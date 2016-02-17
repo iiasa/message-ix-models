@@ -7,4 +7,6 @@ MESSAGE is a tool for investigating possible climate and energy futures.
    :maxdepth: 2
 
    glossary
+   message_new_features
+   
 
