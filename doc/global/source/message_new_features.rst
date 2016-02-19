@@ -19,17 +19,18 @@ Export data from ORACLE database
 - write complete GAMS data files (GDX)
 - add auxiliary parameters during export (e.g., duration of periods)
 
-Change database entries
+Change specific database entries
 ----
 
 - per-item changelog and annotations (old/new values, user, date-time, script, comments)
 - **to do:** restructure changelog as relational database
-- import list of set and parameter changes using Excel template 
-- **to do:** import directly from original data sources (using Excel, R, etc.)
+- import list of set and parameter changes using Excel spreadsheet following the IAMC-template  
+- import list of parameter changes using Nils' Excel spreadsheet for technology cost projection 
+- **to do:** import any changes directly from original data sources (using specific Java functions or a Python/R-interface, etc.)
 - includes sanity checks (“forgotten” technologies or years, nonsensical values, etc.)
 - **to do:** include more sanity checks
 
-Cut and merge datasets
+Cut and merge Message datastructure
 ---- 
 
 - compare entire datasets (by set elements and parameter values)
@@ -39,13 +40,22 @@ Cut and merge datasets
 
 Reference time series and standard look-up tables for aggregations
 ----
+This will be useful for calibration of model runs and for a semi-automated formatting and aggregation of model results.
 
-- **to do:** import reference data from IEA and other sources for comparison/calibration
+- list and synomym replacement list for nodes and hierarchy level
+  (including a consistency check so that only time series can be imported that relate to nodes declared in the node list)
+- **to do:** list and synonym replacement list for fuels and  hierarchy levels 
+- index key (variable in IAMC lingo) replacement using relational  database for more efficient storage and access time
+- import functionality for time series using Excel spreadsheet following the IAMC-template
+- **to do:** import time series directly from original data sources (using specific Java functions or a Python/R-interface, etc.)
 - **to do:** implement look-up tables for standard aggregation/conversion/etc.  
 
+  
 Spatial and temporal disaggregation
 ----
 
-- implemented a completely flexible hierarchical structure for spatial and temporal disaggregation
-- import of disaggregation structure via Excel template  
-- **to do:** modify parameters across hierarchical levels 
+- implemented a completely flexible hierarchical structure for spatial and temporal disaggregation in Message datastructure
+- import of disaggregation structure for a run id via Excel template  
+- **to do:** easy tools for modification parameters across hierarchical levels
+- **to do:** implement sanity and consistency checks
+  
