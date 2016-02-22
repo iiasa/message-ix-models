@@ -6,6 +6,7 @@ Import and clean-up of Message Sqlite dump into ORACLE database
 
 - import complete Message sqlite dump
 - replace parameter names by longer, more explicit names
+- replace the trick that a value of "-1" in investment cost means "no investment possible" by a category-mapping (cat_investment('none',...)
 - drop undefined constraints (i.e., if there exists no associated relation definition)
 - check for duplicate short identifiers, replace if necessary
 - replace all short identifiers in parameter keys (make short id’s obsolete later)
