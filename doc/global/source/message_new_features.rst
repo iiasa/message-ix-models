@@ -5,6 +5,7 @@ Import and clean-up of Message Sqlite dump into ORACLE database
 ----
 
 - import complete Message sqlite dump
+- replace parameter names by longer, more explicit names
 - drop undefined constraints (i.e., if there exists no associated relation definition)
 - check for duplicate short identifiers, replace if necessary
 - replace all short identifiers in parameter keys (make short id’s obsolete later)
