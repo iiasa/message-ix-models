@@ -63,6 +63,10 @@ Decision variables
 ----
 
 
-Constraints
+Constraints in current Message version
+----
+
+
+Constraints in previous GAMS-Message version with technological learning 
 ----
 
