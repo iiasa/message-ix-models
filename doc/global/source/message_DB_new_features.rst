@@ -15,11 +15,11 @@ Import and clean-up of Message Sqlite dump into ORACLE database
 Export data from ORACLE database
 ----
 
-- write complete LDB files ("undoing" clean-up during import) 
+- write complete Message LDB files ("undoing" clean-up during import) 
 - write partial files (update files) - *currently not maintained*
 - write to simple text files ("manual" GAMS files, AMPL, etc.)
 - write complete GAMS data files (GDX)
-- add auxiliary parameters during export (e.g., duration of periods)
+- add auxiliary parameters during (e.g., duration of periods)
 
 Change specific database entries
 ----
@@ -31,7 +31,7 @@ Change specific database entries
 - import list of parameter changes using Nils' Excel spreadsheet for technology cost projection 
 - **to do:** import any changes directly from original data sources (using an R-interface, etc.)
 - includes sanity checks (“forgotten” technologies or years, nonsensical values, etc.)
-- **to do:** include more sanity checks
+- **to do:** include more sanity checks (“forgotten” technologies or years, nonsensical values, etc.)
 
 Cut and merge Message datastructure
 ---- 
