@@ -30,8 +30,10 @@ energy_stocks                           energyforms:    node|commodity|<value>  
 bounds_activity                         systems:        node|technology|mode|\*|year|time                                   bda
 bounds_new_capacity                     systems:        node|technology|\*|year|time                                        bdc
 market_penetration_activity             systems:        node|technology|mode|\*|\*|year|time                                mpa
-Market_penetration_new_capacity         systems:        node|technology|\*|\*|year|time                                     mpc
-*constructiontime* [#construction]_    systems:        node|technology|year                                                ctime
+market_penetration_new_capacity         systems:        node|technology|\*|\*|year|time                                     mpc
+:underline:'initial_new_capacity        none            node|technology|year
+:underline:'spillover_new_capacity      none            node|technology|year|node|technology|year
+*constructiontime* [#construction]_     systems:        node|technology|year                                                ctime
 :strike:'initial_cores'                 systems:        node|technology|\*|year|time                                        corin
 :strike:'final_cores'                   systems:        node|technology|\*|year|time                                        corout
 power_relation                          systems:        node|technology|mode|year|time                                      prel
@@ -52,9 +54,9 @@ cost                                    relations:      node|\*|year|time       
 **resource_remaining**                  resources:      node|commodity|grade|year                                           resrem
 **resource_volume**                     resources:      node|commodity|grade|<value>                                        volume
 :strike:'resource_baseyear_extraction'  resources:      node|commodity|grade|<value>                                        byrex
-:underline:'emissionfactor'             none            node|technology|mode|emission|year                                  none
-:underline:'duration_period'            none            year                                                                none
-:underline:'duration_time'              none            time                                                                none
+:underline:'emissionfactor'             none            node|technology|mode|emission|year                                  
+:underline:'duration_period'            none            year                                                                
+:underline:'duration_time'              none            time                                                                
 ======================================= =============== =================================================================== =================
 
 .. [#costbyvintage] Do we want to include the possibility that technology fixed and variable costs change over time? 
