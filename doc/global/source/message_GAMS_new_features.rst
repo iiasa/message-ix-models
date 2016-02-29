@@ -6,8 +6,8 @@ The following notation is used:
 
 - **already implemented** in the new GAMS-Message model
 - *on the to-do list* to be implemented in the new GAMS-Message model 
-- :strike:`still imported into DB' for backwards compatibility (writing LDB files), but not to be used further`
-- :underline:`new parameters' derived from other input parameters or added manually`
+- :strike:`still imported into DB` for backwards compatibility (writing LDB files), but not to be used further
+- :underline:`new parameters` derived from other input parameters or added manually
 
 Parameters
 ----
@@ -35,8 +35,8 @@ market_penetration_new_capacity         systems:        node|technology|\*|\*|ye
 :underline:'initial_new_capacity        none            node|technology|year
 :underline:'spillover_new_capacity      none            node|technology|year|node|technology|year
 *constructiontime* [#construction]_     systems:        node|technology|year                                                ctime
-:strike:'initial_cores'                 systems:        node|technology|\*|year|time                                        corin
-:strike:'final_cores'                   systems:        node|technology|\*|year|time                                        corout
+:strike:`initial_cores`                 systems:        node|technology|\*|year|time                                        corin
+:strike:`final_cores`                   systems:        node|technology|\*|year|time                                        corout
 power_relation                          systems:        node|technology|mode|year|time                                      prel
 con1a                                   systems:        node|technology|mode|\*|year                                        con1a
 con2a                                   systems:        node|technology|mode|\*|year                                        con2a
@@ -54,10 +54,10 @@ cost                                    relations:      node|\*|year|time       
 **resource_cost**                       resources:      node|commodity|grade|year                                           cost
 **resource_remaining**                  resources:      node|commodity|grade|year                                           resrem
 **resource_volume**                     resources:      node|commodity|grade|<value>                                        volume
-:strike:'resource_baseyear_extraction'  resources:      node|commodity|grade|<value>                                        byrex
-:underline:'emissionfactor'             none            node|technology|mode|emission|year                                  
-:underline:'duration_period'            none            year                                                                
-:underline:'duration_time'              none            time                                                                
+:strike:`resource_baseyear_extraction`  resources:      node|commodity|grade|<value>                                        byrex
+:underline:`emissionfactor`             none            node|technology|mode|emission|year                                  
+:underline:`duration_period`            none            year                                                                
+:underline:`duration_time`              none            time                                                                
 ======================================= =============== =================================================================== =================
 
 .. [#costbyvintage] Do we want to include the possibility that technology fixed and variable costs change over time? 
@@ -112,22 +112,22 @@ Constraint name                              index keys                         
 ============================================ ===================================================== ============================================================
 \* balance equations    
 **EQ_COST_TOTAL**                            period                                                objective funtion by period
-:strike:'EQ_COST_REGIONAL'                   period, node                                          objective function by period/region
-:strike:'EQ_COST_SECTORAL'                   period, node, sector                                  objective function by period/region/sector
-:strike:'EQ_COMMODITY_CONSUMPTION_TOTAL'     period, commodity, level                              commodity consumption
-:strike:'EQ_COMMODITY_PRODUCTION_TOTAL'      period, commodity, level                              commodity production
-:strike:'EQ_COMMODITY_CONSUMPTION_REGIONAL'  period, node, commodity, level                        commodity consumption by region
-:strike:'EQ_COMMODITY_PRODUCTION_REGIONAL'   period, node, commodity, level                        commodity production by region
-:strike:'EQ_COMMODITY_CONSUMPTION_SECTORAL'  period, node, sector, commodity, level 'commodity     consumption by region/sector
-:strike:'EQ_COMMODITY_PRODUCTION_SECTORAL'   period, node, sector, commodity, level  'commodity    production by region/sector
-:underline:'COMMODITY_BALANCE'
+:strike:`EQ_COST_REGIONAL`                   period, node                                          objective function by period/region
+:strike:`EQ_COST_SECTORAL`                   period, node, sector                                  objective function by period/region/sector
+:strike:`EQ_COMMODITY_CONSUMPTION_TOTAL`     period, commodity, level                              commodity consumption
+:strike:`EQ_COMMODITY_PRODUCTION_TOTAL`      period, commodity, level                              commodity production
+:strike:`EQ_COMMODITY_CONSUMPTION_REGIONAL`  period, node, commodity, level                        commodity consumption by region
+:strike:`EQ_COMMODITY_PRODUCTION_REGIONAL`   period, node, commodity, level                        commodity production by region
+:strike:`EQ_COMMODITY_CONSUMPTION_SECTORAL`  period, node, sector, commodity, level 'commodity     consumption by region/sector
+:strike:`EQ_COMMODITY_PRODUCTION_SECTORAL`   period, node, sector, commodity, level  'commodity    production by region/sector
+:underline:`COMMODITY_BALANCE`
 **EQ_EMISSION_TOTAL**                        period, emission                                      total emission output
 EQ_EMISSION_REGIONAL                         period, node, emission                                emission output by region
 EQ_EMISSION_SECTORAL                         period, node, sector, emission                        emission output by region/sector
 \* technology specific equations
 **EQ_MAX_AV**                                period, node, technology, year                        maximum technology availability
-:strike:'EQ_MAV_SUBANNUAL_AV'                period, node, technology_load, year, season, time     maximum technology availability by time slice
-:strike:'EQ_MAX_MODE_AV'                     period, node, technology, mode, year                  maximum technology availability by operation mode
+:strike:`EQ_MAV_SUBANNUAL_AV`                period, node, technology_load, year, season, time     maximum technology availability by time slice
+:strike:`EQ_MAX_MODE_AV`                     period, node, technology, mode, year                  maximum technology availability by operation mode
 EQ_ADDON_CAP                                 period, node, technology_addon                        add-on technology capacity constraint
 EQ_ADDON_ACT                                 period, node, technology_addon, mode                  add-on technology activity constraint
 EQ_COMMODITY_SUPPLY                          period, node, commodity, level                        supply of commodities
