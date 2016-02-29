@@ -25,7 +25,7 @@ Change specific database entries
 ----
 
 - per-item changelog and annotations (old/new values, user, date-time, script, comments)
-- import any changes directly from original data sources (using specific Java functions or a Python)
+- import any changes directly from original data sources (using specific Java functions, or any Python data-processing script plus a Java interface)
 - **to do:** restructure changelog as relational database
 - import list of set and parameter changes using Excel spreadsheet following the IAMC-template  
 - import list of parameter changes using Nils' Excel spreadsheet for technology cost projection 
@@ -50,15 +50,15 @@ This will be useful for calibration of model runs and for a semi-automated forma
 - **to do:** list and synonym replacement list for fuels and  hierarchy levels 
 - index key ("variable" in IAMC lingo) replacement using relational  database for more efficient storage and access time
 - import functionality for time series using Excel spreadsheet following the IAMC-template
-- import time series directly from original data sources (using specific Java functions or a Python-interface, etc.)
+- import time series directly from original data sources (using specific Java function, or any Python data-processing script plus a Java interface)
 - **to do:** import time series directly from original data sources (using an R-interface, etc.)
 - **to do:** implement look-up tables for standard aggregation/conversion/etc.  
   
 Spatial and temporal disaggregation
 ----
 
-- implemented a completely flexible hierarchical structure for spatial and temporal disaggregation in Message datastructure
-- import of disaggregation structure for a run id via Excel template  
+- the database is built on a completely flexible hierarchical structure for spatial and temporal disaggregation in the Message datastructure
+- import of disaggregation structure for a run id via an Excel template  
 - **to do:** easy tools for modification of parameters across hierarchical levels (cut, merge and "seed" could be used for that)
 - **to do:** implement sanity and consistency checks
   
