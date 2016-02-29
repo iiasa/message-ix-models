@@ -296,4 +296,5 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 # prolog for all rst files
 rst_prolog = """
 .. role:: strike
+.. role:: underline
 """
