@@ -1,3 +1,4 @@
+
 A comparison of the new GAMS-Message implementation and the current model
 ==========================
 
@@ -5,8 +6,8 @@ The following notation is used:
 
 - **already implemented** in the new GAMS-Message model
 - *on the to-do list* to be implemented in the new GAMS-Message model 
-- :strike:`still imported into DB' for backwards compatibility (writing LDB files), but not to be used further
-- :underline:`new parameters' derived from other input parameters or added manually
+- :strike:`still imported into DB' for backwards compatibility (writing LDB files), but not to be used further`
+- :underline:`new parameters' derived from other input parameters or added manually`
 
 Parameters
 ----
@@ -18,8 +19,8 @@ New name in DB                          section         index keys              
 ======================================= =============== =================================================================== =================
 energy_stocks                           energyforms:    node|commodity|<value>                                              none
 **demand**                              demand:         node|commodity|level|year|time                                      none
-:strike:'main_output'                   systems:        node|technology|mode|node(O/D)|commodity|level|year|time|time(O/D)  moutp
-:strike:'main_input'                    systems:        node|technology|mode|node(O/D)|commodity|level|<value>              minp
+:strike:`main_output`                   systems:        node|technology|mode|node(O/D)|commodity|level|year|time|time(O/D)  moutp
+:strike:`main_input`                    systems:        node|technology|mode|node(O/D)|commodity|level|<value>              minp
 **output**                              systems:        node|technology|mode|node(O/D)|commodity|level|year|time|time(O/D)  moutp, outp
 **input**                               systems:        node|technology|mode|node(O/D)|commodity|level|year|time|time(O/D)  minp, inp
 **lifetime**                            systems:        node|technology|year                                                pll
