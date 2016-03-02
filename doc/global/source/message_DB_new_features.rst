@@ -1,5 +1,5 @@
 A list of current features of the new MESSAGE database framework
-==========================
+================================================================
 
 Import and clean-up of Message Sqlite dump into ORACLE database
 ----
@@ -25,15 +25,19 @@ Change specific database entries
 ----
 
 - per-item changelog and annotations (old/new values, user, date-time, script, comments)
-- import any changes directly from original data sources (using specific Java functions, or any Python data-processing script plus a Java interface)
-- **to do:** restructure changelog as relational database
-- import list of set and parameter changes using Excel spreadsheet following the IAMC-template  
-- import list of parameter changes using Nils' Excel spreadsheet for technology cost projection 
-- **to do:** import any changes directly from original data sources (using an R-interface, etc.)
-- includes sanity checks (“forgotten” technologies or years, nonsensical values, etc.)
-- **to do:** include more sanity checks (“forgotten” technologies or years, nonsensical values, etc.)
+- **to do:** function to automatically undo specific changes
+- import set and parameter changes directly from original data sources  
 
-Cut and merge Message datastructure
+  + import changes using Excel spreadsheet following the IAMC-template
+  + using any Python/R data-processing script plus a Java interface
+  + (for technology cost projection: import changes from Nils' Excel spreadsheet using Java) 
+  + using "manual" Java functions
+
+- includes sanity checks ("forgotten" technologies or years, nonsensical values, etc.)
+- **to do:** include more sanity checks ("forgotten" technologies or years, nonsensical values, etc.)
+- **to do:** restructure changelog as relational database
+
+Compare, cut and merge Message datastructure
 ---- 
 
 - compare entire datasets (by set elements and parameter values)
@@ -48,16 +52,19 @@ This will be useful for calibration of model runs and for a semi-automated forma
 - list and synomym replacement list for nodes and hierarchy level
   (including a consistency check so that only time series can be imported that relate to nodes declared in the node list)
 - **to do:** list and synonym replacement list for fuels and  hierarchy levels 
-- index key ("variable" in IAMC lingo) replacement using relational  database for more efficient storage and access time
-- import functionality for time series using Excel spreadsheet following the IAMC-template
-- import time series directly from original data sources (using specific Java function, or any Python data-processing script plus a Java interface)
-- **to do:** import time series directly from original data sources (using an R-interface, etc.)
+- index key ("variable" in IAMC lingo) replacement using relational database for more efficient storage and access time
+- import of reference time series (directly from original data sources)
+
+  + import changes using Excel spreadsheet following the IAMC-template
+  + using any Python/R data-processing script plus a Java interface
+  + using "manual" Java functions
+
 - **to do:** implement look-up tables for standard aggregation/conversion/etc.  
   
 Spatial and temporal disaggregation
 ----
+The database is built on a completely flexible hierarchical structure for spatial and temporal disaggregation in the Message datastructure
 
-- the database is built on a completely flexible hierarchical structure for spatial and temporal disaggregation in the Message datastructure
 - import of disaggregation structure for a run id via an Excel template  
 - **to do:** easy tools for modification of parameters across hierarchical levels (cut, merge and "seed" could be used for that)
 - **to do:** implement sanity and consistency checks
