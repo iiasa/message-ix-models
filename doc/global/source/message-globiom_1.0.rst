@@ -6,8 +6,26 @@ MESSAGE-GLOBIOM 1.0 combines the global energy systems model MESSAGE and the lan
 .. toctree::
    :maxdepth: 2
 
+Socio-economic development
+====
+Demographic development
+----
+Economic development
+----
+
 Energy: MESSAGE
 ====
+Scope and methodology
+----
+Spatial process
+~~~~
+Temporal process
+~~~~
+Demand projection
+~~~~
+Technological change
+~~~~
+
 Energy resources
 ----
 Energy conversion
@@ -41,3 +59,8 @@ Linkage: MESSAGE-GLOBIOM
 
 Climate: MAGICC
 ====
+
+Annex: Mathematical formulation
+====
+MESSAGE
+----
