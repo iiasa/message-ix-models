@@ -38,6 +38,7 @@ if "%1" == "help" (
 	echo.  linkcheck  to check all external links for integrity
 	echo.  doctest    to run all doctests embedded in the documentation if enabled
 	echo.  coverage   to run coverage check of the documentation if enabled
+	echo.  serve      serve a local version of the website on the default port for SimpleHTTPServer
 	goto end
 )
 
@@ -257,6 +258,13 @@ if "%1" == "pseudoxml" (
 	if errorlevel 1 exit /b 1
 	echo.
 	echo.Build finished. The pseudo-XML files are in %BUILDDIR%/pseudoxml.
+	goto end
+)
+
+if "%1" == "serve" (
+	echo.
+	echo.Serving from %BUILDDIR%/html.
+	cd %BUILDDIR%/html && python -m SimpleHTTPServer
 	goto end
 )
 
