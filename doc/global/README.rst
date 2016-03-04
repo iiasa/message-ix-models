@@ -36,3 +36,16 @@ On Windows, from the command line, run::
 
 You can then view the site by pointing your browser at http://localhost:8000/
 
+Automatically Update Website after Changing Files
+-------------------------------------------------
+
+If you have `sphinx-autobuild <https://pypi.python.org/pypi/sphinx-autobuild>`_
+installed, you make get an auto-updating local website by
+
+    make livehtml
+
+or
+
+    ./make.bat livehtml
+
+Again, point your browser to http://localhost:8000/
