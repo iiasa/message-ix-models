@@ -6,7 +6,7 @@ MESSAGE-GLOBIOM 1.0 combines the global energy systems model MESSAGE and the lan
 .. toctree::
    :maxdepth: 2
 
-MESSAGE (energy)
+Energy: MESSAGE
 ====
 Energy resources
 ----
@@ -30,14 +30,14 @@ Residential and Commercial
 Industry
 ~~~~
 
-MACRO (economy)
+Economy: MACRO
 ====
 
-GLOBIOM
-===
-
-MESSAGE-GLOBIOM linkage
+Land use: GLOBIOM
 ====
 
-MAGICC
+Linkage: MESSAGE-GLOBIOM
+====
+
+Climate: MAGICC
 ====
