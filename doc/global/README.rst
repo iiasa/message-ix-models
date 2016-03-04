@@ -15,18 +15,24 @@ There are a number of guides out there, e.g. on `docutils
 Building the Site
 -----------------
 
-
 On *nix, from the command line, run::
 
     make html
 
 On Windows, from the command line, run::
 
-    ./make.bat
+    ./make.bat html
 
-You can then view the site by::
+View the Site Locally
+---------------------
 
-    cd build
-    python -m SimpleHTTPServer
+On *nix, from the command line, run::
 
-and pointing your browser at http://localhost:8000/html/
+    make serve
+
+On Windows, from the command line, run::
+
+    ./make.bat serve
+
+You can then view the site by pointing your browser at http://localhost:8000/
+
