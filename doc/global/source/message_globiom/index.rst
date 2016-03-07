@@ -8,10 +8,12 @@ framework.
 .. toctree::
    :maxdepth: 1
 
+   overview
    econ
    message
    macro
    globiom
    link
    magicc
+   references
    annex
