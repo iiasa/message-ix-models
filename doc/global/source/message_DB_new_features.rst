@@ -9,17 +9,17 @@ Import and clean-up of Message Sqlite dump into ORACLE database
 - replace the trick that a value of "-1" in investment cost means "no investment possible" by a category-mapping (cat_investment('none',...)
 - drop undefined constraints (i.e., if there exists no associated relation definition)
 - check for duplicate short identifiers, replace if necessary
-- replace all short identifiers in parameter keys (make short id’s obsolete later)
+- replace all short identifiers in parameter keys (make short id’s obsolete in the future)
+- replace upper/lower/fixed bounds by upper and lower bounds
 - replace "Message infinity" by proper infinity
 
-Export data from ORACLE database
+Export data from ORACLE database to GDX, LBD, etc.
 ----
 
 - write complete Message LDB files ("undoing" clean-up during import) 
+- write complete GAMS data files (GDX)
 - write partial files (update files) - *currently not maintained*
 - write to simple text files ("manual" GAMS files, AMPL, etc.)
-- write complete GAMS data files (GDX)
-- add auxiliary parameters during (e.g., duration of periods)
 
 Change specific database entries
 ----
@@ -68,4 +68,8 @@ The database is built on a completely flexible hierarchical structure for spatia
 - import of disaggregation structure for a run id via an Excel template  
 - **to do:** easy tools for modification of parameters across hierarchical levels (cut, merge and "seed" could be used for that)
 - **to do:** implement sanity and consistency checks
-  
+
+Next section
+----
+Some text again
+ 
