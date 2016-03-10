@@ -6,6 +6,6 @@ for handling reference data, model input data, and model results. This framework
 academic best-practice, including version control, standardized methods for read/write across 
 standard script languages (in particular R and Python), etc. 
 
-.. image:: content/iiasa_IAM_modelling_platform_layout.png.png   
+.. image:: content/iiasa_IAM_modelling_platform_layout.png   
 
 The source from which this image was created can be found at ``I:/huppmann/iiasa_IAM_modelling_platform_layout.pptx``.
