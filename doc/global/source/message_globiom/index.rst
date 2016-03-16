@@ -8,7 +8,7 @@ framework.
 .. toctree::
    :maxdepth: 1
 
-   overview
+   overview/index
    econ
    message
    macro
