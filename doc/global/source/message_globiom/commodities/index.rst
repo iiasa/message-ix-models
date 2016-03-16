@@ -1,1 +1,2 @@
-
+Other commodities and resources
+================================

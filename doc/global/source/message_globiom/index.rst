@@ -9,11 +9,11 @@ framework.
    :maxdepth: 1
 
    overview/index
-   econ
-   message
+   socio_econ/index
+   energy/index
    macro
-   globiom
-   link
-   magicc
+   land_use/index
+   climate/index
+   commodities/index
    references
    annex
