@@ -4,3 +4,4 @@ Socio-economic development
    :maxdepth: 1
 
    pop_GDP
+   demand
