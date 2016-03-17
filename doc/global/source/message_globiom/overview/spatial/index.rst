@@ -2,7 +2,7 @@ Spatial process
 ==============
 MESSAGE has global coverage and divides the world into 11 regions (see Figure 1.1 below).
 
-.. image:: /source/message_globiom/overview/spatial/MESSAGE_regions.png
+.. image:: /_static/MESSAGE_regions.png
 Figure 1.1: Map of 11 MESSAGE regions.
 
 The country definitions of the 11 MESSAGE regions are described in the table below.
