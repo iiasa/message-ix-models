@@ -5,5 +5,5 @@ Overview
 
    model_concept
    spatial/index
-   temporal/index
+   temporal
    policy/index
