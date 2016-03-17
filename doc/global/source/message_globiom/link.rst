@@ -1,3 +1,0 @@
-
-Linkage: MESSAGE-GLOBIOM
-----
