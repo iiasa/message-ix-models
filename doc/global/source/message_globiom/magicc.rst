@@ -1,3 +1,0 @@
-
-Climate: MAGICC
-----
