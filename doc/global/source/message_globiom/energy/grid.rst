@@ -1,3 +1,5 @@
+Grid and infrastructure
+=========================
 Energy Transmission and Distribution Infrastructure
 ---------------------------------------------------
 Energy transport and distribution infrastructure is included in MESSAGE at a level relevant to represent the associated costs. Within regions the capital stock of transmission and distribution infrastructure and its turnover is modeled for the following set of energy carriers:
