@@ -1,3 +1,0 @@
-
-Land use: GLOBIOM
-----
