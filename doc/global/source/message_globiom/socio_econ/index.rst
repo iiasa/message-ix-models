@@ -5,3 +5,4 @@ Socio-economic development
 
    pop_GDP
    demand
+   tech
