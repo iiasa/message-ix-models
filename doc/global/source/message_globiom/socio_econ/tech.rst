@@ -2,7 +2,7 @@ Technological change
 ======================
 Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (`Messner, 1997 <https://wiki.ucl.ac.uk/display/ADVIAM/References+MESSAGE>`_). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, Figure 2.1 below provides an overview of costs ranges for a set of key energy conversion technologies as developed in the Global Energy Assessment (GEA) and applied in MESSAGE. More detailed techno-economic assumptions can be found used in MESSAGE V.4 can be found in the GEA scenario database.
 
-.. image:: /source/message_globiom/socio_econ/GEA_technology_cost_ranges.png
+.. image:: GEA_technology_cost_ranges.png
 Figure 2.1: Investment cost per unit of energy production capacity (`van Vliet et al., 2012 <https://wiki.ucl.ac.uk/display/ADVIAM/References+MESSAGE>`_).
 
 MESSAGE tracks investments by vintage, an important feature to represent the inertia in the energy system due to its long-lived capital stock. In case of shocks (e.g., introduction of stringent climate policy), it is however possible to prematurely retire existing capital stock such as power plants or other energy conversion technologies and switch to more suitable alternatives.
