@@ -4,6 +4,6 @@ Overview
    :maxdepth: 1
 
    model_concept
-   spatial/index
+   spatial
    temporal
    policy/index
