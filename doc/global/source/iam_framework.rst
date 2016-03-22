@@ -9,8 +9,5 @@ control, standardized methods for read/write across standard script languages
 
 .. image:: _static/iam_framework-1.png
 
-.. image:: _static/iam_framework-2.png
-
-
 The source from which this image was created can be found at
 ``I:/huppmann/iiasa_IAM_modelling_platform_layout.pptx``.
