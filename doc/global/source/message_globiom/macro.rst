@@ -1,5 +1,5 @@
 
-Economy: MACRO
+Macro-economy
 ----
 The detailed energy supply model (MESSAGE) is soft-linked to an aggregated macro-economic model (MACRO) which has been adopted from the so-called Global2100 or ETA-MACRO model (Manne and Richels, 1992), a predecessor of the `MERGE <http://www.stanford.edu/group/MERGE/>`_ model. The reason for linking the two models is to consistently reflect the influence of energy supply costs, as calculated by MESSAGE, in the mix of production factors considered in MACRO, and the effect of changes in energy demand on energy costs. The combined MESSAGE-MACRO model (Messner and Schrattenholzer, 2000) can generate a consistent  economic response to changes in energy prices and estimate overall economic consequences (e.g., GDP or consumption loss) of energy or climate policies.
 
