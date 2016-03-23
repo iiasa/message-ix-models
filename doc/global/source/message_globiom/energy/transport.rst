@@ -8,6 +8,6 @@ To reflect limitations of switching to alternative fuels, for example as a resul
 
 .. image:: /_static/transport_end-use.png
 
-Figure 1: Schematic diagram of the stylized transport sector representation in MESSAGE.
+**Figure 1**: Schematic diagram of the stylized transport sector representation in MESSAGE.
 
 The demand for international shipping is modeled in a very simple way with a number of different energy carrier options (light and heavy fuel oil, biofuels, natural gas, and hydrogen). As discussed in the demand section, the demand for international shipping is coupled to global GDP development with an income elasticity.
