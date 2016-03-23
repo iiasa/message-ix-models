@@ -5,7 +5,7 @@ Technological change in MESSAGE is generally treated exogenously, although pione
 .. image:: /_static/GEA_technology_cost_ranges.png
    :scale: 50 %
    :align: left
-Figure 2.1: Investment cost per unit of energy production capacity (`van Vliet et al., 2012 <https://wiki.ucl.ac.uk/display/ADVIAM/References+MESSAGE>`_).
+**Figure 2.1**: Investment cost per unit of energy production capacity (`van Vliet et al., 2012 <https://wiki.ucl.ac.uk/display/ADVIAM/References+MESSAGE>`_).
 
 MESSAGE tracks investments by vintage, an important feature to represent the inertia in the energy system due to its long-lived capital stock. In case of shocks (e.g., introduction of stringent climate policy), it is however possible to prematurely retire existing capital stock such as power plants or other energy conversion technologies and switch to more suitable alternatives.
 
@@ -61,4 +61,4 @@ which adds costs ci  per additional growth factor utilized. The figure below ill
    :scale: 30 %
    :align: left
 
-Figure 2.2: Illustration of maximum technology growth starting at a level of 1 in year t=0 for a set of soft diffusion constraints with effective growth rates r as shown in the legend.
+**Figure 2.2**: Illustration of maximum technology growth starting at a level of 1 in year t=0 for a set of soft diffusion constraints with effective growth rates r as shown in the legend.
