@@ -18,7 +18,7 @@ The mathematical formulation of MESSAGE ensures that the flows are consistent: d
    :maxdepth: 1
 
    resource
-   conversion
+   conversion/index
    transport
    resid_commerc
    industrial
