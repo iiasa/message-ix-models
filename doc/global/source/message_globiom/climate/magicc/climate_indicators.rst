@@ -8,4 +8,4 @@ The reason the projections of climate system responses are estimated probabilist
 
 .. image:: _static/CS-PDFs.png
 
-Figure 1. Probability density functions (PDF) for climate sensitivity (figure from O'Neill et al. (2010)).
+**Figure 1.** Probability density functions (PDF) for climate sensitivity (figure from O'Neill et al. (2010)).
