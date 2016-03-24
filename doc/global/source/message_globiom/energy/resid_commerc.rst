@@ -6,6 +6,6 @@ This stylized residential and commercial thermal energy demand includes fuel swi
 
 .. image:: _static/residential-commercial_end-use.png
 
-**Figure 1**: Schematic diagram of the residential and commercial sector representation in MESSAGE.
+**Figure 3.5**: Schematic diagram of the residential and commercial sector representation in MESSAGE.
 
 To reflect limitations of switching to alternative fuels, for example as a result of limited infrastructure availability (e.g., district heating network) or some energy carriers being unsuitable for certain applications, share constraints of energy carriers (e.g., electricity) and energy carrier groups (e.g., liquid fuels) are used in the residential and commercial sector. In addition, the diffusion of speed of alternative fuels is limited to mimic bottlenecks in the supply chains, not explicitly represented in MESSAGE (e.g., non-energy related infrastructure) (add link).
