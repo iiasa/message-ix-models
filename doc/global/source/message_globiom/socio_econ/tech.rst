@@ -24,8 +24,6 @@ with the period increment
 .. image:: /_static/technology_diffusion_eq_2a.png
    :width: 120px
 
-  (1)
-
 While limiting the possibility of flip-flop behavior as it is frequently observed in unconstrained Linear Programming (LP) models such as MESSAGE, a drawback of such hard growth constraints is that the relative advantage of some technology over another technology is not taken into account and therefore even for very competitive technologies, no acceleration of technology diffusion is possible. In response to this limitation, so called flexible or soft dynamic constraints have been introduced into MESSAGE (Keppo and Strubegger, 2010). These allow faster technology diffusion at additional costs and therefore generate additional model flexibility while still reducing the flip-flop behavior and sudden penetration of technologies. To operationalize this concept, a set of n dummy variables, bi, multiplied by a corresponding growth factor (1+ri)T are added to the dynamic growth constraint in Eq. (1).
 
 .. image:: /_static/technology_diffusion_eq_3.png
