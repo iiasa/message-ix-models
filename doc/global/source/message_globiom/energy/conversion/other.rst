@@ -6,7 +6,7 @@ Liquid Fuel Production
 ----------------------
 Apart from oil refining as predominant supply technology for liquid fuels at present a number of alternative liquid fuel production routes from different feedstocks are represented in MESSAGE (see Table 1). Different processes for coal liquefaction, gas-to-liquids technologiesand biomass-to-liquids technologies both with and without CCS are covered. Some of these technologies include co-generation of electricity, for example, by burning unconverted syngas from a Fischer-Tropsch synthesis in a gas turbine (c.f. Larson et al. 2012). Technology costs for the synthetic liquid fuel production options are based on Larson et al. 2012.
 
-**Table 1**: Liquid fuel production technologies in MESSAGE by energy source.
+**Table 3.6**: Liquid fuel production technologies in MESSAGE by energy source.
 
 +----------------+----------------------------------------------+---------------------------+
 | Energy Source  | Technology                                   | Electricity cogeneration  |
@@ -34,7 +34,7 @@ Apart from oil refining as predominant supply technology for liquid fuels at pre
 
 Gaseous Fuel Production
 -----------------------
-**Table 2**: Gaseous fuel production technologies in MESSAGE by energy source.
+**Table 3.7**: Gaseous fuel production technologies in MESSAGE by energy source.
 
 +----------------+-------------------------------+
 | Energy Source  | Technology                    |
@@ -50,7 +50,7 @@ Gaseous Fuel Production
 
 Hydrogen Production
 -------------------
-**Table 3**: Hydrogen production technologies in MESSAGE by energy source.
+**Table 3.8**: Hydrogen production technologies in MESSAGE by energy source.
 
 +----------------+-----------------------------------+---------------------------+
 | Energy source  | Technology                        | Electricity cogeneration  |
