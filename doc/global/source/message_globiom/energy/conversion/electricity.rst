@@ -6,7 +6,7 @@ Four different nuclear power plant types are represented in MESSAGE, i.e. two li
 
 The conversion of five renewable energy sources to electricity is represented in MESSAGE (see Table 3.1). For wind power, both on- and offshore electricity generation are covered and for solar energy, photovoltaics (PV) and solar thermal (concentrating solar power, CSP) electricity generation are included in MESSAGE (see also sections on renewable resources and systems integration).
 
-**Table 3.1.** List of electricity generation technologies represented in MESSAGE by energy source.
+**Table 3.3**: List of electricity generation technologies represented in MESSAGE by energy source.
 
 +------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
 | Energy source    | Technology                                                                                                                                                                                                                                                                             | CHP option               |
