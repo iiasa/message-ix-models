@@ -1,3 +1,5 @@
+.. _spatial:
+
 Spatial process
 ==============
 MESSAGE has global coverage and divides the world into 11 regions (see Figure 1.1 below).
