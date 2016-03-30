@@ -1,3 +1,5 @@
+.. _industrial:
+
 Industrial sector
 =================
 The industrial sector in MESSAGE distinguishes two demand categories, thermal and specific.Thermal demand, i.e. heat at different temperature levels, can be supplied by a variety of different energy carriers while specific demand requires electricity (or a decentralized technology to convert other energy carriers to electricity).
