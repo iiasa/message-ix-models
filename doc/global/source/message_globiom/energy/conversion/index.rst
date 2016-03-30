@@ -19,9 +19,9 @@ Each energy conversion technology is characterized in MESSAGE by the following d
 * Lag time between input and output of the technology.
 * Minimum unit size: e.g. for nuclear power plants it does not make sense to build plants with a capacity of a few kilowatt power (optional, not used in current model version).
 * Sociopolitical constraints: e.g. ban of nuclear power plants.
-* Inconvenience costs which are specified only for end-use technologies (see the separate description in the section on behavioural change).
+* Inconvenience costs which are specified only for end-use technologies (see the separate description in the section on :ref:`beh_change`).
 
-The specific technologies represented in various parts of the energy conversion sector are discussed in the following sections on electricity, heat, grid and infrastructure, and other conversion.
+The specific technologies represented in various parts of the energy conversion sector are discussed in the following sections on :ref:`electricity`, :ref:`heat`, :ref:`grid`, and :ref:`other`.
 
 .. toctree::
    :maxdepth: 1
