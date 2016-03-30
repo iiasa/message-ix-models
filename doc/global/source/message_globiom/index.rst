@@ -3,7 +3,8 @@ MESSAGE-GLOBIOM
 
 MESSAGE-GLOBIOM combines the global energy systems model MESSAGE and the
 land~use model GLOBIOM into a consistent Integrated Assessment Modeling (IAM)
-framework.
+framework. This is an example of a citation: :cite:`oneill_new_2013`.
+
 
 .. toctree::
    :maxdepth: 1

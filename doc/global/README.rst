@@ -5,12 +5,22 @@ Dependencies
 ------------
 
 1. `Sphinx <http://sphinx-doc.org/>`_ v1.1.2 or higher
+1. `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.org/en/latest/>`_
 
 Writing in Restructed Text
 --------------------------
 
-There are a number of guides out there, e.g. on `docutils
-<http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_.
+There are a number of guides out there, e.g.
+
+- `sphinx <http://www.sphinx-doc.org/en/stable/>`_
+- `docutils <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_
+
+Adding Citations
+----------------
+
+The main citation file is `bibs/main.bib`. To learn how to cite those
+references, you can read the appropriate `documentation
+<http://sphinxcontrib-bibtex.readthedocs.org/en/latest/usage.html>`_.
 
 Building the Site
 -----------------
