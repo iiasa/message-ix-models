@@ -1,6 +1,6 @@
 Energy resource endowments
 ==========================
-Fossil Fuel Reserves and Resources - MESSAGE
+Fossil Fuel Reserves and Resources
 ---------------------------------------------
 Table 3.1 shows the assumed total quantities of fossil fuel resources in the MESSAGE model for the base year 2005. Figure 3.1 gives these resource estimates as supply curves. In addition, the assumptions are compared with estimates from the Global Energy Assessment (Rogner et al. 2012) as of the year 2009. Estimating fossil fuel reserves is built on both economic and technological assumptions. With an improvement in technology or a change in purchasing power, the amount that may be considered a “reserve” vs. a “resource” (generically referred to here as resources) can actually vary quite widely.
 
@@ -46,7 +46,9 @@ Similar to conventional oil, much of the unconventional oil resides in the Middl
 .. image:: /_static/global_resources_3.1.png
 **Figure 3.1.** Global uranium resources in the MESSAGE interpretation of the 3 GEA pathway groups compared to ranges in the literature (Schneider and Sailor, 2008). 
 
-Renewable Resources - MESSAGE
+.. _renewable:
+
+Renewable Resources
 ------------------------------
 Table 3.2 shows the assumed total potentials of renewable energy deployment (by resource type) in the MESSAGE model by 2050. Figure 3.3 overlays these estimates on a map of the 11 MESSAGE regions. In addition, the assumptions are compared with technical potential estimates from the Global Energy Assessment (Rogner et al. 2012).  In this context, it is important to note that typical MESSAGE scenarios do not consider the full technical potential of renewable energy resources, but rather only a subset of those potentials, owing to additional constraints (e.g., sustainability criteria, technology diffusion and systems integration issues, and other economic considerations) that may not be fully captured within the model. These constraints may lead to a significant reduction of the technical potential.
 
