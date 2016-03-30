@@ -1,3 +1,5 @@
+.. _electricity:
+
 Electricity
 ===========
 MESSAGE covers a large number of electricity generation options utilizing a wide range of primary energy sources. For fossil-based electricity generation technologies, typically a number of different technologies with different efficiencies, environmental characteristics and costs is represented. For example, in the case of coal, MESSAGE distinguishes subcritical and supercritical pulverized coal (PC) power plants where the subcritical variant is available with and without flue gas desulpherization/denox and one internal gasification combined cycle (IGCC) power plant. The superciritical PC and IGCC plants are also available with carbon capture and storage (CCS) which also can be retrofitted to some of the existing PC power plants. Table 1 below shows the different power plant types represented in MESSAGE.
