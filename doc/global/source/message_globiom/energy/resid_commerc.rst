@@ -1,3 +1,5 @@
+.. _resid_commerc:
+
 Residential and commercial sectors
 ===================================
 The residential and commercial sector in MESSAGE distinguishes two demand categories, thermal and specific.Thermal demand, i.e. low temperature heat, can be supplied by a variety of different energy carriers while specific demand requires electricity (or a decentralized technology to convert other energy carriers to electricity).
