@@ -1,3 +1,5 @@
+.. _grid:
+
 Grid and infrastructure
 =========================
 Energy Transmission and Distribution Infrastructure
