@@ -6,7 +6,7 @@ MESSAGE covers a large number of electricity generation options utilizing a wide
 
 Four different nuclear power plant types are represented in MESSAGE, i.e. two light water reactor types, a fast breeder reactor and a high temperature reactor, but only the two light water types are included in the majority of scenarios being developed with MESSAGE in the recent past. In addition, MESSAGE includes a representation of the nuclear fuel cycle, including reprocessing and the plutonium fuel cycle, and keeps track of the amounts of nuclear waste being produced.
 
-The conversion of five renewable energy sources to electricity is represented in MESSAGE (see Table 3.1). For wind power, both on- and offshore electricity generation are covered and for solar energy, photovoltaics (PV) and solar thermal (concentrating solar power, CSP) electricity generation are included in MESSAGE (see also sections on renewable resources and systems integration).
+The conversion of five renewable energy sources to electricity is represented in MESSAGE (see Table 3.1). For wind power, both on- and offshore electricity generation are covered and for solar energy, photovoltaics (PV) and solar thermal (concentrating solar power, CSP) electricity generation are included in MESSAGE (see also sections on :ref:`renewable` and :ref:`syst_integration`).
 
 **Table 3.3**: List of electricity generation technologies represented in MESSAGE by energy source.
 
