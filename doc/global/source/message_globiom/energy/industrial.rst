@@ -8,4 +8,4 @@ This stylized industrial thermal energy demand includes fuel switching as the ma
 
 .. image:: /_static/industry_end-use.png
 
-**Figure 3.6**: Schematic diagram of the industrial sector representation in MESSAGE.
+**Figure 3.7**: Schematic diagram of the industrial sector representation in MESSAGE.
