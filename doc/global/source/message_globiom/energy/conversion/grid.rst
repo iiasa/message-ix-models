@@ -24,7 +24,7 @@ The MESSAGE framework includes a single annual time period characterized by aver
 Toward meeting the firm capacity requirement, conventional generating technologies contribute their nameplate generation capacity while variable renewables contribute a capacity value that declines as the market share of the technology increases. This reflects the fact that wind and solar generators do not always generate when needed, and that their output is generally self-correlated. In order to adjust wind capacity values for different levels of penetration, it was necessary to introduce a stepwise-linear supply curve for wind power (shown in the figure below). Each bin covers a range of wind penetration levels as fraction of load and has discrete coefficients for the two constraints. The bins are predefined, and therefore are not able to allow, for example, resource diversification to increase capacity value at a given level of wind penetration.
 
 .. image:: /_static/wind_cv.png
-**Figure 3.3**: Parameterization of Wind Capacity Value.
+**Figure 3.4**: Parameterization of Wind Capacity Value.
 
 The capacity value bins are independent of the wind supply curve bins that already existed in MESSAGE, which are based on quality of the wind resource. That supply curve is defined by absolute wind built, not fraction of load; and the bins differ based on their annual average capacity factor, not capacity value. Solar PV is treated in a similar way as wind with the parameters obviously being different ones. In contrast, concentrating solar power (CSP) is modeled very much like dispatchable power plants in MESSAGE, because it is assumed to come with several hours of thermal storage, making it almost capable of running in baseload mode.
 
