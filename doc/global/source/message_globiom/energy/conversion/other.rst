@@ -6,7 +6,7 @@ Beyond electricity and heat generation there are three further subsectors of the
 
 Liquid Fuel Production
 ----------------------
-Apart from oil refining as predominant supply technology for liquid fuels at present a number of alternative liquid fuel production routes from different feedstocks are represented in MESSAGE (see Table 1). Different processes for coal liquefaction, gas-to-liquids technologiesand biomass-to-liquids technologies both with and without CCS are covered. Some of these technologies include co-generation of electricity, for example, by burning unconverted syngas from a Fischer-Tropsch synthesis in a gas turbine (c.f. Larson et al. 2012). Technology costs for the synthetic liquid fuel production options are based on Larson et al. 2012.
+Apart from oil refining as predominant supply technology for liquid fuels at present a number of alternative liquid fuel production routes from different feedstocks are represented in MESSAGE (see Table 1). Different processes for coal liquefaction, gas-to-liquids technologiesand biomass-to-liquids technologies both with and without CCS are covered. Some of these technologies include co-generation of electricity, for example, by burning unconverted syngas from a Fischer-Tropsch synthesis in a gas turbine (c.f. :cite:`larson_chapter_2012`). Technology costs for the synthetic liquid fuel production options are based on Larson et al. 2012 (:cite:`larson_chapter_2012`).
 
 **Table 3.6**: Liquid fuel production technologies in MESSAGE by energy source.
 
