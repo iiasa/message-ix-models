@@ -8,7 +8,7 @@ Technological change in MESSAGE is generally treated exogenously, although pione
 
 MESSAGE tracks investments by vintage, an important feature to represent the inertia in the energy system due to its long-lived capital stock. In case of shocks (e.g., introduction of stringent climate policy), it is however possible to prematurely retire existing capital stock such as power plants or other energy conversion technologies and switch to more suitable alternatives.
 
-An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is constraint by dynamic constraints that relate the activity a (level of production) in a period t to the activity in the previous period t-1 (Messner and Strubegger, 1995). Two parameters, an annual increment or startup value s and an annual growth rate r are used to parameterize these dynamic growth constraints. For a period length of one year, the following equation describes the dynamic constraints:
+An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is constraint by dynamic constraints that relate the activity a (level of production) in a period t to the activity in the previous period t-1 (Messner and Strubegger, 1995 :cite:`messner_users_1995`). Two parameters, an annual increment or startup value s and an annual growth rate r are used to parameterize these dynamic growth constraints. For a period length of one year, the following equation describes the dynamic constraints:
 
 .. image:: /_static/technology_diffusion_eq_1.png
    :width: 160px
