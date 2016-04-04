@@ -16,5 +16,5 @@ framework.
    land_use/index
    climate/index
    commodities/index
-   references
+   bibliography
    annex
