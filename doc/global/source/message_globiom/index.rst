@@ -17,4 +17,4 @@ framework.
    climate/index
    commodities/index
    bibliography
-   annex
+   annex/index
