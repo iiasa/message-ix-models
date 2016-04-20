@@ -3,7 +3,7 @@ Mathematical Formulation: MESSAGE V
 Table of Contents
 ----
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    introduction
    conversion_technologies
