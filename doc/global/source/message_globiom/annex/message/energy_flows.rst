@@ -1,4 +1,4 @@
-5. Energy flows
+5 Energy flows
 ==============
 
 5.1 	Constraints
