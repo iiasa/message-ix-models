@@ -43,6 +43,7 @@ Rzrgp.lt  × cres(rgpl, t) + c	l	p I zrcp.lt  × cimp(rcpl, t) −
 c	l	p l Ezrcp.lt  × cexp(rcpl, t)	+ (t b   × svd t+td τ =t ∆(t − 1) × Y zsvd..τ × \ svd rcmt td −τ l  l svd  × cari(m, t) × f rasvd,m	, i 	m
 
 where
+
 :math:`∆t`        	 is the length of period t in years,
 
 .. math::
