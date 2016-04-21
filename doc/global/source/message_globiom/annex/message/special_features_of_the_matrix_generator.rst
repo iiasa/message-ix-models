@@ -109,6 +109,7 @@ The possible contribution of an installation that exists in the base year is kep
 yt   = y0 γ−t × ν   , t = 1(1)		, ν
 
 where
+
 :math:`yt`      	   is the annual construction in period :math:`−t`, (0 = base year),
 
 :math:`γ`          	is the annual growth of new installations before the base year,
@@ -133,6 +134,7 @@ If a capacity of a technology is built in one of the last periods its life time 
 τ =t 1 1 + drτ
 
 where
+
 :math:`ν`	          is the number of years the technology exists after the end of the calculation horizon,
 
 :math:`drτ`        	is the discount rate for year :math:`τ`,
