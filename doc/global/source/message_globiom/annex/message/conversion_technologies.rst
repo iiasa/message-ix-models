@@ -8,6 +8,9 @@ Energy conversion technologies are modelled using two types of variables, that r
 
 2.1.1 	Activities  of Energy Conversion Technologies
 ~~~~~~~~~~~~~~~~~~~~~~
+.. math::
+
+ _{D}^{S}\textrm{fg}
 
 :math:`zsvd.elt`
 
