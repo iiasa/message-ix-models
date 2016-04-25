@@ -199,7 +199,7 @@ where
    :widths: 40 110
    :header-rows: 0
 
-   * - :math::math:`RRrgp..t`
+   * - :math:`RRrgp..t`
      - is the annual extraction of resource :math:`r`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`, and
    * - :math:`Arvr...t`
      - is the activity of extraction technology :math:`v` in period :math:`t` (as described in section 2.1.1).
