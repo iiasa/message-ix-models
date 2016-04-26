@@ -103,27 +103,30 @@ The coefficients of the capacity variables of a technology in a relational const
 
 The possible contribution of an installation that exists in the base year is kept track of over time. There are two possibilities to give the necessary information to MESSAGE.
 
-1. Define the capacities that were built in the years :math:`iyr, ..., iyr − τ + 1`, with :math:`iyr` = base year and :math:`τ` = plant life in years explicitly. These capacities are then distributed to historic periods of the length :math:`ν`.
+1. Define the capacities that were built in the years :math:`iyr, ..., iyr −\tau + 1`, with :math:`iyr` = base year and :math:`τ` = plant life in years explicitly. These capacities are then distributed to historic periods of the length :math:`\nu`.
 
-2. Define the total capacity, :math:`c0`, that exists in :math:`iyr` and the rate at that it grew in the last :math:`τ` years, :math:`γ`. This information is then converted to one similar to 1. by using the function:
+2. Define the total capacity, :math:`c_0`, that exists in :math:`iyr` and the rate at that it grew in the last :math:`\tau` years, :math:`\gamma`. This information is then converted to one similar to 1. by using the function:
 
 .. math:: 
-
-γ−ν  − 1 y0  = c0 ν(γ−τ	, 
-yt   = y0 γ−t × ν   , t = 1(1)		, ν
+   y_0=c_0\frac{\gamma^{-\nu}-1}{\nu(\gamma^{-\tau}-1)},
+   y_t=y_0\gamma^{-t\times\nu}, t=1(1)\frac{\tau}{\nu},
 
 where
 
-:math:`yt`      	   is the annual construction in period :math:`−t`, (0 = base year),
+.. list-table:: 
+   :widths: 40 110
+   :header-rows: 0
 
-:math:`γ`          	is the annual growth of new installations before the base year,
-
-:math:`c0`         	is the total capacity in the base year,
-
-:math:`τ`          	is the plant life, and
-
-:math:`ν`          	is the length of the periods in that the time before the base year is divided.
-
+   * - :math:`y_t`
+     - is the annual construction in period :math:`−t`, (0 = base year),
+   * - :math:`\gamma`
+     - is the annual growth of new installations before the base year,
+   * - :math:`c_0`
+     - is the total capacity in the base year,
+   * - :math:`\tau`
+     - is the plant life, and
+   * - :math:`\nu`
+     - is the length of the periods in that the time before the base year is divided.
 
 The right hand sides in the capacity constraints are derived by summing up all the old capacities that still exist in a certain period (according to the plant life). If the life of a technology expires within a period, MESSAGE takes the average production capacity in this period as installed capacity (this represents a linear interpolation between the starting points of this and the following period).
 
@@ -133,22 +136,24 @@ The right hand sides in the capacity constraints are derived by summing up all t
 If a capacity of a technology is built in one of the last periods its life time can exceed the calculation horizon. This fact is taken care of by reducing the investment costs by the following formula:
 
 .. math:: 
- 
-τp −ν t+k−1 n 1 1 + drτ C r	 k=1     τ =t t  = Ct   ×  τp  k=1  t+k−1 n
-τ =t 1 1 + drτ
-
+   C_t^r=C_t\times\frac{\sum_{k=1}^{\tau_p-\nu}\prod_{\tau=t}^{t+k-1}\frac{1}{1+dr_\tau}}{\sum_{k=1}^{\tau_p}\prod_{\tau=t}^{t+k-1}\frac{1}{1+dr_\tau}}
+   
 where
 
-:math:`ν`	          is the number of years the technology exists after the end of the calculation horizon,
+.. list-table:: 
+   :widths: 40 110
+   :header-rows: 0
 
-:math:`drτ`        	is the discount rate for year :math:`τ`,
-
-:math:`τp`         	is the plant life in years,
-
-:math:`Ct`         	is the investment cost in year :math:`t`, and
-
-:math:`t`          	is the reduced investment.
-
+   * - :math:`\nu`
+     - is the number of years the technology exists after the end of the calculation horizon,
+   * - :math:`dr_{\tau}`
+     - is the discount rate for year :math:`\tau`,
+   * - :math:`\tau_p`
+     - is the plant life in years,
+   * - :math:`C_t`
+     - is the investment cost in year :math:`t`, and
+   * - :math:`C_t^r`
+     - is the reduced investment.
 
 10.12 	The  Mixed Integer  Option
 --------------------------------
