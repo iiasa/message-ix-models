@@ -72,25 +72,24 @@ and
 This function is expanded to a normalized distribution function of the following type:
 
 .. math:: 
-   g = 1 + e− 100  	E     −1)(x−50) 50 1 − E  ×	E   50
+   g=\left [ \frac{100}{1+e- \frac{ln(\frac{100}{\epsilon}-1)(x-50)}{50}} - \epsilon\right ]\times \frac{1}{1-\frac{\epsilon}{50}}.
  
-:math:`g` gives the accumulated investment at the time :math:`x`, :math:`x` is given in percent of the construction time. The parameter :math:`E` describes the difference of the investment in the different years. E near to 50 results nearly in equal distribution, an :math:`E` close to 0 indicates high concentration of the expenditures in the middle of the construction period.
+:math:`g` gives the accumulated investment at the time :math:`x`, :math:`x` is given in percent of the construction time. The parameter :math:`\epsilon` describes the difference of the investment in the different years. :math:`\epsilon` near to 50 results nearly in equal distribution, an :math:`\epsilon` close to 0 indicates high concentration of the expenditures in the middle of the construction period.
 
 In order to shift the peak of costs away from the middle of the construction period the function is transformed by a polynomium:
 
 .. math::
-
-x  = az2  + bz	, 0 < z < 100 ,
+   x  = az^2  + bz	, 0 < z < 100 ,
  
 where 
 
 .. math::
-
-100d − d2     , 0 < d < 100 ,
+   b=\frac{5000-d^2}{100d-d^2} , 0 < d < 100 ,
 
 and
- 
-a =  1 −  b
+
+.. math::
+   a =  \frac{1−b}{100}.
  
 :math:`d` denotes the time at that the peak of expenditures occurs in percent of :math:`ct`.
 
