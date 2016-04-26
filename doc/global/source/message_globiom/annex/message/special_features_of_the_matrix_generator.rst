@@ -9,19 +9,32 @@ The mathematical formulation of MESSAGE as presented  in the previous sections s
 The whole time horizon of the calculations is divided into periods of optional length. All variables of MESSAGE are represented  as average over the period they represent, resulting in a step-function. All entries in the objective function are discounted from the middle of the respective period to the first year, if they relate to energy flow variables and from the beginning of that period if they represent power variables. The function to discount the costs has the following form:
  
 .. math::
-   
+   c_t=\frac{C_t^r}{\prod_{k=1}^{t-1}(1+\frac{dr_k}{100})^{\Delta k}\times f_i},
 
 where
 
-:math:`t`      	    is the cost figure to be discounted,
+.. list-table:: 
+   :widths: 40 110
+   :header-rows: 0
 
-:math:`ct`         	is the objective function coefficient in period :math:`t`,
+   * - :math:`C_t^r`
+     - is the cost figure to be discounted,
+   * - :math:`c_t`
+     - is the objective function coefficient in period :math:`t`,
 
-:math:`fi`          for costs connected to investments,
+.. math::
+   f_i=\left\{\begin{matrix}
+   1 & \textup{for costs connected to investments} \\ 
+   (1+\frac{dr_t}{100})^{\frac{\Delta t}{2}} &  \textup{else, and}
+   \end{matrix}\right.
 
-:math:`∆t(1+drt)2` 	else, and
+.. list-table:: 
+   :widths: 40 110
+   :header-rows: 0
 
-:math:`drk`        	is the discount rate in period :math:`k`.
+   * - :math:`dr_k`
+     - is the discount rate in period :math:`k`.
+
 
 9.2 	Distributions of Investments
 -----------------------------------
@@ -35,8 +48,7 @@ The implemented possiblilities are:
 2. The investment distribution is given as a polynomium of 2nd degree, the input consists of the three coefficients:
 
 .. math::
-
-y  = a + bx + cx2   , x  = 1(1)ct,
+   y=a+bx+cx^2  , x = 1(1)ct,
 
 where :math:`ct` is the construction time. The values of the function are internally normalized to 1, taking into account the construction time. 
 
@@ -45,26 +57,22 @@ where :math:`ct` is the construction time. The values of the function are intern
 4. A distribution function based on a logistic function of the type
 
 .. math::
-
-100 f = 1 + e−α(x−x0 )   ,
+   f=\frac{100}{1+e^{\alpha (x-x_0)}},
 
 where
 
 .. math::
-
-x0   =  ct
+   x_0   =  \frac{ct}{2}
 
 and
 
 .. math:: 
-
-α  =  2  ln ( 100 − 1) . ct 	E
+   \alpha  =  \frac{2}{ct} ln(\frac{100}{\epsilon}−1).
 
 This function is expanded to a normalized distribution function of the following type:
 
 .. math:: 
-
-g =  1 + e− 100  	E     −1)(x−50) 50 1 − E  ×	E   50
+   g = 1 + e− 100  	E     −1)(x−50) 50 1 − E  ×	E   50
  
 :math:`g` gives the accumulated investment at the time :math:`x`, :math:`x` is given in percent of the construction time. The parameter :math:`E` describes the difference of the investment in the different years. E near to 50 results nearly in equal distribution, an :math:`E` close to 0 indicates high concentration of the expenditures in the middle of the construction period.
 
