@@ -13,7 +13,12 @@ The formulation of the user-defined relations is given for relations, that are r
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
-   Nm.....t \textup{or} Pm.....t
+   Nm.....t
+
+or
+
+.. math:: 
+   Pm.....t
 
 Relations without load regions just sum up the activities (multiplied with the given coefficients) of all variables defined to be in this constraint. If a technology has load regions, the activity variables for all load regions of this technology are included. If the total capacity of a technology is included, all new capacities from previous periods still operating are included, if new capacities are included, the annual new installation of the current period is taken.
 
@@ -57,7 +62,12 @@ where
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
-   Nm.....t \textup{or} Pm.....t
+   Nm.....t
+
+or
+
+.. math::
+   Pm.....t
 
 The change of activities over time can either be limited or included in the objective by constructing relations between periods: The relations expresses the difference between the annual activity in a period and the following period. This difference can either be limited or included in the objective function.
 
