@@ -56,7 +56,7 @@ where
      - is the length of period t in years,
 
 .. math::
-   \beta_b^t=\Pi_{i=1}^{t-1}\left [ \frac{1}{1+\frac{dr(i)}{100}} \right ]^{\Delta i},
+   \beta_b^t=\prod_{i=1}^{t-1}\left [ \frac{1}{1+\frac{dr(i)}{100}} \right ]^{\Delta i},
    \beta_m^t=\beta_b^t\times\left [ \frac{1}{1+\frac{dr(t)}{100}} \right ]^{\frac{\Delta t}{2}},
 
 .. list-table:: 
