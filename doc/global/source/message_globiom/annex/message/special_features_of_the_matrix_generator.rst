@@ -9,10 +9,7 @@ The mathematical formulation of MESSAGE as presented  in the previous sections s
 The whole time horizon of the calculations is divided into periods of optional length. All variables of MESSAGE are represented  as average over the period they represent, resulting in a step-function. All entries in the objective function are discounted from the middle of the respective period to the first year, if they relate to energy flow variables and from the beginning of that period if they represent power variables. The function to discount the costs has the following form:
  
 .. math::
-
-ct   =
-r
-t 	  , t−1	∆k n (1 +	k ) 100 × fi k=1
+   
 
 where
 
