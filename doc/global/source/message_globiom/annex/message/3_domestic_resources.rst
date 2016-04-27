@@ -196,7 +196,7 @@ where
 ~~~~~~~~~~~~~~~~~
 
 .. math::
-   MRRrg..t`,
+   MRRrg..t,
    
 and
 
