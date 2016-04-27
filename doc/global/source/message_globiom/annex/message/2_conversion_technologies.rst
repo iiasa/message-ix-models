@@ -148,7 +148,7 @@ The following notation is used in the above equations:
      - is the load region with maximum capacity use if the production pattern over the year is fixed,
    * - :math:`\pi(l_m, svd)`
      - is the share of output in the load region with maximum production,
-   * - :math:`rel_{\sigma {v}'\delta`
+   * - :math:`rel_{\sigma {v}'\delta}^{svd}`
      - is the relative capacity of main output of technology (or operation mode) svd to the capacity of main output of the alternative technology (or operation mode) :math:`\sigma {v}'\delta`,
    * - :math:`\lambda _l`
      - is the length of load region :math:`l` as fraction of the year, and
@@ -198,7 +198,7 @@ where
 
    * - :math:`\gamma y_{svd,t}`
      - is the minimum growth rate per period for the construction of technology :math:`v`,
-   * - :math`gy_{svd,t}`
+   * - :math:`gy_{svd,t}`
      - is the ”last” size (decrement) allowing technologies to go out of the market, and
    * - :math:`Yzsvd..t`
      - is the annual new installation of technology :math:`v` in period :math:`t`.
