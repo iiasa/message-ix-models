@@ -15,7 +15,7 @@ to electric demand in MACRO and the thermal useful energy demands, non-energy fe
 
 On the other hand, the interface between MACRO and MESSAGE that organizes the iterative information exchange between the two models has been re-implemented in the 
 scripting language R which makes code maintenance and visualization of results (e.g., for visually checking convergence between MACRO and MESSAGE) easier compared to
-the previous implementation in C.
+the previous implementation in C).
 
 Finally, the parameterization of MACRO has changed in a specific way. As mentioned, the model’s most important input parameters are the projected growth rates of total labor, i.e., 
 the combined effect of labor force and labor productivity growth (note that labor supply growth is also referred to as reference or potential GDP growth.) and the annual rates 
@@ -41,21 +41,21 @@ A listing of all parameters used in MACRO together with a decription can be foun
 =========================== ================================================================================================================================
 Parameter                   Description
 =========================== ================================================================================================================================
-:math:`NYPER_y`             Number of years in time period :math:`y` (forward diff)
+:math:`duration\_period_y`  Number of years in time period :math:`y` (forward diff)
 :math:`TOTAL\_COST_{r,y}`   Total energy system costs in region :math:`r` and period :math:`y` from MESSAGE model run
 :math:`ENESTART_{r,s,y}`    Consumption level of six commercial energy services :math:`s` in region :math:`r` and period :math:`y` from MESSAGE model run 
 :math:`ENEPRICE_{r,s,y}`    Shadow prices of six commercial energy services :math:`s` in region :math:`r` and period :math:`y` from MESSAGE model run 
 :math:`\epsilon_r`          Elasticity of substitution between capital-labor and total energy in region :math:`r`
 :math:`\rho_r`              :math:`\epsilon - 1 / \epsilon` where :math:`\epsilon` is the elasticity of subsitution in region :math:`r`
-:math:`DEPR_r`              Annual percent depreciation in region :math:`r`
+:math:`depr_r`              Annual depreciation rate in region :math:`r`
 :math:`\alpha_r`            Capital value share parameter in region :math:`r`
 :math:`a_r`                 Production function coefficient of capital and labor in region :math:`r`
 :math:`b_{r,s}`             Production function coefficients of the different energy sectors in region :math:`r`, sector :math:`s` and period :math:`y`
 :math:`UDF_{r,y}`           Utility discount factor in period year in region :math:`r` and period :math:`y`
 :math:`NEWLAB_{r,y}`        New vintage of labor force in region :math:`r` and period :math:`y`
-:math:`LGROW_{r,y}`         Annual growth rates of potential GDP in region :math:`r` and period :math:`y`
-:math:`AEEI_{r,s,y}`        Autonomous energy efficiency improvement (AEEI) in region :math:`r`, sector :math:`s` and period :math:`y`
-:math:`FIN\_TIME_{r,y}`     finite time horizon correction factor in utility function in region :math:`r` and period :math:`y`
+:math:`grow_{r,y}`          Annual growth rates of potential GDP in region :math:`r` and period :math:`y`
+:math:`aeei_{r,s,y}`        Autonomous energy efficiency improvement (AEEI) in region :math:`r`, sector :math:`s` and period :math:`y`
+:math:`fin\_time_{r,y}`     finite time horizon correction factor in utility function in region :math:`r` and period :math:`y`
 =========================== ================================================================================================================================
 
 The table below lists all variables in MACRO together with a definition and brief description.
@@ -67,11 +67,11 @@ Variable                 Definition                                           De
 :math:`KN_{r,y}`         :math:`{KN}_{r, y}\geq 0 ~ \forall r, y`             New Capital vintage in region :math:`r` and period :math:`y`
 :math:`Y_{r,y}`          :math:`{Y}_{r, y}\geq 0 ~ \forall r, y`              Total production in region :math:`r` and period :math:`y`
 :math:`YN_{r,y}`         :math:`{YN}_{r, y}\geq 0 ~ \forall r, y`             New production vintage in region :math:`r` and period :math:`y`
+:math:`C_{r,y}`          :math:`{C}_{r, y}\geq 0 ~ \forall r, y`              Consumption in region :math:`r` and period :math:`y`  
+:math:`I_{r,y}`          :math:`{I}_{r, y}\geq 0 ~ \forall r, y`              Investment in region :math:`r` and period :math:`y`
 :math:`PHYSENE_{r,s,y}`  :math:`{PHYSENE}_{r, s, y}\geq 0 ~ \forall r, s, y`  Physical energy use in region :math:`r`, sector :math:`s` and period :math:`y`
 :math:`PRODENE_{r,s,y}`  :math:`{PRODENE}_{r, s, y}\geq 0 ~ \forall r, s, y`  Value of energy in the production function in region :math:`r`, sector :math:`s` and period :math:`y`
 :math:`NEWENE_{r,s,y}`   :math:`{NEWENE}_{r, s, y}\geq 0 ~ \forall r, s, y`   New energy in the production function in region :math:`r`, sector :math:`s` and period :math:`y`
-:math:`C_{r,y}`          :math:`{C}_{r, y}\geq 0 ~ \forall r, y`              Consumption in region :math:`r` and period :math:`y`  
-:math:`I_{r,y}`          :math:`{I}_{r, y}\geq 0 ~ \forall r, y`              Investment in region :math:`r` and period :math:`y`
 :math:`EC_{r,y}`         :math:`EC \in \left[-\infty..\infty\right]`          Approximation of energy costs based on MESSAGE results
 :math:`UTILITY`          :math:`UTILITY \in \left[-\infty..\infty\right]`     Utility function (discounted log of consumption)
 ======================== ==================================================== ======================================================================================================
@@ -84,14 +84,14 @@ Utility function
 The utility function which is maximized sums up the discounted logarithm of consumption of a single representative producer-consumer over the entire time horizon
 of the model.
 
-.. equation {UTIL}
+.. equation {UTILITY_FUNCTION}
 
-.. math:: {UTILITY} = \displaystyle \sum_{r} \left( \displaystyle \sum_{y |  (  (  {ord}( y )   >  1 )  \wedge  (  {ord}( y )   <   | y |  )  )} {UDF}_{r, y} \cdot {log}( C_{r, y} ) \cdot \frac{{NYPER}_{y} + {NYPER}_{y-1}}{2} + \displaystyle \sum_{y |  (  {ord}( y )   =   | y |  ) } {UDF}_{r, y} \cdot {log} ( C_{r, y} ) \cdot \left( \frac{{NYPER}_{y-1}}{2} + \frac{1}{{FIN\_TIME}_{r, y}} \right) \right) 
+.. math:: {UTILITY} = \displaystyle \sum_{r} \left( \displaystyle \sum_{y |  (  (  {ord}( y )   >  1 )  \wedge  (  {ord}( y )   <   | y |  )  )} {UDF}_{r, y} \cdot {log}( C_{r, y} ) \cdot \frac{{duration\_period}_{y} + {duration\_period}_{y-1}}{2} + \displaystyle \sum_{y |  (  {ord}( y )   =   | y |  ) } {UDF}_{r, y} \cdot {log} ( C_{r, y} ) \cdot \left( \frac{{duration\_period}_{y-1}}{2} + \frac{1}{{fin\_time}_{r, y}} \right) \right) 
 
-The utility discount rate for period :math:`y` is set to :math:`DRATE_{r} - LGROW_{r,y}`, where :math:`DRATE_{r}` is the discount rate used in MESSAGE, typically set to 5%, 
-and :math:`LGROW` is the potential GDP growth rate. This choice ensures that in the steady state, the optimal growth rate is identical to the potential GDP growth rates :math:`LGROW`. 
-The values for the utility discount rates are chosen for descriptive rather than normative reasons. The term :math:`\frac{{NYPER}_{y} + {NYPER}_{y-1}}{2}` mutliples the 
-discounted logarithm of consumption with the period length. The final period is treated separately to include a correction factor :math:`\frac{1}{{FIN\_TIME}_{r, y}}` reflecting 
+The utility discount rate for period :math:`y` is set to :math:`DRATE_{r} - grow_{r,y}`, where :math:`DRATE_{r}` is the discount rate used in MESSAGE, typically set to 5%, 
+and :math:`grow` is the potential GDP growth rate. This choice ensures that in the steady state, the optimal growth rate is identical to the potential GDP growth rates :math:`grow`. 
+The values for the utility discount rates are chosen for descriptive rather than normative reasons. The term :math:`\frac{{duration\_period}_{y} + {duration\_period}_{y-1}}{2}` mutliples the 
+discounted logarithm of consumption with the period length. The final period is treated separately to include a correction factor :math:`\frac{1}{{fin\_time}_{r, y}}` reflecting 
 the finite time horizon of the model.
 
 Allocation of total production
@@ -100,7 +100,7 @@ The following equation specifies the allocation of total production among curren
 energy sectors :math:`{I}_{r, y}` and energy system costs :math:`{EC}_{r, y}` which are derived from a previous MESSAGE model run. As described in :cite:`manne_buying_1992`, the first-order 
 optimality conditions lead to the Ramsey rule for the optimal allocation of savings, investment and consumption over time.
 
-.. equation {CC}_{r, y}
+.. equation {CAPITAL_CONSTRAINT}_{r, y}
 
 .. math:: Y_{r, y} = C_{r, y} + I_{r, y} + {EC}_{r, y} \qquad \forall{ r, y} 
 
@@ -109,59 +109,59 @@ New capital stock
 The accumulation of capital in the non-energy sectors is governed by new capital stock equation. Net capital formation :math:`{KN}_{r,y}` is derived from gross 
 investments :math:`{I}_{r,y}` minus depreciation of previsouly existing capital stock.
 
-.. equation {NEWCAP}_{r,y}
+.. equation {NEW_CAPITAL}_{r,y}
 
-.. math:: {KN}_{r,y} =  \frac{1}{2} \cdot {NYPER}_{y} \cdot \left(  { \left( 1 - {DEPR}_r \right) }^{NYPER_{y}} \cdot I_{r,y-1} + I_{r,y} \right) \qquad \forall{r, y > 1}
+.. math:: {KN}_{r,y} =  \frac{1}{2} \cdot {duration\_period}_{y} \cdot \left(  { \left( 1 - {depr}_r \right) }^{duration\_period_{y}} \cdot I_{r,y-1} + I_{r,y} \right) \qquad \forall{r, y > 1}
 
-Here, the initial boundary condition for the base year (:math:`y_0 = 2005`) implies for the investments that :math:`I_{r,y_0} = (LGROW_{r,y_0} + DEPR_{r}) \cdot kgdp \cdot GDP_{y_0}`.
+Here, the initial boundary condition for the base year (:math:`y_0 = 2005`) implies for the investments that :math:`I_{r,y_0} = (grow_{r,y_0} + depr_{r}) \cdot kgdp \cdot GDP_{y_0}`.
 
 Production function
 ~~~~
 MACRO employs a nested CES (constant elasticity of substitution) production function with capital, labor and the six commercial energy services 
 represented in MESSAGE as inputs.
 
-.. equation {NEWPROD}_{r, y}
+.. equation {NEW_PRODUCTION}_{r, y}
 
 .. math:: {YN}_{r,y} =  { \left( {a}_{r} \cdot {{KN}_{r, y}}^{ ( {\rho}_{r} \cdot {\alpha}_{r} ) } \cdot {{NEWLAB}_{r, y}}^{ ( {\rho}_{r} \cdot ( 1 - {\alpha}_{r} )  ) } + \displaystyle \sum_{s} ( {b}_{r, s} \cdot {{NEWENE}_{r, s, y}}^{{\rho}_{r}} )  \right) }^{ \frac{1}{{\rho}_{r}} } \qquad \forall{ r, y > 1}
 
 Total production
 ~~~~
 Total production in the economy (excluding energy sectors) is the sum of production from all assets where assets that were already existing in the previous period :math:`y-1` 
-are depreciated with the depreciation rate :math:`DEPR_{r}`.
+are depreciated with the depreciation rate :math:`depr_{r}`.
 
-.. equation {TOTALPROD}_{r, y}
+.. equation {TOTAL_PRODUCTION}_{r, y}
 
-.. math:: Y_{r, y} = Y_{r, y-1} \cdot { \left( 1 - {DEPR}_r \right) }^{NYPER_{y-1}} + {YN}_{r, y} \qquad \forall{ r, y > 1} 
+.. math:: Y_{r, y} = Y_{r, y-1} \cdot { \left( 1 - {depr}_r \right) }^{duration\_period_{y-1}} + {YN}_{r, y} \qquad \forall{ r, y > 1} 
 
 Total capital stock 
 ~~~~
 Equivalent to the total production equation above, the total capital stock, again excluding the energy sectors which are modeled in MESSAGE, is then simply a summation 
-of capital stock in the previous period :math:`y-1`, depreciated with the depreciation rate :math:`DEPR_{r}`, and the capital stock added in the current period :math:`y`.
+of capital stock in the previous period :math:`y-1`, depreciated with the depreciation rate :math:`depr_{r}`, and the capital stock added in the current period :math:`y`.
 
-.. equation {TOTALCAP}_{r, y}
+.. equation {TOTAL_CAPITAL}_{r, y}
 
-.. math:: K_{r, y} = K_{r, y-1} \cdot { \left( 1 - {DEPR}_r \right) }^{NYPER_{y-1}} + {KN}_{r, y} \qquad \forall{ r, y > 1} 
+.. math:: K_{r, y} = K_{r, y-1} \cdot { \left( 1 - {depr}_r \right) }^{duration\_period_{y-1}} + {KN}_{r, y} \qquad \forall{ r, y > 1} 
 
 New vintage of energy production
 ~~~~
 The new vintage of energy production of the six commerical energy demands :math:`s` derive from total production in period :math:`y` minus the total energy production in the previous 
 period :math:`y-1` after depreciation.
 
-.. equation {NEWENEQ}_{r, s, y}
+.. equation {NEW_ENERGY}_{r, s, y}
 
-.. math:: {NEWENE}_{r, s, y} = {PRODENE}_{r, s, y} - {PRODENE}_{r, s, y-1} \cdot { \left( 1 - {DEPR}_r \right) }^{NYPER_{y-1}} \qquad \forall{ r, s, y > 1} 
+.. math:: {NEWENE}_{r, s, y} = {PRODENE}_{r, s, y} - {PRODENE}_{r, s, y-1} \cdot { \left( 1 - {depr}_r \right) }^{duration\_period_{y-1}} \qquad \forall{ r, s, y > 1} 
 
 Physical energy
 ~~~~
 The relationship below establishes the link between physical energy :math:`{PHYSENE}_{r, s, y}` as accounted in MESSAGE for the six commerical energy demands :math:`s` and 
 energy in terms of monetary value :math:`{PRODENE}_{r, s, y}` as specified in the production function of MACRO.  
 
-.. equation {SUPPLEQ}_{r, s, y}
+.. equation {ENERGY_SUPPLY}_{r, s, y}
 
 .. math:: {PHYSENE}_{r, s, y} \geq {PRODENE}_{r, s, y} \cdot {AEEIFAC}_{r, s, y} \qquad \forall{ r, s, y > 1} 
 
-The cumulative effect of autonomous energy efficiency improvements (AEEI) is captured in :math:`{AEEIFAC}_{r,s,y} = {AEEIFAC}_{r, s, y-1} \cdot (1 - {AEEI}_{r,s,y})^{NYPER}_{y}` 
-with :math:`{AEEIFAC}_{r,s,y=1} = 1`. Therefore, choosing the :math:`{AEEI}_{r,s,y}` coefficients appropriately offers the possibility to calibrate MACRO to a certain energy demand trajectory 
+The cumulative effect of autonomous energy efficiency improvements (AEEI) is captured in :math:`{AEEIFAC}_{r,s,y} = {AEEIFAC}_{r, s, y-1} \cdot (1 - {aeei}_{r,s,y})^{duration\_period}_{y}` 
+with :math:`{AEEIFAC}_{r,s,y=1} = 1`. Therefore, choosing the :math:`{aeei}_{r,s,y}` coefficients appropriately offers the possibility to calibrate MACRO to a certain energy demand trajectory 
 from MESSAGE.
 
 Energy system costs
@@ -169,7 +169,7 @@ Energy system costs
 Energy system costs are based on a previous MESSAGE model run. The approximation of energy system costs in vicinity of the MESSAGE solution are approximated by a Taylor expansion with the 
 first order term using shadow prices :math:`ENEPRICE_{s, y, r}` of the MESSAGE model's solution and a quadratic second-order term.
 
-.. equation {COSTNRG}_{r, y}
+.. equation {COST_ENERGY}_{r, y}
 
 .. math:: {EC}_{r, y} = {TOTAL\_COST}_{y, r} + \displaystyle \sum_{s} {ENEPRICE}_{s, y, r} \cdot \left( {PHYSENE}_{r, s, y} - {ENESTART}_{s, y, r} \right) + \displaystyle \sum_{s} \frac{{ENEPRICE}_{s, y, r}}{{ENESTART}_{s, y, r}} \cdot \left( {PHYSENE}_{r, s, y} - {ENESTART}_{s, y, r} \right)^2 \qquad \forall{ r, y > 1} 
 
@@ -179,9 +179,9 @@ Given the finite time horizon of MACRO, a terminal constraint needs to be applie
 provide net growth of capital stock beyond MACRO's time horizon :cite:`manne_buying_1992`. The goal is to avoid to the extend possible model artifacts resulting from this finite time horizon 
 cutoff.
 
-.. equation {TC}_{r, y}
+.. equation {TERMINAL_CONSTRAINT}_{r, y}
 
-.. math:: K_{r, y} \cdot  \left( LGROW_{r, y} + DEPR_r \right) \leq I_{r, y} \qquad \forall{ r, y = last year} 
+.. math:: K_{r, y} \cdot  \left( grow_{r, y} + depr_r \right) \leq I_{r, y} \qquad \forall{ r, y = last year} 
 
 MACRO parameterization
 ----
@@ -194,7 +194,7 @@ Total capital :math:`K_{r, y=0}` in the base year is derived by multiplying base
 
 Similarly investments :math:`I_{r, y=0}` and consumpiton :math:`C_{r, y=0}` in the base year are derived from base year GDP, capital value share and depriciation rate. 
 
-.. math:: I_{y=0, r} = K_{y=0, r} \cdot (LGROW_{r, y=0} + DEPR)
+.. math:: I_{y=0, r} = K_{y=0, r} \cdot (grow_{r, y=0} + depr_r)
 .. math:: C_{y=0, r} =  GDP_{r, y=0}  - I_{y=0, r}
 
 Total production :math:`Y_{y=0, r}` in the base year then follows as total GDP plus energy system costs (estimation based on MESSAGE):
@@ -219,15 +219,13 @@ economies in transition :math:`r \in \{EEU, FSU\}` intermediate values of 0.25 a
 The capital value share parameter :math:`\alpha_r` can be interpreted as the optimal share of capital in total value added :cite:`manne_buying_1992` and is chosen region-dependent 
 with lower values between 0.24 and 0.28 assumed for developed regions and slightly higher values of 0.3 assumed for economies in transition and developing country regions.
 
-
 Calibration
 ~~~~
-
 Via a simple iterative algorithm, MACRO is typically calibrated to an exogenously specified set of regional GDP trajectories and useful energy demand projections from MESSAGE. 
 To calibrate GDP, after each MACRO run the realized GDP from MACRO and the GDP to be calibrated to are compared and the potential GDP growth rate :math:`{GROW}_{y, r}` used in MACRO is 
 then adjusted according to the following formula.
 
-.. math:: {GROW\_corr}_{y, r} = \left( \frac{{GDP\_cal}_{r, y+1}}{{GDP\_cal}_{r, y}} \right)^{\frac{1}{{NYPER}_{y+1}}} - \left( \frac{{GDP\_MACRO}_{r, y+1}}{{GDP\_MACRO}_{r, y}} \right)^{\frac{1}{{NYPER}_{y+1}}}
+.. math:: {GROW\_corr}_{y, r} = \left( \frac{{GDP\_cal}_{r, y+1}}{{GDP\_cal}_{r, y}} \right)^{\frac{1}{{duration\_period}_{y+1}}} - \left( \frac{{GDP\_MACRO}_{r, y+1}}{{GDP\_MACRO}_{r, y}} \right)^{\frac{1}{{duration\_period}_{y+1}}}
 
 where :math:`{GDP\_cal}_{r, y, s}` is the set of GDP values that MACRO should be calibrated to. In the next run of MACRO the potential GDP growth rate :math:`{GROW}_{y, r}` is chosen to be
 
@@ -236,21 +234,35 @@ where :math:`{GDP\_cal}_{r, y, s}` is the set of GDP values that MACRO should be
 after which the procedure is repeated. Similarly, to calibrate the physical energy demands :math:`{PHYSENE}_{r, y, s}` to ones from MESSAGE, the demand level realized in MACRO and the 
 desired demand level from a MESSAGE model run are compared and the autonomous energy efficiency improvements (AEEIs) are corrected according to the following equations.
 
-.. math:: {AEEI\_corr}_{r, y, s} = \left( \frac{{PHYSENE}_{r, y+1, s}}{{DEMAND\_cal}_{r, y+1, s}} / \frac{{PHYSENE}_{r, y, s}}{{DEMAND\_cal}_{r, y, s}} \right)^{\frac{1}{{NYPER}_{y+1}}} - 1
+.. math:: {aeei\_corr}_{r, y, s} = \left( \frac{{PHYSENE}_{r, y+1, s}}{{DEMAND\_cal}_{r, y+1, s}} / \frac{{PHYSENE}_{r, y, s}}{{DEMAND\_cal}_{r, y, s}} \right)^{\frac{1}{{duration\_period}_{y+1}}} - 1
 
-.. math:: {AEEI}_{r, y, s} = {AEEI}_{r, y, s} + {AEEI\_corr}_{r, y, s}
+.. math:: {aeei}_{r, y, s} = {aeei}_{r, y, s} + {aeei\_corr}_{r, y, s}
 
 where :math:`{DEMAND\_cal}_{r, y, s}` is the set of demand levels from MESSAGE that MACRO should be calibrated to.
 
 Given that GDP and demand calibration interact with each other, in practice they are done in an alternating fashion, i.e. after the first MACRO model run, the potential GDP growth rates 
 are adjusted and in the second run the AEEI coefficients are adjusted. This calibration loop is continued until the correction factors for both the potential GDP growth rates 
-:math:`{GROW\_corr}_{y, r}` and the AEEI coefficients :math:`{AEEI}_{r, y, s}` all stay below :math:`10^{-5}`.
+:math:`{GROW\_corr}_{y, r}` and the AEEI coefficients :math:`{aeei}_{r, y, s}` all stay below :math:`10^{-5}`.
 
 Iterating between MESSAGE and MACRO
 ----
 
-summary of exchanged parameters
-
-Capping demand response
+Exchanged parameters
+~~~~
+MESSAGE and MACRO exchange demand levels of the six commercial servcie demand categories represented in MESSAGE, their corresponding prices as well as total energy system costs including
+trade effects of energy commodities and carbon permits (if any explicit mititgation effort sharing regime is implemented).
 
 Convergence criterion
+~~~~
+The iteration between MESSAGE and MACRO is either stopped after a fixed number of iterations - in case of which the user needs to manually check convergence between the models - or 
+once the maximum of changes across all energy demand categories and regions (i.e. the convergence criterion) is less than a specified threshold. In both cases the convergence criterion 
+is typically set to around 1%.
+
+Constraint on demand response
+~~~~
+Demand responses from MACRO to MESSAGE can be large if the initial demands are far from the equlibrium demand levels of a specific scenario (e.g., when using demand from a non-climate policy scenario
+as the starting point for a stringent climate mitigation scenario that aims at limiting temperature change to 2°C). To avoid oscillations of demands in subsequent MESSAGE-MACRO iterations, a constraint
+on the maximum permissible demand change between subquent iterations has been introduced which is usually set to 15%. In practical terms this means that the demand response is capped at 15%. 
+However, under specific conditions - typically under stringent climate policy - when price repsonses to small demand adjustments are large, an oscillating behavior between two sets of demand levels 
+can still occur. In such situations, the constraint on the demand response is reduced further until the changes in demand are less than the convergence criterion mentioned above.
+
