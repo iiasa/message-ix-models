@@ -65,3 +65,13 @@ The conversion of five renewable energy sources to electricity is represented in
 +------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
 
 Most thermal power plants offer the option of coupled heat production (CHP, see Table 3.1). This option is modeled as a passout turbine via a penalty on the electricity generation efficiency. In addition to the main electricity generation technologies described in this section, also the co-generation of electricity in conversion technologies primarily devoted to producing non-electric energy carriers (e.g., synthetic liquid fuels) is included in MESSAGE (see section on :ref:`other`).
+
+Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, **Figure xx and Figure yy** below provide an overview of costs ranges for a set of key energy conversion technologies.
+
+.. image:: /_static/S1ThermoCosts.png
+   :width: 600px
+**Figure xx:** Cost indicators for thermoelectric power-plant investment. Black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon Capture and Storage; IGCC – Integrated gasification combined cycles; ST – Steam turbine; CT – Combustion turbine; CCGT – Combined cycle gas turbine
+
+.. image:: /_static/S2NonThermoCosts.png
+   :width: 600px
+**Figure YY**: Cost indicators for non-thermoelectric power-plant investment. Black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. PV – Photovoltaic
