@@ -1,9 +1,4 @@
 Land-use
 =========
-MESSAGE V.4 relies on input from the DIMA forestry model to assess the sink enhancement potential from avoided deforestation and afforestation (see Section Forestry) and bioenergy supply curves from `IMAGE <https://wiki.ucl.ac.uk/display/ADVIAM/IMAGE>`_ (see Section Bioenergy).
 
-.. toctree::
-   :maxdepth: 1
-
-   globiom
-   linkage
+Land-use dynamics are modelled with the GLOBIOM (GLobal BIOsphere Management) model, which is a recursive-dynamic partial-equilibrium model (Havlík et al., 2011; Havlík et al., 2014). GLOBIOM represents the competition between different land-use based activities. It includes a bottom-up representation of the agricultural, forestry and bio-energy sector, which allows for the inclusion of detailed grid-cell information on biophysical constraints and technological costs, as well as a rich set of environmental parameters, incl. comprehensive AFOLU (agriculture, forestry and other land use) GHG emission accounts and irrigation water use. Its spatial equilibrium modelling approach represents bilateral trade based on cost competitiveness. For spatially explicit projections of the change in afforestation, deforestation, forest management, and their related CO2 emissions, GLOBIOM is coupled with the G4M (Global FORest Model) model (Kindermann et al., 2006; Kindermann et al., 2008; Gusti, 2010). The spatially explicit G4M model compares the income of managed forest (difference of wood price and harvesting costs, income by storing carbon in forests) with income by alternative land use on the same place, and decides on afforestation, deforestation or alternative management options. As outputs, G4M provides estimates of forest area change, carbon uptake and release by forests, and supply of biomass for bioenergy and timber.
