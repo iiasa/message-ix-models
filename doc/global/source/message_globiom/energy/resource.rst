@@ -17,7 +17,7 @@ Table 3.1 shows the assumed total quantities of fossil fuel resources in the MES
    * - 
      - Reserves+Resources [ZJ] 
      - Reserves [ZJ]
-     - Reserves [ZJ]
+     - Resources [ZJ]
    * - Coal
      - 259
      - 17.3 – 21.0
@@ -25,7 +25,7 @@ Table 3.1 shows the assumed total quantities of fossil fuel resources in the MES
    * - Conventional Oil
      - 9.8
      - 4.0 – 7.6
-     - 291 – 435
+     - 4.2 – 6.2
    * - Unconventional Oil
      - 23.0
      - 3.8 – 5.6
