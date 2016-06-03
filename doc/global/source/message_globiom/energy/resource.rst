@@ -46,7 +46,7 @@ Conventional oil and gas are distributed unevenly throughout the world, with onl
 Similar to conventional oil, much of the unconventional oil resides in the Middle East and North Africa. However, with North America and Latin America showing wide ranges in the unconventional oil estimate, the share of Middle East and North Africa could be high as 42% or as low as 24%. Meanwhile, unconventional gas is distributed quite well throughout the world; North America possesses the most with roughly 25% of the world reserve.
 
 .. image:: /_static/GlobalResourceSupplyCurves.png
-   :width: 600px
+   :width: 750px
 **Figure 3.1.** Cumulative global resource supply curves for coal (top), oil (middle), and gas (bottom) in the IIASA IAM framework. Green shaded resources are technically and economically extractable in all SSPs, purple shaded resources are additionally available in SSP1 and SSP2 and blue shaded resources are additionally available in SSP2. Coloured vertical lines represent the cumulative use of each resource between 2010 and 2100 in the SSP baselines (see top panel for colour coding), and are thus the result of the combined effect of our assumptions on fossil resource availability and conversion technologies in the SSP baselines. ‘Reserves’ are generally defined as being those quantities for which geological and engineering information indicate with reasonable certainty that they can be recovered in the future from known reservoirs under existing economic and operating conditions. ‘Resources’ are detected quantities that cannot be profitably recovered with current technology, but might be recoverable in the future, as well as those quantities that are geologically possible, but yet to be found. The remainder are ‘Undiscovered resources’ and, by definition, one can only speculate on their existence. Definitions are based on Rogner et al. (2012) :cite:`rogner_chapter_2012`.
 
 Nuclear Resources
@@ -103,7 +103,8 @@ While potentials for renewable energy can differ quite substantially between dif
 
 Biomass energy is another potentially important renewable energy resource in the MESSAGE-GLOBIOM model. This includes both commercial and non-commercial use. Commercial refers to the use of bioenergy in, for example, power plants or biofuel refineries, while non-commercial refers to the use of bioenergy for residential heating and cooking, primarily in rural households of today’s developing countries. Bioenergy potentials differ across SSPs as a result of different levels of competition over land for food and fibre, but ultimately only vary to a limited degree (Figure 3.4). The drivers underlying this competition are different land-use developments in the SSPs, which are determined by agricultural productivity and global demand for food consumption.
 
-.. image:: /_static/Availability of BE.png
+.. image:: /_static/Availability_BE.png
+   :width: 500px
 **Figure 3.4.** Availability of bioenergy at different price levels in the MESSAGE-GLOBIOM model for the three SSPs. 
 * typically non-commercial biomass is not traded or sold, however in some cases there is a market – prices range from 0.1-1.5$/GJ (Pachauri et al., 2013) ($ equals 2005 USD).
 
