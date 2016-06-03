@@ -71,3 +71,9 @@ Hydrogen Production
 |                +-----------------------------------+---------------------------+
 |                | biomass gasification with CCS     | yes                       |
 +----------------+-----------------------------------+---------------------------+
+
+Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, **Figure xx** below provides an overview of costs ranges for a set of key energy conversion technologies.
+
+.. image:: /_static/S3OtherCosts.png
+   :width: 600px
+**Figure xx:** Cost indicators for other conversion technology investment. Black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon capture and storage; CTL – Coal to liquids; GTL – Gas to liquids; BTL – Biomass to liquids.
