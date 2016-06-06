@@ -9,3 +9,18 @@ This stylized industrial thermal energy demand includes fuel switching as the ma
 .. image:: /_static/industry_end-use.png
 
 **Figure 3.7**: Schematic diagram of the industrial sector representation in MESSAGE.
+
+The following table presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for industry and feedstocks. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually.
+
+**Table xx**: Electrification rate within industry and feedstocks for SSP1, SSP2 and SSP3
+
++-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
+|                       | SSP1                                  | SSP2                                    | SSP3                                  |
++-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
+| Industry + Feedstocks |       High electrification rate:      |          Medium electrification         |     Low electrification rate: .12%    |
+|                       |                 0.56%                 |               rate: 0.47%               |  (Regional range from -.03% to 0.71%) |
+|                       |   (Regional range from .2% to 1.2%)   |   (Regional range from .07% to 1.08%)   |                                       |
+|                       |                                       |                                         |  Low feedstock reduction rate: -0.24% |
+|                       | High feedstock reduciton rate: -0.33% | Medium feedstock reduction rate: -0.27% | (Regional range from -0.38% to 0.51%) |
+|                       |  (Regional range from -0.51 to 0.59%) |  (Regional range from -0.45% to 0.64%)  |                                       |
++-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
