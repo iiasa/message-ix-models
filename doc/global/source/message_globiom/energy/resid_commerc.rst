@@ -11,3 +11,15 @@ This stylized residential and commercial thermal energy demand includes fuel swi
 **Figure 3.6**: Schematic diagram of the residential and commercial sector representation in MESSAGE.
 
 To reflect limitations of switching to alternative fuels, for example as a result of limited infrastructure availability (e.g., district heating network) or some energy carriers being unsuitable for certain applications, share constraints of energy carriers (e.g., electricity) and energy carrier groups (e.g., liquid fuels) are used in the residential and commercial sector. In addition, the diffusion of speed of alternative fuels is limited to mimic bottlenecks in the supply chains, not explicitly represented in MESSAGE (e.g., non-energy related infrastructure).
+
+The following table presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for the residential and commercial sectors. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually.
+
+Table xx: Electrification rate within the residential and commercial sectors for SSP1, SSP2 and SSP3
+
++--------------------------+----------------------------------+----------------------------------+----------------------------------+
+|                          | SSP1                             | SSP2                             | SSP3                             |
++--------------------------+----------------------------------+----------------------------------+----------------------------------+
+| Residential & Commercial |    High electrification rate:    |      Medium electrification      | Low electrification rate:        |
+|                          |               1.44%              |            rate: 1.07%           | .87%                             |
+|                          | (Regional range from .35% to 4%) | (Regional range from .23% to 3%) | (Regional range from .37% to 2%) |
++--------------------------+----------------------------------+----------------------------------+----------------------------------+
