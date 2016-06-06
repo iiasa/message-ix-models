@@ -93,7 +93,42 @@ As for refrigeration and air-conditioning of the residential and commercial sect
 
 For SSP1, Western Europe is the frontier region, whereas the USA, is the frontier for SSP3.  For SSP2, a mixture of the two is used.  The diagrams below (**Figure 1**) illustrate how regions converge towards the designated frontier region over time.
 
-**FIGURE**
+.. image.. /_static/regional_HFC_intensity.png
+**Figure xx**: Regional HFC Intensity Developments for Refrigeration and Air-Conditioning in the Residential and Commercial Sector across the SSPs 
 
-The SSP storylines and the therewith associated income developments lead to very different convergence time points.  In SSP1, income grows very rapidly in developing, therefore leading to a convergence of intensity levels for almost all regions by middle of the century, with the exception of Africa which converges by 2080.  In SSP2, all regions converge latest by the end of the century which is very different to SSP3, where the convergence is much slower due to the low income level developments.  In SSP3, only few regions converge by the end of the century.
+The SSP storylines and the therewith associated income developments lead to very different convergence time points.  In SSP1, income grows very rapidly in developing, therefore leading to a convergence of intensity levels for almost all regions by middle of the century, with the exception of Africa which converges by 2080. In SSP2, all regions converge latest by the end of the century which is very different to SSP3, where the convergence is much slower due to the low income level developments.  In SSP3, only few regions converge by the end of the century.
 
+**HFC-23**
+
+When comparing the data used in MESSAGE-GLOBIOM with the original data source (both from the EPA), there seems to be a discrepancy. The data currently used in MESSAGE-GLOBIOM shows that in 2010, global HFC emissions add up to approximately 555 MtCO2equivalent across all sources. The raw data from the EPA shows only 442 MtCO2equivalent for the same time period. The difference equates to approximately 113 MtCO2equvalent, similar to what is quoted for HFC-23 from HCFC-22 production by the EPA.  This means, that the current totals used in MESSAGE-GLOBIOM are not far off; global values from the two data sources are shown in the table below.
+
+**Table xx:** HFCs by source in [MtCO2e]
+
+.. list-table:: 
+   :widths: 20 26 46 16
+   :header-rows: 2
+
+   * - [MtCO2e]
+     - MESSAGE-GLOBIOM
+     - EPA 2012 (raw)
+   * - Ref AC
+     - 392.1
+     - 349.3
+   * - Foams
+     - 36.7
+     - 21.7
+   * - Solvents
+     - 58.6
+     - 5.2
+   * - Aerosols
+     - 54.2
+     - 45.5
+   * - Fire extinguishers
+     - 13.9
+     - 21.2
+   * - HCF-23
+     - 
+     - 128.0
+   * - **Totals**
+     - 555.6
+     - 570.8
