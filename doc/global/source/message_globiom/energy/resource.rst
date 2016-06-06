@@ -7,7 +7,7 @@ Table 3.1 shows the assumed total quantities of fossil fuel resources in the MES
 **Table 3.1.** Assumed global fossil fuel reserves and resources in the MESSAGE model. Estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) also added for comparison.
 
 .. list-table:: 
-   :widths: 20 26 46 16
+   :widths: 20 26 26 26
    :header-rows: 2
 
    * - Source
@@ -38,6 +38,31 @@ Table 3.1 shows the assumed total quantities of fossil fuel resources in the MES
      - 23.0
      - 20.1 – 67.1
      - 40.2 – 122
+
+The following table presents the fossil resource availability in ZJ (2010-2100) for coal, oil and gas, for SSP1, SSP2 and SSP3, respectively.
+
+**Table xx**: Fossil resource availability for SSP1, SSP2, and SSP3.
+
+.. list-table:: 
+   :widths: 20 20 20 20
+   :header-rows: 1
+
+   * - Type
+     - SSP1 [ZJ]
+     - SSP2 [ZJ]
+     - SSP3 [ZJ]
+   * - Coal
+     - 93
+     - 92
+     - 24
+   * - Oil
+     - 17
+     - 40
+     - 17
+   * - Gas
+     - 39
+     - 37
+     - 24
 
 Coal is the largest resource among fossil fuels; it accounts for more than 50% of total fossil reserve+resource estimates even at the higher end of the assumptions, which includes considerable amounts of unconventional hydrocarbons. Oil is the most vulnerable fossil fuel at less than 10 ZJ of conventional oil and possibly less than 10 ZJ of unconventional oil. Natural gas is more abundant in both the conventional and unconventional categories.
 
