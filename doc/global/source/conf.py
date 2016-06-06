@@ -38,7 +38,6 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinxcontrib.bibtex',
-    'numfig',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -303,5 +302,4 @@ rst_prolog = """
 """
 
 # numfig options
-numfig_number_figures = True
-numfig_figure_caption_prefix = "Figure"
+numfig = True
