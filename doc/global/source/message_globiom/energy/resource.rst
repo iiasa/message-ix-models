@@ -38,11 +38,10 @@ Fossil Fuel Reserves and Resources
      - 20.1 – 67.1
      - 40.2 – 122
 
-The following table presents the fossil resource availability in ZJ (2010-2100) for coal, oil and gas, for SSP1, SSP2 and SSP3, respectively.
+The following table (:numref:`tab-ffavail`) presents the fossil resource availability in ZJ (2010-2100) for coal, oil and gas, for SSP1, SSP2 and SSP3, respectively.
 
-**Table xx**: Fossil resource availability for SSP1, SSP2, and SSP3.
-
-.. list-table:: 
+.. _tab-ffavail:
+.. list-table:: Fossil resource availability for SSP1, SSP2, and SSP3.
    :widths: 20 20 20 20
    :header-rows: 1
 
@@ -69,27 +68,32 @@ Conventional oil and gas are distributed unevenly throughout the world, with onl
 
 Similar to conventional oil, much of the unconventional oil resides in the Middle East and North Africa. However, with North America and Latin America showing wide ranges in the unconventional oil estimate, the share of Middle East and North Africa could be high as 42% or as low as 24%. Meanwhile, unconventional gas is distributed quite well throughout the world; North America possesses the most with roughly 25% of the world reserve.
 
-.. image:: /_static/GlobalResourceSupplyCurves.png
+:numref:`fig-supply` presents the cumulative global resource supply curves for coal, oil and gas in the IIASA IAM framework. Green shaded resources are technically and economically extractable in all SSPs, purple shaded resources are additionally available in SSP1 and SSP2 and blue shaded resources are additionally available in SSP2. Coloured vertical lines represent the cumulative use of each resource between 2010 and 2100 in the SSP baselines (see top panel for colour coding), and are thus the result of the combined effect of our assumptions on fossil resource availability and conversion technologies in the SSP baselines. ‘Reserves’ are generally defined as being those quantities for which geological and engineering information indicate with reasonable certainty that they can be recovered in the future from known reservoirs under existing economic and operating conditions. ‘Resources’ are detected quantities that cannot be profitably recovered with current technology, but might be recoverable in the future, as well as those quantities that are geologically possible, but yet to be found. The remainder are ‘Undiscovered resources’ and, by definition, one can only speculate on their existence. Definitions are based on Rogner et al. (2012) :cite:`rogner_chapter_2012`.
+
+.. _fig-supply:
+.. figure:: /_static/GlobalResourceSupplyCurves.png
    :width: 750px
-**Figure 3.1.** Cumulative global resource supply curves for coal (top), oil (middle), and gas (bottom) in the IIASA IAM framework. Green shaded resources are technically and economically extractable in all SSPs, purple shaded resources are additionally available in SSP1 and SSP2 and blue shaded resources are additionally available in SSP2. Coloured vertical lines represent the cumulative use of each resource between 2010 and 2100 in the SSP baselines (see top panel for colour coding), and are thus the result of the combined effect of our assumptions on fossil resource availability and conversion technologies in the SSP baselines. ‘Reserves’ are generally defined as being those quantities for which geological and engineering information indicate with reasonable certainty that they can be recovered in the future from known reservoirs under existing economic and operating conditions. ‘Resources’ are detected quantities that cannot be profitably recovered with current technology, but might be recoverable in the future, as well as those quantities that are geologically possible, but yet to be found. The remainder are ‘Undiscovered resources’ and, by definition, one can only speculate on their existence. Definitions are based on Rogner et al. (2012) :cite:`rogner_chapter_2012`.
+   
+   Cumulative global resource supply curves for coal (top), oil (middle), and gas (bottom) in the IIASA IAM framework. 
 
 Nuclear Resources
 -------------------
 
-Estimates of available uranium resources in the literature vary considerably, which could become relevant if advanced nuclear fuel cycles (e.g., the plutonium cycle including fast breeder reactors, the thorium cycle) are not available. In MESSAGE advanced nuclear cycles such as the plutonium cycle and nuclear fuel reprocessing are in principle represented, but their availability varies following the scenario narrative. Figure 3.2 below shows the levels of uranium resources assumed available in recent MESSAGE scenarios, building upon the Global Energy Assessment scenarios. These span a considerable range of the estimates in the literature, but at the same time none of them fall at the extreme ends of the spectrum (see Rogner et al., 2012 :cite:`rogner_chapter_2012`), Section 7.5.2 for a more detailed discussion of uranium resources). Nuclear resources and fuel cycle (if available) are modeled at the global level, which is compatible with the notion of the nuclear fuel cycle being under international control. 
+Estimates of available uranium resources in the literature vary considerably, which could become relevant if advanced nuclear fuel cycles (e.g., the plutonium cycle including fast breeder reactors, the thorium cycle) are not available. In MESSAGE advanced nuclear cycles such as the plutonium cycle and nuclear fuel reprocessing are in principle represented, but their availability varies following the scenario narrative. :numref:`fig-uran` below shows the levels of uranium resources assumed available in recent MESSAGE scenarios, building upon the Global Energy Assessment scenarios. These span a considerable range of the estimates in the literature, but at the same time none of them fall at the extreme ends of the spectrum (see Rogner et al., 2012 :cite:`rogner_chapter_2012`, Section 7.5.2 for a more detailed discussion of uranium resources). Nuclear resources and fuel cycle (if available) are modeled at the global level, which is compatible with the notion of the nuclear fuel cycle being under international control. 
 
-.. image:: /_static/nuclear_resources.png
-**Figure 3.2.** Global uranium resources in the MESSAGE interpretation of the 3 GEA pathway groups compared to ranges in the literature (Schneider and Sailor, 2008 :cite:`schneider_long-term_2008`). 
+.. _fig-uran:
+.. figure:: /_static/nuclear_resources.png
+
+   Global uranium resources in the MESSAGE interpretation of the 3 GEA pathway groups compared to ranges in the literature (Schneider and Sailor, 2008 :cite:`schneider_long-term_2008`). 
 
 .. _renewable:
 
 Renewable Resources
 ------------------------------
-Table 3.2 shows the assumed total potentials of renewable energy deployment (by resource type) in the MESSAGE model by 2050. Figure 3.3 overlays these estimates on a map of the 11 MESSAGE regions. In addition, the assumptions are compared with technical potential estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`).  In this context, it is important to note that typical MESSAGE scenarios do not consider the full technical potential of renewable energy resources, but rather only a subset of those potentials, owing to additional constraints (e.g., sustainability criteria, technology diffusion and systems integration issues, and other economic considerations) that may not be fully captured within the model. These constraints may lead to a significant reduction of the technical potential.
+:numref:`tab-depl` shows the assumed total potentials of renewable energy deployment (by resource type) in the MESSAGE model by 2050. :numref:`fig-rendep` overlays these estimates on a map of the 11 MESSAGE regions. In addition, the assumptions are compared with technical potential estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`).  In this context, it is important to note that typical MESSAGE scenarios do not consider the full technical potential of renewable energy resources, but rather only a subset of those potentials, owing to additional constraints (e.g., sustainability criteria, technology diffusion and systems integration issues, and other economic considerations) that may not be fully captured within the model. These constraints may lead to a significant reduction of the technical potential.
 
-**Table 3.2.** Assumed global renewable energy deployment potentials in the MESSAGE model by 2050. Estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) also added for comparison.
-
-.. list-table:: 
+.. _tab-depl:
+.. list-table:: Assumed global renewable energy deployment potentials in the MESSAGE model by 2050. Estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) also added for comparison.
    :widths: 13 36 46
    :header-rows: 2
 
@@ -118,19 +122,22 @@ Table 3.2 shows the assumed total potentials of renewable energy deployment (by 
      - 23
      - 810 - 1400
 
-*Notes: MESSAGE renewable energy potentials are based on Hoogwijk (2004)* :cite:`hoogwijk_global_2004`, *Hoogwijk and Graus (2008)* :cite:`hoogwijk_global_2008`, *Christiansson (1995)* :cite:`christiansson_diffusion_1995`, *Tubiello and Fischer (2007)* :cite:`tubiello_reducing_2007`, *van Vuuren et al. (2009)* :cite:`van_vuuren_future_2009`, *and Rogner et al (2012)* :cite:`rogner_chapter_2012`. *The potentials for non-combustible renewable energy sources are specified in terms of the electricity or heat that can be produced by specific technologies (i.e., from a secondary energy perspective). By contrast, the technical potentials from :cite:`rogner_chapter_2012` refer to the flows of energy that could become available as inputs for technology conversion. So for example, the technical potential for wind is given as the kinetic energy available for wind power generation, whereas the deployment potential would only be the electricity that could be generated by the wind turbines.*
+*Notes: MESSAGE renewable energy potentials are based on Hoogwijk (2004)* :cite:`hoogwijk_global_2004`, *Hoogwijk and Graus (2008)* :cite:`hoogwijk_global_2008`, *Christiansson (1995)* :cite:`christiansson_diffusion_1995`, *Tubiello and Fischer (2007)* :cite:`tubiello_reducing_2007`, *van Vuuren et al. (2009)* :cite:`van_vuuren_future_2009`, *and Rogner et al (2012)* :cite:`rogner_chapter_2012`. *The potentials for non-combustible renewable energy sources are specified in terms of the electricity or heat that can be produced by specific technologies (i.e., from a secondary energy perspective). By contrast, the technical potentials from* :cite:`rogner_chapter_2012` *refer to the flows of energy that could become available as inputs for technology conversion. So for example, the technical potential for wind is given as the kinetic energy available for wind power generation, whereas the deployment potential would only be the electricity that could be generated by the wind turbines.*
 
 **[REMOVE OR UPDATE THE FOLLOWING PARAGRAPH AND FIGURE]**
 
-While potentials for renewable energy can differ quite substantially between different regions, they are more equitably distributed across the globe than fossil fuels. On the other hand, renewable energy sources cannot be traded as easily before conversion to the secondary level, e.g., trade would typically occur after conversion to electricity or some processed solid, liquid or gaseous fuel. Figure 3.3 shows the renewable energy resource potentials for the 11 MESSAGE regions by 2050. The figure indicates the strong dominance of solar energy across almost all regions. An exception is bioenergy in tropical regions, and wind energy in North America and the Former Soviet Union countries, and to some extent in Europe. However, at a first glance it becomes clear that regionally some of the resources are scarce and the potentials could be exhausted relatively quickly, in particular in those regions with high population densities, which could lead to land use limitations for some of the renewable energy sources. This is particularly the case in Asia, most notably in South Asia, but also in Pacific Asia and partly in China). 
+While potentials for renewable energy can differ quite substantially between different regions, they are more equitably distributed across the globe than fossil fuels. On the other hand, renewable energy sources cannot be traded as easily before conversion to the secondary level, e.g., trade would typically occur after conversion to electricity or some processed solid, liquid or gaseous fuel. :numref:`fig-rendep` shows the renewable energy resource potentials for the 11 MESSAGE regions by 2050. The figure indicates the strong dominance of solar energy across almost all regions. An exception is bioenergy in tropical regions, and wind energy in North America and the Former Soviet Union countries, and to some extent in Europe. However, at a first glance it becomes clear that regionally some of the resources are scarce and the potentials could be exhausted relatively quickly, in particular in those regions with high population densities, which could lead to land use limitations for some of the renewable energy sources. This is particularly the case in Asia, most notably in South Asia, but also in Pacific Asia and partly in China). 
 
-.. image:: /_static/map_3.3.png
-**Figure 3.3.**  Renewable energy deployment potentials by region in 2050, as assumed in the MESSAGE model. 
+.. _fig-rendep:
+.. figure:: /_static/map_3.3.png
 
-Biomass energy is another potentially important renewable energy resource in the MESSAGE-GLOBIOM model. This includes both commercial and non-commercial use. Commercial refers to the use of bioenergy in, for example, power plants or biofuel refineries, while non-commercial refers to the use of bioenergy for residential heating and cooking, primarily in rural households of today’s developing countries. Bioenergy potentials differ across SSPs as a result of different levels of competition over land for food and fibre, but ultimately only vary to a limited degree (Figure 3.4). The drivers underlying this competition are different land-use developments in the SSPs, which are determined by agricultural productivity and global demand for food consumption.
+   Renewable energy deployment potentials by region in 2050, as assumed in the MESSAGE model. 
 
-.. image:: /_static/Availability_BE.png
+Biomass energy is another potentially important renewable energy resource in the MESSAGE-GLOBIOM model. This includes both commercial and non-commercial use. Commercial refers to the use of bioenergy in, for example, power plants or biofuel refineries, while non-commercial refers to the use of bioenergy for residential heating and cooking, primarily in rural households of today’s developing countries. Bioenergy potentials differ across SSPs as a result of different levels of competition over land for food and fibre, but ultimately only vary to a limited degree (:numref:`fig-beavail`). The drivers underlying this competition are different land-use developments in the SSPs, which are determined by agricultural productivity and global demand for food consumption.
+
+.. _fig-beavail:
+.. figure:: /_static/Availability_BE.png
    :width: 500px
-**Figure 3.4.** Availability of bioenergy at different price levels in the MESSAGE-GLOBIOM model for the three SSPs. 
-* typically non-commercial biomass is not traded or sold, however in some cases there is a market – prices range from 0.1-1.5$/GJ (Pachauri et al., 2013) ($ equals 2005 USD).
+
+   Availability of bioenergy at different price levels in the MESSAGE-GLOBIOM model for the three SSPs. * typically non-commercial biomass is not traded or sold, however in some cases there is a market – prices range from 0.1-1.5$/GJ (Pachauri et al., 2013) ($ equals 2005 USD).
 
