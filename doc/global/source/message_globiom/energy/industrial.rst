@@ -14,13 +14,13 @@ The following table presents the quantitative translation of the the storyline e
 
 **Table xx**: Electrification rate within industry and feedstocks for SSP1, SSP2 and SSP3
 
-+-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
-|                       | SSP1                                  | SSP2                                    | SSP3                                  |
-+-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
-| Industry + Feedstocks |       High electrification rate:      |          Medium electrification         |     Low electrification rate: .12%    |
-|                       |                 0.56%                 |               rate: 0.47%               |  (Regional range from -.03% to 0.71%) |
-|                       |   (Regional range from .2% to 1.2%)   |   (Regional range from .07% to 1.08%)   |                                       |
-|                       |                                       |                                         |  Low feedstock reduction rate: -0.24% |
-|                       | High feedstock reduciton rate: -0.33% | Medium feedstock reduction rate: -0.27% | (Regional range from -0.38% to 0.51%) |
-|                       |  (Regional range from -0.51 to 0.59%) |  (Regional range from -0.45% to 0.64%)  |                                       |
-+-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
+    +-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
+    |                       | SSP1                                  | SSP2                                    | SSP3                                  |
+    +-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
+    | Industry + Feedstocks |       High electrification rate:      |          Medium electrification         |     Low electrification rate: .12%    |
+    |                       |                 0.56%                 |               rate: 0.47%               |  (Regional range from -.03% to 0.71%) |
+    |                       |   (Regional range from .2% to 1.2%)   |   (Regional range from .07% to 1.08%)   |                                       |
+    |                       |                                       |                                         |  Low feedstock reduction rate: -0.24% |
+    |                       | High feedstock reduciton rate: -0.33% | Medium feedstock reduction rate: -0.27% | (Regional range from -0.38% to 0.51%) |
+    |                       |  (Regional range from -0.51 to 0.59%) |  (Regional range from -0.45% to 0.64%)  |                                       |
+    +-----------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
