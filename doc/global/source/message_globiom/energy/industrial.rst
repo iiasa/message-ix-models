@@ -6,7 +6,7 @@ The industrial sector in MESSAGE distinguishes two demand categories, thermal an
 
 This stylized industrial thermal energy demand includes fuel switching as the main option, i.e. different final energy forms that provide energy for thermal energy can be chosen from. In addition to the alternative energy carriers that serve as input to these thermal energy supply options, their relative efficiencies also vary. For example, solid fuels such as coal have a lower conversion efficiency than natural gas, direct electric heating or electric heat pumps. To account for the fact that some technologies cannot supply temperature at high temperature levels (e.g., electric heat pumps, district heat), the share of these technologies in the provision of industrial thermal demand is constrained. Additional demand reduction in to response to price increases in policy scenarios is included via the fuel switching option (due to the fuel-specific relative efficiencies) as well as via the linkage with the macro-economic model MACRO (see :numref:`fig-indus` below). The specific industrial demand can be satisfied either by electricity from the grid or with decentralized electricity generation options (including CHP) such as fuel cells. 
 
-.. _fig-indus`
+.. _fig-indus:
 .. figure:: /_static/industry_end-use.png
 
    Schematic diagram of the industrial sector representation in MESSAGE.
