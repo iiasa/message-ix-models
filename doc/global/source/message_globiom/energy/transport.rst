@@ -18,11 +18,11 @@ The demand for international shipping is modeled in a very simple way with a num
 :numref:`tab-trans` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for transport. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually.
 
 .. _tab-trans:
-.. table:: Electrification rate within trasnport for SSP1, SSP2 and SSP3
+.. table:: Electrification rate within transport for SSP1, SSP2 and SSP3
 
-   +-----------+----------------------------------------+----------------------------------------+---------------------------------------+
-   |           | SSP1                                   | SSP2                                   | SSP3                                  |
-   +-----------+----------------------------------------+----------------------------------------+---------------------------------------+
-   | Transport | High electrification                   | Medium electrification                 | Low electrification                   |
-   |           | (max. 75% of total transport possible) | (max. 50% of total transport possible) | (max 10% of total transport possible) |
-   +-----------+----------------------------------------+----------------------------------------+---------------------------------------+
+   +---------------+----------------------------------------+----------------------------------------+---------------------------------------+
+   |               | **SSP1**                               | **SSP2**                               | **SSP3**                              |
+   +---------------+----------------------------------------+----------------------------------------+---------------------------------------+
+   | **Transport** | High electrification                   | Medium electrification                 | Low electrification                   |
+   |               | (max. 75% of total transport possible) | (max. 50% of total transport possible) | (max 10% of total transport possible) |
+   +---------------+----------------------------------------+----------------------------------------+---------------------------------------+
