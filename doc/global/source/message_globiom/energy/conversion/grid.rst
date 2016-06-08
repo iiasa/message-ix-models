@@ -39,34 +39,34 @@ Electric-sector flexibility in MESSAGE is represented as follows: each generatin
 .. _tab-flex:
 .. table :: Flexibility Coefficients by Technology.
 
-+---------------------+-----------------------+
-| Technology          | Flexibility Parameter |
-+=====================+=======================+
-| Load                | -0.1                  |
-+---------------------+-----------------------+
-| Wind                | -0.08                 |
-+---------------------+-----------------------+
-| Solar PV            | -0.05                 |
-+---------------------+-----------------------+
-| Geothermal          | 0                     |
-+---------------------+-----------------------+
-| Nuclear             | 0                     |
-+---------------------+-----------------------+
-| Coal                | 0.15                  |
-+---------------------+-----------------------+
-| Biopower            | 0.3                   |
-+---------------------+-----------------------+
-| Gas-CC              | 0.5                   |
-+---------------------+-----------------------+
-| Hydropower          | 0.5                   |
-+---------------------+-----------------------+
-| H2 Electrolysis     | 0.5                   |
-+---------------------+-----------------------+
-| Oil/Gas Steam       | 1                     |
-+---------------------+-----------------------+
-| Gas-CT              | 1                     |
-+---------------------+-----------------------+
-| Electricity Storage | 1                     |
-+---------------------+-----------------------+
+   +---------------------+-----------------------+
+   | Technology          | Flexibility Parameter |
+   +=====================+=======================+
+   | Load                | -0.1                  |
+   +---------------------+-----------------------+
+   | Wind                | -0.08                 |
+   +---------------------+-----------------------+
+   | Solar PV            | -0.05                 |
+   +---------------------+-----------------------+
+   | Geothermal          | 0                     |
+   +---------------------+-----------------------+
+   | Nuclear             | 0                     |
+   +---------------------+-----------------------+
+   | Coal                | 0.15                  |
+   +---------------------+-----------------------+
+   | Biopower            | 0.3                   |
+   +---------------------+-----------------------+
+   | Gas-CC              | 0.5                   |
+   +---------------------+-----------------------+
+   | Hydropower          | 0.5                   |
+   +---------------------+-----------------------+
+   | H2 Electrolysis     | 0.5                   |
+   +---------------------+-----------------------+
+   | Oil/Gas Steam       | 1                     |
+   +---------------------+-----------------------+
+   | Gas-CT              | 1                     |
+   +---------------------+-----------------------+
+   | Electricity Storage | 1                     |
+   +---------------------+-----------------------+
 
 Thus, a technology like a simple-cycle natural gas plant, used almost exclusively for ancillary services, has a flexibility coefficient of 1, while a coal plant, which provides mostly bulk power but can supply some ancillary services, has a small, positive coefficient. Electric storage systems (e.g. pumped hydropower, compressed air storage, flow batteries) and flexible demand-side technologies like hydrogen-production contribute as well.Meanwhile, wind power and solar PV, which require additional system flexibility to smooth out fluctuations, have negative flexibility coefficients.
