@@ -10,7 +10,7 @@ economic response to changes in energy prices and estimate overall economic cons
 MACRO is a macroeconomic model maximizing the intertemporal utility function of a single representative producer-consumer in each world region. The optimization result is 
 a sequence of optimal savings, investment, and consumption decisions. The main variables of the model are the capital stock, available labor, and energy inputs, which 
 together determine the total output of an economy according to a nested CES (constant elasticity of substitution) production function. Energy demand in the six commercial 
-demand categories of MESSAGE (see Demand - MESSAGE) is determined within the model, and is consistent with energy supply curves, which are inputs to the model. The model’s most 
+demand categories of MESSAGE (see :ref:`demand`) is determined within the model, and is consistent with energy supply curves, which are inputs to the model. The model’s most 
 important driving input variables are the projected growth rates of total labor, i.e., the combined effect of labor force and labor productivity growth and the annual 
 rates of reference energy intensity reduction. The latter is calibrated to the developments in a MESSAGE baseline scenario to ensure consistency between the two models. 
 Labor supply growth is also referred to as reference or potential GDP growth. In the absence of price changes, energy demands grow at rates that are the approximate 
