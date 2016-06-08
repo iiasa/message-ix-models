@@ -10,7 +10,7 @@ Fossil Fuel Reserves and Resources
    :header-rows: 2
 
    * - Source
-     - MESSAGE
+     - MESSAGE (Rogner et al., 1997 :cite:`rogner_assessment_1997`)
      - Rogner et al., 2012 :cite:`rogner_chapter_2012`
      - 
    * - 
