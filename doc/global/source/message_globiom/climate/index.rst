@@ -165,25 +165,25 @@ Similar to HFC-23, EPA data also breaks out HFCs from semiconductor manufacturin
 
 For reporting purposes, but more importantly for use in calculating the climate impacts (MAGICC6), developments of the different HFC compounds are required.  Ideally, CF4, C2F6, C6F14, HFC23, HFC32, HFC43-10, HFC125, HFC134a, HFC143a, HFC227ea, HFC245fa and SF6 are to be reported directly into the MAGICC input file (GAS.SCEN).  MESSAGE-GLOBIOM models F-gas developments, with the exception of SF6 and CF4, in HFC-134aequivalent.  
 
-From the literature, only few sources provide some orientation for deriving such a split.  Below is a table (:numref:`tab-hfcsec`) which summarizes how many of the four available sources agree on which compound comes from the different sectors.  Although EDGAR seems to be an obvious first choice to derive this split, due to the level of regional details included in their historical data on the different HFC compounds, a split of sources is only available for HFC-134a and HFC-23.  Sources included below are therefore limited to Ashford et. al, 2004, Velders et. al, 2009, UNEP Ozone Secretariat, 2015, Harnisch et. al, 2009, whereby not each of these include details for all sectors/compounds and only in a few cases are actual distributions in the form of shares (%) detailed.
+From the literature, only few sources provide some orientation for deriving such a split.  Below is a table (:numref:`fig-hfcsec`) which summarizes how many of the four available sources agree on which compound comes from the different sectors.  Although EDGAR seems to be an obvious first choice to derive this split, due to the level of regional details included in their historical data on the different HFC compounds, a split of sources is only available for HFC-134a and HFC-23.  Sources included below are therefore limited to Ashford et. al, 2004, Velders et. al, 2009, UNEP Ozone Secretariat, 2015, Harnisch et. al, 2009, whereby not each of these include details for all sectors/compounds and only in a few cases are actual distributions in the form of shares (%) detailed.
 
-Based on the above sources, :numref:`tab-hfcshare` shows available shares suggested by the various data sources.  An “X” marks where no further details are available and where assumptions need to be made.
+Based on the above sources, :numref:`fig-hfcshare` shows available shares suggested by the various data sources.  An “X” marks where no further details are available and where assumptions need to be made.
 
-Finally, **Table 4** is an attempt to use the available information, with assumptions made where no data on the split is available, to allocate the total HFCs per sector onto the different compounds.  The resulting sums for the individual compounds have been compared to other data sets.
+Finally, :numref:`fig-hfcglob` is an attempt to use the available information, with assumptions made where no data on the split is available, to allocate the total HFCs per sector onto the different compounds.  The resulting sums for the individual compounds have been compared to other data sets.
 
 
-.. _tab-hfcsec:
-.. table:: /_static/Sources_HFC.png
+.. _fig-hfcsec:
+.. figure:: /_static/Sources_HFC.png
 
    Sources indicating which HFC compound results from which sector/activity
 
-.. _tab-hfcshare:
-.. table:: /_static/Shares_HFC.png
+.. _fig-hfcshare:
+.. figure:: /_static/Shares_HFC.png
 
    Available shares (ranges) for HFC compound distribution/activity per sector
 
-.. _tab-hfcglob:
-.. table:: /_static/global_HFC.png
+.. _fig-hfcglob:
+.. figure:: /_static/global_HFC.png
 
    Assumed shares and globally resulting HFC compound distribution *For comparability, totals do not include HFC-23
 
