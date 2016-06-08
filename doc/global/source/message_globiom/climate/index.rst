@@ -23,48 +23,67 @@ F-gases
 MESSAGE-GLOBIOM models the following *HFC-sources*, details of which can be found in the EPA report (EPA, 2013).  For each of the different sources, the main driver to which the source is linked within the model has been listed along with any mitigation option available. Mitigation options are based on information provided by the EPA report (**EPA, ????**).
 
 * Solvents
+
   * Driver: Population
+  
 * Fire Extinguishers 
+
   * Driver: Population 
+  
 * Aerosols from Medical Use (MDI)
+
   * Driver: Population 
+  
 * Aerosols from Non-Medical Use (Non-MDI)
+
   * Driver: Population 
+  
 * Refrigeration & Air-Conditioning from Residential and Commercial Sector
+
   * Driver: Residential & commercial specific demand (mainly electricity)
   * Mitigation: Refrigerant recovery (refrigerant_recovery bounded by technical applicability)
   * Mitigation: Leak repair (leak_repair bounded by technical applicability)
   * Mitigation: Ammonia secondary loop (ammonia_secloop bounded by technical applicability)
+  
 * Air-Conditioning from Transport Sector 
+
   * Driver: Transport demand  
   * Mitigation: Transcritical vapor cycle CO2 systems (mvac_co2 bounded by technical applicability)
+  
 * Foams
+
   * Driver: Residential & commercial thermal demand
   * Mitigation: Replacement with HC (repl_hc bounded by technical applicability)
 
 MESSAGE-GLOBIOM further models *SF6* including the following sources:
 
 * Electrical Equipment
+
   * Driver: Electricity transmission and distribution
   * Mitigation: Recycling of gas carts (recycling_gas1)
   * Mitigation: Leak repairs (leak_repairsf6)
+  
 * Magnesium
+
   * Driver: Transportation demand
   * Mitigation: Replacement of SF6 by SO2 (replacement_so2)
 
 MESSAGE-GLOBIOM also models *CF4*:
 
 * Aluminum
+
   * Driver: Transportation demand
   * Mitigation: Retrofit of soderberg process
+  
 * Semi-Conductor Production
+
   * Driver: **fixed output based on …**
 
 **Sources used to derive historical numbers and methods applied to develop future trajectories**
 
-SF6 is associated with two main sources.  SF6 from semiconductor production used in electrical equipment manufacturing, currently making up the bulk (88% in 2010) of total SF6 emissions.  SF6 from magnesium used in the car industry is the second notable source.  The historical data, up to 2010, comes from EDGAR (EDGAR4.2, 2011). Alternatively, EPA data could also be used, which equally offers country based data split out for the two sources mentioned above. 
+SF6 is associated with two main sources. SF6 from semiconductor production used in electrical equipment manufacturing, currently making up the bulk (88% in 2010) of total SF6 emissions. SF6 from magnesium used in the car industry is the second notable source.  The historical data, up to 2010, comes from EDGAR (EDGAR4.2, 2011). Alternatively, EPA data could also be used, which equally offers country based data split out for the two sources mentioned above. 
 
-Future developments in SSP2, from 2020 onwards, foresee a 1% and 1.5% annual intensity decline for SF6 from magnesium use in manufacturing processes and electrical equipment manufacturing respectively.  The intensity rate for SF6 from magnesium use in manufacturing processes declines 1.5% and 0.5% in SSP1 and SSP3 respectively.  For SF6 from electrical equipment manufacturing, the intensity declines at a rate of 2% annually while in SSP3 the rate of decline is lower, at 1% annually.
+Future developments in SSP2, from 2020 onwards, foresee a 1% and 1.5% annual intensity decline for SF6 from magnesium use in manufacturing processes and electrical equipment manufacturing respectively. The intensity rate for SF6 from magnesium use in manufacturing processes declines 1.5% and 0.5% in SSP1 and SSP3 respectively. For SF6 from electrical equipment manufacturing, the intensity declines at a rate of 2% annually while in SSP3 the rate of decline is lower, at 1% annually.
 
 `EPA <http://www.epa.gov/climatechange/EPAactivities/economics/nonco2projections.html>`_ data, broken down onto the eleven regions depicted in the MESSAGE-GLOBIOM model, is used to represent the historical developments of HFCs and includes projection data up to 2020.  For the remainder of the modelling timeframe (up to 2100), the intensity remains unchanged for the following sources, scaled only with the development of the underlying driver.
 
@@ -75,6 +94,7 @@ Future developments in SSP2, from 2020 onwards, foresee a 1% and 1.5% annual int
 * Fire Extinguishers
 
 Exceptions have been made for:
+
 * AC from Transport Sector 
 * Refrigeration & AC from Residential and Commercial Sector
 
@@ -86,20 +106,20 @@ The HFC intensity of the transport sector remains unchanged for all regions acro
 
 As for refrigeration and air-conditioning of the residential and commercial sector, it is assumed that regions will converge towards a certain intensity level based on their income development.  The point of convergence is defined by the intensity level attained by the designated frontier region in 2020.
 
-For SSP1, Western Europe is the frontier region, whereas the USA, is the frontier for SSP3.  For SSP2, a mixture of the two is used.  The diagrams below (**Figure 1**) illustrate how regions converge towards the designated frontier region over time.
+For SSP1, Western Europe is the frontier region, whereas the USA, is the frontier for SSP3.  For SSP2, a mixture of the two is used.  The diagrams below (:numref:`fig-hfcint`) illustrate how regions converge towards the designated frontier region over time.
 
-.. image:: /_static/regional_HFC_intensity.png
-**Figure xx**: Regional HFC Intensity Developments for Refrigeration and Air-Conditioning in the Residential and Commercial Sector across the SSPs 
+.. _fig-hfcint:
+.. figure:: /_static/regional_HFC_intensity.png
 
-The SSP storylines and the therewith associated income developments lead to very different convergence time points.  In SSP1, income grows very rapidly in developing, therefore leading to a convergence of intensity levels for almost all regions by middle of the century, with the exception of Africa which converges by 2080. In SSP2, all regions converge latest by the end of the century which is very different to SSP3, where the convergence is much slower due to the low income level developments.  In SSP3, only few regions converge by the end of the century.
+   Regional HFC Intensity Developments for Refrigeration and Air-Conditioning in the Residential and Commercial Sector across the SSPs 
+The SSP storylines and the therewith associated income developments lead to very different convergence time points. In SSP1, income grows very rapidly in developing, therefore leading to a convergence of intensity levels for almost all regions by middle of the century, with the exception of Africa which converges by 2080. In SSP2, all regions converge latest by the end of the century which is very different to SSP3, where the convergence is much slower due to the low income level developments. In SSP3, only few regions converge by the end of the century.
 
 **HFC-23**
 
-When comparing the data used in MESSAGE-GLOBIOM with the original data source (both from the EPA), there seems to be a discrepancy. The data currently used in MESSAGE-GLOBIOM shows that in 2010, global HFC emissions add up to approximately 555 MtCO2equivalent across all sources. The raw data from the EPA shows only 442 MtCO2equivalent for the same time period. The difference equates to approximately 113 MtCO2equvalent, similar to what is quoted for HFC-23 from HCFC-22 production by the EPA.  This means, that the current totals used in MESSAGE-GLOBIOM are not far off; global values from the two data sources are shown in the table below.
+When comparing the data used in MESSAGE-GLOBIOM with the original data source (both from the EPA), there seems to be a discrepancy. The data currently used in MESSAGE-GLOBIOM shows that in 2010, global HFC emissions add up to approximately 555 MtCO2equivalent across all sources. The raw data from the EPA shows only 442 MtCO2equivalent for the same time period. The difference equates to approximately 113 MtCO2equvalent, similar to what is quoted for HFC-23 from HCFC-22 production by the EPA.  This means, that the current totals used in MESSAGE-GLOBIOM are not far off; global values from the two data sources are shown in :numref:`tab-hfcsource`.
 
-**Table xx:** HFCs by source in [MtCO2e]
-
-.. list-table:: 
+.. _tab-hfcsource:
+.. list-table:: HFCs by source in [MtCO2e]
    :widths: 26 26 26
    :header-rows: 1
 
@@ -145,24 +165,27 @@ Similar to HFC-23, EPA data also breaks out HFCs from semiconductor manufacturin
 
 For reporting purposes, but more importantly for use in calculating the climate impacts (MAGICC6), developments of the different HFC compounds are required.  Ideally, CF4, C2F6, C6F14, HFC23, HFC32, HFC43-10, HFC125, HFC134a, HFC143a, HFC227ea, HFC245fa and SF6 are to be reported directly into the MAGICC input file (GAS.SCEN).  MESSAGE-GLOBIOM models F-gas developments, with the exception of SF6 and CF4, in HFC-134aequivalent.  
 
-From the literature, only few sources provide some orientation for deriving such a split.  Below is a table (**Table 2**) which summarizes how many of the four available sources agree on which compound comes from the different sectors.  Although EDGAR seems to be an obvious first choice to derive this split, due to the level of regional details included in their historical data on the different HFC compounds, a split of sources is only available for HFC-134a and HFC-23.  Sources included below are therefore limited to Ashford et. al, 2004, Velders et. al, 2009, UNEP Ozone Secretariat, 2015, Harnisch et. al, 2009, whereby not each of these include details for all sectors/compounds and only in a few cases are actual distributions in the form of shares (%) detailed.
+From the literature, only few sources provide some orientation for deriving such a split.  Below is a table (:numref:`tab-hfcsec`) which summarizes how many of the four available sources agree on which compound comes from the different sectors.  Although EDGAR seems to be an obvious first choice to derive this split, due to the level of regional details included in their historical data on the different HFC compounds, a split of sources is only available for HFC-134a and HFC-23.  Sources included below are therefore limited to Ashford et. al, 2004, Velders et. al, 2009, UNEP Ozone Secretariat, 2015, Harnisch et. al, 2009, whereby not each of these include details for all sectors/compounds and only in a few cases are actual distributions in the form of shares (%) detailed.
 
-Based on the above sources, **Table 3** shows available shares suggested by the various data sources.  An “X” marks where no further details are available and where assumptions need to be made.
+Based on the above sources, :numref:`tab-hfcshare` shows available shares suggested by the various data sources.  An “X” marks where no further details are available and where assumptions need to be made.
 
 Finally, **Table 4** is an attempt to use the available information, with assumptions made where no data on the split is available, to allocate the total HFCs per sector onto the different compounds.  The resulting sums for the individual compounds have been compared to other data sets.
 
-**Table 2** Sources indicating which HFC compound results from which sector/activity
 
-.. image:: /_static/Sources_HFC.png
+.. _tab-hfcsec:
+.. table:: /_static/Sources_HFC.png
 
-**Table 3** Available shares (ranges) for HFC compound distribution/activity per sector
+   Sources indicating which HFC compound results from which sector/activity
 
-.. image:: /_static/Shares_HFC.png
+.. _tab-hfcshare:
+.. table:: /_static/Shares_HFC.png
 
-**Table 4** Assumed shares and globally resulting HFC compound distribution *For comparability, totals do not include HFC-23
+   Available shares (ranges) for HFC compound distribution/activity per sector
 
-.. image:: /_static/global_HFC.png
+.. _tab-hfcglob:
+.. table:: /_static/global_HFC.png
 
+   Assumed shares and globally resulting HFC compound distribution *For comparability, totals do not include HFC-23
 
 Climate
 ------------
