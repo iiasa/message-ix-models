@@ -24,4 +24,6 @@ to be consistent between the two sub-models. Since these requirements are theref
 system in the neighborhood of the optimal point. The costs (energy use and imports) and benefits (energy exports) of providing energy in MACRO are approximated by a Taylor 
 expansion to first order of the energy system costs as calculated by MESSAGE. From an initial MESSAGE model run, the total energy system cost (including costs/revenues from 
 energy trade) and additional abatement costs (e.g., abatement costs from non-energy sources) as well as the shadow prices of the six commercial demand categories by region 
-are passed to MACRO. In addition to the economic implications of energy trade, MACRO also includes the implications of GHG permit trade.
+are passed to MACRO. In addition to the economic implications of energy trade, MACRO also includes the implications of GHG permit trade. 
+
+For a more elaborate description of MACRO, including the system of equations and technical details of the implementation, please consult the :ref:`annex_macro`.
