@@ -17,7 +17,7 @@ The mathematical formulation of MESSAGE ensures that the flows are consistent: d
 .. toctree::
    :maxdepth: 1
 
-   resource
+   resource/index
    conversion/index
    transport
    resid_commerc
