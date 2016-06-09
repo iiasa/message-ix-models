@@ -37,3 +37,4 @@ Regional resource potentials for solar and wind are classified according to reso
 Eurek et al. (in review, :cite:`eurek_wind_2016`). Regional resource potentials as implemented into MESSAGE-GLOBIOM are provided by region and capacity factor for solar PV, concentrating solar 
 power (CSP), and onshore/offshore wind in Johnson et al. (in review, :cite:`johnson_vre_2016`). The physical potential of these sources is assumed to be the same across all SSPs. However, 
 the part of the resource that is useable at economically competitive costs is assumed to differ widely (see Section :ref:`electricity`).
+
