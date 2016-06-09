@@ -73,14 +73,14 @@ Technological change in MESSAGE is generally treated exogenously, although pione
 .. figure:: /_static/S1ThermoCosts.png
    :width: 600px
 
-   Cost indicators for thermoelectric power-plant investment. 
+   Cost indicators for thermoelectric power-plant investment (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`). 
 
-In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon Capture and Storage; IGCC – Integrated gasification combined cycles; ST – Steam turbine; CT – Combustion turbine; CCGT – Combined cycle gas turbine
+In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon Capture and Storage; IGCC – Integrated gasification combined cycles; ST – Steam turbine; CT – Combustion turbine; CCGT – Combined cycle gas turbine (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`).
 
 .. _fig-nonth:
 .. figure:: /_static/S2NonThermoCosts.png
    :width: 600px
 
-   Cost indicators for non-thermoelectric power-plant investment. 
+   Cost indicators for non-thermoelectric power-plant investment (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`). 
    
-In :numref:`fig-nonth`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. PV – Photovoltaic
+In :numref:`fig-nonth`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. PV – Photovoltaic (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`).
