@@ -81,12 +81,12 @@ See :numref:`tab-hydtech` for a list of gaseous fuel production technologies in 
    |                | biomass gasification with CCS     | yes                       |
    +----------------+-----------------------------------+---------------------------+
 
-Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, :numref:`fig-costind` below provides an overview of costs ranges for a set of key energy conversion technologies.
+Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, :numref:`fig-costind` below provides an overview of costs ranges for a set of key energy conversion technologies (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
 .. _fig-costind:
 .. figure:: /_static/S3OtherCosts.png
    :width: 600px
 
-   Cost indicators for other conversion technology investment (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`) 
+   Cost indicators for other conversion technology investment (Fricko et al., 2016 :cite:`fricko_marker_2016`) 
    
-In :numref:`fig-costind`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon capture and storage; CTL – Coal to liquids; GTL – Gas to liquids; BTL – Biomass to liquids (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`).
+In :numref:`fig-costind`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon capture and storage; CTL – Coal to liquids; GTL – Gas to liquids; BTL – Biomass to liquids (Fricko et al., 2016 :cite:`fricko_marker_2016`).
