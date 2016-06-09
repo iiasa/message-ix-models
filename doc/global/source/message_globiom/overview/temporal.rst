@@ -1,4 +1,4 @@
-Temporal process
+Time steps
 =================
 MESSAGE models the time horizon 1990 to 2110 in 5- and 10 year time steps where the first 5 periods (1990, 1995, 2000, 2005, 2010) are 5-year periods and the remaining 10 periods are 10-year periods (2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100, 2110). The first four periods up to 2005 are fully calibrated, i.e. the model has no flexibility to change in these five periods. The 2010 period is partly calibrated so far, some recent trends are included in this time period, but some flexibility remains. In scenario applications the 2010 period is typically fixed to its baseline development so that future climate and energy policy cannot induce changes in the past. The reporting years are the final years of periods which implies that investments that lead to the capacities in the reporting year are the average annual investments over the entire period the reporting year belongs to.
 
