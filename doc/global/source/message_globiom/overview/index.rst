@@ -14,18 +14,17 @@ GLOBIOM provides MESSAGE with information on land use and its implications, like
 
 Air pollution implications of the energy system are computed in MESSAGE by applying technology-specific pollution coefficients from GAINS (see :ref:`gains`).
 
-In general, cumulative global GHG emissions from all sectors are constrained at different levels to reach the forcing levels (cf. right-hand side :numref:`fig-iiasaiam`). The climate constraints are thus taken up in the coupled MESSAGE-GLOBIOM optimization, and the resulting carbon price is fed back to the full-fledged GLOBIOM model for full consistency. Finally, the combined results for land use, energy, and industrial emissions from MESSAGE and GLOBIOM are merged and fed into MAGICC (see :ref:`magicc`), a global carbon-cycle and climate model, which then provides estimates of the climate implications in terms of atmospheric concentrations, radiative forcing, and global-mean temperature increase. Importantly, climate impacts and impacts of the carbon cycle are currently not accounted for in the IIASA IAM framework. The entire framework is linked to an online database infrastructure which allows straightforward visualisation, analysis, comparison and dissemination of results.
+In general, cumulative global GHG emissions from all sectors are constrained at different levels to reach the forcing levels (cf. right-hand side :numref:`fig-iiasaiam`). The climate constraints are thus taken up in the coupled MESSAGE-GLOBIOM optimization, and the resulting carbon price is fed back to the full-fledged GLOBIOM model for full consistency. Finally, the combined results for land use, energy, and industrial emissions from MESSAGE and GLOBIOM are merged and fed into MAGICC (see :ref:`magicc`), a global carbon-cycle and climate model, which then provides estimates of the climate implications in terms of atmospheric concentrations, radiative forcing, and global-mean temperature increase. Importantly, climate impacts and impacts of the carbon cycle are currently not accounted for in the IIASA IAM framework. The entire framework is linked to an online database infrastructure which allows straightforward visualisation, analysis, comparison and dissemination of results. (Riahi et al., 2016 :cite:`riahi_shared_2016`)
 
 .. _fig-iiasaiam:
 
 .. figure:: /_static/iiasaiam.png
    :width: 900px
 
-   Overview of the IIASA IAM framework. Coloured boxes represent respective specialized disciplinary models which are integrated for generating internally consistent scenarios. 
+   Overview of the IIASA IAM framework. Coloured boxes represent respective specialized disciplinary models which are integrated for generating internally consistent scenarios (Riahi et al., 2016 :cite:`riahi_shared_2016`). 
 
 .. toctree::
    :maxdepth: 1
 
-   model_concept
    spatial
    temporal
