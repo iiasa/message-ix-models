@@ -10,6 +10,7 @@ and fuel cycle are modeled at the global level.
 
 .. _fig-uran:
 .. figure:: /_static/nuclear_resources.png
+   :width: 600px
 
    Global uranium resources in the MESSAGE-GLOBIOM interpretation of the SSPs compared to ranges in the literature (Schneider and Sailor, 2008 :cite:`schneider_long-term_2008`). 
 
