@@ -28,5 +28,5 @@ The specific technologies represented in various parts of the energy conversion 
 
    electricity
    heat
-   grid
    other
+   grid
