@@ -1,4 +1,6 @@
-MACRO
+.. _annex_macro:
+
+Mathematical Formulation: MACRO
 ====
 
 MACRO is based on the macro-economic module of the global energy-economy-climate model Global 2100 :cite:`manne_buying_1992`, a predecesor of the MERGE model :cite:. 
@@ -42,17 +44,17 @@ A listing of all parameters used in MACRO together with a decription can be foun
 Parameter                   Description
 =========================== ================================================================================================================================
 :math:`duration\_period_y`  Number of years in time period :math:`y` (forward diff)
-:math:`TOTAL\_COST_{r,y}`   Total energy system costs in region :math:`r` and period :math:`y` from MESSAGE model run
-:math:`ENESTART_{r,s,y}`    Consumption level of six commercial energy services :math:`s` in region :math:`r` and period :math:`y` from MESSAGE model run 
-:math:`ENEPRICE_{r,s,y}`    Shadow prices of six commercial energy services :math:`s` in region :math:`r` and period :math:`y` from MESSAGE model run 
+:math:`total\_cost_{r,y}`   Total energy system costs in region :math:`r` and period :math:`y` from MESSAGE model run
+:math:`enestart_{r,s,y}`    Consumption level of six commercial energy services :math:`s` in region :math:`r` and period :math:`y` from MESSAGE model run 
+:math:`eneprice_{r,s,y}`    Shadow prices of six commercial energy services :math:`s` in region :math:`r` and period :math:`y` from MESSAGE model run 
 :math:`\epsilon_r`          Elasticity of substitution between capital-labor and total energy in region :math:`r`
 :math:`\rho_r`              :math:`\epsilon - 1 / \epsilon` where :math:`\epsilon` is the elasticity of subsitution in region :math:`r`
 :math:`depr_r`              Annual depreciation rate in region :math:`r`
 :math:`\alpha_r`            Capital value share parameter in region :math:`r`
 :math:`a_r`                 Production function coefficient of capital and labor in region :math:`r`
 :math:`b_{r,s}`             Production function coefficients of the different energy sectors in region :math:`r`, sector :math:`s` and period :math:`y`
-:math:`UDF_{r,y}`           Utility discount factor in period year in region :math:`r` and period :math:`y`
-:math:`NEWLAB_{r,y}`        New vintage of labor force in region :math:`r` and period :math:`y`
+:math:`udf_{r,y}`           Utility discount factor in period year in region :math:`r` and period :math:`y`
+:math:`newlab_{r,y}`        New vintage of labor force in region :math:`r` and period :math:`y`
 :math:`grow_{r,y}`          Annual growth rates of potential GDP in region :math:`r` and period :math:`y`
 :math:`aeei_{r,s,y}`        Autonomous energy efficiency improvement (AEEI) in region :math:`r`, sector :math:`s` and period :math:`y`
 :math:`fin\_time_{r,y}`     finite time horizon correction factor in utility function in region :math:`r` and period :math:`y`
@@ -86,7 +88,7 @@ of the model.
 
 .. equation {UTILITY_FUNCTION}
 
-.. math:: {UTILITY} = \displaystyle \sum_{r} \left( \displaystyle \sum_{y |  (  (  {ord}( y )   >  1 )  \wedge  (  {ord}( y )   <   | y |  )  )} {UDF}_{r, y} \cdot {log}( C_{r, y} ) \cdot \frac{{duration\_period}_{y} + {duration\_period}_{y-1}}{2} + \displaystyle \sum_{y |  (  {ord}( y )   =   | y |  ) } {UDF}_{r, y} \cdot {log} ( C_{r, y} ) \cdot \left( \frac{{duration\_period}_{y-1}}{2} + \frac{1}{{fin\_time}_{r, y}} \right) \right) 
+.. math:: {UTILITY} = \displaystyle \sum_{r} \left( \displaystyle \sum_{y |  (  (  {ord}( y )   >  1 )  \wedge  (  {ord}( y )   <   | y |  )  )} {udf}_{r, y} \cdot {log}( C_{r, y} ) \cdot \frac{{duration\_period}_{y} + {duration\_period}_{y-1}}{2} + \displaystyle \sum_{y |  (  {ord}( y )   =   | y |  ) } {udf}_{r, y} \cdot {log} ( C_{r, y} ) \cdot \left( \frac{{duration\_period}_{y-1}}{2} + \frac{1}{{fin\_time}_{r, y}} \right) \right) 
 
 The utility discount rate for period :math:`y` is set to :math:`DRATE_{r} - grow_{r,y}`, where :math:`DRATE_{r}` is the discount rate used in MESSAGE, typically set to 5%, 
 and :math:`grow` is the potential GDP growth rate. This choice ensures that in the steady state, the optimal growth rate is identical to the potential GDP growth rates :math:`grow`. 
@@ -122,7 +124,7 @@ represented in MESSAGE as inputs.
 
 .. equation {NEW_PRODUCTION}_{r, y}
 
-.. math:: {YN}_{r,y} =  { \left( {a}_{r} \cdot {{KN}_{r, y}}^{ ( {\rho}_{r} \cdot {\alpha}_{r} ) } \cdot {{NEWLAB}_{r, y}}^{ ( {\rho}_{r} \cdot ( 1 - {\alpha}_{r} )  ) } + \displaystyle \sum_{s} ( {b}_{r, s} \cdot {{NEWENE}_{r, s, y}}^{{\rho}_{r}} )  \right) }^{ \frac{1}{{\rho}_{r}} } \qquad \forall{ r, y > 1}
+.. math:: {YN}_{r,y} =  { \left( {a}_{r} \cdot {{KN}_{r, y}}^{ ( {\rho}_{r} \cdot {\alpha}_{r} ) } \cdot {{newlab}_{r, y}}^{ ( {\rho}_{r} \cdot ( 1 - {\alpha}_{r} )  ) } + \displaystyle \sum_{s} ( {b}_{r, s} \cdot {{NEWENE}_{r, s, y}}^{{\rho}_{r}} )  \right) }^{ \frac{1}{{\rho}_{r}} } \qquad \forall{ r, y > 1}
 
 Total production
 ~~~~
@@ -158,20 +160,20 @@ energy in terms of monetary value :math:`{PRODENE}_{r, s, y}` as specified in th
 
 .. equation {ENERGY_SUPPLY}_{r, s, y}
 
-.. math:: {PHYSENE}_{r, s, y} \geq {PRODENE}_{r, s, y} \cdot {AEEIFAC}_{r, s, y} \qquad \forall{ r, s, y > 1} 
+.. math:: {PHYSENE}_{r, s, y} \geq {PRODENE}_{r, s, y} \cdot {aeei\_factor}_{r, s, y} \qquad \forall{ r, s, y > 1} 
 
-The cumulative effect of autonomous energy efficiency improvements (AEEI) is captured in :math:`{AEEIFAC}_{r,s,y} = {AEEIFAC}_{r, s, y-1} \cdot (1 - {aeei}_{r,s,y})^{duration\_period}_{y}` 
-with :math:`{AEEIFAC}_{r,s,y=1} = 1`. Therefore, choosing the :math:`{aeei}_{r,s,y}` coefficients appropriately offers the possibility to calibrate MACRO to a certain energy demand trajectory 
+The cumulative effect of autonomous energy efficiency improvements (AEEI) is captured in :math:`{aeei\_factor}_{r,s,y} = {aeei\_factor}_{r, s, y-1} \cdot (1 - {aeei}_{r,s,y})^{duration\_period}_{y}` 
+with :math:`{aeei\_factor}_{r,s,y=1} = 1`. Therefore, choosing the :math:`{aeei}_{r,s,y}` coefficients appropriately offers the possibility to calibrate MACRO to a certain energy demand trajectory 
 from MESSAGE.
 
 Energy system costs
 ~~~~
 Energy system costs are based on a previous MESSAGE model run. The approximation of energy system costs in vicinity of the MESSAGE solution are approximated by a Taylor expansion with the 
-first order term using shadow prices :math:`ENEPRICE_{s, y, r}` of the MESSAGE model's solution and a quadratic second-order term.
+first order term using shadow prices :math:`eneprice_{s, y, r}` of the MESSAGE model's solution and a quadratic second-order term.
 
 .. equation {COST_ENERGY}_{r, y}
 
-.. math:: {EC}_{r, y} = {TOTAL\_COST}_{y, r} + \displaystyle \sum_{s} {ENEPRICE}_{s, y, r} \cdot \left( {PHYSENE}_{r, s, y} - {ENESTART}_{s, y, r} \right) + \displaystyle \sum_{s} \frac{{ENEPRICE}_{s, y, r}}{{ENESTART}_{s, y, r}} \cdot \left( {PHYSENE}_{r, s, y} - {ENESTART}_{s, y, r} \right)^2 \qquad \forall{ r, y > 1} 
+.. math:: {EC}_{r, y} = {total\_cost}_{y, r} + \displaystyle \sum_{s} {eneprice}_{s, y, r} \cdot \left( {PHYSENE}_{r, s, y} - {enestart}_{s, y, r} \right) + \displaystyle \sum_{s} \frac{{eneprice}_{s, y, r}}{{enestart}_{s, y, r}} \cdot \left( {PHYSENE}_{r, s, y} - {enestart}_{s, y, r} \right)^2 \qquad \forall{ r, y > 1} 
 
 Finite time horizon correction
 ~~~~
@@ -199,7 +201,7 @@ Similarly investments :math:`I_{r, y=0}` and consumpiton :math:`C_{r, y=0}` in t
 
 Total production :math:`Y_{y=0, r}` in the base year then follows as total GDP plus energy system costs (estimation based on MESSAGE):
 
-.. math:: Y_{y=0, r} = GDP_{r, y=0} + TOTAL\_COST_{r, y=0}
+.. math:: Y_{y=0, r} = GDP_{r, y=0} + total\_cost_{r, y=0}
 
 The production function coefficients for capital, labor :math:`a_r` and energy :math:`b_{r, s}` are calibrated from the first-order optimality condition, i.e. 
 :math:`b_{r, s}` from :math:`\frac{\partial Y}{\partial NEWENE_{r,s}} = p_{r,s}^{ref}` and :math:`a_r` by inserting :math:`b_r` back into the production function,
