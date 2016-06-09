@@ -50,7 +50,7 @@ The following table (:numref:`tab-ffavail`) presents the fossil resource availab
    * - Coal
      - 93
      - 92
-     - 24
+     - 243
    * - Oil
      - 17
      - 40
