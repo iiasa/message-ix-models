@@ -1,6 +1,6 @@
 SSP narratives
 ===============
-Narratives have been developed for the Shared Socioeconomic Pathways (SSPs) (O’Neill et al., 2015 :cite:`oneill_roads_2015`). These descriptions of alternative futures of societal development span a range of possible worlds that stretch along two climate-change-related dimensions: mitigation and adaptation challenges. The SSPs reflect five different developments of the world that are characterized by varying levels of global challenges (see `Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016` for an overview). In the following, three of them are presented: 
+Narratives have been developed for the Shared Socioeconomic Pathways (SSPs) (O’Neill et al., 2015 :cite:`oneill_roads_2015`). These descriptions of alternative futures of societal development span a range of possible worlds that stretch along two climate-change-related dimensions: mitigation and adaptation challenges. The SSPs reflect five different developments of the world that are characterized by varying levels of global challenges (see `Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_  :cite:`riahi_shared_2016` for an overview) (:cite:`fricko_marker_2016`). In the following, three of them are presented: 
 
 SSP1 Narrative: Sustainability — Taking the green road
 ----------------------------------------------------
