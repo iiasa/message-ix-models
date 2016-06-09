@@ -21,7 +21,7 @@ Each energy conversion technology is characterized in MESSAGE by the following d
 * Sociopolitical constraints: e.g. ban of nuclear power plants.
 * Inconvenience costs which are specified only for end-use technologies
 
-The specific technologies represented in various parts of the energy conversion sector are discussed in the following sections on :ref:`electricity`, :ref:`heat`, :ref:`grid`, and :ref:`other`.
+The specific technologies represented in various parts of the energy conversion sector are discussed in the following sections on :ref:`electricity`, :ref:`heat`, :ref:`other` and :ref:`grid`.
 
 .. toctree::
    :maxdepth: 1
