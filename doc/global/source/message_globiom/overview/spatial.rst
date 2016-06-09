@@ -1,6 +1,6 @@
 .. _spatial:
 
-Spatial process
+Regions
 ==============
 MESSAGE has global coverage and divides the world into 11 regions (see :numref:`fig-reg` below).
 
