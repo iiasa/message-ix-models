@@ -87,6 +87,6 @@ Technological change in MESSAGE is generally treated exogenously, although pione
 .. figure:: /_static/S3OtherCosts.png
    :width: 600px
 
-   Cost indicators for other conversion technology investment. 
+   Cost indicators for other conversion technology investment (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`) 
    
-In :numref:`fig-costind`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon capture and storage; CTL – Coal to liquids; GTL – Gas to liquids; BTL – Biomass to liquids.
+In :numref:`fig-costind`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon capture and storage; CTL – Coal to liquids; GTL – Gas to liquids; BTL – Biomass to liquids (`Riahi et al., 2016 <http://pure.iiasa.ac.at/13280/>`_ :cite:`riahi_shared_2016`).
