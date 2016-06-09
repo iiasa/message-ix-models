@@ -11,10 +11,10 @@ This stylized industrial thermal energy demand includes fuel switching as the ma
 
    Schematic diagram of the industrial sector representation in MESSAGE.
 
-:numref:`tab-indus` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for industry and feedstocks. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually.
+:numref:`tab-indus` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for industry and feedstocks. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
 .. _tab-indus:
-.. table:: Electrification rate within industry and feedstocks for SSP1, SSP2 and SSP3
+.. table:: Electrification rate within industry and feedstocks for SSP1, SSP2 and SSP3 (Fricko et al., 2016 :cite:`fricko_marker_2016`)
 
    +-----------------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
    |                             | **SSP1**                              | **SSP2**                                | **SSP3**                              |
