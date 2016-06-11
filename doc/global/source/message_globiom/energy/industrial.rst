@@ -11,6 +11,9 @@ This stylized industrial thermal energy demand includes fuel switching as the ma
 
    Schematic diagram of the industrial sector representation in MESSAGE.
 
+While cement production is not explicitly modeled at the process level in MESSAGE, the associated CO2 emissions from the calcination process are accounted for explicitly. In addition, 
+adding carbon capture and storage to mitigate these process-based CO2 emission is available.
+
 :numref:`tab-indus` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for industry and feedstocks. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
 .. _tab-indus:
