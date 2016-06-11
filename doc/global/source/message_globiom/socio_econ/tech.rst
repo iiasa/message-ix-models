@@ -1,3 +1,5 @@
+.. _techchange:
+
 Technological change
 ======================
 Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been
@@ -5,14 +7,32 @@ done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current 
 generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of
 uncertainties that influences model results to a good extent.
 
+Technology cost
+----------------
+The quantitative assumptions about technology cost sdevelopment are derived from the overarching qualitative SSP narratives (cf. section :ref:`narratives`). In SSP1, for instance, whose
+green-growth storyline is more consistent with a sustainable development paradigm, higher rates of technological progress and learning are assumed for renewables and other advanced
+technologies that may replace fossil fuels (e.g., the potential for electric mobility is assumed to be higher in SSP1 compared to SSP2 or SSP3). In contrast, SSP3 assumes limited progress
+across a host of advanced technologies, particularly for renewables and hydrogen; more optimistic assumptions are instead made for
+coal-based technologies, not only for power generation but also for liquid fuels production. Meanwhile, the middle-of-the-road SSP2 narrative is characterized by a fairly balanced view
+of progress for both conventional fossil and non-fossil technologies. In this sense, technological development in SSP2 is not biased toward any particular technology group. If it were,
+it would not occupy a middle-of-the-road position between the green-growth and fossil-fuel intensive paradigms of SSP1 and SSP3, respectively.
+
+Technological costs vary regionally in all SSPs, reflecting marked differences in engineering and construction costs across countries observed in the real world. Generally, costs start
+out lower in the developing world and are assumed to converge to those of present-day industrialized countries as the former becomes richer throughout the century (thus, the cost
+projections consider both labour and capital components). This catch-up in costs is assumed to be fastest in SSP1 and slowest in SSP3 (where differences remain, even in 2100); SSP2 is in
+between. Estimates for present-day and fully learned-out technology costs are from the Global Energy Assessment (Riahi et al., 2012 :cite:`riahi_chapter_2012`) and World Energy Outlook
+(IEA, 2014). A summary of these cost assumptions can be found in sections :ref:`electricity` and :ref:`other`.
+
+
+Technology diffusion
+---------------------
 MESSAGE tracks investments by vintage, an important feature to represent the inertia in the energy system due to its long-lived capital stock. In case of shocks
 (e.g., introduction of stringent climate policy), it is however possible to prematurely retire existing capital stock such as power plants or other energy conversion
 technologies and switch to more suitable alternatives.
 
 An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is constrained
 by dynamic constraints that relate the construction of a technology added or the activity (level of production) of a technology in a period t to construction or the
-activity in the previous period t-1 (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. sections .. _upper_dynamic_constraint_capacity: and .. _upper_dynamic_constraint_activity:).
-Two parameters, an annual increment or so-called startup value s and an annual growth rate r are used to parameterize these dynamic growth constraints.
+activity in the previous period t-1 (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. sections :ref:`upper_dynamic_constraint_capacity` and :ref:`upper_dynamic_constraint_activity`).
 
 While limiting the possibility of flip-flop behavior as it is frequently observed in unconstrained Linear Programming (LP) models such as MESSAGE, a drawback of such hard
 growth constraints is that the relative advantage of some technology over another technology is not taken into account and therefore even for very competitive technologies,
@@ -28,9 +48,6 @@ while still reducing the flip-flop behavior and sudden penetration of technologi
 
    Illustration of maximum technology growth starting at a level of 1 in year t=0 for a set of soft diffusion constraints with effective growth rates r as shown in the legend.
 
--- material to be moved to annex:
-
-For a period length of one year, the following equation describes the dynamic constraints:
 
 For more detailed assumptions, see Annex. **[cross-link to correct section]**
 
