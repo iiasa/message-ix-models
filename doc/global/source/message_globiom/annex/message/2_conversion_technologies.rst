@@ -1,8 +1,11 @@
+.. _annex_convtech:
+
+
 2 Conversion Technologies
 ====
 2.1 	Variables
 ----
-Energy conversion technologies are modelled using two types of variables, that represent
+Energy conversion technologies, both on the supply and demand side of the energy system, are modelled using two types of variables, that represent
 – the amount of energy converted per year in a period (activity  variables) and
 – the capacity installed annually in a period (capacity variables).
 
@@ -176,9 +179,44 @@ where
    * - :math:`\gamma y_{svd,t}^o`
      - is the maximum growth rate per period for the construction of technology :math:`v`,
    * - :math:`gy_{svd,t}^o`
-     - is the initial size (increment) that can be given for the introduction of new technologies,
+     - is the initial size (increment) that can be given and which is necessary for the introduction of new technologies that start with zero capacity,
    * - :math:`Yzsvd..t`
      - is the annual new installation of technology :math:`v` in period :math:`t`.
+
+As described in Keppo and Strubegger (2010 :cite:`keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion 
+in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`, 
+:math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{svd,ti})` are added to the upper dynamic constraint described above. 
+
+** notation below needs updating to be consistent with the one from the MESSAGE equations ** 
+
+.. image:: /_static/technology_diffusion_eq_3.png
+   :width: 340px
+   
+The maximum value for these dummy variables bi is limited to the activity of the underlying technology a, i.e.
+
+.. image:: /_static/technology_diffusion_eq_4.png 
+   :width: 60px
+   :align: left
+
+, for all i .
+
+Therefore, this new formulation increases the highest allowed growth factor from
+
+.. image:: /_static/technology_diffusion_eq_4a.png
+   :width: 75px
+   :align: left
+   
+to 
+
+.. image:: /_static/technology_diffusion_eq_4b.png
+   :width: 180px
+
+In addition, the objective function value for period t is modified by the extra term
+
+ .. image:: /_static/technology_diffusion_eq_5.png
+   :width: 140px
+
+which adds costs ci  per additional growth factor utilized. 
 
 
 2.2.3 	Lower Dynamic Constraints on Construction Variables
@@ -221,7 +259,7 @@ where
    :header-rows: 0
 
    * - :math:`\gamma a_{svd,t}^o`
-     - and :math:`ga_{svd,t}^o`are the maximum growth rate and increment as described  in section 2.2.2 (the increment is to be given in units of main output), and
+     - and :math:`ga_{svd,t}^o`are the maximum growth rate and increment, respectively, as described in section 2.2.2 (the increment is to be given in units of main output), and
    * - :math:`zsvd..lt`
      - is the activity of technology :math:`v` in load region :math:l`.
 

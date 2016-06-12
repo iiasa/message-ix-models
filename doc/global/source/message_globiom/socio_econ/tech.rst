@@ -9,7 +9,7 @@ uncertainties that influences model results to a good extent.
 
 Technology cost
 ----------------
-The quantitative assumptions about technology cost sdevelopment are derived from the overarching qualitative SSP narratives (cf. section :ref:`narratives`). In SSP1, for instance, whose
+The quantitative assumptions about technology cost development are derived from the overarching qualitative SSP narratives (cf. section :ref:`narratives`). In SSP1, for instance, whose
 green-growth storyline is more consistent with a sustainable development paradigm, higher rates of technological progress and learning are assumed for renewables and other advanced
 technologies that may replace fossil fuels (e.g., the potential for electric mobility is assumed to be higher in SSP1 compared to SSP2 or SSP3). In contrast, SSP3 assumes limited progress
 across a host of advanced technologies, particularly for renewables and hydrogen; more optimistic assumptions are instead made for
@@ -48,57 +48,4 @@ while still reducing the flip-flop behavior and sudden penetration of technologi
 
    Illustration of maximum technology growth starting at a level of 1 in year t=0 for a set of soft diffusion constraints with effective growth rates r as shown in the legend.
 
-
-For more detailed assumptions, see Annex. **[cross-link to correct section]**
-
-**TO BE PASSED TO ANNEX:**
-
-An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is constraint by dynamic
-constraints that relate the activity a (level of production) in a period t to the activity in the previous period t-1 (Messner and Strubegger, 1995 :cite:`messner_users_1995`).
-Two parameters, an annual increment or startup value s and an annual growth rate r are used to parameterize these dynamic growth constraints. For a period length of one year, the following
-equation describes the dynamic constraints:
-
-.. image:: /_static/technology_diffusion_eq_1.png
-   :width: 160px
-
-Without the startup value s, a technology with a zero activity level in year t-1 would not be able to ever reach a non-zero deployment levels, i.e. a non-zero startup value allows the technology to start growing from zero which would not be possible with a purely exponential growth relationship. Therefore, the value of s governs the technology growth during the early stages of entering the market while the growth rates r predominantly constrain the annual growth once the initial deployment is over.
-
-For an arbitrary period length of T years, the maximum level of technology activity in period t, at , reads as follows:
-
-.. image:: /_static/technology_diffusion_eq_2.png
-
-with the period increment
-
-.. image:: /_static/technology_diffusion_eq_2a.png
-   :width: 120px
-
-To operationalize the concept of soft dynamic constraints, a set of n dummy variables, bi, multiplied by a corresponding growth factor (1+ri)T are added to the dynamic growth constraint in Eq. (1).
-
-.. image:: /_static/technology_diffusion_eq_3.png
-   :width: 340px
-
-The maximum value for these dummy variables bi is limited to the activity of the underlying technology a, i.e.
-
-.. image:: /_static/technology_diffusion_eq_4.png
-   :width: 60px
-   :align: left
-
-, for all i .
-
-Therefore, this new formulation increases the highest allowed growth factor from
-
-.. image:: /_static/technology_diffusion_eq_4a.png
-   :width: 75px
-   :align: left
-
-to
-
-.. image:: /_static/technology_diffusion_eq_4b.png
-   :width: 180px
-
-In addition, the objective function value for period t is modified by the extra term
-
- .. image:: /_static/technology_diffusion_eq_5.png
-   :width: 140px
-
-which adds costs ci  per additional growth factor utilized.
+For a more detailed description of the implementation of technology diffusion constraints, see the Annex Section :ref:`annex_convtech`.
