@@ -1,6 +1,6 @@
 .. _macro:
 
-Macro-economy
+Macro-economy (MACRO)
 ----
 The detailed energy supply model (MESSAGE) is soft-linked to an aggregated macro-economic model (MACRO) which has been adopted from the so-called Global 2100 or ETA-MACRO model 
 (Manne and Richels, 1992 :cite:`manne_buying_1992`), a predecessor of the `MERGE <http://www.stanford.edu/group/MERGE/>`_ model. The reason for linking the two models 
