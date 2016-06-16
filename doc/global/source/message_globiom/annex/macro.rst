@@ -88,7 +88,8 @@ of the model.
 
 .. equation {UTILITY_FUNCTION}
 
-.. math:: {UTILITY} = \displaystyle \sum_{r} \left( \displaystyle \sum_{y |  (  (  {ord}( y )   >  1 )  \wedge  (  {ord}( y )   <   | y |  )  )} {udf}_{r, y} \cdot {log}( C_{r, y} ) \cdot \frac{{duration\_period}_{y} + {duration\_period}_{y-1}}{2} + \displaystyle \sum_{y |  (  {ord}( y )   =   | y |  ) } {udf}_{r, y} \cdot {log} ( C_{r, y} ) \cdot \left( \frac{{duration\_period}_{y-1}}{2} + \frac{1}{{fin\_time}_{r, y}} \right) \right) 
+.. math:: {UTILITY} = \displaystyle \sum_{r} \left( \displaystyle \sum_{y |  (  (  {ord}( y )   >  1 )  \wedge  (  {ord}( y )   <   | y |  )  )} {udf}_{r, y} \cdot {log}( C_{r, y} ) \cdot \frac{{duration\_period}_{y} + {duration\_period}_{y-1}}{2} \right. \\ 
+	\left. + \displaystyle \sum_{y |  (  {ord}( y )   =   | y |  ) } {udf}_{r, y} \cdot {log} ( C_{r, y} ) \cdot \left( \frac{{duration\_period}_{y-1}}{2} + \frac{1}{{fin\_time}_{r, y}} \right) \right) 
 
 The utility discount rate for period :math:`y` is set to :math:`DRATE_{r} - grow_{r,y}`, where :math:`DRATE_{r}` is the discount rate used in MESSAGE, typically set to 5%, 
 and :math:`grow` is the potential GDP growth rate. This choice ensures that in the steady state, the optimal growth rate is identical to the potential GDP growth rates :math:`grow`. 
@@ -173,7 +174,8 @@ first order term using shadow prices :math:`eneprice_{s, y, r}` of the MESSAGE m
 
 .. equation {COST_ENERGY}_{r, y}
 
-.. math:: {EC}_{r, y} = {total\_cost}_{y, r} + \displaystyle \sum_{s} {eneprice}_{s, y, r} \cdot \left( {PHYSENE}_{r, s, y} - {enestart}_{s, y, r} \right) + \displaystyle \sum_{s} \frac{{eneprice}_{s, y, r}}{{enestart}_{s, y, r}} \cdot \left( {PHYSENE}_{r, s, y} - {enestart}_{s, y, r} \right)^2 \qquad \forall{ r, y > 1} 
+.. math:: {EC}_{r, y} = {total\_cost}_{y, r} + \displaystyle \sum_{s} {eneprice}_{s, y, r} \cdot \left( {PHYSENE}_{r, s, y} - {enestart}_{s, y, r} \right) \\
+	+ \displaystyle \sum_{s} \frac{{eneprice}_{s, y, r}}{{enestart}_{s, y, r}} \cdot \left( {PHYSENE}_{r, s, y} - {enestart}_{s, y, r} \right)^2 \qquad \forall{ r, y > 1} 
 
 Finite time horizon correction
 ~~~~
