@@ -159,6 +159,8 @@ The following notation is used in the above equations:
      - is the length of load region :math:`l_m`, the load region with maximum capacity requirements, as fraction of the year.
 
 
+.. _upper_dynamic_constraint_capacity:
+
 2.2.2 	Upper Dynamic Constraints on Construction Variables
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -241,6 +243,7 @@ where
    * - :math:`Yzsvd..t`
      - is the annual new installation of technology :math:`v` in period :math:`t`.
 
+.. _upper_dynamic_constraint_activity:
 
 2.2.4 	Upper Dynamic Constraints on Activity Variables
 ~~~~~~~~~~~~~~~~~~~~~~
