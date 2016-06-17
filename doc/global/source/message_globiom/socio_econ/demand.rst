@@ -19,7 +19,7 @@ sources for the historical and projected datasets are the following:
 
 1. Historical GDP (PPP) – World Bank (World Development Indicators 2012 :cite:`world_bank_group_world_2012`)
 2. Historical Population – UN Population Division (World Population Projection 2010 :cite:`un_population_division_world_2010`)
-3. Historical Final Energy – International Energy Agency Energy Balances (IEA 2012)
+3. Historical Final Energy – International Energy Agency Energy Balances (IEA 2012 :cite:`international_energy_agency_energy_2012`)
 4. Projected GDP (PPP) – Dellink et al (2015 :cite:`dellink_long-term_2015`), see Shared Socio-Economic Pathways database (`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
 5. Projected Population – KC and Lutz (2014 :cite:`kc_human_2014`), see Shared Socio-Economic Pathways database(`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
 
