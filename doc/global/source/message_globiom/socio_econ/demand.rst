@@ -23,8 +23,7 @@ sources for the historical and projected datasets are the following:
 4. Projected GDP (PPP) – Dellink et al (2015 :cite:`dellink_long-term_2015`), see Shared Socio-Economic Pathways database (`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
 5. Projected Population – KC and Lutz (2014 :cite:`kc_human_2014`), see Shared Socio-Economic Pathways database(`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
 
-Using the historical datasets, the scenario generator conducts regressions that describe the historical relationship between the independent variable (GDP (PPP) per capita) and several 
-dependent variables, including total final energy intensity (MJ/2005USD) and the shares of final energy in several energy sectors (%). In the case of final energy intensity, the 
+The scenario generator runs regressions on the historical datasets to establish the relationship between the independent variable (GDP (PPP) per capita) and several dependent variables, including total final energy intensity (MJ/2005USD) and the shares of final energy in several energy sectors (%). In the case of final energy intensity, the 
 relationship is best modeled by a power function so both variables are log-transformed.  In the case of most sectoral shares, only the independent variable is log-transformed. The 
 exception is the industrial share of final energy, which uses a hump-shaped function inspired by Schäfer (2005) :cite:`schafer_structural_2005`. This portion of the model provides the 
 historical relationships between GDP per capita and the dependent variables for each of the eleven MESSAGE regions.
