@@ -71,7 +71,7 @@ Technological change in MESSAGE is generally treated exogenously, although pione
 
 .. _fig-ther:
 .. figure:: /_static/S1ThermoCosts.png
-   :width: 600px
+   :width: 950px
 
    Cost indicators for thermoelectric power-plant investment (Fricko et al., 2016 :cite:`fricko_marker_2016`). 
 
@@ -79,7 +79,7 @@ In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Gr
 
 .. _fig-nonth:
 .. figure:: /_static/S2NonThermoCosts.png
-   :width: 600px
+   :width: 950px
 
    Cost indicators for non-thermoelectric power-plant investment (Fricko et al., 2016 :cite:`fricko_marker_2016`). 
    
