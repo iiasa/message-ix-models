@@ -32,10 +32,10 @@ of energy technologies from resource extraction to transformation, transport, di
 Because few conversion technologies convert resources directly into useful energy, the energy system in MESSAGE is divided into 5 energy levels:
 
 * Resource (r), like coal, oil, natural gas in the ground or biomass on the field
-* Primary (a) energy, like crude oil at the refinery
-* Secondary (x) energy, like gasoline or diesel fuel at the refinery, or wind- or solar power at the powerplant
+* Primary (a) energy, like crude oil input to the refinery
+* Secondary (x) energy, like gasoline or diesel fuel output from the refinery
 * Final (f) energy, like diesel fuel in the tank of a car or electricity at the socket
-* Useful (u) energy that satisfies useful energy demand for providing energy services, like heating, lighting or moving people
+* Useful (u) energy that satisfies useful energy demand for providing energy in the form of end-use services, like heating, lighting or moving people
 
 Technologies can take in from one level and put out at another level or on the same level. The energy forms defined in each level can be envisioned as a transfer hub, 
 that the various technologies feed into or pump away from. The useful energy demand is given as a time series. Technologies can also vary per time period.
