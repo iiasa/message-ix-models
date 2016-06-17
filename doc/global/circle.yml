@@ -1,0 +1,8 @@
+dependencies:
+  pre:
+    - pip install sphinx
+    - pip install sphinxcontrib-bibtex
+
+test:
+  override:
+    - make html
