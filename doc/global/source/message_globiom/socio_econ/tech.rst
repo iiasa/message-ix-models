@@ -14,8 +14,7 @@ green-growth storyline is more consistent with a sustainable development paradig
 technologies that may replace fossil fuels (e.g., the potential for electric mobility is assumed to be higher in SSP1 compared to SSP2 or SSP3). In contrast, SSP3 assumes limited progress
 across a host of advanced technologies, particularly for renewables and hydrogen; more optimistic assumptions are instead made for
 coal-based technologies, not only for power generation but also for liquid fuels production. Meanwhile, the middle-of-the-road SSP2 narrative is characterized by a fairly balanced view
-of progress for both conventional fossil and non-fossil technologies. In this sense, technological development in SSP2 is not biased toward any particular technology group. If it were,
-it would not occupy a middle-of-the-road position between the green-growth and fossil-fuel intensive paradigms of SSP1 and SSP3, respectively.
+of progress for both conventional fossil and non-fossil technologies. In this sense, technological development in SSP2 is not biased toward any particular technology group.
 
 Technological costs vary regionally in all SSPs, reflecting marked differences in engineering and construction costs across countries observed in the real world. Generally, costs start
 out lower in the developing world and are assumed to converge to those of present-day industrialized countries as the former becomes richer throughout the century (thus, the cost
@@ -30,7 +29,7 @@ MESSAGE tracks investments by vintage, an important feature to represent the ine
 (e.g., introduction of stringent climate policy), it is however possible to prematurely retire existing capital stock such as power plants or other energy conversion
 technologies and switch to more suitable alternatives.
 
-An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is constrained
+An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is determined
 by dynamic constraints that relate the construction of a technology added or the activity (level of production) of a technology in a period t to construction or the
 activity in the previous period t-1 (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. sections :ref:`upper_dynamic_constraint_capacity` and :ref:`upper_dynamic_constraint_activity`).
 
