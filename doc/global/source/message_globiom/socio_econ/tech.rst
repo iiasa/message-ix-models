@@ -21,7 +21,7 @@ Technological costs vary regionally in all SSPs, reflecting marked differences i
 out lower in the developing world and are assumed to converge to those of present-day industrialized countries as the former becomes richer throughout the century (thus, the cost
 projections consider both labour and capital components). This catch-up in costs is assumed to be fastest in SSP1 and slowest in SSP3 (where differences remain, even in 2100); SSP2 is in
 between. Estimates for present-day and fully learned-out technology costs are from the Global Energy Assessment (Riahi et al., 2012 :cite:`riahi_chapter_2012`) and World Energy Outlook
-(IEA, 2014). A summary of these cost assumptions can be found in sections :ref:`electricity` and :ref:`other`.
+(IEA, 2014 :cite:`international_energy_agency_world_2014`). A summary of these cost assumptions can be found in sections :ref:`electricity` and :ref:`other`.
 
 
 Technology diffusion
