@@ -1,6 +1,6 @@
 dependencies:
   pre:
-    - sudo apt-get install python-sphinx
+    - sudo apt-get install -y python-sphinx
     - pip install sphinxcontrib-bibtex
 
 test:
