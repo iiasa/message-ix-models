@@ -6,4 +6,4 @@ Biomass energy is another potentially important renewable energy resource in the
 .. figure:: /_static/Availability_BE.png
    :width: 500px
 
-   Availability of bioenergy at different price levels in the MESSAGE-GLOBIOM model for the three SSPs (Fricko et al., 2016 :cite:`fricko_marker_2016`). * typically non-commercial biomass is not traded or sold, however in some cases there is a market – prices range from 0.1-1.5$/GJ (Pachauri et al., 2013 :cite:`pachauri_pathways_2013`) ($ equals 2005 USD).
+   Global bioenergy potential. Availability of bioenergy at different price levels in the MESSAGE-GLOBIOM model for the three SSPs (Fricko et al., 2016 :cite:`fricko_marker_2016`). * typically non-commercial biomass is not traded or sold, however in some cases there is a market – prices range from 0.1-1.5$/GJ (Pachauri et al., 2013 :cite:`pachauri_pathways_2013`) ($ equals 2005 USD).
