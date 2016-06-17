@@ -3,6 +3,7 @@ dependencies:
     - sudo apt-get update
     - sudo apt-get install -y python-sphinx
     - sudo pip install sphinxcontrib-bibtex
+    - sudo pip install sphinx_rtd_theme
 
 test:
   override:
