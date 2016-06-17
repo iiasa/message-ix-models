@@ -45,7 +45,7 @@ Tables :numref:`tab-capfactonshore` and :numref:`tab-capfactoffshore` list the c
 It is important to note that part of the resource that is useable at economically competitive costs is assumed to differ widely (see Section :ref:`electricity`).
 
 .. _tab-pv:
-.. table:: Resource potential (EJ) by region and capacity factor for solar photovoltaic (PV) technology (Johnson et al. in review, :cite:`johnson_vre_2016`).
+.. table:: Resource potential (EJ) by region and capacity factor for solar photovoltaic (PV) technology (Johnson et al. in review, :cite:`johnson_vre_2016`). For a description of each of the regions represented in the table, see :ref:`spatial`.
 
    +----------+---------------------------------------------------------------------------------+
    |          |                                                                                 |
