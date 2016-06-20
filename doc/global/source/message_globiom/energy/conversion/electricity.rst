@@ -8,6 +8,8 @@ Four different nuclear power plant types are represented in MESSAGE-GLOBIOM, i.e
 
 The conversion of five renewable energy sources to electricity is represented in MESSAGE-GLOBIOM (see :numref:`tab-elec`). For wind power, both on- and offshore electricity generation are covered and for solar energy, photovoltaics (PV) and solar thermal (concentrating solar power, CSP) electricity generation are included in MESSAGE (see also sections on :ref:`renewable` and :ref:`syst_integration`).
 
+Most thermal power plants offer the option of coupled heat production (CHP, see :numref:`tab-elec`). This option is modeled as a passout turbine via a penalty on the electricity generation efficiency. In addition to the main electricity generation technologies described in this section, also the co-generation of electricity in conversion technologies primarily devoted to producing non-electric energy carriers (e.g., synthetic liquid fuels) is included in MESSAGE (see section on :ref:`other`).
+
 .. _tab-elec:
 .. table:: List of electricity generation technologies represented in MESSAGE-GLOBIOM by energy source.
 
@@ -64,8 +66,6 @@ The conversion of five renewable energy sources to electricity is represented in
    +------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
    | geothermal       | geothermal power plant                                                                                                                                                                                                                                                                 | yes                      |
    +------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
-
-Most thermal power plants offer the option of coupled heat production (CHP, see :numref:`tab-elec`). This option is modeled as a passout turbine via a penalty on the electricity generation efficiency. In addition to the main electricity generation technologies described in this section, also the co-generation of electricity in conversion technologies primarily devoted to producing non-electric energy carriers (e.g., synthetic liquid fuels) is included in MESSAGE (see section on :ref:`other`).
 
 Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, :numref:`fig-ther` and :numref:`fig-nonth` below provide an overview of costs ranges for a set of key energy conversion technologies (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
