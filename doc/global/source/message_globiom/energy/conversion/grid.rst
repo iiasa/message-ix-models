@@ -48,8 +48,7 @@ absolute wind capacity built, not fraction of load; and the bins differ based on
 parameters obviously being different ones. In contrast, concentrating solar power (CSP) is modeled very much like dispatchable power plants in MESSAGE, because it is assumed to come with 
 several hours of thermal storage, making it almost capable of running in baseload mode.
 
-To ensure adequate flexibility in dispatch, we designed, for MESSAGE, a dynamic shadow price on capacity investments, in particular for wind---dynamic with respect to the amount of wind 
-installed, the relative flexibility of the conventional power supply, and demand-side reliability requirements. For instance, a large amount of storage capacity should, all else being 
+In order to ensure adequate reserve dispatch, dynamic shadow prices are placed on capacity investments of intermittent technologies (e.g., wind and solar). The prices are a function of the cumulative installed capacity of the intermittent technologies, the ability for the convential power supply to act as reserve dispatch, and the demand-side reliability requirements. For instance, a large amount of storage capacity should, all else being 
 equal, lower the shadow price for additional wind. Conversely, an inflexible, coal- or nuclear-heavy generating base should increase the cost of investment in wind by demanding additional 
 expenditures in the form of natural gas or storage or improved demand-side management to maintain system reliability.
 
