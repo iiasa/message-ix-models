@@ -4,8 +4,7 @@ Macro-economy (MACRO)
 ----
 The detailed energy supply model (MESSAGE) is soft-linked to an aggregated macro-economic model (MACRO) which has been adopted from the so-called Global 2100 or ETA-MACRO model 
 (Manne and Richels, 1992 :cite:`manne_buying_1992`), a predecessor of the `MERGE <http://www.stanford.edu/group/MERGE/>`_ model. The reason for linking the two models 
-is to consistently reflect the influence of energy supply costs, as calculated by MESSAGE, in the mix of production factors considered in MACRO, and the effect of changes 
-in energy demand on energy costs. The combined MESSAGE-MACRO model (Messner and Schrattenholzer, 2000 :cite:`messner_messagemacro:_2000`) can generate a consistent
+is to consistently reflect the influence of energy supply costs, as calculated by MESSAGE, in the mix of production factors considered in MACRO, and the effect of changes in energy prices on energy service demands. The combined MESSAGE-MACRO model (Messner and Schrattenholzer, 2000 :cite:`messner_messagemacro:_2000`) can generate a consistent
 economic response to changes in energy prices and estimate overall economic consequences (e.g., GDP or consumption loss) of energy or climate policies.
 
 MACRO is a macroeconomic model maximizing the intertemporal utility function of a single representative producer-consumer in each world region. The optimization result is 
@@ -21,7 +20,7 @@ MACRO’s production function includes six commercial energy demand categories r
 The exact definitions of these costs as a function over all positive quantities of energy cannot be given in closed form because each point of the function would be a result 
 of a full MESSAGE run. However, the optimality conditions implicit in the formulation of MACRO only require the functional values and its derivatives at the optimal point 
 to be consistent between the two sub-models. Since these requirements are therefore only local, most functions with this feature will simulate the combined energy-economic 
-system in the neighborhood of the optimal point. The costs (energy use and imports) and benefits (energy exports) of providing energy in MACRO are approximated by a Taylor 
+system in the neighborhood of the optimal point. The regional costs (energy use and imports) and benefits (energy exports) of providing energy in MACRO are approximated by a Taylor 
 expansion to first order of the energy system costs as calculated by MESSAGE. From an initial MESSAGE model run, the total energy system cost (including costs/revenues from 
 energy trade) and additional abatement costs (e.g., abatement costs from non-energy sources) as well as the shadow prices of the six commercial demand categories by region 
 are passed to MACRO. In addition to the economic implications of energy trade, MACRO also includes the implications of GHG permit trade. 
