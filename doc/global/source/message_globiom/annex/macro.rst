@@ -3,23 +3,25 @@
 Mathematical Formulation: MACRO
 ====
 
-MACRO is based on the macro-economic module of the global energy-economy-climate model Global 2100 :cite:`manne_buying_1992`, a predecesor of the MERGE model :cite:. 
+MACRO is based on the macro-economic module of the global energy-economy-climate model Global 2100 :cite:`manne_buying_1992`, a predecesor of the `MERGE <http://www.stanford.edu/group/MERGE/>`_ model. 
 The original soft-linkage between MACRO and MESSAGE has been described in :cite:`messner_messagemacro:_2000`, but several adjustments have been made compared to this 
 original implementation. The description below builds to a certain degree on these two publications, but deviates in certain places as discussed in the following paragraphs.
-It is worthwhile mentioning that MACRO is as used with MESSAGE has similar origins as the MACRO module of MARKAL-MACRO :cite:`loulou_markal-macro_2004` with the exception of 
+It is worthwhile mentioning that MACRO as used with MESSAGE has similar origins as the MACRO module of MARKAL-MACRO :cite:`loulou_markal-macro_2004` with the exception of 
 being soft-linked rather than hard-linked to the energy systems part of the model.
+
+MACRO is a single-sector macro-economic model, its only sector being the energy sector. All other, non-energy issues, are grouped together and treated as one in the model.
 
 On the one hand, while the version of MACRO described in :cite:`messner_messagemacro:_2000` like the MACRO module of Global 2100 operated
 at the level of electric and non-electric energy demands in the production function, the present version of MACRO operates at the level of the six commercial useful 
-energy demands represented in MESSAGE (link). This change was made in response to electrification becoming a tangible option for the transport sector with the introduction 
+energy demands represented in MESSAGE (:ref:`message`). This change was made in response to electrification becoming a tangible option for the transport sector with the introduction 
 of electric cars over the past decade. Previsouly (and as described in :cite:`messner_messagemacro:_2000`), the electric useful energy demands in MESSAGE had been mapped 
 to electric demand in MACRO and the thermal useful energy demands, non-energy feedstock and transport had been mapped to non-electric demand in MACRO. 
 
 On the other hand, the interface between MACRO and MESSAGE that organizes the iterative information exchange between the two models has been re-implemented in the 
-scripting language R which makes code maintenance and visualization of results (e.g., for visually checking convergence between MACRO and MESSAGE) easier compared to
+scripting language R which makes code maintenance and visualization of results (e.g., for visually checking demand convergence between MACRO and MESSAGE) easier compared to
 the previous implementation in C).
 
-Finally, the parameterization of MACRO has changed in a specific way. As mentioned, the model’s most important input parameters are the projected growth rates of total labor, i.e., 
+Finally, the parameterization of MACRO has changed in a specific way. As mentioned, the modelâ€™s most important input parameters are the projected growth rates of total labor, i.e., 
 the combined effect of labor force and labor productivity growth (note that labor supply growth is also referred to as reference or potential GDP growth.) and the annual rates 
 of reference energy intensity improvements. In all recent applications of MACRO, these are calibrated to be consistent with the developments in a MESSAGE scenario. In practice, 
 this happens by running MACRO and then adjusting the potential GDP growth rates and the autonomous energy efficiency improvements (AEEIs) on a sectoral basis until MACRO does not 
@@ -265,8 +267,8 @@ is typically set to around 1%.
 Constraint on demand response
 ~~~~
 Demand responses from MACRO to MESSAGE can be large if the initial demands are far from the equlibrium demand levels of a specific scenario (e.g., when using demand from a non-climate policy scenario
-as the starting point for a stringent climate mitigation scenario that aims at limiting temperature change to 2°C). To avoid oscillations of demands in subsequent MESSAGE-MACRO iterations, a constraint
-on the maximum permissible demand change between subquent iterations has been introduced which is usually set to 15%. In practical terms this means that the demand response is capped at 15%. 
+as the starting point for a stringent climate mitigation scenario that aims at limiting temperature change to 2Â°C). To avoid oscillations of demands in subsequent MESSAGE-MACRO iterations, a constraint
+on the maximum permissible demand change between subquent iterations has been introduced which is usually set to 15%. In practical terms this means that the demand response is capped at 15% for each type of :ref:`demand` and for each of the 11 MESSAGE :ref:`spatial`. 
 However, under specific conditions - typically under stringent climate policy - when price repsonses to small demand adjustments are large, an oscillating behavior between two sets of demand levels 
 can still occur. In such situations, the constraint on the demand response is reduced further until the changes in demand are less than the convergence criterion mentioned above.
 
