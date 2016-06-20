@@ -75,7 +75,7 @@ Technological change in MESSAGE is generally treated exogenously, although pione
 
    Cost indicators for thermoelectric power-plant investment (Fricko et al., 2016 :cite:`fricko_marker_2016`). 
 
-In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon Capture and Storage; IGCC – Integrated gasification combined cycles; ST – Steam turbine; CT – Combustion turbine; CCGT – Combined cycle gas turbine (Fricko et al., 2016 :cite:`fricko_marker_2016`).
+In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively (see descriptions of the SSP narratives in section :ref:`narratives`). Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. CCS – Carbon Capture and Storage; IGCC – Integrated gasification combined cycles; ST – Steam turbine; CT – Combustion turbine; CCGT – Combined cycle gas turbine (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
 .. _fig-nonth:
 .. figure:: /_static/costind-nonthermo.png
