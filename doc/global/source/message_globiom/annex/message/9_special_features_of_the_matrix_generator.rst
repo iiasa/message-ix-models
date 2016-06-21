@@ -1,3 +1,5 @@
+.. _specialfeatures:
+
 9 Special Features of the Matrix Generator
 ===========================================
 
