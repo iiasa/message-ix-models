@@ -141,6 +141,7 @@ where
    * - :math:`RRrgp..t`
      - is the annual extraction of resource :math:`r`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`.
 
+.. _upperdynamicREC:
 
 3.2.5 	Upper Dynamic Resource Extraction Constraints
 ~~~~~~~~~~~~~~~~~
@@ -166,6 +167,7 @@ where
    * - :math:`RRrgp..t`
      - is the annual extraction of resource :math:`r`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`.
 
+.. _lowerdynamicREC:
 
 3.2.6    Lower Dynamic Resource Extraction  Constraints
 ~~~~~~~~~~~~~~~~~
@@ -202,4 +204,4 @@ and
 
 .. math::
    LRRrg..t
-The same kind of relations as described in sections 3.2.5 and 3.2.6 can be defined per grade of the resource.
+The same kind of relations as described in sections :ref:`upperdynamicREC` and :ref:`lowerdynamicREC` can be defined per grade of the resource.
