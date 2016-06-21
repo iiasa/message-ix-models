@@ -1,10 +1,10 @@
-8 Objective and Cost Counters
+7 Objective and Cost Counters
 =============================
 
-8.1 	Constraints
+7.1 	Constraints
 ---------------------
 
-8.1.1 	Cost Accounting Rows
+7.1.1 	Cost Accounting Rows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The different types of costs (i.e. entries for the objective function) can be accumulated  over all technologies in built-in  accounting rows. These rows can be generated per period or for the whole horizon and contain the sum of the undiscounted costs. They can also be limited. The implemented types are:
@@ -33,7 +33,7 @@ The different types of costs (i.e. entries for the objective function) can be ac
      - total investments (in case of levellized investment costs, see :math:`CCAP`).
 
 
-8.1.2 	The Objective Function
+7.1.2 	The Objective Function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
