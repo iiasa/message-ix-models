@@ -113,7 +113,7 @@ where
 
 For all conversion technologies modelled with capacity variables the capacity constraints will be generated automatically. If the activity variables exist for each load region separately there will be one capacity constraint per load region. If the technology is an end-use technology the sum over the elasticity classes will be included in the capacity constraint.
 
-Additionally  the activity variables of different technologies can be linked to the same capacity variable, which allows to leave the choice of the activity variable used with a given capacity to the optimization.
+Additionally the activity variables of technologies with multiple operation modes (e.g., different fuels) can be linked to the same capacity variable, which allows to leave the choice of the activity variable used with a given capacity to the optimization.
 
 **Technologies without Load Regions**
 
@@ -124,7 +124,7 @@ For technologies without load regions (i.e. technologies, where no input or outp
  
 **Technologies with Varying Inputs and Outputs**
 
-Many types of energy conversion technologies do not have fix relations between their inputs and outputs. MESSAGE has the option to link several activity variables of conversion technologies into one capacity constraint. For the additional activities linked to a capacity variable a coefficient defines the maximum power available in relation to one power unit of the main activity.
+Many types of energy conversion technologies do not have fix relations between their inputs and outputs. MESSAGE has the option to link several activity variables of a conversion technology into one capacity constraint. For the additional activities linked to a capacity variable a coefficient defines the maximum power available in relation to one power unit of the main activity.
 
 In the following this constraint is only described for technologies without load regions; the other types are constructed in analogy.
 
