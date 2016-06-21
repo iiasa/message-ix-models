@@ -30,14 +30,16 @@ where
      - is the main energy output of the technology (demand),
    * - :math:`e`
      - is the level of reduction of demand due to own-price elasticities of demands (does only occur on the demand level; otherwise or if this demand has no elasticities :math:`e = ”.”`),
+   * - :math:`l`
+     - identifies the load region, :math:`l \in \{1, 2, 3, ...\}` or :math:`l` = ”.”`, if the technology is not modelled with load regions, and
    * - :math:`t`
      - identifies the period, :math:`t \in \{a, b, c, ...\}`.
 
 The activity variable of an energy conversion technology is an energy flow variable. It represents the annual consumption of this technology of the main input per period. If a technology has no input, the variable represents the annual production of the main output.
  
-If the level of the main output is *not* U and at least one of the energy carriers consumed or supplied is defined with load regions the technology is defined with load regions. In this case the activity variables are generated separately for each load region, which is indicated by the additional identifier l in position 7. However, this can be changed by fixing the production of the technology over the load regions to a predefined pattern (see section 9.4 **not inlcuded**): one variable is generated for all load regions, the distribution to the load regions is given by the definition of the user (e.g., production pattern of solar power-plants).
+If the level of the main output is *not* U and at least one of the energy carriers consumed or supplied is defined with load regions the technology is defined with load regions. In this case the activity variables are generated separately for each load region, which is indicated by the additional identifier l in position 7. However, this can be changed by fixing the production of the technology over the load regions to a predefined pattern: one variable is generated for all load regions, the distribution to the load regions is given by the definition of the user (e.g., production pattern of solar power-plants).
 
-If the model is formulated with demand elasticities  (see section 9.10 **not included**), the activity variables of technologies with a demand  as main output that is defined with elasticity are generated for each elasticity class (identifier :math:`e` in position 6).
+If the model is formulated with demand elasticities, the activity variables of technologies with a demand  as main output that is defined with elasticity are generated for each elasticity class (identifier :math:`e` in position 6).
 
 2.1.2 	Capacities of Energy Conversion Technologies
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -103,9 +105,9 @@ where
    * - :math:`t`
      - is the period in that the capacity goes into operation.
 
-For all conversion technologies modelled with capacity variables the capacity constraints will be generated automatically. If the activity variables exist for each load region separately there will be one capacity constraint per load region (see also section 9.4). If the technology is an end-use technology the sum over the elasticity classes will be included in the capacity constraint.
+For all conversion technologies modelled with capacity variables the capacity constraints will be generated automatically. If the activity variables exist for each load region separately there will be one capacity constraint per load region. If the technology is an end-use technology the sum over the elasticity classes will be included in the capacity constraint.
 
-Additionally  the activity variables of different technologies can be linked to the same capacity variable, which allows to leave the choice of the activity variable used with a given capacity to the optimization (see section 9.7).
+Additionally  the activity variables of different technologies can be linked to the same capacity variable, which allows to leave the choice of the activity variable used with a given capacity to the optimization.
 
 **Technologies without Load Regions**
 
@@ -118,7 +120,7 @@ For technologies without load regions (i.e. technologies, where no input or outp
 
 Many types of energy conversion technologies do not have fix relations between their inputs and outputs. MESSAGE has the option to link several activity variables of conversion technologies into one capacity constraint. For the additional activities linked to a capacity variable a coefficient defines the maximum power available in relation to one power unit of the main activity.
 
-In the following this constraint is only described for technologies without load regions; the other types are constructed in analogy (see also section 9.7).
+In the following this constraint is only described for technologies without load regions; the other types are constructed in analogy.
 
 .. math::
    \sum_{\sigma {v}'\delta }rel_{\sigma {v}'\delta} ^{svd}\times\epsilon_{\sigma {v}'\delta }\times z\sigma {v}'\delta ...t- \\ \sum_{\tau=t-\tau_{svd}}^{min(t,\kappa_{svd})}\Delta(\tau-1)\times \pi_{svd}\times f_i\times Yzsvd..\tau \leq hc_{svd}^t\times \pi_{svd},
@@ -189,18 +191,18 @@ As described in Keppo and Strubegger (2010 :cite:`keppo_short_2010`) MESSAGE inc
 in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`, 
 :math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{svd,ti})` are added to the upper dynamic constraint described above. 
 
-** notation below needs updating to be consistent with the one from the MESSAGE equations ** 
+**notation below needs updating to be consistent with the one from the MESSAGE equations** 
 
 .. image:: /_static/technology_diffusion_eq_3.png
    :width: 340px
    
-The maximum value for these dummy variables bi is limited to the activity of the underlying technology a, i.e.
+The maximum value for these dummy variables :math:`b^i` is limited to the activity of the underlying technology :math:`a`, i.e.
 
 .. image:: /_static/technology_diffusion_eq_4.png 
    :width: 60px
    :align: left
 
-, for all i .
+, for all :math:`i`.
 
 Therefore, this new formulation increases the highest allowed growth factor from
 
@@ -213,12 +215,12 @@ to
 .. image:: /_static/technology_diffusion_eq_4b.png
    :width: 180px
 
-In addition, the objective function value for period t is modified by the extra term
+In addition, the objective function value for period :math:`t` is modified by the extra term
 
  .. image:: /_static/technology_diffusion_eq_5.png
    :width: 140px
 
-which adds costs ci  per additional growth factor utilized. 
+which adds costs :math:`c_i` per additional growth factor utilized. 
 
 
 2.2.3 	Lower Dynamic Constraints on Construction Variables
@@ -262,9 +264,9 @@ where
    :header-rows: 0
 
    * - :math:`\gamma a_{svd,t}^o`
-     - and :math:`ga_{svd,t}^o`are the maximum growth rate and increment, respectively, as described in section 2.2.2 (the increment is to be given in units of main output), and
+     - and :math:`ga_{svd,t}^o` are the maximum growth rate and increment, respectively, as described in section 2.2.2 (the increment is to be given in units of main output), and
    * - :math:`zsvd..lt`
-     - is the activity of technology :math:`v` in load region :math:l`.
+     - is the activity of technology :math:`v` in load region :math:`l`.
 
 If demand elasticities are modelled, the required sums are included for end-use technologies.
 
