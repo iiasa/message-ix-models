@@ -57,12 +57,12 @@ where
    * - :math:`\tau_{svd}`
      - is the plant life of technology :math:`v` in periods,
    * - :math:`\iota(svd,f)`
-     - is the ”first  inventory”  of technology :math:`v` of :math:`f` (relative to capacity of main output),
+     - is the ”first  inventory” of technology :math:`v` of :math:`f` (relative to capacity of main output),
    * - :math:`\rho(svd,f)`
-     - is the ”last core” of :math:`f` in technology :math:`v`, see also section  5.1.5,
+     - is the ”last core” of :math:`f` in technology :math:`v`, see also section :ref:`resourceextraction`,
    * - :math:`\Delta t`
      - is the length of period :math:`t` in years,
    * - :math:`zfvd..lt`
-     - is the annual input of technology :math:`v` of fuel :math:`f` in load region :math:`l` and period :math:`t` (l is ”.” if v does not have load regions), and
+     - is the annual input of technology :math:`v` of fuel :math:`f` in load region :math:`l` and period :math:`t` (:math:`l` is ”.” if :math:`v` does not have load regions), and
    * - :math:`Yzfvd..t`
      - is the annual new installation of technology :math:`v` in period :math:`t`.
