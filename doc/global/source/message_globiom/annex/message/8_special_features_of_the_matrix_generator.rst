@@ -15,28 +15,20 @@ The whole time horizon of the calculations is divided into periods of optional l
 
 where
 
-.. list-table:: 
-   :widths: 35 65
-   :header-rows: 0
++-------------------------------------------+------------------------------------------------------------+
+| :math:`C_t^r`                             | is the cost figure to be discounted,                       |
++-------------------------------------------+------------------------------------------------------------+
+| :math:`c_t`                               | is the objective function coefficient in period :math:`t`, |
++-------------------------------------------+------------------------------------------------------------+
+| :math:`f_i=\left\{\begin{matrix}          | for costs connected to investments                         |
+| 1\\                                       |                                                            |
++ (1+\frac{dr_t}{100})^{\frac{\Delta t}{2}} +------------------------------------------------------------+
+| \end{matrix}\right.`                      | else, and                                                  |
++-------------------------------------------+------------------------------------------------------------+
+| :math:`dr_k`                              | is the discount rate in period :math:`k`.                  |
++-------------------------------------------+------------------------------------------------------------+
 
-   * - :math:`C_t^r`
-     - is the cost figure to be discounted,
-   * - :math:`c_t`
-     - is the objective function coefficient in period :math:`t`,
-
-.. math::
-   f_i=\left\{\begin{matrix}
-   1 & \textup{for costs connected to investments} \\ 
-   (1+\frac{dr_t}{100})^{\frac{\Delta t}{2}} &  \textup{else, and}
-   \end{matrix}\right.
-
-.. list-table:: 
-   :widths: 35 65
-   :header-rows: 0
-
-   * - :math:`dr_k`
-     - is the discount rate in period :math:`k`.
-
+.. _distributionsofinv:
 
 8.2 	Distributions of Investments
 -----------------------------------
