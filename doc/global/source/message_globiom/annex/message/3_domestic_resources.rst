@@ -28,7 +28,7 @@ where
    * - :math:`t`
      - identifies the period.
 
-The resource variables are energy flow variables and represent the annual rate of extraction of resource :math:`r`. If several grades are defined, one variable per grade is generated (identifier :math:`g` in position 4). Supply elasticities can be defined for resource extraction as described in section 9.11; in this case one variable per elasticity class (identifier :math:`p` in position 5) is generated.
+The resource variables are energy flow variables and represent the annual rate of extraction of resource :math:`r`. If several grades are defined, one variable per grade is generated (identifier :math:`g` in position 4). 
 
 3.2 	Constraints
 ----
@@ -55,7 +55,7 @@ where
    * - :math:`Rrg`
      - is the total amount of resource :math:`r`, cost category :math:`g`, that is available for extraction,
    * - :math:`RRrgp..t`
-     - is the annual extraction of resource :math:`r`, cost category (grade):math:`g` and elasticity class :math:`p` in period :math:`t`,
+     - is the annual extraction of resource :math:`r`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`,
    * - :math:`\Delta t`
      - is the length of period :math:`t`.
    * - :math:`\Delta t_0`
