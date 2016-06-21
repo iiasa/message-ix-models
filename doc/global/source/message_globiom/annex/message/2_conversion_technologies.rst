@@ -9,6 +9,8 @@ Energy conversion technologies, both on the supply and demand side of the energy
 – the amount of energy converted per year in a period (activity  variables) and
 – the capacity installed annually in a period (capacity variables).
 
+.. _activitiesECT:
+
 2.1.1 	Activities  of Energy Conversion Technologies
 ~~~~~~~~~~~~~~~~~~~~~~
 .. math::
@@ -41,6 +43,8 @@ If the level of the main output is *not* U and at least one of the energy carrie
 
 If the model is formulated with demand elasticities, the activity variables of technologies with a demand  as main output that is defined with elasticity are generated for each elasticity class (identifier :math:`e` in position 6).
 
+.. _capacititesECT:
+
 2.1.2 	Capacities of Energy Conversion Technologies
 ~~~~~~~~~~~~~~~~~~~~~~
 .. math:: 
@@ -72,7 +76,7 @@ If a capacity variable is continuous it represents the annual new installations 
 The capacity is defined in relation to the main output of the technology.
 
 2.2 	Constraints
-~~~~~~~~~~~~~~~~~~~~~~
+-------------------
 The rows used to model energy conversion technologies limit
 
 – the utilization of a technology in relation to the capacity actually installed (capacity constraint) and
@@ -132,9 +136,9 @@ The following notation is used in the above equations:
    :header-rows: 0
 
    * - :math:`zsvd..lt`
-     - is the activity of conversion technology :math:`v` in period :math:`t` and, if defined so, load region :math:`l` (see section 2.1.1),
+     - is the activity of conversion technology :math:`v` in period :math:`t` and, if defined so, load region :math:`l` (see section :ref:`activitiesECT`),
    * - :math:`Yzsvd..t`
-     - is the capacity variable of conversion technology :math:`v` (see section 2.1.2).
+     - is the capacity variable of conversion technology :math:`v` (see section :ref:`capacititesECT`).
    * - :math:`\epsilon_{svd}`
      - is the efficiency of technology :math:`v` in converting the main energy input, :math:`s`, into the main energy output, :math:`d`,
    * - :math:`\kappa_{svd}`
@@ -222,6 +226,7 @@ In addition, the objective function value for period :math:`t` is modified by th
 
 which adds costs :math:`c_i` per additional growth factor utilized. 
 
+.. _lowerdynamic:
 
 2.2.3 	Lower Dynamic Constraints on Construction Variables
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -264,7 +269,7 @@ where
    :header-rows: 0
 
    * - :math:`\gamma a_{svd,t}^o`
-     - and :math:`ga_{svd,t}^o` are the maximum growth rate and increment, respectively, as described in section 2.2.2 (the increment is to be given in units of main output), and
+     - and :math:`ga_{svd,t}^o` are the maximum growth rate and increment, respectively, as described in section :ref:`upper_dynamic_constraint_capacity` (the increment is to be given in units of main output), and
    * - :math:`zsvd..lt`
      - is the activity of technology :math:`v` in load region :math:`l`.
 
@@ -286,6 +291,6 @@ where
    :header-rows: 0
 
    * - :math:`\gamma a_{svd,t}`
-     - and :math:`ga_{svd,t}` are the maximum growth rate and increment as described in section 2.2.3, and
+     - and :math:`ga_{svd,t}` are the maximum growth rate and increment as described in section :ref:`lowerdynamic`, and
    * - :math:`zsvd..lt`
      - is the activity of technology :math:`v` in load region :math:`l`.
