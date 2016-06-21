@@ -1,7 +1,7 @@
-5 Energy flows
+4 Energy flows
 ==============
 
-5.1 	Constraints
+4.1 	Constraints
 ----------------
 
 Energy flows are modelled solely by linking the activity  variables of the different conversion technologies and the resource extraction, import and export variables in balance constraints. These constraints ensure that only the amounts of energy available are consumed. There are no further variables required to model energy flows.
@@ -29,7 +29,7 @@ The following description of the energy flow constraints in MESSAGE is given for
 
 The identifier of the demand level (:math:`U`) which gives it a special meaning (see section 2.1.1) and imports and exports are given for primary energy. Clearly any other combination of technologies is also possible.
 
-5.1.1 	Demand Constraints
+4.1.1 	Demand Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -65,7 +65,7 @@ where
      - is the factor giving the relation of total demand for :math:`d` to the demand reduced to level :math:`e` due to the demand elasticity. :math:`(k_e  \times U svd.e.t = U svd.0.t, k_0  = 1, k_e` is increasing monotonously.)
 
 
-5.1.2 	Distribution Balance
+4.1.2 	Distribution Balance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -95,7 +95,7 @@ where
      - is the fraction of demand for :math:`d` occurring in load region :math:`l`.
 
 
-5.1.3 	Transmission or Transportation Balance
+4.1.3 	Transmission or Transportation Balance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -117,7 +117,7 @@ where
 
 all the other entries to the equation are the same as in section 5.1.2.
  
-5.1.4 	Central  Conversion Balance
+4.1.4 	Central  Conversion Balance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -145,7 +145,7 @@ where
    * - :math:`IXscp.lt`
      - and :math:`EXscp.lt` are the import and export variables explained in sections 4.1.1 and 4.1.2, respectively.
 
-5.1.5 	Resource Extraction,  Export  and Import  Balance
+4.1.5 	Resource Extraction,  Export  and Import  Balance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -182,7 +182,7 @@ where
      - is the length of period :math:`t` in years.
 
 
-5.1.6 	Resource Consumption
+4.1.6 	Resource Consumption
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
