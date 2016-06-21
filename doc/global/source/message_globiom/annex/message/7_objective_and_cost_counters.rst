@@ -1,3 +1,5 @@
+.. _objectivecostcounters:
+
 7 Objective and Cost Counters
 =============================
 
@@ -39,7 +41,7 @@ The different types of costs (i.e. entries for the objective function) can be ac
 .. math::
    FUNC
 
-In its usual form the objective function contains the sum of all discounted costs, i.e. all kinds of costs that can be accounted for. All costs related to operation (i.e. resource use, operation costs, costs of demand elasticities,...) are discounted from the middle of the current period to the first year. Costs related to construction are by default discounted from the beginning of the current period to the first year. By using the facility of distributing the investments or accounting during construction these costs can be distributed over some periods before or equal to the current one (see section 10.2). This distribution can also be performed  for user defined relations.
+In its usual form the objective function contains the sum of all discounted costs, i.e. all kinds of costs that can be accounted for. All costs related to operation (i.e. resource use, operation costs, costs of demand elasticities,...) are discounted from the middle of the current period to the first year. Costs related to construction are by default discounted from the beginning of the current period to the first year. By using the facility of distributing the investments or accounting during construction these costs can be distributed over some periods before or equal to the current one (see section :ref:`distributionsofinv`). This distribution can also be performed  for user defined relations.
 
 The objective function has the following general form:
 
