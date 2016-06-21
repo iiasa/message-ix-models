@@ -1,12 +1,12 @@
-6 Stock-piles
+5 Stock-piles
 ===============
 
-6.1 	Variables
+5.1 	Variables
 ---------------
 
 Generally MESSAGE does not generate any variables related to an energy carrier alone. However, in the case of man-made fuels, that are accumulated over time, a variable that shifts the quantities to be transferred from one period to the other is necessary.
 
-6.1.1 	Stock-pile Variables
+5.1.1 	Stock-pile Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -29,10 +29,10 @@ where
 
 The stock-pile variables represent the amount of fuel :math:`f` that is transferred from period :math:`t` into period :math:`t + 1`. Note that these variables do not represent annual quantities, they refer to the period as a whole. These variables are a special type of storage, that just transfers the quantity of an energy carrier available in one period into the next period. Stock-piles are defined  as a separate level. For all other energy carriers any overproduction that occurs in a period is lost.
 
-6.2 	Constraints
+5.2 	Constraints
 -----------------
 
-6.2.1 	Stock-piling Constraints
+5.2.1 	Stock-piling Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
