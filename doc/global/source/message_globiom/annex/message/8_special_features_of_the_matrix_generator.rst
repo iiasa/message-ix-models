@@ -1,11 +1,11 @@
 .. _specialfeatures:
 
-9 Special Features of the Matrix Generator
+8 Special Features of the Matrix Generator
 ===========================================
 
 The mathematical formulation of MESSAGE as presented  in the previous sections shows the structure of all constraints as the matrix generator builds them up. The background of the more complicated features is given here for a better understanding.
 
-9.1 	The  Time  Horizon–Discounting the Costs
+8.1 	The  Time  Horizon–Discounting the Costs
 ----------------------------------------------
 
 The whole time horizon of the calculations is divided into periods of optional length. All variables of MESSAGE are represented  as average over the period they represent, resulting in a step-function. All entries in the objective function are discounted from the middle of the respective period to the first year, if they relate to energy flow variables and from the beginning of that period if they represent power variables. The function to discount the costs has the following form:
@@ -38,7 +38,7 @@ where
      - is the discount rate in period :math:`k`.
 
 
-9.2 	Distributions of Investments
+8.2 	Distributions of Investments
 -----------------------------------
 
 In order to support short term applications of MESSAGE the possibility to distribute the investments for a new built technology over several periods was implemented. The same type of distributions can be applied to entries in user defined relations if they relate to construction. The distribution of investments can be performed in several ways. There is one common parameter that is needed for all of these possibilities, the construction time of the technology [:math:`ct`].
@@ -100,7 +100,7 @@ The distribution of these yearly shares of investments is done starting in the f
 The coefficients of the capacity variables of a technology in a relational constraint can be distributed like the investments.
 
 
-9.3 	The Contribution of Capacities Existing in the Base Year
+8.3 	The Contribution of Capacities Existing in the Base Year
 ---------------------------------------------------------------
 
 The possible contribution of an installation that exists in the base year is kept track of over time. There are two possibilities to give the necessary information to MESSAGE.
@@ -132,7 +132,7 @@ where
 
 The right hand sides in the capacity constraints are derived by summing up all the old capacities that still exist in a certain period (according to the plant life). If the life of a technology expires within a period, MESSAGE takes the average production capacity in this period as installed capacity (this represents a linear interpolation between the starting points of this and the following period).
 
-9.4 	Capacities which Operate  Longer than the Time  Horizon
+8.4 	Capacities which Operate  Longer than the Time  Horizon
 -------------------------------------------------------------
 
 If a capacity of a technology is built in one of the last periods its life time can exceed the calculation horizon. This fact is taken care of by reducing the investment costs by the following formula:
@@ -157,7 +157,7 @@ where
    * - :math:`C_t^r`
      - is the reduced investment.
 
-9.12 	The  Mixed Integer  Option
+8.5 	The  Mixed Integer  Option
 --------------------------------
 
 If the LP-package  used to solve a problem formulated by MESSAGE has the capability to solve mixed integer problems, this can be used to improve the quality of the formulated problems, especially for applications to small regions.
