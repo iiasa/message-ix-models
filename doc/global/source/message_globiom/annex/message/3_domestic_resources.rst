@@ -2,7 +2,7 @@
 ====
 3.1 	Variables
 ----
-Extraction of domestic resources is modelled by variables that represent the quantity extracted per year in a period. A subdivision into cost categories (which are called "grades" in the model) and further into elasticity classes can be modelled.
+Extraction of domestic resources is modelled by variables that represent the quantity extracted per year in a period. A subdivision into cost categories (which are called "grades" in the model) can be modelled.
 
 3.1.1 	Resource Extraction  Variables
 ~~~~~~~~~~~~~~~~~
@@ -35,7 +35,7 @@ The resource variables are energy flow variables and represent the annual rate o
 The overall availability of a resource is limited in the availability constraint per grade, annual resource consumption can be constrained per grade (sum of the elasticity classes) and total. Additionally resource depletion and dynamic resource extraction constraints can be modelled.
 
 
-3.2.1 	Resource Availability per Grade
+3.2.1 	Total Resource Availability per Grade
 ~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -167,7 +167,6 @@ where
    * - :math:`RRrgp..t`
      - is the annual extraction of resource :math:`r`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`.
 
-.. _lowerdynamicREC:
 
 3.2.6    Lower Dynamic Resource Extraction  Constraints
 ~~~~~~~~~~~~~~~~~
@@ -204,4 +203,5 @@ and
 
 .. math::
    LRRrg..t
+
 The same kind of relations as described in sections :ref:`upperdynamicREC` and :ref:`lowerdynamicREC` can be defined per grade of the resource.
