@@ -39,9 +39,9 @@ where
 
 The activity variable of an energy conversion technology is an energy flow variable. It represents the annual consumption of this technology of the main input per period. If a technology has no input, the variable represents the annual production of the main output.
  
-If the level of the main output is *not* U and at least one of the energy carriers consumed or supplied is defined with load regions the technology is defined with load regions. In this case the activity variables are generated separately for each load region, which is indicated by the additional identifier l in position 7. However, this can be changed by fixing the production of the technology over the load regions to a predefined pattern: one variable is generated for all load regions, the distribution to the load regions is given by the definition of the user (e.g., production pattern of solar power-plants).
+If the level of the main output is *not* :math:`U` and at least one of the energy carriers consumed or supplied is defined with load regions the technology is defined with load regions. In this case the activity variables are generated separately for each load region, which is indicated by the additional identifier l in position 7. However, this can be changed by fixing the production of the technology over the load regions to a predefined pattern: one variable is generated for all load regions, the distribution to the load regions is given by the definition of the user (e.g., production pattern of solar power-plants).
 
-If the model is formulated with demand elasticities, the activity variables of technologies with a demand  as main output that is defined with elasticity are generated for each elasticity class (identifier :math:`e` in position 6).
+If the model is formulated with demand elasticities, the activity variables of technologies with a demand  as main output that is defined with elasticity are generated for each elasticity class (identifier :math:`e` in position 0).
 
 .. _capacititesECT:
 
@@ -169,7 +169,7 @@ The following notation is used in the above equations:
 
 .. _upper_dynamic_constraint_capacity:
 
-2.2.2 	Upper Dynamic Constraints on Construction Variables
+2.2.2 	Dynamic Constraints on Activity and Construction Variables
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
