@@ -1,7 +1,7 @@
 References
 ================
 
-.. bibliography:: bibs/main.bib
+.. bibliography:: /bibs/main.bib
    :style: plain 
    :all:
 
