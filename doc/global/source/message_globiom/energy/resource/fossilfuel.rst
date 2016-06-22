@@ -31,7 +31,7 @@ possible, but yet to be found. The remainder are ‘Undiscovered resources’ an
    * - Source
      - MESSAGE (Rogner et al., 1997 :cite:`rogner_assessment_1997`)
      - Rogner et al., 2012 :cite:`rogner_chapter_2012`
-     - 
+     - Rogner et al., 2012 :cite:`rogner_chapter_2012`
    * - 
      - Reserves+Resources [ZJ] 
      - Reserves [ZJ]
