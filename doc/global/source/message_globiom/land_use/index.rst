@@ -14,4 +14,4 @@ We conduct our analysis using the Global Biosphere Management Model (GLOBIOM)  (
 .. figure:: /_static/GLOBIOM_land_cover.png
    :width: 900px
 
-Land cover representation in GLOBIOM and the matrix of endogenous land cover change possibilities (Havlík et al., 2014 :cite:`havlik_climate_2014`).
+   Land cover representation in GLOBIOM and the matrix of endogenous land cover change possibilities (Havlík et al., 2014 :cite:`havlik_climate_2014`).
