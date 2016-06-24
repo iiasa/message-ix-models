@@ -27,3 +27,14 @@ GLOBIOM explicitly covers production of each of the 18 world major crops represe
 Forestry
 ----
 The forestry sector is represented in GLOBIOM with five categories of primary products (pulp logs, saw logs, biomass for energy, traditional fuel wood, and other industrial logs) which are consumed by industrial energy, cooking fuel demand, or processed and sold on the market as final products (wood pulp and sawnwood). These products are supplied from managed forests and short rotation plantations. Harvesting cost and mean annual increments are informed by the G4M global forestry model (Kindermann, Obersteiner et al. 2006) which in turn calculates them based on thinning strategies and length of the rotation period.
+
+Land use change
+----
+The model optimizes over six land cover types: cropland, grassland, short rotation plantations, managed forests, unmanaged forests and other natural land. Economic activities are associated with the first four land cover types. There are other three land cover types represented in the model: other agricultural land, wetlands, and not relevant (bare areas, water bodies, snow and ice, and artificial surfaces). These three categories are currently kept constant. Each Simulation Unit can contain the nine land cover types. The base year spatial distribution of land cover is based on the Global Land Cover 2000 (GLC2000). However, as any other global dataset of this type, GLC2000 suffers from large uncertainty (Fritz, See et al. 2011). Therefore auxiliary datasets and procedures are used to transform this “raw” data into a consistent dataset corresponding to the model needs. An example of such a transformation is presented in section 2.4 concerning grasslands.
+
+.. _fig-globiom_land:
+
+.. figure:: /_static/GLOBIOM_land_cover.png
+   :width: 900px
+
+   Land cover representation in GLOBIOM and the matrix of endogenous land cover change possibilities (Havlík et al., 2014 :cite:`havlik_climate_2014`).
