@@ -90,3 +90,8 @@ Herd dynamics constraints need however to be respected. First, dairy herds are c
 
 For monogastrics, we make the assumption that all additional supply will come from industrial systems and hence the number of animals in other systems is kept constant (Keyzer, Merbis et al. 2005). 
 
+GHG emissions
+====
+Livestock emissions
+----
+In GLOBIOM, we assign the following emission accounts to livestock directly: CH4 from enteric fermentation, CH4 and N2O from manure management, and N2O from excreta on pasture (N2O from manure applied on cropland is reported in a separate account linked to crop production). In brief, CH4 from enteric fermentation is a simultaneous output of the feed-yield calculations done with the RUMINANT model, as well as nitrogen content of excreta and the amount of volatile solids. The assumptions about proportions of different manure management systems, manure uses, and emission coefficients are based on detailed literature review. Detailed description of how these coefficients have been determined including the literature review is provided in (Herrero, Havlik et al. forthcoming).
