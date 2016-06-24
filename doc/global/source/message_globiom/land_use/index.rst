@@ -84,3 +84,9 @@ The EPIC model was the best fit for much of Europe and Eastern Asia, where most 
 
 Livestock dynamics
 ----
+In general, the number of animals of a given species and production type in a particular production system and Supply Unit is an endogenous variable. This means that it will decrease or increase in relation to changes in demand and the relative profitability with respect to competing activities.
+
+Herd dynamics constraints need however to be respected. First, dairy herds are constituted of adult females and followers, and expansion therefore occurs in predefined proportions in the two groups. Moreover, for regions where the specialized meat herds are insignificant (no suckler cows), expansion of meat animals (surplus heifers and males) is also assumed proportional in size to the dairy herd. The ruminants in urban systems are not allowed to expand because this category is not well known and because it is fairly constrained by available space in growing cities. Finally, we do not consider decrease of animals per system and production type higher than 15 per cent per 10 years period, and no increase by more than 100 per cent on the same period. At the level of individual systems, the decrease can however be as deep as 50 per cent per system on a single period.
+
+For monogastrics, we make the assumption that all additional supply will come from industrial systems and hence the number of animals in other systems is kept constant (Keyzer, Merbis et al. 2005). 
+
