@@ -30,3 +30,5 @@ The model optimizes over six land cover types: cropland, grassland, short rotati
    :width: 900px
 
    Land cover representation in GLOBIOM and the matrix of endogenous land cover change possibilities (Havlík et al., 2014 :cite:`havlik_climate_2014`).
+
+Land conversion over the simulation period is endogenously determined for each Supply Unit within the available land resources. Such conversion implies a conversion cost – increasing with the area of land converted - that is taken into account in the producer optimization behavior. Land conversion possibilities are further restricted through biophysical land suitability and production potentials, and through a matrix of potential land cover transitions (Fig. 1). 
