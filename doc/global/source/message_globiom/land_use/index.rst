@@ -15,3 +15,7 @@ We conduct our analysis using the Global Biosphere Management Model (GLOBIOM)  (
    :width: 900px
 
    Land cover representation in GLOBIOM and the matrix of endogenous land cover change possibilities (Havlík et al., 2014 :cite:`havlik_climate_2014`).
+   
+A grid cell structure
+----
+All supply-side data are implemented in the model at the level of gridcell-based Simulation Units (Skalsky, Tarasovicova et al. 2008). In total, 212,707 Simulation Units are delineated by clustering 5 x 5 minutes of arc pixels according to five criteria: altitude, slope, and soil class, 0.5 x 0.5 degrees grid, and the country boundaries. For the present study, in order to ease computation time with the livestock module, the input datasets and the model resolution were agregated to 2 x 2 degree cells disaggregated only by country boundaries and by three agro-ecological zones used in the livestock production system classification: arid, humid, temperate and tropical highlands. This led to a total of 10,894 different Supply Units.
