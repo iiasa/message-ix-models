@@ -12,10 +12,11 @@ A grid cell structure
 ----
 All supply-side data are implemented in the model at the level of gridcell-based Simulation Units (Skalsky, Tarasovicova et al. 2008). In total, 212,707 Simulation Units are delineated by clustering 5 x 5 minutes of arc pixels according to five criteria: altitude, slope, and soil class, 0.5 x 0.5 degrees grid, and the country boundaries. For the present study, in order to ease computation time with the livestock module, the input datasets and the model resolution were agregated to 2 x 2 degree cells disaggregated only by country boundaries and by three agro-ecological zones used in the livestock production system classification: arid, humid, temperate and tropical highlands. This led to a total of 10,894 different Supply Units.
 
-Agricultural production
-----
-GLOBIOM explicitly covers production of each of the 18 world major crops representing more than 70% of the total harvested area and 85% of the vegetal calorie supply as reported by FAOSTAT. Each crop can be produced under different management systems depending on their relative profitability: subsistence, low input rainfed, high input rainfed, and high input irrigated, when water resources are available. For each of the four systems, crop yields are calculated at the Simulation Unit level on the basis of soil, slope, altitude and climate information, using the EPIC model (Williams and Singh 1995). Within each management system, input structure is fixed following a Leontieff production function. But crop yields can change in reaction to external socio-economic drivers through switch to another management system or reallocation of the production to a more or less productive Supply Unit. Besides the endogennous mechanisms, an exogenous component representing longterm technological change is also considered. The livestock sector - the key component of this paper - is presented separately in section 2.
+.. toctree::
+   :maxdepth: 1
 
+   crop
+   
 Forestry
 ----
 The forestry sector is represented in GLOBIOM with five categories of primary products (pulp logs, saw logs, biomass for energy, traditional fuel wood, and other industrial logs) which are consumed by industrial energy, cooking fuel demand, or processed and sold on the market as final products (wood pulp and sawnwood). These products are supplied from managed forests and short rotation plantations. Harvesting cost and mean annual increments are informed by the G4M global forestry model (Kindermann, Obersteiner et al. 2006) which in turn calculates them based on thinning strategies and length of the rotation period.
