@@ -15,6 +15,6 @@ framework.
    macro
    land_use/index
    emissions/index
-   climate/climate
+   climate/index
    bibliography
    annex/index
