@@ -2,10 +2,10 @@
 
 Technological change
 ======================
-Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been
-done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is
-generally derived from the relevant engineering literature. For the future alternative cost and performance projections are developed to cover a relatively wide range of
-uncertainties that influences model results to a good extent.
+Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change via learning curves in energy-engineering type
+models (Messner, 1997 :cite:`messner_endogenized_1997`) and the dependence of technology costs on market structure has been done with MESSAGE (Leibowicz, 2015 :cite:`leibowicz_growth_2015`).
+The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future
+alternative cost and performance projections are developed to cover a relatively wide range of uncertainties that influences model results to a good extent.
 
 Technology cost
 ----------------
