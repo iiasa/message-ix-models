@@ -9,8 +9,6 @@ original implementation. The description below builds to a certain degree on the
 It is worthwhile mentioning that MACRO as used with MESSAGE has similar origins as the MACRO module of MARKAL-MACRO :cite:`loulou_markal-macro_2004` with the exception of 
 being soft-linked rather than hard-linked to the energy systems part of the model.
 
-MACRO is a single-sector macro-economic model, its only sector being the energy sector. All other, non-energy issues, are grouped together and treated as one in the model.
-
 On the one hand, while the version of MACRO described in :cite:`messner_messagemacro:_2000` like the MACRO module of Global 2100 operated
 at the level of electric and non-electric energy demands in the production function, the present version of MACRO operates at the level of the six commercial useful 
 energy demands represented in MESSAGE (:ref:`message`). This change was made in response to electrification becoming a tangible option for the transport sector with the introduction 
@@ -217,7 +215,7 @@ setting the labor force index in the base year to 1 (numeraire) and solving for 
 
 Macro-economic parameters
 ~~~~
-Given that MESSAGE includes endogenous energy efficiency improvements in end-use technologies as well as significant final-to-useful energy efficiency improvements via fuel switching 
+Given that MESSAGE includes (exogenous) energy efficiency improvements in end-use technologies as well as significant potential final-to-useful energy efficiency improvements via fuel switching 
 (e.g., via electrification of thermal demands and transportation), for the elasticity of substitution between capital-labor and total energy demand :math:`\epsilon_r` in MACRO  we choose 
 relatively low values in the range of 0.2 and 0.3. The elasticities are region-dependent with developed regions :math:`r \in \{NAM, PAO, WEU\}` assumed to have higher elasticities of 0.3, 
 economies in transition :math:`r \in \{EEU, FSU\}` intermediate values of 0.25 and developing regions :math:`r \in \{AFR, CPA, LAM, MEA, PAS, SAS\}` the lowest elasticities of 0.2.
