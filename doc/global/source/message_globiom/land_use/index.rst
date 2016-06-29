@@ -40,7 +40,7 @@ Food demand is in GLOBIOM endogenous and depends on population, gross domestic p
 
 Our demand function has the virtue of being easy to linearize which allows us to solve GLOBIOM as a linear program. This is currently necessary because of the size of the model and the current performance of non-linear solvers. However, this demand function has although some limitations which need to be kept in mind when considering the results obtained with respect to climate change mitigation and food availability. One of them is that we do not consider direct substitution effects on the consumer side which could be captured through cross price demand elasticities. Such a demand representation could lead to increased consumption of some products like legumes or cereals when prices of GHG intensive products like rice or beef would go up as a consequence of a carbon price targeting emissions for the agricultural sector. Neglecting the direct substitution effects may lead to an overestimation of the negative impact of such mitigation policies on total food consumption. However, the effect on emissions would be only of second order, because consumption would increase for commodities the least affected by the carbon price, and hence the least emission intensive. Although we do not represent the direct substitution effects on the demand side, substitution can still occur due to changes in prices on the supply side and can in some cases lead to a partial compensation of the decreased demand for commodities affected the most by a mitigation policy. This phenomenon can be observed in our results for mitigation policies targeting the livestock sector only (Fig. 4. In the main text). 
 
-Livestock data
+Livestock
 ====
 
 Livestock population
