@@ -19,7 +19,9 @@ Model Details
    :maxdepth: 1
 
    crop
+   livestock
    forest
+   land use
 
 Land use change
 ----
