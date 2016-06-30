@@ -21,8 +21,8 @@ Model Details
    crop
    livestock
    forest
-   land use
-   food demand
+   land 
+   food 
 
 Land use change
 ----
