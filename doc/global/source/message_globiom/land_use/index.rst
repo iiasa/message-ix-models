@@ -22,6 +22,7 @@ Model Details
    livestock
    forest
    land use
+   food demand
 
 Land use change
 ----
