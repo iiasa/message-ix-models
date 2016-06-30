@@ -8,13 +8,12 @@ As a systems engineering optimization model, MESSAGE is used for medium- to long
 extraction, imports and exports, conversion, transport, and distribution, to the provision of energy end-use services such as light, space conditioning, industrial 
 production processes, and transportation. In addition, MESSAGE links to GLOBIOM (GLObal BIOsphere Model, cf. Section :ref:`globiom`) to consistently assess the implications 
 of utilizing bioenergy of different types and to integrate the GHG emissions from energy and land use and to the aggregated macro-economic model MACRO (cf. Section :ref:`macro`)
-to assess econmic implications and to capture economic feedbacks.
+to assess economic implications and to capture economic feedbacks.
 
-MESSAGE covers all greenhouse gas (GHG)-emitting sectors, including energy, industrial processes as well as - through its linkage to GLOBIOM - agriculture and forestry, 
-for a full basket of greenhouse gases and other radiatively active gases, including CO2, CH4 ,N2O, NOx, volatile organic compounds (VOCs), CO, SO2, BC/OC, CF4, C2F6, 
-HFC125, HFC134a, HFC143a, HFC227ea, HFC245ca and SF6. MESSAGE is used in conjunction with MAGICC (Model for Greenhouse gas Induced Climate Change) version 6.8 (cf. Section 
-:ref:`magicc`) for calculating internally consistent scenarios for atmospheric concentrations, radiative forcing, annual-mean global surface air temperature and 
-global-mean sea level implications.
+MESSAGE covers all greenhouse gas (GHG)-emitting sectors, including energy, industrial processes as well as - through its linkage to GLOBIOM - agriculture and forestry. 
+The emissions of the full basket of greenhouse gases including CO2, CH4, N2O and F-gases (CF4, C2F6, HFC125, HFC134a, HFC143a, HFC227ea, HFC245ca and SF6) as well as other radiatively 
+active gases, such as NOx, volatile organic compounds (VOCs), CO, SO2, and BC/OC is represented in hte model. MESSAGE is used in conjunction with MAGICC (Model for Greenhouse gas 
+Induced Climate Change) version 6.8 (cf. Section :ref:`magicc`) for calculating atmospheric concentrations, radiative forcing, and annual-mean global surface air temperature increase.
 
 The model is designed to formulate and evaluate alternative energy supply strategies consonant with the user-defined constraints such as limits on new investment, fuel 
 availability and trade, environmental regulations and market penetration rates for new technologies. Environmental aspects can be analysed by accounting, and if necessary 

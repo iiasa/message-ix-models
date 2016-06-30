@@ -13,7 +13,7 @@ Limitations of switching to alternative fuels may occur for example as a result 
 
    Schematic diagram of the stylized transport sector representation in MESSAGE.
 
-The demand for international shipping is modeled in a very simple way with a number of different energy carrier options (light and heavy fuel oil, biofuels, natural gas, and hydrogen). As discussed in the demand section, the demand for international shipping is coupled to global GDP development with an income elasticity.
+The demand for international shipping is modeled in a simplified way with a number of different energy carrier options (light and heavy fuel oil, biofuels, natural gas, and hydrogen). The demand for international shipping is coupled to global GDP development with an income elasticity, but to date no demand response in mitigation scenarios is implemented.
 
 :numref:`tab-trans` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for transport (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
