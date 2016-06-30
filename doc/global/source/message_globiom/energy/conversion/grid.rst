@@ -62,11 +62,12 @@ often do involve real energy generation, and variable renewable technologies gen
 Electric-sector flexibility in MESSAGE is represented as follows: each generating technology is assigned a coefficient between -1 and 1 representing (if positive) the fraction of 
 generation from that technology that is considered to be flexible or (if negative) the additional flexible generation required for each unit of generation from that technology. Load also 
 has a parameter (a negative one) representing the amount of flexible energy the system requires solely to meet changes and uncertainty in load. :numref:`tab-flex` below displays the 
-parameters that resulted from the unit-commitment scenarios. Technologies that were not included in the unit-commitment model (nuclear, H2 electrolysis, solar PV) have estimated 
-coefficients.
+parameters that were estimated using a unit-commitment model that commits and dispatches a fixed generation system at hourly resolution to meet load an ancilliary service requirements
+while hewing to generator and transmission operation limitations (Sullivan et al., 2013 :cite:`sullivan_electric_2013`). Technologies that were not included in the unit-commitment model 
+(nuclear, H2 electrolysis, solar PV) have estimated coefficients.
 
 .. _tab-flex:
-.. table :: Flexibility Coefficients by Technology.
+.. table :: Flexibility Coefficients by Technology (Sullivan et al., 2013 :cite:`sullivan_electric_2013`).
 
    +---------------------+-----------------------+
    | Technology          | Flexibility Parameter |
@@ -100,5 +101,5 @@ coefficients.
 
 Thus, a technology like a simple-cycle natural gas plant, used almost exclusively for ancillary services, has a flexibility coefficient of 1, while a coal plant, which provides mostly 
 bulk power but can supply some ancillary services, has a small, positive coefficient. Electric storage systems (e.g. pumped hydropower, compressed air storage, flow batteries) and 
-flexible demand-side technologies like hydrogen-production contribute as well.Meanwhile, wind power and solar PV, which require additional system flexibility to smooth out fluctuations, 
+flexible demand-side technologies like hydrogen-production contribute as well. Meanwhile, wind power and solar PV, which require additional system flexibility to smooth out fluctuations, 
 have negative flexibility coefficients.
