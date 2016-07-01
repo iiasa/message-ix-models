@@ -49,7 +49,7 @@ Both the CENTURY and EPIC models were used to estimate forage production in mesi
 .. figure:: /_static/GLOBIOM_forage_livestock.png
    :width: 800px
 
- Forage available for livestock in tonnes of dry matter per hectare as the result of combination of outputs from the CENTURY and EPIC models.
+   Forage available for livestock in tonnes of dry matter per hectare as the result of combination of outputs from the CENTURY and EPIC models.
  
 The EPIC model was the best fit for much of Europe and Eastern Asia, where most of the forage production is in intensively-managed grasslands. The EPIC simulations used the same soil and climatic drivers as the CENTURY runs plus topography data (high-resolution global Shuttle Radar Topography Mission digital elevation model (SRTM) and the Global 30 Arc Second Elevation Data (GTOPO30). Warm and cold seasonal grasses were simulated in EPIC, and the simulations included a range of management intensities represented by different levels of nitrogen fertilizer inputs and off-take rates. The most intensive management minimizing nitrogen stress and applying 80% off-take rates (EPIC_INT) was found to be the best match for South Korea. Highly fertilized grasslands but with an off-take rate of 50% only were identified in Western Europe, China and Japan (EPIC_MID), and finally extensive management, only partially satisfying the nitrogen requirements and considering 20% off-take rates corresponded best to Central and Northern Europe and South-East Asia (EPIC_EXT). The resulting hybrid forage availability map is represented in Fig. 3.
 
