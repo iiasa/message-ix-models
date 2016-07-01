@@ -19,20 +19,19 @@ In order to put our numbers in perspective with other sources we compared them w
 
 Our 2000 data for crops are overall about 11% higher than Tubiello et al., mainly because of rice where we are closer to EPA (EPA 2012 :cite:`environmental_protection_agency_epa_US_2012`) which is higher than Tubiello et al. For livestock, we are by some 18% lower than Tubiello et al. So in total we have about 10% GHG emissions less in 2000 than the values reported. The year 2010 is already the result of simulations and hence may be interesting to compare with the data. In order to facilitate the comparison, we have included the columns e), f) and g) in Table 1. Columns e) and f) compare GLOBIOM data for 2000 and projections for 2010 respectively, with numbers reported by Tubiello et al. Column g) compares the relative change in emissions between 2000 and 2010 from these two sources (1.00 would indicate the same relative change in GLOBIOM and in Tubiello et al.). We can see that the relative change in total agricultural emissions in GLOBIOM is the same as the development reported by Tubiello et al. – an increase by 11%. The behavior of GLOBIOM is over this period very close to the reported trends also at the level of individual accounts. The only exception is emissions from manure management where the relative change projected in GLOBIOM is by 13% higher than the relative change observed in the Tubiello’s numbers. 
 
-.. _tab-agri-ghg:
+.. _tab-globff:
 .. list-table:: Comparison of agricultural GHG emissions from GLOBIOM and from FAO for the years 2000 and 2010
-   :widths: 20 15 15 15 15 15 15 20
    :header-rows: 3
 
-   * - 
-     - (1) GLOBIOM
-     - 
-     - (2) Tubiello et al. 
-     - 
+   * -
+     - 1 GLOBIOM
      -
-     - (1)/(2)
+     - 2 Tubiello et al.
      -
-   * - 
+     -
+     - 1 / 2
+     -
+   * -
      - a)
      - b)
      - c)
@@ -40,7 +39,7 @@ Our 2000 data for crops are overall about 11% higher than Tubiello et al., mainl
      - e)
      - f)
      - g)
-   * -  
+   * - 
      - 2000
      - 2010
      - 2000
@@ -80,7 +79,7 @@ Our 2000 data for crops are overall about 11% higher than Tubiello et al., mainl
      - 1.29
      - 1.26
      - 0.98
-  * - Livestock
+   * - Livestock
      - 2,362
      - 2,625
      - 2,893
@@ -88,7 +87,7 @@ Our 2000 data for crops are overall about 11% higher than Tubiello et al., mainl
      - 0.82
      - 0.84
      - 1.03
-* - Enteric fermentation
+   * - Enteric fermentation
      - 1,502
      - 1,661
      - 1,863
@@ -96,7 +95,7 @@ Our 2000 data for crops are overall about 11% higher than Tubiello et al., mainl
      - 0.81
      - 0.82
      - 1.02
-* - Manure on pastures
+   * - Manure on pastures
      - 403
      - 441
      - 682
@@ -104,7 +103,7 @@ Our 2000 data for crops are overall about 11% higher than Tubiello et al., mainl
      - 0.59
      - 0.58
      - 0.98
-* - Manure management
+   * - Manure management
      - 457
      - 524
      - 348
@@ -112,7 +111,7 @@ Our 2000 data for crops are overall about 11% higher than Tubiello et al., mainl
      - 1.31
      - 1.48
      - 1.13
-* - Total Agriculture
+   * - Total Agriculture
      - 3,601
      - 3,991
      - 4,007
