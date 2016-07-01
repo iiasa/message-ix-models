@@ -6,5 +6,3 @@ Socio-economic development
 
    narratives
    pop_GDP
-   demand
-   tech

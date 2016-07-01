@@ -1,7 +1,7 @@
 .. _demand:
 
-Demand
-========
+Energy demand
+=============
 Baseline energy service demands are provided exogenously to MESSAGE, though they can be adjusted endogenously based on energy prices using the MESSAGE-MACRO link. There are seven energy 
 service demands that are provided to MESSAGE, including:
 

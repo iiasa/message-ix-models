@@ -49,3 +49,6 @@ The mathematical formulation of MESSAGE ensures that the flows are consistent: d
    transport
    resid_commerc
    industrial
+   energy
+   tech
+
