@@ -45,6 +45,12 @@ Forage productivity was estimated using the CENTURY (Parton, Schimel et al. 1987
 
 Both the CENTURY and EPIC models were used to estimate forage production in mesic, more productive regions. For the CENTURY model, forage yield was simulated using a highly-productive, warm-season grass parameterization. Production was modeled in all cells and applied to areas of planted pasture, which were estimated based on biomes that were not native rangelands, but were under pasture in 2006 according to Ramankutty (Ramankutty, Evan et al. 2008 :cite:`ramankutty_farming_2008`). Pastures were replanted in the late winter every ten years, with grazing starting in the second year. Observed monthly precipitation and minimum and maximum temperatures between 1901 and 2006 were from the CRU Time Series data, CRU TS30 (Mitchell and Jones 2005 :cite:`mitchell_improved_2005`) Soils data were derived from the FAO Soil Map of the World, as modified by (Reynolds, Jackson et al. 2000 :cite:`reynolds_estimating_2000`). CENTURY model output for productive pastures (CENTURY_MGT) were the best-match for area/forage demand in much of the world with a mixture of mesic and drier pastures.
 
+.. _fig-forage-livestock:
+.. figure:: /_static/GLOBIOM_forage_livestock.png
+   :width: 800px
+
+ Forage available for livestock in tonnes of dry matter per hectare as the result of combination of outputs from the CENTURY and EPIC models.
+ 
 The EPIC model was the best fit for much of Europe and Eastern Asia, where most of the forage production is in intensively-managed grasslands. The EPIC simulations used the same soil and climatic drivers as the CENTURY runs plus topography data (high-resolution global Shuttle Radar Topography Mission digital elevation model (SRTM) and the Global 30 Arc Second Elevation Data (GTOPO30). Warm and cold seasonal grasses were simulated in EPIC, and the simulations included a range of management intensities represented by different levels of nitrogen fertilizer inputs and off-take rates. The most intensive management minimizing nitrogen stress and applying 80% off-take rates (EPIC_INT) was found to be the best match for South Korea. Highly fertilized grasslands but with an off-take rate of 50% only were identified in Western Europe, China and Japan (EPIC_MID), and finally extensive management, only partially satisfying the nitrogen requirements and considering 20% off-take rates corresponded best to Central and Northern Europe and South-East Asia (EPIC_EXT). The resulting hybrid forage availability map is represented in Fig. 3.
 
 Livestock dynamics
