@@ -2,7 +2,7 @@
 
 Transport
 ============
-The most commonly applied MESSAGE transport sector representation is very stylized and essentially includes fuel switching and price-elastic demands (via MACRO linkage) as the main responses to energy and climate policy.
+The most commonly applied MESSAGE transport sector representation is very stylized and essentially includes fuel switching and price-elastic demands (via MACRO linkage) as the main responses to energy and climate policy (see :numref:`fig-trans`).
 
 In this stylized transport sector representation fuel switching is a main option, i.e. different final energy forms that provide energy for transportation can be chosen from. In addition to the alternative energy carriers that serve as input to these stylized transportation options, their relative efficiencies are also different. The useful energy demand in the transportation sector is specified as internal combustion engine (ICE) equivalent demands which therefore by definition has a conversion efficiency of final to useful energy of 1. Relative to that the conversion efficiency of alternative fuels is higher, for example, electricity in 2010 has about a factor of three higher final to useful efficiency than the regular oil-product based ICE. The overall efficiency improvements of the ICE in the transportation sector and modal switching over time is implicitly included in the demand specifications, coming from the scenario generator (see section on demand). Additional demand reduction in response to price increases in policy scenarios then occurs via the fuel switching option (due to the fuel-specific relative efficiencies) as well as via the linkage with the macro-economic model MACRO as illustrated in :numref:`fig-trans` below.
 
