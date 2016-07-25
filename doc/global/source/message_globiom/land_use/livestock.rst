@@ -25,7 +25,7 @@ The aggregate GRAINS input group is harmonized with feed quantities as reported 
 
 STOVER is supposed less mobile than GRAINS, therefore stover demand in GLOBIOM is forced to match supply at grid level. The demand is mostly far below the stover availability. In the cells where this is not the case, the same system of reserve is implemented as for the grains. No adjustments are done to the feed rations as such.
 
-There are unfortunately no worldwide statistics available on either consumption or production of grass. Hence we had to rely for grass requirements entirely on the values calculated with RUMINANT, and use them to estimate the grassland extent and productivity. This procedure is described in the next section.
+There are unfortunately no worldwide statistics available on either consumption or production of grass. Hence grass requirements were entirely based on the values calculated with RUMINANT, and were used to estimate the grassland extent and productivity. (This procedure is described in the next section.)
 
 Finally, the feed aggregate OTHER is represented in a simplified way, where it is assumed that it is satisfied entirely from a reserve in the base year, and all additional demand needs to be satisfied by forage production on grasslands.
 
