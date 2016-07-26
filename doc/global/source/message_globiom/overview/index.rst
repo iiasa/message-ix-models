@@ -6,7 +6,7 @@ The IIASA IAM framework consists of a combination of five different models or mo
 model GAINS, the aggregated macro-economic model MACRO and the simple climate model MAGICC - which complement each other and are specialized in different areas. 
 All models and modules together build the IIASA IAM framework, also referred to as MESSAGE-GLOBIOM owing to the fact that the energy model MESSAGE and the land use model 
 GLOBIOM are its most important components. The five models provide input to and iterate between each other during a typical SSP scenario development cycle. 
-Below we provide a brief overview of how the models interact and describe which further steps are taken within the IIASA IAM framework to develop an SSP scenario.  
+Below is a brief overview of how the models interact and describe which further steps are taken within the IIASA IAM framework to develop an SSP scenario.  
 
 MESSAGE represents the core of the IIASA IAM framework (:numref:`fig-iiasaiam`) and its main task is to optimize the energy system so that it can satisfy specified 
 energy demands at the lowest costs. MESSAGE carries out this optimization in an iterative setup with MACRO, which provides estimates of the macro-economic demand response 
