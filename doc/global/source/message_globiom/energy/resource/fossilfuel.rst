@@ -7,7 +7,7 @@ are assumed regarding the technical and economic availability of overall resourc
 particular type of resource is not just the cost at which it can be brought to the surface, but the cost at which it can be used to provide energy services. Assumptions on fossil 
 energy resources should thus be considered together with those on related conversion technologies. In line with the narratives, technological change in fossil fuel extraction and 
 conversion technologies is assumed to be slowest in SSP1, while comparatively faster technological change occurs in SSP3 thereby considerably enlarging the economic potentials of 
-coal and unconventional hydrocarbons (:numref:`tab-globff`, :numref:`fig-supply`). However, driven by tendency toward regional fragmentation we assume the focus in SSP3 to be on 
+coal and unconventional hydrocarbons (:numref:`tab-globff`, :numref:`fig-supply`). However, driven by tendency toward regional fragmentation the focus in SSP3 is assumed to be on 
 developing coal technologies which in the longer term leads to a replacement of oil products by synthetic fuels based on coal-to-liquids technologies. In contrast, for SSP2 we 
 assume a continuation of recent trends, focusing more on developing extraction technologies for unconventional hydrocarbon resources, thereby leading to higher potential cumulative oil 
 extraction than in the other SSPs (:numref:`fig-supply`, middle panel).
