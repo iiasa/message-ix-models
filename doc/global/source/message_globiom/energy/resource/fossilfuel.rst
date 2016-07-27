@@ -87,7 +87,7 @@ Natural gas is more abundant in both the conventional and unconventional categor
 
 :numref:`fig-supply` presents the cumulative global resource supply curves for coal, oil and gas in the IIASA IAM framework. Green shaded resources are technically and economically 
 extractable in all SSPs, purple shaded resources are additionally available in SSP1 and SSP2 and blue shaded resources are additionally available in SSP2. Coloured vertical lines 
-represent the cumulative use of each resource between 2010 and 2100 in the SSP baselines (see top panel for colour coding), and are thus the result of the combined effect of our 
+represent the cumulative use of each resource between 2010 and 2100 in the SSP baselines (see top panel for colour coding), and are thus the result of the combined effect of the
 assumptions on fossil resource availability and conversion technologies in the SSP baselines. 
 
 .. _fig-supply:
