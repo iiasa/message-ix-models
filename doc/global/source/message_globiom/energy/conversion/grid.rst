@@ -54,7 +54,7 @@ expenditures in the form of natural gas or storage or improved demand-side manag
 Starting from the energy metric used in MESSAGE (electricity is considered as annual average load; there are no time-slices or load-curves), the flexibility requirement uses MWh of 
 generation as its unit of note. The metric is inherently limited because operating reserves are often characterized by energy not-generated: a natural gas combustion turbine (gas-CT) that 
 is standing by, ready to start-up at a moment’s notice; a combined-cycle plant operating below its peak output to enable ramping in the event of a surge in demand. Nevertheless, because 
-there is generally a portion of generation associated with providing operating reserves (e.g. that on-call gas-CT plant will be called some fraction of the time), we posit that using 
+there is generally a portion of generation associated with providing operating reserves (e.g. that on-call gas-CT plant will be called some fraction of the time), it is posited that using 
 generated energy to gauge flexibility is a reasonable metric considering the simplifications that need to be made. Furthermore, ancillary services associated with ramping and peaking 
 often do involve real energy generation, and variable renewable technologies generally increase the need for ramping.
 
