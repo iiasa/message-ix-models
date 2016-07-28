@@ -216,8 +216,7 @@ setting the labor force index in the base year to 1 (numeraire) and solving for 
 Macro-economic parameters
 ~~~~
 Given that MESSAGE includes (exogenous) energy efficiency improvements in end-use technologies as well as significant potential final-to-useful energy efficiency improvements via fuel switching 
-(e.g., via electrification of thermal demands and transportation), for the elasticity of substitution between capital-labor and total energy demand :math:`\epsilon_r` in MACRO  we choose 
-relatively low values in the range of 0.2 and 0.3. The elasticities are region-dependent with developed regions :math:`r \in \{NAM, PAO, WEU\}` assumed to have higher elasticities of 0.3, 
+(e.g., via electrification of thermal demands and transportation), for the elasticity of substitution between capital-labor and total energy demand :math:`\epsilon_r` in MACRO  relatively low values in the range of 0.2 and 0.3 were chosen. The elasticities are region-dependent with developed regions :math:`r \in \{NAM, PAO, WEU\}` assumed to have higher elasticities of 0.3, 
 economies in transition :math:`r \in \{EEU, FSU\}` intermediate values of 0.25 and developing regions :math:`r \in \{AFR, CPA, LAM, MEA, PAS, SAS\}` the lowest elasticities of 0.2.
 
 The capital value share parameter :math:`\alpha_r` can be interpreted as the optimal share of capital in total value added :cite:`manne_buying_1992` and is chosen region-dependent 
