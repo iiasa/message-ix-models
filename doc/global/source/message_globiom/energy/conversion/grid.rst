@@ -27,8 +27,7 @@ Systems Integration and Reliability
 The MESSAGE framework includes a single annual time period characterized by average annual load and 11 geographic regions that span the globe. Seasonal and diurnal load curves and spatial 
 issues such as transmission constraints or renewable resource heterogeneity are treated in a stylized way in the model. The reliability extension described below elevates the stylization 
 of temporal resolution by introducing two concepts, peak reserve capacity and general-timescale flexibility, to the model (Sullivan et al., 2013 :cite:`sullivan_electric_2013`). To represent capacity reserves in MESSAGE, 
-a requirement is defined that each region build sufficient firm generating capacity to maintain reliability through reasonable load and contingency events. As a proxy for complex system 
-reliability metrics, we chose to use a reserve margin-based metric, setting the capacity requirement at a multiple of average load, based on electric-system parameters. While many of the 
+a requirement is defined that each region build sufficient firm generating capacity to maintain reliability through reasonable load and contingency events. As a proxy for complex system reliability metrics, a reserve margin-based metric was used, setting the capacity requirement at a multiple of average load, based on electric-system parameters. While many of the 
 same issues apply to both electricity from wind and solar energy, the description below focuses on wind.
 
 Toward meeting the firm capacity requirement, conventional generating technologies contribute their nameplate generation capacity while variable renewables contribute a capacity value 
