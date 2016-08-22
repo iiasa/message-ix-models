@@ -84,12 +84,12 @@ The capacity is defined in relation to the main output of the technology.
 
 2.2 	Constraints
 -------------------
-The rows used to model energy conversion technologies limit
+These are equations used to calculate relations beween timesteps or between different variables in the model. Partially they are generated automatically, partially they are entirely defined by the user.
 
 * the utilization of a technology in relation to the capacity actually installed (capacity constraint),
 * the activity or construction of a technology in a period in relation to the same variable in the previous period (dynamic constraints),
-* limit on minimum or maximum installed capacity of a technology,
-* limit on minimum or maximum annual production on a technology modeled with load region, and
+* limit on minimum or maximum total installed capacity of a technology,
+* limit on minimum or maximum annual production of a technology modeled with load region, and
 * user defined constraints on groups of technologies (activities or capacities).
 
 .. _capacityconstr:
@@ -149,7 +149,7 @@ The following notation is used in the above equations:
    :header-rows: 0
 
    * - :math:`zsvd....rrlllttt`
-     - is the activity of conversion technology :math:`zsvd` in region :mat:`rr`, period :math:`ttt` and, if defined so, load region :math:`lll` (see section :ref:`activitiesECT`),
+     - is the activity of conversion technology :math:`zsvd` in region :math:`rr`, period :math:`ttt` and, if defined so, load region :math:`lll` (see section :ref:`activitiesECT`),
    * - :math:`Yzsvd...rrlllttt`
      - is the capacity variable of conversion technology :math:`zsvd` (see section :ref:`capacititesECT`).
    * - :math:`\epsilon_{zsvd}`
@@ -167,7 +167,7 @@ The following notation is used in the above equations:
    * - :math:`f_i`
      - is 1. if the capacity variable is continuous, and represents the minimum installed capacity per year (unit size) if the variable is integer,
    * - :math:`f_p`
-     - is is the adjustment factor if the end of the plant life does not coincide with the end of a period (:mat:`rest of plant life in period / period length`,
+     - is is the adjustment factor if the end of the plant life does not coincide with the end of a period (:math:`rest of plant life in period / period length`,
    * - :math:`\pi(l_m, svd)`
      - is the share of output in the load region with maximum production,
    * - :math:`rel_{\sigma {v}'\delta}^{svd}`
@@ -202,7 +202,7 @@ where
    * - :math:`D`
      - is :math:`M, L` for upper and lower capacity and :math:`m, l` for upper and lower activity constraints respectively,
    * - :math:`\sim`
-     - is :mat:`\leq, \geq` for upper and lower constraints respectively,
+     - is :math:`\leq, \geq` for upper and lower constraints respectively,
    * - :math:`\gamma _{yzsvd,t}, \gamma _{zsvd,t}`
      - is the maximum growth rate per period for the construction/operation of technology :math:`zsvd`,
    * - :math:`gy_{zsvd,t}`
@@ -212,35 +212,83 @@ where
 
 As described in Keppo and Strubegger (2010 :cite:`keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion 
 in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`, 
-:math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{svd,ti})` are added to the upper dynamic constraint described above. 
+:math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{zsvd,ti})` are added to the upper dynamic constraint described above. 
 
-**notation below needs updating to be consistent with the one from the MESSAGE equations** 
+.. math::
+   a_t = (1+r)^T \times a_t-1 + \sum_i=1^n (1+r_i)^T \times b_t-1^i + S
 
-.. image:: /_static/technology_diffusion_eq_3.png
-   :width: 340px
-   
 The maximum value for these dummy variables :math:`b^i` is limited to the activity of the underlying technology :math:`a`, i.e.
 
-.. image:: /_static/technology_diffusion_eq_4.png 
-   :width: 60px
-   :align: left
+.. math::
+   a_t \leq b_t^i
 
 , for all :math:`i`.
 
 Therefore, this new formulation increases the highest allowed growth factor from
 
-.. image:: /_static/technology_diffusion_eq_4a.png
-   :width: 75px
-   :align: left
+.. math::
+   (1+r)^T
    
 to 
 
-.. image:: /_static/technology_diffusion_eq_4b.png
-   :width: 180px
+.. math::
+   (1+r)^T + \sum_i (1_r_i)^T
 
 In addition, the objective function value for period :math:`t` is modified by the extra term
 
- .. image:: /_static/technology_diffusion_eq_5.png
-   :width: 140px
+ .. math::
+   \cdots + \sum(_i=1^n c_i \times b_t^i
 
 which adds costs :math:`c_i` per additional growth factor utilized. 
+
+.. _dynamic_constraints:
+
+2.2.3 	Contraints on total installed capacity
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+   Izsvd...rrlllttt
+
+These constaints allow to set upper or lower limit to the total installed capacity of a technology at a given point in time.
+
+.. math::
+   \sum_\tau=t-T^t yzsvd...rr...\tau \sim M_t
+
+.. list-table:: 
+   :widths: 40 110
+   :header-rows: 0
+
+   * - :math:`T`
+     - is the plant life of the technology,
+   * - :math:`sim`
+     - is :math:`\leq, \geq` for upper and lower constraints respectively,
+   * - :math:`Mi_t`
+     - is the maximum or minimum total installed capacity in time step t
+
+2.2.4 	User defined Constraints
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+   nname...rrlllttt
+
+.. list-table:: 
+   :widths: 40 110
+   :header-rows: 0
+
+   * - :math:`n`
+     - may be 'n'or 'p' for two groups of user defines constraints,
+   * - :math:`name`
+     - is a user defined 4-character short name of the constraint.
+
+Each technology may have entries related to their activity, new installed capacity, or total installed capacity into any of the defined constraints. In multi-region models the constraint it is first searched in the sub-region, then in the main-region. With this it is possible to create relations between technologies of different sub-regions.
+The main uses for such constraints are to put regional or global constraints on emissions or to relate the production from renewables to the total production.
+
+.. math::
+   wind\_electricity + solar\_electricity + biomass\_electricity \geq \alpa total\_electricity
+   
+where :math:`total\_electricity` can usualy be taken from the input to the electricity transmission technology.
+
+2.3 	Bounds
+~~~~~~~~~~~~~~~~~~~~~~
+
+Upper, lower, or fixed bounds may be put on activity or new installed capacity. This is usually very helpful at the beginning of the planning horizon to fit results to reality. In later time steps they may be used to avoid unrealistic behaviour like, e.g., too many new installations of a specific technology per year).
