@@ -215,7 +215,7 @@ in case of economically attractive technologies. To operationalize the concept o
 :math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{zsvd,ti})` are added to the upper dynamic constraint described above. 
 
 .. math::
-   a_t = (1+r)^T \times a_t-1 + \sum_i=1^n (1+r_i)^T \times b_t-1^i + S
+   a_t = (1+r)^T \times a_{t-1} + \sum_i=1^n (1+r_i)^T \times b_{t-1}^i + S
 
 The maximum value for these dummy variables :math:`b^i` is limited to the activity of the underlying technology :math:`a`, i.e.
 
@@ -232,7 +232,7 @@ Therefore, this new formulation increases the highest allowed growth factor from
 to 
 
 .. math::
-   (1+r)^T + \sum_i (1_r_i)^T
+   (1+r)^T + \sum_i (1+r_i)^T
 
 In addition, the objective function value for period :math:`t` is modified by the extra term
 
