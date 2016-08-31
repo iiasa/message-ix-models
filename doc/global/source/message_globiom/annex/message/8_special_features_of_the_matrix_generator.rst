@@ -37,16 +37,19 @@ where
 8.2 	Distributions of Investments
 -----------------------------------
 
-Investment costs can be distributed over the construction time. As these points in time are closer to the beginning of the time horizon, investments become more expensive, this represents interest durint construction. MESSAGE allows for two options:
+Investment costs can be distributed over the construction time. As these points in time are closer to the beginning of the time horizon, investments become more expensive, this represents interest during construction. MESSAGE allows for two options:
 
 .. list-table:: 
    :widths: 35 65
    :header-rows: 0
+
   * - shifted
     - all costs are paid in the time period(s) prevoius to the start of operation. This is usually used for models with short period lengths.
   * - half-half
     - half of the investments are paid in the period before the start of operation, the other half is paid in the period when the technology goes into operation. With this the period when the technology starts operating is the same as the construction period. This is usually used for models with long time periods.
-    
+
+Investment costs are spread evenly over the construction time. In reality the investment costs follow a bell-shape, but the resulting error after discounting and summing up over the construction time is very small.
+
 8.3 	The Contribution of Capacities Existing in the Base Year
 ---------------------------------------------------------------
 
