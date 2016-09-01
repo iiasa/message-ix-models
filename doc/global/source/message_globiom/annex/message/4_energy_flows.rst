@@ -61,8 +61,9 @@ If another that the level is chosen as demand  level all demand constraints for 
 These constraint match the consumption of a specific energy form with the production of this energy form on any of the defined energy levels. They are generated for each load region, if the energy form is modelled with load regions.
 
 .. math::
-   \sum_{sv} \epsilon_{zsve} \times zsve....rrlllttt + \sum_{sv} \beta_{zsv\kappa}^e \times zsv\kappa....rrlllttt -
-   \sum_{sv} zevd....rrlllttt - \sum_{sv} \beta_{z\kappavd}^d \times z\kappavd....rrlllttt \geq 0.
+
+   \sum_{sv} \epsilon_{zsve} \times zsve....rrlllttt + \sum_{sv} \beta_{zsv \kappa }^e \times zsv \kappa ....rrlllttt -
+   \sum_{sv} zevd....rrlllttt - \sum_{sv} \beta_{z \kappa vd}^d \times z \kappa vd....rrlllttt \geq 0.
 
 where
 
@@ -76,10 +77,10 @@ where
      - is the efficiency of technology :math:`zsve` in producing :math:`s`,
    * - :math:`zevd....rrlllttt`
      - is the activity of the technology :math:`zevd` consuming energy form :math:`e` in region :math:`rr` and period :math:`ttt`,
-   * - :math:`\beta_{zsv\kappa}^e`
-     - is the production of fuel :math:`e` relative to the main output :math:`\kappa` by technology :math:`zsv\kappa`, and
-   * - :math:`\beta_{z\kappavd}^d`
-     - is the consumption of fuel :math:`e` relative to the main output :math:`d` by technology :math:`z\kappavd`.
+   * - :math:`\beta_{zsv \kappa }^e`
+     - is the production of fuel :math:`e` relative to the main output :math:` \kappa ` by technology :math:`zsv \kappa `, and
+   * - :math:`\beta_{z \kappa vd}^d`
+     - is the consumption of fuel :math:`e` relative to the main output :math:`d` by technology :math:`z \kappa vd`.
 
 In case technologies are modeled with given production or consumption load curves, the variables are the annual variables multiplied by the share of the total energy flow in this load region :math:`\eta_{zsve}^l`:
 .. math:

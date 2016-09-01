@@ -36,7 +36,7 @@ where
    * - :math:`rr`
      - identifies the sub-region, :math:`rr` as defined in file "regid" or :math:`rr` = :math:`”..”`, if the model has no sub-regions or if the technology is in the main region, and
    * - :math:`lll`
-     - identifies the load region, :math:`lll` is :math:`\sdp` (season, day, part of day) or :math:`lll` = :math:`”...”`, if the technology is not modelled with load regions, and
+     - identifies the load region, :math:`lll` is :math:`sdp` (season, day, part of day) or :math:`lll` = :math:`”...”`, if the technology is not modelled with load regions, and
    * - :math:`ttt`
      - identifies the period, :math:`ttt` = :math:`year - int(baseyear/100) * 100`.
 
@@ -284,7 +284,7 @@ Each technology may have entries related to their activity, new installed capaci
 The main uses for such constraints are to put regional or global constraints on emissions or to relate the production from renewables to the total production.
 
 .. math::
-   wind\_electricity + solar\_electricity + biomass\_electricity \geq \alpa total\_electricity
+   wind\_electricity + solar\_electricity + biomass\_electricity \geq \alpha total\_electricity
    
 where :math:`total\_electricity` can usualy be taken from the input to the electricity transmission technology.
 
