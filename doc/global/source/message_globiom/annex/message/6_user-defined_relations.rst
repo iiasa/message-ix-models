@@ -16,7 +16,7 @@ The formulation of the user-defined relations is given for relations, that are r
 Relations without load regions sum up the activities (multiplied with the given coefficients) of all variables defined to be in this constraint. If a technology has load regions, the activity variables for all load regions of this technology are included. If the total capacity of a technology is included, all new capacities from previous periods still operating are included, if new capacities are included, the annual new installation of the current period is taken.
 
 .. math::
-   \sum_{zrvs}\left [ ro_{zrvs}^{mlt}\times\sum_{lll} zrvs...rrlllttt\times\epsilon_{zrvs}+ro_{zrvs}^{mt}\times zrvs....rr...ttt \times \epsilon_{zrvs}+ \\ \sum_{\tau=t-ip}^t pl_\tau \times rc_{zrvs}^{mt} \times yzrvs...rr...\tau \right ] \left \sim rhs_m^t
+   \sum_{zrvs}\left [ ro_{zrvs}^{mlt}\times\sum_{lll} zrvs...rrlllttt\times\epsilon_{zrvs}+ro_{zrvs}^{mt}\times zrvs....rr...ttt \times \epsilon_{zrvs}+ \right. \\ \left. \sum_{\tau=t-ip}^t pl_\tau \times rc_{zrvs}^{mt} \times yzrvs...rr...\tau \right ] \sim rhs_m^t
 
 where
 

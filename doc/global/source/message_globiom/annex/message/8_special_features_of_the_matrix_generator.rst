@@ -27,10 +27,9 @@ where
      - :math:`\left\{\begin{matrix}
            1 & for costs connected to investments\\
            (1+\frac{dr_t}{100})^{\frac{\Delta t}{2} & else
-       \end{matrix}\right.` and                                                  |
+       \end{matrix}\right.` and                                                  
   * - :math:`dr_k`
-    - is the discount rate in period :math:`k`; generally the discount rate is constant over the complete time horizon.                  |
-+-------------------------------------------+------------------------------------------------------------+
+    - is the discount rate in period :math:`k`; generally the discount rate is constant over the complete time horizon.                 
 
 .. _distributionsofinv:
 
