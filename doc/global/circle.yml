@@ -8,3 +8,4 @@ dependencies:
 test:
   override:
     - make html
+    - make xetexpdf
