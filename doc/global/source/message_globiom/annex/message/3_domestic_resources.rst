@@ -72,7 +72,7 @@ where
 Limits the domestic resources available annually per period over all cost categories.
 
 .. math::
-   \sum_g rzfg...t \leq rzf.....rr...ttt,
+   \sum_g rzfg....rr...ttt \leq rzf.....rr...ttt,
 
 where
 
@@ -92,7 +92,7 @@ where
 .. math::
    rzfgg...rr...ttt
  
-The extraction of a resource in a period can be constrained  in relation to the total amount still existing in that period. 
+The extraction of a resource in a period can be constrained  in relation to the total amount still existing at the beginning of the period. 
 
 .. math::
    \Delta t\sum_p rzfg....rr...ttt \leq \delta_{rg}^t \left [rzfgg...rr - \Delta t_0R_{rzfg,0} - \sum_{\tau=1}^{t-1} \Delta\tau\times rrzfg...rr...\tau \right ]
@@ -143,7 +143,7 @@ where
 ~~~~~~~~~~~~~~~~~
 
 .. math::
-   Mrzfg...rr...ttt
+   mrzfg...rr...ttt
  
 The annual extraction level of a resource in a period can be related to the previous one by a growth/decline parameter and an increment/decrement of extraction activity resulting in upper/lower dynamic extraction constraints. For the first period the extraction is related to the activity in the baseyear.
  
@@ -156,8 +156,8 @@ where
    :widths: 40 110
    :header-rows: 0
 
-   * - :math:`M`
-     - is the m or l, indicating upper and lower constraints respectively,
+   * - :math:`m`
+     - is m or l, indicating upper and lower constraints respectively,
    * - :math:`\gamma_{ft}^0`
      - is the maximum growth of extraction of resource :math:`f` between period :math:`ttt−1` and :math:`ttt`,
    * - :math:`g_{ft}^0`
