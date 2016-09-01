@@ -220,12 +220,7 @@ latex_elements = {
     #'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    'inputenc': '',
-    'utf8extra': '',
-    'preamble': '''
-
-\usepackage{fontspec}
-''',
+    #'preamble': '',
 
     # Latex figure (float) alignment
     #'figure_align': 'htbp',
