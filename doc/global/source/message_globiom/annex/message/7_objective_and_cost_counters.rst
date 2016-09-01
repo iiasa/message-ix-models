@@ -48,12 +48,12 @@ In its usual form the objective function contains the sum of all discounted cost
 The objective function has the following general form:
 
 .. math::
-   \sum_r \sum_t\left [ \beta_m^t \Delta t\left \{ \sum_{zsvd} \sum_{lll} zsvd....rrlllttt \times \epsilon_{zsvd} \times \left [ ccur(zsvd,t) + \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] + \\
-      \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau)+ \\
-      \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t)] \right \} + \\
+   \sum_r \sum_t\left [ \beta_m^t \Delta t\left \{ \sum_{zsvd} \sum_{lll} zsvd....rrlllttt \times \epsilon_{zsvd} \times \left [ ccur(zsvd,t) + \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] +
+      \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau)+ 
+      \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t)] \right \} + 
       \beta_b^t \times \left \{ \sum_{zsvd} \sum_{\tau=t}^{t+t_d} \Delta(t-1) \times yzsvd...rr...\tau \times 
-      \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + \\
-      \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right \} \right ]
+      \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + 
+      \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right ] \right \} \right ]
 
 where
 
