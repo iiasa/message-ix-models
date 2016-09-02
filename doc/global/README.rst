@@ -22,6 +22,14 @@ The main citation file is `bibs/main.bib`. To learn how to cite those
 references, you can read the appropriate `documentation
 <http://sphinxcontrib-bibtex.readthedocs.org/en/latest/usage.html>`_.
 
+Adding Packages for Latex
+-------------------------
+
+Sometimes building latex requires the addition of `\usepackage{}`
+statements. These can be added at the
+[preamble line](https://github.com/iiasa/message_doc/blob/master/source/conf.py#L223)
+in `source/conf.py`.
+
 Building the Site
 -----------------
 
