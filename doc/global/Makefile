@@ -132,7 +132,7 @@ latex:
 xetexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo "Running LaTeX files through pdflatex..."
-	cd $(BUILDDIR)/latex; xelatex *.tex
+	cd $(BUILDDIR)/latex; xelatex -halt-on-error *.tex
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
 latexpdf:
