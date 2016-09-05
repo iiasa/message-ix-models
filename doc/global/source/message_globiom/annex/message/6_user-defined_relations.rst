@@ -9,7 +9,7 @@ or
 .. math:: 
    pname...rrlllttt
 
-The user-defined relations allow the user to construct constraints that are not included in the basic set of constraints. For each technology  the user can specify coefficients with that either the production variables (see section :ref:`activitiesECT`), the annual new installation variables (see section :ref:`capacititesECT`) or the total capacity in a year (like it is used in the capacity constraints, see section :ref:`capacityconstr`) can be included in the relation. The relations can be defined with and without load regions, have a lower, upper or fix right hand side or remain free (non-binding) and may have an entry in the objective function, i.e., all entries to this relation are also entered to the objective function with the appropriate discount factor. There are two types of user-defined constraints (denoted by :math`n`or :math:`p` as first character), for which the entries to the objective function–without discounting–are summed up under the cost accounting rows :math:`CAR1` and :math:`CAR2` (see chapter :ref:`objectivecostcounters`).
+The user-defined relations allow the user to construct constraints that are not included in the basic set of constraints. For each technology  the user can specify coefficients with that either the production variables (see section :ref:`activitiesECT`), the annual new installation variables (see section :ref:`capacititesECT`) or the total capacity in a year (like it is used in the capacity constraints, see section :ref:`capacityconstr`) can be included in the relation. The relations can be defined with and without load regions, have a lower, upper or fix right hand side or remain free (non-binding) and may have an entry in the objective function, i.e., the objective function entries of all members of this relation are increased/decreased by this value. There are two types of user-defined constraints (denoted by :math`n` or :math:`p` as first character), for which the entries to the objective function–without discounting are summed up under the cost accounting rows :math:`CAR1` and :math:`CAR2` (see chapter :ref:`objectivecostcounters`).
 
 The formulation of the user-defined relations is given for relations, that are related to the main output of the technologies. It is also possible (e.g., for greenhouse gas emissions) to relate the constraint to the main input of the technology, i.e. the amount of fuel used. In this case the efficiencies would be omitted from the formulation.
 
@@ -21,7 +21,7 @@ Relations without load regions sum up the activities (multiplied with the given 
 where
 
 .. list-table:: 
-   :widths: 40 110
+   :widths: 40 60
    :header-rows: 0
 
    * - :math:`zrvs....rrlllttt`
