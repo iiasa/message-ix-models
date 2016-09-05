@@ -5,7 +5,7 @@
 
 The mathematical formulation of MESSAGE as presented  in the previous sections shows the structure of all constraints as the matrix generator builds them up. The background of the more complicated features is given here for a better understanding.
 
-8.1 	The  Time  Horizon–Discounting the Costs
+8.1 	Discounting of Costs
 ----------------------------------------------
 
 The whole time horizon of the calculations is divided into periods of optional length. All variables of MESSAGE are represented  as average over the period they represent, resulting in a step-function. All entries in the objective function are discounted from the middle of the respective period to the first year, if they relate to energy flow variables and from the beginning of that period if they represent power variables. The function to discount the costs has the following form:
@@ -20,16 +20,16 @@ where
    :header-rows: 0
 
    * - :math:`C_t^r`
-     - is the cost figure to be discounted,
+     - cost figure to be discounted,
    * - :math:`c_t`
-     - is the objective function coefficient in period :math:`t`,
+     - objective function coefficient in period :math:`t`,
    * - :math:`f_i`
      - :math:`\left\{\begin{matrix}
            1 & for costs connected to investments\\
            (1+\frac{dr_t}{100})^{\frac{\Delta t}{2} & else
        \end{matrix}\right.` and                                                  
-  * - :math:`dr_k`
-    - is the discount rate in period :math:`k`; generally the discount rate is constant over the complete time horizon.                 
+  * - :math:`dr_t`
+    - discount rate in period :math:`t`; generally the discount rate is constant over the complete time horizon.                 
 
 .. _distributionsofinv:
 
@@ -44,8 +44,8 @@ Investment costs can be distributed over the construction time. As these points 
 
   * - shifted
     - all costs are paid in the time period(s) prevoius to the start of operation. This is usually used for models with short period lengths.
-  * - half-half
-    - half of the investments are paid in the period before the start of operation, the other half is paid in the period when the technology goes into operation. With this the period when the technology starts operating is the same as the construction period. This is usually used for models with long time periods.
+  * - half\-half
+    - half of the investments are paid in the period before the start of operation, the other half is paid in the period when the technology goes into operation. With this, the period when the technology starts operating is the same as the construction period. This is usually used for models with long time periods.
 
 Investment costs are spread evenly over the construction time. In reality the investment costs follow a bell-shape, but the resulting error after discounting and summing up over the construction time is very small.
 
@@ -80,6 +80,8 @@ where
      - is the length of the periods in that the time before the base year is divided.
 
 The right hand sides in the capacity constraints are derived by summing up all the old capacities that still exist in a certain period (according to the plant life). If the life of a technology expires within a period, MESSAGE takes the average production capacity in this period as installed capacity (this represents a linear interpolation between the starting points of this and the following period).
+
+In case of formulation 2. one has to consider that some of the capacity goes out of operation between the base year and the first year.
 
 8.4 	Capacities which Operate  Longer than the Time  Horizon
 -------------------------------------------------------------
