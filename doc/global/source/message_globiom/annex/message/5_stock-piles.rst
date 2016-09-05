@@ -1,3 +1,5 @@
+.. _stockpiles
+
 5 Stock-piles
 ===============
 
