@@ -18,17 +18,24 @@ Energy conversion technologies, both on the supply and demand side of the energy
 
 where
 
-.. raw:: latex
+.. list-table:: 
+   :widths: 40 110
+   :header-rows: 0
 
-   \begin{tabularx}{|l|p{15|}
-   \textit{z} & is the level identifier of the main output of the technology. The demand level is handled differently to all other levels: Technologies with the main output on this level are defined without load regions. If defined, the input is split into the different load regions, \\
-   \textit{s} & is the main energy input of the technology (supply). If the technology has no input \textit{s} is set to "." (e.g., solar technologies), \\
-   \textit{v} & additional identifier of the conversion technology (used to distinguish technologies with the same main input and output), \\
-   \textit{d} & is the main energy output of the technology, \\
-   \textit{rr} & identifies the sub-region, \textit{rr} as defined in file "regid" or \textit{rr} = \textit{".."}, if the model has no sub-regions or if the technology is in the main region, and \\
-   \textit{lll} & identifies the load region, \textit{lll} is \textit{sdp} (season, day, part of day) or \textit{lll} = \textit{"..."}, if the technology is not modelled with load regions, and \\
-   \textit{ttt} & identifies the period, \textit{ttt} = \textit{year - int(year_0/100) * 100}. \\
-   \end{tabularx}
+   * - :math:`z`
+     - is the level identifier of the main output of the technology. The demand level is handled differently to all other levels: Technologies with the main output on this level are defined without load regions. If defined, the input is split into the different load regions.
+   * - :math:`s`
+     - is the main energy input of the technology (supply). If the technology has no input :math:`s` is set to ”.” (e.g., solar technologies),
+   * - :math:`v`
+     - additional identifier of the conversion technology (used to distinguish technologies with the same main input and output),
+   * - :math:`d`
+     - is the main energy output of the technology,
+   * - :math:`rr`
+     - identifies the sub-region, :math:`rr` as defined in file "regid" or :math:`rr` = :math:`”..”`, if the model has no sub-regions or if the technology is in the main region,
+   * - :math:`lll`
+     - identifies the load region, :math:`lll` is :math:`sdp` (season, day, part of day) or :math:`lll` = :math:`”...”`, if the technology is not modelled with load regions, and
+   * - :math:`ttt`
+     - identifies the period, :math:`ttt` = :math:`year - int(year_0/100) * 100`.
 
 The activity variable of an energy conversion technology is an energy flow variable. It represents the annual consumption of this technology of the main input per period. If a technology has no input, the variable represents the annual production of the main output divided by the efficiency.
  
@@ -128,13 +135,15 @@ Many types of energy conversion technologies do not have fix relations between t
 
 
 .. math::
-   \sum_{z\sigma {v}'\delta }\frac{rel_{z\sigma {v}'\delta} ^{zsvd}\times\epsilon_{z\sigma {v}'\delta }\times z\sigma {v}'\delta ....rrlllttt}{\lambda _l} - \\
-   \sum_{\tau=t-\tau_{zsvd}}^{min(t,\kappa_{zsvd})}\Delta \tau \times \pi_{zsvd}\times f_i \times f_p \times yzsvd...rrlll\tau \leq hc_{zsvd}^t\times \pi_{zsvd}
+   \begin{align*}
+   & \sum_{z\sigma {v}'\delta }\frac{rel_{z\sigma {v}'\delta} ^{zsvd}\times\epsilon_{z\sigma {v}'\delta }\times z\sigma {v}'\delta ....rrlllttt}{\lambda _{lll}} - \\
+   & \sum_{\tau=t-\tau_{zsvd}}^{min(t,\kappa_{zsvd})}\Delta \tau \times \pi_{zsvd}\times f_i \times f_p \times yzsvd...rr...\tau \leq hc_{zsvd}^t\times \pi_{zsvd}
+   \end{align*}
  
 The following notation is used in the above equations:
 
 .. list-table:: 
-   :widths: 40 110
+   :widths: 40 1100
    :header-rows: 0
 
    * - :math:`zsvd....rrlllttt`
@@ -161,7 +170,7 @@ The following notation is used in the above equations:
      - is the share of output in the load region with maximum production,
    * - :math:`rel_{\sigma {v}'\delta}^{svd}`
      - is the relative capacity of main output of technology (or operation mode) svd to the capacity of main output of the alternative technology (or operation mode) :math:`\sigma {v}'\delta`, and
-   * - :math:`\lambda _l`
+   * - :math:`\lambda_l`
      - is the length of the load region :math:`l` or the length of the load region with maximum capacity use if the production pattern over the year is fixed or the length of the load region with maximum capacity requirements as fraction of the year.
 
 
@@ -193,15 +202,17 @@ where
      - is the maximum growth rate per period for the construction/operation of technology :math:`zsvd`,
    * - :math:`g_{yzsvd,t}`
      - is the initial size (increment) that can be given and which is necessary for the introduction of new technologies that start with zero capacity/activity,
-   * - :math:`yzsvd...rrlllttt, zsvd...rrlllttt`
-     - is the annual new installation/ activity of technology :math:`zsvd` in period :math:`ttt`.
+   * - :math:`yzsvd...rrlllttt`
+     - is the annual new installation of technology :math:`zsvd` in period :math:`ttt`.
+   * - :math:`zsvd...rrlllttt`
+     - is the annual activity of technology :math:`zsvd` in period :math:`ttt`.
 
 As described in Keppo and Strubegger (2010 :cite:`keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion 
 in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`, 
 :math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{zsvd,ti})` are added to the upper dynamic constraint described above. 
 
 .. math::
-   a_t = (1+r)^T \times a_{t-1} + \sum_i=1^n (1+r_i)^T \times b_{t-1}^i + S
+   a_t = (1+r)^T \times a_{t-1} + \sum_{i=1}^n (1+r_i)^T \times b_{t-1}^i + S
 
 The maximum value for these dummy variables :math:`b^i` is limited to the activity of the underlying technology :math:`a`, i.e.
 
@@ -223,7 +234,7 @@ to
 In addition, the objective function value for period :math:`t` is modified by the extra term
 
  .. math::
-   \cdots + \sum_i=1^n c_i \times b_t^i
+   \cdots + \sum_{i=1}^n c_i \times b_t^i
 
 which adds costs :math:`c_i` per additional growth factor utilized. 
 
