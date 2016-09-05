@@ -6,7 +6,7 @@
 7.1 	Cost Accounting Rows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The different types of costs (i.e. entries for the objective function) can be accumulated  over all technologies in built-in  accounting rows. These rows can be generated per period or for the whole horizon and contain the sum of the discounted and undiscounted costs. They can also be limited. The implemented types are:
+The different types of costs (i.e. entries for the objective function) can be accumulated  over all technologies in built-in  accounting rows. These rows can be generated per load region or per period or for the whole time horizon and contain the sum of the undiscounted costs. They can also be limited. In case of :math:`func` the entries are discounted as these are the entries into the objective function. The implemented types are:
 
 .. list-table:: 
    :widths: 45 110
@@ -26,12 +26,13 @@ The different types of costs (i.e. entries for the objective function) can be ac
      - costs related to the user defined relations of type 2 (see section 7),
 
 The cost accounting rows are further separated into the following schemes:
+
 .. list-table:: 
    :widths: 80 110
    :header-rows: 0
 
    * - :math:`name` 
-     - total costs across all regions, load regions and time steps; ::math:`func` is the objective function (see below),
+     - total costs across all regions, load regions and time steps; :math:`func` is the objective function (see below),
    * - :math:`name.........ttt` 
      - total costs across all regions and load regions per time step,
    * - :math:`name....rr` 
@@ -43,22 +44,22 @@ The cost accounting rows are further separated into the following schemes:
 .. math::
    func
 
-In its usual form the objective function contains the sum of all discounted costs, i.e. all kinds of costs that can be accounted for. All costs related to operation (i.e. resource use, operation costs, taxes on emissions, ...) are discounted from the first model year to the middle of the current period. Costs related to construction are by default discounted from the first year to the beginning of the current period. By using the facility of distributing the investment related costs over the construction time these costs can be distributed over some years before or equal to the current one (see section :ref:`distributionsofinv`). 
+In its usual form, the objective function contains the sum of all discounted costs. All costs related to operation (i.e. resource use, operation costs, taxes on emissions, ...) are discounted from the middle of the current period to the first year. Costs related to construction are by default discounted from the first year of the period to the first year. By using the facility of distributing the investment related costs over the construction time these costs can be distributed over some years before or equal to the current one (see section :ref:`distributionsofinv`). 
 
 The objective function has the following general form:
 
 .. math::
-   \sum_r \sum_t\left [ \beta_m^t \Delta t\left \{ \sum_{zsvd} \sum_{lll} zsvd....rrlllttt \times \epsilon_{zsvd} \times \left [ ccur(zsvd,t) + \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] +
-      \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau)+ 
-      \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t)] \right \} + 
+   \sum_r \sum_t\left [ \beta_m^t \Delta t\left \{ \sum_{zsvd} \sum_{lll} zsvd....rrlllttt \times \epsilon_{zsvd} \times \left [ ccur(zsvd,t) + \\
+   \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] + \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau) + \\
+      \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t)] \right \} + \\
       \beta_b^t \times \left \{ \sum_{zsvd} \sum_{\tau=t}^{t+t_d} \Delta(t-1) \times yzsvd...rr...\tau \times 
-      \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + 
+      \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + \\
       \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right ] \right \} \right ]
 
 where
 
 .. list-table:: 
-   :widths: 40 110
+   :widths: 40 60
    :header-rows: 0
 
    * - :math:`\Delta t`
