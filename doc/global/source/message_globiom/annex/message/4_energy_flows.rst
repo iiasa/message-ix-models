@@ -77,7 +77,7 @@ These constraint match the consumption of a specific energy form with the produc
 
 .. math::
 
-   \sum_{sv} \epsilon_{zsve} \times zsve....rrlllttt + \sum_{sv} \beta_{zsv \kappa }^e \times zsv \kappa ....rrlllttt -
+   \sum_{sv} \epsilon_{zsve} \times zsve....rrlllttt + \sum_{sv} \beta_{zsv \kappa }^e \times zsv \kappa ....rrlllttt - \\
    \sum_{zvd} zevd....rrlllttt - \sum_{zkvd} \beta_{z \kappa vd}^e \times z \kappa vd....rrlllttt \geq 0.
 
 where
