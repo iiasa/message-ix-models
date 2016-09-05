@@ -41,7 +41,7 @@ The overall availability of a resource is limited in the availability constraint
 .. math::
    rzfgg...rr
 
-Limits the domestic resource available from one cost category (grade) over the whole time horizon. Total availability of a resource is defined  as the sum over the grades.
+Limits the domestic resource available from one cost category (grade) over the whole time horizon.
 
 .. math::
    \sum_p\sum_t\Delta t\times rzfg....rr...ttt \leq rzfgg...rr - \Delta t_0R_{zfg,0},
@@ -64,29 +64,7 @@ where
      - is the extraction of resource :math:`r`, grade :math:`g` in the base year.
 
 
-3.2.2 	Maximum Annual Resource Extraction
-~~~~~~~~~~~~~~~~~
-.. math::
-   rzf.....rr...ttt
-
-Limits the domestic resources available annually per period over all cost categories.
-
-.. math::
-   \sum_g rzfg....rr...ttt \leq rzf.....rr...ttt,
-
-where
-
-.. list-table:: 
-   :widths: 40 110
-   :header-rows: 0
-
-   * - :math:`rzf.....rr...ttt`
-     - is the maximum amount of resource :math:`f` that can be extracted per year of period :math:`ttt`, and
-   * - :math:`rzfg....rr...ttt`
-     - is the annual extraction of resource :math:`r`, cost category (grade) :math:`g`  in period :math:`t`.
-
-
-3.2.3 	Resource Depletion  Constraints
+3.2.2 	Resource Depletion  Constraints
 ~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -95,7 +73,7 @@ where
 The extraction of a resource in a period can be constrained  in relation to the total amount still existing at the beginning of the period. 
 
 .. math::
-   \Delta t\sum_p rzfg....rr...ttt \leq \delta_{rg}^t \left [rzfgg...rr - \Delta t_0R_{rzfg,0} - \sum_{\tau=1}^{t-1} \Delta\tau\times rrzfg...rr...\tau \right ]
+   \Delta t\sum_p rzfg....rr...ttt \leq \delta_{fg}^t \left [rzfgg...rr - \Delta t_0R_{rzfg,0} - \sum_{\tau=1}^{t-1} \Delta\tau\times rrzfg...rr...\tau \right ]
 
 where
 
@@ -107,7 +85,7 @@ where
      - is the total amount of resource :math:`f`, cost category :math:`g`, that is available for extraction,
    * - :math:`rzfg....rr...ttt`
      - is the annual extraction of resource :math:`f`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`,
-   * - :math:`\delta_{rg}^t`
+   * - :math:`\delta_{fg}^t`
      - is the maximum fraction of resource :math:`f`, cost category :math:`g`, that can be extracted in period :math:`ttt`,
    * - :math:`\Delta t`
      - is the length of period :math:`t` in years,
@@ -120,10 +98,7 @@ where
 3.2.4 	Maximum Annual Resource Extraction per Grade
 ~~~~~~~~~~~~~~~~~
 
-.. math::
-   rzfg....rr...ttt
-
-Limits the domestic resources available from one cost category per year.
+Limits the domestic resource availability from one cost category per year.
 
 .. math::
    rzfg....rr...ttt \leq value.
@@ -145,10 +120,10 @@ where
 .. math::
    mrzfg...rr...ttt
  
-The annual extraction level of a resource in a period can be related to the previous one by a growth/decline parameter and an increment/decrement of extraction activity resulting in upper/lower dynamic extraction constraints. For the first period the extraction is related to the activity in the baseyear.
+The annual extraction level of a resource in a period can be related to the previous one by a growth parameter and an increment of extraction activity resulting in upper dynamic extraction constraints. For the first period the extraction is related to the activity in the baseyear.
  
 .. math::
-   \sum_g rzfg....rr...ttt - `\sum_{g,p}rzfg....rr...(ttt-1) \leq g_{ft}^0,
+   rzfg....rr...ttt - \gamma_fg \times rzfg....rr...(ttt-1) \leq g_{ft}^0,
  
 where
 
@@ -157,10 +132,10 @@ where
    :header-rows: 0
 
    * - :math:`m`
-     - is m or l, indicating upper and lower constraints respectively,
+     - is m or l, indicating upper and lower constraints respectively (lower limits are generally not used),
    * - :math:`\gamma_{ft}^0`
-     - is the maximum growth of extraction of resource :math:`f` between period :math:`ttt−1` and :math:`ttt`,
+     - is the maximum growth rate for the extraction of resource :math:`f` between period :math:`ttt − 1` and :math:`ttt`,
    * - :math:`g_{ft}^0`
-     - is the initial size (increment/decrement) of extraction of resource :math:`f` in period :math:`ttt`, and
+     - is the annual increment of the extraction of resource :math:`f` in period :math:`ttt` (must be > 0 if the resource (grade) is not extracted in the base year), and
    * - :math:`rzfg....rr...ttt`
      - is the annual extraction of resource :math:`f`, cost category (grade) :math:`g` in period :math:`ttt`.
