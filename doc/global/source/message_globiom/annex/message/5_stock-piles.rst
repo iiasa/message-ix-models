@@ -6,9 +6,9 @@
 5.1 	Variables
 ---------------
 
-Generally MESSAGE does not generate any variables related to an energy carrier alone. However, in the case of man-made fuels, that are accumulated over time, a variable that shifts the quantities to be transferred from one period to the other is generated.
+Generally MESSAGE does not generate any variables related to an energy carrier alone. However, in the case of man-made fuels, that are accumulated over time, a variable that shifts the quantities from one load region or period to the next is generated.
 
-5.1.1 	Stock-pile Variables
+5.1.1 	Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -34,24 +34,23 @@ The stock-pile variables represent the amount of fuel :math:`f` that is transfer
 5.2 	Constraints
 -----------------
 
-5.2.1 	Stock-piling Constraints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. math::
    qf......rrlllttt
 
-:math:`q` is a special level on that energy forms can be defined that are accumulated over time and consumed in later periods. One example is the accumulation of plutonium and later use in fast breeder reactors.
+:math:`q` is a special level on that energy forms can be defined that are accumulated over time and may be consumed in later periods. One example is the accumulation of plutonium and later use in fast breeder reactors.
 
 The general form of this constraint is:
 
 .. math::
-   qfb.....rrlllttt-Qfb.....rrlll(ttt-1)+\sum_v \left[ \sum _t \Delta t \times (zsvf....rrlllttt+\beta _{zsv\phi}^f\times zsv\phi....rrlllttt- \right. \\ \left. \epsilon _{zfvo}\times zfvo....rrlllttt-\beta _{z \phi vo}^f\times z \phi vo....rrlllttt)-\Delta t \times \iota_{zfvd} \times yzfvd...rr...(ttt)-\right. \\ \left. \Delta(t-\tau _{zfvd}-1)\times \rho_{zfvd} \times yzfvd...rr...(ttt-\tau_{zfvd}) \right] = 0
+   qfb.....rrlllttt-qfb.....rrlll(ttt-1)-\sum_v \left[ \Delta t \times (zsvf....rrlllttt+\beta _{zsv\phi}^f\times zsv\phi....rrlllttt- \right. \\
+   \epsilon _{zfvo}\times zfvo....rrlllttt - \beta _{z \phi vo}^f\times z \phi vo....rrlllttt) + \Delta t \times \iota_{zfvd} \times yzfvd...rr...(ttt)- \\
+   \left. \Delta(t-\tau _{zfvd}-1)\times \rho_{zfvd} \times yzfvd...rr...(ttt-\tau_{zfvd}) \right] = 0
 
 
 where
 
 .. list-table:: 
-   :widths: 40 110
+   :widths: 40 60
    :header-rows: 0
 
    * - :math:`f`
