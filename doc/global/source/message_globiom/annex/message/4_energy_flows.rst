@@ -31,6 +31,8 @@ The first level in the above list gives it a special meaning (see section :ref:`
 
 Another exception ia a level labelled :math`q`, this letter is reserved for stock piles (see section :ref:`_stockpiles`).
 
+**IMPORTANT:** Generally central production systems should not deliver to the first (demand) level. In this case the production of the system would be forced to follow the demand pattern.
+
 4.1.1 	Demand Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. math::
