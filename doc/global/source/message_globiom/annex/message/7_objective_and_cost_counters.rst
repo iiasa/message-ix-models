@@ -38,7 +38,7 @@ The cost accounting rows are further separated into the following schemes:
    * - :math:`name....rr` 
      - total costs across all load regions and time steps per region,
 
-7.1.2 	The Objective Function
+7.2 	The Objective Function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
