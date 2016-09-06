@@ -136,11 +136,9 @@ Many types of energy conversion technologies do not have fix relations between t
 
 
 .. math::
-   \begin{align*}
-   & \sum_{z\sigma {v}'\delta }\frac{rel_{z\sigma {v}'\delta} ^{zsvd}\times\epsilon_{z\sigma {v}'\delta }\times z\sigma {v}'\delta ....rrlllttt}{\lambda _{lll}} - \\
-   & \sum_{\tau=t-\tau_{zsvd}}^{min(t,\kappa_{zsvd})}\Delta \tau \times \pi_{zsvd}\times f_i \times f_p \times yzsvd...rr...\tau \leq hc_{zsvd}^t\times \pi_{zsvd}
-   \end{align*}
- 
+   \sum_{z\sigma {v}'\delta }\frac{rel_{z\sigma {v}'\delta} ^{zsvd}\times\epsilon_{z\sigma {v}'\delta }\times z\sigma {v}'\delta ....rrlllttt}{\lambda _{lll}} - \\
+   \sum_{\tau=t-\tau_{zsvd}}^{min(t,\kappa_{zsvd})}\Delta \tau \times \pi_{zsvd}\times f_i \times f_p \times yzsvd...rr...\tau \leq hc_{zsvd}^t\times \pi_{zsvd}
+
 The following notation is used in the above equations:
 
 .. list-table:: 
