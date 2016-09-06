@@ -27,7 +27,7 @@ The following description of the energy flow constraints in MESSAGE is given for
    * - :math:`r`
      - Energy resources.
 
-The first level in the above list gives it a special meaning (see section :ref:`activitiesECT`. Clearly any other combination of identifiers is also possible.
+The first level in the above list gives it a special meaning (see section :ref:`_activitiesECT`. Clearly any other combination of identifiers is also possible.
 
 Another exception ia a level labelled :math`q`, this letter is reserved for stock piles (see section :ref:`_stockpiles`).
 
@@ -51,7 +51,7 @@ where
    * - :math:`zd......rr...ttt`
      - annual demand equation for :math:`d` in region :math:`rr` and period :math:`ttt`,
    * - :math:`zsvd....rr...ttt`
-     - activity of end-use technology :math:`zsvd` in region :math:`rr` and period :math:`ttt` (see section  :ref:`activitiesECT`),
+     - activity of end-use technology :math:`zsvd` in region :math:`rr` and period :math:`ttt` (see section  :ref:`_activitiesECT`),
    * - :math:`\epsilon _{zsvd}`
      - efficiency of end-use technology :math:`zsvd` in converting :math:`s` to :math:`d`,
    * - :math:`\beta _{zsv\delta}^d`
@@ -87,7 +87,7 @@ where
    :header-rows: 0
 
    * - :math:`zsve....rrlllttt`
-     - is the activity of the technology producing energy form :math:`e` in regions :math:`rr`, load region :math:`lll` and period :math:`ttt` (see section :ref:`activitiesECT`),
+     - is the activity of the technology producing energy form :math:`e` in regions :math:`rr`, load region :math:`lll` and period :math:`ttt` (see section :ref:`_activitiesECT`),
    * - :math:`\epsilon _{zsve}`
      - is the efficiency of technology :math:`zsve` in producing :math:`s`,
    * - :math:`zevd....rrlllttt`
