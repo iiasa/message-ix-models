@@ -26,7 +26,7 @@ where
    * - :math:`f_i`
      - :math:`\left\{\begin{matrix}
            1 & for costs connected to investments\\
-           (1+\frac{dr_t}{100})^{\frac{\Delta t}{2} & else
+           (1+\frac{dr_t}{100})^{\frac{\Delta t}{2}} & else
        \end{matrix}\right.` and                                                  
   * - :math:`dr_t`
     - discount rate in period :math:`t`; generally the discount rate is constant over the complete time horizon.                 
