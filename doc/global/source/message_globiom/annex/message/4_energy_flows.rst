@@ -27,9 +27,9 @@ The following description of the energy flow constraints in MESSAGE is given for
    * - :math:`r`
      - Energy resources.
 
-The first level in the above list gives it a special meaning (see section :ref:`_activitiesECT`. Clearly any other combination of identifiers is also possible.
+The first level in the above list gives it a special meaning (see section :ref:`_activitiesECT`). Clearly any other combination of identifiers is also possible.
 
-Another exception ia a level labelled :math`q`, this letter is reserved for stock piles (see section :ref:`_stockpiles`).
+Another exception ia a level labelled :math:`q`, this letter is reserved for stock piles (see section :ref:`_stockpiles`).
 
 **IMPORTANT:** Generally central production systems should not deliver to the first (demand) level. In this case the production of the system would be forced to follow the demand pattern.
 
@@ -45,7 +45,7 @@ Another exception ia a level labelled :math`q`, this letter is reserved for stoc
 where
 
 .. list-table:: 
-   :widths: 40 110
+   :widths: 60 110
    :header-rows: 0
 
    * - :math:`zd......rr...ttt`
@@ -58,7 +58,7 @@ where
      - efficiency of end-use technology :math:`zsvd` in producing by-product :math:`d` from :math:`s` (:math:`\delta` is the main output of the technology), and
    * - :math:`D_{drt}`
      - annual demand for :math:`d` in region :math:`rr` and period :math:`ttt`.
-     
+
 The first level, usually labelled 'demand level', has a special feature. This is related to the fact that useful energy is usually produced on-site, e.g., space heat is produced by a central heating system, and the load variations over the year are all covered by this one system. Thus, an allocation of production technologies to the different areas of the load
    curve, like the model would set it up according to the relation between investment and operating costs would ignore the
    fact that these systems are not located in the same place and are not connected to each other. MESSAGE represents the
@@ -83,19 +83,19 @@ These constraint match the consumption of a specific energy form with the produc
 where
 
 .. list-table::
-   :widths: 40 110
+   :widths: 60 110
    :header-rows: 0
 
    * - :math:`zsve....rrlllttt`
-     - is the activity of the technology producing energy form :math:`e` in regions :math:`rr`, load region :math:`lll` and period :math:`ttt` (see section :ref:`_activitiesECT`),
+     - activity of the technology producing energy form :math:`e` in regions :math:`rr`, load region :math:`lll` and period :math:`ttt` (see section :ref:`_activitiesECT`),
    * - :math:`\epsilon _{zsve}`
-     - is the efficiency of technology :math:`zsve` in producing :math:`s`,
+     - efficiency of technology :math:`zsve` in producing :math:`s`,
    * - :math:`zevd....rrlllttt`
-     - is the activity of the technology :math:`zevd` consuming energy form :math:`e` in region :math:`rr` and period :math:`ttt`,
+     - activity of the technology :math:`zevd` consuming energy form :math:`e` in region :math:`rr` and period :math:`ttt`,
    * - :math:`\beta_{zsv \kappa }^e`
-     - is the production of fuel :math:`e` relative to the main output :math:` \kappa ` by technology :math:`zsv \kappa `, and
+     - production of fuel :math:`e` relative to the main output :math:` \kappa ` by technology :math:`zsv \kappa `, and
    * - :math:`\beta_{z \kappa vd}^e`
-     - is the consumption of fuel :math:`e` relative to the main output :math:`d` by technology :math:`z \kappa vd`.
+     - consumption of fuel :math:`e` relative to the main output :math:`d` by technology :math:`z \kappa vd`.
 
 In case technologies are modeled with given production or consumption load curves, the variables are the annual variables multiplied by the share of the total energy flow in this load region :math:`\eta_{zsve}^l`:
 
@@ -117,8 +117,8 @@ where
    :header-rows: 0
 
    * - :math:`rzfg....rr...ttt`
-     - is the annual extraction of resource :math:`f`, cost category (grade) :math:`g` in region :math:`rr` and period :math:`ttt`, and
+     - annual extraction of resource :math:`f`, cost category (grade) :math:`g` in region :math:`rr` and period :math:`ttt`, and
    * - :math:`rzfg....rr`
-     - is the total available amount of resource :math:`f`, grade :math:`g` in region :math:`rr`.
+     - total available amount of resource :math:`f`, grade :math:`g` in region :math:`rr`.
 
  
