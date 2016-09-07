@@ -56,7 +56,7 @@ where
    :header-rows: 0
 
    * - :math:`y`
-     - dentifier for capacity variables.
+     - identifier for capacity variables.
    * - :math:`z`
      - identifies the level on that the main energy output of the technology is defined,
    * - :math:`s`
