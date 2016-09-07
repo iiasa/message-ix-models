@@ -128,7 +128,7 @@ The annual extraction level of a resource in a period can be related to the prev
 where
 
 .. list-table:: 
-   :widths: 40 110
+   :widths: 60 110
    :header-rows: 0
 
    * - :math:`m`
