@@ -54,11 +54,13 @@ The objective function has the following general form:
 
 .. math::
 
-   & \sum_r \sum_t \left [ \beta_m^t \Delta t \left \{ \sum_{zsvd} \sum_{lll} zsvd....rrlllttt \times \epsilon_{zsvd} \times \left [ ccur(zsvd,t) + \right. \right. \right. \\
-   & \left. \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] + \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau) + \\
-   & \left. \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t) \right ] \right \} + \\
-   & \beta_b^t \times \left \{ \sum_{zsvd} \sum_{\tau=t}^{t+t_d} \Delta(t-1) \times yzsvd...rr...\tau \times \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + \right. \right. \\
-   & \left. \left. \left. \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right \} \right ] \longrightarrow min
+   & \sum_r \sum_t \left [ \beta_m^t \Delta t \sum_{zsvd} \sum_{lll} \left \{ \vphantom{\sum_i^t} zsvd....rrlllttt \times \epsilon_{zsvd} \times ccur(zsvd,t) + \right. \right. \\
+   & \sum_{i=1,2,c} \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) + \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau) + \\
+   & \left . \sum_g \sum_l \sum_p rzrg....rrlllttt \times cres(zrg,t) \right \} + \\
+   & \beta_b^t \Delta(t-1) \sum_{zsvd} \sum_{\tau=t}^{t+t_d} \left \{ \vphantom{\sum_i^t} yzsvd...rr...\tau \times ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + \right. \\
+   & \left. \left. \sum_{i-1,2,c} \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right \} \right ] \longrightarrow min
+
+with:
 
 .. math::
    \beta_b^t=\left [ \frac{1}{1+\frac{dr}{100}} \right ]^{t-t_0},
