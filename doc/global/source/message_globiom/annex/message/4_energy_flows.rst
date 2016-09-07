@@ -59,12 +59,8 @@ where
    * - :math:`D_{drt}`
      - annual demand for :math:`d` in region :math:`rr` and period :math:`ttt`.
 
-The first level, usually labelled 'demand level', has a special feature. This is related to the fact that useful energy is usually produced on-site, e.g., space heat is produced by a central heating system, and the load variations over the year are all covered by this one system. Thus, an allocation of production technologies to the different areas of the load
-   curve, like the model would set it up according to the relation between investment and operating costs would ignore the
-   fact that these systems are not located in the same place and are not connected to each other. MESSAGE represents the
-   end-use technologies by one variable per period that produces the required useful energy in the load pattern needed and
-   requires the inputs in the same pattern. For special technologies like, e.g., night storage heating systems, this pattern
-   can be changed to represent the internal storage capability of the system.
+
+The first level, usually labelled 'demand level', has a special feature. This is related to the fact that useful energy is usually produced on-site, e.g., space heat is produced by a central heating system, and the load variations over the year are all covered by this one system. Thus, an allocation of production technologies to the different areas of the load curve, like the model would set it up according to the relation between investment and operating costs would ignore the fact that these systems are not located in the same place and are not connected to each other. MESSAGE represents the end-use technologies by one variable per period that produces the required useful energy in the load pattern needed and requires the inputs in the same pattern. For special technologies like, e.g., night storage heating systems, this pattern can be changed to represent the internal storage capability of the system.
 
 Each energy form on any level can have an external demand. In this case the demand is given as right hand side to the balance equation (see section :ref:`_enebal`). If the energy carrier is modelled with load regions, the right hand sides are given for each load region. If no load region pattern is defined, the demand is assumed to be a base load demand.
 
