@@ -18,11 +18,11 @@ where
    * - :math:`r`
      - identifies resource extraction variables,
    * - :math:`z`
-     - is the level on that the resource is defined (usually :math:`= r)`,
+     - level on that the resource is defined (usually :math:`= r)`,
    * - :math:`f`
-     - is the identifier of the resource being extracted,
+     - identifier of the resource being extracted,
    * - :math:`g`
-     - is the grade (also called cost category) of resource :math:`r, g \in \{a, b, c, ...\}`.
+     - grade (also called cost category) of resource :math:`r, g \in \{a, b, c, ...\}`.
    * - :math:`rr`
      - identifies the region.
    * - :math:`ttt`
@@ -53,15 +53,15 @@ where
    :header-rows: 0
 
    * - :math:`rzfgg...rr`
-     - is the total amount of resource :math:`f`, cost category :math:`g`, that is available for extraction in a given region :math:`rr`,
+     - total amount of resource :math:`f`, cost category :math:`g`, that is available for extraction in a given region :math:`rr`,
    * - :math:`rzfg....rr...ttt`
-     - is the annual extraction of resource :math:`f`, cost category (grade) :math:`g`  in region :math:`rr` and period :math:`ttt`,
+     - annual extraction of resource :math:`f`, cost category (grade) :math:`g`  in region :math:`rr` and period :math:`ttt`,
    * - :math:`\Delta t`
-     - is the length of period :math:`t`.
+     - length of period :math:`t`.
    * - :math:`\Delta t_0`
-     - is the number of years between the base year and the first model year, and 
+     - number of years between the base year and the first model year, and 
    * - :math:`R_{zfg,0}`
-     - is the extraction of resource :math:`r`, grade :math:`g` in the base year.
+     - extraction of resource :math:`r`, grade :math:`g` in the base year.
 
 
 3.2.2 	Resource Depletion  Constraints
@@ -82,17 +82,17 @@ where
    :header-rows: 0
 
    * - :math:`rzfgg...rr`
-     - is the total amount of resource :math:`f`, cost category :math:`g`, that is available for extraction,
+     - total amount of resource :math:`f`, cost category :math:`g`, that is available for extraction,
    * - :math:`rzfg....rr...ttt`
-     - is the annual extraction of resource :math:`f`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`,
+     - annual extraction of resource :math:`f`, cost category (grade) :math:`g` and elasticity class :math:`p` in period :math:`t`,
    * - :math:`\delta_{fg}^t`
-     - is the maximum fraction of resource :math:`f`, cost category :math:`g`, that can be extracted in period :math:`ttt`,
+     - maximum fraction of resource :math:`f`, cost category :math:`g`, that can be extracted in period :math:`ttt`,
    * - :math:`\Delta t`
-     - is the length of period :math:`t` in years,
+     - length of period :math:`t` in years,
    * - :math:`\Delta t_0`
-     - is the number of years between the base year and the first model year, and
+     - number of years between the base year and the first model year, and
    * - :math:`R_{rzfg,0}`
-     - is the extraction of resource :math:`r`, grade :math:`g` in the base year.
+     - extraction of resource :math:`r`, grade :math:`g` in the base year.
 
 
 3.2.4 	Maximum Annual Resource Extraction per Grade
@@ -110,7 +110,7 @@ where
    :header-rows: 0
 
    * - :math:`rzfg....rr...ttt`
-     - is the annual extraction of resource :math:`f`, cost category (grade) :math:`g` in period :math:`ttt`.
+     - annual extraction of resource :math:`f`, cost category (grade) :math:`g` in period :math:`ttt`.
 
 .. _upperdynamicREC:
 
@@ -134,8 +134,8 @@ where
    * - :math:`m`
      - is m or l, indicating upper and lower constraints respectively (lower limits are generally not used),
    * - :math:`\gamma_{ft}^0`
-     - is the maximum growth rate for the extraction of resource :math:`f` between period :math:`ttt − 1` and :math:`ttt`,
+     - maximum growth rate for the extraction of resource :math:`f` between period :math:`ttt − 1` and :math:`ttt`,
    * - :math:`g_{ft}^0`
-     - is the annual increment of the extraction of resource :math:`f` in period :math:`ttt` (must be > 0 if the resource (grade) is not extracted in the base year), and
+     - annual increment of the extraction of resource :math:`f` in period :math:`ttt` (must be > 0 if the resource (grade) is not extracted in the base year), and
    * - :math:`rzfg....rr...ttt`
-     - is the annual extraction of resource :math:`f`, cost category (grade) :math:`g` in period :math:`ttt`.
+     - annual extraction of resource :math:`f`, cost category (grade) :math:`g` in period :math:`ttt`.
