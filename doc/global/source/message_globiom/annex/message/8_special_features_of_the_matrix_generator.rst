@@ -47,7 +47,7 @@ Investment costs can be distributed over the construction time. As these points 
   * - half\-half
     - half of the investments are paid in the period before the start of operation, the other half is paid in the period when the technology goes into operation. With this, the period when the technology starts operating is the same as the construction period. This is usually used for models with long time periods.
 
-Investment costs are spread evenly over the construction time. In reality the investment costs follow a bell-shape, but the resulting error after discounting and summing up over the construction time is very small.
+Investment costs are spread evenly over the construction time. In reality the investment costs follow a bell-shape, but the resulting error after discounting and summing up over the construction time is very small. There still remains only one entry into the objective function, which is modified according to the sum over the distribution results.
 
 8.3 	The Contribution of Capacities Existing in the Base Year
 ---------------------------------------------------------------
