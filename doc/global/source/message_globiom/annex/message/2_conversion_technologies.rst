@@ -15,7 +15,7 @@ Energy conversion technologies, both on the supply and demand side of the energy
 2.1.1 	Activities  of Energy Conversion Technologies
 ~~~~~~~~~~~~~~~~~~~~~~
 .. math::
-   zsvd....rrllltt
+   zsvd....rrllltt,
 
 where
 
@@ -38,7 +38,7 @@ where
    * - :math:`ttt`
      - identifies the period, :math:`ttt` = :math:`year - int(year_0/100) * 100`.
 
-The activity variable of an energy conversion technology is an energy flow variable. It represents the annual consumption of this technology of the main input per period. If a technology has no input, the variable represents the annual production of the main output divided by the efficiency.
+The activity variable of an energy conversion technology is an energy flow variable. It represents the annual consumption of this technology of the main input per period or load region. If a technology has no input, the variable represents the annual production of the main output divided by the efficiency.
  
 If the main output is *not* on the demand level and at least one of the energy carriers consumed or supplied is defined with load regions the technology is defined with load regions. In this case the activity variables are generated separately for each load region, which is indicated by the additional identifier "lll". However, this changes if the production of the technology over the load regions is predefined: one variable is generated for the time step, the distribution to the load regions is given by the definition of the user (e.g., production pattern of solar power-plants or consumption pattern of end-use devices).
 
@@ -47,7 +47,7 @@ If the main output is *not* on the demand level and at least one of the energy c
 2.1.2 	Capacities of Energy Conversion Technologies
 ~~~~~~~~~~~~~~~~~~~~~~
 .. math:: 
-   yzsvd...rr...ttt, 
+   yzsvd...rr...ttt 
 
 where
 
@@ -92,7 +92,7 @@ These are equations used to calculate relations beween timesteps or between diff
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
-   czsvd...rrlllttt, 
+   czsvd...rrlllttt 
 
 where
 
@@ -269,11 +269,11 @@ These constaints allow to set upper and/or lower limits on the total installed c
    :header-rows: 0
 
    * - :math:`n`
-     - may be 'n' or 'p' for two groups of user defined constraints,
+     - may be 'n', 'p', or 'c' for three groups of user defined constraints,
    * - :math:`name`
      - is a user defined 4-character short name of the constraint.
 
-Each technology may have entries related to their activity, new installed capacity, or total installed capacity into any of the defined constraints. In multi-region models the constraint it is first searched in the sub-region and, if not found, in the main-region. With this it is possible to create relations between technologies in different sub-regions.
+Each technology may have entries related to their activity, new installed capacity, or total installed capacity into any of the defined constraints. In multi-region models the constraint is first searched in the region where the entry is defined and then, if not found, in the main-region. With this it is possible to create relations between technologies in different sub-regions.
 The main uses for such constraints are to put regional or global constraints on emissions or to relate the production from specific energy carrirer to the total production, e.g.:
 
 .. math::
