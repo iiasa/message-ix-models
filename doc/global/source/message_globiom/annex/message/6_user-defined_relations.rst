@@ -21,7 +21,7 @@ Relations without load regions sum up the activities (multiplied with the given 
 where
 
 .. list-table:: 
-   :widths: 40 60
+   :widths: 60 110
    :header-rows: 0
 
    * - :math:`zrvs....rrlllttt`
@@ -42,7 +42,7 @@ where
      - is 1 for relations with new construction and :math:`\Delta\tau` (period length) for relations with total capacity,
    * - :math:`ip`
      - is 1 for accounting during construction and the plant life in periods for accounting of total capacity,
-   * - :math:`sim`
+   * - :math:`\sim`
      - :math:`\geq, \leq, =, or free` indicating a lower, upper, equality, or free constraint, and
    * - :math:`rhs_m^t`
      - is the right hand side of the constraint.
