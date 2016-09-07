@@ -33,10 +33,14 @@ The cost accounting rows are further separated into the following schemes:
 
    * - :math:`name` 
      - total costs across all regions, load regions and time steps; :math:`func` is the objective function (see below),
-   * - :math:`name.........ttt` 
-     - total costs across all regions and load regions per time step,
    * - :math:`name....rr` 
      - total costs across all load regions and time steps per region,
+   * - :math:`nameT........ttt` 
+     - total costs across all regions and load regions per time step,
+   * - :math:`namet...rr...ttt` 
+     - total costs per regions and time step,
+   * - :math:`namel...rrllltt` 
+     - total costs per region, load region and time step.
 
 7.2 	The Objective Function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,27 +54,18 @@ The objective function has the following general form:
 
 .. math::
 
-   &= \sum_r \sum_t \left [ \beta_m^t \Delta t \left \{ \sum_{zsvd} \sum_{lll} zsvd....rrlllttt \times \epsilon_{zsvd} \times \left [ ccur(zsvd,t) + \right. \right. \right. \\
-   &= \left. \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] + \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau) + \\
-   &= \left. \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t) \right ] \right \} + \\
-   &= \beta_b^t \times \left \{ \sum_{zsvd} \sum_{\tau=t}^{t+t_d} \Delta(t-1) \times yzsvd...rr...\tau \times \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + \right. \right. \\
-   &= \left. \left. \left. \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right \} \right ]
-
-where
-
-.. list-table:: 
-   :widths: 40 60
-   :header-rows: 0
-
-   * - :math:`\Delta t`
-     - is the length of period t in years,
+   & \sum_r \sum_t \left [ \beta_m^t \Delta t \left \{ \sum_{zsvd} \sum_{lll} zsvd....rrlllttt \times \epsilon_{zsvd} \times \left [ ccur(zsvd,t) + \right. \right. \right. \\
+   & \left. \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] + \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau) + \\
+   & \left. \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t) \right ] \right \} + \\
+   & \beta_b^t \times \left \{ \sum_{zsvd} \sum_{\tau=t}^{t+t_d} \Delta(t-1) \times yzsvd...rr...\tau \times \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + \right. \right. \\
+   & \left. \left. \left. \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right \} \right ]
 
 .. math::
    \beta_b^t=\left [ \frac{1}{1+\frac{dr}{100}} \right ]^{t-t_0},
    \beta_m^t=\left [ \frac{1}{1+\frac{dr}{100}} \right ]^{t+ \frac{\Delta t}{2}-t_0},
 
 .. list-table:: 
-   :widths: 40 110
+   :widths: 60 110
    :header-rows: 0
 
    * - :math:`dr`
