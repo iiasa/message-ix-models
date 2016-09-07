@@ -8,9 +8,6 @@
 
 Generally MESSAGE does not generate any variables related to an energy carrier alone. However, in the case of man-made fuels, that are accumulated over time, a variable that shifts the quantities from one load region or period to the next is generated.
 
-5.1.1 	Variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. math::
    qfb.....rrlllttt, 
 
@@ -50,20 +47,20 @@ The general form of this constraint is:
 where
 
 .. list-table:: 
-   :widths: 40 60
+   :widths: 60 110
    :header-rows: 0
 
    * - :math:`f`
-     - is the identifier of the man-made fuel (e.g. plutonium, U_{233}),
+     - identifier of the man-made fuel (e.g. plutonium, U_{233}),
    * - :math:`\tau_{zsvd}`
-     - is the plant life of technology :math:`v` in periods,
+     - plant life of technology :math:`v` in periods,
    * - :math:`\iota_{zsvf}`
-     - is the ”first  inventory” of technology :math:`zsvf` of :math:`f` (relative to capacity of main output),
+     - ”first  inventory” of technology :math:`zsvf` of :math:`f` (relative to capacity of main output),
    * - :math:`\rho_{zfvd}`
-     - is the ”last core” of :math:`f` in technology :math:`zfvd`, see also section :ref:`_resourceextraction`,
+     - ”last core” of :math:`f` in technology :math:`zfvd`, see also section :ref:`_resourceextraction`,
    * - :math:`\Delta t`
-     - is the length of period :math:`ttt` in years,
+     - length of period :math:`ttt` in years,
    * - :math:`zfvd....rrlllttt`
-     - is the annual input of technology :math:`zfvd` of fuel :math:`f` in load region :math:`lll` and period :math:`ttt` (:math:`lll` is ”...” if :math:`zfvd` does not have load regions), and
+     - annual input of technology :math:`zfvd` of fuel :math:`f` in load region :math:`lll` and period :math:`ttt` (:math:`lll` is ”...” if :math:`zfvd` does not have load regions), and
    * - :math:`yzfvd...rr...ttt`
-     - is the annual new installation of technology :math:`zfvd` in period :math:`ttt`.
+     - annual new installation of technology :math:`zfvd` in period :math:`ttt`.
