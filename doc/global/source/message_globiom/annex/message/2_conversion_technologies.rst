@@ -24,13 +24,13 @@ where
    :header-rows: 0
 
    * - :math:`z`
-     - is the level identifier of the main output of the technology. The demand level is handled differently to all other levels: Technologies with the main output on this level are defined without load regions. If defined, the input is split into the different load regions.
+     - level identifier of the main output of the technology. The demand level is handled differently to all other levels: Technologies with the main output on this level are defined without load regions. If defined, the input is split into the different load regions.
    * - :math:`s`
-     - is the main energy input of the technology (supply). If the technology has no input :math:`s` is set to ”.” (e.g., solar technologies),
+     - main energy input of the technology (supply). If the technology has no input :math:`s` is set to ”.” (e.g., solar technologies),
    * - :math:`v`
      - additional identifier of the conversion technology (used to distinguish technologies with the same main input and output),
    * - :math:`d`
-     - is the main energy output of the technology,
+     - main energy output of the technology,
    * - :math:`rr`
      - identifies the sub-region, :math:`rr` as defined in file "regid" or :math:`rr` = :math:`”..”`, if the model has no sub-regions or if the technology is in the main region,
    * - :math:`lll`
@@ -47,7 +47,7 @@ If the main output is *not* on the demand level and at least one of the energy c
 2.1.2 	Capacities of Energy Conversion Technologies
 ~~~~~~~~~~~~~~~~~~~~~~
 .. math:: 
-   yzsvd...rrlllttt, 
+   yzsvd...rr...ttt, 
 
 where
 
@@ -56,21 +56,19 @@ where
    :header-rows: 0
 
    * - :math:`y`
-     - is the identifier for capacity variables.
+     - dentifier for capacity variables.
    * - :math:`z`
      - identifies the level on that the main energy output of the technology is defined,
    * - :math:`s`
-     - is the identifier of the main energy input of the technology,
+     - identifier of the main energy input of the technology,
    * - :math:`v`
      - additional identifier of the conversion technology,
    * - :math:`d`
-     - is the identifier of the main energy output of the technology,
+     - identifier of the main energy output of the technology,
    * - :math:`rr`
-     - is the identifier of the model region,
-   * - :math:`lll`
-     - is the identifier of the load region, and
+     - identifier of the model region,
    * - :math:`ttt`
-     - is the period in that the capacity is buildt.
+     - period in that the capacity is buildt.
 
 The capacity variables are power variables. Technologies can be modelled without capacity variables. In this case no capacity constraints and no dynamic constraints on construction can be included in the model. Capacity variables of energy conversion technologies can be defined  as integer variables.
 
@@ -103,21 +101,21 @@ where
    :header-rows: 0
 
    * - :math:`c`
-     - is the identifier for capacity constraints,
+     - identifier for capacity constraints,
    * - :math:`z`
      - identifies the level on that the main energy output of the technology is defined,
    * - :math:`s`
-     - is the identifier of the main energy input of the technology,
+     - identifier of the main energy input of the technology,
    * - :math:`v`
      - additional identifier of the conversion technology,
    * - :math:`d`
-     - is the identifier of the main energy output of the technology,
+     - identifier of the main energy output of the technology,
    * - :math:`rr`
-     - is the identifier of the model region,
+     - identifier of the model region,
    * - :math:`lll`
-     - is the identifier of the load region, and
+     - identifier of the load region, and
    * - :math:`ttt`
-     - is the period in that the capacity is buildt.
+     - period in that the capacity is buildt.
 
 For all conversion technologies modelled with capacity variables the capacity constraints will be generated automatically. If the activity variables exist for each load region separately there will be one capacity constraint per load region.
 
@@ -137,41 +135,41 @@ Many types of energy conversion technologies do not have fix relations between t
 
 .. math::
 
-   &= \sum_{z\sigma {v}'\delta }\frac{rel_{z\sigma {v}'\delta} ^{zsvd}\times\epsilon_{z\sigma {v}'\delta }\times z\sigma {v}'\delta ....rrlllttt}{\lambda _{lll}} - \\
-   &= \sum_{\tau=t-\tau_{zsvd}}^{min(t,\kappa_{zsvd})}\Delta \tau \times \pi_{zsvd}\times f_i \times f_p \times yzsvd...rr...\tau \leq hc_{zsvd}^t\times \pi_{zsvd}
+   & \sum_{z\sigma {v}'\delta }\frac{rel_{z\sigma {v}'\delta} ^{zsvd}\times\epsilon_{z\sigma {v}'\delta }\times z\sigma {v}'\delta ....rrlllttt}{\lambda _{lll}} - \\
+   & \sum_{\tau=t-\tau_{zsvd}}^{min(t,\kappa_{zsvd})}\Delta \tau \times \pi_{zsvd}\times f_i \times f_p \times yzsvd...rr...\tau \leq hc_{zsvd}^t\times \pi_{zsvd}
 
 The following notation is used in the above equations:
 
 .. list-table:: 
-   :widths: 40 1100
+   :widths: 60 110
    :header-rows: 0
 
    * - :math:`zsvd....rrlllttt`
-     - is the activity of conversion technology :math:`zsvd` in region :math:`rr`, period :math:`ttt` and, if defined so, load region :math:`lll` (see section :ref:`_activitiesECT`),
-   * - :math:`Yzsvd...rrlllttt`
-     - is the capacity variable of conversion technology :math:`zsvd` (see section :ref:`_capacititesECT`).
+     - activity of conversion technology :math:`zsvd` in region :math:`rr`, period :math:`ttt` and, if defined so, load region :math:`lll` (see section :ref:`_activitiesECT`),
+   * - :math:`yzsvd...rr...ttt`
+     - capacity variable of conversion technology :math:`zsvd` (see section :ref:`_capacititesECT`).
    * - :math:`\epsilon_{zsvd}`
-     - is the efficiency of technology :math:`zsvd` in converting the main energy input, :math:`s`, into the main energy output, :math:`d`,
+     - efficiency of technology :math:`zsvd` in converting the main energy input, :math:`s`, into the main energy output, :math:`d`,
    * - :math:`\kappa_{zsvd}`
-     - is the last period in that technology :math:`zsvd` can be constructed,
+     - last period in that technology :math:`zsvd` can be constructed,
    * - :math:`\pi_{svd}`
-     - is the "plant factor" of technology :math:`zsvd`, having different meaning depending on the type of capacity equation applied, in case the plant life does not coincide with the end of a period it also is adjusted time the technology can be operated in that period, 
+     - "plant factor" of technology :math:`zsvd`, having different meaning depending on the type of capacity equation applied, in case the plant life does not coincide with the end of a period it also is adjusted time the technology can be operated in that period, 
    * - :math:`\Delta \tau`
-     - is the length of period :math:`\tau` in years,
+     - length of period :math:`\tau` in years,
    * - :math:`\tau_{zsvd}`
-     - is the plant life of technology :math:`zsvd` in periods,
+     - plant life of technology :math:`zsvd` in periods,
    * - :math:`hc_{zsvd}^t`
      - represents the installations built before the time horizon under consideration, that are still in operation in the first year of period :math:`t`,
    * - :math:`f_i`
      - is 1. if the capacity variable is continuous, and represents the minimum installed capacity per year (unit size) if the variable is integer,
    * - :math:`f_p`
-     - is is the adjustment factor if the end of the plant life does not coincide with the end of a period (:math:`rest of plant life in period / period length`,
+     - adjustment factor if the end of the plant life does not coincide with the end of a period (:math:`rest of plant life in period / period length`,
    * - :math:`\pi(l_m, svd)`
-     - is the share of output in the load region with maximum production,
+     - share of output in the load region with maximum production,
    * - :math:`rel_{\sigma {v}'\delta}^{svd}`
-     - is the relative capacity of main output of technology (or operation mode) svd to the capacity of main output of the alternative technology (or operation mode) :math:`\sigma {v}'\delta`, and
+     - relative capacity of main output of technology (or operation mode) svd to the capacity of main output of the alternative technology (or operation mode) :math:`\sigma {v}'\delta`, and
    * - :math:`\lambda_l`
-     - is the length of the load region :math:`l` or the length of the load region with maximum capacity use if the production pattern over the year is fixed or the length of the load region with maximum capacity requirements as fraction of the year.
+     - length of the load region :math:`l` or the length of the load region with maximum capacity use if the production pattern over the year is fixed or the length of the load region with maximum capacity requirements as fraction of the year.
 
 
 .. _upper_dynamic_constraint_capacity:
@@ -185,8 +183,8 @@ The following notation is used in the above equations:
 The dynamic constraints relate the activity or annual new installations of a technology in a period to the activity or annual construction during the previous period.
 
 .. math::
-   yzsvd...rrlllttt - \gamma _{yzsvd,ttt} \times yzsvd...rrlll(ttt-1) \sim g _{yzsvd,ttt} \\
-   zsvd...rrlllttt - \gamma _{zsvd,ttt} \times zsvd...rrlll(ttt-1) \sim g _{zsvd,ttt},
+   yzsvd...rr...ttt - \gamma _{yzsvd,ttt} \times yzsvd...rr...(ttt-1) \sim g _{yzsvd,ttt} \\
+   \sum_{lll} zsvd...rrlllttt - \gamma _{zsvd,ttt} \times \sum_{lll} zsvd...rrlll(ttt-1) \sim g _{zsvd,ttt},
  
 where
 
@@ -199,13 +197,13 @@ where
    * - :math:`\sim`
      - is :math:`\leq, \geq` for upper and lower constraints respectively,
    * - :math:`\gamma _{yzsvd,t}, \gamma _{zsvd,t}`
-     - is the maximum growth rate per period for the construction/operation of technology :math:`zsvd`,
+     - maximum growth rate per period for the construction/operation of technology :math:`zsvd`,
    * - :math:`g_{yzsvd,t}`
-     - is the initial size (increment) that can be given and which is necessary for the introduction of new technologies that start with zero capacity/activity,
-   * - :math:`yzsvd...rrlllttt`
-     - is the annual new installation of technology :math:`zsvd` in period :math:`ttt`.
+     - initial size (increment) that can be given and which is necessary for the introduction of new technologies that start with zero capacity/activity,
+   * - :math:`yzsvd...rr...ttt`
+     - annual new installation of technology :math:`zsvd` in period :math:`ttt`.
    * - :math:`zsvd...rrlllttt`
-     - is the annual activity of technology :math:`zsvd` in period :math:`ttt`.
+     - activity of technology :math:`zsvd` in period :math:`ttt`, and load region lll.
 
 As described in Keppo and Strubegger (2010 :cite:`_keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion 
 in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`, 
@@ -217,9 +215,7 @@ in case of economically attractive technologies. To operationalize the concept o
 The maximum value for these dummy variables :math:`b^i` is limited to the activity of the underlying technology :math:`a`, i.e.
 
 .. math::
-   a_t \leq b_t^i
-
-for all :math:`i`.
+   a_t \leq b_t^i \qquad \qquad \forall i.
 
 Therefore, this new formulation increases the highest allowed growth factor from
 
@@ -244,7 +240,7 @@ which adds costs :math:`c_i` per additional growth factor utilized.
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
-   Izsvd...rrlllttt
+   Izsvd...rr...ttt
 
 These constaints allow to set upper and/or lower limits on the total installed capacity of a technology at a given point in time.
 
@@ -256,11 +252,11 @@ These constaints allow to set upper and/or lower limits on the total installed c
    :header-rows: 0
 
    * - :math:`T`
-     - is the plant life of the technology,
+     - plant life of the technology,
    * - :math:`\sim`
      - is :math:`\leq or \geq` for lower and ujpper constraints respectively,
    * - :math:`M_t`
-     - is the maximum or minimum allowed total installed capacity in time step t
+     - maximum or minimum allowed total installed capacity in time step t
 
 2.2.4 	User defined Constraints
 ~~~~~~~~~~~~~~~~~~~~~~
