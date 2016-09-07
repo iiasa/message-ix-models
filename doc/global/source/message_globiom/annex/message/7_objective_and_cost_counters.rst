@@ -65,7 +65,7 @@ The objective function has the following general form:
    \beta_m^t=\left [ \frac{1}{1+\frac{dr}{100}} \right ]^{t+ \frac{\Delta t}{2}-t_0},
 
 .. list-table:: 
-   :widths: 60 110
+   :widths: 80 110
    :header-rows: 0
 
    * - :math:`dr`
