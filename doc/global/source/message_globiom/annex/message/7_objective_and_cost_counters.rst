@@ -58,7 +58,7 @@ The objective function has the following general form:
    & \left. \sum_i \sum_m rho_{zsvd}^{mlt} \times cari(ml,t) \right ] + \sum_{zsvd} \sum_{\tau=t-\tau_{zsvd}}^t \Delta\tau \times yzsvd..\tau \times cfix(zsvd,\tau) + \\
    & \left. \sum_r \left [\sum_g \sum_l \sum_p Rzrgp...rrlllttt \times cres(rgpl,t) \right ] \right \} + \\
    & \beta_b^t \times \left \{ \sum_{zsvd} \sum_{\tau=t}^{t+t_d} \Delta(t-1) \times yzsvd...rr...\tau \times \left [ ccap(svd,\tau) \times fri_{zsvd}^{t_d-\tau} + \right. \right. \\
-   & \left. \left. \left. \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right \} \right ]
+   & \left. \left. \left. \sum_i \sum_m rc_{zsvd}^{mt} \times cari(m,t) \times fra_{zsvd,m}^{t_d-\tau} \right ] \right \} \right ] \longrightarrow min
 
 .. math::
    \beta_b^t=\left [ \frac{1}{1+\frac{dr}{100}} \right ]^{t-t_0},
