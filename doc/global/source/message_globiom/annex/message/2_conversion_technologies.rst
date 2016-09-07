@@ -141,7 +141,7 @@ Many types of energy conversion technologies do not have fix relations between t
 The following notation is used in the above equations:
 
 .. list-table:: 
-   :widths: 60 110
+   :widths: 20 80
    :header-rows: 0
 
    * - :math:`zsvd....rrlllttt`
