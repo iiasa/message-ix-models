@@ -10,7 +10,7 @@ Energy flows are modelled by linking the activity variables of the different con
 
 Energy demands are also modelled  as part of a balance constraint: the right hand side defines the amount to be supplied by the technologies in this constraint.
 
-The following description of the energy flow constraints in MESSAGE is given for the following set of level identifiers:
+The description of the energy flow constraints in MESSAGE is given for the following set of level identifiers:
 
 .. list-table:: 
    :widths: 40 110
@@ -29,7 +29,7 @@ The following description of the energy flow constraints in MESSAGE is given for
 
 The first level in the above list gives it a special meaning (see section :ref:`_activitiesECT`). Clearly any other combination of identifiers is also possible.
 
-Another exception ia a level labelled :math:`q`, this letter is reserved for stock piles (see section :ref:`_stockpiles`).
+Another exception is a level labelled :math:`q`, this letter is reserved for stock piles (see section :ref:`_stockpiles`).
 
 **IMPORTANT:** Generally central production systems should not deliver to the first (demand) level. In this case the production of the system would be forced to follow the demand pattern.
 
@@ -74,7 +74,7 @@ These constraint match the consumption of a specific energy form with the produc
 .. math::
 
    \sum_{sv} \epsilon_{zsve} \times zsve....rrlllttt + \sum_{sv} \beta_{zsv \kappa }^e \times zsv \kappa ....rrlllttt - \\
-   \sum_{zvd} zevd....rrlllttt - \sum_{zkvd} \beta_{z \kappa vd}^e \times z \kappa vd....rrlllttt \geq 0.
+   \sum_{zvd} zevd....rrlllttt - \sum_{zkvd} \beta_{z \kappa vd}^e \times z \kappa vd....rrlllttt \geq 0
 
 where
 
@@ -104,7 +104,7 @@ In case technologies are modeled with given production or consumption load curve
 The resources produced by the extraction technologies in a period can come from different cost categories (also called grades), which can, e.g., represent the different effort to reach certain resources. Short-term variations in price due to steeply increasing demand can be represented by an elasticity approach (see section 9.11).
 
 .. math::
-   \sum_{ttt} \sum_{g} rzfg....rr...ttt \leq rzfg....rr,
+   \sum_{ttt} \sum_{g} rzfg....rr...ttt \leq rzfg....rr
 
 where
 
