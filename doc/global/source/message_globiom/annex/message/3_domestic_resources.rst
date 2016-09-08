@@ -7,7 +7,7 @@ Extraction of domestic resources is modelled by variables that represent the qua
 3.1.1 	Resource Extraction  Variables
 ~~~~~~~~~~~~~~~~~
 .. math::
-   rzfg....rr...ttt,
+   rzfg....rr...ttt
 
 where
 
@@ -73,7 +73,7 @@ where
 The extraction of a resource in a period can be constrained  in relation to the total amount still existing at the beginning of the period. 
 
 .. math::
-   \Delta t\sum_p rzfg....rr...ttt \leq \delta_{fg}^t \left [rzfgg...rr - \Delta t_0R_{rzfg,0} - \sum_{\tau=1}^{t-1} \Delta\tau\times rrzfg...rr...\tau \right ]
+   \Delta t \times rzfg....rr...ttt \leq \delta_{fg}^t \left [rzfgg...rr - \Delta t_0R_{rzfg,0} - \sum_{\tau=1}^{t-1} \Delta\tau\times rrzfg...rr...\tau \right ]
 
 where
 
