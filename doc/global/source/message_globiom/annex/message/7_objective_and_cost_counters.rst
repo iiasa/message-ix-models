@@ -14,8 +14,10 @@ The different types of costs (i.e. entries for the objective function) can be ac
 
    * - :math:`func`
      - objective functions and discounted accounting rows,
-   * - :math:`ccur`
-     - fix (related to the installed capacity) and variable (related to the production) operation and maintenance costs,
+   * - :math:`cvar`
+     - variable (related to the production) operation and maintenance costs,
+   * - :math:`cfix`
+     - fix (related to the installed capacity) operation and maintenance costs,
    * - :math:`ccap`
      - investment costs; if the investments of a technology are distributed over the previous periods, also the entries to this accounting rows are distributed,
    * - :math:`cres`
