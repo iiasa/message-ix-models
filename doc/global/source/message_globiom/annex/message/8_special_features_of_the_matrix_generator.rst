@@ -11,7 +11,7 @@ The mathematical formulation of MESSAGE as presented  in the previous sections s
 The whole time horizon of the calculations is divided into periods of optional length. All variables of MESSAGE are represented  as average over the period they represent, resulting in a step-function. All entries in the objective function are discounted from the middle of the respective period to the first year, if they relate to energy flow variables and from the beginning of that period if they represent power variables. The function to discount the costs has the following form:
  
 .. math::
-   c_t=\frac{C_t^r}{\prod_{k=1}^{t-1}(1+\frac{dr_k}{100})^{\Delta k}\times f_i},
+   c_t=\frac{C_t^r}{\prod_{k=1}^{t-1}(1+\frac{dr_k}{100})^{\Delta k}\times f_i}
 
 where
 
@@ -25,9 +25,9 @@ where
      - objective function coefficient in period :math:`t`,
    * - :math:`f_i`
      - :math:`\left\{\begin{matrix}
-           1 & for costs connected to investments\\
+           1 & for costs connected to investments \right. \\
            (1+\frac{dr_t}{100})^{\frac{\Delta t}{2}} & else
-       \end{matrix}\right.` and                                                  
+       \end{matrix}`, and                                                  
   * - :math:`dr_t`
     - discount rate in period :math:`t`; generally the discount rate is constant over the complete time horizon.                 
 
@@ -42,10 +42,10 @@ Investment costs can be distributed over the construction time. As these points 
    :widths: 35 65
    :header-rows: 0
 
-  * - shifted
-    - all costs are paid in the time period(s) prevoius to the start of operation. This is usually used for models with short period lengths.
-  * - half\-half
-    - half of the investments are paid in the period before the start of operation, the other half is paid in the period when the technology goes into operation. With this, the period when the technology starts operating is the same as the construction period. This is usually used for models with long time periods.
+   * - shifted
+     - all costs are paid in the time period(s) prevoius to the start of operation. This is usually used for models with short period lengths.
+   * - half\-half
+     - half of the investments are paid in the period before the start of operation, the other half is paid in the period when the technology goes into operation. With this, the period when the technology starts operating is the same as the construction period. This is usually used for models with long time periods.
 
 Investment costs are spread evenly over the construction time. In reality the investment costs follow a bell-shape, but the resulting error after discounting and summing up over the construction time is very small. There still remains only one entry into the objective function, which is modified according to the sum over the distribution results.
 
@@ -60,7 +60,7 @@ The possible contribution of an installation that exists in the base year is kep
 
 .. math:: 
    y_0=c_0\frac{\gamma^{-\nu}-1}{\nu(\gamma^{-\tau}-1)},
-   y_t=y_0\gamma^{-t\times\nu}, t=1(1)\frac{\tau}{\nu},
+   y_t=y_0\gamma^{-t\times\nu}, t=1(1)\frac{\tau}{\nu}
 
 where
 
