@@ -21,15 +21,15 @@ where
 
    * - :math:`C_t^r`
      - cost figure to be discounted,
-   * - :math:`c_t`
+   * - :math:`c_t` 
      - objective function coefficient in period :math:`t`,
    * - :math:`f_i`
      - :math:`\left\{\begin{matrix}
            1 & for costs connected to investments \right. \\
            (1+\frac{dr_t}{100})^{\frac{\Delta t}{2}} & else
-       \end{matrix}`, and                                                  
-  * - :math:`dr_t`
-    - discount rate in period :math:`t`; generally the discount rate is constant over the complete time horizon.                 
+       \end{matrix}`, and
+   * - :math:`dr_t`
+     - discount rate in period :math:`t`; generally the discount rate is constant over the complete time horizon.                 
 
 .. _distributionsofinv:
 
