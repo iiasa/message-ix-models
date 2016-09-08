@@ -43,7 +43,7 @@ Investment costs can be distributed over the construction time. As these points 
    :header-rows: 0
 
    * - shifted
-     - all costs are paid in the time period(s) prevoius to the start of operation. This is usually used for models with short period lengths.
+     - all costs are paid in the time period(s) prevoius to the start of operation. This is usually used for models with short period lengths,
    * - half\-half
      - half of the investments are paid in the period before the start of operation, the other half is paid in the period when the technology goes into operation. With this, the period when the technology starts operating is the same as the construction period. This is usually used for models with long time periods.
 
