@@ -2,7 +2,7 @@
 
 Regions
 ==============
-MESSAGE has global coverage and divides the world into 11 regions (see :numref:`fig-reg` below).
+The combined MESSAGE-GLOBIOM framework has global coverage and divides the world into 11 regions which are also the native regions of the MESSAGE model (see :numref:`fig-reg` below). GLOBIOM natively operates at the level of 30 regions which in the linkage to MESSAGE are aggregated to the 11 regions listed in :numref:`tab-reg`
 
 .. _fig-reg:
 .. figure:: /_static/MESSAGE_regions.png
@@ -13,7 +13,7 @@ MESSAGE has global coverage and divides the world into 11 regions (see :numref:`
 The country definitions of the 11 MESSAGE regions are described in the table below (:numref:`tab-reg`).
 
 .. _tab-reg:
-.. table:: Listing of 11 MESSAGE regions including their country definitions.
+.. table:: Listing of 11 regions used in MESSAGE-GLOBIOM, including their country definitions.
    
     +------------------------+-----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
     | 11 MESSAGE regions     | Definition                        | List of countries                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -42,7 +42,7 @@ The country definitions of the 11 MESSAGE regions are described in the table bel
     +------------------------+-----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-In addition to the 11 geographical regions, there is a global trade region where market clearing of global energy markets is happening, international shipping bunker fuel demand, uranium resource extraction and the nuclear fuel cycle are modeled.
+In addition to the 11 geographical regions, in MESSAGE there is a global trade region where market clearing of global energy markets is happening and international shipping bunker fuel demand, uranium resource extraction and the nuclear fuel cycle are represented.
 
 
 
