@@ -1,7 +1,7 @@
 Fossil Fuel Reserves and Resources
 ====================================
-The availability and costs of fossil fuels influences the future direction of the energy system, and therewith future mitigation challenges. Understanding the variations in 
-fossil fuel availability and the underlying extraction cost assumptions across the SSPs is hence useful. Our fossil energy resource assumptions are derived from various sources 
+The availability and costs of fossil fuels influences the future development of the energy system, and therewith future mitigation challenges. Understanding the variations in 
+fossil fuel availability and the underlying extraction cost assumptions across the SSPs is hence important. Our fossil energy resource assumptions in MESSAGE are derived from various sources 
 (Rogner, 1997 :cite:`rogner_assessment_1997`; Riahi et al., 2012 :cite:`riahi_chapter_2012`) and are aligned with the storylines of the individual SSPs. While the physical resource base is identical across the SSPs, considerable differences 
 are assumed regarding the technical and economic availability of overall resources, for example, of unconventional oil and gas. What ultimately determines the attractiveness of a 
 particular type of resource is not just the cost at which it can be brought to the surface, but the cost at which it can be used to provide energy services. Assumptions on fossil 
@@ -12,7 +12,7 @@ developing coal technologies which in the longer term leads to a replacement of 
 assume a continuation of recent trends, focusing more on developing extraction technologies for unconventional hydrocarbon resources, thereby leading to higher potential cumulative oil 
 extraction than in the other SSPs (:numref:`fig-supply`, middle panel).
 
-:numref:`tab-globff` shows the assumed total quantities of fossil fuel resources in the MESSAGE model for the base year 2005. :numref:`fig-supply` gives these resource estimates as supply 
+:numref:`tab-globff` shows the assumed total quantities of fossil fuel resources in the MESSAGE model for the base year 2005. :numref:`fig-supply` gives these resource estimates as cumulative resource supply 
 curves. In addition, the assumptions are compared with estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) as of the year 2009. Estimating 
 fossil fuel reserves is built on both economic and technological assumptions. With an improvement in technology or a change in purchasing power, the amount that may be considered a 
 “reserve” vs. a “resource” (generically referred to here as resources) can actually vary quite widely.
@@ -57,7 +57,7 @@ possible, but yet to be found. The remainder are ‘Undiscovered resources’ an
      - 20.1 – 67.1
      - 40.2 – 122
 
-The following table (:numref:`tab-ffavail`) presents the fossil resource availability in ZJ (2010-2100) for coal, oil and gas, for SSP1, SSP2 and SSP3, respectively.
+The following table (:numref:`tab-ffavail`) presents the ultimate fossil resource availability for coal, oil and gas, for SSP1, SSP2 and SSP3, respectively.
 
 .. _tab-ffavail:
 .. list-table:: Fossil resource availability for SSP1, SSP2, and SSP3 (Fricko et al., 2016 :cite:`fricko_marker_2016`).
@@ -88,7 +88,7 @@ Natural gas is more abundant in both the conventional and unconventional categor
 :numref:`fig-supply` presents the cumulative global resource supply curves for coal, oil and gas in the IIASA IAM framework. Green shaded resources are technically and economically 
 extractable in all SSPs, purple shaded resources are additionally available in SSP1 and SSP2 and blue shaded resources are additionally available in SSP2. Coloured vertical lines 
 represent the cumulative use of each resource between 2010 and 2100 in the SSP baselines (see top panel for colour coding), and are thus the result of the combined effect of the
-assumptions on fossil resource availability and conversion technologies in the SSP baselines. 
+assumptions on fossil resource availability and conversion technologies in the SSP baseline scenarios. 
 
 .. _fig-supply:
 .. figure:: /_static/GlobalResourceSupplyCurves.png
@@ -98,7 +98,7 @@ assumptions on fossil resource availability and conversion technologies in the S
    
 Conventional oil and gas are distributed unevenly throughout the world, with only a few regions dominating the reserves. Nearly half of the reserves of conventional oil is found in 
 Middle East and North Africa, and close to 40% of conventional gas is found in Russia and the former Soviet Union states. The situation is somewhat different for unconventional oil 
-of which North and Latin America potentially possess significantly higher global shares. Unconventional gas in turn is distributed quite well throughout  the world, with North America 
+of which North and Latin America potentially possess significantly higher global shares. Unconventional gas in turn is distributed quite evenly throughout the world, with North America 
 holding most (roughly 25% of global resources). The distribution of coal reserves shows the highest geographical diversity which in the more fragmented SSP3 world contributes to 
 increased overall reliance on this resource. Russia and the former Soviet Union states, Pacific OECD, North America, and Centrally Planned Asia and China all possess more than 10 ZJ 
 of reserves.

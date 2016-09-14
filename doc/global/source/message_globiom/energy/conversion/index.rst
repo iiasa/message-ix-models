@@ -1,11 +1,11 @@
 Energy conversion
 =================
-Energy technologies are characterized by numerical model inputs describing their economic (e.g., investment costs, fixed and variable operation and maintenance costs), technical (e.g., conversion efficiencies), ecological (e.g., GHG and pollutant emissions), and sociopolitical characteristics. An example for the sociopolitical situation in a world region would be the decision by a country or world region to ban certain types of power plants (e.g., nuclear plants). Model input data reflecting this situation would be upper bounds of zero for these technologies or, equivalently, their omission from the data set for this region altogether.
+Energy technologies are characterized by numerical model inputs describing their economic (e.g., investment costs, fixed and variable operation and maintenance costs), technical (e.g., conversion efficiencies), ecological (e.g., GHG and air pollutant emissions), and sociopolitical characteristics. An example for the sociopolitical situation in a world region would be the decision by a country or world region to ban certain types of technologies (e.g., nuclear power plants). Model input data reflecting this situation would be constraining the use of these technologies or, equivalently, their omission from the data set for this region altogether.
 
 Each energy conversion technology is characterized in MESSAGE by the following data:
 
 * Energy inputs and outputs together with the respective conversion efficiencies. Most energy conversion technologies have one energy input and one output and thereby one associated efficiency. But technologies may also use different fuels (either jointly or alternatively), may have different operation modes and different outputs, which also may have varying shares. An example of different operation modes would be a passout turbine, which can generate electricity and heat at the same time when operated in co-generation mode or which can produce electricity only. For each technology, one output and one input are defined as main output and main input respectively. The activity variables of technologies are given in the units of the main input consumed by the technology or, if there is no explicit input (as for solar-energy conversion technologies), in units of the main output.
-* Specific investment costs (e. g., per kilowatt, kW) and time of construction as well as distribution of capital costs over construction time.
+* Specific investment costs (e.g., per kilowatt, kW) and time of construction as well as distribution of capital costs over construction time.
 * Fixed operating and maintenance costs (per unit of capacity, e.g., per kW).
 * Variable operating costs (per unit of output, e.g. per kilowatt-hour, kWh, excluding fuel costs).
 * Plant availability or maximum utilization time per year. This parameter also reflects maintenance periods and other technological limitations that prevent the continuous operation of the technology.
@@ -20,6 +20,8 @@ Each energy conversion technology is characterized in MESSAGE by the following d
 * Minimum unit size, e.g. for nuclear power plants it does not make sense to build plants with a capacity of a few kilowatt power (optional, not used in current model version).
 * Sociopolitical constraints, e.g., ban of nuclear power plants, or inconvenience costs of household cook stoves.
 * Inconvenience costs which are specified only for end-use technologies (e.g. cook stoves)
+
+Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, :numref:`fig-ther` and :numref:`fig-nonth` provide an overview of costs ranges for a set of key energy conversion technologies (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
 The specific technologies represented in various parts of the energy conversion sector are discussed in the following sections on :ref:`electricity`, :ref:`heat`, :ref:`other` and :ref:`grid`.
 
