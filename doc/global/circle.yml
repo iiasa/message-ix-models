@@ -11,5 +11,6 @@ dependencies:
 
 test:
   override:
+    - xelatex --version
     - make html
     - make xetexpdf
