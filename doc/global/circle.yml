@@ -1,6 +1,5 @@
 dependencies:
   pre:
-    - sudo add-apt-repository -y ppa:jonathonf/texlive-2016
     - sudo apt-get update
     - sudo apt-get install texlive
     - sudo apt-get install -y python-sphinx
@@ -8,6 +7,7 @@ dependencies:
     - sudo pip install sphinxcontrib-bibtex
     - sudo pip install cloud_sptheme
     - sudo pip install sphinxcontrib-fulltoc
+    - sudo apt-get update && time sudo apt-get dist-upgrade
 
 test:
   override:
