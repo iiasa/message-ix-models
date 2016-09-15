@@ -2,7 +2,7 @@
 
 Electricity
 ===========
-MESSAGE covers a large number of electricity generation options utilizing a wide range of primary energy sources. For fossil-based electricity generation technologies, typically a number of different technologies with different efficiencies, environmental characteristics and costs is represented. For example, in the case of coal, MESSAGE distinguishes subcritical and supercritical pulverized coal (PC) power plants where the subcritical variant is available with and without flue gas desulpherization/denox and one internal gasification combined cycle (IGCC) power plant. The superciritical PC and IGCC plants are also available with carbon capture and storage (CCS) which also can be retrofitted to some of the existing PC power plants. :numref:`tab-elec` below shows the different power plant types represented in MESSAGE.
+MESSAGE covers a large number of electricity generation options utilizing a wide range of primary energy sources. For fossil-based electricity generation technologies, typically a number of different technology variants with different efficiencies, environmental characteristics and costs are represented. For example, in the case of coal, MESSAGE distinguishes subcritical and supercritical pulverized coal (PC) power plants where the subcritical variant is available with and without flue gas desulpherization/denox and one internal gasification combined cycle (IGCC) power plant. The superciritical PC and IGCC plants are also available with carbon capture and storage (CCS) which also can be retrofitted to some of the existing PC power plants. :numref:`tab-elec` below shows the different power plant types represented in MESSAGE.
 
 Four different nuclear power plant types are represented in MESSAGE, i.e. two light water reactor types, a fast breeder reactor and a high temperature reactor, but only the two light water types are included in the majority of scenarios being developed with MESSAGE in the recent past. In addition, MESSAGE includes a representation of the nuclear fuel cycle, including reprocessing and the plutonium fuel cycle, and keeps track of the amounts of nuclear waste being produced.
 
@@ -73,7 +73,7 @@ Most thermal power plants offer the option of coupled heat production (CHP, see 
 
    Cost indicators for thermoelectric power-plant investment (Fricko et al., 2016 :cite:`fricko_marker_2016`). 
 
-In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively (see descriptions of the SSP narratives in section :ref:`narratives`). Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region (Fricko et al., 2016 :cite:`fricko_marker_2016`).
+In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively (see description of the :ref:`narratives`). Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region (Fricko et al., 2016 :cite:`fricko_marker_2016`).
 
 .. _fig-nonth:
 .. figure:: /_static/costind-nonthermo.png

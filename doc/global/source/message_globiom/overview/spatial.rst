@@ -2,7 +2,7 @@
 
 Regions
 ==============
-The combined MESSAGE-GLOBIOM framework has global coverage and divides the world into 11 regions which are also the native regions of the MESSAGE model (see :numref:`fig-reg` and :numref:`tab-reg` below). GLOBIOM natively operates at the level of 30 regions which in the linkage to MESSAGE are aggregated to the 11 regions listed in :numref:`tab-globiomreg`
+The combined MESSAGE-GLOBIOM framework has global coverage and divides the world into 11 regions which are also the native regions of the MESSAGE model (see :numref:`fig-reg` and :numref:`tab-reg` below). GLOBIOM natively operates at the level of 30 regions which in the linkage to MESSAGE are aggregated to the 11 regions as listed in :numref:`tab-globiomreg`.
 
 .. _fig-reg:
 .. figure:: /_static/MESSAGE_regions.png
@@ -70,7 +70,13 @@ In addition to the 11 geographical regions, in MESSAGE there is a global trade r
      - United States of America
    * - **WEU**
      - EU_MidWest
-     - Austria, Belgium, Germany, France, Luxembourg, Netherlands EU_North	Denmark, Finland, Ireland, Sweden, United Kingdom EU_South	Cyprus, Greece, Italy, Malta, Portugal, Spain
+     - Austria, Belgium, Germany, France, Luxembourg, Netherlands 
+   * - 
+     - EU_North	
+     - Denmark, Finland, Ireland, Sweden, United Kingdom 
+   * - 
+     - EU_South
+     - Cyprus, Greece, Italy, Malta, Portugal, Spain
    * - 
      - ROWE	
      - Gibraltar, Iceland, Norway, Switzerland
