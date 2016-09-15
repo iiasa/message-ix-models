@@ -264,7 +264,7 @@ is typically set to around 1%.
 Constraint on demand response
 ~~~~
 Demand responses from MACRO to MESSAGE can be large if the initial demands are far from the equlibrium demand levels of a specific scenario (e.g., when using demand from a non-climate policy scenario
-as the starting point for a stringent climate mitigation scenario that aims at limiting temperature change to 2°C). To avoid oscillations of demands in subsequent MESSAGE-MACRO iterations, a constraint
+as the starting point for a stringent climate mitigation scenario that aims at limiting temperature change to 2 degrees C). To avoid oscillations of demands in subsequent MESSAGE-MACRO iterations, a constraint
 on the maximum permissible demand change between subquent iterations has been introduced which is usually set to 15%. In practical terms this means that the demand response is capped at 
 15% for each type of :ref:`demand` and for each of the 11 MESSAGE :ref:`spatial`. 
 However, under specific conditions - typically under stringent climate policy - when price repsonses to small demand adjustments are large, an oscillating behavior between two sets of demand levels 
