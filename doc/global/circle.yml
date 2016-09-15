@@ -2,7 +2,7 @@ dependencies:
   pre:
     - sudo apt-get update
     - sudo apt-get install -y python-sphinx
-    - sudo apt-get install -y texlive-fonts-recommended 
+    - sudo apt-get install -y texlive-lang-german
     - sudo apt-get install -y texlive-xetex
     - sudo pip install sphinxcontrib-bibtex
     - sudo pip install cloud_sptheme
