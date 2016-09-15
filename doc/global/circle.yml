@@ -1,6 +1,8 @@
 dependencies:
   pre:
+    - sudo add-apt-repository ppa:jonathonf/texlive-2016
     - sudo apt-get update
+    - sudo apt-get install texlive
     - sudo apt-get install -y python-sphinx
     - sudo apt-get install -y texlive-xetex
     - sudo pip install sphinxcontrib-bibtex
