@@ -25,7 +25,7 @@ sources for the historical and projected datasets are the following:
 
 The scenario generator runs regressions on the historical datasets to establish the relationship between the independent variable (GDP (PPP) per capita) and several dependent variables, including total final energy intensity (MJ/2005USD) and the shares of final energy in several energy sectors (%). In the case of final energy intensity, the 
 relationship is best modeled by a power function so both variables are log-transformed.  In the case of most sectoral shares, only the independent variable is log-transformed. The 
-exception is the industrial share of final energy, which uses a hump-shaped function inspired by Schäfer (2005) :cite:`schafer_structural_2005`. This portion of the model provides the 
+exception is the industrial share of final energy, which uses a hump-shaped function inspired by Schafer (2005) :cite:`schafer_structural_2005`. This portion of the model provides the 
 historical relationships between GDP per capita and the dependent variables for each of the eleven MESSAGE regions.
 
 The historical data are also used in `quantile regressions <https://en.wikipedia.org/wiki/Quantile_regression>`_ to develop global trend lines that represent each percentile of the 
