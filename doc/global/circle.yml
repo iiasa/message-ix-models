@@ -3,7 +3,8 @@ dependencies:
     - sudo apt-get update
     - sudo apt-get install -y python-sphinx texlive-xetex
     - sudo pip install sphinxcontrib-bibtex
-    - sudo pip install sphinx_rtd_theme
+    - sudo pip install cloud_sptheme
+    - sudo pip install sphinxcontrib-fulltoc
 
 test:
   override:
