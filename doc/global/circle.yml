@@ -6,7 +6,7 @@ dependencies:
     - sudo pip install sphinxcontrib-bibtex
     - sudo pip install cloud_sptheme
     - sudo pip install sphinxcontrib-fulltoc
-    - sudo apt-get update && time sudo apt-get dist-upgrade
+    - sudo apt-get update
 
 test:
   override:
