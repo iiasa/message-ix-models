@@ -21,8 +21,6 @@ Each energy conversion technology is characterized in MESSAGE by the following d
 * Sociopolitical constraints, e.g., ban of nuclear power plants.
 * Inconvenience costs which are specified only for end-use technologies (e.g. cook stoves)
 
-Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change in energy-engineering type models has been done with MESSAGE (Messner, 1997 :cite:`messner_endogenized_1997`). The current cost and performance parameters, including conversion efficiencies and emission coefficients is generally derived from the relevant engineering literature. For the future alternative cost and performance projections are usually developed to cover a relatively wide range of uncertainties that influences model results to a good extent. As an example, :numref:`fig-ther` and :numref:`fig-nonth` provide an overview of costs ranges for a set of key energy conversion technologies (Fricko et al., 2016 :cite:`fricko_marker_2016`). The regional differentiation of technology costs for the initial modeling periods are based on IEA data (IEA, 2014 :cite:`iea_investment_2014`) with convergence of costs assumed over time driven by economic development (GDP/cap).
-
 The specific technologies represented in various parts of the energy conversion sector are discussed in the following sections on :ref:`electricity`, :ref:`heat`, :ref:`other` and :ref:`grid`.
 
 .. toctree::
