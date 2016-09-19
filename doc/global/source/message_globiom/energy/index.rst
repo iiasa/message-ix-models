@@ -48,9 +48,7 @@ equilibrium model. However, through its linkage to MACRO general equilibrium eff
 
    resource/index
    conversion/index
-   transport
-   resid_commerc
-   industrial
+   enduse/index
    tech
    demand
 
