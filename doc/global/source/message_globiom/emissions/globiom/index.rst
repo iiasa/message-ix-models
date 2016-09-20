@@ -1,3 +1,5 @@
+.. _emission_land:
+
 Emissions from land (GLOBIOM)
 ----
 

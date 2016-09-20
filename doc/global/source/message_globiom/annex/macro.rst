@@ -3,27 +3,13 @@
 Mathematical Formulation: MACRO
 ====
 
-MACRO is based on the macro-economic module of the global energy-economy-climate model Global 2100 :cite:`manne_buying_1992`, a predecesor of the `MERGE <http://www.stanford.edu/group/MERGE/>`_ model. 
-The original soft-linkage between MACRO and MESSAGE has been described in :cite:`messner_messagemacro:_2000`, but several adjustments have been made compared to this 
-original implementation. The description below builds to a certain degree on these two publications, but deviates in certain places as discussed in the following paragraphs.
-It is worthwhile mentioning that MACRO as used with MESSAGE has similar origins as the MACRO module of MARKAL-MACRO :cite:`loulou_markal-macro_2004` with the exception of 
-being soft-linked rather than hard-linked to the energy systems part of the model.
+MACRO is based on the macro-economic module of the global energy-economy-climate model Global 2100 :cite:`manne_buying_1992`, a predecesor of the `MERGE <http://www.stanford.edu/group/MERGE/>`_ model. The original soft-linkage between MACRO and MESSAGE has been described in :cite:`messner_messagemacro:_2000`, but several adjustments have been made compared to this original implementation. The description below builds to a certain degree on these two publications, but deviates in some places as discussed in the following paragraphs. It is worthwhile mentioning that MACRO as used with MESSAGE has similar origins as the MACRO module of MARKAL-MACRO :cite:`loulou_markal-macro_2004` with the exception of being soft-linked rather than hard-linked to the energy systems part of the model.
 
-On the one hand, while the version of MACRO described in :cite:`messner_messagemacro:_2000` like the MACRO module of Global 2100 operated
-at the level of electric and non-electric energy demands in the production function, the present version of MACRO operates at the level of the six commercial useful 
-energy demands represented in MESSAGE (:ref:`message`). This change was made in response to electrification becoming a tangible option for the transport sector with the introduction 
-of electric cars over the past decade. Previsouly (and as described in :cite:`messner_messagemacro:_2000`), the electric useful energy demands in MESSAGE had been mapped 
-to electric demand in MACRO and the thermal useful energy demands, non-energy feedstock and transport had been mapped to non-electric demand in MACRO. 
+On the one hand, while the version of MACRO described in :cite:`messner_messagemacro:_2000` like the MACRO module of Global 2100 operated at the level of electric and non-electric energy demands in the production function, the present version of MACRO operates at the level of the six commercial useful energy demands represented in MESSAGE (:ref:`message`). This change was made in response to electrification becoming a tangible option for the transport sector with the introduction of electric cars over the past decade. Previsouly (and as described in :cite:`messner_messagemacro:_2000`), the electric useful energy demands in MESSAGE had been mapped to electric demand in MACRO and the thermal useful energy demands, non-energy feedstock and transport demands in MESSAGE had been mapped to non-electric demand in MACRO. 
 
-On the other hand, the interface between MACRO and MESSAGE that organizes the iterative information exchange between the two models has been re-implemented in the 
-scripting language R which makes code maintenance and visualization of results (e.g., for visually checking demand convergence between MACRO and MESSAGE) easier compared to
-the previous implementation in C).
+On the other hand, the interface between MACRO and MESSAGE that organizes the iterative information exchange between the two models has been re-implemented in the scripting language R which makes code maintenance and visualization of results (e.g., for visually checking demand convergence between MACRO and MESSAGE) easier compared tothe previous implementation in C.
 
-Finally, the parameterization of MACRO has changed in a specific way. As mentioned, the model’s most important input parameters are the projected growth rates of total labor, i.e., 
-the combined effect of labor force and labor productivity growth (note that labor supply growth is also referred to as reference or potential GDP growth.) and the annual rates 
-of reference energy intensity improvements. In all recent applications of MACRO, these are calibrated to be consistent with the developments in a MESSAGE scenario. In practice, 
-this happens by running MACRO and then adjusting the potential GDP growth rates and the autonomous energy efficiency improvements (AEEIs) on a sectoral basis until MACRO does not 
-produce an energy demand response and GDP feedback compared to the MESSAGE scenario that it is calibrated to.
+Finally, the parameterization of MACRO has changed in a specific way. As mentioned, the model's most important input parameters are the projected growth rates of total labor, i.e., the combined effect of labor force and labor productivity growth (note that labor supply growth is also referred to as reference or potential GDP growth) and the annual rates of reference energy intensity improvements. In all recent applications of MACRO, including the SSPs, these are calibrated to be consistent with the developments in a MESSAGE scenario. In practice, this happens by running MACRO and then adjusting the potential GDP growth rates and the autonomous energy efficiency improvements (AEEIs) on a sectoral basis until MACRO does not produce an energy demand response and GDP feedback compared to the MESSAGE scenario that it is calibrated to.
 
 Notation declaration
 ----
