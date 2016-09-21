@@ -25,6 +25,7 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
+	@echo "  exthtml    to make standalone external HTML files"
 	@echo "  serve      serve a local version of the website on the default port for SimpleHTTPServer"
 	@echo "  livehtml   make and serve HTML files which update when RST files are updated"
 	@echo "  dirhtml    to make HTML files named index.html in directories"
@@ -59,6 +60,13 @@ html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+
+exthtml:
+	bash ext_setup.sh
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/exthtml
+	@echo
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/exthtml."
+	bash ext_teardown.sh
 
 livehtml:
 	$(SPHINXAUTOBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
