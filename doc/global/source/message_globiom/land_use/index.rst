@@ -7,7 +7,7 @@ Land-use dynamics are modelled with the GLOBIOM (GLobal BIOsphere Management) mo
 As a partial equilibrium model representing land-use based activities, including agriculture, forestry and bioenergy sectors (see :numref:`fig-landuse_product_structure`), production adjusts to meet the demand at the level of 30 economic regions (see list of the regions in Section :ref:`spatial`). International trade representation is based on the spatial equilibrium modelling approach, where individual regions trade with each other based purely on cost competitiveness because goods are assumed to be homogenous (Takayama and Judge 1971 :cite:`takayama_spatial_1971`; Schneider, McCarl et al. 2007 :cite:`schneider_agricultural_2007`). Market equilibrium is determined through mathematical optimization which allocates land and other resources to maximize the sum of consumer and producer surplus (McCarl and Spreen 1980 :cite:`mccarl_surplus_1980`). As in other partial equilibrium models, prices are endogenous. The model is run recursively dynamic with a 10 year time step, going from 2000 to 2100. The model is solved using a linear programming solver and can be run on a personal computer with the GAMS software.
 
 .. _fig-landuse_product_structure:
-.. figure:: /_static/GLOBIOM_land_use_product_structure.png
+.. figure:: /_static/GLOBIOM_chart_hires.jpg
    :width: 800px
    
    GLOBIOM land use and product structure. 
