@@ -1,2 +1,5 @@
 # pip install requirements for message_doc
+cloud_sptheme
+sphinx
 sphinxcontrib-bibtex
+sphinxcontrib-fulltoc
