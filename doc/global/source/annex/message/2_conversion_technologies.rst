@@ -205,7 +205,7 @@ where
    * - :math:`zsvd...rrlllttt`
      - activity of technology :math:`zsvd` in period :math:`ttt`, and load region lll.
 
-As described in Keppo and Strubegger (2010 :cite:`_keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion 
+As described in Keppo and Strubegger (2010 :cite:`keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion 
 in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`, 
 :math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{zsvd,ti})` are added to the upper dynamic constraint described above. 
 
