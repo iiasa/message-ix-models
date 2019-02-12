@@ -5,7 +5,7 @@ Dependencies
 ------------
 
 1. `Sphinx <http://sphinx-doc.org/>`_ v1.1.2 or higher
-1. `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.org/en/latest/>`_
+2. `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.org/en/latest/>`_
 
 Writing in Restructed Text
 --------------------------
