@@ -1,5 +1,4 @@
 # pip install requirements for message_doc
-cloud_sptheme
 sphinx
+sphinx_rtd_theme
 sphinxcontrib-bibtex
-sphinxcontrib-fulltoc
