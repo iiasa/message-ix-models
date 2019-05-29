@@ -38,7 +38,6 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinxcontrib.bibtex',
-    'cloud_sptheme.ext.table_styling',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
