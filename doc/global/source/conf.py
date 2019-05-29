@@ -237,12 +237,12 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'message.tex', u'message Documentation',
-     u'IIASA Energy Research Group', 'manual'),
+     u'IIASA Energy Program', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = '_static/IIASA_logo.png'
+latex_logo = '_static/logo_blue.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
