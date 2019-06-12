@@ -1,0 +1,13 @@
+consumer groups:
+  location:
+    UR: Urban
+    SU: Suburban
+    RU: Rural
+  attitude:
+    EA: Early adopter
+    EM: Early majority
+    LM: Late majority
+  frequency:
+    A: Average
+    M: Moderate
+    F: Frequent
