@@ -1,0 +1,30 @@
+# Data for exogenous mode choice model
+
+modes:  # Names of passenger transport modi
+- v-u  # LDV
+- h-u  # 2-wheel
+- a-u  # Air
+- u-u  # Public
+- i-u  # Rail
+
+files:  # Tables to load from CSV → dimensions
+  mer_to_ppp: [y, n]
+
+
+# Paramters used in iteration
+params:
+  # Fixed future point for total demand [passenger·km]
+  # Assume only half the speed (330 km/h) and not as steep a curve.
+  as2010fix: 149500 * 1.12818725502081 * 2
+
+  # Year for share convergence
+  time_convergence: 2100
+
+  # Scaling factors for production function
+  scaling: 1
+
+  # Logit share exponents or cost distribution parameters
+  lambda: -2
+
+  # Work hours
+  whours: 200 * 8
