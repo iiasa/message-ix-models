@@ -21,6 +21,7 @@ We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for 
    energy/index
    macro
    land_use/index
+   water/index
    emissions/index
    climate/index
    bibliography
