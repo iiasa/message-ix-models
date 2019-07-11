@@ -26,6 +26,7 @@ Writing
 - `Usage <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_ for ``sphinxcontrib.bibtex`` (citations and bibliography).
   - Add references to ``source/bibs/main.bib``. Format entries:
     - Field lines like ``[TAB]year = {2010},``: tab indent, spaces around ``=``, value inside ``{}``, trailing comma.
+    - Use either ``doi`` (preferred) or ``url``, not both.
     - ``keywords`` separated by semicolons (';').
     - Do not include ``abstract``, ``localfile``, or ``file``  fields.
 
