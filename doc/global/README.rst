@@ -24,7 +24,9 @@ Writing
 - `ReST cheat sheet <https://thomas-cokelaer.info/tutorials/sphinx/rest_syntax.html>`_ by Thomas Cokelaer.
 - `Sphinx <http://www.sphinx-doc.org/>`_ documentation, including reference on Sphinx-specific ReST syntax.
 - `Usage <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_ for ``sphinxcontrib.bibtex`` (citations and bibliography).
+
   - Add references to ``source/bibs/main.bib``. Format entries:
+
     - Field lines like ``[TAB]year = {2010},``: tab indent, spaces around ``=``, value inside ``{}``, trailing comma.
     - Use either ``doi`` (preferred) or ``url``, not both.
     - ``keywords`` separated by semicolons (';').
