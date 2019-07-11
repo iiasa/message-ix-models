@@ -27,7 +27,7 @@ Writing
   - Add references to ``source/bibs/main.bib``. Format entries:
     - Field lines like ``[TAB]year = {2010},``: tab indent, spaces around ``=``, value inside ``{}``, trailing comma.
     - ``keywords`` separated by semicolons (';').
-    - Do not include ``localfile`` or ``file``  fields.
+    - Do not include ``abstract``, ``localfile``, or ``file``  fields.
 
 
 Viewing the docs
