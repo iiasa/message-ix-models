@@ -14,7 +14,7 @@ Dependencies
 2. `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io/>`_.
 3. `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.io/>`_.
 
-Install using `pip install -r requirements.txt`.
+Install using ``pip install -r requirements.txt``.
 
 
 Writing
@@ -24,7 +24,9 @@ Writing
 - `ReST cheat sheet <https://thomas-cokelaer.info/tutorials/sphinx/rest_syntax.html>`_ by Thomas Cokelaer.
 - `Sphinx <http://www.sphinx-doc.org/>`_ documentation, including reference on Sphinx-specific ReST syntax.
 - `Usage <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_ for ``sphinxcontrib.bibtex`` (citations and bibliography).
-  - Add references to `source/bibs/main.bib`.
+  - Add references to ``source/bibs/main.bib``. Formatted entries:
+    - ``keywords``: separated by semicolons (';').
+    - Do not include ``localfile`` or ``file``  fields.
 
 
 Viewing the docs
