@@ -15,10 +15,10 @@ Limitations of switching to alternative fuels may occur for example as a result 
 
 The demand for international shipping is modeled in a simplified way with a number of different energy carrier options (light and heavy fuel oil, biofuels, natural gas, and hydrogen). The demand for international shipping is coupled to global GDP development with an income elasticity, but to date no demand response in mitigation scenarios is implemented.
 
-:numref:`tab-trans` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for transport (Fricko et al., 2016 :cite:`fricko_marker_2016`).
+:numref:`tab-trans` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for transport (Fricko et al., 2017 :cite:`fricko_marker_2017`).
 
 .. _tab-trans:
-.. table:: Electrification rate within transport for SSP1, SSP2 and SSP3 (Fricko et al., 2016 :cite:`fricko_marker_2016`). The indicators apply to 2010-2100; Intensity improvements are presented in Final Energy (FE)/GDP annually.
+.. table:: Electrification rate within transport for SSP1, SSP2 and SSP3 (Fricko et al., 2017 :cite:`fricko_marker_2017`). The indicators apply to 2010-2100; Intensity improvements are presented in Final Energy (FE)/GDP annually.
 
    +---------------+----------------------------------------+----------------------------------------+---------------------------------------+
    |               | **SSP1**                               | **SSP2**                               | **SSP3**                              |

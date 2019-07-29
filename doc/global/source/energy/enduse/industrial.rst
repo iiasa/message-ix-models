@@ -15,10 +15,10 @@ While cement production is not explicitly modeled at the process level in MESSAG
 industrial thermal demand in MESSAGE) and the associated CO2 emissions from the calcination process are accounted for explicitly. In addition, adding carbon capture and storage to 
 mitigate these process-based CO2 emission is available.
 
-:numref:`tab-indus` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for industry and feedstocks. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually (Fricko et al., 2016 :cite:`fricko_marker_2016`).
+:numref:`tab-indus` presents the quantitative translation of the the storyline elements of SSP1, SSP2 and SSP3 in terms of electrification rate for industry and feedstocks. These indicators apply to 2010-2100; Intensity improvements are in FE/GDP annually (Fricko et al., 2017 :cite:`fricko_marker_2017`).
 
 .. _tab-indus:
-.. table:: Electrification rate within industry and feedstocks for SSP1, SSP2 and SSP3 (Fricko et al., 2016 :cite:`fricko_marker_2016`)
+.. table:: Electrification rate within industry and feedstocks for SSP1, SSP2 and SSP3 (Fricko et al., 2017 :cite:`fricko_marker_2017`)
 
    +--------------------------------+---------------------------------------+-----------------------------------------+---------------------------------------+
    |                                | **SSP1**                              | **SSP2**                                | **SSP3**                              |
