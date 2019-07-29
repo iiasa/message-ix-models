@@ -9,6 +9,6 @@ like air pollutants, together with consistent projections of radiative forcing, 
 MAGICC is most commonly used in a deterministic setup (Meinshausen et al., 2011b :cite:`meinshausen_rcp_2011`), but also a probabilistic setup (Meinshausen et al., 2009 
 :cite:`meinshausen_greenhouse-gas_2009`) is available which allows to estimate the probabilities of limiting warming to below specific temperature levels given a specified emissions 
 path (Rogelj et al., 2013a :cite:`rogelj_2020_2013`; Rogelj et al., 2013b :cite:`rogelj_probabilistic_2013`; Rogelj et al., 2015 :cite:`rogelj_mitigation_2015`). Climate feedbacks on 
-the global carbon cycle are accounted for through the interactive coupling of the climate model and a range of gas-cycle models. (Fricko et al., 2016 :cite:`fricko_marker_2016`)
+the global carbon cycle are accounted for through the interactive coupling of the climate model and a range of gas-cycle models. (Fricko et al., 2017 :cite:`fricko_marker_2017`)
 
 For more information about the model, see `www.magicc.org <http://www.magicc.org/>`_.
