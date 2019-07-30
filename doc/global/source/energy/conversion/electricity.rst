@@ -71,14 +71,14 @@ Most thermal power plants offer the option of coupled heat production (CHP, see 
 .. figure:: /_static/costind-thermo.png
    :width: 700px
 
-   Cost indicators for thermoelectric power-plant investment (Fricko et al., 2016 :cite:`fricko_marker_2016`). 
+   Cost indicators for thermoelectric power-plant investment (Fricko et al., 2017 :cite:`fricko_marker_2017`). 
 
-In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively (see description of the :ref:`narratives`). Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region (Fricko et al., 2016 :cite:`fricko_marker_2016`).
+In :numref:`fig-ther`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively (see description of the :ref:`narratives`). Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region (Fricko et al., 2017 :cite:`fricko_marker_2017`).
 
 .. _fig-nonth:
 .. figure:: /_static/costind-nonthermo.png
    :width: 700px
 
-   Cost indicators for non-thermoelectric power-plant investment (Fricko et al., 2016 :cite:`fricko_marker_2016`). Abbreviations: CCS – Carbon Capture and Storage; IGCC – Integrated gasification combined cycles; ST – Steam turbine; CT – Combustion turbine; CCGT – Combined cycle gas turbine 
+   Cost indicators for non-thermoelectric power-plant investment (Fricko et al., 2017 :cite:`fricko_marker_2017`). Abbreviations: CCS – Carbon Capture and Storage; IGCC – Integrated gasification combined cycles; ST – Steam turbine; CT – Combustion turbine; CCGT – Combined cycle gas turbine 
    
-In :numref:`fig-nonth`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. PV – Photovoltaic (Fricko et al., 2016 :cite:`fricko_marker_2016`).
+In :numref:`fig-nonth`, the black ranges show historical cost ranges for 2005. Green, blue, and red ranges show cost ranges in 2100 for SSP1, SSP2, and SSP3, respectively. Global values are represented by solid ranges. Values in the global South are represented by dashed ranges. The diamonds show the costs in the “North America” region. PV – Photovoltaic (Fricko et al., 2017 :cite:`fricko_marker_2017`).

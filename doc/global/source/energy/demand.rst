@@ -17,11 +17,11 @@ These demands are generated using a so-called scenario generator which is implem
 historical data of GDP per capita (PPP) and final energy use as well as projections of GDP (PPP) and population to extrapolate the seven energy service demands into the future. The 
 sources for the historical and projected datasets are the following:
 
-1. Historical GDP (PPP) – World Bank (World Development Indicators 2012 :cite:`world_bank_group_world_2012`)
-2. Historical Population – UN Population Division (World Population Projection 2010 :cite:`un_population_division_world_2010`)
-3. Historical Final Energy – International Energy Agency Energy Balances (IEA 2012 :cite:`international_energy_agency_energy_2012`)
-4. Projected GDP (PPP) – Dellink et al (2015 :cite:`dellink_long-term_2015`), see Shared Socio-Economic Pathways database (`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
-5. Projected Population – KC and Lutz (2014 :cite:`kc_human_2014`), see Shared Socio-Economic Pathways database(`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
+1. Historical GDP (PPP) – World Bank (World Development Indicators, 2012 :cite:`world_bank_group_world_2012`)
+2. Historical Population – UN Population Division (World Population Projection, 2010 :cite:`un_population_division_world_2010`)
+3. Historical Final Energy – International Energy Agency Energy Balances (IEA, 2012 :cite:`international_energy_agency_energy_2012`)
+4. Projected GDP (PPP) – Dellink et al. (2015) :cite:`dellink_long-term_2015`, also see Shared Socio-Economic Pathways database (`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
+5. Projected Population – KC and Lutz (2014) :cite:`kc_human_2014`, also see Shared Socio-Economic Pathways database (`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
 
 The scenario generator runs regressions on the historical datasets to establish the relationship between the independent variable (GDP (PPP) per capita) and several dependent variables, including total final energy intensity (MJ/2005USD), the shares of final energy in several energy end-use sectors (transport, residential/commercial and industry) and the shares of electricity use in the industrial and residential/commercial sectors. In the case of final energy intensity, the relationship is best modeled by a power function so both variables are log-transformed. In the case of most sectoral shares, only the independent variable is log-transformed. The exception is the industrial share of final energy, which uses a hump-shaped function inspired by Schafer (2005) :cite:`schafer_structural_2005`. This portion of the model provides the historical relationships between GDP per capita and the dependent variables for each of the eleven MESSAGE regions.
 

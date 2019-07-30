@@ -14,6 +14,6 @@ and fuel cycle are modeled at the global level.
 
    Global uranium resources in the MESSAGE interpretation of the SSPs compared to seven supply curves from a literature review (Schneider and Sailor, 2008 :cite:`schneider_long-term_2008`). 
    Conservative Crustal and Optimistic Crustal refer to simple crustal models of uranium distribution in the crust and the of extraction costs on the concentration. Pure-KCR refers to a fit 
-   of a simple crustal model to known conventional resources (KCR) as estimated by the Red Book 2003 (OECD/NEA 2004, :cite:`oecd_uranium_2004`). PPM-Cost over the simple crustal models 
+   of a simple crustal model to known conventional resources (KCR) as estimated by the Red Book 2003 (OECD/NEA, 2004 :cite:`oecd_uranium_2004`). PPM-Cost over the simple crustal models 
    include a relationship between uranium grade and extraction costs. FCCCG(1) and (2) as well as DANESS refer to estimats from more complicated models of the dependency of extraction costs on
    uranium concentration (and therefore resource grade).
