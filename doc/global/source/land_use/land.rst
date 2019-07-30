@@ -2,7 +2,10 @@
 
 Land use change
 ---------------
-The model optimizes over six land cover types: cropland, grassland, short rotation plantations, managed forests, unmanaged forests and other natural land. Economic activities are associated with the first four land cover types. There are other three land cover types represented in the model: other agricultural land, wetlands, and not relevant (bare areas, water bodies, snow and ice, and artificial surfaces). These three categories are currently kept constant. Each Simulation Unit can contain the nine land cover types. The base year spatial distribution of land cover is based on the Global Land Cover 2000 (GLC2000). However, as any other global dataset of this type, GLC2000 suffers from large uncertainty (Fritz, See et al. 2011 :cite:`fritz_highlighting_2011`). Therefore auxiliary datasets and procedures are used to transform this “raw” data into a consistent dataset corresponding to the model needs.
+The model optimizes over six land cover types: cropland, grassland, short rotation plantations, managed forests, unmanaged forests and other natural land. Economic activities are associated with the first 
+four land cover types. There are other three land cover types represented in the model: other agricultural land, wetlands, and not relevant (bare areas, water bodies, snow and ice, and artificial surfaces). 
+These three categories are currently kept constant. Each Simulation Unit can contain the nine land cover types. The base year spatial distribution of land cover is based on the Global Land Cover 2000 (GLC2000). 
+However, as any other global dataset of this type, GLC2000 suffers from large uncertainty (Fritz et al., 2011 :cite:`fritz_highlighting_2011`). Therefore auxiliary datasets and procedures are used to transform this “raw” data into a consistent dataset corresponding to the model needs.
 
 .. _fig-globiom_land:
 
