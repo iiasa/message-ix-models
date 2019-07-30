@@ -10,7 +10,7 @@ The combined MESSAGE-GLOBIOM framework has global coverage and divides the world
 
    Map of 11 MESSAGE-GLOBIOM regions inclduing their aggregation to the four regions used in the Representative Concentration Pathways (RCPs).
 
-The country definitions of the 11 MESSAGE regions are described in the table below (:numref:`tab-reg`).
+The country definitions of the 11 MESSAGE regions are described in the table below (:numref:`tab-reg`). In some scenarios, the MESSAGE region of FSU is disaggregated into four sub-regions resulting in a 14-region MESSAGE model.
 
 .. _tab-reg:
 .. list-table:: Listing of 11 regions used in MESSAGE-GLOBIOM, including their country definitions.
