@@ -17,13 +17,13 @@ MESSAGE tracks investments by vintage, an important feature to represent the ine
 (e.g., introduction of stringent climate policy), it is however possible to prematurely retire existing capital stock such as power plants or other energy conversion
 technologies and switch to more suitable alternatives.
 
-An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is determined
-by dynamic constraints that relate the construction of a technology added or the activity (level of production) of a technology in a period t to construction or the
-activity in the previous period t-1 (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. section :ref:`upper_dynamic_constraint_capacity`).
+An important factor in this context that influences technology adoption in MESSAGE is technology diffusion constraints. Technology diffusion in MESSAGE is determined
+by dynamic constraints that relate the construction of a newly added technology or the activity (level of production) of a technology in a period to the construction or the
+activity of that technology in the previous period t-1, respectively (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. section :ref:`upper_dynamic_constraint_capacity`).
 
 While limiting the possibility of flip-flop behavior as is frequently observed in unconstrained Linear Programming (LP) models such as MESSAGE, a drawback of such hard
 growth constraints is that the relative advantage of some technology over another technology is not taken into account and therefore even for very competitive technologies,
-no acceleration of technology diffusion is possible. In response to this limitation, so called flexible or soft dynamic constraints have been introduced into MESSAGE
+no rapid acceleration of technology diffusion is possible. In response to this limitation, so called flexible or soft dynamic constraints have been introduced into MESSAGE
 (Keppo and Strubegger, 2010 :cite:`keppo_short_2010`). These allow faster technology diffusion at additional costs and therefore generate additional model flexibility
 while still reducing the flip-flop behavior and sudden penetration of technologies.
 

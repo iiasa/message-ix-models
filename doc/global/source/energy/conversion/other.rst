@@ -9,11 +9,14 @@ Beyond electricity and centralized heat generation there are three further subse
 .. figure:: /_static/costind-other.png
    :width: 700px
 
-   Cost indicators for other conversion technology investment (Fricko et al., 2016 :cite:`fricko_marker_2016`) Abbreviations: CCS – Carbon capture and storage; CTL – Coal to liquids; GTL – Gas to liquids; BTL – Biomass to liquids. 
+   Cost indicators for other conversion technology investment (Fricko et al., 2017 :cite:`fricko_marker_2017`) Abbreviations: CCS – Carbon capture and storage; CTL – Coal to liquids; GTL – Gas to liquids; BTL – Biomass to liquids. 
    
 Liquid Fuel Production
 ----------------------
-Apart from oil refining as predominant supply technology for liquid fuels at present a number of alternative liquid fuel production routes from different feedstocks are represented in MESSAGE (see :numref:`tab-liqfuel`). Different processes for coal liquefaction, gas-to-liquids technologiesand biomass-to-liquids technologies both with and without CCS are covered. Some of these technologies include co-generation of electricity, for example, by burning unconverted syngas from a Fischer-Tropsch synthesis in a gas turbine (c.f. Larson et al., 2012 :cite:`larson_chapter_2012`). Technology costs for the synthetic liquid fuel production options are based on Larson et al. (2012) (:cite:`larson_chapter_2012`).
+Apart from oil refining as predominant supply technology for liquid fuels at present a number of alternative liquid fuel production routes from different feedstocks are represented in MESSAGE 
+(see :numref:`tab-liqfuel`). Different processes for coal liquefaction, gas-to-liquids technologiesand biomass-to-liquids technologies both with and without CCS are covered. 
+Some of these technologies include co-generation of electricity, for example, by burning unconverted syngas from a Fischer-Tropsch synthesis in a gas turbine (c.f. Larson et al., 2012 :cite:`larson_chapter_2012`). 
+Technology costs for the synthetic liquid fuel production options are based on Larson et al. (2012) :cite:`larson_chapter_2012`.
 
 .. _tab-liqfuel:
 .. table:: Liquid fuel production technologies in MESSAGE by energy source.
