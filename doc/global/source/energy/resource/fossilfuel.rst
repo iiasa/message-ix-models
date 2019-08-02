@@ -1,3 +1,5 @@
+.. fossilfuel:
+
 Fossil Fuel Reserves and Resources
 ====================================
 The availability and costs of fossil fuels influences the future development of the energy system, and therewith future mitigation challenges. Understanding the variations in 
