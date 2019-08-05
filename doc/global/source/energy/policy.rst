@@ -1,4 +1,4 @@
-.. policy:
+.. _policy:
 
 Modelling policies
 ==================
