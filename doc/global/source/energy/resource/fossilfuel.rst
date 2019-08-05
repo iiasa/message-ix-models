@@ -1,4 +1,4 @@
-.. fossilfuel:
+.. _fossilfuel:
 
 Fossil Fuel Reserves and Resources
 ====================================
