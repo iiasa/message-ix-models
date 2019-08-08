@@ -81,6 +81,9 @@ CO2 mitigation options in the energy system include technology and fuel shifts; 
      - 90%
    * - Liquid fuel production
      - Fischer-Tropsch biomass-to-liquids with CCS
+     - 65%
+   * - Liquid fuel production
+     - Biomass to Gasoline via the Methanol-to-Gasoline (MTG) Process with CCS
      - 67%
    * - Hydrogen production
      - coal gasification with CCS
