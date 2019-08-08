@@ -1,10 +1,10 @@
 .. _emission_energy:
 
 Emission from energy (MESSAGE)
-----
+------------------------------
 
 Carbon-dioxide (CO2)
-~~~~
+~~~~~~~~~~~~~~~~~~~~
 The MESSAGE model includes a detailed representation of energy-related and - via the link to GLOBIOM - land-use CO2 emissions (Riahi and Roehrl, 2000 :cite:`riahi_greenhouse_2000`; Riahi, Rubin et al., 2004 :cite:`riahi_prospects_2004`; Rao and Riahi, 2006 :cite:`rao_role_2006`; Riahi et al., 2011 :cite:`riahi_rcp_2011`). CO2 emission factors of fossil fuels and biomass are based on the 1996 version of the IPCC guidelines for national greenhouse gas inventories :cite:`ipcc_revised_1996` (see :numref:`tab-emissionfactor`). It is important to note that biomass is generally treated as being carbon neutral in the energy system, because the effects on the terrestrial carbon stocks are accounted for on the land use side, i.e. in GLOBIOM (see section :ref:`globiom`). The CO2 emission factor of biomass is, however, relevant in the application of carbon capture and storage (CCS) where the carbon content of the fuel and the capture efficiency of the applied process determine the amount of carbon captured per unit of energy.
 
 .. _tab-emissionfactor:
@@ -51,10 +51,51 @@ The MESSAGE model includes a detailed representation of energy-related and - via
 
 CO2 emissions of fossil fuels for the entire energy system are accounted for at the resource extraction level by applying the CO2 emission factors listed in :numref:`tab-emissionfactor` to the extracted fossil fuel quantities. In this economy-wide accounting, carbon emissions captured in CCS processes remove carbon from the balance equation, i.e. they contribute with a negative emission coefficient. In parallel, a sectoral acounting of CO2 emissions is performed which applies the same emission factors to fossil fuels used in individual conversion processes. In addition to conversion processes, also CO2 emissions from energy use in fossil fuel resource extraction are explicitly accounted for. A relevant feature of MESSAGE in this context is that CO2 emissions from the extraction process increase when moving from conventional to unconventional fossil fuel resources (McJeon et al., 2014 :cite:`mcjeon_gas_2014`).
 
-CO2 mitigation options in the energy system include technology and fuel shifts; efficiency improvements; and CCS. A large number of specific mitigation technologies are modeled bottom-up in MESSAGE with a dynamic representation of costs and efficiencies. As mentioend above, MESSAGE also includes a detailed representation of carbon capture and sequestration from both fossil fuel and biomass combustion. 
+CO2 mitigation options in the energy system include technology and fuel shifts; efficiency improvements; and CCS. A large number of specific mitigation technologies are modeled bottom-up in MESSAGE with a dynamic representation of costs and efficiencies. As mentioend above, MESSAGE also includes a detailed representation of carbon capture and sequestration from both fossil fuel and biomass combustion (see :numref:`tab_CCScapturerates`). 
+
+.. _tab_CCScapturerates:
+.. list-table:: Carbon capture rates in [%]
+   :widths: 25 45 15
+   :header-rows: 1
+
+   * - Conversion Process
+     - Plant type
+     - Capture rate
+   * - Electricity generation
+     - supercritical PC power plant with desulphurization/denox and CCS
+     - 90%
+   * - Electricity generation
+     - IGCC power plant with CCS
+     - 90%
+   * - Electricity generation
+     - biomass IGCC power plant with CCS
+     - 86%
+   * - Liquid fuel production
+     - Fischer-Tropsch coal-to-liquids with CCS
+     - 85%
+   * - Liquid fuel production
+     - coal methanol-to-gasoline with CCS
+     - 85%
+   * - Liquid fuel production
+     - Fischer-Tropsch gas-to-liquids with CCS
+     - 90%
+   * - Liquid fuel production
+     - Fischer-Tropsch biomass-to-liquids with CCS
+     - 67%
+   * - Hydrogen production
+     - coal gasification with CCS
+     - 92%
+   * - Hydrogen production
+     - biomass gasification with CCS
+     - 85%
+   * - Hydrogen production
+     - steam methane reforming with CCS
+     - 90%
+
+
 
 Non-CO2 GHGs
-~~~~
+~~~~~~~~~~~~
 MESSAGE includes a representation of non-CO2 GHGs (CH4, N2O, HFCs, SF6, PFCs) mandated by the Kyoto Protocol (Rao and Riahi, 2006 :cite:`rao_role_2006`) with the exception of NF3. Included is a representation of emissions and mitigation options from both energy related processes as well as non-energy sources like municipal solid waste disposal and wastewater. CH4 and N2O emissions from land are taken care of by the link to GLOBIOM (see Section :ref:`emission_land`).
 
 .. _gains:
