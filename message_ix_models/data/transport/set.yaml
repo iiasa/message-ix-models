@@ -8,9 +8,10 @@
 
 commodity:
   add:
-    transport VDT: Vehicle distance travelled
-    transport pax: Passenger transport
     transport freight: Freight transport
+    transport freight VDT: Freight transport vehicle movement
+    transport pax: Passenger transport
+    transport pax VDT: Passenger transport vehicle movement
   require:
   - electr
   - fueloil
