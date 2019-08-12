@@ -1,6 +1,19 @@
+# Transport technologies in the MESSAGE V version of MESSAGE-Transport
+#
 # References:
 # [1] “The "GEAM_TRP_techinput.xls" workbook ("updateTRPdata" sheet) in
 #      Christoph's folders.”
+
+par:
+- output: &output-freight
+    commodity: transport freight vehicle
+    level: useful
+    mode: all
+    time_dest: year
+    time: year
+    unit: vehicle kilometre
+    value: 1.0
+
 
 technology:
   ELC_100:
@@ -106,30 +119,48 @@ technology:
   FR_ICE_H:
     description: High-efficiency internal combustion engine freight truck using gasoline/diesel
     report: FRT_ICE_H
+    par:
+      output: *output-freight
   FR_ICE_M:
     description: Medium-efficiency internal combustion engine freight truck using gasoline/diesel
     report: FRT_ICE_M
+    par:
+      output: *output-freight
   FR_ICE_L:
     description: Low-efficiency internal combustion engine freight truck using gasoline/diesel
     report: FRT_ICE_L
+    par:
+      output: *output-freight
   FR_ICG:
     description: Internal combustion engine freight truck using natural gas
     report: FRT_ICG
+    par:
+      output: *output-freight
   FR_ICAe:
     description: Internal combustion engine freight truck using biofuels
     report: FRT_ICAe
+    par:
+      output: *output-freight
   FR_ICH:
     description: Hybridized internal combustion engine freight truck using gasoline/diesel
     report: FRT_ICH
+    par:
+      output: *output-freight
   FR_FCH:
     description: Hybridized fuel cell freight truck using hydrogen
     report: FRT_HFC
+    par:
+      output: *output-freight
   FR_FCg:
     description: Hybridized fuel cell freight truck using natural gas via steam reformation
     report: FRT_GFC
+    par:
+      output: *output-freight
   FR_FCm:
     description: Hybridized fuel cell freight truck using methanol/synthetic fossil liquids via steam reformation
     report: FRT_MFC
+    par:
+      output: *output-freight
 
   crail_pub:
     description: 'Coal-powered urban public rail transport: aggregate of metro/underground, streetcars/trams, commuter trains, and regional trains'
@@ -150,7 +181,26 @@ technology:
     description: 'Electrically-powered urban public rail transport: aggregate of metro/underground, streetcars/trams, commuter trains, and regional trains'
     report: RAIL_urban_ELE
 
-  Load_factor_truck: {}
+  VDT to freight:  # Formerly 'load_factor_truck'
+    description: >
+      Conversion from vehicle-distance travelled to freight volume.
+    par:
+      input:
+        commodity: transport freight vehicle
+        level: useful
+        mode: all
+        time_origin: year
+        time: year
+        unit: vehicle kilometre
+        value: 1.0
+      output:
+        commodity: transport freight
+        level: useful
+        mode: all
+        time_dest: year
+        time: year
+        unit: tonne kilometre
+
   Occupancy_moto: {}
   Occupancy_ptrp: {}
   cons_convert: {}
@@ -161,7 +211,7 @@ technology:
   hybrid_ptrp: {}
   oil_ref_ptrp: {}
 
-technology_group:
+technology group:
   LDV:
     description: Light-duty vehicles (passenger cars and trucks)
     tech: [ELC_100, HFC_ptrp, IAHe_ptrp, IAHm_ptrp, ICAe_ffv, ICAm_ptrp,
@@ -169,9 +219,10 @@ technology_group:
   2W:
     description: Two-wheelers and motorcycles
     tech: [ICE_H_moto, ELE_moto]
-  FRT:
+  freight truck:
     description: Freight trucks
-    tech:
+    tech: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
+      FR_FCg, FR_FCm]
   AIR:
     description: >
       Aviation (passenger aircraft only, ignoring shared freight component).

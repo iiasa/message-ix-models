@@ -1,4 +1,6 @@
-# Variables reported in the .cin files
+# Reporting variables for the MESSAGE V version of MESSAGE-Transport
+#
+# Derived from the .cin files.
 #
 # For all variables, the following were set (unless specified otherwise):
 # - direction: horizontal
