@@ -1,3 +1,4 @@
+commodity:
 - Dummy_{cg}
 - Dummy_fc
 - Dummy_Hkm
@@ -15,3 +16,16 @@
 - trp_pas
 - trp_rai
 - trp_urb
+
+node:
+- afr
+- cpa
+- eeu
+- fsu
+- lam
+- nam
+- mea
+- pao
+- pas
+- sas
+- weu

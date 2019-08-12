@@ -1,11 +1,12 @@
 # Data for exogenous mode choice model
 
 modes:  # Names of passenger transport modi
-- v-u  # LDV
-- h-u  # 2-wheel
 - a-u  # Air
-- u-u  # Public
+- f-u  # Freight
+- h-u  # 2-wheel
 - i-u  # Rail
+- u-u  # Public
+- v-u  # LDV
 
 files:  # Tables to load from CSV → dimensions
   mer_to_ppp: [y, n]
