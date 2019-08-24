@@ -23,7 +23,7 @@ sources for the historical and projected datasets are the following:
 4. Projected GDP (PPP) – Dellink et al. (2015) :cite:`dellink_long-term_2015`, also see Shared Socio-Economic Pathways database (`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
 5. Projected Population – KC and Lutz (2014) :cite:`kc_human_2014`, also see Shared Socio-Economic Pathways database (`SSP scenarios <https://tntcat.iiasa.ac.at/SspDb/>`_)
 
-The scenario generator runs regressions on the historical datasets to establish the relationship for each of the eleven MESSAGE regions between the independent variable (GDP (PPP) per capita) and multiple dependent variables:
+The scenario generator runs regressions on the historical datasets to establish the relationship for each of the eleven MESSAGE regions between the independent variable (GDP (PPP) per capita) and the following dependent variables:
 
 1. Total final energy intensity (MJ/2005USD)
 2. Shares of final energy among several energy end-use sectors (transport, residential/commercial and industry)
@@ -34,13 +34,13 @@ The exception is the industrial share of final energy, which uses a hump-shaped 
 
 In parallel, the same historical data are used, now globally, in `quantile regressions <https://en.wikipedia.org/wiki/Quantile_regression>`_ to develop global trend lines that represent each percentile of the cumulative distribution function (CDF) of each dependent variable. Given the regional regressions and global trend lines, final energy intensity and sectoral shares can be extrapolated based on projected GDP per capita, or average income. 
 
-A basic assumption here is that the regional trends derived above will converge to certain quantiles of the global trend when each region reaches a certain income level. Several user-defined inputs allow users to tailor the extrapolations to individual socio-economic scenarios. 
+A basic assumption here is that the regional trends derived above will converge to certain quantiles of the global trend when each region reaches a certain income level. Hence, two key user-defined inputs allow users to tailor the extrapolations to individual socio-economic scenarios: convergence quantile and the corresponding income. 
 In the case of final energy intensity (FEI), the extrapolation is produced for each region by defining the quantile at which FEI converges (e.g., the 20th percentile within the global trend) and the income at which the convergence occurs.  For example, while final energy intensity converges quickly to the lowest quantile (0.001) in SSP1, it converges more slowly to a larger quantile (0.5 to 0.7 depending on the region) in SSP3. Convergence quantiles and incomes are provided for each SSP and region in :numref:`tab-quantssp1`, :numref:`tab-quantssp2`, :numref:`tab-quantssp3`. The convergence quantile allows one to identify the magnitude of FEI while the convergence income establishes the rate at which the quantile is approached. For the sectoral shares, users can specify the global quantile at which the extrapolation should converge, the income at which the extrapolation diverges from the regional regression line and turns parallel to the specified convergence quantile (i.e., how long the sectoral share follows the historical trajectory), and the income at which the extrapolation converges to the quantile. Given these input parameters, users can extrapolate both FEI and sectoral shares.
 
 The total final energy in each region is then calculated by multiplying the extrapolated final energy intensity by the projected GDP (PPP) in each time period. Next, the extrapolated shares are multiplied by the total final energy to identify final energy demand for each of the seven energy service demands used in MESSAGE. Finally, final energy is converted to useful energy in each region by using the average final-to-useful energy efficiencies used in the MESSAGE model for each model region (:ref:`spatial`).
 
 .. _tab-quantssp1:
-.. table:: Convergence quantile and income for each parameter and region for SSP1 (for region descriptions, see: :ref:`spatial`)
+.. table:: Convergence quantile and income for each variable and region for SSP1 (for region descriptions, see: :ref:`spatial`)
 
    +--------------------------------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+
    |                                |          |          |          |          |          |          |          |          |          |          |          |
@@ -123,7 +123,7 @@ The total final energy in each region is then calculated by multiplying the extr
 
 
 .. _tab-quantssp2:
-.. table:: Convergence quantile and income for each parameter and region for SSP2 (for region descriptions, see: :ref:`spatial`)
+.. table:: Convergence quantile and income for each variable and region for SSP2 (for region descriptions, see: :ref:`spatial`)
 
    +--------------------------------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+
    |                                |          |          |          |          |          |          |          |          |          |          |          |
@@ -206,7 +206,7 @@ The total final energy in each region is then calculated by multiplying the extr
 
 
 .. _tab-quantssp3:
-.. table:: Convergence quantile and income for each parameter and region for SSP3 (for region descriptions, see: :ref:`spatial`)
+.. table:: Convergence quantile and income for each variable and region for SSP3 (for region descriptions, see: :ref:`spatial`)
 
    +--------------------------------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+
    |                                |          |          |          |          |          |          |          |          |          |          |          |
