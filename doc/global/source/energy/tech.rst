@@ -2,7 +2,7 @@
 
 Technological change
 ======================
-Technological change in MESSAGE is generally treated exogenously, although pioneering work on the endogenization of technological change via learning curves in energy-engineering type models (Messner, 1997 :cite:`messner_endogenized_1997`) and the dependence of technology costs on market structure has been done with MESSAGE (Leibowicz, 2015 :cite:`leibowicz_growth_2015`). The current cost and performance parameters, including conversion efficiencies and emission coefficients are generally derived from the relevant engineering literature. For the future, alternative cost and performance projections are developed to cover a relatively wide range of uncertainties that influence model results to a good extent.
+Technological change in MESSAGE is generally treated exogenously, although pioneering works on the endogenization of technological change via learning curves in energy-engineering type models (Messner, 1997 :cite:`messner_endogenized_1997`) and the dependence of technology costs on market structure have been done with MESSAGE (Leibowicz, 2015 :cite:`leibowicz_growth_2015`). The current cost and performance parameters, including conversion efficiencies and emission coefficients are generally derived from the relevant engineering literature. For the future, alternative cost and performance projections are developed to cover a relatively wide range of uncertainties that influence model results to a good extent.
 
 Technology cost
 ----------------
@@ -17,9 +17,9 @@ MESSAGE tracks investments by vintage, an important feature to represent the ine
 (e.g., introduction of stringent climate policy), it is however possible to prematurely retire existing capital stock such as power plants or other energy conversion
 technologies and switch to more suitable alternatives.
 
-An important factor in this context that influences technology adoption in MESSAGE is technology diffusion constraints. Technology diffusion in MESSAGE is determined
-by dynamic constraints that relate the construction of a newly added technology or the activity (level of production) of a technology in a period to the construction or the
-activity of that technology in the previous period t-1, respectively (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. section :ref:`upper_dynamic_constraint_capacity`).
+An important factor in this context that influences technology adoption in MESSAGE are technology diffusion constraints. Technology diffusion in MESSAGE is determined
+by dynamic constraints that relate the construction of a technology added or the activity (level of production) of a technology in a period *t* to construction or the
+activity in the previous period *t-1* (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. section :ref:`upper_dynamic_constraint_capacity`).
 
 While limiting the possibility of flip-flop behavior as is frequently observed in unconstrained Linear Programming (LP) models such as MESSAGE, a drawback of such hard
 growth constraints is that the relative advantage of some technology over another technology is not taken into account and therefore even for very competitive technologies,
@@ -27,7 +27,7 @@ no rapid acceleration of technology diffusion is possible. In response to this l
 (Keppo and Strubegger, 2010 :cite:`keppo_short_2010`). These allow faster technology diffusion at additional costs and therefore generate additional model flexibility
 while still reducing the flip-flop behavior and sudden penetration of technologies.
 
-:numref:`fig-difconstraint` below illustrates the maximum technology growth starting at a level of 1 in year t=0 for a set of five diffusion constraints which jointly lead to a soft constraint.
+:numref:`fig-difconstraint` below illustrates the maximum technology growth starting at a level of 1 in year *t*=0 for a set of five diffusion constraints which jointly lead to a soft constraint.
 
 .. _fig-difconstraint:
 .. figure:: /_static/diffusion_constraint_example.png
