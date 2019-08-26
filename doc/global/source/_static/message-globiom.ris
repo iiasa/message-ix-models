@@ -66,3 +66,27 @@ ST  - The marker quantification of the Shared Socioeconomic Pathway 2: A middle-
 T2  - Global Environmental Change
 TI  - The marker quantification of the Shared Socioeconomic Pathway 2: A middle-of-the-road scenario for the 21st century
 ER  - 
+
+
+TY  - JOUR
+AU  - Huppmann, Daniel
+AU  - Gidden, Matthew
+AU  - Fricko, Oliver
+AU  - Kolp, Peter
+AU  - Orthofer, Clara
+AU  - Pimmer, Michael
+AU  - Kushin, Nikolay
+AU  - Vinca, Adriano
+AU  - Mastrucci, Alessio
+AU  - Riahi, Keywan
+AU  - Krey, Volker
+DO  - https://doi.org/10.1016/j.envsoft.2018.11.012
+LB  - huppmann_2019_MESSAGEix
+PY  - 2019
+SP  - 143-156
+ST  - The MESSAGEix Integrated Assessment Model and the ix modeling platform (ixmp): An open framework for integrated and cross-cutting analysis of energy, climate, the environment, and sustainable development
+T2  - Environmental Modelling & Software
+TI  - The MESSAGEix Integrated Assessment Model and the ix modeling platform (ixmp): An open framework for integrated and cross-cutting analysis of energy, climate, the environment, and sustainable development
+VL  - 112
+ID  - 817
+ER  - 

@@ -11,6 +11,16 @@ When referring to MESSAGE-GLOBIOM 1.0 as described in this document, please use 
 
 * Fricko O, Havlik P, Rogelj J, Klimont Z, Gusti M, Johnson N, Kolp P, Strubegger M, Valin H, Amann M, Ermolieva T, Forsell N, Herrero M, Heyes C, Kindermann G, Krey V, McCollum DL, Obersteiner M, Pachauri S, Rao S, Schmid E, Schoepp W, Riahi K (2017) The marker quantification of the Shared Socioeconomic Pathway 2: A middle-of-the-road scenario for the 21st century. Global Environmental Change, Volume 42, Pages 251-26, `DOI:10.1016/j.gloenvcha.2016.06.004 <https://doi.org/10.1016/j.gloenvcha.2016.06.004>`_.
 
+The MESSAGE-GLOBIOM Integrated Assessment Model is based on the |MESSAGEix|
+framework, an open-source energy systems optimization modelling environment
+including macro-economic feedback using a stylized computable general
+equilibrium model.
+When referring to the software underpinning MESSAGE-GLOBIOM rather than the data
+or specific assessments, please use the following citation:
+
+* Huppmann D, Gidden M, Fricko O, Kolp P, Orthofer C, Pimmer M, Kushin N, Vinca A, Mastrucci A, Riahi K, Krey V (2019) The MESSAGEix Integrated Assessment Model and the ix modeling platform (ixmp): An open framework for integrated and cross-cutting analysis of energy, climate, the environment, and sustainable development. Environmental Modelling & Software, Volume 112, Pages 143-156, `DOI:0.1016/j.envsoft.2018.11.012 <https://doi.org/0.1016/j.envsoft.2018.11.012>`_.
+
+
 We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for their valuable comments that helped improving this manuscript.
   
 .. toctree::
@@ -26,3 +36,5 @@ We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for 
    climate/index
    bibliography
    annex/index
+
+.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
