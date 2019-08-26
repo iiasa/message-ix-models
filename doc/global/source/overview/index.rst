@@ -6,6 +6,8 @@ The IIASA IAM framework consists of a combination of five different models or mo
 
 MESSAGE (Huppmann et al., 2019 :cite:`huppmann_message_2019`) represents the core of the IIASA IAM framework (:numref:`fig-iiasaiam`) and its main task is to optimize the energy system so that it can satisfy specified energy demands at the lowest costs. MESSAGE carries out this optimization in an iterative setup with MACRO, which provides estimates of the macro-economic demand response that results from energy system and services costs computed by MESSAGE. For the six commercial end-use demand categories depicted in MESSAGE (see :ref:`demand`), MACRO will adjust useful energy demands, until the two models have reached equilibrium (see :ref:`macro`). This iteration reflects price-induced energy efficiency improvements that can occur when energy prices change.
 
+The scientific software powering the global MESSAGE model is called the |MESSAGEix| framework, an open-source, versatile implementation of a linear optimization problem, with the option of coupling to a computable general equilibrium (CGE) model to incorporate the effect of price changes on economic activity and demand for commodities and resources. |MESSAGEix| is integrated with the *ix modeling platform* (ixmp), a powerful "data warehouse" for version control of reference timeseries, input data and model results. ixmp provides interfaces to the scientific programming languages Python and R for efficient, scripted workflows for data processing and visualisation of results (Huppmann et al., 2019 :cite:`huppmann_2019_MESSAGEix`).
+
 GLOBIOM provides MESSAGE with information on land use and its implications, including the availability and cost of bioenergy, and availability and cost of emission mitigation in the AFOLU (Agriculture, Forestry and Other Land Use) sector (see :ref:`globiom`). To reduce computational costs, MESSAGE iteratively queries a GLOBIOM emulator which provides an approximation of land-use outcomes during the optimization process instead of requiring the GLOBIOM model to be rerun iteratively. Only once the iteration between MESSAGE and MACRO has converged, the resulting bioenergy demands along with corresponding carbon prices are used for a concluding analysis with the full-fledged GLOBIOM model. This ensures full consistency of the results from MESSAGE and GLOBIOM, and also allows producing a more extensive set of land-use related indicators.
 
 Air pollution implications of the energy system are accounted for in MESSAGE by applying technology-specific air pollution coefficients from GAINS (see :ref:`gains`).
@@ -24,3 +26,5 @@ In general, cumulative global carbon emissions from all sectors are constrained 
 
    spatial
    temporal
+
+.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
