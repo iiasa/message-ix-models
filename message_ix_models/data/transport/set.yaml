@@ -9,9 +9,9 @@
 commodity:
   add:
     transport freight: Freight transport
-    transport freight VDT: Freight transport vehicle movement
+    transport freight vehicle: Freight transport vehicle distance travelled
     transport pax: Passenger transport
-    transport pax VDT: Passenger transport vehicle movement
+    transport pax vehicle: Passenger transport vehicle distance travelled
   require:
   - electr
   - fueloil
@@ -81,3 +81,8 @@ consumer groups:
     A: Average
     M: Moderate
     F: Frequent
+
+unit:
+  add:
+    t km: tonne kilometre
+    v km: vehicle kilometre

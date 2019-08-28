@@ -11,7 +11,7 @@ par:
     mode: all
     time_dest: year
     time: year
-    unit: vehicle kilometre
+    unit: v km
     value: 1.0
 
 
@@ -191,7 +191,7 @@ technology:
         mode: all
         time_origin: year
         time: year
-        unit: vehicle kilometre
+        unit: v km
         value: 1.0
       output:
         commodity: transport freight
@@ -199,7 +199,7 @@ technology:
         mode: all
         time_dest: year
         time: year
-        unit: tonne kilometre
+        unit: t km
 
   Occupancy_moto: {}
   Occupancy_ptrp: {}
