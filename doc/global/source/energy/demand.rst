@@ -40,7 +40,7 @@ In the case of final energy intensity (FEI), the extrapolation is produced for e
 The total final energy in each region is then calculated by multiplying the extrapolated final energy intensity by the projected GDP (PPP) in each time period. Next, the extrapolated shares are multiplied by the total final energy to identify final energy demand for each of the seven energy service demands used in MESSAGE. Finally, final energy is converted to useful energy in each region by using the average final-to-useful energy efficiencies used in the MESSAGE model for each model region (:ref:`spatial`).
 
 .. _tab-quantssp1:
-.. table:: Convergence quantile and income for each variable and region for SSP1 (for region descriptions, see: :ref:`spatial`)
+.. table:: Convergence quantile and income for each quantity and region for SSP1 (for region descriptions, see: :ref:`spatial`)
 
    +--------------------------------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+
    |                                |          |          |          |          |          |          |          |          |          |          |          |
@@ -123,7 +123,7 @@ The total final energy in each region is then calculated by multiplying the extr
 
 
 .. _tab-quantssp2:
-.. table:: Convergence quantile and income for each variable and region for SSP2 (for region descriptions, see: :ref:`spatial`)
+.. table:: Convergence quantile and income for each quantity and region for SSP2 (for region descriptions, see: :ref:`spatial`)
 
    +--------------------------------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+
    |                                |          |          |          |          |          |          |          |          |          |          |          |
@@ -206,7 +206,7 @@ The total final energy in each region is then calculated by multiplying the extr
 
 
 .. _tab-quantssp3:
-.. table:: Convergence quantile and income for each variable and region for SSP3 (for region descriptions, see: :ref:`spatial`)
+.. table:: Convergence quantile and income for each quantity and region for SSP3 (for region descriptions, see: :ref:`spatial`)
 
    +--------------------------------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+----------+
    |                                |          |          |          |          |          |          |          |          |          |          |          |
