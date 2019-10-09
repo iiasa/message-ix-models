@@ -27,7 +27,7 @@ no rapid acceleration of technology diffusion is possible. In response to this l
 (Keppo and Strubegger, 2010 :cite:`keppo_short_2010`). These allow faster technology diffusion at additional costs and therefore generate additional model flexibility
 while still reducing the flip-flop behavior and sudden penetration of technologies.
 
-:numref:`fig-difconstraint` below illustrates the maximum technology growth starting at a level of 1 in year *t*=0 for a set of five diffusion constraints which jointly lead to a soft constraint.
+:numref:`fig-difconstraint` below illustrates the maximum technology growth starting at a level of 1 in year *t* =0 for a set of five diffusion constraints which jointly lead to a soft constraint.
 
 .. _fig-difconstraint:
 .. figure:: /_static/diffusion_constraint_example.png
