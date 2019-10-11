@@ -15,7 +15,7 @@ A detailed description of the methodological implementation of the NDCs in the g
 
 Emission targets
 ----------------
-Country specific emission reduction targets are specified either in relation to a reference emission trajectory (in the form of a baseline or business as usual scenario (BAU)). The targets themselves are expressed as either (1) absolute reduction, (2) a percentage reduction or (3) intensity reductions e.g. emissions per GDP or per capita. In order to account for these different reduction targets in the global energy model, the targets are translated so that a regionally specific upper bound on emissions can be formulated. If not further specified, emission constraints are assumed to apply to all sectors and all gases, i.e. total GHGs.
+Country specific emission reduction targets are specified either in relation to historical emissions (e.g. x% reduction compared to 1990) or in relation to a reference emission trajectory (in the form of a baseline or business as usual scenario (BAU); e.g. x% reduction compared to 2030 emission levels in the baseline). The targets themselves are expressed as either (1) absolute reduction, (2) a percentage reduction or (3) intensity reductions e.g. emissions per GDP or per capita. In order to account for these different reduction targets in the global energy model, the targets are translated so that a regionally specific upper bound on emissions can be formulated. If not further specified, emission constraints are assumed to apply to all sectors and all gases, i.e. total GHGs.
 
 Energy shares
 -------------
