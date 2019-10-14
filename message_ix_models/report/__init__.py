@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 
 from ixmp.utils import logger
-from .util import prepare_reporter
+from .core import prepare_reporter
 
 
 log = logging.getLogger(__name__)
@@ -16,8 +16,10 @@ log = logging.getLogger(__name__)
 @click.option('-o', '--output', 'output_path', type=Path,
               help='Write output to file instead of console.')
 @click.option('--verbose', is_flag=True, help='Set log level to DEBUG.')
+@click.option('--dry-run', '-n', is_flag=True,
+              help='Only show what would be done.')
 @click.pass_context
-def cli(ctx, key, output_path, verbose):
+def cli(ctx, key, output_path, verbose, dry_run):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message:default', but may also
@@ -44,6 +46,9 @@ def cli(ctx, key, output_path, verbose):
 
     print('Preparing to report:', rep.describe(key), sep='\n')
     mark()
+
+    if dry_run:
+        return
 
     result = rep.get(key)
     print(f'Result written to {output_path}' if output_path else
