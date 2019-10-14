@@ -17,6 +17,30 @@ log = logging.getLogger(__name__)
 
 
 def prepare_reporter(scenario, config, key, output_path):
+    """Prepare to report *key* from *scenario*.
+
+    Parameters
+    ----------
+    scenario : ixmp.Scenario
+        MESSAGE-GLOBIOM scenario containing a solution, to be reported.
+    config : dict-like
+        Reporting configuration.
+    key : str or ixmp.reporting.Key
+        Quantity or node to compute. The computation is not triggered (i.e.
+        :meth:`get <ixmp.reporting.Reporter.get>` is not called); but the
+        corresponding, full-resolution Key is returned.
+    output_path : os.Pathlike
+        If given, a computation ``cli-output`` is added to the Reporter which
+        writes *key* to this path.
+
+    Returns
+    -------
+    ixmp.reporting.Reporter
+        Reporter prepared with MESSAGE-GLOBIOM calculations.
+    ixmp.reporting.Key
+        Same as *key*, in full resolution, if any.
+
+    """
     # Apply global reporting configuration, e.g. unit definitions
     configure(config)
 
