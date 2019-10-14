@@ -1,5 +1,355 @@
+# Configuration for reporting of the MESSAGEix-GLOBIOM global model
+#
+# Some groups in this file ('units', 'files', 'alias') are used by the
+# ixmp.reporting and message_ix.reporting built-in configuration code. See:
+#
+# https://message.iiasa.ac.at/en/latest/reporting.html#ixmp.reporting.configure
+# https://message.iiasa.ac.at/en/latest/
+#   reporting.html#ixmp.reporting.Reporter.configure
+#
+# Others are used in reporting.core.prepare_reporter.
+#
+#
+# EDITING
+#
+# - Wrap lines at 80 characters.
+
+
 units:
   define: |
     USD = [value]
   replace:
     '???': ''
+
+
+# Filters
+#
+# These limit the data that is retrieved from the backend by ixmp.reporting;
+# so ALL quantities in the Reporter are limited to these values. Use these for
+# debugging.
+
+# filters:
+#   t: [coal_ppl, po_turbine, c_ppl_co2scr]
+
+
+# Aggregate across dimensions of single quantities
+# - Corresponds to ixmp.Reporter.aggregate via reporting.core.add_aggregate
+aggregate:
+  # Quantities to aggregate
+- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+  # Added to the end of the each key (e.g. '[key]:pe' or '[key]:[tag]+pe')
+  _tag: pe
+  # Dimension along which to aggregate
+  _dim: t
+
+  # Mappings from group names to members along _dim
+  # Coal
+  coal: [coal_extr, coal_extr_ch4]
+  lignite: [lignite_extr]
+  gas conventional: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4]
+  gas unconventional: [gas_extr_5, gas_extr_6, gas_extr_7, gas_extr_8]
+  oil conventional: [oil_extr_1_ch4, oil_extr_2_ch4, oil_extr_3_ch4,
+                     oil_extr_1, oil_extr_2, oil_extr_3]
+  oil unconventional: [oil_extr_4_ch4, oil_extr_4, oil_extr_5, oil_extr_6,
+                       oil_extr_7, oil_extr_8]
+
+- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+  _tag: se
+  _dim: t
+
+  # Biomass
+  bio elec wo ccs: [bio_ppl, bio_istig]
+  bio elec w ccs: [bio_isitig_ccs]
+  bio eth wo ccs: [eth_bio, liq_bio]
+  bio eth w ccs: [eth_bio_ccs, liq_bio_ccs]
+  bio hydrogen wo ccs: [h2_bio]
+  bio hydrogen w ccs: [h2_bio_ccs]
+
+  # Coal
+  coal elec wo ccs: [coal_ppl, igcc, coal_adv]
+  coal elec w ccs: [igcc_ccs, coal_adv_ccs]
+  coal heat: [coal_hpl]
+  coal hydrogen wo ccs: [h2_coal_ccs]
+  coal loil wo ccs: [syn_liq]
+  coal loil w ccs: [syn_liq_ccs]
+  coal methanol wo ccs: [coal_meth]
+  coal methanol w ccs: [coal_meth_ccs]
+
+  # Gas
+  gas elec wo ccs: [gas_ct, gas_cc, gas_ppl, gas_htfc]
+  gas elec w ccs: [gas_cc_ccs]
+  gas heat wo ccs: [gas_hpl]
+  gas hydrogen wo ccs: [h2_smr]
+  gas hydrogen w ccs: [h2_smr_ccs]
+
+  # Geothermal
+  geothermal elec: [geo_ppl]
+  geothermal heat: [geo_hpl]
+
+  # Hydro
+  hydro: [hydro_hc, hydro_lc]
+
+  # Nuclear
+  nuclear: [nuc_lc, nuc_hc, nuc_fbr]
+
+  # Oil
+  oil elec wo ccs: [foil_ppl, loil_ppl, oil_ppl, loil_cc]
+  oil heat: [foil_hpl]
+
+  # Wind
+  wind curtailment: [wind_curtailment1, wind_curtailment2, wind_curtailment3]
+  wind gen onshore: [wind_res1, wind_res2, wind_res3, wind_res4]
+  wind gen offshore: [wind_ref1, wind_ref2, wind_ref3, wind_ref4, wind_ref5]
+
+  # Solar
+  solar pv gen elec: [solar_res1, solar_res2, solar_res3, solar_res4,
+                      solar_res5, solar_res6, solar_res7, solar_res8]
+  solar pv gen elec RC: [solar_pv_RC]
+  solar pv gen elec I: [solar_pv_I]
+  solar pv curtailment: [solar_curtailment1, solar_curtailment2,
+                         solar_curtailment3]
+  solar csp gen elec sm1: [csp_sm1_res, csp_sm1_res1, csp_sm1_res2,
+                           csp_sm1_res3, csp_sm1_res4, csp_sm1_res5,
+                           csp_sm1_res6, csp_sm1_res7]
+  solar csp gen elec sm3: [csp_sm3_res, csp_sm3_res1, csp_sm3_res2,
+                           csp_sm3_res3, csp_sm3_res4, csp_sm3_res5,
+                           csp_sm3_res6, csp_sm3_res7]
+  solar csp gen heat rc: [solar_rc]
+  solar csp gen heat i: [solar_i]
+
+- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+  _tag: t_d
+  _dim: t
+
+  biomass: [biomass_t_d]
+  coal: [coal_t_d-rc-06p, coal_t_d-in-06p, coal_t_d-in-SO2, coal_t_d-rc-SO2,
+         coal_t_d]
+  elec: [elec_t_d]
+  gas: [gas_t_d, gas_t_d_ch4]
+  heat: [heat_t_d]
+  oil: [loil_t_d, foil_t_d]
+
+- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+  _tag: bunker
+  _dim: t
+
+  methanol: [methanol_bunker]
+  gas: [LNG_bunker]
+  lh2: [LH2_bunker]
+  oil: [loil_bunker, foil_bunker]
+
+- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+  _tag: import
+  _dim: t
+
+  coal: [coal_imp]
+  elec: [elec_imp]
+  ethanol: [eth_imp]
+  gas: [LNG_imp, gas_imp]
+  lh2: [lh2_imp]
+  methanol: [meth_imp]
+  oil: [oil_imp, loil_imp, foil_imp]
+
+- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+  _tag: export
+  _dim: t
+
+  coal: [coal_exp]
+  elec: [elec_exp]
+  ethanol: [eth_exp]
+  lh2: [lh2_exp]
+  gas: [LNG_exp, gas_exp_nam, gas_exp_weu, gas_exp_eeu, gas_exp_pao,
+        gas_exp_cpa, gas_exp_afr, gas_exp_sas, gas_exp_pas]
+  methanol: [meth_exp]
+  oil: [oil_exp, loil_exp, foil_exp]
+
+
+# Create new quantities by weighted sum across multiple quantities
+# - Parsed by reporting.core.add_combination
+combine:
+  # Name and dimensions of quantity to be created
+- key: coal:nl-ya
+  # Inputs to sum
+  inputs:
+    # Input quantity. If dimensions are none ('name::tag') then the necessary
+    # dimensions are inferred: the union of the dimensions of 'key:' above,
+    # plus any dimensions appearing in 'select:''
+  - quantity: in::pe  # e.g. 'in:nl-t-ya:pe' is inferred
+    # Values to select
+    select: {t: [coal, lignite]}
+    # Weight for these values in the weighted sum
+    weight: 1
+  - quantity: in::import
+    select: {t: coal}
+    weight: 1
+  - quantity: in::export
+    select: {t: coal}
+    weight: -1
+  # commented (PNK 2019-10-07): doesn't exist
+  # - quantity: in::bunker
+  #   select: {t: coal}
+  #   weight: 1
+
+- key: gas:nl-ya
+  inputs:
+  - quantity: in::pe
+    select: {t: ['gas conventional', 'gas unconventional']}
+    weight: 1
+  - quantity: in::import
+    select: {t: gas}
+    weight: 1
+  - quantity: in::export
+    select: {t: gas}
+    weight: -1
+  - quantity: in::bunker
+    select: {t: gas}
+    weight: 1
+
+- key: oil:nl-ya
+  inputs:
+  - quantity: in::pe
+    select: {t: ['oil conventional', 'oil unconventional']}
+    weight: 1
+  - quantity: in::import
+    select: {t: oil}
+    weight: 1
+  - quantity: in::export
+    select: {t: oil}
+    weight: -1
+  - quantity: in::bunker
+    select: {t: oil}
+    weight: 1
+
+- key: solar:nl-ya
+  inputs:
+  - quantity: out::se
+    select: {t: ['solar pv gen elec', 'solar pv gen elec RC',
+                 'solar pv gen elec I', 'solar csp gen elec sm1',
+                 'solar csp gen elec sm3', 'solar csp gen heat rc',
+                 'solar csp gen heat i']}
+            #, c: [electr]}
+    weight: 1
+  - quantity: in::se
+    select: {t: solar pv curtailment} #, c: [electr]}
+    weight: -1
+
+- key: se_trade:nl-ya
+  inputs:
+  - quantity: out::import
+    select: {t: [elec, ethanol, lh2, methanol]}
+    weight: 1
+  - quantity: in::export
+    select: {t: [elec, ethanol, lh2, methanol]}
+    weight: -1
+
+- key: wind:nl-ya
+  inputs:
+  - quantity: out::se
+    select: {t: ['wind gen onshore', 'wind gen offshore']}
+    weight: 1
+  - quantity: in::se
+    select: {t: wind curtailment}
+    weight: -1
+
+
+general:
+# - key: wind onshore
+#   operation: share_curtailment  # Refers to a method in computations.py
+#   inputs: [wind curtailment, wind ref, wind res]
+# - key: wind offshore
+#   operation: share_curtailment  # Refers to a method in computations.py
+#   inputs: [wind curtailment, wind res, wind ref]
+- key: pe test 2
+  comp: concat
+  inputs:
+  - Primary Energy|Nuclear:iamc
+  - Primary Energy|Solar:iamc
+  - Primary Energy|Wind:iamc
+- key: pe test 3
+  comp: concat
+  inputs:
+  - wind
+  - solar
+
+
+# Groups of keys for re-use. These keys are not parsed by
+# reporting.prepare_reporter; they only exist to be referenced further in
+# the file.
+#
+# - Ending a line with '&label' defines a YAML anchor.
+# - Using the YAML alias '<<: *label' re-uses the referenced keys.
+#
+pe_iamc: &pe_iamc
+  format:  # Conversion to IAMC format
+    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+    - c
+    - l
+    - m
+    - nd
+    - 'no'  # Bare no is a special YAML value for False, so must quote here.
+    - t
+
+
+# This section is used by reporting.core.add_iamc_table()
+iamc:
+#- variable: Primary Energy|Biomass
+#  base: land_out:
+#  select: {l: [land_use], c: [bioenergy]}
+
+- variable: Primary Energy|Coal
+  base: coal:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Gas
+  base: gas:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Geothermal # This is still incomplete
+  base: out:nl-t-ya-m-c-l
+  select: {l: [secondary], t: [geothermal elec, geothermal heat]}
+  <<: *pe_iamc
+
+- variable: Primary Energy|Hydro
+  base: out:nl-t-ya-m-c-l:se
+  select: {l: [secondary], t: [hydro]}
+  <<: *pe_iamc
+
+- variable: Primary Energy|Nuclear
+  base: out:nl-t-ya-m-c-l:se
+  select: {l: [secondary], t: [nuclear]}
+  <<: *pe_iamc
+
+- variable: Primary Energy|Oil
+  base: oil:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Other
+  base: in:nl-t-ya-m-c-l:bunker
+  select: {t: [lh2]}
+  <<: *pe_iamc
+
+- variable: Primary Energy|Secondary Energy Trade
+  base: se_trade:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Solar
+  base: solar:nl-ya
+  <<: *pe_iamc
+
+- variable: Primary Energy|Wind
+  base: wind:nl-ya
+  <<: *pe_iamc
+
+
+
+# This section is used by reporting.core.add_report()
+report:
+- key: pe test
+  members:
+#  - Primary Energy|Biomass:iamc
+  - Primary Energy|Coal:iamc
+  - Primary Energy|Gas:iamc
+  - Primary Energy|Hydro:iamc
+  - Primary Energy|Nuclear:iamc
+  - Primary Energy|Solar:iamc
+  - Primary Energy|Wind:iamc

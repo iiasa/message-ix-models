@@ -1,30 +1,40 @@
-from functools import partial
-import logging
-
-from message_ix.reporting import Reporter, configure
-from message_ix.reporting.computations import write_report
-
-log = logging.getLogger(__name__)
+from ixmp.reporting import Key
 
 
-def prepare_reporter(scenario, config, key, output_path):
-    # Apply global reporting configuration, e.g. unit definitions
-    configure(config)
+def collapse(df, var_name, var=[], region=[]):
+    """:meth:`as_pyam` `collapse=...` callback.
 
-    log.info('Preparing reporter')
+    Simplified from message_ix.reporting.pyam.collapse_message_cols.
+    """
+    # Extend region column ('n' and 'nl' are automatically added by message_ix)
+    df['region'] = df['region'].str.cat([df[c] for c in region], sep='|')
 
-    # Create a Reporter for *scenario* and apply Reporter-specific config
-    rep = Reporter.from_scenario(scenario) \
-                  .configure(config)
+    # Assemble variable column
+    df['variable'] = var_name
+    df['variable'] = df['variable'].str.cat([df[c] for c in var], sep='|')
 
-    # If needed, get the full key for *quantity*
-    key = rep.check_keys(key)[0]
+    # Drop same columns
+    return df.drop(var + region, axis=1)
 
-    if output_path:
-        # Add a new computation that writes *key* to the specified file
-        rep.add('cli-output', (partial(write_report, path=output_path), key))
-        key = 'cli-output'
 
-    log.info('…done')
+def infer_keys(reporter, key_or_keys, dims=[]):
+    """Helper to guess complete keys in *reporter*."""
+    single = isinstance(key_or_keys, (str, Key))
+    keys = [key_or_keys] if single else key_or_keys
 
-    return rep, key
+    result = []
+
+    for k in keys:
+        # Has some dimensions or tag
+        key = Key.from_str_or_key(k) if ':' in k else k
+
+        if '::' in k or key not in reporter:
+            key = reporter.full_key(key)
+
+        if dims:
+            # Drop all but *dims*
+            key = key.drop(*[d for d in key.dims if d not in dims])
+
+        result.append(key)
+
+    return result[0] if single else result
