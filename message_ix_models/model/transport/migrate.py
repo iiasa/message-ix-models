@@ -7,7 +7,7 @@ import pandas as pd
 import plotnine as p9
 from tqdm import tqdm
 
-from message_ix.tools.messagev import CHNFile, DICFile, INPFile
+from message_data.tools.messagev import CHNFile, DICFile, INPFile
 from .utils import config, data_path, transport_technologies
 
 
