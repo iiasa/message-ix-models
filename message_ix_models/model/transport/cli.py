@@ -8,7 +8,7 @@ import ixmp
 import message_ix
 import pandas as pd
 
-from . import MODEL
+from .common import MODEL
 
 
 # Path to ixmp local HSQL databases
@@ -26,9 +26,9 @@ def get_platform(name):
         raise ValueError(name)
 
 
-@click.group()
+@click.group('transport')
 def main():
-    """Command-line tool for MESSAGEix-Transport."""
+    """MESSAGE-Transport model."""
     pass
 
 
