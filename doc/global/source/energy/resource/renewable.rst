@@ -3,7 +3,7 @@
 Non-Biomass Renewable Resources
 ================================
 :numref:`tab-depl` shows the assumed total potentials of non-biomass renewable energy deployment (by resource type) in the MESSAGE model. In addition, the technical potential estimates are based on different sources,
-such as the U.S. National Renewable Energy Laboratory `database <https://www.nrel.gov/grid/data-tools.html>'_ as described in the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`).
+such as the U.S. National Renewable Energy Laboratory `database <https://www.nrel.gov/grid/data-tools.html>`_ as described in the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`).
 In this context, it is important to note that typical MESSAGE
 scenarios do not consider the full technical potential of renewable energy resources, but rather only a subset of those potentials, owing to additional constraints (e.g., sustainability
 criteria, technology diffusion and systems integration issues, and other economic considerations). These constraints may lead to a significant reduction of the technical potential.
