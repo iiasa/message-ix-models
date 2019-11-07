@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 
 from .utils import (
-    ScenarioInfo,
     config,
     iter_parameters,
     make_df,
     )
+from message_data.tools import ScenarioInfo
 
 
 log = logging.getLogger(__name__)

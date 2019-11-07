@@ -129,38 +129,6 @@ def transport_technologies(by_cg=True, filter=[], with_desc=False):
             yield (tech, info.get('description', '')) if with_desc else tech
 
 
-class ScenarioInfo:
-    """Shorthands for information about message_ix.Scenario.
-
-    ScenarioInfo objects have the following attributes:
-
-    - N: 'node' set elements.
-    - Y: 'year' set elements >= firstmodelyear.
-    - y0: firstmodelyear, if set, else y0.
-    - is_message_macro: :class:`bool`; True if a MESSAGE-MACRO scenario.
-
-    """
-    def __init__(self, scenario):
-        # Computed once
-        fmy = scenario.cat('year', 'firstmodelyear')
-        self.y0 = int(fmy[0]) if len(fmy) else -1
-
-        self.N = scenario.set('node').tolist()
-        self.Y = list(filter(lambda y: y >= self.y0,
-                             map(int, scenario.set('year'))))
-
-        self._scenario = scenario
-
-    @property
-    def sets(self):
-        return self._scenario.set_list()
-
-    @property
-    def is_message_macro(self, scenario):
-        """Simple check for a MESSAGE-MACRO scenario."""
-        return 'PRICE_COMMODITY' in self._scenario.par_list()
-
-
 @contextmanager
 def silence_log():
     """Context manager to temporarily silence log output."""
