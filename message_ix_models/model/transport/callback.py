@@ -4,8 +4,8 @@ from message_ix.reporting import Reporter
 import numpy as np
 import xarray as xr
 
-from .utils import ScenarioInfo, config
-
+from .utils import config
+from message_data.tools import ScenarioInfo
 
 log = logging.getLogger(__name__)
 

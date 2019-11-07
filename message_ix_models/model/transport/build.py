@@ -5,11 +5,10 @@ import message_ix
 from . import MODEL
 from .data import add_data, strip_par_data
 from .utils import (
-    ScenarioInfo,
     config,
     transport_technologies,
     )
-
+from message_data.tools import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
