@@ -95,7 +95,9 @@ Structure
 Bibliography
 ::::::::::::
 
-.. [1] https://www.sciencedirect.com/science/article/pii/S1361920915300900
+.. [1] McCollum et al. (2017), “Improving the behavioral realism of global
+  integrated assessment models: An application to consumers’ vehicle choices” in *Transportation Research Part D* **55.** DOI: `10.1016/j.trd.2016.04.003 <https://doi.org/10.1016/j.trd.2016.04.003>`_
+
 
 
 Usage
