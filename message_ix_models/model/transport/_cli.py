@@ -54,7 +54,8 @@ def migrate(version, check_base, parse, region, source_path):
     """
     from .build import main as build
     from .migrate import import_all, load_all, transform
-    from .utils import ScenarioInfo, silence_log
+    from .utils import silence_log
+    from message_data.tools import ScenarioInfo
 
     # Load the target scenario from database
     mp = get_platform('local')
