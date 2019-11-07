@@ -24,7 +24,7 @@ def read_config():
     def yaml_data(*parts):
         """Open a YAML file in the (meta)data directory and return contents."""
         with open(data_path.joinpath(*parts).with_suffix('.yaml')) as f:
-            return yaml.load(f)
+            return yaml.safe_load(f)
 
     config = {
         # Storage for exogenous data
@@ -60,7 +60,7 @@ def read_config():
 
     # Configure logging
     with open(Path(__file__).parent / 'logging.yaml') as f:
-        logging.config.dictConfig(yaml.load(f))
+        logging.config.dictConfig(yaml.safe_load(f))
 
 
 read_config()
