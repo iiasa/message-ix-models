@@ -11,19 +11,14 @@ import pandas as pd
 from .common import MODEL
 
 
-# Path to ixmp local HSQL databases
-db_path = Path('~', '.local', 'share', 'ixmp', 'localdb').expanduser()
+PLATFORMS = {
+    'local': 'm-t-dev',
+}
 
 
 def get_platform(name):
     """Return a Platform instance."""
-    if name == 'local':
-        return ixmp.Platform(db_path / 'message-transport-dev',
-                             dbtype='HSQLDB')
-    elif name == 'GP3':
-        return ixmp.Platform('gp3.properties')
-    else:
-        raise ValueError(name)
+    return ixmp.Platform(name=PLATFORMS.get(name, name))
 
 
 @click.group('transport')
