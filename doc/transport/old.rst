@@ -95,7 +95,31 @@ The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA 
 ``LDV_costs_efficiencies_US-TIMES_MA3T.xlsx``
 ---------------------------------------------
 
-- This file contains the original LDV-related parameter assumptions before they get sucked into MESSAGE update files and then eventually the sqlite file.
+This file contains the original LDV-related parameter assumptions before they get sucked into MESSAGE update files and then eventually the sqlite file.
+
+Text from the ``MESSAGE_instructions`` sheet:
+
+Instructions for how to generate MESSAGE .upd files that include costs and efficiencies for all LDV technologies and consumer groups.
+
+1. In the "MESSAGE_regional_assumptions" sheet, specify the following for each region: diesel shares, vehicle size class splits, cost multipliers, annual driving distances, vehicle lifetimes, suburbanization rates, etc.
+
+  - Note that as of 2014-4-10, these values are in many cases simply guestimates, and no deep research has been done to peg the values at anything precise.
+  - Note that the annual driving distances (and maybe vehicle lifetimes) need to be the same as entered into the MA3T model and MESSAGE adb/upd files.
+
+2. Use the "MESSAGE_LDV_all_regions" sheet to compare how the costs and efficiencies of vehicle technologies compare across regions.
+
+  - Make sure there are no spikes, dips, or anything else that is odd (e.g., one region much higher/lower than others).
+
+3. Copy values from the "MESSAGE_upd_xxx" sheet (where 'xxx' is the region) and paste them into the respective .upd files for each region.
+
+  - The update files are called "transport_techsX_NAM.upd" and "transport_techsX_non_NAM.upd" (where X is either blank or a number >1).
+
+  .. caution:: As of 2015-05-04, the set-up for calculating the consumer group %-splits for the "transport_techs4_nonNAM.upd" and "transport_techs4_NAM.upd" files has been moved to another XLS file (e.g., "consumer_group_splits_2015-04-28_MESSAGE.xlsx").
+     Therefore, do NOT use the information on the "MESSAGE_upd4_xxx" sheets in this file.
+     Also, note that the naming convention of these update files has slightly changed:  "nonNAM" instead of "non_NAM" in the suffix.
+
+  .. caution:: As of 2016-01-26, the vehicle INV/FOM costs and efficiencies have been made consistent with the MA3T (2015 version of model).
+     This has currently only been done for the NAM region (see the purple sheets).
 
 ``P:\ene.model\MESSAGE_transport_Kalai_V2_copy\``
 -------------------------------------------------
