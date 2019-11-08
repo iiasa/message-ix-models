@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from .utils import (
+from message_data.model.transport.utils import (
     config,
     iter_parameters,
     make_df,
