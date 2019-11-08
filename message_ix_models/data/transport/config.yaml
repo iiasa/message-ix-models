@@ -1,3 +1,78 @@
-# Metadata for MESSAGE-Transport
+# Metadata and parameters for MESSAGE-Transport
 
-'freight load factor': 10  # tonne-km
+factor:
+  freight load: 10  # tonne km per vehicle km
+  activity:
+    # Annual driving distance
+    # NB (DLM) “Modest and Frequent mileages for all non-NAM regions are scaled
+    #    relative to the NAM values from MA3T. This is because we only have
+    #    driving data for the average driver (supplied by Page Kyle of the GCAM
+    #    team in March 2014).
+    ldv:
+      _dim: consumer type
+      _unit: vehicle_km / year
+      modest: 0.5386  # i.e. 13930 km in nam
+      average: 1
+      frequent: 1.7614  # ie. 45550 km in nam
+  cost:
+    # Regional cost multipliers in 2010
+    ldv 2010:
+      nam: 1.0
+      lam: 0.9
+      weu: 1.0
+      eeu: 1.0
+      fsu: 1.0
+      mea: 0.9
+      afr: 0.9
+      cpa: 0.9
+      pao: 1.0
+      pas: 0.9
+      sas: 0.9
+    # Scaling factor to reduce the cost of NGA vehicles.
+    # NB (DLM) “applied to the original US-TIMES cost data. That original data
+    #    simply seems too high - much higher than conventional gasoline
+    #    vehicles in the base-year and in future, which is strange.
+    ldv nga: 0.85
+  efficiency:
+    '*': 0.2
+    hev: 0.2
+    phev: 0.2
+    fcev: 0.2
+
+
+
+ldv activity:
+  _unit: vehicle_km / year
+  nam: 25860
+  lam: 14600
+  weu: 11646
+  eeu:  8962
+  fsu: 11482
+  mea: 14000
+  afr: 10391
+  cpa: 16000
+  pao: 10000
+  pas: 12000
+  sas: 10400
+
+
+# Vehicle lifetime
+ldv lifetimes:
+  _dim: consumer type
+  _unit: year
+  modest: 20
+  average: 15
+  frequent: 10
+
+ldv cost catch-up year:
+  nam: 1.0
+  lam: 2030
+  weu: 1990
+  eeu: 2010
+  fsu: 2010
+  mea: 2030
+  afr: 2050
+  cpa: 2030
+  pao: 1990
+  pas: 2030
+  sas: 2040
