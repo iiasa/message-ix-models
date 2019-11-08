@@ -1,3 +1,10 @@
+from pathlib import Path
+
+
+# Path for metadata
+DATA_PATH = Path(__file__).parents[3] / 'data' / 'transport'
+
+
 # Model & scenario names
 MODEL = {
     'message-transport': dict(
