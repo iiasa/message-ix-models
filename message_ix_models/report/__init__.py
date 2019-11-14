@@ -10,6 +10,8 @@ from .core import prepare_reporter
 
 log = logging.getLogger(__name__)
 
+CONFIG = Path(__file__).parent / 'data' / 'global.yaml'
+
 
 @click.command(name='report')
 @click.argument('key', default='message:default')
@@ -40,8 +42,7 @@ def cli(ctx, key, output_path, verbose, dry_run):
     mark()
 
     # Read reporting configuration from a file
-    config = Path(__file__).parent / 'data' / 'global.yaml'
-    rep, key = prepare_reporter(s, config, key, output_path)
+    rep, key = prepare_reporter(s, CONFIG, key, output_path)
     mark()
 
     print('Preparing to report:', rep.describe(key), sep='\n')
@@ -54,3 +55,28 @@ def cli(ctx, key, output_path, verbose, dry_run):
     print(f'Result written to {output_path}' if output_path else
           f'Result: {result}', sep='\n')
     mark()
+
+
+def report(scenario, path, legacy=None):
+    """Run complete reporting on *scenario* with output to *path*.
+
+    If *legacy* is not None, it is used as keyword arguments to the old-
+    style reporting.
+    """
+    if legacy is None:
+        rep = prepare_reporter(scenario, CONFIG, 'default', path)
+        rep.get('default')
+    else:
+        from message_data.tools.post_processing import iamc_report_hackathon
+
+        legacy_args = dict(merge_hist=True)
+        legacy_args.update(**legacy)
+
+        iamc_report_hackathon.report(
+            mp=scenario.platform,
+            scen=scenario,
+            model=scenario.name,
+            scenario=scenario.name,
+            out_dir=path,
+            **legacy_args,
+        )
