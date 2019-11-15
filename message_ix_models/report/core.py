@@ -52,23 +52,15 @@ def prepare_reporter(scenario, config, key, output_path):
 
     # Load the YAML configuration as a dict
     with open(config, 'r') as f:
-        config = yaml.load(f)
-
-    # -------------------------------------------------------------------------
-    # NB Add code between these --- lines to expand the reporting for
-    #    MESSAGEix-GLOBIOM:
-    #    - Modify the reporter directly with add() or apply().
-    #    - Create a function like add_quantities() below and call it.
-    #    - Add to the file data/global.yaml, and then read its keys from the
-    #      variable *config*.
+        config = yaml.safe_load(f)
 
     # Mapping of file sections to handlers
     sections = (
         ('aggregate', add_aggregate),
         ('combine', add_combination),
         ('iamc', add_iamc_table),
-        ('report', add_report),
         ('general', add_general),
+        ('report', add_report),
         )
 
     for section_name, func in sections:
@@ -79,8 +71,6 @@ def prepare_reporter(scenario, config, key, output_path):
             log.info(f'--- {section_name!r} config section')
         for entry in entries:
             func(rep, entry)
-
-    # -------------------------------------------------------------------------
 
     # If needed, get the full key for *quantity*
     key = rep.check_keys(key)[0]
@@ -146,18 +136,22 @@ def add_iamc_table(rep, info):
     name = info['variable']
 
     # Chain of keys produced: first entry is the key for the base quantity
-    keys = [Key.from_str_or_key(info['base'])]
+    base = Key.from_str_or_key(info['base'])
+    keys = [base]
+
+    # Second entry is a simple rename
+    keys.append(rep.add(Key(name, base.dims, base.tag), base))
 
     if 'select' in info:
         # Select a subset of data from the base quantity
-        key = Key(name, keys[-1]._dims)
+        key = keys[-1].add_tag('sel')
         rep.add(key, (Quantity.sel, keys[-1], info['select']), strict=True)
         keys.append(key)
 
     if 'group_sum' in info:
         # Aggregate data by groups
         args = dict(group=info['group_sum'][0], sum=info['group_sum'][1])
-        key = Key.from_str_or_key(keys[-1], tag='agg')
+        key = keys[-1].add_tag('agg')
         rep.add(key, (partial(group_sum, **args), keys[-1]), strict=True)
         keys.append(key)
 
@@ -169,17 +163,17 @@ def add_iamc_table(rep, info):
 
     drop = set(args.pop('drop', [])) & set(keys[-1]._dims)
 
-    key = f'{name}:iamc'
-    rep.convert_pyam(keys[-1], 'ya', key, drop=drop,
-                     collapse=partial(collapse, **args))
-    keys.append(key)
+    iamc_keys = rep.convert_pyam(keys[-1], 'ya', drop=drop,
+                                 collapse=partial(collapse, **args))
+    keys.extend(iamc_keys)
 
     # Revise the 'message:default' report to include the last key in
     # the chain
     rep.add('message:default',
             rep.graph['message:default'] + (keys[-1],))
 
-    log.info(f'Add {name!r} from {keys[0]!r}\n  keys {keys[1:]!r}')
+    log.info(f'Add {keys[-1]!r} from {keys[0]!r}')
+    log.debug(f'  {len(keys)} keys total')
 
 
 def add_report(rep, info):

@@ -252,24 +252,18 @@ combine:
     weight: -1
 
 
-general:
+# general:
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind ref, wind res]
 # - key: wind offshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind res, wind ref]
-- key: pe test 2
-  comp: concat
-  inputs:
-  - Primary Energy|Nuclear:iamc
-  - Primary Energy|Solar:iamc
-  - Primary Energy|Wind:iamc
-- key: pe test 3
-  comp: concat
-  inputs:
-  - wind
-  - solar
+# - key: pe test 2
+#   comp: concat
+#   inputs:
+#   - wind
+#   - solar
 
 
 # Groups of keys for re-use. These keys are not parsed by
@@ -339,7 +333,6 @@ iamc:
 - variable: Primary Energy|Wind
   base: wind:nl-ya
   <<: *pe_iamc
-
 
 
 # This section is used by reporting.core.add_report()
