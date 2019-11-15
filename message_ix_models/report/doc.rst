@@ -84,5 +84,5 @@ Utilities
 Default configuration
 ---------------------
 
-.. literalinclude:: ../../../message_data/reporting/data/global.yaml
+.. literalinclude:: ../../../data/report/global.yaml
    :language: yaml
