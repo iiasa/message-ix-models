@@ -170,8 +170,8 @@ def add_iamc_table(rep, info):
     drop = set(args.pop('drop', [])) & set(keys[-1]._dims)
 
     key = f'{name}:iamc'
-    rep.as_pyam(keys[-1], 'ya', key, drop=drop,
-                collapse=partial(collapse, **args))
+    rep.convert_pyam(keys[-1], 'ya', key, drop=drop,
+                     collapse=partial(collapse, **args))
     keys.append(key)
 
     # Revise the 'message:default' report to include the last key in
