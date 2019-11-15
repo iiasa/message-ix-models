@@ -14,14 +14,14 @@ CONFIG = Path(__file__).parent / 'data' / 'global.yaml'
 
 
 @click.command(name='report')
+@click.pass_obj
 @click.argument('key', default='message:default')
 @click.option('-o', '--output', 'output_path', type=Path,
               help='Write output to file instead of console.')
 @click.option('--verbose', is_flag=True, help='Set log level to DEBUG.')
 @click.option('--dry-run', '-n', is_flag=True,
               help='Only show what would be done.')
-@click.pass_context
-def cli(ctx, key, output_path, verbose, dry_run):
+def cli(context, key, output_path, verbose, dry_run):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message:default', but may also
@@ -38,11 +38,12 @@ def cli(ctx, key, output_path, verbose, dry_run):
     if verbose:
         logger().setLevel('DEBUG')
 
-    s = ctx.obj.get_scenario()
+    s = context.get_scenario()
     mark()
 
     # Read reporting configuration from a file
-    rep, key = prepare_reporter(s, CONFIG, key, output_path)
+    config = context.get_config('report', 'global-default.yaml')
+    rep, key = prepare_reporter(s, config, key, output_path)
     mark()
 
     print('Preparing to report:', rep.describe(key), sep='\n')
