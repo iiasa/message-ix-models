@@ -16,16 +16,22 @@ CONFIG = Path(__file__).parent / 'data' / 'global.yaml'
 @click.command(name='report')
 @click.pass_obj
 @click.argument('key', default='message:default')
+@click.option('--config', 'config_file', default='global', show_default=True,
+              help='Path or stem for reporting config file.')
 @click.option('-o', '--output', 'output_path', type=Path,
               help='Write output to file instead of console.')
 @click.option('--verbose', is_flag=True, help='Set log level to DEBUG.')
 @click.option('--dry-run', '-n', is_flag=True,
               help='Only show what would be done.')
-def cli(context, key, output_path, verbose, dry_run):
+def cli(context, key, config_file, output_path, verbose, dry_run):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message:default', but may also
     be the name of a specific model quantity, e.g. 'output'.
+
+    --config can give either the absolute path to a reporting configuration
+    file, or the stem (i.e. name without .yaml extension) of a file in
+    data/report.
     """
     from time import process_time
 
@@ -42,7 +48,17 @@ def cli(context, key, output_path, verbose, dry_run):
     mark()
 
     # Read reporting configuration from a file
-    config = context.get_config('report', 'global-default.yaml')
+
+    # Use the option value as if it were an absolute path
+    config = Path(config_file)
+    if not config.exists():
+        # Path doesn't exist; treat it as a stem in the metadata dir
+        config = context.get_config('report', config_file)
+
+    if not config.exists():
+        # Can't find the file
+        raise click.BadOptionUsage(f'--config={config_file} not found')
+
     rep, key = prepare_reporter(s, config, key, output_path)
     mark()
 
