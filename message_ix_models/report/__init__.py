@@ -92,8 +92,8 @@ def report(scenario, path, legacy=None):
         iamc_report_hackathon.report(
             mp=scenario.platform,
             scen=scenario,
-            model=scenario.name,
-            scenario=scenario.name,
+            model=scenario.model,
+            scenario=scenario.scenario,
             out_dir=path,
             **legacy_args,
         )
