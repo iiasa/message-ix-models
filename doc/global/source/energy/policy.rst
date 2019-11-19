@@ -2,20 +2,20 @@
 
 Modelling policies
 ==================
-The global energy model distinguishes between eleven global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies, such as the nationally determined contributions (NDCs) as agreed upon in Paris Agreement, at a lower geographical resolution in order to adequatly account for near term developments in scenario development processes. 
+The global energy model distinguishes between eleven global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies - such as the nationally determined contributions (NDCs) as agreed upon in the Paris Agreement - at a lower geographical resolution, in order to be able to adequately account for future changes in the scenario development processes. 
 
 Representation of single country Nationally Determined Contributions (NDCs)
 ---------------------------------------------------------------------------
-The targets formulated in the NDCs come in many different flavors. This applies to the sectors and gasses, which policies cover, but also how these are expressed and quantified. In the global energy model, four broad categories of policy types related to the NDCs are represented, each of which is translated into a set of constraints.
+The targets formulated in the NDCs come in many different flavors. This applies to the sectors and gases covered by these  policies, but it also applies to how these are expressed and quantified. In the global energy model, four broad categories of policy types related to the NDCs are represented, each of which is translated into a set of constraints.
    1. Emission targets
    2. Energy shares
    3. Capacity or generation targets
    4. Macro-economic targets
-A detailed description of the methodological implementation of the NDCs in the global energy model, along with an extensive list of the energy related targets considered can be found in Rogelj et al. (2017) :cite:`rogelj_indc_2017`. Additional policies implemented in the model can also be found in ('what reference for the CD_Links related policies?`)
+A detailed description of the methodological implementation of the NDCs in the global energy model, along with an extensive list of the energy-related targets considered can be found in Rogelj et al. (2017) :cite:`rogelj_indc_2017`. Additional policies implemented in the model can also be found in ('what reference for the CD_Links related policies?`)
 
 Emission targets
 ----------------
-Country specific emission reduction targets are specified either in relation to historical emissions (e.g. x% reduction compared to 1990) or in relation to a reference emission trajectory (in the form of a baseline or business as usual scenario (BAU); e.g. x% reduction compared to 2030 emission levels in the baseline). The targets themselves are expressed as either (1) absolute reduction, (2) a percentage reduction or (3) intensity reductions e.g. emissions per GDP or per capita. In order to account for these different reduction targets in the global energy model, the targets are translated so that a regionally specific upper bound on emissions can be formulated. If not further specified, emission constraints are assumed to apply to all sectors and all gases, i.e. total GHGs.
+Country-specific emission reduction targets are specified either in relation to historical emissions (e.g. x% reduction compared to 1990) or in relation to a reference emission trajectory (in the form of a baseline or business as usual scenario (BAU); e.g. x% reduction compared to 2030 emission levels in the baseline). The targets themselves are expressed as either (1) absolute reduction, (2) a percentage reduction or (3) intensity reductions e.g. emissions per GDP or per capita. In order to account for these different reduction targets in the global energy model, the targets are translated so that a regionally specific upper bound on emissions can be formulated. If not further specified, emission constraints are assumed to apply to all sectors and all gases, i.e. total GHGs.
 
 Energy shares
 -------------
@@ -34,4 +34,4 @@ Macro-economic targets
 
 Representation of taxes and subsidies
 -------------------------------------
-Another set of policies addressed as a part of climate change analysis, are energy related taxes and subsidies. Removing fossil-fuel subsidies could help reduce emissions by discouraging the use of inefficient energy forms. In the global energy model, fossil fuel prices are endogenously derived based on underlying supply curves representing the technical costs associated with the extraction of the resources (cf. Section :ref:`fossilfuel`).  Refining and processing as well as transmission and distribution costs will be added to the total fuel cost. In order to therefore account for taxes, price adjustment factors are applied, based on the underlying data set as described in Jewell et al. (2018) :cite:`jewell_subsidy_2018`.
+Another set of policies addressed as part of climate change analysis, are energy-related taxes and subsidies. Removing fossil fuel subsidies could help reduce emissions by discouraging the use of inefficient energy forms. In the global energy model, fossil fuel prices are endogenously derived based on underlying supply curves representing the technical costs associated with the extraction of the resources (cf. Section :ref:`fossilfuel`).  Refining and processing as well as transmission and distribution costs will be added to the total fuel cost. In order to account for taxes, price adjustment factors are applied, based on the underlying data set as described in Jewell et al. (2018) :cite:`jewell_subsidy_2018`.
