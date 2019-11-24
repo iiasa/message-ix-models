@@ -4,6 +4,11 @@ Reporting
 .. contents::
    :local:
 
+.. toctree::
+
+   reporting/default-config
+
+
 Introduction
 ------------
 
@@ -79,10 +84,3 @@ Utilities
 
 
 .. automethod:: message_data.reporting.cli
-
-
-Default configuration
----------------------
-
-.. literalinclude:: ../../../data/report/global.yaml
-   :language: yaml
