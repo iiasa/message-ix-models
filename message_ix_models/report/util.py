@@ -7,7 +7,8 @@ def collapse(df, var_name, var=[], region=[]):
     Simplified from message_ix.reporting.pyam.collapse_message_cols.
     """
     # Extend region column ('n' and 'nl' are automatically added by message_ix)
-    df['region'] = df['region'].str.cat([df[c] for c in region], sep='|')
+    df['region'] = df['region'].astype(str)\
+                               .str.cat([df[c] for c in region], sep='|')
 
     # Assemble variable column
     df['variable'] = var_name
