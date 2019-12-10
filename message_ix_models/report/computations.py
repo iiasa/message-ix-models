@@ -16,7 +16,7 @@ def combine(*quantities, select, weights):
     select : list of dict
         Elements to be selected from each quantity. Must have the same number
         of elements as `quantities`.
-    weight : list of float
+    weights : list of float
         Weight applied to each . Must have the same number
         of elements as `quantities`.
 
