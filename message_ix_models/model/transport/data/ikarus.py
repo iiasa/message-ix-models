@@ -20,6 +20,7 @@ u = pint.UnitRegistry()
 u.define('vehicle = [vehicle] = v')
 u.define('passenger = [passenger] = p = pass')
 u.define('tonne_freight = [tonne_freight] = tf = tonnef')
+u.define('vkm = vehicle * kilometer')
 u.define('pkm = passenger * kilometer')
 u.define('tkm = tonne_freight * kilometer')
 u.define('@alias vkm = vkt = v km')
@@ -28,8 +29,12 @@ u.define('@alias tkm = tkt = t km')
 # Currencies
 u.define('euro_2005 = [currency] = EUR_2005 = €_2005')
 # Based on Germany's GDP deflator, data from WorldBank
+# https://data.worldbank.org/indicator/
+# NY.GDP.DEFL.ZS?end=2015&locations=DE&start=2000
 u.define('euro_2000 = 0.94662 * EUR_2005 = EUR_2000 = €_2000'),
 # Exchange rate EUR/USD in 2005, data from WorldBank
+# https://www.statista.com/statistics/412794/
+# euro-to-u-s-dollar-annual-average-exchange-rate/
 u.define('dollar_2005 = 1.2435 * EUR_2005 = USD_2005 = $_2005')
 
 # Based on units from excel sheet
@@ -65,8 +70,11 @@ def main(scenario):
     data.columns = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
     # Assign units to rows of *data*
-    for idx, unit in enumerate(dict_units):
-        data.iloc[[idx]] = (data.iloc[[idx]]) * dict_units[unit]
+    for idx_col, col in enumerate(data.columns):
+        aux = []
+        for idx_row, unit in enumerate(dict_units):
+            aux.append(data.iloc[idx_row, idx_col] * dict_units[unit])
+        data[col] = aux
 
     nodes = s_info.N  # list of nodes e.g. for node_loc column of parameters
     years = s_info.Y  # list of years e.g. for year_vtg column of parameters
