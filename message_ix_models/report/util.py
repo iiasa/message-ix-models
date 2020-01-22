@@ -2,9 +2,26 @@ from ixmp.reporting import Key
 
 
 def collapse(df, var_name, var=[], region=[]):
-    """:meth:`as_pyam` `collapse=...` callback.
+    """Callback for the `collapse` argument to :meth:`.convert_pyam`.
 
-    Simplified from message_ix.reporting.pyam.collapse_message_cols.
+    Simplified from :meth:`message_ix.reporting.pyam.collapse_message_cols`.
+
+    The dimensions listed in the `var` and `region` arguments are automatically
+    dropped from the returned :class:`.IamDataFrame`.
+
+    Parameters
+    ----------
+    var_name : str
+        Initial value to populate the IAMC 'Variable' column.
+    var : list of str, optional
+        Dimensions to concatenate to the 'Variable' column. These are joined
+        after the `var_name` using the pipe ('|') character.
+    region : list of str, optional
+        Dimensions to concatenate to the 'Region' column.
+
+    See also
+    --------
+    .core.add_iamc_table
     """
     # Extend region column ('n' and 'nl' are automatically added by message_ix)
     df['region'] = df['region'].astype(str)\

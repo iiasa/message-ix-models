@@ -86,11 +86,43 @@ def prepare_reporter(scenario, config, key, output_path):
 
 
 def add_aggregate(rep, info):
-    """Add items from the 'aggregates' tree in the config file."""
+    """Add one entry from the 'aggregates:' section of a config file.
+
+    Each entry uses :meth:`.Reporter.aggregate` to compute
+
+    The entry *info* must contain:
+
+    - ``_quantities``: list of 0 or more keys for quantities to aggregate. The
+      full dimensionality of the key(s) is inferred.
+    - ``_tag`` (:class:`str`): new tag to append to the keys for the aggregated
+      quantities.
+    - ``_dim`` (:class:`str`): dimensions
+
+    All other keys are treated as group names; the corresponding values are
+    lists of labels along the dimension to sum.
+
+    **Example:**
+
+    .. code-block:: yaml
+
+       aggregates:
+       - _quantities: [foo, bar]
+         _tag: aggregated
+         _dim: a
+
+         baz123: [baz1, baz2, baz3]
+         baz12: [baz1, baz2]
+
+    If the full dimensionality of the input quantities are ``foo:a-b`` and
+    ``bar:a-b-c``, then :meth:`add_aggregate` creates the new quantities
+    ``foo:a-b:aggregated`` and ``bar:a-b-c:aggregated``. These new quantities
+    have the new labels ``baz123`` and ``baz12`` along their ``a`` dimension,
+    with sums of the indicated values.
+    """
     # Copy for destructive .pop()
     info = copy(info)
 
-    quantities = info.pop('_quantities')
+    quantities = infer_keys(rep, info.pop('_quantities'))
     tag = info.pop('_tag')
     groups = {info.pop('_dim'): info}
 
@@ -101,7 +133,7 @@ def add_aggregate(rep, info):
 
 
 def add_combination(rep, info):
-    r"""Add one entry from the 'combine:' section of the config file.
+    r"""Add one entry from the 'combine:' section of a config file.
 
     Each entry uses the :func:`~.combine` operation to compute a weighted sum
     of different quantities.
@@ -172,7 +204,29 @@ def add_combination(rep, info):
 
 
 def add_iamc_table(rep, info):
-    """Add IAMC tables from the 'iamc:' section of a config file."""
+    """Add one entry from the 'iamc:' section of a config file.
+
+    Each entry uses :meth:`.Reporter.convert_pyam`, plus extra computations, to
+    format data from the internal :class:`.Quantity` into a
+    :class:`pyam.IamDataFrame`.
+
+    The entry *info* must contain:
+
+    - ``variable`` (:class:`str`): variable name. This is used two ways: it
+      is placed in the 'Variable' column of the resulting IamDataFrame; and the
+      reporting key to :meth:`~.Reporter.get` the data frame is
+      ``<variable>:iamc``.
+    - ``format``: dict controlling :meth:`.convert_pyam`; see the
+      documentation of that method. It contains:
+
+      - ``year_time_dim`` (:class:`str`, optional): Dimension to use for the
+        'Year' or 'Time' column. Default 'ya'.
+      - ``drop`` (:class:`list` of :class:`str`, optional): Dimensions to drop.
+      - Other entries: passed as keyword arguments to :func:`.collapse`, which
+        is then supplied as the `collapse` callback for :meth:`.convert_pyam`.
+        :func:`.collapse` formats the 'Variable' column of the IamDataFrame.
+
+    """
     # For each quantity, use a chain of computations to prepare it
     name = info['variable']
 
