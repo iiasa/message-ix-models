@@ -36,7 +36,7 @@ units:
 # - Corresponds to ixmp.Reporter.aggregate via reporting.core.add_aggregate
 aggregate:
   # Quantities to aggregate
-- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+- _quantities: [in, out]
   # Added to the end of the each key (e.g. '[key]:pe' or '[key]:[tag]+pe')
   _tag: pe
   # Dimension along which to aggregate
@@ -53,7 +53,7 @@ aggregate:
   oil unconventional: [oil_extr_4_ch4, oil_extr_4, oil_extr_5, oil_extr_6,
                        oil_extr_7, oil_extr_8]
 
-- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+- _quantities: [in, out]
   _tag: se
   _dim: t
 
@@ -117,7 +117,7 @@ aggregate:
   solar csp gen heat rc: [solar_rc]
   solar csp gen heat i: [solar_i]
 
-- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+- _quantities: [in, out]
   _tag: t_d
   _dim: t
 
@@ -129,7 +129,7 @@ aggregate:
   heat: [heat_t_d]
   oil: [loil_t_d, foil_t_d]
 
-- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+- _quantities: [in, out]
   _tag: bunker
   _dim: t
 
@@ -138,7 +138,7 @@ aggregate:
   lh2: [LH2_bunker]
   oil: [loil_bunker, foil_bunker]
 
-- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+- _quantities: [in, out]
   _tag: import
   _dim: t
 
@@ -150,7 +150,7 @@ aggregate:
   methanol: [meth_imp]
   oil: [oil_imp, loil_imp, foil_imp]
 
-- _quantities: ['in:nl-t-ya-m-c-l', 'out:nl-t-ya-m-c-l']
+- _quantities: [in, out]
   _tag: export
   _dim: t
 
