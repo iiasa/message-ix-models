@@ -162,9 +162,14 @@ def add_iamc_table(rep, info):
     args = copy(info['format'])
     args['var_name'] = name
 
-    drop = set(args.pop('drop', [])) & set(keys[-1]._dims)
+    # Use 'ya' for the IAMC 'Year' column; unless YAML reporting config
+    # includes a different dim under format/year_time_dim.
+    year_time_dim = args.pop('year_time_dim', 'ya')
 
-    iamc_keys = rep.convert_pyam(keys[-1], 'ya', drop=drop,
+    drop = set(args.pop('drop', [])) & set(keys[-1].dims)
+
+    # Use the built-in message_ix.Reporter method to add the coversion step
+    iamc_keys = rep.convert_pyam(keys[-1], year_time_dim, drop=drop,
                                  collapse=partial(collapse, **args))
     keys.extend(iamc_keys)
 
