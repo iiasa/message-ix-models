@@ -112,10 +112,11 @@ def add_combination(rep, info):
     for i in info['inputs']:
         # Required dimensions for this input: output key's dims, plus any
         # dims that must be selected on
-        dims = set(key.dims) | set(i['select'].keys())
+        selector = i.get('select', {})
+        dims = set(key.dims) | set(selector.keys())
         quantities.append(infer_keys(rep, i['quantity'], dims))
 
-        select.append(i['select'])
+        select.append(selector)
         weights.append(i['weight'])
 
     # Check for malformed input
