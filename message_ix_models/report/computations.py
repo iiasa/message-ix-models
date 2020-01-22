@@ -6,7 +6,7 @@ from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
 
 
-def combine(*quantities, select, weights):
+def combine(*quantities, select=None, weights=None):
     """Sum distinct *quantities* by *weights*.
 
     Parameters
@@ -17,23 +17,36 @@ def combine(*quantities, select, weights):
         Elements to be selected from each quantity. Must have the same number
         of elements as `quantities`.
     weights : list of float
-        Weight applied to each . Must have the same number
-        of elements as `quantities`.
-
+        Weight applied to each quantity. Must have the same number of elements
+        as `quantities`.
     """
-    # NB .transpose() is necessary when Quantity is AttrSeries.
-    result = None
+    # Handle arguments
+    select = select or len(quantities) * [{}]
+    weights = weights or len(quantities) * [1.]
 
-    for qty, s, w in zip(quantities, select, weights):
-        multi = [dim for dim, values in s.items() if isinstance(values, list)]
+    result = 0
+    ref_dims = None
 
-        if result is None:
-            result = w * (qty.sel(s).sum(dim=multi) if len(multi) else
-                          qty.sel(s))
-            dims = result.dims
-        else:
-            result += w * (qty.sel(s).sum(dim=multi) if len(multi) else
-                           qty.sel(s)).transpose(*dims)
+    for quantity, selector, weight in zip(quantities, select, weights):
+        ref_dims = ref_dims or quantity.dims
+
+        # Select data
+        temp = quantity.sel(selector)
+
+        # Dimensions along which multiple values are selected
+        multi = [dim for dim, values in selector.items()
+                 if isinstance(values, list)]
+
+        if len(multi):
+            # Sum along these dimensions
+            temp = temp.sum(dim=multi)
+
+        # .transpose() is necessary when Quantity is AttrSeries
+        if len(quantity.dims) > 1:
+            transpose_dims = tuple(filter(lambda d: d in temp.dims, ref_dims))
+            temp = temp.transpose(*transpose_dims)
+
+        result += weight * temp
 
     return result
 
