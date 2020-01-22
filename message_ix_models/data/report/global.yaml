@@ -178,44 +178,35 @@ combine:
     # Values to select
     select: {t: [coal, lignite]}
     # Weight for these values in the weighted sum
-    weight: 1
   - quantity: in::import
     select: {t: coal}
-    weight: 1
   - quantity: in::export
     select: {t: coal}
     weight: -1
   # commented (PNK 2019-10-07): doesn't exist
   # - quantity: in::bunker
   #   select: {t: coal}
-  #   weight: 1
 
 - key: gas:nl-ya
   inputs:
   - quantity: in::pe
     select: {t: ['gas conventional', 'gas unconventional']}
-    weight: 1
   - quantity: in::import
     select: {t: gas}
-    weight: 1
   - quantity: in::export
     select: {t: gas}
     weight: -1
   - quantity: in::bunker
     select: {t: gas}
-    weight: 1
 
 - key: oil:nl-ya
   inputs:
   - quantity: in::pe
     select: {t: ['oil conventional', 'oil unconventional']}
-    weight: 1
   - quantity: in::import
     select: {t: oil}
-    weight: 1
   - quantity: in::export
     select: {t: oil}
-    weight: -1
   - quantity: in::bunker
     select: {t: oil}
     weight: 1
@@ -228,7 +219,6 @@ combine:
                  'solar csp gen elec sm3', 'solar csp gen heat rc',
                  'solar csp gen heat i']}
             #, c: [electr]}
-    weight: 1
   - quantity: in::se
     select: {t: solar pv curtailment} #, c: [electr]}
     weight: -1
@@ -237,7 +227,6 @@ combine:
   inputs:
   - quantity: out::import
     select: {t: [elec, ethanol, lh2, methanol]}
-    weight: 1
   - quantity: in::export
     select: {t: [elec, ethanol, lh2, methanol]}
     weight: -1
@@ -246,7 +235,6 @@ combine:
   inputs:
   - quantity: out::se
     select: {t: ['wind gen onshore', 'wind gen offshore']}
-    weight: 1
   - quantity: in::se
     select: {t: wind curtailment}
     weight: -1

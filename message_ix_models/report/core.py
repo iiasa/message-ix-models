@@ -101,7 +101,47 @@ def add_aggregate(rep, info):
 
 
 def add_combination(rep, info):
-    """Add items from the 'combine' tree in the config file."""
+    r"""Add one entry from the 'combine:' section of the config file.
+
+    Each entry uses the :func:`~.combine` operation to compute a weighted sum
+    of different quantities.
+
+    The entry *info* must contain:
+
+    - ``key``: key for the new quantity, including dimensionality.
+    - ``inputs``: a list of dicts specifying inputs to the weighted sum. Each
+      dict contains:
+
+      - ``quantity`` (required): key for the input quantity.
+        :meth:`add_combination` infers the proper dimensionality from the
+        dimensions of ``key`` plus dimension to ``select`` on.
+      - ``select`` (:class:`dict`, optional): selectors to be applied to the
+        input quantity. Keys are dimensions; values are either single labels,
+        or lists of labels. In the latter case, the sum is taken across these
+        values, so that the result has the same dimensionality as ``key``.
+      - ``weight`` (:class:`int`, optional): weight for the input quantity;
+        default 1.
+
+    **Example.** For the following YAML:
+
+    .. code-block:: yaml
+
+       combine:
+       - key: foo:a-b-c
+         inputs:
+         - quantity: bar
+           weight: -1
+         - quantity: baz::tag
+           select: {d: [d1, d2, d3]}
+
+    …:meth:`add_combination` infers:
+
+    .. math::
+
+       \text{foo}_{abc} = -1 \times \text{bar}_{abc}
+       + 1 \times \sum_{d \in \{ d1, d2, d3 \}}{\text{baz}_{abcd}^\text{(tag)}}
+       \quad \forall \quad a, b, c
+    """
     # Split inputs into three lists
     quantities, select, weights = [], [], []
 
@@ -117,7 +157,7 @@ def add_combination(rep, info):
         quantities.append(infer_keys(rep, i['quantity'], dims))
 
         select.append(selector)
-        weights.append(i['weight'])
+        weights.append(i.get('weight', 1))
 
     # Check for malformed input
     assert len(quantities) == len(select) == len(weights)
@@ -132,7 +172,7 @@ def add_combination(rep, info):
 
 
 def add_iamc_table(rep, info):
-    """Add IAMC tables from the 'iamc' tree in the config file."""
+    """Add IAMC tables from the 'iamc:' section of a config file."""
     # For each quantity, use a chain of computations to prepare it
     name = info['variable']
 
