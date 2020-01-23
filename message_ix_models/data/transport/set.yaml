@@ -1,11 +1,10 @@
 # Set configuration for the MESSAGE-Transport model
-#
+
 # For each set in the MESSAGEix framework, the group contains:
 # - 'require': elements that must be present for the model to be set up.
 # - 'remove': elements to remove.
 # - 'add': elements to add. This is a mapping from element short names to a
 #   longer description.
-
 commodity:
   add:
     transport freight: Freight transport
@@ -68,6 +67,8 @@ mode:
   require:
   - all
 
+# Consumer groups. This is not a message_ix set; the Cartesian product of these
+# labels is used to generate the groups.
 consumer groups:
   location:
     UR: Urban
@@ -82,6 +83,8 @@ consumer groups:
     M: Moderate
     F: Frequent
 
+
+# Units are stored per ixmp.Platform, not in each message_ix.Scenario.
 unit:
   add:
     t km: tonne kilometre
