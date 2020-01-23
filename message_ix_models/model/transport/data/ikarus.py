@@ -9,33 +9,35 @@ from message_data.tools import ScenarioInfo
 
 FILE = 'GEAM_TRP_techinput.xlsx'
 
-# - Set up a pint.UnitRegistry
+# Set up a pint.UnitRegistry
 u = pint.UnitRegistry()
 
 # Compute message_ix quantities *with* proper unit conversion:
 
-# - define all the units in UnitRegistry: i.e. EUR
+# Define all the units in UnitRegistry: i.e. EUR
 
 # Transport units
-u.define('vehicle = [vehicle] = v')
-u.define('passenger = [passenger] = p = pass')
-u.define('tonne_freight = [tonne_freight] = tf = tonnef')
-u.define('vkm = vehicle * kilometer')
-u.define('pkm = passenger * kilometer')
-u.define('tkm = tonne_freight * kilometer')
-u.define('@alias vkm = vkt = v km')
-u.define('@alias pkm = pkt = p km')
-u.define('@alias tkm = tkt = t km')
+u.define("""vehicle = [vehicle] = v
+passenger = [passenger] = p = pass
+tonne_freight = [tonne_freight] = tf = tonnef
+vkm = vehicle * kilometer
+pkm = passenger * kilometer
+tkm = tonne_freight * kilometer
+@alias vkm = vkt = v km
+@alias pkm = pkt = p km
+@alias tkm = tkt = t km""")
+
 # Currencies
-u.define('euro_2005 = [currency] = EUR_2005 = €_2005')
-# Based on Germany's GDP deflator, data from WorldBank
-# https://data.worldbank.org/indicator/
-# NY.GDP.DEFL.ZS?end=2015&locations=DE&start=2000
-u.define('euro_2000 = 0.94662 * EUR_2005 = EUR_2000 = €_2000'),
-# Exchange rate EUR/USD in 2005, data from WorldBank
-# https://www.statista.com/statistics/412794/
-# euro-to-u-s-dollar-annual-average-exchange-rate/
-u.define('dollar_2005 = 1.2435 * EUR_2005 = USD_2005 = $_2005')
+# - EUR_2000: Based on Germany's GDP deflator, data from WorldBank
+#   https://data.worldbank.org/indicator/
+#   NY.GDP.DEFL.ZS?end=2015&locations=DE&start=2000
+# - USD_2005: Exchange rate EUR/USD in 2005, data from WorldBank
+#   https://www.statista.com/statistics/412794/
+#   euro-to-u-s-dollar-annual-average-exchange-rate/
+
+u.define("""EUR_2005 = [currency] = €_2005
+EUR_2000 = 0.94662 * EUR_2005 = €_2000
+USD_2005 = 1.2435 * EUR_2005 = $_2005""")
 
 # Based on units from excel sheet
 
