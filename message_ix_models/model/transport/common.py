@@ -53,6 +53,6 @@ tkm = tonne_freight * kilometer
 #   https://www.statista.com/statistics/412794/
 #   euro-to-u-s-dollar-annual-average-exchange-rate/
 
-UNITS.define("""EUR_2005 = [currency] = €_2005
+UNITS.define("""EUR_2005 = [currency] = EUR = €_2005
 EUR_2000 = 0.94662 * EUR_2005 = €_2000
-USD_2005 = 1.2435 * EUR_2005 = $_2005""")
+USD_2005 = 1.2435 * EUR_2005 = USD = $_2005""")
