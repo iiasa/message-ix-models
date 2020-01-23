@@ -1,51 +1,12 @@
-"""Import non-LDV data from the **IKARUS** :cite:`Martinsen2006` model via
-*GEAM_TRP_techinput.xlsx*."""
-import warnings
-
+"""Prepare non-LDV data from the IKARUS model via GEAM_TRP_techinput.xlsx."""
 from openpyxl import load_workbook
 import pandas as pd
-import pint
 
-from message_data.model.transport.common import DATA_PATH
+from message_data.model.transport.common import DATA_PATH, UNITS
 from message_data.tools import ScenarioInfo
 
 
 FILE = 'GEAM_TRP_techinput.xlsx'
-
-# Catch a warning from pint 0.10
-with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
-    pint.Quantity([])
-
-# Set up a pint.UnitRegistry
-UNITS = pint.UnitRegistry()
-
-# Compute message_ix quantities *with* proper unit conversion:
-
-# Define all the units in UnitRegistry: i.e. EUR
-
-# Transport units
-UNITS.define("""vehicle = [vehicle] = v
-passenger = [passenger] = p = pass
-tonne_freight = [tonne_freight] = tf = tonnef
-vkm = vehicle * kilometer
-pkm = passenger * kilometer
-tkm = tonne_freight * kilometer
-@alias vkm = vkt = v km
-@alias pkm = pkt = p km
-@alias tkm = tkt = t km""")
-
-# Currencies
-# - EUR_2000: Based on Germany's GDP deflator, data from WorldBank
-#   https://data.worldbank.org/indicator/
-#   NY.GDP.DEFL.ZS?end=2015&locations=DE&start=2000
-# - USD_2005: Exchange rate EUR/USD in 2005, data from WorldBank
-#   https://www.statista.com/statistics/412794/
-#   euro-to-u-s-dollar-annual-average-exchange-rate/
-
-UNITS.define("""EUR_2005 = [currency] = €_2005
-EUR_2000 = 0.94662 * EUR_2005 = €_2000
-USD_2005 = 1.2435 * EUR_2005 = $_2005""")
 
 # Based on units from excel sheet
 
