@@ -56,8 +56,7 @@ dict_units = {
 }
 
 
-def main(scenario):
-    s_info = ScenarioInfo(scenario)
+def get_ikarus_data(scenario):
     # Open *GEAM_TRP_techinput.xlsx* using openpyxl
     wb = load_workbook(DATA_PATH / FILE, read_only=True, data_only=True)
     # Open the 'updateTRPdata' sheet
@@ -76,9 +75,13 @@ def main(scenario):
             aux.append(data.iloc[idx_row, idx_col] * dict_units[unit])
         data[col] = aux
 
+    return
+
+    # TODO broadcast the data across nodes and years
+
+    s_info = ScenarioInfo(scenario)
     nodes = s_info.N  # list of nodes e.g. for node_loc column of parameters
     years = s_info.Y  # list of years e.g. for year_vtg column of parameters
 
     # Write the resulting data to temporary files: 1 per parameter.
     wb.save("temp_one_parameter.xlsx")
-
