@@ -76,20 +76,52 @@ def get_ikarus_data(scenario):
     # Open the 'updateTRPdata' sheet
     sheet = wb['updateTRPdata']
 
-    # - Read values from table for e.g. "regional train electric efficient"
-    #   (= rail_pub).
-    # - Extract the value from each cell object.
-    # - Transpose so that each variable is in one column.
-    cells = slice('C103', 'I109')
-    data = pd.DataFrame(list(sheet[cells]),
-                        index=params.keys(),
-                        columns=[2000, 2005, 2010, 2015, 2020, 2025, 2030]) \
-             .applymap(lambda c: c.value) \
-             .transpose()
+    # Manually found all the starting and final cells delimiting tables in sheet
+    cell_slices = {
+        'rail_pub': {'C103', 'I109'},
+        'dMspeed_rai': {'C125', 'I131'},
+        'Mspeed_rai': {'C147', 'I153'},
+        'Hspeed_rai': {'C169', 'I175'},
+        'con_ar': {'C179', 'I185'},
+        # Same parametrization as *con_ar* (see GEAM_TRP_techinput.xlsx):
+        'conm_ar': {'C179', 'I185'},
+        'conE_ar': {'C179', 'I185'},
+        'conh_ar': {'C179', 'I185'},
 
-    # Assign units to each column
-    for label, unit in params.items():
-        data[label] = data[label].apply(lambda v: v * unit)
+        'ICE_M_bus': {'C197', 'I203'},
+        'ICE_H_bus': {'C205', 'I211'},
+        'ICG_bus': {'C213', 'I219'},
+        # Same parametrization as *ICG_bus*. Conversion factors will be applied:
+        'ICAe_bus': {'C213, I219'},
+        'ICH_bus': {'C213, I219'},
+        'PHEV_bus': {'C213, I219'},
+        'FC_bus': {'C213, I219'},
+        # Equivalent to *FC_bus*:
+        'FCg_bus': {'C213, I219'},
+        'FCm_bus': {'C213, I219'},
+
+        'Trolley_bus': {'C229', 'I235'}
+    }
+
+    # Initialize empty DataFrame to concatenate techs
+    indexes = [cell_slices.keys(), params.keys()]
+    data = pd.DataFrame(columns=indexes)
+
+    for non_LDV_tech, table in cell_slices.items():
+        # - Read values from table for e.g. "regional train electric efficient"
+        #   (= rail_pub).
+        # - Extract the value from each cell object.
+        # - Transpose so that each variable is in one column.
+        cells = slice(table)
+        data_one_tec = pd.DataFrame(list(sheet[cells]), index=params.keys(),
+            columns=[2000, 2005, 2010, 2015, 2020, 2025, 2030]) \
+            .applymap(lambda c: c.value).transpose()
+
+        # Assign units to each column
+        for label, unit in params.items():
+            data_one_tec[label] = data_one_tec[label].apply(lambda v: v * unit)
+
+        data[non_LDV_tech] = pd.concat([data, data_one_tec], axis=1)
 
     return data
 
