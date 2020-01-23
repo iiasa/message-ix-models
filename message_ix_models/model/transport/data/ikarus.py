@@ -1,4 +1,6 @@
 """Prepare non-LDV data from the IKARUS model via GEAM_TRP_techinput.xlsx."""
+import warnings
+
 from openpyxl import load_workbook
 import pandas as pd
 import pint
@@ -9,15 +11,20 @@ from message_data.tools import ScenarioInfo
 
 FILE = 'GEAM_TRP_techinput.xlsx'
 
+# Catch a warning from pint 0.10
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    pint.Quantity([])
+
 # Set up a pint.UnitRegistry
-u = pint.UnitRegistry()
+UNITS = pint.UnitRegistry()
 
 # Compute message_ix quantities *with* proper unit conversion:
 
 # Define all the units in UnitRegistry: i.e. EUR
 
 # Transport units
-u.define("""vehicle = [vehicle] = v
+UNITS.define("""vehicle = [vehicle] = v
 passenger = [passenger] = p = pass
 tonne_freight = [tonne_freight] = tf = tonnef
 vkm = vehicle * kilometer
@@ -35,7 +42,7 @@ tkm = tonne_freight * kilometer
 #   https://www.statista.com/statistics/412794/
 #   euro-to-u-s-dollar-annual-average-exchange-rate/
 
-u.define("""EUR_2005 = [currency] = €_2005
+UNITS.define("""EUR_2005 = [currency] = €_2005
 EUR_2000 = 0.94662 * EUR_2005 = €_2000
 USD_2005 = 1.2435 * EUR_2005 = $_2005""")
 
@@ -47,43 +54,48 @@ USD_2005 = 1.2435 * EUR_2005 = $_2005""")
 # technical_lifetime (~pll)
 # inv (~inv)
 # fixed_cost (~fom)
-dict_units = {
-    'inv_cost': u('MEUR_2005 / vehicle'),
-    'fix_cost': u('kEUR_2005 / vehicle'),
-    'var_cost': u('EUR_2005 / hectokilometer / vehicle'),
-    'technical_lifetime': u('year'),
-    'availability': u('hectokilometer / vehicle / year'),
-    'input_electricity': u('GJ / hectokilometer / vehicle'),
-    'output': u('1')
+params = {
+    'inv_cost': UNITS('MEUR_2005 / vehicle'),
+    'fix_cost': UNITS('kEUR_2005 / vehicle'),
+    'var_cost': UNITS('EUR_2005 / hectokilometer'),
+    'technical_lifetime': UNITS('year'),
+    'availability': UNITS('hectokilometer / vehicle / year'),
+    'input_electricity': UNITS('GJ / hectokilometer'),
+    'output': UNITS('1')
 }
 
 
 def get_ikarus_data(scenario):
+    """Read IKARUS data from GEAM_TRP_techinput.xlsx and conform to *scenario*.
+
+    .. todo:: Extend for additional technologies.
+    """
     # Open *GEAM_TRP_techinput.xlsx* using openpyxl
     wb = load_workbook(DATA_PATH / FILE, read_only=True, data_only=True)
+
     # Open the 'updateTRPdata' sheet
     sheet = wb['updateTRPdata']
-    # Read values from table for e.g. "regional train electric efficient"
-    # (= rail_pub)
-    data = pd.DataFrame(list(sheet['C103':'I109']),
-                        index=dict_units.keys()).applymap(lambda c: c.value). \
-                        applymap('{:,.2f}'.format)
-    data.columns = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
-    # Assign units to rows of *data*
-    for idx_col, col in enumerate(data.columns):
-        aux = []
-        for idx_row, unit in enumerate(dict_units):
-            aux.append(data.iloc[idx_row, idx_col] * dict_units[unit])
-        data[col] = aux
+    # - Read values from table for e.g. "regional train electric efficient"
+    #   (= rail_pub).
+    # - Extract the value from each cell object.
+    # - Transpose so that each variable is in one column.
+    cells = slice('C103', 'I109')
+    data = pd.DataFrame(list(sheet[cells]),
+                        index=params.keys(),
+                        columns=[2000, 2005, 2010, 2015, 2020, 2025, 2030]) \
+             .applymap(lambda c: c.value) \
+             .transpose()
 
-    return
+    # Assign units to each column
+    for label, unit in params.items():
+        data[label] = data[label].apply(lambda v: v * unit)
+
+    return data
 
     # TODO broadcast the data across nodes and years
-
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N  # list of nodes e.g. for node_loc column of parameters
     years = s_info.Y  # list of years e.g. for year_vtg column of parameters
 
-    # Write the resulting data to temporary files: 1 per parameter.
-    wb.save("temp_one_parameter.xlsx")
+    # TODO write the resulting data to temporary files: 1 per parameter.
