@@ -121,11 +121,16 @@ The shell script ``run`` is provided that executes commands defined in :mod:`mes
 
 Each individual command also has its own help text; try e.g. ``./run migrate --help``.
 
+Importing non-LDV technologies
+------------------------------
+.. currentmodule:: message_data.model.transport
+
+.. automodule:: message_data.model.transport.data.ikarus
+   :members:
+
 
 API reference
 :::::::::::::
-
-.. currentmodule:: message_data.model.transport
 
 .. automodule:: message_data.model.transport
    :members:
@@ -152,7 +157,7 @@ Files
 - ``data/transport.yml``: transport model metadata.
 - ``message_ix/tools/messagev/``: tools for extracting data from MESSAGE V.
 - ``message_ix/tools/transport/``: code for adding transport.
-- ``tests/test_tools_transport.py``: tests for above.
+- ``tests/model/test_transport.py``: tests for above.
 - ``reference/``: files from the ca. 2016 MESSAGE-V transport model. The
   directory structure matches P:\\ene.model\\TaxSub_Transport_Merged.
   See paths.txt.
