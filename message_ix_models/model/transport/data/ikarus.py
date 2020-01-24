@@ -116,21 +116,21 @@ def get_ikarus_data(scenario):
         cells = slice(*sorted(table))
         index = pd.MultiIndex.from_product([[non_LDV_tech],
                                 list(params.keys())], names=['tech', 'params'])
-        data_one_tec = pd.DataFrame(list(sheet[cells]), index=index,
+        data_one_tech = pd.DataFrame(list(sheet[cells]), index=index,
             columns=[2000, 2005, 2010, 2015, 2020, 2025, 2030]) \
             .applymap(lambda c: c.value).transpose()
 
         # Set all non numeric values to NaNs:
-        for col in data_one_tec:
-            data_one_tec[col] = pd.to_numeric(data_one_tec[col],
+        for col in data_one_tech:
+            data_one_tech[col] = pd.to_numeric(data_one_tech[col],
                                               errors='coerce')
 
         # Assign units to each column
         for label, unit in params.items():
-            data_one_tec[non_LDV_tech, label] = data_one_tec[non_LDV_tech,
+            data_one_tech[non_LDV_tech, label] = data_one_tech[non_LDV_tech,
                                                 label].apply(lambda v: v * unit)
 
-        data = pd.concat([data, data_one_tec], axis=1)
+        data = pd.concat([data, data_one_tech], axis=1)
 
     # TODO broadcast the data across nodes and years
     s_info = ScenarioInfo(scenario)
