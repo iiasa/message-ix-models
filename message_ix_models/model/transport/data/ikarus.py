@@ -92,38 +92,45 @@ def get_ikarus_data(scenario):
         'ICE_H_bus': {'C205', 'I211'},
         'ICG_bus': {'C213', 'I219'},
         # Same parametrization as *ICG_bus*. Conversion factors will be applied:
-        'ICAe_bus': {'C213, I219'},
-        'ICH_bus': {'C213, I219'},
-        'PHEV_bus': {'C213, I219'},
-        'FC_bus': {'C213, I219'},
+        'ICAe_bus': {'C213', 'I219'},
+        'ICH_bus': {'C213', 'I219'},
+        'PHEV_bus': {'C213', 'I219'},
+        'FC_bus': {'C213', 'I219'},
         # Equivalent to *FC_bus*:
-        'FCg_bus': {'C213, I219'},
-        'FCm_bus': {'C213, I219'},
+        'FCg_bus': {'C213', 'I219'},
+        'FCm_bus': {'C213', 'I219'},
 
         'Trolley_bus': {'C229', 'I235'}
     }
 
     # Initialize empty DataFrame to concatenate techs
-    indexes = [cell_slices.keys(), params.keys()]
-    data = pd.DataFrame(columns=indexes)
+    # indexes = [cell_slices.keys(), params.keys()]
+    data = pd.DataFrame()
 
     for non_LDV_tech, table in cell_slices.items():
         # - Read values from table for e.g. "regional train electric efficient"
         #   (= rail_pub).
-        # - Extract the value from each cell object.
+        # - Extract the value from each cell object, sorted alphabetically.
+        # - Define a multi-level index for wrapping
         # - Transpose so that each variable is in one column.
-        cells = slice(table)
-        data_one_tec = pd.DataFrame(list(sheet[cells]), index=params.keys(),
+        cells = slice(*sorted(table))
+        index = pd.MultiIndex.from_product([[non_LDV_tech],
+                                list(params.keys())], names=['tech', 'params'])
+        data_one_tec = pd.DataFrame(list(sheet[cells]), index=index,
             columns=[2000, 2005, 2010, 2015, 2020, 2025, 2030]) \
             .applymap(lambda c: c.value).transpose()
 
+        # Set all non numeric values to NaNs:
+        for col in data_one_tec:
+            data_one_tec[col] = pd.to_numeric(data_one_tec[col],
+                                              errors='coerce')
+
         # Assign units to each column
         for label, unit in params.items():
-            data_one_tec[label] = data_one_tec[label].apply(lambda v: v * unit)
+            data_one_tec[non_LDV_tech, label] = data_one_tec[non_LDV_tech,
+                                                label].apply(lambda v: v * unit)
 
-        data[non_LDV_tech] = pd.concat([data, data_one_tec], axis=1)
-
-    return data
+        data = pd.concat([data, data_one_tec], axis=1)
 
     # TODO broadcast the data across nodes and years
     s_info = ScenarioInfo(scenario)
@@ -131,3 +138,5 @@ def get_ikarus_data(scenario):
     years = s_info.Y  # list of years e.g. for year_vtg column of parameters
 
     # TODO write the resulting data to temporary files: 1 per parameter.
+
+    return data
