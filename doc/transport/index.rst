@@ -92,14 +92,6 @@ Structure
   - Disaggregated technologies must match these totals.
 
 
-Bibliography
-::::::::::::
-
-.. [1] McCollum et al. (2017), “Improving the behavioral realism of global
-  integrated assessment models: An application to consumers’ vehicle choices” in *Transportation Research Part D* **55.** DOI: `10.1016/j.trd.2016.04.003 <https://doi.org/10.1016/j.trd.2016.04.003>`_
-
-
-
 Usage
 :::::
 
@@ -149,6 +141,16 @@ Utilities
 ---------
 .. automodule:: message_data.model.transport.utils
    :members:
+
+
+Bibliography
+::::::::::::
+
+.. [1] McCollum et al. (2017), “Improving the behavioral realism of global
+  integrated assessment models: An application to consumers’ vehicle choices” in *Transportation Research Part D*
+  **55.** DOI: `10.1016/j.trd.2016.04.003 <https://doi.org/10.1016/j.trd.2016.04.003>`_
+.. [2] Martinsen et al. (2006), “A Time Step Energy Process Model for Germany - Model Structure and Results” in *Energy
+  Studies Review* **14.1** DOI: `10.15173/esr.v14i1.480 <https://doi.org/10.15173/esr.v14i1.480>`_
 
 
 Files
