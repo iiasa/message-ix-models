@@ -1,4 +1,5 @@
-"""Prepare non-LDV data from the IKARUS model via GEAM_TRP_techinput.xlsx."""
+"""Import non-LDV data from the **IKARUS** model via
+*GEAM_TRP_techinput.xlsx*."""
 import warnings
 
 from openpyxl import load_workbook
@@ -66,9 +67,22 @@ params = {
 
 
 def get_ikarus_data(scenario):
-    """Read IKARUS data from GEAM_TRP_techinput.xlsx and conform to *scenario*.
+    """Read **IKARUS** data from *GEAM_TRP_techinput.xlsx* and conform to
+    *scenario*. It also exports the processed data into
+    ``non_LDV_techs_wrapped.csv``.
 
-    .. todo:: Extend for additional technologies.
+    Parameters
+    ----------
+    scenario : :class:`ixmp.Scenario`
+        Scenario where to broadcast the non-LDV techs
+
+    Returns
+    -------
+    data: :class:`pandas.DataFrame`
+        A DataFrame containing all the techs with:
+
+        - *index*: years (*integers*)
+        - *columns*: multi-level [*technologies*, *parameters*]
     """
     # Open *GEAM_TRP_techinput.xlsx* using openpyxl
     wb = load_workbook(DATA_PATH / FILE, read_only=True, data_only=True)
