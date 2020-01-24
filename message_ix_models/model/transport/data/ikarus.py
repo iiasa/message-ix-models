@@ -133,9 +133,10 @@ def get_ikarus_data(scenario):
         data = pd.concat([data, data_one_tech], axis=1)
 
     # TODO broadcast the data across nodes and years
-    s_info = ScenarioInfo(scenario)
-    nodes = s_info.N  # list of nodes e.g. for node_loc column of parameters
-    years = s_info.Y  # list of years e.g. for year_vtg column of parameters
+    if scenario is not None:
+        s_info = ScenarioInfo(scenario)
+        nodes = s_info.N  # list of nodes e.g. for node_loc column of parameters
+        years = s_info.Y  # list of years e.g. for year_vtg column of parameters
 
     # TODO write the resulting data to temporary files: 1 per parameter.
 
