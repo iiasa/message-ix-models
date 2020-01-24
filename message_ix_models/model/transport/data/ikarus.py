@@ -139,5 +139,7 @@ def get_ikarus_data(scenario):
         years = s_info.Y  # list of years e.g. for year_vtg column of parameters
 
     # TODO write the resulting data to temporary files: 1 per parameter.
+    NEW_FILE = 'non_LDV_techs_wrapped.csv'
+    data.to_csv(DATA_PATH / NEW_FILE)
 
     return data
