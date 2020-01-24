@@ -146,6 +146,25 @@ def get_ikarus_data(scenario):
 
         data = pd.concat([data, data_one_tech], axis=1)
 
+        # Extraction of factors for subset of buses:
+        factors = [i.value for [i] in sheet['O286':'O289']]
+        # Append [1, 1, 1] due to NaN cell *O290* and to make it the same
+        # dimension as the columns of *data*
+        factors_buses = factors + [1, 1, 1]
+        # Same for other subset of fuel-cell (FC) buses:
+        factors = [i.value for [i] in sheet['O300':'O303']]
+        factors_h2_buses = factors + [1, 1, 1]
+        # Apply parametrization to *data*:
+        techs_alt = ['ICH_bus', 'PHEV_bus']
+        for bus in techs_alt:
+            for parameter in params.keys():
+                data[bus, parameter] = data[bus, parameter] * factors_buses
+        techs_h2 = ['FC_bus', 'FCg_bus', 'FCm_bus']
+        for bus in techs_h2:
+            for parameter in params.keys():
+                data[bus, parameter] = data[bus, parameter] * factors_h2_buses
+
+
     # TODO broadcast the data across nodes and years
     if scenario is not None:
         s_info = ScenarioInfo(scenario)
