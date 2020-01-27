@@ -113,13 +113,6 @@ The shell script ``run`` is provided that executes commands defined in :mod:`mes
 
 Each individual command also has its own help text; try e.g. ``./run migrate --help``.
 
-Importing non-LDV technologies
-------------------------------
-.. currentmodule:: message_data.model.transport
-
-.. automodule:: message_data.model.transport.data.ikarus
-   :members:
-
 
 API reference
 :::::::::::::
@@ -130,6 +123,13 @@ API reference
 Command-line
 ------------
 .. automodule:: message_data.model.transport.cli
+   :members:
+
+Importing non-LDV technologies
+------------------------------
+.. currentmodule:: message_data.model.transport
+
+.. automodule:: message_data.model.transport.data.ikarus
    :members:
 
 Migration
