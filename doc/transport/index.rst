@@ -2,7 +2,7 @@ MESSAGEix-Transport
 ===================
 
 :mod:`message_data.model.transport` adds a technology-rich representation of transport to the MESSAGEix-GLOBIOM global model.
-The resulting model is referred to as **“MESSAGEix-Transport”**. This extends the formulation described by McCollum et al. (2016) [1]_ for the older, MESSAGE V framework that predated MESSAGEix.
+The resulting model is referred to as **“MESSAGEix-Transport”**. This extends the formulation described by McCollum et al. (2016) :cite:`McCollum2017` for the older, MESSAGE V framework that predated MESSAGEix.
 
 The code and data:
 
@@ -141,16 +141,6 @@ Utilities
 ---------
 .. automodule:: message_data.model.transport.utils
    :members:
-
-
-Bibliography
-::::::::::::
-
-.. [1] McCollum et al. (2017), “Improving the behavioral realism of global
-  integrated assessment models: An application to consumers’ vehicle choices” in *Transportation Research Part D*
-  **55.** DOI: `10.1016/j.trd.2016.04.003 <https://doi.org/10.1016/j.trd.2016.04.003>`_
-.. [2] Martinsen et al. (2006), “A Time Step Energy Process Model for Germany - Model Structure and Results” in *Energy
-  Studies Review* **14.1** DOI: `10.15173/esr.v14i1.480 <https://doi.org/10.15173/esr.v14i1.480>`_
 
 
 Files
