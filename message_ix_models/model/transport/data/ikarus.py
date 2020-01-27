@@ -1,4 +1,4 @@
-"""Import non-LDV data from the **IKARUS** [2]_ :cite:`Martinsen2006` model via
+"""Import non-LDV data from the **IKARUS** :cite:`Martinsen2006` model via
 *GEAM_TRP_techinput.xlsx*."""
 import warnings
 
@@ -67,9 +67,10 @@ params = {
 
 
 def get_ikarus_data(scenario):
-    """Read **IKARUS** [2]_ :cite:`Martinsen2006` data from
-    *GEAM_TRP_techinput.xlsx* and conform to *scenario*. It also exports the
-    processed data into ``non_LDV_techs_wrapped.csv``.
+    """Read **IKARUS** :cite:`Martinsen2006` data from
+    *GEAM_TRP_techinput.xlsx* and conform to *scenario*.
+
+    It also exports the processed data into ``non_LDV_techs_wrapped.csv``.
 
     Parameters
     ----------
