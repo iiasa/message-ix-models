@@ -93,33 +93,32 @@ def get_ikarus_data(scenario):
 
     # Manually found all the starting and final cells delimiting tables in sheet
     cell_slices = {
-        'rail_pub': {'C103', 'I109'},
-        'dMspeed_rai': {'C125', 'I131'},
-        'Mspeed_rai': {'C147', 'I153'},
-        'Hspeed_rai': {'C169', 'I175'},
-        'con_ar': {'C179', 'I185'},
+        'rail_pub': ['C103', 'I109'],
+        'dMspeed_rai': ['C125', 'I131'],
+        'Mspeed_rai': ['C147', 'I153'],
+        'Hspeed_rai': ['C169', 'I175'],
+        'con_ar': ['C179', 'I185'],
         # Same parametrization as *con_ar* (see GEAM_TRP_techinput.xlsx):
-        'conm_ar': {'C179', 'I185'},
-        'conE_ar': {'C179', 'I185'},
-        'conh_ar': {'C179', 'I185'},
+        'conm_ar': ['C179', 'I185'],
+        'conE_ar': ['C179', 'I185'],
+        'conh_ar': ['C179', 'I185'],
 
-        'ICE_M_bus': {'C197', 'I203'},
-        'ICE_H_bus': {'C205', 'I211'},
-        'ICG_bus': {'C213', 'I219'},
+        'ICE_M_bus': ['C197', 'I203'],
+        'ICE_H_bus': ['C205', 'I211'],
+        'ICG_bus': ['C213', 'I219'],
         # Same parametrization as *ICG_bus*. Conversion factors will be applied:
-        'ICAe_bus': {'C213', 'I219'},
-        'ICH_bus': {'C213', 'I219'},
-        'PHEV_bus': {'C213', 'I219'},
-        'FC_bus': {'C213', 'I219'},
+        'ICAe_bus': ['C213', 'I219'],
+        'ICH_bus': ['C213', 'I219'],
+        'PHEV_bus': ['C213', 'I219'],
+        'FC_bus': ['C213', 'I219'],
         # Equivalent to *FC_bus*:
-        'FCg_bus': {'C213', 'I219'},
-        'FCm_bus': {'C213', 'I219'},
+        'FCg_bus': ['C213', 'I219'],
+        'FCm_bus': ['C213', 'I219'],
 
-        'Trolley_bus': {'C229', 'I235'}
+        'Trolley_bus': ['C229', 'I235']
     }
 
     # Initialize empty DataFrame to concatenate techs
-    # indexes = [cell_slices.keys(), params.keys()]
     data = pd.DataFrame()
 
     for non_LDV_tech, table in cell_slices.items():
@@ -128,7 +127,7 @@ def get_ikarus_data(scenario):
         # - Extract the value from each cell object, sorted alphabetically.
         # - Define a multi-level index for wrapping
         # - Transpose so that each variable is in one column.
-        cells = slice(*sorted(table))
+        cells = slice(*table)
         index = pd.MultiIndex.from_product([[non_LDV_tech],
                                 list(params.keys())], names=['tech', 'params'])
         data_one_tech = pd.DataFrame(list(sheet[cells]), index=index,
@@ -147,24 +146,21 @@ def get_ikarus_data(scenario):
 
         data = pd.concat([data, data_one_tech], axis=1)
 
-        # Extraction of factors for subset of buses:
-        factors = [i.value for [i] in sheet['O286':'O289']]
-        # Append [1, 1, 1] due to NaN cell *O290* and to make it the same
-        # dimension as the columns of *data*
-        factors_buses = factors + [1, 1, 1]
-        # Same for other subset of fuel-cell (FC) buses:
-        factors = [i.value for [i] in sheet['O300':'O303']]
-        factors_h2_buses = factors + [1, 1, 1]
-        # Apply parametrization to *data*:
-        techs_alt = ['ICH_bus', 'PHEV_bus']
-        for bus in techs_alt:
-            for parameter in params.keys():
-                data[bus, parameter] = data[bus, parameter] * factors_buses
-        techs_h2 = ['FC_bus', 'FCg_bus', 'FCm_bus']
-        for bus in techs_h2:
-            for parameter in params.keys():
-                data[bus, parameter] = data[bus, parameter] * factors_h2_buses
-
+    # Extraction of *output efficiency (~moutp)* factors for subsets of buses:
+    moutp_factors = [sheet['O286'].value, sheet['O300'].value]
+    # Same for investment (~inv) factors:
+    inv_factors = [sheet['O289'].value, sheet['O303'].value]
+    # Apply parametrization to subsets of buses in *data*:
+    # Alternative ICE buses:
+    techs_alt = ['ICH_bus', 'PHEV_bus']
+    for bus in techs_alt:
+        data[bus, 'inv_cost'] = data[bus, 'inv_cost'] * inv_factors[0]
+        data[bus, 'output'] = data[bus, 'output'] * moutp_factors[0]
+    # Fuel-cell (FC) buses:
+    techs_fc = ['FC_bus', 'FCg_bus', 'FCm_bus']
+    for bus in techs_fc:
+        data[bus, 'inv_cost'] = data[bus, 'inv_cost'] * inv_factors[1]
+        data[bus, 'output'] = data[bus, 'output'] * moutp_factors[1]
 
     # TODO broadcast the data across nodes and years
     if scenario is not None:
