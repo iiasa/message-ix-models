@@ -67,10 +67,10 @@ params = {
 
 
 def get_ikarus_data(scenario):
-    """Read **IKARUS** :cite:`Martinsen2006` data from
-    *GEAM_TRP_techinput.xlsx* and conform to *scenario*.
+    """Read IKARUS :cite:`Martinsen2006` data and conform to *scenario*.
 
-    It also exports the processed data into ``non_LDV_techs_wrapped.csv``.
+    The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed
+    data is exported into ``non_LDV_techs_wrapped.csv``.
 
     Parameters
     ----------
@@ -128,24 +128,30 @@ def get_ikarus_data(scenario):
         # - Define a multi-level index for wrapping
         # - Transpose so that each variable is in one column.
         cells = slice(*table)
-        index = pd.MultiIndex.from_product([[non_LDV_tech],
-                                list(params.keys())], names=['tech', 'params'])
-        data_one_tech = pd.DataFrame(list(sheet[cells]), index=index,
+        index = pd.MultiIndex.from_product(
+            [[non_LDV_tech], list(params.keys())],
+            names=['tech', 'params'])
+        data_one_tech = pd.DataFrame(
+            list(sheet[cells]),
+            index=index,
             columns=[2000, 2005, 2010, 2015, 2020, 2025, 2030]) \
-            .applymap(lambda c: c.value).transpose()
+            .applymap(lambda c: c.value) \
+            .transpose()
 
-        # Set all non numeric values to NaNs:
+        # Set all non numeric values to NaNs
         for col in data_one_tech:
             data_one_tech[col] = pd.to_numeric(data_one_tech[col],
-                                              errors='coerce')
+                                               errors='coerce')
 
         # Assign units to each column
         for label, unit in params.items():
-            data_one_tech[non_LDV_tech, label] = data_one_tech[non_LDV_tech,
-                                                label].apply(lambda v: v * unit)
+            data_one_tech[non_LDV_tech, label] = \
+                data_one_tech[non_LDV_tech, label].apply(lambda v: v * unit)
 
         data = pd.concat([data, data_one_tech], axis=1)
 
+    # TODO skip reading these from the Excel sheet, and use factors from
+    #      config.yaml instead.
     # Extraction of *output efficiency (~moutp)* factors for subsets of buses:
     moutp_factors = [sheet['O286'].value, sheet['O300'].value]
     # Same for investment (~inv) factors:
