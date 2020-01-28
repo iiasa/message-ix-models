@@ -146,11 +146,13 @@ Utilities
 Files
 :::::
 
-- ``data/transport/technology.yaml``: transport model metadata.
-- ``data/transport/set.yaml``: set configuration for the transport model.
-- ``message_ix/tools/messagev/``: tools for extracting data from *MESSAGE-V*.
-- ``message_ix/tools/transport/``: code for adding transport.
-- ``tests/model/test_transport.py``: tests for above.
+
+- ``data/transport/``: local copies of MESSAGE-V files used for importing transport technologies.
+- ``data/transport/technology.yaml``: list of technologies from *MESSAGE-V* transport model.
+- ``message_data/tools/messagev/``: tools for extracting data from *MESSAGE-V*.
+- ``message_data/model/transport/``: code for adding transport to *MESSAGEix*.
+- ``message_data/model/transport/data/``: scripts for parsing data files in ``data/transport/``.
+- ``tests/model/test_transport.py``: tests for *MESSAGE-Transport*.
 - ``reference/transport``: files from the ca. 2016 *MESSAGE-V* transport model. The
   directory structure matches ``P:\\ene.model\\TaxSub_Transport_Merged``.
   See **paths.txt**.
