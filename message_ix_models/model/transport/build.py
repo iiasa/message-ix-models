@@ -31,7 +31,7 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
 
     With dry_run=True, don't modify *scenario*; only describe what would be
     done. This also serves as a check that *scenario* has the required features
-    for setting up MESSAGE-Tarnsport.
+    for setting up MESSAGE-Transport.
 
     In order to set up the model, the following steps take place:
 
