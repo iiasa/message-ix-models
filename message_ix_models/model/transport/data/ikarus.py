@@ -150,6 +150,7 @@ def get_ikarus_data(scenario):
     moutp_factors = [sheet['O286'].value, sheet['O300'].value]
     # Same for investment (~inv) factors:
     inv_factors = [sheet['O289'].value, sheet['O303'].value]
+
     # Apply parametrization to subsets of buses in *data*:
     # Alternative ICE buses:
     techs_alt = ['ICH_bus', 'PHEV_bus']
