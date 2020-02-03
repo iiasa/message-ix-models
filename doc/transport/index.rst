@@ -116,19 +116,18 @@ Each individual command also has its own help text; try e.g. ``./run migrate --h
 
 API reference
 :::::::::::::
+.. currentmodule:: message_data.model.transport
 
 .. automodule:: message_data.model.transport
    :members:
 
 Command-line
 ------------
-.. automodule:: message_data.model.transport.cli
+.. automodule:: message_data.model.transport._cli
    :members:
 
 Importing non-LDV technologies
 ------------------------------
-.. currentmodule:: message_data.model.transport
-
 .. automodule:: message_data.model.transport.data.ikarus
    :members:
 
