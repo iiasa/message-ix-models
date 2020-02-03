@@ -1,21 +1,26 @@
 MESSAGE V file reference
-::::::::::::::::::::::::
+************************
 
-(Primary author:  David McCollum in December 2018)
+This page describes building blocks for transferring the detailed transport module in MESSAGE V to the MESSAGEix framework.
 
-Building blocks for transferring the detailed transport module in old MESSAGE to the newer MESSAGEix framework.
+It was originally written by David McCollum in December 2018; fragments of that text are sometimes set off with ‘DLM:’/“in quotes,” to distinguish from rewritten/expanded description.
 
-The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA projects drive, except where otherwise noted.
+The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA ‘Projects’ shared drive, except where otherwise noted.
+Files that have been replaced/incorporated into MESSAGEix are handled by the ''`
 
+.. contents::
+   :local:
+   :depth: 2
+   :backlinks: none
 
-``MESSAGE_Transport_port_to_ix\sqlite\``
-----------------------------------------
+MESSAGE_Transport_port_to_ix\\sqlite\\
+======================================
 
-- sqlite file for the baseline scenario run used for the Nature Energy MIP paper on vehicle choice [2]_ that came out of the ADVANCE project.
+- sqlite file for the baseline scenario run used for :cite:`mccollum-2018`, the MIP paper on vehicle choice that came out of the ADVANCE project.
 - In the baseline scenario, there is no carbon tax and zero/infinitesimal disutility costs assigned to LDV technologies.
 
-``glb\``
---------
+glb\\
+=====
 
 - The file ``run_TaxSub_Transport_v2_sqlite`` was used as a run script (in Unix via a Putty window) to create the sqlite file above.
 - Note that when running this script, one needs to manually update the name of the output sqlite file in the script ``rmxg_soft_dboutput`` (around line 58; e.g., in this case to "ADV3TRAr2_BaseX2_sqlite.sqlite").
@@ -30,8 +35,8 @@ The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA 
    PNK: these appear to be applied to nearly all transport technologies. They are growth constraints on activity, with levelized cost penalty of 50$ for growth
 
 
-``nam\``
---------
+nam\\
+=====
 
 - In each of the regional subfolders (e.g., ``'nam'`` here), you can find the dictionary (``.dic``) and chain (``.chn``) files, which in combination with the sqlite file can help to understand the model structure (i.e., the Reference Energy System, RES).
   See ``nam_geam.chn`` and ``nam_geam.dic``.
@@ -40,8 +45,8 @@ The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA 
   The advantage of these files is that they are a bit human-friendlier to read than the sqlite file (at least Volker, Oliver and I can easily make sense of them).
 - …and then similar for all the other MESSAGE regions (e.g., afr, cpa, etc.)…
 
-``DB_SQL_Java\Model_merger\``
------------------------------
+DB_SQL_Java\\Model_merger\\
+===========================
 
 - 2 Excel files found in this folder.
   Both would be useful for creating sets of commodities, relations (i.e., equations), and technologies (both real and dummy technologies) that should be filtered for in the sqlite file and then their parameterizations translated into new MESSAGEix speak.
@@ -50,8 +55,8 @@ The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA 
 - ``cmp_bl_trpmrg1_LowOP1_ADVWP3ts55mxg1_incl_relations_DM2.xlsx`` then repeats that information (hopefully a one-to-one matching) but is a bit more specific in its categorizations (e.g., which type of relation: c, p, s, 1, 2—less critical in the new MESSAGEix framework).
   This file simultaneously contains the unique commodities, relations, and technologies for the ‘Taxes-Subsidies’ model version, in case there would be interest in porting these over later as well.
 
-``cin\``
---------
+cin\\
+=====
 
 - The ``.cin`` files were the post-processing code in the old MESSAGE framework.
   Documentation was previously available on our internal MESSAGE wiki, but that website may no longer be active.
@@ -68,8 +73,8 @@ The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA 
 
 - ``message-macro6_taxsub.cin``:  some equations in this file are important for producing MESSAGE output that then gets linked to the R script that contains the pkm projection and mode-choice algorithms.
 
-``macro_runs6\``
-----------------
+macro_runs6\\
+=============
 
 - This folder contains pretty much all of the code that is needed to run MACRO as well as the R script that contains the pkm projection and mode-choice algorithms.
   In the new MESSAGEix framework, the linking of MESSAGE and MACRO is more endogenous through GAMS.
@@ -92,12 +97,19 @@ The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA 
 - ``transport_modeplots.R``: Useful script for visualizing results of pkm projection and mode-choice algorithms.
 
 
-``LDV_costs_efficiencies_US-TIMES_MA3T.xlsx``
----------------------------------------------
+MA3T
+====
 
-This file contains the original LDV-related parameter assumptions before they get sucked into MESSAGE update files and then eventually the sqlite file.
+DLM: The file ``LDV_costs_efficiencies_US-TIMES_MA3T.xlsx`` contains the original LDV-related parameter assumptions before they get sucked into MESSAGE update files and then eventually the sqlite file.
 
-Text from the ``MESSAGE_instructions`` sheet:
+.. contents::
+   :local:
+   :backlinks: none
+
+The file has 190 sheets.
+
+Sheet “MESSAGE_instructions”
+----------------------------
 
 Instructions for how to generate MESSAGE .upd files that include costs and efficiencies for all LDV technologies and consumer groups.
 
@@ -121,27 +133,135 @@ Instructions for how to generate MESSAGE .upd files that include costs and effic
   .. caution:: As of 2016-01-26, the vehicle INV/FOM costs and efficiencies have been made consistent with the MA3T (2015 version of model).
      This has currently only been done for the NAM region (see the purple sheets).
 
-``P:\ene.model\MESSAGE_transport_Kalai_V2_copy\``
--------------------------------------------------
+Sheet “MA3T_Techno_data”
+------------------------
+
+This sheet contains quantities from MA3T. The dimensions are:
+
+- Period: annual from 2005 to 2050 inclusive.
+- Vehicle type: 300 different categories.
+
+The quantities:
+
+- Vehicle Manufacturer Cost [USD 2005 / vehicle] (type, period)
+- Fuel Economy, UDDS, CD, Fuel [gallons gasoline equivalent / mile] (type, period)
+- Fuel Economy, HWFET, CD, Fuel (type, period)
+- Fuel Economy, UDDS, CS, Fuel (type, period)
+- Fuel Economy, HWFET, CS, Fuel (type, period)
+- Electricity Consumption, UDDS, CD [watt-hour / mile] (type, period)
+- Electricity Consumption, HWFET, CD (type, period)
+- Range, blended CD, UDDS [mile] (type, period)
+- Range, blended CD, HWFET (type, period)
+- Year on the Market (type)
+- Technology Grouping for Output (type)
+- Fuel Economy Adjustment Factor (type, drive cycle, fuel)
+- Annual Maintenant [sp] Cost [USD 2005] (type, period) — units are written as “$”.
+- Vehicle Price Mark-up Factor [1] (type, period)
+- Vehicle Fuel Consumption Rate in Step 0 [gallons gasoline equivalent / mile] (type, period)
+- Vehicle Electricity Consumption Rate in Step 0 [watt-hour / mile]
+
+Sheet “MESSAGE_regional_assumptions”
+------------------------------------
+
+The tables in this sheet have been preserved as the following files:
+
+- “Vehicle class splits” → ldv_class.csv.
+- “Regional cost multipliers” → config.yaml keys ``factor / cost / ldv 2010``, ``ldv cost catch-up year``.
+- “Annual driving distances by consumer type” → config.yaml keys ``ldv activity``, ``factor / activity / ldv``.
+- “Vehicle lifetimes by consumer type” → config.yaml key ``ldv lifetime``.
+- “Suburbanization rates” → suburb_area_share.csv.
+
+  .. admonition:: PNK
+
+     The use of ‘area’ here was probably a mistake: it seems to mean the fraction of *population* and thus their driving activity.
+
+- “Which population projections should be used?”
+
+  Refers to sheet “Urbanization_data_GEA_{Mix,Supply,Eff}”.
+  These contain population [million people] by: period (2005, 2010, …, 2100), region (R11), {urban, suburban, total}, scenario (``geama_450_btr_full``, ``geaha_450_atr_full``, and ``geala_450_atr_nonuc`` respectively).
+
+Sheet “MESSAGE_Process”
+-----------------------
+
+This sheet contains data from US-TIMES.
+
+- DLM: “Because the original US-TIMES efficiency values were in terms of HHV, I modified Kalai's original conversion factor to ensure that the efficiencies are in terms of LHV (which is what MESSAGE uses). This inflates the values slightly; inflate because the GW-yr value is in the denominator.”
+
+  - The values in thie sheet are converted by the unit conversion factors in the header from sheet “ProcessCharac”, which has similar structure.
+  - Cells in that sheet are in turn references to “TRNLDV_Reduced ver,” which has the comment “EPANMD_10_TRNLDV_v1.0”
+
+- Column J contains the quantity ``CEFF-I`` “Commodity input efficiency” [billion vehicle kilometre / gigawatt hour year].
+  Columns to the right contain values for other periods.
+- Column Z contains the quantity ``NCAP_COST`` “Investment Cost” [million ‘$’ / million vehicle].
+  Columns to the right contain values for other periods.
+
+  - For “Existing” vehicles, DLM comments “Because the original US-TIMES data gave no costs here, I assume they are equal to present-day/future conventional vehicles (whether gasoline or diesel).”
+
+- Other comments appearing in this sheet:
+
+  - DLM: “There are no {mini-compact, pickup} diesels in the US-TIMES dataset, so I roughly estimate what the efficiency of that vehicle type would be by using as a proxy the relative efficiencies of the mini-compact and compact gasoline vehicles.”
+  - Others by someone named “Samaneh.”
+
+Sheet “MESSAGE_LDV_nam”
+-----------------------
+
+This sheet is the prototype for model input calculations.
+
+Parameter appearing in this sheet:
+
+- “Scaling factor to reduce the cost of NGA vehicles” → preserved in config.yaml key ``factor / cost / lgv nga``; see comment there.
+
+Calculations:
+
+- Efficiency [billion vehicle kilometre / gigawatt-hour-year]::
+
+    = 1 / (
+      (
+        (1 - $E$20) * (
+          ($E$22 * (1 / $MESSAGE_Process.J$153))
+          + ($E$23 * (1 / $MESSAGE_Process.J$155))
+          + ($E$24 * (1 / $MESSAGE_Process.J$159))
+          + ($E$25 * (1 / $MESSAGE_Process.J$165))
+          + ($E$26 * (1 / $MESSAGE_Process.J$167))
+          + ($E$27 * (1 / $MESSAGE_Process.J$161))
+          + ($E$28 * (1 / $MESSAGE_Process.J$163))
+        )
+      ) + (
+        ($E$20) * (
+          ($E$22 * (1 / $MESSAGE_Process.J$11))  # [no label] / Mini compact Diesel URBAN
+          +($E$23 * (1 / $MESSAGE_Process.J$13))  # TLCDSLURBAN / Compact Diesel URBAN
+          +($E$24 * (1 / $MESSAGE_Process.J$17))  # TLFDSLURBAN / Full Diesel URBAN
+          +($E$25 * (1 / $MESSAGE_Process.J$23))  # TLSSDSLURBAN / Small SUV Diesel URBAN
+          +($E$26 * (1 / $MESSAGE_Process.J$25))  # TLLSDSLURBAN / Large SUV Diesel URBAN
+          +($E$27 * (1 / $MESSAGE_Process.J$19))  # TLMVDSLURBAN / Minivan Diesel URBAN
+          +($E$28 * (1 / $MESSAGE_Process.J$21))  # TLPDSLURBAN / Pickup Diesel URBAN
+        )
+      )
+    )
+
+    E20 is the diesel/gasoline share; the other entries from column E are the vehicle class shares.
+    → This is a weighted average efficiency.
+
+- Investment cost [million $ / million vehicle]: weighted average over column Z
+
+
+P:\\ene.model\\MESSAGE_transport_Kalai_V2_copy\\
+================================================
 
 - ``GEAM_TRP_techinput.xls``: this file contains the original non-LDV-related parameter assumptions before they get sucked into MESSAGE update files and then eventually the sqlite file.
 
-``MA3T\ADVANCE_WP3_MIP\``
--------------------------
+MA3T\\ADVANCE_WP3_MIP\\
+=======================
 
 - See the files: ``disut_cost_comp_summarized_2016-04-08_MESSAGE.xlsx`` and ``consumer_group_splits_2015-06-08_MESSAGE.xlsx``, which are located in the subfolder ``\MA3T\ADVANCE_WP3_MIP\Disutil_cost_and_Consumer_splits``.
 
 - This is where the underlying calculations for the disutility costs by technology, consumer group, and region are done.
 
-``MESSAGE_Transport_port_to_ix\Emails_and_documentation``
----------------------------------------------------------
+MESSAGE_Transport_port_to_ix\\Emails_and_documentation
+======================================================
 
 - Saved a few old email conversation chains, which sort of serve as documentation for how the merging of model versions (transport + taxes/subsidies) was done previously.
   I'm not sure how useful these will be at the current stage, but they were a bit helpful for me when trying to refresh my memory of what came from where; therefore, I figured it's worth parking these aside in case someone else needs them.
 
 - There is no outstanding technical documentation for how the detailed transport model works at a fundamental level.
-  The best we have is the more conceptual description, which can be found in the supplementary information of the McCollum et al. (2016) paper in Transportation Research Part D. [1]_
-
-
-.. [1] https://www.sciencedirect.com/science/article/pii/S1361920915300900
-.. [2] https://www.nature.com/articles/s41560-018-0195-z
+  The best we have is the more conceptual description, which can be found in the supplementary information of :cite:`McCollum2017`.
