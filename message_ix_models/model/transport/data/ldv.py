@@ -33,12 +33,18 @@ def get_ldv_data(scenario):
         # Worksheet for this region
         sheet = wb[f'MESSAGE_LDV_{sheet_node}']
 
-        # Read tables for efficiency, investment, and fixed cost
+        # Read tables for efficiency, investment, and fixed O&M cost
+        # NB fix_cost varies by distance driven, thus this is the value for
+        #    average driving.
+        # TODO calculate the values for modest and frequent driving
+        # TODO these values are calculated; transfer the calculations to code
         for name, cells, unit in TABLES:
             df = pd.DataFrame(sheet[cells]) \
                      .applymap(lambda c: c.value)
+
             # Make the first row the headers
             df.columns = df.loc[0, :]
+
             # Remaining rows: rearrange columns, period as column.
             df = df.iloc[1:, :] \
                    .drop(['Technology', 'Description'], axis=1) \
