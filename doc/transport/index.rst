@@ -30,7 +30,7 @@ Structure
 
 ``data/transport/technology.yaml`` describes the set of technologies.
 
-.. literalinclude:: /../../data/transport/technology.yaml
+.. literalinclude:: ../../../data/transport/technology.yaml
    :language: yaml
 
 
