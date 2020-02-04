@@ -4,7 +4,6 @@ from itertools import product
 import logging
 
 import pandas as pd
-import plotnine as p9
 from tqdm import tqdm
 
 from message_data.tools.messagev import CHNFile, DICFile, INPFile
@@ -309,6 +308,8 @@ def transform(data, version, info):
 
 def plot_inp_data(data, target_path):
     """Quick diagnostic plots of .inp file data."""
+    import plotnine as p9
+
     plot = p9.ggplot(data.reset_index(),
                      p9.aes(x='year', y='value', color='node')) \
         + p9.geom_point()
