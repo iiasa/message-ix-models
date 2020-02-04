@@ -63,7 +63,9 @@ def read_config():
         logging.config.dictConfig(yaml.safe_load(f))
 
 
-read_config()
+# commented to enable RTD build
+# TODO automatically read configuration given a Context object
+# read_config()
 
 
 def consumer_groups(with_desc=False):
