@@ -1,5 +1,5 @@
 Default reporting configuration
 *******************************
 
-.. literalinclude:: ../../../../data/report/global.yaml
+.. literalinclude:: ../../../data/report/global.yaml
    :language: yaml
