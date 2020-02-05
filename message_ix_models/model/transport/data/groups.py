@@ -1,3 +1,5 @@
+import pandas as pd
+
 from message_data.tools import get_gea_data, regions
 
 # Query for retrieving GEA population data
@@ -18,7 +20,13 @@ GEA_DIMS = dict(
 
 
 def get_consumer_groups(context):
-    """Retrieve population data from GEA."""
+    """Return shares of transport consumer groups.
+
+    Returns
+    -------
+    pandas.Series
+        Dimensions: region, scenario, year.
+    """
     # Retrieve region info
     region_info = regions.get_info(context)
 
@@ -36,7 +44,21 @@ def get_consumer_groups(context):
     for dim, values in GEA_DIMS.items():
         pop = pop.rename(values, level=dim)
 
-    urban_share = (pop.xs('urban', level='variable')
-                   / pop.xs('total', level='variable'))
+    shares = (pop / pop.xs('total', level='variable')) \
+        .query("variable in ['urban', 'rural']") \
+        .rename_axis(index={'variable': 'area_type'}) \
+        .droplevel('unit')
 
-    return urban_share
+    return shares
+
+
+def get_ma3t_data(context):
+    # Read MA3T data files
+    data = {}
+    for var in 'attitude', 'driver', 'population':
+        path = context.get_path('transport', 'ma3t', var).with_suffix('.csv')
+        df = pd.read_csv(path, comment='#')
+        df.set_index(df.columns[:-1].tolist(), inplace=True)
+        data[var] = df
+
+    return data

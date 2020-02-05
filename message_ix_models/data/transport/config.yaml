@@ -94,3 +94,11 @@ ldv cost catch-up year:
   pao: 1990
   pas: 2030
   sas: 2040
+
+csv tables:
+- ma3t/attitude
+- ma3t/driver
+- ma3t/population
+# - ldv_class
+# - mer_to_ppp
+# - suburb_area_share
