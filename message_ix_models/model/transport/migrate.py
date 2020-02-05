@@ -7,22 +7,21 @@ import pandas as pd
 from tqdm import tqdm
 
 from message_data.tools.messagev import CHNFile, DICFile, INPFile
-from .utils import config, data_path, transport_technologies
+from .utils import transport_technologies
 
 
 log = logging.getLogger(__name__)
 
 
-data_path = data_path / 'migrate'
-data_path.mkdir(exist_ok=True)
-
-
-def import_all(path, nodes=[], version='geam_ADV3TRAr2_BaseX2_0',
+def import_all(context, path, nodes=[], version='geam_ADV3TRAr2_BaseX2_0',
                verbose=False):
     """Import data from MESSAGE V files.
 
     .chn, .dic, and .inp files are read from *path* for the given *nodes*.
     """
+    data_path = context.get_path('transport', 'migrate')
+    data_path.mkdir(exist_ok=True)
+
     if not (len(nodes) and nodes != ['']):
         nodes = config['MESSAGE V']['set']['node']
 
