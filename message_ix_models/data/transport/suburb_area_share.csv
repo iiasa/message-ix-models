@@ -1,8 +1,9 @@
 # Share of urbanized area that is suburban
+#
 # - Empty values are filled forward by year.
 #
 # NB (DLM 2010-04-10) All future values and all 2010 non-NAM values are
-#    guesstimates for now (DM, 2014-4-10)
+#    guesstimates for now.
 year,   nam, lam, weu, eeu, fsu, mea,  afr,  cpa, pao,  pas, sas
 2010, 0.618, 0.1, 0.1, 0.1, 0.1, 0.1, 0.05, 0.05, 0.1, 0.05,   0
 2015, 0.61 ,    ,    ,    ,    ,    ,     ,     ,    ,     ,
