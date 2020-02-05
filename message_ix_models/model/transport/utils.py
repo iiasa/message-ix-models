@@ -9,69 +9,49 @@ import pandas as pd
 import xarray as xr
 
 
-# Path to the directory containing data & metadata files
-data_path = Path(__file__).resolve().parents[3] / 'data' / 'transport'
+METADATA = [
+    # Information about message_ix
+    ('parameter',),
+    # Information about MESSAGE-Transport
+    ('transport', 'callback'),
+    ('transport', 'config'),
+    ('transport', 'set'),
+    ('transport', 'technology'),
+    # Information about the MESSAGE V model
+    ('transport', 'migrate', 'set'),
+]
 
 
-# Configuration dictionary
-config = {}
-
-
-def read_config():
+def read_config(context):
     """Read the transport model configuration from file."""
-    global config
 
-    def yaml_data(*parts):
-        """Open a YAML file in the (meta)data directory and return contents."""
-        with open(data_path.joinpath(*parts).with_suffix('.yaml')) as f:
-            return yaml.safe_load(f)
+    for parts in METADATA:
+        context.load_config(*parts)
 
-    config = {
-        # Storage for exogenous data
-        'data': xr.Dataset(),
-
-        # Information about the MESSAGE V model
-        'MESSAGE V': {
-            'set': yaml_data('migrate', 'set'),
-            },
-
-        # Information about the MESSAGEix framework
-        'param': yaml_data('..', 'parameter'),
-
-        # Information about MESSAGE-Transport
-        'model': yaml_data('config'),
-        'set': yaml_data('set'),
-        'tech': yaml_data('technology'),
-        }
-
-    # Callback information
-    cb_cfg = yaml_data('callback')
+    # Storage for exogenous data
+    context.data = xr.Dataset()
 
     # Convert files to xr.DataArrays
-    for key, dims in cb_cfg.pop('files').items():
-        config['data'][key] = xr.DataArray.from_series(
-            pd.read_csv(data_path / f'{key}.csv', index_col=0)
+    for key, dims in context['transport callback'].pop('files').items():
+        context.data[key] = xr.DataArray.from_series(
+            pd.read_csv(context.get_path('transport', key).with_suffix('.csv'),
+                        index_col=0)
             .rename_axis(dims[1], axis=1)
             .stack())
 
     # Convert scalar parameters
-    for key, val in cb_cfg.pop('params').items():
-        config['data'][key] = val
+    for key, val in context['transport callback'].pop('params').items():
+        context.data[key] = eval(val) if isinstance(val, str) else val
 
     # Configure logging
     with open(Path(__file__).parent / 'logging.yaml') as f:
         logging.config.dictConfig(yaml.safe_load(f))
 
 
-# commented to enable RTD build
-# TODO automatically read configuration given a Context object
-# read_config()
-
-
 def consumer_groups(with_desc=False):
     """Iterate over consumer groups in ``sets.yaml``."""
     dims = ['location', 'attitude', 'frequency']
-    cfg = config['set']['consumer groups']
+    cfg = context['transport set']['consumer groups']
 
     # Assemble technology names
     keys = [cfg[d].keys() for d in dims]
@@ -87,7 +67,7 @@ def consumer_groups(with_desc=False):
         yield from sorted(name)
 
 
-def make_df(par_name, tech=None, **kwargs):
+def make_df(context, par_name, tech=None, **kwargs):
     """Return an empty dataframe for *par_name*, *tech*."""
     cols = config['param'][par_name] + ['value', 'unit']
     data = {}
