@@ -2,13 +2,13 @@
 from openpyxl import load_workbook
 import pandas as pd
 
-from message_data.model.transport.common import DATA_PATH, UNITS
 from message_data.tools import ScenarioInfo
 
 
 FILE = 'GEAM_TRP_techinput.xlsx'
 
-# Based on units from excel sheet
+
+# Based on units from Excel sheet
 
 # input efficiency (~minp)
 # output efficiency (~moutp)
@@ -16,18 +16,18 @@ FILE = 'GEAM_TRP_techinput.xlsx'
 # technical_lifetime (~pll)
 # inv (~inv)
 # fixed_cost (~fom)
-params = {
-    'inv_cost': UNITS('MEUR_2005 / vehicle'),
-    'fix_cost': UNITS('kEUR_2005 / vehicle'),
-    'var_cost': UNITS('EUR_2005 / hectokilometer'),
-    'technical_lifetime': UNITS('year'),
-    'availability': UNITS('hectokilometer / vehicle / year'),
-    'input_electricity': UNITS('GJ / hectokilometer'),
-    'output': UNITS('1')
-}
+PARAMS = dict(
+    inv_cost='MEUR_2005 / vehicle',
+    fix_cost='kEUR_2005 / vehicle',
+    var_cost='EUR_2005 / hectokilometer',
+    technical_lifetime='year',
+    availability='hectokilometer / vehicle / year',
+    input_electricity='GJ / hectokilometer',
+    output='1',
+)
 
 
-def get_ikarus_data(scenario):
+def get_ikarus_data(context, scenario):
     """Read IKARUS :cite:`Martinsen2006` data and conform to *scenario*.
 
     The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed
@@ -46,13 +46,17 @@ def get_ikarus_data(scenario):
         - *index*: years (*integers*)
         - *columns*: multi-level [*technologies*, *parameters*]
     """
+    # Load units configuration
+    context.load_config('units')
+
     # Open *GEAM_TRP_techinput.xlsx* using openpyxl
-    wb = load_workbook(DATA_PATH / FILE, read_only=True, data_only=True)
+    wb = load_workbook(context.get_path('transport', FILE), read_only=True,
+                       data_only=True)
 
     # Open the 'updateTRPdata' sheet
     sheet = wb['updateTRPdata']
 
-    # Manually found all the starting and final cells delimiting tables in sheet
+    # Starting and final cells delimiting tables in sheet
     cell_slices = {
         'rail_pub': ['C103', 'I109'],
         'dMspeed_rai': ['C125', 'I131'],
@@ -67,7 +71,7 @@ def get_ikarus_data(scenario):
         'ICE_M_bus': ['C197', 'I203'],
         'ICE_H_bus': ['C205', 'I211'],
         'ICG_bus': ['C213', 'I219'],
-        # Same parametrization as *ICG_bus*. Conversion factors will be applied:
+        # Same parametrization as *ICG_bus*. Conversion factors will be applied
         'ICAe_bus': ['C213', 'I219'],
         'ICH_bus': ['C213', 'I219'],
         'PHEV_bus': ['C213', 'I219'],
@@ -90,7 +94,7 @@ def get_ikarus_data(scenario):
         # - Transpose so that each variable is in one column.
         cells = slice(*table)
         index = pd.MultiIndex.from_product(
-            [[non_LDV_tech], list(params.keys())],
+            [[non_LDV_tech], list(PARAMS.keys())],
             names=['tech', 'params'])
         data_one_tech = pd.DataFrame(
             list(sheet[cells]),
@@ -105,7 +109,8 @@ def get_ikarus_data(scenario):
                                                errors='coerce')
 
         # Assign units to each column
-        for label, unit in params.items():
+        for label, unit in PARAMS.items():
+            unit = context.units(unit)
             data_one_tech[non_LDV_tech, label] = \
                 data_one_tech[non_LDV_tech, label].apply(lambda v: v * unit)
 
@@ -137,7 +142,6 @@ def get_ikarus_data(scenario):
         years = s_info.Y  # list of years e.g. for year_vtg column of parameters
 
     # TODO write the resulting data to temporary files: 1 per parameter.
-    NEW_FILE = 'non_LDV_techs_wrapped.csv'
-    data.to_csv(DATA_PATH / NEW_FILE)
+    data.to_csv(context.get_path('transport', 'non_LDV_techs_wrapped.csv'))
 
     return data

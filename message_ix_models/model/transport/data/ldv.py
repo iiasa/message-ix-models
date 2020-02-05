@@ -2,23 +2,23 @@
 from openpyxl import load_workbook
 import pandas as pd
 
-from message_data.model.transport.common import DATA_PATH, UNITS
 from message_data.tools import ScenarioInfo
 
 
 FILE = 'LDV_costs_efficiencies_US-TIMES_MA3T.xlsx'
 
 TABLES = [
-    ('efficiency', slice('B3', 'Q15'), UNITS('10^9 v km / GW h / year')),
-    ('inv_cost', slice('B33', 'Q45'), UNITS('USD / vehicle')),
-    ('fix_cost', slice('B62', 'Q74'), UNITS('USD / vehicle')),
+    ('efficiency', slice('B3', 'Q15'), '10^9 v km / GW h / year'),
+    ('inv_cost', slice('B33', 'Q45'), 'USD / vehicle'),
+    ('fix_cost', slice('B62', 'Q74'), 'USD / vehicle'),
 ]
 
 
-def get_ldv_data(scenario):
+def get_ldv_data(context, scenario):
     s_info = ScenarioInfo(scenario)
 
-    wb = load_workbook(DATA_PATH / FILE, read_only=True, data_only=True)
+    wb = load_workbook(context.get_path('transport', FILE), read_only=True,
+                       data_only=True)
 
     # Tables
     dfs = []
@@ -38,6 +38,7 @@ def get_ldv_data(scenario):
         #    average driving.
         # TODO calculate the values for modest and frequent driving
         # TODO these values are calculated; transfer the calculations to code
+        # TODO assign units
         for name, cells, unit in TABLES:
             df = pd.DataFrame(sheet[cells]) \
                      .applymap(lambda c: c.value)
