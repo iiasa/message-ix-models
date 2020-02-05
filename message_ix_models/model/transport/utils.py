@@ -67,29 +67,6 @@ def consumer_groups(with_desc=False):
         yield from sorted(name)
 
 
-def make_df(context, par_name, tech=None, **kwargs):
-    """Return an empty dataframe for *par_name*, *tech*."""
-    cols = config['param'][par_name] + ['value', 'unit']
-    data = {}
-    try:
-        tec_info = config['tech']['technology'][tech]['par'][par_name]
-        tec_info['technology'] = tech
-    except KeyError:
-        tec_info = {}
-
-    data = ChainMap(kwargs, tec_info, defaultdict(lambda: None))
-    data = {c: data[c] for c in cols}
-
-    return pd.DataFrame.from_dict(data, orient='columns')
-
-
-def iter_parameters(set_name):
-    """Iterate over MESSAGEix parameters with *set_name* as a dimension."""
-    for name, dims in config['param'].items():
-        if set_name in dims:
-            yield name
-
-
 def transport_technologies(by_cg=True, filter=[], with_desc=False):
     """Iterate over transport technologies in ``messagev-tech.yaml``.
 
