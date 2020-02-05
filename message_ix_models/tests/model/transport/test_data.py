@@ -16,8 +16,8 @@ pytestmark = pytest.mark.skipif(
     reason='Cannot access data on TeamCity server.')
 
 
-def test_ikarus():
-    data = get_ikarus_data(None)
+def test_ikarus(test_context):
+    data = get_ikarus_data(test_context, None)
 
     # Data have been loaded with the correct units
     assert data.loc[2020, ('rail_pub', 'inv_cost')].dimensionality \
@@ -32,7 +32,7 @@ def test_ldv(test_context):
 
     test_context.regions = 'R11'
     scenario = create_res(test_context)
-    data = get_ldv_data(scenario)
+    data = get_ldv_data(test_context, scenario)
 
     # 3 parameters × 11 regions × 13 periods × 12 technologies
     assert len(data) == 11 * 3 * 13 * 12
