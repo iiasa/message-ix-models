@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 import pytest
+import xarray as xr
 
 from message_data.model.bare import create_res
 from message_data.model.transport.data import (
@@ -10,7 +11,7 @@ from message_data.model.transport.data import (
     get_ikarus_data,
     get_ldv_data,
 )
-from message_data.model.transport.data.groups import get_ma3t_data
+from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.tools import load_data
 
 
@@ -20,9 +21,10 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.parametrize('key', FILES)
-def test_load_data(test_context, key):
-    result = load_data(test_context, 'transport', key)
-    assert isinstance(result, pd.Series)
+@pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
+def test_load_data(test_context, key, rtype):
+    result = load_data(test_context, 'transport', key, rtype=rtype)
+    assert isinstance(result, rtype)
 
 
 def test_ikarus(test_context):
@@ -48,8 +50,11 @@ def test_ldv(test_context):
     assert set(data.columns) == {'technology', 'year', 'value', 'node', 'name'}
 
 
-def test_groups(test_context):
-    test_context.regions = 'R11'
+@pytest.mark.parametrize('regions', ['R11'])
+@pytest.mark.parametrize('pop_scen', ['GEA mix'])
+def test_groups(test_context, regions, pop_scen):
+    test_context.regions = regions
+    test_context['transport population scenario'] = pop_scen
 
     result = get_consumer_groups(test_context)
 
@@ -57,5 +62,12 @@ def test_groups(test_context):
     # 3 scenarios × 11 regions × 13 periods × {urban, rural}
     assert len(result) == 11 * 3 * 11 * 2
 
-    result = get_ma3t_data(test_context)
-    assert len(result) == 3
+
+@pytest.mark.parametrize('regions', ['R11'])
+@pytest.mark.parametrize('pop_scen', ['GEA mix', 'GEA supply', 'GEA eff'])
+def test_urban_rural_shares(test_context, regions, pop_scen):
+    test_context.regions = 'R11'
+    test_context['transport population scenario'] = pop_scen
+
+    # Shares can be successfully retrieved
+    get_urban_rural_shares(test_context)
