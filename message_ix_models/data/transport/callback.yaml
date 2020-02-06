@@ -8,10 +8,6 @@ modes:  # Names of passenger transport modi
 - u-u  # Public
 - v-u  # LDV
 
-files:  # Tables to load from CSV → dimensions
-  mer_to_ppp: [y, n]
-
-
 # Paramters used in iteration
 params:
   # Fixed future point for total demand [passenger·km]

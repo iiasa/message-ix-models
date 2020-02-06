@@ -1,5 +1,3 @@
-import pandas as pd
-
 from message_data.tools import get_gea_data, regions
 
 # Query for retrieving GEA population data
@@ -54,11 +52,10 @@ def get_consumer_groups(context):
 
 def get_ma3t_data(context):
     # Read MA3T data files
+    from message_data.model.transport.data import load_data
+
     data = {}
     for var in 'attitude', 'driver', 'population':
-        path = context.get_path('transport', 'ma3t', var).with_suffix('.csv')
-        df = pd.read_csv(path, comment='#')
-        df.set_index(df.columns[:-1].tolist(), inplace=True)
-        data[var] = df
+        data[var] = load_data(context, 'ma3t', var)
 
     return data
