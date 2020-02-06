@@ -1,5 +1,22 @@
 # Metadata and parameters for MESSAGE-Transport
 
+
+population: GEA mix
+
+# (DLM) “Which US census region should be used as a proxy for the distribution
+# of driver types in this MESSAGE region?
+node to census_division:
+  R11_AFR: 2
+  R11_CPA: 2
+  R11_EEU: 2
+  R11_FSU: 2
+  R11_LAM: 2
+  R11_MEA: 2
+  R11_PAO: 2
+  R11_PAS: 2
+  R11_SAS: 2
+  R11_WEU: 2
+
 factor:
   freight load: 10  # tonne km per vehicle km
   activity:
