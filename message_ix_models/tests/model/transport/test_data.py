@@ -1,19 +1,28 @@
 import os
 
+import pandas as pd
 import pytest
 
 from message_data.model.bare import create_res
 from message_data.model.transport.data import (
+    FILES,
     get_consumer_groups,
     get_ikarus_data,
     get_ldv_data,
 )
 from message_data.model.transport.data.groups import get_ma3t_data
+from message_data.tools import load_data
 
 
 pytestmark = pytest.mark.skipif(
     'TEAMCITY_VERSION' in os.environ,
     reason='Cannot access data on TeamCity server.')
+
+
+@pytest.mark.parametrize('key', FILES)
+def test_load_data(test_context, key):
+    result = load_data(test_context, 'transport', key)
+    assert isinstance(result, pd.Series)
 
 
 def test_ikarus(test_context):
