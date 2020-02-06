@@ -50,6 +50,7 @@ def test_ldv(test_context):
     assert set(data.columns) == {'technology', 'year', 'value', 'node', 'name'}
 
 
+@pytest.mark.xfail(reason='Needs normalization across consumer groups.')
 @pytest.mark.parametrize('regions', ['R11'])
 @pytest.mark.parametrize('pop_scen', ['GEA mix'])
 def test_groups(test_context, regions, pop_scen):
@@ -58,9 +59,9 @@ def test_groups(test_context, regions, pop_scen):
 
     result = get_consumer_groups(test_context)
 
-    # Currently only urban share;
-    # 3 scenarios × 11 regions × 13 periods × {urban, rural}
-    assert len(result) == 11 * 3 * 11 * 2
+    assert result.sizes == {'node': 11, 'year': 11, 'consumer_group': 27}
+    print(result.sum('consumer_group'))
+    assert all(result.sum('consumer_group') == 1)
 
 
 @pytest.mark.parametrize('regions', ['R11'])
