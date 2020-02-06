@@ -4,8 +4,10 @@ import logging.config
 from pathlib import Path
 
 import yaml
-import pandas as pd
 import xarray as xr
+
+from .data import FILES
+from message_data.tools import load_data
 
 
 METADATA = [
@@ -24,19 +26,23 @@ METADATA = [
 def read_config(context):
     """Read the transport model configuration from file."""
 
+    try:
+        context['transport migrate set']
+        # Already loaded
+        return
+    except KeyError:
+        pass
+
     for parts in METADATA:
         context.load_config(*parts)
 
     # Storage for exogenous data
     context.data = xr.Dataset()
 
-    # Convert files to xr.DataArrays
-    for key, dims in context['transport callback'].pop('files').items():
-        context.data[key] = xr.DataArray.from_series(
-            pd.read_csv(context.get_path('transport', key).with_suffix('.csv'),
-                        index_col=0)
-            .rename_axis(dims[1], axis=1)
-            .stack())
+    # Load data files
+    for key in FILES:
+        context.data[key] = load_data(context, 'transport', key,
+                                      rtype=xr.DataArray)
 
     # Convert scalar parameters
     for key, val in context['transport callback'].pop('params').items():
