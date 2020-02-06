@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from functools import lru_cache
 from itertools import product
 import logging.config
 from pathlib import Path
@@ -53,23 +54,48 @@ def read_config(context):
         logging.config.dictConfig(yaml.safe_load(f))
 
 
-def consumer_groups(context, with_desc=False):
+@lru_cache()
+def consumer_groups(context, rtype='code'):
     """Iterate over consumer groups in ``sets.yaml``."""
-    dims = ['location', 'attitude', 'frequency']
-    cfg = context['transport set']['consumer groups']
+    dims = ['area_type', 'attitude', 'driver_type']
 
-    # Assemble technology names
-    keys = [cfg[d].keys() for d in dims]
-    name = [''.join(k) for k in product(*keys)]
+    # Retrieve configuration
+    read_config(context)
+    codes = [context['transport set'][d].keys() for d in dims]
+    names = [context['transport set'][d] for d in dims]
 
-    if with_desc:
-        # Assemble technology descriptions
-        vals = [cfg[d].values() for d in dims]
-        desc = [', '.join(v).lower() for v in product(*vals)]
+    # Assemble group information
+    result = dict(
+        code=[],
+        index=[],
+        description=[],
+        )
 
-        yield from sorted(zip(name, desc))
+    for indices in product(*codes):
+        # Tuple of the values along each dimension
+        result['index'].append(indices)
+
+        # String code
+        result['code'].append(''.join(indices))
+
+        # String description
+        desc = ', '.join(n[i] for n, i in zip(names, indices)).lower()
+        result['description'].append(desc)
+
+    if rtype == 'description':
+        return list(zip(result['code'], result['description']))
+    elif rtype == 'indexers':
+        # Three tuples of members along each dimension
+        indexers = zip(*result['index'])
+        indexers = {d: xr.DataArray(list(i), dims='consumer_group') for d, i
+                    in zip(dims, indexers)}
+        indexers['consumer_group'] = xr.DataArray(result['code'],
+                                                  dims='consumer_group')
+        return indexers
+    elif rtype == 'code':
+        return sorted(result['code'])
     else:
-        yield from sorted(name)
+        raise ValueError(rtype)
 
 
 def transport_technologies(context, by_cg=True, filter=[], with_desc=False):
