@@ -1,3 +1,5 @@
+from itertools import product
+
 import pandas as pd
 import xarray as xr
 
@@ -47,6 +49,9 @@ def get_consumer_groups(context):
     # census_divisions
     n_cd_map = context['transport config']['node to census_division']
     n, cd = zip(*n_cd_map.items())
+    n_cd_indexers = dict(
+        node=xr.DataArray(list(n), dims='node'),
+        census_division=xr.DataArray(list(cd), dims='node'))
 
     # Split the GEA 'UR+SU' population share using su_share
     pop_share = xr.concat([
@@ -74,11 +79,15 @@ def get_consumer_groups(context):
                  * context.data['ma3t/attitude']
                  * context.data['ma3t/driver']
         ) \
-        .sel(node=xr.DataArray(list(n), dims='node'),
-             census_division=xr.DataArray(list(cd), dims='node')) \
+        .sel(**n_cd_indexers) \
         .drop('census_division')
 
-    # TODO collapse area_type, attitude, driver_type dimensions
+    # Collapse area_type, attitude, driver_type dimensions
+    cg_dims = ('area_type', 'attitude', 'driver_type')
+    cg_indexers = []
+    for values in product(*[groups[dim].values for dim in cg_dims]):
+        cg_indexers.append(list(values) + [''.join(values)])
+
 
     return groups
 
@@ -115,6 +124,6 @@ def get_urban_rural_shares(context) -> xr.DataArray:
              .rename_axis(index={'variable': 'area_type', 'region': 'node'}) \
              .pipe(xr.DataArray.from_series)
 
-    # Compute and return shares
+    # Compute shares, select the appropriate scenario
     return (pop.sel(area_type=['UR+SU', 'RU']) / pop.sel(area_type='total')) \
-        .sel(scenario=context['transport population scenario'], drop=True)
+        .drop_sel(scenario=context['transport population scenario'])

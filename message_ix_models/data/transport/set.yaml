@@ -67,23 +67,8 @@ mode:
   require:
   - all
 
-# Consumer groups. This is not a message_ix set; the Cartesian product of these
-# labels is used to generate the groups.
-consumer groups:
-  location:
-    UR: Urban
-    SU: Suburban
-    RU: Rural
-  attitude:
-    EA: Early adopter
-    EM: Early majority
-    LM: Late majority
-  frequency:
-    A: Average
-    M: Moderate
-    F: Frequent
 
-# MA3T
+# MA3T sets
 census_division:
   1: New England
   2: Middle Atlantic
@@ -110,9 +95,3 @@ driver_type:
   M: Moderate
   A: Average
   F: Frequent
-
-# Units are stored per ixmp.Platform, not in each message_ix.Scenario.
-unit:
-  add:
-    t km: tonne kilometre
-    v km: vehicle kilometre
