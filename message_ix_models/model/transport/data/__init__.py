@@ -16,10 +16,10 @@ log = logging.getLogger(__name__)
 FILES = [
     'ldv_class',
     'mer_to_ppp',
-    'suburb_area_share',
+    'population-suburb-share',
+    'ma3t/population',
     'ma3t/attitude',
     'ma3t/driver',
-    'ma3t/population',
 ]
 
 
