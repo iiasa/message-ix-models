@@ -31,8 +31,10 @@ def get_consumer_groups(context):
         Dimensions: region, scenario, year.
     """
     # Ensure MA3T data is loaded
-    from message_data.model.transport.utils import read_config
+    from message_data.model.transport.utils import consumer_groups, read_config
     read_config(context)
+    cg_indexers = consumer_groups(context, rtype='indexers')
+    consumer_group = cg_indexers.pop('consumer_group')
 
     # Data: GEA population projections give split between 'UR+SU' and 'RU'
     ursu_ru = get_urban_rural_shares(context)
@@ -55,9 +57,9 @@ def get_consumer_groups(context):
 
     # Split the GEA 'UR+SU' population share using su_share
     pop_share = xr.concat([
-        ursu_ru.drop_sel(area_type='UR+SU') * (1 - su_share),
-        ursu_ru.drop_sel(area_type='UR+SU') * su_share,
-        ursu_ru.drop_sel(area_type='RU'),
+        ursu_ru.sel(area_type='UR+SU', drop=True) * (1 - su_share),
+        ursu_ru.sel(area_type='UR+SU', drop=True) * su_share,
+        ursu_ru.sel(area_type='RU', drop=True),
     ], dim=pd.Index(['UR', 'SU', 'RU'], name='area_type'))
 
     # Index of pop_share versus the previous period
@@ -74,20 +76,18 @@ def get_consumer_groups(context):
     # - Select using matched sequences, i.e. select a sequence of (node,
     #   census_division) coordinates.
     # - Drop the census_division.
+    # - Collapse area_type, attitude, driver_type dimensions into
+    #   consumer_group.
     groups = (
         ma3t_pop * pop_share_index.cumprod('year')
                  * context.data['ma3t/attitude']
                  * context.data['ma3t/driver']
         ) \
         .sel(**n_cd_indexers) \
-        .drop('census_division')
-
-    # Collapse area_type, attitude, driver_type dimensions
-    cg_dims = ('area_type', 'attitude', 'driver_type')
-    cg_indexers = []
-    for values in product(*[groups[dim].values for dim in cg_dims]):
-        cg_indexers.append(list(values) + [''.join(values)])
-
+        .drop_vars('census_division') \
+        .sel(**cg_indexers) \
+        .drop_vars(cg_indexers.keys()) \
+        .assign_coords(consumer_group=consumer_group)
 
     return groups
 
@@ -126,4 +126,4 @@ def get_urban_rural_shares(context) -> xr.DataArray:
 
     # Compute shares, select the appropriate scenario
     return (pop.sel(area_type=['UR+SU', 'RU']) / pop.sel(area_type='total')) \
-        .drop_sel(scenario=context['transport population scenario'])
+        .sel(scenario=context['transport population scenario'], drop=True)
