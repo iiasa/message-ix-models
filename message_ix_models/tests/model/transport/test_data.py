@@ -23,6 +23,7 @@ pytestmark = pytest.mark.skipif(
 @pytest.mark.parametrize('key', FILES)
 @pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
 def test_load_data(test_context, key, rtype):
+    # Load transport metadata from files in both pandas and xarray formats
     result = load_data(test_context, 'transport', key, rtype=rtype)
     assert isinstance(result, rtype)
 
@@ -45,8 +46,10 @@ def test_ldv(test_context):
     scenario = create_res(test_context)
     data = get_ldv_data(test_context, scenario)
 
-    # 3 parameters × 11 regions × 13 periods × 12 technologies
+    # Data have the correct size: 3 parameters × 11 regions × 13 periods × 12
+    # technologies
     assert len(data) == 11 * 3 * 13 * 12
+    # …and correct columns
     assert set(data.columns) == {'technology', 'year', 'value', 'node', 'name'}
 
 
@@ -59,7 +62,11 @@ def test_groups(test_context, regions, pop_scen):
 
     result = get_consumer_groups(test_context)
 
+    # Data have the correct size
     assert result.sizes == {'node': 11, 'year': 11, 'consumer_group': 27}
+
+    # Data sum to 1 across the consumer_group dimension, i.e. consititute a
+    # discrete distribution
     print(result.sum('consumer_group'))
     assert all(result.sum('consumer_group') == 1)
 
@@ -70,5 +77,5 @@ def test_urban_rural_shares(test_context, regions, pop_scen):
     test_context.regions = 'R11'
     test_context['transport population scenario'] = pop_scen
 
-    # Shares can be successfully retrieved
+    # Shares can be retrieved
     get_urban_rural_shares(test_context)
