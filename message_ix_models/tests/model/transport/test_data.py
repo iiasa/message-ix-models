@@ -15,11 +15,6 @@ from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.tools import load_data
 
 
-pytestmark = pytest.mark.skipif(
-    'TEAMCITY_VERSION' in os.environ,
-    reason='Cannot access data on TeamCity server.')
-
-
 @pytest.mark.parametrize('key', FILES)
 @pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
 def test_load_data(test_context, key, rtype):
@@ -28,6 +23,9 @@ def test_load_data(test_context, key, rtype):
     assert isinstance(result, rtype)
 
 
+@pytest.mark.skipif(
+    'TEAMCITY_VERSION' in os.environ,
+    reason='Cannot access data on TeamCity server.')
 def test_ikarus(test_context):
     data = get_ikarus_data(test_context, None)
 
@@ -36,6 +34,9 @@ def test_ikarus(test_context):
         == {'[currency]': 1, '[vehicle]': -1}
 
 
+@pytest.mark.skipif(
+    'TEAMCITY_VERSION' in os.environ,
+    reason='Cannot access data on TeamCity server.')
 def test_ldv(test_context):
     test_context.scenario_info.update(dict(
         model='Bare RES',
@@ -71,6 +72,9 @@ def test_groups(test_context, regions, pop_scen):
     assert all(result.sum('consumer_group') == 1)
 
 
+@pytest.mark.skipif(
+    'TEAMCITY_VERSION' in os.environ,
+    reason='Cannot access data on TeamCity server.')
 @pytest.mark.parametrize('regions', ['R11'])
 @pytest.mark.parametrize('pop_scen', ['GEA mix', 'GEA supply', 'GEA eff'])
 def test_urban_rural_shares(test_context, regions, pop_scen):
