@@ -47,7 +47,7 @@ def get_ikarus_data(context, scenario):
         - *columns*: multi-level [*technologies*, *parameters*]
     """
     # Load units configuration
-    context.load_config('units')
+    context.load_config('units', 'definitions.txt')
 
     # Open *GEAM_TRP_techinput.xlsx* using openpyxl
     wb = load_workbook(context.get_path('transport', FILE), read_only=True,
