@@ -1,7 +1,7 @@
 """Tests for reporting/."""
 from functools import partial
 
-from ixmp.reporting.utils import Quantity
+from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Reporter
 import pandas as pd
 

@@ -2,7 +2,7 @@ from copy import copy
 from functools import partial
 import logging
 
-from ixmp.reporting.utils import Quantity
+from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Key, Reporter, configure
 from message_ix.reporting.computations import write_report
 from message_ix.reporting.computations import concat
