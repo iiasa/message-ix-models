@@ -12,11 +12,18 @@ commodity:
     transport pax: Passenger transport
     transport pax vehicle: Passenger transport vehicle distance travelled
   require:
+  - coal
   - electr
-  - fueloil
-  - gas
-  - lightoil
-  - methanol
+  - ethanol  # Ethanol used by transport technologies (including ethanol flexible-fuel
+    # vehicles using ICEs and vehicles using fuel cells powered by an ethanol reformer).
+  - fueloil # Includes heavy fuel oil used by maritime technologies
+  - gas  # Compressed natural gas used by bi-fuel vehicles
+  - hydrogen # Gaseous H2 used by fuel-cell powered vehicles
+  - lh2  # Liquid H2 used by fuel-cell powered vehicles
+  - lightoil  # Includes gasoline, diesel oil.
+  - methanol  # Methanol and dimethyl ether (DME) used by transport technologies (including
+    # methanol flexible-fuel vehicles using ICEs, vehicles using Direct Methanol Fuel Cells,
+    # and maritime technologies).
   remove:
   - transport
 
@@ -56,6 +63,7 @@ technology:
 
 level:
   require:
+  - final
   - useful
 
 time:
