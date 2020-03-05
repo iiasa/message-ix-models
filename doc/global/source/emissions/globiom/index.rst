@@ -36,7 +36,7 @@ Comparison with other literature
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to put the numbers in perspective with other sources they were compared with FAO (Tubiello et al., 2013 :cite:`tubiello_faostat_2013`) where a simple but transparent approach is used, largely relying on FAOSTAT
-activity numbers and IPCC Tier 1 emission coefficients (see :numref:`tab-globff`).
+activity numbers and IPCC Tier 1 emission coefficients (see :numref:`tab-ag-emissions-globiom-fao`).
 
 The 2000 data for crops are overall about 11% higher than Tubiello et al., mainly because of rice where the data are closer to EPA (EPA 2012 :cite:`environmental_protection_agency_epa_US_2012`) which is higher than
 Tubiello et al. For livestock, it is by some 18% lower than Tubiello et al. So in total there is about 10% GHG emissions less in 2000 than the values reported. The year 2010 is already the result of simulations
@@ -46,7 +46,7 @@ and in Tubiello et al.). It is apparent that the relative change in total agricu
 is over this period very close to the reported trends also at the level of individual accounts. The only exception is emissions from manure management where the relative change projected in GLOBIOM is by 13% higher
 than the relative change observed in Tubiello's numbers.
 
-.. _tab-globff:
+.. _tab-ag-emissions-globiom-fao:
 .. list-table:: Comparison of agricultural GHG emissions from GLOBIOM and from FAO for the years 2000 and 2010
    :header-rows: 3
 
