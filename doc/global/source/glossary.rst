@@ -1,5 +1,5 @@
-Glossary of MESSAGE Terms
-==========================
+Glossary
+********
 
 .. glossary::
   :sorted:
@@ -7,5 +7,5 @@ Glossary of MESSAGE Terms
   ADVANCE
 
     A project finishing in 2016 designed to update the current generation of
-    IAMS and perform validation exericses. See the `ADVANCE website
+    IAMs and perform validation exercises. See the `ADVANCE website
     <http://www.fp7-advance.eu/>`_ for more details.

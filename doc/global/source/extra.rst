@@ -7,6 +7,5 @@ Additional pages
    climate/magicc/index <climate/magicc/index>
    emissions/message/f_gases <emissions/message/f_gases>
    energy/resource <energy/resource>
-   glossary <glossary>
    land_use/linkage <land_use/linkage>
    overview/policy/index <overview/policy/index>
