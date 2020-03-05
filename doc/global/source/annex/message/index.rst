@@ -1,5 +1,5 @@
-Mathematical Formulation: MESSAGE V
-***********************************
+MESSAGE V
+*********
 
 .. toctree::
    :maxdepth: 2
