@@ -6,6 +6,9 @@
 
 Extraction of domestic resources is modelled by variables that represent the quantity extracted per year in a period. A subdivision into cost categories (which are called "grades" in the model) can be modelled.
 
+
+.. _resourceextraction:
+
 3.1.1 Resource Extraction Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

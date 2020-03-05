@@ -27,9 +27,9 @@ The description of the energy flow constraints in MESSAGE is given for the follo
    * - :math:`r`
      - Energy resources.
 
-The first level in the above list gives it a special meaning (see section :ref:`_activitiesECT`). Clearly any other combination of identifiers is also possible.
+The first level in the above list gives it a special meaning (see section :ref:`activitiesECT`). Clearly any other combination of identifiers is also possible.
 
-Another exception is a level labelled :math:`q`, this letter is reserved for stock piles (see section :ref:`_stockpiles`).
+Another exception is a level labelled :math:`q`, this letter is reserved for stock piles (see section :ref:`stockpiles`).
 
 **IMPORTANT:** Generally central production systems should not deliver to the first (demand) level. In this case the production of the system would be forced to follow the demand pattern.
 
@@ -51,7 +51,7 @@ where
    * - :math:`zd......rr...ttt`
      - annual demand equation for :math:`d` in region :math:`rr` and period :math:`ttt`,
    * - :math:`zsvd....rr...ttt`
-     - activity of end-use technology :math:`zsvd` in region :math:`rr` and period :math:`ttt` (see section  :ref:`_activitiesECT`),
+     - activity of end-use technology :math:`zsvd` in region :math:`rr` and period :math:`ttt` (see section  :ref:`activitiesECT`),
    * - :math:`\epsilon _{zsvd}`
      - efficiency of end-use technology :math:`zsvd` in converting :math:`s` to :math:`d`,
    * - :math:`\beta _{zsv\delta}^d`
@@ -62,7 +62,7 @@ where
 
 The first level, usually labelled 'demand level', has a special feature. This is related to the fact that useful energy is usually produced on-site, e.g., space heat is produced by a central heating system, and the load variations over the year are all covered by this one system. Thus, an allocation of production technologies to the different areas of the load curve, like the model would set it up according to the relation between investment and operating costs would ignore the fact that these systems are not located in the same place and are not connected to each other. MESSAGE represents the end-use technologies by one variable per period that produces the required useful energy in the load pattern needed and requires the inputs in the same pattern. For special technologies like, e.g., night storage heating systems, this pattern can be changed to represent the internal storage capability of the system.
 
-Each energy form on any level can have an external demand. In this case the demand is given as right hand side to the balance equation (see section :ref:`_enebal`). If the energy carrier is modelled with load regions, the right hand sides are given for each load region. If no load region pattern is defined, the demand is assumed to be a base load demand.
+Each energy form on any level can have an external demand. In this case the demand is given as right hand side to the balance equation (see section :ref:`enebal`). If the energy carrier is modelled with load regions, the right hand sides are given for each load region. If no load region pattern is defined, the demand is assumed to be a base load demand.
 
 .. _distbal:
 
@@ -83,7 +83,7 @@ where
    :header-rows: 0
 
    * - :math:`zsve....rrlllttt`
-     - activity of the technology producing energy form :math:`e` in regions :math:`rr`, load region :math:`lll` and period :math:`ttt` (see section :ref:`_activitiesECT`),
+     - activity of the technology producing energy form :math:`e` in regions :math:`rr`, load region :math:`lll` and period :math:`ttt` (see section :ref:`activitiesECT`),
    * - :math:`\epsilon _{zsve}`
      - efficiency of technology :math:`zsve` in producing :math:`s`,
    * - :math:`zevd....rrlllttt`

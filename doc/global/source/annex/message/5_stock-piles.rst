@@ -57,7 +57,7 @@ where
    * - :math:`\iota_{zsvf}`
      - ”first  inventory” of technology :math:`zsvf` of :math:`f` (relative to capacity of main output),
    * - :math:`\rho_{zfvd}`
-     - ”last core” of :math:`f` in technology :math:`zfvd`, see also section :ref:`_resourceextraction`,
+     - ”last core” of :math:`f` in technology :math:`zfvd`, see also section :ref:`resourceextraction`,
    * - :math:`\Delta t`
      - length of period :math:`ttt` in years,
    * - :math:`zfvd....rrlllttt`

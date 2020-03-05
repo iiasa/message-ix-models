@@ -10,4 +10,5 @@ Further reading
 
 .. bibliography:: /bibs/main.bib
    :style: plain
-   :uncited:
+   :labelprefix: A
+   :notcited:

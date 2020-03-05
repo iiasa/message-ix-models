@@ -150,9 +150,9 @@ The following notation is used in the above equations:
    :header-rows: 0
 
    * - :math:`zsvd....rrlllttt`
-     - activity of conversion technology :math:`zsvd` in region :math:`rr`, period :math:`ttt` and, if defined so, load region :math:`lll` (see section :ref:`_activitiesECT`),
+     - activity of conversion technology :math:`zsvd` in region :math:`rr`, period :math:`ttt` and, if defined so, load region :math:`lll` (see section :ref:`activitiesECT`),
    * - :math:`yzsvd...rr...ttt`
-     - capacity variable of conversion technology :math:`zsvd` (see section :ref:`_capacititesECT`).
+     - capacity variable of conversion technology :math:`zsvd` (see section :ref:`capacititesECT`).
    * - :math:`\epsilon_{zsvd}`
      - efficiency of technology :math:`zsvd` in converting the main energy input, :math:`s`, into the main energy output, :math:`d`,
    * - :math:`\kappa_{zsvd}`

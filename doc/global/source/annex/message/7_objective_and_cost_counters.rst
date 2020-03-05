@@ -50,7 +50,7 @@ The cost accounting rows are further separated into the following schemes:
 .. math::
    func
 
-In its usual form, the objective function contains the sum of all discounted costs. All costs related to operation (i.e. resource use, operation costs, taxes on emissions, ...) are discounted from the middle of the current period to the first year. Costs related to construction are by default discounted from the first year of the period to the first year. By using the facility of distributing the investment related costs over the construction time these costs can be distributed over some years before or equal to the current one (see section :ref:`_distributionsofinv`).
+In its usual form, the objective function contains the sum of all discounted costs. All costs related to operation (i.e. resource use, operation costs, taxes on emissions, ...) are discounted from the middle of the current period to the first year. Costs related to construction are by default discounted from the first year of the period to the first year. By using the facility of distributing the investment related costs over the construction time these costs can be distributed over some years before or equal to the current one (see section :ref:`distributionsofinv`).
 
 The objective function has the following general form:
 
