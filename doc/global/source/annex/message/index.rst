@@ -1,5 +1,5 @@
 Mathematical Formulation: MESSAGE V
-====
+***********************************
 
 .. toctree::
    :maxdepth: 2
@@ -12,6 +12,3 @@ Mathematical Formulation: MESSAGE V
    6_user-defined_relations
    7_objective_and_cost_counters
    8_special_features_of_the_matrix_generator
-   
-  
-

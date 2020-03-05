@@ -1,46 +1,46 @@
 .. _specialfeatures:
 
 8 Special Features of the Matrix Generator
-===========================================
+==========================================
 
 The mathematical formulation of MESSAGE as presented  in the previous sections shows the structure of all constraints as the matrix generator builds them up. The background of the more complicated features is given here for a better understanding.
 
-8.1 	Discounting of Costs
-----------------------------------------------
+8.1 Discounting of Costs
+------------------------
 
 The whole time horizon of the calculations is divided into periods of optional length. All variables of MESSAGE are represented  as average over the period they represent, resulting in a step-function. All entries in the objective function are discounted from the middle of the respective period to the first year, if they relate to energy flow variables and from the beginning of that period if they represent power variables. The function to discount the costs has the following form:
- 
+
 .. math::
    c_t=\frac{C_t^r}{\prod_{k=1}^{t-1}(1+\frac{dr_k}{100})^{\Delta k}\times f_i}
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 35 65
    :header-rows: 0
 
    * - :math:`C_t^r`
      - cost figure to be discounted,
-   * - :math:`c_t` 
+   * - :math:`c_t`
      - objective function coefficient in period :math:`t`,
    * - :math:`f_i`
      - cost factor (see below), and
    * - :math:`dr_t`
-     - discount rate in period :math:`t`; generally the discount rate is constant over the complete time horizon.                 
+     - discount rate in period :math:`t`; generally the discount rate is constant over the complete time horizon.
 .. math::
   f_i = \left\{\begin{array}{ll}
   1  &\mbox{for costs connected to investments} \\
   (1+\frac{dr_t}{100})^{\frac{\Delta t}{2}}  &\mbox{else}
   \end{array}\right.
-  
+
 .. _distributionsofinv:
 
-8.2 	Distributions of Investments
------------------------------------
+8.2 Distributions of Investments
+--------------------------------
 
 Investment costs can be distributed over the construction time. As these points in time are closer to the beginning of the time horizon, investments become more expensive, this represents interest during construction. MESSAGE allows for two options:
 
-.. list-table:: 
+.. list-table::
    :widths: 35 65
    :header-rows: 0
 
@@ -51,8 +51,8 @@ Investment costs can be distributed over the construction time. As these points 
 
 Investment costs are spread evenly over the construction time. In reality the investment costs follow a bell-shape, but the resulting error after discounting and summing up over the construction time is very small. There still remains only one entry into the objective function, which is modified according to the sum over the distribution results.
 
-8.3 	The Contribution of Capacities Existing in the Base Year
----------------------------------------------------------------
+8.3 The Contribution of Capacities Existing in the Base Year
+------------------------------------------------------------
 
 The possible contribution of an installation that exists in the base year is kept track of over time. There are two possibilities to give the necessary information to MESSAGE.
 
@@ -60,13 +60,13 @@ The possible contribution of an installation that exists in the base year is kep
 
 2. Define the total capacity, :math:`c_0`, that exists in :math:`iyr` and the rate at that it grew in the last :math:`\tau` years, :math:`\gamma`. This information is then converted to one similar to 1. by using the function:
 
-.. math:: 
+.. math::
    y_0=c_0\frac{\gamma^{-\nu}-1}{\nu(\gamma^{-\tau}-1)},
    y_t=y_0\gamma^{-t\times\nu}, t=1(1)\frac{\tau}{\nu}
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 35 65
    :header-rows: 0
 
@@ -85,17 +85,17 @@ The right hand sides in the capacity constraints are derived by summing up all t
 
 In case of formulation 2. one has to consider that some of the capacity goes out of operation between the base year and the first year.
 
-8.4 	Capacities which Operate  Longer than the Time  Horizon
--------------------------------------------------------------
+8.4 Capacities which Operate Longer than the Time Horizon
+---------------------------------------------------------
 
 If a capacity of a technology is built in one of the last periods its life time can exceed the calculation horizon. This fact is taken care of by reducing the investment costs by the following formula:
 
-.. math:: 
+.. math::
    C_t^r=C_t\times\frac{\sum_{k=1}^{\tau_p-\nu}\prod_{\tau=t}^{t+k-1}\frac{1}{1+dr_\tau}}{\sum_{k=1}^{\tau_p}\prod_{\tau=t}^{t+k-1}\frac{1}{1+dr_\tau}}
-   
+
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 35 65
    :header-rows: 0
 
@@ -110,8 +110,8 @@ where
    * - :math:`C_t^r`
      - is the reduced investment.
 
-8.5 	The  Mixed Integer  Option
---------------------------------
+8.5 The Mixed Integer Option
+----------------------------
 
 If the LP-package  used to solve a problem formulated by MESSAGE has the capability to solve mixed integer problems, this can be used to improve the quality of the formulated problems, especially for applications to small regions.
 

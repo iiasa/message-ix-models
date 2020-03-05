@@ -2,9 +2,11 @@
 
 
 2 Conversion Technologies
-====
-2.1 	Variables
-----
+=========================
+
+2.1 Variables
+-------------
+
 Energy conversion technologies, both on the supply and demand side of the energy system, are modelled using two types of variables, that represent
 
 * the amount of energy converted per year in a period (activity  variables) and
@@ -12,14 +14,15 @@ Energy conversion technologies, both on the supply and demand side of the energy
 
 .. _activitiesECT:
 
-2.1.1 	Activities  of Energy Conversion Technologies
-~~~~~~~~~~~~~~~~~~~~~~
+2.1.1 Activities of Energy Conversion Technologies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. math::
    zsvd....rrllltt
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -39,19 +42,20 @@ where
      - identifies the period, :math:`ttt` = :math:`year - int(year_0/100) * 100`.
 
 The activity variable of an energy conversion technology is an energy flow variable. It represents the annual consumption of this technology of the main input per period or load region. If a technology has no input, the variable represents the annual production of the main output divided by the efficiency.
- 
+
 If the main output is *not* on the demand level and at least one of the energy carriers consumed or supplied is defined with load regions the technology is defined with load regions. In this case the activity variables are generated separately for each load region, which is indicated by the additional identifier "lll". However, this changes if the production of the technology over the load regions is predefined: one variable is generated for the time step, the distribution to the load regions is given by the definition of the user (e.g., production pattern of solar power-plants or consumption pattern of end-use devices).
 
 .. _capacititesECT:
 
-2.1.2 	Capacities of Energy Conversion Technologies
-~~~~~~~~~~~~~~~~~~~~~~
-.. math:: 
-   yzsvd...rr...ttt 
+2.1.2 Capacities of Energy Conversion Technologies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math::
+   yzsvd...rr...ttt
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -76,8 +80,9 @@ If a capacity variable is continuous it represents the annual new installations 
 
 The capacity is defined in relation to the main output of the technology.
 
-2.2 	Constraints
--------------------
+2.2 Constraints
+---------------
+
 These are equations used to calculate relations beween timesteps or between different variables in the model. Partially they are generated automatically, partially they are entirely defined by the user.
 
 * Utilization of a technology in relation to the capacity actually installed (capacity constraint),
@@ -88,15 +93,15 @@ These are equations used to calculate relations beween timesteps or between diff
 
 .. _capacityconstr:
 
-2.2.1 	Capacity Constraints
-~~~~~~~~~~~~~~~~~~~~~~
+2.2.1 Capacity Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
-   czsvd...rrlllttt 
+   czsvd...rrlllttt
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -127,7 +132,7 @@ For technologies without load regions (i.e. technologies, where no input or outp
 
 .. math::
    \epsilon_{zsvd} \times zsvd....rr...ttt - \sum_{\tau =t-\tau_{zsvd}}^{min(t,\kappa_{zsvd})} \Delta(\tau-1)\times \pi_{zsvd}\times f_i \times f_p \times yzsvd...rr...\tau \leq hc_{zsvd}^t \times \pi_{zsvd}
- 
+
 **Technologies with Varying Inputs and Outputs**
 
 Many types of energy conversion technologies do not have fix relations between their inputs and outputs (e.g.: a power plant may use oil or gas as input or can produce electricity and/or heat as output). MESSAGE has the option to link several activity variables of a conversion technology into one capacity constraint. For the additional activities linked to a capacity variable a coefficient defines the maximum power available in relation to one power unit of the main activity.
@@ -140,7 +145,7 @@ Many types of energy conversion technologies do not have fix relations between t
 
 The following notation is used in the above equations:
 
-.. list-table:: 
+.. list-table::
    :widths: 20 80
    :header-rows: 0
 
@@ -153,7 +158,7 @@ The following notation is used in the above equations:
    * - :math:`\kappa_{zsvd}`
      - last period in that technology :math:`zsvd` can be constructed,
    * - :math:`\pi_{svd}`
-     - "plant factor" of technology :math:`zsvd`, having different meaning depending on the type of capacity equation applied, in case the plant life does not coincide with the end of a period it also is adjusted time the technology can be operated in that period, 
+     - "plant factor" of technology :math:`zsvd`, having different meaning depending on the type of capacity equation applied, in case the plant life does not coincide with the end of a period it also is adjusted time the technology can be operated in that period,
    * - :math:`\Delta \tau`
      - length of period :math:`\tau` in years,
    * - :math:`\tau_{zsvd}`
@@ -174,8 +179,8 @@ The following notation is used in the above equations:
 
 .. _upper_dynamic_constraint_capacity:
 
-2.2.2 	Dynamic Constraints on Activity and Construction Variables
-~~~~~~~~~~~~~~~~~~~~~~
+2.2.2 Dynamic Constraints on Activity and Construction Variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    Dzsvd...rrlllttt
@@ -185,10 +190,10 @@ The dynamic constraints relate the activity or annual new installations of a tec
 .. math::
    yzsvd...rr...ttt - \gamma _{yzsvd,ttt} \times yzsvd...rr...(ttt-1) \sim g _{yzsvd,ttt} \\
    \sum_{lll} zsvd...rrlllttt - \gamma _{zsvd,ttt} \times \sum_{lll} zsvd...rrlll(ttt-1) \sim g _{zsvd,ttt},
- 
+
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -205,9 +210,9 @@ where
    * - :math:`zsvd...rrlllttt`
      - activity of technology :math:`zsvd` in period :math:`ttt`, and load region lll.
 
-As described in Keppo and Strubegger (2010 :cite:`keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion 
-in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`, 
-:math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{zsvd,ti})` are added to the upper dynamic constraint described above. 
+As described in Keppo and Strubegger (2010 :cite:`keppo_short_2010`) MESSAGE includes so called flexible or soft dynamic constraints to allow for faster diffusion
+in case of economically attractive technologies. To operationalize the concept of soft dynamic constraints, a set of :math:`n` dummy variables with index :math:`i`,
+:math:`Bzsvd..ti`, multiplied by a corresponding growth factor :math:`(1+\delta y_{zsvd,ti})` are added to the upper dynamic constraint described above.
 
 .. math::
    a_t = (1+r)^T \times a_{t-1} + \sum_{i=1}^n (1+r_i)^T \times b_{t-1}^i + S
@@ -221,8 +226,8 @@ Therefore, this new formulation increases the highest allowed growth factor from
 
 .. math::
    (1+r)^T
-   
-to 
+
+to
 
 .. math::
    (1+r)^T + \sum_i (1+r_i)^T
@@ -232,12 +237,12 @@ In addition, the objective function value for period :math:`t` is modified by th
  .. math::
    \cdots + \sum_{i=1}^n c_i \times b_t^i
 
-which adds costs :math:`c_i` per additional growth factor utilized. 
+which adds costs :math:`c_i` per additional growth factor utilized.
 
 .. _dynamic_constraints:
 
-2.2.3 	Contraints on total installed capacity
-~~~~~~~~~~~~~~~~~~~~~~
+2.2.3 Contraints on total installed capacity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    Izsvd...rr...ttt
@@ -247,7 +252,7 @@ These constaints allow to set upper and/or lower limits on the total installed c
 .. math::
    \sum_{\tau=t-T}^t yzsvd...rr...\tau \sim M_t
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -258,13 +263,13 @@ These constaints allow to set upper and/or lower limits on the total installed c
    * - :math:`M_t`
      - maximum or minimum allowed total installed capacity in time step t
 
-2.2.4 	User defined Constraints
-~~~~~~~~~~~~~~~~~~~~~~
+2.2.4 User defined Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    nname...rrlllttt
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -278,10 +283,10 @@ The main uses for such constraints are to put regional or global constraints on 
 
 .. math::
    wind\_electricity + solar\_electricity + biomass\_electricity \geq \alpha \times total\_electricity.
-   
+
 where :math:`total\_electricity` can usualy be taken from the input to the electricity transmission technology.
 
-2.3 	Bounds
-~~~~~~~~~~~~~~~~~~~~~~
+2.3 Bounds
+~~~~~~~~~~
 
 Upper, lower, or fixed bounds may be put on activity or new installed capacity. This is usually very helpful at the beginning of the planning horizon to fit results to reality. In later time steps they may be used to avoid unrealistic behaviour like, e.g., too many new installations of a specific technology per year.

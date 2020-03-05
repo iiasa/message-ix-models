@@ -7,31 +7,31 @@ MESSAGE models the following *HFC-sources*, details of which can be found in the
 * Solvents
 
   * Driver: Population
-  
-* Fire Extinguishers 
 
-  * Driver: Population 
-  
+* Fire Extinguishers
+
+  * Driver: Population
+
 * Aerosols from Medical Use (MDI)
 
-  * Driver: Population 
-  
+  * Driver: Population
+
 * Aerosols from Non-Medical Use (Non-MDI)
 
-  * Driver: Population 
-  
+  * Driver: Population
+
 * Refrigeration & Air-Conditioning from Residential and Commercial Sector
 
   * Driver: Residential & commercial specific demand (mainly electricity)
   * Mitigation: Refrigerant recovery (refrigerant_recovery bounded by technical applicability)
   * Mitigation: Leak repair (leak_repair bounded by technical applicability)
   * Mitigation: Ammonia secondary loop (ammonia_secloop bounded by technical applicability)
-  
-* Air-Conditioning from Transport Sector 
 
-  * Driver: Transport demand  
+* Air-Conditioning from Transport Sector
+
+  * Driver: Transport demand
   * Mitigation: Transcritical vapor cycle CO2 systems (mvac_co2 bounded by technical applicability)
-  
+
 * Foams
 
   * Driver: Residential & commercial thermal demand
@@ -44,7 +44,7 @@ MESSAGE further models *SF6* including the following sources:
   * Driver: Electricity transmission and distribution
   * Mitigation: Recycling of gas carts (recycling_gas1)
   * Mitigation: Leak repairs (leak_repairsf6)
-  
+
 * Magnesium
 
   * Driver: Transportation demand
@@ -56,7 +56,7 @@ MESSAGE also models *CF4*:
 
   * Driver: Transportation demand
   * Mitigation: Retrofit of soderberg process
-  
+
 * Semi-Conductor Production
 
   * Driver: **fixed output based on …**
@@ -64,7 +64,7 @@ MESSAGE also models *CF4*:
 Data sources and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-SF6 is associated with two main sources. SF6 from semiconductor production used in electrical equipment manufacturing, currently making up the bulk (88% in 2010) of total SF6 emissions. SF6 from magnesium used in the car industry is the second notable source.  The historical data, up to 2010, comes from EDGAR (EDGAR4.2, 2011 :cite:`joint_research_centre_global_emissions_emission_2011`). Alternatively, EPA data could also be used, which equally offers country based data split out for the two sources mentioned above. 
+SF6 is associated with two main sources. SF6 from semiconductor production used in electrical equipment manufacturing, currently making up the bulk (88% in 2010) of total SF6 emissions. SF6 from magnesium used in the car industry is the second notable source.  The historical data, up to 2010, comes from EDGAR (EDGAR4.2, 2011 :cite:`joint_research_centre_global_emissions_emission_2011`). Alternatively, EPA data could also be used, which equally offers country based data split out for the two sources mentioned above.
 
 Future developments in SSP2, from 2020 onwards, foresee a 1% and 1.5% annual intensity decline for SF6 from magnesium use in manufacturing processes and electrical equipment manufacturing respectively. The intensity rate for SF6 from magnesium use in manufacturing processes declines 1.5% and 0.5% in SSP1 and SSP3 respectively. For SF6 from electrical equipment manufacturing, the intensity declines at a rate of 2% annually while in SSP3 the rate of decline is lower, at 1% annually.
 
@@ -78,7 +78,7 @@ Future developments in SSP2, from 2020 onwards, foresee a 1% and 1.5% annual int
 
 Exceptions have been made for:
 
-* AC from Transport Sector 
+* AC from Transport Sector
 * Refrigeration & AC from Residential and Commercial Sector
 
 The mitigation potentials remain unchanged across the different SSPs, as these are bound by the technical feasibility (Rao S., Riahi K., 2006 :cite:`rao_role_2006`).  A further improvement could foresee adaptations of these bounds across the SSP to better reflect the storylines as well as to update the MACs to reflect numbers from the latest EPA report (EPA, 2013 :cite:`environmental_protection_agency_epa_global_2013`).
@@ -94,7 +94,8 @@ For SSP1, Western Europe is the frontier region, whereas the USA, is the frontie
 .. _fig-hfcint:
 .. figure:: /_static/regional_HFC_intensity.png
 
-   Regional HFC Intensity Developments for Refrigeration and Air-Conditioning in the Residential and Commercial Sector across the SSPs 
+   Regional HFC Intensity Developments for Refrigeration and Air-Conditioning in the Residential and Commercial Sector across the SSPs
+
 The SSP storylines and the therewith associated income developments lead to very different convergence time points. In SSP1, income grows very rapidly in developing, therefore leading to a convergence of intensity levels for almost all regions by middle of the century, with the exception of Africa which converges by 2080. In SSP2, all regions converge latest by the end of the century which is very different to SSP3, where the convergence is much slower due to the low income level developments. In SSP3, only few regions converge by the end of the century.
 
 HFC-23
@@ -126,7 +127,7 @@ When comparing the data used in MESSAGE-GLOBIOM with the original data source (b
      - 13.9
      - 21.2
    * - HCF-23
-     - 
+     -
      - 128.0
    * - **Totals**
      - 555.6
@@ -136,7 +137,7 @@ A possible explanation could be, that the differences have occurred due to a dis
 
 Further, HFC-23 emissions from HCFC-22 production amount to approximately 128MtCO2e according to the EPA (EPA, 2013 :cite:`environmental_protection_agency_epa_global_2013`).  EDGAR numbers show that 259 MtCO2e of HFC-23 are emitted in 2010, a stark difference to the EPA numbers.
 
-`EPA reports <http://www.epa.gov/methane/pdfs/fulldocumentofdeveloped.pdf>`_ explain that HFC-23 emissions result from semiconductor production and are a byproduct of HCFC-22 production – used in part for refrigeration and air-conditioning as well as a feedstock for the production of synthetic polymers.  A large surge is to be expected in HFC-23 emissions from feedstock production (EPA, 2013 :cite:`environmental_protection_agency_epa_global_2013`), which is currently not regulated, while dispersive uses will be phased out in accordance with the Montreal protocol.  Comparatively, EDGAR data shows that HFC-23 comes from the production of halocarbons and SF6 (98%), Other F-Gases (1.3%) and minimal amounts from semiconductor and electronic manufacturing.  
+`EPA reports <http://www.epa.gov/methane/pdfs/fulldocumentofdeveloped.pdf>`_ explain that HFC-23 emissions result from semiconductor production and are a byproduct of HCFC-22 production – used in part for refrigeration and air-conditioning as well as a feedstock for the production of synthetic polymers.  A large surge is to be expected in HFC-23 emissions from feedstock production (EPA, 2013 :cite:`environmental_protection_agency_epa_global_2013`), which is currently not regulated, while dispersive uses will be phased out in accordance with the Montreal protocol.  Comparatively, EDGAR data shows that HFC-23 comes from the production of halocarbons and SF6 (98%), Other F-Gases (1.3%) and minimal amounts from semiconductor and electronic manufacturing.
 
 Conclusions:
 
@@ -147,7 +148,7 @@ Similar to HFC-23, EPA data also breaks out HFCs from semiconductor manufacturin
 
 Distribution of HFCs onto HFC compound Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-For reporting purposes, but more importantly for use in calculating the climate impacts (MAGICC6), developments of the different HFC compounds are required.  Ideally, CF4, C2F6, C6F14, HFC23, HFC32, HFC43-10, HFC125, HFC134a, HFC143a, HFC227ea, HFC245fa and SF6 are to be reported directly into the MAGICC input file (GAS.SCEN).  MESSAGE-GLOBIOM models F-gas developments, with the exception of SF6 and CF4, in HFC-134aequivalent.  
+For reporting purposes, but more importantly for use in calculating the climate impacts (MAGICC6), developments of the different HFC compounds are required.  Ideally, CF4, C2F6, C6F14, HFC23, HFC32, HFC43-10, HFC125, HFC134a, HFC143a, HFC227ea, HFC245fa and SF6 are to be reported directly into the MAGICC input file (GAS.SCEN).  MESSAGE-GLOBIOM models F-gas developments, with the exception of SF6 and CF4, in HFC-134aequivalent.
 
 From the literature, only few sources provide some orientation for deriving such a split.  Below is a table (:numref:`fig-hfcsec`) which summarizes how many of the four available sources agree on which compound comes from the different sectors.  Although EDGAR seems to be an obvious first choice to derive this split, due to the level of regional details included in their historical data on the different HFC compounds, a split of sources is only available for HFC-134a and HFC-23.  Sources included below are therefore limited to Ashford et. al, 2004, Velders et. al, 2009, UNEP Ozone Secretariat, 2015, Harnisch et. al, 2009, whereby not each of these include details for all sectors/compounds and only in a few cases are actual distributions in the form of shares (%) detailed.
 
@@ -169,4 +170,4 @@ Finally, :numref:`fig-hfcglob` is an attempt to use the available information, w
 .. _fig-hfcglob:
 .. figure:: /_static/global_HFC.png
 
-   Assumed shares and globally resulting HFC compound distribution *For comparability, totals do not include HFC-23
+   Assumed shares and globally resulting HFC compound distribution. *For comparability, totals do not include HFC-23.*

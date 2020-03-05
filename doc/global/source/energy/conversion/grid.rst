@@ -1,9 +1,11 @@
 .. _grid:
 
 Grid, Infrastructure and System Reliability
-==========================================
+===========================================
+
 Energy Transmission and Distribution Infrastructure
 ---------------------------------------------------
+
 Energy transport and distribution infrastructure is included in MESSAGE at a level relevant to represent the associated costs as well as transmission and distribution losses. Within individual model regions the capital stock of transmission and distribution infrastructure and its turnover is modeled for the following set of energy carriers:
 
 * electricity
@@ -11,7 +13,7 @@ Energy transport and distribution infrastructure is included in MESSAGE at a lev
 * natural gas
 * hydrogen
 
-For all solid (coal, biomass) and liquid energy carriers (oil products, biofuels, fossil synfuels) a simpler approach is taken and only transmission and distribution losses and costs 
+For all solid (coal, biomass) and liquid energy carriers (oil products, biofuels, fossil synfuels) a simpler approach is taken and only transmission and distribution losses and costs
 are taken into account.
 
 Inter-regional energy transmission infrastructure, such as natural gas pipelines and high voltage electricity grids, are also represented between geographically adjacent regions. Solid and liquid fuel trade is, similar to the transmission and distribution within regions, modeled by taking into account distribution losses and costs. A special case are gases that can be traded in liquified form, i.e. liquified natural gas (LNG) and liquid hydrogen, where liquefaction and re-gasification infrastructure is explicitly represented in addition to the actual transport process.
@@ -19,10 +21,11 @@ Inter-regional energy transmission infrastructure, such as natural gas pipelines
 .. _syst_integration:
 
 Systems Integration and Reliability
-------------------------------------------
-The global MESSAGE model includes a single annual time period within each modeling year characterized by average annual load and 11 geographic regions. 
-Seasonal and diurnal load curves and spatial issues such as transmission constraints or renewable resource heterogeneity are treated in a stylized way in the model. 
-The mechanism to represent power system reliability in MESSAGE is based on (Sullivan et al., 2013 :cite:`sullivan_electric_2013`). This method elevates the stylization of temporal resolution by introducing two concepts, 
+-----------------------------------
+
+The global MESSAGE model includes a single annual time period within each modeling year characterized by average annual load and 11 geographic regions.
+Seasonal and diurnal load curves and spatial issues such as transmission constraints or renewable resource heterogeneity are treated in a stylized way in the model.
+The mechanism to represent power system reliability in MESSAGE is based on (Sullivan et al., 2013 :cite:`sullivan_electric_2013`). This method elevates the stylization of temporal resolution by introducing two concepts,
 peak reserve capacity and general-timescale flexibility (for mathematical representation see this `Section <https://message.iiasa.ac.at/en/stable/model/MESSAGE/model_core.html#system-reliability-and-flexibility-requirements>`_). To represent capacity reserves in MESSAGE, a requirement is defined that each region build sufficient firm generating capacity to maintain reliability through reasonable load and contingency events. As a proxy for complex system reliability metrics, a reserve margin-based metric was used, setting the capacity requirement at a multiple of average load, based on electric-system parameters. While many of the same issues apply to both electricity from wind and solar energy, the description below focuses on wind.
 
 Toward meeting the firm capacity requirement, conventional generating technologies contribute their nameplate generation capacity while variable renewables contribute a capacity value that declines as the market share of the technology increases. This reflects the fact that wind and solar generators do not always generate when needed, and that their output is generally self-correlated. In order to adjust wind capacity values for different levels of penetration, it was necessary to introduce a stepwise-linear supply curve for wind power (shown in the :numref:`fig-windcap` below). Each bin covers a range of wind penetration levels as fraction of load and has discrete coefficients for the two constraints. The bins are predefined, and therefore are not able to allow, for example, resource diversification to increase capacity value at a given level of wind penetration.
