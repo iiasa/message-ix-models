@@ -18,7 +18,7 @@ developing coal technologies which in the longer term leads to a replacement of 
 assume a continuation of recent trends, focusing more on developing extraction technologies for unconventional hydrocarbon resources, thereby leading to higher potential cumulative oil
 extraction than in the other SSPs (:numref:`fig-supply`, the middle panel).
 
-:numref:`tab-global-ff-res2` shows the assumed total quantities of fossil fuel resources in the MESSAGE model for 2005. :numref:`fig-supply` gives these resource estimates as cumulative resource supply
+:numref:`tab-global-ff-res` shows the assumed total quantities of fossil fuel resources in the MESSAGE model for 2005. :numref:`fig-supply` gives these resource estimates as cumulative resource supply
 curves. In addition, the assumptions are compared with estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) and the databases mentioned earlier. Estimating
 fossil fuel reserves is built on both economic and technological assumptions. With an improvement in technology or a change in purchasing power, the amount that may be considered a
 “reserve” vs. a “resource” (generically referred to here as resources) can actually vary quite widely.
@@ -29,7 +29,7 @@ engineering information indicate with reasonable certainty that they can be reco
 possible, but yet to be found. The remainder are ‘Undiscovered resources’ and, by definition, one can only speculate on their existence. Definitions are based on Rogner et al. (2012)
 :cite:`rogner_chapter_2012`.
 
-.. _tab-global-ff-res2:
+.. _tab-global-ff-res:
 .. list-table:: Assumed global fossil fuel reserves and resources in the MESSAGE model. Estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) also added for comparison.
    :widths: 20 26 26 26
    :header-rows: 2
