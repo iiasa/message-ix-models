@@ -1,13 +1,15 @@
 Energy resource endowments
 ==========================
+
 Fossil Fuel Reserves and Resources
----------------------------------------------
-:numref:`tab-globff` shows the assumed total quantities of fossil fuel resources in the MESSAGE model for the base year 2005. :numref:`fig-supply` gives these resource estimates as supply curves.
+----------------------------------
+
+:numref:`tab-global-ff-res` shows the assumed total quantities of fossil fuel resources in the MESSAGE model for the base year 2005. :numref:`fig-supply` gives these resource estimates as supply curves.
 In addition, the assumptions are compared with estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) as of the year 2009. Estimating fossil fuel reserves
 is built on both economic and technological assumptions. With an improvement in technology or a change in purchasing power, the amount that may be considered a “reserve” vs. a “resource”
 (generically referred to here as resources) can actually vary quite widely.
 
-.. _tab-globff:
+.. _tab-global-ff-res:
 .. list-table:: Assumed global fossil fuel reserves and resources in the MESSAGE model. Estimates from the Global Energy Assessment (Rogner et al., 2012 :cite:`rogner_chapter_2012`) also added for comparison.
    :widths: 20 26 26 26
    :header-rows: 2
