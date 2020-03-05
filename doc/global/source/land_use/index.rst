@@ -32,4 +32,3 @@ The model is run recursively dynamic with a 10 year time step, going from 2000 t
    forest
    land
    food
-   linkage

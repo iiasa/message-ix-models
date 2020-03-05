@@ -36,5 +36,6 @@ We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for 
    climate/index
    z_bibliography
    annex/index
+   extra
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
