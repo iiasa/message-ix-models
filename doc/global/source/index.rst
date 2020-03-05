@@ -3,7 +3,7 @@ MESSAGE-GLOBIOM
 
 These webpages document the IIASA Integrated Assessment Modeling (IAM) framework, also referred to as MESSAGE-GLOBIOM, owing to the fact that the energy model MESSAGE and the land use model GLOBIOM are its most important components. MESSAGE-GLOBIOM 1.0 was developed for the quantification of the so-called Shared Socio-economic Pathways (SSPs) which are the first application of the IAM framework.
 
-**This documentation is in part still under development and will be supplemented with additional information in certain sections.** 
+**This documentation is in part still under development and will be supplemented with additional information in certain sections.**
 
 When referring to MESSAGE-GLOBIOM 1.0 as described in this document, please use the following citations (Download :download:`ris </_static/message-globiom.ris>`, :download:`BibTeX </_static/message-globiom.bib>`):
 
@@ -22,7 +22,7 @@ or specific assessments, please use the following citation:
 
 
 We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for their valuable comments that helped improving this manuscript.
-  
+
 .. toctree::
    :maxdepth: 1
 
@@ -34,7 +34,7 @@ We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for 
    water/index
    emissions/index
    climate/index
-   bibliography
+   z_bibliography
    annex/index
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
