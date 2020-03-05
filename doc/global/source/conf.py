@@ -56,7 +56,7 @@ html_logo = '_static/logo_white.png'
 
 html_static_path = ['_static']
 
-html_style = 'custom.css'
+html_style = 'css/custom.css'
 
 
 # -- Options for HTML help output -----------------------------------------
