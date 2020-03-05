@@ -20,9 +20,9 @@ The demand for international shipping is modeled in a simplified way with a numb
 .. _tab-trans:
 .. table:: Electrification rate within transport for SSP1, SSP2 and SSP3 (Fricko et al., 2017 :cite:`fricko_marker_2017`). The indicators apply to 2010-2100; Intensity improvements are presented in Final Energy (FE)/GDP annually.
 
-   +---------------+----------------------------------------+----------------------------------------+---------------------------------------+
-   |               | **SSP1**                               | **SSP2**                               | **SSP3**                              |
-   +---------------+----------------------------------------+----------------------------------------+---------------------------------------+
-   | **Transport** | High electrification                   | Medium electrification                 | Low electrification                   |
+   +---------------+----------------------------------------+----------------------------------------+----------------------------------------+
+   |               | **SSP1**                               | **SSP2**                               | **SSP3**                               |
+   +---------------+----------------------------------------+----------------------------------------+----------------------------------------+
+   | **Transport** | High electrification                   | Medium electrification                 | Low electrification                    |
    |               | (max. 75% of total transport possible) | (max. 50% of total transport possible) | (max. 10% of total transport possible) |
-   +---------------+----------------------------------------+----------------------------------------+---------------------------------------+
+   +---------------+----------------------------------------+----------------------------------------+----------------------------------------+

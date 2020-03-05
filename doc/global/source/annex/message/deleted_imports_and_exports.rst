@@ -1,19 +1,20 @@
 4 Imports and Exports
-=====
-4.1 	Variables
-----
+=====================
+
+4.1 Variables
+-------------
 
 Imports and exports are modelled by variables that represent the quantity imported per year in a period. A subdivision into countries and further into elasticity classes can be modelled.
 
-4.1.1 	Import  Variables
-~~~~~~~~~~~~~~~~~~~~~
+4.1.1 Import Variables
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    Izscp.lt,
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -34,15 +35,15 @@ where
 
 The import variables are energy flow variables and represent the annual import of the identified energy carrier from the country or region given. If supply elasticities are defined for the import of this energy carrier and country one variable per elasticity class (identifier :math:`p` in position 5) is generated.
 
-4.1.2 	Export  Variables
-~~~~~~~~~~~~~~~~~~~~~
+4.1.2 Export Variables
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    Ezrcp.lt,
- 
+
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -63,23 +64,23 @@ where
 
 The export variables are energy flow variables and represent the annual export of the identified energy carrier to the country or region given. If supply elasticities are defined for the export of this energy carrier and country one variable per elasticity class (identifier :math:`p` in position 5) is generated.
 
-4.2 	Constraints
------
+4.2 Constraints
+---------------
 
-4.2.1 	Imports per Country
-~~~~~~~~~~~~~~~~~~
+4.2.1 Imports per Country
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    Izrc.g..
 
-Limits the imports of a fuel from a specific country :math:`c over the whole horizon.
+Limits the imports of a fuel from a specific country :math:`c` over the whole horizon.
 
 .. math::
    \sum_p\sum_t\Delta t\times Izrcp..t \leq Irc,
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -91,8 +92,8 @@ where
      - is the length of period :math:`t` in years.
 
 
-4.2.2 	Maximum Annual Imports
-~~~~~~~~~~~~~~
+4.2.2 Maximum Annual Imports
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    Izr....t
@@ -104,7 +105,7 @@ Limits the annual imports of a fuel from all countries per period.
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -114,20 +115,20 @@ where
      - is the annual import of :math:`r` from country :math:`c`, elasticity class :math:`p` in period :math:`t`.
 
 
-4.2.3 	Maximum Annual Imports per Country
-~~~~~~~~~~~~~~~~
+4.2.3 Maximum Annual Imports per Country
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    Izrc.a.t
 
 Limits the imports from one country per year.
 
-.. math:: 
+.. math::
    \sum_pIzrcp..t\leq Irct,
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -137,20 +138,20 @@ where
      - is the annual import of :math:`r` from country :math:`c`, elasticity class :math:`p` in period :math:`t`.
 
 
-4.2.4 	Upper Dynamic Import  Constraints
-~~~~~~~~~~~~~~~~~~~~~~
+4.2.4 Upper Dynamic Import Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    MIzr...t
 
 The annual import level of a fuel in a period can, like the resource extraction, be related to the previous one by a growth parameter and an increment resulting in upper dynamic constraints.
- 
+
 .. math::
    \sum_{c,p}Izrcp..t - \gamma_{rt}^o\sum_{c,p}Izrcp..(t-1)\leq g_{rt}^o,
- 
+
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -162,8 +163,8 @@ where
      - is the initial size (increment) of import of :math:`r` in period :math:`t`.
 
 
-4.2.5 	Lower Dynamic Import  Constraints
-~~~~~~~~~~~~~~~~~~~~~
+4.2.5 Lower Dynamic Import Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    LIzr...t
@@ -175,7 +176,7 @@ The annual import level of a fuel in a period can also be related to the previou
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -187,8 +188,8 @@ where
      - is the "last" size (decrement) of import of :math:`r` in period :math:`t`.
 
 
-4.2.6 	Dynamic Import  Constraints per Country
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4.2.6 Dynamic Import Constraints per Country
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    MIzrc..t
@@ -200,7 +201,7 @@ and
 
 The same kind of relations can be defined per country from that the fuel is imported.
 
-4.2.7 	Constraints on Exports
-~~~~~~~~~~~~~~~~~~~~~~~~~
+4.2.7 Constraints on Exports
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The exports of fuels can principally be limited in the same way as the imports. In the identifiers of the variables and constraints the :math:`"I"` is substituted by an :math:`"E"`.

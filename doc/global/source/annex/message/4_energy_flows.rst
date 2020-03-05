@@ -3,8 +3,8 @@
 
 .. _enebal:
 
-4.1 	Balance Equations
-----------------
+4.1 Balance Equations
+---------------------
 
 Energy flows are modelled by linking the activity variables of the different conversion, resource extraction technologies and demands in balance constraints. These constraints ensure that only the amounts of energy available are consumed. There are no further variables required to model energy flows.
 
@@ -12,7 +12,7 @@ Energy demands are also modelled  as part of a balance constraint: the right han
 
 The description of the energy flow constraints in MESSAGE is given for the following set of level identifiers:
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -33,18 +33,18 @@ Another exception is a level labelled :math:`q`, this letter is reserved for sto
 
 **IMPORTANT:** Generally central production systems should not deliver to the first (demand) level. In this case the production of the system would be forced to follow the demand pattern.
 
-4.1.1 	Demand Constraints
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+4.1.1 Demand Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~
 .. math::
 
    zd......rr...ttt
-   
+
 .. math::
    \sum_{sv} \epsilon_{zsvd} \times zsvd....rr...ttt + \sum_{sv} \beta_{zsv\delta}^d \times zsv\delta....rr...ttt \geq D_{drt}
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 60 110
    :header-rows: 0
 
@@ -66,8 +66,8 @@ Each energy form on any level can have an external demand. In this case the dema
 
 .. _distbal:
 
-4.1.2 	Other Balances
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+4.1.2 Other Balances
+~~~~~~~~~~~~~~~~~~~~
 
 These constraint match the consumption of a specific energy form with the production of this energy form on any of the defined energy levels. They are generated for each load region, if the energy form is modelled with load regions.
 
@@ -98,8 +98,8 @@ In case technologies are modeled with given production or consumption load curve
 .. math:
    \eta_{zsve}^l \times zsve....rr...ttt
 
-4.1.3 	Resource Balance
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4.1.3 Resource Balance
+~~~~~~~~~~~~~~~~~~~~~~
 
 The resources produced by the extraction technologies in a period can come from different cost categories (also called grades), which can, e.g., represent the different effort to reach certain resources. Short-term variations in price due to steeply increasing demand can be represented by an elasticity approach (see section 9.11).
 
@@ -108,7 +108,7 @@ The resources produced by the extraction technologies in a period can come from 
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 40 110
    :header-rows: 0
 
@@ -116,5 +116,3 @@ where
      - annual extraction of resource :math:`f`, cost category (grade) :math:`g` in region :math:`rr` and period :math:`ttt`, and
    * - :math:`rzfg....rr`
      - total available amount of resource :math:`f`, grade :math:`g` in region :math:`rr`.
-
- 

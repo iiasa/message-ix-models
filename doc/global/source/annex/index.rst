@@ -1,6 +1,6 @@
-
 Annex: Mathematical formulation
-----
+*******************************
+
 This Annex provides a desription of the mathematical formulation of MESSAGE-GLOBIOM and its modules.
 
 
@@ -9,4 +9,3 @@ This Annex provides a desription of the mathematical formulation of MESSAGE-GLOB
 
    macro
    message/index
-   

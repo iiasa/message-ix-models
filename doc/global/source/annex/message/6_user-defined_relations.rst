@@ -1,5 +1,5 @@
 6 User-defined Relations
-=======================
+========================
 
 .. math::
    nname...rrlllttt, pname...rrlllttt, Cname...rr
@@ -15,7 +15,7 @@ Relations without load regions sum up the activities (multiplied with the given 
 
 where
 
-.. list-table:: 
+.. list-table::
    :widths: 60 110
    :header-rows: 0
 

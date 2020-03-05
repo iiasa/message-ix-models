@@ -3,12 +3,12 @@
 7 Objective and Cost Counters
 =============================
 
-7.1 	Cost Accounting Rows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+7.1 Cost Accounting Rows
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The different types of costs (i.e. entries for the objective function) can be accumulated  over all technologies in built-in  accounting rows. These rows can be generated per load region or per period or for the whole time horizon and contain the sum of the undiscounted costs. They can also be limited. In case of :math:`func` the entries are discounted as these are the entries into the objective function. The implemented types are:
 
-.. list-table:: 
+.. list-table::
    :widths: 45 110
    :header-rows: 0
 
@@ -23,34 +23,34 @@ The different types of costs (i.e. entries for the objective function) can be ac
    * - :math:`cres`
      - domestic fuel costs,
    * - :math:`car1`
-     - costs related to the user defined relations of type 1 (see section 7), 
+     - costs related to the user defined relations of type 1 (see section 7),
    * - :math:`car2`
      - costs related to the user defined relations of type 2 (see section 7),
 
 The cost accounting rows are further separated into the following schemes:
 
-.. list-table:: 
+.. list-table::
    :widths: 80 110
    :header-rows: 0
 
-   * - :math:`name` 
+   * - :math:`name`
      - total costs across all regions, load regions and time steps; :math:`func` is the objective function (see below),
-   * - :math:`name....rr` 
+   * - :math:`name....rr`
      - total costs across all load regions and time steps per region,
-   * - :math:`nameT........ttt` 
+   * - :math:`nameT........ttt`
      - total costs across all regions and load regions per time step,
-   * - :math:`namet...rr...ttt` 
+   * - :math:`namet...rr...ttt`
      - total costs per regions and time step,
-   * - :math:`namel...rrllltt` 
+   * - :math:`namel...rrllltt`
      - total costs per region, load region and time step.
 
-7.2 	The Objective Function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+7.2 The Objective Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
    func
 
-In its usual form, the objective function contains the sum of all discounted costs. All costs related to operation (i.e. resource use, operation costs, taxes on emissions, ...) are discounted from the middle of the current period to the first year. Costs related to construction are by default discounted from the first year of the period to the first year. By using the facility of distributing the investment related costs over the construction time these costs can be distributed over some years before or equal to the current one (see section :ref:`_distributionsofinv`). 
+In its usual form, the objective function contains the sum of all discounted costs. All costs related to operation (i.e. resource use, operation costs, taxes on emissions, ...) are discounted from the middle of the current period to the first year. Costs related to construction are by default discounted from the first year of the period to the first year. By using the facility of distributing the investment related costs over the construction time these costs can be distributed over some years before or equal to the current one (see section :ref:`_distributionsofinv`).
 
 The objective function has the following general form:
 
@@ -68,7 +68,7 @@ with:
    \beta_b^t=\left [ \frac{1}{1+\frac{dr}{100}} \right ]^{t-t_0},
    \beta_m^t=\left [ \frac{1}{1+\frac{dr}{100}} \right ]^{t+ \frac{\Delta t}{2}-t_0},
 
-.. list-table:: 
+.. list-table::
    :widths: 80 110
    :header-rows: 0
 

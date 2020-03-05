@@ -7,10 +7,12 @@ The global energy model distinguishes between eleven global regions (cf. Section
 Representation of single country Nationally Determined Contributions (NDCs)
 ---------------------------------------------------------------------------
 The targets formulated in the NDCs come in many different flavors. This applies to the sectors and gases covered by these  policies, but it also applies to how these are expressed and quantified. In the global energy model, four broad categories of policy types related to the NDCs are represented, each of which is translated into a set of constraints.
-   1. Emission targets
-   2. Energy shares
-   3. Capacity or generation targets
-   4. Macro-economic targets
+
+1. Emission targets
+2. Energy shares
+3. Capacity or generation targets
+4. Macro-economic targets
+
 A detailed description of the methodological implementation of the NDCs in the global energy model, along with an extensive list of the energy-related targets considered can be found in Rogelj et al. (2017) :cite:`rogelj_indc_2017`.
 
 .. TODO complete the following. See iiasa/message_doc#42
