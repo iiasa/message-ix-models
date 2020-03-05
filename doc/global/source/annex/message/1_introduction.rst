@@ -22,7 +22,7 @@ This manual gives the mathematical formulation of MESSAGE. It contains a formali
 The reader of this paper is assumed to be familiar with the theory of linear and mixed integer programming. Each of the building stones of MESSAGE handled in a separate chapter,
 which is again subdivided into sections on columns and rows. The notation used for the variable and equation names is the same as in the MPS-file. Uppercase letters are used to
 indicate predefined identifiers, while lowercase letters represent characters that are chosen by the user or varied over a set of characters. In order to keep the notation simple and
-the mathematical description as short as possible the more complex features are omitted from the description of the rows and described in an additional section (see :ref:`_specialfeatures`).
+the mathematical description as short as possible the more complex features are omitted from the description of the rows and described in an additional section (see :ref:`specialfeatures`).
 Since practically all parameters of MESSAGE can be defined as time series (i.e. change over the planning horizon), the index for the period is often omitted in the formulation
 (e.g., for the efficiencies or the plant factors of conversion technologies).
 
