@@ -9,6 +9,5 @@ Further reading
 ===============
 
 .. bibliography:: /bibs/main.bib
-   :style: plain
-   :labelprefix: A
+   :list: enumerated
    :notcited:
