@@ -89,7 +89,7 @@ where
    * - :math:`zevd....rrlllttt`
      - activity of the technology :math:`zevd` consuming energy form :math:`e` in region :math:`rr` and period :math:`ttt`,
    * - :math:`\beta_{zsv \kappa }^e`
-     - production of fuel :math:`e` relative to the main output :math:` \kappa ` by technology :math:`zsv \kappa `, and
+     - production of fuel :math:`e` relative to the main output :math:` \kappa` by technology :math:`zsv \kappa`, and
    * - :math:`\beta_{z \kappa vd}^e`
      - consumption of fuel :math:`e` relative to the main output :math:`d` by technology :math:`z \kappa vd`.
 
