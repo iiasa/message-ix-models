@@ -114,12 +114,3 @@ of energy use, industrial production, and agricultural activity for which it dis
 emission trajectories with different levels of mitigation ambition (Cofala et al., 2007 :cite:`cofala_scenarios_2007`; Amann et al., 2013 :cite:`amann_regional_2013`). The results of such scenarios are used as
 input to global IAM frameworks to characterize air pollution trajectories associated with various long-term energy developments
 (see further for example Riahi et al., 2012 :cite:`riahi_chapter_2012`; Rao et al., 2013 :cite:`rao_better_2013`; Fricko et al., 2017 :cite:`fricko_marker_2017`).
-
-
-
-.. NB (2020-03-05 PNK): these were omitted
-
-.. toctree::
-
-   f_gases
-   ghgs
