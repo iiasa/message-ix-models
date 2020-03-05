@@ -47,11 +47,11 @@ The MESSAGE model includes a detailed representation of energy-related and - via
    * - Solid biomass
      - 29.9
      - 109.6
-     - 0.942    
+     - 0.942
 
 CO2 emissions of fossil fuels for the entire energy system are accounted for at the resource extraction level by applying the CO2 emission factors listed in :numref:`tab-emissionfactor` to the extracted fossil fuel quantities. In this economy-wide accounting, carbon emissions captured in CCS processes remove carbon from the balance equation, i.e. they contribute with a negative emission coefficient. In parallel, a sectoral acounting of CO2 emissions is performed which applies the same emission factors to fossil fuels used in individual conversion processes. In addition to conversion processes, also CO2 emissions from energy use in fossil fuel resource extraction are explicitly accounted for. A relevant feature of MESSAGE in this context is that CO2 emissions from the extraction process increase when moving from conventional to unconventional fossil fuel resources (McJeon et al., 2014 :cite:`mcjeon_gas_2014`).
 
-CO2 mitigation options in the energy system include technology and fuel shifts; efficiency improvements; and CCS. A large number of specific mitigation technologies are modeled bottom-up in MESSAGE with a dynamic representation of costs and efficiencies. As mentioend above, MESSAGE also includes a detailed representation of carbon capture and sequestration from both fossil fuel and biomass combustion (see :numref:`tab_CCScapturerates`). 
+CO2 mitigation options in the energy system include technology and fuel shifts; efficiency improvements; and CCS. A large number of specific mitigation technologies are modeled bottom-up in MESSAGE with a dynamic representation of costs and efficiencies. As mentioend above, MESSAGE also includes a detailed representation of carbon capture and sequestration from both fossil fuel and biomass combustion (see :numref:`tab_CCScapturerates`).
 
 .. _tab_CCScapturerates:
 .. list-table:: Carbon capture rates in [%]
@@ -105,12 +105,21 @@ MESSAGE includes a representation of non-CO2 GHGs (CH4, N2O, HFCs, SF6, PFCs) ma
 
 Air pollution
 ~~~~~~~~~~~~~
-Air pollution implications are derived with the help of the GAINS (Greenhouse gas-Air pollution INteractions and Synergies) model. GAINS allows for the development of cost-effective emission control strategies to 
-meet environmental objectives on climate, human health and ecosystem impacts until 2030 (Amann et al., 2011 :cite:`amann_cost-effective_2011`). These impacts are considered in a multi-pollutant context, 
-quantifying the contributions of sulfur dioxide (SO2), nitrogen oxides (NOx), ammonia (NH3), non-methane volatile organic compounds (VOC), and primary emissions of particulate matter (PM), including fine 
-and coarse PM as well as carbonaceous particles (BC, OC). As a stand-alone model, it also tracks emissions of six greenhouse gases of the Kyoto basket with exception of NF3. The GAINS model has global 
-coverage and holds essential information about key sources of emissions, environmental policies, and further mitigation opportunities for about 170 country-regions. The model relies on exogenous projections 
-of energy use, industrial production, and agricultural activity for which it distinguishes all key emission sources and several hundred control measures. GAINS can develop finely resolved mid-term air pollutant 
-emission trajectories with different levels of mitigation ambition (Cofala et al., 2007 :cite:`cofala_scenarios_2007`; Amann et al., 2013 :cite:`amann_regional_2013`). The results of such scenarios are used as 
-input to global IAM frameworks to characterize air pollution trajectories associated with various long-term energy developments 
+Air pollution implications are derived with the help of the GAINS (Greenhouse gas-Air pollution INteractions and Synergies) model. GAINS allows for the development of cost-effective emission control strategies to
+meet environmental objectives on climate, human health and ecosystem impacts until 2030 (Amann et al., 2011 :cite:`amann_cost-effective_2011`). These impacts are considered in a multi-pollutant context,
+quantifying the contributions of sulfur dioxide (SO2), nitrogen oxides (NOx), ammonia (NH3), non-methane volatile organic compounds (VOC), and primary emissions of particulate matter (PM), including fine
+and coarse PM as well as carbonaceous particles (BC, OC). As a stand-alone model, it also tracks emissions of six greenhouse gases of the Kyoto basket with exception of NF3. The GAINS model has global
+coverage and holds essential information about key sources of emissions, environmental policies, and further mitigation opportunities for about 170 country-regions. The model relies on exogenous projections
+of energy use, industrial production, and agricultural activity for which it distinguishes all key emission sources and several hundred control measures. GAINS can develop finely resolved mid-term air pollutant
+emission trajectories with different levels of mitigation ambition (Cofala et al., 2007 :cite:`cofala_scenarios_2007`; Amann et al., 2013 :cite:`amann_regional_2013`). The results of such scenarios are used as
+input to global IAM frameworks to characterize air pollution trajectories associated with various long-term energy developments
 (see further for example Riahi et al., 2012 :cite:`riahi_chapter_2012`; Rao et al., 2013 :cite:`rao_better_2013`; Fricko et al., 2017 :cite:`fricko_marker_2017`).
+
+
+
+.. NB (2020-03-05 PNK): these were omitted
+
+.. toctree::
+
+   f_gases
+   ghgs
