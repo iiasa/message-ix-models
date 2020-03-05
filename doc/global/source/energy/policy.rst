@@ -2,7 +2,7 @@
 
 Modelling policies
 ==================
-The global energy model distinguishes between eleven global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies - such as the nationally determined contributions (NDCs) as agreed upon in the Paris Agreement - at a lower geographical resolution, in order to be able to adequately account for future changes in the scenario development processes. 
+The global energy model distinguishes between eleven global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies - such as the nationally determined contributions (NDCs) as agreed upon in the Paris Agreement - at a lower geographical resolution, in order to be able to adequately account for future changes in the scenario development processes.
 
 Representation of single country Nationally Determined Contributions (NDCs)
 ---------------------------------------------------------------------------
@@ -11,7 +11,11 @@ The targets formulated in the NDCs come in many different flavors. This applies 
    2. Energy shares
    3. Capacity or generation targets
    4. Macro-economic targets
-A detailed description of the methodological implementation of the NDCs in the global energy model, along with an extensive list of the energy-related targets considered can be found in Rogelj et al. (2017) :cite:`rogelj_indc_2017`. Additional policies implemented in the model can also be found in ('what reference for the CD_Links related policies?`)
+A detailed description of the methodological implementation of the NDCs in the global energy model, along with an extensive list of the energy-related targets considered can be found in Rogelj et al. (2017) :cite:`rogelj_indc_2017`.
+
+.. TODO complete the following. See iiasa/message_doc#42
+
+   Additional policies implemented in the model can also be found in ('what reference for the CD_Links related policies?`).
 
 Emission targets
 ----------------
@@ -28,8 +32,10 @@ Capacity and generation targets
 Some NDCs specify capacity installation targets, e.g. for planned power plants which will be operational by a certain year.  Others specify that a given energy commodity will come from a specific source, for example a certain amount of electricity will stem form a specific intermittent renewable source or nuclear. These targets types are implemented in the model as lower bounds on generation.
 
 
-Macro-economic targets
-----------------------
+.. TODO complete the following. See iiasa/message_doc#43
+
+   Macro-economic targets
+   ----------------------
 
 
 Representation of taxes and subsidies
