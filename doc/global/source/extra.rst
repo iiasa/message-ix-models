@@ -12,7 +12,6 @@ Additional pages
    emissions/message/ghgs <emissions/message/ghgs>
    energy/resource <energy/resource>
    glossary <glossary>
-   land_use/globiom <land_use/globiom>
    land_use/linkage <land_use/linkage>
    message <message>
    overview/policy/index <overview/policy/index>
