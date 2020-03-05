@@ -1,3 +1,14 @@
+/* Import the sphinx_rtd_theme CSS */
+@import 'theme.css';
+
+.strike {
+    text-decoration: line-through;
+}
+
+.underline {
+    text-decoration: underline;
+}
+
 /*
 
 IIASA blue + three-stage gradient to white
