@@ -1,7 +1,8 @@
 .. _spatial:
 
 Regions
-==============
+*******
+
 The combined MESSAGE-GLOBIOM framework has global coverage and divides the world into 11 regions which are also the native regions of the MESSAGE model (see :numref:`fig-reg` and :numref:`tab-reg` below). GLOBIOM natively operates at the level of 30 regions which in the linkage to MESSAGE are aggregated to the 11 regions as listed in :numref:`tab-globiomreg`.
 
 .. _fig-reg:
@@ -33,7 +34,7 @@ The country definitions of the 11 MESSAGE regions are described in the table bel
      - Albania, Bosnia and Herzegovina, Bulgaria, Croatia, Czech Republic, The former Yugoslav Rep. of Macedonia, Hungary, Poland, Romania, Slovak Republic, Slovenia, Yugoslavia, Estonia, Latvia, Lithuania
    * - **FSU**
      - Former Soviet Union
-     - Armenia, Azerbaijan, Belarus, Georgia, Kazakhstan, Kyrgyzstan, Republic of Moldova, Russian Federation, Tajikistan, Turkmenistan, Ukraine, Uzbekistan       
+     - Armenia, Azerbaijan, Belarus, Georgia, Kazakhstan, Kyrgyzstan, Republic of Moldova, Russian Federation, Tajikistan, Turkmenistan, Ukraine, Uzbekistan
    * - **CPA**
      - Centrally Planned Asia and China
      - Cambodia, China (incl. Hong Kong), Korea (DPR), Laos (PDR), Mongolia, Viet Nam
@@ -42,7 +43,7 @@ The country definitions of the 11 MESSAGE regions are described in the table bel
      - Afghanistan, Bangladesh, Bhutan, India, Maldives, Nepal, Pakistan, Sri Lanka
    * - **PAS**
      - Other Pacific Asia
-     - American Samoa, Brunei Darussalam, Fiji, French Polynesia, Gilbert-Kiribati, Indonesia, Malaysia, Myanmar, New Caledonia, Papua, New Guinea, Philippines, Republic of Korea, Singapore, Solomon Islands, Taiwan (China), Thailand, Tonga, Vanuatu, Western Samoa                                                                        
+     - American Samoa, Brunei Darussalam, Fiji, French Polynesia, Gilbert-Kiribati, Indonesia, Malaysia, Myanmar, New Caledonia, Papua, New Guinea, Philippines, Republic of Korea, Singapore, Solomon Islands, Taiwan (China), Thailand, Tonga, Vanuatu, Western Samoa
    * - **MEA**
      - Middle East and North Africa
      - Algeria, Bahrain, Egypt (Arab Republic), Iraq, Iran (Islamic Republic), Israel, Jordan, Kuwait, Lebanon, Libya/SPLAJ, Morocco, Oman, Qatar, Saudi Arabia, Sudan, Syria (Arab Republic), Tunisia, United Arab Emirates, Yemen
@@ -59,97 +60,96 @@ In addition to the 11 geographical regions, in MESSAGE there is a global trade r
 .. list-table:: Listing of 30 regions used in GLOBIOM, including their country definitions and the mapping to the 11 regions of the combined MESSAGE-GLOBIOM model.
    :header-rows: 1
 
-   * - 11 MESSAGE regions 	
-     - 30 GLOBIOM regions	
+   * - 11 MESSAGE regions
+     - 30 GLOBIOM regions
      - List of countries
    * - **NAM**
-     - Canada	
      - Canada
-   * - 
-     - USA	
+     - Canada
+   * -
+     - USA
      - United States of America
    * - **WEU**
      - EU_MidWest
-     - Austria, Belgium, Germany, France, Luxembourg, Netherlands 
-   * - 
-     - EU_North	
-     - Denmark, Finland, Ireland, Sweden, United Kingdom 
-   * - 
+     - Austria, Belgium, Germany, France, Luxembourg, Netherlands
+   * -
+     - EU_North
+     - Denmark, Finland, Ireland, Sweden, United Kingdom
+   * -
      - EU_South
      - Cyprus, Greece, Italy, Malta, Portugal, Spain
-   * - 
-     - ROWE	
+   * -
+     - ROWE
      - Gibraltar, Iceland, Norway, Switzerland
-   * - 
+   * -
      - Turkey
      - Turkey
-   * - **PAO**	 			 
-     - ANZ	
+   * - **PAO**
+     - ANZ
      - Australia, New Zealand
-   * - 
-     - Japan	
+   * -
      - Japan
-   * - 
-     - Pacific_Islands	
+     - Japan
+   * -
+     - Pacific_Islands
      - Fiji Islands, Kiribati, Papua New Guinea, Samoa, Solomon Islands, Tonga, Vanuatu
    * - **EEU**
-     - EU_Baltic	
+     - EU_Baltic
      - Estonia, Latvia, Lithuania
-   * - 
-     - EU_CentEast	
+   * -
+     - EU_CentEast
      - Bulgaria, Czech Republic, Hungary, Poland, Romania, Slovakia, Slovenia
    * -
-     - RCEU	
+     - RCEU
      - Albania, Bosnia and Herzegovina, Croatia, Macedonia, Serbia-Montenegro
-   * - **FSU**	
-     - Former_USSR	
+   * - **FSU**
+     - Former_USSR
      - Armenia, Azerbaijan, Belarus, Georgia, Kazakhstan, Kyrgyzstan, Moldova, Russian Federation, Tajikistan, Turkmenistan, Ukraine, Uzbekistan
    * - **CPA**
-     - China	
      - China
-   * -  
-     - RSEA_PAC	
+     - China
+   * -
+     - RSEA_PAC
      - Cambodia, Korea DPR, Laos, Mongolia, Viet Nam
-   * - **SAS**	 	
-     - India	
+   * - **SAS**
      - India
-   * - 
-     - RSAS	
+     - India
+   * -
+     - RSAS
      - Afghanistan, Bangladesh, Bhutan, Maldives, Nepal, Pakistan, Sri Lanka
    * - **PAS**
-     - South_Korea	
+     - South_Korea
      - South Korea
-   * - 	 			 
-     - RSEA_OPA	
+   * -
+     - RSEA_OPA
      - Brunei Daressalaam, Indonesia, Singapore, Malaysia, Myanmar, Philippines, Thailand
    * - **MEA**
-     - MidEastNAfr	
+     - MidEastNAfr
      - Algeria, Bahrain, Egypt, Iran, Iraq, Israel, Jordan, Kuwait, Lebanon, Libya, Morocco, Oman, Qatar, Saudi Arabia, Syria, Tunisia, United Arab Emirates, Yemen
-   * - **LAM** 
-     - Brazil	
+   * - **LAM**
      - Brazil
-   * - 
+     - Brazil
+   * -
      - Mexico
      - Mexico
    * -
      - RCAM
      - Bahamas, Barbados, Belize, Bermuda, Costa Rica, Cuba, Dominica, Dominican Republic, El Salvador, Grenada, Guatemala, Haiti, Honduras, Jamaica, Nicaragua, Netherland Antilles, Panama, St Lucia, St Vincent, Trinidad and Tobago
-   * - 
-     - RSAM	
-     - Argentina, Bolivia, Chile, Colombia, Ecuador, Guyana, Paraguay, Peru, Suriname, Uruguay, Venezuela 	
+   * -
+     - RSAM
+     - Argentina, Bolivia, Chile, Colombia, Ecuador, Guyana, Paraguay, Peru, Suriname, Uruguay, Venezuela
    * - **AFR**
-     - Congo_Basin	
+     - Congo_Basin
      - Cameroon, Central African Republic, Congo Republic, Democratic Republic of Congo, Equatorial, Guinea, Gabon
-   * - 
-     - EasternAf	
+   * -
+     - EasternAf
      - Burundi, Ethiopia, Kenya, Rwanda, Tanzania, Uganda
-   * - 
-     - SouthAf	
+   * -
+     - SouthAf
      - South Africa
-   * - 
-     - RoSAfr	
+   * -
+     - RoSAfr
      - Angola, Botswana, Comoros, Lesotho, Madagascar, Malawi, Mauritius, Mozambique, Namibia, Swaziland, Zambia, Zimbabwe
-   * - 
+   * -
      - WestCentAfr
      - Benin, Burkina Faso, Cape Verde, Chad, Cote d'Ivoire, Djibouti, Eritrea, Gambia, Ghana, Guinea, Guinea Bissau, Liberia, Mali, Mauritania, Niger, Nigeria, Senegal, Sierra Leone, Somalia, Sudan, Togo
-     
