@@ -15,6 +15,5 @@ Additional pages
    land_use/globiom <land_use/globiom>
    land_use/linkage <land_use/linkage>
    message <message>
-   overview/model_concept <overview/model_concept>
    overview/policy/cancun <overview/policy/cancun>
    overview/policy/index <overview/policy/index>
