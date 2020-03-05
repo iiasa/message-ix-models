@@ -21,7 +21,7 @@ availability and trade, environmental regulations and policies as well as diffus
 limiting, the amounts of pollutants emitted by various technologies at various steps in energy supplies. This helps to evaluate the impact of environmental regulations
 on energy system development.
 
-It's principal results comprise, among others, estimates of technology-specific multi-sector response strategies for specific climate stabilization targets. By doing so,
+Its principal results comprise, among others, estimates of technology-specific multi-sector response strategies for specific climate stabilization targets. By doing so,
 the model identifies the least-cost portfolio of mitigation technologies. The choice of the individual mitigation options across gases and sectors is driven by the relative
 economics of the abatement measures, assuming full temporal and spatial flexibility (i.e., emissions-reduction measures are assumed to occur when and where they are
 cheapest to implement).

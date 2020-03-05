@@ -11,5 +11,4 @@ Additional pages
    energy/resource <energy/resource>
    glossary <glossary>
    land_use/linkage <land_use/linkage>
-   message <message>
    overview/policy/index <overview/policy/index>
