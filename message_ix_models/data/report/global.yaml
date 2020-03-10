@@ -16,8 +16,10 @@
 
 
 units:
-  define: |
-    USD = [value]
+  # Unit definitions are loaded from data/units == IAMconsortium/units; only
+  # add units here which are idiosyncrasies of MESSAGEix-GLOBIOM.
+  # define: |
+  #   USD = [value]
   replace:
     '???': ''
 
