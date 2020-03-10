@@ -66,8 +66,8 @@ technology:
 
 level:
   require:
-  - final
-  - useful
+  - final   # Fuel consumption in transport.
+  - useful  # Activity in passenger-kilometers [pkm] or tonne-kilometers [tkm].
 
 time:
   # NB cannot handle models with sub-annual time resolution
