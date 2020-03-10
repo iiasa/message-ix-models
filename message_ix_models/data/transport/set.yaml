@@ -14,16 +14,19 @@ commodity:
   require:
   - coal
   - electr
-  - ethanol  # Ethanol used by transport technologies (including ethanol flexible-fuel
-    # vehicles using ICEs and vehicles using fuel cells powered by an ethanol reformer).
-  - fueloil # Includes heavy fuel oil used by maritime technologies
-  - gas  # Compressed natural gas used by bi-fuel vehicles
-  - hydrogen # Gaseous H2 used by fuel-cell powered vehicles
-  - lh2  # Liquid H2 used by fuel-cell powered vehicles
+  # Ethanol used by transport technologies (including ethanol flexible-fuel
+  # vehicles using ICEs and vehicles using fuel cells powered by an ethanol
+  # reformer).
+  - ethanol
+  - fueloil   # Includes heavy fuel oil used by maritime technologies.
+  - gas       # Compressed natural gas used by bi-fuel vehicles.
+  - hydrogen  # Gaseous H2 used by fuel-cell powered vehicles.
+  - lh2       # Liquid H2 used by fuel-cell powered vehicles.
   - lightoil  # Includes gasoline, diesel oil.
-  - methanol  # Methanol and dimethyl ether (DME) used by transport technologies (including
-    # methanol flexible-fuel vehicles using ICEs, vehicles using Direct Methanol Fuel Cells,
-    # and maritime technologies).
+  # Methanol and dimethyl ether (DME) used by transport technologies (including
+  # methanol flexible-fuel vehicles using ICEs, vehicles using Direct Methanol
+  # Fuel Cells, and maritime technologies).
+  - methanol
   remove:
   - transport
 
