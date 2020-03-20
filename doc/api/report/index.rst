@@ -1,58 +1,87 @@
 Reporting
-=========
+*********
 
 .. contents::
    :local:
 
+See also:
+
+- `“Reporting” project board <https://github.com/orgs/iiasa/projects/3>`_ on GitHub, tracking ongoing development.
+- ``global.yaml``, the :doc:`reporting/default-config`.
+
 .. toctree::
+   :hidden:
 
    reporting/default-config
 
-
 Introduction
-------------
+============
 
 :mod:`message_data.reporting` is developed on the basis of :doc:`message_ix <message_ix:reporting>`, and in turn :doc:`ixmp <ixmp:reporting>` features.
 Each layer of the stack provides reporting features that match the framework features at the corresponding level:
 
 .. list-table::
-   :header-rows: 0
+   :header-rows: 1
 
    * - Stack level
      - Role
      - Core feature
      - Reporting feature
    * - ``ixmp``
-     - Optimization models
-     - N-D parameters
-     - :class:`Reporter <ixmp.reporting.Reporter>`,
-       :class:`Key <ixmp.reporting.Key>`,
-       :class:`Quantity <ixmp.reporting.utils.Quantity>`.
+     - Optimization models & data
+     - N-dimensional parameters
+     - :class:`~ixmp.reporting.Reporter`,
+       :class:`~ixmp.reporting.Key`,
+       :class:`~ixmp.reporting.quantity.Quantity`
    * - ``message_ix``
-     - Generalized energy model framework
-     - Specific parameters (``output``)
-     - Auto derivatives (``tom``)
+     - Generalized energy model
+     - Specific sets/parameters (``output``)
+     - Derived quantities (``tom``)
    * - ``message_data``
-     - MESSAGE-GLOBIOM model family
+     - MESSAGEix-GLOBIOM models
      - Specific set members (``coal_ppl`` in ``t``)
-     - Calculations for tec groups
+     - Calculations for M-G tech groups
 
-For instance, ``message_ix`` cannot contain reporting code that references ``coal_ppl``
+For example: ``message_ix`` cannot contain reporting code that references ``coal_ppl``, because not every model built on the MESSAGE framework will have a technology with this name.
+Any reporting specific to ``coal_ppl`` must be in ``message_data``, since all models in the MESSAGEix-GLOBIOM family will have this technology.
 
 The basic **design pattern** of :mod:`message_data.reporting` is:
 
 - A ``global.yaml`` file (i.e. in `YAML <https://en.wikipedia.org/wiki/YAML#Example>`_ format) that contains a *concise* yet *explicit* description of the reporting computations needed for a MESSAGE-GLOBIOM model.
-- :meth:`prepare_reporter <message_data.reporting.core.prepare_reporter>` reads the file and a Scenario object, and uses it to populate a new Reporter
-- …by calling methods like :meth:`add_aggregate <message_data.reporting.code.add_aggregate>` that process atomic chunks of the file.
+- :func:`.prepare_reporter` reads the file and a Scenario object, and uses it to populate a new Reporter…
+- …by calling methods like :func:`.add_aggregate` that process atomic chunks of the file.
+
+Features
+========
+
+By combining these ixmp, message_ix, and message_data features, the following functionality is provided.
+
+.. note:: If any of this does not appear to work as advertised, file a bug!
+
+Units
+-----
+
+- read automatically for ixmp parameters.
+- pass through calculations/are derived automatically.
+- are recognized based on the definitions of non-SI units from `IAMconsortium/units <https://github.com/IAMconsortium/units/>`_.
+- are discarded when inconsistent.
+- can be overridden for entire parameters:
+
+  .. code-block:: yaml
+
+     units:
+       apply:
+         inv_cost: USD
+
 
 API reference
--------------
+=============
 
 .. currentmodule:: message_data.reporting
 
 
 Core
-~~~~
+----
 
 .. currentmodule:: message_data.reporting.core
 
@@ -65,19 +94,22 @@ Core
    add_iamc_table
    add_report
 
+.. autofunction:: message_data.reporting.core.prepare_reporter
+
 .. automodule:: message_data.reporting.core
    :members:
+   :exclude-members: prepare_reporter
 
 
 Computations
-~~~~~~~~~~~~
+------------
 
 .. automodule:: message_data.reporting.computations
    :members:
 
 
 Utilities
-~~~~~~~~~
+---------
 
 .. automodule:: message_data.reporting.util
    :members:
