@@ -1,4 +1,4 @@
-from copy import copy
+from copy import copy, deepcopy
 from functools import partial
 import logging
 from pathlib import Path
@@ -17,7 +17,7 @@ from .util import collapse, infer_keys
 log = logging.getLogger(__name__)
 
 
-def prepare_reporter(scenario, config, key, output_path):
+def prepare_reporter(scenario, config, key, output_path=None):
     """Prepare to report *key* from *scenario*.
 
     Parameters
@@ -46,6 +46,9 @@ def prepare_reporter(scenario, config, key, output_path):
         # Load configuration from a YAML file
         with open(config, 'r') as f:
             config = yaml.safe_load(f)
+    else:
+        # Make a copy, in case operations below are destructive
+        config = deepcopy(config)
 
     # TODO do this in ixmp.reporting.configure
     def cfg_sections(*sections):
