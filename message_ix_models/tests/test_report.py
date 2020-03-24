@@ -57,7 +57,6 @@ def test_report_bare_res(test_context, solved_res, global_config):
         solved_res,
         config=global_config,
         key='message:default',
-        output_path=None,
     )
 
     # Get the default report
@@ -66,59 +65,83 @@ def test_report_bare_res(test_context, solved_res, global_config):
     # reporter.get(key)
 
 
-def test_apply_units(solved_res, tmp_path):
+# Common data for tests
+DATA_INV_COST = pd.DataFrame([
+    ['R11_NAM', 'coal_ppl', '2010', 10.5, 'USD'],
+    ['R11_LAM', 'coal_ppl', '2010',  9.5, 'USD'],
+    ], columns='node_loc technology year_vtg value unit'.split())
+
+IAMC_INV_COST = dict(
+    variable='Investment Cost',
+    base='inv_cost:nl-t-yv',
+    year_time_dim='yv',
+    var=['t'],
+    unit='EUR_2005',
+)
+
+
+def test_apply_units(bare_res):
     qty = 'inv_cost'
 
     # Create a temporary config dict
     config = MIN_CONFIG.copy()
 
-    def _prepare_reporter():
-        return prepare_reporter(solved_res, config=config, key=qty,
-                                output_path=None)
-
     # Prepare the reporter
-    reporter, key = _prepare_reporter()
+    bare_res.solve()
+    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
 
     # Add some data to the scenario
-    inv_cost = pd.DataFrame([
-        ['R11_NAM', 'coal_ppl', '2010', 10.5, 'USD'],
-        ['R11_LAM', 'coal_ppl', '2010',  9.5, 'USD'],
-        ], columns='node_loc technology year_vtg value unit'.split())
-
-    solved_res.remove_solution()
-    solved_res.check_out()
-    solved_res.add_par('inv_cost', inv_cost)
+    inv_cost = DATA_INV_COST.copy()
+    bare_res.remove_solution()
+    bare_res.check_out()
+    bare_res.add_par('inv_cost', inv_cost)
+    bare_res.commit('')
+    bare_res.solve()
 
     # Units are retrieved
     assert reporter.get(key).attrs['_unit'] == 'USD_2005'
 
     # Add data with units that will be discarded
     inv_cost['unit'] = ['USD', 'kg']
-    solved_res.add_par('inv_cost', inv_cost)
+    bare_res.remove_solution()
+    bare_res.check_out()
+    bare_res.add_par('inv_cost', inv_cost)
 
     # Units are discarded
     assert str(reporter.get(key).attrs['_unit']) == 'dimensionless'
 
     # Update configuration, re-create the reporter
     config['units']['apply'] = {'inv_cost': 'USD'}
-    solved_res.commit('')
-    solved_res.solve()
-    reporter, key = _prepare_reporter()
+    bare_res.commit('')
+    bare_res.solve()
+    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
 
     # Units are applied
     assert str(reporter.get(key).attrs['_unit']) == 'USD_2005'
 
     # Update configuration, re-create the reporter
-    config['iamc'] = [
-        dict(
-            variable='Investment Cost',
-            base='inv_cost:nl-t-yv',
-            year_time_dim='yv',
-            var=['t'],
-            unit='EUR_2005'),
-    ]
-    reporter, key = _prepare_reporter()
+    config['iamc'] = [IAMC_INV_COST]
+    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
 
     # Units are converted
     df = reporter.get('Investment Cost:iamc').as_pandas()
     assert set(df['unit']) == {'EUR_2005'}
+
+
+def test_iamc_replace_vars(bare_res):
+    """Test the 'iamc variable names' reporting configuration."""
+    qty = 'inv_cost'
+    config = {
+        'iamc': [IAMC_INV_COST],
+        'iamc variable names': {
+            'Investment Cost|coal_ppl': 'Investment Cost|Coal',
+        }
+    }
+    bare_res.check_out()
+    bare_res.add_par('inv_cost', DATA_INV_COST)
+    bare_res.commit('')
+    bare_res.solve()
+
+    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
+    df = reporter.get('Investment Cost:iamc').as_pandas()
+    assert set(df['variable']) == {'Investment Cost|Coal'}
