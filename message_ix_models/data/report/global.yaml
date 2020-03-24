@@ -264,14 +264,17 @@ combine:
 # - Using the YAML alias '<<: *label' re-uses the referenced keys.
 #
 pe_iamc: &pe_iamc
-  format:  # Conversion to IAMC format
-    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
-    - c
-    - l
-    - m
-    - nd
-    - 'no'  # Bare no is a special YAML value for False, so must quote here.
-    - t
+  drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+  - c
+  - l
+  - m
+  - nd
+  - 'no'  # Bare no is a special YAML value for False, so must quote here.
+  - t
+
+
+iamc variable names:
+  Input|variable|name: Final|variable|name
 
 
 # This section is used by reporting.core.add_iamc_table()
