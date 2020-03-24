@@ -1,6 +1,7 @@
 from copy import copy
 from functools import partial
 import logging
+from pathlib import Path
 
 from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Key, Reporter, configure
@@ -23,8 +24,8 @@ def prepare_reporter(scenario, config, key, output_path):
     ----------
     scenario : ixmp.Scenario
         MESSAGE-GLOBIOM scenario containing a solution, to be reported.
-    config : dict-like
-        Reporting configuration.
+    config : os.Pathlike or dict-like
+        Reporting configuration path or dictionary.
     key : str or ixmp.reporting.Key
         Quantity or node to compute. The computation is not triggered (i.e.
         :meth:`get <ixmp.reporting.Reporter.get>` is not called); but the
@@ -41,18 +42,24 @@ def prepare_reporter(scenario, config, key, output_path):
         Same as *key*, in full resolution, if any.
 
     """
+    if isinstance(config, Path):
+        # Load configuration from a YAML file
+        with open(config, 'r') as f:
+            config = yaml.safe_load(f)
+
+    # TODO do this in ixmp.reporting.configure
+    def cfg_sections(*sections):
+        return {s: config[s] for s in sections if s in config}
+
     # Apply global reporting configuration, e.g. unit definitions
-    configure(config)
+    configure(**cfg_sections('units', 'rename_dims'))
 
     log.info('Preparing reporter')
 
     # Create a Reporter for *scenario* and apply Reporter-specific config
     rep = Reporter.from_scenario(scenario) \
-                  .configure(config)
-
-    # Load the YAML configuration as a dict
-    with open(config, 'r') as f:
-        config = yaml.safe_load(f)
+                  .configure(**cfg_sections('default', 'filters', 'file',
+                                            'alias', 'units'))
 
     # Variable name replacement: dict, not list of entries
     rep.add('iamc variable names', config.get('iamc variable names', {}))
