@@ -73,6 +73,16 @@ Units
        apply:
          inv_cost: USD
 
+- can be set explicitly when converting data to IAMC format:
+
+  .. code-block:: yaml
+
+     iamc:
+     # 'value' will be in kJ; 'units' will be the string 'kJ'
+     - variable: Variable Name
+       base: example_var:a-b-c
+       units: kJ
+
 
 API reference
 =============
