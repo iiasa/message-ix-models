@@ -91,15 +91,16 @@ def prepare_reporter(scenario, config, key, output_path):
 def add_aggregate(rep, info):
     """Add one entry from the 'aggregates:' section of a config file.
 
-    Each entry uses :meth:`.Reporter.aggregate` to compute
+    Each entry uses :meth:`~.message_ix.reporting.Reporter.aggregate` to
+    compute sums across labels within one dimension of a quantity.
 
     The entry *info* must contain:
 
-    - ``_quantities``: list of 0 or more keys for quantities to aggregate. The
+    - **_quantities**: list of 0 or more keys for quantities to aggregate. The
       full dimensionality of the key(s) is inferred.
-    - ``_tag`` (:class:`str`): new tag to append to the keys for the aggregated
+    - **_tag** (:class:`str`): new tag to append to the keys for the aggregated
       quantities.
-    - ``_dim`` (:class:`str`): dimensions
+    - **_dim** (:class:`str`): dimensions
 
     All other keys are treated as group names; the corresponding values are
     lists of labels along the dimension to sum.
@@ -143,18 +144,18 @@ def add_combination(rep, info):
 
     The entry *info* must contain:
 
-    - ``key``: key for the new quantity, including dimensionality.
-    - ``inputs``: a list of dicts specifying inputs to the weighted sum. Each
+    - **key**: key for the new quantity, including dimensionality.
+    - **inputs**: a list of dicts specifying inputs to the weighted sum. Each
       dict contains:
 
-      - ``quantity`` (required): key for the input quantity.
+      - **quantity** (required): key for the input quantity.
         :meth:`add_combination` infers the proper dimensionality from the
-        dimensions of ``key`` plus dimension to ``select`` on.
-      - ``select`` (:class:`dict`, optional): selectors to be applied to the
+        dimensions of `key` plus dimension to `select` on.
+      - **select** (:class:`dict`, optional): selectors to be applied to the
         input quantity. Keys are dimensions; values are either single labels,
         or lists of labels. In the latter case, the sum is taken across these
-        values, so that the result has the same dimensionality as ``key``.
-      - ``weight`` (:class:`int`, optional): weight for the input quantity;
+        values, so that the result has the same dimensionality as `key`.
+      - **weight** (:class:`int`, optional): weight for the input quantity;
         default 1.
 
     **Example.** For the following YAML:
@@ -308,16 +309,16 @@ def add_report(rep, info):
 
 
 def add_general(rep, info):
-    """Add items from the 'general' tree in the config file.
+    """Add one entry from the 'general:' tree in the config file.
 
     This is, as the name implies, the most generalized section of the config
     file. Entry *info* must contain:
 
-    - 'comp': this refers to the name of a computation that is available in the
-      namespace of message_data.reporting.computations.
-    - 'args': (optional) keyword arguments to the computation.
-    - 'inputs': a list of keys to which the computation is applied.
-    - 'key': the key for the computed quantity.
+    - **comp**: this refers to the name of a computation that is available in
+      the namespace of :mod:`message_data.reporting.computations`.
+    - **args** (:class:`dict`, optional): keyword arguments to the computation.
+    - **inputs**: a list of keys to which the computation is applied.
+    - **key**: the key for the computed quantity.
     """
     log.info(f"Add {info['key']!r}")
 
