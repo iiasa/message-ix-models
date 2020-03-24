@@ -69,14 +69,15 @@ def test_report_bare_res(test_context, solved_res, global_config):
 def test_apply_units(solved_res, tmp_path):
     qty = 'inv_cost'
 
-    # Create a temporary config file
-    config_path = tmp_path / 'reporting-config.yaml'
+    # Create a temporary config dict
     config = MIN_CONFIG.copy()
-    config_path.write_text(yaml.dump(config))
+
+    def _prepare_reporter():
+        return prepare_reporter(solved_res, config=config, key=qty,
+                                output_path=None)
 
     # Prepare the reporter
-    reporter, key = prepare_reporter(solved_res, config=config_path, key=qty,
-                                     output_path=None)
+    reporter, key = _prepare_reporter()
 
     # Add some data to the scenario
     inv_cost = pd.DataFrame([
@@ -100,11 +101,24 @@ def test_apply_units(solved_res, tmp_path):
 
     # Update configuration, re-create the reporter
     config['units']['apply'] = {'inv_cost': 'USD'}
-    config_path.write_text(yaml.dump(config))
     solved_res.commit('')
     solved_res.solve()
-    reporter, key = prepare_reporter(solved_res, config=config_path, key=qty,
-                                     output_path=None)
+    reporter, key = _prepare_reporter()
 
     # Units are applied
     assert str(reporter.get(key).attrs['_unit']) == 'USD_2005'
+
+    # Update configuration, re-create the reporter
+    config['iamc'] = [
+        dict(
+            variable='Investment Cost',
+            base='inv_cost:nl-t-yv',
+            year_time_dim='yv',
+            var=['t'],
+            unit='EUR_2005'),
+    ]
+    reporter, key = _prepare_reporter()
+
+    # Units are converted
+    df = reporter.get('Investment Cost:iamc').as_pandas()
+    assert set(df['unit']) == {'EUR_2005'}
