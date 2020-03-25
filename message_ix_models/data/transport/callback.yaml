@@ -1,6 +1,6 @@
 # Data for exogenous mode choice model
 
-modes:  # Names of passenger transport modi
+modes:  # Names of passenger transport modes
 - a-u  # Air
 - f-u  # Freight
 - h-u  # 2-wheel
@@ -8,7 +8,7 @@ modes:  # Names of passenger transport modi
 - u-u  # Public
 - v-u  # LDV
 
-# Paramters used in iteration
+# Parameters used in iteration
 params:
   # Fixed future point for total demand [passenger·km]
   # Assume only half the speed (330 km/h) and not as steep a curve.

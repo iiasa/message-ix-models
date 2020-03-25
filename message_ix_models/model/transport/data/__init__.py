@@ -13,16 +13,6 @@ from .ldv import get_ldv_data  # noqa: F401
 log = logging.getLogger(__name__)
 
 
-FILES = [
-    'ldv_class',
-    'mer_to_ppp',
-    'population-suburb-share',
-    'ma3t/population',
-    'ma3t/attitude',
-    'ma3t/driver',
-]
-
-
 def add_data(scenario, data_from, dry_run=False):
     info = ScenarioInfo(scenario)
 

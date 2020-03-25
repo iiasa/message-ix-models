@@ -69,13 +69,60 @@ factor:
     phev: 0.2
     fcev: 0.2
     # Similar to 'cost/bus inv' above, except for output efficiency.
-    # bus output:
-    #   ICH_bus: ...
-    #   PHEV_bus: ...
-    #   FC_bus: ...
-    #   FCg_bus: ...
-    #   FCm_bus: ...
+    bus output:
+      ICH_bus: 1.424  # ie. 47.6 / 33.42
+      PHEV_bus: 1.424
+      FC_bus: 1.563  # ie. 52.25 / 33.42
+      FCg_bus: 1.563
+      FCm_bus: 1.563
 
+non-ldv:
+  output:  # These are effectively occupancy/load factors, in [pkm / km]
+    # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
+    rail_pub: 80
+    # Intercity trains
+    dMspeed_rai: 200
+    Mspeed_rai: 200
+    Hspeed_rai: 200
+    # Aircrafts
+    con_ar: 115
+    conm_ar: 115
+    conE_ar: 115
+    conh_ar: 115
+    # Buses
+    ICE_M_bus: 20.9
+    ICE_H_bus: 20.9
+    ICG_bus: 20.9
+    ICAe_bus: 20.9
+    ICH_bus: 20.9
+    PHEV_bus: 20.9
+    FC_bus: 20.9
+    FCg_bus: 20.9
+    FCm_bus: 20.9
+    Trolley_bus: 20.9
+  input commodity:
+    # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
+    rail_pub: electr
+    # Intercity trains
+    dMspeed_rai: lightoil
+    Mspeed_rai: electr
+    Hspeed_rai: electr
+    # Aircrafts
+    con_ar: lightoil
+    conm_ar: methanol
+    conE_ar: lightoil  # actually biofuel
+    conh_ar: hydrogen
+    # Buses
+    ICE_M_bus: lightoil
+    ICE_H_bus: lightoil
+    ICG_bus: gas
+    ICAe_bus: lightoil  # actually biofuel
+    ICH_bus: lightoil  # hybridized, but not plug-in, so only oil input
+    PHEV_bus: lightoil  # actually both lightoil *and* electr
+    FC_bus: hydrogen
+    FCg_bus: gas
+    FCm_bus: methanol
+    Trolley_bus: electr
 
 ldv activity:
   _unit: vehicle_km / year
