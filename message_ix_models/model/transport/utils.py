@@ -7,10 +7,10 @@ from pathlib import Path
 import yaml
 import xarray as xr
 
-from .data import FILES
 from message_data.tools import load_data
 
 
+# Configuration files
 METADATA = [
     # Information about message_ix
     ('parameter',),
@@ -21,6 +21,16 @@ METADATA = [
     ('transport', 'technology'),
     # Information about the MESSAGE V model
     ('transport', 'migrate', 'set'),
+]
+
+# Files containing data for input calculations and assumptions
+FILES = [
+    'ldv_class',
+    'mer_to_ppp',
+    'population-suburb-share',
+    'ma3t/population',
+    'ma3t/attitude',
+    'ma3t/driver',
 ]
 
 
