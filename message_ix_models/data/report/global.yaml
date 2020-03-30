@@ -107,25 +107,25 @@ aggregate:
   oil heat: [foil_hpl]
 
   # Wind
-  # wind curtailment: [wind_curtailment1, wind_curtailment2, wind_curtailment3]
-  # wind gen onshore: [wind_res1, wind_res2, wind_res3, wind_res4]
-  # wind gen offshore: [wind_ref1, wind_ref2, wind_ref3, wind_ref4, wind_ref5]
+  wind curtailment: [wind_curtailment1, wind_curtailment2, wind_curtailment3]
+  wind gen onshore: [wind_res1, wind_res2, wind_res3, wind_res4]
+  wind gen offshore: [wind_ref1, wind_ref2, wind_ref3, wind_ref4, wind_ref5]
 
-  # # SolarSolar
-  # solar pv gen elec: [solar_res1, solar_res2, solar_res3, solar_res4,
-                      # solar_res5, solar_res6, solar_res7, solar_res8]
-  # solar pv gen elec RC: [solar_pv_RC]
-  # solar pv gen elec I: [solar_pv_I]
-  # solar pv curtailment: [solar_curtailment1, solar_curtailment2,
-                         # solar_curtailment3]
-  # solar csp gen elec sm1: [csp_sm1_res, csp_sm1_res1, csp_sm1_res2,
-                           # csp_sm1_res3, csp_sm1_res4, csp_sm1_res5,
-                           # csp_sm1_res6, csp_sm1_res7]
-  # solar csp gen elec sm3: [csp_sm3_res, csp_sm3_res1, csp_sm3_res2,
-                           # csp_sm3_res3, csp_sm3_res4, csp_sm3_res5,
-                           # csp_sm3_res6, csp_sm3_res7]
-  # solar csp gen heat rc: [solar_rc]
-  # solar csp gen heat i: [solar_i]
+  # SolarSolar
+  solar pv gen elec: [solar_res1, solar_res2, solar_res3, solar_res4,
+                      solar_res5, solar_res6, solar_res7, solar_res8]
+  solar pv gen elec RC: [solar_pv_RC]
+  solar pv gen elec I: [solar_pv_I]
+  solar pv curtailment: [solar_curtailment1, solar_curtailment2,
+                         solar_curtailment3]
+  solar csp gen elec sm1: [csp_sm1_res, csp_sm1_res1, csp_sm1_res2,
+                           csp_sm1_res3, csp_sm1_res4, csp_sm1_res5,
+                           csp_sm1_res6, csp_sm1_res7]
+  solar csp gen elec sm3: [csp_sm3_res, csp_sm3_res1, csp_sm3_res2,
+                           csp_sm3_res3, csp_sm3_res4, csp_sm3_res5,
+                           csp_sm3_res6, csp_sm3_res7]
+  solar csp gen heat rc: [solar_rc]
+  solar csp gen heat i: [solar_i]
 
  # Emission CH4
  # Is there any way to group over multiple dimensions?
@@ -187,17 +187,6 @@ aggregate:
   manure:  [Emissions|CH4|Land Use|Agriculture|AWM]
   rice: [Emissions|CH4|Land Use|Agriculture|Rice]
 
-  # sf6: [elec_t_d, eth_fc_trp, eth_ic_trp, foil_trp, h2_fc_trp,
-  #       leak_repairsf6, loil_trp, meth_fc_trp, meth_ic_trp,
-  #       recycling_gas1, replacement_so2]
-  # hfc: [ammonia_secloop, biomass_rc, coal_rc, elec_trp, eth_fc_trp.
-  #       eth_ic_trp, eth_rc, foil_rc , foil_trp, gas_rc, gas_trp,
-  #       h2_fc_RC, h2_fc_trp, h2_rc, heat_rc, hp_el_rc, hp_gas_rc,
-  #       leak_repair, loil_rc, loil_trp, meth_fc_trp, meth_ic_trp,
-  #       refrigerant_recovery,repl_hc, solar_rc, sp_el_RC]
-  # cf4: [CF4_Semico, eth_fc_trp. eth_ic_trp, foil_trp,
-  #       h2_fc_trp, loil_trp, meth_fc_trp, meth_ic_trp,
-  #       vertical_stud]
 
 - _quantities: [in, out]
   _tag: t_d
@@ -249,6 +238,7 @@ aggregate:
 # - Parsed by reporting.core.add_combination
 combine:
 
+# CH4 from emi
 - key: CH4:nl-t-ya
   inputs:
   - quantity: emi::t_CH4
@@ -256,16 +246,12 @@ combine:
       CH4_Emission_bunkers]}
     weight: 1
 
+# Agricultural CH4 from land_out
 - key: agri_CH4:n-y-c
   inputs:
   - quantity: land_out::c_CH4
     select: {l:[land_use_reporting]}
     weight: 0.025 #Seems that this is used??
-
-# - key: CH4tot:nl-ya-t-m
-#   inputs:
-#   - quantity: emi
-#     weight: 1
 
   # Name and dimensions of quantity to be created
 - key: coal:nl-ya
@@ -313,17 +299,17 @@ combine:
     select: {t: oil}
     weight: 1
 
-# - key: solar:nl-ya
-  # inputs:
-  # - quantity: out::se
-    # select: {t: ['solar pv gen elec', 'solar pv gen elec RC',
-                 # 'solar pv gen elec I', 'solar csp gen elec sm1',
-                 # 'solar csp gen elec sm3', 'solar csp gen heat rc',
-                 # 'solar csp gen heat i']}
-            # #, c: [electr]}
-  # - quantity: in::se
-    # select: {t: solar pv curtailment} #, c: [electr]}
-    # weight: -1
+- key: solar:nl-ya
+  inputs:
+  - quantity: out::se
+    select: {t: ['solar pv gen elec', 'solar pv gen elec RC',
+                 'solar pv gen elec I', 'solar csp gen elec sm1',
+                 'solar csp gen elec sm3', 'solar csp gen heat rc',
+                 'solar csp gen heat i']}
+            #, c: [electr]}
+  - quantity: in::se
+    select: {t: solar pv curtailment} #, c: [electr]}
+    weight: -1
 
 - key: se_trade:nl-ya
   inputs:
@@ -333,13 +319,13 @@ combine:
     select: {t: [elec, ethanol, lh2, methanol]}
     weight: -1
 
-# - key: wind:nl-ya
-  # inputs:
-  # - quantity: out::se
-    # select: {t: ['wind gen onshore', 'wind gen offshore']}
-  # - quantity: in::se
-    # select: {t: wind curtailment}
-    # weight: -1
+- key: wind:nl-ya
+  inputs:
+  - quantity: out::se
+    select: {t: ['wind gen onshore', 'wind gen offshore']}
+  - quantity: in::se
+    select: {t: wind curtailment}
+    weight: -1
 
 # Prices
 
@@ -565,21 +551,13 @@ iamc:
 
 # Emissions
 
-# I don't have to worry about specifc namings
-# Do automatic names and later we rename correctly commonly.
-# - variable: Emissions|CH4|Fossil Fuels and Industry
-#   base: CH4tot:nl-t-ya
-#   select: {e: [CH4_Emission, CH4_nonenergy]}
-#   format:
-#     var:
-#       - t
-
-- variable: Emissions|CH4|Industrial Processes # Verified
+# CH4-related IAMC variables
+- variable: Emissions|CH4|Industrial Processes
   base: CH4:nl-t-ya
   select: {t: [industry]}
   <<: *emis_iamc
 
-- variable: Emissions|CH4|Waste # Verified
+- variable: Emissions|CH4|Waste
   base: CH4:nl-t-ya
   select: {t: [waste]}
   <<: *emis_iamc
@@ -664,12 +642,12 @@ iamc:
   select: {t: [solid_transportation]}
   <<: *emis_iamc
 
-- variable: Emissions|CH4|AFOLU|Biomass Burning # Verified
+- variable: Emissions|CH4|AFOLU|Biomass Burning
   base: CH4:nl-t-ya
   select: {t: [agri waste]}
   <<: *emis_iamc
 
-- variable: GLOBIOM|Emissions|CH4 Emissions Total # Verified
+- variable: GLOBIOM|Emissions|CH4 Emissions Total
   base: agri_CH4:n-y-c
   select: {c: [agri]}
   <<: *landemis_iamc
