@@ -493,6 +493,12 @@ emis_iamc: &emis_iamc
     - m
     - t
 
+emis_iamc: &emis_iamc
+  format:
+    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+    - m
+    - t
+
 landemis_iamc: &landemis_iamc
   format:
     year_time_dim: y
