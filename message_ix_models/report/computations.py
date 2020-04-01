@@ -2,6 +2,7 @@
 
 Some of these may migrate upstream to message_ix or ixmp in the future.
 """
+from ixmp.reporting.utils import collect_units
 from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
 
@@ -19,10 +20,24 @@ def combine(*quantities, select=None, weights=None):
     weights : list of float
         Weight applied to each quantity. Must have the same number of elements
         as `quantities`.
+
+    Raises
+    ------
+    ValueError
+        If the *quantities* have mismatched units.
     """
     # Handle arguments
     select = select or len(quantities) * [{}]
     weights = weights or len(quantities) * [1.]
+
+    # Check units
+    units = collect_units(*quantities)
+    for u in units:
+        # TODO relax this condition: modify the weights with conversion factors
+        #      if the units are compatible, but not the same
+        if u != units[0]:
+            raise ValueError(f'Cannot combine() units {units[0]} and {u}')
+    units = units[0]
 
     result = 0
     ref_dims = None
@@ -47,6 +62,8 @@ def combine(*quantities, select=None, weights=None):
             temp = temp.transpose(*transpose_dims)
 
         result += weight * temp
+
+    result.attrs['_unit'] = units
 
     return result
 
