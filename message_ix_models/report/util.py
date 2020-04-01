@@ -1,7 +1,29 @@
 from ixmp.reporting import Key
 
 
-def collapse(df, var_name, var=[], region=[]):
+#: Replacements used in :meth:`collapse`.
+REPLACE = {
+    # Applied to whole values along each dimension
+    'c': {
+        'Crudeoil': 'Oil',
+        'Electr': 'Electricity',
+        'Ethanol': 'Liquids|Biomass',
+        'Lightoil': 'Liquids|Oil',
+    },
+    'l': {
+        'Final Energy': 'Final Energy|Residential',
+    },
+
+    # Applied after the variable column is assembled. Partial string
+    # replacement; handled as regular expressions.
+    'variable': {
+        r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
+        r'Residential\|Gas': 'Residential|Gases|Natural Gas',
+    }
+}
+
+
+def collapse(df, var_name, var=[], region=[], replace_common=True):
     """Callback for the `collapse` argument to :meth:`.convert_pyam`.
 
     Simplified from :meth:`message_ix.reporting.pyam.collapse_message_cols`.
@@ -18,11 +40,30 @@ def collapse(df, var_name, var=[], region=[]):
         after the `var_name` using the pipe ('|') character.
     region : list of str, optional
         Dimensions to concatenate to the 'Region' column.
+    replace_common : bool, optional
+        If :obj:`True` (the default), use :data`REPLACE` to perform standard
+        replacements on columns before and after assembling the 'Variable'
+        column.
 
     See also
     --------
     .core.add_iamc_table
     """
+    if replace_common:
+        try:
+            # Level: to title case, add the word 'energy'
+            df['l'] = df['l'].str.title() + ' Energy'
+        except KeyError:
+            pass
+        try:
+            # Commodity: to title case
+            df['c'] = df['c'].str.title()
+        except KeyError:
+            pass
+
+        # Apply replacements
+        df = df.replace(REPLACE)
+
     # Extend region column ('n' and 'nl' are automatically added by message_ix)
     df['region'] = df['region'].astype(str)\
                                .str.cat([df[c] for c in region], sep='|')
@@ -30,6 +71,12 @@ def collapse(df, var_name, var=[], region=[]):
     # Assemble variable column
     df['variable'] = var_name
     df['variable'] = df['variable'].str.cat([df[c] for c in var], sep='|')
+
+    # TODO roll this into the rename_vars argument of message_ix...as_pyam()
+    if replace_common:
+        # Apply variable name partial replacements
+        for pat, repl in REPLACE['variable'].items():
+            df['variable'] = df['variable'].str.replace(pat, repl)
 
     # Drop same columns
     return df.drop(var + region, axis=1)
