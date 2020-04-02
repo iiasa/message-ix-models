@@ -187,7 +187,6 @@ aggregate:
   manure:  [Emissions|CH4|Land Use|Agriculture|AWM]
   rice: [Emissions|CH4|Land Use|Agriculture|Rice]
 
-
 - _quantities: [in, out]
   _tag: t_d
   _dim: t
@@ -474,22 +473,14 @@ iamc variable names:
 
 
 emis_iamc: &emis_iamc
-  format:
-    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
-    - m
-    - t
-
-emis_iamc: &emis_iamc
-  format:
-    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
-    - m
-    - t
+  drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+  - m
+  - t
 
 landemis_iamc: &landemis_iamc
-  format:
-    year_time_dim: y
-    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
-    - c
+  year_time_dim: y
+  drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+  - c
 
 
 # This section is used by reporting.core.add_iamc_table()
@@ -745,6 +736,8 @@ report:
   members:
   - GDP|MER:iamc
   - GDP|PPP:iamc
+
+
 
 - key: CH4_emissions
   members:
