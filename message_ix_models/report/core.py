@@ -42,30 +42,21 @@ def prepare_reporter(scenario, config, key, output_path=None):
         Same as *key*, in full resolution, if any.
 
     """
-    if isinstance(config, Path):
-        # Load configuration from a YAML file
-        with open(config, 'r') as f:
-            config = yaml.safe_load(f)
-    else:
-        # Make a copy, in case operations below are destructive
-        config = deepcopy(config)
-
-    # TODO do this in ixmp.reporting.configure
-    def cfg_sections(*sections):
-        return {s: config[s] for s in sections if s in config}
-
-    # Apply global reporting configuration, e.g. unit definitions
-    configure(**cfg_sections('units', 'rename_dims'))
-
     log.info('Preparing reporter')
 
-    # Create a Reporter for *scenario* and apply Reporter-specific config
-    rep = Reporter.from_scenario(scenario) \
-                  .configure(**cfg_sections('default', 'filters', 'file',
-                                            'alias', 'units'))
+    # Create a Reporter for *scenario*
+    rep = Reporter.from_scenario(scenario)
+
+    # Load and apply configuration
+    if not isinstance(config, dict):
+        # A non-dict *config* argument must be a Path
+        config = dict(path=Path(config))
+    rep.configure(**config)
+    # Reference to the configuration as stored in the reporter
+    config = rep.graph['config']
 
     # Variable name replacement: dict, not list of entries
-    rep.add('iamc variable names', config.get('iamc variable names', {}))
+    rep.add('iamc variable names', config.pop('iamc variable names', {}))
 
     # Mapping of file sections to handlers
     sections = (
@@ -77,11 +68,12 @@ def prepare_reporter(scenario, config, key, output_path=None):
         )
 
     for section_name, func in sections:
-        entries = config.get(section_name, [])
+        entries = config.pop(section_name, [])
 
         # Handle the entries, if any
         if len(entries):
             log.info(f'--- {section_name!r} config section')
+
         for entry in entries:
             func(rep, entry)
 
