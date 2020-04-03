@@ -171,8 +171,17 @@ aggregate:
     solar_rc, biomass_nc, other_sc]
   transport: [coal_trp, foil_trp, loil_trp, gas_trp, elec_trp, meth_ic_trp, eth_ic_trp, meth_fc_trp, eth_fc_trp, h2_fc_trp]
 
+  # aggregates # This doesn't give outputs.
+  # fugitive: [gases_extr, gases_extr_fug, gases_transportation, gases_coal, gases_hydrogen, liquids_extraction, liquids_transportation ,liquids_oil, liquids_gas, liquids_coal, liquids_biomass, solid_extraction, solid_transportation]
+
 - _quantities: [emi::t_CH4]
-  _tag: t_e_CH4
+  _tag: agg
+  _dim: t
+
+  fugitive: [gases_extr, gases_extr_fug, gases_transportation, gases_coal, gases_hydrogen, liquids_extraction, liquids_transportation ,liquids_oil, liquids_gas, liquids_coal, liquids_biomass, solid_extraction, solid_transportation]
+
+- _quantities: [emi::t_CH4+agg]
+  _tag: e_CH4
   _dim: e
 
   CH4: [CH4_Emission, CH4_nonenergy, CH4_new_Emission, CH4_Emission_bunkers]
@@ -250,7 +259,7 @@ combine:
   inputs:
   - quantity: land_out::c_CH4
     select: {l:[land_use_reporting]}
-    weight: 0.025 #Seems that this is used??
+    weight: 0.025 #CHECK: Seems that this is used??
 
   # Name and dimensions of quantity to be created
 - key: coal:nl-ya
@@ -473,13 +482,16 @@ iamc variable names:
 
 
 emis_iamc: &emis_iamc
-  drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
-  - m
+  drop:  # Drop 'technology' <- already aggregated above
+  #- m
   - t
+  - e
+  # unit: # CHECK: Cause AttributeError: 'NoneType' object has no attribute 'items' from pint
+  # - Mt CH4/yr
 
 landemis_iamc: &landemis_iamc
   year_time_dim: y
-  drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+  drop:  # Drop 'commodity'
   - c
 
 
@@ -633,6 +645,16 @@ iamc:
   select: {t: [solid_transportation]}
   <<: *emis_iamc
 
+# - variable: Emissions|CH4|Energy|Supply|Fugitive1
+#   base: CH4:nl-t-ya
+#   select: {t: [fugitive]}
+#   <<: *emis_iamc
+
+- variable: Emissions|CH4|Energy|Supply|Fugitive
+  base: emi:nl-t-ya-e:t_CH4+agg+e_CH4
+  select: {t: [fugitive], e: [CH4]}
+  <<: *emis_iamc
+
 - variable: Emissions|CH4|AFOLU|Biomass Burning
   base: CH4:nl-t-ya
   select: {t: [agri waste]}
@@ -752,6 +774,7 @@ report:
   - Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management:iamc
   - Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
+  - Emissions|CH4|Energy|Supply|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive:iamc
