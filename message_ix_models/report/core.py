@@ -4,10 +4,9 @@ import logging
 from pathlib import Path
 
 from ixmp.reporting.quantity import Quantity
-from message_ix.reporting import Key, Reporter, configure
+from message_ix.reporting import Key, Reporter
 from message_ix.reporting.computations import write_report
 from message_ix.reporting.computations import concat
-import yaml
 
 from . import computations
 from .computations import combine, group_sum
@@ -47,10 +46,14 @@ def prepare_reporter(scenario, config, key, output_path=None):
     # Create a Reporter for *scenario*
     rep = Reporter.from_scenario(scenario)
 
-    # Load and apply configuration
-    if not isinstance(config, dict):
+    if isinstance(config, dict):
+        # Deepcopy to avoid destructive operations below
+        config = deepcopy(config)
+    else:
+        # Load and apply configuration
         # A non-dict *config* argument must be a Path
         config = dict(path=Path(config))
+
     rep.configure(**config)
     # Reference to the configuration as stored in the reporter
     config = rep.graph['config']
