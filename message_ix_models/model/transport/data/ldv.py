@@ -40,7 +40,7 @@ def get_ldv_data(context, scenario):
         # TODO these values are calculated; transfer the calculations to code
         # TODO assign units
         for name, cells, unit in TABLES:
-            df = pd.DataFrame(sheet[cells]) \
+            df = pd.DataFrame(list(sheet[cells])) \
                      .applymap(lambda c: c.value)
 
             # Make the first row the headers
