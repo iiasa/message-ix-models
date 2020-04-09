@@ -237,12 +237,12 @@ aggregate:
   methanol: [meth_exp]
   oil: [oil_exp, loil_exp, foil_exp]
 
-# Emission _SF6 & retr_fgases
-- _quantities: [emi CO2e]
+# Aggregate emissions species
+- _quantities: [emi GWPe]
   _tag: agg
   _dim: e
 
-  F gases: [SF6, CF4, HFC]
+  F gases: [CF4, HFC, SF6]
 
 
 # Create new quantities by weighted sum across multiple quantities
@@ -460,12 +460,14 @@ general:
     units: 'Mt / year'
   sums: true
 
+# GWP factors retrieved from the iam_units package
 - key: gwp factors:gwp metric-e-e equivalent
   comp: gwp_factors
   add args:
-    sums: true
     index: true
-- key: emi CO2e
+
+# Emissions converted to GWP-equivalent species
+- key: emi GWPe
   comp: product
   inputs:
   - emi
@@ -609,8 +611,8 @@ iamc:
 # SF6 emissions
 - variable: Emissions
   # Auto sum over t, yv, m, h
-  base: emi CO2e:nl-ya-e-gwp metric-e equivalent:agg
-  var:  # Add these to 'variable' column
+  base: emi GWPe:nl-ya-e-gwp metric-e equivalent:agg
+  var:  # Add these to 'variable' column; collapse_gwp_info() is applied
   - e
   - e equivalent
   - gwp metric
