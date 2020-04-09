@@ -33,12 +33,16 @@ units:
     # Temporary: requires changes in iiasa/message_data#115
     emission_factor: 'Mt / year'
 
-files:
-- path: ./gwp.csv
-  key: gwp:e-gwp_source
-  dims:
-    message_act_name: e
-    gwp: gwp_source
+# Files with external data
+#
+# Entries are keyword arguments to ixmp.Reporter.add_file()
+
+# files:
+# - path: ./foo.csv
+#   key: gwp:e-gwp_source
+#   dims:
+#     message_act_name: e
+#     gwp: gwp_source
 
 
 # Filters
@@ -234,9 +238,11 @@ aggregate:
   oil: [oil_exp, loil_exp, foil_exp]
 
 # Emission _SF6 & retr_fgases
-- _quantities: [emi]
-  _tag: emissions
-  _dim: t-e
+- _quantities: [emi CO2e]
+  _tag: agg
+  _dim: e
+
+  F gases: [SF6, CF4, HFC]
 
 
 # Create new quantities by weighted sum across multiple quantities
@@ -322,28 +328,6 @@ combine:
   inputs:
   - quantity: land_out::CH4_0+1
     weight: 0.025
-
-# SF6 emissions
-# Unit: kt SF6/yr
-- key: SF6:nl-ya
-  inputs:
-  - quantity: emi::emissions
-    select: {e: ['SF6_Emission']}
-    weight: 1000
-
-# retr_fgases emissions
-- key: retr_fgases:nl-ya
-  inputs:
-  - quantity: emi::emissions
-    select: {e:['SF6'] }
-    weight: gwp_e  # conversion factor to Mt-CO2 equivalent(from old reporting)
-  - quantity: emi::emissions
-    select: {e:['CF4'] }
-    weight: gwp_e  # conversion factor to Mt-CO2 equivalent(from IPCC  )
-    # from old reporting
-  - quantity: emi::emissions
-    select: {e:['HFC'] }
-    weight: gwp_e
 
 
 # Prices
@@ -476,11 +460,16 @@ general:
     units: 'Mt / year'
   sums: true
 
-- key: emi gwp
+- key: gwp factors:gwp metric-e-e equivalent
+  comp: gwp_factors
+  add args:
+    sums: true
+    index: true
+- key: emi CO2e
   comp: product
   inputs:
   - emi
-  - gwp
+  - gwp factors
 
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
@@ -501,21 +490,19 @@ general:
 #
 # - Ending a line with '&label' defines a YAML anchor.
 # - Using the YAML alias '<<: *label' re-uses the referenced keys.
-#
-pe_iamc: &pe_iamc
-  drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
-  - c
-  - l
-  - m
-  - nd
-  - 'no'  # Bare no is a special YAML value for False, so must quote here.
-  - t
+iamc formats:
+  primary energy: &pe_iamc
+    drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
+    - c
+    - l
+    - m
+    - nd
+    - 'no'  # Bare no is a special YAML value for False, so must quote here.
+    - t
 
-price_iamc: &price_iamc
-  unit: USD_2010 / GJ
-  year_time_dim: y
-
-emis_iamc: &emis_iamc
+  price_iamc: &price_iamc
+    unit: USD_2010 / GJ
+    year_time_dim: y
 
 
 # Replacements for entire variable name strings
@@ -620,12 +607,13 @@ iamc:
   var: [c, s]
 
 # SF6 emissions
-- variable: emis|SF6_Emission
-  base: SF6:nl-ya
- # <<: *emis_iamc
-
-- variable: emis|retr_fgases
-  base: retr_fgases:nl-ya
+- variable: Emissions
+  # Auto sum over t, yv, m, h
+  base: emi CO2e:nl-ya-e-gwp metric-e equivalent:agg
+  var:  # Add these to 'variable' column
+  - e
+  - e equivalent
+  - gwp metric
 
 # Prices
 # Preferred method: convert all the contents of the variable at once.
@@ -712,8 +700,7 @@ report:
 
 - key: emissions
   members:
-  - emis|SF6_Emission:iamc
-  - emis|retr_fgases:iamc
+  - Emissions:iamc
 
 - key: CH4 emissions
   members:
