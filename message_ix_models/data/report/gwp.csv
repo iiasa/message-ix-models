@@ -1,0 +1,16 @@
+common_name,chemical_formula,message_act_name,category,gwp,value
+HFC-134a,CH2FCF3,HFC,hfc,SAR,1300
+Sulfurhexafluoride,SF6,SF6,perfluorinated_compounds,SAR,23900
+PFC-14,CF4,CF4,perfluorinated_compounds,SAR,6500
+Carbondioxide,CO2,CO2,main,AR4,1
+Methane,CH4,CH4,main,AR4,25
+Nitrousoxide,N2O,N2O,main,AR4,298
+HFC-134a,CH2FCF3,HFC,hfc,AR4,1430
+Sulfurhexafluoride,SF6,SF6,perfluorinated_compounds,AR4,22800
+PFC-14,CF4,CF4,perfluorinated_compounds,AR4,7390
+Carbondioxide,CO2,CO2,main,AR5,1
+Methane,CH4,CH4,main,AR5,28
+Nitrousoxide,N2O,N2O,main,AR5,265
+HFC-134a,CH2FCF3,HFC,hfc,AR5,1300
+Sulfurhexafluoride,SF6,SF6,perfluorinated_compounds,AR5,23500
+PFC-14,CF4,CF4,perfluorinated_compounds,AR5,6630
