@@ -122,6 +122,9 @@ def prepare_reporter(scenario, config, key, output_path=None):
     # Tidy the config dict by removing any YAML sections starting with '_'
     [config.pop(k) for k in list(config.keys()) if k.startswith('_')]
 
+    # Tidy the config dict by removing any YAML sections starting with '_'
+    [config.pop(k) for k in list(config.keys()) if k.startswith('_')]
+
     # If needed, get the full key for *quantity*
     key = infer_keys(rep, key)
 
