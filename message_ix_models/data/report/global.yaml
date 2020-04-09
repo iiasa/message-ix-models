@@ -492,7 +492,7 @@ general:
 #
 # - Ending a line with '&label' defines a YAML anchor.
 # - Using the YAML alias '<<: *label' re-uses the referenced keys.
-iamc formats:
+_iamc formats:
   primary energy: &pe_iamc
     drop:  # Drop 'commodity', 'level', 'mode', 'node_dest', 'node_origin'
     - c
