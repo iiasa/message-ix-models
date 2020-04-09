@@ -33,6 +33,13 @@ units:
     # Temporary: requires changes in iiasa/message_data#115
     emission_factor: 'Mt / year'
 
+files:
+- path: ./gwp.csv
+  key: gwp:e-gwp_source
+  dims:
+    message_act_name: e
+    gwp: gwp_source
+
 
 # Filters
 #
@@ -226,6 +233,11 @@ aggregate:
   methanol: [meth_exp]
   oil: [oil_exp, loil_exp, foil_exp]
 
+# Emission _SF6 & retr_fgases
+- _quantities: [emi]
+  _tag: emissions
+  _dim: t-e
+
 
 # Create new quantities by weighted sum across multiple quantities
 # - Parsed by reporting.core.add_combination
@@ -310,6 +322,29 @@ combine:
   inputs:
   - quantity: land_out::CH4_0+1
     weight: 0.025
+
+# SF6 emissions
+# Unit: kt SF6/yr
+- key: SF6:nl-ya
+  inputs:
+  - quantity: emi::emissions
+    select: {e: ['SF6_Emission']}
+    weight: 1000
+
+# retr_fgases emissions
+- key: retr_fgases:nl-ya
+  inputs:
+  - quantity: emi::emissions
+    select: {e:['SF6'] }
+    weight: gwp_e  # conversion factor to Mt-CO2 equivalent(from old reporting)
+  - quantity: emi::emissions
+    select: {e:['CF4'] }
+    weight: gwp_e  # conversion factor to Mt-CO2 equivalent(from IPCC  )
+    # from old reporting
+  - quantity: emi::emissions
+    select: {e:['HFC'] }
+    weight: gwp_e
+
 
 # Prices
 
@@ -441,6 +476,12 @@ general:
     units: 'Mt / year'
   sums: true
 
+- key: emi gwp
+  comp: product
+  inputs:
+  - emi
+  - gwp
+
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind ref, wind res]
@@ -473,6 +514,8 @@ pe_iamc: &pe_iamc
 price_iamc: &price_iamc
   unit: USD_2010 / GJ
   year_time_dim: y
+
+emis_iamc: &emis_iamc
 
 
 # Replacements for entire variable name strings
@@ -576,6 +619,14 @@ iamc:
   year_time_dim: y
   var: [c, s]
 
+# SF6 emissions
+- variable: emis|SF6_Emission
+  base: SF6:nl-ya
+ # <<: *emis_iamc
+
+- variable: emis|retr_fgases
+  base: retr_fgases:nl-ya
+
 # Prices
 # Preferred method: convert all the contents of the variable at once.
 - variable: Price
@@ -658,6 +709,11 @@ report:
   members:
   - GDP|MER:iamc
   - GDP|PPP:iamc
+
+- key: emissions
+  members:
+  - emis|SF6_Emission:iamc
+  - emis|retr_fgases:iamc
 
 - key: CH4 emissions
   members:
