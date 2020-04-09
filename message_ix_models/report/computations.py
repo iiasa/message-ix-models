@@ -2,10 +2,13 @@
 
 Some of these may migrate upstream to message_ix or ixmp in the future.
 """
-from itertools import zip_longest
+import itertools
 import logging
 
 # TODO shouldn't be necessary to have so many imports; tidy up
+from iam_units import convert_gwp
+from iam_units.emissions import SPECIES
+from ixmp.reporting import Quantity
 from ixmp.reporting.computations import apply_units, select  # noqa: F401
 from ixmp.reporting.utils import collect_units
 from message_ix.reporting.computations import *  # noqa: F401,F403
@@ -83,6 +86,42 @@ def combine(*quantities, select=None, weights=None):  # noqa: F811
     return result
 
 
+def gwp_factors():
+    """Use :mod:`iam_units` to generate a Quantity of GWP factors.
+
+    The quantity is dimensionless, e.g. for converting [mass] to [mass], and
+    has dimensions:
+
+    - 'gwp metric': the name of a GWP metric, e.g. 'SAR', 'AR4', 'AR5'. All
+      metrics are on a 100-year basis.
+    - 'e': emissions species, as in MESSAGE. The entry 'HFC' is added as an
+      alias for the species 'HFC134a' from iam_units.
+    - 'e equivalent': GWP-equivalent species, always 'CO2e'.
+    """
+    dims = ['gwp metric', 'e', 'e equivalent']
+    metric = ['SARGWP100', 'AR4GWP100', 'AR5GWP100']
+    species_to = ['CO2e']  # Add to this list to perform additional conversions
+
+    data = []
+    for m, s_from, s_to in itertools.product(metric, SPECIES, species_to):
+        # Get the conversion factor from iam_units
+        factor = convert_gwp(m, (1, 'kg'), s_from, s_to).magnitude
+
+        # MESSAGEix-GLOBIOM uses e='HFC' to refer to this species
+        if s_from == 'HFC134a':
+            s_from = 'HFC'
+
+        # Store entry
+        data.append((m[:3], s_from, s_to, factor))
+
+    # Convert to Quantity object and return
+    return Quantity(
+        pd.DataFrame(data, columns=dims + ['value'])
+          .set_index(dims)['value']
+          .dropna()
+    )
+
+
 def group_sum(qty, group, sum):
     """Group by dimension *group*, then sum across dimension *sum*.
 
@@ -117,7 +156,9 @@ def update_scenario(scenario, *quantities, params=[]):
     log.info("Update '{0.model}/{0.scenario}#{0.version}'".format(scenario))
     scenario.check_out()
 
-    for order, (qty, par_name) in enumerate(zip_longest(quantities, params)):
+    for order, (qty, par_name) in enumerate(
+        itertools.zip_longest(quantities, params)
+    ):
         if not isinstance(qty, pd.DataFrame):
             # Convert a Quantity to a DataFrame
             par_name = qty.name
