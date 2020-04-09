@@ -325,12 +325,17 @@ def add_general(rep, info):
     - **inputs**: a list of keys to which the computation is applied.
     - **key**: the key for the computed quantity.
     """
-    log.info(f"Add {info['key']!r}")
+    if info['comp'] == 'product':
+        log.info(f"Add {info['key']!r} using "
+                 f"ixmp.reporting.Reporter.add_product()")
+        rep.add_product(info['key'], *info['inputs'])
+    else:
+        log.info(f"Add {info['key']!r}")
 
-    # Retrieve the function for the computation
-    f = getattr(computations, info['comp'])
-    kwargs = info.get('args', {})
-    inputs = infer_keys(rep, info['inputs'])
-    task = tuple([partial(f, **kwargs)] + inputs)
+        # Retrieve the function for the computation
+        f = getattr(computations, info['comp'])
+        kwargs = info.get('args', {})
+        inputs = infer_keys(rep, info['inputs'])
+        task = tuple([partial(f, **kwargs)] + inputs)
 
-    rep.add(info['key'], task, strict=True)
+        rep.add(info['key'], task, strict=True)

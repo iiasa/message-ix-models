@@ -22,6 +22,10 @@ units:
   #   USD = [value]
   replace:
     '???': ''
+    '-': ''
+  apply:
+    GDP: billion USD_2005 / year
+
 
 
 # Filters
@@ -242,7 +246,12 @@ combine:
     weight: -1
 
 
-# general:
+general:
+- key: gdp_ppp
+  comp: product
+  inputs:
+  - GDP
+  - MERtoPPP
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind ref, wind res]
@@ -276,12 +285,21 @@ pe_iamc: &pe_iamc
 iamc variable names:
   Input|variable|name: Final|variable|name
 
-
 # This section is used by reporting.core.add_iamc_table()
 iamc:
 #- variable: Primary Energy|Biomass
 #  base: land_out:
 #  select: {l: [land_use], c: [bioenergy]}
+
+- variable: GDP|MER
+  base: GDP:n-y
+  unit: billion USD_2010 / year
+  year_time_dim: y
+
+- variable: GDP|PPP
+  base: gdp_ppp:n-y
+  unit: billion USD_2010 / year
+  year_time_dim: y
 
 - variable: Primary Energy|Coal
   base: coal:nl-ya
@@ -339,3 +357,8 @@ report:
   - Primary Energy|Nuclear:iamc
   - Primary Energy|Solar:iamc
   - Primary Energy|Wind:iamc
+
+- key: gdp test
+  members:
+  - GDP|MER:iamc
+  - GDP|PPP:iamc
