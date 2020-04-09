@@ -96,11 +96,11 @@ def gwp_factors():
       metrics are on a 100-year basis.
     - 'e': emissions species, as in MESSAGE. The entry 'HFC' is added as an
       alias for the species 'HFC134a' from iam_units.
-    - 'e equivalent': GWP-equivalent species, always 'CO2e'.
+    - 'e equivalent': GWP-equivalent species, always 'CO2'.
     """
     dims = ['gwp metric', 'e', 'e equivalent']
     metric = ['SARGWP100', 'AR4GWP100', 'AR5GWP100']
-    species_to = ['CO2e']  # Add to this list to perform additional conversions
+    species_to = ['CO2']  # Add to this list to perform additional conversions
 
     data = []
     for m, s_from, s_to in itertools.product(metric, SPECIES, species_to):

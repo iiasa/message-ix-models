@@ -1,3 +1,4 @@
+from iam_units import format_mass
 from ixmp.reporting import Key
 
 
@@ -98,6 +99,9 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
         except KeyError:
             pass
 
+        if 'emissions' in var_name.lower():
+            df, var = collapse_gwp_info(df, var)
+
         # Apply replacements
         df = df.replace(REPLACE_DIMS)
 
@@ -117,6 +121,31 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
 
     # Drop same columns
     return df.drop(var + region, axis=1)
+
+
+def collapse_gwp_info(df, var):
+    """:meth:`collapse` helper for emissions data with GWP dimensions.
+
+    The dimensions 'e equivalent', and 'gwp metric' dimensions are combined
+    with the 'e' dimension, using a format like::
+
+        '{e} ({e equivalent}-equivalent, {GWP metric} metric)'
+
+    For example::
+
+        'SF6 (CO2-equivalent, AR5 metric)'
+    """
+    # Check that *df* contains the necessary columns
+    cols = ['e equivalent', 'gwp metric']
+    assert all(c in df.columns for c in ['e'] + cols)
+
+    # Format the column with original emissions species
+    df['e'] = df['e'] + ' (' + df['e equivalent'] + '-equivalent, ' \
+        + df['gwp metric'] + ' metric)'
+
+    # Remove columns from further processing
+    [var.remove(c) for c in cols]
+    return df.drop(cols, axis=1), var
 
 
 def infer_keys(reporter, key_or_keys, dims=[]):
