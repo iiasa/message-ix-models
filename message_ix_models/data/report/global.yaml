@@ -139,7 +139,7 @@ aggregate:
     landfill_digester1, landfill_compost1, landfill_mechbio, landfill_heatprdn,
     landfill_direct1, landfill_ele, landfill_flaring]
   Industrial Processes: [CH4_IndNonEnergyEM]
-  agri waste: [CH4_AgWasteEM]
+  AFOLU|Biomass Burning: [CH4_AgWasteEM]
   Heat: [bio_hpl, coal_hpl, foil_hpl, gas_hpl]
   Electricity: [bio_istig, bio_ppl, coal_adv, coal_ppl_u, igcc, coal_ppl,
     foil_ppl, gas_cc, gas_ppl, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl,
@@ -180,7 +180,7 @@ aggregate:
   _tag: agg
   _dim: t
 
-  fugitive: [Gases|Extraction, Gases|Transportation, Gases|Coal, Gases|Hydrogen, Liquids|Extraction, Liquids|Transportation, Liquids|Oil, Liquids|Gas, Liquids|Coal, Liquids|Biomass, Solids|Extraction, Solids|Transportation]
+  Fugitive: [Gases|Extraction, Gases|Transportation, Gases|Coal, Gases|Hydrogen, Liquids|Extraction, Liquids|Transportation, Liquids|Oil, Liquids|Gas, Liquids|Coal, Liquids|Biomass, Solids|Extraction, Solids|Transportation]
 
 - _quantities: [emi::t_CH4+agg]
   _tag: e_CH4
@@ -247,12 +247,6 @@ aggregate:
 # Create new quantities by weighted sum across multiple quantities
 # - Parsed by reporting.core.add_combination
 combine:
-# CH4 from emi
-- key: CH4:nl-t-ya
-  inputs:
-  - quantity: emi::t_CH4+agg+e_CH4
-    weight: 1
-
 # Agricultural CH4 from land_out
 - key: agri_CH4:n-y-c
   inputs:
@@ -449,9 +443,11 @@ general:
   args:
     indexers:
       t:
+      - AFOLU|Biomass Burning
       - CH4 rescomm
       - CH4 transport
       - Electricity
+      - Fugitive
       - Gases|Coal
       - Gases|Extraction
       - Gases|Hydrogen
@@ -586,21 +582,6 @@ iamc:
   var: [t]
   unit: 'Mt / year'  # CH4; the species is indicated by 'variable'
 
-# - variable: Emissions|CH4|Energy|Supply|Fugitive1
-#   base: CH4:nl-t-ya
-#   select: {t: [fugitive]}
-#   <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Fugitive
-  base: emi:nl-t-ya-e:t_CH4+agg+e_CH4
-  select: {t: [fugitive], e: [CH4]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|AFOLU|Biomass Burning
-  base: CH4:nl-t-ya
-  select: {t: [agri waste]}
-  <<: *emis_iamc
-
 - variable: GLOBIOM|Emissions|CH4 Emissions Total
   base: agri_CH4:n-y-c
   select: {c: [agri]}
@@ -704,11 +685,9 @@ report:
   members:
   - Emissions|CH4:iamc
   # - Emissions|CH4|Fossil Fuels and Industry:iamc
-  # - Emissions|CH4|AFOLU|Biomass Burning:iamc
   # - Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management:iamc
   # - Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive:iamc
