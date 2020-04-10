@@ -6,7 +6,7 @@ import itertools
 import logging
 
 # TODO shouldn't be necessary to have so many imports; tidy up
-from iam_units import convert_gwp
+from iam_units import convert_gwp, registry
 from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
 from ixmp.reporting.computations import apply_units, select  # noqa: F401
@@ -20,8 +20,20 @@ from message_data.model.transport.report import (  # noqa: F401
     check_computation as transport_check
 )
 
-
 log = logging.getLogger(__name__)
+
+
+def apply_units(qty, units):
+    """Simply apply *units* to *qty*."""
+    existing = getattr(qty.attrs.get('_unit', {}), 'dimensionality', {})
+    new_units = registry(units)
+
+    if len(existing) and existing != new_units:
+        log.info(f'Overwriting {existing} with {new_units}')
+
+    qty.attrs['_unit'] = new_units
+
+    return qty
 
 
 def combine(*quantities, select=None, weights=None):  # noqa: F811
