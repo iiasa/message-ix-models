@@ -158,7 +158,7 @@ aggregate:
     oil_extr_6, oil_extr_7, oil_extr_8]
   Liquids|Transportation: [loil_t_d, foil_t_d, meth_t_d, eth_t_d]
   Liquids|Oil: [ref_lol, ref_hil, SO2_scrub_ref]
-  Liquids|Gas: [meth_ng, meth_ng_ccs]
+  Liquids|Natural Gas: [meth_ng, meth_ng_ccs]
   Liquids|Coal: [meth_coal, meth_coal_ccs, syn_liq, syn_liq_ccs]
   Liquids|Biomass: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
 
@@ -461,7 +461,7 @@ general:
       - Liquids|Biomass
       - Liquids|Coal
       - Liquids|Extraction
-      - Liquids|Gas
+      - Liquids|Natural Gas
       - Liquids|Oil
       - Liquids|Transportation
       - Solids|Extraction
@@ -580,101 +580,11 @@ iamc:
 # Emissions
 
 # CH4-related IAMC variables
-- variable: Emissions|CH4 (new)
+- variable: Emissions|CH4
   # Auto-sum over dimensions yv, m, h
   base: CH4 new:nl-t-ya
   var: [t]
   unit: 'Mt / year'  # CH4; the species is indicated by 'variable'
-
-- variable: Emissions|CH4|Industrial Processes
-  base: CH4:nl-t-ya
-  select: {t: [Industrial Processes]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Waste
-  base: CH4:nl-t-ya
-  select: {t: [Waste]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Demand|Residential and Commercial
-  base: CH4:nl-t-ya
-  select: {t: [CH4 rescomm]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Demand|Transportation|Road Rail and Domestic Shipping
-  base: CH4:nl-t-ya
-  select: {t: [CH4 transport]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Heat
-  base: CH4:nl-t-ya
-  select: {t: [Heat]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Electricity
-  base: CH4:nl-t-ya
-  select: {t: [Electricity]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Gases|Extraction]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Gases|Transportation|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Gases|Transportation]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Gases|Coal]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Gases|Hydrogen]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Liquids|Extraction|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Liquids|Extraction]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Liquids|Transportation|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Liquids|Transportation]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Liquids|Oil|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Liquids|Oil]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Liquids|Natural Gas|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Liquids|Gas]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Liquids|Coal|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Liquids|Coal]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Liquids|Biomass|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Liquids|Biomass]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Solids|Extraction]}
-  <<: *emis_iamc
-
-- variable: Emissions|CH4|Energy|Supply|Solids|Transportation|Fugitive
-  base: CH4:nl-t-ya
-  select: {t: [Solids|Transportation]}
-  <<: *emis_iamc
 
 # - variable: Emissions|CH4|Energy|Supply|Fugitive1
 #   base: CH4:nl-t-ya
@@ -792,34 +702,16 @@ report:
 
 - key: CH4_emissions
   members:
-  - Emissions|CH4 (new):iamc
+  - Emissions|CH4:iamc
   # - Emissions|CH4|Fossil Fuels and Industry:iamc
-  - Emissions|CH4|Energy|Demand|Residential and Commercial:iamc
-  - Emissions|CH4|Energy|Demand|Transportation|Road Rail and Domestic Shipping:iamc
-  - Emissions|CH4|Energy|Supply|Heat:iamc
-  - Emissions|CH4|Energy|Supply|Electricity:iamc
-  - Emissions|CH4|Industrial Processes:iamc
-  - Emissions|CH4|Waste:iamc
   # - Emissions|CH4|AFOLU|Biomass Burning:iamc
   # - Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management:iamc
   # - Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Transportation|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Liquids|Biomass|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Liquids|Coal|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Liquids|Extraction|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Liquids|Natural Gas|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Liquids|Oil|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Liquids|Transportation|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Solids|Transportation|Fugitive:iamc
   # - GLOBIOM|Emissions|CH4 Emissions Total:iamc
 
 - key: price test
