@@ -14,8 +14,8 @@ REPLACE = {
         'Final Energy': 'Final Energy|Residential',
     },
     't': {
-        'Ch4 rescomm': 'Energy|Demand|Residential and Commercial',
-        'Ch4 transport':
+        'Ch4 Rescomm': 'Energy|Demand|Residential and Commercial',
+        'Ch4 Transport':
             'Energy|Demand|Transportation|Road Rail and Domestic Shipping',
     },
 
