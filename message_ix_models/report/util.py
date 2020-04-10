@@ -13,12 +13,18 @@ REPLACE = {
     'l': {
         'Final Energy': 'Final Energy|Residential',
     },
+    't': {
+        'Ch4 rescomm': 'Energy|Demand|Residential and Commercial',
+        'Ch4 transport':
+            'Energy|Demand|Transportation|Road Rail and Domestic Shipping',
+    },
 
     # Applied after the variable column is assembled. Partial string
     # replacement; handled as regular expressions.
     'variable': {
-        r'(Emissions\|CH4[^\|]*)\|(Liquids.*)$':
+        r'(Emissions\|CH4[^\|]*)\|((Gases|Liquids|Solids|Elec|Heat).*)$':
             r'\1|Energy|Supply|\2|Fugitive',
+
         r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
         r'Residential\|Gas': 'Residential|Gases|Natural Gas',
         r"Import Energy\|Lng": "Primary Energy|Gas",
@@ -59,6 +65,10 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
     .core.add_iamc_table
     """
     if replace_common:
+        for dim in 'clt':
+            if dim in df.columns:
+                df[dim] = df[dim].astype(str).str.title()
+
         try:
             # Level: to title case, add the word 'energy'
             # FIXME astype() here should not be necessary; debug
