@@ -132,7 +132,7 @@ aggregate:
  # Emission CH4
  # Is there any way to group over multiple dimensions?
 - _quantities: [emi]
-  _tag: t_CH4
+  _tag: CH4_0
   _dim: t
 
   Waste: [CH4_WasteBurnEM, CH4_DomWasteWa, CH4_IndWasteWa, CH4n_landfills,
@@ -173,30 +173,19 @@ aggregate:
   CH4 transport: [coal_trp, foil_trp, loil_trp, gas_trp, elec_trp, meth_ic_trp,
     eth_ic_trp, meth_fc_trp, eth_fc_trp, h2_fc_trp]
 
-  # aggregates # This doesn't give outputs.
-  # fugitive: [gases_extr, gases_extr_fug, gases_transportation, gases_coal, gases_hydrogen, liquids_extraction, liquids_transportation ,liquids_oil, liquids_gas, liquids_coal, liquids_biomass, solid_extraction, solid_transportation]
-
-- _quantities: [emi::t_CH4]
-  _tag: agg
+# Second stage of CH4 aggregation
+- _quantities: [emi::CH4_0]
+  _tag: '1'
   _dim: t
 
   Fugitive: [Gases|Extraction, Gases|Transportation, Gases|Coal, Gases|Hydrogen, Liquids|Extraction, Liquids|Transportation, Liquids|Oil, Liquids|Gas, Liquids|Coal, Liquids|Biomass, Solids|Extraction, Solids|Transportation]
 
-- _quantities: [emi::t_CH4+agg]
-  _tag: e_CH4
+# Third stage of CH4 aggregation
+- _quantities: [emi::CH4_0+1]
+  _tag: '2'
   _dim: e
 
   CH4: [CH4_Emission, CH4_nonenergy, CH4_new_Emission, CH4_Emission_bunkers]
-
-# Agricultural CH4 emissions
-- _quantities: [land_out]
-  _tag: c_CH4
-  _dim: c
-
-  agri: [Agri_CH4]
-  enteric: [Emissions|CH4|Land Use|Agriculture|Enteric Fermentation]
-  manure:  [Emissions|CH4|Land Use|Agriculture|AWM]
-  rice: [Emissions|CH4|Land Use|Agriculture|Rice]
 
 - _quantities: [in, out]
   _tag: t_d
@@ -247,14 +236,7 @@ aggregate:
 # Create new quantities by weighted sum across multiple quantities
 # - Parsed by reporting.core.add_combination
 combine:
-# Agricultural CH4 from land_out
-- key: agri_CH4:n-y-c
-  inputs:
-  - quantity: land_out::c_CH4
-    select: {l:[land_use_reporting]}
-    weight: 0.025 #CHECK: Seems that this is used??
-
-  # Name and dimensions of quantity to be created
+# Name and dimensions of quantity to be created
 - key: coal:nl-ya
   # Inputs to sum
   inputs:
@@ -437,33 +419,6 @@ general:
   - GDP
   - MERtoPPP
 
-- key: CH4 new:nl-t-ya
-  comp: select
-  inputs: [emi:nl-t-ya:t_CH4+agg+e_CH4]
-  args:
-    indexers:
-      t:
-      - AFOLU|Biomass Burning
-      - CH4 rescomm
-      - CH4 transport
-      - Electricity
-      - Fugitive
-      - Gases|Coal
-      - Gases|Extraction
-      - Gases|Hydrogen
-      - Gases|Transportation
-      - Heat
-      - Industrial Processes
-      - Liquids|Biomass
-      - Liquids|Coal
-      - Liquids|Extraction
-      - Liquids|Natural Gas
-      - Liquids|Oil
-      - Liquids|Transportation
-      - Solids|Extraction
-      - Solids|Transportation
-      - Waste
-
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind ref, wind res]
@@ -498,8 +453,16 @@ price_iamc: &price_iamc
   year_time_dim: y
 
 
+# Replacements for entire variable name strings
 iamc variable names:
-  Input|variable|name: Final|variable|name
+  # TODO move these to regular expressions in util.REPLACE. The full-name
+  #      replacement doesn't work, because the land-use scenario ('s') is
+  #      appended
+  land_out_|Agri_CH4: GLOBIOM|Emissions|CH4 Emissions Total
+  land_out_|Emissions|CH4|Land Use|Agriculture|Enteric Fermentation: |
+    Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation
+  land_out_|Emissions|CH4|Land Use|Agriculture|AWM: |
+    Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management
 
 
 emis_iamc: &emis_iamc
@@ -578,23 +541,45 @@ iamc:
 # CH4-related IAMC variables
 - variable: Emissions|CH4
   # Auto-sum over dimensions yv, m, h
-  base: CH4 new:nl-t-ya
+  base: emi:nl-t-ya:CH4_0+1+2
   var: [t]
   unit: 'Mt / year'  # CH4; the species is indicated by 'variable'
+  select:
+    t:
+    - AFOLU|Biomass Burning
+    - CH4 rescomm
+    - CH4 transport
+    - Electricity
+    - Fugitive
+    - Gases|Coal
+    - Gases|Extraction
+    - Gases|Hydrogen
+    - Gases|Transportation
+    - Heat
+    - Industrial Processes
+    - Liquids|Biomass
+    - Liquids|Coal
+    - Liquids|Extraction
+    - Liquids|Natural Gas
+    - Liquids|Oil
+    - Liquids|Transportation
+    - Solids|Extraction
+    - Solids|Transportation
+    - Waste
 
-- variable: GLOBIOM|Emissions|CH4 Emissions Total
-  base: agri_CH4:n-y-c
-  select: {c: [agri]}
-  <<: *landemis_iamc
-
-- variable: Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation
-  base: agri_CH4:n-y-c
-  select: {c: [enteric]}
-  <<: *landemis_iamc
-
-- variable: Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management
-  base: agri_CH4:n-y-c
-  select: {c: [manure]}
+# FIXME this needs to have a have a factor of 0.025 applied to it, for some
+#       reason
+- variable: land_out_
+  base: land_out:n-s-y-c-l
+  var: [c, s]
+  drop: [l]
+  select:
+    c:
+    - Agri_CH4
+    - Emissions|CH4|Land Use|Agriculture|Enteric Fermentation
+    - Emissions|CH4|Land Use|Agriculture|AWM
+    l:
+    - land_use_reporting
   <<: *landemis_iamc
 
 # Prices
@@ -684,14 +669,12 @@ report:
 - key: CH4_emissions
   members:
   - Emissions|CH4:iamc
+  - land_out_:iamc
   # - Emissions|CH4|Fossil Fuels and Industry:iamc
-  # - Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management:iamc
-  # - Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive:iamc
-  # - GLOBIOM|Emissions|CH4 Emissions Total:iamc
 
 - key: price test
   members:

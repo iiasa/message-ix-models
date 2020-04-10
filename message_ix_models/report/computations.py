@@ -92,28 +92,6 @@ def group_sum(qty, group, sum):
                   dim=group)
 
 
-# Temporary: will be added to ixmp
-def select(qty, indexers, inverse=False):
-    """Select from *qty* based on *indexers*.
-    Parameters
-    ----------
-    qty : .Quantity
-    select : list of dict
-        Elements to be selected from each quantity. Must have the same number
-        of elements as `quantities`.
-    inverse : bool, optional
-        If :obj:`True`, *remove* the items in indexers instead of keeping them.
-    """
-    if inverse:
-        new_indexers = {}
-        for dim, labels in indexers.items():
-            new_indexers[dim] = list(filter(lambda l: l not in labels,
-                                            qty.coords[dim]))
-        indexers = new_indexers
-
-    return qty.sel(indexers)
-
-
 def share_curtailment(curt, *parts):
     """Apply a share of *curt* to the first of *parts*.
 
