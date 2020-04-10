@@ -135,23 +135,22 @@ aggregate:
   _tag: t_CH4
   _dim: t
 
-  waste:  [CH4_WasteBurnEM, CH4_DomWasteWa, CH4_IndWasteWa, CH4n_landfills,
+  Waste: [CH4_WasteBurnEM, CH4_DomWasteWa, CH4_IndWasteWa, CH4n_landfills,
     landfill_digester1, landfill_compost1, landfill_mechbio, landfill_heatprdn,
     landfill_direct1, landfill_ele, landfill_flaring]
-  industry: [CH4_IndNonEnergyEM]
+  Industrial Processes: [CH4_IndNonEnergyEM]
   agri waste: [CH4_AgWasteEM]
-  heat:   [bio_hpl, coal_hpl, foil_hpl, gas_hpl]
-  elec:   [bio_istig, bio_ppl, coal_adv, coal_ppl_u, igcc, coal_ppl, foil_ppl,
-    gas_cc, gas_ppl, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl,
+  Heat: [bio_hpl, coal_hpl, foil_hpl, gas_hpl]
+  Electricity: [bio_istig, bio_ppl, coal_adv, coal_ppl_u, igcc, coal_ppl,
+    foil_ppl, gas_cc, gas_ppl, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl,
     coal_adv_ccs, igcc_ccs, gas_cc_ccs, gas_ct, gas_htfc, bio_istig_ccs]
 
   # Fugitive - gas
-  gases_extr: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5,
-    gas_extr_6, gas_extr_7, gas_extr_8]
-  gases_extr_fug: [flaring_CO2]
-  gases_transportation: [gas_t_d_ch4, gas_t_d]
-  gases_coal: [coal_gas]
-  gases_hydrogen: [h2_smr, h2_smr_ccs, h2_coal, h2_coal_ccs, h2_bio, h2_bio_ccs]
+  Gases|Extraction: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5,
+    gas_extr_6, gas_extr_7, gas_extr_8, flaring_CO2]
+  Gases|Transportation: [gas_t_d_ch4, gas_t_d]
+  Gases|Coal: [coal_gas]
+  Gases|Hydrogen: [h2_smr, h2_smr_ccs, h2_coal, h2_coal_ccs, h2_bio, h2_bio_ccs]
 
   # Fugitive - liquid
   Liquids|Extraction: [oil_extr_1_ch4, oil_extr_1, oil_extr_2_ch4, oil_extr_2,
@@ -164,14 +163,15 @@ aggregate:
   Liquids|Biomass: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
 
   # Fugitive - solid
-  solid_extraction: [coal_extr_ch4, coal_extr, lignite_extr]
-  solid_transportation: [coal_t_d, biomass_t_d]
+  Solids|Extraction: [coal_extr_ch4, coal_extr, lignite_extr]
+  Solids|Transportation: [coal_t_d, biomass_t_d]
 
   # Demand
-  rescomm: [sp_el_RC, solar_pv_RC, h2_fc_RC, coal_rc, foil_rc, loil_rc, gas_rc,
-    elec_rc, biomass_rc, heat_rc, meth_rc, eth_rc, h2_rc, hp_el_rc, hp_gas_rc,
-    solar_rc, biomass_nc, other_sc]
-  transport: [coal_trp, foil_trp, loil_trp, gas_trp, elec_trp, meth_ic_trp, eth_ic_trp, meth_fc_trp, eth_fc_trp, h2_fc_trp]
+  CH4 rescomm: [sp_el_RC, solar_pv_RC, h2_fc_RC, coal_rc, foil_rc, loil_rc,
+    gas_rc, elec_rc, biomass_rc, heat_rc, meth_rc, eth_rc, h2_rc, hp_el_rc,
+    hp_gas_rc, solar_rc, biomass_nc, other_sc]
+  CH4 transport: [coal_trp, foil_trp, loil_trp, gas_trp, elec_trp, meth_ic_trp,
+    eth_ic_trp, meth_fc_trp, eth_fc_trp, h2_fc_trp]
 
   # aggregates # This doesn't give outputs.
   # fugitive: [gases_extr, gases_extr_fug, gases_transportation, gases_coal, gases_hydrogen, liquids_extraction, liquids_transportation ,liquids_oil, liquids_gas, liquids_coal, liquids_biomass, solid_extraction, solid_transportation]
@@ -180,7 +180,7 @@ aggregate:
   _tag: agg
   _dim: t
 
-  fugitive: [gases_extr, gases_extr_fug, gases_transportation, gases_coal, gases_hydrogen, Liquids|Extraction, Liquids|Transportation, Liquids|Oil, Liquids|Gas, Liquids|Coal, Liquids|Biomass, solid_extraction, solid_transportation]
+  fugitive: [Gases|Extraction, Gases|Transportation, Gases|Coal, Gases|Hydrogen, Liquids|Extraction, Liquids|Transportation, Liquids|Oil, Liquids|Gas, Liquids|Coal, Liquids|Biomass, Solids|Extraction, Solids|Transportation]
 
 - _quantities: [emi::t_CH4+agg]
   _tag: e_CH4
@@ -562,52 +562,52 @@ iamc:
 
 - variable: Emissions|CH4|Industrial Processes
   base: CH4:nl-t-ya
-  select: {t: [industry]}
+  select: {t: [Industrial Processes]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Waste
   base: CH4:nl-t-ya
-  select: {t: [waste]}
+  select: {t: [Waste]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Demand|Residential and Commercial
   base: CH4:nl-t-ya
-  select: {t: [rescomm]}
+  select: {t: [CH4 rescomm]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Demand|Transportation|Road Rail and Domestic Shipping
   base: CH4:nl-t-ya
-  select: {t: [transport]}
+  select: {t: [CH4 transport]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Heat
   base: CH4:nl-t-ya
-  select: {t: [heat]}
+  select: {t: [Heat]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Electricity
   base: CH4:nl-t-ya
-  select: {t: [elec]}
+  select: {t: [Electricity]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [gases_extr, gases_extr_fug]}
+  select: {t: [Gases|Extraction]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Gases|Transportation|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [gases_transportation]}
+  select: {t: [Gases|Transportation]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [gases_coal]}
+  select: {t: [Gases|Coal]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [gases_hydrogen]}
+  select: {t: [Gases|Hydrogen]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Liquids|Extraction|Fugitive
@@ -642,12 +642,12 @@ iamc:
 
 - variable: Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [solid_extraction]}
+  select: {t: [Solids|Extraction]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Solids|Transportation|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [solid_transportation]}
+  select: {t: [Solids|Transportation]}
   <<: *emis_iamc
 
 # - variable: Emissions|CH4|Energy|Supply|Fugitive1
@@ -768,22 +768,22 @@ report:
   members:
   - Emissions|CH4 (new):iamc
   # - Emissions|CH4|Fossil Fuels and Industry:iamc
-  # - Emissions|CH4|Energy|Demand|Residential and Commercial:iamc
-  # - Emissions|CH4|Energy|Demand|Transportation|Road Rail and Domestic Shipping:iamc
-  # - Emissions|CH4|Energy|Supply|Heat:iamc
-  # - Emissions|CH4|Energy|Supply|Electricity:iamc
-  # - Emissions|CH4|Industrial Processes:iamc
-  # - Emissions|CH4|Waste:iamc
+  - Emissions|CH4|Energy|Demand|Residential and Commercial:iamc
+  - Emissions|CH4|Energy|Demand|Transportation|Road Rail and Domestic Shipping:iamc
+  - Emissions|CH4|Energy|Supply|Heat:iamc
+  - Emissions|CH4|Energy|Supply|Electricity:iamc
+  - Emissions|CH4|Industrial Processes:iamc
+  - Emissions|CH4|Waste:iamc
   # - Emissions|CH4|AFOLU|Biomass Burning:iamc
   # - Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management:iamc
   # - Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive:iamc
+  - Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive:iamc
+  - Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive:iamc
+  - Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Gases|Transportation|Fugitive:iamc
+  - Emissions|CH4|Energy|Supply|Gases|Transportation|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Liquids|Biomass|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Liquids|Coal|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Liquids|Extraction|Fugitive:iamc
@@ -792,8 +792,8 @@ report:
   - Emissions|CH4|Energy|Supply|Liquids|Transportation|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Solids|Transportation|Fugitive:iamc
+  - Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive:iamc
+  - Emissions|CH4|Energy|Supply|Solids|Transportation|Fugitive:iamc
   # - GLOBIOM|Emissions|CH4 Emissions Total:iamc
 
 - key: price test
