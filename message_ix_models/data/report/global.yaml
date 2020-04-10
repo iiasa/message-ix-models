@@ -442,6 +442,32 @@ general:
   inputs:
   - GDP
   - MERtoPPP
+
+- key: CH4 new:nl-t-ya
+  comp: select
+  inputs: [emi:nl-t-ya:t_CH4+agg+e_CH4]
+  args:
+    indexers:
+      t:
+      - CH4 rescomm
+      - CH4 transport
+      - Electricity
+      - Gases|Coal
+      - Gases|Extraction
+      - Gases|Hydrogen
+      - Gases|Transportation
+      - Heat
+      - Industrial Processes
+      - Liquids|Biomass
+      - Liquids|Coal
+      - Liquids|Extraction
+      - Liquids|Gas
+      - Liquids|Oil
+      - Liquids|Transportation
+      - Solids|Extraction
+      - Solids|Transportation
+      - Waste
+
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind ref, wind res]
@@ -556,7 +582,7 @@ iamc:
 # CH4-related IAMC variables
 - variable: Emissions|CH4 (new)
   # Auto-sum over dimensions yv, m, h
-  base: CH4:nl-t-ya
+  base: CH4 new:nl-t-ya
   var: [t]
   unit: 'Mt / year'  # CH4; the species is indicated by 'variable'
 
