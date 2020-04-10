@@ -152,14 +152,14 @@ aggregate:
   gases_hydrogen: [h2_smr, h2_smr_ccs, h2_coal, h2_coal_ccs, h2_bio, h2_bio_ccs]
 
   # Fugitive - liquid
-  liquids_extraction: [oil_extr_1_ch4, oil_extr_1, oil_extr_2_ch4, oil_extr_2,
+  Liquids|Extraction: [oil_extr_1_ch4, oil_extr_1, oil_extr_2_ch4, oil_extr_2,
     oil_extr_3_ch4, oil_extr_3, oil_extr_4_ch4, oil_extr_4, oil_extr_5,
     oil_extr_6, oil_extr_7, oil_extr_8]
-  liquids_transportation: [loil_t_d, foil_t_d, meth_t_d, eth_t_d]
-  liquids_oil: [ref_lol, ref_hil, SO2_scrub_ref]
-  liquids_gas: [meth_ng, meth_ng_ccs]
-  liquids_coal: [meth_coal, meth_coal_ccs, syn_liq, syn_liq_ccs]
-  liquids_biomass: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
+  Liquids|Transportation: [loil_t_d, foil_t_d, meth_t_d, eth_t_d]
+  Liquids|Oil: [ref_lol, ref_hil, SO2_scrub_ref]
+  Liquids|Gas: [meth_ng, meth_ng_ccs]
+  Liquids|Coal: [meth_coal, meth_coal_ccs, syn_liq, syn_liq_ccs]
+  Liquids|Biomass: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
 
   # Fugitive - solid
   solid_extraction: [coal_extr_ch4, coal_extr, lignite_extr]
@@ -178,7 +178,7 @@ aggregate:
   _tag: agg
   _dim: t
 
-  fugitive: [gases_extr, gases_extr_fug, gases_transportation, gases_coal, gases_hydrogen, liquids_extraction, liquids_transportation ,liquids_oil, liquids_gas, liquids_coal, liquids_biomass, solid_extraction, solid_transportation]
+  fugitive: [gases_extr, gases_extr_fug, gases_transportation, gases_coal, gases_hydrogen, Liquids|Extraction, Liquids|Transportation, Liquids|Oil, Liquids|Gas, Liquids|Coal, Liquids|Biomass, solid_extraction, solid_transportation]
 
 - _quantities: [emi::t_CH4+agg]
   _tag: e_CH4
@@ -245,13 +245,10 @@ aggregate:
 # Create new quantities by weighted sum across multiple quantities
 # - Parsed by reporting.core.add_combination
 combine:
-
 # CH4 from emi
 - key: CH4:nl-t-ya
   inputs:
-  - quantity: emi::t_CH4
-    select: {e: [CH4_Emission, CH4_nonenergy, CH4_new_Emission,
-      CH4_Emission_bunkers]}
+  - quantity: emi::t_CH4+agg+e_CH4
     weight: 1
 
 # Agricultural CH4 from land_out
@@ -607,32 +604,32 @@ iamc:
 
 - variable: Emissions|CH4|Energy|Supply|Liquids|Extraction|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [liquids_extraction]}
+  select: {t: [Liquids|Extraction]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Liquids|Transportation|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [liquids_transportation]}
+  select: {t: [Liquids|Transportation]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Liquids|Oil|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [liquids_oil]}
+  select: {t: [Liquids|Oil]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Liquids|Natural Gas|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [liquids_gas]}
+  select: {t: [Liquids|Gas]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Liquids|Coal|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [liquids_coal]}
+  select: {t: [Liquids|Coal]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Liquids|Biomass|Fugitive
   base: CH4:nl-t-ya
-  select: {t: [liquids_biomass]}
+  select: {t: [Liquids|Biomass]}
   <<: *emis_iamc
 
 - variable: Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive
