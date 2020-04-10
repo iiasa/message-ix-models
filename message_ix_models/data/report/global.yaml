@@ -29,6 +29,8 @@ units:
     # FIXME 'carbon' is not a unit; these should be t, kt, Mt or similar
     PRICE_EMISSION: USD_2005 / carbon
     tax_emission: USD_2005 / carbon
+    # Temporary: requires changes in iiasa/message_data#115
+    emission_factor: 'Mt / year'
 
 
 # Filters
@@ -552,6 +554,12 @@ iamc:
 # Emissions
 
 # CH4-related IAMC variables
+- variable: Emissions|CH4 (new)
+  # Auto-sum over dimensions yv, m, h
+  base: CH4:nl-t-ya
+  var: [t]
+  unit: 'Mt / year'  # CH4; the species is indicated by 'variable'
+
 - variable: Emissions|CH4|Industrial Processes
   base: CH4:nl-t-ya
   select: {t: [industry]}
@@ -756,27 +764,26 @@ report:
   - GDP|MER:iamc
   - GDP|PPP:iamc
 
-
-
 - key: CH4_emissions
   members:
+  - Emissions|CH4 (new):iamc
   # - Emissions|CH4|Fossil Fuels and Industry:iamc
-  - Emissions|CH4|Energy|Demand|Residential and Commercial:iamc
-  - Emissions|CH4|Energy|Demand|Transportation|Road Rail and Domestic Shipping:iamc
-  - Emissions|CH4|Energy|Supply|Heat:iamc
-  - Emissions|CH4|Energy|Supply|Electricity:iamc
-  - Emissions|CH4|Industrial Processes:iamc
-  - Emissions|CH4|Waste:iamc
-  - Emissions|CH4|AFOLU|Biomass Burning:iamc
-  - Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management:iamc
-  - Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation:iamc
+  # - Emissions|CH4|Energy|Demand|Residential and Commercial:iamc
+  # - Emissions|CH4|Energy|Demand|Transportation|Road Rail and Domestic Shipping:iamc
+  # - Emissions|CH4|Energy|Supply|Heat:iamc
+  # - Emissions|CH4|Energy|Supply|Electricity:iamc
+  # - Emissions|CH4|Industrial Processes:iamc
+  # - Emissions|CH4|Waste:iamc
+  # - Emissions|CH4|AFOLU|Biomass Burning:iamc
+  # - Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management:iamc
+  # - Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive:iamc
+  # - Emissions|CH4|Energy|Supply|Fugitive:iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Coal|Fugitive:iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Extraction|Fugitive:iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Hydrogen|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Gases|Transportation|Fugitive:iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Transportation|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Liquids|Biomass|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Liquids|Coal|Fugitive:iamc
   - Emissions|CH4|Energy|Supply|Liquids|Extraction|Fugitive:iamc
@@ -785,9 +792,9 @@ report:
   - Emissions|CH4|Energy|Supply|Liquids|Transportation|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive:iamc
-  - Emissions|CH4|Energy|Supply|Solids|Transportation|Fugitive:iamc
-  - GLOBIOM|Emissions|CH4 Emissions Total:iamc
+  # - Emissions|CH4|Energy|Supply|Solids|Extraction|Fugitive:iamc
+  # - Emissions|CH4|Energy|Supply|Solids|Transportation|Fugitive:iamc
+  # - GLOBIOM|Emissions|CH4 Emissions Total:iamc
 
 - key: price test
   members:
