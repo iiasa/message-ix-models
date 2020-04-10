@@ -22,7 +22,8 @@ REPLACE = {
     # Applied after the variable column is assembled. Partial string
     # replacement; handled as regular expressions.
     'variable': {
-        r'(Emissions\|CH4[^\|]*)\|((Gases|Liquids|Solids|Elec|Heat).*)$':
+        r'(Emissions\|CH4)\|Fugitive': r'\1|Energy|Supply|Fugitive',
+        r'(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)$':
             r'\1|Energy|Supply|\2|Fugitive',
 
         r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
