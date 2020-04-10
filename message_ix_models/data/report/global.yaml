@@ -30,8 +30,11 @@ units:
     # FIXME 'carbon' is not a unit; these should be t, kt, Mt or similar
     PRICE_EMISSION: USD_2005 / carbon
     tax_emission: USD_2005 / carbon
-    # Temporary: requires changes in iiasa/message_data#115
-    emission_factor: 'Mt / year'
+    # Inconsistent units. These quantities (and others computed from them)
+    # must be split apart into separate quantities with consistent units.
+    # Also applies to "emi". This value preserved because it works for the
+    # reporting of CH4 emissions.
+    emission_factor: "Mt / year"
 
 # Files with external data
 #
@@ -238,7 +241,7 @@ aggregate:
   oil: [oil_exp, loil_exp, foil_exp]
 
 # Aggregate emissions species
-- _quantities: [emi GWPe]
+- _quantities: [emi::gwpe]
   _tag: agg
   _dim: e
 
@@ -460,17 +463,46 @@ general:
     units: 'Mt / year'
   sums: true
 
-# GWP factors retrieved from the iam_units package
+# Remove elements from 'emi' so that the remainder have consistent units.
+# 1. 'TCE' emissions. These appear to be used for some internal model purpose
+#    (maybe relations?) and have units 'tC'.
+# 2. Water-related emissions. These have units '-'.
+#
+# TODO check if this is correct. If the actual units for different 'e' values
+#      are not the same, then add another 'comp: select' so that emi is split
+#      into two (or more) separate quantities, each with consistent units
+- key: emi::_0
+  comp: select
+  inputs: [emi]
+  args:
+    # Remove the elements below
+    inverse: true
+    indexers:
+      e: [TCE,
+          fresh_consumption, fresh_thermal_pollution, fresh_wastewater,
+          instream_consumption,
+          saline_consumption, saline_thermal_polution, saline_wastewater]
+
+# <emi::_0> filters out elements with units other than 'kg / kWa'. The units
+# of emission_factor are stored as 'kg / kWa', and 'ACT' is in GWa / year, so
+# assigning kt / year gives correct results.
+#
+- key: emi:nl-t-yv-ya-m-e-h:ghg
+  inputs: [emi::_0]
+  comp: apply_units
+  args:
+    units: 'kt / year'  # TODO check if this is correct
+  sums: true
+
+# GWP factors retrieved from the iam_units package. Dimensionless
 - key: gwp factors:gwp metric-e-e equivalent
   comp: gwp_factors
-  add args:
-    index: true
 
 # Emissions converted to GWP-equivalent species
-- key: emi GWPe
+- key: emi::gwpe
   comp: product
   inputs:
-  - emi
+  - emi::ghg
   - gwp factors
 
 # - key: wind onshore
@@ -611,11 +643,12 @@ iamc:
 # SF6 emissions
 - variable: Emissions
   # Auto sum over t, yv, m, h
-  base: emi GWPe:nl-ya-e-gwp metric-e equivalent:agg
+  base: emi:nl-ya-e-gwp metric-e equivalent:gwpe+agg
   var:  # Add these to 'variable' column; collapse_gwp_info() is applied
   - e
   - e equivalent
   - gwp metric
+  unit: Mt / year  # Species captured in 'e equivalent'
 
 # Prices
 # Preferred method: convert all the contents of the variable at once.
