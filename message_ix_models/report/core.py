@@ -90,7 +90,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
     [config.pop(k) for k in list(config.keys()) if k.startswith('_')]
 
     # If needed, get the full key for *quantity*
-    key = infer_keys(rep, key)[0]
+    key = infer_keys(rep, key)
 
     if output_path:
         # Add a new computation that writes *key* to the specified file
@@ -147,7 +147,7 @@ def add_aggregate(rep: Reporter, info):
     for qty in quantities:
         keys = rep.aggregate(qty, tag, groups, sums=True)
 
-        log.info(f'Add {keys[0]!r} + {len(keys)-1} partial sums')
+        log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
 
 
 def add_combination(rep: Reporter, info):
@@ -217,8 +217,9 @@ def add_combination(rep: Reporter, info):
 
     added = rep.add(key, c, strict=True, index=True, sums=True)
 
-    log.info(f"Add {key}\n  computed from {quantities!r}\n  + {len(added)-1} "
-             "partial sums")
+    log.info(f'Add {repr(key)} + {len(added)-1} partial sums')
+    log.debug(f'    as combination of')
+    log.debug(f'    {repr(quantities)}')
 
 
 def add_iamc_table(rep: Reporter, info):
@@ -310,13 +311,13 @@ def add_iamc_table(rep: Reporter, info):
     # Revise the 'message:default' report to include the last key in the chain
     rep.add('message:default', rep.graph['message:default'] + (keys[-1],))
 
-    log.info(f'Add {keys[-1]!r} from {keys[0]!r}')
-    log.debug(f'  {len(keys)} keys total')
+    log.info(f'Add {repr(keys[-1])} from {repr(keys[0])}')
+    log.debug(f'    {len(keys)} keys total')
 
 
 def add_report(rep: Reporter, info):
     """Add items from the 'report' tree in the config file."""
-    log.info(f"Add {info['key']!r}")
+    log.info(f"Add report {info['key']} with {len(info['members'])} table(s)")
 
     # Concatenate pyam data structures
     rep.add(info['key'], tuple([concat] + info['members']), strict=True)
@@ -329,22 +330,32 @@ def add_general(rep: Reporter, info):
     file. Entry *info* must contain:
 
     - **comp**: this refers to the name of a computation that is available in
-      the namespace of :mod:`message_data.reporting.computations`.
-    - **args** (:class:`dict`, optional): keyword arguments to the computation.
-    - **inputs**: a list of keys to which the computation is applied.
+      the namespace of :mod:`message_data.reporting.computations`. If
+      'product', then :meth:`ixmp.Reporter.add_product` is called instead.
     - **key**: the key for the computed quantity.
+    - **inputs**: a list of keys to which the computation is applied.
+    - **args** (:class:`dict`, optional): keyword arguments to the computation.
+    - **add args** (:class:`dict`, optional): keyword arguments to
+      :meth:`ixmp.Reporter.add` itself.
     """
+    inputs = infer_keys(rep, info.get('inputs', []))
+
     if info['comp'] == 'product':
-        log.info(f"Add {info['key']!r} using "
-                 f"ixmp.reporting.Reporter.add_product()")
-        rep.add_product(info['key'], *info['inputs'])
+        key = rep.add_product(info['key'], *inputs)
+        log.info(f"Add {repr(key)} using .add_product()")
     else:
-        log.info(f"Add {info['key']!r}")
+        key = Key.from_str_or_key(info['key'])
 
         # Retrieve the function for the computation
         f = getattr(computations, info['comp'])
+
+        log.info(f"Add {repr(key)} using {f.__name__}(...)")
+
         kwargs = info.get('args', {})
-        inputs = infer_keys(rep, info['inputs'])
         task = tuple([partial(f, **kwargs)] + inputs)
 
-        rep.add(info['key'], task, strict=True)
+        added = rep.add(key, task, strict=True, index=True,
+                        sums=info.get('sums', False))
+
+        if isinstance(added, list):
+            log.info(f'    + {len(added)-1} partial sums')
