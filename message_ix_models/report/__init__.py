@@ -62,7 +62,7 @@ def cli(context, key, config_file, output_path, verbose, dry_run):
     rep, key = prepare_reporter(s, config, key, output_path)
     mark()
 
-    print('Preparing to report:', rep.describe(key), sep='\n')
+    print('', 'Preparing to report:', rep.describe(key), '', sep='\n\n')
     mark()
 
     if dry_run:
