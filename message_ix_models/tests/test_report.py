@@ -5,7 +5,6 @@ from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Reporter
 import pandas as pd
 import pytest
-import yaml
 
 from message_data.reporting import prepare_reporter
 from message_data.reporting.computations import combine
@@ -99,7 +98,8 @@ def test_apply_units(bare_res):
     bare_res.solve()
 
     # Units are retrieved
-    assert reporter.get(key).attrs['_unit'] == 'USD_2005'
+
+    assert reporter.get(key).attrs['_unit'] == 'USD'
 
     # Add data with units that will be discarded
     inv_cost['unit'] = ['USD', 'kg']
@@ -117,7 +117,7 @@ def test_apply_units(bare_res):
     reporter, key = prepare_reporter(bare_res, config=config, key=qty)
 
     # Units are applied
-    assert str(reporter.get(key).attrs['_unit']) == 'USD_2005'
+    assert str(reporter.get(key).attrs['_unit']) == 'USD'
 
     # Update configuration, re-create the reporter
     config['iamc'] = [IAMC_INV_COST]
