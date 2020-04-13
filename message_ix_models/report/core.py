@@ -84,7 +84,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
 
     # Use ixmp.Reporter.add_queue() to process the entries. Retry at most
     # once; raise an exception if adding fails after that.
-    rep.add_queue(to_add, max_tries=1, fail='raise')
+    rep.add_queue(to_add, max_tries=2, fail='raise')
 
     # Tidy the config dict by removing any YAML sections starting with '_'
     [config.pop(k) for k in list(config.keys()) if k.startswith('_')]
