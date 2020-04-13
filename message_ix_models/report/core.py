@@ -3,10 +3,12 @@ from functools import partial
 import logging
 from pathlib import Path
 
+from iam_units import registry
 from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Key, Reporter
 from message_ix.reporting.computations import write_report
 from message_ix.reporting.computations import concat
+import pint
 
 from . import computations
 from .computations import combine, group_sum
@@ -41,6 +43,9 @@ def prepare_reporter(scenario, config, key, output_path=None):
         Same as *key*, in full resolution, if any.
 
     """
+    # Use the IAM-units registry as the application registry for all reporting
+    pint.set_application_registry(registry)
+
     log.info('Preparing reporter')
 
     # Create a Reporter for *scenario*
@@ -70,18 +75,22 @@ def prepare_reporter(scenario, config, key, output_path=None):
         ('report', add_report),
         )
 
+    # Assemble a queue of (args, kwargs) to Reporter.add()
+    to_add = []
     for section_name, func in sections:
-        entries = config.pop(section_name, [])
+        for entry in config.pop(section_name, []):
+            # Append to queue
+            to_add.append((('apply', func), dict(info=entry)))
 
-        # Handle the entries, if any
-        if len(entries):
-            log.info(f'--- {section_name!r} config section')
+    # Use ixmp.Reporter.add_queue() to process the entries. Retry at most
+    # once; raise an exception if adding fails after that.
+    rep.add_queue(to_add, max_tries=1, fail='raise')
 
-        for entry in entries:
-            func(rep, entry)
+    # Tidy the config dict by removing any YAML sections starting with '_'
+    [config.pop(k) for k in list(config.keys()) if k.startswith('_')]
 
     # If needed, get the full key for *quantity*
-    key = rep.check_keys(key)[0]
+    key = infer_keys(rep, key)[0]
 
     if output_path:
         # Add a new computation that writes *key* to the specified file
@@ -93,7 +102,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
     return rep, key
 
 
-def add_aggregate(rep, info):
+def add_aggregate(rep: Reporter, info):
     """Add one entry from the 'aggregates:' section of a config file.
 
     Each entry uses :meth:`~.message_ix.reporting.Reporter.aggregate` to
@@ -141,7 +150,7 @@ def add_aggregate(rep, info):
         log.info(f'Add {keys[0]!r} + {len(keys)-1} partial sums')
 
 
-def add_combination(rep, info):
+def add_combination(rep: Reporter, info):
     r"""Add one entry from the 'combine:' section of a config file.
 
     Each entry uses the :func:`~.combine` operation to compute a weighted sum
@@ -212,7 +221,7 @@ def add_combination(rep, info):
              "partial sums")
 
 
-def add_iamc_table(rep, info):
+def add_iamc_table(rep: Reporter, info):
     """Add one entry from the 'iamc:' section of a config file.
 
     Each entry uses :meth:`.Reporter.convert_pyam` (plus extra computations) to
@@ -305,7 +314,7 @@ def add_iamc_table(rep, info):
     log.debug(f'  {len(keys)} keys total')
 
 
-def add_report(rep, info):
+def add_report(rep: Reporter, info):
     """Add items from the 'report' tree in the config file."""
     log.info(f"Add {info['key']!r}")
 
@@ -313,7 +322,7 @@ def add_report(rep, info):
     rep.add(info['key'], tuple([concat] + info['members']), strict=True)
 
 
-def add_general(rep, info):
+def add_general(rep: Reporter, info):
     """Add one entry from the 'general:' tree in the config file.
 
     This is, as the name implies, the most generalized section of the config
