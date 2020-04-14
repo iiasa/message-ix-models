@@ -12,7 +12,8 @@
 #
 # EDITING
 #
-# - Wrap lines at 80 characters.
+# - Keep lists of labels—technologies, etc.—in alphabetical.
+# - Long lists can be on a single line.
 
 
 units:
@@ -162,8 +163,8 @@ aggregate:
   Solids|Transportation: [biomass_t_d, coal_t_d]
 
   # Demand
-  CH4 rescomm: [biomass_nc, biomass_rc, coal_rc, elec_rc, eth_rc, foil_rc, gas_rc, h2_fc_RC, h2_rc, heat_rc, hp_el_rc, hp_gas_rc, loil_rc, meth_rc, other_sc, solar_pv_RC, solar_rc, sp_el_RC]
-  CH4 transport: [coal_trp, elec_trp, eth_fc_trp, eth_ic_trp, foil_trp, gas_trp, h2_fc_trp, loil_trp, meth_fc_trp, meth_ic_trp]
+  Energy|Demand|Residential and Commercial: [biomass_nc, biomass_rc, coal_rc, elec_rc, eth_rc, foil_rc, gas_rc, h2_fc_RC, h2_rc, heat_rc, hp_el_rc, hp_gas_rc, loil_rc, meth_rc, other_sc, solar_pv_RC, solar_rc, sp_el_RC]
+  Energy|Demand|Transportation|Road Rail and Domestic Shipping: [coal_trp, elec_trp, eth_fc_trp, eth_ic_trp, foil_trp, gas_trp, h2_fc_trp, loil_trp, meth_fc_trp, meth_ic_trp]
 
 # Second stage of CH4 aggregation
 - _quantities: [emi::CH4_0]
@@ -547,9 +548,9 @@ iamc:
   select:
     t:
     - AFOLU|Biomass Burning
-    - CH4 rescomm
-    - CH4 transport
     - Electricity
+    - Energy|Demand|Residential and Commercial
+    - Energy|Demand|Transportation|Road Rail and Domestic Shipping
     - Fugitive
     - Gases|Coal
     - Gases|Extraction
@@ -568,7 +569,7 @@ iamc:
     - Waste
 
 # CH4 emissions from GLOBIOM
-# - The variable name signals utils.collapse to make some replacement, then is
+# - The variable name signals utils.collapse to make some replacements, then is
 #   removed.
 - variable: land_out CH4
   base: land_out:n-s-y-c:CH4_0+1+2
