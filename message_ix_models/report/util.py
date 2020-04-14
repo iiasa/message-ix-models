@@ -23,8 +23,11 @@ REPLACE = {
             'Energy|Demand|Transportation|Road Rail and Domestic Shipping',
     },
 
-    # Applied after the variable column is assembled. Partial string
-    # replacement; handled as regular expressions.
+    # Applied after the variable column is assembled.
+    # - Applied in sequence.
+    # - Partial string replacement.
+    # - Handled as regular expressions; see https://regex101.com and
+    #   https://docs.python.org/3/library/re.html.
     'variable': {
         # CH4 emissions from MESSAGE technologies
         r'(Emissions\|CH4)\|Fugitive': r'\1|Energy|Supply|Fugitive',
@@ -32,9 +35,9 @@ REPLACE = {
             r'\1|Energy|Supply|\2|Fugitive',
 
         # CH4 emissions from GLOBIOM
+        r'^(land_out CH4.*\|)Awm': r'\1Manure Management',
         r'^land_out CH4\|Emissions\|Ch4\|Land Use\|Agriculture\|':
             'Emissions|CH4|AFOLU|Agriculture|Livestock|',
-        r'^(land_out CH4.*\|)Awm': r'\1Manure Management',
         r'^land_out CH4\|': '',  # Strip internal prefix
 
         # Prices
