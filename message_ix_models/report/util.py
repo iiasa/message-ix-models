@@ -2,9 +2,10 @@ from ixmp.reporting import Key
 
 
 #: Replacements used in :meth:`collapse`.
-REPLACE = {
-    # Applied to whole values along each dimension. These columns have
-    # str.title() applied before these replacements.
+#:
+#: - Applied to whole strings along each dimension.
+#: - These columns have str.title() applied before these replacements
+REPLACE_DIMS = {
     'c': {
         'Crudeoil': 'Oil',
         'Electr': 'Electricity',
@@ -17,50 +18,48 @@ REPLACE = {
     'l': {
         'Final Energy': 'Final Energy|Residential',
     },
-    't': {
-        'Ch4 Rescomm': 'Energy|Demand|Residential and Commercial',
-        'Ch4 Transport':
-            'Energy|Demand|Transportation|Road Rail and Domestic Shipping',
-    },
+    't': {},
+}
 
-    # Applied after the variable column is assembled.
-    # - Applied in sequence.
-    # - Partial string replacement.
-    # - Handled as regular expressions; see https://regex101.com and
-    #   https://docs.python.org/3/library/re.html.
-    'variable': {
-        # CH4 emissions from MESSAGE technologies
-        r'(Emissions\|CH4)\|Fugitive': r'\1|Energy|Supply|Fugitive',
-        r'(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)$':
-            r'\1|Energy|Supply|\2|Fugitive',
+#: Replacements used in :meth:`collapse` after the 'variable' column is
+#: assembled.
+#:
+#: - Applied in sequence, from first to last.
+#: - Partial string matches.
+#: - Handled as regular expressions; see https://regex101.com and
+#:   https://docs.python.org/3/library/re.html.
+REPLACE_VARS = {
+    # CH4 emissions from MESSAGE technologies
+    r'(Emissions\|CH4)\|Fugitive': r'\1|Energy|Supply|Fugitive',
+    r'(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)':
+        r'\1|Energy|Supply|\2|Fugitive',
 
-        # CH4 emissions from GLOBIOM
-        r'^(land_out CH4.*\|)Awm': r'\1Manure Management',
-        r'^land_out CH4\|Emissions\|Ch4\|Land Use\|Agriculture\|':
-            'Emissions|CH4|AFOLU|Agriculture|Livestock|',
-        r'^land_out CH4\|': '',  # Strip internal prefix
+    # CH4 emissions from GLOBIOM
+    r'^(land_out CH4.*\|)Awm': r'\1Manure Management',
+    r'^land_out CH4\|Emissions\|Ch4\|Land Use\|Agriculture\|':
+        'Emissions|CH4|AFOLU|Agriculture|Livestock|',
+    r'^land_out CH4\|': '',  # Strip internal prefix
 
-        # Prices
-        r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
-        r'Residential\|Gas': 'Residential|Gases|Natural Gas',
-        r"Import Energy\|Lng": "Primary Energy|Gas",
-        r"Import Energy\|Coal": "Primary Energy|Coal",
-        r"Import Energy\|Oil": "Primary Energy|Oil",
-        r"Import Energy\|(Liquids|Oil)": r"Secondary Energy|\1",
-        r"Import Energy\|(Liquids|Biomass)": r"Secondary Energy|\1",
-        r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
+    # Prices
+    r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
+    r'Residential\|Gas': 'Residential|Gases|Natural Gas',
+    r"Import Energy\|Lng": "Primary Energy|Gas",
+    r"Import Energy\|Coal": "Primary Energy|Coal",
+    r"Import Energy\|Oil": "Primary Energy|Oil",
+    r"Import Energy\|(Liquids|Oil)": r"Secondary Energy|\1",
+    r"Import Energy\|(Liquids|Biomass)": r"Secondary Energy|\1",
+    r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
 
-    }
 }
 
 
 def collapse(df, var_name, var=[], region=[], replace_common=True):
     """Callback for the `collapse` argument to :meth:`.convert_pyam`.
 
-    Simplified from :meth:`message_ix.reporting.pyam.collapse_message_cols`.
-
     The dimensions listed in the `var` and `region` arguments are automatically
     dropped from the returned :class:`.IamDataFrame`.
+
+    Adapted from :meth:`message_ix.reporting.pyam.collapse_message_cols`.
 
     Parameters
     ----------
@@ -72,18 +71,18 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
     region : list of str, optional
         Dimensions to concatenate to the 'Region' column.
     replace_common : bool, optional
-        If :obj:`True` (the default), use :data`REPLACE` to perform standard
-        replacements on columns before and after assembling the 'Variable'
-        column.
+        If :obj:`True` (the default), use :data:`REPLACE_DIMS` and
+        :data:`REPLACE_VARS` to perform standard replacements on columns before
+        and after assembling the 'Variable' column.
 
     See also
     --------
     .core.add_iamc_table
     """
     if replace_common:
-        for dim in 'clt':
-            if dim in df.columns:
-                df[dim] = df[dim].astype(str).str.title()
+        # Convert dimension labels to title-case strings
+        for dim in filter(lambda d: d in df.columns, REPLACE_DIMS.keys()):
+            df[dim] = df[dim].astype(str).str.title()
 
         try:
             # Level: to title case, add the word 'energy'
@@ -99,7 +98,7 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
             pass
 
         # Apply replacements
-        df = df.replace(REPLACE)
+        df = df.replace(REPLACE_DIMS)
 
     # Extend region column ('n' and 'nl' are automatically added by message_ix)
     df['region'] = df['region'].astype(str) \
@@ -112,7 +111,7 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
     # TODO roll this into the rename_vars argument of message_ix...as_pyam()
     if replace_common:
         # Apply variable name partial replacements
-        for pat, repl in REPLACE['variable'].items():
+        for pat, repl in REPLACE_VARS.items():
             df['variable'] = df['variable'].str.replace(pat, repl)
 
     # Drop same columns
