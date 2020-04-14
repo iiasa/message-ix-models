@@ -310,6 +310,15 @@ combine:
     select: {t: wind curtailment}
     weight: -1
 
+# Emissions
+
+# CH4 emissions from GLOBIOM: apply a factor of 0.025 to land_out
+# TODO document why this is needed
+- key: land_out:n-s-y-c:CH4_0+1+2
+  inputs:
+  - quantity: land_out::CH4_0+1
+    weight: 0.025
+
 # Prices
 
 - key: price_carbon:n-y
@@ -418,6 +427,28 @@ general:
   inputs:
   - GDP
   - MERtoPPP
+
+# CH4 emissions from GLOBIOM: select only the subset
+- key: land_out:n-s-y-c-l-h:CH4_0
+  comp: select
+  inputs: [land_out]
+  args:
+    indexers:
+      c:
+      - Agri_CH4
+      - Emissions|CH4|Land Use|Agriculture|Enteric Fermentation
+      - Emissions|CH4|Land Use|Agriculture|AWM
+      l:
+      - land_use_reporting
+  sums: true
+# Auto-sum over [l, h], apply units
+- key: land_out:n-s-y-c:CH4_0+1
+  comp: apply_units
+  inputs: [land_out:n-s-y-c:CH4_0]
+  args:
+    units: 'Mt / year'
+  sums: true
+
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind ref, wind res]
@@ -454,28 +485,7 @@ price_iamc: &price_iamc
 
 # Replacements for entire variable name strings
 iamc variable names:
-  # TODO move these to regular expressions in util.REPLACE. The full-name
-  #      replacement doesn't work, because the land-use scenario ('s') is
-  #      appended
-  land_out_|Agri_CH4: GLOBIOM|Emissions|CH4 Emissions Total
-  land_out_|Emissions|CH4|Land Use|Agriculture|Enteric Fermentation: |
-    Emissions|CH4|AFOLU|Agriculture|Livestock|Enteric Fermentation
-  land_out_|Emissions|CH4|Land Use|Agriculture|AWM: |
-    Emissions|CH4|AFOLU|Agriculture|Livestock|Manure Management
-
-
-emis_iamc: &emis_iamc
-  drop:  # Drop 'technology' <- already aggregated above
-  #- m
-  - t
-  - e
-  # unit: # CHECK: Cause AttributeError: 'NoneType' object has no attribute 'items' from pint
-  # - Mt CH4/yr
-
-landemis_iamc: &landemis_iamc
-  year_time_dim: y
-  drop:  # Drop 'commodity'
-  - c
+  Input|variable|name: Final|variable|name
 
 
 # This section is used by reporting.core.add_iamc_table()
@@ -537,7 +547,7 @@ iamc:
 
 # Emissions
 
-# CH4-related IAMC variables
+# CH4 emissions from MESSAGE technologies
 - variable: Emissions|CH4
   # Auto-sum over dimensions yv, m, h
   base: emi:nl-t-ya:CH4_0+1+2
@@ -566,20 +576,13 @@ iamc:
     - Solids|Transportation
     - Waste
 
-# FIXME this needs to have a have a factor of 0.025 applied to it, for some
-#       reason
-- variable: land_out_
-  base: land_out:n-s-y-c-l
+# CH4 emissions from GLOBIOM
+# - The variable name signals utils.collapse to make some replacement, then is
+#   removed.
+- variable: land_out CH4
+  base: land_out:n-s-y-c:CH4_0+1+2
+  year_time_dim: y
   var: [c, s]
-  drop: [l]
-  select:
-    c:
-    - Agri_CH4
-    - Emissions|CH4|Land Use|Agriculture|Enteric Fermentation
-    - Emissions|CH4|Land Use|Agriculture|AWM
-    l:
-    - land_use_reporting
-  <<: *landemis_iamc
 
 # Prices
 # Preferred method: convert all the contents of the variable at once.
@@ -664,10 +667,10 @@ report:
   - GDP|MER:iamc
   - GDP|PPP:iamc
 
-- key: CH4_emissions
+- key: CH4 emissions
   members:
   - Emissions|CH4:iamc
-  - land_out_:iamc
+  - land_out CH4:iamc
   # - Emissions|CH4|Fossil Fuels and Industry:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
   # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive:iamc
