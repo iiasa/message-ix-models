@@ -136,7 +136,7 @@ def test_iamc_replace_vars(bare_res):
     config = {
         'iamc': [IAMC_INV_COST],
         'iamc variable names': {
-            'Investment Cost|coal_ppl': 'Investment Cost|Coal',
+            'Investment Cost|Coal_Ppl': 'Investment Cost|Coal',
         }
     }
     scen.check_out()
