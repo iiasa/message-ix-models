@@ -6,7 +6,7 @@ import itertools
 import logging
 
 # TODO shouldn't be necessary to have so many imports; tidy up
-from iam_units import convert_gwp, registry
+from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
 from ixmp.reporting.computations import apply_units, select  # noqa: F401
@@ -21,19 +21,6 @@ from message_data.model.transport.report import (  # noqa: F401
 )
 
 log = logging.getLogger(__name__)
-
-
-def apply_units(qty, units):
-    """Simply apply *units* to *qty*."""
-    existing = getattr(qty.attrs.get('_unit', {}), 'dimensionality', {})
-    new_units = registry(units)
-
-    if len(existing) and existing != new_units:
-        log.info(f'Overwriting {existing} with {new_units}')
-
-    qty.attrs['_unit'] = new_units
-
-    return qty
 
 
 def combine(*quantities, select=None, weights=None):  # noqa: F811
@@ -141,28 +128,6 @@ def group_sum(qty, group, sum):
     """
     return concat([values.sum(dim=[sum]) for _, values in qty.groupby(group)],
                   dim=group)
-
-
-def select(qty, indexers, inverse=True):
-    """Select from *qty* based on *indexers*.
-
-    Parameters
-    ----------
-    qty : .Quantity
-    select : list of dict
-        Elements to be selected from each quantity. Must have the same number
-        of elements as `quantities`.
-    inverse : bool, optional
-        If :obj:`True`, *remove* the items in indexers instead of keeping them.
-    """
-    if inverse:
-        new_indexers = {}
-        for dim, labels in indexers.items():
-            new_indexers[dim] = list(filter(lambda l: l not in labels,
-                                            qty.coords[dim]))
-        indexers = new_indexers
-
-    return qty.sel(indexers)
 
 
 def share_curtailment(curt, *parts):
