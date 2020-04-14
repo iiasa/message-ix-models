@@ -3,12 +3,16 @@ from ixmp.reporting import Key
 
 #: Replacements used in :meth:`collapse`.
 REPLACE = {
-    # Applied to whole values along each dimension
+    # Applied to whole values along each dimension. These columns have
+    # str.title() applied before these replacements.
     'c': {
         'Crudeoil': 'Oil',
         'Electr': 'Electricity',
         'Ethanol': 'Liquids|Biomass',
         'Lightoil': 'Liquids|Oil',
+
+        # in land_out, for CH4 emissions from GLOBIOM
+        'Agri_Ch4': 'GLOBIOM|Emissions|CH4 Emissions Total',
     },
     'l': {
         'Final Energy': 'Final Energy|Residential',
@@ -22,10 +26,18 @@ REPLACE = {
     # Applied after the variable column is assembled. Partial string
     # replacement; handled as regular expressions.
     'variable': {
+        # CH4 emissions from MESSAGE technologies
         r'(Emissions\|CH4)\|Fugitive': r'\1|Energy|Supply|Fugitive',
         r'(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)$':
             r'\1|Energy|Supply|\2|Fugitive',
 
+        # CH4 emissions from GLOBIOM
+        r'^land_out CH4\|Emissions\|Ch4\|Land Use\|Agriculture\|':
+            'Emissions|CH4|AFOLU|Agriculture|Livestock|',
+        r'^(land_out CH4.*\|)Awm': r'\1Manure Management',
+        r'^land_out CH4\|': '',  # Strip internal prefix
+
+        # Prices
         r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
         r'Residential\|Gas': 'Residential|Gases|Natural Gas',
         r"Import Energy\|Lng": "Primary Energy|Gas",
