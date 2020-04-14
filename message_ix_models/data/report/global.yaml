@@ -45,9 +45,10 @@ units:
 
 # Aggregate across dimensions of single quantities
 #
-# - Corresponds to ixmp.Reporter.aggregate via reporting.core.add_aggregate
+# - Corresponds to ixmp.Reporter.aggregate via reporting.core.add_aggregate.
 # - The dimension `_dim` is not removed; it gains new labels that are the sum
 #   of the listed members. Basically regrouping over one dimension.
+# - Keep members in alphabetical order.
 aggregate:
   # Quantities to aggregate
 - _quantities: [in, out]
@@ -136,57 +137,47 @@ aggregate:
   _tag: CH4_0
   _dim: t
 
-  Waste: [CH4_WasteBurnEM, CH4_DomWasteWa, CH4_IndWasteWa, CH4n_landfills,
-    landfill_digester1, landfill_compost1, landfill_mechbio, landfill_heatprdn,
-    landfill_direct1, landfill_ele, landfill_flaring]
+  Waste: [CH4_WasteBurnEM, CH4_DomWasteWa, CH4_IndWasteWa, CH4n_landfills, landfill_compost1, landfill_digester1, landfill_direct1, landfill_ele, landfill_flaring, landfill_heatprdn, landfill_mechbio]
   Industrial Processes: [CH4_IndNonEnergyEM]
   AFOLU|Biomass Burning: [CH4_AgWasteEM]
   Heat: [bio_hpl, coal_hpl, foil_hpl, gas_hpl]
-  Electricity: [bio_istig, bio_ppl, coal_adv, coal_ppl_u, igcc, coal_ppl,
-    foil_ppl, gas_cc, gas_ppl, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl,
-    coal_adv_ccs, igcc_ccs, gas_cc_ccs, gas_ct, gas_htfc, bio_istig_ccs]
+  Electricity: [bio_istig_ccs, bio_istig, bio_ppl, coal_adv_ccs, coal_adv, coal_ppl_u, coal_ppl, foil_ppl, gas_cc_ccs, gas_cc, gas_ct, gas_htfc, gas_ppl, igcc_ccs, igcc, loil_cc, loil_ppl, oil_ppl, SO2_scrub_ppl]
 
   # Fugitive - gas
-  Gases|Extraction: [gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5,
-    gas_extr_6, gas_extr_7, gas_extr_8, flaring_CO2]
-  Gases|Transportation: [gas_t_d_ch4, gas_t_d]
+  Gases|Extraction: [flaring_CO2, gas_extr_1, gas_extr_2, gas_extr_3, gas_extr_4, gas_extr_5, gas_extr_6, gas_extr_7, gas_extr_8]
+  Gases|Transportation: [gas_t_d, gas_t_d_ch4]
   Gases|Coal: [coal_gas]
-  Gases|Hydrogen: [h2_smr, h2_smr_ccs, h2_coal, h2_coal_ccs, h2_bio, h2_bio_ccs]
+  Gases|Hydrogen: [h2_bio_ccs, h2_bio, h2_coal_ccs, h2_coal, h2_smr_ccs, h2_smr]
 
   # Fugitive - liquid
-  Liquids|Extraction: [oil_extr_1_ch4, oil_extr_1, oil_extr_2_ch4, oil_extr_2,
-    oil_extr_3_ch4, oil_extr_3, oil_extr_4_ch4, oil_extr_4, oil_extr_5,
-    oil_extr_6, oil_extr_7, oil_extr_8]
-  Liquids|Transportation: [loil_t_d, foil_t_d, meth_t_d, eth_t_d]
-  Liquids|Oil: [ref_lol, ref_hil, SO2_scrub_ref]
+  Liquids|Extraction: [oil_extr_1, oil_extr_1_ch4, oil_extr_2, oil_extr_2_ch4, oil_extr_3, oil_extr_3_ch4, oil_extr_4, oil_extr_4_ch4, oil_extr_5, oil_extr_6, oil_extr_7, oil_extr_8]
+  Liquids|Transportation: [eth_t_d, foil_t_d, loil_t_d, meth_t_d]
+  Liquids|Oil: [ref_hil, ref_lol, SO2_scrub_ref]
   Liquids|Natural Gas: [meth_ng, meth_ng_ccs]
   Liquids|Coal: [meth_coal, meth_coal_ccs, syn_liq, syn_liq_ccs]
   Liquids|Biomass: [eth_bio, eth_bio_ccs, liq_bio, liq_bio_ccs]
 
   # Fugitive - solid
-  Solids|Extraction: [coal_extr_ch4, coal_extr, lignite_extr]
-  Solids|Transportation: [coal_t_d, biomass_t_d]
+  Solids|Extraction: [coal_extr, coal_extr_ch4, lignite_extr]
+  Solids|Transportation: [biomass_t_d, coal_t_d]
 
   # Demand
-  CH4 rescomm: [sp_el_RC, solar_pv_RC, h2_fc_RC, coal_rc, foil_rc, loil_rc,
-    gas_rc, elec_rc, biomass_rc, heat_rc, meth_rc, eth_rc, h2_rc, hp_el_rc,
-    hp_gas_rc, solar_rc, biomass_nc, other_sc]
-  CH4 transport: [coal_trp, foil_trp, loil_trp, gas_trp, elec_trp, meth_ic_trp,
-    eth_ic_trp, meth_fc_trp, eth_fc_trp, h2_fc_trp]
+  CH4 rescomm: [biomass_nc, biomass_rc, coal_rc, elec_rc, eth_rc, foil_rc, gas_rc, h2_fc_RC, h2_rc, heat_rc, hp_el_rc, hp_gas_rc, loil_rc, meth_rc, other_sc, solar_pv_RC, solar_rc, sp_el_RC]
+  CH4 transport: [coal_trp, elec_trp, eth_fc_trp, eth_ic_trp, foil_trp, gas_trp, h2_fc_trp, loil_trp, meth_fc_trp, meth_ic_trp]
 
 # Second stage of CH4 aggregation
 - _quantities: [emi::CH4_0]
   _tag: '1'
   _dim: t
 
-  Fugitive: [Gases|Extraction, Gases|Transportation, Gases|Coal, Gases|Hydrogen, Liquids|Extraction, Liquids|Transportation, Liquids|Oil, Liquids|Gas, Liquids|Coal, Liquids|Biomass, Solids|Extraction, Solids|Transportation]
+  Fugitive: [Gases|Coal, Gases|Extraction, Gases|Hydrogen, Gases|Transportation, Liquids|Biomass, Liquids|Coal, Liquids|Extraction, Liquids|Gas, Liquids|Oil, Liquids|Transportation, Solids|Extraction, Solids|Transportation]
 
 # Third stage of CH4 aggregation
 - _quantities: [emi::CH4_0+1]
   _tag: '2'
   _dim: e
 
-  CH4: [CH4_Emission, CH4_nonenergy, CH4_new_Emission, CH4_Emission_bunkers]
+  CH4: [CH4_Emission, CH4_Emission_bunkers, CH4_new_Emission, CH4_nonenergy]
 
 - _quantities: [in, out]
   _tag: t_d
