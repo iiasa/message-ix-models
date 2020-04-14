@@ -98,8 +98,8 @@ def test_apply_units(bare_res):
     bare_res.solve()
 
     # Units are retrieved
-
-    assert reporter.get(key).attrs['_unit'] == 'USD'
+    USD_2005 = reporter.unit_registry.Unit('USD_2005')
+    assert reporter.get(key).attrs['_unit'] == USD_2005
 
     # Add data with units that will be discarded
     inv_cost['unit'] = ['USD', 'kg']
@@ -117,7 +117,7 @@ def test_apply_units(bare_res):
     reporter, key = prepare_reporter(bare_res, config=config, key=qty)
 
     # Units are applied
-    assert str(reporter.get(key).attrs['_unit']) == 'USD'
+    assert str(reporter.get(key).attrs['_unit']) == USD_2005
 
     # Update configuration, re-create the reporter
     config['iamc'] = [IAMC_INV_COST]
