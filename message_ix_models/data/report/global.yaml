@@ -44,9 +44,11 @@ units:
 
 
 # Aggregate across dimensions of single quantities
+#
 # - Corresponds to ixmp.Reporter.aggregate via reporting.core.add_aggregate
+# - The dimension `_dim` is not removed; it gains new labels that are the sum
+#   of the listed members. Basically regrouping over one dimension.
 aggregate:
-# Doesn't remove any dimensions. Basically regrouping over one dimension
   # Quantities to aggregate
 - _quantities: [in, out]
   # Added to the end of the each key (e.g. '[key]:pe' or '[key]:[tag]+pe')
@@ -113,7 +115,7 @@ aggregate:
   wind gen onshore: [wind_res1, wind_res2, wind_res3, wind_res4]
   wind gen offshore: [wind_ref1, wind_ref2, wind_ref3, wind_ref4, wind_ref5]
 
-  # SolarSolar
+  # Solar
   solar pv gen elec: [solar_res1, solar_res2, solar_res3, solar_res4,
                       solar_res5, solar_res6, solar_res7, solar_res8]
   solar pv gen elec RC: [solar_pv_RC]
@@ -129,8 +131,7 @@ aggregate:
   solar csp gen heat rc: [solar_rc]
   solar csp gen heat i: [solar_i]
 
- # Emission CH4
- # Is there any way to group over multiple dimensions?
+# Emissions of CH4
 - _quantities: [emi]
   _tag: CH4_0
   _dim: t
@@ -233,10 +234,11 @@ aggregate:
   methanol: [meth_exp]
   oil: [oil_exp, loil_exp, foil_exp]
 
+
 # Create new quantities by weighted sum across multiple quantities
 # - Parsed by reporting.core.add_combination
 combine:
-# Name and dimensions of quantity to be created
+  # Name and dimensions of quantity to be created
 - key: coal:nl-ya
   # Inputs to sum
   inputs:
@@ -255,8 +257,6 @@ combine:
   # commented (PNK 2019-10-07): doesn't exist
   # - quantity: in::bunker
   #   select: {t: coal}
-
-  #   weight: 1
 
 - key: gas:nl-ya
   inputs:
@@ -418,7 +418,6 @@ general:
   inputs:
   - GDP
   - MERtoPPP
-
 # - key: wind onshore
 #   operation: share_curtailment  # Refers to a method in computations.py
 #   inputs: [wind curtailment, wind ref, wind res]
@@ -649,7 +648,6 @@ iamc:
 
 
 # This section is used by reporting.core.add_report()
-
 report:
 - key: pe test
   members:
