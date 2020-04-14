@@ -3,7 +3,6 @@ from functools import partial
 import logging
 from pathlib import Path
 
-from iam_units import registry
 from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Key, Reporter
 from message_ix.reporting.computations import write_report
@@ -43,9 +42,6 @@ def prepare_reporter(scenario, config, key, output_path=None):
         Same as *key*, in full resolution, if any.
 
     """
-    # Use the IAM-units registry as the application registry for all reporting
-    pint.set_application_registry(registry)
-
     log.info('Preparing reporter')
 
     # Create a Reporter for *scenario*
