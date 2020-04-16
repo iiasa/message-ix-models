@@ -136,9 +136,9 @@ def prepare_reporter(scenario, config, key, output_path=None):
 
 
 def add_aggregate(rep: Reporter, info):
-    """Add one entry from the 'aggregates:' section of a config file.
+    """Add one entry from the 'aggregate:' section of a config file.
 
-    Each entry uses :meth:`~.message_ix.reporting.Reporter.aggregate` to
+    Each entry uses :meth:`~.ixmp.reporting.Reporter.aggregate` to
     compute sums across labels within one dimension of a quantity.
 
     The entry *info* must contain:
@@ -258,19 +258,20 @@ def add_combination(rep: Reporter, info):
 def add_iamc_table(rep: Reporter, info):
     """Add one entry from the 'iamc:' section of a config file.
 
-    Each entry uses :meth:`.Reporter.convert_pyam` (plus extra computations) to
-    reformat data from the internal :class:`.Quantity` data structure into a
+    Each entry uses :meth:`message_ix.reporting.Reporter.convert_pyam`
+    (plus extra computations) to reformat data from the internal
+    :class:`ixmp.reporting.Quantity` data structure into a
     :class:`pyam.IamDataFrame`.
 
     The entry *info* must contain:
 
     - **variable** (:class:`str`): variable name. This is used two ways: it
       is placed in 'Variable' column of the resulting IamDataFrame; and the
-      reporting key to :meth:`~.Reporter.get` the data frame is
+      reporting key to :meth:`~ixmp.reporting.Reporter.get` the data frame is
       ``<variable>:iamc``.
     - **base** (:class:`str`): key for the quantity to convert.
-    - **select** (:class:`dict`, optional): keword arguments to
-      :meth:`~.Quantity.sel`.
+    - **select** (:class:`dict`, optional): keyword arguments to
+      :meth:`ixmp.reporting.Quantity.sel`.
     - **group_sum** (2-:class:`tuple`, optional): `group` and `sum` arguments
       to :func:`.group_sum`.
     - **year_time_dim** (:class:`str`, optional): Dimension to use for the IAMC
@@ -282,7 +283,8 @@ def add_iamc_table(rep: Reporter, info):
       convert_pyam).
 
     Additional entries are passed as keyword arguments to :func:`.collapse`,
-    which is then given as the `collapse` callback for :meth:`.convert_pyam`.
+    which is then given as the `collapse` callback for
+    :meth:`~message_ix.reporting.Reporter.convert_pyam`.
 
     :func:`.collapse` formats the 'Variable' column of the IamDataFrame.
     The variable name replacements from the 'iamc variable names:' section of
@@ -364,12 +366,13 @@ def add_general(rep: Reporter, info):
 
     - **comp**: this refers to the name of a computation that is available in
       the namespace of :mod:`message_data.reporting.computations`. If
-      'product', then :meth:`ixmp.Reporter.add_product` is called instead.
+      'product', then :meth:`ixmp.reporting.Reporter.add_product` is called
+      instead.
     - **key**: the key for the computed quantity.
     - **inputs**: a list of keys to which the computation is applied.
     - **args** (:class:`dict`, optional): keyword arguments to the computation.
     - **add args** (:class:`dict`, optional): keyword arguments to
-      :meth:`ixmp.Reporter.add` itself.
+      :meth:`ixmp.reporting.Reporter.add` itself.
     """
     inputs = infer_keys(rep, info.get('inputs', []))
 
