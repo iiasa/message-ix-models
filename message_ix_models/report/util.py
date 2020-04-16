@@ -4,7 +4,7 @@ from ixmp.reporting import Key
 #: Replacements used in :meth:`collapse`.
 #:
 #: - Applied to whole strings along each dimension.
-#: - These columns have str.title() applied before these replacements
+#: - These columns have :meth:`str.title` applied before these replacements
 REPLACE_DIMS = {
     'c': {
         'Crudeoil': 'Oil',
@@ -54,12 +54,13 @@ REPLACE_VARS = {
 
 
 def collapse(df, var_name, var=[], region=[], replace_common=True):
-    """Callback for the `collapse` argument to :meth:`.convert_pyam`.
+    """Callback for the `collapse` argument to
+    :meth:`message_ix.reporting.Reporter.convert_pyam`.
 
     The dimensions listed in the `var` and `region` arguments are automatically
-    dropped from the returned :class:`.IamDataFrame`.
+    dropped from the returned :class:`pyam.IamDataFrame`.
 
-    Adapted from :meth:`message_ix.reporting.pyam.collapse_message_cols`.
+    Adapted from :func:`message_ix.reporting.pyam.collapse_message_cols`.
 
     Parameters
     ----------
