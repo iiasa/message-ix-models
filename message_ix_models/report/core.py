@@ -156,7 +156,7 @@ def add_aggregate(rep: Reporter, info):
 
     .. code-block:: yaml
 
-       aggregates:
+       aggregate:
        - _quantities: [foo, bar]
          _tag: aggregated
          _dim: a
