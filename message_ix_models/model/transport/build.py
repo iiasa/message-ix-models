@@ -2,15 +2,16 @@ import logging
 
 import message_ix
 
-from . import MODEL
 from .data import add_data, strip_par_data
-from .utils import (
-    config,
-    transport_technologies,
-    )
+from .utils import read_config, transport_technologies
 from message_data.tools import ScenarioInfo
 
 log = logging.getLogger(__name__)
+
+
+# TODO this variable contained (model, scenario) coordinates; get these from
+#      Context instead
+MODEL = {}
 
 
 def clone(p_source, p_dest):
@@ -46,13 +47,20 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
     2. Transport technologies are added.
 
     """
+    # Read MESSAGE-Transport config / metadata
+    context = read_config()
+    config = context['transport set']
+
     if quiet:
         log.setLevel(logging.ERROR)
 
     s = scenario
 
     if not dry_run:
-        s.remove_solution()
+        try:
+            s.remove_solution()
+        except ValueError:
+            pass
         s.check_out()
 
     s_ = ScenarioInfo(s)
@@ -63,7 +71,7 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
 
     dump = {}  # Removed data
 
-    for set_name, set_cfg in config['set'].items():
+    for set_name, set_cfg in config.items():
         if set_name not in s_.sets:
             log.info(f'Skip {set_name}.')
             continue
@@ -107,7 +115,7 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
     log.info(f'{N_removed} parameter rows removed.')
 
     # Add units
-    for u, desc in config['set']['unit']['add'].items():
+    for u, desc in config['unit']['add'].items():
         log.info(f'Add unit {u!r}')
         s.platform.add_unit(u, comment=desc)
 
