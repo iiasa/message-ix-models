@@ -39,7 +39,7 @@ def test_ikarus(test_context):
     s_info = ScenarioInfo(scenario)
 
     # get_ikarus_data() succeeds on text_context and the bare RES
-    data = get_ikarus_data(test_context, scenario)
+    data = get_ikarus_data(scenario)
 
     # Returns a mapping
     # Retrieve DataFrame for par e.g. 'inv_cost' and tech e.g. 'rail_pub'
