@@ -105,7 +105,7 @@ def convert_units(s, context):
     return pd.Series(qty.to(unit_out).tolist(), index=s.index)
 
 
-def get_ikarus_data(context, scenario):
+def get_ikarus_data(scenario):
     """Read IKARUS :cite:`Martinsen2006` data and conform to *scenario*.
 
     The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed
@@ -124,7 +124,7 @@ def get_ikarus_data(context, scenario):
         are data frames ready for :meth:`~.Scenario.add_par`.
     """
     # Read configuration, including units and conversion factors
-    read_config(context)
+    context = read_config()
     # Reference to the transport configuration
     config = context['transport config']
 
