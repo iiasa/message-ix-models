@@ -1,10 +1,12 @@
 """Generate input data."""
+from collections import defaultdict
 import logging
 
 import pandas as pd
 
 from message_data.tools import (
     ScenarioInfo,
+    broadcast,
     get_context,
     iter_parameters,
     make_df,
@@ -112,26 +114,58 @@ def conversion(info):
     data = {}
 
     common = dict(
-        technology='VDT to freight',
-        node_loc=info.N[1],
-        node_origin=info.N[1],  # for input; same node
-        node_dest=info.N[1],  # for output; same node
         year_vtg=info.Y,
         year_act=info.Y,
-        mode='all',
-        time='year', time_dest='year',  # no subannual detail
-    )
-
-    # data['input'] = make_df('input', **common)
-
-    data['output'] = make_df(
-        'output',
-        commodity='transport freight',
         level='useful',
-        value=cfg['factor']['freight load'],
-        unit='t km',
-        **common
+        mode='all',
+        # No subannual detail
+        time='year',
+        time_origin='year',
+        time_dest='year',
     )
+
+    base = dict(
+        input=(make_df('input', value=1.0, unit='km', **common)
+               .pipe(broadcast, node_loc=info.N[1:])),
+        output=(make_df('output', **common)
+                .pipe(broadcast, node_loc=info.N[1:])),
+    )
+
+    mode_info = [
+        ('freight', cfg['factor']['freight load'], 't km'),
+        ('pax', 1.0, 'km'),
+    ]
+
+    data = defaultdict(list)
+
+    for mode, factor, output_unit in mode_info:
+        tech = f'transport {mode} load factor'
+
+        data['input'].append(
+            base['input'].assign(
+                technology=tech,
+                commodity=f'transport {mode} vehicle',
+            )
+        )
+
+        data['output'].append(
+            base['output'].assign(
+                technology=tech,
+                commodity=f'transport {mode}',
+                value=factor,
+                unit=output_unit,
+            )
+        )
+
+    for par, dfs in data.items():
+        df = pd.concat(dfs)
+
+        # Copy 'node' into another column
+        col = 'node_origin' if par == 'input' else 'node_dest'
+        df[col] = df['node_loc']
+
+        # Store
+        data[par] = df
 
     return data
 
