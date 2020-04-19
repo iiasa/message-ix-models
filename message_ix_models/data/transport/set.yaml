@@ -78,6 +78,11 @@ mode:
   require:
   - all
 
+unit:
+  add:
+    km: kilometre
+    t km: tonne kilometre (freight transport)
+
 
 # MA3T sets
 census_division:
