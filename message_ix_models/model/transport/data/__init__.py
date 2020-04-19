@@ -4,7 +4,12 @@ import logging
 import numpy as np
 import pandas as pd
 
-from message_data.tools import ScenarioInfo, iter_parameters, make_df
+from message_data.tools import (
+    ScenarioInfo,
+    get_context,
+    iter_parameters,
+    make_df,
+)
 from .groups import get_consumer_groups  # noqa: F401
 from .ikarus import get_ikarus_data  # noqa: F401
 from .ldv import get_ldv_data  # noqa: F401
@@ -117,38 +122,57 @@ def demand(info):
 
 def conversion(info):
     """Dummy input and output data for conversion technologies."""
+    cfg = get_context()['transport config']
 
-    input = make_df('input', 'VDT to freight',
-                    year_vtg=info.Y, year_act=info.Y)
-    input['node_loc'] = info.N[1]
+    data = {}
 
-    # Same node
-    input['node_origin'] = input['node_loc']
+    common = dict(
+        technology='VDT to freight',
+        node_loc=info.N[1],
+        node_origin=info.N[1],  # for input; same node
+        node_dest=info.N[1],  # for output; same node
+        year_vtg=info.Y,
+        year_act=info.Y,
+        mode='all',
+        time='year', time_dest='year',  # no subannual detail
+    )
 
-    output = make_df('output', 'VDT to freight',
-                     year_vtg=info.Y, year_act=info.Y,
-                     value=config['model']['freight load factor'])
-    output['node_loc'] = info.N[1]
+    # data['input'] = make_df('input', **common)
 
-    # Same node
-    output['node_dest'] = output['node_loc']
+    data['output'] = make_df(
+        'output',
+        commodity='transport freight',
+        level='useful',
+        value=cfg['factor']['freight load'],
+        unit='t km',
+        **common
+    )
 
-    return dict(input=input, output=output)
+    return data
 
 
 def freight(info):
     """Data for freight technologies."""
+    cfg = get_context()['transport technology']
+
+    common = dict(
+        year_vtg=info.Y,
+        year_act=info.Y,
+        node_loc=info.N[1],
+        node_dest=info.N[1],
+        mode='all',
+        time='year', time_dest='year',  # no subannual detail
+    )
+
     output = []
-    for tech in config['tech']['technology group']['freight truck']['tech']:
-        output.append(make_df('output', tech, year_vtg=info.Y,
-                              year_act=info.Y))
+    for tech in cfg['technology group']['freight truck']['tech']:
+        output.append(make_df(
+            'output',
+            technology=tech,
+            commodity='transport freight vehicle',
+            level='useful',
+            value=1.0,  # placeholder
+            unit='km',
+            **common))
 
-    output = pd.concat(output)
-
-    # Modify the concatenated data
-    output['node_loc'] = info.N[1]
-
-    # Same node
-    output['node_dest'] = output['node_loc']
-
-    return dict(output=output)
+    return dict(output=pd.concat(output))
