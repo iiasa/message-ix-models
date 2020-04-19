@@ -201,6 +201,13 @@ technology:
         time: year
         unit: t km
 
+  transport freight load factor:
+    description: >
+      Conversion from vehicle-distance traveled to freight transport activity.
+  transport pax load factor:
+    description: >
+      Conversion from vehicle-distance traveled to passenger transport activity.
+
   Occupancy_moto: {}
   Occupancy_ptrp: {}
   cons_convert: {}
