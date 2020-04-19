@@ -1,7 +1,6 @@
 """Generate input data."""
 import logging
 
-import numpy as np
 import pandas as pd
 
 from message_data.tools import (
@@ -10,6 +9,7 @@ from message_data.tools import (
     iter_parameters,
     make_df,
 )
+from message_data.model.transport.demand import demand
 from .groups import get_consumer_groups  # noqa: F401
 from .ikarus import get_ikarus_data  # noqa: F401
 from .ldv import get_ldv_data  # noqa: F401
@@ -103,21 +103,6 @@ def strip_par_data(scenario, set_name, value, dry_run=False, dump=None):
     log.info(f'No data removed from {len(no_data)} other parameters.')
 
     return total
-
-
-def demand(info):
-    """Dummy demand data."""
-    result = pd.DataFrame(zip(info.Y, np.arange(len(info.Y)) + 0.1),
-                          columns=['year', 'value'])
-
-    # Set other dimension
-    result['node'] = info.N[1]
-    result['level'] = 'useful'
-    result['commodity'] = 'transport freight'
-    result['time'] = 'year'
-    result['unit'] = 't km'
-
-    return dict(demand=result)
 
 
 def conversion(info):
