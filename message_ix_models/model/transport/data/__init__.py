@@ -11,6 +11,7 @@ from message_data.tools import (
     get_context,
     iter_parameters,
     make_df,
+    make_io,
 )
 from message_data.model.transport.demand import demand  # noqa: F401
 from .groups import get_consumer_groups  # noqa: F401
@@ -134,26 +135,14 @@ def conversion(info):
     """
     cfg = get_context()['transport config']
 
-    data = {}
-
     common = dict(
-        year_vtg=info.Y,
+        year_vtg=info.y0,
         year_act=info.Y,
-        level='useful',
         mode='all',
         # No subannual detail
         time='year',
         time_origin='year',
         time_dest='year',
-    )
-
-    base = dict(
-        input=(make_df('input', value=1.0, unit='km', **common)
-               .pipe(broadcast, node_loc=info.N[1:])
-               .assign(node_origin=copy_column('node_loc'))),
-        output=(make_df('output', **common)
-                .pipe(broadcast, node_loc=info.N[1:])
-                .assign(node_dest=copy_column('node_loc'))),
     )
 
     mode_info = [
@@ -162,25 +151,18 @@ def conversion(info):
     ]
 
     data = defaultdict(list)
-
     for mode, factor, output_unit in mode_info:
-        tech = f'transport {mode} load factor'
-
-        data['input'].append(
-            base['input'].assign(
-                technology=tech,
-                commodity=f'transport {mode} vehicle',
-            )
-        )
-
-        data['output'].append(
-            base['output'].assign(
-                technology=tech,
-                commodity=f'transport {mode}',
-                value=factor,
-                unit=output_unit,
-            )
-        )
+        i_o = make_io(
+            (f'transport {mode} vehicle', 'useful', 'km'),
+            (f'transport {mode}', 'useful', output_unit),
+            factor,
+            on='output',
+            technology=f'transport {mode} load factor',
+            **common)
+        for par, df in i_o.items():
+            node_col = 'node_origin' if par == 'input' else 'node_dest'
+            data[par].append(df.pipe(broadcast, node_loc=info.N[1:])
+                               .assign(**{node_col: copy_column('node_loc')}))
 
     return {par: pd.concat(dfs) for par, dfs in data.items()}
 
