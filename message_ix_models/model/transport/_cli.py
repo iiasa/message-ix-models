@@ -6,7 +6,6 @@ import stat
 import click
 import ixmp
 import message_ix
-import pandas as pd
 
 from .common import MODEL
 
@@ -138,27 +137,3 @@ def clone_cmd(source):
         # Clone over the network from the server.
         p_dest = get_platform('local')
         clone(get_platform(source), p_dest)
-
-    # Show the results
-    show(p_dest)
-
-
-def show(mp):
-    """Show the contents of a database."""
-    with pd.option_context('display.max_rows', None,
-                           'display.max_columns', None):
-        cols = ['model', 'scenario', 'version']
-        print(mp.scenario_list(default=False)[cols])
-
-
-@main.command('show')
-def show_cmd():
-    """Show the contents of the local database."""
-    show(get_platform('local'))
-
-
-@main.command()
-def debug():
-    """Temporary code for debugging."""
-    # Don't commit anything here
-    pass
