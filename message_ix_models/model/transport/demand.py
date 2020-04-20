@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from message_data.tools import broadcast, make_df
+from message_data.tools import broadcast, get_context, make_df
 
 
 def demand(info):
@@ -11,7 +11,10 @@ def demand(info):
     ----------
     info : .ScenarioInfo
     """
-    return dict(demand=dummy(info))
+    config = get_context()['transport config']['data source']
+    func = globals()[config['demand']]
+
+    return dict(demand=func(info))
 
 
 def dummy(info):

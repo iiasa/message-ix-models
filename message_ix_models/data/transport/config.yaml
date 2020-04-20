@@ -5,6 +5,8 @@ data source:
   non-LDV: null
   # LDV technologies: 'MA3T' or null
   LDV: null
+  # Demands: 'dummy'
+  demand: dummy
 
 population: GEA mix
 
