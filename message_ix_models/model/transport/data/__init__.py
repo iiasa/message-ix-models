@@ -7,6 +7,7 @@ import pandas as pd
 from message_data.tools import (
     ScenarioInfo,
     broadcast,
+    copy_column,
     get_context,
     iter_parameters,
     make_df,
@@ -148,9 +149,11 @@ def conversion(info):
 
     base = dict(
         input=(make_df('input', value=1.0, unit='km', **common)
-               .pipe(broadcast, node_loc=info.N[1:])),
+               .pipe(broadcast, node_loc=info.N[1:])
+               .assign(node_origin=copy_column('node_loc'))),
         output=(make_df('output', **common)
-                .pipe(broadcast, node_loc=info.N[1:])),
+                .pipe(broadcast, node_loc=info.N[1:])
+                .assign(node_dest=copy_column('node_loc'))),
     )
 
     mode_info = [
@@ -179,17 +182,7 @@ def conversion(info):
             )
         )
 
-    for par, dfs in data.items():
-        df = pd.concat(dfs)
-
-        # Copy 'node' into another column
-        col = 'node_origin' if par == 'input' else 'node_dest'
-        df[col] = df['node_loc']
-
-        # Store
-        data[par] = df
-
-    return data
+    return {par: pd.concat(dfs) for par, dfs in data.items()}
 
 
 def freight(info):
@@ -209,10 +202,11 @@ def freight(info):
 
     output = []
     for tech in cfg['technology group']['freight truck']['tech']:
-        df = make_df('output', technology=tech, **common) \
+        output.append(
+            make_df('output', technology=tech, **common)
             .pipe(broadcast, node_loc=info.N[1:])
-        df['node_dest'] = df['node_loc']
-        output.append(df)
+            .assign(node_dest=copy_column('node_loc'))
+        )
 
     return dict(output=pd.concat(output))
 
@@ -234,9 +228,10 @@ def passenger(info):
 
     output = []
     for tech in cfg['technology group']['BUS']['tech']:
-        df = make_df('output', technology=tech, **common) \
+        output.append(
+            make_df('output', technology=tech, **common)
             .pipe(broadcast, node_loc=info.N[1:])
-        df['node_dest'] = df['node_loc']
-        output.append(df)
+            .assign(node_dest=copy_column('node_loc'))
+        )
 
     return dict(output=pd.concat(output))
