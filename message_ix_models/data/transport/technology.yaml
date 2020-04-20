@@ -19,50 +19,62 @@ technology:
   ELC_100:
     by_consumer_group: true
     description: Battery-electric light-duty vehicle using electricity-only (100-mile all-electric range)
+    input commodity: electr
     report: LDV_ELE
   HFC_ptrp:
     by_consumer_group: true
     description: Hybridized fuel cell light-duty vehicle using hydrogen
+    input commodity: hydrogen
     report: LDV_HFC
   IAHe_ptrp:
     by_consumer_group: true
     description: Hybridized internal combustion engine light-duty vehicle using biofuels
+    input commodity: lightoil
     report: LDV_EHYB
   IAHm_ptrp:
     by_consumer_group: true
     description: Hybridized internal combustion engine light-duty vehicle using methanol/synthetic fossil liquids
+    input commodity: methanol
     report: LDV_MHYB
   ICAe_ffv:
     by_consumer_group: true
     description: Internal combustion engine light-duty vehicle using biofuels
+    input commodity: lightoil
     report: LDV_ffv
   ICAm_ptrp:
     by_consumer_group: true
     description: Internal combustion engine light-duty vehicle using methanol/synthetic fossil liquids
+    input commodity: methanol
     report: LDV_meth
   ICE_conv:
     by_consumer_group: true
     description: Future (2005 and after) medium/high-efficiency internal combustion engine light-duty vehicle using gasoline/diesel
+    input commodity: lightoil
     report: LDV_conv
   ICE_L_ptrp:
     by_consumer_group: true
     description: Historical (2005 and before) Low-efficiency internal combustion engine light-duty vehicle using gasoline/diesel
+    input commodity: lightoil
     report: LDV_ICE_L
   ICE_nga:
     by_consumer_group: true
     description: Internal combustion engine light-duty vehicle using natural gas
+    input commodity: gas
     report: LDV_NGA
   ICH_chyb:
     by_consumer_group: true
     description: Hybridized internal combustion engine light-duty vehicle using gasoline/diesel
+    input commodity: lightoil
     report: LDV_CHYB
   IGH_ghyb:
     by_consumer_group: true
     description: Hybridized internal combustion engine light-duty vehicle using natural gas
+    input commodity: gas
     report: LDV_GHYB
   PHEV_ptrp:
     by_consumer_group: true
     description: Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile all-electric range)
+    input commodity: lightoil
     report: LDV_PHEV
 
   ICE_H_moto:
