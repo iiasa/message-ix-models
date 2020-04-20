@@ -11,7 +11,7 @@ from message_data.tools import (
     iter_parameters,
     make_df,
 )
-from message_data.model.transport.demand import demand
+from message_data.model.transport.demand import demand  # noqa: F401
 from .groups import get_consumer_groups  # noqa: F401
 from .ikarus import get_ikarus_data  # noqa: F401
 from .ldv import get_ldv_data  # noqa: F401
@@ -20,18 +20,37 @@ from .ldv import get_ldv_data  # noqa: F401
 log = logging.getLogger(__name__)
 
 
+DATA_FUNCTIONS = [
+    'demand',
+    'conversion',
+    'freight',
+    'passenger',
+]
+
+
 def add_data(scenario, data_from, dry_run=False):
-    info = ScenarioInfo(scenario)
+    """Populate *senario* with MESSAGE-Transport data."""
+    func_names = DATA_FUNCTIONS.copy()
+
+    # Select source for non-LDV data
+    config = get_context()['transport config']['data source']
+    non_LDV = config.get('non-LDV', None)
+    if non_LDV == 'IKARUS':
+        func_names.append('get_ikarus_data')
+    elif non_LDV is None:
+        pass  # Don't add any data
+    else:
+        raise ValueError(f'invalid source for non-LDV data: {non_LDV}')
 
     # Add data
-    for data_func in (demand, conversion, freight, passenger):
-        log.info(f'Adding data from {data_func}')
+    info = ScenarioInfo(scenario)
 
-        # Generate or load the data
-        data = data_func(info)
+    for name in func_names:
+        func = globals()[name]
+        log.info(f'Add data from {repr(name)}')
 
-        # Add to the scenario
-        add_par_data(scenario, data, dry_run=dry_run)
+        # Generate or load the data; add to the Scenario
+        add_par_data(scenario, func(info), dry_run=dry_run)
 
 
 def add_par_data(scenario, data, dry_run=False):

@@ -105,17 +105,16 @@ def convert_units(s, context):
     return pd.Series(qty.to(unit_out).tolist(), index=s.index)
 
 
-def get_ikarus_data(scenario):
-    """Read IKARUS :cite:`Martinsen2006` data and conform to *scenario*.
+def get_ikarus_data(info):
+    """Read IKARUS :cite:`Martinsen2006` data and conform to Scenario *info*.
 
     The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed
     data is exported into ``non_LDV_techs_wrapped.csv``.
 
     Parameters
     ----------
-    context : .Context
-    scenario : ixmp.Scenario
-        Target Scenario for technology information.
+    info : .ScenarioInfo
+        Information about target Scenario.
 
     Returns
     -------
@@ -192,13 +191,11 @@ def get_ikarus_data(scenario):
 
     # Create data frames to add imported params to MESSAGEix
 
-    s_info = ScenarioInfo(scenario)
     # List of nodes, e.g. for node_loc dimension of parameters
-    nodes = sorted(n for n in s_info.N if n != 'World')
+    nodes = sorted(n for n in info.N if n != 'World')
 
     # Vintage and active years from Scenario
-    year_df = scenario.vintage_and_active_years()
-    vtg_years, act_years = year_df['year_vtg'], year_df['year_act']
+    vtg_years, act_years = info.yv_ya['year_vtg'], info.yv_ya['year_act']
 
     # Default values to be used as args in make_df()
     defaults = dict(
