@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 import pandas as pd
 
 from message_data.model.transport import read_config
-from message_data.tools import ScenarioInfo, make_df
+from message_data.tools import make_df
 
 #: Name of the input file.
 #
@@ -126,6 +126,7 @@ def get_ikarus_data(info):
     context = read_config()
     # Reference to the transport configuration
     config = context['transport config']
+    tech_info = context['transport technology']['technology']
 
     # Open the input file using openpyxl
     wb = load_workbook(context.get_path('transport', FILE), read_only=True,
@@ -222,11 +223,13 @@ def get_ikarus_data(info):
 
         # Parameter-specific arguments/processing
         if par == 'input':
+            args['commodity'] = tech_info[tec]['input commodity']
+            # TODO use the appropriate level for the given commodity; see
+            #      ldv.py
             args['level'] = 'final'
-            args['commodity'] = config['non-ldv']['input commodity'][tec]
         elif par == 'output':
             args['level'] = 'useful'
-            args['commodity'] = 'transport pax'
+            args['commodity'] = 'transport pax vehicle'
         elif par == 'capacity_factor':
             # Convert to preferred units
             group_data = group_data.apply(lambda v: v.to(UNITS[par][2]))

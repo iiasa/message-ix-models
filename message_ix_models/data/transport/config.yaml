@@ -107,29 +107,6 @@ non-ldv:
     FCg_bus: 20.9
     FCm_bus: 20.9
     Trolley_bus: 20.9
-  input commodity:
-    # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
-    rail_pub: electr
-    # Intercity trains
-    dMspeed_rai: lightoil
-    Mspeed_rai: electr
-    Hspeed_rai: electr
-    # Aircrafts
-    con_ar: lightoil
-    conm_ar: methanol
-    conE_ar: lightoil  # actually biofuel
-    conh_ar: hydrogen
-    # Buses
-    ICE_M_bus: lightoil
-    ICE_H_bus: lightoil
-    ICG_bus: gas
-    ICAe_bus: lightoil  # actually biofuel
-    ICH_bus: lightoil  # hybridized, but not plug-in, so only oil input
-    PHEV_bus: lightoil  # actually both lightoil *and* electr
-    FC_bus: hydrogen
-    FCg_bus: gas
-    FCm_bus: methanol
-    Trolley_bus: electr
 
 ldv activity:
   _unit: vehicle_km / year
