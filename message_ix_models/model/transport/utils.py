@@ -12,8 +12,6 @@ from message_data.tools import get_context, load_data
 
 # Configuration files
 METADATA = [
-    # Information about message_ix
-    ('parameter',),
     # Information about MESSAGE-Transport
     ('transport', 'callback'),
     ('transport', 'config'),
