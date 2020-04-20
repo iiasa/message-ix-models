@@ -4,221 +4,222 @@
 # [1] “The "GEAM_TRP_techinput.xls" workbook ("updateTRPdata" sheet) in
 #      Christoph's folders.”
 
-par:
-- output: &output-freight
-    commodity: transport freight vehicle
-    level: useful
-    mode: all
-    time_dest: year
-    time: year
-    unit: v km
-    value: 1.0
-
-
 technology:
   ELC_100:
-    by_consumer_group: true
-    description: Battery-electric light-duty vehicle using electricity-only (100-mile all-electric range)
+    description: >-
+      Battery-electric light-duty vehicle using electricity-only (100-mile
+      all-electric range)
     input commodity: electr
     report: LDV_ELE
   HFC_ptrp:
-    by_consumer_group: true
     description: Hybridized fuel cell light-duty vehicle using hydrogen
     input commodity: hydrogen
     report: LDV_HFC
   IAHe_ptrp:
-    by_consumer_group: true
-    description: Hybridized internal combustion engine light-duty vehicle using biofuels
+    description: >-
+      Hybridized internal combustion engine light-duty vehicle using biofuels
     input commodity: lightoil
     report: LDV_EHYB
   IAHm_ptrp:
-    by_consumer_group: true
-    description: Hybridized internal combustion engine light-duty vehicle using methanol/synthetic fossil liquids
+    description: >-
+      Hybridized internal combustion engine light-duty vehicle using methanol/
+      synthetic fossil liquids
     input commodity: methanol
     report: LDV_MHYB
   ICAe_ffv:
-    by_consumer_group: true
     description: Internal combustion engine light-duty vehicle using biofuels
     input commodity: lightoil
     report: LDV_ffv
   ICAm_ptrp:
-    by_consumer_group: true
-    description: Internal combustion engine light-duty vehicle using methanol/synthetic fossil liquids
+    description: >-
+      Internal combustion engine light-duty vehicle using methanol/synthetic
+      fossil liquids
     input commodity: methanol
     report: LDV_meth
   ICE_conv:
-    by_consumer_group: true
-    description: Future (2005 and after) medium/high-efficiency internal combustion engine light-duty vehicle using gasoline/diesel
+    description: >-
+      Future (2005 and after) medium/high-efficiency internal combustion engine
+      light-duty vehicle using gasoline/diesel
     input commodity: lightoil
     report: LDV_conv
   ICE_L_ptrp:
-    by_consumer_group: true
-    description: Historical (2005 and before) Low-efficiency internal combustion engine light-duty vehicle using gasoline/diesel
+    description: >-
+      Historical (2005 and before) Low-efficiency internal combustion engine
+      light-duty vehicle using gasoline/diesel
     input commodity: lightoil
     report: LDV_ICE_L
   ICE_nga:
-    by_consumer_group: true
-    description: Internal combustion engine light-duty vehicle using natural gas
+    description: >-
+      Internal combustion engine light-duty vehicle using natural gas
     input commodity: gas
     report: LDV_NGA
   ICH_chyb:
-    by_consumer_group: true
-    description: Hybridized internal combustion engine light-duty vehicle using gasoline/diesel
+    description: >-
+      Hybridized internal combustion engine light-duty vehicle using
+      gasoline/diesel
     input commodity: lightoil
     report: LDV_CHYB
   IGH_ghyb:
-    by_consumer_group: true
-    description: Hybridized internal combustion engine light-duty vehicle using natural gas
+    description: >-
+      Hybridized internal combustion engine light-duty vehicle using natural gas
     input commodity: gas
     report: LDV_GHYB
   PHEV_ptrp:
-    by_consumer_group: true
-    description: Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile all-electric range)
+    description: >-
+      Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
+      all-electric range)
     input commodity: lightoil
     report: LDV_PHEV
 
   ICE_H_moto:
-    description: High-efficiency internal combustion engine two-wheeler/motorcycle using gasoline/diesel
+    description: >-
+      High-efficiency internal combustion engine two-wheeler/motorcycle using
+      gasoline/diesel
     report: 2W_ICE_H
   ELE_moto:
-    description: Battery-electric two-wheeler/motorcycle using electricity-only
+    description: >-
+      Battery-electric two-wheeler/motorcycle using electricity-only
     report: 2W_ELE
 
   ICE_H_bus:
-    description: High-efficiency internal combustion engine bus using gasoline/diesel
+    description:
+      High-efficiency internal combustion engine bus using gasoline/diesel
+    input commodity: lightoil
     report: BUS_ICE_H
   ICE_M_bus:
-    description: Medium-efficiency internal combustion engine bus using gasoline/diesel
+    description: >-
+      Medium-efficiency internal combustion engine bus using gasoline/diesel
+    input commodity: lightoil
     report: BUS_ICE_M
   ICG_bus:
     description: Internal combustion engine bus using natural gas
+    input commodity: gas
     report: BUS_ICG
   ICAe_bus:
     description: Internal combustion engine bus using biofuels
+    input commodity: lightoil  # actually biofuel
     report: BUS_ICAe
   ICH_bus:
-    description: Hybridized internal combustion engine bus using gasoline/diesel
+    description: >-
+      Hybridized internal combustion engine bus using gasoline/diesel
+    input commodity: lightoil  # hybridized, but not plug-in, so only oil input
     report: BUS_ICH
   FC_bus:
     description: Hybridized fuel cell bus using hydrogen
+    input commodity: hydrogen
     report: BUS_HFC
   FCg_bus:
-    description: Hybridized fuel cell bus using natural gas via steam reformation
+    description: >-
+      Hybridized fuel cell bus using natural gas via steam reformation
+    input commodity: gas
     report: BUS_GFC
   FCm_bus:
-    description: Hybridized fuel cell bus using methanol/synthetic fossil liquids via steam reformation
+    description: >-
+      Hybridized fuel cell bus using methanol/synthetic fossil liquids via steam
+      reformation
+    input commodity: methanol
     report: BUS_MFC
   Trolley_bus:
     description: Electric trolleybus connected to power cables
+    input commodity: electr
     report: BUS_ELEtr
   PHEV_bus:
     description: Plug-in hybrid-electric bus using gasoline/diesel
+    input commodity: lightoil  # actually both lightoil *and* electr
     report: BUS_PHEV
 
   con_ar:
-    description: Conventional jet engine passenger aircraft using light oil petroleum products (kerosene jet fuel)
+    description: >-
+      Conventional jet engine passenger aircraft using light oil petroleum
+      products (kerosene jet fuel)
+    input commodity: lightoil
     report: AIRp_JF
   conh_ar:
     description: Conventional jet engine passenger aircraft using hydrogen
+    input commodity: hydrogen
     report: AIRp_H2
   conm_ar:
-    description: Conventional jet engine passenger aircraft using methanol/synthetic fossil liquids
+    description: >-
+      Conventional jet engine passenger aircraft using methanol/synthetic fossil
+      liquids
+    input commodity: methanol
     report: AIRp_MET
   conE_ar:
     description: Conventional jet engine passenger aircraft using biofuels
+    input commodity: lightoil  # actually biofuel
     report: AIRp_BIO
 
   FR_ICE_H:
-    description: High-efficiency internal combustion engine freight truck using gasoline/diesel
+    description: >-
+      High-efficiency internal combustion engine freight truck using
+      gasoline/diesel
     report: FRT_ICE_H
-    par:
-      output: *output-freight
   FR_ICE_M:
-    description: Medium-efficiency internal combustion engine freight truck using gasoline/diesel
+    description: >-
+      Medium-efficiency internal combustion engine freight truck using
+      gasoline/diesel
     report: FRT_ICE_M
-    par:
-      output: *output-freight
   FR_ICE_L:
-    description: Low-efficiency internal combustion engine freight truck using gasoline/diesel
+    description: >-
+      Low-efficiency internal combustion engine freight truck using
+      gasoline/diesel
     report: FRT_ICE_L
-    par:
-      output: *output-freight
   FR_ICG:
     description: Internal combustion engine freight truck using natural gas
     report: FRT_ICG
-    par:
-      output: *output-freight
   FR_ICAe:
     description: Internal combustion engine freight truck using biofuels
     report: FRT_ICAe
-    par:
-      output: *output-freight
   FR_ICH:
-    description: Hybridized internal combustion engine freight truck using gasoline/diesel
+    description: >-
+      Hybridized internal combustion engine freight truck using gasoline/diesel
     report: FRT_ICH
-    par:
-      output: *output-freight
   FR_FCH:
     description: Hybridized fuel cell freight truck using hydrogen
     report: FRT_HFC
-    par:
-      output: *output-freight
   FR_FCg:
-    description: Hybridized fuel cell freight truck using natural gas via steam reformation
+    description: >-
+      Hybridized fuel cell freight truck using natural gas via steam reformation
     report: FRT_GFC
-    par:
-      output: *output-freight
   FR_FCm:
-    description: Hybridized fuel cell freight truck using methanol/synthetic fossil liquids via steam reformation
+    description: >-
+      Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
+      via steam reformation
     report: FRT_MFC
-    par:
-      output: *output-freight
 
   crail_pub:
-    description: 'Coal-powered urban public rail transport: aggregate of metro/underground, streetcars/trams, commuter trains, and regional trains'
+    description: >-
+      Coal-powered urban public rail transport: aggregate of metro/underground,
+      streetcars/trams, commuter trains, and regional trains
     report: RAIL_urban_COAL
   dMspeed_rai:
     description: Diesel-powered long-distance medium-speed rail transport
+    input commodity: lightoil
     report: RAIL_ldm_DSL
   drail_pub:
     description: Diesel-powered urban public rail transport
     report: RAIL_urban_DSL
   Hspeed_rai:
     description: Electrically-powered long-distance high-speed rail transport
+    input commodity: electr
     report: RAIL_ldh_ELE
   Mspeed_rai:
     description: Electrically-powered long-distance medium-speed rail transport
+    input commodity: electr
     report: RAIL_ldm_ELE
   rail_pub:
-    description: 'Electrically-powered urban public rail transport: aggregate of metro/underground, streetcars/trams, commuter trains, and regional trains'
+    description: >-
+      Electrically-powered urban public rail transport: aggregate of metro/
+      underground, streetcars/trams, commuter trains, and regional trains
+    input commodity: electr
     report: RAIL_urban_ELE
 
-  VDT to freight:  # Formerly 'load_factor_truck'
-    description: >
-      Conversion from vehicle-distance travelled to freight volume.
-    par:
-      input:
-        commodity: transport freight vehicle
-        level: useful
-        mode: all
-        time_origin: year
-        time: year
-        unit: v km
-        value: 1.0
-      output:
-        commodity: transport freight
-        level: useful
-        mode: all
-        time_dest: year
-        time: year
-        unit: t km
-
   transport freight load factor:
-    description: >
-      Conversion from vehicle-distance traveled to freight transport activity.
+    description: >-
+      Conversion from vehicle-distance traveled to freight transport activity
   transport pax load factor:
-    description: >
-      Conversion from vehicle-distance traveled to passenger transport activity.
+    description: >-
+      Conversion from vehicle-distance traveled to passenger transport activity
 
   Occupancy_moto: {}
   Occupancy_ptrp: {}
@@ -233,6 +234,7 @@ technology:
 technology group:
   LDV:
     description: Light-duty vehicles (passenger cars and trucks)
+    by_consumer_group: true
     tech: [ELC_100, HFC_ptrp, IAHe_ptrp, IAHm_ptrp, ICAe_ffv, ICAm_ptrp,
       ICE_conv, ICE_L_ptrp, ICE_nga, ICH_chyb, IGH_ghyb, PHEV_ptrp]
   2W:
@@ -243,7 +245,7 @@ technology group:
     tech: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
       FR_FCg, FR_FCm]
   AIR:
-    description: >
+    description: >-
       Aviation (passenger aircraft only, ignoring shared freight component).
 
       The aviation technologies in MESSAGE directly output passenger-km, not
@@ -253,7 +255,7 @@ technology group:
       technologies is 115.
     tech: [con_ar, conh_ar, conm_ar, conE_ar]
   BUS:
-    description: >
+    description: >-
       Buses (urban public transit)
 
       The bus technologies in MESSAGE directly output passenger-km, not
@@ -264,7 +266,7 @@ technology group:
     tech: [ICE_H_bus, ICE_M_bus, ICG_bus, ICAe_bus, ICH_bus, FC_bus, FCg_bus,
            FCm_bus, Trolley_bus, PHEV_bus]
   RAIL:
-    description: >
+    description: >-
       Rail (passenger trains only, both urban public transit and long-distance
       intercity)
 
