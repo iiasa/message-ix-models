@@ -1,5 +1,5 @@
 from message_data.model.transport.build import main as build
-# from message_data.reporting.core import prepare_reporter
+from message_data.model.transport.check import check
 
 
 def test_build_bare_res(bare_res):
@@ -16,13 +16,6 @@ def test_solve_bare_res(bare_res):
 
     bare_res.solve()
 
-    # Report the results
-    #
-    # rep = prepare_reporter(bare_res)
-    #
-    # rep.set_filters(t=[
-    #     'transport freight load factor',
-    #     'transport pax load factor',
-    # ])
-    #
-    # print(rep.get('ACT'))
+    # Use Reporting calculations to check the result
+    result = check(bare_res)
+    assert result.all(), f'\n{result}'

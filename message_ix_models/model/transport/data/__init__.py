@@ -41,7 +41,7 @@ def add_par_data(scenario, data, dry_run=False):
         N = len(values)
 
         log.info(f'{N} rows in {par_name!r}')
-        log.info(str(values))
+        log.debug(str(values))
 
         if not dry_run:
             # Reset index
