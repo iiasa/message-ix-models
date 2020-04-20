@@ -2,9 +2,16 @@
 
 Some of these may migrate upstream to message_ix or ixmp in the future.
 """
+from itertools import zip_longest
+import logging
+
+from ixmp.reporting import Quantity
 from ixmp.reporting.utils import collect_units
 from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
+
+
+log = logging.getLogger(__name__)
 
 
 def combine(*quantities, select=None, weights=None):
@@ -84,3 +91,37 @@ def share_curtailment(curt, *parts):
     into multiple technologies; one for each of *parts*.
     """
     return parts[0] - curt * (parts[0] / sum(parts))
+
+
+def update_scenario(scenario, *quantities, params=[]):
+    """Update *scenario* with computed data from reporting *quantities*.
+
+    Parameters
+    ----------
+    scenario : .Scenario
+    quantities : .Quantity or pd.DataFrame
+        If DataFrame, must be valid input to :meth:`.Scenario.add_par`.
+    params : list of str, optional
+        For every element of `quantities` that is a pd.DataFrame, the element
+        of `params` at the same index gives the name of the parameter to
+        update.
+    """
+    log.info("Update '{0.model}/{0.scenario}#{0.version}'".format(scenario))
+    scenario.check_out()
+
+    for order, (qty, par_name) in enumerate(zip_longest(quantities, params)):
+        if isinstance(qty, Quantity):
+            # Convert a Quantity to a DataFrame
+            par_name = qty.name
+            new = qty.to_series() \
+                     .reset_index() \
+                     .rename(columns={par_name: 'value'})
+            new['unit'] = '{:~}'.format(qty.attrs['_unit'])
+            qty = new
+
+        # Add the data
+        log.info(f'  {repr(par_name)} ← {len(qty)} rows')
+        scenario.add_par(par_name, qty)
+
+    scenario.commit('Data added using '
+                    'message_data.reporting.computations.update_scenario')
