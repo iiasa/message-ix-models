@@ -1,2 +1,7 @@
-from ._cli import main as cli  # noqa: F401
+from ._cli import main as cli
 from .utils import read_config
+
+__all__ = [
+    'cli',
+    'read_config',
+]
