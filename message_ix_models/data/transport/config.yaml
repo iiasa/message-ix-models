@@ -1,5 +1,10 @@
 # Metadata and parameters for MESSAGE-Transport
 
+data source:
+  # Non-LDV technologies: 'IKARUS' or null
+  non-LDV: null
+  # LDV technologies: 'MA3T' or null
+  LDV: null
 
 population: GEA mix
 

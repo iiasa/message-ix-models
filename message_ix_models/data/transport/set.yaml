@@ -82,6 +82,13 @@ unit:
   add:
     km: kilometre
     t km: tonne kilometre (freight transport)
+    # for IKARUS
+    a: year
+    GJ / km: gigajoule per kilometre
+    Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
+    pkm / GJ: passenger-kilometre per gigajoule
+    MUSD / a / v: 10⁶ USD per vehicle-year
+    MUSD / v: 10⁶ USD per vehicle
 
 
 # MA3T sets
