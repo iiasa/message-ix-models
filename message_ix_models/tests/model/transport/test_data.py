@@ -15,6 +15,8 @@ from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.model.transport.utils import FILES
 from message_data.tools import ScenarioInfo, load_data, make_df
 
+from message_data.tests import binary_data_available
+
 
 @pytest.mark.parametrize('key', FILES)
 @pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
@@ -24,11 +26,8 @@ def test_load_data(test_context, key, rtype):
     assert isinstance(result, rtype)
 
 
-@pytest.mark.skipif(
-    'TEAMCITY_VERSION' in os.environ,
-    reason='Cannot access data on TeamCity server.')
+@binary_data_available
 def test_ikarus(test_context):
-
     # Create bare RES
     test_context.scenario_info.update(dict(
         model='Bare RES',
@@ -39,7 +38,7 @@ def test_ikarus(test_context):
     s_info = ScenarioInfo(scenario)
 
     # get_ikarus_data() succeeds on text_context and the bare RES
-    data = get_ikarus_data(scenario)
+    data = get_ikarus_data(s_info)
 
     # Returns a mapping
     # Retrieve DataFrame for par e.g. 'inv_cost' and tech e.g. 'rail_pub'
@@ -118,9 +117,7 @@ def test_ikarus(test_context):
                             check_names=False)
 
 
-@pytest.mark.skipif(
-    'TEAMCITY_VERSION' in os.environ,
-    reason='Cannot access data on TeamCity server.')
+@binary_data_available
 def test_ldv(test_context):
     test_context.scenario_info.update(dict(
         model='Bare RES',
@@ -156,9 +153,7 @@ def test_groups(test_context, regions, pop_scen):
     assert all(result.sum('consumer_group') == 1)
 
 
-@pytest.mark.skipif(
-    'TEAMCITY_VERSION' in os.environ,
-    reason='Cannot access data on TeamCity server.')
+@binary_data_available
 @pytest.mark.parametrize('regions', ['R11'])
 @pytest.mark.parametrize('pop_scen', ['GEA mix', 'GEA supply', 'GEA eff'])
 def test_urban_rural_shares(test_context, regions, pop_scen):

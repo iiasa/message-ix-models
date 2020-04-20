@@ -1,5 +1,3 @@
-from itertools import product
-
 import pandas as pd
 import xarray as xr
 
