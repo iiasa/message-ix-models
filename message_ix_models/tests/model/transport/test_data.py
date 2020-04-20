@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 from pandas.testing import assert_series_equal
 import pytest
@@ -126,13 +124,14 @@ def test_ldv(test_context):
 
     test_context.regions = 'R11'
     scenario = create_res(test_context)
-    data = get_ldv_data(test_context, scenario)
+    info = ScenarioInfo(scenario)
 
-    # Data have the correct size: 3 parameters × 11 regions × 13 periods × 12
-    # technologies
-    assert len(data) == 11 * 3 * 13 * 12
-    # …and correct columns
-    assert set(data.columns) == {'technology', 'year', 'value', 'node', 'name'}
+    # Method runs without error
+    data = get_ldv_data(info)
+
+    # Data have the correct size: 11 regions × 13 periods × 12 technologies
+    for par, df in data.items():
+        assert len(df) == len(info.N[1:]) * (len(info.Y) + 3) * 12
 
 
 @pytest.mark.xfail(reason='Needs normalization across consumer groups.')

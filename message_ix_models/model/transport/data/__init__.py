@@ -32,10 +32,20 @@ DATA_FUNCTIONS = [
 
 def add_data(scenario, data_from, dry_run=False):
     """Populate *senario* with MESSAGE-Transport data."""
+    config = get_context()['transport config']['data source']
+
     func_names = DATA_FUNCTIONS.copy()
 
+    # Select source for LDV data
+    LDV = config.get('LDV', None)
+    if LDV == 'US-TIMES MA3T':
+        func_names.append('get_ldv_data')
+    elif LDV is None:
+        pass  # Don't add any data
+    else:
+        raise ValueError(f'invalid source for non-LDV data: {LDV}')
+
     # Select source for non-LDV data
-    config = get_context()['transport config']['data source']
     non_LDV = config.get('non-LDV', None)
     if non_LDV == 'IKARUS':
         func_names.append('get_ikarus_data')
