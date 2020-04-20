@@ -10,6 +10,9 @@ from ixmp.reporting.utils import collect_units
 from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
 
+# Computations for specific models and projects
+from message_data.model.transport.check import transport_check  # noqa: F401
+
 
 log = logging.getLogger(__name__)
 
