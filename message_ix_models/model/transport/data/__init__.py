@@ -24,7 +24,7 @@ def add_data(scenario, data_from, dry_run=False):
     info = ScenarioInfo(scenario)
 
     # Add data
-    for data_func in (demand, conversion, freight):
+    for data_func in (demand, conversion, freight, passenger):
         log.info(f'Adding data from {data_func}')
 
         # Generate or load the data
@@ -108,7 +108,10 @@ def strip_par_data(scenario, set_name, value, dry_run=False, dump=None):
 
 
 def conversion(info):
-    """Dummy input and output data for conversion technologies."""
+    """Input and output data for conversion technologies:
+
+    The technologies are named 'transport {mode} load factor'.
+    """
     cfg = get_context()['transport config']
 
     data = {}
@@ -177,21 +180,44 @@ def freight(info):
     common = dict(
         year_vtg=info.Y,
         year_act=info.Y,
-        node_loc=info.N[1],
-        node_dest=info.N[1],
+        commodity='transport freight vehicle',
+        level='useful',
+        value=1.0,  # placeholder
+        unit='km',
         mode='all',
         time='year', time_dest='year',  # no subannual detail
     )
 
     output = []
     for tech in cfg['technology group']['freight truck']['tech']:
-        output.append(make_df(
-            'output',
-            technology=tech,
-            commodity='transport freight vehicle',
-            level='useful',
-            value=1.0,  # placeholder
-            unit='km',
-            **common))
+        df = make_df('output', technology=tech, **common) \
+            .pipe(broadcast, node_loc=info.N[1:])
+        df['node_dest'] = df['node_loc']
+        output.append(df)
+
+    return dict(output=pd.concat(output))
+
+
+def passenger(info):
+    """Data for passenger technologies."""
+    cfg = get_context()['transport technology']
+
+    common = dict(
+        year_vtg=info.Y,
+        year_act=info.Y,
+        commodity='transport pax vehicle',
+        level='useful',
+        value=1.0,  # placeholder
+        unit='km',
+        mode='all',
+        time='year', time_dest='year',  # no subannual detail
+    )
+
+    output = []
+    for tech in cfg['technology group']['BUS']['tech']:
+        df = make_df('output', technology=tech, **common) \
+            .pipe(broadcast, node_loc=info.N[1:])
+        df['node_dest'] = df['node_loc']
+        output.append(df)
 
     return dict(output=pd.concat(output))
