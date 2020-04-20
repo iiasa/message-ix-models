@@ -6,11 +6,6 @@ from message_data.tools import ScenarioInfo
 #: 'transport check', that depends on others and returns a
 #: :class:`pandas.Series` of :class:`bool`.
 CONFIG = dict(
-    filters=dict(
-        t=[
-            'transport freight load factor',
-            'transport pax load factor',
-        ]),
     general=[dict(
         key='transport check',
         comp='transport_check',
@@ -51,8 +46,10 @@ def transport_check(scenario, ACT):
     checks = {}
 
     # Correct number of outputs
+    ACT_lf = ACT.sel(t=['transport freight load factor',
+                        'transport pax load factor'])
     checks["'transport * load factor' technologies are active"] = \
-        len(ACT) == 2 * len(info.Y) * (len(info.N) - 1)
+        len(ACT_lf) == 2 * len(info.Y) * (len(info.N) - 1)
 
     # # Force the check to fail
     # checks['(fail for debugging)'] = False
