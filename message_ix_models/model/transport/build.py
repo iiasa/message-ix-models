@@ -46,6 +46,11 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
 
     2. Transport technologies are added.
 
+
+    Parameters
+    ----------
+    fast : bool, optional
+
     """
     # Read MESSAGE-Transport config / metadata
     context = read_config()
@@ -89,11 +94,13 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
                 log.info(f'{name!r} missing.')
                 raise KeyError(f'{name} not among {base}')
 
-        # Remove elements and associated parameter values
-        for name in set_cfg.get('remove', []):
-            log.info(f'{name!r} removed.')
-            strip_par_data(s, set_name, name, dry_run=dry_run or fast,
-                           dump=dump)
+        if fast:
+            log.info('Skip removing parameter values.')
+        else:
+            # Remove elements and associated parameter values
+            for name in set_cfg.get('remove', []):
+                log.info(f'{name!r} removed.')
+                strip_par_data(s, set_name, name, dry_run=dry_run, dump=dump)
 
         # Add elements
         to_add = list(set_cfg.get('add', {}).items())
