@@ -1,11 +1,14 @@
 """Reporting for the MESSAGEix-GLOBIOM global model."""
+from copy import copy
 import logging
 from pathlib import Path
+from time import process_time
 
 import click
 
-from ixmp.utils import logger
 from .core import prepare_reporter
+
+import yaml
 
 
 log = logging.getLogger(__name__)
@@ -13,17 +16,27 @@ log = logging.getLogger(__name__)
 CONFIG = Path(__file__).parent / 'data' / 'global.yaml'
 
 
+_TIMES = []
+
+
+def mark():
+    _TIMES.append(process_time())
+    log.info(' {:.2f} seconds'.format(_TIMES[-1] - _TIMES[-2]))
+
+
 @click.command(name='report')
 @click.pass_obj
-@click.argument('key', default='message:default')
 @click.option('--config', 'config_file', default='global', show_default=True,
               help='Path or stem for reporting config file.')
 @click.option('-o', '--output', 'output_path', type=Path,
               help='Write output to file instead of console.')
+@click.option('--from-file', type=click.Path(exists=True, dir_okay=False),
+              help='Report multiple Scenarios listed in FILE.')
 @click.option('--verbose', is_flag=True, help='Set log level to DEBUG.')
 @click.option('--dry-run', '-n', is_flag=True,
               help='Only show what would be done.')
-def cli(context, key, config_file, output_path, verbose, dry_run):
+@click.argument('key', default='message:default')
+def cli(context, config_file, output_path, from_file, verbose, dry_run, key):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message:default', but may also
@@ -32,24 +45,13 @@ def cli(context, key, config_file, output_path, verbose, dry_run):
     --config can give either the absolute path to a reporting configuration
     file, or the stem (i.e. name without .yaml extension) of a file in
     data/report.
+
+    With --from-file, read multiple Scenario identifiers from FILE, and report
+    each one. In this usage, --output-path may only be a directory.
     """
-    from time import process_time
+    _TIMES.append(process_time())
 
-    times = [process_time()]
-
-    def mark():
-        times.append(process_time())
-        log.info(' {:.2f} seconds'.format(times[-1] - times[-2]))
-
-    if verbose:
-        logger().setLevel('DEBUG')
-
-    s = context.get_scenario()
-    mark()
-
-    # Read reporting configuration from a file
-
-    # Use the option value as if it were an absolute path
+    # --config: use the option value as if it were an absolute path
     config = Path(config_file)
     if not config.exists():
         # Path doesn't exist; treat it as a stem in the metadata dir
@@ -59,7 +61,52 @@ def cli(context, key, config_file, output_path, verbose, dry_run):
         # Can't find the file
         raise click.BadOptionUsage(f'--config={config_file} not found')
 
-    rep, key = prepare_reporter(s, config, key, output_path)
+    if verbose:
+        log.setLevel('DEBUG')
+        logging.getLogger('ixmp').setLevel('DEBUG')
+
+    # Prepare a list of Context objects, each referring to one Scenario
+    contexts = []
+
+    if from_file:
+        # Multiple URLs
+        if not output_path:
+            output_path = Path.cwd()
+        if not output_path.is_dir():
+            msg = '--output-path must be directory with --from-file'
+            raise click.BadOptionUsage(msg)
+
+        for item in yaml.safe_load(open(from_file)):
+            # Copy the existing Context to a new object
+            ctx = copy(context)
+
+            # Update with Scenario info from file
+            ctx.handle_cli_args(**item)
+
+            # Construct an output path from the parsed info/URL
+            ctx.output_path = Path(
+                output_path,
+                '_'.join([ctx.platform_info['name'],
+                          ctx.scenario_info['model'],
+                         ctx.scenario_info['scenario']]),
+                ).with_suffix('.xlsx')
+
+            contexts.append(ctx)
+    else:
+        # Single Scenario; identifiers were supplied to the top-level CLI
+        context.output_path = output_path
+        contexts.append(context)
+
+    for ctx in contexts:
+        # Load the Platform and Scenario
+        scenario = context.get_scenario()
+        mark()
+
+        report(scenario, key, config, ctx.output_path, dry_run)
+
+
+def report(scenario, key, config, output_path, dry_run):
+    rep, key = prepare_reporter(scenario, config, key, output_path)
     mark()
 
     print('', 'Preparing to report:', rep.describe(key), '', sep='\n\n')
@@ -74,7 +121,7 @@ def cli(context, key, config_file, output_path, verbose, dry_run):
     mark()
 
 
-def report(scenario, path, legacy=None):
+def _report(scenario, path, legacy=None):
     """Run complete reporting on *scenario* with output to *path*.
 
     If *legacy* is not None, it is used as keyword arguments to the old-
