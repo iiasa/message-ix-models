@@ -84,6 +84,22 @@ Units
        units: kJ
 
 
+Continous reporting
+===================
+
+The IIASA TeamCity build server is configured to automatically run the full (:file:`global.yaml`) reporting on the following scenarios:
+
+.. literalinclude:: ../../../ci/report.yaml
+   :language: yaml
+
+This takes place:
+
+- every morning at 07:00 IIASA time, and
+- for every commit on every pull request branch, *if* the branch name includes ``report`` anywhere, e.g. ``feature/improve-reporting``.
+
+The results are output to Excel files that are preserved and made available as 'build artifacts' via the TeamCity web interface.
+
+
 API reference
 =============
 
