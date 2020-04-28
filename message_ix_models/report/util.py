@@ -52,12 +52,12 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
     if replace_common:
         try:
             # Level: to title case, add the word 'energy'
-            df['l'] = df['l'].str.title() + ' Energy'
+            df['l'] = df['l'].astype(str).str.title() + ' Energy'
         except KeyError:
             pass
         try:
             # Commodity: to title case
-            df['c'] = df['c'].str.title()
+            df['c'] = df['c'].astype(str).str.title()
         except KeyError:
             pass
 
@@ -65,7 +65,7 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
         df = df.replace(REPLACE)
 
     # Extend region column ('n' and 'nl' are automatically added by message_ix)
-    df['region'] = df['region'].astype(str)\
+    df['region'] = df['region'].astype(str) \
                                .str.cat([df[c] for c in region], sep='|')
 
     # Assemble variable column
