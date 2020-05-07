@@ -1,6 +1,14 @@
+import logging
+
+from message_ix.reporting import Reporter
 import pandas as pd
 
-from message_data.tools import ScenarioInfo
+from message_data.reporting.util import infer_keys
+from message_data.tools import ScenarioInfo, get_context
+
+
+log = logging.getLogger(__name__)
+
 
 #: Reporting configuration for :func:`check`. Adds a single key,
 #: 'transport check', that depends on others and returns a
@@ -35,7 +43,7 @@ def check(scenario):
     return rep.get(key)
 
 
-def transport_check(scenario, ACT):
+def check_computation(scenario, ACT):
     """Reporting computation for :func:`check`.
 
     Imported into :mod:`.reporting.computations`.
@@ -55,3 +63,21 @@ def transport_check(scenario, ACT):
     # checks['(fail for debugging)'] = False
 
     return pd.Series(checks)
+
+
+def callback(rep: Reporter):
+    """:meth:`.prepare_reporter` callback for MESSAGE-Transport.
+
+    Adds:
+
+    - ``out::transport`` that aggregates outputs by technology group.
+    """
+    tech_cfg = get_context()['transport technology']
+
+    out = infer_keys(rep, 'out')
+
+    # Aggregate transport technologies
+    t_groups = {g: i['tech'] for g, i in tech_cfg['technology group'].items()}
+    keys = rep.aggregate(out, 'transport', dict(t=t_groups), sums=True)
+
+    log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
