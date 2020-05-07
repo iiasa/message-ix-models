@@ -33,12 +33,12 @@ def test_solve_bare_res(bare_res):
     context['transport config']['data source']['LDV'] = 'US-TIMES MA3T'
     context['transport config']['data source']['non-LDV'] = 'IKARUS'
 
-    build(bare_res, fast=True)
+    build(bare_res, fast=True, quiet=False)
 
     # commented: for debugging
     # bare_res.to_excel('debug.xlsx')
 
-    bare_res.solve()
+    bare_res.solve(solve_options=dict(lpmethod=4))
 
     # Use Reporting calculations to check the result
     result = check(bare_res)
