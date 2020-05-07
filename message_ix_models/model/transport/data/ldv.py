@@ -5,7 +5,13 @@ from openpyxl import load_workbook
 import pandas as pd
 
 from message_data.model.transport.utils import read_config
-from message_data.tools import commodities, get_context, make_io
+from message_data.tools import (
+    commodities,
+    copy_column,
+    get_context,
+    make_df,
+    make_io,
+)
 
 
 #: Input file containing data from US-TIMES and MA3T models.
@@ -21,6 +27,18 @@ TABLES = [
 
 
 def get_ldv_data(info):
+    config = get_context()['transport config']['data source']
+    source = config.get('LDV', None)
+
+    if source == 'US-TIMES MA3T':
+        return get_USTIMES_MA3T(info)
+    elif source is None:
+        return {}  # Don't add any data
+    else:
+        raise ValueError(f'invalid source for non-LDV data: {source}')
+
+
+def get_USTIMES_MA3T(info):
     """Read LDV cost and efficiency data from US-TIMES and MA3T."""
     # Open workbook
     path = get_context().get_path('transport', FILE)
@@ -47,17 +65,24 @@ def get_ldv_data(info):
             df = pd.DataFrame(list(sheet[cells])) \
                    .applymap(lambda c: c.value)
 
-            # Make the first row the headers
-            df.columns = df.loc[0, :]
-
-            # Remaining rows: rearrange columns, period as column.
             data[par_name].append(
+                # Make the first row the headers
                 df.iloc[1:, :]
-                  .drop(['Technology', 'Description'], axis=1)
-                  .rename(columns={'MESSAGE name': 'technology'})
-                  .melt(id_vars=['technology'], var_name='year')
-                  .astype({'year': int})
-                  .assign(node=node, unit=unit)
+                .set_axis(df.loc[0, :], axis=1)
+                # Drop extra columns
+                .drop(['Technology', 'Description'], axis=1)
+                # Use 'MESSAGE name' as the technology name
+                .rename(columns={'MESSAGE name': 'technology'})
+                # Pivot to long format
+                .melt(id_vars=['technology'], var_name='year')
+                # Year as integer
+                .astype({'year': int})
+                # Within the model horizon/time resolution
+                .query(f"year in [{', '.join(map(str, info.Y))}]")
+                # Assign values
+                .assign(node=node, unit=unit)
+                # Drop NA values (e.g. ICE_L_ptrp after the first year)
+                .dropna(subset=['value'])
             )
 
     # Concatenate data frames
@@ -105,6 +130,18 @@ def get_ldv_data(info):
 
     i_o['input'] = i_o['input'].apply(add_commodity_and_level, axis=1)
 
-    data.update(i_o)
+    # Transform costs
+    for par in 'fix_cost', 'inv_cost':
+        base = data.pop(par)
+        # Rename 'node' and 'year' columns
+        data[par] = make_df(
+            par,
+            node_loc=base['node'],
+            technology=base['technology'],
+            year_vtg=base['year'],
+            year_act=base['year'],  # fix_cost only
+            value=base['value'],
+            unit=base['unit'],
+        )
 
     return data

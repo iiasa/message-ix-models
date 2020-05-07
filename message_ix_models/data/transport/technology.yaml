@@ -234,7 +234,8 @@ technology:
 technology group:
   LDV:
     description: Light-duty vehicles (passenger cars and trucks)
-    by_consumer_group: true
+    # temporarily disabled
+    # by_consumer_group: true
     tech: [ELC_100, HFC_ptrp, IAHe_ptrp, IAHm_ptrp, ICAe_ffv, ICAm_ptrp,
       ICE_conv, ICE_L_ptrp, ICE_nga, ICH_chyb, IGH_ghyb, PHEV_ptrp]
   2W:

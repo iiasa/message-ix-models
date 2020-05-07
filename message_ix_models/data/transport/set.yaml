@@ -89,6 +89,8 @@ unit:
     pkm / GJ: passenger-kilometre per gigajoule
     MUSD / a / v: 10⁶ USD per vehicle-year
     MUSD / v: 10⁶ USD per vehicle
+    # for US-TIMES MA3T
+    USD / vehicle: USD per vehicle
 
 
 # MA3T sets

@@ -17,15 +17,22 @@ def test_build_bare_res(bare_res, ldv, nonldv):
     context = read_config()
 
     # Manually modify some of the configuration per test parameters
-    context['transport config']['data source']['non-LDV'] = ldv
+    context['transport config']['data source']['LDV'] = ldv
     context['transport config']['data source']['non-LDV'] = nonldv
 
     # Build succeeds without error
     build(bare_res, fast=True)
 
 
+@pytest.mark.skip('Partially complete')
 def test_solve_bare_res(bare_res):
     """Test that MESSAGE-Transport built on the bare RES will solve."""
+    # Pre-load transport config/metadata
+    context = read_config()
+
+    context['transport config']['data source']['LDV'] = 'US-TIMES MA3T'
+    context['transport config']['data source']['non-LDV'] = 'IKARUS'
+
     build(bare_res, fast=True)
 
     # commented: for debugging

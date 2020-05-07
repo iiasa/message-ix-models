@@ -3,7 +3,7 @@ disable_existing_loggers: False
 
 formatters:
   simple:
-    format: '{funcName}| {message}'
+    format: '{funcName} | {message}'
     style: '{'
 
 handlers:
