@@ -11,7 +11,9 @@ from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
 
 # Computations for specific models and projects
-from message_data.model.transport.check import transport_check  # noqa: F401
+from message_data.model.transport.report import (  # noqa: F401
+    check_computation as transport_check
+)
 
 
 log = logging.getLogger(__name__)
