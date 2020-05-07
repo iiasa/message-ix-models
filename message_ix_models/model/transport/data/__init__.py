@@ -15,8 +15,8 @@ from message_data.tools import (
 )
 from message_data.model.transport.demand import demand  # noqa: F401
 from .groups import get_consumer_groups  # noqa: F401
-from .ikarus import get_ikarus_data  # noqa: F401
-from .ldv import get_ldv_data  # noqa: F401
+from .ldv import get_ldv_data
+from .non_ldv import get_non_ldv_data
 
 
 log = logging.getLogger(__name__)
@@ -27,39 +27,19 @@ DATA_FUNCTIONS = [
     'conversion',
     'freight',
     'passenger',
+    get_ldv_data,
+    get_non_ldv_data,
 ]
 
 
 def add_data(scenario, data_from, dry_run=False):
     """Populate *senario* with MESSAGE-Transport data."""
-    config = get_context()['transport config']['data source']
-
-    func_names = DATA_FUNCTIONS.copy()
-
-    # Select source for LDV data
-    LDV = config.get('LDV', None)
-    if LDV == 'US-TIMES MA3T':
-        func_names.append('get_ldv_data')
-    elif LDV is None:
-        pass  # Don't add any data
-    else:
-        raise ValueError(f'invalid source for non-LDV data: {LDV}')
-
-    # Select source for non-LDV data
-    non_LDV = config.get('non-LDV', None)
-    if non_LDV == 'IKARUS':
-        func_names.append('get_ikarus_data')
-    elif non_LDV is None:
-        pass  # Don't add any data
-    else:
-        raise ValueError(f'invalid source for non-LDV data: {non_LDV}')
-
     # Add data
     info = ScenarioInfo(scenario)
 
-    for name in func_names:
-        func = globals()[name]
-        log.info(f'Add data from {repr(name)}')
+    for func in DATA_FUNCTIONS:
+        func = globals()[func] if isinstance(func, str) else func
+        log.info(f'Add data from {func}')
 
         # Generate or load the data; add to the Scenario
         add_par_data(scenario, func(info), dry_run=dry_run)
@@ -74,12 +54,12 @@ def add_par_data(scenario, data, dry_run=False):
         log.info(f'{N} rows in {par_name!r}')
         log.debug(str(values))
 
-        if not dry_run:
-            # Reset index
-            # TODO ixmp should do this automatically
-            scenario.add_par(par_name, values.reset_index())
-
         total += N
+
+        if dry_run:
+            continue
+
+        scenario.add_par(par_name, values)
 
     return total
 
