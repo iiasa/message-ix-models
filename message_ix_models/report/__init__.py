@@ -6,9 +6,15 @@ from time import process_time
 
 import click
 
-from .core import prepare_reporter
+from .core import prepare_reporter, register
 
 import yaml
+
+
+__all__ = [
+    'prepare_reporter',
+    'register',
+]
 
 
 log = logging.getLogger(__name__)

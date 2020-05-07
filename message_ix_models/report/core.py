@@ -7,7 +7,6 @@ from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Key, Reporter
 from message_ix.reporting.computations import write_report
 from message_ix.reporting.computations import concat
-import pint
 
 from . import computations
 from .computations import combine, group_sum
@@ -15,6 +14,34 @@ from .util import collapse, infer_keys
 
 
 log = logging.getLogger(__name__)
+
+
+CALLBACKS = []
+
+
+def register(callback) -> None:
+    """Register a callback function for :meth:`prepare_reporter`.
+
+    Each registered function is called by :meth:`prepare_reporter`, in order to
+    add or modify reporting keys. Specific model variants and projects can
+    register a callback to extend the reporting graph.
+
+    Callback functions must take one argument, with a type annotation::
+
+        from message_ix.reporting import Reporter
+        from message_data.reporting import register
+
+        def cb(rep: Reporter):
+            # Modify `rep` by calling its methods ...
+            pass
+
+        register(cb)
+    """
+    if callback in CALLBACKS:
+        log.info(f'Already registered: {callback}')
+        return
+
+    CALLBACKS.append(callback)
 
 
 def prepare_reporter(scenario, config, key, output_path=None):
@@ -77,6 +104,9 @@ def prepare_reporter(scenario, config, key, output_path=None):
         for entry in config.pop(section_name, []):
             # Append to queue
             to_add.append((('apply', func), dict(info=entry)))
+
+    # Also add the callbacks to the queue
+    to_add.extend((('apply', cb), {}) for cb in CALLBACKS)
 
     # Use ixmp.Reporter.add_queue() to process the entries. Retry at most
     # once; raise an exception if adding fails after that.
