@@ -28,7 +28,6 @@ DATA_FUNCTIONS = [
     demand,
     'conversion',
     'freight',
-    'passenger',
     get_ldv_data,
     get_non_ldv_data,
     'dummy_supply',
@@ -130,7 +129,7 @@ def conversion(info):
     cfg = get_context()['transport config']
 
     common = dict(
-        year_vtg=info.y0,
+        year_vtg=info.Y,
         year_act=info.Y,
         mode='all',
         # No subannual detail
@@ -167,7 +166,7 @@ def conversion(info):
         make_matched_dfs(
             base=data['input'],
             capacity_factor=1,
-            technical_lifetime=100,
+            technical_lifetime=10,
         )
     )
 
@@ -179,7 +178,7 @@ def freight(info):
     cfg = get_context()['transport technology']
 
     common = dict(
-        year_vtg=info.y0,
+        year_vtg=info.Y,
         year_act=info.Y,
         mode='all',
         time='year',  # no subannual detail
@@ -198,7 +197,7 @@ def freight(info):
             **common,
         )
 
-        i_o['input'] = add_commodity_and_level(i_o['input'])
+        i_o['input'] = add_commodity_and_level(i_o['input'], 'final')
 
         for par, df in i_o.items():
             node_col = 'node_origin' if par == 'input' else 'node_dest'
@@ -213,37 +212,11 @@ def freight(info):
         make_matched_dfs(
             base=data['input'],
             capacity_factor=1,
-            technical_lifetime=100,
+            technical_lifetime=10,
         )
     )
 
     return data
-
-
-def passenger(info):
-    """Data for passenger technologies."""
-    cfg = get_context()['transport technology']
-
-    common = dict(
-        year_vtg=info.Y,
-        year_act=info.Y,
-        commodity='transport pax vehicle',
-        level='useful',
-        value=1.0,  # placeholder
-        unit='km',
-        mode='all',
-        time='year', time_dest='year',  # no subannual detail
-    )
-
-    output = []
-    for tech in cfg['technology group']['BUS']['tech']:
-        output.append(
-            make_df('output', technology=tech, **common)
-            .pipe(broadcast, node_loc=info.N[1:])
-            .assign(node_dest=copy_column('node_loc'))
-        )
-
-    return dict(output=pd.concat(output))
 
 
 def dummy_supply(info):
@@ -258,7 +231,7 @@ def dummy_supply(info):
         unit='GWa',
         value=1.0,
         year_act=info.Y,
-        year_vtg=info.y0,
+        year_vtg=info.Y,
     )
 
     result = dict(
@@ -274,7 +247,7 @@ def dummy_supply(info):
             base=result['output'],
             capacity_factor=1,
             var_cost=1,
-            technical_lifetime=100,
+            technical_lifetime=10,
         )
     )
 

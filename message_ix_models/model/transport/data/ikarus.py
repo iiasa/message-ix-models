@@ -223,7 +223,7 @@ def get_ikarus_data(info):
 
         # Parameter-specific arguments/processing
         if par == 'input':
-            args['commodity'] = tech_info[tec]['input commodity']
+            args['commodity'] = tech_info[tec]['input']['commodity']
             # TODO use the appropriate level for the given commodity; see
             #      ldv.py
             args['level'] = 'final'
