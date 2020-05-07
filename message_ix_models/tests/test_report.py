@@ -130,6 +130,8 @@ def test_apply_units(bare_res):
 
 def test_iamc_replace_vars(bare_res):
     """Test the 'iamc variable names' reporting configuration."""
+    scen = bare_res.clone()
+
     qty = 'inv_cost'
     config = {
         'iamc': [IAMC_INV_COST],
@@ -137,11 +139,11 @@ def test_iamc_replace_vars(bare_res):
             'Investment Cost|coal_ppl': 'Investment Cost|Coal',
         }
     }
-    bare_res.check_out()
-    bare_res.add_par('inv_cost', DATA_INV_COST)
-    bare_res.commit('')
-    bare_res.solve()
+    scen.check_out()
+    scen.add_par('inv_cost', DATA_INV_COST)
+    scen.commit('')
+    scen.solve()
 
-    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
+    reporter, key = prepare_reporter(scen, config=config, key=qty)
     df = reporter.get('Investment Cost:iamc').as_pandas()
     assert set(df['variable']) == {'Investment Cost|Coal'}
