@@ -1,10 +1,7 @@
 from contextlib import contextmanager
 from functools import lru_cache
 from itertools import product
-import logging.config
-from pathlib import Path
 
-import yaml
 import xarray as xr
 
 from message_data.tools import get_context, load_data
@@ -67,10 +64,6 @@ def read_config():
     # Convert scalar parameters
     for key, val in context['transport callback'].pop('params').items():
         context.data[key] = eval(val) if isinstance(val, str) else val
-
-    # Configure logging
-    with open(Path(__file__).parent / 'logging.yaml') as f:
-        logging.config.dictConfig(yaml.safe_load(f))
 
     return context
 
