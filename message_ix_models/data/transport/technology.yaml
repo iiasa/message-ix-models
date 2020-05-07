@@ -9,66 +9,66 @@ technology:
     description: >-
       Battery-electric light-duty vehicle using electricity-only (100-mile
       all-electric range)
-    input commodity: electr
+    input: {commodity: electr}
     report: LDV_ELE
   HFC_ptrp:
     description: Hybridized fuel cell light-duty vehicle using hydrogen
-    input commodity: hydrogen
+    input: {commodity: hydrogen}
     report: LDV_HFC
   IAHe_ptrp:
     description: >-
       Hybridized internal combustion engine light-duty vehicle using biofuels
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: LDV_EHYB
   IAHm_ptrp:
     description: >-
       Hybridized internal combustion engine light-duty vehicle using methanol/
       synthetic fossil liquids
-    input commodity: methanol
+    input: {commodity: methanol}
     report: LDV_MHYB
   ICAe_ffv:
     description: Internal combustion engine light-duty vehicle using biofuels
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: LDV_ffv
   ICAm_ptrp:
     description: >-
       Internal combustion engine light-duty vehicle using methanol/synthetic
       fossil liquids
-    input commodity: methanol
+    input: {commodity: methanol}
     report: LDV_meth
   ICE_conv:
     description: >-
       Future (2005 and after) medium/high-efficiency internal combustion engine
       light-duty vehicle using gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: LDV_conv
   ICE_L_ptrp:
     description: >-
       Historical (2005 and before) Low-efficiency internal combustion engine
       light-duty vehicle using gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: LDV_ICE_L
   ICE_nga:
     description: >-
       Internal combustion engine light-duty vehicle using natural gas
-    input commodity: gas
+    input: {commodity: gas}
     report: LDV_NGA
   ICH_chyb:
     description: >-
       Hybridized internal combustion engine light-duty vehicle using
       gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: LDV_CHYB
   IGH_ghyb:
     description: >-
       Hybridized internal combustion engine light-duty vehicle using natural gas
-    input commodity: gas
+    input: {commodity: gas}
     report: LDV_GHYB
   PHEV_ptrp:
     description: >-
       Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
       all-electric range)
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: LDV_PHEV
 
   ICE_H_moto:
@@ -84,116 +84,116 @@ technology:
   ICE_H_bus:
     description:
       High-efficiency internal combustion engine bus using gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: BUS_ICE_H
   ICE_M_bus:
     description: >-
       Medium-efficiency internal combustion engine bus using gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: BUS_ICE_M
   ICG_bus:
     description: Internal combustion engine bus using natural gas
-    input commodity: gas
+    input: {commodity: gas}
     report: BUS_ICG
   ICAe_bus:
     description: Internal combustion engine bus using biofuels
-    input commodity: lightoil  # actually biofuel
+    input: {commodity: lightoil}  # actually biofuel
     report: BUS_ICAe
   ICH_bus:
     description: >-
       Hybridized internal combustion engine bus using gasoline/diesel
-    input commodity: lightoil  # hybridized, but not plug-in, so only oil input
+    input: {commodity: lightoil}  # hybridized, but not plug-in, so only oil input
     report: BUS_ICH
   FC_bus:
     description: Hybridized fuel cell bus using hydrogen
-    input commodity: hydrogen
+    input: {commodity: hydrogen}
     report: BUS_HFC
   FCg_bus:
     description: >-
       Hybridized fuel cell bus using natural gas via steam reformation
-    input commodity: gas
+    input: {commodity: gas}
     report: BUS_GFC
   FCm_bus:
     description: >-
       Hybridized fuel cell bus using methanol/synthetic fossil liquids via steam
       reformation
-    input commodity: methanol
+    input: {commodity: methanol}
     report: BUS_MFC
   Trolley_bus:
     description: Electric trolleybus connected to power cables
-    input commodity: electr
+    input: {commodity: electr}
     report: BUS_ELEtr
   PHEV_bus:
     description: Plug-in hybrid-electric bus using gasoline/diesel
-    input commodity: lightoil  # actually both lightoil *and* electr
+    input: {commodity: lightoil}  # actually both lightoil *and* electr
     report: BUS_PHEV
 
   con_ar:
     description: >-
       Conventional jet engine passenger aircraft using light oil petroleum
       products (kerosene jet fuel)
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: AIRp_JF
   conh_ar:
     description: Conventional jet engine passenger aircraft using hydrogen
-    input commodity: hydrogen
+    input: {commodity: hydrogen}
     report: AIRp_H2
   conm_ar:
     description: >-
       Conventional jet engine passenger aircraft using methanol/synthetic fossil
       liquids
-    input commodity: methanol
+    input: {commodity: methanol}
     report: AIRp_MET
   conE_ar:
     description: Conventional jet engine passenger aircraft using biofuels
-    input commodity: lightoil  # actually biofuel
+    input: {commodity: lightoil}  # actually biofuel
     report: AIRp_BIO
 
   FR_ICE_H:
     description: >-
       High-efficiency internal combustion engine freight truck using
       gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil, level: final}
     report: FRT_ICE_H
   FR_ICE_M:
     description: >-
       Medium-efficiency internal combustion engine freight truck using
       gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: FRT_ICE_M
   FR_ICE_L:
     description: >-
       Low-efficiency internal combustion engine freight truck using
       gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: FRT_ICE_L
   FR_ICG:
     description: Internal combustion engine freight truck using natural gas
-    input commodity: gas
+    input: {commodity: gas}
     report: FRT_ICG
   FR_ICAe:
     description: Internal combustion engine freight truck using biofuels
-    input commodity: lightoil  # actually biofuel
+    input: {commodity: lightoil}  # actually biofuel
     report: FRT_ICAe
   FR_ICH:
     description: >-
       Hybridized internal combustion engine freight truck using gasoline/diesel
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: FRT_ICH
   FR_FCH:
     description: Hybridized fuel cell freight truck using hydrogen
-    input commodity: hydrogen
+    input: {commodity: hydrogen}
     report: FRT_HFC
   FR_FCg:
     description: >-
       Hybridized fuel cell freight truck using natural gas via steam reformation
-    input commodity: gas
+    input: {commodity: gas}
     report: FRT_GFC
   FR_FCm:
     description: >-
       Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
       via steam reformation
-    input commodity: methanol
+    input: {commodity: methanol}
     report: FRT_MFC
 
   crail_pub:
@@ -203,24 +203,24 @@ technology:
     report: RAIL_urban_COAL
   dMspeed_rai:
     description: Diesel-powered long-distance medium-speed rail transport
-    input commodity: lightoil
+    input: {commodity: lightoil}
     report: RAIL_ldm_DSL
   drail_pub:
     description: Diesel-powered urban public rail transport
     report: RAIL_urban_DSL
   Hspeed_rai:
     description: Electrically-powered long-distance high-speed rail transport
-    input commodity: electr
+    input: {commodity: electr}
     report: RAIL_ldh_ELE
   Mspeed_rai:
     description: Electrically-powered long-distance medium-speed rail transport
-    input commodity: electr
+    input: {commodity: electr}
     report: RAIL_ldm_ELE
   rail_pub:
     description: >-
       Electrically-powered urban public rail transport: aggregate of metro/
       underground, streetcars/trams, commuter trains, and regional trains
-    input commodity: electr
+    input: {commodity: electr}
     report: RAIL_urban_ELE
 
   transport freight load factor:

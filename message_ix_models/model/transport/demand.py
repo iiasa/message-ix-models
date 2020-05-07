@@ -24,22 +24,30 @@ def dummy(info):
     ----------
     info : .ScenarioInfo
     """
-    data = dict(
+    common = dict(
         year=info.Y,
         value=np.arange(len(info.Y)) + 0.1,
         level='useful',
-        commodity='transport freight',
-        unit='t km',
         time='year',
     )
 
-    # - Assemble into a message_ix-ready DataFrame
-    # - Broadcast over all nodes
-    data = make_df('demand', **data)\
-        .pipe(broadcast, node=info.N[1:])
+    dfs = []
 
-    # Original data plus a copy
-    return pd.concat([
-        data,
-        data.assign(commodity='transport pax', unit='km'),
-    ])
+    for mode, unit in [('freight', 't km'), ('pax', 'km')]:
+        dfs.append(make_df(
+            'demand',
+            commodity=f'transport {mode}',
+            unit=unit,
+            **common,
+        ))
+
+    # # Dummy demand for light oil
+    # common['level'] = 'final'
+    # dfs.append(
+    #     make_df('demand', commodity='lightoil', **common)
+    # )
+
+    return (
+        pd.concat(dfs)
+        .pipe(broadcast, node=info.N[1:])
+    )

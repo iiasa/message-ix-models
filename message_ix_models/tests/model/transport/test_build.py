@@ -24,7 +24,6 @@ def test_build_bare_res(bare_res, ldv, nonldv):
     build(bare_res, fast=True)
 
 
-@pytest.mark.skip('Partially complete')
 def test_solve_bare_res(bare_res):
     """Test that MESSAGE-Transport built on the bare RES will solve."""
     # Pre-load transport config/metadata
