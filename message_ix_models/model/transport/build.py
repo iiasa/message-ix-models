@@ -27,7 +27,7 @@ def clone(p_source, p_dest):
     return scen
 
 
-def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
+def main(scenario, dry_run=False, quiet=True, fast=False):
     """Set up MESSAGE-Transport on *scenario*.
 
     With dry_run=True, don't modify *scenario*; only describe what would be
@@ -50,7 +50,6 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
     Parameters
     ----------
     fast : bool, optional
-
     """
     # Read MESSAGE-Transport config / metadata
     context = read_config()
@@ -127,7 +126,7 @@ def main(scenario, data_from=None, dry_run=False, quiet=True, fast=False):
         s.platform.add_unit(u, comment=desc)
 
     # Add data
-    add_data(scenario, data_from, dry_run=dry_run)
+    add_data(scenario, dry_run=dry_run)
 
     # Finalize
     log.info('Commit results.')
