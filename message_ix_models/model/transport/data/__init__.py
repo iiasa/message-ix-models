@@ -12,8 +12,10 @@ from message_data.tools import (
     iter_parameters,
     make_df,
     make_io,
+    make_matched_dfs,
 )
-from message_data.model.transport.demand import demand  # noqa: F401
+from message_data.model.transport.demand import demand
+from message_data.model.transport.utils import add_commodity_and_level
 from .groups import get_consumer_groups  # noqa: F401
 from .ldv import get_ldv_data
 from .non_ldv import get_non_ldv_data
@@ -23,35 +25,37 @@ log = logging.getLogger(__name__)
 
 
 DATA_FUNCTIONS = [
-    'demand',
+    demand,
     'conversion',
     'freight',
     'passenger',
     get_ldv_data,
     get_non_ldv_data,
+    'dummy_supply',
 ]
 
 
-def add_data(scenario, data_from, dry_run=False):
+def add_data(scenario, dry_run=False):
     """Populate *senario* with MESSAGE-Transport data."""
     # Add data
     info = ScenarioInfo(scenario)
 
     for func in DATA_FUNCTIONS:
         func = globals()[func] if isinstance(func, str) else func
-        log.info(f'Add data from {func}')
+        log.info(f'from {func.__name__}()')
 
         # Generate or load the data; add to the Scenario
         add_par_data(scenario, func(info), dry_run=dry_run)
+
+    log.info('done')
 
 
 def add_par_data(scenario, data, dry_run=False):
     total = 0
 
     for par_name, values in data.items():
-        N = len(values)
-
-        log.info(f'{N} rows in {par_name!r}')
+        N = values.shape[0]
+        log.info(f'{N} rows in {repr(par_name)}')
         log.debug(str(values))
 
         total += N
@@ -148,13 +152,26 @@ def conversion(info):
             factor,
             on='output',
             technology=f'transport {mode} load factor',
-            **common)
+            **common
+        )
         for par, df in i_o.items():
             node_col = 'node_origin' if par == 'input' else 'node_dest'
-            data[par].append(df.pipe(broadcast, node_loc=info.N[1:])
-                               .assign(**{node_col: copy_column('node_loc')}))
+            data[par].append(
+                df.pipe(broadcast, node_loc=info.N[1:])
+                .assign(**{node_col: copy_column('node_loc')})
+            )
 
-    return {par: pd.concat(dfs) for par, dfs in data.items()}
+    data = {par: pd.concat(dfs) for par, dfs in data.items()}
+
+    data.update(
+        make_matched_dfs(
+            base=data['input'],
+            capacity_factor=1,
+            technical_lifetime=100,
+        )
+    )
+
+    return data
 
 
 def freight(info):
@@ -162,25 +179,45 @@ def freight(info):
     cfg = get_context()['transport technology']
 
     common = dict(
-        year_vtg=info.Y,
+        year_vtg=info.y0,
         year_act=info.Y,
-        commodity='transport freight vehicle',
-        level='useful',
-        value=1.0,  # placeholder
-        unit='km',
         mode='all',
-        time='year', time_dest='year',  # no subannual detail
+        time='year',  # no subannual detail
+        time_dest='year',
+        time_origin='year',
     )
 
-    output = []
+    data = defaultdict(list)
     for tech in cfg['technology group']['freight truck']['tech']:
-        output.append(
-            make_df('output', technology=tech, **common)
-            .pipe(broadcast, node_loc=info.N[1:])
-            .assign(node_dest=copy_column('node_loc'))
+        i_o = make_io(
+            src=(None, None, 'GWa'),
+            dest=('transport freight vehicle', 'useful', 'km'),
+            efficiency=1.,
+            on='input',
+            technology=tech,
+            **common,
         )
 
-    return dict(output=pd.concat(output))
+        i_o['input'] = add_commodity_and_level(i_o['input'])
+
+        for par, df in i_o.items():
+            node_col = 'node_origin' if par == 'input' else 'node_dest'
+            data[par].append(
+                df.pipe(broadcast, node_loc=info.N[1:])
+                .assign(**{node_col: copy_column('node_loc')})
+            )
+
+    data = {par: pd.concat(dfs) for par, dfs in data.items()}
+
+    data.update(
+        make_matched_dfs(
+            base=data['input'],
+            capacity_factor=1,
+            technical_lifetime=100,
+        )
+    )
+
+    return data
 
 
 def passenger(info):
@@ -207,3 +244,38 @@ def passenger(info):
         )
 
     return dict(output=pd.concat(output))
+
+
+def dummy_supply(info):
+    """Dummy fuel supply for the bare RES."""
+    common = dict(
+        commodity='lightoil',
+        level='final',
+        mode='all',
+        technology='DUMMY transport fuel',
+        time='year',
+        time_dest='year',
+        unit='GWa',
+        value=1.0,
+        year_act=info.Y,
+        year_vtg=info.y0,
+    )
+
+    result = dict(
+        output=(
+            make_df('output', **common)
+            .pipe(broadcast, node_loc=info.N[1:])
+            .assign(node_dest=copy_column('node_loc'))
+        )
+    )
+
+    result.update(
+        make_matched_dfs(
+            base=result['output'],
+            capacity_factor=1,
+            var_cost=1,
+            technical_lifetime=100,
+        )
+    )
+
+    return result
