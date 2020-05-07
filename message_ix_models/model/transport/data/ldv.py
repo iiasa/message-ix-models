@@ -91,8 +91,13 @@ def get_ldv_data(info):
 
     @lru_cache()
     def t_cl(t):
-        c = t_info[t]['input commodity']
-        return c, c_info[c]['level']
+        # Commodity must be specified
+        commodity = t_info[t]['input commodity']
+        # Use the default level for the commodity in the RES (per
+        # commodity.yaml) or 'secondary'
+        level = c_info[commodity].get('level', 'secondary')
+
+        return commodity, level
 
     def add_commodity_and_level(row):
         row[['commodity', 'level']] = t_cl(row['technology'])
