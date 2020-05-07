@@ -153,38 +153,47 @@ technology:
     description: >-
       High-efficiency internal combustion engine freight truck using
       gasoline/diesel
+    input commodity: lightoil
     report: FRT_ICE_H
   FR_ICE_M:
     description: >-
       Medium-efficiency internal combustion engine freight truck using
       gasoline/diesel
+    input commodity: lightoil
     report: FRT_ICE_M
   FR_ICE_L:
     description: >-
       Low-efficiency internal combustion engine freight truck using
       gasoline/diesel
+    input commodity: lightoil
     report: FRT_ICE_L
   FR_ICG:
     description: Internal combustion engine freight truck using natural gas
+    input commodity: gas
     report: FRT_ICG
   FR_ICAe:
     description: Internal combustion engine freight truck using biofuels
+    input commodity: lightoil  # actually biofuel
     report: FRT_ICAe
   FR_ICH:
     description: >-
       Hybridized internal combustion engine freight truck using gasoline/diesel
+    input commodity: lightoil
     report: FRT_ICH
   FR_FCH:
     description: Hybridized fuel cell freight truck using hydrogen
+    input commodity: hydrogen
     report: FRT_HFC
   FR_FCg:
     description: >-
       Hybridized fuel cell freight truck using natural gas via steam reformation
+    input commodity: gas
     report: FRT_GFC
   FR_FCm:
     description: >-
       Hybridized fuel cell freight truck using methanol/synthetic fossil liquids
       via steam reformation
+    input commodity: methanol
     report: FRT_MFC
 
   crail_pub:
@@ -221,15 +230,19 @@ technology:
     description: >-
       Conversion from vehicle-distance traveled to passenger transport activity
 
-  Occupancy_moto: {}
-  Occupancy_ptrp: {}
-  cons_convert: {}
-  disutility: {}
-  fuel_cell_ptrp: {}
-  gas_ref_ptrp: {}
-  h2stor_ptrp: {}
-  hybrid_ptrp: {}
-  oil_ref_ptrp: {}
+  DUMMY transport fuel:
+    description: >-
+      Dummy technology for development; should not appear in the final model.
+
+  # Occupancy_moto: {}
+  # Occupancy_ptrp: {}
+  # cons_convert: {}
+  # disutility: {}
+  # fuel_cell_ptrp: {}
+  # gas_ref_ptrp: {}
+  # h2stor_ptrp: {}
+  # hybrid_ptrp: {}
+  # oil_ref_ptrp: {}
 
 technology group:
   LDV:
