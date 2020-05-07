@@ -3,10 +3,10 @@ import xarray as xr
 from message_data.model.transport.utils import consumer_groups, read_config
 
 
-def test_read_config(test_context):
+def test_read_config(session_context):
     # read_config() returns a reference to the current context
     context = read_config()
-    assert context is test_context
+    assert context is session_context
 
     # Data table is loaded
     assert 'mer_to_ppp' in context.data
@@ -16,7 +16,7 @@ def test_read_config(test_context):
     assert context.data['whours'] == 200 * 8
 
 
-def test_consumer_groups(test_context):
+def test_consumer_groups(session_context):
     # Returns a list of codes
     result = consumer_groups(rtype='code')
     assert 'RUEAA' in result

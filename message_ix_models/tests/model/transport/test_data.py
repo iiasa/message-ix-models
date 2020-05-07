@@ -18,21 +18,16 @@ from message_data.tests import binary_data_available
 
 @pytest.mark.parametrize('key', FILES)
 @pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
-def test_load_data(test_context, key, rtype):
+def test_load_data(session_context, key, rtype):
     # Load transport metadata from files in both pandas and xarray formats
-    result = load_data(test_context, 'transport', key, rtype=rtype)
+    result = load_data(session_context, 'transport', key, rtype=rtype)
     assert isinstance(result, rtype)
 
 
 @binary_data_available
-def test_ikarus(test_context):
+def test_ikarus(bare_res, session_context):
     # Create bare RES
-    test_context.scenario_info.update(dict(
-        model='Bare RES',
-        scenario='test_ikarus',
-    ))
-    test_context.regions = 'R11'
-    scenario = create_res(test_context)
+    scenario = bare_res.clone()
     s_info = ScenarioInfo(scenario)
 
     # get_ikarus_data() succeeds on text_context and the bare RES
@@ -57,7 +52,7 @@ def test_ikarus(test_context):
     assert len(units) == 1, 'Units for each (par, tec) must be unique'
 
     # Unit is parseable by pint
-    pint_unit = test_context.units(units[0])
+    pint_unit = session_context.units(units[0])
 
     # Unit has the correct dimensionality
     assert pint_unit.dimensionality == {'[currency]': 1, '[vehicle]': -1}
@@ -82,7 +77,7 @@ def test_ikarus(test_context):
         units = data[par]['unit'].unique()
         assert len(units) == 1, 'Units for each (par, tec) must be unique'
         # Unit is parseable by pint
-        pint_unit = test_context.units(units[0])
+        pint_unit = session_context.units(units[0])
         # Unit has the correct dimensionality
         assert pint_unit.dimensionality == dim
 
@@ -116,15 +111,8 @@ def test_ikarus(test_context):
 
 
 @binary_data_available
-def test_ldv(test_context):
-    test_context.scenario_info.update(dict(
-        model='Bare RES',
-        scenario='test_create_res',
-    ))
-    read_config()
-
-    test_context.regions = 'R11'
-    scenario = create_res(test_context)
+def test_ldv(bare_res):
+    scenario = bare_res
     info = ScenarioInfo(scenario)
 
     # Method runs without error
