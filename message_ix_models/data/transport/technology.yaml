@@ -254,10 +254,12 @@ technology group:
   2W:
     description: Two-wheelers and motorcycles
     tech: [ICE_H_moto, ELE_moto]
+
   freight truck:
     description: Freight trucks
     tech: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
       FR_FCg, FR_FCm]
+
   AIR:
     description: >-
       Aviation (passenger aircraft only, ignoring shared freight component).
