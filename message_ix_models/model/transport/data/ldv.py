@@ -1,17 +1,10 @@
 from collections import defaultdict
-from functools import lru_cache
 
 from openpyxl import load_workbook
 import pandas as pd
 
-from message_data.model.transport.utils import read_config
-from message_data.tools import (
-    commodities,
-    copy_column,
-    get_context,
-    make_df,
-    make_io,
-)
+from message_data.model.transport.utils import add_commodity_and_level
+from message_data.tools import get_context, make_df, make_io
 
 
 #: Input file containing data from US-TIMES and MA3T models.
@@ -109,26 +102,7 @@ def get_USTIMES_MA3T(info):
         time_dest='year',
     )
 
-    # Add input commodity and level
-    read_config()
-    t_info = get_context()['transport technology']['technology']
-    c_info = commodities.get_info()
-
-    @lru_cache()
-    def t_cl(t):
-        # Commodity must be specified
-        commodity = t_info[t]['input commodity']
-        # Use the default level for the commodity in the RES (per
-        # commodity.yaml) or 'secondary'
-        level = c_info[commodity].get('level', 'secondary')
-
-        return commodity, level
-
-    def add_commodity_and_level(row):
-        row[['commodity', 'level']] = t_cl(row['technology'])
-        return row
-
-    i_o['input'] = i_o['input'].apply(add_commodity_and_level, axis=1)
+    i_o['input'] = add_commodity_and_level(i_o['input'])
 
     # Transform costs
     for par in 'fix_cost', 'inv_cost':

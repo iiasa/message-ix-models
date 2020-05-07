@@ -1,10 +1,9 @@
-from contextlib import contextmanager
 from functools import lru_cache
 from itertools import product
 
 import xarray as xr
 
-from message_data.tools import get_context, load_data
+from message_data.tools import commodities, get_context, load_data
 
 
 # Configuration files
@@ -143,14 +142,23 @@ def transport_technologies(by_cg=True, filter=[], with_desc=False):
             yield (tech, info.get('description', '')) if with_desc else tech
 
 
-@contextmanager
-def silence_log():
-    """Context manager to temporarily silence log output."""
-    # Get the main logger
-    main_log = logging.getLogger('.'.join(__name__.split('.')[:-1]))
+def add_commodity_and_level(df, default_level='final'):
+    # Add input commodity and level
+    t_info = get_context()['transport technology']['technology']
+    c_info = commodities.get_info()
 
-    try:
-        main_log.setLevel(100)
-        yield
-    finally:
-        main_log.setLevel(logging.INFO)
+    @lru_cache()
+    def t_cl(t):
+        # Commodity must be specified
+        commodity = t_info[t]['input commodity']
+        # Use the default level for the commodity in the RES (per
+        # commodity.yaml)
+        level = c_info[commodity].get('level', default_level)
+
+        return commodity, level
+
+    def func(row):
+        row[['commodity', 'level']] = t_cl(row['technology'])
+        return row
+
+    return df.apply(func, axis=1)
