@@ -6,10 +6,10 @@ import pandas as pd
 
 from message_data.tools import (
     ScenarioInfo,
+    add_par_data,
     broadcast,
     copy_column,
     get_context,
-    iter_parameters,
     make_df,
     make_io,
     make_matched_dfs,
@@ -47,78 +47,6 @@ def add_data(scenario, dry_run=False):
         add_par_data(scenario, func(info), dry_run=dry_run)
 
     log.info('done')
-
-
-def add_par_data(scenario, data, dry_run=False):
-    total = 0
-
-    for par_name, values in data.items():
-        N = values.shape[0]
-        log.info(f'{N} rows in {repr(par_name)}')
-        log.debug(str(values))
-
-        total += N
-
-        if dry_run:
-            continue
-
-        scenario.add_par(par_name, values)
-
-    return total
-
-
-def strip_par_data(scenario, set_name, value, dry_run=False, dump=None):
-    """Remove data from parameters of *scenario* where *value* in *set_name*.
-
-    Returns
-    -------
-    Total number of rows removed across all parameters.
-    """
-    par_list = scenario.par_list()
-    no_data = []
-    total = 0
-
-    for par_name in iter_parameters(set_name):
-        if par_name not in par_list:
-            continue
-
-        # Check for contents of par_name that include *value*
-        par_data = scenario.par(par_name, filters={set_name: value})
-        N = len(par_data)
-
-        if N == 0:
-            # No data; no need to do anything further
-            no_data.append(par_name)
-            continue
-        elif dump is not None:
-            dump[par_name] = pd.concat([
-                dump.get(par_name, pd.DataFrame()),
-                par_data,
-                ])
-
-        log.info(f'Remove {N} rows in {par_name!r}.')
-
-        # Show some debug info
-        for col in 'commodity level technology'.split():
-            if col == set_name or col not in par_data.columns:
-                continue
-
-            log.info('  with {}={}'
-                     .format(col, sorted(par_data[col].unique())))
-
-        if not dry_run:
-            # Actually remove the data
-            scenario.remove_par(par_name, key=par_data)
-
-            # # NB would prefer to do the following, but raises an exception:
-            # scenario.remove_par(par_name, key={set_name: [value]})
-
-        total += N
-
-    log.info(f'{total} rows removed.')
-    log.info(f'No data removed from {len(no_data)} other parameters.')
-
-    return total
 
 
 def conversion(info):
