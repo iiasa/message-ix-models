@@ -103,7 +103,8 @@ def conversion(info):
 
 def freight(info):
     """Data for freight technologies."""
-    cfg = get_context()['transport technology']
+    codes = get_context()["transport set"]["technology"]["add"]
+    freight_truck = codes[codes.index("freight truck")]
 
     common = dict(
         year_vtg=info.Y,
@@ -115,13 +116,13 @@ def freight(info):
     )
 
     data = defaultdict(list)
-    for tech in cfg['technology group']['freight truck']['tech']:
+    for tech in freight_truck.child:
         i_o = make_io(
             src=(None, None, 'GWa'),
             dest=('transport freight vehicle', 'useful', 'km'),
             efficiency=1.,
             on='input',
-            technology=tech,
+            technology=tech.id,
             **common,
         )
 

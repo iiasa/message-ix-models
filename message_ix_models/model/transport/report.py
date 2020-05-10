@@ -73,12 +73,16 @@ def callback(rep: Reporter):
     """
     from message_data.reporting.util import infer_keys
 
-    tech_cfg = get_context()['transport technology']
-
     out = infer_keys(rep, 'out')
 
     # Aggregate transport technologies
-    t_groups = {g: i['tech'] for g, i in tech_cfg['technology group'].items()}
+    t_groups = {}
+    for tech in get_context()["transport set"]["technology"]["add"]:
+        if not len(tech.child):
+            continue  # No children; not a group
+
+        t_groups[tech.id] = [child.id for child in tech.child]
+
     keys = rep.aggregate(out, 'transport', dict(t=t_groups), sums=True)
 
     log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')

@@ -126,7 +126,7 @@ def get_ikarus_data(info):
     context = read_config()
     # Reference to the transport configuration
     config = context['transport config']
-    tech_info = context['transport technology']['technology']
+    tech_info = context["transport set"]["technology"]["add"]
 
     # Open the input file using openpyxl
     wb = load_workbook(context.get_path('transport', FILE), read_only=True,
@@ -223,7 +223,8 @@ def get_ikarus_data(info):
 
         # Parameter-specific arguments/processing
         if par == 'input':
-            args['commodity'] = tech_info[tec]['input']['commodity']
+            tech = tech_info[tech_info.index(tec)]
+            args["commodity"] = tech.anno["input"]["commodity"]
             # TODO use the appropriate level for the given commodity; see
             #      ldv.py
             args['level'] = 'final'
