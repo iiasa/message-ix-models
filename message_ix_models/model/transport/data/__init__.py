@@ -1,5 +1,6 @@
 """Generate input data."""
 from collections import defaultdict
+from itertools import product
 import logging
 
 import pandas as pd
@@ -13,7 +14,9 @@ from message_data.tools import (
     make_df,
     make_io,
     make_matched_dfs,
+    same_node,
 )
+from message_data.model.transport.build import generate_set_elements
 from message_data.model.transport.demand import demand
 from message_data.model.transport.utils import add_commodity_and_level
 from .groups import get_consumer_groups  # noqa: F401
@@ -82,11 +85,69 @@ def conversion(info):
             **common
         )
         for par, df in i_o.items():
-            node_col = 'node_origin' if par == 'input' else 'node_dest'
             data[par].append(
                 df.pipe(broadcast, node_loc=info.N[1:])
-                .assign(**{node_col: copy_column('node_loc')})
+                .pipe(same_node)
             )
+
+    data = {par: pd.concat(dfs) for par, dfs in data.items()}
+
+    data.update(
+        make_matched_dfs(
+            base=data['input'],
+            capacity_factor=1,
+            technical_lifetime=10,
+        )
+    )
+
+    return data
+
+
+def disutility_conversion(info):
+    """Input and output data for disutility conversion technologies.
+
+    The technologies are named 'transport {mode} load factor'.
+    """
+    common = dict(
+        year_vtg=info.Y,
+        year_act=info.Y,
+        # No subannual detail
+        time='year',
+        time_origin='year',
+        time_dest='year',
+    )
+
+    technology = generate_set_elements("technology", "LDV")
+
+    modes = list(map(str, generate_set_elements("consumer_group")))
+    # Identical values, currently:
+    # modes = list(map(str, generate_set_elements("mode")))
+
+    data = defaultdict(list)
+    for t in technology:
+        i_o = make_io(
+            (f"transport vehicle {t.id}", 'useful', 'km'),
+            (None, "useful", "km"),
+            1.0,
+            on="output",
+            technology=f"transport {t.id} load factor",
+            **common
+        )
+        for par, df in i_o.items():
+            df = df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node)
+            if par == "input":
+                # Common across modes
+                data[par].append(df.assign(mode="all"))
+                # Disutility inputs differ by mode
+                data[par].append(
+                    df.assign(commodity="disutility")
+                    .pipe(broadcast, mode=modes)
+                )
+            elif par == "output":
+                data[par].append(
+                    df.pipe(broadcast, mode=modes)
+                    .assign(commodity=lambda df: "transport pax " + df["mode"])
+                )
 
     data = {par: pd.concat(dfs) for par, dfs in data.items()}
 
@@ -129,10 +190,9 @@ def freight(info):
         i_o['input'] = add_commodity_and_level(i_o['input'], 'final')
 
         for par, df in i_o.items():
-            node_col = 'node_origin' if par == 'input' else 'node_dest'
             data[par].append(
                 df.pipe(broadcast, node_loc=info.N[1:])
-                .assign(**{node_col: copy_column('node_loc')})
+                .pipe(same_node)
             )
 
     data = {par: pd.concat(dfs) for par, dfs in data.items()}
@@ -167,7 +227,7 @@ def dummy_supply(info):
         output=(
             make_df('output', **common)
             .pipe(broadcast, node_loc=info.N[1:])
-            .assign(node_dest=copy_column('node_loc'))
+            .pipe(same_node)
         )
     )
 

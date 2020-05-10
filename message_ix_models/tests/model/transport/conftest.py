@@ -1,5 +1,8 @@
+from copy import deepcopy
+
 import pytest
 
+from message_data.model.bare import get_spec
 from message_data.model.transport.utils import read_config
 from message_data.model.transport.build import main as build
 
@@ -17,3 +20,11 @@ def solved_bare_res_transport(_bare_res):
     scen.solve(solve_options=dict(lpmethod=4))
 
     yield scen
+
+
+@pytest.fixture(scope="session")
+def res_info(session_context):
+    ctx = deepcopy(session_context)
+    ctx.regions = 'R11'
+
+    yield get_spec(ctx)["add"]

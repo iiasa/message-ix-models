@@ -52,7 +52,4 @@ def dummy(info):
     #     make_df('demand', commodity='lightoil', **common)
     # )
 
-    return (
-        pd.concat(dfs)
-        .pipe(broadcast, node=info.N[1:])
-    )
+    return pd.concat(dfs).pipe(broadcast, node=info.N[1:])
