@@ -130,7 +130,7 @@ def test_apply_units(bare_res):
 
 def test_iamc_replace_vars(bare_res):
     """Test the 'iamc variable names' reporting configuration."""
-    scen = bare_res.clone()
+    scen = bare_res
 
     qty = 'inv_cost'
     config = {
