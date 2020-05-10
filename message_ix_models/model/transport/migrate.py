@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from message_data.tools.messagev import CHNFile, DICFile, INPFile
-from .utils import transport_technologies
+from .build import generate_set_elements
 
 
 log = logging.getLogger(__name__)

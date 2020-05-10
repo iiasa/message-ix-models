@@ -11,6 +11,10 @@ commodity:
     transport freight vehicle: Freight transport vehicle distance travelled
     transport pax: Passenger transport
     transport pax vehicle: Passenger transport vehicle distance travelled
+    _LDV output:
+      generate:
+        dims: {technology: LDV}
+        template: {id: "transport vehicle {technology.id}"}
   require:
   - coal
   - electr
@@ -77,6 +81,11 @@ time:
 mode:
   require:
   - all
+  add:
+    _disutility:
+      generate:
+        dims: {consumer_group: null}
+        template: {id: "{consumer_group.id}"}
 
 unit:
   add:
