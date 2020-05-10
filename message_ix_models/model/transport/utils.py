@@ -3,7 +3,7 @@ from itertools import product
 
 import xarray as xr
 
-from message_data.tools import commodities, get_context, load_data
+from message_data.tools import Code, commodities, get_context, load_data
 
 
 # Configuration files
@@ -134,12 +134,14 @@ def transport_technologies(by_cg=True, filter=[], with_desc=False):
             # Technology has consumer groups
             if with_desc:
                 for name, desc in consumer_groups(rtype='description'):
-                    yield f'{tech}_{name}', \
-                        f"{info['description']} ({desc})"
+                    yield Code(
+                        id=f'{tech}_{name}',
+                        name=f"{info['description']} ({desc})",
+                    )
             else:
                 yield from [f'{tech}_{cg}' for cg in consumer_groups()]
         else:
-            yield (tech, info.get('description', '')) if with_desc else tech
+            yield Code(tech, info.get('description', '')) if with_desc else tech
 
 
 def add_commodity_and_level(df, default_level=None):
