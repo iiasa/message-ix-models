@@ -192,9 +192,6 @@ def get_ikarus_data(info):
 
     # Create data frames to add imported params to MESSAGEix
 
-    # List of nodes, e.g. for node_loc dimension of parameters
-    nodes = sorted(n for n in info.N if n != 'World')
-
     # Vintage and active years from Scenario
     vtg_years, act_years = info.yv_ya['year_vtg'], info.yv_ya['year_act']
 
@@ -206,10 +203,6 @@ def get_ikarus_data(info):
         time='year',
         time_origin='year',
         time_dest='year',
-        # Placeholder node name; replaced below
-        node_loc='NODE',
-        node_origin='NODE',
-        node_dest='NODE',
     )
 
     # Dict of ('parameter name' -> [list of data frames])
@@ -256,9 +249,11 @@ def get_ikarus_data(info):
         # value registered, in this case for 2030.
         df['value'] = df['value'].fillna(method='ffill')
 
-        # - Replace 'NODE' with the actual node name.
-        # - Add one data frame per node to the list result[par]
-        result[par].extend(df.replace({'NODE': n}) for n in nodes)
+        # Broadcast across all nodes
+        result[par].append(
+            df.pipe(broadcast, node_loc=info.N)
+            .pipe(same_node)
+        )
 
     # Concatenate data frames for each model parameter
     for par, list_of_df in result.items():

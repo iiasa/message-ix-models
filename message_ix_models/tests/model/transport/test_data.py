@@ -4,6 +4,7 @@ import pytest
 import xarray as xr
 
 from message_data.model.transport.data import (
+    disutility_conversion,
     get_consumer_groups,
     get_ldv_data,
 )
@@ -21,6 +22,11 @@ def test_load_data(session_context, key, rtype):
     # Load transport metadata from files in both pandas and xarray formats
     result = load_data(session_context, 'transport', key, rtype=rtype)
     assert isinstance(result, rtype)
+
+
+def test_disutility_conversion(res_info):
+    """Function runs without error."""
+    disutility_conversion(res_info)
 
 
 @binary_data_available
