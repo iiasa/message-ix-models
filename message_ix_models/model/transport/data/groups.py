@@ -1,7 +1,7 @@
 import pandas as pd
 import xarray as xr
 
-from message_data.tools import get_gea_data, regions
+from message_data.tools import get_gea_data, set_info
 
 # Query for retrieving GEA population data
 
@@ -98,12 +98,14 @@ def get_urban_rural_shares(context) -> xr.DataArray:
     .get_gea_data
     """
     # Retrieve region info
-    region_info = regions.get_info(context)
+    nodes = set_info("node")
+    # List of regions according to the context
+    regions = nodes[nodes.index(context.regions)].child
 
     # Identify the regions to query from the GEA data, which has R5 and other
     # mappings
     GEA_DIMS['region'].update(
-        {r.split('_')[-1]: r for r in region_info.keys()})
+        {r.split('_')[-1]: r for r in map(str, regions)})
 
     # Assemble query string and retrieve data from GEA snapshot
     query = []

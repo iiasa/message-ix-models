@@ -3,14 +3,13 @@ from pandas.testing import assert_series_equal
 import pytest
 import xarray as xr
 
-from message_data.model.bare import create_res
 from message_data.model.transport.data import (
     get_consumer_groups,
     get_ldv_data,
 )
 from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.model.transport.data.ikarus import get_ikarus_data
-from message_data.model.transport.utils import FILES, read_config
+from message_data.model.transport.utils import FILES
 from message_data.tools import ScenarioInfo, load_data, make_df
 
 from message_data.tests import binary_data_available
@@ -27,7 +26,7 @@ def test_load_data(session_context, key, rtype):
 @binary_data_available
 def test_ikarus(bare_res, session_context):
     # Create bare RES
-    scenario = bare_res.clone()
+    scenario = bare_res
     s_info = ScenarioInfo(scenario)
 
     # get_ikarus_data() succeeds on text_context and the bare RES
