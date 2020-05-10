@@ -5,7 +5,6 @@ from typing import Mapping
 
 from message_data.model.build import apply_spec
 from message_data.tools import Code, ScenarioInfo
-from .data import add_data
 from .utils import consumer_groups, read_config
 
 log = logging.getLogger(__name__)
@@ -66,7 +65,11 @@ def generate_codes(dims, template):
 
     for item in product(*codes):
         fmt = dict(zip(dims.keys(), item))
-        yield Code(**{attr: t.format(**fmt) for attr, t in template.items()})
+        args = {}
+        for attr, t in template.items():
+            args[attr] = t.format(**fmt) if isinstance(t, str) else t
+
+        yield Code(**args)
 
 
 def main(scenario, **options):
@@ -74,9 +77,11 @@ def main(scenario, **options):
 
     See also
     --------
-    get_spec
+    add_data
     apply_spec
+    get_spec
     """
+    from .data import add_data
 
     spec = get_spec()
 

@@ -6,15 +6,6 @@
 # - 'add': elements to add. This is a mapping from element short names to a
 #   longer description.
 commodity:
-  add:
-    transport freight: Freight transport
-    transport freight vehicle: Freight transport vehicle distance travelled
-    transport pax: Passenger transport
-    transport pax vehicle: Passenger transport vehicle distance travelled
-    _LDV output:
-      generate:
-        dims: {technology: LDV}
-        template: {id: "transport vehicle {technology.id}"}
   require:
   - coal
   - electr
@@ -33,23 +24,43 @@ commodity:
   - methanol
   remove:
   - transport
+  add:
+    transport freight:
+      name: Freight transport
+      demand: true
+    transport freight vehicle: Freight transport vehicle distance travelled
+    transport pax vehicle: Passenger transport vehicle distance travelled
+    _LDV output:
+      generate:
+        dims: {technology: LDV}
+        template: {id: "transport vehicle {technology.id}"}
+    _pax demand:
+      generate:
+        dims: {consumer_group: LDV}
+        template:
+          id: "transport pax {consumer_group.id}"
+          demand: true
+
+level:
+  require:
+  - final   # Fuel consumption in transport.
+  - useful  # Activity in passenger-kilometers [pkm] or tonne-kilometers [tkm].
+
+mode:
+  require:
+  - all
+  add:
+    _disutility:
+      generate:
+        dims: {consumer_group: null}
+        template: {id: "{consumer_group.id}"}
 
 node:
+  # Just one is sufficient, since the RES will never be generated with a mix
   require:
   - R11_AFR
-  - R11_CPA
-  - R11_EEU
-  - R11_FSU
-  - R11_LAM
-  - R11_NAM
-  - R11_MEA
-  - R11_PAO
-  - R11_PAS
-  - R11_SAS
-  - R11_WEU
 
 technology:
-  # NB the elements to add are generated in tools.transport.setup()
   remove:
   - Trans_1
   - Trans_2
@@ -67,25 +78,12 @@ technology:
   - loil_trp
   - meth_fc_trp
   - meth_ic_trp
-
-level:
-  require:
-  - final   # Fuel consumption in transport.
-  - useful  # Activity in passenger-kilometers [pkm] or tonne-kilometers [tkm].
+  # add: elements are generated from technology.yaml
 
 time:
   # NB cannot handle models with sub-annual time resolution
   require:
   - year
-
-mode:
-  require:
-  - all
-  add:
-    _disutility:
-      generate:
-        dims: {consumer_group: null}
-        template: {id: "{consumer_group.id}"}
 
 unit:
   add:
