@@ -18,13 +18,9 @@ def test_read_config(session_context):
 
 def test_consumer_groups(session_context):
     # Returns a list of codes
-    result = consumer_groups(rtype='code')
-    assert 'RUEAA' in result
-
-    # Returns tuples of (code, description)
-    result = consumer_groups(rtype='description')
-    assert ('RUEAA', 'rural, or “outside msa”, early adopter, average') \
-        in result
+    codes = consumer_groups()
+    RUEAA = codes[codes.index('RUEAA')]
+    assert RUEAA.name == 'Rural, or “Outside MSA”, Early Adopter, Average'
 
     # Returns xarray objects for indexing
     result = consumer_groups(rtype='indexers')

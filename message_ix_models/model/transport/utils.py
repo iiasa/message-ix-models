@@ -1,9 +1,10 @@
+from collections import defaultdict
 from functools import lru_cache
 from itertools import product
 
 import xarray as xr
 
-from message_data.tools import Code, get_context, load_data, set_info
+from message_data.tools import Code, as_codes, get_context, load_data, set_info
 
 
 # Configuration files
@@ -68,45 +69,42 @@ def read_config():
 
 
 @lru_cache()
-def consumer_groups(rtype='code'):
+def consumer_groups(rtype=Code):
     """Iterate over consumer groups in ``sets.yaml``."""
     dims = ['area_type', 'attitude', 'driver_type']
 
     # Retrieve configuration
     context = read_config()
-    codes = [context['transport set'][d]['add'].keys() for d in dims]
-    names = [context['transport set'][d]['add'] for d in dims]
 
     # Assemble group information
-    result = dict(
-        code=[],
-        index=[],
-        description=[],
-        )
+    result = defaultdict(list)
 
-    for indices in product(*codes):
+    for indices in product(*[
+        as_codes(context['transport set'][d]['add']) for d in dims
+    ]):
+        # Create a new code by combining three
+        result['code'].append(Code(
+            id=''.join(c.id for c in indices),
+            name=', '.join(c.name for c in indices),
+        ))
+
         # Tuple of the values along each dimension
-        result['index'].append(indices)
+        result['index'].append(tuple(c.id for c in indices))
 
-        # String code
-        result['code'].append(''.join(indices))
-
-        # String description
-        desc = ', '.join(n[i] for n, i in zip(names, indices)).lower()
-        result['description'].append(desc)
-
-    if rtype == 'description':
-        return list(zip(result['code'], result['description']))
-    elif rtype == 'indexers':
+    if rtype == 'indexers':
         # Three tuples of members along each dimension
         indexers = zip(*result['index'])
-        indexers = {d: xr.DataArray(list(i), dims='consumer_group') for d, i
-                    in zip(dims, indexers)}
-        indexers['consumer_group'] = xr.DataArray(result['code'],
-                                                  dims='consumer_group')
+        indexers = {
+            d: xr.DataArray(list(i), dims='consumer_group')
+            for d, i in zip(dims, indexers)
+        }
+        indexers['consumer_group'] = xr.DataArray(
+            [c.id for c in result['code']],
+            dims='consumer_group',
+        )
         return indexers
-    elif rtype == 'code':
-        return sorted(result['code'])
+    elif rtype is Code:
+        return sorted(result['code'], key=str)
     else:
         raise ValueError(rtype)
 
