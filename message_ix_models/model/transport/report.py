@@ -3,7 +3,6 @@ import logging
 from message_ix.reporting import Reporter
 import pandas as pd
 
-from message_data.reporting.util import infer_keys
 from message_data.tools import ScenarioInfo, get_context
 
 
@@ -72,6 +71,8 @@ def callback(rep: Reporter):
 
     - ``out::transport`` that aggregates outputs by technology group.
     """
+    from message_data.reporting.util import infer_keys
+
     tech_cfg = get_context()['transport technology']
 
     out = infer_keys(rep, 'out')

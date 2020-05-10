@@ -3,7 +3,7 @@ from itertools import product
 
 import xarray as xr
 
-from message_data.tools import Code, commodities, get_context, load_data
+from message_data.tools import Code, get_context, load_data, set_info
 
 
 # Configuration files
@@ -74,8 +74,8 @@ def consumer_groups(rtype='code'):
 
     # Retrieve configuration
     context = read_config()
-    codes = [context['transport set'][d].keys() for d in dims]
-    names = [context['transport set'][d] for d in dims]
+    codes = [context['transport set'][d]['add'].keys() for d in dims]
+    names = [context['transport set'][d]['add'] for d in dims]
 
     # Assemble group information
     result = dict(
@@ -147,7 +147,7 @@ def transport_technologies(by_cg=True, filter=[], with_desc=False):
 def add_commodity_and_level(df, default_level=None):
     # Add input commodity and level
     t_info = get_context()['transport technology']['technology']
-    c_info = commodities.get_info()
+    c_info = set_info("commodity")
 
     @lru_cache()
     def t_cl(t):
@@ -158,7 +158,7 @@ def add_commodity_and_level(df, default_level=None):
         # commodity.yaml)
         level = (
             input.get('level', None)
-            or c_info[commodity].get('level', None)
+            or c_info[c_info.index(commodity)].anno.get('level', None)
             or default_level
         )
 

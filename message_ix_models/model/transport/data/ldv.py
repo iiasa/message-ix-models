@@ -3,7 +3,10 @@ from collections import defaultdict
 from openpyxl import load_workbook
 import pandas as pd
 
-from message_data.model.transport.utils import add_commodity_and_level
+from message_data.model.transport.utils import (
+    add_commodity_and_level,
+    read_config,
+)
 from message_data.tools import get_context, make_df, make_io
 
 
@@ -20,8 +23,8 @@ TABLES = [
 
 
 def get_ldv_data(info):
-    config = get_context()['transport config']['data source']
-    source = config.get('LDV', None)
+    context = read_config()
+    source = context['transport config']['data source'].get('LDV', None)
 
     if source == 'US-TIMES MA3T':
         return get_USTIMES_MA3T(info)
