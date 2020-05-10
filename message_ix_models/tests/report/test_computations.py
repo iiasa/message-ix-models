@@ -1,4 +1,5 @@
 from functools import partial
+import logging
 
 from ixmp.reporting import as_quantity
 from ixmp.testing import assert_logs
@@ -38,7 +39,7 @@ def test_update_scenario(bare_res, caplog):
                         'input'))
 
     # Trigger the computation that results in data being added
-    with assert_logs(caplog, "'demand' ← 10 rows"):
+    with assert_logs(caplog, "'demand' ← 10 rows", at_level=logging.DEBUG):
         # Returns nothing
         assert calc.get('test 1') is None
 
