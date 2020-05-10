@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from message_data.tools import broadcast, get_context, make_df
+from .build import generate_set_elements
 
 
 def demand(info):
@@ -33,10 +34,14 @@ def dummy(info):
 
     dfs = []
 
-    for mode, unit in [('freight', 't km'), ('pax', 'km')]:
+    for commodity in filter(
+        lambda c: c.anno.get("demand", False),
+        generate_set_elements("commodity"),
+    ):
+        unit = "t km" if "freight" in commodity.id else "km"
         dfs.append(make_df(
             'demand',
-            commodity=f'transport {mode}',
+            commodity=commodity.id,
             unit=unit,
             **common,
         ))
