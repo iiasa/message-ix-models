@@ -1,6 +1,5 @@
 """Generate input data."""
 from collections import defaultdict
-from itertools import product
 import logging
 
 import pandas as pd
@@ -9,7 +8,6 @@ from message_data.tools import (
     ScenarioInfo,
     add_par_data,
     broadcast,
-    copy_column,
     get_context,
     make_df,
     make_io,
@@ -30,6 +28,7 @@ log = logging.getLogger(__name__)
 DATA_FUNCTIONS = [
     demand,
     'conversion',
+    'disutility_conversion',
     'freight',
     get_ldv_data,
     get_non_ldv_data,

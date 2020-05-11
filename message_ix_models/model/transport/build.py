@@ -83,8 +83,8 @@ def main(scenario, **options):
     """
     from .data import add_data
 
+    log.info('Set up MESSAGE-Transport')
     spec = get_spec()
-
     apply_spec(scenario, spec, add_data)
 
-    scenario.to_excel('debug.xlsx')
+    # scenario.to_excel('debug.xlsx')

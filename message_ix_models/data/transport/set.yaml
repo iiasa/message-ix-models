@@ -28,18 +28,30 @@ commodity:
     transport freight:
       name: Freight transport
       demand: true
+
     transport freight vehicle: Freight transport vehicle distance travelled
+
+    transport pax:
+      name: Passenger transport
+      # demand: true
+      description: >-
+        Not used when consumer group disutility formulation is in use.
+
     transport pax vehicle: Passenger transport vehicle distance travelled
+
     _LDV output:
       generate:
         dims: {technology: LDV}
         template: {id: "transport vehicle {technology.id}"}
+
     _pax demand:
       generate:
         dims: {consumer_group: LDV}
         template:
           id: "transport pax {consumer_group.id}"
           demand: true
+
+    disutility: Generalized disutility.
 
 level:
   require:
