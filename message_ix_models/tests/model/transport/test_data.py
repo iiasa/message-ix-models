@@ -4,7 +4,6 @@ import pytest
 import xarray as xr
 
 from message_data.model.transport.data import (
-    disutility_conversion,
     get_consumer_groups,
     get_ldv_data,
 )
@@ -24,6 +23,7 @@ def test_load_data(session_context, key, rtype):
     assert isinstance(result, rtype)
 
 
+@pytest.mark.skip(reason="Code moved from model.transport to model")
 def test_disutility_conversion(res_info):
     """Function runs without error."""
     disutility_conversion(res_info)
@@ -49,7 +49,7 @@ def test_ikarus(bare_res, session_context):
 
     # Data have been loaded with the correct shape, unit and magnitude:
     # 1. Shape
-    assert inv_rail_pub.shape == (rows_per_tech, 5)
+    assert inv_rail_pub.shape == (rows_per_tech, 5), inv_rail_pub
     assert inv.shape == (rows_per_tech * N_techs, 5)
 
     # 2. Units
@@ -116,16 +116,13 @@ def test_ikarus(bare_res, session_context):
 
 
 @binary_data_available
-def test_ldv(bare_res):
-    scenario = bare_res
-    info = ScenarioInfo(scenario)
-
+def test_ldv(res_info):
     # Method runs without error
-    data = get_ldv_data(info)
+    data = get_ldv_data(res_info)
 
     # Data have the correct size: 11 regions × 13 periods × 12 technologies
     for par, df in data.items():
-        assert len(df) == len(info.N[1:]) * (len(info.Y) + 3) * 12
+        assert len(df) == len(res_info.N[1:]) * (len(res_info.Y) + 3) * 12
 
 
 @pytest.mark.xfail(reason='Needs normalization across consumer groups.')

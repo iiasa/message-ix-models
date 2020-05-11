@@ -3,7 +3,7 @@ from itertools import product
 import logging
 from typing import Mapping
 
-from message_data.model.build import apply_spec
+from message_data.model import build, disutility
 from message_data.tools import Code, ScenarioInfo
 from .utils import consumer_groups, read_config
 
@@ -85,6 +85,27 @@ def main(scenario, **options):
 
     log.info('Set up MESSAGE-Transport')
     spec = get_spec()
-    apply_spec(scenario, spec, add_data)
+    build.apply_spec(scenario, spec, add_data, **options)
+
+    # Add generalized disutility formulation to LDV technologies
+    disutility.add(
+        scenario,
+        consumer_groups=consumer_groups(),
+        technologies=generate_set_elements("technology", "LDV"),
+        template=Code(
+            id="transport {technology} usage",
+            input=dict(
+                commodity="transport vehicle {technology}",
+                level="useful",
+                unit="km",
+            ),
+            output=dict(
+                commodity="transport pax {mode}",
+                level="useful",
+                unit="km",
+            ),
+        ),
+        **options,
+    )
 
     # scenario.to_excel('debug.xlsx')
