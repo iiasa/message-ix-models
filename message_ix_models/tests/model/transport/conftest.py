@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import pytest
 
 from message_data.model.bare import get_spec
@@ -24,7 +22,10 @@ def solved_bare_res_transport(_bare_res):
 
 @pytest.fixture(scope="session")
 def res_info(session_context):
-    ctx = deepcopy(session_context)
-    ctx.regions = 'R11'
+    ctx = session_context
 
-    yield get_spec(ctx)["add"]
+    # TODO this alters state that may be depended on by other tests; avoid
+    ctx.regions = "R11"
+    spec = get_spec(ctx)["add"]
+
+    yield spec

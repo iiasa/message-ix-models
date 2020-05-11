@@ -251,7 +251,7 @@ def get_ikarus_data(info):
 
         # Broadcast across all nodes
         result[par].append(
-            df.pipe(broadcast, node_loc=info.N)
+            df.pipe(broadcast, node_loc=info.N[1:])
             .pipe(same_node)
         )
 
