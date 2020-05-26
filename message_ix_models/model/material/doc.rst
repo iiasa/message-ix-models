@@ -5,6 +5,8 @@ This module adds (life-cycle) accounting of materials associated with technologi
 
 The initial implementation supports nitrogen-based fertilizers.
 
+.. contents::
+   :local:
 
 Code reference
 ==============
@@ -13,3 +15,10 @@ Code reference
 
 .. automodule:: message_data.model.material
    :members:
+
+
+Configuration file (:file:`material.yaml`)
+==========================================
+
+.. literalinclude:: ../../../data/material.yaml
+   :language: yaml
