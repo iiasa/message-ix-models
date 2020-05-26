@@ -18,7 +18,10 @@ def read_config():
         return context
 
     # Read material.yaml
-    context.load_config("material")
+    context.load_config("material", "config")
+
+    # Use a shorter name
+    context["material"] = context["material config"]
 
     # Convert some values to Code objects
     for set_name, info in context["material"]["set"].items():
