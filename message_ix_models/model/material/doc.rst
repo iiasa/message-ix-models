@@ -14,7 +14,10 @@ Code reference
 .. currentmodule:: message_data.model.material
 
 .. automodule:: message_data.model.material
-   :members: build, get_spec, gen_data
+   :members:
+
+.. automodule:: message_data.model.material.data
+   :members:
 
 
 Data, metadata, and configuration
