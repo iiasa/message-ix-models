@@ -14,7 +14,7 @@ Code reference
 .. currentmodule:: message_data.model.material
 
 .. automodule:: message_data.model.material
-   :members:
+   :members: build, get_spec, gen_data
 
 
 Configuration file (:file:`material.yaml`)

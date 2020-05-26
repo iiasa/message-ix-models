@@ -2,6 +2,7 @@ from typing import Mapping
 
 from message_data.model.build import apply_spec
 from message_data.tools import ScenarioInfo
+from .data import gen_data
 from .util import read_config
 
 
@@ -11,7 +12,7 @@ def build(scenario):
     spec = get_spec()
 
     # Apply to the base scenario
-    apply_spec(scenario, spec)
+    apply_spec(scenario, spec, gen_data)
 
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
