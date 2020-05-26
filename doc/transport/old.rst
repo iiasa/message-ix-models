@@ -1,17 +1,54 @@
-MESSAGE V file reference
-************************
+MESSAGE V-Transport
+*******************
 
 This page describes building blocks for transferring the detailed transport module in MESSAGE V to the MESSAGEix framework.
 
 It was originally written by David McCollum in December 2018; fragments of that text are sometimes set off with ‘DLM:’/“in quotes,” to distinguish from rewritten/expanded description.
 
-The files are located in ``P:\ene.model\TaxSub_Transport_Merged\`` on the IIASA ‘Projects’ shared drive, except where otherwise noted.
-Files that have been replaced/incorporated into MESSAGEix are handled by the ''`
+The files are located in :file:`P:\ene.model\TaxSub_Transport_Merged\\` on the IIASA ‘Projects’ shared drive, except where otherwise noted.
 
 .. contents::
    :local:
    :depth: 2
    :backlinks: none
+
+
+Code for migration from MESSAGE V
+=================================
+.. automodule:: message_data.model.transport.migrate
+   :members:
+
+
+Structure
+=========
+
+- Extra level, ``consumer``, has commodities like ``Dummy_RUEAA``. These have:
+
+  - multiple ‘producers’ like ``ELC_100_RUEAA`` and other LDV technologies for the same consumer group.
+  - a single ‘consumer’, ``cons_convert``.
+
+- At the ``final`` level:
+
+  - ``Dummy_Vkm`` is produced by ``cons_convert`` and consumed by ``Occupancy_ptrp``.
+  - ``Dummy_Tkm`` is produced by ``FR_.*`` and consumed by ``Load_factor_truck``.
+  - ``Dummy_Hkm`` is produced by ``.*_moto`` and consumed by ``Occupancy_moto``.
+  - ``DummyGas_ref`` is produced by ``gas_ref_ptrp``.
+  - ``DummyH2_stor`` is produced by ``h2stor_ptrp``.
+  - ``DummyHybrid`` is produced by ``hybrid_ptrp``.
+  - ``DummyOil_ref`` is produced by ``oil_ref_ptrp``.
+  - ``Dummy_fc`` is produced by ``fuel_cell_ptrp``.
+  - ``Dummy_util`` is produced by ``disutility``.
+
+- At the ``useful`` level:
+
+  - ``trp_2wh`` is produced by ``Occupancy_moto``.
+  - ``trp_avi`` is produced by ``con.*_ar`` (4).
+  - ``trp_fre`` is produced by ``Load_factor_truck``.
+  - ``trp_pas`` is produced by ``Occupancy_ptrp``.
+  - ``trp_rai`` is produced by ``dMspeed_rai``, ``Hspeed_rai``, and ``Mspeed_rai``.
+  - ``trp_urb`` is produced by ``.*_bus`` (11).
+  - ``transport`` also exists, produced by (perhaps legacy technologies): ``back_trp``, ``back_trp``, ``back_trp``, ``eth_ic_trp``, ``eth_fc_trp``, ``h2_fc_trp``, ``coal_trp``, ``elec_trp``, ``foil_trp``, ``gas_trp``, ``loil_trp``, ``meth_ic_trp``, ``meth_fc_trp``, ``Trans_1``, ``Trans_2``, ``Trans_3``, ``Trans_4``, ``Trans_5``.
+
 
 MESSAGE_Transport_port_to_ix\\sqlite\\
 ======================================
