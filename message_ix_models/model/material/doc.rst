@@ -17,8 +17,35 @@ Code reference
    :members: build, get_spec, gen_data
 
 
-Configuration file (:file:`material.yaml`)
-==========================================
+Data, metadata, and configuration
+=================================
 
-.. literalinclude:: ../../../data/material.yaml
+Binary/raw data files
+---------------------
+
+The code relies on the following input files, stored in :file:`data/material/`:
+
+:file:`Ammonia feedstock share.Global.xlsx`
+   TODO describe the contents, original source, and layout of this file.
+
+:file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`
+   TODO describe the contents, original source, and layout of this file.
+
+:file:`N fertil trade - FAOSTAT_data_9-25-2019.csv`
+   TODO describe the contents, original source, and layout of this file.
+
+:file:`n-fertilizer_techno-economic.xlsx`
+   TODO describe the contents, original source, and layout of this file.
+
+:file:`trade.FAO.R11.csv`
+   TODO describe the contents, original source, and layout of this file.
+
+:file:`trade.FAO.R14.csv`
+   TODO describe the contents, original source, and layout of this file.
+
+
+:file:`material/config.yaml`
+----------------------------
+
+.. literalinclude:: ../../../data/material/config.yaml
    :language: yaml

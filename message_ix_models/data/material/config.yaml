@@ -1,0 +1,103 @@
+# Configuration for message_data.model.material
+#
+# NB these values are currently for the nitrogen fertilizer materials
+#    accounting. Different sets can be created once there are 2+ different
+#    categories of materials.
+
+set:
+  commodity:
+    require:
+    - d_heat
+    - electr
+    - freshwater_supply
+    add:
+    - NH3
+    - Fertilizer Use|Nitrogen
+
+  level:
+    require:
+    - primary
+    - secondary
+    - water_supply
+    add:
+    - material_interim
+    - material_final
+
+  # Currently only works with R11 regional aggregation
+  region:
+    # Just one is sufficient, since the RES will never be generated with a mix
+    require:
+    - R11_AFR
+
+  technology:
+    require:
+    - h2_bio_ccs  # Reference for vent-to-storage ratio
+    add:
+    - biomass_NH3
+    - electr_NH3
+    - gas_NH3
+    - coal_NH3
+    - fueloil_NH3
+    - NH3_to_N_fertil
+
+  type_tec:
+    add:
+    - industry
+
+
+# NB this codelist added by #125
+
+iron-steel:
+  name: Iron and Steel
+  description: Iron is a chemical element with the symbol Fe, while steel is an alloy of iron and carbon and, sometimes, other elements. Measured as the total mass of material.
+  unit: Mt
+
+non-ferrous:
+  name: Non-ferrous metals
+  description: Metals and alloys which do not contain iron. Measured as the total mass of material.
+  unit: Mt
+
+aluminum:
+  name: Aluminum
+  description: Aluminum (or aluminium) is a chemical element with the symbol Al. Measured as the total mass of material.
+  unit: Mt
+  parent: non-ferrous
+
+copper:
+  name: Copper
+  description: Copper is a chemical element with the symbol Cu. Measured as the total mass of material.
+  unit: Mt
+  parent: non-ferrous
+
+minerals:
+  name: Minerals
+  description: Non-metallic minerals are minerals that have no metallic luster, break easily and include, e.g., sand, limestone, marble, clay and salt. Measured as the FE-equivalent mass of material using LCA midpoint characterization factors.
+  unit: MtFe-eq
+
+cement:
+  name: Cement
+  description: Cement is a binder used for construction that sets, hardens, and adheres to other materials to bind them together. Measured as the total mass of material.
+  unit: Mt
+  parent: minerals
+
+chemicals:
+  name: Chemicals
+  description: Industrial chemicals that form the basis of many products. Measured as the total mass of material.
+  unit: Mt
+
+ethylene:
+  name: Ethylene
+  description: Ethylene is a hydrocarbon with the formula C2H4. Measured as the total mass of material.
+  unit: Mt
+  parent: chemicals
+
+ammonia:
+  name: Ammonia
+  description: Ammonia is a compound of nitrogen and hydrogen with the formula NH3. Measured as the total mass of material.
+  unit: Mt
+  parent: chemicals
+
+paper-pulp:
+  name: Paper and pulp for paper
+  description: Pulp is a lignocellulosic fibrous material prepared by chemically or mechanically separating cellulose fibers and the raw material for making paper. Measured as the total mass of material.
+  unit: Mt
