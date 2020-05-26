@@ -20,6 +20,27 @@ Code reference
    :members:
 
 
+CLI usage
+=========
+
+Use ``mix-data materials run``, giving the base scenario, e.g.::
+
+    $ mix-data \
+      --url ixmp://ene-ixmp/CD_Links_SSP2/baseline
+      materials run
+    $ mix-data \
+      --url ixmp://ene-ixmp/CD_Links_SSP2/NPi2020-con-prim-dir-ncr
+      materials run
+    $ mix-data \
+      --url ixmp://ene-ixmp/CD_Links_SSP2/NPi2020_1000-con-prim-dir-ncr
+      materials run
+    $ mix-data \
+      --url ixmp://ene-ixmp/CD_Links_SSP2/NPi2020_400-con-prim-dir-ncr
+      materials run
+
+The output scenario will be ``ixmp://JM_GLB_NITRO/{name}``.
+
+
 Data, metadata, and configuration
 =================================
 
