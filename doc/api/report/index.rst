@@ -89,7 +89,7 @@ Continous reporting
 
 The IIASA TeamCity build server is configured to automatically run the full (:file:`global.yaml`) reporting on the following scenarios:
 
-.. literalinclude:: ../../../ci/report.yaml
+.. literalinclude:: ../../ci/report.yaml
    :language: yaml
 
 This takes place:
