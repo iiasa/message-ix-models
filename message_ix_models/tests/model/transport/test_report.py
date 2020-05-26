@@ -1,11 +1,13 @@
 from message_data.model.transport.report import callback
 from message_data.reporting import prepare_reporter, register
+from message_data.tests import binary_data_available
 
 
 def test_register_cb():
     register(callback)
 
 
+@binary_data_available
 def test_report_bare(solved_bare_res_transport, session_context):
     """Run MESSAGE-Transport–specific reporting."""
     register(callback)

@@ -21,6 +21,7 @@ def test_build_bare_res(bare_res, ldv, nonldv):
     build.main(bare_res, fast=True)
 
 
+@binary_data_available
 def test_solve_bare_res(solved_bare_res_transport):
     """Test that MESSAGE-Transport built on the bare RES will solve."""
     scen = solved_bare_res_transport
