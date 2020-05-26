@@ -1,6 +1,16 @@
 from typing import Mapping
 
+from message_data.model.build import apply_spec
 from message_data.tools import ScenarioInfo, as_codes, get_context
+
+
+def build(scenario):
+    """Set up materials accounting on `scenario`."""
+    # Get the specification
+    spec = get_spec()
+
+    # Apply to the base scenario
+    apply_spec(scenario, spec)
 
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
