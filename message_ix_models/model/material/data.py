@@ -39,11 +39,11 @@ def gen_data(scenario, dry_run=False):
 
     # Iterate over new technologies, using the configuration
     for t in config["technology"]["add"]:
-        # TODO describe what this is. In SetupNitrogenBase.py, the values are
-        #      read for technology == "solar_i" but are not altered before
-        #      being re-added to the scenario.
+        # Output of NH3: same efficiency for all technologies
+        # TODO the output commodity and level are different for
+        #      t=NH3_to_N_fertil; use 'if' statements to fill in.
         df = (
-            make_df("output", technology=t, **common)
+            make_df("output", technology=t, value=1, unit='t', **common)
             .pipe(broadcast, node_loc=s_info.N)
             .pipe(same_node)
         )

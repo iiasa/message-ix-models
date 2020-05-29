@@ -27,18 +27,18 @@ Use ``mix-data materials run``, giving the base scenario, e.g.::
 
     $ mix-data \
       --url ixmp://ene-ixmp/CD_Links_SSP2/baseline
-      materials run
+      materials solve
     $ mix-data \
       --url ixmp://ene-ixmp/CD_Links_SSP2/NPi2020-con-prim-dir-ncr
-      materials run
+      materials solve
     $ mix-data \
       --url ixmp://ene-ixmp/CD_Links_SSP2/NPi2020_1000-con-prim-dir-ncr
-      materials run
+      materials solve
     $ mix-data \
       --url ixmp://ene-ixmp/CD_Links_SSP2/NPi2020_400-con-prim-dir-ncr
-      materials run
+      materials solve
 
-The output scenario will be ``ixmp://JM_GLB_NITRO/{name}``.
+The output scenario will be ``ixmp://ene-ixmp/JM_GLB_NITRO/{name}``, where {name} is a shortened version of the input scenario name.
 
 
 Data, metadata, and configuration
