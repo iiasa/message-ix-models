@@ -9,9 +9,9 @@ from message_data.tools import (
     add_par_data,
     broadcast,
     get_context,
-    make_df,
     make_io,
     make_matched_dfs,
+    make_source_tech,
     same_node,
 )
 from message_data.model.transport.demand import demand
@@ -148,34 +148,18 @@ def freight(info):
 
 def dummy_supply(info):
     """Dummy fuel supply for the bare RES."""
-    common = dict(
-        commodity='lightoil',
-        level='final',
-        mode='all',
-        technology='DUMMY transport fuel',
-        time='year',
-        time_dest='year',
-        unit='GWa',
-        value=1.0,
-        year_act=info.Y,
-        year_vtg=info.Y,
+    return make_source_tech(
+        info,
+        common=dict(
+            commodity="lightoil",
+            level="final",
+            mode="all",
+            technology="DUMMY transport fuel",
+            time="year",
+            time_dest="year",
+            unit="GWa",
+        ),
+        output=1.0,
+        var_cost=1.0,
+        technical_lifetime=1.0,
     )
-
-    result = dict(
-        output=(
-            make_df('output', **common)
-            .pipe(broadcast, node_loc=info.N[1:])
-            .pipe(same_node)
-        )
-    )
-
-    result.update(
-        make_matched_dfs(
-            base=result['output'],
-            capacity_factor=1,
-            var_cost=1,
-            technical_lifetime=10,
-        )
-    )
-
-    return result
