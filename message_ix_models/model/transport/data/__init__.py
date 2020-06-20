@@ -29,7 +29,7 @@ DATA_FUNCTIONS = [
     'conversion',
     'freight',
     get_ldv_data,
-    # get_non_ldv_data,  # TEMP for debugging
+    get_non_ldv_data,
     'dummy_supply',
 ]
 
