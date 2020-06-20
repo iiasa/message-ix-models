@@ -3,13 +3,16 @@ from functools import partial
 import logging
 from pathlib import Path
 
-from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Key, Reporter
-from message_ix.reporting.computations import write_report
-from message_ix.reporting.computations import concat
 
 from . import computations
-from .computations import combine, group_sum
+from .computations import (
+    concat,
+    combine,
+    group_sum,
+    select,
+    write_report,
+)
 from .util import collapse, infer_keys
 
 
@@ -244,7 +247,7 @@ def add_combination(rep: Reporter, info):
     added = rep.add(key, c, strict=True, index=True, sums=True)
 
     log.info(f'Add {repr(key)} + {len(added)-1} partial sums')
-    log.debug(f'    as combination of')
+    log.debug('    as combination of')
     log.debug(f'    {repr(quantities)}')
 
 
@@ -298,7 +301,7 @@ def add_iamc_table(rep: Reporter, info):
         pass
     else:
         key = keys[-1].add_tag('sel')
-        rep.add(key, (Quantity.sel, keys[-1], sel), strict=True)
+        rep.add(key, (select, keys[-1], sel), strict=True)
         keys.append(key)
 
     # Optionally aggregate data by groups

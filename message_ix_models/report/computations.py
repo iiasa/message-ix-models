@@ -5,10 +5,12 @@ Some of these may migrate upstream to message_ix or ixmp in the future.
 from itertools import zip_longest
 import logging
 
-from ixmp.reporting import Quantity
+# TODO shouldn't be necessary to have so many imports; tidy up
+from ixmp.reporting.computations import select  # noqa: F401
 from ixmp.reporting.utils import collect_units
 from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
+import pandas as pd
 
 # Computations for specific models and projects
 from message_data.model.transport.report import (  # noqa: F401
@@ -19,7 +21,7 @@ from message_data.model.transport.report import (  # noqa: F401
 log = logging.getLogger(__name__)
 
 
-def combine(*quantities, select=None, weights=None):
+def combine(*quantities, select=None, weights=None):  # noqa: F811
     """Sum distinct *quantities* by *weights*.
 
     Parameters
@@ -115,7 +117,7 @@ def update_scenario(scenario, *quantities, params=[]):
     scenario.check_out()
 
     for order, (qty, par_name) in enumerate(zip_longest(quantities, params)):
-        if isinstance(qty, Quantity):
+        if not isinstance(qty, pd.DataFrame):
             # Convert a Quantity to a DataFrame
             par_name = qty.name
             new = qty.to_series() \
