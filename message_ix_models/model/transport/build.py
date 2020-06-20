@@ -84,10 +84,12 @@ def main(scenario, **options):
     from .data import add_data
 
     log.info('Set up MESSAGE-Transport')
+
+    # Core transport structure
     spec = get_spec()
     build.apply_spec(scenario, spec, add_data, **options)
 
-    # Add generalized disutility formulation to LDV technologies
+    # Add generalized disutility structure to LDV technologies
     disutility.add(
         scenario,
         consumer_groups=consumer_groups(),
@@ -108,4 +110,5 @@ def main(scenario, **options):
         **options,
     )
 
+    # Uncomment to dump for debugging
     # scenario.to_excel('debug.xlsx')

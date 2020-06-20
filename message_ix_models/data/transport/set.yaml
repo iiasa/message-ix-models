@@ -22,14 +22,17 @@ commodity:
   # methanol flexible-fuel vehicles using ICEs, vehicles using Direct Methanol
   # Fuel Cells, and maritime technologies).
   - methanol
+
   remove:
   - transport
+
   add:
     transport freight:
       name: Freight transport
       demand: true
 
-    transport freight vehicle: Freight transport vehicle distance travelled
+    transport freight vehicle:
+      name: Freight transport vehicle distance travelled
 
     transport pax:
       name: Passenger transport
@@ -51,7 +54,9 @@ commodity:
           id: "transport pax {consumer_group.id}"
           demand: true
 
-    disutility: Generalized disutility.
+    disutility:
+      name: Generalized disutility
+
 
 level:
   require:
