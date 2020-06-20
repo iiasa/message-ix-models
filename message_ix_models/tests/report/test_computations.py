@@ -1,7 +1,7 @@
 from functools import partial
 import logging
 
-from ixmp.reporting import as_quantity
+from ixmp.reporting import Quantity
 from ixmp.testing import assert_logs
 from message_ix.reporting import Reporter
 from message_data.reporting.computations import update_scenario
@@ -50,7 +50,7 @@ def test_update_scenario(bare_res, caplog):
     demand['value'] = 2.0
     demand = demand.iloc[:5]
     # Convert to a Quantity object
-    input = as_quantity(
+    input = Quantity(
         demand.set_index('node commodity level year time'.split())['value'],
         name='demand',
         units=units,
