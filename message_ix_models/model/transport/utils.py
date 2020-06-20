@@ -41,21 +41,17 @@ def read_config():
     """
     context = get_context()
 
-    try:
-        context['transport migrate set']
-    except KeyError:
-        # Not yet loaded
-        pass
-    else:
+    if "transport set" in context:
         # Already loaded
         return context
 
+    # Load transport configuration
     for parts in METADATA:
         context.load_config(*parts)
 
     # Merge technology.yaml with set.yaml
     context["transport set"]["technology"]["add"] = (
-        context._values.pop("transport technology")
+        context.pop("transport technology")
     )
 
     # Convert some values to codes
