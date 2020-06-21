@@ -1,23 +1,10 @@
-import os
 from pathlib import Path
-import shutil
-import stat
 
 import click
-import ixmp
 import message_ix
 
-from .common import MODEL
-
-
-PLATFORMS = {
-    'local': 'm-t-dev',
-}
-
-
-def get_platform(name):
-    """Return a Platform instance."""
-    return ixmp.Platform(name=PLATFORMS.get(name, name))
+from . import SCENARIO_INFO
+from message_data.tools.cli import clone_to_dest, common_params
 
 
 @click.group('transport')
@@ -37,7 +24,8 @@ def cli():
               help='Comma-separated region(s).')
 @click.argument('SOURCE_PATH', required=False,
                 default=Path('reference', 'data'))
-def migrate(version, check_base, parse, region, source_path):
+@click.pass_obj
+def migrate(context, version, check_base, parse, region, source_path):
     """Migrate data from MESSAGE(V)-Transport.
 
     If --parse is given, data from .chn, .dic, and .inp files is read from
@@ -52,8 +40,8 @@ def migrate(version, check_base, parse, region, source_path):
     from message_data.tools import ScenarioInfo
 
     # Load the target scenario from database
-    mp = get_platform('local')
-    s_target = message_ix.Scenario(mp, **MODEL['message-transport'])
+    mp = context.get_platform()
+    s_target = message_ix.Scenario(mp, **SCENARIO_INFO)
     info = ScenarioInfo(s_target)
 
     # Check that it has the required features
@@ -75,65 +63,32 @@ def migrate(version, check_base, parse, region, source_path):
     transform(data, version, info)
 
 
-@cli.command('build')
-@click.option('--version', default='geam_ADV3TRAr2_BaseX2_0',
-              metavar='VERSION', help='Model version to read.')
-@click.option('--dry-run', is_flag=True)
-@click.option('--quiet', is_flag=True)
-@click.option('--fast', is_flag=True,
-              help='Skip removing data for removed set elements.')
-def build_cmd(version, dry_run, fast, quiet):
+@cli.command("build")
+@common_params("dest dry_run quiet")
+@click.option("--fast", is_flag=True,
+              help="Skip removing data for removed set elements.")
+@click.pass_obj
+def build_cmd(context, dest, **options):
     """Prepare the model."""
     from .build import main
 
-    # Load from database
-    mp = get_platform('local')
-    s = message_ix.Scenario(mp, **MODEL['message-transport'])
+    scenario = clone_to_dest(context)
 
-    main(s, data_from=version, dry_run=dry_run, quiet=quiet, fast=fast)
+    main(scenario, **options)
 
 
 @cli.command()
-@click.option('--macro', is_flag=True)
-def solve(macro):
+@click.option("--macro", is_flag=True)
+@click.pass_obj
+def solve(context, macro):
     """Run the model."""
     args = dict()
 
-    # Load from database
-    mp = get_platform('local')
-    s = message_ix.Scenario(mp, **MODEL['message-transport'])
+    scenario = context.get_scenario()
 
     if macro:
         from .callback import main as callback
         args['callback'] = callback
 
-    s.solve(**args)
-    s.commit()
-
-
-@cli.command('clone')
-@click.argument('source', type=click.Choice('backup GP3'.split()))
-def clone_cmd(source):
-    """Clone base scenario to the local database.
-
-    SOURCE is the name of source platform: either 'GP3' or 'backup'. If
-    'backup', the local database is manually overwritten with archive files.
-    """
-    if source == 'backup':
-        # NB do this by copying files instead of using ixmp Scenario.clone()
-        for src in db_path.glob('gp3-clone-2019-07-08*'):
-            if src.suffix == '.tmp':
-                continue
-            dst = src.parent / src.name.replace('gp3-clone-2019-07-08',
-                                                'message-transport-dev')
-            shutil.copy(src, dst)
-            os.chmod(dst, stat.S_IRUSR | stat.S_IWUSR)
-
-        p_dest = get_platform('local')
-
-    elif source == 'GP3':
-        from .build import clone
-
-        # Clone over the network from the server.
-        p_dest = get_platform('local')
-        clone(get_platform(source), p_dest)
+    scenario.solve(**args)
+    scenario.commit()
