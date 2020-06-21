@@ -64,7 +64,7 @@ Utilities and CLI
    :members:
    :exclude-members: read_config
 
-.. automodule:: message_data.model.transport._cli
+.. automodule:: message_data.model.transport.cli
    :members:
 
 

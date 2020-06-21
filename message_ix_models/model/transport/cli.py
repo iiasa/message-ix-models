@@ -21,12 +21,12 @@ def get_platform(name):
 
 
 @click.group('transport')
-def main():
+def cli():
     """MESSAGE-Transport model."""
     pass
 
 
-@main.command()
+@cli.command()
 @click.option('--version', default='geam_ADV3TRAr2_BaseX2_0',
               metavar='VERSION', help='Model version to read.')
 @click.option('--check-base/--no-check-base', is_flag=True,
@@ -75,7 +75,7 @@ def migrate(version, check_base, parse, region, source_path):
     transform(data, version, info)
 
 
-@main.command('build')
+@cli.command('build')
 @click.option('--version', default='geam_ADV3TRAr2_BaseX2_0',
               metavar='VERSION', help='Model version to read.')
 @click.option('--dry-run', is_flag=True)
@@ -93,7 +93,7 @@ def build_cmd(version, dry_run, fast, quiet):
     main(s, data_from=version, dry_run=dry_run, quiet=quiet, fast=fast)
 
 
-@main.command()
+@cli.command()
 @click.option('--macro', is_flag=True)
 def solve(macro):
     """Run the model."""
@@ -111,7 +111,7 @@ def solve(macro):
     s.commit()
 
 
-@main.command('clone')
+@cli.command('clone')
 @click.argument('source', type=click.Choice('backup GP3'.split()))
 def clone_cmd(source):
     """Clone base scenario to the local database.
