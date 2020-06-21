@@ -1,4 +1,5 @@
 import logging
+import sys
 from copy import copy
 from pathlib import Path
 from time import process_time
@@ -6,7 +7,7 @@ from time import process_time
 import click
 import yaml
 
-from . import prepare_reporter
+from . import prepare_reporter, register
 
 
 log = logging.getLogger(__name__)
@@ -24,6 +25,8 @@ def mark():
 @click.pass_obj
 @click.option('--config', 'config_file', default='global', show_default=True,
               help='Path or stem for reporting config file.')
+@click.option("--module", "-m", metavar="MODULES",
+              help="Add reporting for MODULES")
 @click.option('-o', '--output', 'output_path', type=Path,
               help='Write output to file instead of console.')
 @click.option('--from-file', type=click.Path(exists=True, dir_okay=False),
@@ -32,7 +35,16 @@ def mark():
 @click.option('--dry-run', '-n', is_flag=True,
               help='Only show what would be done.')
 @click.argument('key', default='message:default')
-def cli(context, config_file, output_path, from_file, verbose, dry_run, key):
+def cli(
+    context,
+    config_file,
+    module,
+    output_path,
+    from_file,
+    verbose,
+    dry_run,
+    key
+):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message:default', but may also
@@ -60,6 +72,13 @@ def cli(context, config_file, output_path, from_file, verbose, dry_run, key):
     if verbose:
         log.setLevel('DEBUG')
         logging.getLogger('ixmp').setLevel('DEBUG')
+
+    # Load modules
+    module = module or ""
+    for name in module.split(","):
+        name = f"message_data.{name}.report"
+        __import__(name)
+        register(sys.modules[name].callback)
 
     # Prepare a list of Context objects, each referring to one Scenario
     contexts = []
