@@ -26,7 +26,7 @@ def mark():
 @click.option('--config', 'config_file', default='global', show_default=True,
               help='Path or stem for reporting config file.')
 @click.option("--module", "-m", metavar="MODULES",
-              help="Add reporting for MODULES")
+              help="Add extra reporting for MODULES.")
 @click.option('-o', '--output', 'output_path', type=Path,
               help='Write output to file instead of console.')
 @click.option('--from-file', type=click.Path(exists=True, dir_okay=False),
