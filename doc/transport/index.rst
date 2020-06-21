@@ -21,6 +21,34 @@ The code and data:
 .. contents::
    :local:
 
+Usage
+=====
+
+Preliminaries. Create a platform named e.g. ``mt``:
+
+    $ ixmp platform add mt jdbc hsqldb path/to/db
+
+Create the bare RES, or identify another base scenario:
+
+    $ export BASE="ixmp://mt/Bare RES/baseline"
+    $ mix-data --url=$BASE res create-bare
+
+  Other scenarios include:
+
+  - ``ixmp://ene-ixmp/CD_LINKS_SSP2_v2/baseline``
+
+Build the model:
+
+    # export URL=ixmp://mt/MESSAGEix-Transport/baseline
+    $ mix-data --url=$BASE transport build --dest=$URL
+
+Solve the model:
+
+    $ message-ix --url=$URL solve
+
+Report the results:
+
+    $ mix-data --url=$URL report
 
 Code reference
 ==============
