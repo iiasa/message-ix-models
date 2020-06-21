@@ -130,6 +130,7 @@ Core
 Computations
 ------------
 
+.. currentmodule:: message_data.reporting.computations
 .. automodule:: message_data.reporting.computations
    :members:
 
@@ -137,8 +138,11 @@ Computations
 Utilities
 ---------
 
+.. currentmodule:: message_data.reporting.util
 .. automodule:: message_data.reporting.util
    :members:
 
 
-.. automethod:: message_data.reporting.cli
+.. currentmodule:: message_data.reporting.cli
+.. automodule:: message_data.reporting.cli
+   :members:
