@@ -3,7 +3,9 @@ import logging
 from message_ix.reporting import Reporter
 import pandas as pd
 
-from message_data.tools import ScenarioInfo, get_context
+from message_data.tools import ScenarioInfo
+from .plot import PLOTS
+from .utils import read_config
 
 
 log = logging.getLogger(__name__)
@@ -73,16 +75,23 @@ def callback(rep: Reporter):
     """
     from message_data.reporting.util import infer_keys
 
-    out = infer_keys(rep, 'out')
+    k_out = infer_keys(rep, "out")
 
     # Aggregate transport technologies
     t_groups = {}
-    for tech in get_context()["transport set"]["technology"]["add"]:
+    for tech in read_config()["transport set"]["technology"]["add"]:
         if not len(tech.child):
             continue  # No children; not a group
 
         t_groups[tech.id] = [child.id for child in tech.child]
 
-    keys = rep.aggregate(out, 'transport', dict(t=t_groups), sums=True)
-
+    keys = rep.aggregate(k_out, 'transport', dict(t=t_groups), sums=True)
     log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
+
+    rep.add("transport plots", [])
+
+    for plot in PLOTS:
+        key = f"plot {plot.name}"
+        log.info(f"Add {repr(key)}")
+        rep.add(key, tuple([plot()] + plot.inputs))
+        rep.graph["transport plots"].append(key)

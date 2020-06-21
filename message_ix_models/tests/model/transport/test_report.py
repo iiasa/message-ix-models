@@ -21,3 +21,6 @@ def test_report_bare(solved_bare_res_transport, session_context):
     # The key is added, can be computed and retrieved, and has a specific
     # aggregate calculated
     rep.get(key).sel(t='freight truck')
+
+    # Get the catch-all key, including plots etc.
+    rep.get("transport")
