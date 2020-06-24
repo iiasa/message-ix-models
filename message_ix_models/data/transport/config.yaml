@@ -1,17 +1,27 @@
-# Metadata and parameters for MESSAGE-Transport
+# Configuration for MESSAGE-Transport
 
+# Sources for input data
 data source:
   # Non-LDV technologies: 'IKARUS' or null
   non-LDV: null
   # LDV technologies: 'US-TIMES MA3T' or null
   LDV: US-TIMES MA3T
-  # Demands: 'dummy'
+  # Demands: 'dummy' only
   demand: dummy
+  # Population: 'GEA mix' only
+  population: GEA mix
 
-population: GEA mix
+# CSV files containing data for input calculations and assumptions
+data files:
+- ldv_class
+- mer_to_ppp
+- population-suburb-share
+- ma3t/population
+- ma3t/attitude
+- ma3t/driver
 
 # (DLM) “Which US census region should be used as a proxy for the distribution
-# of driver types in this MESSAGE region?
+# of driver types in this MESSAGE region?”
 node to census_division:
   R11_AFR: 2
   R11_CPA: 2
@@ -143,3 +153,35 @@ ldv cost catch-up year:
   pao: 1990
   pas: 2030
   sas: 2040
+
+
+# Parameters used in demand and mode share calculations -----------------------
+
+# Work hours per year, used to compute value of time [hour]
+work hours: 1600  # = 200 * 8
+
+# Speeds of transport modes
+# The labels on the 'technology' dimension match the aggregate groups listed in
+# technology.yaml.
+# Source: Schäefer et al. (2010)
+speeds:
+  _dim: technology
+  _unit: km / hour
+  LDV: 54.5 # = 31 + 78 / 2
+  2W: 31
+  AIR: 270
+  BUS: 19
+  RAIL: 35
+
+# Fixed future point for total passenger demand [kilometre per year]
+# “Assume only half the speed (330 km/h) and not as steep a curve.”
+as2010fix: 337327.9893 # = 149500 * 1.12818725502081 * 2
+
+# Year for share convergence
+time_convergence: 2100
+
+# Scaling factors for production function [0]
+scaling: 1
+
+# Logit share exponents or cost distribution parameters [0]
+lambda: -2

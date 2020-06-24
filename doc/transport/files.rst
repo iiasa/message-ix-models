@@ -1,5 +1,11 @@
-Set elements
-************
+Configuration files
+*******************
+
+Configuration (:file:`transport/config.yaml`)
+=============================================
+
+.. literalinclude:: ../../../../data/transport/config.yaml
+   :language: yaml
 
 Technology (:file:`transport/technology.yaml`)
 ==============================================

@@ -10,22 +10,11 @@ from message_data.tools import Code, as_codes, get_context, load_data, set_info
 # Configuration files
 METADATA = [
     # Information about MESSAGE-Transport
-    ('transport', 'callback'),
     ('transport', 'config'),
     ('transport', 'set'),
     ('transport', 'technology'),
     # Information about the MESSAGE V model
     ('transport', 'migrate', 'set'),
-]
-
-# Files containing data for input calculations and assumptions
-FILES = [
-    'ldv_class',
-    'mer_to_ppp',
-    'population-suburb-share',
-    'ma3t/population',
-    'ma3t/attitude',
-    'ma3t/driver',
 ]
 
 
@@ -61,17 +50,11 @@ def read_config(context=None):
         except KeyError:
             pass
 
-    # Storage for exogenous data
-    context.data = xr.Dataset()
-
     # Load data files
-    for key in FILES:
-        context.data[key] = load_data(context, 'transport', key,
-                                      rtype=xr.DataArray)
-
-    # Convert scalar parameters
-    for key, val in context['transport callback'].pop('params').items():
-        context.data[key] = eval(val) if isinstance(val, str) else val
+    for key in context["transport config"]["data files"]:
+        context.data[key] = load_data(
+            context, 'transport', key, rtype=xr.DataArray,
+        )
 
     return context
 
