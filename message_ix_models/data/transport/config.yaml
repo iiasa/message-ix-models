@@ -4,7 +4,7 @@ data source:
   # Non-LDV technologies: 'IKARUS' or null
   non-LDV: null
   # LDV technologies: 'US-TIMES MA3T' or null
-  LDV: null
+  LDV: US-TIMES MA3T
   # Demands: 'dummy'
   demand: dummy
 

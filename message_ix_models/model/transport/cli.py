@@ -72,7 +72,7 @@ def build_cmd(context, dest, **options):
     """Prepare the model."""
     from .build import main
 
-    scenario = clone_to_dest(context)
+    scenario = clone_to_dest(context, defaults=SCENARIO_INFO)
 
     main(scenario, **options)
 
