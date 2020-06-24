@@ -3,14 +3,13 @@ from pandas.testing import assert_series_equal
 import pytest
 import xarray as xr
 
-from message_data.model.transport.data import (
-    get_consumer_groups,
-    get_ldv_data,
-)
+from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
+from message_data.model.transport.data.ldv import get_USTIMES_MA3T
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.utils import FILES
 from message_data.tools import ScenarioInfo, load_data, make_df
+
 
 @pytest.mark.parametrize('key', FILES)
 @pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
@@ -18,12 +17,6 @@ def test_load_data(session_context, key, rtype):
     # Load transport metadata from files in both pandas and xarray formats
     result = load_data(session_context, 'transport', key, rtype=rtype)
     assert isinstance(result, rtype)
-
-
-@pytest.mark.skip(reason="Code moved from model.transport to model")
-def test_disutility_conversion(res_info):
-    """Function runs without error."""
-    disutility_conversion(res_info)
 
 
 @pytest.mark.needs_input_data
@@ -112,14 +105,19 @@ def test_ikarus(bare_res, session_context):
                             check_names=False)
 
 
-def test_ldv(res_info):
 @pytest.mark.needs_input_data
+def test_USTIMES_MA3T(res_info):
     # Method runs without error
-    data = get_ldv_data(res_info)
+    data = get_USTIMES_MA3T(res_info)
 
-    # Data have the correct size: 11 regions × 13 periods × 12 technologies
+    # # Dump data for debugging
+    # for par, df in data.items():
+    #     df.to_csv(f"debug-USTIMES_MA3T-{par}.csv")
+
+    # Data have the correct size: 11 region; 11 technology * 5 years to 2050;
+    # 1 technology for only 2010
     for par, df in data.items():
-        assert len(df) == len(res_info.N[1:]) * (len(res_info.Y) + 3) * 12
+        assert len(df) == len(res_info.N[1:]) * ((5 * 11) + 1)
 
 
 @pytest.mark.xfail(reason='Needs normalization across consumer groups.')
