@@ -36,8 +36,11 @@ def get_ldv_data(info):
 
 def get_USTIMES_MA3T(info):
     """Read LDV cost and efficiency data from US-TIMES and MA3T."""
+    # Ensure transport config is loaded
+    context = read_config()
+
     # Open workbook
-    path = get_context().get_path('transport', FILE)
+    path = context.get_path("transport", FILE)
     wb = load_workbook(path, read_only=True, data_only=True)
 
     # Tables

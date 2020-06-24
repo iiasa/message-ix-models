@@ -29,7 +29,7 @@ FILES = [
 ]
 
 
-def read_config():
+def read_config(context=None):
     """Read the transport model configuration / metadata from file.
 
     Numerical values are converted to computation-ready data structures.
@@ -39,7 +39,7 @@ def read_config():
     .Context
         The current Context, with the loaded configuration.
     """
-    context = get_context()
+    context = context or get_context(strict=True)
 
     if "transport set" in context:
         # Already loaded
