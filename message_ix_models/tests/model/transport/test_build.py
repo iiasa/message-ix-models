@@ -1,12 +1,11 @@
 import pytest
 
 from message_data.model.transport import build, report, utils
-from message_data.tests import binary_data_available
 
 
 @pytest.mark.parametrize('ldv, nonldv', [
     (None, None),
-    pytest.param('US-TIMES MA3T', 'IKARUS', marks=binary_data_available),
+    pytest.param('US-TIMES MA3T', 'IKARUS', marks=pytest.mark.needs_input_data),
 ])
 def test_build_bare_res(bare_res, ldv, nonldv):
     """Test that model.transport.build works on the MESSAGEix-GLOBIOM RES."""
@@ -21,7 +20,7 @@ def test_build_bare_res(bare_res, ldv, nonldv):
     build.main(bare_res, fast=True)
 
 
-@binary_data_available
+@pytest.mark.needs_input_data
 def test_solve_bare_res(solved_bare_res_transport):
     """Test that MESSAGE-Transport built on the bare RES will solve."""
     scen = solved_bare_res_transport
