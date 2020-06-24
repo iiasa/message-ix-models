@@ -12,9 +12,6 @@ from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.utils import FILES
 from message_data.tools import ScenarioInfo, load_data, make_df
 
-from message_data.tests import binary_data_available
-
-
 @pytest.mark.parametrize('key', FILES)
 @pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
 def test_load_data(session_context, key, rtype):
@@ -29,7 +26,7 @@ def test_disutility_conversion(res_info):
     disutility_conversion(res_info)
 
 
-@binary_data_available
+@pytest.mark.needs_input_data
 def test_ikarus(bare_res, session_context):
     # Create bare RES
     scenario = bare_res
@@ -115,8 +112,8 @@ def test_ikarus(bare_res, session_context):
                             check_names=False)
 
 
-@binary_data_available
 def test_ldv(res_info):
+@pytest.mark.needs_input_data
     # Method runs without error
     data = get_ldv_data(res_info)
 
@@ -143,7 +140,7 @@ def test_groups(test_context, regions, pop_scen):
     assert all(result.sum('consumer_group') == 1)
 
 
-@binary_data_available
+@pytest.mark.needs_input_data
 @pytest.mark.parametrize('regions', ['R11'])
 @pytest.mark.parametrize('pop_scen', ['GEA mix', 'GEA supply', 'GEA eff'])
 def test_urban_rural_shares(test_context, regions, pop_scen):
