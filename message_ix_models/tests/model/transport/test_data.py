@@ -7,11 +7,17 @@ from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.model.transport.data.ldv import get_USTIMES_MA3T
 from message_data.model.transport.data.ikarus import get_ikarus_data
-from message_data.model.transport.utils import FILES
 from message_data.tools import ScenarioInfo, load_data, make_df
 
 
-@pytest.mark.parametrize('key', FILES)
+@pytest.mark.parametrize('key', [
+    "ldv_class",
+    "mer_to_ppp",
+    "population-suburb-share",
+    "ma3t/population",
+    "ma3t/attitude",
+    "ma3t/driver",
+])
 @pytest.mark.parametrize('rtype', (pd.Series, xr.DataArray))
 def test_load_data(session_context, key, rtype):
     # Load transport metadata from files in both pandas and xarray formats

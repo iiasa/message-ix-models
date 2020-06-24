@@ -12,8 +12,8 @@ def test_read_config(session_context):
     assert 'mer_to_ppp' in context.data
 
     # Scalar parameters are loaded
-    assert 'scaling' in context.data
-    assert context.data['whours'] == 200 * 8
+    assert "scaling" in context["transport config"]
+    assert context["transport config"]["work hours"] == 200 * 8
 
 
 def test_consumer_groups(session_context):
