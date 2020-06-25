@@ -44,9 +44,9 @@ Solve the model::
 
     $ message-ix --url=$URL solve
 
-Report the results::
+Report the results, using :mod:`model.transport.report` to add additional reporting calculations::
 
-    $ mix-data --url=$URL report
+    $ mix-data --url=$URL report -m model.transport "transport plots"
 
 Code reference
 ==============
