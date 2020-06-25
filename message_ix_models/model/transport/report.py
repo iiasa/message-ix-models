@@ -75,6 +75,12 @@ def callback(rep: Reporter):
     """
     from message_data.reporting.util import infer_keys
 
+    # Uncomment if full-resolution reporting of ACT leads to memory issues
+    # Include only technologies with "transport" in the name
+    rep.set_filters(
+        t=list(filter(lambda n: "transport" in n, rep.get("t")))
+    )
+
     k_out = infer_keys(rep, "out")
 
     # Aggregate transport technologies
