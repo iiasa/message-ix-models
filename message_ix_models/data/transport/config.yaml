@@ -185,3 +185,16 @@ scaling: 1
 
 # Logit share exponents or cost distribution parameters [0]
 lambda: -2
+
+# Share weights for regions converge to the average of the regions in each list
+share weight convergence:
+  R11_AFR: [R11_WEU, R11_PAO]
+  R11_CPA: [R11_WEU, R11_PAO]
+  R11_EEU: [R11_WEU, R11_PAO]
+  R11_FSU: [R11_NAM]
+  R11_LAM: [R11_WEU, R11_PAO]
+  R11_NAM: [R11_NAM]
+  R11_PAO: [R11_WEU, R11_PAO]
+  R11_PAS: [R11_WEU, R11_PAO]
+  R11_SAS: [R11_WEU, R11_PAO]
+  R11_WEU: [R11_WEU, R11_PAO]
