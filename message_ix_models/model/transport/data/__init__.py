@@ -23,27 +23,27 @@ from .non_ldv import get_non_ldv_data
 
 log = logging.getLogger(__name__)
 
-
 DATA_FUNCTIONS = [
     demand,
-    'conversion',
-    'freight',
     get_ldv_data,
     get_non_ldv_data,
-    'dummy_supply',
 ]
 
 
 def add_data(scenario, dry_run=False):
-    """Populate *senario* with MESSAGE-Transport data."""
-    # Add data
+    """Populate `scenario` with MESSAGE-Transport data."""
+    # Information about `scenario`
     info = ScenarioInfo(scenario)
 
-    for func in DATA_FUNCTIONS:
-        func = globals()[func] if isinstance(func, str) else func
-        log.info(f'from {func.__name__}()')
+    # Check for two "node" values for global data, e.g. in
+    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
+    if {"World", "R11_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R11_GLB' from node list for data generation")
+        info.set["node"].remove("R11_GLB")
 
+    for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
+        log.info(f'from {func.__name__}()')
         add_par_data(scenario, func(info), dry_run=dry_run)
 
     log.info('done')
@@ -100,6 +100,9 @@ def conversion(info):
     return data
 
 
+DATA_FUNCTIONS.append(conversion)
+
+
 def freight(info):
     """Data for freight technologies."""
     codes = get_context()["transport set"]["technology"]["add"]
@@ -146,6 +149,9 @@ def freight(info):
     return data
 
 
+DATA_FUNCTIONS.append(freight)
+
+
 def dummy_supply(info):
     """Dummy fuel supply for the bare RES."""
     return make_source_tech(
@@ -163,3 +169,6 @@ def dummy_supply(info):
         var_cost=1.0,
         technical_lifetime=1.0,
     )
+
+
+DATA_FUNCTIONS.append(dummy_supply)
