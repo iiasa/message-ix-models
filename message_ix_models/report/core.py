@@ -22,6 +22,10 @@ log = logging.getLogger(__name__)
 CALLBACKS = []
 
 
+# Equivalent of some content in global.yaml
+CONFIG = dict(units=dict(replace={"-": ""}))
+
+
 def register(callback) -> None:
     """Register a callback function for :meth:`prepare_reporter`.
 
