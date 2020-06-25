@@ -75,7 +75,7 @@ def cli(
 
     # Load modules
     module = module or ""
-    for name in module.split(","):
+    for name in filter(lambda n: len(n), module.split(",")):
         name = f"message_data.{name}.report"
         __import__(name)
         register(sys.modules[name].callback)
