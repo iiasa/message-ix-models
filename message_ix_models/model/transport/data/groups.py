@@ -1,7 +1,7 @@
 import pandas as pd
 import xarray as xr
 
-from message_data.tools import get_gea_data, set_info
+from message_data.tools import get_context, get_gea_data, set_info
 
 # Query for retrieving GEA population data
 
@@ -90,28 +90,49 @@ def get_consumer_groups(context):
     return groups
 
 
-def get_urban_rural_shares(context) -> xr.DataArray:
-    """Return sares of urban and rural population from GEA.
+def get_urban_rural_shares(context=None) -> xr.DataArray:
+    """Return shares of urban and rural population from GEA.
 
     See also
     --------
     .get_gea_data
     """
-    # Retrieve region info
-    nodes = set_info("node")
-    # List of regions according to the context
-    regions = nodes[nodes.index(context.regions)].child
+    context = context or get_context()
+    pop = get_gea_population(context=context)
+
+    # Scenario to use, e.g. "GEA mix"
+    pop_scen = context["transport"]["data source"]["population"]
+
+    # Compute shares, select the appropriate scenario
+    return (
+        (pop.sel(area_type=["UR+SU", "RU"]) / pop.sel(area_type="total"))
+        .sel(scenario=pop_scen, drop=True)
+    )
+
+
+def get_gea_population(regions=[], context=None):
+    if not len(regions):
+        if not context:
+            raise ValueError("context required to determine regions")
+        # Retrieve region info
+        nodes = set_info("node")
+        # List of regions according to the context
+        regions = nodes[nodes.index(context.regions)].child
 
     # Identify the regions to query from the GEA data, which has R5 and other
     # mappings
-    GEA_DIMS['region'].update(
-        {r.split('_')[-1]: r for r in map(str, regions)})
+    GEA_DIMS["region"].update(
+        {r.split('_')[-1]: r for r in map(str, regions)}
+    )
 
     # Assemble query string and retrieve data from GEA snapshot
-    query = []
-    for dim, values in GEA_DIMS.items():
-        query.append(f'{dim} in {list(values.keys())}')
-    pop = get_gea_data(context, ' and '.join(query))
+    pop = get_gea_data(
+        query=" and ".join(
+            f"{dim} in {list(values.keys())}"
+            for dim, values in GEA_DIMS.items()
+        ),
+        context=context,
+    )
 
     # Rename values along dimensions
     for dim, values in GEA_DIMS.items():
@@ -120,10 +141,7 @@ def get_urban_rural_shares(context) -> xr.DataArray:
     # - Remove model, units dimensions
     # - Rename 'variable' to 'area_type'
     # - Convert to xarray
-    pop = pop.droplevel(['model', 'unit']) \
-             .rename_axis(index={'variable': 'area_type', 'region': 'node'}) \
-             .pipe(xr.DataArray.from_series)
-
-    # Compute shares, select the appropriate scenario
-    return (pop.sel(area_type=['UR+SU', 'RU']) / pop.sel(area_type='total')) \
-        .sel(scenario=context['transport population scenario'], drop=True)
+    return xr.DataArray.from_series(
+        pop.droplevel(["model", "unit"])
+        .rename_axis(index={"variable": "area_type", "region": "node"})
+    )
