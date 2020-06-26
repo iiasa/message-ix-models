@@ -145,11 +145,11 @@ def test_groups(test_context, regions, pop_scen):
 
 
 @pytest.mark.needs_input_data
-@pytest.mark.parametrize('regions', ['R11'])
-@pytest.mark.parametrize('pop_scen', ['GEA mix', 'GEA supply', 'GEA eff'])
+@pytest.mark.parametrize("regions", ["R11"])
+@pytest.mark.parametrize("pop_scen", ["GEA mix", "GEA supply", "GEA eff"])
 def test_urban_rural_shares(test_context, regions, pop_scen):
-    test_context.regions = 'R11'
-    test_context['transport population scenario'] = pop_scen
+    test_context.regions = "R11"
+    test_context["transport"] = {"data source": {"population": pop_scen}}
 
     # Shares can be retrieved
     get_urban_rural_shares(test_context)
