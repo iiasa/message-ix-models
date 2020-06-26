@@ -8,8 +8,9 @@ def test_read_config(session_context):
     context = read_config()
     assert context is session_context
 
-    # Data table is loaded
-    assert 'mer_to_ppp' in context.data
+    # Data tables are loaded
+    assert isinstance(context.data["transport mer-to-ppp"], xr.DataArray)
+    assert context.data["transport mer-to-ppp"].dims == ("node", "year",)
 
     # Scalar parameters are loaded
     assert "scaling" in context["transport config"]

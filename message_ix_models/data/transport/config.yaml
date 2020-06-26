@@ -13,8 +13,10 @@ data source:
 
 # CSV files containing data for input calculations and assumptions
 data files:
-- ldv_class
-- mer_to_ppp
+- demand-scale
+- gdp
+- ldv-class
+- mer-to-ppp
 - population-suburb-share
 - ma3t/population
 - ma3t/attitude
