@@ -159,6 +159,9 @@ ldv cost catch-up year:
 
 # Parameters used in demand and mode share calculations -----------------------
 
+# Set of modes handled by demand projection
+demand modes: [LDV, 2W, AIR, BUS, RAIL]
+
 # Work hours per year, used to compute value of time [hour]
 work hours: 1600  # = 200 * 8
 
@@ -180,7 +183,7 @@ speeds:
 as2010fix: 337327.9893 # = 149500 * 1.12818725502081 * 2
 
 # Year for share convergence
-time_convergence: 2100
+year convergence: 2100
 
 # Scaling factors for production function [0]
 scaling: 1
@@ -190,13 +193,14 @@ lambda: -2
 
 # Share weights for regions converge to the average of the regions in each list
 share weight convergence:
-  R11_AFR: [R11_WEU, R11_PAO]
-  R11_CPA: [R11_WEU, R11_PAO]
-  R11_EEU: [R11_WEU, R11_PAO]
+  R11_AFR: [R11_PAO, R11_WEU]
+  R11_CPA: [R11_PAO, R11_WEU]
+  R11_EEU: [R11_PAO, R11_WEU]
   R11_FSU: [R11_NAM]
-  R11_LAM: [R11_WEU, R11_PAO]
+  R11_LAM: [R11_PAO, R11_WEU]
+  R11_MEA: [R11_NAM, R11_WEU]
   R11_NAM: [R11_NAM]
-  R11_PAO: [R11_WEU, R11_PAO]
-  R11_PAS: [R11_WEU, R11_PAO]
-  R11_SAS: [R11_WEU, R11_PAO]
-  R11_WEU: [R11_WEU, R11_PAO]
+  R11_PAO: [R11_PAO, R11_WEU]
+  R11_PAS: [R11_PAO, R11_WEU]
+  R11_SAS: [R11_PAO, R11_WEU]
+  R11_WEU: [R11_PAO, R11_WEU]
