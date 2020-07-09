@@ -96,35 +96,71 @@ fertilizer:
     - d_heat
     - electr
     - freshwater_supply
+    - coal
+    - fueloil
+    - ethanol
+    - biomass
+    - gas
+    - hydrogen
     add:
     - NH3
     - Fertilizer Use|Nitrogen
+    - ht_heat
+    - lt_heat
+    - aluminum
 
   level:
     require:
     - primary
     - secondary
     - water_supply
+    - final
     add:
-    - material_interim
-    - material_final
+    # - material_interim
+    # - material_final
+      - useful_aluminum
+      - new_scrap
+      - old_scrap
+      - final_material
+      - useful_material
+      - product
 
-  # Currently only works with R11 regional aggregation
+# should also work with regional model
+
   region:
-    # Just one is sufficient, since the RES will never be generated with a mix
     require:
-    - R11_AFR
 
   technology:
     require:
     - h2_bio_ccs  # Reference for vent-to-storage ratio
+
     add:
-    - biomass_NH3
-    - electr_NH3
-    - gas_NH3
-    - coal_NH3
-    - fueloil_NH3
-    - NH3_to_N_fertil
+    # - biomass_NH3
+    # - electr_NH3
+    # - gas_NH3
+    # - coal_NH3
+    # - fueloil_NH3
+    # - NH3_to_N_fertil
+      - soderberg_aluminum
+      - prebake_aluminum
+      - furnace_coal_aluminum
+      - furnace_hoil_aluminum
+      - furnace_biofuel_aluminum
+      - furnace_biomass_aluminum
+      - furnace_synfuel_aluminum
+      - furnace_gas_aluminum
+      - furnace_elec_aluminum
+      - furnace_h2_aluminum
+      - hp_gas_aluminum
+      - hp_elec_aluminum
+      - fc_h2_aluminum
+      - solar_aluminum
+      - dheat_aluminum
+      - secondary_aluminum
+      - prep_secondary_aluminum
+      - finishing_aluminum
+      - manuf_aluminum
+      - scrap_recovery_aluminum
 
   type_tec:
     add:
