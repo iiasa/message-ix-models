@@ -60,14 +60,15 @@ def solve(context):
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
     }.get(context.scenario_info["scenario"])
 
+    # Chnage this part - the model name ?? 
+
     if context.scenario_info["model"] != "CD_Links_SSP2":
         print("WARNING: this code is not tested with this base scenario!")
 
     # Clone and set up
     scenario = build(
-        context.get_scenario().clone(
-            model="JM_GLB_NITRO", scenario=output_scenario_name
-        )
+        context.get_scenario()
+        .clone(model="Material_test", scenario=output_scenario_name)
     )
 
     # Solve
