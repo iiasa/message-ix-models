@@ -7,7 +7,7 @@ from message_data.model.transport.utils import (
     add_commodity_and_level,
     read_config,
 )
-from message_data.tools import get_context, make_df, make_io
+from message_data.tools import make_df, make_io, make_matched_dfs
 
 
 #: Input file containing data from US-TIMES and MA3T models.
@@ -89,6 +89,7 @@ def get_USTIMES_MA3T(info):
 
     # Convert 'efficiency' into 'input' and 'output' parameter data
     base = data.pop('efficiency')
+    # TODO also add these to `data`
     i_o = make_io(
         src=(None, None, 'GWh'),
         dest=('transport pax vehicle', 'useful', 'Gv km'),
@@ -123,5 +124,14 @@ def get_USTIMES_MA3T(info):
             value=base['value'],
             unit=base['unit'],
         )
+
+    # commented: incomplete / for debugging
+    # # Activity constraints
+    # data.update(
+    #     make_matched_dfs(
+    #         base=i_o["output"],
+    #         initial_activity_up=2.,
+    #     )
+    # )
 
     return data
