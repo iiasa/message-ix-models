@@ -11,8 +11,8 @@ from message_data.tools import ScenarioInfo, load_data, make_df
 
 
 @pytest.mark.parametrize('key', [
-    "ldv_class",
-    "mer_to_ppp",
+    "ldv-class",
+    "mer-to-ppp",
     "population-suburb-share",
     "ma3t/population",
     "ma3t/attitude",
