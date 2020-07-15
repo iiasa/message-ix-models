@@ -4,7 +4,93 @@
 #    accounting. Different sets can be created once there are 2+ different
 #    categories of materials.
 
-set:
+aluminum:
+  commodity:
+    add:
+    - ht_heat
+    - lt_heat
+    - aluminum
+  level:
+    add:
+    - useful_aluminum
+    - new_scrap
+    - old_scrap
+    - final_material
+    - useful_material
+    - product
+
+  technology:
+    add:
+    - soderberg_aluminum
+    - prebake_aluminum
+    - furnace_coal_aluminum
+    - furnace_hoil_aluminum
+    - furnace_biofuel_aluminum
+    - furnace_biomass_aluminum
+    - furnace_synfuel_aluminum
+    - furnace_gas_aluminum
+    - furnace_elec_aluminum
+    - furnace_h2_aluminum
+    - hp_gas_aluminum
+    - hp_elec_aluminum
+    - fc_h2_aluminum
+    - solar_aluminum
+    - dheat_aluminum
+    - secondary_aluminum
+    - prep_secondary_aluminum
+    - finishing_aluminum
+    - manuf_aluminum
+    - scrap_recovery_aluminum
+
+steel:
+  commodity:
+    add:
+    - ht_heat
+    - lt_heat
+    - steel
+    - pig_iron
+    - sponge_iron
+    - sinter_iron
+    - pellet_iron
+    - ore_iron
+    - limestone_iron
+
+  level:
+    add:
+    - useful_steel
+    - new_scrap
+    - old_scrap
+    - primary_material
+    - secondary_material
+    - final_material
+    - useful_material
+    - product
+
+  technology:
+    add:
+    - bf_steel
+    - dri_steel
+    - sr_steel
+    - bof_steel
+    - eaf_steel
+    - furnace_hoil_steel
+    - furnace_biofuel_steel
+    - furnace_biomass_steel
+    - furnace_synfuel_steel
+    - furnace_gas_steel
+    - furnace_elec_steel
+    - furnace_h2_steel
+    - hp_gas_steel
+    - hp_elec_steel
+    - fc_h2_steel
+    - solar_steel
+    - dheat_steel
+    - prep_secondary_steel
+    - finishing_steel
+    - manuf_steel
+    - scrap_recovery_steel
+
+fertilizer:
   commodity:
     require:
     - d_heat
