@@ -1,8 +1,16 @@
+from ixmp.reporting import RENAME_DIMS, Quantity
+from message_ix.reporting import Reporter, computations
+import dask
 import numpy as np
 import pandas as pd
+import xarray as xr
+import message_ix
 
-from message_data.tools import broadcast, get_context, make_df
+from message_data.reporting import CONFIG
+from message_data.tools import ScenarioInfo, broadcast, get_context, make_df
 from .build import generate_set_elements
+from .data.groups import get_gea_population
+from .utils import read_config
 
 
 def demand(info):
@@ -27,7 +35,7 @@ def dummy(info):
     """
     common = dict(
         year=info.Y,
-        value=np.arange(len(info.Y)) + 0.1,
+        value=10 + np.arange(len(info.Y)),
         level='useful',
         time='year',
     )
@@ -53,3 +61,293 @@ def dummy(info):
     # )
 
     return pd.concat(dfs).pipe(broadcast, node=info.N[1:])
+
+
+def from_scenario(scenario: message_ix.Scenario) -> Reporter:
+    """Return a Reporter for calculating demand based on `scenario`.
+
+    Parameters
+    ----------
+    Scenario
+        Solved Scenario
+
+    Returns
+    -------
+    Reporter
+    """
+    rep = Reporter.from_scenario(scenario)
+
+    prepare_reporter(rep)
+
+    return rep
+
+
+def from_external_data(info: ScenarioInfo) -> Reporter:
+    """Return a Reporter for calculating demand from external data.
+
+    Returns
+    -------
+    Reporter
+    """
+    context = read_config()
+    rep = Reporter()
+
+    rep.add("n", dask.core.quote(info.set["node"]))
+
+    rep.add(
+        "GDP:n-y",
+        Quantity(context.data["transport gdp"].rename(RENAME_DIMS)),
+        sums=True,
+    )
+    rep.add(
+        "MERtoPPP:n-y",
+        Quantity(context.data["transport mer-to-ppp"].rename(RENAME_DIMS)),
+        sums=True,
+    )
+    # TODO add external data source for PRICE_COMMODITY
+    rep.add(
+        "PRICE_COMMODITY:n-c-y", 1, sums=True, index=True,
+    )
+
+    prepare_reporter(rep)
+
+    return rep
+
+
+def prepare_reporter(rep: Reporter) -> None:
+    """Prepare `rep` for calculating transport demand.
+
+    Parameters
+    ----------
+    rep : Reporter
+        Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
+    """
+    # Copy general MESSAGEix-GLOBIOM config
+    config = CONFIG.copy()
+
+    # Update with transport-specific keys from config.yaml
+    context = read_config()
+    config.update(transport=context["transport config"])
+
+    # Configure the reporter; keys are stored
+    rep.configure(**config)
+
+    # Existing keys, prepared by from_scenario() or from_external_data()
+    gdp = rep.full_key("GDP")
+    mer_to_ppp = rep.full_key("MERtoPPP")
+    price_full = rep.full_key("PRICE_COMMODITY").drop("h", "l")
+
+    # Values based on configuration
+    speed_key = rep.add("speed:t", speed, "config")
+    whour_key = rep.add("whour:", whour, "config")
+
+    # Base share data
+    share_key = rep.add(
+        "shares:n-y-transport_mode", base_shares, "n", "y", "config",
+    )
+
+    # Population data from GEA
+    pop_key = rep.add("population:n-y", population, "n", "config")
+
+    # PPP GDP, total and per capita
+    gdp_ppp = rep.add("product", "GDP PPP", gdp, mer_to_ppp)
+    gdp_ppp_cap = rep.add("ratio", "GDP PPP per capita:n-y", gdp_ppp, pop_key)
+
+    # Value-of-time multiplier
+    votm_key = rep.add("transport VOT", (votm, gdp_ppp_cap))
+
+    # Select only the price of transport services
+    price_sel = rep.add(
+        "transport price",
+        computations.select,
+        price_full,
+        # TODO should be the full set of prices
+        dict(c="transport"),
+    )
+    # Smooth prices to avoid zig-zag in share projections
+    price = rep.add("smoothed price", smooth, price_sel)
+
+    # Transport costs by mode
+    cost_key = rep.add(
+        "cost", cost, price, gdp_ppp_cap, whour_key, speed_key, votm_key, "n",
+    )
+
+    # Share weights
+    sweight_key = rep.add(
+        "share weight",
+        share_weight,
+        share_key,
+        gdp_ppp_cap,
+        cost_key,
+        "n",
+        "y",
+        "t",
+        "cat_year",
+        "config"
+    )
+
+    return rep.get(sweight_key)
+
+
+def base_shares(n, y, config):
+    """Return base mode shares."""
+    modes = config["transport"]["demand modes"]
+    return Quantity(
+        xr.DataArray(
+            1,
+            coords=[n, y, modes],
+            dims=["n", "y", "t"]
+        )
+    )
+
+
+def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
+    """Calculate mode share weights."""
+    # Non-global nodes
+    nodes = list(filter(lambda name: "GLB" not in name and name != "World", n))
+
+    # Modes from configuration
+    modes = config["transport"]["demand modes"]
+
+    # Lambda, from configuration
+    lamda = config["transport"]["lambda"]
+
+    # Selectors
+    t0 = dict(t=modes[0])
+    y0 = dict(y=cat_year.query("type_year == 'firstmodelyear'")["year"].item())
+    yC = dict(y=config["transport"]["year convergence"])
+    years = list(filter(lambda year: y0["y"] <= year <= yC["y"], y))
+
+    # Share weights
+    weight = xr.DataArray(coords=[nodes, years, modes], dims=["n", "y", "t"])
+
+    # Weights in y0 for all modes and noes
+    s_y0 = share.sel(y0, t=modes, n=nodes)
+    c_y0 = cost.sel(y0, t=modes, n=nodes)
+    tmp = s_y0 / c_y0 ** lamda
+
+    # Normalize against first mode's weight
+    # TODO should be able to avoid a cast here
+    tmp = tmp / tmp.sel(t0, drop=True)
+    weight.loc[y0] = xr.DataArray.from_series(tmp).sel(y0)
+
+    # Normalize to 1 across modes
+    weight.loc[y0] = weight.loc[y0] / weight.loc[y0].sum("t")
+
+    # Weights at the convergence year, yC
+    for node in nodes:
+        # Set of 1+ nodes to converge towards
+        ref_nodes = config["transport"]["share weight convergence"][node]
+
+        # Ratio between this node's GDP and that of the first reference node
+        scale = gdp_ppp_cap.sel(yC) / gdp_ppp_cap.sel(n=ref_nodes[0], **yC)
+
+        # Scale weights in yC
+        weight.loc[dict(n=node, **yC)] = (
+            scale * weight.sel(n=ref_nodes, **y0).mean("n")
+            + (1 - scale) * weight.sel(n=node, **y0)
+        )
+
+    # Currently not enabled
+    # “Set 2010 sweight to 2005 value in order not to have rail in 2010, where
+    # technologies become available only in 2020”
+    # weight.loc[dict(y=2010)] = weight.loc[dict(y=2005)]
+
+    # Interpolate linearly between y0 and yC
+    # NB this will not work if yC is before the final period; it will leave NaN
+    #    after yC
+    weight = weight.interpolate_na(dim="y")
+
+    return Quantity(weight)
+
+
+def speed(config):
+    """Return travel speed [distance / time].
+
+    The returned Quantity has dimension ``t`` (technology).
+    """
+    # Convert the dict from the YAML file to a Quantity
+    data = pd.Series(config["transport"]["speeds"])
+    dim = RENAME_DIMS.get(data.pop("_dim"))
+    units = data.pop("_unit")
+    return Quantity(data.rename_axis(dim), units=units)
+
+
+def whour(config):
+    """Return work duration [hours / person-year]."""
+    return config["transport"]["work hours"]
+
+
+def _lambda(config):
+    """Return lambda parameter for transport mode share equations."""
+    return config["transport"]["lambda"]
+
+
+def votm(gdp_ppp_cap):
+    """Calculate value of time multiplier.
+
+    A value of 1 means the VoT is equal to the wage rate per hour.
+
+    Parameters
+    ----------
+    gdp_ppp_cap
+        PPP GDP per capita.
+    """
+    return 1 / (1 + np.exp((30000 - gdp_ppp_cap * 1000) / 20000))
+
+
+def population(nodes, config):
+    """Return population data from GEA."""
+    pop_scenario = config["transport"]["data source"]["population"]
+    return Quantity(
+        get_gea_population(nodes)
+        .sel(area_type="total", scenario=pop_scenario, drop=True)
+        .rename(node="n", year="y")
+    )
+
+
+def smooth(qty):
+    """Smooth `qty` (e.g. PRICE_COMMODITY) in the ``y`` dimension."""
+    # Convert to an xr.DataArray
+    # NB conversion can be removed once Quantity is SparseDataArray
+    qty = xr.DataArray.from_series(qty)
+
+    y = qty.coords["y"]
+
+    # General smoothing
+    result = 0.25 * qty.shift(y=-1) + 0.5 * qty + 0.25 * qty.shift(y=1)
+
+    # First period
+    weights = xr.DataArray([0.4, 0.4, 0.2], coords=[y[:3]], dims=["y"])
+    result.loc[dict(y=y[0])] = (qty * weights).sum("y", min_count=1)
+
+    # Final period. “closer to the trend line”
+    # NB the inherited R file used a formula equivalent to weights like
+    #    [-1/8, 0, 3/8, 3/4]; didn't make much sense.
+    weights = xr.DataArray([0.2, 0.2, 0.6], coords=[y[-3:]], dims=["y"])
+    result.loc[dict(y=y[-1])] = (qty * weights).sum("y", min_count=1)
+
+    # NB conversion can be removed once Quantity is SparseDataArray
+    return Quantity(result)
+
+
+def cost(price, gdp_ppp_cap, whours, speeds, votm, n):
+    """Calculate cost of transport [money / distance].
+
+    Calculated from two components:
+
+    1. The inherent price of the mode.
+    2. Value of time, in turn from:
+
+       1. a value of time multiplier (`votm`),
+       2. the wage rate per hour (`gdp_ppp_cap` / `whours`), and
+       3. the travel time per unit distance (1 / `speeds`).
+    """
+    # When ixmp.reporting.Quantity is AttrSeries, this is needed to avoid
+    # "ValueError: cannot join with no overlapping index names"
+    speeds = pd.concat({n_: speeds for n_ in n[1:]}, names="n")
+
+    # NB for some reason, the 'y' dimension of result becomes `float`, rather
+    #    than `int`, in this step
+    result = price + (gdp_ppp_cap * votm) / (whours * speeds)
+    return result
