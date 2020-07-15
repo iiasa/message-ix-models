@@ -5,7 +5,9 @@ from message_data.model.transport import build, report, utils
 
 @pytest.mark.parametrize('ldv, nonldv', [
     (None, None),
-    pytest.param('US-TIMES MA3T', 'IKARUS', marks=pytest.mark.needs_input_data),
+    pytest.param(
+        "US-TIMES MA3T", "IKARUS", marks=pytest.mark.needs_input_data
+    ),
 ])
 def test_build_bare_res(bare_res, ldv, nonldv):
     """Test that model.transport.build works on the MESSAGEix-GLOBIOM RES."""
