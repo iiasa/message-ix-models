@@ -105,6 +105,9 @@ API reference
 
 .. currentmodule:: message_data.reporting
 
+.. automodule:: message_data.reporting
+   :members:
+
 
 Core
 ----
@@ -113,14 +116,11 @@ Core
 
 .. autosummary::
 
-   prepare_reporter
    add_aggregate
    add_combination
    add_general
    add_iamc_table
    add_report
-
-.. autofunction:: message_data.reporting.core.prepare_reporter
 
 .. automodule:: message_data.reporting.core
    :members:

@@ -2,23 +2,15 @@ import logging
 import sys
 from copy import copy
 from pathlib import Path
-from time import process_time
 
 import click
 import yaml
 
-from . import prepare_reporter, register
+from message_data.reporting import register, report
+from message_data.tools.cli import mark_time
 
 
 log = logging.getLogger(__name__)
-
-
-_TIMES = []
-
-
-def mark():
-    _TIMES.append(process_time())
-    log.info(' {:.2f} seconds'.format(_TIMES[-1] - _TIMES[-2]))
 
 
 @click.command(name='report')
@@ -57,7 +49,7 @@ def cli(
     With --from-file, read multiple Scenario identifiers from FILE, and report
     each one. In this usage, --output-path may only be a directory.
     """
-    _TIMES.append(process_time())
+    mark_time(quiet=True)
 
     # --config: use the option value as if it were an absolute path
     config = Path(config_file)
@@ -115,48 +107,6 @@ def cli(
     for ctx in contexts:
         # Load the Platform and Scenario
         scenario = context.get_scenario()
-        mark()
+        mark_time()
 
         report(scenario, key, config, ctx.output_path, dry_run)
-
-
-def report(scenario, key, config, output_path, dry_run):
-    rep, key = prepare_reporter(scenario, config, key, output_path)
-    mark()
-
-    print('', 'Preparing to report:', rep.describe(key), '', sep='\n\n')
-    mark()
-
-    if dry_run:
-        return
-
-    result = rep.get(key)
-    print(f'Result written to {output_path}' if output_path else
-          f'Result: {result}', sep='\n')
-    mark()
-
-
-def _report(scenario, path, legacy=None):
-    """Run complete reporting on *scenario* with output to *path*.
-
-    If *legacy* is not None, it is used as keyword arguments to the old-
-    style reporting.
-    """
-    if legacy is None:
-        config = Path(__file__).parents[2] / 'data' / 'report' / 'global.yaml'
-        rep = prepare_reporter(scenario, config, 'default', path)
-        rep.get('default')
-    else:
-        from message_data.tools.post_processing import iamc_report_hackathon
-
-        legacy_args = dict(merge_hist=True)
-        legacy_args.update(**legacy)
-
-        iamc_report_hackathon.report(
-            mp=scenario.platform,
-            scen=scenario,
-            model=scenario.model,
-            scenario=scenario.scenario,
-            out_dir=path,
-            **legacy_args,
-        )
