@@ -30,7 +30,7 @@ class ModeShare0(Plot):
         return (
             p9.ggplot(df, p9.aes(x="ya", y="value", fill="t"))
             + p9.facet_wrap(["nl"], ncol=2)
-            + p9.geom_bar(stat="identity")
+            + p9.geom_bar(stat="identity", width=4)
         )
 
 
@@ -49,7 +49,7 @@ class ModeShare1(Plot):
         return (
             p9.ggplot(df, p9.aes(x="ya", y="value", fill="t"))
             + p9.facet_wrap(["c"], ncol=5)
-            + p9.geom_bar(stat="identity")
+            + p9.geom_bar(stat="identity", width=4)
         )
 
 
