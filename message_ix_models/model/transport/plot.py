@@ -1,7 +1,18 @@
+import logging
+
 import matplotlib
 import plotnine as p9
 
-matplotlib.use("cairo")
+
+log = logging.getLogger(__name__)
+
+try:
+    matplotlib.use("cairo")
+except ImportError:
+    log.info(
+        f"'cairo' not available; using {matplotlib.get_backend()} matplotlib "
+        "backend"
+    )
 
 
 class Plot:
