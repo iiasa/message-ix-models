@@ -23,19 +23,6 @@ aluminum:
     add:
     - soderberg_aluminum
     - prebake_aluminum
-    - furnace_coal_aluminum
-    - furnace_hoil_aluminum
-    - furnace_biofuel_aluminum
-    - furnace_biomass_aluminum
-    - furnace_synfuel_aluminum
-    - furnace_gas_aluminum
-    - furnace_elec_aluminum
-    - furnace_h2_aluminum
-    - hp_gas_aluminum
-    - hp_elec_aluminum
-    - fc_h2_aluminum
-    - solar_aluminum
-    - dheat_aluminum
     - secondary_aluminum
     - prep_secondary_aluminum
     - finishing_aluminum
@@ -80,6 +67,21 @@ generic_set:
     - secondary
     - water_supply
     - final
+  technology:
+    add:
+    - furnace_coal_aluminum
+    - furnace_hoil_aluminum
+    - furnace_biofuel_aluminum
+    - furnace_biomass_aluminum
+    - furnace_synfuel_aluminum
+    - furnace_gas_aluminum
+    - furnace_elec_aluminum
+    - furnace_h2_aluminum
+    - hp_gas_aluminum
+    - hp_elec_aluminum
+    - fc_h2_aluminum
+    - solar_aluminum
+    - dheat_aluminum
 # should also work with regional model
   region:
     require:
