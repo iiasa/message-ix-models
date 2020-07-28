@@ -65,7 +65,7 @@ def read_data():
 
     return data
 
-# This function can also be generic for all materials
+# Question: Do we need read data dunction seperately for all materials ?
 def read_data_aluminum():
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
 
@@ -92,6 +92,36 @@ def read_data_aluminum():
 
     return data_aluminum
 
+def read_data_generic():
+    """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
+
+    # Ensure config is loaded, get the context
+    context = read_config()
+
+    # Shorter access to sets configuration
+    sets = context["material"]["generic_set"]
+
+    # Read the file
+    data_generic = pd.read_excel(
+        context.get_path("material", "generic_furnace_boiler_techno_economic.xlsx"),
+        sheet_name="generic",
+    )
+
+    # Clean the data
+    # Drop columns that don't contain useful information
+
+    data_generic= data_generic.drop(['Region', 'Source', 'Description'], axis = 1)
+
+    # Unit conversion
+
+    # At the moment this is done in the excel file, can be also done here
+    # To make sure we use the same units
+
+    return data_generic
+
+
+# TODO: Adding the active years to the tables
+# TODO: If there are differnet values for the years.
 def gen_data_aluminum(scenario, dry_run=False):
     """Generate data for materials representation of aluminum."""
     # Load configuration
@@ -107,12 +137,9 @@ def gen_data_aluminum(scenario, dry_run=False):
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    # TODO: If there are differnet values for the years...
-    # TODO: Adding the active years to the tables
-
     # Iterate over technologies
 
-    for t in technology_add:
+    for t in config["technology"]["add"]:
 
         params = data_aluminum.loc[(data_aluminum["technology"] == t),\
         "parameter"].values.tolist()
@@ -129,7 +156,7 @@ def gen_data_aluminum(scenario, dry_run=False):
             # Obtain the scalar value for the parameter
 
             val = data_aluminum.loc[((data_aluminum["technology"] == t) \
-            & (data_aluminum["parameter"] == par)),2015].values[0]
+            & (data_aluminum["parameter"] == par)),'value'].values[0]
 
             common = dict(
             year_vtg= years,
@@ -176,9 +203,76 @@ def gen_data_aluminum(scenario, dry_run=False):
     # Temporary: return nothing, since the data frames are incomplete
     return results
 
+# TODO: Add active years
+# TODO: Different values over the years: Add a function that modifies the values
+# over the years ?
 def gen_data_generic(scenario, dry_run=False):
-    # For furnaces and boilers
-    # Export this data from excel file in the model .. ?
+
+# For each technology there are differnet input and output combinations
+# Iterate over technologies
+
+    for t in config["technology"]["add"]:
+
+        years = s_info.Y
+        params = data_generic.loc[(data_generic["technology"] == t),"parameter"]\
+        .values.tolist()
+
+        # Availability year of the technology
+        av = data_generic.loc[(data_generic["technology"] == t),'availability'].\
+        values[0]
+        years = [year for year in years if year >= av]
+
+        # Iterate over parameters
+        for par in params:
+            split = par.split("|")
+            param_name = par.split("|")[0]
+
+            val = data_generic.loc[((data_generic["technology"] == t) & \
+            (data_generic["parameter"] == par)),'value'].values[0]
+
+            # Common parameters for all input and output tables
+            # year_act is none at the moment
+            # node_dest and node_origin are the same as node_loc
+
+            common = dict(
+            year_vtg= years,
+            time="year",
+            time_origin="year",
+            time_dest="year",)
+
+            if len(split)> 1:
+
+                if (param_name == "input")|(param_name == "output"):
+
+                    com = split[1]
+                    lev = split[2]
+                    mod = split[3]
+
+                    df = (make_df(param_name, technology=t, commodity=com, \
+                    level=lev,mode=mod, value=val, unit='t', **common).\
+                    pipe(broadcast, node_loc=nodes).pipe(same_node))
+
+                    results[param_name].append(df)
+
+                elif param_name == "emission_factor":
+                    emi = split[1]
+
+                    df = (make_df(param_name, technology=t,value=val,\
+                    emission=emi, unit='t', **common).pipe(broadcast, \
+                    node_loc=nodes))
+
+                    results[param_name].append(df)
+
+            # Rest of the parameters apart from inpput, output and emission_factor
+
+            else:
+
+                df = (make_df(param_name, technology=t, value=val,unit='t', \
+                **common).pipe(broadcast, node_loc=nodes))
+
+                results[param_name].append(df)
+
+        results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
 def gen_data(scenario, dry_run=False):
     """Generate data for materials representation of nitrogen fertilizers.
