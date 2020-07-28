@@ -70,10 +70,11 @@ generic_set:
   technology:
     add:
     - furnace_coal_aluminum
-    - furnace_hoil_aluminum
-    - furnace_biofuel_aluminum
+    - furnace_loil_aluminum
+    - furnace_foil_aluminum
+    - furnace_ethanol_aluminum
     - furnace_biomass_aluminum
-    - furnace_synfuel_aluminum
+    - furnace_methanol_aluminum
     - furnace_gas_aluminum
     - furnace_elec_aluminum
     - furnace_h2_aluminum
@@ -82,6 +83,7 @@ generic_set:
     - fc_h2_aluminum
     - solar_aluminum
     - dheat_aluminum
+
 # should also work with regional model
   region:
     require:
