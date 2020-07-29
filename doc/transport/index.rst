@@ -33,7 +33,7 @@ Create the bare RES, or identify another base scenario::
     $ export BASE="ixmp://mt/Bare RES/baseline"
     $ mix-data --url=$BASE res create-bare
 
-  .. note:: Other usable base scenarios include ``ixmp://ene-ixmp/CD_LINKS_SSP2_v2/baseline``.
+.. note:: Other usable base scenarios include ``ixmp://ene-ixmp/CD_LINKS_SSP2_v2/baseline``.
 
 Build the model::
 
