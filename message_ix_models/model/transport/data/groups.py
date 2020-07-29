@@ -114,10 +114,11 @@ def get_gea_population(regions=[], context=None):
     if not len(regions):
         if not context:
             raise ValueError("context required to determine regions")
-        # Retrieve region info
-        nodes = set_info("node")
+
+        # Retrieve region info for the selected regional aggregation
+        nodes = set_info(f"node/{context.regions}")
         # List of regions according to the context
-        regions = nodes[nodes.index(context.regions)].child
+        regions = nodes[nodes.index("World")].child
 
     # Identify the regions to query from the GEA data, which has R5 and other
     # mappings
