@@ -42,6 +42,30 @@ fertilizer:
     require:
     - h2_bio_ccs  # Reference for vent-to-storage ratio
     add:
+    - cokeoven_steel
+    - sinter_steel
+    - pellet_steel
+    - bf_steel
+    - dri_steel
+    - sr_steel
+    - bof_steel
+    - eaf_steel
+    - furnace_hoil_steel
+    - furnace_biofuel_steel
+    - furnace_biomass_steel
+    - furnace_synfuel_steel
+    - furnace_gas_steel
+    - furnace_elec_steel
+    - furnace_h2_steel
+    - hp_gas_steel
+    - hp_elec_steel
+    - fc_h2_steel
+    - solar_steel
+    - dheat_steel
+    - prep_secondary_steel
+    - finishing_steel
+    - manuf_steel
+    - scrap_recovery_steel
     - biomass_NH3
     - electr_NH3
     - gas_NH3
