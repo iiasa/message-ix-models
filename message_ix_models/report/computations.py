@@ -73,6 +73,7 @@ def combine(*quantities, select=None, weights=None):  # noqa: F811
         # .transpose() is necessary when Quantity is AttrSeries
         if len(quantity.dims) > 1:
             transpose_dims = tuple(filter(lambda d: d in temp.dims, ref_dims))
+            print(transpose_dims)
             temp = temp.transpose(*transpose_dims)
 
         result += weight * temp
