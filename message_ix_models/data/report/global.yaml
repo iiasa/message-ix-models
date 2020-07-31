@@ -27,9 +27,10 @@ units:
   apply:
     GDP: billion USD_2005 / year
     PRICE_COMMODITY: USD_2010 / kWa
-    # FIXME 'carbon' is not a unit; these should be t, kt, Mt or similar
-    PRICE_EMISSION: USD_2005 / carbon
-    tax_emission: USD_2005 / carbon
+    # These were initially "carbon", which is not a unit.
+    # TODO check that Mt (rather than t or kt) is correct for all values.
+    PRICE_EMISSION: USD_2005 / Mt
+    tax_emission: USD_2005 / Mt
     # Inconsistent units. These quantities (and others computed from them)
     # must be split apart into separate quantities with consistent units.
     # Also applies to "emi". This value preserved because it works for the
@@ -658,8 +659,10 @@ iamc:
   <<: *price_iamc
 - variable: Price|Carbon
   base: price_carbon:n-y
-  # FIXME "carbon_dioxide" is not a unit; this should be t, kt, Mt or similar
-  unit: USD_2010 / carbon_dioxide
+  # This was initially "carbon_dioxide", which is not a unit.
+  # TODO check that Mt (rather than t or kt) is correct.
+  # TODO check whether there is a species / GWP conversion here.
+  unit: USD_2010 / Mt
   year_time_dim: y
 # commented: see above
 # - variable: Price w/o carbon
