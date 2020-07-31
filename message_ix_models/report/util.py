@@ -19,6 +19,13 @@ REPLACE = {
     'variable': {
         r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
         r'Residential\|Gas': 'Residential|Gases|Natural Gas',
+        r"Import Energy\|Lng": "Primary Energy|Gas",
+        r"Import Energy\|Coal": "Primary Energy|Coal",
+        r"Import Energy\|Oil": "Primary Energy|Oil",
+        r"Import Energy\|(Liquids|Oil)": r"Secondary Energy|\1",
+        r"Import Energy\|(Liquids|Biomass)": r"Secondary Energy|\1",
+        r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
+
     }
 }
 
@@ -52,11 +59,13 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
     if replace_common:
         try:
             # Level: to title case, add the word 'energy'
+            # FIXME astype() here should not be necessary; debug
             df['l'] = df['l'].astype(str).str.title() + ' Energy'
         except KeyError:
             pass
         try:
             # Commodity: to title case
+            # FIXME astype() here should not be necessary; debug
             df['c'] = df['c'].astype(str).str.title()
         except KeyError:
             pass
