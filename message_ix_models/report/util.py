@@ -1,5 +1,9 @@
-from iam_units import format_mass
+import logging
+
 from ixmp.reporting import Key
+
+
+log = logging.getLogger(__name__)
 
 
 #: Replacements used in :meth:`collapse`.
@@ -42,7 +46,7 @@ REPLACE_VARS = {
     r'^land_out CH4\|': '',  # Strip internal prefix
 
     # Prices
-    r'Residential\|(Biomass|Coal)': r'Residential|Solids|\1',
+    r'Residential\|(Biomass|Coal)': r"Residential|Solids|\1",
     r'Residential\|Gas': 'Residential|Gases|Natural Gas',
     r"Import Energy\|Lng": "Primary Energy|Gas",
     r"Import Energy\|Coal": "Primary Energy|Coal",
@@ -50,18 +54,16 @@ REPLACE_VARS = {
     r"Import Energy\|(Liquids|Oil)": r"Secondary Energy|\1",
     r"Import Energy\|(Liquids|Biomass)": r"Secondary Energy|\1",
     r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
-
 }
 
 
 def collapse(df, var_name, var=[], region=[], replace_common=True):
-    """Callback for the `collapse` argument to
-    :meth:`message_ix.reporting.Reporter.convert_pyam`.
+    """Callback for the `collapse argument to :meth:`~.Reporter.convert_pyam.
 
     The dimensions listed in the `var` and `region` arguments are automatically
     dropped from the returned :class:`pyam.IamDataFrame`.
 
-    Adapted from :func:`message_ix.reporting.pyam.collapse_message_cols`.
+    Adapted from :func:`.pyam.collapse_message_cols`.
 
     Parameters
     ----------
@@ -73,13 +75,15 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
     region : list of str, optional
         Dimensions to concatenate to the 'Region' column.
     replace_common : bool, optional
-        If :obj:`True` (the default), use :data:`REPLACE_DIMS` and
-        :data:`REPLACE_VARS` to perform standard replacements on columns before
-        and after assembling the 'Variable' column.
+        If :obj:`True` (the default), perform standard replacements on columns
+        before and after assembling the 'Variable' column, according to
+        ``REPLACE_DIMS`` and ``REPLACE_VARS``.
 
     See also
     --------
     .core.add_iamc_table
+    REPLACE_DIMS
+    REPLACE_VARS
     """
     if replace_common:
         # Convert dimension labels to title-case strings
@@ -100,14 +104,18 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
             pass
 
         if 'emissions' in var_name.lower():
+            log.info(f"Collapse GWP info for {var_name}")
             df, var = collapse_gwp_info(df, var)
 
         # Apply replacements
         df = df.replace(REPLACE_DIMS)
 
     # Extend region column ('n' and 'nl' are automatically added by message_ix)
-    df['region'] = df['region'].astype(str) \
-                               .str.cat([df[c] for c in region], sep='|')
+    df['region'] = (
+        df['region']
+        .astype(str)
+        .str.cat([df[c] for c in region], sep='|')
+    )
 
     # Assemble variable column
     df['variable'] = var_name
@@ -136,8 +144,11 @@ def collapse_gwp_info(df, var):
         'SF6 (CO2-equivalent, AR5 metric)'
     """
     # Check that *df* contains the necessary columns
-    cols = ['e equivalent', 'gwp metric']
-    assert all(c in df.columns for c in ['e'] + cols)
+    cols = ["e equivalent", "gwp metric"]
+    missing = set(["e"] + cols) - set(df.columns)
+    if len(missing):
+        log.warning(f"…skip; {missing} not in columns {list(df.columns)}")
+        return df, var
 
     # Format the column with original emissions species
     df['e'] = df['e'] + ' (' + df['e equivalent'] + '-equivalent, ' \
