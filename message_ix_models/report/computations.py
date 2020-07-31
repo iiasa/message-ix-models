@@ -6,7 +6,7 @@ from itertools import zip_longest
 import logging
 
 # TODO shouldn't be necessary to have so many imports; tidy up
-from ixmp.reporting.computations import select  # noqa: F401
+from ixmp.reporting.computations import apply_units, select  # noqa: F401
 from ixmp.reporting.utils import collect_units
 from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
