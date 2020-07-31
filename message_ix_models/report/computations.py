@@ -11,6 +11,7 @@ from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
 from ixmp.reporting.computations import apply_units, select  # noqa: F401
 from ixmp.reporting.utils import collect_units
+from message_ix.reporting import computations
 from message_ix.reporting.computations import *  # noqa: F401,F403
 from message_ix.reporting.computations import concat
 import pandas as pd
@@ -55,31 +56,23 @@ def combine(*quantities, select=None, weights=None):  # noqa: F811
             raise ValueError(f'Cannot combine() units {units[0]} and {u}')
     units = units[0]
 
-    result = 0
-    ref_dims = None
+    args = []
 
-    for quantity, selector, weight in zip(quantities, select, weights):
-        ref_dims = ref_dims or quantity.dims
-
+    for quantity, indexers, weight in zip(quantities, select, weights):
         # Select data
-        temp = quantity.sel(selector)
+        temp = computations.select(quantity, indexers)
 
         # Dimensions along which multiple values are selected
-        multi = [dim for dim, values in selector.items()
-                 if isinstance(values, list)]
-
+        multi = [
+            dim for dim, values in indexers.items() if isinstance(values, list)
+        ]
         if len(multi):
             # Sum along these dimensions
             temp = temp.sum(dim=multi)
 
-        # .transpose() is necessary when Quantity is AttrSeries
-        if len(quantity.dims) > 1:
-            transpose_dims = tuple(filter(lambda d: d in temp.dims, ref_dims))
-            print(transpose_dims)
-            temp = temp.transpose(*transpose_dims)
+        args.append(weight * temp)
 
-        result += weight * temp
-
+    result = computations.add(*args)
     result.attrs['_unit'] = units
 
     return result
