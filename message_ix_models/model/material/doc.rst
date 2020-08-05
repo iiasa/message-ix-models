@@ -50,22 +50,23 @@ Binary/raw data files
 The code relies on the following input files, stored in :file:`data/material/`:
 
 :file:`Ammonia feedstock share.Global.xlsx`
-   TODO describe the contents, original source, and layout of this file.
+   Feedstock shares (gas/oil/coal) for NH3 production for MESSAGE R11 regions.
 
 :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`
-   TODO describe the contents, original source, and layout of this file.
+   N-fertilizer demand time series from SSP2 scenarios (NPi2020_1000, NPi2020_400, NoPolicy) for MESSAGE R11 regions.
 
 :file:`N fertil trade - FAOSTAT_data_9-25-2019.csv`
-   TODO describe the contents, original source, and layout of this file.
+   Raw data from FAO used to generate the two :file:`trade.FAO.*.csv` files below.
+   Exported from `FAOSTAT <www.fao.org/faostat/en/>`_.
 
 :file:`n-fertilizer_techno-economic.xlsx`
-   TODO describe the contents, original source, and layout of this file.
+   Techno-economic parameters from literature for various NH3 production technologies (used as direct inputs for MESSAGE parameters).
 
 :file:`trade.FAO.R11.csv`
-   TODO describe the contents, original source, and layout of this file.
+   Historical N-fertilizer trade records among R11 regions, extracted from FAO database.
 
 :file:`trade.FAO.R14.csv`
-   TODO describe the contents, original source, and layout of this file.
+   Historical N-fertilizer trade records among R14 regions, extracted from FAO database.
 
 
 :file:`material/config.yaml`
