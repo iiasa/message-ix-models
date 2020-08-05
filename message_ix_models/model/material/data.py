@@ -12,7 +12,11 @@ log = logging.getLogger(__name__)
 
 
 def gen_data(scenario, dry_run=False):
-    """Generate data for materials representation of nitrogen fertilizers."""
+    """Generate data for materials representation of nitrogen fertilizers.
+
+    .. note:: This code is only partially translated from
+       :file:`SetupNitrogenBase.py`.
+    """
     # Load configuration
     config = read_config()["material"]["set"]
 
