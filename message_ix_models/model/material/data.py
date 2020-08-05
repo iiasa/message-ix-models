@@ -65,6 +65,38 @@ def read_data():
 
     return data
 
+
+
+def process_china_data():
+    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
+
+    # Ensure config is loaded, get the context
+    context = read_config()
+
+    # Shorter access to sets configuration
+    # sets = context["material"]["aluminum"]
+
+    # Read the file
+    data_steel_china = pd.read_excel(
+        context.get_path("material", "China_steel_eet.xlsx"),
+        sheet_name="technologies",
+    )
+
+    # Clean the data
+
+    data_steel_china= data_steel_china.drop(['Region', 'Source', 'Description'], axis = 1)
+
+    # Unit conversion
+
+    # At the moment this is done in the excel file, can be also done here
+    # To make sure we use the same units
+
+    return data_steel_china
+
+
+
+
+
 # Question: Do we need read data dunction seperately for all materials ?
 def read_data_aluminum():
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
