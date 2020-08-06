@@ -70,6 +70,8 @@ def read_data():
 def process_china_data():
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
 
+    import numpy as np
+    
     # Ensure config is loaded, get the context
     context = read_config()
 
@@ -84,8 +86,15 @@ def process_china_data():
 
     # Clean the data
 
-    data_steel_china= data_steel_china.drop(['Region', 'Source', 'Description'], axis = 1)
+    data_steel_china = data_steel_china[['Technology', 'Parameter', 'Level', 
+                                         'Commodity', 'Species', 'Units', '2015']].replace(np.nan, '', regex=True)
+    
+    tuple_series = data_steel_china[['Parameter', 'Level', 'Commodity']].apply(tuple, axis=1)
+    data_steel_china['parameter'] = tuple_series.str.join('|')   
 
+    # data_steel_china['parameter'] = data_steel_china.apply(
+    #     lambda attach: attach.Parameter + "|" + attach.Commodity + "|" + attach.Level, axis=1)
+         
     # Unit conversion
 
     # At the moment this is done in the excel file, can be also done here

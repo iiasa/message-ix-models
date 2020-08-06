@@ -29,7 +29,7 @@ aluminum:
     - manuf_aluminum
     - scrap_recovery_aluminum
 
-fertilizer:
+set:
   commodity:
     add:
     - NH3
