@@ -1,0 +1,193 @@
+# Configuration for message_data.model.material
+#
+# NB these values are currently for the nitrogen fertilizer materials
+#    accounting. Different sets can be created once there are 2+ different
+#    categories of materials.
+
+common:
+  commodity:
+    require:
+    - coal
+    - gas
+    - electr
+    - ethanol
+    - fueloil
+    - hydrogen
+    - lh2
+    - biomass
+    - d_heat
+    - water
+    - fresh_water
+
+  level:
+    require:
+    - primary
+    - secondary
+    - useful
+    - final
+    - water_supply
+
+  # Currently only works with China
+  region:
+    # Just one is sufficient, since the RES will never be generated with a mix
+    require:
+    - China
+    remove:
+    - World
+
+  type_tec:
+    add:
+    - industry
+
+  mode:
+    require:
+    - M1
+
+  emission:
+    require:
+    - CO2
+    - CH4
+    - N2O
+    - NOx
+    - SO2
+    add:
+    - PM2p5
+
+
+steel:
+  commodity:
+    add:
+    - ht_heat
+    - lt_heat
+    - steel
+    - pig_iron
+    - sponge_iron
+    - sinter_iron
+    - pellet_iron
+    - ore_iron
+    - limestone_iron
+    - coke_iron
+    - slag_iron
+
+  level:
+    add:
+    - useful_steel
+    - new_scrap
+    - old_scrap
+    - primary_material
+    - secondary_material
+    - tertiary_material
+    - final_material
+    - useful_material
+    - waste_material
+    - product
+
+  technology:
+    add:
+    - cokeoven_steel
+    - sinter_steel
+    - pellet_steel
+    - bf_steel
+    - dri_steel
+    - sr_steel
+    - bof_steel
+    - eaf_steel
+    - furnace_hoil_steel
+    - furnace_biofuel_steel
+    - furnace_biomass_steel
+    - furnace_synfuel_steel
+    - furnace_gas_steel
+    - furnace_elec_steel
+    - furnace_h2_steel
+    - hp_gas_steel
+    - hp_elec_steel
+    - fc_h2_steel
+    - solar_steel
+    - dheat_steel
+    - prep_secondary_steel
+    - finishing_steel
+    - manuf_steel
+    - scrap_recovery_steel
+
+fertilizer:
+  commodity:
+    require:
+    - electr
+    - freshwater_supply
+    add:
+    - NH3
+    - Fertilizer Use|Nitrogen
+
+  level:
+    add:
+    - material_interim
+    - material_final
+
+  technology:
+    require:
+    - h2_bio_ccs  # Reference for vent-to-storage ratio
+    add:
+    - biomass_NH3
+    - electr_NH3
+    - gas_NH3
+    - coal_NH3
+    - fueloil_NH3
+    - NH3_to_N_fertil
+
+
+# NB this codelist added by #125
+
+iron-steel:
+  name: Iron and Steel
+  description: Iron is a chemical element with the symbol Fe, while steel is an alloy of iron and carbon and, sometimes, other elements. Measured as the total mass of material.
+  unit: Mt
+
+non-ferrous:
+  name: Non-ferrous metals
+  description: Metals and alloys which do not contain iron. Measured as the total mass of material.
+  unit: Mt
+
+aluminum:
+  name: Aluminum
+  description: Aluminum (or aluminium) is a chemical element with the symbol Al. Measured as the total mass of material.
+  unit: Mt
+  parent: non-ferrous
+
+copper:
+  name: Copper
+  description: Copper is a chemical element with the symbol Cu. Measured as the total mass of material.
+  unit: Mt
+  parent: non-ferrous
+
+minerals:
+  name: Minerals
+  description: Non-metallic minerals are minerals that have no metallic luster, break easily and include, e.g., sand, limestone, marble, clay and salt. Measured as the FE-equivalent mass of material using LCA midpoint characterization factors.
+  unit: MtFe-eq
+
+cement:
+  name: Cement
+  description: Cement is a binder used for construction that sets, hardens, and adheres to other materials to bind them together. Measured as the total mass of material.
+  unit: Mt
+  parent: minerals
+
+chemicals:
+  name: Chemicals
+  description: Industrial chemicals that form the basis of many products. Measured as the total mass of material.
+  unit: Mt
+
+ethylene:
+  name: Ethylene
+  description: Ethylene is a hydrocarbon with the formula C2H4. Measured as the total mass of material.
+  unit: Mt
+  parent: chemicals
+
+ammonia:
+  name: Ammonia
+  description: Ammonia is a compound of nitrogen and hydrogen with the formula NH3. Measured as the total mass of material.
+  unit: Mt
+  parent: chemicals
+
+paper-pulp:
+  name: Paper and pulp for paper
+  description: Pulp is a lignocellulosic fibrous material prepared by chemically or mechanically separating cellulose fibers and the raw material for making paper. Measured as the total mass of material.
+  unit: Mt
