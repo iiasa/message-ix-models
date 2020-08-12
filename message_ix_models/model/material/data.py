@@ -376,3 +376,131 @@ def gen_data(scenario, dry_run=False):
     # Temporary: return nothing, since the data frames are incomplete
     return dict()
     # return result
+
+
+def read_data():
+    """Read and clean data from :file:`n-fertilizer_techno-economic.xlsx`."""
+    # Ensure config is loaded, get the context
+    context = read_config()
+
+    # Shorter access to sets configuration
+    sets = context["material"]["set"]
+
+    # Read the file
+    data = pd.read_excel(
+        context.get_path("material", "n-fertilizer_techno-economic.xlsx"),
+        sheet_name="Sheet1",
+    )
+
+    # Prepare contents for the "parameter" and "technology" columns
+    # FIXME put these in the file itself to avoid ambiguity/error
+
+    # "Variable" column contains different values selected to match each of
+    # these parameters, per technology
+    params = [
+        "inv_cost",
+        "fix_cost",
+        "var_cost",
+        "technical_lifetime",
+        "input_fuel",
+        "input_elec",
+        "input_water",
+        "output_NH3",
+        "output_water",
+        "output_heat",
+        "emissions",
+        "capacity_factor",
+    ]
+
+    param_values = []
+    tech_values = []
+    for t in sets["technology"]["add"]:
+        param_values.extend(params)
+        tech_values.extend([t.id] * len(params))
+
+    # Clean the data
+    data = (
+        # Insert "technology" and "parameter" columns
+        data.assign(technology=tech_values, parameter=param_values)
+        # Drop columns that don't contain useful information
+        .drop(["Model", "Scenario", "Region"], axis=1)
+        # Set the data frame index for selection
+        .set_index(["parameter", "technology"])
+    )
+
+    # TODO convert units for some parameters, per LoadParams.py
+
+    return data
+
+
+def get_data(scenario, context, **options):
+    """Data for the bare RES."""
+    if context.res_with_dummies:
+        dt = get_dummy_data(scenario)
+        print(dt)
+        return dt
+    else:
+        return dict()
+
+
+def get_dummy_data(scenario, **options):
+    """Dummy data for the bare RES.
+
+    Currently this contains:
+    - A dummy 1-to-1 technology taking input from (dummy, primary) and output
+      to (dummy, useful).
+    - A dummy source technology for (dummy, primary).
+    - Demand for (dummy, useful).
+
+    This ensures that the model variable ACT has some non-zero entries.
+    """
+    info = ScenarioInfo(scenario)
+
+    common = dict(
+        node=info.N[0],
+        node_loc=info.N[0],
+        node_origin=info.N[0],
+        node_dest=info.N[0],
+        technology="dummy",
+        year=info.Y,
+        year_vtg=info.Y,
+        year_act=info.Y,
+        mode="all",
+        # No subannual detail
+        time="year",
+        time_origin="year",
+        time_dest="year",
+    )
+
+    data = make_io(
+        src=("dummy", "primary", "GWa"),
+        dest=("dummy", "useful", "GWa"),
+        efficiency=1.,
+        on='input',
+        # Other data
+        **common
+    )
+
+    # Source for dummy
+    data["output"] = data["output"].append(
+        data["output"].assign(technology="dummy source", level="primary")
+    )
+
+    data.update(
+        make_matched_dfs(
+            data["output"],
+            capacity_factor=1.,
+            technical_lifetime=10,
+            var_cost=1,
+        )
+    )
+
+    common.update(dict(
+        commodity="dummy",
+        level="useful",
+        value=1.,
+        unit="GWa",
+    ))
+    data["demand"] = make_df("demand", **common)
+
+    return data
