@@ -116,9 +116,31 @@ def process_china_data():
 
     return data_steel_china
 
+def read_data_steel():
+    """Read and clean data from :file:`steel_techno_economic.xlsx`."""
 
+    # Ensure config is loaded, get the context
+    context = read_config()
 
+    # Shorter access to sets configuration
+    sets = context["material"]["steel"]
 
+    # Read the file
+    data_steel = pd.read_excel(
+        context.get_path("material", "steel_techno_economic.xlsx"),
+        sheet_name="steel",
+    )
+
+    # Clean the data
+
+    data_steel= data_steel.drop(['Region', 'Source', 'Description'], axis = 1)
+
+    # Unit conversion
+
+    # At the moment this is done in the excel file, can be also done here
+    # To make sure we use the same units
+
+    return data_steel
 
 # Question: Do we need read data dunction seperately for all materials ?
 def read_data_aluminum():
@@ -262,9 +284,20 @@ def gen_data_aluminum(scenario, dry_run=False):
 # TODO: Different values over the years: Add a function that modifies the values
 # over the years ?
 def gen_data_generic(scenario, dry_run=False):
+    # Load configuration
 
-# For each technology there are differnet input and output combinations
-# Iterate over technologies
+    config = read_config()["material"]["generic"]
+
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    # Techno-economic assumptions
+    data_generic = read_data_generic()
+
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
 
     for t in config["technology"]["add"]:
 
@@ -328,6 +361,9 @@ def gen_data_generic(scenario, dry_run=False):
                 results[param_name].append(df)
 
         results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    # Temporary: return nothing, since the data frames are incomplete
+    return results
 
 
 def gen_data_steel(scenario, dry_run=False):
