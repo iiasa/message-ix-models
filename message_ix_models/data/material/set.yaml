@@ -108,6 +108,13 @@ steel:
     - finishing_steel
     - manuf_steel
     - scrap_recovery_steel
+    - DUMMY_coal_supply
+    - DUMMY_gas_supply
+    - DUMMY_ore_supply
+    - DUMMY_limestone_supply
+    - DUMMY_hydrogen_supply
+    - DUMMY_freshwater_supply
+    - DUMMY_water_supply
 
 fertilizer:
   commodity:
