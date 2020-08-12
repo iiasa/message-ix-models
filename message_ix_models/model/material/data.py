@@ -80,21 +80,35 @@ def process_china_data():
 
     # Read the file
     data_steel_china = pd.read_excel(
-        context.get_path("material", "China_steel_eet.xlsx"),
+        context.get_path("material", "China_steel_renamed.xlsx"),
         sheet_name="technologies",
     )
 
     # Clean the data
 
-    data_steel_china = data_steel_china[['Technology', 'Parameter', 'Level', 
-                                         'Commodity', 'Species', 'Units', '2015']].replace(np.nan, '', regex=True)
-    
-    tuple_series = data_steel_china[['Parameter', 'Level', 'Commodity']].apply(tuple, axis=1)
-    data_steel_china['parameter'] = tuple_series.str.join('|')   
+    data_steel_china = data_steel_china \
+        [['Technology', 'Parameter', 'Level',  \
+        'Commodity', 'Species', 'Units', 'Value']] \
+        .replace(np.nan, '', regex=True)
 
-    # data_steel_china['parameter'] = data_steel_china.apply(
-    #     lambda attach: attach.Parameter + "|" + attach.Commodity + "|" + attach.Level, axis=1)
-         
+    tuple_series = data_steel_china[['Parameter', 'Commodity', 'Level']] \
+        .apply(tuple, axis=1)
+    tuple_ef = data_steel_china[['Parameter', 'Species']] \
+        .apply(tuple, axis=1)
+
+
+    data_steel_china['parameter'] = tuple_series.str.join('|') \
+        .str.replace('\|\|', '')
+    data_steel_china.loc[data_steel_china['Parameter'] == "emission_factor", \
+        'parameter'] = tuple_ef.str.join('|').str.replace('\|\|', '')
+
+    data_steel_china = data_steel_china.drop(['Parameter', 'Level', 'Commodity'] \
+        , axis = 1)
+    data_steel_china = data_steel_china.drop( \
+        data_steel_china[data_steel_china.Value==''].index)
+
+    data_steel_china.columns = data_steel_china.columns.str.lower()
+
     # Unit conversion
 
     # At the moment this is done in the excel file, can be also done here
