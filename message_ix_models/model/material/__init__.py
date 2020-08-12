@@ -44,6 +44,24 @@ def cli():
     """Model with materials accounting."""
 
 
+@cli.command("create-bare")
+@click.option("--regions", type=click.Choice(["China", "R11", "R14"]))
+@click.option('--dry_run', '-n', is_flag=True,
+              help='Only show what would be done.')
+@click.pass_obj
+def create_bare(context, regions, dry_run):
+    """Create the RES from scratch."""
+    from .bare import create_res
+
+    if regions:
+        context.regions = regions
+
+    scen = create_res(context)
+
+    # Solve
+    if not dry_run:
+        scen.solve()
+
 @cli.command()
 @click.pass_obj
 def solve(context):
