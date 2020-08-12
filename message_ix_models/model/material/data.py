@@ -315,6 +315,99 @@ def gen_data_generic(scenario, dry_run=False):
 
         results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
+
+def gen_data_steel(scenario, dry_run=False):
+    """Generate data for materials representation of steel industry.
+
+    """
+    # Load configuration
+    # config = read_config()["material"]["steel"]
+
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    # Techno-economic assumptions
+    data_steel = process_china_data()
+
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+
+    years = s_info.Y
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+
+    nodes.remove('World') # For the bare model
+
+    for t in s_info.set['technology']:
+
+        params = data_steel.loc[(data_steel["technology"] == t),\
+            "parameter"].values.tolist()
+
+        # Iterate over parameters
+
+        for par in params:
+
+            # Obtain the parameter names, commodity,level,emission
+
+            split = par.split("|")
+            param_name = split[0]
+
+            # Obtain the scalar value for the parameter
+
+            val = data_steel.loc[((data_steel["technology"] == t) \
+            & (data_steel["parameter"] == par)),'value'].values[0]
+
+            common = dict(
+                year_vtg= yv_ya.year_vtg,
+                year_act= yv_ya.year_act,
+                mode="M1",
+                time="year",
+                time_origin="year",
+                time_dest="year",)
+
+            # For the parameters which inlcudes index names
+            if len(split)> 1:
+
+                if (param_name == "input")|(param_name == "output"):
+
+                    # Assign commodity and level names
+                    com = split[1]
+                    lev = split[2]
+
+                    df = (make_df(param_name, technology=t, commodity=com, \
+                    level=lev, value=val, unit='t', **common)\
+                    .pipe(broadcast, node_loc=nodes).pipe(same_node))
+
+                    results[param_name].append(df)
+
+                elif param_name == "emission_factor":
+
+                    # Assign the emisson type
+                    emi = split[1]
+
+                    df = (make_df(param_name, technology=t,value=val,\
+                    emission=emi, unit='t', **common).pipe(broadcast, \
+                    node_loc=nodes))
+                    results[param_name].append(df)
+
+            # Parameters with only parameter name
+
+            else:
+                df = (make_df(param_name, technology=t, value=val, unit='t', \
+                **common).pipe(broadcast, node_loc=nodes))
+                results[param_name].append(df)
+
+    # Concatenate to one data frame per parameter
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    # Temporary: return nothing, since the data frames are incomplete
+    return results
+
+
+
 def gen_data(scenario, dry_run=False):
     """Generate data for materials representation of nitrogen fertilizers.
 
