@@ -8,6 +8,8 @@ from message_ix_models.util import broadcast, same_node
 
 from .util import read_config
 
+import re
+
 
 log = logging.getLogger(__name__)
 
@@ -67,11 +69,11 @@ def read_data():
 
 
 
-def process_china_data():
+def process_china_data_tec():
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
 
     import numpy as np
-    
+
     # Ensure config is loaded, get the context
     context = read_config()
 
@@ -115,6 +117,27 @@ def process_china_data():
     # To make sure we use the same units
 
     return data_steel_china
+
+
+def process_china_data_rel():
+    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
+
+    import numpy as np
+
+    # Ensure config is loaded, get the context
+    context = read_config()
+
+    # Shorter access to sets configuration
+    # sets = context["material"]["aluminum"]
+
+    # Read the file
+    data_steel_china = pd.read_excel(
+        context.get_path("material", "China_steel_renamed.xlsx"),
+        sheet_name="relations",
+    )
+
+    return data_steel_china
+
 
 def read_data_steel():
     """Read and clean data from :file:`steel_techno_economic.xlsx`."""
@@ -366,6 +389,17 @@ def gen_data_generic(scenario, dry_run=False):
     return results
 
 
+def gen_mock_demand():
+    # True steel use 2010 (China) = 537 Mt/year
+    # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
+    gdp_growth = [0.121448215899944, \
+        0.0733079014579874, 0.0348154093342843, \
+        0.021827616787921,0.0134425983942219, 0.0108320197485592, \
+        0.00884341208063,0.00829374133206562, 0.00649794573935969]
+    demand = [(x+1) * 537 for x in gdp_growth]
+
+    return demand
+
 def gen_data_steel(scenario, dry_run=False):
     """Generate data for materials representation of steel industry.
 
@@ -377,7 +411,7 @@ def gen_data_steel(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_steel = process_china_data()
+    data_steel = process_china_data_tec()
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -385,9 +419,11 @@ def gen_data_steel(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    years = s_info.Y
+    allyears = s_info.set['year'] #s_info.Y is only for modeling years
+    modelyears = s_info.Y #s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
+    fmy = s_info.y0
 
     nodes.remove('World') # For the bare model
 
@@ -431,8 +467,6 @@ def gen_data_steel(scenario, dry_run=False):
                     level=lev, value=val, unit='t', **common)\
                     .pipe(broadcast, node_loc=nodes).pipe(same_node))
 
-                    results[param_name].append(df)
-
                 elif param_name == "emission_factor":
 
                     # Assign the emisson type
@@ -441,14 +475,66 @@ def gen_data_steel(scenario, dry_run=False):
                     df = (make_df(param_name, technology=t,value=val,\
                     emission=emi, unit='t', **common).pipe(broadcast, \
                     node_loc=nodes))
-                    results[param_name].append(df)
+
+                results[param_name].append(df)
 
             # Parameters with only parameter name
 
             else:
-                df = (make_df(param_name, technology=t, value=val, unit='t', \
-                **common).pipe(broadcast, node_loc=nodes))
+                # Historical years are earlier than firstmodelyear
+                y_hist = [y for y in allyears if y < fmy]
+                # print(y_hist, fmy, years)
+                if re.search("historical_", param_name):
+                    common_hist = dict(
+                        year_vtg= y_hist,
+                        year_act= y_hist,
+                        mode="M1",
+                        time="year",)
+
+                    df = (make_df(param_name, technology=t, value=val, unit='t', \
+                    **common_hist).pipe(broadcast, node_loc=nodes))
+                    # print(common_hist, param_name, t, nodes, val, y_hist)
+                else:
+                    df = (make_df(param_name, technology=t, value=val, unit='t', \
+                    **common).pipe(broadcast, node_loc=nodes))
+
                 results[param_name].append(df)
+
+    for r in s_info.set['relation']:
+
+        # Read the file
+        rel_steel = process_china_data_rel()
+
+        params = rel_steel.loc[(rel_steel["relation"] == r),\
+            "parameter"].values.tolist()
+
+        common_rel = dict(
+            year_rel = modelyears,
+            year_act = modelyears,
+            mode = 'M1',
+            relation = r,)
+
+        for par_name in params:
+            if par_name == "relation_activity":
+
+                val = rel_steel.loc[((rel_steel["relation"] == r) \
+                    & (rel_steel["parameter"] == par_name)),'value'].values[0]
+                tec = rel_steel.loc[((rel_steel["relation"] == r) \
+                    & (rel_steel["parameter"] == par_name)),'technology'].values[0]
+
+                df = (make_df(par_name, technology=tec, value=val, unit='t',\
+                **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
+
+                results[par_name].append(df)
+
+            elif par_name == "relation_lower":
+
+                demand = gen_mock_demand()
+
+                df = (make_df(par_name, value=demand, unit='t',\
+                **common_rel).pipe(broadcast, node_rel=nodes))
+
+                results[par_name].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
