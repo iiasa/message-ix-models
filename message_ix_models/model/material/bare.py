@@ -110,11 +110,15 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     # Set elements: World, followed by the direct children of World
     add.set["node"] = context["material"]["common"]["region"]["require"]
 
+    add.set["relation"] = context["material"]["steel"]["relation"]["add"]
+
     # Add the time horizon
     add.set['year'] = list(range(
         context.period_start, context.period_end + 1, context.time_step
     ))
-    add.set['cat_year'] = [('firstmodelyear', context.period_start)]
+
+    # JM: Leave the first time period as historical year
+    add.set['cat_year'] = [('firstmodelyear', context.period_start + context.time_step)]
 
     # Add levels
     # JM: For bare model, both 'add' & 'require' need to be added.
@@ -152,8 +156,8 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     # but reduces duplicate log entries
     add.set['unit'] = sorted(set(add.set['unit']))
 
-    # Manually set the first model year
-    add.y0 = context.period_start
+    # JM: Manually set the first model year
+    add.y0 = context.period_start + context.time_step
 
     if context.res_with_dummies:
         # Add dummy technologies
