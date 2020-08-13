@@ -116,6 +116,10 @@ steel:
     - DUMMY_freshwater_supply
     - DUMMY_water_supply
 
+  relation:
+    add:
+    - steel_demand
+
 fertilizer:
   commodity:
     require:
