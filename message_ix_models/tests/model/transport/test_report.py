@@ -1,5 +1,3 @@
-import pytest
-
 from message_data.model.transport.report import callback
 from message_data.reporting import prepare_reporter, register
 
@@ -8,7 +6,6 @@ def test_register_cb():
     register(callback)
 
 
-@pytest.mark.needs_input_data
 def test_report_bare(solved_bare_res_transport, session_context):
     """Run MESSAGE-Transport–specific reporting."""
     register(callback)
