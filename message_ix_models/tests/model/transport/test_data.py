@@ -25,7 +25,6 @@ def test_load_data(session_context, key, rtype):
     assert isinstance(result, rtype)
 
 
-@pytest.mark.needs_input_data
 def test_ikarus(bare_res, session_context):
     # Create bare RES
     scenario = bare_res
@@ -111,7 +110,6 @@ def test_ikarus(bare_res, session_context):
                             check_names=False)
 
 
-@pytest.mark.needs_input_data
 def test_USTIMES_MA3T(res_info):
     # Method runs without error
     data = get_USTIMES_MA3T(res_info)
@@ -144,7 +142,6 @@ def test_groups(test_context, regions, pop_scen):
     assert all(result.sum('consumer_group') == 1)
 
 
-@pytest.mark.needs_input_data
 @pytest.mark.parametrize("regions", ["R11"])
 @pytest.mark.parametrize("pop_scen", ["GEA mix", "GEA supply", "GEA eff"])
 def test_urban_rural_shares(test_context, regions, pop_scen):
