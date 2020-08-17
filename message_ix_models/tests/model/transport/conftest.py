@@ -5,7 +5,10 @@ from message_data.model.transport.utils import read_config
 from message_data.model.transport.build import main as build
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(
+    scope="session",
+    params=[pytest.param(None, marks=pytest.mark.gams_license)],
+    )
 def solved_bare_res_transport(_bare_res):
     # Pre-load transport config/metadata
     context = read_config()
