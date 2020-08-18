@@ -92,6 +92,18 @@ steel:
     - sr_steel
     - bof_steel
     - eaf_steel
+    - prep_secondary_steel
+    - finishing_steel
+    - manuf_steel
+    - scrap_recovery_steel
+    - DUMMY_coal_supply
+    - DUMMY_gas_supply
+    - DUMMY_electr_supply
+    - DUMMY_ore_supply
+    - DUMMY_limestone_supply
+    - DUMMY_hydrogen_supply
+    - DUMMY_freshwater_supply
+    - DUMMY_water_supply
     - furnace_hoil_steel
     - furnace_biofuel_steel
     - furnace_biomass_steel
@@ -104,17 +116,6 @@ steel:
     - fc_h2_steel
     - solar_steel
     - dheat_steel
-    - prep_secondary_steel
-    - finishing_steel
-    - manuf_steel
-    - scrap_recovery_steel
-    - DUMMY_coal_supply
-    - DUMMY_gas_supply
-    - DUMMY_ore_supply
-    - DUMMY_limestone_supply
-    - DUMMY_hydrogen_supply
-    - DUMMY_freshwater_supply
-    - DUMMY_water_supply
 
   relation:
     add:
