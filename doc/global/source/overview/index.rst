@@ -4,7 +4,7 @@ Overview
 ==============
 The IIASA IAM framework consists of a combination of five different models or modules - the energy model MESSAGE, the land use model GLOBIOM, the air pollution and GHG  model GAINS, the aggregated macro-economic model MACRO and the simple climate model MAGICC - which complement each other and are specialized in different areas. All models and modules together build the IIASA IAM framework, also referred to as MESSAGE-GLOBIOM owing to the fact that the energy model MESSAGE and the land use model GLOBIOM are its central components. The five models provide input to and iterate between each other during a typical scenario development cycle. Below is a brief overview of how the models interact with each other, specifically in the context of developing the SSP scenarios.
 
-MESSAGE (Huppmann et al., 2019 :cite:`huppmann_2019_messageix`) represents the core of the IIASA IAM framework (:numref:`fig-iiasaiam`) and its main task is to optimize the energy system so that it can satisfy specified energy demands at the lowest costs. MESSAGE carries out this optimization in an iterative setup with MACRO, a single sector macro-economic model, which provides estimates of the macro-economic demand response that results from energy system and services costs computed by MESSAGE. For the six commercial end-use demand categories depicted in MESSAGE (see :ref:`demand`), based on demand prices MACRO will adjust useful energy demands, until the two models have reached equilibrium (see :ref:`macro`). This iteration reflects price-induced energy efficiency adjustements that can occur when energy prices change.
+MESSAGE (Huppmann et al., 2019 :cite:`huppmann_2019_messageix`) represents the core of the IIASA IAM framework (:numref:`fig-iiasaiam`) and its main task is to optimize the energy system so that it can satisfy specified energy demands at the lowest costs. MESSAGE carries out this optimization in an iterative setup with MACRO, a single sector macro-economic model, which provides estimates of the macro-economic demand response that results from energy system and services costs computed by MESSAGE. For the six commercial end-use demand categories depicted in MESSAGE (see :ref:`demand`), based on demand prices MACRO will adjust useful energy demands, until the two models have reached equilibrium (see :ref:`macro`). This iteration reflects price-induced energy efficiency adjustments that can occur when energy prices change. MESSAGE can represent different energy- and climate-related :ref:`policies`.
 
 GLOBIOM provides MESSAGE with information on land use and its implications, including the availability and cost of bioenergy, and availability and cost of emission mitigation in the AFOLU (Agriculture, Forestry and Other Land Use) sector (see :ref:`globiom`). To reduce computational costs, MESSAGE iteratively queries a GLOBIOM emulator which provides an approximation of land-use outcomes during the optimization process instead of requiring the GLOBIOM model to be rerun iteratively. Only once the iteration between MESSAGE and MACRO has converged, the resulting bioenergy demands along with corresponding carbon prices are used for a concluding analysis with the full-fledged GLOBIOM model. This ensures full consistency of the results from MESSAGE and GLOBIOM, and also allows producing a more extensive set of land-use related indicators, including spatially explicit information on land use.
 
@@ -19,12 +19,13 @@ The scientific software underlying the global MESSAGE-GLOBIOM model is called th
 .. figure:: /_static/iiasaiam.png
    :width: 900px
 
-   Overview of the IIASA IAM framework. Coloured boxes represent respective specialized disciplinary models which are integrated for generating internally consistent scenarios (Fricko et al., 2017 :cite:`fricko_marker_2017`). 
+   Overview of the IIASA IAM framework. Coloured boxes represent respective specialized disciplinary models which are integrated for generating internally consistent scenarios (Fricko et al., 2017 :cite:`fricko_marker_2017`).
 
 .. toctree::
    :maxdepth: 1
 
    spatial
    temporal
+   policies/index
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
