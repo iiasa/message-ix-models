@@ -69,111 +69,11 @@ def read_data():
 
     return data
 
-
-
-def process_china_data_tec():
-    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
-
-    import numpy as np
-
-    # Ensure config is loaded, get the context
-    context = read_config()
-
-    # Shorter access to sets configuration
-    # sets = context["material"]["aluminum"]
-
-    # Read the file
-    data_steel_china = pd.read_excel(
-        context.get_path("material", "China_steel_renamed.xlsx"),
-        sheet_name="technologies",
-    )
-
-    # Clean the data
-
-    data_steel_china = data_steel_china \
-        [['Technology', 'Parameter', 'Level',  \
-        'Commodity', 'Species', 'Units', 'Value']] \
-        .replace(np.nan, '', regex=True)
-
-    tuple_series = data_steel_china[['Parameter', 'Commodity', 'Level']] \
-        .apply(tuple, axis=1)
-    tuple_ef = data_steel_china[['Parameter', 'Species']] \
-        .apply(tuple, axis=1)
-
-
-    data_steel_china['parameter'] = tuple_series.str.join('|') \
-        .str.replace('\|\|', '')
-    data_steel_china.loc[data_steel_china['Parameter'] == "emission_factor", \
-        'parameter'] = tuple_ef.str.join('|').str.replace('\|\|', '')
-
-    data_steel_china = data_steel_china.drop(['Parameter', 'Level', 'Commodity'] \
-        , axis = 1)
-    data_steel_china = data_steel_china.drop( \
-        data_steel_china[data_steel_china.Value==''].index)
-
-    data_steel_china.columns = data_steel_china.columns.str.lower()
-
-    # Unit conversion
-
-    # At the moment this is done in the excel file, can be also done here
-    # To make sure we use the same units
-
-    return data_steel_china
-
-
-def process_china_data_rel():
-    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
-
-    import numpy as np
-
-    # Ensure config is loaded, get the context
-    context = read_config()
-
-    # Shorter access to sets configuration
-    # sets = context["material"]["aluminum"]
-
-    # Read the file
-    data_steel_china = pd.read_excel(
-        context.get_path("material", "China_steel_renamed.xlsx"),
-        sheet_name="relations",
-    )
-
-    return data_steel_china
-
-
-def read_data_steel():
-    """Read and clean data from :file:`steel_techno_economic.xlsx`."""
-
-    # Ensure config is loaded, get the context
-    context = read_config()
-
-    # Shorter access to sets configuration
-    sets = context["material"]["steel"]
-
-    # Read the file
-    data_steel = pd.read_excel(
-        context.get_path("material", "steel_techno_economic.xlsx"),
-        sheet_name="steel",
-    )
-
-    # Clean the data
-
-    data_steel= data_steel.drop(['Region', 'Source', 'Description'], axis = 1)
-
-    # Unit conversion
-
-    # At the moment this is done in the excel file, can be also done here
-    # To make sure we use the same units
-
-    return data_steel
-
-# Question: Do we need read data dunction seperately for all materials ?
 def read_data_aluminum():
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
 
     # Ensure config is loaded, get the context
     context = read_config()
-
     # Shorter access to sets configuration
     sets = context["material"]["aluminum"]
 
@@ -232,7 +132,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_aluminum = read_data()
+    data_aluminum = read_data_aluminum()
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -241,15 +141,33 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     for t in config["technology"]["add"]:
 
+        # Obtain the active and vintage years
+        av = data_aluminum.loc[(data_aluminum["technology"] == t),'availability']\
+        .values[0]
+
+        # For the technologies with lifetime
+
+        if "technical_lifetime" in data_aluminum.loc[(data_aluminum["technology"] \
+        == t)]["parameter"].values:
+            lifetime = data_aluminum.loc[(data_aluminum["technology"] == t) & \
+            (data_aluminum["parameter"]== "technical_lifetime"),'value'].values[0]
+            years_df = scenario.vintage_and_active_years()
+            years_df = years_df.loc[years_df["year_vtg"]>= av]
+            years_df_final = pd.DataFrame(columns=["year_vtg","year_act"])
+
+        # For each vintage adjsut the active years according to technical lifetime
+        for vtg in years_df["year_vtg"].unique():
+            years_df_temp = years_df.loc[years_df["year_vtg"]== vtg]
+            years_df_temp = years_df_temp.loc[years_df["year_act"]< vtg + lifetime]
+            years_df_final = pd.concat([years_df_temp, years_df_final], ignore_index=True)
+
+        vintage_years, act_years = years_df_final['year_vtg'], years_df_final['year_act']
+
         params = data_aluminum.loc[(data_aluminum["technology"] == t),\
         "parameter"].values.tolist()
 
         # Iterate over parameters
-
         for par in params:
-
-            # Obtain the parameter names, commodity,level,emission
-
             split = par.split("|")
             param_name = split[0]
 
@@ -259,8 +177,9 @@ def gen_data_aluminum(scenario, dry_run=False):
             & (data_aluminum["parameter"] == par)),'value'].values[0]
 
             common = dict(
-            year_vtg= years,
-            mode="M1",
+            year_vtg= vintage_years,
+            year_act = act_years,
+            mode="standard",
             time="year",
             time_origin="year",
             time_dest="year",)
@@ -281,7 +200,6 @@ def gen_data_aluminum(scenario, dry_run=False):
                     results[param_name].append(df)
 
                 elif param_name == "emission_factor":
-
                     # Assign the emisson type
                     emi = split[1]
 
@@ -290,7 +208,7 @@ def gen_data_aluminum(scenario, dry_run=False):
                     node_loc=nodes))
                     results[param_name].append(df)
 
-            # Parameters with only parameter name
+            # Rest of the parameters except input,output and emission_factor
 
             else:
                 df = (make_df(param_name, technology=t, value=val,unit='t', \
@@ -298,10 +216,10 @@ def gen_data_aluminum(scenario, dry_run=False):
                 results[param_name].append(df)
 
     # Concatenate to one data frame per parameter
-    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+    results_aluminum = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     # Temporary: return nothing, since the data frames are incomplete
-    return results
+    return results_aluminum
 
 # TODO: Different input values over the years: Add a function that modifies
 #the values over the years
@@ -410,164 +328,7 @@ def gen_data_generic(scenario, dry_run=False):
 
     results_generic = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
-    # Temporary: return nothing, since the data frames are incomplete
-    return results
-
-
-def gen_mock_demand():
-    # True steel use 2010 (China) = 537 Mt/year
-    # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
-    gdp_growth = [0.121448215899944, \
-        0.0733079014579874, 0.0348154093342843, \
-        0.021827616787921,0.0134425983942219, 0.0108320197485592, \
-        0.00884341208063,0.00829374133206562, 0.00649794573935969]
-    demand = [(x+1) * 537 for x in gdp_growth]
-
-    return demand
-
-def gen_data_steel(scenario, dry_run=False):
-    """Generate data for materials representation of steel industry.
-
-    """
-    # Load configuration
-    # config = read_config()["material"]["steel"]
-
-    # Information about scenario, e.g. node, year
-    s_info = ScenarioInfo(scenario)
-
-    # Techno-economic assumptions
-    data_steel = process_china_data_tec()
-
-    # List of data frames, to be concatenated together at end
-    results = defaultdict(list)
-
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
-
-    allyears = s_info.set['year'] #s_info.Y is only for modeling years
-    modelyears = s_info.Y #s_info.Y is only for modeling years
-    nodes = s_info.N
-    yv_ya = s_info.yv_ya
-    fmy = s_info.y0
-
-    nodes.remove('World') # For the bare model
-
-    for t in s_info.set['technology']:
-
-        params = data_steel.loc[(data_steel["technology"] == t),\
-            "parameter"].values.tolist()
-
-        # Iterate over parameters
-
-        for par in params:
-
-            # Obtain the parameter names, commodity,level,emission
-
-            split = par.split("|")
-            param_name = split[0]
-
-            # Obtain the scalar value for the parameter
-
-            val = data_steel.loc[((data_steel["technology"] == t) \
-            & (data_steel["parameter"] == par)),'value'].values[0]
-
-            common = dict(
-                year_vtg= yv_ya.year_vtg,
-                year_act= yv_ya.year_act,
-                mode="M1",
-                time="year",
-                time_origin="year",
-                time_dest="year",)
-
-            # For the parameters which inlcudes index names
-            if len(split)> 1:
-
-                if (param_name == "input")|(param_name == "output"):
-
-                    # Assign commodity and level names
-                    com = split[1]
-                    lev = split[2]
-
-                    df = (make_df(param_name, technology=t, commodity=com, \
-                    level=lev, value=val, unit='t', **common)\
-                    .pipe(broadcast, node_loc=nodes).pipe(same_node))
-
-                elif param_name == "emission_factor":
-
-                    # Assign the emisson type
-                    emi = split[1]
-
-                    df = (make_df(param_name, technology=t,value=val,\
-                    emission=emi, unit='t', **common).pipe(broadcast, \
-                    node_loc=nodes))
-
-                results[param_name].append(df)
-
-            # Parameters with only parameter name
-
-            else:
-                # Historical years are earlier than firstmodelyear
-                y_hist = [y for y in allyears if y < fmy]
-                # print(y_hist, fmy, years)
-                if re.search("historical_", param_name):
-                    common_hist = dict(
-                        year_vtg= y_hist,
-                        year_act= y_hist,
-                        mode="M1",
-                        time="year",)
-
-                    df = (make_df(param_name, technology=t, value=val, unit='t', \
-                    **common_hist).pipe(broadcast, node_loc=nodes))
-                    # print(common_hist, param_name, t, nodes, val, y_hist)
-                else:
-                    df = (make_df(param_name, technology=t, value=val, unit='t', \
-                    **common).pipe(broadcast, node_loc=nodes))
-
-                results[param_name].append(df)
-
-    for r in s_info.set['relation']:
-
-        # Read the file
-        rel_steel = process_china_data_rel()
-
-        params = rel_steel.loc[(rel_steel["relation"] == r),\
-            "parameter"].values.tolist()
-
-        common_rel = dict(
-            year_rel = modelyears,
-            year_act = modelyears,
-            mode = 'M1',
-            relation = r,)
-
-        for par_name in params:
-            if par_name == "relation_activity":
-
-                val = rel_steel.loc[((rel_steel["relation"] == r) \
-                    & (rel_steel["parameter"] == par_name)),'value'].values[0]
-                tec = rel_steel.loc[((rel_steel["relation"] == r) \
-                    & (rel_steel["parameter"] == par_name)),'technology'].values[0]
-
-                df = (make_df(par_name, technology=tec, value=val, unit='t',\
-                **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
-
-                results[par_name].append(df)
-
-            elif par_name == "relation_lower":
-
-                demand = gen_mock_demand()
-
-                df = (make_df(par_name, value=demand, unit='t',\
-                **common_rel).pipe(broadcast, node_rel=nodes))
-
-                results[par_name].append(df)
-
-    # Concatenate to one data frame per parameter
-    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-
-    # Temporary: return nothing, since the data frames are incomplete
-    return results
-
-
+    return results_generic
 
 def gen_data(scenario, dry_run=False):
     """Generate data for materials representation of nitrogen fertilizers.
