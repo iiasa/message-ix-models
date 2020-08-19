@@ -91,5 +91,5 @@ latex_logo = '_static/logo_blue.png'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
-    'message_ix': ('https://message.iiasa.ac.at/en/latest/', None),
+    'message_ix': ('https://docs.messageix.org/en/latest/', None),
 }

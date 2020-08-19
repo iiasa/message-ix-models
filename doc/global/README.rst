@@ -1,8 +1,8 @@
 MESSAGEix-GLOBIOM
 =================
 
-.. image:: https://readthedocs.com/projects/iiasa-energy-program-message-doc/badge/?version=2019-update
-   :target: https://message.iiasa.ac.at/projects/global/en/2019-update/?badge=2019-update
+.. image:: https://readthedocs.com/projects/iiasa-energy-program-message-doc/badge/?version=cleanup
+   :target: https://docs.messageix.org/projects/global/en/cleanup/?badge=cleanup
    :alt: Documentation Status
 
 Documentation for the MESSAGEix-GLOBIOM global integrated assessment model.
@@ -39,7 +39,7 @@ Viewing the docs
 On Read The Docs
 ~~~~~~~~~~~~~~~~
 
-- Branches other than ``master`` in the main repository (``iiasa/message_doc``) can be built under the IIASA ENE ReadTheDocs account, and will appear at ``https://message.iiasa.ac.at/en/[BRANCH]``.
+- Branches other than ``master`` in the main repository (``iiasa/message_doc``) can be built under the IIASA ENE ReadTheDocs account, and will appear at ``https://docs.messageix.org/projects/global/en/[BRANCH]``.
   Authorized users can configure these at https://readthedocs.com/projects/iiasa-energy-program-message-doc/versions/
 - For a personal fork, e.g. ``[USER]/message_doc``, visit https://readthedocs.io [1] and configure builds for your fork, using a project name like ``message-doc-[USER]``.
   These will appear at ``https://message-doc-[USER].readthedocs.io/en/[BRANCH]``.
