@@ -1,6 +1,8 @@
 from collections import defaultdict
 import logging
-
+import message_ix
+import ixmp
+import numpy as np
 import pandas as pd
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
@@ -197,15 +199,13 @@ def read_data_generic():
 
     # Ensure config is loaded, get the context
     context = read_config()
-
     # Shorter access to sets configuration
     sets = context["material"]["generic_set"]
 
     # Read the file
     data_generic = pd.read_excel(
         context.get_path("material", "generic_furnace_boiler_techno_economic.xlsx"),
-        sheet_name="generic",
-    )
+        sheet_name="generic")
 
     # Clean the data
     # Drop columns that don't contain useful information
@@ -303,13 +303,14 @@ def gen_data_aluminum(scenario, dry_run=False):
     # Temporary: return nothing, since the data frames are incomplete
     return results
 
-# TODO: Add active years
-# TODO: Different values over the years: Add a function that modifies the values
-# over the years ?
+# TODO: Different input values over the years: Add a function that modifies
+#the values over the years
+
 def gen_data_generic(scenario, dry_run=False):
     # Load configuration
 
-    config = read_config()["material"]["generic"]
+    # Load configuration
+    config = read_config()["material"]["generic_set"]
 
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
@@ -319,21 +320,38 @@ def gen_data_generic(scenario, dry_run=False):
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
-    # For each technology there are differnet input and output combinations
-    # Iterate over technologies
 
+    # Iterate over technologies
     for t in config["technology"]["add"]:
 
-        years = s_info.Y
+        # Retreive the technology availability and vintage/active years
+        # Limit the years according to the available year
+
+        av = data_generic.loc[(data_generic["technology"] == t),'availability']\
+        .values[0]
+        lifetime = data_generic.loc[(data_generic["technology"] == t) & \
+        (data_generic["parameter"]== "technical_lifetime"),'value'].values[0]
+
+        # Can we use s_info.Y here ?
+        years_df = scenario.vintage_and_active_years()
+        years_df = years_df.loc[years_df["year_vtg"]>= av]
+        years_df_final = pd.DataFrame(columns=["year_vtg","year_act"])
+
+        # For each vintage adjsut the active years according to technical lifetime
+        for vtg in years_df["year_vtg"].unique():
+            years_df_temp = years_df.loc[years_df["year_vtg"]== vtg]
+            years_df_temp = years_df_temp.loc[years_df["year_act"]< vtg + lifetime]
+            years_df_final = pd.concat([years_df_temp, years_df_final], ignore_index=True)
+
+        vintage_years, act_years = years_df_final['year_vtg'], years_df_final['year_act']
+
         params = data_generic.loc[(data_generic["technology"] == t),"parameter"]\
         .values.tolist()
 
-        # Availability year of the technology
-        av = data_generic.loc[(data_generic["technology"] == t),'availability'].\
-        values[0]
-        years = [year for year in years if year >= av]
+        # Keep the available modes for a technology
+         mode_list = []
 
-        # Iterate over parameters
+        # Iterate over parameters (e.g. input|coal|final|low_temp)
         for par in params:
             split = par.split("|")
             param_name = par.split("|")[0]
@@ -342,11 +360,10 @@ def gen_data_generic(scenario, dry_run=False):
             (data_generic["parameter"] == par)),'value'].values[0]
 
             # Common parameters for all input and output tables
-            # year_act is none at the moment
-            # node_dest and node_origin are the same as node_loc
 
             common = dict(
-            year_vtg= years,
+            year_vtg= vintage_years,
+            year_act= act_years,
             time="year",
             time_origin="year",
             time_dest="year",)
@@ -359,6 +376,10 @@ def gen_data_generic(scenario, dry_run=False):
                     lev = split[2]
                     mod = split[3]
 
+                    # Store the available modes for a technology
+
+                    mode_list.append(mod)
+
                     df = (make_df(param_name, technology=t, commodity=com, \
                     level=lev,mode=mod, value=val, unit='t', **common).\
                     pipe(broadcast, node_loc=nodes).pipe(same_node))
@@ -367,15 +388,19 @@ def gen_data_generic(scenario, dry_run=False):
 
                 elif param_name == "emission_factor":
                     emi = split[1]
+                    mod = data_generic.loc[((data_generic["technology"] == t) & (data_generic["parameter"] == par)),\
+                        'value'].values[0]
 
-                    df = (make_df(param_name, technology=t,value=val,\
-                    emission=emi, unit='t', **common).pipe(broadcast, \
-                    node_loc=nodes))
+                        # Create emission factor for existing different modes
 
-                    results[param_name].append(df)
+                    for m in np.unique(np.array(mode_list)):
+                        df = (make_df(param_name, technology=t,value=val,\
+                        emission=emi,mode= m, unit='t', **common)\
+                        .pipe(broadcast, node_loc=nodes))
 
-            # Rest of the parameters apart from inpput, output and emission_factor
+                        results[param_name].append(df)
 
+            # Rest of the parameters apart from input, output and emission_factor
             else:
 
                 df = (make_df(param_name, technology=t, value=val,unit='t', \
@@ -383,7 +408,7 @@ def gen_data_generic(scenario, dry_run=False):
 
                 results[param_name].append(df)
 
-        results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+    results_generic = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     # Temporary: return nothing, since the data frames are incomplete
     return results
