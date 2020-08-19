@@ -1,7 +1,7 @@
 .. _policy:
 
-Modelling policies
-==================
+Modeling policies
+=================
 The global energy model distinguishes between eleven global regions (cf. Section :ref:`spatial`).  It is nevertheless important to represent current and planned national policies - such as the nationally determined contributions (NDCs) as agreed upon in the Paris Agreement - at a lower geographical resolution, in order to be able to adequately account for future changes in the scenario development processes.
 
 Representation of single country Nationally Determined Contributions (NDCs)
