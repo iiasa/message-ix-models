@@ -306,8 +306,8 @@ def gen_data_generic(scenario, dry_run=False):
 
                 elif param_name == "emission_factor":
                     emi = split[1]
-                    mod = data_generic.loc[((data_generic["technology"] == t) & (data_generic["parameter"] == par)),\
-                        'value'].values[0]
+                    mod = data_generic.loc[((data_generic["technology"] == t) \
+                    & (data_generic["parameter"] == par)),'value'].values[0]
 
                         # Create emission factor for existing different modes
 

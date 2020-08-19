@@ -1,8 +1,4 @@
 # Configuration for message_data.model.material
-#
-# NB these values are currently for the nitrogen fertilizer materials
-#    accounting. Different sets can be created once there are 2+ different
-#    categories of materials.
 
 aluminum:
   commodity:
@@ -10,6 +6,15 @@ aluminum:
     - ht_heat
     - lt_heat
     - aluminum
+    require:
+    - d_heat
+    - electr
+    - coal
+    - fueloil
+    - ethanol
+    - biomass
+    - gas
+    - hydrogen
   level:
     add:
     - useful_aluminum
@@ -18,7 +23,8 @@ aluminum:
     - final_material
     - useful_material
     - product
-
+    require:
+    - final
   technology:
     add:
     - soderberg_aluminum
@@ -74,23 +80,6 @@ set:
     - NH3_to_N_fertil
 
 generic_set:
-  commodity:
-    require:
-    - d_heat
-    - electr
-    - freshwater_supply
-    - coal
-    - fueloil
-    - ethanol
-    - biomass
-    - gas
-    - hydrogen
-  level:
-    require:
-    - primary
-    - secondary
-    - water_supply
-    - final
   technology:
     add:
     - furnace_coal_aluminum
