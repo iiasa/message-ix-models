@@ -3,7 +3,7 @@
 Energy (MESSAGE)
 ****************
 
-The `MESSAGEix <https://message.iiasa.ac.at>`_ modeling framework, briefly known as MESSAGE (Model for Energy Supply Strategy Alternatives and their General Environmental Impact), is a linear programming (LP) energy engineering model with global coverage.
+The `MESSAGEix <https://docs.messageix.org>`_ modeling framework, briefly known as MESSAGE (Model for Energy Supply Strategy Alternatives and their General Environmental Impact), is a linear programming (LP) energy engineering model with global coverage.
 As a systems engineering optimization model, MESSAGE is primarily used for medium- to long-term energy system planning, energy policy analysis, and scenario development
 (Huppmann et al., 2019 :cite:`huppmann_2019_messageix`; Messner and Strubegger, 1995 :cite:`messner_users_1995`). The model provides a framework for representing an energy system with all its interdependencies from resource
 extraction, imports and exports, conversion, transport, and distribution, to the provision of energy end-use services such as light, space conditioning, industrial
