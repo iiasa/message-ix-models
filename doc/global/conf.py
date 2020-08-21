@@ -10,9 +10,9 @@ project = 'MESSAGE-GLOBIOM'
 copyright = '2016–2020, IIASA Energy Program'
 author = 'IIASA Energy Program'
 # The major project version, used as the replacement for |version|.
-version = '1.0'
+version = '2020-03-05'
 # The full project version, used as the replacement for |release|.
-release = '1.0'
+release = '2020-03-05'
 
 # -- General configuration ------------------------------------------------
 
