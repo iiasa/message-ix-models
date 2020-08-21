@@ -10,7 +10,7 @@ Documentation for the MESSAGEix-GLOBIOM global integrated assessment model.
 Dependencies
 ------------
 
-1. `Sphinx <http://sphinx-doc.org/>`_.
+1. `Sphinx <http://sphinx-doc.org/>`__.
 2. `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io/>`_.
 3. `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.io/>`_.
 
@@ -25,7 +25,7 @@ Writing
 - `Sphinx <http://www.sphinx-doc.org/>`_ documentation, including reference on Sphinx-specific ReST syntax.
 - `Usage <https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html>`_ for ``sphinxcontrib.bibtex`` (citations and bibliography).
 
-  - Add references to ``source/bibs/main.bib``. Format entries:
+  - Add references to ``bibs/main.bib``. Format entries:
 
     - Field lines like ``[TAB]year = {2010},``: tab indent, spaces around ``=``, value inside ``{}``, trailing comma.
     - Use either ``doi`` (preferred) or ``url``, not both.
@@ -41,7 +41,7 @@ On Read The Docs
 
 - Branches other than ``master`` in the main repository (``iiasa/message_doc``) can be built under the IIASA ENE ReadTheDocs account, and will appear at ``https://docs.messageix.org/projects/global/en/[BRANCH]``.
   Authorized users can configure these at https://readthedocs.com/projects/iiasa-energy-program-message-doc/versions/
-- For a personal fork, e.g. ``[USER]/message_doc``, visit https://readthedocs.io [1] and configure builds for your fork, using a project name like ``message-doc-[USER]``.
+- For a personal fork, e.g. ``[USER]/message_doc``, visit https://readthedocs.io [1]_ and configure builds for your fork, using a project name like ``message-doc-[USER]``.
   These will appear at ``https://message-doc-[USER].readthedocs.io/en/[BRANCH]``.
 
 
