@@ -365,9 +365,12 @@ def add_general(rep: Reporter, info):
     file. Entry *info* must contain:
 
     - **comp**: this refers to the name of a computation that is available in
-      the namespace of :mod:`message_data.reporting.computations`. If
-      'product', then :meth:`ixmp.reporting.Reporter.add_product` is called
-      instead.
+      the namespace of :mod:`message_data.reporting.computations` (be aware
+      that it also imports all the computations from :doc:`ixmp
+      <ixmp:reporting>` and :doc:`message_ix <message_ix:reporting>`). E.g.
+      if 'product', then :meth:`ixmp.reporting.Reporter.add_product` is
+      called, which also automatically infers the correct dimensions for
+      each input.
     - **key**: the key for the computed quantity.
     - **inputs**: a list of keys to which the computation is applied.
     - **args** (:class:`dict`, optional): keyword arguments to the computation.
