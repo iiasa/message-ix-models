@@ -37,6 +37,10 @@ We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for 
    z_bibliography
    annex/index
    glossary
-   extra
+
+.. toctree::
+   :hidden:
+
+   _extra/index
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
