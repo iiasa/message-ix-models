@@ -123,6 +123,12 @@ def group_sum(qty, group, sum):
                   dim=group)
 
 
+# commented: currently unused
+# def share_cogeneration(fraction, *parts):
+#     """Deducts a *fraction* from the first of *parts*."""
+#     return parts[0] - (fraction * sum(parts[1:]))
+
+
 def share_curtailment(curt, *parts):
     """Apply a share of *curt* to the first of *parts*.
 

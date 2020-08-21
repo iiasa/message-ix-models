@@ -34,6 +34,9 @@ REPLACE_DIMS = {
 #: - Handled as regular expressions; see https://regex101.com and
 #:   https://docs.python.org/3/library/re.html.
 REPLACE_VARS = {
+    # Secondary energy: remove duplicate "Solids"
+    r'(Secondary Energy\|Solids)\|Solids': r'\1',
+
     # CH4 emissions from MESSAGE technologies
     r'(Emissions\|CH4)\|Fugitive': r'\1|Energy|Supply|Fugitive',
     r'(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)':
