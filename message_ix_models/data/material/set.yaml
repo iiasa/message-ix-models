@@ -11,7 +11,9 @@ common:
     - gas
     - electr
     - ethanol
+    - methanol
     - fueloil
+    - lightoil
     - hydrogen
     - lh2
     - biomass
@@ -53,12 +55,41 @@ common:
     add:
     - PM2p5
 
-
-steel:
+generic:
   commodity:
     add:
     - ht_heat
     - lt_heat
+
+  level:
+    add:
+    - useful_steel
+
+  technology:
+    add:
+    - furnace_foil_steel
+    - furnace_loil_steel
+    - furnace_biomass_steel
+    - furnace_ethanol_steel
+    - furnace_methanol_steel
+    - furnace_gas_steel
+    - furnace_coal_steel
+    - furnace_elec_steel
+    - furnace_h2_steel
+    - hp_gas_steel
+    - hp_elec_steel
+    - fc_h2_steel
+    - solar_steel
+    - dheat_steel
+
+  mode:
+    add:
+    - low_temp
+    - high_temp
+
+steel:
+  commodity:
+    add:
     - steel
     - pig_iron
     - sponge_iron
@@ -71,7 +102,6 @@ steel:
 
   level:
     add:
-    - useful_steel
     - new_scrap
     - old_scrap
     - primary_material
@@ -98,24 +128,16 @@ steel:
     - scrap_recovery_steel
     - DUMMY_coal_supply
     - DUMMY_gas_supply
+    - DUMMY_loil_supply
+    - DUMMY_foil_supply
     - DUMMY_electr_supply
     - DUMMY_ore_supply
+    - DUMMY_ethanol_supply
+    - DUMMY_methanol_supply
     - DUMMY_limestone_supply
     - DUMMY_hydrogen_supply
     - DUMMY_freshwater_supply
     - DUMMY_water_supply
-    - furnace_hoil_steel
-    - furnace_biofuel_steel
-    - furnace_biomass_steel
-    - furnace_synfuel_steel
-    - furnace_gas_steel
-    - furnace_elec_steel
-    - furnace_h2_steel
-    - hp_gas_steel
-    - hp_elec_steel
-    - fc_h2_steel
-    - solar_steel
-    - dheat_steel
 
   relation:
     add:
