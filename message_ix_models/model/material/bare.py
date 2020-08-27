@@ -4,10 +4,10 @@ import logging
 
 import message_ix
 
-from message_data.tools import Code, ScenarioInfo, get_context, set_info
+from message_data.tools import Code, ScenarioInfo, get_context, set_info, add_par_data
 from .build import apply_spec
 from .util import read_config
-from .data import get_data, gen_data_steel
+from .data import get_data, gen_data_steel, gen_data_generic
 import message_data
 
 
@@ -60,12 +60,40 @@ def create_res(context=None, quiet=True):
         scenario,
         spec,
         # data=partial(get_data, context=context, spec=spec),
-        data=gen_data_steel,
+        data=add_data,
         quiet=quiet,
         message=f"Create using message_data {message_data.__version__}",
     )
 
     return scenario
+
+
+DATA_FUNCTIONS = [
+    gen_data_steel,
+    gen_data_generic,
+    # gen_data_aluminum,
+]
+
+
+# Try to handle multiple data input functions from different materials
+def add_data(scenario, dry_run=False):
+    """Populate `scenario` with MESSAGE-Transport data."""
+    # Information about `scenario`
+    info = ScenarioInfo(scenario)
+
+    # Check for two "node" values for global data, e.g. in
+    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
+    if {"World", "R11_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R11_GLB' from node list for data generation")
+        info.set["node"].remove("R11_GLB")
+
+    for func in DATA_FUNCTIONS:
+        # Generate or load the data; add to the Scenario
+        log.info(f'from {func.__name__}()')
+        add_par_data(scenario, func(scenario), dry_run=dry_run)
+
+    log.info('done')
+
 
 
 def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
@@ -94,10 +122,10 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
 
     add = ScenarioInfo()
 
-
     # Add technologies
     # JM: try to find out a way to loop over 1st/2nd level and to just context["material"][xx]["add"]
-    add.set["technology"] = context["material"]["steel"]["technology"]["add"]
+    add.set["technology"] = context["material"]["steel"]["technology"]["add"] + \
+        context["material"]["generic"]["technology"]["add"]
 
     # Add regions
 
@@ -123,15 +151,19 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     # Add levels
     # JM: For bare model, both 'add' & 'require' need to be added.
     add.set['level'] = context["material"]["steel"]["level"]["add"] + \
-        context["material"]["common"]["level"]["require"]
+        context["material"]["common"]["level"]["require"] + \
+        context["material"]["generic"]["level"]["add"]
 
     # Add commodities
     c_list = context["material"]["steel"]["commodity"]["add"] + \
-        context["material"]["common"]["commodity"]["require"]
+        context["material"]["common"]["commodity"]["require"] + \
+        context["material"]["generic"]["commodity"]["add"]
     add.set['commodity'] = c_list
 
     add.set['type_tec'] = context["material"]["common"]["type_tec"]["add"]
-    add.set['mode'] = context["material"]["common"]["mode"]["require"]
+    add.set['mode'] = context["material"]["common"]["mode"]["require"] +\
+        context["material"]["generic"]["mode"]["add"]
+        
     add.set['emission'] = context["material"]["common"]["emission"]["require"] +\
         context["material"]["common"]["emission"]["add"]
 
