@@ -75,11 +75,18 @@ def callback(rep: Reporter):
     """
     from message_data.reporting.util import infer_keys
 
-    # Uncomment if full-resolution reporting of ACT leads to memory issues
-    # Include only technologies with "transport" in the name
-    rep.set_filters(
-        t=list(filter(lambda n: "transport" in n, rep.get("t")))
-    )
+    # Read transport reporting configuration
+    context = read_config()
+    config = context["transport config"]["report"]
+
+    if config["filter"]:
+        # Include only technologies with "transport" in the name
+        rep.set_filters(
+            t=list(filter(lambda n: "transport" in n, rep.get("t")))
+        )
+
+    # Add configuration to the Reporter
+    rep.graph["config"]["transport"] = config.copy()
 
     k_out = infer_keys(rep, "out")
 
@@ -99,5 +106,5 @@ def callback(rep: Reporter):
     for plot in PLOTS:
         key = f"plot {plot.name}"
         log.info(f"Add {repr(key)}")
-        rep.add(key, tuple([plot()] + plot.inputs))
+        rep.add(key, tuple([plot(), "config"] + plot.inputs))
         rep.graph["transport plots"].append(key)
