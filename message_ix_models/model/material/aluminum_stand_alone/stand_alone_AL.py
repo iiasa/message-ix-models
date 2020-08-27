@@ -3,17 +3,16 @@
 Created on Wed Aug 26 13:41:29 2020
 
 "Aluminum stand-alone run"
-"Solves and plots activity and capacity"
-
+Solve and plot
 @author: unlu
 """
 import message_ix
 import ixmp
 import pandas as pd
 from message_data.tools import make_df
-from tools import Plots
 from generate_data_AL import gen_data_aluminum as gen_data_aluminum
 from generate_data_generic import gen_data_generic as gen_data_generic
+from tools import Plots
 
 mp = ixmp.Platform()
 
@@ -143,13 +142,19 @@ scenario.add_cat('emission', 'GHG', 'CO2')
 
 # Run read data aluminum 
 
-results_al, data_aluminum_hist = gen_data_aluminum()
+scenario.commit("changes added")
+
+results_al, data_aluminum_hist = gen_data_aluminum("aluminum_techno_economic.xlsx")
+
+scenario.check_out()
 
 for k, v in results_al.items():
     scenario.add_par(k,v)
     
+scenario.commit("aluminum_techno_economic added")
 results_generic = gen_data_generic() 
 
+scenario.check_out()
 for k, v in results_generic.items():
     scenario.add_par(k,v)
     
@@ -285,6 +290,7 @@ for yr in historic_generation.index:
     scenario.add_par('historical_new_capacity', hist_capacity_gas)
     
 scenario.commit("changes")
+
 scenario.solve()
 
 # Be aware plots produce the same color for some technologies. 
