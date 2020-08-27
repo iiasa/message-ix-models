@@ -136,7 +136,7 @@ ldv activity:
 
 
 # Vehicle lifetime
-ldv lifetimes:
+ldv lifetime:
   _dim: consumer type
   _unit: year
   modest: 20
