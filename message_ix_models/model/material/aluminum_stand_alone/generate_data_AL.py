@@ -13,17 +13,16 @@ import message_ix
 import ixmp
 
 
-def gen_data_aluminum():
+def gen_data_aluminum(file):
     
     mp = ixmp.Platform()
     
     scenario = message_ix.Scenario(mp,"MESSAGE_material","baseline", cache=True)
 
-    data_aluminum = pd.read_excel("aluminum_techno_economic.xlsx",
-                                  sheet_name="aluminum")
+    data_aluminum = pd.read_excel(file,sheet_name="data")
     
     data_aluminum_hist = pd.read_excel("aluminum_techno_economic.xlsx",
-                                   sheet_name="aluminum_historical",
+                                   sheet_name="data_historical",
                                    usecols = "A:F")
     # Clean the data
     # Drop columns that don't contain useful information
@@ -32,11 +31,7 @@ def gen_data_aluminum():
     # List of data frames, to be concatenated together at the end
     results = defaultdict(list) 
     # Will come from the yaml file 
-    technology_add = ["soderberg_aluminum", "prebake_aluminum",
-                      "secondary_aluminum", "prep_secondary_aluminum",
-                      "finishing_aluminum", "manuf_aluminum",
-                      "scrap_recovery_aluminum", "alumina_supply"]
-    
+    technology_add = data_aluminum["technology"].unique()
     # normally from s_info.Y
     years = [2010,2020,2030,2040,2050,2060,2070,2080,2090,2100]
     
@@ -83,7 +78,6 @@ def gen_data_aluminum():
                                 'value'].values[0]
     
             # Common parameters for all input and output tables 
-            # year_act is none at the moment 
             # node_dest and node_origin are the same as node_loc
             
             common = dict(
