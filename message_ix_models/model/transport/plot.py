@@ -20,8 +20,8 @@ class Plot:
     inputs = []
     name = ""
 
-    def __call__(self, *args):
         filename = f"{self.name}.pdf"
+    def __call__(self, config, *args):
         plot_or_plots = self.generate(*args)
 
         try:
