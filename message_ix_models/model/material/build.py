@@ -138,9 +138,9 @@ def apply_spec(
 
     # Add data
     if callable(data):
-        result = data(scenario, dry_run=dry_run)
-        if result:
-            add_par_data(scenario, result, dry_run=dry_run)
+        data(scenario, dry_run=dry_run)
+        # if result:
+        #     add_par_data(scenario, result, dry_run=dry_run)
 
     # Finalize
     log.info('Commit results.')
