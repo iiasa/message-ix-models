@@ -20,18 +20,18 @@ class Plot:
     inputs = []
     name = ""
 
-        filename = f"{self.name}.pdf"
     def __call__(self, config, *args):
+        path = config["output dir"] / f"{self.name}.pdf"
         plot_or_plots = self.generate(*args)
 
         try:
             # Single plot
-            plot_or_plots.save(filename, **self.save_args)
+            plot_or_plots.save(path, **self.save_args)
         except AttributeError:
             # Iterator containing multiple plots
-            p9.save_as_pdf_pages(plot_or_plots, filename, **self.save_args)
+            p9.save_as_pdf_pages(plot_or_plots, path, **self.save_args)
 
-        return filename
+        return path
 
     def generate(*args):
         return p9.ggplot(*args)

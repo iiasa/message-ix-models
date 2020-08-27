@@ -92,7 +92,7 @@ def callback(rep: Reporter):
 
     # Aggregate transport technologies
     t_groups = {}
-    for tech in read_config()["transport set"]["technology"]["add"]:
+    for tech in context["transport set"]["technology"]["add"]:
         if not len(tech.child):
             continue  # No children; not a group
 
@@ -108,3 +108,5 @@ def callback(rep: Reporter):
         log.info(f"Add {repr(key)}")
         rep.add(key, tuple([plot(), "config"] + plot.inputs))
         rep.graph["transport plots"].append(key)
+
+    rep.add("transport all", ["transport plots"])
