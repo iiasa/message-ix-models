@@ -38,6 +38,7 @@ def get_USTIMES_MA3T(info):
     """Read LDV cost and efficiency data from US-TIMES and MA3T."""
     # Ensure transport config is loaded
     context = read_config()
+    config = context["transport config"]
 
     # Open workbook
     path = context.get_path("transport", FILE)
@@ -89,9 +90,8 @@ def get_USTIMES_MA3T(info):
 
     # Convert 'efficiency' into 'input' and 'output' parameter data
     base = data.pop('efficiency')
-    # TODO also add these to `data`
     i_o = make_io(
-        src=(None, None, 'GWh'),
+        src=(None, None, 'GWa'),
         dest=('transport pax vehicle', 'useful', 'Gv km'),
         efficiency=1. / base['value'],
         on='input',
@@ -110,6 +110,15 @@ def get_USTIMES_MA3T(info):
     )
 
     i_o['input'] = add_commodity_and_level(i_o['input'])
+    data.update(i_o)
+
+    # Add technical lifetimes
+    data.update(
+        make_matched_dfs(
+            base=i_o["output"],
+            technical_lifetime=config["ldv lifetime"]["average"],
+        )
+    )
 
     # Transform costs
     for par in 'fix_cost', 'inv_cost':
