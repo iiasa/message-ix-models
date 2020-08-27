@@ -5,6 +5,8 @@ from pathlib import Path
 
 from message_ix.reporting import Key, Reporter
 
+from message_data.tools import get_context
+
 from . import computations
 from .computations import (
     concat,
@@ -88,6 +90,11 @@ def prepare_reporter(scenario, config, key, output_path=None):
         # Load and apply configuration
         # A non-dict *config* argument must be a Path
         config = dict(path=Path(config))
+
+    # Store path for output
+    config.setdefault(
+        "output dir", get_context().get("output dir", Path.cwd())
+    )
 
     rep.configure(**config)
     # Reference to the configuration as stored in the reporter
