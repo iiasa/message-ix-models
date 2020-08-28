@@ -88,8 +88,6 @@ def callback(rep: Reporter):
     # Add configuration to the Reporter
     rep.graph["config"]["transport"] = config.copy()
 
-    k_out = infer_keys(rep, "out")
-
     # Aggregate transport technologies
     t_groups = {}
     for tech in context["transport set"]["technology"]["add"]:
@@ -98,15 +96,20 @@ def callback(rep: Reporter):
 
         t_groups[tech.id] = [child.id for child in tech.child]
 
-    keys = rep.aggregate(k_out, 'transport', dict(t=t_groups), sums=True)
-    log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
+    all_keys = []
 
-    rep.add("transport plots", [])
+    for k in infer_keys(rep, ["in", "out"]):
+        keys = rep.aggregate(k, 'transport', dict(t=t_groups), sums=True)
+        all_keys.append(keys[0])
+        log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
+
+    plot_keys = []
 
     for plot in PLOTS:
         key = f"plot {plot.name}"
-        log.info(f"Add {repr(key)}")
         rep.add(key, tuple([plot(), "config"] + plot.inputs))
-        rep.graph["transport plots"].append(key)
+        plot_keys.append(key)
+        log.info(f"Add {repr(key)}")
 
-    rep.add("transport all", ["transport plots"])
+    rep.add("transport plots", plot_keys)
+    rep.add("transport all", all_keys + plot_keys)
