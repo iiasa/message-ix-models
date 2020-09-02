@@ -7,7 +7,7 @@ These webpages document the IIASA Integrated Assessment Modeling (IAM) framework
 
 When referring to MESSAGE-GLOBIOM 1.0 as described in this document, please use the following citations (Download :download:`ris </_static/message-globiom.ris>`, :download:`BibTeX </_static/message-globiom.bib>`):
 
-* Krey V, Havlik P, Fricko O, Zilliacus J, Gidden M, Strubegger M, Kartasasmita G, Ermolieva T, Forsell N, Gusti M, Johnson N, Kindermann G, Kolp P, McCollum DL, Pachauri S, Rao S, Rogelj J, Valin H, Obersteiner M, Riahi K (2016) MESSAGE-GLOBIOM 1.0 Documentation. International Institute for Applied Systems Analysis (IIASA), Laxenburg, Austria `http://data.ene.iiasa.ac.at/message-globiom/ <http://data.ene.iiasa.ac.at/message-globiom/>`_.
+* Krey V, Havlik P, Kishimoto, PN, Fricko O, Zilliacus J, Gidden M, Strubegger M, Kartasasmita G, Ermolieva T, Forsell N, Guo F, Gusti M, Huppmann D, Johnson N, Kikstra J, Kindermann G, Kolp P, Lovat F, McCollum DL, Min J, Pachauri S, Parkinson SC, Rao S, Rogelj J, Valin H, Zakeri B, Obersteiner M, Riahi K (2020) MESSAGE-GLOBIOM 1.0 Documentation. International Institute for Applied Systems Analysis (IIASA), Laxenburg, Austria `https://docs.messageix.org/global/ <https://docs.messageix.org/global/>`_.
 
 * Fricko O, Havlik P, Rogelj J, Klimont Z, Gusti M, Johnson N, Kolp P, Strubegger M, Valin H, Amann M, Ermolieva T, Forsell N, Herrero M, Heyes C, Kindermann G, Krey V, McCollum DL, Obersteiner M, Pachauri S, Rao S, Schmid E, Schoepp W, Riahi K (2017) The marker quantification of the Shared Socioeconomic Pathway 2: A middle-of-the-road scenario for the 21st century. Global Environmental Change, Volume 42, Pages 251-26, `DOI:10.1016/j.gloenvcha.2016.06.004 <https://doi.org/10.1016/j.gloenvcha.2016.06.004>`_.
 
