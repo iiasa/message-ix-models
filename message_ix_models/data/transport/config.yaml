@@ -178,9 +178,10 @@ speeds:
   BUS: 19
   RAIL: 35
 
-# Fixed future point for total passenger demand [kilometre per year]
+# Fixed future point for total passenger demand
 # “Assume only half the speed (330 km/h) and not as steep a curve.”
-as2010fix: 337327.9893 # = 149500 * 1.12818725502081 * 2
+fixed demand: "337327.9893 km / year"  # = 149500 * 1.12818725502081 * 2
+fixed GDP: "300 kUSD / passenger / year"
 
 # Year for share convergence
 year convergence: 2100

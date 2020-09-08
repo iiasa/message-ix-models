@@ -1,3 +1,4 @@
+from iam_units import registry
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix.reporting import Reporter, computations
 import dask
@@ -90,24 +91,33 @@ def from_external_data(info: ScenarioInfo) -> Reporter:
     Reporter
     """
     context = read_config()
+
+    # Empty reporter
     rep = Reporter()
 
+    # Sets based on `info`; in from_scenario(), these are populated from the
+    # sets in the Scenario
     rep.add("n", dask.core.quote(info.set["node"]))
+    rep.add("y", dask.core.quote(info.set["year"]))
 
-    rep.add(
-        "GDP:n-y",
-        Quantity(context.data["transport gdp"].rename(RENAME_DIMS)),
-        sums=True,
-    )
-    rep.add(
-        "MERtoPPP:n-y",
-        Quantity(context.data["transport mer-to-ppp"].rename(RENAME_DIMS)),
-        sums=True,
-    )
+    def _add(ctx_key, rep_key, **kwargs):
+        """Add context data (i.e. files) to the reporter."""
+        qty = Quantity(context.data[ctx_key], **kwargs)
+        # Rename long column names ("node") to short ("n")
+        qty = qty.rename(
+            {k: v for k, v in RENAME_DIMS.items() if k in qty.coords}
+        )
+        rep.add(rep_key, qty, index=True, sums=True)
+
+    _add("transport gdp", "GDP:n-y", units="GUSD / year")
+    _add("transport mer-to-ppp", "MERtoPPP:n-y")
+
     # TODO add external data source for PRICE_COMMODITY
-    rep.add(
-        "PRICE_COMMODITY:n-c-y", 1, sums=True, index=True,
+    context.data["transport PRICE_COMMODITY"] = (
+        xr.ones_like(context.data["transport gdp"])
+        .expand_dims({"c": ["transport"]})
     )
+    _add("transport PRICE_COMMODITY", "PRICE_COMMODITY:n-c-y")
 
     prepare_reporter(rep)
 
@@ -142,19 +152,20 @@ def prepare_reporter(rep: Reporter) -> None:
     whour_key = rep.add("whour:", whour, "config")
 
     # Base share data
-    share_key = rep.add(
-        "shares:n-y-transport_mode", base_shares, "n", "y", "config",
-    )
+    share_key = rep.add("shares:n-t-y", base_shares, "n", "y", "config")
 
     # Population data from GEA
     pop_key = rep.add("population:n-y", population, "n", "config")
 
     # PPP GDP, total and per capita
-    gdp_ppp = rep.add("product", "GDP PPP", gdp, mer_to_ppp)
+    gdp_ppp = rep.add("product", "GDP PPP:n-y", gdp, mer_to_ppp)
     gdp_ppp_cap = rep.add("ratio", "GDP PPP per capita:n-y", gdp_ppp, pop_key)
 
+    # Total demand
+    rep.add("transport pdt:n-y", total_pdt, gdp_ppp_cap, "config")
+
     # Value-of-time multiplier
-    votm_key = rep.add("transport VOT", (votm, gdp_ppp_cap))
+    votm_key = rep.add("transport VOT", votm, gdp_ppp_cap)
 
     # Select only the price of transport services
     price_sel = rep.add(
@@ -173,7 +184,7 @@ def prepare_reporter(rep: Reporter) -> None:
     )
 
     # Share weights
-    sweight_key = rep.add(
+    rep.add(
         "share weight",
         share_weight,
         share_key,
@@ -186,7 +197,13 @@ def prepare_reporter(rep: Reporter) -> None:
         "config"
     )
 
-    return rep.get(sweight_key)
+    # Total PDT shared out by mode
+    rep.add(
+        "product",
+        "transport pdt::mode",
+        "transport pdt:n-y",
+        "shares:n-t-y",  # For debugging
+    )
 
 
 def base_shares(n, y, config):
@@ -194,8 +211,8 @@ def base_shares(n, y, config):
     modes = config["transport"]["demand modes"]
     return Quantity(
         xr.DataArray(
-            1,
-            coords=[n, y, modes],
+            1. / len(modes),
+            coords=[[node.id for node in n[1:]], y, modes],
             dims=["n", "y", "t"]
         )
     )
@@ -283,6 +300,25 @@ def _lambda(config):
     return config["transport"]["lambda"]
 
 
+def total_pdt(gdp_ppp_cap, config):
+    """Compute total passenger distance traveled (PDT).
+
+    Simplification of Schäefer et al. (2010): linear interpolation between
+    (0, 0) and the configuration keys "fixed demand" and "fixed GDP".
+    """
+    fix_gdp = registry(config["transport"]["fixed GDP"])
+    fix_demand = registry(config["transport"]["fixed demand"])
+
+    result = (gdp_ppp_cap / fix_gdp.magnitude) * fix_demand.magnitude
+
+    # Consistent output units
+    result.attrs["_unit"] = (
+        (gdp_ppp_cap.attrs["_unit"] / fix_gdp.units) * fix_demand.units
+    )
+
+    return result
+
+
 def votm(gdp_ppp_cap):
     """Calculate value of time multiplier.
 
@@ -297,12 +333,16 @@ def votm(gdp_ppp_cap):
 
 
 def population(nodes, config):
-    """Return population data from GEA."""
+    """Return population data from GEA.
+
+    Dimensions: n-y. Units: 10⁶ person/passenger.
+    """
     pop_scenario = config["transport"]["data source"]["population"]
     return Quantity(
         get_gea_population(nodes)
         .sel(area_type="total", scenario=pop_scenario, drop=True)
-        .rename(node="n", year="y")
+        .rename(node="n", year="y"),
+        units="Mpassenger"
     )
 
 
@@ -345,7 +385,7 @@ def cost(price, gdp_ppp_cap, whours, speeds, votm, n):
     """
     # When ixmp.reporting.Quantity is AttrSeries, this is needed to avoid
     # "ValueError: cannot join with no overlapping index names"
-    speeds = pd.concat({n_: speeds for n_ in n[1:]}, names="n")
+    speeds = pd.concat({n_.id: speeds for n_ in n[1:]}, names="n")
 
     # NB for some reason, the 'y' dimension of result becomes `float`, rather
     #    than `int`, in this step

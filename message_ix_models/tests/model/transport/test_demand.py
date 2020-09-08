@@ -1,3 +1,4 @@
+from iam_units import registry
 import message_ix
 import pytest
 
@@ -13,12 +14,23 @@ def test_demand_dummy(test_context):
     assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
 
 
-@pytest.mark.xfail(reason="Incomplete")
 def test_from_external_data(test_context):
     test_context.regions = "R11"
     info = get_spec(test_context)["add"]
 
-    demand.from_external_data(info)
+    rep = demand.from_external_data(info)
+
+    # These following units are implied by the test of "transport pdt:…:mode":
+    # "GDP PPP:n-y" → "MUSD / year"
+    # "GDP PPP per capita:n-y" → "kUSD / passenger / year"
+    # "transport pdt:n-y") → "Mm / year"
+
+    # Total demand by mode: can be computed
+    result = rep.get("transport pdt:n-y-t:mode")
+    # Has correct units: km / year / capita
+    assert (
+        registry.Quantity(1, result.attrs["_unit"]) == registry("1 km / year")
+    )
 
 
 @pytest.mark.skip(reason="Requires user's context")
