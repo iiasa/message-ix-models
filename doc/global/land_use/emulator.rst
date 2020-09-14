@@ -1,7 +1,7 @@
 .. _emulator:
 
 Land-Use Emulator
------------------
+=================
 
 The land-use emulator refers to a set of land-use scenarios, provided by GLOBIOM, which are integrated into MESSAGE using a didicated set of equations (add reference to land-use relevant code documentation).  Each land-use scenario represents a combination of biomass potential (for use in the energy sector) and a carbon price.  Each land-use scenario therefore represents a disctinct land-use development pathway. The figure belowillustrates the combination of biomass- and carbon prices for which land-use pathways are available.
 
@@ -18,6 +18,9 @@ In their entierty, the various land-use pathways provide MESSAGE with a range of
    :width: 800px
 
    Land-Use Pathway Trade-Off Surface for SSP2.
+
+Equations and constraints
+-------------------------
 
 The land-use pathways are integrated into MESSAGE using a dedicated set of equations (add link to documentaiton). At the core, these state that the linear combination of land-use pathways must be equal to 1.
 
@@ -84,8 +87,37 @@ The table below shows the corresponding shares for each land type and region. (i
      - 0.02
      - 0.02
 
-In addition to constraining the growth of platation forest (reference to globiom forest type description), the increase of old forerst is prohibited.
+In addition to constraining the growth of plantation forest (reference to globiom forest type description), the increase of old forerst is prohibited.
 
 :math:`old\_forest_{n,s,y} <= old\_forest_{n,s,y-1}`
 
-The third and last constraint required for the land-use emulator is an overall growth constraint for switching from one land-use pathway to another.  This avoids too rapid switches between land-use pathways between adjacent timesteps. Such switches can occur if there are numerical `non-convexities` in input data between pathways.  These can occur for single time-steps and without such a growth constraint the optimizer may choose to fully swtich between two land-use pathways for only a single timestep.  Further, this also contributes to smoothing transitions between carbon price steps.  As can be seen in the figure above (insert reference to matrix), there is only a limited set of carbon price categories.  Hence, should there be no growth constraint, then the optimizer would only choose a certain category, when the carbon price rises above the repsective category price. In GLOBIOM, there is already mitigation at carbon prices between categories,, especially lower pirces, hence the growth constraint will help mimic this behavior.  The growth rate is set to 5% annualy, and was derived based on a senstivity anlysis, showing that factor best matched the transition results of the full fletched GLOBIOM model.  
+The third and last set of constraints required for the land-use emulator enforce gradual transitions between land-use pathways.  Too rapid switches between land-use pathways, i.e. full transitioning between land-use pathways in adjacent timesteps, can occur for several reasons.  Slight numerical `non-convexities` in input data, i.e. numerical inconsistencies can occur for individual time-steps.  Land-use pathways, initially generated indivdually using GLOBIOM, cumulatively (across time) depict consistent behavior i.e. as carbon prices increase, the cumulative emissions decrease within a single biomass potential category.  Yet for the same carbon price across multiple biomass potential categories, inconsistencies may occur, for example as a result of data scaling or aggregation. (GLOBIOM colleagues may want to expand on this). Without such transitional constraint between pathways, the optimal solution could be to swtich between two land-use pathways for only a single timestep, therefore introducing artifacts as a result. 
+As can be seen in the figure above (insert reference to matrix), the carbon price categories have been chosen to span a broad range of mitigation options, with stepped carbon price increases that best reflect increases in global mitigation efforts, while at the same time ensuring that inclusion of the land-use emulator in MESSAGE, does not result in too long solving times. The transitional constraints between pathways further contribute to smoothing the step wise increases between the carbon price categories. 
+The transition rate has been set, so that land-use pathways can be phased out at a rate of 5% annually.  This value was derived based on a senstivity anlysis, showing that this factor best matched the transition results of the full fletched GLOBIOM model.
+
+Adaptation of the Reference-Energy-System (RES)
+-----------------------------------------------
+
+Prior to the use of the land-use emulator, biomass supply curves were used to inform the energy system of the biomass potentials available (see REFERENCE GEA?). The addition of the land-use emulator, require two adapatations of the RES to be undertaken. On the on hand, an additional level/commodity has been introduced to link the land-use pathways with the energy system, while emissions are depicted using the dedicated land-emissions formulation (add reference to GAMS). 
+
+.. _fig-LU_Emulator_adapted_RES:
+.. figure:: /_static/Land-Use_Pathway_RES.PNG
+   :width: 800px
+
+   Adaptations of a simplified RES for inclusion of the land-use emulator.
+
+Note, that because each of the land-use pathways has been calculated accounting for mitigation of all GHGs, MESSAGE scenarios aiming to only reduce a single green-house-gas for example, will either need to account for the fact that a price on CH4 for example will equally result in reductions of CO2 and N2O in the land-use sector.  Equally, other land-use policies, such as the limitation of deforestation, can be implemented, but will most likely include other land-use related trends, which are artifacts as opposed to results of the policy, due to the limitations of using an emulator, and therefore a limited solution space, meant to represent the broad as opposed to specific policy land-scape consistent with SSP storylines. For some larger projects or studies, matrixes, i.e. input data sets from GLOBIOM, can be tailored to allow the analysis of specific policies in MESSAGE.
+
+Results and validation
+----------------------
+
+The figure below illustrates, based on the land-use pathway trade-off surface, how scenarios navigate throughout the land-use pathways over the course of a scenario. The figures do not show time specific usage. For scenarios of varying degrees of long-term climate mitigation policies, the orange shaded areas represent the choice of land-use pathways combined over time for all regions. The scenarios include a.) a SSP2 based no-policy, baseline scenario, b.) a SSP2 based policy scenario with a cumulative CO2 budget of 1600 GtCO2 (limiting global temperature increase compared to pre-industrial times to approximately 1.9 °C) c.)  a SSP2 bassed policy scenario with a cumulative CO2 budget of 1000 GtCO2 (limiting global temperature increase compared to pre-industrial times to approximately 1.6 °C) d.) a SSP2 based policy scenario with a cumulative CO2 budget of 400 GtCO2 (limiting global temperature increase compared to pre-industrial times to approximately 1.3 °C). More details on these scenarios can be found here (insert link to CD-Links documentation).
+
+
+.. _fig-CD_Links_SSP2_v2_Global_LanduseSurface_RESULTS:
+.. figure:: /_static/CD_Links_SSP2_v2_Global_LanduseSurface_RESULTS.png
+   :width: 800px
+
+   Global land-use pathway choice across different scenarios.
+
+In addition to informing MESSAGE of the biomass and land-use emission quantity and prices, the land-use matrix includes additional information related to land-use by type, production and demand of other non-bioenergy related land produces as well as information on crop-yields, irrigation water-use, amongst others.
