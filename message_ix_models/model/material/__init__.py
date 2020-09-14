@@ -4,7 +4,7 @@ import click
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 
-from .data import gen_data
+from .data import add_data
 from .util import read_config
 
 
@@ -14,7 +14,7 @@ def build(scenario):
     spec = get_spec()
 
     # Apply to the base scenario
-    apply_spec(scenario, spec, gen_data)
+    apply_spec(scenario, spec, add_data)
 
     return scenario
 
@@ -28,12 +28,14 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
     context = read_config()
 
     # Update the ScenarioInfo objects with required and new set elements
-    for set_name, config in context["material"]["set"].items():
-        # Required elements
-        require.set[set_name].extend(config.get("require", []))
+    for type in "generic", "common", "steel",:
+        for set_name, config in context["material"][type].items():
+            # for cat_name, detail in config.items():
+            # Required elements
+            require.set[set_name].extend(config.get("require", []))
 
-        # Elements to add
-        add.set[set_name].extend(config.get("add", []))
+            # Elements to add
+            add.set[set_name].extend(config.get("add", []))
 
     return dict(require=require, remove=ScenarioInfo(), add=add)
 
