@@ -335,7 +335,7 @@ def gen_data_generic(scenario, dry_run=False):
 
     # 'World' is included by default when creating a message_ix.Scenario().
     # Need to remove it for the China bare model
-    nodes.remove('World')
+    # nodes.remove('World')
 
     for t in config["technology"]["add"]:
 
@@ -444,7 +444,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     print(allyears, modelyears, fmy)
 
-    nodes.remove('World') # For the bare model
+    # nodes.remove('World') # For the bare model
 
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:
