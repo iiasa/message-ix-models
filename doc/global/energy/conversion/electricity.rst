@@ -2,12 +2,24 @@
 
 Electricity
 ===========
-MESSAGE covers a large number of electricity generation options utilizing a wide range of primary energy sources. For fossil-based electricity generation technologies, typically a number of different technology variants with different efficiencies, environmental characteristics and costs are represented. For example, in the case of coal, MESSAGE distinguishes subcritical and supercritical pulverized coal (PC) power plants where the subcritical variant is available with and without flue gas desulpherization/denox and one internal gasification combined cycle (IGCC) power plant. The superciritical PC and IGCC plants are also available with carbon capture and storage (CCS) which also can be retrofitted to some of the existing PC power plants. :numref:`tab-elec` below shows the different power plant types represented in MESSAGE.
+MESSAGE covers a large number of electricity generation options utilizing a wide range of primary energy sources. For fossil-based electricity generation technologies, typically a number of different technology variants with different efficiencies, environmental characteristics and costs are represented. For example, in the case of coal, MESSAGE distinguishes subcritical and supercritical pulverized coal (PC) power plants where the subcritical variant is available with and without flue gas desulpherization/denox and one internal gasification combined cycle (IGCC) power plant. The supercritical PC and IGCC plants are also available with carbon capture and storage (CCS) which also can be retrofitted to some of the existing PC power plants (see :numref:`fig-elec-fossil-nuc`). :numref:`tab-elec` below shows the different power plant types represented in MESSAGE.
+
+.. _fig-elec-fossil-nuc:
+.. figure:: /_static/electricity_generation_fossil_nuclear.png
+
+   Schematic diagram of the fossil and nuclear power plants represented in MESSAGEix.
+
 
 Four different nuclear power plant types are represented in MESSAGE, i.e. two light water reactor types, a fast breeder reactor and a high temperature reactor, but only the two light water types are included in the majority of scenarios being developed with MESSAGE in the recent past. In addition, MESSAGE includes a representation of the nuclear fuel cycle, including reprocessing and the plutonium fuel cycle, and keeps track of the amounts of nuclear waste being produced.
 
-The conversion of five renewable energy sources to electricity is represented in MESSAGE (see :numref:`tab-elec`). For wind power, both on- and offshore electricity generation are covered and for solar energy, photovoltaics (PV) and solar thermal (concentrating solar power, CSP) electricity generation are included in MESSAGE (see also sections on :ref:`renewable` and :ref:`syst_integration`).
+The conversion of five renewable energy sources to electricity is represented in MESSAGE (see :numref:`fig-elec-renewable`). For wind power, both on- and offshore electricity generation are covered and for solar energy, photovoltaics (PV) and solar thermal (concentrating solar power, CSP) electricity generation are included in MESSAGE (see also sections on :ref:`renewable` and :ref:`syst_integration`).
 Two CSP technologies are modeled: (1) a flexible plant with a solar multiple of one (SM1) and 6 h of thermal storage and (2) a baseload plant with a solar multiple of three (SM3) and 12 h of storage (Johnson et al. 2016, :cite:`johnson_vre_2016`).
+
+.. _fig-elec-renewable:
+.. figure:: /_static/electricity_generation_renewable.png
+
+   Schematic diagram of the renewable power generation options represented in MESSAGEix.
+
 
 Most thermal power plants offer the option of coupled heat production (CHP, see :numref:`tab-elec`). This option is modeled as a passout turbine via a penalty on the electricity generation efficiency. In addition to the main electricity generation technologies described in this section, also the co-generation of electricity in conversion technologies primarily devoted to producing non-electric energy carriers (e.g., synthetic liquid fuels) is included in MESSAGE (see section on :ref:`other`).
 
@@ -41,7 +53,7 @@ Most thermal power plants offer the option of coupled heat production (CHP, see 
    |                  +----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
    |                  | combined cycle power plant                                                                                                                                                                                                                                                             | yes                      |
    |                  +----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
-   |                  | combined cycle power plant with CCS                                                                                                                                                                                                                                                            | yes                      |
+   |                  | combined cycle power plant with CCS                                                                                                                                                                                                                                                    | yes                      |
    +------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
    | nuclear          | nuclear light water reactor (Gen II)                                                                                                                                                                                                                                                   | yes                      |
    |                  +----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------+
