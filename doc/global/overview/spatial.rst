@@ -13,11 +13,25 @@ The combined MESSAGE-GLOBIOM framework has global coverage and divides the world
 
 The country definitions of the 11 MESSAGE regions are described in the table below (:numref:`tab-reg`). In some scenarios, the MESSAGE region of FSU is disaggregated into four sub-regions resulting in a 14-region MESSAGE model.
 
+.. _tab-regions:
+.. table:: Listing of 11 regions used in MESSAGE-GLOBIOM, including their country definitions.
+
+   +------------------+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | MESSAGE regions  | Definition     | List of countries                                                                                                                                                                                                                                                                                                                       |
+   +==================+================+=========================================================================================================================================================================================================================================================================================================================================+
+   | **NAM**          | North America  | Canada, Guam, Puerto Rico, United States of America, Virgin Islands                                                                                                                                                                                                                                                                     |
+   +------------------+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | **WEU**          | Western Europe | Andorra, Austria, Azores, Belgium, Canary Islands, Channel Islands, Cyprus, Denmark, Faeroe Islands, Finland, France, Germany, Gibraltar, Greece, Greenland, Iceland, Ireland, Isle of Man, Italy, Liechtenstein, Luxembourg, Madeira, Malta, Monaco, Netherlands, Norway, Portugal, Spain, Sweden, Switzerland, Turkey, United Kingdom |
+   +------------------+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+This is a test.
+
 .. _tab-reg:
 .. list-table:: Listing of 11 regions used in MESSAGE-GLOBIOM, including their country definitions.
+   :widths: 20 20 60
    :header-rows: 1
 
-   * - 11 MESSAGE regions
+   * - MESSAGE regions
      - Definition
      - List of countries
    * - **NAM**
@@ -58,10 +72,11 @@ In addition to the 11 geographical regions, in MESSAGE there is a global trade r
 
 .. _tab-globiomreg:
 .. list-table:: Listing of 30 regions used in GLOBIOM, including their country definitions and the mapping to the 11 regions of the combined MESSAGE-GLOBIOM model.
+   :widths: 20 20 60
    :header-rows: 1
 
-   * - 11 MESSAGE regions
-     - 30 GLOBIOM regions
+   * - MESSAGE regions
+     - GLOBIOM regions
      - List of countries
    * - **NAM**
      - Canada
