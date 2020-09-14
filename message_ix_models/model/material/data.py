@@ -428,7 +428,7 @@ def gen_data_steel(scenario, dry_run=False):
     data_steel = process_china_data_tec()
     # Special treatment for time-dependent Parameters
     data_steel_vc = read_var_cost()
-    tec_vc = set(data_steel_vc.technology)
+    tec_vc = set(data_steel_vc.technology) # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -441,6 +441,8 @@ def gen_data_steel(scenario, dry_run=False):
     nodes = s_info.N
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
+
+    print(allyears, modelyears, fmy)
 
     nodes.remove('World') # For the bare model
 
@@ -468,7 +470,7 @@ def gen_data_steel(scenario, dry_run=False):
             unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
             node_loc=nodes))
 
-            print(param_name, df)
+            # print(param_name, df)
             results[param_name].append(df)
 
         # Iterate over parameters
@@ -580,13 +582,41 @@ def gen_data_steel(scenario, dry_run=False):
     return results
 
 
+
+DATA_FUNCTIONS = [
+    gen_data_steel,
+    gen_data_generic,
+    # gen_data_aluminum,
+]
+
+
+# Try to handle multiple data input functions from different materials
+def add_data(scenario, dry_run=False):
+    """Populate `scenario` with MESSAGE-Transport data."""
+    # Information about `scenario`
+    info = ScenarioInfo(scenario)
+
+    # Check for two "node" values for global data, e.g. in
+    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
+    if {"World", "R11_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R11_GLB' from node list for data generation")
+        info.set["node"].remove("R11_GLB")
+
+    for func in DATA_FUNCTIONS:
+        # Generate or load the data; add to the Scenario
+        log.info(f'from {func.__name__}()')
+        add_par_data(scenario, func(scenario), dry_run=dry_run)
+
+    log.info('done')
+
+
 # Generate a fake steel demand
 def gen_mock_demand():
     # True steel use 2010 (China) = 537 Mt/year
     # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
     gdp_growth = [0.121448215899944, \
         0.0733079014579874, 0.0348154093342843, \
-        0.021827616787921,0.0134425983942219, 0.0108320197485592, \
+        0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
         0.00884341208063,0.00829374133206562, 0.00649794573935969]
     demand = [(x+1) * 537 for x in gdp_growth]
 
