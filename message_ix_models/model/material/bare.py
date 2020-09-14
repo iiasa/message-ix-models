@@ -68,33 +68,6 @@ def create_res(context=None, quiet=True):
     return scenario
 
 
-DATA_FUNCTIONS = [
-    gen_data_steel,
-    gen_data_generic,
-    # gen_data_aluminum,
-]
-
-
-# Try to handle multiple data input functions from different materials
-def add_data(scenario, dry_run=False):
-    """Populate `scenario` with MESSAGE-Transport data."""
-    # Information about `scenario`
-    info = ScenarioInfo(scenario)
-
-    # Check for two "node" values for global data, e.g. in
-    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
-    if {"World", "R11_GLB"} < set(info.set["node"]):
-        log.warning("Remove 'R11_GLB' from node list for data generation")
-        info.set["node"].remove("R11_GLB")
-
-    for func in DATA_FUNCTIONS:
-        # Generate or load the data; add to the Scenario
-        log.info(f'from {func.__name__}()')
-        add_par_data(scenario, func(scenario), dry_run=dry_run)
-
-    log.info('done')
-
-
 
 def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     """Return the spec for the MESSAGE-China bare RES.
@@ -163,7 +136,7 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     add.set['type_tec'] = context["material"]["common"]["type_tec"]["add"]
     add.set['mode'] = context["material"]["common"]["mode"]["require"] +\
         context["material"]["generic"]["mode"]["add"]
-        
+
     add.set['emission'] = context["material"]["common"]["emission"]["require"] +\
         context["material"]["common"]["emission"]["add"]
 
