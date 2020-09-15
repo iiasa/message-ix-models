@@ -16,8 +16,9 @@ common:
     - lightoil
     - hydrogen
     - lh2
-    - biomass
     - d_heat
+    add:
+    - biomass
     - water
     - fresh_water
 
@@ -31,9 +32,9 @@ common:
     - water_supply
 
   # Currently only works with China
-  region:
+  node:
     # Just one is sufficient, since the RES will never be generated with a mix
-    require:
+    add:
     - China
     remove:
     - World
@@ -43,18 +44,25 @@ common:
     - industry
 
   mode:
-    require:
+    add:
     - M1
 
   emission:
-    require:
+    add:
     - CO2
     - CH4
     - N2O
     - NOx
     - SO2
+    - PM2p5 # Just add there since it is already in Shaohui's data
+
+  year:
     add:
-    - PM2p5
+    - 2010
+
+  type_year:
+    add:
+    - 2010
 
 generic:
   commodity:
