@@ -23,6 +23,7 @@ common:
 
   level:
     require:
+      # We do not require the secondary and primary levels ??
     - primary
     - secondary
     - useful
@@ -64,6 +65,7 @@ generic:
   level:
     add:
     - useful_steel
+    - useful_aluminum
 
   technology:
     add:
@@ -81,6 +83,20 @@ generic:
     - fc_h2_steel
     - solar_steel
     - dheat_steel
+    - furnace_coal_aluminum
+    - furnace_foil_aluminum
+    - furnace_loil_aluminum
+    - furnace_ethanol_aluminum
+    - furnace_biomass_aluminum
+    - furnace_methanol_aluminum
+    - furnace_gas_aluminum
+    - furnace_elec_aluminum
+    - furnace_h2_aluminum
+    - hp_gas_aluminum
+    - hp_elec_aluminum
+    - fc_h2_aluminum
+    - solar_aluminum
+    - dheat_aluminum
 
   mode:
     add:
@@ -167,6 +183,68 @@ fertilizer:
     - coal_NH3
     - fueloil_NH3
     - NH3_to_N_fertil
+
+  aluminum:
+    commodity:
+      add:
+      - aluminum
+
+    level:
+      add:
+      - new_scrap
+      - old_scrap
+      - useful_aluminum
+      - final_material
+      - useful_material
+      - product
+      - secondary_material
+      - demand_aluminum
+
+    technology:
+      add:
+      - soderberg_aluminum
+      - prebake_aluminum
+      - secondary_aluminum
+      - prep_secondary_aluminum
+      - finishing_aluminum
+      - manuf_aluminum
+      - scrap_recovery_aluminum
+      - alumina_supply
+      - DUMMY_coal_supply
+      - DUMMY_gas_supply
+      - DUMMY_loil_supply
+      - DUMMY_foil_supply
+      - DUMMY_electr_supply
+      - DUMMY_ethanol_supply
+      - DUMMY_methanol_supply
+      - DUMMY_hydrogen_supply
+      - DUMMY_dist_heating
+      - DUMMY_biomass_supply
+      
+  fertilizer:
+    commodity:
+      require:
+      - electr
+      - freshwater_supply
+      add:
+      - NH3
+      - Fertilizer Use|Nitrogen
+
+    level:
+      add:
+      - material_interim
+      - material_final
+
+    technology:
+      require:
+      - h2_bio_ccs  # Reference for vent-to-storage ratio
+      add:
+      - biomass_NH3
+      - electr_NH3
+      - gas_NH3
+      - coal_NH3
+      - fueloil_NH3
+      - NH3_to_N_fertil
 
 
 # NB this codelist added by #125
