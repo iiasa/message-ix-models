@@ -5,7 +5,7 @@ These webpages document the IIASA Integrated Assessment Modeling (IAM) framework
 
 **This documentation is in part still under development and will be supplemented with additional information in certain sections.**
 
-When referring to MESSAGE-GLOBIOM 1.0 as described in this document, please use the following citations (Download :download:`ris </_static/message-globiom.ris>`, :download:`BibTeX </_static/message-globiom.bib>`):
+When referring to MESSAGEix-GLOBIOM 1.0 as described in this document, please use the following citations (Download :download:`ris </_static/message-globiom.ris>`, :download:`BibTeX </_static/message-globiom.bib>`):
 
 * Krey V, Havlik P, Kishimoto PN, Fricko O, Zilliacus J, Gidden M, Strubegger M, Kartasasmita G, Ermolieva T, Forsell N, Guo F, Gusti M, Huppmann D, Johnson N, Kikstra J, Kindermann G, Kolp P, Lovat F, McCollum DL, Min J, Pachauri S, Parkinson SC, Rao S, Rogelj J, Ünlü G, Valin H, Wagner P, Zakeri B, Obersteiner M, Riahi K (2020) MESSAGE-GLOBIOM 1.0 Documentation. International Institute for Applied Systems Analysis (IIASA), Laxenburg, Austria `https://docs.messageix.org/global/ <https://docs.messageix.org/global/>`_.
 
@@ -37,10 +37,5 @@ We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for 
    z_bibliography
    annex/index
    glossary
-
-.. toctree::
-   :hidden:
-
-   _extra/index
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
