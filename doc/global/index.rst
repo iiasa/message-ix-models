@@ -34,7 +34,6 @@ We thank Edward Byers, Jessica Jewell, Ruslana Palatnik, Narasimha D. Rao, and F
    water/index
    emissions/index
    climate/index
-   z_bibliography
    annex/index
 
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
