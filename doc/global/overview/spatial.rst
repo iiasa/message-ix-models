@@ -11,11 +11,11 @@ The combined MESSAGE-GLOBIOM framework has global coverage and divides the world
 
    Map of 11 MESSAGE-GLOBIOM regions including their aggregation to the four regions used in the Representative Concentration Pathways (RCPs).
 
-The country definitions of the 11 MESSAGE regions are described in the table below (:numref:`tab-reg`). In some scenarios, the MESSAGE region of FSU (Former SOviet Union) is disaggregated into four sub-regions resulting in a 14-region MESSAGE model.
+The country definitions of the 11 MESSAGE regions are described in the table below (:numref:`tab-reg`). In some scenarios, the MESSAGE region of FSU (Former Soviet Union) is disaggregated into four sub-regions resulting in a 14-region MESSAGE model.
 
 .. _tab-reg:
 .. list-table:: Listing of 11 regions used in MESSAGE-GLOBIOM, including their country definitions.
-   :widths: 13 17 70
+   :widths: 13 18 69
    :header-rows: 1
 
    * - MESSAGE regions
@@ -26,7 +26,7 @@ The country definitions of the 11 MESSAGE regions are described in the table bel
      - Canada, Guam, Puerto Rico, United States of America, Virgin Islands
    * - **WEU**
      - Western Europe
-     - Andorra, Austria, Azores, Belgium, Canary Islands, Channel Islands, Cyprus, Denmark, Faeroe Islands, Finland, France, Germany, Gibraltar, Greece, Greenland, Iceland, Ireland, Isle of Man, Italy, Liechtenstein, Luxembourg, Madeira, Malta, Monaco, Netherlands, Norway, Portugal, Spain, Sweden, Switzerland, Turkey, United Kingdom                                                                                |
+     - Andorra, Austria, Azores, Belgium, Canary Islands, Channel Islands, Cyprus, Denmark, Faeroe Islands, Finland, France, Germany, Gibraltar, Greece, Greenland, Iceland, Ireland, Isle of Man, Italy, Liechtenstein, Luxembourg, Madeira, Malta, Monaco, Netherlands, Norway, Portugal, Spain, Sweden, Switzerland, Turkey, United Kingdom
    * - **PAO**
      - Pacific OECD
      - Australia, Japan, New Zealand
