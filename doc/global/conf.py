@@ -6,13 +6,13 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'MESSAGE-GLOBIOM'
+project = 'MESSAGEix-GLOBIOM'
 copyright = '2016–2020, IIASA Energy Program'
 author = 'IIASA Energy Program'
 # The major project version, used as the replacement for |version|.
-version = '2020-03-05'
+version = '2020-09-16'
 # The full project version, used as the replacement for |release|.
-release = '2020-03-05'
+release = '2020-09-16'
 
 # -- General configuration ------------------------------------------------
 
