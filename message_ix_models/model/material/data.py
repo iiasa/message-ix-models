@@ -160,8 +160,6 @@ def read_data_aluminum():
 
     # Ensure config is loaded, get the context
     context = read_config()
-    # Shorter access to sets configuration
-    sets = context["material"]["aluminum"]
 
     # Read the file
     data_aluminum = pd.read_excel(
@@ -182,7 +180,7 @@ def read_data_aluminum():
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
 
-    return data_aluminum,data_aluminum_hist
+    return data_aluminum, data_aluminum_hist
 
 def read_data_generic():
     """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
@@ -208,10 +206,6 @@ def read_data_generic():
     # To make sure we use the same units
 
     return data_generic
-
-
-# TODO: Adding the active years to the tables
-# TODO: If there are differnet values for the years.
 
 def gen_data_aluminum(scenario, dry_run=False):
     """Generate data for materials representation of aluminum."""
@@ -326,17 +320,49 @@ def gen_data_aluminum(scenario, dry_run=False):
     aluminum_demand = pd.DataFrame({
             'node': nodes,
             'commodity': 'aluminum',
-            'level': 'demand',
+            'level': 'demand_aluminum',
             'year': modelyears,
             'time': 'year',
             'value': values ,
             'unit': 'Mt',
         })
     results["demand"].append(aluminum_demand)
+
+    # Add historical data
+
+    for tec in data_aluminum_hist["technology"].unique():
+
+        y_hist = [y for y in allyears if y < fmy]
+
+        common_hist = dict(
+            year_vtg= y_hist,
+            year_act= y_hist,
+            mode="M1",
+            time="year",)
+
+        val_act = data_aluminum_hist.\
+        loc[(data_aluminum_hist["technology"]== tec), "production"]
+
+        df_hist_act = (make_df("historical_activity", technology=tec, \
+        value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
+
+        c_factor = data_aluminum.loc[(data_aluminum["technology"]== tec) \
+                    & (data_aluminum["parameter"]=="capacity_factor"), "value"]
+
+        val_cap = data_aluminum_hist.loc[(data_aluminum_hist["technology"]== tec), \
+                                        "new_production"] / c_factor
+
+        df_hist_cap = (make_df("historical_new_capacity", technology=tec, \
+        value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
+
+        results["historical_activity"].append(df_hist_act)
+        results["historical_new_capacity""].append(df_hist_cap)
+
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     return results
 
+#TODO: Add historical data ?
 def gen_data_generic(scenario, dry_run=False):
     # Load configuration
 
@@ -441,7 +467,7 @@ def gen_data_generic(scenario, dry_run=False):
 
     return results
 
-def gen_variable_data():
+def gen_data_variable():
 
     # Generates variables costs for dummy technologies
 
@@ -451,7 +477,7 @@ def gen_variable_data():
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    allyears = s_info.set['year'] #s_info.Y is only for modeling years
+    allyears = s_info.set['year']
     modelyears = s_info.Y #s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
@@ -698,6 +724,8 @@ def gen_mock_demand_aluminum():
 
     # The future projection of the demand: Increases by half of the GDP growth rate.
     # Starting from 2020.
+    context = read_config()
+
     gdp_growth = pd.Series([0.121448215899944, 0.0733079014579874, \
                         0.0348154093342843, 0.021827616787921,\
                         0.0134425983942219, 0.0108320197485592, \
@@ -710,13 +738,13 @@ def gen_mock_demand_aluminum():
 
     i = 0
     values = []
-    val = (17.3 * (1+ 0.147718884937996/2) ** duration_period[i])
+    val = (17.3 * (1+ 0.147718884937996/2) ** context.time_step)
     values.append(val)
 
     for element in gdp_growth:
     i = i + 1
     if i < len(model_horizon):
-        val = (val * (1+ element/2) ** duration_period[i])
+        val = (val * (1+ element/2) ** context.time_step)
         values.append(val)
 
     # Adjust the demand according to old scrap level.
