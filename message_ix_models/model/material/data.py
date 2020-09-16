@@ -143,7 +143,7 @@ def read_var_cost():
 
     # Read the file
     df = pd.read_excel(
-        context.get_path("material", "China_steel_renamed.xlsx"),
+        context.get_path("material", "dummy_variable_costs.xlsx"),
         sheet_name="var_cost",
     )
 
@@ -173,12 +173,16 @@ def read_data_aluminum():
 
     data_aluminum= data_aluminum.drop(['Region', 'Source', 'Description'], axis = 1)
 
+    data_aluminum_hist = pd.read_excel(context.get_path("material", \
+    "aluminum_techno_economic.xlsx",sheet_name="data_historical", \
+    usecols = "A:F")
+
     # Unit conversion
 
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
 
-    return data_aluminum
+    return data_aluminum,data_aluminum_hist
 
 def read_data_generic():
     """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
@@ -208,6 +212,7 @@ def read_data_generic():
 
 # TODO: Adding the active years to the tables
 # TODO: If there are differnet values for the years.
+
 def gen_data_aluminum(scenario, dry_run=False):
     """Generate data for materials representation of aluminum."""
     # Load configuration
@@ -218,10 +223,18 @@ def gen_data_aluminum(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_aluminum = read_data_aluminum()
+    data_aluminum, data_aluminum_hist = read_data_aluminum()
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
+
+    allyears = s_info.set['year']
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    fmy = s_info.y0
+
+    nodes.remove('World')
 
     # Iterate over technologies
 
@@ -251,6 +264,12 @@ def gen_data_aluminum(scenario, dry_run=False):
 
         params = data_aluminum.loc[(data_aluminum["technology"] == t),\
         "parameter"].values.tolist()
+
+        # Availability of the technology
+        av = data_aluminum.loc[(data_aluminum["technology"] == t),
+                               'availability'].values[0]
+        modelyears = [year for year in modelyears if year >= av]
+        yva = yv_ya.loc[yv_ya.year_vtg >= av]
 
         # Iterate over parameters
         for par in params:
@@ -301,13 +320,22 @@ def gen_data_aluminum(scenario, dry_run=False):
                 **common).pipe(broadcast, node_loc=nodes))
                 results[param_name].append(df)
 
-    # Concatenate to one data frame per parameter
-    results_aluminum = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+    # Add the dummy alluminum demand
+
+    values = gen_mock_demand_aluminum()
+    aluminum_demand = pd.DataFrame({
+            'node': nodes,
+            'commodity': 'aluminum',
+            'level': 'demand',
+            'year': modelyears,
+            'time': 'year',
+            'value': values ,
+            'unit': 'Mt',
+        })
+    results["demand"].append(aluminum_demand)
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     return results
-
-# TODO: Different input values over the years: Add a function that modifies
-#the values over the years
 
 def gen_data_generic(scenario, dry_run=False):
     # Load configuration
@@ -413,6 +441,47 @@ def gen_data_generic(scenario, dry_run=False):
 
     return results
 
+def gen_variable_data():
+
+    # Generates variables costs for dummy technologies
+
+    data_vc = read_var_cost()
+    tec_vc = set(data_vc.technology)
+
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    allyears = s_info.set['year'] #s_info.Y is only for modeling years
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    fmy = s_info.y0
+
+    for t in config['technology']['add']:
+
+        # Special treatment for time-varying params
+        if t in tec_vc:
+            common = dict(
+                time="year",
+                time_origin="year",
+                time_dest="year",)
+
+            param_name = "var_cost"
+            val = data_vc.loc[(data_vc["technology"] == t), 'value']
+            units = data_vc.loc[(data_vc["technology"] == t),'units'].values[0]
+            mod = data_vc.loc[(data_vc["technology"] == t), 'mode']
+            yr = data_vc.loc[(data_vc["technology"] == t), 'year']
+
+            df = (make_df(param_name, technology=t, value=val,\
+            unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
+            node_loc=nodes))
+            results[param_name].append(df)
+
+    # Concatenate to one data frame per parameter
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    return results
+
 
 def gen_data_steel(scenario, dry_run=False):
     """Generate data for materials representation of steel industry.
@@ -427,8 +496,8 @@ def gen_data_steel(scenario, dry_run=False):
     # Techno-economic assumptions
     data_steel = process_china_data_tec()
     # Special treatment for time-dependent Parameters
-    data_steel_vc = read_var_cost()
-    tec_vc = set(data_steel_vc.technology) # set of tecs with var_cost
+    #data_steel_vc = read_var_cost()
+    #tec_vc = set(data_steel_vc.technology)
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -452,26 +521,26 @@ def gen_data_steel(scenario, dry_run=False):
         params = data_steel.loc[(data_steel["technology"] == t),\
             "parameter"].values.tolist()
 
-        # Special treatment for time-varying params
-        if t in tec_vc:
-            common = dict(
-                time="year",
-                time_origin="year",
-                time_dest="year",)
-
-            param_name = "var_cost"
-            val = data_steel_vc.loc[(data_steel_vc["technology"] == t), 'value']
-            units = data_steel_vc.loc[(data_steel_vc["technology"] == t), \
-            'units'].values[0]
-            mod = data_steel_vc.loc[(data_steel_vc["technology"] == t), 'mode']
-            yr = data_steel_vc.loc[(data_steel_vc["technology"] == t), 'year']
-
-            df = (make_df(param_name, technology=t, value=val,\
-            unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
-            node_loc=nodes))
-
-            # print(param_name, df)
-            results[param_name].append(df)
+        # # Special treatment for time-varying params
+        # if t in tec_vc:
+        #     common = dict(
+        #         time="year",
+        #         time_origin="year",
+        #         time_dest="year",)
+        #
+        #     param_name = "var_cost"
+        #     val = data_steel_vc.loc[(data_steel_vc["technology"] == t), 'value']
+        #     units = data_steel_vc.loc[(data_steel_vc["technology"] == t), \
+        #     'units'].values[0]
+        #     mod = data_steel_vc.loc[(data_steel_vc["technology"] == t), 'mode']
+        #     yr = data_steel_vc.loc[(data_steel_vc["technology"] == t), 'year']
+        #
+        #     df = (make_df(param_name, technology=t, value=val,\
+        #     unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
+        #     node_loc=nodes))
+        #
+        #     print(param_name, df)
+        #     results[param_name].append(df)
 
         # Iterate over parameters
         for par in params:
@@ -569,7 +638,7 @@ def gen_data_steel(scenario, dry_run=False):
 
             elif par_name == "relation_lower":
 
-                demand = gen_mock_demand()
+                demand = gen_mock_demand_steel()
 
                 df = (make_df(par_name, value=demand, unit='t',\
                 **common_rel).pipe(broadcast, node_rel=nodes))
@@ -611,7 +680,7 @@ def add_data(scenario, dry_run=False):
 
 
 # Generate a fake steel demand
-def gen_mock_demand():
+def gen_mock_demand_steel():
     # True steel use 2010 (China) = 537 Mt/year
     # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
     gdp_growth = [0.121448215899944, \
@@ -622,6 +691,39 @@ def gen_mock_demand():
 
     return demand
 
+def gen_mock_demand_aluminum():
+
+    # 17.3 Mt in 2010 to match the historical production from IAI.
+    # This is the amount right after electrolysis.
+
+    # The future projection of the demand: Increases by half of the GDP growth rate.
+    # Starting from 2020.
+    gdp_growth = pd.Series([0.121448215899944, 0.0733079014579874, \
+                        0.0348154093342843, 0.021827616787921,\
+                        0.0134425983942219, 0.0108320197485592, \
+                        0.00884341208063, 0.00829374133206562, \
+                        0.00649794573935969],index=pd.Index(model_horizon, \
+                                                            name='Time'))
+    # Values in 2010 from IAI.
+    fin_to_useful = 0.971
+    useful_to_product = 0.866
+
+    i = 0
+    values = []
+    val = (17.3 * (1+ 0.147718884937996/2) ** duration_period[i])
+    values.append(val)
+
+    for element in gdp_growth:
+    i = i + 1
+    if i < len(model_horizon):
+        val = (val * (1+ element/2) ** duration_period[i])
+        values.append(val)
+
+    # Adjust the demand according to old scrap level.
+
+    values = [x * fin_to_useful * useful_to_product for x in values]
+
+    return values
 
 def get_data(scenario, context, **options):
     """Data for the bare RES."""
