@@ -14,10 +14,7 @@ The targets formulated in the NDCs come in many different flavors. This applies 
 4. Macro-economic targets
 
 A detailed description of the methodological implementation of the NDCs in the global energy model, along with an extensive list of the energy-related targets considered can be found in Rogelj et al. (2017) :cite:`rogelj_indc_2017`.
-
-.. TODO complete the following. See iiasa/message_doc#42
-
-   Additional policies implemented in the model can also be found in ('what reference for the CD_Links related policies?`).
+Additional policies implemented in the model can also be found in Roelfsema et al. (2020) :cite:`roelfsema_2020_paris`.
 
 Emission targets
 ----------------
@@ -36,8 +33,8 @@ Some NDCs specify capacity installation targets, e.g. for planned power plants w
 
 .. TODO complete the following. See iiasa/message_doc#43
 
-   Macro-economic targets
-   ----------------------
+Macro-economic targets
+----------------------
 
 
 Representation of taxes and subsidies
