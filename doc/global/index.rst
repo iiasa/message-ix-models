@@ -21,7 +21,7 @@ or specific assessments, please use the following citation:
 * Huppmann D, Gidden M, Fricko O, Kolp P, Orthofer C, Pimmer M, Kushin N, Vinca A, Mastrucci A, Riahi K, Krey V (2019) The MESSAGEix Integrated Assessment Model and the ix modeling platform (ixmp): An open framework for integrated and cross-cutting analysis of energy, climate, the environment, and sustainable development. Environmental Modelling & Software, Volume 112, Pages 143-156, `DOI:0.1016/j.envsoft.2018.11.012 <https://doi.org/0.1016/j.envsoft.2018.11.012>`_.
 
 
-We thank Edward Byers, Jessica Jewell, Simon C. Parkinson, Narasimha D. Rao for their valuable comments that helped improving this manuscript.
+We thank Edward Byers, Jessica Jewell, Ruslana Palatnik, Narasimha D. Rao, and Fabio Sferra for their valuable comments that helped improving this manuscript.
 
 .. toctree::
    :maxdepth: 1
