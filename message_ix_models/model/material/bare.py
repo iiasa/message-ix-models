@@ -7,7 +7,7 @@ import message_ix
 from message_data.tools import Code, ScenarioInfo, get_context, set_info, add_par_data
 from .build import apply_spec
 from .util import read_config
-from .data import get_data, gen_data_steel, gen_data_generic, gen_data_aluminum
+from .data import get_data, gen_data_steel, gen_data_generic, gen_data_aluminum, gen_data_variable
 import message_data
 
 
@@ -75,6 +75,7 @@ DATA_FUNCTIONS = [
     gen_data_steel,
     gen_data_generic,
     gen_data_aluminum,
+    gen_data_variable
 ]
 
 # Try to handle multiple data input functions from different materials
