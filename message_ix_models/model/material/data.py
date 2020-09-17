@@ -80,7 +80,7 @@ def process_china_data_tec():
 
     # Read the file
     data_steel_china = pd.read_excel(
-        context.get_path("material", "China_steel_renamed.xlsx"),
+        context.get_path("material", "China_steel_renamed - test.xlsx"),
         sheet_name="technologies",
     )
 
@@ -126,7 +126,7 @@ def process_china_data_rel():
 
     # Read the file
     data_steel_china = pd.read_excel(
-        context.get_path("material", "China_steel_renamed.xlsx"),
+        context.get_path("material", "China_steel_renamed - test.xlsx"),
         sheet_name="relations",
     )
 
@@ -141,10 +141,14 @@ def read_var_cost():
     # Ensure config is loaded, get the context
     context = read_config()
 
+    if context.scenario_info['scenario'] == 'NPi400':
+        sheet_name="var_cost_NPi400"
+    else:
+        sheet_name = "var_cost"
+
     # Read the file
     df = pd.read_excel(
-        context.get_path("material", "dummy_variable_costs.xlsx"),
-        sheet_name="var_cost",
+        context.get_path("material", "China_steel_renamed - test.xlsx"), sheet_name
     )
 
     df = pd.melt(df, id_vars=['technology', 'mode', 'units'], \
@@ -389,7 +393,7 @@ def gen_data_generic(scenario, dry_run=False):
 
     # 'World' is included by default when creating a message_ix.Scenario().
     # Need to remove it for the China bare model
-    # nodes.remove('World')
+    nodes.remove('World')
 
     for t in config["technology"]["add"]:
 
@@ -539,7 +543,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     print(allyears, modelyears, fmy)
 
-    # nodes.remove('World') # For the bare model
+    nodes.remove('World') # For the bare model
 
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:

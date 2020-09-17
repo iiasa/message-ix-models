@@ -10,9 +10,10 @@ import message_ix as mix
 from message_ix import Scenario
 
 import message_data.model.material.data as dt
+from message_data.model.material.plotting import Plots
 import pyam
 
-from message_data.model.material import bare
+# from message_data.model.material import bare
 
 from message_data.tools.cli import Context
 
@@ -21,7 +22,14 @@ from message_data.tools import (
     make_df,
     make_io,
     make_matched_dfs,
+    set_info,
 )
+
+from message_data.model.bare import create_res
+# from message_data.model.create import create_res
+from message_data.model.material import build, get_spec
+
+from message_data.model.material.util import read_config
 
 #%% Main test run
 
@@ -32,11 +40,46 @@ ctx = Context()
 # Set default scenario/model names
 ctx.scenario_info.setdefault('model', 'Material_test')
 ctx.scenario_info.setdefault('scenario', 'baseline')
+ctx['period_start'] = 2020
+ctx['regions'] = 'China'
 
-# Create bare model/scenario and solve it
-scen = bare.create_res(context = ctx)
+# Use general code to create a Scenario with some stuff in it
+scen = create_res(context = ctx)
+
+# Use material-specific code to add certain stuff
+a = build(scen)
+
+# Solve the model
 scen.solve()
 
+p = Plots(scen, 'China', firstyear=2020)
+p.plot_activity(baseyear=True, subset=['bf_steel', 'dri_steel', 'eaf_steel'])
+p.plot_capacity(baseyear=True, subset=['bf_steel', 'dri_steel', 'eaf_steel'])
+
+
+#%% run with NPi prices
+Context._instance = []
+ctx = Context()
+
+# Set default scenario/model names
+ctx.scenario_info.setdefault('model', 'Material_test')
+ctx.scenario_info.setdefault('scenario', 'NPi400')
+ctx['period_start'] = 2020
+ctx['regions'] = 'China'
+
+# Use general code to create a Scenario with some stuff in it
+scen_np = create_res(context = ctx)
+
+# Use material-specific code to add certain stuff
+a = build(scen_np)
+
+# Solve the model
+scen_np.solve()
+
+p = Plots(scen_np, 'China', firstyear=2020)
+p.plot_activity(baseyear=True, subset=['bf_steel', 'dri_steel', 'eaf_steel'])
+p.plot_capacity(baseyear=True, subset=['bf_steel', 'dri_steel', 'eaf_steel'])
+p.plot_new_capacity(baseyear=True, subset=['bf_steel', 'dri_steel', 'eaf_steel'])
 
 
 #%% Auxiliary random test stuff
@@ -60,7 +103,7 @@ bare.add_data(scen)
 
 
 info = ScenarioInfo(scen)
-a = bare.get_spec(ctx)
+a = get_spec()
 
 mp_samp = ixmp.Platform(name="local")
 mp_samp.scenario_list()
