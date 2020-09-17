@@ -157,35 +157,6 @@ def read_var_cost():
 
     return df
 
-
-# Question: Do we need read data dunction seperately for all materials ?
-def read_data_aluminum():
-    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
-
-    # Ensure config is loaded, get the context
-    context = read_config()
-
-    # Read the file
-    data_aluminum = pd.read_excel(
-        context.get_path("material", "aluminum_techno_economic.xlsx"),
-        sheet_name="aluminum",
-    )
-
-    # Clean the data
-
-    data_aluminum= data_aluminum.drop(['Region', 'Source', 'Description'], axis = 1)
-
-    data_aluminum_hist = pd.read_excel(context.get_path("material", \
-    "aluminum_techno_economic.xlsx",sheet_name="data_historical", \
-    usecols = "A:F")
-
-    # Unit conversion
-
-    # At the moment this is done in the excel file, can be also done here
-    # To make sure we use the same units
-
-    return data_aluminum, data_aluminum_hist
-
 def read_data_generic():
     """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
 
@@ -210,6 +181,26 @@ def read_data_generic():
     # To make sure we use the same units
 
     return data_generic
+
+def read_data_aluminum():
+    """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
+
+    # Ensure config is loaded, get the context
+    context = read_config()
+
+    # Read the file
+    data_aluminum = pd.read_excel(
+        context.get_path("material", "aluminum_techno_economic.xlsx"),
+        sheet_name="data")
+    # Clean the data
+
+    data_aluminum= data_aluminum.drop(['Region', 'Source', 'Description'], axis = 1)
+
+    data_aluminum_hist = pd.read_excel(context.get_path("material", \
+    "aluminum_techno_economic.xlsx"),sheet_name="data_historical", \
+    usecols = "A:F")
+
+    return data_aluminum,data_aluminum_hist
 
 def gen_data_aluminum(scenario, dry_run=False):
     """Generate data for materials representation of aluminum."""
@@ -280,9 +271,9 @@ def gen_data_aluminum(scenario, dry_run=False):
             & (data_aluminum["parameter"] == par)),'value'].values[0]
 
             common = dict(
-            year_vtg= vintage_years,
-            year_act = act_years,
-            mode="standard",
+            year_vtg= yv_ya.year_vtg,
+            year_act= yv_ya.year_act,
+            mode="M1",
             time="year",
             time_origin="year",
             time_dest="year",)
@@ -320,23 +311,21 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     # Add the dummy alluminum demand
 
-    values = gen_mock_demand_aluminum()
-    aluminum_demand = pd.DataFrame({
-            'node': nodes,
-            'commodity': 'aluminum',
-            'level': 'demand_aluminum',
-            'year': modelyears,
-            'time': 'year',
-            'value': values ,
-            'unit': 'Mt',
-        })
-    results["demand"].append(aluminum_demand)
+    values = gen_mock_demand_aluminum(scenario)
+
+    demand_al = (make_df("demand", commodity= "aluminum", \
+    level= "demand_aluminum", year = modelyears, value=values, unit='Mt',\
+    time= "year").pipe(broadcast, node=nodes))
+
+    results["demand"].append(demand_al)
 
     # Add historical data
 
     for tec in data_aluminum_hist["technology"].unique():
+        print(tec)
 
         y_hist = [y for y in allyears if y < fmy]
+        print(y_hist)
 
         common_hist = dict(
             year_vtg= y_hist,
@@ -350,8 +339,10 @@ def gen_data_aluminum(scenario, dry_run=False):
         df_hist_act = (make_df("historical_activity", technology=tec, \
         value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
 
-        c_factor = data_aluminum.loc[(data_aluminum["technology"]== tec) \
-                    & (data_aluminum["parameter"]=="capacity_factor"), "value"]
+        results["historical_activity"].append(df_hist_act)
+
+        c_factor = data_aluminum.loc[((data_aluminum["technology"]== tec) \
+                    & (data_aluminum["parameter"]=="capacity_factor")), "value"].values
 
         val_cap = data_aluminum_hist.loc[(data_aluminum_hist["technology"]== tec), \
                                         "new_production"] / c_factor
@@ -359,8 +350,7 @@ def gen_data_aluminum(scenario, dry_run=False):
         df_hist_cap = (make_df("historical_new_capacity", technology=tec, \
         value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
 
-        results["historical_activity"].append(df_hist_act)
-        results["historical_new_capacity""].append(df_hist_cap)
+        results["historical_new_capacity"].append(df_hist_cap)
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
@@ -471,7 +461,13 @@ def gen_data_generic(scenario, dry_run=False):
 
     return results
 
-def gen_data_variable():
+def gen_data_variable(scenario, dry_run=False):
+
+    # Load configuration
+    config = read_config()["material"]["generic"]
+
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
 
     # Generates variables costs for dummy technologies
 
@@ -721,7 +717,7 @@ def gen_mock_demand_steel():
 
     return demand
 
-def gen_mock_demand_aluminum():
+def gen_mock_demand_aluminum(scenario):
 
     # 17.3 Mt in 2010 to match the historical production from IAI.
     # This is the amount right after electrolysis.
@@ -729,12 +725,14 @@ def gen_mock_demand_aluminum():
     # The future projection of the demand: Increases by half of the GDP growth rate.
     # Starting from 2020.
     context = read_config()
+    s_info = ScenarioInfo(scenario)
+    modelyears = s_info.Y #s_info.Y is only for modeling years
 
     gdp_growth = pd.Series([0.121448215899944, 0.0733079014579874, \
                         0.0348154093342843, 0.021827616787921,\
                         0.0134425983942219, 0.0108320197485592, \
                         0.00884341208063, 0.00829374133206562, \
-                        0.00649794573935969],index=pd.Index(model_horizon, \
+                        0.00649794573935969],index=pd.Index(modelyears, \
                                                             name='Time'))
     # Values in 2010 from IAI.
     fin_to_useful = 0.971
@@ -746,10 +744,10 @@ def gen_mock_demand_aluminum():
     values.append(val)
 
     for element in gdp_growth:
-    i = i + 1
-    if i < len(model_horizon):
-        val = (val * (1+ element/2) ** context.time_step)
-        values.append(val)
+        i = i + 1
+        if i < len(modelyears):
+            val = (val * (1+ element/2) ** context.time_step)
+            values.append(val)
 
     # Adjust the demand according to old scrap level.
 
