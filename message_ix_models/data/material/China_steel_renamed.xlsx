@@ -1,3 +1,8 @@
 version https://git-lfs.github.com/spec/v1
+<<<<<<< master
 oid sha256:e48e7a16deea9672bc0f3d9854a5ddbb50b8109148f5a404ea0ddbe4ca0d6b29
 size 54442
+=======
+oid sha256:56d26e538005bd7249c10f35702e32f30ae081b470cc9bd2bc48ec6b66833e35
+size 51675
+>>>>>>> excel data files rearranged errors fixed
