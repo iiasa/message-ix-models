@@ -80,7 +80,7 @@ def solve(context):
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
     }.get(context.scenario_info["scenario"])
 
-    # Chnage this part - the model name ?? 
+    # Chnage this part - the model name ??
 
     if context.scenario_info["model"] != "CD_Links_SSP2":
         print("WARNING: this code is not tested with this base scenario!")
