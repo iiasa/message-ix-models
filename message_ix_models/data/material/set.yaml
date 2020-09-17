@@ -192,42 +192,32 @@ fertilizer:
     - fueloil_NH3
     - NH3_to_N_fertil
 
-  aluminum:
-    commodity:
-      add:
-      - aluminum
+aluminum:
+  commodity:
+    add:
+    - aluminum
 
-    level:
-      add:
-      - new_scrap
-      - old_scrap
-      - useful_aluminum
-      - final_material
-      - useful_material
-      - product
-      - secondary_material
-      - demand_aluminum
+  level:
+    add:
+    - new_scrap
+    - old_scrap
+    - useful_aluminum
+    - final_material
+    - useful_material
+    - product
+    - secondary_material
+    - demand_aluminum
 
-    technology:
-      add:
-      - soderberg_aluminum
-      - prebake_aluminum
-      - secondary_aluminum
-      - prep_secondary_aluminum
-      - finishing_aluminum
-      - manuf_aluminum
-      - scrap_recovery_aluminum
-      - DUMMY_alumina_supply
-      - DUMMY_coal_supply
-      - DUMMY_gas_supply
-      - DUMMY_loil_supply
-      - DUMMY_foil_supply
-      - DUMMY_electr_supply
-      - DUMMY_ethanol_supply
-      - DUMMY_methanol_supply
-      - DUMMY_hydrogen_supply
-      - DUMMY_dist_heating
-      - DUMMY_biomass_supply
+  technology:
+    add:
+    - soderberg_aluminum
+    - prebake_aluminum
+    - secondary_aluminum
+    - prep_secondary_aluminum
+    - finishing_aluminum
+    - manuf_aluminum
+    - scrap_recovery_aluminum
+    - DUMMY_alumina_supply
 
   fertilizer:
     commodity:
@@ -267,11 +257,12 @@ non-ferrous:
   description: Metals and alloys which do not contain iron. Measured as the total mass of material.
   unit: Mt
 
-aluminum:
-  name: Aluminum
-  description: Aluminum (or aluminium) is a chemical element with the symbol Al. Measured as the total mass of material.
-  unit: Mt
-  parent: non-ferrous
+# Creates an error because it is the same name with the above aluminum 
+# aluminum:
+#   name: Aluminum
+#   description: Aluminum (or aluminium) is a chemical element with the symbol Al. Measured as the total mass of material.
+#   unit: Mt
+#   parent: non-ferrous
 
 copper:
   name: Copper
