@@ -1,6 +1,6 @@
+from pathlib import Path
 from message_ix_models import Context
 from message_ix_models.util import as_codes, load_package_data
-
 
 def read_config():
     """Read configuration from set.yaml."""
@@ -19,6 +19,7 @@ def read_config():
         return context
 
     # Read material.yaml
+    context.metadata_path=Path("C:/Users/unlu/Documents/GitHub/message_data/data")
     context.load_config("material", "set")
 
     # Use a shorter name
