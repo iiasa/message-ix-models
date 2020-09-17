@@ -23,7 +23,7 @@ SETTINGS = dict(
     first_model_year = [2020],
     period_end=[2100],
     regions=["China"],
-    res_with_dummies=[False],
+    res_with_dummies=[True],
     time_step=[10],
 )
 
@@ -43,6 +43,7 @@ def create_res(context=None, quiet=True):
         :func:`.build.apply_spec`.
     """
     mp = context.get_platform()
+    mp.add_unit('Mt')  
 
     # Model and scenario name for the RES
     model_name = context.scenario_info['model']
