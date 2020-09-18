@@ -53,12 +53,16 @@ def cli():
 @click.pass_obj
 def create_bare(context, regions, dry_run):
     """Create the RES from scratch."""
-    from .bare import create_res
+    from message_data.model.bare import create_res
 
     if regions:
         context.regions = regions
 
+    # to allow historical years
+    context.period_start = 2020
+
     scen = create_res(context)
+    build(scen)
 
     # Solve
     if not dry_run:
