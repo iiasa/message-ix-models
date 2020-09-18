@@ -148,12 +148,13 @@ def read_var_cost():
 
     # Read the file
     df = pd.read_excel(
-        context.get_path("material", "China_steel_renamed - test.xlsx"), sheet_name
-    )
+        context.get_path("material", "China_steel_renamed - test.xlsx"), sheet_name)
 
     df = pd.melt(df, id_vars=['technology', 'mode', 'units'], \
         value_vars=[2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100], \
         var_name='year')
+
+
 
     return df
 
@@ -635,41 +636,48 @@ def gen_data_steel(scenario, dry_run=False):
     # TODO: relation is used to set external demand.
     # We can also have two redundant commodity outputs from manufacturing stage
     # and set external demand on one of them.
-    for r in config['relation']['add']:
+    # for r in config['relation']['add']:
+    #
+    #     # Read the file
+    #     rel_steel = process_china_data_rel()
+    #
+    #     params = rel_steel.loc[(rel_steel["relation"] == r),\
+    #         "parameter"].values.tolist()
+    #
+    #     common_rel = dict(
+    #         year_rel = modelyears,
+    #         year_act = modelyears,
+    #         mode = 'M1',
+    #         relation = r,)
+    #
+    #     for par_name in params:
+    #         if par_name == "relation_activity":
+    #
+    #             val = rel_steel.loc[((rel_steel["relation"] == r) \
+    #                 & (rel_steel["parameter"] == par_name)),'value'].values[0]
+    #             tec = rel_steel.loc[((rel_steel["relation"] == r) \
+    #                 & (rel_steel["parameter"] == par_name)),'technology'].values[0]
+    #
+    #             df = (make_df(par_name, technology=tec, value=val, unit='t',\
+    #             **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
+    #
+    #             results[par_name].append(df)
+    #
+    #         elif par_name == "relation_lower":
+    #
+    #             demand = gen_mock_demand()
+    #
+    #             df = (make_df(par_name, value=demand, unit='t',\
+    #             **common_rel).pipe(broadcast, node_rel=nodes))
+    #
+    #             results[par_name].append(df)
 
-        # Read the file
-        rel_steel = process_china_data_rel()
-
-        params = rel_steel.loc[(rel_steel["relation"] == r),\
-            "parameter"].values.tolist()
-
-        common_rel = dict(
-            year_rel = modelyears,
-            year_act = modelyears,
-            mode = 'M1',
-            relation = r,)
-
-        for par_name in params:
-            if par_name == "relation_activity":
-
-                val = rel_steel.loc[((rel_steel["relation"] == r) \
-                    & (rel_steel["parameter"] == par_name)),'value'].values[0]
-                tec = rel_steel.loc[((rel_steel["relation"] == r) \
-                    & (rel_steel["parameter"] == par_name)),'technology'].values[0]
-
-                df = (make_df(par_name, technology=tec, value=val, unit='t',\
-                **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
-
-                results[par_name].append(df)
-
-            elif par_name == "relation_lower":
-
-                demand = gen_mock_demand_steel()
-
-                df = (make_df(par_name, value=demand, unit='t',\
-                **common_rel).pipe(broadcast, node_rel=nodes))
-
-                results[par_name].append(df)
+    # Create external demand param
+    parname = 'demand'
+    demand = gen_mock_demand()
+    df = (make_df(parname, level='demand', commodity='steel', value=demand, unit='t', \
+        year=modelyears, **common).pipe(broadcast, node=nodes))
+    results[parname].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}

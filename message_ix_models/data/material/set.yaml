@@ -143,6 +143,7 @@ steel:
     - useful_material
     - waste_material
     - product
+    - demand
 
   technology:
     add:
@@ -163,9 +164,9 @@ steel:
     - DUMMY_freshwater_supply
     - DUMMY_water_supply
 
-  relation:
-    add:
-    - steel_demand
+  # relation:
+  #   add:
+  #   - steel_demand
 
 fertilizer:
   commodity:
