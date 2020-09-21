@@ -1,3 +1,7 @@
+from functools import partial
+from operator import attrgetter
+from pathlib import Path
+
 from iam_units import registry
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix.reporting import Reporter, computations
@@ -99,6 +103,13 @@ def from_external_data(info: ScenarioInfo) -> Reporter:
     # sets in the Scenario
     rep.add("n", dask.core.quote(info.set["node"]))
     rep.add("y", dask.core.quote(info.set["year"]))
+    rep.add(
+        "cat_year",
+        pd.DataFrame(
+            [["firstmodelyear", info.set["year"][0]]],
+            columns=["type_year", "year"],
+        )
+    )
 
     def _add(ctx_key, rep_key, **kwargs):
         """Add context data (i.e. files) to the reporter."""
@@ -112,7 +123,8 @@ def from_external_data(info: ScenarioInfo) -> Reporter:
     _add("transport gdp", "GDP:n-y", units="GUSD / year")
     _add("transport mer-to-ppp", "MERtoPPP:n-y")
 
-    # TODO add external data source for PRICE_COMMODITY
+    # Commodity prices: all equal to 1
+    # TODO add external data source
     context.data["transport PRICE_COMMODITY"] = (
         xr.ones_like(context.data["transport gdp"])
         .expand_dims({"c": ["transport"]})
@@ -137,7 +149,10 @@ def prepare_reporter(rep: Reporter) -> None:
 
     # Update with transport-specific keys from config.yaml
     context = read_config()
-    config.update(transport=context["transport config"])
+    config.update({
+        "transport": context["transport config"],
+        "output dir": Path.cwd(),
+    })
 
     # Configure the reporter; keys are stored
     rep.configure(**config)
@@ -150,9 +165,10 @@ def prepare_reporter(rep: Reporter) -> None:
     # Values based on configuration
     speed_key = rep.add("speed:t", speed, "config")
     whour_key = rep.add("whour:", whour, "config")
+    lambda_key = rep.add("lambda:", _lambda, "config")
 
     # Base share data
-    share_key = rep.add("shares:n-t-y", base_shares, "n", "y", "config")
+    rep.add("base shares:n-t-y", base_shares, "n", "y", "config")
 
     # Population data from GEA
     pop_key = rep.add("population:n-y", population, "n", "config")
@@ -187,14 +203,24 @@ def prepare_reporter(rep: Reporter) -> None:
     rep.add(
         "share weight",
         share_weight,
-        share_key,
+        "base shares:n-t-y",
         gdp_ppp_cap,
         cost_key,
         "n",
         "y",
         "t",
         "cat_year",
-        "config"
+        "config",
+    )
+
+    # Shares
+    rep.add(
+        "shares:n-t-y",
+        partial(logit, dim="t"),
+        cost_key,
+        "share weight",
+        lambda_key,
+        "y",
     )
 
     # Total PDT shared out by mode
@@ -221,7 +247,12 @@ def base_shares(n, y, config):
 def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
     """Calculate mode share weights."""
     # Non-global nodes
-    nodes = list(filter(lambda name: "GLB" not in name and name != "World", n))
+    nodes = list(
+        filter(
+            lambda n_: "GLB" not in n_ and n_ != "World",
+            map(attrgetter("id"), n),
+        )
+    )
 
     # Modes from configuration
     modes = config["transport"]["demand modes"]
@@ -244,9 +275,10 @@ def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
     tmp = s_y0 / c_y0 ** lamda
 
     # Normalize against first mode's weight
-    # TODO should be able to avoid a cast here
+    # TODO should be able to avoid a cast and align here
     tmp = tmp / tmp.sel(t0, drop=True)
-    weight.loc[y0] = xr.DataArray.from_series(tmp).sel(y0)
+    *_, tmp = xr.align(weight.loc[y0], xr.DataArray.from_series(tmp).sel(y0))
+    weight.loc[y0] = tmp
 
     # Normalize to 1 across modes
     weight.loc[y0] = weight.loc[y0] / weight.loc[y0].sum("t")
@@ -257,7 +289,10 @@ def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
         ref_nodes = config["transport"]["share weight convergence"][node]
 
         # Ratio between this node's GDP and that of the first reference node
-        scale = gdp_ppp_cap.sel(yC) / gdp_ppp_cap.sel(n=ref_nodes[0], **yC)
+        scale = float(
+            gdp_ppp_cap.sel(n=node, **yC, drop=True)
+            / gdp_ppp_cap.sel(n=ref_nodes[0], **yC, drop=True)
+        )
 
         # Scale weights in yC
         weight.loc[dict(n=node, **yC)] = (
@@ -390,4 +425,37 @@ def cost(price, gdp_ppp_cap, whours, speeds, votm, n):
     # NB for some reason, the 'y' dimension of result becomes `float`, rather
     #    than `int`, in this step
     result = price + (gdp_ppp_cap * votm) / (whours * speeds)
+
+    # commented: for debugging only; TODO make this configurable
+    # Perturb the cost of one mode
+    # print(result)
+    # mask = result.reset_index()["t"] != "2W"
+    # print(mask)
+    # result = result.where(mask.values, 10 * result)
+    # print(result)
+
     return result
+
+
+def logit(x, k, lamda, y, dim=None):
+    r"""Compute probabilities for a logit random utility model.
+
+    The choice probabilities have the form:
+
+    .. math::
+
+       Pr(i) = \frac{k_j x_j ^{\lambda_j}}
+                    {\sum_{\forall i \in D} k_i x_i ^{\lambda_i}}
+               \forall j \in D
+
+    …where :math:`D` is the dimension named by the `dim` argument. All other
+    dimensions are broadcast automatically.
+    """
+    # Systematic utility
+    u = (k * (x ** lamda)).sel(y=y)
+
+    # commented: for debugging
+    # u.to_csv("u.csv")
+
+    # Logit probability
+    return u / u.sum(dim)
