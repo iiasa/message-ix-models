@@ -135,11 +135,12 @@ def get_USTIMES_MA3T(info):
         )
 
     # commented: incomplete / for debugging
-    # # Activity constraints
+    # Activity constraints
     # data.update(
     #     make_matched_dfs(
     #         base=i_o["output"],
-    #         initial_activity_up=2.,
+    #         bound_new_capacity_up=1.,
+    #         initial_activity_up=1.,
     #     )
     # )
 
