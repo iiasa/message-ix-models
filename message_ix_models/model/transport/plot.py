@@ -20,6 +20,9 @@ class Plot:
     inputs = []
     name = ""
 
+    # TODO add static geoms
+    __static = []
+
     def __call__(self, config, *args):
         path = config["output dir"] / f"{self.name}.pdf"
         plot_or_plots = self.generate(*args)
@@ -102,4 +105,28 @@ class ModeShare1(Plot):
             )
 
 
-PLOTS = [ModeShare0, ModeShare1]
+class ModeShare2(Plot):
+    name = "demand-by-mode"
+    inputs = ["transport pdt:n-y-t:mode", "config"]
+
+    def generate(self, data, config):
+        # Select a subset of technologies
+        df = (
+            data.to_series().rename("value").sort_index().reset_index()
+            .astype(dict(value=float))
+        )
+
+        return (
+            p9.ggplot(df, p9.aes(x="y", y="value", fill="t"))
+            + p9.theme(figure_size=(11.7, 8.3))
+            + p9.facet_wrap(["n"], ncol=2, labeller=LabelFirst("Node: {}"))
+            + p9.geom_bar(stat="identity", width=4)
+            + p9.labs(
+                x="Period",
+                y="Activity [km / pass / a]",
+                fill="Transport mode group",
+            )
+        )
+
+
+PLOTS = [ModeShare0, ModeShare1, ModeShare2]
