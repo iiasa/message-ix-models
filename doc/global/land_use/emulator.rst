@@ -146,7 +146,7 @@ Such validation or *feedback* runs were conducted for the shared-socio-economic 
  
 
 .. _fig-SSP1_feedback:
-.. figure:: /_static/SSP1_feedback.png
+.. figure:: /_static/SSP1_Feedback.png
    :width: 800px
 
    SSP1 Emulated land-use results vs. GLOBIOM feedback.
