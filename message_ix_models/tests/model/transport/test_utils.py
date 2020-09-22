@@ -12,13 +12,22 @@ from message_data.model.transport.utils import (
 def test_add_cl(session_context):
     """add_commodity_and_level() preserves the content of other columns."""
     read_config()
+
+    # Input data missing 'commodity' and 'level'
     df_in = pd.DataFrame([
-        ["R11_AFR", "ICE_conv", None, None],
-        ["R11_WEU", "ELC_100", None, None],
-    ], columns=["node", "technology", "commodity", "level"])
+        ["R11_AFR", None, None, "ICE_conv"],
+        ["R11_WEU", None, None, "ELC_100"],
+    ], columns=["node", "commodity", "level", "technology"])
 
-    df_out = add_commodity_and_level(df_in)
+    df_out = add_commodity_and_level(df_in, default_level="foo")
 
+    # Output is the same shape
+    assert df_out.shape == (2, 4)
+
+    # All NaNs are filled
+    assert not df_out.isna().any().any(), df_out
+
+    # Existing columns have the same content
     for col in "node", "technology":
         pdt.assert_series_equal(df_in[col], df_out[col])
 

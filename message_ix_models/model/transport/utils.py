@@ -2,6 +2,7 @@ from collections import defaultdict
 from functools import lru_cache
 from itertools import product
 
+import pandas as pd
 import xarray as xr
 
 from message_data.tools import Code, as_codes, get_context, load_data, set_info
@@ -100,13 +101,21 @@ def consumer_groups(rtype=Code):
         raise ValueError(rtype)
 
 
-def add_commodity_and_level(df, default_level=None):
-    # Add input commodity and level
+def add_commodity_and_level(
+    df: pd.DataFrame,
+    default_level=None,
+) -> pd.DataFrame:
+    """Add input 'commodity' and 'level' to `df` based on 'technology'."""
+
+    # Retrieve transport technology information from configuration
     t_info = get_context()["transport set"]["technology"]["add"]
+
+    # Retrieve general commodity information
     c_info = set_info("commodity")
 
     @lru_cache()
     def t_cl(t):
+        """Return the commodity and level given technology `t`."""
         input = t_info[t_info.index(t)].anno["input"]
         # Commodity must be specified
         commodity = input['commodity']
@@ -118,10 +127,11 @@ def add_commodity_and_level(df, default_level=None):
             or default_level
         )
 
-        return commodity, level
+        return pd.Series(dict(commodity=commodity, level=level))
 
     def func(row):
-        row[['commodity', 'level']] = t_cl(row['technology'])
-        return row
+        """Modify `row` to fill in 'commodity' and 'level' columns."""
+        return row.fillna(t_cl(row['technology']))
 
+    # Process every row in `df`; return a new DataFrame
     return df.apply(func, axis=1)
