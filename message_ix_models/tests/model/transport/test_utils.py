@@ -1,6 +1,26 @@
+import pandas as pd
+import pandas.testing as pdt
 import xarray as xr
 
-from message_data.model.transport.utils import consumer_groups, read_config
+from message_data.model.transport.utils import (
+    add_commodity_and_level,
+    consumer_groups,
+    read_config,
+)
+
+
+def test_add_cl(session_context):
+    """add_commodity_and_level() preserves the content of other columns."""
+    read_config()
+    df_in = pd.DataFrame([
+        ["R11_AFR", "ICE_conv", None, None],
+        ["R11_WEU", "ELC_100", None, None],
+    ], columns=["node", "technology", "commodity", "level"])
+
+    df_out = add_commodity_and_level(df_in)
+
+    for col in "node", "technology":
+        pdt.assert_series_equal(df_in[col], df_out[col])
 
 
 def test_read_config(session_context):
