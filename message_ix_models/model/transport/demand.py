@@ -1,5 +1,4 @@
 from functools import partial
-from operator import attrgetter
 from pathlib import Path
 
 from iam_units import registry
@@ -12,7 +11,13 @@ import xarray as xr
 import message_ix
 
 from message_data.reporting import CONFIG
-from message_data.tools import ScenarioInfo, broadcast, get_context, make_df
+from message_data.tools import (
+    Context,
+    ScenarioInfo,
+    broadcast,
+    get_context,
+    make_df,
+)
 from .build import generate_set_elements
 from .data.groups import get_gea_population
 from .utils import read_config
@@ -87,14 +92,17 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
     return rep
 
 
-def from_external_data(info: ScenarioInfo) -> Reporter:
+def from_external_data(
+    info: ScenarioInfo,
+    context: Context = None,
+) -> Reporter:
     """Return a Reporter for calculating demand from external data.
 
     Returns
     -------
     Reporter
     """
-    context = read_config()
+    context = read_config(context)
 
     # Empty reporter
     rep = Reporter()
@@ -131,12 +139,12 @@ def from_external_data(info: ScenarioInfo) -> Reporter:
     )
     _add("transport PRICE_COMMODITY", "PRICE_COMMODITY:n-c-y")
 
-    prepare_reporter(rep)
+    prepare_reporter(rep, context)
 
     return rep
 
 
-def prepare_reporter(rep: Reporter) -> None:
+def prepare_reporter(rep: Reporter, context: Context = None) -> None:
     """Prepare `rep` for calculating transport demand.
 
     Parameters
@@ -148,7 +156,7 @@ def prepare_reporter(rep: Reporter) -> None:
     config = CONFIG.copy()
 
     # Update with transport-specific keys from config.yaml
-    context = read_config()
+    context = read_config(context)
     config.update({
         "transport": context["transport config"],
         "output dir": Path.cwd(),
@@ -171,7 +179,12 @@ def prepare_reporter(rep: Reporter) -> None:
     rep.add("base shares:n-t-y", base_shares, "n", "y", "config")
 
     # Population data from GEA
-    pop_key = rep.add("population:n-y", population, "n", "config")
+    pop_key = rep.add(
+        "population:n-y",
+        partial(population, context=context),
+        "n",
+        "config"
+    )
 
     # PPP GDP, total and per capita
     gdp_ppp = rep.add("product", "GDP PPP:n-y", gdp, mer_to_ppp)
@@ -360,14 +373,14 @@ def votm(gdp_ppp_cap):
     return 1 / (1 + np.exp((30000 - gdp_ppp_cap * 1000) / 20000))
 
 
-def population(nodes, config):
+def population(nodes, config, context=None):
     """Return population data from GEA.
 
     Dimensions: n-y. Units: 10⁶ person/passenger.
     """
     pop_scenario = config["transport"]["data source"]["population"]
     return Quantity(
-        get_gea_population(nodes)
+        get_gea_population(nodes, context=context)
         .sel(area_type="total", scenario=pop_scenario, drop=True)
         .rename(node="n", year="y"),
         units="Mpassenger"
@@ -413,7 +426,7 @@ def cost(price, gdp_ppp_cap, whours, speeds, votm, n):
     """
     # When ixmp.reporting.Quantity is AttrSeries, this is needed to avoid
     # "ValueError: cannot join with no overlapping index names"
-    speeds = pd.concat({n_.id: speeds for n_ in n[1:]}, names="n")
+    speeds = pd.concat({n_: speeds for n_ in n[1:]}, names="n")
 
     # NB for some reason, the 'y' dimension of result becomes `float`, rather
     #    than `int`, in this step
