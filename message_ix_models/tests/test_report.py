@@ -4,7 +4,6 @@ from functools import partial
 from ixmp.reporting.quantity import Quantity
 from message_ix.reporting import Reporter
 import pandas as pd
-import pytest
 
 from message_data.reporting import prepare_reporter
 from message_data.reporting.computations import combine
@@ -18,9 +17,11 @@ MIN_CONFIG = {
 }
 
 
-@pytest.fixture
-def global_config(test_context):
-    yield test_context.get_config_file('report', 'global')
+# commented: was only used in test_report_bare_res(); uncomment if 1+ more
+# use(s) are added.
+# @pytest.fixture
+# def global_config(test_context):
+#     yield test_context.get_config_file('report', 'global')
 
 
 def test_computation_combine():
@@ -49,13 +50,13 @@ def test_computation_combine():
     assert rep.get('d').loc[('foo2', 'bar1')] == 3 * 0.5 + 20 * 1 + 200 * 2
 
 
-def test_report_bare_res(test_context, solved_res, global_config):
+def test_report_bare_res(solved_res, session_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     # Prepare the reporter
     reporter, key = prepare_reporter(
         solved_res,
-        config=global_config,
-        key='message:default',
+        config=session_context.get_config_file("report", "global"),
+        key="message:default",
     )
 
     # Get the default report

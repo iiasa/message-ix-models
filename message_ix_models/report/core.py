@@ -97,6 +97,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
     )
 
     rep.configure(**config)
+
     # Reference to the configuration as stored in the reporter
     config = rep.graph['config']
 
