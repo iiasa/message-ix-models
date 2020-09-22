@@ -77,6 +77,7 @@ def callback(rep: Reporter):
     - ``transport all``: all of the above.
     """
     from message_data.reporting.util import infer_keys
+    from .demand import prepare_reporter as prepare_demand
 
     # Read transport reporting configuration
     context = read_config()
@@ -105,6 +106,9 @@ def callback(rep: Reporter):
         keys = rep.aggregate(k, 'transport', dict(t=t_groups), sums=True)
         all_keys.append(keys[0])
         log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
+
+    # Add ex-post mode and demand calculations
+    prepare_demand(rep)
 
     # Add all plots
     plot_keys = []
