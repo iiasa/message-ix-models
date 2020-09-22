@@ -58,6 +58,8 @@ common:
 
   year:
     add:
+    - 1990
+    - 2000
     - 2010
 
   type_year:
