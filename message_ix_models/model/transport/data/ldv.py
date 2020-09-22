@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 
 from openpyxl import load_workbook
 import pandas as pd
@@ -8,6 +9,9 @@ from message_data.model.transport.utils import (
     read_config,
 )
 from message_data.tools import make_df, make_io, make_matched_dfs
+
+
+log = logging.getLogger(__name__)
 
 
 #: Input file containing data from US-TIMES and MA3T models.
@@ -52,6 +56,8 @@ def get_USTIMES_MA3T(info):
         if node == 'World':
             continue
 
+        log.debug(node)
+
         # Worksheet for this region
         sheet_node = node.split('_')[-1].lower()
         sheet = wb[f'MESSAGE_LDV_{sheet_node}']
@@ -86,30 +92,34 @@ def get_USTIMES_MA3T(info):
             )
 
     # Concatenate data frames
-    data = {par: pd.concat(dfs) for par, dfs in data.items()}
+    data = {
+        par: pd.concat(dfs, ignore_index=True) for par, dfs in data.items()
+    }
 
     # Convert 'efficiency' into 'input' and 'output' parameter data
-    base = data.pop('efficiency')
+    base = data.pop("efficiency")
     i_o = make_io(
-        src=(None, None, 'GWa'),
-        dest=('transport pax vehicle', 'useful', 'Gv km'),
-        efficiency=1. / base['value'],
-        on='input',
+        src=(None, None, "GWa"),
+        dest=("transport pax vehicle", "useful", "Gv km"),
+        efficiency=1. / base["value"],
+        on="input",
         # Other data
-        node_loc=base['node'],
-        node_origin=base['node'],
-        node_dest=base['node'],
-        technology=base['technology'],
-        year_vtg=base['year'],
-        year_act=base['year'],
-        mode='all',
+        node_loc=base["node"],
+        node_origin=base["node"],
+        node_dest=base["node"],
+        technology=base["technology"],
+        year_vtg=base["year"],
+        year_act=base["year"],
+        mode="all",
         # No subannual detail
-        time='year',
-        time_origin='year',
-        time_dest='year',
+        time="year",
+        time_origin="year",
+        time_dest="year",
     )
 
-    i_o['input'] = add_commodity_and_level(i_o['input'])
+    i_o['input'] = add_commodity_and_level(
+        i_o['input'], default_level="secondary"
+    )
     data.update(i_o)
 
     # Add technical lifetimes
