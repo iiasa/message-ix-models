@@ -1,46 +1,17 @@
 import logging
 
-import matplotlib
 import plotnine as p9
 
+from message_data.reporting.plot import Plot
 
 log = logging.getLogger(__name__)
 
-try:
-    matplotlib.use("cairo")
-except ImportError:
-    log.info(
-        f"'cairo' not available; using {matplotlib.get_backend()} matplotlib "
-        "backend"
-    )
-
-
-class Plot:
-    save_args = dict(verbose=False)
-    inputs = []
-    name = ""
-
-    # TODO add static geoms
-    __static = []
-
-    def __call__(self, config, *args):
-        path = config["output dir"] / f"{self.name}.pdf"
-        plot_or_plots = self.generate(*args)
-
-        try:
-            # Single plot
-            plot_or_plots.save(path, **self.save_args)
-        except AttributeError:
-            # Iterator containing multiple plots
-            p9.save_as_pdf_pages(plot_or_plots, path, **self.save_args)
-
-        return path
-
-    def generate(*args):
-        return p9.ggplot(*args)
-
 
 class LabelFirst:
+    """Labeller that labels the first item using a format string.
+
+    Subsequent items are named with the bare value only.
+    """
     __name__ = None
 
     def __init__(self, fmt_string):
@@ -53,8 +24,8 @@ class LabelFirst:
         return self.fmt_string.format(value) if first else value
 
 
-class ModeShare0(Plot):
-    name = "mode-share"
+class LDVTechShare0(Plot):
+    name = "ldv-tech-share"
     inputs = ["out:nl-t-ya:transport"]
 
     def generate(self, data):
@@ -75,8 +46,8 @@ class ModeShare0(Plot):
         )
 
 
-class ModeShare1(Plot):
-    name = "mode-share-by-cg"
+class LDVTechShare1(Plot):
+    name = "ldv-tech-share-by-cg"
     inputs = ["out:nl-t-ya-c:transport"]
 
     def generate(self, data):
@@ -129,4 +100,4 @@ class ModeShare2(Plot):
         )
 
 
-PLOTS = [ModeShare0, ModeShare1, ModeShare2]
+PLOTS = [LDVTechShare0, LDVTechShare1, ModeShare2]
