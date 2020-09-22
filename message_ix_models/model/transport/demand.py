@@ -101,7 +101,7 @@ def from_external_data(info: ScenarioInfo) -> Reporter:
 
     # Sets based on `info`; in from_scenario(), these are populated from the
     # sets in the Scenario
-    rep.add("n", dask.core.quote(info.set["node"]))
+    rep.add("n", dask.core.quote([n.id for n in info.set["node"]]))
     rep.add("y", dask.core.quote(info.set["year"]))
     rep.add(
         "cat_year",
@@ -237,9 +237,7 @@ def base_shares(n, y, config):
     modes = config["transport"]["demand modes"]
     return Quantity(
         xr.DataArray(
-            1. / len(modes),
-            coords=[[node.id for node in n[1:]], y, modes],
-            dims=["n", "y", "t"]
+            1. / len(modes), coords=[n[1:], y, modes], dims=["n", "y", "t"]
         )
     )
 
@@ -247,12 +245,7 @@ def base_shares(n, y, config):
 def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
     """Calculate mode share weights."""
     # Non-global nodes
-    nodes = list(
-        filter(
-            lambda n_: "GLB" not in n_ and n_ != "World",
-            map(attrgetter("id"), n),
-        )
-    )
+    nodes = list(filter(lambda n_: "GLB" not in n_ and n_ != "World", n))
 
     # Modes from configuration
     modes = config["transport"]["demand modes"]
