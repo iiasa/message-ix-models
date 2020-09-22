@@ -218,11 +218,20 @@ def gen_data_aluminum(scenario, dry_run=False):
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    allyears = s_info.set['year']
+    #allyears = s_info.set['year']
+
+    # FIX: The years do not include 1980
+    allyears = np.arange(1980, 2101, 10).tolist()
+    print('All years')
+    print(allyears)
     modelyears = s_info.Y #s_info.Y is only for modeling years
+    print('Model years')
+    print(modelyears)
     nodes = s_info.N
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
+    print('first model year')
+    print(fmy)
 
     nodes.remove('World')
 
@@ -326,6 +335,9 @@ def gen_data_aluminum(scenario, dry_run=False):
         print(tec)
 
         y_hist = [y for y in allyears if y < fmy]
+        print('Second all years')
+        print(allyears)
+        print('Historical years')
         print(y_hist)
 
         common_hist = dict(
@@ -336,6 +348,7 @@ def gen_data_aluminum(scenario, dry_run=False):
 
         val_act = data_aluminum_hist.\
         loc[(data_aluminum_hist["technology"]== tec), "production"]
+        print(val_act)
 
         df_hist_act = (make_df("historical_activity", technology=tec, \
         value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
@@ -376,7 +389,7 @@ def gen_data_generic(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    allyears = s_info.set['year'] #s_info.Y is only for modeling years
+    allyears = s_info.set['year']
     modelyears = s_info.Y #s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
@@ -674,7 +687,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = 'demand'
-    demand = gen_mock_demand()
+    demand = gen_mock_demand_steel()
     df = (make_df(parname, level='demand', commodity='steel', value=demand, unit='t', \
         year=modelyears, **common).pipe(broadcast, node=nodes))
     results[parname].append(df)
@@ -689,7 +702,8 @@ def gen_data_steel(scenario, dry_run=False):
 DATA_FUNCTIONS = [
     gen_data_steel,
     gen_data_generic,
-    # gen_data_aluminum,
+    gen_data_aluminum,
+    gen_data_variable
 ]
 
 
@@ -715,6 +729,7 @@ def add_data(scenario, dry_run=False):
 
 # Generate a fake steel demand
 def gen_mock_demand_steel():
+    import numpy as np
     # True steel use 2010 (China) = 537 Mt/year
     # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
     gdp_growth = [0.121448215899944, \

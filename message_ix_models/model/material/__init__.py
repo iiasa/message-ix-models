@@ -28,7 +28,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
     context = read_config()
 
     # Update the ScenarioInfo objects with required and new set elements
-    for type in "generic", "common", "steel",:
+    for type in "generic", "common", "steel",'aluminum':
         for set_name, config in context["material"][type].items():
             # for cat_name, detail in config.items():
             # Required elements
@@ -59,7 +59,7 @@ def create_bare(context, regions, dry_run):
         context.regions = regions
 
     # to allow historical years
-    context.period_start = 2020
+    context.period_start = 1980
 
     # Otherwise it can not find the path to read the yaml files..
     context.metadata_path = context.metadata_path /'data'
