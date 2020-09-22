@@ -19,7 +19,7 @@ def read_config():
         return context
 
     # Read material.yaml
-    context.metadata_path=Path("C:/Users/unlu/Documents/GitHub/message_data/data")
+    #context.metadata_path=Path("C:/Users/unlu/Documents/GitHub/message_data/data")
     context.load_config("material", "set")
 
     # Use a shorter name

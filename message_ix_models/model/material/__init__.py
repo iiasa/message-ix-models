@@ -61,6 +61,9 @@ def create_bare(context, regions, dry_run):
     # to allow historical years
     context.period_start = 2020
 
+    # Otherwise it can not find the path to read the yaml files..
+    context.metadata_path = context.metadata_path /'data'
+
     scen = create_res(context)
     build(scen)
 
