@@ -18,7 +18,7 @@ def test_from_external_data(test_context, tmp_path):
     test_context.regions = "R11"
     info = get_spec(test_context)["add"]
 
-    rep = demand.from_external_data(info)
+    rep = demand.from_external_data(info, context=test_context)
 
     # These units are implied by the test of "transport pdt:*:mode":
     # "GDP PPP:n-y" → "MUSD / year"
