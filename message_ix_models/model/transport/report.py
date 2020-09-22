@@ -71,7 +71,10 @@ def callback(rep: Reporter):
 
     Adds:
 
-    - ``out::transport`` that aggregates outputs by technology group.
+    - ``{in,out}::transport``: with outputs aggregated by technology group or
+      "mode".
+    - ``transport plots``: the plots from :mod:`.transport.plot`.
+    - ``transport all``: all of the above.
     """
     from message_data.reporting.util import infer_keys
 
@@ -103,13 +106,18 @@ def callback(rep: Reporter):
         all_keys.append(keys[0])
         log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
 
+    # Add all plots
     plot_keys = []
 
     for plot in PLOTS:
         key = f"plot {plot.name}"
-        rep.add(key, tuple([plot(), "config"] + plot.inputs))
+        comp = plot.computation()
+        log.info(repr(comp))
+        rep.add(key, comp)
         plot_keys.append(key)
         log.info(f"Add {repr(key)}")
 
     rep.add("transport plots", plot_keys)
+
+    # Add key collecting all others
     rep.add("transport all", all_keys + plot_keys)
