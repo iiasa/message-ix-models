@@ -58,6 +58,7 @@ common:
 
   year:
     add:
+    - 1980
     - 1990
     - 2000
     - 2010
@@ -115,11 +116,17 @@ generic:
     - DUMMY_ethanol_supply
     - DUMMY_methanol_supply
     - DUMMY_hydrogen_supply
+    - DUMMY_biomass_supply
+    - DUMMY_dist_heating
+
 
   mode:
     add:
     - low_temp
     - high_temp
+  node:
+    remove:
+    - World
 
 steel:
   commodity:
@@ -260,7 +267,7 @@ non-ferrous:
   description: Metals and alloys which do not contain iron. Measured as the total mass of material.
   unit: Mt
 
-# Creates an error because it is the same name with the above aluminum 
+# Creates an error because it is the same name with the above aluminum
 # aluminum:
 #   name: Aluminum
 #   description: Aluminum (or aluminium) is a chemical element with the symbol Al. Measured as the total mass of material.

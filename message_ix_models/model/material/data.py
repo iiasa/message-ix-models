@@ -332,14 +332,8 @@ def gen_data_aluminum(scenario, dry_run=False):
     # Add historical data
 
     for tec in data_aluminum_hist["technology"].unique():
-        print(tec)
 
         y_hist = [y for y in allyears if y < fmy]
-        print('Second all years')
-        print(allyears)
-        print('Historical years')
-        print(y_hist)
-
         common_hist = dict(
             year_vtg= y_hist,
             year_act= y_hist,
@@ -348,7 +342,6 @@ def gen_data_aluminum(scenario, dry_run=False):
 
         val_act = data_aluminum_hist.\
         loc[(data_aluminum_hist["technology"]== tec), "production"]
-        print(val_act)
 
         df_hist_act = (make_df("historical_activity", technology=tec, \
         value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
@@ -496,6 +489,8 @@ def gen_data_variable(scenario, dry_run=False):
     nodes = s_info.N
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
+
+    nodes.remove('World')
 
     for t in config['technology']['add']:
 
