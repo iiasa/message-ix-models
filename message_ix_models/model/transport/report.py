@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 
 from message_ix.reporting import Reporter
@@ -83,32 +84,42 @@ def callback(rep: Reporter):
     context = read_config()
     config = context["transport config"]["report"]
 
-    if config["filter"]:
-        # Include only technologies with "transport" in the name
-        rep.set_filters(
-            t=list(filter(lambda n: "transport" in n, rep.get("t")))
-        )
-
     # Add configuration to the Reporter
     rep.graph["config"]["transport"] = config.copy()
 
-    # Aggregate transport technologies
-    t_groups = {}
+    # Groups of transport technologies for aggregation
+    t_groups = defaultdict(list)
+
+    # Set of all transport technologies
+    all_techs = set(t for t in rep.get("t") if "transport" in t)
+
     for tech in context["transport set"]["technology"]["add"]:
-        if not len(tech.child):
-            continue  # No children; not a group
+        all_techs.add(tech.id)
 
-        t_groups[tech.id] = [child.id for child in tech.child]
+        for child in tech.child:
+            t_groups[tech.id].append(child.id)
+            all_techs.add(child.id)
 
+    # Apply filters if configured
+    if config["filter"]:
+        # Include only technologies with "transport" in the name
+        log.info("Filter out non-transport technologies")
+        rep.set_filters(t=sorted(all_techs))
+        log.info(repr(rep.graph["config"]))
+
+    # List of all reporting keys added
     all_keys = []
 
+    # Aggregate transport technologies
     for k in infer_keys(rep, ["in", "out"]):
         keys = rep.aggregate(k, 'transport', dict(t=t_groups), sums=True)
         all_keys.append(keys[0])
         log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
 
     # Add ex-post mode and demand calculations
-    prepare_demand(rep)
+    prepare_demand(rep, configure=False)
+
+    log.info(repr(rep.graph["config"]))
 
     # Add all plots
     plot_keys = []
