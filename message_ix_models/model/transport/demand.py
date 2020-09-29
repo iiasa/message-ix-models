@@ -11,29 +11,10 @@ import xarray as xr
 import message_ix
 
 from message_data.reporting import CONFIG
-from message_data.tools import (
-    Context,
-    ScenarioInfo,
-    broadcast,
-    get_context,
-    make_df,
-)
+from message_data.tools import Context, ScenarioInfo, broadcast, make_df
 from .build import generate_set_elements
 from .data.groups import get_gea_population
 from .utils import read_config
-
-
-def demand(info):
-    """Return transport demands.
-
-    Parameters
-    ----------
-    info : .ScenarioInfo
-    """
-    config = get_context()['transport config']['data source']
-    func = globals()[config['demand']]
-
-    return dict(demand=func(info))
 
 
 def dummy(info):
@@ -144,7 +125,11 @@ def from_external_data(
     return rep
 
 
-def prepare_reporter(rep: Reporter, context: Context = None) -> None:
+def prepare_reporter(
+    rep: Reporter,
+    context: Context = None,
+    configure: bool = True
+) -> None:
     """Prepare `rep` for calculating transport demand.
 
     Parameters
@@ -152,18 +137,21 @@ def prepare_reporter(rep: Reporter, context: Context = None) -> None:
     rep : Reporter
         Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
     """
-    # Copy general MESSAGEix-GLOBIOM config
-    config = CONFIG.copy()
+    if configure:
+        # Copy general MESSAGEix-GLOBIOM config
+        config = CONFIG.copy()
 
-    # Update with transport-specific keys from config.yaml
-    context = read_config(context)
-    config.update({
-        "transport": context["transport config"],
-        "output dir": Path.cwd(),
-    })
+        # Update with transport-specific keys from config.yaml
+        context = read_config(context)
+        config.update({
+            "transport": context["transport config"],
+            "output dir": Path.cwd(),
+        })
 
-    # Configure the reporter; keys are stored
-    rep.configure(**config)
+        # Configure the reporter; keys are stored
+        rep.configure(**config)
+    else:
+        rep.graph["config"]["output dir"] = Path.cwd()
 
     # Existing keys, prepared by from_scenario() or from_external_data()
     gdp = rep.full_key("GDP")

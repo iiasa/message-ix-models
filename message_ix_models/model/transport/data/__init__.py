@@ -14,7 +14,6 @@ from message_data.tools import (
     make_source_tech,
     same_node,
 )
-from message_data.model.transport.demand import demand
 from message_data.model.transport.utils import add_commodity_and_level
 from .groups import get_consumer_groups  # noqa: F401
 from .ldv import get_ldv_data
@@ -24,7 +23,6 @@ from .non_ldv import get_non_ldv_data
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
-    demand,
     get_ldv_data,
     get_non_ldv_data,
 ]
@@ -47,6 +45,24 @@ def add_data(scenario, dry_run=False):
         add_par_data(scenario, func(info), dry_run=dry_run)
 
     log.info('done')
+
+
+def demand(info):
+    """Return transport demands.
+
+    Parameters
+    ----------
+    info : .ScenarioInfo
+    """
+    import message_data.transport.demand as demand_module
+
+    config = get_context()["transport config"]["data source"]
+    func = getattr(demand_module, config["demand"])
+
+    return dict(demand=func(info))
+
+
+DATA_FUNCTIONS.append(demand)
 
 
 def conversion(info):
