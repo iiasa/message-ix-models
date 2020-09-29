@@ -81,7 +81,7 @@ class ModeShare2(Plot):
     inputs = ["transport pdt:n-y-t:mode", "config"]
 
     def generate(self, data, config):
-        # Select a subset of technologies
+        # TODO select a subset of technologies
         df = (
             data.to_series().rename("value").sort_index().reset_index()
             .astype(dict(value=float))
@@ -100,4 +100,37 @@ class ModeShare2(Plot):
         )
 
 
-PLOTS = [LDVTechShare0, LDVTechShare1, ModeShare2]
+class EnergyCmdty(Plot):
+    name = "energy-by-cmdty"
+    inputs = ["in:nl-t-ya-c"]
+
+    def generate(self, data):
+        df = (
+            data.to_series().rename("value").sort_index().reset_index()
+            .astype(dict(value=float))
+        )
+
+        df = df[~df["t"].str.startswith("transport vehicle.*")]
+        df = df[~df["t"].str.startswith("disutility")]
+        print(df)
+
+        return (
+            p9.ggplot(df, p9.aes(x="ya", y="value", fill="c"))
+            + p9.theme(figure_size=(11.7, 8.3))
+            + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("Node: {}"))
+            + p9.geom_bar(stat="identity", width=5, color="black")
+            + p9.labs(x="Period", y="Energy", fill="Commodity")
+        )
+
+
+# class EmissionsTech(Plot):
+#     name = "emissions-by-tech"
+#     inputs = ["emi:"]
+
+
+PLOTS = [
+    EnergyCmdty,
+    LDVTechShare0,
+    LDVTechShare1,
+    ModeShare2,
+]
