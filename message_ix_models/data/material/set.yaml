@@ -46,6 +46,7 @@ common:
   mode:
     add:
     - M1
+    - M2
 
   emission:
     add:
