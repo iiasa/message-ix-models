@@ -846,6 +846,74 @@ def get_dummy_data(scenario, **options):
 
     return data
 
+# def add_scrap_prices(scenario):
+#
+#     context = read_config()
+#     s_info = ScenarioInfo(scenario)
+#     nodes = s_info.N
+#     modelyears = s_info.Y
+#     nodes.remove('World')
+#
+#     # Distinguish the share and total technologies
+#
+#     total = ['prep_secondary_aluminum_1', 'prep_secondary_aluminum_2', \
+#      'prep_secondary_aluminum_3']
+#
+#     #total = ["scrap_recovery_aluminum"]
+#
+#     # Add technology category for total
+#
+#     scenario.add_cat('technology', 'type_total', total)
+#
+#     no = 0
+#     for tech in total:
+#
+#         # Add technology category for shares
+#
+#         no = no + 1
+#         no_shr = str(no)
+#         type_tec_shr = 'type' + no_shr
+#         share = 'scrap_availability_' + no_shr
+#
+#         scenario.add_set('shares',share)
+#         scenario.add_cat('technology',type_tec_shr, [tech])
+#
+#         # Map shares
+#
+#         map_share = pd.DataFrame({'shares': [share],
+#                        'node_share': nodes,
+#                        'node': nodes,
+#                        'type_tec': type_tec_shr,
+#                        'mode': 'M1',
+#                        'commodity': 'aluminum',
+#                        'level': 'old_scrap',})
+#         scenario.add_set('map_shares_commodity_share', map_share)
+#
+#
+#         # Map total
+#
+#         map_total = pd.DataFrame({'shares': [share],
+#                    'node_share': nodes,
+#                    'node': nodes,
+#                    'type_tec': 'type_total',
+#                    'mode': 'M1',
+#                    'commodity': 'aluminum',
+#                    'level': 'old_scrap',})
+#         scenario.add_set('map_shares_commodity_total', map_total)
+#
+#         # Add the upper bound
+#
+#         up_share = pd.DataFrame({'shares': share,
+#        'node_share': nodes[0],
+#        'year_act': modelyears,
+#        'time': 'year',
+#        'value': 0.333,
+#        'unit': '%',})
+#
+#         print(up_share)
+#
+#         scenario.add_par('share_commodity_up', up_share)
+
 def add_scrap_prices(scenario):
 
     context = read_config()
@@ -854,16 +922,8 @@ def add_scrap_prices(scenario):
     modelyears = s_info.Y
     nodes.remove('World')
 
-    # Distinguish the share and total technologies
-
     total = ['prep_secondary_aluminum_1', 'prep_secondary_aluminum_2', \
      'prep_secondary_aluminum_3']
-
-    #total = ["scrap_recovery_aluminum"]
-
-    # Add technology category for total
-
-    scenario.add_cat('technology', 'type_total', total)
 
     no = 0
     for tech in total:
@@ -871,45 +931,54 @@ def add_scrap_prices(scenario):
         # Add technology category for shares
 
         no = no + 1
-        no_shr = str(no)
-        type_tec_shr = 'type' + no_shr
-        share = 'scrap_availability_' + no_shr
+        relation = 'scrap_availability_' + str(no)
 
-        scenario.add_set('shares',share)
-        scenario.add_cat('technology',type_tec_shr, [tech])
+        scenario.add_set('relation',relation)
 
-        # Map shares
+        # relation_activity for the technology
 
-        map_share = pd.DataFrame({'shares': [share],
-                       'node_share': nodes,
-                       'node': nodes,
-                       'type_tec': type_tec_shr,
-                       'mode': 'M1',
-                       'commodity': 'aluminum',
-                       'level': 'old_scrap',})
-        scenario.add_set('map_shares_commodity_share', map_share)
+        nodes_new = nodes * len(modelyears)
+        print(relation)
+        print(nodes)
+        print(modelyears)
+        print(tech)
 
+        rel_act = pd.DataFrame({
+                        'relation': relation,
+                        'node_rel': nodes_new,
+                        'year_rel': modelyears,
+                        'node_loc': nodes_new,
+                        'technology': tech,
+                        'year_act': modelyears,
+                        'mode': 'M1',
+                        "value": 1,
+                        'unit': '-',
+                        })
 
-        # Map total
+        # 1/3 of the old scrap is available. 0.24512 the amount of old scrap.
+        # Is there a way to obtain it without hard-coding ?
 
-        map_total = pd.DataFrame({'shares': [share],
-                   'node_share': nodes,
-                   'node': nodes,
-                   'type_tec': 'type_total',
-                   'mode': 'M1',
-                   'commodity': 'aluminum',
-                   'level': 'old_scrap',})
-        scenario.add_set('map_shares_commodity_total', map_total)
+        rel_act_rec = pd.DataFrame({
+                        'relation': relation,
+                        'node_rel': nodes_new,
+                        'year_rel': modelyears,
+                        'node_loc': nodes_new,
+                        'technology': "scrap_recovery_aluminum",
+                        'year_act': modelyears,
+                        'mode': 'M1',
+                        "value": -1/3 * 0.24512,
+                        'unit': '-',
+                        })
+
+        scenario.add_par("relation_activity", rel_act)
+        scenario.add_par("relation_activity", rel_act_rec)
 
         # Add the upper bound
 
-        up_share = pd.DataFrame({'shares': share,
-       'node_share': nodes[0],
-       'year_act': modelyears,
-       'time': 'year',
-       'value': 0.333,
-       'unit': '%',})
+        upper = pd.DataFrame({'relation': relation,
+                               'node_rel': nodes_new,
+                               'year_rel': modelyears,
+                               'value': 0,
+                               'unit': '???',})
 
-        print(up_share)
-
-        scenario.add_par('share_commodity_up', up_share)
+        scenario.add_par("relation_upper",upper)
