@@ -148,7 +148,9 @@ def read_var_cost():
 
     # Read the file
     df = pd.read_excel(
-        context.get_path("material", "China_steel_renamed - test.xlsx"), sheet_name)
+        context.get_path("material", "variable_costs.xlsx"),
+        sheet_name=sheet_name,
+    )
 
     df = pd.melt(df, id_vars=['technology', 'mode', 'units'], \
         value_vars=[2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100], \
@@ -361,6 +363,8 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
+    add_scrap_prices(scenario)
+
     return results
 
 #TODO: Add historical data ?
@@ -470,9 +474,6 @@ def gen_data_generic(scenario, dry_run=False):
 
 def gen_data_variable(scenario, dry_run=False):
 
-    # Load configuration
-    config = read_config()["material"]["generic"]
-
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
 
@@ -492,25 +493,25 @@ def gen_data_variable(scenario, dry_run=False):
 
     nodes.remove('World')
 
-    for t in config['technology']['add']:
+    #for t in config['technology']['add']:
+    for t in tec_vc:
+    # Special treatment for time-varying params
+    #if t in tec_vc:
+        common = dict(
+            time="year",
+            time_origin="year",
+            time_dest="year",)
 
-        # Special treatment for time-varying params
-        if t in tec_vc:
-            common = dict(
-                time="year",
-                time_origin="year",
-                time_dest="year",)
+        param_name = "var_cost"
+        val = data_vc.loc[(data_vc["technology"] == t), 'value']
+        units = data_vc.loc[(data_vc["technology"] == t),'units'].values[0]
+        mod = data_vc.loc[(data_vc["technology"] == t), 'mode']
+        yr = data_vc.loc[(data_vc["technology"] == t), 'year']
 
-            param_name = "var_cost"
-            val = data_vc.loc[(data_vc["technology"] == t), 'value']
-            units = data_vc.loc[(data_vc["technology"] == t),'units'].values[0]
-            mod = data_vc.loc[(data_vc["technology"] == t), 'mode']
-            yr = data_vc.loc[(data_vc["technology"] == t), 'year']
-
-            df = (make_df(param_name, technology=t, value=val,\
-            unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
-            node_loc=nodes))
-            results[param_name].append(df)
+        df = (make_df(param_name, technology=t, value=val,\
+        unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
+        node_loc=nodes))
+        results[param_name].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
@@ -844,3 +845,71 @@ def get_dummy_data(scenario, **options):
     data["demand"] = make_df("demand", **common)
 
     return data
+
+def add_scrap_prices(scenario):
+
+    context = read_config()
+    s_info = ScenarioInfo(scenario)
+    nodes = s_info.N
+    modelyears = s_info.Y
+    nodes.remove('World')
+
+    # Distinguish the share and total technologies
+
+    total = ['prep_secondary_aluminum_1', 'prep_secondary_aluminum_2', \
+     'prep_secondary_aluminum_3']
+
+    #total = ["scrap_recovery_aluminum"]
+
+    # Add technology category for total
+
+    scenario.add_cat('technology', 'type_total', total)
+
+    no = 0
+    for tech in total:
+
+        # Add technology category for shares
+
+        no = no + 1
+        no_shr = str(no)
+        type_tec_shr = 'type' + no_shr
+        share = 'scrap_availability_' + no_shr
+
+        scenario.add_set('shares',share)
+        scenario.add_cat('technology',type_tec_shr, [tech])
+
+        # Map shares
+
+        map_share = pd.DataFrame({'shares': [share],
+                       'node_share': nodes,
+                       'node': nodes,
+                       'type_tec': type_tec_shr,
+                       'mode': 'M1',
+                       'commodity': 'aluminum',
+                       'level': 'old_scrap',})
+        scenario.add_set('map_shares_commodity_share', map_share)
+
+
+        # Map total
+
+        map_total = pd.DataFrame({'shares': [share],
+                   'node_share': nodes,
+                   'node': nodes,
+                   'type_tec': 'type_total',
+                   'mode': 'M1',
+                   'commodity': 'aluminum',
+                   'level': 'old_scrap',})
+        scenario.add_set('map_shares_commodity_total', map_total)
+
+        # Add the upper bound
+
+        up_share = pd.DataFrame({'shares': share,
+       'node_share': nodes[0],
+       'year_act': modelyears,
+       'time': 'year',
+       'value': 0.333,
+       'unit': '%',})
+
+        print(up_share)
+
+        scenario.add_par('share_commodity_up', up_share)

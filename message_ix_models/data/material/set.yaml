@@ -225,7 +225,9 @@ aluminum:
     - soderberg_aluminum
     - prebake_aluminum
     - secondary_aluminum
-    - prep_secondary_aluminum
+    - prep_secondary_aluminum_1
+    - prep_secondary_aluminum_2
+    - prep_secondary_aluminum_3
     - finishing_aluminum
     - manuf_aluminum
     - scrap_recovery_aluminum
