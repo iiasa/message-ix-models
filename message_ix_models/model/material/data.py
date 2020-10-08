@@ -489,6 +489,8 @@ def gen_data_variable(scenario, dry_run=False):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
+    print("YVYA")
+    print(yv_ya)
     fmy = s_info.y0
 
     nodes.remove('World')
@@ -497,6 +499,7 @@ def gen_data_variable(scenario, dry_run=False):
     for t in tec_vc:
     # Special treatment for time-varying params
     #if t in tec_vc:
+
         common = dict(
             time="year",
             time_origin="year",
@@ -508,9 +511,9 @@ def gen_data_variable(scenario, dry_run=False):
         mod = data_vc.loc[(data_vc["technology"] == t), 'mode']
         yr = data_vc.loc[(data_vc["technology"] == t), 'year']
 
-        df = (make_df(param_name, technology=t, value=val,\
-        unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
-        node_loc=nodes))
+        df = (make_df(param_name, technology=t, value=val,unit='t', \
+             year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
+             node_loc=nodes))
         results[param_name].append(df)
 
     # Concatenate to one data frame per parameter
@@ -938,10 +941,6 @@ def add_scrap_prices(scenario):
         # relation_activity for the technology
 
         nodes_new = nodes * len(modelyears)
-        print(relation)
-        print(nodes)
-        print(modelyears)
-        print(tech)
 
         rel_act = pd.DataFrame({
                         'relation': relation,
@@ -958,6 +957,15 @@ def add_scrap_prices(scenario):
         # 1/3 of the old scrap is available. 0.24512 the amount of old scrap.
         # Is there a way to obtain it without hard-coding ?
 
+        # Chnage the availability
+
+        if no == 1:
+            val = 1/4
+        if no == 2:
+            val = 1/4
+        if no== 3:
+            val = 1/2
+
         rel_act_rec = pd.DataFrame({
                         'relation': relation,
                         'node_rel': nodes_new,
@@ -966,7 +974,7 @@ def add_scrap_prices(scenario):
                         'technology': "scrap_recovery_aluminum",
                         'year_act': modelyears,
                         'mode': 'M1',
-                        "value": -1/3 * 0.24512,
+                        "value": -val * 0.24512,
                         'unit': '-',
                         })
 
