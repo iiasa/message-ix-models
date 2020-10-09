@@ -729,15 +729,22 @@ def add_data(scenario, dry_run=False):
 # Generate a fake steel demand
 def gen_mock_demand_steel():
     import numpy as np
-    # True steel use 2010 (China) = 537 Mt/year
-    # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
-    gdp_growth = [0.121448215899944, \
-        0.0733079014579874, 0.0348154093342843, \
-        0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
-        0.00884341208063,0.00829374133206562, 0.00649794573935969]
-    demand = [(x+1) * 537 for x in gdp_growth]
 
-    return demand
+    modelyears = s_info.Y
+    fmy = s_info.y0
+
+    # True steel use 2010 (China) = 537 Mt/year
+    demand2010 = 537
+    # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
+    gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
+        0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
+        0.00884341208063,0.00829374133206562, 0.00649794573935969, 0.00649794573935969]
+    baseyear = list(range(2020, 2110+1, 10))
+
+    gr = [(x+1) for x in gdp_growth]
+
+    demand = np.cumprod(gr) * demand2010
+    demand_interp = np.interp(modelyears, baseyear, demand)
 
 def gen_mock_demand_aluminum(scenario):
 
