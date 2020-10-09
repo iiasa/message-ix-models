@@ -175,6 +175,43 @@ steel:
     - DUMMY_freshwater_supply
     - DUMMY_water_supply
 
+cement:
+  commodity:
+    add:
+    - cement
+    - clinker_cement
+    - raw_meal_cement
+
+  level:
+    add:
+    - primary_material
+    - secondary_material
+    - tertiary_material
+    - final_material
+    - useful_material
+    - demand
+
+  technology:
+    add:
+    - raw_meal_prep_cement
+    - clinker_dry_cement
+    - clinker_dry_ccs_cement
+    - clinker_wet_cement
+    - grinding_ballmill_cement
+    - grinding_vertmill_cement
+    - DUMMY_coal_supply
+    - DUMMY_gas_supply
+    - DUMMY_loil_supply
+    - DUMMY_foil_supply
+    - DUMMY_electr_supply
+    - DUMMY_ore_supply
+    - DUMMY_ethanol_supply
+    - DUMMY_methanol_supply
+    - DUMMY_limestone_supply
+    - DUMMY_hydrogen_supply
+    - DUMMY_freshwater_supply
+    - DUMMY_water_supply
+
   # relation:
   #   add:
   #   - steel_demand
