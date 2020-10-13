@@ -115,6 +115,28 @@ The third and last set of constraints required for the land-use emulator enforce
 The carbon price categories have been chosen to span a broad range of mitigation options (see :numref:`fig-Land-Use_Pathway_Scenario_Matrix`), with stepped carbon price growth that best reflect increases in global mitigation efforts, while at the same time ensuring that inclusion of the land-use emulator in MESSAGEix, does not result in too long solving times. The transitional constraints between pathways further contribute to smoothing the step wise increases between the carbon price categories.
 The transition rate has been set, so that land-use pathways can be phased out at a rate of 5% annually.  This value was derived based on a sensitivity analysis, showing that this factor best matched the transition results of the full fletched GLOBIOM model.
 
+Land-use Price
+--------------
+
+In the figure depicting the land-use scenario matrix (:numref:`fig-Land-Use_Pathway_Scenario_Matrix`), various biomass and carbon price categories are depicted. These information, together with the quantities of biomass and respective emission reductions are used to determine the land-use scenario price (`objective function in MESSAGEix <https://docs.messageix.org/en/stable/model/MESSAGE/model_core.html#the-objective-function-of-the-messageix-core-model>`_), which the model effectively interprets as the biomass price. 
+Based on the first biomass potential category, `BIO00`, the price (:math:`P`) for a distinct land-use scenario, in the example below without a carbon price, is a result of the biomass quantity (:math:`BQ`) times the biomass price (:math:`BPr`).
+
+:math:`P_{n,s_{BIO00,GHG000},y} = BQ_{n,s_{BIO00,GHG000},y} * BPr_{n,s_{BIO00},y}`
+
+Following on from the above example, therefore staying within the lowest biomass potential category, as the carbon price increases, the costs of emission mitigation must be accounted for as part of the price. Hence, in addition to the quantity of biomass, the emissions savings must be calculated and multiplied with the carbon price (:math:`EPr`). Below, we look a this example for the first carbon price of 5$, `GHG005`.
+
+:math:`P_{n,s_{BIO00,GHG005},y} = BQ_{n,s_{BIO00,GHG005},y} * BPr_{n,s_{BIO05},y} + (E_{n,s_{BIO00,GHG000},y} - E_{n,s_{BIO00,GHG005},y}) * EPr_{n,s_{BIO05},y}`
+
+where :math:`E` are the GHG-Emissions.
+
+This can be generalized as follows:
+
+:math:`P_{n,s_{b,g},y} = BQ_{n,s_{b,g},y} * BPr_{n,s_{b},y} + (E_{n,s_{b,g-1},y} - E_{n,s_{b,g},y}) * EPr_{n,s_{g},y}`
+
+where :math:`b` represents the biomass-potential category, and :math:`g` represents the carbon-price category.
+
+The fact that biomass is the only land-use related commodity which MESSAGEix accounts for when optimizing, also means that all the costs associated with the mitigation of land-use related emissions are therefore perceived as being part of the biomass-price. This is a drawback of the approach, but nevertheless provides a full representation of the land-use scenario specific costs.
+
 Results and validation
 ----------------------
 
