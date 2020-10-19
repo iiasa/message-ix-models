@@ -84,37 +84,43 @@ def process_china_data_tec():
         context.get_path("material", context.datafile),
         sheet_name="technologies",
     )
+    data_cement_china = pd.read_excel(
+        context.get_path("material", context.datafile),
+        sheet_name="tec_cement",
+    )
+
+    data_df = data_steel_china.append(data_cement_china, ignore_index=True)
 
     # Clean the data
 
-    data_steel_china = data_steel_china \
+    data_df = data_df \
         [['Technology', 'Parameter', 'Level',  \
         'Commodity', 'Mode', 'Species', 'Units', 'Value']] \
         .replace(np.nan, '', regex=True)
 
     # Combine columns and remove ''
-    list_series = data_steel_china[['Parameter', 'Commodity', 'Level', 'Mode']] \
+    list_series = data_df[['Parameter', 'Commodity', 'Level', 'Mode']] \
         .apply(list, axis=1).apply(lambda x: list(filter(lambda a: a != '', x)))
-    list_ef = data_steel_china[['Parameter', 'Species', 'Mode']] \
+    list_ef = data_df[['Parameter', 'Species', 'Mode']] \
         .apply(list, axis=1)
 
-    data_steel_china['parameter'] = list_series.str.join('|')
-    data_steel_china.loc[data_steel_china['Parameter'] == "emission_factor", \
+    data_df['parameter'] = list_series.str.join('|')
+    data_df.loc[data_df['Parameter'] == "emission_factor", \
         'parameter'] = list_ef.str.join('|')
 
-    data_steel_china = data_steel_china.drop(['Parameter', 'Level', 'Commodity', 'Mode'] \
+    data_df = data_df.drop(['Parameter', 'Level', 'Commodity', 'Mode'] \
         , axis = 1)
-    data_steel_china = data_steel_china.drop( \
-        data_steel_china[data_steel_china.Value==''].index)
+    data_df = data_df.drop( \
+        data_df[data_df.Value==''].index)
 
-    data_steel_china.columns = data_steel_china.columns.str.lower()
+    data_df.columns = data_df.columns.str.lower()
 
     # Unit conversion
 
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
 
-    return data_steel_china
+    return data_df
 
 # Read in relation-specific parameters from input xlsx
 def process_china_data_rel():
@@ -533,6 +539,7 @@ def gen_data_steel(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
+    # TEMP: now add cement sector as well => Need to separate those since now I have get_data_steel and cement
     data_steel = process_china_data_tec()
     # Special treatment for time-dependent Parameters
     data_steel_vc = read_timeseries()
@@ -675,7 +682,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = 'demand'
-    demand = gen_mock_demand_steel()
+    demand = gen_mock_demand_steel(s_info)
     df = (make_df(parname, level='demand', commodity='steel', value=demand, unit='t', \
         year=modelyears, **common).pipe(broadcast, node=nodes))
     results[parname].append(df)
@@ -686,9 +693,146 @@ def gen_data_steel(scenario, dry_run=False):
     return results
 
 
+def gen_data_cement(scenario, dry_run=False):
+    """Generate data for materials representation of steel industry.
+
+    """
+    # Load configuration
+    config = read_config()["material"]["cement"]
+
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    # Techno-economic assumptions
+    # TEMP: now add cement sector as well
+    data_cement = process_china_data_tec()
+    # Special treatment for time-dependent Parameters
+    # data_cement_vc = read_timeseries()
+    # tec_vc = set(data_cement_vc.technology) # set of tecs with var_cost
+
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+
+    allyears = s_info.set['year'] #s_info.Y is only for modeling years
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    fmy = s_info.y0
+
+    print(allyears, modelyears, fmy)
+
+    nodes.remove('World') # For the bare model
+
+    # for t in s_info.set['technology']:
+    for t in config['technology']['add']:
+
+        params = data_cement.loc[(data_cement["technology"] == t),\
+            "parameter"].values.tolist()
+
+        # # Special treatment for time-varying params
+        # if t in tec_vc:
+        #     common = dict(
+        #         time="year",
+        #         time_origin="year",
+        #         time_dest="year",)
+        #
+        #     param_name = data_cement_vc.loc[(data_cement_vc["technology"] == t), 'parameter']
+        #
+        #     for p in set(param_name):
+        #         val = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
+        #             & (data_cement_vc["parameter"] == p), 'value']
+        #         units = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
+        #             & (data_cement_vc["parameter"] == p), 'units'].values[0]
+        #         mod = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
+        #             & (data_cement_vc["parameter"] == p), 'mode']
+        #         yr = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
+        #             & (data_cement_vc["parameter"] == p), 'year']
+        #
+        #         df = (make_df(p, technology=t, value=val,\
+        #         unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
+        #         node_loc=nodes))
+        #
+        #         print("time-dependent::", p, df)
+        #         results[p].append(df)
+
+        # Iterate over parameters
+        for par in params:
+
+            # Obtain the parameter names, commodity,level,emission
+            split = par.split("|")
+            param_name = split[0]
+            # Obtain the scalar value for the parameter
+            val = data_cement.loc[((data_cement["technology"] == t) \
+            & (data_cement["parameter"] == par)),'value'].values[0]
+
+            common = dict(
+                year_vtg= yv_ya.year_vtg,
+                year_act= yv_ya.year_act,
+                # mode="M1",
+                time="year",
+                time_origin="year",
+                time_dest="year",)
+
+            # For the parameters which inlcudes index names
+            if len(split)> 1:
+
+                print('1.param_name:', param_name, t)
+                if (param_name == "input")|(param_name == "output"):
+
+                    # Assign commodity and level names
+                    com = split[1]
+                    lev = split[2]
+                    mod = split[3]
+
+                    df = (make_df(param_name, technology=t, commodity=com, \
+                    level=lev, value=val, mode=mod, unit='t', **common)\
+                    .pipe(broadcast, node_loc=nodes).pipe(same_node))
+
+                elif param_name == "emission_factor":
+
+                    # Assign the emisson type
+                    emi = split[1]
+                    mod = split[2]
+
+                    df = (make_df(param_name, technology=t, value=val,\
+                    emission=emi, mode=mod, unit='t', **common).pipe(broadcast, \
+                    node_loc=nodes))
+
+                else: # time-independent var_cost
+                    mod = split[1]
+                    df = (make_df(param_name, technology=t, value=val, \
+                    mode=mod, unit='t', \
+                    **common).pipe(broadcast, node_loc=nodes))
+
+                results[param_name].append(df)
+
+            # Parameters with only parameter name
+            else:
+                print('2.param_name:', param_name)
+                df = (make_df(param_name, technology=t, value=val, unit='t', \
+                **common).pipe(broadcast, node_loc=nodes))
+
+                results[param_name].append(df)
+
+    # Create external demand param
+    parname = 'demand'
+    demand = gen_mock_demand_cement(s_info)
+    df = (make_df(parname, level='demand', commodity='cement', value=demand, unit='t', \
+        year=modelyears, **common).pipe(broadcast, node=nodes))
+    results[parname].append(df)
+
+    # Concatenate to one data frame per parameter
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    return results
+
 
 DATA_FUNCTIONS = [
     gen_data_steel,
+    gen_data_cement,
     gen_data_generic,
     gen_data_aluminum,
     gen_data_variable
@@ -715,24 +859,41 @@ def add_data(scenario, dry_run=False):
     log.info('done')
 
 
+import numpy as np
+gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
+    0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
+    0.00884341208063,0.00829374133206562, 0.00649794573935969, 0.00649794573935969]
+gr = np.cumprod([(x+1) for x in gdp_growth])
+
 # Generate a fake steel demand
-def gen_mock_demand_steel():
-    import numpy as np
+def gen_mock_demand_steel(s_info):
 
     modelyears = s_info.Y
     fmy = s_info.y0
 
     # True steel use 2010 (China) = 537 Mt/year
-    demand2010 = 537
+    demand2010_steel = 537
     # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
-    gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
-        0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
-        0.00884341208063,0.00829374133206562, 0.00649794573935969, 0.00649794573935969]
+
     baseyear = list(range(2020, 2110+1, 10))
 
-    gr = [(x+1) for x in gdp_growth]
+    demand = gr * demand2010_steel
+    demand_interp = np.interp(modelyears, baseyear, demand)
 
-    demand = np.cumprod(gr) * demand2010
+    return demand_interp.tolist()
+
+# Generate a fake cement demand
+def gen_mock_demand_cement(s_info):
+
+    modelyears = s_info.Y
+    fmy = s_info.y0
+
+    # True cement use 2011 (China) = 2100 Mt/year (ADVANCE)
+    demand2010_cement = 2100
+
+    baseyear = list(range(2020, 2110+1, 10))
+
+    demand = gr * demand2010_cement
     demand_interp = np.interp(modelyears, baseyear, demand)
 
     return demand.tolist()
