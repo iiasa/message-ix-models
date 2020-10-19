@@ -140,7 +140,8 @@ c = pd.melt(b, id_vars=['technology', 'mode', 'units'], \
 df_gen = dt.gen_data_generic(scen) 
 df_st = dt.gen_data_steel(scen) 
 a = dt.get_data(scen, ctx)
-
+dt.gen_mock_demand_cement(ScenarioInfo(scen))
+dt.read_data_generic()
 bare.add_data(scen)
 
 
