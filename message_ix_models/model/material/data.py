@@ -732,32 +732,6 @@ def gen_data_cement(scenario, dry_run=False):
         params = data_cement.loc[(data_cement["technology"] == t),\
             "parameter"].values.tolist()
 
-        # # Special treatment for time-varying params
-        # if t in tec_vc:
-        #     common = dict(
-        #         time="year",
-        #         time_origin="year",
-        #         time_dest="year",)
-        #
-        #     param_name = data_cement_vc.loc[(data_cement_vc["technology"] == t), 'parameter']
-        #
-        #     for p in set(param_name):
-        #         val = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
-        #             & (data_cement_vc["parameter"] == p), 'value']
-        #         units = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
-        #             & (data_cement_vc["parameter"] == p), 'units'].values[0]
-        #         mod = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
-        #             & (data_cement_vc["parameter"] == p), 'mode']
-        #         yr = data_cement_vc.loc[(data_cement_vc["technology"] == t) \
-        #             & (data_cement_vc["parameter"] == p), 'year']
-        #
-        #         df = (make_df(p, technology=t, value=val,\
-        #         unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
-        #         node_loc=nodes))
-        #
-        #         print("time-dependent::", p, df)
-        #         results[p].append(df)
-
         # Iterate over parameters
         for par in params:
 
