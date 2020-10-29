@@ -7,7 +7,8 @@ import message_ix
 from message_data.tools import Code, ScenarioInfo, get_context, set_info, add_par_data
 from .build import apply_spec
 from .util import read_config
-from .data import get_data, gen_data_steel, gen_data_generic, gen_data_aluminum, gen_data_variable
+from .data import get_data, gen_data_steel, gen_data_generic, gen_data_aluminum, \
+gen_data_variable, gen_data_petro_chemicals
 import message_data
 
 
@@ -132,7 +133,8 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     # JM: try to find out a way to loop over 1st/2nd level and to just context["material"][xx]["add"]
     add.set["technology"] = context["material"]["steel"]["technology"]["add"] + \
         context["material"]["generic"]["technology"]["add"] + \
-        context["material"]["aluminum"]["technology"]["add"]
+        context["material"]["aluminum"]["technology"]["add"] + \
+        context["material"]["petro_chemicals"]["technology"]["add"]
 
     # Add regions
 
@@ -163,19 +165,22 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     add.set['level'] = context["material"]["steel"]["level"]["add"] + \
         context["material"]["common"]["level"]["require"] + \
         context["material"]["generic"]["level"]["add"] + \
-        context["material"]["aluminum"]["level"]["add"]
+        context["material"]["aluminum"]["level"]["add"] +\
+        context["material"]["petro_chemicals"]["level"]["add"]
 
     # Add commodities
     add.set['commodity'] = context["material"]["steel"]["commodity"]["add"] + \
         context["material"]["common"]["commodity"]["require"] + \
         context["material"]["generic"]["commodity"]["add"] + \
         context["material"]["aluminum"]["commodity"]["add"]
+        context["material"]["petro_chemicals"]["commodity"]["add"]
 
     # Add other sets
 
     add.set['type_tec'] = context["material"]["common"]["type_tec"]["add"]
     add.set['mode'] = context["material"]["common"]["mode"]["require"] +\
-        context["material"]["generic"]["mode"]["add"]
+        context["material"]["generic"]["mode"]["add"] + \
+        context["material"]["petro_chemicals"]["mode"]["add"]
 
     add.set['emission'] = context["material"]["common"]["emission"]["require"] +\
         context["material"]["common"]["emission"]["add"]
