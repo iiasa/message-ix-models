@@ -4,6 +4,71 @@
 #    accounting. Different sets can be created once there are 2+ different
 #    categories of materials.
 
+petro_chemicals:
+  commodity:
+    require:
+    - crudeoil
+    - hydrogen
+    - elctr
+    - ethanol
+    - fueloil
+    - lightoil
+    add:
+    - naphtha
+    - kerosene
+    - diesel
+    - atm_residue
+    - refinery_gas
+    - atm_gasoil
+    - atm_residue
+    - vacuum_gasoil
+    - vacuum_residue
+    - desulf_gasoil
+    - desulf_naphtha
+    - desulf_kerosene
+    - desulf_diesel
+    - desful_gasoil
+    - gasoline
+    - heavy_foil
+    - light_foil
+    - propylene
+    - coke
+    - ethane
+    - propane
+    - ethylene
+    - BTX
+
+  level:
+    require:
+    - secondary
+    - final
+    add:
+    - pre_intermediate
+    - useful_refining
+    - desulfurized
+    - intermediate
+    - secondary_material
+    - useful_petro
+    - final_material
+
+  mode:
+    add:
+    - atm_gasoil
+    - vacuum_gasoil
+    - naphtha
+    - kerosene
+    - diesel
+    - cracking_gasoline
+    - cracking_loil
+    - gasoil
+    - ethane
+    - propane
+
+  emission:
+    add:
+    - CO2
+    - SO2
+
 common:
   commodity:
     require:
