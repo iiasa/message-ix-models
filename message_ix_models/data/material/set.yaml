@@ -64,11 +64,6 @@ petro_chemicals:
     - ethane
     - propane
 
-  emission:
-    add:
-    - CO2
-    - SO2
-
 common:
   commodity:
     require:

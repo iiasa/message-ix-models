@@ -29,7 +29,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
     context = read_config()
 
     # Update the ScenarioInfo objects with required and new set elements
-    for type in "generic", "common", "steel", "cement",:
+    for type in "generic", "common", "steel",'aluminum',"petro_chemicals":
         for set_name, config in context["material"][type].items():
             # for cat_name, detail in config.items():
             # Required elements
