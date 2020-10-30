@@ -591,7 +591,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # Add demand
 
-    values_e, values_p, values_BTX = gen_mock_demand_petro(scenario)
+    values_e, values_p, values_BTX, values_foil, values_loil = \
+    gen_mock_demand_petro(scenario)
 
     demand_ethylene = (make_df("demand", commodity= "ethylene", \
     level= "demand_ethylene", year = modelyears, value=values_e, unit='Mt',\
@@ -605,9 +606,19 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     level= "demand_BTX", year = modelyears, value=values_p, unit='Mt',\
     time= "year").pipe(broadcast, node=nodes))
 
+    demand_foil = (make_df("demand", commodity= "fueloil", \
+    level= "demand_foil", year = modelyears, value=values_foil, unit='GWyr',\
+    time= "year").pipe(broadcast, node=nodes))
+
+    demand_loil = (make_df("demand", commodity= "lightoil", \
+    level= "demand_loil", year = modelyears, value=values_loil, unit='GWyr',\
+    time= "year").pipe(broadcast, node=nodes))
+
     results["demand"].append(demand_ethylene)
     results["demand"].append(demand_propylene)
     results["demand"].append(demand_BTX)
+    results["demand"].append(demand_loil)
+    results["demand"].append(demand_foil)
 
     # Add historical data
 
@@ -1076,9 +1087,10 @@ def gen_mock_demand_aluminum(scenario):
 def gen_mock_demand_petro(scenario):
 
     # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
-    # This makes 28.842 Mt. (Energy Technology Transitions for Industry)
-    # Distribution: 6:5:6 (ethylene,propylene,BTX)
+    # This makes 28.842 Mt. (IEA Energy Technology Transitions for Industry)
+    # Distribution in 2015 for China: 6:6:5 (ethylene,propylene,BTX)
     # Future of Petrochemicals Methodological Annex
+    # This can be verified by other sources.
 
     # The future projection of the demand: Increases by half of the GDP growth rate.
     # Starting from 2020.
@@ -1092,26 +1104,48 @@ def gen_mock_demand_petro(scenario):
                         0.00884341208063, 0.00829374133206562, \
                         0.00649794573935969],index=pd.Index(modelyears, \
                                                             name='Time'))
-    # Values in 2010 from IAI.
-    fin_to_useful = 0.971
-    useful_to_product = 0.866
-
     i = 0
-    values = []
-    val = (17.3 * (1+ 0.147718884937996/2) ** context.time_step)
-    values.append(val)
+    values_e = []
+    values_p = []
+    values_BTX = []
+
+    val_e = (10 * (1+ 0.147718884937996/2) ** context.time_step)
+    values_e.append(val_e)
+
+    val_p = (10 * (1+ 0.147718884937996/2) ** context.time_step)
+    values_p.append(val_p)
+
+    val_BTX = (8 * (1+ 0.147718884937996/2) ** context.time_step)
+    values_BTX.append(val_BTX)
 
     for element in gdp_growth:
         i = i + 1
         if i < len(modelyears):
-            val = (val * (1+ element/2) ** context.time_step)
-            values.append(val)
+            val_e = (val_e * (1+ element/2) ** context.time_step)
+            values_e.append(val_e)
 
-    # Adjust the demand according to old scrap level.
+            val_p = (val_p * (1+ element/2) ** context.time_step)
+            values_p.append(val_p)
 
-    values = [x * fin_to_useful * useful_to_product for x in values]
+            val_BTX = (val_BTX * (1+ element/2) ** context.time_step)
+            values_BTX.append(val_BTX)
 
-    return values
+            pd.read_excel('oil_demand.xlsx', index_col=0)
+
+        if context.scenario_info['scenario'] == 'NPi400':
+            sheet_name="demand_NPi400"
+        else:
+            sheet_name = "demand_baseline"
+        # Read the file
+        df = pd.read_excel(
+            context.get_path("material", "oil_demand.xlsx"),
+            sheet_name=sheet_name,
+        )
+
+        values_foil = df["Total_foil"].tolist()
+        values_loil = df["Total_loil"].tolist()
+
+    return values_e, values_p, values_BTX, values_foil, values_loil
 
 def get_data(scenario, context, **options):
     """Data for the bare RES."""
@@ -1121,7 +1155,6 @@ def get_data(scenario, context, **options):
         return dt
     else:
         return dict()
-
 
 def get_dummy_data(scenario, **options):
     """Dummy data for the bare RES.
