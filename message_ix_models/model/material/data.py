@@ -424,13 +424,14 @@ def gen_data_generic(scenario, dry_run=False):
 
     for t in config["technology"]["add"]:
 
+        print(t)
+
         # years = s_info.Y
         params = data_generic.loc[(data_generic["technology"] == t),"parameter"]\
         .values.tolist()
 
         # Availability year of the technology
-        av = data_generic.loc[(data_generic["technology"] == t),'availability'].\
-        values[0]
+        av = data_generic.loc[(data_generic["technology"] == t),'availability'].values[0]
         modelyears = [year for year in modelyears if year >= av]
         yva = yv_ya.loc[yv_ya.year_vtg >= av, ]
 
@@ -507,8 +508,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_petro = read_data_petrochemicals()
-
+    data_petro, data_petro_hist = read_data_petrochemicals()
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
@@ -572,11 +572,20 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
                 elif param_name == "emission_factor":
                     emi = split[1]
+                    mod = split[2]
 
-                    # TODO: Now tentatively fixed to one mode. Have values for the other mode too
                     df = (make_df(param_name, technology=t,value=val,\
-                    emission=emi, mode="low_temp", unit='t', **common).pipe(broadcast, \
+                    emission=emi, mode=mod, unit='t', **common).pipe(broadcast, \
                     node_loc=nodes))
+
+                elif param_name == "var_cost":
+                    mod = split[1]
+
+                    df = (make_df(param_name, technology=t, commodity=com, \
+                    level=lev,mode=mod, value=val, unit='t', **common).\
+                    pipe(broadcast, node_loc=nodes).pipe(same_node))
+
+
 
                     results[param_name].append(df)
 
@@ -607,11 +616,11 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     time= "year").pipe(broadcast, node=nodes))
 
     demand_foil = (make_df("demand", commodity= "fueloil", \
-    level= "demand_foil", year = modelyears, value=values_foil, unit='GWyr',\
+    level= "demand_foil", year = modelyears, value=values_foil, unit='GWa',\
     time= "year").pipe(broadcast, node=nodes))
 
     demand_loil = (make_df("demand", commodity= "lightoil", \
-    level= "demand_loil", year = modelyears, value=values_loil, unit='GWyr',\
+    level= "demand_loil", year = modelyears, value=values_loil, unit='GWa',\
     time= "year").pipe(broadcast, node=nodes))
 
     results["demand"].append(demand_ethylene)
@@ -1129,8 +1138,6 @@ def gen_mock_demand_petro(scenario):
 
             val_BTX = (val_BTX * (1+ element/2) ** context.time_step)
             values_BTX.append(val_BTX)
-
-            pd.read_excel('oil_demand.xlsx', index_col=0)
 
         if context.scenario_info['scenario'] == 'NPi400':
             sheet_name="demand_NPi400"
