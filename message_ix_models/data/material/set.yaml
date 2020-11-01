@@ -8,11 +8,6 @@ petro_chemicals:
   commodity:
     require:
     - crudeoil
-    - hydrogen
-    - elctr
-    - ethanol
-    - fueloil
-    - lightoil
     add:
     - naphtha
     - kerosene
@@ -50,7 +45,7 @@ petro_chemicals:
     - secondary_material
     - useful_petro
     - final_material
-    - demnad_ethylene
+    - demand_ethylene
     - demand_propylene
     - demand_BTX
     - demand_foil
