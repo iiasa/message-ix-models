@@ -288,15 +288,34 @@ cement:
     add:
     - raw_meal_prep_cement
     - clinker_dry_cement
-    - clinker_dry_ccs_cement
     - clinker_wet_cement
+    - clinker_dry_ccs_cement
+    - clinker_wet_ccs_cement
     - grinding_ballmill_cement
     - grinding_vertmill_cement
     - DUMMY_limestone_supply
-
     remove:
     - cement_co2scr
     - cement_CO2
+
+  relation:
+    remove:
+    - cement_pro
+    - cement_scrub_lim
+
+  addon:
+    add:
+    - clinker_dry_ccs_cement
+    - clinker_wet_ccs_cement
+
+  type_addon:
+    add:
+    - ccs_cement
+
+  cat_addon:
+    add:
+    - [ccs_cement, clinker_dry_ccs_cement]
+    - [ccs_cement, clinker_wet_ccs_cement]
 
   # relation:
   #   add:
