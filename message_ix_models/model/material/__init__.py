@@ -14,10 +14,11 @@ def build(scenario):
     spec = get_spec()
 
     # Apply to the base scenario
-    apply_spec(scenario, spec, add_data)
+    apply_spec(scenario, spec, add_data) # dry_run=True
 
     return scenario
 
+SPEC_LIST = ["generic", "common", "steel", "cement"] # add as needed/implemented
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
@@ -29,7 +30,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
     context = read_config()
 
     # Update the ScenarioInfo objects with required and new set elements
-    for type in "generic", "common", "steel",'aluminum',"petro_chemicals":
+    for type in SPEC_LIST:
         for set_name, config in context["material"][type].items():
             # for cat_name, detail in config.items():
             # Required elements
@@ -38,7 +39,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
             # Elements to add
             add.set[set_name].extend(config.get("add", []))
 
-            # Elements to add
+            # Elements to remove
             remove.set[set_name].extend(config.get("remove", []))
 
     return dict(require=require, add=add, remove=remove)
