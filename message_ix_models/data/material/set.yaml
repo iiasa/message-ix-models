@@ -18,12 +18,11 @@ petro_chemicals:
     - atm_residue
     - vacuum_gasoil
     - vacuum_residue
-    - desulf_gasoil
     - desulf_naphtha
     - desulf_kerosene
     - desulf_diesel
-    - desful_atm_gasoil
-    - desful_vacuum_gasoil
+    - desulf_atm_gasoil
+    - desulf_vacuum_gasoil
     - gasoline
     - heavy_foil
     - light_foil
@@ -61,7 +60,6 @@ petro_chemicals:
     - diesel
     - cracking_gasoline
     - cracking_loil
-    - gasoil
     - ethane
     - propane
     - light_foil
@@ -70,6 +68,7 @@ petro_chemicals:
     - pet_coke
     - atm_residue
     - vacuum_residue
+    - gasoline
 
   technology:
     add:
@@ -216,6 +215,21 @@ generic:
     - fc_h2_petro
     - solar_petro
     - dheat_petro
+    - furnace_coke_refining
+    - furnace_coal_refining
+    - furnace_foil_refining
+    - furnace_loil_refining
+    - furnace_ethanol_refining
+    - furnace_biomass_refining
+    - furnace_methanol_refining
+    - furnace_gas_refining
+    - furnace_elec_refining
+    - furnace_h2_refining
+    - hp_gas_refining
+    - hp_elec_refining
+    - fc_h2_refining
+    - solar_refining
+    - dheat_refining
     - DUMMY_coal_supply
     - DUMMY_gas_supply
     - DUMMY_loil_supply
