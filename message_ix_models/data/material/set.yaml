@@ -83,8 +83,8 @@ petro_chemicals:
     - hydro_cracking_ref
     - steam_cracker_petro
     - ethanol_to_ethylene_petro
-    - blend_loil_ref
-    - blend_foil_ref
+    - loil_ref
+    - foil_ref
     - gas_processing_petro
 
     remove:
@@ -171,6 +171,7 @@ generic:
 
   technology:
     add:
+    - furnace_coke_steel
     - furnace_foil_steel
     - furnace_loil_steel
     - furnace_biomass_steel
@@ -185,6 +186,7 @@ generic:
     - fc_h2_steel
     - solar_steel
     - dheat_steel
+    - furnace_coke_aluminum
     - furnace_coal_aluminum
     - furnace_foil_aluminum
     - furnace_loil_aluminum
@@ -199,6 +201,21 @@ generic:
     - fc_h2_aluminum
     - solar_aluminum
     - dheat_aluminum
+    - furnace_coke_petro
+    - furnace_coal_petro
+    - furnace_foil_petro
+    - furnace_loil_petro
+    - furnace_ethanol_petro
+    - furnace_biomass_petro
+    - furnace_methanol_petro
+    - furnace_gas_petro
+    - furnace_elec_petro
+    - furnace_h2_petro
+    - hp_gas_petro
+    - hp_elec_petro
+    - fc_h2_petro
+    - solar_petro
+    - dheat_petro
     - DUMMY_coal_supply
     - DUMMY_gas_supply
     - DUMMY_loil_supply
