@@ -150,7 +150,7 @@ a = get_spec()
 
 mp_samp = ixmp.Platform(name="local")
 mp_samp.scenario_list()
-sample = mix.Scenario(mp_samp, model="Material_b", scenario="baseline", version="new")
+sample = mix.Scenario(mp_samp, model="Material_test", scenario="baseline")
 sample.set_list()
 sample.set('year')
 sample.cat('year', 'firstmodelyear')
