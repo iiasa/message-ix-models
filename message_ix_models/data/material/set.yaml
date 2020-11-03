@@ -22,12 +22,13 @@ petro_chemicals:
     - desulf_naphtha
     - desulf_kerosene
     - desulf_diesel
-    - desful_gasoil
+    - desful_atm_gasoil
+    - desful_vacuum_gasoil
     - gasoline
     - heavy_foil
     - light_foil
     - propylene
-    - coke
+    - pet_coke
     - ethane
     - propane
     - ethylene
@@ -63,6 +64,12 @@ petro_chemicals:
     - gasoil
     - ethane
     - propane
+    - light_foil
+    - refinery_gas
+    - heavy_foil
+    - pet_coke
+    - atm_residue
+    - vacuum_residue
 
   technology:
     add:
