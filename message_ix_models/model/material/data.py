@@ -71,8 +71,15 @@ def read_data():
     return data
 
 
+# def read_data_cement():
+#     return process_china_data_tec("cement")
+#
+# def read_data_steel():
+#     return process_china_data_tec("steel")
+
+
 # Read in technology-specific parameters from input xlsx
-def process_china_data_tec():
+def process_china_data_tec(sectname):
 
     import numpy as np
 
@@ -80,16 +87,20 @@ def process_china_data_tec():
     context = read_config()
 
     # Read the file
-    data_steel_china = pd.read_excel(
-        context.get_path("material", context.datafile),
-        sheet_name="technologies",
-    )
-    data_cement_china = pd.read_excel(
-        context.get_path("material", context.datafile),
-        sheet_name="tec_cement",
-    )
+    # data_steel_china = pd.read_excel(
+    #     context.get_path("material", context.datafile),
+    #     sheet_name="technologies",
+    # )
+    # data_cement_china = pd.read_excel(
+    #     context.get_path("material", context.datafile),
+    #     sheet_name="tec_cement",
+    # )
 
-    data_df = data_steel_china.append(data_cement_china, ignore_index=True)
+    # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
+    data_df = pd.read_excel(
+        context.get_path("material", context.datafile),
+        sheet_name=sectname,
+    )
 
     # Clean the data
 
@@ -725,7 +736,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Techno-economic assumptions
     # TEMP: now add cement sector as well => Need to separate those since now I have get_data_steel and cement
-    data_steel = process_china_data_tec()
+    data_steel = process_china_data_tec("steel")
     # Special treatment for time-dependent Parameters
     data_steel_vc = read_timeseries()
     tec_vc = set(data_steel_vc.technology) # set of tecs with var_cost
@@ -742,7 +753,7 @@ def gen_data_steel(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
 
-    print(allyears, modelyears, fmy)
+    #print(allyears, modelyears, fmy)
 
     nodes.remove('World') # For the bare model
 
@@ -789,7 +800,7 @@ def gen_data_steel(scenario, dry_run=False):
                 unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
                 node_loc=nodes))
 
-                print("time-dependent::", p, df)
+                #print("time-dependent::", p, df)
                 results[p].append(df)
 
         # Iterate over parameters
@@ -813,7 +824,7 @@ def gen_data_steel(scenario, dry_run=False):
             # For the parameters which inlcudes index names
             if len(split)> 1:
 
-                print('1.param_name:', param_name, t)
+                #print('1.param_name:', param_name, t)
                 if (param_name == "input")|(param_name == "output"):
 
                     # Assign commodity and level names
@@ -845,21 +856,7 @@ def gen_data_steel(scenario, dry_run=False):
 
             # Parameters with only parameter name
             else:
-                print('2.param_name:', param_name)
-                # # Historical years are earlier than firstmodelyear
-                # y_hist = [y for y in allyears if y < fmy]
-                # # print(y_hist, fmy, years)
-                # if re.search("historical_", param_name):
-                #     common_hist = dict(
-                #         year_vtg= y_hist,
-                #         year_act= y_hist,
-                #         # mode="M1",
-                #         time="year",)
-                #
-                #     df = (make_df(param_name, technology=t, value=val, unit='t', \
-                #     **common_hist).pipe(broadcast, node_loc=nodes))
-                #     # print(common_hist, param_name, t, nodes, val, y_hist)
-                # else:
+                #print('2.param_name:', param_name)
                 df = (make_df(param_name, technology=t, value=val, unit='t', \
                 **common).pipe(broadcast, node_loc=nodes))
 
@@ -890,7 +887,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
-    data_cement = process_china_data_tec()
+    data_cement = process_china_data_tec("cement")
     # Special treatment for time-dependent Parameters
     # data_cement_vc = read_timeseries()
     # tec_vc = set(data_cement_vc.technology) # set of tecs with var_cost
@@ -907,7 +904,7 @@ def gen_data_cement(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
 
-    print(allyears, modelyears, fmy)
+    #print(allyears, modelyears, fmy)
 
     nodes.remove('World') # For the bare model
 
@@ -938,7 +935,7 @@ def gen_data_cement(scenario, dry_run=False):
             # For the parameters which inlcudes index names
             if len(split)> 1:
 
-                print('1.param_name:', param_name, t)
+                #print('1.param_name:', param_name, t)
                 if (param_name == "input")|(param_name == "output"):
 
                     # Assign commodity and level names
@@ -970,7 +967,7 @@ def gen_data_cement(scenario, dry_run=False):
 
             # Parameters with only parameter name
             else:
-                print('2.param_name:', param_name)
+                #print('2.param_name:', param_name)
                 df = (make_df(param_name, technology=t, value=val, unit='t', \
                 **common).pipe(broadcast, node_loc=nodes))
 
@@ -979,9 +976,17 @@ def gen_data_cement(scenario, dry_run=False):
     # Create external demand param
     parname = 'demand'
     demand = gen_mock_demand_cement(s_info)
-    df = (make_df(parname, level='demand', commodity='cement', value=demand, unit='t', \
-        year=modelyears, **common).pipe(broadcast, node=nodes))
+    df = (make_df(parname, level='demand', commodity='cement', value=demand, \
+        unit='t', year=modelyears, **common).pipe(broadcast, node=nodes))
     results[parname].append(df)
+
+    # Add CCS as addon
+    # parname = 'addon_conversion'
+    # ccs_tec = ['clinker_wet_cement', 'clinker_dry_cement']
+    # df = (make_df(parname, technology=ccs_tec, mode='M1', \
+    #     type_addon='ccs_cement', \
+    #     value=1, unit='-', **common).pipe(broadcast, node=nodes))
+    # results[parname].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
