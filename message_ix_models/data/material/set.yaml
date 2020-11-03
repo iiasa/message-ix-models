@@ -312,6 +312,11 @@ cement:
     add:
     - ccs_cement
 
+  map_tec_addon:
+    add:
+    - [clinker_dry_cement, ccs_cement]
+    - [clinker_wet_cement, ccs_cement]
+
   cat_addon:
     add:
     - [ccs_cement, clinker_dry_ccs_cement]
