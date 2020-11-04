@@ -617,14 +617,20 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     demand_ethylene = (make_df("demand", commodity= "ethylene", \
     level= "demand_ethylene", year = modelyears, value=values_e, unit='Mt',\
     time= "year").pipe(broadcast, node=nodes))
+    print("Ethylene demand")
+    print(demand_ethylene)
 
     demand_propylene = (make_df("demand", commodity= "propylene", \
     level= "demand_propylene", year = modelyears, value=values_p, unit='Mt',\
     time= "year").pipe(broadcast, node=nodes))
+    print("Propylene demand")
+    print(demand_propylene)
 
     demand_BTX = (make_df("demand", commodity= "BTX", \
-    level= "demand_BTX", year = modelyears, value=values_p, unit='Mt',\
+    level= "demand_BTX", year = modelyears, value=values_BTX, unit='Mt',\
     time= "year").pipe(broadcast, node=nodes))
+    print("BTX demand")
+    print(demand_BTX)
 
     demand_foil = (make_df("demand", commodity= "fueloil", \
     level= "demand_foil", year = modelyears, value=values_foil, unit='GWa',\
@@ -691,8 +697,6 @@ def gen_data_variable(scenario, dry_run=False):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
-    print("YVYA")
-    print(yv_ya)
     fmy = s_info.y0
 
     nodes.remove('World')
@@ -1092,7 +1096,7 @@ def gen_mock_demand_aluminum(scenario):
             val = (val * (1+ element/2) ** context.time_step)
             values.append(val)
 
-    # Adjust the demand according to old scrap level.
+    # Adjust the demand according to old scrap level. x is in final level.
 
     values = [x * fin_to_useful * useful_to_product for x in values]
 
@@ -1123,14 +1127,25 @@ def gen_mock_demand_petro(scenario):
     values_p = []
     values_BTX = []
 
+    # 10-10-8 is the ratio
+
     val_e = (10 * (1+ 0.147718884937996/2) ** context.time_step)
+    print("val_e")
+    print(val_e)
     values_e.append(val_e)
+    print(values_e)
 
     val_p = (10 * (1+ 0.147718884937996/2) ** context.time_step)
+    print("val_p")
+    print(val_p)
     values_p.append(val_p)
+    print(values_p)
 
     val_BTX = (8 * (1+ 0.147718884937996/2) ** context.time_step)
+    print("val_BTX")
+    print(val_BTX)
     values_BTX.append(val_BTX)
+    print(values_BTX)
 
     for element in gdp_growth:
         i = i + 1
