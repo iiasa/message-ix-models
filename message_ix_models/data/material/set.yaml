@@ -82,8 +82,18 @@ petro_chemicals:
     - hydro_cracking_ref
     - steam_cracker_petro
     - ethanol_to_ethylene_petro
-    - loil_ref
-    - foil_ref
+    - loil_ref_naphtha
+    - loil_ref_gasoline
+    - loil_ref_lightfoil
+    - loil_ref_ethane
+    - loil_ref_kerosene
+    - loil_ref_diesel
+    - loil_ref_refinerygas
+    - foil_ref_heavyfoil
+    - foil_ref_petcoke
+    - foil_ref_atmgasoil
+    - foil_ref_atmresidue
+    - foil_ref_vacuumresidue
     - gas_processing_petro
 
     remove:
@@ -241,6 +251,8 @@ generic:
     - DUMMY_biomass_supply
     - DUMMY_dist_heating
     - DUMMY_crudeoil_supply
+    - DUMMY_ethanol_supply_secondary
+    - DUMMY_gas_supply_secondary
     - furnace_foil_cement
     - furnace_loil_cement
     - furnace_biomass_cement
@@ -250,7 +262,6 @@ generic:
     - furnace_coal_cement
     - furnace_elec_cement
     - furnace_h2_cement
-
 
   mode:
     add:
