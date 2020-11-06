@@ -78,7 +78,7 @@ class LDVTechShare1(Plot):
 
 class ModeShare2(Plot):
     name = "demand-by-mode"
-    inputs = ["transport pdt:n-y-t:mode", "config"]
+    inputs = ["transport pdt:n-y-t", "config"]
 
     def generate(self, data, config):
         # TODO select a subset of technologies

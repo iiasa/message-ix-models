@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pandas as pd
 import xarray as xr
 
@@ -23,17 +25,17 @@ GEA_DIMS = dict(
 )
 
 
-def get_consumer_groups(context: Context = None):
+def get_consumer_groups(config=None, context: Context = None):
     """Return shares of transport consumer groups.
 
     Returns
     -------
-    pandas.Series
-        Dimensions: region, scenario, year.
+    ixmp.reporting.Quantity
+        Dimensions: n, y, cg.
     """
     # Ensure MA3T data is loaded
     context = read_config(context)
-    cg_indexers = consumer_groups(rtype="indexers")
+    cg_indexers = deepcopy(consumer_groups(rtype="indexers"))
     consumer_group = cg_indexers.pop("consumer_group")
 
     # Data: GEA population projections give split between 'UR+SU' and 'RU'

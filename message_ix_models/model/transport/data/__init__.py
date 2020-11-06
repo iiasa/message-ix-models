@@ -67,7 +67,7 @@ def demand(info):
 
     # Generate the demand data; convert to pd.DataFrame
     data = (
-        rep.get("transport pdt:n-y-t:mode")
+        rep.get("transport pdt:n-y-t-cg")
         .to_series()
         .reset_index(name="value")
     )
