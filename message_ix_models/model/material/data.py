@@ -985,12 +985,19 @@ def gen_data_cement(scenario, dry_run=False):
     results[parname].append(df)
 
     # Add CCS as addon
-    # parname = 'addon_conversion'
-    # ccs_tec = ['clinker_wet_cement', 'clinker_dry_cement']
-    # df = (make_df(parname, technology=ccs_tec, mode='M1', \
-    #     type_addon='ccs_cement', \
-    #     value=1, unit='-', **common).pipe(broadcast, node=nodes))
-    # results[parname].append(df)
+    parname = 'addon_conversion'
+    ccs_tec = ['clinker_wet_cement', 'clinker_dry_cement']
+    df = (make_df(parname, mode='M1', \
+        type_addon='ccs_cement', \
+        value=1, unit='-', **common).pipe(broadcast, node=nodes, technology=ccs_tec))
+    results[parname].append(df)
+
+    # Test emission bound
+    parname = 'bound_emission'
+    df = (make_df(parname, type_tec='all', type_year='cumulative', \
+        type_emission='CO2_industry', \
+        value=200, unit='-').pipe(broadcast, node=nodes))
+    results[parname].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
