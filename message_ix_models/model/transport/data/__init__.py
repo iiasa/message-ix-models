@@ -9,6 +9,7 @@ from message_data.tools import (
     add_par_data,
     broadcast,
     get_context,
+    make_df,
     make_io,
     make_matched_dfs,
     make_source_tech,
@@ -39,10 +40,6 @@ def add_data(scenario, dry_run=False):
         log.warning("Remove 'R11_GLB' from node list for data generation")
         info.set["node"].remove("R11_GLB")
 
-    from message_data.model.transport import demand
-
-    DATA_FUNCTIONS.insert(0, demand.demand)
-
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
         log.info(f'from {func.__name__}()')
@@ -58,12 +55,40 @@ def demand(info):
     ----------
     info : .ScenarioInfo
     """
-    import message_data.transport.demand as demand_module
+    from message_data.model.transport.demand import dummy, from_external_data
 
     config = get_context()["transport config"]["data source"]
-    func = getattr(demand_module, config["demand"])
 
-    return dict(demand=func(info))
+    if config.get("demand dummy", False):
+        return dict(demand=dummy())
+
+    # Retrieve a Reporter configured do to the calculation for the input data
+    rep = from_external_data(info)
+
+    # Generate the demand data; convert to pd.DataFrame
+    data = (
+        rep.get("transport pdt:n-y-t:mode")
+        .to_series()
+        .reset_index(name="value")
+    )
+
+    # Convert to message_ix layout; form commodity based on the mode
+    data = make_df(
+        "demand",
+        node=data["n"],
+        commodity="transport pax " + data["t"].str.lower(),
+        year=data["y"],
+        value=data["value"],
+        level="useful",
+        time="year",
+        unit="km",
+        )
+
+    # Temporary: remove LDV data
+    # TODO broadcast over consumer groups
+    data = data[data["commodity"] != "transport pax ldv"]
+
+    return dict(demand=data)
 
 
 DATA_FUNCTIONS.append(demand)
