@@ -13,7 +13,7 @@ import message_ix
 from message_data.reporting import CONFIG
 from message_data.tools import Context, ScenarioInfo, broadcast, make_df
 from .build import generate_set_elements
-from .data.groups import get_gea_population
+from .data.groups import get_consumer_groups, get_gea_population
 from .utils import read_config
 
 
@@ -172,6 +172,11 @@ def prepare_reporter(
         partial(population, context=context),
         "n",
         "config"
+    )
+
+    # Consumer group sizes
+    cg_key = rep.add(
+        "cg share:n-y-cg", partial(get_consumer_groups, context=context),
     )
 
     # PPP GDP, total and per capita

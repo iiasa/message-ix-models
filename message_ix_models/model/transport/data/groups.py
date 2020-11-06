@@ -1,7 +1,10 @@
 import pandas as pd
 import xarray as xr
 
-from message_data.tools import get_context, get_gea_data, set_info
+from ixmp.reporting import Quantity
+
+from message_data.tools import Context, get_gea_data, set_info
+from message_data.model.transport.utils import consumer_groups, read_config
 
 # Query for retrieving GEA population data
 
@@ -20,7 +23,7 @@ GEA_DIMS = dict(
 )
 
 
-def get_consumer_groups(context):
+def get_consumer_groups(context: Context = None):
     """Return shares of transport consumer groups.
 
     Returns
@@ -29,10 +32,9 @@ def get_consumer_groups(context):
         Dimensions: region, scenario, year.
     """
     # Ensure MA3T data is loaded
-    from message_data.model.transport.utils import consumer_groups, read_config
-    read_config(context)
-    cg_indexers = consumer_groups(context, rtype='indexers')
-    consumer_group = cg_indexers.pop('consumer_group')
+    context = read_config(context)
+    cg_indexers = consumer_groups(rtype="indexers")
+    consumer_group = cg_indexers.pop("consumer_group")
 
     # Data: GEA population projections give split between 'UR+SU' and 'RU'
     ursu_ru = get_urban_rural_shares(context)
@@ -41,9 +43,11 @@ def get_consumer_groups(context):
     # - Fill forward along years, for nodes where only a year 2010 value is
     #   assumed.
     # - Fill backward 2010 to 2005, in order to compute
-    su_share = context.data['population-suburb-share'] \
-        .ffill('year') \
-        .bfill('year')
+    su_share = (
+        context.data["transport population-suburb-share"]
+        .ffill("year")
+        .bfill("year")
+    )
 
     # Assumption: global nodes are assumed to match certain U.S.
     # census_divisions
@@ -67,7 +71,9 @@ def get_consumer_groups(context):
     # calculations done in 2008 timeframe. Therefore, I assume that the numbers
     # here are applicable to the US in 2005.”
     # NB in the spreadsheet, the data are also filled forward to 2010
-    ma3t_pop = context.data['ma3t/population'].assign_coords(year=2010)
+    ma3t_pop = (
+        context.data["transport ma3t population"].assign_coords(year=2010)
+    )
 
     # - Apply the trajectory of pop_share to the initial values of ma3t_pop.
     # - Compute the group shares.
@@ -76,32 +82,36 @@ def get_consumer_groups(context):
     # - Drop the census_division.
     # - Collapse area_type, attitude, driver_type dimensions into
     #   consumer_group.
+    # - Convert to short dimension names.
     groups = (
-        ma3t_pop * pop_share_index.cumprod('year')
-                 * context.data['ma3t/attitude']
-                 * context.data['ma3t/driver']
-        ) \
-        .sel(**n_cd_indexers) \
-        .drop_vars('census_division') \
-        .sel(**cg_indexers) \
-        .drop_vars(cg_indexers.keys()) \
+        (
+            ma3t_pop * pop_share_index.cumprod("year")
+            * context.data["transport ma3t attitude"]
+            * context.data["transport ma3t driver"]
+        ).sel(**n_cd_indexers)
+        .drop_vars('census_division')
+        .sel(**cg_indexers)
+        .drop_vars(cg_indexers.keys())
         .assign_coords(consumer_group=consumer_group)
+        .rename(node="n", year="y", consumer_group="cg")
+    )
 
-    return groups
+    # Normalize so the sum across groups is always 1; convert to Quantity
+    return Quantity(groups / groups.sum("cg"))
 
 
-def get_urban_rural_shares(context=None) -> xr.DataArray:
+def get_urban_rural_shares(context: Context = None) -> xr.DataArray:
     """Return shares of urban and rural population from GEA.
 
     See also
     --------
     .get_gea_data
     """
-    context = context or get_context()
+    context = read_config(context)
     pop = get_gea_population(context=context)
 
     # Scenario to use, e.g. "GEA mix"
-    pop_scen = context["transport"]["data source"]["population"]
+    pop_scen = context["transport config"]["data source"]["population"]
 
     # Compute shares, select the appropriate scenario
     return (
