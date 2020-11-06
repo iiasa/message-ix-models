@@ -39,6 +39,10 @@ def add_data(scenario, dry_run=False):
         log.warning("Remove 'R11_GLB' from node list for data generation")
         info.set["node"].remove("R11_GLB")
 
+    from message_data.model.transport import demand
+
+    DATA_FUNCTIONS.insert(0, demand.demand)
+
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
         log.info(f'from {func.__name__}()')
