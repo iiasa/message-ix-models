@@ -19,7 +19,7 @@ def test_report_bare(solved_bare_res_transport, session_context, tmp_path):
     )
 
     # The key is added, can be computed and written to file
-    path = tmp_path / "out::transport.xlsx"
+    path = tmp_path / "out__transport.xlsx"
     rep.write(key, path)
 
     # commented: for debugging
@@ -30,7 +30,7 @@ def test_report_bare(solved_bare_res_transport, session_context, tmp_path):
 
     # in::transport can be reported to file
     key = rep.full_key("in::transport")
-    rep.write(key, tmp_path / "in::transport.xlsx")
+    rep.write(key, tmp_path / "in__transport.xlsx")
 
     # Get the catch-all key, including plots etc.
     rep.get("transport all")

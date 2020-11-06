@@ -24,27 +24,49 @@ The code and data:
 Usage
 =====
 
-Preliminaries. Create a platform named e.g. ``mt``::
+Preliminaries.
+Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for working with :mod:`.message_data`.
 
-    $ ixmp platform add mt jdbc hsqldb path/to/db
+.. note:: One pre-requisite is basic familiarity with using a shell/command line.
 
-Create the bare RES, or identify another base scenario::
+   Specifically: ``export BASE="…"``, seen below, is a built-in command of the Bash shell (Linux or macOS) to set an environment variable.
+   ``$BASE`` refers to this variable.
+   In the Windows Command Prompt, use ``set BASE="…"`` to set and ``%BASE%`` to reference.
+   Variables with values containing spaces must be quoted when referencing, as in the example commands below.
+
+   To avoid using environment variables altogether, insert the URL directly in the command, for instance::
+
+       $ mix-data --url="ixmp://mt/Bare RES/baseline" res create-bare
+
+Choose a platform.
+This example uses a platform named ``mt``.
+If not already configured on your system, create the configuration for the platform to be used::
+
+    $ ixmp platform add mt jdbc hsqldb /path/to/db
+
+.. note:: See the :ref:`ixmp documentation <ixmp:configuration>` for how to use the ``ixmp`` command to add or edit configuration for specific platforms and databases.
+
+Identify the base scenario.
+One option is to create the ‘bare’ RES; the following is equivalent to calling :func:`.bare.create_res`::
 
     $ export BASE="ixmp://mt/Bare RES/baseline"
-    $ mix-data --url=$BASE res create-bare
+    $ mix-data --url="$BASE" res create-bare
 
-.. note:: Other usable base scenarios include ``ixmp://ene-ixmp/CD_LINKS_SSP2_v2/baseline``.
+Other usable base scenarios include ``ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline``.
 
-Build the model::
+Build the model.
+The following is equivalent to cloning ``BASE`` to ``URL``, and then calling :func:`.build.main` on the scenario stored at ``URL``::
 
-    # export URL=ixmp://mt/MESSAGEix-Transport/baseline
-    $ mix-data --url=$BASE transport build --dest=$URL
+    $ export URL=ixmp://mt/MESSAGEix-Transport/baseline
+    $ mix-data --url="$BASE" transport build --dest="$URL"
 
-Solve the model::
+Solve the model.
+The following is equivalent to calling :meth:`message_ix.Scenario.solve`::
 
-    $ message-ix --url=$URL solve
+    $ message-ix --url="$URL" solve
 
-Report the results, using :mod:`model.transport.report` to add additional reporting calculations::
+Report the results.
+The ``-m model.transport`` option indicates that additional reporting calculations from :mod:`model.transport.report` should be added to the base reporting configuration for MESSAGEix-GLOBIOM::
 
     $ mix-data --url=$URL report -m model.transport "transport plots"
 
@@ -113,7 +135,7 @@ See also: :doc:`transport/files`.
 CLI usage
 =========
 
-Use the :doc:`CLI </usage>` command ``mix-data transport`` to invoke the commands defined in :mod:`.transport._cli`. Try:
+Use the :doc:`CLI </cli>` command ``mix-data transport`` to invoke the commands defined in :mod:`.transport.cli`. Try:
 
 .. code::
 
