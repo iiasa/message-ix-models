@@ -175,8 +175,12 @@ def prepare_reporter(
     )
 
     # Consumer group sizes
+    # TODO ixmp is picky here when there is no separate argument to the
+    #      callable; fix.
     cg_key = rep.add(
-        "cg share:n-y-cg", partial(get_consumer_groups, context=context),
+        "cg share:n-y-cg",
+        partial(get_consumer_groups, context=context),
+        "config"
     )
 
     # PPP GDP, total and per capita
@@ -184,7 +188,7 @@ def prepare_reporter(
     gdp_ppp_cap = rep.add("ratio", "GDP PPP per capita:n-y", gdp_ppp, pop_key)
 
     # Total demand
-    rep.add("transport pdt:n-y", total_pdt, gdp_ppp_cap, "config")
+    rep.add("transport pdt:n-y:total", total_pdt, gdp_ppp_cap, "config")
 
     # Value-of-time multiplier
     votm_key = rep.add("transport VOT", votm, gdp_ppp_cap)
@@ -229,12 +233,13 @@ def prepare_reporter(
         "y",
     )
 
-    # Total PDT shared out by mode
+    # Total PDT shared out by mode and CG
     rep.add(
         "product",
-        "transport pdt::mode",
-        "transport pdt:n-y",
+        "transport pdt",
+        "transport pdt:n-y:total",
         "shares:n-t-y",  # For debugging
+        cg_key
     )
 
 

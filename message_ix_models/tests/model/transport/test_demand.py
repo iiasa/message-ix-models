@@ -20,13 +20,13 @@ def test_from_external_data(test_context, tmp_path):
 
     rep = demand.from_external_data(info, context=test_context)
 
-    # These units are implied by the test of "transport pdt:*:mode":
+    # These units are implied by the test of "transport pdt:*":
     # "GDP PPP:n-y" → "MUSD / year"
     # "GDP PPP per capita:n-y" → "kUSD / passenger / year"
-    # "transport pdt:n-y") → "Mm / year"
+    # "transport pdt:n-y:total") → "Mm / year"
 
     # Total demand by mode
-    key = "transport pdt:n-y-t:mode"
+    key = "transport pdt:n-y-t"
 
     # Graph structure can be visualized
     import dask
