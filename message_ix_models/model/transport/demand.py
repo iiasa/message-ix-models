@@ -90,7 +90,7 @@ def from_external_data(
 
     # Sets based on `info`; in from_scenario(), these are populated from the
     # sets in the Scenario
-    rep.add("n", dask.core.quote([n.id for n in info.set["node"]]))
+    rep.add("n", dask.core.quote(list(map(str, info.set["node"]))))
     rep.add("y", dask.core.quote(info.set["year"]))
     rep.add(
         "cat_year",
