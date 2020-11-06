@@ -233,13 +233,27 @@ def prepare_reporter(
         "y",
     )
 
-    # Total PDT shared out by mode and CG
+    # Total PDT shared out by mode
     rep.add(
         "product",
         "transport pdt",
         "transport pdt:n-y:total",
         "shares:n-t-y",  # For debugging
-        cg_key
+    )
+
+    # LDV PDT shared out by mode
+    rep.add(
+        "select",
+        "transport ldv pdt:n-y:total",
+        "transport pdt:n-y-t",
+        dict(t=["LDV"])
+    )
+
+    rep.add(
+        "product",
+        "transport ldv pdt",
+        "transport ldv pdt:n-y:total",
+        cg_key,
     )
 
 

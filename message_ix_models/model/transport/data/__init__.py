@@ -67,28 +67,51 @@ def demand(info):
 
     # Generate the demand data; convert to pd.DataFrame
     data = (
-        rep.get("transport pdt:n-y-t-cg")
+        rep.get("transport pdt:n-y-t")
         .to_series()
         .reset_index(name="value")
     )
 
-    # Convert to message_ix layout; form commodity based on the mode
+    common = dict(
+        level="useful",
+        time="year",
+        unit="km",
+    )
+
+    # Convert to message_ix layout
+    # TODO combine the two below in a loop or push the logic to demand.py
     data = make_df(
         "demand",
         node=data["n"],
         commodity="transport pax " + data["t"].str.lower(),
         year=data["y"],
         value=data["value"],
-        level="useful",
-        time="year",
-        unit="km",
+        **common
+        )
+    data = data[~data["commodity"].str.contains("ldv")]
+
+    data2 = (
+        rep.get("transport ldv pdt:n-y-cg")
+        .to_series()
+        .reset_index(name="value")
+    )
+
+    data2 = make_df(
+        "demand",
+        node=data2["n"],
+        commodity="transport pax " + data2["cg"],
+        year=data2["y"],
+        value=data2["value"],
+        **common
         )
 
-    # Temporary: remove LDV data
-    # TODO broadcast over consumer groups
-    data = data[data["commodity"] != "transport pax ldv"]
+    # result = dict(demand=pd.concat([data, data2]))
+    result = dict(demand=data2)
 
-    return dict(demand=data)
+    # commented: for debugging
+    # result["demand"].to_csv("debug.csv")
+
+    return result
 
 
 DATA_FUNCTIONS.append(demand)
