@@ -85,8 +85,10 @@ def main(scenario, **options):
 
     log.info('Set up MESSAGE-Transport')
 
-    # Core transport structure
+    # Generate the description of the structure / structure changes
     spec = get_spec()
+
+    # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec, add_data, **options)
 
     # Add generalized disutility structure to LDV technologies

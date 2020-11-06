@@ -83,6 +83,7 @@ def callback(rep: Reporter):
     # Read transport reporting configuration
     context = read_config()
     config = context["transport config"]["report"]
+    config.update(context["transport config"])
 
     # Add configuration to the Reporter
     rep.graph["config"]["transport"] = config.copy()
@@ -105,7 +106,6 @@ def callback(rep: Reporter):
         # Include only technologies with "transport" in the name
         log.info("Filter out non-transport technologies")
         rep.set_filters(t=sorted(all_techs))
-        log.info(repr(rep.graph["config"]))
 
     # List of all reporting keys added
     all_keys = []
