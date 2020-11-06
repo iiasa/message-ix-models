@@ -18,7 +18,7 @@ def build(scenario):
 
     return scenario
 
-SPEC_LIST = ["generic", "common", "steel", "cement"] # add as needed/implemented
+SPEC_LIST = ["generic", "common", "steel", "cement", "aluminum"] # add as needed/implemented
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
