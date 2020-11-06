@@ -84,9 +84,12 @@ a = build(scen_np)
 scen_np.solve()
 
 p = Plots(scen_np, 'China', firstyear=2020)
-p.plot_activity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
-p.plot_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
-p.plot_new_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
+p.plot_activity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', \
+                                       'eaf_steel'])
+p.plot_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', \
+                                       'eaf_steel'])
+p.plot_new_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', \
+                                           'dri_steel', 'eaf_steel'])
 
 
 #%% Main test run based on a MESSAGE scenario
@@ -116,11 +119,16 @@ a = build(scen)
 scen.solve()
 
 p = Plots(scen, 'China', firstyear=2020)
-p.plot_activity(baseyear=False, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
-p.plot_activity(baseyear=False, subset=['bof_steel', 'eaf_steel'])
-p.plot_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
-p.plot_new_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
-p.plot_activity(baseyear=True, subset=['manuf_steel', 'prep_secondary_steel'])
+p.plot_activity(baseyear=False, subset=['clinker_dry_cement', \
+                                        'clinker_wet_cement'])
+p.plot_activity(baseyear=False, subset=['grinding_ballmill_cement', \
+                                        'grinding_vertmill_cement'])
+# p.plot_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
+# p.plot_new_capacity(baseyear=True, subset=['bf_steel', 'bof_steel', 'dri_steel', 'eaf_steel'])
+p.plot_activity(baseyear=False, subset=['clinker_dry_cement', \
+                                       'clinker_dry_ccs_cement', \
+                                       'clinker_wet_cement', \
+                                       'clinker_wet_ccs_cement'])
 
 
 #%% Auxiliary random test stuff
