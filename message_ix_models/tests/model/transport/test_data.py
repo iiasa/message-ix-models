@@ -124,22 +124,23 @@ def test_USTIMES_MA3T(res_info):
         assert len(df) == len(res_info.N[1:]) * ((5 * 11) + 1)
 
 
-@pytest.mark.xfail(reason='Needs normalization across consumer groups.')
-@pytest.mark.parametrize('regions', ['R11'])
-@pytest.mark.parametrize('pop_scen', ['GEA mix'])
+@pytest.mark.parametrize("regions", ["R11"])
+@pytest.mark.parametrize("pop_scen", ["GEA mix"])
 def test_groups(test_context, regions, pop_scen):
     test_context.regions = regions
-    test_context['transport population scenario'] = pop_scen
+    test_context["transport population scenario"] = pop_scen
 
     result = get_consumer_groups(test_context)
 
     # Data have the correct size
-    assert result.sizes == {'node': 11, 'year': 11, 'consumer_group': 27}
+    exp = dict(n=11, y=11, cg=27)
+    # TODO when Quantity is SparseDataArray test using .sizes:
+    # assert result.sizes == exp
+    assert all(len(result.coords[dim]) == N for dim, N in exp.items())
 
     # Data sum to 1 across the consumer_group dimension, i.e. consititute a
     # discrete distribution
-    print(result.sum('consumer_group'))
-    assert all(result.sum('consumer_group') == 1)
+    assert (result.sum("cg") - 1. < 1e-08).all()
 
 
 @pytest.mark.parametrize("regions", ["R11"])

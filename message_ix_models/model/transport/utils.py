@@ -53,8 +53,8 @@ def read_config(context=None):
 
     # Load data files
     for key in context["transport config"]["data files"]:
-        context.data[f"transport {key}"] = load_data(
-            context, 'transport', key, rtype=xr.DataArray,
+        context.data[f"transport {key.replace('/', ' ')}"] = load_data(
+            context, "transport", key, rtype=xr.DataArray,
         )
 
     return context
