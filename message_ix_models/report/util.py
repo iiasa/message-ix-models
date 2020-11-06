@@ -61,7 +61,7 @@ REPLACE_VARS = {
 
 
 def collapse(df, var_name, var=[], region=[], replace_common=True):
-    """Callback for the `collapse argument to :meth:`~.Reporter.convert_pyam.
+    """Callback for the `collapse` argument to :meth:`~.Reporter.convert_pyam`.
 
     The dimensions listed in the `var` and `region` arguments are automatically
     dropped from the returned :class:`pyam.IamDataFrame`.
