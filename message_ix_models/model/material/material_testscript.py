@@ -39,13 +39,14 @@ Context._instance = []
 ctx = Context()
 
 # Set default scenario/model names
+ctx.platform_info.setdefault('name', 'ixmp_dev')
 ctx.scenario_info.setdefault('model', 'Material_test_MESSAGE_China')
 ctx.scenario_info.setdefault('scenario', 'baseline')
 # ctx['period_start'] = 2020
 # ctx['regions'] = 'China'
 # ctx['ssp'] = 'SSP2' # placeholder
-ctx['scentype'] = 'C30-const'
-ctx['datafile'] = 'China_steel_MESSAGE.xlsx'
+ctx['scentype'] = 'C30-const_E414'
+ctx['datafile'] = 'China_steel_cement_MESSAGE.xlsx'
 
 # Use general code to create a Scenario with some stuff in it
 scen = create_res(context = ctx)
@@ -78,7 +79,7 @@ df = dt.read_data_steel()
 
 b = dt.read_data_generic()
 b = dt.read_var_cost() 
-bb = dt.process_china_data_tec()
+bb = dt.read_sector_data()
 c = pd.melt(b, id_vars=['technology', 'mode', 'units'], \
             value_vars=[2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100], \
             var_name='year')

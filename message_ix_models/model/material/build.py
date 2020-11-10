@@ -139,6 +139,7 @@ def apply_spec(
     # Add data
     if callable(data):
         data(scenario, dry_run=dry_run)
+        # JM: call add_par_data at add_data in data.py
         # if result:
         #     add_par_data(scenario, result, dry_run=dry_run)
 
