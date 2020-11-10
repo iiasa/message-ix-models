@@ -38,7 +38,7 @@ from message_data.model.create import create_res
 Context._instance = []
 ctx = Context()
 
-# Set default scenario/model names
+# Set default scenario/model names - Later coming from CLI
 ctx.platform_info.setdefault('name', 'ixmp_dev')
 ctx.scenario_info.setdefault('model', 'Material_test_MESSAGE_China')
 ctx.scenario_info.setdefault('scenario', 'baseline')
@@ -95,7 +95,7 @@ bare.add_data(scen)
 info = ScenarioInfo(scen)
 a = get_spec()
 
-mp_samp = ixmp.Platform(name="local")
+mp_samp = ixmp.Platform(name="ene_ixmp")
 mp_samp.scenario_list()
 sample = mix.Scenario(mp_samp, model="Material_test", scenario="baseline")
 sample.set_list()
