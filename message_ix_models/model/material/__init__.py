@@ -5,6 +5,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 
 from .data import add_data
+from .data_util import modify_demand
 from .util import read_config
 
 
@@ -13,6 +14,8 @@ def build(scenario):
     # Get the specification
     spec = get_spec()
 
+    modify_demand(scenario)
+    
     # Apply to the base scenario
     apply_spec(scenario, spec, add_data) # dry_run=True
 

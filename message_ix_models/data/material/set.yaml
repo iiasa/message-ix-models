@@ -280,18 +280,18 @@ generic:
     - fc_h2_aluminum
     - solar_aluminum
     - dheat_aluminum
-    - DUMMY_coal_supply
-    - DUMMY_gas_supply
-    - DUMMY_loil_supply
-    - DUMMY_foil_supply
-    - DUMMY_electr_supply
-    - DUMMY_ethanol_supply
-    - DUMMY_methanol_supply
-    - DUMMY_hydrogen_supply
-    - DUMMY_freshwater_supply
-    - DUMMY_water_supply
-    - DUMMY_biomass_supply
-    - DUMMY_dist_heating
+    # - DUMMY_coal_supply
+    # - DUMMY_gas_supply
+    # - DUMMY_loil_supply
+    # - DUMMY_foil_supply
+    # - DUMMY_electr_supply
+    # - DUMMY_ethanol_supply
+    # - DUMMY_methanol_supply
+    # - DUMMY_hydrogen_supply
+    # - DUMMY_freshwater_supply
+    # - DUMMY_water_supply
+    # - DUMMY_biomass_supply
+    # - DUMMY_dist_heating
 
   mode:
     add:
@@ -429,6 +429,12 @@ aluminum:
     - manuf_aluminum
     - scrap_recovery_aluminum
     - DUMMY_alumina_supply
+
+  relation:
+    add:
+    - scrap_availability_1
+    - scrap_availability_2
+    - scrap_availability_3
 
 fertilizer:
   commodity:
