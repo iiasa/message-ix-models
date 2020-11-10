@@ -6,8 +6,42 @@ from .util import read_config
 import re
 
 
+
+def modify_demand(scen):
+    """Take care of demand changes due to the introduction of material parents
+
+    Shed industrial energy demand properly.
+
+    Also need take care of remove dynamic constraints for certain energy carriers
+    """
+
+    # NOTE Temporarily modifying industrial energy demand
+    #       (30% of non-elec industrial energy for steel)
+    df = scen.par('demand', filters={'commodity':'i_therm'})
+    df.value = df.value * 0.45 #(30% steel, 25% cement)
+
+    scen.check_out()
+    scen.add_par('demand', df)
+    scen.commit(comment = 'modify i_therm demand')
+
+    # NOTE Aggregate industrial coal demand need to adjust to
+    #      the sudden intro of steel setor in the first model year
+
+    t_i = ['coal_i','elec_i','gas_i','heat_i','loil_i','solar_i']
+
+    for t in t_i:
+        df = scen.par('growth_activity_lo', \
+                filters={'technology':t, 'year_act':2020})
+
+        scen.check_out()
+        scen.remove_par('growth_activity_lo', df)
+        scen.commit(comment = 'remove growth_lo constraints')
+
+
+
 # Read in technology-specific parameters from input xlsx
-def process_china_data_tec(sectname):
+# Now used for steel and cement, which are in one file
+def read_sector_data(sectname):
 
     import numpy as np
 
@@ -53,7 +87,7 @@ def process_china_data_tec(sectname):
 
 # Read in time-dependent parameters
 # Now only used to add fuel cost for bare model
-def read_timeseries():
+def read_timeseries(filename):
 
     import numpy as np
 
@@ -67,7 +101,7 @@ def read_timeseries():
 
     # Read the file
     df = pd.read_excel(
-        context.get_path("material", context.datafile), sheet_name)
+        context.get_path("material", filename), sheet_name)
 
     import numbers
     # Take only existing years in the data
@@ -79,3 +113,17 @@ def read_timeseries():
 
     df = df.drop(df[np.isnan(df.value)].index)
     return df
+
+def read_rel(filename):
+
+    import numpy as np
+
+    # Ensure config is loaded, get the context
+    context = read_config()
+
+    # Read the file
+    data_rel = pd.read_excel(
+        context.get_path("material", filename), sheet_name="relations",
+    )
+
+    return data_rel

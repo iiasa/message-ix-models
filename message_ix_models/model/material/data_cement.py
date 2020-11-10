@@ -1,4 +1,4 @@
-from .data_util import process_china_data_tec, read_timeseries
+from .data_util import read_sector_data, read_timeseries
 
 import numpy as np
 from collections import defaultdict
@@ -53,7 +53,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
-    data_cement = process_china_data_tec("cement")
+    data_cement = read_sector_data("cement")
     # Special treatment for time-dependent Parameters
     # data_cement_vc = read_timeseries()
     # tec_vc = set(data_cement_vc.technology) # set of tecs with var_cost
@@ -69,10 +69,7 @@ def gen_data_cement(scenario, dry_run=False):
     nodes = s_info.N
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
-
-    #print(allyears, modelyears, fmy)
-
-    nodes.remove('World') # For the bare model
+    nodes.remove('World')
 
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:
