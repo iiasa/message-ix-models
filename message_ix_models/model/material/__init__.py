@@ -14,10 +14,11 @@ def build(scenario):
     # Get the specification
     spec = get_spec()
 
-    modify_demand(scenario)
-    
     # Apply to the base scenario
     apply_spec(scenario, spec, add_data) # dry_run=True
+
+    # Adjust exogenous energy demand to incorporate the endogenized sectors
+    modify_demand(scenario)
 
     return scenario
 
@@ -79,9 +80,11 @@ def create_bare(context, regions, dry_run):
     if not dry_run:
         scen.solve()
 
-@cli.command()
+@cli.command("solve")
+@click.option('--datafile', default='China_steel_cement_MESSAGE.xlsx',
+              metavar='INPUT', help='File name for external data input')
 @click.pass_obj
-def solve(context):
+def solve(context, datafile):
     """Build and solve model.
 
     Use the --url option to specify the base scenario.
@@ -93,9 +96,10 @@ def solve(context):
         "NPi2020-con-prim-dir-ncr": "NPi",
         "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
+        "DIAG-C30-const_E414": "baseline_test",
     }.get(context.scenario_info["scenario"])
 
-    # Chnage this part - the model name ??
+    context.datafile = datafile
 
     if context.scenario_info["model"] != "CD_Links_SSP2":
         print("WARNING: this code is not tested with this base scenario!")
@@ -103,7 +107,7 @@ def solve(context):
     # Clone and set up
     scenario = build(
         context.get_scenario()
-        .clone(model="Material_test", scenario=output_scenario_name)
+        .clone(model="Material_China", scenario=output_scenario_name)
     )
 
     # Solve
