@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from .data_cement import gen_data_cement
 from .data_steel import gen_data_steel
-from .data_aluminum import gen_data_aluminum
+from .data_aluminum import gen_data_aluminum, add_other_data_aluminum
 from .data_generic import gen_data_generic
 
 from message_data.tools import (
@@ -29,6 +29,7 @@ DATA_FUNCTIONS = [
     gen_data_cement,
     gen_data_aluminum,
     gen_data_generic,
+    add_other_data_aluminum, # Directly writing to some additional params
 ]
 
 # Try to handle multiple data input functions from different materials
@@ -36,6 +37,9 @@ def add_data(scenario, dry_run=False):
     """Populate `scenario` with MESSAGE-Transport data."""
     # Information about `scenario`
     info = ScenarioInfo(scenario)
+
+    # Need to modify demand specification to accomodate material endogenization
+    # modify_demand(scenario)
 
     # Check for two "node" values for global data, e.g. in
     # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline

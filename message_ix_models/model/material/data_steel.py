@@ -1,4 +1,4 @@
-from .data_util import process_china_data_tec, read_timeseries
+from .data_util import read_sector_data, read_timeseries
 
 import numpy as np
 from collections import defaultdict
@@ -17,10 +17,12 @@ from message_data.tools import (
     add_par_data
 )
 
-
-gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
-    0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
-    0.00884341208063,0.00829374133206562, 0.00649794573935969, 0.00649794573935969]
+# Decadal growth rate (2020-2110)
+gdp_growth = [0.121448215899944, 0.0733079014579874,
+            0.0348154093342843, 0.021827616787921, \
+            0.0134425983942219,  0.0108320197485592, \
+            0.00884341208063,  0.00829374133206562, \
+            0.00649794573935969, 0.00649794573935969]
 gr = np.cumprod([(x+1) for x in gdp_growth])
 
 
@@ -47,16 +49,17 @@ def gen_data_steel(scenario, dry_run=False):
 
     """
     # Load configuration
-    config = read_config()["material"]["steel"]
+    context = read_config()
+    config = context["material"]["steel"]
 
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
     # TEMP: now add cement sector as well => Need to separate those since now I have get_data_steel and cement
-    data_steel = process_china_data_tec("steel")
+    data_steel = read_sector_data("steel")
     # Special treatment for time-dependent Parameters
-    data_steel_vc = read_timeseries()
+    data_steel_vc = read_timeseries(context.datafile)
     tec_vc = set(data_steel_vc.technology) # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
@@ -70,10 +73,7 @@ def gen_data_steel(scenario, dry_run=False):
     nodes = s_info.N
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
-
-    #print(allyears, modelyears, fmy)
-
-    nodes.remove('World') # For the bare model
+    nodes.remove('World')
 
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:
