@@ -29,6 +29,7 @@ DATA_FUNCTIONS = [
     gen_data_cement,
     gen_data_aluminum,
     gen_data_generic,
+    gen_data_petro_chemicals
 ]
 
 # Try to handle multiple data input functions from different materials
