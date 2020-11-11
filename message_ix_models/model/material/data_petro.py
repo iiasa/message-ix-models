@@ -1,0 +1,280 @@
+import pandas as pd
+import numpy as np
+from collections import defaultdict
+
+import message_ix
+import ixmp
+
+from .util import read_config
+from .data_util import read_rel
+from message_data.tools import (
+    ScenarioInfo,
+    broadcast,
+    make_df,
+    make_io,
+    make_matched_dfs,
+    same_node,
+    add_par_data
+)
+
+def read_data_petrochemicals():
+    """Read and clean data from :file:`petrochemicals_techno_economic.xlsx`."""
+
+    # Ensure config is loaded, get the context
+    context = read_config()
+
+    # Read the file
+    data_petro = pd.read_excel(
+        context.get_path("material", "petrochemicals_techno_economic.xlsx"),
+        sheet_name="data")
+    # Clean the data
+
+    data_petro= data_petro.drop(['Region', 'Source', 'Description'], axis = 1)
+
+    data_petro_hist = pd.read_excel(context.get_path("material", \
+    "petrochemicals_techno_economic.xlsx"),sheet_name="data_historical", \
+    usecols = "A:F")
+
+    return data_petro,data_petro_hist
+
+def gen_data_petro_chemicals(scenario, dry_run=False):
+    # Load configuration
+
+    config = read_config()["material"]["petro_chemicals"]
+
+    # Information about scenario, e.g. node, year
+    s_info = ScenarioInfo(scenario)
+
+    # Techno-economic assumptions
+    data_petro, data_petro_hist = read_data_petrochemicals()
+    # List of data frames, to be concatenated together at end
+    results = defaultdict(list)
+
+    # For each technology there are differnet input and output combinations
+    # Iterate over technologies
+
+    allyears = s_info.set['year']
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+    nodes = s_info.N
+    yv_ya = s_info.yv_ya
+    fmy = s_info.y0
+
+    # 'World' is included by default when creating a message_ix.Scenario().
+    # Need to remove it for the China bare model
+    nodes.remove('World')
+
+    for t in config["technology"]["add"]:
+
+        # years = s_info.Y
+        params = data_petro.loc[(data_petro["technology"] == t),"parameter"]\
+        .values.tolist()
+
+        # Availability year of the technology
+        av = data_petro.loc[(data_petro["technology"] == t),'availability'].\
+        values[0]
+        modelyears = [year for year in modelyears if year >= av]
+        yva = yv_ya.loc[yv_ya.year_vtg >= av, ]
+
+        # Iterate over parameters
+        for par in params:
+            split = par.split("|")
+            param_name = par.split("|")[0]
+
+            val = data_petro.loc[((data_petro["technology"] == t) & \
+            (data_petro["parameter"] == par)),'value'].values[0]
+
+            # Common parameters for all input and output tables
+            # year_act is none at the moment
+            # node_dest and node_origin are the same as node_loc
+
+            common = dict(
+            year_vtg= yva.year_vtg,
+            year_act= yva.year_act,
+            time="year",
+            time_origin="year",
+            time_dest="year",)
+
+            if len(split)> 1:
+
+                if (param_name == "input")|(param_name == "output"):
+
+                    com = split[1]
+                    lev = split[2]
+                    mod = split[3]
+
+                    df = (make_df(param_name, technology=t, commodity=com, \
+                    level=lev,mode=mod, value=val, unit='t', **common).\
+                    pipe(broadcast, node_loc=nodes).pipe(same_node))
+
+                    results[param_name].append(df)
+
+                elif param_name == "emission_factor":
+                    emi = split[1]
+                    mod = split[2]
+
+                    df = (make_df(param_name, technology=t,value=val,\
+                    emission=emi, mode=mod, unit='t', **common).pipe(broadcast, \
+                    node_loc=nodes))
+
+                elif param_name == "var_cost":
+                    mod = split[1]
+
+                    df = (make_df(param_name, technology=t, commodity=com, \
+                    level=lev,mode=mod, value=val, unit='t', **common).\
+                    pipe(broadcast, node_loc=nodes).pipe(same_node))
+
+
+
+                    results[param_name].append(df)
+
+            # Rest of the parameters apart from inpput, output and emission_factor
+
+            else:
+
+                df = (make_df(param_name, technology=t, value=val,unit='t', \
+                **common).pipe(broadcast, node_loc=nodes))
+
+                results[param_name].append(df)
+
+    # Add demand
+
+    values_e, values_p, values_BTX, values_foil, values_loil = \
+    gen_mock_demand_petro(scenario)
+
+    demand_ethylene = (make_df("demand", commodity= "ethylene", \
+    level= "demand_ethylene", year = modelyears, value=values_e, unit='Mt',\
+    time= "year").pipe(broadcast, node=nodes))
+    print("Ethylene demand")
+    print(demand_ethylene)
+
+    demand_propylene = (make_df("demand", commodity= "propylene", \
+    level= "demand_propylene", year = modelyears, value=values_p, unit='Mt',\
+    time= "year").pipe(broadcast, node=nodes))
+    print("Propylene demand")
+    print(demand_propylene)
+
+    demand_BTX = (make_df("demand", commodity= "BTX", \
+    level= "demand_BTX", year = modelyears, value=values_BTX, unit='Mt',\
+    time= "year").pipe(broadcast, node=nodes))
+    print("BTX demand")
+    print(demand_BTX)
+
+    demand_foil = (make_df("demand", commodity= "fueloil", \
+    level= "demand_foil", year = modelyears, value=values_foil, unit='GWa',\
+    time= "year").pipe(broadcast, node=nodes))
+
+    demand_loil = (make_df("demand", commodity= "lightoil", \
+    level= "demand_loil", year = modelyears, value=values_loil, unit='GWa',\
+    time= "year").pipe(broadcast, node=nodes))
+
+    results["demand"].append(demand_ethylene)
+    results["demand"].append(demand_propylene)
+    results["demand"].append(demand_BTX)
+    results["demand"].append(demand_loil)
+    results["demand"].append(demand_foil)
+
+    # Add historical data
+
+    for tec in data_petro_hist["technology"].unique():
+
+        y_hist = [y for y in allyears if y < fmy]
+        common_hist = dict(
+            year_vtg= y_hist,
+            year_act= y_hist,
+            mode="M1",
+            time="year",)
+
+        val_act = data_petro_hist.\
+        loc[(data_petro_hist["technology"]== tec), "production"]
+
+        df_hist_act = (make_df("historical_activity", technology=tec, \
+        value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
+
+        results["historical_activity"].append(df_hist_act)
+
+        c_factor = data_petro.loc[((data_petro["technology"]== tec) \
+                    & (data_petro["parameter"]=="capacity_factor")), "value"].values
+
+        val_cap = data_petro_hist.loc[(data_petro_hist["technology"]== tec), \
+                                        "new_production"] / c_factor
+
+        df_hist_cap = (make_df("historical_new_capacity", technology=tec, \
+        value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
+
+        results["historical_new_capacity"].append(df_hist_cap)
+
+    results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    return results
+
+    def gen_mock_demand_petro(scenario):
+
+        # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
+        # This makes 28.842 Mt. (IEA Energy Technology Transitions for Industry)
+        # Distribution in 2015 for China: 6:6:5 (ethylene,propylene,BTX)
+        # Future of Petrochemicals Methodological Annex
+        # This can be verified by other sources.
+
+        # The future projection of the demand: Increases by half of the GDP growth rate.
+        # Starting from 2020.
+        context = read_config()
+        s_info = ScenarioInfo(scenario)
+        modelyears = s_info.Y #s_info.Y is only for modeling years
+
+        gdp_growth = pd.Series([0.121448215899944, 0.0733079014579874, \
+                            0.0348154093342843, 0.021827616787921,\
+                            0.0134425983942219, 0.0108320197485592, \
+                            0.00884341208063, 0.00829374133206562, \
+                            0.00649794573935969],index=pd.Index(modelyears, \
+                                                                name='Time'))
+        i = 0
+        values_e = []
+        values_p = []
+        values_BTX = []
+
+        # 10-10-8 is the ratio
+
+        val_e = (10 * (1+ 0.147718884937996/2) ** context.time_step)
+        print("val_e")
+        print(val_e)
+        values_e.append(val_e)
+        print(values_e)
+
+        val_p = (10 * (1+ 0.147718884937996/2) ** context.time_step)
+        print("val_p")
+        print(val_p)
+        values_p.append(val_p)
+        print(values_p)
+
+        val_BTX = (8 * (1+ 0.147718884937996/2) ** context.time_step)
+        print("val_BTX")
+        print(val_BTX)
+        values_BTX.append(val_BTX)
+        print(values_BTX)
+
+        for element in gdp_growth:
+            i = i + 1
+            if i < len(modelyears):
+                val_e = (val_e * (1+ element/2) ** context.time_step)
+                values_e.append(val_e)
+
+                val_p = (val_p * (1+ element/2) ** context.time_step)
+                values_p.append(val_p)
+
+                val_BTX = (val_BTX * (1+ element/2) ** context.time_step)
+                values_BTX.append(val_BTX)
+
+            if context.scenario_info['scenario'] == 'NPi400':
+                sheet_name="demand_NPi400"
+            else:
+                sheet_name = "demand_baseline"
+            # Read the file
+            df = pd.read_excel(
+                context.get_path("material", "oil_demand.xlsx"),
+                sheet_name=sheet_name,
+            )
+
+            values_foil = df["Total_foil"].tolist()
+            values_loil = df["Total_loil"].tolist()
+
+        return values_e, values_p, values_BTX, values_foil, values_loil

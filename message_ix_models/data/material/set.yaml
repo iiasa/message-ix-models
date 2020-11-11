@@ -181,6 +181,8 @@ generic:
     - useful_aluminum
     - useful_cement
     - useful_aluminum
+    - useful_refining
+    - useful_petro
 
   technology:
     add:
@@ -280,6 +282,36 @@ generic:
     - fc_h2_aluminum
     - solar_aluminum
     - dheat_aluminum
+    - furnace_coke_petro
+    - furnace_coal_petro
+    - furnace_foil_petro
+    - furnace_loil_petro
+    - furnace_ethanol_petro
+    - furnace_biomass_petro
+    - furnace_methanol_petro
+    - furnace_gas_petro
+    - furnace_elec_petro
+    - furnace_h2_petro
+    - hp_gas_petro
+    - hp_elec_petro
+    - fc_h2_petro
+    - solar_petro
+    - dheat_petro
+    - furnace_coke_refining
+    - furnace_coal_refining
+    - furnace_foil_refining
+    - furnace_loil_refining
+    - furnace_ethanol_refining
+    - furnace_biomass_refining
+    - furnace_methanol_refining
+    - furnace_gas_refining
+    - furnace_elec_refining
+    - furnace_h2_refining
+    - hp_gas_refining
+    - hp_elec_refining
+    - fc_h2_refining
+    - solar_refining
+    - dheat_refining
 
   mode:
     add:
@@ -288,6 +320,89 @@ generic:
   node:
     remove:
     - World
+
+petro_chemicals:
+  commodity:
+    require:
+    - crudeoil
+    add:
+    - naphtha
+    - kerosene
+    - diesel
+    - atm_residue
+    - refinery_gas
+    - atm_gasoil
+    - atm_residue
+    - vacuum_gasoil
+    - vacuum_residue
+    - desulf_naphtha
+    - desulf_kerosene
+    - desulf_diesel
+    - desulf_atm_gasoil
+    - desulf_vacuum_gasoil
+    - gasoline
+    - heavy_foil
+    - light_foil
+    - propylene
+    - pet_coke
+    - ethane
+    - propane
+    - ethylene
+    - BTX
+
+  level:
+    require:
+    - secondary
+    - final
+    add:
+    - pre_intermediate
+    - desulfurized
+    - intermediate
+    - secondary_material
+    - final_material
+    - demand_ethylene
+    - demand_propylene
+    - demand_BTX
+    - demand_foil
+    - demand_loil
+  mode:
+    add:
+    - atm_gasoil
+    - vacuum_gasoil
+    - naphtha
+    - kerosene
+    - diesel
+    - cracking_gasoline
+    - cracking_loil
+    - ethane
+    - propane
+    - light_foil
+    - refinery_gas
+    - heavy_foil
+    - pet_coke
+    - atm_residue
+    - vacuum_residue
+    - gasoline
+
+  technology:
+    add:
+    - atm_distillation_ref
+    - vacuum_distillation_ref
+    - hydrotreating_ref
+    - catalytic_cracking_ref
+    - visbreaker_ref
+    - coking_ref
+    - catalytic_reforming_ref
+    - hydro_cracking_ref
+    - steam_cracker_petro
+    - ethanol_to_ethylene_petro
+    - agg_ref
+    - gas_processing_petro
+
+    remove:
+    # Any representation of refinery.
+    - ref_hil
+    - ref_lol
 
 steel:
   commodity:
