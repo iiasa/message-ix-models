@@ -335,11 +335,6 @@ petro_chemicals:
     - atm_residue
     - vacuum_gasoil
     - vacuum_residue
-    - desulf_naphtha
-    - desulf_kerosene
-    - desulf_diesel
-    - desulf_atm_gasoil
-    - desulf_vacuum_gasoil
     - gasoline
     - heavy_foil
     - light_foil
@@ -363,8 +358,7 @@ petro_chemicals:
     - demand_ethylene
     - demand_propylene
     - demand_BTX
-    - demand_foil
-    - demand_loil
+
   mode:
     add:
     - atm_gasoil
@@ -398,7 +392,6 @@ petro_chemicals:
     - ethanol_to_ethylene_petro
     - agg_ref
     - gas_processing_petro
-
     remove:
     # Any representation of refinery.
     - ref_hil
