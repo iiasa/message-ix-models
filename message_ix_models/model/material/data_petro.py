@@ -218,19 +218,19 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     values_e, values_p, values_BTX = gen_mock_demand_petro(scenario)
 
     demand_ethylene = (make_df("demand", commodity= "ethylene", \
-    level= "demand_ethylene", year = modelyears, value=values_e, unit='Mt',\
+    level= "demand", year = modelyears, value=values_e, unit='Mt',\
     time= "year").pipe(broadcast, node=nodes))
     print("Ethylene demand")
     print(demand_ethylene)
 
     demand_propylene = (make_df("demand", commodity= "propylene", \
-    level= "demand_propylene", year = modelyears, value=values_p, unit='Mt',\
+    level= "demand", year = modelyears, value=values_p, unit='Mt',\
     time= "year").pipe(broadcast, node=nodes))
     print("Propylene demand")
     print(demand_propylene)
 
     demand_BTX = (make_df("demand", commodity= "BTX", \
-    level= "demand_BTX", year = modelyears, value=values_BTX, unit='Mt',\
+    level= "demand", year = modelyears, value=values_BTX, unit='Mt',\
     time= "year").pipe(broadcast, node=nodes))
     print("BTX demand")
     print(demand_BTX)
