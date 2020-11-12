@@ -8,6 +8,7 @@ from .data_cement import gen_data_cement
 from .data_steel import gen_data_steel
 from .data_aluminum import gen_data_aluminum
 from .data_generic import gen_data_generic
+from .data_petro import gen_data_petro_chemicals
 
 from message_data.tools import (
     ScenarioInfo,
