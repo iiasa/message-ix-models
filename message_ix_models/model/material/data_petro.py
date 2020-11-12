@@ -33,16 +33,22 @@ def read_data_petrochemicals():
 
     data_petro_hist = pd.read_excel(context.get_path("material", \
     "petrochemicals_techno_economic.xlsx"),sheet_name="data_historical", \
-    usecols = "A:F")
-
+    usecols = "A:G", nrows= 16)
+    print("data petro hist")
+    print(data_petro_hist)
     return data_petro,data_petro_hist
+
 
 def gen_mock_demand_petro(scenario):
 
     # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
     # This makes 28.842 Mt. (IEA Energy Technology Transitions for Industry)
+    # In 2010: 43.263 Mt (1.5 times of 2006)
+    # In 2015 72.105 Mt (1.56 times of 2010)
+    # Grwoth rates are from CECDATA (assuming same growth rate as ethylene).
     # Distribution in 2015 for China: 6:6:5 (ethylene,propylene,BTX)
     # Future of Petrochemicals Methodological Annex
+    # This makes 25 Mt ethylene, 25 Mt propylene, 21 Mt BTX
     # This can be verified by other sources.
 
     # The future projection of the demand: Increases by half of the GDP growth rate.
@@ -59,6 +65,7 @@ def gen_mock_demand_petro(scenario):
                             0.00649794573935969, 0.00649794573935969]
     baseyear = list(range(2020, 2110+1, 10)) # Index for above vector
     gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
+    print(gdp_growth_interp)
 
     i = 0
     values_e = []
@@ -70,21 +77,19 @@ def gen_mock_demand_petro(scenario):
         pd.Series(modelyears).shift(1)).tolist()
     duration_period[0] = 5
 
-    # 10-10-8 is the ratio
-
-    val_e = (10 * (1+ 0.147718884937996/2) ** duration_period[i])
+    val_e = (25 * (1+ 0.147718884937996/2) ** duration_period[i])
     print("val_e")
     print(val_e)
     values_e.append(val_e)
     print(values_e)
 
-    val_p = (10 * (1+ 0.147718884937996/2) ** duration_period[i])
+    val_p = (25 * (1+ 0.147718884937996/2) ** duration_period[i])
     print("val_p")
     print(val_p)
     values_p.append(val_p)
     print(values_p)
 
-    val_BTX = (8 * (1+ 0.147718884937996/2) ** duration_period[i])
+    val_BTX = (21 * (1+ 0.147718884937996/2) ** duration_period[i])
     print("val_BTX")
     print(val_BTX)
     values_BTX.append(val_BTX)
@@ -236,7 +241,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # Add historical data
 
+    print(data_petro_hist["technology"].unique())
     for tec in data_petro_hist["technology"].unique():
+        print(tec)
 
         y_hist = [1980,1985,1990,1995,2000,2005,2010,2015] #length need to match what's in the xls
         common_hist = dict(
@@ -245,9 +252,11 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
             mode="M1",
             time="year",)
 
+        print("historical years")
         print(y_hist)
         val_act = data_petro_hist.\
         loc[(data_petro_hist["technology"]== tec), "production"]
+        print("value activity")
         print(val_act)
 
         df_hist_act = (make_df("historical_activity", technology=tec, \
@@ -260,6 +269,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
         val_cap = data_petro_hist.loc[(data_petro_hist["technology"]== tec), \
                                         "new_production"] / c_factor
+
+        print("This is capacity value")
+        print(val_cap)
 
         df_hist_cap = (make_df("historical_new_capacity", technology=tec, \
         value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
