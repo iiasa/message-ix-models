@@ -37,6 +37,78 @@ def read_data_petrochemicals():
 
     return data_petro,data_petro_hist
 
+def gen_mock_demand_petro(scenario):
+
+    # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
+    # This makes 28.842 Mt. (IEA Energy Technology Transitions for Industry)
+    # Distribution in 2015 for China: 6:6:5 (ethylene,propylene,BTX)
+    # Future of Petrochemicals Methodological Annex
+    # This can be verified by other sources.
+
+    # The future projection of the demand: Increases by half of the GDP growth rate.
+    # Starting from 2020.
+    context = read_config()
+    s_info = ScenarioInfo(scenario)
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+
+    gdp_growth = [0.121448215899944, 0.0733079014579874,
+                            0.0348154093342843, 0.021827616787921,
+                            0.0134425983942219, 0.0108320197485592,
+                            0.00884341208063, 0.00829374133206562,
+                            # Add one more element since model is until 2110 normally
+                            0.00649794573935969, 0.00649794573935969]
+    baseyear = list(range(2020, 2110+1, 10)) # Index for above vector
+    gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
+
+    i = 0
+    values_e = []
+    values_p = []
+    values_BTX = []
+
+    # Assume 5 year duration at the beginning
+    duration_period = (pd.Series(modelyears) - \
+        pd.Series(modelyears).shift(1)).tolist()
+    duration_period[0] = 5
+
+    # 10-10-8 is the ratio
+
+    val_e = (10 * (1+ 0.147718884937996/2) ** duration_period[i])
+    print("val_e")
+    print(val_e)
+    values_e.append(val_e)
+    print(values_e)
+
+    val_p = (10 * (1+ 0.147718884937996/2) ** duration_period[i])
+    print("val_p")
+    print(val_p)
+    values_p.append(val_p)
+    print(values_p)
+
+    val_BTX = (8 * (1+ 0.147718884937996/2) ** duration_period[i])
+    print("val_BTX")
+    print(val_BTX)
+    values_BTX.append(val_BTX)
+    print(values_BTX)
+
+    for element in gdp_growth_interp:
+        i = i + 1
+        if i < len(modelyears):
+            val_e = (val_e * (1+ element/2) ** duration_period[i])
+            values_e.append(val_e)
+
+            val_p = (val_p * (1+ element/2) ** duration_period[i])
+            values_p.append(val_p)
+
+            val_BTX = (val_BTX * (1+ element/2) ** duration_period[i])
+            values_BTX.append(val_BTX)
+
+        if context.scenario_info['scenario'] == 'NPi400':
+            sheet_name="demand_NPi400"
+        else:
+            sheet_name = "demand_baseline"
+
+    return values_e, values_p, values_BTX
+
 def gen_data_petro_chemicals(scenario, dry_run=False):
     # Load configuration
 
@@ -138,8 +210,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # Add demand
 
-    values_e, values_p, values_BTX, values_foil, values_loil = \
-    gen_mock_demand_petro(scenario)
+    values_e, values_p, values_BTX = gen_mock_demand_petro(scenario)
 
     demand_ethylene = (make_df("demand", commodity= "ethylene", \
     level= "demand_ethylene", year = modelyears, value=values_e, unit='Mt',\
@@ -159,33 +230,25 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     print("BTX demand")
     print(demand_BTX)
 
-    demand_foil = (make_df("demand", commodity= "fueloil", \
-    level= "demand_foil", year = modelyears, value=values_foil, unit='GWa',\
-    time= "year").pipe(broadcast, node=nodes))
-
-    demand_loil = (make_df("demand", commodity= "lightoil", \
-    level= "demand_loil", year = modelyears, value=values_loil, unit='GWa',\
-    time= "year").pipe(broadcast, node=nodes))
-
     results["demand"].append(demand_ethylene)
     results["demand"].append(demand_propylene)
     results["demand"].append(demand_BTX)
-    results["demand"].append(demand_loil)
-    results["demand"].append(demand_foil)
 
     # Add historical data
 
     for tec in data_petro_hist["technology"].unique():
 
-        y_hist = [y for y in allyears if y < fmy]
+        y_hist = [1980,1985,1990,1995,2000,2005,2010,2015] #length need to match what's in the xls
         common_hist = dict(
             year_vtg= y_hist,
             year_act= y_hist,
             mode="M1",
             time="year",)
 
+        print(y_hist)
         val_act = data_petro_hist.\
         loc[(data_petro_hist["technology"]== tec), "production"]
+        print(val_act)
 
         df_hist_act = (make_df("historical_activity", technology=tec, \
         value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
@@ -206,75 +269,3 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     return results
-
-    def gen_mock_demand_petro(scenario):
-
-        # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
-        # This makes 28.842 Mt. (IEA Energy Technology Transitions for Industry)
-        # Distribution in 2015 for China: 6:6:5 (ethylene,propylene,BTX)
-        # Future of Petrochemicals Methodological Annex
-        # This can be verified by other sources.
-
-        # The future projection of the demand: Increases by half of the GDP growth rate.
-        # Starting from 2020.
-        context = read_config()
-        s_info = ScenarioInfo(scenario)
-        modelyears = s_info.Y #s_info.Y is only for modeling years
-
-        gdp_growth = pd.Series([0.121448215899944, 0.0733079014579874, \
-                            0.0348154093342843, 0.021827616787921,\
-                            0.0134425983942219, 0.0108320197485592, \
-                            0.00884341208063, 0.00829374133206562, \
-                            0.00649794573935969],index=pd.Index(modelyears, \
-                                                                name='Time'))
-        i = 0
-        values_e = []
-        values_p = []
-        values_BTX = []
-
-        # 10-10-8 is the ratio
-
-        val_e = (10 * (1+ 0.147718884937996/2) ** context.time_step)
-        print("val_e")
-        print(val_e)
-        values_e.append(val_e)
-        print(values_e)
-
-        val_p = (10 * (1+ 0.147718884937996/2) ** context.time_step)
-        print("val_p")
-        print(val_p)
-        values_p.append(val_p)
-        print(values_p)
-
-        val_BTX = (8 * (1+ 0.147718884937996/2) ** context.time_step)
-        print("val_BTX")
-        print(val_BTX)
-        values_BTX.append(val_BTX)
-        print(values_BTX)
-
-        for element in gdp_growth:
-            i = i + 1
-            if i < len(modelyears):
-                val_e = (val_e * (1+ element/2) ** context.time_step)
-                values_e.append(val_e)
-
-                val_p = (val_p * (1+ element/2) ** context.time_step)
-                values_p.append(val_p)
-
-                val_BTX = (val_BTX * (1+ element/2) ** context.time_step)
-                values_BTX.append(val_BTX)
-
-            if context.scenario_info['scenario'] == 'NPi400':
-                sheet_name="demand_NPi400"
-            else:
-                sheet_name = "demand_baseline"
-            # Read the file
-            df = pd.read_excel(
-                context.get_path("material", "oil_demand.xlsx"),
-                sheet_name=sheet_name,
-            )
-
-            values_foil = df["Total_foil"].tolist()
-            values_loil = df["Total_loil"].tolist()
-
-        return values_e, values_p, values_BTX, values_foil, values_loil
