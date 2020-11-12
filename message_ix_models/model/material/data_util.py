@@ -17,12 +17,16 @@ def modify_demand(scen):
 
     # NOTE Temporarily modifying industrial energy demand
     #       (30% of non-elec industrial energy for steel)
+    # Add aluminum and petro-chemicals
+
     df = scen.par('demand', filters={'commodity':'i_therm'})
     df.value = df.value * 0.45 #(30% steel, 25% cement)
 
     scen.check_out()
     scen.add_par('demand', df)
     scen.commit(comment = 'modify i_therm demand')
+
+    # Also adjust the i_spec. 
 
     # NOTE Aggregate industrial coal demand need to adjust to
     #      the sudden intro of steel setor in the first model year

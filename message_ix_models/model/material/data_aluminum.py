@@ -155,7 +155,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     values = gen_mock_demand_aluminum(scenario)
 
     demand_al = (make_df("demand", commodity= "aluminum", \
-        level= "demand_aluminum", year = modelyears, value=values, unit='Mt',\
+        level= "demand", year = modelyears, value=values, unit='Mt',\
         time= "year").pipe(broadcast, node=nodes))
 
     results["demand"].append(demand_al)

@@ -355,9 +355,7 @@ petro_chemicals:
     - intermediate
     - secondary_material
     - final_material
-    - demand_ethylene
-    - demand_propylene
-    - demand_BTX
+    - demand
 
   mode:
     add:
@@ -511,7 +509,7 @@ aluminum:
     - useful_material
     - product
     - secondary_material
-    - demand_aluminum
+    - demand
 
   technology:
     add:
