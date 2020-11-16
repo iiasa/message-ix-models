@@ -17,19 +17,21 @@ from message_data.tools import (
     add_par_data
 )
 
-# Decadal growth rate (2020-2110)
+# annual average growth rate by decade (2020-2110)
 gdp_growth = [0.121448215899944, 0.0733079014579874,
             0.0348154093342843, 0.021827616787921, \
             0.0134425983942219,  0.0108320197485592, \
             0.00884341208063,  0.00829374133206562, \
             0.00649794573935969, 0.00649794573935969]
-gr = np.cumprod([(x+1) for x in gdp_growth])
+# gr = np.cumprod([(x+1) for x in gdp_growth])
 
 
 # Generate a fake steel demand
-def gen_mock_demand_steel(s_info):
+def gen_mock_demand_steel(scenario):
 
-    modelyears = s_info.Y
+    context = read_config()
+    s_info = ScenarioInfo(scenario)
+    modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
 
     # True steel use 2010 (China) = 537 Mt/year
@@ -37,11 +39,27 @@ def gen_mock_demand_steel(s_info):
     # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
 
     baseyear = list(range(2020, 2110+1, 10))
+    gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
 
-    demand = gr * demand2010_steel
-    demand_interp = np.interp(modelyears, baseyear, demand)
+    i = 0
+    values = []
 
-    return demand_interp.tolist()
+    # Assume 5 year duration at the beginning
+    duration_period = (pd.Series(modelyears) - \
+        pd.Series(modelyears).shift(1)).tolist()
+    duration_period[0] = 5
+
+    val = (demand2010_steel * (1+ 0.147718884937996/2) ** duration_period[i])
+    values.append(val)
+
+    for element in gdp_growth_interp:
+        i = i + 1
+        if i < len(modelyears):
+            val = (val * (1+ element/2) ** duration_period[i])
+            values.append(val)
+
+    return values
+
 
 
 def gen_data_steel(scenario, dry_run=False):
@@ -168,7 +186,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = 'demand'
-    demand = gen_mock_demand_steel(s_info)
+    demand = gen_mock_demand_steel(scenario)
     df = (make_df(parname, level='demand', commodity='steel', value=demand, unit='t', \
         year=modelyears, **common).pipe(broadcast, node=nodes))
     results[parname].append(df)

@@ -107,11 +107,6 @@ def gen_mock_demand_petro(scenario):
             val_BTX = (val_BTX * (1+ element/2) ** duration_period[i])
             values_BTX.append(val_BTX)
 
-        if context.scenario_info['scenario'] == 'NPi400':
-            sheet_name="demand_NPi400"
-        else:
-            sheet_name = "demand_baseline"
-
     return values_e, values_p, values_BTX
 
 def gen_data_petro_chemicals(scenario, dry_run=False):
