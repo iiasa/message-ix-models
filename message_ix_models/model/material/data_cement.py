@@ -25,20 +25,38 @@ gr = np.cumprod([(x+1) for x in gdp_growth])
 
 
 # Generate a fake cement demand
-def gen_mock_demand_cement(s_info):
+def gen_mock_demand_cement(scenario):
 
-    modelyears = s_info.Y
+    context = read_config()
+    s_info = ScenarioInfo(scenario)
+    modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
 
     # True cement use 2011 (China) = 2100 Mt/year (ADVANCE)
     demand2010_cement = 2100
 
     baseyear = list(range(2020, 2110+1, 10))
+    gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
 
-    demand = gr * demand2010_cement
-    demand_interp = np.interp(modelyears, baseyear, demand)
+    i = 0
+    values = []
 
-    return demand_interp.tolist()
+    # Assume 5 year duration at the beginning
+    duration_period = (pd.Series(modelyears) - \
+        pd.Series(modelyears).shift(1)).tolist()
+    duration_period[0] = 5
+
+    val = (demand2010_cement * (1+ 0.147718884937996/2) ** duration_period[i])
+    values.append(val)
+
+    for element in gdp_growth_interp:
+        i = i + 1
+        if i < len(modelyears):
+            val = (val * (1+ element/2) ** duration_period[i])
+            values.append(val)
+
+    return values
+
 
 
 def gen_data_cement(scenario, dry_run=False):
@@ -138,7 +156,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Create external demand param
     parname = 'demand'
-    demand = gen_mock_demand_cement(s_info)
+    demand = gen_mock_demand_cement(scenario)
     df = (make_df(parname, level='demand', commodity='cement', value=demand, \
         unit='t', year=modelyears, **common).pipe(broadcast, node=nodes))
     results[parname].append(df)
@@ -152,11 +170,11 @@ def gen_data_cement(scenario, dry_run=False):
     results[parname].append(df)
 
     # Test emission bound
-    parname = 'bound_emission'
-    df = (make_df(parname, type_tec='all', type_year='cumulative', \
-        type_emission='CO2_industry', \
-        value=200, unit='-').pipe(broadcast, node=nodes))
-    results[parname].append(df)
+    # parname = 'bound_emission'
+    # df = (make_df(parname, type_tec='all', type_year='cumulative', \
+    #     type_emission='CO2_industry', \
+    #     value=200, unit='-').pipe(broadcast, node=nodes))
+    # results[parname].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
