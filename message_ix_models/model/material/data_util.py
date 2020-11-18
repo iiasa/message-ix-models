@@ -17,16 +17,41 @@ def modify_demand(scen):
 
     # NOTE Temporarily modifying industrial energy demand
     #       (30% of non-elec industrial energy for steel)
-    # Add aluminum and petro-chemicals
+
+    # For aluminum there is no significant deduction required
+    # (refining process not included and thermal energy required from
+    # recycling is not a significant share.)
+    # For petro: based on 13.1 GJ/tonne of ethylene and the demand in the model
 
     df = scen.par('demand', filters={'commodity':'i_therm'})
-    df.value = df.value * 0.45 #(30% steel, 25% cement)
+    df.value = df.value * 0.38 #(30% steel, 25% cement, 7% petro)
 
     scen.check_out()
     scen.add_par('demand', df)
     scen.commit(comment = 'modify i_therm demand')
 
-    # Also adjust the i_spec. 
+    # Adjust the i_spec.
+    # Electricity usage seems negligable in the production of HVCs.
+    # Aluminum: based on IAI China data 20%.
+
+    df = scen.par('demand', filters={'commodity':'i_spec'})
+    df.value = df.value * 0.80  #(15% aluminum)
+
+    scen.check_out()
+    scen.add_par('demand', df)
+    scen.commit(comment = 'modify i_spec demand')
+
+    # Adjust the i_feedstock.
+    # 45 GJ/tonne of ethylene or propylene or BTX
+    # 2020 demand of one of these: 35.7 Mt
+    # Makes up around 30% of total feedstock demand.
+
+    df = scen.par('demand', filters={'commodity':'i_feed'})
+    df.value = df.value * 0.7  #(70% HVCs)
+
+    scen.check_out()
+    scen.add_par('demand', df)
+    scen.commit(comment = 'modify i_feed demand')
 
     # NOTE Aggregate industrial coal demand need to adjust to
     #      the sudden intro of steel setor in the first model year
