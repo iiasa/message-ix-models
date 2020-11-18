@@ -193,6 +193,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     # Add relations for scrap grades and availability
 
     for r in config['relation']['add']:
+        print(r)
 
         params = data_aluminum_rel.loc[(data_aluminum_rel["relation"] == r),\
             "parameter"].values.tolist()
@@ -206,15 +207,24 @@ def gen_data_aluminum(scenario, dry_run=False):
         for par_name in params:
             if par_name == "relation_activity":
 
-                val = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
-                    & (data_aluminum_rel["parameter"] == par_name)),'value'].values[0]
-                tec = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
-                    & (data_aluminum_rel["parameter"] == par_name)),'technology'].values[0]
+                tec_list = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
+                    & (data_aluminum_rel["parameter"] == par_name)) ,'technology']
 
-                df = (make_df(par_name, technology=tec, value=val, unit='-',\
-                **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
+                for tec in tec_list.unique():
+                    print("tec list")
+                    print(data_aluminum_rel["technology"].unique())
+                    print(tec)
 
-                results[par_name].append(df)
+                    val = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
+                        & (data_aluminum_rel["parameter"] == par_name) & \
+                        (data_aluminum_rel["technology"]==tec)),'value'].values[0]
+                    print("relation value")
+                    print(val)
+
+                    df = (make_df(par_name, technology=tec, value=val, unit='-',\
+                    **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
+
+                    results[par_name].append(df)
 
             elif par_name == "relation_upper":
 
