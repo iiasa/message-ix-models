@@ -7,6 +7,7 @@ import logging
 import pandas as pd
 
 from .util import read_config
+from .data_util import read_rel
 from message_data.tools import (
     ScenarioInfo,
     broadcast,
@@ -14,6 +15,7 @@ from message_data.tools import (
     make_io,
     make_matched_dfs,
     same_node,
+    copy_column,
     add_par_data
 )
 
@@ -77,8 +79,10 @@ def gen_data_steel(scenario, dry_run=False):
     # TEMP: now add cement sector as well => Need to separate those since now I have get_data_steel and cement
     data_steel = read_sector_data("steel")
     # Special treatment for time-dependent Parameters
-    data_steel_vc = read_timeseries(context.datafile)
-    tec_vc = set(data_steel_vc.technology) # set of tecs with var_cost
+    data_steel_ts = read_timeseries(context.datafile)
+    data_steel_rel = read_rel(context.datafile)
+
+    tec_ts = set(data_steel_ts.technology) # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -100,23 +104,23 @@ def gen_data_steel(scenario, dry_run=False):
             "parameter"].values.tolist()
 
         # Special treatment for time-varying params
-        if t in tec_vc:
+        if t in tec_ts:
             common = dict(
                 time="year",
                 time_origin="year",
                 time_dest="year",)
 
-            param_name = data_steel_vc.loc[(data_steel_vc["technology"] == t), 'parameter']
+            param_name = data_steel_ts.loc[(data_steel_ts["technology"] == t), 'parameter']
 
             for p in set(param_name):
-                val = data_steel_vc.loc[(data_steel_vc["technology"] == t) \
-                    & (data_steel_vc["parameter"] == p), 'value']
-                units = data_steel_vc.loc[(data_steel_vc["technology"] == t) \
-                    & (data_steel_vc["parameter"] == p), 'units'].values[0]
-                mod = data_steel_vc.loc[(data_steel_vc["technology"] == t) \
-                    & (data_steel_vc["parameter"] == p), 'mode']
-                yr = data_steel_vc.loc[(data_steel_vc["technology"] == t) \
-                    & (data_steel_vc["parameter"] == p), 'year']
+                val = data_steel_ts.loc[(data_steel_ts["technology"] == t) \
+                    & (data_steel_ts["parameter"] == p), 'value']
+                units = data_steel_ts.loc[(data_steel_ts["technology"] == t) \
+                    & (data_steel_ts["parameter"] == p), 'units'].values[0]
+                mod = data_steel_ts.loc[(data_steel_ts["technology"] == t) \
+                    & (data_steel_ts["parameter"] == p), 'mode']
+                yr = data_steel_ts.loc[(data_steel_ts["technology"] == t) \
+                    & (data_steel_ts["parameter"] == p), 'year']
 
                 df = (make_df(p, technology=t, value=val,\
                 unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
@@ -183,6 +187,47 @@ def gen_data_steel(scenario, dry_run=False):
                 **common).pipe(broadcast, node_loc=nodes))
 
                 results[param_name].append(df)
+
+    # Add relations for scrap grades and availability
+
+    for r in config['relation']['add']:
+
+        params = set(data_steel_rel.loc[(data_steel_rel["relation"] == r),\
+            "parameter"].values)
+
+        common_rel = dict(
+            year_rel = modelyears,
+            year_act = modelyears,
+            mode = 'M1',
+            relation = r,)
+
+        for par_name in params:
+            if par_name == "relation_activity":
+
+                val = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
+                    & (data_steel_rel["parameter"] == par_name)),'value'].values
+                tec = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
+                    & (data_steel_rel["parameter"] == par_name)),'technology'].values
+
+                print(par_name, "val", val, "tec", tec)
+
+                df = (make_df(par_name, technology=tec, \
+                            value=val, unit='-', mode = 'M1', relation = r)\
+                    .pipe(broadcast, node_rel=nodes, \
+                            node_loc=nodes, year_rel = modelyears))\
+                    .assign(year_act=copy_column('year_rel'))
+
+                results[par_name].append(df)
+
+            elif par_name == "relation_upper":
+
+                val = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
+                    & (data_steel_rel["parameter"] == par_name)),'value'].values[0]
+
+                df = (make_df(par_name, value=val, unit='-',\
+                **common_rel).pipe(broadcast, node_rel=nodes))
+
+                results[par_name].append(df)
 
     # Create external demand param
     parname = 'demand'
