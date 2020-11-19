@@ -431,7 +431,9 @@ steel:
     - sr_steel
     - bof_steel
     - eaf_steel
-    - prep_secondary_steel
+    - prep_secondary_steel_1
+    - prep_secondary_steel_2
+    - prep_secondary_steel_3
     - finishing_steel
     - manuf_steel
     - scrap_recovery_steel
@@ -439,6 +441,12 @@ steel:
     - DUMMY_limestone_supply
     - DUMMY_freshwater_supply
     - DUMMY_water_supply
+
+  relation:
+    add:
+    - scrap_availability_steel_1
+    - scrap_availability_steel_2
+    - scrap_availability_steel_3
 
 cement:
   commodity:

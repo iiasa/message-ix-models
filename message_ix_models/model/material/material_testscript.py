@@ -19,7 +19,9 @@ from message_data.tools import Context
 from message_data.tools import (
     ScenarioInfo,
     make_df,
+    broadcast,
     make_io,
+    copy_column,
     make_matched_dfs,
     set_info,
 )
@@ -69,13 +71,18 @@ p.plot_activity(baseyear=False, subset=['clinker_dry_cement', \
                                        'clinker_wet_cement', \
                                        'clinker_wet_ccs_cement'])
 
+p.plot_activity(baseyear=False, subset=['dri_steel', \
+                                   'bf_steel'])
 
 #%% Auxiliary random test stuff
 
 import pandas as pd
 
+import message_data.model.material.data_util as du
+
 # Test read_data_steel <- will be in create_res if working fine
 df = dt.read_data_steel()
+df = du.read_rel(ctx.datafile)
 
 b = dt.read_data_generic()
 b = dt.read_var_cost() 
@@ -95,7 +102,7 @@ bare.add_data(scen)
 info = ScenarioInfo(scen)
 a = get_spec()
 
-mp_samp = ixmp.Platform(name="ene_ixmp")
+mp_samp = ixmp.Platform(name="ixmp_dev")
 mp_samp.scenario_list()
 sample = mix.Scenario(mp_samp, model="Material_test", scenario="baseline")
 sample.set_list()
