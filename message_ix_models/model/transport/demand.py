@@ -95,7 +95,7 @@ def from_external_data(
     rep.add(
         "cat_year",
         pd.DataFrame(
-            [["firstmodelyear", info.set["year"][0]]],
+            [["firstmodelyear", info.y0]],
             columns=["type_year", "year"],
         )
     )
