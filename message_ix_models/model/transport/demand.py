@@ -209,7 +209,16 @@ def prepare_reporter(
 
     # Transport costs by mode
     cost_key = rep.add(
-        "cost", cost, price, gdp_ppp_cap, whour_key, speed_key, votm_key, "n",
+        "cost",
+        cost,
+        price,
+        gdp_ppp_cap,
+        whour_key,
+        speed_key,
+        votm_key,
+        "n",
+        "y",
+        "cat_year",
     )
 
     # Share weights
@@ -435,7 +444,7 @@ def smooth(qty):
     return Quantity(result)
 
 
-def cost(price, gdp_ppp_cap, whours, speeds, votm, n):
+def cost(price, gdp_ppp_cap, whours, speeds, votm, n, y, cat_year):
     """Calculate cost of transport [money / distance].
 
     Calculated from two components:
@@ -462,6 +471,13 @@ def cost(price, gdp_ppp_cap, whours, speeds, votm, n):
     # print(mask)
     # result = result.where(mask.values, 10 * result)
     # print(result)
+
+    # Select only years from y0 onwards
+    y0 = cat_year.query("type_year == 'firstmodelyear'")["year"].item()
+    years = list(filter(lambda year: y0 <= year, y))
+    result = result.sel(y=years)
+
+    # log.debug(result)
 
     return result
 
