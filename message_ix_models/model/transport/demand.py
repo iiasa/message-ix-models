@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from pathlib import Path
 
@@ -15,6 +16,8 @@ from message_data.tools import Context, ScenarioInfo, broadcast, make_df
 from .build import generate_set_elements
 from .data.groups import get_consumer_groups, get_gea_population
 from .utils import read_config
+
+log = logging.getLogger(__name__)
 
 
 def dummy(info):
@@ -391,12 +394,20 @@ def population(nodes, config, context=None):
     Dimensions: n-y. Units: 10⁶ person/passenger.
     """
     pop_scenario = config["transport"]["data source"]["population"]
-    return Quantity(
+
+    data = (
         get_gea_population(nodes, context=context)
         .sel(area_type="total", scenario=pop_scenario, drop=True)
-        .rename(node="n", year="y"),
-        units="Mpassenger"
+        .rename(node="n", year="y")
     )
+
+    # Duplicate 2100 data for 2110
+    data = xr.concat([
+        data,
+        data.sel(y=2100, drop=False).assign_coords(y=2110)
+    ], dim="y")
+
+    return Quantity(data, units="Mpassenger")
 
 
 def smooth(qty):
