@@ -38,8 +38,8 @@ def test_ikarus(bare_res, session_context):
     inv = data['inv_cost']
     inv_rail_pub = inv[inv['technology'] == 'rail_pub']
 
-    # 11 regions * 10 years (inv_cost has 'year_vtg' but not 'year_act' dim)
-    rows_per_tech = 11 * 10
+    # 11 regions * 11 years (inv_cost has 'year_vtg' but not 'year_act' dim)
+    rows_per_tech = 11 * 11
     N_techs = 18
 
     # Data have been loaded with the correct shape, unit and magnitude:
