@@ -184,7 +184,7 @@ fixed demand: "337327.9893 km / year"  # = 149500 * 1.12818725502081 * 2
 fixed GDP: "300 kUSD / passenger / year"
 
 # Year for share convergence
-year convergence: 2100
+year convergence: 2110
 
 # Scaling factors for production function [0]
 scaling: 1
