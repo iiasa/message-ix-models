@@ -180,6 +180,9 @@ def prepare_reporter(
     # Consumer group sizes
     # TODO ixmp is picky here when there is no separate argument to the
     #      callable; fix.
+    # FIXME this isn't the best place to set regions; move somewhere more
+    #       obvious/general
+    context.setdefault("regions", "R11")
     cg_key = rep.add(
         "cg share:n-y-cg",
         get_consumer_groups,
