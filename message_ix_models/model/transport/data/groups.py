@@ -1,3 +1,4 @@
+import logging
 from copy import deepcopy
 
 import pandas as pd
@@ -7,6 +8,9 @@ from ixmp.reporting import Quantity
 
 from message_data.tools import Context, get_gea_data, set_info
 from message_data.model.transport.utils import consumer_groups, read_config
+
+log = logging.getLogger(__name__)
+
 
 # Query for retrieving GEA population data
 
@@ -25,7 +29,7 @@ GEA_DIMS = dict(
 )
 
 
-def get_consumer_groups(config=None, context: Context = None):
+def get_consumer_groups(context: Context = None):
     """Return shares of transport consumer groups.
 
     Returns

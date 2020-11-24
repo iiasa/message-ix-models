@@ -182,8 +182,8 @@ def prepare_reporter(
     #      callable; fix.
     cg_key = rep.add(
         "cg share:n-y-cg",
-        partial(get_consumer_groups, context=context),
-        "config"
+        get_consumer_groups,
+        context,
     )
 
     # PPP GDP, total and per capita
