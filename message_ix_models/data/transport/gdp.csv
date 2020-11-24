@@ -1,7 +1,8 @@
 # Gross domestic product [10⁹ USD / year]
 #
-# Temporary: these values should be read directly from an SSP database.
-# Derived from ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline.
+# Source: exported from ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline.
+#
+# TODO read these values directly from an SSP database.
 #
 node,    year, value
 R11_AFR, 2010, 528.3
