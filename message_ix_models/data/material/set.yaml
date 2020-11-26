@@ -131,13 +131,10 @@ common:
     - final
     - water_supply
 
-  # Currently only works with China
   node:
     # Just one is sufficient, since the RES will never be generated with a mix
-    add:
-    - China
-    # remove:
-    # - World
+    require:
+    - R11_AFR
 
   type_tec:
     add:
