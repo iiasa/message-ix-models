@@ -85,7 +85,7 @@ def read_sector_data(sectname):
 
     # Clean the data
     data_df = data_df \
-        [['Technology', 'Parameter', 'Level',  \
+        [['Region', 'Technology', 'Parameter', 'Level',  \
         'Commodity', 'Mode', 'Species', 'Units', 'Value']] \
         .replace(np.nan, '', regex=True)
 
