@@ -25,7 +25,6 @@ gdp_growth = [0.121448215899944, 0.0733079014579874,
             0.0134425983942219,  0.0108320197485592, \
             0.00884341208063,  0.00829374133206562, \
             0.00649794573935969, 0.00649794573935969]
-# gr = np.cumprod([(x+1) for x in gdp_growth])
 
 
 # Generate a fake steel demand
@@ -97,6 +96,10 @@ def gen_data_steel(scenario, dry_run=False):
     fmy = s_info.y0
     nodes.remove('World')
 
+    # Do not parametrize GLB region the same way
+    if "R11_GLB" in nodes:
+        nodes.remove("R11_GLB")
+
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:
 
@@ -134,10 +137,13 @@ def gen_data_steel(scenario, dry_run=False):
 
             # Obtain the parameter names, commodity,level,emission
             split = par.split("|")
+            print(split)
             param_name = split[0]
             # Obtain the scalar value for the parameter
             val = data_steel.loc[((data_steel["technology"] == t) \
-            & (data_steel["parameter"] == par)),'value'].values[0]
+                & (data_steel["parameter"] == par)),'value']#.values
+            regions = data_steel.loc[((data_steel["technology"] == t) \
+                & (data_steel["parameter"] == par)),'region']#.values
 
             common = dict(
                 year_vtg= yv_ya.year_vtg,
@@ -147,44 +153,56 @@ def gen_data_steel(scenario, dry_run=False):
                 time_origin="year",
                 time_dest="year",)
 
-            # For the parameters which inlcudes index names
-            if len(split)> 1:
+            for rg in regions:
 
-                #print('1.param_name:', param_name, t)
-                if (param_name == "input")|(param_name == "output"):
+                # For the parameters which inlcudes index names
+                if len(split)> 1:
 
-                    # Assign commodity and level names
-                    com = split[1]
-                    lev = split[2]
-                    mod = split[3]
+                    print('1.param_name:', param_name, t)
+                    if (param_name == "input")|(param_name == "output"):
 
-                    df = (make_df(param_name, technology=t, commodity=com, \
-                    level=lev, value=val, mode=mod, unit='t', **common)\
-                    .pipe(broadcast, node_loc=nodes).pipe(same_node))
+                        print(rg, par, regions, val)
+                        # Assign commodity and level names
+                        com = split[1]
+                        lev = split[2]
+                        mod = split[3]
 
-                elif param_name == "emission_factor":
+                        df = (make_df(param_name, technology=t, commodity=com, \
+                        level=lev, \
+                        value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
+                        node_loc=rg, **common)\
+                        .pipe(same_node))
 
-                    # Assign the emisson type
-                    emi = split[1]
-                    mod = split[2]
+                    elif param_name == "emission_factor":
 
-                    df = (make_df(param_name, technology=t, value=val,\
-                    emission=emi, mode=mod, unit='t', **common).pipe(broadcast, \
-                    node_loc=nodes))
+                        # Assign the emisson type
+                        emi = split[1]
+                        mod = split[2]
 
-                else: # time-independent var_cost
-                    mod = split[1]
-                    df = (make_df(param_name, technology=t, value=val, \
-                    mode=mod, unit='t', \
-                    **common).pipe(broadcast, node_loc=nodes))
+                        df = make_df(param_name, technology=t, \
+                        value=val[regions[regions==rg].index[0]],\
+                        emission=emi, mode=mod, unit='t', \
+                        node_loc=rg, **common)#.pipe(broadcast, \
+                        #node_loc=nodes))
 
-                results[param_name].append(df)
+                    else: # time-independent var_cost
+                        mod = split[1]
+                        df = make_df(param_name, technology=t, \
+                        value=val[regions[regions==rg].index[0]], \
+                        mode=mod, unit='t', node_loc=rg, \
+                        **common)#.pipe(broadcast, node_loc=nodes))
 
-            # Parameters with only parameter name
-            else:
-                #print('2.param_name:', param_name)
-                df = (make_df(param_name, technology=t, value=val, unit='t', \
-                **common).pipe(broadcast, node_loc=nodes))
+                # Parameters with only parameter name
+                else:
+                    print('2.param_name:', param_name)
+                    df = make_df(param_name, technology=t, \
+                    value=val[regions[regions==rg].index[0]], unit='t', \
+                    node_loc=rg, **common)#.pipe(broadcast, node_loc=nodes))
+
+                if len(regions) == 1:
+                    print(df)
+                    df['node_loc'] = None
+                    df = df.pipe(broadcast, node_loc=nodes).pipe(same_node)
 
                 results[param_name].append(df)
 
