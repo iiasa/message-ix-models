@@ -81,6 +81,10 @@ def gen_data_aluminum(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
 
+    # Do not parametrize GLB region the same way
+    if "R11_GLB" in nodes:
+        nodes.remove("R11_GLB")
+        
     # 'World' is included by default when creating a message_ix.Scenario().
     # Need to remove it for the China bare model
     nodes.remove('World')
