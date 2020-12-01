@@ -74,15 +74,44 @@ p.plot_activity(baseyear=False, subset=['clinker_dry_cement', \
 p.plot_activity(baseyear=False, subset=['dri_steel', \
                                    'bf_steel'])
 
+#%% Global test
+from message_data.model.create import create_res
+
+# Create Context obj
+Context._instance = []
+ctx = Context()
+
+# Set default scenario/model names - Later coming from CLI
+ctx.platform_info.setdefault('name', 'ixmp_dev')
+ctx.platform_info.setdefault('jvmargs', ['-Xmx12G']) # To avoid java heap space error
+ctx.scenario_info.setdefault('model', 'Material_test_MESSAGE_global')
+ctx.scenario_info.setdefault('scenario', 'baseline')
+ctx['ssp'] = 'SSP2'
+ctx['datafile'] = 'Global_steel_cement_MESSAGE.xlsx'
+
+# Use general code to create a Scenario with some stuff in it
+scen = create_res(context = ctx)
+                
+# Use material-specific code to add certain stuff
+a = build(scen)
+
+# Solve the model
+import time
+start_time = time.time()
+scen.solve()
+print(".solve: %.6s seconds taken." % (time.time() - start_time))
 #%% Auxiliary random test stuff
 
 import pandas as pd
 
 import message_data.model.material.data_util as du
+import message_data.model.material.data_cement as dc
 
 # Test read_data_steel <- will be in create_res if working fine
-df = dt.read_data_steel()
+df = du.read_sector_data('steel')
 df = du.read_rel(ctx.datafile)
+
+mp = ctx.get_platform()
 
 b = dt.read_data_generic()
 b = dt.read_var_cost() 
@@ -93,8 +122,9 @@ c = pd.melt(b, id_vars=['technology', 'mode', 'units'], \
                     
 df_gen = dt.gen_data_generic(scen) 
 df_st = dt.gen_data_steel(scen) 
+df_st = dt.gen_data_cement(scen) 
 a = dt.get_data(scen, ctx)
-dt.gen_mock_demand_cement(ScenarioInfo(scen))
+dc.gen_mock_demand_cement(scen)
 dt.read_data_generic()
 bare.add_data(scen)
 
