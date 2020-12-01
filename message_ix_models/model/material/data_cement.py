@@ -18,10 +18,10 @@ from message_data.tools import (
 )
 
 
-gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
-    0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
-    0.00884341208063,0.00829374133206562, 0.00649794573935969, 0.00649794573935969]
-gr = np.cumprod([(x+1) for x in gdp_growth])
+# gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
+#     0.021827616787921, 0.0134425983942219, 0.0108320197485592, \
+#     0.00884341208063,0.00829374133206562, 0.00649794573935969, 0.00649794573935969]
+# gr = np.cumprod([(x+1) for x in gdp_growth])
 
 
 # Generate a fake cement demand
@@ -32,30 +32,62 @@ def gen_mock_demand_cement(scenario):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
 
-    # True cement use 2011 (China) = 2100 Mt/year (ADVANCE)
-    demand2010_cement = 2100
+    # SSP2 R11 baseline GDP projection
+    gdp_growth = pd.read_excel(
+        context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        sheet_name="data",
+    )
 
-    baseyear = list(range(2020, 2110+1, 10))
-    gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
+    gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & (gdp_growth['Region']!='World')].\
+        drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005, 2010, 2015], axis = 1)
 
-    i = 0
-    values = []
+    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
 
-    # Assume 5 year duration at the beginning
-    duration_period = (pd.Series(modelyears) - \
-        pd.Series(modelyears).shift(1)).tolist()
-    duration_period[0] = 5
+    # Regions setting for IMAGE
+    region_cement = pd.read_excel(
+        context.get_path("material", "CEMENT.BvR2010.xlsx"),
+        sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
+        .drop_duplicates().sort_values(by='Region #')
 
-    val = (demand2010_cement * (1+ 0.147718884937996/2) ** duration_period[i])
-    values.append(val)
+    region_cement = region_cement.loc[region_cement['Region #'] < 999]
+    region_cement['node'] = \
+        ['R11_NAM', 'R11_NAM',
+         'R11_LAM', 'R11_LAM',
+         'R11_LAM', 'R11_LAM',
+         'R11_AFR', 'R11_AFR',
+         'R11_AFR', 'R11_AFR',
+         'R11_WEU', 'R11_EEU',
+         'R11_EEU', 'R11_FSU',
+         'R11_FSU', 'R11_FSU',
+         'R11_MEA', 'R11_SAS',
+         'R11_PAS', 'R11_CPA',
+         'R11_PAS', 'R11_PAS',
+         'R11_PAO', 'R11_PAO',
+         'R11_SAS', 'R11_AFR']
 
-    for element in gdp_growth_interp:
-        i = i + 1
-        if i < len(modelyears):
-            val = (val * (1+ element/2) ** duration_period[i])
-            values.append(val)
+    # Cement demand 2010 [Mt/year] (IMAGE)
+    demand2010_cement = pd.read_excel(
+        context.get_path("material", "CEMENT.BvR2010.xlsx"),
+        sheet_name="Domestic Consumption", skiprows=range(0,3)).\
+        groupby(by=["Region #"]).sum()[[2010]].\
+        join(region_cement.set_index('Region #'), on='Region #').\
+        rename(columns={2010:'value'})
 
-    return values
+    demand2010_cement = demand2010_cement.groupby(by=['node']).sum().reset_index()
+    demand2010_cement['value'] = demand2010_cement['value'] / 1e9 # kg to Mt
+
+    demand2010_cement = demand2010_cement.\
+        join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
+
+    demand2010_cement.iloc[:,3:] = demand2010_cement.iloc[:,3:].\
+        div(demand2010_cement[2020], axis=0).\
+        multiply(demand2010_cement["value"], axis=0)
+
+    demand2010_cement = pd.melt(demand2010_cement.drop(['value', 'Scenario'], axis=1),\
+        id_vars=['node'], \
+        var_name='year', value_name = 'value')
+
+    return demand2010_cement
 
 
 
@@ -89,6 +121,10 @@ def gen_data_cement(scenario, dry_run=False):
     fmy = s_info.y0
     nodes.remove('World')
 
+    # Do not parametrize GLB region the same way
+    if "R11_GLB" in nodes:
+        nodes.remove("R11_GLB")
+
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:
 
@@ -100,10 +136,13 @@ def gen_data_cement(scenario, dry_run=False):
 
             # Obtain the parameter names, commodity,level,emission
             split = par.split("|")
+            print(split)
             param_name = split[0]
             # Obtain the scalar value for the parameter
             val = data_cement.loc[((data_cement["technology"] == t) \
-            & (data_cement["parameter"] == par)),'value'].values[0]
+                & (data_cement["parameter"] == par)),'value']#.values
+            regions = data_cement.loc[((data_cement["technology"] == t) \
+                & (data_cement["parameter"] == par)),'region']#.values
 
             common = dict(
                 year_vtg= yv_ya.year_vtg,
@@ -113,52 +152,64 @@ def gen_data_cement(scenario, dry_run=False):
                 time_origin="year",
                 time_dest="year",)
 
-            # For the parameters which inlcudes index names
-            if len(split)> 1:
+            for rg in regions:
 
-                #print('1.param_name:', param_name, t)
-                if (param_name == "input")|(param_name == "output"):
+                # For the parameters which inlcudes index names
+                if len(split)> 1:
 
-                    # Assign commodity and level names
-                    com = split[1]
-                    lev = split[2]
-                    mod = split[3]
+                    print('1.param_name:', param_name, t)
+                    if (param_name == "input")|(param_name == "output"):
 
-                    df = (make_df(param_name, technology=t, commodity=com, \
-                    level=lev, value=val, mode=mod, unit='t', **common)\
-                    .pipe(broadcast, node_loc=nodes).pipe(same_node))
+                        print(rg, par, regions, val)
+                        # Assign commodity and level names
+                        com = split[1]
+                        lev = split[2]
+                        mod = split[3]
 
-                elif param_name == "emission_factor":
+                        df = (make_df(param_name, technology=t, commodity=com, \
+                        level=lev, \
+                        value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
+                        node_loc=rg, **common)\
+                        .pipe(same_node))
 
-                    # Assign the emisson type
-                    emi = split[1]
-                    mod = split[2]
+                    elif param_name == "emission_factor":
 
-                    df = (make_df(param_name, technology=t, value=val,\
-                    emission=emi, mode=mod, unit='t', **common).pipe(broadcast, \
-                    node_loc=nodes))
+                        # Assign the emisson type
+                        emi = split[1]
+                        mod = split[2]
 
-                else: # time-independent var_cost
-                    mod = split[1]
-                    df = (make_df(param_name, technology=t, value=val, \
-                    mode=mod, unit='t', \
-                    **common).pipe(broadcast, node_loc=nodes))
+                        df = make_df(param_name, technology=t, \
+                        value=val[regions[regions==rg].index[0]],\
+                        emission=emi, mode=mod, unit='t', \
+                        node_loc=rg, **common)#.pipe(broadcast, \
+                        #node_loc=nodes))
 
-                results[param_name].append(df)
+                    else: # time-independent var_cost
+                        mod = split[1]
+                        df = make_df(param_name, technology=t, \
+                        value=val[regions[regions==rg].index[0]], \
+                        mode=mod, unit='t', node_loc=rg, \
+                        **common)#.pipe(broadcast, node_loc=nodes))
 
-            # Parameters with only parameter name
-            else:
-                #print('2.param_name:', param_name)
-                df = (make_df(param_name, technology=t, value=val, unit='t', \
-                **common).pipe(broadcast, node_loc=nodes))
+                # Parameters with only parameter name
+                else:
+                    print('2.param_name:', param_name)
+                    df = make_df(param_name, technology=t, \
+                    value=val[regions[regions==rg].index[0]], unit='t', \
+                    node_loc=rg, **common)#.pipe(broadcast, node_loc=nodes))
+
+                if len(regions) == 1:
+                    print(df)
+                    df['node_loc'] = None
+                    df = df.pipe(broadcast, node_loc=nodes).pipe(same_node)
 
                 results[param_name].append(df)
 
     # Create external demand param
     parname = 'demand'
     demand = gen_mock_demand_cement(scenario)
-    df = (make_df(parname, level='demand', commodity='cement', value=demand, \
-        unit='t', year=modelyears, **common).pipe(broadcast, node=nodes))
+    df = make_df(parname, level='demand', commodity='cement', value=demand.value, unit='t', \
+        year=demand.year, time='year', node=demand.node)
     results[parname].append(df)
 
     # Add CCS as addon
