@@ -20,11 +20,12 @@ from message_data.tools import (
 )
 
 # annual average growth rate by decade (2020-2110)
-gdp_growth = [0.121448215899944, 0.0733079014579874,
-            0.0348154093342843, 0.021827616787921, \
-            0.0134425983942219,  0.0108320197485592, \
-            0.00884341208063,  0.00829374133206562, \
-            0.00649794573935969, 0.00649794573935969]
+# gdp_growth = [0.121448215899944, 0.0733079014579874,
+#             0.0348154093342843, 0.021827616787921, \
+#             0.0134425983942219,  0.0108320197485592, \
+#             0.00884341208063,  0.00829374133206562, \
+#             0.00649794573935969, 0.00649794573935969]
+
 
 
 # Generate a fake steel demand
@@ -35,31 +36,56 @@ def gen_mock_demand_steel(scenario):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
 
-    # True steel use 2010 (China) = 537 Mt/year
-    demand2010_steel = 537
+    # SSP2 R11 baseline GDP projection
+    gdp_growth = pd.read_excel(
+        context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        sheet_name="data",
+    )
+
+    gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & (gdp_growth['Region']!='World')].\
+        drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005, 2010, 2015], axis = 1)
+
+    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
+
+    # True steel use 2010 [Mt/year]
     # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
+    r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
+        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+    d = [35, 537, 70, 53, 49, \
+        39, 130, 80, 45, 96, 100]
 
-    baseyear = list(range(2020, 2110+1, 10))
-    gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
+    demand2010_steel = pd.DataFrame({'Region':r, 'Val':d}).\
+        join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
 
-    i = 0
-    values = []
+    demand2010_steel.iloc[:,3:] = demand2010_steel.iloc[:,3:].\
+        div(demand2010_steel[2020], axis=0).\
+        multiply(demand2010_steel["Val"], axis=0)
 
-    # Assume 5 year duration at the beginning
-    duration_period = (pd.Series(modelyears) - \
-        pd.Series(modelyears).shift(1)).tolist()
-    duration_period[0] = 5
+    demand2010_steel = pd.melt(demand2010_steel.drop(['Val', 'Scenario'], axis=1),\
+        id_vars=['node'], \
+        var_name='year', value_name = 'value')
+    #
+    # baseyear = list(range(2020, 2110+1, 10))
+    # gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
+    #
+    # i = 0
+    # values = []
+    #
+    # # Assume 5 year duration at the beginning
+    # duration_period = (pd.Series(modelyears) - \
+    #     pd.Series(modelyears).shift(1)).tolist()
+    # duration_period[0] = 5
+    #
+    # val = (demand2010_steel.val * (1+ 0.147718884937996/2) ** duration_period[i])
+    # values.append(val)
+    #
+    # for element in gdp_growth_interp:
+    #     i = i + 1
+    #     if i < len(modelyears):
+    #         val = (val * (1+ element/2) ** duration_period[i])
+    #         values.append(val)
 
-    val = (demand2010_steel * (1+ 0.147718884937996/2) ** duration_period[i])
-    values.append(val)
-
-    for element in gdp_growth_interp:
-        i = i + 1
-        if i < len(modelyears):
-            val = (val * (1+ element/2) ** duration_period[i])
-            values.append(val)
-
-    return values
+    return demand2010_steel
 
 
 
@@ -250,8 +276,8 @@ def gen_data_steel(scenario, dry_run=False):
     # Create external demand param
     parname = 'demand'
     demand = gen_mock_demand_steel(scenario)
-    df = (make_df(parname, level='demand', commodity='steel', value=demand, unit='t', \
-        year=modelyears, **common).pipe(broadcast, node=nodes))
+    df = make_df(parname, level='demand', commodity='steel', value=demand.value, unit='t', \
+        year=demand.year, time='year', node=demand.node)#.pipe(broadcast, node=nodes)
     results[parname].append(df)
 
     # Concatenate to one data frame per parameter
