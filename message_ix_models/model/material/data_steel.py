@@ -52,7 +52,7 @@ def gen_mock_demand_steel(scenario):
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
     d = [35, 537, 70, 53, 49, \
-        39, 130, 80, 45, 96, 100]
+        9, 130, 80, 45, 96, 100]  # MEA change from 39 to 9 to make it feasible (coal supply bound)
 
     demand2010_steel = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
