@@ -130,6 +130,8 @@ common:
     - useful
     - final
     - water_supply
+    - export
+    - import
 
   node:
     # Just one is sufficient, since the RES will never be generated with a mix
@@ -436,8 +438,9 @@ steel:
     - scrap_recovery_steel
     - DUMMY_ore_supply
     - DUMMY_limestone_supply
-    - DUMMY_freshwater_supply
-    - DUMMY_water_supply
+    - trade_steel
+    - import_steel
+    - export_steel
 
   relation:
     add:
