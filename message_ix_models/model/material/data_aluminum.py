@@ -159,6 +159,8 @@ def gen_data_aluminum(scenario, dry_run=False):
     demand = gen_mock_demand_aluminum(scenario)
     df = make_df(parname, level='demand', commodity='aluminum', value=demand.value, unit='t', \
         year=demand.year, time='year', node=demand.node)#.pipe(broadcast, node=nodes)
+    print("aluminum node")
+    print(demand.node)
     results[parname].append(df)
 
     # # Add historical data
@@ -194,7 +196,6 @@ def gen_data_aluminum(scenario, dry_run=False):
     # Add relations for scrap grades and availability
 
     for r in config['relation']['add']:
-        print(r)
 
         params = data_aluminum_rel.loc[(data_aluminum_rel["relation"] == r),\
             "parameter"].values.tolist()
@@ -212,15 +213,9 @@ def gen_data_aluminum(scenario, dry_run=False):
                     & (data_aluminum_rel["parameter"] == par_name)) ,'technology']
 
                 for tec in tec_list.unique():
-                    print("tec list")
-                    print(data_aluminum_rel["technology"].unique())
-                    print(tec)
-
                     val = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
                         & (data_aluminum_rel["parameter"] == par_name) & \
                         (data_aluminum_rel["technology"]==tec)),'value'].values[0]
-                    print("relation value")
-                    print(val)
 
                     df = (make_df(par_name, technology=tec, value=val, unit='-',\
                     **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
@@ -275,8 +270,13 @@ def gen_mock_demand_aluminum(scenario):
 
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+
+    # Domestic production
     d = [1.7, 31.5, 1.8, 2, 1.3, 6.1, 4.5, 2,1,1,3.7]
     d = [x * fin_to_useful * useful_to_product for x in d]
+
+    # Demand at product level. (IAI)
+    #d = [1.7, 28.2, 4.5, 2, 2.5, 2, 14.1, 3.5, 5.5,6,8 ]
 
     demand2015_al = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\
@@ -288,6 +288,8 @@ def gen_mock_demand_aluminum(scenario):
 
     demand2015_al = pd.melt(demand2015_al.drop(['Val', 'Scenario'], axis=1),\
         id_vars=['node'], var_name='year', value_name = 'value')
+
+    print(demand2015_al)
 
     # # Add temporary exogenous demand: 17.3 Mt in 2010 (IAI)
     # demand2010_aluminum = 17.3

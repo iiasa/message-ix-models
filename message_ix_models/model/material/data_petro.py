@@ -72,6 +72,7 @@ def gen_mock_demand_petro(scenario):
     list = []
 
     for e in ["ethylene","propylene","BTX"]:
+        print(e)
         if e == "ethylene":
             demand2015 = pd.DataFrame({'Region':r, 'Val':d_ethylene}).\
             join(gdp_growth.set_index('Region'), on='Region').\
@@ -93,9 +94,13 @@ def gen_mock_demand_petro(scenario):
         demand2015 = pd.melt(demand2015.drop(['Val', 'Scenario'], axis=1),\
             id_vars=['node'], var_name='year', value_name = 'value')
 
-        list.append(demand2015)
+        print(demand2015)
 
-    return demand2015[0], demand2015[1], demand2015[2]
+        list.append(demand2015)
+        print("list")
+        print(list)
+
+    return list[0], list[1], list[2]
 
 
     # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
@@ -275,20 +280,27 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     demand_e,demand_p,demand_BTX = gen_mock_demand_petro(scenario)
     paramname = "demand"
 
-    df_e = make_df(parname, level='demand', commodity="ethylene", \
-    value=demand_e.value, unit='t',year=demand.year, time='year', \
-    node=demand.node)#.pipe(broadcast, node=nodes)
-    results["demand"].append(df)
+    df_e = make_df(paramname, level='demand', commodity="ethylene", \
+    value=demand_e.value, unit='t',year=demand_e.year, time='year', \
+    node=demand_e.node)#.pipe(broadcast, node=nodes)
+    print("demand ethylene")
+    print(demand_e.node)
+    results["demand"].append(df_e)
 
-    df_p = make_df(parname, level='demand', commodity="propylene", \
-    value=demand_p.value, unit='t',year=demand.year, time='year', \
-    node=demand.node)#.pipe(broadcast, node=nodes)
+    df_p = make_df(paramname, level='demand', commodity="propylene", \
+    value=demand_p.value, unit='t',year=demand_p.year, time='year', \
+    node=demand_p.node)#.pipe(broadcast, node=nodes)
+    print("demand propylene")
+    print(demand_p.node)
     results["demand"].append(df_p)
 
-    df_BTX = make_df(parname, level='demand', commodity="BTX", \
-    value=demand_BTX.value, unit='t',year=demand.year, time='year', \
-    node=demand.node)#.pipe(broadcast, node=nodes)
+    df_BTX = make_df(paramname, level='demand', commodity="BTX", \
+    value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
+    node=demand_BTX.node)#.pipe(broadcast, node=nodes)
+    print("demand BTX")
+    print(demand_BTX.node)
     results["demand"].append(df_BTX)
+
 
     # # Add historical data
     #
