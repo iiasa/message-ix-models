@@ -52,7 +52,7 @@ def gen_mock_demand_steel(scenario):
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
     d = [35, 537, 70, 53, 49, \
-        9, 130, 80, 45, 96, 100]  # MEA change from 39 to 9 to make it feasible (coal supply bound)
+        39, 130, 80, 45, 96, 100]  # MEA change from 39 to 9 to make it feasible (coal supply bound)
 
     demand2010_steel = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
@@ -187,17 +187,37 @@ def gen_data_steel(scenario, dry_run=False):
                     print('1.param_name:', param_name, t)
                     if (param_name == "input")|(param_name == "output"):
 
-                        print(rg, par, regions, val)
                         # Assign commodity and level names
                         com = split[1]
                         lev = split[2]
                         mod = split[3]
+                        print(rg, par, lev)
 
-                        df = (make_df(param_name, technology=t, commodity=com, \
-                        level=lev, \
-                        value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
-                        node_loc=rg, **common)\
-                        .pipe(same_node))
+                        if (param_name == "input") and (lev == "import"):
+                            df = make_df(param_name, technology=t, commodity=com, \
+                            level=lev, \
+                            value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
+                            node_loc=rg, node_origin="R11_GLB", **common)
+                        elif (param_name == "output") and (lev == "export"):
+                            df = make_df(param_name, technology=t, commodity=com, \
+                            level=lev, \
+                            value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
+                            node_loc=rg, node_dest="R11_GLB", **common)
+                        else:
+                            df = (make_df(param_name, technology=t, commodity=com, \
+                            level=lev, \
+                            value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
+                            node_loc=rg, **common)\
+                            .pipe(same_node))
+
+                        # Copy parameters to all regions, when node_loc is not GLB
+                        if (len(regions) == 1) and (rg != "R11_GLB"):
+                            print("copying to all R11", rg, lev)
+                            df['node_loc'] = None
+                            df = df.pipe(broadcast, node_loc=nodes)#.pipe(same_node)
+                            # Use same_node only for non-trade technologies
+                            if (lev != "import") and (lev != "export"):
+                                df = df.pipe(same_node)
 
                     elif param_name == "emission_factor":
 
@@ -224,11 +244,6 @@ def gen_data_steel(scenario, dry_run=False):
                     df = make_df(param_name, technology=t, \
                     value=val[regions[regions==rg].index[0]], unit='t', \
                     node_loc=rg, **common)#.pipe(broadcast, node_loc=nodes))
-
-                if len(regions) == 1:
-                    print(df)
-                    df['node_loc'] = None
-                    df = df.pipe(broadcast, node_loc=nodes).pipe(same_node)
 
                 results[param_name].append(df)
 
