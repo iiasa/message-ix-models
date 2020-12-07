@@ -228,22 +228,27 @@ def gen_data_steel(scenario, dry_run=False):
                         df = make_df(param_name, technology=t, \
                         value=val[regions[regions==rg].index[0]],\
                         emission=emi, mode=mod, unit='t', \
-                        node_loc=rg, **common)#.pipe(broadcast, \
-                        #node_loc=nodes))
+                        node_loc=rg, **common)
 
                     else: # time-independent var_cost
                         mod = split[1]
                         df = make_df(param_name, technology=t, \
                         value=val[regions[regions==rg].index[0]], \
                         mode=mod, unit='t', node_loc=rg, \
-                        **common)#.pipe(broadcast, node_loc=nodes))
+                        **common)
 
                 # Parameters with only parameter name
                 else:
                     print('2.param_name:', param_name)
                     df = make_df(param_name, technology=t, \
                     value=val[regions[regions==rg].index[0]], unit='t', \
-                    node_loc=rg, **common)#.pipe(broadcast, node_loc=nodes))
+                    node_loc=rg, **common)
+
+                # Copy parameters to all regions
+                if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
+                    print("Copying to all R11")
+                    df['node_loc'] = None
+                    df = df.pipe(broadcast, node_loc=nodes)
 
                 results[param_name].append(df)
 
