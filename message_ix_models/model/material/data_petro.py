@@ -64,6 +64,8 @@ def gen_mock_demand_petro(scenario):
     # For division of some regions assumptions made:
     # PAO, PAS, SAS, EEU,WEU
 
+    # Domestic production (not demand !!!)
+
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
     d_ethylene = [1,25,10,3,5,20,25,12,10,13,15]
@@ -283,22 +285,16 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     df_e = make_df(paramname, level='demand', commodity="ethylene", \
     value=demand_e.value, unit='t',year=demand_e.year, time='year', \
     node=demand_e.node)#.pipe(broadcast, node=nodes)
-    print("demand ethylene")
-    print(demand_e.node)
     results["demand"].append(df_e)
 
     df_p = make_df(paramname, level='demand', commodity="propylene", \
     value=demand_p.value, unit='t',year=demand_p.year, time='year', \
     node=demand_p.node)#.pipe(broadcast, node=nodes)
-    print("demand propylene")
-    print(demand_p.node)
     results["demand"].append(df_p)
 
     df_BTX = make_df(paramname, level='demand', commodity="BTX", \
     value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
     node=demand_BTX.node)#.pipe(broadcast, node=nodes)
-    print("demand BTX")
-    print(demand_BTX.node)
     results["demand"].append(df_BTX)
 
 
