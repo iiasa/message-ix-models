@@ -51,12 +51,16 @@ def read_data_aluminum():
         usecols = "A:F")
 
     data_alu_rel = read_rel(fname)
+
+    data_alu_var = pd.read_excel(
+            context.get_path("material", fname),
+            sheet_name="variable_data")
     # Unit conversion
 
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
 
-    return data_alu, data_alu_hist, data_alu_rel
+    return data_alu, data_alu_hist, data_alu_rel, data_alu_var
 
 def gen_data_aluminum(scenario, dry_run=False):
 
@@ -66,7 +70,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_aluminum, data_aluminum_hist, data_aluminum_rel= read_data_aluminum()
+    data_aluminum, data_aluminum_hist, data_aluminum_rel, data_aluminum_var= read_data_aluminum()
     tec_tv = set(data_aluminum_hist.technology) # set of tecs with time-varying values
 
     # List of data frames, to be concatenated together at end
@@ -163,35 +167,77 @@ def gen_data_aluminum(scenario, dry_run=False):
     print(demand.node)
     results[parname].append(df)
 
-    # # Add historical data
-    #
-    # for tec in data_aluminum_hist["technology"].unique():
-    #
-    #     y_hist = [1980,1985,1990,1995,2000,2005,2010,2015] #length need to match what's in the xls
-    #     common_hist = dict(
-    #         year_vtg= y_hist,
-    #         year_act= y_hist,
-    #         mode="M1",
-    #         time="year",)
-    #
-    #     val_act = data_aluminum_hist.\
-    #     loc[(data_aluminum_hist["technology"]== tec), "production"]
-    #
-    #     df_hist_act = (make_df("historical_activity", technology=tec, \
-    #     value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
-    #
-    #     results["historical_activity"].append(df_hist_act)
-    #
-    #     c_factor = data_aluminum.loc[((data_aluminum["technology"]== tec) \
-    #                 & (data_aluminum["parameter"]=="capacity_factor")), "value"].values
-    #
-    #     val_cap = data_aluminum_hist.loc[(data_aluminum_hist["technology"]== tec), \
-    #                                     "new_production"] / c_factor
-    #
-    #     df_hist_cap = (make_df("historical_new_capacity", technology=tec, \
-    #     value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
-    #
-    #     results["historical_new_capacity"].append(df_hist_cap)
+    # Add historical data
+
+    for tec in data_aluminum_hist["technology"].unique():
+
+        y_hist = [1980,1985,1990,1995,2000,2005,2010,2015] #length need to match what's in the xls
+        common_hist = dict(
+            year_vtg= y_hist,
+            year_act= y_hist,
+            mode="M1",
+            time="year",)
+
+        val_act = data_aluminum_hist.\
+        loc[(data_aluminum_hist["technology"]== tec), "production"]
+
+        df_hist_act = (make_df("historical_activity", technology=tec, \
+        value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
+
+        results["historical_activity"].append(df_hist_act)
+
+        c_factor = data_aluminum.loc[((data_aluminum["technology"]== tec) \
+                    & (data_aluminum["parameter"]=="capacity_factor")), "value"].values
+
+        val_cap = data_aluminum_hist.loc[(data_aluminum_hist["technology"]== tec), \
+                                        "new_production"] / c_factor
+
+        df_hist_cap = (make_df("historical_new_capacity", technology=tec, \
+        value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
+
+        results["historical_new_capacity"].append(df_hist_cap)
+    
+
+    # Add variable costs
+
+    data_aluminum_var = pd.melt(data_aluminum_var, id_vars=['technology', 'mode', 'units',\
+    "parameter","region"], value_vars=[2020, 2025,2030,2035, 2040,2045, 2050,2055,2060, 2070, 2080, 2090, 2100], var_name='year')
+
+    tec_vc = set(data_aluminum_var.technology)
+    print(tec_vc)
+    param_name = set(data_aluminum_var.parameter)
+
+
+    for p in param_name:
+        for t in tec_vc:
+
+            print("V_technology")
+            print(t)
+
+            common = dict(
+                time="year",
+                time_origin="year",
+                time_dest="year",
+                )
+
+            param_name = p
+            print(param_name)
+            val = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
+            & (data_aluminum_var["parameter"] == p)), 'value'].values
+            print(val)
+            units = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
+            & (data_aluminum_var["parameter"] == p)),'units'].values
+            print(units)
+            mod = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
+            & (data_aluminum_var["parameter"] == p)), 'mode'].values
+            print(mod)
+            yr = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
+            & (data_aluminum_var["parameter"] == p)), 'year'].values
+            print(yr)
+
+            df = (make_df(param_name, technology=t, value=val,unit='t', \
+            mode=mod, year_vtg=yr, year_act=yr, **common).pipe(broadcast,node_loc=nodes))
+            results[param_name].append(df)
 
     # Add relations for scrap grades and availability
 
@@ -236,8 +282,6 @@ def gen_data_aluminum(scenario, dry_run=False):
                         dfs in results.items()}
 
     return results_aluminum
-
-
 
 def gen_mock_demand_aluminum(scenario):
 
@@ -288,41 +332,5 @@ def gen_mock_demand_aluminum(scenario):
 
     demand2015_al = pd.melt(demand2015_al.drop(['Val', 'Scenario'], axis=1),\
         id_vars=['node'], var_name='year', value_name = 'value')
-
-    print(demand2015_al)
-
-    # # Add temporary exogenous demand: 17.3 Mt in 2010 (IAI)
-    # demand2010_aluminum = 17.3
-    #
-    # # The future projection of the demand: Increases by half of the GDP growth rate
-    # # gdp_growth rate: SSP2 global model. Starting from 2020.
-    # gdp_growth = [0.121448215899944, 0.0733079014579874,
-    #                         0.0348154093342843, 0.021827616787921,
-    #                         0.0134425983942219, 0.0108320197485592,
-    #                         0.00884341208063, 0.00829374133206562,
-    #                         # Add one more element since model is until 2110 normally
-    #                         0.00649794573935969, 0.00649794573935969]
-    # baseyear = list(range(2020, 2110+1, 10)) # Index for above vector
-    # gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
-    #
-    # i = 0
-    # values = []
-    #
-    # # Assume 5 year duration at the beginning
-    # duration_period = (pd.Series(modelyears) - \
-    #     pd.Series(modelyears).shift(1)).tolist()
-    # duration_period[0] = 5
-    #
-    # val = (demand2010_aluminum * (1+ 0.147718884937996/2) ** duration_period[i])
-    # values.append(val)
-    #
-    # for element in gdp_growth_interp:
-    #     i = i + 1
-    #     if i < len(modelyears):
-    #         val = (val * (1+ element/2) ** duration_period[i])
-    #         values.append(val)
-    # # Adjust the demand to product level.
-    #
-    # values = [x * fin_to_useful * useful_to_product for x in values]
 
     return demand2015_al
