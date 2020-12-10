@@ -11,7 +11,7 @@ from message_ix import Scenario
 
 import message_data.model.material.data as dt
 from message_data.model.material.plotting import Plots
-import pyam
+# import pyam
 
 
 from message_data.tools import Context
@@ -29,7 +29,7 @@ from message_data.tools import (
 from message_data.model.create import create_res
 from message_data.model.material import build, get_spec
 
-from message_data.model.material.util import read_config
+# from message_data.model.material.util import read_config
 
 
 #%% Main test run based on a MESSAGE scenario

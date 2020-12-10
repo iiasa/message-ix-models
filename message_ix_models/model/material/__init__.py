@@ -21,7 +21,7 @@ def build(scenario):
     modify_demand(scenario)
 
     return scenario
-    
+
 # add as needed/implemented
 SPEC_LIST = ["generic", "common", "steel", "cement", "aluminum", "petro_chemicals"]
 
@@ -82,7 +82,7 @@ def create_bare(context, regions, dry_run):
         scen.solve()
 
 @cli.command("solve")
-@click.option('--datafile', default='China_steel_cement_MESSAGE.xlsx',
+@click.option('--datafile', default='Global_steel_cement_MESSAGE.xlsx',
               metavar='INPUT', help='File name for external data input')
 @click.pass_obj
 def solve(context, datafile):
@@ -97,7 +97,7 @@ def solve(context, datafile):
         "NPi2020-con-prim-dir-ncr": "NPi",
         "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
-        "DIAG-C30-const_E414": "baseline_test",
+        # "DIAG-C30-const_E414": "baseline_test",
     }.get(context.scenario_info["scenario"])
 
     #context.metadata_path = context.metadata_path /'data'
@@ -109,7 +109,7 @@ def solve(context, datafile):
     # Clone and set up
     scenario = build(
         context.get_scenario()
-        .clone(model="Material_China", scenario=output_scenario_name)
+        .clone(model="Material_Global", scenario=output_scenario_name)
     )
 
     # Solve
