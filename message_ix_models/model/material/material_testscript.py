@@ -84,8 +84,8 @@ ctx = Context()
 # Set default scenario/model names - Later coming from CLI
 ctx.platform_info.setdefault('name', 'ixmp_dev')
 ctx.platform_info.setdefault('jvmargs', ['-Xmx12G']) # To avoid java heap space error
-ctx.scenario_info.setdefault('model', 'Material_test_MESSAGE_global')
-ctx.scenario_info.setdefault('scenario', 'baseline')
+ctx.scenario_info.setdefault('model', 'Material_Global')
+ctx.scenario_info.setdefault('scenario', 'NoPolicy')
 ctx['ssp'] = 'SSP2'
 ctx['datafile'] = 'Global_steel_cement_MESSAGE.xlsx'
 
@@ -135,8 +135,9 @@ bare.add_data(scen)
 info = ScenarioInfo(scen)
 a = get_spec()
 
-mp_samp = ixmp.Platform(name="ixmp_dev")
-mp_samp.scenario_list()
+mp = ixmp.Platform(name="ixmp_dev")
+a = mp.scenario_list()
+b=a.loc[a['cre_user']=="min"]
 sample = mix.Scenario(mp_samp, model="Material_test", scenario="baseline")
 sample.set_list()
 sample.set('year')
