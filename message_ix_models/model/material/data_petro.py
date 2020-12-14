@@ -256,14 +256,14 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                     emission=emi, mode=mod, unit='t', **common).pipe(broadcast, \
                     node_loc=nodes))
 
+                    results[param_name].append(df)
+
                 elif param_name == "var_cost":
                     mod = split[1]
 
                     df = (make_df(param_name, technology=t, commodity=com, \
                     level=lev,mode=mod, value=val, unit='t', **common).\
                     pipe(broadcast, node_loc=nodes).pipe(same_node))
-
-
 
                     results[param_name].append(df)
 
