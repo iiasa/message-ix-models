@@ -2,11 +2,11 @@
 
 Add-on technologies
 ===================
-Add-on technologies in the global model refer to a distinct formulation in MESSAGEix.  The formulation is used to represent two main types of technical extensions/options for technologies. Add-on technologies provide additional modes of operation for a single or multiple technologies. They can also be used to depict emission mitigation options.
+Add-on technologies in the global model refer to a distinct formulation in |MESSAGEix|. The formulation is used to represent two main types of technical extensions/options for technologies. Add-on technologies provide additional modes of operation for a single or multiple technologies. They can also be used to depict emission mitigation options.
 
 General description of add-on technologies
 ------------------------------------------
-Add-on technologies can be defined using all the same parameters as any other technology. What makes a technology an `add-on technology`, is the fact that their activity is bound to the activity of one or more other technologies, henceforth referred to as the parent technology. The mathematical formulation can be found `here <https://docs.messageix.org/en/stable/model/MESSAGE/model_core.html#constraints-for-addon-technologies>`_. One of the main benefits of the add-on technology formulation, over specifying an alternative `mode`, is that it allows a single add-on technology to be coupled to the activity of multiple parent technologies. Furthermore, multiple add-on technologies can be linked to the activity of a single parent technology.
+Add-on technologies can be defined using all the same parameters as any other technology. What makes a technology an `add-on technology`, is the fact that their activity is bound to the activity of one or more other technologies, henceforth referred to as the parent technology. The mathematical formulation can be found :ref:`here <message_ix:addon>` <https://docs.messageix.org/en/stable/model/MESSAGE/model_core.html#constraints-for-addon-technologies>`_. One of the main benefits of the add-on technology formulation, over specifying an alternative `mode`, is that it allows a single add-on technology to be coupled to the activity of multiple parent technologies. Furthermore, multiple add-on technologies can be linked to the activity of a single parent technology.
 
 Modelling Combined Heat Powerplants (CHPs)
 ------------------------------------------
