@@ -2,7 +2,7 @@
 
 Fuel Blending
 =============
-Fuel blending in the energy system is a common practice, which allows the shared use of infrastructure by fuels with similar chemical attributes and thus use at the secondary and final energy level, without requiring the consumer to adapt the power plant or enduse devices. Fuel blending in the global energy model is modelled for two distinct blending processes.  The first relates to the blending of natural gas with other synthetic gases. The second is related to the blending of light oil with coal derived synthetic liquids.  In order to ensure that emissions and energy flows are correctly accounted for, blended fuels types are nevertheless explicitly modelled.  
+Fuel blending in the energy system is a common practice, which allows the shared use of infrastructure by fuels with similar chemical attributes and thus use at the secondary and final energy level, without requiring the consumer to adapt the power plant or enduse devices. Fuel blending in the global energy model is modelled for two distinct blending processes.  The first relates to the blending of natural gas with other synthetic gases. The second is related to the blending of light oil with coal derived synthetic liquids.  In order to ensure that emissions and energy flows are correctly accounted for, blended fuels types are nevertheless explicitly modelled.
 
 
 Natural gas and synthetic gas
