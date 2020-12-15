@@ -136,7 +136,7 @@ def read_timeseries(filename):
     # Take only existing years in the data
     datayears = [x for x in list(df) if isinstance(x, numbers.Number)]
 
-    df = pd.melt(df, id_vars=['parameter', 'technology', 'mode', 'units'], \
+    df = pd.melt(df, id_vars=['parameter', 'region', 'technology', 'mode', 'units'], \
         value_vars = datayears, \
         var_name ='year')
 

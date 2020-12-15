@@ -151,11 +151,16 @@ def gen_data_steel(scenario, dry_run=False):
                 yr = data_steel_ts.loc[(data_steel_ts["technology"] == t) \
                     & (data_steel_ts["parameter"] == p), 'year']
 
-                df = (make_df(p, technology=t, value=val,\
-                unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
-                node_loc=nodes))
+                if p=="var_cost":
+                    df = (make_df(p, technology=t, value=val,\
+                    unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
+                    node_loc=nodes))
+                else:
+                    rg = data_steel_ts.loc[(data_steel_ts["technology"] == t) \
+                        & (data_steel_ts["parameter"] == p), 'region']
+                    df = make_df(p, technology=t, value=val,\
+                    unit='t', year_vtg=yr, year_act=yr, mode=mod, node_loc=rg, **common)
 
-                #print("time-dependent::", p, df)
                 results[p].append(df)
 
         # Iterate over parameters
