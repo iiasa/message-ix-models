@@ -78,7 +78,7 @@ def gen_data_generic(scenario, dry_run=False):
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
-        
+
     # 'World' is included by default when creating a message_ix.Scenario().
     # Need to remove it for the China bare model
     nodes.remove('World')
@@ -132,11 +132,16 @@ def gen_data_generic(scenario, dry_run=False):
                     emi = split[1]
 
                     # TODO: Now tentatively fixed to one mode. Have values for the other mode too
-                    df = (make_df(param_name, technology=t,value=val,\
+                    df_low = (make_df(param_name, technology=t,value=val,\
                     emission=emi, mode="low_temp", unit='t', **common).pipe(broadcast, \
                     node_loc=nodes))
 
-                    results[param_name].append(df)
+                    df_high = (make_df(param_name, technology=t,value=val,\
+                    emission=emi, mode="high_temp", unit='t', **common).pipe(broadcast, \
+                    node_loc=nodes))
+
+                    results[param_name].append(df_low)
+                    results[param_name].append(df_high)
 
             # Rest of the parameters apart from inpput, output and emission_factor
 
