@@ -100,7 +100,7 @@ def solve(context, datafile):
         # "DIAG-C30-const_E414": "baseline_test",
     }.get(context.scenario_info["scenario"])
 
-    #context.metadata_path = context.metadata_path /'data'
+    context.metadata_path = context.metadata_path /'data'
     context.datafile = datafile
 
     if context.scenario_info["model"] != "CD_Links_SSP2":
