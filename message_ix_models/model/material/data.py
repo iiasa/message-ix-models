@@ -86,6 +86,7 @@ def read_data():
     data = pd.read_excel(
         context.get_path("material", "n-fertilizer_techno-economic.xlsx"),
         sheet_name="Sheet1",
+        engine="openpyxl",
     )
 
     # Prepare contents for the "parameter" and "technology" columns
