@@ -163,8 +163,6 @@ def gen_data_aluminum(scenario, dry_run=False):
     demand = gen_mock_demand_aluminum(scenario)
     df = make_df(parname, level='demand', commodity='aluminum', value=demand.value, unit='t', \
         year=demand.year, time='year', node=demand.node)#.pipe(broadcast, node=nodes)
-    print("aluminum node")
-    print(demand.node)
     results[parname].append(df)
 
     # Add historical data
@@ -196,7 +194,7 @@ def gen_data_aluminum(scenario, dry_run=False):
         value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
 
         results["historical_new_capacity"].append(df_hist_cap)
-    
+
 
     # Add variable costs
 
@@ -204,15 +202,11 @@ def gen_data_aluminum(scenario, dry_run=False):
     "parameter","region"], value_vars=[2020, 2025,2030,2035, 2040,2045, 2050,2055,2060, 2070, 2080, 2090, 2100], var_name='year')
 
     tec_vc = set(data_aluminum_var.technology)
-    print(tec_vc)
     param_name = set(data_aluminum_var.parameter)
 
 
     for p in param_name:
         for t in tec_vc:
-
-            print("V_technology")
-            print(t)
 
             common = dict(
                 time="year",
@@ -221,19 +215,14 @@ def gen_data_aluminum(scenario, dry_run=False):
                 )
 
             param_name = p
-            print(param_name)
             val = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
             & (data_aluminum_var["parameter"] == p)), 'value'].values
-            print(val)
             units = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
             & (data_aluminum_var["parameter"] == p)),'units'].values
-            print(units)
             mod = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
             & (data_aluminum_var["parameter"] == p)), 'mode'].values
-            print(mod)
             yr = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
             & (data_aluminum_var["parameter"] == p)), 'year'].values
-            print(yr)
 
             df = (make_df(param_name, technology=t, value=val,unit='t', \
             mode=mod, year_vtg=yr, year_act=yr, **common).pipe(broadcast,node_loc=nodes))
@@ -265,8 +254,6 @@ def gen_data_aluminum(scenario, dry_run=False):
 
                     df = (make_df(par_name, technology=tec, value=val, unit='-',\
                     **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
-
-                    results[par_name].append(df)
 
             elif par_name == "relation_upper":
 
