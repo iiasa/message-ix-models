@@ -369,6 +369,7 @@ petro_chemicals:
     - propane
     - light_foil
     - refinery_gas
+    - refinery_gas_int
     - heavy_foil
     - pet_coke
     - atm_residue

@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+from .data_util import read_timeseries
 
 import message_ix
 import ixmp
@@ -31,12 +32,7 @@ def read_data_petrochemicals():
 
     data_petro= data_petro.drop(['Region', 'Source', 'Description'], axis = 1)
 
-    data_petro_hist = pd.read_excel(context.get_path("material", \
-    "petrochemicals_techno_economic.xlsx"),sheet_name="data_historical", \
-    usecols = "A:G", nrows= 16)
-    print("data petro hist")
-    print(data_petro_hist)
-    return data_petro,data_petro_hist
+    return data_petro
 
 
 def gen_mock_demand_petro(scenario):
@@ -74,7 +70,6 @@ def gen_mock_demand_petro(scenario):
     list = []
 
     for e in ["ethylene","propylene","BTX"]:
-        print(e)
         if e == "ethylene":
             demand2015 = pd.DataFrame({'Region':r, 'Val':d_ethylene}).\
             join(gdp_growth.set_index('Region'), on='Region').\
@@ -96,11 +91,7 @@ def gen_mock_demand_petro(scenario):
         demand2015 = pd.melt(demand2015.drop(['Val', 'Scenario'], axis=1),\
             id_vars=['node'], var_name='year', value_name = 'value')
 
-        print(demand2015)
-
         list.append(demand2015)
-        print("list")
-        print(list)
 
     return list[0], list[1], list[2]
 
@@ -182,7 +173,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_petro, data_petro_hist = read_data_petrochemicals()
+    data_petro = read_data_petrochemicals()
+    data_petro_ts = read_timeseries("petrochemicals_techno_economic.xlsx")
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
@@ -297,6 +289,39 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     node=demand_BTX.node)#.pipe(broadcast, node=nodes)
     results["demand"].append(df_BTX)
 
+    # Special treatment for time-varying params
+
+    tec_ts = set(data_petro_ts.technology) # set of tecs in timeseries sheet
+
+    for t in tec_ts:
+        common = dict(
+            time="year",
+            time_origin="year",
+            time_dest="year",)
+
+        param_name = data_petro_ts.loc[(data_petro_ts["technology"] == t), 'parameter']
+
+        for p in set(param_name):
+            val = data_petro_ts.loc[(data_petro_ts["technology"] == t) \
+                & (data_petro_ts["parameter"] == p), 'value']
+            units = data_petro_ts.loc[(data_petro_ts["technology"] == t) \
+                & (data_petro_ts["parameter"] == p), 'units'].values[0]
+            mod = data_petro_ts.loc[(data_petro_ts["technology"] == t) \
+                & (data_petro_ts["parameter"] == p), 'mode']
+            yr = data_petro_ts.loc[(data_petro_ts["technology"] == t) \
+                & (data_petro_ts["parameter"] == p), 'year']
+
+            if p=="var_cost":
+                df = (make_df(p, technology=t, value=val,\
+                unit='t', year_vtg=yr, year_act=yr, mode=mod, **common).pipe(broadcast, \
+                node_loc=nodes))
+            else:
+                rg = data_petro_ts.loc[(data_petro_ts["technology"] == t) \
+                    & (data_petro_ts["parameter"] == p), 'region']
+                df = make_df(p, technology=t, value=val,\
+                unit='t', year_vtg=yr, year_act=yr, mode=mod, node_loc=rg, **common)
+
+            results[p].append(df)
 
     # # Add historical data
     #
