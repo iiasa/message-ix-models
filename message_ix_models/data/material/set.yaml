@@ -375,6 +375,9 @@ petro_chemicals:
     - atm_residue
     - vacuum_residue
     - gasoline
+    - ethylene
+    - propylene
+    - BTX
 
   technology:
     add:
@@ -390,6 +393,9 @@ petro_chemicals:
     - ethanol_to_ethylene_petro
     - agg_ref
     - gas_processing_petro
+    - trade_petro
+    - import_petro
+    - export_petro
     remove:
     # Any representation of refinery.
     - ref_hil
@@ -532,6 +538,9 @@ aluminum:
     - manuf_aluminum
     - scrap_recovery_aluminum
     - DUMMY_alumina_supply
+    - trade_aluminum
+    - import_aluminum
+    - export_aluminum
 
   relation:
     add:
