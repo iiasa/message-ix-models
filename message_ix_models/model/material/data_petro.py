@@ -226,10 +226,11 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                     node_loc=rg, **common)
 
                 # Copy parameters to all regions
-                if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
-                    print("Copying to all R11")
-                    df['node_loc'] = None
-                    df = df.pipe(broadcast, node_loc=nodes)
+                if (len(regions) == 1) and (rg != "R11_GLB"):
+                    if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
+                        print("Copying to all R11")
+                        df['node_loc'] = None
+                        df = df.pipe(broadcast, node_loc=nodes)
 
                 results[param_name].append(df)
 
