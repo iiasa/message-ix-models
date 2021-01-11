@@ -25,8 +25,6 @@ from message_data.tools import (
     add_par_data
 )
 
-
-
 def read_data_aluminum():
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
 
@@ -53,6 +51,11 @@ def read_data_aluminum():
     # To make sure we use the same units
 
     return data_alu, data_alu_rel
+
+def print_full(x):
+    pd.set_option('display.max_rows', len(x))
+    print(x)
+    pd.reset_option('display.max_rows')
 
 def gen_data_aluminum(scenario, dry_run=False):
 
@@ -95,7 +98,6 @@ def gen_data_aluminum(scenario, dry_run=False):
 
         # Iterate over parameters
         for par in params:
-
             # Obtain the parameter names, commodity,level,emission
 
             split = par.split("|")
@@ -108,7 +110,6 @@ def gen_data_aluminum(scenario, dry_run=False):
 
             regions = data_aluminum.loc[((data_aluminum["technology"] == t) \
                 & (data_aluminum["parameter"] == par)),'region']
-
 
             common = dict(
             year_vtg= yv_ya.year_vtg,
@@ -145,7 +146,6 @@ def gen_data_aluminum(scenario, dry_run=False):
 
                         # Copy parameters to all regions, when node_loc is not GLB
                         if (len(regions) == 1) and (rg != "R11_GLB"):
-                            print("copying to all R11", rg, lev)
                             df['node_loc'] = None
                             df = df.pipe(broadcast, node_loc=nodes)#.pipe(same_node)
                             # Use same_node only for non-trade technologies
@@ -168,8 +168,7 @@ def gen_data_aluminum(scenario, dry_run=False):
                     node_loc=rg, **common)
 
                 # Copy parameters to all regions
-                if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
-                    print("Copying to all R11")
+                if (len(regions) == 1)  and len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
                     df['node_loc'] = None
                     df = df.pipe(broadcast, node_loc=nodes)
 
@@ -216,107 +215,50 @@ def gen_data_aluminum(scenario, dry_run=False):
 
             results[p].append(df)
 
-    # # Add historical data
-    #
-    # for tec in data_aluminum_hist["technology"].unique():
-    #
-    #     y_hist = [1980,1985,1990,1995,2000,2005,2010,2015] #length need to match what's in the xls
-    #     common_hist = dict(
-    #         year_vtg= y_hist,
-    #         year_act= y_hist,
-    #         mode="M1",
-    #         time="year",)
-    #
-    #     val_act = data_aluminum_hist.\
-    #     loc[(data_aluminum_hist["technology"]== tec), "production"]
-    #
-    #     df_hist_act = (make_df("historical_activity", technology=tec, \
-    #     value=val_act, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
-    #
-    #     results["historical_activity"].append(df_hist_act)
-    #
-    #     c_factor = data_aluminum.loc[((data_aluminum["technology"]== tec) \
-    #                 & (data_aluminum["parameter"]=="capacity_factor")), "value"].values
-    #
-    #     val_cap = data_aluminum_hist.loc[(data_aluminum_hist["technology"]== tec), \
-    #                                     "new_production"] / c_factor
-    #
-    #     df_hist_cap = (make_df("historical_new_capacity", technology=tec, \
-    #     value=val_cap, unit='Mt', **common_hist).pipe(broadcast, node_loc=nodes))
-    #
-    #     results["historical_new_capacity"].append(df_hist_cap)
-    #
-    #
-    # # Add variable costs
-    #
-    # data_aluminum_var = pd.melt(data_aluminum_var, id_vars=['technology', 'mode', 'units',\
-    # "parameter","region"], value_vars=[2020, 2025,2030,2035, 2040,2045, 2050,2055,2060, 2070, 2080, 2090, 2100], var_name='year')
-    #
-    # tec_vc = set(data_aluminum_var.technology)
-    # param_name = set(data_aluminum_var.parameter)
-    #
-    #
-    # for p in param_name:
-    #     for t in tec_vc:
-    #
-    #         common = dict(
-    #             time="year",
-    #             time_origin="year",
-    #             time_dest="year",
-    #             )
-    #
-    #         param_name = p
-    #         val = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
-    #         & (data_aluminum_var["parameter"] == p)), 'value'].values
-    #         units = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
-    #         & (data_aluminum_var["parameter"] == p)),'units'].values
-    #         mod = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
-    #         & (data_aluminum_var["parameter"] == p)), 'mode'].values
-    #         yr = data_aluminum_var.loc[((data_aluminum_var["technology"] == t) \
-    #         & (data_aluminum_var["parameter"] == p)), 'year'].values
-    #
-    #         df = (make_df(param_name, technology=t, value=val,unit='t', \
-    #         mode=mod, year_vtg=yr, year_act=yr, **common).pipe(broadcast,node_loc=nodes))
-    #         results[param_name].append(df)
-
     # Add relations for scrap grades and availability
 
-    for r in config['relation']['add']:
+    regions = set(data_aluminum_rel["Region"].values)
 
-        params = data_aluminum_rel.loc[(data_aluminum_rel["relation"] == r),\
-            "parameter"].values.tolist()
+    for reg in regions:
 
-        common_rel = dict(
-            year_rel = modelyears,
-            year_act = modelyears,
-            mode = 'M1',
-            relation = r,)
+        for r in config['relation']['add']:
 
-        for par_name in params:
-            if par_name == "relation_activity":
+            params = set(data_aluminum_rel.loc[(data_aluminum_rel["relation"] == r),\
+                "parameter"].values)
 
-                tec_list = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
-                    & (data_aluminum_rel["parameter"] == par_name)) ,'technology']
+            common_rel = dict(
+                year_rel = modelyears,
+                year_act = modelyears,
+                mode = 'M1',
+                relation = r,)
 
-                for tec in tec_list.unique():
+            for par_name in params:
+                if par_name == "relation_activity":
+
+                    tec_list = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
+                        & (data_aluminum_rel["parameter"] == par_name)) ,'technology']
+
+                    for tec in tec_list.unique():
+
+                        val = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
+                            & (data_aluminum_rel["parameter"] == par_name) & \
+                            (data_aluminum_rel["technology"]==tec) & \
+                            (data_aluminum_rel["Region"]==reg)),'value'].values[0]
+
+                        df = (make_df(par_name, technology=tec, value=val, unit='-',\
+                        node_loc = reg, node_rel= reg, **common_rel).pipe(same_node))
+
+                        results[par_name].append(df)
+
+                elif (par_name == "relation_upper") | (par_name == "relation_lower"):
                     val = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
                         & (data_aluminum_rel["parameter"] == par_name) & \
-                        (data_aluminum_rel["technology"]==tec)),'value'].values[0]
+                        (data_aluminum_rel["Region"]==reg)),'value'].values[0]
 
-                    df = (make_df(par_name, technology=tec, value=val, unit='-',\
-                    **common_rel).pipe(broadcast, node_rel=nodes, node_loc=nodes))
+                    df = (make_df(par_name, value=val, unit='-',node_rel=reg,
+                    **common_rel))
 
                     results[par_name].append(df)
-
-            elif par_name == "relation_upper":
-
-                val = data_aluminum_rel.loc[((data_aluminum_rel["relation"] == r) \
-                    & (data_aluminum_rel["parameter"] == par_name)),'value'].values[0]
-
-                df = (make_df(par_name, value=val, unit='-',\
-                **common_rel).pipe(broadcast, node_rel=nodes))
-
-                results[par_name].append(df)
 
     results_aluminum = {par_name: pd.concat(dfs) for par_name,
                         dfs in results.items()}
@@ -344,22 +286,11 @@ def gen_mock_demand_aluminum(scenario):
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
 
-    # Aluminum 2015
-    # https://www.world-aluminium.org/statistics/#data
-    # Not all the regions match here. Some assumptions needed to be made.
-    # MEA, PAS, SAS, EEU, FSU
-    # Domestic production (final material level)
-    #fin_to_useful = 0.971
-    #useful_to_product = 0.866
-    #d = [1.7, 31.5, 1.8, 2, 1.3, 6.1, 4.5, 2,1,1,3.7]
-    #d = [x * fin_to_useful * useful_to_product for x in d]
-
     # Demand at product level
     # Material efficiency in clean energy transitions (2017)
     # Europe is divided between WEU and EEU
     # FUS: Eurasia
     # PAO, PAS, SAS: IAI Alu cycle
-
     # Below matrix is for 2020
 
     d = [3,55, 4, 7, 5, 6, 15, 3.5, 5.5,6,6 ]
