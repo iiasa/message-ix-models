@@ -518,7 +518,9 @@ aluminum:
   level:
     add:
     - new_scrap
-    - old_scrap
+    - old_scrap_1
+    - old_scrap_2
+    - old_scrap_3
     - useful_aluminum
     - final_material
     - useful_material
