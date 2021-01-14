@@ -1,22 +1,28 @@
-from functools import lru_cache
+from functools import lru_cache, partial
 from itertools import product
 import logging
 from typing import Mapping
 
-from message_data.model import build, disutility
-from message_data.tools import Code, ScenarioInfo, set_info
-from .utils import consumer_groups, read_config
+from message_data.model import bare, build, disutility
+from message_data.tools import Code, ScenarioInfo, get_context, set_info
+from .utils import consumer_groups
 
 log = logging.getLogger(__name__)
 
 
-def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
-    """Return the specification for MESSAGEix-Transport."""
+def get_spec(context) -> Mapping[str, ScenarioInfo]:
+    """Return the specification for MESSAGEix-Transport.
+
+    Parameters
+    ----------
+    context : .Context
+        The key ``regions`` determines the regional aggregation used.
+    """
+    context.use_defaults(bare.SETTINGS)
+
     require = ScenarioInfo()
     remove = ScenarioInfo()
     add = ScenarioInfo()
-
-    context = read_config(context)
 
     for set_name, config in context["transport set"].items():
         # Required elements
@@ -40,7 +46,7 @@ def generate_set_elements(set_name, match=None):
     if set_name == "consumer_group":
         return consumer_groups()
 
-    codes = read_config()["transport set"][set_name].get("add", [])
+    codes = get_context()["transport set"][set_name].get("add", [])
 
     hierarchical = set_name in {"technology"}
 
@@ -73,7 +79,7 @@ def generate_codes(dims, template):
         yield Code(**args)
 
 
-def main(scenario, **options):
+def main(context, scenario, **options):
     """Set up MESSAGE-Transport on `scenario`.
 
     See also
@@ -87,10 +93,10 @@ def main(scenario, **options):
     log.info("Set up MESSAGE-Transport")
 
     # Generate the description of the structure / structure changes
-    spec = get_spec()
+    spec = get_spec(context)
 
     # Apply the structural changes AND add the data
-    build.apply_spec(scenario, spec, add_data, **options)
+    build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
 
     # Add generalized disutility structure to LDV technologies
     disutility.add(

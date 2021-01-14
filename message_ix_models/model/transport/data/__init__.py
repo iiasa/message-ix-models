@@ -29,10 +29,11 @@ DATA_FUNCTIONS = [
 ]
 
 
-def add_data(scenario, dry_run=False):
+def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGE-Transport data."""
     # Information about `scenario`
     info = ScenarioInfo(scenario)
+    context["transport build info"] = info
 
     # Check for two "node" values for global data, e.g. in
     # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
@@ -42,13 +43,13 @@ def add_data(scenario, dry_run=False):
 
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
-        log.info(f'from {func.__name__}()')
-        add_par_data(scenario, func(info), dry_run=dry_run)
+        log.info(f"from {func.__name__}()")
+        add_par_data(scenario, func(context), dry_run=dry_run)
 
-    log.info('done')
+    log.info("done")
 
 
-def demand(info):
+def demand(context):
     """Return transport demands.
 
     Parameters
@@ -57,20 +58,16 @@ def demand(info):
     """
     from message_data.model.transport.demand import dummy, from_external_data
 
-    config = get_context()["transport config"]["data source"]
+    config = context["transport config"]["data source"]
 
     if config.get("demand dummy", False):
         return dict(demand=dummy())
 
     # Retrieve a Reporter configured do to the calculation for the input data
-    rep = from_external_data(info)
+    rep = from_external_data(context["transport build info"], context)
 
     # Generate the demand data; convert to pd.DataFrame
-    data = (
-        rep.get("transport pdt:n-y-t")
-        .to_series()
-        .reset_index(name="value")
-    )
+    data = rep.get("transport pdt:n-y-t").to_series().reset_index(name="value")
 
     common = dict(
         level="useful",
@@ -86,15 +83,11 @@ def demand(info):
         commodity="transport pax " + data["t"].str.lower(),
         year=data["y"],
         value=data["value"],
-        **common
-        )
+        **common,
+    )
     data = data[~data["commodity"].str.contains("ldv")]
 
-    data2 = (
-        rep.get("transport ldv pdt:n-y-cg")
-        .to_series()
-        .reset_index(name="value")
-    )
+    data2 = rep.get("transport ldv pdt:n-y-cg").to_series().reset_index(name="value")
 
     data2 = make_df(
         "demand",
@@ -102,8 +95,8 @@ def demand(info):
         commodity="transport pax " + data2["cg"],
         year=data2["y"],
         value=data2["value"],
-        **common
-        )
+        **common,
+    )
 
     # result = dict(demand=pd.concat([data, data2]))
     result = dict(demand=data2)
@@ -117,49 +110,47 @@ def demand(info):
 DATA_FUNCTIONS.append(demand)
 
 
-def conversion(info):
+def conversion(context):
     """Input and output data for conversion technologies:
 
     The technologies are named 'transport {mode} load factor'.
     """
-    cfg = get_context()['transport config']
+    cfg = context["transport config"]
+    info = context["transport build info"]
 
     common = dict(
         year_vtg=info.Y,
         year_act=info.Y,
-        mode='all',
+        mode="all",
         # No subannual detail
-        time='year',
-        time_origin='year',
-        time_dest='year',
+        time="year",
+        time_origin="year",
+        time_dest="year",
     )
 
     mode_info = [
-        ('freight', cfg['factor']['freight load'], 't km'),
-        ('pax', 1.0, 'km'),
+        ("freight", cfg["factor"]["freight load"], "t km"),
+        ("pax", 1.0, "km"),
     ]
 
     data = defaultdict(list)
     for mode, factor, output_unit in mode_info:
         i_o = make_io(
-            (f'transport {mode} vehicle', 'useful', 'km'),
-            (f'transport {mode}', 'useful', output_unit),
+            (f"transport {mode} vehicle", "useful", "km"),
+            (f"transport {mode}", "useful", output_unit),
             factor,
-            on='output',
-            technology=f'transport {mode} load factor',
-            **common
+            on="output",
+            technology=f"transport {mode} load factor",
+            **common,
         )
         for par, df in i_o.items():
-            data[par].append(
-                df.pipe(broadcast, node_loc=info.N[1:])
-                .pipe(same_node)
-            )
+            data[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))
 
     data = {par: pd.concat(dfs) for par, dfs in data.items()}
 
     data.update(
         make_matched_dfs(
-            base=data['input'],
+            base=data["input"],
             capacity_factor=1,
             technical_lifetime=10,
         )
@@ -171,44 +162,42 @@ def conversion(info):
 DATA_FUNCTIONS.append(conversion)
 
 
-def freight(info):
+def freight(context):
     """Data for freight technologies."""
-    codes = get_context()["transport set"]["technology"]["add"]
+    codes = context["transport set"]["technology"]["add"]
     freight_truck = codes[codes.index("freight truck")]
+    info = context["transport build info"]
 
     common = dict(
         year_vtg=info.Y,
         year_act=info.Y,
-        mode='all',
-        time='year',  # no subannual detail
-        time_dest='year',
-        time_origin='year',
+        mode="all",
+        time="year",  # no subannual detail
+        time_dest="year",
+        time_origin="year",
     )
 
     data = defaultdict(list)
     for tech in freight_truck.child:
         i_o = make_io(
-            src=(None, None, 'GWa'),
-            dest=('transport freight vehicle', 'useful', 'km'),
-            efficiency=1.,
-            on='input',
+            src=(None, None, "GWa"),
+            dest=("transport freight vehicle", "useful", "km"),
+            efficiency=1.0,
+            on="input",
             technology=tech.id,
             **common,
         )
 
-        i_o['input'] = add_commodity_and_level(i_o['input'], 'final')
+        i_o["input"] = add_commodity_and_level(i_o["input"], "final")
 
         for par, df in i_o.items():
-            data[par].append(
-                df.pipe(broadcast, node_loc=info.N[1:])
-                .pipe(same_node)
-            )
+            data[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))
 
     data = {par: pd.concat(dfs) for par, dfs in data.items()}
 
     data.update(
         make_matched_dfs(
-            base=data['input'],
+            base=data["input"],
             capacity_factor=1,
             technical_lifetime=10,
         )
@@ -220,10 +209,10 @@ def freight(info):
 DATA_FUNCTIONS.append(freight)
 
 
-def dummy_supply(info):
+def dummy_supply(context):
     """Dummy fuel supply for the bare RES."""
     return make_source_tech(
-        info,
+        context["transport build info"],
         common=dict(
             commodity="lightoil",
             level="final",
