@@ -4,19 +4,19 @@ import logging
 from typing import Mapping
 
 from message_data.model import build, disutility
-from message_data.tools import Code, ScenarioInfo
+from message_data.tools import Code, ScenarioInfo, set_info
 from .utils import consumer_groups, read_config
 
 log = logging.getLogger(__name__)
 
 
-def get_spec() -> Mapping[str, ScenarioInfo]:
+def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     """Return the specification for MESSAGEix-Transport."""
     require = ScenarioInfo()
     remove = ScenarioInfo()
     add = ScenarioInfo()
 
-    context = read_config()
+    context = read_config(context)
 
     for set_name, config in context["transport set"].items():
         # Required elements
@@ -27,6 +27,10 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
 
         # Elements to add
         add.set[set_name].extend(generate_set_elements(set_name))
+
+    # The set of required nodes varies according to context.regions
+    nodes = set_info(f"node/{context.regions}")
+    require.set["node"].extend(map(str, nodes[nodes.index("World")].child))
 
     return dict(require=require, remove=remove, add=add)
 
@@ -58,10 +62,7 @@ def generate_set_elements(set_name, match=None):
 
 
 def generate_codes(dims, template):
-    codes = [
-        generate_set_elements(set_name, match)
-        for set_name, match in dims.items()
-    ]
+    codes = [generate_set_elements(set_name, match) for set_name, match in dims.items()]
 
     for item in product(*codes):
         fmt = dict(zip(dims.keys(), item))
@@ -83,7 +84,7 @@ def main(scenario, **options):
     """
     from .data import add_data
 
-    log.info('Set up MESSAGE-Transport')
+    log.info("Set up MESSAGE-Transport")
 
     # Generate the description of the structure / structure changes
     spec = get_spec()
