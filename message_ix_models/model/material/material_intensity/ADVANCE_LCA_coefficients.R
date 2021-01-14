@@ -58,15 +58,15 @@ data.lca = temp
 ################################################################################
 
 # existing model and scenario name in ixmp to add material intensities to
-modelName <- "ENGAGE_SSP2_v4.1.5"
-scenarioName <- "baseline"
+modelName <- "Material_Global"
+scenarioName <- "NoPolicy"
 
 # new model and scenario name in ixmp
-newmodelName <- "ENGAGE_SSP2_v4.1.5"
-newscenarioName <- "baseline_lca_material"
+newmodelName <- "Material_Global"
+newscenarioName <- "NoPolicy_lca_material"
 
 # comment for commit
-comment <- "adding LCA-based material intensity coefficients to electricity generation technologies in MESSAGEix-GLOBIOM"
+comment <- "adding LCA-based material intensity coefficients to electricity generation technologies in MESSAGEix-Materials"
 
 # load required packages 
 library(rmessageix)
