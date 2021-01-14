@@ -16,11 +16,9 @@ log = logging.getLogger(__name__)
 #: 'transport check', that depends on others and returns a
 #: :class:`pandas.Series` of :class:`bool`.
 CONFIG = dict(
-    general=[dict(
-        key='transport check',
-        comp='transport_check',
-        inputs=['scenario', 'ACT']
-    )],
+    general=[
+        dict(key="transport check", comp="transport_check", inputs=["scenario", "ACT"])
+    ],
 )
 
 
@@ -41,7 +39,7 @@ def check(scenario):
     # NB this is here to avoid circular imports
     from message_data.reporting.core import prepare_reporter
 
-    rep, key = prepare_reporter(scenario, CONFIG, 'transport check')
+    rep, key = prepare_reporter(scenario, CONFIG, "transport check")
     return rep.get(key)
 
 
@@ -56,10 +54,10 @@ def check_computation(scenario, ACT):
     checks = {}
 
     # Correct number of outputs
-    ACT_lf = ACT.sel(t=['transport freight load factor',
-                        'transport pax load factor'])
-    checks["'transport * load factor' technologies are active"] = \
-        len(ACT_lf) == 2 * len(info.Y) * (len(info.N) - 1)
+    ACT_lf = ACT.sel(t=["transport freight load factor", "transport pax load factor"])
+    checks["'transport * load factor' technologies are active"] = len(
+        ACT_lf
+    ) == 2 * len(info.Y) * (len(info.N) - 1)
 
     # # Force the check to fail
     # checks['(fail for debugging)'] = False
@@ -112,12 +110,12 @@ def callback(rep: Reporter):
 
     # Aggregate transport technologies
     for k in infer_keys(rep, ["in", "out"]):
-        keys = rep.aggregate(k, 'transport', dict(t=t_groups), sums=True)
+        keys = rep.aggregate(k, "transport", dict(t=t_groups), sums=True)
         all_keys.append(keys[0])
-        log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
+        log.info(f"Add {repr(keys[0])} + {len(keys)-1} partial sums")
 
     # Add ex-post mode and demand calculations
-    prepare_demand(rep, configure=False)
+    prepare_demand(rep, context, configure=False)
 
     log.info(repr(rep.graph["config"]))
 
