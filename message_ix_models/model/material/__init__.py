@@ -112,5 +112,8 @@ def solve(context, datafile):
         .clone(model="Material_Global", scenario=output_scenario_name)
     )
 
+    # Set the latest version as default 
+    scenario.set_as_default()
+
     # Solve
     scenario.solve()
