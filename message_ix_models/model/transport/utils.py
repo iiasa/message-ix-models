@@ -5,28 +5,20 @@ from itertools import product
 import pandas as pd
 import xarray as xr
 
-from message_data.model.transport.common import METADATA, SETTINGS
-from message_data.tools import Code, as_codes, get_context, load_data, set_info
+from message_data.model.transport.common import METADATA
+from message_data.tools import Code, Context, as_codes, get_context, load_data, set_info
 
 
-def read_config(context=None):
+def read_config():
     """Read the transport model configuration / metadata from file.
 
     Numerical values are converted to computation-ready data structures.
-
-    Returns
-    -------
-    .Context
-        The current Context, with the loaded configuration.
     """
-    context = context or get_context(strict=True)
+    context = Context.get_instance()
 
     if "transport set" in context:
         # Already loaded
         return context
-
-    # Ensure the same default settings as model.bare are set on context
-    context.use_defaults(SETTINGS)
 
     # Load transport configuration
     for parts in METADATA:
@@ -51,21 +43,23 @@ def read_config(context=None):
             rtype=xr.DataArray,
         )
 
-    return context
 
-
-@lru_cache()
 def consumer_groups(rtype=Code):
-    """Iterate over consumer groups in ``sets.yaml``."""
+    """Iterate over consumer groups in ``sets.yaml``.
+
+    NB this low-level method requires the transport configuration to be loaded
+    (:func:`.read_config`), but does not perform this step itself.
+
+    Parameters
+    ----------
+    rtype : optional
+        Return type.
+    """
     dims = ["area_type", "attitude", "driver_type"]
-
-    # Retrieve configuration
-    context = read_config()
-
     # Assemble group information
     result = defaultdict(list)
 
-    for indices in product(*[context["transport set"][d]["add"] for d in dims]):
+    for indices in product(*[get_context()["transport set"][d]["add"] for d in dims]):
         # Create a new code by combining three
         result["code"].append(
             Code(
@@ -95,10 +89,7 @@ def consumer_groups(rtype=Code):
         raise ValueError(rtype)
 
 
-def add_commodity_and_level(
-    df: pd.DataFrame,
-    default_level=None,
-) -> pd.DataFrame:
+def add_commodity_and_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
     """Add input 'commodity' and 'level' to `df` based on 'technology'."""
 
     # Retrieve transport technology information from configuration
