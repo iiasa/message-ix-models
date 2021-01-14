@@ -6,24 +6,29 @@ from message_data.model.bare import get_spec
 from message_data.model.transport import demand, plot
 
 
-def test_demand_dummy(test_context):
+def test_demand_dummy(transport_context):
     """Consumer-group-specific commodities are generated."""
-    test_context.regions = "R11"
-    info = get_spec(test_context)["add"]
+    info = get_spec(transport_context)["add"]
 
     assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
 
 
-def test_from_external_data(test_context, tmp_path):
-    test_context.regions = "R11"
-    info = get_spec(test_context)["add"]
+@pytest.mark.parametrize("regions", ["R11"])
+def test_from_external_data(transport_context_f, tmp_path, regions):
+    ctx = transport_context_f
+    ctx.regions = regions
 
-    rep = demand.from_external_data(info, context=test_context)
+    info = get_spec(ctx)["add"]
+    rep = demand.from_external_data(info, context=ctx)
 
     # These units are implied by the test of "transport pdt:*":
     # "GDP PPP:n-y" → "MUSD / year"
     # "GDP PPP per capita:n-y" → "kUSD / passenger / year"
     # "transport pdt:n-y:total") → "Mm / year"
+
+    # Share weight
+    print(rep.describe("share weight"))
+    rep.get("share weight")
 
     # Total demand by mode
     key = "transport pdt:n-y-t"
@@ -38,9 +43,7 @@ def test_from_external_data(test_context, tmp_path):
     # Can be computed
     result = rep.get(key)
     # Has correct units: km / year / capita
-    assert (
-        registry.Quantity(1, result.attrs["_unit"]) == registry("1 km / year")
-    )
+    assert registry.Quantity(1, result.attrs["_unit"]) == registry("1 km / year")
 
     # Can be plotted
     key = "transport pdt plot"

@@ -3,11 +3,12 @@ from pandas.testing import assert_series_equal
 import pytest
 import xarray as xr
 
+from message_data.model import bare
 from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.model.transport.data.ldv import get_USTIMES_MA3T
 from message_data.model.transport.data.ikarus import get_ikarus_data
-from message_data.tools import ScenarioInfo, load_data, make_df
+from message_data.tools import load_data, make_df
 
 
 @pytest.mark.parametrize(
@@ -28,13 +29,17 @@ def test_load_data(session_context, key, rtype):
     assert isinstance(result, rtype)
 
 
-def test_ikarus(bare_res, session_context):
-    # Create bare RES
-    scenario = bare_res
-    s_info = ScenarioInfo(scenario)
+@pytest.mark.parametrize("regions", ["R11"])
+def test_ikarus(transport_context_f, regions):
+    ctx = transport_context_f
+    ctx.regions = regions
 
-    # get_ikarus_data() succeeds on text_context and the bare RES
-    data = get_ikarus_data(s_info)
+    # Information about the corresponding base model
+    s_info = bare.get_spec(ctx)["add"]
+    ctx["transport build info"] = s_info
+
+    # get_ikarus_data() succeeds on the bare RES
+    data = get_ikarus_data(ctx)
 
     # Returns a mapping
     # Retrieve DataFrame for par e.g. 'inv_cost' and tech e.g. 'rail_pub'
@@ -55,7 +60,7 @@ def test_ikarus(bare_res, session_context):
     assert len(units) == 1, "Units for each (par, tec) must be unique"
 
     # Unit is parseable by pint
-    pint_unit = session_context.units(units[0])
+    pint_unit = ctx.units(units[0])
 
     # Unit has the correct dimensionality
     assert pint_unit.dimensionality == {"[currency]": 1, "[vehicle]": -1}
@@ -83,7 +88,7 @@ def test_ikarus(bare_res, session_context):
         units = data[par]["unit"].unique()
         assert len(units) == 1, "Units for each (par, tec) must be unique"
         # Unit is parseable by pint
-        pint_unit = session_context.units(units[0])
+        pint_unit = ctx.units(units[0])
         # Unit has the correct dimensionality
         assert pint_unit.dimensionality == dim
 
@@ -120,9 +125,18 @@ def test_ikarus(bare_res, session_context):
         )
 
 
-def test_USTIMES_MA3T(res_info):
+@pytest.mark.parametrize("regions", ["R11"])
+def test_USTIMES_MA3T(transport_context_f, regions):
+    ctx = transport_context_f
+    ctx.regions = regions
+
+    # Info about the corresponding RES
+    res_info = bare.get_spec(ctx)["add"]
+
+    ctx["transport build info"] = res_info
+
     # Method runs without error
-    data = get_USTIMES_MA3T(res_info)
+    data = get_USTIMES_MA3T(ctx)
 
     # # Dump data for debugging
     # for par, df in data.items():
@@ -136,11 +150,12 @@ def test_USTIMES_MA3T(res_info):
 
 @pytest.mark.parametrize("regions", ["R11"])
 @pytest.mark.parametrize("pop_scen", ["GEA mix"])
-def test_groups(test_context, regions, pop_scen):
-    test_context.regions = regions
-    test_context["transport population scenario"] = pop_scen
+def test_groups(transport_context_f, regions, pop_scen):
+    ctx = transport_context_f
+    ctx["regions"] = regions
+    ctx["transport population scenario"] = pop_scen
 
-    result = get_consumer_groups(test_context)
+    result = get_consumer_groups(ctx)
 
     # Data have the correct size
     exp = dict(n=11, y=11, cg=27)
@@ -148,16 +163,17 @@ def test_groups(test_context, regions, pop_scen):
     # assert result.sizes == exp
     assert all(len(result.coords[dim]) == N for dim, N in exp.items())
 
-    # Data sum to 1 across the consumer_group dimension, i.e. consititute a
-    # discrete distribution
+    # Data sum to 1 across the consumer_group dimension, i.e. constitute a discrete
+    # distribution
     assert (result.sum("cg") - 1.0 < 1e-08).all()
 
 
 @pytest.mark.parametrize("regions", ["R11"])
 @pytest.mark.parametrize("pop_scen", ["GEA mix", "GEA supply", "GEA eff"])
-def test_urban_rural_shares(test_context, regions, pop_scen):
-    test_context.regions = "R11"
-    test_context["transport"] = {"data source": {"population": pop_scen}}
+def test_urban_rural_shares(transport_context_f, regions, pop_scen):
+    ctx = transport_context_f
+    ctx.regions = "R11"
+    ctx["transport"] = {"data source": {"population": pop_scen}}
 
     # Shares can be retrieved
-    get_urban_rural_shares(test_context)
+    get_urban_rural_shares(ctx)
