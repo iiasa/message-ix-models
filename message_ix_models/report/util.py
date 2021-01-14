@@ -11,19 +11,18 @@ log = logging.getLogger(__name__)
 #: - Applied to whole strings along each dimension.
 #: - These columns have :meth:`str.title` applied before these replacements
 REPLACE_DIMS = {
-    'c': {
-        'Crudeoil': 'Oil',
-        'Electr': 'Electricity',
-        'Ethanol': 'Liquids|Biomass',
-        'Lightoil': 'Liquids|Oil',
-
+    "c": {
+        "Crudeoil": "Oil",
+        "Electr": "Electricity",
+        "Ethanol": "Liquids|Biomass",
+        "Lightoil": "Liquids|Oil",
         # in land_out, for CH4 emissions from GLOBIOM
-        'Agri_Ch4': 'GLOBIOM|Emissions|CH4 Emissions Total',
+        "Agri_Ch4": "GLOBIOM|Emissions|CH4 Emissions Total",
     },
-    'l': {
-        'Final Energy': 'Final Energy|Residential',
+    "l": {
+        "Final Energy": "Final Energy|Residential",
     },
-    't': {},
+    "t": {},
 }
 
 #: Replacements used in :meth:`collapse` after the 'variable' column is
@@ -35,22 +34,22 @@ REPLACE_DIMS = {
 #:   https://docs.python.org/3/library/re.html.
 REPLACE_VARS = {
     # Secondary energy: remove duplicate "Solids"
-    r'(Secondary Energy\|Solids)\|Solids': r'\1',
-
+    r"(Secondary Energy\|Solids)\|Solids": r"\1",
     # CH4 emissions from MESSAGE technologies
-    r'(Emissions\|CH4)\|Fugitive': r'\1|Energy|Supply|Fugitive',
-    r'(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)':
-        r'\1|Energy|Supply|\2|Fugitive',
-
+    r"(Emissions\|CH4)\|Fugitive": r"\1|Energy|Supply|Fugitive",
     # CH4 emissions from GLOBIOM
-    r'^(land_out CH4.*\|)Awm': r'\1Manure Management',
-    r'^land_out CH4\|Emissions\|Ch4\|Land Use\|Agriculture\|':
-        'Emissions|CH4|AFOLU|Agriculture|Livestock|',
-    r'^land_out CH4\|': '',  # Strip internal prefix
-
+    r"(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)": (
+        r"\1|Energy|Supply|\2|Fugitive"
+    ),
+    r"^(land_out CH4.*\|)Awm": r"\1Manure Management",
+    r"^land_out CH4\|Emissions\|Ch4\|Land Use\|Agriculture\|": (
+        "Emissions|CH4|AFOLU|Agriculture|Livestock|"
+    ),
+    # Strip internal prefix
+    r"^land_out CH4\|": "",
     # Prices
-    r'Residential\|(Biomass|Coal)': r"Residential|Solids|\1",
-    r'Residential\|Gas': 'Residential|Gases|Natural Gas',
+    r"Residential\|(Biomass|Coal)": r"Residential|Solids|\1",
+    r"Residential\|Gas": "Residential|Gases|Natural Gas",
     r"Import Energy\|Lng": "Primary Energy|Gas",
     r"Import Energy\|Coal": "Primary Energy|Coal",
     r"Import Energy\|Oil": "Primary Energy|Oil",
@@ -96,17 +95,17 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
         try:
             # Level: to title case, add the word 'energy'
             # FIXME astype() here should not be necessary; debug
-            df['l'] = df['l'].astype(str).str.title() + ' Energy'
+            df["l"] = df["l"].astype(str).str.title() + " Energy"
         except KeyError:
             pass
         try:
             # Commodity: to title case
             # FIXME astype() here should not be necessary; debug
-            df['c'] = df['c'].astype(str).str.title()
+            df["c"] = df["c"].astype(str).str.title()
         except KeyError:
             pass
 
-        if 'emissions' in var_name.lower():
+        if "emissions" in var_name.lower():
             log.info(f"Collapse GWP info for {var_name}")
             df, var = collapse_gwp_info(df, var)
 
@@ -114,21 +113,17 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
         df = df.replace(REPLACE_DIMS)
 
     # Extend region column ('n' and 'nl' are automatically added by message_ix)
-    df['region'] = (
-        df['region']
-        .astype(str)
-        .str.cat([df[c] for c in region], sep='|')
-    )
+    df["region"] = df["region"].astype(str).str.cat([df[c] for c in region], sep="|")
 
     # Assemble variable column
-    df['variable'] = var_name
-    df['variable'] = df['variable'].str.cat([df[c] for c in var], sep='|')
+    df["variable"] = var_name
+    df["variable"] = df["variable"].str.cat([df[c] for c in var], sep="|")
 
     # TODO roll this into the rename_vars argument of message_ix...as_pyam()
     if replace_common:
         # Apply variable name partial replacements
         for pat, repl in REPLACE_VARS.items():
-            df['variable'] = df['variable'].str.replace(pat, repl)
+            df["variable"] = df["variable"].str.replace(pat, repl, regex=True)
 
     # Drop same columns
     return df.drop(var + region, axis=1)
@@ -154,8 +149,14 @@ def collapse_gwp_info(df, var):
         return df, var
 
     # Format the column with original emissions species
-    df['e'] = df['e'] + ' (' + df['e equivalent'] + '-equivalent, ' \
-        + df['gwp metric'] + ' metric)'
+    df["e"] = (
+        df["e"]
+        + " ("
+        + df["e equivalent"]
+        + "-equivalent, "
+        + df["gwp metric"]
+        + " metric)"
+    )
 
     # Remove columns from further processing
     [var.remove(c) for c in cols]
@@ -171,9 +172,9 @@ def infer_keys(reporter, key_or_keys, dims=[]):
 
     for k in keys:
         # Has some dimensions or tag
-        key = Key.from_str_or_key(k) if ':' in k else k
+        key = Key.from_str_or_key(k) if ":" in k else k
 
-        if '::' in k or key not in reporter:
+        if "::" in k or key not in reporter:
             key = reporter.full_key(key)
 
         if dims:
