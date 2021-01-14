@@ -34,8 +34,8 @@ commodity.mapping = read_xlsx('LCA_commodity_mapping.xlsx', sheet = 'commodity')
 # process data
 ################################################################################
 
-# filter relevant scenario, technology variant and remove operation phase (and remove duplicates)
-data.lca = data.lca %>% filter(scenario == 'Baseline' & `technology variant` == 'mix' & phase != 'Operation')
+# filter relevant scenario, technology variant (residue for biomass, mix for others) and remove operation phase (and remove duplicates)
+data.lca = data.lca %>% filter(scenario == 'Baseline' & `technology variant` %in% c('mix', 'residue') & phase != 'Operation')
 
 # add intermediate time steps and turn into long table format
 data.lca = data.lca %>% mutate(`2015` = NA, `2020` = NA, `2025` = NA, `2035` = NA, `2040` = NA, `2045` = NA) %>% pivot_longer(cols = c("2010":"2045"), names_to = 'year', values_to = 'value') %>% mutate(value = as.numeric(value))
