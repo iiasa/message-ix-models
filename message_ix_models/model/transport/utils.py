@@ -33,9 +33,7 @@ def read_config(context=None):
         context.load_config(*parts)
 
     # Merge technology.yaml with set.yaml
-    context["transport set"]["technology"]["add"] = (
-        context.pop("transport technology")
-    )
+    context["transport set"]["technology"]["add"] = context.pop("transport technology")
 
     # Convert some values to codes
     for set_name, info in context["transport set"].items():
@@ -47,7 +45,10 @@ def read_config(context=None):
     # Load data files
     for key in context["transport config"]["data files"]:
         context.data[f"transport {key.replace('/', ' ')}"] = load_data(
-            context, "transport", key, rtype=xr.DataArray,
+            context,
+            "transport",
+            key,
+            rtype=xr.DataArray,
         )
 
     return context
@@ -56,7 +57,7 @@ def read_config(context=None):
 @lru_cache()
 def consumer_groups(rtype=Code):
     """Iterate over consumer groups in ``sets.yaml``."""
-    dims = ['area_type', 'attitude', 'driver_type']
+    dims = ["area_type", "attitude", "driver_type"]
 
     # Retrieve configuration
     context = read_config()
@@ -64,32 +65,32 @@ def consumer_groups(rtype=Code):
     # Assemble group information
     result = defaultdict(list)
 
-    for indices in product(*[
-        context["transport set"][d]["add"] for d in dims
-    ]):
+    for indices in product(*[context["transport set"][d]["add"] for d in dims]):
         # Create a new code by combining three
-        result['code'].append(Code(
-            id=''.join(c.id for c in indices),
-            name=', '.join(c.name for c in indices),
-        ))
+        result["code"].append(
+            Code(
+                id="".join(c.id for c in indices),
+                name=", ".join(c.name for c in indices),
+            )
+        )
 
         # Tuple of the values along each dimension
-        result['index'].append(tuple(c.id for c in indices))
+        result["index"].append(tuple(c.id for c in indices))
 
-    if rtype == 'indexers':
+    if rtype == "indexers":
         # Three tuples of members along each dimension
-        indexers = zip(*result['index'])
+        indexers = zip(*result["index"])
         indexers = {
-            d: xr.DataArray(list(i), dims='consumer_group')
+            d: xr.DataArray(list(i), dims="consumer_group")
             for d, i in zip(dims, indexers)
         }
-        indexers['consumer_group'] = xr.DataArray(
-            [c.id for c in result['code']],
-            dims='consumer_group',
+        indexers["consumer_group"] = xr.DataArray(
+            [c.id for c in result["code"]],
+            dims="consumer_group",
         )
         return indexers
     elif rtype is Code:
-        return sorted(result['code'], key=str)
+        return sorted(result["code"], key=str)
     else:
         raise ValueError(rtype)
 
@@ -111,12 +112,12 @@ def add_commodity_and_level(
         """Return the commodity and level given technology `t`."""
         input = t_info[t_info.index(t)].anno["input"]
         # Commodity must be specified
-        commodity = input['commodity']
+        commodity = input["commodity"]
         # Use the default level for the commodity in the RES (per
         # commodity.yaml)
         level = (
-            input.get('level', None)
-            or c_info[c_info.index(commodity)].anno.get('level', None)
+            input.get("level", None)
+            or c_info[c_info.index(commodity)].anno.get("level", None)
             or default_level
         )
 
@@ -124,7 +125,7 @@ def add_commodity_and_level(
 
     def func(row):
         """Modify `row` to fill in 'commodity' and 'level' columns."""
-        return row.fillna(t_cl(row['technology']))
+        return row.fillna(t_cl(row["technology"]))
 
     # Process every row in `df`; return a new DataFrame
     return df.apply(func, axis=1)
