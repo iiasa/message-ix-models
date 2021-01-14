@@ -77,9 +77,9 @@ mode:
         template: {id: "{consumer_group.id}"}
 
 node:
-  # Just one is sufficient, since the RES will never be generated with a mix
-  require:
-  - R11_AFR
+  # transport.build.get_spec() sets the list of required nodes
+  require: []
+  # No nodes added/removed
 
 technology:
   remove:
