@@ -1,21 +1,29 @@
+import pytest
+
 from message_data.model.transport.report import callback
 from message_data.reporting import prepare_reporter, register
+
+from . import built_transport
 
 
 def test_register_cb():
     register(callback)
 
 
-def test_report_bare(solved_bare_res_transport, session_context, tmp_path):
+@pytest.mark.skip("Very slow")  # TODO debug this
+@pytest.mark.parametrize("regions", ["R11"])
+def test_report_bare(request, transport_context_f, tmp_path, regions):
     """Run MESSAGE-Transport–specific reporting."""
     register(callback)
 
-    session_context["output dir"] = tmp_path
+    ctx = transport_context_f
+    ctx["output dir"] = tmp_path
+    ctx.regions = regions
+
+    scenario = built_transport(request, ctx, solved=True)
 
     rep, key = prepare_reporter(
-        solved_bare_res_transport,
-        session_context.get_config_file("report", "global"),
-        "out::transport",
+        scenario, ctx.get_config_file("report", "global"), "out::transport"
     )
 
     # The key is added, can be computed and written to file

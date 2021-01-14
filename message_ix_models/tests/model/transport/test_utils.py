@@ -9,15 +9,16 @@ from message_data.model.transport.utils import (
 )
 
 
-def test_add_cl(session_context):
+def test_add_cl(transport_context):
     """add_commodity_and_level() preserves the content of other columns."""
-    read_config()
-
     # Input data missing 'commodity' and 'level'
-    df_in = pd.DataFrame([
-        ["R11_AFR", None, None, "ICE_conv"],
-        ["R11_WEU", None, None, "ELC_100"],
-    ], columns=["node", "commodity", "level", "technology"])
+    df_in = pd.DataFrame(
+        [
+            ["R11_AFR", None, None, "ICE_conv"],
+            ["R11_WEU", None, None, "ELC_100"],
+        ],
+        columns=["node", "commodity", "level", "technology"],
+    )
 
     df_out = add_commodity_and_level(df_in, default_level="foo")
 
@@ -39,19 +40,19 @@ def test_read_config(session_context):
 
     # Data tables are loaded
     assert isinstance(context.data["transport mer-to-ppp"], xr.DataArray)
-    assert context.data["transport mer-to-ppp"].dims == ("node", "year",)
+    assert context.data["transport mer-to-ppp"].dims == ("node", "year")
 
     # Scalar parameters are loaded
     assert "scaling" in context["transport config"]
     assert context["transport config"]["work hours"] == 200 * 8
 
 
-def test_consumer_groups(session_context):
+def test_consumer_groups(transport_context):
     # Returns a list of codes
     codes = consumer_groups()
-    RUEAA = codes[codes.index('RUEAA')]
-    assert RUEAA.name == 'Rural, or “Outside MSA”, Early Adopter, Average'
+    RUEAA = codes[codes.index("RUEAA")]
+    assert RUEAA.name == "Rural, or “Outside MSA”, Early Adopter, Average"
 
     # Returns xarray objects for indexing
-    result = consumer_groups(rtype='indexers')
+    result = consumer_groups(rtype="indexers")
     assert all(isinstance(da, xr.DataArray) for da in result.values())
