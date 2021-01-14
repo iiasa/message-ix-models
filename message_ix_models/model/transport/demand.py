@@ -15,7 +15,6 @@ from message_data.reporting import CONFIG
 from message_data.tools import Context, ScenarioInfo, broadcast, make_df
 from .build import generate_set_elements
 from .data.groups import get_consumer_groups, get_gea_population
-from .utils import read_config
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +29,8 @@ def dummy(info):
     common = dict(
         year=info.Y,
         value=10 + np.arange(len(info.Y)),
-        level='useful',
-        time='year',
+        level="useful",
+        time="year",
     )
 
     dfs = []
@@ -41,12 +40,14 @@ def dummy(info):
         generate_set_elements("commodity"),
     ):
         unit = "t km" if "freight" in commodity.id else "km"
-        dfs.append(make_df(
-            'demand',
-            commodity=commodity.id,
-            unit=unit,
-            **common,
-        ))
+        dfs.append(
+            make_df(
+                "demand",
+                commodity=commodity.id,
+                unit=unit,
+                **common,
+            )
+        )
 
     # # Dummy demand for light oil
     # common['level'] = 'final'
@@ -71,23 +72,18 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
     """
     rep = Reporter.from_scenario(scenario)
 
-    prepare_reporter(rep)
+    prepare_reporter(rep, Context.get_instance())
 
     return rep
 
 
-def from_external_data(
-    info: ScenarioInfo,
-    context: Context = None,
-) -> Reporter:
+def from_external_data(info: ScenarioInfo, context: Context) -> Reporter:
     """Return a Reporter for calculating demand from external data.
 
     Returns
     -------
     Reporter
     """
-    context = read_config(context)
-
     # Empty reporter
     rep = Reporter()
 
@@ -97,19 +93,14 @@ def from_external_data(
     rep.add("y", dask.core.quote(info.set["year"]))
     rep.add(
         "cat_year",
-        pd.DataFrame(
-            [["firstmodelyear", info.y0]],
-            columns=["type_year", "year"],
-        )
+        pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
     )
 
     def _add(ctx_key, rep_key, **kwargs):
         """Add context data (i.e. files) to the reporter."""
         qty = Quantity(context.data[ctx_key], **kwargs)
         # Rename long column names ("node") to short ("n")
-        qty = qty.rename(
-            {k: v for k, v in RENAME_DIMS.items() if k in qty.coords}
-        )
+        qty = qty.rename({k: v for k, v in RENAME_DIMS.items() if k in qty.coords})
         rep.add(rep_key, qty, index=True, sums=True)
 
     _add("transport gdp", "GDP:n-y", units="GUSD / year")
@@ -117,10 +108,9 @@ def from_external_data(
 
     # Commodity prices: all equal to 1
     # TODO add external data source
-    context.data["transport PRICE_COMMODITY"] = (
-        xr.ones_like(context.data["transport gdp"])
-        .expand_dims({"c": ["transport"]})
-    )
+    context.data["transport PRICE_COMMODITY"] = xr.ones_like(
+        context.data["transport gdp"]
+    ).expand_dims({"c": ["transport"]})
     _add("transport PRICE_COMMODITY", "PRICE_COMMODITY:n-c-y")
 
     prepare_reporter(rep, context)
@@ -128,11 +118,7 @@ def from_external_data(
     return rep
 
 
-def prepare_reporter(
-    rep: Reporter,
-    context: Context = None,
-    configure: bool = True
-) -> None:
+def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) -> None:
     """Prepare `rep` for calculating transport demand.
 
     Parameters
@@ -145,11 +131,9 @@ def prepare_reporter(
         config = CONFIG.copy()
 
         # Update with transport-specific keys from config.yaml
-        context = read_config(context)
-        config.update({
-            "transport": context["transport config"],
-            "output dir": Path.cwd(),
-        })
+        config.update(
+            {"transport": context["transport config"], "output dir": Path.cwd()}
+        )
 
         # Configure the reporter; keys are stored
         rep.configure(**config)
@@ -166,28 +150,19 @@ def prepare_reporter(
     whour_key = rep.add("whour:", whour, "config")
     lambda_key = rep.add("lambda:", _lambda, "config")
 
+    # List of nodes excluding "World"
+    # TODO move upstream to message_ix
+    rep.add("nodes ex world", nodes_ex_world, "n")
+
     # Base share data
-    rep.add("base shares:n-t-y", base_shares, "n", "y", "config")
+    rep.add("base shares:n-t-y", base_shares, "nodes ex world", "y", "config")
 
     # Population data from GEA
-    pop_key = rep.add(
-        "population:n-y",
-        partial(population, context=context),
-        "n",
-        "config"
-    )
+    pop_key = rep.add("population:n-y", population, "nodes ex world", "config")
 
     # Consumer group sizes
-    # TODO ixmp is picky here when there is no separate argument to the
-    #      callable; fix.
-    # FIXME this isn't the best place to set regions; move somewhere more
-    #       obvious/general
-    context.setdefault("regions", "R11")
-    cg_key = rep.add(
-        "cg share:n-y-cg",
-        get_consumer_groups,
-        context,
-    )
+    # TODO ixmp is picky here when there is no separate argument to the callable; fix.
+    cg_key = rep.add("cg share:n-y-cg", get_consumer_groups, context)
 
     # PPP GDP, total and per capita
     gdp_ppp = rep.add("product", "GDP PPP:n-y", gdp, mer_to_ppp)
@@ -219,7 +194,7 @@ def prepare_reporter(
         whour_key,
         speed_key,
         votm_key,
-        "n",
+        "nodes ex world",
         "y",
         "cat_year",
     )
@@ -231,7 +206,7 @@ def prepare_reporter(
         "base shares:n-t-y",
         gdp_ppp_cap,
         cost_key,
-        "n",
+        "nodes ex world",
         "y",
         "t",
         "cat_year",
@@ -258,10 +233,7 @@ def prepare_reporter(
 
     # LDV PDT shared out by mode
     rep.add(
-        "select",
-        "transport ldv pdt:n-y:total",
-        "transport pdt:n-y-t",
-        dict(t=["LDV"])
+        "select", "transport ldv pdt:n-y:total", "transport pdt:n-y-t", dict(t=["LDV"])
     )
 
     rep.add(
@@ -272,21 +244,21 @@ def prepare_reporter(
     )
 
 
-def base_shares(n, y, config):
+def base_shares(nodes, y, config):
     """Return base mode shares."""
     modes = config["transport"]["demand modes"]
     return Quantity(
-        xr.DataArray(
-            1. / len(modes), coords=[n[1:], y, modes], dims=["n", "y", "t"]
-        )
+        xr.DataArray(1.0 / len(modes), coords=[nodes, y, modes], dims=["n", "y", "t"])
     )
 
 
-def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
-    """Calculate mode share weights."""
-    # Non-global nodes
-    nodes = list(filter(lambda n_: "GLB" not in n_ and n_ != "World", n))
+def nodes_ex_world(nodes):
+    """Nodes excluding 'World'."""
+    return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
 
+
+def share_weight(share, gdp_ppp_cap, cost, nodes, y, t, cat_year, config):
+    """Calculate mode share weights."""
     # Modes from configuration
     modes = config["transport"]["demand modes"]
 
@@ -302,9 +274,9 @@ def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
     # Share weights
     weight = xr.DataArray(coords=[nodes, years, modes], dims=["n", "y", "t"])
 
-    # Weights in y0 for all modes and noes
+    # Weights in y0 for all modes and nodes
     s_y0 = share.sel(y0, t=modes, n=nodes)
-    c_y0 = cost.sel(y0, t=modes, n=nodes)
+    c_y0 = cost.sel(y0, t=modes, n=nodes).sel(c="transport", drop=True)
     tmp = s_y0 / c_y0 ** lamda
 
     # Normalize against first mode's weight
@@ -328,10 +300,9 @@ def share_weight(share, gdp_ppp_cap, cost, n, y, t, cat_year, config):
         )
 
         # Scale weights in yC
-        weight.loc[dict(n=node, **yC)] = (
-            scale * weight.sel(n=ref_nodes, **y0).mean("n")
-            + (1 - scale) * weight.sel(n=node, **y0)
-        )
+        weight.loc[dict(n=node, **yC)] = scale * weight.sel(n=ref_nodes, **y0).mean(
+            "n"
+        ) + (1 - scale) * weight.sel(n=node, **y0)
 
     # Currently not enabled
     # “Set 2010 sweight to 2005 value in order not to have rail in 2010, where
@@ -381,8 +352,8 @@ def total_pdt(gdp_ppp_cap, config):
 
     # Consistent output units
     result.attrs["_unit"] = (
-        (gdp_ppp_cap.attrs["_unit"] / fix_gdp.units) * fix_demand.units
-    )
+        gdp_ppp_cap.attrs["_unit"] / fix_gdp.units
+    ) * fix_demand.units
 
     return result
 
@@ -400,7 +371,7 @@ def votm(gdp_ppp_cap):
     return 1 / (1 + np.exp((30000 - gdp_ppp_cap * 1000) / 20000))
 
 
-def population(nodes, config, context=None):
+def population(nodes, config):
     """Return population data from GEA.
 
     Dimensions: n-y. Units: 10⁶ person/passenger.
@@ -408,16 +379,15 @@ def population(nodes, config, context=None):
     pop_scenario = config["transport"]["data source"]["population"]
 
     data = (
-        get_gea_population(nodes, context=context)
+        get_gea_population(nodes)
         .sel(area_type="total", scenario=pop_scenario, drop=True)
         .rename(node="n", year="y")
     )
 
     # Duplicate 2100 data for 2110
-    data = xr.concat([
-        data,
-        data.sel(y=2100, drop=False).assign_coords(y=2110)
-    ], dim="y")
+    data = xr.concat(
+        [data, data.sel(y=2100, drop=False).assign_coords(y=2110)], dim="y"
+    )
 
     return Quantity(data, units="Mpassenger")
 
@@ -447,7 +417,7 @@ def smooth(qty):
     return Quantity(result)
 
 
-def cost(price, gdp_ppp_cap, whours, speeds, votm, n, y, cat_year):
+def cost(price, gdp_ppp_cap, whours, speeds, votm, nodes, y, cat_year):
     """Calculate cost of transport [money / distance].
 
     Calculated from two components:
@@ -461,7 +431,7 @@ def cost(price, gdp_ppp_cap, whours, speeds, votm, n, y, cat_year):
     """
     # When ixmp.reporting.Quantity is AttrSeries, this is needed to avoid
     # "ValueError: cannot join with no overlapping index names"
-    speeds = pd.concat({n_: speeds for n_ in n[1:]}, names="n")
+    speeds = pd.concat({n_: speeds for n_ in nodes}, names="n")
 
     # NB for some reason, the 'y' dimension of result becomes `float`, rather
     #    than `int`, in this step
