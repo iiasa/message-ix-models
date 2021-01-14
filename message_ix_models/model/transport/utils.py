@@ -25,6 +25,9 @@ def read_config(context=None):
         # Already loaded
         return context
 
+    # Ensure the same default settings as model.bare are set on context
+    context.use_defaults(SETTINGS)
+
     # Load transport configuration
     for parts in METADATA:
         context.load_config(*parts)
