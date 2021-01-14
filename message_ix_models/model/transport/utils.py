@@ -5,18 +5,8 @@ from itertools import product
 import pandas as pd
 import xarray as xr
 
+from message_data.model.transport.common import METADATA, SETTINGS
 from message_data.tools import Code, as_codes, get_context, load_data, set_info
-
-
-# Configuration files
-METADATA = [
-    # Information about MESSAGE-Transport
-    ('transport', 'config'),
-    ('transport', 'set'),
-    ('transport', 'technology'),
-    # Information about the MESSAGE V model
-    ('transport', 'migrate', 'set'),
-]
 
 
 def read_config(context=None):
