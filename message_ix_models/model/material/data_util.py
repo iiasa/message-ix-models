@@ -5,7 +5,54 @@ import pandas as pd
 from .util import read_config
 import re
 
+def modify_historical_activity(scen):
 
+    """Adjust the historical activity of the related industry technologies
+
+    that provide output to different categories of industrial demand (e.g.
+
+    i_therm, i_spec, i_feed). The historical activity is reduced the same %
+
+    as the industrial demand is reduced in modfiy_demand function.
+    """
+
+    # Relted technologies that have outputs to useful industry level.
+
+    tec_therm = ["biomass_i","coal_i","elec_i","eth_i","foil_i","gas_i",
+                "h2_i","heat_i","hp_el_i", "hp_gas_i","loil_i",
+                "meth_i","solar_i"]
+    tec_fs = ["coal_fs","ethanol_fs","foil_fs","gas_fs","loil_fs","methanol_fs",]
+    tec_sp = ["sp_coal_I","sp_el_I","sp_eth_I","sp_liq_I","sp_meth_I", "h2_fc_I"]
+
+    # Thermal industrial technologies
+    thermal_df = scen.par('historical_activity', filters={'technology':tec_therm})
+    # Specific industrial technologies
+    spec_df = scen.par('historical_activity', filters={'technology':tec_sp})
+    # Specific industrial technologies
+    feed_df = scen.par('historical_activity', filters={'technology':tec_fs})
+
+    #i_therm adjsutment (30% steel, 25% cement, 7% petro)
+    thermal_df.value = thermal_df.value * 0.38
+    # i_spec adjustment (15% aluminum)
+    spec_df.value = spec_df.value * 0.8
+    # i_feed adjustment (30% HVCs)
+    feed_df.value = feed_df.value * 0.7
+
+    # Infeasibility R11_NAM 2020 act_dynamic_up: 0.0409422121702949)
+    # Modify initial activity up:
+
+    initial_activity_up_df = scen.par('initial_activity_up', filters = \
+    {'node_loc': 'R11_NAM', 'technology':'biomass_i', 'year_act':2020})
+
+    initial_activity_up_df.value = initial_activity_up_df.value + 0.041
+
+    scen.check_out()
+    scen.add_par('historical_activity', thermal_df)
+    scen.add_par('historical_activity', spec_df)
+    scen.add_par('historical_activity', feed_df)
+    scen.add_par("initial_activity_up", initial_activity_up_df)
+    scen.commit(comment = 'historical activity for useful level industry \
+    technologies adjusted')
 
 def modify_demand(scen):
     """Take care of demand changes due to the introduction of material parents
@@ -47,7 +94,7 @@ def modify_demand(scen):
     # Makes up around 30% of total feedstock demand.
 
     df = scen.par('demand', filters={'commodity':'i_feed'})
-    df.value = df.value * 0.7  #(70% HVCs)
+    df.value = df.value * 0.7  #(30% HVCs)
 
     scen.check_out()
     scen.add_par('demand', df)
@@ -65,8 +112,6 @@ def modify_demand(scen):
         scen.check_out()
         scen.remove_par('growth_activity_lo', df)
         scen.commit(comment = 'remove growth_lo constraints')
-
-
 
 # Read in technology-specific parameters from input xlsx
 # Now used for steel and cement, which are in one file

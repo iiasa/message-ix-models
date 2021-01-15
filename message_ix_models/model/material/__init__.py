@@ -6,6 +6,7 @@ from message_ix_models.model.build import apply_spec
 
 from .data import add_data
 from .data_util import modify_demand
+from .data_util import modify_historical_activity
 from .util import read_config
 
 
@@ -19,6 +20,9 @@ def build(scenario):
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     modify_demand(scenario)
+
+    # Adjust the historical activity of the usefyl level industry technologies
+    modify_historical_activity(scenario)
 
     return scenario
 
@@ -112,7 +116,7 @@ def solve(context, datafile):
         .clone(model="Material_Global", scenario=output_scenario_name)
     )
 
-    # Set the latest version as default 
+    # Set the latest version as default
     scenario.set_as_default()
 
     # Solve
