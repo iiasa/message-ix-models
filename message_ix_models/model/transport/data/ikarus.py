@@ -4,7 +4,7 @@ from collections import defaultdict
 from openpyxl import load_workbook
 import pandas as pd
 
-from message_data.tools import broadcast, get_context, make_df, same_node
+from message_data.tools import broadcast, make_df, same_node
 
 #: Name of the input file.
 #

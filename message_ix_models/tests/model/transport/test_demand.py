@@ -1,7 +1,9 @@
 from iam_units import registry
 import message_ix
 import pytest
+from pytest import param
 
+from message_data import testing
 from message_data.model.bare import get_spec
 from message_data.model.transport import demand, plot
 
@@ -13,7 +15,9 @@ def test_demand_dummy(transport_context):
     assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
 
 
-@pytest.mark.parametrize("regions", ["R11"])
+@pytest.mark.parametrize(
+    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
+)
 def test_from_external_data(transport_context_f, tmp_path, regions):
     ctx = transport_context_f
     ctx.regions = regions

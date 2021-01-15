@@ -11,7 +11,7 @@ def test_register_cb():
 
 
 @pytest.mark.skip("Very slow")  # TODO debug this
-@pytest.mark.parametrize("regions", ["R11"])
+@pytest.mark.parametrize("regions", ["R11", "R14", "ISR"])
 def test_report_bare(request, transport_context_f, tmp_path, regions):
     """Run MESSAGE-Transport–specific reporting."""
     register(callback)

@@ -1,8 +1,10 @@
 import pandas as pd
 from pandas.testing import assert_series_equal
 import pytest
+from pytest import param
 import xarray as xr
 
+from message_data import testing
 from message_data.model import bare
 from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
@@ -29,8 +31,8 @@ def test_load_data(session_context, key, rtype):
     assert isinstance(result, rtype)
 
 
-@pytest.mark.parametrize("regions", ["R11"])
-def test_ikarus(transport_context_f, regions):
+@pytest.mark.parametrize("regions, N_node", [("R11", 11), ("R14", 14), ("ISR", 1)])
+def test_ikarus(transport_context_f, regions, N_node):
     ctx = transport_context_f
     ctx.regions = regions
 
@@ -46,8 +48,8 @@ def test_ikarus(transport_context_f, regions):
     inv = data["inv_cost"]
     inv_rail_pub = inv[inv["technology"] == "rail_pub"]
 
-    # 11 regions * 11 years (inv_cost has 'year_vtg' but not 'year_act' dim)
-    rows_per_tech = 11 * 11
+    # Regions * 11 years (inv_cost has 'year_vtg' but not 'year_act' dim)
+    rows_per_tech = N_node * 11
     N_techs = 18
 
     # Data have been loaded with the correct shape, unit and magnitude:
@@ -120,12 +122,14 @@ def test_ikarus(transport_context_f, regions):
             result["value_x"],
             result["value_y"],
             check_exact=False,
-            check_less_precise=3,
             check_names=False,
+            atol=1e-4,
         )
 
 
-@pytest.mark.parametrize("regions", ["R11"])
+@pytest.mark.parametrize(
+    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
+)
 def test_USTIMES_MA3T(transport_context_f, regions):
     ctx = transport_context_f
     ctx.regions = regions
@@ -148,7 +152,9 @@ def test_USTIMES_MA3T(transport_context_f, regions):
         assert len(df) == len(res_info.N[1:]) * ((5 * 11) + 1)
 
 
-@pytest.mark.parametrize("regions", ["R11"])
+@pytest.mark.parametrize(
+    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
+)
 @pytest.mark.parametrize("pop_scen", ["GEA mix"])
 def test_groups(transport_context_f, regions, pop_scen):
     ctx = transport_context_f
@@ -168,11 +174,13 @@ def test_groups(transport_context_f, regions, pop_scen):
     assert (result.sum("cg") - 1.0 < 1e-08).all()
 
 
-@pytest.mark.parametrize("regions", ["R11"])
+@pytest.mark.parametrize(
+    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
+)
 @pytest.mark.parametrize("pop_scen", ["GEA mix", "GEA supply", "GEA eff"])
 def test_urban_rural_shares(transport_context_f, regions, pop_scen):
     ctx = transport_context_f
-    ctx.regions = "R11"
+    ctx.regions = regions
     ctx["transport"] = {"data source": {"population": pop_scen}}
 
     # Shares can be retrieved
