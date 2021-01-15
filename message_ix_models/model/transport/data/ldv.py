@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 import pandas as pd
 
 from message_data.model.transport.utils import add_commodity_and_level
-from message_data.tools import get_context, make_df, make_io, make_matched_dfs
+from message_data.tools import make_df, make_io, make_matched_dfs
 
 
 log = logging.getLogger(__name__)
@@ -22,6 +22,8 @@ TABLES = [
     ("fix_cost", slice("B62", "Q74"), "USD / vehicle"),
 ]
 
+SUPPORTED = dict(regions=frozenset(["R11"]))
+
 
 def get_ldv_data(context):
     source = context["transport config"]["data source"].get("LDV", None)
@@ -36,7 +38,14 @@ def get_ldv_data(context):
 
 def get_USTIMES_MA3T(context):
     """Read LDV cost and efficiency data from US-TIMES and MA3T."""
-    # Ensure transport config is loaded
+    # Compatibility checks
+    if context.regions not in SUPPORTED["regions"]:
+        raise NotImplementedError(
+            f"US-TIMES and MA3T data only available for {repr(SUPPORTED['regions'])};"
+            f" got {repr(context.regions)}"
+        )
+
+    # Retrieve configuration and ScenarioINfo
     config = context["transport config"]
     info = context["transport build info"]
 

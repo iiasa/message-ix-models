@@ -6,7 +6,8 @@ import xarray as xr
 
 from ixmp.reporting import Quantity
 
-from message_data.tools import get_gea_data, set_info
+from message_data.tools import set_info
+from message_data.tools.gea import SUPPORTED as GEA_SUPPORTED, get_gea_data
 from message_data.model.transport.utils import consumer_groups
 
 log = logging.getLogger(__name__)
@@ -123,6 +124,12 @@ def get_urban_rural_shares(context) -> xr.DataArray:
     --------
     .get_gea_population
     """
+    if context.regions not in GEA_SUPPORTED["regions"]:
+        raise NotImplementedError(
+            f"GEA population data only available for {repr(GEA_SUPPORTED['regions'])};"
+            f" got {repr(context.regions)}"
+        )
+
     # Retrieve region info for the selected regional aggregation
     nodes = set_info(f"node/{context.regions}")
     # List of regions according to the context
