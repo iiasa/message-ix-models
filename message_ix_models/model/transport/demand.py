@@ -13,6 +13,7 @@ import message_ix
 
 from message_data.reporting import CONFIG
 from message_data.tools import Context, ScenarioInfo, broadcast, make_df
+from message_data.tools.gea import SUPPORTED as GEA_SUPPORTED
 from .build import generate_set_elements
 from .data.groups import get_consumer_groups, get_gea_population
 
@@ -78,12 +79,7 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
 
 
 def from_external_data(info: ScenarioInfo, context: Context) -> Reporter:
-    """Return a Reporter for calculating demand from external data.
-
-    Returns
-    -------
-    Reporter
-    """
+    """Return a Reporter for calculating demand from external data."""
     # Empty reporter
     rep = Reporter()
 
@@ -139,6 +135,13 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
         rep.configure(**config)
     else:
         rep.graph["config"]["output dir"] = Path.cwd()
+
+    # Compatibility checks
+    if context.regions not in GEA_SUPPORTED["regions"]:
+        raise NotImplementedError(
+            f"GEA population data only available for {repr(GEA_SUPPORTED['regions'])};"
+            f" got {repr(context.regions)}"
+        )
 
     # Existing keys, prepared by from_scenario() or from_external_data()
     gdp = rep.full_key("GDP")
