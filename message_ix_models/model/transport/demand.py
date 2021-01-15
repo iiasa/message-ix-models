@@ -12,8 +12,7 @@ import xarray as xr
 import message_ix
 
 from message_data.reporting import CONFIG
-from message_data.tools import Context, ScenarioInfo, broadcast, make_df
-from message_data.tools.gea import SUPPORTED as GEA_SUPPORTED
+from message_data.tools import Context, ScenarioInfo, broadcast, gea, make_df
 from .build import generate_set_elements
 from .data.groups import get_consumer_groups, get_gea_population
 
@@ -122,6 +121,9 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
     rep : Reporter
         Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
     """
+    # Ensure the current settings are supported
+    gea.supports(context)
+
     if configure:
         # Copy general MESSAGEix-GLOBIOM config
         config = CONFIG.copy()
@@ -135,13 +137,6 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
         rep.configure(**config)
     else:
         rep.graph["config"]["output dir"] = Path.cwd()
-
-    # Compatibility checks
-    if context.regions not in GEA_SUPPORTED["regions"]:
-        raise NotImplementedError(
-            f"GEA population data only available for {repr(GEA_SUPPORTED['regions'])};"
-            f" got {repr(context.regions)}"
-        )
 
     # Existing keys, prepared by from_scenario() or from_external_data()
     gdp = rep.full_key("GDP")
