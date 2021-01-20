@@ -1,3 +1,3 @@
-from setuptools import setup
+import setuptools
 
-setup(use_scm_version=True)
+setuptools.setup()
