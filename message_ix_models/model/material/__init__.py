@@ -5,10 +5,8 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 
 from .data import add_data
-from .data_util import modify_demand
-from .data_util import modify_historical_activity
+from .data_util import modify_demand_and_hist_activity
 from .util import read_config
-
 
 def build(scenario):
     """Set up materials accounting on `scenario`."""
@@ -19,10 +17,8 @@ def build(scenario):
     apply_spec(scenario, spec, add_data) # dry_run=True
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
-    modify_demand(scenario)
-
     # Adjust the historical activity of the usefyl level industry technologies
-    modify_historical_activity(scenario)
+    modify_demand_and_hist_activity(scenario)
 
     return scenario
 
