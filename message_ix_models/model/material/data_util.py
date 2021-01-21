@@ -306,6 +306,7 @@ def read_timeseries(filename):
     df = df.drop(df[np.isnan(df.value)].index)
     return df
 
+
 def read_rel(filename):
 
     import numpy as np
