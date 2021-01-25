@@ -5,7 +5,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 
 from .data import add_data
-from .data_util import modify_demand_and_hist_activity
+from .data_util import modify_historical_activity
 from .util import read_config
 
 def build(scenario):
@@ -18,12 +18,12 @@ def build(scenario):
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the usefyl level industry technologies
-    modify_demand_and_hist_activity(scenario)
+    modify_historical_activity(scenario)
 
     return scenario
 
 # add as needed/implemented
-SPEC_LIST = ["generic", "common", "steel", "cement", "aluminum", "petro_chemicals"]
+SPEC_LIST = ["generic", "common", "steel", "cement", "aluminum", "petro_chemicals", "buildings"]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
