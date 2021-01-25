@@ -1,4 +1,4 @@
-from .data_util import read_sector_data, read_timeseries_buildings
+from .data_util import read_sector_data
 
 import numpy as np
 from collections import defaultdict
@@ -32,7 +32,9 @@ def read_timeseries_buildings(filename):
         context.get_path("material", filename))
 
     bld_input_mat = bld_input_raw[bld_input_raw['Variable'].\
-                                  str.contains("Floor Space|Aluminum|Cement|Steel")]
+                                  # str.contains("Floor Space|Aluminum|Cement|Steel|Final Energy")]
+                                  str.contains("Floor Space|Aluminum|Cement|Steel")] # Final Energy - Later. Need to figure out carving out
+    bld_input_mat['Region'] = 'R11_' + bld_input_mat['Region']
 
     bld_input_pivot = \
         bld_input_mat.melt(id_vars=['Region','Variable'], var_name='Year', \
@@ -42,40 +44,53 @@ def read_timeseries_buildings(filename):
             .unstack()\
             .reset_index()
 
+    # Divide by floor area to get energy/material intensities
+    bld_intensity_ene_mat = bld_input_pivot.iloc[:,2:].div(bld_input_pivot['Energy Service|Residential|Floor Space'], axis=0)
+    bld_intensity_ene_mat.columns = [s + "|Intensity" for s in bld_intensity_ene_mat.columns]
+    bld_intensity_ene_mat = pd.concat([bld_input_pivot[['Region', 'Year']], \
+                                       bld_intensity_ene_mat.reindex(bld_input_pivot.index)], axis=1).\
+        drop(columns = ['Energy Service|Residential|Floor Space|Intensity'])
+
+    bld_intensity_ene_mat['Energy Service|Residential|Floor Space'] = bld_input_pivot['Energy Service|Residential|Floor Space']
+
+    # bld_intensity_ene = bld_intensity_ene_mat.iloc[:, 1:7]
+    # bld_intensity_mat = bld_intensity_ene_mat.iloc[:, 8:]
+
     # Calculate material intensities
-    bld_input_pivot['Material Demand|Residential|Buildings|Cement|Intensity'] =\
-        bld_input_pivot['Material Demand|Residential|Buildings|Cement']/\
-            bld_input_pivot['Energy Service|Residential|Floor Space']
-    bld_input_pivot['Material Demand|Residential|Buildings|Steel|Intensity'] =\
-        bld_input_pivot['Material Demand|Residential|Buildings|Steel']/\
-            bld_input_pivot['Energy Service|Residential|Floor Space']
-    bld_input_pivot['Material Demand|Residential|Buildings|Aluminum|Intensity'] =\
-        bld_input_pivot['Material Demand|Residential|Buildings|Aluminum']/\
-            bld_input_pivot['Energy Service|Residential|Floor Space']
-    bld_input_pivot['Scrap Release|Residential|Buildings|Cement|Intensity'] =\
-        bld_input_pivot['Scrap Release|Residential|Buildings|Cement']/\
-            bld_input_pivot['Energy Service|Residential|Floor Space']
-    bld_input_pivot['Scrap Release|Residential|Buildings|Steel|Intensity'] =\
-        bld_input_pivot['Scrap Release|Residential|Buildings|Steel']/\
-            bld_input_pivot['Energy Service|Residential|Floor Space']
-    bld_input_pivot['Scrap Release|Residential|Buildings|Aluminum|Intensity'] =\
-        bld_input_pivot['Scrap Release|Residential|Buildings|Aluminum']/\
-            bld_input_pivot['Energy Service|Residential|Floor Space']
+    # bld_input_pivot['Material Demand|Residential|Buildings|Cement|Intensity'] =\
+    #     bld_input_pivot['Material Demand|Residential|Buildings|Cement']/\
+    #         bld_input_pivot['Energy Service|Residential|Floor Space']
+    # bld_input_pivot['Material Demand|Residential|Buildings|Steel|Intensity'] =\
+    #     bld_input_pivot['Material Demand|Residential|Buildings|Steel']/\
+    #         bld_input_pivot['Energy Service|Residential|Floor Space']
+    # bld_input_pivot['Material Demand|Residential|Buildings|Aluminum|Intensity'] =\
+    #     bld_input_pivot['Material Demand|Residential|Buildings|Aluminum']/\
+    #         bld_input_pivot['Energy Service|Residential|Floor Space']
+    # bld_input_pivot['Scrap Release|Residential|Buildings|Cement|Intensity'] =\
+    #     bld_input_pivot['Scrap Release|Residential|Buildings|Cement']/\
+    #         bld_input_pivot['Energy Service|Residential|Floor Space']
+    # bld_input_pivot['Scrap Release|Residential|Buildings|Steel|Intensity'] =\
+    #     bld_input_pivot['Scrap Release|Residential|Buildings|Steel']/\
+    #         bld_input_pivot['Energy Service|Residential|Floor Space']
+    # bld_input_pivot['Scrap Release|Residential|Buildings|Aluminum|Intensity'] =\
+    #     bld_input_pivot['Scrap Release|Residential|Buildings|Aluminum']/\
+    #         bld_input_pivot['Energy Service|Residential|Floor Space']
 
     # Material intensities are in kg/m2
-    bld_data_long = bld_input_pivot.melt(id_vars=['Region','Year'], var_name='Variable')\
+    bld_data_long = bld_intensity_ene_mat.melt(id_vars=['Region','Year'], var_name='Variable')\
         .rename(columns={"Region": "node", "Year": "year"})
+    # Both for energy and material
     bld_intensity_long = bld_data_long[bld_data_long['Variable'].\
                                   str.contains("Intensity")]\
         .reset_index(drop=True)
-    bld_area_long = bld_data_long[bld_data_long['Variable'].\
-                                  str.contains("Floor Space")]\
+    bld_area_long = bld_data_long[bld_data_long['Variable']==\
+                                  'Energy Service|Residential|Floor Space']\
         .reset_index(drop=True)
 
     tmp = bld_intensity_long.Variable.str.split("|", expand=True)
 
-    bld_intensity_long['commodity'] = tmp[3]
-    bld_intensity_long['type'] = tmp[0]
+    bld_intensity_long['commodity'] = tmp[3].str.lower() # Material type
+    bld_intensity_long['type'] = tmp[0] # 'Material Demand' or 'Scrap Release'
     bld_intensity_long['unit'] = "kg/m2"
 
     bld_intensity_long = bld_intensity_long.drop(columns='Variable')
@@ -95,9 +110,9 @@ def gen_data_buildings(scenario, dry_run=False):
     context = read_config()
     config = context["material"]["buildings"]
 
-    lev = config['level']['add']
-    comm = config['commodity']['add']
-    tec = config['technology']['add'] # "buildings"
+    lev = config['level']['add'][0]
+    comm = config['commodity']['add'][0]
+    tec = config['technology']['add'][0] # "buildings"
 
     print(lev, comm, tec, type(tec))
 
@@ -113,17 +128,17 @@ def gen_data_buildings(scenario, dry_run=False):
     # For each technology there are differnet input and output combinations
     # Iterate over technologies
 
-    allyears = s_info.set['year'] #s_info.Y is only for modeling years
+    # allyears = s_info.set['year'] #s_info.Y is only for modeling years
     modelyears = s_info.Y #s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
-    fmy = s_info.y0
+    # fmy = s_info.y0
     nodes.remove('World')
 
-    # R11
-    regions = set(data_buildings.node)
-    comms = set(data_buildings.commodity)
-    types = set(data_buildings.type)
+    # Read field values from the buildings input data
+    regions = list(set(data_buildings.node))
+    comms = list(set(data_buildings.commodity))
+    types = list(set(data_buildings.type)) #
     # ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
     #     'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
 
@@ -132,42 +147,51 @@ def gen_data_buildings(scenario, dry_run=False):
         time_origin="year",
         time_dest="year",
         mode="M1")
-
+    
+    # Filter only the years in the base scenario
+    data_buildings['year'] = data_buildings['year'].astype(int)
+    data_buildings_demand['year'] = data_buildings_demand['year'].astype(int)
+    data_buildings = data_buildings[data_buildings['year'].isin(modelyears)]
+    data_buildings_demand = data_buildings_demand[data_buildings_demand['year'].isin(modelyears)]
+            
     for rg in regions:
         for comm in comms:
             # for typ in types:
 
             val_mat = data_buildings.loc[(data_buildings["type"] == types[0]) \
-                & (data_buildings["commodity"] == comm), ]
+                & (data_buildings["commodity"] == comm)\
+                & (data_buildings["node"] == rg), ]
             val_scr = data_buildings.loc[(data_buildings["type"] == types[1]) \
-                & (data_buildings["commodity"] == comm), ]
+                & (data_buildings["commodity"] == comm)\
+                & (data_buildings["node"] == rg), ]
+            
 
             # Material input to buildings
             df = make_df('input', technology=tec, commodity=comm, \
                 level="product", year_vtg = val_mat.year, \
                 value=val_mat.value, unit='t', \
                 node_loc = rg, **common)\
-                .pipe(same_node))\
+                .pipe(same_node)\
                 .assign(year_act=copy_column('year_vtg'))
-            results[param_name].append(df)
+            results['input'].append(df)
 
             # Scrap output back to industry
             df = make_df('output', technology=tec, commodity=comm, \
-                level='old_scrap', year_vtg = val_mat.year, \
+                level='old_scrap', year_vtg = val_scr.year, \
                 value=val_scr.value, unit='t', \
                 node_loc = rg, **common)\
-                .pipe(same_node))\
+                .pipe(same_node)\
                 .assign(year_act=copy_column('year_vtg'))
-            results[param_name].append(df)
+            results['output'].append(df)
 
         # Service output to buildings demand
         df = make_df('output', technology=tec, commodity='floor_area', \
             level=lev, year_vtg = val_mat.year, \
             value=1, unit='t', \
-            node_dest=rg, **common)\
-            .pipe(same_node))\
+            node_loc=rg, **common)\
+            .pipe(same_node)\
             .assign(year_act=copy_column('year_vtg'))
-        results[param_name].append(df)
+        results['output'].append(df)
 
     # Create external demand param
     parname = 'demand'
