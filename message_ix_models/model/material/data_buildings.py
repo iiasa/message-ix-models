@@ -19,7 +19,6 @@ from message_data.tools import (
     add_par_data
 )
 
-
 def read_timeseries_buildings(filename):
 
     import numpy as np
@@ -53,28 +52,6 @@ def read_timeseries_buildings(filename):
 
     bld_intensity_ene_mat['Energy Service|Residential|Floor Space'] = bld_input_pivot['Energy Service|Residential|Floor Space']
 
-    # bld_intensity_ene = bld_intensity_ene_mat.iloc[:, 1:7]
-    # bld_intensity_mat = bld_intensity_ene_mat.iloc[:, 8:]
-
-    # Calculate material intensities
-    # bld_input_pivot['Material Demand|Residential|Buildings|Cement|Intensity'] =\
-    #     bld_input_pivot['Material Demand|Residential|Buildings|Cement']/\
-    #         bld_input_pivot['Energy Service|Residential|Floor Space']
-    # bld_input_pivot['Material Demand|Residential|Buildings|Steel|Intensity'] =\
-    #     bld_input_pivot['Material Demand|Residential|Buildings|Steel']/\
-    #         bld_input_pivot['Energy Service|Residential|Floor Space']
-    # bld_input_pivot['Material Demand|Residential|Buildings|Aluminum|Intensity'] =\
-    #     bld_input_pivot['Material Demand|Residential|Buildings|Aluminum']/\
-    #         bld_input_pivot['Energy Service|Residential|Floor Space']
-    # bld_input_pivot['Scrap Release|Residential|Buildings|Cement|Intensity'] =\
-    #     bld_input_pivot['Scrap Release|Residential|Buildings|Cement']/\
-    #         bld_input_pivot['Energy Service|Residential|Floor Space']
-    # bld_input_pivot['Scrap Release|Residential|Buildings|Steel|Intensity'] =\
-    #     bld_input_pivot['Scrap Release|Residential|Buildings|Steel']/\
-    #         bld_input_pivot['Energy Service|Residential|Floor Space']
-    # bld_input_pivot['Scrap Release|Residential|Buildings|Aluminum|Intensity'] =\
-    #     bld_input_pivot['Scrap Release|Residential|Buildings|Aluminum']/\
-    #         bld_input_pivot['Energy Service|Residential|Floor Space']
 
     # Material intensities are in kg/m2
     bld_data_long = bld_intensity_ene_mat.melt(id_vars=['Region','Year'], var_name='Variable')\
@@ -99,7 +76,23 @@ def read_timeseries_buildings(filename):
     bld_intensity_long = bld_intensity_long\
         .drop(bld_intensity_long[np.isnan(bld_intensity_long.value)].index)
 
-    return bld_intensity_long, bld_area_long
+    # Derive baseyear material demand (Mt/year in 2020)
+    bld_demand_long = bld_input_pivot.melt(id_vars=['Region','Year'], var_name='Variable')\
+        .rename(columns={"Region": "node", "Year": "year"})
+    tmp = bld_demand_long.Variable.str.split("|", expand=True)
+    bld_demand_long['commodity'] = tmp[3].str.lower() # Material type
+    bld_demand_long = bld_demand_long[bld_demand_long['year']=="2020"].\
+        dropna(how='any')
+    bld_demand_long = bld_demand_long[bld_demand_long['Variable'].str.contains("Material Demand")].drop(columns='Variable')
+
+    return bld_intensity_long, bld_area_long, bld_demand_long
+
+
+INPUTFILE = 'LED_LED_report_IAMC.csv'
+
+def get_baseyear_mat_demand(commod):
+    a, b, c = read_timeseries_buildings(INPUTFILE)
+    return c[c.commodity==commod].reset_index()
 
 
 def gen_data_buildings(scenario, dry_run=False):
@@ -121,7 +114,7 @@ def gen_data_buildings(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Buildings raw data (from Alessio)
-    data_buildings, data_buildings_demand = read_timeseries_buildings('LED_LED_report_IAMC.csv')
+    data_buildings, data_buildings_demand, data_buildings_mat_demand = read_timeseries_buildings(INPUTFILE)
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -152,6 +145,8 @@ def gen_data_buildings(scenario, dry_run=False):
     data_buildings_demand['year'] = data_buildings_demand['year'].astype(int)
     data_buildings = data_buildings[data_buildings['year'].isin(modelyears)]
     data_buildings_demand = data_buildings_demand[data_buildings_demand['year'].isin(modelyears)]
+
+    # historical demands
 
     for rg in regions:
         for comm in comms:

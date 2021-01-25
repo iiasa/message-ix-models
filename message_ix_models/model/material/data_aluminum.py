@@ -24,6 +24,9 @@ from message_data.tools import (
     same_node,
     add_par_data
 )
+# Get endogenous material demand from buildings interface
+from .data_buildings import get_baseyear_mat_demand
+from . import get_spec
 
 def read_data_aluminum():
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
@@ -294,6 +297,14 @@ def gen_mock_demand_aluminum(scenario):
     # Below matrix is for 2020
 
     d = [3,55, 4, 7, 5, 6, 15, 3.5, 5.5,6,6 ]
+
+    # Do this if we have 2020 demand values for buildings
+    sp = get_spec()
+    if 'buildings' in sp['add'].set['technology']:
+        val = get_baseyear_mat_demand("steel")
+        print("Base year demand of {}:".format("aluminum"), val)
+        d = d - val.value
+        print("UPDATE {} demand for 2020!".format("aluminum"))
 
     demand2015_al = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\

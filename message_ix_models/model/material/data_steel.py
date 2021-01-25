@@ -8,6 +8,8 @@ import pandas as pd
 
 from .util import read_config
 from .data_util import read_rel
+# Get endogenous material demand from buildings interface
+from .data_buildings import get_baseyear_mat_demand
 from message_data.tools import (
     ScenarioInfo,
     broadcast,
@@ -18,6 +20,7 @@ from message_data.tools import (
     copy_column,
     add_par_data
 )
+from . import get_spec
 
 # annual average growth rate by decade (2020-2110)
 # gdp_growth = [0.121448215899944, 0.0733079014579874,
@@ -53,6 +56,14 @@ def gen_mock_demand_steel(scenario):
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
     d = [35, 537, 70, 53, 49, \
         39, 130, 80, 45, 96, 100]  # MEA change from 39 to 9 to make it feasible (coal supply bound)
+
+    # Do this if we have 2020 demand values for buildings
+    sp = get_spec()
+    if 'buildings' in sp['add'].set['technology']:
+        val = get_baseyear_mat_demand("steel")
+        print("Base year demand of {}:".format("steel"), val)
+        d = d - val.value
+        print("UPDATE {} demand for 2020!".format("steel"))
 
     demand2010_steel = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
