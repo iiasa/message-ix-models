@@ -16,6 +16,9 @@ from message_data.tools import (
     same_node,
     add_par_data
 )
+# Get endogenous material demand from buildings interface
+from .data_buildings import get_baseyear_mat_demand
+from . import get_spec
 
 
 # gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
@@ -75,6 +78,15 @@ def gen_mock_demand_cement(scenario):
 
     demand2010_cement = demand2010_cement.groupby(by=['node']).sum().reset_index()
     demand2010_cement['value'] = demand2010_cement['value'] / 1e9 # kg to Mt
+
+    # Do this if we have 2020 demand values for buildings
+    sp = get_spec()
+    if 'buildings' in sp['add'].set['technology']:
+        val = get_baseyear_mat_demand("cement")
+        print("Base year demand of {}:".format("cement"), val)
+        demand2010_cement['value'] = demand2010_cement['value'] - val['value']
+        print("UPDATE {} demand for 2020!".format("cement"))
+
 
     demand2010_cement = demand2010_cement.\
         join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
