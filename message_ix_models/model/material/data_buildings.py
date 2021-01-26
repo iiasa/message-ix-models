@@ -132,7 +132,8 @@ def gen_data_buildings(scenario, dry_run=False):
     # Read field values from the buildings input data
     regions = list(set(data_buildings.node))
     comms = list(set(data_buildings.commodity))
-    types = list(set(data_buildings.type))
+    # types = list(set(data_buildings.type))
+    types = ['Material Demand', 'Scrap Release'] # Order matters
 
     common = dict(
         time="year",
@@ -161,7 +162,7 @@ def gen_data_buildings(scenario, dry_run=False):
 
             # Material input to buildings
             df = make_df('input', technology=tec_new, commodity=comm, \
-                level="product", year_vtg = val_mat.year, \
+                level="demand", year_vtg = val_mat.year, \
                 value=val_mat.value, unit='t', \
                 node_loc = rg, **common)\
                 .pipe(same_node)\
