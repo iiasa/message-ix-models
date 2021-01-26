@@ -311,7 +311,6 @@ generic:
     - fc_h2_refining
     - solar_refining
     - dheat_refining
-
   mode:
     add:
     - low_temp
@@ -396,6 +395,7 @@ petro_chemicals:
     - trade_petro
     - import_petro
     - export_petro
+    - feedstock_t/d
     remove:
     # Any representation of refinery.
     - ref_hil
