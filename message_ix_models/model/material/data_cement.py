@@ -42,7 +42,7 @@ def gen_mock_demand_cement(scenario):
     )
 
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & (gdp_growth['Region']!='World')].\
-        drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005, 2010, 2015], axis = 1)
+        drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005], axis = 1)
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
 
@@ -92,7 +92,7 @@ def gen_mock_demand_cement(scenario):
         join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
 
     demand2010_cement.iloc[:,3:] = demand2010_cement.iloc[:,3:].\
-        div(demand2010_cement[2020], axis=0).\
+        div(demand2010_cement[2010], axis=0).\
         multiply(demand2010_cement["value"], axis=0)
 
     demand2010_cement = pd.melt(demand2010_cement.drop(['value', 'Scenario'], axis=1),\
@@ -148,7 +148,6 @@ def gen_data_cement(scenario, dry_run=False):
 
             # Obtain the parameter names, commodity,level,emission
             split = par.split("|")
-            print(split)
             param_name = split[0]
             # Obtain the scalar value for the parameter
             val = data_cement.loc[((data_cement["technology"] == t) \
@@ -168,11 +167,7 @@ def gen_data_cement(scenario, dry_run=False):
 
                 # For the parameters which inlcudes index names
                 if len(split)> 1:
-
-                    print('1.param_name:', param_name, t)
                     if (param_name == "input")|(param_name == "output"):
-
-                        print(rg, par, regions, val)
                         # Assign commodity and level names
                         com = split[1]
                         lev = split[2]
@@ -205,13 +200,11 @@ def gen_data_cement(scenario, dry_run=False):
 
                 # Parameters with only parameter name
                 else:
-                    print('2.param_name:', param_name)
                     df = make_df(param_name, technology=t, \
                     value=val[regions[regions==rg].index[0]], unit='t', \
                     node_loc=rg, **common)#.pipe(broadcast, node_loc=nodes))
 
                 if len(regions) == 1:
-                    print(df)
                     df['node_loc'] = None
                     df = df.pipe(broadcast, node_loc=nodes).pipe(same_node)
 

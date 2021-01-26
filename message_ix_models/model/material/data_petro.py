@@ -50,11 +50,12 @@ def gen_mock_demand_petro(scenario):
 
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & \
     (gdp_growth['Region']!='World')].drop(['Model', 'Variable', 'Unit', \
-    'Notes', 2000, 2005, 2010, 2015], axis = 1)
+    'Notes', 2000, 2005], axis = 1)
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
 
-    # 2015 production
+    # 2018 production
+    # Use as 2020
     # The Future of Petrochemicals Methodological Annex
     # Projections here do not show too much growth until 2050 for some regions.
     # For division of some regions assumptions made:
@@ -62,34 +63,34 @@ def gen_mock_demand_petro(scenario):
 
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
-    d_ethylene = [1,25,10,3,5,20,25,12,10,13,15]
-    d_propylene = [0.5,25, 10, 0.5, 3, 10, 15, 10,7,8, 10]
-    d_BTX = [0.5,25, 10, 0.5, 3, 10, 15, 10,7,8, 10]
+    d_ethylene = [1,25,10,3,5,20,30,12,10,13,15]
+    d_propylene = [0.5,25, 10, 0.5, 3, 10, 15, 10,10,8, 10]
+    d_BTX = [0.5,25, 10, 0.5, 3, 12, 15, 10,10,8, 10]
     list = []
 
     for e in ["ethylene","propylene","BTX"]:
         if e == "ethylene":
-            demand2015 = pd.DataFrame({'Region':r, 'Val':d_ethylene}).\
+            demand2020 = pd.DataFrame({'Region':r, 'Val':d_ethylene}).\
             join(gdp_growth.set_index('Region'), on='Region').\
             rename(columns={'Region':'node'})
 
         if e == "propylene":
-            demand2015 = pd.DataFrame({'Region':r, 'Val':d_propylene}).\
+            demand2020 = pd.DataFrame({'Region':r, 'Val':d_propylene}).\
             join(gdp_growth.set_index('Region'), on='Region').\
             rename(columns={'Region':'node'})
 
         if e == "BTX":
-            demand2015 = pd.DataFrame({'Region':r, 'Val':d_BTX}).\
+            demand2020 = pd.DataFrame({'Region':r, 'Val':d_BTX}).\
             join(gdp_growth.set_index('Region'), on='Region').\
             rename(columns={'Region':'node'})
 
-        demand2015.iloc[:,3:] = demand2015.iloc[:,3:].div(demand2015[2020], axis=0).\
-        multiply(demand2015["Val"], axis=0)
+        demand2020.iloc[:,3:] = demand2020.iloc[:,3:].div(demand2020[2020], axis=0).\
+        multiply(demand2020["Val"], axis=0)
 
-        demand2015 = pd.melt(demand2015.drop(['Val', 'Scenario'], axis=1),\
+        demand2020 = pd.melt(demand2020.drop(['Val', 'Scenario'], axis=1),\
             id_vars=['node'], var_name='year', value_name = 'value')
 
-        list.append(demand2015)
+        list.append(demand2020)
 
     return list[0], list[1], list[2]
 

@@ -282,39 +282,33 @@ def gen_mock_demand_aluminum(scenario):
 
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & \
     (gdp_growth['Region']!='World')].drop(['Model', 'Variable', 'Unit', 'Notes',\
-     2000, 2005, 2010, 2015], axis = 1)
+     2000, 2005], axis = 1)
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
+    print("This is gdp growth table")
+    print(gdp_growth)
 
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
 
     # Demand at product level
-    # Material efficiency in clean energy transitions (2017)
+    # Material efficiency in clean energy transitions (2018)
+    # This is assumed as 2020.
     # Europe is divided between WEU and EEU
     # FUS: Eurasia
     # PAO, PAS, SAS: IAI Alu cycle
-    # Below matrix is for 2020
 
     d = [3,55, 4, 7, 5, 6, 15, 3.5, 5.5,6,6 ]
 
-    # Do this if we have 2020 demand values for buildings
-    sp = get_spec()
-    if 'buildings' in sp['add'].set['technology']:
-        val = get_baseyear_mat_demand("steel")
-        print("Base year demand of {}:".format("aluminum"), val)
-        d = d - val.value
-        print("UPDATE {} demand for 2020!".format("aluminum"))
-
-    demand2015_al = pd.DataFrame({'Region':r, 'Val':d}).\
+    demand2020_al = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\
         rename(columns={'Region':'node'})
 
-    demand2015_al.iloc[:,3:] = demand2015_al.iloc[:,3:].\
-        div(demand2015_al[2020], axis=0).\
-        multiply(demand2015_al["Val"], axis=0)
+    demand2020_al.iloc[:,3:] = demand2020_al.iloc[:,3:].\
+        div(demand2020_al[2020], axis=0).\
+        multiply(demand2020_al["Val"], axis=0)
 
-    demand2015_al = pd.melt(demand2015_al.drop(['Val', 'Scenario'], axis=1),\
+    demand2020_al = pd.melt(demand2020_al.drop(['Val', 'Scenario'], axis=1),\
         id_vars=['node'], var_name='year', value_name = 'value')
 
-    return demand2015_al
+    return demand2020_al
