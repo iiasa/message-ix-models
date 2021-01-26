@@ -193,3 +193,16 @@ ixScenario$set_as_default()
 
 # run MESSAGE scenario in GAMS and import results in ix platform
 ixScenario$solve("MESSAGE")
+
+################################################################################
+# illustrative visualization of material intensities
+################################################################################
+
+tec.figure = data.frame(tec = c("coal_adv", "coal_adv_ccs", "gas_cc", "nuc_hc", "bio_ppl", "solar_pv_ppl", "csp_sm1_ppl", "wind_ppl"), label = c("Coal w/o CCS", "Coal w/ CCS", " Gas CC", "Nuclear", "Biomass", "Solar PV", "CSP", "Wind onshore"))
+data.figure = input_cap_new %>% filter(year_vtg == 2030 & node_loc == 'R11_WEU') %>% inner_join(tec.figure, by = c("technology" = "tec"))
+
+library(ggplot2)
+setwd("H:/Projects/ENE/ALPS/material_integration/figures")
+png(paste("Material_intensity_electricity.png", sep = ''), width = 10, height = 5, units = "in", res = 300) 
+  ggplot(data.figure) + geom_bar(aes(x = label, y = value, fill = commodity), stat = 'identity', position="dodge") + scale_y_continuous(limits = c(0, 0.5)) + ylab("Material Intensity [t/kW]") + xlab("")
+dev.off()
