@@ -46,7 +46,7 @@ def gen_mock_demand_steel(scenario):
     )
 
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & (gdp_growth['Region']!='World')].\
-        drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005, 2010, 2015], axis = 1)
+        drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005], axis = 1)
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
 
@@ -69,7 +69,7 @@ def gen_mock_demand_steel(scenario):
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
 
     demand2010_steel.iloc[:,3:] = demand2010_steel.iloc[:,3:].\
-        div(demand2010_steel[2020], axis=0).\
+        div(demand2010_steel[2010], axis=0).\
         multiply(demand2010_steel["Val"], axis=0)
 
     demand2010_steel = pd.melt(demand2010_steel.drop(['Val', 'Scenario'], axis=1),\
@@ -179,7 +179,6 @@ def gen_data_steel(scenario, dry_run=False):
 
             # Obtain the parameter names, commodity,level,emission
             split = par.split("|")
-            print(split)
             param_name = split[0]
             # Obtain the scalar value for the parameter
             val = data_steel.loc[((data_steel["technology"] == t) \
@@ -199,16 +198,12 @@ def gen_data_steel(scenario, dry_run=False):
 
                 # For the parameters which inlcudes index names
                 if len(split)> 1:
-
-                    print('1.param_name:', param_name, t)
                     if (param_name == "input")|(param_name == "output"):
 
                         # Assign commodity and level names
                         com = split[1]
                         lev = split[2]
                         mod = split[3]
-                        print(rg, par, lev)
-
                         if (param_name == "input") and (lev == "import"):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, \
@@ -228,7 +223,6 @@ def gen_data_steel(scenario, dry_run=False):
 
                         # Copy parameters to all regions, when node_loc is not GLB
                         if (len(regions) == 1) and (rg != "R11_GLB"):
-                            print("copying to all R11", rg, lev)
                             df['node_loc'] = None
                             df = df.pipe(broadcast, node_loc=nodes)#.pipe(same_node)
                             # Use same_node only for non-trade technologies
@@ -255,14 +249,12 @@ def gen_data_steel(scenario, dry_run=False):
 
                 # Parameters with only parameter name
                 else:
-                    print('2.param_name:', param_name)
                     df = make_df(param_name, technology=t, \
                     value=val[regions[regions==rg].index[0]], unit='t', \
                     node_loc=rg, **common)
 
                 # Copy parameters to all regions
                 if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
-                    print("Copying to all R11")
                     df['node_loc'] = None
                     df = df.pipe(broadcast, node_loc=nodes)
 
@@ -288,8 +280,6 @@ def gen_data_steel(scenario, dry_run=False):
                     & (data_steel_rel["parameter"] == par_name)),'value'].values
                 tec = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
                     & (data_steel_rel["parameter"] == par_name)),'technology'].values
-
-                print(par_name, "val", val, "tec", tec)
 
                 df = (make_df(par_name, technology=tec, \
                             value=val, unit='-', mode = 'M1', relation = r)\
