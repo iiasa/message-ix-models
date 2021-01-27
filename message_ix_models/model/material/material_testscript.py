@@ -85,7 +85,7 @@ ctx = Context()
 ctx.platform_info.setdefault('name', 'ixmp_dev')
 ctx.platform_info.setdefault('jvmargs', ['-Xmx12G']) # To avoid java heap space error
 ctx.scenario_info.setdefault('model', 'Material_Global')
-ctx.scenario_info.setdefault('scenario', 'NoPolicy-Buildings')
+ctx.scenario_info.setdefault('scenario', 'NoPolicy')
 ctx['ssp'] = 'SSP2'
 ctx['datafile'] = 'Global_steel_cement_MESSAGE.xlsx'
 
@@ -111,6 +111,9 @@ import message_data.model.material.data_buildings as db
 from message_data.model.material.data_buildings import BLD_MAT_USE_2020 as bld_demand2020
 
 mp = ixmp.Platform(name="ixmp_dev")
+sl = mp.scenario_list()
+sl = sl.loc[sl.model == "Material_Global"] # "ENGAGE_SSP2_v4.1.4"]
+
 sample = mix.Scenario(mp, model="Material_Global", scenario="NoPolicy")
 cem_demand = sample.par('demand', {"commodity":"cement", "year":2010})
 
@@ -119,7 +122,9 @@ df = du.read_sector_data('steel')
 df = du.read_rel(ctx.datafile)
 
 # Buildings scripts
-a,b,c = db.read_timeseries_buildings('LED_LED_report_IAMC.csv')
+a,b,cc = db.read_timeseries_buildings('LED_LED_report_IAMC_sensitivity.csv', 'ref')
+a1,b1,cc1 = db.read_timeseries_buildings('LED_LED_report_IAMC_sensitivity.csv', 'min')
+c = db.get_scen_mat_demand(commod='steel', year="all")
 r = db.gen_data_buildings(scen)
 
 
