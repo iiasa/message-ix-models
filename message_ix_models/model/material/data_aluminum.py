@@ -300,21 +300,25 @@ def gen_mock_demand_aluminum(scenario):
 
     d = [3,55, 4, 7, 5, 6, 15, 3.5, 5.5,6,6 ]
 
-    # Do this if we have 2020 demand values for buildings
-    sp = get_spec()
-    if 'buildings' in sp['add'].set['technology']:
-        val = get_baseyear_mat_demand("aluminum")
-        print("Base year demand of {}:".format("aluminum"), val)
-        d = d - val.value
-        print("UPDATE {} demand for 2020!".format("aluminum"))
-
-    demand2015_al = pd.DataFrame({'Region':r, 'Val':d}).\
+    demand2020_al = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\
         rename(columns={'Region':'node'})
 
     demand2020_al.iloc[:,3:] = demand2020_al.iloc[:,3:].\
         div(demand2020_al[2020], axis=0).\
         multiply(demand2020_al["Val"], axis=0)
+
+    # Do this if we have 2020 demand values for buildings
+    sp = get_spec()
+    if 'buildings' in sp['add'].set['technology']:
+        val = get_baseyear_mat_demand("aluminum")
+        print("Base year demand of {}:".format("aluminum"), val)
+        # d = d - val.value
+        # Scale down all years' demand values by the 2020 ratio
+        demand2020_al.iloc[:,3:] =  demand2020_al.iloc[:,3:].\
+            multiply(demand2020_al[2020]- val['value'], axis=0).\
+            div(demand2020_al[2020], axis=0)
+        print("UPDATE {} demand for 2020!".format("aluminum"))
 
     demand2020_al = pd.melt(demand2020_al.drop(['Val', 'Scenario'], axis=1),\
         id_vars=['node'], var_name='year', value_name = 'value')

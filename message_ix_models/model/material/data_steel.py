@@ -57,20 +57,24 @@ def gen_mock_demand_steel(scenario):
     d = [35, 537, 70, 53, 49, \
         39, 130, 80, 45, 96, 100]  # MEA change from 39 to 9 to make it feasible (coal supply bound)
 
-    # Do this if we have 2020 demand values for buildings
-    sp = get_spec()
-    if 'buildings' in sp['add'].set['technology']:
-        val = get_baseyear_mat_demand("steel")
-        print("Base year demand of {}:".format("steel"), val)
-        d = d - val.value
-        print("UPDATE {} demand for 2020!".format("steel"))
-
     demand2010_steel = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
 
     demand2010_steel.iloc[:,3:] = demand2010_steel.iloc[:,3:].\
         div(demand2010_steel[2010], axis=0).\
         multiply(demand2010_steel["Val"], axis=0)
+
+    # Do this if we have 2020 demand values for buildings
+    sp = get_spec()
+    if 'buildings' in sp['add'].set['technology']:
+        val = get_baseyear_mat_demand("steel")
+        print("Base year demand of {}:".format("steel"), val)
+        # d = d - val.value
+        # Scale down all years' demand values by the 2020 ratio
+        demand2010_steel.iloc[:,3:] =  demand2010_steel.iloc[:,3:].\
+            multiply(demand2010_steel[2020]- val['value'], axis=0).\
+            div(demand2010_steel[2020], axis=0)
+        print("UPDATE {} demand for 2020!".format("steel"))
 
     demand2010_steel = pd.melt(demand2010_steel.drop(['Val', 'Scenario'], axis=1),\
         id_vars=['node'], \
