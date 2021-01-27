@@ -79,21 +79,24 @@ def gen_mock_demand_cement(scenario):
     demand2010_cement = demand2010_cement.groupby(by=['node']).sum().reset_index()
     demand2010_cement['value'] = demand2010_cement['value'] / 1e9 # kg to Mt
 
-    # Do this if we have 2020 demand values for buildings
-    sp = get_spec()
-    if 'buildings' in sp['add'].set['technology']:
-        val = get_baseyear_mat_demand("cement")
-        print("Base year demand of {}:".format("cement"), val)
-        demand2010_cement['value'] = demand2010_cement['value'] - val['value']
-        print("UPDATE {} demand for 2020!".format("cement"))
-
-
     demand2010_cement = demand2010_cement.\
         join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
 
     demand2010_cement.iloc[:,3:] = demand2010_cement.iloc[:,3:].\
         div(demand2010_cement[2010], axis=0).\
         multiply(demand2010_cement["value"], axis=0)
+
+    # Do this if we have 2020 demand values for buildings
+    sp = get_spec()
+    if 'buildings' in sp['add'].set['technology']:
+        val = get_baseyear_mat_demand("cement") # Mt in 2020
+        print("Base year demand of {}:".format("cement"), val)
+        # demand2010_cement['value'] = demand2010_cement['value'] - val['value']
+        # Scale down all years' demand values by the 2020 ratio
+        demand2010_cement.iloc[:,3:] =  demand2010_cement.iloc[:,3:].\
+            multiply(demand2010_cement[2020]- val['value'], axis=0).\
+            div(demand2010_cement[2020], axis=0)
+        print("UPDATE {} demand for 2020!".format("cement"))
 
     demand2010_cement = pd.melt(demand2010_cement.drop(['value', 'Scenario'], axis=1),\
         id_vars=['node'], \
