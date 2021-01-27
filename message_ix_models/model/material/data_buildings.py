@@ -19,16 +19,21 @@ from message_data.tools import (
     add_par_data
 )
 
-def read_timeseries_buildings(filename):
+INPUTFILE = 'LED_LED_report_IAMC_sensitivity.csv' #'LED_LED_report_IAMC.csv'
+CASE_SENS = 'ref' # 'min', 'max'
+
+
+def read_timeseries_buildings(filename, case=CASE_SENS):
 
     import numpy as np
 
     # Ensure config is loaded, get the context
     context = read_config()
 
-    # Read the file
+    # Read the file and filter the given sensitivity case
     bld_input_raw = pd.read_csv(
         context.get_path("material", filename))
+    bld_input_raw = bld_input_raw.loc[bld_input_raw.Sensitivity==case]
 
     bld_input_mat = bld_input_raw[bld_input_raw['Variable'].\
                                   # str.contains("Floor Space|Aluminum|Cement|Steel|Final Energy")]
@@ -81,18 +86,51 @@ def read_timeseries_buildings(filename):
         .rename(columns={"Region": "node", "Year": "year"})
     tmp = bld_demand_long.Variable.str.split("|", expand=True)
     bld_demand_long['commodity'] = tmp[3].str.lower() # Material type
-    bld_demand_long = bld_demand_long[bld_demand_long['year']=="2020"].\
-        dropna(how='any')
+    # bld_demand_long = bld_demand_long[bld_demand_long['year']=="2020"].\
+    #     dropna(how='any')
+    bld_demand_long = bld_demand_long.dropna(how='any')
     bld_demand_long = bld_demand_long[bld_demand_long['Variable'].str.contains("Material Demand")].drop(columns='Variable')
 
     return bld_intensity_long, bld_area_long, bld_demand_long
 
 
-INPUTFILE = 'LED_LED_report_IAMC.csv'
+def get_scen_mat_demand(commod, year = "2020", inputfile = INPUTFILE, case=CASE_SENS):
+    a, b, c = read_timeseries_buildings(inputfile, case)
+    if not year == "all": # specific year
+        cc = c[(c.commodity==commod) & (c.year==year)].reset_index(drop=True)
+    else: # all years
+        cc = c[(c.commodity==commod)].reset_index(drop=True)
+    return cc
 
-def get_baseyear_mat_demand(commod):
-    a, b, c = read_timeseries_buildings(INPUTFILE)
-    return c[c.commodity==commod].reset_index()
+
+def adjust_demand_param(scen):
+
+    s_info = ScenarioInfo(scen)
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+
+    # scen.clone(model=scen.model, scenario=scen.scenario+"_building")
+
+    scen_mat_demand = scen.par('demand', {"level":"demand"}) # mat demand without buildings considered
+
+    scen.check_out()
+    comms = ["steel", "cement", "aluminum"]
+    for c in comms:
+        mat_building = get_scen_mat_demand(c, year="all").rename(columns={"value":"bld_demand"}) # mat demand (timeseries) from buildings model (Alessio)
+        mat_building['year'] = mat_building['year'].astype(int)
+
+        sub_mat_demand = scen_mat_demand.loc[scen_mat_demand.commodity == c]
+        # print("old", sub_mat_demand.loc[sub_mat_demand.year >=2025])
+        sub_mat_demand = sub_mat_demand.join(mat_building.set_index(["node", "year", "commodity"]), \
+            on = ["node", "year", "commodity"], how='left')
+        sub_mat_demand['value'] = sub_mat_demand['value'] - sub_mat_demand['bld_demand']
+        sub_mat_demand = sub_mat_demand.drop(columns=["bld_demand"]).dropna(how="any")
+
+        # Only replace for year >= 2025
+        scen.add_par('demand', sub_mat_demand.loc[sub_mat_demand.year >=2025])
+        # print("new", sub_mat_demand.loc[sub_mat_demand.year >=2025])
+    scen.commit("Building material demand subtracted")
+
+
 
 
 def gen_data_buildings(scenario, dry_run=False):
@@ -114,7 +152,7 @@ def gen_data_buildings(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Buildings raw data (from Alessio)
-    data_buildings, data_buildings_demand, data_buildings_mat_demand = read_timeseries_buildings(INPUTFILE)
+    data_buildings, data_buildings_demand, data_buildings_mat_demand = read_timeseries_buildings(INPUTFILE, CASE_SENS)
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -196,5 +234,9 @@ def gen_data_buildings(scenario, dry_run=False):
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    # TODO: check the starting model/scenario, if not ENGAGE, call adjust_demand_param
+    if scenario.scenario == "LEDXXXX":
+        adjust_demand_param(scenario)
 
     return results
