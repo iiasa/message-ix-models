@@ -17,7 +17,7 @@ from message_data.tools import (
     add_par_data
 )
 # Get endogenous material demand from buildings interface
-from .data_buildings import get_baseyear_mat_demand
+from .data_buildings import get_scen_mat_demand
 from . import get_spec
 
 
@@ -105,7 +105,7 @@ def gen_mock_demand_cement(scenario):
     # Do this if we have 2020 demand values for buildings
     sp = get_spec()
     if 'buildings' in sp['add'].set['technology']:
-        val = get_baseyear_mat_demand("cement") # Mt in 2020
+        val = get_scen_mat_demand("cement") # Mt in 2020
         print("Base year demand of {}:".format("cement"), val)
         # demand2020_cement['value'] = demand2020_cement['value'] - val['value']
         # Scale down all years' demand values by the 2020 ratio
