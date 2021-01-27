@@ -72,6 +72,7 @@ def modify_demand_and_hist_activity(scen):
              (df["FUEL"]== "total") ]
     df_feed_total = df[(df["SECTOR"]== "feedstock (total)") & (df["FUEL"]== "total")]
     df_feed_temp = pd.DataFrame(columns= ["REGION","i_feed"])
+    df_feed_new = pd.DataFrame(columns= ["REGION","i_feed"])
 
     for r in df_feed["REGION"].unique():
 
