@@ -46,63 +46,79 @@ def gen_mock_demand_cement(scenario):
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
 
-    # Regions setting for IMAGE
-    region_cement = pd.read_excel(
-        context.get_path("material", "CEMENT.BvR2010.xlsx"),
-        sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
-        .drop_duplicates().sort_values(by='Region #')
+    # # Regions setting for IMAGE
+    # region_cement = pd.read_excel(
+    #     context.get_path("material", "CEMENT.BvR2010.xlsx"),
+    #     sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
+    #     .drop_duplicates().sort_values(by='Region #')
+    #
+    # region_cement = region_cement.loc[region_cement['Region #'] < 999]
+    # region_cement['node'] = \
+    #     ['R11_NAM', 'R11_NAM',
+    #      'R11_LAM', 'R11_LAM',
+    #      'R11_LAM', 'R11_LAM',
+    #      'R11_AFR', 'R11_AFR',
+    #      'R11_AFR', 'R11_AFR',
+    #      'R11_WEU', 'R11_EEU',
+    #      'R11_EEU', 'R11_FSU',
+    #      'R11_FSU', 'R11_FSU',
+    #      'R11_MEA', 'R11_SAS',
+    #      'R11_PAS', 'R11_CPA',
+    #      'R11_PAS', 'R11_PAS',
+    #      'R11_PAO', 'R11_PAO',
+    #      'R11_SAS', 'R11_AFR']
+    #
+    # # Cement demand 2010 [Mt/year] (IMAGE)
+    # demand2010_cement = pd.read_excel(
+    #     context.get_path("material", "CEMENT.BvR2010.xlsx"),
+    #     sheet_name="Domestic Consumption", skiprows=range(0,3)).\
+    #     groupby(by=["Region #"]).sum()[[2010]].\
+    #     join(region_cement.set_index('Region #'), on='Region #').\
+    #     rename(columns={2010:'value'})
+    #
+    # demand2010_cement = demand2010_cement.groupby(by=['node']).sum().reset_index()
+    # demand2010_cement['value'] = demand2010_cement['value'] / 1e9 # kg to Mt
 
-    region_cement = region_cement.loc[region_cement['Region #'] < 999]
-    region_cement['node'] = \
-        ['R11_NAM', 'R11_NAM',
-         'R11_LAM', 'R11_LAM',
-         'R11_LAM', 'R11_LAM',
-         'R11_AFR', 'R11_AFR',
-         'R11_AFR', 'R11_AFR',
-         'R11_WEU', 'R11_EEU',
-         'R11_EEU', 'R11_FSU',
-         'R11_FSU', 'R11_FSU',
-         'R11_MEA', 'R11_SAS',
-         'R11_PAS', 'R11_CPA',
-         'R11_PAS', 'R11_PAS',
-         'R11_PAO', 'R11_PAO',
-         'R11_SAS', 'R11_AFR']
+    # 2019 production by country (USGS)
+    # p43 of https://pubs.usgs.gov/periodicals/mcs2020/mcs2020-cement.pdf
+    r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
+        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
 
-    # Cement demand 2010 [Mt/year] (IMAGE)
-    demand2010_cement = pd.read_excel(
-        context.get_path("material", "CEMENT.BvR2010.xlsx"),
-        sheet_name="Domestic Consumption", skiprows=range(0,3)).\
-        groupby(by=["Region #"]).sum()[[2010]].\
-        join(region_cement.set_index('Region #'), on='Region #').\
-        rename(columns={2010:'value'})
+    # Directly assigned countries from the table on p43
+    demand2020_top = [76, 2295, 0, 57, 55, \
+            60, 89, 54, 129, 320, 51]
+    # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
+    demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
+            (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51]
+    d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
 
-    demand2010_cement = demand2010_cement.groupby(by=['node']).sum().reset_index()
-    demand2010_cement['value'] = demand2010_cement['value'] / 1e9 # kg to Mt
+    demand2020_cement = pd.DataFrame({'Region':r, 'value':d}).\
+        join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
 
-    demand2010_cement = demand2010_cement.\
-        join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
+    # demand2010_cement = demand2010_cement.\
+    #     join(gdp_growth.rename(columns={'Region':'node'}).set_index('node'), on='node')
 
-    demand2010_cement.iloc[:,3:] = demand2010_cement.iloc[:,3:].\
-        div(demand2010_cement[2010], axis=0).\
-        multiply(demand2010_cement["value"], axis=0)
+    demand2020_cement.iloc[:,3:] = demand2020_cement.iloc[:,3:].\
+        div(demand2020_cement[2020], axis=0).\
+        multiply(demand2020_cement["value"], axis=0)
 
     # Do this if we have 2020 demand values for buildings
     sp = get_spec()
     if 'buildings' in sp['add'].set['technology']:
         val = get_baseyear_mat_demand("cement") # Mt in 2020
         print("Base year demand of {}:".format("cement"), val)
-        # demand2010_cement['value'] = demand2010_cement['value'] - val['value']
+        # demand2020_cement['value'] = demand2020_cement['value'] - val['value']
         # Scale down all years' demand values by the 2020 ratio
-        demand2010_cement.iloc[:,3:] =  demand2010_cement.iloc[:,3:].\
-            multiply(demand2010_cement[2020]- val['value'], axis=0).\
-            div(demand2010_cement[2020], axis=0)
+        demand2020_cement.iloc[:,3:] =  demand2020_cement.iloc[:,3:].\
+            multiply(demand2020_cement[2020]- val['value'], axis=0).\
+            div(demand2020_cement[2020], axis=0)
         print("UPDATE {} demand for 2020!".format("cement"))
 
-    demand2010_cement = pd.melt(demand2010_cement.drop(['value', 'Scenario'], axis=1),\
+    demand2020_cement = pd.melt(demand2020_cement.drop(['value', 'Scenario'], axis=1),\
         id_vars=['node'], \
         var_name='year', value_name = 'value')
 
-    return demand2010_cement
+    return demand2020_cement
 
 
 
