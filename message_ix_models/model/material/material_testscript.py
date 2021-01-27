@@ -9,8 +9,8 @@ import ixmp
 import message_ix as mix
 from message_ix import Scenario
 
-import message_data.model.material.data as dt
-from message_data.model.material.plotting import Plots
+# import message_data.model.material.data as dt
+# from message_data.model.material.plotting import Plots
 # import pyam
 
 
@@ -29,7 +29,7 @@ from message_data.tools import (
 from message_data.model.create import create_res
 from message_data.model.material import build, get_spec
 
-# from message_data.model.material.util import read_config
+from message_data.model.material.util import read_config
 
 
 #%% Main test run based on a MESSAGE scenario
@@ -85,7 +85,7 @@ ctx = Context()
 ctx.platform_info.setdefault('name', 'ixmp_dev')
 ctx.platform_info.setdefault('jvmargs', ['-Xmx12G']) # To avoid java heap space error
 ctx.scenario_info.setdefault('model', 'Material_Global')
-ctx.scenario_info.setdefault('scenario', 'NoPolicy')
+ctx.scenario_info.setdefault('scenario', 'NoPolicy-Buildings')
 ctx['ssp'] = 'SSP2'
 ctx['datafile'] = 'Global_steel_cement_MESSAGE.xlsx'
 
@@ -104,12 +104,25 @@ print(".solve: %.6s seconds taken." % (time.time() - start_time))
 
 import pandas as pd
 
-import message_data.model.material.data_util as du
+import message_data.model.material.data_aluminum as da
+import message_data.model.material.data_steel as ds
 import message_data.model.material.data_cement as dc
+import message_data.model.material.data_buildings as db
+from message_data.model.material.data_buildings import BLD_MAT_USE_2020 as bld_demand2020
+
+mp = ixmp.Platform(name="ixmp_dev")
+sample = mix.Scenario(mp, model="Material_Global", scenario="NoPolicy")
+cem_demand = sample.par('demand', {"commodity":"cement", "year":2010})
 
 # Test read_data_steel <- will be in create_res if working fine
 df = du.read_sector_data('steel')
 df = du.read_rel(ctx.datafile)
+
+# Buildings scripts
+a,b,c = db.read_timeseries_buildings('LED_LED_report_IAMC.csv')
+r = db.gen_data_buildings(scen)
+
+
 
 mp = ctx.get_platform()
 
@@ -127,7 +140,9 @@ b=a.loc[a['level']=="export"]
 
 df_st = dt.gen_data_cement(scen) 
 a = dt.get_data(scen, ctx)
-dc.gen_mock_demand_cement(scen)
+dc.gen_mock_demand_cement(sample)
+ds.gen_mock_demand_steel(sample)
+da.gen_mock_demand_aluminum(sample)
 dt.read_data_generic()
 bare.add_data(scen)
 
@@ -135,7 +150,6 @@ bare.add_data(scen)
 info = ScenarioInfo(scen)
 a = get_spec()
 
-mp = ixmp.Platform(name="ixmp_dev")
 a = mp.scenario_list()
 b=a.loc[a['cre_user']=="min"]
 sample = mix.Scenario(mp_samp, model="Material_test", scenario="baseline")
