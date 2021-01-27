@@ -60,27 +60,42 @@ def modify_demand_and_hist_activity(scen):
 
     df_spec_new.drop(["FUEL","RYEAR","UNIT_OUT","RESULT"],axis=1, inplace=True)
     df_spec_new.loc[df_spec_new["SECTOR"]=="industry (chemicals)","i_spec"] = \
-    df_spec_new.loc[df_spec_new["SECTOR"]=="industry (chemicals)","i_spec"] * 0.5
+    df_spec_new.loc[df_spec_new["SECTOR"]=="industry (chemicals)","i_spec"] * 0.7
 
     df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
 
     # Retreive data for i_feed: Only for petrochemicals
+    # It is assumed that the sectors that are explicitly covered in MESSAGE are
+    # 50% of the total feedstock.
 
     df_feed = df[(df["SECTOR"]== "feedstock (petrochemical industry)") & \
              (df["FUEL"]== "total") ]
-    df_feed_total = df[(df["SECTOR"]== "feedstock (total)") \
-                        & (df["FUEL"]== "total")]
+    df_feed_total = df[(df["SECTOR"]== "feedstock (total)") & (df["FUEL"]== "total")]
+    df_feed_temp = pd.DataFrame(columns= ["REGION","i_feed"])
 
-    df_feed_new = pd.DataFrame(columns=["REGION","SECTOR","FUEL",\
-                                        "RYEAR","UNIT_OUT","RESULT"])
     for r in df_feed["REGION"].unique():
-        df_feed_temp = df_feed[df_feed["REGION"]==r]
-        df_feed_total_temp = df_feed_total[df_feed_total["REGION"] == r]
-        df_feed_temp["i_feed"] = df_feed_temp["RESULT"]/df_feed_total_temp["RESULT"].values[0]
+
+        i = 0
+        df_feed_temp.at[i,"REGION"] = r
+        df_feed_temp.at[i,"i_feed"] = 0.7
+        i = i + 1
         df_feed_new = pd.concat([df_feed_temp,df_feed_new],ignore_index = True)
 
-    df_feed_new.drop(["FUEL","RYEAR","UNIT_OUT","RESULT"],axis=1, inplace=True)
-    df_feed_new = df_feed_new.groupby(["REGION"]).sum().reset_index()
+    # df_feed = df[(df["SECTOR"]== "feedstock (petrochemical industry)") & \
+    #          (df["FUEL"]== "total") ]
+    # df_feed_total = df[(df["SECTOR"]== "feedstock (total)") \
+    #                     & (df["FUEL"]== "total")]
+    #
+    # df_feed_new = pd.DataFrame(columns=["REGION","SECTOR","FUEL",\
+    #                                     "RYEAR","UNIT_OUT","RESULT"])
+    # for r in df_feed["REGION"].unique():
+    #     df_feed_temp = df_feed[df_feed["REGION"]==r]
+    #     df_feed_total_temp = df_feed_total[df_feed_total["REGION"] == r]
+    #     df_feed_temp["i_feed"] = df_feed_temp["RESULT"]/df_feed_total_temp["RESULT"].values[0]
+    #     df_feed_new = pd.concat([df_feed_temp,df_feed_new],ignore_index = True)
+    #
+    # df_feed_new.drop(["FUEL","RYEAR","UNIT_OUT","RESULT"],axis=1, inplace=True)
+    # df_feed_new = df_feed_new.groupby(["REGION"]).sum().reset_index()
 
     # Retreive data for i_therm
     # NOTE: It is assumped that 50% of the chemicals category is HVCs
@@ -111,7 +126,7 @@ def modify_demand_and_hist_activity(scen):
 
     df_therm_new.drop(["FUEL","RYEAR","UNIT_OUT"],axis=1,inplace=True)
     df_therm_new.loc[df_therm_new["SECTOR"]=="industry (chemicals)","i_therm"] = \
-    df_therm_new.loc[df_therm_new["SECTOR"]=="industry (chemicals)","i_therm"] * 0.5
+    df_therm_new.loc[df_therm_new["SECTOR"]=="industry (chemicals)","i_therm"] * 0.7
 
     # Modify CPA based on https://www.iea.org/sankey/#?c=Japan&s=Final%20consumption.
     # Since the value did not allign with the one in the IEA website.
