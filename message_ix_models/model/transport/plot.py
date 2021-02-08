@@ -12,6 +12,7 @@ class LabelFirst:
 
     Subsequent items are named with the bare value only.
     """
+
     __name__ = None
 
     def __init__(self, fmt_string):
@@ -51,16 +52,11 @@ class LDVTechShare1(Plot):
     inputs = ["out:nl-t-ya-c:transport"]
 
     def generate(self, data):
-        techs = list(
-            filter(lambda n: "usage" in n, data.coords["t"].values)
-        )
+        techs = list(filter(lambda n: "usage" in n, data.coords["t"].values))
 
         # Select a subset of technologies
         for node in data.coords["nl"].values:
-            df = (
-                data.sel(t=techs, nl=node)
-                .to_series().rename("value").reset_index()
-            )
+            df = data.sel(t=techs, nl=node).to_series().rename("value").reset_index()
 
             yield (
                 p9.ggplot(df, p9.aes(x="ya", y="value", fill="t"))
@@ -83,7 +79,10 @@ class ModeShare2(Plot):
     def generate(self, data, config):
         # TODO select a subset of technologies
         df = (
-            data.to_series().rename("value").sort_index().reset_index()
+            data.to_series()
+            .rename("value")
+            .sort_index()
+            .reset_index()
             .astype(dict(value=float))
         )
 
@@ -106,7 +105,10 @@ class EnergyCmdty(Plot):
 
     def generate(self, data):
         df = (
-            data.to_series().rename("value").sort_index().reset_index()
+            data.to_series()
+            .rename("value")
+            .sort_index()
+            .reset_index()
             .astype(dict(value=float))
         )
 
