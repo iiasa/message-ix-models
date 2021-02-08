@@ -2,7 +2,7 @@ import logging
 
 import plotnine as p9
 
-from message_data.reporting.plot import Plot
+from message_data.reporting.plot import Plot as BasePlot
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +23,11 @@ class LabelFirst:
         first = self.first
         self.first = False
         return self.fmt_string.format(value) if first else value
+
+
+class Plot(BasePlot):
+    # Output goes in the "transport" subdirectory
+    path = ["transport"]
 
 
 class LDVTechShare0(Plot):

@@ -80,12 +80,20 @@ def callback(rep: Reporter):
     from .demand import prepare_reporter as prepare_demand
 
     # Read transport reporting configuration onto the latest Context
-    context = read_config(Context.get_instance(-1))
+    context = Context.get_instance(-1)
+    read_config(context)
+
+    # Node list / regional aggregation
+    # Get the name of one node
+    _n = rep.get("n")[-1]
+    context.regions = _n.split("_")[0]
+    log.info(f"Infer regional aggregation {repr(context.regions)} from {repr(_n)}")
 
     # Add configuration to the Reporter
     config = context["transport config"]["report"]
     config.update(context["transport config"])
-    rep.graph["config"]["transport"] = config.copy()
+    rep.graph["config"].setdefault("transport", {})
+    rep.graph["config"]["transport"].update(config.copy())
 
     # Groups of transport technologies for aggregation
     t_groups = defaultdict(list)
@@ -122,18 +130,17 @@ def callback(rep: Reporter):
         log.error(e)
         assert False
 
-    log.info(repr(rep.graph["config"]))
-
     # Add all plots
     plot_keys = []
 
     for plot in PLOTS:
         key = f"plot {plot.name}"
-        comp = plot.computation()
-        log.info(repr(comp))
-        rep.add(key, comp)
+        task = plot.computation()
+        rep.add(key, task)
         plot_keys.append(key)
+
         log.info(f"Add {repr(key)}")
+        log.debug(repr(task))
 
     rep.add("transport plots", plot_keys)
 
