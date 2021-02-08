@@ -9,12 +9,12 @@ from message_data.model.transport.common import METADATA
 from message_data.tools import Code, Context, as_codes, get_context, load_data, set_info
 
 
-def read_config():
+def read_config(context=None):
     """Read the transport model configuration / metadata from file.
 
     Numerical values are converted to computation-ready data structures.
     """
-    context = Context.get_instance()
+    context = context or Context.get_instance(0)
 
     if "transport set" in context:
         # Already loaded
