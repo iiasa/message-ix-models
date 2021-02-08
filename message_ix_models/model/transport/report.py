@@ -76,14 +76,15 @@ def callback(rep: Reporter):
     - ``transport all``: all of the above.
     """
     from message_data.reporting.util import infer_keys
+    from message_data.tools import Context
     from .demand import prepare_reporter as prepare_demand
 
-    # Read transport reporting configuration
-    context = read_config()
-    config = context["transport config"]["report"]
-    config.update(context["transport config"])
+    # Read transport reporting configuration onto the latest Context
+    context = read_config(Context.get_instance(-1))
 
     # Add configuration to the Reporter
+    config = context["transport config"]["report"]
+    config.update(context["transport config"])
     rep.graph["config"]["transport"] = config.copy()
 
     # Groups of transport technologies for aggregation
@@ -115,7 +116,11 @@ def callback(rep: Reporter):
         log.info(f"Add {repr(keys[0])} + {len(keys)-1} partial sums")
 
     # Add ex-post mode and demand calculations
-    prepare_demand(rep, context, configure=False)
+    try:
+        prepare_demand(rep, context, configure=False)
+    except Exception as e:
+        log.error(e)
+        assert False
 
     log.info(repr(rep.graph["config"]))
 
