@@ -129,14 +129,12 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
         config = CONFIG.copy()
 
         # Update with transport-specific keys from config.yaml
-        config.update(
-            {"transport": context["transport config"], "output dir": Path.cwd()}
-        )
+        config.update({"transport": context["transport config"]})
 
         # Configure the reporter; keys are stored
         rep.configure(**config)
-    else:
-        rep.graph["config"]["output dir"] = Path.cwd()
+
+    rep.graph["config"].update({"output_path": context.get("output_path", Path.cwd())})
 
     # Existing keys, prepared by from_scenario() or from_external_data()
     gdp = rep.full_key("GDP")

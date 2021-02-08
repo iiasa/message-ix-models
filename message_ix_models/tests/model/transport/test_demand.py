@@ -21,6 +21,7 @@ def test_demand_dummy(transport_context):
 def test_from_external_data(transport_context_f, tmp_path, regions):
     ctx = transport_context_f
     ctx.regions = regions
+    ctx.output_path = tmp_path
 
     info = get_spec(ctx)["add"]
     rep = demand.from_external_data(info, context=ctx)
@@ -51,7 +52,7 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
 
     # Can be plotted
     key = "transport pdt plot"
-    p = plot.ModeShare2
+    p = plot.DemandExo
     rep.add(key, tuple([p(), "config"] + p.inputs))
     rep.get(key)
 
