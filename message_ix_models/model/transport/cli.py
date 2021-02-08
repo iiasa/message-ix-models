@@ -6,9 +6,13 @@ from message_data.tools.cli import clone_to_dest, common_params
 
 
 @click.group("transport")
-def cli():
-    """MESSAGE-Transport model."""
-    pass
+@click.pass_obj
+def cli(context):
+    """MESSAGEix-Transport variant."""
+    from .utils import read_config
+
+    # Ensure transport model configuration is loaded
+    read_config(context)
 
 
 @cli.command()
@@ -74,7 +78,7 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 
 
 @cli.command("build")
-@common_params("dest dry_run quiet")
+@common_params("dest dry_run regions quiet")
 @click.option(
     "--fast", is_flag=True, help="Skip removing data for removed set elements."
 )
@@ -83,9 +87,17 @@ def build_cmd(context, dest, **options):
     """Prepare the model."""
     from .build import main
 
-    scenario, platform = clone_to_dest(context)
+    # Handle --regions
+    regions = options.get("regions")
+    if not regions:
+        print("Using default --regions=R11")
+        regions = "R11"
+    context.regions = regions
 
-    main(scenario, **options)
+    # No defaults; force the user to provide these
+    scenario, platform = clone_to_dest(context, defaults=dict())
+
+    main(context, scenario, **options)
 
     del platform
 
