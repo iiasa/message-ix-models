@@ -41,7 +41,7 @@ class Plot:
     __static = []
 
     def __call__(self, config, *args):
-        path = config["report_path"].joinpath(*self.path, f"{self.name}.pdf")
+        path = config["output_path"].joinpath(*self.path, f"{self.name}.pdf")
         log.info(f"Generate {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
 
