@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 import pandas as pd
 
 from message_data.model.transport.utils import add_commodity_and_level
-from message_data.tools import check_support, make_df, make_io, make_matched_dfs
+from message_data.tools import cached, check_support, make_df, make_io, make_matched_dfs
 
 
 log = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ def get_ldv_data(context):
         raise ValueError(f"invalid source for non-LDV data: {source}")
 
 
+@cached
 def get_USTIMES_MA3T(context):
     """Read LDV cost and efficiency data from US-TIMES and MA3T."""
     # Compatibility checks
@@ -43,7 +44,7 @@ def get_USTIMES_MA3T(context):
         desc="US-TIMES and MA3T data available",
     )
 
-    # Retrieve configuration and ScenarioINfo
+    # Retrieve configuration and ScenarioInfo
     config = context["transport config"]
     info = context["transport build info"]
 
