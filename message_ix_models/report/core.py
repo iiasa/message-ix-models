@@ -92,8 +92,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
         config = dict(path=Path(config))
 
     # Directory for reporting output
-    context = get_context()
-    config.setdefault("report_path", context.get("report_path", Path.cwd()))
+    config.setdefault("output_path", output_path)
 
     rep.configure(**config)
 
@@ -132,7 +131,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
     # If needed, get the full key for *quantity*
     key = infer_keys(rep, key)
 
-    if output_path:
+    if output_path and not output_path.is_dir():
         # Add a new computation that writes *key* to the specified file
         rep.add("cli-output", (partial(write_report, path=output_path), key))
         key = "cli-output"

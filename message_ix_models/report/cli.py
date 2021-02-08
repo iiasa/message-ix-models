@@ -31,6 +31,7 @@ log = logging.getLogger(__name__)
     "output_path",
     type=Path,
     help="Write output to file instead of console.",
+    default=Path.cwd(),
 )
 @click.option(
     "--from-file",
@@ -64,6 +65,9 @@ def cli(context, config_file, module, output_path, from_file, verbose, dry_run, 
         # Can't find the file
         raise click.BadOptionUsage(f"--config={config_file} not found")
 
+    # --output/-o: handle "~"
+    output_path = output_path.expanduser()
+
     if verbose:
         log.setLevel("DEBUG")
         logging.getLogger("ixmp").setLevel("DEBUG")
@@ -81,11 +85,10 @@ def cli(context, config_file, module, output_path, from_file, verbose, dry_run, 
 
     if from_file:
         # Multiple URLs
-        if not output_path:
-            output_path = Path.cwd()
         if not output_path.is_dir():
-            msg = "--output-path must be directory with --from-file"
-            raise click.BadOptionUsage(msg)
+            raise click.BadOptionUsage(
+                "--output-path must be directory with --from-file"
+            )
 
         for item in yaml.safe_load(open(from_file)):
             # Copy the existing Context to a new object
