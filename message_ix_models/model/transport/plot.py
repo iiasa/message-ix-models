@@ -1,7 +1,9 @@
 import logging
+from datetime import datetime
 
 import plotnine as p9
 
+from ixmp.reporting import computations
 from message_data.reporting.plot import Plot as BasePlot
 
 log = logging.getLogger(__name__)
@@ -28,6 +30,31 @@ class LabelFirst:
 class Plot(BasePlot):
     # Output goes in the "transport" subdirectory
     path = ["transport"]
+
+    def title(self, value):
+        """Return :class:`plotnine.ggtitle` including the current date & time."""
+        return p9.ggtitle(f"{value} ({datetime.now().isoformat(timespec='minutes')})")
+
+
+class LDV_IO(Plot):
+    name = "ldv-efficiency"
+    inputs = ["input:nl-t-yv-ya"]
+
+    def generate(self, data):
+        df = data.to_series().rename("value").reset_index()
+
+        return (
+            p9.ggplot(df, p9.aes(x="ya", y="value", color="t"))
+            + p9.theme(figure_size=(11.7, 8.3))
+            + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}"))
+            + p9.geom_line()
+            + p9.geom_point()
+            + p9.labs(
+                x="Period",
+                y="Input efficiency [GWa / km]",
+                color="LDV technology",
+            )
+        )
 
 
 class LDVTechShare0(Plot):
@@ -77,8 +104,68 @@ class LDVTechShare1(Plot):
             )
 
 
-class ModeShare2(Plot):
-    name = "demand-by-mode"
+class DemandCalibrated(Plot):
+    name = "par-demand"
+    inputs = ["demand:n-c-y", "c:transport"]
+
+    def generate(self, data, commodities):
+        # Convert and select data
+        df = (
+            data.to_series()
+            .rename("value")
+            .sort_index()
+            .reset_index()
+            .astype(dict(value=float))
+            .query(f"c in {repr(list(map(str, commodities)))}")
+        )
+
+        for node, node_data in df.groupby("n"):
+            yield (
+                p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c"))
+                + p9.theme(figure_size=(11.7, 8.3))
+                + p9.geom_bar(stat="identity", width=4)
+                + self.title(f"Node: {node}")
+                + p9.labs(
+                    x="Period",
+                    y=r"‘demand’ parameter [km / pass / a]",
+                    fill="Transport mode group",
+                )
+            )
+
+
+class DemandCalibratedCap(Plot):
+    name = "par-demand-cap"
+    inputs = ["demand:n-c-y", "population:n-y", "c:transport"]
+
+    def generate(self, demand, population, commodities):
+        # Convert and select data
+        data = computations.ratio(demand, population)
+        print(data)
+        df = (
+            data.to_series()
+            .rename("value")
+            .sort_index()
+            .reset_index()
+            .astype(dict(value=float))
+            .query(f"c in {repr(list(map(str, commodities)))}")
+        )
+
+        for node, node_data in df.groupby("n"):
+            yield (
+                p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c"))
+                + p9.theme(figure_size=(11.7, 8.3))
+                + p9.geom_bar(stat="identity", width=4)
+                + self.title(f"Node: {node}")
+                + p9.labs(
+                    x="Period",
+                    y=r"‘demand’ parameter [km / pass / a]",
+                    fill="Transport mode group",
+                )
+            )
+
+
+class DemandExo(Plot):
+    name = "demand-exo"
     inputs = ["transport pdt:n-y-t", "config"]
 
     def generate(self, data, config):
@@ -139,5 +226,7 @@ PLOTS = [
     EnergyCmdty,
     LDVTechShare0,
     LDVTechShare1,
-    ModeShare2,
+    DemandCalibrated,
+    DemandCalibratedCap,
+    DemandExo,
 ]

@@ -206,7 +206,7 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
         cost_key,
         "nodes ex world",
         "y",
-        "t",
+        "t:transport",
         "cat_year",
         "config",
     )
