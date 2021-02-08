@@ -47,7 +47,7 @@ def register(callback) -> None:
         register(cb)
     """
     if callback in CALLBACKS:
-        log.info(f'Already registered: {callback}')
+        log.info(f"Already registered: {callback}")
         return
 
     CALLBACKS.append(callback)
@@ -78,7 +78,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
         Same as *key*, in full resolution, if any.
 
     """
-    log.info('Preparing reporter')
+    log.info("Preparing reporter")
 
     # Create a Reporter for *scenario*
     rep = Reporter.from_scenario(scenario)
@@ -91,54 +91,53 @@ def prepare_reporter(scenario, config, key, output_path=None):
         # A non-dict *config* argument must be a Path
         config = dict(path=Path(config))
 
-    # Store path for output
-    config.setdefault(
-        "output dir", get_context().get("output dir", Path.cwd())
-    )
+    # Directory for reporting output
+    context = get_context()
+    config.setdefault("report_path", context.get("report_path", Path.cwd()))
 
     rep.configure(**config)
 
     # Reference to the configuration as stored in the reporter
-    config = rep.graph['config']
+    config = rep.graph["config"]
 
     # Variable name replacement: dict, not list of entries
-    rep.add('iamc variable names', config.pop('iamc variable names', {}))
+    rep.add("iamc variable names", config.pop("iamc variable names", {}))
 
     # Mapping of file sections to handlers
     sections = (
-        ('aggregate', add_aggregate),
-        ('combine', add_combination),
-        ('iamc', add_iamc_table),
-        ('general', add_general),
-        ('report', add_report),
-        )
+        ("aggregate", add_aggregate),
+        ("combine", add_combination),
+        ("iamc", add_iamc_table),
+        ("general", add_general),
+        ("report", add_report),
+    )
 
     # Assemble a queue of (args, kwargs) to Reporter.add()
     to_add = []
     for section_name, func in sections:
         for entry in config.pop(section_name, []):
             # Append to queue
-            to_add.append((('apply', func), dict(info=entry)))
+            to_add.append((("apply", func), dict(info=entry)))
 
     # Also add the callbacks to the queue
-    to_add.extend((('apply', cb), {}) for cb in CALLBACKS)
+    to_add.extend((("apply", cb), {}) for cb in CALLBACKS)
 
     # Use ixmp.Reporter.add_queue() to process the entries. Retry at most
     # once; raise an exception if adding fails after that.
-    rep.add_queue(to_add, max_tries=2, fail='raise')
+    rep.add_queue(to_add, max_tries=2, fail="raise")
 
     # Tidy the config dict by removing any YAML sections starting with '_'
-    [config.pop(k) for k in list(config.keys()) if k.startswith('_')]
+    [config.pop(k) for k in list(config.keys()) if k.startswith("_")]
 
     # If needed, get the full key for *quantity*
     key = infer_keys(rep, key)
 
     if output_path:
         # Add a new computation that writes *key* to the specified file
-        rep.add('cli-output', (partial(write_report, path=output_path), key))
-        key = 'cli-output'
+        rep.add("cli-output", (partial(write_report, path=output_path), key))
+        key = "cli-output"
 
-    log.info('…done')
+    log.info("…done")
 
     return rep, key
 
@@ -181,14 +180,14 @@ def add_aggregate(rep: Reporter, info):
     # Copy for destructive .pop()
     info = copy(info)
 
-    quantities = infer_keys(rep, info.pop('_quantities'))
-    tag = info.pop('_tag')
-    groups = {info.pop('_dim'): info}
+    quantities = infer_keys(rep, info.pop("_quantities"))
+    tag = info.pop("_tag")
+    groups = {info.pop("_dim"): info}
 
     for qty in quantities:
         keys = rep.aggregate(qty, tag, groups, sums=True)
 
-        log.info(f'Add {repr(keys[0])} + {len(keys)-1} partial sums')
+        log.info(f"Add {repr(keys[0])} + {len(keys)-1} partial sums")
 
 
 def add_combination(rep: Reporter, info):
@@ -237,18 +236,18 @@ def add_combination(rep: Reporter, info):
     quantities, select, weights = [], [], []
 
     # Key for the new quantity
-    key = Key.from_str_or_key(info['key'])
+    key = Key.from_str_or_key(info["key"])
 
     # Loop over inputs to the combination
-    for i in info['inputs']:
+    for i in info["inputs"]:
         # Required dimensions for this input: output key's dims, plus any
         # dims that must be selected on
-        selector = i.get('select', {})
+        selector = i.get("select", {})
         dims = set(key.dims) | set(selector.keys())
-        quantities.append(infer_keys(rep, i['quantity'], dims))
+        quantities.append(infer_keys(rep, i["quantity"], dims))
 
         select.append(selector)
-        weights.append(i.get('weight', 1))
+        weights.append(i.get("weight", 1))
 
     # Check for malformed input
     assert len(quantities) == len(select) == len(weights)
@@ -258,9 +257,9 @@ def add_combination(rep: Reporter, info):
 
     added = rep.add(key, c, strict=True, index=True, sums=True)
 
-    log.info(f'Add {repr(key)} + {len(added)-1} partial sums')
-    log.debug('    as combination of')
-    log.debug(f'    {repr(quantities)}')
+    log.info(f"Add {repr(key)} + {len(added)-1} partial sums")
+    log.debug("    as combination of")
+    log.debug(f"    {repr(quantities)}")
 
 
 def add_iamc_table(rep: Reporter, info):
@@ -299,10 +298,10 @@ def add_iamc_table(rep: Reporter, info):
     the config file are applied to all variables.
     """
     # For each quantity, use a chain of computations to prepare it
-    name = info.pop('variable')
+    name = info.pop("variable")
 
     # Chain of keys produced: first entry is the key for the base quantity
-    base = Key.from_str_or_key(info.pop('base'))
+    base = Key.from_str_or_key(info.pop("base"))
     keys = [base]
 
     # Second entry is a simple rename
@@ -310,21 +309,21 @@ def add_iamc_table(rep: Reporter, info):
 
     # Optionally select a subset of data from the base quantity
     try:
-        sel = info.pop('select')
+        sel = info.pop("select")
     except KeyError:
         pass
     else:
-        key = keys[-1].add_tag('sel')
+        key = keys[-1].add_tag("sel")
         rep.add(key, (select, keys[-1], sel), strict=True)
         keys.append(key)
 
     # Optionally aggregate data by groups
     try:
-        gs = info.pop('group_sum')
+        gs = info.pop("group_sum")
     except KeyError:
         pass
     else:
-        key = keys[-1].add_tag('agg')
+        key = keys[-1].add_tag("agg")
         task = (partial(group_sum, group=gs[0], sum=gs[1]), keys[-1])
         rep.add(key, task, strict=True)
         keys.append(key)
@@ -333,29 +332,29 @@ def add_iamc_table(rep: Reporter, info):
     args = dict(
         # Use 'ya' for the IAMC 'Year' column; unless YAML reporting config
         # includes a different dim under format/year_time_dim.
-        year_time_dim=info.pop('year_time_dim', 'ya'),
-        drop=set(info.pop('drop', [])) & set(keys[-1].dims),
-        replace_vars='iamc variable names',
+        year_time_dim=info.pop("year_time_dim", "ya"),
+        drop=set(info.pop("drop", [])) & set(keys[-1].dims),
+        replace_vars="iamc variable names",
     )
 
     # Optionally convert units
     try:
-        args['unit'] = info.pop('unit')
+        args["unit"] = info.pop("unit")
     except KeyError:
         pass
 
     # Remaining arguments are for the collapse() callback
-    args['collapse'] = partial(collapse, var_name=name, **info)
+    args["collapse"] = partial(collapse, var_name=name, **info)
 
     # Use the message_ix.Reporter method to add the coversion step
     iamc_keys = rep.convert_pyam(keys[-1], **args)
     keys.extend(iamc_keys)
 
     # Revise the 'message:default' report to include the last key in the chain
-    rep.add('message:default', rep.graph['message:default'] + (keys[-1],))
+    rep.add("message:default", rep.graph["message:default"] + (keys[-1],))
 
-    log.info(f'Add {repr(keys[-1])} from {repr(keys[0])}')
-    log.debug(f'    {len(keys)} keys total')
+    log.info(f"Add {repr(keys[-1])} from {repr(keys[0])}")
+    log.debug(f"    {len(keys)} keys total")
 
 
 def add_report(rep: Reporter, info):
@@ -363,7 +362,7 @@ def add_report(rep: Reporter, info):
     log.info(f"Add report {info['key']} with {len(info['members'])} table(s)")
 
     # Concatenate pyam data structures
-    rep.add(info['key'], tuple([concat] + info['members']), strict=True)
+    rep.add(info["key"], tuple([concat] + info["members"]), strict=True)
 
 
 def add_general(rep: Reporter, info):
@@ -385,24 +384,25 @@ def add_general(rep: Reporter, info):
     - **add args** (:class:`dict`, optional): keyword arguments to
       :meth:`ixmp.reporting.Reporter.add` itself.
     """
-    inputs = infer_keys(rep, info.get('inputs', []))
+    inputs = infer_keys(rep, info.get("inputs", []))
 
-    if info['comp'] == 'product':
-        key = rep.add_product(info['key'], *inputs)
+    if info["comp"] == "product":
+        key = rep.add_product(info["key"], *inputs)
         log.info(f"Add {repr(key)} using .add_product()")
     else:
-        key = Key.from_str_or_key(info['key'])
+        key = Key.from_str_or_key(info["key"])
 
         # Retrieve the function for the computation
-        f = getattr(computations, info['comp'])
+        f = getattr(computations, info["comp"])
 
         log.info(f"Add {repr(key)} using {f.__name__}(...)")
 
-        kwargs = info.get('args', {})
+        kwargs = info.get("args", {})
         task = tuple([partial(f, **kwargs)] + inputs)
 
-        added = rep.add(key, task, strict=True, index=True,
-                        sums=info.get('sums', False))
+        added = rep.add(
+            key, task, strict=True, index=True, sums=info.get("sums", False)
+        )
 
         if isinstance(added, list):
-            log.info(f'    + {len(added)-1} partial sums')
+            log.info(f"    + {len(added)-1} partial sums")
