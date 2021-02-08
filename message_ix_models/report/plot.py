@@ -10,8 +10,7 @@ try:
     matplotlib.use("cairo")
 except ImportError:
     log.info(
-        f"'cairo' not available; using {matplotlib.get_backend()} matplotlib "
-        "backend"
+        f"'cairo' not available; using {matplotlib.get_backend()} matplotlib backend"
     )
 
 
@@ -28,6 +27,9 @@ class Plot:
 
          rep.add("foo", P.computation())
     """
+
+    #: Path fragments for output.
+    path = []
     #: Filename base for saving the plot.
     name = ""
     #: Keys for reporting quantities needed by :meth:`generate`.
@@ -39,7 +41,10 @@ class Plot:
     __static = []
 
     def __call__(self, config, *args):
-        path = config["output dir"] / f"{self.name}.pdf"
+        path = config["report_path"].joinpath(*self.path, f"{self.name}.pdf")
+        log.info(f"Generate {path}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+
         plot_or_plots = self.generate(*args)
 
         try:
