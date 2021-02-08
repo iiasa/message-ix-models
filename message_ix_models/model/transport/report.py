@@ -1,6 +1,7 @@
 from collections import defaultdict
 import logging
 
+from dask.core import quote
 from message_ix.reporting import Reporter
 import pandas as pd
 
@@ -77,6 +78,7 @@ def callback(rep: Reporter):
     """
     from message_data.reporting.util import infer_keys
     from message_data.tools import Context
+    from .build import get_spec
     from .demand import prepare_reporter as prepare_demand
 
     # Read transport reporting configuration onto the latest Context
@@ -95,24 +97,29 @@ def callback(rep: Reporter):
     rep.graph["config"].setdefault("transport", {})
     rep.graph["config"]["transport"].update(config.copy())
 
-    # Groups of transport technologies for aggregation
-    t_groups = defaultdict(list)
+    spec = get_spec(context)
 
     # Set of all transport technologies
-    all_techs = set(t for t in rep.get("t") if "transport" in t)
+    technologies = spec["add"].set["technology"]
+    rep.add("t:transport", quote(technologies))
 
-    for tech in context["transport set"]["technology"]["add"]:
-        all_techs.add(tech.id)
+    # Groups of transport technologies for aggregation
+    t_groups = {
+        tech.id: list(tech.child)
+        # Only include those technologies with children
+        for tech in filter(
+            lambda t: len(t.child), context["transport set"]["technology"]["add"]
+        )
+    }
 
-        for child in tech.child:
-            t_groups[tech.id].append(child.id)
-            all_techs.add(child.id)
+    # Set of all transport commodities
+    rep.add("c:transport", quote(spec["add"].set["commodity"]))
 
     # Apply filters if configured
     if config["filter"]:
         # Include only technologies with "transport" in the name
         log.info("Filter out non-transport technologies")
-        rep.set_filters(t=sorted(all_techs))
+        rep.set_filters(t=sorted(technologies))
 
     # List of all reporting keys added
     all_keys = []
