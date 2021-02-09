@@ -2,9 +2,8 @@ import logging
 from datetime import datetime
 
 import plotnine as p9
-
+from genno.compat.plotnine import Plot as BasePlot
 from ixmp.reporting import computations
-from message_data.reporting.plot import Plot as BasePlot
 
 log = logging.getLogger(__name__)
 
