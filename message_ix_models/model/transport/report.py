@@ -1,11 +1,10 @@
-from collections import defaultdict
 import logging
 
 from dask.core import quote
 from message_ix.reporting import Reporter
 import pandas as pd
 
-from message_data.tools import ScenarioInfo
+from message_data.tools import Context, ScenarioInfo
 from .plot import PLOTS
 from .utils import read_config
 
@@ -76,8 +75,6 @@ def callback(rep: Reporter):
     - ``transport plots``: the plots from :mod:`.transport.plot`.
     - ``transport all``: all of the above.
     """
-    from message_data.reporting.util import infer_keys
-    from message_data.tools import Context
     from .build import get_spec
     from .demand import prepare_reporter as prepare_demand
 
@@ -125,7 +122,7 @@ def callback(rep: Reporter):
     all_keys = []
 
     # Aggregate transport technologies
-    for k in infer_keys(rep, ["in", "out"]):
+    for k in rep.infer_keys(["in", "out"]):
         keys = rep.aggregate(k, "transport", dict(t=t_groups), sums=True)
         all_keys.append(keys[0])
         log.info(f"Add {repr(keys[0])} + {len(keys)-1} partial sums")
