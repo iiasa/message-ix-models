@@ -1,8 +1,5 @@
 import logging
 
-from ixmp.reporting import Key
-
-
 log = logging.getLogger(__name__)
 
 
@@ -161,26 +158,3 @@ def collapse_gwp_info(df, var):
     # Remove columns from further processing
     [var.remove(c) for c in cols]
     return df.drop(cols, axis=1), var
-
-
-def infer_keys(reporter, key_or_keys, dims=[]):
-    """Helper to guess complete keys in *reporter*."""
-    single = isinstance(key_or_keys, (str, Key))
-    keys = [key_or_keys] if single else key_or_keys
-
-    result = []
-
-    for k in keys:
-        # Has some dimensions or tag
-        key = Key.from_str_or_key(k) if ":" in k else k
-
-        if "::" in k or key not in reporter:
-            key = reporter.full_key(key)
-
-        if dims:
-            # Drop all but *dims*
-            key = key.drop(*[d for d in key.dims if d not in dims])
-
-        result.append(key)
-
-    return result[0] if single else result
