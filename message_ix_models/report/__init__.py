@@ -15,14 +15,7 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def report(
-    scenario,
-    key=None,
-    config=None,
-    output_path=None,
-    dry_run=False,
-    **kwargs
-):
+def report(scenario, key=None, config=None, output_path=None, dry_run=False, **kwargs):
     """Run complete reporting on *scenario* with output to *output_path*.
 
     This function provides a common interface to call both the 'new'
@@ -79,7 +72,7 @@ def report(
     # Default arguments
     key = key or "default"
     config = config or (
-        Path(__file__).parents[2] / "data" / "report" / "global.yaml"
+        Path(__file__).parents[2].joinpath("data", "report", "global.yaml")
     )
 
     rep, key = prepare_reporter(scenario, config, key, output_path)
