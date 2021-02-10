@@ -53,7 +53,7 @@ def demand(context):
 
     Parameters
     ----------
-    info : .ScenarioInfo
+    context : .Context
     """
     from message_data.model.transport.demand import dummy, from_external_data
 
