@@ -74,7 +74,7 @@ COLUMNS = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
 
 def convert_units(s, context):
-    """Convert units of pd.Series *s*, for use with :meth:`~DataFrame.apply`.
+    """Convert units of pd.Series *s*, for use with :meth:`~pandas.DataFrame.apply`.
 
     The ``s.name`` is used to retrieve a tuple of (factor, input unit, output
     unit) from :obj:`UNITS`. The (:class:`float`) values of *s* are converted
@@ -91,6 +91,7 @@ def convert_units(s, context):
     pandas.Series
         Same shape, index, and values as *s*, with output units.
     """
+    # TODO move this function to .tools module
     factor, unit_in, unit_out = UNITS[s.name]
     # replace None with the input unit
     unit_out = unit_out or unit_in
@@ -108,8 +109,7 @@ def get_ikarus_data(context):
 
     Parameters
     ----------
-    info : .ScenarioInfo
-        Information about target Scenario.
+    context : .Context
 
     Returns
     -------
