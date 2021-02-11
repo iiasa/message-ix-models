@@ -2,16 +2,16 @@ import logging
 from functools import partial
 from pathlib import Path
 
-from iam_units import registry
-from ixmp.reporting import RENAME_DIMS, Quantity
-from message_ix.reporting import Reporter, computations
 import dask
+import message_ix
 import numpy as np
 import pandas as pd
 import xarray as xr
-import message_ix
+from genno import Computer
+from iam_units import registry
+from ixmp.reporting import RENAME_DIMS, Quantity
+from message_ix.reporting import Reporter
 
-from message_data.reporting import CONFIG
 from message_data.tools import Context, ScenarioInfo, broadcast, gea, make_df
 from .build import generate_set_elements
 from .data.groups import get_consumer_groups, get_gea_population
@@ -77,16 +77,16 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
     return rep
 
 
-def from_external_data(info: ScenarioInfo, context: Context) -> Reporter:
+def from_external_data(info: ScenarioInfo, context: Context) -> Computer:
     """Return a Reporter for calculating demand from external data."""
-    # Empty reporter
-    rep = Reporter()
+    # Empty Computer
+    c = Computer()
 
     # Sets based on `info`; in from_scenario(), these are populated from the
     # sets in the Scenario
-    rep.add("n", dask.core.quote(list(map(str, info.set["node"]))))
-    rep.add("y", dask.core.quote(info.set["year"]))
-    rep.add(
+    c.add("n", dask.core.quote(list(map(str, info.set["node"]))))
+    c.add("y", dask.core.quote(info.set["year"]))
+    c.add(
         "cat_year",
         pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
     )
@@ -96,7 +96,7 @@ def from_external_data(info: ScenarioInfo, context: Context) -> Reporter:
         qty = Quantity(context.data[ctx_key], **kwargs)
         # Rename long column names ("node") to short ("n")
         qty = qty.rename({k: v for k, v in RENAME_DIMS.items() if k in qty.coords})
-        rep.add(rep_key, qty, index=True, sums=True)
+        c.add(rep_key, qty, index=True, sums=True)
 
     _add("transport gdp", "GDP:n-y", units="GUSD / year")
     _add("transport mer-to-ppp", "MERtoPPP:n-y")
@@ -108,9 +108,9 @@ def from_external_data(info: ScenarioInfo, context: Context) -> Reporter:
     ).expand_dims({"c": ["transport"]})
     _add("transport PRICE_COMMODITY", "PRICE_COMMODITY:n-c-y")
 
-    prepare_reporter(rep, context)
+    prepare_reporter(c, context)
 
-    return rep
+    return c
 
 
 def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) -> None:
@@ -125,14 +125,8 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
     gea.supports(context)
 
     if configure:
-        # Copy general MESSAGEix-GLOBIOM config
-        config = CONFIG.copy()
-
-        # Update with transport-specific keys from config.yaml
-        config.update({"transport": context["transport config"]})
-
         # Configure the reporter; keys are stored
-        rep.configure(**config)
+        rep.configure(transport=context["transport config"])
 
     rep.graph["config"].update({"output_path": context.get("output_path", Path.cwd())})
 
@@ -173,7 +167,7 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
     # Select only the price of transport services
     price_sel = rep.add(
         "transport price",
-        computations.select,
+        rep.get_comp("select"),
         price_full,
         # TODO should be the full set of prices
         dict(c="transport"),
