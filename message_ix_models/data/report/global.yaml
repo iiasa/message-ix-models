@@ -846,26 +846,17 @@ _iamc formats:
 
   price_iamc: &price_iamc
     unit: USD_2010 / GJ
-    year_time_dim: y
 
 
-# Replacements for entire variable name strings
-iamc variable names:
-  Input|variable|name: Final|variable|name
-
-
-# This section is used by reporting.core.add_iamc_table()
+# This section is handled by message_data.reporting.core.iamc
 iamc:
-
 - variable: GDP|MER
   base: GDP:n-y
   unit: billion USD_2010 / year
-  year_time_dim: y
 
 - variable: GDP|PPP
   base: gdp_ppp:n-y
   unit: billion USD_2010 / year
-  year_time_dim: y
 
 - variable: Primary Energy|Coal
   base: coal:nl-ya
@@ -980,7 +971,7 @@ iamc:
 #   removed.
 - variable: land_out CH4
   base: land_out:n-s-y-c:CH4_0+1+2
-  year_time_dim: y
+  rename: {y: year}
   var: [c, s]
 
 # SF6 emissions
@@ -1005,12 +996,12 @@ iamc:
   # TODO check that Mt (rather than t or kt) is correct.
   # TODO check whether there is a species / GWP conversion here.
   unit: USD_2010 / Mt
-  year_time_dim: y
+  rename: {y: year}
 # commented: see above
 # - variable: Price w/o carbon
 #   base: price ex carbon:n-t-y-c-e
 #   var: [t, c, l, e]
-#   year_time_dim: y
+#   rename: {y: year}
 
 # TODO ensure these are covered by the preferred method, above, and then
 #      remove these separate conversions.
@@ -1058,7 +1049,7 @@ iamc:
   <<: *price_iamc
 #- variable: Price (legacy)|Agriculture|Non-Energy Crops and Livestock|Index
 #  base: price_agriculture:n-y-h
-#  year_time_dim: y
+#  rename: {y: year}
 
 
 # This section is used by reporting.core.add_report()
