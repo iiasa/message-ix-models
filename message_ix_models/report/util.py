@@ -56,7 +56,7 @@ REPLACE_VARS = {
 }
 
 
-def collapse(df, var_name, var=[], region=[], replace_common=True):
+def collapse(df, var=[], replace_common=True):
     """Callback for the `collapse` argument to :meth:`~.Reporter.convert_pyam`.
 
     The dimensions listed in the `var` and `region` arguments are automatically
@@ -66,11 +66,10 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
 
     Parameters
     ----------
-    var_name : str
-        Initial value to populate the IAMC 'Variable' column.
     var : list of str, optional
-        Dimensions to concatenate to the 'Variable' column. These are joined
-        after the `var_name` using the pipe ('|') character.
+        Strings or dimensions to concatenate to the 'Variable' column. The first of
+        these is usually a string value used to populate the column. These are joined
+        using the pipe ('|') character.
     region : list of str, optional
         Dimensions to concatenate to the 'Region' column.
     replace_common : bool, optional
@@ -102,15 +101,14 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
         except KeyError:
             pass
 
+        var_name, *var = var
+
         if "emissions" in var_name.lower():
             log.info(f"Collapse GWP info for {var_name}")
             df, var = collapse_gwp_info(df, var)
 
         # Apply replacements
         df = df.replace(REPLACE_DIMS)
-
-    # Extend region column ('n' and 'nl' are automatically added by message_ix)
-    df["region"] = df["region"].astype(str).str.cat([df[c] for c in region], sep="|")
 
     # Assemble variable column
     df["variable"] = var_name
@@ -123,7 +121,7 @@ def collapse(df, var_name, var=[], region=[], replace_common=True):
             df["variable"] = df["variable"].str.replace(pat, repl, regex=True)
 
     # Drop same columns
-    return df.drop(var + region, axis=1)
+    return df.drop(var, axis=1)
 
 
 def collapse_gwp_info(df, var):
