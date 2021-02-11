@@ -6,6 +6,8 @@ from message_ix import make_df
 from openpyxl import load_workbook
 
 from message_data.tools import broadcast, eval_anno, same_node
+from message_data.tools.utilities.convert_units import convert_units
+
 
 #: Name of the input file.
 #
@@ -73,34 +75,6 @@ CELL_RANGE = {
 COLUMNS = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
 
-def convert_units(s, context):
-    """Convert units of pd.Series *s*, for use with :meth:`~pandas.DataFrame.apply`.
-
-    The ``s.name`` is used to retrieve a tuple of (factor, input unit, output
-    unit) from :obj:`UNITS`. The (:class:`float`) values of *s* are converted
-    to :class:`pint.Quantity` with the input units and factor; then cast to the
-    output units.
-
-    Parameters
-    ----------
-    s : pandas.Series
-    context : Context
-
-    Returns
-    -------
-    pandas.Series
-        Same shape, index, and values as *s*, with output units.
-    """
-    # TODO move this function to .tools module
-    factor, unit_in, unit_out = UNITS[s.name]
-    # replace None with the input unit
-    unit_out = unit_out or unit_in
-    # Convert the values to a pint.Quantity(array) with the input units
-    qty = context.units.Quantity(factor * s.values, unit_in)
-    # Convert to output units, then to a list of scalar Quantity
-    return pd.Series(qty.to(unit_out).tolist(), index=s.index)
-
-
 def get_ikarus_data(context):
     """Read IKARUS :cite:`Martinsen2006` data and conform to Scenario *info*.
 
@@ -148,7 +122,7 @@ def get_ikarus_data(context):
             .applymap(lambda c: c.value)
             .apply(pd.to_numeric, errors="coerce")
             .transpose()
-            .apply(convert_units, context=context)
+            .apply(convert_units, context=context, dict_units=UNITS)
         )
 
         # Conversion of IKARUS data to MESSAGEix-scheme parameters.
