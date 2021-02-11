@@ -141,6 +141,9 @@ Data preparation
 .. automodule:: message_data.model.transport.data.AFR
    :members:
 
+.. automodule:: message_data.model.transport.data.CHN_IND_data
+   :members:
+
 Utilities and CLI
 -----------------
 .. automodule:: message_data.model.transport.utils
