@@ -2,24 +2,14 @@ import logging
 
 from dask.core import quote
 from message_ix.reporting import Reporter
-import pandas as pd
 
-from message_data.tools import Context, ScenarioInfo
-from .plot import PLOTS
+from message_data.tools import Context
+from . import computations
 from .utils import read_config
+from .plot import PLOTS
 
 
 log = logging.getLogger(__name__)
-
-
-#: Reporting configuration for :func:`check`. Adds a single key,
-#: 'transport check', that depends on others and returns a
-#: :class:`pandas.Series` of :class:`bool`.
-CONFIG = dict(
-    general=[
-        dict(key="transport check", comp="transport_check", inputs=["scenario", "ACT"])
-    ],
-)
 
 
 def check(scenario):
@@ -33,36 +23,15 @@ def check(scenario):
     Returns
     -------
     pd.Series
-        Index entries are str descriptions of checks. Values are the
-        :obj:`True` if the respective check passes.
+        Index entries are str descriptions of checks. Values are :obj:`True` if the
+        respective check passes.
     """
     # NB this is here to avoid circular imports
-    from message_data.reporting.core import prepare_reporter
+    from message_data.reporting.core import prepare_reporter, register
 
-    rep, key = prepare_reporter(scenario, CONFIG, "transport check")
+    register(callback)
+    rep, key = prepare_reporter(scenario, "global.yaml", "transport check")
     return rep.get(key)
-
-
-def check_computation(scenario, ACT):
-    """Reporting computation for :func:`check`.
-
-    Imported into :mod:`.reporting.computations`.
-    """
-    info = ScenarioInfo(scenario)
-
-    # Mapping from check name → bool
-    checks = {}
-
-    # Correct number of outputs
-    ACT_lf = ACT.sel(t=["transport freight load factor", "transport pax load factor"])
-    checks["'transport * load factor' technologies are active"] = len(
-        ACT_lf
-    ) == 2 * len(info.Y) * (len(info.N) - 1)
-
-    # # Force the check to fail
-    # checks['(fail for debugging)'] = False
-
-    return pd.Series(checks)
 
 
 def callback(rep: Reporter):
@@ -75,8 +44,9 @@ def callback(rep: Reporter):
     - ``transport plots``: the plots from :mod:`.transport.plot`.
     - ``transport all``: all of the above.
     """
-    from .build import get_spec
-    from .demand import prepare_reporter as prepare_demand
+    from . import build, demand
+
+    rep.modules.append(computations)
 
     # Read transport reporting configuration onto the latest Context
     context = Context.get_instance(-1)
@@ -94,7 +64,7 @@ def callback(rep: Reporter):
     rep.graph["config"].setdefault("transport", {})
     rep.graph["config"]["transport"].update(config.copy())
 
-    spec = get_spec(context)
+    spec = build.get_spec(context)
 
     # Set of all transport technologies
     technologies = spec["add"].set["technology"]
@@ -102,7 +72,7 @@ def callback(rep: Reporter):
 
     # Groups of transport technologies for aggregation
     t_groups = {
-        tech.id: list(tech.child)
+        tech.id: list(c.id for c in tech.child)
         # Only include those technologies with children
         for tech in filter(
             lambda t: len(t.child), context["transport set"]["technology"]["add"]
@@ -129,7 +99,7 @@ def callback(rep: Reporter):
 
     # Add ex-post mode and demand calculations
     try:
-        prepare_demand(rep, context, configure=False)
+        demand.prepare_reporter(rep, context, configure=False)
     except Exception as e:
         log.error(e)
         assert False
@@ -138,15 +108,18 @@ def callback(rep: Reporter):
     plot_keys = []
 
     for plot in PLOTS:
-        key = f"plot {plot.name}"
-        task = plot.computation()
-        rep.add(key, task)
-        plot_keys.append(key)
+        task = plot.make_task()
+        plot_keys.append(rep.add(f"plot {plot.name}", plot.make_task()))
 
-        log.info(f"Add {repr(key)}")
+        log.info(f"Add {repr(plot_keys[-1])}")
         log.debug(repr(task))
 
     rep.add("transport plots", plot_keys)
 
     # Add key collecting all others
     rep.add("transport all", all_keys + plot_keys)
+
+    # Configuration for :func:`check`. Adds a single key, 'transport check', that
+    # depends on others and returns a :class:`pandas.Series` of :class:`bool`.
+    ACT = rep.infer_keys("ACT")
+    rep.add("transport check", computations.transport_check, "scenario", ACT)
