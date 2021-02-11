@@ -14,13 +14,6 @@ MIN_CONFIG = {
 }
 
 
-# commented: was only used in test_report_bare_res(); uncomment if 1+ more
-# use(s) are added.
-# @pytest.fixture
-# def global_config(test_context):
-#     yield test_context.get_config_file('report', 'global')
-
-
 def test_report_bare_res(request, session_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     ctx = session_context
@@ -49,12 +42,16 @@ DATA_INV_COST = pd.DataFrame(
     columns="node_loc technology year_vtg value unit".split(),
 )
 
-IAMC_INV_COST = dict(
-    variable="Investment Cost",
-    base="inv_cost:nl-t-yv",
-    year_time_dim="yv",
-    var=["t"],
-    unit="EUR_2005",
+INV_COST_CONFIG = dict(
+    iamc=[
+        dict(
+            variable="Investment Cost",
+            base="inv_cost:nl-t-yv",
+            rename=dict(nl="region", yv="year"),
+            collapse=dict(var=["t"]),
+            unit="EUR_2005",
+        )
+    ]
 )
 
 
@@ -102,32 +99,9 @@ def test_apply_units(request, test_context, regions):
     assert str(reporter.get(key).attrs["_unit"]) == USD_2005
 
     # Update configuration, re-create the reporter
-    config["iamc"] = [IAMC_INV_COST]
+    config.update(INV_COST_CONFIG)
     reporter, key = prepare_reporter(bare_res, config=config, key=qty)
 
     # Units are converted
     df = reporter.get("Investment Cost:iamc").as_pandas()
     assert set(df["unit"]) == {"EUR_2005"}
-
-
-@pytest.mark.parametrize("regions", ["R11"])
-def test_iamc_replace_vars(request, test_context, regions):
-    """Test the 'iamc variable names' reporting configuration."""
-    test_context.regions = regions
-    scen = testing.bare_res(request, test_context)
-
-    qty = "inv_cost"
-    config = {
-        "iamc": [IAMC_INV_COST],
-        "iamc variable names": {
-            "Investment Cost|Coal_Ppl": "Investment Cost|Coal",
-        },
-    }
-    scen.check_out()
-    scen.add_par("inv_cost", DATA_INV_COST)
-    scen.commit("")
-    scen.solve()
-
-    reporter, key = prepare_reporter(scen, config=config, key=qty)
-    df = reporter.get("Investment Cost:iamc").as_pandas()
-    assert set(df["variable"]) == {"Investment Cost|Coal"}
