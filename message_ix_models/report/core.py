@@ -2,24 +2,36 @@ import logging
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
+from typing import Callable, List
 
+import genno.config
+from genno.compat.pyam import iamc as handle_iamc
 from message_ix.reporting import Reporter
+
+
+from . import computations, util
+from message_data.tools import Context
 
 log = logging.getLogger(__name__)
 
 
-# Equivalent of some content in global.yaml
-CONFIG = dict(units=dict(replace={"-": ""}))
+# Add to the configuration keys stored by Reporter.configure().
+genno.config.STORE.add("output_path")
+
+#: List of callbacks for preparing the Reporter
+CALLBACKS: List[Callable] = []
 
 
 def register(callback) -> None:
     """Register a callback function for :meth:`prepare_reporter`.
 
-    Each registered function is called by :meth:`prepare_reporter`, in order to
-    add or modify reporting keys. Specific model variants and projects can
-    register a callback to extend the reporting graph.
+    Each registered function is called by :meth:`prepare_reporter`, in order to add or
+    modify reporting keys. Specific model variants and projects can register a callback
+    to extend the reporting graph.
 
-    Callback functions must take one argument, with a type annotation::
+    Callback functions must take one argument, the Reporter:
+
+    .. code-block:: python
 
         from message_ix.reporting import Reporter
         from message_data.reporting import register
@@ -30,13 +42,33 @@ def register(callback) -> None:
 
         register(cb)
     """
-    from genno.config import CALLBACKS
-
     if callback in CALLBACKS:
         log.info(f"Already registered: {callback}")
         return
 
     CALLBACKS.append(callback)
+
+
+@genno.config.handles("iamc")
+def iamc(c: Reporter, info):
+    """Handle one entry from the ``iamc:`` config section."""
+    # Use message_data custom collapse() method
+    info.setdefault("collapse", {})
+    info["collapse"]["callback"] = util.collapse
+
+    # Add standard renames
+    info.setdefault("rename", {})
+    for dim, target in (
+        ("n", "region"),
+        ("nl", "region"),
+        ("y", "year"),
+        ("ya", "year"),
+        ("yv", "year"),
+    ):
+        info["rename"].setdefault(dim, target)
+
+    # Invoke the genno built-in handler
+    handle_iamc(c, info)
 
 
 def prepare_reporter(scenario, config, key, output_path=None):
@@ -69,27 +101,34 @@ def prepare_reporter(scenario, config, key, output_path=None):
     # Create a Reporter for *scenario*
     rep = Reporter.from_scenario(scenario)
 
+    # Append the message_data computations
+    rep.modules.append(computations)
+
+    # Apply configuration
     if isinstance(config, dict):
-        # Deepcopy to avoid destructive operations below
-        config = deepcopy(config)
+        if len(config):
+            # Deepcopy to avoid destructive operations below
+            config = deepcopy(config)
+        else:
+            config = dict(
+                path=Context.get_instance(-1).get_config_file("report", "global")
+            )
     else:
-        # Load and apply configuration
         # A non-dict *config* argument must be a Path
-        config = dict(path=Path(config))
+        path = Path(config)
+        if not path.exists() and not path.is_absolute():
+            # Try to resolve relative to the data directory
+            path = Context.get_instance(-1).message_data_path.joinpath("report", path)
+        config = dict(path=path)
 
     # Directory for reporting output
     config.setdefault("output_path", output_path)
 
+    # Handle configuration
     rep.configure(**config)
 
-    # Reference to the configuration as stored in the reporter
-    config = rep.graph["config"]
-
-    # Variable name replacement: dict, not list of entries
-    rep.add("iamc variable names", config.pop("iamc variable names", {}))
-
-    # Tidy the config dict by removing any YAML sections starting with '_'
-    [config.pop(k) for k in list(config.keys()) if k.startswith("_")]
+    for callback in CALLBACKS:
+        callback(rep)
 
     # If needed, get the full key for *quantity*
     key = rep.infer_keys(key)
