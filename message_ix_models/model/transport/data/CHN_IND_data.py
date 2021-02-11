@@ -14,11 +14,12 @@ UNITS = dict(
     Population=(1.0e-6, None, None),
 )
 
-FILES = {"Passenger activity": ("Passenger-km.csv", 4),
-         "Vehicle stock civil": ("Civil-Vehicles.csv", 5),
-         "Vehicle stock private": ("Private-Vehicles.csv", 1),
-         "Freight activity": ("Tonne-km.csv", 5),
-         }
+FILES = {
+    "Passenger activity": ("Passenger-km.csv", 4),
+    "Vehicle stock civil": ("Civil-Vehicles.csv", 5),
+    "Vehicle stock private": ("Private-Vehicles.csv", 1),
+    "Freight activity": ("Tonne-km.csv", 5),
+}
 
 POP_FILE = "pop_CHN_IND.csv"
 
@@ -53,8 +54,11 @@ def get_chn_ind_pop(ctx):
     """
     pop = pd.read_csv(ctx.get_path("transport", POP_FILE), header=0)
     pop.rename(columns={"LOCATION": "ISO_code", "Time": "Year"}, inplace=True)
-    pop.drop([x for x in pop.columns if x not in ["ISO_code", "Year", "Value"]],
-             axis=1, inplace=True)
+    pop.drop(
+        [x for x in pop.columns if x not in ["ISO_code", "Year", "Value"]],
+        axis=1,
+        inplace=True,
+    )
     # Add "Variable" name column
     pop["Variable"] = "Population"
 
@@ -84,17 +88,20 @@ def get_chn_ind_data(ctx):
     df = pd.DataFrame()
     for file, skip_footer in FILES.values():
         # Read excel sheet
-        df_aux = pd.read_csv(ctx.get_path("transport", "China", file),
-                             skipfooter=skip_footer, header=2)
+        df_aux = pd.read_csv(
+            ctx.get_path("transport", "China", file), skipfooter=skip_footer, header=2
+        )
         df = pd.concat([df, df_aux], ignore_index=True)
     # Drop rows containing sub-categories of rail transport
     df.drop([2, 3, 4, 34, 35, 36], inplace=True)
     df.reset_index(drop=True, inplace=True)
-    df = pd.concat([df, split_units(df["Indicators"])], axis=1) \
-           .drop(["Indicators"], axis=1)
+    df = pd.concat([df, split_units(df["Indicators"])], axis=1).drop(
+        ["Indicators"], axis=1
+    )
     # Reach **tidy data** structure
-    df = df.melt(id_vars=["Variable", "Units"], var_name="Year",
-                 value_name="Value").sort_values("Year")
+    df = df.melt(
+        id_vars=["Variable", "Units"], var_name="Year", value_name="Value"
+    ).sort_values("Year")
     # Add "ISO_code" column to *df*, and move to first position
     df["ISO_code"] = "CHN"
     df.set_index("ISO_code", inplace=True)
@@ -105,12 +112,15 @@ def get_chn_ind_data(ctx):
     df = df.drop(df[df["Year"] == 2019].index)
 
     # Concat population values
-    df = pd.concat([df, get_chn_ind_pop(ctx)], ignore_index=True) \
-           .sort_values(["ISO_code", "Variable", "Year"], ignore_index=True)
-    chn = df[df["ISO_code"] == "CHN"].pivot(index="Year", columns="Variable",
-                                            values="Value")
-    ind = df[df["ISO_code"] == "IND"].pivot(index="Year", columns="Variable",
-                                            values="Value")
+    df = pd.concat([df, get_chn_ind_pop(ctx)], ignore_index=True).sort_values(
+        ["ISO_code", "Variable", "Year"], ignore_index=True
+    )
+    chn = df[df["ISO_code"] == "CHN"].pivot(
+        index="Year", columns="Variable", values="Value"
+    )
+    ind = df[df["ISO_code"] == "IND"].pivot(
+        index="Year", columns="Variable", values="Value"
+    )
 
     return df
 
