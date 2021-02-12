@@ -1,4 +1,3 @@
-"""Reporting for the MESSAGEix-GLOBIOM global model."""
 import logging
 from copy import deepcopy
 from functools import partial

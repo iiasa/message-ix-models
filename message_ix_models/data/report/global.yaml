@@ -1,9 +1,5 @@
 # Configuration for reporting of the MESSAGEix-GLOBIOM global model
 #
-# Some groups in this file ('units', 'files', 'alias') are used by the
-# ixmp.reporting and message_ix.reporting built-in configuration code.
-# Others are used in message_data.reporting.core.prepare_reporter.
-#
 #
 # EDITING
 #
@@ -35,9 +31,6 @@ units:
     emission_factor: "Mt / year"
 
 # Files with external data
-#
-# Entries are keyword arguments to ixmp.Reporter.add_file()
-
 # files:
 # - path: ./foo.csv
 #   key: gwp:e-gwp_source
@@ -58,7 +51,6 @@ units:
 
 # Aggregate across dimensions of single quantities
 #
-# - Corresponds to ixmp.Reporter.aggregate via reporting.core.add_aggregate.
 # - The dimension `_dim` is not removed; it gains new labels that are the sum
 #   of the listed members. Basically regrouping over one dimension.
 # - Keep members in alphabetical order.
@@ -312,7 +304,6 @@ aggregate:
 
 
 # Create new quantities by weighted sum across multiple quantities
-# - Parsed by reporting.core.add_combination
 combine:
   # Name and dimensions of quantity to be created
 - key: coal:nl-ya
@@ -566,7 +557,6 @@ combine:
 #       c: ["Price|Agriculture|Non-Energy Crops and Livestock|Index"]
 
 
-# - Parsed by reporting.core.add_general
 general:
 - key: Liquids:nl-ya
   comp: apply_units
@@ -848,7 +838,6 @@ _iamc formats:
     unit: USD_2010 / GJ
 
 
-# This section is handled by message_data.reporting.core.iamc
 iamc:
 - variable: GDP|MER
   base: GDP:n-y
@@ -1051,8 +1040,6 @@ iamc:
 #  base: price_agriculture:n-y-h
 #  rename: {y: year}
 
-
-# This section is used by reporting.core.add_report()
 report:
 - key: pe test
   members:

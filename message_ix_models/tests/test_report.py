@@ -1,9 +1,10 @@
 """Tests for message_data.reporting."""
 import pandas as pd
+import pandas.testing as pdt
 import pytest
 
 from message_data import testing
-from message_data.reporting import prepare_reporter
+from message_data.reporting import prepare_reporter, util
 
 
 # Minimal reporting configuration for testing
@@ -105,3 +106,47 @@ def test_apply_units(request, test_context, regions):
     # Units are converted
     df = reporter.get("Investment Cost:iamc").as_pandas()
     assert set(df["unit"]) == {"EUR_2005"}
+
+
+@pytest.mark.parametrize(
+    "input, exp",
+    (
+        ("x Secondary Energy|Solids|Solids x", "x Secondary Energy|Solids x"),
+        ("x Emissions|CH4|Fugitive x", "x Emissions|CH4|Energy|Supply|Fugitive x"),
+        (
+            "x Emissions|CH4|Heat|foo x",
+            "x Emissions|CH4|Energy|Supply|Heat|Fugitive|foo x",
+        ),
+        (
+            "land_out CH4|Emissions|Ch4|Land Use|Agriculture|foo x",
+            "Emissions|CH4|AFOLU|Agriculture|Livestock|foo x",
+        ),
+        ("land_out CH4|foo|bar|Awm x", "foo|bar|Manure Management x"),
+        ("x Residential|Biomass x", "x Residential|Solids|Biomass x"),
+        ("x Residential|Gas x", "x Residential|Gases|Natural Gas x"),
+        ("x Import Energy|Lng x", "x Primary Energy|Gas x"),
+        ("x Import Energy|Coal x", "x Primary Energy|Coal x"),
+        ("x Import Energy|Oil x", "x Primary Energy|Oil x"),
+        ("x Import Energy|Liquids|Biomass x", "x Secondary Energy|Liquids|Biomass x"),
+        ("x Import Energy|Lh2 x", "x Secondary Energy|Hydrogen x"),
+    ),
+)
+def test_collapse(input, exp):
+    """Test :meth:`.reporting.util.collapse` and use of :data:`.REPLACE_VARS`.
+
+    This test is parametrized with example input and expected output strings for the
+    ``variable`` IAMC column. There should be ≥1 example for each pattern in
+    :data:`.REPLACE_VARS`.
+
+    When adding test cases, if the pattern does not start with ``^`` or end with ``$``,
+    then prefix "x " or suffix " x" respectively to ensure these are handled as
+    intended.
+
+    .. todo:: Extend or duplicate to also cover :data:`.REPLACE_DIMS`.
+    """
+    # Convert values to data frames with 1 row and 1 column
+    df_in = pd.DataFrame([[input]], columns=["variable"])
+    df_exp = pd.DataFrame([[exp]], columns=["variable"])
+
+    # collapse() transforms the "variable" column in the expected way
+    pdt.assert_frame_equal(util.collapse(df_in), df_exp)

@@ -1,12 +1,18 @@
 import logging
 
+import pandas as pd
+from genno.compat.pyam.util import collapse as genno_collapse
+
+
 log = logging.getLogger(__name__)
 
 
 #: Replacements used in :meth:`collapse`.
+#: These are applied using :meth:`pandas.DataFrame.replace` with ``regex=True``; see
+#: the documentation of that method.
 #:
 #: - Applied to whole strings along each dimension.
-#: - These columns have :meth:`str.title` applied before these replacements
+#: - These columns have :meth:`str.title` applied before these replacements.
 REPLACE_DIMS = {
     "c": {
         "Crudeoil": "Oil",
@@ -19,24 +25,28 @@ REPLACE_DIMS = {
     "l": {
         "Final Energy": "Final Energy|Residential",
     },
-    "t": {},
 }
 
-#: Replacements used in :meth:`collapse` after the 'variable' column is
-#: assembled.
+#: Replacements used in :meth:`collapse` after the 'variable' column is assembled.
+#: These are applied using :meth:`pandas.DataFrame.replace` with ``regex=True``; see
+#: the documentation of that method. For documentation of regular expressions, see
+#: https://docs.python.org/3/library/re.html and https://regex101.com.
 #:
-#: - Applied in sequence, from first to last.
-#: - Partial string matches.
-#: - Handled as regular expressions; see https://regex101.com and
-#:   https://docs.python.org/3/library/re.html.
+#: .. todo:: These may be particular or idiosyncratic to a single "template". The
+#:    strings used to collapse multiple conceptual dimensions into the IAMC "variable"
+#:    column are known to vary in poorly-documented ways across these templates.
+#:
+#:    This setting is currently applied universally. To improve, specify a different
+#:    mapping with the replacements needed for each individual template, and load the
+#:    correct one when reporting scenarios to that template.
 REPLACE_VARS = {
     # Secondary energy: remove duplicate "Solids"
     r"(Secondary Energy\|Solids)\|Solids": r"\1",
     # CH4 emissions from MESSAGE technologies
     r"(Emissions\|CH4)\|Fugitive": r"\1|Energy|Supply|Fugitive",
     # CH4 emissions from GLOBIOM
-    r"(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat).*)": (
-        r"\1|Energy|Supply|\2|Fugitive"
+    r"(Emissions\|CH4)\|((Gases|Liquids|Solids|Elec|Heat)(.*))": (
+        r"\1|Energy|Supply|\3|Fugitive\4"
     ),
     r"^(land_out CH4.*\|)Awm": r"\1Manure Management",
     r"^land_out CH4\|Emissions\|Ch4\|Land Use\|Agriculture\|": (
@@ -50,19 +60,20 @@ REPLACE_VARS = {
     r"Import Energy\|Lng": "Primary Energy|Gas",
     r"Import Energy\|Coal": "Primary Energy|Coal",
     r"Import Energy\|Oil": "Primary Energy|Oil",
-    r"Import Energy\|(Liquids|Oil)": r"Secondary Energy|\1",
-    r"Import Energy\|(Liquids|Biomass)": r"Secondary Energy|\1",
+    r"Import Energy\|(Liquids\|(Biomass|Oil))": r"Secondary Energy|\1",
     r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
 }
 
 
-def collapse(df, var=[], replace_common=True):
+def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
     """Callback for the `collapse` argument to :meth:`~.Reporter.convert_pyam`.
 
-    The dimensions listed in the `var` and `region` arguments are automatically
-    dropped from the returned :class:`pyam.IamDataFrame`.
+    Replacements from :data:`REPLACE_DIMS` and :data:`REPLACE_VARS` are applied.
+    The dimensions listed in the `var` arguments are automatically dropped from the
+    returned :class:`pyam.IamDataFrame`. If ``var[0]`` contains the word "emissions",
+    then :meth:`collapse_gwp_info` is invoked.
 
-    Adapted from :func:`.pyam.collapse_message_cols`.
+    Adapted from :func:`genno.compat.pyam.collapse`.
 
     Parameters
     ----------
@@ -70,58 +81,34 @@ def collapse(df, var=[], replace_common=True):
         Strings or dimensions to concatenate to the 'Variable' column. The first of
         these is usually a string value used to populate the column. These are joined
         using the pipe ('|') character.
-    region : list of str, optional
-        Dimensions to concatenate to the 'Region' column.
-    replace_common : bool, optional
-        If :obj:`True` (the default), perform standard replacements on columns
-        before and after assembling the 'Variable' column, according to
-        ``REPLACE_DIMS`` and ``REPLACE_VARS``.
 
     See also
     --------
-    .core.add_iamc_table
     REPLACE_DIMS
     REPLACE_VARS
+    collapse_gwp_info
+    test_collapse
     """
-    if replace_common:
-        # Convert dimension labels to title-case strings
-        for dim in filter(lambda d: d in df.columns, REPLACE_DIMS.keys()):
-            df[dim] = df[dim].astype(str).str.title()
+    # Convert some dimension labels to title-case strings
+    for dim in filter(lambda d: d in df.columns, "clt"):
+        df[dim] = df[dim].astype(str).str.title()
 
-        try:
-            # Level: to title case, add the word 'energy'
-            # FIXME astype() here should not be necessary; debug
-            df["l"] = df["l"].astype(str).str.title() + " Energy"
-        except KeyError:
-            pass
-        try:
-            # Commodity: to title case
-            # FIXME astype() here should not be necessary; debug
-            df["c"] = df["c"].astype(str).str.title()
-        except KeyError:
-            pass
+    if "l" in df.columns:
+        # Level: to title case, add the word 'energy'
+        df["l"] = df["l"] + " Energy"
 
-        var_name, *var = var
+    if len(var) and "emissions" in var[0].lower():
+        log.info(f"Collapse GWP info for {var[0]}")
+        df, var = collapse_gwp_info(df, var)
 
-        if "emissions" in var_name.lower():
-            log.info(f"Collapse GWP info for {var_name}")
-            df, var = collapse_gwp_info(df, var)
-
-        # Apply replacements
-        df = df.replace(REPLACE_DIMS)
-
-    # Assemble variable column
-    df["variable"] = var_name
-    df["variable"] = df["variable"].str.cat([df[c] for c in var], sep="|")
-
-    # TODO roll this into the rename_vars argument of message_ix...as_pyam()
-    if replace_common:
-        # Apply variable name partial replacements
-        for pat, repl in REPLACE_VARS.items():
-            df["variable"] = df["variable"].str.replace(pat, repl, regex=True)
-
-    # Drop same columns
-    return df.drop(var, axis=1)
+    # - Apply replacements to individual dimensions.
+    # - Use the genno built-in to assemble the variable column.
+    # - Apply replacements to assembled columns.
+    return (
+        df.replace(REPLACE_DIMS, regex=True)
+        .pipe(genno_collapse, columns=dict(variable=var))
+        .replace(dict(variable=REPLACE_VARS), regex=True)
+    )
 
 
 def collapse_gwp_info(df, var):
