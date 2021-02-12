@@ -87,16 +87,6 @@ API reference
    :members:
 
 
-Core
-----
-
-.. currentmodule:: message_data.reporting.core
-
-.. automodule:: message_data.reporting.core
-   :members:
-   :exclude-members: prepare_reporter
-
-
 Computations
 ------------
 
