@@ -27,7 +27,7 @@ def check(scenario):
         respective check passes.
     """
     # NB this is here to avoid circular imports
-    from message_data.reporting.core import prepare_reporter, register
+    from message_data.reporting import prepare_reporter, register
 
     register(callback)
     rep, key = prepare_reporter(scenario, "global.yaml", "transport check")
