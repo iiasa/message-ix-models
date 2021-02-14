@@ -42,13 +42,53 @@ class Costs0(Plot):
     inputs = ["inv_cost:nl-t-yv"]
 
     def generate(self, data):
+        y_max = max(data["inv_cost"])
+        unit = data["unit"].unique()[0]
         for nl, group_df in data.groupby("nl"):
             yield (
                 p9.ggplot(p9.aes(x="yv", y="inv_cost", color="t"), group_df)
                 + p9.geom_line()
                 + p9.geom_point()
-                + p9.expand_limits(y=[0, max(data["inv_cost"])])
-                + self.title(f"Investment cost [{data['unit'].unique()[0]}] {nl}")
+                + p9.expand_limits(y=[0, y_max])
+                + self.title(f"Investment cost [{unit}] {nl}")
+                + self.static
+            )
+
+
+class Costs1(Plot):
+    basename = "fix-cost"
+    inputs = ["fix_cost:nl-t-yv-ya"]
+
+    def generate(self, data):
+        y_max = max(data["fix_cost"])
+        unit = data["unit"].unique()[0]
+        for nl, group_df in data.groupby("nl"):
+            yield (
+                p9.ggplot(p9.aes(x="ya", y="fix_cost", color="t", group="yv"), group_df)
+                + p9.geom_line()
+                + p9.geom_point()
+                + p9.expand_limits(y=[0, y_max])
+                + self.title(f"Fixed cost [{unit}] {nl}")
+                + self.static
+            )
+
+
+class Costs2(Plot):
+    basename = "var-cost"
+    inputs = ["var_cost:nl-t-yv-ya"]
+
+    def generate(self, data):
+        data = data.rename(columns={0: "var_cost"})
+        print(data)
+        y_max = max(data["var_cost"])
+        unit = data["unit"].unique()[0]
+        for nl, group_df in data.groupby("nl"):
+            yield (
+                p9.ggplot(p9.aes(x="ya", y="var_cost", color="t", group="yv"), group_df)
+                + p9.geom_line()
+                + p9.geom_point()
+                + p9.expand_limits(y=[0, y_max])
+                + self.title(f"Variable cost [{unit}] {nl}")
                 + self.static
             )
 
@@ -241,6 +281,8 @@ class EnergyCmdty(Plot):
 
 PLOTS = [
     Costs0,
+    Costs1,
+    Costs2,
     EnergyCmdty,
     LDVTechShare0,
     LDVTechShare1,
