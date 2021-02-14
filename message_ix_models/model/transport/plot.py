@@ -30,9 +30,27 @@ class Plot(BasePlot):
     # Output goes in the "transport" subdirectory
     path = ["transport"]
 
+    static = [p9.theme(figure_size=(11.7, 8.3))]
+
     def title(self, value):
         """Return :class:`plotnine.ggtitle` including the current date & time."""
         return p9.ggtitle(f"{value} ({datetime.now().isoformat(timespec='minutes')})")
+
+
+class Costs0(Plot):
+    basename = "inv-cost"
+    inputs = ["inv_cost:nl-t-yv"]
+
+    def generate(self, data):
+        for nl, group_df in data.groupby("nl"):
+            yield (
+                p9.ggplot(p9.aes(x="yv", y="inv_cost", color="t"), group_df)
+                + p9.geom_line()
+                + p9.geom_point()
+                + p9.expand_limits(y=[0, max(data["inv_cost"])])
+                + self.title(f"Investment cost [{data['unit'].unique()[0]}] {nl}")
+                + self.static
+            )
 
 
 class LDV_IO(Plot):
@@ -222,6 +240,7 @@ class EnergyCmdty(Plot):
 
 
 PLOTS = [
+    Costs0,
     EnergyCmdty,
     LDVTechShare0,
     LDVTechShare1,
