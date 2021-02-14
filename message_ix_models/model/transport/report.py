@@ -109,7 +109,7 @@ def callback(rep: Reporter):
 
     for plot in PLOTS:
         task = plot.make_task()
-        plot_keys.append(rep.add(f"plot {plot.name}", plot.make_task()))
+        plot_keys.append(rep.add(f"plot {plot.basename}", plot.make_task()))
 
         log.info(f"Add {repr(plot_keys[-1])}")
         log.debug(repr(task))
