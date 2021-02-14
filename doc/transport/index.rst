@@ -18,8 +18,14 @@ The code and data:
   through the ixmp callback feature, to set demand for specific transport
   technologies.
 
+On this page:
+
 .. contents::
    :local:
+
+On other pages:
+
+- :doc:`transport/report`
 
 Usage
 =====
@@ -105,9 +111,6 @@ Data preparation
 
 Utilities and CLI
 -----------------
-.. automodule:: message_data.model.transport.report
-   :members:
-
 .. automodule:: message_data.model.transport.utils
    :members:
    :exclude-members: read_config
@@ -191,5 +194,6 @@ Reference
 .. toctree::
    :maxdepth: 2
 
+   transport/report
    transport/files
    transport/old

@@ -79,7 +79,6 @@ class Costs2(Plot):
 
     def generate(self, data):
         data = data.rename(columns={0: "var_cost"})
-        print(data)
         y_max = max(data["var_cost"])
         unit = data["unit"].unique()[0]
         for nl, group_df in data.groupby("nl"):
