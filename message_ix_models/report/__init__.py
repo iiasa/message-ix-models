@@ -213,6 +213,9 @@ def prepare_reporter(scenario, config, key, output_path=None):
 
     # Directory for reporting output
     config.setdefault("output_path", output_path)
+    # For genno.compat.plot
+    # FIXME use a consistent set of names
+    config.setdefault("output_dir", output_path)
 
     # Handle configuration
     rep.configure(**config)
