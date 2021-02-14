@@ -93,7 +93,7 @@ class Costs2(Plot):
 
 
 class LDV_IO(Plot):
-    name = "ldv-efficiency"
+    basename = "ldv-efficiency"
     inputs = ["input:nl-t-yv-ya"]
 
     def generate(self, data):
@@ -114,7 +114,7 @@ class LDV_IO(Plot):
 
 
 class LDVTechShare0(Plot):
-    name = "ldv-tech-share"
+    basename = "ldv-tech-share"
     inputs = ["out:nl-t-ya:transport"]
 
     def generate(self, data):
@@ -136,7 +136,7 @@ class LDVTechShare0(Plot):
 
 
 class LDVTechShare1(Plot):
-    name = "ldv-tech-share-by-cg"
+    basename = "ldv-tech-share-by-cg"
     inputs = ["out:nl-t-ya-c:transport"]
 
     def generate(self, data):
@@ -161,7 +161,7 @@ class LDVTechShare1(Plot):
 
 
 class DemandCalibrated(Plot):
-    name = "par-demand"
+    basename = "par-demand"
     inputs = ["demand:n-c-y", "c:transport"]
 
     def generate(self, data, commodities):
@@ -190,7 +190,7 @@ class DemandCalibrated(Plot):
 
 
 class DemandCalibratedCap(Plot):
-    name = "par-demand-cap"
+    basename = "par-demand-cap"
     inputs = ["demand:n-c-y", "population:n-y", "c:transport"]
 
     def generate(self, demand, population, commodities):
@@ -221,7 +221,7 @@ class DemandCalibratedCap(Plot):
 
 
 class DemandExo(Plot):
-    name = "demand-exo"
+    basename = "demand-exo"
     inputs = ["transport pdt:n-y-t", "config"]
 
     def generate(self, data, config):
@@ -248,7 +248,7 @@ class DemandExo(Plot):
 
 
 class EnergyCmdty(Plot):
-    name = "energy-by-cmdty"
+    basename = "energy-by-cmdty"
     inputs = ["in:nl-t-ya-c"]
 
     def generate(self, data):
@@ -274,7 +274,7 @@ class EnergyCmdty(Plot):
 
 
 # class EmissionsTech(Plot):
-#     name = "emissions-by-tech"
+#     basename = "emissions-by-tech"
 #     inputs = ["emi:"]
 
 
