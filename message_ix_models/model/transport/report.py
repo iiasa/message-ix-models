@@ -48,6 +48,11 @@ def callback(rep: Reporter):
 
     rep.modules.append(computations)
 
+    try:
+        solved = rep.graph["scenario"].has_solution()
+    except KeyError:
+        solved = False
+
     # Read transport reporting configuration onto the latest Context
     context = Context.get_instance(-1)
     read_config(context)
@@ -88,38 +93,47 @@ def callback(rep: Reporter):
         log.info("Filter out non-transport technologies")
         rep.set_filters(t=sorted(technologies))
 
-    # List of all reporting keys added
-    all_keys = []
+    # Queue of computations to add
+    queue = []
 
     # Aggregate transport technologies
-    for k in rep.infer_keys(["in", "out"]):
-        keys = rep.aggregate(k, "transport", dict(t=t_groups), sums=True)
-        all_keys.append(keys[0])
-        log.info(f"Add {repr(keys[0])} + {len(keys)-1} partial sums")
-
-    # Add ex-post mode and demand calculations
-    try:
-        demand.prepare_reporter(rep, context, configure=False)
-    except Exception as e:
-        log.error(e)
-        assert False
-
-    # Add all plots
-    plot_keys = []
-
-    for plot in PLOTS:
-        task = plot.make_task()
-        plot_keys.append(rep.add(f"plot {plot.basename}", plot.make_task()))
-
-        log.info(f"Add {repr(plot_keys[-1])}")
-        log.debug(repr(task))
-
-    rep.add("transport plots", plot_keys)
+    for k in ["in:nl-t-yv-ya-m-no-c-l-h-ho", "out:nl-t-yv-ya-m-nd-c-l-h-hd"]:
+        queue.append(
+            (("aggregate", k, "transport", quote(dict(t=t_groups))), dict(sums=True))
+        )
 
     # Add key collecting all others
-    rep.add("transport all", all_keys + plot_keys)
+    # FIXME `added` includes all partial sums of in::transport etc.
+    rep.add("transport all", [])
 
     # Configuration for :func:`check`. Adds a single key, 'transport check', that
     # depends on others and returns a :class:`pandas.Series` of :class:`bool`.
-    ACT = rep.infer_keys("ACT")
-    rep.add("transport check", computations.transport_check, "scenario", ACT)
+    rep.add(
+        "transport check",
+        computations.transport_check,
+        "scenario",
+        "ACT:nl-t-yv-ya-m-h",
+    )
+
+    # Add ex-post mode and demand calculations
+    demand.prepare_reporter(
+        rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
+    )
+
+
+def add_plots(rep: Reporter):
+    try:
+        solved = rep.graph["scenario"].has_solution()
+    except KeyError:
+        solved = False
+
+    queue = []
+
+    for plot in PLOTS:
+        key = f"plot {plot.basename}"
+        queue.append(((key, plot.make_task()), dict()))
+
+    added = rep.add_queue(queue, max_tries=2, fail="raise" if solved else logging.INFO)
+
+    plots = list(k for k in added if str(k).startswith("plot"))
+    rep.add("transport plots", plots)
