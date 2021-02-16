@@ -80,11 +80,23 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
 
 def from_external_data(info: ScenarioInfo, context: Context) -> Computer:
     """Return a Reporter for calculating demand from external data."""
-    # Empty Computer
     c = Computer()
+    prepare_reporter(c, context, exogenous_data=True, info=info)
 
-    # Sets based on `info`; in from_scenario(), these are populated from the
-    # sets in the Scenario
+    return c
+
+
+def qty_from_context(context: Context, ctx_key, **kwargs):
+    """Add context data (i.e. files) to the reporter."""
+    # Rename long column names ("node") to short ("n")
+    qty = Quantity(context.data[ctx_key], **kwargs)
+    return qty.rename({k: v for k, v in RENAME_DIMS.items() if k in qty.coords})
+
+
+def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo):
+    """Add data to `c` that mocks data coming from an actual Scenario."""
+    # Sets based on `info`; in from_scenario(), these are populated from the sets in
+    # the Scenario
     c.add("n", dask.core.quote(list(map(str, info.set["node"]))))
     c.add("y", dask.core.quote(info.set["year"]))
     c.add(
@@ -92,29 +104,27 @@ def from_external_data(info: ScenarioInfo, context: Context) -> Computer:
         pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
     )
 
-    def _add(ctx_key, rep_key, **kwargs):
-        """Add context data (i.e. files) to the reporter."""
-        qty = Quantity(context.data[ctx_key], **kwargs)
-        # Rename long column names ("node") to short ("n")
-        qty = qty.rename({k: v for k, v in RENAME_DIMS.items() if k in qty.coords})
-        c.add(rep_key, qty, index=True, sums=True)
-
-    _add("transport gdp", "GDP:n-y", units="GUSD / year")
-    _add("transport mer-to-ppp", "MERtoPPP:n-y")
-
     # Commodity prices: all equal to 1
     # TODO add external data source
-    context.data["transport PRICE_COMMODITY"] = xr.ones_like(
+    context.data["transport PRICE_COMMODITY"] = 0.1 * xr.ones_like(
         context.data["transport gdp"]
     ).expand_dims({"c": ["transport"]})
-    _add("transport PRICE_COMMODITY", "PRICE_COMMODITY:n-c-y")
 
-    prepare_reporter(c, context)
+    def _add(key, ctx_key, **kwargs):
+        c.add(key, qty_from_context(context, ctx_key, **kwargs), index=True, sums=True)
 
-    return c
+    _add("GDP:n-y", "transport gdp", units="GUSD / year")
+    _add("MERtoPPP:n-y", "transport mer-to-ppp")
+    _add("PRICE_COMMODITY:n-c-y", "transport PRICE_COMMODITY", units="USD / km")
 
 
-def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) -> None:
+def prepare_reporter(
+    rep: Computer,
+    context: Context,
+    configure: bool = True,
+    exogenous_data: bool = False,
+    info: ScenarioInfo = None,
+) -> None:
     """Prepare `rep` for calculating transport demand.
 
     Parameters
@@ -129,6 +139,9 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
         # Configure the reporter; keys are stored
         rep.configure(transport=context["transport config"])
 
+    if exogenous_data:
+        add_exogenous_data(rep, context, info)
+
     rep.graph["config"].update({"output_path": context.get("output_path", Path.cwd())})
 
     # Existing keys, prepared by from_scenario() or from_external_data()
@@ -137,67 +150,68 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
     price_full = rep.full_key("PRICE_COMMODITY").drop("h", "l")
 
     # Values based on configuration
-    speed_key = rep.add("speed:t", speed, "config")
-    whour_key = rep.add("whour:", whour, "config")
-    lambda_key = rep.add("lambda:", _lambda, "config")
+    rep.add("speed:t", speed, "config")
+    rep.add("whour:", whour, "config")
+    rep.add("lambda:", _lambda, "config")
 
     # List of nodes excluding "World"
     # TODO move upstream to message_ix
-    rep.add("nodes ex world", nodes_ex_world, "n")
+    rep.add("n:ex world", nodes_ex_world, "n")
+
+    # List of model years
+    rep.add("y:model", model_periods, "y", "cat_year")
 
     # Base share data
-    rep.add("base shares:n-t-y", base_shares, "nodes ex world", "y", "config")
+    rep.add("base shares:n-t-y", base_shares, "n:ex world", "y", "config")
 
     # Population data from GEA
-    pop_key = rep.add("population:n-y", population, "nodes ex world", "config")
+    pop_key = rep.add("population:n-y", population, "n:ex world", "config")
 
     # Consumer group sizes
     # TODO ixmp is picky here when there is no separate argument to the callable; fix.
     cg_key = rep.add("cg share:n-y-cg", get_consumer_groups, context)
 
     # PPP GDP, total and per capita
-    gdp_ppp = rep.add("product", "GDP PPP:n-y", gdp, mer_to_ppp)
-    gdp_ppp_cap = rep.add("ratio", "GDP PPP per capita:n-y", gdp_ppp, pop_key)
+    gdp_ppp = rep.add("product", "GDP:n-y:PPP", gdp, mer_to_ppp)
+    gdp_ppp_cap = rep.add("ratio", "GDP:n-y:PPP+percapita", gdp_ppp, pop_key)
 
     # Total demand
     rep.add("transport pdt:n-y:total", total_pdt, gdp_ppp_cap, "config")
 
     # Value-of-time multiplier
-    votm_key = rep.add("transport VOT", votm, gdp_ppp_cap)
+    rep.add("votm:n-y", votm, gdp_ppp_cap)
 
     # Select only the price of transport services
     price_sel = rep.add(
-        "transport price",
+        price_full.add_tag("transport"),
         rep.get_comp("select"),
         price_full,
         # TODO should be the full set of prices
         dict(c="transport"),
     )
     # Smooth prices to avoid zig-zag in share projections
-    price = rep.add("smoothed price", smooth, price_sel)
+    price = rep.add(price_sel.add_tag("smooth"), smooth, price_sel)
 
     # Transport costs by mode
-    cost_key = rep.add(
-        "cost",
+    rep.add(
+        "cost:n-y-c-t",
         cost,
         price,
         gdp_ppp_cap,
-        whour_key,
-        speed_key,
-        votm_key,
-        "nodes ex world",
-        "y",
-        "cat_year",
+        "whour:",
+        "speed:t",
+        "votm:n-y",
+        "y:model",
     )
 
     # Share weights
     rep.add(
-        "share weight",
+        "share weight:n-t-y",
         share_weight,
         "base shares:n-t-y",
         gdp_ppp_cap,
-        cost_key,
-        "nodes ex world",
+        "cost:n-y-c-t",
+        "n:ex world",
         "y",
         "t:transport",
         "cat_year",
@@ -208,19 +222,14 @@ def prepare_reporter(rep: Reporter, context: Context, configure: bool = True) ->
     rep.add(
         "shares:n-t-y",
         partial(logit, dim="t"),
-        cost_key,
-        "share weight",
-        lambda_key,
+        "cost:n-y-c-t",
+        "share weight:n-t-y",
+        "lambda:",
         "y",
     )
 
     # Total PDT shared out by mode
-    rep.add(
-        "product",
-        "transport pdt",
-        "transport pdt:n-y:total",
-        "shares:n-t-y",  # For debugging
-    )
+    rep.add("product", "transport pdt", "transport pdt:n-y:total", "shares:n-t-y")
 
     # LDV PDT shared out by mode
     rep.add(
@@ -243,6 +252,17 @@ def base_shares(nodes, y, config):
     )
 
 
+def model_periods(y, cat_year):
+    """Return the elements of `y` beyond the firstmodelyear of `cat_year`."""
+    return list(
+        filter(
+            lambda year: cat_year.query("type_year == 'firstmodelyear'")["year"].item()
+            <= year,
+            y,
+        )
+    )
+
+
 def nodes_ex_world(nodes):
     """Nodes excluding 'World'."""
     return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
@@ -258,9 +278,9 @@ def share_weight(share, gdp_ppp_cap, cost, nodes, y, t, cat_year, config):
 
     # Selectors
     t0 = dict(t=modes[0])
-    y0 = dict(y=cat_year.query("type_year == 'firstmodelyear'")["year"].item())
+    y0 = dict(y=y[0])
     yC = dict(y=config["transport"]["year convergence"])
-    years = list(filter(lambda year: y0["y"] <= year <= yC["y"], y))
+    years = list(filter(lambda year: year <= yC["y"], y))
 
     # Share weights
     weight = xr.DataArray(coords=[nodes, years, modes], dims=["n", "y", "t"])
@@ -322,19 +342,20 @@ def speed(config):
 
 def whour(config):
     """Return work duration [hours / person-year]."""
-    return config["transport"]["work hours"]
+    q = registry(config["transport"]["work hours"])
+    return Quantity(q.magnitude, units=q.units)
 
 
 def _lambda(config):
     """Return lambda parameter for transport mode share equations."""
-    return config["transport"]["lambda"]
+    return Quantity(config["transport"]["lambda"], units="")
 
 
 def total_pdt(gdp_ppp_cap, config):
     """Compute total passenger distance traveled (PDT).
 
-    Simplification of Schäefer et al. (2010): linear interpolation between
-    (0, 0) and the configuration keys "fixed demand" and "fixed GDP".
+    Simplification of Schäefer et al. (2010): linear interpolation between (0, 0) and
+    the configuration keys "fixed demand" and "fixed GDP".
     """
     fix_gdp = registry(config["transport"]["fixed GDP"])
     fix_demand = registry(config["transport"]["fixed demand"])
@@ -349,6 +370,13 @@ def total_pdt(gdp_ppp_cap, config):
     return result
 
 
+def assert_units(qty, exp):
+    """Assert that `qty` has units `exp`."""
+    assert (
+        qty.attrs["_unit"] / qty.attrs["_unit"]._REGISTRY(exp)
+    ).dimensionless, f"Units '{qty.attrs['_unit']:~}'; expected {repr(exp)}"
+
+
 def votm(gdp_ppp_cap):
     """Calculate value of time multiplier.
 
@@ -359,7 +387,13 @@ def votm(gdp_ppp_cap):
     gdp_ppp_cap
         PPP GDP per capita.
     """
-    return 1 / (1 + np.exp((30000 - gdp_ppp_cap * 1000) / 20000))
+    assert_units(gdp_ppp_cap, "kUSD / passenger / year")
+
+    result = Quantity(
+        1 / (1 + np.exp((30 - gdp_ppp_cap) / 20)), units=registry.dimensionless
+    )
+
+    return result
 
 
 def population(nodes, config):
@@ -376,6 +410,7 @@ def population(nodes, config):
     )
 
     # Duplicate 2100 data for 2110
+    # TODO use some kind of ffill operation
     data = xr.concat(
         [data, data.sel(y=2100, drop=False).assign_coords(y=2110)], dim="y"
     )
@@ -385,30 +420,30 @@ def population(nodes, config):
 
 def smooth(qty):
     """Smooth `qty` (e.g. PRICE_COMMODITY) in the ``y`` dimension."""
-    # Convert to an xr.DataArray
-    # NB conversion can be removed once Quantity is SparseDataArray
-    qty = xr.DataArray.from_series(qty)
+    # Convert to xr.DataArray because genno.AttrSeries lacks a .shift() method.
+    # Conversion can be removed once Quantity is SparseDataArray.
+    q = xr.DataArray.from_series(qty.to_series())
 
-    y = qty.coords["y"]
+    y = q.coords["y"]
 
     # General smoothing
-    result = 0.25 * qty.shift(y=-1) + 0.5 * qty + 0.25 * qty.shift(y=1)
+    result = 0.25 * q.shift(y=-1) + 0.5 * q + 0.25 * q.shift(y=1)
 
     # First period
     weights = xr.DataArray([0.4, 0.4, 0.2], coords=[y[:3]], dims=["y"])
-    result.loc[dict(y=y[0])] = (qty * weights).sum("y", min_count=1)
+    result.loc[dict(y=y[0])] = (q * weights).sum("y", min_count=1)
 
     # Final period. “closer to the trend line”
     # NB the inherited R file used a formula equivalent to weights like
     #    [-1/8, 0, 3/8, 3/4]; didn't make much sense.
     weights = xr.DataArray([0.2, 0.2, 0.6], coords=[y[-3:]], dims=["y"])
-    result.loc[dict(y=y[-1])] = (qty * weights).sum("y", min_count=1)
+    result.loc[dict(y=y[-1])] = (q * weights).sum("y", min_count=1)
 
     # NB conversion can be removed once Quantity is SparseDataArray
-    return Quantity(result)
+    return Quantity(result, units=qty.attrs["_unit"])
 
 
-def cost(price, gdp_ppp_cap, whours, speeds, votm, nodes, y, cat_year):
+def cost(price, gdp_ppp_cap, whours, speeds, votm, y):
     """Calculate cost of transport [money / distance].
 
     Calculated from two components:
@@ -420,33 +455,24 @@ def cost(price, gdp_ppp_cap, whours, speeds, votm, nodes, y, cat_year):
        2. the wage rate per hour (`gdp_ppp_cap` / `whours`), and
        3. the travel time per unit distance (1 / `speeds`).
     """
-    # When ixmp.reporting.Quantity is AttrSeries, this is needed to avoid
-    # "ValueError: cannot join with no overlapping index names"
-    speeds = pd.concat({n_: speeds for n_ in nodes}, names="n")
+    add = computations.add
+    product = computations.product
+    ratio = computations.ratio
 
-    # NB for some reason, the 'y' dimension of result becomes `float`, rather
-    #    than `int`, in this step
-    result = price + (gdp_ppp_cap * votm) / (whours * speeds)
+    # NB for some reason, the 'y' dimension of result becomes `float`, rather than
+    # `int`, in this step
+    result = add(
+        price,
+        ratio(
+            product(gdp_ppp_cap, votm),
+            product(speeds, whours),
+        ),
+    )
 
-    # commented: for debugging only; TODO make this configurable
-    # Perturb the cost of one mode
-    # print(result)
-    # mask = result.reset_index()["t"] != "2W"
-    # print(mask)
-    # result = result.where(mask.values, 10 * result)
-    # print(result)
-
-    # Select only years from y0 onwards
-    y0 = cat_year.query("type_year == 'firstmodelyear'")["year"].item()
-    years = list(filter(lambda year: y0 <= year, y))
-    result = result.sel(y=years)
-
-    # log.debug(result)
-
-    return result
+    return result.sel(y=y)
 
 
-def logit(x, k, lamda, y, dim=None):
+def logit(x, k, lamda, y, dim):
     r"""Compute probabilities for a logit random utility model.
 
     The choice probabilities have the form:
@@ -457,14 +483,14 @@ def logit(x, k, lamda, y, dim=None):
                     {\sum_{\forall i \in D} k_i x_i ^{\lambda_i}}
                \forall j \in D
 
-    …where :math:`D` is the dimension named by the `dim` argument. All other
-    dimensions are broadcast automatically.
+    …where :math:`D` is the dimension named by the `dim` argument. All other dimensions
+    are broadcast automatically.
     """
     # Systematic utility
-    u = (k * (x ** lamda)).sel(y=y)
+    u = computations.product(k, computations.pow(x, lamda)).sel(y=y)
 
     # commented: for debugging
     # u.to_csv("u.csv")
 
     # Logit probability
-    return u / u.sum(dim)
+    return computations.ratio(u, u.sum(dim))
