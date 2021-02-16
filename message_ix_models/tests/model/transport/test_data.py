@@ -1,15 +1,15 @@
 import pandas as pd
-from pandas.testing import assert_series_equal
 import pytest
-from pytest import param
 import xarray as xr
+from pandas.testing import assert_series_equal
+from pytest import param
 
 from message_data import testing
 from message_data.model import bare
 from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
-from message_data.model.transport.data.ldv import get_USTIMES_MA3T
 from message_data.model.transport.data.ikarus import get_ikarus_data
+from message_data.model.transport.data.ldv import get_USTIMES_MA3T
 from message_data.tools import load_data, make_df
 
 

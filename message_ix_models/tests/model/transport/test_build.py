@@ -1,5 +1,5 @@
 import pytest
-from pytest import param, mark
+from pytest import mark, param
 
 from message_data import testing
 from message_data.model.transport import build, report

@@ -3,12 +3,10 @@ from copy import deepcopy
 
 import pandas as pd
 import xarray as xr
-
 from ixmp.reporting import Quantity
 
-from message_data.tools import set_info
-from message_data.tools import gea
 from message_data.model.transport.utils import consumer_groups
+from message_data.tools import gea, set_info
 
 log = logging.getLogger(__name__)
 

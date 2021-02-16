@@ -47,10 +47,11 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
     Data is transformed to be suitable for the target scenario, and stored in
     migrate/VERSION/*.csv.
     """
+    from message_data.tools import ScenarioInfo
+
     from .build import main as build
     from .migrate import import_all, load_all, transform
     from .utils import silence_log
-    from message_data.tools import ScenarioInfo
 
     # Load the target scenario from database
     mp = context.get_platform()

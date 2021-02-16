@@ -2,6 +2,7 @@ import pytest
 
 from message_data.model.transport.report import callback
 from message_data.reporting import prepare_reporter, register
+from message_data.testing import NIE
 
 from . import built_transport
 
