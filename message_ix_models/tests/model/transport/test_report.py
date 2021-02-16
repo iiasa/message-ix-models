@@ -11,35 +11,29 @@ def test_register_cb():
     register(callback)
 
 
-@pytest.mark.skip("Very slow")  # TODO debug this
-@pytest.mark.parametrize("regions", ["R11", "R14", "ISR"])
-def test_report_bare(request, transport_context_f, tmp_path, regions):
-    """Run MESSAGE-Transport–specific reporting."""
+@pytest.mark.parametrize(
+    "regions, solved",
+    (
+        pytest.param("R11", True),
+        pytest.param("R11", False),
+        pytest.param("R14", True, marks=NIE),
+        pytest.param("ISR", True, marks=NIE),
+    ),
+)
+def test_report_bare(request, transport_context_f, tmp_path, regions, solved):
+    """Run MESSAGEix-Transport–specific reporting."""
     register(callback)
 
     ctx = transport_context_f
     ctx["output dir"] = tmp_path
     ctx.regions = regions
 
-    scenario = built_transport(request, ctx, solved=True)
+    scenario = built_transport(request, ctx, solved=solved)
 
     rep, key = prepare_reporter(
-        scenario, ctx.get_config_file("report", "global"), "out::transport"
+        scenario, ctx.get_config_file("report", "global"), "transport all"
     )
-
-    # The key is added, can be computed and written to file
-    path = tmp_path / "out__transport.xlsx"
-    rep.write(key, path)
-
-    # commented: for debugging
-    # print(path)
-
-    # out::transport contains a specific, defined aggregate
-    rep.get(key).sel(t="freight truck")
-
-    # in::transport can be reported to file
-    key = rep.full_key("in::transport")
-    rep.write(key, tmp_path / "in__transport.xlsx")
+    rep.configure(output_dir=tmp_path)
 
     # Get the catch-all key, including plots etc.
-    rep.get("transport all")
+    rep.get(key)

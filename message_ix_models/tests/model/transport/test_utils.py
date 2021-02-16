@@ -1,6 +1,7 @@
 import pandas as pd
 import pandas.testing as pdt
 import xarray as xr
+from iam_units import registry
 
 from message_data.model.transport.utils import (
     add_commodity_and_level,
@@ -33,18 +34,19 @@ def test_add_cl(transport_context):
         pdt.assert_series_equal(df_in[col], df_out[col])
 
 
-def test_read_config(session_context):
-    # read_config() returns a reference to the current context
-    context = read_config()
-    assert context is session_context
+def test_read_config(test_context):
+    ctx = test_context
+
+    # read_config() returns nothing
+    assert read_config(test_context) is None
 
     # Data tables are loaded
-    assert isinstance(context.data["transport mer-to-ppp"], xr.DataArray)
-    assert context.data["transport mer-to-ppp"].dims == ("node", "year")
+    assert isinstance(ctx.data["transport mer-to-ppp"], xr.DataArray)
+    assert ctx.data["transport mer-to-ppp"].dims == ("node", "year")
 
     # Scalar parameters are loaded
-    assert "scaling" in context["transport config"]
-    assert context["transport config"]["work hours"] == 200 * 8
+    assert "scaling" in ctx["transport config"]
+    assert 200 * 8 == registry(ctx["transport config"]["work hours"]).magnitude
 
 
 def test_consumer_groups(transport_context):

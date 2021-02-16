@@ -23,17 +23,30 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
     ctx.regions = regions
     ctx.output_path = tmp_path
 
-    info = get_spec(ctx)["add"]
-    rep = demand.from_external_data(info, context=ctx)
+    spec = get_spec(ctx)
+
+    rep = message_ix.Reporter()
+    demand.prepare_reporter(rep, context=ctx, exogenous_data=True, info=spec["add"])
+    rep.configure(output_dir=tmp_path)
+
+    for key, unit in (
+        ("GDP:n-y:PPP+percapita", "kUSD / passenger / year"),
+        ("votm:n-y", ""),
+        ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
+        ("cost:n-y-c-t", "USD / km"),
+        ("transport pdt:n-y-t", "km / year"),
+    ):
+        print(f"\n\n-- {key} --\n\n")
+        try:
+            qty = rep.get(key)
+            demand.assert_units(qty, unit)
+        except AssertionError:
+            print(rep.describe(key))
+            print(qty, qty.attrs)
+            raise
 
     # These units are implied by the test of "transport pdt:*":
-    # "GDP PPP:n-y" → "MUSD / year"
-    # "GDP PPP per capita:n-y" → "kUSD / passenger / year"
     # "transport pdt:n-y:total") → "Mm / year"
-
-    # Share weight
-    print(rep.describe("share weight"))
-    rep.get("share weight")
 
     # Total demand by mode
     key = "transport pdt:n-y-t"
@@ -45,16 +58,9 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
     dsk, deps = cull(rep.graph, key)
     dask.visualize(dsk, filename=str(tmp_path / "demand-graph.pdf"))
 
-    # Can be computed
-    result = rep.get(key)
-    # Has correct units: km / year / capita
-    assert registry.Quantity(1, result.attrs["_unit"]) == registry("1 km / year")
-
-    # Can be plotted
-    key = "transport pdt plot"
-    p = plot.DemandExo
-    rep.add(key, tuple([p(), "config"] + p.inputs))
-    rep.get(key)
+    # Plots can be generated
+    report.add_plots(rep)
+    print(rep.get("plot demand-exo"))
 
 
 @pytest.mark.skip(reason="Requires user's context")
