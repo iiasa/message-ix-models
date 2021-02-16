@@ -218,7 +218,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
     config.setdefault("output_dir", output_path)
 
     # Handle configuration
-    rep.configure(**config)
+    rep.configure(**config, fail="raise" if scenario.has_solution() else logging.DEBUG)
 
     for callback in CALLBACKS:
         callback(rep)
