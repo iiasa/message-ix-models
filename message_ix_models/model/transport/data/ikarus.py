@@ -1,8 +1,8 @@
 """Prepare non-LDV data from the IKARUS model via GEAM_TRP_techinput.xlsx."""
 from collections import defaultdict
 
-from openpyxl import load_workbook
 import pandas as pd
+from openpyxl import load_workbook
 
 from message_data.tools import broadcast, make_df, same_node
 

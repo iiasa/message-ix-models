@@ -1,11 +1,11 @@
-from iam_units import registry
 import message_ix
 import pytest
+from iam_units import registry
 from pytest import param
 
 from message_data import testing
 from message_data.model.bare import get_spec
-from message_data.model.transport import demand, plot
+from message_data.model.transport import demand, report
 
 
 def test_demand_dummy(transport_context):

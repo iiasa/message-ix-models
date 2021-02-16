@@ -4,10 +4,10 @@ from dask.core import quote
 from message_ix.reporting import Reporter
 
 from message_data.tools import Context
-from . import computations
-from .utils import read_config
-from .plot import PLOTS
 
+from . import computations
+from .plot import PLOTS
+from .utils import read_config
 
 log = logging.getLogger(__name__)
 

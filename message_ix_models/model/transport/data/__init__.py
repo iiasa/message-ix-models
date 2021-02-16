@@ -1,25 +1,24 @@
 """Generate input data."""
-from collections import defaultdict
 import logging
+from collections import defaultdict
 
 import pandas as pd
 
+from message_data.model.transport.utils import add_commodity_and_level
 from message_data.tools import (
     ScenarioInfo,
     add_par_data,
     broadcast,
-    get_context,
     make_df,
     make_io,
     make_matched_dfs,
     make_source_tech,
     same_node,
 )
-from message_data.model.transport.utils import add_commodity_and_level
+
 from .groups import get_consumer_groups  # noqa: F401
 from .ldv import get_ldv_data
 from .non_ldv import get_non_ldv_data
-
 
 log = logging.getLogger(__name__)
 

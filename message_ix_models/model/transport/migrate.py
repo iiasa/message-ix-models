@@ -1,14 +1,14 @@
+import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-import logging
 
 import pandas as pd
 from tqdm import tqdm
 
 from message_data.tools.messagev import CHNFile, DICFile, INPFile
-from .build import generate_set_elements
 
+from .build import generate_set_elements
 
 log = logging.getLogger(__name__)
 

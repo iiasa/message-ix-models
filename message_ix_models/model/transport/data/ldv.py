@@ -1,12 +1,11 @@
 import logging
 from collections import defaultdict
 
-from openpyxl import load_workbook
 import pandas as pd
+from openpyxl import load_workbook
 
 from message_data.model.transport.utils import add_commodity_and_level
 from message_data.tools import cached, check_support, make_df, make_io, make_matched_dfs
-
 
 log = logging.getLogger(__name__)
 

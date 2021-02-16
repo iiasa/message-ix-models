@@ -7,12 +7,13 @@ import message_ix
 import numpy as np
 import pandas as pd
 import xarray as xr
-from genno import Computer
+from genno import Computer, computations
 from iam_units import registry
-from ixmp.reporting import RENAME_DIMS, Quantity
-from message_ix.reporting import Reporter
+from ixmp.reporting import RENAME_DIMS
+from message_ix.reporting import Quantity, Reporter
 
 from message_data.tools import Context, ScenarioInfo, broadcast, gea, make_df
+
 from .build import generate_set_elements
 from .data.groups import get_consumer_groups, get_gea_population
 

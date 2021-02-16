@@ -1,10 +1,11 @@
+import logging
 from functools import lru_cache, partial
 from itertools import product
-import logging
 from typing import Mapping
 
 from message_data.model import bare, build, disutility
 from message_data.tools import Code, ScenarioInfo, get_context, set_info
+
 from .utils import consumer_groups
 
 log = logging.getLogger(__name__)

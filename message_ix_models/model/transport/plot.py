@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+import pint
 import plotnine as p9
 from genno.compat.plotnine import Plot as BasePlot
 from ixmp.reporting import computations
