@@ -18,7 +18,7 @@ def read_config(context=None):
 
     if "transport set" in context:
         # Already loaded
-        return context
+        return
 
     # Load transport configuration
     for parts in METADATA:
