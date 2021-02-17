@@ -5,14 +5,19 @@ import pandas as pd
 from pycountry import countries
 import yaml
 
+from item import historical
 from message_data.model.transport import read_config
-from message_data.model.transport.data.ikarus import convert_units
+from message_data.tools.utilities.convert_units import convert_units
+from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.tools import make_df, same_node, set_info, Code, get_context
 
 
-UNITS = dict(
-    Population=(1.0e-6, None, None),
-)
+UNITS = {
+    "Population": (1.0e-6, None, None),
+    "Vehicle stock": (1.0e4, None, "vehicle"),
+    "Passenger-Kilometers": (100, None, "megapassenger km"),
+    "Ton-Kilometers": (100, None, "megaton km"),
+}
 
 FILES = {
     "Passenger activity": ("Passenger-km.csv", 4),
@@ -24,7 +29,30 @@ FILES = {
 POP_FILE = "pop_CHN_IND.csv"
 
 
-# TODO: import split_units from iea_eei.py and add extra argument for *pat* in .rsplit()
+def split_variable(s):
+    """Split strings in :class:`pandas.Series` *s* into Variable and Mode.
+
+    Parameters
+    ----------
+    s : pandas.Series
+
+    Returns
+    -------
+    DataFrame : pandas.DataFrame
+        DataFrame with two columns: Variable names and their respective Mode.
+    """
+    # Split str in *s* into variable name and units
+    df = s.str.rsplit(pat=" of ", n=1, expand=True)
+    df[1].fillna("All", inplace=True)
+
+    # Remove remaining parentheses from units column and assign labels
+    df[1] = df[1].str.replace(")", "").str.replace("/", " / ")
+    df.columns = ["Var", "Vehicle Type"]
+    return df
+
+
+# TODO: import split_units from iea_eei.py and add extra argument for *pat* in
+#  .rsplit(). Use pat=" of " when calling here and " (" when calling in iea_eei.py
 def split_units(s):
     """Split units (btw parentheses) from variable names of :class:`pandas.Series` *s*.
 
@@ -42,7 +70,8 @@ def split_units(s):
 
     # Remove remaining parentheses from units column and assign labels
     df[1] = df[1].str.replace(")", "").str.replace("/", " / ")
-    df.columns = ["Variable", "Units"]
+    df[0] = df[0].str.replace("Possession", "Vehicle Stock")
+    df.columns = ["Variable", "Unit"]
     return df
 
 
@@ -53,9 +82,9 @@ def get_chn_ind_pop(ctx):
     <https://stats.oecd.org/Index.aspx?#>`_ website, filtering data for China and India.
     """
     pop = pd.read_csv(ctx.get_path("transport", POP_FILE), header=0)
-    pop.rename(columns={"LOCATION": "ISO_code", "Time": "Year"}, inplace=True)
+    pop.rename(columns={"LOCATION": "ISO Code", "Time": "Year"}, inplace=True)
     pop.drop(
-        [x for x in pop.columns if x not in ["ISO_code", "Year", "Value"]],
+        [x for x in pop.columns if x not in ["ISO Code", "Year", "Value"]],
         axis=1,
         inplace=True,
     )
@@ -76,8 +105,9 @@ def get_chn_ind_pop(ctx):
 def get_chn_ind_data(ctx):
     """Read transport activity data from China and India.
 
-    The data is read from from ``/China`` folder and imported from iTEM project,
-    and the processed data is merged into IEA's EEI datasets for scenario calibration.
+    The data is read from from ``/China`` folder (data for China) and imported from
+    iTEM project (data for India), and the processed data is merged into IEA's EEI
+    datasets for scenario calibration.
 
     Parameters
     ----------
@@ -100,26 +130,58 @@ def get_chn_ind_data(ctx):
     )
     # Reach **tidy data** structure
     df = df.melt(
-        id_vars=["Variable", "Units"], var_name="Year", value_name="Value"
+        id_vars=["Variable", "Unit"], var_name="Year", value_name="Value"
     ).sort_values("Year")
-    # Add "ISO_code" column to *df*, and move to first position
-    df["ISO_code"] = "CHN"
-    df.set_index("ISO_code", inplace=True)
+
+    # Add "ISO Code" column to *df*, and move to first position
+    df["ISO Code"] = "CHN"
+    df.set_index("ISO Code", inplace=True)
     df.reset_index(inplace=True)
     df["Year"] = pd.to_numeric(df["Year"])
 
     # Drop 2019 values so it can concat with population values
-    df = df.drop(df[df["Year"] == 2019].index)
+    df.drop(df[df["Year"] == 2019].index, inplace=True)
+
+    # Split Variable column into Variable and Mode
+    df = (
+        pd.concat([df, split_variable(df["Variable"])], axis=1)
+        .drop(["Variable"], axis=1)
+        .rename(columns={"Var": "Variable"})
+    )
+
+    # Reorder columns of *df*
+    cols = df.columns.tolist()
+    cols = [cols[0]] + cols[-2:] + cols[1:4]
+    df = df[cols]
 
     # Concat population values
     df = pd.concat([df, get_chn_ind_pop(ctx)], ignore_index=True).sort_values(
-        ["ISO_code", "Variable", "Year"], ignore_index=True
+        ["ISO Code", "Variable", "Year"], ignore_index=True
     )
-    chn = df[df["ISO_code"] == "CHN"].pivot(
-        index="Year", columns="Variable", values="Value"
+
+    # Import data from iTEM database file T000.csv, including inland passenger
+    # transport activity data
+    df_raw = historical.process(0)
+    df_raw.drop(
+        columns=["Source", "Country", "Region", "Technology", "Fuel", "ID"],
+        inplace=True,
     )
-    ind = df[df["ISO_code"] == "IND"].pivot(
-        index="Year", columns="Variable", values="Value"
+    # Filter values for CHN & IND between 2000-2018
+    df_raw = df_raw[
+        (df_raw["ISO Code"].isin(["IND", "CHN"]))
+        & (df_raw["Year"].isin(list(np.arange(2000, 2019))))
+    ].sort_values(["ISO Code", "Mode"], ignore_index=True)
+
+    chn = df[df["ISO Code"] == "CHN"].pivot(
+        index="Year", columns=["Variable", "Vehicle Type"], values="Value"
+    )
+    for var in list(df.columns.get_level_values("Variable")):
+        df[var] = df[var].apply(convert_units, context=ctx, dict_units=UNITS)
+
+    ind = (
+        df[df["ISO Code"] == "IND"]
+        .pivot(index="Year", columns="Variable", values="Value")
+        .apply(convert_units, context=ctx, dict_units=UNITS)
     )
 
     return df
