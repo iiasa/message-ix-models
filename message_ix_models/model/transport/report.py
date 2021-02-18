@@ -121,6 +121,9 @@ def callback(rep: Reporter):
         rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
     )
 
+    # Add plots
+    add_plots(rep)
+
 
 def add_plots(rep: Reporter):
     try:
@@ -137,4 +140,7 @@ def add_plots(rep: Reporter):
     added = rep.add_queue(queue, max_tries=2, fail="raise" if solved else logging.INFO)
 
     plots = list(k for k in added if str(k).startswith("plot"))
-    rep.add("transport plots", plots)
+
+    key = "transport plots"
+    log.info(f"Add {repr(key)} collecting {len(plots)} plots")
+    rep.add(key, plots)
