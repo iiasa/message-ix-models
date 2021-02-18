@@ -2,12 +2,12 @@ import logging
 from functools import partial
 from pathlib import Path
 
-import dask
 import message_ix
 import numpy as np
 import pandas as pd
 import xarray as xr
-from genno import Computer, computations
+from dask.core import quote
+from genno import Computer, KeyExistsError, computations
 from iam_units import registry
 from ixmp.reporting import RENAME_DIMS
 from message_ix.reporting import Quantity, Reporter

@@ -1,6 +1,5 @@
 import message_ix
 import pytest
-from iam_units import registry
 from pytest import param
 
 from message_data import testing

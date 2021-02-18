@@ -58,7 +58,7 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
     from .utils import silence_log
 
     # Load the target scenario from database
-    mp = context.get_platform()
+    # mp = context.get_platform()
     s_target = dest
     info = ScenarioInfo(s_target)
 
