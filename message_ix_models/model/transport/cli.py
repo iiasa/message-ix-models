@@ -1,8 +1,12 @@
+import logging
 from pathlib import Path
 
 import click
 
+from message_data.logging import mark_time
 from message_data.tools.cli import clone_to_dest, common_params
+
+log = logging.getLogger(__name__)
 
 
 @click.group("transport")
