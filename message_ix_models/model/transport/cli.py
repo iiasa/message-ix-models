@@ -87,22 +87,57 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 @click.option(
     "--fast", is_flag=True, help="Skip removing data for removed set elements."
 )
+@click.option("--report", help="Path for diagnostic reports of the built scenario.")
 @click.pass_obj
 def build_cmd(context, dest, **options):
     """Prepare the model."""
-    from .build import main
+    from message_data.model import bare
+    from message_data.model.transport import build
 
-    # Handle --regions
-    regions = options.get("regions")
+    # Handle --regions; use a sensible default for MESSAGEix-Transport
+    regions = options.pop("regions", None)
     if not regions:
-        print("Using default --regions=R11")
+        log.info("Use default --regions=R11")
         regions = "R11"
     context.regions = regions
 
-    # No defaults; force the user to provide these
+    # Other defaults from .model.bare
+    context.use_defaults(bare.SETTINGS)
+
+    # Either clone from --dest, or create a new, bare RES
     scenario, platform = clone_to_dest(context, defaults=dict())
 
-    main(context, scenario, **options)
+    # Build MESSAGEix-Transport
+    build.main(context, scenario, **options)
+
+    mark_time()
+
+    if options["report"]:
+        # Also output diagnostic reports
+        from message_data.model.transport import report
+        from message_data.reporting import prepare_reporter, register
+
+        register(report.callback)
+
+        rep, key = prepare_reporter(
+            scenario, context.get_config_file("report", "global")
+        )
+        rep.configure(output_dir=Path(options["report"]).expanduser())
+
+        # Add a catch-all key, including plots etc.
+        rep.add(
+            "_plots",
+            ["plot demand-exo", "plot var-cost", "plot fix-cost", "plot inv-cost"],
+        )
+
+        mark_time()
+
+        log.info(f"Report plots to {rep.graph['config']['output_dir']}")
+        log.debug(rep.describe("_plots"))
+
+        rep.get("_plots")
+
+        mark_time()
 
     del platform
 

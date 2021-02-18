@@ -66,12 +66,13 @@ def demand(context):
     rep = from_external_data(context["transport build info"], context)
 
     # Generate the demand data; convert to pd.DataFrame
-    data = rep.get("transport pdt:n-y-t").to_series().reset_index(name="value")
+    pdt1 = rep.get("transport pdt:n-y-t")
+    data = pdt1.to_series().reset_index(name="value")
 
     common = dict(
         level="useful",
         time="year",
-        unit="km",
+        unit="km",  # TODO reduce this from the units of pdt1
     )
 
     # Convert to message_ix layout

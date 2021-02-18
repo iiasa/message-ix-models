@@ -227,7 +227,7 @@ def prepare_reporter(
         gdp_ppp_cap,
         "cost:n-y-c-t",
         "n:ex world",
-        "y",
+        "y:model",
         "t:transport",
         "cat_year",
         "config",
@@ -240,7 +240,7 @@ def prepare_reporter(
         "cost:n-y-c-t",
         "share weight:n-t-y",
         "lambda:",
-        "y",
+        "y:model",
     )
 
     # Total PDT shared out by mode
