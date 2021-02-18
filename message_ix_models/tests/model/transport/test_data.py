@@ -135,21 +135,20 @@ def test_USTIMES_MA3T(transport_context_f, regions):
     ctx.regions = regions
 
     # Info about the corresponding RES
-    res_info = bare.get_spec(ctx)["add"]
+    info = bare.get_spec(ctx)["add"]
 
-    ctx["transport build info"] = res_info
+    ctx["transport build info"] = info
 
     # Method runs without error
     data = get_USTIMES_MA3T(ctx)
 
-    # # Dump data for debugging
-    # for par, df in data.items():
-    #     df.to_csv(f"debug-USTIMES_MA3T-{par}.csv")
-
-    # Data have the correct size: 11 region; 11 technology * 5 years to 2050;
-    # 1 technology for only 2010
-    for par, df in data.items():
-        assert len(df) == len(res_info.N[1:]) * ((5 * 11) + 1)
+    # Data have the correct size:
+    for par_name, df in data.items():
+        # Data covers all the years
+        assert info.Y == sorted(df["year_vtg"].unique())
+        # Total length of data: # of regions × 11 technology × 5 years to 2050; 1
+        # technology (historical ICE) for only 2010.
+        assert len(df) == len(info.N[1:]) * ((5 * 11) + 1)
 
 
 @pytest.mark.parametrize(
