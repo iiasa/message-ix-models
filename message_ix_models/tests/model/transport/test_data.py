@@ -146,9 +146,9 @@ def test_USTIMES_MA3T(transport_context_f, regions):
     for par_name, df in data.items():
         # Data covers all the years
         assert info.Y == sorted(df["year_vtg"].unique())
-        # Total length of data: # of regions × 11 technology × 5 years to 2050; 1
-        # technology (historical ICE) for only 2010.
-        assert len(df) == len(info.N[1:]) * ((5 * 11) + 1)
+        # Total length of data: # of regions × (11 technology × # of periods; plus 1
+        # technology (historical ICE) for only 2010)
+        assert len(df) == len(info.N[1:]) * ((11 * len(info.Y)) + 1)
 
 
 @pytest.mark.parametrize(
