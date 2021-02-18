@@ -5,7 +5,14 @@ import pandas as pd
 from openpyxl import load_workbook
 
 from message_data.model.transport.utils import add_commodity_and_level
-from message_data.tools import cached, check_support, make_df, make_io, make_matched_dfs
+from message_data.tools import (
+    cached,
+    check_support,
+    ffill,
+    make_df,
+    make_io,
+    make_matched_dfs,
+)
 
 log = logging.getLogger(__name__)
 
@@ -95,8 +102,19 @@ def get_USTIMES_MA3T(context):
                 .dropna(subset=["value"])
             )
 
-    # Concatenate data frames
-    data = {par: pd.concat(dfs, ignore_index=True) for par, dfs in data.items()}
+    for par, dfs in data.items():
+        # Dimension to forward fill along
+        for col in ("year_vtg", "year"):
+            if col in df.columns:
+                break
+        # - Concatenate data frames.
+        # - Forward-fill over uncovered periods in the model horizon.
+        data[par] = pd.concat(dfs, ignore_index=True).pipe(
+            ffill,
+            col,
+            info.Y,
+            expr="year_act = year_vtg" if col == "year_vtg" else None,
+        )
 
     # Convert 'efficiency' into 'input' and 'output' parameter data
     base = data.pop("efficiency")
