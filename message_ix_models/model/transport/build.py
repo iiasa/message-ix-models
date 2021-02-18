@@ -81,7 +81,7 @@ def generate_codes(dims, template):
 
 
 def main(context, scenario, **options):
-    """Set up MESSAGE-Transport on `scenario`.
+    """Build MESSAGEix-Transport on `scenario`.
 
     See also
     --------
@@ -91,7 +91,7 @@ def main(context, scenario, **options):
     """
     from .data import add_data
 
-    log.info("Set up MESSAGE-Transport")
+    log.info("Build MESSAGEix-Transport")
 
     # Generate the description of the structure / structure changes
     spec = get_spec(context)
