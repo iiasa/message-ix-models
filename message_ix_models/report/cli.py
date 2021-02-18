@@ -6,9 +6,8 @@ from pathlib import Path
 import click
 import yaml
 
+from message_data.logging import mark_time
 from message_data.reporting import register, report
-from message_data.tools.cli import mark_time
-
 
 log = logging.getLogger(__name__)
 
