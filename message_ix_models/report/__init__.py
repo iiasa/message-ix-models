@@ -186,7 +186,7 @@ def prepare_reporter(scenario, config, key, output_path=None):
         Same as *key*, in full resolution, if any.
 
     """
-    log.info("Preparing reporter")
+    log.info("Prepare reporter")
 
     # Create a Reporter for *scenario*
     rep = Reporter.from_scenario(scenario)
