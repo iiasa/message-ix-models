@@ -59,17 +59,20 @@ def callback(rep: Reporter):
     read_config(context)
 
     # Node list / regional aggregation
-    # Get the name of one node
-    _n = rep.get("n")[-1]
-    context.regions = _n.split("_")[0]
-    log.info(f"Infer regional aggregation {repr(context.regions)} from {repr(_n)}")
+    if "regions" not in context:
+        # Get the name of one node
+        _n = rep.get("n")[-1]
+        context.regions = _n.split("_")[0]
+        log.info(f"Infer regional aggregation {repr(context.regions)} from {repr(_n)}")
 
-    # Add configuration to the Reporter
     config = context["transport config"]["report"]
     config.update(context["transport config"])
+
+    # Add configuration to the Reporter
     rep.graph["config"].setdefault("transport", {})
     rep.graph["config"]["transport"].update(config.copy())
 
+    # Get a specification that describes this setting
     spec = build.get_spec(context)
 
     # Set of all transport technologies
