@@ -46,7 +46,8 @@ def callback(rep: Reporter):
     """
     from . import build, demand
 
-    rep.modules.append(computations)
+    if computations not in rep.modules:
+        rep.modules.append(computations)
 
     try:
         solved = rep.graph["scenario"].has_solution()
