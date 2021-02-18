@@ -161,29 +161,29 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
     log.info(f"Result{msg}")
 
 
-def prepare_reporter(scenario, config, key, output_path=None):
+def prepare_reporter(scenario, config, key=None, output_path=None):
     """Prepare to report *key* from *scenario*.
 
     Parameters
     ----------
     scenario : ixmp.Scenario
-        MESSAGE-GLOBIOM scenario containing a solution, to be reported.
+        Scenario containing a solution, to be reported.
     config : os.Pathlike or dict-like
         Reporting configuration path or dictionary.
-    key : str or ixmp.reporting.Key
+    key : str or ixmp.reporting.Key, optional
         Quantity or node to compute. The computation is not triggered (i.e.
         :meth:`get <ixmp.reporting.Reporter.get>` is not called); but the
-        corresponding, full-resolution Key is returned.
-    output_path : os.Pathlike
-        If given, a computation ``cli-output`` is added to the Reporter which
-        writes *key* to this path.
+        corresponding, full-resolution Key, if any, is returned.
+    output_path : os.Pathlike, optional
+        If given, a computation ``cli-output`` is added to the Reporter which writes
+        `key` to this path.
 
     Returns
     -------
-    ixmp.reporting.Reporter
+    .Reporter
         Reporter prepared with MESSAGE-GLOBIOM calculations.
-    ixmp.reporting.Key
-        Same as *key*, in full resolution, if any.
+    .Key
+        Same as `key`, but in full resolution, if any.
 
     """
     log.info("Prepare reporter")
@@ -224,14 +224,16 @@ def prepare_reporter(scenario, config, key, output_path=None):
         callback(rep)
 
     # If needed, get the full key for *quantity*
-    key = rep.infer_keys(key)
+    if key:
+        key = rep.infer_keys(key)
 
-    if output_path and not output_path.is_dir():
-        # Add a new computation that writes *key* to the specified file
-        key = rep.add(
-            "cli-output", (partial(rep.get_comp("write_report"), path=output_path), key)
-        )
+        if output_path and not output_path.is_dir():
+            # Add a new computation that writes *key* to the specified file
+            key = rep.add(
+                "cli-output",
+                (partial(rep.get_comp("write_report"), path=output_path), key),
+            )
 
     log.info("…done")
 
-    return rep, key
+    return rep, rep.default_key
