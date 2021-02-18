@@ -35,7 +35,10 @@ def get_ldv_data(context):
 
 @cached
 def get_USTIMES_MA3T(context):
-    """Read LDV cost and efficiency data from US-TIMES and MA3T."""
+    """Read LDV cost and efficiency data from US-TIMES and MA3T.
+
+    .. todo:: Some calculations are performed in the spreadsheet; transfer to code.
+    """
     # Compatibility checks
     check_support(
         context,
@@ -66,29 +69,29 @@ def get_USTIMES_MA3T(context):
         sheet = wb[f"MESSAGE_LDV_{sheet_node}"]
 
         # Read tables for efficiency, investment, and fixed O&M cost
-        # NB fix_cost varies by distance driven, thus this is the value for
-        #    average driving.
+        # NB fix_cost varies by distance driven, thus this is the value for average
+        #    driving.
         # TODO calculate the values for modest and frequent driving
-        # TODO these values are calculated; transfer the calculations to code
         for par_name, cells, unit in TABLES:
             df = pd.DataFrame(list(sheet[cells])).applymap(lambda c: c.value)
 
+            # - Make the first row the headers.
+            # - Drop extra columns.
+            # - Use 'MESSAGE name' as the technology name.
+            # - Pivot to long format.
+            # - Year as integer.
+            # - Within the model horizon/time resolution.
+            # - Assign values.
+            # - Drop NA values (e.g. ICE_L_ptrp after the first year).
             data[par_name].append(
-                # Make the first row the headers
-                df.iloc[1:, :].set_axis(df.loc[0, :], axis=1)
-                # Drop extra columns
+                df.iloc[1:, :]
+                .set_axis(df.loc[0, :], axis=1)
                 .drop(["Technology", "Description"], axis=1)
-                # Use 'MESSAGE name' as the technology name
                 .rename(columns={"MESSAGE name": "technology"})
-                # Pivot to long format
                 .melt(id_vars=["technology"], var_name="year")
-                # Year as integer
                 .astype({"year": int})
-                # Within the model horizon/time resolution
                 .query(f"year in [{', '.join(map(str, info.Y))}]")
-                # Assign values
                 .assign(node=node, unit=unit)
-                # Drop NA values (e.g. ICE_L_ptrp after the first year)
                 .dropna(subset=["value"])
             )
 
