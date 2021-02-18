@@ -93,17 +93,8 @@ def qty_from_context(context: Context, ctx_key, **kwargs):
     return qty.rename({k: v for k, v in RENAME_DIMS.items() if k in qty.coords})
 
 
-def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo):
+def add_exogenous_data(c: Computer, context: Context):
     """Add data to `c` that mocks data coming from an actual Scenario."""
-    # Sets based on `info`; in from_scenario(), these are populated from the sets in
-    # the Scenario
-    c.add("n", dask.core.quote(list(map(str, info.set["node"]))))
-    c.add("y", dask.core.quote(info.set["year"]))
-    c.add(
-        "cat_year",
-        pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
-    )
-
     # Commodity prices: all equal to 1
     # TODO add external data source
     context.data["transport PRICE_COMMODITY"] = 0.1 * xr.ones_like(
@@ -116,6 +107,28 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo):
     _add("GDP:n-y", "transport gdp", units="GUSD / year")
     _add("MERtoPPP:n-y", "transport mer-to-ppp")
     _add("PRICE_COMMODITY:n-c-y", "transport PRICE_COMMODITY", units="USD / km")
+
+
+def add_structure(c: Computer, info: ScenarioInfo):
+    """Add keys to `c` for model structure required by demand computations.
+
+    This uses `info` to mock the contents that would be reported from an already-
+    populated Scenario for sets "node", "year", and "cat_year".
+    """
+    for key, value in (
+        ("n", quote(list(map(str, info.set["node"])))),
+        ("y", quote(info.set["year"])),
+        (
+            "cat_year",
+            pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
+        ),
+    ):
+        try:
+            # strict=True to raise an exception if `key` exists
+            c.add_single(key, value, strict=True)
+        except KeyExistsError:
+            # Already present; don't overwrite
+            continue
 
 
 def prepare_reporter(
@@ -139,8 +152,10 @@ def prepare_reporter(
         # Configure the reporter; keys are stored
         rep.configure(transport=context["transport config"])
 
+    add_structure(rep, info)
+
     if exogenous_data:
-        add_exogenous_data(rep, context, info)
+        add_exogenous_data(rep, context)
 
     rep.graph["config"].update({"output_path": context.get("output_path", Path.cwd())})
 
