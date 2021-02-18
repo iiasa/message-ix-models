@@ -53,8 +53,6 @@ def cli(context, config_file, module, output_path, from_file, verbose, dry_run, 
     With --from-file, read multiple Scenario identifiers from FILE, and report each one.
     In this usage, --output-path may only be a directory.
     """
-    mark_time(quiet=True)
-
     # --config: use the option value as if it were an absolute path
     config = Path(config_file)
     if not config.exists():
