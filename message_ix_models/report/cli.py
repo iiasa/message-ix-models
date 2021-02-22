@@ -37,10 +37,9 @@ log = logging.getLogger(__name__)
     type=click.Path(exists=True, dir_okay=False),
     help="Report multiple Scenarios listed in FILE.",
 )
-@click.option("--verbose", is_flag=True, help="Set log level to DEBUG.")
 @click.option("--dry-run", "-n", is_flag=True, help="Only show what would be done.")
 @click.argument("key", default="message:default")
-def cli(context, config_file, module, output_path, from_file, verbose, dry_run, key):
+def cli(context, config_file, module, output_path, from_file, dry_run, key):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message:default', but may alsobe the name
@@ -65,17 +64,13 @@ def cli(context, config_file, module, output_path, from_file, verbose, dry_run, 
     # --output/-o: handle "~"
     output_path = output_path.expanduser()
 
-    if verbose:
-        log.setLevel("DEBUG")
-        logging.getLogger("ixmp").setLevel("DEBUG")
-
     # Load modules
     module = module or ""
     for name in filter(lambda n: len(n), module.split(",")):
         name = f"message_data.{name}.report"
         __import__(name)
         register(sys.modules[name].callback)
-        print(f"Registered reporting config from {name}")
+        log.info(f"Registered reporting config from {name}")
 
     # Prepare a list of Context objects, each referring to one Scenario
     contexts = []
@@ -117,4 +112,10 @@ def cli(context, config_file, module, output_path, from_file, verbose, dry_run, 
         scenario = context.get_scenario()
         mark_time()
 
-        report(scenario, key, config, ctx.output_path, dry_run)
+        report(
+            scenario,
+            config=config,
+            key=key,
+            output_path=ctx.output_path,
+            dry_run=dry_run,
+        )
