@@ -244,7 +244,10 @@ def prepare_reporter(
     )
 
     # Total PDT shared out by mode
-    rep.add("product", "transport pdt", "transport pdt:n-y:total", "shares:n-t-y")
+    pdt_key = rep.add(
+        "product", "transport pdt", "transport pdt:n-y:total", "shares:n-t-y"
+    )
+    rep.add("ratio", pdt_key.add_tag("capita"), pdt_key, pop_key)
 
     # LDV PDT shared out by mode
     rep.add(
@@ -262,6 +265,7 @@ def prepare_reporter(
 def base_shares(nodes, y, config):
     """Return base mode shares."""
     modes = config["transport"]["demand modes"]
+    # TODO replace with input data
     return Quantity(
         xr.DataArray(1.0 / len(modes), coords=[nodes, y, modes], dims=["n", "y", "t"])
     )
