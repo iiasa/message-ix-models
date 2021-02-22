@@ -65,7 +65,7 @@ class FixCost(Plot):
         unit = data["unit"].unique()[0]
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(p9.aes(x="ya", y="fix_cost", color="t", group="yv"), group_df)
+                p9.ggplot(p9.aes(x="ya", y="fix_cost", color="t", group="t"), group_df)
                 + p9.geom_line()
                 + p9.geom_point()
                 + p9.expand_limits(y=[0, y_max])
