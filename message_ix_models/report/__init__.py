@@ -150,7 +150,9 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
 
     rep, key = prepare_reporter(scenario, config, key, output_path)
 
-    log.info(f"Prepare to report:\n\n{rep.describe(key)}")
+    log.info(f"Prepare to report {'(DRY RUN)' if dry_run else ''}")
+    log.info(key)
+    log.debug(rep.describe(key))
 
     if dry_run:
         return
@@ -223,8 +225,8 @@ def prepare_reporter(scenario, config, key=None, output_path=None):
     for callback in CALLBACKS:
         callback(rep)
 
-    # If needed, get the full key for *quantity*
     if key:
+        # If needed, get the full key for *quantity*
         key = rep.infer_keys(key)
 
         if output_path and not output_path.is_dir():
@@ -233,7 +235,10 @@ def prepare_reporter(scenario, config, key=None, output_path=None):
                 "cli-output",
                 (partial(rep.get_comp("write_report"), path=output_path), key),
             )
+    else:
+        log.info(f"No key given; will use default: {repr(key)}")
+        key = rep.default_key
 
     log.info("…done")
 
-    return rep, rep.default_key
+    return rep, key
