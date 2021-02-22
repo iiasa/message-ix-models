@@ -38,7 +38,7 @@ class Plot(BasePlot):
         return p9.ggtitle(f"{value} ({datetime.now().isoformat(timespec='minutes')})")
 
 
-class Costs0(Plot):
+class InvCost(Plot):
     basename = "inv-cost"
     inputs = ["inv_cost:nl-t-yv"]
 
@@ -56,7 +56,7 @@ class Costs0(Plot):
             )
 
 
-class Costs1(Plot):
+class FixCost(Plot):
     basename = "fix-cost"
     inputs = ["fix_cost:nl-t-yv-ya"]
 
@@ -74,7 +74,7 @@ class Costs1(Plot):
             )
 
 
-class Costs2(Plot):
+class VarCost(Plot):
     basename = "var-cost"
     inputs = ["var_cost:nl-t-yv-ya"]
 
@@ -277,9 +277,9 @@ class EnergyCmdty(Plot):
 
 
 PLOTS = [
-    Costs0,
-    Costs1,
-    Costs2,
+    FixCost,
+    InvCost,
+    VarCost,
     EnergyCmdty,
     LDVTechShare0,
     LDVTechShare1,
