@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- :pull:`2`: Add :func:`.get_codes` and related code lists.
 - :pull:`3`: Add :class:`.MessageDataFinder` and document :doc:`migrate`.
 
 
