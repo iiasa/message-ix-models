@@ -21,6 +21,7 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
    :caption: Development
 
    whatsnew
+   migrate
    releasing
 
 Indices and tables
