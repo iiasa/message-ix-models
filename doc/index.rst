@@ -26,6 +26,13 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
 
 .. toctree::
    :maxdepth: 2
+   :caption: Package data
+
+   pkg-data/node
+   pkg-data/codelists
+
+.. toctree::
+   :maxdepth: 2
    :caption: Development
 
    whatsnew
