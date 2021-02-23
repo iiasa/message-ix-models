@@ -77,7 +77,7 @@ jobs:
       with:
         java-version: '14'
 
-    - name: Cache GAMS installer, Python packages, and R packages
+    - name: Cache Python packages and GAMS installer
       uses: actions/cache@v2
       with:
         path: |

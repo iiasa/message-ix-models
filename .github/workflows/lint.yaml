@@ -17,6 +17,13 @@ jobs:
 
     - uses: actions/setup-python@v2
 
+    - name: Cache Python packages
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache/pip
+        key: lint-${{ runner.os }}
+
     - name: Upgrade pip and install requirements
       run: |
         python -m pip install --upgrade pip
@@ -31,4 +38,7 @@ jobs:
         isort --check-only .
 
     - name: Check typing with mypy
-      run: mypy .
+      # Also install packages that provide type hints
+      run: |
+        pip install pytest
+        mypy .
