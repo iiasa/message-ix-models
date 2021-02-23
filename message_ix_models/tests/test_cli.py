@@ -1,0 +1,23 @@
+"""Basic tests of the command line."""
+from click.testing import CliRunner
+import pytest
+
+from message_ix_models.cli import main
+
+
+SUBCOMMANDS = [
+    tuple(),
+    # model
+    ("model",),
+]
+
+
+def _cli_help_id(argvalue):
+    return f"mix-data {' '.join(argvalue)} --help"
+
+
+@pytest.mark.parametrize("subcommand", SUBCOMMANDS, ids=_cli_help_id)
+def test_cli_help(subcommand):
+    runner = CliRunner()
+    result = runner.invoke(main, list(subcommand) + ["--help"])
+    assert result.exit_code == 0, result.output
