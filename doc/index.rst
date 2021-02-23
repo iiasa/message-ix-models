@@ -6,10 +6,15 @@
 MESSAGEix models
 ****************
 
+:mod:`message_ix_models` provides tools for research using the MESSAGEix-GLOBIOM family of models.
+These models are built in the `MESSAGEix framework <https://docs.messageix.org>`_ and on the `ix modeling platform (ixmp) <https://docs.messageix.org/ixmp/>`_.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   install
+   api
 
 Indices and tables
 ==================
