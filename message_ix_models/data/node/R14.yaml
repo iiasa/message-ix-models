@@ -1,0 +1,83 @@
+# Region code list
+#
+# - See message_data.tools.regions.
+# - The ISO 3166-1 alpha-3 codes are not defined in this file, but loaded from
+#   a copy of the ISO database, e.g. in pycountry.
+# - Among others, there are no assignments for:
+#   - ATA Antarctica
+#   - IOT British Indian Ocean Territory
+#   - SGS South Georgia
+
+World:
+  name: World
+  description: R14 regions
+
+R14_AFR:
+  parent: World
+  name: Sub-Saharan Africa
+  child: [AGO, BDI, BEN, BFA, BWA, CAF, CIV, CMR, COD, COG, COM, CPV, DJI, ERI, ETH, GAB, GHA, GIN, GMB, GNB, GNQ, KEN, LBR, LSO, MDG, MLI, MOZ, MRT, MUS, MWI, MYT, NAM, NER, NGA, REU, RWA, SDN, SEN, SHN, SLE, SOM, STP, SWZ, SYC, TCD, TGO, TZA, UGA, ZAF, ZMB, ZWE]
+
+R14_CAS:
+  parent: World
+  name: Central Asia
+  child: [KAZ, KGZ, TJK, TKM, UZB]
+
+R14_CPA:
+  parent: World
+  name: Centrally Planned Asia
+  child: [CHN, KHM, LAO, MAC, MNG, PRK, TWN, VNM]
+
+R14_EEU:
+  parent: World
+  name: Central and Eastern Europe
+  child: [ALB, BGR, BIH, CZE, EST, HRV, HUN, LTU, LVA, MKD, MNE, POL, ROU, SCG, SRB, SVK, SVN, YUG]
+
+R14_LAM:
+  parent: World
+  name: Latin America and The Caribbean
+  child: [ABW, AIA, ARG, ATG, BHS, BLZ, BMU, BOL, BRA, BRB, CHL, COL, CRI, CUB, CYM, DMA, DOM, ECU, FLK, GLP, GRD, GTM, GUF, GUY, HND, HTI, JAM, LCA, MEX, MSR, MTQ, NIC, PAN, PER, PRI, PRY, SLV, SUR, TCA, TTO, URY, VCT, VEN, VGB]
+
+R14_MEA:
+  parent: World
+  name: Middle East and North Africa
+  child: [ARE, BHR, DZA, EGY, ESH, IRN, IRQ, ISR, JOR, KWT, LBN, LBY, MAR, OMN, PSE, QAT, SAU, SDN, SSD, SYR, TUN, YEM]
+
+R14_NAM:
+  parent: World
+  name: North America
+  child: [CAN, GUM, SPM, USA]
+
+R14_PAO:
+  parent: World
+  name: Pacific OECD
+  child: [AUS, JPN, NZL]
+
+R14_PAS:
+  parent: World
+  name: Other Pacific Asia
+  child: [ASM, BRN, CCK, COK, CXR, FJI, FSM, IDN, KIR, KOR, MHL, MMR, MNP, MYS, NCL, NFK, NIU, NRU, PCN, PHL, PLW, PNG, PYF, SGP, SLB, THA, TKL, TLS, TON, TUV, VUT, WLF, WSM]
+
+R14_RUS:
+  parent: World
+  name: Russia
+  child: [RUS]
+
+R14_SAS:
+  parent: World
+  name: South Asia
+  child: [AFG, BGD, BTN, IND, LKA, MDV, NPL, PAK]
+
+R14_SCS:
+  parent: World
+  name: Caspian States
+  child: [ARM, AZE, GEO]
+
+R14_UBM:
+  parent: World
+  name: Ukraine, Belarus, and Moldova
+  child: [BLR, MDA, UKR]
+
+R14_WEU:
+  parent: World
+  name: Western Europe
+  child: [AND, AUT, BEL, CHE, CYP, DEU, DNK, ESP, FIN, FRA, FRO, GBR, GIB, GRC, GRL, IMN, IRL, ISL, ITA, LIE, LUX, MCO, MLT, NLD, NOR, PRT, SJM, SMR, SWE, TUR, VAT]
