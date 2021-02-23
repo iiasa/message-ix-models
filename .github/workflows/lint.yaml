@@ -32,8 +32,3 @@ jobs:
 
     - name: Check typing with mypy
       run: mypy .
-
-    - name: Test package build
-      run: |
-        python3 setup.py bdist_wheel sdist
-        twine check dist/*
