@@ -66,27 +66,27 @@ def as_codes(data):
 
 
 def load_package_data(*parts, suffix=None):
-    """Load a config file, attach it to the Context, and return.
+    """Load a package data file and return its contents.
+
+    Data is re-used if already loaded.
 
     Example
     -------
 
     The single call:
 
-    >>> info = context.load_config("transport", "set")
+    >>> info = load_package_data("node", "R11")
 
-    1. loads the metadata file :file:`data/transport/set.yaml`, parsing its
-       contents,
-    2. stores those values at ``context["transport set"]`` for use by other
-       code, and
+    1. loads the metadata file :file:`data/node/R11.yaml`, parsing its contents,
+    2. stores those values at ``PACKAGE_DATA["node R11"]`` for use by other code, and
     3. returns the loaded values.
 
     Parameters
     ----------
     parts : iterable of str
-        Used to construct a path under :attr:`metadata_path`.
+        Used to construct a path under :file:`message_ix_models/data/`.
     suffix : str, optional
-        File suffix.
+        File name suffix, including, the ".", e.g. :file:`.yaml`.
 
     Returns
     -------
