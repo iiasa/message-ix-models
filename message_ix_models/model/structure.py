@@ -1,13 +1,14 @@
 from collections import ChainMap
 from functools import lru_cache
+from typing import List
 
-from sdmx.model import Annotation
+from sdmx.model import Annotation, Code
 
 from message_ix_models.util import as_codes, load_package_data
 
 
 @lru_cache()
-def get_codes(name):
+def get_codes(name: str) -> List[Code]:
     """Return codes for the set `name` in MESSAGE-GLOBIOM scenarios.
 
     The information is read from :file:`data/{name}.yaml`, e.g.
@@ -20,7 +21,10 @@ def get_codes(name):
 
     Returns
     -------
-    list of :class:`.Code`
+    list of :class:`~sdmx.model.Code`
+        Every Code has :attr:`id`, :attr:`name`, :attr:`description`, and
+        :attr:`annotations` attributes. Calling :func:`str` on a code returns its
+        :attr:`id`.
     """
     # Raw contents of the config file
     config = load_package_data(name)
