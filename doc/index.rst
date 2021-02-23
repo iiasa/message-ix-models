@@ -11,10 +11,17 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: User guide & reference
 
    install
    api
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   whatsnew
+   releasing
 
 Indices and tables
 ==================
