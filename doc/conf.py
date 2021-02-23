@@ -16,6 +16,7 @@ author = "IIASA Energy, Climate, and Environment (ECE) Program"
 # with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
 ]
 
@@ -45,6 +46,14 @@ html_logo = "_static/logo-white.png"
 # to this directory. They are copied after the builtin static files, so a file named
 # "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+
+# -- Options for sphinx.ext.extlinks ---------------------------------------------------
+
+extlinks = {
+    "issue": ("https://github.com/iiasa/message-ix-models/issue/%s", "GH #"),
+    "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #"),
+}
 
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
