@@ -9,8 +9,10 @@ class MessageDataFinder:
     # Expression for supported module names
     expr = re.compile(r"message_ix_models\.(?P<name>(model|project)\..*)")
 
+    # NB coverage is excluded, because the message-ix-models test suite does not
+    #    install/use message-data.
     @classmethod
-    def find_spec(cls, name, path, target=None):
+    def find_spec(cls, name, path, target=None):  # pragma: no cover
         match = cls.expr.match(name)
         try:
             # Construct the name for the actual module to load
