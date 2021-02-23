@@ -1,0 +1,3021 @@
+# This file describes a possible set of base technologies to be used in the
+# global model. It will be usable by both model creation and reporting code.
+#
+# Each entry includes the following fields:
+# - name, description: required.
+# - sector: a label to group multiple technologies to a notional sector.
+#   Required.
+# - output (required) and input (optional): either
+#   - a list of [commodity, level] giving the output generated or input used by
+#     the technology; or,
+#   - a list of 2 or more such lists, if the technology has multiple inputs or
+#     outputs.
+# - vintaged: True if the technology's properties vary by year_vintage.
+#   Optional; False if omitted.
+# - type: In the Excel file used to create this YAML file (see
+#   https://github.com/iiasa/message_data/issues/74), 'type' appears to be
+#   always the same as 'output'/level; *unless* the 'output'/commodity is a
+#   dummy commodity, in which case it is 'dummy'.
+#
+#   TODO if this is the case, remove 'type' from this file, and generate 'type'
+#        in tools.technologies.get_info.
+
+CF4_TCE:
+  name: CF4_TCE
+  description: Tetrafluoromethane (CF4) Total Carbon Emissions
+  type: primary
+  sector: dummy
+  output: [dummy, primary]
+
+CH4_TCE:
+  name: CH4_TCE
+  description: Methane total carbon equivalent emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+CH4g_TCE:
+  name: CH4g_TCE
+  description: CH4 emissions from animals directly in Total Carbon Equivalent emissions
+  type: dummy
+  sector: dummy
+  output: [dummy agriculture, primary]
+
+CH4n_TCE:
+  name: CH4n_TCE
+  description: CH4 emissions from anaerobic waste decomposition in Total Carbon Equivalent emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+CH4o_TCE:
+  name: CH4o_TCE
+  description: Dummy technology converting CH4 emissions from industrial and domestic wastewater, non energy biomass burning and other CH4 emissions, to total carbon equivalent emissions (TCE)
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+CO2_TCE:
+  name: CO2_TCE
+  description: CO2 total carbon equivalent emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+dom_total:
+  name: dom_total
+  description: Used in balance equation for domestic energy supply and in the equation for constraining net imports
+  type: secondary
+  sector: dummy
+  output: [exports, secondary]
+
+dummy_producer:
+  name: dummy_producer
+  description: Technology added to produce dummy energy to avoid infeasibility if needed (e.g. when CO2_TCE needs to go negative)
+  type: primary
+  sector: dummy
+  output: [dummy, primary]
+
+exp_total:
+  name: exp_total
+  description: Used in balance equation for exported energy supply and in the equation for constraining net imports
+  type: secondary
+  sector: dummy
+  output: [exports, secondary]
+
+HFC_TCE:
+  name: HFC_TCE
+  description: HFC total carbon equivalent emissions
+  type: primary
+  sector: dummy
+  output: [dummy, primary]
+
+HFCo_TCE:
+  name: HFCo_TCE
+  description: Dummy technology converting HFC equiv emissions from solvents, fire extinguishers, aerosols MDI, aerosols non-MDI to total carbon equivalent emissions (TCE)
+  type: primary
+  sector: dummy
+  output: [dummy, primary]
+
+imp_total:
+  name: imp_total
+  description: Used in balance equation for imported energy supply
+  type: exports
+  sector: dummy
+  output: [exports, secondary]
+
+N2O_TCE:
+  name: N2O_TCE
+  description: N2O total carbon equivalent emissions
+  type: dummy
+  sector: dummy
+  output: [dummy]
+
+N2OG_TCE:
+  name: N2OG_TCE
+  description: N2O soil emissions total carbon equivalent emissions
+  type: dummy
+  sector: dummy
+  output: [dummy]
+
+N2On_TCE:
+  name: N2On_TCE
+  description: N2O adipic acid total carbon equivalent emissions
+  type: dummy
+  sector: dummy
+  output: [dummy]
+
+N2Oo_TCE:
+  name: N2Oo_TCE
+  description: Dummy technology converting N2O emissions from Manure Management, Human Sewage, Other Agricultural sources, Other Non Ag Sources to total carbon equivalent emissions (TCE)
+  type: dummy
+  sector: dummy
+  output: [dummy]
+
+nica_con:
+  name: nica_con
+  description:
+  type: dummy
+  sector: dummy
+  output: [dummy]
+
+nitric_catalytic1:
+  name: nitric_catalytic1
+  description: Mitigation technology (catalytic converter) category 2 for N2O emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+nitric_catalytic2:
+  name: nitric_catalytic2
+  description: Mitigation technology (catalytic converter) category 1 for N2O emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+nitric_catalytic3:
+  name: nitric_catalytic3
+  description: Mitigation technology (catalytic converter) category 3 for N2O emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+nitric_catalytic4:
+  name: nitric_catalytic4
+  description: Mitigation technology (catalytic converter) category 4 for N2O emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+nitric_catalytic5:
+  name: nitric_catalytic5
+  description: Mitigation technology (catalytic converter) category 5 for N2O emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+nitric_catalytic6:
+  name: nitric_catalytic6
+  description: Mitigation technology (catalytic converter) category 6 for N2O emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+nitric_catalytic7:
+  name: nitric_catalytic7
+  description: Mitigation technology (catalytic converter) category 7 for N2O emissions
+  type: dummy
+  sector: dummy
+  output: [dummy, primary]
+
+SF6_TCE:
+  name: SF6_TCE
+  description: SF6 total carbon equivalent emissions
+  type: primary
+  sector: dummy
+  output: [dummy, primary]
+
+useful_feedstock:
+  name: useful_feedstock
+  description: Share constraint for industry feedstocks
+  type: dummy
+  sector: dummy
+  output: [dummy_useful, primary]
+
+useful_industry_sp:
+  name: useful_industry_sp
+  description: Share constraint for Industry Specific
+  type: dummy
+  sector: dummy
+  output: [dummy_useful, primary]
+
+useful_industry_th:
+  name: useful_industry_th
+  description: Share constraint for Industry Thermal
+  type: dummy
+  sector: dummy
+  output: [dummy_useful, primary]
+
+useful_res/comm_sp:
+  name: useful_res/comm_sp
+  description: Share constraint for Residential and Commercial Specific
+  type: dummy
+  sector: dummy
+  output: [dummy_useful, primary]
+
+useful_res/comm_th:
+  name: useful_res/comm_th
+  description: Share constraint for Residential and Commercial Thermal
+  type: dummy
+  sector: dummy
+  output: [dummy_useful, primary]
+
+useful_transport:
+  name: useful_transport
+  description: Share constraint for Transport
+  type: dummy
+  sector: dummy
+  output: [dummy_useful, primary]
+
+bio_istig:
+  name: bio_istig
+  description: Advanced biomass power plant- gasified biomass is burned in gas turbine plant - modes with and without net carbon release
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [biomass, primary]
+  output: [electr, secondary]
+
+bio_istig_ccs:
+  name: bio_istig_ccs
+  description: Advanced biomass power plant with carbon capture and storage- gasified biomass is burned in gas turbine plant - modes with and without net carbon release
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [biomass, primary]
+  output: [electr, secondary]
+
+bio_ppl:
+  name: bio_ppl
+  description: Bio powerplant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input:
+    - [biomass, primary]
+    - [cooling__bio_ppl, cooling]
+    - [freshwater_supply, water_supply]
+  output: [electr, secondary]
+
+coal_adv:
+  name: coal_adv
+  description: Advanced coal power plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [coal, secondary]
+  output: [electr, secondary]
+
+coal_adv_ccs:
+  name: coal_adv_ccs
+  description: Advanced coal power plant with carbon capture and storage
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [coal, secondary]
+  output: [electr, secondary]
+
+coal_ppl:
+  name: coal_ppl
+  description: Coal power-plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [coal, secondary]
+  output: [electr, secondary]
+
+coal_ppl_u:
+  name: coal_ppl_u
+  description: Coal power plant without abatement measures
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [coal, secondary]
+  output: [electr, secondary]
+
+elec_exp:
+  name: elec_exp
+  description: Net export of electricity
+  type: exports
+  sector: electricity
+  input: [electr, secondary]
+  output: [electr, exports]
+
+elec_imp:
+  name: elec_imp
+  description: Net import of electricity
+  type: secondary
+  sector: electricity
+  input: [electr, imports]
+  output: [electr, secondary]
+
+elec_t/d:
+  name: elec_t/d
+  description: Grid technology cost converted to 2005$
+  type: final
+  vintaged: TRUE
+  sector: electricity
+  input: [electr, secondary]
+  output: [electr, final]
+
+foil_ppl:
+  name: foil_ppl
+  description: New standard oil power plant, Rankine cycle
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [fueloil, secondary]
+  output: [electr, secondary]
+
+gas_cc:
+  name: gas_cc
+  description: Gas combined cycle power-plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [gas, secondary]
+  output: [electr, secondary]
+
+gas_cc_ccs:
+  name: gas_cc_ccs
+  description: Gas combined cycle power-plant with carbon capture and storage
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [gas, secondary]
+  output: [electr, secondary]
+
+gas_ct:
+  name: gas_ct
+  description: Gas combustion-turbine power plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [gas, secondary]
+  output: [electr, secondary]
+
+gas_htfc:
+  name: gas_htfc
+  description: High temperature fuel cell powered with natural gas
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [gas, secondary]
+  output: [electr, secondary]
+
+gas_ppl:
+  name: gas_ppl
+  description: Gas power plant, Rankine cycle
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [gas, secondary]
+  output: [electr, secondary]
+
+geo_ppl:
+  name: geo_ppl
+  description: Geothermal power plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  output: [electr, secondary]
+
+glb_elec_exp:
+  name: glb_elec_exp
+  description: Global net export of electricity
+  type: imports
+  sector: electricity
+  output: [electr, imports]
+
+glb_elec_imp:
+  name: glb_elec_imp
+  description: Global net import of electricity
+  type: exports
+  sector: electricity
+  input: [electr, exports]
+  output: [exports]
+
+hydro_hc:
+  name: hydro_hc
+  description: High cost hydro power plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  output: [electr, secondary]
+
+hydro_lc:
+  name: hydro_lc
+  description: Low cost hydro power plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  output: [electr, secondary]
+
+igcc:
+  name: igcc
+  description: Integrated gasification combined cycle (IGCC) power plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [coal, secondary]
+  output: [electr, secondary]
+
+igcc_ccs:
+  name: igcc_ccs
+  description: Integrated gasification combined cycle (IGCC) power plant with carbon capture and storage
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [coal, secondary]
+  output: [electr, secondary]
+
+igcc_co2scr:
+  name: igcc_co2scr
+  description: New coal scrubber for igcc plants
+  type: exports
+  vintaged: TRUE
+  sector: electricity
+  output: [exports, secondary]
+
+loil_cc:
+  name: loil_cc
+  description: Light oil combined cycle
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [lightoil, secondary]
+  output: [electr, secondary]
+
+loil_ppl:
+  name: loil_ppl
+  description: Existing light oil power-plant
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [lightoil, secondary]
+  output: [electr, secondary]
+
+nuc_hc:
+  name: nuc_hc
+  description: Nuclear power plant (~GEN III+), high cost
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [uranium, stocks]
+  output: [electr, secondary]
+
+nuc_lc:
+  name: nuc_lc
+  description: Nuclear power plant (~GEN II), low cost
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [uranium, stocks]
+  output: [electr, secondary]
+
+solar_curtailment1:
+  name: solar_curtailment1
+  description: Solar PV curtailment steps
+  type: dummy
+  sector: electricity
+  input: [electr, secondary]
+  output: [dummy renewable, secondary]
+
+solar_curtailment2:
+  name: solar_curtailment2
+  description: Solar PV curtailment steps
+  type: dummy
+  sector: electricity
+  input: [electr, secondary]
+  output: [dummy renewable, secondary]
+
+solar_curtailment3:
+  name: solar_curtailment3
+  description: Solar PV curtailment steps
+  type: dummy
+  sector: electricity
+  input: [electr, secondary]
+  output: [dummy renewable, secondary]
+
+solar_cv1:
+  name: solar_cv1
+  description: Quadratic systems integration costs added to solar PV
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+solar_cv2:
+  name: solar_cv2
+  description: Quadratic systems integration costs added to solar PV
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+solar_cv3:
+  name: solar_cv3
+  description: Quadratic systems integration costs added to solar PV
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+solar_cv4:
+  name: solar_cv4
+  description: Quadratic systems integration costs added to solar PV
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+solar_pv_ppl:
+  name: solar_pv_ppl
+  description: Solar photovoltaic power plant (no storage)
+  type: dummy
+  vintaged: TRUE
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+solar_res1:
+  name: solar_res1
+  description: Maximum solar electricity potential 1
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res2:
+  name: solar_res2
+  description: Maximum solar electricity potential 2
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res3:
+  name: solar_res3
+  description: Maximum solar electricity potential 3
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res4:
+  name: solar_res4
+  description: Maximum solar electricity potential 4
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res5:
+  name: solar_res5
+  description: Maximum solar electricity potential 5
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res6:
+  name: solar_res6
+  description: Maximum solar electricity potential 6
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_res7:
+  name: solar_res7
+  description: Maximum solar electricity potential 7
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+solar_th_ppl:
+  name: solar_th_ppl
+  description: Solar thermal power plant with storage
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  output: [electr, secondary]
+
+stor_ppl:
+  name: stor_ppl
+  description: Generic electric storage
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  input: [electr, secondary]
+  output: [exports, secondary]
+
+wind_curtailment1:
+  name: wind_curtailment1
+  description: Wind curtailment steps
+  type: dummy
+  sector: electricity
+  input: [secondary, electricity]
+  output: [dummy renewable, secondary]
+
+wind_curtailment2:
+  name: wind_curtailment2
+  description: Wind curtailment steps
+  type: dummy
+  sector: electricity
+  input: [secondary, electricity]
+  output: [dummy renewable, secondary]
+
+wind_curtailment3:
+  name: wind_curtailment3
+  description: Wind curtailment steps
+  type: dummy
+  sector: electricity
+  input: [secondary, electricity]
+  output: [dummy renewable, secondary]
+
+wind_cv1:
+  name: wind_cv1
+  description: Wind flexibility requirement and firm capacity contribution, quadratic systems integration costs added to wind
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+wind_cv2:
+  name: wind_cv2
+  description: Wind flexibility requirement and firm capacity contribution, quadratic systems integration costs added to wind
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+wind_cv3:
+  name: wind_cv3
+  description: Wind flexibility requirement and firm capacity contribution, quadratic systems integration costs added to wind
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+wind_cv4:
+  name: wind_cv4
+  description: Wind flexibility requirement and firm capacity contribution, quadratic systems integration costs added to wind
+  type: dummy
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+wind_ppl:
+  name: wind_ppl
+  description: Wind power plant onshore (provides capacity only)
+  type: dummy
+  vintaged: TRUE
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+wind_res1:
+  name: wind_res1
+  description: Wind onshore potential and generation 1
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_res2:
+  name: wind_res2
+  description: Wind onshore potential and generation 2
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_res3:
+  name: wind_res3
+  description: Wind onshore potential and generation 3
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_res4:
+  name: wind_res4
+  description: Wind onshore potential and generation 4
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ppf:
+  name: wind_ppf
+  description: Wind power plant offshore (provides capacity only)
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+wind_ref1:
+  name: wind_ref1
+  description: Wind offshore potential and generation 1
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref2:
+  name: wind_ref2
+  description: Wind offshore potential and generation 2
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref3:
+  name: wind_ref3
+  description: Wind offshore potential and generation 3
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref4:
+  name: wind_ref4
+  description: Wind offshore potential and generation 4
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+wind_ref5:
+  name: wind_ref5
+  description: Wind offshore potential and generation 5
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res:
+  name: csp_sm3_res
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 1
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res1:
+  name: csp_sm3_res1
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 2
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res2:
+  name: csp_sm3_res2
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 3
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res3:
+  name: csp_sm3_res3
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 4
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res4:
+  name: csp_sm3_res4
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 5
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res5:
+  name: csp_sm3_res5
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 6
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res6:
+  name: csp_sm3_res6
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 7
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_res7:
+  name: csp_sm3_res7
+  description: Concentrating solar power (CSP) with solar multiple of 3 potential and generation 8
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm3_ppl:
+  name: csp_sm3_ppl
+  description: Concentrating solar power (CSP) with solar multiple of 3 (provides capacity only)
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+csp_sm1_res:
+  name: csp_sm1_res
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 1
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_res1:
+  name: csp_sm1_res1
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 2
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_res2:
+  name: csp_sm1_res2
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 3
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_res3:
+  name: csp_sm1_res3
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 4
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_res4:
+  name: csp_sm1_res4
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 5
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_res5:
+  name: csp_sm1_res5
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 6
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_res6:
+  name: csp_sm1_res6
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 7
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_res7:
+  name: csp_sm1_res7
+  description: Concentrating solar power (CSP) with solar multiple of 1 potential and generation 8
+  type: secondary
+  sector: electricity
+  output: [electr, secondary]
+
+csp_sm1_ppl:
+  name: csp_sm1_ppl
+  description: Concentrating solar power (CSP) with solar multiple of 1 (provides capacity only)
+  type: secondary
+  vintaged: TRUE
+  sector: electricity
+  output: [dummy renewable, secondary]
+
+bio_extr_1:
+  name: bio_extr_1
+  description: Biomass Extraction
+  type: primary
+  sector: extraction
+  output: [biomass, primary]
+
+bio_extr_2:
+  name: bio_extr_2
+  description: Biomass Extraction
+  type: primary
+  sector: extraction
+  output: [biomass, primary]
+
+bio_extr_3:
+  name: bio_extr_3
+  description: Biomass Extraction
+  type: primary
+  sector: extraction
+  output: [biomass, primary]
+
+bio_extr_4:
+  name: bio_extr_4
+  description: Biomass Extraction
+  type: primary
+  sector: extraction
+  output: [biomass, primary]
+
+bio_extr_5:
+  name: bio_extr_5
+  description: Biomass Extraction
+  type: primary
+  sector: extraction
+  output: [biomass, primary]
+
+bio_extr_6:
+  name: bio_extr_6
+  description: Biomass Extraction
+  type: primary
+  sector: extraction
+  output: [biomass, primary]
+
+coal_extr:
+  name: coal_extr
+  description: Hard coal extraction, world average grade A
+  type: primary
+  sector: extraction
+  input: [coal, resource]
+  output: [coal, primary]
+
+coal_extr_ch4:
+  name: coal_extr_ch4
+  description: Describes efforts in CH4-reduction from coal mining
+  type: primary
+  vintaged: TRUE
+  sector: extraction
+  input: [coal, resource]
+  output: [coal, primary]
+
+flaring_CO2:
+  name: flaring_CO2
+  description: Co2 emissions from gas flaring
+  type: exports
+  sector: extraction
+  output: [exports, exports]
+
+gas_extr_1:
+  name: gas_extr_1
+  description: Natural gas extraction, Cat I = Master et al.14.WPC "Identified Reserves"
+  type: primary
+  sector: extraction
+  input: [resource]
+  output: [primary]
+
+gas_extr_2:
+  name: gas_extr_2
+  description: Natural gas extraction, Cat II = Master et al.14.WPC "Mode" undiscovered natural gas
+  type: primary
+  sector: extraction
+  input: [resource]
+  output: [primary]
+
+gas_extr_3:
+  name: gas_extr_3
+  description: Natural gas extraction, Cat III = Masters  et al.14.WPC Difference between "Mode and 5%"  undiscovered natural gas
+  type: primary
+  sector: extraction
+  input: [resource]
+  output: [primary]
+
+gas_extr_4:
+  name: gas_extr_4
+  description: Natural gas extraction, Cat IV = Estimated enhanced Recovery (30% of Resources I+II+III)  plus 15% of historical production
+  type: primary
+  sector: extraction
+  input: [resource]
+  output: [primary]
+
+gas_extr_5:
+  name: gas_extr_5
+  description: Natural gas extraction, Cat V = Non-conventional reserves (20% of Coal bed; 15% of fractured Shale; 15% of Tight formation)
+  type: primary
+  sector: extraction
+  input: [resource]
+  output: [primary]
+
+gas_extr_6:
+  name: gas_extr_6
+  description: Natural gas extraction, Cat VI -VII= Non-conventional resources. Rest of Coal bed (80%), fractured Shale (85%) and Tight formation (85%) were aggregated and then distributed to VI (40%) nd VII (60%)
+  type: primary
+  sector: extraction
+  input: [resource]
+  output: [primary]
+
+gas_extr_mpen:
+  name: gas_extr_mpen
+  description: Common Market penetration for all gas extraction technologies
+  type: secondary
+  sector: extraction
+  output: [exports, secondary]
+
+lignite_extr:
+  name: lignite_extr
+  description: Lignite extraction, world average grade A
+  type: primary
+  sector: extraction
+  input: [lignite, resource]
+  output: [coal, primary]
+
+oil_extr_1:
+  name: oil_extr_1
+  description: Crude oil extraction, Cat I = Masters 14 WPC conv. oil reserves
+  type: primary
+  sector: extraction
+  input: [crude 1 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_1_ch4:
+  name: oil_extr_1_ch4
+  description: Describes efforts in CH4-reduction from oil extraction of Cat I
+  type: primary
+  sector: extraction
+  input: [crude 1 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_2:
+  name: oil_extr_2
+  description: Crude oil extraction, Cat II = Masters mode undiscovered conv. oil (incl. NGL)
+  type: primary
+  sector: extraction
+  input: [crude 2 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_2_ch4:
+  name: oil_extr_2_ch4
+  description: Describes efforts in CH4-reduction from oil extraction of Cat II
+  type: primary
+  sector: extraction
+  input: [crude 2 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_3:
+  name: oil_extr_3
+  description: Crude oil extraction, Cat III = Masters 5% - Masters 50%
+  type: primary
+  sector: extraction
+  input: [crude 3 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_3_ch4:
+  name: oil_extr_3_ch4
+  description: Describes efforts in CH4-reduction from oil extraction of Cat III
+  type: primary
+  sector: extraction
+  input: [crude 3 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_4:
+  name: oil_extr_4
+  description: Crude oil extraction, Cat IV = Recoverable "reserves" non-conventional oil
+  type: primary
+  sector: extraction
+  input: [crude 4 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_4_ch4:
+  name: oil_extr_4_ch4
+  description: Describes efforts in CH4-reduction from oil extraction of Cat IV
+  type: primary
+  sector: extraction
+  input: [crude 4 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_5:
+  name: oil_extr_5
+  description: Crude oil extraction, Cat V = Recoverable reserves of nonconventional oil = Shale, tarsands/bitumen and heavy oils
+  type: primary
+  sector: extraction
+  input: [crude 5 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_6:
+  name: oil_extr_6
+  description: Crude oil extraction, Cat VI = 20% of estimated occurrences (-reserves) of shale, heavy oils, tarsands/bitumen
+  type: primary
+  sector: extraction
+  input: [crude 6 resource, primary]
+  output: [crude oil, primary]
+
+oil_extr_mpen:
+  name: oil_extr_mpen
+  description: Common Market penetration for all oil extraction technologies
+  type: secondary
+  sector: extraction
+  output: [exports, secondary]
+
+Feeds_1:
+  name: Feeds_1
+  description: Conservation cost curve step for industry feedstock demand
+  type: useful
+  sector: feedstock
+  output: [i_feed, useful]
+
+Feeds_2:
+  name: Feeds_2
+  description: Conservation cost curve step for industry feedstock demand
+  type: useful
+  sector: feedstock
+  output: [i_feed, useful]
+
+Feeds_3:
+  name: Feeds_3
+  description: Conservation cost curve step for industry feedstock demand
+  type: useful
+  sector: feedstock
+  output: [i_feed, useful]
+
+Feeds_4:
+  name: Feeds_4
+  description: Conservation cost curve step for industry feedstock demand
+  type: useful
+  sector: feedstock
+  output: [i_feed, useful]
+
+Feeds_5:
+  name: Feeds_5
+  description: Conservation cost curve step for industry feedstock demand
+  type: useful
+  sector: feedstock
+  output: [i_feed, useful]
+
+Feeds_con:
+  name: Feeds_con
+  description: Joint diffusion constraint for feedstock conservation cost curve steps
+  type: primary
+  sector: feedstock
+  output: [dummy agriculture, primary]
+
+coal_fs:
+  name: coal_fs
+  description: Coal as industry feedstock
+  type: useful
+  sector: feedstock
+  input: [coal, final]
+  output: [i_feed, useful]
+
+ethanol_fs:
+  name: ethanol_fs
+  description: Ethanol as industry feedstock
+  type: useful
+  sector: feedstock
+  input: [ethanol, final]
+  output: [i_feed, useful]
+
+foil_fs:
+  name: foil_fs
+  description: Fuel oil as industry feedstock
+  type: useful
+  sector: feedstock
+  input: [fueloil, final]
+  output: [i_feed, useful]
+
+gas_fs:
+  name: gas_fs
+  description: Gas as industry feedstock
+  type: useful
+  sector: feedstock
+  input: [gas, final]
+  output: [i_feed, useful]
+
+loil_fs:
+  name: loil_fs
+  description: Lightoil as industry feedstock
+  type: useful
+  sector: feedstock
+  input: [lightoil, final]
+  output: [i_feed, useful]
+
+methanol_fs:
+  name: methanol_fs
+  description: Methanol as industry feedstock
+  type: useful
+  sector: feedstock
+  input: [methanol, final]
+  output: [i_feed, useful]
+
+coal_gas:
+  name: coal_gas
+  description: Hard coal gasification
+  type: secondary
+  vintaged: TRUE
+  sector: gas
+  input:
+    - [coal, secondary]
+    - [freshwater_supply, water_supply]
+  output: [gas, secondary]
+
+g_ppl_co2scr:
+  name: g_ppl_co2scr
+  description: CO2 scrubber for natural gas power plant
+  type: secondary
+  vintaged: TRUE
+  sector: gas
+  output: [exports, secondary]
+
+gas_bal:
+  name: gas_bal
+  description: Link technology to stabilize gas production
+  type: secondary
+  sector: gas
+  input: [gas, primary]
+  output: [gas, secondary]
+
+gas_bio:
+  name: gas_bio
+  description: Synthesis gas production from biomass
+  type: secondary
+  vintaged: TRUE
+  sector: gas
+  input:
+    - [biomass, primary]
+    - [electr, secondary]
+    - [freshwater_supply, water_supply]
+  output: [gas, secondary]
+
+gas_imp:
+  name: gas_imp
+  description: Piped Gas imports
+  type: secondary
+  sector: gas
+  input: [gas, exports]
+  output: [gas, secondary]
+
+gas_rc:
+  name: gas_rc
+  description: Gas heating in residential/commercial sector
+  type: final
+  sector: gas
+  input: [gas, secondary]
+  output: [gas, final]
+
+gas_t/d:
+  name: gas_t/d
+  description: Transmission/Distribution of gas
+  type: final
+  vintaged: TRUE
+  sector: gas
+  input: [gas, secondary]
+  output: [gas, final]
+
+gas_t/d_ch4:
+  name: gas_t/d_ch4
+  description: Transmission/Distribution of gas with CH4 mitigation
+  type: final
+  vintaged: TRUE
+  sector: gas
+  input: [gas, secondary]
+  output: [gas, final]
+
+gfc_co2scr:
+  name: gfc_co2scr
+  description: New co2 scrubber for gas fuel cells
+  type: secondary
+  vintaged: TRUE
+  sector: gas
+  output: [exports, secondary]
+
+glb_gas_exp:
+  name: glb_gas_exp
+  description: Global net export of gas
+  type: exports
+  sector: gas
+  output: [gas, exports]
+
+glb_LNG_exp:
+  name: glb_LNG_exp
+  description: Global net export of liquified natural gas
+  type: imports
+  sector: gas
+  output: [LNG, imports]
+
+h2_mix:
+  name: h2_mix
+  description: Hydrogen injection into the natural gas system
+  type: secondary
+  sector: gas
+  input: [hydrogen, secondary]
+  output: [gas, secondary]
+
+LNG_bal:
+  name: LNG_bal
+  description: Link technology to stabilize liquified natural gas production
+  type: secondary
+  sector: gas
+  input: [LNG, primary]
+  output: [LNG, secondary]
+
+LNG_imp:
+  name: LNG_imp
+  description: LNG Imports
+  type: imports
+  sector: gas
+  input: [LNG, imports]
+  output: [LNG, secondary]
+
+LNG_regas:
+  name: LNG_regas
+  description: LNG regasification (just link; losses are in trade)
+  type: secondary
+  vintaged: TRUE
+  sector: gas
+  input: [LNG, secondary]
+  output: [gas, secondary]
+
+bio_hpl:
+  name: bio_hpl
+  description: Biomass heating plant
+  type: secondary
+  vintaged: TRUE
+  sector: heat
+  input:
+    - [biomass, primary]
+    - [cooling__bio_hpl, cooling]
+    - [freshwater_supply, water_supply]
+  output: [d_heat, secondary]
+
+coal_hpl:
+  name: coal_hpl
+  description: Coal heating plant
+  type: secondary
+  vintaged: TRUE
+  sector: heat
+  input: [coal, secondary]
+  output: [d_heat, secondary]
+
+foil_hpl:
+  name: foil_hpl
+  description: Fuel oil heating plant
+  type: secondary
+  vintaged: TRUE
+  sector: heat
+  input: [fueloil, secondary]
+  output: [d_heat, secondary]
+
+gas_hpl:
+  name: gas_hpl
+  description: Natural gas heating plant
+  type: secondary
+  vintaged: TRUE
+  sector: heat
+  input: [gas, secondary]
+  output: [d_heat, secondary]
+
+geo_hpl:
+  name: geo_hpl
+  description: Geothermal heat plant
+  type: secondary
+  vintaged: TRUE
+  sector: heat
+  output: [d_heat, secondary]
+
+heat_t/d:
+  name: heat_t/d
+  description: Transmission/Distribution of district heat
+  type: final
+  vintaged: TRUE
+  sector: heat
+  input: [d_heat, secondary]
+  output: [d_heat, final]
+
+po_turbine:
+  name: po_turbine
+  description: Pass out turbine
+  type: secondary
+  vintaged: TRUE
+  sector: heat
+  input: [electr, secondary]
+  output: [d_heat, secondary]
+
+glb_lh2_imp:
+  name: glb_lh2_imp
+  description: Global net import of liquid hydrogen
+  type: exports
+  sector: hydrogen
+  input: [liquid hydrogen, exports]
+  output: [exports]
+
+h2_bio:
+  name: h2_bio
+  description: Hydrogen production from biomass with C (via gasification)
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input:
+    - [biomass, primary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+
+h2_bio_ccs:
+  name: h2_bio_ccs
+  description: Hydrogen production from biomass with C (via gasification) with carbon capture and storage
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input:
+    - [biomass, primary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+
+h2_co2_scrub:
+  name: h2_co2_scrub
+  description: CO2 scrubber for h2 production from coal and gas
+  type: exports
+  vintaged: TRUE
+  sector: hydrogen
+  input: [electr, secondary]
+  output: [exports, secondary]
+
+h2_coal:
+  name: h2_coal
+  description: Hydrogen production via coal gasification
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input:
+    - [coal, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+
+h2_coal_ccs:
+  name: h2_coal_ccs
+  description: Hydrogen production via coal gasification with carbon capture and storage
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input:
+    - [coal, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+
+h2_elec:
+  name: h2_elec
+  description: Hydrogen production via electrolysis
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input: [electr, secondary]
+  output: [hydrogen, secondary]
+
+h2_liq:
+  name: h2_liq
+  description: Hydrogen liquefaction
+  type: primary
+  vintaged: TRUE
+  sector: hydrogen
+  input: [hydrogen, primary]
+  output: [liquid hydrogen, primary]
+
+h2_smr:
+  name: h2_smr
+  description: Hydrogen production via steam-methane reforming of natural gas
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input:
+    - [gas, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+
+h2_smr_ccs:
+  name: h2_smr_ccs
+  description: Hydrogen production via steam-methane reforming of natural gas with carbon capture and storage
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input:
+    - [gas, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [hydrogen, secondary]
+    - [electr, secondary]
+
+h2_t/d:
+  name: h2_t/d
+  description: Transmission/Distribution of gaseous hydrogen (just linking technology)
+  type: final
+  vintaged: TRUE
+  sector: hydrogen
+  input: [hydrogen, secondary]
+  output: [hydrogen, final]
+
+h2b_co2_scrub:
+  name: h2b_co2_scrub
+  description: CO2 scrubber for h2 production from biomass
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input: [electr, secondary]
+  output: [exports, secondary]
+
+lh2_bal:
+  name: lh2_bal
+  description: Link technology to stabilize liquid hydrogen production
+  type: secondary
+  sector: hydrogen
+  input: [liquid hydrogen, primary]
+  output: [liquid hydrogen, secondary]
+
+lh2_exp:
+  name: lh2_exp
+  description: Exports of liquid hydrogen
+  type: exports
+  sector: hydrogen
+  input: [liquid hydrogen, primary]
+  output: [liquid hydrogen, exports]
+
+lh2_imp:
+  name: lh2_imp
+  description: Imports of liquid hydrogen
+  type: secondary
+  sector: hydrogen
+  input: [liquid hydrogen, exports]
+  output: [liquid hydrogen, secondary]
+
+lh2_regas:
+  name: lh2_regas
+  description: Regasification of liquid hydrogen
+  type: secondary
+  vintaged: TRUE
+  sector: hydrogen
+  input: [liquid hydrogen, secondary]
+  output: [hydrogen, secondary]
+
+lh2_t/d:
+  name: lh2_t/d
+  description: Transmission/Distribution of liquid hydrogen
+  type: final
+  vintaged: TRUE
+  sector: hydrogen
+  input: [liquid hydrogen, secondary]
+  output: [liquid hydrogen, final]
+
+back_bio_ind:
+  name: back_bio_ind
+  description: Backstop for diagnosing model infeasibility
+  type: final
+  sector: industry
+  output: [biomass, useful]
+
+back_fs:
+  name: back_fs
+  description: Backstop for diagnosing model infeasibility
+  type: useful
+  sector: industry
+  output: [i_feed, useful]
+
+back_I:
+  name: back_I
+  description: Backstop for diagnosing model infeasibility
+  type: useful
+  sector: industry
+  output: [i_spec, useful]
+
+cement_CO2:
+  name: cement_CO2
+  description: Co2 emissions from cement production
+  type: secondary
+  sector: industry
+  output: [exports, secondary]
+
+cement_co2scr:
+  name: cement_co2scr
+  description: Cement CO2 scrubber (CCS)
+  type: secondary
+  vintaged: TRUE
+  sector: industry
+  output: [exports, secondary]
+
+coal_i:
+  name: coal_i
+  description: Coal in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [coal, final]
+  output: [i_therm, useful]
+
+elec_i:
+  name: elec_i
+  description: Electricity in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [electr, final]
+  output: [i_therm, useful]
+
+eth_i:
+  name: eth_i
+  description: Ethanol (without C) replacement for use as liquid fuel in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [ethanol, final]
+  output: [i_therm, useful]
+
+foil_i:
+  name: foil_i
+  description: Fuel oil for thermal uses in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [fueloil, final]
+  output: [i_therm, useful]
+
+gas_i:
+  name: gas_i
+  description: Gas for thermal uses in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [gas, final]
+  output: [i_therm, useful]
+
+h2_i:
+  name: h2_i
+  description: Gaseous hydrogen in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [hydrogen, final]
+  output: [i_therm, useful]
+
+heat_i:
+  name: heat_i
+  description: District heating for thermal uses in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [d_heat, final]
+  output: [i_therm, useful]
+
+hp_el_i:
+  name: hp_el_i
+  description: Electric heat pump in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [electr, final]
+  output: [i_therm, useful]
+
+hp_gas_i:
+  name: hp_gas_i
+  description: Natural gas heat pump in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [gas, final]
+  output: [i_therm, useful]
+
+loil_i:
+  name: loil_i
+  description: Lightoil for thermal uses in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [lightoil, final]
+  output: [i_therm, useful]
+
+meth_i:
+  name: meth_i
+  description: Methanol (with C) replacement for use as liquid fuel in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [methanol, final]
+  output: [i_therm, useful]
+
+solar_i:
+  name: solar_i
+  description: Solar thermal in industry thermal sector
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  output: [i_therm, useful]
+
+Ispec_1:
+  name: Ispec_1
+  description: Conservation cost curve step for industry specific demand
+  type: useful
+  sector: industry
+  output: [i_spec, useful]
+
+Ispec_2:
+  name: Ispec_2
+  description: Conservation cost curve step for industry specific demand
+  type: useful
+  sector: industry
+  output: [i_spec, useful]
+
+Ispec_3:
+  name: Ispec_3
+  description: Conservation cost curve step for industry specific demand
+  type: useful
+  sector: industry
+  output: [i_spec, useful]
+
+Ispec_4:
+  name: Ispec_4
+  description: Conservation cost curve step for industry specific demand
+  type: useful
+  sector: industry
+  output: [i_spec, useful]
+
+Ispec_5:
+  name: Ispec_5
+  description: Conservation cost curve step for industry specific demand
+  type: useful
+  sector: industry
+  output: [i_spec, useful]
+
+Ispec_con:
+  name: Ispec_con
+  description: Joint diffusion constraint for industry specific conservation cost curve steps
+  type: primary
+  sector: industry
+  output: [dummy agriculture, primary]
+
+Itherm_1:
+  name: Itherm_1
+  description: Conservation cost curve step for industry thermal demand
+  type: useful
+  sector: industry
+  output: [i_therm, useful]
+
+Itherm_2:
+  name: Itherm_2
+  description: Conservation cost curve step for industry thermal demand
+  type: useful
+  sector: industry
+  output: [i_therm, useful]
+
+Itherm_3:
+  name: Itherm_3
+  description: Conservation cost curve step for industry thermal demand
+  type: useful
+  sector: industry
+  output: [i_therm, useful]
+
+Itherm_4:
+  name: Itherm_4
+  description: Conservation cost curve step for industry thermal demand
+  type: useful
+  sector: industry
+  output: [i_therm, useful]
+
+Itherm_5:
+  name: Itherm_5
+  description: Conservation cost curve step for industry thermal demand
+  type: useful
+  sector: industry
+  output: [i_therm, useful]
+
+Itherm_con:
+  name: Itherm_con
+  description: Joint diffusion constraint for industry thermal conservation cost curve steps
+  type: dummy
+  sector: industry
+  output: [dummy agriculture, primary]
+
+solar_pv_I:
+  name: solar_pv_I
+  description: On-site solar photovoltaic power plant (no storage) in industry specific
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  output: [i_spec, useful]
+
+h2_fc_I:
+  name: h2_fc_I
+  description: Hydrogen fuel cell cogeneration system for industry specific
+  type: useful
+  vintaged: TRUE
+  sector: industry
+  input: [hydrogen, final]
+  output: [i_spec, useful]
+
+sp_coal_I:
+  name: sp_coal_I
+  description: Specific use of coal in industry
+  type: useful
+  sector: industry
+  input: [coal, final]
+  output: [i_spec, useful]
+
+sp_el_I:
+  name: sp_el_I
+  description: Specific use of electricity in industry
+  type: useful
+  sector: industry
+  input: [electr, final]
+  output: [i_spec, useful]
+
+sp_eth_I:
+  name: sp_eth_I
+  description: Ethanol (without net C) replacement for specific use of light oil in industry
+  type: useful
+  sector: industry
+  input: [ethanol, final]
+  output: [i_spec, useful]
+
+sp_liq_I:
+  name: sp_liq_I
+  description: Specific use of light oil in industry
+  type: useful
+  sector: industry
+  input: [lightoil, final]
+  output: [i_spec, useful]
+
+sp_meth_I:
+  name: sp_meth_I
+  description: Methanol (with C) replacement for  specific use of light oil in industry
+  type: useful
+  sector: industry
+  input: [methanol, final]
+  output: [i_spec, useful]
+
+bio_extr_mpen:
+  name: bio_extr_mpen
+  description: Slack primary biomass created with new implementation of non commercial biomass
+  type: secondary
+  sector: land
+  output: [exports, secondary]
+
+forest_CO2:
+  name: forest_CO2
+  description: Co2 emissions from forests
+  type: secondary
+  sector: land
+  output: [exports, secondary]
+
+sinks_1:
+  name: sinks_1
+  description: Potential for sinks (50. US$)
+  type: secondary
+  sector: land
+  output: [exports, secondary]
+
+sinks_2:
+  name: sinks_2
+  description: Potential for sinks (100. US$)
+  type: secondary
+  sector: land
+  output: [exports, secondary]
+
+sinks_3:
+  name: sinks_3
+  description: Potential for sinks (200. US$)
+  type: secondary
+  sector: land
+  output: [exports, secondary]
+
+sinks_4:
+  name: sinks_4
+  description: Potential for sinks (300. US$)
+  type: secondary
+  sector: land
+  output: [exports, secondary]
+
+eth_bal:
+  name: eth_bal
+  description: Link technology to stabilize ethanol production
+  type: secondary
+  sector: liquids
+  input: [ethanol, primary]
+  output: [ethanol, secondary]
+
+eth_bio:
+  name: eth_bio
+  description: Ethanol synthesis via biomass gasification
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [biomass, primary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [ethanol, primary]
+    - [electr, secondary]
+
+eth_bio_ccs:
+  name: eth_bio_ccs
+  description: Ethanol synthesis via biomass gasification with carbon capture and storage
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [biomass, primary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [ethanol, primary]
+    - [electr, secondary]
+
+eth_exp:
+  name: eth_exp
+  description: Exports of ethanol (no accounting of CO2 transferred)
+  type: exports
+  sector: liquids
+  input: [ethanol, primary]
+  output: [ethanol, exports]
+
+eth_imp:
+  name: eth_imp
+  description: Imports of ethanol (no accounting of CO2 transferred)
+  type: secondary
+  sector: liquids
+  input: [ethanol, exports]
+  output: [ethanol, secondary]
+
+eth_t/d:
+  name: eth_t/d
+  description: Transmission/Distribution of methanol without net C (just linking technology)
+  type: final
+  sector: liquids
+  input: [ethanol, secondary]
+  output: [ethanol, final]
+
+foil_exp:
+  name: foil_exp
+  description: Net exports of crude oil at 95% of oil price
+  type: exports
+  sector: liquids
+  input: [fueloil, secondary]
+  output: [fueloil, exports]
+
+foil_imp:
+  name: foil_imp
+  description: Net imports of residual oil at 95% of oil price
+  type: secondary
+  sector: liquids
+  input: [fueloil, imports]
+  output: [fueloil, secondary]
+
+foil_t/d:
+  name: foil_t/d
+  description: Transmission/Distribution of fueloil  (just linking technology)
+  type: final
+  sector: liquids
+  input: [fueloil, secondary]
+  output: [fueloil, final]
+
+glb_eth_imp:
+  name: glb_eth_imp
+  description: Global net import of ethanol
+  type: exports
+  sector: liquids
+  input: [ethanol, exports]
+  output: [exports]
+
+glb_foil_exp:
+  name: glb_foil_exp
+  description: Global net export of fuel oil
+  type: imports
+  sector: liquids
+  output: [fueloil, imports]
+
+glb_foil_imp:
+  name: glb_foil_imp
+  description: Global net import of fuel oil
+  type: exports
+  sector: liquids
+  input: [fueloil, exports]
+  output: [exports]
+
+glb_loil_exp:
+  name: glb_loil_exp
+  description: Global net export of light oil
+  type: imports
+  sector: liquids
+  output: [loil, imports]
+
+glb_loil_imp:
+  name: glb_loil_imp
+  description: Global net import of light oil
+  type: exports
+  sector: liquids
+  input: [loil, exports]
+  output: [exports]
+
+glb_meth_imp:
+  name: glb_meth_imp
+  description: Global net import of methanol
+  type: exports
+  sector: liquids
+  input: [methanol, exports]
+  output: [exports]
+
+glb_oil_exp:
+  name: glb_oil_exp
+  description: Global net export of crude oil
+  type: imports
+  sector: liquids
+  output: [oil, imports]
+
+glb_oil_imp:
+  name: glb_oil_imp
+  description: Global net import of crude oil
+  type: exports
+  sector: liquids
+  input: [oil, exports]
+  output: [exports]
+
+liq_bio:
+  name: liq_bio
+  description: Second Generation Ethanol Production based on Biomass to FTL
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [biomass, primary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [ethanol, primary]
+    - [electr, secondary]
+
+liq_bio_ccs:
+  name: liq_bio_ccs
+  description: Second Generation Ethanol Production with carbon capture and storage based on Biomass to FTL
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [biomass, primary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [ethanol, primary]
+    - [electr, secondary]
+
+loil_exp:
+  name: loil_exp
+  description: Net exports of crude oil at 15% above oil price
+  type: exports
+  sector: liquids
+  input: [lightoil, secondary]
+  output: [lightoil, exports]
+
+loil_imp:
+  name: loil_imp
+  description: Net imports of light oil at 15% above crude price
+  type: secondary
+  sector: liquids
+  input: [lightoil, imports]
+  output: [lightoil, secondary]
+
+loil_std:
+  name: loil_std
+  description: Standard light oil power-plant
+  type: secondary
+  vintaged: TRUE
+  sector: liquids
+  output: [lightoil, secondary]
+
+loil_t/d:
+  name: loil_t/d
+  description: Transmission/Distribution of light oil (just linking technology)
+  type: final
+  sector: liquids
+  input: [lightoil, secondary]
+  output: [lightoil, final]
+
+meth_coal:
+  name: meth_coal
+  description: Methanol synthesis via coal gasification
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [coal, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [methanol, primary]
+    - [electr, secondary]
+
+meth_coal_ccs:
+  name: meth_coal_ccs
+  description: Methanol synthesis via coal gasification with carbon capture and storage
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [coal, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [methanol, primary]
+    - [electr, secondary]
+
+meth_exp:
+  name: meth_exp
+  description: Exports of methanol (no accounting of CO2 transferred)
+  type: exports
+  sector: liquids
+  input: [methanol, primary]
+  output: [methanol, exports]
+
+meth_imp:
+  name: meth_imp
+  description: Imports of methanol (no accounting of CO2 transferred)
+  type: secondary
+  sector: liquids
+  input: [methanol, exports]
+  output: [methanol, secondary]
+
+meth_ng:
+  name: meth_ng
+  description: Methanol synthesis via natural gas
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [gas, secondary]
+    - [freshwater_supply, water_supply]
+  output: [methanol, primary]
+
+meth_ng_ccs:
+  name: meth_ng_ccs
+  description: Methanol synthesis via natural gas with carbon capture and storage
+  type: primary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [gas, secondary]
+    - [freshwater_supply, water_supply]
+  output: [methanol, primary]
+
+meth_t/d:
+  name: meth_t/d
+  description: Transmission/Distribution of methanol with C
+  type: final
+  sector: liquids
+  input: [methanol, secondary]
+  output: [methanol, final]
+
+oil_bal:
+  name: oil_bal
+  description: Link technology to stabilize crude oil production
+  type: secondary
+  sector: liquids
+  input: [crude oil, primary]
+  output: [crude oil, secondary]
+
+oil_exp:
+  name: oil_exp
+  description: Net exports of crude oil at 100% of oil price
+  type: exports
+  sector: liquids
+  input: [crude oil, primary]
+  output: [oil, exports]
+
+oil_imp:
+  name: oil_imp
+  description: Net imports of oil
+  type: secondary
+  sector: liquids
+  input: [oil, imports]
+  output: [crude oil, secondary]
+
+plutonium_prod:
+  name: plutonium_prod
+  description: Plutonium production
+  type: stocks
+  sector: liquids
+  input: [plutonium, stocks]
+  output: [plutonium, stocks]
+
+ref_hil:
+  name: ref_hil
+  description: New deeply upgraded refineries
+  type: secondary
+  vintaged: TRUE
+  sector: liquids
+  input: [crude oil, secondary]
+  output: [fueloil, secondary]
+
+ref_lol:
+  name: ref_lol
+  description: Existing refineries (low yield)
+  type: secondary
+  vintaged: TRUE
+  sector: liquids
+  input: [crude oil, secondary]
+  output: [fueloil, secondary]
+
+SO2_scrub_ref:
+  name: SO2_scrub_ref
+  description: SO2 scrubber for refineries
+  type: secondary
+  vintaged: TRUE
+  sector: liquids
+  output: [exports, secondary]
+
+syn_liq:
+  name: syn_liq
+  description: Coal liquefaction and light oil synthesis
+  type: secondary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [coal, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [lightoil, secondary]
+    - [electr, secondary]
+
+syn_liq_ccs:
+  name: syn_liq_ccs
+  description: Coal liquefaction and light oil synthesis with carbon capture and storage
+  type: secondary
+  vintaged: TRUE
+  sector: liquids
+  input:
+    - [coal, secondary]
+    - [freshwater_supply, water_supply]
+  output:
+    - [lightoil, secondary]
+    - [electr, secondary]
+
+adipic_thermal:
+  name: adipic_thermal
+  description: Thermal destruction tech for adipic acid sector
+  type: dummy
+  sector: non-co2
+  output: [dummy, primary]
+
+ammonia_secloop:
+  name: ammonia_secloop
+  description: Ammonia Secondary Loop Systems
+  type: dummy
+  sector: non-co2
+  output: [dummy, primary]
+
+enre_con:
+  name: enre_con
+  description: Joint diffusion constraint for enteric fermentation mitigation technologies
+  type: dummy
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+ent_red1:
+  name: ent_red1
+  description: Mitigation for CH4 emissions from animals directly
+  type: dummy
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+ent_red2:
+  name: ent_red2
+  description: Mitigation for CH4 emissions from animals directly
+  type: dummy
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+ent_red3:
+  name: ent_red3
+  description: Mitigation for CH4 emissions from animals directly
+  type: dummy
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+landfill_compost1:
+  name: landfill_compost1
+  description: Landfill mitigation technology (composting) technology 1 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+landfill_compost2:
+  name: landfill_compost2
+  description: Landfill mitigation technology (composting) technology 2 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+landfill_direct1:
+  name: landfill_direct1
+  description: Landfill mitigation technology (direct) 1 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+landfill_direct2:
+  name: landfill_direct2
+  description: Landfill mitigation technology (direct) 1 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+landfill_ele:
+  name: landfill_ele
+  description: Landfill mitigation technology (ele) 1 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+landfill_flaring:
+  name: landfill_flaring
+  description: Landfill mitigation technology (flaring) 1 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+landfill_heatprdn:
+  name: landfill_heatprdn
+  description: Landfill mitigation technology (heat production) 1 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+landfill_oxdn:
+  name: landfill_oxdn
+  description: Landfill mitigation technology (oxidation) 1 for CH4 mitigation
+  type: dummy
+  vintaged: TRUE
+  sector: non-co2
+  output: [dummy, primary]
+
+leak_repair:
+  name: leak_repair
+  description: Leak-repairs, HFC-134a from refrigeration & AC(SR)
+  type: dummy
+  sector: non-co2
+  output: [dummy, primary]
+
+leak_repairsf6:
+  name: leak_repairsf6
+  description: Recycling gas carts for SF6 recovery during assembly of gas insulated equipment
+  type: dummy
+  sector: non-co2
+  output: [dummy, primary]
+
+lfil_con:
+  name: lfil_con
+  description: Joint diffusion constraint for landfill mitigation technologies
+  type: dummy
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+manu_con:
+  name: manu_con
+  description: Joint diffusion constraint for manure management+B249 mitigation technologies
+  type: primary
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+meth_bal:
+  name: meth_bal
+  description: Link technology to stabilize methanol production
+  type: primary
+  sector: non-co2
+  input: [methanol, primary]
+  output: [methanol, secondary]
+
+mvac_co2:
+  name: mvac_co2
+  description: Transcritical vapor cycle CO2 systems for mobile vehicle air conditioners
+  type: dummy
+  sector: non-co2
+  output: [dummy]
+
+recycling_gas1:
+  name: recycling_gas1
+  description: Recycling gas carts for SF6 recovery during maintenance of gas insulated equipment(SR)
+  type: dummy
+  sector: non-co2
+  output: [dummy, primary]
+
+refrigerant_recover:
+  name: refrigerant_recover
+  description: Recovery of refrigerant, HFC-134a from refrigeration and AC (SR)
+  type: primary
+  sector: non-co2
+  output: [dummy, primary]
+
+repl_hc:
+  name: repl_hc
+  description: Replacement with HC for foams
+  type: primary
+  sector: non-co2
+  output: [dummy, primary]
+
+replacement_so2:
+  name: replacement_so2
+  description: Replacing SF6 by SO2(SR)
+  type: primary
+  sector: non-co2
+  output: [dummy, primary]
+
+rice_red1:
+  name: rice_red1
+  description: Mitigation for CH4 emissions from rice
+  type: primary
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+rice_red2:
+  name: rice_red2
+  description: Mitigation for CH4 emissions from rice
+  type: primary
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+rice_red3:
+  name: rice_red3
+  description: Mitigation for CH4 emissions from rice
+  type: primary
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+rire_con:
+  name: rire_con
+  description: Joint diffusion constraint for rice cultivation mitigation technologies
+  type: primary
+  sector: non-co2
+  output: [dummy  agriculture, primary]
+
+soil_red1:
+  name: soil_red1
+  description: Mitigation for N2Oemissions from soil
+  type: primary
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+soil_red2:
+  name: soil_red2
+  description: Mitigation for N2Oemissions from soil
+  type: primary
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+soil_red3:
+  name: soil_red3
+  description: Mitigation for N2Oemissions from soil
+  type: primary
+  sector: non-co2
+  output: [dummy agriculture, primary]
+
+vertical_stud:
+  name: vertical_stud
+  description: Soderberg process for CF4 from aluminum (SR)
+  type: dummy
+  sector: non-co2
+  output: [dummy, primary]
+
+u5-reproc:
+  name: u5-reproc
+  description: Uranium reprocessing
+  type: stocks
+  vintaged: TRUE
+  sector: nuclear
+  input: [uranium, stocks]
+  output: [uranium, stocks]
+
+Uran_extr:
+  name: Uran_extr
+  description: Uranium extraction, milling for FBR blanket
+  type: stocks
+  sector: nuclear
+  input: [uranium, resource]
+  output: [uranium, stocks]
+
+uran2u5:
+  name: uran2u5
+  description: Uranium extraction, milling, fluorination and enrichment per t U5
+  type: stocks
+  sector: nuclear
+  input: [uranium, resource]
+  output: [uranium, stocks]
+
+bco2_tr_dis:
+  name: bco2_tr_dis
+  description: Technology for co2 transportation and disposal from biomass technologies
+  type: secondary
+  sector: other conversion
+  output: [exports, secondary]
+
+co2_tr_dis:
+  name: co2_tr_dis
+  description: Technology for co2 transportation and disposal
+  type: secondary
+  sector: other conversion
+  output: [exports, secondary]
+
+back_RC:
+  name: back_RC
+  description: Backstop for diagnosing model infeasibility
+  type: useful
+  sector: residential/commercial
+  output: [rc_spec, useful]
+
+solar_rc:
+  name: solar_rc
+  description: Solar thermal in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  output: [rc_therm, useful]
+
+biomass_rc:
+  name: biomass_rc
+  description: Biomass with C for heating in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [biomass, final]
+  output: [rc_therm, useful]
+
+coal_rc:
+  name: coal_rc
+  description: Coal heating in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [coal, final]
+  output: [rc_therm, useful]
+
+elec_rc:
+  name: elec_rc
+  description: Electricity heating in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [electr, final]
+  output: [rc_therm, useful]
+
+eth_rc:
+  name: eth_rc
+  description: Ethanol (without C) replacement for use as liquid fuel in residential/commercial
+  type: useful
+  sector: residential/commercial
+  input: [ethanol, final]
+  output: [rc_therm, useful]
+
+foil_rc:
+  name: foil_rc
+  description: Fuel oil heating in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [fueloil, final]
+  output: [rc_therm, useful]
+
+h2_rc:
+  name: h2_rc
+  description: Hydrogen (gaseous) catalytic heating in
+  type: secondary
+  sector: residential/commercial
+  input: [hydrogen, final]
+  output: [rc_therm, useful]
+
+heat_rc:
+  name: heat_rc
+  description: District heating in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [d_heat, final]
+  output: [rc_therm, useful]
+
+hp_el_rc:
+  name: hp_el_rc
+  description: Electric heat pump in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [electr, final]
+  output: [rc_therm, useful]
+
+hp_gas_rc:
+  name: hp_gas_rc
+  description: Natural gas heat pump in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [gas, final]
+  output: [rc_therm, useful]
+
+loil_rc:
+  name: loil_rc
+  description: Lightoil heating in residential/commercial sector
+  type: useful
+  sector: residential/commercial
+  input: [lightoil, final]
+  output: [rc_therm, useful]
+
+meth_rc:
+  name: meth_rc
+  description: Methanol (with C) replacement for use as liquid fuel in residential/commercial
+  type: useful
+  sector: residential/commercial
+  input: [methanol, final]
+  output: [rc_therm, useful]
+
+RCspec_1:
+  name: RCspec_1
+  description: Conservation cost curve step for residential/commercial specific demand
+  type: useful
+  sector: residential/commercial
+  output: [useful]
+
+RCspec_2:
+  name: RCspec_2
+  description: Conservation cost curve step for residential/commercial specific demand
+  type: useful
+  sector: residential/commercial
+  output: [useful]
+
+RCspec_3:
+  name: RCspec_3
+  description: Conservation cost curve step for residential/commercial specific demand
+  type: useful
+  sector: residential/commercial
+  output: [useful]
+
+RCspec_4:
+  name: RCspec_4
+  description: Conservation cost curve step for residential/commercial specific demand
+  type: useful
+  sector: residential/commercial
+  output: [useful]
+
+RCspec_5:
+  name: RCspec_5
+  description: Conservation cost curve step for residential/commercial specific demand
+  type: useful
+  sector: residential/commercial
+  output: [useful]
+
+RCspec_con:
+  name: RCspec_con
+  description: Joint diffusion constraint for residential/commercial specific conservation cost curve steps
+  type: dummy
+  sector: residential/commercial
+  output: [dummy agriculture, primary]
+
+RCtherm_1:
+  name: RCtherm_1
+  description: Conservation cost curve step for residential/commercial thermal demand
+  type: useful
+  sector: residential/commercial
+  output: [rc_therm, useful]
+
+RCtherm_2:
+  name: RCtherm_2
+  description: Conservation cost curve step for residential/commercial thermal demand
+  type: useful
+  sector: residential/commercial
+  output: [rc_therm, useful]
+
+RCtherm_3:
+  name: RCtherm_3
+  description: Conservation cost curve step for residential/commercial thermal demand
+  type: useful
+  sector: residential/commercial
+  output: [rc_therm, useful]
+
+RCtherm_4:
+  name: RCtherm_4
+  description: Conservation cost curve step for residential/commercial thermal demand
+  type: useful
+  sector: residential/commercial
+  output: [rc_therm, useful]
+
+RCtherm_5:
+  name: RCtherm_5
+  description: Conservation cost curve step for residential/commercial thermal demand
+  type: useful
+  sector: residential/commercial
+  output: [rc_therm, useful]
+
+RCtherm_con:
+  name: RCtherm_con
+  description: Joint diffusion constraint for residential/commercial thermal conservation cost curve steps
+  type: dummy
+  sector: residential/commercial
+  output: [dummy agriculture, primary]
+
+solar_pv_RC:
+  name: solar_pv_RC
+  description: Specific use of on-site solar photovoltaic power plant (no storage) in residential/commercial
+  type: useful
+  vintaged: TRUE
+  sector: residential/commercial
+  output: [rc_spec, useful]
+
+sp_el_RC:
+  name: sp_el_RC
+  description: Specific use of electricity in residential/commercial
+  type: useful
+  sector: residential/commercial
+  input: [electr, final]
+  output: [rc_spec, useful]
+
+h2_fc_RC:
+  name: h2_fc_RC
+  description: Specific use of hydrogen fuel cell cogeneration system in res/comm
+  type: useful
+  vintaged: TRUE
+  sector: residential/commercial
+  input: [hydrogen, final]
+  output: [rc_spec, useful]
+
+bio_extr_chp:
+  name: bio_extr_chp
+  description: Supply of biomass without net C emissions;  defined here as agricultural wastes, and other crops with cycle of 1 year or less
+  type: primary
+  sector: solids
+  output: [biomass, primary]
+
+bio_ppl_co2scr:
+  name: bio_ppl_co2scr
+  description: New coal scrubber for power plants
+  type: secondary
+  vintaged: TRUE
+  sector: solids
+  output: [exports, secondary]
+
+biomass_i:
+  name: biomass_i
+  description: Biomass with C in industry thermal
+  type: useful
+  vintaged: TRUE
+  sector: solids
+  input: [biomass, final]
+  output: [i_therm, useful]
+
+biomass_nc:
+  name: biomass_nc
+  description: Non-commercial biomass with C
+  type: useful
+  vintaged: TRUE
+  sector: solids
+  input: [biomass, primary]
+  output: [non-comm, useful]
+
+biomass_t/d:
+  name: biomass_t/d
+  description: Transmission/Distribution of biomass with C
+  type: useful
+  sector: solids
+  input: [biomass, primary]
+  output: [biomass, final]
+
+c_ppl_co2scr:
+  name: c_ppl_co2scr
+  description: New coal scrubber for coal power plants
+  type: secondary
+  vintaged: TRUE
+  sector: solids
+  output: [exports, secondary]
+
+cfc_co2scr:
+  name: cfc_co2scr
+  description: Co2 scrubber for coal fuel cells (CCS)
+  type: secondary
+  vintaged: TRUE
+  sector: solids
+  output: [exports, secondary]
+
+coal_bal:
+  name: coal_bal
+  description: Link technology to stabilize coal production
+  type: secondary
+  sector: solids
+  input: [coal, primary]
+  output: [coal, secondary]
+
+coal_exp:
+  name: coal_exp
+  description: Net exports of coal at fixed price of about US$ 42/tce
+  type: exports
+  sector: solids
+  input: [coal, primary]
+  output: [coal, exports]
+
+coal_imp:
+  name: coal_imp
+  description: Net imports of coal
+  type: secondary
+  sector: solids
+  input: [coal, imports]
+  output: [coal, secondary]
+
+coal_t/d:
+  name: coal_t/d
+  description: Transmission/Distribution of coal
+  type: final
+  sector: solids
+  input: [coal, secondary]
+  output: [coal, final]
+
+coal_t/d-in-06%:
+  name: coal_t/d-in-06%
+  description: Transmission/Distribution of coal industry like coal_t/d but imported coal  with 0.6% S content
+  type: final
+  sector: solids
+  input: [coal, secondary]
+  output: [coal, final]
+
+coal_t/d-in-SO2:
+  name: coal_t/d-in-SO2
+  description: Transmission/Distribution of coal industry like coal_t/d but processed coal
+  type: final
+  sector: solids
+  input: [coal, secondary]
+  output: [coal, final]
+
+coal_t/d-rc-06%:
+  name: coal_t/d-rc-06%
+  description: Transmission/Distribution of coal residential/commercial like coal_t/d but imported coal with 0.6% S content
+  type: final
+  sector: solids
+  input: [coal, secondary]
+  output: [coal, final]
+
+coal_t/d-rc-SO2:
+  name: coal_t/d-rc-SO2
+  description: Transmission/Distribution of coal like coal_t/d but processed coal
+  type: final
+  sector: solids
+  input: [coal, secondary]
+  output: [coal, final]
+
+glb_coal_exp:
+  name: glb_coal_exp
+  description: Global net export of coal
+  type: imports
+  sector: solids
+  output: [coal, imports]
+
+glb_coal_imp:
+  name: glb_coal_imp
+  description: Global net import of coal
+  type: exports
+  sector: solids
+  input: [electr, exports]
+  output: [exports]
+
+back_trp:
+  name: back_trp
+  description: Backstop for diagnosing model infeasibility
+  type: useful
+  sector: transport
+  output: [transport, useful]
+
+coal_trp:
+  name: coal_trp
+  description: Coal-based transport
+  type: useful
+  sector: transport
+  input: [coal, final]
+  output: [transport, useful]
+
+elec_trp:
+  name: elec_trp
+  description: Electricity-based transport
+  type: useful
+  sector: transport
+  input: [electr, final]
+  output: [transport, useful]
+
+eth_fc_trp:
+  name: eth_fc_trp
+  description: Ethanol (without net C) fuel cell-based transport
+  type: useful
+  sector: transport
+  input: [ethanol, final]
+  output: [transport, useful]
+
+eth_ic_trp:
+  name: eth_ic_trp
+  description: Ethanol (without net C) ic-engine-based transport
+  type: useful
+  sector: transport
+  input: [ethanol, final]
+  output: [transport, useful]
+
+foil_trp:
+  name: foil_trp
+  description: Fueloil-based transport
+  type: useful
+  sector: transport
+  input: [fueloil, final]
+  output: [transport, useful]
+
+gas_trp:
+  name: gas_trp
+  description: Gas-based transport
+  type: useful
+  sector: transport
+  input: [gas, final]
+  output: [transport, useful]
+
+h2_fc_trp:
+  name: h2_fc_trp
+  description: Hydrogen fuel cell-based transport (plus off-hours electricity generation)
+  type: useful
+  vintaged: TRUE
+  sector: transport
+  input: [liquid hydrogen, final]
+  output: [transport, useful]
+
+loil_trp:
+  name: loil_trp
+  description: Lightoil-based transport
+  type: useful
+  sector: transport
+  input: [lightoil, final]
+  output: [transport, useful]
+
+meth_fc_trp:
+  name: meth_fc_trp
+  description: Methanol (with C) fuel cell-based transport
+  type: useful
+  sector: transport
+  input: [methanol, final]
+  output: [transport, useful]
+
+meth_ic_trp:
+  name: meth_ic_trp
+  description: Methanol (with C) ic-engine-based transport
+  type: useful
+  sector: transport
+  input: [methanol, final]
+  output: [transport, useful]
+
+Trans_1:
+  name: Trans_1
+  description: Conservation cost curve step for transport demand
+  type: useful
+  sector: transport
+  output: [transport, useful]
+
+Trans_2:
+  name: Trans_2
+  description: Conservation cost curve step for transport demand
+  type: useful
+  sector: transport
+  output: [transport, useful]
+
+Trans_3:
+  name: Trans_3
+  description: Conservation cost curve step for transport demand
+  type: useful
+  sector: transport
+  output: [transport, useful]
+
+Trans_4:
+  name: Trans_4
+  description: Conservation cost curve step for transport demand
+  type: useful
+  sector: transport
+  output: [transport, useful]
+
+Trans_5:
+  name: Trans_5
+  description: Conservation cost curve step for transport demand
+  type: useful
+  sector: transport
+  output: [transport, useful]
+
+Trans_con:
+  name: Trans_con
+  description: Joint diffusion constraint for transport conservation cost curve steps
+  type: primary
+  sector: transport
+  output: [dummy agriculture, primary]
+
+foil_bunker:
+  name: foil_bunker
+  description: Fuel oil demand for international shipping bunkers (global trade)
+  type: useful
+  sector: shipping
+  input: [fueloil, final]
+  output: [shipping, useful]
+
+loil_bunker:
+  name: loil_bunker
+  description: Light oil demand for international shipping bunkers (global trade)
+  type: useful
+  sector: shipping
+  input: [lightoil, final]
+  output: [shipping, useful]
+
+meth_bunker:
+  name: meth_bunker
+  description: Methanol demand for international shipping bunkers (global trade)
+  type: useful
+  sector: shipping
+  input: [methanol, final]
+  output: [shipping, useful]
+
+eth_bunker:
+  name: eth_bunker
+  description: Ethanol demand for international shipping bunkers (global trade)
+  type: useful
+  sector: shipping
+  input: [ethanol, final]
+  output: [shipping, useful]
+
+LNG_bunker:
+  name: LNG_bunker
+  description: Liquified natural gas demand for international shipping bunkers (global trade)
+  type: useful
+  sector: shipping
+  input: [LNG, final]
+  output: [shipping, useful]
+
+LH2_bunker:
+  name: LH2_bunker
+  description: Liquified hydrogen  demand for international shipping bunkers (global trade)
+  type: useful
+  sector: shipping
+  input: [lh2, final]
+  output: [shipping, useful]
