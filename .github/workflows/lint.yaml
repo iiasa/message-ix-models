@@ -7,7 +7,8 @@ on:
     branches: [ main ]
 
 env:
-  max-complexity: 4
+  # Maximum McCabe complexity for code
+  max-complexity: 12
 
 jobs:
   lint:
