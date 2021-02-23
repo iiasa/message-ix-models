@@ -1,11 +1,11 @@
 import click
-from message_ix.cli import main
 
 
-@click.group("model")
-@click.pass_obj
-def model_group(context):
+@click.group()
+def main():
     """MESSAGEix-GLOBIOM tools."""
 
 
-main.add_command(model_group)
+@main.command()
+def model():
+    """Commands for models."""
