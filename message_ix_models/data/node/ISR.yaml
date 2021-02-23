@@ -1,0 +1,9 @@
+# Codes for the "node" dimension of the MESSAGE-IL model
+
+World:
+  name: World
+  description: MESSAGE-IL regions
+
+Israel:
+  name: Israel
+  parent: World
