@@ -1,10 +1,18 @@
 Other code lists
 ****************
 
+.. _commodity-yaml:
+
+Commodities (``commodity.yaml``)
+===============================
+
+.. literalinclude:: ../../message_ix_models/data/commodity.yaml
+   :language: yaml
+
 .. _level-yaml:
 
-List of levels (``level.yaml``)
-===============================
+Levels (``level.yaml``)
+=======================
 
 .. literalinclude:: ../../message_ix_models/data/level.yaml
    :language: yaml
@@ -12,8 +20,8 @@ List of levels (``level.yaml``)
 
 .. _technology-yaml:
 
-List of technologies (``technology.yaml``)
-==========================================
+Technologies (``technology.yaml``)
+==================================
 
 .. warning:: This list is *only for reference*; particular MESSAGE-GLOBIOM scenarios may not contain all these technologies, or may contain other technologies not listed.
 

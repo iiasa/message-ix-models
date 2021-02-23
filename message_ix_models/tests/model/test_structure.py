@@ -7,6 +7,7 @@ from message_ix_models.model.structure import get_codes
     "name",
     (
         "cd_links/unit",
+        "commodity",
         "level",
         "node/ISR",
         "node/R11",

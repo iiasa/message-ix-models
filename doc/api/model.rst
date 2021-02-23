@@ -15,16 +15,14 @@ Models and model variants
 
 .. autofunction:: get_codes
 
-   Code lists include:
+   The available code lists are reproduced as part of this documentation.
+   See:
 
-   ``node/R11``, ``node/R14``, etc.
-      General, hierarchical code lists for the ‘node’ dimension of a :class:`message_ix.Scenario`
-   ``level``
-      Levels of an energy system, for the ‘level’ dimension. General.
-   ``technology``
-      Technologies, for the ‘technology’ dimension. General.
-   ``cd_links/unit``
-      Project-specific. Units appearing in CD-LINKS scenarios.
+   - :doc:`pkg-data/codelists`
+   - :doc:`pkg-data/node`
+
+   Also available is :file:`cd_links/unit.yaml`.
+   This is a project-specific list of units appearing in CD-LINKS scenarios.
 
    **Example:**
 
