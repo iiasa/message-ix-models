@@ -1,5 +1,4 @@
 import click
-
 from message_ix.cli import main
 
 
