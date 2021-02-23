@@ -19,6 +19,7 @@ def as_codes(data):
     - :class:`dict`, in which keys are :attr:`.Code.id` and values are further
       :class:`dict` with keys matching other :class:`.Code` attributes.
     """
+    # Assemble results as a dictionary
     result = {}
 
     if isinstance(data, list):
@@ -40,17 +41,22 @@ def as_codes(data):
             desc=info.pop("description", None),
         )
 
+        # Associate with a parent
         try:
-            result[info.pop("parent")].child.append(code)
+            parent_id = info.pop("parent")
         except KeyError:
             pass  # No parent
+        else:
+            result[parent_id].append_child(code)
 
-        try:
-            for id in info.pop("child"):
-                code.child.append(result[id])
-        except KeyError:
-            pass  # No children
+        # Associate with any children
+        for id in info.pop("child", []):
+            try:
+                code.append_child(result[id])
+            except KeyError:
+                pass  # Not parsed yet
 
+        # Convert other dictionary (key, value) pairs to annotations
         for id, value in info.items():
             code.annotations.append(Annotation(id=id, text=repr(value)))
 
