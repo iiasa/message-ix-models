@@ -108,7 +108,7 @@ jobs:
 
     - name: Run test suite using pytest
       working-directory: message-ix-models
-      run: pytest message-ix-models -rA --verbose --cov-report=xml --color=yes
+      run: pytest message_ix_models -rA --verbose --cov-report=xml --color=yes
 
     - name: Test documentation build using Sphinx
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
