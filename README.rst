@@ -13,7 +13,7 @@ Tools for MESSAGEix-GLOBIOM models
    :alt: Build status
    :target: https://github.com/iiasa/message-ix-models/actions?query=workflow:pytest
 
-.. image:: https://codecov.io/gh/iiasa/message-ix-models/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/iiasa/message-ix-models/branch/main/graph/badge.svg
    :alt: Test coverage
    :target: https://codecov.io/gh/iiasa/message-ix-models
 
