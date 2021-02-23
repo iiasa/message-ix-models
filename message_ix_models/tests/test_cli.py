@@ -1,9 +1,8 @@
 """Basic tests of the command line."""
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
 from message_ix_models.cli import main
-
 
 SUBCOMMANDS = [
     tuple(),
