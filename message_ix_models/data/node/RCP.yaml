@@ -1,0 +1,41 @@
+# Codes for the "node" dimension of the Representative Concentration Pathways
+#
+# - See message_data.tools.regions.
+# - Since ixmp does not support the "." character in IDs, the names "R5.2ASIA"
+#   are transformed to "R5_ASIA" etc. The original code is left in a
+#   description.
+# - The ISO 3166-1 alpha-3 codes are not defined in this file, but loaded from
+#   a copy of the ISO database, e.g. in pycountry.
+# - Among others, there are no assignments for:
+#   - ATA Antarctica
+#   - IOT British Indian Ocean Territory
+#   - SGS South Georgia
+
+World:
+  name: World
+  description: RCP regions
+
+R5_ASIA:
+  parent: World
+  description: Officially "R5.2ASIA".
+  child: [AFG, ASM, BGD, BRN, BTN, CCK, CHN, COK, CXR, FJI, FSM, GUM, HKG, IDN, IND, KHM, KIR, KOR, LAO, LKA, MAC, MDV, MHL, MMR, MNG, MNP, MYS, MYT, NCL, NFK, NIU, NPL, NRU, PAK, PCI, PCN, PHL, PLW, PNG, PRK, PYF, SGP, SLB, SYC, THA, TKL, TLS, TON, TUV, TWN, VNM, VUT, WSM]
+
+R5_LAM:
+  parent: World
+  description: Officially "R5.2LAM".
+  child: [ABW, AIA, ANT, ARG, ATG, BHS, BLZ, BMU, BOL, BRA, BRB, CHL, COL, CRI, CUB, CYM, DMA, DOM, ECU, GLP, GRD, GTM, GUF, GUY, HND, HTI, JAM, KNA, LCA, MEX, MSR, MTQ, NIC, PAN, PER, PRY, SLV, SUR, TTO, URY, VCT, VEN]
+
+R5_MAF:
+  parent: World
+  description: Officially "R5.2MAF".
+  child: [AGO, ARE, BDI, BEN, BFA, BHR, BWA, CAF, CIV, CMR, COD, COG, COM, CPV, DJI, DZA, EGY, ERI, ESH, ETH, GAB, GHA, GIN, GMB, GNB, GNQ, IRN, IRQ, ISR, JOR, KEN, KWT, LBN, LBR, LBY, LSO, MAR, MDG, MLI, MOZ, MRT, MUS, MWI, NAM, NER, NGA, OMN, PSE, QAT, REU, RWA, SAU, SDN, SEN, SLE, SOM, SSD, STP, SWZ, SYR, TCD, TGO, TUN, TZA, UGA, YEM, ZAF, ZMB, ZWE]
+
+R5_OECD:
+  parent: World
+  description: Officially "R5.2OECD".
+  child: [ALB, AND, AUS, AUT, BEL, BGR, BIH, CAN, CHE, CHI, CYP, CZE, DEU, DNK, ESP, EST, FIN, FLK, FRA, FRO, GBR, GIB, GRC, GRL, HRV, HUN, IMN, IRL, ISL, ITA, JPN, LIE, LTU, LUX, LVA, MCO, MKD, MLT, MNE, NLD, NOR, NZL, POL, PRI, PRT, ROM, SCG, SHN, SJM, SMR, SPM, SRB, SVK, SVN, SWE, TCA, TUR, USA, VAT, VGB, VIR, WLF, YUG]
+
+R5_REF:
+  parent: World
+  description: Officially "R5.2REF".
+  child: [ARM, AZE, BLR, GEO, KAZ, KGZ, MDA, RUS, TJK, TKM, UKR, UZB]

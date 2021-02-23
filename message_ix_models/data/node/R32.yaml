@@ -1,0 +1,197 @@
+World:
+  name: World
+  description: |-
+    Region code list for the SSP 32-region aggregation.
+
+    Source: https://tntcat.iiasa.ac.at/SspDb/dsd?Action=htmlpage&page=about
+
+R32ANUZ:
+  parent: World
+  name: Australia & New Zealand
+  description: This region includes Australia and New Zealand.
+  child: [AUS, NZL]
+
+R32BRA:
+  parent: World
+  name: Brazil
+  child: [BRA]
+
+R32CAN:
+  parent: World
+  name: Canada
+  child: [CAN]
+
+R32CAS:
+  parent: World
+  name: Central Asia
+  description: This region includes the countries of Central Asia.
+  child: [ARM, AZE, GEO, KAZ, KGZ, TJK, TKM, UZB]
+
+R32CHN:
+  parent: World
+  name: China excl. Taiwan
+  description: China (Mainland, Hongkong, Macao; excl. Taiwan).
+  child: [CHN, HKG, MAC]
+
+R32EEU:
+  parent: World
+  name: Eastern Europe
+  description: |-
+    Eastern Europe (excl. former Soviet Union and EU member states).
+
+    The source page describes “the former Yugoslav Republic of Macedonia”; this entity was renamed in 2018 to “North Macedonia”.
+  child: [ALB, BIH, HRV, MKD, MNE, SRB]
+
+R32EEU-FSU:
+  parent: World
+  name: Former Soviet Union in Eastern Europe
+  description: Eastern Europe, former Soviet Union (excl. Russia and EU members).
+  child: [BLR, MDA, UKR]
+
+R32EFTA:
+  parent: World
+  name: European Free Trade Association
+  description: |-
+    This region includes Iceland, Norway, Switzerland.
+
+    The source omits Liechtenstein, but it is included as a child.
+  child: [ISL, LIE, NOR, CHE]
+
+R32EU12-H:
+  parent: World
+  name: EU member states new in 2004, high income
+  description: New EU member states that joined as of 2004 - high income.
+  child: [CYP, CZE, EST, HUN, MLT, POL, SVK, SVN]
+
+R32EU12-M:
+  parent: World
+  name: EU member states new in 2004, middle income
+  description: New EU member states that joined as of 2004 - medium income.
+  child: [BGR, LTU, LVA, ROU]
+
+R32EU15:
+  parent: World
+  name: EU member states pre-2004
+  description: This region includes European Union member states that joined prior to 2004.
+  child: [AUT, BEL, DEU, DNK, ESP, FIN, FRA, GBR, GRC, IRL, ITA, LUX, NLD, PRT, SWE]
+
+R32IDN:
+  parent: World
+  name: Indonesia
+  child: [IDN]
+
+R32IND:
+  parent: World
+  name: India
+  child: [IND]
+
+R32JPN:
+  parent: World
+  name: Japan
+  child: [JAP]
+
+R32KOR:
+  parent: World
+  name: Republic of Korea
+  child: [KOR]
+
+R32LAM-L:
+  parent: World
+  name: Latin America, low income
+  description: This region includes the countries of Latin America (excl. Brazil, Mexico) - low income.
+  child: [BLZ, GTM, HND, HTI, NIC]
+
+R32LAM-M:
+  parent: World
+  name: Latin America, middle & high income
+  description: |-
+    This region includes the countries of Latin America (excl. Brazil, Mexico) - medium and high income.
+
+    The source includes “Netherlands Antilles” which has a provisional ISO 3166-2 alpha-3 code, but is not a country.
+  child: [ABW, AIA, ANT, BHS, BMU, BOL, BRB, CHL, COL, CRI, CUB, DMA, DOM, ECU, GLP, GRD, GUF, GUY, JAM, KNA, LCA, PAN, PER, PRY, MTQ, SLV, SUR, TTO, URY, VCT, VEN]
+
+R32MEA-H:
+  parent: World
+  name: Middle East & Asia, high income
+  description: |-
+    This region includes the countries of Middle East Asia - high income.
+  child: [ARE, BHR, ISR, KWT, OMN, QAT, SAU]
+
+R32MEA-M:
+  parent: World
+  name: Middle East & Asia, low & middle income
+  description: This region includes the countries of Middle East Asia - low and medium income.
+  child: [IRN, IRQ, JOR, LBN, PSE, SYR, YEM]
+
+R32MEX:
+  parent: World
+  name: Mexico
+  child: [MEX]
+
+R32NAF:
+  parent: World
+  name: North Africa
+  description: This region includes the countries of North Africa.
+  child: [DZA, EGY, ESH, LBY, MAR, TUN]
+
+R32OAS-CPA:
+  parent: World
+  name: Other Asia
+  description: This region includes the countries of Other Asia - former Centrally Planned Asia.
+  child: [KHM, LAO, MNG, VNM]
+
+R32OAS-L:
+  parent: World
+  name: Other Asia, low income
+  description: This region includes the countries of Other Asia - low income.
+  child: [BGD, FJI, FSM, MMR, NPL, PHL, PNG, PRK, SLB, TLS, TON, VUT, WSM]
+
+R32OAS-M:
+  parent: World
+  name: Other Asia, middle & high income
+  description: This region includes the countries of Other Asia - medium and high income.
+  child: [BRN, BTN, GUM, LKA, MDV, MYS, NCL, PYF, SGP, THA]
+
+R32PAK:
+  parent: World
+  name: Pakistan & Afghanistan
+  description: This region includes Pakistan and Afghanistan.
+  child: [AFG, PAK]
+
+R32RUS:
+  parent: World
+  name: Russian Federation
+  child: [RUS]
+
+R32SAF:
+  parent: World
+  name: South Africa
+  child: [ZAF]
+
+R32SSA-L:
+  parent: World
+  name: Sub-Saharan Africa, low income
+  description: This region includes the countries of Subsahara Africa (excl. South Africa) - low income.
+  child: [BDI, BEN, BFA, CAF, CIV, CMR, COD, COG, COM, CPV, DJI, ERI, ETH, GHA, GIN, GMB, GNB, KEN, LBR, LSO, MDG, MLI, MOZ, MRT, MWI, NER, NGA, RWA, SDN, SEN, SLE, SOM, SSD, STP, SWZ, TCD, TGO, TZA, UGA, ZMB, ZWE]
+
+R32SSA-M:
+  parent: World
+  name: Sub-Saharan Africa, middle & high income
+  description: This region includes the countries of Subsahara Africa (excl. South Africa) - medium and high income.
+  child: [AGO, BWA, GAB, GNQ, MUS, MYT, NAM, REU, SYC]
+
+R32TUR:
+  parent: World
+  name: Turkey
+  child: [TUR]
+
+R32TWN:
+  parent: World
+  name: Taiwan
+  child: [TWN]
+
+R32USA:
+  parent: World
+  name: United States of America
+  description: United States of America.
+  child: [PRI, USA, VIR]
