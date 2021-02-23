@@ -1,9 +1,10 @@
 import re
 from importlib import util
+from importlib.abc import MetaPathFinder
 from importlib.machinery import ModuleSpec, SourceFileLoader
 
 
-class MessageDataFinder:
+class MessageDataFinder(MetaPathFinder):
     """Load model and project code from :mod:`message_data`."""
 
     # Expression for supported module names
@@ -23,6 +24,8 @@ class MessageDataFinder:
 
         # Get an import spec for the message_data submodule
         spec = util.find_spec(new_name)
+        if not spec:
+            return None
 
         # Create a new spec that loads message_data.model.foo as if it were
         # message_ix_models.model.foo
