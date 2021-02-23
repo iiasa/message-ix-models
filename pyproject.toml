@@ -1,4 +1,7 @@
 [build-system]
 requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
 
+[tool.pytest.ini_options]
+addopts = "--cov=message_ix_models"
+
 [tool.setuptools_scm]
