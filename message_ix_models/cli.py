@@ -21,7 +21,7 @@ except ImportError:
 for name in message_data_modules_with_cli:  # pragma: no cover
     name = "message_data." + name
     __import__(name)
-    main.add_command(sys.modules[name].cli)
+    main.add_command(getattr(sys.modules[name], "cli"))
 
     # TODO use this in the future
     # name = f"message_data.{name}.cli"
