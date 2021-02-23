@@ -39,8 +39,8 @@ jobs:
       uses: pypa/gh-action-pypi-publish@v1.4.1
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       with:
-        user: ${{ secrets.PYPI_USERNAME }}
-        password: ${{ secrets.PYPI_PASSWORD }}
+        user: ${{ secrets.TESTPYPI_USERNAME }}
+        password: ${{ secrets.TESTPYPI_PASSWORD }}
         repository_url: https://test.pypi.org/legacy/
 
     - name: Publish to PyPI
