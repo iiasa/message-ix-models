@@ -1,9 +1,10 @@
 import pytest
 from pytest import mark, param
 
+from message_ix_models.model.structure import get_codes
+
 from message_data import testing
 from message_data.model.transport import build, report
-from message_data.tools import set_info
 
 
 @pytest.mark.parametrize(
@@ -20,7 +21,7 @@ def test_get_spec(transport_context_f, regions_arg, regions_exp):
     spec = build.get_spec(ctx)
 
     # The required elements of the "node" set match the configuration
-    nodes = set_info(f"node/{regions_exp}")
+    nodes = get_codes(f"node/{regions_exp}")
     exp = list(map(str, nodes[nodes.index("World")].child))
     assert spec["require"].set["node"] == exp
 
