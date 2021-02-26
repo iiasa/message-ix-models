@@ -36,16 +36,18 @@ def dummy(info):
 
     dfs = []
 
-    for commodity in filter(
-        lambda c: c.anno.get("demand", False),
-        generate_set_elements("commodity"),
-    ):
-        unit = "t km" if "freight" in commodity.id else "km"
+    for commodity in generate_set_elements("commodity"):
+        try:
+            commodity.get_annotation(id="demand")
+        except KeyError:
+            # Not a demand commodity
+            continue
+
         dfs.append(
             make_df(
                 "demand",
                 commodity=commodity.id,
-                unit=unit,
+                unit="t km" if "freight" in commodity.id else "km",
                 **common,
             )
         )
