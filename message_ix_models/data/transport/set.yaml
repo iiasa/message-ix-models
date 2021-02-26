@@ -46,20 +46,20 @@ commodity:
 
     transport pax vehicle: Passenger transport vehicle distance travelled
 
-    _LDV output:
-      generate:
-        dims: {technology: LDV}
-        template: {id: "transport vehicle {technology.id}"}
-
-    _pax demand:
-      generate:
-        dims: {consumer_group: LDV}
-        template:
-          id: "transport pax {consumer_group.id}"
-          demand: true
-
     disutility:
       name: Generalized disutility
+
+    # These two keys are further processed by .model.transport.build to generate
+    # a longer list of codes
+    "transport vehicle {technology.id}":
+      _generate: {technology: LDV}
+      name: Activity for {technology.id} LDVs
+
+    "transport pax {consumer_group.id}":
+      _generate: {consumer_group: LDV}
+      name: Activity for {consumer_group.id} passengers
+      demand: true
+
 
 
 level:
@@ -71,10 +71,10 @@ mode:
   require:
   - all
   add:
-    _disutility:
-      generate:
-        dims: {consumer_group: null}
-        template: {id: "{consumer_group.id}"}
+    "{consumer_group.id}":
+      _generate: {consumer_group: null}
+      name: Vehicle usage by {consumer_group.id}
+
 
 node:
   # transport.build.get_spec() sets the list of required nodes

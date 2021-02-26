@@ -295,11 +295,10 @@ LDV:
   child: [ELC_100, HFC_ptrp, IAHe_ptrp, IAHm_ptrp, ICAe_ffv, ICAm_ptrp,
     ICE_conv, ICE_L_ptrp, ICE_nga, ICH_chyb, IGH_ghyb, PHEV_ptrp]
 
-LDV occupancy:
+"transport {technology.id} load factor":
+  _generate: {technology: LDV}
+  name: LDV occupancy
   disutility formulation: true
-  generate:
-    dims: {technology: LDV}
-    template: {id: "transport {technology.id} load factor"}
 
 2W:
   name: Two-wheelers and motorcycles
