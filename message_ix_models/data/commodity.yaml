@@ -1,0 +1,292 @@
+coal:
+  name: Coal
+  unit: GWa
+
+crudeoil:
+  name: Crude oil
+  description: >-
+    For secondary energy, use 'fueloil', 'lightoil', etc.
+  level: primary
+  unit: GWa
+
+d_heat:
+  name: (?) District heat
+  description: >-
+    FIXME provide an unambiguous description of what this commodity represents.
+
+electr:
+  name: Electricity
+  unit: GWa
+
+ethanol:
+  name: Ethanol
+  unit: GWa
+
+freshwater_supply:
+  name: (?) Fresh water
+  description: >-
+    FIXME provide an unambiguous description of what this commodity represents.
+
+fueloil:
+  name: Fuel oil
+  description: Heavy fuel oil.
+  level: secondary
+  unit: GWa
+
+gas:
+  name: Natural Gas
+  unit: GWa
+
+hydrogen:
+  name: Gaseous hydrogen
+  unit: GWa
+
+lh2:
+  name: Liquid hydrogen
+  unit: GWa
+
+lightoil:
+  name: Light oil
+  description: Includes gasoline, diesel oil.
+  level: secondary
+  unit: GWa
+
+methanol:
+  name: Methanol
+  unit: GWa
+
+transport:
+  name: Transportation
+  description: >-
+    For MESSAGEix-Transport, this commodity is not used; it is replaced by a
+    disaggregated set of transport service demands (representing e.g. light-
+    duty vehicles, civil aviation, freight transport, etc.)
+  level: useful
+  unit: GWa
+
+# The following codes also appear in a recent (2020-02-28) SSP2 scenario, but
+# are not currently used by model.bare.create_res.
+#
+# Aff_CO2_G4M
+# Agri_CH4
+# Agri_N2O
+# Agri_N2O_calc
+# Agricultural Demand
+# Agricultural Demand|Bioenergy
+# Agricultural Demand|Bioenergy|1st generation
+# Agricultural Demand|Bioenergy|2nd generation
+# Agricultural Demand|Feed
+# Agricultural Demand|Feed|Crops
+# Agricultural Demand|Food
+# Agricultural Demand|Food|Crops
+# Agricultural Demand|Food|Livestock
+# Agricultural Demand|Non-Food
+# Agricultural Demand|Non-Food|Crops
+# Agricultural Demand|Non-Food|Livestock
+# Agricultural Production
+# Agricultural Production|Energy Crops
+# Agricultural Production|Livestock
+# Agricultural Production|Non-Energy Crops
+# Agricultural Production|Non-Energy Crops|Cereals
+# BCA_LandUseChangeEM
+# BCA_SavanBurnEM
+# Biodiesel_G1
+# bioenergy
+# Bioethanol_G1
+# biomass
+# CalAnim
+# CalCrop
+# CalTot
+# CH4_LandUseChangeEM
+# CH4_SavanBurnEM
+# CO_LandUseChangeEM
+# CO_SavanBurnEM
+# CO2_oil
+# CO2_rem
+# cooling__bio_hpl
+# cooling__bio_istig
+# cooling__bio_istig_ccs
+# cooling__bio_ppl
+# cooling__coal_adv
+# cooling__coal_adv_ccs
+# cooling__coal_ppl
+# cooling__coal_ppl_u
+# cooling__foil_hpl
+# cooling__foil_ppl
+# cooling__gas_cc
+# cooling__gas_cc_ccs
+# cooling__gas_hpl
+# cooling__gas_ppl
+# cooling__geo_hpl
+# cooling__geo_ppl
+# cooling__igcc
+# cooling__igcc_ccs
+# cooling__loil_cc
+# cooling__loil_ppl
+# cooling__nuc_hc
+# cooling__nuc_lc
+# cooling__solar_th_ppl
+# CrpLnd
+# crude_1
+# crude_2
+# crude_3
+# crude_4
+# crude_5
+# crude_6
+# crude_7
+# crude_8
+# Def_CO2_G4M
+# Def_CO2_GLO
+# dumagr
+# dumfert
+# Emissions|CH4|Land Use
+# Emissions|CH4|Land Use|Agricultural Waste Burning
+# Emissions|CH4|Land Use|Agriculture
+# Emissions|CH4|Land Use|Agriculture|AWM
+# Emissions|CH4|Land Use|Agriculture|Enteric Fermentation
+# Emissions|CH4|Land Use|Agriculture|Rice
+# Emissions|CH4|Land Use|Savannah Burning
+# Emissions|CO2|Land Use
+# Emissions|CO2|Land Use|Negative
+# Emissions|CO2|Land Use|Positive
+# Emissions|N2O|Land Use
+# Emissions|N2O|Land Use|Agricultural Waste Burning
+# Emissions|N2O|Land Use|Agriculture
+# Emissions|N2O|Land Use|Agriculture|AWM
+# Emissions|N2O|Land Use|Agriculture|Cropland Soils
+# Emissions|N2O|Land Use|Agriculture|Pasture
+# Emissions|N2O|Land Use|Savannah Burning
+# EnergyRoundwood
+# exports
+# Fertilizer Use|Nitrogen
+# Fertilizer Use|Phosphorus
+# Fmg_CO2_G4M
+# Food Demand
+# Food Demand|Crops
+# Food Demand|Livestock
+# Food Energy Demand
+# Food Energy Demand|Livestock
+# ForestBiomass
+# ForestBiomass_G4M
+# ForestHarvestDF_G4M
+# ForestHarvestFM_G4M
+# ForestHarvestTot_G4M
+# ForestHarvestTot_GLO
+# Forestry Demand|Roundwood
+# Forestry Demand|Roundwood|Industrial Roundwood
+# Forestry Demand|Roundwood|Wood Fuel
+# Forestry Production|Forest Residues
+# Forestry Production|Roundwood
+# Forestry Production|Roundwood|Industrial Roundwood
+# Forestry Production|Roundwood|Wood Fuel
+# freshwater_instream
+# FuelWood
+# FuelWood_G4M
+# gas
+# gas_1
+# gas_2
+# gas_3
+# gas_4
+# gas_5
+# gas_6
+# gas_7
+# gas_8
+# gas_afr
+# gas_cpa
+# gas_eeu
+# gas_nam
+# gas_pao
+# gas_pas
+# gas_sas
+# gas_weu
+# GrsLnd
+# i_feed
+# i_spec
+# i_therm
+# IrriWithdrawal
+# Land Cover
+# Land Cover|Cropland
+# Land Cover|Cropland|Cereals
+# Land Cover|Cropland|Energy Crops
+# Land Cover|Cropland|Irrigated
+# Land Cover|Forest
+# Land Cover|Forest|Afforestation and Reforestation
+# Land Cover|Forest|Forestry
+# Land Cover|Forest|Managed
+# Land Cover|Forest|Natural Forest
+# Land Cover|Other Natural Land
+# Land Cover|Pasture
+# lh2
+# lignite
+# LiquidTotal
+# LNG
+# LoggingResidues
+# LU_CO2
+# LU_GHG
+# LucGrs_CO2
+# LucOth_CO2
+# NewFor_G4M
+# NH3_LandUseChangeEM
+# NH3_ManureEM
+# NH3_RiceEM
+# NH3_SavanBurnEM
+# NH3_SoilEM
+# non-comm
+# NOx_LandUseChangeEM
+# NOx_SavanBurnEM
+# NOx_SoilEM
+# nucfuel
+# OCA_LandUseChangeEM
+# OCA_SavanBurnEM
+# oil_st
+# Olc_CO2_GLO
+# Olc_CO2_GLO_neg
+# Olc_CO2_GLO_pos
+# OldFor_G4M
+# OtherLnd
+# OthSolidNonComm
+# PlantationBiomass
+# PlantationHarvest_GLO
+# PltArt
+# PltFor
+# PltFor_gr
+# Price_BIO
+# Price_CO2
+# Price|Agriculture|Non-Energy Crops and Livestock|Index
+# Price|Agriculture|Non-Energy Crops|Index
+# Price|Primary Energy|Biomass
+# pu
+# puq
+# puq2
+# rc_spec
+# rc_therm
+# saline_supply
+# SawmillResidues
+# SawmillResidues_G4M
+# shipping
+# SO2_LandUseChangeEM
+# SO2_SavanBurnEM
+# SolidExogenous
+# SolidExogenous_G4M
+# SolidTotal
+# SolidTotal_G4M
+# TCE
+# TimberIndust
+# TimberIndust_G4M
+# Tot_CO2_G4M
+# total_cost
+# TotalLnd
+# TotFor_G4M
+# u5
+# u5q
+# u5t
+# upstream_landuse
+# uq
+# uranium
+# VOC_LandUseChangeEM
+# VOC_SavanBurnEM
+# water_constraint
+# Water|Withdrawal|Irrigation
+# Yield|Cereal
+# Yield|Oilcrops
+# Yield|Sugarcrops

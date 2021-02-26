@@ -10,11 +10,26 @@ MESSAGEix models
 These models are built in the `MESSAGEix framework <https://docs.messageix.org>`_ and on the `ix modeling platform (ixmp) <https://docs.messageix.org/ixmp/>`_.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: User guide & reference
+   :maxdepth: 1
+   :caption: User guide
 
    install
-   api
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API reference
+
+   api/model
+   api/project
+   api/tools
+   api/util
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Package data
+
+   pkg-data/node
+   pkg-data/codelists
 
 .. toctree::
    :maxdepth: 2

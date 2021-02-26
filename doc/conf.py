@@ -16,8 +16,12 @@ author = "IIASA Energy, Climate, and Environment (ECE) Program"
 # with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -63,4 +67,5 @@ intersphinx_mapping = {
     "message-ix": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
     "m-data": ("https://docs.messageix.org/projects/global/en/latest/", None),
     "python": ("https://docs.python.org/3/", None),
+    "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),
 }
