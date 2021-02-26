@@ -213,9 +213,8 @@ def get_ikarus_data(context):
         # Parameter-specific arguments/processing
         if par == "input":
             tech = tech_info[tech_info.index(tec)]
-            args["commodity"] = tech.anno["input"]["commodity"]
-            # TODO use the appropriate level for the given commodity; see
-            #      ldv.py
+            args["commodity"] = eval_anno(tech, "input")["commodity"]
+            # TODO use the appropriate level for the given commodity; see ldv.py
             args["level"] = "final"
         elif par == "output":
             args["level"] = "useful"
