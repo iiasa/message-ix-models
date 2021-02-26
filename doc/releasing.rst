@@ -1,6 +1,16 @@
 Releasing
 *********
 
+Version numbers
+===============
+
+:mod:`message_ix_models` uses date-based version numbers like ``Y.M.D``.
+Thus version ``2021.2.23`` is released on 23 February 2021.
+This is to establish a more direct correspondence between outputs of the code and the version(s) used to produce it.
+
+Procedure
+=========
+
 Before releasing, check:
 
 - https://github.com/iiasa/message-ix-models/actions?query=branch:main to ensure that the push and scheduled builds are passing.

@@ -1,0 +1,42 @@
+primary:
+  name: Primary Energy
+  description: >-
+    A form found in nature that has not been subjected to any human engineered
+    conversion process.
+
+secondary:
+  name: Secondary Energy
+  description: Forms which have been transformed from primary energy.
+
+final:
+  name: Final Energy
+  description: >-
+    Represents end-use demands of the end-use sectors (e.g. industry, transport,
+    residential, commercial and agriculture).
+
+import:
+  name: Imports
+
+useful:
+  name: Useful Energy
+  description: >-
+    Represents energy-service demands (or activity levels) of the end-use
+    sectors in non-energy units.
+
+water_supply:
+  name: Water Supply
+  description: >-
+    FIXME provide an unambiguous description of what this level represents.
+
+# The following codes also appear in a recent (2020-02-28) SSP2 scenario, but
+# are not currently used by model.bare.create_res.
+#
+# cooling
+# export
+# import
+# land_use_reporting
+# land_use
+# piped-gas
+# resource
+# stocks
+# water_supply_constraint
