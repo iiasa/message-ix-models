@@ -36,8 +36,8 @@ def as_codes(data):
             raise TypeError(info)
 
         code = Code(
-            id=id,
-            name=info.pop("name", id.title()),
+            id=str(id),
+            name=info.pop("name", str(id).title()),
             desc=info.pop("description", None),
         )
 
