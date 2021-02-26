@@ -15,19 +15,19 @@ Plots
 
 .. automodule:: message_data.model.transport.plot
 
-   .. autoclass:: Costs0
+   .. autoclass:: InvCost
       :members: basename
       :undoc-members:
 
       Investment costs.
 
-   .. autoclass:: Costs1
+   .. autoclass:: FixCost
       :members: basename
       :undoc-members:
 
       Fixed costs.
 
-   .. autoclass:: Costs2
+   .. autoclass:: VarCost
       :members: basename
       :undoc-members:
 
