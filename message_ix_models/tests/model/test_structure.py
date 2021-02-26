@@ -88,6 +88,10 @@ class TestGetCodes:
         # A specific country is present in the region
         assert member in code.child
 
+    def test_node_historic_country(self):
+        """get_codes() handles ISO 3166 alpha-3 codes for historic countries."""
+        assert "SCG" in get_codes("node/R11")
+
     def test_technologies(self):
         # Retrieve the tech info without calling technologies.cli
         data = get_codes("technology")
