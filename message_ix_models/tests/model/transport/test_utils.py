@@ -53,7 +53,7 @@ def test_consumer_groups(transport_context):
     # Returns a list of codes
     codes = consumer_groups()
     RUEAA = codes[codes.index("RUEAA")]
-    assert RUEAA.name == "Rural, or “Outside MSA”, Early Adopter, Average"
+    assert "Rural, or “Outside MSA”, Early Adopter, Average" == str(RUEAA.name)
 
     # Returns xarray objects for indexing
     result = consumer_groups(rtype="indexers")

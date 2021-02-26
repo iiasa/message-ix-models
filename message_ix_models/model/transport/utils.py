@@ -67,7 +67,7 @@ def consumer_groups(rtype=Code):
         result["code"].append(
             Code(
                 id="".join(c.id for c in indices),
-                name=", ".join(c.name for c in indices),
+                name=", ".join(str(c.name) for c in indices),
             )
         )
 
