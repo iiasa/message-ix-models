@@ -1,12 +1,15 @@
 import logging
 from functools import lru_cache, partial
 from itertools import product
-from typing import Mapping
+from typing import List, Mapping
+
+from message_ix_models.model.structure import get_codes
+from sdmx.model import Annotation, Code
 
 from message_data.model import bare, build, disutility
-from message_data.tools import Code, ScenarioInfo, get_context, set_info
+from message_data.model.transport.utils import consumer_groups
+from message_data.tools import ScenarioInfo, eval_anno, get_context
 
-from .utils import consumer_groups
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +39,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
         add.set[set_name].extend(generate_set_elements(set_name))
 
     # The set of required nodes varies according to context.regions
-    nodes = set_info(f"node/{context.regions}")
+    nodes = get_codes(f"node/{context.regions}")
     require.set["node"].extend(map(str, nodes[nodes.index("World")].child))
 
     return dict(require=require, remove=remove, add=add)

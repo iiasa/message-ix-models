@@ -2,9 +2,10 @@
 from collections import defaultdict
 
 import pandas as pd
+from message_ix import make_df
 from openpyxl import load_workbook
 
-from message_data.tools import broadcast, make_df, same_node
+from message_data.tools import broadcast, eval_anno, same_node
 
 #: Name of the input file.
 #
