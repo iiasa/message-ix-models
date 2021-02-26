@@ -48,8 +48,7 @@ class TestGetCodes:
 
         # Units for one commodity can be retrieved and parsed
         coal = data[data.index("coal")]
-        unit_anno = next(filter(lambda a: a.id == "unit", coal.annotations))
-        registry(str(unit_anno.text))
+        registry(str(coal.get_annotation(id="unit").text))
 
         # Descriptions are parsed without new lines
         crudeoil = data[data.index("crudeoil")]
@@ -98,11 +97,11 @@ class TestGetCodes:
 
         # Get info on a certain technology
         h2_fc_trp = data[data.index("h2_fc_trp")]
-        output_anno = next(filter(lambda a: a.id == "output", h2_fc_trp.annotations))
-        assert ["transport", "useful"] == eval(str(output_anno.text))
+        assert ["transport", "useful"] == eval(
+            str(h2_fc_trp.get_annotation(id="output").text)
+        )
 
         # Check that the default value for 'vintaged' is False when omitted from the
         # YAML file
         elec_exp = data[data.index("elec_exp")]
-        vintaged_anno = next(filter(lambda a: a.id == "vintaged", elec_exp.annotations))
-        assert False is eval(str(vintaged_anno.text))
+        assert False is eval(str(elec_exp.get_annotation(id="vintaged").text))
