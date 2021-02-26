@@ -9,7 +9,7 @@ from message_ix_models.util import as_codes
 from sdmx.model import Code
 
 from message_data.model.transport.common import METADATA
-from message_data.tools import Context, get_context, load_data
+from message_data.tools import Context, eval_anno, get_context, load_data
 
 
 def read_config(context=None):
@@ -102,17 +102,23 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None) -> pd.DataFram
     c_info = get_codes("commodity")
 
     @lru_cache()
-    def t_cl(t):
+    def t_cl(t: str) -> pd.Series:
         """Return the commodity and level given technology `t`."""
-        input = t_info[t_info.index(t)].anno["input"]
-        # Commodity must be specified
+        # Retrieve the "input" annotation for this technology
+        input = eval_anno(t_info[t_info.index(t)], "input")
+
+        # Commodity ID
         commodity = input["commodity"]
-        # Use the default level for the commodity in the RES (per
-        # commodity.yaml)
+
+        # Retrieve the code for this commodity
+        c_code = c_info[c_info.index(commodity)]
+
+        # Level, in order of precedence:
+        # 1. Technology-specific input level from `t_code`.
+        # 2. Default level for the commodity from `c_code`.
+        # 3. `default_level` argument to this function.
         level = (
-            input.get("level", None)
-            or c_info[c_info.index(commodity)].anno.get("level", None)
-            or default_level
+            input.get("level", None) or eval_anno(c_code, id="level") or default_level
         )
 
         return pd.Series(dict(commodity=commodity, level=level))
