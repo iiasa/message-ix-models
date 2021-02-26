@@ -16,10 +16,11 @@ Models and model variants
 .. autofunction:: get_codes
 
    The available code lists are reproduced as part of this documentation.
+   The returned code objects have annotations that vary by set.
    See:
 
-   - :doc:`pkg-data/codelists`
-   - :doc:`pkg-data/node`
+   - :doc:`/pkg-data/codelists`
+   - :doc:`/pkg-data/node`
 
    Also available is :file:`cd_links/unit.yaml`.
    This is a project-specific list of units appearing in CD-LINKS scenarios.

@@ -5,6 +5,11 @@ Node code lists
 
 The codes in these lists denote **regions** and **countries**.
 
+When loaded using :func:`.get_codes`, the :attr:`.Code.child` attribute is a list of child codes.
+See the function documentation for how to retrieve these.
+
+.. contents::
+   :local:
 
 32-region aggregation (``R32``)
 ===============================
