@@ -44,5 +44,5 @@ jobs:
     - name: Check typing with mypy
       # Also install packages that provide type hints
       run: |
-        pip install pytest
+        pip install pytest sdmx1
         mypy .
