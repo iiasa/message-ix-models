@@ -13,7 +13,7 @@ From source
 ===========
 
 1. Clone the code.
-2. Run: [1]_
+2. Run [1]_::
 
     $ pip install --no-use-pep517 --editable .
 
