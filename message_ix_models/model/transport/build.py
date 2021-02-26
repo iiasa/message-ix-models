@@ -46,7 +46,22 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
 
 @lru_cache()
-def generate_set_elements(set_name, match=None):
+def generate_set_elements(set_name, match=None) -> List[Code]:
+    """Generate elements for set `set_name`.
+
+    This function converts the contents of :file:`transport/set.yaml` and
+    :file:`transport/technology.yaml` into lists of codes, of which the IDs are the
+    elements of sets (dimensions) in a scenario.
+
+    Parameters
+    ----------
+    set_name : str
+        Name of the set for which to generate elements.
+        If "consumer_group", calls :func:`consumer_groups`
+    match: str, optional
+        If given, only the Code whose IDs matches this value are returned.
+    """
+
     if set_name == "consumer_group":
         return consumer_groups()
 
@@ -59,8 +74,12 @@ def generate_set_elements(set_name, match=None):
         if match and code.id != match:
             continue
 
-        if "generate" in code.anno:
-            results.extend(generate_codes(**code.anno["generate"]))
+        # Get an annotation named "_generate"
+        generate_info = eval_anno(code, "_generate")
+        if generate_info:
+            # Generate codes using a template
+            code.pop_annotation(id="_generate")
+            results.extend(generate_codes(code, generate_info))
             continue
 
         if hierarchical and len(code.child):
@@ -71,16 +90,31 @@ def generate_set_elements(set_name, match=None):
     return results
 
 
-def generate_codes(dims, template):
+def generate_codes(base: Code, dims):
+    """Generates codes from a product along `dims`.
+
+    :func:`generate_set_elements` is called for each of the `dims`, and these values
+    are used to format `base`.
+
+    Parameters
+    ----------
+    base : .Code
+        Must have Python format strings for its its :attr:`id` and :attr:`name`
+        attributes.
+    dims : dict of (str -> value)
+        (key, value) pairs are passed as arguments to :func:`generate_set_elements`.
+    """
     codes = [generate_set_elements(set_name, match) for set_name, match in dims.items()]
 
     for item in product(*codes):
-        fmt = dict(zip(dims.keys(), item))
-        args = {}
-        for attr, t in template.items():
-            args[attr] = t.format(**fmt) if isinstance(t, str) else t
+        result = base.copy()
 
-        yield Code(**args)
+        # Format the ID and name
+        fmt = dict(zip(dims.keys(), item))
+        result.id = result.id.format(**fmt)
+        result.name = str(result.name).format(**fmt)
+
+        yield result
 
 
 def main(context, scenario, **options):
@@ -103,22 +137,23 @@ def main(context, scenario, **options):
     build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
 
     # Add generalized disutility structure to LDV technologies
+    lu = dict(level="useful", unit="km")
     disutility.add(
         scenario,
         consumer_groups=consumer_groups(),
         technologies=generate_set_elements("technology", "LDV"),
         template=Code(
             id="transport {technology} usage",
-            input=dict(
-                commodity="transport vehicle {technology}",
-                level="useful",
-                unit="km",
-            ),
-            output=dict(
-                commodity="transport pax {mode}",
-                level="useful",
-                unit="km",
-            ),
+            annotations=[
+                Annotation(
+                    id="input",
+                    text=repr(dict(commodity="transport vehicle {technology}", **lu)),
+                ),
+                Annotation(
+                    id="output",
+                    text=repr(dict(commodity="transport pax {mode}", **lu)),
+                ),
+            ],
         ),
         **options,
     )
