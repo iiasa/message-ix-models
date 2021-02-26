@@ -58,7 +58,9 @@ def as_codes(data):
 
         # Convert other dictionary (key, value) pairs to annotations
         for id, value in info.items():
-            code.annotations.append(Annotation(id=id, text=repr(value)))
+            code.annotations.append(
+                Annotation(id=id, text=value if isinstance(value, str) else repr(value))
+            )
 
         result[code.id] = code
 
