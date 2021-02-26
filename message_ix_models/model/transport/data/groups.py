@@ -4,9 +4,10 @@ from copy import deepcopy
 import pandas as pd
 import xarray as xr
 from ixmp.reporting import Quantity
+from message_ix_models.model.structure import get_codes
 
 from message_data.model.transport.utils import consumer_groups
-from message_data.tools import gea, set_info
+from message_data.tools import gea
 
 log = logging.getLogger(__name__)
 
@@ -126,7 +127,7 @@ def get_urban_rural_shares(context) -> xr.DataArray:
     gea.supports(context)
 
     # Retrieve region info for the selected regional aggregation
-    nodes = set_info(f"node/{context.regions}")
+    nodes = get_codes(f"node/{context.regions}")
     # List of regions according to the context
     regions = nodes[nodes.index("World")].child
     pop = get_gea_population(regions)

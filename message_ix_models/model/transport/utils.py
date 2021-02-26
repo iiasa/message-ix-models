@@ -4,9 +4,12 @@ from itertools import product
 
 import pandas as pd
 import xarray as xr
+from message_ix_models.model.structure import get_codes
+from message_ix_models.util import as_codes
+from sdmx.model import Code
 
 from message_data.model.transport.common import METADATA
-from message_data.tools import Code, Context, as_codes, get_context, load_data, set_info
+from message_data.tools import Context, get_context, load_data
 
 
 def read_config(context=None):
@@ -96,7 +99,7 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None) -> pd.DataFram
     t_info = get_context()["transport set"]["technology"]["add"]
 
     # Retrieve general commodity information
-    c_info = set_info("commodity")
+    c_info = get_codes("commodity")
 
     @lru_cache()
     def t_cl(t):
