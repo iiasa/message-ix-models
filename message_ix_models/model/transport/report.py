@@ -1,4 +1,5 @@
 import logging
+from operator import attrgetter
 
 from dask.core import quote
 from message_ix.reporting import Reporter
@@ -95,7 +96,7 @@ def callback(rep: Reporter):
     if config["filter"]:
         # Include only technologies with "transport" in the name
         log.info("Filter out non-transport technologies")
-        rep.set_filters(t=sorted(technologies))
+        rep.set_filters(t=sorted(technologies, key=attrgetter("id")))
 
     # Queue of computations to add
     queue = []
