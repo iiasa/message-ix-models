@@ -2,6 +2,7 @@ from collections import ChainMap
 from functools import lru_cache
 from typing import List
 
+import pycountry
 from sdmx.model import Annotation, Code
 
 from message_ix_models.util import as_codes, load_package_data
@@ -13,6 +14,18 @@ def get_codes(name: str) -> List[Code]:
 
     The information is read from :file:`data/{name}.yaml`, e.g.
     :file:`data/technology.yaml`.
+
+    When `name` includes "node", then child codes are automatically populated from the
+    ISO 3166 database via :mod:`pycountry`. For instance:
+
+    .. code-block:: yaml
+
+       myregion:
+         name: Custom region
+         child: [AUT, SCG]
+
+    …results in a region with child codes for Austria (a current country) and the
+    formerly-existing country Serbia and Montenegro.
 
     Parameters
     ----------
@@ -31,15 +44,17 @@ def get_codes(name: str) -> List[Code]:
 
     if "node" in name:
         # Automatically add information for countries within regions in the node
-        # codelists
-        from pycountry import countries
-
-        # Use a ChainMap to combine a new dict and the `config` loaded from file, in
-        # that order
+        # codelists. Use a ChainMap to combine a the `config` loaded from file and then
+        # fall back to contents of the pycountry databases.
         config = ChainMap(
             config,
             # Create codes using the ISO database via pycountry
-            {c.alpha_3: dict(id=c.alpha_3, name=c.name) for c in countries},
+            {c.alpha_3: dict(id=c.alpha_3, name=c.name) for c in pycountry.countries},
+            # Also include historic countries
+            {
+                c.alpha_3: dict(id=c.alpha_3, name=c.name)
+                for c in pycountry.historic_countries
+            },
         )
 
     # Convert to codes
