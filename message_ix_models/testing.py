@@ -2,10 +2,10 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from ixmp import Platform, config as ixmp_config
+from ixmp import Platform
+from ixmp import config as ixmp_config
 
 from message_ix_models.util.context import Context
-
 
 # pytest hooks
 
