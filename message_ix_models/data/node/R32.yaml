@@ -88,7 +88,7 @@ R32IND:
 R32JPN:
   parent: World
   name: Japan
-  child: [JAP]
+  child: [JPN]
 
 R32KOR:
   parent: World
@@ -107,14 +107,13 @@ R32LAM-M:
   description: |-
     This region includes the countries of Latin America (excl. Brazil, Mexico) - medium and high income.
 
-    The source includes “Netherlands Antilles” which has a provisional ISO 3166-2 alpha-3 code, but is not a country.
-  child: [ABW, AIA, ANT, BHS, BMU, BOL, BRB, CHL, COL, CRI, CUB, DMA, DOM, ECU, GLP, GRD, GUF, GUY, JAM, KNA, LCA, PAN, PER, PRY, MTQ, SLV, SUR, TTO, URY, VCT, VEN]
+    The source includes “Netherlands Antilles” which has a provisional ISO 3166-2 alpha-3 code (ANT), but is not a country. It was dissolved in 2010 into BES, CUW and SXM, also included.
+  child: [ABW, AIA, ANT, BES, BHS, BMU, BOL, BRB, CHL, COL, CRI, CUB, CUW, DMA, DOM, ECU, GLP, GRD, GUF, GUY, JAM, KNA, LCA, PAN, PER, PRY, MTQ, SLV, SUR, SXM, TTO, URY, VCT, VEN]
 
 R32MEA-H:
   parent: World
   name: Middle East & Asia, high income
-  description: |-
-    This region includes the countries of Middle East Asia - high income.
+  description: This region includes the countries of Middle East Asia - high income.
   child: [ARE, BHR, ISR, KWT, OMN, QAT, SAU]
 
 R32MEA-M:
