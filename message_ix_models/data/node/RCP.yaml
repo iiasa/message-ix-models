@@ -17,13 +17,19 @@ World:
 
 R5_ASIA:
   parent: World
-  description: Officially "R5.2ASIA".
+  description: |-
+    Officially "R5.2ASIA".
+
+    Trust Territory of the Pacific Islands (PCI) still included in this list, but it was dissolved into MHL, FSM, MNP and PLW in 1986.
   child: [AFG, ASM, BGD, BRN, BTN, CCK, CHN, COK, CXR, FJI, FSM, GUM, HKG, IDN, IND, KHM, KIR, KOR, LAO, LKA, MAC, MDV, MHL, MMR, MNG, MNP, MYS, MYT, NCL, NFK, NIU, NPL, NRU, PAK, PCI, PCN, PHL, PLW, PNG, PRK, PYF, SGP, SLB, SYC, THA, TKL, TLS, TON, TUV, TWN, VNM, VUT, WSM]
 
 R5_LAM:
   parent: World
-  description: Officially "R5.2LAM".
-  child: [ABW, AIA, ANT, ARG, ATG, BHS, BLZ, BMU, BOL, BRA, BRB, CHL, COL, CRI, CUB, CYM, DMA, DOM, ECU, GLP, GRD, GTM, GUF, GUY, HND, HTI, JAM, KNA, LCA, MEX, MSR, MTQ, NIC, PAN, PER, PRY, SLV, SUR, TTO, URY, VCT, VEN]
+  description: |-
+    Officially "R5.2LAM".
+
+    The source includes “Netherlands Antilles” which has a provisional ISO 3166-2 alpha-3 code (ANT), but is not a country. It was dissolved in 2010 into BES, CUW and SXM, also included.
+  child: [ABW, AIA, ANT, ARG, ATG, BES, BHS, BLZ, BMU, BOL, BRA, BRB, CHL, COL, CRI, CUB, CUW, CYM, DMA, DOM, ECU, GLP, GRD, GTM, GUF, GUY, HND, HTI, JAM, KNA, LCA, MEX, MSR, MTQ, NIC, PAN, PER, PRY, SLV, SUR, SXM, TTO, URY, VCT, VEN]
 
 R5_MAF:
   parent: World
@@ -32,8 +38,11 @@ R5_MAF:
 
 R5_OECD:
   parent: World
-  description: Officially "R5.2OECD".
-  child: [ALB, AND, AUS, AUT, BEL, BGR, BIH, CAN, CHE, CHI, CYP, CZE, DEU, DNK, ESP, EST, FIN, FLK, FRA, FRO, GBR, GIB, GRC, GRL, HRV, HUN, IMN, IRL, ISL, ITA, JPN, LIE, LTU, LUX, LVA, MCO, MKD, MLT, MNE, NLD, NOR, NZL, POL, PRI, PRT, ROM, SCG, SHN, SJM, SMR, SPM, SRB, SVK, SVN, SWE, TCA, TUR, USA, VAT, VGB, VIR, WLF, YUG]
+  description: |-
+    Officially "R5.2OECD".
+
+    Serbia and Montenegro (SCG) and Yugoslavia (YUG) still included in this list, even though their ISO 3166-1 codes were deleted in 2006 and 2003, respectively.
+  child: [ALB, AND, AUS, AUT, BEL, BGR, BIH, CAN, CHE, CYP, CZE, DEU, DNK, ESP, EST, FIN, FLK, FRA, FRO, GBR, GIB, GRC, GRL, HRV, HUN, IMN, IRL, ISL, ITA, JPN, LIE, LTU, LUX, LVA, MCO, MKD, MLT, MNE, NLD, NOR, NZL, POL, PRI, PRT, ROU, SCG, SHN, SJM, SMR, SPM, SRB, SVK, SVN, SWE, TCA, TUR, USA, VAT, VGB, VIR, WLF, YUG]
 
 R5_REF:
   parent: World
