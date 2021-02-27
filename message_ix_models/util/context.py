@@ -1,14 +1,14 @@
-from copy import deepcopy
-from pathlib import Path
 import logging
 import os
+from copy import deepcopy
+from pathlib import Path
 
-from click import BadOptionUsage
 import ixmp
 import message_ix
 import pint
 import xarray as xr
 import yaml
+from click import BadOptionUsage
 
 log = logging.getLogger(__name__)
 
