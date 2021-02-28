@@ -1,17 +1,19 @@
 import logging
-import os
 from copy import deepcopy
 from pathlib import Path
+from warnings import warn
 
 import ixmp
 import message_ix
+import message_data
 import pint
 import xarray as xr
 import yaml
 from click import BadOptionUsage
 
-log = logging.getLogger(__name__)
+from message_ix_models.util import load_package_data
 
+log = logging.getLogger(__name__)
 
 #: List of Context instances, from first created to last.
 _CONTEXTS = []
@@ -223,48 +225,16 @@ class Context(dict):
             self.scenario_info["version"] = version
 
     def load_config(self, *parts, suffix=None):
-        """Load a config file, attach it to the Context, and return.
+        """Load :mod:`message_ix_models`.
 
-        Example
-        -------
+        .. deprecated:: 2021.2.28
+           Use :func:`.load_package_data` instead.
 
-        The single call:
-
-        >>> info = context.load_config("transport", "set")
-
-        1. loads the metadata file :file:`data/transport/set.yaml`, parsing its
-           contents,
-        2. stores those values at ``context["transport set"]`` for use by other
-           code, and
-        3. returns the loaded values.
-
-        Parameters
-        ----------
-        parts : iterable of str
-            Used to construct a path under :attr:`metadata_path`.
-        suffix : str, optional
-            File suffix.
-
-        Returns
-        -------
-        dict
-            Configuration values that were loaded.
         """
-        key = " ".join(parts)
-        if key in self:
-            log.debug(f"{repr(key)} already loaded; skip")
-            return self[key]
-
-        path = self.metadata_path.joinpath(*parts)
-        path = path.with_suffix(suffix or path.suffix or ".yaml")
-
-        if path.suffix == ".yaml":
-            with open(path, encoding="utf-8") as f:
-                self[key] = yaml.safe_load(f)
-        else:
-            raise ValueError(suffix)
-
-        return self[key]
+        warn("Context.load_config(). Instead use one of: …", DeprecationWarning)
+        result = load_package_data(*parts, suffix=suffix)
+        self[" ".join(parts)] = result
+        return result
 
     @property
     def units(self):

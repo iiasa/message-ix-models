@@ -7,6 +7,7 @@ from sdmx.model import Annotation, Code
 
 log = logging.getLogger(__name__)
 
+#: Already loaded package data.
 PACKAGE_DATA: Dict[str, Any] = dict()
 
 
