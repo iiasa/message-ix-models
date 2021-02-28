@@ -15,6 +15,7 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
 
    install
    data
+   cli
 
 .. toctree::
    :maxdepth: 2
