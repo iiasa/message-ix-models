@@ -25,6 +25,8 @@ Choose locations for data
 
 These are listed in order of preference.
 
+.. _package-data:
+
 (1) :file:`message_ix_models/data/`
 -----------------------------------
 
@@ -39,6 +41,8 @@ These are listed in order of preference.
 - Documentation files like :file:`doc/pkg-data/*.rst` describe the contents of these files.
   For example: :doc:`pkg-data/node`.
 
+.. _private-data:
+
 (2) :file:`data/` directory in the :mod:`message_data` repo
 -----------------------------------------------------------
 
@@ -50,8 +54,10 @@ These are listed in order of preference.
 
 - Data here can be loaded with :func:`.load_private_data` or other, more specialized code.
 
-(3) Other, system-specific directories
---------------------------------------
+.. _local-data:
+
+(3) Other, system-specific (“local”) directories
+------------------------------------------------
 
 - These are the preferred location for:
 
@@ -64,8 +70,8 @@ These are listed in order of preference.
   This setting can be made in multiple ways.
   In order of ascending precedence:
 
-  1. The default location is the *current working directory*, i.e. whichever direct the :program:`mix-models` CLI is invoked in, or in which Python code is run that imports and uses :mod:`message_ix_models`.
-  2. The :mod:`ixmp` configuration setting ``message_local_data``.
+  1. The default location is the *current working directory*, i.e. whichever directory the :doc:`cli` is invoked in, or in which Python code is run that imports and uses :mod:`message_ix_models`.
+  2. The :mod:`ixmp` configuration setting ``message local data``.
   3. The ``MESSAGE_LOCAL_DATA`` environment variable.
   4. The ``--local-data`` CLI option and related options such as ``--cache-path`` or the ``--output`` option to the ``report`` command.
   5. Code that directly modifies the ``local_data`` setting on :class:`.Context`.
