@@ -20,6 +20,10 @@ jobs:
     - uses: actions/checkout@v2
 
     - uses: actions/setup-python@v2
+      with:
+        # This should match the "Latest version testable on GitHub Actions"
+        # in pytest.yaml
+        python-version: "3.8"
 
     - name: Cache Python packages
       uses: actions/cache@v2
@@ -41,8 +45,24 @@ jobs:
         flake8 --count --max-complexity=${{ env.max-complexity }} --show-source --statistics
         isort --check-only .
 
+    - name: Check out ixmp
+      uses: actions/checkout@v2
+      with:
+        repository: iiasa/ixmp
+        path: ixmp
+
+    - name: Check out message-ix
+      uses: actions/checkout@v2
+      with:
+        repository: iiasa/message_ix
+        path: message-ix
+
     - name: Check typing with mypy
+      # Give the paths to ixmp and message_ix sources. These need not be
+      # installed for static type checking
+      env:
+        MYPYPATH: "./ixmp/:./message-ix/"
       # Also install packages that provide type hints
       run: |
-        pip install pytest sdmx1
-        mypy .
+        pip install genno pytest sdmx1
+        mypy ./message_ix_models

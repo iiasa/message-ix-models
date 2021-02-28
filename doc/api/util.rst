@@ -5,3 +5,13 @@ Low-level utilities
 
 .. automodule:: message_ix_models.util
    :members:
+
+.. currentmodule:: message_ix_models.util.context
+
+.. automodule:: message_ix_models.util.context
+   :members:
+
+.. currentmodule:: message_ix_models.util.importlib
+
+.. automodule:: message_ix_models.util.importlib
+   :members:

@@ -6,13 +6,12 @@ from message_ix_models.cli import main
 
 SUBCOMMANDS = [
     tuple(),
-    # model
-    ("model",),
+    ("debug",),
 ]
 
 
 def _cli_help_id(argvalue):
-    return f"mix-data {' '.join(argvalue)} --help"
+    return f"mix-models {' '.join(argvalue)} --help"
 
 
 @pytest.mark.parametrize("subcommand", SUBCOMMANDS, ids=_cli_help_id)
