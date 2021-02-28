@@ -61,7 +61,7 @@ jobs:
       # Give the paths to ixmp and message_ix sources. These need not be
       # installed for static type checking
       env:
-        MYPYPATH: "ixmp/ixmp:message_ix/message_ix"
+        MYPYPATH: "ixmp/ixmp:message-ix/message_ix"
       # Also install packages that provide type hints
       run: |
         pip install genno pytest sdmx1
