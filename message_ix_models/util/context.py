@@ -12,6 +12,8 @@ from click import BadOptionUsage
 
 log = logging.getLogger(__name__)
 
+
+#: List of Context instances, from first created to last.
 _CONTEXTS = []
 
 
@@ -278,7 +280,3 @@ class Context(dict):
 
             if value not in info:
                 raise ValueError(f"{setting} must be in {info}; got {value}")
-
-
-# Ensure at least one context is created
-Context()
