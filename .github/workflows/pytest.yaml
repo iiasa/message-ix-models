@@ -49,6 +49,7 @@ jobs:
     - name: Check out message-ix
       uses: actions/checkout@v2
       with:
+        repository: iiasa/message_ix
         path: message-ix
         fetch-depth: ${{ env.depth }}
 

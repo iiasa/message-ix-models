@@ -14,6 +14,8 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
    :caption: User guide
 
    install
+   data
+   cli
 
 .. toctree::
    :maxdepth: 2
