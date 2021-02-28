@@ -18,6 +18,24 @@ class TestContext:
         # Attribute access works
         assert test_context.foo == 23
 
+    def test_deepcopy(self, session_context):
+        """Paths are preserved through deepcopy()."""
+        ld = session_context.local_data
+
+        c = deepcopy(session_context)
+
+        assert ld == c.local_data
+
+    def test_get_cache_path(self, pytestconfig, test_context):
+        """cache_path() returns the expected output."""
+        base = test_context.local_data
+
+        assert base.joinpath(
+            "cache", "pytest", "bar.pkl"
+        ) == test_context.get_cache_path("pytest", "bar.pkl")
+
+    # Deprecated methods and attributes
+
     def test_load_config(self, test_context):
         # Calling this method is deprecated
         with pytest.deprecated_call():
@@ -27,33 +45,13 @@ class TestContext:
         # The loaded file is stored and can be reused
         assert isinstance(test_context["level"], dict)
 
-    def test_deepcopy(self, session_context):
-        """Paths are preserved through deepcopy()."""
-        mdp = session_context.message_data_path
-        ldp = session_context.local_data_path
-
-        c = deepcopy(session_context)
-
-        assert mdp == c.message_data_path
-        assert ldp == c.local_data_path
-
-    def test_get_cache_path(self, pytestconfig, test_context):
-        """cache_path() returns the expected output."""
-        base = (
-            test_context.metadata_path
-            if pytestconfig.option.local_cache
-            else test_context.local_data_path
-        )
-        assert base.joinpath(
-            "cache", "pytest", "bar.pkl"
-        ) == test_context.get_cache_path("pytest", "bar.pkl")
-
     def test_units(self, test_context):
         """Context.units can be used to parse units that are not standard in pint.
 
         i.e. message_data unit definitions are used.
         """
-        assert test_context.units("15 USD_2005 / year").dimensionality == {
-            "[currency]": 1,
-            "[time]": -1,
-        }
+        with pytest.deprecated_call():
+            assert test_context.units("15 USD_2005 / year").dimensionality == {
+                "[currency]": 1,
+                "[time]": -1,
+            }
