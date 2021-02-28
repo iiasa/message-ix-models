@@ -139,6 +139,10 @@ class TestContext:
                 "level.yaml",
             ) == test_context.get_config_file("level").parts[-3:]
 
+    @pytest.mark.xfail(
+        condition=MESSAGE_DATA_PATH is None,
+        reason="Requires message_data to be installed.",
+    )
     def test_get_path(self, test_context):
         with pytest.deprecated_call():
             assert MESSAGE_DATA_PATH.joinpath(
