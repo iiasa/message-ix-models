@@ -14,7 +14,6 @@ from message_ix_models.util import (
     private_data_path,
 )
 
-
 log = logging.getLogger(__name__)
 
 #: List of Context instances, from first created to last.
@@ -175,8 +174,9 @@ class Context(dict):
     def get_scenario(self) -> message_ix.Scenario:
         """Return a :class:`message_ix.Scenario` from :attr:`scenario_info`.
 
-        When used through the CLI, :attr:`scenario_info` is a 'base' scenario
-        as indicated by the --url or --platform/--model/--scenario options.
+        When used through the CLI, :attr:`scenario_info` is a ‘base’ scenario for an
+        operation, indicated by the ``--url`` or ``--platform/--model/--scenario``
+        options.
         """
         return message_ix.Scenario(self.get_platform(), **self.scenario_info)
 
@@ -202,8 +202,8 @@ class Context(dict):
         if url:
             if platform or model_name or scenario_name or version:
                 raise BadOptionUsage(
-                    "--platform --model --scenario and/or --version redundant with "
-                    "--url"
+                    "--platform --model --scenario and/or --version",
+                    " redundant with --url",
                 )
 
             self.url = url
@@ -250,7 +250,7 @@ class Context(dict):
             DeprecationWarning,
             stacklevel=2,
         )
-        return package_data_path(*parts, suffix=f".{ext}")
+        return package_data_path(*parts).with_suffix(f".{ext}")
 
     def get_path(self, *parts) -> Path:
         """Return a path under :attr:`message_data_path` by joining *parts*.
