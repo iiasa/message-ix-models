@@ -41,8 +41,20 @@ jobs:
         flake8 --count --max-complexity=${{ env.max-complexity }} --show-source --statistics
         isort --check-only .
 
+    - name: Check out ixmp
+      uses: actions/checkout@v2
+      with:
+        repository: iiasa/ixmp
+        path: ixmp
+
+    - name: Check out message-ix
+      uses: actions/checkout@v2
+      with:
+        repository: iiasa/message_ix
+
     - name: Check typing with mypy
-      # Also install packages that provide type hints
+      # - Install packages that provide type hints
+      # - Also give the path to ixmp and message_ix sources
       run: |
-        pip install pytest sdmx1
-        mypy .
+        pip install genno pytest sdmx1
+        mypy . ./ixmp ./ixmp
