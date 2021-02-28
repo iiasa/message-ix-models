@@ -19,11 +19,13 @@ class TestContext:
         assert test_context.foo == 23
 
     def test_load_config(self, test_context):
-        # Config files can be loaded and are parsed from YAML into Python objects
-        assert isinstance(test_context.load_config("sources"), dict)
+        # Calling this method is deprecated
+        with pytest.deprecated_call():
+            # Config files can be loaded and are parsed from YAML into Python objects
+            assert isinstance(test_context.load_config("level"), dict)
 
         # The loaded file is stored and can be reused
-        assert isinstance(test_context["sources"], dict)
+        assert isinstance(test_context["level"], dict)
 
     def test_deepcopy(self, session_context):
         """Paths are preserved through deepcopy()."""
