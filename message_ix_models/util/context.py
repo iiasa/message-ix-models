@@ -1,17 +1,20 @@
 import logging
+import os
 from copy import deepcopy
 from pathlib import Path
 from warnings import warn
 
 import ixmp
 import message_ix
-import message_data
-import pint
 import xarray as xr
-import yaml
 from click import BadOptionUsage
 
-from message_ix_models.util import load_package_data
+from message_ix_models.util import (
+    load_package_data,
+    package_data_path,
+    private_data_path,
+)
+
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +23,7 @@ _CONTEXTS = []
 
 
 class Context(dict):
-    """Context and settings for :mod:`message_data` code.
+    """Context and settings for :mod:`message_ix_models` code.
 
     Context is a subclass of :class:`dict`, so common methods like :meth:`~dict.copy`
     and :meth:`~dict.setdefault` may be used to handle settings. To be forgiving, it
@@ -30,8 +33,8 @@ class Context(dict):
     settings:
 
     .. autosummary::
-       get_config_file
-       get_path
+       get_cache_path
+       get_local_path
        get_platform
        get_scenario
        load_config
@@ -68,18 +71,20 @@ class Context(dict):
         if len(_CONTEXTS) == 0:
             log.info("Create root Context")
 
+        # Store any keyword arguments
         super().__init__(*args, **kwargs)
 
-        # Set default values, only if they are not already set
-        metadata_path = Path(__file__).parents[2] / "data"
+        # Default paths for local data
+        default_local_data = (
+            os.environ.get("MESSAGE_LOCAL_DATA", None)
+            or ixmp.config.values.get("message_local_data", None)
+            or Path.cwd()
+        )
 
         for key, value in (
-            ("data", xr.Dataset()),
             ("platform_info", dict()),
             ("scenario_info", dict()),
-            ("metadata_path", Path(os.environ.get("MESSAGE_DATA_PATH", metadata_path))),
-            ("message_data_path", metadata_path),
-            ("cache_path", metadata_path / "cache"),
+            ("local_data", default_local_data),
         ):
             self.setdefault(key, value)
 
@@ -128,26 +133,18 @@ class Context(dict):
 
     def get_cache_path(self, *parts) -> Path:
         """Return a path to a local cache file."""
-        result = self.cache_path.joinpath(*parts)
+        base = self.get("cache_path", self.local_data.joinpath("cache"))
+        result = base.joinpath(*parts)
 
         # Ensure the directory exists
         result.parent.mkdir(parents=True, exist_ok=True)
 
         return result
 
-    def get_config_file(self, *parts, ext="yaml") -> Path:
-        """Return a path under :attr:`metadata_path`.
-
-        The suffix ".{ext}" is added; defaulting to ".yaml".
-        """
-        return self.metadata_path.joinpath(*parts).with_suffix("." + ext)
-
-    def get_path(self, *parts) -> Path:
-        """Return a path under :attr:`message_data_path` by joining *parts*.
-
-        *parts* may include directory names, or a filename with extension.
-        """
-        return Path(self.message_data_path, *parts)
+    def get_local_path(self, *parts, suffix=None):
+        """Return a path under ``local_data``."""
+        result = self.local_data.joinpath(*parts)
+        return result.with_suffix(suffix or result.suffix)
 
     def get_platform(self, reload=False) -> ixmp.Platform:
         """Return a :class:`ixmp.Platform` from :attr:`platform_info`.
@@ -191,7 +188,7 @@ class Context(dict):
         model_name=None,
         scenario_name=None,
         version=None,
-        data_path=None,
+        local_data=None,
     ):
         """Handle command-line arguments.
 
@@ -199,7 +196,7 @@ class Context(dict):
         :attr:`scenario_info`, and/or :attr:`url` attributes.
         """
         # Store the path to command-specific data and metadata
-        self.data_path = data_path
+        self.local_data = Path(local_data)
 
         # Store information for the target Platform
         if url:
@@ -224,22 +221,6 @@ class Context(dict):
         if version:
             self.scenario_info["version"] = version
 
-    def load_config(self, *parts, suffix=None):
-        """Load :mod:`message_ix_models`.
-
-        .. deprecated:: 2021.2.28
-           Use :func:`.load_package_data` instead.
-
-        """
-        warn("Context.load_config(). Instead use one of: …", DeprecationWarning)
-        result = load_package_data(*parts, suffix=suffix)
-        self[" ".join(parts)] = result
-        return result
-
-    @property
-    def units(self):
-        return pint.get_application_registry()
-
     def use_defaults(self, settings):
         """Update from `settings`."""
         for setting, info in settings.items():
@@ -250,3 +231,71 @@ class Context(dict):
 
             if value not in info:
                 raise ValueError(f"{setting} must be in {info}; got {value}")
+
+    # Deprecated methods
+
+    def get_config_file(self, *parts, ext="yaml") -> Path:
+        """Return a path under :attr:`metadata_path`.
+
+        The suffix ".{ext}" is added; defaulting to ".yaml".
+
+        .. deprecated:: 2021.2.28
+           Use :func:`.package_data_path` instead.
+           Will be removed on or after 2021-05-28.
+        """
+        # TODO remove on or after 2021-05-28
+        warn(
+            "Context.get_config_file(). Instead use:\n"
+            "from message_ix_models import package_data_path",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return package_data_path(*parts, suffix=f".{ext}")
+
+    def get_path(self, *parts) -> Path:
+        """Return a path under :attr:`message_data_path` by joining *parts*.
+
+        *parts* may include directory names, or a filename with extension.
+
+        .. deprecated:: 2021.2.28
+           Use :func:`.private_data_path` instead.
+           Will be removed on or after 2021-05-28.
+        """
+        # TODO remove on or after 2021-05-28
+        warn(
+            "Context.get_path(). Instead use: \n"
+            "from message_ix_models import private_data_path",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return private_data_path(*parts)
+
+    def load_config(self, *parts, suffix=None):
+        """Load configuration from :mod:`message_ix_models`.
+
+        .. deprecated:: 2021.2.28
+           Use :func:`.load_package_data` instead.
+           Will be removed on or after 2021-05-28.
+        """
+        # TODO remove on or after 2021-05-28
+        warn(
+            "Context.load_config(). Instead use:\n"
+            "from message_ix_models.util import load_package_data",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        result = load_package_data(*parts, suffix=suffix)
+        self[" ".join(parts)] = result
+        return result
+
+    @property
+    def units(self):
+        # TODO remove on or after 2021-05-28
+        warn(
+            "Context.units attribute. Instead use:\nfrom iam_units import registry",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from iam_units import registry
+
+        return registry

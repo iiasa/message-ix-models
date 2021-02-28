@@ -7,8 +7,24 @@ from sdmx.model import Annotation, Code
 
 log = logging.getLogger(__name__)
 
+try:
+    import message_data
+
+    # Root directory of the message_data repository.
+    MESSAGE_DATA_PATH = Path(message_data.__file__).parent
+except ImportError:  # pragma: no cover
+    log.warning("message_data is not installed")
+    MESSAGE_DATA_PATH = None
+
+
+# Directory containing message_ix_models.__init__
+MESSAGE_MODELS_PATH = Path(__file__).parents[1]
+
 #: Already loaded package data.
 PACKAGE_DATA: Dict[str, Any] = dict()
+
+#: Already loaded private data.
+PRIVATE_DATA: Dict[str, Any] = dict()
 
 
 def as_codes(data):
@@ -68,6 +84,31 @@ def as_codes(data):
     return list(result.values())
 
 
+def _load(var, base_path, *parts, suffix=None, default_suffix=None):
+    """Helper for :func:`.load_package_data` and :func:`.load_private_data`."""
+    key = " ".join(parts)
+    if key in var:
+        log.debug(f"{repr(key)} already loaded; skip")
+        return var[key]
+
+    path = _make_path(base_path, *parts, suffix=suffix, default_suffix=default_suffix)
+
+    if path.suffix == ".yaml":
+        import yaml
+
+        with open(path, encoding="utf-8") as f:
+            var[key] = yaml.safe_load(f)
+    else:
+        raise ValueError(suffix)
+
+    return var[key]
+
+
+def _make_path(base_path, *parts, suffix=None, default_suffix=None):
+    result = base_path.joinpath(*parts)
+    return result.with_suffix(suffix or result.suffix or default_suffix)
+
+
 def load_package_data(*parts, suffix=None):
     """Load a package data file and return its contents.
 
@@ -96,21 +137,25 @@ def load_package_data(*parts, suffix=None):
     dict
         Configuration values that were loaded.
     """
+    return _load(
+        PACKAGE_DATA,
+        MESSAGE_MODELS_PATH / "data",
+        *parts,
+        suffix=suffix,
+        default_suffix=".yaml",
+    )
 
-    key = " ".join(parts)
-    if key in PACKAGE_DATA:
-        log.debug(f"{repr(key)} already loaded; skip")
-        return PACKAGE_DATA[key]
 
-    path = Path(__file__).parents[1].joinpath("data", *parts)
-    path = path.with_suffix(suffix or path.suffix or ".yaml")
+def load_private_data(*parts, suffix=None):
+    if MESSAGE_DATA_PATH is None:
+        raise RuntimeError("message_data is not installed")
 
-    if path.suffix == ".yaml":
-        import yaml
+    return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts, suffix=suffix)
 
-        with open(path, encoding="utf-8") as f:
-            PACKAGE_DATA[key] = yaml.safe_load(f)
-    else:
-        raise ValueError(suffix)
 
-    return PACKAGE_DATA[key]
+def package_data_path(*parts, suffix=None):
+    return _make_path(MESSAGE_MODELS_PATH / "data", *parts, suffix=suffix)
+
+
+def private_data_path(*parts, suffix=None):
+    return _make_path(MESSAGE_DATA_PATH / "data", *parts, suffix=suffix)
