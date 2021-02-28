@@ -55,10 +55,14 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: iiasa/message_ix
+        path: message-ix
 
     - name: Check typing with mypy
-      # - Install packages that provide type hints
-      # - Also give the path to ixmp and message_ix sources
+      # Give the paths to ixmp and message_ix sources. These need not be
+      # installed for static type checking
+      env:
+        MYPYPATH: "ixmp/ixmp:message_ix/message_ix"
+      # Also install packages that provide type hints
       run: |
         pip install genno pytest sdmx1
-        mypy . ./ixmp ./ixmp
+        mypy .
