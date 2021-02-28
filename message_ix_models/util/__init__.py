@@ -1,7 +1,7 @@
 import logging
 from copy import copy
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, cast
 
 from sdmx.model import Annotation, Code
 
@@ -20,14 +20,14 @@ except ImportError:  # pragma: no cover
 # Directory containing message_ix_models.__init__
 MESSAGE_MODELS_PATH = Path(__file__).parents[1]
 
-#: Already loaded package data.
+#: Package data already loaded with :func:`load_package_data`.
 PACKAGE_DATA: Dict[str, Any] = dict()
 
-#: Already loaded private data.
+#: Data already loaded with :func:`load_private_data`.
 PRIVATE_DATA: Dict[str, Any] = dict()
 
 
-def as_codes(data):
+def as_codes(data) -> List[Code]:
     """Convert *data* to a :class:`list` of :class:`.Code` objects.
 
     Various inputs are accepted:
@@ -37,7 +37,7 @@ def as_codes(data):
       :class:`dict` with keys matching other :class:`.Code` attributes.
     """
     # Assemble results as a dictionary
-    result = {}
+    result: Dict[str, Code] = {}
 
     if isinstance(data, list):
         data = dict(zip(data, data))
@@ -84,7 +84,9 @@ def as_codes(data):
     return list(result.values())
 
 
-def _load(var, base_path, *parts, default_suffix=None):
+def _load(
+    var: Dict, base_path: Path, *parts: str, default_suffix: Optional[str] = None
+) -> Mapping:
     """Helper for :func:`.load_package_data` and :func:`.load_private_data`."""
     key = " ".join(parts)
     if key in var:
@@ -104,13 +106,15 @@ def _load(var, base_path, *parts, default_suffix=None):
     return var[key]
 
 
-def _make_path(base_path, *parts, default_suffix=None):
+def _make_path(
+    base_path: Path, *parts: str, default_suffix: Optional[str] = None
+) -> Path:
     p = base_path.joinpath(*parts)
     return p.with_suffix(p.suffix or default_suffix) if default_suffix else p
 
 
-def load_package_data(*parts, suffix=".yaml"):
-    """Load a package data file and return its contents.
+def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Mapping:
+    """Load a :mod:`message_ix_models` package data file and return its contents.
 
     Data is re-used if already loaded.
 
@@ -145,16 +149,38 @@ def load_package_data(*parts, suffix=".yaml"):
     )
 
 
-def load_private_data(*parts):  # pragma: no cover
+def load_private_data(*parts: str) -> Mapping:  # pragma: no cover
+    """Load a private data file from :mod:`message_data` and return its contents.
+
+    Analogous to :mod:`load_package_data`, but for non-public data.
+
+    Parameters
+    ----------
+    parts : iterable of str
+        Used to construct a path under :file:`data/` in the :mod:`message_data`
+        repository.
+
+    Returns
+    -------
+    dict
+        Configuration values that were loaded.
+
+    Raises
+    ------
+    RuntimeError
+        if :mod:`message_data` is not installed.
+    """
     if MESSAGE_DATA_PATH is None:
         raise RuntimeError("message_data is not installed")
 
     return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts)
 
 
-def package_data_path(*parts):
+def package_data_path(*parts) -> Path:
+    """Construct a path to a file under :file:`message_ix_models/data/`."""
     return _make_path(MESSAGE_MODELS_PATH / "data", *parts)
 
 
-def private_data_path(*parts):
-    return _make_path(MESSAGE_DATA_PATH / "data", *parts)
+def private_data_path(*parts) -> Path:
+    """Construct a path to a file under :file:`data/` in :mod:`message_data`."""
+    return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)

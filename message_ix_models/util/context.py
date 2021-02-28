@@ -22,22 +22,7 @@ _CONTEXTS: List["Context"] = []
 
 
 class Context(dict):
-    """Context and settings for :mod:`message_ix_models` code.
-
-    Context is a subclass of :class:`dict`, so common methods like :meth:`~dict.copy`
-    and :meth:`~dict.setdefault` may be used to handle settings. To be forgiving, it
-    also provides attribute access; ``context.foo`` is equivalent to ``context["foo"]``.
-
-    Context provides additional methods to do common tasks that depend on configurable
-    settings:
-
-    .. autosummary::
-       get_cache_path
-       get_local_path
-       get_platform
-       get_scenario
-       load_config
-    """
+    """Context and settings for :mod:`message_ix_models` code."""
 
     # NB the docs contain a table of settings
 
@@ -291,6 +276,17 @@ class Context(dict):
 
     @property
     def units(self):
+        """Access the unit registry.
+
+        .. deprecated:: 2021.2.28
+           Instead, use:
+
+           .. code-block:: python
+
+              from iam_units import registry
+
+           Will be removed on or after 2021-05-28.
+        """
         # TODO remove on or after 2021-05-28
         warn(
             "Context.units attribute. Instead use:\nfrom iam_units import registry",
