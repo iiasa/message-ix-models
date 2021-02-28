@@ -6,7 +6,6 @@ from warnings import warn
 
 import ixmp
 import message_ix
-import xarray as xr
 from click import BadOptionUsage
 
 from message_ix_models.util import (
@@ -77,7 +76,7 @@ class Context(dict):
         # Default paths for local data
         default_local_data = (
             os.environ.get("MESSAGE_LOCAL_DATA", None)
-            or ixmp.config.values.get("message_local_data", None)
+            or ixmp.config.values.get("message local data", None)
             or Path.cwd()
         )
 
@@ -196,7 +195,8 @@ class Context(dict):
         :attr:`scenario_info`, and/or :attr:`url` attributes.
         """
         # Store the path to command-specific data and metadata
-        self.local_data = Path(local_data)
+        if local_data:
+            self.local_data = local_data
 
         # Store information for the target Platform
         if url:
