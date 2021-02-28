@@ -1,7 +1,7 @@
 import logging
 from copy import copy
 from pathlib import Path
-from typing import Any, Dict, Mapping
+from typing import Any, Dict, Mapping, Optional
 
 from sdmx.model import Annotation, Code
 
@@ -11,7 +11,7 @@ try:
     import message_data
 
     # Root directory of the message_data repository.
-    MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
+    MESSAGE_DATA_PATH: Optional[Path] = Path(message_data.__file__).parents[1]
 except ImportError:  # pragma: no cover
     log.warning("message_data is not installed")
     MESSAGE_DATA_PATH = None

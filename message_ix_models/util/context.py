@@ -2,6 +2,7 @@ import logging
 import os
 from copy import deepcopy
 from pathlib import Path
+from typing import List
 from warnings import warn
 
 import ixmp
@@ -17,7 +18,7 @@ from message_ix_models.util import (
 log = logging.getLogger(__name__)
 
 #: List of Context instances, from first created to last.
-_CONTEXTS = []
+_CONTEXTS: List["Context"] = []
 
 
 class Context(dict):
