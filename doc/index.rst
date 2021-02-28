@@ -1,7 +1,5 @@
 .. "MESSAGEix models" documentation master file, created by
    sphinx-quickstart on Tue Feb 23 14:52:14 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 MESSAGEix models
 ****************
@@ -25,6 +23,7 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
    api/project
    api/tools
    api/util
+   api/testing
 
 .. toctree::
    :maxdepth: 2
