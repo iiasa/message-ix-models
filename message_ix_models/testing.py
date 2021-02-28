@@ -15,7 +15,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--local-cache",
         action="store_true",
-        help="use cache files in the code directory",
+        help="Use existing local cache files in tests",
     )
 
 
@@ -24,15 +24,23 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def session_context(request, tmp_env):
-    """A Context connected to a temporary, in-memory database."""
+    """A Context connected to a temporary, in-memory database.
+
+    Uses the :func:`.tmp_env` fixture from ixmp.
+    """
     ctx = Context.only()
 
-    ctx.local_data_path = Path(request.config._tmp_path_factory.mktemp("data"))
+    # Temporary, empty local directory for local data
+    session_tmp_dir = Path(request.config._tmp_path_factory.mktemp("data"))
+
+    # Set the cache path according to whether pytest --local-cache was given. If True,
+    # pick up the existing setting from the user environment.
     ctx.cache_path = (
-        ctx.message_data_path
-        if request.config.option.local_cache
-        else ctx.local_data_path
+        ctx.local_data if request.config.option.local_cache else session_tmp_dir
     ).joinpath("cache")
+
+    # Other local data in the temporary directory
+    ctx.local_data = session_tmp_dir
 
     platform_name = "message_data"
 
