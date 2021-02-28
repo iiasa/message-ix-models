@@ -77,7 +77,7 @@ def test_context(request, session_context):
 
 
 @pytest.fixture(scope="function")
-def user_context(request):
+def user_context(request):  # pragma: no cover
     """Context which can access user's configuration, e.g. platform names."""
     # Disabled; this is bad practice
     raise NotImplementedError
