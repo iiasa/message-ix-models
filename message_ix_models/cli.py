@@ -1,15 +1,17 @@
 """Command-line interface for MESSAGEix-GLOBIOM model tools.
 
 Every tool and script in this repository is accessible through this CLI. Scripts are
-grouped into commands and sub-commands. For help on specific (sub)commands, use --help:
+grouped into commands and sub-commands. For help on specific (sub)commands, use --help,
+e.g.:
 
     \b
-    mix-models --help
     mix-models cd-links --help
     mix-models cd-links run --help
 
 The top-level options --platform, --model, and --scenario are used by commands that
-access specific ixmp or message_ix scenarios; these can also be specified with --url.
+access specific message_ix scenarios; these can also be specified with --url.
+
+For more information, see https://docs.messageix.org/projects/models2/en/latest/cli.html
 """
 import sys
 from pathlib import Path

@@ -1,19 +1,43 @@
-Low-level utilities
-*******************
+Low-level utilities (:mod:`.util`)
+**********************************
+
 
 .. currentmodule:: message_ix_models.util
+
+Submodules:
+
+.. autosummary::
+
+   click
+   context
+   importlib
+   logging
+
+Commonly used:
+
+.. autosummary::
+
+   as_codes
+   load_package_data
+   load_private_data
+   package_data_path
+   private_data_path
+   ~context.Context
 
 .. automodule:: message_ix_models.util
    :members:
 
-   .. autosummary::
 
-      as_codes
-      load_package_data
-      load_private_data
-      package_data_path
-      private_data_path
-      ~context.Context
+:mod:`.util.click`
+==================
+
+.. currentmodule:: message_ix_models.util.click
+
+.. automodule:: message_ix_models.util.click
+   :members:
+
+:mod:`.util.context`
+====================
 
 .. currentmodule:: message_ix_models.util.context
 
@@ -44,7 +68,18 @@ Low-level utilities
       load_config
       units
 
+:mod:`.util.importlib`
+======================
+
 .. currentmodule:: message_ix_models.util.importlib
 
 .. automodule:: message_ix_models.util.importlib
+   :members:
+
+:mod:`.util.logging`
+====================
+
+.. currentmodule:: message_ix_models.util.logging
+
+.. automodule:: message_ix_models.util.logging
    :members:
