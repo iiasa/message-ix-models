@@ -6,7 +6,7 @@ import pandas as pd
 import xarray as xr
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import as_codes
+from message_ix_models.util import as_codes, load_private_data
 from sdmx.model import Code
 
 from message_data.model.transport.common import METADATA
@@ -14,9 +14,11 @@ from message_data.tools import eval_anno, load_data
 
 
 def read_config(context=None):
-    """Read the transport model configuration / metadata from file.
+    """Read the transport model configuration / metadata and store on `context`.
 
-    Numerical values are converted to computation-ready data structures.
+    Files from :data:`.METADATA` are stored with keys like "transport set" corresponding
+    to :file:`data/transport/set.yaml`. Numerical values are converted to computation-
+    ready data structures.
     """
     context = context or Context.get_instance(0)
 
@@ -24,9 +26,16 @@ def read_config(context=None):
         # Already loaded
         return
 
-    # Load transport configuration
+    # Load transport configuration, copy onto the context
     for parts in METADATA:
-        context.load_config(*parts)
+        # Key for storing in the context
+        key = " ".join(parts)
+
+        # Actual filename parts; ends with YAML
+        _parts = list(parts)
+        _parts[-1] += ".yaml"
+
+        context[key] = load_private_data(*_parts)
 
     # Merge technology.yaml with set.yaml
     context["transport set"]["technology"]["add"] = context.pop("transport technology")
@@ -37,6 +46,11 @@ def read_config(context=None):
             info["add"] = as_codes(info["add"])
         except KeyError:
             pass
+
+    # message_ix_models.Context does not provide an automatic xr.DataSet; create one
+    # TODO remove this. Most of this data is eventually handled via genno in e.g.
+    #      .transport.demand, so simply use genno.computations.load_file
+    context.setdefault("data", xr.Dataset())
 
     # Load data files
     for key in context["transport config"]["data files"]:
