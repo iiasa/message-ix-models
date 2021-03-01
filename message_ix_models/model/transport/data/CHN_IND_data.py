@@ -6,7 +6,6 @@ from pycountry import countries
 import yaml
 
 from item import historical
-from message_data.model.transport import read_config
 from message_data.tools.utilities.convert_units import convert_units
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.tools import make_df, same_node, set_info, Code, get_context
