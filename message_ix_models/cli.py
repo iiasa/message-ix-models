@@ -67,13 +67,22 @@ def debug(ctx):
     # print(ctx.local_data)
 
 
-try:
-    from message_data.cli import modules_with_cli as message_data_modules_with_cli
-except ImportError:
-    message_data_modules_with_cli = []
+#: List of submodules providing CLI (sub)commands accessible through `mix-models`.
+submodules = [
+    "message_ix_models.model.structure",
+]
 
-for name in message_data_modules_with_cli:  # pragma: no cover
-    name = "message_data." + name
+try:
+    import message_data.cli
+except ImportError:
+    pass  # message_data is not installed
+else:
+    # Also add message_data submodules
+    submodules.extend(
+        f"message_data.{name}" for name in message_data.cli.modules_with_cli
+    )
+
+for name in submodules:
     __import__(name)
     main.add_command(getattr(sys.modules[name], "cli"))
 
