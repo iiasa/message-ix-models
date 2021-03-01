@@ -138,7 +138,7 @@ See also: :doc:`transport/files`.
 CLI usage
 =========
 
-Use the :doc:`CLI </cli>` command ``mix-data transport`` to invoke the commands defined in :mod:`.transport.cli`. Try:
+Use the :doc:`CLI <cli>` command ``mix-data transport`` to invoke the commands defined in :mod:`.transport.cli`. Try:
 
 .. code::
 
