@@ -1,3 +1,5 @@
+"""Context and settings for :mod:`message_ix_models` code."""
+
 import logging
 import os
 from copy import deepcopy

@@ -1,3 +1,5 @@
+"""Load model and project code from :mod:`message_data`."""
+
 import re
 from importlib import util
 from importlib.abc import MetaPathFinder
