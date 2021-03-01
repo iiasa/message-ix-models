@@ -76,7 +76,7 @@ def split_units(s):
 
 
 def get_chn_ind_pop(ctx):
-    """Retrieve population data from for China and India.
+    """Retrieve population data for China and India.
 
     The dataset is a ``.csv`` file in */data* and was retrieved from `OECD
     <https://stats.oecd.org/Index.aspx?#>`_ website, filtering data for China and India.
