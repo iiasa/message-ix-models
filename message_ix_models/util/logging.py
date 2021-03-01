@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from copy import deepcopy
 from time import process_time
 
-
 __all__ = [
     "Formatter",
     "make_formatter",
