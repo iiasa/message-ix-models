@@ -69,7 +69,7 @@ class Formatter(logging.Formatter):
         """
         # Remove the leading 'message_data.' from the module name
         name_parts = record.name.split(".")
-        if name_parts[0] == "message_data":
+        if name_parts[0] in ("message_ix_models", "message_data"):
             short_name = ".".join(["—"] + name_parts[1:])
         else:
             short_name = record.name
@@ -84,7 +84,7 @@ class Formatter(logging.Formatter):
 
 
 def make_formatter():
-    """Return a :class:`Formatter` instance for the ``message_data`` logger.
+    """Return a :class:`Formatter` instance for the ``message_ix_models`` logger.
 
     See also
     --------
@@ -138,12 +138,12 @@ CONFIG = dict(
         message_ix_models=dict(
             level="NOTSET",
             # propagate=False,
-            handlers=[],
+            # handlers=[],
         ),
         message_data=dict(
             level="NOTSET",
             # propagate=False,
-            handlers=[],
+            # handlers=[],
         ),
     ),
     root=dict(
@@ -169,8 +169,7 @@ def setup(
     # Copy to avoid modifying with the operations below
     config = deepcopy(CONFIG)
 
-    config["loggers"]["message_ix_models"]["level"] = level
-    config["loggers"]["message_data"]["level"] = level
+    config["root"].setdefault("level", level)
 
     if console:
         config["root"]["handlers"].append("console")
