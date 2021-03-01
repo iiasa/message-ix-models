@@ -71,6 +71,7 @@ class TestGetCodes:
             ("R11", "R11_AFR", 50, "CIV"),
             ("R14", "R14_AFR", 51, "CIV"),
             ("R32", "R32SSA-L", 41, "CIV"),
+            ("R32", "R32JPN", 1, "JPN"),
         ],
     )
     def test_nodes(self, codelist, to_check, length, member):
