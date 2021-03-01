@@ -90,6 +90,7 @@ def _load(
     """Helper for :func:`.load_package_data` and :func:`.load_private_data`."""
     key = " ".join(parts)
     if key in var:
+        print(f"{repr(key)} already loaded; skip")
         log.debug(f"{repr(key)} already loaded; skip")
         return var[key]
 
