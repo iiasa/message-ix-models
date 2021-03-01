@@ -16,6 +16,8 @@ from pathlib import Path
 
 import click
 
+from message_ix_models.util import logging
+from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
 
 
@@ -37,16 +39,14 @@ from message_ix_models.util.context import Context
 )
 @click.option("--version", type=int, help="Scenario version.")
 @click.option("--local-data", type=Path, help="Base path for local data.")
-# commented pending migration of this code
-# @common_params("verbose")
+@common_params("verbose")
 @click.pass_context
 def main(click_ctx, **kwargs):
-    # commented pending migration of this code
-    # # Start timer
-    # logging.mark_time(quiet=True)
-    #
-    # # Log to console
-    # logging.setup(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
+    # Start timer
+    logging.mark_time(quiet=True)
+
+    # Log to console
+    logging.setup(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
 
     # Use the first instance of the message_data.tools.cli.Context object. click carries
     # the object to subcommands decorated with @click.pass_obj
