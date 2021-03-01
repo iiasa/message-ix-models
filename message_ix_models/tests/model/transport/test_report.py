@@ -1,5 +1,7 @@
 import pytest
 
+from message_ix_models.util import private_data_path
+
 from message_data.model.transport.report import callback
 from message_data.reporting import prepare_reporter, register
 from message_data.testing import NIE
@@ -34,7 +36,7 @@ def test_report_bare(request, transport_context_f, tmp_path, regions, solved):
     scenario = built_transport(request, ctx, solved=solved)
 
     rep, key = prepare_reporter(
-        scenario, ctx.get_config_file("report", "global"), "transport all"
+        scenario, private_data_path("report", "global.yaml"), "transport all"
     )
     rep.configure(output_dir=tmp_path)
 

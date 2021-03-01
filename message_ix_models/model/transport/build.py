@@ -3,12 +3,13 @@ from functools import lru_cache, partial
 from itertools import product
 from typing import List, Mapping
 
+from message_ix_models.util import load_private_data
 from message_ix_models.model.structure import get_codes
 from sdmx.model import Annotation, Code
 
 from message_data.model import bare, build, disutility
 from message_data.model.transport.utils import consumer_groups
-from message_data.tools import ScenarioInfo, eval_anno, get_context
+from message_data.tools import ScenarioInfo, eval_anno
 
 
 log = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def generate_set_elements(set_name, match=None) -> List[Code]:
     if set_name == "consumer_group":
         return consumer_groups()
 
-    codes = get_context()["transport set"][set_name].get("add", [])
+    codes = load_private_data("transport", "set.yaml")[set_name].get("add", [])
 
     hierarchical = set_name in {"technology"}
 

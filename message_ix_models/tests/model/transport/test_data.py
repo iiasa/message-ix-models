@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 import xarray as xr
+from iam_units import registry
 from pandas.testing import assert_series_equal
 from pytest import param
 
@@ -62,7 +63,7 @@ def test_ikarus(transport_context_f, regions, N_node):
     assert len(units) == 1, "Units for each (par, tec) must be unique"
 
     # Unit is parseable by pint
-    pint_unit = ctx.units(units[0])
+    pint_unit = registry(units[0])
 
     # Unit has the correct dimensionality
     assert pint_unit.dimensionality == {"[currency]": 1, "[vehicle]": -1}
@@ -90,7 +91,7 @@ def test_ikarus(transport_context_f, regions, N_node):
         units = data[par]["unit"].unique()
         assert len(units) == 1, "Units for each (par, tec) must be unique"
         # Unit is parseable by pint
-        pint_unit = ctx.units(units[0])
+        pint_unit = registry(units[0])
         # Unit has the correct dimensionality
         assert pint_unit.dimensionality == dim
 

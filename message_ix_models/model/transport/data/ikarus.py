@@ -2,7 +2,9 @@
 from collections import defaultdict
 
 import pandas as pd
+from iam_units import registry
 from message_ix import make_df
+from message_ix_models.util import private_data_path
 from openpyxl import load_workbook
 
 from message_data.tools import broadcast, eval_anno, same_node
@@ -98,7 +100,7 @@ def get_ikarus_data(context):
 
     # Open the input file using openpyxl
     wb = load_workbook(
-        context.get_path("transport", FILE), read_only=True, data_only=True
+        private_data_path("transport", FILE), read_only=True, data_only=True
     )
     # Open the 'updateTRPdata' sheet
     sheet = wb["updateTRPdata"]
@@ -122,13 +124,13 @@ def get_ikarus_data(context):
             .applymap(lambda c: c.value)
             .apply(pd.to_numeric, errors="coerce")
             .transpose()
-            .apply(convert_units, context=context, dict_units=UNITS)
+            .apply(convert_units)
         )
 
         # Conversion of IKARUS data to MESSAGEix-scheme parameters.
 
         # Read output efficiency (occupancy factor) from config and apply units
-        output = config["non-ldv"]["output"][tec] * context.units("pkm / km")
+        output = config["non-ldv"]["output"][tec] * registry("pkm / km")
         # Convert to a Series so operations are element-wise
         output = pd.Series([output] * len(df.index), index=df.index)
 

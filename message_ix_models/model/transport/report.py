@@ -3,8 +3,7 @@ from operator import attrgetter
 
 from dask.core import quote
 from message_ix.reporting import Reporter
-
-from message_data.tools import Context
+from message_ix_models import Context
 
 from . import computations
 from .plot import PLOTS
