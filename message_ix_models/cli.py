@@ -13,14 +13,17 @@ access specific message_ix scenarios; these can also be specified with --url.
 
 For more information, see https://docs.messageix.org/projects/models2/en/latest/cli.html
 """
+import logging
 import sys
 from pathlib import Path
 
 import click
 
-from message_ix_models.util import logging
+from message_ix_models.util.logging import mark_time, setup as setup_logging
 from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
+
+log = logging.getLogger(__name__)
 
 
 # Main command group. The code in this function is ALWAYS executed, so it should only
@@ -45,10 +48,10 @@ from message_ix_models.util.context import Context
 @click.pass_context
 def main(click_ctx, **kwargs):
     # Start timer
-    logging.mark_time(quiet=True)
+    mark_time(quiet=True)
 
     # Log to console
-    logging.setup(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
+    setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
 
     # Use the first instance of the message_data.tools.cli.Context object. click carries
     # the object to subcommands decorated with @click.pass_obj
@@ -66,7 +69,7 @@ def main(click_ctx, **kwargs):
 def debug(ctx):
     """Hidden command for debugging."""
     # Print the local data path
-    # print(ctx.local_data)
+    log.debug(ctx.local_data)
 
 
 #: List of submodules providing CLI (sub)commands accessible through `mix-models`.
