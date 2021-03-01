@@ -6,7 +6,7 @@ from message_ix import make_df
 from openpyxl import load_workbook
 
 from message_data.tools import broadcast, eval_anno, same_node
-from message_data.tools.utilities.convert_units import convert_units
+from message_data.tools.convert_units import convert_units
 
 
 #: Name of the input file.
