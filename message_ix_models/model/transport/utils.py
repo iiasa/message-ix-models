@@ -4,12 +4,13 @@ from itertools import product
 
 import pandas as pd
 import xarray as xr
+from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import as_codes
 from sdmx.model import Code
 
 from message_data.model.transport.common import METADATA
-from message_data.tools import Context, eval_anno, get_context, load_data
+from message_data.tools import eval_anno, load_data
 
 
 def read_config(context=None):
@@ -62,7 +63,9 @@ def consumer_groups(rtype=Code):
     # Assemble group information
     result = defaultdict(list)
 
-    for indices in product(*[get_context()["transport set"][d]["add"] for d in dims]):
+    set_config = Context.get_instance()["transport set"]
+
+    for indices in product(*[set_config[d]["add"] for d in dims]):
         # Create a new code by combining three
         result["code"].append(
             Code(
@@ -96,7 +99,8 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None) -> pd.DataFram
     """Add input 'commodity' and 'level' to `df` based on 'technology'."""
 
     # Retrieve transport technology information from configuration
-    t_info = get_context()["transport set"]["technology"]["add"]
+    ctx = Context.get_instance()
+    t_info = ctx["transport set"]["technology"]["add"]
 
     # Retrieve general commodity information
     c_info = get_codes("commodity")

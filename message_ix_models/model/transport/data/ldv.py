@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 
 import pandas as pd
+from message_ix_models.util import private_data_path
 from openpyxl import load_workbook
 
 from message_data.model.transport.utils import add_commodity_and_level
@@ -58,7 +59,7 @@ def get_USTIMES_MA3T(context):
     info = context["transport build info"]
 
     # Open workbook
-    path = context.get_path("transport", FILE)
+    path = private_data_path("transport", FILE)
     wb = load_workbook(path, read_only=True, data_only=True)
 
     # Tables
