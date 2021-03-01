@@ -228,6 +228,12 @@ def get_ikarus_data(context):
         result[par] = pd.concat(list_of_df)
 
         # DEBUG write each parameter's data to a file
-        result[par].to_csv(context.get_path("debug", f"ikarus-{par}.csv"), index=False)
+
+        # Path for the file
+        target = context.get_local_path("debug", f"ikarus-{par}.csv")
+        # Ensure the directory containing the path exists
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        result[par].to_csv(target, index=False)
 
     return result
