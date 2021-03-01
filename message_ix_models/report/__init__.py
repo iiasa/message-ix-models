@@ -7,9 +7,9 @@ from typing import Callable, List
 import genno.config
 from genno.compat.pyam import iamc as handle_iamc
 from message_ix.reporting import Reporter
+from message_ix_models.util import private_data_path
 
 from . import computations, util
-from message_data.tools import Context
 
 
 __all__ = [
@@ -144,9 +144,7 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
 
     # Default arguments
     key = key or "default"
-    config = config or (
-        Path(__file__).parents[2].joinpath("data", "report", "global.yaml")
-    )
+    config = config or private_data_path("report", "global.yaml")
 
     rep, key = prepare_reporter(scenario, config, key, output_path)
 
@@ -202,15 +200,14 @@ def prepare_reporter(scenario, config, key=None, output_path=None):
             # Deepcopy to avoid destructive operations below
             config = deepcopy(config)
         else:
-            config = dict(
-                path=Context.get_instance(-1).get_config_file("report", "global")
-            )
+            config = private_data_path("report", "global.yaml")
     else:
         # A non-dict *config* argument must be a Path
         path = Path(config)
         if not path.exists() and not path.is_absolute():
             # Try to resolve relative to the data directory
-            path = Context.get_instance(-1).message_data_path.joinpath("report", path)
+            path = private_data_path("report", path)
+            assert path.exists(), path
         config = dict(path=path)
 
     # Directory for reporting output
