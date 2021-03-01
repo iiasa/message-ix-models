@@ -2,8 +2,10 @@ from collections import ChainMap
 from functools import lru_cache
 from typing import List
 
+import click
 import pycountry
-from sdmx.model import Annotation, Code
+import sdmx
+from sdmx.model import Annotation, Code, Codelist
 
 from message_ix_models.util import as_codes, load_package_data
 
@@ -70,3 +72,23 @@ def get_codes(name: str) -> List[Code]:
             code.annotations.append(anno)
 
     return data
+
+
+@click.command(name="techs")
+@click.pass_obj
+def cli(ctx):
+    """Export metadata to technology.csv.
+
+    This command transforms the technology metadata from the YAML file to CSV format.
+    """
+    cl = Codelist(items=get_codes("technology"))
+    techs = sdmx.to_pandas(cl)
+
+    # Write to file
+    dest = ctx.get_local_path("technology.csv")
+    print(f"Write to {dest}")
+
+    techs.to_csv(dest, index=None, header=True)
+
+    # Print few items of the dict
+    print(techs.head())
