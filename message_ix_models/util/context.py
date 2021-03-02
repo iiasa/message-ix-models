@@ -74,7 +74,7 @@ class Context(dict):
         ):
             self.setdefault(key, value)
 
-        # Store a reference for get_context()
+        # Store a reference for get_instance()
         _CONTEXTS.append(self)
 
     # Attribute access
@@ -100,7 +100,7 @@ class Context(dict):
         return result
 
     def delete(self):
-        """Hide the current Context from future :func:`get_context` calls."""
+        """Hide the current Context from future :meth:`.get_instance` calls."""
         index = _CONTEXTS.index(self)
 
         if index > 0:
@@ -112,38 +112,6 @@ class Context(dict):
 
     def clone_to_dest(self) -> Tuple[message_ix.Scenario, ixmp.Platform]:
         """Return a scenario based on the ``--dest`` command-line option.
-
-        To use this method, either decorate a command with ``@common_param("dest")``:
-
-        .. code-block:: python
-
-           from message_data.tools.cli import common_params
-
-           @click.command()
-           @common_params("dest")
-           @click.pass_obj
-           def foo(context, dest):
-               scenario, mp = context.clone_to_dest()
-
-        or, store the settings ``dest_scenario`` and ``dest_platform`` on `context`:
-
-        .. code-block:: python
-
-           c = Context.get_instance()
-
-           c.dest_scenario = dict(model="foo model", scenario="foo scenario")
-           scenario_mp = context.clone_to_dest()
-
-        The resulting scenario has the indicated model- and scenario names.
-
-        If ``--url`` (or ``--platform``, ``--model``, ``--scenario`` and optionally
-        ``--version``) are given, the identified scenario is used as a 'base' scenario,
-        and is cloned. If ``--url``/``--platform`` and ``--dest`` refer to different
-        :class:`ixmp.Platform` s, then this is a two-platform clone.
-
-        If no base scenario can be loaded, :func:`.bare.create_res` is called to
-        generate a base scenario.
-
 
         Returns
         -------
