@@ -3,8 +3,9 @@ from pathlib import Path
 
 import click
 
-from message_data.logging import mark_time
-from message_data.tools.cli import clone_to_dest, common_params
+from message_ix_models.util.click import common_params
+from message_ix_models.util.logging import mark_time
+
 
 log = logging.getLogger(__name__)
 
@@ -105,7 +106,8 @@ def build_cmd(context, dest, **options):
     context.use_defaults(bare.SETTINGS)
 
     # Either clone from --dest, or create a new, bare RES
-    scenario, platform = clone_to_dest(context, defaults=dict())
+    scenario = context.clone_to_dest()
+    platform = scenario.platform
 
     # Build MESSAGEix-Transport
     build.main(context, scenario, **options)
