@@ -4,8 +4,7 @@ from typing import List
 
 import click
 import pycountry
-import sdmx
-from sdmx.model import Annotation, Code, Codelist
+from sdmx.model import Annotation, Code
 
 from message_ix_models.util import as_codes, load_package_data
 
@@ -81,8 +80,25 @@ def cli(ctx):
 
     This command transforms the technology metadata from the YAML file to CSV format.
     """
-    cl = Codelist(items=get_codes("technology"))
-    techs = sdmx.to_pandas(cl)
+    import pandas as pd
+
+    # Convert each code to a pd.Series
+    data = []
+    for code in get_codes("technology"):
+        # Base attributes
+        d = dict(id=code.id, name=str(code.name), description=str(code.description))
+
+        # Annotations
+        for anno in ("type", "vintaged", "sector", "input", "output"):
+            try:
+                d[anno] = str(code.get_annotation(id=anno).text)
+            except KeyError:
+                pass
+
+        data.append(pd.Series(d))
+
+    # Combine series to a data frame
+    techs = pd.DataFrame(data)
 
     # Write to file
     dest = ctx.get_local_path("technology.csv")
@@ -90,5 +106,5 @@ def cli(ctx):
 
     techs.to_csv(dest, index=None, header=True)
 
-    # Print few items of the dict
+    # Print the first few items of the data frame
     print(techs.head())
