@@ -1,7 +1,7 @@
 import logging
 import re
 
-from message_ix_models.util.logging import silence_log, mark_time
+from message_ix_models.util.logging import mark_time, silence_log
 
 
 def test_mark_time(caplog):
