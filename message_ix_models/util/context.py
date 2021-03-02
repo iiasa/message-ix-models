@@ -176,15 +176,20 @@ class Context(dict):
         scenario_name=None,
         version=None,
         local_data=None,
+        _store_as=("platform_info", "scenario_info"),
     ):
         """Handle command-line arguments.
 
-        May update the :attr:`data_path`, :attr:`platform_info`,
-        :attr:`scenario_info`, and/or :attr:`url` attributes.
+        May update the :attr:`data_path`, :attr:`platform_info`, :attr:`scenario_info`,
+        and/or :attr:`url` settings.
         """
         # Store the path to command-specific data and metadata
         if local_data:
             self.local_data = local_data
+
+        # References to the Context settings to be updated
+        platform_info = self.setdefault(_store_as[0], dict())
+        scenario_info = self.setdefault(_store_as[1], dict())
 
         # Store information for the target Platform
         if url:
@@ -196,18 +201,18 @@ class Context(dict):
 
             self.url = url
             urlinfo = ixmp.utils.parse_url(url)
-            self.platform_info.update(urlinfo[0])
-            self.scenario_info.update(urlinfo[1])
+            platform_info.update(urlinfo[0])
+            scenario_info.update(urlinfo[1])
         elif platform:
-            self.platform_info["name"] = platform
+            platform_info["name"] = platform
 
         # Store information about the target Scenario
         if model_name:
-            self.scenario_info["model"] = model_name
+            scenario_info["model"] = model_name
         if scenario_name:
-            self.scenario_info["scenario"] = scenario_name
+            scenario_info["scenario"] = scenario_name
         if version:
-            self.scenario_info["version"] = version
+            scenario_info["version"] = version
 
     def use_defaults(self, settings):
         """Update from `settings`."""
