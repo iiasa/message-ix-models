@@ -11,10 +11,10 @@ try:
     import message_data
 except ImportError:
     log.warning("message_data is not installed")
-    MESSAGE_DATA_PATH = None
+    MESSAGE_DATA_PATH: Optional[Path] = None
 else:  # pragma: no cover  (needs message_data)
     # Root directory of the message_data repository.
-    MESSAGE_DATA_PATH: Optional[Path] = Path(message_data.__file__).parents[1]
+    MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
 
 
 # Directory containing message_ix_models.__init__
