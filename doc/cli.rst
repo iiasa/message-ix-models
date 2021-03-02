@@ -102,32 +102,34 @@ Top-level options and commands
 ------------------------------
 ``mix-models --help`` describes these::
 
+    $ mix-models --help
     Usage: mix-models [OPTIONS] COMMAND [ARGS]...
 
       Command-line interface for MESSAGEix-GLOBIOM model tools.
 
       Every tool and script in this repository is accessible through this CLI.
       Scripts are grouped into commands and sub-commands. For help on specific
-      (sub)commands, use --help:
+      (sub)commands, use --help, e.g.:
 
-              mix-models --help
               mix-models cd-links --help
               mix-models cd-links run --help
 
       The top-level options --platform, --model, and --scenario are used by
-      commands that access specific ixmp or message_ix scenarios; these can also
-      be specified with --url.
+      commands that access specific message_ix scenarios; these can also be
+      specified with --url.
 
-      --data-path uses the environment variable MESSAGE_DATA_PATH, if it is set.
+      For more information, see
+      https://docs.messageix.org/projects/models2/en/latest/cli.html
 
     Options:
       --url ixmp://PLATFORM/MODEL/SCENARIO[#VERSION]
                                       Scenario URL.
-      --platform PLATFORM             Database properties file or 'local'.
+      --platform PLATFORM             Configured platform name.
       --model MODEL                   Model name for some commands.
       --scenario SCENARIO             Scenario name for some commands.
       --version INTEGER               Scenario version.
       --local-data PATH               Base path for local data.
+      -v, --verbose                   Print DEBUG-level log messages.
       --help                          Show this message and exit.
 
     Commands:
@@ -135,10 +137,12 @@ Top-level options and commands
       dl               Retrieve data from primary sources.
       engage           ENGAGE project.
       iiasapp          Import power plant capacity.
+      material         Model with materials accounting.
       prep-submission  Prepare scenarios for submission to database.
       report           Postprocess results.
       res              MESSAGE-GLOBIOM reference energy system (RES).
       techs            Export data from data/technology.yaml to CSV.
+      transport        MESSAGEix-Transport variant.
 
 To explain further:
 
@@ -155,7 +159,7 @@ To explain further:
 
 Common options
 --------------
-Since :mod:`message_ix_models.model` and :mod:`message_ix_models.project` codes often perform similar tasks, their CLI options and arguments are provided in :mod:`.util.cli` for easy re-use.
+Since :mod:`message_ix_models.model` and :mod:`message_ix_models.project` codes often perform similar tasks, their CLI options and arguments are provided in :mod:`.util.click` for easy re-use.
 These include:
 
 ``ssp`` argument
