@@ -4,7 +4,7 @@ import logging
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 from warnings import warn
 
 import ixmp
@@ -109,6 +109,101 @@ class Context(dict):
             log.warning("Delete the only Context instance")
 
         self.close_db()
+
+    def clone_to_dest(self) -> Tuple[message_ix.Scenario, ixmp.Platform]:
+        """Return a scenario based on the ``--dest`` command-line option.
+
+        To use this method, either decorate a command with ``@common_param("dest")``:
+
+        .. code-block:: python
+
+           from message_data.tools.cli import common_params
+
+           @click.command()
+           @common_params("dest")
+           @click.pass_obj
+           def foo(context, dest):
+               scenario, mp = context.clone_to_dest()
+
+        or, store the settings ``dest_scenario`` and ``dest_platform`` on `context`:
+
+        .. code-block:: python
+
+           c = Context.get_instance()
+
+           c.dest_scenario = dict(model="foo model", scenario="foo scenario")
+           scenario_mp = context.clone_to_dest()
+
+        The resulting scenario has the indicated model- and scenario names.
+
+        If ``--url`` (or ``--platform``, ``--model``, ``--scenario`` and optionally
+        ``--version``) are given, the identified scenario is used as a 'base' scenario,
+        and is cloned. If ``--url``/``--platform`` and ``--dest`` refer to different
+        :class:`ixmp.Platform` s, then this is a two-platform clone.
+
+        If no base scenario can be loaded, :func:`.bare.create_res` is called to
+        generate a base scenario.
+
+
+        Returns
+        -------
+        Scenario
+            To prevent the scenario from being garbage collected. Keep a reference to
+            its Platform:
+
+            .. code-block: python
+
+               s = context.clone_to_dest()
+               mp = s.platform
+
+        See also
+        --------
+        create_res
+        """
+        if "dest_scenario" not in self:
+            # No information on the destination; try to parse a URL, storing the keys
+            # dest_platform and dest_scenario.
+            self.handle_cli_args(
+                url=self["dest"], _store_as=("dest_platform", "dest_scenario")
+            )
+
+        try:
+            # Get the base scenario, e.g. from the --url CLI argument
+            scenario_base = self.get_scenario()
+
+            # By default, clone to the same platform
+            mp_dest = scenario_base.platform
+
+            try:
+                # Get information about a destination platform
+                info = self["dest_platform"]
+            except KeyError:
+                pass  # dest_platform not set; use the same as scenario_base
+            else:  # pragma: no cover
+                # Not tested; current test fixtures make it difficult to create *two*
+                # temporary platforms simultaneously
+                if info["name"] != mp_dest.name:
+                    # Different platform
+                    mp_dest = ixmp.Platform(**info)
+
+        except Exception:
+            log.info("No base scenario given")
+            from message_ix_models.model.bare import create_res
+
+            # Create a bare scenario to be the base scenario
+
+            # Create the bare scenario on the destination platform
+            c = deepcopy(self)
+            c.platform_info.update(self.get("dest_platform", {}))
+
+            scenario_base = create_res(c)
+
+            # Same platform
+            mp_dest = scenario_base.platform
+
+        # Clone
+        log.info(f"Clone to {repr(self['dest_scenario'])}")
+        return scenario_base.clone(platform=mp_dest, **self["dest_scenario"])
 
     def close_db(self):
         try:

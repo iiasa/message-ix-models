@@ -2,107 +2,11 @@
 
 These are used for building CLIs using :mod:`click`.
 """
-
 import logging
-from typing import Tuple
 
-import ixmp
-import message_ix
 from click import Argument, Choice, Option
-from ixmp.utils import parse_url
-
-from message_ix_models.util.context import Context
 
 log = logging.getLogger(__name__)
-
-
-def clone_to_dest(
-    context: Context, defaults=dict()
-) -> Tuple[message_ix.Scenario, ixmp.Platform]:
-    """Return a scenario based on the ``--dest`` the option.
-
-    To use this method, decorate a command:
-
-    .. code-block:: python
-
-       from message_data.tools.cli import common_params
-
-       @click.command()
-       @common_params("dest")
-       @click.pass_obj
-       def foo(context, dest):
-           defaults = dict(model="foo model", scenario="foo scenario")
-           scenario = clone_to_dest(context, defaults)
-
-    The resulting `scenario` has model and scenario names from ``--dest``, if given,
-    else from `defaults`.
-
-    If ``--url`` (or ``--platform``, ``--model``, ``--scenario`` and optionally
-    ``--version``) are given, the identified scenario is used as a 'base' scenario, and
-    is cloned. If ``--url``/``--platform`` and ``--dest`` refer to different
-    :class:`ixmp.Platform` s, then this is a two-platform clone.
-
-    If no base scenario can be loaded, :meth:`.bare.create_res` is called to generate a
-    base scenario. This code is controlled by `context`.
-
-    Parameters
-    ----------
-    context : Context
-    defaults : dict
-        Keys are 'model' and 'scenario', as accepted by :class:`.Scenario`.
-
-    Returns
-    -------
-    Scenario
-    Platform
-        The platform for the returned scenario. Keep a reference to this Platform in
-        order to prevent the Scenario being garbage collected.
-
-    See also
-    --------
-    create_res
-    """
-    import ixmp
-
-    # Default target model name and scenario name
-    scenario_info = defaults.copy()
-
-    try:
-        # Handle the --dest= command-line option
-        dest_platform, dest_info = parse_url(context.dest)
-    except ValueError:
-        # --dest not given
-        dest_platform = {}
-    else:
-        # --dest URL was provided
-        scenario_info.update(dest_info)
-
-    try:
-        # Get the base scenario from the --url argument
-        scenario_base = context.get_scenario()
-
-        # Destination platform
-        if dest_platform == context.platform_info:
-            # Same as origin; don't re-instantiate
-            mp_dest = scenario_base.platform
-        else:
-            # Different platform
-            mp_dest = ixmp.Platform(**dest_platform)
-    except Exception:
-        log.info("No base scenario given")
-        from message_data.model.bare import create_res
-
-        # Create
-        context.platform_info.update(dest_platform)
-
-        scenario_base = create_res(context)
-
-        # Same platform
-        mp_dest = scenario_base.platform
-
-    # Clone
-    log.info(f"Clone to {repr(scenario_info)}")
-    return scenario_base.clone(platform=mp_dest, **scenario_info), mp_dest
 
 
 def common_params(param_names: str):
