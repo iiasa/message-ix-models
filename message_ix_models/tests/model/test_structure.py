@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+
 import pytest
 from iam_units import registry
 
@@ -109,3 +112,26 @@ class TestGetCodes:
         # YAML file
         elec_exp = data[data.index("elec_exp")]
         assert False is eval(str(elec_exp.get_annotation(id="vintaged").text))
+
+
+def test_cli_techs(session_context, mix_models_cli):
+    """Test the `techs` CLI command."""
+    # Command runs without error
+    result = mix_models_cli.invoke("techs")
+    assert 0 == result.exit_code
+
+    # Result test
+    assert result.output.endswith("[5 rows x 8 columns]\n")
+
+    # Path to the temporary file written by the command
+    path = Path(re.match("Write to (.*.csv)", result.output)[1])
+
+    # File was written in the local data directory
+    assert Path("technology.csv") == path.relative_to(session_context.local_data)
+
+    # File was written with the expected contents
+    assert path.read_text().startswith(
+        "id,name,description,type,vintaged,sector,output,input\n"
+        "CF4_TCE,CF4_TCE,Tetrafluoromethane (CF4) Total Carbon Emissions,"
+        "primary,False,dummy,\"['dummy', 'primary']\",\n"
+    )
