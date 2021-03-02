@@ -1,8 +1,5 @@
 """Basic tests of the command line."""
 import pytest
-from click.testing import CliRunner
-
-from message_ix_models.cli import main
 
 SUBCOMMANDS = [
     tuple(),
@@ -15,7 +12,13 @@ def _cli_help_id(argvalue):
 
 
 @pytest.mark.parametrize("subcommand", SUBCOMMANDS, ids=_cli_help_id)
-def test_cli_help(subcommand):
-    runner = CliRunner()
-    result = runner.invoke(main, list(subcommand) + ["--help"])
+def test_cli_help(mix_models_cli, subcommand):
+    """--help works for every CLI command."""
+    result = mix_models_cli.invoke(list(subcommand) + ["--help"])
+
     assert result.exit_code == 0, result.output
+
+
+def test_cli_debug(mix_models_cli):
+    """The 'debug' CLI command can be invoked."""
+    assert 0 == mix_models_cli.invoke(["debug"]).exit_code
