@@ -155,7 +155,7 @@ def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Mapping:
     )
 
 
-def load_private_data(*parts: str) -> Mapping:  # pragma: no cover
+def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs message_data)
     """Load a private data file from :mod:`message_data` and return its contents.
 
     Analogous to :mod:`load_package_data`, but for non-public data.
@@ -187,6 +187,6 @@ def package_data_path(*parts) -> Path:
     return _make_path(MESSAGE_MODELS_PATH / "data", *parts)
 
 
-def private_data_path(*parts) -> Path:
+def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
     """Construct a path to a file under :file:`data/` in :mod:`message_data`."""
     return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)
