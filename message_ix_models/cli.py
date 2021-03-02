@@ -82,7 +82,7 @@ try:
     import message_data.cli
 except ImportError:
     pass  # message_data is not installed
-else:
+else:  # pragma: no cover  (needs message_data)
     # Also add message_data submodules
     submodules.extend(
         f"message_data.{name}" for name in message_data.cli.modules_with_cli
