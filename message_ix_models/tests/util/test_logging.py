@@ -6,12 +6,12 @@ from message_ix_models.util.logging import silence_log, mark_time
 
 def test_mark_time(caplog):
     # Call 3 times
-    mark_time()
+    mark_time()  # Will only log if already called during the course of another test
     mark_time()
     mark_time()
 
-    # First call to mark_time() doesn't print anything, because no delta → 2 records
-    assert 2 == len(caplog.records)
+    # Either 2 or 3 records
+    assert len(caplog.records) in (2, 3)
 
     # Each message matches the expected format
     assert all(re.match(r" \+\d+\.\d = \d+\.\d seconds", m) for m in caplog.messages)
