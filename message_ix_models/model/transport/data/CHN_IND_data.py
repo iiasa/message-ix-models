@@ -9,7 +9,7 @@ from message_data.tools import get_context
 
 
 UNITS = {
-    "Population": (1.0e-6, None, None),
+    "Population": (1.0e-6, None, "dimensionless"),
     "Vehicle stock": (1.0e4, None, "vehicle"),
     "Passenger-Kilometers": (100, None, "megapassenger km"),
     "Ton-Kilometers": (100, None, "megaton km"),
@@ -77,24 +77,19 @@ def get_chn_ind_pop(ctx):
     The dataset is a ``.csv`` file in */data* and was retrieved from `OECD
     <https://stats.oecd.org/Index.aspx?#>`_ website, filtering data for China and India.
     """
+    # Read csv file
     pop = pd.read_csv(ctx.get_path("transport", POP_FILE), header=0)
-    pop.rename(columns={"LOCATION": "ISO Code", "Time": "Year"}, inplace=True)
-    pop.drop(
-        [x for x in pop.columns if x not in ["ISO Code", "Year", "Value"]],
+    # Drop irrelevant columns and rename when necessary
+    pop = pop.drop(
+        [x for x in pop.columns if x not in ["LOCATION", "Time", "Value"]],
         axis=1,
-        inplace=True,
-    )
+    ).rename(columns={"LOCATION": "ISO Code", "Time": "Year"})
     # Add "Variable" name column
     pop["Variable"] = "Population"
-
-    # TODO edit code below accordingly once *convert_units* will be migrated to /tools
-    s = pop["Value"]
-    factor, unit_in, unit_out = UNITS["Population"]
-    # Convert the values to a pint.Quantity(array) with the input units
-    qty = ctx.units.Quantity(factor * s.values, unit_in)
-    # Convert to output units, then to a list of scalar Quantity
-    pop["Value"] = pd.Series(qty.magnitude.tolist(), index=s.index)
-
+    # Convert population units into millions using dict **UNITS** above
+    pop["Value"] = convert_units(
+        pop["Value"].rename("Population"), ctx, dict_units=UNITS
+    ).apply(lambda qty: qty.magnitude)
     return pop
 
 
