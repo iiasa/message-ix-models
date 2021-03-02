@@ -19,9 +19,10 @@ from pathlib import Path
 
 import click
 
-from message_ix_models.util.logging import mark_time, setup as setup_logging
 from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
+from message_ix_models.util.logging import mark_time
+from message_ix_models.util.logging import setup as setup_logging
 
 log = logging.getLogger(__name__)
 

@@ -188,21 +188,22 @@ class Context(dict):
 
         except Exception:
             log.info("No base scenario given")
+
+            # Create a bare RES to be the base scenario
+
             from message_ix_models.model.bare import create_res
 
-            # Create a bare scenario to be the base scenario
-
-            # Create the bare scenario on the destination platform
+            # Create on the destination platform
             c = deepcopy(self)
             c.platform_info.update(self.get("dest_platform", {}))
 
             scenario_base = create_res(c)
 
-            # Same platform
+            # Clone to the same platform
             mp_dest = scenario_base.platform
 
         # Clone
-        log.info(f"Clone to {repr(self['dest_scenario'])}")
+        log.info(f"Clone to {repr(self.dest_scenario)}")
         return scenario_base.clone(platform=mp_dest, **self["dest_scenario"])
 
     def close_db(self):
