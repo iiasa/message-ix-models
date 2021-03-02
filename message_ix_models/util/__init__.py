@@ -9,12 +9,12 @@ log = logging.getLogger(__name__)
 
 try:
     import message_data
-
-    # Root directory of the message_data repository.
-    MESSAGE_DATA_PATH: Optional[Path] = Path(message_data.__file__).parents[1]
-except ImportError:  # pragma: no cover
+except ImportError:
     log.warning("message_data is not installed")
     MESSAGE_DATA_PATH = None
+else:  # pragma: no cover  (needs message_data)
+    # Root directory of the message_data repository.
+    MESSAGE_DATA_PATH: Optional[Path] = Path(message_data.__file__).parents[1]
 
 
 # Directory containing message_ix_models.__init__

@@ -341,7 +341,7 @@ class Context(dict):
         )
         return package_data_path(*parts).with_suffix(f".{ext}")
 
-    def get_path(self, *parts) -> Path:
+    def get_path(self, *parts) -> Path:  # pragma: no cover  (needs message_data)
         """Return a path under :attr:`message_data_path` by joining *parts*.
 
         *parts* may include directory names, or a filename with extension.
