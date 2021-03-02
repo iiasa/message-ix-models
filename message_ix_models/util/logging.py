@@ -95,7 +95,7 @@ def make_formatter():
         import colorama
 
         colorama.init()
-    except ImportError:
+    except ImportError:  # pragma: no cover
         # Colorama not installed
         colorama = None
 
