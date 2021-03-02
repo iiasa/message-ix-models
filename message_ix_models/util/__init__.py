@@ -55,8 +55,13 @@ def as_codes(data) -> List[Code]:
         code = Code(
             id=str(id),
             name=info.pop("name", str(id).title()),
-            desc=info.pop("description", None),
         )
+
+        # Store the description, if any
+        try:
+            code.description = info.pop("description")
+        except KeyError:
+            pass
 
         # Associate with a parent
         try:
