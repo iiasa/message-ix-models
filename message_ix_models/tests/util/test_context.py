@@ -20,6 +20,36 @@ class TestContext:
         with pytest.raises(IndexError, match="ambiguous: 2 Context instances"):
             Context.only()
 
+    def test_clone_to_dest(self, test_context):
+        ctx = test_context
+
+        platform_name = ctx.platform_info["name"]
+        model_name = "foo model"
+        scenario_name = "bar scenario"
+
+        # Works with direct settings, no URL
+        c = deepcopy(ctx)
+        c["dest_scenario"] = dict(model=model_name, scenario=scenario_name)
+        s = c.clone_to_dest()
+
+        # Works with a URL to parse and no base scenario
+        url = f"ixmp://{platform_name}/{model_name}/{scenario_name}"
+
+        c = deepcopy(ctx)
+        c["dest"] = url
+        s = c.clone_to_dest()
+        assert model_name == s.model and scenario_name == s.scenario
+
+        del s
+
+        # Works with a base scenario
+        c.handle_cli_args(url=url)
+        c["dest_scenario"] = dict(model="baz model", scenario="baz scenario")
+        del c["dest_platform"]
+        s = c.clone_to_dest()
+
+        assert s.model.startswith("baz") and s.scenario.startswith("baz")
+
     def test_default_value(self, test_context):
         # Setting is missing
         with pytest.raises(AttributeError):
