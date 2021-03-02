@@ -134,7 +134,6 @@ N2Oo_TCE:
 
 nica_con:
   name: nica_con
-  description:
   type: dummy
   sector: dummy
   output: [dummy]

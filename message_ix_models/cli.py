@@ -1,22 +1,30 @@
 """Command-line interface for MESSAGEix-GLOBIOM model tools.
 
 Every tool and script in this repository is accessible through this CLI. Scripts are
-grouped into commands and sub-commands. For help on specific (sub)commands, use --help:
+grouped into commands and sub-commands. For help on specific (sub)commands, use --help,
+e.g.:
 
     \b
-    mix-models --help
     mix-models cd-links --help
     mix-models cd-links run --help
 
 The top-level options --platform, --model, and --scenario are used by commands that
-access specific ixmp or message_ix scenarios; these can also be specified with --url.
+access specific message_ix scenarios; these can also be specified with --url.
+
+For more information, see https://docs.messageix.org/projects/models2/en/latest/cli.html
 """
+import logging
 import sys
 from pathlib import Path
 
 import click
 
+from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
+from message_ix_models.util.logging import mark_time
+from message_ix_models.util.logging import setup as setup_logging
+
+log = logging.getLogger(__name__)
 
 
 # Main command group. The code in this function is ALWAYS executed, so it should only
@@ -37,16 +45,14 @@ from message_ix_models.util.context import Context
 )
 @click.option("--version", type=int, help="Scenario version.")
 @click.option("--local-data", type=Path, help="Base path for local data.")
-# commented pending migration of this code
-# @common_params("verbose")
+@common_params("verbose")
 @click.pass_context
 def main(click_ctx, **kwargs):
-    # commented pending migration of this code
-    # # Start timer
-    # logging.mark_time(quiet=True)
-    #
-    # # Log to console
-    # logging.setup(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
+    # Start timer
+    mark_time(quiet=True)
+
+    # Log to console
+    setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
 
     # Use the first instance of the message_data.tools.cli.Context object. click carries
     # the object to subcommands decorated with @click.pass_obj
@@ -64,16 +70,25 @@ def main(click_ctx, **kwargs):
 def debug(ctx):
     """Hidden command for debugging."""
     # Print the local data path
-    # print(ctx.local_data)
+    log.debug(ctx.local_data)
 
+
+#: List of submodules providing CLI (sub)commands accessible through `mix-models`.
+submodules = [
+    "message_ix_models.model.structure",
+]
 
 try:
-    from message_data.cli import modules_with_cli as message_data_modules_with_cli
+    import message_data.cli
 except ImportError:
-    message_data_modules_with_cli = []
+    pass  # message_data is not installed
+else:  # pragma: no cover  (needs message_data)
+    # Also add message_data submodules
+    submodules.extend(
+        f"message_data.{name}" for name in message_data.cli.modules_with_cli
+    )
 
-for name in message_data_modules_with_cli:  # pragma: no cover
-    name = "message_data." + name
+for name in submodules:
     __import__(name)
     main.add_command(getattr(sys.modules[name], "cli"))
 

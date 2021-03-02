@@ -2,6 +2,7 @@ from collections import ChainMap
 from functools import lru_cache
 from typing import List
 
+import click
 import pycountry
 from sdmx.model import Annotation, Code
 
@@ -70,3 +71,40 @@ def get_codes(name: str) -> List[Code]:
             code.annotations.append(anno)
 
     return data
+
+
+@click.command(name="techs")
+@click.pass_obj
+def cli(ctx):
+    """Export metadata to technology.csv.
+
+    This command transforms the technology metadata from the YAML file to CSV format.
+    """
+    import pandas as pd
+
+    # Convert each code to a pd.Series
+    data = []
+    for code in get_codes("technology"):
+        # Base attributes
+        d = dict(id=code.id, name=str(code.name), description=str(code.description))
+
+        # Annotations
+        for anno in ("type", "vintaged", "sector", "input", "output"):
+            try:
+                d[anno] = str(code.get_annotation(id=anno).text)
+            except KeyError:
+                pass
+
+        data.append(pd.Series(d))
+
+    # Combine series to a data frame
+    techs = pd.DataFrame(data)
+
+    # Write to file
+    dest = ctx.get_local_path("technology.csv")
+    print(f"Write to {dest}")
+
+    techs.to_csv(dest, index=None, header=True)
+
+    # Print the first few items of the data frame
+    print(techs.head())
