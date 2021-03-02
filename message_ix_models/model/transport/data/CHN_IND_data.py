@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 
 from item import historical
-from message_data.tools.convert_units import convert_units
 from message_data.tools import get_context
+from message_data.tools.convert_units import convert_units
+from message_data.tools.iea_eei import split_units
 
 
 UNITS = {
@@ -44,30 +45,6 @@ def split_variable(s):
     # Remove remaining parentheses from units column and assign labels
     df[1] = df[1].str.replace(")", "").str.replace("/", " / ")
     df.columns = ["Var", "Vehicle Type"]
-    return df
-
-
-# TODO: import split_units from iea_eei.py and add extra argument for *pat* in
-#  .rsplit(). Use pat=" of " when calling here and " (" when calling in iea_eei.py
-def split_units(s):
-    """Split units (btw parentheses) from variable names of :class:`pandas.Series` *s*.
-
-    Parameters
-    ----------
-    s : pandas.Series
-
-    Returns
-    -------
-    DataFrame : pandas.DataFrame
-        DataFrame with two columns: variable names and their respective units.
-    """
-    # Split str in *s* into variable name and units
-    df = s.str.rsplit(pat="(", n=1, expand=True)
-
-    # Remove remaining parentheses from units column and assign labels
-    df[1] = df[1].str.replace(")", "").str.replace("/", " / ")
-    df[0] = df[0].str.replace("Possession", "Vehicle Stock")
-    df.columns = ["Variable", "Unit"]
     return df
 
 
@@ -116,18 +93,19 @@ def get_chn_ind_data(ctx):
     # Drop rows containing sub-categories of rail transport
     df.drop([2, 3, 4, 34, 35, 36], inplace=True)
     df.reset_index(drop=True, inplace=True)
-    df = pd.concat([df, split_units(df["Indicators"])], axis=1).drop(
+    df = pd.concat([df, split_units(df["Indicators"], pat="(")], axis=1).drop(
         ["Indicators"], axis=1
     )
+    df["Variable"] = df["Variable"].str.replace("Possession", "Vehicle Stock")
     # Reach **tidy data** structure
     df = df.melt(
-        id_vars=["Variable", "Unit"], var_name="Year", value_name="Value"
+        id_vars=["Variable", "Units"], var_name="Year", value_name="Value"
     ).sort_values("Year")
 
     # Add "ISO Code" column to *df*, and move to first position
     df["ISO Code"] = "CHN"
-    df.set_index("ISO Code", inplace=True)
-    df.reset_index(inplace=True)
+    df = df.set_index("ISO Code").reset_index()
+
     df["Year"] = pd.to_numeric(df["Year"])
 
     # Drop 2019 values so it can concat with population values
