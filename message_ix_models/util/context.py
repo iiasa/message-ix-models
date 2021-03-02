@@ -1,8 +1,10 @@
+"""Context and settings for :mod:`message_ix_models` code."""
+
 import logging
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 from warnings import warn
 
 import ixmp
@@ -72,7 +74,7 @@ class Context(dict):
         ):
             self.setdefault(key, value)
 
-        # Store a reference for get_context()
+        # Store a reference for get_instance()
         _CONTEXTS.append(self)
 
     # Attribute access
@@ -98,7 +100,7 @@ class Context(dict):
         return result
 
     def delete(self):
-        """Hide the current Context from future :func:`get_context` calls."""
+        """Hide the current Context from future :meth:`.get_instance` calls."""
         index = _CONTEXTS.index(self)
 
         if index > 0:
@@ -107,6 +109,70 @@ class Context(dict):
             log.warning("Delete the only Context instance")
 
         self.close_db()
+
+    def clone_to_dest(self) -> Tuple[message_ix.Scenario, ixmp.Platform]:
+        """Return a scenario based on the ``--dest`` command-line option.
+
+        Returns
+        -------
+        Scenario
+            To prevent the scenario from being garbage collected. Keep a reference to
+            its Platform:
+
+            .. code-block: python
+
+               s = context.clone_to_dest()
+               mp = s.platform
+
+        See also
+        --------
+        create_res
+        """
+        if "dest_scenario" not in self:
+            # No information on the destination; try to parse a URL, storing the keys
+            # dest_platform and dest_scenario.
+            self.handle_cli_args(
+                url=self["dest"], _store_as=("dest_platform", "dest_scenario")
+            )
+
+        try:
+            # Get the base scenario, e.g. from the --url CLI argument
+            scenario_base = self.get_scenario()
+
+            # By default, clone to the same platform
+            mp_dest = scenario_base.platform
+
+            try:
+                # Get information about a destination platform
+                info = self["dest_platform"]
+            except KeyError:
+                pass  # dest_platform not set; use the same as scenario_base
+            else:  # pragma: no cover
+                # Not tested; current test fixtures make it difficult to create *two*
+                # temporary platforms simultaneously
+                if info["name"] != mp_dest.name:
+                    # Different platform
+                    mp_dest = ixmp.Platform(**info)
+
+        except Exception:
+            log.info("No base scenario given")
+
+            # Create a bare RES to be the base scenario
+
+            from message_ix_models.model.bare import create_res
+
+            # Create on the destination platform
+            c = deepcopy(self)
+            c.platform_info.update(self.get("dest_platform", {}))
+
+            scenario_base = create_res(c)
+
+            # Clone to the same platform
+            mp_dest = scenario_base.platform
+
+        # Clone
+        log.info(f"Clone to {repr(self.dest_scenario)}")
+        return scenario_base.clone(platform=mp_dest, **self["dest_scenario"])
 
     def close_db(self):
         try:
@@ -174,15 +240,20 @@ class Context(dict):
         scenario_name=None,
         version=None,
         local_data=None,
+        _store_as=("platform_info", "scenario_info"),
     ):
         """Handle command-line arguments.
 
-        May update the :attr:`data_path`, :attr:`platform_info`,
-        :attr:`scenario_info`, and/or :attr:`url` attributes.
+        May update the :attr:`data_path`, :attr:`platform_info`, :attr:`scenario_info`,
+        and/or :attr:`url` settings.
         """
         # Store the path to command-specific data and metadata
         if local_data:
             self.local_data = local_data
+
+        # References to the Context settings to be updated
+        platform_info = self.setdefault(_store_as[0], dict())
+        scenario_info = self.setdefault(_store_as[1], dict())
 
         # Store information for the target Platform
         if url:
@@ -194,18 +265,18 @@ class Context(dict):
 
             self.url = url
             urlinfo = ixmp.utils.parse_url(url)
-            self.platform_info.update(urlinfo[0])
-            self.scenario_info.update(urlinfo[1])
+            platform_info.update(urlinfo[0])
+            scenario_info.update(urlinfo[1])
         elif platform:
-            self.platform_info["name"] = platform
+            platform_info["name"] = platform
 
         # Store information about the target Scenario
         if model_name:
-            self.scenario_info["model"] = model_name
+            scenario_info["model"] = model_name
         if scenario_name:
-            self.scenario_info["scenario"] = scenario_name
+            scenario_info["scenario"] = scenario_name
         if version:
-            self.scenario_info["version"] = version
+            scenario_info["version"] = version
 
     def use_defaults(self, settings):
         """Update from `settings`."""
@@ -238,7 +309,7 @@ class Context(dict):
         )
         return package_data_path(*parts).with_suffix(f".{ext}")
 
-    def get_path(self, *parts) -> Path:
+    def get_path(self, *parts) -> Path:  # pragma: no cover  (needs message_data)
         """Return a path under :attr:`message_data_path` by joining *parts*.
 
         *parts* may include directory names, or a filename with extension.

@@ -2,9 +2,11 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 from ixmp import Platform
 from ixmp import config as ixmp_config
 
+from message_ix_models import cli
 from message_ix_models.util.context import Context
 
 # pytest hooks
@@ -81,3 +83,15 @@ def user_context(request):  # pragma: no cover
     """Context which can access user's configuration, e.g. platform names."""
     # Disabled; this is bad practice
     raise NotImplementedError
+
+
+@pytest.fixture(scope="session")
+def mix_models_cli(request, session_context, tmp_env):
+    """A CliRunner object that invokes the :program:`mix-models` CLI."""
+    # Require the `session_context` fixture in order to set Context.local_data
+
+    class Runner(CliRunner):
+        def invoke(self, *args, **kwargs):
+            return super().invoke(cli.main, *args, env=tmp_env, **kwargs)
+
+    yield Runner()
