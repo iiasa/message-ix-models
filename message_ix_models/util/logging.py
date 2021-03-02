@@ -23,8 +23,8 @@ def silence_log():
     >>> with silence_log():
     >>>     log.warning("This message is not recorded.")
     """
-    # Get the main logger
-    main_log = logging.getLogger(".".join(__name__.split(".")[:-1]))
+    # Get the top-level logger for the package containing this file
+    main_log = logging.getLogger(__name__.split(".")[0])
 
     try:
         level = main_log.getEffectiveLevel()
@@ -108,7 +108,7 @@ _TIMES = []
 def mark_time(quiet=False):
     """Record and log (if `quiet` is :obj:`True`) a time mark."""
     _TIMES.append(process_time())
-    if not quiet:
+    if not quiet and len(_TIMES) > 1:
         logging.getLogger(__name__).info(
             f" +{_TIMES[-1] - _TIMES[-2]:.1f} = {_TIMES[-1]:.1f} seconds"
         )
