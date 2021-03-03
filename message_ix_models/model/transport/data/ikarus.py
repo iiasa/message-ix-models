@@ -10,7 +10,6 @@ from openpyxl import load_workbook
 from message_data.tools import broadcast, eval_anno, same_node
 from message_data.tools.convert_units import convert_units
 
-
 #: Name of the input file.
 #
 # The input file uses the old, MESSAGE V names for parameters:
@@ -124,7 +123,7 @@ def get_ikarus_data(context):
             .applymap(lambda c: c.value)
             .apply(pd.to_numeric, errors="coerce")
             .transpose()
-            .apply(convert_units)
+            .apply(convert_units, unit_info=UNITS)
         )
 
         # Conversion of IKARUS data to MESSAGEix-scheme parameters.
