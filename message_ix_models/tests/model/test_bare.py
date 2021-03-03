@@ -3,7 +3,6 @@ import pytest
 
 from message_ix_models import testing
 
-
 # Number of items in the respective YAML files
 SET_SIZE = dict(
     commodity=13,

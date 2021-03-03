@@ -8,7 +8,6 @@ from click.testing import CliRunner
 from ixmp import Platform
 from ixmp import config as ixmp_config
 
-
 from message_ix_models import cli
 from message_ix_models.util.context import Context
 
