@@ -1,5 +1,7 @@
 # Vehicle class split
 #
+# Units: dimensionless
+#
 # - Empty values are zero.
 # - (DLM 2014-04-10) All values for non-NAM regions are guesstimates for now.
 # - (PNK 2019-11-08) NAM values are computed from another Excel sheet.
