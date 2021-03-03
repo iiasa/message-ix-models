@@ -79,7 +79,8 @@ def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
     result: Dict[str, Code] = {}
 
     if isinstance(data, list):
-        data = dict(zip(data, data))
+        # FIXME typing ignored temporarily for PR#9
+        data = dict(zip(data, data))  # type: ignore [arg-type]
     elif not isinstance(data, Mapping):
         raise TypeError(data)
 

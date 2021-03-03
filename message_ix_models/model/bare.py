@@ -14,7 +14,6 @@ from message_ix_models.model.data import get_data
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import eval_anno
 
-
 log = logging.getLogger(__name__)
 
 
@@ -106,7 +105,8 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     nodes = get_codes(f"node/{context.regions}")
 
     # Top-level "World" node
-    world = nodes[nodes.index("World")]
+    # FIXME typing ignored temporarily for PR#9
+    world = nodes[nodes.index("World")]  # type: ignore [arg-type]
 
     # Set elements: World, followed by the direct children of World
     add.set["node"] = [world] + world.child
