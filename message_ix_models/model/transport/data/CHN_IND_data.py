@@ -4,18 +4,18 @@ import numpy as np
 import pandas as pd
 
 from item import historical
-from message_data.tools import get_context
 from message_data.tools.convert_units import convert_units
 from message_data.tools.iea_eei import split_units
-
+from message_ix_models.util import private_data_path
 
 UNITS = {
     "Population": (1.0e-6, None, "dimensionless"),
-    "Vehicle stock": (1.0e4, None, "vehicle"),
-    "Passenger-Kilometers": (100, None, "megapassenger km"),
-    "Ton-Kilometers": (100, None, "megaton km"),
+    "Vehicle Stock": (1.0e4, "vehicle", "thousand vehicle"),
+    "Passenger-Kilometers": (100, "megapkm", "gigapkm"),
+    "Freight Ton-Kilometers": (100, "megatkm", "gigatkm"),
 }
 
+#: Files containing data for China ("name_of_file", rows_to_skip_from_the_bottom)
 FILES = {
     "Passenger activity": ("Passenger-km.csv", 4),
     "Vehicle stock civil": ("Civil-Vehicles.csv", 5),
@@ -24,6 +24,22 @@ FILES = {
 }
 
 POP_FILE = "pop_CHN_IND.csv"
+
+# Rail sub-categories to be removed from Chinese dataset
+RAIL_SUB_CAT = [
+    "Freight Ton-Kilometers of National Railways(100 million ton-km)",
+    "Freight Ton-Kilometers of Local Railways(100 million ton-km)",
+    "Freight Ton-Kilometers of Joint-venture Railways(100 million ton-km)",
+    "Passenger-Kilometers of National Railways(100 million passenger-km)",
+    "Passenger-Kilometers of Local Railways(100 million passenger-km)",
+    "Passenger-Kilometers of Joint-venture Railways(100 million passenger-km)",
+]
+
+# Mapping of variables to vehicle modes
+FILL_VALUES = {
+    "Passenger-Kilometers": "Total passenger transport",
+    "Freight Ton-Kilometers": "Total freight transport",
+}
 
 
 def split_variable(s):
@@ -40,22 +56,30 @@ def split_variable(s):
     """
     # Split str in *s* into variable name and units
     df = s.str.rsplit(pat=" of ", n=1, expand=True)
-    df[1].fillna("All", inplace=True)
-
-    # Remove remaining parentheses from units column and assign labels
-    df[1] = df[1].str.replace(")", "").str.replace("/", " / ")
-    df.columns = ["Var", "Vehicle Type"]
+    # Remove residual parentheses from variable column, still present in some entries
+    for col in list(df.columns):
+        df[col] = df[col].str.rsplit(pat="(", n=1, expand=True)[0]
+    # Assign labels to columns
+    df.columns = ["Var", "Mode/vehicle type"]
+    # Use mapping FILL_VALUES to replace NaNs in "Mode/vehicle type" column
+    for key, value in FILL_VALUES.items():
+        df[df["Var"] == key] = df[df["Var"] == key].fillna(value)
+    # Alternative not working:
+    # def func(df):
+    #     a_func = lambda group: group["target_col"].fillna(FILL_VALUES.get(group[0]))
+    #     return df.assign(target_col=a_func)
+    # df.groupby(0).pipe(func)
     return df
 
 
-def get_chn_ind_pop(ctx):
+def get_chn_ind_pop():
     """Retrieve population data for China and India.
 
     The dataset is a ``.csv`` file in */data* and was retrieved from `OECD
     <https://stats.oecd.org/Index.aspx?#>`_ website, filtering data for China and India.
     """
     # Read csv file
-    pop = pd.read_csv(ctx.get_path("transport", POP_FILE), header=0)
+    pop = pd.read_csv(private_data_path("transport", POP_FILE), header=0)
     # Drop irrelevant columns and rename when necessary
     pop = pop.drop(
         [x for x in pop.columns if x not in ["LOCATION", "Time", "Value"]],
@@ -63,10 +87,6 @@ def get_chn_ind_pop(ctx):
     ).rename(columns={"LOCATION": "ISO Code", "Time": "Year"})
     # Add "Variable" name column
     pop["Variable"] = "Population"
-    # Convert population units into millions using dict **UNITS** above
-    pop["Value"] = convert_units(
-        pop["Value"].rename("Population"), ctx, dict_units=UNITS
-    ).apply(lambda qty: qty.magnitude)
     return pop
 
 
@@ -79,7 +99,7 @@ def get_chn_ind_data(ctx):
 
     Parameters
     ----------
-    ctx : .Context
+    ctx : :class:`~message_ix_models.util.context.Context`
         Information about target Scenario.
     """
     # Load and process data from China
@@ -87,12 +107,12 @@ def get_chn_ind_data(ctx):
     for file, skip_footer in FILES.values():
         # Read excel sheet
         df_aux = pd.read_csv(
-            ctx.get_path("transport", "China", file), skipfooter=skip_footer, header=2
+            private_data_path("transport", "China", file), skipfooter=skip_footer,
+            header=2
         )
         df = pd.concat([df, df_aux], ignore_index=True)
     # Drop rows containing sub-categories of rail transport
-    df.drop([2, 3, 4, 34, 35, 36], inplace=True)
-    df.reset_index(drop=True, inplace=True)
+    df = df.drop(df[df["Indicators"].isin(RAIL_SUB_CAT)].index).reset_index(drop=True)
     df = pd.concat([df, split_units(df["Indicators"], pat="(")], axis=1).drop(
         ["Indicators"], axis=1
     )
@@ -108,14 +128,15 @@ def get_chn_ind_data(ctx):
 
     df["Year"] = pd.to_numeric(df["Year"])
 
-    # Drop 2019 values so it can concat with population values
+    # Drop 2019 values so it can be concatenated with population values
     df.drop(df[df["Year"] == 2019].index, inplace=True)
 
-    # Split Variable column into Variable and Mode
+    # Split Variable column into Variable and Mode/vehicle type
     df = (
         pd.concat([df, split_variable(df["Variable"])], axis=1)
-        .drop(["Variable"], axis=1)
-        .rename(columns={"Var": "Variable"})
+        # Drop "Variable" and then rename "Var" to "Variable", since "Variable" column
+        # was previously returned with that label by split_units()
+        .drop(["Variable"], axis=1).rename(columns={"Var": "Variable"})
     )
 
     # Reorder columns of *df*
@@ -124,8 +145,8 @@ def get_chn_ind_data(ctx):
     df = df[cols]
 
     # Concat population values
-    df = pd.concat([df, get_chn_ind_pop(ctx)], ignore_index=True).sort_values(
-        ["ISO Code", "Variable", "Year"], ignore_index=True
+    df = pd.concat([df, get_chn_ind_pop()], ignore_index=True).sort_values(
+        ["ISO Code", "Year", "Variable", "Mode/vehicle type"], ignore_index=True
     )
 
     # Import data from iTEM database file T000.csv, including inland passenger
@@ -142,10 +163,13 @@ def get_chn_ind_data(ctx):
     ].sort_values(["ISO Code", "Mode"], ignore_index=True)
 
     chn = df[df["ISO Code"] == "CHN"].pivot(
-        index="Year", columns=["Variable", "Vehicle Type"], values="Value"
+        index="Year", columns=["Mode/vehicle type", "Variable"], values="Value"
     )
-    for var in list(df.columns.get_level_values("Variable")):
-        df[var] = df[var].apply(convert_units, context=ctx, dict_units=UNITS)
+    # Convert units using the mapping **UNITS** defined above
+    idx_lvl_0 = list(set(chn.columns.get_level_values(0)))
+    for mode in idx_lvl_0:
+        chn[mode] = chn[mode].apply(convert_units, context=ctx,
+                                    dict_units=UNITS)
 
     ind = (
         df[df["ISO Code"] == "IND"]
