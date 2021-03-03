@@ -177,5 +177,5 @@ def name(context):
     return (
         f"MESSAGEix-GLOBIOM {context.regions} {context.period_start}:"
         f"{context.time_step}:{context.period_end}"
-        + ("+D" if context.res_with_dummies else "")
+        + ("+D" if context.get("res_with_dummies", False) else "")
     )
