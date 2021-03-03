@@ -1,4 +1,5 @@
 import logging
+from copy import copy
 from functools import partial
 from typing import Mapping
 from urllib.parse import urlunsplit
@@ -97,7 +98,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     add = ScenarioInfo()
 
     # Add technologies
-    add.set["technology"] = get_codes("technology")
+    add.set["technology"] = copy(get_codes("technology"))
 
     # Add regions
 
