@@ -30,12 +30,12 @@ UNITS = dict(
     inv_cost=(1.0e6, "EUR_2000 / vehicle", "MUSD_2005 / vehicle"),
     fix_cost=(1000.0, "EUR_2000 / vehicle / year", "MUSD_2005 / vehicle / year"),
     var_cost=(0.01, "EUR_2000 / kilometer", None),
-    technical_lifetime=(1, "year", None),
+    technical_lifetime=(1.0, "year", None),
     availability=(100, "kilometer / vehicle / year", None),
     input=(0.01, "GJ / kilometer", None),
-    output=(1, "", None),
+    output=(1.0, "", None),
     # Created below
-    capacity_factor=(None, None, "gigapassenger kilometre / vehicle / year"),
+    capacity_factor=(1.0, None, "gigapassenger kilometre / vehicle / year"),
 )
 ROWS = [
     "inv_cost",
@@ -112,8 +112,8 @@ def get_ikarus_data(context):
     # 'technology name' -> pd.DataFrame
     dfs = {}
     for tec, cell_range in CELL_RANGE.items():
-        # - Read values from table for one technology, e.g. "regional train
-        #   electric efficient" = rail_pub.
+        # - Read values from table for one technology, e.g. "regional train electric
+        #   efficient" = rail_pub.
         # - Extract the value from each openpyxl cell object.
         # - Set all non numeric values to NaN.
         # - Transpose so that each variable is in one column.
@@ -123,20 +123,28 @@ def get_ikarus_data(context):
             .applymap(lambda c: c.value)
             .apply(pd.to_numeric, errors="coerce")
             .transpose()
-            .apply(convert_units, unit_info=UNITS)
+            .apply(convert_units, unit_info=UNITS, store="quantity")
         )
 
         # Conversion of IKARUS data to MESSAGEix-scheme parameters.
 
         # Read output efficiency (occupancy factor) from config and apply units
-        output = config["non-ldv"]["output"][tec] * registry("pkm / km")
+        output_value = config["non-ldv"]["output"][tec] * registry("pkm / km")
+
         # Convert to a Series so operations are element-wise
-        output = pd.Series([output] * len(df.index), index=df.index)
+        output = pd.Series([output_value] * len(df.index), index=df.index)
 
         # Compute output efficiency
         df["output"] = output / df["input"] * out_factor.get(tec, 1.0)
 
+        # Compute capacity factor = availability × output
         df["capacity_factor"] = df["availability"] * output
+
+        # Check units: (km / vehicle / year) × (passenger km / km) [=] passenger km /
+        # vehicle / year
+        assert df["capacity_factor"].values[0].units == registry(
+            "passenger km / vehicle / year"
+        )
 
         df["inv_cost"] *= inv_factor.get(tec, 1.0)
 
