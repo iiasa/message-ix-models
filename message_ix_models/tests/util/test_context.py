@@ -27,8 +27,17 @@ class TestContext:
         model_name = "foo model"
         scenario_name = "bar scenario"
 
+        # Settings required by .bare.create_res() when no base scenario is provided
+        create_settings = dict(
+            regions="R11",
+            period_start=2010,
+            period_end=2110,
+            time_step=5,
+        )
+
         # Works with direct settings, no URL
         c = deepcopy(ctx)
+        c.update(create_settings)
         c["dest_scenario"] = dict(model=model_name, scenario=scenario_name)
         s = c.clone_to_dest()
 
@@ -36,6 +45,7 @@ class TestContext:
         url = f"ixmp://{platform_name}/{model_name}/{scenario_name}"
 
         c = deepcopy(ctx)
+        c.update(create_settings)
         c["dest"] = url
         s = c.clone_to_dest()
         assert model_name == s.model and scenario_name == s.scenario
