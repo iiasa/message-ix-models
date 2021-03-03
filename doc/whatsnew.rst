@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2021.3.3
+========
 
 - :pull:`8`: Migrate :mod:`.util.click`, :mod:`.util.logging`; expand documentation.
 - :meth:`.Context.clone_to_dest` method replaces :func:`clone_to_dest` function.
