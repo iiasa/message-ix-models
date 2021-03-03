@@ -1,5 +1,7 @@
 # Share of population by driver type, census_division, and area_type
 #
+# Units: dimensionless
+#
 # Values sum to roughly 1 across 'area_type' for each combination of other
 # dimensions.
 #

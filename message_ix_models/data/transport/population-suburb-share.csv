@@ -1,5 +1,7 @@
 # Share of MSA population that is suburban
 #
+# Units: dimensionless
+#
 # - Values are filled forward by year.
 # - (DLM 2010-04-10) All future values and all 2010 non-NAM values are
 #   guesstimates for now.

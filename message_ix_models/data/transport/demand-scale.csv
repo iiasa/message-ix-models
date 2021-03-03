@@ -1,5 +1,7 @@
 # Scaling of total demand relative to base year levels
 #
+# Units: dimensionless
+#
 # Temporary: code in model.transport.demand should produce output that matches
 # these in the baseline SSP2 case.
 # Derived from ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline.
