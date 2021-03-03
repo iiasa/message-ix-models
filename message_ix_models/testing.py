@@ -1,13 +1,18 @@
+import logging
 from copy import deepcopy
 from pathlib import Path
 
+import message_ix
 import pytest
 from click.testing import CliRunner
 from ixmp import Platform
 from ixmp import config as ixmp_config
 
+
 from message_ix_models import cli
 from message_ix_models.util.context import Context
+
+log = logging.getLogger(__name__)
 
 # pytest hooks
 
@@ -95,3 +100,56 @@ def mix_models_cli(request, session_context, tmp_env):
             return super().invoke(cli.main, *args, env=tmp_env, **kwargs)
 
     yield Runner()
+
+
+# Testing utility functions
+
+
+def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scenario:
+    """Return or create a Scenario containing the bare RES, for use in testing.
+
+    The Scenario has a model name like "MESSAGEix-GLOBIOM [regions]
+    [start]:[duration]:[end]", e.g. "MESSAGEix-GLOBIOM R14 2020:10:2110" (see
+    :func:`.bare.name`) and the scenario name "baseline".
+
+    This function should:
+
+    - only be called from within test code, i.e. in :mod:`message_data.tests`.
+    - be called once for each test function, so that each test receives a fresh copy of
+      the RES scenario.
+
+    Parameters
+    ----------
+    request : .Request
+        The pytest :fixture:`pytest:request` fixture.
+    context : .Context
+        Passed to :func:`.testing.bare_res`.
+    solved : bool, optional
+        Return a solved Scenario.
+
+    Returns
+    -------
+    .Scenario
+        The scenario is a fresh clone, so can be modified freely without disturbing
+        other tests.
+    """
+    from message_ix_models.model import bare
+
+    context.use_defaults(bare.SETTINGS)
+
+    name = bare.name(context)
+    mp = context.get_platform()
+
+    try:
+        base = message_ix.Scenario(mp, name, "baseline")
+    except ValueError:
+        log.info(f"Create '{name}/baseline' for testing")
+        context.scenario_info.update(dict(model=name, scenario="baseline"))
+        base = bare.create_res(context)
+
+    if solved and not base.has_solution():
+        log.info("Solve")
+        base.solve(solve_options=dict(lpmethod=4))
+
+    log.info(f"Clone to '{name}/{request.node.name}'")
+    return base.clone(scenario=request.node.name, keep_solution=solved)
