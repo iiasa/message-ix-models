@@ -41,7 +41,7 @@ Don't import from :mod:`message_data` in :mod:`message_ix_models`
    The open-source code should not depend on any private code.
    If this appears necessary, the code in :mod:`message_data` can probably be moved to :mod:`message_ix_models`.
 
-Use :mod:`message_ix_models.tools` and :mod:`.util` in :mod:`message_data`
+Use :mod:`message_ix_models.tools` and :mod:`~message_ix_models.util` in :mod:`message_data`
    The former have stricter quality standards and are more transparent, which is better for reproducibility.
 
    At some points, similar code may appear in both packages as it is being migrated.

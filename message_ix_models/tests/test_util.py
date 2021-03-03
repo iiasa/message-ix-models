@@ -1,3 +1,4 @@
+"""Tests of :mod:`message_ix_models.util`."""
 import logging
 from pathlib import Path
 
