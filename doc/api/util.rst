@@ -1,5 +1,5 @@
-Low-level utilities (:mod:`.util`)
-**********************************
+Low-level utilities (:mod:`~message_ix_models.util`)
+****************************************************
 
 
 .. currentmodule:: message_ix_models.util
