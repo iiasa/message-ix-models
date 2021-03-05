@@ -266,42 +266,50 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Add relations for scrap grades and availability
 
-    for r in config['relation']['add']:
+    regions = set(data_steel_rel["Region"].values)
 
-        params = set(data_steel_rel.loc[(data_steel_rel["relation"] == r),\
-            "parameter"].values)
+    for reg in regions:
+        for r in data_steel_rel["relation"]:
+            if r is None:
+                break
 
-        common_rel = dict(
-            year_rel = modelyears,
-            year_act = modelyears,
-            mode = 'M1',
-            relation = r,)
+            params = set(data_steel_rel.loc[(data_steel_rel["relation"] == r),\
+                "parameter"].values)
 
-        for par_name in params:
-            if par_name == "relation_activity":
+            common_rel = dict(
+                year_rel = modelyears,
+                year_act = modelyears,
+                mode = 'M1',
+                relation = r,)
 
-                val = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
-                    & (data_steel_rel["parameter"] == par_name)),'value'].values
-                tec = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
-                    & (data_steel_rel["parameter"] == par_name)),'technology'].values
+            for par_name in params:
+                if par_name == "relation_activity":
 
-                df = (make_df(par_name, technology=tec, \
-                            value=val, unit='-', mode = 'M1', relation = r)\
-                    .pipe(broadcast, node_rel=nodes, \
-                            node_loc=nodes, year_rel = modelyears))\
-                    .assign(year_act=copy_column('year_rel'))
+                    tec_list = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
+                        & (data_steel_rel["parameter"] == par_name)) ,'technology']
 
-                results[par_name].append(df)
+                    for tec in tec_list.unique():
 
-            elif par_name == "relation_upper":
+                        val = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
+                            & (data_steel_rel["parameter"] == par_name) & \
+                            (data_steel_rel["technology"]==tec) & \
+                            (data_steel_rel["Region"]==reg)),'value'].values[0]
 
-                val = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
-                    & (data_steel_rel["parameter"] == par_name)),'value'].values[0]
+                        df = (make_df(par_name, technology=tec, value=val, unit='-',\
+                        node_loc = reg, node_rel = reg, **common_rel).pipe(same_node))
 
-                df = (make_df(par_name, value=val, unit='-',\
-                **common_rel).pipe(broadcast, node_rel=nodes))
+                        results[par_name].append(df)
 
-                results[par_name].append(df)
+                elif (par_name == "relation_upper") | (par_name == "relation_lower"):
+
+                    val = data_steel_rel.loc[((data_steel_rel["relation"] == r) \
+                        & (data_steel_rel["parameter"] == par_name) & \
+                        (data_steel_rel["Region"]==reg)),'value'].values[0]
+
+                    df = (make_df(par_name, value=val, unit='-', node_rel = reg,\
+                    **common_rel))
+
+                    results[par_name].append(df)
 
     # Create external demand param
     parname = 'demand'
@@ -312,5 +320,4 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-
     return results
