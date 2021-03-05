@@ -223,8 +223,9 @@ def gen_data_aluminum(scenario, dry_run=False):
     regions = set(data_aluminum_rel["Region"].values)
 
     for reg in regions:
-
-        for r in config['relation']['add']:
+        for r in data_aluminum_rel["relation"]:
+            if r is None:
+                break
 
             params = set(data_aluminum_rel.loc[(data_aluminum_rel["relation"] == r),\
                 "parameter"].values)
@@ -265,7 +266,6 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     results_aluminum = {par_name: pd.concat(dfs) for par_name,
                         dfs in results.items()}
-
     return results_aluminum
 
 def gen_mock_demand_aluminum(scenario):
@@ -291,14 +291,22 @@ def gen_mock_demand_aluminum(scenario):
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
 
-    # Demand at product level
-    # Material efficiency in clean energy transitions (2018)
-    # This is assumed as 2020.
-    # Europe is divided between WEU and EEU
-    # FUS: Eurasia
-    # PAO, PAS, SAS: IAI Alu cycle
+    # Demand at product level (IAI Global Aluminum Cycle 2018)
+    # Globally: 82.4 Mt
+    # Domestic production + Import
+    # AFR: No Data
+    # CPA - China: 28.2 Mt
+    # EEU / 2 + WEU / 2 = Europe 12.5 Mt
+    # FSU: No data
+    # LAM: South America: 2.5 Mt
+    # MEA: Middle East: 2
+    # NAM: North America: 14.1
+    # PAO: Japan: 3
+    # PAS/2 + SAS /2: Other Asia: 11.5 Mt
+    # Remaining 8.612 Mt shared between AFR and FSU
+    # This is used as 2020 data.
 
-    d = [3,55, 4, 7, 5, 6, 15, 3.5, 5.5,6,6 ]
+    d = [3,28.2, 6.25,5,2.5,2,14.1,3,5.75,5.75,6.25]
 
     demand2020_al = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\

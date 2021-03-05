@@ -209,7 +209,7 @@ def gen_data_buildings(scenario, dry_run=False):
 
             # Scrap output back to industry
             df = make_df('output', technology=tec_new, commodity=comm, \
-                level='old_scrap', year_vtg = val_scr.year, \
+                level='end_of_life', year_vtg = val_scr.year, \
                 value=val_scr.value, unit='t', \
                 node_loc = rg, **common)\
                 .pipe(same_node)\

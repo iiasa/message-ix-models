@@ -417,7 +417,9 @@ steel:
   level:
     add:
     - new_scrap
-    - old_scrap
+    - old_scrap_1
+    - old_scrap_2
+    - old_scrap_3
     - primary_material
     - secondary_material
     - tertiary_material
@@ -426,6 +428,8 @@ steel:
     - waste_material
     - product
     - demand
+    - end_of_life
+    - dummy_end_of_life
 
   technology:
     add:
@@ -448,12 +452,20 @@ steel:
     - trade_steel
     - import_steel
     - export_steel
+    - other_EOL_steel
+    - total_EOL_steel
 
   relation:
     add:
-    - scrap_availability_steel_1
-    - scrap_availability_steel_2
-    - scrap_availability_steel_3
+      - minimum_recycling_steel
+
+  balance_equality:
+    add:
+      - ["steel","old_scrap_1"]
+      - ["steel","old_scrap_2"]
+      - ["steel","old_scrap_3"]
+      - ["steel","end_of_life"]
+      - ["steel","product"]
 
 cement:
   commodity:
@@ -527,6 +539,8 @@ aluminum:
     - product
     - secondary_material
     - demand
+    - end_of_life
+    - dummy_end_of_life
 
   technology:
     add:
@@ -543,12 +557,20 @@ aluminum:
     - trade_aluminum
     - import_aluminum
     - export_aluminum
+    - other_EOL_aluminum
+    - total_EOL_aluminum
 
   relation:
     add:
-    - scrap_availability_1
-    - scrap_availability_2
-    - scrap_availability_3
+      - minimum_recycling_aluminum
+
+  balance_equality:
+    add:
+      - ["aluminum","old_scrap_1"]
+      - ["aluminum","old_scrap_2"]
+      - ["aluminum","old_scrap_3"]
+      - ["aluminum","end_of_life"]
+      - ["aluminum","product"]
 
 fertilizer:
   commodity:
