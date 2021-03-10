@@ -108,7 +108,7 @@ tec.list = unique(data.lca$technology)
 com.list = unique(data.lca$commodity)
 lev.list = unique(data.lca$level)
 # add scrap as commodity level
-lev.list = c(lev.list, "old_scrap")
+lev.list = c(lev.list, 'end_of_life')
 
 # check whether set members exist in scenario and add in case not
 for (n in 1:length(node.list)) if (!node.list[n] %in% node$.) ixScenario$add_set('node', node.list[n])
@@ -133,9 +133,9 @@ for (n in node.list) for (t in tec.list) for (c in com.list) {
   for (y in year_vtg.list) {
     # for years after maximum year in data set use values for maximum year, similarly for years before minimum year in data set use values for minimum year
     if (y > max(year.list)) yeff = max(year.list) else if (y < min(year.list)) yeff = min(year.list) else yeff = y
-    input_cap_new = rbind(input_cap_new, data.frame(node_loc = n, technology = t, year_vtg = as.character(y), node_origin = n, commodity = c, level = "product", time_origin = "year", value = filter(data.lca, node == n & technology == t & phase == 'Construction' & commodity == c & year == yeff)$value * 1e-3, unit = 't/kW'))
-    input_cap_ret = rbind(input_cap_ret, data.frame(node_loc = n, technology = t, year_vtg = as.character(y), node_origin = n, commodity = c, level = "product", time_origin = "year", value = filter(data.lca, node == n & technology == t & phase == 'End-of-life' & commodity == c & year == yeff)$value * 1e-3, unit = 't/kW'))
-    output_cap_ret = rbind(output_cap_ret, data.frame(node_loc = n, technology = t, year_vtg = as.character(y), node_dest = n, commodity = c, level = "old_scrap", time_dest = "year", value = filter(data.lca, node == n & technology == t & phase == 'Construction' & commodity == c & year == yeff)$value * 1e-3, unit = 't/kW'))
+    input_cap_new = rbind(input_cap_new, data.frame(node_loc = n, technology = t, year_vtg = as.character(y), node_origin = n, commodity = c, level = 'product', time_origin = "year", value = filter(data.lca, node == n & technology == t & phase == 'Construction' & commodity == c & year == yeff)$value * 1e-3, unit = 't/kW'))
+    input_cap_ret = rbind(input_cap_ret, data.frame(node_loc = n, technology = t, year_vtg = as.character(y), node_origin = n, commodity = c, level = 'product', time_origin = "year", value = filter(data.lca, node == n & technology == t & phase == 'End-of-life' & commodity == c & year == yeff)$value * 1e-3, unit = 't/kW'))
+    output_cap_ret = rbind(output_cap_ret, data.frame(node_loc = n, technology = t, year_vtg = as.character(y), node_dest = n, commodity = c, level = 'end_of_life', time_dest = "year", value = filter(data.lca, node == n & technology == t & phase == 'Construction' & commodity == c & year == yeff)$value * 1e-3, unit = 't/kW'))
   }
 }
 
@@ -165,7 +165,7 @@ ixScenario$add_par('output_cap_ret', output_cap_ret)
 # add dummy material production technologies (only needed for model variants without material sector)
 ################################################################################
 
-technology.material = data.frame(tec = c("material_aluminum", "material_cement", "material_steel", "scrap_aluminum", "scrap_cement", "scrap_steel"), com = c("aluminum", "cement", "steel", "aluminum", "cement", "steel"), lev = c("product", "product", "product", "old_scrap", "old_scrap", "old_scrap"))
+technology.material = data.frame(tec = c("material_aluminum", "material_cement", "material_steel", "scrap_aluminum", "scrap_cement", "scrap_steel"), com = c("aluminum", "cement", "steel", "aluminum", "cement", "steel"), lev = c("product", "product", "product", "end_of_life", "end_of_life", "end_of_life"))
 
 for (n in 1:length(technology.material$tec)) if (!technology.material$tec[n] %in% technology$.) ixScenario$add_set('technology', technology.material$tec[n])
 
