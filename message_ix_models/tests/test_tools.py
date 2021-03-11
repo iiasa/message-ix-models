@@ -1,8 +1,11 @@
+import pandas as pd
 import pandas.testing as pdt
 from message_ix import make_df
 
 from message_data.testing import bare_res
+from message_data.tools import ScenarioInfo
 from message_data.tools.utilities import add_budget
+from message_data.tools.utilities.update_fix_and_inv_cost import add_missing_years
 
 
 def test_add_budget(request, test_context):
@@ -48,3 +51,42 @@ def test_add_budget(request, test_context):
     assert 0 == len(
         scen.set("cat_year").query("type_year == 'cumulative' and year == 2000")
     )
+
+
+def test_add_missing_years(request, test_context):
+    # Create a empty Scenario (no data) with the RES structure for R14 (using test
+    # utilities)
+    test_context.regions = "R11"
+    scen = bare_res(request, test_context, solved=False)
+
+    info = ScenarioInfo(scen)
+    # Sample of model years, where 2095 does not have any data assigned
+    model_years = [2090, 2095, 2100]
+    # Year that we want to fill with values through interpolation
+    missing_years = [2095]
+    # Index
+    index_years = "year_vtg"
+
+    # Create sample df
+    data = {
+        "technology": ["coal_ppl"],
+        "node_loc": [info.N[0]],
+        "unit": ["GWa"],
+        # Assign test values to 2090 and 2100
+        model_years[0]: 10,
+        model_years[-1]: 20,
+    }
+    df = pd.DataFrame.from_dict(data)
+
+    # Call the function
+    df, df_tec = add_missing_years(df, model_years, missing_years, index_years)
+
+    # Check structure of *df_tec*
+    assert "coal_ppl" == df_tec[0]
+    # Check that values for 2110 are equal to values in 2100
+    pdt.assert_frame_equal(
+        df.xs(2110, level=3), df.xs(2100, level=3), check_names=False
+    )
+
+    # Check that missing year was added and interpolation was correctly conducted
+    assert df.xs(2095, level=3)["value1"][0] == 15
