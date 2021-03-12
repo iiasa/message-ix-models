@@ -111,7 +111,7 @@ def solve(context, datafile):
     # Clone and set up
     scenario = build(
         context.get_scenario()
-        .clone(model="Material_Global", scenario=output_scenario_name)
+        .clone(model="MESSAGEix-Materials", scenario=output_scenario_name)
     )
 
     # Set the latest version as default
@@ -119,6 +119,22 @@ def solve(context, datafile):
 
     # Solve
     scenario.solve()
+
+@cli.command("report")
+@click.option('--old_reporting', default= True,
+               help='If True old reporting is merged with the new variables.')
+@click.option('--scenario_name', default= "NoPolicy")
+@click.option('--model_name', default= "MESSAGEix-Materials")
+#@click.pass_obj
+def run_reporting(old_reporting, scenario_name, model_name):
+    from message_data.reporting.materials.reporting import report
+    from message_ix import Scenario
+    from ixmp import Platform
+
+    print(model_name)
+    mp = Platform()
+    scenario = Scenario(mp, model_name, scenario_name)
+    report(scenario, old_reporting)
 
 import logging
 log = logging.getLogger(__name__)
