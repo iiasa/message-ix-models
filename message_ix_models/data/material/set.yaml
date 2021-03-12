@@ -428,6 +428,7 @@ steel:
     - waste_material
     - product
     - demand
+    - dummy_emission
     - end_of_life
     - dummy_end_of_life
 
@@ -449,6 +450,8 @@ steel:
     - scrap_recovery_steel
     - DUMMY_ore_supply
     - DUMMY_limestone_supply
+    - DUMMY_coal_supply
+    - DUMMY_gas_supply
     - trade_steel
     - import_steel
     - export_steel
