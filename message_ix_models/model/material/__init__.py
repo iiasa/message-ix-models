@@ -4,7 +4,7 @@ import click
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 
-from message_data.model.build import apply_spec
+from .build import apply_spec
 from message_data.tools import ScenarioInfo
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity
