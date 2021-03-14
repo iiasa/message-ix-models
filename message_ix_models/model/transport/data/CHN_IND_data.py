@@ -77,6 +77,11 @@ def get_chn_ind_pop():
 
     The dataset is a ``.csv`` file in */data* and was retrieved from `OECD
     <https://stats.oecd.org/Index.aspx?#>`_ website, filtering data for China and India.
+
+    Returns
+    -------
+    DataFrame : pandas.DataFrame
+        DataFrame containing population data for China and India.
     """
     # Read csv file
     pop = pd.read_csv(private_data_path("transport", POP_FILE), header=0)
