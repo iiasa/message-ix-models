@@ -613,6 +613,11 @@ buildings:
     add:
     - buildings
 
+power_sector:
+  unit:
+    add:
+      - t/kW
+
 # NB this codelist added by #125
 
 # iron-steel:
