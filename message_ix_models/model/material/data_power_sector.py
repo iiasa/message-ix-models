@@ -3,6 +3,18 @@ from .data_util import read_sector_data, read_timeseries
 import numpy as np
 from collections import defaultdict
 import logging
+from pathlib import Path
+
+# check Python and R environments (for debugging)
+import rpy2.situation
+for row in rpy2.situation.iter_info():
+    print(row)
+
+# load rpy2 modules
+import rpy2.robjects as ro
+#from rpy2.robjects.packages import importr
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
 
 import pandas as pd
 
@@ -28,54 +40,43 @@ def gen_data_power_sector(scenario, dry_run=False):
     context = read_config()
     config = context["material"]["power_sector"]
 
+    # paths to r code and lca data
+    rcode_path= Path(__file__).parents[0] / 'material_intensity'
+    data_path = context.get_path("material")
+
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
 
-    modelyears = s_info.Y #s_info.Y is only for modeling years
-    nodes = s_info.N
-    tecs = s_info.set['technology']
-    lvls = s_info.set['level']
-    comms = s_info.set['commodity']
+    # read node, technology, commodity and level from existing scenario
+    node = s_info.N
+    year = s_info.set['year'] #s_info.Y is only for modeling years
+    technology = s_info.set['technology']
+    commodity = s_info.set['commodity']
+    level = s_info.set['level']
 
-    params = ['input_cap_new', 'input_cap_ret', 'output_cap_ret']
+    # read inv.cost data
+    inv_cost = scenario.par('inv_cost')
+
+    # source R code
+    r=ro.r
+    r.source(str(rcode_path / "ADVANCE_lca_coefficients_embedded.R"))
+
+    param_name = ['input_cap_new']#, 'input_cap_ret', 'output_cap_ret']
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    # Create external demand param
-    for p in params:
-        df = import_intensity_r(p, s_info)
+    # call R function with type conversion
+    for p in set(param_name):
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            df = r.read_material_intensities(p, str(data_path), node, year, technology, commodity, level, inv_cost)
+            print('type df:', type(df))
+            print(df.head())
+
         results[p].append(df)
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     print(results)
-    # return results
-
-
-# Dummy definition - LINK THIS
-def import_intensity_r(param_name, info):
-    print("Get {} from R...".format(param_name))
-
-    common = dict(
-        node=info.N[0],
-        node_loc=info.N[0],
-        node_origin=info.N[0],
-        node_dest=info.N[0],
-        technology="dummy",
-        year=info.Y,
-        year_vtg=info.Y,
-        year_act=info.Y,
-        mode="all",
-        # No subannual detail
-        time="year",
-        time_origin="year",
-        time_dest="year",
-    )
-
-    # Dummy DF
-    data = make_df(param_name,
-        **common)
-
-    return data
+    return results
