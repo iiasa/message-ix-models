@@ -25,7 +25,10 @@ def build(scenario):
     return scenario
 
 # add as needed/implemented
-SPEC_LIST = ["generic", "common", "steel", "cement", "aluminum", "petro_chemicals", "buildings"]
+SPEC_LIST = [
+            # "generic", "common", "steel", "cement", "aluminum",
+            # "petro_chemicals", "buildings",
+            "power_sector"]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
@@ -86,8 +89,10 @@ def create_bare(context, regions, dry_run):
 @cli.command("solve")
 @click.option('--datafile', default='Global_steel_cement_MESSAGE.xlsx',
               metavar='INPUT', help='File name for external data input')
+@click.option('--tag', default='',
+              help='Suffix to the scenario name')
 @click.pass_obj
-def solve(context, datafile):
+def solve(context, datafile, tag):
     """Build and solve model.
 
     Use the --url option to specify the base scenario.
@@ -111,7 +116,7 @@ def solve(context, datafile):
     # Clone and set up
     scenario = build(
         context.get_scenario()
-        .clone(model="MESSAGEix-Materials", scenario=output_scenario_name)
+        .clone(model="MESSAGEix-Materials", scenario=output_scenario_name + tag)
     )
 
     # Set the latest version as default
@@ -145,15 +150,17 @@ from .data_aluminum import gen_data_aluminum
 from .data_generic import gen_data_generic
 from .data_petro import gen_data_petro_chemicals
 from .data_buildings import gen_data_buildings
+from .data_power_sector import gen_data_power_sector
 from message_data.tools import add_par_data
 
 DATA_FUNCTIONS = [
-    gen_data_buildings,
-    gen_data_steel,
-    gen_data_cement,
-    gen_data_aluminum,
-    gen_data_petro_chemicals,
-    gen_data_generic
+    # gen_data_buildings,
+    # gen_data_steel,
+    # gen_data_cement,
+    # gen_data_aluminum,
+    # gen_data_petro_chemicals,
+    # gen_data_generic,
+    gen_data_power_sector
 ]
 
 # Try to handle multiple data input functions from different materials
