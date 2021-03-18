@@ -6,13 +6,13 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'MESSAGEix-GLOBIOM'
-copyright = '2016–2020, IIASA Energy Program'
-author = 'IIASA Energy Program'
+project = "MESSAGEix-GLOBIOM"
+copyright = "2016–2020, IIASA Energy Program"
+author = "IIASA Energy Program"
 # The major project version, used as the replacement for |version|.
-version = '2020-09-16'
+version = "2020-09-16"
 # The full project version, used as the replacement for |release|.
-release = '2020-09-16'
+release = "2020-09-16"
 
 # -- General configuration ------------------------------------------------
 
@@ -22,13 +22,13 @@ exclude_patterns = ["README.rst"]
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.todo',
-    'sphinxcontrib.bibtex',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.todo",
+    "sphinxcontrib.bibtex",
 ]
 
 # Figures, tables and code-blocks are automatically numbered if they have a
@@ -43,7 +43,7 @@ rst_prolog = """
 """
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -52,29 +52,28 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
-html_logo = '_static/logo_white.png'
+html_logo = "_static/logo_white.png"
 
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
-html_style = 'css/custom.css'
+html_style = "css/custom.css"
 
 
 # -- Options for HTML help output -----------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'messagedoc'
+htmlhelp_basename = "messagedoc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
     # Paper size option of the document class.
-    'papersize': 'a4paper',
-
+    "papersize": "a4paper",
     # Additional preamble content.
-    'preamble': r"""
+    "preamble": r"""
     \usepackage{tabularx}
     """,
 }
@@ -87,11 +86,11 @@ latex_elements = {
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = '_static/logo_blue.png'
+latex_logo = "_static/logo_blue.png"
 
 # -- Options for sphinx.ext.intersphinx --------------------------------------
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'message_ix': ('https://docs.messageix.org/en/latest/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "message_ix": ("https://docs.messageix.org/en/latest/", None),
 }
