@@ -35,4 +35,4 @@ while still reducing the flip-flop behavior and sudden penetration of technologi
 
    Illustration of maximum technology growth starting at a level of 1 in year t=0 for a set of soft diffusion constraints with effective growth rates r as shown in the legend.
 
-For a more detailed description of the implementation of technology diffusion constraints, see the Section :ref:`Dynamic constraints <message_ix:dynamic_constraints>` of the :ref:`|MESSAGEix| documentation`<message_ix>`.
+For a more detailed description of the implementation of technology diffusion constraints, see the Section :ref:`Dynamic constraints <message_ix:dynamic_constraints>` of the :doc:`|MESSAGEix| documentation <message_ix:index>`.
