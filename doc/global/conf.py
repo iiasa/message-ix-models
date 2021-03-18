@@ -16,7 +16,12 @@ release = "2020-09-16"
 
 # -- General configuration ------------------------------------------------
 
-exclude_patterns = ["README.rst"]
+exclude_patterns = [
+    "README.rst",
+    # Uncomment this line to suppress warnings when these files are excluded.
+    # See corresponding comment at the bottom of index.rst.
+    "_extra/*.rst",
+]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -37,7 +42,7 @@ numfig = True
 
 # A string of reStructuredText included at the beginning of every source file
 # that is read.
-rst_prolog = """
+rst_prolog = r"""
 .. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
 
 .. role:: strike
