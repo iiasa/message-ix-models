@@ -36,7 +36,13 @@ We thank Edward Byers, Jessica Jewell, Ruslana Palatnik, Narasimha D. Rao, and F
    climate/index
    annex/index
 
-.. Leave these lines commented for releases; uncommented during development/on `master`.
+.. Under development; excluded.
+   See also the exclude_patterns setting in conf.py.
+
+   glossary
+
+.. Leave these lines commented for releases; uncommented during development/on
+   `master`.
 
    .. toctree::
       :hidden:
