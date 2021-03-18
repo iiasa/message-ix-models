@@ -78,6 +78,9 @@ htmlhelp_basename = "messagedoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
+# LaTeX engine to build the docs
+latex_engine = "lualatex"
+
 latex_elements = {
     # Paper size option of the document class.
     "papersize": "a4paper",
