@@ -76,9 +76,29 @@ The code relies on the following input files, stored in :file:`data/material/`:
 :file:`trade.FAO.R14.csv`
    Historical N-fertilizer trade records among R14 regions, extracted from FAO database.
 
+:file:`NTNU_LCA_coefficients.xlsx`
+   Material intensity (and other) and other coefficients for power plants based on lifecycle assessment (LCA) data from the THEMIS database, compiled in the `ADVANCE project` <http://www.fp7-advance.eu/?q=content/environmental-impacts-module>`_.
+
+:file:`MESSAGE_global_model_technologies.xlsx`
+   Technology list of global MESSAGEix-GLOBIOM model with mapping to LCA technology dataset.
+
+:file:`LCA_region_mapping.xlsx`
+   Region mapping of global 11-regional MESSAGEix-GLOBIOM model to regions of THEMIS LCA dataset.
+
+:file:`LCA_commodity_mapping.xlsx`
+   Commodity mapping (for materials) of global 11-regional MESSAGEix-GLOBIOM model to commodities of THEMIS LCA dataset.
 
 :file:`material/config.yaml`
 ----------------------------
 
 .. literalinclude:: ../../../data/material/config.yaml
    :language: yaml
+
+R code and dependencies
+-----------------------
+
+:file:`ADVANCE_lca_coefficients_embedded.R`
+The code processing the material intensity coefficients of power plants is written in R and integrated into the Python workflow via the Python package `rpy2`.
+R code is called from the Python data module `data_power_sector.py`.
+Depending on the local R installation(s), the environment variables `R_HOME` and `R_USER` may need to be set for the installation to work (see `stackoverflow <https://stackoverflow.com/questions/12698877/how-to-setup-environment-variable-r-user-to-use-rpy2-in-python>`_).
+Additional dependencies include the R packages `dplyr`, `tidyr`, `readxl` and `imputeTS` that need to be installed in the R environment.
