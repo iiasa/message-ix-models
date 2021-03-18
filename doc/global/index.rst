@@ -6,12 +6,14 @@ These pages document the IIASA Integrated Assessment Modeling (IAM) framework, a
 
 **This documentation is under constant development and is being expanded with additional information to reflect the latest changes in the modeling framework.**
 
-When referring to |MESSAGEix|-GLOBIOM as described in this document, please use the following citations (Download :download:`ris </_static/message-globiom.ris>`, :download:`BibTeX </_static/message-globiom.bib>`):
+When referring to |MESSAGEix|-GLOBIOM as described in this document, please use the following citations: [1]_
 
 .. bibliography::
    :list: bullet
    :style: unsrt
    :filter: key in {"message_globiom_2020", "fricko_havlik_2017"}
+
+.. [1] Download these citations in :download:`RIS </bibs/messageix-globiom.ris>` or :download:`BibTeX </bibs/messageix-globiom.bib>` format (web only).
 
 The |MESSAGEix|-GLOBIOM Integrated Assessment Model is based on the |MESSAGEix| framework, an open-source energy systems optimization modelling environment including macro-economic feedback using a stylized computable general equilibrium model.
 When referring to the software underpinning |MESSAGEix|-GLOBIOM rather than the data or specific assessments, please see the :ref:`“User guidelines and notice” section <message_ix:notice-cite>` of the documentation, which indicates to use at least the following citation:

@@ -110,6 +110,6 @@ intersphinx_mapping = {
 # -- Options for sphinxcontrib.bibtex -----------------------------------------
 
 bibtex_bibfiles = [
-    "_static/message-globiom.bib",
     "bibs/main.bib",
+    "bibs/messageix-globiom.bib",
 ]
