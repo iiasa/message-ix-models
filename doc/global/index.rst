@@ -35,3 +35,10 @@ We thank Edward Byers, Jessica Jewell, Ruslana Palatnik, Narasimha D. Rao, and F
    emissions/index
    climate/index
    annex/index
+
+.. Leave these lines commented for releases; uncommented during development/on `master`.
+
+   .. toctree::
+      :hidden:
+
+      _extra/index
