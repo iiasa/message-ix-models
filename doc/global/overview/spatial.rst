@@ -155,6 +155,3 @@ In addition to the 11 geographical regions, in the glboal |MESSAGEix| model ther
    * -
      - WestCentAfr
      - Benin, Burkina Faso, Cape Verde, Chad, Cote d'Ivoire, Djibouti, Eritrea, Gambia, Ghana, Guinea, Guinea Bissau, Liberia, Mali, Mauritania, Niger, Nigeria, Senegal, Sierra Leone, Somalia, Sudan, Togo
-
-
-.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
