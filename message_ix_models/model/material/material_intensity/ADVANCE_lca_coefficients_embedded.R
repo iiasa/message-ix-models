@@ -88,14 +88,10 @@ read_material_intensities <- function(parameter, data_path, node, year, technolo
       }
     }
   }
-  
+
   # return parameter
-  if (parameter == "input_cap_new")
-    input_cap_new
-  if (parameter == "input_cap_ret")
-    input_cap_ret
-  if (parameter == "output_cap_ret")
-    output_cap_ret
-  else
-    NA
+  if (parameter == "input_cap_new") {input_cap_new
+  } else if (parameter == "input_cap_ret") {input_cap_ret 
+  } else if (parameter == "output_cap_ret") {output_cap_ret
+  } else NA
 }
