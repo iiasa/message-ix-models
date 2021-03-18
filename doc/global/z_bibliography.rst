@@ -1,13 +1,8 @@
-References
-**********
+.. only:: html or text
+
+   Bibliography
+   ************
 
 .. bibliography:: /bibs/main.bib
    :style: plain
    :cited:
-
-Further reading
-===============
-
-.. bibliography:: /bibs/main.bib
-   :list: enumerated
-   :notcited:

@@ -35,6 +35,8 @@ We thank Edward Byers, Jessica Jewell, Ruslana Palatnik, Narasimha D. Rao, and F
    emissions/index
    climate/index
    annex/index
+   further-reading
+   z_bibliography
 
 .. Under development; excluded.
    See also the exclude_patterns setting in conf.py.
