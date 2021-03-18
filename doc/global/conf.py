@@ -9,10 +9,10 @@
 project = "MESSAGEix-GLOBIOM"
 copyright = "2016–2020, IIASA Energy Program"
 author = "IIASA Energy Program"
-# The major project version, used as the replacement for |version|.
-version = "2020-09-16"
-# The full project version, used as the replacement for |release|.
-release = "2020-09-16"
+
+# Set this to the specific version number for a release; otherwise `latest`
+version = "2020"
+release = "2020"
 
 # -- General configuration ------------------------------------------------
 
@@ -70,12 +70,6 @@ html_static_path = ["_static"]
 html_style = "css/custom.css"
 
 
-# -- Options for HTML help output -----------------------------------------
-
-# Output file base name for HTML help builder.
-htmlhelp_basename = "messagedoc"
-
-
 # -- Options for LaTeX output ---------------------------------------------
 
 # LaTeX engine to build the docs
@@ -89,12 +83,6 @@ latex_elements = {
     \usepackage{tabularx}
     """,
 }
-
-# Group the document tree into LaTeX source files.
-# latex_documents = [
-#     ('index', 'message.tex', 'MESSAGE-GLOBIOM Documentation',
-#      'IIASA Energy Program', 'manual', False),
-# ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
