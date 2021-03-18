@@ -94,3 +94,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "message_ix": ("https://docs.messageix.org/en/latest/", None),
 }
+
+# -- Options for sphinxcontrib.bibtex -----------------------------------------
+
+bibtex_bibfiles = ["bibs/main.bib"]
