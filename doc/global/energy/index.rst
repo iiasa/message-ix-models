@@ -55,5 +55,3 @@ equilibrium model. However, through its linkage to MACRO general equilibrium eff
    fuel_blending
    demand
    policy
-
-.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`

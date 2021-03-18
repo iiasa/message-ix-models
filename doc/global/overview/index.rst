@@ -27,5 +27,3 @@ The scientific software underlying the global MESSAGE-GLOBIOM model is called th
    spatial
    temporal
    policy/index
-
-.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`

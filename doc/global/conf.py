@@ -38,6 +38,8 @@ numfig = True
 # A string of reStructuredText included at the beginning of every source file
 # that is read.
 rst_prolog = """
+.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
+
 .. role:: strike
 .. role:: underline
 """
