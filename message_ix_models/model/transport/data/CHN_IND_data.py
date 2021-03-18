@@ -15,6 +15,16 @@ UNITS = {
     "Freight Ton-Kilometers": (100, "megatkm", "gigatkm"),
 }
 
+
+SDMX_MAP = {
+    "REF_AREA": "ISO Code",
+    "VARIABLE": "Variable",
+    "VEHICLE": "Vehicle type",
+    "MODE": "Mode",
+    "UNIT": "Units",
+    "TIME_PERIOD": "Year",
+    "VALUE": "Value",
+}
 #: Files containing data for China ("name_of_file", rows_to_skip_from_the_bottom)
 FILES = {
     "Passenger activity": ("Passenger-km.csv", 4),
@@ -95,25 +105,21 @@ def get_chn_ind_pop():
     return pop
 
 
-def get_chn_ind_data(ctx):
+def get_chn_ind_data():
     """Read transport activity data from China and India.
 
     The data is read from from ``/China`` folder (data for China) and imported from
     iTEM project (data for India), and the processed data is merged into IEA's EEI
     datasets for scenario calibration.
-
-    Parameters
-    ----------
-    ctx : :class:`~message_ix_models.util.context.Context`
-        Information about target Scenario.
     """
     # Load and process data from China
     df = pd.DataFrame()
     for file, skip_footer in FILES.values():
         # Read excel sheet
         df_aux = pd.read_csv(
-            private_data_path("transport", "China", file), skipfooter=skip_footer,
-            header=2
+            private_data_path("transport", "China", file),
+            skipfooter=skip_footer,
+            header=2,
         )
         df = pd.concat([df, df_aux], ignore_index=True)
     # Drop rows containing sub-categories of rail transport
@@ -158,14 +164,15 @@ def get_chn_ind_data(ctx):
     # transport activity data
     df_raw = historical.process(0)
     df_raw.drop(
-        columns=["Source", "Country", "Region", "Technology", "Fuel", "ID"],
+        columns=[x for x in list(df_raw.columns) if x not in list(SDMX_MAP.keys())],
         inplace=True,
     )
+    df_raw.columns = df_raw.columns.to_series().map(SDMX_MAP)
     # Filter values for CHN & IND between 2000-2018
     df_raw = df_raw[
         (df_raw["ISO Code"].isin(["IND", "CHN"]))
         & (df_raw["Year"].isin(list(np.arange(2000, 2019))))
-    ].sort_values(["ISO Code", "Mode"], ignore_index=True)
+    ].sort_values(["ISO Code", "Mode", "Vehicle type"], ignore_index=True)
 
     chn = df[df["ISO Code"] == "CHN"].pivot(
         index="Year", columns=["Mode/vehicle type", "Variable"], values="Value"
@@ -173,13 +180,12 @@ def get_chn_ind_data(ctx):
     # Convert units using the mapping **UNITS** defined above
     idx_lvl_0 = list(set(chn.columns.get_level_values(0)))
     for mode in idx_lvl_0:
-        chn[mode] = chn[mode].apply(convert_units, context=ctx,
-                                    dict_units=UNITS)
+        chn[mode] = chn[mode].apply(convert_units, unit_info=UNITS)
 
     ind = (
         df[df["ISO Code"] == "IND"]
         .pivot(index="Year", columns="Variable", values="Value")
-        .apply(convert_units, context=ctx, dict_units=UNITS)
+        .apply(convert_units, unit_info=UNITS)
     )
 
     return df
