@@ -7,8 +7,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "MESSAGEix-GLOBIOM"
-copyright = "2016–2020, IIASA Energy Program"
-author = "IIASA Energy Program"
+copyright = "2016–2020, IIASA Energy, Climate, and Environment (ECE) Program"
+author = "IIASA Energy, Climate, and Environment (ECE) Program"
 
 # Set this to the specific version number for a release; otherwise `latest`
 version = "2020"

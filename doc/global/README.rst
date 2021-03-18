@@ -17,12 +17,12 @@ Build
 on ReadTheDocs
 --------------
 
-- Branches other than ``master`` in the main repository (``iiasa/message_doc``) can be built under the IIASA ENE ReadTheDocs account, and will appear at ``https://docs.messageix.org/projects/global/en/[BRANCH]``.
+- Branches other than ``master`` in the main repository (``iiasa/message_doc``) can be built under the IIASA ECE ReadTheDocs account, and will appear at ``https://docs.messageix.org/projects/global/en/[BRANCH]``.
   Authorized users can configure these at https://readthedocs.com/projects/iiasa-energy-program-message-doc/versions/
 - For a personal fork, e.g. ``[USER]/message_doc``, visit https://readthedocs.io [1]_ and configure builds for your fork, using a project name like ``message-doc-[USER]``.
   These will appear at ``https://message-doc-[USER].readthedocs.io/en/[BRANCH]``.
 
-.. [1] note that this is the free/open-source version of RTD, rather than the commercial product used by ENE for the official documentation of releases.
+.. [1] note that this is the free/open-source version of RTD, rather than the commercial product used by ECE for the official documentation of releases.
 
 
 Locally
