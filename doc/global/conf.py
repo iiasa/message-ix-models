@@ -21,6 +21,8 @@ exclude_patterns = [
     # Uncomment this line to suppress warnings when these files are excluded.
     # See corresponding comment at the bottom of index.rst.
     "_extra/*.rst",
+    # Currently under development
+    "glossary.rst",
 ]
 
 # Add any Sphinx extension module names here, as strings. They can be
