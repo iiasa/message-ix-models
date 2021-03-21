@@ -75,6 +75,20 @@ def gen_data_power_sector(scenario, dry_run=False):
 
         results[p].append(df)
 
+    # create new parameters input_cap_new, output_cap_new, input_cap_ret, output_cap_ret, input_cap and output_cap if they don't exist 
+    if not scenario.has_par('input_cap_new'): 
+        scenario.init_par('input_cap_new', idx_sets = ['node', 'technology', 'year', 'node', 'commodity', 'level', 'time'], idx_names = ['node_loc', 'technology', 'year_vtg', 'node_origin', 'commodity', 'level', 'time_origin'])
+    if  not scenario.has_par('output_cap_new'):
+        scenario.init_par('output_cap_new', idx_sets = ['node', 'technology', 'year', 'node', 'commodity', 'level', 'time'], idx_names = ['node_loc', 'technology', 'year_vtg', 'node_dest', 'commodity', 'level', 'time_dest'])
+    if not scenario.has_par('input_cap_ret'): 
+        scenario.init_par('input_cap_ret', idx_sets = ['node', 'technology', 'year', 'node', 'commodity', 'level', 'time'], idx_names = ['node_loc', 'technology', 'year_vtg', 'node_origin', 'commodity', 'level', 'time_origin'])
+    if not scenario.has_par('output_cap_ret'):
+        scenario.init_par('output_cap_ret', idx_sets = ['node', 'technology', 'year', 'node', 'commodity', 'level', 'time'], idx_names = ['node_loc', 'technology', 'year_vtg', 'node_dest', 'commodity', 'level', 'time_dest'])
+    if not scenario.has_par('input_cap'): 
+        scenario.init_par('input_cap', idx_sets = ['node', 'technology', 'year', 'year', 'node', 'commodity', 'level', 'time'], idx_names = ['node_loc', 'technology', 'year_vtg', 'year_act', 'node_origin', 'commodity', 'level', 'time_origin'])
+    if not scenario.has_par('output_cap'): 
+        scenario.init_par('output_cap', idx_sets = ['node', 'technology', 'year', 'year', 'node', 'commodity', 'level', 'time'], idx_names = ['node_loc', 'technology', 'year_vtg', 'year_act', 'node_dest', 'commodity', 'level', 'time_dest'])
+
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
