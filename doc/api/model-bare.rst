@@ -69,8 +69,8 @@ Code reference
    :members:
 
 
-Roadmap
-=======
+.. Roadmap
+.. =======
 
 .. todo:: With `ixmp#212 <https://github.com/iiasa/ixmp/pull/212>`_ merged,
    some :mod:`.model.bare` code could be moved to a new class and method like
