@@ -8,6 +8,7 @@ from message_ix_models.util import (
     MESSAGE_DATA_PATH,
     MESSAGE_MODELS_PATH,
     as_codes,
+    iter_parameters,
     load_package_data,
     load_private_data,
     package_data_path,
@@ -39,6 +40,16 @@ def test_as_codes_invalid(data):
     """as_codes() rejects invalid data."""
     with pytest.raises(TypeError):
         as_codes(data)
+
+
+def test_iter_parameters(test_context):
+    """Parameters indexed by set 'node' can be retrieved."""
+    result = list(iter_parameters("node"))
+    assert result[0] == "abs_cost_activity_soft_lo"
+    assert result[-1] == "var_cost"
+    # The length of this list depends on message_ix. Changes in message_ix may increase
+    # the number of parameters, so use <= to future-proof. See the method comments.
+    assert 99 <= len(result)
 
 
 @pytest.mark.parametrize("path", _actual_package_data.rglob("*.yaml"))
