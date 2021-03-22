@@ -7,15 +7,18 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.core import quote
-from genno import Computer, KeyExistsError, computations
+from genno import Computer, Key, KeyExistsError, Quantity, computations
 from iam_units import registry
 from ixmp.reporting import RENAME_DIMS
-from message_ix.reporting import Quantity, Reporter
+from message_ix import make_df
+from message_ix.reporting import Reporter
 
-from message_data.tools import Context, ScenarioInfo, broadcast, gea, make_df
+from message_ix_models import Context
+from message_data.tools import ScenarioInfo, broadcast, gea
 
 from .build import generate_set_elements
 from .data.groups import get_consumer_groups, get_gea_population
+from .computations import load_transport_file
 
 log = logging.getLogger(__name__)
 
@@ -88,27 +91,33 @@ def from_external_data(info: ScenarioInfo, context: Context) -> Computer:
     return c
 
 
-def qty_from_context(context: Context, ctx_key, **kwargs):
-    """Add context data (i.e. files) to the reporter."""
-    # Rename long column names ("node") to short ("n")
-    qty = Quantity(context.data[ctx_key], **kwargs)
-    return qty.rename({k: v for k, v in RENAME_DIMS.items() if k in qty.coords})
-
-
 def add_exogenous_data(c: Computer, context: Context):
     """Add data to `c` that mocks data coming from an actual Scenario."""
-    # Commodity prices: all equal to 1
-    # TODO add external data source
-    context.data["transport PRICE_COMMODITY"] = 0.1 * xr.ones_like(
-        context.data["transport gdp"]
-    ).expand_dims({"c": ["transport"]})
 
-    def _add(key, ctx_key, **kwargs):
-        c.add(key, qty_from_context(context, ctx_key, **kwargs), index=True, sums=True)
+    gdp_k = Key("GDP", "ny")
 
-    _add("GDP:n-y", "transport gdp", units="GUSD / year")
-    _add("MERtoPPP:n-y", "transport mer-to-ppp")
-    _add("PRICE_COMMODITY:n-c-y", "transport PRICE_COMMODITY", units="USD / km")
+    for key, basename, units in (
+        (gdp_k, "gdp", "GUSD / year"),
+        (Key("MERtoPPP", "ny"), "mer-to-ppp", ""),
+    ):
+        c.add(
+            key,
+            (partial(load_transport_file, units=units, name=key.name), quote(basename)),
+            sums=True,
+            index=True,
+        )
+
+    def _dummy_prices(gdp):
+        # Commodity prices: all equal to 0.1
+        # TODO add external data source
+        coords = list(gdp.coords.items()) + [("c", ["transport"])]
+        shape = list(len(c[1]) for c in coords)
+
+        return Quantity(
+            xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km"
+        )
+
+    c.add(Key("PRICE_COMMODITY", "ncy"), (_dummy_prices, gdp_k), sums=True, index=True)
 
 
 def add_structure(c: Computer, info: ScenarioInfo):
@@ -186,7 +195,7 @@ def prepare_reporter(
 
     # Consumer group sizes
     # TODO ixmp is picky here when there is no separate argument to the callable; fix.
-    cg_key = rep.add("cg share:n-y-cg", get_consumer_groups, context)
+    cg_key = rep.add("cg share:n-y-cg", get_consumer_groups, quote(context))
 
     # PPP GDP, total and per capita
     gdp_ppp = rep.add("product", "GDP:n-y:PPP", gdp, mer_to_ppp)
@@ -307,8 +316,8 @@ def share_weight(share, gdp_ppp_cap, cost, nodes, y, t, cat_year, config):
     weight = xr.DataArray(coords=[nodes, years, modes], dims=["n", "y", "t"])
 
     # Weights in y0 for all modes and nodes
-    s_y0 = share.sel(y0, t=modes, n=nodes)
-    c_y0 = cost.sel(y0, t=modes, n=nodes).sel(c="transport", drop=True)
+    s_y0 = share.sel(**y0, t=modes, n=nodes)
+    c_y0 = cost.sel(**y0, t=modes, n=nodes).sel(c="transport", drop=True)
     tmp = s_y0 / c_y0 ** lamda
 
     # Normalize against first mode's weight
@@ -319,6 +328,9 @@ def share_weight(share, gdp_ppp_cap, cost, nodes, y, t, cat_year, config):
 
     # Normalize to 1 across modes
     weight.loc[y0] = weight.loc[y0] / weight.loc[y0].sum("t")
+
+    print("gdp_ppp_cap", gdp_ppp_cap)
+    gdp_ppp_cap.to_series().to_csv("debug-gdp_ppp_cap.csv")
 
     # Weights at the convergence year, yC
     for node in nodes:
@@ -427,13 +439,14 @@ def population(nodes, config):
     data = (
         get_gea_population(nodes)
         .sel(area_type="total", scenario=pop_scenario, drop=True)
-        .rename(node="n", year="y")
+        .rename(dict(region="n", year="y"))
     )
 
     # Duplicate 2100 data for 2110
     # TODO use some kind of ffill operation
-    data = xr.concat(
-        [data, data.sel(y=2100, drop=False).assign_coords(y=2110)], dim="y"
+    # NB transpose() should not be necessary; see khaeru/genno#38
+    data = computations.concat(
+        data, data.sel(y=2100).expand_dims(y=[2110]).transpose("n", "y")
     )
 
     return Quantity(data, units="Mpassenger")
