@@ -92,10 +92,13 @@ else:  # pragma: no cover  (needs message_data)
     )
 
 for name in submodules:
+    # Import the module and retrieve the click.Command object
     __import__(name)
-    main.add_command(getattr(sys.modules[name], "cli"))
+    cmd = getattr(sys.modules[name], "cli")
 
-    # TODO use this in the future
-    # name = f"message_data.{name}.cli"
-    # __import__(name)
-    # main.add_command(sys.modules[name].main)
+    # Avoid replacing message-ix-models CLI with message_data CLI
+    if cmd.name in main.commands:
+        log.warning(f"Skip {repr(cmd.name)} CLI from {repr(name)}; already defined")
+        continue
+
+    main.add_command(cmd)
