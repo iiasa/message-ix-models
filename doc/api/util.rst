@@ -11,7 +11,8 @@ Submodules:
    click
    context
    importlib
-   logging
+   _logging
+   scenarioinfo
 
 Commonly used:
 
@@ -23,6 +24,7 @@ Commonly used:
    package_data_path
    private_data_path
    ~context.Context
+   ~scenarioinfo.ScenarioInfo
 
 .. automodule:: message_ix_models.util
    :members:
@@ -113,10 +115,18 @@ Commonly used:
 .. automodule:: message_ix_models.util.importlib
    :members:
 
-:mod:`.util.logging`
-====================
+:mod:`.util._logging`
+=====================
 
-.. currentmodule:: message_ix_models.util.logging
+.. currentmodule:: message_ix_models.util._logging
 
-.. automodule:: message_ix_models.util.logging
+.. automodule:: message_ix_models.util._logging
+   :members:
+
+:mod:`.util.scenarioinfo`
+=========================
+
+.. currentmodule:: message_ix_models.util.scenarioinfo
+
+.. automodule:: message_ix_models.util.scenarioinfo
    :members:
