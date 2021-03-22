@@ -51,6 +51,9 @@ def create_res(context, quiet=True):
     """
     mp = context.get_platform()
 
+    # Retrieve the spec; this also sets defaults expected by name()
+    spec = get_spec(context)
+
     # Model and scenario name for the RES
     args = dict(
         mp=mp,
@@ -71,7 +74,7 @@ def create_res(context, quiet=True):
     # TODO move to message_ix
     scenario.init_par("MERtoPPP", ["node", "year"])
 
-    spec = get_spec(context)
+    # Apply the spec
     apply_spec(
         scenario,
         spec,
