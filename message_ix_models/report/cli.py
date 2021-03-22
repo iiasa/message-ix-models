@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 import yaml
-from message_ix_models.util.logging import mark_time
+from message_ix_models.util._logging import mark_time
 
 from message_data.reporting import register, report
 
