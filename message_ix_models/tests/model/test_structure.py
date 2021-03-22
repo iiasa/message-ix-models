@@ -8,7 +8,7 @@ from message_ix_models.model.structure import get_codes
 
 
 class TestGetCodes:
-    """Test :func:`get_codes() for different code lists."""
+    """Test :func:`get_codes` for different code lists."""
 
     @pytest.mark.parametrize(
         "name",

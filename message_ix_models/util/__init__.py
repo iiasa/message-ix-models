@@ -1,9 +1,12 @@
 import logging
 from copy import copy
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, cast
+from typing import Any, Dict, List, Mapping, Optional, Union, cast
 
-from sdmx.model import Annotation, Code
+import message_ix
+import pandas as pd
+from message_ix.models import MESSAGE_ITEMS
+from sdmx.model import AnnotableArtefact, Annotation, Code
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +30,43 @@ PACKAGE_DATA: Dict[str, Any] = dict()
 PRIVATE_DATA: Dict[str, Any] = dict()
 
 
-def as_codes(data) -> List[Code]:
+def add_par_data(
+    scenario: message_ix.Scenario,
+    data: Mapping[str, pd.DataFrame],
+    dry_run: bool = False,
+):
+    """Add `data` to `scenario`.
+
+    Parameters
+    ----------
+    data
+        Dict with keys that are parameter names, and values are pd.DataFrame or other
+        arguments
+    dry_run : optional
+        Only show what would be done.
+
+    See also
+    --------
+    strip_par_data
+    """
+    total = 0
+
+    for par_name, values in data.items():
+        N = values.shape[0]
+        log.info(f"{N} rows in {repr(par_name)}")
+        log.debug(str(values))
+
+        total += N
+
+        if dry_run:
+            continue
+
+        scenario.add_par(par_name, values)
+
+    return total
+
+
+def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
     """Convert *data* to a :class:`list` of :class:`.Code` objects.
 
     Various inputs are accepted:
@@ -40,7 +79,8 @@ def as_codes(data) -> List[Code]:
     result: Dict[str, Code] = {}
 
     if isinstance(data, list):
-        data = dict(zip(data, data))
+        # FIXME typing ignored temporarily for PR#9
+        data = dict(zip(data, data))  # type: ignore [arg-type]
     elif not isinstance(data, Mapping):
         raise TypeError(data)
 
@@ -89,9 +129,49 @@ def as_codes(data) -> List[Code]:
     return list(result.values())
 
 
+def eval_anno(obj: AnnotableArtefact, id: str):
+    """Retrieve the annotation `id` from `obj`, run :func:`eval` on its contents.
+
+    This can be used for unpacking Python values (e.g. :class:`dict`) stored as an
+    annotation on a :class:`~sdmx.model.Code`.
+
+    Returns :obj:`None` if no attribute exists with the given `id`.
+    """
+    try:
+        value = str(obj.get_annotation(id=id).text)
+    except KeyError:
+        # No such attribute
+        return None
+
+    try:
+        return eval(value)
+    except Exception:
+        # Something that can't be eval()'d, e.g. a string
+        return value
+
+
+def iter_parameters(set_name):
+    """Iterate over MESSAGEix parameters with *set_name* as a dimension.
+
+    Parameters
+    ----------
+    set_name : str
+        Name of a set.
+
+    Yields
+    ------
+    str
+        Names of parameters that have `set_name` indexing ≥1 dimension.
+    """
+    # TODO move upstream. See iiasa/ixmp#402 and iiasa/message_ix#444
+    for name, info in MESSAGE_ITEMS.items():
+        if info["ix_type"] == "par" and set_name in info["idx_sets"]:
+            yield name
+
+
 def _load(
     var: Dict, base_path: Path, *parts: str, default_suffix: Optional[str] = None
-) -> Mapping:
+) -> Any:
     """Helper for :func:`.load_package_data` and :func:`.load_private_data`."""
     key = " ".join(parts)
     if key in var:
@@ -118,7 +198,7 @@ def _make_path(
     return p.with_suffix(p.suffix or default_suffix) if default_suffix else p
 
 
-def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Mapping:
+def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Any:
     """Load a :mod:`message_ix_models` package data file and return its contents.
 
     Data is re-used if already loaded.
@@ -189,3 +269,71 @@ def package_data_path(*parts) -> Path:
 def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
     """Construct a path to a file under :file:`data/` in :mod:`message_data`."""
     return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)
+
+
+def strip_par_data(
+    scenario, set_name, value, dry_run=False, dump: Dict[str, pd.DataFrame] = None
+):
+    """Remove data from parameters of *scenario* where *value* in *set_name*.
+
+    Returns
+    -------
+    Total number of rows removed across all parameters.
+
+    See also
+    --------
+    add_par_data
+    """
+    par_list = scenario.par_list()
+    no_data = []
+    total = 0
+
+    # Iterate over parameters with ≥1 dimensions indexed by `set_name`
+    for par_name in iter_parameters(set_name):
+        if par_name not in par_list:
+            raise RuntimeError(  # pragma: no cover
+                f"MESSAGEix parameter {repr(par_name)} missing in Scenario "
+                f"{scenario.model}/{scenario.scenario}"
+            )
+
+        # Iterate over dimensions indexed by `set_name`
+        for dim, _ in filter(
+            lambda item: item[1] == set_name,
+            zip(scenario.idx_names(par_name), scenario.idx_sets(par_name)),
+        ):
+            # Check for contents of par_name that include *value*
+            par_data = scenario.par(par_name, filters={dim: value})
+            N = len(par_data)
+
+            if N == 0:
+                # No data; no need to do anything further
+                no_data.append(par_name)
+                continue
+            elif dump is not None:
+                dump[par_name] = pd.concat(
+                    [dump.get(par_name, pd.DataFrame()), par_data]
+                )
+
+            log.info(f"Remove {N} rows in {repr(par_name)}")
+
+            # Show some debug info
+            for col in "commodity level technology".split():
+                if col == set_name or col not in par_data.columns:
+                    continue
+
+                log.info(f"  with {col}={sorted(par_data[col].unique())}")
+
+            if not dry_run:
+                # Actually remove the data
+                scenario.remove_par(par_name, key=par_data)
+
+                # NB would prefer to do the following, but raises an exception:
+                # scenario.remove_par(par_name, key={set_name: [value]})
+
+            total += N
+
+    level = logging.INFO if total > 0 else logging.DEBUG
+    log.log(level, f"{total} rows removed.")
+    log.debug(f"No data removed from {len(no_data)} other parameters")
+
+    return total

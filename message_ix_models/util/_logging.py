@@ -117,7 +117,7 @@ def mark_time(quiet=False):
 CONFIG = dict(
     version=1,
     disable_existing_loggers=False,
-    formatters=dict(simple={"()": "message_ix_models.util.logging.make_formatter"}),
+    formatters=dict(simple={"()": "message_ix_models.util._logging.make_formatter"}),
     handlers=dict(
         console={
             "class": "logging.StreamHandler",
