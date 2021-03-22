@@ -6,11 +6,10 @@ import pandas as pd
 import xarray as xr
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import as_codes, load_private_data
+from message_ix_models.util import as_codes, eval_anno, load_private_data
 from sdmx.model import Code
 
 from message_data.model.transport.common import METADATA
-from message_data.tools import eval_anno
 
 
 def read_config(context=None):

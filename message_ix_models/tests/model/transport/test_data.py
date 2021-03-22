@@ -3,11 +3,12 @@ import pytest
 import xarray as xr
 from iam_units import registry
 from message_ix import make_df
+from message_ix_models.model import bare
 from pandas.testing import assert_series_equal
 from pytest import param
 
+
 from message_data import testing
-from message_data.model import bare
 from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.model.transport.data.ikarus import get_ikarus_data
