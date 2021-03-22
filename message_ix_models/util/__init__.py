@@ -288,46 +288,52 @@ def strip_par_data(
     no_data = []
     total = 0
 
+    # Iterate over parameters with ≥1 dimensions indexed by `set_name`
     for par_name in iter_parameters(set_name):
         if par_name not in par_list:
-            continue
-
-        # Check for contents of par_name that include *value*
-        par_data = scenario.par(par_name, filters={set_name: value})
-        N = len(par_data)
-
-        if N == 0:
-            # No data; no need to do anything further
-            no_data.append(par_name)
-            continue
-        elif dump is not None:
-            dump[par_name] = pd.concat(
-                [
-                    dump.get(par_name, pd.DataFrame()),
-                    par_data,
-                ]
+            raise RuntimeError(  # pragma: no cover
+                f"MESSAGEix parameter {repr(par_name)} missing in Scenario "
+                f"{scenario.model}/{scenario.scenario}"
             )
 
-        log.info(f"Remove {N} rows in {par_name!r}.")
+        # Iterate over dimensions indexed by `set_name`
+        for dim, _ in filter(
+            lambda item: item[1] == set_name,
+            zip(scenario.idx_names(par_name), scenario.idx_sets(par_name)),
+        ):
+            # Check for contents of par_name that include *value*
+            par_data = scenario.par(par_name, filters={dim: value})
+            N = len(par_data)
 
-        # Show some debug info
-        for col in "commodity level technology".split():
-            if col == set_name or col not in par_data.columns:
+            if N == 0:
+                # No data; no need to do anything further
+                no_data.append(par_name)
                 continue
+            elif dump is not None:
+                dump[par_name] = pd.concat(
+                    [dump.get(par_name, pd.DataFrame()), par_data]
+                )
 
-            log.info("  with {}={}".format(col, sorted(par_data[col].unique())))
+            log.info(f"Remove {N} rows in {repr(par_name)}")
 
-        if not dry_run:
-            # Actually remove the data
-            scenario.remove_par(par_name, key=par_data)
+            # Show some debug info
+            for col in "commodity level technology".split():
+                if col == set_name or col not in par_data.columns:
+                    continue
 
-            # # NB would prefer to do the following, but raises an exception:
-            # scenario.remove_par(par_name, key={set_name: [value]})
+                log.info(f"  with {col}={sorted(par_data[col].unique())}")
 
-        total += N
+            if not dry_run:
+                # Actually remove the data
+                scenario.remove_par(par_name, key=par_data)
+
+                # NB would prefer to do the following, but raises an exception:
+                # scenario.remove_par(par_name, key={set_name: [value]})
+
+            total += N
 
     level = logging.INFO if total > 0 else logging.DEBUG
     log.log(level, f"{total} rows removed.")
-    log.debug(f"No data removed from {len(no_data)} other parameters.")
+    log.debug(f"No data removed from {len(no_data)} other parameters")
 
     return total
