@@ -40,10 +40,6 @@ def test_read_config(test_context):
     # read_config() returns nothing
     assert read_config(test_context) is None
 
-    # Data tables are loaded
-    assert isinstance(ctx.data["transport mer-to-ppp"], xr.DataArray)
-    assert ctx.data["transport mer-to-ppp"].dims == ("node", "year")
-
     # Scalar parameters are loaded
     assert "scaling" in ctx["transport config"]
     assert 200 * 8 == registry(ctx["transport config"]["work hours"]).magnitude
