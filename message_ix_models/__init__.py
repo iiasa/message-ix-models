@@ -13,7 +13,7 @@ __all__ = ["Context", "ScenarioInfo"]
 try:
     # Version string for reference in other code
     __version__ = get_distribution(__name__).version
-except DistributionNotFound:
+except DistributionNotFound:  # pragma: no cover
     # Package is not installed
     __version__ = "999"
 
