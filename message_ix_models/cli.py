@@ -19,10 +19,10 @@ from pathlib import Path
 
 import click
 
+from message_ix_models.util._logging import mark_time
+from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
-from message_ix_models.util.logging import mark_time
-from message_ix_models.util.logging import setup as setup_logging
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +74,10 @@ def debug(ctx):
 
 
 #: List of submodules providing CLI (sub)commands accessible through `mix-models`.
+#: Each of these should contain a function named ``cli`` decorated with @click.command
+#: or @click.group.
 submodules = [
+    "message_ix_models.model.cli",
     "message_ix_models.model.structure",
 ]
 
@@ -89,10 +92,13 @@ else:  # pragma: no cover  (needs message_data)
     )
 
 for name in submodules:
+    # Import the module and retrieve the click.Command object
     __import__(name)
-    main.add_command(getattr(sys.modules[name], "cli"))
+    cmd = getattr(sys.modules[name], "cli")
 
-    # TODO use this in the future
-    # name = f"message_data.{name}.cli"
-    # __import__(name)
-    # main.add_command(sys.modules[name].main)
+    # Avoid replacing message-ix-models CLI with message_data CLI
+    if cmd.name in main.commands:  # pragma: no cover  (needs message_data)
+        log.warning(f"Skip {repr(cmd.name)} CLI from {repr(name)}; already defined")
+        continue
+
+    main.add_command(cmd)
