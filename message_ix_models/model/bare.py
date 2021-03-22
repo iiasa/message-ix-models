@@ -141,7 +141,8 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
         try:
             # Check that the unit can be parsed by the pint.UnitRegistry
             registry(unit)
-        except Exception:
+        except Exception:  # pragma: no cover
+            # No coverage: code that triggers this exception should never be committed
             log.warning(f"Unit {unit} for commodity {c} not pint compatible")
         else:
             add.set["unit"].append(unit)
