@@ -61,16 +61,34 @@ def get_codes(name: str) -> List[Code]:
     # Convert to codes
     data = as_codes(config)
 
+    # Fill in additional data, defaults, etc.
     if name == "technology":
-        for code in data:
-            try:
-                anno = code.pop_annotation(id="vintaged")
-            except KeyError:
-                # Default value for 'vintaged'
-                anno = Annotation(id="vintaged", text=repr(False))
-            code.annotations.append(anno)
+        process_technology_codes(data)
+    elif name == "year":
+        process_year_codes(data)
 
     return data
+
+
+def process_technology_codes(codes):
+    """Process a list of codes for ``technology``.
+
+    This function ensures every code has an annotation with id "vintaged", default
+    :obj:`False`.
+    """
+    for code in codes:
+        try:
+            anno = code.pop_annotation(id="vintaged")
+        except KeyError:
+            # Default value for 'vintaged'
+            anno = Annotation(id="vintaged", text=repr(False))
+
+        code.annotations.append(anno)
+
+
+def process_year_codes(codes):
+    """Process a list of codes for ``year`` (time periods)."""
+    pass
 
 
 @click.command(name="techs")
