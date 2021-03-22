@@ -329,9 +329,6 @@ def share_weight(share, gdp_ppp_cap, cost, nodes, y, t, cat_year, config):
     # Normalize to 1 across modes
     weight.loc[y0] = weight.loc[y0] / weight.loc[y0].sum("t")
 
-    print("gdp_ppp_cap", gdp_ppp_cap)
-    gdp_ppp_cap.to_series().to_csv("debug-gdp_ppp_cap.csv")
-
     # Weights at the convergence year, yC
     for node in nodes:
         # Set of 1+ nodes to converge towards
