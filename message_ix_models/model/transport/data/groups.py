@@ -3,8 +3,10 @@ from copy import deepcopy
 
 import pandas as pd
 import xarray as xr
-from ixmp.reporting import Quantity
+from genno import computations
+from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util import private_data_path
 
 from message_data.model.transport.utils import consumer_groups
 from message_data.tools import gea
@@ -28,6 +30,9 @@ GEA_DIMS = dict(
     region={},
 )
 
+# Dimensions
+DIMS = deepcopy(RENAME_DIMS)
+
 
 def get_consumer_groups(context):
     """Return shares of transport consumer groups.
@@ -49,75 +54,86 @@ def get_consumer_groups(context):
     ursu_ru = get_urban_rural_shares(context)
 
     # Assumption: split of population between area_type 'UR' and 'SU'
-    # - Fill forward along years, for nodes where only a year 2010 value is
-    #   assumed.
-    # - Fill backward 2010 to 2005, in order to compute
+    # - Fill forward along years, for nodes where only a year 2010 value is assumed.
+    # - Fill backward 2010 to 2005, in order to compute.
     su_share = (
-        context.data["transport population-suburb-share"].ffill("year").bfill("year")
+        computations.load_file(
+            path=private_data_path("transport", "population-suburb-share.csv"),
+            dims=RENAME_DIMS,
+        )
+        .ffill("y")
+        .bfill("y")
     )
 
-    # Assumption: global nodes are assumed to match certain U.S.
-    # census_divisions
+    # Assumption: each global node is equivalent to a certain U.S. census_division
+
+    # Convert setting from config file into a set of indexers
     n_cd_map = context["transport config"]["node to census_division"]
     n, cd = zip(*n_cd_map.items())
     n_cd_indexers = dict(
-        node=xr.DataArray(list(n), dims="node"),
-        census_division=xr.DataArray(list(cd), dims="node"),
+        n=xr.DataArray(list(n), dims="n"),
+        census_division=xr.DataArray(list(cd), dims="n"),
     )
 
     # Split the GEA 'UR+SU' population share using su_share
-    pop_share = xr.concat(
-        [
+    pop_share = (
+        computations.concat(
             ursu_ru.sel(area_type="UR+SU", drop=True) * (1 - su_share),
             ursu_ru.sel(area_type="UR+SU", drop=True) * su_share,
             ursu_ru.sel(area_type="RU", drop=True),
-        ],
-        dim=pd.Index(["UR", "SU", "RU"], name="area_type"),
+            dim=pd.Index(["UR", "SU", "RU"], name="area_type"),
+        )
+        .ffill("y")
+        .bfill("y")
     )
 
     # Index of pop_share versus the previous period
-    pop_share_index = pop_share / pop_share.shift(year=1)
+    pop_share_index = pop_share / pop_share.shift(y=1)
 
     # DLM: “Values from MA3T are based on 2001 NHTS survey and some more recent
     # calculations done in 2008 timeframe. Therefore, I assume that the numbers
     # here are applicable to the US in 2005.”
     # NB in the spreadsheet, the data are also filled forward to 2010
-    ma3t_pop = context.data["transport ma3t population"].assign_coords(year=2010)
+    ma3t_pop = computations.load_file(
+        path=private_data_path("transport", "ma3t", "population.csv")
+    ).expand_dims(y=[2010])
+
+    ma3t_attitude = computations.load_file(
+        path=private_data_path("transport", "ma3t", "attitude.csv")
+    )
+
+    ma3t_driver = computations.load_file(
+        path=private_data_path("transport", "ma3t", "driver.csv")
+    )
 
     # - Apply the trajectory of pop_share to the initial values of ma3t_pop.
     # - Compute the group shares.
     # - Select using matched sequences, i.e. select a sequence of (node,
     #   census_division) coordinates.
     # - Drop the census_division.
-    # - Collapse area_type, attitude, driver_type dimensions into
-    #   consumer_group.
+    # - Collapse area_type, attitude, driver_type dimensions into consumer_group.
     # - Convert to short dimension names.
     groups = (
-        (
-            ma3t_pop
-            * pop_share_index.cumprod("year")
-            * context.data["transport ma3t attitude"]
-            * context.data["transport ma3t driver"]
+        computations.product(
+            ma3t_pop, pop_share_index.cumprod("y"), ma3t_attitude, ma3t_driver
         )
-        .sel(**n_cd_indexers)
-        .drop_vars("census_division")
-        .sel(**cg_indexers)
-        .drop_vars(cg_indexers.keys())
-        .assign_coords(consumer_group=consumer_group)
-        .rename(node="n", year="y", consumer_group="cg")
+        .sel(n_cd_indexers)
+        .sel(cg_indexers)
+        .assign_coords(consumer_group=consumer_group.values)
+        .rename(dict(node="n", year="y", consumer_group="cg"))
     )
 
     # Normalize so the sum across groups is always 1; convert to Quantity
     return Quantity(groups / groups.sum("cg"))
 
 
-def get_urban_rural_shares(context) -> xr.DataArray:
+def get_urban_rural_shares(context):
     """Return shares of urban and rural population from GEA.
 
     Parameters
     ----------
     context : .Context
-        The ``.regions`` attribute determines the regional aggregation used.
+        The ``regions`` setting determines the regional aggregation used.
 
     See also
     --------
@@ -130,14 +146,16 @@ def get_urban_rural_shares(context) -> xr.DataArray:
     nodes = get_codes(f"node/{context.regions}")
     # List of regions according to the context
     regions = nodes[nodes.index("World")].child
-    pop = get_gea_population(regions)
 
-    # Scenario to use, e.g. "GEA mix"
-    pop_scen = context["transport config"]["data source"]["population"]
+    # Retrieve the data, and select the scenario to use, e.g. "GEA mix"
+    # TODO pass the scenario selector through get_gea_population() to get_gea_data()
+    pop = get_gea_population(regions).sel(
+        scenario=context["transport config"]["data source"]["population"], drop=True
+    )
 
-    # Compute shares, select the appropriate scenario
-    return (pop.sel(area_type=["UR+SU", "RU"]) / pop.sel(area_type="total")).sel(
-        scenario=pop_scen, drop=True
+    # Compute and return shares
+    return computations.div(
+        pop.sel(area_type=["UR+SU", "RU"]), pop.sel(area_type="total", drop=True)
     )
 
 
@@ -168,11 +186,15 @@ def get_gea_population(regions=[]):
     for dim, values in GEA_DIMS.items():
         pop = pop.rename(values, level=dim)
 
-    # - Remove model, units dimensions
-    # - Rename 'variable' to 'area_type'
-    # - Convert to xarray
-    return xr.DataArray.from_series(
+    # Units are as expected
+    assert ["million"] == pop.index.levels[pop.index.names.index("unit")]
+
+    # - Remove model, units dimensions.
+    # - Rename other dimensions.
+    # - Convert to Quantity.
+    return Quantity(
         pop.droplevel(["model", "unit"]).rename_axis(
-            index={"variable": "area_type", "region": "node"}
-        )
+            index={"variable": "area_type", "region": "n", "year": "y"}
+        ),
+        units="Mpassenger",
     )
