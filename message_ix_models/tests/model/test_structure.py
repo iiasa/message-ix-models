@@ -22,6 +22,8 @@ class TestGetCodes:
             "node/R32",
             "node/RCP",
             "technology",
+            "year/CD-LINKS",
+            "year/ENGAGE",
         ),
     )
     def test_get_codes(self, name):
@@ -112,6 +114,20 @@ class TestGetCodes:
         # YAML file
         elec_exp = data[data.index("elec_exp")]
         assert False is eval(str(elec_exp.get_annotation(id="vintaged").text))
+
+    @pytest.mark.parametrize(
+        "codelist, length",
+        [
+            ("CD-LINKS", 13),
+            ("ENGAGE", 17),
+        ],
+    )
+    def test_year(self, codelist, length):
+        # Year codelist can be loaded
+        data = get_codes(f"year/{codelist}")
+
+        # List contains the expected number of codes
+        assert len(data) == length
 
 
 def test_cli_techs(session_context, mix_models_cli):
