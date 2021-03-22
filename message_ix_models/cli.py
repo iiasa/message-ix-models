@@ -74,7 +74,10 @@ def debug(ctx):
 
 
 #: List of submodules providing CLI (sub)commands accessible through `mix-models`.
+#: Each of these should contain a function named ``cli`` decorated with @click.command
+#: or @click.group.
 submodules = [
+    "message_ix_models.model.cli",
     "message_ix_models.model.structure",
 ]
 
