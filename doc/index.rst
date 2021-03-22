@@ -14,12 +14,15 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
    install
    data
    cli
+   repro
 
 .. toctree::
    :maxdepth: 2
    :caption: API reference
 
    api/model
+   api/model-bare
+   api/model-build
    api/project
    api/tools
    api/util

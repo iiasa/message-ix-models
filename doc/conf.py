@@ -3,6 +3,11 @@
 # This file only contains a selection of the most common options. For a full list see
 # the documentation: https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import sphinx.application
+
 # -- Project information ---------------------------------------------------------------
 
 project = '"MESSAGEix models"'
@@ -25,12 +30,22 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+templates_path = ["_template"]
 
 # List of patterns, relative to source directory, that match files and directories to
 # ignore when looking for source files. This pattern also affects html_static_path and
 # html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+
+def setup(app: "sphinx.application.Sphinx") -> None:
+    """Copied from pytest's conf.py to enable intersphinx references to these."""
+    app.add_crossref_type(
+        "fixture",
+        "fixture",
+        objname="built-in fixture",
+        indextemplate="pair: %s; fixture",
+    )
 
 
 # -- Options for HTML output -----------------------------------------------------------
@@ -50,6 +65,10 @@ html_logo = "_static/logo-white.png"
 # to this directory. They are copied after the builtin static files, so a file named
 # "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+# -- Options for sphinx.ext.autosummary ------------------------------------------------
+
+autosummary_generate = True
 
 
 # -- Options for sphinx.ext.extlinks ---------------------------------------------------
