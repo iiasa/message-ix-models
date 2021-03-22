@@ -164,8 +164,8 @@ def test_groups(transport_context_f, regions, pop_scen):
     result = get_consumer_groups(ctx)
 
     # Data have the correct size
-    exp = dict(n=11, y=11, cg=27)
-    # TODO when Quantity is SparseDataArray test using .sizes:
+    exp = dict(n=11, y=14, cg=27)
+    # NB as of genno 1.3.0, can't use .sizes on AttrSeries:
     # assert result.sizes == exp
     assert all(len(result.coords[dim]) == N for dim, N in exp.items())
 
