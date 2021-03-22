@@ -90,13 +90,14 @@ def get_consumer_groups(context):
     # Index of pop_share versus the previous period
     pop_share_index = pop_share / pop_share.shift(y=1)
 
+    # Population shares between urban, suburban, and rural
     # DLM: “Values from MA3T are based on 2001 NHTS survey and some more recent
     # calculations done in 2008 timeframe. Therefore, I assume that the numbers
     # here are applicable to the US in 2005.”
     # NB in the spreadsheet, the data are also filled forward to 2010
     ma3t_pop = computations.load_file(
         path=private_data_path("transport", "ma3t", "population.csv")
-    ).expand_dims(y=[2010])
+    )
 
     ma3t_attitude = computations.load_file(
         path=private_data_path("transport", "ma3t", "attitude.csv")
