@@ -207,7 +207,7 @@ The code relies on the following input files, stored in :file:`data/material/`:
    Historical N-fertilizer trade records among R14 regions, extracted from FAO database.
 
 :file:`NTNU_LCA_coefficients.xlsx`
-   Material intensity (and other) and other coefficients for power plants based on lifecycle assessment (LCA) data from the THEMIS database, compiled in the `ADVANCE project` <http://www.fp7-advance.eu/?q=content/environmental-impacts-module>`_.
+   Material intensity (and other) coefficients for power plants based on lifecycle assessment (LCA) data from the THEMIS database, compiled in the `ADVANCE project <http://www.fp7-advance.eu/?q=content/environmental-impacts-module>`_.
 
 :file:`MESSAGE_global_model_technologies.xlsx`
    Technology list of global MESSAGEix-GLOBIOM model with mapping to LCA technology dataset.
