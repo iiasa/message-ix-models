@@ -97,7 +97,7 @@ for name in submodules:
     cmd = getattr(sys.modules[name], "cli")
 
     # Avoid replacing message-ix-models CLI with message_data CLI
-    if cmd.name in main.commands:
+    if cmd.name in main.commands:  # pragma: no cover  (needs message_data)
         log.warning(f"Skip {repr(cmd.name)} CLI from {repr(name)}; already defined")
         continue
 
