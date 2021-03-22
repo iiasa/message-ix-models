@@ -1,9 +1,9 @@
 from typing import Mapping
 
 import click
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.build import apply_spec
 
-from message_data.model.build import apply_spec
-from message_data.tools import ScenarioInfo
 from .data import gen_data
 from .util import read_config
 
@@ -65,8 +65,9 @@ def solve(context):
 
     # Clone and set up
     scenario = build(
-        context.get_scenario()
-        .clone(model="JM_GLB_NITRO", scenario=output_scenario_name)
+        context.get_scenario().clone(
+            model="JM_GLB_NITRO", scenario=output_scenario_name
+        )
     )
 
     # Solve
