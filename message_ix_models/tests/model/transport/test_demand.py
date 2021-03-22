@@ -1,9 +1,9 @@
 import message_ix
 import pytest
+from message_ix_models.model.bare import get_spec
 from pytest import param
 
 from message_data import testing
-from message_data.model.bare import get_spec
 from message_data.model.transport import demand, report
 
 
