@@ -4,7 +4,7 @@ import click
 @click.group("res")
 @click.pass_obj
 def cli(context):
-    """MESSAGE-GLOBIOM reference energy system (RES)."""
+    """MESSAGEix-GLOBIOM reference energy system (RES)."""
 
 
 @cli.command("create-bare")
