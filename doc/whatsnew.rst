@@ -1,15 +1,18 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Migrate :mod:`.model.bare`, :mod:`.model.build`, :mod:`.model.cli`, and associated documentation (:pull:`9`:)
+- Migrate utilities: :class:`.ScenarioInfo`, :func:`.add_par_data`, :func:`.eval_anno`, :func:`.iter_parameters`, and :func:`.strip_par_data`.
 
 2021.3.3
 ========
 
 - :pull:`8`: Migrate :mod:`.util.click`, :mod:`.util.logging`; expand documentation.
 - :meth:`.Context.clone_to_dest` method replaces :func:`clone_to_dest` function.
-- Build PDf documentation on ReadTheDocs.
+- Build PDF documentation on ReadTheDocs.
 - Allow CLI commands from both :mod:`message_ix_models` and :mod:`message_data` via :program:`mix-models`.
 - Migrate :program:`mix-models techs` CLI command.
 
