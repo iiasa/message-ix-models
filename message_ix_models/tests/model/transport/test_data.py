@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from iam_units import registry
+from message_ix import make_df
 from pandas.testing import assert_series_equal
 from pytest import param
 
@@ -11,7 +12,7 @@ from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_USTIMES_MA3T
-from message_data.tools import load_data, make_df
+from message_data.tools import load_data
 
 
 @pytest.mark.parametrize(

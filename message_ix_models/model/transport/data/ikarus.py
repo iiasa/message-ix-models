@@ -7,7 +7,7 @@ from message_ix import make_df
 from message_ix_models.util import private_data_path
 from openpyxl import load_workbook
 
-from message_data.tools import broadcast, eval_anno, same_node
+from message_data.tools import broadcast, eval_anno, same_node, series_of_pint_quantity
 from message_data.tools.convert_units import convert_units
 
 #: Name of the input file.
@@ -132,7 +132,7 @@ def get_ikarus_data(context):
         output_value = config["non-ldv"]["output"][tec] * registry("pkm / km")
 
         # Convert to a Series so operations are element-wise
-        output = pd.Series([output_value] * len(df.index), index=df.index)
+        output = series_of_pint_quantity([output_value] * len(df.index), index=df.index)
 
         # Compute output efficiency
         df["output"] = output / df["input"] * out_factor.get(tec, 1.0)
