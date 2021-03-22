@@ -3,6 +3,11 @@
 # This file only contains a selection of the most common options. For a full list see
 # the documentation: https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import sphinx.application
+
 # -- Project information ---------------------------------------------------------------
 
 project = '"MESSAGEix models"'
@@ -31,6 +36,16 @@ templates_path = ["_template"]
 # ignore when looking for source files. This pattern also affects html_static_path and
 # html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+
+def setup(app: "sphinx.application.Sphinx") -> None:
+    """Copied from pytest's conf.py to enable intersphinx references to these."""
+    app.add_crossref_type(
+        "fixture",
+        "fixture",
+        objname="built-in fixture",
+        indextemplate="pair: %s; fixture",
+    )
 
 
 # -- Options for HTML output -----------------------------------------------------------
