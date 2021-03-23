@@ -53,3 +53,19 @@ Each of these codes has the following annotations:
 
 .. literalinclude:: ../../message_ix_models/data/technology.yaml
    :language: yaml
+
+
+Years or time periods (:file:`year/*.yaml`)
+===========================================
+
+List ‘A’
+--------
+
+.. literalinclude:: ../../message_ix_models/data/year/A.yaml
+   :language: yaml
+
+List ‘B’
+--------
+
+.. literalinclude:: ../../message_ix_models/data/year/B.yaml
+   :language: yaml
