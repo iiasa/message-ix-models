@@ -128,7 +128,7 @@ def test_cli_techs(session_context, mix_models_cli):
     """Test the `techs` CLI command."""
     # Command runs without error
     result = mix_models_cli.invoke("techs")
-    assert 0 == result.exit_code
+    assert 0 == result.exit_code, result.exc_info
 
     # Result test
     assert result.output.endswith("[5 rows x 8 columns]\n")
