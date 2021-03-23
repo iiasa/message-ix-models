@@ -1,5 +1,4 @@
 import logging
-
 from collections import ChainMap
 from functools import lru_cache
 from typing import List
