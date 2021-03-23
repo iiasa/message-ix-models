@@ -2,16 +2,15 @@
 
 1990:
   description: Period from 1981-01-01 to 1990-12-31.
-  historical: true
   # Durations of subsequent periods are implied by the prior period
   duration_period: 10
 
 2000:
   description: Period from 1991-01-01 to 2000-12-31.
-  historical: true
 
 2010:
   description: Period from 2001-01-01 to 2010-12-31.
+  # Periods before this are historical
   firstmodelyear: true
 
 2020:
