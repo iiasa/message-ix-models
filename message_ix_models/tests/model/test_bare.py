@@ -26,7 +26,7 @@ SET_SIZE = dict(
         (dict(regions="ISR"), dict(node=1 + 1)),
         #
         # Different time periods
-        (dict(year="A"), dict(year=13)),  # 2010, 2020, ..., 2110
+        (dict(years="A"), dict(year=13)),  # 2010, 2020, ..., 2110
         #
         # Option to add a dummy technology/commodity so the model solves
         (
@@ -55,7 +55,4 @@ def test_create_res(request, test_context, settings, expected):
     sets = SET_SIZE.copy()
     sets.update(expected)
     for name, size in sets.items():
-        assert len(scenario.set(name)) == size
-
-    # Contains the correct periods
-    year = scenario.set("year").tolist()
+        assert size == len(scenario.set(name))
