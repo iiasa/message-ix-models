@@ -83,7 +83,7 @@ class TestScenarioInfo:
         "codelist, y0, N_all, N_Y, y_m1, dp_checks",
         [
             (
-                "CD-LINKS",
+                "A",
                 2010,
                 13,
                 11,
@@ -91,7 +91,7 @@ class TestScenarioInfo:
                 ((1990, 10), (2010, 10), (2020, 10), (2050, 10), (2110, 10)),
             ),
             (
-                "ENGAGE",
+                "B",
                 2020,
                 17,
                 13,
