@@ -106,6 +106,7 @@ class TestScenarioInfo:
 
         # First model period
         assert y0 == info.y0
+        assert ("firstmodelyear", y0) in info.set["cat_year"]
 
         # Total number of periods
         assert N_all == len(info.set["year"])
