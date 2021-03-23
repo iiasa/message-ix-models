@@ -54,9 +54,12 @@ def main(click_ctx, **kwargs):
     # Log to console
     setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
 
-    # Use the first instance of the message_data.tools.cli.Context object. click carries
-    # the object to subcommands decorated with @click.pass_obj
-    click_ctx.obj = Context.only()
+    # Store the most recently created instance of message_ix_models.Context. click
+    # carries this object to any subcommand decorated with @click.pass_obj.
+    # NB this can't be Context.only(). When click.testing.CliRunner is used, there may
+    #    already be ≥2 Context instances created elsewhere in the test session before
+    #    this function is called to run CLI commands within the test session.
+    click_ctx.obj = Context.get_instance(-1)
 
     # Handle command-line parameters
     click_ctx.obj.handle_cli_args(**kwargs)
