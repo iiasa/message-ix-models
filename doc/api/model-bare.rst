@@ -41,13 +41,13 @@ See documentation for further context settings in :ref:`context`.
 Code reference
 ==============
 
-.. currentmodule:: message_data.model.bare
+.. currentmodule:: message_ix_models.model.bare
 
-.. automodule:: message_data.model.bare
+.. automodule:: message_ix_models.model.bare
    :members:
    :exclude-members: get_spec
 
-.. automethod:: message_data.model.bare.get_spec
+.. automethod:: message_ix_models.model.bare.get_spec
 
    Since the RES is the base for all variants of MESSAGEix-GLOBIOM, the 'require' and 'remove' portions of the spec are empty.
 
@@ -56,9 +56,9 @@ Code reference
    Settings are retrieved from `context`, as above.
 
 
-.. currentmodule:: message_data.model.data
+.. currentmodule:: message_ix_models.model.data
 
-.. automodule:: message_data.model.data
+.. automodule:: message_ix_models.model.data
    :members:
 
 
