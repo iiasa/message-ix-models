@@ -15,6 +15,7 @@ class TestContext:
     def test_get_instance(self, session_context):
         c = Context()
         assert c is Context.get_instance(-1)
+        c.delete()
 
     def test_only(self):
         with pytest.raises(IndexError, match="ambiguous: 2 Context instances"):
@@ -126,6 +127,7 @@ class TestContext:
             ctx.handle_cli_args(**args2)
 
         # New instance
+        ctx.delete()
         ctx = Context()
 
         # Platform and scenario info are empty
@@ -139,6 +141,8 @@ class TestContext:
         expected["url"] = url
 
         assert all(ctx[k] == v for k, v in expected.items()), ctx
+
+        ctx.delete()
 
     def test_use_defaults(self, caplog):
         caplog.set_level(logging.INFO)
@@ -158,6 +162,8 @@ class TestContext:
             ValueError, match=re.escape("bar must be in ['bar1', 'bar3']; got bar2")
         ):
             c.use_defaults(defaults)
+
+        c.delete()
 
     # Deprecated methods and attributes
 
