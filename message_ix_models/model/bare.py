@@ -5,7 +5,6 @@ from typing import Mapping
 from urllib.parse import urlunsplit
 
 import message_ix
-from iam_units import registry
 from sdmx.model import Code
 
 import message_ix_models
@@ -18,14 +17,16 @@ from message_ix_models.util import eval_anno
 log = logging.getLogger(__name__)
 
 
-# Settings and valid values; the default is listed first
+#: Settings and valid values; the default is listed first.
+#:
+#: - ``regions``: recognized lists of nodes; these match the files
+#:   :file:`data/node/*.yaml`.
+#: - ``years``: recognized lists of time periods ("years"); these match the files
+#:   :file:`data/year/*.yaml`
 SETTINGS = dict(
-    period_start=[2010],
-    period_end=[2110],
-    # Recognized lists of nodes; these match the files in data/node/*.yaml
     regions=["R14", "R11", "RCP", "ISR"],
+    years=["B", "A"],
     res_with_dummies=[False, True],
-    time_step=[10, 5],
 )
 
 
@@ -95,9 +96,6 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     """
     context.use_defaults(SETTINGS)
 
-    # The RES is the base, so does not require/remove any elements
-    spec = dict(require=ScenarioInfo(), remove=ScenarioInfo())
-
     add = ScenarioInfo()
 
     # Add technologies
@@ -115,44 +113,20 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     # Set elements: World, followed by the direct children of World
     add.set["node"] = [world] + world.child
 
-    # Add the time horizon
-    add.set["year"] = list(
-        range(context.period_start, context.period_end + 1, context.time_step)
-    )
-    add.set["cat_year"] = [("firstmodelyear", context.period_start)]
-
-    # First model year
-    add.y0 = context.period_start
+    # Initialize time periods
+    add.years_from_codes(get_codes(f"year/{context.years}"))
 
     # Add levels
     add.set["level"] = get_codes("level")
 
     # Add commodities
-    c_list = get_codes("commodity")
-    add.set["commodity"] = c_list
+    add.set["commodity"] = get_codes("commodity")
 
     # Add units, associated with commodities
-    for c in c_list:
-        unit = eval_anno(c, "unit")
-        if unit is None:
-            log.warning(f"Commodity {c} lacks defined units")
-            continue
-
-        try:
-            # Check that the unit can be parsed by the pint.UnitRegistry
-            registry(unit)
-        except Exception:  # pragma: no cover
-            # No coverage: code that triggers this exception should never be committed
-            log.warning(f"Unit {unit} for commodity {c} not pint compatible")
-        else:
-            add.set["unit"].append(unit)
-
+    units = set(eval_anno(commodity, "unit") for commodity in add.set["commodity"])
     # Deduplicate by converting to a set and then back; not strictly necessary,
     # but reduces duplicate log entries
-    add.set["unit"] = sorted(set(add.set["unit"]))
-
-    # Manually set the first model year
-    add.y0 = context.period_start
+    add.set["unit"] = sorted(filter(None, units))
 
     if context.res_with_dummies:
         # Add dummy technologies
@@ -160,8 +134,8 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
         # Add a dummy commodity
         add.set["commodity"].append(Code(id="dummy"))
 
-    spec["add"] = add
-    return spec
+    # The RES is the base, so does not require/remove any elements
+    return dict(add=add, remove=ScenarioInfo(), require=ScenarioInfo())
 
 
 def name(context):
@@ -169,18 +143,15 @@ def name(context):
 
     The name has a form like::
 
-        MESSAGEix-GLOBIOM R99 1990:2:2020+D
+        MESSAGEix-GLOBIOM R99 YA +D
 
     where:
 
     - "R99" is the node list/regional aggregation.
-    - "1990:2:2020" indicates the first model period is 1990, the last period is 2020,
-      and periods have a duration of 2 years.
+    - "YA" indicates the year codelist from :file:`data/year/A.yaml` is used.
     - "+D" indicates dummy set elements are included in the structure.
 
     """
-    return (
-        f"MESSAGEix-GLOBIOM {context.regions} {context.period_start}:"
-        f"{context.time_step}:{context.period_end}"
-        + ("+D" if context.get("res_with_dummies", False) else "")
+    return f"MESSAGEix-GLOBIOM {context.regions} Y{context.years}" + (
+        " +D" if context.get("res_with_dummies", False) else ""
     )
