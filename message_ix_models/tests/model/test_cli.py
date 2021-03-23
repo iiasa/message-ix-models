@@ -4,4 +4,4 @@ def test_create_bare(mix_models_cli):
     # that handles it
     result = mix_models_cli.invoke(["res", "create-bare", "--regions=R11"])
 
-    assert 0 == result.exit_code, result.output
+    assert 0 == result.exit_code, result.exc_info

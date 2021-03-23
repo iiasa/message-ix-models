@@ -28,7 +28,7 @@ def test_default_path_cb(session_context):
     result = CliRunner().invoke(main, cmd)
 
     # The value was stored on, and retrieved from, `ctx`
-    assert 0 == result.exit_code
+    assert 0 == result.exit_code, result.exc_info
     assert f"{expected}\n" == result.output
 
 
@@ -47,5 +47,5 @@ def test_store_context():
     result = CliRunner().invoke(main, [name, "SSP2"])
 
     # The value was stored on, and retrieved from, `ctx`
-    assert 0 == result.exit_code
+    assert 0 == result.exit_code, result.exc_info
     assert "SSP2\n" == result.output

@@ -16,9 +16,10 @@ def test_cli_help(mix_models_cli, subcommand):
     """--help works for every CLI command."""
     result = mix_models_cli.invoke(list(subcommand) + ["--help"])
 
-    assert result.exit_code == 0, result.output
+    assert 0 == result.exit_code, result.exc_info
 
 
 def test_cli_debug(mix_models_cli):
     """The 'debug' CLI command can be invoked."""
-    assert 0 == mix_models_cli.invoke(["debug"]).exit_code
+    result = mix_models_cli.invoke(["debug"])
+    assert 0 == result.exit_code, result.exc_info
