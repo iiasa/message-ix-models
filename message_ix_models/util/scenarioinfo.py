@@ -121,6 +121,7 @@ class ScenarioInfo:
                 if fmy_set:
                     raise ValueError("≥2 periods are annotated firstmodelyear: true")
                 self.y0 = year
+                self.set["cat_year"].append(("firstmodelyear", year))
 
             # Store the duration_period: either from an annotation, or computed vs.
             # the prior
