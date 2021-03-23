@@ -114,7 +114,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     add.set["node"] = [world] + world.child
 
     # Initialize time periods
-    add.years_from_codes(get_codes(f"year/{context.years}"))
+    add.year_from_codes(get_codes(f"year/{context.years}"))
 
     # Add levels
     add.set["level"] = get_codes("level")
