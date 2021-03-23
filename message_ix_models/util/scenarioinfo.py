@@ -1,9 +1,15 @@
 """:class:`ScenarioInfo` class."""
+import logging
 from collections import defaultdict
 from itertools import product
 from typing import Dict, List
 
 import pandas as pd
+import sdmx.model
+
+from message_ix_models.util import eval_anno
+
+log = logging.getLogger(__name__)
 
 
 class ScenarioInfo:
@@ -28,6 +34,9 @@ class ScenarioInfo:
     #: Elements of :mod:`ixmp`/:mod:`message_ix` sets in the Scenario.
     set: Dict[str, List] = {}
 
+    #: Elements of :mod:`ixmp`/:mod:`message_ix` parameters in the Scenario.
+    par: Dict[str, pd.DataFrame] = {}
+
     #: First model year, if set, else ``Y[0]``.
     y0: int = -1
 
@@ -38,6 +47,7 @@ class ScenarioInfo:
 
     def __init__(self, scenario=None):
         self.set = defaultdict(list)
+        self.par = dict()
 
         if not scenario:
             return
@@ -88,3 +98,39 @@ class ScenarioInfo:
     def Y(self):
         """Elements of the set 'year' that are >= the first model year."""
         return list(filter(lambda y: y >= self.y0, self.set["year"]))
+
+    def year_from_codes(self, codes: List[sdmx.model.Code]):
+        """Update the ScenarioInfo ``year`` and ``duration_period`` from `codes`."""
+        if len(self.set["year"]):
+            log.debug(f"Discard existing 'year' elements: {repr(self.set['year'])}")
+        elif "duration_period" in self.par:
+            log.debug("Discard existing 'duration_period' elements")
+
+        self.set["year"] = []
+
+        fmy_set = False
+        duration_period = []
+        # TODO use sorted() here once supported by sdmx
+        for code in codes:
+            year = int(code.id)
+            # Store the year
+            self.set["year"].append(year)
+
+            # Check for an annotation 'firstmodelyear: true'
+            if eval_anno(code, "firstmodelyear"):
+                if fmy_set:
+                    raise ValueError("≥2 periods are annotated firstmodelyear: true")
+                self.y0 = year
+
+            # Store the duration_period: either from an annotation, or computed vs.
+            # the prior
+            duration_period.append(
+                dict(
+                    year=year,
+                    value=eval_anno(code, "duration_period")
+                    or (year - duration_period[-1]["year"]),
+                    unit="y",
+                )
+            )
+
+        self.par["duration_period"] = pd.DataFrame(duration_period)

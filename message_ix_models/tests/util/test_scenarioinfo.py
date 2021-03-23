@@ -1,9 +1,11 @@
 import pandas as pd
+import pytest
 from message_ix.testing import make_dantzig
 from pandas.testing import assert_frame_equal
 from sdmx.model import Code
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.structure import get_codes
 
 
 class TestScenarioInfo:
@@ -76,3 +78,47 @@ class TestScenarioInfo:
         ] == info.N
         assert 1963 == info.y0
         assert [1963, 1964, 1965] == info.Y
+
+    @pytest.mark.parametrize(
+        "codelist, y0, N_all, N_Y, y_m1, dp_checks",
+        [
+            (
+                "CD-LINKS",
+                2010,
+                13,
+                11,
+                2110,
+                ((1990, 10), (2010, 10), (2020, 10), (2050, 10), (2110, 10)),
+            ),
+            (
+                "ENGAGE",
+                2020,
+                17,
+                13,
+                2110,
+                ((1990, 10), (2010, 10), (2020, 5), (2050, 5), (2110, 10)),
+            ),
+        ],
+    )
+    def test_year_from_codes(self, codelist, y0, N_all, N_Y, y_m1, dp_checks):
+        info = ScenarioInfo()
+        info.year_from_codes(get_codes(f"year/{codelist}"))
+
+        # First model period
+        assert y0 == info.y0
+
+        # Total number of periods
+        assert N_all == len(info.set["year"])
+
+        # Number of model periods
+        assert N_Y == len(info.Y)
+
+        # Final period
+        assert y_m1 == info.Y[-1]
+
+        # Convert the data frame to a series
+        dp = info.par["duration_period"].set_index("year")["value"]
+
+        # duration_period entries are as expected
+        for key, expected in dp_checks:
+            assert expected == dp[key]
