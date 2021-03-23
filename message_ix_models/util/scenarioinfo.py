@@ -109,7 +109,7 @@ class ScenarioInfo:
         self.set["year"] = []
 
         fmy_set = False
-        duration_period = []
+        duration_period: List[Dict] = []
         # TODO use sorted() here once supported by sdmx
         for code in codes:
             year = int(code.id)
