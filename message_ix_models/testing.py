@@ -2,9 +2,9 @@ import logging
 from copy import deepcopy
 from pathlib import Path
 
+import click.testing
 import message_ix
 import pytest
-from click.testing import CliRunner
 from ixmp import Platform
 from ixmp import config as ixmp_config
 
@@ -89,16 +89,48 @@ def user_context(request):  # pragma: no cover
     raise NotImplementedError
 
 
+class CliRunner(click.testing.CliRunner):
+    """Subclass of :class:`click.testing.CliRunner` with extra features."""
+
+    def invoke(self, *args, **kwargs):
+        """Invoke the :program:`mix-models` CLI."""
+        result = super().invoke(cli.main, *args, **kwargs)
+        # Store the result for assert_exit_0()
+        self.last_result = result
+        return result
+
+    def assert_exit_0(self, *args, **kwargs):
+        """Assert a result has exit_code 0, or print its traceback.
+
+        If any `args` or `kwargs` are given, :meth:`.invoke` is first called. Otherwise,
+        the result from the last call of :meth:`.invoke` is used.
+
+        Raises
+        ------
+        AssertionError
+            if the result exit code is not 0. The exception contains the traceback from
+            within the CLI.
+
+        Returns
+        -------
+        click.testing.Result
+        """
+        __tracebackhide__ = True
+
+        if len(args) + len(kwargs):
+            self.invoke(*args, **kwargs)
+
+        if self.last_result.exit_code != 0:
+            raise self.last_result.exc_info[1]
+
+        return self.last_result
+
+
 @pytest.fixture(scope="session")
 def mix_models_cli(request, session_context, tmp_env):
-    """A CliRunner object that invokes the :program:`mix-models` CLI."""
+    """A :class:`.CliRunner` object that invokes the :program:`mix-models` CLI."""
     # Require the `session_context` fixture in order to set Context.local_data
-
-    class Runner(CliRunner):
-        def invoke(self, *args, **kwargs):
-            return super().invoke(cli.main, *args, env=tmp_env, **kwargs)
-
-    yield Runner()
+    yield CliRunner(env=tmp_env)
 
 
 # Testing utility functions
