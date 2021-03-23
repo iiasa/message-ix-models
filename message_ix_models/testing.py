@@ -148,7 +148,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
 
     if solved and not base.has_solution():
         log.info("Solve")
-        base.solve(solve_options=dict(lpmethod=4))
+        base.solve(solve_options=dict(lpmethod=4), quiet=True)
 
     log.info(f"Clone to '{name}/{request.node.name}'")
     return base.clone(scenario=request.node.name, keep_solution=solved)
