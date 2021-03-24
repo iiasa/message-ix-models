@@ -115,8 +115,12 @@ class TestGetCodes:
         elec_exp = data[data.index("elec_exp")]
         assert False is eval(str(elec_exp.get_annotation(id="vintaged").text))
 
-    @pytest.mark.parametrize("codelist, length", [("A", 13), ("B", 17)])
+    @pytest.mark.parametrize("codelist, length", [("A", 16), ("B", 22)])
     def test_year(self, codelist, length):
+        """Year code lists can be loaded and contain the correct number of codes.
+
+        :seealso: :meth:`.TestScenarioInfo.test_year_from_codes`.
+        """
         # Year codelist can be loaded
         data = get_codes(f"year/{codelist}")
 
