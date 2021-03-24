@@ -1,12 +1,16 @@
+import logging
 from collections import ChainMap
 from functools import lru_cache
 from typing import List
 
 import click
 import pycountry
+from iam_units import registry
 from sdmx.model import Annotation, Code
 
-from message_ix_models.util import as_codes, load_package_data
+from message_ix_models.util import as_codes, eval_anno, load_package_data
+
+log = logging.getLogger(__name__)
 
 
 @lru_cache()
@@ -61,16 +65,49 @@ def get_codes(name: str) -> List[Code]:
     # Convert to codes
     data = as_codes(config)
 
-    if name == "technology":
-        for code in data:
-            try:
-                anno = code.pop_annotation(id="vintaged")
-            except KeyError:
-                # Default value for 'vintaged'
-                anno = Annotation(id="vintaged", text=repr(False))
-            code.annotations.append(anno)
+    # Fill in additional data, defaults, etc.
+    if name == "commodity":
+        process_commodity_codes(data)
+    elif name == "technology":
+        process_technology_codes(data)
 
     return data
+
+
+def process_commodity_codes(codes):
+    """Process a list of codes for ``commodity``.
+
+    The function warns for commodities missing units or with non-:mod:`pint`-compatible
+    units.
+    """
+    for code in codes:
+        unit = eval_anno(code, "unit")
+        if unit is None:
+            log.warning(f"Commodity {code} lacks defined units")
+            continue
+
+        try:
+            # Check that the unit can be parsed by the pint.UnitRegistry
+            registry(unit)
+        except Exception:  # pragma: no cover
+            # No coverage: code that triggers this exception should never be committed
+            log.warning(f"Unit {unit} for commodity {code} not pint compatible")
+
+
+def process_technology_codes(codes):
+    """Process a list of codes for ``technology``.
+
+    This function ensures every code has an annotation with id "vintaged", default
+    :obj:`False`.
+    """
+    for code in codes:
+        try:
+            anno = code.pop_annotation(id="vintaged")
+        except KeyError:
+            # Default value for 'vintaged'
+            anno = Annotation(id="vintaged", text=repr(False))
+
+        code.annotations.append(anno)
 
 
 @click.command(name="techs")
