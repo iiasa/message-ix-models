@@ -60,7 +60,7 @@ def test_load_package_data(path):
 
 def test_load_package_data_twice(caplog):
     """Loading the same data twice logs a message."""
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="message_ix_models")
     load_package_data("node", "R11")
     load_package_data("node", "R11")
     assert "'node R11' already loaded; skip" in caplog.messages

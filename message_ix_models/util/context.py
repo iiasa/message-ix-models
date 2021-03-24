@@ -106,7 +106,7 @@ class Context(dict):
         if index > 0:
             _CONTEXTS.pop(index)
         else:
-            log.warning("Delete the only Context instance")
+            log.warning("Won't delete the only Context instance")
 
         self.close_db()
 

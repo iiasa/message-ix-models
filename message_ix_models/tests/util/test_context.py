@@ -15,6 +15,7 @@ class TestContext:
     def test_get_instance(self, session_context):
         c = Context()
         assert c is Context.get_instance(-1)
+        c.delete()
 
     def test_only(self):
         with pytest.raises(IndexError, match="ambiguous: 2 Context instances"):
@@ -27,17 +28,8 @@ class TestContext:
         model_name = "foo model"
         scenario_name = "bar scenario"
 
-        # Settings required by .bare.create_res() when no base scenario is provided
-        create_settings = dict(
-            regions="R11",
-            period_start=2010,
-            period_end=2110,
-            time_step=5,
-        )
-
         # Works with direct settings, no URL
         c = deepcopy(ctx)
-        c.update(create_settings)
         c["dest_scenario"] = dict(model=model_name, scenario=scenario_name)
         s = c.clone_to_dest()
 
@@ -45,7 +37,6 @@ class TestContext:
         url = f"ixmp://{platform_name}/{model_name}/{scenario_name}"
 
         c = deepcopy(ctx)
-        c.update(create_settings)
         c["dest"] = url
         s = c.clone_to_dest()
         assert model_name == s.model and scenario_name == s.scenario
@@ -136,6 +127,7 @@ class TestContext:
             ctx.handle_cli_args(**args2)
 
         # New instance
+        ctx.delete()
         ctx = Context()
 
         # Platform and scenario info are empty
@@ -149,6 +141,8 @@ class TestContext:
         expected["url"] = url
 
         assert all(ctx[k] == v for k, v in expected.items()), ctx
+
+        ctx.delete()
 
     def test_use_defaults(self, caplog):
         caplog.set_level(logging.INFO)
@@ -168,6 +162,8 @@ class TestContext:
             ValueError, match=re.escape("bar must be in ['bar1', 'bar3']; got bar2")
         ):
             c.use_defaults(defaults)
+
+        c.delete()
 
     # Deprecated methods and attributes
 
