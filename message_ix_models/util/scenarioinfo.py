@@ -16,11 +16,12 @@ class ScenarioInfo:
     """Information about a :class:`~message_ix.Scenario` object.
 
     Code that prepares data for a target Scenario can accept a ScenarioInfo instance.
-    This avoids any need to load a Scenario, which can be slow under some conditions.
-    ScenarioInfo objects are also used by :func:`.apply_spec` to describe the contents
-    of a scenario before it is created.
+    This avoids the need to load a Scenario, which can be slow under some conditions.
 
-    ScenarioInfo objects have the following attributes:
+    ScenarioInfo objects can also be used (e.g. by :func:`.apply_spec`) to describe the
+    contents of a Scenario *before* it is created.
+
+    ScenarioInfo objects have the following convenience attributes:
 
     .. autosummary::
        set
@@ -29,12 +30,17 @@ class ScenarioInfo:
        Y
        y0
        yv_ya
+
+    Parameters
+    ----------
+    scenario : message_ix.Scenario
+        If given, :attr:`.set` is initialized from this existing scenario.
     """
 
-    #: Elements of :mod:`ixmp`/:mod:`message_ix` sets in the Scenario.
+    #: Elements of :mod:`ixmp`/:mod:`message_ix` sets.
     set: Dict[str, List] = {}
 
-    #: Elements of :mod:`ixmp`/:mod:`message_ix` parameters in the Scenario.
+    #: Elements of :mod:`ixmp`/:mod:`message_ix` parameters.
     par: Dict[str, pd.DataFrame] = {}
 
     #: First model year, if set, else ``Y[0]``.
@@ -68,7 +74,7 @@ class ScenarioInfo:
 
     @property
     def yv_ya(self):
-        """(year_vtg, year_act) for the entire model horizon."""
+        """:class:`pandas.DataFrame` with valid ``year_vtg``, ``year_act`` pairs."""
         if self._yv_ya is None:
             first = self.y0
 
@@ -100,16 +106,53 @@ class ScenarioInfo:
         return list(filter(lambda y: y >= self.y0, self.set["year"]))
 
     def year_from_codes(self, codes: List[sdmx.model.Code]):
-        """Update the ScenarioInfo ``year`` and ``duration_period`` from `codes`."""
+        """Update using a list of `codes`.
+
+        The following are updated:
+
+        - :attr:`.set` ``year``
+        - :attr:`.set` ``cat_year``, with the first model year.
+        - :attr:`.par` ``duration_period``
+
+        Any existing values are discarded.
+
+        After this, the attributes :attr:`.y0` and :attr:`.Y` give the first model year
+        and model years, respectively.
+
+        Examples
+        --------
+        Get a particular code list, create a ScenarioInfo instance, and update using
+        the codes:
+
+        >>> years = get_codes("year/A")
+        >>> info = ScenarioInfo()
+        >>> info.year_from_codes(years)
+
+        Use populated values:
+
+        >>> info.y0
+        2020
+        >>> info.Y[:3]
+        [2020, 2030, 2040]
+        >>> info.Y[-3:]
+        [2090, 2100, 2110]
+
+        """
+        # Clear existing values
         if len(self.set["year"]):
             log.debug(f"Discard existing 'year' elements: {repr(self.set['year'])}")
-        elif "duration_period" in self.par:
+            self.set["year"] = []
+        if len(self.set["cat_year"]):
+            log.debug(
+                f"Discard existing 'cat_year' elements: {repr(self.set['cat_year'])}"
+            )
+            self.set["cat_year"] = []
+        if "duration_period" in self.par:
             log.debug("Discard existing 'duration_period' elements")
-
-        self.set["year"] = []
 
         fmy_set = False
         duration_period: List[Dict] = []
+
         # TODO use sorted() here once supported by sdmx
         for code in codes:
             year = int(code.id)
@@ -123,8 +166,8 @@ class ScenarioInfo:
                 self.y0 = year
                 self.set["cat_year"].append(("firstmodelyear", year))
 
-            # Store the duration_period: either from an annotation, or computed vs.
-            # the prior
+            # Store the duration_period: either from an annotation, or computed vs. the
+            # prior period
             duration_period.append(
                 dict(
                     year=year,
@@ -134,4 +177,5 @@ class ScenarioInfo:
                 )
             )
 
+        # Store
         self.par["duration_period"] = pd.DataFrame(duration_period)
