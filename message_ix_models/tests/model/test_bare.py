@@ -3,13 +3,13 @@ import pytest
 
 from message_ix_models import testing
 
-# Number of items in the respective YAML files
+#: Number of items in the respective YAML files.
 SET_SIZE = dict(
     commodity=13,
     level=6,
     technology=377,
     node=14 + 1,  # R14 is default, and 'World' exists automatically
-    year=17,  # YB is default: 2020, 2025, ..., 2050, 2060, ..., 2110
+    year=22,  # YB is default: 1960, ..., 2020, 2025, ..., 2050, 2060, ..., 2110
 )
 
 
@@ -26,7 +26,7 @@ SET_SIZE = dict(
         (dict(regions="ISR"), dict(node=1 + 1)),
         #
         # Different time periods
-        (dict(years="A"), dict(year=13)),  # 2010, 2020, ..., 2110
+        (dict(years="A"), dict(year=16)),  # ..., 2010, 2020, ..., 2110
         #
         # Option to add a dummy technology/commodity so the model solves
         (
