@@ -83,7 +83,7 @@ extlinks = {
 
 intersphinx_mapping = {
     "ixmp": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
-    "message-ix": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
+    "message-ix": ("https://docs.messageix.org/en/latest/", None),
     "m-data": ("https://docs.messageix.org/projects/global/en/latest/", None),
     "python": ("https://docs.python.org/3/", None),
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),
