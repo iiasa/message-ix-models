@@ -10,10 +10,14 @@
   description: Period from 1971-01-01 to 1980-12-31.
 1990:
   description: Period from 1981-01-01 to 1990-12-31.
+1995:
+  description: Period from 1991-01-01 to 1995-12-31.
 2000:
-  description: Period from 1991-01-01 to 2000-12-31.
+  description: Period from 1996-01-01 to 2000-12-31.
+2005:
+  description: Period from 2001-01-01 to 2005-12-31.
 2010:
-  description: Period from 2001-01-01 to 2010-12-31.
+  description: Period from 2006-01-01 to 2010-12-31.
 2015:
   description: Period from 2011-01-01 to 2015-12-31.
 
