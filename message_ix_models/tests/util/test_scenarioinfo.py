@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 import pytest
 from message_ix.testing import make_dantzig
@@ -100,9 +102,12 @@ class TestScenarioInfo:
             ),
         ],
     )
-    def test_year_from_codes(self, codelist, y0, N_all, N_Y, y_m1, dp_checks):
+    def test_year_from_codes(self, caplog, codelist, y0, N_all, N_Y, y_m1, dp_checks):
+        caplog.set_level(logging.DEBUG)
+
         info = ScenarioInfo()
-        info.year_from_codes(get_codes(f"year/{codelist}"))
+        codes = get_codes(f"year/{codelist}")
+        info.year_from_codes(codes)
 
         # First model period
         assert y0 == info.y0
@@ -123,3 +128,11 @@ class TestScenarioInfo:
         # duration_period entries are as expected
         for key, expected in dp_checks:
             assert expected == dp[key]
+
+        # Test logging
+        assert 0 == len(caplog.messages)
+
+        info.year_from_codes(codes)
+
+        assert 3 == len(caplog.messages)
+        assert all(msg.startswith("Discard existing") for msg in caplog.messages)

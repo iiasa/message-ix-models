@@ -162,9 +162,14 @@ class ScenarioInfo:
             # Check for an annotation 'firstmodelyear: true'
             if eval_anno(code, "firstmodelyear"):
                 if fmy_set:
-                    raise ValueError("≥2 periods are annotated firstmodelyear: true")
+                    # No coverage: data that triggers this should not be committed
+                    raise ValueError(  # pragma: no cover
+                        "≥2 periods are annotated firstmodelyear: true"
+                    )
+
                 self.y0 = year
                 self.set["cat_year"].append(("firstmodelyear", year))
+                fmy_set = True
 
             # Store the duration_period: either from an annotation, or computed vs. the
             # prior period
