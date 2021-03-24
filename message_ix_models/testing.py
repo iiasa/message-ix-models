@@ -9,8 +9,8 @@ from ixmp import Platform
 from ixmp import config as ixmp_config
 
 from message_ix_models import cli
-from message_ix_models.util.context import Context
 from message_ix_models.util._logging import preserve_log_level
+from message_ix_models.util.context import Context
 
 log = logging.getLogger(__name__)
 
