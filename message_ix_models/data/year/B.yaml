@@ -1,16 +1,19 @@
 # Time periods used in ENGAGE, inter alia
 
-1990:
-  description: Period from 1981-01-01 to 1990-12-31.
+1960:
+  description: Period from 1951-01-01 to 1960-12-31.
   # Durations of subsequent periods are implied by the prior period
   duration_period: 10
-
+1970:
+  description: Period from 1961-01-01 to 1970-12-31.
+1980:
+  description: Period from 1971-01-01 to 1980-12-31.
+1990:
+  description: Period from 1981-01-01 to 1990-12-31.
 2000:
   description: Period from 1991-01-01 to 2000-12-31.
-
 2010:
   description: Period from 2001-01-01 to 2010-12-31.
-
 2015:
   description: Period from 2011-01-01 to 2015-12-31.
 
