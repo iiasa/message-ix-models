@@ -23,14 +23,25 @@ def silence_log():
     >>> with silence_log():
     >>>     log.warning("This message is not recorded.")
     """
+    # Restore the log level at the end of the context
+    with preserve_log_level():
+        # Set the level to a very high value
+        logging.getLogger(__name__.split(".")[0]).setLevel(100)
+        yield
+
+
+@contextmanager
+def preserve_log_level():
+    """Context manager to preserve the level of the ``message_ix_models`` logger."""
     # Get the top-level logger for the package containing this file
     main_log = logging.getLogger(__name__.split(".")[0])
 
     try:
+        # Store the current level
         level = main_log.getEffectiveLevel()
-        main_log.setLevel(100)
         yield
     finally:
+        # Restore the level
         main_log.setLevel(level)
 
 

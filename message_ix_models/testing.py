@@ -10,6 +10,7 @@ from ixmp import config as ixmp_config
 
 from message_ix_models import cli
 from message_ix_models.util.context import Context
+from message_ix_models.util._logging import preserve_log_level
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ def session_context(request, tmp_env):
     # Other local data in the temporary directory
     ctx.local_data = session_tmp_dir
 
-    platform_name = "message_data"
+    platform_name = "message-ix-models"
 
     # Add a platform connected to an in-memory database
     # NB cannot call Config.add_platform() here because it does not support supplying a
@@ -92,11 +93,16 @@ def user_context(request):  # pragma: no cover
 class CliRunner(click.testing.CliRunner):
     """Subclass of :class:`click.testing.CliRunner` with extra features."""
 
+    # NB decorator ensures any changes that the CLI makes to the logger level are
+    #    restored
+    @preserve_log_level()
     def invoke(self, *args, **kwargs):
         """Invoke the :program:`mix-models` CLI."""
         result = super().invoke(cli.main, *args, **kwargs)
-        # Store the result for assert_exit_0()
+
+        # Store the result to be used by assert_exit_0()
         self.last_result = result
+
         return result
 
     def assert_exit_0(self, *args, **kwargs):
