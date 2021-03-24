@@ -103,7 +103,7 @@ class TestScenarioInfo:
         ],
     )
     def test_year_from_codes(self, caplog, codelist, y0, N_all, N_Y, y_m1, dp_checks):
-        caplog.set_level(logging.DEBUG)
+        caplog.set_level(logging.DEBUG, logger="message_ix_models")
 
         info = ScenarioInfo()
         codes = get_codes(f"year/{codelist}")
