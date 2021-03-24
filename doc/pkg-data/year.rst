@@ -5,7 +5,7 @@ Years or time periods (:file:`year/*.yaml`)
 
 - See also:
 
-  - The discussion of :message_ix:doc:`time` in the :mod:`message_ix` documentation, which explains the standard sense of time periods used across the MESSAGEix framework and specific models based on it.
+  - The discussion of :doc:`message-ix:time` in the :mod:`message_ix` documentation, which explains the standard sense of time periods used across the MESSAGEix framework and specific models based on it.
   - :meth:`.ScenarioInfo.year_from_codes`
 
 - These are not the only possible meanings of these codes; others may be used in data from other sources.
