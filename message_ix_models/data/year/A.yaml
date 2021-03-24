@@ -12,14 +12,13 @@
   description: Period from 1981-01-01 to 1990-12-31.
 2000:
   description: Period from 1991-01-01 to 2000-12-31.
-
 2010:
   description: Period from 2001-01-01 to 2010-12-31.
-  # Periods before this are historical
-  firstmodelyear: true
 
 2020:
   description: Period from 2011-01-01 to 2020-12-31.
+  # Periods before this are historical
+  firstmodelyear: true
 
 2030:
   description: Period from 2021-01-01 to 2030-12-31.
