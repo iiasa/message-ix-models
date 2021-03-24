@@ -33,6 +33,7 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
    :caption: Package data
 
    pkg-data/node
+   pkg-data/year
    pkg-data/codelists
 
 .. toctree::

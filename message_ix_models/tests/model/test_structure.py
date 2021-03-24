@@ -22,6 +22,8 @@ class TestGetCodes:
             "node/R32",
             "node/RCP",
             "technology",
+            "year/A",
+            "year/B",
         ),
     )
     def test_get_codes(self, name):
@@ -113,12 +115,23 @@ class TestGetCodes:
         elec_exp = data[data.index("elec_exp")]
         assert False is eval(str(elec_exp.get_annotation(id="vintaged").text))
 
+    @pytest.mark.parametrize("codelist, length", [("A", 16), ("B", 22)])
+    def test_year(self, codelist, length):
+        """Year code lists can be loaded and contain the correct number of codes.
+
+        :seealso: :meth:`.TestScenarioInfo.test_year_from_codes`.
+        """
+        # Year codelist can be loaded
+        data = get_codes(f"year/{codelist}")
+
+        # List contains the expected number of codes
+        assert len(data) == length
+
 
 def test_cli_techs(session_context, mix_models_cli):
     """Test the `techs` CLI command."""
     # Command runs without error
-    result = mix_models_cli.invoke("techs")
-    assert 0 == result.exit_code
+    result = mix_models_cli.assert_exit_0(["techs"])
 
     # Result test
     assert result.output.endswith("[5 rows x 8 columns]\n")

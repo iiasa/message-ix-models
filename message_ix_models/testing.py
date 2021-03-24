@@ -2,13 +2,14 @@ import logging
 from copy import deepcopy
 from pathlib import Path
 
+import click.testing
 import message_ix
 import pytest
-from click.testing import CliRunner
 from ixmp import Platform
 from ixmp import config as ixmp_config
 
 from message_ix_models import cli
+from message_ix_models.util._logging import preserve_log_level
 from message_ix_models.util.context import Context
 
 log = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ def session_context(request, tmp_env):
     # Other local data in the temporary directory
     ctx.local_data = session_tmp_dir
 
-    platform_name = "message_data"
+    platform_name = "message-ix-models"
 
     # Add a platform connected to an in-memory database
     # NB cannot call Config.add_platform() here because it does not support supplying a
@@ -89,16 +90,53 @@ def user_context(request):  # pragma: no cover
     raise NotImplementedError
 
 
+class CliRunner(click.testing.CliRunner):
+    """Subclass of :class:`click.testing.CliRunner` with extra features."""
+
+    # NB decorator ensures any changes that the CLI makes to the logger level are
+    #    restored
+    @preserve_log_level()
+    def invoke(self, *args, **kwargs):
+        """Invoke the :program:`mix-models` CLI."""
+        result = super().invoke(cli.main, *args, **kwargs)
+
+        # Store the result to be used by assert_exit_0()
+        self.last_result = result
+
+        return result
+
+    def assert_exit_0(self, *args, **kwargs):
+        """Assert a result has exit_code 0, or print its traceback.
+
+        If any `args` or `kwargs` are given, :meth:`.invoke` is first called. Otherwise,
+        the result from the last call of :meth:`.invoke` is used.
+
+        Raises
+        ------
+        AssertionError
+            if the result exit code is not 0. The exception contains the traceback from
+            within the CLI.
+
+        Returns
+        -------
+        click.testing.Result
+        """
+        __tracebackhide__ = True
+
+        if len(args) + len(kwargs):
+            self.invoke(*args, **kwargs)
+
+        if self.last_result.exit_code != 0:
+            raise self.last_result.exc_info[1]
+
+        return self.last_result
+
+
 @pytest.fixture(scope="session")
 def mix_models_cli(request, session_context, tmp_env):
-    """A CliRunner object that invokes the :program:`mix-models` CLI."""
+    """A :class:`.CliRunner` object that invokes the :program:`mix-models` CLI."""
     # Require the `session_context` fixture in order to set Context.local_data
-
-    class Runner(CliRunner):
-        def invoke(self, *args, **kwargs):
-            return super().invoke(cli.main, *args, env=tmp_env, **kwargs)
-
-    yield Runner()
+    yield CliRunner(env=tmp_env)
 
 
 # Testing utility functions
@@ -148,7 +186,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
 
     if solved and not base.has_solution():
         log.info("Solve")
-        base.solve(solve_options=dict(lpmethod=4))
+        base.solve(solve_options=dict(lpmethod=4), quiet=True)
 
     log.info(f"Clone to '{name}/{request.node.name}'")
     return base.clone(scenario=request.node.name, keep_solution=solved)

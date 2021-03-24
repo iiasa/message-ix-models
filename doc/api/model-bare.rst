@@ -27,16 +27,9 @@ Context settings
    * - regions
      - str
      - The 'node' set (regional aggregation) to use; must be "R14" (default), "R11", "RCP" or "ISR".
-   * - period_start
-     - int
-     - Model start period; must be 2010.
-   * - period_end
-     - int
-     - Model end period; must be 2110.
-   * - time_step
-     - int
-     - The duration of periods, i.e. for 'year' and 'duration_period'.
-       Either 10 (default) or 5.
+   * - years
+     - str
+     - The 'year' set (time periods) to use; must be "B" (default) or "A".
    * - res_with_dummies
      - bool
      - If :obj:`True`, create and include dummy technologies.
@@ -48,13 +41,13 @@ See documentation for further context settings in :ref:`context`.
 Code reference
 ==============
 
-.. currentmodule:: message_data.model.bare
+.. currentmodule:: message_ix_models.model.bare
 
-.. automodule:: message_data.model.bare
+.. automodule:: message_ix_models.model.bare
    :members:
    :exclude-members: get_spec
 
-.. automethod:: message_data.model.bare.get_spec
+.. automethod:: message_ix_models.model.bare.get_spec
 
    Since the RES is the base for all variants of MESSAGEix-GLOBIOM, the 'require' and 'remove' portions of the spec are empty.
 
@@ -63,9 +56,9 @@ Code reference
    Settings are retrieved from `context`, as above.
 
 
-.. currentmodule:: message_data.model.data
+.. currentmodule:: message_ix_models.model.data
 
-.. automodule:: message_data.model.data
+.. automodule:: message_ix_models.model.data
    :members:
 
 

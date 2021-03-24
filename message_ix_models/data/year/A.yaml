@@ -1,0 +1,41 @@
+# Time periods used in CD-LINKS, inter alia
+
+1960:
+  description: Period from 1951-01-01 to 1960-12-31.
+  # Durations of subsequent periods are implied by the prior period
+  duration_period: 10
+
+1970:
+  description: Period from 1961-01-01 to 1970-12-31.
+1980:
+  description: Period from 1971-01-01 to 1980-12-31.
+1990:
+  description: Period from 1981-01-01 to 1990-12-31.
+2000:
+  description: Period from 1991-01-01 to 2000-12-31.
+2010:
+  description: Period from 2001-01-01 to 2010-12-31.
+
+2020:
+  description: Period from 2011-01-01 to 2020-12-31.
+  # Periods before this are historical
+  firstmodelyear: true
+
+2030:
+  description: Period from 2021-01-01 to 2030-12-31.
+2040:
+  description: Period from 2031-01-01 to 2040-12-31.
+2050:
+  description: Period from 2041-01-01 to 2050-12-31.
+2060:
+  description: Period from 2051-01-01 to 2060-12-31.
+2070:
+  description: Period from 2061-01-01 to 2070-12-31.
+2080:
+  description: Period from 2071-01-01 to 2080-12-31.
+2090:
+  description: Period from 2081-01-01 to 2090-12-31.
+2100:
+  description: Period from 2091-01-01 to 2100-12-31.
+2110:
+  description: Period from 2101-01-01 to 2110-12-31.
