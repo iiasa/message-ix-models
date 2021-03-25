@@ -14,24 +14,22 @@ def test_register_cb():
 
 
 @pytest.mark.parametrize(
-    "regions, solved",
+    "regions, years, solved",
     (
-        pytest.param("R11", True),
-        # FIXME
-        pytest.param(
-            "R11", False, marks=pytest.mark.skip(reason="Interference from other tests")
-        ),
-        pytest.param("R14", True, marks=NIE),
-        pytest.param("ISR", True, marks=NIE),
+        pytest.param("R11", "A", False),
+        pytest.param("R11", "A", True),
+        pytest.param("R14", "A", True, marks=NIE),
+        pytest.param("ISR", "A", True, marks=NIE),
     ),
 )
-def test_report_bare(request, transport_context_f, tmp_path, regions, solved):
+def test_report_bare(request, transport_context_f, tmp_path, regions, years, solved):
     """Run MESSAGEix-Transport–specific reporting."""
     register(callback)
 
     ctx = transport_context_f
-    ctx["output dir"] = tmp_path
     ctx.regions = regions
+    ctx.years = years
+    ctx["output dir"] = tmp_path
 
     scenario = built_transport(request, ctx, solved=solved)
 
