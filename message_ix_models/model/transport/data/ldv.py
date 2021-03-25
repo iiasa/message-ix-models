@@ -46,17 +46,22 @@ def get_USTIMES_MA3T(context):
     """Read LDV cost and efficiency data from US-TIMES and MA3T.
 
     .. todo:: Some calculations are performed in the spreadsheet; transfer to code.
+    .. todo:: Interpolate values for time periods e.g. 2025 not in the spreadsheet.
     """
     # Compatibility checks
     check_support(
         context,
-        settings=dict(regions=frozenset(["R11"])),
+        settings=dict(regions=frozenset(["R11"]), years=frozenset(["A"])),
         desc="US-TIMES and MA3T data available",
     )
 
     # Retrieve configuration and ScenarioInfo
     config = context["transport config"]
     info = context["transport build info"]
+
+    # List of years to include
+    years = list(filter(lambda y: y >= 2010, info.set["year"]))
+    years_query = f"year in {repr(years)}"
 
     # Open workbook
     path = private_data_path("transport", FILE)
@@ -98,7 +103,7 @@ def get_USTIMES_MA3T(context):
                 .rename(columns={"MESSAGE name": "technology"})
                 .melt(id_vars=["technology"], var_name="year")
                 .astype({"year": int})
-                .query(f"year in [{', '.join(map(str, info.Y))}]")
+                .query(years_query)
                 .assign(node=node, unit=unit)
                 .dropna(subset=["value"])
             )
