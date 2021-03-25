@@ -89,8 +89,10 @@ def get_ikarus_data(context):
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
-        are data frames ready for :meth:`~.Scenario.add_par`.
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+        Values are data frames ready for :meth:`~.Scenario.add_par`.
+        Years in the data include the model horizon indicated by
+        ``context["transport build info"]``, plus the additional year 2010.
     """
     # Reference to the transport configuration
     config = context["transport config"]
@@ -171,14 +173,16 @@ def get_ikarus_data(context):
 
     # Create data frames to add imported params to MESSAGEix
 
-    # Vintage and active years from Scenario
-    vtg_years, act_years = info.yv_ya["year_vtg"], info.yv_ya["year_act"]
+    # Vintage and active years from scenario info
+    # Prepend 2010 so that values for this year are saved
+    vtg_years = [2010] + info.yv_ya["year_vtg"].tolist()
+    act_years = [2010] + info.yv_ya["year_act"].tolist()
 
     # Default values to be used as args in make_df()
     defaults = dict(
         mode="all",
-        year_act=act_years.astype(int),
-        year_vtg=vtg_years.astype(int),
+        year_act=act_years,
+        year_vtg=vtg_years,
         time="year",
         time_origin="year",
         time_dest="year",
