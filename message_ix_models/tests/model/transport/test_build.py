@@ -1,10 +1,11 @@
 import pytest
 from pytest import mark, param
 
+from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
 
-from message_data import testing
 from message_data.model.transport import build, report
+from message_data.testing import NIE
 
 
 @pytest.mark.parametrize(
@@ -26,9 +27,6 @@ def test_get_spec(transport_context_f, regions_arg, regions_exp):
     assert spec["require"].set["node"] == exp
 
 
-_NIE = pytest.mark.xfail(raises=NotImplementedError)
-
-
 @pytest.mark.parametrize(
     "regions, ldv, nonldv, solve",
     [
@@ -37,8 +35,8 @@ _NIE = pytest.mark.xfail(raises=NotImplementedError)
         param("R11", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),  # 43 s
         param("R11", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
         # Non-R11 configurations currently fail
-        param("R14", None, None, False, marks=_NIE),
-        param("ISR", None, None, False, marks=_NIE),
+        param("R14", None, None, False, marks=NIE),
+        param("ISR", None, None, False, marks=NIE),
     ],
 )
 def test_build_bare_res(request, transport_context_f, regions, ldv, nonldv, solve):

@@ -2,9 +2,8 @@ import pandas as pd
 
 from genno import Quantity, computations
 from ixmp.reporting import RENAME_DIMS
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import private_data_path
-
-from message_data.tools import ScenarioInfo
 
 
 def load_transport_file(basename: str, units=None, name: str = None) -> Quantity:
