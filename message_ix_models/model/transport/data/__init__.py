@@ -3,13 +3,13 @@ import logging
 from collections import defaultdict
 
 import pandas as pd
+from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data
 
 from message_data.model.transport.utils import add_commodity_and_level
 from message_data.tools import (
     broadcast,
-    make_df,
     make_io,
     make_matched_dfs,
     make_source_tech,
