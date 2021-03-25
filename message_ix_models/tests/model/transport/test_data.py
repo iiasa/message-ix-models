@@ -34,10 +34,12 @@ def test_load_data(session_context, key, rtype):
     assert isinstance(result, rtype)
 
 
+@pytest.mark.parametrize("years", ["A", "B"])  # param("B", marks=testing.NIE)])
 @pytest.mark.parametrize("regions, N_node", [("R11", 11), ("R14", 14), ("ISR", 1)])
-def test_ikarus(transport_context_f, regions, N_node):
+def test_ikarus(transport_context_f, regions, N_node, years):
     ctx = transport_context_f
     ctx.regions = regions
+    ctx.years = years
 
     # Information about the corresponding base model
     s_info = bare.get_spec(ctx)["add"]
@@ -51,8 +53,8 @@ def test_ikarus(transport_context_f, regions, N_node):
     inv = data["inv_cost"]
     inv_rail_pub = inv[inv["technology"] == "rail_pub"]
 
-    # Regions * 11 years (inv_cost has 'year_vtg' but not 'year_act' dim)
-    rows_per_tech = N_node * 11
+    # Regions * 13 years (inv_cost has 'year_vtg' but not 'year_act' dim)
+    rows_per_tech = N_node * (len(s_info.Y) + 1)
     N_techs = 18
 
     # Data have been loaded with the correct shape, unit and magnitude:
@@ -130,14 +132,16 @@ def test_ikarus(transport_context_f, regions, N_node):
         )
 
 
+@pytest.mark.parametrize("years", ["A", param("B", marks=testing.NIE)])
 @pytest.mark.parametrize(
     "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
 )
-def test_USTIMES_MA3T(transport_context_f, regions):
+def test_USTIMES_MA3T(transport_context_f, regions, years):
     ctx = transport_context_f
-    ctx.regions = regions
 
     # Info about the corresponding RES
+    ctx.regions = regions
+    ctx.years = years
     info = bare.get_spec(ctx)["add"]
 
     ctx["transport build info"] = info
@@ -147,11 +151,11 @@ def test_USTIMES_MA3T(transport_context_f, regions):
 
     # Data have the correct size:
     for par_name, df in data.items():
-        # Data covers all the years
-        assert info.Y == sorted(df["year_vtg"].unique())
+        # Data covers all the years in the scenario, plus 2010
+        assert [2010] + info.Y == sorted(df["year_vtg"].unique())
         # Total length of data: # of regions × (11 technology × # of periods; plus 1
         # technology (historical ICE) for only 2010)
-        assert len(df) == len(info.N[1:]) * ((11 * len(info.Y)) + 1)
+        assert len(info.N[1:]) * ((11 * (len(info.Y) + 1)) + 1) == len(df)
 
 
 @pytest.mark.parametrize(
