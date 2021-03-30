@@ -194,7 +194,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
                         # Copy parameters to all regions, when node_loc is not GLB
                         if (len(regions) == 1) and (rg != "R11_GLB"):
-                            print("copying to all R11", rg, lev)
+                            # print("copying to all R11", rg, lev)
                             df['node_loc'] = None
                             df = df.pipe(broadcast, node_loc=nodes)#.pipe(same_node)
                             # Use same_node only for non-trade technologies
@@ -229,7 +229,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                 # Copy parameters to all regions
                 if (len(regions) == 1) and (rg != "R11_GLB"):
                     if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
-                        print("Copying to all R11")
+                        # print("Copying to all R11")
                         df['node_loc'] = None
                         df = df.pipe(broadcast, node_loc=nodes)
 
