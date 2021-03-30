@@ -26,8 +26,8 @@ def build(scenario):
 
 # add as needed/implemented
 SPEC_LIST = [
-            # "generic", "common", "steel", "cement", "aluminum",
-            # "petro_chemicals", "buildings",
+            "generic", "common", "steel", "cement", "aluminum",
+            "petro_chemicals", "buildings",
             "power_sector"]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
@@ -116,7 +116,7 @@ def solve(context, datafile, tag):
     # Clone and set up
     scenario = build(
         context.get_scenario()
-        .clone(model="MESSAGEix-Materials", scenario=output_scenario_name + tag)
+        .clone(model="MESSAGEix-Materials", scenario=output_scenario_name + '_' + tag)
     )
 
     # Set the latest version as default
@@ -154,12 +154,12 @@ from .data_power_sector import gen_data_power_sector
 from message_data.tools import add_par_data
 
 DATA_FUNCTIONS = [
-    # gen_data_buildings,
-    # gen_data_steel,
-    # gen_data_cement,
-    # gen_data_aluminum,
-    # gen_data_petro_chemicals,
-    # gen_data_generic,
+    gen_data_buildings,
+    gen_data_steel,
+    gen_data_cement,
+    gen_data_aluminum,
+    gen_data_petro_chemicals,
+    gen_data_generic,
     gen_data_power_sector
 ]
 
