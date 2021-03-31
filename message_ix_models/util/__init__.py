@@ -495,10 +495,11 @@ def strip_par_data(
     # Iterate over parameters with ≥1 dimensions indexed by `set_name`
     for par_name in iter_parameters(set_name):
         if par_name not in par_list:
-            raise RuntimeError(  # pragma: no cover
+            log.warning(  # pragma: no cover
                 f"MESSAGEix parameter {repr(par_name)} missing in Scenario "
                 f"{scenario.model}/{scenario.scenario}"
             )
+            continue
 
         # Iterate over dimensions indexed by `set_name`
         for dim, _ in filter(
