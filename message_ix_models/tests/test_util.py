@@ -2,15 +2,22 @@
 import logging
 from pathlib import Path
 
+import pandas as pd
 import pytest
+from message_ix import make_df
 
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     MESSAGE_DATA_PATH,
     MESSAGE_MODELS_PATH,
     as_codes,
+    broadcast,
+    copy_column,
+    ffill,
     iter_parameters,
     load_package_data,
     load_private_data,
+    make_source_tech,
     package_data_path,
     private_data_path,
 )
@@ -40,6 +47,37 @@ def test_as_codes_invalid(data):
     """as_codes() rejects invalid data."""
     with pytest.raises(TypeError):
         as_codes(data)
+
+
+def test_copy_column():
+    df = pd.DataFrame([[0, 1], [2, 3]], columns=["a", "b"])
+    df = df.assign(c=copy_column("a"), d=4)
+    assert all(df["c"] == [0, 2])
+    assert all(df["d"] == 4)
+
+
+def test_ffill():
+    years = list(range(6))
+
+    df = (
+        make_df(
+            "fix_cost",
+            year_act=[0, 2, 4],
+            year_vtg=[0, 2, 4],
+            technology=["foo", "bar", "baz"],
+            unit="USD",
+        )
+        .pipe(broadcast, node_loc=["A", "B", "C"])
+        .assign(value=list(map(float, range(9))))
+    )
+
+    # Function completes
+    result = ffill(df, "year_vtg", years, "year_act = year_vtg")
+
+    assert 2 * len(df) == len(result)
+    assert years == sorted(result["year_vtg"].unique())
+
+    # TODO test some specific values
 
 
 def test_iter_parameters(test_context):
@@ -77,6 +115,44 @@ def test_load_package_data_invalid():
 )
 def test_load_private_data(*parts, suffix=None):
     load_private_data("sources.yaml")
+
+
+def test_make_source_tech():
+    info = ScenarioInfo()
+    info.set["node"] = ["World", "node0", "node1"]
+    info.set["year"] = [1, 2, 3]
+
+    values = dict(
+        capacity_factor=1.0,
+        output=2.0,
+        var_cost=3.0,
+        technical_lifetime=4.0,
+    )
+    result = make_source_tech(
+        info,
+        common=dict(
+            commodity="commodity",
+            level="level",
+            mode="mode",
+            technology="technology",
+            time="time",
+            time_dest="time",
+            unit="unit",
+        ),
+        **values,
+    )
+    # Result is dictionary with the expected keys
+    assert isinstance(result, dict)
+    assert set(result.keys()) == set(values.keys())
+
+    # "World" node does not appear in results
+    assert set(result["output"]["node_loc"].unique()) == set(info.N[1:])
+
+    for df in result.values():
+        # Results have 2 nodes × 3 years
+        assert len(df) == 2 * 3
+        # No empty values
+        assert not df.isna().any(None)
 
 
 def test_package_data_path(*parts, suffix=None):
