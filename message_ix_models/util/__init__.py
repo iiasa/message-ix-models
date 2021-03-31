@@ -1,7 +1,8 @@
 import logging
+from collections import defaultdict
 from copy import copy
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Union, cast
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union, cast
 
 import message_ix
 import pandas as pd
@@ -129,6 +130,38 @@ def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
     return list(result.values())
 
 
+def broadcast(df, **kwargs):
+    """Fill missing data in `df` by broadcasting.
+
+    Arguments
+    ---------
+    kwargs
+        Keys are dimensions. Values are labels along that dimension to fill.
+    """
+    for dim, levels in kwargs.items():
+        assert df[dim].isna().all(), ("Dimension {dim} was not empty", df.head())
+
+        df = (
+            pd.concat({level: df for level in levels}, names=[dim])
+            .drop(dim, axis=1)
+            .reset_index(dim)
+        )
+    return df
+
+
+def copy_column(column_name):
+    """For use with :meth:`pandas.DataFrame.assign`.
+
+    Examples
+    --------
+    Modify `df` by filling the column 'baz' with the value ``3``, and copying
+    the column 'bar' into column 'foo'.
+
+    >>> df.assign(foo=copy_column('bar'), baz=3)
+    """
+    return lambda df: df[column_name]
+
+
 def eval_anno(obj: AnnotableArtefact, id: str):
     """Retrieve the annotation `id` from `obj`, run :func:`eval` on its contents.
 
@@ -148,6 +181,48 @@ def eval_anno(obj: AnnotableArtefact, id: str):
     except Exception:
         # Something that can't be eval()'d, e.g. a string
         return value
+
+
+def ffill(
+    df: pd.DataFrame, dim: str, values: Sequence[Union[str, Code]], expr: str = None
+) -> pd.DataFrame:
+    """Forward-fill `df` on `dim` to cover `values`.
+
+    Parameters
+    ----------
+    df : .DataFrame
+        Data to fill forwards.
+    dim : str
+        Dimension to fill along. Must be a column in `df`.
+    labels : list of str
+        Labels along `dim` that must be present in the returned data frame.
+    expr : str, optional
+        If provided, :meth:`.DataFrame.eval` is called. This can be used to assign one
+        column to another. For instance, if `dim` == "year_vtg" and `expr` is "year_act
+        = year_vtg", then forward filling is performed along the "year_vtg" dimension/
+        column, and then the filled values are copied to the "year_act" column.
+    """
+    if dim in ("value", "unit"):
+        raise ValueError(dim)
+
+    # Mapping from (values existing in `df`) -> equal or greater members of `values`
+    mapping = defaultdict(set)
+    last_seen = None
+    for v in sorted(set(values) | set(df[dim].unique())):
+        if v in df[dim].unique():
+            last_seen = v
+        mapping[last_seen].add(v)
+
+    def _maybe_eval(df):
+        return df.eval(expr) if expr is not None else df
+
+    dfs = [df]
+    for key, group_df in df.groupby(dim):
+        for new_label in sorted(mapping[key])[1:]:
+            # Duplicate the data; assign the new_label to `dim`
+            dfs.append(group_df.assign(**{dim: new_label}).pipe(_maybe_eval))
+
+    return pd.concat(dfs, ignore_index=True)
 
 
 def iter_parameters(set_name):
@@ -261,6 +336,129 @@ def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs messag
     return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts)
 
 
+def make_io(src, dest, efficiency, on="input", **kwargs):
+    """Return input and output data frames for a 1-to-1 technology.
+
+    Parameters
+    ----------
+    src : tuple (str, str, str)
+        Input commodity, level, unit.
+    dest : tuple (str, str, str)
+        Output commodity, level, unit.
+    efficiency : float
+        Conversion efficiency.
+    on : 'input' or 'output'
+        If 'input', `efficiency` applies to the input, and the output, thus the
+        activity level of the technology, is in dest[2] units. If 'output',
+        the opposite.
+    kwargs
+        Passed to :func:`make_df`.
+
+    Returns
+    -------
+    dict (str -> pd.DataFrame)
+        Keys are 'input' and 'output'; values are data frames.
+    """
+    return dict(
+        input=message_ix.make_df(
+            "input",
+            commodity=src[0],
+            level=src[1],
+            unit=src[2],
+            value=efficiency if on == "input" else 1.0,
+            **kwargs,
+        ),
+        output=message_ix.make_df(
+            "output",
+            commodity=dest[0],
+            level=dest[1],
+            unit=dest[2],
+            value=1.0 if on == "input" else efficiency,
+            **kwargs,
+        ),
+    )
+
+
+def make_matched_dfs(base, **par_value):
+    """Return data frames derived from *base* for multiple parameters.
+
+    *par_values* maps from parameter names (e.g. 'fix_cost') to values.
+    make_matched_dfs returns a :class:`dict` of :class:`pandas.DataFrame`, one
+    for each parameter in *par_value*. The contents of *base* are used to
+    populate the columns of each data frame, and the values of *par_value*
+    overwrite the 'value' column. Duplicates—which occur when the target
+    parameter has fewer dimensions than *base*—are dropped.
+
+    Examples
+    --------
+    >>> input = make_df('input', ...)
+    >>> cf_tl = make_matched_dfs(
+    >>>     input,
+    >>>     capacity_factor=1,
+    >>>     technical_lifetime=1,
+    >>> )
+    """
+    data = {col: v for col, v in base.iteritems() if col != "value"}
+    return {
+        par: message_ix.make_df(par, **data, value=value).drop_duplicates()
+        for par, value in par_value.items()
+    }
+
+
+def make_source_tech(info, common, **values) -> Mapping[str, pd.DataFrame]:
+    """Return parameter data for a ‘source’ technology.
+
+    The technology has no inputs; its output commodity and/or level are
+    determined by `common`; either single values, or :obj:`None` if the
+    result will be :meth:`~DataFrame.pipe`'d through :func:`broadcast`.
+
+    Parameters
+    ----------
+    info : ScenarioInfo
+    common : dict
+        Passed to :func:`make_df`.
+    **values
+        Values for 'capacity_factor' (optional; default 1.0), 'output',
+        'technical_lifetime', and 'var_cost'.
+
+    Returns
+    -------
+    dict
+        Suitable for :func:`add_par_data`.
+    """
+    # Check arguments
+    values.setdefault("capacity_factor", 1.0)
+    missing = {"capacity_factor", "output", "technical_lifetime", "var_cost"} - set(
+        values.keys()
+    )
+    if len(missing):
+        raise ValueError(f"make_dummy_source() needs values for {repr(missing)}")
+
+    # Create data for "output"
+    output = (
+        message_ix.make_df(
+            "output",
+            value=values.pop("output"),
+            year_act=info.Y,
+            year_vtg=info.Y,
+            **common,
+        )
+        .pipe(broadcast, node_loc=info.N[1:])
+        .pipe(same_node)
+    )
+    result = make_matched_dfs(base=output, **values)
+    result["output"] = output
+
+    return result
+
+
+def merge_data(base, *others):
+    """Merge dictionaries of DataFrames together into `base`."""
+    for other in others:
+        for par, df in other.items():
+            base[par] = base[par].append(df) if par in base else df
+
+
 def package_data_path(*parts) -> Path:
     """Construct a path to a file under :file:`message_ix_models/data/`."""
     return _make_path(MESSAGE_MODELS_PATH / "data", *parts)
@@ -269,6 +467,12 @@ def package_data_path(*parts) -> Path:
 def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
     """Construct a path to a file under :file:`data/` in :mod:`message_data`."""
     return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)
+
+
+def same_node(df):
+    """Fill 'node_origin'/'node_dest' in `df` from 'node_loc'."""
+    cols = list(set(df.columns) & {"node_origin", "node_dest"})
+    return df.assign(**{c: copy_column("node_loc") for c in cols})
 
 
 def strip_par_data(
