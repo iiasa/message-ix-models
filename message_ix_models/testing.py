@@ -157,8 +157,9 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
 
     Parameters
     ----------
-    request : .Request
-        The pytest :fixture:`pytest:request` fixture.
+    request : .Request or None
+        The pytest :fixture:`pytest:request` fixture. If provided the pytest test node
+        name is used for the scenario name of the returned Scenario.
     context : .Context
         Passed to :func:`.testing.bare_res`.
     solved : bool, optional
@@ -188,5 +189,10 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
         log.info("Solve")
         base.solve(solve_options=dict(lpmethod=4), quiet=True)
 
-    log.info(f"Clone to '{name}/{request.node.name}'")
-    return base.clone(scenario=request.node.name, keep_solution=solved)
+    try:
+        new_name = request.node.name
+    except AttributeError:
+        new_name = "baseline"
+
+    log.info(f"Clone to '{name}/{new_name}'")
+    return base.clone(scenario=new_name, keep_solution=solved)
