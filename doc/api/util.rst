@@ -19,10 +19,18 @@ Commonly used:
 .. autosummary::
 
    as_codes
+   broadcast
+   copy_column
+   ffill
    load_package_data
    load_private_data
+   make_io
+   make_matched_dfs
+   make_source_tech
+   merge_data
    package_data_path
    private_data_path
+   same_node
    ~context.Context
    ~scenarioinfo.ScenarioInfo
 
