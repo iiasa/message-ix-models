@@ -1,10 +1,12 @@
 from collections import defaultdict
 from functools import lru_cache, partial
-from typing import Mapping
+from typing import Dict, Mapping, Sequence, Union
 import logging
 
+import message_ix
 import pandas as pd
 from sdmx.model import Annotation, Code
+
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 from message_ix_models.util import (
@@ -20,18 +22,40 @@ from message_ix_models.util import (
 
 log = logging.getLogger(__name__)
 
+CodeLike = Union[str, Code]
 
-def add(scenario, consumer_groups, technologies, template, **options):
+
+def add(
+    scenario: message_ix.Scenario,
+    groups: Sequence[CodeLike],
+    technologies: Sequence[CodeLike],
+    template: Code,
+    **options,
+) -> None:
     """Add disutility formulation to `scenario`."""
     # Generate the spec given the configuration options
-    spec = get_spec(scenario, consumer_groups, technologies, template)
+    spec = get_spec(groups, technologies, template)
 
     # Apply spec and add data
     apply_spec(scenario, spec, partial(get_data, spec=spec), **options)
 
 
-def get_spec(scenario, consumer_groups, technologies, template):
-    """Get a spec for a disutility formulation."""
+def get_spec(
+    groups: Sequence[CodeLike],
+    technologies: Sequence[CodeLike],
+    template: Code,
+) -> Dict[str, ScenarioInfo]:
+    """Get a spec for a disutility formulation.
+
+    Parameters
+    ----------
+    groups : list of Code
+        Identities of the consumer groups with distinct disutilities.
+    technologies : list of Code
+        The technologies to which the disutilities are applied.
+    template : .Code
+
+    """
     require = ScenarioInfo()
     remove = ScenarioInfo()
     add = ScenarioInfo()
