@@ -411,7 +411,7 @@ def make_matched_dfs(base, **par_value):
     }
 
 
-def make_source_tech(info, common, **values) -> Mapping[str, pd.DataFrame]:
+def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
     """Return parameter data for a ‘source’ technology.
 
     The technology has no inputs; its output commodity and/or level are determined by
