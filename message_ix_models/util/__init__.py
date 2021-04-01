@@ -160,8 +160,8 @@ def copy_column(column_name):
 
     Examples
     --------
-    Modify `df` by filling the column 'baz' with the value ``3``, and copying
-    the column 'bar' into column 'foo'.
+    Modify `df` by filling the column 'baz' with the value ``3``, and copying the column
+    'bar' into column 'foo'.
 
     >>> df.assign(foo=copy_column('bar'), baz=3)
     """
@@ -354,9 +354,8 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
     efficiency : float
         Conversion efficiency.
     on : 'input' or 'output'
-        If 'input', `efficiency` applies to the input, and the output, thus the
-        activity level of the technology, is in dest[2] units. If 'output',
-        the opposite.
+        If 'input', `efficiency` applies to the input, and the output, thus the activity
+        level of the technology, is in dest[2] units. If 'output', the opposite.
     kwargs
         Passed to :func:`make_df`.
 
@@ -389,11 +388,11 @@ def make_matched_dfs(base, **par_value):
     """Return data frames derived from *base* for multiple parameters.
 
     *par_values* maps from parameter names (e.g. 'fix_cost') to values.
-    make_matched_dfs returns a :class:`dict` of :class:`pandas.DataFrame`, one
-    for each parameter in *par_value*. The contents of *base* are used to
-    populate the columns of each data frame, and the values of *par_value*
-    overwrite the 'value' column. Duplicates—which occur when the target
-    parameter has fewer dimensions than *base*—are dropped.
+    make_matched_dfs returns a :class:`dict` of :class:`pandas.DataFrame`, one for each
+    parameter in *par_value*. The contents of *base* are used to populate the columns
+    of each data frame, and the values of *par_value* overwrite the 'value' column.
+    Duplicates—which occur when the target parameter has fewer dimensions than
+    *base*—are dropped.
 
     Examples
     --------
