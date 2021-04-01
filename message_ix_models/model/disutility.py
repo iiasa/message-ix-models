@@ -100,7 +100,7 @@ def get_spec(
         add.set["technology"].append(t_code)
 
     # Deduplicate "commodity" set elements
-    add.set["commodity"] = sorted(set(add.set["commodity"]))
+    add.set["commodity"] = sorted(map(str, set(add.set["commodity"])))
 
     return dict(require=require, remove=remove, add=add)
 
