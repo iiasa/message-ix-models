@@ -67,30 +67,40 @@ def get_spec(
     add.set["technology"] = [Code(id="disutility source")]
 
     # Add consumer groups
-    for cg in consumer_groups:
-        add.set["mode"].append(Code(id=cg.id, name=f"Production for {cg.id}"))
+    for g in groups:
+        add.set["mode"].append(Code(id=g.id, name=f"Production for {g.id}"))
 
     # Add conversion technologies
     for t in technologies:
         # String formatting arguments
         fmt = dict(technology=t)
 
+        # Format each field in the "input" and "output" annotations
+        input = {k: v.format(**fmt) for k, v in eval_anno(template, id="input").items()}
+        output = eval_anno(template, id="output")
+
         # - Format the ID string from the template
         # - Copy the "output" annotation without modification
         t_code = Code(
             id=template.id.format(**fmt),
-            annotations=[template.get_annotation(id="output")],
+            annotations=[
+                template.get_annotation(id="output"),
+                Annotation(id="input", text=repr(input)),
+            ],
         )
 
-        # Format each field in the "input" annotation
-        input = eval(str(template.get_annotation(id="input").text))
-        t_code.annotations.append(
-            Annotation(
-                id="input", text=repr({k: v.format(**fmt) for k, v in input.items()})
-            )
+        # "commodity" set elements to add
+        add.set["commodity"].append(input["commodity"])
+        add.set["commodity"].extend(
+            output["commodity"].format(mode=g.id) for g in groups
         )
 
+        # "technology" set elements to add
+        t_code.annotations.append(Annotation(id="input", text=repr(input)))
         add.set["technology"].append(t_code)
+
+    # Deduplicate "commodity" set elements
+    add.set["commodity"] = sorted(set(add.set["commodity"]))
 
     return dict(require=require, remove=remove, add=add)
 
