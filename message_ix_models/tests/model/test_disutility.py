@@ -184,8 +184,15 @@ def test_get_spec(groups, techs, template):
     # Spec removes nothing
     assert set() == set(spec["remove"].set.keys())
 
-    # Spec adds the "disutility" commodity
-    assert {"disutility"} == set(map(str, spec["add"].set["commodity"]))
+    # Spec adds the "disutility" commodity; and adds (if not existing) the output
+    # commodities for t[01] and demand commodities for g[01]
+    assert {
+        "disutility",
+        "output of t0",
+        "output of t1",
+        "demand of group g0",
+        "demand of group g1",
+    } == set(map(str, spec["add"].set["commodity"]))
 
     # Spec adds the "distuility source" technology, and "{tech} usage" for each tech,
     # per the template
