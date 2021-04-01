@@ -139,7 +139,13 @@ def broadcast(df, **kwargs):
         Keys are dimensions. Values are labels along that dimension to fill.
     """
     for dim, levels in kwargs.items():
-        assert df[dim].isna().all(), ("Dimension {dim} was not empty", df.head())
+        # Checks
+        assert df[dim].isna().all(), f"Dimension {dim} was not empty\n\n{df.head()}"
+        if len(levels) == 0:
+            log.debug(
+                f"Don't broadcast over {repr(dim)}; labels {levels} have length 0"
+            )
+            continue
 
         df = (
             pd.concat({level: df for level in levels}, names=[dim])
@@ -408,9 +414,9 @@ def make_matched_dfs(base, **par_value):
 def make_source_tech(info, common, **values) -> Mapping[str, pd.DataFrame]:
     """Return parameter data for a ‘source’ technology.
 
-    The technology has no inputs; its output commodity and/or level are
-    determined by `common`; either single values, or :obj:`None` if the
-    result will be :meth:`~DataFrame.pipe`'d through :func:`broadcast`.
+    The technology has no inputs; its output commodity and/or level are determined by
+    `common`; either single values, or :obj:`None` if the result will be
+    :meth:`~DataFrame.pipe`'d through :func:`broadcast`.
 
     Parameters
     ----------
