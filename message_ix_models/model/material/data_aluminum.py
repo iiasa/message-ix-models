@@ -142,6 +142,33 @@ def gen_data_aluminum(scenario, dry_run=False):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, value=val[regions[regions==rg].index[0]], unit='t', \
                             node_loc=rg, node_dest="R11_GLB", **common)
+
+                        # Assign higher efficiency to younger plants
+                        elif (((t == "soderberg_aluminum") or (t == "prebake_aluminum")) \
+                         & (com == "electr") & (param_name == "input")):
+                              # All the vıntage years
+                             year_vtg = sorted(set(yv_ya.year_vtg.values))
+                             # Collect the values for the combination of vintage and
+                             # active years.
+                             input_values_all = []
+                             for yr_v in year_vtg:
+                                 # The initial year efficiency value
+                                 input_values_temp = [val[regions[regions==rg].index[0]]]
+                                 # Reduction after the vintage year
+                                 year_vtg_filtered = list(filter(lambda op: op>=yr_v, year_vtg))
+                                 # Filter the active model years
+                                 year_act = yv_ya.loc[yv_ya["year_vtg"]== yr_v,"year_act"].values
+                                 for i in range(len(year_vtg_filtered) - 1):
+                                     input_values_temp.append(input_values_temp[i] * 1.1)
+
+                                 act_year_no = len(year_act)
+                                 input_values_temp = input_values_temp[-act_year_no:]
+                                 input_values_all = input_values_all + input_values_temp
+
+                             df = (make_df(param_name, technology=t, commodity=com, \
+                             level=lev, value= input_values_all, unit='t', \
+                             node_loc=rg, **common).pipe(same_node))
+
                         else:
                             df = (make_df(param_name, technology=t, commodity=com, \
                             level=lev, value=val[regions[regions==rg].index[0]], unit='t', \
@@ -230,11 +257,24 @@ def gen_data_aluminum(scenario, dry_run=False):
             params = set(data_aluminum_rel.loc[(data_aluminum_rel["relation"] == r),\
                 "parameter"].values)
 
-            common_rel = dict(
-                year_rel = modelyears,
-                year_act = modelyears,
-                mode = 'M1',
-                relation = r,)
+            # This relation should start from 2020...
+            if r == "minimum_recycling_aluminum":
+                modelyears_copy = modelyears[:]
+                modelyears_copy.remove(2020)
+
+                common_rel = dict(
+                    year_rel = modelyears_copy,
+                    year_act = modelyears_copy,
+                    mode = 'M1',
+                    relation = r,)
+            else:
+
+                # Use all the model years for other relations...
+                common_rel = dict(
+                    year_rel = modelyears,
+                    year_act = modelyears,
+                    mode = 'M1',
+                    relation = r,)
 
             for par_name in params:
                 if par_name == "relation_activity":
@@ -285,8 +325,6 @@ def gen_mock_demand_aluminum(scenario):
      2000, 2005], axis = 1)
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
-    print("This is gdp growth table")
-    print(gdp_growth)
 
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
@@ -306,7 +344,7 @@ def gen_mock_demand_aluminum(scenario):
     # Remaining 8.612 Mt shared between AFR and FSU
     # This is used as 2020 data.
 
-    d = [3,28.2, 6.25,5,2.5,2,14.1,3,5.75,5.75,6.25]
+    d = [3,28, 6,5,2.5,2,13.6,3,4.8,4.8,6]
 
     demand2020_al = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\
