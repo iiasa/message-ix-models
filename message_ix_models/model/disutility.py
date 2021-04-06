@@ -127,6 +127,23 @@ def get_data(scenario, spec, **kwargs) -> Mapping[str, pd.DataFrame]:
     return data
 
 
+def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:
+    """:meth:`pandas.DataFrame.assign` helper for ``duration_period``.
+
+    Returns a callable to be passed to :meth:`pandas.DataFrame.assign`. The callable
+    takes a data frame as the first argument, and returns a :class:`pandas.Series`
+    based on the ``duration_period`` parameter in `info`, aligned to `col_name` in the
+    data frame.
+    """
+
+    def func(df):
+        return df.merge(info.par["duration_period"], left_on=col_name, right_on="year")[
+            "value_y"
+        ]
+
+    return func
+
+
 def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
     """Input and output data for disutility conversion technologies."""
     common = dict(
@@ -181,7 +198,7 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
             df = df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node)
             if par == "input":
                 # Common across modes
-                data0[par].append(df.assign(mode="all"))
+                data0[par].append(df.pipe(broadcast, mode=mode))
 
                 # Disutility inputs differ by mode
                 data0[par].append(
@@ -189,40 +206,28 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
                 )
             elif par == "output":
                 # - Broadcast across modes
-                # - Use a function to set the output commodity based on the
-                #   mode
+                # - Use a function to set the output commodity based on the mode
                 data0[par].append(
                     df.pipe(broadcast, mode=mode).assign(commodity=output_commodity)
                 )
 
     # Concatenate to a single data frame per parameter
-    data = {par: pd.concat(dfs) for par, dfs in data0.items()}
+    data = {par: pd.concat(dfs, ignore_index=True) for par, dfs in data0.items()}
 
     # Create data for capacity_factor and technical_lifetime
     data.update(
         make_matched_dfs(
             base=data["input"],
             capacity_factor=1,
-            # TODO get this from ScenarioInfo
-            technical_lifetime=10,
-            # commented: activity constraints for the technologies
-            # TODO get these values from an argument
-            growth_activity_lo=-0.5,
-            # growth_activity_up=0.5,
-            # initial_activity_up=1.,
-            # soft_activity_lo=-0.5,
-            # soft_activity_up=0.5,
+            technical_lifetime=None,
         )
     )
-    # Remove growth_activity_lo for first year
-    data["growth_activity_lo"] = data["growth_activity_lo"].query(
-        f"year_act > {spec['add'].y0}"
-    )
 
-    # commented: initial activity constraints for the technologies
-    # data.update(
-    #    make_matched_dfs(base=data["output"], initial_activity_up=2.)
-    # )
+    # Update technical_lifetime with values from duration_period for the corresponding
+    # period
+    data["technical_lifetime"] = data["technical_lifetime"].assign(
+        value=dp_for("year_vtg", info), unit="y"
+    )
 
     return data
 
@@ -253,9 +258,13 @@ def data_source(info, spec) -> Mapping[str, pd.DataFrame]:
         ),
         output=1.0,
         var_cost=1.0,
-        # TODO get this from ScenarioInfo
-        technical_lifetime=10,
+        technical_lifetime=None,
     )
     result["output"] = result["output"].pipe(broadcast, level=sorted(levels))
+    # Update technical_lifetime with values from duration_period for the corresponding
+    # period
+    result["technical_lifetime"] = result["technical_lifetime"].assign(
+        value=dp_for("year_vtg", info), unit="y"
+    )
 
     return result
