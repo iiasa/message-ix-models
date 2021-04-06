@@ -147,10 +147,15 @@ def broadcast(df, **kwargs):
             )
             continue
 
+        # - Duplicate the data
+        # - Drop the existing column named 'dim'
+        # - Re-add the column from the constructed MultiIndex
+        # - Reindex for sequential row numbers
         df = (
-            pd.concat({level: df for level in levels}, names=[dim])
+            pd.concat([df] * len(levels), keys=levels, names=[dim])
             .drop(dim, axis=1)
             .reset_index(dim)
+            .reset_index()
         )
     return df
 
@@ -405,7 +410,9 @@ def make_matched_dfs(base, **par_value):
     """
     data = {col: v for col, v in base.iteritems() if col != "value"}
     return {
-        par: message_ix.make_df(par, **data, value=value).drop_duplicates()
+        par: message_ix.make_df(par, **data, value=value)
+        .drop_duplicates()
+        .reset_index()
         for par, value in par_value.items()
     }
 
