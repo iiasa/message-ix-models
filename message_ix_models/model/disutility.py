@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from functools import lru_cache, partial
+from functools import partial
 from itertools import product
 from typing import Dict, List, Mapping, Sequence, Union
 
