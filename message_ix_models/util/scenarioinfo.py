@@ -64,6 +64,9 @@ class ScenarioInfo:
             except AttributeError:
                 continue  # pd.DataFrame for ≥2-D set; don't convert
 
+        for name in ("duration_period",):
+            self.par[name] = scenario.par(name)
+
         self.is_message_macro = "PRICE_COMMODITY" in scenario.par_list()
 
         # Computed once
