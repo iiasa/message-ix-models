@@ -1,3 +1,5 @@
+from itertools import product
+
 import pandas as pd
 import pytest
 from message_ix import make_df
@@ -108,51 +110,60 @@ def test_minimal(scenario, groups, techs, template):
                 common,
                 output=1.0,
                 technical_lifetime=5.0,
-                var_cost=0.0,
+                var_cost=1.0,
             ),
         )
 
     # For each combination of (tech) × (group) × (2 years)
     df = pd.DataFrame(
         [
-            ["g0", "output of t0", "t0 usage", 2020, 1.0],
-            ["g0", "output of t0", "t0 usage", 2025, 1.0],
-            ["g0", "output of t1", "t1 usage", 2020, 1.0],
-            ["g0", "output of t1", "t1 usage", 2025, 1.0],
-            ["g1", "output of t0", "t0 usage", 2020, 1.0],
-            ["g1", "output of t0", "t0 usage", 2025, 1.0],
-            ["g1", "output of t1", "t1 usage", 2020, 1.0],
-            ["g1", "output of t1", "t1 usage", 2025, 1.0],
+            ["g0", "t0 usage", 2020, 0.1],
+            ["g0", "t0 usage", 2025, 0.1],
+            ["g0", "t1 usage", 2020, 0.1],
+            ["g0", "t1 usage", 2025, 0.1],
+            ["g1", "t0 usage", 2020, 0.1],
+            ["g1", "t0 usage", 2025, 0.1],
+            ["g1", "t1 usage", 2020, 0.1],
+            ["g1", "t1 usage", 2025, 0.1],
         ],
-        columns=["mode", "commodity", "technology", "year_vtg", "value"],
+        columns=["mode", "technology", "year_vtg", "value"],
     )
-    data["input"] = make_df("input", **df, **COMMON).assign(
+    data["input"] = make_df("input", **df, commodity="disutility", **COMMON).assign(
         node_origin=copy_column("node_loc"), year_act=copy_column("year_vtg")
     )
 
-    data["demand"] = make_df(
-        "demand",
-        **pd.DataFrame(
-            [
-                ["demand of group g0", 2020, 1.0],
-                ["demand of group g0", 2025, 1.0],
-                ["demand of group g1", 2020, 1.0],
-                ["demand of group g1", 2025, 1.0],
-            ],
-            columns=["commodity", "year", "value"],
-        ),
-        **COMMON,
-    )
+    # Demand
+    c, y = zip(*product(["demand of group g0", "demand of group g1"], [2020, 2025]))
+    data["demand"] = make_df("demand", commodity=c, year=y, value=1.0, **COMMON)
+
+    # Activity in the first year
+    m, t = zip(*product(["g0", "g1"], ["t0 usage", "t1 usage"]))
+    for bound in ("lo", "up"):
+        par = f"bound_activity_{bound}"
+        data[par] = make_df(
+            par, value=0.5, mode=m, technology=t, year_act=2020, **COMMON
+        )
+
+    # Bounds
+    t, ya = zip(*product(["t0 usage", "t1 usage"], [2025]))
+    for bound, factor in (("lo", -1.0), ("up", 1.0)):
+        par = f"growth_activity_{bound}"
+        data[par] = make_df(
+            par, value=factor * 0.01, technology=t, year_act=ya, **COMMON
+        )
 
     scenario.check_out()
     add_par_data(scenario, data)
     scenario.commit("Disutility test 1")
 
+    # Pre-solve debugging output
+    for par in ("input", "output", "duration_period", "var_cost"):
+        scenario.par(par).to_csv(f"debug-{par}.csv")
+
     scenario.solve(quiet=True)
 
+    # Post-solve debugging output TODO comment before merging
     ACT = scenario.var("ACT").query("lvl > 0").drop(columns=["node_loc", "time", "mrg"])
-
-    # For debugging TODO comment before merging
     print(ACT)
 
 
