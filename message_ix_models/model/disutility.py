@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 from functools import lru_cache, partial
+from itertools import product
 from typing import Dict, List, Mapping, Sequence, Union
 
 import message_ix
@@ -65,33 +66,29 @@ def get_spec(
     add.set["commodity"] = [Code(id="disutility")]
     add.set["technology"] = [Code(id="disutility source")]
 
-    # Add consumer groups
-    add.set["mode"].extend(Code(id=g.id, name=f"Production for {g.id}") for g in groups)
-
     # Add conversion technologies
-    for t in technologies:
+    for t, g in product(technologies, groups):
         # String formatting arguments
-        fmt = dict(technology=t)
+        fmt = dict(technology=t, group=g)
 
         # Format each field in the "input" and "output" annotations
         input = {k: v.format(**fmt) for k, v in eval_anno(template, id="input").items()}
-        output = eval_anno(template, id="output")
+        output = {
+            k: v.format(**fmt) for k, v in eval_anno(template, id="output").items()
+        }
 
         # - Format the ID string from the template
         # - Copy the "output" annotation without modification
         t_code = Code(
             id=template.id.format(**fmt),
             annotations=[
-                template.get_annotation(id="output"),
                 Annotation(id="input", text=repr(input)),
+                Annotation(id="output", text=repr(output)),
             ],
         )
 
         # "commodity" set elements to add
-        add.set["commodity"].append(input["commodity"])
-        add.set["commodity"].extend(
-            output["commodity"].format(mode=g.id) for g in groups
-        )
+        add.set["commodity"].extend([input["commodity"], output["commodity"]])
 
         # "technology" set elements to add
         t_code.annotations.append(Annotation(id="input", text=repr(input)))
@@ -147,6 +144,7 @@ def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:
 def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
     """Input and output data for disutility conversion technologies."""
     common = dict(
+        mode="all",
         year_vtg=info.Y,
         year_act=info.Y,
         # No subannual detail
@@ -157,37 +155,26 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
 
     # Use the spec to retrieve information
     technology = spec["add"].set["technology"]
-    mode = list(map(str, spec["add"].set["mode"]))
 
     # Data to return
     data0: Mapping[str, List[pd.DataFrame]] = defaultdict(list)
 
-    # Loop over technologies
+    # Loop over conversion technologies
     for t in technology:
         # Use the annotations on the technology Code to get information about the
         # commodity, level, and unit
         input = eval_anno(t, "input")
         output = eval_anno(t, "output")
-        if input is output is None:
+        if None in (input, output):
             if t.id == "disutility source":
-                continue  # Data for this tech is from disutility_source()
+                continue  # Data for this tech is from data_source()
             else:
                 raise ValueError(t)  # Error in user input
-
-        # Helper functions for output
-        @lru_cache()
-        def oc_for_mode(mode):
-            # Format the output commodity id given the mode id
-            return output["commodity"].format(mode=mode)
-
-        def output_commodity(df):
-            # Return a series with output commodity based on mode
-            return df["mode"].apply(oc_for_mode)
 
         # Make input and output data frames
         i_o = make_io(
             (input["commodity"], input["level"], input["unit"]),
-            (None, output["level"], output["unit"]),
+            (output["commodity"], output["level"], output["unit"]),
             1.0,
             on="output",
             technology=t.id,
@@ -196,20 +183,14 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
         for par, df in i_o.items():
             # Broadcast across nodes
             df = df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node)
-            if par == "input":
-                # Common across modes
-                data0[par].append(df.pipe(broadcast, mode=mode))
 
-                # Disutility inputs differ by mode
-                data0[par].append(
-                    df.assign(commodity="disutility").pipe(broadcast, mode=mode)
+            if par == "input":
+                # Add input of disutility
+                df = pd.concat(
+                    [df, df.assign(commodity="disutility")], ignore_index=True
                 )
-            elif par == "output":
-                # - Broadcast across modes
-                # - Use a function to set the output commodity based on the mode
-                data0[par].append(
-                    df.pipe(broadcast, mode=mode).assign(commodity=output_commodity)
-                )
+
+            data0[par].append(df)
 
     # Concatenate to a single data frame per parameter
     data = {par: pd.concat(dfs, ignore_index=True) for par, dfs in data0.items()}
