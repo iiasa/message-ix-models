@@ -2,7 +2,7 @@ from itertools import product
 
 import pandas as pd
 
-# import pandas.testing as pdt
+import pandas.testing as pdt
 import pytest
 from message_ix import make_df
 from sdmx.model import Annotation, Code
@@ -92,42 +92,34 @@ def test_add(scenario, groups, techs, template):
     assert (scenario.var("ACT")["lvl"] == 0).all()
 
 
-def test_minimal(scenario, groups, techs, template):
-    """Minimal test case for disutility formulation."""
-    disutility.add(scenario, groups, techs, template)
-
+def minimal_test_data(scenario):
     # Fill in the data for the test case
-
     common = COMMON.copy()
     common.pop("node_loc")
     common.update(dict(mode="all"))
 
     data = dict()
 
+    info = ScenarioInfo(scenario)
+    y0 = info.Y[0]
+    y1 = info.Y[1]
+
+    # Output from t0 and t1
     for t in ("t0", "t1"):
         common.update(dict(technology=t, commodity=f"output of {t}"))
-        merge_data(
-            data,
-            make_source_tech(
-                ScenarioInfo(scenario),
-                common,
-                output=1.0,
-                technical_lifetime=5.0,
-                var_cost=1.0,
-            ),
-        )
+        merge_data(data, make_source_tech(info, common, output=1.0, var_cost=1.0))
 
-    # For each combination of (tech) × (group) × (2 years)
+    # Disutility input for each combination of (tech) × (group) × (2 years)
     input_data = pd.DataFrame(
         [
-            ["usage of t0 by g0", 2020, 0.1],
-            ["usage of t0 by g0", 2025, 0.1],
-            ["usage of t1 by g0", 2020, 0.1],
-            ["usage of t1 by g0", 2025, 0.1],
-            ["usage of t0 by g1", 2020, 0.1],
-            ["usage of t0 by g1", 2025, 0.1],
-            ["usage of t1 by g1", 2020, 0.1],
-            ["usage of t1 by g1", 2025, 0.1],
+            ["usage of t0 by g0", y0, 0.1],
+            ["usage of t0 by g0", y1, 0.1],
+            ["usage of t1 by g0", y0, 0.1],
+            ["usage of t1 by g0", y1, 0.1],
+            ["usage of t0 by g1", y0, 0.1],
+            ["usage of t0 by g1", y1, 0.1],
+            ["usage of t1 by g1", y0, 0.1],
+            ["usage of t1 by g1", y1, 0.1],
         ],
         columns=["technology", "year_vtg", "value"],
     )
@@ -136,39 +128,95 @@ def test_minimal(scenario, groups, techs, template):
     ).assign(node_origin=copy_column("node_loc"), year_act=copy_column("year_vtg"))
 
     # Demand
-    c, y = zip(*product(["demand of group g0", "demand of group g1"], [2020, 2025]))
+    c, y = zip(*product(["demand of group g0", "demand of group g1"], [y0, y1]))
     data["demand"] = make_df("demand", commodity=c, year=y, value=1.0, **COMMON)
 
-    # Activity in the first year
+    # Constraint on activity in the first period
     t = sorted(input_data["technology"].unique())
     for bound in ("lo", "up"):
         par = f"bound_activity_{bound}"
-        data[par] = make_df(par, value=0.5, technology=t, year_act=2020, **COMMON)
+        data[par] = make_df(par, value=0.5, technology=t, year_act=y0, **COMMON)
 
-    # Bounds
+    # Constraint on activity growth
+    annual = (1.1 ** (1.0 / 5.0)) - 1.0
     for bound, factor in (("lo", -1.0), ("up", 1.0)):
         par = f"growth_activity_{bound}"
         data[par] = make_df(
-            par, value=factor * 0.1, technology=t, year_act=2025, **COMMON
+            par, value=factor * annual, technology=t, year_act=y1, **COMMON
         )
+
+    return data, y0, y1
+
+
+def test_minimal(scenario, groups, techs, template):
+    """Minimal test case for :mod:`.disutility`."""
+    # Set up structure
+    disutility.add(scenario, groups, techs, template)
+
+    # Add test-specific data
+    data, y0, y1 = minimal_test_data(scenario)
 
     scenario.check_out()
     add_par_data(scenario, data)
     scenario.commit("Disutility test 1")
 
-    # Pre-solve debugging output
-    for par in ("input", "output", "technical_lifetime", "var_cost"):
-        scenario.par(par).to_csv(f"debug-{par}.csv")
+    # commented: pre-solve debugging output
+    # for par in ("input", "output", "technical_lifetime", "var_cost"):
+    #     scenario.par(par).to_csv(f"debug-{par}.csv")
 
     scenario.solve(quiet=True)
 
+    # Helper function to retrieve ACT data and condense for inspection
+    def get_act(s):
+        result = (
+            scenario.var("ACT")
+            .query("lvl > 0")
+            .drop(columns=["node_loc", "mode", "time", "mrg"])
+            .sort_values(["year_vtg", "technology"])
+            .reset_index(drop=True)
+        )
+        # No "stray" activity of technologies beyond the vintage periods
+        pdt.assert_series_equal(
+            result["year_act"], result["year_vtg"], check_names=False
+        )
+        result = result.drop(columns=["year_vtg"]).set_index(["technology", "year_act"])
+        # Return the activity and its inter-period delta
+        return result, (
+            result.xs(y1, level="year_act") - result.xs(y0, level="year_act")
+        )
+
     # Post-solve debugging output TODO comment before merging
-    ACT = scenario.var("ACT").query("lvl > 0").drop(columns=["node_loc", "time", "mrg"])
+    ACT1, ACT1_delta = get_act(scenario)
 
-    print(ACT)
+    # Increase the disutility of for t0 for g0 in period y1
+    data["input"].loc[1, "value"] = 0.2
 
-    # commented: pending debugging
-    # pdt.assert_series_equal(ACT["year_act"], ACT["year_vtg"])
+    # Re-solve
+    scenario.remove_solution()
+    scenario.check_out()
+    scenario.add_par("input", data["input"])
+    scenario.commit("Disutility test 2")
+    scenario.solve(quiet=True)
+
+    # Compare activity
+    ACT2, ACT2_delta = get_act(scenario)
+
+    merged = ACT1.merge(ACT2, left_index=True, right_index=True)
+    merged["lvl_diff"] = merged["lvl_y"] - merged["lvl_x"]
+
+    merged_delta = ACT1_delta.merge(ACT2_delta, left_index=True, right_index=True)
+
+    # commented: for debugging
+    # print(merged, merged_delta)
+
+    # Group g0 decreases usage of t0, and increases usage of t1, in period y1 vs. y0
+    assert merged_delta.loc["usage of t0 by g0", "lvl_y"] < 0
+    assert merged_delta.loc["usage of t1 by g0", "lvl_y"] > 0
+
+    # Group g0 usage of t0 is lower when the disutility is higher
+    assert merged.loc[("usage of t0 by g0", y1), "lvl_diff"] < 0
+    # Group g0 usage of t1 is correspondingly higher
+    assert merged.loc[("usage of t1 by g0", y1), "lvl_diff"] > 0
 
 
 def test_data_conversion(scenario, spec):
