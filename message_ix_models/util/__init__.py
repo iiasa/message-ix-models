@@ -205,7 +205,7 @@ def ffill(
         Data to fill forwards.
     dim : str
         Dimension to fill along. Must be a column in `df`.
-    labels : list of str
+    values : list of str
         Labels along `dim` that must be present in the returned data frame.
     expr : str, optional
         If provided, :meth:`.DataFrame.eval` is called. This can be used to assign one
@@ -507,8 +507,8 @@ def strip_par_data(
 
     # Iterate over parameters with ≥1 dimensions indexed by `set_name`
     for par_name in iter_parameters(set_name):
-        if par_name not in par_list:
-            log.warning(  # pragma: no cover
+        if par_name not in par_list:  # pragma: no cover
+            log.warning(
                 f"MESSAGEix parameter {repr(par_name)} missing in Scenario "
                 f"{scenario.model}/{scenario.scenario}"
             )
