@@ -195,20 +195,8 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
     # Concatenate to a single data frame per parameter
     data = {par: pd.concat(dfs, ignore_index=True) for par, dfs in data0.items()}
 
-    # Create data for capacity_factor and technical_lifetime
-    data.update(
-        make_matched_dfs(
-            base=data["input"],
-            capacity_factor=1,
-            technical_lifetime=None,
-        )
-    )
-
-    # Update technical_lifetime with values from duration_period for the corresponding
-    # period
-    data["technical_lifetime"] = data["technical_lifetime"].assign(
-        value=dp_for("year_vtg", info), unit="y"
-    )
+    # Create data for capacity_factor
+    data.update(make_matched_dfs(base=data["input"], capacity_factor=1.0))
 
     return data
 
@@ -227,6 +215,7 @@ def data_source(info, spec) -> Mapping[str, pd.DataFrame]:
 
     log.info(f"Generate disutility on level(s): {repr(levels)}")
 
+    # Use default capacity_factor = 1.0
     result = make_source_tech(
         info,
         common=dict(
@@ -239,13 +228,7 @@ def data_source(info, spec) -> Mapping[str, pd.DataFrame]:
         ),
         output=1.0,
         var_cost=1.0,
-        technical_lifetime=None,
     )
     result["output"] = result["output"].pipe(broadcast, level=sorted(levels))
-    # Update technical_lifetime with values from duration_period for the corresponding
-    # period
-    result["technical_lifetime"] = result["technical_lifetime"].assign(
-        value=dp_for("year_vtg", info), unit="y"
-    )
 
     return result
