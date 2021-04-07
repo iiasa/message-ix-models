@@ -37,7 +37,7 @@ The following modules use this workflow and can be examples for developing simil
 Code reference
 ==============
 
-.. currentmodule:: message_data.model.build
+.. currentmodule:: message_ix_models.model.build
 
-.. automodule:: message_data.model.build
+.. automodule:: message_ix_models.model.build
    :members:

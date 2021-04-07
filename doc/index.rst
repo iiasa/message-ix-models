@@ -23,6 +23,7 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
    api/model
    api/model-bare
    api/model-build
+   api/disutility
    api/project
    api/tools
    api/util
