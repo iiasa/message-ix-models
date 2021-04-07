@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add :mod:`.model.disutility`, code for setting up structure and data for generalized consumer disutility (:pull:`13`)
 
 2021.3.24
 =========
