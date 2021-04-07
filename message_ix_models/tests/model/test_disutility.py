@@ -2,7 +2,6 @@
 from itertools import product
 
 import pandas as pd
-
 import pandas.testing as pdt
 import pytest
 from message_ix import make_df
