@@ -127,7 +127,8 @@ class CliRunner(click.testing.CliRunner):
             self.invoke(*args, **kwargs)
 
         if self.last_result.exit_code != 0:
-            raise self.last_result.exc_info[1]
+            # Re-raise the exception triggered within the CLI invocation
+            raise self.last_result.exc_info[1].__context__
 
         return self.last_result
 

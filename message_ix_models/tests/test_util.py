@@ -1,5 +1,6 @@
 """Tests of :mod:`message_ix_models.util`."""
 import logging
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -33,6 +34,16 @@ def test_as_codes():
     )
     result = as_codes(data)
     assert result[1] not in result[0].child
+
+
+def test_broadcast(caplog):
+    # Debug message logged with length-0 values
+    with caplog.at_level(logging.DEBUG, logger="message_ix_models"):
+        broadcast(pd.DataFrame(columns=["foo", "bar"]), foo=[], bar=[])
+
+    assert "Don't broadcast over 'foo'; labels [] have length 0" in caplog.messages
+
+    # TODO expand
 
 
 @pytest.mark.parametrize(
@@ -76,6 +87,10 @@ def test_ffill():
 
     assert 2 * len(df) == len(result)
     assert years == sorted(result["year_vtg"].unique())
+
+    # Cannot ffill on "value" and "unit" dimensions
+    with pytest.raises(ValueError, match="value"):
+        ffill(df, "value", [])
 
     # TODO test some specific values
 
@@ -128,19 +143,17 @@ def test_make_source_tech():
         var_cost=3.0,
         technical_lifetime=4.0,
     )
-    result = make_source_tech(
-        info,
-        common=dict(
-            commodity="commodity",
-            level="level",
-            mode="mode",
-            technology="technology",
-            time="time",
-            time_dest="time",
-            unit="unit",
-        ),
-        **values,
+    common = dict(
+        commodity="commodity",
+        level="level",
+        mode="mode",
+        technology="technology",
+        time="time",
+        time_dest="time",
+        unit="unit",
     )
+    # Code runs
+    result = make_source_tech(info, common, **values)
     # Result is dictionary with the expected keys
     assert isinstance(result, dict)
     assert set(result.keys()) == set(values.keys())
@@ -153,6 +166,10 @@ def test_make_source_tech():
         assert len(df) == 2 * 3
         # No empty values
         assert not df.isna().any(None)
+
+    del values["var_cost"]
+    with pytest.raises(ValueError, match=re.escape("needs values for {'var_cost'}")):
+        make_source_tech(info, common, **values)
 
 
 def test_package_data_path(*parts, suffix=None):
