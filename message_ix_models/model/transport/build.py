@@ -5,11 +5,10 @@ from typing import List, Mapping
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import eval_anno, load_private_data
-from message_ix_models.model import bare, build
+from message_ix_models.model import bare, build, disutility
 from message_ix_models.model.structure import get_codes
 from sdmx.model import Annotation, Code
 
-from message_data.model import disutility
 from message_data.model.transport.utils import consumer_groups
 
 
@@ -142,7 +141,7 @@ def main(context, scenario, **options):
     lu = dict(level="useful", unit="km")
     disutility.add(
         scenario,
-        consumer_groups=consumer_groups(),
+        groups=consumer_groups(),
         technologies=generate_set_elements("technology", "LDV"),
         template=Code(
             id="transport {technology} usage",
