@@ -144,7 +144,7 @@ def main(context, scenario, **options):
         groups=consumer_groups(),
         technologies=generate_set_elements("technology", "LDV"),
         template=Code(
-            id="transport {technology} usage",
+            id="{technology} usage by {group}",
             annotations=[
                 Annotation(
                     id="input",
@@ -152,7 +152,7 @@ def main(context, scenario, **options):
                 ),
                 Annotation(
                     id="output",
-                    text=repr(dict(commodity="transport pax {mode}", **lu)),
+                    text=repr(dict(commodity="transport pax {group}", **lu)),
                 ),
             ],
         ),
