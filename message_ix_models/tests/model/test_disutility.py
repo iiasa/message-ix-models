@@ -1,3 +1,4 @@
+"""Tests of :mod:`.model.disutility`."""
 from itertools import product
 
 import pandas as pd
@@ -34,19 +35,19 @@ COMMON = dict(
 
 @pytest.fixture
 def groups():
-    """List of two consumer groups."""
+    """Fixture: list of 2 consumer groups."""
     yield [Code(id="g0"), Code(id="g1")]
 
 
 @pytest.fixture
 def techs():
-    """List of two technologies, for which groups may have different disutilities."""
+    """Fixture: list of 2 technologies for which groups can have disutility."""
     yield [Code(id="t0"), Code(id="t1")]
 
 
 @pytest.fixture
 def template():
-    """:class:.`Code` object with annotations, for :func:`.disutility.get_spec`."""
+    """Fixture: :class:.`Code` with annotations, for :func:`.disutility.get_spec`."""
     # Template for inputs of conversion technologies, from a technology-specific
     # commodity
     input = dict(commodity="output of {technology}", level="useful", unit="kg")
@@ -67,13 +68,13 @@ def template():
 
 @pytest.fixture
 def spec(groups, techs, template):
-    """A prepared spec for the minimal test case."""
+    """Fixture: a prepared spec for the minimal test case."""
     yield disutility.get_spec(groups, techs, template)
 
 
 @pytest.fixture
 def scenario(request, test_context, techs):
-    """A :class:`.Scenario` with technologies given by :func:`techs`."""
+    """Fixture: a :class:`.Scenario` with technologies given by :func:`techs`."""
     s = testing.bare_res(request, test_context, solved=False)
     s.check_out()
 
@@ -93,7 +94,7 @@ def test_add(scenario, groups, techs, template):
 
 
 def minimal_test_data(scenario):
-    # Fill in the data for the test case
+    """Generate data for :func:`test_minimal`."""
     common = COMMON.copy()
     common.pop("node_loc")
     common.update(dict(mode="all"))
@@ -149,7 +150,7 @@ def minimal_test_data(scenario):
 
 
 def test_minimal(scenario, groups, techs, template):
-    """Minimal test case for :mod:`.disutility`."""
+    """Expected results are generated from a minimal test case."""
     # Set up structure
     disutility.add(scenario, groups, techs, template)
 

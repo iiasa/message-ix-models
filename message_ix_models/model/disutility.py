@@ -145,7 +145,7 @@ def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:
 
 
 def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
-    """Input and output data for disutility conversion technologies."""
+    """Generate input and output data for disutility conversion technologies."""
     common = dict(
         mode="all",
         year_vtg=info.Y,
@@ -205,7 +205,7 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
 
 
 def data_source(info, spec) -> Mapping[str, pd.DataFrame]:
-    """Generate data for a technology that emits the disutility commodity."""
+    """Generate data for a technology that emits the “disutility” commodity."""
     # List of input levels where disutility commodity must exist
     levels = set()
     for t in spec["add"].set["technology"]:

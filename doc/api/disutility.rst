@@ -1,12 +1,11 @@
-.. currentmodule:: message_data.model.disutility
+.. currentmodule:: message_ix_models.model.disutility
 
 Consumer disutility
 *******************
 
 This module provides a generalized consumer disutility formulation, currently used by :mod:`message_data.model.transport`.
-
-The formulation rests on the concept of “consumer groups.”
-Each consumer group may have a distinct disutility for using the outputs of each technology.
+The formulation rests on the concept of “consumer groups”; each consumer group may have a distinct disutility associated with using the outputs of each technology.
+A set of ‘pseudo-’/‘virtual’/non-physical “usage technologies” converts the outputs of the actual technologies into the commodities demanded by each group, while also requiring input of a costly “disutility” commodity.
 
 
 Method & usage
@@ -25,48 +24,51 @@ Technologies
 Template
    This is also a :class:`.Code` object, similar to those in ``technologies``; see below.
 
+The code creates a source technology for the “disutility” commodity.
+The code does *not* perform the following step(s) needed to completely parametrize the formulation:
 
-The code does *not* do the following steps needed to completely parametrize the formulation:
+- Set consumer group-specific ``demand`` parameter values for new commodities.
+- Set the amounts of “disutility” commodities used as ``input`` to the new usage technologies.
 
-- Set consumer group-specific 'demand' parameter values for new commodities.
-- Create a source technology for the “disutility” commodity.
-
+These must be parametrized based on the particular application.
 
 Detailed example
 ================
 
-From :func:`.transport.build.main`:
+This example is similar to the one used in :func:`.test_disutility.test_minimal`:
 
 .. code-block:: python
 
-    # Add generalized disutility formulation to LDV technologies
+    # Two consumer groups
+    groups = [Code(id="g0"), Code(id="g1")]
+
+    # Two technologies, for which groups may have different disutilities.
+    techs = [Code(id="t0"), Code(id="t1")]
+
+    # Add generalized disutility formulation to some technologies
     disutility.add(
         scenario,
-
-        # Generate a list of consumer groups
-        consumer_groups=consumer_groups(),
-
-        # Generate a list of technologies
-        technologies=generate_set_elements("technology", "LDV"),
+        groups=groups,
+        technologies=techs,
 
         template=Code(
             # Template for IDs of conversion technologies
-            id="transport {technology} usage",
+            id="usage of {technology} by {group}",
 
             # Templates for inputs of conversion technologies
             input=dict(
                 # Technology-specific output commodity
-                commodity="transport vehicle {technology}",
+                commodity="output of {technology}",
                 level="useful",
-                unit="km",
+                unit="kg",
             ),
 
             # Templates for outputs of conversion technologies
             output=dict(
                 # Consumer-group–specific demand commodity
-                commodity="transport pax {mode}",
+                commodity="demand of group {group}",
                 level="useful",
-                unit="km",
+                unit="kg",
             ),
         ),
         **options,
@@ -75,49 +77,44 @@ From :func:`.transport.build.main`:
 
 :func:`add` uses :func:`get_spec` to generate a specification that adds the following:
 
-- A single 'commodity' set element, “disutility”.
+- For the set ``commodity``:
 
-- 1 'mode' set element per element in ``consumer_groups``.
+  - The single element “disutility”.
+  - One element per `technologies`, using the `template` “input” annotation, e.g. “output of t0” generated from ``output of {technology}`` and the id “t0”.
+    These **may** already be present in the `scenario`; if not, the spec causes them to be added.
+  - One elements per `groups`, using the `template` “output” annotation, e.g. “demand of group g1” generated from ``demand of group {group}`` and the id “g1”.
+    These **may** already be present in the `scenario`; if not, the spec causes them to be added.
 
-  **Example:** the function :func:`.consumer_groups` returns codes like “RUEAA”, “URLMF”, etc.; one 'mode' is created for each such group.
+- For the set ``technology``:
 
-- 1 'commodity' set element per technology in ``technologies``.
-  ``template.anno["input"]["commodity"]`` is used to generate the IDs of these commodities.
-
-  **Example:** “transport vehicle {technology}” is used to generate a commodity “transport vehicles ELC_100” associated with the technology with the ID “ELC_100”.
-
-- 1 'commodity' set element per consumer group.
-  ``template.anno["output"]["commodity"]`` is used to generate the IDs of these commodities.
-
-  **Example:** “transport pax {mode}” is used with to generate a commodity “transport pax RUEAA” is associated with the consumer group with ID “RUEAA”.
-
-- 1 additional 'technology' set element per disutility-affected technology.
-  ``template.id`` is used to generate the IDs of these technologies.
-
-  **Example:** “transport {technology} usage}” is used to generate “transport ELC_100 usage” associated with the existing technology “ELC_100”.
-
+  - The single element “disutility source”.
+  - One element per each combination of disutility-affected technology (`technologies`) and consumer group (`groups`).
+    For example, “usage of t0 by g1” generated from ``usage of {technology} by {group}``, and the ids “t0” and “g1”.
 
 The spec is applied to the target scenario using :func:`.model.build.apply_spec`.
 If the arguments produce a spec that is inconsistent with the target scenario, an exception will by raised at this point.
 
 
-Next, :func:`add` uses :func:`disutility_conversion` to generate data for the 'input' and 'output' parameters, as follows:
+Next, :func:`add` uses :func:`data_conversion` and :func:`data_source` to generate:
 
-- Existing, disutility-affected technologies (those listed in the ``technologies`` argument) 'output' to technology-specific commodities.
+- ``output`` and ``var_cost`` parameter data for “disutility source”.
+  This technology outputs the unitless commodity “disutility” at a cost of 1.0 per unit.
 
-  **Example:** the technology “ELC_100” outputs to the commodity “transport vehicle ELC_100”, instead of to a common/pooled commodity such as “transport vehicle”.
+- ``input`` and ``output`` parameter data for the new usage technologies.
+  For example, the new technology “usage of t0 by g1”…
 
-- New, conversion technologies have one 'mode' per consumer group.
+  - …takes input from the *technology-specific* commodity “output of t0”.
+  - …takes input from the common commodity “disutility”, in an amount specific to group “g1”.
+  - …outputs to a *group-specific* commodity “demand of group g1”.
 
-  **Example:** the new technology “transport ELC_100 usage”
-
-  - …in “all” modes—takes the *same* quantity of input from the *technology-specific* commodity “transport ELC_100 vehicle”.
-  - …in each consumer-group specific mode e.g. “RUEAA”—takes a *group-specific* quantity of input from the common commodity “disutility”.
-  - …in each consumer-group specific mode e.g. “RUEAA”—outputs to a *group-specific* commodity, e.g. “transport pax RUEAA”.
+Note that the `technologies` towards which the groups have disutility are assumed to already be configured to ``output`` to the corresponding commodities.
+For example, the technology “t0” outputs to the commodity “output of t0”; the ``output`` values for this technology are **not** added/introduced by :func:`add`.
 
 
 Code reference
 ==============
+
+See also :mod:`message_ix_models.tests.model.test_disutility`.
 
 .. automodule:: message_ix_models.model.disutility
    :members:
