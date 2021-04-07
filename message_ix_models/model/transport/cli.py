@@ -92,7 +92,7 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 @click.pass_obj
 def build_cmd(context, dest, **options):
     """Prepare the model."""
-    from message_data.model import bare
+    from message_ix_models.model import bare
     from message_data.model.transport import build
 
     # Handle --regions; use a sensible default for MESSAGEix-Transport
