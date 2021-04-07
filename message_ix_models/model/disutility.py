@@ -127,13 +127,15 @@ def get_data(scenario, spec, **kwargs) -> Mapping[str, pd.DataFrame]:
     return data
 
 
-def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:
+def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:  # pragma: no cover
     """:meth:`pandas.DataFrame.assign` helper for ``duration_period``.
 
     Returns a callable to be passed to :meth:`pandas.DataFrame.assign`. The callable
     takes a data frame as the first argument, and returns a :class:`pandas.Series`
     based on the ``duration_period`` parameter in `info`, aligned to `col_name` in the
     data frame.
+
+    Currently (2021-04-07) unused.
     """
 
     def func(df):
@@ -171,7 +173,7 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
         if None in (input, output):
             if t.id == "disutility source":
                 continue  # Data for this tech is from data_source()
-            else:
+            else:  # pragma: no cover
                 raise ValueError(t)  # Error in user input
 
         # Make input and output data frames
@@ -212,9 +214,6 @@ def data_source(info, spec) -> Mapping[str, pd.DataFrame]:
         input = eval_anno(t, "input")
         if input:
             levels.add(input["level"])
-        else:
-            # "disutility source" technology has no annotations
-            continue
 
     log.info(f"Generate disutility on level(s): {repr(levels)}")
 
