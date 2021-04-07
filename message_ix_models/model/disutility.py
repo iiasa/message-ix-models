@@ -66,6 +66,9 @@ def get_spec(
     add.set["commodity"] = [Code(id="disutility")]
     add.set["technology"] = [Code(id="disutility source")]
 
+    # Disutility is unitless
+    add.set["unit"].append("")
+
     # Add conversion technologies
     for t, g in product(technologies, groups):
         # String formatting arguments
@@ -187,7 +190,7 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
             if par == "input":
                 # Add input of disutility
                 df = pd.concat(
-                    [df, df.assign(commodity="disutility")], ignore_index=True
+                    [df, df.assign(commodity="disutility", unit="")], ignore_index=True
                 )
 
             data0[par].append(df)
