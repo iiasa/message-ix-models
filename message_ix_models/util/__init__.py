@@ -430,8 +430,8 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
     common : dict
         Passed to :func:`make_df`.
     **values
-        Values for 'capacity_factor' (optional; default 1.0), 'output',
-        'technical_lifetime', and 'var_cost'.
+        Values for 'capacity_factor' (optional; default 1.0), 'output', 'var_cost', and
+        optionally 'technical_lifetime'.
 
     Returns
     -------
@@ -440,15 +440,15 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
     """
     # Check arguments
     values.setdefault("capacity_factor", 1.0)
-    missing = {"capacity_factor", "output", "technical_lifetime", "var_cost"} - set(
-        values.keys()
-    )
+    missing = {"capacity_factor", "output", "var_cost"} - set(values.keys())
     if len(missing):
-        raise ValueError(f"make_dummy_source() needs values for {repr(missing)}")
+        raise ValueError(f"make_source_tech() needs values for {repr(missing)}")
+    elif "technical_lifetime" not in values:
+        log.debug("No technical_lifetime for source technology")
 
     # Create data for "output"
-    output = (
-        message_ix.make_df(
+    result = dict(
+        output=message_ix.make_df(
             "output",
             value=values.pop("output"),
             year_act=info.Y,
@@ -458,8 +458,9 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
         .pipe(broadcast, node_loc=info.N[1:])
         .pipe(same_node)
     )
-    result = make_matched_dfs(base=output, **values)
-    result["output"] = output
+
+    # Add data for other parameters
+    result.update(make_matched_dfs(base=result["output"], **values))
 
     return result
 
