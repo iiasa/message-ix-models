@@ -1,9 +1,9 @@
 import pandas as pd
 import pandas.testing as pdt
 from message_ix import make_df
+from message_ix_models import ScenarioInfo
+from message_ix_models.testing import bare_res
 
-from message_data.testing import bare_res
-from message_data.tools import ScenarioInfo
 from message_data.tools.utilities import add_budget
 from message_data.tools.utilities.update_fix_and_inv_cost import add_missing_years
 
