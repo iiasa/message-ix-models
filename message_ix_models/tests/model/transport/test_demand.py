@@ -35,11 +35,11 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
         ("cost:n-y-c-t", "USD / km"),
         ("transport pdt:n-y-t", "km / year"),
     ):
-        print(f"\n\n-- {key} --\n\n")
         try:
             qty = rep.get(key)
             demand.assert_units(qty, unit)
         except AssertionError:
+            print(f"\n\n-- {key} --\n\n")
             print(rep.describe(key))
             print(qty, qty.attrs)
             raise
