@@ -110,7 +110,10 @@ def add_exogenous_data(c: Computer, context: Context):
     def _dummy_prices(gdp):
         # Commodity prices: all equal to 0.1
         # TODO add external data source
-        coords = list(gdp.coords.items()) + [("c", ["transport"])]
+
+        # Same coords/shape as `gdp`, but with c="transport"
+        coords = [(dim, item.data) for dim, item in gdp.coords.items()]
+        coords.append(("c", ["transport"]))
         shape = list(len(c[1]) for c in coords)
 
         return Quantity(
