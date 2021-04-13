@@ -98,10 +98,10 @@ class LDV_IO(Plot):
     inputs = ["input:nl-t-yv-ya"]
 
     def generate(self, data):
-        df = data.to_series().rename("value").reset_index()
+        data = data.rename(columns={0: "input"})
 
         return (
-            p9.ggplot(df, p9.aes(x="ya", y="value", color="t"))
+            p9.ggplot(data, p9.aes(x="ya", y="input", color="t"))
             + p9.theme(figure_size=(11.7, 8.3))
             + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}"))
             + p9.geom_line()
@@ -111,6 +111,7 @@ class LDV_IO(Plot):
                 y="Input efficiency [GWa / km]",
                 color="LDV technology",
             )
+            + self.static
         )
 
 
@@ -120,11 +121,11 @@ class LDVTechShare0(Plot):
 
     def generate(self, data):
         # Select a subset of technologies
-        techs = list(filter(lambda n: "usage" in n, data.coords["t"].values))
-        df = data.sel(t=techs).to_series().rename("value").reset_index()
+        data = data.rename(columns={0: "out"})
+        data = data[data.t.str.contains("usage")]
 
         return (
-            p9.ggplot(df, p9.aes(x="ya", y="value", fill="t"))
+            p9.ggplot(data, p9.aes(x="ya", y="value", fill="t"))
             + p9.theme(figure_size=(11.7, 8.3))
             + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}"))
             + p9.geom_bar(stat="identity", width=4)
@@ -141,15 +142,15 @@ class LDVTechShare1(Plot):
     inputs = ["out:nl-t-ya-c:transport"]
 
     def generate(self, data):
-        techs = list(filter(lambda n: "usage" in n, data.coords["t"].values))
+        # Select a subset of technologies
+        data = data.rename(columns={0: "out"})
+        # data.to_csv("ldv-tech-share-by-cg.csv")
+        data = data[data.t.str.contains("usage")]
 
         # Select a subset of technologies
-        for node in data.coords["nl"].values:
-            df = data.sel(t=techs, nl=node).to_series().rename("value").reset_index()
-
+        for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(df, p9.aes(x="ya", y="value", fill="t"))
-                + p9.theme(figure_size=(11.7, 8.3))
+                p9.ggplot(data, p9.aes(x="ya", y="out", fill="t"))
                 + p9.facet_wrap(["c"], ncol=5)
                 + p9.geom_bar(stat="identity", width=4)
                 + p9.labs(
@@ -157,7 +158,8 @@ class LDVTechShare1(Plot):
                     y="Activity [10⁹ km / y]",
                     fill="LDV technology",
                 )
-                + p9.ggtitle(f"Mode share by CG — {node}")
+                + self.title(f"Mode share by CG {nl}")
+                + self.static
             )
 
 
