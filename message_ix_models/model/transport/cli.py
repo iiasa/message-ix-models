@@ -101,6 +101,7 @@ def build_cmd(context, dest, **options):
         log.info("Use default --regions=R11")
         regions = "R11"
     context.regions = regions
+    context.years = "A"
 
     # Other defaults from .model.bare
     context.use_defaults(bare.SETTINGS)
