@@ -101,10 +101,15 @@ def callback(rep: Reporter):
     queue = []
 
     # Aggregate transport technologies
-    for k in ["in:nl-t-yv-ya-m-no-c-l-h-ho", "out:nl-t-yv-ya-m-nd-c-l-h-hd"]:
+    for k in ("in", "out"):
         queue.append(
-            (("aggregate", k, "transport", quote(dict(t=t_groups))), dict(sums=True))
+            (
+                ("aggregate", rep.full_key(k), "transport", dict(t=t_groups)),
+                dict(sums=True),
+            )
         )
+
+    rep.add_queue(queue)
 
     # Add key collecting all others
     # FIXME `added` includes all partial sums of in::transport etc.
