@@ -70,10 +70,6 @@ level:
 mode:
   require:
   - all
-  add:
-    "{consumer_group.id}":
-      _generate: {consumer_group: null}
-      name: Vehicle usage by {consumer_group.id}
 
 
 node:
