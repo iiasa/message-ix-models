@@ -158,6 +158,3 @@ def main(context, scenario, **options):
         ),
         **options,
     )
-
-    # Uncomment to dump for debugging
-    # scenario.to_excel('debug.xlsx')
