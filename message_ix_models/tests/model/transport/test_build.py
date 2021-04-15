@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from pytest import mark, param
 
@@ -6,6 +8,8 @@ from message_ix_models.model.structure import get_codes
 
 from message_data.model.transport import build, report
 from message_data.testing import NIE
+
+log = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize("years", ["A", "B"])
@@ -46,7 +50,7 @@ def test_get_spec(transport_context_f, regions_arg, regions_exp, years):
     ],
 )
 def test_build_bare_res(
-    request, transport_context_f, years, regions, ldv, nonldv, solve
+    request, tmp_path, transport_context_f, years, regions, ldv, nonldv, solve
 ):
     """Test that model.transport.build works on the bare RES, and the model solves."""
     # Pre-load transport config/metadata
@@ -63,6 +67,10 @@ def test_build_bare_res(
 
     # Build succeeds without error
     build.main(ctx, scenario, fast=True)
+
+    dump_path = tmp_path / "scenario.xlsx"
+    log.info(f"Dump contents to {dump_path}")
+    scenario.to_excel(dump_path)
 
     if solve:
         scenario.solve(solve_options=dict(lpmethod=4))
