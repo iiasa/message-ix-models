@@ -1,0 +1,4 @@
+*.shp filter=lfs diff=lfs merge=lfs -text
+*.Rda filter=lfs diff=lfs merge=lfs -text
+*.csv filter=lfs diff=lfs merge=lfs -text
+ppl_cooling_tech/*.csv filter=lfs diff=lfs merge=lfs -text

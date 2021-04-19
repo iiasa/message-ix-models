@@ -1,0 +1,12 @@
+# Configuration for MESSAGEix-Water
+
+# Configuration file for the model
+# Added data sources here.
+#TODO update data sources for all of the water sources
+
+
+
+# CSV files containing data for input calculations and assumptions
+data files:
+- cooltech_cost_and_shares_ssp_msg14
+- tech_water_performance_ssp_msg
