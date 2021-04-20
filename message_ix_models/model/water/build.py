@@ -5,6 +5,7 @@ from typing import Mapping
 from message_ix_models.model import bare, build
 from message_ix_models import ScenarioInfo
 from .utils import read_config
+from message_ix_models.model.structure import get_codes
 
 log = logging.getLogger(__name__)
 
@@ -13,14 +14,13 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     """Return the specification for water implementation"""
 
     context.use_defaults(bare.SETTINGS)
-
+    context = read_config()
+    
     require = ScenarioInfo()
     remove = ScenarioInfo()
     add = ScenarioInfo()
-
-    # Load configuration
-    context = read_config()
-
+    
+    
     # Update the ScenarioInfo objects with required and new set elements
     for set_name, config in context["water set"].items():
         # Required elements
@@ -31,6 +31,10 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
         # Elements to add
         add.set[set_name].extend(config.get("add", []))
+
+    # The set of required nodes varies according to context.regions
+    nodes = get_codes(f"node/{context.regions}")
+    require.set["node"].extend(map(str, nodes[nodes.index("World")].child))
 
     return dict(require=require, remove=remove, add=add)
 
@@ -58,10 +62,7 @@ def get_water_reference_scenario(context):
     update the scenario with updated water parameters
     """
 
-    #mp = ix.Platform()
     mp = context.get_platform()
-    #ssp = context.ssp
-    data_path = context.metadata_path / 'model'
 
     # Model and scenario name for storing the RES
     model_name = context.scenario_info['model']
@@ -96,7 +97,8 @@ def main(scenario, **options):
     # Core water structure
     spec = get_spec(context)
 
-    build.apply_spec(scenario, spec, add_data, **options)
+    # Apply the structural changes AND add the data
+    build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
 
     # Uncomment to dump for debugging
     # scenario.to_excel('debug.xlsx')
