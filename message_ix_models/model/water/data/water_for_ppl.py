@@ -37,11 +37,9 @@ def cool_tech(context):
     # define an empty dictionary
     results = {}
 
-    context = read_config()
-
     # Reference to the transport configuration
-    config = context["water config"]
-    tech_info = context["water set"]["technology"]["add"]
+    # config = context["water config"]
+    # tech_info = context["water set"]["technology"]["add"]
     info = context["water build info"]
 
     path = context.get_path("water","ppl_cooling_tech", FILE)
