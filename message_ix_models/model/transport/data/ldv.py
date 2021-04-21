@@ -2,18 +2,19 @@ import logging
 from collections import defaultdict
 
 import pandas as pd
-from message_ix_models.util import private_data_path
+from message_ix import make_df
+from message_ix_models.util import (
+    broadcast,
+    ffill,
+    make_io,
+    make_matched_dfs,
+    private_data_path,
+    same_node,
+)
 from openpyxl import load_workbook
 
 from message_data.model.transport.utils import add_commodity_and_level
-from message_data.tools import (
-    cached,
-    check_support,
-    ffill,
-    make_df,
-    make_io,
-    make_matched_dfs,
-)
+from message_data.tools import cached, check_support
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def get_ldv_data(context):
     if source == "US-TIMES MA3T":
         return get_USTIMES_MA3T(context)
     elif source is None:
-        return {}  # Don't add any data
+        return get_dummy(context)
     else:
         raise ValueError(f"invalid source for non-LDV data: {source}")
 
@@ -177,5 +178,43 @@ def get_USTIMES_MA3T(context):
     #         initial_activity_up=1.,
     #     )
     # )
+
+    return data
+
+
+@cached
+def get_dummy(context):
+    """Generate dummy, equal-cost output for each LDV technology."""
+    # Information about the target structure
+    info = context["transport build info"]
+
+    # List of LDV technologies
+    all_techs = context["transport set"]["technology"]["add"]
+    ldv_techs = list(map(str, all_techs[all_techs.index("LDV")].child))
+
+    # 'output' parameter values: all 1.0 (ACT units == output units)
+    # - Broadcast across nodes.
+    # - Broadcast across LDV technologies.
+    # - Add commodity ID based on technology ID.
+    output = (
+        make_df(
+            "output",
+            value=1.0,
+            year_act=info.Y,
+            year_vtg=info.Y,
+            unit="km",
+            level="useful",
+            mode="all",
+            time="year",
+            time_dest="year",
+        )
+        .pipe(broadcast, node_loc=info.N[1:], technology=ldv_techs)
+        .assign(commodity=lambda df: "transport vehicle " + df["technology"])
+        .pipe(same_node)
+    )
+
+    # Add matching data for 'capacity_factor' and 'var_cost'
+    data = make_matched_dfs(output, capacity_factor=1.0, var_cost=1.0)
+    data["output"] = output
 
     return data
