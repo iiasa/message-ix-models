@@ -13,22 +13,10 @@ def cli(context):
     """MESSAGEix-Water module."""
     from .utils import read_config
 
-    # Ensure transport model configuration is loaded
+    # Ensure water model configuration is loaded
     read_config(context)
 
-@cli.command()
-@click.option(
-    "--version",
-    default="geam_ADV3TRAr2_BaseX2_0",
-    metavar="VERSION",
-    help="Model version to read.",
-)
-@click.option(
-    "--dunno",
-    default="geam_ADV3TRAr2_BaseX2_0",
-    metavar="VERSION",
-    help="temporarily here.",
-)
+
 #when have a function
 @click.pass_obj
 def solve(context):
