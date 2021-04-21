@@ -304,7 +304,7 @@ def cool_tech(context):
         cooling_technologies = list(tech_df["technology"])
         new_values = tech_df[node_loc] * x.value
 
-        return [[node_loc, technology, cooling_technology, x.year_act, x.value, new_value, x.unit]
+        return [[node_loc, technology, cooling_technology, x.year_vtg, x.value, new_value, x.unit]
                 for new_value, cooling_technology in zip(new_values, cooling_technologies)]
 
     changed_value_series = ref_hist_act.apply(hist_act, axis=1)
@@ -469,7 +469,7 @@ def cool_tech(context):
 
 # Water use & electricity for non-cooling technologies
 
-def non_cooling_tec(info):
+def non_cooling_tec(context):
     """
         Parameters
         ----------
@@ -487,9 +487,9 @@ def non_cooling_tec(info):
     """
     results = {}
 
-    context = read_config()
+    info = context["water build info"]
 
-    path = context.get_path("water", FILE)
+    path = context.get_path("water","ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
     cooling_df = df.loc[df['technology_group'] == 'cooling']
     # Separate a column for parent technologies of respective cooling
@@ -499,6 +499,13 @@ def non_cooling_tec(info):
         columns=1)
     non_cool_df = df[(df['technology_group'] != 'cooling') &
                  (df['water_supply_type'] == 'freshwater_supply')]
+    techs_to_remove = ['coal[a]', 'coal[b]',  'coal[c]',  'coal[d]', 'coal[e]',
+                       'lignite[a]', 'lignite[b]', 'lignite[c]', 'lignite[d]',
+                       'lignite[e]', 'SO2_scrub_BS', 'SO2_scrub_ppl',  'SO2_scrub_ind',
+                       'SO2_scrub_synf','oil_extr_8','gas_extr_7','gas_extr_8',
+                       'mw_ppl','nuc_fbr', 'nuc_htemp']
+    
+    non_cool_df = non_cool_df[~non_cool_df['technology_name'].isin(techs_to_remove)]
 
     non_cool_df['input_value'] =  non_cool_df['water_withdrawal_mid_m3_per_output'] *60*60*24*365*(1e-9)
 
