@@ -54,7 +54,7 @@ def cool_tech(context):
 
     #TODO commented for now to reduce the time
 
-    scen = get_water_reference_scenario(context)
+    scen = context.get_scenario()
 
     # Extracting input database from scenario for parent technologies
     # Extracting input values from scenario
