@@ -51,12 +51,11 @@ def read_config(context=None):
     )
 
     # Convert some values to codes
-    for set_name, info in context["water set"].items():
-        try:
-            info["add"] = as_codes(info["add"])
-        except KeyError:
-            pass
-
+    # for set_name, info in context["water set"].items():
+    #     try:
+    #         info["add"] = as_codes(info["add"])
+    #     except KeyError:
+    #         pass
 
     return context
 
