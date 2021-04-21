@@ -56,7 +56,7 @@ def generate_set_elements(set_name, match = None):
     return results
 
 def get_water_reference_scenario(context):
-
+    # Not Needed anymore
     """
     This functions clones a global scenario and returns for using it's data and
     update the scenario with updated water parameters
@@ -70,9 +70,9 @@ def get_water_reference_scenario(context):
 
     # Clone from a global scenario
     clone_from = dict(model='ENGAGE_SSP2_v4.1.7',
-                      scenario='baseline')
-    base = message_ix.Scenario(mp, **clone_from, cache=True)
-    scenario = base.clone(model_name, scenario_name, keep_solution=True)
+                      scenario='baseline_clone_test')
+    base = message_ix.Scenario(mp, **clone_from, cache=True) # input CLI
+    scenario = base.clone(model_name, scenario_name, keep_solution=True) # output scenario
 
     # Solve the scenario and set default version
     #scenario.solve()
