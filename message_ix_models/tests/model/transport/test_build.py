@@ -35,22 +35,22 @@ def test_get_spec(transport_context_f, regions_arg, regions_exp, years):
 
 
 @pytest.mark.parametrize(
-    "years", ["A", param("B", marks=pytest.mark.skip("Not implemented"))]
-)
-@pytest.mark.parametrize(
-    "regions, ldv, nonldv, solve",
+    "regions, years, ldv, nonldv, solve",
     [
-        ("R11", None, None, False),  # 31 s
-        param("R11", None, None, True, marks=mark.slow),  # 44 s
-        param("R11", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),  # 43 s
-        param("R11", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
+        ("R11", "A", None, None, False),  # 31 s
+        ("R11", "B", None, None, False),
+        param("R11", "A", None, None, True, marks=mark.slow),  # 44 s
+        param("R11", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),  # 43 s
+        param("R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
         # Non-R11 configurations currently fail
-        param("R14", None, None, False, marks=NIE),
-        param("ISR", None, None, False, marks=NIE),
+        param("R14", "A", None, None, False, marks=NIE),
+        param("ISR", "A", None, None, False, marks=NIE),
+        # Periods "B" currently fail
+        param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=(mark.slow, NIE)),
     ],
 )
 def test_build_bare_res(
-    request, tmp_path, transport_context_f, years, regions, ldv, nonldv, solve
+    request, tmp_path, transport_context_f, regions, years, ldv, nonldv, solve
 ):
     """Test that model.transport.build works on the bare RES, and the model solves."""
     # Pre-load transport config/metadata
