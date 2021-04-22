@@ -12,12 +12,6 @@ from message_data.model.water.build import get_water_reference_scenario
 FILE = 'tech_water_performance_ssp_msg.csv'
 # Investment costs and regional shares of historical activities of cooling technologies
 FILE1 = 'cooltech_cost_and_shares_ssp_msg.csv'
-# input dataframe for reference values from a global scenario
-FILE2 = 'ref_input.csv'
-# Historical activity  dataframe for reference values from a global scenario
-FILE3 = 'ref_hist_act.csv'
-# Historical new  capacity  dataframe for reference values from a global scenario
-FILE4 = 'ref_hist_cap.csv'
 
 # water & electricity for cooling technologies
 def cool_tech(context):
@@ -64,16 +58,8 @@ def cool_tech(context):
     # Extracting historical capacity from scenario
     ref_hist_cap = scen.par('historical_new_capacity', {'technology': cooling_df['parent_tech']})
 
-    # # May possibly remove these in future
-    # path2 = context.get_path("water", FILE2)
-    # ref_input = pd.read_csv(path2)
-    # path3 = context.get_path("water", FILE3)
-    # ref_hist_act = pd.read_csv(path3)
-    # path4 = context.get_path("water", FILE4)
-    # ref_hist_cap = pd.read_csv(path4)
-
     ref_hist_act = ref_hist_act[ref_hist_act['node_loc'] != 'R11_GLB']
-    ref_hist_act = ref_hist_cap[ref_hist_cap['node_loc'] != 'R11_GLB']
+    ref_hist_cap = ref_hist_cap[ref_hist_cap['node_loc'] != 'R11_GLB']
 
     # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg), where h_fg (flue gasses losses) = 0.1
     ref_input['cooling_fraction'] = ref_input['value'] * 0.9 - 1
