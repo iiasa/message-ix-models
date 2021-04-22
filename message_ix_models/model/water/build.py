@@ -81,7 +81,7 @@ def get_water_reference_scenario(context):
     return scenario
 
 
-def main(scenario, **options):
+def main(context, scenario, **options):
     """Set up MESSAGE-Water on `scenario`.
 
     See also
@@ -96,7 +96,7 @@ def main(scenario, **options):
 
     # Core water structure
     spec = get_spec(context)
-
+    
     # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
 
