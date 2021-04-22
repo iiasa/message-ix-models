@@ -12,10 +12,10 @@ from message_data.tools import Code, as_codes, get_context, set_info
 # Configuration files
 METADATA = [
     # Information about MESSAGE-water
-    ('water', 'config'),
-    ('water', 'set'),
-    ('water', 'technology'),
-    ]
+    ("water", "config"),
+    ("water", "set"),
+    ("water", "technology"),
+]
 
 
 def read_config(context=None):
@@ -46,9 +46,7 @@ def read_config(context=None):
         context[key] = load_private_data(*_parts)
 
     # Merge technology.yaml with set.yaml
-    context["water set"]["technology"]["add"] = (
-        context.pop("water technology")
-    )
+    context["water set"]["technology"]["add"] = context.pop("water technology")
 
     # Convert some values to codes
     # for set_name, info in context["water set"].items():
@@ -59,10 +57,11 @@ def read_config(context=None):
 
     return context
 
+
 @lru_cache()
 def map_add_on(rtype=Code):
     """Map addon & type_addon in ``sets.yaml``."""
-    dims = ['add_on', 'type_addon']
+    dims = ["add_on", "type_addon"]
 
     # Retrieve configuration
     context = read_config()
@@ -70,32 +69,32 @@ def map_add_on(rtype=Code):
     # Assemble group information
     result = defaultdict(list)
 
-    for indices in product(*[
-        context["water set"][d]["add"] for d in dims
-    ]):
+    for indices in product(*[context["water set"][d]["add"] for d in dims]):
         # Create a new code by combining three
-        result['code'].append(Code(
-            id=''.join(c.id for c in indices),
-            name=', '.join(c.name for c in indices),
-        ))
+        result["code"].append(
+            Code(
+                id="".join(c.id for c in indices),
+                name=", ".join(c.name for c in indices),
+            )
+        )
 
         # Tuple of the values along each dimension
-        result['index'].append(tuple(c.id for c in indices))
+        result["index"].append(tuple(c.id for c in indices))
 
-    if rtype == 'indexers':
+    if rtype == "indexers":
         # Three tuples of members along each dimension
-        indexers = zip(*result['index'])
+        indexers = zip(*result["index"])
         indexers = {
-            d: xr.DataArray(list(i), dims='consumer_group')
+            d: xr.DataArray(list(i), dims="consumer_group")
             for d, i in zip(dims, indexers)
         }
-        indexers['consumer_group'] = xr.DataArray(
-            [c.id for c in result['code']],
-            dims='consumer_group',
+        indexers["consumer_group"] = xr.DataArray(
+            [c.id for c in result["code"]],
+            dims="consumer_group",
         )
         return indexers
     elif rtype is Code:
-        return sorted(result['code'], key=str)
+        return sorted(result["code"], key=str)
     else:
         raise ValueError(rtype)
 
@@ -109,19 +108,19 @@ def add_commodity_and_level(df, default_level=None):
     def t_cl(t):
         input = t_info[t_info.index(t)].anno["input"]
         # Commodity must be specified
-        commodity = input['commodity']
+        commodity = input["commodity"]
         # Use the default level for the commodity in the RES (per
         # commodity.yaml)
         level = (
-            input.get('level', 'water_supply')
-            or c_info[c_info.index(commodity)].anno.get('level', None)
+            input.get("level", "water_supply")
+            or c_info[c_info.index(commodity)].anno.get("level", None)
             or default_level
         )
 
         return commodity, level
 
     def func(row):
-        row[['commodity', 'level']] = t_cl(row['technology'])
+        row[["commodity", "level"]] = t_cl(row["technology"])
         return row
 
     return df.apply(func, axis=1)

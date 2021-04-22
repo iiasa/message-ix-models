@@ -9,9 +9,10 @@ from .demands import add_demand
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
-    cool_tech, # Water & parasitic_electricity requirements for cooling technologies
-    non_cooling_tec
+    cool_tech,  # Water & parasitic_electricity requirements for cooling technologies
+    non_cooling_tec,
 ]
+
 
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGEix-Water data."""
@@ -22,7 +23,7 @@ def add_data(scenario, context, dry_run=False):
 
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
-        log.info(f'from {func.__name__}()')
+        log.info(f"from {func.__name__}()")
         add_par_data(scenario, func(context), dry_run=dry_run)
 
-    log.info('done')
+    log.info("done")
