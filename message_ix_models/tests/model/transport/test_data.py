@@ -12,7 +12,7 @@ from message_data import testing
 from message_data.model.transport.data import get_consumer_groups
 from message_data.model.transport.data.groups import get_urban_rural_shares
 from message_data.model.transport.data.ikarus import get_ikarus_data
-from message_data.model.transport.data.ldv import get_USTIMES_MA3T
+from message_data.model.transport.data.ldv import get_ldv_data
 from message_data.tools import load_data
 
 
@@ -132,11 +132,18 @@ def test_ikarus(transport_context_f, regions, N_node, years):
         )
 
 
-@pytest.mark.parametrize("years", ["A", param("B", marks=testing.NIE)])
 @pytest.mark.parametrize(
-    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
+    "source, regions, years",
+    [
+        (None, "R11", "A"),
+        ("US-TIMES MA3T", "R11", "A"),
+        # Not implemented
+        param("US-TIMES MA3T", "R11", "B", marks=testing.NIE),
+        param("US-TIMES MA3T", "R14", "A", marks=testing.NIE),
+        param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
+    ],
 )
-def test_USTIMES_MA3T(transport_context_f, regions, years):
+def test_get_ldv_data(transport_context_f, source, regions, years):
     ctx = transport_context_f
 
     # Info about the corresponding RES
@@ -147,12 +154,17 @@ def test_USTIMES_MA3T(transport_context_f, regions, years):
     ctx["transport build info"] = info
 
     # Method runs without error
-    data = get_USTIMES_MA3T(ctx)
+    ctx["transport config"]["data source"]["LDV"] = source
+    data = get_ldv_data(ctx)
 
-    # Data have the correct size:
+    # Output data is returned
+    assert "output" in data
+
+    # Data have the correct size
     for par_name, df in data.items():
         # Data covers all the years in the scenario, plus 2010
         assert [2010] + info.Y == sorted(df["year_vtg"].unique())
+
         # Total length of data: # of regions × (11 technology × # of periods; plus 1
         # technology (historical ICE) for only 2010)
         assert len(info.N[1:]) * ((11 * (len(info.Y) + 1)) + 1) == len(df)
