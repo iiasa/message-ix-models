@@ -9,18 +9,18 @@ from message_ix_models.model.structure import get_codes
 
 log = logging.getLogger(__name__)
 
+
 def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
     """Return the specification for water implementation"""
 
     context.use_defaults(bare.SETTINGS)
     context = read_config()
-    
+
     require = ScenarioInfo()
     remove = ScenarioInfo()
     add = ScenarioInfo()
-    
-    
+
     # Update the ScenarioInfo objects with required and new set elements
     for set_name, config in context["water set"].items():
         # Required elements
@@ -40,7 +40,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
 
 @lru_cache()
-def generate_set_elements(set_name, match = None):
+def generate_set_elements(set_name, match=None):
 
     codes = read_config()["water set"][set_name].get("add", [])
 
@@ -55,6 +55,7 @@ def generate_set_elements(set_name, match = None):
 
     return results
 
+
 def get_water_reference_scenario(context):
     # Not Needed anymore
     """
@@ -65,17 +66,18 @@ def get_water_reference_scenario(context):
     mp = context.get_platform()
 
     # Model and scenario name for storing the RES
-    model_name = context.scenario_info['model']
-    scenario_name = context.scenario_info['scenario']
+    model_name = context.scenario_info["model"]
+    scenario_name = context.scenario_info["scenario"]
 
     # Clone from a global scenario
-    clone_from = dict(model='ENGAGE_SSP2_v4.1.7',
-                      scenario='baseline_clone_test')
-    base = message_ix.Scenario(mp, **clone_from, cache=True) # input CLI
-    scenario = base.clone(model_name, scenario_name, keep_solution=True) # output scenario
+    clone_from = dict(model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test")
+    base = message_ix.Scenario(mp, **clone_from, cache=True)  # input CLI
+    scenario = base.clone(
+        model_name, scenario_name, keep_solution=True
+    )  # output scenario
 
     # Solve the scenario and set default version
-    #scenario.solve()
+    # scenario.solve()
     scenario.set_as_default()
 
     return scenario
@@ -92,11 +94,11 @@ def main(context, scenario, **options):
     """
     from .data import add_data
 
-    log.info('Set up MESSAGE-Water')
+    log.info("Set up MESSAGE-Water")
 
     # Core water structure
     spec = get_spec(context)
-    
+
     # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
 
