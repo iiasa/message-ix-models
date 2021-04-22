@@ -15,7 +15,10 @@ log = logging.getLogger(__name__)
 @common_params("regions")
 @click.pass_obj
 def cli(context, regions):
-    """MESSAGEix-Water module."""
+    """MESSAGEix-Water module.
+    
+    Model and scenario are set in this cli function
+    together with context and regions"""
     from .utils import read_config
 
     # Ensure water model configuration is loaded
