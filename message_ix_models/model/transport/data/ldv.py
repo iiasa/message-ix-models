@@ -188,6 +188,9 @@ def get_dummy(context):
     # Information about the target structure
     info = context["transport build info"]
 
+    # List of years to include
+    years = list(filter(lambda y: y >= 2010, info.set["year"]))
+
     # List of LDV technologies
     all_techs = context["transport set"]["technology"]["add"]
     ldv_techs = list(map(str, all_techs[all_techs.index("LDV")].child))
@@ -200,9 +203,9 @@ def get_dummy(context):
         make_df(
             "output",
             value=1.0,
-            year_act=info.Y,
-            year_vtg=info.Y,
-            unit="km",
+            year_act=years,
+            year_vtg=years,
+            unit="Gv km",
             level="useful",
             mode="all",
             time="year",
@@ -212,6 +215,9 @@ def get_dummy(context):
         .assign(commodity=lambda df: "transport vehicle " + df["technology"])
         .pipe(same_node)
     )
+
+    # Discard rows for the historical LDV technology beyond 2010
+    output = output[~output.eval("technology == 'ICE_L_ptrp' and year_vtg > 2010")]
 
     # Add matching data for 'capacity_factor' and 'var_cost'
     data = make_matched_dfs(output, capacity_factor=1.0, var_cost=1.0)
