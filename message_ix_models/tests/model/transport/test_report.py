@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from message_ix_models.util import private_data_path
@@ -7,6 +9,8 @@ from message_data.reporting import prepare_reporter, register
 from message_data.testing import NIE
 
 from . import built_transport
+
+log = logging.getLogger(__name__)
 
 
 def test_register_cb():
@@ -33,8 +37,14 @@ def test_report_bare(request, transport_context_f, tmp_path, regions, years, sol
 
     scenario = built_transport(request, ctx, solved=solved)
 
+    dump_path = tmp_path / "scenario.xlsx"
+    log.info(f"Dump contents to {dump_path}")
+    scenario.to_excel(dump_path)
+
     rep, key = prepare_reporter(
-        scenario, private_data_path("report", "global.yaml"), "transport all"
+        scenario,
+        private_data_path("report", "global.yaml"),
+        "transport all",
     )
     rep.configure(output_dir=tmp_path)
 
