@@ -104,6 +104,9 @@ time:
 
 unit:
   add:
+    # TODO move this one upstream
+    "": dimensionless
+
     km: kilometre
     t km: tonne kilometre (freight transport)
     Gv km: 10⁹ vehicle kilometre
