@@ -41,6 +41,8 @@ extensions = [
 # Figures, tables and code-blocks are automatically numbered if they have a
 # caption.
 numfig = True
+math_numfig = True
+math_eqref_format = "Eq.{number}"
 
 # A string of reStructuredText included at the beginning of every source file
 # that is read.
