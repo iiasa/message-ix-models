@@ -161,3 +161,46 @@ def solve(context, macro):
 
     scenario.solve(**args)
     scenario.commit()
+
+
+@cli.command()
+@click.pass_obj
+def debug(context):
+    """Temporary code for development."""
+    from message_ix_models import testing
+    from message_ix_models.util import private_data_path
+
+    from message_data.model.transport import build
+    from message_data.model.transport.report import callback
+    from message_data.reporting import prepare_reporter, register
+
+    request = None
+    context.regions = "R11"
+    context.years = "A"
+    context.res_with_dummies = True
+
+    # Retrieve (maybe generate) the bare RES with the same settings
+    res = testing.bare_res(request, context, solved=False)
+    # Derive the name for the transport scenario
+    model_name = res.model.replace("-GLOBIOM", "-Transport")
+    # Build
+    log.info(f"Create '{model_name}/baseline' for testing")
+    scenario = res.clone(model=model_name)
+    build.main(context, scenario, fast=True, quiet=False)
+    # Solve
+    log.info(f"Solve '{scenario.model}/{scenario.scenario}'")
+    scenario.solve(solve_options=dict(lpmethod=4))
+
+    # Prepare reporting
+    register(callback)
+    rep, key = prepare_reporter(
+        scenario,
+        private_data_path("report", "global.yaml"),
+        "plot ldv-tech-share-by-cg",
+    )
+
+    # Configure output
+    rep.configure(output_dir=Path.cwd())
+
+    # Get the catch-all key, including plots etc.
+    rep.get(key)
