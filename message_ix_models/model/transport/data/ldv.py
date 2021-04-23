@@ -8,6 +8,7 @@ from message_ix_models.util import (
     ffill,
     make_io,
     make_matched_dfs,
+    merge_data,
     private_data_path,
     same_node,
 )
@@ -35,11 +36,15 @@ def get_ldv_data(context):
     source = context["transport config"]["data source"].get("LDV", None)
 
     if source == "US-TIMES MA3T":
-        return get_USTIMES_MA3T(context)
+        data = get_USTIMES_MA3T(context)
     elif source is None:
-        return get_dummy(context)
+        data = get_dummy(context)
     else:
         raise ValueError(f"invalid source for non-LDV data: {source}")
+
+    # Merge in constraint data
+    merge_data(data, get_constraints(context))
+    return data
 
 
 @cached
@@ -229,5 +234,30 @@ def get_dummy(context):
     # Add matching data for 'capacity_factor' and 'var_cost'
     data = make_matched_dfs(output, capacity_factor=1.0, var_cost=1.0)
     data["output"] = output
+
+    return data
+
+
+def get_constraints(context):
+    # Information about the target structure
+    info = context["transport build info"]
+
+    years = info.Y[1:]
+
+    # List of LDV technologies
+    all_techs = context["transport set"]["technology"]["add"]
+    ldv_techs = list(map(str, all_techs[all_techs.index("LDV")].child))
+
+    data = dict()
+
+    # Constraint on activity growth: ± 10% every 5 years
+    # TODO read this from config.yaml
+    annual = (1.1 ** (1.0 / 5.0)) - 1.0
+
+    for bound, factor in (("lo", -1.0), ("up", 1.0)):
+        par = f"growth_activity_{bound}"
+        data[par] = make_df(
+            par, value=factor * annual, year_act=years, time="year", unit="-"
+        ).pipe(broadcast, node_loc=info.N[1:], technology=ldv_techs)
 
     return data
