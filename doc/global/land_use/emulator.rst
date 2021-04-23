@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 .. _emulator:
 
 Land-Use Emulator
