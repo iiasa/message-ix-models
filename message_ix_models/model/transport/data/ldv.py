@@ -127,7 +127,7 @@ def get_USTIMES_MA3T(context):
     base = data.pop("efficiency")
     i_o = make_io(
         src=(None, None, "GWa"),
-        dest=("transport pax vehicle", "useful", "Gv km"),
+        dest=(None, "useful", "Gv km"),
         efficiency=1.0 / base["value"],
         on="input",
         # Other data
@@ -144,7 +144,14 @@ def get_USTIMES_MA3T(context):
         time_dest="year",
     )
 
+    # Assign input commodity and level according to the technology
     i_o["input"] = add_commodity_and_level(i_o["input"], default_level="secondary")
+
+    # Assign output commodity based on the technology name
+    i_o["output"] = i_o["output"].assign(
+        commodity=lambda df: "transport vehicle " + df["technology"]
+    )
+
     data.update(i_o)
 
     # Add technical lifetimes
