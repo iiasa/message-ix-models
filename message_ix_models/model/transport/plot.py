@@ -3,8 +3,8 @@ from datetime import datetime
 
 import pint
 import plotnine as p9
+from genno import computations
 from genno.compat.plotnine import Plot as BasePlot
-from ixmp.reporting import computations
 
 log = logging.getLogger(__name__)
 
@@ -120,12 +120,13 @@ class LDVTechShare0(Plot):
     inputs = ["out:nl-t-ya:transport"]
 
     def generate(self, data):
-        # Select a subset of technologies
         data = data.rename(columns={0: "out"})
-        data = data[data.t.str.contains("usage")]
+
+        # # DEBUG dump data
+        # data.to_csv(f"{self.basename}.csv")
 
         return (
-            p9.ggplot(data, p9.aes(x="ya", y="value", fill="t"))
+            p9.ggplot(data, p9.aes(x="ya", y="out", fill="t"))
             + p9.theme(figure_size=(11.7, 8.3))
             + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}"))
             + p9.geom_bar(stat="identity", width=4)
@@ -142,15 +143,17 @@ class LDVTechShare1(Plot):
     inputs = ["out:nl-t-ya-c:transport"]
 
     def generate(self, data):
-        # Select a subset of technologies
         data = data.rename(columns={0: "out"})
-        # data.to_csv("ldv-tech-share-by-cg.csv")
-        data = data[data.t.str.contains("usage")]
+        # Select a subset of commodities
+        data = data[data.c.str.contains("transport vehicle")]
+
+        # # DEBUG dump data
+        # data.to_csv(f"{self.basename}.csv")
 
         # Select a subset of technologies
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(data, p9.aes(x="ya", y="out", fill="t"))
+                p9.ggplot(group_df, p9.aes(x="ya", y="out", fill="t"))
                 + p9.facet_wrap(["c"], ncol=5)
                 + p9.geom_bar(stat="identity", width=4)
                 + p9.labs(
@@ -169,26 +172,21 @@ class DemandCalibrated(Plot):
 
     def generate(self, data, commodities):
         # Convert and select data
-        df = (
-            data.to_series()
-            .rename("value")
-            .sort_index()
-            .reset_index()
-            .astype(dict(value=float))
-            .query(f"c in {repr(list(map(str, commodities)))}")
+        data = data.rename(columns={0: "value"}).query(
+            f"c in {repr(list(map(str, commodities)))}"
         )
 
-        for node, node_data in df.groupby("n"):
+        for node, node_data in data.groupby("n"):
             yield (
                 p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c"))
-                + p9.theme(figure_size=(11.7, 8.3))
                 + p9.geom_bar(stat="identity", width=4)
-                + self.title(f"Node: {node}")
                 + p9.labs(
                     x="Period",
                     y=r"‘demand’ parameter [km / pass / a]",
                     fill="Transport mode group",
                 )
+                + self.title(f"Investment cost {node}")
+                + self.static
             )
 
 
@@ -197,9 +195,13 @@ class DemandCalibratedCap(Plot):
     inputs = ["demand:n-c-y", "population:n-y", "c:transport"]
 
     def generate(self, demand, population, commodities):
-        # Convert and select data
-        data = computations.ratio(demand, population)
-        print(data)
+        try:
+            # Convert and select data
+            data = computations.ratio(demand, population)
+        except TypeError:
+            log.error(f"Missing data to plot {self.basename}")
+            return []
+
         df = (
             data.to_series()
             .rename("value")
@@ -260,14 +262,14 @@ class DemandExoCap(Plot):
         for n, group_df in data.groupby("n"):
             yield (
                 p9.ggplot(p9.aes(x="y", y="value", fill="t"), group_df)
-                + p9.theme(figure_size=(11.7, 8.3))
                 + p9.geom_bar(stat="identity", width=4)
                 + p9.expand_limits(y=[0, y_max])
-                + self.title(f"Passenger transport activity [{unit:~}] {n}")
                 + p9.labs(
                     x="Period",
                     fill="Mode (tech group)",
                 )
+                + self.title(f"Passenger transport activity [{unit:~}] {n}")
+                + self.static
             )
 
 
@@ -276,24 +278,21 @@ class EnergyCmdty(Plot):
     inputs = ["in:nl-t-ya-c"]
 
     def generate(self, data):
-        df = (
-            data.to_series()
-            .rename("value")
-            .sort_index()
-            .reset_index()
-            .astype(dict(value=float))
-        )
-
-        df = df[~df["t"].str.startswith("transport vehicle.*")]
-        df = df[~df["t"].str.startswith("disutility")]
-        print(df)
+        # Discard data for certain technologies
+        data = data[
+            ~(
+                data.t.str.startswith("transport vehicle.*")
+                | data.t.str.startswith("disutility")
+            )
+        ].rename(columns={0: "in"})
 
         return (
-            p9.ggplot(df, p9.aes(x="ya", y="value", fill="c"))
-            + p9.theme(figure_size=(11.7, 8.3))
+            p9.ggplot(data, p9.aes(x="ya", y="in", fill="c"))
             + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("Node: {}"))
             + p9.geom_bar(stat="identity", width=5, color="black")
             + p9.labs(x="Period", y="Energy", fill="Commodity")
+            + self.title("Energy input to transport")
+            + self.static
         )
 
 
@@ -311,6 +310,6 @@ PLOTS = [
     LDVTechShare1,
     DemandCalibrated,
     DemandCalibratedCap,
-    DemandExo,
-    DemandExoCap,
+    # DemandExo,
+    # DemandExoCap,
 ]
