@@ -211,11 +211,14 @@ DATA_FUNCTIONS.append(freight)
 
 def dummy_supply(context):
     """Dummy fuel supply for the bare RES."""
-    return make_source_tech(
+    # TODO read the 'level' from config
+    # TODO read the list of 'commodity' from context/config
+    # TODO separate dummy supplies by commodity
+
+    data = make_source_tech(
         context["transport build info"],
         common=dict(
-            commodity="lightoil",
-            level="final",
+            level="secondary",
             mode="all",
             technology="DUMMY transport fuel",
             time="year",
@@ -224,8 +227,19 @@ def dummy_supply(context):
         ),
         output=1.0,
         var_cost=1.0,
-        technical_lifetime=1.0,
     )
+
+    # Broadcast across all fuel commodities
+    for par_name in data:
+        if "commodity" not in data[par_name].columns:
+            continue
+
+        data[par_name] = data[par_name].pipe(
+            broadcast,
+            commodity=["lightoil", "gas", "methanol", "hydrogen", "electr"],
+        )
+
+    return data
 
 
 DATA_FUNCTIONS.append(dummy_supply)
