@@ -102,18 +102,23 @@ def callback(rep: Reporter):
 
     # Aggregate transport technologies
     for k in ("in", "out"):
-        queue.append(
-            (
-                ("aggregate", rep.full_key(k), "transport", dict(t=t_groups)),
-                dict(sums=True),
+        try:
+            queue.append(
+                (
+                    ("aggregate", rep.full_key(k), "transport", dict(t=t_groups)),
+                    dict(sums=True),
+                )
             )
-        )
+        except KeyError:
+            if solved:
+                raise
 
+    # Only viable keys added
     rep.add_queue(queue)
 
     # Add key collecting all others
     # FIXME `added` includes all partial sums of in::transport etc.
-    rep.add("transport all", [])
+    rep.add("transport all", ["transport plots"])
 
     # Configuration for :func:`check`. Adds a single key, 'transport check', that
     # depends on others and returns a :class:`pandas.Series` of :class:`bool`.
