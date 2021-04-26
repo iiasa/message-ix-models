@@ -486,6 +486,8 @@ cement:
     - final_material
     - useful_material
     - demand
+    - dummy_end_of_life
+    - end_of_life
 
   technology:
     add:
@@ -497,6 +499,8 @@ cement:
     - grinding_ballmill_cement
     - grinding_vertmill_cement
     - DUMMY_limestone_supply_cement
+    - total_EOL_cement
+    - scrap_recovery_cement
     remove:
     - cement_co2scr
     - cement_CO2
