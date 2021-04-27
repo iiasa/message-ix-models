@@ -15,9 +15,12 @@ from message_data.model.transport.common import METADATA
 def read_config(context=None):
     """Read the transport model configuration / metadata and store on `context`.
 
-    Files from :data:`.METADATA` are stored with keys like "transport set" corresponding
-    to :file:`data/transport/set.yaml`. Numerical values are converted to computation-
-    ready data structures.
+    The files listed in :data:`.METADATA` are stored with keys like "transport set",
+    corresponding to :file:`data/transport/set.yaml`.
+
+    If a subdirectory of :file:`data/transport/` exists corresponding to
+    ``context.regions`` then the files are loaded from that subdirectory, e.g.
+    e.g. :file:`data/transport/ISR/set.yaml` instead of :file:`data/transport/set.yaml`.
     """
     context = context or Context.get_instance(0)
 
@@ -25,16 +28,27 @@ def read_config(context=None):
         # Already loaded
         return
 
-    # Load transport configuration, copy onto the context
-    for parts in METADATA:
-        # Key for storing in the context
-        key = " ".join(parts)
+    # Base private directory containing transport config files. The second component
+    # may not exist.
+    dir = ["transport", context.get("regions", "") or ""]
 
-        # Actual filename parts; ends with YAML
+    # Load transport configuration files and store on the context object
+    for parts in METADATA:
+        # Key for storing in the context, e.g. "transport config"
+        key = f"transport {' '.join(parts)}"
+
+        # Actual filename parts; ends with ".yaml"
         _parts = list(parts)
         _parts[-1] += ".yaml"
 
-        context[key] = load_private_data(*_parts)
+        # Load and store the data from the YAML file
+        try:
+            # Try first in the subdirectory, if any.
+            context[key] = load_private_data(*(dir + _parts))
+        except FileNotFoundError:
+            # Subdirectory or specific file does not exist; use the general file in the
+            # top-level directory
+            context[key] = load_private_data(*(dir[:1] + _parts))
 
     # Merge technology.yaml with set.yaml
     context["transport set"]["technology"]["add"] = context.pop("transport technology")
