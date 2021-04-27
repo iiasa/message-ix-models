@@ -17,8 +17,9 @@ from message_ix_models import Context
 from message_data.tools import ScenarioInfo, broadcast, gea
 
 from .build import generate_set_elements
-from .data.groups import get_consumer_groups, get_gea_population
 from .computations import load_transport_file
+from .data.groups import get_consumer_groups, get_gea_population
+from .plot import DEMAND_PLOTS
 
 log = logging.getLogger(__name__)
 
@@ -274,6 +275,11 @@ def prepare_reporter(
         "transport ldv pdt:n-y:total",
         cg_key,
     )
+
+    # Plots
+    for plot in DEMAND_PLOTS:
+        key = f"plot {plot.basename}"
+        rep.add(key, plot.make_task())
 
 
 def base_shares(nodes, y, config):

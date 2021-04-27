@@ -1,3 +1,5 @@
+import logging
+
 import message_ix
 import pytest
 from message_ix_models.model.bare import get_spec
@@ -5,6 +7,8 @@ from pytest import param
 
 from message_data import testing
 from message_data.model.transport import demand, report
+
+log = logging.getLogger(__name__)
 
 
 def test_demand_dummy(transport_context):
@@ -55,11 +59,12 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
     from dask.optimization import cull
 
     dsk, deps = cull(rep.graph, key)
-    dask.visualize(dsk, filename=str(tmp_path / "demand-graph.pdf"))
+    path = tmp_path / "demand-graph.pdf"
+    log.info(f"Visualize output at {path}")
+    dask.visualize(dsk, filename=str(path))
 
     # Plots can be generated
-    report.add_plots(rep)
-    print(rep.get("plot demand-exo"))
+    log.info(f"Plot demand data at {rep.get('plot demand-exo')}")
 
 
 @pytest.mark.skip(reason="Requires user's context")
