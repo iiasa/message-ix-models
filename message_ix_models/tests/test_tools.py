@@ -1,15 +1,15 @@
 import pandas as pd
 import pandas.testing as pdt
-from message_ix import make_df
-from message_ix_models import ScenarioInfo
-from message_ix_models.testing import bare_res
-
 from message_data.tools.utilities import (
     add_budget,
-    update_CO2_td_cost,
     adjust_curtailment_cap_to_act,
+    update_CO2_td_cost,
 )
 from message_data.tools.utilities.update_fix_and_inv_cost import add_missing_years
+from message_ix import make_df
+
+from message_ix_models import ScenarioInfo
+from message_ix_models.testing import bare_res
 
 
 def test_add_budget(request, test_context):
