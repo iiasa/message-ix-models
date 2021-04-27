@@ -43,8 +43,10 @@ class InvCost(Plot):
     inputs = ["inv_cost:nl-t-yv"]
 
     def generate(self, data):
+        data = data.rename(columns={0: "inv_cost"})
         y_max = max(data["inv_cost"])
         unit = data["unit"].unique()[0]
+        
         for nl, group_df in data.groupby("nl"):
             yield (
                 p9.ggplot(p9.aes(x="yv", y="inv_cost", color="t"), group_df)
@@ -61,8 +63,10 @@ class FixCost(Plot):
     inputs = ["fix_cost:nl-t-yv-ya"]
 
     def generate(self, data):
+        data = data.rename(columns={0: "fix_cost"})
         y_max = max(data["fix_cost"])
         unit = data["unit"].unique()[0]
+
         for nl, group_df in data.groupby("nl"):
             yield (
                 p9.ggplot(p9.aes(x="ya", y="fix_cost", color="t", group="t"), group_df)
@@ -82,6 +86,7 @@ class VarCost(Plot):
         data = data.rename(columns={0: "var_cost"})
         y_max = max(data["var_cost"])
         unit = data["unit"].unique()[0]
+
         for nl, group_df in data.groupby("nl"):
             yield (
                 p9.ggplot(p9.aes(x="ya", y="var_cost", color="t", group="yv"), group_df)
