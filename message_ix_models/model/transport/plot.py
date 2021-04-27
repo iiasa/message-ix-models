@@ -46,7 +46,7 @@ class InvCost(Plot):
         data = data.rename(columns={0: "inv_cost"})
         y_max = max(data["inv_cost"])
         unit = data["unit"].unique()[0]
-        
+
         for nl, group_df in data.groupby("nl"):
             yield (
                 p9.ggplot(p9.aes(x="yv", y="inv_cost", color="t"), group_df)
