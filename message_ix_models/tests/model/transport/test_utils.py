@@ -1,5 +1,6 @@
 import pandas as pd
 import pandas.testing as pdt
+import pytest
 import xarray as xr
 from iam_units import registry
 
@@ -34,8 +35,18 @@ def test_add_cl(transport_context):
         pdt.assert_series_equal(df_in[col], df_out[col])
 
 
-def test_read_config(test_context):
+@pytest.mark.parametrize(
+    "regions",
+    [
+        None,  # Default, i.e. R11
+        "ISR",
+    ],
+)
+def test_read_config(test_context, regions):
+    """Configuration can be read from files."""
+    # Set the regional aggregation to be used
     ctx = test_context
+    ctx.regions = regions
 
     # read_config() returns nothing
     assert read_config(test_context) is None
@@ -43,6 +54,13 @@ def test_read_config(test_context):
     # Scalar parameters are loaded
     assert "scaling" in ctx["transport config"]
     assert 200 * 8 == registry(ctx["transport config"]["work hours"]).magnitude
+
+    # If "ISR" was given as 'regions', then the corresponding config file was loaded
+    if regions == "ISR":
+        # Check one config value to confirm
+        assert {"Israel"} == set(
+            ctx["transport config"]["node to census_division"].keys()
+        )
 
 
 def test_consumer_groups(transport_context):
