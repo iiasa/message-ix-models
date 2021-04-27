@@ -160,6 +160,13 @@ def test_get_ldv_data(transport_context_f, source, regions, years):
     # Output data is returned
     assert "output" in data
 
+    for bound in ("lo", "up"):
+        # Constraint data are returned
+        df = data.pop(f"growth_activity_{bound}")
+
+        # Data covers all periods except the first
+        assert info.Y[1:] == sorted(df["year_act"].unique())
+
     # Data have the correct size
     for par_name, df in data.items():
         # Data covers all the years in the scenario, plus 2010
