@@ -301,6 +301,7 @@ class EnergyCmdty(Plot):
 #     inputs = ["emi:"]
 
 
+#: Plots of data from the built (and maybe solved) MESSAGEix-Transport scenario.
 PLOTS = [
     FixCost,
     InvCost,
@@ -310,6 +311,10 @@ PLOTS = [
     LDVTechShare1,
     DemandCalibrated,
     DemandCalibratedCap,
-    # DemandExo,
-    # DemandExoCap,
+]
+
+#: Plots of data from the exogenous demand calculation; see :func:`.from_external_data`.
+DEMAND_PLOTS = [
+    DemandExo,
+    DemandExoCap,
 ]
