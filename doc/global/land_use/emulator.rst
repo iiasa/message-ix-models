@@ -46,7 +46,7 @@ Prior to the use of the land-use emulator, biomass supply-curves were used to in
 The emulator replaces supply-curves, by incorporating all the land-use scenarios in MESSAGEix, therefore the choice of which land-use pathway(s) becomes part of the entire optimization problem.
 Conceptually, each land-use scenario is incorporated similarly to any other technology in MESSAGEix, each providing biomass at a given price and corresponding GHG-emissions.
 The incorporation of the land-use emulator requires two changes to the RES to be undertaken.
-On the on hand, an additional level/commodity has been introduced to link the land-use pathways with the energy system, while land-use emissions are accounted for in the emissions equation (`emissions equations in MESSAGEix <https://docs.messageix.org/en/stable/model/MESSAGE/model_core.html#emission-section>`_). 
+On the on hand, an additional level/commodity has been introduced to link the land-use pathways with the energy system, while land-use emissions are accounted for in the emissions equation (:ref:`emissions equations in MESSAGEix <message_ix:section_emission>`). 
 
 .. _fig-LU_Emulator_adapted_RES:
 .. figure:: /_static/emulator_RES.PNG
@@ -72,7 +72,7 @@ For some larger projects or studies, matrixes, i.e. input data sets from GLOBIOM
 Equations and constraints
 -------------------------
 
-The `land use equations in MESSAGEix <https://docs.messageix.org/en/stable/model/MESSAGE/model_core.html#land-use-model-emulator-section>`_ state that the linear combination of land-use pathways must be equal to 1 (:eq:`Land constraint equation`).
+The :ref:`land use equations in MESSAGEix <message_ix:section_landuse_emulator>` state that the linear combination of land-use pathways must be equal to 1 (:eq:`Land constraint equation`).
 Therefore, separately for each region, either a single discrete land-use scenario can be used, or shares of multiple scenarios can be combined linearly to obtain, for example, biomass quantities which are not explicitly represented as part of the land-use matrix.
 This also applies to the mitigation dimension, i.e., to the GHG categories.
 
@@ -80,7 +80,7 @@ This also applies to the mitigation dimension, i.e., to the GHG categories.
    :label: Land constraint equation
 
 In order to correctly represent the transitional dynamics between land-use pathways, such as the rate at which changes in land-use can occur, e.g. the conversion from land-type A to land-type B, additional constraints are required as the underlying dependencies between these land-use pathways are only represented in the full fletched GLOBIOM model.
-Based on rates derived from GLOBIOM, for each of MESSAGEix model regions, the upscaling of plantation forest area is limited using `DYNAMIC_LAND_TYPE_CONSTRAINT_UP`.
+Based on rates derived from GLOBIOM, for each of MESSAGEix model regions, the upscaling of plantation forest area is limited using :ref:`dynamic constraints on land-use <message_ix:equation_dynamic_land_scen_constraint_up>`.
 The total area of plantation forest in a given region and time-period is determined, by summing up the shares of area (Mha) for other land types (crop-, grass- and other natural land) in the previous time-period in that region (:eq:`Dynamic land conversion constraint`).
 Therefore, the bigger area for the three land types is available, the bigger plantation forest area can be expanded in the following time-period.
 This growth constraint is applied for each land-use pathway individually.
@@ -169,7 +169,7 @@ Land-use Price
 --------------
 
 In the figure depicting the land-use scenario matrix (:numref:`fig-Land-Use_Pathway_Scenario_Matrix`), various biomass and carbon price categories are depicted.
-This information, together with the quantities of biomass and respective emission reductions are used to determine the land-use scenario price (`objective function in MESSAGEix <https://docs.messageix.org/en/stable/model/MESSAGE/model_core.html#the-objective-function-of-the-messageix-core-model>`_), which the model effectively interprets as the biomass price. 
+This information, together with the quantities of biomass and respective emission reductions are used to determine the land-use scenario price (:ref:`objective function in MESSAGEix <message_ix:section_objective>`), which the model effectively interprets as the biomass price. 
 Based on the first biomass potential category, `BIO00`, the price (:math:`P`) for a distinct land-use scenario, in the example below without a carbon price (:eq:`Landuse price equation for BIO00GHG000`), is a result of the biomass quantity (:math:`BQ`) times the biomass price (:math:`BPr`).
 
 .. math:: P_{n,s_{BIO00,GHG000},y} = BQ_{n,s_{BIO00,GHG000},y} * BPr_{n,s_{BIO00},y}
@@ -244,7 +244,7 @@ The carbon price in MESSAGEix is set so that the GHG-categories, GHG005, GHG100,
 In addition to informing MESSAGEix of the biomass potential and land-use related emission quantities and prices, the land-use input matrix includes information related to land-use by type, production and demand of other non-bioenergy related land produces as well as information on crop-yields, irrigation water-use, amongst others.
 Region specific quantities of biomass from different feedstocks, the carbon price trajectory as well as GDP developments can be *plugged* back into the full fletched GLOBIOM land-use model.
 Thus, despite the slightly adjusted results, allows the land-use impacts to be analyzed in greater detail. 
-Such validation or *feedback-runs*  were conducted for the Shared Socioeconomic Pathways (`Riahi et al., 2017 <http://pure.iiasa.ac.at/13280/>`_  :cite:`riahi_shared_2017`).
+Such validation or *feedback-runs*  were conducted for the Shared Socioeconomic Pathways (Riahi et al., 2017 :cite:`riahi_shared_2017`).
 :numref:`fig-SSP1_feedback` compares how the emulated results (full lines) for GHG- (panel a.) and CH4 emissions (panel b.) across various scenarios compare with the results of the full fletched GLOBIOM model.
 The differences in emissions are updated in the original MESSAGEix scenario in order to correctly account for changes in atmospheric concentrations.
  
