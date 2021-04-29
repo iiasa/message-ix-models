@@ -15,25 +15,30 @@ FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
 
 # water & electricity for cooling technologies
 def cool_tech(context):
-    """
-    Parameters
-    ----------
-    info : .ScenarioInfo
-        Information about target Scenario.
+    """Process cooling technology data for a scenario instance.
+`
+       The input values of parent technologies are read in from a scenario instance and then
+       cooling fractions are calculated by using the data from
+       ``tech_water_performance_ssp_msg.csv``.
 
-    Returns
-    -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
-        are data frames ready for :meth:`~.Scenario.add_par`.
+       Parameters
+       ----------
+       context : .Context
+
+       Returns
+       -------
+       data : dict of (str -> pandas.DataFrame)
+           Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+           Values are data frames ready for :meth:`~.Scenario.add_par`.
+           Years in the data include the model horizon indicated by
+           ``context["transport build info"]``, plus the additional year 2010.
     """
 
     # define an empty dictionary
     results = {}
 
     # Reference to the transport configuration
-    # config = context["water config"]
-    # tech_info = context["water set"]["technology"]["add"]
+
     info = context["water build info"]
 
     path = context.get_path("water", "ppl_cooling_tech", FILE)
@@ -71,8 +76,8 @@ def cool_tech(context):
     ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
 
     def missing_tech(x):
-        """
-        This function goes through the input data frame and extract the
+        """Assign values to missing data.
+        It goes through the input data frame and extract the
         technologies which don't have input values and then assign manual
         values to those technologies along with assigning them an arbitrary
         level i.e dummy supply
@@ -121,16 +126,12 @@ def cool_tech(context):
     ]
 
     def cooling_fr(x):
-        """
-        This function returns the cooling fraction
-        The calculation is different for two cateogries;
+        """Calculate cooling fraction
+        Returns the calculated cooling fraction after for two cateogries;
         1. Technologies that produce heat as an output
-
             cooling_fraction(h_cool) = input value(hi) - 1
-
-        Simply substract 1 from the heating value since the
-        rest of the part is already accounted in the heating
-        value
+        Simply substract 1 from the heating value since the rest of the part is already
+        accounted in the heating value
 
         2. Rest of technologies
             h_cool  =  hi -Hi* h_fg - 1,
@@ -162,6 +163,7 @@ def cool_tech(context):
 
     # Make a new column 'value_cool' for calculating values against technologies
     # input_cool['value_cool'] = input_cool.apply(foo2, axis=1)
+    # Converting water withdrawal units to Km3/GWa
     input_cool["value_cool"] = (
         input_cool["water_withdrawal_mid_m3_per_output"]
         * 60
@@ -278,9 +280,11 @@ def cool_tech(context):
     search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
 
     def shares(x):
-        """
-        This function takes the value of shares of cooling technology types
-        of regions and multiplies them with corresponding cooling fraction
+        """Process share and cooling fraction.
+        Returns
+        -------
+        Product of value of shares of cooling technology types of regions with
+        corresponding cooling fraction
         """
         for col in search_cols_cooling_fraction:
             cooling_fraction = hold_df[
@@ -307,13 +311,11 @@ def cool_tech(context):
     hold_cost = hold_cost[hold_cost["technology"] != "delme"]
 
     def hist_act(x):
-        """
-        This functions multiplies the values calculated in previous function
-        with the historical activity of parent technologies to calculate
-        historical activities of cooling technologies
-        Thus;
-        hist_activity(cooling_tech) = hist_activitiy(parent_technology)
-                                                    * share * cooling_fraction
+        """Calculate historical activity of cooling technology.
+        Returns
+        -------
+        hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
+        *cooling_fraction
         """
         tech_df = hold_cost[
             hold_cost["technology"].str.startswith(x.technology)
@@ -353,12 +355,11 @@ def cool_tech(context):
     act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
 
     def hist_cap(x):
-        """
-        This functions multiplies the values calculated in previous function
-        with the historical activity of parent technologies to calculate
-        histroical capacities of parent technologies Thus;
-        hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)
-                                                    * share * cooling_fraction
+        """Calculate historical capacity of cooling technology.
+        Returns
+        -------
+        hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
+        share * cooling_fraction
         """
         tech_df = hold_cost[
             hold_cost["technology"].str.startswith(x.technology)
@@ -481,7 +482,7 @@ def cool_tech(context):
         time="year",
         type_addon=adon_df["tech"],
         value=adon_df["cooling_fraction"],
-        unit="GWa",
+        unit="km3/GWa",
     )
 
     results["addon_conversion"] = addon_df
@@ -506,7 +507,7 @@ def cool_tech(context):
             "technical_lifetime",
             technology=inp["technology"].drop_duplicates(),
             value=30,
-            unit="-",
+            unit="year",
         )
         .pipe(broadcast, year_vtg=year, node_loc=info.N[1:])
         .pipe(same_node)
@@ -520,7 +521,7 @@ def cool_tech(context):
             "output",
             technology="extract_freshwater_supply",
             value=1,
-            unit="-",
+            unit="km3",
             year_vtg=info.Y,
             year_act=info.Y,
             level="water_supply",
@@ -539,7 +540,7 @@ def cool_tech(context):
             "output",
             technology="extract_saline_supply",
             value=1,
-            unit="-",
+            unit="km3",
             year_vtg=info.Y,
             year_act=info.Y,
             level="water_supply",
@@ -565,20 +566,22 @@ def cool_tech(context):
 
 
 def non_cooling_tec(context):
-    """
-    Parameters
-    ----------
-    info : .ScenarioInfo
-        Information about target Scenario.
+    """Process data for water usage of power plants (non-cooling technology related).
+`
+       Water withdrawal values for power plants are read in from
+       ``tech_water_performance_ssp_msg.csv``
 
-    Returns
-    -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
-        are data frames ready for :meth:`~.Scenario.add_par`.
+       Parameters
+       ----------
+       context : .Context
 
-    This function returns input dataframe to assign water withdrawal for non
-    cooling technologies
+       Returns
+       -------
+       data : dict of (str -> pandas.DataFrame)
+           Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+           Values are data frames ready for :meth:`~.Scenario.add_par`.
+           Years in the data include the model horizon indicated by
+           ``context["transport build info"]``, plus the additional year 2010.
     """
     results = {}
 
@@ -661,7 +664,7 @@ def non_cooling_tec(context):
             "technical_lifetime",
             technology=inp_n_cool["technology"].drop_duplicates(),
             value=20,
-            unit="-",
+            unit="year",
         )
         .pipe(broadcast, year_vtg=year, node_loc=info.N[1:])
         .pipe(same_node)
