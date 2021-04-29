@@ -43,25 +43,6 @@ def add_techs(info):
         "rural_untreated",
     )
 
-    i_o = make_io(
-        src=(None, None, "GWa"),
-        dest=("transport pax vehicle", "useful", "Gv km"),
-        efficiency=1.0 / base["value"],
-        on="input",
-        # Other data
-        node_loc=base["node"],
-        node_origin=base["node"],
-        node_dest=base["node"],
-        technology=base["technology"],
-        year_vtg=base["year"],
-        year_act=base["year"],
-        mode="all",
-        # No subannual detail
-        time="year",
-        time_origin="year",
-        time_dest="year",
-    )
-
     tec = ["saline_ppl_t_d" "desal_t_d"]
 
     tec_saline = ["membrane", "distillation"]

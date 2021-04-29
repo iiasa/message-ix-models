@@ -26,7 +26,7 @@ commodity:
   - urban_mw
   - urban_dis
   - rural_mw
-  - rual_dis
+  - rural_dis
   - cooling__bio_hpl
   - cooling__bio_ppl
   - cooling__bio_istig
@@ -349,7 +349,7 @@ map_tec_addon:
   - [nuc_lc, cooling__nuc_lc]
   - [solar_th_ppl, cooling__solar_th_ppl]
 
-# Commented out for now. cat_addon is automatically mapped
+
 cat_addon:
 #   #TODO check whether these needs to be added ?
   add:
