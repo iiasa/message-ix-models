@@ -70,7 +70,7 @@ def map_add_on(rtype=Code):
     result = defaultdict(list)
 
     for indices in product(*[context["water set"][d]["add"] for d in dims]):
-        # Create a new code by combining three
+        # Create a new code by combining two
         result["code"].append(
             Code(
                 id="".join(c.id for c in indices),

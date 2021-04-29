@@ -15,11 +15,8 @@ DATA_FUNCTIONS = [
 
 
 def add_data(scenario, context, dry_run=False):
-    """Populate `scenario` with MESSAGEix-Water data."""
+    """Populate `scenario` with MESSAGEix-Nexus data."""
 
-    # Information about `scenario`
-    info = ScenarioInfo(scenario)
-    context["water build info"] = info
 
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
