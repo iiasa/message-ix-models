@@ -16,10 +16,8 @@ log = logging.getLogger(__name__)
 @common_params("regions")
 @click.pass_obj
 def cli(context, regions):
-    """MESSAGEix-Water module.
+    """MESSAGEix-Nexus module"""
 
-    Model and scenario are set in this cli function
-    together with context and regions"""
     from .utils import read_config
 
     # Ensure water model configuration is loaded
@@ -29,7 +27,7 @@ def cli(context, regions):
     )
     context.output_scenario = context.scenario_info["scenario"] + "_water"
 
-    # Handle --regions; use a sensible default for MESSAGEix-Transport
+    # Handle --regions; use a sensible default for MESSAGEix-Nexus
     if regions:
         print("INFO: Regions choice", regions)
     else:

@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
-    """Return the specification for water implementation"""
+    """Return the specification for nexus implementation"""
 
     context.use_defaults(bare.SETTINGS)
     context = read_config()
@@ -84,7 +84,7 @@ def get_water_reference_scenario(context):
 
 
 def main(context, scenario, **options):
-    """Set up MESSAGE-Water on `scenario`.
+    """Set up MESSAGEix-Nexus on `scenario`.
 
     See also
     --------
