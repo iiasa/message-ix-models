@@ -5,7 +5,3 @@ __all__ = [
 ]
 
 
-SCENARIO_INFO = dict(
-    model="MESSAGEix-Water",
-    scenario="baseline",
-)

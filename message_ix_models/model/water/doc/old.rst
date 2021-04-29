@@ -31,7 +31,7 @@ a combination of increasingly stringent water efficiency and climate change miti
 It takes multiple days to solve the scenarios sequentially.
 
 Water for energy
----------------------
+----------------
 
 The water withdrawal and return flows from energy technologies are calculated in
 MESSAGE following the approach described in Fricko et al., (2016) :cite:`fricko_2016`.
@@ -185,3 +185,8 @@ The implementation relies on harmonized gridded data for socioeconomic and hydro
 other data files containing parameter mappings and technical performance data.
 The specific data locations are indicated within the workflow scripts.
 
+#  Scenarios
+#  model: ( "MESSAGE-GLOBIOM CD-LINKS R2.3.1", "MESSAGE-GLOBIOM CD-LINKS R2.3.1" , "MESSAGE-GLOBIOM CD-LINKS R2.3.1" ,
+#  "MESSAGE-GLOBIOM CD-LINKS R2.3.1" ,"MESSAGE-GLOBIOM CD-LINKS R2.3.1" )
+#  scenarioName : ( "baseline_globiom_base_watbaseline", "baseline_globiom_SDG_sdg6eff",
+#  "baseline_globiom_SDG_sdg6supp", "baseline_globiom_SDG_sdg6supp2", "baseline_globiom_SDG_sdg6led" ) )
