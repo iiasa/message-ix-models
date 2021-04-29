@@ -1,18 +1,13 @@
-Water Sector Linkage
-*********************
+MESSAGEix-Nexus Module
+**********************
 
 :mod:`message_data.model.water` adds water usage and demand related representation to the MESSAGEix-GLOBIOM global model.
-The resulting model is referred to as **“MESSAGEix-Water”**. This work extends the water sector linkage described by Parkinson et al. (2019) :cite:`Parkinson2019`.
+The resulting model is referred to as **“MESSAGEix-Nexus”**. This work extends the water sector linkage described by Parkinson et al. (2019) :cite:`Parkinson2019`.
 
 
 
 .. contents::
    :local:
-
-Usage
-=====
-
-
 
 Code reference
 ==============
@@ -60,10 +55,24 @@ Data, metadata, and config files
 
 See also: :doc:`water/files`.
 
-- :file:`data/water/`: data files from :file:`P:\ene.model\NEST' and other metadata used for defining water technologies.
-
+- :file:`data/water/`: contains input data used for building the Nexus module
+  - :file:`delineation/`: contains geospatial files for basin mapping and MESSAGE regions
+  - :file:`ppl_cooling_tech/`: contains cooling technology shares, costs and water intensities for different regional definitions
   - :file:`technology.yaml`: metadata for the 'technology' dimension.
   - :file:`set.yaml`: metadata for other sets.
+
+Deprecated R Code
+=================
+
+- :file:`data/water/deprecated`: contains `R` scripts from the older water sector implementaiona
+  - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop
+pathways for sectoral water withdrawals, return flows and infrastructure penetration rates
+in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
+  - :file:`generate_water_constraints.R`: contains input data processing and implementation into the MESSAGEix model using the ixmp utilities
+and solving the model for different policy cases to ensure the framework operates as anticipated.
+  - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
+  - :file:`Figures.R`: R script for producing figures
+  - :file:`cooling_tech_av.R`:
 
 
 CLI usage
@@ -84,3 +93,13 @@ Use the :doc:`CLI </cli>` command ``mix-data water`` to invoke the commands defi
      build    Prepare the model.
      clone    Clone base scenario to the local database.
      solve    Run the model.
+
+Reference
+=========
+
+.. toctree::
+   :maxdepth: 2
+
+   water/files
+   water/old
+   water/cooling

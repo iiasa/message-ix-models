@@ -1,5 +1,5 @@
-Configuration files
-*******************
+Data and Configuration files
+****************************
 
 
 Technology (:file:`water/technology.yaml`)
@@ -14,3 +14,4 @@ Other sets (:file:`water/set.yaml`)
 
 .. literalinclude:: ../../../../data/water/set.yaml
    :language: yaml
+
