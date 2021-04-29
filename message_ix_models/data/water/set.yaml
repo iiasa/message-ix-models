@@ -448,4 +448,5 @@ cat_addon:
 unit:
   add:
   - km3/GWa
+  - km3
   # TODO need to finalize units we will be using for water i.e MCM/day ?
