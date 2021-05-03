@@ -1,11 +1,12 @@
-from functools import lru_cache, partial
 import logging
-import message_ix
+from functools import lru_cache, partial
 from typing import Mapping
-from message_ix_models.model import bare, build
+
 from message_ix_models import ScenarioInfo
-from .utils import read_config
+from message_ix_models.model import bare, build
 from message_ix_models.model.structure import get_codes
+
+from .utils import read_config
 
 log = logging.getLogger(__name__)
 
@@ -54,33 +55,6 @@ def generate_set_elements(set_name, match=None):
             results.extend(code)
 
     return results
-
-
-def get_water_reference_scenario(context):
-    # Not Needed anymore
-    """
-    This functions clones a global scenario and returns for using it's data and
-    update the scenario with updated water parameters
-    """
-
-    mp = context.get_platform()
-
-    # Model and scenario name for storing the RES
-    model_name = context.scenario_info["model"]
-    scenario_name = context.scenario_info["scenario"]
-
-    # Clone from a global scenario
-    clone_from = dict(model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test")
-    base = message_ix.Scenario(mp, **clone_from, cache=True)  # input CLI
-    scenario = base.clone(
-        model_name, scenario_name, keep_solution=True
-    )  # output scenario
-
-    # Solve the scenario and set default version
-    # scenario.solve()
-    scenario.set_as_default()
-
-    return scenario
 
 
 def main(context, scenario, **options):

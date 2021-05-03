@@ -1,13 +1,13 @@
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
+
 import xarray as xr
 from message_ix_models import Context
-from message_ix_models.model.structure import get_codes
-from message_ix_models.util import as_codes, eval_anno, load_private_data
+from message_ix_models.util import load_private_data
 from sdmx.model import Code
-from message_data.tools import Code, as_codes, get_context, set_info
 
+from message_data.tools import get_context, set_info
 
 # Configuration files
 METADATA = [
