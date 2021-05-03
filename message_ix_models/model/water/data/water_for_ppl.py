@@ -1,10 +1,9 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import pandas as pd
-from message_data.model.water import read_config
-from message_data.tools import broadcast, make_df, same_node, make_matched_dfs
 from message_ix import make_df
-from message_data.model.water.build import get_water_reference_scenario
+
+from message_data.tools import broadcast, make_matched_dfs, same_node
 
 #: Name of the input file.
 # The input file mentions water withdrawals and emission heating fractions for
@@ -13,28 +12,29 @@ FILE = "tech_water_performance_ssp_msg.csv"
 # Investment costs and regional shares of historical activities of cooling technologies
 FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
 
+
 # water & electricity for cooling technologies
 def cool_tech(context):
     """Process cooling technology data for a scenario instance.
 
-       The input values of parent technologies are read in from a scenario instance and then
-       cooling fractions are calculated by using the data from
-       ``tech_water_performance_ssp_msg.csv``.
-       It adds cooling  technologies as addons to the parent technologies.The nomenclature
-       for cooling technology is <parenttechnologyname>__<coolingtype>. E.g:
-       `coal_ppl__ot_fresh`
+    The input values of parent technologies are read in from a scenario instance and
+    then cooling fractions are calculated by using the data from
+    ``tech_water_performance_ssp_msg.csv``.
+    It adds cooling  technologies as addons to the parent technologies.The
+    nomenclature for cooling technology is <parenttechnologyname>__<coolingtype>.
+    E.g: `coal_ppl__ot_fresh`
 
-       Parameters
-       ----------
-       context : .Context
+    Parameters
+    ----------
+    context : .Context
 
-       Returns
-       -------
-       data : dict of (str -> pandas.DataFrame)
-           Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
-           Values are data frames ready for :meth:`~.Scenario.add_par`.
-           Years in the data include the model horizon indicated by
-           ``context["transport build info"]``, plus the additional year 2010.
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+        Values are data frames ready for :meth:`~.Scenario.add_par`.
+        Years in the data include the model horizon indicated by
+        ``context["transport build info"]``, plus the additional year 2010.
     """
 
     # define an empty dictionary
@@ -54,9 +54,6 @@ def cool_tech(context):
         .apply(lambda x: pd.Series(str(x).split("__")))
         .drop(columns=1)
     )
-    non_cooling_df = df.loc[df["technology_group"] != "cooling"]
-
-    # TODO commented for now to reduce the time
 
     scen = context.get_scenario()
 
@@ -75,15 +72,15 @@ def cool_tech(context):
     ref_hist_act = ref_hist_act[ref_hist_act["node_loc"] != "R11_GLB"]
     ref_hist_cap = ref_hist_cap[ref_hist_cap["node_loc"] != "R11_GLB"]
 
-    # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg), where h_fg (flue gasses losses) = 0.1
+    # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
+    # where h_fg (flue gasses losses) = 0.1
     ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
 
     def missing_tech(x):
         """Assign values to missing data.
-        It goes through the input data frame and extract the
-        technologies which don't have input values and then assign manual
-        values to those technologies along with assigning them an arbitrary
-        level i.e dummy supply
+        It goes through the input data frame and extract the technologies which
+        don't have input values and then assign manual  values to those technologies
+        along with assigning them an arbitrary level i.e dummy supply
         """
         data_dic = {
             "geo_hpl": 1 / 0.850,
@@ -105,7 +102,7 @@ def cool_tech(context):
         missing_tech, axis=1
     )
 
-    # Combines the input dataframe of parent technologies alongwith the water withdrawal data f
+    # Combines the input df of parent_tech with water withdrawal data
     input_cool = (
         cooling_df.set_index("parent_tech")
         .combine_first(ref_input.set_index("technology"))
@@ -123,7 +120,6 @@ def cool_tech(context):
         (input_cool["level"] != "water_supply") & (input_cool["level"] != "cooling")
     ]
 
-    # TODO Remvoing heating plant values temporarily, need to research if hpl needs cooling?
     input_cool = input_cool[
         ~input_cool["technology_name"].str.contains("hpl", na=False)
     ]
@@ -149,24 +145,6 @@ def cool_tech(context):
 
     input_cool["cooling_fraction"] = input_cool.apply(cooling_fr, axis=1)
 
-    # def foo2(x):
-    #     """
-    #     This function returns input values for cooling technologies
-    #         1. The first condition filters out techs with 'hpl' in their names,and
-    #          returns water withdrawal values directly without using cooling fraction,
-    #          since these technologies have output as heat and not electricity.
-    #         2. The remaining technologies returns the value by dividing the water withdrawal
-    #          values by cooling fraction
-    #     """
-    #     if "hpl" in x['index']:
-    #         return x['water_withdrawal_mid_m3_per_output'] \
-    #                * 60 * 60 * 24 * 365 * (1e-9)
-    #     else:
-    #         return (x['water_withdrawal_mid_m3_per_output']
-    #                 * 60 * 60 * 24 * 365 * (1e-9)) / x['cooling_fraction']
-
-    # Make a new column 'value_cool' for calculating values against technologies
-    # input_cool['value_cool'] = input_cool.apply(foo2, axis=1)
     # Converting water withdrawal units to Km3/GWa
     input_cool["value_cool"] = (
         input_cool["water_withdrawal_mid_m3_per_output"]
@@ -180,8 +158,8 @@ def cool_tech(context):
 
     # def foo3(x):
     #     """
-    #     This function is similar to foo2, but it returns electricity values per unit of cooling
-    #     for techs that require parasitic electricity demand
+    #     This function is similar to foo2, but it returns electricity values
+    #     per unit of cooling for techs that require parasitic electricity demand
     #     """
     #     if "hpl" in x['index']:
     #         return x['parasitic_electricity_demand_fraction']
@@ -571,25 +549,23 @@ def cool_tech(context):
 
 
 # Water use & electricity for non-cooling technologies
-
-
 def non_cooling_tec(context):
     """Process data for water usage of power plants (non-cooling technology related).
-    
-       Water withdrawal values for power plants are read in from
-       ``tech_water_performance_ssp_msg.csv``
 
-       Parameters
-       ----------
-       context : .Context
+    Water withdrawal values for power plants are read in from
+    ``tech_water_performance_ssp_msg.csv``
 
-       Returns
-       -------
-       data : dict of (str -> pandas.DataFrame)
-           Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
-           Values are data frames ready for :meth:`~.Scenario.add_par`.
-           Years in the data include the model horizon indicated by
-           ``context["transport build info"]``, plus the additional year 2010.
+    Parameters
+    ----------
+    context : .Context
+
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+        Values are data frames ready for :meth:`~.Scenario.add_par`.
+        Years in the data include the model horizon indicated by
+        ``context["transport build info"]``, plus the additional year 2010.
     """
     results = {}
 
