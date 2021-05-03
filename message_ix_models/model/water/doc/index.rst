@@ -103,5 +103,3 @@ Reference
    :maxdepth: 2
 
    water/files
-   water/old
-   water/cooling
