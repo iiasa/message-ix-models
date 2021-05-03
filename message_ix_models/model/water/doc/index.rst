@@ -56,6 +56,7 @@ Data, metadata, and config files
 See also: :doc:`water/files`.
 
 - :file:`data/water/`: contains input data used for building the Nexus module
+
   - :file:`delineation/`: contains geospatial files for basin mapping and MESSAGE regions
   - :file:`ppl_cooling_tech/`: contains cooling technology shares, costs and water intensities for different regional definitions
   - :file:`technology.yaml`: metadata for the 'technology' dimension.
@@ -64,21 +65,22 @@ See also: :doc:`water/files`.
 Deprecated R Code
 =================
 
-- :file:`data/water/deprecated`: contains `R` scripts from the older water sector implementaiona
+- :file:`data/water/deprecated`: contains `R` scripts from the older water sector implementaion
+
   - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop
-pathways for sectoral water withdrawals, return flows and infrastructure penetration rates
-in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
+      pathways for sectoral water withdrawals, return flows and infrastructure penetration rates
+      in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
   - :file:`generate_water_constraints.R`: contains input data processing and implementation into the MESSAGEix model using the ixmp utilities
-and solving the model for different policy cases to ensure the framework operates as anticipated.
+      and solving the model for different policy cases to ensure the framework operates as anticipated.
   - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
   - :file:`Figures.R`: R script for producing figures
-  - :file:`cooling_tech_av.R`:
+  - :file:`cooling_tech_av.R`: contains similar code as in the above-mentioned scripts, but this was originated from another workstream
 
 
 CLI usage
 =========
 
-Use the :doc:`CLI </cli>` command ``mix-data water`` to invoke the commands defined in :mod:`.water.cli`. Try:
+Use the :doc:`CLI <cli>` command ``mix-data water`` to invoke the commands defined in :mod:`.water.cli`. Try:
 
 .. code::
 
