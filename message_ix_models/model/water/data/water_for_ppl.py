@@ -20,6 +20,9 @@ def cool_tech(context):
        The input values of parent technologies are read in from a scenario instance and then
        cooling fractions are calculated by using the data from
        ``tech_water_performance_ssp_msg.csv``.
+       It adds cooling  technologies as addons to the parent technologies.The nomenclature
+       for cooling technology is <parenttechnologyname>__<coolingtype>. E.g:
+       `coal_ppl__ot_fresh`
 
        Parameters
        ----------
@@ -128,10 +131,10 @@ def cool_tech(context):
     def cooling_fr(x):
         """Calculate cooling fraction
 
-        Returns the calculated cooling fraction after for two cateogries;
+        Returns the calculated cooling fraction after for two categories;
         1. Technologies that produce heat as an output
             cooling_fraction(h_cool) = input value(hi) - 1
-        Simply substract 1 from the heating value since the rest of the part is already
+        Simply subtract 1 from the heating value since the rest of the part is already
         accounted in the heating value
 
         2. Rest of technologies
@@ -314,6 +317,7 @@ def cool_tech(context):
 
     def hist_act(x):
         """Calculate historical activity of cooling technology.
+        The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
 
         Returns
         -------
@@ -359,7 +363,7 @@ def cool_tech(context):
 
     def hist_cap(x):
         """Calculate historical capacity of cooling technology.
-        
+        The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
         Returns
         -------
         hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
