@@ -1,15 +1,10 @@
 import logging
-from pathlib import Path
 
 import click
-
-# import message_ix
-
-# from . import SCENARIO_INFO
 from message_ix_models.util.click import common_params
-from message_ix_models.util._logging import mark_time
 
 log = logging.getLogger(__name__)
+
 
 # allows to activate water module
 @click.group("water")
