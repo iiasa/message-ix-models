@@ -112,9 +112,9 @@ from message_data.model.material.data_buildings import BLD_MAT_USE_2020 as bld_d
 
 mp = ixmp.Platform(name="ixmp_dev")
 sl = mp.scenario_list()
-sl = sl.loc[sl.model == "Material_Global"] # "ENGAGE_SSP2_v4.1.4"]
+sl = sl.loc[sl.model == "MESSAGEix-Materials"] # "ENGAGE_SSP2_v4.1.4"]
 
-sample = mix.Scenario(mp, model="Material_Global", scenario="NoPolicy")
+sample = mix.Scenario(mp, model="MESSAGEix-Materials", scenario="NoPolicy")
 cem_demand = sample.par('demand', {"commodity":"cement", "year":2010})
 
 # Test read_data_steel <- will be in create_res if working fine
@@ -165,3 +165,46 @@ mp_samp.close_db()
 
 scen.to_excel("test.xlsx")
 scen_rp = Scenario(scen)
+
+#%%
+
+s_info = ScenarioInfo(sample)
+years = s_info.Y
+
+import os
+import pyam
+import pandas as pd
+import matplotlib.pyplot as plt
+msg_data_path = os.environ["MESSAGE_DATA_PATH"]
+directory = os.path.join(msg_data_path, "message_data", "reporting", "materials")
+path = os.path.join(directory, "message_ix_reporting.xlsx")
+report = pd.read_excel(path)
+report.Unit.fillna("", inplace=True)
+df = pyam.IamDataFrame(report)
+
+df_ref_fueloil = df.copy()
+r = 'R11_CPA|R11_CPA'
+df_ref_fueloil.filter(region=r, year=years, inplace=True)
+
+df_ref_fueloil.filter(
+    variable=["out|secondary|fueloil|agg_ref|*"], inplace=True
+)
+
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
+        
+df_ref_fueloil.stack_plot(ax=ax1)
+ax1.legend(
+    [
+        "Atm gas oil",
+        "Atm resiude",
+        "Heavy fuel oil",
+        "Petroleum coke",
+        "Vacuum residue",
+        "import",
+    ],
+    bbox_to_anchor=(0.3, 1),
+)
+ax1.set_title("Fuel oil mix_" + r)
+ax1.set_xlabel("Year")
+ax1.set_ylabel("GWa")
