@@ -6,9 +6,11 @@ from message_ix_models.model.build import apply_spec
 
 from .build import apply_spec
 from message_data.tools import ScenarioInfo
+
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity
 from .util import read_config
+
 
 def build(scenario):
     """Set up materials accounting on `scenario`."""
@@ -16,7 +18,7 @@ def build(scenario):
     spec = get_spec()
 
     # Apply to the base scenario
-    apply_spec(scenario, spec, add_data) # dry_run=True
+    apply_spec(scenario, spec, add_data)  # dry_run=True
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the usefyl level industry technologies
@@ -24,11 +26,19 @@ def build(scenario):
 
     return scenario
 
+
 # add as needed/implemented
 SPEC_LIST = [
-            "generic", "common", "steel", "cement", "aluminum",
-            "petro_chemicals", "buildings",
-            "power_sector"]
+    "generic",
+    "common",
+    "steel",
+    "cement",
+    "aluminum",
+    "petro_chemicals",
+    "buildings",
+    "power_sector",
+]
+
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
     """Return the specification for materials accounting."""
@@ -63,8 +73,7 @@ def cli():
 
 @cli.command("create-bare")
 @click.option("--regions", type=click.Choice(["China", "R11", "R14"]))
-@click.option('--dry_run', '-n', is_flag=True,
-              help='Only show what would be done.')
+@click.option("--dry_run", "-n", is_flag=True, help="Only show what would be done.")
 @click.pass_obj
 def create_bare(context, regions, dry_run):
     """Create the RES from scratch."""
@@ -77,7 +86,7 @@ def create_bare(context, regions, dry_run):
     context.period_start = 1980
 
     # Otherwise it can not find the path to read the yaml files..
-    context.metadata_path = context.metadata_path /'data'
+    context.metadata_path = context.metadata_path / "data"
 
     scen = create_res(context)
     build(scen)
@@ -86,14 +95,18 @@ def create_bare(context, regions, dry_run):
     if not dry_run:
         scen.solve()
 
-@cli.command("solve")
-@click.option('--datafile', default='Global_steel_cement_MESSAGE.xlsx',
-              metavar='INPUT', help='File name for external data input')
-@click.option('--tag', default='',
-              help='Suffix to the scenario name')
+
+@cli.command("build")
+@click.option(
+    "--datafile",
+    default="Global_steel_cement_MESSAGE.xlsx",
+    metavar="INPUT",
+    help="File name for external data input",
+)
+@click.option("--tag", default="", help="Suffix to the scenario name")
 @click.pass_obj
 def solve(context, datafile, tag):
-    """Build and solve model.
+    """Build model.
 
     Use the --url option to specify the base scenario.
     """
@@ -107,7 +120,7 @@ def solve(context, datafile, tag):
         # "DIAG-C30-const_E414": "baseline_test",
     }.get(context.scenario_info["scenario"])
 
-    context.metadata_path = context.metadata_path /'data'
+    context.metadata_path = context.metadata_path / "data"
     context.datafile = datafile
 
     if context.scenario_info["model"] != "CD_Links_SSP2":
@@ -115,22 +128,55 @@ def solve(context, datafile, tag):
 
     # Clone and set up
     scenario = build(
-        context.get_scenario()
-        .clone(model="MESSAGEix-Materials", scenario=output_scenario_name + '_' + tag)
+        context.get_scenario().clone(
+            model="MESSAGEix-Materials", scenario=output_scenario_name + "_" + tag
+        )
     )
 
     # Set the latest version as default
     scenario.set_as_default()
 
     # Solve
+    # scenario.solve()
+
+
+@cli.command("solve")
+@click.option("--scenario_name", default="NoPolicy")
+@click.option("--model_name", default="MESSAGEix-Materials")
+@click.option(
+    "--datafile",
+    default="Global_steel_cement_MESSAGE.xlsx",
+    metavar="INPUT",
+    help="File name for external data input",
+)
+@click.pass_obj
+# @click.pass_obj
+def solve_scen(context, datafile, model_name, scenario_name):
+    """Build model.
+
+    Use the --url option to specify the base scenario.
+    """
+    # Clone and set up
+    from message_ix import Scenario
+
+    scenario = Scenario(context.get_platform(), model_name, scenario_name)
+
+    if scenario.has_solution():
+        scenario.remove_solution()
+
+    # Solve
     scenario.solve()
 
+
 @cli.command("report")
-@click.option('--old_reporting', default= True,
-               help='If True old reporting is merged with the new variables.')
-@click.option('--scenario_name', default= "NoPolicy")
-@click.option('--model_name', default= "MESSAGEix-Materials")
-#@click.pass_obj
+@click.option(
+    "--old_reporting",
+    default=True,
+    help="If True old reporting is merged with the new variables.",
+)
+@click.option("--scenario_name", default="NoPolicy")
+@click.option("--model_name", default="MESSAGEix-Materials")
+# @click.pass_obj
 def run_reporting(old_reporting, scenario_name, model_name):
     from message_data.reporting.materials.reporting import report
     from message_ix import Scenario
@@ -141,7 +187,9 @@ def run_reporting(old_reporting, scenario_name, model_name):
     scenario = Scenario(mp, model_name, scenario_name)
     report(scenario, old_reporting)
 
+
 import logging
+
 log = logging.getLogger(__name__)
 
 from .data_cement import gen_data_cement
@@ -160,7 +208,7 @@ DATA_FUNCTIONS = [
     gen_data_aluminum,
     gen_data_petro_chemicals,
     gen_data_generic,
-    gen_data_power_sector
+    gen_data_power_sector,
 ]
 
 # Try to handle multiple data input functions from different materials
@@ -177,7 +225,7 @@ def add_data(scenario, dry_run=False):
 
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
-        log.info(f'from {func.__name__}()')
+        log.info(f"from {func.__name__}()")
         add_par_data(scenario, func(scenario), dry_run=dry_run)
 
-    log.info('done')
+    log.info("done")
