@@ -16,7 +16,7 @@ FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
 # water & electricity for cooling technologies
 def cool_tech(context):
     """Process cooling technology data for a scenario instance.
-`
+
        The input values of parent technologies are read in from a scenario instance and then
        cooling fractions are calculated by using the data from
        ``tech_water_performance_ssp_msg.csv``.
@@ -127,6 +127,7 @@ def cool_tech(context):
 
     def cooling_fr(x):
         """Calculate cooling fraction
+
         Returns the calculated cooling fraction after for two cateogries;
         1. Technologies that produce heat as an output
             cooling_fraction(h_cool) = input value(hi) - 1
@@ -281,6 +282,7 @@ def cool_tech(context):
 
     def shares(x):
         """Process share and cooling fraction.
+
         Returns
         -------
         Product of value of shares of cooling technology types of regions with
@@ -312,6 +314,7 @@ def cool_tech(context):
 
     def hist_act(x):
         """Calculate historical activity of cooling technology.
+
         Returns
         -------
         hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
@@ -356,6 +359,7 @@ def cool_tech(context):
 
     def hist_cap(x):
         """Calculate historical capacity of cooling technology.
+        
         Returns
         -------
         hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
@@ -567,7 +571,7 @@ def cool_tech(context):
 
 def non_cooling_tec(context):
     """Process data for water usage of power plants (non-cooling technology related).
-`
+    
        Water withdrawal values for power plants are read in from
        ``tech_water_performance_ssp_msg.csv``
 
