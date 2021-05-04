@@ -3,7 +3,7 @@
 import logging
 
 from message_ix_models.util import add_par_data
-
+from message_ix_models import ScenarioInfo
 from .water_for_ppl import cool_tech, non_cooling_tec
 
 log = logging.getLogger(__name__)
@@ -16,6 +16,9 @@ DATA_FUNCTIONS = [
 
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGEix-Nexus data."""
+
+    info = ScenarioInfo(scenario)
+    context["water build info"] = info
 
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario
