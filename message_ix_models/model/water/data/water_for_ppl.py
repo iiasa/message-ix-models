@@ -314,7 +314,7 @@ def cool_tech(context):
                 node_loc,
                 technology,
                 cooling_technology,
-                x.year_vtg,
+                x.year_act,
                 x.value,
                 new_value,
                 x.unit,
