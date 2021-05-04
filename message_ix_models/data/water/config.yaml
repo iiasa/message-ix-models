@@ -1,0 +1,10 @@
+# Configuration for MESSAGEix-Nexus
+
+# Configuration file for the model
+# Added data sources here.
+
+
+# CSV files containing data for input calculations and assumptions
+data files:
+- cooltech_cost_and_shares_ssp_msg14
+- tech_water_performance_ssp_msg
