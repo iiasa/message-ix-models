@@ -34,14 +34,13 @@ def cool_tech(context):
         Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
         Values are data frames ready for :meth:`~.Scenario.add_par`.
         Years in the data include the model horizon indicated by
-        ``context["transport build info"]``, plus the additional year 2010.
+        ``context["water build info"]``, plus the additional year 2010.
     """
 
     # define an empty dictionary
     results = {}
 
-    # Reference to the transport configuration
-
+    # Reference to the water configuration
     info = context["water build info"]
 
     path = context.get_path("water", "ppl_cooling_tech", FILE)
