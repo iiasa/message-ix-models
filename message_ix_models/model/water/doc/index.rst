@@ -32,12 +32,6 @@ Data preparation
 .. automodule:: message_data.model.water.data.water_for_ppl
    :members:
 
-.. automodule:: message_data.model.water.data.waste_t_d
-   :members:
-
-.. automodule:: message_data.model.water.data.demands
-   :members:
-
 
 Utilities and CLI
 -----------------
