@@ -238,22 +238,28 @@ def get_dummy(context):
     return data
 
 
-def get_constraints(context):
+def get_constraints(context) -> Dict[str, pd.DataFrame]:
+    """Return constraints on light-duty vehicle technology activity.
+
+    Responds to the ``["transport config"]["constraint"]["LDV growth_activity"]``
+    context setting, which should give the allowable *annual* increase/decrease in
+    activity of each LDV technology.
+
+    For example, a value of 0.01 means the activity may increase (or decrease) by 1%
+    from one year to the next. For periods of length >1 year, this value is compounded.
+    """
     # Information about the target structure
     info = context["transport build info"]
-
     years = info.Y[1:]
 
     # List of LDV technologies
     all_techs = context["transport set"]["technology"]["add"]
     ldv_techs = list(map(str, all_techs[all_techs.index("LDV")].child))
 
+    # Constraint value
+    annual = context["transport config"]["constraint"]["LDV growth_activity"]
+
     data = dict()
-
-    # Constraint on activity growth: ± 10% every 5 years
-    # TODO read this from config.yaml
-    annual = (1.1 ** (1.0 / 5.0)) - 1.0
-
     for bound, factor in (("lo", -1.0), ("up", 1.0)):
         par = f"growth_activity_{bound}"
         data[par] = make_df(

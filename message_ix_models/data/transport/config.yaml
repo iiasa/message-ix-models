@@ -156,6 +156,9 @@ ldv cost catch-up year:
   pas: 2030
   sas: 2040
 
+constraint:
+  LDV growth_activity: 0.0192  # = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years
+
 
 # Parameters used in demand and mode share calculations -----------------------
 
