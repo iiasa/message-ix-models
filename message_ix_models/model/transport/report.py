@@ -77,6 +77,12 @@ def callback(rep: Reporter):
 
     # Set of all transport technologies
     technologies = spec["add"].set["technology"]
+
+    # Combine technologies from disutility formulation
+    # TODO do this somewhere earlier, e.g. in build.get_spec()
+    disutil_spec = build.get_disuility_spec()
+    technologies.extend(disutil_spec["add"].set["technology"])
+
     rep.add("t:transport", quote(technologies))
 
     # Groups of transport technologies for aggregation
@@ -95,7 +101,7 @@ def callback(rep: Reporter):
     if config["filter"]:
         # Include only technologies with "transport" in the name
         log.info("Filter out non-transport technologies")
-        rep.set_filters(t=sorted(technologies, key=attrgetter("id")))
+        rep.set_filters(t=list(map(str, sorted(technologies, key=attrgetter("id")))))
 
     # Queue of computations to add
     queue = []
