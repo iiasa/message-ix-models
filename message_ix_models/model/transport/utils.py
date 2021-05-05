@@ -126,9 +126,5 @@ def add_commodity_and_level(df: pd.DataFrame, default_level=None) -> pd.DataFram
 
         return pd.Series(dict(commodity=commodity, level=level))
 
-    def func(row):
-        """Modify `row` to fill in 'commodity' and 'level' columns."""
-        return row.fillna(t_cl(row["technology"]))
-
     # Process every row in `df`; return a new DataFrame
-    return df.apply(func, axis=1)
+    return df.combine_first(df["technology"].apply(t_cl))
