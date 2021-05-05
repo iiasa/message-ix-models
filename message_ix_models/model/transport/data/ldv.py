@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from typing import Dict, List
 
 import pandas as pd
 from message_ix import make_df
@@ -20,19 +21,16 @@ from message_data.tools import cached, check_support
 log = logging.getLogger(__name__)
 
 
-#: Input file containing data from US-TIMES and MA3T models.
-FILE = "LDV_costs_efficiencies_US-TIMES_MA3T.xlsx"
+def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
+    """Load data for light-duty-vehicle technologies.
 
-#: (parameter name, cell range, units) for data to be read from multiple
-#: sheets in the file.
-TABLES = [
-    ("efficiency", slice("B3", "Q15"), "10^9 v km / GWh / year"),
-    ("inv_cost", slice("B33", "Q45"), "USD / vehicle"),
-    ("fix_cost", slice("B62", "Q74"), "USD / vehicle"),
-]
+    Responds to the ``["transport config"]["data source"]["LDV"]`` context setting:
 
+    - :obj:`None`: calls :func:`get_dummy`.
+    - ``"US-TIMES MA3T": calls :func:`get_USTIMES_MA3T`.
 
-def get_ldv_data(context):
+    In both cases, :func:`get_constraints` is used to generate constraints.
+    """
     source = context["transport config"]["data source"].get("LDV", None)
 
     if source == "US-TIMES MA3T":
@@ -47,40 +45,38 @@ def get_ldv_data(context):
     return data
 
 
+#: Input file containing data from US-TIMES and MA3T models.
+FILE = "LDV_costs_efficiencies_US-TIMES_MA3T.xlsx"
+
+#: (parameter name, cell range, units) for data to be read from multiple sheets in the
+#: file.
+TABLES = [
+    ("efficiency", slice("B3", "Q15"), "10^9 v km / GW year"),
+    ("inv_cost", slice("B33", "Q45"), "USD / vehicle"),
+    ("fix_cost", slice("B62", "Q74"), "USD / vehicle"),
+]
+
+
 @cached
-def get_USTIMES_MA3T(context):
-    """Read LDV cost and efficiency data from US-TIMES and MA3T.
+def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
+    """Read the US-TIMES MA3T data input file.
 
-    .. todo:: Some calculations are performed in the spreadsheet; transfer to code.
-    .. todo:: Interpolate values for time periods e.g. 2025 not in the spreadsheet.
+    No transformation is performed.
+
+    **NB** this function takes only simple arguments (`nodes` and `subdir`) so that
+    :func:`.cached` computes the same key every time to avoid the slow step of opening/
+    reading the large spreadsheet. :func:`get_USTIMES_MA3T` then conforms the data to
+    particular context settings.
     """
-    # Compatibility checks
-    check_support(
-        context,
-        settings=dict(regions=frozenset(["R11"]), years=frozenset(["A"])),
-        desc="US-TIMES and MA3T data available",
-    )
-
-    # Retrieve configuration and ScenarioInfo
-    config = context["transport config"]
-    info = context["transport build info"]
-
-    # List of years to include
-    years = list(filter(lambda y: y >= 2010, info.set["year"]))
-    years_query = f"year in {repr(years)}"
-
     # Open workbook
-    path = private_data_path("transport", FILE)
+    path = private_data_path("transport", subdir or "", FILE)
     wb = load_workbook(path, read_only=True, data_only=True)
 
     # Tables
     data = defaultdict(list)
 
     # Iterate over regions/nodes
-    for node in info.N:
-        if node == "World":
-            continue
-
+    for node in nodes:
         log.debug(node)
 
         # Worksheet for this region
@@ -97,10 +93,9 @@ def get_USTIMES_MA3T(context):
             # - Make the first row the headers.
             # - Drop extra columns.
             # - Use 'MESSAGE name' as the technology name.
-            # - Pivot to long format.
+            # - Melt to long format.
             # - Year as integer.
-            # - Within the model horizon/time resolution.
-            # - Assign values.
+            # - Assign "node" and "unit" columns.
             # - Drop NA values (e.g. ICE_L_ptrp after the first year).
             data[par_name].append(
                 df.iloc[1:, :]
@@ -109,19 +104,52 @@ def get_USTIMES_MA3T(context):
                 .rename(columns={"MESSAGE name": "technology"})
                 .melt(id_vars=["technology"], var_name="year")
                 .astype({"year": int})
-                .query(years_query)
                 .assign(node=node, unit=unit)
                 .dropna(subset=["value"])
             )
 
-    for par, dfs in data.items():
+    # Combine data frames
+    return {par: pd.concat(dfs, ignore_index=True) for par, dfs in data.items()}
+
+
+def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
+    """Prepare LDV data from US-TIMES and MA3T.
+
+    .. todo:: Some calculations are performed in the spreadsheet; transfer to code.
+    .. todo:: Values for intermediate time periods e.g. 2025 are forward-filled from
+       the next earlier period, e.g. 2020; interpolate instead.
+
+    Returns
+    -------
+    dict of (str → pd.DataFrame)
+        Data for the ``input``, ``output``, ``technical_lifetime``, ``inv_cost``, and
+        ``fix_cost`` parameters.
+    """
+    # Compatibility checks
+    check_support(
+        context,
+        settings=dict(regions=frozenset(["R11"])),
+        desc="US-TIMES and MA3T data available",
+    )
+
+    # Retrieve configuration and ScenarioInfo
+    technical_lifetime = context["transport config"]["ldv lifetime"]["average"]
+    info = context["transport build info"]
+
+    # Retrieve the data from the spreadsheet
+    data = read_USTIMES_MA3T(info.N[1:])
+
+    # List of years to include
+    years = list(filter(lambda y: y >= 2010, info.set["year"]))
+
+    for par, df in data.items():
         # Dimension to forward fill along
-        for col in ("year_vtg", "year"):
-            if col in df.columns:
-                break
-        # - Concatenate data frames.
-        # - Forward-fill over uncovered periods in the model horizon.
-        data[par] = pd.concat(dfs, ignore_index=True).pipe(
+        col = next(filter(lambda c: c in "year_vtg year", df.columns))
+
+        # - Select only the periods appearing in the target scenario.
+        # - Forward-fill over uncovered periods in the model horizon; copy year_vtg
+        #   values into year_act.
+        data[par] = df.query(f"year in {repr(years)}").pipe(
             ffill,
             col,
             info.Y,
@@ -133,9 +161,10 @@ def get_USTIMES_MA3T(context):
     i_o = make_io(
         src=(None, None, "GWa"),
         dest=(None, "useful", "Gv km"),
+        # Convert 10^9 v km / GWh / year →
         efficiency=1.0 / base["value"],
         on="input",
-        # Other data
+        # Other dimensions
         node_loc=base["node"],
         node_origin=base["node"],
         node_dest=base["node"],
@@ -150,46 +179,30 @@ def get_USTIMES_MA3T(context):
     )
 
     # Assign input commodity and level according to the technology
-    i_o["input"] = add_commodity_and_level(i_o["input"], default_level="secondary")
+    data["input"] = add_commodity_and_level(i_o["input"], default_level="secondary")
 
     # Assign output commodity based on the technology name
-    i_o["output"] = i_o["output"].assign(
+    data["output"] = i_o["output"].assign(
         commodity=lambda df: "transport vehicle " + df["technology"]
     )
 
-    data.update(i_o)
-
     # Add technical lifetimes
     data.update(
-        make_matched_dfs(
-            base=i_o["output"],
-            technical_lifetime=config["ldv lifetime"]["average"],
-        )
+        make_matched_dfs(base=data["output"], technical_lifetime=technical_lifetime)
     )
 
-    # Transform costs
+    # Transform costs: rename "node" to "node_loc", "year" to "year_vtg" and "year_act"
     for par in "fix_cost", "inv_cost":
         base = data.pop(par)
-        # Rename 'node' and 'year' columns
         data[par] = make_df(
             par,
             node_loc=base["node"],
             technology=base["technology"],
             year_vtg=base["year"],
-            year_act=base["year"],  # fix_cost only
+            year_act=base["year"],
             value=base["value"],
             unit=base["unit"],
         )
-
-    # commented: incomplete / for debugging
-    # Activity constraints
-    # data.update(
-    #     make_matched_dfs(
-    #         base=i_o["output"],
-    #         bound_new_capacity_up=1.,
-    #         initial_activity_up=1.,
-    #     )
-    # )
 
     return data
 
