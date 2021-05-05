@@ -74,7 +74,7 @@ The following is equivalent to calling :meth:`message_ix.Scenario.solve`::
 Report the results.
 The ``-m model.transport`` option indicates that additional reporting calculations from :mod:`model.transport.report` should be added to the base reporting configuration for MESSAGEix-GLOBIOM::
 
-    $ mix-models --url=$URL report -m model.transport "transport plots"
+    $ mix-models --url="$URL" report -m model.transport "transport plots"
 
 Code reference
 ==============
