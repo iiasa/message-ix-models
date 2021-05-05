@@ -118,6 +118,30 @@ def generate_codes(base: Code, dims):
         yield result
 
 
+#: Template for disutility technologies.
+TEMPLATE = Code(
+    id="{technology} usage by {group}",
+    annotations=[
+        Annotation(
+            id="input",
+            text=repr(
+                dict(
+                    commodity="transport vehicle {technology}",
+                    level="useful",
+                    unit="km",
+                )
+            ),
+        ),
+        Annotation(
+            id="output",
+            text=repr(
+                dict(commodity="transport pax {group}", level="useful", unit="km")
+            ),
+        ),
+    ],
+)
+
+
 def main(context, scenario, **options):
     """Build MESSAGEix-Transport on `scenario`.
 
@@ -138,23 +162,19 @@ def main(context, scenario, **options):
     build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
 
     # Add generalized disutility structure to LDV technologies
-    lu = dict(level="useful", unit="km")
     disutility.add(
         scenario,
         groups=consumer_groups(),
         technologies=generate_set_elements("technology", "LDV"),
-        template=Code(
-            id="{technology} usage by {group}",
-            annotations=[
-                Annotation(
-                    id="input",
-                    text=repr(dict(commodity="transport vehicle {technology}", **lu)),
-                ),
-                Annotation(
-                    id="output",
-                    text=repr(dict(commodity="transport pax {group}", **lu)),
-                ),
-            ],
-        ),
+        template=TEMPLATE,
         **options,
+    )
+
+
+def get_disutility_spec():
+    """Return the spec for the disutility formulation on LDVs."""
+    return disutility.get_spec(
+        groups=consumer_groups(),
+        technologies=generate_set_elements("technology", "LDV"),
+        template=TEMPLATE,
     )
