@@ -194,8 +194,7 @@ def get_USTIMES_MA3T(context):
     return data
 
 
-@cached
-def get_dummy(context):
+def get_dummy(context) -> Dict[str, pd.DataFrame]:
     """Generate dummy, equal-cost output for each LDV technology."""
     # Information about the target structure
     info = context["transport build info"]
