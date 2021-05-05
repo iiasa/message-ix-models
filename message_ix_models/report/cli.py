@@ -5,6 +5,7 @@ from pathlib import Path
 
 import click
 import yaml
+from message_ix_models.util import private_data_path
 from message_ix_models.util._logging import mark_time
 
 from message_data.reporting import register, report
@@ -55,11 +56,11 @@ def cli(context, config_file, module, output_path, from_file, dry_run, key):
     config = Path(config_file)
     if not config.exists():
         # Path doesn't exist; treat it as a stem in the metadata dir
-        config = context.get_config_file("report", config_file)
+        config = private_data_path("report", config_file).with_suffix(".yaml")
 
     if not config.exists():
         # Can't find the file
-        raise click.BadOptionUsage(f"--config={config_file} not found")
+        raise FileNotFoundError(f"Reporting configuration --config={config}")
 
     # --output/-o: handle "~"
     output_path = output_path.expanduser()
