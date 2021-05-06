@@ -16,7 +16,6 @@ from message_ix_models.util import (
 
 from message_data.model.transport.utils import add_commodity_and_level
 
-from .groups import get_consumer_groups  # noqa: F401
 from .ldv import get_ldv_data
 from .non_ldv import get_non_ldv_data
 
@@ -30,7 +29,7 @@ DATA_FUNCTIONS = [
 
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGE-Transport data."""
-    # Information about `scenario`
+    # Information about the base `scenario`
     info = ScenarioInfo(scenario)
     context["transport build info"] = info
 
@@ -98,13 +97,7 @@ def demand(context):
         **common,
     )
 
-    # result = dict(demand=pd.concat([data, data2]))
-    result = dict(demand=data2)
-
-    # commented: for debugging
-    # result["demand"].to_csv("debug.csv")
-
-    return result
+    return dict(demand=pd.concat([data, data2]))
 
 
 DATA_FUNCTIONS.append(demand)
