@@ -6,7 +6,7 @@ import xarray as xr
 from genno import computations
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import private_data_path
+from message_ix_models.util import ffill, private_data_path
 
 from message_data.model.transport.utils import consumer_groups
 from message_data.tools import gea
@@ -131,6 +131,9 @@ def get_consumer_groups(context):
 def get_urban_rural_shares(context):
     """Return shares of urban and rural population from GEA.
 
+    The data are filled forward to cover the years indicated by ``context["transport
+    build info"].set["year"]``.
+
     Parameters
     ----------
     context : .Context
@@ -152,6 +155,15 @@ def get_urban_rural_shares(context):
     # TODO pass the scenario selector through get_gea_population() to get_gea_data()
     pop = get_gea_population(regions).sel(
         scenario=context["transport config"]["data source"]["population"], drop=True
+    )
+
+    # Duplicate 2100 data for 2110
+    # TODO use some kind of ffill operation
+    years = context["transport build info"].Y
+    idx = years.index(2100) + 1
+    pop = computations.concat(
+        pop,
+        pop.sel(y=2100).expand_dims(y=years[idx:]).transpose("n", "area_type", "y"),
     )
 
     # Compute and return shares
