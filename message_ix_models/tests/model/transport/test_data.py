@@ -9,8 +9,11 @@ from pytest import param
 
 
 from message_data import testing
-from message_data.model.transport.data import get_consumer_groups
-from message_data.model.transport.data.groups import get_urban_rural_shares
+from message_data.model.transport import data as data_module
+from message_data.model.transport.data.groups import (
+    get_consumer_groups,
+    get_urban_rural_shares,
+)
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
 from message_data.tools import load_data
@@ -32,6 +35,36 @@ def test_load_data(session_context, key, rtype):
     # Load transport metadata from files in both pandas and xarray formats
     result = load_data(session_context, "transport", key, rtype=rtype)
     assert isinstance(result, rtype)
+
+
+@pytest.mark.parametrize(
+    "regions",
+    [
+        "R11",
+        param("R14", marks=testing.NIE),
+        param("ISR", marks=testing.NIE),
+    ],
+)
+def test_demand(transport_context_f, regions):
+    """Test :func:`.transport.data.demand` that returns demand data."""
+    ctx = transport_context_f
+    ctx["regions"] = regions
+    ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
+
+    # Function runs
+    data = data_module.demand(ctx)
+
+    # Returns a dict with a single key/DataFrame
+    demand = data.pop("demand")
+    assert 0 == len(data)
+
+    # Demand is expressed for the expected quantities
+    assert {"transport pax RUEMF", "transport pax air"} < set(demand["commodity"])
+
+    # Demand covers the model horizon
+    assert info.Y[-1] == max(
+        demand["year"].unique()
+    ), "`demand` does not cover the model horizon"
 
 
 @pytest.mark.parametrize("years", ["A", "B"])  # param("B", marks=testing.NIE)])
