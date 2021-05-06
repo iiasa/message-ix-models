@@ -6,7 +6,7 @@ from message_ix_models.model.bare import get_spec
 from pytest import param
 
 from message_data import testing
-from message_data.model.transport import demand, report
+from message_data.model.transport import demand
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +19,15 @@ def test_demand_dummy(transport_context):
 
 
 @pytest.mark.parametrize(
-    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
+    "regions",
+    [
+        "R11",
+        param("R14", marks=testing.NIE),
+        param("ISR", marks=testing.NIE),
+    ],
 )
 def test_from_external_data(transport_context_f, tmp_path, regions):
+    """Exogenous demand calculation succeeds."""
     ctx = transport_context_f
     ctx.regions = regions
     ctx.output_path = tmp_path
@@ -38,6 +44,8 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
         ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
         ("cost:n-y-c-t", "USD / km"),
         ("transport pdt:n-y-t", "km / year"),
+        # These units are implied by the test of "transport pdt:*":
+        # "transport pdt:n-y:total" [=] Mm / year
     ):
         try:
             qty = rep.get(key)
@@ -47,9 +55,6 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
             print(rep.describe(key))
             print(qty, qty.attrs)
             raise
-
-    # These units are implied by the test of "transport pdt:*":
-    # "transport pdt:n-y:total") → "Mm / year"
 
     # Total demand by mode
     key = "transport pdt:n-y-t"
