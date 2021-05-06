@@ -6,6 +6,8 @@ import plotnine as p9
 from genno import computations
 from genno.compat.plotnine import Plot as BasePlot
 
+from message_data.model.transport.utils import consumer_groups
+
 log = logging.getLogger(__name__)
 
 
@@ -145,15 +147,28 @@ class LDVTechShare0(Plot):
 
 class LDVTechShare1(Plot):
     basename = "ldv-tech-share-by-cg"
-    inputs = ["out:nl-t-ya-c:transport"]
+    inputs = ["out:nl-t-ya-c"]
 
     def generate(self, data):
         data = data.rename(columns={0: "out"})
-        # Select a subset of commodities
-        data = data[data.c.str.contains("transport vehicle")]
 
-        # # DEBUG dump data
-        # data.to_csv(f"{self.basename}.csv")
+        # TODO do these operations in reporting for broader reuse
+        # Select a subset of commodities
+        data = data[data.c.str.contains("transport pax")]
+
+        # - Remove the consumer group name from the technology name.
+        # - Remove the prefix from the commodity name.
+        data = data.assign(
+            t=data.t.str.split(" usage by ", expand=True)[0],
+            c=data.c.str.replace("transport pax ", ""),
+        )
+
+        # Discard others, e.g. non-LDV activity
+        data = data.query(f"c in {list(map(str, consumer_groups()))}")
+
+        # DEBUG dump data
+        data.to_csv(f"{self.basename}-1.csv")
+        log.info(f"Dumped data to {self.basename}.csv")
 
         # Select a subset of technologies
         for nl, group_df in data.groupby("nl"):
@@ -166,7 +181,7 @@ class LDVTechShare1(Plot):
                     y="Activity [10⁹ km / y]",
                     fill="LDV technology",
                 )
-                + self.title(f"Mode share by CG {nl}")
+                + self.title(f"Usage of LDV technologies per CG, {nl}")
                 + self.static
             )
 
