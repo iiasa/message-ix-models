@@ -80,7 +80,7 @@ def callback(rep: Reporter):
 
     # Combine technologies from disutility formulation
     # TODO do this somewhere earlier, e.g. in build.get_spec()
-    disutil_spec = build.get_disuility_spec()
+    disutil_spec = build.get_disutility_spec()
     technologies.extend(disutil_spec["add"].set["technology"])
 
     rep.add("t:transport", quote(technologies))
