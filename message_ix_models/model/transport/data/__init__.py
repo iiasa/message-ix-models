@@ -14,7 +14,7 @@ from message_ix_models.util import (
     same_node,
 )
 
-from message_data.model.transport.utils import add_commodity_and_level
+from message_data.model.transport.utils import input_commodity_level
 
 from .ldv import get_ldv_data
 from .non_ldv import get_non_ldv_data
@@ -181,7 +181,7 @@ def freight(context):
             **common,
         )
 
-        i_o["input"] = add_commodity_and_level(i_o["input"], "final")
+        i_o["input"] = input_commodity_level(i_o["input"], "final")
 
         for par, df in i_o.items():
             data[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))

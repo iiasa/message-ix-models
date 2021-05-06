@@ -15,7 +15,7 @@ from message_ix_models.util import (
 )
 from openpyxl import load_workbook
 
-from message_data.model.transport.utils import add_commodity_and_level
+from message_data.model.transport.utils import input_commodity_level
 from message_data.tools import cached, check_support
 
 log = logging.getLogger(__name__)
@@ -177,7 +177,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     )
 
     # Assign input commodity and level according to the technology
-    data["input"] = add_commodity_and_level(i_o["input"], default_level="secondary")
+    data["input"] = input_commodity_level(i_o["input"], default_level="secondary")
 
     # Assign output commodity based on the technology name
     data["output"] = i_o["output"].assign(
