@@ -94,9 +94,8 @@ def consumer_groups(rtype=Code):
         raise ValueError(rtype)
 
 
-def add_commodity_and_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
+def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
     """Add input 'commodity' and 'level' to `df` based on 'technology'."""
-
     # Retrieve transport technology information from configuration
     ctx = Context.get_instance()
     t_info = ctx["transport set"]["technology"]["add"]

@@ -4,14 +4,14 @@ import xarray as xr
 from iam_units import registry
 
 from message_data.model.transport.utils import (
-    add_commodity_and_level,
     consumer_groups,
+    input_commodity_level,
     read_config,
 )
 
 
 def test_add_cl(transport_context):
-    """add_commodity_and_level() preserves the content of other columns."""
+    """:func:`.input_commodity_level` preserves the content of other columns."""
     # Input data missing 'commodity' and 'level'
     df_in = pd.DataFrame(
         [
@@ -21,7 +21,7 @@ def test_add_cl(transport_context):
         columns=["node", "commodity", "level", "technology"],
     )
 
-    df_out = add_commodity_and_level(df_in, default_level="foo")
+    df_out = input_commodity_level(df_in, default_level="foo")
 
     # Output is the same shape
     assert df_out.shape == (2, 4)
