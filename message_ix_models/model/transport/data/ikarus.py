@@ -1,27 +1,33 @@
 """Prepare non-LDV data from the IKARUS model via GEAM_TRP_techinput.xlsx."""
+import logging
 from collections import defaultdict
 
 import pandas as pd
 from iam_units import registry
 from message_ix import make_df
-from message_ix_models.util import broadcast, eval_anno, private_data_path, same_node
+from message_ix_models.util import broadcast, private_data_path, same_node
 from openpyxl import load_workbook
 
-from message_data.tools import series_of_pint_quantity
+from message_data.model.transport.utils import input_commodity_level
+from message_data.tools import cached, series_of_pint_quantity
 from message_data.tools.convert_units import convert_units
 
+log = logging.getLogger(__name__)
+
 #: Name of the input file.
-#
-# The input file uses the old, MESSAGE V names for parameters:
-# - inv_cost = inv
-# - fix_cost = fom
-# - technical_lifetime = pll
-# - input (efficiency) = minp
-# - output (efficiency) = moutp
-# - capacity_factor = plf
+#:
+#: The input file uses the old, MESSAGE V names for parameters:
+#:
+#: - inv_cost = inv
+#: - fix_cost = fom
+#: - technical_lifetime = pll
+#: - input (efficiency) = minp
+#: - output (efficiency) = moutp
+#: - capacity_factor = plf
 FILE = "GEAM_TRP_techinput.xlsx"
 
 #: Mapping from parameters to 3-tuples of units:
+#:
 #: 1. Factor for units appearing in the input file.
 #: 2. Units appearing in the input file.
 #: 3. Target units for MESSAGEix-GLOBIOM.
@@ -37,6 +43,8 @@ UNITS = dict(
     # Created below
     capacity_factor=(1.0, None, "gigapassenger kilometre / vehicle / year"),
 )
+
+#: Rows appearing in each cell range.
 ROWS = [
     "inv_cost",
     "fix_cost",
@@ -76,8 +84,82 @@ CELL_RANGE = {
 COLUMNS = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
 
+@cached
+def read_ikarus_data(occupancy, k_output, k_inv_cost):
+    """Read the IKARUS data from :data:`FILE`.
+
+    No transformation is performed.
+
+    **NB** this function takes only simple arguments so that :func:`.cached` computes
+    the same key every time to avoid the slow step of opening/reading the spreadsheet.
+    :func:`get_ikarus_data` then conforms the data to particular context settings.
+    """
+    # Open the input file using openpyxl
+    wb = load_workbook(
+        private_data_path("transport", FILE), read_only=True, data_only=True
+    )
+    # Open the 'updateTRPdata' sheet
+    sheet = wb["updateTRPdata"]
+
+    # 'technology name' -> pd.DataFrame
+    dfs = {}
+    for tec, cell_range in CELL_RANGE.items():
+        # - Read values from table for one technology, e.g. "regional train electric
+        #   efficient" = rail_pub.
+        # - Extract the value from each openpyxl cell object.
+        # - Set all non numeric values to NaN.
+        # - Transpose so that each variable is in one column.
+        # - Convert from input units to desired units.
+        df = (
+            pd.DataFrame(list(sheet[slice(*cell_range)]), index=ROWS, columns=COLUMNS)
+            .applymap(lambda c: c.value)
+            .apply(pd.to_numeric, errors="coerce")
+            .transpose()
+            .apply(convert_units, unit_info=UNITS, store="quantity")
+        )
+
+        # Conversion of IKARUS data to MESSAGEix-scheme parameters.
+
+        # Read output efficiency (occupancy) from config and apply units
+        output_value = occupancy[tec] * registry("pkm / km")
+
+        # Convert to a Series so operations are element-wise
+        output = series_of_pint_quantity([output_value] * len(df.index), index=df.index)
+
+        # Compute output efficiency
+        df["output"] = output / df["input"] * k_output.get(tec, 1.0)
+
+        # Compute capacity factor = availability × output
+        df["capacity_factor"] = df["availability"] * output
+
+        # Check units: (km / vehicle / year) × (passenger km / km) [=] passenger km /
+        # vehicle / year
+        assert df["capacity_factor"].values[0].units == registry(
+            "passenger km / vehicle / year"
+        )
+
+        df["inv_cost"] *= k_inv_cost.get(tec, 1.0)
+
+        # Include variable cost * availability in fix_cost
+        df["fix_cost"] += df["availability"] * df["var_cost"]
+
+        # Store
+        dfs[tec] = df.drop(columns=["availability", "var_cost"])
+
+    # Finished reading IKARUS data from spreadsheet
+    wb.close()
+
+    # - Concatenate to pd.DataFrame with technology and param as columns.
+    # - Reformat as a pd.Series with a 3-level index: year, technology, param
+    return (
+        pd.concat(dfs, axis=1, names=["technology", "param"])
+        .rename_axis(index="year")
+        .stack(["technology", "param"])
+    )
+
+
 def get_ikarus_data(context):
-    """Read IKARUS :cite:`Martinsen2006` data and conform to Scenario *info*.
+    """Prepare non-LDV data from :cite:`Martinsen2006`.
 
     The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed
     data is exported into ``non_LDV_techs_wrapped.csv``.
@@ -99,76 +181,12 @@ def get_ikarus_data(context):
     tech_info = context["transport set"]["technology"]["add"]
     info = context["transport build info"]
 
-    # Open the input file using openpyxl
-    wb = load_workbook(
-        private_data_path("transport", FILE), read_only=True, data_only=True
-    )
-    # Open the 'updateTRPdata' sheet
-    sheet = wb["updateTRPdata"]
-
-    # Additional output efficiency and investment cost factors for some bus
-    # technologies
-    out_factor = config["factor"]["efficiency"]["bus output"]
-    inv_factor = config["factor"]["cost"]["bus inv"]
-
-    # 'technology name' -> pd.DataFrame
-    dfs = {}
-    for tec, cell_range in CELL_RANGE.items():
-        # - Read values from table for one technology, e.g. "regional train electric
-        #   efficient" = rail_pub.
-        # - Extract the value from each openpyxl cell object.
-        # - Set all non numeric values to NaN.
-        # - Transpose so that each variable is in one column.
-        # - Convert from input units to desired units.
-        df = (
-            pd.DataFrame(list(sheet[slice(*cell_range)]), index=ROWS, columns=COLUMNS)
-            .applymap(lambda c: c.value)
-            .apply(pd.to_numeric, errors="coerce")
-            .transpose()
-            .apply(convert_units, unit_info=UNITS, store="quantity")
-        )
-
-        # Conversion of IKARUS data to MESSAGEix-scheme parameters.
-
-        # Read output efficiency (occupancy factor) from config and apply units
-        output_value = config["non-ldv"]["output"][tec] * registry("pkm / km")
-
-        # Convert to a Series so operations are element-wise
-        output = series_of_pint_quantity([output_value] * len(df.index), index=df.index)
-
-        # Compute output efficiency
-        df["output"] = output / df["input"] * out_factor.get(tec, 1.0)
-
-        # Compute capacity factor = availability × output
-        df["capacity_factor"] = df["availability"] * output
-
-        # Check units: (km / vehicle / year) × (passenger km / km) [=] passenger km /
-        # vehicle / year
-        assert df["capacity_factor"].values[0].units == registry(
-            "passenger km / vehicle / year"
-        )
-
-        df["inv_cost"] *= inv_factor.get(tec, 1.0)
-
-        # Include variable cost * availability in fix_cost
-        df["fix_cost"] += df["availability"] * df["var_cost"]
-
-        df.drop(columns="availability", inplace=True)
-
-        df.drop(columns="var_cost", inplace=True)
-
-        # Store
-        dfs[tec] = df
-
-    # Finished reading IKARUS data from spreadsheet
-    wb.close()
-
-    # - Concatenate to pd.DataFrame with technology and param as columns.
-    # - Reformat as a pd.Series with a 3-level index: year, technology, param
-    data = (
-        pd.concat(dfs, axis=1, names=["technology", "param"])
-        .rename_axis(index="year")
-        .stack(["technology", "param"])
+    # Retrieve the data from the spreadsheet. Use Additional output efficiency and
+    # investment cost factors for some bus technologies
+    data = read_ikarus_data(
+        occupancy=config["non-ldv"]["output"],
+        k_output=config["factor"]["efficiency"]["bus output"],
+        k_inv_cost=config["factor"]["cost"]["bus inv"],
     )
 
     # Create data frames to add imported params to MESSAGEix
@@ -199,13 +217,11 @@ def get_ikarus_data(context):
 
         # Parameter-specific arguments/processing
         if par == "input":
-            tech = tech_info[tech_info.index(tec)]
-            args["commodity"] = eval_anno(tech, "input")["commodity"]
-            # TODO use the appropriate level for the given commodity; see ldv.py
-            args["level"] = "final"
+            pass  # Handled by input_commodity_level(), below
         elif par == "output":
-            args["level"] = "useful"
-            args["commodity"] = "transport pax vehicle"
+            # Get the mode for a technology
+            mode = tech_info[tech_info.index(tec)].parent.id
+            args.update(dict(commodity=f"transport pax {mode.lower()}", level="useful"))
         elif par == "capacity_factor":
             # Convert to preferred units
             group_data = group_data.apply(lambda v: v.to(UNITS[par][2]))
@@ -218,17 +234,20 @@ def get_ikarus_data(context):
         # Create data frame with values from *args*
         df = make_df(par, **args)
 
+        # Assign input commodity and level according to the technology
+        if par == "input":
+            df = input_commodity_level(df, default_level="secondary")
+
         # Copy data into the 'value' column, by vintage year
         for (year, *_), value in group_data.items():
             df.loc[df["year_vtg"] == year, "value"] = value.magnitude
 
-        # Drop duplicates. For parameters with 'year_vtg' but no 'year_act'
-        # dimension, the same year_vtg appears multiple times because of the
-        # contents of *defaults*
+        # Drop duplicates. For parameters with 'year_vtg' but no 'year_act' dimension,
+        # the same year_vtg appears multiple times because of the contents of *defaults*
         df.drop_duplicates(inplace=True)
 
-        # Fill remaining values for the rest of vintage years with the last
-        # value registered, in this case for 2030.
+        # Fill remaining values for the rest of vintage years with the last value
+        # registered, in this case for 2030.
         df["value"] = df["value"].fillna(method="ffill")
 
         # Broadcast across all nodes
@@ -245,6 +264,7 @@ def get_ikarus_data(context):
         # Ensure the directory containing the path exists
         target.parent.mkdir(parents=True, exist_ok=True)
 
+        log.info(f"Dump data to {target}")
         result[par].to_csv(target, index=False)
 
     return result
