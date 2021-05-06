@@ -5,6 +5,7 @@ from typing import List, Mapping
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import eval_anno, load_private_data
+from message_ix_models.util._logging import mark_time
 from message_ix_models.model import bare, build, disutility
 from message_ix_models.model.structure import get_codes
 from sdmx.model import Annotation, Code
@@ -154,12 +155,15 @@ def main(context, scenario, **options):
     from .data import add_data
 
     log.info("Build MESSAGEix-Transport")
+    mark_time()
 
     # Generate the description of the structure / structure changes
     spec = get_spec(context)
 
     # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
+
+    mark_time()
 
     # Add generalized disutility structure to LDV technologies
     disutility.add(
@@ -169,6 +173,8 @@ def main(context, scenario, **options):
         template=TEMPLATE,
         **options,
     )
+
+    mark_time()
 
 
 def get_disutility_spec():

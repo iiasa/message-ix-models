@@ -77,8 +77,6 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
 
     # Iterate over regions/nodes
     for node in nodes:
-        log.debug(node)
-
         # Worksheet for this region
         sheet_node = node.split("_")[-1].lower()
         sheet = wb[f"MESSAGE_LDV_{sheet_node}"]
