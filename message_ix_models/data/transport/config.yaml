@@ -3,7 +3,7 @@
 # Sources for input data
 data source:
   # Non-LDV technologies: 'IKARUS' or null
-  non-LDV: null
+  non-LDV: IKARUS
   # LDV technologies: 'US-TIMES MA3T' or null
   LDV: US-TIMES MA3T
   # Demands: 'dummy' only
