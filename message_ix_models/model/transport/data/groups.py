@@ -6,7 +6,7 @@ import xarray as xr
 from genno import computations
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import ffill, private_data_path
+from message_ix_models.util import private_data_path
 
 from message_data.model.transport.utils import consumer_groups
 from message_data.tools import gea

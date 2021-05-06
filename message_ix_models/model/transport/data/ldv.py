@@ -59,7 +59,7 @@ TABLES = [
 
 @cached
 def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
-    """Read the US-TIMES MA3T data input file.
+    """Read the US-TIMES MA3T data from :data:`FILE`.
 
     No transformation is performed.
 
