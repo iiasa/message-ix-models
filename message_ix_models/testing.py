@@ -10,7 +10,7 @@ from ixmp import Platform
 from ixmp import config as ixmp_config
 
 from message_ix_models import cli
-from message_ix_models.util._logging import preserve_log_level
+from message_ix_models.util._logging import mark_time, preserve_log_level
 from message_ix_models.util.context import Context
 
 log = logging.getLogger(__name__)
@@ -210,78 +210,130 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     return base.clone(scenario=new_name, keep_solution=solved)
 
 
-def export_test_data(context):
-    """Export a subset of data from a scenario for testing.
+#: Items with names that match (partially or fully) these names are omitted by
+#: :func:`export_test_data`.
+EXPORT_OMIT = [
+    "aeei",
+    "cost_MESSAGE",
+    "demand_MESSAGE",
+    "demand",
+    "depr",
+    "esub",
+    "gdp_calibrate",
+    "grow",
+    "historical_gdp",
+    "kgdp",
+    "kpvs",
+    "lakl",
+    "land",
+    "lotol",
+    "mapping_macro_sector",
+    "MERtoPPP",
+    "prfconst",
+    "price_MESSAGE",
+    "sector",
+]
 
-    This is for testing the lifetime reduction for technology coal_ppl and regions
-    R11_AFR and R11_CPA.
+
+def export_test_data(context: Context):
+    """Export a subset of data from a scenario, for use in tests.
+
+    The context settings ``export_nodes`` (default: "R11_AFR" and "R11_CPA") and
+    ``export_techs`` (default: "coal_ppl") are used to filter the data exported.
+    In addition, any item (set, parameter, variable, or equation) with a name matching
+    :data:`EXPORT_OMIT` is discarded.
+
+    The output is stored at :file:`data/tests/{model name}_{scenario name}_{techs}.xlsx`
+    in :mod:`message_data`.
     """
-    src_model = "ENGAGE_SSP2_v4.1.7"
-    src_scenario = "baseline"
-    scen = message_ix.Scenario(context.get_platform(), src_model, src_scenario)
+    from message_ix_models.util import private_data_path
 
-    technology = "coal_ppl"
-    nodes = ["R11_AFR", "R11_CPA"]
-    dest_file = f"{src_model}_{src_scenario}_{technology}.xlsx"
+    # Load the scenario to be exported
+    scen = context.get_scenario()
 
-    # Dump data to Excel file
+    # Retrieve the context settings giving the nodes and technologies to export
+    nodes = context.get("export_nodes", ["R11_AFR", "R11_CPA"])
+    technology = context.get("export_techs", ["coal_ppl"])
+
+    # Construct the destination file name
+    dest_file = private_data_path(
+        "tests", f"{scen.model}_{scen.scenario}_{'_'.join(technology)}.xlsx"
+    )
+    # Temporary file name
+    tmp_file = dest_file.with_name("export_test_data.xlsx")
+
+    # Ensure the target directory exists
+    dest_file.parent.mkdir(exist_ok=True)
+
+    # Dump data to temporary Excel file
+    log.info(f"Export test data to {dest_file}")
     scen.to_excel(
-        dest_file,
+        tmp_file,
         filters={
             "technology": technology,
             "node": nodes,
             "node_dest": nodes,
             "node_loc": nodes,
             "node_origin": nodes,
+            "node_parent": nodes,
+            "node_rel": nodes,
+            "node_share": nodes,
         },
     )
 
-    # Copy data from temporary Excel file to outfile, thereby omitting all unnecessary
-    # sheets
-    reader = pd.ExcelFile(dest_file)
+    mark_time()
 
-    # Remove all sheets that include the following, which is not required for testing
-    # purposes
+    log.info("Reduce test data")
+
+    # Read from temporary file and write to final file, omitting unnecessary sheets
+    reader = pd.ExcelFile(tmp_file)
     writer = pd.ExcelWriter(dest_file)
-    remove = [
-        "land",
-        "mapping_macro_sector",
-        "sector",
-        "MERtoPPP",
-        "aeei",
-        "cost_MESSAGE",
-        "demand",
-        "demand_MESSAGE",
-        "depr",
-        "esub",
-        "grow",
-        "historical_gdp",
-        "kgdp",
-        "lotol",
-        "prfconst",
-        "kpvs",
-        "lakl",
-        "price_MESSAGE",
-        "gdp_calibrate",
-    ]
 
-    for sheet in [s for s in reader.sheet_names if not any(i in s for i in remove)]:
-        df = reader.parse(sheet)
-        if sheet == "ix_type_mapping":
-            df2 = df.copy()
-            df = df[
-                df.item.isin(
-                    [i for i in df2.item.tolist() if not any(x in i for x in remove)]
-                )
-            ]
+    # Retrieve the type mapping first, to be modified as sheets are discarded
+    ix_type_mapping = reader.parse("ix_type_mapping").set_index("item")
 
-        # Filter out data for selected regions as exporting data doesn't filter the
-        # nodes
-        elif sheet in scen.par_list():
-            node_idx = [i for i in scen.idx_names(sheet) if "node" in i]
+    for name in reader.sheet_names:
+        # Check if this sheet is to be included
+        if any(i in name for i in EXPORT_OMIT):
+            log.info(f"Discard sheet '{name}'")
+
+            # Remove from the mapping
+            ix_type_mapping.drop(name, inplace=True)
+
+            continue
+        elif name == "ix_type_mapping":
+            # Already handled
+            continue
+
+        # Parse the sheet
+        df = reader.parse(name)
+
+        # Filter out data for selected nodes
+        if ix_type_mapping.loc[name, "ix_type"] == "par":
+            # Dimensions with "node" in the name
+            node_idx = [i for i in scen.idx_names(name) if "node" in i]
+
             if node_idx:
-                df = df[df[node_idx[0]].isin(nodes)]
+                mask = df[node_idx[0]].isin(nodes)
 
-        df.to_excel(writer, sheet_name=sheet, index=False)
+                if not mask.all():
+                    # NB this doesn't occur now that all node_* sets are in the filters
+                    print("Filtering didn't work")
+                    df = df[mask]
 
+        # Store in the output
+        df.to_excel(writer, sheet_name=name, index=False)
+
+    # Write the mapping
+    ix_type_mapping.reset_index().to_excel(
+        writer, sheet_name="ix_type_mapping", index=False
+    )
+
+    # Save the final file
     writer.save()
+
+    # Close and remove the temporary file
+    reader.close()
+    tmp_file.unlink()
+
+    mark_time()
