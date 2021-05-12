@@ -4,14 +4,14 @@ Land-Use Emulator
 =================
 
 The land-use emulator integrates a set of land-use scenarios into MESSAGEix energy system model.
-These land-use scenarios are developed by a land-use management model `GLOBIOM <https://iiasa.ac.at/web/home/research/GLOBIOM/GLOBIOM.html>`_, which can assess competition for land-use between agriculture, bioenergy, and forestry.
-This linkage between an energy model, here MESSAGEix, and a land-use model is important to explore the potential of bioenergy and the implications of using biomass for energy generation on emissions and the cost of the system.
+These land-use scenarios are developed by an economic land-use model `GLOBIOM <https://iiasa.github.io/GLOBIOM/>`_, which can assess competition for land-use between agriculture, bioenergy, and forestry. The land-use scenarios represent a two dimensional scenario matrix (so called `Lookup-Table <https://github.com/iiasa/GLOBIOM-G4M_LookupTable>`_) combining different carbon and biomass price trajectories which allows to represent biomass supply curves conditional on different carbon prices as well as marginal abatement cost curves conditional on different biomass prices for the land-use sector in MESSAGEix.
+This linkage between an energy model, here MESSAGEix, and a land-use model is important to explore the potential of bioenergy and the implications of using biomass for energy generation on emissions, the cost of the system, and related land-use implications.
 In MESSAGEix formulation, there is a dedicated set of :ref:`land use equations <message_ix:section_landuse_emulator>`, to establish this linkage as follows.
 Each land-use scenario represents a distinct land-use development pathway for a given biomass potential and carbon price.
 The biomass potentials for use in the energy sector are determined by the biomass price.
-At lower prices, biomass mainly stems from the industrial residues, for example from sawmills.
-With increasing prices, land-use will be shifted to make room for fast-rotation biomass, purposely grown for use in energy production and/or result in the deforestation of today's forest.
-At very high prices, roundwood will be used (for further details see :ref:`forestry`).
+At lower biomass prices, biomass mainly stems from forest residues, for example from sawmills or logging residues.
+With increasing prices, land-use will be shifted to make room for fast-rotation tree plantations, purposely grown for use in energy production which may cause indirectly through increased competition with agricultural land deforestation of today's forest.
+At very high prices, roundwood will be harvested for energy production (for further details see :ref:`forestry`) competing with material uses.
 In addition, for each level of biomass potential, different carbon prices reflect the cost of mitigation for land-use related greenhouse gas (GHG) emissions.
 For example, the matrix depicted below (:numref:`fig-Land-Use_Pathway_Scenario_Matrix`) illustrates the combination of biomass and carbon prices for each of which a distinct land-use scenario has been provided by GLOBIOM.
 
@@ -36,7 +36,7 @@ The figure depicts global biomass potentials and respective GHG emissions at dif
 
 From the trade-off surface it possible to deduct that for a MESSAGEix scenario without climate policy, land-use pathways of the lower BIO-categories and lowest GHG-categories will be used.
 The energy system will therefore only use biomass for energy production to the extent that it is economically viable without mitigating emissions.
-When climate policy scenarios are run in MESSAGE, the land-use pathways will be chosen such that the optimal balance between the land-use related emission and biomass use in the energy system is obtained.
+When climate policy scenarios are run in MESSAGEix, the land-use pathways will be chosen such that the optimal balance between the land-use related emission and biomass use in the energy system is obtained.
 In addition to serving as a commodity from which energy can be generated, biomass can also be used to obtain negative emissions via BECCS.
 
 Adaptation of the Reference-Energy-System (RES)
@@ -60,7 +60,7 @@ Bioenergy can therefore be used for use in power generation or liquefaction or g
 The only exception is made for non-commercial biomass (fuel wood).
 Non-commercial biomass supply and demand have been aligned between the two models.
 These are derived based on population and GDP projections for each of the SSP storyline projections (Riahi et al., 2017 :cite:`riahi_chapter_2012`, Pachauri et al., 2017 :cite:`pachauri_2013_access`).
-In MESSAGE, non-commercial biomass is explicitly modeled as a demand category (see :ref:`demand` for further details).
+In MESSAGEix, non-commercial biomass is explicitly modeled as a demand category (see :ref:`demand` for further details).
 The reduction of non-commercial biomass demand therefore is not possible in the global energy model, without the use of an additional addon module specifically developed to address this issue (Poblete et al., 2018 :cite:`poblete_2018_fuelchoice`, Poblete et al., :cite:`poblete_2021_access`).
 The reason for this is the fact that non-commercial biomass is not a traded commodity and therefore its use us not determined as a function of cost.
 
