@@ -4,6 +4,7 @@ from pathlib import Path
 
 import click.testing
 import message_ix
+import pandas as pd
 import pytest
 from ixmp import Platform
 from ixmp import config as ixmp_config
@@ -207,3 +208,80 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
 
     log.info(f"Clone to '{name}/{new_name}'")
     return base.clone(scenario=new_name, keep_solution=solved)
+
+
+def export_test_data(context):
+    """Export a subset of data from a scenario for testing.
+
+    This is for testing the lifetime reduction for technology coal_ppl and regions
+    R11_AFR and R11_CPA.
+    """
+    src_model = "ENGAGE_SSP2_v4.1.7"
+    src_scenario = "baseline"
+    scen = message_ix.Scenario(context.get_platform(), src_model, src_scenario)
+
+    technology = "coal_ppl"
+    nodes = ["R11_AFR", "R11_CPA"]
+    dest_file = f"{src_model}_{src_scenario}_{technology}.xlsx"
+
+    # Dump data to Excel file
+    scen.to_excel(
+        dest_file,
+        filters={
+            "technology": technology,
+            "node": nodes,
+            "node_dest": nodes,
+            "node_loc": nodes,
+            "node_origin": nodes,
+        },
+    )
+
+    # Copy data from temporary Excel file to outfile, thereby omitting all unnecessary
+    # sheets
+    reader = pd.ExcelFile(dest_file)
+
+    # Remove all sheets that include the following, which is not required for testing
+    # purposes
+    writer = pd.ExcelWriter(dest_file)
+    remove = [
+        "land",
+        "mapping_macro_sector",
+        "sector",
+        "MERtoPPP",
+        "aeei",
+        "cost_MESSAGE",
+        "demand",
+        "demand_MESSAGE",
+        "depr",
+        "esub",
+        "grow",
+        "historical_gdp",
+        "kgdp",
+        "lotol",
+        "prfconst",
+        "kpvs",
+        "lakl",
+        "price_MESSAGE",
+        "gdp_calibrate",
+    ]
+
+    for sheet in [s for s in reader.sheet_names if not any(i in s for i in remove)]:
+        df = reader.parse(sheet)
+        if sheet == "ix_type_mapping":
+            df2 = df.copy()
+            df = df[
+                df.item.isin(
+                    [i for i in df2.item.tolist() if not any(x in i for x in remove)]
+                )
+            ]
+
+        # Filter out data for selected regions as exporting data doesn't filter the
+        # nodes
+        elif sheet in scen.par_list():
+            node_idx = [i for i in scen.idx_names(sheet) if "node" in i]
+            if node_idx:
+                df = df[df[node_idx[0]].isin(nodes)]
+
+        df.to_excel(writer, sheet_name=sheet, index=False)
+
+    writer.save()
