@@ -305,24 +305,8 @@ def export_test_data(context: Context):
             # Already handled
             continue
 
-        # Parse the sheet
-        df = reader.parse(name)
-
-        # Filter out data for selected nodes
-        if ix_type_mapping.loc[name, "ix_type"] == "par":
-            # Dimensions with "node" in the name
-            node_idx = [i for i in scen.idx_names(name) if "node" in i]
-
-            if node_idx:
-                mask = df[node_idx[0]].isin(nodes)
-
-                if not mask.all():
-                    # NB this doesn't occur now that all node_* sets are in the filters
-                    print("Filtering didn't work")
-                    df = df[mask]
-
-        # Store in the output
-        df.to_excel(writer, sheet_name=name, index=False)
+        # Copy the sheet from temporary to final file
+        reader.parse(name).to_excel(writer, sheet_name=name, index=False)
 
     # Write the mapping
     ix_type_mapping.reset_index().to_excel(
