@@ -42,7 +42,7 @@ Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for workin
 
    To avoid using environment variables altogether, insert the URL directly in the command, for instance::
 
-       $ mix-data --url="ixmp://mt/Bare RES/baseline" res create-bare
+       $ mix-models --url="ixmp://mt/Bare RES/baseline" res create-bare
 
 Choose a platform.
 This example uses a platform named ``mt``.
@@ -56,7 +56,7 @@ Identify the base scenario.
 One option is to create the ‘bare’ RES; the following is equivalent to calling :func:`.bare.create_res`::
 
     $ export BASE="ixmp://mt/Bare RES/baseline"
-    $ mix-data --url="$BASE" res create-bare
+    $ mix-models --url="$BASE" res create-bare
 
 Other usable base scenarios include ``ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline``.
 
@@ -64,7 +64,7 @@ Build the model.
 The following is equivalent to cloning ``BASE`` to ``URL``, and then calling :func:`.build.main` on the scenario stored at ``URL``::
 
     $ export URL=ixmp://mt/MESSAGEix-Transport/baseline
-    $ mix-data --url="$BASE" transport build --dest="$URL"
+    $ mix-models --url="$BASE" transport build --dest="$URL"
 
 Solve the model.
 The following is equivalent to calling :meth:`message_ix.Scenario.solve`::
@@ -74,7 +74,7 @@ The following is equivalent to calling :meth:`message_ix.Scenario.solve`::
 Report the results.
 The ``-m model.transport`` option indicates that additional reporting calculations from :mod:`model.transport.report` should be added to the base reporting configuration for MESSAGEix-GLOBIOM::
 
-    $ mix-data --url=$URL report -m model.transport "transport plots"
+    $ mix-models --url=$URL report -m model.transport "transport plots"
 
 Code reference
 ==============
@@ -138,24 +138,24 @@ See also: :doc:`transport/files`.
 CLI usage
 =========
 
-Use the :doc:`CLI <cli>` command ``mix-data transport`` to invoke the commands defined in :mod:`.transport.cli`. Try:
+Use the :doc:`CLI <cli>` command ``mix-models transport`` to invoke the commands defined in :mod:`.transport.cli`. Try:
 
 .. code::
 
-   Usage: mix-data transport [OPTIONS] COMMAND [ARGS]...
+   Usage: mix-models transport [OPTIONS] COMMAND [ARGS]...
 
-     MESSAGE-Transport model.
+     MESSAGE-Transport variant.
 
    Options:
      --help  Show this message and exit.
 
    Commands:
      build    Prepare the model.
-     clone    Clone base scenario to the local database.
+     debug    Temporary code for development.
      migrate  Migrate data from MESSAGE(V)-Transport.
      solve    Run the model.
 
-Each individual command also has its own help text; try e.g. ``mix-data transport build --help``.
+Each individual command also has its own help text; try e.g. ``mix-models transport build --help``.
 
 
 Base structure
