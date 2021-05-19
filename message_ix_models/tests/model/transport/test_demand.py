@@ -43,7 +43,7 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
         ("votm:n-y", ""),
         ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
         ("cost:n-y-c-t", "USD / km"),
-        ("transport pdt:n-y-t", "km / year"),
+        ("transport pdt:n-y-t", "passenger km / year"),
         # These units are implied by the test of "transport pdt:*":
         # "transport pdt:n-y:total" [=] Mm / year
     ):
@@ -65,11 +65,12 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
 
     dsk, deps = cull(rep.graph, key)
     path = tmp_path / "demand-graph.pdf"
-    log.info(f"Visualize output at {path}")
+    log.info(f"Visualize compute graph at {path}")
     dask.visualize(dsk, filename=str(path))
 
     # Plots can be generated
-    log.info(f"Plot demand data at {rep.get('plot demand-exo')}")
+    rep.add("demand plots", ["plot demand-exo", "plot demand-exo-cap"])
+    rep.get("demand plots")
 
 
 @pytest.mark.skip(reason="Requires user's context")
