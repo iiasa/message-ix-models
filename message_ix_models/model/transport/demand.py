@@ -206,7 +206,8 @@ def prepare_reporter(
     gdp_ppp_cap = rep.add("ratio", "GDP:n-y:PPP+percapita", gdp_ppp, pop_key)
 
     # Total demand
-    rep.add("transport pdt:n-y:total", total_pdt, gdp_ppp_cap, "config")
+    pdt_cap = rep.add("transport pdt:n-y:capita", pdt_per_capita, gdp_ppp_cap, "config")
+    pdt_ny = rep.add("product", "transport pdt:n-y:total", pdt_cap, pop_key)
 
     # Value-of-time multiplier
     rep.add("votm:n-y", votm, gdp_ppp_cap)
@@ -259,15 +260,13 @@ def prepare_reporter(
     )
 
     # Total PDT shared out by mode
-    pdt_key = rep.add(
-        "product", "transport pdt", "transport pdt:n-y:total", "shares:n-t-y"
-    )
-    rep.add("ratio", pdt_key.add_tag("capita"), pdt_key, pop_key)
+    pdt_nyt = rep.add("product", "transport pdt:n-y-t", pdt_ny, "shares:n-t-y")
+
+    # Per capita
+    rep.add("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop_key, sums=False)
 
     # LDV PDT shared out by mode
-    rep.add(
-        "select", "transport ldv pdt:n-y:total", "transport pdt:n-y-t", dict(t=["LDV"])
-    )
+    rep.add("select", "transport ldv pdt:n-y:total", pdt_nyt, dict(t=["LDV"]))
 
     rep.add(
         "product",
@@ -390,8 +389,8 @@ def _lambda(config):
     return Quantity(config["transport"]["lambda"], units="")
 
 
-def total_pdt(gdp_ppp_cap, config):
-    """Compute total passenger distance traveled (PDT).
+def pdt_per_capita(gdp_ppp_cap, config):
+    """Compute passenger distance traveled (PDT) per capita.
 
     Simplification of Schäefer et al. (2010): linear interpolation between (0, 0) and
     the configuration keys "fixed demand" and "fixed GDP".

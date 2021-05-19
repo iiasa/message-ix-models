@@ -255,17 +255,16 @@ class DemandExo(Plot):
         y_max = max(data["value"])
         unit = pint.Quantity(1, data["unit"].unique()[0]).to_reduced_units().units
 
+        scale = 1e6
+
         for n, group_df in data.groupby("n"):
             yield (
-                p9.ggplot(p9.aes(x="y", y="value", fill="t"), group_df)
-                + p9.theme(figure_size=(11.7, 8.3))
+                p9.ggplot(p9.aes(x="y", y=f"value / {scale}", fill="t"), group_df)
                 + p9.geom_bar(stat="identity", width=4)
-                + p9.expand_limits(y=[0, y_max])
-                + self.title(f"Passenger transport activity [{unit:~}] {n}")
-                + p9.labs(
-                    x="Period",
-                    fill="Mode (tech group)",
-                )
+                + p9.expand_limits(y=[0, y_max / scale])
+                + p9.labs(x="Period", fill="Mode (tech group)")
+                + self.title(f"Passenger transport activity [10⁶ {unit:~}] {n}")
+                + self.static
             )
 
 
@@ -279,16 +278,17 @@ class DemandExoCap(Plot):
         y_max = max(data["value"])
         unit = pint.Quantity(1, data["unit"].unique()[0]).to_reduced_units().units
 
+        scale = 1e3
+
         for n, group_df in data.groupby("n"):
             yield (
-                p9.ggplot(p9.aes(x="y", y="value", fill="t"), group_df)
+                p9.ggplot(p9.aes(x="y", y=f"value / {scale}", fill="t"), group_df)
                 + p9.geom_bar(stat="identity", width=4)
-                + p9.expand_limits(y=[0, y_max])
-                + p9.labs(
-                    x="Period",
-                    fill="Mode (tech group)",
+                + p9.expand_limits(y=[0, y_max / scale])
+                + p9.labs(x="Period", fill="Mode (tech group)")
+                + self.title(
+                    f"Passenger transport activity per person [10³ {unit:~}] {n}"
                 )
-                + self.title(f"Passenger transport activity [{unit:~}] {n}")
                 + self.static
             )
 
