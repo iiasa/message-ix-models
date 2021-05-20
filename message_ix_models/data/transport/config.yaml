@@ -37,6 +37,7 @@ node to census_division:
   R11_SAS: 2
   R11_WEU: 2
 
+# TODO flatten this structure
 factor:
   freight load: 10  # tonne km per vehicle km
   activity:
@@ -46,11 +47,11 @@ factor:
     #    driving data for the average driver (supplied by Page Kyle of the GCAM
     #    team in March 2014).
     ldv:
-      _dim: consumer type
-      _unit: vehicle_km / year
-      modest: 0.5386  # i.e. 13930 km in nam
-      average: 1
-      frequent: 1.7614  # ie. 45550 km in nam
+      _dim: driver_type
+      _unit: "1"  # dimensionless
+      M: 0.5386  # i.e. 13930 km in R11_NAM
+      A: 1  # by definition
+      F: 1.7614  # ie. 45550 km in R11_NAM
   cost:
     # Regional cost multipliers in 2010
     ldv 2010:
@@ -121,18 +122,29 @@ non-ldv:
     Trolley_bus: 20.9
 
 ldv activity:
-  _unit: vehicle_km / year
-  nam: 25860
-  lam: 14600
-  weu: 11646
-  eeu:  8962
-  fsu: 11482
-  mea: 14000
-  afr: 10391
-  cpa: 16000
-  pao: 10000
-  pas: 12000
-  sas: 10400
+  # Extracted from the spreadsheet LDV_costs_efficiencies_US-TIMES_MA3T.xlsx,
+  # where the following comments are given by DLM:
+  #
+  #     Annual driving distances by consumer type. These values used for all
+  #     years; only the values in yellow/red [=included in this file] need to be
+  #     changed. Modest and Frequent mileages for all non-NAM regions are scaled
+  #     relative to the NAM values from MA3T. This is because we only have
+  #     driving data for the average driver (supplied by Page Kyle of the GCAM
+  #     team in March 2014).
+  #
+  _dim: nl  # node_loc
+  _unit: vehicle km / year
+  R11_NAM: 25860
+  R11_LAM: 14600
+  R11_WEU: 11646
+  R11_EEU:  8962
+  R11_FSU: 11482
+  R11_MEA: 14000
+  R11_AFR: 10391
+  R11_CPA: 16000
+  R11_PAO: 10000
+  R11_PAS: 12000
+  R11_SAS: 10400
 
 
 # Vehicle lifetime
