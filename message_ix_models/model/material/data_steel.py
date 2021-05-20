@@ -38,6 +38,26 @@ def gen_mock_demand_steel(scenario):
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
+    nodes = s_info.N
+
+    # True steel use 2010 [Mt/year]
+    # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = "data_R11"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
+        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+
+        d = [35, 537, 70, 53, 49, 39, 130, 80, 45, 96, 100]
+        # MEA change from 39 to 9 to make it feasible (coal supply bound)
+    else:
+        sheet_n = "data_R12"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
+        'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+
+        d = [35,5.37, 70, 53, 49, 39, 130, 80, 45, 96, 100,531.63]
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -49,13 +69,6 @@ def gen_mock_demand_steel(scenario):
         drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005], axis = 1)
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
-
-    # True steel use 2010 [Mt/year]
-    # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
-    r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
-    d = [35, 537, 70, 53, 49, \
-        39, 130, 80, 45, 96, 100]  # MEA change from 39 to 9 to make it feasible (coal supply bound)
 
     demand2010_steel = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
@@ -101,8 +114,6 @@ def gen_mock_demand_steel(scenario):
     #         values.append(val)
 
     return demand2010_steel
-
-
 
 def gen_data_steel(scenario, dry_run=False):
     """Generate data for materials representation of steel industry.

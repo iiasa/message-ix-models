@@ -34,6 +34,35 @@ def gen_mock_demand_cement(scenario):
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
+    nodes = s_info.N
+
+    # 2019 production by country (USGS)
+    # p43 of https://pubs.usgs.gov/periodicals/mcs2020/mcs2020-cement.pdf
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = "data_R11"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
+        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+
+        demand2020_top = [76, 2295, 0, 57, 55, 60, 89, 54, 129, 320, 51]
+        # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
+        demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
+                (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51]
+        d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
+
+    else:
+        sheet_n = "data_R12"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
+            'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+
+            demand2020_top = [76, 229.5, 0, 57, 55, 60, 89, 54, 129, 320, 51,2065.5]
+            # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
+            demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2*0.1, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
+                    (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51,
+                    (4100*0.14-155)*0.2*0.9]
+            d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -79,18 +108,8 @@ def gen_mock_demand_cement(scenario):
     # demand2010_cement = demand2010_cement.groupby(by=['node']).sum().reset_index()
     # demand2010_cement['value'] = demand2010_cement['value'] / 1e9 # kg to Mt
 
-    # 2019 production by country (USGS)
-    # p43 of https://pubs.usgs.gov/periodicals/mcs2020/mcs2020-cement.pdf
-    r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
-
     # Directly assigned countries from the table on p43
-    demand2020_top = [76, 2295, 0, 57, 55, \
-            60, 89, 54, 129, 320, 51]
-    # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
-    demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
-            (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51]
-    d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
+
 
     demand2020_cement = pd.DataFrame({'Region':r, 'value':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
