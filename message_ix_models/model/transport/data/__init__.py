@@ -29,6 +29,9 @@ DATA_FUNCTIONS = [
 
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGE-Transport data."""
+    # First strip existing emissions data
+    strip_emissions_data(scenario, context)
+
     # Information about the base `scenario`
     info = ScenarioInfo(scenario)
     context["transport build info"] = info
@@ -45,6 +48,15 @@ def add_data(scenario, context, dry_run=False):
         add_par_data(scenario, func(context), dry_run=dry_run)
 
     log.info("done")
+
+
+def strip_emissions_data(scenario, context):
+    """Remove base model's parametrization of freight transport emissions.
+
+    They are re-added by :func:`get_freight_data`.
+    """
+    log.warning("Not implemented")
+    pass
 
 
 def demand(context):
