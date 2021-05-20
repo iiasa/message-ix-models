@@ -249,17 +249,24 @@ def modify_demand_and_hist_activity(scen):
 
 # Read in technology-specific parameters from input xlsx
 # Now used for steel and cement, which are in one file
-def read_sector_data(sectname):
+def read_sector_data(sectname,scenario):
 
     import numpy as np
 
     # Ensure config is loaded, get the context
     context = read_config()
 
+    s_info = ScenarioInfo(scenario)
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = sect_name + "_R12"
+    else:
+        sheet_n = sect_name + "_R11"
+
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
         context.get_path("material", context.datafile),
-        sheet_name=sectname,
+        sheet_name=sheet_n,
     )
 
     # Clean the data
@@ -295,21 +302,27 @@ def read_sector_data(sectname):
 
 # Read in time-dependent parameters
 # Now only used to add fuel cost for bare model
-def read_timeseries(filename):
+def read_timeseries(filename,scenario):
 
     import numpy as np
 
     # Ensure config is loaded, get the context
     context = read_config()
+    s_info = ScenarioInfo(scenario)
 
-    if context.scenario_info['scenario'] == 'NPi400':
-        sheet_name="timeseries_NPi400"
+    # if context.scenario_info['scenario'] == 'NPi400':
+    #     sheet_name="timeseries_NPi400"
+    # else:
+    #     sheet_name = "timeseries"
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = timeseries_R12
     else:
-        sheet_name = "timeseries"
+        sheet_n = timeseries_R11
 
     # Read the file
     df = pd.read_excel(
-        context.get_path("material", filename), sheet_name)
+        context.get_path("material", filename), sheet_name=sheet_n)
 
     import numbers
     # Take only existing years in the data
@@ -330,9 +343,16 @@ def read_rel(filename):
     # Ensure config is loaded, get the context
     context = read_config()
 
+    s_info = ScenarioInfo(scenario)
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = relations_R12
+    else:
+        sheet_n = relations_R11
+
     # Read the file
     data_rel = pd.read_excel(
-        context.get_path("material", filename), sheet_name="relations",
+        context.get_path("material", filename), sheet_name=sheet_n,
     )
 
     return data_rel
