@@ -28,32 +28,43 @@ from message_data.tools import (
 from .data_buildings import get_scen_mat_demand
 from . import get_spec
 
-def read_data_aluminum():
+def read_data_aluminum(scenario):
     """Read and clean data from :file:`aluminum_techno_economic.xlsx`."""
 
     # Ensure config is loaded, get the context
     context = read_config()
+    s_info = ScenarioInfo(scenario)
 
     # Shorter access to sets configuration
     # sets = context["material"]["generic"]
 
     fname = "aluminum_techno_economic.xlsx"
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = "data_R12"
+        sheet_n_relations = "relations_R12"
+    else:
+        sheet_n = "data_R11"
+        sheet_n_relations = "relations_R11"
+
     # Read the file
-    data_alu = pd.read_excel(
-        context.get_path("material", fname),
-        sheet_name="data",
-    )
+    data_alu = pd.read_excel(context.get_path("material", fname),
+               sheet_name=sheet_n,)
 
     # Drop columns that don't contain useful information
     data_alu= data_alu.drop(["Source", 'Description'], axis = 1)
 
-    data_alu_rel = read_rel(fname)
+    data_alu_rel = pd.read_excel(context.get_path("material", fname),
+    sheet_name=sheet_n_relations,)
+
+    data_aluminum_ts = read_timeseries("aluminum_techno_economic.xlsx")
+
     # Unit conversion
 
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
 
-    return data_alu, data_alu_rel
+    return data_alu, data_alu_rel, data_aluminum_ts
 
 def print_full(x):
     pd.set_option('display.max_rows', len(x))
@@ -68,8 +79,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_aluminum, data_aluminum_rel= read_data_aluminum()
-    data_aluminum_ts = read_timeseries("aluminum_techno_economic.xlsx")
+    data_aluminum, data_aluminum_rel, data_aluminum_ts = read_data_aluminum()
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -314,20 +324,7 @@ def gen_mock_demand_aluminum(scenario):
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
-
-    # SSP2 R11 baseline GDP projection
-    gdp_growth = pd.read_excel(
-        context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
-        sheet_name="data",)
-
-    gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & \
-    (gdp_growth['Region']!='World')].drop(['Model', 'Variable', 'Unit', 'Notes',\
-     2000, 2005], axis = 1)
-
-    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
-
-    r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+    nodes = s_info.N
 
     # Demand at product level (IAI Global Aluminum Cycle 2018)
     # Globally: 82.4 Mt
@@ -344,7 +341,32 @@ def gen_mock_demand_aluminum(scenario):
     # Remaining 8.612 Mt shared between AFR and FSU
     # This is used as 2020 data.
 
-    d = [3,28, 6,5,2.5,2,13.6,3,4.8,4.8,6]
+    if "R11_CHN" in s_info.N:
+        sheet_n = "data_R11"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
+        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+
+        d = [3,28, 6,5,2.5,2,13.6,3,4.8,4.8,6]
+
+    else:
+        sheet_n = "data_12"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
+            'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+
+        d = [3,26, 6,5,2.5,2,13.6,3,4.8,4.8,6,2]
+
+    # SSP2 R11 baseline GDP projection
+    gdp_growth = pd.read_excel(
+        context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        sheet_name=sheet_n,)
+
+    gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & \
+    (gdp_growth['Region']!='World')].drop(['Model', 'Variable', 'Unit', 'Notes',\
+     2000, 2005], axis = 1)
+
+    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
 
     demand2020_al = pd.DataFrame({'Region':r, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\
