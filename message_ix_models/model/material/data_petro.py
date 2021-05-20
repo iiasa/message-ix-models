@@ -23,11 +23,17 @@ def read_data_petrochemicals():
 
     # Ensure config is loaded, get the context
     context = read_config()
+    s_info = ScenarioInfo(scenario)
+    fname =  "petrochemicals_techno_economic.xlsx"
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = "data_R12"
+    else:
+        sheet_n = "data_R11"
 
     # Read the file
     data_petro = pd.read_excel(
-        context.get_path("material", "petrochemicals_techno_economic.xlsx"),
-        sheet_name="data")
+        context.get_path("material", fname),sheet_name=sheet_n)
     # Clean the data
 
     data_petro= data_petro.drop(['Source', 'Description'], axis = 1)
@@ -41,6 +47,41 @@ def gen_mock_demand_petro(scenario):
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
+    nodes = s_info.N
+
+    # 2018 production
+    # Use as 2020
+    # The Future of Petrochemicals Methodological Annex
+    # Projections here do not show too much growth until 2050 for some regions.
+    # For division of some regions assumptions made:
+    # PAO, PAS, SAS, EEU,WEU
+
+    if "R11_CHN" in s_info.N:
+        sheet_n = "data_R11"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
+        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+
+        d_ethylene = [0.853064, 32.04327, 2.88788, 8.780442, 8.831229,21.58509,
+        32.54942, 8.94036, 7.497867, 28.12818, 16.65209]
+        d_propylene = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 10.79255,
+        16.27471, 7.4503, 7.497867, 17.30965, 11.1014]
+        d_BTX = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
+        7.4503, 7.497867, 17.30965, 11.1014]
+
+    else:
+        sheet_n = "data_12"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
+                'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+
+        d_ethylene = [0.853064, 28.84327, 2.88788, 8.780442, 8.831229,21.58509,
+        32.54942, 8.94036, 28.84327, 28.12818, 16.65209,3.2]
+        d_propylene = [0.426532, 28.84327, 2.88788, 1.463407, 5.298738, 10.79255,
+        16.27471, 7.4503, 7.497867, 17.30965, 11.1014,3.2]
+        d_BTX = [0.426532, 28.84327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
+        7.4503, 7.497867, 17.30965, 11.1014, 3.2]
+
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -54,22 +95,10 @@ def gen_mock_demand_petro(scenario):
 
     gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
 
-    # 2018 production
-    # Use as 2020
-    # The Future of Petrochemicals Methodological Annex
-    # Projections here do not show too much growth until 2050 for some regions.
-    # For division of some regions assumptions made:
-    # PAO, PAS, SAS, EEU,WEU
-
     r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
 
-    d_ethylene = [0.853064, 32.04327, 2.88788, 8.780442, 8.831229,21.58509,
-    32.54942, 8.94036, 7.497867, 28.12818, 16.65209]
-    d_propylene = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 10.79255,
-    16.27471, 7.4503, 7.497867, 17.30965, 11.1014]
-    d_BTX = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
-    7.4503, 7.497867, 17.30965, 11.1014]
+
     list = []
 
     for e in ["ethylene","propylene","BTX"]:
