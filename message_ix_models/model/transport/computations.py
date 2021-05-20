@@ -30,6 +30,30 @@ def load_transport_file(basename: str, units=None, name: str = None) -> Quantity
     )
 
 
+def as_quantity(info):
+    dim = info.pop("_dim")
+    unit = info.pop("_unit")
+
+    return Quantity(pd.Series(info).rename_axis(dim), units=unit)
+
+
+def ldv_distance(config):
+    """Return annual driving distance per LDV.
+
+    - Regions other than R11_NAM have M/F values in same proportion to their A value as
+      in NAM
+    """
+    # Load from config.yaml
+    result = computations.product(
+        as_quantity(config["ldv activity"]),
+        as_quantity(config["factor"]["activity"]["ldv"]),
+    )
+
+    result.name = "ldv distance"
+
+    return result
+
+
 def transport_check(scenario, ACT):
     """Reporting computation for :func:`check`.
 

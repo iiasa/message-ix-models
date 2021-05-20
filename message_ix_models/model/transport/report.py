@@ -2,7 +2,7 @@ import logging
 from operator import attrgetter
 
 from dask.core import quote
-from message_ix.reporting import Reporter
+from message_ix.reporting import Key, Reporter
 from message_ix_models import Context
 
 from . import computations
@@ -118,6 +118,18 @@ def callback(rep: Reporter):
         except KeyError:
             if solved:
                 raise
+
+    # Compute vehicle stocks
+    ldv_distance = Key("ldv distance:nl-driver_type")
+    rep.add(ldv_distance, (computations.ldv_distance, "config"), sums=True, index=True)
+
+    # queue.append(
+    #     (
+    #         ("ratio", "ldv stock:nl-t-ya-driver_type", "CAP:nl-t-ya:ldv",
+    #          ldv_distance),
+    #         dict(sums=True, index=True),
+    #     )
+    # )
 
     # Only viable keys added
     rep.add_queue(queue)
