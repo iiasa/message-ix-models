@@ -2,10 +2,11 @@ import logging
 import os
 
 import pytest
+from numpy.testing import assert_allclose
 
 from message_ix_models.util import private_data_path
 
-from message_data.model.transport.report import callback
+from message_data.model.transport.report import callback, computations
 from message_data.reporting import prepare_reporter, register
 from message_data.testing import NIE
 
@@ -55,3 +56,19 @@ def test_report_bare(request, transport_context_f, tmp_path, regions, years, sol
 
     # Get the catch-all key, including plots etc.
     rep.get(key)
+
+
+def test_ldv_distance(transport_context_f):
+    "Test the :func:`ldv_distance()` computation."
+    ctx = transport_context_f
+
+    # Computation runs
+    result = computations.ldv_distance(ctx["transport config"])
+
+    # Computed value has the expected dimensions
+    assert ("nl", "driver_type") == result.dims
+
+    # Check some computed values
+    assert_allclose(
+        [13930, 45550], result.sel(nl="R11_NAM", driver_type=["M", "F"]), rtol=2e-4
+    )
