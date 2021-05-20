@@ -350,12 +350,12 @@ def gen_mock_demand_aluminum(scenario):
         d = [3,28, 6,5,2.5,2,13.6,3,4.8,4.8,6]
 
     else:
-        sheet_n = "data_12"
+        sheet_n = "data_R12"
 
         r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
             'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
 
-        d = [3,26, 6,5,2.5,2,13.6,3,4.8,4.8,6,2]
+        d = [3,2,6,5,2.5,2,13.6,3,4.8,4.8,6,26]
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
