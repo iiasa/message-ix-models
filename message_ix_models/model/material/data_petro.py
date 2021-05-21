@@ -18,7 +18,7 @@ from message_data.tools import (
     add_par_data
 )
 
-def read_data_petrochemicals():
+def read_data_petrochemicals(scenario):
     """Read and clean data from :file:`petrochemicals_techno_economic.xlsx`."""
 
     # Ensure config is loaded, get the context
@@ -56,6 +56,8 @@ def gen_mock_demand_petro(scenario):
     # For division of some regions assumptions made:
     # PAO, PAS, SAS, EEU,WEU
 
+    # For R12: China and CPA demand divided by 0.1 and 0.9.
+
     if "R11_CHN" in s_info.N:
         sheet_n = "data_R11"
 
@@ -85,7 +87,7 @@ def gen_mock_demand_petro(scenario):
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
         context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
-        sheet_name="data",
+        sheet_name=sheet_n,
     )
 
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & \
@@ -142,8 +144,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_petro = read_data_petrochemicals()
-    data_petro_ts = read_timeseries("petrochemicals_techno_economic.xlsx")
+    data_petro = read_data_petrochemicals(scenario)
+    data_petro_ts = read_timeseries(scenario,"petrochemicals_techno_economic.xlsx")
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 

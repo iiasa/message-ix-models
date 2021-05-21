@@ -54,10 +54,9 @@ def read_data_aluminum(scenario):
     # Drop columns that don't contain useful information
     data_alu= data_alu.drop(["Source", 'Description'], axis = 1)
 
-    data_alu_rel = pd.read_excel(context.get_path("material", fname),
-    sheet_name=sheet_n_relations,)
+    data_alu_rel = read_rel(scenario, "aluminum_techno_economic.xlsx")
 
-    data_aluminum_ts = read_timeseries("aluminum_techno_economic.xlsx")
+    data_aluminum_ts = read_timeseries(scenario,"aluminum_techno_economic.xlsx")
 
     # Unit conversion
 
@@ -79,8 +78,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_aluminum, data_aluminum_rel, data_aluminum_ts = read_data_aluminum()
-
+    data_aluminum, data_aluminum_rel, data_aluminum_ts = read_data_aluminum(scenario)
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
@@ -340,6 +338,8 @@ def gen_mock_demand_aluminum(scenario):
     # PAS/2 + SAS /2: Other Asia: 11.5 Mt
     # Remaining 8.612 Mt shared between AFR and FSU
     # This is used as 2020 data.
+
+    # For R12: China and CPA demand divided by 0.1 and 0.9.
 
     if "R11_CHN" in s_info.N:
         sheet_n = "data_R11"

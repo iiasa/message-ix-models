@@ -114,6 +114,7 @@ def solve(context, datafile, tag):
     # user did not give a recognized value, this raises an error.
     output_scenario_name = {
         "baseline": "NoPolicy",
+        "baseline_macro":"NoPolicy",
         "NPi2020-con-prim-dir-ncr": "NPi",
         "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",

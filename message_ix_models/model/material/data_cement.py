@@ -39,6 +39,8 @@ def gen_mock_demand_cement(scenario):
     # 2019 production by country (USGS)
     # p43 of https://pubs.usgs.gov/periodicals/mcs2020/mcs2020-cement.pdf
 
+    # For R12: China and CPA demand divided by 0.1 and 0.9.
+
     if "R11_CHN" in s_info.N:
         sheet_n = "data_R11"
 
@@ -57,17 +59,17 @@ def gen_mock_demand_cement(scenario):
         r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
             'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
 
-            demand2020_top = [76, 229.5, 0, 57, 55, 60, 89, 54, 129, 320, 51,2065.5]
+        demand2020_top = [76, 229.5, 0, 57, 55, 60, 89, 54, 129, 320, 51,2065.5]
             # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
-            demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2*0.1, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
+        demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2*0.1, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
                     (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51,
                     (4100*0.14-155)*0.2*0.9]
-            d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
+        d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
         context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
-        sheet_name="data",
+        sheet_name=sheet_n,
     )
 
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & (gdp_growth['Region']!='World')].\
@@ -153,7 +155,7 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
-    data_cement = read_sector_data("cement")
+    data_cement = read_sector_data(scenario,"cement")
     # Special treatment for time-dependent Parameters
     # data_cement_vc = read_timeseries()
     # tec_vc = set(data_cement_vc.technology) # set of tecs with var_cost
