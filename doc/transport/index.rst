@@ -26,6 +26,7 @@ On this page:
 On other pages:
 
 - :doc:`transport/report`
+- :doc:`transport/disutility`
 
 Usage
 =====
