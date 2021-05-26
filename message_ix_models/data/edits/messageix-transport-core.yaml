@@ -1,0 +1,60 @@
+format: 1
+
+title: MESSAGEix-Transport model core
+description: >
+  These are the data represented in the model core of MESSAGEix-Transport. This
+  model uses the same, generic MESSAGE mathematical formulation as the
+  MESSAGEix-GLOBIOM global model (without transport detail), and so this data
+  description also applies to other instances ("scenarios") of that model.
+
+  All of the core data are available directly as output, as well as aggregated
+  and derived quantities.
+
+  [Choose one: “For derived output quantities, see the separate `....yaml`.”
+  OR “In this file, derived output quantities are denoted with [...].”]
+
+provider:
+  organisation: International Institute for Applied Systems Analysis (IIASA)
+  contact: kishimot@iiasa.ac.at
+
+classifiers:
+- "Kind :: Model core"
+
+dimension:
+  # time, space, mode, technology: same as in messageix-transport-in.yaml
+
+measure:
+  stock:
+    description: Quantity of transport vehicles.
+
+quantity:
+- measure: activity
+  kind: core
+  dimensions: [time, space, mode, technology]
+
+- measure: freight activity
+  kind: core
+  dimensions: [time, space, mode, technology]
+  description: |
+    For freight truck `technology` only.
+
+- measure: passenger activity
+  kind: core
+  dimensions: [time, space, mode, technology]
+  description: |
+    For non-LDV `mode` only. For these modes & technologies, there is no
+    distinction by `consumer_group`.
+
+- measure: passenger activity
+  kind: core
+  dimensions: [time, space, technology, consumer_group]
+  description: |
+    For LDV `technology` only. The model core optimizes the activity of each
+    `consumer_group` by each `LDV` technology.
+
+- measure: stock
+  kind: derived
+  dimensions: [time, space, mode, technology]
+  units: 10^3 vehicles
+  description: |
+    Excluding aviation `mode` and associated technologies.

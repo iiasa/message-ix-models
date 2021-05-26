@@ -1,0 +1,124 @@
+format: 1
+
+title: MESSAGEix-Transport inputs
+description: >
+  These data are ingested by the setup/calibration code for MESSAGEix-Transport.
+  This code takes an instance ("scenario") of the MESSAGEix-GLOBIOM global model
+  and alters it to add the detailed transport structure.
+
+  See the description `messageix-transport-core.yaml` for the data in the core
+  model formulation. Data that exactly matches the core formulation can also be
+  used as input; this file describes non-core data that can be transformed/used
+  with existing code & methods.
+
+  This setup code was originally developed for use with data from the US-TIMES
+  and MA³T models.
+
+provider:
+  organisation: International Institute for Applied Systems Analysis (IIASA)
+  contact: kishimot@iiasa.ac.at
+
+classifiers:
+- "Kind :: Model input"
+
+dimension:
+  time:
+    scope: historical (1990-2020) to 2100
+    resolution: 5- or 10-year periods, or annual
+    description: Data at <5 year resolution can be aggregated.
+  space:
+    scope: global
+    resolution: country or R11 regions
+    description: Data at the country resolution can be aggregated.
+  census_division:
+    scope: Continental United States
+    resolution: 9 census regions, or total
+    description: |
+      Census divisons of the United States. This is used to map data from
+      US-TIMES and MA³T.
+  area_type:
+    scope: all areas within a given spatial unit
+    resolution: 3-point scale: urban, suburban, or rural.
+    description: Urbanization or urban form of a sub-national area.
+  attitude:
+    scope: all people in a given (sub-)population
+    resolution: 3-point scale: early adopter, early majority, late majority
+    description: |
+      New technology adoption attitude or propensity, in particular towards new
+      transport technologies, modes, options, etc.
+  driver_type:
+    scope: all vehicle drivers in a given (sub-)population
+    resolution: 3-point scale: moderate, average, frequent
+    description: |
+      The amount of annual driving done by a person, relative to others in the
+      population.
+  consumer_group:
+    scope: all people in a given population
+    resolution: 27-point scale; see description
+    description: |
+      Group of people within a population that have similar transport demand/
+      activity, behaviour, etc. characteristics. In MESSAGEix-Transport, this is
+      operationalized as the Cartesian product of the `area_type`, `attitude`,
+      and `driver_type` concepts/dimensions.
+
+      E.g. the label "RUEMF" means the subset of people who live in rural
+      areas ("RU"), have early majority ("EM") technology attitudes, and are
+      frequent drivers ("F").
+  mode:
+    scope: the points listed below; excluding e.g. pipelines
+    resolution: 5-point scale: air, bus, rail, LDV, 2-3 wheelers
+    description: |
+      Mode or medium of passenger transport. In the MESSAGEix-Transport setup
+      code, this is operationalized in a way that includes both different
+      vehicle types (e.g. bus, LDV, 2W+3W) and the `mode` concept in the iTEM
+      sense (e.g. "Road" for all 3 of these).
+  technology:
+    scope: All transport technologies
+    description: The powertrain technology of a transport vehicle.
+    resolution: |
+      43 distinct labels. Some of these are only valid in combination with
+      certain other values for the `mode` dimension. In particular, the number
+      of labels is:
+
+      - Rail: 6
+      - 2-3 wheelers: 2
+      - LDV: 12
+      - Aviation: 4
+      - Bus: 10
+
+      As well, for freight road (not included in the `mode` dimension, above),
+      there are 9 `technology` labels.
+
+measure:
+  population:
+    description: Count of people in a given area or category.
+  disutility cost:
+    description: |
+      Monetary equivalent to the intangible/non-monetary disutility
+      (‘inconvenience’, etc.) that a person has towards using a specific
+      technology; separate from the real, monetary costs of obtaining or using
+      that technology.
+  travel speed:
+    description: Average travel speed by a particular means of transport.
+
+quantity:
+- measure: population
+  dimensions: [time, space, consumer_group]
+  units: persons
+  description: |
+    With these dimensions, this data captures the "shares" or division of the
+    total population across the consumer groups.
+
+- measure: disutility cost
+  dimensions: [time, space, technology, consumer_group]
+  units: USD_2015
+  description: |
+    These data only cover the 12 `technology` labels associated with the LDV
+    `mode`.
+
+- measure: travel speed
+  dimensions: [time, space, mode]
+  units: km/h
+  description: |
+    The code uses the assumption that travel speeds are the same for every
+    `technology` with the same `mode`.
