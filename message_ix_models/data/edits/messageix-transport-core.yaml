@@ -1,7 +1,7 @@
 format: 1
 
 title: MESSAGEix-Transport model core
-description: >
+description: |-
   These are the data represented in the model core of MESSAGEix-Transport. This
   model uses the same, generic MESSAGE mathematical formulation as the
   MESSAGEix-GLOBIOM global model (without transport detail), and so this data
@@ -21,7 +21,17 @@ classifiers:
 - "Kind :: Model core"
 
 dimension:
-  # time, space, mode, technology: same as in messageix-transport-in.yaml
+  time:
+    scope: 2015 to 2110
+    resolution: 5- or 10-year periods
+    description: Periods are labelled with their final year.
+  space:
+    scope: global
+    resolution: R11 regions
+    description: |-
+      See https://docs.messageix.org/projects/models2/en/latest/pkg-data/node.html
+      or https://github.com/iiasa/message-ix-models/blob/main/message_ix_models/data/node/R11.yaml
+  # TODO add mode, technology: same as in messageix-transport-input.yaml
 
 measure:
   stock:
@@ -35,20 +45,20 @@ quantity:
 - measure: freight activity
   kind: core
   dimensions: [time, space, mode, technology]
-  description: |
+  description: >-
     For freight truck `technology` only.
 
 - measure: passenger activity
   kind: core
   dimensions: [time, space, mode, technology]
-  description: |
+  description: >-
     For non-LDV `mode` only. For these modes & technologies, there is no
     distinction by `consumer_group`.
 
 - measure: passenger activity
   kind: core
   dimensions: [time, space, technology, consumer_group]
-  description: |
+  description: >-
     For LDV `technology` only. The model core optimizes the activity of each
     `consumer_group` by each `LDV` technology.
 
@@ -56,5 +66,5 @@ quantity:
   kind: derived
   dimensions: [time, space, mode, technology]
   units: 10^3 vehicles
-  description: |
+  description: >-
     Excluding aviation `mode` and associated technologies.
