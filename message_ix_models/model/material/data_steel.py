@@ -45,7 +45,15 @@ def gen_mock_demand_steel(scenario):
 
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
-    if "R11_CHN" in s_info.N:
+    if "R11_CHN" in nodes:
+        sheet_n = "data_R12"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
+        'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+
+        d = [35,5.37, 70, 53, 49, 39, 130, 80, 45, 96, 100,531.63]
+
+    else:
         sheet_n = "data_R11"
 
         r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
@@ -53,13 +61,6 @@ def gen_mock_demand_steel(scenario):
 
         d = [35, 537, 70, 53, 49, 39, 130, 80, 45, 96, 100]
         # MEA change from 39 to 9 to make it feasible (coal supply bound)
-    else:
-        sheet_n = "data_R12"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
-        'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
-
-        d = [35,5.37, 70, 53, 49, 39, 130, 80, 45, 96, 100,531.63]
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -80,20 +81,23 @@ def gen_mock_demand_steel(scenario):
         multiply(demand2010_steel["Val"], axis=0)
 
     # Do this if we have 2020 demand values for buildings
-    sp = get_spec()
-    if 'buildings' in sp['add'].set['technology']:
-        val = get_scen_mat_demand("steel")
-        print("Base year demand of {}:".format("steel"), val)
-        # d = d - val.value
-        # Scale down all years' demand values by the 2020 ratio
-        demand2010_steel.iloc[:,3:] =  demand2010_steel.iloc[:,3:].\
-            multiply(demand2010_steel[2020]- val['value'], axis=0).\
-            div(demand2010_steel[2020], axis=0)
-        print("UPDATE {} demand for 2020!".format("steel"))
-
+    # sp = get_spec()
+    # if 'buildings' in sp['add'].set['technology']:
+    #     val = get_scen_mat_demand("steel",scenario)
+    #     print("Base year demand of {}:".format("steel"), val)
+    #     # d = d - val.value
+    #     # Scale down all years' demand values by the 2020 ratio
+    #     demand2010_steel.iloc[:,3:] =  demand2010_steel.iloc[:,3:].\
+    #         multiply(demand2010_steel[2020]- val['value'], axis=0).\
+    #         div(demand2010_steel[2020], axis=0)
+    #     print("UPDATE {} demand for 2020!".format("steel"))
+    #
     demand2010_steel = pd.melt(demand2010_steel.drop(['Val', 'Scenario'], axis=1),\
         id_vars=['node'], \
         var_name='year', value_name = 'value')
+    #
+    # print("This is steel demand")
+    # print(demand2010_steel)
     #
     # baseyear = list(range(2020, 2110+1, 10))
     # gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
@@ -149,6 +153,7 @@ def gen_data_steel(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
+    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:

@@ -59,7 +59,19 @@ def gen_mock_demand_petro(scenario):
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
     if "R11_CHN" in s_info.N:
-        sheet_n = "data_R11"
+        sheet_n = "data_R12"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
+                'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+
+        d_ethylene = [0.853064, 3.2, 2.88788, 8.780442, 8.831229,21.58509,
+        32.54942, 8.94036, 28.84327, 28.12818, 16.65209, 28.84327]
+        d_propylene = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 10.79255,
+        16.27471, 7.4503, 7.497867, 17.30965, 11.1014,28.84327]
+        d_BTX = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
+        7.4503, 7.497867, 17.30965, 11.1014, 28.84327]
+
+    else:
 
         r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
         'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
@@ -71,18 +83,6 @@ def gen_mock_demand_petro(scenario):
         d_BTX = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
         7.4503, 7.497867, 17.30965, 11.1014]
 
-    else:
-        sheet_n = "data_12"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
-                'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
-
-        d_ethylene = [0.853064, 3.2, 2.88788, 8.780442, 8.831229,21.58509,
-        32.54942, 8.94036, 28.84327, 28.12818, 16.65209, 28.84327]
-        d_propylene = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 10.79255,
-        16.27471, 7.4503, 7.497867, 17.30965, 11.1014,28.84327]
-        d_BTX = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
-        7.4503, 7.497867, 17.30965, 11.1014, 28.84327]
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -158,6 +158,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
+    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:

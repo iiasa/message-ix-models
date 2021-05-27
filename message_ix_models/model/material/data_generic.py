@@ -82,6 +82,7 @@ def gen_data_generic(scenario, dry_run=False):
     # 'World' is included by default when creating a message_ix.Scenario().
     # Need to remove it for the China bare model
     nodes.remove('World')
+    nodes.remove("R11_RCPA")
 
     for t in config["technology"]["add"]:
 

@@ -42,18 +42,6 @@ def gen_mock_demand_cement(scenario):
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
     if "R11_CHN" in s_info.N:
-        sheet_n = "data_R11"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
-
-        demand2020_top = [76, 2295, 0, 57, 55, 60, 89, 54, 129, 320, 51]
-        # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
-        demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
-                (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51]
-        d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
-
-    else:
         sheet_n = "data_R12"
 
         r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
@@ -65,6 +53,19 @@ def gen_mock_demand_cement(scenario):
                     (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51,
                     (4100*0.14-155)*0.2*0.9]
         d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
+
+    else:
+        sheet_n = "data_R11"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
+        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+
+        demand2020_top = [76, 2295, 0, 57, 55, 60, 89, 54, 129, 320, 51]
+        # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
+        demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
+                (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51]
+        d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
+
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -124,17 +125,17 @@ def gen_mock_demand_cement(scenario):
         multiply(demand2020_cement["value"], axis=0)
 
     # Do this if we have 2020 demand values for buildings
-    sp = get_spec()
-    if 'buildings' in sp['add'].set['technology']:
-        val = get_scen_mat_demand("cement") # Mt in 2020
-        print("Base year demand of {}:".format("cement"), val)
-        # demand2020_cement['value'] = demand2020_cement['value'] - val['value']
-        # Scale down all years' demand values by the 2020 ratio
-        demand2020_cement.iloc[:,3:] =  demand2020_cement.iloc[:,3:].\
-            multiply(demand2020_cement[2020]- val['value'], axis=0).\
-            div(demand2020_cement[2020], axis=0)
-        print("UPDATE {} demand for 2020!".format("cement"))
-
+    # sp = get_spec()
+    # if 'buildings' in sp['add'].set['technology']:
+    #     val = get_scen_mat_demand("cement",scenario) # Mt in 2020
+    #     print("Base year demand of {}:".format("cement"), val)
+    #     # demand2020_cement['value'] = demand2020_cement['value'] - val['value']
+    #     # Scale down all years' demand values by the 2020 ratio
+    #     demand2020_cement.iloc[:,3:] =  demand2020_cement.iloc[:,3:].\
+    #         multiply(demand2020_cement[2020]- val['value'], axis=0).\
+    #         div(demand2020_cement[2020], axis=0)
+    #     print("UPDATE {} demand for 2020!".format("cement"))
+    #
     demand2020_cement = pd.melt(demand2020_cement.drop(['value', 'Scenario'], axis=1),\
         id_vars=['node'], \
         var_name='year', value_name = 'value')
@@ -172,6 +173,7 @@ def gen_data_cement(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
+    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:

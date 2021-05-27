@@ -27,7 +27,7 @@ import re
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
-    gen_data_buildings,
+    #gen_data_buildings,
     gen_data_steel,
     gen_data_cement,
     gen_data_aluminum,
