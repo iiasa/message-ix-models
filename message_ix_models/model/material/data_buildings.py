@@ -19,16 +19,18 @@ from message_data.tools import (
     add_par_data
 )
 
-INPUTFILE = 'LED_LED_report_IAMC_sensitivity.csv' #'LED_LED_report_IAMC.csv'
 CASE_SENS = 'ref' # 'min', 'max'
+INPUTFILE = 'LED_LED_report_IAMC_sensitivity_R12.csv'
+#INPUTFILE = 'LED_LED_report_IAMC_sensitivity_R11.csv'
 
-
-def read_timeseries_buildings(filename, case=CASE_SENS):
+def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
 
     import numpy as np
 
     # Ensure config is loaded, get the context
     context = read_config()
+    s_info = ScenarioInfo(scenario)
+    nodes = s_info.N
 
     # Read the file and filter the given sensitivity case
     bld_input_raw = pd.read_csv(
@@ -39,6 +41,8 @@ def read_timeseries_buildings(filename, case=CASE_SENS):
                                   # str.contains("Floor Space|Aluminum|Cement|Steel|Final Energy")]
                                   str.contains("Floor Space|Aluminum|Cement|Steel")] # Final Energy - Later. Need to figure out carving out
     bld_input_mat['Region'] = 'R11_' + bld_input_mat['Region']
+    print("Check the year values")
+    print(bld_input_mat)
 
     bld_input_pivot = \
         bld_input_mat.melt(id_vars=['Region','Variable'], var_name='Year', \
@@ -94,8 +98,8 @@ def read_timeseries_buildings(filename, case=CASE_SENS):
     return bld_intensity_long, bld_area_long, bld_demand_long
 
 
-def get_scen_mat_demand(commod, year = "2020", inputfile = INPUTFILE, case=CASE_SENS):
-    a, b, c = read_timeseries_buildings(inputfile, case)
+def get_scen_mat_demand(commod, scenario, year = "2020", inputfile = INPUTFILE, case=CASE_SENS):
+    a, b, c = read_timeseries_buildings(inputfile, scenario, case)
     if not year == "all": # specific year
         cc = c[(c.commodity==commod) & (c.year==year)].reset_index(drop=True)
     else: # all years
@@ -115,7 +119,7 @@ def adjust_demand_param(scen):
     scen.check_out()
     comms = ["steel", "cement", "aluminum"]
     for c in comms:
-        mat_building = get_scen_mat_demand(c, year="all").rename(columns={"value":"bld_demand"}) # mat demand (timeseries) from buildings model (Alessio)
+        mat_building = get_scen_mat_demand(c, scen, year="all").rename(columns={"value":"bld_demand"}) # mat demand (timeseries) from buildings model (Alessio)
         mat_building['year'] = mat_building['year'].astype(int)
 
         sub_mat_demand = scen_mat_demand.loc[scen_mat_demand.commodity == c]
@@ -152,7 +156,8 @@ def gen_data_buildings(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Buildings raw data (from Alessio)
-    data_buildings, data_buildings_demand, data_buildings_mat_demand = read_timeseries_buildings(INPUTFILE, CASE_SENS)
+    data_buildings, data_buildings_demand, data_buildings_mat_demand = \
+    read_timeseries_buildings(INPUTFILE, scenario, CASE_SENS)
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -166,6 +171,7 @@ def gen_data_buildings(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     # fmy = s_info.y0
     nodes.remove('World')
+    nodes.remove("R11_RCPA")
 
     # Read field values from the buildings input data
     regions = list(set(data_buildings.node))

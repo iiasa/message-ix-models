@@ -91,6 +91,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
+    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
@@ -342,6 +343,14 @@ def gen_mock_demand_aluminum(scenario):
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
     if "R11_CHN" in s_info.N:
+        sheet_n = "data_R12"
+
+        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
+            'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+
+        d = [3,2,6,5,2.5,2,13.6,3,4.8,4.8,6,26]
+
+    else:
         sheet_n = "data_R11"
 
         r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
@@ -349,13 +358,6 @@ def gen_mock_demand_aluminum(scenario):
 
         d = [3,28, 6,5,2.5,2,13.6,3,4.8,4.8,6]
 
-    else:
-        sheet_n = "data_R12"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
-            'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
-
-        d = [3,2,6,5,2.5,2,13.6,3,4.8,4.8,6,26]
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -377,17 +379,17 @@ def gen_mock_demand_aluminum(scenario):
         multiply(demand2020_al["Val"], axis=0)
 
     # Do this if we have 2020 demand values for buildings
-    sp = get_spec()
-    if 'buildings' in sp['add'].set['technology']:
-        val = get_scen_mat_demand("aluminum")
-        print("Base year demand of {}:".format("aluminum"), val)
-        # d = d - val.value
-        # Scale down all years' demand values by the 2020 ratio
-        demand2020_al.iloc[:,3:] =  demand2020_al.iloc[:,3:].\
-            multiply(demand2020_al[2020]- val['value'], axis=0).\
-            div(demand2020_al[2020], axis=0)
-        print("UPDATE {} demand for 2020!".format("aluminum"))
-
+    # sp = get_spec()
+    # if 'buildings' in sp['add'].set['technology']:
+    #     val = get_scen_mat_demand("aluminum",scenario)
+    #     print("Base year demand of {}:".format("aluminum"), val)
+    #     # d = d - val.value
+    #     # Scale down all years' demand values by the 2020 ratio
+    #     demand2020_al.iloc[:,3:] =  demand2020_al.iloc[:,3:].\
+    #         multiply(demand2020_al[2020]- val['value'], axis=0).\
+    #         div(demand2020_al[2020], axis=0)
+    #     print("UPDATE {} demand for 2020!".format("aluminum"))
+    #
     demand2020_al = pd.melt(demand2020_al.drop(['Val', 'Scenario'], axis=1),\
         id_vars=['node'], var_name='year', value_name = 'value')
 

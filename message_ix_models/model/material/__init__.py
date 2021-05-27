@@ -115,6 +115,7 @@ def solve(context, datafile, tag):
     output_scenario_name = {
         "baseline": "NoPolicy",
         "baseline_macro":"NoPolicy",
+        "baseline_new":"NoPolicy",
         "NPi2020-con-prim-dir-ncr": "NPi",
         "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
@@ -203,7 +204,7 @@ from .data_power_sector import gen_data_power_sector
 from message_data.tools import add_par_data
 
 DATA_FUNCTIONS = [
-    gen_data_buildings,
+    #gen_data_buildings,
     gen_data_steel,
     gen_data_cement,
     gen_data_aluminum,
