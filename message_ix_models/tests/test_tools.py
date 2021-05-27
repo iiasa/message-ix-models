@@ -4,7 +4,11 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.testing import bare_res
 
-from message_data.tools.utilities import add_budget
+from message_data.tools.utilities import (
+    add_budget,
+    update_CO2_td_cost,
+    adjust_curtailment_cap_to_act,
+)
 from message_data.tools.utilities.update_fix_and_inv_cost import add_missing_years
 
 
@@ -90,3 +94,62 @@ def test_add_missing_years(request, test_context):
 
     # Check that missing year was added and interpolation was correctly conducted
     assert df.xs(2095, level=3)["value1"][0] == 15
+
+
+def test_co2_td_cost(request, test_context):
+    # Create a empty Scenario (no data) with the RES structure for R14 (using test
+    # utilities)
+    test_context.regions = "R11"
+    scen = bare_res(request, test_context, solved=False)
+    update_CO2_td_cost(scen)
+
+    # Check that CO2 T/D values from both biomass and fossil fuel origins match
+    # assumptions from literature
+    df = scen.par("var_cost", filters={"technology": ["co2_tr_dis"]})
+    assert all(df["value"] == 75)
+    df = scen.par("var_cost", filters={"technology": ["bco2_tr_dis"]})
+    assert all(df["value"] == 150)
+
+
+def test_adjust_curtailment_cap_to_act(request, test_context):
+    # Create a empty Scenario (no data) with the RES structure for R14 (using test
+    # utilities)
+    test_context.regions = "R11"
+    scen = bare_res(request, test_context, solved=False)
+    adjust_curtailment_cap_to_act(scen)
+    df = scen.par(
+        "relation_total_capacity",
+        filters={
+            "technology": ["h2_elec", "stor_ppl"],
+            "relation": [
+                "solar_curtailment_1",
+                "solar_curtailment_2",
+                "solar_curtailment_3",
+                "wind_curtailment_1",
+                "wind_curtailment_2",
+                "wind_curtailment_3",
+            ],
+        },
+    )
+    assert df.empty
+    # Edit *df* to match what's in the model
+    df = scen.par(
+        "relation_activity",
+        filters={
+            "technology": "stor_ppl",
+            "relation": [
+                "solar_curtailment_1",
+                "solar_curtailment_2",
+                "solar_curtailment_3",
+                "wind_curtailment_1",
+                "wind_curtailment_2",
+                "wind_curtailment_3",
+            ],
+        },
+    )
+    assert all(df[df["relation"] == "wind_curtailment_1"] == -1.4)
+    assert all(df[df["relation"] == "wind_curtailment_1"] == -0.8)
+    assert all(df[df["relation"] == "wind_curtailment_1"] == -0.4)
+    assert all(df[df["relation"] == "solar_curtailment_1"] == -1.0)
+    assert all(df[df["relation"] == "solar_curtailment_2"] == -0.6)
+    assert all(df[df["relation"] == "solar_curtailment_3"] == -0.32)
