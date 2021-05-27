@@ -11,20 +11,28 @@ log = logging.getLogger(__name__)
 @common_params("regions")
 @click.pass_obj
 def cli(context, regions):
-    """MESSAGEix-Nexus module"""
+    """This allows adding components of the MESSAGEix-Nexus module
+    
+    This modifies model name & scenario name
+    and verifies the region setup
+    """
 
     from .utils import read_config
 
     # Ensure water model configuration is loaded
     read_config(context)
-    context.scenario_info = dict(
-        model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test"
-    )
+    if not context.scenario_info:
+        context.scenario_info.update(dict(
+            model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test"
+        ) )
     context.output_scenario = context.scenario_info["scenario"] + "_water"
 
     # Handle --regions; use a sensible default for MESSAGEix-Nexus
     if regions:
         print("INFO: Regions choice", regions)
+        if regions in [ "R14", "R32", "RCP"]:
+            print("WARNING: the MESSAGEix-Nexus module might not be", 
+            "compatible with your 'regions' choice")
     else:
         log.info("Use default --regions=R11")
         regions = "R11"
@@ -46,12 +54,10 @@ def cooling(context, regions):
 
     output_scenario_name = context.output_scenario
 
-    if context.scenario_info["model"] != "CD_Links_SSP2":
-        print("WARNING: this code is not tested with this base scenario!")
-
     # Clone and build
     scen = context.get_scenario().clone(model="", scenario=output_scenario_name)
 
+    print(scen.model)
     print(scen.scenario)
     # Build
     build(context, scen)

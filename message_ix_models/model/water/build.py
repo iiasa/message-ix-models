@@ -12,8 +12,13 @@ log = logging.getLogger(__name__)
 
 
 def get_spec(context) -> Mapping[str, ScenarioInfo]:
+    """Return the specification for nexus implementation
 
-    """Return the specification for nexus implementation"""
+    Parameters
+    ----------
+    context : .Context
+        The key ``regions`` determines the regional aggregation used.
+    """
 
     context.use_defaults(bare.SETTINGS)
     context = read_config()
@@ -68,7 +73,7 @@ def main(context, scenario, **options):
     """
     from .data import add_data
 
-    log.info("Set up MESSAGE-Water")
+    log.info("Set up MESSAGEix-Nexus")
 
     # Core water structure
     spec = get_spec(context)
