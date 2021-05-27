@@ -1,96 +1,66 @@
-from pathlib import Path
+import logging
 
 import click
-import message_ix
+from message_ix_models.util.click import common_params
 
-from . import SCENARIO_INFO
-from message_data.tools.cli import clone_to_dest, common_params
+log = logging.getLogger(__name__)
 
 
-@click.group('transport')
-def cli():
-    """MESSAGEix-Water module."""
-    pass
+# allows to activate water module
+@click.group("water")
+@common_params("regions")
+@click.pass_obj
+def cli(context, regions):
+    """This allows adding components of the MESSAGEix-Nexus module
+
+    This modifies model name & scenario name
+    and verifies the region setup
+    """
+
+    from .utils import read_config
+
+    # Ensure water model configuration is loaded
+    read_config(context)
+    if not context.scenario_info:
+        context.scenario_info.update(dict(
+            model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test"
+        ) )
+    context.output_scenario = context.scenario_info["scenario"] + "_water"
+
+    # Handle --regions; use a sensible default for MESSAGEix-Nexus
+    if regions:
+        print("INFO: Regions choice", regions)
+        if regions in [ "R14", "R32", "RCP"]:
+            print("WARNING: the MESSAGEix-Nexus module might not be",
+            "compatible with your 'regions' choice")
+    else:
+        log.info("Use default --regions=R11")
+        regions = "R11"
+    context.regions = regions
 
 
 @cli.command()
-@click.option('--version', default='geam_ADV3TRAr2_BaseX2_0',
-              metavar='VERSION', help='Model version to read.')
-@click.option('--check-base/--no-check-base', is_flag=True,
-              help='Check properties of the base scenario (default: no).')
-@click.option('--parse/--no-parse', is_flag=True,
-              help='(Re)parse MESSAGE V data files (default: no).')
-@click.option('--region', default='', metavar='REGIONS',
-              help='Comma-separated region(s).')
-@click.argument('SOURCE_PATH', required=False,
-                default=Path('reference', 'data'))
+@common_params("regions")
 @click.pass_obj
-def migrate(context, version, check_base, parse, region, source_path):
-    """Migrate data from MESSAGE(V)-Transport.
+def cooling(context, regions):
+    """Build and solve model with new cooling technologies.
 
-    If --parse is given, data from .chn, .dic, and .inp files is read from
-    SOURCE_PATH for VERSION. Values are extracted and cached.
-
-    Data is transformed to be suitable for the target scenario, and stored in
-    migrate/VERSION/*.csv.
+    Use the --url option to specify the base scenario.
     """
     from .build import main as build
-    from .migrate import import_all, load_all, transform
-    from .utils import silence_log
-    from message_data.tools import ScenarioInfo
 
-    # Load the target scenario from database
-    mp = context.get_platform()
-    s_target = message_ix.Scenario(mp, **SCENARIO_INFO)
-    info = ScenarioInfo(s_target)
+    # Determine the output scenario name based on the --url CLI option. If the
+    # user did not give a recognized value, this raises an error.
 
-    # Check that it has the required features
-    if check_base:
-        with silence_log():
-            build(s_target, dry_run=True)
-            print(f'Scenario {s_target} is a valid target for building '
-                  'MESSAGE-Transport.')
+    output_scenario_name = context.output_scenario
 
-    if parse:
-        # Parse raw data
-        data = import_all(source_path, nodes=region.split(','),
-                          version=version)
-    else:
-        # Load cached data
-        data = load_all(version=version)
+    # Clone and build
+    scen = context.get_scenario().clone(model="", scenario=output_scenario_name)
 
-    # Transform the data
-    transform(data, version, info)
+    print(scen.model)
+    print(scen.scenario)
+    # Build
+    build(context, scen)
 
-
-@cli.command("build")
-@common_params("dest dry_run quiet")
-@click.option("--fast", is_flag=True,
-              help="Skip removing data for removed set elements.")
-@click.pass_obj
-def build_cmd(context, dest, **options):
-    """Prepare the model."""
-    from .build import main
-
-    scenario, platform = clone_to_dest(context, defaults=SCENARIO_INFO)
-
-    main(scenario, **options)
-
-    del platform
-
-
-@cli.command()
-@click.option("--macro", is_flag=True)
-@click.pass_obj
-def solve(context, macro):
-    """Run the model."""
-    args = dict()
-
-    scenario = context.get_scenario()
-
-    if macro:
-        from .callback import main as callback
-        args['callback'] = callback
-
-    scenario.solve(**args)
-    scenario.commit()
+    # Solve
+    scen.solve()
