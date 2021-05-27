@@ -2,8 +2,9 @@
 
 import logging
 
-from message_ix_models.util import add_par_data
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import add_par_data
+
 from .water_for_ppl import cool_tech, non_cooling_tec
 
 log = logging.getLogger(__name__)
