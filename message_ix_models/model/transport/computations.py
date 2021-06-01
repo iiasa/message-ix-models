@@ -6,7 +6,9 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.util import private_data_path
 
 
-def load_transport_file(basename: str, units=None, name: str = None) -> Quantity:
+def load_transport_file(
+    basename: str, units=None, name: str = None, dims=None
+) -> Quantity:
     """Load transport calibration data from a CSV file.
 
     Wrapper around :func:`genno.computations.load_file`.
@@ -22,9 +24,12 @@ def load_transport_file(basename: str, units=None, name: str = None) -> Quantity
         Name to assign.
     """
 
+    _dims = {d: d for d in dims}
+    _dims.update(RENAME_DIMS)
+
     return computations.load_file(
         path=private_data_path("transport", basename).with_suffix(".csv"),
-        dims=RENAME_DIMS,
+        dims=_dims,
         units=units,
         name=name,
     )
