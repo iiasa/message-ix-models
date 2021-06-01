@@ -1,4 +1,5 @@
 import logging
+from copy import copy
 
 import pytest
 from pytest import mark, param
@@ -64,6 +65,47 @@ def test_build_bare_res(
 
     # Generate the relevant bare RES
     scenario = testing.bare_res(request, ctx)
+
+    # Build succeeds without error
+    build.main(ctx, scenario, fast=True)
+
+    dump_path = tmp_path / "scenario.xlsx"
+    log.info(f"Dump contents to {dump_path}")
+    scenario.to_excel(dump_path)
+
+    if solve:
+        scenario.solve(solve_options=dict(lpmethod=4))
+
+        # Use Reporting calculations to check the result
+        result = report.check(scenario)
+        assert result.all(), f"\n{result}"
+
+
+@pytest.mark.ece_db
+@pytest.mark.parametrize(
+    "url",
+    (
+        "ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline",
+        "ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7_ar5_gwp100/EN_NPi2020_1000_emif_new",
+        "ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline#17",
+        "ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline_macro#3",
+    ),
+)
+def test_build_existing(tmp_path, transport_context_f, url, solve=False):
+    """Test that model.transport.build works on certain existing scenarios.
+
+    These are the ones listed in the documenation, at :ref:`transport-base-scenarios`.
+    """
+    ctx = transport_context_f
+
+    # Get the platform prepared by the text fixture
+    ctx.dest_platform = copy(ctx.platform)
+
+    # Update the Context with the base scenario's `url`
+    ctx.handle_cli_args(url=url)
+
+    # Clone the base scenario to the test platform
+    scenario = ctx.clone_to_dest()
 
     # Build succeeds without error
     build.main(ctx, scenario, fast=True)
