@@ -31,7 +31,7 @@ On other pages:
 Usage
 =====
 
-Preliminaries.
+**Preliminaries.**
 Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for working with :mod:`.message_data`.
 
 .. note:: One pre-requisite is basic familiarity with using a shell/command line.
@@ -45,7 +45,7 @@ Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for workin
 
        $ mix-models --url="ixmp://mt/Bare RES/baseline" res create-bare
 
-Choose a platform.
+**Choose a platform.**
 This example uses a platform named ``mt``.
 If not already configured on your system, create the configuration for the platform to be used::
 
@@ -53,29 +53,54 @@ If not already configured on your system, create the configuration for the platf
 
 .. note:: See the :ref:`ixmp documentation <ixmp:configuration>` for how to use the ``ixmp`` command to add or edit configuration for specific platforms and databases.
 
-Identify the base scenario.
+**Identify the base scenario.**
 One option is to create the ‘bare’ RES; the following is equivalent to calling :func:`.bare.create_res`::
 
     $ export BASE="ixmp://mt/Bare RES/baseline"
     $ mix-models --url="$BASE" res create-bare
 
-Other usable base scenarios include ``ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline``.
+For other possibilities, see :ref:`transport-base-scenarios`.
 
-Build the model.
-The following is equivalent to cloning ``BASE`` to ``URL``, and then calling :func:`.build.main` on the scenario stored at ``URL``::
+**Build the model.**
+The following is equivalent to cloning ``BASE`` to ``URL``, and then calling :func:`.transport.build.main` on the scenario stored at ``URL``::
 
     $ export URL=ixmp://mt/MESSAGEix-Transport/baseline
     $ mix-models --url="$BASE" transport build --dest="$URL"
 
-Solve the model.
+**Solve the model.**
 The following is equivalent to calling :meth:`message_ix.Scenario.solve`::
 
     $ message-ix --url="$URL" solve
 
-Report the results.
+**Report the results.**
 The ``-m model.transport`` option indicates that additional reporting calculations from :mod:`model.transport.report` should be added to the base reporting configuration for MESSAGEix-GLOBIOM::
 
     $ mix-models --url="$URL" report -m model.transport "transport plots"
+
+
+.. _transport-base-scenarios:
+
+Base scenarios
+==============
+
+The following existing scenarios are targets for the MESSAGEix-Transport code to operate on:
+
+``ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline``
+   regions=R11, years=A.
+
+``ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7_ar5_gwp100/EN_NPi2020_1000_emif_new``
+   regions=R11, years=B.
+   This scenario has a “hybrid” or “dual” implementation of emissions accounting: it includes *both*:
+
+   - the ‘old’ structure, in which emissions are accounted using :mod:`message_ix` ``relation_activity`` and related parameter, but ``emission_factor`` is unused/empty, **and**
+   - a ‘new’ structure in which the ``emission_factor`` parameter is actually used.
+
+``ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline#17``
+   regions=R12, years=B. Based on ENGAGE, without MACRO calibration.
+
+``ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline_macro#3``
+   regions=R12, years=B. Includes MACRO calibration
+
 
 Code reference
 ==============
