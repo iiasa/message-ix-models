@@ -35,37 +35,36 @@ def gen_mock_demand_cement(scenario):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
     nodes = s_info.N
+    nodes.remove('World')
 
     # 2019 production by country (USGS)
     # p43 of https://pubs.usgs.gov/periodicals/mcs2020/mcs2020-cement.pdf
 
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
-    if "R11_CHN" in s_info.N:
-        sheet_n = "data_R12"
+    # The order:
+    #r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
+    #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
-            'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+    if "R12_CHN" in nodes:
+        nodes.remove('R12_GLB')
+        sheet_n = "data_R12"
+        region_set = 'R12_'
 
         demand2020_top = [76, 229.5, 0, 57, 55, 60, 89, 54, 129, 320, 51,2065.5]
             # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
         demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2*0.1, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
                     (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51,
                     (4100*0.14-155)*0.2*0.9]
-        d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
-
     else:
+        nodes.remove('R11_GLB')
         sheet_n = "data_R11"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+        region_set = 'R11_'
 
         demand2020_top = [76, 2295, 0, 57, 55, 60, 89, 54, 129, 320, 51]
         # the rest (~900 Mt) allocated by % values in http://www.cembureau.eu/media/clkdda45/activity-report-2019.pdf
         demand2020_rest = [4100*0.051-76, (4100*0.14-155)*0.2, 4100*0.064*0.5, 4100*0.026-57, 4100*0.046*0.5-55, \
                 (4100*0.14-155)*0.2, 4100*0.046*0.5, 12, 4100*0.003, (4100*0.14-155)*0.6, 4100*0.064*0.5 - 51]
-        d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
-
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -76,7 +75,8 @@ def gen_mock_demand_cement(scenario):
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & (gdp_growth['Region']!='World')].\
         drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005], axis = 1)
 
-    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
+    d = [a + b for a, b in zip(demand2020_top, demand2020_rest)]
+    gdp_growth['Region'] = region_set + gdp_growth['Region']
 
     # # Regions setting for IMAGE
     # region_cement = pd.read_excel(
@@ -113,8 +113,7 @@ def gen_mock_demand_cement(scenario):
 
     # Directly assigned countries from the table on p43
 
-
-    demand2020_cement = pd.DataFrame({'Region':r, 'value':d}).\
+    demand2020_cement = pd.DataFrame({'Region':nodes, 'value':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
 
     # demand2010_cement = demand2010_cement.\
@@ -141,8 +140,6 @@ def gen_mock_demand_cement(scenario):
         var_name='year', value_name = 'value')
 
     return demand2020_cement
-
-
 
 def gen_data_cement(scenario, dry_run=False):
     """Generate data for materials representation of steel industry.
@@ -173,11 +170,12 @@ def gen_data_cement(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
-    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
+    if "R12_GLB" in nodes:
+        nodes.remove("R12_GLB")
 
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:

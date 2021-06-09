@@ -26,7 +26,7 @@ def read_data_petrochemicals(scenario):
     s_info = ScenarioInfo(scenario)
     fname =  "petrochemicals_techno_economic.xlsx"
 
-    if "R11_CHN" in s_info.N:
+    if "R12_CHN" in s_info.N:
         sheet_n = "data_R12"
     else:
         sheet_n = "data_R11"
@@ -48,6 +48,7 @@ def gen_mock_demand_petro(scenario):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
     nodes = s_info.N
+    nodes.remove('World')
 
     # 2018 production
     # Use as 2020
@@ -58,11 +59,16 @@ def gen_mock_demand_petro(scenario):
 
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
-    if "R11_CHN" in s_info.N:
-        sheet_n = "data_R12"
+    # SSP2 R11 baseline GDP projection
 
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
-                'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
+    # The orders of the regions
+    #r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
+    #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+
+    if "R12_CHN" in nodes:
+        nodes.remove('R12_GLB')
+        sheet_n = "data_R12"
+        region_set = 'R12_'
 
         d_ethylene = [0.853064, 3.2, 2.88788, 8.780442, 8.831229,21.58509,
         32.54942, 8.94036, 28.84327, 28.12818, 16.65209, 28.84327]
@@ -72,9 +78,9 @@ def gen_mock_demand_petro(scenario):
         7.4503, 7.497867, 17.30965, 11.1014, 28.84327]
 
     else:
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
+        nodes.remove('R11_GLB')
+        sheet_n = "data_R11"
+        region_set = 'R11_'
 
         d_ethylene = [0.853064, 32.04327, 2.88788, 8.780442, 8.831229,21.58509,
         32.54942, 8.94036, 7.497867, 28.12818, 16.65209]
@@ -83,8 +89,6 @@ def gen_mock_demand_petro(scenario):
         d_BTX = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
         7.4503, 7.497867, 17.30965, 11.1014]
 
-
-    # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
         context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
@@ -94,23 +98,23 @@ def gen_mock_demand_petro(scenario):
     (gdp_growth['Region']!='World')].drop(['Model', 'Variable', 'Unit', \
     'Notes', 2000, 2005], axis = 1)
 
-    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
+    gdp_growth['Region'] = region_set + gdp_growth['Region']
 
     list = []
 
     for e in ["ethylene","propylene","BTX"]:
         if e == "ethylene":
-            demand2020 = pd.DataFrame({'Region':r, 'Val':d_ethylene}).\
+            demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_ethylene}).\
             join(gdp_growth.set_index('Region'), on='Region').\
             rename(columns={'Region':'node'})
 
         if e == "propylene":
-            demand2020 = pd.DataFrame({'Region':r, 'Val':d_propylene}).\
+            demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_propylene}).\
             join(gdp_growth.set_index('Region'), on='Region').\
             rename(columns={'Region':'node'})
 
         if e == "BTX":
-            demand2020 = pd.DataFrame({'Region':r, 'Val':d_BTX}).\
+            demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_BTX}).\
             join(gdp_growth.set_index('Region'), on='Region').\
             rename(columns={'Region':'node'})
 
@@ -158,11 +162,14 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
-    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
+        global_region = "R11_GLB"
+    if "R12_GLB" in nodes:
+        nodes.remove("R12_GLB")
+        global_region = "R12_GLB"
 
     for t in config["technology"]["add"]:
 
@@ -211,12 +218,12 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, mode= mod, \
                             value=val[regions[regions==rg].index[0]], unit='t', \
-                            node_loc=rg, node_origin="R11_GLB", **common)
+                            node_loc=rg, node_origin=global_region, **common)
                         elif (param_name == "output") and (lev == "export"):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, mode=mod, \
                             value=val[regions[regions==rg].index[0]], unit='t', \
-                            node_loc=rg, node_dest="R11_GLB", **common)
+                            node_loc=rg, node_dest=global_region, **common)
                         else:
                             df = (make_df(param_name, technology=t, commodity=com, \
                             level=lev, mode=mod, \
@@ -224,7 +231,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                             node_loc=rg, **common).pipe(same_node))
 
                         # Copy parameters to all regions, when node_loc is not GLB
-                        if (len(regions) == 1) and (rg != "R11_GLB"):
+                        if (len(regions) == 1) and (rg != global_region):
                             # print("copying to all R11", rg, lev)
                             df['node_loc'] = None
                             df = df.pipe(broadcast, node_loc=nodes)#.pipe(same_node)
@@ -258,8 +265,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                     node_loc=rg, **common)
 
                 # Copy parameters to all regions
-                if (len(regions) == 1) and (rg != "R11_GLB"):
-                    if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
+                if (len(regions) == 1) and (rg != global_region):
+                    if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!= global_region:
                         # print("Copying to all R11")
                         df['node_loc'] = None
                         df = df.pipe(broadcast, node_loc=nodes)

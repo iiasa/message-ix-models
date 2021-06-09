@@ -39,26 +39,27 @@ def gen_mock_demand_steel(scenario):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
     nodes = s_info.N
+    nodes.remove('World')
+
+    # The order:
+    #r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
+    #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
     # True steel use 2010 [Mt/year]
     # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
 
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
-    if "R11_CHN" in nodes:
+    if "R12_CHN" in nodes:
+        nodes.remove('R12_GLB')
         sheet_n = "data_R12"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
-        'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
-
+        region_set = 'R12_'
         d = [35,5.37, 70, 53, 49, 39, 130, 80, 45, 96, 100,531.63]
 
     else:
+        nodes.remove('R11_GLB')
         sheet_n = "data_R11"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
-
+        region_set = 'R11_'
         d = [35, 537, 70, 53, 49, 39, 130, 80, 45, 96, 100]
         # MEA change from 39 to 9 to make it feasible (coal supply bound)
 
@@ -71,9 +72,9 @@ def gen_mock_demand_steel(scenario):
     gdp_growth = gdp_growth.loc[(gdp_growth['Scenario']=='baseline') & (gdp_growth['Region']!='World')].\
         drop(['Model', 'Variable', 'Unit', 'Notes', 2000, 2005], axis = 1)
 
-    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
+    gdp_growth['Region'] = region_set + gdp_growth['Region']
 
-    demand2010_steel = pd.DataFrame({'Region':r, 'Val':d}).\
+    demand2010_steel = pd.DataFrame({'Region':nodes, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').rename(columns={'Region':'node'})
 
     demand2010_steel.iloc[:,3:] = demand2010_steel.iloc[:,3:].\
@@ -153,11 +154,14 @@ def gen_data_steel(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
-    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
+        global_region = "R11_GLB"
+    if "R12_GLB" in nodes:
+        nodes.remove("R12_GLB")
+        global_region = "R12_GLB"
 
     # for t in s_info.set['technology']:
     for t in config['technology']['add']:
@@ -230,12 +234,12 @@ def gen_data_steel(scenario, dry_run=False):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, \
                             value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
-                            node_loc=rg, node_origin="R11_GLB", **common)
+                            node_loc=rg, node_origin=global_region, **common)
                         elif (param_name == "output") and (lev == "export"):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, \
                             value=val[regions[regions==rg].index[0]], mode=mod, unit='t', \
-                            node_loc=rg, node_dest="R11_GLB", **common)
+                            node_loc=rg, node_dest=global_region, **common)
                         else:
                             df = (make_df(param_name, technology=t, commodity=com, \
                             level=lev, \
@@ -244,7 +248,7 @@ def gen_data_steel(scenario, dry_run=False):
                             .pipe(same_node))
 
                         # Copy parameters to all regions, when node_loc is not GLB
-                        if (len(regions) == 1) and (rg != "R11_GLB"):
+                        if (len(regions) == 1) and (rg != global_region):
                             df['node_loc'] = None
                             df = df.pipe(broadcast, node_loc=nodes)#.pipe(same_node)
                             # Use same_node only for non-trade technologies
@@ -276,7 +280,7 @@ def gen_data_steel(scenario, dry_run=False):
                     node_loc=rg, **common)
 
                 # Copy parameters to all regions
-                if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
+                if len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!=global_region:
                     df['node_loc'] = None
                     df = df.pipe(broadcast, node_loc=nodes)
 
