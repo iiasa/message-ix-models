@@ -19,7 +19,7 @@ memory.limit(size = 1e6)
 #this path need tobe automatize, maybe loading with retisulate a python ojects that contains the rith path.
 #otherwise environment path an be used
 msg_data = Sys.getenv("MESSAGE_DATA_PATH")
-data_subf = path.expand(paste0(msg_data,'\\data\\water'))
+data_subf = path.expand(paste0(msg_data,'\\data\\water\\ppl_cooling_tech'))
 
 library("readxl")
 
@@ -38,15 +38,7 @@ cooling_plants = all_units.df %>% filter(STATUS == 'OPR',
 # add the data to the cooltech_cost_and_shares_ssp_msg.csv file
 cooltech_cost_shares = read.csv(paste0(data_subf,'/cooltech_cost_and_shares_ssp_msg.csv'),stringsAsFactors=FALSE)
 
-# mapping in order to add missing technologies
-platts_types = shars_cooling_MSG_global %>% select(utype) %>% rename(utype_pl = utype) %>% 
-  mutate(match = gsub('_.*','',utype_pl)) %>% group_by(match) %>% 
-  summarise(utype_pl = first(utype_pl), match = first(match))
-map_all_types = cooltech_cost_shares %>% select(utype,cooling) %>% 
-  mutate(match = gsub('_.*','',utype)) %>% left_join(platts_types) %>% select(-match) %>% 
-  filter(!is.na(utype_pl)) %>% distinct()
-
-#### shares by message REGION ####
+#### shares by message REGION #### needed to establish initial mapping
 shars_cooling_MSG_global = cooling_plants %>% group_by(utype,cooling,msgregion) %>% #change to COUNTRY
   summarise(MW_x = sum(MW_x)) %>% ungroup() %>% 
   group_by(utype,msgregion) %>% #change to COUNTRY
@@ -56,6 +48,14 @@ shars_cooling_MSG_global = cooling_plants %>% group_by(utype,cooling,msgregion) 
   spread(msgregion, shares)
 
 shars_cooling_MSG_global[is.na(shars_cooling_MSG_global)] = 0
+
+# mapping in order to add missing technologies
+platts_types = shars_cooling_MSG_global %>% select(utype) %>% rename(utype_pl = utype) %>% 
+  mutate(match = gsub('_.*','',utype_pl)) %>% group_by(match) %>% 
+  summarise(utype_pl = first(utype_pl), match = first(match))
+map_all_types = cooltech_cost_shares %>% select(utype,cooling) %>% 
+  mutate(match = gsub('_.*','',utype)) %>% left_join(platts_types) %>% select(-match) %>% 
+  filter(!is.na(utype_pl)) %>% distinct()
 
 # This will be the file
 write.csv(shars_cooling_MSG_global,paste0(data_subf,'/cool_techs_region_share.csv'),row.names = FALSE)
@@ -107,7 +107,7 @@ all_shares_c = map_all_types %>%
 
 cooltech_cost_shares_c = cooltech_cost_shares %>%
   select(utype,	cooling,investment_million_USD_per_MW_low,	investment_million_USD_per_MW_mid,	investment_million_USD_per_MW_high) %>% 
-  left_join(all_shares)
+  left_join(all_shares_c)
 
 cooltech_cost_shares_c[is.na(cooltech_cost_shares_c)] = 0
 # write new file
