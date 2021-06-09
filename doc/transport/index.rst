@@ -88,7 +88,10 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
 ``ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline``
    regions=R11, years=A.
 
-``ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7_ar5_gwp100/EN_NPi2020_1000_emif_new``
+``ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7/baseline#3``
+   regions=R11, years=B.
+
+``ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7_ar5_gwp100/EN_NPi2020_1000_emif_new#5``
    regions=R11, years=B.
    This scenario has a “hybrid” or “dual” implementation of emissions accounting: it includes *both*:
 

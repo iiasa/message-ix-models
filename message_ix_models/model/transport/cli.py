@@ -204,3 +204,39 @@ def debug(context):
 
     # Get the catch-all key, including plots etc.
     rep.get(key)
+
+
+@cli.command("export-emi")
+@click.pass_obj
+@click.argument("path_stem")
+def export_emissions_factors(context, path_stem):
+    """Export emissions factors from base scenarios.
+
+    Only the subset corresponding to removed transport technologies are exported.
+    """
+    from datetime import datetime
+
+    from message_ix_models.util import private_data_path
+
+    # List of techs
+    techs = context["transport set"]["technology"]["remove"]
+
+    # Load the targeted scenario
+    scenario = context.get_scenario()
+
+    # Output path
+    out_dir = private_data_path("transport", "emi")
+    out_dir.mkdir(exist_ok=True, parents=True)
+
+    for name in ("emission_factor", "relation_activity"):
+        df = scenario.par(name, filters=dict(technology=techs))
+
+        path = out_dir / f"{path_stem}-{name}.csv"
+        log.info(f"Write {len(df)} rows to {path}")
+
+        # Write header
+        path.write_text(
+            f"# Exported {datetime.today().isoformat()} from\n# {context.url}\n"
+        )
+        # Write data
+        df.to_csv(path, mode="a", index=False)
