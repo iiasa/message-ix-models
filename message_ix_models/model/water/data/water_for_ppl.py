@@ -5,14 +5,6 @@ from message_ix import make_df
 
 from message_data.tools import broadcast, make_matched_dfs, same_node
 
-#: Name of the input file.
-# The input file mentions water withdrawals and emission heating fractions for
-# cooling technologies alongwith parent technologies:
-FILE = "tech_water_performance_ssp_msg.csv"
-# Investment costs and regional shares of historical activities of cooling technologies
-FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
-
-
 # water & electricity for cooling technologies
 def cool_tech(context):
     """Process cooling technology data for a scenario instance.
@@ -36,7 +28,15 @@ def cool_tech(context):
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
     """
-
+    #: Name of the input file.
+    # The input file mentions water withdrawals and emission heating fractions for
+    # cooling technologies alongwith parent technologies:
+    FILE = "tech_water_performance_ssp_msg.csv"
+    # Investment costs and regional shares of historical activities of cooling technologies
+    if context.type_reg == 'global':
+        FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
+    else: 
+        FILE1 = "cooltech_cost_and_shares_country.csv"
     # define an empty dictionary
     results = {}
 
@@ -67,9 +67,6 @@ def cool_tech(context):
     ref_hist_cap = scen.par(
         "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
     )
-
-    ref_hist_act = ref_hist_act[ref_hist_act["node_loc"] != "R11_GLB"]
-    ref_hist_cap = ref_hist_cap[ref_hist_cap["node_loc"] != "R11_GLB"]
 
     # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
     # where h_fg (flue gasses losses) = 0.1
@@ -252,15 +249,23 @@ def cool_tech(context):
     # Filter out columns that contain 'mix' in column name
     columns = [col for col in cost.columns if "mix_" in col]
     # Rename column names to R11 to match with the previous df
-    rename_columns_dict = {column: column.replace("mix_", "R11_") for column in columns}
-    cost.rename(columns=rename_columns_dict, inplace=True)
+    
+    if context.type_reg == 'global':
+        rename_columns_dict = {column: column.replace("mix_", "R11_") for column in columns}
+        cost.rename(columns=rename_columns_dict, inplace=True)
+        search_cols = [col for col in cost.columns if "R11_" in col or "technology" in col]
+        hold_df = input_cool_2010[["node_loc", "technology_name", "cooling_fraction"]]
+        hold_df = hold_df.drop_duplicates()
+        search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
+    else:
+        rename_columns_dict = {column: column.replace("mix_", "") for column in columns}
+        cost.rename(columns=rename_columns_dict, inplace=True)
+        search_cols = [col for col in cost.columns if context.regions in col or "technology" in col]
+        hold_df = input_cool_2010[["node_loc", "technology_name", "cooling_fraction"]]
+        hold_df = hold_df.drop_duplicates()
+        search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
 
-    search_cols = [col for col in cost.columns if "R11_" in col or "technology" in col]
-    hold_df = input_cool_2010[["node_loc", "technology_name", "cooling_fraction"]]
-    hold_df = hold_df.drop_duplicates()
-    search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
-
-    def shares(x):
+    def shares(x,context):
         """Process share and cooling fraction.
 
         Returns
@@ -269,8 +274,12 @@ def cool_tech(context):
         corresponding cooling fraction
         """
         for col in search_cols_cooling_fraction:
+            # MAPPING ISOCODE to region name, assume one country only
+            if context.type_reg == 'country':
+                col2 = (context.map_ISO_c)[col]
+            else: col2 = col
             cooling_fraction = hold_df[
-                (hold_df["node_loc"] == col)
+                (hold_df["node_loc"] == col2)
                 & (hold_df["technology_name"] == x["technology"])
             ]["cooling_fraction"]
             x[col] = x[col] * cooling_fraction
@@ -282,17 +291,17 @@ def cool_tech(context):
             else:
                 if not len(i):
                     return pd.Series(
-                        [i for i in range(11)] + ["delme"], index=search_cols
+                        [i for i in range(len(search_cols)-1)] + ["delme"], index=search_cols
                     )
                 else:
                     results.append(float(i))
         return pd.Series(results, index=search_cols)
 
     # Apply function to the
-    hold_cost = cost[search_cols].apply(shares, axis=1)
+    hold_cost = cost[search_cols].apply(shares, axis=1, context = context)
     hold_cost = hold_cost[hold_cost["technology"] != "delme"]
 
-    def hist_act(x):
+    def hist_act(x, context):
         """Calculate historical activity of cooling technology.
         The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
 
@@ -304,10 +313,14 @@ def cool_tech(context):
         tech_df = hold_cost[
             hold_cost["technology"].str.startswith(x.technology)
         ]  # [x.node_loc]
-        node_loc = x["node_loc"]  # R11_EEU
+        if context.type_reg == 'country':
+            node_search = context.regions
+        else: 
+            node_search = x["node_loc"]  # R11_EEU
+        node_loc = x["node_loc"]
         technology = x["technology"]
         cooling_technologies = list(tech_df["technology"])
-        new_values = tech_df[node_loc] * x.value
+        new_values = tech_df[node_search] * x.value
 
         return [
             [
@@ -322,7 +335,7 @@ def cool_tech(context):
             for new_value, cooling_technology in zip(new_values, cooling_technologies)
         ]
 
-    changed_value_series = ref_hist_act.apply(hist_act, axis=1)
+    changed_value_series = ref_hist_act.apply(hist_act, axis=1 , context = context)
     changed_value_series_flat = [
         row for series in changed_value_series for row in series
     ]
@@ -338,7 +351,7 @@ def cool_tech(context):
     # dataframe for historical activities of cooling techs
     act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
 
-    def hist_cap(x):
+    def hist_cap(x,context):
         """Calculate historical capacity of cooling technology.
         The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
         Returns
@@ -349,10 +362,14 @@ def cool_tech(context):
         tech_df = hold_cost[
             hold_cost["technology"].str.startswith(x.technology)
         ]  # [x.node_loc]
-        node_loc = x["node_loc"]  # R11_EEU
+        if context.type_reg == 'country':
+            node_search = context.regions
+        else: 
+            node_search = x["node_loc"]  # R11_EEU
+        node_loc = x["node_loc"]
         technology = x["technology"]
         cooling_technologies = list(tech_df["technology"])
-        new_values = tech_df[node_loc] * x.value
+        new_values = tech_df[node_search] * x.value
 
         return [
             [
@@ -367,7 +384,7 @@ def cool_tech(context):
             for new_value, cooling_technology in zip(new_values, cooling_technologies)
         ]
 
-    changed_value_series = ref_hist_cap.apply(hist_cap, axis=1)
+    changed_value_series = ref_hist_cap.apply(hist_cap, axis=1, context = context)
     changed_value_series_flat = [
         row for series in changed_value_series for row in series
     ]
@@ -569,7 +586,7 @@ def non_cooling_tec(context):
     results = {}
 
     info = context["water build info"]
-
+    FILE = "tech_water_performance_ssp_msg.csv"
     path = context.get_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
     cooling_df = df.loc[df["technology_group"] == "cooling"]
@@ -584,28 +601,11 @@ def non_cooling_tec(context):
         (df["technology_group"] != "cooling")
         & (df["water_supply_type"] == "freshwater_supply")
     ]
-    techs_to_remove = [
-        "coal[a]",
-        "coal[b]",
-        "coal[c]",
-        "coal[d]",
-        "coal[e]",
-        "lignite[a]",
-        "lignite[b]",
-        "lignite[c]",
-        "lignite[d]",
-        "lignite[e]",
-        "SO2_scrub_BS",
-        "SO2_scrub_ppl",
-        "SO2_scrub_ind",
-        "SO2_scrub_synf",
-        "oil_extr_8",
-        "gas_extr_7",
-        "gas_extr_8",
-        "mw_ppl",
-        "nuc_fbr",
-        "nuc_htemp",
-    ]
+    
+    scen = context.get_scenario()
+    all_tech = list(scen.set('technology'))
+    tech_non_cool_csv = list(non_cool_df["technology_name"])
+    techs_to_remove = [tec for tec in tech_non_cool_csv if tec not in all_tech]
 
     non_cool_df = non_cool_df[~non_cool_df["technology_name"].isin(techs_to_remove)]
 
