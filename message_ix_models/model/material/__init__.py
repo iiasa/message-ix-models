@@ -224,6 +224,9 @@ def add_data(scenario, dry_run=False):
     if {"World", "R11_GLB"} < set(info.set["node"]):
         log.warning("Remove 'R11_GLB' from node list for data generation")
         info.set["node"].remove("R11_GLB")
+    if {"World", "R12_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R12_GLB' from node list for data generation")
+        info.set["node"].remove("R12_GLB")
 
     for func in DATA_FUNCTIONS:
         # Generate or load the data; add to the Scenario

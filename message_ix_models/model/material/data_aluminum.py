@@ -40,7 +40,7 @@ def read_data_aluminum(scenario):
 
     fname = "aluminum_techno_economic.xlsx"
 
-    if "R11_CHN" in s_info.N:
+    if "R12_CHN" in s_info.N:
         sheet_n = "data_R12"
         sheet_n_relations = "relations_R12"
     else:
@@ -91,11 +91,14 @@ def gen_data_aluminum(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
     nodes.remove('World')
-    nodes.remove("R11_RCPA")
 
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
+        global_region = "R11_GLB"
+    if "R12_GLB" in nodes:
+        nodes.remove("R12_GLB")
+        global_region = "R12_GLB"
 
     for t in config["technology"]["add"]:
 
@@ -145,12 +148,12 @@ def gen_data_aluminum(scenario, dry_run=False):
                         if (param_name == "input") and (lev == "import"):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, value=val[regions[regions==rg].index[0]], unit='t', \
-                            node_loc=rg, node_origin="R11_GLB", **common)
+                            node_loc=rg, node_origin=global_region, **common)
 
                         elif (param_name == "output") and (lev == "export"):
                             df = make_df(param_name, technology=t, commodity=com, \
                             level=lev, value=val[regions[regions==rg].index[0]], unit='t', \
-                            node_loc=rg, node_dest="R11_GLB", **common)
+                            node_loc=rg, node_dest=global_region, **common)
 
                         # Assign higher efficiency to younger plants
                         elif (((t == "soderberg_aluminum") or (t == "prebake_aluminum")) \
@@ -184,7 +187,7 @@ def gen_data_aluminum(scenario, dry_run=False):
                             node_loc=rg, **common).pipe(same_node))
 
                         # Copy parameters to all regions, when node_loc is not GLB
-                        if (len(regions) == 1) and (rg != "R11_GLB"):
+                        if (len(regions) == 1) and (rg != global_region):
                             df['node_loc'] = None
                             df = df.pipe(broadcast, node_loc=nodes)#.pipe(same_node)
                             # Use same_node only for non-trade technologies
@@ -207,7 +210,7 @@ def gen_data_aluminum(scenario, dry_run=False):
                     node_loc=rg, **common)
 
                 # Copy parameters to all regions
-                if (len(regions) == 1)  and len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!='R11_GLB':
+                if (len(regions) == 1)  and len(set(df['node_loc'])) == 1 and list(set(df['node_loc']))[0]!=global_region:
                     df['node_loc'] = None
                     df = df.pipe(broadcast, node_loc=nodes)
 
@@ -324,6 +327,7 @@ def gen_mock_demand_aluminum(scenario):
     modelyears = s_info.Y #s_info.Y is only for modeling years
     fmy = s_info.y0
     nodes = s_info.N
+    nodes.remove('World')
 
     # Demand at product level (IAI Global Aluminum Cycle 2018)
     # Globally: 82.4 Mt
@@ -342,22 +346,21 @@ def gen_mock_demand_aluminum(scenario):
 
     # For R12: China and CPA demand divided by 0.1 and 0.9.
 
-    if "R11_CHN" in s_info.N:
+    # The order:
+    #r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
+    #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+
+    if "R12_CHN" in nodes:
+        nodes.remove('R12_GLB')
         sheet_n = "data_R12"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', 'R11_MEA',\
-            'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU',"R11_CHN"]
-
+        region_set = 'R12_'
         d = [3,2,6,5,2.5,2,13.6,3,4.8,4.8,6,26]
 
     else:
+        nodes.remove('R11_GLB')
         sheet_n = "data_R11"
-
-        r = ['R11_AFR', 'R11_CPA', 'R11_EEU', 'R11_FSU', 'R11_LAM', \
-        'R11_MEA', 'R11_NAM', 'R11_PAO', 'R11_PAS', 'R11_SAS', 'R11_WEU']
-
+        region_set = 'R11_'
         d = [3,28, 6,5,2.5,2,13.6,3,4.8,4.8,6]
-
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
@@ -368,9 +371,9 @@ def gen_mock_demand_aluminum(scenario):
     (gdp_growth['Region']!='World')].drop(['Model', 'Variable', 'Unit', 'Notes',\
      2000, 2005], axis = 1)
 
-    gdp_growth['Region'] = 'R11_'+ gdp_growth['Region']
+    gdp_growth['Region'] = region_set + gdp_growth['Region']
 
-    demand2020_al = pd.DataFrame({'Region':r, 'Val':d}).\
+    demand2020_al = pd.DataFrame({'Region':nodes, 'Val':d}).\
         join(gdp_growth.set_index('Region'), on='Region').\
         rename(columns={'Region':'node'})
 

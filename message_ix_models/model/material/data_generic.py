@@ -78,11 +78,12 @@ def gen_data_generic(scenario, dry_run=False):
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
+    if "R12_GLB" in nodes:
+        nodes.remove("R12_GLB")
 
     # 'World' is included by default when creating a message_ix.Scenario().
     # Need to remove it for the China bare model
     nodes.remove('World')
-    nodes.remove("R11_RCPA")
 
     for t in config["technology"]["add"]:
 
