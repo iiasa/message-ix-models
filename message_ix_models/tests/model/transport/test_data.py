@@ -10,6 +10,7 @@ from pytest import param
 
 from message_data import testing
 from message_data.model.transport import data as data_module
+from message_data.model.transport.data.emissions import get_emissions_data
 from message_data.model.transport.data.groups import (
     get_consumer_groups,
     get_urban_rural_shares,
@@ -163,6 +164,16 @@ def test_ikarus(transport_context_f, regions, N_node, years):
             check_names=False,
             atol=1e-4,
         )
+
+
+@pytest.mark.parametrize("source, rows", (("1", 15839), ("2", 17286), ("3", 5722)))
+def test_get_emissions_data(transport_context_f, source, rows):
+    ctx = transport_context_f
+    ctx["transport config"]["data source"]["emissions"] = source
+
+    data = get_emissions_data(ctx)
+    assert {"emission_factor"} == set(data.keys())
+    assert rows == len(data["emission_factor"])
 
 
 @pytest.mark.parametrize(

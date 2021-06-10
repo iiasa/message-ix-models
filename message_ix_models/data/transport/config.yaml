@@ -10,6 +10,8 @@ data source:
   demand dummy: false
   # Population: 'GEA mix' only
   population: GEA mix
+  # Emissions: ID of a dump from a base scenario
+  emissions: "1"
 
 # CSV files containing data for input calculations and assumptions
 data files:
