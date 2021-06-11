@@ -19,11 +19,11 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     context : .Context
         The key ``regions`` determines the regional aggregation used.
     """
-    
+
     context = read_config()
 
     require = ScenarioInfo()
-    
+
     remove = ScenarioInfo()
     add = ScenarioInfo()
 
@@ -45,10 +45,10 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     require.set["node"].extend(nn)
     # create a mapping ISO code : region name, for other scripts
     # only needed for 1-country models
-    if context.type_reg == 'country':
-        map_ISO_c = {context.regions : lst[0]}
+    if context.type_reg == "country":
+        map_ISO_c = {context.regions: lst[0]}
         context.map_ISO_c = map_ISO_c
-        print('mapping',context.map_ISO_c[context.regions])
+        print("mapping", context.map_ISO_c[context.regions])
     return dict(require=require, remove=remove, add=add)
 
 
@@ -84,7 +84,7 @@ def main(context, scenario, **options):
 
     # Core water structure
     spec = get_spec(context)
-    
+
     # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
 
