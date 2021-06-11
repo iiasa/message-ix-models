@@ -35,7 +35,7 @@ from message_data.tools.gfei_fuel_economy import get_gfei_data
 @pytest.mark.parametrize("rtype", (pd.Series, xr.DataArray))
 def test_load_data(session_context, key, rtype):
     # Load transport metadata from files in both pandas and xarray formats
-    result = load_data(session_context, "transport", key, rtype=rtype)
+    result = load_data("transport", key, rtype=rtype)
     assert isinstance(result, rtype)
 
 
