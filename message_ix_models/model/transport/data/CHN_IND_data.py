@@ -1,12 +1,12 @@
-"""Retrieve transport activity data from China (Statistical Yearbook of the National
-Bureau of Statistics) and from India (iTEM)."""
+"""Retrieve transport activity data for China (Statistical Yearbook of the National
+Bureau of Statistics) and for India (iTEM)."""
 import numpy as np
 import pandas as pd
-
 from item import historical
+from message_ix_models.util import private_data_path
+
 from message_data.tools.convert_units import convert_units
 from message_data.tools.iea_eei import split_units
-from message_ix_models.util import private_data_path
 
 UNITS = {
     "Population": (1.0e-6, None, "dimensionless"),
@@ -27,13 +27,13 @@ SDMX_MAP = {
 }
 #: Files containing data for China ("name_of_file", rows_to_skip_from_the_bottom)
 FILES = {
-    "Passenger activity": ("Passenger-km.csv", 4),
-    "Vehicle stock civil": ("Civil-Vehicles.csv", 5),
-    "Vehicle stock private": ("Private-Vehicles.csv", 1),
-    "Freight activity": ("Tonne-km.csv", 5),
+    "Passenger activity": ("CHN_activity-passenger.csv", 4),
+    "Vehicle stock civil": ("CHN_stock-civil.csv", 5),
+    "Vehicle stock private": ("CHN_stock-private.csv", 1),
+    "Freight activity": ("CHN_activity-freight.csv", 5),
 }
 
-POP_FILE = "pop_CHN_IND.csv"
+POP_FILE = "CHN_IND_population.csv"
 
 # Rail sub-categories to be removed from Chinese dataset
 RAIL_SUB_CAT = [
@@ -106,10 +106,10 @@ def get_chn_ind_pop():
 
 
 def get_chn_ind_data():
-    """Read transport activity data from China and India.
+    """Read transport activity and vehicle stock data for China and India.
 
-    The data is read from from ``/China`` folder (data for China) and imported from
-    iTEM project (data for India), and the processed data is merged into IEA's EEI
+    The data is read from from ``data/transport`` folder (data for China) and imported
+    from iTEM project (data for India), and the processed data is merged into IEA's EEI
     datasets for scenario calibration.
     """
     # Load and process data from China
@@ -117,7 +117,7 @@ def get_chn_ind_data():
     for file, skip_footer in FILES.values():
         # Read excel sheet
         df_aux = pd.read_csv(
-            private_data_path("transport", "China", file),
+            private_data_path("transport", file),
             skipfooter=skip_footer,
             header=2,
         )
