@@ -82,6 +82,34 @@ def split_variable(s):
     return df
 
 
+def get_chn_ind_item_data():
+    """Retrieve activity data for rail and road transport for China and India.
+
+    Data is obtained from iTEM database's file ``T000.csv`` and filtered for the two
+    specific countries and for the period 2000-2018.
+
+    Returns
+    -------
+    DataFrame : pandas.DataFrame
+        DataFrame with transport data for China and India.
+    """
+    # Import data from iTEM database file T000.csv, including inland passenger
+    # transport activity data
+    df = historical.process(0)
+    df.drop(
+        columns=[x for x in list(df.columns) if x not in list(SDMX_MAP.keys())],
+        inplace=True,
+    )
+    # Rename columns using SDMX_MAP dict, to match dataset format in get_chn_nbsc_data()
+    df.columns = df.columns.to_series().map(SDMX_MAP)
+    # Filter values for CHN & IND between 2000-2018
+    df = df[
+        (df["ISO Code"].isin(["IND", "CHN"]))
+        & (df["Year"].isin(list(np.arange(2000, 2019))))
+    ].sort_values(["ISO Code", "Mode", "Vehicle type"], ignore_index=True)
+    return df
+
+
 def get_chn_ind_pop():
     """Retrieve population data for China and India.
 
@@ -108,9 +136,14 @@ def get_chn_ind_pop():
 def get_chn_ind_data():
     """Read transport activity and vehicle stock data for China and India.
 
-    The data is read from from ``data/transport`` folder (data for China) and imported
-    from iTEM project (data for India), and the processed data is merged into IEA's EEI
-    datasets for scenario calibration.
+    The data is read from ``data/transport`` folder (data for China from NBSC) and
+    imported from iTEM project (data for India). Then, it is processed into the same
+    format as the IEA's EEI datasets -to be used for MESSAGEix-Transport calibration.
+
+    Returns
+    -------
+    DataFrame : pandas.DataFrame
+        DataFrame with processed transport data for China and India.
     """
     # Load and process data from China
     df = pd.DataFrame()
@@ -160,20 +193,6 @@ def get_chn_ind_data():
         ["ISO Code", "Year", "Variable", "Mode/vehicle type"], ignore_index=True
     )
 
-    # Import data from iTEM database file T000.csv, including inland passenger
-    # transport activity data
-    df_raw = historical.process(0)
-    df_raw.drop(
-        columns=[x for x in list(df_raw.columns) if x not in list(SDMX_MAP.keys())],
-        inplace=True,
-    )
-    df_raw.columns = df_raw.columns.to_series().map(SDMX_MAP)
-    # Filter values for CHN & IND between 2000-2018
-    df_raw = df_raw[
-        (df_raw["ISO Code"].isin(["IND", "CHN"]))
-        & (df_raw["Year"].isin(list(np.arange(2000, 2019))))
-    ].sort_values(["ISO Code", "Mode", "Vehicle type"], ignore_index=True)
-
     chn = df[df["ISO Code"] == "CHN"].pivot(
         index="Year", columns=["Mode/vehicle type", "Variable"], values="Value"
     )
@@ -187,6 +206,9 @@ def get_chn_ind_data():
         .pivot(index="Year", columns="Variable", values="Value")
         .apply(convert_units, unit_info=UNITS)
     )
+
+    # Import CHN-IND data from iTEM database
+    df_item = get_chn_ind_item_data()
 
     return df
 
