@@ -25,11 +25,17 @@ HIST_YEARS = [2000, 2005, 2010, 2015]
 def get_afr_data():
     """Read transport activity data for Africa.
 
-    The data is read from RoadmapResults_2017.xlsx, and the processed data is merged
-    into IEA's EEI datasets for scenario calibration.
+    The data is read from RoadmapResults_2017.xlsx. It is then processed into a
+    format compatible with the IEA's EEI datasets, to be used altogether for
+    MESSAGEix-Transport scenario calibration.
+
+    Returns
+    -------
+    DataFrame : pandas.DataFrame
+        Same format as returned by :func:`~message_data.tools.iea_eei.get_eei_data`.
     """
     # Load and process data for Africa
-    # Read csv file
+    # Read xlsx file
     df = pd.read_excel(
         private_data_path("transport", FILE), sheet_name="Model Results", header=0
     )

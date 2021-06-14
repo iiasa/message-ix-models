@@ -138,6 +138,9 @@ Data preparation
 .. automodule:: message_data.model.transport.data.non_ldv
    :members:
 
+.. automodule:: message_data.model.transport.data.AFR
+   :members:
+
 Utilities and CLI
 -----------------
 .. automodule:: message_data.model.transport.utils
