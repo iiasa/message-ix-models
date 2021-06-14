@@ -319,6 +319,7 @@ petro_chemicals:
     require:
     - crudeoil
     add:
+    - HVC
     - naphtha
     - kerosene
     - diesel
@@ -391,6 +392,7 @@ petro_chemicals:
     - import_petro
     - export_petro
     - feedstock_t/d
+    - demand_HVC
     remove:
     # Any representation of refinery.
     - ref_hil

@@ -70,24 +70,30 @@ def gen_mock_demand_petro(scenario):
         sheet_n = "data_R12"
         region_set = 'R12_'
 
-        d_ethylene = [0.853064, 3.2, 2.88788, 8.780442, 8.831229,21.58509,
-        32.54942, 8.94036, 28.84327, 28.12818, 16.65209, 28.84327]
-        d_propylene = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 10.79255,
-        16.27471, 7.4503, 7.497867, 17.30965, 11.1014,28.84327]
-        d_BTX = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
-        7.4503, 7.497867, 17.30965, 11.1014, 28.84327]
+        d_HVC = [1.706128, 9.6, 8.66364, 11.707256, 19.428705, 47.48719, 65.09884,
+        23.84096, 43.839004, 62.74748, 38.85489, 86.52981]
+
+        # d_ethylene = [0.853064, 3.2, 2.88788, 8.780442, 8.831229,21.58509,
+        # 32.54942, 8.94036, 28.84327, 28.12818, 16.65209, 28.84327]
+        # d_propylene = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 12.95105,
+        # 16.27471, 7.4503, 7.497867, 17.30965, 11.1014,28.84327]
+        # d_BTX = [0.426532, 3.2, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
+        # 7.4503, 7.497867, 17.30965, 11.1014, 28.84327]
 
     else:
         nodes.remove('R11_GLB')
         sheet_n = "data_R11"
         region_set = 'R11_'
 
-        d_ethylene = [0.853064, 32.04327, 2.88788, 8.780442, 8.831229,21.58509,
-        32.54942, 8.94036, 7.497867, 28.12818, 16.65209]
-        d_propylene = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 10.79255,
-        16.27471, 7.4503, 7.497867, 17.30965, 11.1014]
-        d_BTX = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
-        7.4503, 7.497867, 17.30965, 11.1014]
+        d_HVC = [1.706128, 96.12981, 8.66364, 11.707256, 19.428705, 47.48719, 65.09884,
+        23.84096, 43.839004, 62.74748, 38.85489]
+
+        # d_ethylene = [0.853064, 32.04327, 2.88788, 8.780442, 8.831229,21.58509,
+        # 32.54942, 8.94036, 7.497867, 28.12818, 16.65209]
+        # d_propylene = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 10.79255,
+        # 16.27471, 7.4503, 7.497867, 17.30965, 11.1014]
+        # d_BTX = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
+        # 7.4503, 7.497867, 17.30965, 11.1014]
 
     gdp_growth = pd.read_excel(
         context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
@@ -100,33 +106,38 @@ def gen_mock_demand_petro(scenario):
 
     gdp_growth['Region'] = region_set + gdp_growth['Region']
 
-    list = []
+    # list = []
+    #
+    # for e in ["ethylene","propylene","BTX"]:
+    #     if e == "ethylene":
+    #         demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_ethylene}).\
+    #         join(gdp_growth.set_index('Region'), on='Region').\
+    #         rename(columns={'Region':'node'})
+    #
+    #     if e == "propylene":
+    #         demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_propylene}).\
+    #         join(gdp_growth.set_index('Region'), on='Region').\
+    #         rename(columns={'Region':'node'})
+    #
+    #     if e == "BTX":
+    #         demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_BTX}).\
+    #         join(gdp_growth.set_index('Region'), on='Region').\
+    #         rename(columns={'Region':'node'})
 
-    for e in ["ethylene","propylene","BTX"]:
-        if e == "ethylene":
-            demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_ethylene}).\
-            join(gdp_growth.set_index('Region'), on='Region').\
-            rename(columns={'Region':'node'})
+    demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_HVC}).\
+    join(gdp_growth.set_index('Region'), on='Region').\
+    rename(columns={'Region':'node'})
 
-        if e == "propylene":
-            demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_propylene}).\
-            join(gdp_growth.set_index('Region'), on='Region').\
-            rename(columns={'Region':'node'})
+    demand2020.iloc[:,3:] = demand2020.iloc[:,3:].div(demand2020[2020], axis=0).\
+    multiply(demand2020["Val"], axis=0)
 
-        if e == "BTX":
-            demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_BTX}).\
-            join(gdp_growth.set_index('Region'), on='Region').\
-            rename(columns={'Region':'node'})
+    demand2020 = pd.melt(demand2020.drop(['Val', 'Scenario'], axis=1),\
+        id_vars=['node'], var_name='year', value_name = 'value')
 
-        demand2020.iloc[:,3:] = demand2020.iloc[:,3:].div(demand2020[2020], axis=0).\
-        multiply(demand2020["Val"], axis=0)
+        #list.append(demand2020)
 
-        demand2020 = pd.melt(demand2020.drop(['Val', 'Scenario'], axis=1),\
-            id_vars=['node'], var_name='year', value_name = 'value')
-
-        list.append(demand2020)
-
-    return list[0], list[1], list[2]
+    #return list[0], list[1], list[2]
+    return demand2020
 
 
     # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
@@ -276,23 +287,29 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # Add demand
     # Create external demand param
 
-    demand_e,demand_p,demand_BTX = gen_mock_demand_petro(scenario)
+    #demand_e,demand_p,demand_BTX = gen_mock_demand_petro(scenario)
+    demand_HVC = gen_mock_demand_petro(scenario)
     paramname = "demand"
 
-    df_e = make_df(paramname, level='final_material', commodity="ethylene", \
-    value=demand_e.value, unit='t',year=demand_e.year, time='year', \
-    node=demand_e.node)#.pipe(broadcast, node=nodes)
-    results["demand"].append(df_e)
+    df_HVC = make_df(paramname, level='demand', commodity="HVC", \
+    value=demand_HVC.value, unit='t',year=demand_HVC.year, time='year', \
+    node=demand_HVC.node)#.pipe(broadcast, node=nodes)
+    results["demand"].append(df_HVC)
 
-    df_p = make_df(paramname, level='final_material', commodity="propylene", \
-    value=demand_p.value, unit='t',year=demand_p.year, time='year', \
-    node=demand_p.node)#.pipe(broadcast, node=nodes)
-    results["demand"].append(df_p)
-
-    df_BTX = make_df(paramname, level='final_material', commodity="BTX", \
-    value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
-    node=demand_BTX.node)#.pipe(broadcast, node=nodes)
-    results["demand"].append(df_BTX)
+    # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
+    # value=demand_e.value, unit='t',year=demand_e.year, time='year', \
+    # node=demand_e.node)#.pipe(broadcast, node=nodes)
+    # results["demand"].append(df_e)
+    #
+    # df_p = make_df(paramname, level='final_material', commodity="propylene", \
+    # value=demand_p.value, unit='t',year=demand_p.year, time='year', \
+    # node=demand_p.node)#.pipe(broadcast, node=nodes)
+    # results["demand"].append(df_p)
+    #
+    # df_BTX = make_df(paramname, level='final_material', commodity="BTX", \
+    # value=demand_BTX.value, unit='t',year=demand_BTX.year, time='year', \
+    # node=demand_BTX.node)#.pipe(broadcast, node=nodes)
+    # results["demand"].append(df_BTX)
 
     # Special treatment for time-varying params
 
