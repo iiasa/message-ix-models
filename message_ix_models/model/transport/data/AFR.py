@@ -1,4 +1,4 @@
-"""Prepare Africa data from the Roadmap 1.0 model via RoadmapResults_2017.xlsx.
+"""Prepare Africa data from the Roadmap 1.0 model via ``RoadmapResults_2017.xlsx``.
 
 The countries belonging to the Africa region in the Roadmap 1.0 model are:
     Angola, Burundi, Benin, Burkina Faso, Botswana, Central African Republic,
@@ -11,23 +11,94 @@ The countries belonging to the Africa region in the Roadmap 1.0 model are:
     Uganda, South Africa, Zambia, Zimbabwe -- see sheet **Countries by Roadmap
     Region** in RoadmapResults_2017.xlsx.
 """
-from collections import defaultdict
-
 import pandas as pd
-from iam_units import registry
-from message_ix_models.util import broadcast, eval_anno, private_data_path, same_node
+from message_ix_models.model.structure import get_codes
+from message_ix_models.util import private_data_path
+from plotnine import save_as_pdf_pages
+
+from message_data.tools.iea_eei import plot_params_per_mode, split_units
 
 FILE = "RoadmapResults_2017.xlsx"
 
 HIST_YEARS = [2000, 2005, 2010, 2015]
 
+COLUMN_MAP = {
+    "Mode": "Mode/vehicle type",
+}
 
-def get_afr_data():
+MODE_MAP = {
+    "Buses": "Bus",
+    "Freight Rail": "Freight trains",
+    "Aviation": "Domestic passenger airplanes",
+    "LDV": "Cars/light trucks",
+    "Passenger Rail": "Passenger trains",
+    "LHDT": "Freight trucks",
+    "MHDT_HHDT": "Freight trucks",
+}
+
+VAR_MAP = dict(
+    # Map of ICCT's Roadmap variables to IEA's EEI variable names
+    Stock_million="Stock (10^6 vehicle)",
+    Sales_million="New vehicle sales (10^6 vehicle)",
+    VKT_billion="Vehicle kilometre per year (10^6 vkm/yr)",
+    TKM_billion="Tonne kilometre per year (10^6 tkm/yr)",
+    PKM_billion="Passenger kilometre per year (10^6 pkm/yr)",
+    # TODO IEA EEI's is in PJ, adjust those values in future plots
+    Energy_PJ="Total final energy (EJ/yr)",
+    TTW_CO2_Mt="Total final emissions (MtCO2/yr)",
+    # TODO add PM2.5 to IAMconsortium/units: https://github.com/IAMconsortium/units
+    TTW_PM2_5_kt="Total final PM2.5 emissions (ktPM2.5/yr)",
+)
+
+UNITS = dict(
+    # Appearing in input file
+    Stock_million=(None, "megavehicle", "megavehicle"),
+    Sales_million=(None, "megavehicle", "megavehicle"),
+    VKT_billion=(None, "gigavehicle kilometer / year", "gigavehicle kilometer / year"),
+    TKM_billion=(None, "gigatonne kilometre / year", "gigatonne kilometre / year"),
+    PKM_billion=(
+        None,
+        "gigapassenger kilometre / year",
+        "gigapassenger kilometre / year",
+    ),
+    Energy_PJ=(None, "PJ", "EJ"),
+    TTW_CO2_Mt=(None, "Megatonne CO2", "Megatonne CO2"),
+    # TODO add PM2.5 to IAMconsortium/units: https://github.com/IAMconsortium/units
+    # TTW_PM2_5_kt=(None, "kilotonne PM2.5", "kilotonne PM2.5"),
+    # occupancy=(None, "pkm / vkm", "pkm / vkm"),
+    # vkm_capita=(None, "vkm / capita", "vkm / capita"),
+    # energy_vkm=(None, "MJ / vkm", "MJ / vkm"),
+    # mileage=(1000.0, "vkm / vehicle", "vkm / vehicle"),
+    # tkm_capita=(1000.0, "tonne kilometre / capita", "tonne kilometre / capita"),
+    # energy_tkm=(None, "MJ / tkm", "MJ / tkm"),
+    # load_factor=(None, "tkm / vkm", "tkm / vkm"),
+    # # Created below
+    # activity=(None, None, "gigapassenger kilometre / year"),
+)
+
+
+def get_afr_data(context, region=("Africa", "R11_AFR"), plot=False):
     """Read transport activity data for Africa.
 
-    The data is read from RoadmapResults_2017.xlsx. It is then processed into a
-    format compatible with the IEA's EEI datasets, to be used altogether for
-    MESSAGEix-Transport scenario calibration.
+    The data is read from ``RoadmapResults_2017.xlsx``, which is already aggregated
+    into total values for the Africa region -including the countries mentioned above.
+    It is then processed into a DataFrame format compatible with the IEA's EEI
+    datasets, to be ultimately used for **MESSAGEix-Transport** scenario calibration.
+
+    The region name returned is :class:`~message-ix-models.util.context.Context`
+    dependent. However, it is just relevant for ``R11``, ```R12`` or ``R14`` regional
+    aggregations, since the country-level aggregation is the same in both cases.
+
+    Parameters
+    ----------
+    context : .Context
+        Information about target Scenario.
+    region : tuple
+        (Roadmap region, MESSAGEix region). Info about the target region. At the
+        moment, default values are set to ``Africa`` and ``R11`` since these are of
+        relevance for the current research of MESSAGEix-Transport.
+    plot : bool, optional
+        If ``True``, plots per mode will be generated in folder /debug.
 
     Returns
     -------
@@ -40,13 +111,45 @@ def get_afr_data():
         private_data_path("transport", FILE), sheet_name="Model Results", header=0
     )
     df = df[
-        (df["Year"].isin(HIST_YEARS)) & (df["Roadmap_Region"] == "Africa")
+        (df["Year"].isin(HIST_YEARS)) & (df["Roadmap_Region"] == region[0])
     ].reset_index(drop=True)
 
+    # Map ICCT modes to IEA EEI's modes
     # Sum up 2_3_W modes that represent disaggregated values for 2 and 3 wheelers. Same
     # for MHDT_HHDT, which two sub-categories are also accounted separately
-    df = df.groupby(by=["Year", "Mode"], as_index=False).sum().sort_values(by=[
-        "Mode", "Year"])
+    df = (
+        df.replace({"Mode": MODE_MAP})
+        .groupby(by=["Year", "Mode"], as_index=False)
+        .sum()
+        .sort_values(by=["Mode", "Year"])
+        .melt(id_vars=["Mode", "Year"], value_name="Value")
+        .replace({"variable": VAR_MAP})
+        .rename(columns={"Mode": "Mode/vehicle type"})
+        .reset_index(drop=True)
+    )
+
+    df = pd.concat(
+        [
+            df,
+            # Split 'Variable' and 'Units' columns from `var_unit_col`
+            split_units(df["variable"]),
+        ],
+        axis=1,
+    ).drop(["variable"], axis=1)
+
+    # Get the input regional aggregation and add it as a column
+    df["Region"] = region[1]
+
+    if plot:
+        # Path for debug output
+        debug_path = context.get_local_path("debug")
+        debug_path.mkdir(parents=True, exist_ok=True)
+        # Plot all indicators as grid, per mode, and store them into PNG images
+        save_as_pdf_pages(
+            plot_params_per_mode(df),
+            filename=f"{context.regions}_AFR_Indicators_per_mode.pdf",
+            path=debug_path,
+        )
 
     return df
 
