@@ -3,7 +3,7 @@ from functools import lru_cache, partial
 from typing import Mapping
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.model import bare, build
+from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
 
 from .utils import read_config
