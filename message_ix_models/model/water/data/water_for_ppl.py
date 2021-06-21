@@ -33,7 +33,8 @@ def cool_tech(context):
     # The input file mentions water withdrawals and emission heating fractions for
     # cooling technologies alongwith parent technologies:
     FILE = "tech_water_performance_ssp_msg.csv"
-    # Investment costs and regional shares of historical activities of cooling technologies
+    # Investment costs & regional shares of hist. activities of cooling
+    # technologies
     if context.type_reg == "global":
         FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
     else:
