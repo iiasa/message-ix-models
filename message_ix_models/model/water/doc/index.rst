@@ -56,24 +56,25 @@ See also: :doc:`water/files`.
   - :file:`technology.yaml`: metadata for the 'technology' dimension.
   - :file:`set.yaml`: metadata for other sets.
 
-Needed and Deprecated R Code
-============================
-- :file:`data/water/`: contains `R` scripts used in creating source data for the water sector implementaion
-
-  - :file:`generate_water_constraints.R`: contains input data processing and implementation into the MESSAGEix model using the ixmp utilities and solving the model for different policy cases to ensure the framework operates as anticipated.
-
-- :file:`data/water/deprecated`: contains `R` scripts from the older water sector implementaion
+Pre-processing 
+==============
+- :file:`data/water/`: contains scripts used in pre-processing source data for the water sector implementaion
 
   - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop pathways for sectoral water withdrawals, return flows and infrastructure penetration rates in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
   - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
+
+Deprecated R Code
+=================
+
+- :file:`data/water/deprecated`: contains `R` scripts from the older water sector implementaion
+
   - :file:`Figures.R`: R script for producing figures
   - :file:`cooling_tech_av.R`: contains similar code as in the above-mentioned scripts, but this was originated from another workstream
-
 
 CLI usage
 =========
 
-Use the :doc:`CLI <cli>` command ``mix-data water`` to invoke the commands defined in :mod:`.water.cli`. Example: 
+Use the :doc:`CLI <cli>` command ``mix-data water`` to invoke the commands defined in :mod:`.water.cli`. Example:
 ``mix-models --url=ixmp://ixmp_dev/ENGAGE_SSP2_v4.1.7/baseline_clone_test water cooling``
 model and scenario specifications can be either set manually in ``cli.py`` or specificed in the ``--url`` option
 
