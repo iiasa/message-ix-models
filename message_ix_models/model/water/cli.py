@@ -23,10 +23,7 @@ def cli(context, regions):
     read_config(context)
     if not context.scenario_info:
         context.scenario_info.update(
-            dict(
-                model="ENGAGE_SSP2_v4.1.7", 
-                scenario="baseline_clone_test"
-            )
+            dict(model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test")
         )
     context.output_scenario = context.scenario_info["scenario"] + "_water"
 
