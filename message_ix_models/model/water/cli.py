@@ -39,7 +39,7 @@ def cli(context, regions):
         log.info("Use default --regions=R11")
         regions = "R11"
     # add an attribute to distinguish country models
-    if regions in ["R11", "R14", "R32", "RCP"]:
+    if regions in ["R11", "R12", "R14", "R32", "RCP"]:
         context.type_reg = "global"
     else:
         context.type_reg = "country"
