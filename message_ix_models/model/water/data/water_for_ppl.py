@@ -36,7 +36,7 @@ def cool_tech(context):
     # Investment costs & regional shares of hist. activities of cooling
     # technologies
     if context.type_reg == "global":
-        FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
+        FILE1 = "cooltech_cost_and_shares_ssp_msg_" + context.regions + ".csv"
     else:
         FILE1 = "cooltech_cost_and_shares_country.csv"
     # define an empty dictionary
@@ -254,11 +254,11 @@ def cool_tech(context):
 
     if context.type_reg == "global":
         rename_columns_dict = {
-            column: column.replace("mix_", "R11_") for column in columns
+            column: column.replace("mix_", "") for column in columns
         }
         cost.rename(columns=rename_columns_dict, inplace=True)
         search_cols = [
-            col for col in cost.columns if "R11_" in col or "technology" in col
+            col for col in cost.columns if context.regions in col or "technology" in col
         ]
         hold_df = input_cool_2010[["node_loc", "technology_name", "cooling_fraction"]]
         hold_df = hold_df.drop_duplicates()
