@@ -52,6 +52,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
         log.info(f"mapping {context.map_ISO_c[context.regions]}")
     return dict(require=require, remove=remove, add=add)
 
+    return dict(require=require, remove=remove, add=add)
 
 @lru_cache()
 def generate_set_elements(set_name, match=None):
@@ -68,6 +69,29 @@ def generate_set_elements(set_name, match=None):
             results.extend(code)
 
     return results
+
+@lru_cache()
+def map_basin(context):
+    # define an empty dictionary
+    results = {}
+    path = context.get_path("water", "delineation", "basin_names.csv")
+    df = pd.read_csv(path)
+    df['node'] = 'B' + df['BCU_name'].astype(str)
+    df['mode'] = 'M' + df['BCU_name'].astype(str)
+    df['region']= 'R11_' + df['REGION'].astype(str)
+    results['node'] = df['node']
+    results['mode'] = df['mode']
+    df1 = pd.DataFrame({'node_parent':df['region'],
+               'node':df['node']})
+    df2 = pd.DataFrame({'node_parent':df['node'],
+               'node':df['node']})
+    frame = [df1,df2]
+    df_node = pd.concat(frame)
+    results['map_node'] = df_node
+
+    return results
+
+
 
 
 def main(context, scenario, **options):
