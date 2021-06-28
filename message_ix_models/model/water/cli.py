@@ -41,6 +41,8 @@ def cli(context, regions):
     # add an attribute to distinguish country models
     if regions in ["R11", "R12", "R14", "R32", "RCP"]:
         context.type_reg = "global"
+    elif regions in ["R210"]:
+        context.type_reg = "global_basins"
     else:
         context.type_reg = "country"
     context.regions = regions
