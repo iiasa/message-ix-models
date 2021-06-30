@@ -227,16 +227,19 @@ def test_get_ldv_data(transport_context_f, source, regions, years):
 @pytest.mark.parametrize("pop_scen", ["GEA mix"])
 def test_groups(transport_context_f, regions, pop_scen):
     ctx = transport_context_f
-    ctx["regions"] = regions
+    ctx.regions = regions
     ctx["transport population scenario"] = pop_scen
+    ctx["transport build info"] = bare.get_spec(ctx)["add"]
 
     result = get_consumer_groups(ctx)
 
     # Data have the correct size
-    exp = dict(n=11, y=14, cg=27)
+    exp = dict(n=11, y=15, cg=27)
+
     # NB as of genno 1.3.0, can't use .sizes on AttrSeries:
     # assert result.sizes == exp
-    assert all(len(result.coords[dim]) == N for dim, N in exp.items())
+    obs = {dim: len(result.coords[dim]) for dim in exp.keys()}
+    assert exp == obs, result.coords
 
     # Data sum to 1 across the consumer_group dimension, i.e. constitute a discrete
     # distribution
@@ -251,6 +254,7 @@ def test_urban_rural_shares(transport_context_f, regions, pop_scen):
     ctx = transport_context_f
     ctx.regions = regions
     ctx["transport"] = {"data source": {"population": pop_scen}}
+    ctx["transport build info"] = bare.get_spec(ctx)["add"]
 
     # Shares can be retrieved
     get_urban_rural_shares(ctx)
