@@ -35,7 +35,11 @@ def cool_tech(context):
     FILE = "tech_water_performance_ssp_msg.csv"
     # Investment costs & regional shares of hist. activities of cooling
     # technologies
-    FILE1 = "cooltech_cost_and_shares_" + (f"ssp_msg_{context.regions}" if context.type_reg == "global" else "country") + ".csv"
+    FILE1 = (
+        "cooltech_cost_and_shares_"
+        + (f"ssp_msg_{context.regions}" if context.type_reg == "global" else "country")
+        + ".csv"
+    )
 
     # define an empty dictionary
     results = {}
@@ -250,15 +254,14 @@ def cool_tech(context):
     columns = [col for col in cost.columns if "mix_" in col]
     # Rename column names to R11 to match with the previous df
 
-    
     cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
     search_cols = [
         col for col in cost.columns if context.regions in col or "technology" in col
     ]
-    hold_df = input_cool_2010[["node_loc", "technology_name", "cooling_fraction"]].drop_duplicates()
-    search_cols_cooling_fraction = [
-        col for col in search_cols if col != "technology"
-    ]
+    hold_df = input_cool_2010[
+        ["node_loc", "technology_name", "cooling_fraction"]
+    ].drop_duplicates()
+    search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
 
     def shares(x, context):
         """Process share and cooling fraction.
@@ -307,9 +310,11 @@ def cool_tech(context):
         tech_df = hold_cost[
             hold_cost["technology"].str.startswith(x.technology)
         ]  # [x.node_loc]
-        
-        node_search = context.regions if context.type_reg == "country" else x["node_loc"]
-        
+
+        node_search = (
+            context.regions if context.type_reg == "country" else x["node_loc"]
+        )
+
         node_loc = x["node_loc"]
         technology = x["technology"]
         cooling_technologies = list(tech_df["technology"])
