@@ -33,7 +33,8 @@ def cli(context, regions):
         log.info(f"Regions choice {regions}")
         if regions in ["R14", "R32", "RCP"]:
             log.warning(
-                "the MESSAGEix-Nexus module might not be compatible with your 'regions' choice" )
+                "the MESSAGEix-Nexus module might not be compatible with your 'regions' choice"
+            )
     else:
         log.info("Use default --regions=R11")
         regions = "R11"
