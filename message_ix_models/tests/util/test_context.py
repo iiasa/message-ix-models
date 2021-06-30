@@ -73,13 +73,13 @@ class TestContext:
 
         assert ld == c.local_data
 
-    def test_get_cache_path(self, test_context):
+    def test_get_cache_path(self, pytestconfig, test_context):
         """cache_path() returns the expected output."""
-        base = test_context.local_data
-
-        assert base.joinpath(
-            "cache", "pytest", "bar.pkl"
-        ) == test_context.get_cache_path("pytest", "bar.pkl")
+        # One of two values depending on whether the user has given --local-cache
+        assert test_context.get_cache_path("pytest", "bar.pkl") in (
+            test_context.local_data.joinpath("cache", "pytest", "bar.pkl"),
+            Path(pytestconfig.cache.makedir("cache")).joinpath("pytest", "bar.pkl"),
+        )
 
     def test_get_local_path(self, tmp_path_factory, session_context):
         assert str(tmp_path_factory.mktemp("data").joinpath("foo", "bar")).replace(
