@@ -30,12 +30,10 @@ def cli(context, regions):
 
     # Handle --regions; use a sensible default for MESSAGEix-Nexus
     if regions:
-        print("INFO: Regions choice", regions)
+        log.info(f"Regions choice {regions}")
         if regions in ["R14", "R32", "RCP"]:
-            print(
-                "WARNING: the MESSAGEix-Nexus module might not be",
-                "compatible with your 'regions' choice",
-            )
+            log.warning(
+                "the MESSAGEix-Nexus module might not be compatible with your 'regions' choice" )
     else:
         log.info("Use default --regions=R11")
         regions = "R11"
@@ -45,7 +43,6 @@ def cli(context, regions):
     else:
         context.type_reg = "country"
     context.regions = regions
-    print("first context.reg", context.regions)
 
 
 @cli.command()

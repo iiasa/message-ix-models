@@ -40,15 +40,16 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
     # The set of required nodes varies according to context.regions
     nodes = get_codes(f"node/{context.regions}")
-    nn = map(str, nodes[nodes.index("World")].child)
-    lst = list(nn)
-    require.set["node"].extend(nn)
+    nodes = list(map(str, nodes[nodes.index("World")].child))
+    require.set["node"].extend(nodes)
+
+    # require.set["node"].extend(nn)
     # create a mapping ISO code : region name, for other scripts
     # only needed for 1-country models
     if context.type_reg == "country":
-        map_ISO_c = {context.regions: lst[0]}
+        map_ISO_c = {context.regions: nodes[0]}
         context.map_ISO_c = map_ISO_c
-        print("mapping", context.map_ISO_c[context.regions])
+        log.info(f"mapping {context.map_ISO_c[context.regions]}")
     return dict(require=require, remove=remove, add=add)
 
 
