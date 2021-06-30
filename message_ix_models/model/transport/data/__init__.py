@@ -27,6 +27,12 @@ DATA_FUNCTIONS = [
 ]
 
 
+def provides_data(f):
+    """Decorator that adds a function to :data:`DATA_FUNCTIONS`."""
+    DATA_FUNCTIONS.append(f)
+    return f
+
+
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGE-Transport data."""
     # First strip existing emissions data
@@ -59,6 +65,7 @@ def strip_emissions_data(scenario, context):
     pass
 
 
+@provides_data
 def demand(context):
     """Return transport demands.
 
@@ -112,9 +119,7 @@ def demand(context):
     return dict(demand=pd.concat([data, data2]))
 
 
-DATA_FUNCTIONS.append(demand)
-
-
+@provides_data
 def conversion(context):
     """Input and output data for conversion technologies:
 
@@ -164,12 +169,7 @@ def conversion(context):
     return data
 
 
-DATA_FUNCTIONS.append(conversion)
-
-
-DATA_FUNCTIONS.append(freight)
-
-
+@provides_data
 def dummy_supply(context):
     """Dummy fuel supply for the bare RES."""
     # TODO read the 'level' from config
@@ -201,6 +201,3 @@ def dummy_supply(context):
         )
 
     return data
-
-
-DATA_FUNCTIONS.append(dummy_supply)
