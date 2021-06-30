@@ -94,7 +94,7 @@ model and scenario specifications can be either set manually in ``cli.py`` or sp
 Country vs Global implementation
 --------------------------------
 
-The :mod:`message_data.model.water` is designed to being able to add water components to either a global R11 model or any countrty model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
+The :mod:`message_data.model.water` is designed to being able to add water components to either a global R11 model or any country model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
 To work with a country model please ensure that:
 
 1. country model and scenario are specified either in ``--url`` or in the ``cli.py`` script
