@@ -224,7 +224,7 @@ def prepare_reporter(
     price = rep.add(price_sel.add_tag("smooth"), smooth, price_sel)
 
     # Transport costs by mode
-    rep.add(
+    cost_key = rep.add(
         "cost:n-y-c-t",
         cost,
         price,
@@ -241,7 +241,7 @@ def prepare_reporter(
         share_weight,
         "base shares:n-t-y",
         gdp_ppp_cap,
-        "cost:n-y-c-t",
+        cost_key,
         "n:ex world",
         "y:model",
         "t:transport",
@@ -253,7 +253,7 @@ def prepare_reporter(
     rep.add(
         "shares:n-t-y",
         partial(logit, dim="t"),
-        "cost:n-y-c-t",
+        cost_key,
         "share weight:n-t-y",
         "lambda:",
         "y:model",

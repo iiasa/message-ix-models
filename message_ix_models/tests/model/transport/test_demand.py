@@ -2,6 +2,7 @@ import logging
 
 import message_ix
 import pytest
+from message_ix.reporting import Key
 from message_ix_models.model.bare import get_spec
 from pytest import param
 
@@ -57,7 +58,7 @@ def test_from_external_data(transport_context_f, tmp_path, regions):
             raise
 
     # Total demand by mode
-    key = "transport pdt:n-y-t"
+    key = Key("transport pdt", "nyt")
 
     # Graph structure can be visualized
     import dask
