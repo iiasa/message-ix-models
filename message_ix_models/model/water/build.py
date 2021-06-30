@@ -7,6 +7,7 @@ from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
 
 from .utils import read_config
+import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -49,9 +50,6 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
         map_ISO_c = {context.regions: lst[0]}
         context.map_ISO_c = map_ISO_c
         print("mapping", context.map_ISO_c[context.regions])
-    elif context.type_reg == 'global_basin':
-        add.set.extend(map_basin(context))
-
 
     return dict(require=require, remove=remove, add=add)
 
@@ -71,8 +69,52 @@ def generate_set_elements(set_name, match=None):
 
     return results
 
-@lru_cache()
-def map_basin(context):
+def water_balance(context) -> Mapping[str, ScenarioInfo]:
+    """Return the specification for nexus implementation alongwith water balance
+
+    Parameters
+    ----------
+    context : .Context
+    """
+
+    log.info("Set up water constraints in a scenario")
+
+    # Core water structure
+
+    #extend water infrastrcuture
+    spec1 = map_basin(context)
+
+    # Apply the structural changes AND add the data
+    build.apply_spec(scenario, spec, **options)
+
+
+def cooling(context) -> Mapping[str, ScenarioInfo]:
+    """Return the specification for cooling technologies
+
+    Parameters
+    ----------
+    context : .Context
+    """
+
+    log.info("Set up water constraints in a scenario")
+
+    from .data import add_cooling_data
+
+    log.info("Set up cooling technologies in model")
+
+    # Core water structure
+    spec = get_spec(context)
+
+    # Apply the structural changes and add the data
+    build.apply_spec(scenario, spec, partial(add_cooling_data, context=context), **options)
+
+
+def map_basin(context) -> Mapping[str, ScenarioInfo]:
+
+    context = read_config()
+
+    add = ScenarioInfo()
+
     # define an empty dictionary
     results = {}
     path = context.get_path("water", "delineation", "basin_names.csv")
@@ -90,10 +132,9 @@ def map_basin(context):
     df_node = pd.concat(frame)
     results['map_node'] = df_node
 
-    return results
+    add.set.extend(results)
 
-
-
+    return dict(add=add)
 
 def main(context, scenario, **options):
     """Set up MESSAGEix-Nexus on `scenario`.
@@ -113,6 +154,12 @@ def main(context, scenario, **options):
 
     # Apply the structural changes AND add the data
     build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
+
+    # Add water balance
+    spec1 = map_basin(context)
+
+    # Apply the structural changes AND add the data
+    build.apply_spec(scenario, spec1, **options)
 
     # Uncomment to dump for debugging
     # scenario.to_excel('debug.xlsx')
