@@ -7,7 +7,7 @@ from message_ix_models.util import private_data_path
 
 
 def load_transport_file(
-    basename: str, units=None, name: str = None, dims=None
+    basename: str, units=None, name: str = None, dims=[]
 ) -> Quantity:
     """Load transport calibration data from a CSV file.
 
