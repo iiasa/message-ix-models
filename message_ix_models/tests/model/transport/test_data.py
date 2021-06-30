@@ -182,7 +182,7 @@ def test_get_emissions_data(transport_context_f, source, rows):
         (None, "R11", "A"),
         ("US-TIMES MA3T", "R11", "A"),
         # Not implemented
-        param("US-TIMES MA3T", "R11", "B", marks=testing.NIE),
+        ("US-TIMES MA3T", "R11", "B"),
         param("US-TIMES MA3T", "R14", "A", marks=testing.NIE),
         param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
     ],
@@ -205,20 +205,24 @@ def test_get_ldv_data(transport_context_f, source, regions, years):
     assert "output" in data
 
     for bound in ("lo", "up"):
-        # Constraint data are returned
+        # Constraint data are returned. Use .pop() to exclude from the next assertions
         df = data.pop(f"growth_activity_{bound}")
 
         # Data covers all periods except the first
         assert info.Y[1:] == sorted(df["year_act"].unique())
 
-    # Data have the correct size
+    # Historical periods from 2010 + all model periods
+    i = info.set["year"].index(2010)
+    exp = info.set["year"][i:]
+
+    # Remaining data have the correct size
     for par_name, df in data.items():
-        # Data covers all the years in the scenario, plus 2010
-        assert [2010] + info.Y == sorted(df["year_vtg"].unique())
+        # Data covers these periods
+        assert exp == sorted(df["year_vtg"].unique())
 
         # Total length of data: # of regions × (11 technology × # of periods; plus 1
         # technology (historical ICE) for only 2010)
-        assert len(info.N[1:]) * ((11 * (len(info.Y) + 1)) + 1) == len(df)
+        assert len(info.N[1:]) * ((11 * len(exp)) + 1) == len(df)
 
 
 @pytest.mark.parametrize(
