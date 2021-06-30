@@ -30,7 +30,7 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def session_context(request, tmp_env):
+def session_context(pytestconfig, request, tmp_env):
     """A Context connected to a temporary, in-memory database.
 
     Uses the :func:`.tmp_env` fixture from ixmp.
@@ -41,12 +41,16 @@ def session_context(request, tmp_env):
     session_tmp_dir = Path(request.config._tmp_path_factory.mktemp("data"))
 
     # Set the cache path according to whether pytest --local-cache was given. If True,
-    # pick up the existing setting from the user environment.
+    # pick up the existing setting from the user environment. If False, use a pytest-
+    # managed cache directory that persists across test sessions.
     ctx.cache_path = (
-        ctx.local_data if request.config.option.local_cache else session_tmp_dir
-    ).joinpath("cache")
+        ctx.local_data.joinpath("cache")
+        if request.config.option.local_cache
+        # TODO use pytestconfig.cache.mkdir() when pytest >= 6.3 is available
+        else Path(pytestconfig.cache.makedir("cache"))
+    )
 
-    # Other local data in the temporary directory
+    # Other local data in the temporary directory for this session only
     ctx.local_data = session_tmp_dir
 
     platform_name = "message-ix-models"
