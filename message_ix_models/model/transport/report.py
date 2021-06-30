@@ -144,7 +144,7 @@ def callback(rep: Reporter):
         "transport check",
         computations.transport_check,
         "scenario",
-        "ACT:nl-t-yv-ya-m-h",
+        Key("ACT", "nl t yv ya m h".split()),
     )
 
     # Add ex-post mode and demand calculations
