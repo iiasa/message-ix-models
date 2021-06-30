@@ -41,17 +41,15 @@ def cli(context, regions):
     # add an attribute to distinguish country models
     if regions in ["R11", "R12", "R14", "R32", "RCP"]:
         context.type_reg = "global"
-    elif regions in ["R210"]:
-        context.type_reg = "global_basins"
     else:
         context.type_reg = "country"
     context.regions = regions
 
 
-@cli.command()
+@cli.command("nexus")
 @common_params("regions")
 @click.pass_obj
-def cooling(context, regions):
+def nexus(context, regions):
     """Build and solve model with new cooling technologies.
 
     Use the --url option to specify the base scenario.
@@ -73,3 +71,56 @@ def cooling(context, regions):
 
     # Solve
     scen.solve()
+
+@cli.command("cooling")
+@common_params("regions")
+@click.pass_obj
+def cooling(context, regions):
+    """Build and solve model with new cooling technologies.
+
+    Use the --url option to specify the base scenario.
+    """
+    from .build import cooling as build
+
+    # Determine the output scenario name based on the --url CLI option. If the
+    # user did not give a recognized value, this raises an error.
+
+    output_scenario_name = context.output_scenario
+
+    # Clone and build
+    scen = context.get_scenario().clone(model="", scenario=output_scenario_name)
+
+    print(scen.model)
+    print(scen.scenario)
+    # Build
+    build(context, scen)
+
+    # Solve
+    scen.solve()
+
+
+@cli.command("waterbalance")
+@common_params("regions")
+@click.pass_obj
+def waterbalance(context, regions):
+    """Build and solve model with new cooling technologies.
+
+    Use the --url option to specify the base scenario.
+    """
+    from .build import water_balance as build
+
+    # Determine the output scenario name based on the --url CLI option. If the
+    # user did not give a recognized value, this raises an error.
+
+    output_scenario_name = context.output_scenario
+
+    # Clone and build
+    scen = context.get_scenario().clone(model="", scenario=output_scenario_name)
+
+    print(scen.model)
+    print(scen.scenario)
+    # Build
+    build(context, scen)
+
+    # Solve
+    #scen.solve()
