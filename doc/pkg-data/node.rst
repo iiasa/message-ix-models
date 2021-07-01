@@ -40,6 +40,14 @@ Models with global scope
 .. literalinclude:: ../../message_ix_models/data/node/R11.yaml
    :language: yaml
 
+.. _R12:
+
+12-region aggregation (``R12``)
+-------------------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/R12.yaml
+   :language: yaml
+
 .. _RCP:
 
 5-region aggregation (``RCP``)
