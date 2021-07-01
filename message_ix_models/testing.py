@@ -245,6 +245,10 @@ def export_test_data(context: Context):
 
     The output is stored at :file:`data/tests/{model name}_{scenario name}_{techs}.xlsx`
     in :mod:`message_data`.
+
+    See also
+    --------
+    :ref:`export-test-data`
     """
     from message_ix_models.util import private_data_path
 
