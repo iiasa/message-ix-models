@@ -99,7 +99,7 @@ def cooling(context, regions):
     scen.solve()
 
 
-@cli.command("waterbalance")
+@cli.command()
 @common_params("regions")
 @click.pass_obj
 def waterbalance(context, regions):
