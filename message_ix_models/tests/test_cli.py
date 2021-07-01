@@ -1,5 +1,9 @@
 """Basic tests of the command line."""
+import ixmp
 import pytest
+from message_ix.testing import make_dantzig
+
+from message_ix_models.util import private_data_path
 
 SUBCOMMANDS = [
     tuple(),
@@ -20,3 +24,34 @@ def test_cli_help(mix_models_cli, subcommand):
 def test_cli_debug(mix_models_cli):
     """The 'debug' CLI command can be invoked."""
     mix_models_cli.assert_exit_0(["debug"])
+
+
+def test_cli_export_test_data(session_context, mix_models_cli):
+    """The :command:`export-test-data` command can be invoked."""
+    # Create an empty scenario in the temporary local file database
+    platform = "local"
+    mp = ixmp.Platform(platform)
+    scen = make_dantzig(mp)
+
+    # URL
+    url = f"ixmp://{platform}/{scen.model}/{scen.scenario}#{scen.version}"
+
+    # File that will be created
+    technology = ["coal_ppl"]
+    dest_file = private_data_path(
+        "tests", f"{scen.model}_{scen.scenario}_{'_'.join(technology)}.xlsx"
+    )
+
+    # Release the database lock
+    mp.close_db()
+
+    try:
+        # Export works
+        result = mix_models_cli.assert_exit_0([f"--url={url}", "export-test-data"])
+
+        # The file is created in the expected location
+        assert str(dest_file) in result.output
+        assert dest_file.exists()
+    finally:
+        # Remove this temporary file
+        dest_file.unlink()
