@@ -9,6 +9,10 @@ Next release
 - Add the :ref:`R12` node code list (:pull:`14`)
 
 - Allow use of pytest's persistent cache across test sessions (see :doc:`repro`; :pull:`23`).
+- Add :func:`.export_test_data` and :command:`mix-models export-test-data` command (:pull:`16`).
+  See :ref:`export-test-data`.
+- Allow use of pytest's persistent cache across test sessions (:pull:`23`).
+  See :doc:`repro`.
 - Add the :ref:`R12` node code list (:pull:`14`).
 
 2021.4.7
