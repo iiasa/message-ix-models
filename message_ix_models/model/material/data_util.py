@@ -5,29 +5,41 @@ import pandas as pd
 from .util import read_config
 import re
 
+from message_data.tools import (
+    ScenarioInfo)
+
 def modify_demand_and_hist_activity(scen):
     """Take care of demand changes due to the introduction of material parents
-
     Shed industrial energy demand properly.
-
     Also need take care of remove dynamic constraints for certain energy carriers.
-
     Adjust the historical activity of the related industry technologies
-
     that provide output to different categories of industrial demand (e.g.
-
     i_therm, i_spec, i_feed). The historical activity is reduced the same %
-
-    as the industrial demand is reduced in modfiy_demand function.
+    as the industrial demand is reduced.
     """
 
     # NOTE Temporarily modifying industrial energy demand
     # From IEA database (dumped to an excel)
 
     context = read_config()
+    s_info = ScenarioInfo(scen)
     fname = "MESSAGEix-Materials_final_energy_industry.xlsx"
+
+    if "R12_CHN" in s_info.N:
+        sheet_n = "R12"
+        region_type = 'R12_'
+        region_name_CPA = "RCPA"
+        region_name_CHN = "CHN"
+    else:
+        sheet_n = "R11"
+        region_type = 'R11_'
+        region_name_CPA = "CPA"
+
     df = pd.read_excel(context.get_path("material", fname),\
-    sheet_name="Export Worksheet")
+    sheet_name=sheet_n, usecols = "A:F")
+
+    print("Are the correct numbers read?")
+    print(df)
 
     # Filter the necessary variables
     df = df[(df["SECTOR"]== "feedstock (petrochemical industry)")|
@@ -38,6 +50,9 @@ def modify_demand_and_hist_activity(scen):
         (df["SECTOR"]== "industry (non-metallic minerals)") | \
         (df["SECTOR"]== "industry (total)")]
     df = df[df["RYEAR"]==2015]
+
+    print("Is the filter correct?")
+    print(df)
 
     # Retreive data for i_spec (Excludes petrochemicals as the share is negligable)
     # Aluminum, cement and steel included.
@@ -63,6 +78,8 @@ def modify_demand_and_hist_activity(scen):
     df_spec_new.loc[df_spec_new["SECTOR"]=="industry (chemicals)","i_spec"] * 0.7
 
     df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
+    print("spec")
+    print(df_spec_new)
 
     # Retreive data for i_feed: Only for petrochemicals
     # It is assumed that the sectors that are explicitly covered in MESSAGE are
@@ -81,6 +98,9 @@ def modify_demand_and_hist_activity(scen):
         df_feed_temp.at[i,"i_feed"] = 0.7
         i = i + 1
         df_feed_new = pd.concat([df_feed_temp,df_feed_new],ignore_index = True)
+
+        print("feed")
+        print(df_feed_new)
 
     # df_feed = df[(df["SECTOR"]== "feedstock (petrochemical industry)") & \
     #          (df["FUEL"]== "total") ]
@@ -132,10 +152,15 @@ def modify_demand_and_hist_activity(scen):
     # Modify CPA based on https://www.iea.org/sankey/#?c=Japan&s=Final%20consumption.
     # Since the value did not allign with the one in the IEA website.
     index = ((df_therm_new["SECTOR"]=="industry (iron and steel)") \
-    & (df_therm_new["REGION"]=="CPA"))
+    & ((df_therm_new["REGION"]==region_name_CPA) | \
+    (df_therm_new["REGION"]==region_name_CHN)))
+
     df_therm_new.loc[index,"i_therm"] = 0.2
 
     df_therm_new = df_therm_new.groupby(["REGION"]).sum().reset_index()
+
+    print("therm")
+    print(df_therm_new)
 
     # TODO: Useful technology efficiencies will also be included
 
@@ -157,7 +182,14 @@ def modify_demand_and_hist_activity(scen):
     useful_feed = scen.par('demand', filters={'commodity':'i_feed'})
 
     for r in df_therm_new["REGION"]:
-        r_MESSAGE = "R11_" + r
+        r_MESSAGE = region_type + r
+
+        if ((r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN")):
+            print(r_MESSAGE)
+            print("Thermal before multiplication")
+            print(useful_thermal.loc[useful_thermal["node"]== r_MESSAGE])
+            print(thermal_df_hist.loc[thermal_df_hist["node_loc"]== r_MESSAGE])
+
         useful_thermal.loc[useful_thermal["node"]== r_MESSAGE ,"value"] = \
         useful_thermal.loc[useful_thermal["node"]== r_MESSAGE,"value"] * \
         (1 - df_therm_new.loc[df_therm_new["REGION"]==r,"i_therm"].values[0])
@@ -166,8 +198,21 @@ def modify_demand_and_hist_activity(scen):
         thermal_df_hist.loc[thermal_df_hist["node_loc"]== r_MESSAGE,"value"] * \
         (1 - df_therm_new.loc[df_therm_new["REGION"]==r,"i_therm"].values[0])
 
+        if ((r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN")):
+            print(r_MESSAGE)
+            print("Thermal after multiplication")
+            print(useful_thermal.loc[useful_thermal["node"]== r_MESSAGE])
+            print(thermal_df_hist.loc[thermal_df_hist["node_loc"]== r_MESSAGE])
+
     for r in df_spec_new["REGION"]:
-        r_MESSAGE = "R11_" + r
+        r_MESSAGE = region_type + r
+
+        if ((r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN")):
+            print(r_MESSAGE)
+            print("Spec before multiplication")
+            print(useful_spec.loc[useful_spec["node"]== r_MESSAGE])
+            print(spec_df_hist.loc[spec_df_hist["node_loc"]== r_MESSAGE])
+
         useful_spec.loc[useful_spec["node"]== r_MESSAGE ,"value"] = \
         useful_spec.loc[useful_spec["node"]== r_MESSAGE,"value"] * \
         (1 - df_spec_new.loc[df_spec_new["REGION"]==r,"i_spec"].values[0])
@@ -176,8 +221,21 @@ def modify_demand_and_hist_activity(scen):
         spec_df_hist.loc[spec_df_hist["node_loc"]== r_MESSAGE,"value"] * \
         (1 - df_spec_new.loc[df_spec_new["REGION"]==r,"i_spec"].values[0])
 
+        if ((r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN")):
+            print(r_MESSAGE)
+            print("Spec after multiplication")
+            print(useful_spec.loc[useful_spec["node"]== r_MESSAGE])
+            print(spec_df_hist.loc[spec_df_hist["node_loc"]== r_MESSAGE])
+
     for r in df_feed_new["REGION"]:
-        r_MESSAGE = "R11_" + r
+        r_MESSAGE = region_type + r
+
+        if ((r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN")):
+            print(r_MESSAGE)
+            print("Feedstock before multiplication")
+            print(useful_feed.loc[useful_feed["node"]== r_MESSAGE])
+            print(feed_df_hist.loc[feed_df_hist["node_loc"]== r_MESSAGE])
+
         useful_feed.loc[useful_feed["node"]== r_MESSAGE ,"value"] = \
         useful_feed.loc[useful_feed["node"]== r_MESSAGE,"value"] * \
         (1 - df_feed_new.loc[df_feed_new["REGION"]==r,"i_feed"].values[0])
@@ -185,6 +243,12 @@ def modify_demand_and_hist_activity(scen):
         feed_df_hist.loc[feed_df_hist["node_loc"]== r_MESSAGE ,"value"] = \
         feed_df_hist.loc[feed_df_hist["node_loc"]== r_MESSAGE,"value"] * \
         (1 - df_feed_new.loc[df_feed_new["REGION"]==r,"i_feed"].values[0])
+
+        if ((r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN")):
+            print(r_MESSAGE)
+            print("Feedstock after multiplication")
+            print(useful_feed.loc[useful_feed["node"]== r_MESSAGE])
+            print(feed_df_hist.loc[feed_df_hist["node_loc"]== r_MESSAGE])
 
     scen.check_out()
     scen.add_par("demand",useful_thermal)
@@ -249,7 +313,7 @@ def modify_demand_and_hist_activity(scen):
 
 # Read in technology-specific parameters from input xlsx
 # Now used for steel and cement, which are in one file
-def read_sector_data(sectname,scenario):
+def read_sector_data(scenario,sectname):
 
     import numpy as np
 
@@ -258,10 +322,10 @@ def read_sector_data(sectname,scenario):
 
     s_info = ScenarioInfo(scenario)
 
-    if "R11_CHN" in s_info.N:
-        sheet_n = sect_name + "_R12"
+    if "R12_CHN" in s_info.N:
+        sheet_n = sectname + "_R12"
     else:
-        sheet_n = sect_name + "_R11"
+        sheet_n = sectname + "_R11"
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
@@ -302,7 +366,7 @@ def read_sector_data(sectname,scenario):
 
 # Read in time-dependent parameters
 # Now only used to add fuel cost for bare model
-def read_timeseries(filename,scenario):
+def read_timeseries(scenario,filename):
 
     import numpy as np
 
@@ -315,10 +379,10 @@ def read_timeseries(filename,scenario):
     # else:
     #     sheet_name = "timeseries"
 
-    if "R11_CHN" in s_info.N:
-        sheet_n = timeseries_R12
+    if "R12_CHN" in s_info.N:
+        sheet_n = "timeseries_R12"
     else:
-        sheet_n = timeseries_R11
+        sheet_n = "timeseries_R11"
 
     # Read the file
     df = pd.read_excel(
@@ -336,7 +400,7 @@ def read_timeseries(filename,scenario):
     return df
 
 
-def read_rel(filename):
+def read_rel(scenario,filename):
 
     import numpy as np
 
@@ -345,10 +409,10 @@ def read_rel(filename):
 
     s_info = ScenarioInfo(scenario)
 
-    if "R11_CHN" in s_info.N:
-        sheet_n = relations_R12
+    if "R12_CHN" in s_info.N:
+        sheet_n = "relations_R12"
     else:
-        sheet_n = relations_R11
+        sheet_n = "relations_R11"
 
     # Read the file
     data_rel = pd.read_excel(
