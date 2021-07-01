@@ -85,7 +85,7 @@ def water_balance(context) -> Mapping[str, ScenarioInfo]:
     spec1 = map_basin(context)
 
     # Apply the structural changes AND add the data
-    build.apply_spec(scenario, spec, **options)
+    build.apply_spec(scenario, spec1, **options)
 
 
 def cooling(context) -> Mapping[str, ScenarioInfo]:
@@ -115,6 +115,11 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
 
     add = ScenarioInfo()
 
+    require = ScenarioInfo()
+
+    remove = ScenarioInfo()
+
+
     # define an empty dictionary
     results = {}
     path = context.get_path("water", "delineation", "basin_names.csv")
@@ -132,9 +137,11 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     df_node = pd.concat(frame)
     results['map_node'] = df_node
 
-    add.set.extend(results)
+    for set_name, config in results.items():
+        # Sets  to add
+        add.set[set_name].extend(config)
 
-    return dict(add=add)
+    return dict(require=require, remove=remove, add=add)
 
 def main(context, scenario, **options):
     """Set up MESSAGEix-Nexus on `scenario`.
