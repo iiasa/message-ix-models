@@ -68,6 +68,29 @@ def main(click_ctx, **kwargs):
     click_ctx.call_on_close(click_ctx.obj.close_db)
 
 
+@main.command("export-test-data")
+@click.option("--nodes", default="R11_AFR,R11_CPA")
+@click.option("--techs", default="coal_ppl")
+@click.pass_obj
+def export_test_data_cmd(ctx, nodes, techs):
+    """Prepare data for testing.
+
+    --nodes and --techs give comma-separated lists of node/technology IDs to filter.
+    """
+    from message_ix_models.testing import export_test_data
+
+    # Store CLI options on the Context
+    ctx.export_nodes = nodes.split(",")
+    ctx.export_techs = techs.split(",")
+
+    mark_time()
+
+    # Export
+    export_test_data(ctx)
+
+    mark_time()
+
+
 @main.command(hidden=True)
 @click.pass_obj
 def debug(ctx):
