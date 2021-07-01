@@ -9,7 +9,7 @@ import pytest
 from ixmp import Platform
 from ixmp import config as ixmp_config
 
-from message_ix_models import cli
+from message_ix_models import cli, util
 from message_ix_models.util._logging import mark_time, preserve_log_level
 from message_ix_models.util.context import Context
 
@@ -37,7 +37,7 @@ def pytest_sessionstart():
 
 
 @pytest.fixture(scope="session")
-def session_context(pytestconfig, request, tmp_env):
+def session_context(pytestconfig, tmp_env):
     """A Context connected to a temporary, in-memory database.
 
     Uses the :func:`.tmp_env` fixture from ixmp.
@@ -45,20 +45,28 @@ def session_context(pytestconfig, request, tmp_env):
     ctx = Context.only()
 
     # Temporary, empty local directory for local data
-    session_tmp_dir = Path(request.config._tmp_path_factory.mktemp("data"))
+    session_tmp_dir = Path(pytestconfig._tmp_path_factory.mktemp("data"))
 
     # Set the cache path according to whether pytest --local-cache was given. If True,
     # pick up the existing setting from the user environment. If False, use a pytest-
     # managed cache directory that persists across test sessions.
     ctx.cache_path = (
         ctx.local_data.joinpath("cache")
-        if request.config.option.local_cache
+        if pytestconfig.option.local_cache
         # TODO use pytestconfig.cache.mkdir() when pytest >= 6.3 is available
         else Path(pytestconfig.cache.makedir("cache"))
     )
 
     # Other local data in the temporary directory for this session only
     ctx.local_data = session_tmp_dir
+
+    # If message_data is not installed, use a temporary path for private_data_path()
+    message_data_path = util.MESSAGE_DATA_PATH
+    if util.MESSAGE_DATA_PATH is None:
+        util.MESSAGE_DATA_PATH = session_tmp_dir.joinpath("message_data")
+
+        # Create some subdirectories
+        util.MESSAGE_DATA_PATH.joinpath("data", "tests").mkdir(parents=True)
 
     platform_name = "message-ix-models"
 
@@ -78,10 +86,14 @@ def session_context(pytestconfig, request, tmp_env):
 
     ctx.platform_info["name"] = platform_name
 
-    yield ctx
+    try:
+        yield ctx
+    finally:
+        ctx.close_db()
+        ixmp_config.remove_platform(platform_name)
 
-    ctx.close_db()
-    ixmp_config.remove_platform(platform_name)
+        # Restore prior value
+        util.MESSAGE_DATA_PATH = message_data_path
 
 
 @pytest.fixture(scope="function")
