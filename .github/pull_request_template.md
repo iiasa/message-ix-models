@@ -47,7 +47,7 @@ In ambiguous cases, strike them out and add a short explanation, e.g.
   To do this, add a single line at the TOP of the “Next release” section of
   doc/whatsnew.rst, where '999' is the GitHub pull request number:
 
-  - Title or single-sentence description from above (:pull:`999`:)
+  - Title or single-sentence description from above (:pull:`999`:).
 
   Commit with a message like “Add #999 to doc/whatsnew”
   -->
