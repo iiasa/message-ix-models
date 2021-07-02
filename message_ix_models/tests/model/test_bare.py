@@ -9,7 +9,7 @@ SET_SIZE = dict(
     level=6,
     technology=377,
     node=14 + 1,  # R14 is default, and 'World' exists automatically
-    year=22,  # YB is default: 1960, ..., 2020, 2025, ..., 2050, 2060, ..., 2110
+    year=28,  # YB is default: 1950, ..., 2020, 2025, ..., 2055, 2060, ..., 2110
 )
 
 
