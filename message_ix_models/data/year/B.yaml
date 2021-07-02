@@ -1,15 +1,25 @@
 # Time periods used in ENGAGE, inter alia
 
-1960:
-  description: Period from 1951-01-01 to 1960-12-31.
+1950:
+  description: Period from 1946-01-01 to 1950-12-31.
   # Durations of subsequent periods are implied by the prior period
-  duration_period: 10
+  duration_period: 5
+1955:
+  description: Period from 1951-01-01 to 1955-12-31.
+1960:
+  description: Period from 1956-01-01 to 1960-12-31.
+1965:
+  description: Period from 1961-01-01 to 1965-12-31.
 1970:
-  description: Period from 1961-01-01 to 1970-12-31.
+  description: Period from 1966-01-01 to 1970-12-31.
+1975:
+  description: Period from 1971-01-01 to 1975-12-31.
 1980:
-  description: Period from 1971-01-01 to 1980-12-31.
+  description: Period from 1976-01-01 to 1980-12-31.
+1985:
+  description: Period from 1981-01-01 to 1985-12-31.
 1990:
-  description: Period from 1981-01-01 to 1990-12-31.
+  description: Period from 1986-01-01 to 1990-12-31.
 1995:
   description: Period from 1991-01-01 to 1995-12-31.
 2000:
@@ -38,8 +48,10 @@
   description: Period from 2041-01-01 to 2045-12-31.
 2050:
   description: Period from 2046-01-01 to 2050-12-31.
+2055:
+  description: Period from 2046-01-01 to 2055-12-31.
 2060:
-  description: Period from 2051-01-01 to 2060-12-31.
+  description: Period from 2056-01-01 to 2060-12-31.
 2070:
   description: Period from 2061-01-01 to 2070-12-31.
 2080:
