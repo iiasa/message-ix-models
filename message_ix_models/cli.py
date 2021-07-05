@@ -69,17 +69,19 @@ def main(click_ctx, **kwargs):
 
 
 @main.command("export-test-data")
-@click.option("--nodes", default="R11_AFR,R11_CPA")
-@click.option("--techs", default="coal_ppl")
+@click.option("--exclude", default="", help="Sheets to exclude.")
+@click.option("--nodes", default="R11_AFR,R11_CPA", help="Nodes to include.")
+@click.option("--techs", default="coal_ppl", help="Technologies to include.")
 @click.pass_obj
-def export_test_data_cmd(ctx, nodes, techs):
+def export_test_data_cmd(ctx, exclude, nodes, techs):
     """Prepare data for testing.
 
-    --nodes and --techs give comma-separated lists of node/technology IDs to filter.
+    Option values for --exclude, --nodes, and --techs must be comma-separated lists.
     """
     from message_ix_models.testing import export_test_data
 
     # Store CLI options on the Context
+    ctx.export_exclude = exclude.split(",")
     ctx.export_nodes = nodes.split(",")
     ctx.export_techs = techs.split(",")
 
