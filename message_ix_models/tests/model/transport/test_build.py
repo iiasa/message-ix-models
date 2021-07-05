@@ -89,9 +89,14 @@ def test_build_bare_res(
     "url",
     (
         "ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline",
+        "ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7/EN_NPi2020_1000f",
+        "ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7/baseline",
         "ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7_ar5_gwp100/EN_NPi2020_1000_emif_new",
         "ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline#17",
         "ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline_macro#3",
+        # Local clones of the above
+        # "ixmp://clone-2021-06-09/ENGAGE_SSP2_v4.1.7/baseline",
+        # "ixmp://clone-2021-06-09/ENGAGE_SSP2_v4.1.7/EN_NPi2020_1000f",
     ),
 )
 def test_build_existing(tmp_path, transport_context_f, url, solve=False):
@@ -101,11 +106,18 @@ def test_build_existing(tmp_path, transport_context_f, url, solve=False):
     """
     ctx = transport_context_f
 
-    # Get the platform prepared by the text fixture
-    ctx.dest_platform = copy(ctx.platform)
-
     # Update the Context with the base scenario's `url`
     ctx.handle_cli_args(url=url)
+
+    # Destination for built scenarios: uncomment one of
+    # the platform prepared by the text fixture…
+    ctx.dest_platform = copy(ctx.platform)
+    # # or, a specific, named platform.
+    # ctx.dest_platform = dict(name="local")
+
+    # New model name for the destination scenario
+    ctx.dest_scenario = copy(ctx.scenario_info)
+    ctx.dest_scenario["model"] = f"MESSAGEix-Transport {ctx.dest_scenario['model']}"
 
     # Clone the base scenario to the test platform
     scenario = ctx.clone_to_dest()
@@ -113,9 +125,10 @@ def test_build_existing(tmp_path, transport_context_f, url, solve=False):
     # Build succeeds without error
     build.main(ctx, scenario, fast=True)
 
-    dump_path = tmp_path / "scenario.xlsx"
-    log.info(f"Dump contents to {dump_path}")
-    scenario.to_excel(dump_path)
+    # commented: slow
+    # dump_path = tmp_path / "scenario.xlsx"
+    # log.info(f"Dump contents to {dump_path}")
+    # scenario.to_excel(dump_path)
 
     if solve:
         scenario.solve(solve_options=dict(lpmethod=4))
