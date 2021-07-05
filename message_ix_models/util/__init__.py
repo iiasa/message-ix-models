@@ -136,6 +136,19 @@ def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
     return list(result.values())
 
 
+def aggregate_codes(df: pd.DataFrame, dim: str, codes):  # pragma: no cover
+    """Aggregate `df` along dimension `dim` according to `codes`."""
+    raise NotImplementedError
+
+    # Construct an inverse mapping
+    mapping = {}
+    for code in codes:
+        mapping.update({child.id: code.id for child in code.child})
+
+    for key, group_series in df.groupby(dim):
+        print(key, group_series.replace({dim: mapping}))
+
+
 def broadcast(df, **kwargs):
     """Fill missing data in `df` by broadcasting.
 
