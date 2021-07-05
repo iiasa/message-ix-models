@@ -1,0 +1,234 @@
+# Configuration for MESSAGE-Transport
+
+# Sources for input data
+data source:
+  # Non-LDV technologies: 'IKARUS' or null
+  non-LDV: IKARUS
+  # LDV technologies: 'US-TIMES MA3T' or null
+  LDV: US-TIMES MA3T
+  # Demands: 'dummy' only
+  demand dummy: false
+  # Population: 'GEA mix' only
+  population: GEA mix
+  # Emissions: ID of a dump from a base scenario
+  emissions: "1"
+
+# CSV files containing data for input calculations and assumptions
+data files:
+- demand-scale
+- gdp
+- ldv-class
+- mer-to-ppp
+- population-suburb-share
+- ma3t/population
+- ma3t/attitude
+- ma3t/driver
+
+# (DLM) “Which US census region should be used as a proxy for the distribution
+# of driver types in this MESSAGE region?”
+node to census_division:
+  R11_AFR: 2
+  R11_CPA: 2
+  R11_EEU: 2
+  R11_FSU: 2
+  R11_LAM: 2
+  R11_MEA: 2
+  R11_NAM: 2
+  R11_PAO: 2
+  R11_PAS: 2
+  R11_SAS: 2
+  R11_WEU: 2
+
+# TODO flatten this structure
+factor:
+  freight load: 10  # tonne km per vehicle km
+  activity:
+    # Annual driving distance
+    # NB (DLM) “Modest and Frequent mileages for all non-NAM regions are scaled
+    #    relative to the NAM values from MA3T. This is because we only have
+    #    driving data for the average driver (supplied by Page Kyle of the GCAM
+    #    team in March 2014).
+    ldv:
+      _dim: driver_type
+      _unit: "1"  # dimensionless
+      M: 0.5386  # i.e. 13930 km in R11_NAM
+      A: 1  # by definition
+      F: 1.7614  # ie. 45550 km in R11_NAM
+  cost:
+    # Regional cost multipliers in 2010
+    ldv 2010:
+      nam: 1.0
+      lam: 0.9
+      weu: 1.0
+      eeu: 1.0
+      fsu: 1.0
+      mea: 0.9
+      afr: 0.9
+      cpa: 0.9
+      pao: 1.0
+      pas: 0.9
+      sas: 0.9
+    # Scaling factor to reduce the cost of NGA vehicles.
+    # NB (DLM) “applied to the original US-TIMES cost data. That original data
+    #    simply seems too high - much higher than conventional gasoline
+    #    vehicles in the base-year and in future, which is strange.
+    ldv nga: 0.85
+    # Investment costs of bus technologies are relative to the costs of ICG_bus.
+    # - Used in ikarus.py
+    # - This is from the IKARUS data in GEAM_TRP_Technologies.xlsx; sheet
+    #   'updateTRPdata', with the comment "Original data from Sei (PAO)."
+    # - This probably refers to some source that gave relative costs of
+    #   different buses, in PAO, for this year; it is applied across all years.
+    bus inv:
+      ICH_bus: 1.153  # ie. 150,000 / 130,000
+      PHEV_bus: 1.153
+      FC_bus: 1.538  # ie. 200,000 / 130,000
+      FCg_bus: 1.538
+      FCm_bus: 1.538
+  efficiency:
+    '*': 0.2
+    hev: 0.2
+    phev: 0.2
+    fcev: 0.2
+    # Similar to 'cost/bus inv' above, except for output efficiency.
+    bus output:
+      ICH_bus: 1.424  # ie. 47.6 / 33.42
+      PHEV_bus: 1.424
+      FC_bus: 1.563  # ie. 52.25 / 33.42
+      FCg_bus: 1.563
+      FCm_bus: 1.563
+
+non-ldv:
+  output:  # These are effectively occupancy/load factors, in [pkm / km]
+    # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
+    rail_pub: 80
+    # Intercity trains
+    dMspeed_rai: 200
+    Mspeed_rai: 200
+    Hspeed_rai: 200
+    # Aircrafts
+    con_ar: 115
+    conm_ar: 115
+    conE_ar: 115
+    conh_ar: 115
+    # Buses
+    ICE_M_bus: 20.9
+    ICE_H_bus: 20.9
+    ICG_bus: 20.9
+    ICAe_bus: 20.9
+    ICH_bus: 20.9
+    PHEV_bus: 20.9
+    FC_bus: 20.9
+    FCg_bus: 20.9
+    FCm_bus: 20.9
+    Trolley_bus: 20.9
+
+ldv activity:
+  # Extracted from the spreadsheet LDV_costs_efficiencies_US-TIMES_MA3T.xlsx,
+  # where the following comments are given by DLM:
+  #
+  #     Annual driving distances by consumer type. These values used for all
+  #     years; only the values in yellow/red [=included in this file] need to be
+  #     changed. Modest and Frequent mileages for all non-NAM regions are scaled
+  #     relative to the NAM values from MA3T. This is because we only have
+  #     driving data for the average driver (supplied by Page Kyle of the GCAM
+  #     team in March 2014).
+  #
+  _dim: nl  # node_loc
+  _unit: vehicle km / year
+  R11_NAM: 25860
+  R11_LAM: 14600
+  R11_WEU: 11646
+  R11_EEU:  8962
+  R11_FSU: 11482
+  R11_MEA: 14000
+  R11_AFR: 10391
+  R11_CPA: 16000
+  R11_PAO: 10000
+  R11_PAS: 12000
+  R11_SAS: 10400
+
+
+# Vehicle lifetime
+ldv lifetime:
+  _dim: consumer type
+  _unit: year
+  modest: 20
+  average: 15
+  frequent: 10
+
+ldv cost catch-up year:
+  nam: 1.0
+  lam: 2030
+  weu: 1990
+  eeu: 2010
+  fsu: 2010
+  mea: 2030
+  afr: 2050
+  cpa: 2030
+  pao: 1990
+  pas: 2030
+  sas: 2040
+
+constraint:
+  LDV growth_activity: 0.0192  # = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years
+
+
+# Parameters used in demand and mode share calculations -----------------------
+
+# Set of modes handled by demand projection
+demand modes: [LDV, 2W, AIR, BUS, RAIL]
+
+# Work hours per year, used to compute value of time
+work hours: "1600 hours / passenger / year"  # = 200 * 8
+
+# Speeds of transport modes
+# The labels on the 'technology' dimension match the aggregate groups listed in
+# technology.yaml.
+# Source: Schäefer et al. (2010)
+speeds:
+  _dim: technology
+  _unit: km / hour
+  LDV: 54.5 # = 31 + 78 / 2
+  2W: 31
+  AIR: 270
+  BUS: 19
+  RAIL: 35
+
+# Fixed future point for total passenger demand
+# “Assume only half the speed (330 km/h) and not as steep a curve.”
+fixed demand: "337327.9893 km / year"  # = 149500 * 1.12818725502081 * 2
+fixed GDP: "300 kUSD / passenger / year"
+
+# Year for share convergence
+year convergence: 2110
+
+# Scaling factors for production function [0]
+scaling: 1
+
+# Logit share exponents or cost distribution parameters [0]
+lambda: -2
+
+# Share weights for regions converge to the average of the regions in each list
+share weight convergence:
+  R14_AFR: [R14_PAO, R14_WEU]
+  R14_CAS: [R14_NAM]
+  R14_CPA: [R14_PAO, R14_WEU]
+  R14_EEU: [R14_PAO, R14_WEU]
+  R14_LAM: [R14_PAO, R14_WEU]
+  R14_MEA: [R14_NAM, R14_WEU]
+  R14_NAM: [R14_NAM]
+  R14_PAO: [R14_PAO, R14_WEU]
+  R14_PAS: [R14_PAO, R14_WEU]
+  R14_RUS: [R14_NAM]
+  R14_SAS: [R14_PAO, R14_WEU]
+  R14_SCS: [R14_NAM]
+  R14_UBM: [R14_NAM]
+  R14_WEU: [R14_PAO, R14_WEU]
+
+# -- Reporting -----------------------------------------------------------------
+
+report:
+  # Set 'true' to include only technologies with "transport" in the name, e.g.
+  # if full-resolution reporting of ACT leads to memory issues
+  filter: true
