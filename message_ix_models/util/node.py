@@ -1,12 +1,18 @@
 """Utilities for nodes."""
+import logging
 from functools import singledispatch
 from typing import Dict, Union
 
 import pandas as pd
+from message_ix import Scenario
 from message_ix.reporting import Quantity
 
-# FIXME to be robust to changes in message_ix, read these names from the package
+log = logging.getLogger(__name__)
+
 #: Names of dimensions indexed by 'node'.
+#:
+#: .. todo:: to be robust to changes in :mod:`message_ix`, read these names from that
+#:    package.
 NODE_DIMS = [
     "n",
     "node",
@@ -96,3 +102,51 @@ def adapt_R11_R12(
     data: Dict[str, Union[pd.DataFrame, Quantity]]
 ) -> Dict[str, Union[pd.DataFrame, Quantity]]:  # pragma: no cover
     raise NotImplementedError
+
+
+def identify_nodes(scenario: Scenario) -> str:
+    """Return the ID of a node codelist given the contents of `scenario`.
+
+    Returns
+    -------
+    str
+        The ID of the :doc:`node` containing the regions of `scenario`.
+
+    Raises
+    ------
+    ValueError
+        if no codelist can be identified, or the nodes in the scenario do not match the
+        children of the “World” node in the codelist.
+    """
+    from message_ix_models.model.structure import get_codes
+
+    nodes = sorted(scenario.set("node"))
+
+    # Candidate ID: split e.g. "R14_AFR" to "R14"
+    id = nodes[0].split("_")[0]
+
+    try:
+        # Get the corresponding codelist
+        codes = get_codes(f"node/{id}")
+    except FileNotFoundError:
+        raise ValueError(f"Couldn't identify node codelist from {repr(nodes)}")
+
+    # Expected list of nodes
+    world = codes[codes.index("World")]
+    codes = [world] + world.child
+
+    try:
+        assert set(nodes) == set(map(str, codes))
+    except AssertionError:
+        raise ValueError(
+            "\n".join(
+                [
+                    f"Node IDs suggest codelist {repr(id)}, values do not match:",
+                    repr(nodes),
+                    repr(codes),
+                ]
+            )
+        )
+    else:
+        log.info(f"Identified node codelist {repr(id)}")
+        return id
