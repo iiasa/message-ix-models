@@ -74,7 +74,7 @@ def _1(qty: Quantity) -> Quantity:
 
     try:
         # Copy units
-        result.attrs["_unit"] = qty.attrs["_unit"]
+        result.attrs["_unit"] = qty.attrs["_unit"]  # type: ignore [attr-defined]
     except KeyError:
         pass
 
