@@ -82,9 +82,11 @@ extlinks = {
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
 
 intersphinx_mapping = {
+    "genno": ("https://genno.readthedocs.io/en/stable", None),
     "ixmp": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
     "message-ix": ("https://docs.messageix.org/en/latest/", None),
     "m-data": ("https://docs.messageix.org/projects/global/en/latest/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pytest": ("https://docs.pytest.org/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),

@@ -9,6 +9,13 @@ import pandas as pd
 from message_ix.models import MESSAGE_ITEMS
 from sdmx.model import AnnotableArtefact, Annotation, Code
 
+from .node import adapt_R11_R14, identify_nodes
+
+__all__ = [
+    "adapt_R11_R14",
+    "identify_nodes",
+]
+
 log = logging.getLogger(__name__)
 
 try:
@@ -55,7 +62,7 @@ def add_par_data(
     for par_name, values in data.items():
         N = values.shape[0]
         log.info(f"{N} rows in {repr(par_name)}")
-        log.debug(str(values))
+        log.debug(values.to_string(max_rows=5))
 
         total += N
 
@@ -128,6 +135,19 @@ def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
         result[code.id] = code
 
     return list(result.values())
+
+
+def aggregate_codes(df: pd.DataFrame, dim: str, codes):  # pragma: no cover
+    """Aggregate `df` along dimension `dim` according to `codes`."""
+    raise NotImplementedError
+
+    # Construct an inverse mapping
+    mapping = {}
+    for code in codes:
+        mapping.update({child.id: code.id for child in code.child})
+
+    for key, group_series in df.groupby(dim):
+        print(key, group_series.replace({dim: mapping}))
 
 
 def broadcast(df, **kwargs):

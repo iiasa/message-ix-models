@@ -18,10 +18,12 @@ Commonly used:
 
 .. autosummary::
 
+   adapt_R11_R14
    as_codes
    broadcast
    copy_column
    ffill
+   identify_nodes
    load_package_data
    load_private_data
    make_io
