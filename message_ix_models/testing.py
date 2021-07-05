@@ -312,15 +312,15 @@ def export_test_data(context: Context):
 
     for name in reader.sheet_names:
         # Check if this sheet is to be included
-        if any(i in name for i in (EXPORT_OMIT + context.get("export_exclude", []))):
+        if name == "ix_type_mapping":
+            # Already handled
+            continue
+        elif any(i in name for i in (EXPORT_OMIT + context.get("export_exclude", []))):
             log.info(f"Discard sheet '{name}'")
 
             # Remove from the mapping
             ix_type_mapping.drop(name, inplace=True)
 
-            continue
-        elif name == "ix_type_mapping":
-            # Already handled
             continue
 
         # Copy the sheet from temporary to final file
