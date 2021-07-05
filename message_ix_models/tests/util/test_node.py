@@ -1,9 +1,10 @@
 """Tests of :mod:`message_ix_models.util.node`."""
+import re
 from contextlib import contextmanager
 
 import pytest
 from genno import Quantity
-from message_ix import make_df
+from message_ix import Scenario, make_df
 
 from message_ix_models.model.bare import create_res
 from message_ix_models.model.structure import get_codes
@@ -104,5 +105,24 @@ def test_identify_nodes(test_context, regions):
     # No longer any match
     with pytest.raises(
         ValueError, match=f"IDs suggest codelist {repr(regions)}, values do not match"
+    ):
+        identify_nodes(scenario)
+
+
+def test_identify_nodes1(test_context):
+    mp = test_context.get_platform()
+    scenario = Scenario(
+        mp, model="identify_nodes", scenario="identify_nodes", version="new"
+    )
+    scenario.add_set("technology", "t")
+    scenario.add_set("year", 0)
+    scenario.commit("")
+
+    with _transact(scenario):
+        scenario.add_set("node", "R99_ZZZ")
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Couldn't identify node codelist from ['R99_ZZZ', 'World']"),
     ):
         identify_nodes(scenario)
