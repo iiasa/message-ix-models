@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 #: - ``years``: recognized lists of time periods ("years"); these match the files
 #:   :file:`data/year/*.yaml`
 SETTINGS = dict(
-    regions=["R14", "R11", "RCP", "ISR"],
+    regions=["R14", "R11", "R12", "RCP", "ISR"],
     years=["B", "A"],
     res_with_dummies=[False, True],
 )
