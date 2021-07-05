@@ -1,10 +1,13 @@
 """Tests of :mod:`message_ix_models.util.node`."""
+from contextlib import contextmanager
+
 import pytest
 from genno import Quantity
 from message_ix import make_df
 
+from message_ix_models.model.bare import create_res
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import adapt_R11_R14, broadcast
+from message_ix_models.util import adapt_R11_R14, broadcast, identify_nodes
 
 PAR = "technical_lifetime"
 VALUE = 0.1
@@ -68,3 +71,38 @@ def test_adapt_R11_R14_1(input):
     assert (
         VALUE == qty_out.sel(node_loc="R14_CAS", technology="coal_ppl", year=2022)
     ).all()
+
+
+@contextmanager
+def _transact(ts, condition=True, commit_message=""):
+    """TEMPORARY Context manager to wrap in a 'transaction'.
+
+    This is just a placeholder; should import from :mod:`ixmp`.
+    """
+    if condition:
+        ts.check_out()
+    try:
+        yield ts
+    finally:
+        if condition:
+            ts.commit(commit_message)
+
+
+@pytest.mark.parametrize("regions", ["R11", "R12", "R14"])
+def test_identify_nodes(test_context, regions):
+    ctx = test_context
+    ctx.regions = regions
+    scenario = create_res(ctx)
+
+    # The ID of the node codelist can be recovered from scenario contents
+    assert regions == identify_nodes(scenario)
+
+    # Remove one element from the node set
+    with _transact(scenario):
+        scenario.remove_set("node", scenario.set("node").tolist()[-1])
+
+    # No longer any match
+    with pytest.raises(
+        ValueError, match=f"IDs suggest codelist {repr(regions)}, values do not match"
+    ):
+        identify_nodes(scenario)
