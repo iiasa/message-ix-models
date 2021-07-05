@@ -19,9 +19,7 @@ NODE_DIMS = [
 
 
 @singledispatch
-def adapt_R11_R14(
-    data: Dict[str, Union[pd.DataFrame, Quantity]]
-) -> Dict[str, Union[pd.DataFrame, Quantity]]:
+def adapt_R11_R14(data: Dict[str, Union[pd.DataFrame, Quantity]]):
     """Adapt `data` from R11 to R14 node list.
 
     The data is adapted by copying the data for R11_FSU to R14_CAS, R14_RUS, R14_SCS,
@@ -32,7 +30,7 @@ def adapt_R11_R14(
 
 
 @adapt_R11_R14.register
-def _(df: pd.DataFrame) -> pd.DataFrame:
+def _0(df: pd.DataFrame) -> pd.DataFrame:
     """Adapt a :class:`pandas.DataFrame`."""
     # New values for columns indexed by node
     new_values = {}
@@ -67,7 +65,7 @@ def _(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @adapt_R11_R14.register
-def _(qty: Quantity) -> Quantity:
+def _1(qty: Quantity) -> Quantity:
     """Adapt a :class:`genno.Quantity`."""
     s = qty.to_series()
     result = Quantity.from_series(
