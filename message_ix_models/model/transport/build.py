@@ -5,14 +5,13 @@ from typing import List, Mapping
 
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util import eval_anno, load_private_data
-from message_ix_models.util._logging import mark_time
 from message_ix_models.model import bare, build, disutility
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util import eval_anno, load_private_data
+from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
 from message_data.model.transport.utils import consumer_groups
-
 
 log = logging.getLogger(__name__)
 

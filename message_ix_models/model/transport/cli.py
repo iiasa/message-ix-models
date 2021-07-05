@@ -2,10 +2,8 @@ import logging
 from pathlib import Path
 
 import click
-
-from message_ix_models.util.click import common_params
 from message_ix_models.util._logging import mark_time
-
+from message_ix_models.util.click import common_params
 
 log = logging.getLogger(__name__)
 
@@ -93,6 +91,7 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 def build_cmd(context, dest, **options):
     """Prepare the model."""
     from message_ix_models.model import bare
+
     from message_data.model.transport import build
 
     # Handle --regions; use a sensible default for MESSAGEix-Transport
