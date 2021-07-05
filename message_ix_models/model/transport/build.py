@@ -3,7 +3,8 @@ from functools import lru_cache, partial
 from itertools import product
 from typing import List, Mapping
 
-from message_ix_models import ScenarioInfo
+from message_ix import Scenario
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import eval_anno, load_private_data
 from message_ix_models.util._logging import mark_time
 from message_ix_models.model import bare, build, disutility
@@ -16,7 +17,7 @@ from message_data.model.transport.utils import consumer_groups
 log = logging.getLogger(__name__)
 
 
-def get_spec(context) -> Mapping[str, ScenarioInfo]:
+def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     """Return the specification for MESSAGEix-Transport.
 
     Parameters
@@ -143,7 +144,7 @@ TEMPLATE = Code(
 )
 
 
-def main(context, scenario, **options):
+def main(context: Context, scenario: Scenario, **options):
     """Build MESSAGEix-Transport on `scenario`.
 
     See also
