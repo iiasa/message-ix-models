@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, Mapping
+from typing import Callable, Dict, List, Mapping
 
 import pandas as pd
 from ixmp.utils import maybe_check_out, maybe_commit
@@ -116,7 +116,7 @@ def apply_spec(
 
         if len(add):
             log.info(f"  Add {len(add)} element(s)")
-            log.debug("  " + ", ".join(map(repr, add)))
+            log.debug("  " + ellipsize(add))
 
         log.info("  ---")
 
@@ -143,3 +143,15 @@ def apply_spec(
         condition=not dry_run,
         message=options.get("message", f"{__name__}.apply_spec()"),
     )
+
+
+def ellipsize(elements: List) -> str:
+    """Generate a short string representation of `elements`.
+
+    If the list has more than 5 elements, only the first two and last two are shown,
+    with "..." between.
+    """
+    if len(elements) > 5:
+        return ", ".join(map(str, elements[:2] + ["..."] + elements[-2:]))
+    else:
+        return ", ".join(map(str, elements))
