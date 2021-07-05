@@ -22,8 +22,19 @@ NODE_DIMS = [
 def adapt_R11_R14(data: Dict[str, Union[pd.DataFrame, Quantity]]):
     """Adapt `data` from R11 to R14 node list.
 
-    The data is adapted by copying the data for R11_FSU to R14_CAS, R14_RUS, R14_SCS,
-    and R14_UBM.
+    The data is adapted by:
+
+    - Renaming regions such as R11_NAM to R14_NAM.
+    - Copying the data for R11_FSU to R14_CAS, R14_RUS, R14_SCS, and R14_UBM.
+
+    …wherever these appear in a column/dimension named ‘node’, ‘node_*’, or ‘n’.
+
+    The function may be called with:
+
+    - :class:`pandas.DataFrame`,
+    - :class:`genno.Quantity`, or
+    - :class:`dict` mapping :class:`str` parameter names to values (either of the above
+      types).
     """
     # Dispatch to the methods for the value types
     return {par: adapt_R11_R14(value) for par, value in data.items()}

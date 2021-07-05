@@ -66,3 +66,5 @@ Models and model variants
       >>> AUT = codes[codes.index("AUT")]
       >>> AUT.parent
       <Code R11_WEU: Western Europe>
+
+   .. seealso:: :func:`.adapt_R11_R14`

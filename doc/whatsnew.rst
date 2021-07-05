@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add :func:`adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` (:pull:`24`).
 
 2021.4.7
 ========
