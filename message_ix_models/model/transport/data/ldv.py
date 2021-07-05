@@ -4,7 +4,9 @@ from typing import Dict, List
 
 import pandas as pd
 from message_ix import make_df
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
+    adapt_R11_R14,
     broadcast,
     ffill,
     make_io,
@@ -126,7 +128,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     # Compatibility checks
     check_support(
         context,
-        settings=dict(regions=frozenset(["R11"])),
+        settings=dict(regions=frozenset(["R11", "R14"])),
         desc="US-TIMES and MA3T data available",
     )
 
@@ -134,8 +136,19 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     technical_lifetime = context["transport config"]["ldv lifetime"]["average"]
     info = context["transport build info"]
 
+    if context.regions == "R14":
+        # Read data using the R11 nodes
+        node_cl = get_codes("node/R11")
+        read_nodes = node_cl[node_cl.index("World")].child
+    else:
+        read_nodes = info.N[1:]
+
     # Retrieve the data from the spreadsheet
-    data = read_USTIMES_MA3T(info.N[1:])
+    data = read_USTIMES_MA3T(read_nodes)
+
+    if context.regions == "R14":
+        # Convert R11 to R14 data
+        data = adapt_R11_R14(data)
 
     # List of years to include
     years = list(filter(lambda y: y >= 2010, info.set["year"]))
