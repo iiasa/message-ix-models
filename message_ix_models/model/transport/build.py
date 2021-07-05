@@ -7,7 +7,7 @@ from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import bare, build, disutility
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import eval_anno, load_private_data
+from message_ix_models.util import eval_anno, identify_nodes, load_private_data
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
@@ -156,6 +156,10 @@ def main(context: Context, scenario: Scenario, **options):
 
     log.info("Build MESSAGEix-Transport")
     mark_time()
+
+    regions = identify_nodes(scenario)
+    if context.get("regions") != regions:
+        log.info(f"Set Context.regions = {repr(regions)} from scenario contents")
 
     # Generate the description of the structure / structure changes
     spec = get_spec(context)
