@@ -253,7 +253,7 @@ def export_test_data(context: Context):
     The context settings ``export_nodes`` (default: "R11_AFR" and "R11_CPA") and
     ``export_techs`` (default: "coal_ppl") are used to filter the data exported.
     In addition, any item (set, parameter, variable, or equation) with a name matching
-    :data:`EXPORT_OMIT` is discarded.
+    :data:`EXPORT_OMIT` *or* the context setting ``export_exclude`` is discarded.
 
     The output is stored at :file:`data/tests/{model name}_{scenario name}_{techs}.xlsx`
     in :mod:`message_data`.
@@ -310,7 +310,7 @@ def export_test_data(context: Context):
 
     for name in reader.sheet_names:
         # Check if this sheet is to be included
-        if any(i in name for i in EXPORT_OMIT):
+        if any(i in name for i in (EXPORT_OMIT + context.get("export_exclude", []))):
             log.info(f"Discard sheet '{name}'")
 
             # Remove from the mapping

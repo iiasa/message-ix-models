@@ -76,3 +76,4 @@ Use the ``export-test-data`` CLI command::
   mix-models --url="ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7/baseline" export-test-data
 
 See also the documentation for :func:`export_test_data`.
+Use the :command:`--exclude`, :command:`--nodes`, and :command:`--techs` options to control the content of the resulting file.
