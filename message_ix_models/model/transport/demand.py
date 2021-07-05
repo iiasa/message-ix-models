@@ -12,14 +12,18 @@ from iam_units import registry
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix.reporting import Reporter
-
 from message_ix_models import Context
-from message_data.tools import ScenarioInfo, broadcast, gea
+from message_ix_models.util import adapt_R11_R14
 
-from .build import generate_set_elements
-from .computations import load_transport_file
-from .data.groups import get_consumer_groups, get_gea_population
-from .plot import DEMAND_PLOTS
+from message_data.tools import ScenarioInfo, broadcast
+from message_data.transport.build import generate_set_elements
+from message_data.transport.computations import load_transport_file
+from message_data.transport.data.groups import (
+    get_consumer_groups,
+    get_gea_population,
+    get_ssp_population,
+)
+from message_data.transport.plot import DEMAND_PLOTS
 
 log = logging.getLogger(__name__)
 

@@ -1,5 +1,4 @@
 import pandas as pd
-
 from genno import Quantity, computations
 from ixmp.reporting import RENAME_DIMS
 from message_ix_models import ScenarioInfo

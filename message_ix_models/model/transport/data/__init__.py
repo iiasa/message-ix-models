@@ -14,9 +14,9 @@ from message_ix_models.util import (
     same_node,
 )
 
+from .freight import get_freight_data
 from .ldv import get_ldv_data
 from .non_ldv import get_non_ldv_data
-from .freight import get_freight_data
 
 log = logging.getLogger(__name__)
 
