@@ -86,7 +86,7 @@ def _1(qty: Quantity) -> Quantity:
     try:
         # Copy units
         result.attrs["_unit"] = qty.attrs["_unit"]  # type: ignore [attr-defined]
-    except KeyError:
+    except KeyError:  # pragma: no cover
         pass
 
     return result
@@ -94,5 +94,5 @@ def _1(qty: Quantity) -> Quantity:
 
 def adapt_R11_R12(
     data: Dict[str, Union[pd.DataFrame, Quantity]]
-) -> Dict[str, Union[pd.DataFrame, Quantity]]:
+) -> Dict[str, Union[pd.DataFrame, Quantity]]:  # pragma: no cover
     raise NotImplementedError
