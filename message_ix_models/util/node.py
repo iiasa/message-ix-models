@@ -110,7 +110,7 @@ def identify_nodes(scenario: Scenario) -> str:
     Returns
     -------
     str
-        The ID of the :doc:`node` containing the regions of `scenario`.
+        The ID of the :doc:`/pkg-data/node` containing the regions of `scenario`.
 
     Raises
     ------
