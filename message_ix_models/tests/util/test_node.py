@@ -1,3 +1,4 @@
+"""Tests of :mod:`message_ix_models.util.node`."""
 import pytest
 from genno import Quantity
 from message_ix import make_df
@@ -11,7 +12,7 @@ VALUE = 0.1
 
 @pytest.fixture(scope="module")
 def input():
-    # Make some R11 test data
+    """Fixture: test data for :func:`.adapt_R11_R14`."""
     R11_all = get_codes("node/R11")
     R11_reg = R11_all[R11_all.index("World")].child
     df = make_df(
@@ -25,6 +26,7 @@ def input():
 
 
 def test_adapt_R11_R14_0(input):
+    """:func:`.adapt_R11_R14` handles :class:`pandas.DataFrame`."""
     # Function runs
     output = adapt_R11_R14(input)
 
@@ -46,6 +48,7 @@ def test_adapt_R11_R14_0(input):
 
 
 def test_adapt_R11_R14_1(input):
+    """:func:`.adapt_R11_R14` handles :class:`genno.Quantity`."""
     # Convert to genno.Quantity
     df = input[PAR]
     input[PAR] = Quantity.from_series(df.set_index(df.columns[:-2].tolist())["value"])
