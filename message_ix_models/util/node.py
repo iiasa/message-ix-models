@@ -132,7 +132,7 @@ def identify_nodes(scenario: Scenario) -> str:
         raise ValueError(f"Couldn't identify node codelist from {repr(nodes)}")
 
     # Expected list of nodes
-    world = codes[codes.index("World")]
+    world = codes[codes.index("World")]  # type: ignore [arg-type]
     codes = [world] + world.child
 
     try:
