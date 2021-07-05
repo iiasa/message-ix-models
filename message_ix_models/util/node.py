@@ -3,7 +3,6 @@ from functools import singledispatch
 from typing import Dict, Union
 
 import pandas as pd
-
 from message_ix.reporting import Quantity
 
 # FIXME to be robust to changes in message_ix, read these names from the package
