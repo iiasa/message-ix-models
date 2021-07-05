@@ -9,6 +9,12 @@ import pandas as pd
 from message_ix.models import MESSAGE_ITEMS
 from sdmx.model import AnnotableArtefact, Annotation, Code
 
+from .node import adapt_R11_R14
+
+__all__ = [
+    "adapt_R11_R14",
+]
+
 log = logging.getLogger(__name__)
 
 try:
