@@ -21,7 +21,7 @@ class TestContext:
         with pytest.raises(IndexError, match="ambiguous: 2 Context instances"):
             Context.only()
 
-    def test_clone_to_dest(self, test_context):
+    def test_clone_to_dest(self, caplog, test_context):
         ctx = test_context
 
         platform_name = ctx.platform_info["name"]
@@ -30,13 +30,21 @@ class TestContext:
 
         # Works with direct settings, no URL
         c = deepcopy(ctx)
+
+        # Force the base scenario info to be empty
+        c["scenario_info"] = dict()
+
         c["dest_scenario"] = dict(model=model_name, scenario=scenario_name)
         s = c.clone_to_dest()
+
+        # Base scenario was created
+        assert "No base scenario given" in caplog.messages
 
         # Works with a URL to parse and no base scenario
         url = f"ixmp://{platform_name}/{model_name}/{scenario_name}"
 
         c = deepcopy(ctx)
+        c["scenario_info"] = dict()
         c["dest"] = url
         s = c.clone_to_dest()
         assert model_name == s.model and scenario_name == s.scenario
