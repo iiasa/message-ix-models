@@ -68,6 +68,31 @@ def main(click_ctx, **kwargs):
     click_ctx.call_on_close(click_ctx.obj.close_db)
 
 
+@main.command("export-test-data")
+@click.option("--exclude", default="", help="Sheets to exclude.")
+@click.option("--nodes", default="R11_AFR,R11_CPA", help="Nodes to include.")
+@click.option("--techs", default="coal_ppl", help="Technologies to include.")
+@click.pass_obj
+def export_test_data_cmd(ctx, exclude, nodes, techs):
+    """Prepare data for testing.
+
+    Option values for --exclude, --nodes, and --techs must be comma-separated lists.
+    """
+    from message_ix_models.testing import export_test_data
+
+    # Store CLI options on the Context
+    ctx.export_exclude = list(filter(None, exclude.split(",")))  # Exclude empty string
+    ctx.export_nodes = nodes.split(",")
+    ctx.export_techs = techs.split(",")
+
+    mark_time()
+
+    # Export
+    export_test_data(ctx)
+
+    mark_time()
+
+
 @main.command(hidden=True)
 @click.pass_obj
 def debug(ctx):
