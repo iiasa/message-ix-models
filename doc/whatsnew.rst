@@ -6,9 +6,6 @@ Next release
 
 - Add :func:`identify_nodes`, a function for identifying a :doc:`pkg-data/node` based on a :class:`.Scenario` (:pull:`24`).
 - Add :func:`adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` (:pull:`24`).
-- Add the :ref:`R12` node code list (:pull:`14`)
-
-- Allow use of pytest's persistent cache across test sessions (see :doc:`repro`; :pull:`23`).
 - Add :func:`.export_test_data` and :command:`mix-models export-test-data` command (:pull:`16`).
   See :ref:`export-test-data`.
 - Allow use of pytest's persistent cache across test sessions (:pull:`23`).
