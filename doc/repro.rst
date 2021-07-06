@@ -64,3 +64,16 @@ Continuous testing
 The test suite (:mod:`message_ix_models.tests`) is run using GitHub Actions for new commits on the ``main`` branch, or on any branch associated with a pull request.
 
 Because it is closed-source and requires access to internal IIASA resources, including databases, continuous integration for :mod:`message_data` is handled by an internal server running `TeamCity <https://www.jetbrains.com/teamcity/>`_: https://ene-builds.iiasa.ac.at/project/message (requires authorization)
+
+
+.. _export-test-data:
+
+Prepare data for testing
+========================
+
+Use the ``export-test-data`` CLI command::
+
+  mix-models --url="ixmp://ixmp-dev/ENGAGE_SSP2_v4.1.7/baseline" export-test-data
+
+See also the documentation for :func:`export_test_data`.
+Use the :command:`--exclude`, :command:`--nodes`, and :command:`--techs` options to control the content of the resulting file.
