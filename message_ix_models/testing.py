@@ -245,6 +245,7 @@ EXPORT_OMIT = [
     "MERtoPPP",
     "prfconst",
     "price_MESSAGE",
+    "ref_",
     "sector",
 ]
 
