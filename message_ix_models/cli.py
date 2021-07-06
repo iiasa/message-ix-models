@@ -81,7 +81,7 @@ def export_test_data_cmd(ctx, exclude, nodes, techs):
     from message_ix_models.testing import export_test_data
 
     # Store CLI options on the Context
-    ctx.export_exclude = exclude.split(",")
+    ctx.export_exclude = list(filter(None, exclude.split(",")))  # Exclude empty string
     ctx.export_nodes = nodes.split(",")
     ctx.export_techs = techs.split(",")
 
