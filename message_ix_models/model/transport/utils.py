@@ -36,6 +36,12 @@ def read_config(context=None):
     # Apply a default setting, e.g. regions = R11
     context.use_defaults(SETTINGS)
 
+    # Temporary
+    if context.regions == "ISR":
+        raise NotImplementedError(
+            "ISR transpor config; see https://github.com/iiasa/message_data/pull/190"
+        )
+
     # Base private directory containing transport config files. The second component
     # may not exist.
     dir = ["transport", context.regions]
