@@ -7,31 +7,29 @@ from message_ix_models.model.bare import get_spec
 from pytest import param
 
 from message_data import testing
-from message_data.model.transport import demand
+from message_data.model.transport import demand, read_config
 
 log = logging.getLogger(__name__)
 
 
-def test_demand_dummy(transport_context):
+def test_demand_dummy(test_context):
     """Consumer-group-specific commodities are generated."""
-    info = get_spec(transport_context)["add"]
+    info = get_spec(test_context)["add"]
 
     assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
 
 
 @pytest.mark.parametrize(
-    "regions",
-    [
-        "R11",
-        param("R14", marks=testing.NIE),
-        param("ISR", marks=testing.NIE),
-    ],
+    "regions,N_node",
+    [("R11", 11), ("R14", 14), param("ISR", 1, marks=testing.NIE)],
 )
-def test_from_external_data(transport_context_f, tmp_path, regions):
+def test_from_external_data(test_context, tmp_path, regions, N_node):
     """Exogenous demand calculation succeeds."""
-    ctx = transport_context_f
+    ctx = test_context
     ctx.regions = regions
     ctx.output_path = tmp_path
+
+    read_config(ctx)
 
     spec = get_spec(ctx)
 

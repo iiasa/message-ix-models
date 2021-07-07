@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 
 from message_ix_models.util import private_data_path
 
+from message_data.model.transport import read_config
 from message_data.model.transport.report import callback, computations
 from message_data.reporting import prepare_reporter, register
 from message_data.testing import NIE
@@ -32,14 +33,16 @@ def test_register_cb():
         pytest.param("ISR", "A", True, marks=NIE),
     ),
 )
-def test_report_bare(request, transport_context_f, tmp_path, regions, years, solved):
+def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     """Run MESSAGEix-Transport–specific reporting."""
     register(callback)
 
-    ctx = transport_context_f
+    ctx = test_context
     ctx.regions = regions
     ctx.years = years
     ctx["output dir"] = tmp_path
+
+    read_config(ctx)
 
     scenario = built_transport(request, ctx, solved=solved)
 
@@ -58,9 +61,9 @@ def test_report_bare(request, transport_context_f, tmp_path, regions, years, sol
     rep.get(key)
 
 
-def test_ldv_distance(transport_context_f):
+def test_ldv_distance(test_context):
     "Test the :func:`ldv_distance()` computation."
-    ctx = transport_context_f
+    ctx = test_context
 
     # Computation runs
     result = computations.ldv_distance(ctx["transport config"])

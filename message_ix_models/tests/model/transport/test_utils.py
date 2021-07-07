@@ -3,15 +3,14 @@ import pandas.testing as pdt
 import pytest
 import xarray as xr
 from iam_units import registry
+from pytest import param
 
-from message_data.model.transport.utils import (
-    consumer_groups,
-    input_commodity_level,
-    read_config,
-)
+from message_data import testing
+from message_data.model.transport import read_config
+from message_data.model.transport.utils import consumer_groups, input_commodity_level
 
 
-def test_add_cl(transport_context):
+def test_add_cl(test_context):
     """:func:`.input_commodity_level` preserves the content of other columns."""
     # Input data missing 'commodity' and 'level'
     df_in = pd.DataFrame(
@@ -39,7 +38,9 @@ def test_add_cl(transport_context):
     "regions",
     [
         None,  # Default, i.e. R11
-        "ISR",
+        "R11",
+        "R14",
+        param("ISR", marks=testing.NIE),
     ],
 )
 def test_read_config(test_context, regions):
@@ -63,7 +64,9 @@ def test_read_config(test_context, regions):
         )
 
 
-def test_consumer_groups(transport_context):
+def test_consumer_groups(test_context):
+    read_config(test_context)
+
     # Returns a list of codes
     codes = consumer_groups()
     RUEAA = codes[codes.index("RUEAA")]
