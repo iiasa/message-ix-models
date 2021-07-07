@@ -180,9 +180,9 @@ def test_get_emissions_data(test_context, source, rows):
     [
         (None, "R11", "A"),
         ("US-TIMES MA3T", "R11", "A"),
+        ("US-TIMES MA3T", "R14", "A"),
         # Not implemented
         ("US-TIMES MA3T", "R11", "B"),
-        param("US-TIMES MA3T", "R14", "A", marks=testing.NIE),
         param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
     ],
 )
@@ -227,9 +227,7 @@ def test_get_ldv_data(test_context, source, regions, years):
         assert len(info.N[1:]) * ((11 * len(exp)) + 1) == len(df)
 
 
-@pytest.mark.parametrize(
-    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
-)
+@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
 @pytest.mark.parametrize("pop_scen", ["GEA mix"])
 def test_groups(test_context, regions, pop_scen):
     ctx = test_context
@@ -255,9 +253,7 @@ def test_groups(test_context, regions, pop_scen):
     assert (result.sum("cg") - 1.0 < 1e-08).all()
 
 
-@pytest.mark.parametrize(
-    "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
-)
+@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
 @pytest.mark.parametrize("pop_scen", ["GEA mix", "GEA supply", "GEA eff"])
 def test_urban_rural_shares(test_context, regions, pop_scen):
     ctx = test_context
