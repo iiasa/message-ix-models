@@ -90,7 +90,8 @@ def consumer_groups(rtype=Code):
     # Assemble group information
     result = defaultdict(list)
 
-    set_config = Context.get_instance()["transport set"]
+    # FIXME don't depend on the most recent Context instance being the correct one
+    set_config = Context.get_instance(-1)["transport set"]
 
     for indices in product(*[set_config[d]["add"] for d in dims]):
         # Create a new code by combining three
@@ -125,7 +126,8 @@ def consumer_groups(rtype=Code):
 def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
     """Add input 'commodity' and 'level' to `df` based on 'technology'."""
     # Retrieve transport technology information from configuration
-    ctx = Context.get_instance()
+    # FIXME don't depend on the most recent Context instance being the correct one
+    ctx = Context.get_instance(-1)
     t_info = ctx["transport set"]["technology"]["add"]
 
     # Retrieve general commodity information
