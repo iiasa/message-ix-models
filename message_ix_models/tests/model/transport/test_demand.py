@@ -47,9 +47,16 @@ def test_from_external_data(test_context, tmp_path, regions, N_node):
         # "transport pdt:n-y:total" [=] Mm / year
     ):
         try:
+            # Quantity can be computed
             qty = rep.get(key)
+
+            # Quantity has the expected units
             demand.assert_units(qty, unit)
+
+            # Quantity has the expected size on the n/node dimension
+            assert N_node == len(qty.coords["n"])
         except AssertionError:
+            # Something else
             print(f"\n\n-- {key} --\n\n")
             print(rep.describe(key))
             print(qty, qty.attrs)
