@@ -1,15 +1,16 @@
 import logging
 from copy import deepcopy
+from typing import List
 
 import pandas as pd
 import xarray as xr
 from genno import computations
 from ixmp.reporting import RENAME_DIMS, Quantity
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import Code, get_codes
 from message_ix_models.util import private_data_path
 
 from message_data.model.transport.utils import consumer_groups
-from message_data.tools import gea
+from message_data.tools import gea, ssp
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ GEA_DIMS = dict(
 
 # Dimensions
 DIMS = deepcopy(RENAME_DIMS)
+DIMS.update(dict(region="n", variable="area_type"))
 
 
 def get_consumer_groups(context):
@@ -172,7 +174,7 @@ def get_urban_rural_shares(context):
     )
 
 
-def get_gea_population(regions=[]):
+def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
     """Load population data from the GEA database.
 
     Parameters
@@ -186,28 +188,70 @@ def get_gea_population(regions=[]):
     .get_gea_data
     """
     # Identify the regions to query from the GEA data, which has R5 and other mappings
-    GEA_DIMS["region"].update({r.split("_")[-1]: r for r in map(str, regions)})
+    GEA_DIMS["region"].update({r.split("_")[-1]: r for r in map(str, nodes)})
 
     # Assemble query string and retrieve data from GEA snapshot
-    pop = gea.get_gea_data(
+    data = gea.get_gea_data(
         " and ".join(
             f"{dim} in {list(values.keys())}" for dim, values in GEA_DIMS.items()
         )
-    )
+    ).droplevel("model")
 
-    # Rename values along dimensions
+    # Discard index levels that aren't used as labels
+    data.index = data.index.remove_unused_levels()
+
+    # Replace values along dimensions
     for dim, values in GEA_DIMS.items():
-        pop = pop.rename(values, level=dim)
+        data = data.rename(values, level=dim)
+
+    # Convert to genno.Quantity
+    qty = Quantity(data, units="Mpassenger").rename(DIMS)
 
     # Units are as expected
-    assert ["million"] == pop.index.levels[pop.index.names.index("unit")]
+    assert ["million"] == qty.coords["unit"]
 
-    # - Remove model, units dimensions.
-    # - Rename other dimensions.
-    # - Convert to Quantity.
-    return Quantity(
-        pop.droplevel(["model", "unit"]).rename_axis(
-            index={"variable": "area_type", "region": "n", "year": "y"}
-        ),
-        units="Mpassenger",
+    # Remove unit dimension
+    return add_2110(qty.drop(["unit"]))
+
+
+def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quantity:
+    """Load population data from the SSP database."""
+    # Retrieve country-level data from SSP snapshot
+    data = ssp.get_ssp_data(
+        kind="country",
+        query="variable == 'Population' and model == 'IIASA GDP'",
+    ).droplevel(["variable", "model"])
+
+    # Discard index levels that aren't used as labels
+    data.index = data.index.remove_unused_levels()
+
+    # Convert to genno.Quantity
+    qty = Quantity(data, units="Mpassenger").rename(DIMS)
+
+    # Units are as expected
+    assert ["million"] == qty.coords["unit"]
+
+    # Find the scenario label that includes `scenario`, e.g. "SSP2_v4_…" for "SSP2"
+    _scenario = list(filter(lambda s: scenario in s, qty.coords["scenario"].data))
+    assert len(_scenario) == 1
+
+    # - Select & drop on the 'unit' and 'scenario' dimensions.
+    # - Convert the list of nodes into a country → region mapping.
+    # - Use the genno aggregate operation from country to regional resolution.
+    return add_2110(
+        computations.aggregate(
+            qty.sel(scenario=_scenario[0]).drop(["unit", "scenario"]),
+            groups=dict(n={node.id: list(map(str, node.child)) for node in nodes}),
+            keep=False,
+        )
+    ).sel(y=periods)
+
+
+def add_2110(data: Quantity) -> Quantity:
+    """Duplicate 2100 data for 2110."""
+    # TODO use some kind of ffill operation
+    # NB transpose() should not be necessary; see khaeru/genno#38
+    dims = data.dims
+    return computations.concat(
+        data, data.sel(y=2100).expand_dims(y=[2110]).transpose(*dims)
     )

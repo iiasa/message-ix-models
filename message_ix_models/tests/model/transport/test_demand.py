@@ -1,9 +1,12 @@
 import logging
+from itertools import dropwhile
 
 import message_ix
 import pytest
 from message_ix.reporting import Key
 from message_ix_models.model.bare import get_spec
+from message_ix_models.model.structure import get_codes
+from message_ix_models.util import eval_anno
 from pytest import param
 
 from message_data import testing
@@ -17,6 +20,35 @@ def test_demand_dummy(test_context):
     info = get_spec(test_context)["add"]
 
     assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
+
+
+@pytest.mark.parametrize(
+    "regions,source,years", [("R11", "GEA mix", "A"), ("R14", "SSP2", "B")]
+)
+def test_population(regions, source, years):
+    # Inputs to the function: list of model nodes
+    nodes = get_codes(f"node/{regions}")
+    nodes = nodes[nodes.index("World")].child
+
+    # Get the list of model periods
+    # TODO move upstream to message_ix_models
+    periods = get_codes(f"year/{years}")
+    periods = list(
+        map(
+            lambda c: int(str(c)),
+            dropwhile(lambda c: not eval_anno(c, "firstmodelyear"), periods),
+        )
+    )
+
+    # Configuration (only the expected key)
+    config = {"transport": {"data source": {"population": source}}}
+
+    # Function runs
+    result = demand.population(nodes, periods, config)
+
+    # Data have expected coverage
+    assert set(nodes) == set(result.coords["n"].values)
+    assert set(periods) <= set(result.coords["y"].values)
 
 
 @pytest.mark.parametrize(
