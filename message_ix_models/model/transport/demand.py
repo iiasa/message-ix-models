@@ -199,7 +199,7 @@ def prepare_reporter(
     rep.add("base shares:n-t-y", base_shares, "n:ex world", "y", "config")
 
     # Population data from GEA
-    pop_key = rep.add("population:n-y", population, "n:ex world", "config")
+    pop_key = rep.add("population:n-y", population, "nodes:ex world", "y", "config")
 
     # Consumer group sizes
     # TODO ixmp is picky here when there is no separate argument to the callable; fix.
@@ -438,27 +438,18 @@ def votm(gdp_ppp_cap):
     return result
 
 
-def population(nodes, config):
+def population(n, y, config) -> Quantity:
     """Return population data from GEA.
 
     Dimensions: n-y. Units: 10⁶ person/passenger.
     """
     pop_scenario = config["transport"]["data source"]["population"]
 
-    data = (
-        get_gea_population(nodes)
-        .sel(area_type="total", scenario=pop_scenario, drop=True)
-        .rename(dict(region="n", year="y"))
-    )
-
-    # Duplicate 2100 data for 2110
-    # TODO use some kind of ffill operation
-    # NB transpose() should not be necessary; see khaeru/genno#38
-    data = computations.concat(
-        data, data.sel(y=2100).expand_dims(y=[2110]).transpose("n", "y")
-    )
-
-    return Quantity(data, units="Mpassenger")
+    if "GEA" in pop_scenario:
+        return get_gea_population(n, y, pop_scenario).sel(area_type="total", drop=True)
+    elif "SSP" in pop_scenario:
+        # NB incomplete
+        return get_ssp_population(n, y, pop_scenario)
 
 
 def smooth(qty):
