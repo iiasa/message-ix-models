@@ -7,7 +7,7 @@ from pytest import mark, param
 from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
 
-from message_data.model.transport import build, report
+from message_data.model.transport import build, report, read_config
 from message_data.testing import NIE
 
 log = logging.getLogger(__name__)
@@ -16,15 +16,17 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions_arg, regions_exp",
-    [(None, "R14"), ("ISR", "ISR"), ("R11", "R11"), ("R14", "R14")],
+    [(None, "R11"), ("R11", "R11"), ("R14", "R14"), param("ISR", "ISR", marks=NIE)],
 )
-def test_get_spec(transport_context_f, regions_arg, regions_exp, years):
-    ctx = transport_context_f
+def test_get_spec(test_context, regions_arg, regions_exp, years):
+    ctx = test_context
     if regions_arg:
         # Non-default value
         ctx.regions = regions_arg
 
     ctx.years = years
+
+    read_config(ctx)
 
     # The spec can be generated
     spec = build.get_spec(ctx)
@@ -32,7 +34,7 @@ def test_get_spec(transport_context_f, regions_arg, regions_exp, years):
     # The required elements of the "node" set match the configuration
     nodes = get_codes(f"node/{regions_exp}")
     exp = list(map(str, nodes[nodes.index("World")].child))
-    assert spec["require"].set["node"] == exp
+    assert exp == spec["require"].set["node"]
 
 
 @pytest.mark.parametrize(
@@ -40,27 +42,26 @@ def test_get_spec(transport_context_f, regions_arg, regions_exp, years):
     [
         ("R11", "A", None, None, False),  # 31 s
         ("R11", "B", None, None, False),
-        # TODO re-enable
-        param(
-            "R11", "A", None, None, True, marks=(mark.slow, pytest.mark.skip)
-        ),  # 44 s
+        param("R11", "A", None, None, True, marks=mark.slow),  # 44 s
         param("R11", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),  # 43 s
         param("R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
+        param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
         # Non-R11 configurations currently fail
-        param("R14", "A", None, None, False, marks=NIE),
         param("ISR", "A", None, None, False, marks=NIE),
         # Periods "B" currently fail
         param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=(mark.slow, NIE)),
     ],
 )
 def test_build_bare_res(
-    request, tmp_path, transport_context_f, regions, years, ldv, nonldv, solve
+    request, tmp_path, test_context, regions, years, ldv, nonldv, solve
 ):
     """Test that model.transport.build works on the bare RES, and the model solves."""
     # Pre-load transport config/metadata
-    ctx = transport_context_f
+    ctx = test_context
     ctx.regions = regions
     ctx.years = years
+
+    read_config(ctx)
 
     # Manually modify some of the configuration per test parameters
     ctx["transport config"]["data source"]["LDV"] = ldv
@@ -99,12 +100,12 @@ def test_build_bare_res(
         # "ixmp://clone-2021-06-09/ENGAGE_SSP2_v4.1.7/EN_NPi2020_1000f",
     ),
 )
-def test_build_existing(tmp_path, transport_context_f, url, solve=False):
+def test_build_existing(tmp_path, test_context, url, solve=False):
     """Test that model.transport.build works on certain existing scenarios.
 
     These are the ones listed in the documenation, at :ref:`transport-base-scenarios`.
     """
-    ctx = transport_context_f
+    ctx = test_context
 
     # Update the Context with the base scenario's `url`
     ctx.handle_cli_args(url=url)

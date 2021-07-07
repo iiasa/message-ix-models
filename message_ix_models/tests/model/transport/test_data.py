@@ -9,7 +9,7 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from message_data import testing
-from message_data.model.transport import data as data_module
+from message_data.model.transport import data as data_module, read_config
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import get_emissions_data
 from message_data.model.transport.data.groups import (
@@ -41,19 +41,14 @@ def test_load_data(session_context, key, rtype):
     assert isinstance(result, rtype)
 
 
-@pytest.mark.parametrize(
-    "regions",
-    [
-        "R11",
-        param("R14", marks=testing.NIE),
-        param("ISR", marks=testing.NIE),
-    ],
-)
-def test_demand(transport_context_f, regions):
+@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
+def test_demand(test_context, regions):
     """Test :func:`.transport.data.demand` that returns demand data."""
-    ctx = transport_context_f
+    ctx = test_context
     ctx["regions"] = regions
     ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
+
+    read_config(ctx)
 
     # Function runs
     data = data_module.demand(ctx)
@@ -71,10 +66,10 @@ def test_demand(transport_context_f, regions):
     ), "`demand` does not cover the model horizon"
 
 
-@pytest.mark.parametrize("years", ["A", "B"])  # param("B", marks=testing.NIE)])
+@pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize("regions, N_node", [("R11", 11), ("R14", 14), ("ISR", 1)])
-def test_ikarus(transport_context_f, regions, N_node, years):
-    ctx = transport_context_f
+def test_ikarus(test_context, regions, N_node, years):
+    ctx = test_context
     ctx.regions = regions
     ctx.years = years
 
@@ -171,8 +166,8 @@ def test_ikarus(transport_context_f, regions, N_node, years):
 
 @pytest.mark.skip("Temporary, to be resolved in #238")
 @pytest.mark.parametrize("source, rows", (("1", 15839), ("2", 17286), ("3", 5722)))
-def test_get_emissions_data(transport_context_f, source, rows):
-    ctx = transport_context_f
+def test_get_emissions_data(test_context, source, rows):
+    ctx = test_context
     ctx["transport config"]["data source"]["emissions"] = source
 
     data = get_emissions_data(ctx)
@@ -191,12 +186,15 @@ def test_get_emissions_data(transport_context_f, source, rows):
         param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
     ],
 )
-def test_get_ldv_data(transport_context_f, source, regions, years):
-    ctx = transport_context_f
+def test_get_ldv_data(test_context, source, regions, years):
+    ctx = test_context
 
     # Info about the corresponding RES
     ctx.regions = regions
     ctx.years = years
+
+    read_config()
+
     info = bare.get_spec(ctx)["add"]
 
     ctx["transport build info"] = info
@@ -233,10 +231,13 @@ def test_get_ldv_data(transport_context_f, source, regions, years):
     "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
 )
 @pytest.mark.parametrize("pop_scen", ["GEA mix"])
-def test_groups(transport_context_f, regions, pop_scen):
-    ctx = transport_context_f
+def test_groups(test_context, regions, pop_scen):
+    ctx = test_context
     ctx.regions = regions
     ctx["transport population scenario"] = pop_scen
+
+    read_config(ctx)
+
     ctx["transport build info"] = bare.get_spec(ctx)["add"]
 
     result = get_consumer_groups(ctx)
@@ -258,10 +259,13 @@ def test_groups(transport_context_f, regions, pop_scen):
     "regions", ["R11", param("R14", marks=testing.NIE), param("ISR", marks=testing.NIE)]
 )
 @pytest.mark.parametrize("pop_scen", ["GEA mix", "GEA supply", "GEA eff"])
-def test_urban_rural_shares(transport_context_f, regions, pop_scen):
-    ctx = transport_context_f
+def test_urban_rural_shares(test_context, regions, pop_scen):
+    ctx = test_context
     ctx.regions = regions
     ctx["transport"] = {"data source": {"population": pop_scen}}
+
+    read_config(ctx)
+
     ctx["transport build info"] = bare.get_spec(ctx)["add"]
 
     # Shares can be retrieved
