@@ -11,6 +11,11 @@ from sdmx.model import Code
 
 from message_data.model.transport.common import METADATA
 
+#: Valid values of Context.regions for MESSAGEix-Transport; default first.
+SETTINGS = dict(
+    regions=["R11", "R12", "R14", "ISR"],
+)
+
 
 def read_config(context=None):
     """Read the transport model configuration / metadata and store on `context`.
@@ -28,9 +33,12 @@ def read_config(context=None):
         # Already loaded
         return
 
+    # Apply a default setting, e.g. regions = R11
+    context.use_defaults(SETTINGS)
+
     # Base private directory containing transport config files. The second component
     # may not exist.
-    dir = ["transport", context.get("regions", "") or ""]
+    dir = ["transport", context.regions]
 
     # Load transport configuration files and store on the context object
     for parts in METADATA:
