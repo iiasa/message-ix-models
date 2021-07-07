@@ -71,7 +71,7 @@ def read_config(context=None):
     for set_name, info in context["transport set"].items():
         try:
             info["add"] = as_codes(info["add"])
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
 
