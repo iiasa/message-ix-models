@@ -253,19 +253,38 @@ def test_groups(test_context, regions, pop_scen):
     assert (result.sum("cg") - 1.0 < 1e-08).all()
 
 
-@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
-@pytest.mark.parametrize("pop_scen", ["GEA mix", "GEA supply", "GEA eff"])
-def test_urban_rural_shares(test_context, regions, pop_scen):
+@pytest.mark.parametrize(
+    "regions,years,pop_scen",
+    [
+        ("R11", "A", "GEA mix"),
+        ("R11", "A", "GEA supply"),
+        ("R11", "A", "GEA eff"),
+        # Different years
+        ("R11", "B", "GEA mix"),
+        # Different regions & years
+        ("R14", "B", "SSP1"),
+        ("R14", "B", "SSP2"),
+        ("R14", "B", "SSP3"),
+        param("ISR", "B", "SSP2", marks=testing.NIE),
+    ],
+)
+def test_urban_rural_shares(test_context, regions, years, pop_scen):
     ctx = test_context
     ctx.regions = regions
-    ctx["transport"] = {"data source": {"population": pop_scen}}
+    ctx.years = years
 
     read_config(ctx)
 
-    ctx["transport build info"] = bare.get_spec(ctx)["add"]
+    ctx["transport config"] = {"data source": {"population": pop_scen}}
+    ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
 
     # Shares can be retrieved
-    get_urban_rural_shares(ctx)
+    result = get_urban_rural_shares(ctx)
+
+    assert ("n", "y", "area_type") == result.dims
+    assert set(info.N[1:]) == set(result.coords["n"].values)
+    assert set(info.Y) <= set(result.coords["y"].values)
+    assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
 
 
 @pytest.mark.parametrize(
