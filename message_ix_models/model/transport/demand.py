@@ -136,6 +136,7 @@ def add_structure(c: Computer, info: ScenarioInfo):
     """
     for key, value in (
         ("n", quote(list(map(str, info.set["node"])))),
+        ("nodes", quote(info.set["node"])),
         ("y", quote(info.set["year"])),
         (
             "cat_year",
@@ -188,6 +189,7 @@ def prepare_reporter(
     # List of nodes excluding "World"
     # TODO move upstream to message_ix
     rep.add("n:ex world", nodes_ex_world, "n")
+    rep.add("nodes:ex world", nodes_ex_world, "nodes")
 
     # List of model years
     rep.add("y:model", model_periods, "y", "cat_year")
