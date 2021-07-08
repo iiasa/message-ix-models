@@ -36,7 +36,7 @@ DIMS = deepcopy(RENAME_DIMS)
 DIMS.update(dict(region="n", variable="area_type"))
 
 
-def get_consumer_groups(context):
+def get_consumer_groups(context) -> Quantity:
     """Return shares of transport consumer groups.
 
     Parameters
@@ -130,7 +130,7 @@ def get_consumer_groups(context):
     return Quantity(groups / groups.sum("cg"))
 
 
-def get_urban_rural_shares(context):
+def get_urban_rural_shares(context) -> Quantity:
     """Return shares of urban and rural population from GEA.
 
     The data are filled forward to cover the years indicated by ``context["transport
@@ -144,31 +144,51 @@ def get_urban_rural_shares(context):
     See also
     --------
     .get_gea_population
+    .get_ssp_population
     """
     # Retrieve region info for the selected regional aggregation
     nodes = get_codes(f"node/{context.regions}")
     # List of regions according to the context
     regions = nodes[nodes.index("World")].child
 
-    # Retrieve the data, and select the scenario to use, e.g. "GEA mix"
-    # TODO pass the scenario selector through get_gea_population() to get_gea_data()
-    pop = get_gea_population(regions).sel(
-        scenario=context["transport config"]["data source"]["population"], drop=True
-    )
+    scenario = context["transport config"]["data source"]["population"]
 
-    # Duplicate 2100 data for 2110
-    # TODO use some kind of ffill operation
-    years = context["transport build info"].Y
-    idx = years.index(2100) + 1
-    pop = computations.concat(
-        pop,
-        pop.sel(y=2100).expand_dims(y=years[idx:]).transpose("n", "area_type", "y"),
-    )
+    if "GEA" in scenario:
+        pop = get_gea_population(regions, context["transport build info"].Y, scenario)
+        return computations.div(
+            pop.sel(area_type=["UR+SU", "RU"]), pop.sel(area_type="total", drop=True)
+        )
+    elif "SSP" in scenario:
+        pop = get_ssp_population(regions, context["transport build info"].Y, scenario)
+        log.warning("Need urban/suburban share data for SSP scenarios")
 
-    # Compute and return shares
-    return computations.div(
-        pop.sel(area_type=["UR+SU", "RU"]), pop.sel(area_type="total", drop=True)
-    )
+        share = Quantity(
+            xr.DataArray([0.8, 0.2], coords=[["UR+SU", "RU"]], dims=["area_type"])
+        )
+        return computations.product(pop, share)
+    else:
+        raise ValueError(scenario)
+
+
+def population(n, y, config) -> Quantity:
+    """Return population data from GEA or SSP, depending on `config`.
+
+    Dimensions: n-y. Units: 10⁶ person/passenger.
+
+    .. note:: this version differs from the one in :mod:`.transport.demand` in that the
+       GEA data is returned with the ``area_type`` dimension preserved.
+
+       .. todo:: consolidate the two in a simple way.
+
+    """
+    pop_scenario = config["transport"]["data source"]["population"]
+
+    if "GEA" in pop_scenario:
+        return get_gea_population(n, y, pop_scenario)
+    elif "SSP" in pop_scenario:
+        return get_ssp_population(n, y, pop_scenario)
+    else:
+        raise ValueError(pop_scenario)
 
 
 def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
@@ -208,7 +228,7 @@ def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
     assert ["million"] == qty.coords["unit"]
 
     # Remove unit dimension
-    return add_2110(qty.drop(["unit"]))
+    return add_2110(qty.sel(scenario=scenario).drop(["unit", "scenario"]))
 
 
 def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quantity:
