@@ -46,7 +46,8 @@ def test_population(regions, source, years):
     # Function runs
     result = demand.population(nodes, periods, config)
 
-    # Data have expected coverage
+    # Data have expected dimensions and coverage
+    assert ("n", "y") == result.dims
     assert set(nodes) == set(result.coords["n"].values)
     assert set(periods) <= set(result.coords["y"].values)
 
