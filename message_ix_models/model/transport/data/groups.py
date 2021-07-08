@@ -145,9 +145,6 @@ def get_urban_rural_shares(context):
     --------
     .get_gea_population
     """
-    # Ensure the current settings are supported
-    gea.supports(context)
-
     # Retrieve region info for the selected regional aggregation
     nodes = get_codes(f"node/{context.regions}")
     # List of regions according to the context
