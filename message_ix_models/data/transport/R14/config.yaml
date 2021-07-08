@@ -1,4 +1,4 @@
-# Configuration for MESSAGE-Transport
+# Configuration for MESSAGEix-Transport
 
 # Sources for input data
 data source:
@@ -8,8 +8,7 @@ data source:
   LDV: US-TIMES MA3T
   # Demands: 'dummy' only
   demand dummy: false
-  # Population: 'GEA mix' only
-  population: GEA mix
+  population: SSP2
   # Emissions: ID of a dump from a base scenario
   emissions: "1"
 
@@ -27,17 +26,20 @@ data files:
 # (DLM) “Which US census region should be used as a proxy for the distribution
 # of driver types in this MESSAGE region?”
 node to census_division:
-  R11_AFR: 2
-  R11_CPA: 2
-  R11_EEU: 2
-  R11_FSU: 2
-  R11_LAM: 2
-  R11_MEA: 2
-  R11_NAM: 2
-  R11_PAO: 2
-  R11_PAS: 2
-  R11_SAS: 2
-  R11_WEU: 2
+  R14_AFR: 2
+  R14_CAS: 2
+  R14_CPA: 2
+  R14_EEU: 2
+  R14_LAM: 2
+  R14_MEA: 2
+  R14_NAM: 2
+  R14_PAO: 2
+  R14_PAS: 2
+  R14_RUS: 2
+  R14_SAS: 2
+  R14_SCS: 2
+  R14_UBM: 2
+  R14_WEU: 2
 
 # TODO flatten this structure
 factor:
@@ -57,17 +59,21 @@ factor:
   cost:
     # Regional cost multipliers in 2010
     ldv 2010:
-      nam: 1.0
-      lam: 0.9
-      weu: 1.0
-      eeu: 1.0
-      fsu: 1.0
-      mea: 0.9
-      afr: 0.9
-      cpa: 0.9
-      pao: 1.0
-      pas: 0.9
-      sas: 0.9
+      R14_AFR: 0.9
+      R14_CPA: 0.9
+      R14_EEU: 1.0
+      R14_LAM: 0.9
+      R14_MEA: 0.9
+      R14_NAM: 1.0
+      R14_PAO: 1.0
+      R14_PAS: 0.9
+      R14_RUS: 1.0
+      R14_SAS: 0.9
+      R14_WEU: 1.0
+      # Duplicated from RUS
+      R14_CAS: 1.0
+      R14_SCS: 1.0
+      R14_UBM: 1.0
     # Scaling factor to reduce the cost of NGA vehicles.
     # NB (DLM) “applied to the original US-TIMES cost data. That original data
     #    simply seems too high - much higher than conventional gasoline
@@ -136,17 +142,21 @@ ldv activity:
   #
   _dim: nl  # node_loc
   _unit: vehicle km / year
-  R11_NAM: 25860
-  R11_LAM: 14600
-  R11_WEU: 11646
-  R11_EEU:  8962
-  R11_FSU: 11482
-  R11_MEA: 14000
-  R11_AFR: 10391
-  R11_CPA: 16000
-  R11_PAO: 10000
-  R11_PAS: 12000
-  R11_SAS: 10400
+  R14_AFR: 10391
+  R14_CPA: 16000
+  R14_EEU:  8962
+  R14_LAM: 14600
+  R14_MEA: 14000
+  R14_NAM: 25860
+  R14_PAO: 10000
+  R14_PAS: 12000
+  R14_RUS: 11482
+  R14_SAS: 10400
+  R14_WEU: 11646
+  # Duplicated from R14_RUS
+  R14_CAS: 11482
+  R14_SCS: 11482
+  R14_UBM: 11482
 
 
 # Vehicle lifetime
@@ -158,17 +168,21 @@ ldv lifetime:
   frequent: 10
 
 ldv cost catch-up year:
-  nam: 1.0
-  lam: 2030
-  weu: 1990
-  eeu: 2010
-  fsu: 2010
-  mea: 2030
-  afr: 2050
-  cpa: 2030
-  pao: 1990
-  pas: 2030
-  sas: 2040
+  R14_AFR: 2050
+  R14_CPA: 2030
+  R14_EEU: 2010
+  R14_LAM: 2030
+  R14_MEA: 2030
+  R14_NAM: 1.0
+  R14_PAO: 1990
+  R14_PAS: 2030
+  R14_RUS: 2010
+  R14_SAS: 2040
+  R14_WEU: 1990
+  # Duplicated from R14_RUS
+  R14_CAS: 2010
+  R14_SCS: 2010
+  R14_UBM: 2010
 
 constraint:
   LDV growth_activity: 0.0192  # = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years
@@ -212,7 +226,6 @@ lambda: -2
 # Share weights for regions converge to the average of the regions in each list
 share weight convergence:
   R14_AFR: [R14_PAO, R14_WEU]
-  R14_CAS: [R14_NAM]
   R14_CPA: [R14_PAO, R14_WEU]
   R14_EEU: [R14_PAO, R14_WEU]
   R14_LAM: [R14_PAO, R14_WEU]
@@ -222,9 +235,11 @@ share weight convergence:
   R14_PAS: [R14_PAO, R14_WEU]
   R14_RUS: [R14_NAM]
   R14_SAS: [R14_PAO, R14_WEU]
+  R14_WEU: [R14_PAO, R14_WEU]
+  # Imitating R14_RUS
+  R14_CAS: [R14_NAM]
   R14_SCS: [R14_NAM]
   R14_UBM: [R14_NAM]
-  R14_WEU: [R14_PAO, R14_WEU]
 
 # -- Reporting -----------------------------------------------------------------
 
