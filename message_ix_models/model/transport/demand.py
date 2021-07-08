@@ -164,9 +164,6 @@ def prepare_reporter(
     rep : Reporter
         Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
     """
-    # Ensure the current settings are supported
-    gea.supports(context)
-
     if configure:
         # Configure the reporter; keys are stored
         rep.configure(transport=context["transport config"])
