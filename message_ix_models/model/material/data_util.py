@@ -34,6 +34,7 @@ def modify_demand_and_hist_activity(scen):
         sheet_n = "R11"
         region_type = 'R11_'
         region_name_CPA = "CPA"
+        region_name_CHN = ''
 
     df = pd.read_excel(context.get_path("material", fname),\
     sheet_name=sheet_n, usecols = "A:F")
