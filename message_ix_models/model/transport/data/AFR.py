@@ -12,7 +12,6 @@ The countries belonging to the Africa region in the Roadmap 1.0 model are:
     Region** in RoadmapResults_2017.xlsx.
 """
 import pandas as pd
-from message_ix_models.model.structure import get_codes
 from message_ix_models.util import private_data_path
 from plotnine import save_as_pdf_pages
 
@@ -20,6 +19,7 @@ from message_data.tools.iea_eei import plot_params_per_mode, split_units
 
 FILE = "RoadmapResults_2017.xlsx"
 
+#: Historical years from the Roadmap model.
 HIST_YEARS = [2000, 2005, 2010, 2015]
 
 COLUMN_MAP = {
@@ -88,6 +88,10 @@ def get_afr_data(context, region=("Africa", "R11_AFR"), plot=False):
     The region name returned is :class:`~message-ix-models.util.context.Context`
     dependent. However, it is just relevant for ``R11``, ```R12`` or ``R14`` regional
     aggregations, since the country-level aggregation is the same in both cases.
+
+    It processes the historical years from the Roadmap model, up to 2015. The source
+    file also contains projections up to 2050 (in 5-year time steps), but these are not
+    considered since the focus of this data preparation is the calibration of the model.
 
     Parameters
     ----------
