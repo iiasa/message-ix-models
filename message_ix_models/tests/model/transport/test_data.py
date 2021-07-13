@@ -9,7 +9,7 @@ from pytest import param
 
 from message_data import testing
 from message_data.model.transport import data as data_module
-from message_data.model.transport.data.AFR import get_afr_data
+from message_data.model.transport.data.roadmap import get_roadmap_data
 from message_data.model.transport.data.emissions import get_emissions_data
 from message_data.model.transport.data.groups import (
     get_consumer_groups,
@@ -273,7 +273,7 @@ def test_urban_rural_shares(transport_context_f, regions, pop_scen):
 def test_get_afr_data(transport_context_f, region, length):
     ctx = transport_context_f
 
-    df = get_afr_data(ctx, region)
+    df = get_roadmap_data(ctx, region)
 
     # Data covers all historical periods from the Roadmap model
     assert sorted(df["Year"].unique()) == [2000, 2005, 2010, 2015]

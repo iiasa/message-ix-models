@@ -22,6 +22,9 @@ FILE = "RoadmapResults_2017.xlsx"
 #: Historical years from the Roadmap model.
 HIST_YEARS = [2000, 2005, 2010, 2015]
 
+#: All Roadmap model timesteps.
+ALL_YEARS = [2000, 2005, 2010, 2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050]
+
 COLUMN_MAP = {
     "Mode": "Mode/vehicle type",
 }
@@ -77,7 +80,9 @@ UNITS = dict(
 )
 
 
-def get_afr_data(context, region=("Africa", "R11_AFR"), plot=False):
+def get_roadmap_data(
+    context, region=("Africa", "R11_AFR"), years=None, plot=False
+):
     """Read transport activity data for Africa.
 
     The data is read from ``RoadmapResults_2017.xlsx``, which is already aggregated
@@ -89,9 +94,9 @@ def get_afr_data(context, region=("Africa", "R11_AFR"), plot=False):
     dependent. However, it is just relevant for ``R11``, ```R12`` or ``R14`` regional
     aggregations, since the country-level aggregation is the same in both cases.
 
-    It processes the historical years from the Roadmap model, up to 2015. The source
-    file also contains projections up to 2050 (in 5-year time steps), but these are not
-    considered since the focus of this data preparation is the calibration of the model.
+    By default, it processes the historical years from the Roadmap model, up to 2015.
+    The source file also contains projections up to 2050 (in 5-year time steps),
+    and can be retrieved through the ``years`` argument.
 
     Parameters
     ----------
@@ -101,6 +106,10 @@ def get_afr_data(context, region=("Africa", "R11_AFR"), plot=False):
         (Roadmap region, MESSAGEix region). Info about the target region. At the
         moment, default values are set to ``Africa`` and ``R11`` since these are of
         relevance for the current research of MESSAGEix-Transport.
+    years : list
+        Default: ``None``, implies that it retrieves exclusively the historical time
+        steps from the Roadmap model. It can provide projections up to 2050 if other
+        lists of time steps are provided.
     plot : bool, optional
         If ``True``, plots per mode will be generated in folder /debug.
 
@@ -110,12 +119,18 @@ def get_afr_data(context, region=("Africa", "R11_AFR"), plot=False):
         Same format as returned by :func:`~message_data.tools.iea_eei.get_eei_data`.
     """
     # Load and process data for Africa
+    # Check years provided
+    if not years:
+        years = HIST_YEARS
+    else:
+        for x in years:
+            assert x in ALL_YEARS
     # Read xlsx file
     df = pd.read_excel(
         private_data_path("transport", FILE), sheet_name="Model Results", header=0
     )
     df = df[
-        (df["Year"].isin(HIST_YEARS)) & (df["Roadmap_Region"] == region[0])
+        (df["Year"].isin(years)) & (df["Roadmap_Region"] == region[0])
     ].reset_index(drop=True)
 
     # Map ICCT modes to IEA EEI's modes
@@ -156,5 +171,3 @@ def get_afr_data(context, region=("Africa", "R11_AFR"), plot=False):
         )
 
     return df
-
-
