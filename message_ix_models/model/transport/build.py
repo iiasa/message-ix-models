@@ -11,7 +11,7 @@ from message_ix_models.util import eval_anno, identify_nodes, load_private_data
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
-from message_data.model.transport.utils import consumer_groups
+from message_data.model.transport.utils import consumer_groups, read_config
 
 log = logging.getLogger(__name__)
 
@@ -160,6 +160,9 @@ def main(context: Context, scenario: Scenario, **options):
     regions = identify_nodes(scenario)
     if context.get("regions") != regions:
         log.info(f"Set Context.regions = {repr(regions)} from scenario contents")
+
+        # Read configuration for these regions
+        read_config(context)
 
     # Generate the description of the structure / structure changes
     spec = get_spec(context)
