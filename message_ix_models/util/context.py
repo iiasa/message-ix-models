@@ -110,13 +110,19 @@ class Context(dict):
 
         self.close_db()
 
-    def clone_to_dest(self) -> Tuple[message_ix.Scenario, ixmp.Platform]:
+    def clone_to_dest(self, create=True) -> message_ix.Scenario:
         """Return a scenario based on the ``--dest`` command-line option.
+
+        Parameters
+        ----------
+        create : bool, optional
+            If :obj:`True` (the default) and the base scenario does not exist, a bare
+            RES scenario is created. Otherwise, an exception is raised.
 
         Returns
         -------
         Scenario
-            To prevent the scenario from being garbage collected. Keep a reference to
+            To prevent the scenario from being garbage collected, keep a reference to
             its Platform:
 
             .. code-block: python
@@ -154,8 +160,12 @@ class Context(dict):
                     # Different platform
                     mp_dest = ixmp.Platform(**info)
 
-        except Exception:
-            log.info("No base scenario given")
+        except Exception as e:
+            log.info(f"{type(e).__name__}: {e}")
+
+            if not create:
+                log.error("and create=False")
+                raise
 
             # Create a bare RES to be the base scenario
 
