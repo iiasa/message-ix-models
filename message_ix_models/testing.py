@@ -25,6 +25,12 @@ def pytest_addoption(parser):
         action="store_true",
         help="Use existing local cache files in tests",
     )
+    parser.addoption(
+        "--jvmargs",
+        action="store",
+        default="",
+        help="Arguments for Java VM used by ixmp JDBCBackend",
+    )
 
 
 def pytest_sessionstart():
@@ -78,6 +84,7 @@ def session_context(pytestconfig, tmp_env):
         "class": "jdbc",
         "driver": "hsqldb",
         "url": f"jdbc:hsqldb:mem://{platform_name}",
+        "jvmargs": pytestconfig.option.jvmargs,
     }
 
     # Launch Platform and connect to testdb (reconnect if closed)
