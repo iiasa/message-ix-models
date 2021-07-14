@@ -131,6 +131,11 @@ def identify_nodes(scenario: Scenario) -> str:
     except FileNotFoundError:
         raise ValueError(f"Couldn't identify node codelist from {repr(nodes)}")
 
+    glb_node = [n.endswith("_GLB") for n in nodes]
+    if any(glb_node):
+        omit = nodes.pop(glb_node.index(True))
+        log.info(f"Omit known, non-standard node '{omit}' from set to match")
+
     # Expected list of nodes
     world = codes[codes.index("World")]  # type: ignore [arg-type]
     codes = [world] + world.child
