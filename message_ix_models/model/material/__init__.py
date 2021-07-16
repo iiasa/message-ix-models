@@ -173,7 +173,7 @@ def solve_scen(context, datafile, model_name, scenario_name):
 @cli.command("report")
 @click.option(
     "--old_reporting",
-    default=True,
+    default=False,
     help="If True old reporting is merged with the new variables.",
 )
 @click.option("--scenario_name", default="NoPolicy")
