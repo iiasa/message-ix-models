@@ -1,3 +1,9 @@
+"""Importing data from MESSAGE (V)-Transport data files.
+
+This code is not currently in use.
+
+See also :mod:`message_data.tools.messagev`.
+"""
 import logging
 from collections import defaultdict
 from functools import lru_cache

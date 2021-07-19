@@ -1,3 +1,4 @@
+"""MESSAGEix-Transport."""
 from .utils import read_config
 
 __all__ = [

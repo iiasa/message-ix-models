@@ -1,4 +1,4 @@
-"""Generate input data."""
+"""Compute MESSAGEix-compatible input data for MESSAGEix-Transport."""
 import logging
 from collections import defaultdict
 

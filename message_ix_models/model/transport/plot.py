@@ -1,3 +1,4 @@
+"""Plots for MESSAGEix-Transport reporting."""
 import logging
 from datetime import datetime
 

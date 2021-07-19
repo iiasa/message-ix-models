@@ -1,3 +1,4 @@
+"""Data for light-duty passenger vehicles (LDVs)."""
 import logging
 from collections import defaultdict
 from typing import Dict, List

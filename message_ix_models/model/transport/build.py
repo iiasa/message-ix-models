@@ -1,3 +1,8 @@
+"""Build MESSAGEix-Transport on a base model.
+
+.. autodata:: TEMPLATE
+
+"""
 import logging
 from functools import lru_cache, partial
 from itertools import product
