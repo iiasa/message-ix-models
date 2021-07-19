@@ -392,6 +392,12 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
     return result
 
 
+def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
+    """Apply :meth:`pandas.DataFrame.query` if the `query` arg is not :obj:`None`."""
+    # Convert Series to DataFrame, query(), then retrieve the single column
+    return series if query is None else series.to_frame().query(query)[0]
+
+
 def merge_data(base, *others):
     """Merge dictionaries of DataFrames together into `base`."""
     for other in others:
