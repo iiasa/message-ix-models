@@ -1,5 +1,5 @@
-from warnings import catch_warnings, filterwarnings
 from typing import Mapping, Optional, Tuple
+from warnings import catch_warnings, filterwarnings
 
 import pandas as pd
 from iam_units import registry
