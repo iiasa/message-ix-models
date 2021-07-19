@@ -1,21 +1,16 @@
 """Context and settings for :mod:`message_ix_models` code."""
-
 import logging
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 from warnings import warn
 
 import ixmp
 import message_ix
 from click import BadOptionUsage
 
-from message_ix_models.util import (
-    load_package_data,
-    package_data_path,
-    private_data_path,
-)
+from .common import load_package_data, package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
