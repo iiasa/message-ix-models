@@ -9,12 +9,12 @@ log = logging.getLogger(__name__)
 
 def main(scenario):
     """Callback for :meth:`ixmp.Scenario.solve`."""
-    log.info('Executing callback on {!r}'.format(scenario))
+    log.info("Executing callback on {!r}".format(scenario))
 
     from .demand import from_scenario
 
     if not ScenarioInfo(scenario).is_message_macro:
-        log.info('Not a MESSAGE-MACRO scenario; cannot iterate.')
+        log.info("Not a MESSAGE-MACRO scenario; cannot iterate.")
         return True
 
     result = from_scenario(scenario)
