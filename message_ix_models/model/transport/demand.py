@@ -414,8 +414,8 @@ def pdt_per_capita(gdp_ppp_cap, config):
 def assert_units(qty, exp):
     """Assert that `qty` has units `exp`."""
     assert (
-        qty.attrs["_unit"] / qty.attrs["_unit"]._REGISTRY(exp)
-    ).dimensionless, f"Units '{qty.attrs['_unit']:~}'; expected {repr(exp)}"
+        qty.units / qty.units._REGISTRY(exp)
+    ).dimensionless, f"Units '{qty.units:~}'; expected {repr(exp)}"
 
 
 def votm(gdp_ppp_cap):
