@@ -26,6 +26,18 @@ METADATA = [
     ("migrate", "set"),
 ]
 
+#: CSV files containing data for input calculations and assumptions.
+DATA_FILES = [
+    ("demand-scale.csv"),
+    ("gdp.csv"),
+    ("ldv-class.csv"),
+    ("mer-to-ppp.csv"),
+    ("population-suburb-share.csv"),
+    ("ma3t", "population.csv"),
+    ("ma3t", "attitude.csv"),
+    ("ma3t", "driver.csv"),
+]
+
 
 def read_config(context=None):
     """Read the transport model configuration / metadata and store on `context`.

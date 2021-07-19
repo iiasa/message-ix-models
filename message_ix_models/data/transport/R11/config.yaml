@@ -13,17 +13,6 @@ data source:
   # Emissions: ID of a dump from a base scenario
   emissions: "1"
 
-# CSV files containing data for input calculations and assumptions
-data files:
-- demand-scale
-- gdp
-- ldv-class
-- mer-to-ppp
-- population-suburb-share
-- ma3t/population
-- ma3t/attitude
-- ma3t/driver
-
 # (DLM) “Which US census region should be used as a proxy for the distribution
 # of driver types in this MESSAGE region?”
 node to census_division:
