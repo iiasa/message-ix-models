@@ -156,7 +156,8 @@ class Context(dict):
                     mp_dest = ixmp.Platform(**info)
 
         except Exception as e:
-            log.info(f"{type(e).__name__}: {e}")
+            log.info("Base scenario not given or found")
+            log.debug(f"{type(e).__name__}: {e}")
 
             if not create:
                 log.error("and create=False")

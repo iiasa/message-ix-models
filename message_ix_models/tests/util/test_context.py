@@ -38,7 +38,7 @@ class TestContext:
         s = c.clone_to_dest()
 
         # Base scenario was created
-        assert "No base scenario given" in caplog.messages
+        assert "Base scenario not given or found" in caplog.messages
 
         # Works with a URL to parse and no base scenario
         url = f"ixmp://{platform_name}/{model_name}/{scenario_name}"
