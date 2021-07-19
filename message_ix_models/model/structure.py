@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 @lru_cache()
 def get_codes(name: str) -> List[Code]:
-    """Return codes for the set `name` in MESSAGE-GLOBIOM scenarios.
+    """Return codes for the dimension/set `name` in MESSAGE-GLOBIOM scenarios.
 
     The information is read from :file:`data/{name}.yaml`, e.g.
     :file:`data/technology.yaml`.
