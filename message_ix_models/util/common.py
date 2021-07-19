@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional, Mapping, cast
+from typing import Any, Dict, Mapping, Optional, cast
 
 log = logging.getLogger(__name__)
 

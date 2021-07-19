@@ -8,6 +8,7 @@ import pandas as pd
 from message_ix.models import MESSAGE_ITEMS
 from sdmx.model import AnnotableArtefact, Annotation, Code
 
+from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
 from .common import (
     MESSAGE_DATA_PATH,
@@ -18,7 +19,6 @@ from .common import (
     private_data_path,
 )
 from .node import adapt_R11_R14, identify_nodes
-from ._convert_units import convert_units, series_of_pint_quantity
 
 __all__ = [
     "MESSAGE_DATA_PATH",
