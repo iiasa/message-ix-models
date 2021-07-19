@@ -57,11 +57,15 @@ def test_demand(test_context, regions):
 
 
 @pytest.mark.parametrize("years", ["A", "B"])
-@pytest.mark.parametrize("regions, N_node", [("R11", 11), ("R14", 14), ("ISR", 1)])
+@pytest.mark.parametrize(
+    "regions, N_node", [("R11", 11), ("R14", 14), param("ISR", 1, marks=testing.NIE)]
+)
 def test_ikarus(test_context, regions, N_node, years):
     ctx = test_context
     ctx.regions = regions
     ctx.years = years
+
+    read_config(ctx)
 
     # Information about the corresponding base model
     s_info = bare.get_spec(ctx)["add"]
@@ -188,7 +192,7 @@ def test_get_ldv_data(test_context, source, regions, years):
     ctx.regions = regions
     ctx.years = years
 
-    read_config()
+    read_config(ctx)
 
     info = bare.get_spec(ctx)["add"]
 
