@@ -36,7 +36,7 @@ def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
     source = context["transport config"]["data source"].get("LDV", None)
 
     if source == "US-TIMES MA3T":
-        data = get_USTIMES_MA3T(context)
+        data = get_USTIMES_MA3T(context, subdir=context.regions)
     elif source is None:
         data = get_dummy(context)
     else:
@@ -44,14 +44,17 @@ def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
 
     # Merge in constraint data
     merge_data(data, get_constraints(context))
+
     return data
 
 
-#: Input file containing data from US-TIMES and MA3T models.
-FILE = "LDV_costs_efficiencies_US-TIMES_MA3T.xlsx"
+#: Input file containing structured data about LDV technologies.
+#:
+#: For R11, this data is from the US-TIMES and MA3T models.
+FILE = "ldv-cost-efficiency.xlsx"
 
 #: (parameter name, cell range, units) for data to be read from multiple sheets in the
-#: file.
+#: :data:`FILE`.
 TABLES = [
     ("efficiency", slice("B3", "Q15"), "10^9 v km / GW year"),
     ("inv_cost", slice("B33", "Q45"), "USD / vehicle"),
