@@ -16,8 +16,16 @@ from message_data.model.transport.demand import assert_units
 log = logging.getLogger(__name__)
 
 
-def test_demand_dummy(test_context):
+@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
+@pytest.mark.parametrize("years", ["A", "B"])
+def test_demand_dummy(test_context, regions, years):
     """Consumer-group-specific commodities are generated."""
+    ctx = test_context
+    ctx.regions = regions
+    ctx.years = years
+
+    read_config(ctx)
+
     info = get_spec(test_context)["add"]
 
     assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
