@@ -9,12 +9,21 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.util import as_codes, eval_anno, load_private_data
 from sdmx.model import Code
 
-from message_data.model.transport.common import METADATA
-
 #: Valid values of Context.regions for MESSAGEix-Transport; default first.
 SETTINGS = dict(
     regions=["R11", "R12", "R14", "ISR"],
 )
+
+#: Configuration files in :file:`data/transport/` or a subdirectory, for
+#: :func:`read_config`.
+METADATA = [
+    # Information about MESSAGEix-Transport
+    ("config",),
+    ("set",),
+    ("technology",),
+    # Information about MESSAGE(V)-Transport
+    ("migrate", "set"),
+]
 
 
 def read_config(context=None):
