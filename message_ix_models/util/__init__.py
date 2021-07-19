@@ -11,11 +11,14 @@ from sdmx.model import AnnotableArtefact, Annotation, Code
 
 from .cache import cached
 from .node import adapt_R11_R14, identify_nodes
+from ._convert_units import convert_units, series_of_pint_quantity
 
 __all__ = [
     "adapt_R11_R14",
     "cached",
+    "convert_units",
     "identify_nodes",
+    "series_of_pint_quantity",
 ]
 
 log = logging.getLogger(__name__)
