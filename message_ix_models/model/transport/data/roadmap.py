@@ -1,4 +1,6 @@
-"""Prepare Africa data from the Roadmap 1.0 model via ``RoadmapResults_2017.xlsx``.
+"""Prepare Africa data from the ICCT Roadmap 1.0 model.
+
+The data are located in :data:`FILE`.
 
 The countries belonging to the Africa region in the Roadmap 1.0 model are:
     Angola, Burundi, Benin, Burkina Faso, Botswana, Central African Republic,

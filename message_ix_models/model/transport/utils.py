@@ -1,3 +1,4 @@
+"""Utility code for MESSAGEix-Transport."""
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product

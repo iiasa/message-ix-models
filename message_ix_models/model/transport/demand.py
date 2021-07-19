@@ -1,3 +1,4 @@
+"""Demand calculation for MESSAGEix-Transport."""
 import logging
 from functools import partial
 from pathlib import Path

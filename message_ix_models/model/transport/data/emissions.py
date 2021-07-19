@@ -1,3 +1,4 @@
+"""Transport emissions data."""
 from message_data.tools import load_data
 
 

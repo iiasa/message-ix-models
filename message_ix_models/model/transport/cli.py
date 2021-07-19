@@ -1,3 +1,27 @@
+"""Command-line interface for MESSAGEix-Transport.
+
+Use the :doc:`CLI <cli>` command ``mix-models transport`` to invoke the commands
+defined in this module.
+Use :command:`mix-models transport --help` to show a help text like::
+
+    Usage: mix-models transport [OPTIONS] COMMAND [ARGS]...
+
+      MESSAGEix-Transport variant.
+
+    Options:
+      --help  Show this message and exit.
+
+    Commands:
+      build       Prepare the model.
+      debug       Temporary code for development.
+      export-emi  Export emissions factors from base scenarios.
+      migrate     Migrate data from MESSAGE(V)-Transport.
+      solve       Run the model.
+
+Each individual command also has its own help text; try e.g. :command:`mix-models
+transport build --help`.
+
+"""
 import logging
 from pathlib import Path
 

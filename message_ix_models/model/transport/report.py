@@ -1,3 +1,4 @@
+"""Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
 from operator import attrgetter
 

@@ -1,4 +1,4 @@
-"""Prepare non-LDV data from the IKARUS model via GEAM_TRP_techinput.xlsx."""
+"""Prepare non-LDV data from the IKARUS model via :file:`GEAM_TRP_techinput.xlsx`."""
 import logging
 from collections import defaultdict
 

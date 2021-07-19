@@ -1,3 +1,4 @@
+"""Consumer groups data."""
 import logging
 from copy import deepcopy
 from typing import List
