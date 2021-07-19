@@ -2,8 +2,9 @@ from collections import defaultdict
 import logging
 
 import pandas as pd
-
-from message_data.tools import ScenarioInfo, broadcast, make_df, same_node
+from message_ix import make_df
+from message_ix_models import ScenarioInfo
+from message_ix_models.util import broadcast, same_node
 
 from .util import read_config
 
