@@ -19,6 +19,7 @@ from plotnine import save_as_pdf_pages
 
 from message_data.tools.iea_eei import plot_params_per_mode, split_units
 
+#: Name of the file containing the data.
 FILE = "RoadmapResults_2017.xlsx"
 
 #: Historical years from the Roadmap model.
@@ -82,9 +83,7 @@ UNITS = dict(
 )
 
 
-def get_roadmap_data(
-    context, region=("Africa", "R11_AFR"), years=None, plot=False
-):
+def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=False):
     """Read transport activity data for Africa.
 
     The data is read from ``RoadmapResults_2017.xlsx``, which is already aggregated
@@ -131,9 +130,9 @@ def get_roadmap_data(
     df = pd.read_excel(
         private_data_path("transport", FILE), sheet_name="Model Results", header=0
     )
-    df = df[
-        (df["Year"].isin(years)) & (df["Roadmap_Region"] == region[0])
-    ].reset_index(drop=True)
+    df = df[(df["Year"].isin(years)) & (df["Roadmap_Region"] == region[0])].reset_index(
+        drop=True
+    )
 
     # Map ICCT modes to IEA EEI's modes
     # Sum up 2_3_W modes that represent disaggregated values for 2 and 3 wheelers. Same

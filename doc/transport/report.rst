@@ -1,34 +1,16 @@
 Reporting
 *********
 
-
-Code reference
-==============
-
-.. automodule:: message_data.model.transport.report
-   :members:
+This section describes reporting outputs available for MESSAGEix-Transport.
 
 Plots
 =====
 
-.. currentmodule:: message_data.model.transport.plot
+:class:`.InvCost`
+   Investment costs.
 
-.. automodule:: message_data.model.transport.plot
+:class:`.FixCost`
+   Fixed costs.
 
-   .. autoclass:: InvCost
-      :members: basename
-      :undoc-members:
-
-      Investment costs.
-
-   .. autoclass:: FixCost
-      :members: basename
-      :undoc-members:
-
-      Fixed costs.
-
-   .. autoclass:: VarCost
-      :members: basename
-      :undoc-members:
-
-      Variable costs.
+:class:`.VarCost`
+   Variable costs.

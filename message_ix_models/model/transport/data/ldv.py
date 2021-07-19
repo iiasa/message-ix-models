@@ -30,7 +30,7 @@ def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
     Responds to the ``["transport config"]["data source"]["LDV"]`` context setting:
 
     - :obj:`None`: calls :func:`get_dummy`.
-    - ``"US-TIMES MA3T": calls :func:`get_USTIMES_MA3T`.
+    - “US-TIMES MA3T”: calls :func:`get_USTIMES_MA3T`.
 
     In both cases, :func:`get_constraints` is used to generate constraints.
     """

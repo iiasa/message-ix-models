@@ -61,7 +61,7 @@ def read_config(context=None):
     # Temporary
     if context.regions == "ISR":
         raise NotImplementedError(
-            "ISR transpor config; see https://github.com/iiasa/message_data/pull/190"
+            "ISR transport config; see https://github.com/iiasa/message_data/pull/190"
         )
 
     # Base private directory containing transport config files. The second component
@@ -98,7 +98,7 @@ def read_config(context=None):
 
 
 def consumer_groups(rtype=Code):
-    """Iterate over consumer groups in ``sets.yaml``.
+    """Iterate over consumer groups defined in :file:`sets.yaml`.
 
     NB this low-level method requires the transport configuration to be loaded
     (:func:`.read_config`), but does not perform this step itself.
