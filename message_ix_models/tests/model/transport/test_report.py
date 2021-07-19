@@ -5,11 +5,11 @@ import pytest
 from numpy.testing import assert_allclose
 
 from message_ix_models.util import private_data_path
+from message_ix_models.testing import NIE
 
 from message_data.model.transport import read_config
 from message_data.model.transport.report import callback, computations
 from message_data.reporting import prepare_reporter, register
-from message_data.testing import NIE
 
 from . import built_transport
 

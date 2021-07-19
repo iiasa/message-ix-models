@@ -9,6 +9,8 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
     adapt_R11_R14,
     broadcast,
+    cached,
+    check_support,
     ffill,
     make_io,
     make_matched_dfs,
@@ -19,7 +21,6 @@ from message_ix_models.util import (
 from openpyxl import load_workbook
 
 from message_data.model.transport.utils import input_commodity_level
-from message_data.tools import cached, check_support
 
 log = logging.getLogger(__name__)
 

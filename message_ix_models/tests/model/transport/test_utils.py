@@ -3,9 +3,9 @@ import pandas.testing as pdt
 import pytest
 import xarray as xr
 from iam_units import registry
+from message_ix_models import testing
 from pytest import param
 
-from message_data import testing
 from message_data.model.transport import read_config
 from message_data.model.transport.utils import consumer_groups, input_commodity_level
 
