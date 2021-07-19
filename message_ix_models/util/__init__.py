@@ -9,10 +9,12 @@ import pandas as pd
 from message_ix.models import MESSAGE_ITEMS
 from sdmx.model import AnnotableArtefact, Annotation, Code
 
+from .cache import cached
 from .node import adapt_R11_R14, identify_nodes
 
 __all__ = [
     "adapt_R11_R14",
+    "cached",
     "identify_nodes",
 ]
 
