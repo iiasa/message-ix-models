@@ -10,7 +10,7 @@ from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.model.structure import Code, get_codes
 from message_ix_models.util import private_data_path
 
-from message_data.model.transport.utils import consumer_groups
+from message_data.model.transport.utils import consumer_groups, path_fallback
 from message_data.tools import gea, ssp
 
 log = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ def get_consumer_groups(context) -> Quantity:
     # - Fill backward 2010 to 2005, in order to compute.
     su_share = (
         computations.load_file(
-            path=private_data_path("transport", "population-suburb-share.csv"),
+            path=path_fallback(context, "population-suburb-share.csv"),
             dims=RENAME_DIMS,
         )
         .ffill("y")
@@ -99,15 +99,15 @@ def get_consumer_groups(context) -> Quantity:
     # here are applicable to the US in 2005.”
     # NB in the spreadsheet, the data are also filled forward to 2010
     ma3t_pop = computations.load_file(
-        path=private_data_path("transport", "ma3t", "population.csv")
+        path=path_fallback(context, "ma3t", "population.csv")
     )
 
     ma3t_attitude = computations.load_file(
-        path=private_data_path("transport", "ma3t", "attitude.csv")
+        path=path_fallback(context, "ma3t", "attitude.csv")
     )
 
     ma3t_driver = computations.load_file(
-        path=private_data_path("transport", "ma3t", "driver.csv")
+        path=path_fallback(context, "ma3t", "driver.csv")
     )
 
     # - Apply the trajectory of pop_share to the initial values of ma3t_pop.
