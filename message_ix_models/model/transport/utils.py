@@ -2,12 +2,18 @@
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
+from pathlib import Path
 
 import pandas as pd
 import xarray as xr
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import as_codes, eval_anno, load_private_data
+from message_ix_models.util import (
+    as_codes,
+    eval_anno,
+    load_private_data,
+    private_data_path,
+)
 from sdmx.model import Code
 
 #: Valid values of Context.regions for MESSAGEix-Transport; default first.
@@ -179,3 +185,19 @@ def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
 
     # Process every row in `df`; return a new DataFrame
     return df.combine_first(df["technology"].apply(t_cl))
+
+
+def path_fallback(context, *parts) -> Path:
+    """Return a :class:`.Path` constructed from `parts`.
+
+    If ``context.regions`` is defined and the file exists in a subdirectory of
+    :file:`data/transport/{regions}/`, return its path; otherwise, return the path in
+    :file:`data/transport/`.
+    """
+    for candidate in (
+        private_data_path("transport", context.regions or "", *parts),
+        private_data_path("transport", *parts),
+    ):
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(candidate)
