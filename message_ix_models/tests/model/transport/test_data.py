@@ -235,12 +235,12 @@ def test_groups(test_context, regions, pop_scen):
 
     read_config(ctx)
 
-    ctx["transport build info"] = bare.get_spec(ctx)["add"]
+    ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
 
     result = get_consumer_groups(ctx)
 
     # Data have the correct size
-    exp = dict(n=11, y=15, cg=27)
+    exp = dict(n=len(info.set["node"]) - 1, y=len(info.Y), cg=27)
 
     # NB as of genno 1.3.0, can't use .sizes on AttrSeries:
     # assert result.sizes == exp
