@@ -1,5 +1,6 @@
 """Demand calculation for MESSAGEix-Transport."""
 import logging
+from copy import deepcopy
 from functools import partial
 from pathlib import Path
 
@@ -17,13 +18,14 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import adapt_R11_R14, broadcast
 
 from message_data.model.transport.build import generate_set_elements
-from message_data.model.transport.computations import load_transport_file
+from message_data.model.transport.computations import dummy_prices, rename
 from message_data.model.transport.data.groups import (
     get_consumer_groups,
     get_gea_population,
     get_ssp_population,
 )
 from message_data.model.transport.plot import DEMAND_PLOTS
+from message_data.model.transport.utils import path_fallback
 
 log = logging.getLogger(__name__)
 
@@ -97,35 +99,59 @@ def from_external_data(info: ScenarioInfo, context: Context) -> Computer:
 
 
 def add_exogenous_data(c: Computer, context: Context):
-    """Add data to `c` that mocks data coming from an actual Scenario."""
+    """Add data to `c` that mocks data coming from an actual Scenario.
+
+    The specific quantities added are:
+
+    - ``GDP:n-y``, from :file:`gdp.csv`.
+    - ``MERtoPPP:n-y``, from :file:`mer-to-ppp.csv`.
+    - ``PRICE_COMMODITY:n-c-y``, currently mocked based on the shape of ``GDP:n-y``
+      using :func:`.dummy_prices`.
+
+      .. todo:: Add an external data source.
+
+    If ``context.regions`` is “R14”, data are adapted from R11 using
+    :func:`.adapt_R11_R14`.
+
+    See also
+    --------
+    :doc:`transport/data`
+    """
 
     gdp_k = Key("GDP", "ny")
 
+    if context.regions == "R11":
+        ctx = context
+    elif context.regions == "R14":
+        ctx = deepcopy(context)
+        ctx.regions = "R11"
+    else:
+        raise NotImplementedError
+
+    # Add 3 computations per quantity
     for key, basename, units in (
-        (gdp_k, "gdp", "GUSD / year"),
+        (gdp_k, "gdp", "GUSD/year"),
         (Key("MERtoPPP", "ny"), "mer-to-ppp", ""),
     ):
+        # 1. Load the file
+        k1 = Key(key.name, tag="raw")
         c.add(
-            key,
-            (partial(load_transport_file, units=units, name=key.name), quote(basename)),
-            sums=True,
-            index=True,
+            k1,
+            partial(computations.load_file, units=units),
+            path_fallback(ctx, f"{basename}.csv"),
         )
 
-    def _dummy_prices(gdp):
-        # Commodity prices: all equal to 0.1
-        # TODO add external data source
+        # 2. Rename dimensions
+        k2 = key.add_tag(ctx.regions)
+        c.add(k2, rename, k1, quote(RENAME_DIMS))
 
-        # Same coords/shape as `gdp`, but with c="transport"
-        coords = [(dim, item.data) for dim, item in gdp.coords.items()]
-        coords.append(("c", ["transport"]))
-        shape = list(len(c[1]) for c in coords)
+        # 3. Maybe transform from R11 to another node list
+        if context.regions == "R11":
+            c.add(key, k2, sums=True, index=True)  # No-op/pass-through
+        elif context.regions == "R14":
+            c.add(key, adapt_R11_R14, k2, sums=True, index=True)
 
-        return Quantity(
-            xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km"
-        )
-
-    c.add(Key("PRICE_COMMODITY", "ncy"), (_dummy_prices, gdp_k), sums=True, index=True)
+    c.add(Key("PRICE_COMMODITY", "ncy"), (dummy_prices, gdp_k), sums=True, index=True)
 
 
 def add_structure(c: Computer, info: ScenarioInfo):
