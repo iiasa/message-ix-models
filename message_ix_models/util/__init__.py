@@ -179,6 +179,26 @@ def broadcast(df, **kwargs):
     return df
 
 
+def check_support(context, settings=dict(), desc: str = "") -> None:
+    """Check whether a Context is compatible with certain `settings`.
+
+    Raises
+    ------
+    :class:`NotImplementedError`
+        if any `context` value for a key of `settings` is not among the values in
+        `settings`.
+    :class:`KeyError`
+        if the key is not set on `context` at all.
+
+    """
+    __tracebackhide__ = True
+    for key, values in settings.items():
+        if context[key] not in values:
+            raise NotImplementedError(
+                f"{desc} for {repr(values)}; got {repr(context[key])}"
+            )
+
+
 def copy_column(column_name):
     """For use with :meth:`pandas.DataFrame.assign`.
 
