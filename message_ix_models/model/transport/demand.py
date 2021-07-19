@@ -171,7 +171,7 @@ def add_structure(c: Computer, info: ScenarioInfo):
     ):
         try:
             # strict=True to raise an exception if `key` exists
-            c.add_single(key, value, strict=True)
+            c.add(key, value, strict=True)
         except KeyExistsError:
             # Already present; don't overwrite
             continue
