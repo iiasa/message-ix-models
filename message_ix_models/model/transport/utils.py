@@ -29,18 +29,6 @@ METADATA = [
     ("set.yaml",),
     ("technology.yaml",),
     # Information about MESSAGE(V)-Transport
-]
-
-#: CSV files containing data for input calculations and assumptions.
-DATA_FILES = [
-    ("demand-scale.csv"),
-    ("gdp.csv"),
-    ("ldv-class.csv"),
-    ("mer-to-ppp.csv"),
-    ("population-suburb-share.csv"),
-    ("ma3t", "population.csv"),
-    ("ma3t", "attitude.csv"),
-    ("ma3t", "driver.csv"),
     ("migrate", "set.yaml"),
 ]
 

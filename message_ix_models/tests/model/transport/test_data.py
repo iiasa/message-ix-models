@@ -1,7 +1,6 @@
 import numpy as np
-import pandas as pd
 import pytest
-import xarray as xr
+from genno import Quantity, computations
 from iam_units import registry
 from message_ix import make_df
 from message_ix_models.model import bare
@@ -19,26 +18,17 @@ from message_data.model.transport.data.groups import (
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
 from message_data.model.transport.data.roadmap import get_roadmap_data
-from message_data.tools import load_data
+from message_data.model.transport.utils import path_fallback
 from message_data.tools.gfei_fuel_economy import get_gfei_data
 
 
-@pytest.mark.parametrize(
-    "key",
-    [
-        "ldv-class",
-        "mer-to-ppp",
-        "population-suburb-share",
-        "ma3t/population",
-        "ma3t/attitude",
-        "ma3t/driver",
-    ],
-)
-@pytest.mark.parametrize("rtype", (pd.Series, xr.DataArray))
-def test_load_data(session_context, key, rtype):
-    # Load transport metadata from files in both pandas and xarray formats
-    result = load_data("transport", key, rtype=rtype)
-    assert isinstance(result, rtype)
+@pytest.mark.parametrize("parts", data_module.DATA_FILES)
+def test_data_files(test_context, parts):
+    """Input data can be read."""
+    test_context.regions = "R11"
+
+    result = computations.load_file(path_fallback(test_context, *parts))
+    assert isinstance(result, Quantity)
 
 
 @pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])

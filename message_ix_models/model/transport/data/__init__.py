@@ -20,6 +20,18 @@ from .non_ldv import get_non_ldv_data
 
 log = logging.getLogger(__name__)
 
+#: CSV files containing data for input calculations and assumptions.
+DATA_FILES = [
+    ("demand-scale.csv",),
+    ("gdp.csv",),
+    ("ldv-class.csv",),
+    ("mer-to-ppp.csv",),
+    ("population-suburb-share.csv",),
+    ("ma3t", "population.csv"),
+    ("ma3t", "attitude.csv"),
+    ("ma3t", "driver.csv"),
+]
+
 DATA_FUNCTIONS = [
     get_ldv_data,
     get_non_ldv_data,
