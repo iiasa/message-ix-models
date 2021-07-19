@@ -1,11 +1,13 @@
 """Transport emissions data."""
-from message_data.tools import load_data
+from genno.computations import load_file
+
+from message_data.model.transport.utils import path_fallback
 
 
 def get_emissions_data(context):
     """Load emissions data from a file."""
     source = context["transport config"]["data source"]["emissions"]
 
-    return dict(
-        emission_factor=load_data(None, "transport", "emi", f"{source}-emission_factor")
-    )
+    qty = load_file(path_fallback(context, "emi", f"{source}-emission_factor.csv"))
+
+    return dict(emission_factor=qty.to_dataframe())
