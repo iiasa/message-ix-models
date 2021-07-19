@@ -1,6 +1,5 @@
 """Demand calculation for MESSAGEix-Transport."""
 import logging
-from copy import deepcopy
 from functools import partial
 from pathlib import Path
 
@@ -17,6 +16,7 @@ from message_ix.reporting import Reporter
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import adapt_R11_R14, broadcast
 
+from message_data.tools import check_support
 from message_data.model.transport.build import generate_set_elements
 from message_data.model.transport.computations import dummy_prices, rename
 from message_data.model.transport.data.groups import (
@@ -98,8 +98,8 @@ def from_external_data(info: ScenarioInfo, context: Context) -> Computer:
     return c
 
 
-def add_exogenous_data(c: Computer, context: Context):
-    """Add data to `c` that mocks data coming from an actual Scenario.
+def add_exogenous_data(c: Computer, context: Context) -> None:
+    """Add exogenous data to `c` that mocks data coming from an actual Scenario.
 
     The specific quantities added are:
 
@@ -117,16 +117,13 @@ def add_exogenous_data(c: Computer, context: Context):
     --------
     :doc:`transport/data`
     """
+    check_support(
+        context,
+        settings=dict(regions=frozenset(["R11", "R14"])),
+        desc="Exogenous data for demand projection",
+    )
 
     gdp_k = Key("GDP", "ny")
-
-    if context.regions == "R11":
-        ctx = context
-    elif context.regions == "R14":
-        ctx = deepcopy(context)
-        ctx.regions = "R11"
-    else:
-        raise NotImplementedError
 
     # Add 3 computations per quantity
     for key, basename, units in (
@@ -138,11 +135,11 @@ def add_exogenous_data(c: Computer, context: Context):
         c.add(
             k1,
             partial(computations.load_file, units=units),
-            path_fallback(ctx, f"{basename}.csv"),
+            path_fallback("R11", f"{basename}.csv"),
         )
 
         # 2. Rename dimensions
-        k2 = key.add_tag(ctx.regions)
+        k2 = key.add_tag("R11")
         c.add(k2, rename, k1, quote(RENAME_DIMS))
 
         # 3. Maybe transform from R11 to another node list
