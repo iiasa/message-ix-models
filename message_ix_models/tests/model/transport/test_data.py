@@ -288,8 +288,8 @@ def test_urban_rural_shares(test_context, regions, years, pop_scen):
         (("Africa", "R11_AFR"), 224),
     ],
 )
-def test_get_afr_data(transport_context_f, region, length):
-    ctx = transport_context_f
+def test_get_afr_data(test_context, region, length):
+    ctx = test_context
 
     df = get_roadmap_data(ctx, region)
 
