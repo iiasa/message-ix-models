@@ -11,6 +11,7 @@ from pytest import param
 
 from message_data import testing
 from message_data.model.transport import demand, read_config
+from message_data.model.transport.demand import assert_units
 
 log = logging.getLogger(__name__)
 
@@ -46,20 +47,27 @@ def test_population(regions, source, years):
     # Function runs
     result = demand.population(nodes, periods, config)
 
-    # Data have expected dimensions and coverage
+    # Data have expected dimensions, units, and coords
     assert ("n", "y") == result.dims
+    assert_units(result, "Mpassenger")
     assert set(nodes) == set(result.coords["n"].values)
     assert set(periods) <= set(result.coords["y"].values)
 
 
 @pytest.mark.parametrize(
-    "regions,N_node",
-    [("R11", 11), ("R14", 14), param("ISR", 1, marks=testing.NIE)],
+    "regions,years,N_node",
+    [
+        ("R11", "A", 11),
+        ("R11", "B", 11),
+        ("R14", "B", 14),
+        param("ISR", "A", 1, marks=testing.NIE),
+    ],
 )
-def test_from_external_data(test_context, tmp_path, regions, N_node):
+def test_from_external_data(test_context, tmp_path, regions, years, N_node):
     """Exogenous demand calculation succeeds."""
     ctx = test_context
     ctx.regions = regions
+    ctx.years = years
     ctx.output_path = tmp_path
 
     read_config(ctx)
@@ -71,6 +79,7 @@ def test_from_external_data(test_context, tmp_path, regions, N_node):
     rep.configure(output_dir=tmp_path)
 
     for key, unit in (
+        ("population:n-y", "Mpassenger"),
         ("GDP:n-y:PPP+percapita", "kUSD / passenger / year"),
         ("votm:n-y", ""),
         ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
