@@ -347,3 +347,8 @@ def export_test_data(context: Context):
     tmp_file.unlink()
 
     mark_time()
+
+
+#: Shorthand for marking a parametrized test case that is expected to fail because it is
+#: not implemented.
+NIE = pytest.mark.xfail(raises=NotImplementedError)
