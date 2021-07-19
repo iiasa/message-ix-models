@@ -61,7 +61,7 @@ def cached(load_func: Callable) -> Callable:
     :meth:`.Context.get_cache_path`. On subsequent calls, if the cache exists, it is
     used instead of calling the (possibly slow) `load_func`.
 
-    When :data`SKIP_CACHE` is true, `load_func` is always called.
+    When :data:`SKIP_CACHE` is true, `load_func` is always called.
     """
     log.debug(f"Wrap {load_func.__name__} in cached()")
 
