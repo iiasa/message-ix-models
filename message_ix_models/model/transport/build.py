@@ -190,7 +190,12 @@ def main(context: Context, scenario: Scenario, **options):
 
 
 def get_disutility_spec():
-    """Return the spec for the disutility formulation on LDVs."""
+    """Return the spec for the disutility formulation on LDVs.
+
+    See also
+    --------
+    TEMPLATE
+    """
     return disutility.get_spec(
         groups=consumer_groups(),
         technologies=generate_set_elements("technology", "LDV"),

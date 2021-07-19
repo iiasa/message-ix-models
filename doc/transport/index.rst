@@ -25,8 +25,11 @@ On this page:
 
 On other pages:
 
-- :doc:`transport/report`
+- :doc:`transport/files`
+- :doc:`transport/data`
 - :doc:`transport/disutility`
+- :doc:`transport/report`
+- :doc:`transport/old`
 
 Usage
 =====
@@ -104,101 +107,12 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
 ``ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline_macro#3``
    regions=R12, years=B. Includes MACRO calibration
 
-
-Code reference
-==============
-
-.. currentmodule:: message_data.model.transport
-
-.. automodule:: message_data.model.transport
-   :members:
-
-Build and run
--------------
-.. automodule:: message_data.model.transport.build
-   :members:
-
-.. automodule:: message_data.model.transport.callback
-   :members:
-
-Data preparation
-----------------
-.. automodule:: message_data.model.transport.data
-   :members:
-
-.. automodule:: message_data.model.transport.data.groups
-   :members:
-
-.. automodule:: message_data.model.transport.data.ikarus
-   :members:
-
-.. automodule:: message_data.model.transport.data.ldv
-   :members:
-
-.. automodule:: message_data.model.transport.data.non_ldv
-   :members:
-
-.. automodule:: message_data.model.transport.data.AFR
-   :members:
-
-.. automodule:: message_data.model.transport.data.CHN_IND
-   :members:
-
-Utilities and CLI
------------------
-.. automodule:: message_data.model.transport.utils
-   :members:
-   :exclude-members: read_config
-
-.. automodule:: message_data.model.transport.cli
-   :members:
-
-
-Data, metadata, and config files
-================================
-
-See also: :doc:`transport/files`.
-
-- :file:`data/transport/`: data files from :file:`P:\ene.model\TaxSub_Transport_Merged` and other metadata used for defining transport technologies.
-
-  - :file:`config.yaml`: general configuration for :func:`.transport.build.main`.
-  - :file:`technology.yaml`: metadata for the 'technology' dimension.
-  - :file:`set.yaml`: metadata for other sets.
-
-- ``reference/transport``: files from the ca. 2016 *MESSAGE V-Transport* model. The
-  directory structure matches :file:`P:\ene.model\TaxSub_Transport_Merged\`.
-  See :doc:`data`.
-
-
-CLI usage
-=========
-
-Use the :doc:`CLI <cli>` command ``mix-models transport`` to invoke the commands defined in :mod:`.transport.cli`. Try:
-
-.. code::
-
-   Usage: mix-models transport [OPTIONS] COMMAND [ARGS]...
-
-     MESSAGE-Transport variant.
-
-   Options:
-     --help  Show this message and exit.
-
-   Commands:
-     build    Prepare the model.
-     debug    Temporary code for development.
-     migrate  Migrate data from MESSAGE(V)-Transport.
-     solve    Run the model.
-
-Each individual command also has its own help text; try e.g. ``mix-models transport build --help``.
-
-
-Base structure
-==============
+Structure of base scenarios
+---------------------------
 
 The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.create` or :mod:`.model.bare`) contains an aggregated transport representation, as follows:
 
-- Demand (``commodity=transport``, ``level=useful``) in GWa.
+- Demand (``commodity=transport``, ``level=useful``) is denoted in **energy units**, i.e. GWa.
 - Technologies producing this output; all at ``m=M1``, except where noted.
   This is the same set as in :doc:`MESSAGE V <transport/old>`, i.e. in MESSAGE V, the aggregate transport representation is inactive but still present.
 
@@ -223,13 +137,44 @@ The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.create` or :mod:`.model.bare`) cont
   - Disaggregated technologies must match these totals.
 
 
+Data, metadata, and config files
+================================
+
+See also: :doc:`transport/files` and :doc:`transport/data`.
+
+:func:`~.transport.read_config` reads files from :file:`data/transport/` **or** a subdirectory.
+This allows to separate input data files according to the node list used by the base model.
+See the function docs for details.
+
+Other data files include:
+
+- :file:`data/transport/` contains data files originally from :file:`P:\ene.model\TaxSub_Transport_Merged` (a private IIASA shared drive) and other metadata used for defining transport technologies.
+
+- :file:`reference/transport/` contains files from :doc:`transport/old` that are for reference, and not used by MESSAGEix-Transport.
+  The directory structure matches :file:`P:\ene.model\TaxSub_Transport_Merged\`.
+
+
 Reference
 =========
 
 .. toctree::
    :maxdepth: 2
 
-   transport/report
    transport/files
+   transport/data
    transport/disutility
+   transport/report
    transport/old
+
+
+Code reference
+==============
+
+.. currentmodule:: message_data.model
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   transport

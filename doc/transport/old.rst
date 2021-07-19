@@ -13,12 +13,6 @@ The files are located in :file:`P:\ene.model\TaxSub_Transport_Merged\\` on the I
    :backlinks: none
 
 
-Code for migration from MESSAGE V
-=================================
-.. automodule:: message_data.model.transport.migrate
-   :members:
-
-
 Structure
 =========
 
