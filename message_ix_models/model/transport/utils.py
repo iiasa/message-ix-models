@@ -21,15 +21,14 @@ SETTINGS = dict(
     regions=["R11", "R12", "R14", "ISR"],
 )
 
-#: Configuration files in :file:`data/transport/` or a subdirectory, for
-#: :func:`read_config`.
+#: Configuration files for :func:`read_config`, located in :file:`data/transport/` or a
+#: subdirectory.
 METADATA = [
     # Information about MESSAGEix-Transport
-    ("config",),
-    ("set",),
-    ("technology",),
+    ("config.yaml",),
+    ("set.yaml",),
+    ("technology.yaml",),
     # Information about MESSAGE(V)-Transport
-    ("migrate", "set"),
 ]
 
 #: CSV files containing data for input calculations and assumptions.
@@ -42,6 +41,7 @@ DATA_FILES = [
     ("ma3t", "population.csv"),
     ("ma3t", "attitude.csv"),
     ("ma3t", "driver.csv"),
+    ("migrate", "set.yaml"),
 ]
 
 
@@ -70,27 +70,15 @@ def read_config(context=None):
             "ISR transport config; see https://github.com/iiasa/message_data/pull/190"
         )
 
-    # Base private directory containing transport config files. The second component
-    # may not exist.
-    dir = ["transport", context.regions]
-
-    # Load transport configuration files and store on the context object
+    # Load transport configuration YAML files and store on the Context
     for parts in METADATA:
         # Key for storing in the context, e.g. "transport config"
-        key = f"transport {' '.join(parts)}"
+        key = f"transport {' '.join(parts)}".split(".yaml")[0]
 
-        # Actual filename parts; ends with ".yaml"
-        _parts = list(parts)
-        _parts[-1] += ".yaml"
-
-        # Load and store the data from the YAML file
-        try:
-            # Try first in the subdirectory, if any.
-            context[key] = load_private_data(*(dir + _parts))
-        except FileNotFoundError:
-            # Subdirectory or specific file does not exist; use the general file in the
-            # top-level directory
-            context[key] = load_private_data(*(dir[:1] + _parts))
+        # Load and store the data from the YAML file: either in a subdirectory for
+        # context.regions, or the top-level data directory
+        path = path_fallback(context, *parts).relative_to(private_data_path())
+        context[key] = load_private_data(*path.parts)
 
     # Merge technology.yaml with set.yaml
     context["transport set"]["technology"]["add"] = context.pop("transport technology")
