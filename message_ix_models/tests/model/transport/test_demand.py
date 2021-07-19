@@ -4,12 +4,12 @@ from itertools import dropwhile
 import message_ix
 import pytest
 from message_ix.reporting import Key
+from message_ix_models import testing
 from message_ix_models.model.bare import get_spec
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import eval_anno
 from pytest import param
 
-from message_data import testing
 from message_data.model.transport import demand, read_config
 from message_data.model.transport.demand import assert_units
 

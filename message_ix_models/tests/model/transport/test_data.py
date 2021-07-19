@@ -4,10 +4,10 @@ from genno import Quantity, computations
 from iam_units import registry
 from message_ix import make_df
 from message_ix_models.model import bare
+from message_ix_models import testing
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from message_data import testing
 from message_data.model.transport import data as data_module, read_config
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import get_emissions_data

@@ -6,9 +6,9 @@ from pytest import mark, param
 
 from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
+from message_ix_models.testing import NIE
 
 from message_data.model.transport import build, report, read_config
-from message_data.testing import NIE
 
 log = logging.getLogger(__name__)
 
