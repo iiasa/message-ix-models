@@ -270,6 +270,7 @@ def add_2110(data: Quantity) -> Quantity:
     # TODO use some kind of ffill operation
     # NB transpose() should not be necessary; see khaeru/genno#38
     dims = data.dims
-    return computations.concat(
+    result = computations.concat(
         data, data.sel(y=2100).expand_dims(y=[2110]).transpose(*dims)
     )
+    return computations.apply_units(result, data.units)
