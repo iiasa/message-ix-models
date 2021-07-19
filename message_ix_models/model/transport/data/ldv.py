@@ -37,7 +37,7 @@ def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
     source = context["transport config"]["data source"].get("LDV", None)
 
     if source == "US-TIMES MA3T":
-        data = get_USTIMES_MA3T(context, subdir=context.regions)
+        data = get_USTIMES_MA3T(context)
     elif source is None:
         data = get_dummy(context)
     else:
@@ -148,7 +148,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
         read_nodes = info.N[1:]
 
     # Retrieve the data from the spreadsheet
-    data = read_USTIMES_MA3T(read_nodes)
+    data = read_USTIMES_MA3T(read_nodes, subdir="R11")
 
     if context.regions == "R14":
         # Convert R11 to R14 data
