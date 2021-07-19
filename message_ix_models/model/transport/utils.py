@@ -3,6 +3,7 @@ from collections import defaultdict
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 import xarray as xr
@@ -163,15 +164,22 @@ def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
     return df.combine_first(df["technology"].apply(t_cl))
 
 
-def path_fallback(context, *parts) -> Path:
+def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     """Return a :class:`.Path` constructed from `parts`.
 
-    If ``context.regions`` is defined and the file exists in a subdirectory of
-    :file:`data/transport/{regions}/`, return its path; otherwise, return the path in
-    :file:`data/transport/`.
+    If ``context.regions`` (or a string value as the first argument) is defined and the
+    file exists in a subdirectory of :file:`data/transport/{regions}/`, return its
+    path; otherwise, return the path in :file:`data/transport/`.
     """
+    try:
+        # Use a value from a Context object, or a default
+        regions = context_or_regions.regions or ""
+    except AttributeError:
+        # Value was a str instead
+        regions = context_or_regions
+
     for candidate in (
-        private_data_path("transport", context.regions or "", *parts),
+        private_data_path("transport", regions, *parts),
         private_data_path("transport", *parts),
     ):
         if candidate.exists():
