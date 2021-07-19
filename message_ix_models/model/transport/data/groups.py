@@ -8,10 +8,10 @@ import xarray as xr
 from genno import computations
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.model.structure import Code, get_codes
-from message_ix_models.util import private_data_path
+from message_ix_models.util import adapt_R11_R14
 
 from message_data.model.transport.utils import consumer_groups, path_fallback
-from message_data.tools import gea, ssp
+from message_data.tools import check_support, gea, ssp
 
 log = logging.getLogger(__name__)
 
@@ -56,17 +56,26 @@ def get_consumer_groups(context) -> Quantity:
     # Data: GEA population projections give split between 'UR+SU' and 'RU'
     ursu_ru = get_urban_rural_shares(context)
 
+    check_support(
+        context,
+        settings=dict(regions=frozenset(["R11", "R14"])),
+        desc="Exogenous data for consumer group calculations",
+    )
+
     # Assumption: split of population between area_type 'UR' and 'SU'
     # - Fill forward along years, for nodes where only a year 2010 value is assumed.
     # - Fill backward 2010 to 2005, in order to compute.
     su_share = (
         computations.load_file(
-            path=path_fallback(context, "population-suburb-share.csv"),
+            path=path_fallback("R11", "population-suburb-share.csv"),
             dims=RENAME_DIMS,
         )
         .ffill("y")
         .bfill("y")
     )
+
+    if context.regions == "R14":
+        su_share = adapt_R11_R14(su_share)
 
     # Assumption: each global node is equivalent to a certain U.S. census_division
 
@@ -95,9 +104,9 @@ def get_consumer_groups(context) -> Quantity:
 
     # Population shares between urban, suburban, and rural
     # DLM: “Values from MA3T are based on 2001 NHTS survey and some more recent
-    # calculations done in 2008 timeframe. Therefore, I assume that the numbers
-    # here are applicable to the US in 2005.”
-    # NB in the spreadsheet, the data are also filled forward to 2010
+    # calculations done in 2008 timeframe. Therefore, I assume that the numbers here are
+    # applicable to the US in 2005.”
+    # NB in the spreadsheet, the data are also filled forward to 2110
     ma3t_pop = computations.load_file(
         path=path_fallback(context, "ma3t", "population.csv")
     )
@@ -229,7 +238,11 @@ def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
     assert ["million"] == qty.coords["unit"]
 
     # Remove unit dimension
-    return add_2110(qty.sel(scenario=scenario).drop(["unit", "scenario"]))
+    return computations.interpolate(
+        qty.sel(scenario=scenario).drop(["unit", "scenario"]),
+        coords=dict(y=periods),
+        kwargs=dict(fill_value="extrapolate"),
+    )
 
 
 def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quantity:
@@ -256,21 +269,14 @@ def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     # - Select & drop on the 'unit' and 'scenario' dimensions.
     # - Convert the list of nodes into a country → region mapping.
     # - Use the genno aggregate operation from country to regional resolution.
-    return add_2110(
+    # - Interpolate and select only the required `periods`.
+    print(qty.sel(scenario=_scenario[0]).drop(["unit", "scenario"]))
+    return computations.interpolate(
         computations.aggregate(
             qty.sel(scenario=_scenario[0]).drop(["unit", "scenario"]),
             groups=dict(n={node.id: list(map(str, node.child)) for node in nodes}),
             keep=False,
-        )
-    ).sel(y=periods)
-
-
-def add_2110(data: Quantity) -> Quantity:
-    """Duplicate 2100 data for 2110."""
-    # TODO use some kind of ffill operation
-    # NB transpose() should not be necessary; see khaeru/genno#38
-    dims = data.dims
-    result = computations.concat(
-        data, data.sel(y=2100).expand_dims(y=[2110]).transpose(*dims)
+        ),
+        coords=dict(y=periods),
+        kwargs=dict(fill_value="extrapolate"),
     )
-    return computations.apply_units(result, data.units)
