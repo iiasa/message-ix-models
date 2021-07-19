@@ -154,13 +154,18 @@ def test_ikarus(test_context, regions, N_node, years):
         )
 
 
-@pytest.mark.skip("Temporary, to be resolved in #238")
-@pytest.mark.parametrize("source, rows", (("1", 15839), ("2", 17286), ("3", 5722)))
-def test_get_emissions_data(test_context, source, rows):
-    ctx = test_context
-    ctx["transport config"]["data source"]["emissions"] = source
+@pytest.mark.parametrize("source, rows", (("1", 4717), ("2", 5153)))
+@pytest.mark.parametrize("regions", ["R11"])
+def test_get_emissions_data(test_context, source, rows, regions):
+    # Set the value; don't need to read_config()
+    test_context.update(
+        {
+            "transport config": {"data source": {"emissions": source}},
+            "regions": regions,
+        }
+    )
 
-    data = get_emissions_data(ctx)
+    data = get_emissions_data(test_context)
     assert {"emission_factor"} == set(data.keys())
     assert rows == len(data["emission_factor"])
 
