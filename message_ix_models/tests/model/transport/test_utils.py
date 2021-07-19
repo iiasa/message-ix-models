@@ -47,10 +47,11 @@ def test_read_config(test_context, regions):
     """Configuration can be read from files."""
     # Set the regional aggregation to be used
     ctx = test_context
-    ctx.regions = regions
+    if regions is not None:
+        ctx.regions = regions
 
     # read_config() returns nothing
-    assert read_config(test_context) is None
+    assert read_config(ctx) is None
 
     # Scalar parameters are loaded
     assert "scaling" in ctx["transport config"]
