@@ -1,8 +1,7 @@
 """Iteration of MESSAGE-MACRO solve and MESSAGEix-Transport's demand calculation."""
-
 import logging
 
-from message_data.tools import ScenarioInfo
+from message_ix_models import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
