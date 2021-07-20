@@ -18,6 +18,7 @@ from message_data.model.transport.data.groups import (
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
 from message_data.tools import load_data
+from message_data.tools.gfei_fuel_economy import get_gfei_data
 
 
 @pytest.mark.parametrize(
@@ -297,4 +298,39 @@ def test_get_afr_data(transport_context_f, region, length):
         "Variable",
         "Units",
         "Region",
+    ]
+
+
+def test_get_gfei_data(transport_context_f):
+    ctx = transport_context_f
+    ctx.regions = "R11"
+
+    df = get_gfei_data(ctx)
+
+    # Data covers all historical periods from the Roadmap model
+    assert list(df["Year"].unique()) == [2017]
+    # Modes match the list below
+    assert list(df["Mode/vehicle type"].unique()) == [
+        "ICAe_ffv",
+        "ICAm_ptrp",
+        "ICH_chyb",
+        "ICE_conv",
+        "ELC_100",
+        "ICE_lpg",
+        "PHEV_ptrp",
+        "ICE_nga",
+        "HFC_ptrp",
+    ]
+
+    # Data have the correct size and format
+    assert len(df["Mode/vehicle type"]) == 307
+    assert list(df.columns) == [
+        "Country",
+        "Mode/vehicle type",
+        "Value",
+        "ISO_code",
+        "Region",
+        "Year",
+        "Variable",
+        "Units",
     ]
