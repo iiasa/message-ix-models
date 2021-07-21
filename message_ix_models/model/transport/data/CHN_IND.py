@@ -2,10 +2,11 @@
 Bureau of Statistics) and for India (iTEM)."""
 import numpy as np
 import pandas as pd
+from iam_units import registry
 from item import historical
 from message_ix_models.util import private_data_path
 
-from message_data.tools.convert_units import convert_units
+from message_data.tools import series_of_pint_quantity
 from message_data.tools.iea_eei import split_units
 
 UNITS = {
@@ -20,7 +21,7 @@ SDMX_MAP = {
     "REF_AREA": "ISO Code",
     "VARIABLE": "Variable",
     "VEHICLE": "Vehicle type",
-    "MODE": "Mode",
+    "MODE": "Mode/vehicle type",
     "UNIT": "Units",
     "TIME_PERIOD": "Year",
     "VALUE": "Value",
@@ -82,16 +83,16 @@ def split_variable(s):
     return df
 
 
-def get_chn_ind_item_data():
-    """Retrieve activity data for rail and road transport for China and India.
+def get_ind_item_data():
+    """Retrieve activity data for rail and road transport for India from iTEM.
 
-    Data is obtained from iTEM database's file ``T000.csv`` and filtered for the two
-    specific countries and for the period 2000-2018.
+    Data is obtained from iTEM database's file ``T000.csv`` and filtered for the
+    period 2000-2018. Data for China is not retrieved since it comes from the NBSC.
 
     Returns
     -------
     DataFrame : pandas.DataFrame
-        DataFrame with transport data for China and India.
+        DataFrame with transport data for India.
     """
     # Import data from iTEM database file T000.csv, including inland passenger
     # transport activity data
@@ -100,13 +101,12 @@ def get_chn_ind_item_data():
         columns=[x for x in list(df.columns) if x not in list(SDMX_MAP.keys())],
         inplace=True,
     )
-    # Rename columns using SDMX_MAP dict, to match dataset format in get_chn_nbsc_data()
+    # Rename columns using SDMX_MAP dict, to match dataset format in get_chn_ind_data()
     df.columns = df.columns.to_series().map(SDMX_MAP)
-    # Filter values for CHN & IND between 2000-2018
+    # Filter values for IND between 2000-2018
     df = df[
-        (df["ISO Code"].isin(["IND", "CHN"]))
-        & (df["Year"].isin(list(np.arange(2000, 2019))))
-    ].sort_values(["ISO Code", "Mode", "Vehicle type"], ignore_index=True)
+        (df["ISO Code"].isin(["IND"])) & (df["Year"].isin(list(np.arange(2000, 2019))))
+    ].sort_values(["ISO Code", "Mode/vehicle type", "Vehicle type"], ignore_index=True)
     return df
 
 
@@ -203,22 +203,34 @@ def get_chn_ind_data(private_vehicles=False):
         ["ISO Code", "Year", "Variable", "Mode/vehicle type"], ignore_index=True
     )
 
-    chn = df[df["ISO Code"] == "CHN"].pivot(
-        index="Year", columns=["Mode/vehicle type", "Variable"], values="Value"
-    )
-    # Convert units using the mapping **UNITS** defined above
-    idx_lvl_0 = list(set(chn.columns.get_level_values(0)))
-    for mode in idx_lvl_0:
-        chn[mode] = chn[mode].apply(convert_units, unit_info=UNITS)
+    # Import IND data from iTEM database
+    df_item = get_ind_item_data()
+    # Rename values in columns to match CHN dataset from NBSC
+    df_item["Variable"] = "Passenger-Kilometers"
+    df_item["Mode/vehicle type"] = "Railways"
+    df_item.drop(columns="Vehicle type", inplace=True)
 
-    ind = (
-        df[df["ISO Code"] == "IND"]
-        .pivot(index="Year", columns="Variable", values="Value")
-        .apply(convert_units, unit_info=UNITS)
-    )
+    # Concat CHN and IND data
+    df = pd.concat([df, df_item], ignore_index=True)
 
-    # Import CHN-IND data from iTEM database
-    df_item = get_chn_ind_item_data()
+    # Convert units
+    # TODO: Make this a separate function once unit conversions are dealt with
+    for var, info in UNITS.items():
+        factor, unit_in, unit_out = info
+        unit_out = unit_out or unit_in
+        result = registry.Quantity(
+            factor * df[df["Variable"] == var]["Value"].values, unit_in
+        ).to(unit_out)
+        result = series_of_pint_quantity(
+            result.tolist(),
+            index=df[df["Variable"] == var]["Value"].index,
+            dtype=object,
+            name=df[df["Variable"] == var]["Value"].name,
+        )
+        # TODO: fix lines below: should store *pint* magnitude into "Value" and units
+        #  into "Units"
+        df[df["Variable"] == var]["Value"] = result.apply(lambda x: x.magnitude)
+        df[df["Variable"] == var]["Units"] = result.apply(lambda x: x.units)
 
     return df
 
