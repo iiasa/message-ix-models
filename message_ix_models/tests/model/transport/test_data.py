@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
@@ -9,7 +10,7 @@ from pytest import param
 
 from message_data import testing
 from message_data.model.transport import data as data_module
-from message_data.model.transport.data.roadmap import get_roadmap_data
+from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import get_emissions_data
 from message_data.model.transport.data.groups import (
     get_consumer_groups,
@@ -17,6 +18,7 @@ from message_data.model.transport.data.groups import (
 )
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
+from message_data.model.transport.data.roadmap import get_roadmap_data
 from message_data.tools import load_data
 from message_data.tools.gfei_fuel_economy import get_gfei_data
 
@@ -333,4 +335,65 @@ def test_get_gfei_data(transport_context_f):
         "Year",
         "Variable",
         "Units",
+    ]
+
+
+def test_get_chn_ind_data():
+    df = get_chn_ind_data()
+
+    # Data covers all historical periods from NBSC
+    assert list(df["Year"].unique()) == list(range(2000, 2019, 1))
+    # Modes match the list below
+    assert list(df["Mode/vehicle type"].unique()) == [
+        "Civil Aviation",
+        "Highways",
+        "Ocean",
+        "Railways",
+        "Total freight transport",
+        "Waterways",
+        "Total passenger transport",
+        np.nan,
+        "Civil Vehicles",
+        "Heavy Trucks",
+        "Large Passenger Vehicles",
+        "Light Trucks",
+        "Medium Passenger Vehicles",
+        "Medium Trucks",
+        "Mini Passenger Vehicles",
+        "Mini Trucks",
+        "Other Vehicles",
+        "Passenger Vehicles",
+        "Small Passenger Vehicles",
+        "Trucks",
+    ]
+
+    # Data have the correct size and format
+    assert len(df["Mode/vehicle type"]) == 529
+    assert list(df.columns) == [
+        "ISO Code",
+        "Variable",
+        "Mode/vehicle type",
+        "Units",
+        "Year",
+        "Value",
+    ]
+
+    # TODO: also test units once conversion has been fixed.
+
+
+def test_get_chn_ind_pop():
+    df = get_chn_ind_pop()
+
+    # Data covers all historical periods from NBSC
+    assert list(df["Year"].unique()) == list(range(2000, 2019, 1))
+    # Data have the correct size and format
+    assert (
+        df[(df["ISO Code"] == "CHN") & (df["Year"] == 2001)]["Value"].values
+        == 1290937649
+    )
+    assert list(df.columns) == [
+        "ISO Code",
+        "Year",
+        "Value",
+        "Variable",
     ]
