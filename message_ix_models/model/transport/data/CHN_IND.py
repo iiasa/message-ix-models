@@ -133,18 +133,28 @@ def get_chn_ind_pop():
     return pop
 
 
-def get_chn_ind_data():
+def get_chn_ind_data(private_vehicles=False):
     """Read transport activity and vehicle stock data for China and India.
 
     The data is read from ``data/transport`` folder (data for China from NBSC) and
     imported from iTEM project (data for India). Then, it is processed into the same
     format as the IEA's EEI datasets -to be used for MESSAGEix-Transport calibration.
 
+    Parameters
+    ----------
+    private_vehicles : bool, optional
+        If ``True``, also data for private vehicles will be parsed. However,
+        it is set by default to ``False`` since this category is included within the
+        civil vehicles, which are read from another file. Therefore, in absolute
+        terms, only the civil vehicles are relevant for top-level stock insights.
+
     Returns
     -------
     DataFrame : pandas.DataFrame
         DataFrame with processed transport data for China and India.
     """
+    if not private_vehicles:
+        del FILES["Vehicle stock private"]
     # Load and process data from China
     df = pd.DataFrame()
     for file, skip_footer in FILES.values():
