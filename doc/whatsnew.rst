@@ -1,8 +1,12 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Migrate utilities :func:`cached`, :func:`.check_support`, :func:`.convert_units`, :func:`.maybe_query`, :func:`.series_of_pint_quantity` (:pull:`27`)
+- Add :data:`.testing.NIE`.
+- Add the ``--jvmargs`` option to :command:`pytest` (see :func:`.pytest_addoption`).
 
 2021.7.6
 ========
