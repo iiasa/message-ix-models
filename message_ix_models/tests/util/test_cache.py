@@ -9,7 +9,6 @@ import message_ix_models.util.cache
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import cached
 
-
 log = logging.getLogger(__name__)
 
 
