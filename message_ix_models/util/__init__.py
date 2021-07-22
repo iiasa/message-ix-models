@@ -30,6 +30,7 @@ __all__ = [
     "identify_nodes",
     "load_package_data",
     "load_private_data",
+    "maybe_query",
     "package_data_path",
     "private_data_path",
     "series_of_pint_quantity",
@@ -418,7 +419,13 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
 
 
 def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
-    """Apply :meth:`pandas.DataFrame.query` if the `query` arg is not :obj:`None`."""
+    """Apply :meth:`pandas.Series.query` if the `query` arg is not :obj:`None`.
+
+    :meth:`~pandas.Series.query` is not chainable (`pandas-dev/pandas#37941
+    <https://github.com/pandas-dev/pandas/issues/37941>`_). Use this function with
+    :func:`pandas.Series.pipe`, passing an argument that may be :obj:`None`, to have a
+    chainable query operation that can be a no-op.
+    """
     # Convert Series to DataFrame, query(), then retrieve the single column
     return series if query is None else series.to_frame().query(query)[0]
 
