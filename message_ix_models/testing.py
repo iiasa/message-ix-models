@@ -19,7 +19,17 @@ log = logging.getLogger(__name__)
 
 
 def pytest_addoption(parser):
-    """Add the ``--local-cache`` command-line option to pytest."""
+    """Add two command-line options to pytest:
+
+    ``--local-cache``
+       Use existing, local cache files in tests. This option can speed up tests that
+       *use* the results of slow data loading/parsing. However, if cached values are not
+       up to date with the current code, unexpected failure may occur.
+
+    ``--jvmargs``
+       Additional arguments to give for the Java Virtual Machine used by :mod:`ixmp`'s
+       :class:`.JDBCBackend`. Used by :func:`session_context`.
+    """
     parser.addoption(
         "--local-cache",
         action="store_true",
