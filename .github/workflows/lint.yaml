@@ -20,10 +20,6 @@ jobs:
     - uses: actions/checkout@v2
 
     - uses: actions/setup-python@v2
-      with:
-        # This should match the "Latest version testable on GitHub Actions"
-        # in pytest.yaml
-        python-version: "3.8"
 
     - name: Cache Python packages
       uses: actions/cache@v2
@@ -64,5 +60,5 @@ jobs:
         MYPYPATH: "./ixmp/:./message-ix/"
       # Also install stub packages and others that provide type hints
       run: |
-        pip install genno pytest sdmx1 types-PyYAML types-setuptools
+        pip install genno iam-units pytest sdmx1 types-PyYAML types-setuptools
         mypy ./message_ix_models

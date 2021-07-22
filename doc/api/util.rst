@@ -21,6 +21,9 @@ Commonly used:
    adapt_R11_R14
    as_codes
    broadcast
+   cached
+   check_support
+   convert_units
    copy_column
    ffill
    identify_nodes
@@ -29,10 +32,12 @@ Commonly used:
    make_io
    make_matched_dfs
    make_source_tech
+   maybe_query
    merge_data
    package_data_path
    private_data_path
    same_node
+   series_of_pint_quantity
    ~context.Context
    ~scenarioinfo.ScenarioInfo
 

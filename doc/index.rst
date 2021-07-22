@@ -41,6 +41,7 @@ These models are built in the `MESSAGEix framework <https://docs.messageix.org>`
    :maxdepth: 2
    :caption: Development
 
+   develop
    whatsnew
    migrate
    releasing

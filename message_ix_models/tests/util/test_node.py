@@ -1,6 +1,5 @@
 """Tests of :mod:`message_ix_models.util.node`."""
 import re
-from contextlib import contextmanager
 
 import pytest
 from genno import Quantity
@@ -74,23 +73,8 @@ def test_adapt_R11_R14_1(input):
     ).all()
 
 
-@contextmanager
-def _transact(ts, condition=True, commit_message=""):
-    """TEMPORARY Context manager to wrap in a 'transaction'.
-
-    This is just a placeholder; should import from :mod:`ixmp`.
-    """
-    if condition:
-        ts.check_out()
-    try:
-        yield ts
-    finally:
-        if condition:
-            ts.commit(commit_message)
-
-
 @pytest.mark.parametrize("regions", ["R11", "R12", "R14"])
-def test_identify_nodes(test_context, regions):
+def test_identify_nodes(caplog, test_context, regions):
     ctx = test_context
     ctx.regions = regions
     scenario = create_res(ctx)
@@ -98,9 +82,14 @@ def test_identify_nodes(test_context, regions):
     # The ID of the node codelist can be recovered from scenario contents
     assert regions == identify_nodes(scenario)
 
+    # A node like "R11_GLB" is ignored
+    with scenario.transact():
+        scenario.add_set("node", f"{regions}_GLB")
+    assert regions == identify_nodes(scenario)
+
     # Remove one element from the node set
-    with _transact(scenario):
-        scenario.remove_set("node", scenario.set("node").tolist()[-1])
+    with scenario.transact():
+        scenario.remove_set("node", scenario.set("node").tolist()[0])
 
     # No longer any match
     with pytest.raises(
@@ -118,7 +107,7 @@ def test_identify_nodes1(test_context):
     scenario.add_set("year", 0)
     scenario.commit("")
 
-    with _transact(scenario):
+    with scenario.transact():
         scenario.add_set("node", "R99_ZZZ")
 
     with pytest.raises(
