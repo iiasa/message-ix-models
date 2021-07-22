@@ -74,12 +74,17 @@ def test_adapt_R11_R14_1(input):
 
 
 @pytest.mark.parametrize("regions", ["R11", "R12", "R14"])
-def test_identify_nodes(test_context, regions):
+def test_identify_nodes(caplog, test_context, regions):
     ctx = test_context
     ctx.regions = regions
     scenario = create_res(ctx)
 
     # The ID of the node codelist can be recovered from scenario contents
+    assert regions == identify_nodes(scenario)
+
+    # A node like "R11_GLB" is ignored
+    with scenario.transact():
+        scenario.add_set("node", f"{regions}_GLB")
     assert regions == identify_nodes(scenario)
 
     # Remove one element from the node set
