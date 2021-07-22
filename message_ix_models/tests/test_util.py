@@ -3,8 +3,10 @@ import logging
 import re
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
+from iam_units import registry
 from message_ix import make_df
 from pandas.testing import assert_series_equal
 
@@ -15,6 +17,7 @@ from message_ix_models.util import (
     as_codes,
     broadcast,
     check_support,
+    convert_units,
     copy_column,
     ffill,
     iter_parameters,
@@ -24,6 +27,7 @@ from message_ix_models.util import (
     maybe_query,
     package_data_path,
     private_data_path,
+    series_of_pint_quantity,
 )
 
 _actual_package_data = Path(__file__).parents[1].joinpath("data")
@@ -82,6 +86,31 @@ def test_check_support(test_context):
         match=re.escape("Test data available for ['R11', 'R14']; got 'FOO'"),
     ):
         check_support(*args)
+
+
+def test_convert_units(recwarn):
+    """:func:`.convert_units` and :func:`.series_of_pint_quantity` work."""
+    # Common arguments
+    args = [pd.Series([1.1, 10.2, 100.3], name="bar"), dict(bar=(10.0, "lb", "kg"))]
+
+    exp = series_of_pint_quantity(
+        [registry("4.9895 kg"), registry("46.2664 kg"), registry("454.9531 kg")],
+    )
+
+    # With store="quantity", a series of pint.Quantity is returned
+    result = convert_units(*args, store="quantity")
+    assert all(np.isclose(a, b, atol=1e-4) for a, b in zip(exp.values, result.values))
+
+    # With store="magnitude", a series of floats
+    exp = pd.Series([q.magnitude for q in exp.values], name="bar")
+    assert_series_equal(exp, convert_units(*args, store="magnitude"), check_dtype=False)
+
+    # Other values for store= are errors
+    with pytest.raises(ValueError, match="store='foo'"):
+        convert_units(*args, store="foo")
+
+    # series_of_pint_quantity() successfully caught warnings
+    assert 0 == len(recwarn)
 
 
 def test_copy_column():

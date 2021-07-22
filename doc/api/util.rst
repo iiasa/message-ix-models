@@ -22,6 +22,7 @@ Commonly used:
    as_codes
    broadcast
    check_support
+   convert_units
    copy_column
    ffill
    identify_nodes
@@ -35,6 +36,7 @@ Commonly used:
    package_data_path
    private_data_path
    same_node
+   series_of_pint_quantity
    ~context.Context
    ~scenarioinfo.ScenarioInfo
 

@@ -30,10 +30,10 @@ def convert_units(
 ) -> pd.Series:
     """Convert units of `s`, for use with :meth:`~pandas.DataFrame.apply`.
 
-    ``s.name`` is used to retrieve a tuple of (`factor`, `input_unit`,
-    `output_unit`) from `unit_info`. The (:class:`float`) values of `s` are converted
-    to :class:`pint.Quantity` with the `input_unit` and factor; then cast to
-    `output_unit`, if provided.
+    ``s.name`` is used to retrieve a tuple of (`factor`, `input_unit`, `output_unit`)
+    from `unit_info`. The (:class:`float`) values of `s` are converted to
+    :class:`pint.Quantity` with the `input_unit` and factor; then cast to `output_unit`,
+    if provided.
 
     Parameters
     ----------
@@ -52,6 +52,9 @@ def convert_units(
     pandas.Series
         Same shape, index, and values as `s`, with output units.
     """
+    if store not in "magnitude quantity":
+        raise ValueError(f"store={repr(store)}")
+
     # Retrieve the information from `unit_info`
     factor, unit_in, unit_out = unit_info[s.name]
 
