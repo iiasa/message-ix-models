@@ -18,8 +18,13 @@ class TestContext:
         c.delete()
 
     def test_only(self):
+        # Ensure at least 2 instances exist
+        c2 = Context()
+
         with pytest.raises(IndexError, match=r"ambiguous: \d+ Context instances"):
             Context.only()
+
+        c2.delete()
 
     def test_clone_to_dest(self, caplog, test_context):
         ctx = test_context
