@@ -1,5 +1,5 @@
-Models and variants (:mod:`.model`)
-***********************************
+Models and variants (:mod:`~message_ix_models.model`)
+*****************************************************
 
 .. currentmodule:: message_ix_models.model
 
