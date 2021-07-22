@@ -25,7 +25,9 @@ jobs:
         - ubuntu-latest
         - windows-latest
         python-version:
-        - "3.8"  # Latest version testable on GitHub Actions
+        # Latest version testable on GitHub Actions. This should match the
+        # version used in the 'pytest' workflows of both ixmp and message_ix.
+        - "3.9"
 
       fail-fast: false
 
@@ -81,13 +83,11 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          gams
           ~/.cache/pip
           ~/Library/Caches/pip
           ~/appdata/local/pip/cache
-        key: ${{ matrix.os }}-gams${{ env.GAMS_VERSION }}-py${{ matrix.python-version }}
+        key: ${{ matrix.os }}-py${{ matrix.python-version }}
         restore-keys: |
-          ${{ matrix.os }}-gams${{ env.GAMS_VERSION }}-
           ${{ matrix.os }}-
 
     - uses: iiasa/actions/setup-gams@main
