@@ -25,6 +25,7 @@ __all__ = [
     "MESSAGE_MODELS_PATH",
     "adapt_R11_R14",
     "cached",
+    "check_support",
     "convert_units",
     "identify_nodes",
     "load_package_data",
@@ -189,6 +190,10 @@ def check_support(context, settings=dict(), desc: str = "") -> None:
         `settings`.
     :class:`KeyError`
         if the key is not set on `context` at all.
+
+    See also
+    --------
+    :ref:`check-support`
 
     """
     __tracebackhide__ = True
