@@ -4,13 +4,10 @@ import os
 from copy import deepcopy
 from pathlib import Path
 from typing import List
-from warnings import warn
 
 import ixmp
 import message_ix
 from click import BadOptionUsage
-
-from .common import load_package_data, package_data_path, private_data_path
 
 log = logging.getLogger(__name__)
 
@@ -295,82 +292,3 @@ class Context(dict):
 
             if value not in info:
                 raise ValueError(f"{setting} must be in {info}; got {value}")
-
-    # Deprecated methods
-
-    def get_config_file(self, *parts, ext="yaml") -> Path:
-        """Return a path under :attr:`metadata_path`.
-
-        The suffix ".{ext}" is added; defaulting to ".yaml".
-
-        .. deprecated:: 2021.2.28
-           Use :func:`.package_data_path` instead.
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.get_config_file(). Instead use:\n"
-            "from message_ix_models import package_data_path",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return package_data_path(*parts).with_suffix(f".{ext}")
-
-    def get_path(self, *parts) -> Path:  # pragma: no cover  (needs message_data)
-        """Return a path under :attr:`message_data_path` by joining *parts*.
-
-        *parts* may include directory names, or a filename with extension.
-
-        .. deprecated:: 2021.2.28
-           Use :func:`.private_data_path` instead.
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.get_path(). Instead use: \n"
-            "from message_ix_models import private_data_path",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return private_data_path(*parts)
-
-    def load_config(self, *parts, suffix=None):
-        """Load configuration from :mod:`message_ix_models`.
-
-        .. deprecated:: 2021.2.28
-           Use :func:`.load_package_data` instead.
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.load_config(). Instead use:\n"
-            "from message_ix_models.util import load_package_data",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        result = load_package_data(*parts, suffix=suffix)
-        self[" ".join(parts)] = result
-        return result
-
-    @property
-    def units(self):
-        """Access the unit registry.
-
-        .. deprecated:: 2021.2.28
-           Instead, use:
-
-           .. code-block:: python
-
-              from iam_units import registry
-
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.units attribute. Instead use:\nfrom iam_units import registry",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        from iam_units import registry
-
-        return registry
