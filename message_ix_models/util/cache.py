@@ -70,7 +70,7 @@ def cached(load_func: Callable) -> Callable:
         # Path to the cache file
         name_parts = [load_func.__name__, _arg_hash(*args, **kwargs)]
         cache_path = (
-            Context.get_instance()
+            Context.get_instance(-1)
             .get_cache_path("-".join(name_parts))
             .with_suffix(".pkl")
         )
