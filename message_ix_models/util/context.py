@@ -96,7 +96,8 @@ class Context(dict):
 
     def delete(self):
         """Hide the current Context from future :meth:`.get_instance` calls."""
-        index = _CONTEXTS.index(self)
+        # Index of the *last* matching instance
+        index = len(_CONTEXTS) - 1 - list(reversed(_CONTEXTS)).index(self)
 
         if index > 0:
             _CONTEXTS.pop(index)
