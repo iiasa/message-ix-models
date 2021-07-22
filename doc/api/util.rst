@@ -21,6 +21,7 @@ Commonly used:
    adapt_R11_R14
    as_codes
    broadcast
+   check_support
    copy_column
    ffill
    identify_nodes

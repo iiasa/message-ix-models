@@ -13,6 +13,7 @@ from message_ix_models.util import (
     MESSAGE_MODELS_PATH,
     as_codes,
     broadcast,
+    check_support,
     copy_column,
     ffill,
     iter_parameters,
@@ -58,6 +59,27 @@ def test_as_codes_invalid(data):
     """as_codes() rejects invalid data."""
     with pytest.raises(TypeError):
         as_codes(data)
+
+
+def test_check_support(test_context):
+    """:func:`.check_support` raises an exception for missing/non-matching values."""
+    args = [test_context, dict(regions=["R11", "R14"]), "Test data available"]
+
+    # Setting not set → KeyError
+    with pytest.raises(KeyError, match="regions"):
+        check_support(*args)
+
+    # Accepted value
+    test_context.regions = "R11"
+    check_support(*args)
+
+    # Wrong setting
+    test_context.regions = "FOO"
+    with pytest.raises(
+        NotImplementedError,
+        match=re.escape("Test data available for ['R11', 'R14']; got 'FOO'"),
+    ):
+        check_support(*args)
 
 
 def test_copy_column():
