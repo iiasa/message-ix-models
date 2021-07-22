@@ -39,6 +39,14 @@ class TestContext:
         c["scenario_info"] = dict()
 
         c["dest_scenario"] = dict(model=model_name, scenario=scenario_name)
+
+        # Fails with create=False
+        with pytest.raises(
+            TypeError, match="missing 1 required positional argument: 'model'"
+        ):
+            c.clone_to_dest(create=False)
+
+        # Succeeds with default create=True
         s = c.clone_to_dest()
 
         # Base scenario was created
