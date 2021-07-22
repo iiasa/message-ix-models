@@ -51,7 +51,7 @@ class Encoder(json.JSONEncoder):
 
 
 # Override genno's built-in encoder with the one above, covering more cases
-genno.caching.PathEncoder = Encoder
+genno.caching.PathEncoder = Encoder  # type: ignore [assignment, misc]
 
 
 def cached(func: Callable) -> Callable:
