@@ -8,7 +8,6 @@ import ixmp
 import pytest
 
 from message_ix_models import Context
-from message_ix_models.util import MESSAGE_DATA_PATH
 
 
 class TestContext:
@@ -18,8 +17,13 @@ class TestContext:
         c.delete()
 
     def test_only(self):
-        with pytest.raises(IndexError, match="ambiguous: 2 Context instances"):
+        # Ensure at least 2 instances exist
+        c2 = Context()
+
+        with pytest.raises(IndexError, match=r"ambiguous: \d+ Context instances"):
             Context.only()
+
+        c2.delete()
 
     def test_clone_to_dest(self, caplog, test_context):
         ctx = test_context
@@ -35,10 +39,18 @@ class TestContext:
         c["scenario_info"] = dict()
 
         c["dest_scenario"] = dict(model=model_name, scenario=scenario_name)
+
+        # Fails with create=False
+        with pytest.raises(
+            TypeError, match="missing 1 required positional argument: 'model'"
+        ):
+            c.clone_to_dest(create=False)
+
+        # Succeeds with default create=True
         s = c.clone_to_dest()
 
         # Base scenario was created
-        assert "No base scenario given" in caplog.messages
+        assert "Base scenario not given or found" in caplog.messages
 
         # Works with a URL to parse and no base scenario
         url = f"ixmp://{platform_name}/{model_name}/{scenario_name}"
@@ -172,43 +184,3 @@ class TestContext:
             c.use_defaults(defaults)
 
         c.delete()
-
-    # Deprecated methods and attributes
-
-    def test_get_config_file(self, test_context):
-        with pytest.deprecated_call():
-            assert (
-                "message_ix_models",
-                "data",
-                "level.yaml",
-            ) == test_context.get_config_file("level").parts[-3:]
-
-    @pytest.mark.xfail(
-        condition=MESSAGE_DATA_PATH is None,
-        reason="Requires message_data to be installed.",
-    )
-    def test_get_path(self, test_context):
-        with pytest.deprecated_call():
-            assert MESSAGE_DATA_PATH.joinpath(
-                "data", "foo", "bar"
-            ) == test_context.get_path("foo", "bar")
-
-    def test_load_config(self, test_context):
-        # Calling this method is deprecated
-        with pytest.deprecated_call():
-            # Config files can be loaded and are parsed from YAML into Python objects
-            assert isinstance(test_context.load_config("level"), dict)
-
-        # The loaded file is stored and can be reused
-        assert isinstance(test_context["level"], dict)
-
-    def test_units(self, test_context):
-        """Context.units can be used to parse units that are not standard in pint.
-
-        i.e. message_data unit definitions are used.
-        """
-        with pytest.deprecated_call():
-            assert test_context.units("15 USD_2005 / year").dimensionality == {
-                "[currency]": 1,
-                "[time]": -1,
-            }

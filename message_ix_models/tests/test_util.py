@@ -3,9 +3,12 @@ import logging
 import re
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
+from iam_units import registry
 from message_ix import make_df
+from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
@@ -13,14 +16,18 @@ from message_ix_models.util import (
     MESSAGE_MODELS_PATH,
     as_codes,
     broadcast,
+    check_support,
+    convert_units,
     copy_column,
     ffill,
     iter_parameters,
     load_package_data,
     load_private_data,
     make_source_tech,
+    maybe_query,
     package_data_path,
     private_data_path,
+    series_of_pint_quantity,
 )
 
 _actual_package_data = Path(__file__).parents[1].joinpath("data")
@@ -58,6 +65,52 @@ def test_as_codes_invalid(data):
     """as_codes() rejects invalid data."""
     with pytest.raises(TypeError):
         as_codes(data)
+
+
+def test_check_support(test_context):
+    """:func:`.check_support` raises an exception for missing/non-matching values."""
+    args = [test_context, dict(regions=["R11", "R14"]), "Test data available"]
+
+    # Setting not set → KeyError
+    with pytest.raises(KeyError, match="regions"):
+        check_support(*args)
+
+    # Accepted value
+    test_context.regions = "R11"
+    check_support(*args)
+
+    # Wrong setting
+    test_context.regions = "FOO"
+    with pytest.raises(
+        NotImplementedError,
+        match=re.escape("Test data available for ['R11', 'R14']; got 'FOO'"),
+    ):
+        check_support(*args)
+
+
+def test_convert_units(recwarn):
+    """:func:`.convert_units` and :func:`.series_of_pint_quantity` work."""
+    # Common arguments
+    args = [pd.Series([1.1, 10.2, 100.3], name="bar"), dict(bar=(10.0, "lb", "kg"))]
+
+    exp = series_of_pint_quantity(
+        [registry("4.9895 kg"), registry("46.2664 kg"), registry("454.9531 kg")],
+    )
+
+    # With store="quantity", a series of pint.Quantity is returned
+    result = convert_units(*args, store="quantity")
+    assert all(np.isclose(a, b, atol=1e-4) for a, b in zip(exp.values, result.values))
+
+    # With store="magnitude", a series of floats
+    exp = pd.Series([q.magnitude for q in exp.values], name="bar")
+    assert_series_equal(exp, convert_units(*args, store="magnitude"), check_dtype=False)
+
+    # Other values for store= are errors
+    with pytest.raises(ValueError, match="store='foo'"):
+        convert_units(*args, store="foo")
+
+    # series_of_pint_quantity() successfully caught warnings
+    assert 0 == len(recwarn)
 
 
 def test_copy_column():
@@ -170,6 +223,22 @@ def test_make_source_tech():
     del values["var_cost"]
     with pytest.raises(ValueError, match=re.escape("needs values for {'var_cost'}")):
         make_source_tech(info, common, **values)
+
+
+def test_maybe_query():
+    """:func:`.maybe_query` works as intended."""
+    s = pd.Series(
+        [0, 1, 2, 3],
+        index=pd.MultiIndex.from_product(
+            [["a", "b"], ["c", "d"]], names=["foo", "bar"]
+        ),
+    )
+
+    # No-op
+    assert_series_equal(s, maybe_query(s, None))
+
+    # Select a few rows
+    assert 2 == len(maybe_query(s, "bar == 'c'"))
 
 
 def test_package_data_path(*parts, suffix=None):

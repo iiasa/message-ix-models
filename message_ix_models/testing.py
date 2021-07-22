@@ -19,11 +19,27 @@ log = logging.getLogger(__name__)
 
 
 def pytest_addoption(parser):
-    """Add the ``--local-cache`` command-line option to pytest."""
+    """Add two command-line options to pytest:
+
+    ``--local-cache``
+       Use existing, local cache files in tests. This option can speed up tests that
+       *use* the results of slow data loading/parsing. However, if cached values are not
+       up to date with the current code, unexpected failure may occur.
+
+    ``--jvmargs``
+       Additional arguments to give for the Java Virtual Machine used by :mod:`ixmp`'s
+       :class:`.JDBCBackend`. Used by :func:`session_context`.
+    """
     parser.addoption(
         "--local-cache",
         action="store_true",
         help="Use existing local cache files in tests",
+    )
+    parser.addoption(
+        "--jvmargs",
+        action="store",
+        default="",
+        help="Arguments for Java VM used by ixmp JDBCBackend",
     )
 
 
@@ -78,6 +94,7 @@ def session_context(pytestconfig, tmp_env):
         "class": "jdbc",
         "driver": "hsqldb",
         "url": f"jdbc:hsqldb:mem://{platform_name}",
+        "jvmargs": pytestconfig.option.jvmargs,
     }
 
     # Launch Platform and connect to testdb (reconnect if closed)
@@ -340,3 +357,8 @@ def export_test_data(context: Context):
     tmp_file.unlink()
 
     mark_time()
+
+
+#: Shorthand for marking a parametrized test case that is expected to fail because it is
+#: not implemented.
+NIE = pytest.mark.xfail(raises=NotImplementedError)

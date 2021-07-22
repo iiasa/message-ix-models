@@ -1,5 +1,5 @@
-Test utilities and fixtures
-***************************
+Test utilities and fixtures (:mod:`.testing`)
+*********************************************
 
 .. currentmodule:: message_ix_models.testing
 
