@@ -6,7 +6,6 @@ from iam_units import registry
 from item import historical
 from message_ix_models.util import private_data_path
 
-from message_data.tools import series_of_pint_quantity
 from message_data.tools.iea_eei import split_units
 
 UNITS = {
@@ -18,7 +17,7 @@ UNITS = {
 
 
 SDMX_MAP = {
-    "REF_AREA": "ISO Code",
+    "REF_AREA": "ISO_code",
     "VARIABLE": "Variable",
     "VEHICLE": "Vehicle type",
     "MODE": "Mode/vehicle type",
@@ -51,6 +50,20 @@ FILL_VALUES = {
     "Passenger-Kilometers": "Total passenger transport",
     "Freight Ton-Kilometers": "Total freight transport",
 }
+
+
+# TODO: migrate to convert_units.py, as an extra argument: e.g. axis=1 being the
+#  already way (converting per var names in columns) or axis=0 (converting per rows).
+def _convert(group_df):
+    """""Convert units of a pandas.groupby object based on UNITS."""
+    info = UNITS.get(group_df["Variable"].unique()[0], None)
+    if not info:
+        return group_df
+    factor, unit_in, unit_out = info
+    qty = registry.Quantity(factor * group_df["Value"].values, unit_in).to(
+        unit_out or unit_in
+    )
+    return group_df.assign(Value=qty.magnitude, Units=qty.units)
 
 
 def split_variable(s):
@@ -94,20 +107,30 @@ def get_ind_item_data():
     DataFrame : pandas.DataFrame
         DataFrame with transport data for India.
     """
-    # Import data from iTEM database file T000.csv, including inland passenger
-    # transport activity data
-    df = historical.process(0)
-    df.drop(
-        columns=[x for x in list(df.columns) if x not in list(SDMX_MAP.keys())],
-        inplace=True,
-    )
-    # Rename columns using SDMX_MAP dict, to match dataset format in get_chn_ind_data()
-    df.columns = df.columns.to_series().map(SDMX_MAP)
-    # Filter values for IND between 2000-2018
-    df = df[
-        (df["ISO Code"].isin(["IND"])) & (df["Year"].isin(list(np.arange(2000, 2019))))
-    ].sort_values(["ISO Code", "Mode/vehicle type", "Vehicle type"], ignore_index=True)
-    return df
+    # Import data from iTEM database historical files:
+    all_data = pd.DataFrame()
+    for x in range(0, 13, 1):
+        # Exclude non-existent historical file 11
+        if x != 11:
+            df = historical.process(x)
+            df.drop(
+                columns=[x for x in list(df.columns) if x not in list(SDMX_MAP.keys())],
+                inplace=True,
+            )
+            # Rename columns using SDMX_MAP dict, to match dataset format in
+            # get_chn_ind_data()
+            df.columns = df.columns.to_series().map(SDMX_MAP)
+            # Filter values for IND between 2000-2018
+            df = df[
+                (df["ISO_code"].isin(["IND"]))
+                & (df["Year"].isin(list(np.arange(2000, 2019))))
+            ].sort_values(
+                ["ISO_code", "Mode/vehicle type", "Vehicle type"], ignore_index=True
+            )
+            # Concat whenever data is retrieved
+            all_data = pd.concat([all_data, df], ignore_index=True)
+
+    return all_data
 
 
 def get_chn_ind_pop():
@@ -127,7 +150,7 @@ def get_chn_ind_pop():
     pop = pop.drop(
         [x for x in pop.columns if x not in ["LOCATION", "Time", "Value"]],
         axis=1,
-    ).rename(columns={"LOCATION": "ISO Code", "Time": "Year"})
+    ).rename(columns={"LOCATION": "ISO_code", "Time": "Year"})
     # Add "Variable" name column
     pop["Variable"] = "Population"
     return pop
@@ -176,9 +199,9 @@ def get_chn_ind_data(private_vehicles=False):
         id_vars=["Variable", "Units"], var_name="Year", value_name="Value"
     ).sort_values("Year")
 
-    # Add "ISO Code" column to *df*, and move to first position
-    df["ISO Code"] = "CHN"
-    df = df.set_index("ISO Code").reset_index()
+    # Add "ISO_code" column to *df*, and move to first position
+    df["ISO_code"] = "CHN"
+    df = df.set_index("ISO_code").reset_index()
 
     df["Year"] = pd.to_numeric(df["Year"])
 
@@ -200,37 +223,23 @@ def get_chn_ind_data(private_vehicles=False):
 
     # Concat population values
     df = pd.concat([df, get_chn_ind_pop()], ignore_index=True).sort_values(
-        ["ISO Code", "Year", "Variable", "Mode/vehicle type"], ignore_index=True
+        ["ISO_code", "Year", "Variable", "Mode/vehicle type"], ignore_index=True
     )
 
     # Import IND data from iTEM database
     df_item = get_ind_item_data()
-    # Rename values in columns to match CHN dataset from NBSC
-    df_item["Variable"] = "Passenger-Kilometers"
-    df_item["Mode/vehicle type"] = "Railways"
+
     df_item.drop(columns="Vehicle type", inplace=True)
 
     # Concat CHN and IND data
     df = pd.concat([df, df_item], ignore_index=True)
 
     # Convert units
-    # TODO: Make this a separate function once unit conversions are dealt with
-    for var, info in UNITS.items():
-        factor, unit_in, unit_out = info
-        unit_out = unit_out or unit_in
-        result = registry.Quantity(
-            factor * df[df["Variable"] == var]["Value"].values, unit_in
-        ).to(unit_out)
-        result = series_of_pint_quantity(
-            result.tolist(),
-            index=df[df["Variable"] == var]["Value"].index,
-            dtype=object,
-            name=df[df["Variable"] == var]["Value"].name,
-        )
-        # TODO: fix lines below: should store *pint* magnitude into "Value" and units
-        #  into "Units"
-        df[df["Variable"] == var]["Value"] = result.apply(lambda x: x.magnitude)
-        df[df["Variable"] == var]["Units"] = result.apply(lambda x: x.units)
+    df = df.groupby("Variable").apply(_convert).reset_index(drop=True)
+
+    # NB: CHN data for *Waterways* includes *Ocean* and inland freight transport.
+    # In IND, vehicle type *Container* would map to *Ocean* from CHN and *Inland* to
+    # (Waterways minus Ocean) from CHN.
 
     return df
 
