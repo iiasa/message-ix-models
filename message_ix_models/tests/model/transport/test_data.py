@@ -365,20 +365,29 @@ def test_get_chn_ind_data():
         "Passenger Vehicles",
         "Small Passenger Vehicles",
         "Trucks",
+        "Rail",
+        "Road",
+        "_T",
+        "Shipping",
+        "Inland",
+        "Inland ex. pipeline",
+        "Pipeline",
     ]
 
     # Data have the correct size and format
-    assert len(df["Mode/vehicle type"]) == 529
+    assert len(df["Mode/vehicle type"]) == 683
     assert list(df.columns) == [
-        "ISO Code",
+        "ISO_code",
         "Variable",
         "Mode/vehicle type",
         "Units",
         "Year",
         "Value",
     ]
+    # Check unit conversions
+    assert df.loc[0, "Units"] == "gigatkm"
+    assert df.loc[0, "Value"] == 5.027
 
-    # TODO: also test units once conversion has been fixed.
 
 
 def test_get_chn_ind_pop():
