@@ -42,7 +42,7 @@ Running the test suite
 
 Some notes for running the test suite.
 
-:mod:`message_data.cache` is used to cache the data resulting from slow operations, like parsing large input files.
+:func:`.cached` is used to cache the data resulting from slow operations, like parsing large input files.
 Data are stored in a location described by the :class:`.Context` setting ``cache_path``.
 The test suite interacts with caches in two ways:
 

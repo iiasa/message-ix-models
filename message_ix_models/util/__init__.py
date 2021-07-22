@@ -1,41 +1,42 @@
 import logging
 from collections import defaultdict
 from copy import copy
-from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Union, cast
+from typing import Dict, List, Mapping, Optional, Sequence, Union
 
 import message_ix
 import pandas as pd
 from message_ix.models import MESSAGE_ITEMS
 from sdmx.model import AnnotableArtefact, Annotation, Code
 
+from ._convert_units import convert_units, series_of_pint_quantity
+from .cache import cached
+from .common import (
+    MESSAGE_DATA_PATH,
+    MESSAGE_MODELS_PATH,
+    load_package_data,
+    load_private_data,
+    package_data_path,
+    private_data_path,
+)
 from .node import adapt_R11_R14, identify_nodes
 
 __all__ = [
+    "MESSAGE_DATA_PATH",
+    "MESSAGE_MODELS_PATH",
     "adapt_R11_R14",
+    "cached",
+    "check_support",
+    "convert_units",
     "identify_nodes",
+    "load_package_data",
+    "load_private_data",
+    "maybe_query",
+    "package_data_path",
+    "private_data_path",
+    "series_of_pint_quantity",
 ]
 
 log = logging.getLogger(__name__)
-
-try:
-    import message_data
-except ImportError:
-    log.warning("message_data is not installed")
-    MESSAGE_DATA_PATH: Optional[Path] = None
-else:  # pragma: no cover  (needs message_data)
-    # Root directory of the message_data repository.
-    MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
-
-
-# Directory containing message_ix_models.__init__
-MESSAGE_MODELS_PATH = Path(__file__).parents[1]
-
-#: Package data already loaded with :func:`load_package_data`.
-PACKAGE_DATA: Dict[str, Any] = dict()
-
-#: Data already loaded with :func:`load_private_data`.
-PRIVATE_DATA: Dict[str, Any] = dict()
 
 
 def add_par_data(
@@ -180,6 +181,30 @@ def broadcast(df, **kwargs):
     return df
 
 
+def check_support(context, settings=dict(), desc: str = "") -> None:
+    """Check whether a Context is compatible with certain `settings`.
+
+    Raises
+    ------
+    :class:`NotImplementedError`
+        if any `context` value for a key of `settings` is not among the values in
+        `settings`.
+    :class:`KeyError`
+        if the key is not set on `context` at all.
+
+    See also
+    --------
+    :ref:`check-support`
+
+    """
+    __tracebackhide__ = True
+    for key, values in settings.items():
+        if context[key] not in values:
+            raise NotImplementedError(
+                f"{desc} for {repr(values)}; got {repr(context[key])}"
+            )
+
+
 def copy_column(column_name):
     """For use with :meth:`pandas.DataFrame.assign`.
 
@@ -273,98 +298,6 @@ def iter_parameters(set_name):
     for name, info in MESSAGE_ITEMS.items():
         if info["ix_type"] == "par" and set_name in info["idx_sets"]:
             yield name
-
-
-def _load(
-    var: Dict, base_path: Path, *parts: str, default_suffix: Optional[str] = None
-) -> Any:
-    """Helper for :func:`.load_package_data` and :func:`.load_private_data`."""
-    key = " ".join(parts)
-    if key in var:
-        log.debug(f"{repr(key)} already loaded; skip")
-        return var[key]
-
-    path = _make_path(base_path, *parts, default_suffix=default_suffix)
-
-    if path.suffix == ".yaml":
-        import yaml
-
-        with open(path, encoding="utf-8") as f:
-            var[key] = yaml.safe_load(f)
-    else:
-        raise ValueError(path.suffix)
-
-    return var[key]
-
-
-def _make_path(
-    base_path: Path, *parts: str, default_suffix: Optional[str] = None
-) -> Path:
-    p = base_path.joinpath(*parts)
-    return p.with_suffix(p.suffix or default_suffix) if default_suffix else p
-
-
-def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Any:
-    """Load a :mod:`message_ix_models` package data file and return its contents.
-
-    Data is re-used if already loaded.
-
-    Example
-    -------
-
-    The single call:
-
-    >>> info = load_package_data("node", "R11")
-
-    1. loads the metadata file :file:`data/node/R11.yaml`, parsing its contents,
-    2. stores those values at ``PACKAGE_DATA["node R11"]`` for use by other code, and
-    3. returns the loaded values.
-
-    Parameters
-    ----------
-    parts : iterable of str
-        Used to construct a path under :file:`message_ix_models/data/`.
-    suffix : str, optional
-        File name suffix, including, the ".", e.g. :file:`.yaml`.
-
-    Returns
-    -------
-    dict
-        Configuration values that were loaded.
-    """
-    return _load(
-        PACKAGE_DATA,
-        MESSAGE_MODELS_PATH / "data",
-        *parts,
-        default_suffix=suffix,
-    )
-
-
-def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs message_data)
-    """Load a private data file from :mod:`message_data` and return its contents.
-
-    Analogous to :mod:`load_package_data`, but for non-public data.
-
-    Parameters
-    ----------
-    parts : iterable of str
-        Used to construct a path under :file:`data/` in the :mod:`message_data`
-        repository.
-
-    Returns
-    -------
-    dict
-        Configuration values that were loaded.
-
-    Raises
-    ------
-    RuntimeError
-        if :mod:`message_data` is not installed.
-    """
-    if MESSAGE_DATA_PATH is None:
-        raise RuntimeError("message_data is not installed")
-
-    return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts)
 
 
 def make_io(src, dest, efficiency, on="input", **kwargs):
@@ -485,21 +418,23 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
     return result
 
 
+def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
+    """Apply :meth:`pandas.Series.query` if the `query` arg is not :obj:`None`.
+
+    :meth:`~pandas.Series.query` is not chainable (`pandas-dev/pandas#37941
+    <https://github.com/pandas-dev/pandas/issues/37941>`_). Use this function with
+    :func:`pandas.Series.pipe`, passing an argument that may be :obj:`None`, to have a
+    chainable query operation that can be a no-op.
+    """
+    # Convert Series to DataFrame, query(), then retrieve the single column
+    return series if query is None else series.to_frame().query(query)[0]
+
+
 def merge_data(base, *others):
     """Merge dictionaries of DataFrames together into `base`."""
     for other in others:
         for par, df in other.items():
             base[par] = base[par].append(df) if par in base else df
-
-
-def package_data_path(*parts) -> Path:
-    """Construct a path to a file under :file:`message_ix_models/data/`."""
-    return _make_path(MESSAGE_MODELS_PATH / "data", *parts)
-
-
-def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
-    """Construct a path to a file under :file:`data/` in :mod:`message_data`."""
-    return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)
 
 
 def same_node(df):

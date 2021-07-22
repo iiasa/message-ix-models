@@ -7,8 +7,6 @@ from typing import Dict, List
 import pandas as pd
 import sdmx.model
 
-from message_ix_models.util import eval_anno
-
 log = logging.getLogger(__name__)
 
 
@@ -141,6 +139,8 @@ class ScenarioInfo:
         [2090, 2100, 2110]
 
         """
+        from message_ix_models.util import eval_anno
+
         # Clear existing values
         if len(self.set["year"]):
             log.debug(f"Discard existing 'year' elements: {repr(self.set['year'])}")

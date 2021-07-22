@@ -1,21 +1,13 @@
 """Context and settings for :mod:`message_ix_models` code."""
-
 import logging
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Tuple
-from warnings import warn
+from typing import List
 
 import ixmp
 import message_ix
 from click import BadOptionUsage
-
-from message_ix_models.util import (
-    load_package_data,
-    package_data_path,
-    private_data_path,
-)
 
 log = logging.getLogger(__name__)
 
@@ -101,7 +93,8 @@ class Context(dict):
 
     def delete(self):
         """Hide the current Context from future :meth:`.get_instance` calls."""
-        index = _CONTEXTS.index(self)
+        # Index of the *last* matching instance
+        index = len(_CONTEXTS) - 1 - list(reversed(_CONTEXTS)).index(self)
 
         if index > 0:
             _CONTEXTS.pop(index)
@@ -110,13 +103,19 @@ class Context(dict):
 
         self.close_db()
 
-    def clone_to_dest(self) -> Tuple[message_ix.Scenario, ixmp.Platform]:
+    def clone_to_dest(self, create=True) -> message_ix.Scenario:
         """Return a scenario based on the ``--dest`` command-line option.
+
+        Parameters
+        ----------
+        create : bool, optional
+            If :obj:`True` (the default) and the base scenario does not exist, a bare
+            RES scenario is created. Otherwise, an exception is raised.
 
         Returns
         -------
         Scenario
-            To prevent the scenario from being garbage collected. Keep a reference to
+            To prevent the scenario from being garbage collected, keep a reference to
             its Platform:
 
             .. code-block: python
@@ -154,8 +153,13 @@ class Context(dict):
                     # Different platform
                     mp_dest = ixmp.Platform(**info)
 
-        except Exception:
-            log.info("No base scenario given")
+        except Exception as e:
+            log.info("Base scenario not given or found")
+            log.debug(f"{type(e).__name__}: {e}")
+
+            if not create:
+                log.error("and create=False")
+                raise
 
             # Create a bare RES to be the base scenario
 
@@ -288,82 +292,3 @@ class Context(dict):
 
             if value not in info:
                 raise ValueError(f"{setting} must be in {info}; got {value}")
-
-    # Deprecated methods
-
-    def get_config_file(self, *parts, ext="yaml") -> Path:
-        """Return a path under :attr:`metadata_path`.
-
-        The suffix ".{ext}" is added; defaulting to ".yaml".
-
-        .. deprecated:: 2021.2.28
-           Use :func:`.package_data_path` instead.
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.get_config_file(). Instead use:\n"
-            "from message_ix_models import package_data_path",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return package_data_path(*parts).with_suffix(f".{ext}")
-
-    def get_path(self, *parts) -> Path:  # pragma: no cover  (needs message_data)
-        """Return a path under :attr:`message_data_path` by joining *parts*.
-
-        *parts* may include directory names, or a filename with extension.
-
-        .. deprecated:: 2021.2.28
-           Use :func:`.private_data_path` instead.
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.get_path(). Instead use: \n"
-            "from message_ix_models import private_data_path",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return private_data_path(*parts)
-
-    def load_config(self, *parts, suffix=None):
-        """Load configuration from :mod:`message_ix_models`.
-
-        .. deprecated:: 2021.2.28
-           Use :func:`.load_package_data` instead.
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.load_config(). Instead use:\n"
-            "from message_ix_models.util import load_package_data",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        result = load_package_data(*parts, suffix=suffix)
-        self[" ".join(parts)] = result
-        return result
-
-    @property
-    def units(self):
-        """Access the unit registry.
-
-        .. deprecated:: 2021.2.28
-           Instead, use:
-
-           .. code-block:: python
-
-              from iam_units import registry
-
-           Will be removed on or after 2021-05-28.
-        """
-        # TODO remove on or after 2021-05-28
-        warn(
-            "Context.units attribute. Instead use:\nfrom iam_units import registry",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        from iam_units import registry
-
-        return registry
