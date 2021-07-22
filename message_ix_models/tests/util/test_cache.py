@@ -5,8 +5,10 @@ import pytest
 import xarray as xr
 from ixmp.testing import assert_logs
 
+import message_ix_models.util.cache
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import cached
+
 
 log = logging.getLogger(__name__)
 
@@ -16,6 +18,9 @@ def test_cached(caplog, test_context, tmp_path):
 
     .. todo:: test behaviour when :data:`.SKIP_CACHE` is :obj:`True`
     """
+    # Clear seen paths, so that log message below is guaranteed to occur
+    message_ix_models.util.cache.PATHS_SEEN.clear()
+
     # Store in the temporary directory for this session, to avoid collisions across
     # sessions
     test_context.cache_path = tmp_path.joinpath("cache")
@@ -23,22 +28,24 @@ def test_cached(caplog, test_context, tmp_path):
     # A dummy path to be hashed as an argument
     path_foo = tmp_path.joinpath("foo", "bar")
 
-    @cached
-    def func0(ctx, a, path, b=3):
-        """A test function."""
-        log.info("func0 runs")
-        return f"{id(ctx)}, {a + b}"
+    with caplog.at_level(logging.DEBUG, logger="message_ix_models"):
+
+        @cached
+        def func0(ctx, a, path, b=3):
+            """A test function."""
+            log.info("func0 runs")
+            return f"{id(ctx)}, {a + b}"
+
+    # Docstring is modified
+    assert "Data returned by this function is cached" in func0.__doc__
+    # Message is logged
+    assert f"func0() will cache in {tmp_path.joinpath('cache')}" in caplog.messages
 
     @cached
     def func1(x=1, y=2, **kwargs):
         # Function with defaults for all arguments
         log.info("func1 runs")
         return x + y
-
-    # Docstring is modified
-    assert "Data returned by this function is cached" in func0.__doc__
-    # Message is logged:
-    assert f"func0() will cache in {tmp_path.joinpath('cache')}" in caplog.messages
 
     caplog.clear()
 
@@ -59,14 +66,16 @@ def test_cached(caplog, test_context, tmp_path):
     ctx2 = deepcopy(test_context)
     assert id(test_context) != id(ctx2)
 
-    result2 = func0(test_context, 1, path_foo)
+    result2 = func0(ctx2, 1, path_foo)
     # Function does not run
     assert "func0 runs" not in caplog.messages
     # Results are identical, i.e. including the old ID
     assert result0 == result2
 
-    # Hash of no arguments is the same, function only runs once
+    ctx2.delete()
     caplog.clear()
+
+    # Hash of no arguments is the same, function only runs once
     assert 3 == func1() == func1()
     assert 1 == sum(m == "func1 runs" for m in caplog.messages)
 
