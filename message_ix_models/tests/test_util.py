@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from message_ix import make_df
+from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
@@ -20,6 +21,7 @@ from message_ix_models.util import (
     load_package_data,
     load_private_data,
     make_source_tech,
+    maybe_query,
     package_data_path,
     private_data_path,
 )
@@ -192,6 +194,22 @@ def test_make_source_tech():
     del values["var_cost"]
     with pytest.raises(ValueError, match=re.escape("needs values for {'var_cost'}")):
         make_source_tech(info, common, **values)
+
+
+def test_maybe_query():
+    """:func:`.maybe_query` works as intended."""
+    s = pd.Series(
+        [0, 1, 2, 3],
+        index=pd.MultiIndex.from_product(
+            [["a", "b"], ["c", "d"]], names=["foo", "bar"]
+        ),
+    )
+
+    # No-op
+    assert_series_equal(s, maybe_query(s, None))
+
+    # Select a few rows
+    assert 2 == len(maybe_query(s, "bar == 'c'"))
 
 
 def test_package_data_path(*parts, suffix=None):

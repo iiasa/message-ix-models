@@ -30,6 +30,7 @@ Commonly used:
    make_io
    make_matched_dfs
    make_source_tech
+   maybe_query
    merge_data
    package_data_path
    private_data_path
