@@ -7,6 +7,7 @@ Next release
 - Migrate utilities :func:`cached`, :func:`.check_support`, :func:`.convert_units`, :func:`.maybe_query`, :func:`.series_of_pint_quantity` (:pull:`27`)
 - Add :data:`.testing.NIE`.
 - Add the ``--jvmargs`` option to :command:`pytest` (see :func:`.pytest_addoption`).
+- Remove :meth:`.Context.get_config_file`, :meth:`.get_path`, :meth:`.load_config`, and :meth:`.units`, all deprecated since 2021-02-28.
 
 2021.7.6
 ========
