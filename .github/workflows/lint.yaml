@@ -64,5 +64,5 @@ jobs:
         MYPYPATH: "./ixmp/:./message-ix/"
       # Also install stub packages and others that provide type hints
       run: |
-        pip install genno pytest sdmx1 types-PyYAML types-setuptools
+        pip install genno iam-units pytest sdmx1 types-PyYAML types-setuptools
         mypy ./message_ix_models
