@@ -37,15 +37,14 @@ def test_cached(caplog, test_context, tmp_path):
 
     # Docstring is modified
     assert "Data returned by this function is cached" in func0.__doc__
+    # Message is logged:
+    assert f"func0() will cache in {tmp_path.joinpath('cache')}" in caplog.messages
 
     caplog.clear()
 
     # pathlib.Path argument is serialized to JSON as part of the argument hash;
     # function runs, messages logged
-    with assert_logs(
-        caplog,
-        ["func0 runs", "Cache func0(<", f"…>) in {tmp_path.joinpath('cache')}"],
-    ):
+    with assert_logs(caplog, "func0 runs"):
         result0 = func0(test_context, 1, path_foo)
 
     caplog.clear()
@@ -87,5 +86,3 @@ def test_cached(caplog, test_context, tmp_path):
         TypeError, match="Object of type slice is not JSON serializable"
     ):
         func1(arg=slice(None))
-
-    assert False
