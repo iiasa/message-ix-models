@@ -1,22 +1,18 @@
-"""Cache data for expensive operations.
-
-This code is lightly adapted from code in
-https://github.com/transportenergy/ipcc-ar6-wg3-ch10
-and earlier code by @khaeru.
-"""
+"""Cache data for expensive operations."""
 import functools
 import json
 import logging
 import pathlib
-import pickle
-from hashlib import sha1
 from typing import Callable
 
+import genno.caching
 import ixmp
 import xarray as xr
+from genno import Computer
 from sdmx.model import Code
 
 from .context import Context
+from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
@@ -24,9 +20,22 @@ log = logging.getLogger(__name__)
 #: Set to :obj:`True` to force reload.
 SKIP_CACHE = False
 
+# Paths already logged, to decrease verbosity
+PATHS_SEEN = set()
+
 
 class Encoder(json.JSONEncoder):
-    """JSON Encoder that handles pathlib.Path; used by _arg_hash."""
+    """:class:`.JSONEncoder` that handles classes common in :mod:`message_ix_models`.
+
+    Used by :func:`cached` to serialize arguments as a unique string, then hash them.
+
+    :class:`pathlib.Path`, :class:`sdmx.Code`
+        Serialized as their string representation.
+    :class:`ixmp.Platform`, :class:`xarray.Dataset`
+        Ignored, with a warning logged.
+    :class:`ScenarioInfo`
+        Only the :attr:`~ScenarioInfo.set` entries are serialized.
+    """
 
     def default(self, o):
         if isinstance(o, (pathlib.Path, Code)):
@@ -34,65 +43,47 @@ class Encoder(json.JSONEncoder):
         elif isinstance(o, (xr.Dataset, ixmp.Platform)):
             log.warning(f"cached() key ignores {type(o)}")
             return ""
-        elif o.__class__.__name__ == "ScenarioInfo":
+        elif isinstance(o, ScenarioInfo):
             return dict(o.set)
 
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, o)
 
 
-def _arg_hash(*args, **kwargs):
-    """Return a unique hash for *args, **kwargs; used by cached."""
-    if len(args) + len(kwargs) == 0:
-        unique = ""
-    else:
-        unique = json.dumps(args, cls=Encoder) + json.dumps(kwargs, cls=Encoder)
-
-    # Uncomment for debugging
-    # log.debug(f"Cache key hashed from: {unique}")
-
-    return sha1(unique.encode()).hexdigest()
+# Override genno's built-in encoder with the one above, covering more cases
+genno.caching.PathEncoder = Encoder
 
 
-def cached(load_func: Callable) -> Callable:
-    """Decorator to cache selected data.
+def cached(func: Callable) -> Callable:
+    """Decorator to cache the return value of a function `func`.
 
     On a first call, the data requested is returned and also cached under
     :meth:`.Context.get_cache_path`. On subsequent calls, if the cache exists, it is
-    used instead of calling the (possibly slow) `load_func`.
+    used instead of calling the (possibly slow) `func`.
 
-    When :data:`SKIP_CACHE` is true, `load_func` is always called.
+    When :data:`SKIP_CACHE` is true, `func` is always called.
+
+    See also
+    --------
+    :doc:`genno:cache` in the :mod:`genno` documentation
     """
-    log.debug(f"Wrap {load_func.__name__} in cached()")
+    # Determine and create the cache path
+    cache_path = Context.get_instance(-1).get_cache_path()
+    cache_path.mkdir(exist_ok=True, parents=True)
 
-    # Wrap the call to load_func
-    def cached_load(*args, **kwargs):
-        # Path to the cache file
-        name_parts = [load_func.__name__, _arg_hash(*args, **kwargs)]
-        cache_path = (
-            Context.get_instance(-1)
-            .get_cache_path("-".join(name_parts))
-            .with_suffix(".pkl")
-        )
+    if cache_path not in PATHS_SEEN:
+        log.debug(f"{func.__name__}() will cache in {cache_path}")
+        PATHS_SEEN.add(cache_path)
 
-        # Shorter name for logging
-        short_name = f"{name_parts[0]}(<{name_parts[1][:8]}…>)"
+    # Create a temporary/throwaway Computer to carry values to genno.caching; use the
+    # genno internals to wrap the function.
+    # TODO this indicates poor design; instead make_cache_decorator() should take the
+    #      args directly
+    cached_load = genno.caching.make_cache_decorator(
+        Computer(cache_path=cache_path, cache_skip=SKIP_CACHE), func
+    )
 
-        if not SKIP_CACHE and cache_path.exists():
-            log.info(f"Cache hit for {short_name}")
-            with open(cache_path, "rb") as f:
-                return pickle.load(f)
-        else:
-            log.info(f"Cache miss for {short_name}")
-            data = load_func(*args, **kwargs)
-
-            log.info(f"Cache {short_name} in {cache_path.parent}")
-            with open(cache_path, "wb") as f:
-                pickle.dump(data, f)
-
-            return data
-
-    update_wrapper(cached_load, load_func)
+    update_wrapper(cached_load, func)
 
     return cached_load
 
@@ -102,7 +93,7 @@ def update_wrapper(wrapper, wrapped):
 
     This ensures it is picked up by Sphinx. Also add a note that the results are cached.
     """
-
+    # Let the functools equivalent do most of the work
     functools.update_wrapper(wrapper, wrapped)
 
     if wrapper.__doc__ is None:
