@@ -21,6 +21,7 @@ Commonly used:
    adapt_R11_R14
    as_codes
    broadcast
+   cached
    check_support
    convert_units
    copy_column
