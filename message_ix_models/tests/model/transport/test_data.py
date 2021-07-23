@@ -169,6 +169,7 @@ def test_ikarus(transport_context_f, regions, N_node, years):
         )
 
 
+@pytest.mark.skip("Temporary, to be resolved in #238")
 @pytest.mark.parametrize("source, rows", (("1", 15839), ("2", 17286), ("3", 5722)))
 def test_get_emissions_data(transport_context_f, source, rows):
     ctx = transport_context_f
@@ -397,11 +398,11 @@ def test_get_chn_ind_pop():
     assert list(df["Year"].unique()) == list(range(2000, 2019, 1))
     # Data have the correct size and format
     assert (
-        df[(df["ISO Code"] == "CHN") & (df["Year"] == 2001)]["Value"].values
+        df[(df["ISO_code"] == "CHN") & (df["Year"] == 2001)]["Value"].values
         == 1290937649
     )
     assert list(df.columns) == [
-        "ISO Code",
+        "ISO_code",
         "Year",
         "Value",
         "Variable",
