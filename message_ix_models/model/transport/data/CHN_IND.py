@@ -53,7 +53,8 @@ FILL_VALUES = {
 
 
 # TODO: migrate to convert_units.py, as an extra argument: e.g. axis=1 being the
-#  already way (converting per var names in columns) or axis=0 (converting per rows).
+#  current way (converting per var names in columns) or axis=0 (converting per rows
+#  as coded in _covert below).
 def _convert(group_df):
     """""Convert units of a pandas.groupby object based on UNITS."""
     info = UNITS.get(group_df["Variable"].unique()[0], None)
@@ -145,7 +146,7 @@ def get_chn_ind_pop():
         DataFrame containing population data for China and India.
     """
     # Read csv file
-    pop = pd.read_csv(private_data_path("transport", POP_FILE), header=0)
+    pop = pd.read_csv(private_data_path("transport", POP_FILE), header=1)
     # Drop irrelevant columns and rename when necessary
     pop = pop.drop(
         [x for x in pop.columns if x not in ["LOCATION", "Time", "Value"]],
@@ -242,4 +243,3 @@ def get_chn_ind_data(private_vehicles=False):
     # (Waterways minus Ocean) from CHN.
 
     return df
-
