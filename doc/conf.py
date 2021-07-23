@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 # -- Project information ---------------------------------------------------------------
 
 project = '"MESSAGEix models"'
-copyright = "2021, IIASA Energy, Climate, and Environment (ECE) Program"
+copyright = "2020–2021, IIASA Energy, Climate, and Environment (ECE) Program"
 author = "IIASA Energy, Climate, and Environment (ECE) Program"
 
 
@@ -85,7 +85,7 @@ intersphinx_mapping = {
     "genno": ("https://genno.readthedocs.io/en/stable", None),
     "ixmp": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
     "message-ix": ("https://docs.messageix.org/en/latest/", None),
-    "m-data": ("https://docs.messageix.org/projects/global/en/latest/", None),
+    "m-data": ("https://docs.messageix.org/projects/models-internal/en/latest/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pytest": ("https://docs.pytest.org/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
