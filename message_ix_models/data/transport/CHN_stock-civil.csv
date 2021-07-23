@@ -1,5 +1,5 @@
-Database???Annual
-Year£ºLATEST20
+Dataset containing vehicle stock data for civil vehicles (inc. private vehicles) in China [10000 units]
+Downloaded from National Bureau of Statistics China in 2021. https://data.stats.gov.cn/english/easyquery.htm?cn=C01
 Indicators,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000
 Possession of Civil Vehicles(10000 units),25376.38,23231.22,20906.67,18574.54,16284.45,14598.11,12670.14,10933.09,9356.32,7801.83,6280.61,5099.61,4358.35,3697.35,3159.66,2693.71,2382.93,2053.17,1802.04,1608.91
 Possession of Passenger Vehicles(10000 units),22474.27,20555.40,18469.54,16278.24,14095.88,12326.70,10561.78,8943.01,7478.37,6124.13,4845.09,3838.92,3195.99,2619.57,2132.46,1735.91,1478.81,1202.37,993.96,853.73
@@ -16,5 +16,5 @@ Possession of Other Vehicles(10000 units),119.27,108.00,98.28,124.41,122.95,145.
 Number of Motor Drivers,43636.74,41030.16,36016.94,35876.98,32853.05,29892.32,26955.93,25250.83,22817.62,20068.47,19167.58,17336.56,15363.88,14213.87,13069.52,11769.04,10611.04,9362.03,8455.04,7655.56
 Number of Automobile Drivers,39752.86,36923.42,31658.20,30328.77,28012.99,24812.06,21742.70,20028.52,17416.76,15129.89,13740.73,12276.80,10567.15,9317.24,8017.76,7101.64,5368.07,4827.08,4462.68,3746.51
 "Note:1.Since 2002, there has been adjustment to the statistical coverages of of some detailed items of passenger vehicles and trucks and other vehicles, the data are hence not comparable with those in previous years."
-¡¡¡¡¡¡2.Cars are included in passenger vehicles.
-Data Sources£ºNational Bureau of Statistics
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2.Cars are included in passenger vehicles.
+Data Sources National Bureau of Statistics

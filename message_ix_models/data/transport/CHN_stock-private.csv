@@ -1,5 +1,5 @@
-Database???Annual
-Year£ºLATEST20
+Dataset containing vehicle stock data for private vehicles in China [10000 units]
+Downloaded from National Bureau of Statistics China in 2021. https://data.stats.gov.cn/english/easyquery.htm?cn=C01
 Indicators,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000
 Possession of Private Vehicles(10000 units),22508.99,20574.93,18515.11,16330.22,14099.10,12339.36,10501.68,8838.60,7326.79,5938.71,4574.91,3501.39,2876.22,2333.32,1848.07,1481.66,1219.23,968.98,770.78,625.33
 Possession of Private Passenger Vehicles(10000 units),20710.58,18930.29,17001.51,14896.27,12737.23,10945.39,9198.23,7637.87,6237.46,4989.50,3808.33,2880.50,2316.91,1823.57,1383.92,1069.69,845.87,623.76,469.85,365.09
@@ -13,4 +13,4 @@ Possession of Private Medium Trucks(10000 units),63.07,68.59,73.22,79.77,86.62,1
 Possession of Private Light Trucks(10000 units),1469.04,1323.25,1205.66,1129.13,1060.70,1050.60,978.73,867.64,744.39,632.77,494.97,384.12,332.69,288.94,243.29,203.85,176.58,158.67,,
 Possession of Private Mini Trucks(10000 units),3.44,4.48,5.54,7.45,9.47,14.59,10.52,11.35,14.24,16.78,20.12,23.31,27.43,33.09,45.98,50.87,51.09,49.95,,
 Possession of Private Other Vehicles(10000 units),44.76,39.55,35.19,32.79,31.22,41.20,27.95,25.09,21.90,17.69,13.17,24.50,19.86,14.84,12.04,9.15,6.00,3.94,,
-Data Sources£ºNational Bureau of Statistics
+Data Sources National Bureau of Statistics
