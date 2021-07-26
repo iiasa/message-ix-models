@@ -5,6 +5,14 @@ This page describes development practices for :mod:`message_ix_models` and :mod:
 
 In the following, the bold-face words **required**, **optional**, etc. have specific meanings as described in `IETF RFC 2119 <https://tools.ietf.org/html/rfc2119>`_.
 
+On other pages:
+
+- :doc:`message-ix:contributing` in the MESSAGEix docs.
+  *All* of these apply to contributions to :mod:`message_ix_models` and :mod:`message_data`, including the :ref:`message-ix:code-style`.
+- :doc:`data`, for how to add and handle these.
+
+On this page:
+
 .. contents::
    :local:
    :backlinks: none
