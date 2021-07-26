@@ -83,13 +83,10 @@ Commonly used:
       only
       use_defaults
 
-   The following Context methods and attribute are **deprecated**:
+   .. The following Context methods and attribute are **deprecated**:
 
-   .. autosummary::
-      get_config_file
-      get_path
-      load_config
-      units
+      .. autosummary::
+         (currently none)
 
    .. automethod:: clone_to_dest
 
