@@ -110,6 +110,8 @@ jobs:
 
     - name: Test documentation build using Sphinx
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
+      env:
+        RTD_TOKEN_MESSAGE_DATA: ${{ secrets.RTD_TOKEN_MESSAGE_DATA }}
       run: make --directory=message-ix-models/doc html
 
     - name: Upload test coverage to Codecov.io
