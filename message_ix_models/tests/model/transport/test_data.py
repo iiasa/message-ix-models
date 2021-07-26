@@ -339,6 +339,7 @@ def test_get_gfei_data(transport_context_f):
     ]
 
 
+@pytest.mark.skip("Pending https://github.com/transportenergy/database/issues/75")
 def test_get_chn_ind_data():
     df = get_chn_ind_data()
 
@@ -388,7 +389,6 @@ def test_get_chn_ind_data():
     # Check unit conversions
     assert df.loc[0, "Units"] == "gigatkm"
     assert df.loc[0, "Value"] == 5.027
-
 
 
 def test_get_chn_ind_pop():
