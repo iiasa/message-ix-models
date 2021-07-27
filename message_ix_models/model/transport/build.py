@@ -162,12 +162,16 @@ def main(context: Context, scenario: Scenario, **options):
     log.info("Build MESSAGEix-Transport")
     mark_time()
 
-    regions = identify_nodes(scenario)
-    if context.get("regions") != regions:
-        log.info(f"Set Context.regions = {repr(regions)} from scenario contents")
+    try:
+        regions = identify_nodes(scenario)
+    except ValueError:
+        pass
+    else:
+        if context.get("regions") != regions:
+            log.info(f"Set Context.regions = {repr(regions)} from scenario contents")
 
-        # Read configuration for these regions
-        read_config(context)
+            # Read configuration for these regions
+            read_config(context)
 
     # Generate the description of the structure / structure changes
     spec = get_spec(context)
