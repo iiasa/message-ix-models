@@ -6,6 +6,7 @@ from typing import List
 import pandas as pd
 import xarray as xr
 from genno import computations
+from iam_units import registry
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.model.structure import Code, get_codes
 from message_ix_models.util import adapt_R11_R14
@@ -173,7 +174,8 @@ def get_urban_rural_shares(context) -> Quantity:
         log.warning("Need urban/suburban share data for SSP scenarios")
 
         share = Quantity(
-            xr.DataArray([0.8, 0.2], coords=[["UR+SU", "RU"]], dims=["area_type"])
+            xr.DataArray([0.8, 0.2], coords=[["UR+SU", "RU"]], dims=["area_type"]),
+            units=registry.dimensionless,
         )
         return computations.product(pop, share)
     else:
