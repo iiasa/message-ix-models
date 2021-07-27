@@ -1,15 +1,25 @@
-"""Cache data for expensive operations."""
-import functools
-import json
+"""Cache data for expensive operations.
+
+
+
+:class:`.JSONEncoder` that handles classes common in :mod:`message_ix_models`.
+
+Used by :func:`cached` to serialize arguments as a unique string, then hash them.
+
+:class:`pathlib.Path`, :class:`sdmx.Code`
+    Serialized as their string representation.
+:class:`ixmp.Platform`, :class:`xarray.Dataset`
+    Ignored, with a warning logged.
+:class:`ScenarioInfo`
+    Only the :attr:`~ScenarioInfo.set` entries are serialized.
+"""
 import logging
-import pathlib
 from typing import Callable
 
 import genno.caching
 import ixmp
+import sdmx.model
 import xarray as xr
-from genno import Computer
-from sdmx.model import Code
 
 from .context import Context
 from .scenarioinfo import ScenarioInfo
@@ -24,34 +34,20 @@ SKIP_CACHE = False
 PATHS_SEEN = set()
 
 
-class Encoder(json.JSONEncoder):
-    """:class:`.JSONEncoder` that handles classes common in :mod:`message_ix_models`.
-
-    Used by :func:`cached` to serialize arguments as a unique string, then hash them.
-
-    :class:`pathlib.Path`, :class:`sdmx.Code`
-        Serialized as their string representation.
-    :class:`ixmp.Platform`, :class:`xarray.Dataset`
-        Ignored, with a warning logged.
-    :class:`ScenarioInfo`
-        Only the :attr:`~ScenarioInfo.set` entries are serialized.
-    """
-
-    def default(self, o):
-        if isinstance(o, (pathlib.Path, Code)):
-            return str(o)
-        elif isinstance(o, (xr.Dataset, ixmp.Platform)):
-            log.warning(f"cached() key ignores {type(o)}")
-            return ""
-        elif isinstance(o, ScenarioInfo):
-            return dict(o.set)
-
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, o)
+# Show genno how to hash function arguments seen in message_ix_models
 
 
-# Override genno's built-in encoder with the one above, covering more cases
-genno.caching.PathEncoder = Encoder  # type: ignore [assignment, misc]
+@genno.caching.Encoder.register
+def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
+    return str(o)
+
+
+@genno.caching.Encoder.register
+def _si(o: ScenarioInfo):
+    return dict(o.set)
+
+
+genno.caching.Encoder.ignore(xr.Dataset, ixmp.Platform)
 
 
 def cached(func: Callable) -> Callable:
@@ -75,35 +71,22 @@ def cached(func: Callable) -> Callable:
         log.debug(f"{func.__name__}() will cache in {cache_path}")
         PATHS_SEEN.add(cache_path)
 
-    # Create a temporary/throwaway Computer to carry values to genno.caching; use the
-    # genno internals to wrap the function.
-    # TODO this indicates poor design; instead make_cache_decorator() should take the
-    #      args directly
-    cached_load = genno.caching.make_cache_decorator(
-        Computer(cache_path=cache_path, cache_skip=SKIP_CACHE), func
+    # Use the genno internals to wrap the function.
+    cached_load = genno.caching.decorate(
+        func, cache_path=cache_path, cache_skip=SKIP_CACHE
     )
 
-    update_wrapper(cached_load, func)
+    try:
+        # Determine the indent
+        line = cached_load.__doc__.split("\n")[-1]
+        indent = len(line) - len(line.lstrip(" "))
+    except AttributeError:
+        pass  # No docstring
+    else:
+        # Add a note that the results are cached
+        cached_load.__doc__ += (
+            f"\n\n{' ' * indent}Data returned by this function is cached using "
+            ":func:`.cached`; see also :data:`.SKIP_CACHE`."
+        )
 
     return cached_load
-
-
-def update_wrapper(wrapper, wrapped):
-    """Update `wrapper` so it has the same docstring etc. as `wrapped`.
-
-    This ensures it is picked up by Sphinx. Also add a note that the results are cached.
-    """
-    # Let the functools equivalent do most of the work
-    functools.update_wrapper(wrapper, wrapped)
-
-    if wrapper.__doc__ is None:
-        return
-
-    # Determine the indent
-    line = wrapper.__doc__.split("\n")[-1]
-    indent = len(line) - len(line.lstrip(" "))
-
-    wrapper.__doc__ += (
-        f"\n\n{' ' * indent}Data returned by this function is cached using "
-        ":func:`.cached`; see also :data:`.SKIP_CACHE`."
-    )
