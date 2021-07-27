@@ -112,7 +112,12 @@ submodules = [
 try:
     import message_data.cli
 except ImportError:
-    pass  # message_data is not installed
+    # message_data is not installed or contains some ImportError of its own
+    from traceback import format_exception
+
+    # Display information for debugging
+    etype, value, tb = sys.exc_info()
+    print("", *format_exception(etype, value, tb, limit=-1, chain=False)[1:], sep="\n")
 else:  # pragma: no cover  (needs message_data)
     # Also add message_data submodules
     submodules.extend(
