@@ -16,7 +16,13 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions_arg, regions_exp",
-    [(None, "R11"), ("R11", "R11"), ("R14", "R14"), param("ISR", "ISR", marks=NIE)],
+    [
+        (None, "R11"),
+        ("R11", "R11"),
+        param("R12", "R12", marks=pytest.mark.xfail(raises=FileNotFoundError)),
+        ("R14", "R14"),
+        param("ISR", "ISR", marks=testing.NIE),
+    ],
 )
 def test_get_spec(test_context, regions_arg, regions_exp, years):
     ctx = test_context
