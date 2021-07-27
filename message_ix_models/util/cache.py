@@ -1,17 +1,14 @@
 """Cache data for expensive operations.
 
+This module extends :class:`genno.caching.Encoder` to handle classes common in
+:mod:`message_ix_models`, so these can be used as arguments to cached functions and
+included in the computed cache key:
 
+- :class:`sdmx.model.IdentifiableArtefact`, including :class:`.Code`: hashed as
+  their string representation / ID.
+- :class:`ixmp.Platform`, :class:`xarray.Dataset`: ignored, with a warning logged.
+- :class:`ScenarioInfo`: only the :attr:`~ScenarioInfo.set` entries are hashed.
 
-:class:`.JSONEncoder` that handles classes common in :mod:`message_ix_models`.
-
-Used by :func:`cached` to serialize arguments as a unique string, then hash them.
-
-:class:`pathlib.Path`, :class:`sdmx.Code`
-    Serialized as their string representation.
-:class:`ixmp.Platform`, :class:`xarray.Dataset`
-    Ignored, with a warning logged.
-:class:`ScenarioInfo`
-    Only the :attr:`~ScenarioInfo.set` entries are serialized.
 """
 import logging
 from typing import Callable
