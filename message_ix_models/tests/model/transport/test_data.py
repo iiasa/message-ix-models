@@ -322,8 +322,8 @@ def test_get_afr_data(test_context, region, length):
     ]
 
 
-def test_get_gfei_data(transport_context_f):
-    ctx = transport_context_f
+def test_get_gfei_data(test_context):
+    ctx = test_context
     ctx.regions = "R11"
 
     df = get_gfei_data(ctx)
