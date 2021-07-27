@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Improve caching using  mod:`genno` v1.8.0 (:pull:`29`).
 
 2021.7.22
 =========
