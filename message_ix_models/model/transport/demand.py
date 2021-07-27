@@ -14,9 +14,8 @@ from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix.reporting import Reporter
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util import adapt_R11_R14, broadcast
+from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
-from message_data.tools import check_support
 from message_data.model.transport.build import generate_set_elements
 from message_data.model.transport.computations import dummy_prices, rename
 from message_data.model.transport.data.groups import (
