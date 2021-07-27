@@ -4,10 +4,9 @@ from itertools import product
 
 import xarray as xr
 from message_ix_models import Context
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import load_private_data
 from sdmx.model import Code
-
-from message_data.tools import get_context, set_info
 
 # Configuration files
 METADATA = [
@@ -101,8 +100,8 @@ def map_add_on(rtype=Code):
 
 def add_commodity_and_level(df, default_level=None):
     # Add input commodity and level
-    t_info = get_context()["water set"]["technology"]["add"]
-    c_info = set_info("commodity")
+    t_info = Context.get_instance()["water set"]["technology"]["add"]
+    c_info = get_codes("commodity")
 
     @lru_cache()
     def t_cl(t):
