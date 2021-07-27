@@ -110,6 +110,7 @@ def test_build_bare_res(
         # Local clones of the above
         # "ixmp://clone-2021-06-09/ENGAGE_SSP2_v4.1.7/baseline",
         # "ixmp://clone-2021-06-09/ENGAGE_SSP2_v4.1.7/EN_NPi2020_1000f",
+        # "ixmp://local/MESSAGEix-Transport on ENGAGE_SSP2_v4.1.7/baseline",
     ),
 )
 def test_build_existing(tmp_path, test_context, url, solve=False):
@@ -130,10 +131,11 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
 
     # New model name for the destination scenario
     ctx.dest_scenario = copy(ctx.scenario_info)
-    ctx.dest_scenario["model"] = f"MESSAGEix-Transport {ctx.dest_scenario['model']}"
+    ctx.dest_scenario["model"] = f"{ctx.dest_scenario['model']} +transport"
 
     # Clone the base scenario to the test platform
-    scenario = ctx.clone_to_dest()
+    scenario = ctx.clone_to_dest(create=False)
+    mp = scenario.platform
 
     # Build succeeds without error
     build.main(ctx, scenario, fast=True)
@@ -149,3 +151,5 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
         # Use Reporting calculations to check the result
         result = report.check(scenario)
         assert result.all(), f"\n{result}"
+
+    del mp
