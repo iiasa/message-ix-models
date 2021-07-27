@@ -76,13 +76,11 @@ def cached(func: Callable) -> Callable:
         func, cache_path=cache_path, cache_skip=SKIP_CACHE
     )
 
-    try:
+    if cached_load.__doc__ is not None:
         # Determine the indent
         line = cached_load.__doc__.split("\n")[-1]
         indent = len(line) - len(line.lstrip(" "))
-    except AttributeError:
-        pass  # No docstring
-    else:
+
         # Add a note that the results are cached
         cached_load.__doc__ += (
             f"\n\n{' ' * indent}Data returned by this function is cached using "
