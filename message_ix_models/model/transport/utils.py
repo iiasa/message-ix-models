@@ -34,7 +34,7 @@ METADATA = [
 ]
 
 
-def read_config(context=None):
+def read_config(context):
     """Read the transport model configuration / metadata and store on `context`.
 
     The files listed in :data:`.METADATA` are stored with keys like "transport set",
@@ -44,14 +44,15 @@ def read_config(context=None):
     ``context.regions`` then the files are loaded from that subdirectory, e.g.
     e.g. :file:`data/transport/ISR/set.yaml` instead of :file:`data/transport/set.yaml`.
     """
-    context = context or Context.get_instance(0)
-
-    if "transport set" in context:
-        # Already loaded
-        return
-
     # Apply a default setting, e.g. regions = R11
     context.use_defaults(SETTINGS)
+
+    try:
+        # Confirm that the loaded config.yaml matches the current context.regions
+        if context["transport config"]["regions"] == context.regions:
+            return  # Already loaded
+    except KeyError:
+        pass  # "transport config" not present
 
     # Temporary
     if context.regions == "ISR":

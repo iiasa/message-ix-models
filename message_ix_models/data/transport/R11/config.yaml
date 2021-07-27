@@ -1,5 +1,7 @@
 # Configuration for MESSAGEix-Transport
 
+regions: R11
+
 # Sources for input data
 data source:
   # Non-LDV technologies: 'IKARUS' or null
