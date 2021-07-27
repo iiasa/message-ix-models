@@ -109,15 +109,18 @@ def get_consumer_groups(context) -> Quantity:
     # applicable to the US in 2005.”
     # NB in the spreadsheet, the data are also filled forward to 2110
     ma3t_pop = computations.load_file(
-        path=path_fallback(context, "ma3t", "population.csv")
+        path=path_fallback(context, "ma3t", "population.csv"),
+        units=registry.dimensionless,
     )
 
     ma3t_attitude = computations.load_file(
-        path=path_fallback(context, "ma3t", "attitude.csv")
+        path=path_fallback(context, "ma3t", "attitude.csv"),
+        units=registry.dimensionless,
     )
 
     ma3t_driver = computations.load_file(
-        path=path_fallback(context, "ma3t", "driver.csv")
+        path=path_fallback(context, "ma3t", "driver.csv"),
+        units=registry.dimensionless,
     )
 
     # - Apply the trajectory of pop_share to the initial values of ma3t_pop.
