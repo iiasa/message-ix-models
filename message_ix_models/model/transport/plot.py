@@ -41,9 +41,11 @@ class Plot(BasePlot):
         return p9.ggtitle(f"{value} ({datetime.now().isoformat(timespec='minutes')})")
 
 
-class InvCost(Plot):
-    basename = "inv-cost"
-    inputs = ["inv_cost:nl-t-yv"]
+class InvCost0(Plot):
+    basename = "inv-cost-transport"
+    inputs = ["inv_cost:nl-t-yv:transport"]
+
+    _title_detail = "All transport"
 
     def generate(self, data):
         data = data.rename(columns={0: "inv_cost"})
@@ -56,9 +58,25 @@ class InvCost(Plot):
                 + p9.geom_line()
                 + p9.geom_point()
                 + p9.expand_limits(y=[0, y_max])
-                + self.title(f"Investment cost [{unit}] {nl}")
+                + self.title(f"{self._title_detail} Investment cost [{unit}] {nl}")
                 + self.static
             )
+
+
+class InvCost1(InvCost0):
+    """Same as InvCost0, but for LDV techs only."""
+
+    basename = "inv-cost-ldv"
+    inputs = ["inv_cost:nl-t-yv:ldv"]
+    _title_detail = "LDV transport"
+
+
+class InvCost2(InvCost0):
+    """Same as InvCost0, but for non-LDV techs only."""
+
+    basename = "inv-cost-nonldv"
+    inputs = ["inv_cost:nl-t-yv:nonldv"]
+    _title_detail = "Non-LDV transport"
 
 
 class FixCost(Plot):
@@ -216,21 +234,24 @@ class DemandCalibratedCap(Plot):
     inputs = ["demand:n-c-y", "population:n-y", "c:transport"]
 
     def generate(self, demand, population, commodities):
-        try:
-            # Convert and select data
-            data = computations.ratio(demand, population)
-        except TypeError:
-            log.error(f"Missing data to plot {self.basename}")
-            return []
+        # TODO handle this by adding additional computations in report.callback() or
+        #      functions it calls.
+        # try:
+        #     # Convert and select data
+        #     data = computations.ratio(demand, population)
+        # except TypeError:
+        #     log.error(f"Missing data to plot {self.basename}")
+        #     return []
 
-        df = (
-            data.to_series()
-            .rename("value")
-            .sort_index()
-            .reset_index()
-            .astype(dict(value=float))
-            .query(f"c in {repr(list(map(str, commodities)))}")
-        )
+        # TODO remove; this is now handled by genno…Plot
+        # df = (
+        #     data.to_series()
+        #     .rename("value")
+        #     .sort_index()
+        #     .reset_index()
+        #     .astype(dict(value=float))
+        #     .query(f"c in {repr(list(map(str, commodities)))}")
+        # )
 
         for node, node_data in df.groupby("n"):
             yield (
@@ -325,7 +346,7 @@ class EnergyCmdty(Plot):
 #: Plots of data from the built (and maybe solved) MESSAGEix-Transport scenario.
 PLOTS = [
     FixCost,
-    InvCost,
+    InvCost0,
     VarCost,
     EnergyCmdty,
     LDVTechShare0,
