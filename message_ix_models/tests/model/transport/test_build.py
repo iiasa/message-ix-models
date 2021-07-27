@@ -43,19 +43,25 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
     assert exp == spec["require"].set["node"]
 
 
+_238 = mark.skip(reason="Temporary, for iiasa/message_data#238")
+
+
 @pytest.mark.parametrize(
     "regions, years, ldv, nonldv, solve",
     [
+        # R11, A
         ("R11", "A", None, None, False),  # 31 s
         ("R11", "B", None, None, False),
-        param("R11", "A", None, None, True, marks=mark.slow),  # 44 s
+        param("R11", "A", None, None, True, marks=(mark.slow, _238)),  # 44 s
         param("R11", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),  # 43 s
         param("R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
-        param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
-        # Non-R11 configurations currently fail
+        # R11, B
+        param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
+        param("R11", "B", "US-TIMES MA3T", "IKARUS", True, marks=(mark.slow, _238)),
+        # R14, A
+        param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=(mark.slow, _238)),
+        # Pending iiasa/message_data#190
         param("ISR", "A", None, None, False, marks=NIE),
-        # Periods "B" currently fail
-        param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=(mark.slow, NIE)),
     ],
 )
 def test_build_bare_res(
