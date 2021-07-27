@@ -2,7 +2,9 @@ import logging
 from copy import deepcopy
 
 import pytest
+import sdmx.model
 import xarray as xr
+from genno.caching import hash_args
 from ixmp.testing import assert_logs
 
 import message_ix_models.util.cache
@@ -10,6 +12,17 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.util import cached
 
 log = logging.getLogger(__name__)
+
+
+class TestEncoder:
+    def test_sdmx(self):
+        """:mod:`message_ix_models` configures :class:`.Encoder` for :class:`.Code`."""
+        codes0 = [sdmx.model.Code(id=f"FOO{i}", name="foo") for i in range(5)]
+        codes1 = [f"FOO{i}" for i in range(5)]
+
+        # List of codes hashes the same as a list of their string IDs
+        expected = "40a0735385448dcbe745904ebfec7255995ca451"
+        assert expected == hash_args(codes0, bar="baz") == hash_args(codes1, bar="baz")
 
 
 def test_cached(caplog, test_context, tmp_path):
