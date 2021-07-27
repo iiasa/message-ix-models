@@ -166,8 +166,8 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
 def get_ikarus_data(context):
     """Prepare non-LDV data from :cite:`Martinsen2006`.
 
-    The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed
-    data is exported into ``non_LDV_techs_wrapped.csv``.
+    The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed data is
+    exported into ``non_LDV_techs_wrapped.csv``.
 
     Parameters
     ----------
