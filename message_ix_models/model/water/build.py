@@ -2,12 +2,12 @@ import logging
 from functools import lru_cache, partial
 from typing import Mapping
 
+import pandas as pd
 from message_ix_models import ScenarioInfo
 from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
 
 from .utils import read_config
-import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,6 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     context = read_config()
 
     require = ScenarioInfo()
-
     remove = ScenarioInfo()
     add = ScenarioInfo()
 
@@ -55,6 +54,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
     return dict(require=require, remove=remove, add=add)
 
+
 @lru_cache()
 def generate_set_elements(set_name, match=None):
 
@@ -72,28 +72,7 @@ def generate_set_elements(set_name, match=None):
     return results
 
 
-def cooling(context, scenario) -> Mapping[str, ScenarioInfo]:
-    """Return the specification for cooling technologies
-
-    Parameters
-    ----------
-    context : .Context
-    """
-
-    log.info("Set up water constraints in a scenario")
-
-    from .data import add_cooling_data
-
-    log.info("Set up cooling technologies in model")
-
-    # Core water structure
-    spec = get_spec(context)
-
-    # Apply the structural changes and add the data
-    build.apply_spec(scenario, spec, partial(add_cooling_data, context=context), **options)
-
-
-def map_basin(context, scenario) -> Mapping[str, ScenarioInfo]:
+def map_basin(context) -> Mapping[str, ScenarioInfo]:
 
     context = read_config()
 
@@ -109,27 +88,26 @@ def map_basin(context, scenario) -> Mapping[str, ScenarioInfo]:
     path = context.get_path("water", "delineation", "basins_by_region_simpl_R11.csv")
     df = pd.read_csv(path)
     # Assigning proper nomenclature
-    df['node'] = 'B' + df['BCU_name'].astype(str)
-    df['mode'] = 'M' + df['BCU_name'].astype(str)
-    df['region']= 'R11_' + df['REGION'].astype(str)
-    results['node'] = df['node']
-    results['mode'] = df['mode']
+    df["node"] = "B" + df["BCU_name"].astype(str)
+    df["mode"] = "M" + df["BCU_name"].astype(str)
+    df["region"] = "R11_" + df["REGION"].astype(str)
+    results["node"] = df["node"]
+    results["mode"] = df["mode"]
     # map nodes as per dimensions
-    df1 = pd.DataFrame({'node_parent':df['region'],
-               'node':df['node']})
-    df2 = pd.DataFrame({'node_parent':df['node'],
-               'node':df['node']})
-    frame = [df1,df2]
+    df1 = pd.DataFrame({"node_parent": df["region"], "node": df["node"]})
+    df2 = pd.DataFrame({"node_parent": df["node"], "node": df["node"]})
+    frame = [df1, df2]
     df_node = pd.concat(frame)
     nodes = df_node.values.tolist()
 
-    results['map_node'] = nodes
+    results["map_node"] = nodes
 
     for set_name, config in results.items():
         # Sets  to add
         add.set[set_name].extend(config)
 
     return dict(require=require, remove=remove, add=add)
+
 
 def main(context, scenario, **options):
     """Set up MESSAGEix-Nexus on `scenario`.
@@ -144,17 +122,17 @@ def main(context, scenario, **options):
 
     log.info("Set up MESSAGEix-Nexus")
 
-    # Core water structure
-    spec = get_spec(context)
-
-    # Apply the structural changes AND add the data
-    build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
-
     # Add water balance
-    spec1 = map_basin(context)
+    spec = map_basin(context)
 
     # Apply the structural changes AND add the data
-    build.apply_spec(scenario, spec1, **options)
+    build.apply_spec(scenario, spec, **options)
+
+    # Core water structure
+    spec1 = get_spec(context)
+
+    # Apply the structural changes AND add the data
+    build.apply_spec(scenario, spec1, partial(add_data, context=context), **options)
 
     # Uncomment to dump for debugging
     # scenario.to_excel('debug.xlsx')
