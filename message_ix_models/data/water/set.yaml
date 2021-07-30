@@ -447,6 +447,7 @@ cat_addon:
   - [cooling__solar_th_ppl, solar_th_ppl__air]
 
 shares:
+  add:
   - share_basin
 
 unit:

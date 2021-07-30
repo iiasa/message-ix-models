@@ -25,7 +25,8 @@ def cli(context, regions):
         context.scenario_info.update(
             dict(model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test")
         )
-    context.output_scenario = "MESSAGEix-Nexus" + "_water"
+    context.output_scenario = context.scenario_info["scenario"] + "_water"
+    context.output_model = context.scenario_info["model"] + "_wat"
 
     # Handle --regions; use a sensible default for MESSAGEix-Nexus
     if regions:
@@ -53,7 +54,7 @@ def nexus(context, regions):
 
     Use the --url option to specify the base scenario.
     """
-    context.nexus_set = 'nexus'
+    context.nexus_set = "nexus"
 
     from .build import main as build
 
@@ -61,9 +62,12 @@ def nexus(context, regions):
     # user did not give a recognized value, this raises an error.
 
     output_scenario_name = context.output_scenario
+    output_model_name = context.output_model
 
     # Clone and build
-    scen = context.get_scenario().clone(model="", scenario=output_scenario_name)
+    scen = context.get_scenario().clone(
+        model=output_model_name, scenario=output_scenario_name
+    )
 
     print(scen.model)
     print(scen.scenario)
@@ -72,6 +76,7 @@ def nexus(context, regions):
 
     # Solve
     scen.solve()
+
 
 @cli.command("cooling")
 @common_params("regions")
@@ -81,17 +86,20 @@ def cooling(context, regions):
 
     Use the --url option to specify the base scenario.
     """
-    context.nexus_set = 'cooling'
+    context.nexus_set = "cooling"
 
-    from .build import cooling as build
+    from .build import main as build
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
 
-    output_scenario_name = context.output_scenario
+    output_scenario_name = context.output_scenario + "çooling_only"
+    output_model_name = context.output_model
 
     # Clone and build
-    scen = context.get_scenario().clone(model="", scenario=output_scenario_name)
+    scen = context.get_scenario().clone(
+        model=output_model_name, scenario=output_scenario_name
+    )
 
     print(scen.model)
     print(scen.scenario)
@@ -100,30 +108,3 @@ def cooling(context, regions):
 
     # Solve
     scen.solve()
-
-
-@cli.command("waterbalance")
-@common_params("regions")
-@click.pass_obj
-def waterbalance(context, regions):
-    """Build and solve model with new cooling technologies.
-
-    Use the --url option to specify the base scenario.
-    """
-    from .build import water_balance as build
-
-    # Determine the output scenario name based on the --url CLI option. If the
-    # user did not give a recognized value, this raises an error.
-
-    output_scenario_name = context.output_scenario
-
-    # Clone and build
-    scen = context.get_scenario().clone(model="", scenario=output_scenario_name)
-
-    print(scen.model)
-    print(scen.scenario)
-    # Build
-    build(context, scen)
-
-    # Solve
-    #scen.solve()
