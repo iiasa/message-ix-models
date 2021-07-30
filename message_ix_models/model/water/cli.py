@@ -25,7 +25,7 @@ def cli(context, regions):
         context.scenario_info.update(
             dict(model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test")
         )
-    context.output_scenario = context.scenario_info["scenario"] + "_water"
+    context.output_scenario = "MESSAGEix-Nexus" + "_water"
 
     # Handle --regions; use a sensible default for MESSAGEix-Nexus
     if regions:
@@ -53,6 +53,8 @@ def nexus(context, regions):
 
     Use the --url option to specify the base scenario.
     """
+    context.nexus_set = 'nexus'
+
     from .build import main as build
 
     # Determine the output scenario name based on the --url CLI option. If the
@@ -79,6 +81,8 @@ def cooling(context, regions):
 
     Use the --url option to specify the base scenario.
     """
+    context.nexus_set = 'cooling'
+
     from .build import cooling as build
 
     # Determine the output scenario name based on the --url CLI option. If the
@@ -98,7 +102,7 @@ def cooling(context, regions):
     scen.solve()
 
 
-@cli.command()
+@cli.command("waterbalance")
 @common_params("regions")
 @click.pass_obj
 def waterbalance(context, regions):
