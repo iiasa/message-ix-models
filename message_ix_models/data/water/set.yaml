@@ -445,6 +445,10 @@ cat_addon:
   - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
   - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
   - [cooling__solar_th_ppl, solar_th_ppl__air]
+
+shares:
+  - share_basin
+
 unit:
   add:
   - km3/GWa

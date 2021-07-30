@@ -635,3 +635,9 @@ saline_ppl_t_d:
     Saline power plant transmission & distribution
     # TODO verify description
   input: {commodity: saline_supply}
+
+water_to_en:
+  description: >-
+    dummy technology to map water supply to energy technologies
+
+  input: {commodity: freshwater_supply}
