@@ -45,6 +45,15 @@ def cool_tech(context):
     # Reference to the water configuration
     info = context["water build info"]
 
+    # reading basin_delineation
+    path1 = context.get_path("water", "delineation", "basins_by_region_simpl_R11.csv")
+    df_node = pd.read_csv(path1)
+    # Assigning proper nomenclature
+    df_node['node'] = 'B' + df_node['BCU_name'].astype(str)
+    df_node['mode'] = 'M' + df_node['BCU_name'].astype(str)
+    df_node['region'] = 'R11_' + df_node['REGION'].astype(str)
+
+    # reading ppl cooling tech dataframe
     path = context.get_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
     cooling_df = df.loc[df["technology_group"] == "cooling"]
@@ -531,27 +540,31 @@ def cool_tech(context):
 
     results["technical_lifetime"] = tl
 
-    # Add output df  for freshwater & saline supply
-    output_df = (
-        make_df(
-            "output",
-            technology="extract_freshwater_supply",
-            value=1,
-            unit="km3",
-            year_vtg=info.Y,
-            year_act=info.Y,
-            level="water_supply",
-            commodity="freshwater_supply",
-            mode="M1",
-            time="year",
-            time_dest="year",
-            time_origin="year",
+    if context.nexus_set = 'cooling':
+        # Add output df  for freshwater supply for regions
+        output_df = (
+            make_df(
+                "output",
+                technology="extract_freshwater_supply",
+                value=1,
+                unit="km3",
+                year_vtg=info.Y,
+                year_act=info.Y,
+                level="water_supply",
+                commodity="freshwater_supply",
+                mode="M1",
+                time="year",
+                time_dest="year",
+                time_origin="year",
+            )
+                .pipe(broadcast, node_loc=info.N[1:])
+                .pipe(same_node)
         )
-        .pipe(broadcast, node_loc=info.N[1:])
-        .pipe(same_node)
-    )
 
-    output_df = output_df.append(
+        results["output"] = output_df
+
+    # Add output of saline water supply for regions
+    output_df = (
         make_df(
             "output",
             technology="extract_saline_supply",
@@ -575,6 +588,97 @@ def cool_tech(context):
     cap_fact = make_matched_dfs(inp, capacity_factor=1)
     results["capacity_factor"] = cap_fact["capacity_factor"]
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+    if context.nexus_set = "nexus":
+        # freshwater extraction for basins
+        output_df = (
+            make_df('output',
+                    node_dest=df_node['node'],
+                    node_loc=df_node['node'],
+                    technology='extract_freshwater_supply',
+                    value=1, unit='-',
+                    level='water_supply_basin',
+                    commodity='freshwater_supply',
+                    mode='M1',
+                    time='year',
+                    time_dest='year',
+                    time_origin='year').pipe(broadcast, year_vtg=info.Y,
+                                             year_act=info.Y)
+        )
+        results["output"] = output_df
+
+        # input dataframe  linking water supply to energy dummy technology
+        inp = (make_df('input',
+                       technology='water_to_en',
+                       value=1, unit='-',
+                       level='water_supply',
+                       commodity='freshwater_supply',
+                       mode=df_node['mode'],
+                       time='year',
+                       time_origin='year',
+                       node_origin=df_node['node'],
+                       node_loc=df_node['region']
+                       ).pipe(broadcast, year_vtg=info.Y,
+                              year_act=info.Y))
+        results["input"] = inp
+
+        # output dataframe linking water supply to energy dummy technology
+        output_df = (
+            make_df('output',
+                    technology='water_to_en',
+                    value=1, unit='-',
+                    level='water_supply',
+                    commodity='freshwater_supply',
+                    mode=df_node['mode'], node_loc=df_node['region'],
+                    node_dest=df_node['region'],
+                    time='year',
+                    time_dest='year',
+                    time_origin='year').pipe(broadcast,
+                                             year_vtg=info.Y,
+                                             year_act=info.Y,
+                                             ))
+        results["output"] = output_df
+
+        # dummy variable cost for dummy water to energy technology
+        var = (make_df('var_cost',
+                       technology='water_to_en',
+                       mode=df_node['mode'],
+                       time='year',
+                       value=20,
+                       unit='-'
+                       ).pipe(broadcast,
+                              node_loc=info.N[1:],
+                              year_vtg=info.Y,
+                              year_act=info.Y))
+        results["var_cost"] = var
+
+        # reading flow availability data for defining share constraints of basins in each region
+        path2 = ctx.get_path("water", "water_availability", "run_off_rcp26_mean.csv")
+        df_wat = pd.read_csv(path2)
+        df_wat['region'] = 'R11_' + df_wat['BCU_name'].str[-3:]
+        df_wat_1 = df_wat.drop(columns=['Unnamed: 0', 'BASIN_ID', 'unit', 'BCU_name'], axis=1)
+        # Calculating ratio of water availability in basin by region
+        df_wat_1 = df_wat_1.groupby(["region"]).apply(lambda x: x / x.sum())
+        df_wat_1['node'] = 'B' + df_wat['BCU_name']
+        df_wat_1['mode'] = 'M' + df_node['BCU_name']
+        df_wat_1['region'] = df_wat['region']
+        # restacking dataframe to be compatible with MESSAGE format
+        df_wat_1 = df_wat_1.set_index(['node', 'region'])
+        df_wat_1 = df_wat_1.stack().reset_index(level=0).reset_index()
+        df_wat_1.columns = ['region', 'mode', 'year', 'node', 'value']
+        df_wat_1.sort_values(['region', 'mode', 'year', 'node', 'value'], inplace=True)
+
+        share = (make_df('share_mode_up',
+                         shares=shares,
+                         technology='water_to_en',
+                         mode=df_wat_1['mode'],
+                         node_share=df_wat_1['region'],
+                         time='year',
+                         value=df_wat_1['value'],
+                         unit='-',
+                         year=df_wat_1['year']
+                         ))
+        results['share_mode_up'] = shares
+
     return results
 
 
@@ -670,3 +774,5 @@ def non_cooling_tec(context):
     results["technical_lifetime"] = tl
 
     return results
+
+
