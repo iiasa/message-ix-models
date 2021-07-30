@@ -11,9 +11,11 @@ log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
     cool_tech,  # Water & parasitic_electricity requirements for cooling technologies
-    non_cooling_tec
+    non_cooling_tec,
+    demands
 ]
 
+data_funcs = [cool_tech,non_cooling_tec()] if context.nexus_set = 'cooling' else DATA_FUNCTIONS
 
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGEix-Nexus data."""
