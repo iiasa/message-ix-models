@@ -71,26 +71,8 @@ def generate_set_elements(set_name, match=None):
 
     return results
 
-def water_balance(context) -> Mapping[str, ScenarioInfo]:
-    """Return the specification for nexus implementation alongwith water balance
 
-    Parameters
-    ----------
-    context : .Context
-    """
-
-    log.info("Set up water constraints in a scenario")
-
-    # Core water structure
-
-    #extend water infrastrcuture
-    spec1 = map_basin(context)
-
-    # Apply the structural changes AND add the data
-    build.apply_spec(scenario, spec1, **options)
-
-
-def cooling(context) -> Mapping[str, ScenarioInfo]:
+def cooling(context, scenario) -> Mapping[str, ScenarioInfo]:
     """Return the specification for cooling technologies
 
     Parameters
@@ -111,7 +93,7 @@ def cooling(context) -> Mapping[str, ScenarioInfo]:
     build.apply_spec(scenario, spec, partial(add_cooling_data, context=context), **options)
 
 
-def map_basin(context) -> Mapping[str, ScenarioInfo]:
+def map_basin(context, scenario) -> Mapping[str, ScenarioInfo]:
 
     context = read_config()
 
@@ -121,23 +103,27 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
 
     remove = ScenarioInfo()
 
-
     # define an empty dictionary
     results = {}
-    path = context.get_path("water", "delineation", "basin_names.csv")
+    # read csv file for basin names and region mapping
+    path = context.get_path("water", "delineation", "basins_by_region_simpl_R11.csv")
     df = pd.read_csv(path)
+    # Assigning proper nomenclature
     df['node'] = 'B' + df['BCU_name'].astype(str)
     df['mode'] = 'M' + df['BCU_name'].astype(str)
     df['region']= 'R11_' + df['REGION'].astype(str)
     results['node'] = df['node']
     results['mode'] = df['mode']
+    # map nodes as per dimensions
     df1 = pd.DataFrame({'node_parent':df['region'],
                'node':df['node']})
     df2 = pd.DataFrame({'node_parent':df['node'],
                'node':df['node']})
     frame = [df1,df2]
     df_node = pd.concat(frame)
-    results['map_node'] = df_node
+    nodes = df_node.values.tolist()
+
+    results['map_node'] = nodes
 
     for set_name, config in results.items():
         # Sets  to add
