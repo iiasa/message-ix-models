@@ -25,7 +25,7 @@ def cli(context, regions):
         context.scenario_info.update(
             dict(model="ENGAGE_SSP2_v4.1.7", scenario="baseline_clone_test")
         )
-    context.output_scenario = context.scenario_info["scenario"] + "_water"
+    context.output_scenario = "baseline"
     context.output_model = context.scenario_info["model"] + "_wat"
 
     # Handle --regions; use a sensible default for MESSAGEix-Nexus
@@ -59,8 +59,7 @@ def nexus(context, regions):
     from .build import main as build
 
     # Determine the output scenario name based on the --url CLI option. If the
-    # user did not give a recognized value, this raises an error.
-
+    # user did not give a recognized value, this raises an error
     output_scenario_name = context.output_scenario
     output_model_name = context.output_model
 
@@ -93,7 +92,7 @@ def cooling(context, regions):
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
 
-    output_scenario_name = context.output_scenario + "çooling_only"
+    output_scenario_name = context.output_scenario
     output_model_name = context.output_model
 
     # Clone and build
