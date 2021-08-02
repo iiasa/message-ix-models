@@ -648,21 +648,33 @@ def cool_tech(context):
             "var_cost",
             technology="water_to_en",
             mode=df_node["mode"],
+            node_loc=df_node["region"],
             time="year",
             value=20,
             unit="-",
-        ).pipe(broadcast, node_loc=info.N[1:], year_vtg=info.Y, year_act=info.Y)
+        ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
         results["var_cost"] = var
 
-        # reading flow availability data for defining share constraints of basins in each region
+        # reading flow availability data for defining share constraints of basins in each recgion
         path2 = context.get_path(
             "water", "water_availability", "run_off_rcp26_mean.csv"
         )
         df_wat = pd.read_csv(path2)
         df_wat["region"] = "R11_" + df_wat["BCU_name"].str[-3:]
         df_wat_1 = df_wat.drop(
-            columns=["Unnamed: 0", "BASIN_ID", "unit", "BCU_name"], axis=1
+            columns=[
+                "Unnamed: 0",
+                "BASIN_ID",
+                "unit",
+                "BCU_name",
+                "2065",
+                "2075",
+                "2085",
+                "2095",
+            ],
+            axis=1,
         )
+        df_wat_1["2110"] = 1.1 * df_wat_1["2100"]
         # Calculating ratio of water availability in basin by region
         df_wat_1 = df_wat_1.groupby(["region"]).apply(lambda x: x / x.sum())
         df_wat_1["node"] = "B" + df_wat["BCU_name"].astype(str)
@@ -676,16 +688,16 @@ def cool_tech(context):
 
         share = make_df(
             "share_mode_up",
-            shares=shares,
+            shares="share_basin",
             technology="water_to_en",
             mode=df_wat_1["mode"],
             node_share=df_wat_1["region"],
             time="year",
             value=df_wat_1["value"],
             unit="-",
-            year=df_wat_1["year"],
+            year_act=df_wat_1["year"],
         )
-        results["share_mode_up"] = shares
+        results["share_mode_up"] = share
 
     return results
 
