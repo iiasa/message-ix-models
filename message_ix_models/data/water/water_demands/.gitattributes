@@ -1,0 +1,4 @@
+cdlinks_globiom_irrigation.csv filter=lfs diff=lfs merge=lfs -text
+country_region_map_key.csv filter=lfs diff=lfs merge=lfs -text
+watergap_historical_water_use_mf.csv filter=lfs diff=lfs merge=lfs -text
+watergap_historical_water_use_mw.csv filter=lfs diff=lfs merge=lfs -text
