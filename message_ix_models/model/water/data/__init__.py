@@ -6,13 +6,14 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data
 
 from .water_for_ppl import cool_tech, non_cooling_tec
+from .demands import add_demand
 
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS = [
     cool_tech,  # Water & parasitic_electricity requirements for cooling technologies
-    non_cooling_tec
-    # demands
+    non_cooling_tec,
+    add_demand
 ]
 
 

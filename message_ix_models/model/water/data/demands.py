@@ -8,15 +8,15 @@ import xarray as xr
 from message_data.model.water import read_config
 
 from message_data.tools import make_df
-   
 
 
-def add_demand(info):
+def add_demand(context):
     """
+    Adds water sectoral demands and supply constraints
     Parameters
     ----------
-    info : .ScenarioInfo
-        Information about target Scenario.
+    context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -27,10 +27,8 @@ def add_demand(info):
     # define an empty dictionary
     results = {}
 
-    context = read_config()
-
     # defines path to read in demand data
-    path = context.get_path("water", "water_demands", "harmonized", ".")
+    path = context.get_path("water", "water_demands", "harmonized", "R11", ".")
     # make sure all of the csvs have format, otherwise it might not work
     list_of_csvs = list(path.glob("*_baseline.csv"))
     # define names for variables
@@ -57,12 +55,12 @@ def add_demand(info):
     # Unstack xarray back to pandas dataframe
     df_f = df_x_c.to_dataframe("").unstack()
 
-    # Format the datframe to be compatible with message format
-    df2_f = df_f.stack().reset_index(level=0).reset_index()
-    df2_f.columns = ["year", "node", "variable", "value"]
-    df2_f.sort_values(["year", "node", "variable", "value"], inplace=True)
+    # Format the dataframe to be compatible with message format
+    df_dmds = df_f.stack().reset_index(level=0).reset_index()
+    df_dmds.columns = ["year", "node", "variable", "value"]
+    df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
+
     # Write final interpolated values as csv
-    # TODO fix the path in writing csv to it writes to the 'path' defined above
     # df2_f.to_csv('final_interpolated_values.csv')
 
     urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal_baseline"]
@@ -84,11 +82,6 @@ def add_demand(info):
     # urban_desal_fraction_df = df_dmds[df_dmds['variable'] == 'urban_desal_fraction_baseline']
     # rural_desal_fraction_df = df_dmds[df_dmds['variable'] == 'rural_desal_fraction_baseline']
     # urban_reuse_fraction_df = df_dmds[df_dmds['variable'] == 'urban_reuse_fraction_baseline']
-    # TODO Irrigation demands have been imported from GLOBIOM and hamronized in the previous work
-    # However, this might need to be revisited
-    irrigation_withdrawal_df = df_dmds[
-        df_dmds["variable"] == "irrigation_withdrawal_baseline"
-    ]
 
     urban_mw = urban_withdrawal_df.reset_index(drop=True)
     urban_mw["value"] = (1e-3 * urban_mw["value"]) * urban_connection_rate_df["value"]
@@ -224,18 +217,58 @@ def add_demand(info):
         )
     )
 
-    freshwater_supply = irrigation_withdrawal_df.reset_index(drop=True)
-    freshwater_supply["value"] = 1e-3 * freshwater_water_supply["value"]
+    # TODO Add updated irrigation withdrawal data from GLOBIOM
+    # TODO decide whether to include additional GLOBIOM nodes
+
+    # freshwater_supply = irrigation_withdrawal_df.reset_index(drop=True)
+    # freshwater_supply["value"] = 1e-3 * freshwater_water_supply["value"]
+    #
+    # dmd_df = dmd_df.append(
+    #     make_df(
+    #         "demand",
+    #         node=freshwater_supply["node"],
+    #         commodity="freshwater_supply",
+    #         level="water_supply",
+    #         year=freshwater_supply["year"],
+    #         time="year",
+    #         value=freshwater_supply["value"],
+    #         unit="-",
+    #     )
+    # )
+
+    # Adding freshwater supply constraints
+    # The water availability here refers to runoff
+    # TODO identify whether discharge or runoff needs to be used
+
+    # Reading data, the data is spatially and temprally aggregated from GHMs
+    path1 = context.get_path("water", "water_availability", "run_off_rcp26_mean.csv")
+    df_wat_ava = pd.read_csv(path1)
+    df_wat_ava = df_wat_ava.drop(
+        columns=[
+            "Unnamed: 0",
+            "BCU_name",
+            "2065",
+            "2075",
+            "2085",
+            "2095",
+        ],
+        axis=1,
+    )
+    df_wat_ava["2110"] = 1.1 * df_wat_ava["2100"]
+    df_wat_ava = df_wat_ava.set_index(["BCU_name", "unit"])
+    df_wat_ava = df_wat_ava.stack().reset_index(level=0).reset_index()
+    df_wat_ava.columns = ["unit", "year", "node", "value"]
+    df_wat_ava.sort_values(["unit", "year", "node", "value"], inplace=True)
 
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=freshwater_supply["node"],
+            node=df_wat_ava["node"],
             commodity="freshwater_supply",
             level="water_supply",
-            year=freshwater_supply["year"],
+            year=df_wat_ava["year"],
             time="year",
-            value=freshwater_supply["value"],
+            value=-df_wat_ava["value"],
             unit="-",
         )
     )
