@@ -122,11 +122,12 @@ def main(context, scenario, **options):
 
     log.info("Set up MESSAGEix-Nexus")
 
-    # Add water balance
-    spec = map_basin(context)
+    if context.nexus_set == 'nexus':
+        # Add water balance
+        spec = map_basin(context)
 
-    # Apply the structural changes AND add the data
-    build.apply_spec(scenario, spec, **options)
+        # Apply the structural changes AND add the data
+        build.apply_spec(scenario, spec, **options)
 
     # Core water structure
     spec1 = get_spec(context)
