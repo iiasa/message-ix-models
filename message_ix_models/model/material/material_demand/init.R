@@ -45,6 +45,9 @@ df_cement_consumption = df_raw_cement_consumption %>%
   filter(cons.pcap > 0)
 
 #### Fit models ####
+
+# Note: IMAGE adopts NLI for cement, NLIT for steel.
+
 # . Linear ==== 
 lni.c = lm(log(cons.pcap) ~ I(1/gdp.pcap), data=df_cement_consumption)
 lni.s = lm(log(cons.pcap) ~ I(1/gdp.pcap), data=df_steel_consumption)
@@ -66,3 +69,14 @@ nlnit.c = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_cement_cons
 nlnit.s = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_steel_consumption, start=list(a=600, b=-10000, m=0))
 summary(nlnit.c)
 summary(nlnit.s)
+
+
+#### Prediction ####
+
+year = seq(2020, 2100, 10)
+df = data.frame(gdp.pcap = seq(3000, 50000, length.out = length(year)), year) %>% mutate(del.t = year - 2010)
+df2 = df %>% mutate(gdp.pcap = 2*gdp.pcap)
+predict(nlnit.s, df)
+predict(nlnit.s, df2)
+predict(nlni.c, df)
+predict(nlni.c, df2)
