@@ -466,6 +466,7 @@ steel:
       - ["steel","old_scrap_3"]
       - ["steel","end_of_life"]
       - ["steel","product"]
+      - ["steel","new_scrap"]
 
 cement:
   commodity:
@@ -575,6 +576,7 @@ aluminum:
       - ["aluminum","old_scrap_3"]
       - ["aluminum","end_of_life"]
       - ["aluminum","product"]
+      - ["aluminum","new_scrap"]
 
 fertilizer:
   commodity:
