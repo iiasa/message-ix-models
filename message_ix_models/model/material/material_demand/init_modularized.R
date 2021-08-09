@@ -70,7 +70,10 @@ derive_steel_demand <- function(df_pop, df_demand) {
     mutate(demand.pcap = demand.pcap0 + gap.base * (1-exp(-9*exp(-0.1*(year - 2010))))) %>% # Bas' equation
     mutate(demand.tot = demand.pcap * pop.mil * mega / giga) # Mt
   
-  return(demand %>% select(region, year, demand.tot)) # Mt
+  # Add 2110 spaceholder
+  demand = demand %>% rbind(demand %>% filter(year==2100) %>% mutate(year = 2110))
+  
+  return(demand %>% select(node=region, year, value=demand.tot) %>% arrange(year, node)) # Mt
 } 
 
 
@@ -116,7 +119,10 @@ derive_cement_demand <- function(df_pop, df_demand) {
     mutate(demand.pcap = demand.pcap0 + gap.base * (1-exp(-10*exp(-0.1*(year - 2010))))) %>% # Bas' equation
     mutate(demand.tot = demand.pcap * pop.mil * mega / giga) # Mt
   
-  return(demand %>% select(region, year, demand.tot)) # Mt
+  # Add 2110 spaceholder
+  demand = demand %>% rbind(demand %>% filter(year==2100) %>% mutate(year = 2110))
+  
+  return(demand %>% select(node=region, year, value=demand.tot) %>% arrange(year, node)) # Mt
 } 
 
 
