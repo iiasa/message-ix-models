@@ -70,12 +70,12 @@ lnit.s = lm(log(cons.pcap) ~ I(1/gdp.pcap)+del.t, data=df_steel_consumption)
 lnit.a = lm(log(cons.pcap) ~ I(1/gdp.pcap)+del.t, data=df_aluminum_consumption)
 summary(lnit.c)
 summary(lnit.s)
-summary(lnit.a)
+summary(lnit.a) # better in linear
 
 # . Non-linear ====
 nlni.c = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_cement_consumption, start=list(a=500, b=-3000))
 nlni.s = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_steel_consumption, start=list(a=600, b=-10000))
-nlni.a = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_aluminum_consumption)
+nlni.a = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_aluminum_consumption, start=list(a=600, b=-10000))
 
 summary(nlni.c)
 summary(nlni.s)
@@ -83,7 +83,7 @@ summary(nlni.a)
 
 nlnit.c = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_cement_consumption, start=list(a=500, b=-3000, m=0))
 nlnit.s = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_steel_consumption, start=list(a=600, b=-10000, m=0))
-nlnit.a = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_aluminum_consumption,start=list(a=600, b=-10000, m=0))
+nlnit.a = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_aluminum_consumption, start=list(a=600, b=-10000, m=0))
 
 summary(nlnit.c)
 summary(nlnit.s)
@@ -93,9 +93,18 @@ summary(nlnit.a)
 #### Prediction ####
 
 year = seq(2020, 2100, 10)
-df = data.frame(gdp.pcap = seq(3000, 50000, length.out = length(year)), year) %>% mutate(del.t = year - 2010)
+df = data.frame(gdp.pcap = seq(3000, 70000, length.out = length(year)), year) %>% mutate(del.t = year - 2010)
 df2 = df %>% mutate(gdp.pcap = 2*gdp.pcap)
 predict(nlnit.s, df)
+predict(nlni.s, df)
+exp(predict(lnit.s, df))
+exp(predict(lni.s, df))
 predict(nlnit.s, df2)
+
 predict(nlni.c, df)
 predict(nlni.c, df2)
+
+predict(nlni.a, df)
+predict(nlnit.a, df)
+exp(predict(lni.a, df))
+exp(predict(lnit.a, df))
