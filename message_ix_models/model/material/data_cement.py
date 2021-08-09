@@ -3,6 +3,7 @@ from .data_util import read_sector_data, read_timeseries
 import numpy as np
 from collections import defaultdict
 import logging
+from pathlib import Path
 
 import pandas as pd
 
@@ -311,7 +312,8 @@ def gen_data_cement(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    demand = gen_mock_demand_cement(scenario)
+    # demand = gen_mock_demand_cement(scenario)
+    demand = derive_cement_demand(scenario)
     df = make_df(
         parname,
         level="demand",
@@ -362,22 +364,30 @@ def derive_cement_demand(scenario, dry_run=False):
     r.source(str(rcode_path / "init_modularized.R"))
 
     # Read population and baseline demand for materials
-    pop = scenario.var("ACT", {"technology": "Population"})
+    pop = scenario.par("bound_activity_up", {"technology": "Population"})
     pop = pop.loc[pop.year_act >= 2020].rename(
-        columns={"year_act": "year", "lvl": "pop.mil", "node_loc": "region"}
+        columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
     )
     pop = pop[["region", "year", "pop.mil"]]
-    base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
-    base_demand = base_demand.loc[base_demand.year >= 2020].rename(
+    
+    base_demand = gen_mock_demand_cement(scenario)
+    base_demand = base_demand.loc[base_demand.year == 2020].rename(
         columns={"value": "demand.tot.base", "node": "region"}
     )
-    base_demand = base_demand[["region", "year", "demand.tot.base"]]
+    
+    # import pdb; pdb.set_trace()
+        
+    # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
+    # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
+    #     columns={"value": "demand.tot.base", "node": "region"}
+    # )
+    # base_demand = base_demand[["region", "year", "demand.tot.base"]]
 
     # call R function with type conversion
     with localconverter(ro.default_converter + pandas2ri.converter):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
-        df = r.derive_steel_demand(pop, base_demand)
+        df = r.derive_cement_demand(pop, base_demand)
+        df.year = df.year.astype(int)
 
-
-return df
+    return df
