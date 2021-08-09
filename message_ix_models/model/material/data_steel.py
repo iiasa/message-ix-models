@@ -452,7 +452,8 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    demand = gen_mock_demand_steel(scenario)
+    demand = derive_steel_demand(scenario)
+    
     df = make_df(
         parname,
         level="demand",
@@ -487,22 +488,31 @@ def derive_steel_demand(scenario, dry_run=False):
     r.source(str(rcode_path / "init_modularized.R"))
 
     # Read population and baseline demand for materials
-    pop = scenario.var("ACT", {"technology": "Population"})
+    pop = scenario.par("bound_activity_up", {"technology": "Population"})
     pop = pop.loc[pop.year_act >= 2020].rename(
-        columns={"year_act": "year", "lvl": "pop.mil", "node_loc": "region"}
+        columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
     )
+    
+    # import pdb; pdb.set_trace()
+    
     pop = pop[["region", "year", "pop.mil"]]
-    base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
-    base_demand = base_demand.loc[base_demand.year >= 2020].rename(
+    
+    base_demand = gen_mock_demand_steel(scenario)
+    base_demand = base_demand.loc[base_demand.year == 2020].rename(
         columns={"value": "demand.tot.base", "node": "region"}
     )
-    base_demand = base_demand[["region", "year", "demand.tot.base"]]
+    
+    # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
+    # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
+    #     columns={"value": "demand.tot.base", "node": "region"}
+    # )
+    # base_demand = base_demand[["region", "year", "demand.tot.base"]]
 
     # call R function with type conversion
     with localconverter(ro.default_converter + pandas2ri.converter):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
         df = r.derive_steel_demand(pop, base_demand)
+        df.year = df.year.astype(int)
 
-
-return df
+    return df
