@@ -8,6 +8,7 @@ datapath = 'H:/MyDocuments/MESSAGE/message_data/data/material/'
 
 file_cement = "CEMENT.BvR2010.xlsx"
 file_steel = "STEEL_database_2012.xlsx"
+file_al = "demand_aluminum.xlsx"
 file_gdp = "iamc_db ENGAGE baseline GDP PPP.xlsx"
 # file_pop = "iamc_db ENGAGE baseline population.xlsx"
 # 
@@ -67,7 +68,7 @@ derive_steel_demand <- function(df_pop, df_demand) {
     group_by(region) %>%
     mutate(demand.pcap.base = first(demand.tot.base*giga/pop.mil/mega)) %>%
     mutate(gap.base = first(demand.pcap.base - demand.pcap0)) %>%
-    mutate(demand.pcap = demand.pcap0 + gap.base * (1-exp(-9*exp(-0.1*(year - 2010))))) %>% # Bas' equation
+    mutate(demand.pcap = demand.pcap0 + gap.base * gompertz(9, 0.1, y=year)) %>% # Bas' equation
     mutate(demand.tot = demand.pcap * pop.mil * mega / giga) # Mt
   
   # Add 2110 spaceholder
@@ -116,7 +117,7 @@ derive_cement_demand <- function(df_pop, df_demand) {
     group_by(region) %>%
     mutate(demand.pcap.base = first(demand.tot.base*giga/pop.mil/mega)) %>%
     mutate(gap.base = first(demand.pcap.base - demand.pcap0)) %>%
-    mutate(demand.pcap = demand.pcap0 + gap.base * (1-exp(-10*exp(-0.1*(year - 2010))))) %>% # Bas' equation
+    mutate(demand.pcap = demand.pcap0 + gap.base * gompertz(10, 0.1, y=year)) %>% # Bas' equation
     mutate(demand.tot = demand.pcap * pop.mil * mega / giga) # Mt
   
   # Add 2110 spaceholder
@@ -129,40 +130,28 @@ derive_cement_demand <- function(df_pop, df_demand) {
 
 
 derive_aluminum_demand <- function(df_pop, df_demand) {
-  # df_in will have columns:
-  # region
-  # year
-  # gdp.pcap
-  # population (in mil.)
+
+  # Aluminum xls input already has population and gdp
   df_raw_aluminum_consumption = read_excel(paste0(datapath, file_al),
                                            sheet="final_table", n_max = 378) # kt
-  # df_population = read_excel(paste0(datapath, file_cement), 
-  #                            sheet="Timer_POP", skip=3, n_max=27) %>%  # million
-  #   pivot_longer(cols="1970":"2100", values_to='pop', names_to='year')
-  # df_gdp = read_excel(paste0(datapath, file_cement), 
-  #                     sheet="Timer_GDPCAP", skip=3, n_max=27) %>%  # million
-  #   pivot_longer(cols="1970":"2100", values_to='gdp.pcap', names_to='year')
   
   #### Organize data ####
-  # names(df_raw_aluminum_consumption)[1] = 
-  #   names(df_population)[1] = names(df_gdp)[1] = "reg_no"
-  # names(df_raw_aluminum_consumption)[2] = 
-  #   names(df_population)[2] = names(df_gdp)[2] = "region"
   df_aluminum_consumption = df_raw_aluminum_consumption %>%
     mutate(cons.pcap = consumption/pop, del.t= as.numeric(year) - 2010) %>% #kg/cap
     drop_na() %>%
     filter(cons.pcap > 0)
   
-  nlnit.a = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_aluminum_consumption, start=list(a=600, b=-10000, m=0))
+  # nlnit.a = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_aluminum_consumption, start=list(a=600, b=-10000, m=0))
+  nlni.a = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_aluminum_consumption, start=list(a=600, b=-10000))
   
   df_in = df_pop %>% left_join(df_demand %>% select(-year)) %>% # df_demand is only for 2020
-    inner_join(gdp.ppp) %>% mutate(del.t = year - 2010, gdp.pcap = gdp.ppp*giga/pop.mil/mega)
+    inner_join(gdp.ppp) %>% mutate(gdp.pcap = gdp.ppp*giga/pop.mil/mega)
   demand = df_in %>% 
-    mutate(demand.pcap0 = predict(nlnit.a, .)) %>% #kg/cap
+    mutate(demand.pcap0 = predict(nlni.a, .)) %>% #kg/cap
     group_by(region) %>%
     mutate(demand.pcap.base = first(demand.tot.base*giga/pop.mil/mega)) %>%
     mutate(gap.base = first(demand.pcap.base - demand.pcap0)) %>%
-    mutate(demand.pcap = demand.pcap0 + gap.base * (1-exp(-9*exp(-0.1*(year - 2010))))) %>% # Bas' equation
+    mutate(demand.pcap = demand.pcap0 + gap.base * gompertz(9, 0.1, y=year)) %>% # Bas' equation
     mutate(demand.tot = demand.pcap * pop.mil * mega / giga) # Mt
   
   # Add 2110 spaceholder
@@ -171,6 +160,10 @@ derive_aluminum_demand <- function(df_pop, df_demand) {
   return(demand %>% select(node=region, year, value=demand.tot) %>% arrange(year, node)) # Mt
 } 
 
+
+gompertz <- function(phi, mu, y, baseyear=2020) {
+  return (1-exp(-phi*exp(-mu*(y - baseyear))))
+}
 
 #### test
 # year = seq(2020, 2100, 10)

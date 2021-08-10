@@ -93,7 +93,7 @@ summary(nlnit.a)
 #### Prediction ####
 
 year = seq(2020, 2100, 10)
-df = data.frame(gdp.pcap = seq(3000, 70000, length.out = length(year)), year) %>% mutate(del.t = year - 2010)
+df = data.frame(gdp.pcap = seq(3000, 90000, length.out = length(year)), year) %>% mutate(del.t = year - 2010)
 df2 = df %>% mutate(gdp.pcap = 2*gdp.pcap)
 predict(nlnit.s, df)
 predict(nlni.s, df)
@@ -108,3 +108,8 @@ predict(nlni.a, df)
 predict(nlnit.a, df)
 exp(predict(lni.a, df))
 exp(predict(lnit.a, df))
+predict(nlni.a, df2)
+predict(nlnit.a, df2)
+exp(predict(lni.a, df2))
+exp(predict(lnit.a, df2))
+
