@@ -292,7 +292,7 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    demand = gen_mock_demand_aluminum(scenario)
+    demand = derive_aluminum_demand(scenario)
     df = make_df(
         parname,
         level="demand",
@@ -551,6 +551,11 @@ def gen_mock_demand_aluminum(scenario):
 
     return demand2020_al
 
+
+# load rpy2 modules
+import rpy2.robjects as ro
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
 
 # This returns a df with columns ["region", "year", "demand.tot"]
 def derive_aluminum_demand(scenario, dry_run=False):
