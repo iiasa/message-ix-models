@@ -391,3 +391,5 @@ def derive_cement_demand(scenario, dry_run=False):
         df.year = df.year.astype(int)
 
     return df
+
+    return df
