@@ -79,8 +79,11 @@ def test_ikarus(test_context, regions, N_node, years):
     inv = data["inv_cost"]
     inv_rail_pub = inv[inv["technology"] == "rail_pub"]
 
+    # NB: *prep_years* is created to accommodate prepended years before than
+    # *firstmodelyear*. See ikarus.py to check how/why those are prepended.
+    prep_years = (1 if years == "A" else 2) + len(s_info.Y)
     # Regions * 13 years (inv_cost has 'year_vtg' but not 'year_act' dim)
-    rows_per_tech = N_node * (len(s_info.Y) + 1)
+    rows_per_tech = N_node * prep_years
     N_techs = 18
 
     # Data have been loaded with the correct shape, unit and magnitude:
@@ -128,9 +131,9 @@ def test_ikarus(test_context, regions, N_node, years):
     # Specific magnitudes of other values to check
     checks = [
         dict(par="capacity_factor", year_vtg=2010, value=0.000905),
-        dict(par="technical_lifetime", year_vtg=2010, value=14.7),
+        dict(par="technical_lifetime", year_vtg=2010, value=15.0),
         dict(par="capacity_factor", year_vtg=2050, value=0.000886),
-        dict(par="technical_lifetime", year_vtg=2050, value=14.7),
+        dict(par="technical_lifetime", year_vtg=2050, value=15.0),
     ]
     defaults = dict(node_loc=s_info.N[-1], technology="ICG_bus", time="year")
 
