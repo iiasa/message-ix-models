@@ -197,9 +197,10 @@ def get_ikarus_data(context):
     # Create data frames to add imported params to MESSAGEix
 
     # Vintage and active years from scenario info
-    # Prepend 2010 so that values for this year are saved
-    vtg_years = [2010] + info.yv_ya["year_vtg"].tolist()
-    act_years = [2010] + info.yv_ya["year_act"].tolist()
+    # Prepend years between 2010 and *firstmodelyear* so that values are saved
+    missing_years = [x for x in info.set["year"] if (x >= 2010) and (x < info.y0)]
+    vtg_years = missing_years + info.yv_ya["year_vtg"].tolist()
+    act_years = missing_years + info.yv_ya["year_act"].tolist()
 
     # Default values to be used as args in make_df()
     defaults = dict(
@@ -254,6 +255,11 @@ def get_ikarus_data(context):
         # Fill remaining values for the rest of vintage years with the last value
         # registered, in this case for 2030.
         df["value"] = df["value"].fillna(method="ffill")
+
+        # Round up **technical_lifetime** values due to incompatibility in handling
+        # non-integer values in the GAMS code
+        if par == "technical_lifetime":
+            df["value"] = df["value"].round()
 
         # Broadcast across all nodes
         result[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))
