@@ -60,7 +60,7 @@ def nexus(context, regions):
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error
-    output_scenario_name = context.output_scenario
+    output_scenario_name = 'nexus'
     output_model_name = context.output_model
 
     # Clone and build
@@ -92,7 +92,7 @@ def cooling(context, regions):
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
 
-    output_scenario_name = context.output_scenario
+    output_scenario_name = "cooling"
     output_model_name = context.output_model
 
     # Clone and build
