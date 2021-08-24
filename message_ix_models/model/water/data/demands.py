@@ -4,10 +4,8 @@ import os
 
 import pandas as pd
 import xarray as xr
-
-from message_data.model.water import read_config
-
-from message_data.tools import make_df
+from message_ix import make_df
+from message_ix_models.util import private_data_path
 
 
 def add_demand(context):
@@ -28,7 +26,7 @@ def add_demand(context):
     results = {}
 
     # defines path to read in demand data
-    path = context.get_path("water", "water_demands", "harmonized", "R11", ".")
+    path = private_data_path("water", "water_demands", "harmonized", "R11", ".")
     # make sure all of the csvs have format, otherwise it might not work
     list_of_csvs = list(path.glob("*_baseline.csv"))
     # define names for variables
@@ -70,15 +68,22 @@ def add_demand(context):
     urban_connection_rate_df = df_dmds[
         df_dmds["variable"] == "urban_connection_rate_baseline"
     ]
+    urban_connection_rate_df = urban_connection_rate_df.reset_index(drop=True)
     rural_connection_rate_df = df_dmds[
         df_dmds["variable"] == "rural_connection_rate_baseline"
     ]
+    rural_connection_rate_df = rural_connection_rate_df.reset_index(drop=True)
+
     urban_treatment_rate_df = df_dmds[
         df_dmds["variable"] == "urban_treatment_rate_baseline"
     ]
+    urban_treatment_rate_df = urban_treatment_rate_df.reset_index(drop=True)
+
     rural_treatment_rate_df = df_dmds[
         df_dmds["variable"] == "rural_treatment_rate_baseline"
     ]
+    rural_treatment_rate_df = rural_treatment_rate_df.reset_index(drop=True)
+
     # urban_desal_fraction_df = df_dmds[df_dmds['variable'] == 'urban_desal_fraction_baseline']
     # rural_desal_fraction_df = df_dmds[df_dmds['variable'] == 'rural_desal_fraction_baseline']
     # urban_reuse_fraction_df = df_dmds[df_dmds['variable'] == 'urban_reuse_fraction_baseline']
@@ -88,8 +93,8 @@ def add_demand(context):
 
     dmd_df = make_df(
         "demand",
-        node=urban_mw["node"],
-        commodity="ubran_mw",
+        node='B'+urban_mw["node"],
+        commodity="urban_mw",
         level="final",
         year=urban_mw["year"],
         time="year",
@@ -104,7 +109,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=urban_dis["node"],
+            node='B'+urban_dis["node"],
             commodity="urban_dis",
             level="final",
             year=urban_dis["year"],
@@ -119,7 +124,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=rural_mw["node"],
+            node='B'+rural_mw["node"],
             commodity="rural_mw",
             level="final",
             year=rural_mw["year"],
@@ -137,7 +142,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=rural_dis["node"],
+            node='B'+rural_dis["node"],
             commodity="rural_dis",
             level="final",
             year=rural_dis["year"],
@@ -154,7 +159,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=urban_collected_wst["node"],
+            node='B'+urban_collected_wst["node"],
             commodity="urban_collected_wst",
             level="final",
             year=urban_collected_wst["year"],
@@ -172,7 +177,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=rural_collected_wst["node"],
+            node='B'+rural_collected_wst["node"],
             commodity="rural_collected_wst",
             level="final",
             year=rural_collected_wst["year"],
@@ -189,7 +194,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=urban_uncollected_wst["node"],
+            node='B'+urban_uncollected_wst["node"],
             commodity="urban_uncollected_wst",
             level="final",
             year=urban_uncollected_wst["year"],
@@ -207,7 +212,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=rural_uncollected_wst["node"],
+            node='B'+rural_uncollected_wst["node"],
             commodity="rural_collected_wst",
             level="final",
             year=rural_uncollected_wst["year"],
@@ -241,12 +246,12 @@ def add_demand(context):
     # TODO identify whether discharge or runoff needs to be used
 
     # Reading data, the data is spatially and temprally aggregated from GHMs
-    path1 = context.get_path("water", "water_availability", "run_off_rcp26_mean.csv")
+    path1 = private_data_path("water", "water_availability", "run_off_rcp26_mean.csv")
     df_wat_ava = pd.read_csv(path1)
     df_wat_ava = df_wat_ava.drop(
         columns=[
             "Unnamed: 0",
-            "BCU_name",
+            "BASIN_ID",
             "2065",
             "2075",
             "2085",
@@ -263,7 +268,7 @@ def add_demand(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node=df_wat_ava["node"],
+            node='B'+df_wat_ava["node"],
             commodity="freshwater_supply",
             level="water_supply",
             year=df_wat_ava["year"],
