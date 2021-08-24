@@ -55,6 +55,7 @@ commodity:
   - saline_supply
   - freshwater_instream
   - freshwater_supply
+  - freshwater_supply_basin
   - desalinated_water
   - saline_supply_ppl
   - urban_collected_wst
@@ -78,6 +79,7 @@ level:
   - water_treat
   add:
   - water_supply
+  - water_supply_basin
   #- desalination_supply
   #- water_treat
 
