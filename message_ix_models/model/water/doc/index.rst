@@ -1,10 +1,18 @@
 MESSAGEix-Nexus Module
 **********************
 
+.. warning::
+
+   MESSAGEix-Nexus is **under development**.
+
+   For details, see the
+   `water <https://github.com/iiasa/message_data/labels/water>`_ label,
+   `project board <https://github.com/iiasa/message_data/projects/7>`_, and
+   `current tracking issue (#246) <https://github.com/iiasa/message_data/issues/246>`_.
+
+
 :mod:`message_data.model.water` adds water usage and demand related representation to the MESSAGEix-GLOBIOM global model.
 The resulting model is referred to as **“MESSAGEix-Nexus”**. This work extends the water sector linkage described by Parkinson et al. (2019) :cite:`parkinson2019`.
-
-
 
 .. contents::
    :local:
@@ -56,7 +64,7 @@ See also: :doc:`water/files`.
   - :file:`technology.yaml`: metadata for the 'technology' dimension.
   - :file:`set.yaml`: metadata for other sets.
 
-Pre-processing 
+Pre-processing
 ==============
 - :file:`data/water/`: contains scripts used in pre-processing source data for the water sector implementaion
 
