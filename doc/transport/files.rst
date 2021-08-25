@@ -2,7 +2,7 @@ Configuration files
 *******************
 
 Configuration (:file:`transport/R11/config.yaml`)
-=============================================
+=================================================
 
 Note that this is the configuration file for an R11 base model.
 The configuration file contains some assumptions/settings that are specific to the node list used in the base model.
