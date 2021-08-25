@@ -1,8 +1,33 @@
 MESSAGEix-Transport
 *******************
 
+.. warning::
+
+   MESSAGEix-Transport is **under development**.
+
+   For details, see the
+   `transport <https://github.com/iiasa/message_data/labels/transport>`_ label,
+   `project board <https://github.com/iiasa/message_data/projects/1>`_, and
+   `current tracking issue (#180) <https://github.com/iiasa/message_data/issues/180>`_.
+
 :mod:`message_data.model.transport` adds a technology-rich representation of transport to the MESSAGEix-GLOBIOM global model.
 The resulting model is referred to as **“MESSAGEix-Transport”**. This extends the formulation described by McCollum et al. (2016) :cite:`McCollum2017` for the older, MESSAGE V framework that predated MESSAGEix.
+
+On this page:
+
+.. contents::
+   :local:
+
+On other pages:
+
+- :doc:`transport/files`
+- :doc:`transport/data`
+- :doc:`transport/disutility`
+- :doc:`transport/report`
+- :doc:`transport/old`
+
+Summary
+=======
 
 The code and data:
 
@@ -17,19 +42,6 @@ The code and data:
 - Provide an exogenous mode choice model that iterates with MESSAGEix-GLOBIOM
   through the ixmp callback feature, to set demand for specific transport
   technologies.
-
-On this page:
-
-.. contents::
-   :local:
-
-On other pages:
-
-- :doc:`transport/files`
-- :doc:`transport/data`
-- :doc:`transport/disutility`
-- :doc:`transport/report`
-- :doc:`transport/old`
 
 Usage
 =====
@@ -149,9 +161,8 @@ See the function docs for details.
 Other data files include:
 
 - :file:`data/transport/` contains data files originally from :file:`P:\ene.model\TaxSub_Transport_Merged` (a private IIASA shared drive) and other metadata used for defining transport technologies.
-
 - :file:`reference/transport/` contains files from :doc:`transport/old` that are for reference, and not used by MESSAGEix-Transport.
-  The directory structure matches :file:`P:\ene.model\TaxSub_Transport_Merged\`.
+  The directory structure matches :file:`P:\ene.model\TaxSub_Transport_Merged\\`.
 
 
 Reference
