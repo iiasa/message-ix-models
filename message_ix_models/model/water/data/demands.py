@@ -246,7 +246,7 @@ def add_demand(context):
     # TODO identify whether discharge or runoff needs to be used
 
     # Reading data, the data is spatially and temprally aggregated from GHMs
-    path1 = private_data_path("water", "water_availability", "run_off_rcp26_mean.csv")
+    path1 = private_data_path("water", "water_availability", "dis_rcp26_5y_meansd.csv")
     df_wat_ava = pd.read_csv(path1)
     df_wat_ava = df_wat_ava.drop(
         columns=[
@@ -264,6 +264,7 @@ def add_demand(context):
     df_wat_ava = df_wat_ava.stack().reset_index(level=0).reset_index()
     df_wat_ava.columns = ["unit", "year", "node", "value"]
     df_wat_ava.sort_values(["unit", "year", "node", "value"], inplace=True)
+    df_wat_ava.fillna(o,inplace = True)
 
     dmd_df = dmd_df.append(
         make_df(
