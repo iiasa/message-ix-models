@@ -114,7 +114,7 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
 
     See also
     --------
-    :doc:`transport/data`
+    :doc:`/reference/model/transport/data`
     """
     check_support(
         context,
