@@ -1,6 +1,14 @@
 Materials accounting
 ********************
 
+.. warning::
+
+   :mod:`.material` is **under development**.
+
+   For details, see the
+   `materials <https://github.com/iiasa/message_data/labels/materials>`_ label and
+   `current tracking issue (#248) <https://github.com/iiasa/message_data/issues/248>`_.
+
 This module adds (life-cycle) accounting of materials associated with technologies and demands in MESSAGEix-GLOBIOM.
 
 The initial implementation supports nitrogen-based fertilizers.
