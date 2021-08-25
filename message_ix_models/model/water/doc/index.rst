@@ -1,5 +1,5 @@
-MESSAGEix-Nexus Module
-**********************
+MESSAGEix-Nexus (:mod:`.water`)
+*******************************
 
 .. warning::
 
