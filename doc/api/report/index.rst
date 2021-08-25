@@ -25,7 +25,7 @@ Any reporting specific to ``coal_ppl`` must be in :mod:`message_data`, since all
 The basic **design pattern** of :mod:`message_data.reporting` is:
 
 - A ``global.yaml`` file (i.e. in `YAML <https://en.wikipedia.org/wiki/YAML#Example>`_ format) that contains a *concise* yet *explicit* description of the reporting computations needed for a MESSAGE-GLOBIOM model.
-- :func:`.prepare_reporter` reads the file and a Scenario object, and uses it to populate a new Reporter.
+- :func:`~.reporting.prepare_reporter` reads the file and a Scenario object, and uses it to populate a new Reporter.
   This function mostly relies on the :doc:`configuration handlers <genno:config>` built in to Genno to handle the different sections of the file.
 
 Features
