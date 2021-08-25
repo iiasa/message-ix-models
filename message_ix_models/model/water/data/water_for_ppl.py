@@ -410,7 +410,7 @@ def cool_tech(context):
     ]
     cap_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
 
-    # Make model compatible df for histroical acitvitiy
+    # Make model compatible df for historical activitiy
     h_act = make_df(
         "historical_activity",
         node_loc=act_value_df["node_loc"],
@@ -443,7 +443,7 @@ def cool_tech(context):
     # con5 = cost.technology.isin(input_cool['technology_name'])
     # inv_cost = cost[(con3) | (con4)]
     inv_cost = cost.copy()
-    # Manually removing extra technolgoies not required
+    # Manually removing extra technologies not required
     # TODO make it automatic to not include the names manually
     techs_to_remove = [
         "mw_ppl__ot_fresh",
@@ -670,9 +670,10 @@ def cool_tech(context):
 
         # reading flow availability data for defining share constraints of basins in each recgion
         path2 = private_data_path(
-            "water", "water_availability", "run_off_rcp26_mean.csv"
+            "water", "water_availability", "dis_rcp26_5y_meansd.csv"
         )
         df_wat = pd.read_csv(path2)
+        df_wat.fillna(0,inplace = True)
         df_wat["region"] = "R11_" + df_wat["BCU_name"].str[-3:]
         df_wat_1 = df_wat.drop(
             columns=[
