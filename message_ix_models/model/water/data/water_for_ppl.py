@@ -3,7 +3,7 @@
 import pandas as pd
 from message_ix import make_df
 
-from message_data.tools import broadcast, make_matched_dfs, same_node
+from message_ix_models.util import broadcast, make_matched_dfs, same_node
 
 
 # water & electricity for cooling technologies
