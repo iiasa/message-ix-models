@@ -52,21 +52,22 @@ commodity:
 
   add:
   - electr
-  - saline_supply
+  - salinewater
   - freshwater_instream
-  - freshwater_supply
-  - freshwater_supply_basin
+  - freshwater
+  - freshwater_basin
   - desalinated_water
-  - saline_supply_ppl
+  - saline_ppl
   - urban_collected_wst
   - urban_uncollected_wst
   - yield_freshwater_suply
   - rural_collected_wst
   - rual_uncollected_wst
   - urban_mw
-  - urban_dis
+  - urban_disconnected
   - rural_mw
-  - rual_dis
+  - rural_disconnected
+
 
 level:
   require:
@@ -80,8 +81,9 @@ level:
   add:
   - water_supply
   - water_supply_basin
-  #- desalination_supply
-  #- water_treat
+  - desalination_supply
+  - water_treat
+  - water_avail_basin
 
 mode:
   require:
@@ -447,6 +449,39 @@ cat_addon:
   - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
   - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
   - [cooling__solar_th_ppl, solar_th_ppl__air]
+
+type_tec:
+  add:
+  - water_distribution
+  - water_efficiency
+  - wastewater_treatment
+
+cat_tec:
+  add:
+  - [water_distribution, urban_t_d]
+  - [water_distribution, rural_t_d]
+  - [water_distribution, urban_unconnected]
+  - [water_distribution, rural_unconnected]
+  - [water_distribution, urban_sewerage]
+  - [wastewater_treatment, urban_treatment]
+  - [wastewater_treatment, urban_untreated]
+  - [wastewater_treatment, urban_recycle]
+  - [wastewater_treatment, rural_treatment]
+  - [wastewater_treatment, rural_untreated]
+  - [water_efficiency, ueff1]
+  - [water_efficiency, ueff2]
+  - [water_efficiency, ueff3]
+  - [water_efficiency, reff1]
+  - [water_efficiency, reff2]
+  - [water_efficiency, reff3]
+  - [water_efficiency, ieff1]
+  - [water_efficiency, ieff2]
+  - [water_efficiency, ieff3]
+  - [water_resource_extraction, extract__upstream_landuse]
+  - [water_resource_extraction, extract__freshwater_supply]
+  - [water_resource_extraction, extract__freshwater_instream]
+  - [water_resource_extraction, extract__saline_supply]
+
 
 shares:
   add:

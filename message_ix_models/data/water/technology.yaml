@@ -641,3 +641,57 @@ water_to_en:
     dummy technology to map water supply to energy technologies
 
   input: {commodity: freshwater_supply}
+
+ueff1:
+  description: >-
+    low urban efficiency
+
+  input: {commodity: urban_mw, urban_collected_wst}
+
+ueff2:
+  description: >-
+    low urban efficiency
+
+  input: {commodity: urban_mw, urban_collected_wst}
+
+ueff3:
+  description: >-
+    low urban efficiency
+
+  input: {commodity: urban_mw, urban_collected_wst}
+
+reff1:
+  description: >-
+    low rural efficiency
+
+  input: {commodity: rural_mw, rural_collected_wst}
+
+reff2:
+  description: >-
+    mid rural efficiency
+
+  input: {commodity: rural_mw, rural_collected_wst}
+
+reff3:
+  description: >-
+    high rural efficiency
+
+  input: {commodity: rural_mw, rural_collected_wst}
+
+ieff1:
+  description: >-
+    low irrigation efficiency
+
+  input: {commodity: freshwater_supply}
+
+ieff2:
+  description: >-
+    mid irrigation efficiency
+
+  input: {commodity: freshwater_supply}
+
+ieff3:
+  description: >-
+    high irrigation efficiency
+
+  input: {commodity: freshwater_supply}
