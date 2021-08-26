@@ -64,25 +64,27 @@ def add_demand(context):
     urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal_baseline"]
     rual_withdrawal_df = df_dmds[df_dmds["variable"] == "rural_withdrawal_baseline"]
     urban_return_df = df_dmds[df_dmds["variable"] == "urban_return_baseline"]
+    urban_return_df.reset_index(drop=True, inplace = True)
     rural_return_df = df_dmds[df_dmds["variable"] == "rural_return_baseline"]
+    rural_return_df.reset_index(drop=True, inplace=True)
     urban_connection_rate_df = df_dmds[
         df_dmds["variable"] == "urban_connection_rate_baseline"
     ]
-    urban_connection_rate_df = urban_connection_rate_df.reset_index(drop=True)
+    urban_connection_rate_df.reset_index(drop=True, inplace=True)
     rural_connection_rate_df = df_dmds[
         df_dmds["variable"] == "rural_connection_rate_baseline"
     ]
-    rural_connection_rate_df = rural_connection_rate_df.reset_index(drop=True)
+    rural_connection_rate_df.reset_index(drop=True, inplace=True)
 
     urban_treatment_rate_df = df_dmds[
         df_dmds["variable"] == "urban_treatment_rate_baseline"
     ]
-    urban_treatment_rate_df = urban_treatment_rate_df.reset_index(drop=True)
+    urban_treatment_rate_df.reset_index(drop=True, inplace=True)
 
     rural_treatment_rate_df = df_dmds[
         df_dmds["variable"] == "rural_treatment_rate_baseline"
     ]
-    rural_treatment_rate_df = rural_treatment_rate_df.reset_index(drop=True)
+    rural_treatment_rate_df.reset_index(drop=True, inplace=True)
 
     # urban_desal_fraction_df = df_dmds[df_dmds['variable'] == 'urban_desal_fraction_baseline']
     # rural_desal_fraction_df = df_dmds[df_dmds['variable'] == 'rural_desal_fraction_baseline']
@@ -110,7 +112,7 @@ def add_demand(context):
         make_df(
             "demand",
             node='B'+urban_dis["node"],
-            commodity="urban_dis",
+            commodity="urban_disconnected",
             level="final",
             year=urban_dis["year"],
             time="year",
@@ -143,7 +145,7 @@ def add_demand(context):
         make_df(
             "demand",
             node='B'+rural_dis["node"],
-            commodity="rural_dis",
+            commodity="rural_disconnected",
             level="final",
             year=rural_dis["year"],
             time="year",
@@ -264,14 +266,14 @@ def add_demand(context):
     df_wat_ava = df_wat_ava.stack().reset_index(level=0).reset_index()
     df_wat_ava.columns = ["unit", "year", "node", "value"]
     df_wat_ava.sort_values(["unit", "year", "node", "value"], inplace=True)
-    df_wat_ava.fillna(o,inplace = True)
+    df_wat_ava.fillna(0,inplace = True)
 
     dmd_df = dmd_df.append(
         make_df(
             "demand",
             node='B'+df_wat_ava["node"],
-            commodity="freshwater_supply",
-            level="water_supply",
+            commodity="freshwater_basin",
+            level="water_avail_basin",
             year=df_wat_ava["year"],
             time="year",
             value=-df_wat_ava["value"],
