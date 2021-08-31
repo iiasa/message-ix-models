@@ -251,7 +251,7 @@ def cool_tech(context):
     inp = inp.dropna(subset=["value"])
 
     # append the input data to results
-    results["input"] = inp
+    #results["input"] = inp
 
     path1 = private_data_path("water", "ppl_cooling_tech", FILE1)
     cost = pd.read_csv(path1)
@@ -593,7 +593,7 @@ def cool_tech(context):
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
     if context.nexus_set == "nexus":
         # input dataframe  linking water supply to energy dummy technology
-        inp = make_df(
+        inp = inp.append(make_df(
             "input",
             technology="extract_freshwater_supply",
             value=1,
@@ -606,7 +606,8 @@ def cool_tech(context):
             node_origin=df_node["node"],
             node_loc=df_node["region"],
         ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
-        results["input"] = inp
+                         )
+
         # Add output df  for freshwater supply for basins
         output_df = make_df(
                 "output",
@@ -624,8 +625,10 @@ def cool_tech(context):
             ).pipe(
                 broadcast,
                 year_vtg=info.Y,
-                year_act=info.Y,
+                year_act=info.Y
             )
+
+
         # Add output of saline water supply for regions
         output_df = output_df.append((
             make_df(
@@ -672,7 +675,8 @@ def cool_tech(context):
         results["output"] = output_df
 
         # input dataframe  linking water supply to energy dummy technology
-        inp = make_df(
+        inp = inp.append(
+            make_df(
             "input",
             technology="water_to_en",
             value=1,
@@ -683,8 +687,9 @@ def cool_tech(context):
             time="year",
             time_origin="year",
             node_origin=df_node["node"],
-            node_loc=df_node["region"],
-        ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+            node_loc=df_node["region"]
+            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+        )
         results["input"] = inp
 
         # dummy variable cost for dummy water to energy technology
