@@ -136,6 +136,7 @@ def cool_tech(context):
     input_cool = input_cool[
         ~input_cool["technology_name"].str.contains("hpl", na=False)
     ]
+    input_cool = input_cool[(input_cool['node_loc'] != 'R11_GLB') & (input_cool['node_origin'] != 'R11_GLB')]
 
     def cooling_fr(x):
         """Calculate cooling fraction
@@ -757,7 +758,6 @@ def non_cooling_tec(context):
     """
     results = {}
 
-    info = context["water build info"]
     FILE = "tech_water_performance_ssp_msg.csv"
     path = private_data_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
@@ -791,8 +791,10 @@ def non_cooling_tec(context):
     non_cool_tech = list(non_cool_df['technology'].unique())
 
     n_cool_df = scen.par('output', {'technology': non_cool_tech})
+    n_cool_df = n_cool_df[(n_cool_df['node_loc'] != 'R11_GLB') & (n_cool_df['node_dest'] != 'R11_GLB')]
     n_cool_df_merge = pd.merge(n_cool_df, non_cool_df, on='technology', how='right')
     n_cool_df_merge.dropna(inplace = True)
+
     # Input dataframe for non cooling technologies
     # only water withdrawals are being taken
     # Only freshwater supply is assumed for simplicity
