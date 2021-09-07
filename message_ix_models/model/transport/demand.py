@@ -228,7 +228,7 @@ def prepare_reporter(
 
     # PPP GDP, total and per capita
     gdp_ppp = rep.add("product", "GDP:n-y:PPP", gdp, mer_to_ppp)
-    gdp_ppp_cap = rep.add("ratio", "GDP:n-y:PPP+percapita", gdp_ppp, pop_key)
+    gdp_ppp_cap = rep.add("ratio", "GDP:n-y:PPP+capita", gdp_ppp, pop_key)
 
     # Total demand
     pdt_cap = rep.add("transport pdt:n-y:capita", pdt_per_capita, gdp_ppp_cap, "config")

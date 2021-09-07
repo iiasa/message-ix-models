@@ -88,7 +88,7 @@ def test_from_external_data(test_context, tmp_path, regions, years, N_node):
 
     for key, unit in (
         ("population:n-y", "Mpassenger"),
-        ("GDP:n-y:PPP+percapita", "kUSD / passenger / year"),
+        ("GDP:n-y:PPP+capita", "kUSD / passenger / year"),
         ("votm:n-y", ""),
         ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
         ("cost:n-y-c-t", "USD / km"),
