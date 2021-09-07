@@ -158,7 +158,7 @@ def add_structure(c: Computer, info: ScenarioInfo):
     """
     for key, value in (
         ("n", quote(list(map(str, info.set["node"])))),
-        # ("nodes", quote(info.set["node"])),
+        ("nodes", quote(info.set["node"])),
         ("y", quote(info.set["year"])),
         (
             "cat_year",
@@ -211,7 +211,7 @@ def prepare_reporter(
     # List of nodes excluding "World"
     # TODO move upstream to message_ix
     rep.add("n:ex world", nodes_ex_world, "n")
-    # rep.add("nodes:ex world", nodes_ex_world, "nodes")
+    rep.add("n:ex world+code", nodes_ex_world, "nodes")
 
     # List of model years
     rep.add("y:model", model_periods, "y", "cat_year")
@@ -220,7 +220,7 @@ def prepare_reporter(
     rep.add("base shares:n-t-y", base_shares, "n:ex world", "y", "config")
 
     # Population data from GEA
-    pop_key = rep.add("population:n-y", population, "n:ex world", "y", "config")
+    pop_key = rep.add("population:n-y", population, "n:ex world+code", "y", "config")
 
     # Consumer group sizes
     # TODO ixmp is picky here when there is no separate argument to the callable; fix.
