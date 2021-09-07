@@ -125,7 +125,7 @@ def test_from_external_data(test_context, tmp_path, regions, years, N_node):
     dask.visualize(dsk, filename=str(path))
 
     # Plots can be generated
-    rep.add("demand plots", ["plot demand-exo", "plot demand-exo-cap"])
+    rep.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
     rep.get("demand plots")
 
 
