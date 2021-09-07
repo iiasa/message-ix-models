@@ -136,7 +136,9 @@ def cool_tech(context):
     input_cool = input_cool[
         ~input_cool["technology_name"].str.contains("hpl", na=False)
     ]
-    input_cool = input_cool[(input_cool['node_loc'] != 'R11_GLB') & (input_cool['node_origin'] != 'R11_GLB')]
+    input_cool = input_cool[
+        (input_cool["node_loc"] != "R11_GLB") & (input_cool["node_origin"] != "R11_GLB")
+    ]
 
     def cooling_fr(x):
         """Calculate cooling fraction
@@ -254,7 +256,7 @@ def cool_tech(context):
     inp = inp.dropna(subset=["value"])
 
     # append the input data to results
-    #results["input"] = inp
+    # results["input"] = inp
 
     path1 = private_data_path("water", "ppl_cooling_tech", FILE1)
     cost = pd.read_csv(path1)
@@ -529,7 +531,7 @@ def cool_tech(context):
 
     results["technical_lifetime"] = tl
 
-    if context.nexus_set == 'cooling':
+    if context.nexus_set == "cooling":
         # Add output df  for freshwater supply for regions
         output_df = (
             make_df(
@@ -550,111 +552,125 @@ def cool_tech(context):
             .pipe(same_node)
         )
         # Add output of saline water supply for regions
-        output_df = output_df.append((
-            make_df(
-                "output",
-                technology="extract_saline_supply",
-                value=1,
-                unit="km3",
-                year_vtg=info.Y,
-                year_act=info.Y,
-                level="water_supply",
-                commodity="saline_ppl",
-                mode="M1",
-                time="year",
-                time_dest="year",
-                time_origin="year",
-            )
+        output_df = output_df.append(
+            (
+                make_df(
+                    "output",
+                    technology="extract_saline_supply",
+                    value=1,
+                    unit="km3",
+                    year_vtg=info.Y,
+                    year_act=info.Y,
+                    level="water_supply",
+                    commodity="saline_ppl",
+                    mode="M1",
+                    time="year",
+                    time_dest="year",
+                    time_origin="year",
+                )
                 .pipe(broadcast, node_loc=info.N[1:13])
                 .pipe(same_node)
-        )
+            )
         )
 
         results["output"] = output_df
-
 
     cap_fact = make_matched_dfs(inp, capacity_factor=1)
     results["capacity_factor"] = cap_fact["capacity_factor"]
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
     if context.nexus_set == "nexus":
-        # input dataframe  linking water supply to energy dummy technology
-        inp = inp.append(make_df(
-            "input",
-            technology="extract_freshwater_supply",
-            value=1,
-            unit="-",
-            level="water_avail_basin",
-            commodity="freshwater_basin",
-            mode='M1',
-            time="year",
-            time_origin="year",
-            node_origin=df_node["node"],
-            node_loc=df_node["region"],
-        ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
-                         )
+        # input dataframe  for slack technology balancing equality with demands
+        inp = inp.append(
+            make_df(
+                "input",
+                technology="return_flow",
+                value=1,
+                unit="-",
+                level="water_avail_basin",
+                commodity="freshwater_basin",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                node_origin=df_node["node"],
+                node_loc=df_node["node"],
+            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+        )
 
-        # Add output df  for freshwater supply for basins
-        output_df = make_df(
-                "output",
+        # input dataframe  for freshwater supply
+        inp = inp.append(
+            make_df(
+                "input",
                 technology="extract_freshwater_supply",
                 value=1,
                 unit="-",
-                level="water_supply_basin",
+                level="water_avail_basin",
                 commodity="freshwater_basin",
-                mode='M1',
+                mode="M1",
+                time="year",
+                time_origin="year",
+                node_origin=df_node["node"],
                 node_loc=df_node["node"],
-                node_dest=df_node["node"],
+            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+        )
+
+        # Add output df  for freshwater supply for basins
+        output_df = make_df(
+            "output",
+            technology="extract_freshwater_supply",
+            value=1,
+            unit="-",
+            level="water_supply_basin",
+            commodity="freshwater_basin",
+            mode="M1",
+            node_loc=df_node["node"],
+            node_dest=df_node["node"],
+            time="year",
+            time_dest="year",
+            time_origin="year",
+        ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+
+        # Add output of saline water supply for regions
+        output_df = output_df.append(
+            (
+                make_df(
+                    "output",
+                    technology="extract_saline_supply",
+                    value=1,
+                    unit="km3",
+                    year_vtg=info.Y,
+                    year_act=info.Y,
+                    level="water_supply",
+                    commodity="saline_ppl",
+                    mode="M1",
+                    time="year",
+                    time_dest="year",
+                    time_origin="year",
+                )
+                .pipe(broadcast, node_loc=info.N[1:13])
+                .pipe(same_node)
+            )
+        )
+
+        # output dataframe linking water supply to energy dummy technology
+        output_df = output_df.append(
+            make_df(
+                "output",
+                technology="water_to_en",
+                value=1,
+                unit="-",
+                level="water_supply",
+                commodity="freshwater",
+                mode=df_node["mode"],
+                node_loc=df_node["region"],
+                node_dest=df_node["region"],
                 time="year",
                 time_dest="year",
                 time_origin="year",
             ).pipe(
                 broadcast,
                 year_vtg=info.Y,
-                year_act=info.Y
-            )
-
-
-        # Add output of saline water supply for regions
-        output_df = output_df.append((
-            make_df(
-                "output",
-                technology="extract_saline_supply",
-                value=1,
-                unit="km3",
-                year_vtg=info.Y,
                 year_act=info.Y,
-                level="water_supply",
-                commodity="saline_ppl",
-                mode="M1",
-                time="year",
-                time_dest="year",
-                time_origin="year",
             )
-                .pipe(broadcast, node_loc=info.N[1:13])
-                .pipe(same_node)
-        )
-        )
-
-        # output dataframe linking water supply to energy dummy technology
-        output_df = output_df.append(
-            make_df(
-            "output",
-            technology="water_to_en",
-            value=1,
-            unit="-",
-            level="water_supply",
-            commodity="freshwater",
-            mode=df_node["mode"],
-            node_loc=df_node["region"],
-            node_dest=df_node["region"],
-            time="year",
-            time_dest="year",
-            time_origin="year",
-        ).pipe(
-            broadcast,
-            year_vtg=info.Y,
-            year_act=info.Y,
-        )
         )
 
         results["output"] = output_df
@@ -662,17 +678,17 @@ def cool_tech(context):
         # input dataframe  linking water supply to energy dummy technology
         inp = inp.append(
             make_df(
-            "input",
-            technology="water_to_en",
-            value=1,
-            unit="-",
-            level="water_supply_basin",
-            commodity="freshwater_basin",
-            mode=df_node["mode"],
-            time="year",
-            time_origin="year",
-            node_origin=df_node["node"],
-            node_loc=df_node["region"]
+                "input",
+                technology="water_to_en",
+                value=1,
+                unit="-",
+                level="water_supply_basin",
+                commodity="freshwater_basin",
+                mode=df_node["mode"],
+                time="year",
+                time_origin="year",
+                node_origin=df_node["node"],
+                node_loc=df_node["region"],
             ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
         )
         results["input"] = inp
@@ -694,7 +710,7 @@ def cool_tech(context):
             "water", "water_availability", "dis_rcp26_5y_meansd.csv"
         )
         df_wat = pd.read_csv(path2)
-        df_wat.fillna(0,inplace = True)
+        df_wat.fillna(0, inplace=True)
         df_wat["region"] = "R11_" + df_wat["BCU_name"].str[-3:]
         df_wat_1 = df_wat.drop(
             columns=[
@@ -775,45 +791,45 @@ def non_cooling_tec(context):
     ]
 
     scen = context.get_scenario()
-    tec_lt = scen.par('technical_lifetime')
-    all_tech = list(tec_lt['technology'].unique())
-    #all_tech = list(scen.set("technology"))
+    tec_lt = scen.par("technical_lifetime")
+    all_tech = list(tec_lt["technology"].unique())
+    # all_tech = list(scen.set("technology"))
     tech_non_cool_csv = list(non_cool_df["technology_name"])
     techs_to_remove = [tec for tec in tech_non_cool_csv if tec not in all_tech]
 
     non_cool_df = non_cool_df[~non_cool_df["technology_name"].isin(techs_to_remove)]
-    non_cool_df = non_cool_df.rename(columns={'technology_name': 'technology'})
+    non_cool_df = non_cool_df.rename(columns={"technology_name": "technology"})
 
     non_cool_df["value"] = (
         non_cool_df["water_withdrawal_mid_m3_per_output"] * 60 * 60 * 24 * 365 * (1e-9)
     )
 
-    non_cool_tech = list(non_cool_df['technology'].unique())
+    non_cool_tech = list(non_cool_df["technology"].unique())
 
-    n_cool_df = scen.par('output', {'technology': non_cool_tech})
-    n_cool_df = n_cool_df[(n_cool_df['node_loc'] != 'R11_GLB') & (n_cool_df['node_dest'] != 'R11_GLB')]
-    n_cool_df_merge = pd.merge(n_cool_df, non_cool_df, on='technology', how='right')
-    n_cool_df_merge.dropna(inplace = True)
+    n_cool_df = scen.par("output", {"technology": non_cool_tech})
+    n_cool_df = n_cool_df[
+        (n_cool_df["node_loc"] != "R11_GLB") & (n_cool_df["node_dest"] != "R11_GLB")
+    ]
+    n_cool_df_merge = pd.merge(n_cool_df, non_cool_df, on="technology", how="right")
+    n_cool_df_merge.dropna(inplace=True)
 
     # Input dataframe for non cooling technologies
     # only water withdrawals are being taken
     # Only freshwater supply is assumed for simplicity
-    inp_n_cool = (
-        make_df(
-            "input",
-            technology=n_cool_df_merge["technology"],
-            value=n_cool_df_merge["value_y"],
-            unit="km3/GWa",
-            level="water_supply",
-            commodity="freshwater",
-            time_origin="year",
-            mode="M1",
-            time="year",
-            year_vtg = n_cool_df_merge["year_vtg"].astype(int),
-            year_act = n_cool_df_merge["year_act"].astype(int),
-            node_loc = n_cool_df_merge["node_loc"],
-            node_origin = n_cool_df_merge["node_dest"]
-        )
+    inp_n_cool = make_df(
+        "input",
+        technology=n_cool_df_merge["technology"],
+        value=n_cool_df_merge["value_y"],
+        unit="km3/GWa",
+        level="water_supply",
+        commodity="freshwater",
+        time_origin="year",
+        mode="M1",
+        time="year",
+        year_vtg=n_cool_df_merge["year_vtg"].astype(int),
+        year_act=n_cool_df_merge["year_act"].astype(int),
+        node_loc=n_cool_df_merge["node_loc"],
+        node_origin=n_cool_df_merge["node_dest"],
     )
 
     # append the input data to results

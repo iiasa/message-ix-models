@@ -695,3 +695,7 @@ ieff3:
     high irrigation efficiency
 
   input: {commodity: freshwater_supply}
+
+return_flow:
+  description: >-
+    remaining water left after consumption
