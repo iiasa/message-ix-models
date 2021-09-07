@@ -343,6 +343,50 @@ class EnergyCmdty(Plot):
 #     inputs = ["emi:"]
 
 
+class Stock0(Plot):
+    basename = "stock-ldv"
+    inputs = ["ldv stock:nl-t-ya-driver_type"]
+    _title_detail = "LDV transport"
+
+    def generate(self, data):
+        data = data.rename(columns={0: "ldv stock"})
+        y_max = max(data["ldv stock"])
+        unit = data["unit"].unique()[0]
+
+        for nl, group_df in data.groupby("nl"):
+            yield (
+                p9.ggplot(p9.aes(x="yv", y="ldv stock", color="t"), group_df)
+                + p9.geom_line()
+                + p9.geom_point()
+                + p9.expand_limits(y=[0, y_max])
+                + self.title(f"{self._title_detail} Vehicle stock [{unit}] {nl}")
+                + self.static
+            )
+
+
+class Stock1(Plot):
+    """Same as Stock0, but for non-LDV techs only."""
+
+    basename = "stock-non-ldv"
+    inputs = ["inv_cost:nl-t-yv:nonldv"]
+    _title_detail = "Non-LDV transport"
+
+    def generate(self, data):
+        data = data.rename(columns={0: "ldv stock"})
+        y_max = max(data["ldv stock"])
+        unit = data["unit"].unique()[0]
+
+        for nl, group_df in data.groupby("nl"):
+            yield (
+                p9.ggplot(p9.aes(x="yv", y="ldv stock", color="t"), group_df)
+                + p9.geom_line()
+                + p9.geom_point()
+                + p9.expand_limits(y=[0, y_max])
+                + self.title(f"{self._title_detail} Vehicle stock [{unit}] {nl}")
+                + self.static
+            )
+
+
 #: Plots of data from the built (and maybe solved) MESSAGEix-Transport scenario.
 PLOTS = [
     FixCost,
@@ -351,6 +395,8 @@ PLOTS = [
     EnergyCmdty,
     LDVTechShare0,
     LDVTechShare1,
+    Stock0,
+    Stock1,
     DemandCalibrated,
     DemandCalibratedCap,
 ]
