@@ -482,6 +482,20 @@ cat_tec:
   - [water_resource_extraction, extract__freshwater_instream]
   - [water_resource_extraction, extract__saline_supply]
 
+balance_equality:
+  add:
+  - [freshwater, water_supply]
+  - [freshwater_basin, water_supply_basin]
+  - [freshwater_basin, water_avail_basin]
+  - [urban_collected_wst, water_treat]
+  - [urban_uncollected_wst, final]
+  - [rural_collected_wst, final]
+  - [rual_uncollected_wst, final]
+  - [urban_mw, final]
+  - [urban_disconnected, final]
+  - [rural_mw, final]
+  - [rural_disconnected, final]
+
 
 shares:
   add:
