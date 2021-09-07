@@ -206,6 +206,7 @@ def population(n, y, config) -> Quantity:
         raise ValueError(pop_scenario)
 
 
+# TODO: fix docstring
 def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
     """Load population data from the GEA database.
 
@@ -214,6 +215,8 @@ def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
     regions : list of str
         Regions for which to return population. Prefixes before and including "_" are
         stripped, e.g. "R11_AFR" results in a query for "AFR".
+    periods :
+    scenario :
 
     See also
     --------
@@ -240,7 +243,7 @@ def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
     qty = Quantity(data, units="Mpassenger").rename(DIMS)
 
     # Units are as expected
-    assert ["million"] == qty.coords["unit"]
+    assert ["million"] == qty.coords["unit"], qty.coords["unit"]
 
     # Remove unit dimension
     return computations.interpolate(
