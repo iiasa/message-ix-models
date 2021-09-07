@@ -4,7 +4,6 @@ from datetime import datetime
 
 import pint
 import plotnine as p9
-from genno import computations
 from genno.compat.plotnine import Plot as BasePlot
 
 from message_data.model.transport.utils import consumer_groups
@@ -231,9 +230,9 @@ class DemandCalibrated(Plot):
 
 class DemandCalibratedCap(Plot):
     basename = "par-demand-cap"
-    inputs = ["demand:n-c-y", "population:n-y", "c:transport"]
+    inputs = ["demand:n-c-y:capita", "c:transport"]
 
-    def generate(self, demand, population, commodities):
+    def generate(self, data, commodities):
         # TODO handle this by adding additional computations in report.callback() or
         #      functions it calls.
         # try:
@@ -253,7 +252,7 @@ class DemandCalibratedCap(Plot):
         #     .query(f"c in {repr(list(map(str, commodities)))}")
         # )
 
-        for node, node_data in df.groupby("n"):
+        for node, node_data in data.groupby("n"):
             yield (
                 p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c"))
                 + p9.theme(figure_size=(11.7, 8.3))
@@ -391,8 +390,11 @@ class Stock1(Plot):
 PLOTS = [
     FixCost,
     InvCost0,
+    InvCost1,
+    InvCost2,
     VarCost,
     EnergyCmdty,
+    LDV_IO,
     LDVTechShare0,
     LDVTechShare1,
     Stock0,
