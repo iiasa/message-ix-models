@@ -8,9 +8,9 @@ from message_ix import make_df
 from message_ix_models.util import private_data_path
 
 
-def add_demand(context):
+def add_sectoral_demands(context):
     """
-    Adds water sectoral demands and supply constraints
+    Adds water sectoral demands
     Parameters
     ----------
     context : .Context
@@ -243,10 +243,31 @@ def add_demand(context):
     #     )
     # )
 
+
+    results["demand"] = dmd_df
+
+    return results
+
+def add_water_availbility(context):
+    """
+    Adds water supply constraints
+
+    Parameters
+    ----------
+    context : .Context
+
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
+        are data frames ready for :meth:`~.Scenario.add_par`.
+    """
+
+    # define an empty dictionary
+    results = {}
     # Adding freshwater supply constraints
     # The water availability here refers to runoff
     # TODO identify whether discharge or runoff needs to be used
-
     # Reading data, the data is spatially and temprally aggregated from GHMs
     path1 = private_data_path("water", "water_availability", "dis_rcp26_5y_meansd.csv")
     df_wat_ava = pd.read_csv(path1)
@@ -266,12 +287,11 @@ def add_demand(context):
     df_wat_ava = df_wat_ava.stack().reset_index(level=0).reset_index()
     df_wat_ava.columns = ["unit", "year", "node", "value"]
     df_wat_ava.sort_values(["unit", "year", "node", "value"], inplace=True)
-    df_wat_ava.fillna(0,inplace = True)
+    df_wat_ava.fillna(0, inplace=True)
 
-    dmd_df = dmd_df.append(
-        make_df(
+    dmd_df =  make_df(
             "demand",
-            node='B'+df_wat_ava["node"],
+            node='B' + df_wat_ava["node"],
             commodity="freshwater_basin",
             level="water_avail_basin",
             year=df_wat_ava["year"],
@@ -279,8 +299,9 @@ def add_demand(context):
             value=-df_wat_ava["value"],
             unit="-",
         )
-    )
+
 
     results["demand"] = dmd_df
+
 
     return results
