@@ -7,6 +7,9 @@ import xarray as xr
 from genno import Quantity, computations
 from ixmp import Scenario
 from message_ix_models import ScenarioInfo
+from message_ix_models.util.context import Context
+
+from message_data.tools.iea_eei import get_eei_data
 
 
 def as_quantity(info: dict) -> Quantity:
@@ -40,6 +43,22 @@ def ldv_distance(config: dict) -> Quantity:
     )
 
     result.name = "ldv distance"
+
+    return result
+
+
+def non_ldv_distance():
+    """Return annual driving distance per non-LDV."""
+    # Load from get_eei_data
+    ctx = Context.get_instance()
+    dfs = get_eei_data(ctx)
+    df = dfs["Activity"]
+    # TODO think of an efficient way to obtain the mileage of non-LDV without having
+    #  to call get_eei_data() and its Context argument.
+    result = df[df["Variable" == "Vehicle use (10^3 vkm/vehicle)"]]
+    result = as_quantity({"var": result, "_dim": "1"})
+
+    result.name = "non-ldv distance"
 
     return result
 
