@@ -205,7 +205,7 @@ class LDVTechShare1(Plot):
 
 
 class DemandCalibrated(Plot):
-    basename = "par-demand"
+    basename = "demand"
     inputs = ["demand:n-c-y", "c:transport"]
 
     def generate(self, data, commodities):
@@ -229,7 +229,7 @@ class DemandCalibrated(Plot):
 
 
 class DemandCalibratedCap(Plot):
-    basename = "par-demand-cap"
+    basename = "demand-capita"
     inputs = ["demand:n-c-y:capita", "c:transport"]
 
     def generate(self, data, commodities):
@@ -290,7 +290,7 @@ class DemandExo(Plot):
 
 
 class DemandExoCap(Plot):
-    basename = "demand-exo-cap"
+    basename = "demand-exo-capita"
     inputs = ["transport pdt:n-y-t:capita"]
 
     def generate(self, data):
