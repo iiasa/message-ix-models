@@ -50,7 +50,8 @@ def cli(context, regions):
 @common_params("regions")
 @click.pass_obj
 def nexus(context, regions):
-    """Build and solve model with new cooling technologies.
+    """Add basin structure connected to the energy sector and
+    water balance linking different water demands to supply.
 
     Use the --url option to specify the base scenario.
     """
@@ -60,7 +61,7 @@ def nexus(context, regions):
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error
-    output_scenario_name = 'nexus'
+    output_scenario_name = context.output_scenario + '_nexus'
     output_model_name = context.output_model
 
     # Clone and build
@@ -74,7 +75,7 @@ def nexus(context, regions):
     build(context, scen)
 
     # Solve
-    scen.solve()
+    scen.solve(solve_options={'lpmethod': '4'})
 
 
 @cli.command("cooling")
@@ -92,7 +93,7 @@ def cooling(context, regions):
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
 
-    output_scenario_name = "cooling"
+    output_scenario_name = context.output_scenario + "_cooling"
     output_model_name = context.output_model
 
     # Clone and build
@@ -106,4 +107,4 @@ def cooling(context, regions):
     build(context, scen)
 
     # Solve
-    scen.solve()
+    scen.solve(solve_options={'lpmethod': '4'})
