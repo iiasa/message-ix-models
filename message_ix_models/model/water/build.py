@@ -73,7 +73,8 @@ def generate_set_elements(set_name, match=None):
 
 
 def map_basin(context) -> Mapping[str, ScenarioInfo]:
-
+    """Info to be added 
+    """
     context = read_config()
 
     add = ScenarioInfo()
