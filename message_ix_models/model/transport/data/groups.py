@@ -1,7 +1,7 @@
 """Consumer groups data."""
 import logging
 from copy import deepcopy
-from typing import List
+from typing import Dict, List
 
 import pandas as pd
 import xarray as xr
@@ -145,7 +145,7 @@ def get_consumer_groups(context) -> Quantity:
 
 
 def get_urban_rural_shares(context) -> Quantity:
-    """Return shares of urban and rural population from GEA.
+    """Return shares of urban and rural population.
 
     The data are filled forward to cover the years indicated by ``context["transport
     build info"].set["year"]``.
@@ -157,23 +157,24 @@ def get_urban_rural_shares(context) -> Quantity:
 
     See also
     --------
-    .get_gea_population
-    .get_ssp_population
+    population
     """
-    # Retrieve region info for the selected regional aggregation
-    nodes = get_codes(f"node/{context.regions}")
-    # List of regions according to the context
-    regions = nodes[nodes.index("World")].child
-
     scenario = context["transport config"]["data source"]["population"]
 
+    # Let the population() method handle regions, scenarios, data source.
+    # NB need to adapt the key/hierarchy here from the one on `context` to the one
+    #    stored in a Computer/Reporter; a little messy.
+    pop = population(
+        context["transport build info"].Y,
+        config=dict(transport=context["transport config"], regions=context.regions),
+        extra_dims=True,
+    )
+
     if "GEA" in scenario:
-        pop = get_gea_population(regions, context["transport build info"].Y, scenario)
         return computations.div(
             pop.sel(area_type=["UR+SU", "RU"]), pop.sel(area_type="total", drop=True)
         )
     elif "SSP" in scenario:
-        pop = get_ssp_population(regions, context["transport build info"].Y, scenario)
         log.warning("Need urban/suburban share data for SSP scenarios")
 
         share = Quantity(
@@ -185,38 +186,59 @@ def get_urban_rural_shares(context) -> Quantity:
         raise ValueError(scenario)
 
 
-def population(n, y, config) -> Quantity:
-    """Return population data from GEA or SSP, depending on `config`.
+def population(periods: List[int], config: Dict, extra_dims: bool = False) -> Quantity:
+    """Return population data.
 
-    Dimensions: n-y. Units: 10⁶ person/passenger.
+    :func:`population` either retrieves data from GEA or SSP, depending on
+    ``config["transport"]["data source"]["population"]``.
 
-    .. note:: this version differs from the one in :mod:`.transport.demand` in that the
-       GEA data is returned with the ``area_type`` dimension preserved.
+    Parameters
+    ----------
+    periods
+        Periods for returned data.
+    config
+        Dictionary, e.g. from the ``config`` key of a :class:`genno.Computer`.
+    extra_dims
+        :data:`False` (default) to return data with the dimensions (n, y); :data:`True`
+        to return additional dimensions.
 
-       .. todo:: consolidate the two in a simple way.
+    Returns
+    -------
+    Quantity
+        with dimensions (n, y) and possibly extra dimensions if `extra_dims` is
+        :data:`True`; units 10⁶ passenger.
 
+    See also
+    --------
+    get_gea_population
+    get_ssp_population
     """
     pop_scenario = config["transport"]["data source"]["population"]
 
+    nodes = get_codes(f"node/{config['regions']}")
+    nodes = nodes[nodes.index("World")].child
+
     if "GEA" in pop_scenario:
-        return get_gea_population(n, y, pop_scenario)
+        result = get_gea_population(nodes, periods, pop_scenario)
+        return result.sel(area_type="total", drop=True) if not extra_dims else result
     elif "SSP" in pop_scenario:
-        return get_ssp_population(n, y, pop_scenario)
+        return get_ssp_population(nodes, periods, pop_scenario)
     else:
         raise ValueError(pop_scenario)
 
 
-# TODO: fix docstring
-def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
+def get_gea_population(nodes: List[Code], periods: List, scenario: str) -> Quantity:
     """Load population data from the GEA database.
 
     Parameters
     ----------
-    regions : list of str
+    node
         Regions for which to return population. Prefixes before and including "_" are
         stripped, e.g. "R11_AFR" results in a query for "AFR".
-    periods :
-    scenario :
+    periods
+        Periods for returned data.
+    scenario
+        Specific name of a GEA scenario.
 
     See also
     --------
@@ -254,7 +276,24 @@ def get_gea_population(nodes: List, periods: List, scenario: str) -> Quantity:
 
 
 def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quantity:
-    """Load population data from the SSP database."""
+    """Load population data from the SSP database.
+
+    Always uses ``model="IIASA GDP"`` and the country-resolution data from the SSP
+    database, aggregated according to the children of each element of `nodes`.
+
+    Parameters
+    ----------
+    nodes
+        Regions for returned data.
+    periods
+        Periods for returned data.
+    scenario
+        Full or partial name of an SSP scenario, e.g. "SSP2" to match "SSP2_v4_…".
+
+    See also
+    --------
+    .get_ssp_data
+    """
     # Retrieve country-level data from SSP snapshot
     data = ssp.get_ssp_data(
         kind="country",

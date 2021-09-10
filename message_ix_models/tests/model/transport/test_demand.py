@@ -35,9 +35,7 @@ def test_demand_dummy(test_context, regions, years):
     "regions,source,years", [("R11", "GEA mix", "A"), ("R14", "SSP2", "B")]
 )
 def test_population(regions, source, years):
-    # Inputs to the function: list of model nodes
-    nodes = get_codes(f"node/{regions}")
-    nodes = nodes[nodes.index("World")].child
+    # Inputs to the function
 
     # Get the list of model periods
     # TODO move upstream to message_ix_models
@@ -50,15 +48,19 @@ def test_population(regions, source, years):
     )
 
     # Configuration (only the expected key)
-    config = {"transport": {"data source": {"population": source}}}
+    config = {"regions": regions, "transport": {"data source": {"population": source}}}
 
     # Function runs
-    result = demand.population(nodes, periods, config)
+    result = demand.population(periods, config)
 
     # Data have expected dimensions, units, and coords
     assert ("n", "y") == result.dims
     assert_units(result, "Mpassenger")
-    assert set(nodes) == set(result.coords["n"].values)
+
+    # List of model nodes
+    nodes = get_codes(f"node/{regions}")
+    assert set(nodes[nodes.index("World")].child) == set(result.coords["n"].values)
+
     assert set(periods) <= set(result.coords["y"].values)
 
 

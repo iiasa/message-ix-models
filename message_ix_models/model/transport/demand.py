@@ -18,11 +18,7 @@ from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
 from message_data.model.transport.build import generate_set_elements
 from message_data.model.transport.computations import dummy_prices, rename
-from message_data.model.transport.data.groups import (
-    get_consumer_groups,
-    get_gea_population,
-    get_ssp_population,
-)
+from message_data.model.transport.data.groups import get_consumer_groups, population
 from message_data.model.transport.plot import DEMAND_PLOTS
 from message_data.model.transport.utils import path_fallback
 
@@ -196,7 +192,12 @@ def prepare_reporter(
     if exogenous_data:
         add_exogenous_data(rep, context)
 
-    rep.graph["config"].update({"output_path": context.get("output_path", Path.cwd())})
+    rep.graph["config"].update(
+        {
+            "output_path": context.get("output_path", Path.cwd()),
+            "regions": context.regions,
+        }
+    )
 
     # Existing keys, prepared by from_scenario() or from_external_data()
     gdp = rep.full_key("GDP")
@@ -220,7 +221,9 @@ def prepare_reporter(
     rep.add("base shares:n-t-y", base_shares, "n:ex world", "y", "config")
 
     # Population data from GEA
-    pop_key = rep.add("population:n-y", population, "n:ex world+code", "y", "config")
+    pop_key = rep.add(
+        "population:n-y", partial(population, extra_dims=False), "y", "config"
+    )
 
     # Consumer group sizes
     # TODO ixmp is picky here when there is no separate argument to the callable; fix.
@@ -457,20 +460,6 @@ def votm(gdp_ppp_cap):
     )
 
     return result
-
-
-def population(n, y, config) -> Quantity:
-    """Return population data from GEA.
-
-    Dimensions: n-y. Units: 10⁶ person/passenger.
-    """
-    pop_scenario = config["transport"]["data source"]["population"]
-
-    if "GEA" in pop_scenario:
-        return get_gea_population(n, y, pop_scenario).sel(area_type="total", drop=True)
-    elif "SSP" in pop_scenario:
-        # NB incomplete
-        return get_ssp_population(n, y, pop_scenario)
 
 
 def smooth(qty):
