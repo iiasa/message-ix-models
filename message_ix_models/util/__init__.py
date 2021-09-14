@@ -69,7 +69,6 @@ def add_par_data(
 
         if dry_run:
             continue
-
         scenario.add_par(par_name, values)
 
     return total

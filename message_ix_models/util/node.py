@@ -45,7 +45,6 @@ def adapt_R11_R14(data: Dict[str, Union[pd.DataFrame, Quantity]]):
     # Dispatch to the methods for the value types
     return {par: adapt_R11_R14(value) for par, value in data.items()}
 
-
 @adapt_R11_R14.register
 def _0(df: pd.DataFrame) -> pd.DataFrame:
     """Adapt a :class:`pandas.DataFrame`."""
@@ -97,12 +96,10 @@ def _1(qty: Quantity) -> Quantity:
 
     return result
 
-
 def adapt_R11_R12(
     data: Dict[str, Union[pd.DataFrame, Quantity]]
 ) -> Dict[str, Union[pd.DataFrame, Quantity]]:  # pragma: no cover
     raise NotImplementedError
-
 
 def identify_nodes(scenario: Scenario) -> str:
     """Return the ID of a node codelist given the contents of `scenario`.
