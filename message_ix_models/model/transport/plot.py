@@ -365,9 +365,8 @@ class Stock0(Plot):
 
 class Stock1(Plot):
     """Same as Stock0, but for non-LDV techs only."""
-
     basename = "stock-non-ldv"
-    inputs = ["inv_cost:nl-t-yv:nonldv"]
+    inputs = ["non ldv stock:nl-t-ya"]
     _title_detail = "Non-LDV transport"
 
     def generate(self, data):

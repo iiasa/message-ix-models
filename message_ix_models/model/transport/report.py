@@ -126,19 +126,24 @@ def callback(rep: Reporter):
 
     queue.append(
         (
-            ("ratio", "ldv stock:nl-t-ya-driver_type", "CAP:nl-t-ya:ldv",
-             ldv_distance),
+            ("ratio", "ldv stock:nl-t-ya-driver_type", "CAP:nl-t-ya:ldv", ldv_distance),
+            dict(sums=True, index=True),
+        )
+    )
+
+    # Compute vehicle stocks for non-ldv
+    non_ldv_distance = Key("non-ldv distance")
+    rep.add(non_ldv_distance, computations.non_ldv_distance, sums=True, index=True)
+
+    queue.append(
+        (
+            ("ratio", "non ldv stock:nl-t-ya", "CAP:nl-t-ya:non-ldv", non_ldv_distance),
             dict(sums=True, index=True),
         )
     )
 
     # Only viable keys added
     rep.add_queue(queue)
-
-    # Compute vehicle stocks for non-ldv
-    rep.add(
-        Key("non-ldv distance"), computations.non_ldv_distance, sums=True, index=True
-    )
 
     # Add key collecting all others
     # FIXME `added` includes all partial sums of in::transport etc.
