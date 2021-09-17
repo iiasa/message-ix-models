@@ -30,29 +30,28 @@ def cli(context, regions):
 
     # Handle --regions; use a sensible default for MESSAGEix-Nexus
     if regions:
-        print("INFO: Regions choice", regions)
+        log.info(f"Regions choice {regions}")
         if regions in ["R14", "R32", "RCP"]:
-            print(
-                "WARNING: the MESSAGEix-Nexus module might not be",
-                "compatible with your 'regions' choice",
+            log.warning(
+                "the MESSAGEix-Nexus module might not be compatible with your 'regions' choice"
             )
     else:
         log.info("Use default --regions=R11")
         regions = "R11"
     # add an attribute to distinguish country models
-    if regions in ["R11", "R14", "R32", "RCP"]:
+    if regions in ["R11", "R12", "R14", "R32", "RCP"]:
         context.type_reg = "global"
     else:
         context.type_reg = "country"
     context.regions = regions
-    print("first context.reg", context.regions)
 
 
 @cli.command("nexus")
 @common_params("regions")
 @click.pass_obj
 def nexus(context, regions):
-    """Build and solve model with new cooling technologies.
+    """Add basin structure connected to the energy sector and
+    water balance linking different water demands to supply.
 
     Use the --url option to specify the base scenario.
     """
@@ -62,7 +61,7 @@ def nexus(context, regions):
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error
-    output_scenario_name = 'nexus'
+    output_scenario_name = context.output_scenario + '_nexus'
     output_model_name = context.output_model
 
     # Clone and build
@@ -76,7 +75,7 @@ def nexus(context, regions):
     build(context, scen)
 
     # Solve
-    scen.solve()
+    scen.solve(solve_options={'lpmethod': '4'})
 
 
 @cli.command("cooling")
@@ -94,7 +93,7 @@ def cooling(context, regions):
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error.
 
-    output_scenario_name = "cooling"
+    output_scenario_name = context.output_scenario + "_cooling"
     output_model_name = context.output_model
 
     # Clone and build
@@ -108,4 +107,4 @@ def cooling(context, regions):
     build(context, scen)
 
     # Solve
-    scen.solve()
+    scen.solve(solve_options={'lpmethod': '4'})

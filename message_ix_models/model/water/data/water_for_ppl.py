@@ -39,10 +39,12 @@ def cool_tech(context):
     FILE = "tech_water_performance_ssp_msg.csv"
     # Investment costs & regional shares of hist. activities of cooling
     # technologies
-    if context.type_reg == "global":
-        FILE1 = "cooltech_cost_and_shares_ssp_msg.csv"
-    else:
-        FILE1 = "cooltech_cost_and_shares_country.csv"
+    FILE1 = (
+        "cooltech_cost_and_shares_"
+        + (f"ssp_msg_{context.regions}" if context.type_reg == "global" else "country")
+        + ".csv"
+    )
+
     # define an empty dictionary
     results = {}
 
@@ -268,30 +270,14 @@ def cool_tech(context):
     columns = [col for col in cost.columns if "mix_" in col]
     # Rename column names to R11 to match with the previous df
 
-    if context.type_reg == "global":
-        rename_columns_dict = {
-            column: column.replace("mix_", "R11_") for column in columns
-        }
-        cost.rename(columns=rename_columns_dict, inplace=True)
-        search_cols = [
-            col for col in cost.columns if "R11_" in col or "technology" in col
-        ]
-        hold_df = input_cool_2010[["node_loc", "technology_name", "cooling_fraction"]]
-        hold_df = hold_df.drop_duplicates()
-        search_cols_cooling_fraction = [
-            col for col in search_cols if col != "technology"
-        ]
-    else:
-        rename_columns_dict = {column: column.replace("mix_", "") for column in columns}
-        cost.rename(columns=rename_columns_dict, inplace=True)
-        search_cols = [
-            col for col in cost.columns if context.regions in col or "technology" in col
-        ]
-        hold_df = input_cool_2010[["node_loc", "technology_name", "cooling_fraction"]]
-        hold_df = hold_df.drop_duplicates()
-        search_cols_cooling_fraction = [
-            col for col in search_cols if col != "technology"
-        ]
+    cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
+    search_cols = [
+        col for col in cost.columns if context.regions in col or "technology" in col
+    ]
+    hold_df = input_cool_2010[
+        ["node_loc", "technology_name", "cooling_fraction"]
+    ].drop_duplicates()
+    search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
 
     def shares(x, context):
         """Process share and cooling fraction.
@@ -303,10 +289,7 @@ def cool_tech(context):
         """
         for col in search_cols_cooling_fraction:
             # MAPPING ISOCODE to region name, assume one country only
-            if context.type_reg == "country":
-                col2 = (context.map_ISO_c)[col]
-            else:
-                col2 = col
+            col2 = context.map_ISO_c[col] if context.type_reg == "country" else col
             cooling_fraction = hold_df[
                 (hold_df["node_loc"] == col2)
                 & (hold_df["technology_name"] == x["technology"])
@@ -343,10 +326,11 @@ def cool_tech(context):
         tech_df = hold_cost[
             hold_cost["technology"].str.startswith(x.technology)
         ]  # [x.node_loc]
-        if context.type_reg == "country":
-            node_search = context.regions
-        else:
-            node_search = x["node_loc"]  # R11_EEU
+
+        node_search = (
+            context.regions if context.type_reg == "country" else x["node_loc"]
+        )
+
         node_loc = x["node_loc"]
         technology = x["technology"]
         cooling_technologies = list(tech_df["technology"])
