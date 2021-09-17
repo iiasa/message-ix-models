@@ -1,13 +1,12 @@
 """Prepare data for adding techs related to water distribution, treatment in urban & rural"""
 
 import pandas as pd
-from message_ix_models.utils.tools import (
+from message_ix import make_df
+from message_ix_models.util import (
     broadcast,
-    get_context,
-    make_df,
-    make_io,
     make_matched_dfs,
     same_node,
+    private_data_path
 )
 
 from .demands import add_sectoral_demands

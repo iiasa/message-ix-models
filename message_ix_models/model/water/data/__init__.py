@@ -7,6 +7,7 @@ from message_ix_models.util import add_par_data
 
 from .water_for_ppl import cool_tech, non_cooling_tec
 from .demands import add_sectoral_demands, add_water_availbility
+from .infrastructure import add_infrastructure_techs
 
 log = logging.getLogger(__name__)
 
