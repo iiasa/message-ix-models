@@ -6,6 +6,7 @@ import pandas as pd
 from message_ix_models import ScenarioInfo
 from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util import private_data_path
 
 from .utils import read_config
 
@@ -85,7 +86,7 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     # define an empty dictionary
     results = {}
     # read csv file for basin names and region mapping
-    path = context.get_path("water", "delineation", "basins_by_region_simpl_R11.csv")
+    path = private_data_path("water", "delineation", "basins_by_region_simpl_R11.csv")
     df = pd.read_csv(path)
     # Assigning proper nomenclature
     df["node"] = "B" + df["BCU_name"].astype(str)
