@@ -5,10 +5,10 @@ from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
+    private_data_path,
     same_node,
     private_data_path
 )
-
 from .demands import add_sectoral_demands
 
 
@@ -28,6 +28,9 @@ def add_infrastructure_techs(context):
         ``context["water build info"]``, plus the additional year 2010.
     """
 
+    # Reference to the water configuration
+    info = context["water build info"]
+
     # define an empty dictionary
     results = {}
 
@@ -38,6 +41,10 @@ def add_infrastructure_techs(context):
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
     df_node["region"] = "R11_" + df_node["REGION"].astype(str)
+
+    # Reading water distribution mapping from csv
+    path = private_data_path("water", "water_dist", "water_distribution.xlsx")
+    df = pd.read_excel(path)
 
     # Adding input dataframe
     inp_df = (
@@ -134,5 +141,6 @@ def add_infrastructure_techs(context):
     ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y, node_loc=df_node["node"])
 
     results["var_cost"] = var_cost
+
 
     return results
