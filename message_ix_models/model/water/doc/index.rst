@@ -40,6 +40,11 @@ Data preparation
 .. automodule:: message_data.model.water.data.water_for_ppl
    :members:
 
+.. automodule:: message_data.model.water.data.demands
+   :members:
+
+.. automodule:: message_data.model.water.data.infrastructure
+   :members:
 
 Utilities and CLI
 -----------------
@@ -61,6 +66,8 @@ See also: :doc:`water/files`.
 
   - :file:`delineation/`: contains geospatial files for basin mapping and MESSAGE regions
   - :file:`ppl_cooling_tech/`: contains cooling technology shares, costs and water intensities for different regional definitions
+  - :file:`water_demands/`: contains water sectoral demands, connection rates for basins
+  - :file:`water_dist/`: contains water infrastructure data.The data is copied from previous implementation.
   - :file:`technology.yaml`: metadata for the 'technology' dimension.
   - :file:`set.yaml`: metadata for other sets.
 
@@ -70,6 +77,9 @@ Pre-processing
 
   - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop pathways for sectoral water withdrawals, return flows and infrastructure penetration rates in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
   - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
+  - :file:`hydro_agg.py`: contains workflow for upscaling gridded data (mostly hydrological) to basin scale
+  - :file:`shp_to_raster.py`: converts shapefile to raster
+
 
 Deprecated R Code
 =================
