@@ -14,10 +14,12 @@ METADATA = [
     ("water", "config"),
     ("water", "set"),
     ("water", "technology"),
+    ("water", "set_cooling"),
+    ("water", "technology_cooling"),
 ]
 
 
-def read_config(context=None):
+def read_config(context):
     """Read the water model configuration / metadata from file.
 
     Numerical values are converted to computation-ready data structures.
@@ -27,26 +29,44 @@ def read_config(context=None):
     .Context
         The current Context, with the loaded configuration.
     """
-    context = context or Context.get_instance(0)
+    #context = context or Context.get_instance(0)
 
-    if "water set" in context:
-        # Already loaded
-        return context
+    if context.nexus_set == 'nexus':
+        if "water set" in context:
+            # Already loaded
+            return context
 
-    # Load water configuration
-    for parts in METADATA:
-        # Key for storing in the context
-        key = " ".join(parts)
+        # Load water configuration
+        for parts in METADATA:
+            # Key for storing in the context
+            key = " ".join(parts)
 
-        # Actual filename parts; ends with YAML
-        _parts = list(parts)
-        _parts[-1] += ".yaml"
+            # Actual filename parts; ends with YAML
+            _parts = list(parts)
+            _parts[-1] += ".yaml"
 
-        context[key] = load_private_data(*_parts)
+            context[key] = load_private_data(*_parts)
 
-    # Merge technology.yaml with set.yaml
-    context["water set"]["technology"]["add"] = context.pop("water technology")
+        # Merge technology.yaml with set.yaml
+        context["water set"]["technology"]["add"] = context.pop("water technology")
+    else:
+        if "water set_cooling" in context:
+            # Already loaded
+            return context
 
+        # Load water configuration
+        for parts in METADATA:
+            # Key for storing in the context
+            key = " ".join(parts)
+
+            # Actual filename parts; ends with YAML
+            _parts = list(parts)
+            _parts[-1] += ".yaml"
+
+            context[key] = load_private_data(*_parts)
+
+        # Merge technology.yaml with set.yaml
+        context["water set"]["technology"]["add"] = context.pop("water technology_cooling")
     # Convert some values to codes
     # for set_name, info in context["water set"].items():
     #     try:
