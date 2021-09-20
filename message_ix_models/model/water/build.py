@@ -3,6 +3,7 @@ from functools import lru_cache, partial
 from typing import Mapping
 
 import pandas as pd
+
 from message_ix_models import ScenarioInfo
 from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
@@ -74,7 +75,12 @@ def generate_set_elements(set_name, match=None):
 
 
 def map_basin(context) -> Mapping[str, ScenarioInfo]:
-    """Info to be added 
+    """Return specification for mapping basins to regions
+
+    The basins are spatially consolidated from HydroSHEDS basins delineation
+    database.This delineation is then intersected with MESSAGE regions to form new
+    water sector regions for the nexus module.
+    The nomenclature for basin names is <basin_id>|<MESSAGEregion> such as R1|AFR
     """
     context = read_config()
 
@@ -124,7 +130,7 @@ def main(context, scenario, **options):
 
     log.info("Set up MESSAGEix-Nexus")
 
-    if context.nexus_set == 'nexus':
+    if context.nexus_set == "nexus":
         # Add water balance
         spec = map_basin(context)
 
