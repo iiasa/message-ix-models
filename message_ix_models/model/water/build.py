@@ -73,7 +73,12 @@ def generate_set_elements(set_name, match=None):
 
 
 def map_basin(context) -> Mapping[str, ScenarioInfo]:
-    """Info to be added
+    """Return specification for mapping basins to regions
+
+    The basins are spatially consolidated from HydroSHEDS basins delineation
+    database.This delineation is then intersected with MESSAGE regions to form new
+    water sector regions for the nexus module.
+    The nomenclature for basin names is <basin_id>|<MESSAGEregion> such as R1|AFR
     """
     context = read_config()
 

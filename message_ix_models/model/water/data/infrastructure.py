@@ -83,27 +83,32 @@ def add_infrastructure_techs(context):
         .pipe(same_node)
     )
 
-    results["output"] = inp_df
+    results["output"] = out_df
+
+    # Filtering df for capacity factors
+    df_cap = df.dropna(subset=["capacity_factor_mid"])
 
     # Adding input dataframe
-    cap_df = make_df(
-        "capacity_factor",
-        technology=df["tec"],
-        value=df["capacity_factor_mid"],
-        unit="%",
-        time="year",
-        node_loc=df_node["node"],
-    ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+    cap_df = make_df('capacity_factor',
+                     technology=df_cap['tec'],
+                     value=df_cap['capacity_factor_mid'],
+                     unit="%",
+                     time="year"
+                     ).pipe(broadcast, year_act=info.Y, year_vtg=info.Y, node_loc=df_node["node"]
+                            ).pipe(same_node)
 
     results["capacity_factor"] = cap_df
 
+    # Filtering df for capacity factors
+    df_tl = df.dropna(subset=["technical_lifetime_mid"])
+
     tl = make_df(
         "technical_lifetime",
-        technology=df["tec"],
-        value=df["technical_lifetime_mid"],
-        unit="y",
-        node_loc=df_node["node"],
-    ).pipe(broadcast, year_vtg=info.Y)
+        technology=df_tl["tec"],
+        value=df_tl["technical_lifetime_mid"],
+        unit="y"
+    ).pipe(broadcast, year_vtg=info.Y, node_loc=df_node["node"]).pipe(same_node)
+
 
     results["technical_lifetime"] = tl
 
@@ -116,7 +121,10 @@ def add_infrastructure_techs(context):
     # Prepare dataframe for investments
     # TODO finalize units
     inv_cost = make_df(
-        "inv_cost", technology=df_inv["tec"], value=df_inv["investment_mid"], unit="-"
+        "inv_cost",
+        technology=df_inv["tec"],
+        value=df_inv["investment_mid"],
+        unit="-"
     ).pipe(broadcast, year_vtg=info.Y, node_loc=df_node["node"])
 
     results["inv_cost"] = inv_cost
@@ -141,6 +149,5 @@ def add_infrastructure_techs(context):
     ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y, node_loc=df_node["node"])
 
     results["var_cost"] = var_cost
-
 
     return results

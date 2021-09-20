@@ -22,7 +22,7 @@ commodity:
   - urban_uncollected_wst
   - yield_freshwater_suply
   - rural_collected_wst
-  - rual_uncollected_wst
+  - rural_uncollected_wst
   - urban_mw
   - urban_dis
   - rural_mw
@@ -62,7 +62,7 @@ commodity:
   - urban_uncollected_wst
   - yield_freshwater_suply
   - rural_collected_wst
-  - rual_uncollected_wst
+  - rural_uncollected_wst
   - urban_mw
   - urban_disconnected
   - rural_mw
@@ -490,7 +490,7 @@ balance_equality:
   - [urban_collected_wst, water_treat]
   - [urban_uncollected_wst, final]
   - [rural_collected_wst, final]
-  - [rual_uncollected_wst, final]
+  - [rural_uncollected_wst, final]
   - [urban_mw, final]
   - [urban_disconnected, final]
   - [rural_mw, final]
