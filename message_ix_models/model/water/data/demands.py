@@ -166,7 +166,7 @@ def add_sectoral_demands(context):
             level="final",
             year=urban_collected_wst["year"],
             time="year",
-            value=urban_collected_wst["value"],
+            value=-urban_collected_wst["value"],
             unit="-",
         )
     )
@@ -184,7 +184,7 @@ def add_sectoral_demands(context):
             level="final",
             year=rural_collected_wst["year"],
             time="year",
-            value=rural_collected_wst["value"],
+            value=-rural_collected_wst["value"],
             unit="-",
         )
     )
@@ -201,7 +201,7 @@ def add_sectoral_demands(context):
             level="final",
             year=urban_uncollected_wst["year"],
             time="year",
-            value=urban_uncollected_wst["value"],
+            value=-urban_uncollected_wst["value"],
             unit="-",
         )
     )
@@ -219,7 +219,7 @@ def add_sectoral_demands(context):
             level="final",
             year=rural_uncollected_wst["year"],
             time="year",
-            value=rural_uncollected_wst["value"],
+            value=-rural_uncollected_wst["value"],
             unit="-",
         )
     )
