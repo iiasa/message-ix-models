@@ -28,39 +28,39 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     remove = ScenarioInfo()
     add = ScenarioInfo()
 
-    if context.nexus_set == 'nexus':
-        # Update the ScenarioInfo objects with required and new set elements
-        for set_name, config in context["water set"].items():
-            # Required elements
-            require.set[set_name].extend(config.get("require", []))
+    # if context.nexus_set == 'nexus':
+    # Update the ScenarioInfo objects with required and new set elements
+    for set_name, config in context["water set"].items():
+        # Required elements
+        require.set[set_name].extend(config.get("require", []))
 
-            # Elements to remove
-            remove.set[set_name].extend(config.get("remove", []))
+        # Elements to remove
+        remove.set[set_name].extend(config.get("remove", []))
 
-            # Elements to add
-            add.set[set_name].extend(config.get("add", []))
+        # Elements to add
+        add.set[set_name].extend(config.get("add", []))
 
-        # The set of required nodes varies according to context.regions
-        nodes = get_codes(f"node/{context.regions}")
-        nodes = list(map(str, nodes[nodes.index("World")].child))
-        require.set["node"].extend(nodes)
+    # The set of required nodes varies according to context.regions
+    nodes = get_codes(f"node/{context.regions}")
+    nodes = list(map(str, nodes[nodes.index("World")].child))
+    require.set["node"].extend(nodes)
 
-    else:
-        # Update the ScenarioInfo objects with required and new set elements
-        for set_name, config in context["water set_cooling"].items():
-            # Required elements
-            require.set[set_name].extend(config.get("require", []))
-
-            # Elements to remove
-            remove.set[set_name].extend(config.get("remove", []))
-
-            # Elements to add
-            add.set[set_name].extend(config.get("add", []))
-
-        # The set of required nodes varies according to context.regions
-        nodes = get_codes(f"node/{context.regions}")
-        nodes = list(map(str, nodes[nodes.index("World")].child))
-        require.set["node"].extend(nodes)
+    # else:
+    #     # Update the ScenarioInfo objects with required and new set elements
+    #     for set_name, config in context["water set_cooling"].items():
+    #         # Required elements
+    #         require.set[set_name].extend(config.get("require", []))
+    #
+    #         # Elements to remove
+    #         remove.set[set_name].extend(config.get("remove", []))
+    #
+    #         # Elements to add
+    #         add.set[set_name].extend(config.get("add", []))
+    #
+    #     # The set of required nodes varies according to context.regions
+    #     nodes = get_codes(f"node/{context.regions}")
+    #     nodes = list(map(str, nodes[nodes.index("World")].child))
+    #     require.set["node"].extend(nodes)
 
     # require.set["node"].extend(nn)
     # create a mapping ISO code : region name, for other scripts
