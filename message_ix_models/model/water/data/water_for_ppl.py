@@ -613,6 +613,23 @@ def cool_tech(context):
             ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
         )
 
+        # electricity input dataframe  for extract freshwater supply
+        inp = inp.append(
+            make_df(
+                "input",
+                technology="extract_freshwater_supply",
+                value= 0.2*(1e3/(24*365)),
+                unit="-",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time="year",
+                time_origin="year",
+                node_origin=df_node["region"],
+                node_loc=df_node["node"],
+            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+        )
+
         # Add output df  for freshwater supply for basins
         output_df = make_df(
             "output",
