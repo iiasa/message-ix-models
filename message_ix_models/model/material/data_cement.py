@@ -8,10 +8,10 @@ from pathlib import Path
 import pandas as pd
 
 from .util import read_config
-from message_data.tools import (
-    ScenarioInfo,
+from message_ix_models import ScenarioInfo
+from message_ix import make_df
+from message_ix_models.util import (
     broadcast,
-    make_df,
     make_io,
     make_matched_dfs,
     same_node,
@@ -92,7 +92,7 @@ def gen_mock_demand_cement(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        context.get_local_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -105,7 +105,7 @@ def gen_mock_demand_cement(scenario):
 
     # # Regions setting for IMAGE
     # region_cement = pd.read_excel(
-    #     context.get_path("material", "CEMENT.BvR2010.xlsx"),
+    #     context.get_local_path("material", "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
     #     .drop_duplicates().sort_values(by='Region #')
     #
@@ -127,7 +127,7 @@ def gen_mock_demand_cement(scenario):
     #
     # # Cement demand 2010 [Mt/year] (IMAGE)
     # demand2010_cement = pd.read_excel(
-    #     context.get_path("material", "CEMENT.BvR2010.xlsx"),
+    #     context.get_local_path("material", "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Domestic Consumption", skiprows=range(0,3)).\
     #     groupby(by=["Region #"]).sum()[[2010]].\
     #     join(region_cement.set_index('Region #'), on='Region #').\
@@ -389,7 +389,5 @@ def derive_cement_demand(scenario, dry_run=False):
         # To get PPP GDP, it is read externally from the R side
         df = r.derive_cement_demand(pop, base_demand)
         df.year = df.year.astype(int)
-
-    return df
 
     return df
