@@ -74,7 +74,7 @@ def add_infrastructure_techs(context):
             value=rows["value_mid"],
             unit="-",
             level='final',
-            commodity='final',
+            commodity='electr',
             mode="M1",
             time="year",
             time_origin="year",
