@@ -46,15 +46,18 @@ def add_infrastructure_techs(context):
     path = private_data_path("water", "water_dist", "water_distribution.xlsx")
     df = pd.read_excel(path)
 
+    df_non_elec = df[df["incmd"] != 'electr'].reset_index()
+    df_elec = df[df["incmd"] == 'electr'].reset_index()
+
     # Adding input dataframe
     inp_df = (
         make_df(
             "input",
-            technology=df["tec"],
-            value=df["value_mid"],
+            technology=df_non_elec["tec"],
+            value=df_non_elec["value_mid"],
             unit="-",
-            level=df["inlvl"],
-            commodity=df["incmd"],
+            level=df_non_elec["inlvl"],
+            commodity=df_non_elec["incmd"],
             mode="M1",
             time="year",
             time_origin="year",
@@ -63,7 +66,25 @@ def add_infrastructure_techs(context):
         .pipe(same_node)
     )
 
-    results["input"] = inp_df
+    for index, rows in df_elec.iterrows():
+
+        inp_df = inp_df.append((make_df(
+            "input",
+            technology=rows['tec'],
+            value=rows["value_mid"],
+            unit="-",
+            level='final',
+            commodity='final',
+            mode="M1",
+            time="year",
+            time_origin="year",
+            node_loc=df_node["node"],
+            node_origin=df_node["region"]
+        )
+        .pipe(broadcast, year_act=info.Y, year_vtg=info.Y, )
+        ))
+
+        results["input"] = inp_df
 
     # add output dataframe
     df_out = df[~df["outcmd"].isna()]
