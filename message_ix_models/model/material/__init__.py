@@ -4,8 +4,11 @@ import click
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 
-from .build import apply_spec
-from message_data.tools import ScenarioInfo
+# from .build import apply_spec
+# from message_data.tools import ScenarioInfo
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.build import apply_spec
+from message_ix_models.util.context import Context
 
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity
@@ -47,6 +50,7 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
     remove = ScenarioInfo()
 
     # Load configuration
+    # context = Context.get_instance(-1)
     context = read_config()
 
     # Update the ScenarioInfo objects with required and new set elements
@@ -86,7 +90,7 @@ def create_bare(context, regions, dry_run):
     context.period_start = 1980
 
     # Otherwise it can not find the path to read the yaml files..
-    context.metadata_path = context.metadata_path / "data"
+    # context.metadata_path = context.metadata_path / "data"
 
     scen = create_res(context)
     build(scen)
@@ -122,7 +126,7 @@ def solve(context, datafile, tag):
         # "DIAG-C30-const_E414": "baseline_test",
     }.get(context.scenario_info["scenario"])
 
-    context.metadata_path = context.metadata_path / "data"
+    # context.metadata_path = context.metadata_path / "data"
     context.datafile = datafile
 
     if context.scenario_info["model"] != "CD_Links_SSP2":
@@ -201,7 +205,7 @@ from .data_generic import gen_data_generic
 from .data_petro import gen_data_petro_chemicals
 from .data_buildings import gen_data_buildings
 from .data_power_sector import gen_data_power_sector
-from message_data.tools import add_par_data
+from message_ix_models.util import add_par_data
 
 DATA_FUNCTIONS = [
     # gen_data_buildings,

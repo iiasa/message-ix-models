@@ -21,10 +21,10 @@ from rpy2.robjects.conversion import localconverter
 import pandas as pd
 
 from .util import read_config
-from message_data.tools import (
-    ScenarioInfo,
+from message_ix_models import ScenarioInfo
+from message_ix import make_df
+from message_ix_models.util import (
     broadcast,
-    make_df,
     make_io,
     make_matched_dfs,
     same_node,
@@ -42,7 +42,7 @@ def gen_data_power_sector(scenario, dry_run=False):
 
     # paths to r code and lca data
     rcode_path = Path(__file__).parents[0] / "material_intensity"
-    data_path = context.get_path("material")
+    data_path = context.get_local_path("material")
 
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)

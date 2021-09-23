@@ -5,18 +5,18 @@ from ixmp.utils import maybe_check_out
 from message_ix import Scenario
 import pandas as pd
 
-from message_data.tools import Code, ScenarioInfo, add_par_data, strip_par_data
+from message_ix_models import Code, ScenarioInfo, add_par_data, strip_par_data
 
 
 log = logging.getLogger(__name__)
 
 
 def apply_spec(
-        scenario: Scenario,
-        spec: Mapping[str, ScenarioInfo],
-        data: Callable = None,
-        **options,
-        ):
+    scenario: Scenario,
+    spec: Mapping[str, ScenarioInfo],
+    data: Callable = None,
+    **options,
+):
     """Apply `spec` to `scenario`.
 
     Parameters
@@ -52,11 +52,9 @@ def apply_spec(
     .Code
     .ScenarioInfo
     """
-    dry_run = options.get('dry_run', False)
+    dry_run = options.get("dry_run", False)
 
-    log.setLevel(
-        logging.ERROR if options.get('quiet', False) else logging.DEBUG
-    )
+    log.setLevel(logging.ERROR if options.get("quiet", False) else logging.DEBUG)
 
     if not dry_run:
         try:
@@ -85,35 +83,31 @@ def apply_spec(
         # log.debug(', '.join(map(repr, base)))  # All elements; verbose
 
         # Check for required elements
-        require = spec['require'].set[set_name]
+        require = spec["require"].set[set_name]
         for element in require:
             if element not in base:
-                log.error(f'  {repr(element)} not found')
+                log.error(f"  {repr(element)} not found")
                 raise ValueError
         if len(require):
-            log.info(f'  Check {len(require)} required elements')
+            log.info(f"  Check {len(require)} required elements")
 
-        if options.get('fast', False):
-            log.info('  Skip removing parameter values')
+        if options.get("fast", False):
+            log.info("  Skip removing parameter values")
         else:
             # Remove elements and associated parameter values
-            remove = spec['remove'].set[set_name]
+            remove = spec["remove"].set[set_name]
             for element in remove:
                 msg = f"{repr(element)} and associated parameter elements"
-                if options.get('fast', False):
+                if options.get("fast", False):
                     log.info(f"  Skip removing {msg} (fast=True)")
                 else:
                     log.info(f"  Remove {msg}")
                     strip_par_data(
-                        scenario,
-                        set_name,
-                        element,
-                        dry_run=dry_run,
-                        dump=dump
+                        scenario, set_name, element, dry_run=dry_run, dump=dump
                     )
 
         # Add elements
-        add = spec['add'].set[set_name]
+        add = spec["add"].set[set_name]
         if not dry_run:
             for element in add:
                 scenario.add_set(
@@ -123,17 +117,17 @@ def apply_spec(
 
         if len(add):
             log.info(f"  Add {len(add)} element(s)")
-            log.debug('  ' + ', '.join(map(repr, add)))
+            log.debug("  " + ", ".join(map(repr, add)))
 
-        log.info('  ---')
+        log.info("  ---")
 
     N_removed = sum(len(d) for d in dump.values())
-    log.info(f'{N_removed} parameter elements removed')
+    log.info(f"{N_removed} parameter elements removed")
 
     # Add units
-    for unit in spec['add'].set['unit']:
+    for unit in spec["add"].set["unit"]:
         unit = Code(id=unit, name=unit) if isinstance(unit, str) else unit
-        log.info(f'Add unit {repr(unit.id)}')
+        log.info(f"Add unit {repr(unit.id)}")
         scenario.platform.add_unit(unit.id, comment=unit.name)
 
     # Add data
@@ -144,6 +138,6 @@ def apply_spec(
         #     add_par_data(scenario, result, dry_run=dry_run)
 
     # Finalize
-    log.info('Commit results.')
+    log.info("Commit results.")
     if not dry_run:
-        scenario.commit(options.get('message', f"{__name__}.apply_spec()"))
+        scenario.commit(options.get("message", f"{__name__}.apply_spec()"))

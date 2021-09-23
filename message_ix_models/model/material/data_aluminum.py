@@ -16,10 +16,10 @@ import ixmp
 
 from .util import read_config
 from .data_util import read_rel
-from message_data.tools import (
-    ScenarioInfo,
+from message_ix_models import ScenarioInfo
+from message_ix import make_df
+from message_ix_models.util import (
     broadcast,
-    make_df,
     make_io,
     make_matched_dfs,
     same_node,
@@ -52,7 +52,7 @@ def read_data_aluminum(scenario):
 
     # Read the file
     data_alu = pd.read_excel(
-        context.get_path("material", fname),
+        context.get_local_path("material", fname),
         sheet_name=sheet_n,
     )
 
@@ -508,7 +508,7 @@ def gen_mock_demand_aluminum(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        context.get_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        context.get_local_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
