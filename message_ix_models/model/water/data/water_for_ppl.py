@@ -52,12 +52,14 @@ def cool_tech(context):
     info = context["water build info"]
 
     # reading basin_delineation
-    path1 = private_data_path("water", "delineation", "basins_by_region_simpl_R11.csv")
-    df_node = pd.read_csv(path1)
+    FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
+    PATH = private_data_path("water", "delineation", FILE2)
+
+    df_node = pd.read_csv(PATH)
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    df_node["region"] = "R11_" + df_node["REGION"].astype(str)
+    df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # reading ppl cooling tech dataframe
     path = private_data_path("water", "ppl_cooling_tech", FILE)
@@ -137,7 +139,7 @@ def cool_tech(context):
         ~input_cool["technology_name"].str.contains("hpl", na=False)
     ]
     input_cool = input_cool[
-        (input_cool["node_loc"] != "R11_GLB") & (input_cool["node_origin"] != "R11_GLB")
+        (input_cool["node_loc"] != f"{context.regions}_GLB") & (input_cool["node_origin"] != f"{context.regions}_GLB")
     ]
 
     def cooling_fr(x):
@@ -272,7 +274,7 @@ def cool_tech(context):
 
     cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
     search_cols = [
-        col for col in cost.columns if context.regions in col or "technology" in col
+        col for col in cost.columns if 'R11' in col or "technology" in col
     ]
     hold_df = input_cool_2010[
         ["node_loc", "technology_name", "cooling_fraction"]
@@ -728,7 +730,7 @@ def cool_tech(context):
         )
         df_wat = pd.read_csv(path2)
         df_wat.fillna(0, inplace=True)
-        df_wat["region"] = "R11_" + df_wat["BCU_name"].str[-3:]
+        df_wat["region"] = f"{context.regions}_" + df_wat["BCU_name"].str[-3:]
         df_wat_1 = df_wat.drop(
             columns=[
                 "Unnamed: 0",

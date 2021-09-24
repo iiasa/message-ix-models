@@ -26,7 +26,8 @@ def add_sectoral_demands(context):
     results = {}
 
     # defines path to read in demand data
-    path = private_data_path("water", "water_demands", "harmonized", "R11", ".")
+    region = f"{context.regions}"
+    path = private_data_path("water", "water_demands", "harmonized", region, ".")
     # make sure all of the csvs have format, otherwise it might not work
     list_of_csvs = list(path.glob("*_baseline.csv"))
     # define names for variables
@@ -101,7 +102,7 @@ def add_sectoral_demands(context):
         year=urban_mw["year"],
         time="year",
         value=urban_mw["value"],
-        unit="-",
+        unit="km3/year",
     )
     urban_dis = urban_withdrawal_df.reset_index(drop=True)
     urban_dis["value"] = (1e-3 * urban_dis["value"]) * (
@@ -117,7 +118,7 @@ def add_sectoral_demands(context):
             year=urban_dis["year"],
             time="year",
             value=urban_dis["value"],
-            unit="-",
+            unit="km3/year",
         )
     )
     rural_mw = rual_withdrawal_df.reset_index(drop=True)
@@ -132,7 +133,7 @@ def add_sectoral_demands(context):
             year=rural_mw["year"],
             time="year",
             value=rural_mw["value"],
-            unit="-",
+            unit="km3/year",
         )
     )
 
@@ -150,7 +151,7 @@ def add_sectoral_demands(context):
             year=rural_dis["year"],
             time="year",
             value=rural_dis["value"],
-            unit="-",
+            unit="km3/year",
         )
     )
     urban_collected_wst = urban_return_df.reset_index(drop=True)
@@ -167,7 +168,7 @@ def add_sectoral_demands(context):
             year=urban_collected_wst["year"],
             time="year",
             value=-urban_collected_wst["value"],
-            unit="-",
+            unit="km3/year",
         )
     )
 
@@ -185,7 +186,7 @@ def add_sectoral_demands(context):
             year=rural_collected_wst["year"],
             time="year",
             value=-rural_collected_wst["value"],
-            unit="-",
+            unit="km3/year",
         )
     )
     urban_uncollected_wst = urban_return_df.reset_index(drop=True)
@@ -202,7 +203,7 @@ def add_sectoral_demands(context):
             year=urban_uncollected_wst["year"],
             time="year",
             value=-urban_uncollected_wst["value"],
-            unit="-",
+            unit="km3/year",
         )
     )
 
@@ -220,7 +221,7 @@ def add_sectoral_demands(context):
             year=rural_uncollected_wst["year"],
             time="year",
             value=-rural_uncollected_wst["value"],
-            unit="-",
+            unit="km3/year",
         )
     )
 
@@ -243,6 +244,7 @@ def add_sectoral_demands(context):
     #     )
     # )
 
+    #dmd_df = dmd_df.append(add_water_availbility(context))
 
     results["demand"] = dmd_df
 
@@ -297,11 +299,9 @@ def add_water_availbility(context):
             year=df_wat_ava["year"],
             time="year",
             value=-df_wat_ava["value"],
-            unit="-",
+            unit="km3/year",
         )
 
-
     results["demand"] = dmd_df
-
 
     return results
