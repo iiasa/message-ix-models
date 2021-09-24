@@ -505,4 +505,5 @@ unit:
   add:
   - km3/GWa
   - km3
+  - km3/year
   # TODO need to finalize units we will be using for water i.e MCM/day ?
