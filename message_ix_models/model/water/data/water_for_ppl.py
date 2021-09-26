@@ -86,7 +86,6 @@ def cool_tech(context):
     ref_hist_cap = scen.par(
         "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
     )
-
     # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
     # where h_fg (flue gasses losses) = 0.1
     ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
@@ -139,7 +138,8 @@ def cool_tech(context):
         ~input_cool["technology_name"].str.contains("hpl", na=False)
     ]
     input_cool = input_cool[
-        (input_cool["node_loc"] != f"{context.regions}_GLB") & (input_cool["node_origin"] != f"{context.regions}_GLB")
+        (input_cool["node_loc"] != f"{context.regions}_GLB")
+        & (input_cool["node_origin"] != f"{context.regions}_GLB")
     ]
 
     def cooling_fr(x):
@@ -273,9 +273,7 @@ def cool_tech(context):
     # Rename column names to R11 to match with the previous df
 
     cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
-    search_cols = [
-        col for col in cost.columns if 'R11' in col or "technology" in col
-    ]
+    search_cols = [col for col in cost.columns if "R11" in col or "technology" in col]
     hold_df = input_cool_2010[
         ["node_loc", "technology_name", "cooling_fraction"]
     ].drop_duplicates()
@@ -620,7 +618,7 @@ def cool_tech(context):
             make_df(
                 "input",
                 technology="extract_freshwater_supply",
-                value= 0.2*(1e3/(24*365)),
+                value=0.2 * (1e3 / (24 * 365)),
                 unit="-",
                 level="final",
                 commodity="electr",

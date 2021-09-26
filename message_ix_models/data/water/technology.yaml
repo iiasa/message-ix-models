@@ -565,53 +565,51 @@ solar_th_ppl__air:
 urban_t_d:
   description: >-
     Urban water transmission & distribution
-    # TODO add more detail if required
   input: {commodity: freshwater_supply}
 
 rural_t_d:
   description: >-
     Rural water transmission & distribution
-    # TODO add more detail if required
   input: {commodity: freshwater_supply}
 
 urban_unconnected:
   description: >-
-    # TODO add description
+    untreated urban water not connected to system
   input: {commodity: freshwater_supply}
 
 rural_unconnected:
   description: >-
-    # TODO add description
+    untreated rural water not connected to system
   input: {commodity: freshwater_supply}
 
 urban_sewerage:
   description: >-
-    # TODO add description
+    urban wastewater
   input: {commodity: freshwater_supply}
 
 urban_untreated:
   description: >-
-    # TODO add description
+    untreated urban water
   input: {commodity: urban_uncollected_wst}
 
 urban_treatment:
   description: >-
-    # TODO add description
+    treated urban water
   input: {commodity: electr, urban_collected_wst}
 
 urban_recycle:
   description: >-
-    # TODO add description
+    treated wastewater used as available water
   input: {commodity: electr, urban_collected_wst}
 
 rural_treatment:
   description: >-
-    # TODO add description
+    treated rural water
   input: {commodity: rural_collected_wst}
 
 rural_untreated:
   description: >-
-    # TODO add description
+    untreated rural water
   input: {commodity: rural_collected_wst}
 
 membrane:
@@ -699,3 +697,12 @@ ieff3:
 return_flow:
   description: >-
     remaining water left after consumption
+
+rural_recycle:
+  description: >-
+    recycled water after rural treatment
+
+
+rural_sewerage:
+  description: >-
+    treated rural water
