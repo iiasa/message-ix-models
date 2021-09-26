@@ -73,7 +73,6 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     return dict(require=require, remove=remove, add=add)
 
 
-
 @lru_cache()
 def generate_set_elements(set_name, match=None):
 
@@ -147,7 +146,7 @@ def main(context, scenario, **options):
 
     log.info("Set up MESSAGEix-Nexus")
 
-    if context.nexus_set == 'nexus':
+    if context.nexus_set == "nexus":
         # Add water balance
         spec = map_basin(context)
 

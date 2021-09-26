@@ -7,8 +7,8 @@ from message_ix_models.util import (
     make_matched_dfs,
     private_data_path,
     same_node,
-    private_data_path
 )
+
 from .demands import add_sectoral_demands
 
 
@@ -35,8 +35,10 @@ def add_infrastructure_techs(context):
     results = {}
 
     # reading basin_delineation
-    path1 = private_data_path("water", "delineation", "basins_by_region_simpl_R11.csv")
-    df_node = pd.read_csv(path1)
+    FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
+    PATH = private_data_path("water", "delineation", FILE2)
+
+    df_node = pd.read_csv(PATH)
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
@@ -46,8 +48,8 @@ def add_infrastructure_techs(context):
     path = private_data_path("water", "water_dist", "water_distribution.xlsx")
     df = pd.read_excel(path)
 
-    df_non_elec = df[df["incmd"] != 'electr'].reset_index()
-    df_elec = df[df["incmd"] == 'electr'].reset_index()
+    df_non_elec = df[df["incmd"] != "electr"].reset_index()
+    df_elec = df[df["incmd"] == "electr"].reset_index()
 
     # Adding input dataframe
     inp_df = (
@@ -68,21 +70,27 @@ def add_infrastructure_techs(context):
 
     for index, rows in df_elec.iterrows():
 
-        inp_df = inp_df.append((make_df(
-            "input",
-            technology=rows['tec'],
-            value=rows["value_mid"],
-            unit="-",
-            level='final',
-            commodity='electr',
-            mode="M1",
-            time="year",
-            time_origin="year",
-            node_loc=df_node["node"],
-            node_origin=df_node["region"]
+        inp_df = inp_df.append(
+            (
+                make_df(
+                    "input",
+                    technology=rows["tec"],
+                    value=rows["value_mid"],
+                    unit="-",
+                    level="final",
+                    commodity="electr",
+                    mode="M1",
+                    time="year",
+                    time_origin="year",
+                    node_loc=df_node["node"],
+                    node_origin=df_node["region"],
+                ).pipe(
+                    broadcast,
+                    year_act=info.Y,
+                    year_vtg=info.Y,
+                )
+            )
         )
-        .pipe(broadcast, year_act=info.Y, year_vtg=info.Y, )
-        ))
 
         results["input"] = inp_df
 
@@ -110,26 +118,33 @@ def add_infrastructure_techs(context):
     df_cap = df.dropna(subset=["capacity_factor_mid"])
 
     # Adding input dataframe
-    cap_df = make_df('capacity_factor',
-                     technology=df_cap['tec'],
-                     value=df_cap['capacity_factor_mid'],
-                     unit="%",
-                     time="year"
-                     ).pipe(broadcast, year_act=info.Y, year_vtg=info.Y, node_loc=df_node["node"]
-                            ).pipe(same_node)
+    cap_df = (
+        make_df(
+            "capacity_factor",
+            technology=df_cap["tec"],
+            value=df_cap["capacity_factor_mid"],
+            unit="%",
+            time="year",
+        )
+        .pipe(broadcast, year_act=info.Y, year_vtg=info.Y, node_loc=df_node["node"])
+        .pipe(same_node)
+    )
 
     results["capacity_factor"] = cap_df
 
     # Filtering df for capacity factors
     df_tl = df.dropna(subset=["technical_lifetime_mid"])
 
-    tl = make_df(
-        "technical_lifetime",
-        technology=df_tl["tec"],
-        value=df_tl["technical_lifetime_mid"],
-        unit="y"
-    ).pipe(broadcast, year_vtg=info.Y, node_loc=df_node["node"]).pipe(same_node)
-
+    tl = (
+        make_df(
+            "technical_lifetime",
+            technology=df_tl["tec"],
+            value=df_tl["technical_lifetime_mid"],
+            unit="y",
+        )
+        .pipe(broadcast, year_vtg=info.Y, node_loc=df_node["node"])
+        .pipe(same_node)
+    )
 
     results["technical_lifetime"] = tl
 
@@ -142,10 +157,7 @@ def add_infrastructure_techs(context):
     # Prepare dataframe for investments
     # TODO finalize units
     inv_cost = make_df(
-        "inv_cost",
-        technology=df_inv["tec"],
-        value=df_inv["investment_mid"],
-        unit="-"
+        "inv_cost", technology=df_inv["tec"], value=df_inv["investment_mid"], unit="-"
     ).pipe(broadcast, year_vtg=info.Y, node_loc=df_node["node"])
 
     results["inv_cost"] = inv_cost

@@ -61,7 +61,7 @@ def nexus(context, regions):
 
     # Determine the output scenario name based on the --url CLI option. If the
     # user did not give a recognized value, this raises an error
-    output_scenario_name = context.output_scenario + '_nexus'
+    output_scenario_name = context.output_scenario + "_nexus"
     output_model_name = context.output_model
 
     # Clone and build
@@ -75,7 +75,7 @@ def nexus(context, regions):
     build(context, scen)
 
     # Solve
-    scen.solve(solve_options={'lpmethod': '4'})
+    scen.solve(solve_options={"lpmethod": "4"})
 
 
 @cli.command("cooling")
@@ -107,4 +107,4 @@ def cooling(context, regions):
     build(context, scen)
 
     # Solve
-    scen.solve(solve_options={'lpmethod': '4'})
+    scen.solve(solve_options={"lpmethod": "4"})

@@ -38,7 +38,7 @@ def read_config(context=None):
 
     context = context or Context.get_instance(0)
 
-    #if context.nexus_set == 'nexus':
+    # if context.nexus_set == 'nexus':
     if "water set" in context:
         # Already loaded
         return context

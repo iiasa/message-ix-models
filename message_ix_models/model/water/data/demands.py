@@ -65,7 +65,7 @@ def add_sectoral_demands(context):
     urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal_baseline"]
     rual_withdrawal_df = df_dmds[df_dmds["variable"] == "rural_withdrawal_baseline"]
     urban_return_df = df_dmds[df_dmds["variable"] == "urban_return_baseline"]
-    urban_return_df.reset_index(drop=True, inplace = True)
+    urban_return_df.reset_index(drop=True, inplace=True)
     rural_return_df = df_dmds[df_dmds["variable"] == "rural_return_baseline"]
     rural_return_df.reset_index(drop=True, inplace=True)
     urban_connection_rate_df = df_dmds[
@@ -96,7 +96,7 @@ def add_sectoral_demands(context):
 
     dmd_df = make_df(
         "demand",
-        node='B'+urban_mw["node"],
+        node="B" + urban_mw["node"],
         commodity="urban_mw",
         level="final",
         year=urban_mw["year"],
@@ -112,7 +112,7 @@ def add_sectoral_demands(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node='B'+urban_dis["node"],
+            node="B" + urban_dis["node"],
             commodity="urban_disconnected",
             level="final",
             year=urban_dis["year"],
@@ -127,7 +127,7 @@ def add_sectoral_demands(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node='B'+rural_mw["node"],
+            node="B" + rural_mw["node"],
             commodity="rural_mw",
             level="final",
             year=rural_mw["year"],
@@ -145,7 +145,7 @@ def add_sectoral_demands(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node='B'+rural_dis["node"],
+            node="B" + rural_dis["node"],
             commodity="rural_disconnected",
             level="final",
             year=rural_dis["year"],
@@ -162,7 +162,7 @@ def add_sectoral_demands(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node='B'+urban_collected_wst["node"],
+            node="B" + urban_collected_wst["node"],
             commodity="urban_collected_wst",
             level="final",
             year=urban_collected_wst["year"],
@@ -180,7 +180,7 @@ def add_sectoral_demands(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node='B'+rural_collected_wst["node"],
+            node="B" + rural_collected_wst["node"],
             commodity="rural_collected_wst",
             level="final",
             year=rural_collected_wst["year"],
@@ -197,7 +197,7 @@ def add_sectoral_demands(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node='B'+urban_uncollected_wst["node"],
+            node="B" + urban_uncollected_wst["node"],
             commodity="urban_uncollected_wst",
             level="final",
             year=urban_uncollected_wst["year"],
@@ -215,7 +215,7 @@ def add_sectoral_demands(context):
     dmd_df = dmd_df.append(
         make_df(
             "demand",
-            node='B'+rural_uncollected_wst["node"],
+            node="B" + rural_uncollected_wst["node"],
             commodity="rural_collected_wst",
             level="final",
             year=rural_uncollected_wst["year"],
@@ -244,11 +244,12 @@ def add_sectoral_demands(context):
     #     )
     # )
 
-    #dmd_df = dmd_df.append(add_water_availbility(context))
+    # dmd_df = dmd_df.append(add_water_availbility(context))
 
     results["demand"] = dmd_df
 
     return results
+
 
 def add_water_availbility(context):
     """
@@ -291,16 +292,16 @@ def add_water_availbility(context):
     df_wat_ava.sort_values(["unit", "year", "node", "value"], inplace=True)
     df_wat_ava.fillna(0, inplace=True)
 
-    dmd_df =  make_df(
-            "demand",
-            node='B' + df_wat_ava["node"],
-            commodity="freshwater_basin",
-            level="water_avail_basin",
-            year=df_wat_ava["year"],
-            time="year",
-            value=-df_wat_ava["value"],
-            unit="km3/year",
-        )
+    dmd_df = make_df(
+        "demand",
+        node="B" + df_wat_ava["node"],
+        commodity="freshwater_basin",
+        level="water_avail_basin",
+        year=df_wat_ava["year"],
+        time="year",
+        value=-df_wat_ava["value"],
+        unit="km3/year",
+    )
 
     results["demand"] = dmd_df
 
