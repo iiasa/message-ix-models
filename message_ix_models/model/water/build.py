@@ -75,7 +75,6 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
     return dict(require=require, remove=remove, add=add)
 
-
 @lru_cache()
 def generate_set_elements(set_name, match=None):
 
