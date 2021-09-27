@@ -42,7 +42,7 @@ def add_infrastructure_techs(context):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    df_node["region"] = "R11_" + df_node["REGION"].astype(str)
+    df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # Reading water distribution mapping from csv
     path = private_data_path("water", "water_dist", "water_distribution.xlsx")
