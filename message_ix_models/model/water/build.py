@@ -109,12 +109,15 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     # define an empty dictionary
     results = {}
     # read csv file for basin names and region mapping
-    path = private_data_path("water", "delineation", "basins_by_region_simpl_R11.csv")
-    df = pd.read_csv(path)
+    # reading basin_delineation
+    FILE = f"basins_by_region_simpl_{context.regions}.csv"
+    PATH = private_data_path("water", "delineation", FILE)
+
+    df = pd.read_csv(PATH)
     # Assigning proper nomenclature
     df["node"] = "B" + df["BCU_name"].astype(str)
     df["mode"] = "M" + df["BCU_name"].astype(str)
-    df["region"] = "R11_" + df["REGION"].astype(str)
+    df["region"] = f"{context.regions}_" + df["REGION"].astype(str)
     results["node"] = df["node"]
     results["mode"] = df["mode"]
     # map nodes as per dimensions
