@@ -54,33 +54,6 @@ def read_config(context=None):
 
         context[key] = load_private_data(*_parts)
 
-    # Merge technology.yaml with set.yaml
-    context["water set"]["technology"]["add"] = context.pop("water technology")
-    # else:
-    #     if "water set_cooling" in context:
-    #         # Already loaded
-    #         return context
-    #
-    #     # Load water configuration
-    #     for parts in METADATA:
-    #         # Key for storing in the context
-    #         key = " ".join(parts)
-    #
-    #         # Actual filename parts; ends with YAML
-    #         _parts = list(parts)
-    #         _parts[-1] += ".yaml"
-    #
-    #         context[key] = load_private_data(*_parts)
-    #
-    #     # Merge technology.yaml with set.yaml
-    #     context["water set"]["technology"]["add"] = context.pop("water technology_cooling")
-    # Convert some values to codes
-    # for set_name, info in context["water set"].items():
-    #     try:
-    #         info["add"] = as_codes(info["add"])
-    #     except KeyError:
-    #         pass
-
     return context
 
 
