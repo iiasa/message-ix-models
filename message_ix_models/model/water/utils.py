@@ -8,20 +8,12 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.util import load_private_data
 from sdmx.model import Code
 
-#: Valid values of Context.regions for MESSAGEix-Transport; default first.
-SETTINGS = dict(
-    regions=["R11", "R12", "R14", "ISR"],
-)
-
-
 # Configuration files
 METADATA = [
     # Information about MESSAGE-water
     ("water", "config"),
     ("water", "set"),
-    ("water", "technology"),
-    ("water", "set_cooling"),
-    ("water", "technology_cooling"),
+    ("water", "technology")
 ]
 
 
