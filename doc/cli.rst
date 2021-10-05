@@ -26,7 +26,11 @@ You probably want to add one of the IIASA ENE databases such as the main or ‘p
 These are listed on the `ENE wiki <https://github.com/iiasa/ene/wiki/Databases>`_.
 Use the ixmp CLI::
 
-    $ ixmp platform add [PLATFORMNAME] jdbc oracle gp3.iiasa.ac.at:1521:GP2 [USERNAME] [PASSWORD]
+    $ ixmp platform add [PLATFORMNAME] jdbc oracle x8oda.iiasa.ac.at:1521/pIXMP2.iiasa.ac.at [USERNAME] [PASSWORD]
+
+or in some cases::
+
+    $ ixmp platform add [PLATFORMNAME] jdbc oracle x8oda.iiasa.ac.at:1521/pIXMP1.iiasa.ac.at [USERNAME] [PASSWORD]
 
 You may also want to make this the *default* platform.
 Unless told otherwise, :mod:`message_ix_models` creates :class:`~.Platform` objects without any arguments (``mp = ixmp.Platform()``); this loads the default platform.
