@@ -120,6 +120,7 @@ def solve(context, datafile, tag):
         "baseline": "NoPolicy",
         "baseline_macro": "NoPolicy",
         "baseline_new": "NoPolicy",
+        "baseline_new_macro": "NoPolicy",
         "NPi2020-con-prim-dir-ncr": "NPi",
         "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
