@@ -136,9 +136,6 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
         return iamc_report_hackathon.report(
             mp=scenario.platform,
             scen=scenario,
-            model=scenario.model,
-            scenario=scenario.scenario,
-            out_dir=output_path,
             **legacy_args,
         )
 
