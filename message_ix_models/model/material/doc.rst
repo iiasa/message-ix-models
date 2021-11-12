@@ -12,7 +12,31 @@ Materials accounting
 This module adds (life-cycle) accounting of materials associated with technologies and demands in MESSAGEix-GLOBIOM.
 
 The implementation currently supports four key energy/emission-intensive material industries: Steel, Aluminum, Cement, and Petrochemical.
-The petrochemical sector will soon expand to cover plastic production processes, and ammonia and nitrogen-based fertilizer process will be added too.
+The petrochemical sector will soon expand to cover production processes of plastics, ammonia and nitrogen-based fertilizers.
+
+The technologies to represent for the primary production processes of the materials are chosen based on their emission mitigation potential and the degree
+of commercialization.
+
+After the primary production stages of the materials, finishing and manufacturing processes are carried out which results in a complete product.
+For metals, during the manufacturing process new scrap is formed as residue. This type of scrap requires less preparation before recycling and has a higher quality
+as it is the direct product of the manufacturing unlike the old scrap which is formed at the end of the life cycle of a product.
+The percentage of the new scrap is an exogenous fixed ratio in the model.
+
+The products that are produced are used in different end-use sectors as stocks and therefore they are not immediately available for recycling until the end of their lifetime.
+In the model, each year only certain quantity of products are available for recycling and this ratio is exogenously determined based on historical values.
+The end-of-life products coming from buildings and power sector can be endogenously determined in case the relevant links are turned on.
+
+In the model, there is a minimum recycling rate specified for different materials and it is based on the historical recycling rates. This parameter can also be used to represent
+regulations in different regions. In the end recycling rate is a model decision which can be higher than the minimum rate depending on the economic attractiveness.
+
+The end-of-life products that are collected as old scrap are classified in three different grade/quality. This reflects the degree of difficulty of recycling process in terms of
+labor and energy. Different initial designs and final use conditions determine the ease of recycling which is also reflected in costs.
+The availability of different scrap is set with 1-2-1 ratio as default for high, medium and low scrap quality.
+
+Three different scrap preparation technologies have different variable costs and energy inputs to process the old scraps with different grades. At the end of the preparation process
+these scraps are returned as new scrap all with the same quality. The quality differences in the end product are neglected. All of the old scrap that is collected is used in the model
+assuming scrap availability and collection are the main bottlenecks of the recycling process. All the scraps are sent to a secondary melter where they are turned into final materials.
+During this process there are also recycling losses.
 
 .. contents::
    :local:
