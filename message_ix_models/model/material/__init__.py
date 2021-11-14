@@ -12,6 +12,7 @@ from message_ix_models.util.context import Context
 
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity
+from .data_util import add_emission_accounting
 from .util import read_config
 
 
@@ -26,6 +27,7 @@ def build(scenario):
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the usefyl level industry technologies
     modify_demand_and_hist_activity(scenario)
+    add_emission_accounting(scenario)
 
     return scenario
 
