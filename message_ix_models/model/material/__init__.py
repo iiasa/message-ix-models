@@ -15,7 +15,6 @@ from .data_util import modify_demand_and_hist_activity
 from .data_util import add_emission_accounting
 from .util import read_config
 
-
 def build(scenario):
     """Set up materials accounting on `scenario`."""
     # Get the specification
@@ -177,7 +176,7 @@ def solve_scen(context, datafile, model_name, scenario_name):
     scenario.solve()
 
 
-@cli.command("report")
+@cli.command("report-1")
 @click.option(
     "--old_reporting",
     default=False,
@@ -195,6 +194,28 @@ def run_reporting(old_reporting, scenario_name, model_name):
     mp = Platform()
     scenario = Scenario(mp, model_name, scenario_name)
     report(scenario, old_reporting)
+
+@cli.command("report-2")
+@click.option("--scenario_name", default="NoPolicy")
+@click.option("--model_name", default="MESSAGEix-Materials")
+# @click.pass_obj
+def run_old_reporting(scenario_name, model_name):
+    from message_ix import Scenario
+    from ixmp import Platform
+    from message_data.tools.post_processing.iamc_report_hackathon import (
+        report as reporting
+    )
+
+    base_model = model_name
+    scen_name = scenario_name
+
+    print(model_name)
+    print(scenario_name)
+    mp = Platform()
+    scenario = Scenario(mp, model_name, scenario_name)
+
+    reporting(mp, scenario, 'False', base_model,
+              scen_name, merge_hist=True, merge_ts= True)
 
 
 import logging

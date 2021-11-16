@@ -82,6 +82,29 @@ For example, the buildings module (`data_buildings.py`) is only used when the bu
 .. automodule:: message_data.model.material.data_generic
   :members:
 
+Reporting
+##########
+
+.. automodule:: message_data.reporting.materials.reporting
+  :members:
+
+.. automodule:: message_data.tools.post_processing.iamc_report_hackathon
+    :members:
+
+The reporting of the scenarios involves two steps. First step generates the specific
+variables that are related to materials and industry sectors. At the end of this step
+all the varibles are uploaded as ixmp timeseries objects. The reporting file is
+generated under \...\message_data\message_data\reporting\materials with the name
+“New_Reporting_MESSAGEix-Materials_scenario_name.xls”. The required versions of
+pyam and pyam-iamc are as follows respectively: 0.2.1a0 and 0.9.0.
+
+If the model is ran with buildings and appliances linkage, the related extra variables
+are uploaded as ixmp timeseries object to the scenario as well.
+
+In the second step, rest of the default reporting variables are obtained by running
+the general reporting code. This step combines all the variables that were uploaded
+as timeseries to the scenario together with the generic IAMC variables. It also
+correctly reports the aggregate variables such as Final Energy and Emissions.
 
 CLI usage
 =========
@@ -99,8 +122,9 @@ This command line only builds the scenario but does not run it. To run the scena
 
     $ mix-models material solve --scenario_name NoPolicy_R12
 
+To run the first step of the reporting use $ mix-models material report-1 --model_name MESSAGEix-Materials --scenario_name xxxx
 
-
+To run the second step of the reporting use $ mix-models material report-2 --model_name MESSAGEix-Materials --scenario_name xxxx
 
 Data, metadata, and configuration
 =================================
