@@ -1,19 +1,23 @@
 from typing import Mapping
 
 import click
-from message_ix_models import ScenarioInfo
-from message_ix_models.model.build import apply_spec
+import logging
 
 # from .build import apply_spec
 # from message_data.tools import ScenarioInfo
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 from message_ix_models.util.context import Context
+from message_ix_models.util import add_par_data
 
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity
 from .data_util import add_emission_accounting
 from .util import read_config
+
+
+log = logging.getLogger(__name__)
+
 
 def build(scenario):
     """Set up materials accounting on `scenario`."""
@@ -218,10 +222,6 @@ def run_old_reporting(scenario_name, model_name):
               scen_name, merge_hist=True, merge_ts= True)
 
 
-import logging
-
-log = logging.getLogger(__name__)
-
 from .data_cement import gen_data_cement
 from .data_steel import gen_data_steel
 from .data_aluminum import gen_data_aluminum
@@ -229,7 +229,7 @@ from .data_generic import gen_data_generic
 from .data_petro import gen_data_petro_chemicals
 from .data_buildings import gen_data_buildings
 from .data_power_sector import gen_data_power_sector
-from message_ix_models.util import add_par_data
+
 
 DATA_FUNCTIONS = [
     # gen_data_buildings,
@@ -240,6 +240,7 @@ DATA_FUNCTIONS = [
     gen_data_generic,
     gen_data_power_sector,
 ]
+
 
 # Try to handle multiple data input functions from different materials
 def add_data(scenario, dry_run=False):
