@@ -52,8 +52,8 @@ _238 = mark.skip(reason="Temporary, for iiasa/message_data#238")
         # R11, A
         ("R11", "A", None, None, False),  # 31 s
         ("R11", "B", None, None, False),
-        param("R11", "A", None, None, True, marks=(mark.slow, _238)),  # 44 s
-        param("R11", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),  # 43 s
+        param("R11", "A", None, None, True, marks=_238),  # 44 s
+        ("R11", "A", "US-TIMES MA3T", "IKARUS", False),  # 43 s
         param("R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
         # R11, B
         param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
