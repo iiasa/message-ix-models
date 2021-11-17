@@ -37,8 +37,8 @@ def ldv_distance(config: dict) -> Quantity:
     """
     # Load from config.yaml
     result = computations.product(
-        as_quantity(config["ldv activity"]),
-        as_quantity(config["factor"]["activity"]["ldv"]),
+        as_quantity(config["transport"]["ldv activity"]),
+        as_quantity(config["transport"]["factor"]["activity"]["ldv"]),
     )
 
     result.name = "ldv distance"
