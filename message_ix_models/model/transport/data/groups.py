@@ -9,10 +9,10 @@ from genno import computations
 from iam_units import registry
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.model.structure import Code, get_codes
-from message_ix_models.util import adapt_R11_R14
+from message_ix_models.util import adapt_R11_R14, check_support
 
 from message_data.model.transport.utils import consumer_groups, path_fallback
-from message_data.tools import check_support, gea, ssp
+from message_data.tools import gea, ssp
 
 log = logging.getLogger(__name__)
 
