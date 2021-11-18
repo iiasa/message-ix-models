@@ -46,16 +46,30 @@ def ldv_distance(config: dict) -> Quantity:
     return result
 
 
-def non_ldv_distance(config):
+def non_ldv_distance(config: dict) -> Quantity:
     """Return annual travel distance per vehicle for non-LDV transport modes."""
     # Load from get_eei_data
     dfs = get_eei_data(config["transport"]["regions"])
-    df = dfs["Activity"]
 
-    result = df[df["Variable" == "Vehicle use (10^3 vkm/vehicle)"]]
-    result = as_quantity({"var": result, "_dim": "1"})
+    # TODO adjust get_eei_data() to clean these and return separate quantities, or long-
+    #      form tidy data
+    cols = [
+        "ISO_code",
+        "Year",
+        "Mode/vehicle type",
+        "Vehicle stock (10^6)",
+        "Vehicle-kilometres (10^9 vkm)",
+    ]
 
-    result.name = "non-ldv distance"
+    df = (
+        dfs["Activity"][cols]
+        .rename(columns={"ISO_code": "nl", "Year": "y", "Mode/vehicle type": "t"})
+        .set_index(["nl", "t", "y"])
+    )
+    # print(df)
+
+    result = Quantity(df[cols[4]], name="non-ldv distance")
+    # print(result)
 
     return result
 
