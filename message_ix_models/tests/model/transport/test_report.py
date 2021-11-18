@@ -53,7 +53,8 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     rep, key = prepare_reporter(
         scenario,
         private_data_path("report", "global.yaml"),
-        "transport all",
+        # "transport all",
+        "ldv stock:nl-t-ya-driver_type",
     )
     rep.configure(output_dir=tmp_path)
 
@@ -61,12 +62,18 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     rep.get(key)
 
 
-def test_ldv_distance(test_context):
-    "Test the :func:`ldv_distance()` computation."
+@pytest.mark.parametrize("regions", ["R11"])
+def test_ldv_distance(test_context, regions):
+    "Test :func:`.computations.ldv_distance`."
     ctx = test_context
+    ctx.regions = regions
+    read_config(ctx)
+
+    # Fake reporting config from the context
+    config = dict(transport=ctx["transport config"])
 
     # Computation runs
-    result = computations.ldv_distance(ctx["transport config"])
+    result = computations.ldv_distance(config)
 
     # Computed value has the expected dimensions
     assert ("nl", "driver_type") == result.dims
