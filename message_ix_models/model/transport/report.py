@@ -86,14 +86,18 @@ def callback(rep: Reporter):
 
     rep.add("t:transport", quote(technologies))
 
-    # Groups of transport technologies for aggregation
-    t_groups = {
-        tech.id: list(c.id for c in tech.child)
-        # Only include those technologies with children
-        for tech in filter(
-            lambda t: len(t.child), context["transport set"]["technology"]["add"]
-        )
-    }
+    # Subsets of transport technologies for aggregation and filtering
+    t_groups = dict(nonldv=[])
+    for tech in filter(  # Only include those technologies with children
+        lambda t: len(t.child), context["transport set"]["technology"]["add"]
+    ):
+        t_groups[tech.id] = list(c.id for c in tech.child)
+        rep.add(f"t:transport {tech.id}", quote(dict(t=t_groups[tech.id])))
+        # Store non-LDV technologies
+        if tech.id != "LDV":
+            t_groups["nonldv"].extend(t_groups[tech.id])
+
+    rep.add("t:transport non-LDV", quote(dict(t=t_groups["nonldv"])))
 
     # Set of all transport commodities
     rep.add("c:transport", quote(spec["add"].set["commodity"]))
@@ -107,39 +111,39 @@ def callback(rep: Reporter):
     # Queue of computations to add
     queue = []
 
+    # Shorthands for queue of computations to add
+    _s = dict(sums=True)
+    _si = dict(sums=True, index=True)
+
     # Aggregate transport technologies
     for k in ("in", "out"):
         try:
             queue.append(
-                (
-                    ("aggregate", rep.full_key(k), "transport", dict(t=t_groups)),
-                    dict(sums=True),
-                )
+                (("aggregate", rep.full_key(k), "transport", dict(t=t_groups)), _s)
             )
         except KeyError:
             if solved:
                 raise
 
-    # Compute vehicle stocks for ldv
-    ldv_distance = Key("ldv distance:nl-driver_type")
-    rep.add(ldv_distance, (computations.ldv_distance, "config"), sums=True, index=True)
+    # Keys
+    dist_ldv = Key("distance", "nl driver_type".split(), "ldv")
+    dist_nonldv = Key("distance", "nl", "non-ldv")
+    CAP = Key("CAP", "nl t ya".split())
+    CAP_ldv = CAP.add_tag("ldv")
+    CAP_nonldv = CAP.add_tag("non-ldv")
 
-    queue.append(
-        (
-            ("ratio", "ldv stock:nl-t-ya-driver_type", "CAP:nl-t-ya:ldv", ldv_distance),
-            dict(sums=True, index=True),
-        )
-    )
-
-    # Compute vehicle stocks for non-ldv
-    non_ldv_distance = Key("non-ldv distance")
-    rep.add(non_ldv_distance, computations.non_ldv_distance, sums=True, index=True)
-
-    queue.append(
-        (
-            ("ratio", "non ldv stock:nl-t-ya", "CAP:nl-t-ya:non-ldv", non_ldv_distance),
-            dict(sums=True, index=True),
-        )
+    # Vehicle stocks
+    queue.extend(
+        [
+            (("select", CAP_ldv, CAP, "t:transport LDV"), _si),
+            (("select", CAP_nonldv, CAP, "t:transport non-LDV"), _si),
+            # Vehicle stocks for LDV
+            ((dist_ldv, computations.ldv_distance, "config"), _si),
+            (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _si),
+            # Vehicle stocks for non-LDV technologies
+            ((dist_nonldv, computations.non_ldv_distance, "config"), _si),
+            (("ratio", "stock:nl-t-ya:non-ldv", CAP_nonldv, dist_nonldv), _si),
+        ]
     )
 
     # Only viable keys added
