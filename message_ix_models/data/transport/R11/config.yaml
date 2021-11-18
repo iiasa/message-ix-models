@@ -219,4 +219,4 @@ share weight convergence:
 report:
   # Set 'true' to include only technologies with "transport" in the name, e.g.
   # if full-resolution reporting of ACT leads to memory issues
-  filter: true
+  filter: false
