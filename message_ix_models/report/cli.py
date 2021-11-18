@@ -31,7 +31,6 @@ log = logging.getLogger(__name__)
     "output_path",
     type=Path,
     help="Write output to file instead of console.",
-    default=Path.cwd(),
 )
 @click.option(
     "--from-file",
@@ -63,7 +62,7 @@ def cli(context, config_file, module, output_path, from_file, dry_run, key):
         raise FileNotFoundError(f"Reporting configuration --config={config}")
 
     # --output/-o: handle "~"
-    output_path = output_path.expanduser()
+    output_path = output_path.expanduser() if output_path else None
 
     # Load modules
     module = module or ""
