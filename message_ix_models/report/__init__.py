@@ -147,7 +147,7 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
 
     log.info(f"Prepare to report {'(DRY RUN)' if dry_run else ''}")
     log.info(key)
-    log.debug(rep.describe(key))
+    log.log(logging.INFO if dry_run else logging.DEBUG, rep.describe(key))
 
     if dry_run:
         return
