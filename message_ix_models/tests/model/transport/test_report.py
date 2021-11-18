@@ -75,3 +75,18 @@ def test_ldv_distance(test_context):
     assert_allclose(
         [13930, 45550], result.sel(nl="R11_NAM", driver_type=["M", "F"]), rtol=2e-4
     )
+
+
+@pytest.mark.parametrize("regions", ["R11"])
+def test_non_ldv_distance(regions):
+    "Test :func:`.computations.ldv_distance`."
+    # Configuration
+    config = dict(transport=dict(regions=regions))
+
+    # Computation runs
+    result = computations.non_ldv_distance(config)
+
+    # Computed value has the expected dimensions
+    assert ("nl", "t", "y") == result.dims
+
+    # TODO Check some computed values
