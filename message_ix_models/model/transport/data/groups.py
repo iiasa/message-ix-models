@@ -267,7 +267,9 @@ def get_gea_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     # Units are as expected
     assert ["million"] == qty.coords["unit"], qty.coords["unit"]
 
-    # Remove unit dimension
+    # - Select the target scenario.
+    # - Remove unit dimension.
+    # - Interpolate to desired `periods`.
     return computations.interpolate(
         qty.sel(scenario=scenario).drop(["unit", "scenario"]),
         coords=dict(y=periods),
