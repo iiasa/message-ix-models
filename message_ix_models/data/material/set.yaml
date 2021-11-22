@@ -4,106 +4,6 @@
 #    accounting. Different sets can be created once there are 2+ different
 #    categories of materials.
 
-petro_chemicals:
-  commodity:
-    require:
-    - crudeoil
-    add:
-    - naphtha
-    - kerosene
-    - diesel
-    - atm_residue
-    - refinery_gas
-    - atm_gasoil
-    - atm_residue
-    - vacuum_gasoil
-    - vacuum_residue
-    - desulf_naphtha
-    - desulf_kerosene
-    - desulf_diesel
-    - desulf_atm_gasoil
-    - desulf_vacuum_gasoil
-    - gasoline
-    - heavy_foil
-    - light_foil
-    - propylene
-    - pet_coke
-    - ethane
-    - propane
-    - ethylene
-    - BTX
-
-  level:
-    require:
-    - secondary
-    - final
-    add:
-    - pre_intermediate
-    - useful_refining
-    - desulfurized
-    - intermediate
-    - secondary_material
-    - useful_petro
-    - final_material
-    - demand_ethylene
-    - demand_propylene
-    - demand_BTX
-    - demand_foil
-    - demand_loil
-
-  mode:
-    add:
-    - atm_gasoil
-    - vacuum_gasoil
-    - naphtha
-    - kerosene
-    - diesel
-    - cracking_gasoline
-    - cracking_loil
-    - ethane
-    - propane
-    - light_foil
-    - refinery_gas
-    - heavy_foil
-    - pet_coke
-    - atm_residue
-    - vacuum_residue
-    - gasoline
-
-  technology:
-    add:
-    - atm_distillation_ref
-    - vacuum_distillation_ref
-    - hydrotreating_ref
-    - catalytic_cracking_ref
-    - visbreaker_ref
-    - coking_ref
-    - catalytic_reforming_ref
-    - hydro_cracking_ref
-    - steam_cracker_petro
-    - ethanol_to_ethylene_petro
-    # - loil_ref_naphtha
-    # - loil_ref_gasoline
-    # - loil_ref_lightfoil
-    # - loil_ref_ethane
-    # - loil_ref_kerosene
-    # - loil_ref_diesel
-    # - loil_ref_refinerygas
-    # - loil_ref
-    # - foil_ref
-    # - foil_ref_heavyfoil
-    # - foil_ref_petcoke
-    # - foil_ref_atmgasoil
-    # - foil_ref_atmresidue
-    # - foil_ref_vacuumresidue
-    - agg_ref
-    - gas_processing_petro
-
-    remove:
-    # Any representation of refinery.
-    - ref_hil
-    - ref_lol
-
 common:
   commodity:
     require:
@@ -124,7 +24,6 @@ common:
 
   level:
     require:
-      # We do not require the secondary and primary levels ??
     - primary
     - secondary
     - useful
@@ -172,7 +71,6 @@ generic:
   level:
     add:
     - useful_steel
-    - useful_aluminum
     - useful_cement
     - useful_aluminum
     - useful_refining
@@ -180,7 +78,6 @@ generic:
 
   technology:
     add:
-    - furnace_coke_steel
     - furnace_foil_steel
     - furnace_loil_steel
     - furnace_biomass_steel
@@ -195,64 +92,6 @@ generic:
     - fc_h2_steel
     - solar_steel
     - dheat_steel
-    - furnace_coke_aluminum
-    - furnace_coal_aluminum
-    - furnace_foil_aluminum
-    - furnace_loil_aluminum
-    - furnace_ethanol_aluminum
-    - furnace_biomass_aluminum
-    - furnace_methanol_aluminum
-    - furnace_gas_aluminum
-    - furnace_elec_aluminum
-    - furnace_h2_aluminum
-    - hp_gas_aluminum
-    - hp_elec_aluminum
-    - fc_h2_aluminum
-    - solar_aluminum
-    - dheat_aluminum
-    - furnace_coke_petro
-    - furnace_coal_petro
-    - furnace_foil_petro
-    - furnace_loil_petro
-    - furnace_ethanol_petro
-    - furnace_biomass_petro
-    - furnace_methanol_petro
-    - furnace_gas_petro
-    - furnace_elec_petro
-    - furnace_h2_petro
-    - hp_gas_petro
-    - hp_elec_petro
-    - fc_h2_petro
-    - solar_petro
-    - dheat_petro
-    - furnace_coke_refining
-    - furnace_coal_refining
-    - furnace_foil_refining
-    - furnace_loil_refining
-    - furnace_ethanol_refining
-    - furnace_biomass_refining
-    - furnace_methanol_refining
-    - furnace_gas_refining
-    - furnace_elec_refining
-    - furnace_h2_refining
-    - hp_gas_refining
-    - hp_elec_refining
-    - fc_h2_refining
-    - solar_refining
-    - dheat_refining
-    - DUMMY_coal_supply
-    - DUMMY_gas_supply
-    - DUMMY_loil_supply
-    - DUMMY_foil_supply
-    - DUMMY_electr_supply
-    - DUMMY_ethanol_supply
-    - DUMMY_methanol_supply
-    - DUMMY_hydrogen_supply
-    - DUMMY_biomass_supply
-    - DUMMY_dist_heating
-    - DUMMY_crudeoil_supply
-    - DUMMY_ethanol_supply_secondary
-    - DUMMY_gas_supply_secondary
     - furnace_foil_cement
     - furnace_loil_cement
     - furnace_biomass_cement
@@ -310,9 +149,6 @@ generic:
     add:
     - low_temp
     - high_temp
-  node:
-    remove:
-    - World
 
 petro_chemicals:
   commodity:
@@ -677,54 +513,3 @@ power_sector:
 #   name: Paper and pulp for paper
 #   description: Pulp is a lignocellulosic fibrous material prepared by chemically or mechanically separating cellulose fibers and the raw material for making paper. Measured as the total mass of material.
 #   unit: Mt
-
-non-ferrous:
-  name: Non-ferrous metals
-  description: Metals and alloys which do not contain iron. Measured as the total mass of material.
-  unit: Mt
-
-# Creates an error because it is the same name with the above aluminum
-# aluminum:
-#   name: Aluminum
-#   description: Aluminum (or aluminium) is a chemical element with the symbol Al. Measured as the total mass of material.
-#   unit: Mt
-#   parent: non-ferrous
-
-copper:
-  name: Copper
-  description: Copper is a chemical element with the symbol Cu. Measured as the total mass of material.
-  unit: Mt
-  parent: non-ferrous
-
-minerals:
-  name: Minerals
-  description: Non-metallic minerals are minerals that have no metallic luster, break easily and include, e.g., sand, limestone, marble, clay and salt. Measured as the FE-equivalent mass of material using LCA midpoint characterization factors.
-  unit: MtFe-eq
-
-cement:
-  name: Cement
-  description: Cement is a binder used for construction that sets, hardens, and adheres to other materials to bind them together. Measured as the total mass of material.
-  unit: Mt
-  parent: minerals
-
-chemicals:
-  name: Chemicals
-  description: Industrial chemicals that form the basis of many products. Measured as the total mass of material.
-  unit: Mt
-
-ethylene:
-  name: Ethylene
-  description: Ethylene is a hydrocarbon with the formula C2H4. Measured as the total mass of material.
-  unit: Mt
-  parent: chemicals
-
-ammonia:
-  name: Ammonia
-  description: Ammonia is a compound of nitrogen and hydrogen with the formula NH3. Measured as the total mass of material.
-  unit: Mt
-  parent: chemicals
-
-paper-pulp:
-  name: Paper and pulp for paper
-  description: Pulp is a lignocellulosic fibrous material prepared by chemically or mechanically separating cellulose fibers and the raw material for making paper. Measured as the total mass of material.
-  unit: Mt
