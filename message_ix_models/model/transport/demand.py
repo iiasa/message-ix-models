@@ -15,6 +15,7 @@ from message_ix import make_df
 from message_ix.reporting import Reporter
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import adapt_R11_R14, broadcast, check_support
+from message_ix_models.model.structure import get_codes
 
 from message_data.model.transport.build import generate_set_elements
 from message_data.model.transport.computations import dummy_prices, rename
@@ -146,12 +147,21 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
     c.add(Key("PRICE_COMMODITY", "ncy"), (dummy_prices, gdp_k), sums=True, index=True)
 
 
-def add_structure(c: Computer, info: ScenarioInfo):
+def add_structure(c: Computer, context: Context, info: ScenarioInfo):
     """Add keys to `c` for model structure required by demand computations.
 
     This uses `info` to mock the contents that would be reported from an already-
     populated Scenario for sets "node", "year", and "cat_year".
     """
+    # `info` contains only structure to be added, not existing/required structure. Add
+    # information about the year dimension, to be used below.
+    # TODO accomplish this by 'merging' the ScenarioInfo/spec.
+    if not len(info.set["years"]):
+        info.year_from_codes(get_codes(f"year/{context.years}"))
+    if not len(info.set["node"]):
+        nodes = get_codes(f"node/{context.regions}")
+        info.set["node"] = nodes[nodes.index("World")].child
+
     for key, value in (
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
@@ -187,7 +197,7 @@ def prepare_reporter(
         # Configure the reporter; keys are stored
         rep.configure(transport=context["transport config"])
 
-    add_structure(rep, info)
+    add_structure(rep, context, info)
 
     if exogenous_data:
         add_exogenous_data(rep, context)
