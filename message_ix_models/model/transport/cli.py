@@ -168,6 +168,58 @@ def build_cmd(context, dest, **options):
     del platform
 
 
+@cli.command("gen-demand")
+@common_params("nodes years")
+@click.argument("source", metavar="DATASOURCE")
+@click.argument("output_dir", metavar="DIR", type=Path, required=False, default=None)
+@click.pass_obj
+def gen_demand(ctx, source, nodes, years, output_dir):
+    """Compute activity (demand) data and write to file in DIR.
+
+    The indicated DATASOURCE is used for exogenous GDP and population data; both inputs
+    to the calculation of demands.
+    """
+    import message_ix
+    from genno import Key
+
+    from message_data.model.transport import build, demand, read_config
+
+    # Read general transport config
+    ctx.regions = nodes or "R11"
+    ctx.years = years or "A"
+    read_config(ctx)
+
+    # Set input data sources from the command-line argument
+    ctx["transport config"]["data source"]["population"] = source
+    ctx["transport config"]["data source"]["GDP"] = source
+
+    # Get a spec for the structure of a target model
+    spec = build.get_spec(ctx)
+
+    # Prepare a Reporter object for demand calculations
+    rep = message_ix.Reporter()
+    demand.prepare_reporter(rep, context=ctx, exogenous_data=True, info=spec["add"])
+    rep.configure(output_dir=output_dir)
+
+    output_dir = output_dir or ctx.get_local_path("output")
+    output_path = output_dir.joinpath(
+        f"demand-{source.replace(' ', '_')}-{ctx.regions}-{ctx.years}.csv"
+    )
+
+    # Compute total demand by mode
+    key = Key("transport pdt", "nyt")
+    rep.add("write_report", "gen-demand", key, output_path)
+
+    log.info(f"Compute {repr(key)}")
+    output_dir.mkdir(exist_ok=True, parents=True)
+    rep.get("gen-demand")
+    log.info(f"Wrote to {output_path}")
+
+    # # Generate diagnostic plots
+    # rep.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
+    # rep.get("demand plots")
+
+
 @cli.command()
 @click.option("--macro", is_flag=True)
 @click.pass_obj
