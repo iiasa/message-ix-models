@@ -1,13 +1,11 @@
 import logging
-from itertools import dropwhile
 
 import message_ix
 import pytest
 from message_ix.reporting import Key
-from message_ix_models import testing
+from message_ix_models import ScenarioInfo, testing
 from message_ix_models.model.bare import get_spec
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import eval_anno
 from pytest import param
 
 from message_data.model.transport import demand, read_config
@@ -38,20 +36,14 @@ def test_population(regions, source, years):
     # Inputs to the function
 
     # Get the list of model periods
-    # TODO move upstream to message_ix_models
-    periods = get_codes(f"year/{years}")
-    periods = list(
-        map(
-            lambda c: int(str(c)),
-            dropwhile(lambda c: not eval_anno(c, "firstmodelyear"), periods),
-        )
-    )
+    info = ScenarioInfo()
+    info.year_from_codes(get_codes(f"year/{years}"))
 
     # Configuration (only the expected key)
     config = {"regions": regions, "transport": {"data source": {"population": source}}}
 
     # Function runs
-    result = demand.population(periods, config)
+    result = demand.population(info.Y, config)
 
     # Data have expected dimensions, units, and coords
     assert ("n", "y") == result.dims
@@ -61,7 +53,7 @@ def test_population(regions, source, years):
     nodes = get_codes(f"node/{regions}")
     assert set(nodes[nodes.index("World")].child) == set(result.coords["n"].values)
 
-    assert set(periods) <= set(result.coords["y"].values)
+    assert set(info.Y) <= set(result.coords["y"].values)
 
 
 @pytest.mark.parametrize(
