@@ -12,7 +12,6 @@ from message_ix_models.model.structure import Code, get_codes
 from message_ix_models.util import adapt_R11_R14, check_support
 
 from message_data.model.transport.utils import consumer_groups, path_fallback
-from message_data.tools import gea, ssp
 
 log = logging.getLogger(__name__)
 
@@ -211,6 +210,7 @@ def population(periods: List[int], config: Dict, extra_dims: bool = False) -> Qu
     See also
     --------
     get_gea_population
+    get_shape_population
     get_ssp_population
     """
     pop_scenario = config["transport"]["data source"]["population"]
@@ -219,15 +219,25 @@ def population(periods: List[int], config: Dict, extra_dims: bool = False) -> Qu
     nodes = nodes[nodes.index("World")].child
 
     if "GEA" in pop_scenario:
-        result = get_gea_population(nodes, periods, pop_scenario)
-        return result.sel(area_type="total", drop=True) if not extra_dims else result
+        data = get_gea_population(nodes, pop_scenario)
+        if not extra_dims:
+            data = data.sel(area_type="total", drop=True)
     elif "SSP" in pop_scenario:
-        return get_ssp_population(nodes, periods, pop_scenario)
+        data = get_ssp_population(nodes, pop_scenario)
+    elif "SHAPE" in pop_scenario:
+        data = get_shape_population(nodes)
     else:
         raise ValueError(pop_scenario)
 
+    # Interpolate to the desired set of periods
+    return computations.interpolate(
+        data,
+        coords=dict(y=periods),
+        kwargs=dict(fill_value="extrapolate"),
+    )
 
-def get_gea_population(nodes: List[Code], periods: List, scenario: str) -> Quantity:
+
+def get_gea_population(nodes: List[Code], scenario: str) -> Quantity:
     """Load population data from the GEA database.
 
     Parameters
@@ -235,8 +245,6 @@ def get_gea_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     node
         Regions for which to return population. Prefixes before and including "_" are
         stripped, e.g. "R11_AFR" results in a query for "AFR".
-    periods
-        Periods for returned data.
     scenario
         Specific name of a GEA scenario.
 
@@ -244,11 +252,13 @@ def get_gea_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     --------
     .get_gea_data
     """
+    from message_data.tools.gea import get_gea_data
+
     # Identify the regions to query from the GEA data, which has R5 and other mappings
     GEA_DIMS["region"].update({r.split("_")[-1]: r for r in map(str, nodes)})
 
     # Assemble query string and retrieve data from GEA snapshot
-    data = gea.get_gea_data(
+    data = get_gea_data(
         " and ".join(
             f"{dim} in {list(values.keys())}" for dim, values in GEA_DIMS.items()
         )
@@ -270,14 +280,47 @@ def get_gea_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     # - Select the target scenario.
     # - Remove unit dimension.
     # - Interpolate to desired `periods`.
-    return computations.interpolate(
-        qty.sel(scenario=scenario).drop(["unit", "scenario"]),
-        coords=dict(y=periods),
-        kwargs=dict(fill_value="extrapolate"),
+    return qty.sel(scenario=scenario).drop(["unit", "scenario"])
+
+
+def _agg(qty: Quantity, nodes: List[Code]) -> Quantity:
+    """Common aggregation code."""
+    return computations.aggregate(
+        qty,
+        groups=dict(n={node.id: list(map(str, node.child)) for node in nodes}),
+        keep=False,
     )
 
 
-def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quantity:
+def get_shape_population(nodes: List[Code]) -> Quantity:
+    """Load population data from the SHAPE source.
+
+    There is only one SHAPE population scenario, labelled “all_SHAPE_SDPs”. Country-
+    resolution data from this projection is aggregated according to the hierarchy of
+    `nodes`.
+
+    Parameters
+    ----------
+    nodes :
+        Regions for returned data.
+    """
+    from message_data.projects import shape
+
+    qty = (
+        shape.get_shape_data("population", rtype="quantity")
+        .drop("scenario")
+        .rename(DIMS)
+        .pipe(_agg, nodes)
+    )
+
+    # Convert bare "million" to [persons]
+    assert "million" == qty.units, qty.units
+    qty.units = "Mpassenger"
+
+    return qty
+
+
+def get_ssp_population(nodes: List[Code], scenario: str) -> Quantity:
     """Load population data from the SSP database.
 
     Always uses ``model="IIASA GDP"`` and the country-resolution data from the SSP
@@ -287,8 +330,6 @@ def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     ----------
     nodes
         Regions for returned data.
-    periods
-        Periods for returned data.
     scenario
         Full or partial name of an SSP scenario, e.g. "SSP2" to match "SSP2_v4_…".
 
@@ -296,8 +337,10 @@ def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     --------
     .get_ssp_data
     """
+    from message_data.tools.ssp import get_ssp_data
+
     # Retrieve country-level data from SSP snapshot
-    data = ssp.get_ssp_data(
+    data = get_ssp_data(
         kind="country",
         query="variable == 'Population' and model == 'IIASA GDP'",
     ).droplevel(["variable", "model"])
@@ -319,13 +362,4 @@ def get_ssp_population(nodes: List[Code], periods: List, scenario: str) -> Quant
     # - Convert the list of nodes into a country → region mapping.
     # - Use the genno aggregate operation from country to regional resolution.
     # - Interpolate and select only the required `periods`.
-    print(qty.sel(scenario=_scenario[0]).drop(["unit", "scenario"]))
-    return computations.interpolate(
-        computations.aggregate(
-            qty.sel(scenario=_scenario[0]).drop(["unit", "scenario"]),
-            groups=dict(n={node.id: list(map(str, node.child)) for node in nodes}),
-            keep=False,
-        ),
-        coords=dict(y=periods),
-        kwargs=dict(fill_value="extrapolate"),
-    )
+    return qty.sel(scenario=_scenario[0]).drop(["unit", "scenario"]).pipe(_agg, nodes)
