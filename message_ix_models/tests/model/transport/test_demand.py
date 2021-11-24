@@ -8,6 +8,7 @@ from message_ix_models.model.bare import get_spec
 from pytest import param
 
 from message_data.model.transport import demand, read_config
+from message_data.tools import assert_units
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ def test_from_external_data(test_context, tmp_path, regions, years, N_node):
             qty = rep.get(key)
 
             # Quantity has the expected units
-            demand.assert_units(qty, unit)
+            assert_units(qty, unit)
 
             # Quantity has the expected size on the n/node dimension
             assert N_node == len(qty.coords["n"])
