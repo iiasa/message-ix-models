@@ -92,6 +92,16 @@ The ``-m model.transport`` option indicates that additional reporting calculatio
 
     $ mix-models --url="$URL" report -m model.transport "transport plots"
 
+Utilities
+---------
+
+The :command:`gen-demand` CLI command is provided to allow generating demand data without building a full scenario::
+
+    $ mix-models transport gen-demand "SHAPE innovation" ../output_dir/
+
+Output is written to a CSV file in the indicated directory.
+See :func:`gdp_pop`, the ``--help`` text, and the command-line output.
+
 
 .. _transport-base-scenarios:
 
