@@ -11,11 +11,7 @@ from message_ix_models import ScenarioInfo
 from message_data.tools.iea_eei import get_eei_data
 
 
-def as_quantity(info: dict) -> Quantity:
-    dim = info.pop("_dim")
-    unit = info.pop("_unit")
 
-    return Quantity(pd.Series(info).rename_axis(dim), units=unit)
 
 
 def dummy_prices(gdp: Quantity) -> Quantity:
