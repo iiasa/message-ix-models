@@ -180,7 +180,7 @@ work hours: "1600 hours / passenger / year"  # = 200 * 8
 # technology.yaml.
 # Source: Schäefer et al. (2010)
 speeds:
-  _dim: technology
+  _dim: t
   _unit: km / hour
   LDV: 54.5 # = 31 + 78 / 2
   2W: 31
