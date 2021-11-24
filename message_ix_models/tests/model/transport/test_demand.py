@@ -3,13 +3,11 @@ import logging
 import message_ix
 import pytest
 from message_ix.reporting import Key
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import testing
 from message_ix_models.model.bare import get_spec
-from message_ix_models.model.structure import get_codes
 from pytest import param
 
 from message_data.model.transport import demand, read_config
-from message_data.model.transport.demand import assert_units
 
 log = logging.getLogger(__name__)
 
@@ -27,33 +25,6 @@ def test_demand_dummy(test_context, regions, years):
     info = get_spec(test_context)["add"]
 
     assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
-
-
-@pytest.mark.parametrize(
-    "regions,source,years", [("R11", "GEA mix", "A"), ("R14", "SSP2", "B")]
-)
-def test_population(regions, source, years):
-    # Inputs to the function
-
-    # Get the list of model periods
-    info = ScenarioInfo()
-    info.year_from_codes(get_codes(f"year/{years}"))
-
-    # Configuration (only the expected key)
-    config = {"regions": regions, "transport": {"data source": {"population": source}}}
-
-    # Function runs
-    result = demand.population(info.Y, config)
-
-    # Data have expected dimensions, units, and coords
-    assert ("n", "y") == result.dims
-    assert_units(result, "Mpassenger")
-
-    # List of model nodes
-    nodes = get_codes(f"node/{regions}")
-    assert set(nodes[nodes.index("World")].child) == set(result.coords["n"].values)
-
-    assert set(info.Y) <= set(result.coords["y"].values)
 
 
 @pytest.mark.parametrize(
