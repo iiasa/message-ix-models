@@ -1,5 +1,5 @@
 """Reporting computations for MESSAGEix-Transport."""
-from typing import Hashable, Mapping, Union
+from typing import Hashable, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ from message_data.tools import assert_units
 from message_data.tools.iea_eei import get_eei_data
 
 
-def base_shares(nodes: list[int], y: list[int], config: dict) -> Quantity:
+def base_shares(nodes: List[int], y: List[int], config: dict) -> Quantity:
     """Return base mode shares."""
     modes = config["transport"]["demand modes"]
     # TODO replace with input data
@@ -30,7 +30,7 @@ def cost(
     whours: Quantity,
     speeds: Quantity,
     votm: Quantity,
-    y: list[int],
+    y: List[int],
 ) -> Quantity:
     """Calculate cost of transport [money / distance].
 
@@ -112,7 +112,7 @@ def _lambda(config: str) -> Quantity:
 
 
 def logit(
-    x: Quantity, k: Quantity, lamda: Quantity, y: list[int], dim: str
+    x: Quantity, k: Quantity, lamda: Quantity, y: List[int], dim: str
 ) -> Quantity:
     r"""Compute probabilities for a logit random utility model.
 
@@ -137,7 +137,7 @@ def logit(
     return ratio(u, u.sum(dim))
 
 
-def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:
+def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
     """Return the elements of `y` beyond the firstmodelyear of `cat_year`."""
     return list(
         filter(
@@ -148,7 +148,7 @@ def model_periods(y: list[int], cat_year: pd.DataFrame) -> list[int]:
     )
 
 
-def nodes_ex_world(nodes: list) -> list[str]:
+def nodes_ex_world(nodes: list) -> List[str]:
     """Nodes excluding 'World'."""
     return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
 
@@ -182,9 +182,9 @@ def share_weight(
     gdp_ppp_cap: Quantity,
     cost: Quantity,
     lamda: Quantity,
-    nodes: list[str],
-    y: list[int],
-    t: list[str],
+    nodes: List[str],
+    y: List[int],
+    t: List[str],
     cat_year: pd.DataFrame,
     config: dict,
 ) -> Quantity:
