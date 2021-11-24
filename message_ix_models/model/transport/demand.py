@@ -19,9 +19,10 @@ from message_ix_models.model.structure import get_codes
 
 from message_data.model.transport.build import generate_set_elements
 from message_data.model.transport.computations import dummy_prices, rename
-from message_data.model.transport.data.groups import get_consumer_groups, population
+from message_data.model.transport.data.groups import get_consumer_groups
 from message_data.model.transport.plot import DEMAND_PLOTS
 from message_data.model.transport.utils import path_fallback
+from message_data.tools import gdp_pop
 
 log = logging.getLogger(__name__)
 
@@ -119,11 +120,9 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
         desc="Exogenous data for demand projection",
     )
 
-    gdp_k = Key("GDP", "ny")
-
     # Add 3 computations per quantity
     for key, basename, units in (
-        (gdp_k, "gdp", "GUSD/year"),
+        # (gdp_k, "gdp", "GUSD/year"),  # Handled below
         (Key("MERtoPPP", "ny"), "mer-to-ppp", ""),
     ):
         # 1. Load the file
@@ -144,7 +143,8 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
         elif context.regions == "R14":
             c.add(key, adapt_R11_R14, k2, sums=True, index=True)
 
-    c.add(Key("PRICE_COMMODITY", "ncy"), (dummy_prices, gdp_k), sums=True, index=True)
+    gdp_key = c.add("GDP:n-y", gdp_pop.gdp, "y", "config")
+    c.add("PRICE_COMMODITY:n-c-y", (dummy_prices, gdp_key), sums=True, index=True)
 
 
 def add_structure(c: Computer, context: Context, info: ScenarioInfo):
@@ -230,9 +230,9 @@ def prepare_reporter(
     # Base share data
     rep.add("base shares:n-t-y", base_shares, "n:ex world", "y", "config")
 
-    # Population data from GEA
+    # Population data according to config
     pop_key = rep.add(
-        "population:n-y", partial(population, extra_dims=False), "y", "config"
+        "population:n-y", partial(gdp_pop.population, extra_dims=False), "y", "config"
     )
 
     # Consumer group sizes
