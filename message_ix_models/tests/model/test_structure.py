@@ -4,7 +4,19 @@ from pathlib import Path
 import pytest
 from iam_units import registry
 
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import codelists, get_codes
+
+
+@pytest.mark.parametrize(
+    "kind, exp",
+    [
+        ("node", ["ISR", "R11", "R12", "R14", "R32", "RCP"]),
+        ("year", ["A", "B"]),
+    ],
+)
+def test_codelists(kind, exp):
+    """:func:`codelists` returns the expected IDs."""
+    assert exp == codelists(kind)
 
 
 class TestGetCodes:
