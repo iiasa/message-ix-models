@@ -8,9 +8,24 @@ import pycountry
 from iam_units import registry
 from sdmx.model import Annotation, Code
 
-from message_ix_models.util import as_codes, eval_anno, load_package_data
+from message_ix_models.util import (
+    as_codes,
+    eval_anno,
+    load_package_data,
+    package_data_path,
+)
 
 log = logging.getLogger(__name__)
+
+
+def codelists(kind: str) -> List[str]:
+    """Return a valid IDs for code lists of `kind`.
+
+    Parameters
+    ----------
+    kind : str, "node" or "year"
+    """
+    return sorted(path.stem for path in package_data_path(kind).glob("*.yaml"))
 
 
 @lru_cache()
