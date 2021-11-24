@@ -12,6 +12,7 @@ Models and variants (:mod:`~message_ix_models.model`)
 .. currentmodule:: message_ix_models.model.structure
 
 .. automodule:: message_ix_models.model.structure
+   :members: codelists
 
 .. autofunction:: get_codes
 

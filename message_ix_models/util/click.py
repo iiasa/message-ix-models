@@ -6,6 +6,8 @@ import logging
 
 from click import Argument, Choice, Option
 
+from message_ix_models.model.structure import codelists
+
 log = logging.getLogger(__name__)
 
 
@@ -75,6 +77,11 @@ PARAMS = {
         callback=store_context,
         help="Overwrite or modify existing model/scenario.",
     ),
+    "nodes": Option(
+        ["--nodes"],
+        help="Code list to use for 'node' dimension.",
+        type=Choice(codelists("node")),
+    ),
     "output_model": Option(
         ["--output-model"], help="Model name under which scenarios should be generated."
     ),
@@ -92,8 +99,7 @@ PARAMS = {
     "regions": Option(
         ["--regions"],
         help="Code list to use for 'node' dimension.",
-        # TODO make this list dynamic, e.g. using a callback to check against data/node/
-        type=Choice(["ISR", "R11", "R14", "R32", "RCP"]),
+        type=Choice(codelists("node")),
     ),
     "rep_out_path": Option(
         ["--rep-out-path"],
@@ -118,5 +124,10 @@ PARAMS = {
     ),
     "verbose": Option(
         ["--verbose", "-v"], is_flag=True, help="Print DEBUG-level log messages."
+    ),
+    "years": Option(
+        ["--years"],
+        help="Code list to use for the 'year' dimension.",
+        type=Choice(codelists("year")),
     ),
 }
