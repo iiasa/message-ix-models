@@ -1,7 +1,10 @@
 import logging
+from typing import Union
 
 import pandas as pd
+from genno import Quantity
 from genno.compat.pyam.util import collapse as genno_collapse
+from iam_units import registry
 
 
 log = logging.getLogger(__name__)
@@ -63,6 +66,18 @@ REPLACE_VARS = {
     r"Import Energy\|(Liquids\|(Biomass|Oil))": r"Secondary Energy|\1",
     r"Import Energy\|Lh2": "Secondary Energy|Hydrogen",
 }
+
+
+def as_quantity(info: Union[dict, str]) -> Quantity:
+    """Convert values from a :class:`dict` to Quantity."""
+    if isinstance(info, str):
+        q = registry(info)
+        return Quantity(q.magnitude, units=q.units)
+    else:
+        data = info.copy()
+        dim = data.pop("_dim")
+        unit = data.pop("_unit")
+        return Quantity(pd.Series(data).rename_axis(dim), units=unit)
 
 
 def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
