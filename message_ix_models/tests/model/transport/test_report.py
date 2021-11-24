@@ -63,8 +63,8 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
 
 
 @pytest.mark.parametrize("regions", ["R11"])
-def test_ldv_distance(test_context, regions):
-    "Test :func:`.computations.ldv_distance`."
+def test_distance_ldv(test_context, regions):
+    "Test :func:`.computations.distance_ldv`."
     ctx = test_context
     ctx.regions = regions
     read_config(ctx)
@@ -73,7 +73,7 @@ def test_ldv_distance(test_context, regions):
     config = dict(transport=ctx["transport config"])
 
     # Computation runs
-    result = computations.ldv_distance(config)
+    result = computations.distance_ldv(config)
 
     # Computed value has the expected dimensions
     assert ("nl", "driver_type") == result.dims
@@ -85,13 +85,13 @@ def test_ldv_distance(test_context, regions):
 
 
 @pytest.mark.parametrize("regions", ["R11"])
-def test_non_ldv_distance(regions):
+def test_distance_nonldv(regions):
     "Test :func:`.computations.ldv_distance`."
     # Configuration
     config = dict(transport=dict(regions=regions))
 
     # Computation runs
-    result = computations.non_ldv_distance(config)
+    result = computations.distance_nonldv(config)
 
     # Computed value has the expected dimensions
     assert ("nl", "t", "y") == result.dims
