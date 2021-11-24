@@ -1,5 +1,7 @@
 import click
 
+from message_ix_models.util.click import common_params
+
 
 @click.group("res")
 @click.pass_obj
@@ -8,13 +10,13 @@ def cli(context):
 
 
 @cli.command("create-bare")
-@click.option("--regions", type=click.Choice(["R11", "R14"]))
+@common_params("nodes")
 @click.pass_obj
-def create_bare(context, regions):
+def create_bare(context, nodes):
     """Create the RES from scratch."""
     from .bare import create_res
 
-    if regions:
-        context.regions = regions
+    if nodes:
+        context.regions = nodes
 
     create_res(context)
