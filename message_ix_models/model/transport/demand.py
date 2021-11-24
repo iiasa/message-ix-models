@@ -120,9 +120,9 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
         desc="Exogenous data for demand projection",
     )
 
-    si = dict(sums=True, index=True)
+    si = dict(sums=True, index=True)  # Shorthand
 
-    # Add 3 computations per quantity
+    # Data from files. Add 3 computations per quantity.
     for key, basename, units in (
         # (gdp_k, "gdp", "GUSD/year"),  # Handled below
         (Key("MERtoPPP", "ny"), "mer-to-ppp", ""),
@@ -199,11 +199,13 @@ def prepare_reporter(
         # Configure the reporter; keys are stored
         rep.configure(transport=context["transport config"])
 
+    # Always ensure structure is available
     add_structure(rep, context, info)
 
     if exogenous_data:
         add_exogenous_data(rep, context)
 
+    # Transfer transport config to the Reporter
     rep.graph["config"].update(
         {
             "data source": {
@@ -215,114 +217,124 @@ def prepare_reporter(
         }
     )
 
+    # Keys to refer to quantities
     # Existing keys, prepared by from_scenario() or from_external_data()
     gdp = rep.full_key("GDP")
     mer_to_ppp = rep.full_key("MERtoPPP")
     price_full = rep.full_key("PRICE_COMMODITY").drop("h", "l")
 
-    # Values based on configuration
-    rep.add("speed:t", speed, "config")
-    rep.add("whour:", whour, "config")
-    rep.add("lambda:", _lambda, "config")
+    # Keys for new quantities
+    pop = Key("population", "ny")
+    cg = Key("cg share", "n y cg".split())
+    gdp_ppp = Key("GDP", "ny", "PPP")
+    gdp_ppp_cap = gdp_ppp.add_tag("capita")
+    pdt_nyt = Key("transport pdt", "nyt")  # Total PDT shared out by mode
+    pdt_cap = pdt_nyt.drop("t").add_tag("capita")
+    pdt_ny = pdt_nyt.drop("t").add_tag("total")
+    price_sel = price_full.add_tag("transport")
+    price = price_sel.add_tag("smooth")
+    cost_key = Key("cost", "nyct")
 
-    # List of nodes excluding "World"
-    # TODO move upstream to message_ix
-    rep.add("n:ex world", nodes_ex_world, "n")
-    rep.add("n:ex world+code", nodes_ex_world, "nodes")
+    _ = dict()
 
-    # List of model years
-    rep.add("y:model", model_periods, "y", "cat_year")
-
-    # Base share data
-    rep.add("base shares:n-t-y", base_shares, "n:ex world", "y", "config")
-
-    # Population data according to config
-    pop_key = rep.add(
-        "population:n-y", partial(gdp_pop.population, extra_dims=False), "y", "config"
-    )
-
-    # Consumer group sizes
-    # TODO ixmp is picky here when there is no separate argument to the callable; fix.
-    cg_key = rep.add("cg share:n-y-cg", get_consumer_groups, quote(context))
-
-    # PPP GDP, total and per capita
-    gdp_ppp = rep.add("product", "GDP:n-y:PPP", gdp, mer_to_ppp)
-    gdp_ppp_cap = rep.add("ratio", "GDP:n-y:PPP+capita", gdp_ppp, pop_key)
-
-    # Total demand
-    pdt_cap = rep.add("transport pdt:n-y:capita", pdt_per_capita, gdp_ppp_cap, "config")
-    pdt_ny = rep.add("product", "transport pdt:n-y:total", pdt_cap, pop_key)
-
-    # Value-of-time multiplier
-    rep.add("votm:n-y", votm, gdp_ppp_cap)
-
-    # Select only the price of transport services
-    price_sel = rep.add(
-        price_full.add_tag("transport"),
-        rep.get_comp("select"),
-        price_full,
-        # TODO should be the full set of prices
-        dict(c="transport"),
-    )
-    # Smooth prices to avoid zig-zag in share projections
-    price = rep.add(price_sel.add_tag("smooth"), smooth, price_sel)
-
-    # Transport costs by mode
-    cost_key = rep.add(
-        "cost:n-y-c-t",
-        cost,
-        price,
-        gdp_ppp_cap,
-        "whour:",
-        "speed:t",
-        "votm:n-y",
-        "y:model",
-    )
-
-    # Share weights
-    rep.add(
-        "share weight:n-t-y",
-        share_weight,
-        "base shares:n-t-y",
-        gdp_ppp_cap,
-        cost_key,
-        "n:ex world",
-        "y:model",
-        "t:transport",
-        "cat_year",
-        "config",
-    )
-
-    # Shares
-    rep.add(
-        "shares:n-t-y",
-        partial(logit, dim="t"),
-        cost_key,
-        "share weight:n-t-y",
-        "lambda:",
-        "y:model",
-    )
-
-    # Total PDT shared out by mode
-    pdt_nyt = rep.add("product", "transport pdt:n-y-t", pdt_ny, "shares:n-t-y")
-
-    # Per capita
-    rep.add("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop_key, sums=False)
-
-    # LDV PDT shared out by mode
-    rep.add("select", "transport ldv pdt:n-y:total", pdt_nyt, dict(t=["LDV"]))
-
-    rep.add(
-        "product",
-        "transport ldv pdt",
-        "transport ldv pdt:n-y:total",
-        cg_key,
-    )
+    queue = [
+        # Values based on configuration
+        (("speed:t", speed, "config"), _),
+        (("whour:", whour, "config"), _),
+        (("lambda:", _lambda, "config"), _),
+        # List of nodes excluding "World"
+        # TODO move upstream to message_ix
+        (("n:ex world", nodes_ex_world, "n"), _),
+        (("n:ex world+code", nodes_ex_world, "nodes"), _),
+        # List of model years
+        (("y:model", model_periods, "y", "cat_year"), _),
+        # Base share data
+        (("base shares:n-t-y", base_shares, "n:ex world", "y", "config"), _),
+        # Population data; data source according to config
+        ((pop, partial(gdp_pop.population, extra_dims=False), "y", "config"), _),
+        # Consumer group sizes
+        # TODO ixmp is picky here when there is no separate argument to the callable;
+        # fix.
+        ((cg, get_consumer_groups, quote(context)), _),
+        # PPP GDP, total and per capita
+        (("product", gdp_ppp, gdp, mer_to_ppp), _),
+        (("ratio", gdp_ppp_cap, gdp_ppp, pop), _),
+        # Total demand
+        ((pdt_cap, pdt_per_capita, gdp_ppp_cap, "config"), _),
+        (("product", pdt_ny, pdt_cap, pop), _),
+        # Value-of-time multiplier
+        (("votm:n-y", votm, gdp_ppp_cap), _),
+        # Select only the price of transport services
+        # FIXME should be the full set of prices
+        (("select", price_sel, price_full, dict(c="transport")), _),
+        # Smooth prices to avoid zig-zag in share projections
+        ((price, smooth, price_sel), _),
+        # Transport costs by mode
+        (
+            (
+                cost_key,
+                cost,
+                price,
+                gdp_ppp_cap,
+                "whour:",
+                "speed:t",
+                "votm:n-y",
+                "y:model",
+            ),
+            _,
+        ),
+        # Share weights
+        (
+            (
+                "share weight:n-t-y",
+                share_weight,
+                "base shares:n-t-y",
+                gdp_ppp_cap,
+                cost_key,
+                "n:ex world",
+                "y:model",
+                "t:transport",
+                "cat_year",
+                "config",
+            ),
+            _,
+        ),
+        # Shares
+        (
+            (
+                "shares:n-t-y",
+                partial(logit, dim="t"),
+                cost_key,
+                "share weight:n-t-y",
+                "lambda:",
+                "y:model",
+            ),
+            _,
+        ),
+        # Total PDT shared out by mode
+        (("product", pdt_nyt, pdt_ny, "shares:n-t-y"), _),
+        # Per capita
+        (("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop), dict(sums=False)),
+        # LDV PDT only
+        (("select", "transport ldv pdt:n-y:total", pdt_nyt, dict(t=["LDV"])), _),
+        # LDV PDT shared out by consumer group
+        (
+            (
+                "product",
+                "transport ldv pdt",
+                "transport ldv pdt:n-y:total",
+                cg,
+            ),
+            _,
+        ),
+    ]
 
     # Plots
-    for plot in DEMAND_PLOTS:
-        key = f"plot {plot.basename}"
-        rep.add(key, plot.make_task())
+    queue.extend(
+        [((f"plot {plot.basename}", plot.make_task()), _) for plot in DEMAND_PLOTS]
+    )
+
+    rep.add_queue(queue)
 
 
 def base_shares(nodes, y, config):
