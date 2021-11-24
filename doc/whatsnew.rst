@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2021.11.24
+==========
 
 - Add :command:`--years` and :command:`--nodes` to :func:`.common_params` (:pull:`35`).
 - New utility function :func:`.structure.codelists` (:pull:`35`).
