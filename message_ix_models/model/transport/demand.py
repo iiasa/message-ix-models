@@ -120,6 +120,8 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
         desc="Exogenous data for demand projection",
     )
 
+    si = dict(sums=True, index=True)
+
     # Add 3 computations per quantity
     for key, basename, units in (
         # (gdp_k, "gdp", "GUSD/year"),  # Handled below
@@ -139,12 +141,12 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
 
         # 3. Maybe transform from R11 to another node list
         if context.regions == "R11":
-            c.add(key, k2, sums=True, index=True)  # No-op/pass-through
+            c.add(key, k2, **si)  # No-op/pass-through
         elif context.regions == "R14":
-            c.add(key, adapt_R11_R14, k2, sums=True, index=True)
+            c.add(key, adapt_R11_R14, k2, **si)
 
-    gdp_key = c.add("GDP:n-y", gdp_pop.gdp, "y", "config")
-    c.add("PRICE_COMMODITY:n-c-y", (dummy_prices, gdp_key), sums=True, index=True)
+    gdp_keys = c.add("GDP:n-y", gdp_pop.gdp, "y", "config", **si)
+    c.add("PRICE_COMMODITY:n-c-y", (dummy_prices, gdp_keys[0]), **si)
 
 
 def add_structure(c: Computer, context: Context, info: ScenarioInfo):
@@ -204,6 +206,10 @@ def prepare_reporter(
 
     rep.graph["config"].update(
         {
+            "data source": {
+                k: context["transport config"]["data source"][k]
+                for k in ("gdp", "population")
+            },
             "output_path": context.get("output_path", Path.cwd()),
             "regions": context.regions,
         }
