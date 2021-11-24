@@ -464,13 +464,6 @@ def pdt_per_capita(gdp_ppp_cap, config):
     return result
 
 
-def assert_units(qty, exp):
-    """Assert that `qty` has units `exp`."""
-    assert (
-        qty.units / qty.units._REGISTRY(exp)
-    ).dimensionless, f"Units '{qty.units:~}'; expected {repr(exp)}"
-
-
 def votm(gdp_ppp_cap):
     """Calculate value of time multiplier.
 
