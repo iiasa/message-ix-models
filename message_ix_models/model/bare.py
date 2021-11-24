@@ -11,10 +11,14 @@ import message_ix_models
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.build import apply_spec
 from message_ix_models.model.data import get_data
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import codelists, get_codes
 from message_ix_models.util import eval_anno
 
 log = logging.getLogger(__name__)
+
+
+def _default_first(kind, default):
+    return [default] + list(filter(lambda id: id != default, codelists(kind)))
 
 
 #: Settings and valid values; the default is listed first.
@@ -24,8 +28,9 @@ log = logging.getLogger(__name__)
 #: - ``years``: recognized lists of time periods ("years"); these match the files
 #:   :file:`data/year/*.yaml`
 SETTINGS = dict(
-    regions=["R14", "R11", "R12", "RCP", "ISR"],
-    years=["B", "A"],
+    # Place the default value first
+    regions=_default_first("node", "R14"),
+    years=_default_first("year", "B"),
     res_with_dummies=[False, True],
 )
 
