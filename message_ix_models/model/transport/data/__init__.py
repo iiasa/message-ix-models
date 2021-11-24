@@ -23,7 +23,6 @@ log = logging.getLogger(__name__)
 #: CSV files containing data for input calculations and assumptions.
 DATA_FILES = [
     ("demand-scale.csv",),
-    ("gdp.csv",),
     ("ldv-class.csv",),
     ("mer-to-ppp.csv",),
     ("population-suburb-share.csv",),
