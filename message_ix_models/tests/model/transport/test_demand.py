@@ -100,3 +100,23 @@ def test_from_scenario(user_context):
     scenario, mp = message_ix.Scenario.from_url(url)
 
     demand.from_scenario(scenario)
+
+
+@pytest.mark.parametrize(
+    "data_source",
+    [
+        "GEA mix",
+        "SSP2",
+        "SHAPE innovation",
+    ],
+)
+def test_cli(tmp_path, mix_models_cli, data_source):
+    assert 0 == len(list(tmp_path.glob("*.csv")))
+
+    result = mix_models_cli.invoke(
+        ["transport", "gen-demand", data_source, str(tmp_path)]
+    )
+    assert result.exit_code == 0, (result.exception, result.output)
+
+    # 1 file created in the temporary path
+    assert 1 == len(list(tmp_path.glob("*.csv")))

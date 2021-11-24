@@ -191,7 +191,7 @@ def gen_demand(ctx, source, nodes, years, output_dir):
 
     # Set input data sources from the command-line argument
     ctx["transport config"]["data source"]["population"] = source
-    ctx["transport config"]["data source"]["GDP"] = source
+    ctx["transport config"]["data source"]["gdp"] = source
 
     # Get a spec for the structure of a target model
     spec = build.get_spec(ctx)

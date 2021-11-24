@@ -12,6 +12,8 @@ data source:
   demand dummy: false
   # Population: 'GEA mix' only
   population: GEA mix
+  #  GDP
+  gdp: GEA mix
   # Emissions: ID of a dump from a base scenario
   emissions: "1"
 
