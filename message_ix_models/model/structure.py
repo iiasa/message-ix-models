@@ -23,7 +23,8 @@ def codelists(kind: str) -> List[str]:
 
     Parameters
     ----------
-    kind : str, "node" or "year"
+    kind : str
+        "node" or "year".
     """
     return sorted(path.stem for path in package_data_path(kind).glob("*.yaml"))
 
