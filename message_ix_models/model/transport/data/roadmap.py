@@ -17,7 +17,7 @@ import pandas as pd
 from message_ix_models.util import private_data_path
 from plotnine import save_as_pdf_pages
 
-from message_data.tools.iea_eei import plot_params_per_mode, split_units
+from message_data.tools.iea_eei import plot_params_per_mode
 
 #: Name of the file containing the data.
 FILE = "RoadmapResults_2017.xlsx"
@@ -150,12 +150,14 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
 
     df = pd.concat(
         [
-            df,
-            # Split 'Variable' and 'Units' columns from `var_unit_col`
-            split_units(df["variable"]),
+            df.drop("variable", axis=1),
+            # Split "variable" and "units" columns
+            df["variable"]
+            .str.rsplit("_", n=1, expand=True)
+            .set_axis(["variable", "unit"], axis=1),
         ],
         axis=1,
-    ).drop(["variable"], axis=1)
+    )
 
     # Get the input regional aggregation and add it as a column
     df["Region"] = region[1]

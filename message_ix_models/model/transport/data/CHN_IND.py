@@ -6,8 +6,6 @@ from iam_units import registry
 from item import historical
 from message_ix_models.util import private_data_path
 
-from message_data.tools.iea_eei import split_units
-
 UNITS = {
     "Population": (1.0e-6, None, "dimensionless"),
     "Vehicle Stock": (1.0e4, "vehicle", "thousand vehicle"),
@@ -191,8 +189,12 @@ def get_chn_ind_data(private_vehicles=False):
         df = pd.concat([df, df_aux], ignore_index=True)
     # Drop rows containing sub-categories of rail transport
     df = df.drop(df[df["Indicators"].isin(RAIL_SUB_CAT)].index).reset_index(drop=True)
-    df = pd.concat([df, split_units(df["Indicators"], pat="(")], axis=1).drop(
-        ["Indicators"], axis=1
+    df = pd.concat(
+        [
+            df.drop("Indicators", axis=1),
+            df["Indicators"].str.extract(r"(?P<variable>.*) \((?P<units>.*)\)"),
+        ],
+        axis=1,
     )
     df["Variable"] = df["Variable"].str.replace("Possession", "Vehicle Stock")
     # Reach **tidy data** structure
