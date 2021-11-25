@@ -29,6 +29,8 @@ DATA_FILES = [
     ("ma3t", "population.csv"),
     ("ma3t", "attitude.csv"),
     ("ma3t", "driver.csv"),
+    ("mode-share", "default.csv"),
+    ("mode-share", "A---.csv"),
 ]
 
 DATA_FUNCTIONS = [
