@@ -23,6 +23,7 @@ transport build --help`.
 
 """
 import logging
+from itertools import product
 from pathlib import Path
 
 import click
@@ -107,6 +108,7 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 
 @cli.command("build")
 @common_params("dest dry_run regions quiet")
+@click.option("--future", help="Transport futures scenario")
 @click.option(
     "--fast", is_flag=True, help="Skip removing data for removed set elements."
 )
@@ -168,6 +170,75 @@ def build_cmd(context, dest, **options):
     del platform
 
 
+@cli.command()
+@click.pass_context
+def batch(click_ctx):
+    """Generate commands to handle batches of scenarios."""
+    # from message_ix_models.cli import solve_cmd
+
+    # Items for Cartesian product
+    actions = [
+        "build",
+        "solve",
+        # "report",
+    ]
+    model_names = ["ENGAGE_SSP2_v4.1.7"]
+    scenario_version = [
+        "baseline#1",
+        "EN_NPi2020_1000f#1",
+    ]
+    options = {
+        "": "",
+        "A---": '--future="A---"',
+    }
+
+    # Accumulate command fragments
+    commands = []
+
+    for action, m, sv, (label, opt) in product(
+        actions, model_names, scenario_version, options.items()
+    ):
+        # Source and destination URLs
+        src = f"ixmp://local/{m}/{sv}"
+        dest = f"ixmp://local/{m}+transport/{sv.split('#')[0]} {label}".rstrip()
+
+        # Assemble a command fragment
+        if action == "build":
+            print(f'$ mix-models --url="{src}" transport build --dest="{dest}" {opt}')
+            # commands.append([src, build_cmd, build_opts])
+        elif action == "solve":
+            print(f'$ message-ix --url="{dest}" solve')
+            # commands.append([dest, solve_cmd, dict()])
+        else:
+            raise NotImplementedError
+
+    return
+    # NB the following code would run each of the commands directly through click self-
+    #    invocation, within the same Python session. This tends to trigger memory
+    #    overruns, so it is currently disabled.
+
+    if getattr(click_ctx.obj, "url", False):
+        log.warning(f"Ignoring --url={click_ctx.obj.url}")
+
+    ctx = click_ctx.obj
+
+    for url, cmd, opts in commands:
+        log.info(f"Invoke: {cmd} {url} {opts}")
+        # continue  # for debugging
+
+        # Store certain settings on the message_ix_models.Context object which cannot
+        # be passed through invoke()
+        ctx.handle_cli_args(url=url)
+        if "dest" in opts:
+            ctx.handle_cli_args(
+                url=opts.pop("dest"), _store_as=("dest_platform", "dest_scenario")
+            )
+
+        click_ctx.invoke(cmd, **opts)
+
+        ctx.close_db()
+
+
 @cli.command("gen-demand")
 @common_params("nodes years")
 @click.argument("source", metavar="DATASOURCE")
@@ -218,24 +289,6 @@ def gen_demand(ctx, source, nodes, years, output_dir):
     # # Generate diagnostic plots
     # rep.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
     # rep.get("demand plots")
-
-
-@cli.command()
-@click.option("--macro", is_flag=True)
-@click.pass_obj
-def solve(context, macro):
-    """Run the model."""
-    args = dict()
-
-    scenario = context.get_scenario()
-
-    if macro:
-        from .callback import main as callback
-
-        args["callback"] = callback
-
-    scenario.solve(**args)
-    scenario.commit()
 
 
 @cli.command()
