@@ -80,6 +80,10 @@ def read_config(context):
         except (KeyError, TypeError):
             pass
 
+    # Set some defaults
+    context["transport config"].setdefault("mode-share", "default")
+    context["transport config"].setdefault("regions", context.regions)
+
 
 def consumer_groups(rtype=Code):
     """Iterate over consumer groups defined in :file:`sets.yaml`.
