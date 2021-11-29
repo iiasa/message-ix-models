@@ -1,4 +1,5 @@
 """Reporting computations for MESSAGEix-Transport."""
+import logging
 from typing import Hashable, List, Mapping, Union
 
 import numpy as np
@@ -8,19 +9,48 @@ from genno import Quantity, computations
 from genno.computations import add, product, ratio
 from iam_units import registry
 from ixmp import Scenario
+from ixmp.reporting import RENAME_DIMS
 from message_ix_models import ScenarioInfo
 
+from message_data.model.transport.utils import path_fallback
 from message_data.reporting.util import as_quantity
 from message_data.tools import assert_units
 from message_data.tools.iea_eei import get_eei_data
 
+log = logging.getLogger(__name__)
 
-def base_shares(nodes: List[int], y: List[int], config: dict) -> Quantity:
-    """Return base mode shares."""
-    modes = config["transport"]["demand modes"]
-    # TODO replace with input data
-    return Quantity(
-        xr.DataArray(1.0 / len(modes), coords=[nodes, y, modes], dims=["n", "y", "t"])
+
+def base_shares(
+    nodes: List[str], techs: List[str], y: List[int], config: dict
+) -> Quantity:
+    """Return base mode shares.
+
+    The mode shares are read from a file at
+    :file:`data/transport/{regions}/mode-shares/{name}.csv`, where `name` is from the
+    configuration key ``mode-share:``, and `region` uses :func:`.path_fallback`.
+
+    Labels on the t (technology) dimension must match the ``demand modes:`` from the
+    configuration.
+
+    If the data lack the n (node, spatial) and/or y (time) dimensions, they are
+    broadcast over these.
+    """
+    # TODO write tests
+    path = path_fallback(
+        config["regions"], "mode-share", f"{config['transport']['mode-share']}.csv"
+    )
+    log.info(f"Read base mode shares from {path}")
+
+    base = computations.load_file(path, dims=RENAME_DIMS, name="mode share", units="")
+
+    missing = [d for d in "nty" if d not in base.dims]
+    log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
+
+    return product(
+        base,
+        Quantity(
+            xr.DataArray(1.0, coords=[nodes, techs, y], dims=["n", "t", "y"]), units=""
+        ),
     )
 
 
