@@ -165,6 +165,7 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
     for key, value in (
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
+        ("t:transport modes", quote(context["transport config"]["demand modes"])),
         ("y", quote(info.set["year"])),
         (
             "cat_year",
@@ -252,7 +253,17 @@ def prepare_reporter(
         # List of model years
         (("model_periods", "y:model", "y", "cat_year"), _),
         # Base share data
-        (("base_shares", "base shares:n-t-y", "n:ex world", "y", "config"), _),
+        (
+            (
+                "base_shares",
+                "base shares:n-t-y",
+                "n:ex world",
+                "t:transport modes",
+                "y:model",
+                "config",
+            ),
+            _,
+        ),
         # Population data; data source according to config
         ((pop, partial(gdp_pop.population, extra_dims=False), "y", "config"), _),
         # Consumer group sizes
