@@ -1,6 +1,6 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
-from typing import Hashable, List, Mapping, Union
+from typing import Dict, Hashable, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from genno.computations import add, product, ratio
 from iam_units import registry
 from ixmp import Scenario
 from ixmp.reporting import RENAME_DIMS
+from message_ix import make_df
 from message_ix_models import ScenarioInfo
 
 from message_data.model.transport.utils import path_fallback
@@ -78,6 +79,47 @@ def cost(
     result = add(price, ratio(product(gdp_ppp_cap, votm), product(speeds, whours)))
 
     return result.sel(y=y)
+
+
+def demand_ixmp(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
+    """Convert transport demands as model-ready ixmp format.
+
+    pdt1: "transport pdt:n-y-t"
+    pdt2: "transport ldv pdt:n-y-cg"
+    """
+    # Generate the demand data; convert to pd.DataFrame
+    data = pdt1.to_series().reset_index(name="value")
+
+    common = dict(
+        level="useful",
+        time="year",
+        unit="km",  # TODO reduce this from the units of pdt1
+    )
+
+    # Convert to message_ix layout
+    # TODO combine the two below in a loop or push the logic to demand.py
+    data = make_df(
+        "demand",
+        node=data["n"],
+        commodity="transport pax " + data["t"].str.lower(),
+        year=data["y"],
+        value=data["value"],
+        **common,
+    )
+    data = data[~data["commodity"].str.contains("ldv")]
+
+    data2 = pdt2.to_series().reset_index(name="value")
+
+    data2 = make_df(
+        "demand",
+        node=data2["n"],
+        commodity="transport pax " + data2["cg"],
+        year=data2["y"],
+        value=data2["value"],
+        **common,
+    )
+
+    return dict(demand=pd.concat([data, data2]))
 
 
 def distance_ldv(config: dict) -> Quantity:
