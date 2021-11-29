@@ -1,7 +1,5 @@
 # Configuration for MESSAGEix-Transport
 
-regions: R11
-
 # Sources for input data
 data source:
   # Non-LDV technologies: 'IKARUS' or null
@@ -171,6 +169,10 @@ constraint:
 
 # Set of modes handled by demand projection
 demand modes: [LDV, 2W, AIR, BUS, RAIL]
+
+# Base year shares of activity by mode. This should be the stem of a CSV file
+# in the directory data/transport/{regions}/mode-share/.
+mode-share: default
 
 # Work hours per year, used to compute value of time
 work hours: "1600 hours / passenger / year"  # = 200 * 8
