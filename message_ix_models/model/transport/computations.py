@@ -234,7 +234,7 @@ def share_weight(
     # Weights in y0 for all modes and nodes
     s_y0 = share.sel(**y0, t=modes, n=nodes)
     c_y0 = cost.sel(**y0, t=modes, n=nodes).sel(c="transport", drop=True)
-    tmp = computations.pow(s_y0 / c_y0, lamda)
+    tmp = computations.pow(ratio(s_y0, c_y0), lamda)
 
     # Normalize against first mode's weight
     # TODO should be able to avoid a cast and align here
