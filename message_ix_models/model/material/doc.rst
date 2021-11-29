@@ -10,7 +10,7 @@ MESSAGEix-Materials
    `current tracking issue (#248) <https://github.com/iiasa/message_data/issues/248>`_.
 
 Description
-==============
+===========
 
 This module adds (life-cycle) accounting of materials associated with technologies and demands in MESSAGEix-GLOBIOM.
 
@@ -21,7 +21,7 @@ The technologies to represent for the primary production processes of the materi
 of commercialization.
 
 Processing secondary materials
------------------------------
+------------------------------
 
 After the primary production stages of the materials, finishing and manufacturing processes are carried out which results in a complete product.
 For metals, during the manufacturing process new scrap is formed as residue. This type of scrap requires less preparation before recycling and has a higher quality
@@ -33,7 +33,7 @@ In the model, each year only certain quantity of products are available for recy
 The end-of-life products coming from buildings and power sector can be endogenously determined in case the relevant links are turned on.
 
 Modeling recycling decisions
-~~~~~~~~~~~~~~~~~~~~
+############################
 
 In the model, there is a minimum recycling rate specified for different materials and it is based on the historical recycling rates. This parameter can also be used to represent
 regulations in different regions. In the end recycling rate is a model decision which can be higher than the minimum rate depending on the economic attractiveness.
