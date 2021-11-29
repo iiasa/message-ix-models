@@ -1,9 +1,12 @@
 """Compute MESSAGEix-compatible input data for MESSAGEix-Transport."""
 import logging
 from collections import defaultdict
+from functools import partial
+from typing import Dict, List
 
 import pandas as pd
-from message_ix import make_df
+from dask.core import quote
+from genno import Computer
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     add_par_data,
@@ -14,9 +17,7 @@ from message_ix_models.util import (
     same_node,
 )
 
-from .freight import get_freight_data
-from .ldv import get_ldv_data
-from .non_ldv import get_non_ldv_data
+from . import freight, ldv, non_ldv
 
 log = logging.getLogger(__name__)
 
@@ -33,21 +34,29 @@ DATA_FILES = [
     ("mode-share", "A---.csv"),
 ]
 
-DATA_FUNCTIONS = [
-    get_ldv_data,
-    get_non_ldv_data,
-    get_freight_data,
-]
+#: Genno computations that generate model-ready data in ixmp format.
+DATA_FUNCTIONS = {
+    "ldv": (ldv.get_ldv_data, "context"),
+    "non_ldv": (non_ldv.get_non_ldv_data, "context"),
+    "freight": (freight.get_freight_data, "context"),
+    "demand": ("demand:ixmp",),
+}
 
 
-def provides_data(f):
+def provides_data(*args):
     """Decorator that adds a function to :data:`DATA_FUNCTIONS`."""
-    DATA_FUNCTIONS.append(f)
-    return f
+
+    def decorator(f):
+        DATA_FUNCTIONS[f.__name__] = tuple([f] + list(args))
+        return f
+
+    return decorator
 
 
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGE-Transport data."""
+    from message_data.model.transport import demand
+
     # First strip existing emissions data
     strip_emissions_data(scenario, context)
 
@@ -61,12 +70,38 @@ def add_data(scenario, context, dry_run=False):
         log.warning("Remove 'R11_GLB' from node list for data generation")
         info.set["node"].remove("R11_GLB")
 
-    for func in DATA_FUNCTIONS:
-        # Generate or load the data; add to the Scenario
-        log.info(f"from {func.__name__}()")
-        add_par_data(scenario, func(context), dry_run=dry_run)
+    c = Computer()
 
-    log.info("done")
+    # Reference values: the Context, Scenario, ScenarioInfo, and dry_run parameter
+    for key, value in dict(
+        context=context,
+        scenario=scenario,
+        info=info,
+        dry_run=dry_run,
+    ).items():
+        c.add(key, quote(value))
+
+    # Data-generating calculations
+    all_keys = []
+    add = partial(add_par_data, dry_run=dry_run)
+    for name, comp in DATA_FUNCTIONS.items():
+        # Add 2 computations: one to generate the data
+        k1 = c.add(f"{name}:ixmp", *comp)
+        # …one to add it to `scenario`
+        all_keys.append(c.add(f"add {name}", add, "scenario", k1))
+
+    # Prepare demand calculations
+    demand.prepare_reporter(c, context, exogenous_data=True, info=info)
+
+    # Add a key to trigger generating and adding all data
+    c.add("add transport data", all_keys)
+
+    # commented: extremely verbose
+    # log.debug(c.describe("add transport data"))
+
+    # Actually add the data
+    result = c.get("add transport data")
+    log.info(f"Added {result.sum()} total obs")
 
 
 def strip_emissions_data(scenario, context):
@@ -78,72 +113,15 @@ def strip_emissions_data(scenario, context):
     pass
 
 
-@provides_data
-def demand(context):
-    """Return transport demands.
-
-    Parameters
-    ----------
-    context : .Context
-    """
-    from message_data.model.transport.demand import dummy, from_external_data
-
-    config = context["transport config"]["data source"]
-
-    if config.get("demand dummy", False):
-        return dict(demand=dummy())
-
-    # Retrieve a Reporter configured do to the calculation for the input data
-    rep = from_external_data(context["transport build info"], context)
-
-    # Generate the demand data; convert to pd.DataFrame
-    pdt1 = rep.get("transport pdt:n-y-t")
-    data = pdt1.to_series().reset_index(name="value")
-
-    common = dict(
-        level="useful",
-        time="year",
-        unit="km",  # TODO reduce this from the units of pdt1
-    )
-
-    # Convert to message_ix layout
-    # TODO combine the two below in a loop or push the logic to demand.py
-    data = make_df(
-        "demand",
-        node=data["n"],
-        commodity="transport pax " + data["t"].str.lower(),
-        year=data["y"],
-        value=data["value"],
-        **common,
-    )
-    data = data[~data["commodity"].str.contains("ldv")]
-
-    data2 = rep.get("transport ldv pdt:n-y-cg").to_series().reset_index(name="value")
-
-    data2 = make_df(
-        "demand",
-        node=data2["n"],
-        commodity="transport pax " + data2["cg"],
-        year=data2["y"],
-        value=data2["value"],
-        **common,
-    )
-
-    return dict(demand=pd.concat([data, data2]))
-
-
-@provides_data
-def conversion(context):
+@provides_data("n:ex world", "y:model", "config")
+def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFrame]:
     """Input and output data for conversion technologies:
 
     The technologies are named 'transport {mode} load factor'.
     """
-    cfg = context["transport config"]
-    info = context["transport build info"]
-
     common = dict(
-        year_vtg=info.Y,
-        year_act=info.Y,
+        year_vtg=y,
+        year_act=y,
         mode="all",
         # No subannual detail
         time="year",
@@ -152,7 +130,7 @@ def conversion(context):
     )
 
     mode_info = [
-        ("freight", cfg["factor"]["freight load"], "t km"),
+        ("freight", config["transport"]["factor"]["freight load"], "t km"),
         ("pax", 1.0, "km"),
     ]
 
@@ -167,7 +145,7 @@ def conversion(context):
             **common,
         )
         for par, df in i_o.items():
-            data[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))
+            data[par].append(df.pipe(broadcast, node_loc=nodes).pipe(same_node))
 
     data = {par: pd.concat(dfs) for par, dfs in data.items()}
 
@@ -182,15 +160,15 @@ def conversion(context):
     return data
 
 
-@provides_data
-def dummy_supply(context):
+@provides_data("info")
+def dummy_supply(info) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
     # TODO read the 'level' from config
     # TODO read the list of 'commodity' from context/config
     # TODO separate dummy supplies by commodity
 
     data = make_source_tech(
-        context["transport build info"],
+        info,
         common=dict(
             level="secondary",
             mode="all",

@@ -2,6 +2,7 @@
 import logging
 from functools import partial
 from pathlib import Path
+from typing import Dict, List
 
 import genno.computations
 import message_ix
@@ -26,18 +27,22 @@ from message_data.tools import gdp_pop
 log = logging.getLogger(__name__)
 
 
-def dummy(info):
+def dummy(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFrame]:
     """Dummy demands.
 
     Parameters
     ----------
     info : .ScenarioInfo
     """
+    if config["data source"]["demand dummy"] is not True:
+        # No dummy data → return nothing
+        return dict()
+
     common = dict(
-        year=info.Y,
-        value=10 + np.arange(len(info.Y)),
         level="useful",
         time="year",
+        value=10 + np.arange(len(y)),
+        year=y,
     )
 
     dfs = []
@@ -64,7 +69,7 @@ def dummy(info):
     #     make_df('demand', commodity='lightoil', **common)
     # )
 
-    return pd.concat(dfs).pipe(broadcast, node=info.N[1:])
+    return pd.concat(dfs).pipe(broadcast, node=nodes)
 
 
 def from_scenario(scenario: message_ix.Scenario) -> Reporter:
@@ -213,7 +218,7 @@ def prepare_reporter(
         {
             "data source": {
                 k: context["transport config"]["data source"][k]
-                for k in ("gdp", "population")
+                for k in ("demand dummy", "gdp", "population")
             },
             "output_path": context.get("output_path", Path.cwd()),
             "regions": context.regions,
@@ -342,6 +347,18 @@ def prepare_reporter(
             ),
             _,
         ),
+        # Convert to ixmp format
+        (
+            (
+                "demand:ixmp",
+                computations.demand_ixmp,
+                "transport pdt:n-y-t",
+                "transport ldv pdt:n-y-cg",
+            ),
+            _,
+        ),
+        # Dummy demands, if configured
+        (("demand dummy:ixmp", dummy, "nodes:ex world", "y:model", "config"), _),
     ]
 
     # Plots
