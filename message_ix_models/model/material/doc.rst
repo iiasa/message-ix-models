@@ -33,7 +33,7 @@ In the model, each year only certain quantity of products are available for recy
 The end-of-life products coming from buildings and power sector can be endogenously determined in case the relevant links are turned on.
 
 Modeling recycling decisions
-############################
+----------------------------
 
 In the model, there is a minimum recycling rate specified for different materials and it is based on the historical recycling rates. This parameter can also be used to represent
 regulations in different regions. In the end recycling rate is a model decision which can be higher than the minimum rate depending on the economic attractiveness.
@@ -63,7 +63,7 @@ Code reference
   :members:
 
 Data preparation
-################
+----------------
 
 These modules are not necessary for the parametrization for each sector and they can be turned on and off individually under `DATA_FUNCTIONS` in `__init__.py`.
 For example, the buildings module (`data_buildings.py`) is only used when the buildings model outputs are given explicitly without linking the CHILLED/STURM model through a soft link.
@@ -135,7 +135,7 @@ Data, metadata, and configuration
 =================================
 
 Binary/raw data files
-#####################
+---------------------
 
 The code relies on the following input files, stored in :file:`data/material/`:
 
@@ -210,7 +210,7 @@ The code relies on the following input files, stored in :file:`data/material/`:
    :language: yaml
 
 R code and dependencies
-#######################
+=======================
 
 :file:`ADVANCE_lca_coefficients_embedded.R`
 The code processing the material intensity coefficients of power plants is written in R and integrated into the Python workflow via the Python package `rpy2`.
