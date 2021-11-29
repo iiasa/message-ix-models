@@ -91,14 +91,6 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
     return rep
 
 
-def from_external_data(info: ScenarioInfo, context: Context) -> Computer:
-    """Return a Reporter for calculating demand from external data."""
-    c = Computer()
-    prepare_reporter(c, context, exogenous_data=True, info=info)
-
-    return c
-
-
 def add_exogenous_data(c: Computer, context: Context) -> None:
     """Add exogenous data to `c` that mocks data coming from an actual Scenario.
 
@@ -226,7 +218,7 @@ def prepare_reporter(
     )
 
     # Keys to refer to quantities
-    # Existing keys, prepared by from_scenario() or from_external_data()
+    # Existing keys, from Reporter.from_scenario() or add_structure() (above)
     gdp = rep.full_key("GDP")
     mer_to_ppp = rep.full_key("MERtoPPP")
     price_full = rep.full_key("PRICE_COMMODITY").drop("h", "l")

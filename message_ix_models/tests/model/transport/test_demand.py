@@ -39,9 +39,7 @@ def test_demand_dummy(test_context, regions, years):
         param("ISR", "A", 1, None, marks=testing.NIE),
     ],
 )
-def test_from_external_data(
-    test_context, tmp_path, regions, years, N_node, mode_shares
-):
+def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     """Exogenous demand calculation succeeds."""
     ctx = test_context
     ctx.regions = regions
