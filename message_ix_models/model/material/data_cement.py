@@ -369,14 +369,14 @@ def derive_cement_demand(scenario, dry_run=False):
         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
     )
     pop = pop[["region", "year", "pop.mil"]]
-    
+
     base_demand = gen_mock_demand_cement(scenario)
     base_demand = base_demand.loc[base_demand.year == 2020].rename(
         columns={"value": "demand.tot.base", "node": "region"}
     )
-    
+
     # import pdb; pdb.set_trace()
-        
+
     # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
     # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
     #     columns={"value": "demand.tot.base", "node": "region"}

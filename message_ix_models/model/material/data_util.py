@@ -6,7 +6,10 @@ from .util import read_config
 import re
 
 from message_ix_models import ScenarioInfo
-from message_data.tools.utilities.get_optimization_years import main as get_optimization_years
+from message_data.tools.utilities.get_optimization_years import (
+    main as get_optimization_years,
+)
+
 
 def modify_demand_and_hist_activity(scen):
     """Take care of demand changes due to the introduction of material parents
@@ -367,6 +370,7 @@ def modify_demand_and_hist_activity(scen):
         scen.remove_par("growth_activity_lo", df)
         scen.commit(comment="remove growth_lo constraints")
 
+
 def add_emission_accounting(scen):
     context = read_config()
     s_info = ScenarioInfo(scen)
@@ -374,26 +378,41 @@ def add_emission_accounting(scen):
     # Obtain the emission factors only for material related technologies
     # TODO: Also residential and commercial technologies should be added to this list.
     tec_list = scen.par("emission_factor")["technology"].unique()
-    tec_list_materials = [i for i in tec_list if (("steel" in i) | ("aluminum" in i) \
-    | ("petro" in i) | ("cement" in i) | ("ref" in i))]
+    tec_list_materials = [
+        i
+        for i in tec_list
+        if (
+            ("steel" in i)
+            | ("aluminum" in i)
+            | ("petro" in i)
+            | ("cement" in i)
+            | ("ref" in i)
+        )
+    ]
     tec_list_materials.remove("refrigerant_recovery")
     tec_list_materials.remove("replacement_so2")
     tec_list_materials.remove("SO2_scrub_ref")
-    emission_factors = scen.par("emission_factor",filters = {"technology":tec_list_materials})
+    emission_factors = scen.par(
+        "emission_factor", filters={"technology": tec_list_materials}
+    )
 
     # Note: Emission factors for non-CO2 gases are in kt/ACT. For CO2 MtC/ACT.
 
-    relation_activity = emission_factors.assign(relation = lambda x: (x['emission'] + \
-    '_Emission'))
+    relation_activity = emission_factors.assign(
+        relation=lambda x: (x["emission"] + "_Emission")
+    )
     relation_activity["node_rel"] = relation_activity["node_loc"]
-    relation_activity.drop(["year_vtg","emission"],axis = 1,inplace = True)
+    relation_activity.drop(["year_vtg", "emission"], axis=1, inplace=True)
     relation_activity["year_rel"] = relation_activity["year_act"]
-    relation_activity = relation_activity[(relation_activity["relation"] !=
-    'PM2p5_Emission') & (relation_activity["relation"] != 'CO2_industry_Emission')]
+    relation_activity = relation_activity[
+        (relation_activity["relation"] != "PM2p5_Emission")
+        & (relation_activity["relation"] != "CO2_industry_Emission")
+    ]
 
     scen.check_out()
-    scen.add_par("relation_activity",relation_activity)
+    scen.add_par("relation_activity", relation_activity)
     scen.commit("Emissions accounting for industry technologies added.")
+
 
 def read_sector_data(scenario, sectname):
 
@@ -414,8 +433,7 @@ def read_sector_data(scenario, sectname):
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        context.get_local_path("material", context.datafile),
-        sheet_name=sheet_n,
+        context.get_local_path("material", context.datafile), sheet_name=sheet_n,
     )
 
     # Clean the data
@@ -514,8 +532,7 @@ def read_rel(scenario, filename):
 
     # Read the file
     data_rel = pd.read_excel(
-        context.get_local_path("material", filename),
-        sheet_name=sheet_n,
+        context.get_local_path("material", filename), sheet_name=sheet_n,
     )
 
     return data_rel

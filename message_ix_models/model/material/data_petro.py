@@ -378,11 +378,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
 
     for t in tec_ts:
-        common = dict(
-            time="year",
-            time_origin="year",
-            time_dest="year",
-        )
+        common = dict(time="year", time_origin="year", time_dest="year",)
 
         param_name = data_petro_ts.loc[(data_petro_ts["technology"] == t), "parameter"]
 

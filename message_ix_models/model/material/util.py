@@ -9,6 +9,7 @@ METADATA = [
     # ("material", "technology"),
 ]
 
+
 def read_config():
     """Read configuration from set.yaml."""
     # TODO this is similar to transport.utils.read_config; make a common

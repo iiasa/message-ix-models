@@ -111,8 +111,7 @@ def apply_spec(
         if not dry_run:
             for element in add:
                 scenario.add_set(
-                    set_name,
-                    element.id if isinstance(element, Code) else element,
+                    set_name, element.id if isinstance(element, Code) else element,
                 )
 
         if len(add):
