@@ -114,8 +114,8 @@ def create_bare(context, regions, dry_run):
 )
 @click.option("--tag", default="", help="Suffix to the scenario name")
 @click.pass_obj
-def solve(context, datafile, tag):
-    """Build model.
+def build_scen(context, datafile, tag):
+    """Build a scenario.
 
     Use the --url option to specify the base scenario.
     """
@@ -129,7 +129,6 @@ def solve(context, datafile, tag):
         "NPi2020-con-prim-dir-ncr": "NPi",
         "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
-        # "DIAG-C30-const_E414": "baseline_test",
     }.get(context.scenario_info["scenario"])
 
     # context.metadata_path = context.metadata_path / "data"
@@ -148,9 +147,6 @@ def solve(context, datafile, tag):
     # Set the latest version as default
     scenario.set_as_default()
 
-    # Solve
-    # scenario.solve()
-
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
@@ -164,9 +160,9 @@ def solve(context, datafile, tag):
 @click.pass_obj
 # @click.pass_obj
 def solve_scen(context, datafile, model_name, scenario_name):
-    """Build model.
+    """Solve a scenario.
 
-    Use the --url option to specify the base scenario.
+    Use the --model_name and --scenario_name option to specify the scenario to solve.
     """
     # Clone and set up
     from message_ix import Scenario
