@@ -29,15 +29,19 @@ def test_demand_dummy(test_context, regions, years):
 
 
 @pytest.mark.parametrize(
-    "regions,years,N_node",
+    "regions,years,N_node,mode_shares",
     [
-        ("R11", "A", 11),
-        ("R11", "B", 11),
-        ("R14", "B", 14),
-        param("ISR", "A", 1, marks=testing.NIE),
+        ("R11", "A", 11, None),
+        ("R11", "B", 11, None),
+        ("R11", "B", 11, "debug"),
+        ("R11", "B", 11, "A---"),
+        ("R14", "B", 14, None),
+        param("ISR", "A", 1, None, marks=testing.NIE),
     ],
 )
-def test_from_external_data(test_context, tmp_path, regions, years, N_node):
+def test_from_external_data(
+    test_context, tmp_path, regions, years, N_node, mode_shares
+):
     """Exogenous demand calculation succeeds."""
     ctx = test_context
     ctx.regions = regions
@@ -45,6 +49,9 @@ def test_from_external_data(test_context, tmp_path, regions, years, N_node):
     ctx.output_path = tmp_path
 
     read_config(ctx)
+
+    if mode_shares is not None:
+        ctx["transport config"]["mode-share"] = mode_shares
 
     spec = get_spec(ctx)
 
