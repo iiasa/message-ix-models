@@ -181,11 +181,7 @@ def gen_data_steel(scenario, dry_run=False):
 
         # Special treatment for time-varying params
         if t in tec_ts:
-            common = dict(
-                time="year",
-                time_origin="year",
-                time_dest="year",
-            )
+            common = dict(time="year", time_origin="year", time_dest="year",)
 
             param_name = data_steel_ts.loc[
                 (data_steel_ts["technology"] == t), "parameter"
@@ -392,10 +388,7 @@ def gen_data_steel(scenario, dry_run=False):
             )
 
             common_rel = dict(
-                year_rel=modelyears,
-                year_act=modelyears,
-                mode="M1",
-                relation=r,
+                year_rel=modelyears, year_act=modelyears, mode="M1", relation=r,
             )
 
             for par_name in params:
@@ -453,7 +446,7 @@ def gen_data_steel(scenario, dry_run=False):
     # Create external demand param
     parname = "demand"
     demand = derive_steel_demand(scenario)
-    
+
     df = make_df(
         parname,
         level="demand",
@@ -492,16 +485,16 @@ def derive_steel_demand(scenario, dry_run=False):
     pop = pop.loc[pop.year_act >= 2020].rename(
         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
     )
-    
+
     # import pdb; pdb.set_trace()
-    
+
     pop = pop[["region", "year", "pop.mil"]]
-    
+
     base_demand = gen_mock_demand_steel(scenario)
     base_demand = base_demand.loc[base_demand.year == 2020].rename(
         columns={"value": "demand.tot.base", "node": "region"}
     )
-    
+
     # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
     # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
     #     columns={"value": "demand.tot.base", "node": "region"}

@@ -52,8 +52,7 @@ def read_data_aluminum(scenario):
 
     # Read the file
     data_alu = pd.read_excel(
-        context.get_local_path("material", fname),
-        sheet_name=sheet_n,
+        context.get_local_path("material", fname), sheet_name=sheet_n,
     )
 
     # Drop columns that don't contain useful information
@@ -310,11 +309,7 @@ def gen_data_aluminum(scenario, dry_run=False):
     tec_ts = set(data_aluminum_ts.technology)  # set of tecs in timeseries sheet
 
     for t in tec_ts:
-        common = dict(
-            time="year",
-            time_origin="year",
-            time_dest="year",
-        )
+        common = dict(time="year", time_origin="year", time_dest="year",)
 
         param_name = data_aluminum_ts.loc[
             (data_aluminum_ts["technology"] == t), "parameter"
@@ -403,10 +398,7 @@ def gen_data_aluminum(scenario, dry_run=False):
 
                 # Use all the model years for other relations...
                 common_rel = dict(
-                    year_rel=modelyears,
-                    year_act=modelyears,
-                    mode="M1",
-                    relation=r,
+                    year_rel=modelyears, year_act=modelyears, mode="M1", relation=r,
                 )
 
             for par_name in params:

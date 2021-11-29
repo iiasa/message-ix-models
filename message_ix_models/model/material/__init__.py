@@ -199,6 +199,7 @@ def run_reporting(old_reporting, scenario_name, model_name):
     scenario = Scenario(mp, model_name, scenario_name)
     report(scenario, old_reporting)
 
+
 @cli.command("report-2")
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
@@ -207,7 +208,7 @@ def run_old_reporting(scenario_name, model_name):
     from message_ix import Scenario
     from ixmp import Platform
     from message_data.tools.post_processing.iamc_report_hackathon import (
-        report as reporting
+        report as reporting,
     )
 
     base_model = model_name
@@ -218,8 +219,9 @@ def run_old_reporting(scenario_name, model_name):
     mp = Platform()
     scenario = Scenario(mp, model_name, scenario_name)
 
-    reporting(mp, scenario, 'False', base_model,
-              scen_name, merge_hist=True, merge_ts= True)
+    reporting(
+        mp, scenario, "False", base_model, scen_name, merge_hist=True, merge_ts=True
+    )
 
 
 from .data_cement import gen_data_cement
