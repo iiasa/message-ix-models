@@ -33,7 +33,7 @@ DATA_FUNCTIONS = [
 
 # Try to handle multiple data input functions from different materials
 def add_data(scenario, dry_run=False):
-    """Populate `scenario` with MESSAGE-Transport data."""
+    """Populate `scenario` with MESSAGEix-Materials data."""
     # Information about `scenario`
     info = ScenarioInfo(scenario)
 

@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 26 14:54:24 2020
-Generate techno economic generic furncaedata based on
-generic_furnace_boiler_techno_economic.xlsx
-
-@author: unlu
-
-"""
 from collections import defaultdict
 import logging
 

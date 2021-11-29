@@ -472,7 +472,7 @@ from rpy2.robjects.conversion import localconverter
 
 # This returns a df with columns ["region", "year", "demand.tot"]
 def derive_steel_demand(scenario, dry_run=False):
-    """Generate data for materials representation of power industry."""
+    """Generate steel demand."""
     # paths to r code and lca data
     rcode_path = Path(__file__).parents[0] / "material_demand"
 

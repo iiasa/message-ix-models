@@ -176,7 +176,7 @@ def gen_mock_demand_cement(scenario):
 
 
 def gen_data_cement(scenario, dry_run=False):
-    """Generate data for materials representation of steel industry."""
+    """Generate data for materials representation of cement industry."""
     # Load configuration
     config = read_config()["material"]["cement"]
 
@@ -355,7 +355,7 @@ from rpy2.robjects.conversion import localconverter
 
 # This returns a df with columns ["region", "year", "demand.tot"]
 def derive_cement_demand(scenario, dry_run=False):
-    """Generate data for materials representation of power industry."""
+    """Generate cement demand."""
     # paths to r code and lca data
     rcode_path = Path(__file__).parents[0] / "material_demand"
 

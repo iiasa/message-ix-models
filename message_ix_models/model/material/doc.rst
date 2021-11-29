@@ -1,4 +1,4 @@
-Materials accounting
+MESSAGEix-Materials
 ********************
 
 .. warning::
@@ -44,8 +44,6 @@ During this process there are also recycling losses.
 Code reference
 ==============
 
-.. currentmodule:: message_data.model.material
-
 .. automodule:: message_data.model.material
   :members:
 
@@ -58,7 +56,7 @@ Code reference
 Data preparation
 ################
 
-These modules do the necessary parametrization for each sector, which can be turned on and off individually under `DATA_FUNCTIONS` in `__init__.py`.
+These modules are not necessary for the parametrization for each sector and they can be turned on and off individually under `DATA_FUNCTIONS` in `__init__.py`.
 For example, the buildings module (`data_buildings.py`) is only used when the buildings model outputs are given explicitly without linking the CHILLED/STURM model through a soft link.
 
 .. automodule:: message_data.model.material.data_aluminum
@@ -82,32 +80,8 @@ For example, the buildings module (`data_buildings.py`) is only used when the bu
 .. automodule:: message_data.model.material.data_generic
   :members:
 
-Reporting
-##########
-
-.. automodule:: message_data.reporting.materials.reporting
-  :members:
-
-.. automodule:: message_data.tools.post_processing.iamc_report_hackathon
-    :members:
-
-The reporting of the scenarios involves two steps. First step generates the specific
-variables that are related to materials and industry sectors. At the end of this step
-all the varibles are uploaded as ixmp timeseries objects. The reporting file is
-generated under \...\message_data\message_data\reporting\materials with the name
-“New_Reporting_MESSAGEix-Materials_scenario_name.xls”. The required versions of
-pyam and pyam-iamc are as follows respectively: 0.2.1a0 and 0.9.0.
-
-If the model is ran with buildings and appliances linkage, the related extra variables
-are uploaded as ixmp timeseries object to the scenario as well.
-
-In the second step, rest of the default reporting variables are obtained by running
-the general reporting code. This step combines all the variables that were uploaded
-as timeseries to the scenario together with the generic IAMC variables. It also
-correctly reports the aggregate variables such as Final Energy and Emissions.
-
-CLI usage
-=========
+Build and Solve the model from CLI
+==================================
 
 Use ``mix-models materials build`` to add the material implementation on top of existing standard global (R12) scenarios, also giving the base scenario and indicating the relevant data location, e.g.::
 
@@ -122,15 +96,37 @@ This command line only builds the scenario but does not run it. To run the scena
 
     $ mix-models material solve --scenario_name NoPolicy_R12
 
-To run the first step of the reporting use $ mix-models material report-1 --model_name MESSAGEix-Materials --scenario_name xxxx
+Reporting
+=========
 
-To run the second step of the reporting use $ mix-models material report-2 --model_name MESSAGEix-Materials --scenario_name xxxx
+The reporting of the scenarios involves two steps. First step generates the specific
+variables that are related to materials and industry sectors. At the end of this step
+all the varibles are uploaded as ixmp timeseries objects. The reporting file is
+generated under message_data\\reporting\\materials with the name
+“New_Reporting_MESSAGEix-Materials_scenario_name.xls”. The required versions of
+pyam and pyam-iamc are as follows respectively: 0.2.1a0 and 0.9.0.
+
+If the model is ran with buildings and appliances linkage, the related extra variables
+are uploaded as ixmp timeseries object to the scenario as well.
+
+In the second step, rest of the default reporting variables are obtained by running
+the general reporting code. This step combines all the variables that were uploaded
+as timeseries to the scenario together with the generic IAMC variables. It also
+correctly reports the aggregate variables such as Final Energy and Emissions.
+
+To run the first step of the reporting use ::
+
+$ mix-models material report-1 --model_name MESSAGEix-Materials --scenario_name xxxx
+
+To run the second step of the reporting use ::
+
+$ mix-models material report-2 --model_name MESSAGEix-Materials --scenario_name xxxx
 
 Data, metadata, and configuration
 =================================
 
 Binary/raw data files
----------------------
+#####################
 
 The code relies on the following input files, stored in :file:`data/material/`:
 
@@ -205,7 +201,7 @@ The code relies on the following input files, stored in :file:`data/material/`:
    :language: yaml
 
 R code and dependencies
------------------------
+#######################
 
 :file:`ADVANCE_lca_coefficients_embedded.R`
 The code processing the material intensity coefficients of power plants is written in R and integrated into the Python workflow via the Python package `rpy2`.

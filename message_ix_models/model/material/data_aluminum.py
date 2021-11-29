@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 26 14:43:41 2020
-Generate techno economic aluminum data based on aluminum_techno_economic.xlsx
-
-@author: unlu
-"""
 import pandas as pd
 import numpy as np
 from collections import defaultdict
@@ -551,7 +544,7 @@ from rpy2.robjects.conversion import localconverter
 
 # This returns a df with columns ["region", "year", "demand.tot"]
 def derive_aluminum_demand(scenario, dry_run=False):
-    """Generate data for materials representation of power industry."""
+    """Generate aluminum demand."""
     # paths to r code and lca data
     rcode_path = Path(__file__).parents[0] / "material_demand"
 
