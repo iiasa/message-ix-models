@@ -101,7 +101,7 @@ def add_data(scenario, context, dry_run=False):
 
     # Actually add the data
     result = c.get("add transport data")
-    log.info(f"Added {result.sum()} total obs")
+    log.info(f"Added {sum(result)} total obs")
 
 
 def strip_emissions_data(scenario, context):

@@ -69,7 +69,7 @@ def dummy(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFram
     #     make_df('demand', commodity='lightoil', **common)
     # )
 
-    return pd.concat(dfs).pipe(broadcast, node=nodes)
+    return dict(demand=pd.concat(dfs).pipe(broadcast, node=nodes))
 
 
 def from_scenario(scenario: message_ix.Scenario) -> Reporter:

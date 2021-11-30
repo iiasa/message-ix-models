@@ -24,8 +24,16 @@ def test_demand_dummy(test_context, regions, years):
     read_config(ctx)
 
     info = get_spec(test_context)["add"]
+    args = (info.set["node"], info.set["year"], ctx["transport config"])
 
-    assert any(demand.dummy(info)["commodity"] == "transport pax URLMM")
+    # Returns empty dict without config flag set
+    ctx["transport config"]["data source"]["demand dummy"] = False
+    assert dict() == demand.dummy(*args)
+
+    ctx["transport config"]["data source"]["demand dummy"] = True
+    data = demand.dummy(*args)
+
+    assert any(data["demand"]["commodity"] == "transport pax URLMM")
 
 
 @pytest.mark.parametrize(
