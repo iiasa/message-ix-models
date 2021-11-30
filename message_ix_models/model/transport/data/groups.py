@@ -1,14 +1,13 @@
-"""Consumer groups data.
-
-.. todo:: reconfigure to use a genno.Computer, similar to .demand.
-"""
+"""Consumer groups data."""
 import logging
 from copy import deepcopy
+from typing import List, Dict
 
 import pandas as pd
 import xarray as xr
 from genno import computations
 from ixmp.reporting import RENAME_DIMS, Quantity
+from message_ix_models import Context
 from message_ix_models.util import adapt_R11_R14, check_support
 
 from message_data.model.transport.utils import path_fallback
@@ -21,24 +20,25 @@ DIMS = deepcopy(RENAME_DIMS)
 DIMS.update(dict(region="n", variable="area_type"))
 
 
-def get_consumer_groups(context) -> Quantity:
+def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
     """Return shares of transport consumer groups.
+
+    .. todo:: explode the individual atomic steps here.
 
     Parameters
     ----------
+    ursu_ru : Quantity
+        Population split between "UR+SU" and "RU" on the ``area_type`` dimension.
     context : .Context
         The ``.regions`` attribute is passed to :func:`get_urban_rural_shares`.
 
     Returns
     -------
-    ixmp.reporting.Quantity
-        Dimensions: n, y, cg.
+    .Quantity
+        Dimensions: n, y, cg. Units.dimensionless.
     """
     cg_indexers = deepcopy(context["transport set"]["consumer_group"]["indexers"])
     consumer_group = cg_indexers.pop("consumer_group")
-
-    # Data: GEA population projections give split between 'UR+SU' and 'RU'
-    ursu_ru = get_urban_rural_shares(context)
 
     check_support(
         context,
@@ -124,29 +124,38 @@ def get_consumer_groups(context) -> Quantity:
     return Quantity(groups / groups.sum("cg"))
 
 
-def get_urban_rural_shares(context) -> Quantity:
+def urban_rural_shares(years: List[int], config: Dict) -> Quantity:
     """Return shares of urban and rural population.
 
-    The data are filled forward to cover the years indicated by ``context["transport
-    build info"].set["year"]``.
+    The data are filled forward to cover the years indicated by the `years` setting.
 
     Parameters
     ----------
-    context : .Context
-        The ``regions`` setting determines the regional aggregation used.
+    years : list of int
+        Years for which to return population
+    config : dict
+        The ``regions`` and ``data source/population`` keys are used.
+
+    Returns
+    -------
+    .Quantity
+        Dimensions: n, t, area_type. Units: dimensionless.
 
     See also
     --------
     population
     """
-    scenario = context["transport config"]["data source"]["population"]
+    scenario = config["data source"]["population"]
 
     # Let the population() method handle regions, scenarios, data source.
     # NB need to adapt the key/hierarchy here from the one on `context` to the one
     #    stored in a Computer/Reporter; a little messy.
     pop = population(
-        context["transport build info"].Y,
-        config={"data source": {"population": scenario}, "regions": context.regions},
+        years,
+        config={
+            "data source": {"population": scenario},
+            "regions": config["regions"],
+        },
         extra_dims=True,
     )
 
@@ -158,7 +167,7 @@ def get_urban_rural_shares(context) -> Quantity:
         log.warning("Need urban/suburban share data for SSP scenarios")
 
         share = Quantity(
-            xr.DataArray([0.8, 0.2], coords=[["UR+SU", "RU"]], dims=["area_type"]),
+            xr.DataArray([0.6, 0.4], coords=[["UR+SU", "RU"]], dims=["area_type"]),
             units="",
         )
         return computations.product(pop, share)

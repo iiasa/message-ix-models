@@ -9,13 +9,9 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from message_data.model.transport import configure, data as data_module
-from message_data.model.transport.computations import demand_ixmp
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import get_emissions_data
-from message_data.model.transport.data.groups import (
-    get_consumer_groups,
-    get_urban_rural_shares,
-)
+from message_data.model.transport.data.groups import cg_shares
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
 from message_data.model.transport.data.roadmap import get_roadmap_data
@@ -229,39 +225,6 @@ def test_groups(test_context, regions, pop_scen):
     # Data sum to 1 across the consumer_group dimension, i.e. constitute a discrete
     # distribution
     assert (result.sum("cg") - 1.0 < 1e-08).all()
-
-
-@pytest.mark.parametrize(
-    "regions,years,pop_scen",
-    [
-        ("R11", "A", "GEA mix"),
-        ("R11", "A", "GEA supply"),
-        ("R11", "A", "GEA eff"),
-        # Different years
-        ("R11", "B", "GEA mix"),
-        # Different regions & years
-        ("R14", "B", "SSP1"),
-        ("R14", "B", "SSP2"),
-        ("R14", "B", "SSP3"),
-        param("ISR", "B", "SSP2", marks=testing.NIE),
-    ],
-)
-def test_urban_rural_shares(test_context, regions, years, pop_scen):
-    ctx = test_context
-    ctx.regions = regions
-    ctx.years = years
-
-    configure(ctx, options={"data source": {"population": pop_scen}})
-
-    ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
-
-    # Shares can be retrieved
-    result = get_urban_rural_shares(ctx)
-
-    assert ("n", "y", "area_type") == result.dims
-    assert set(info.N[1:]) == set(result.coords["n"].values)
-    assert set(info.Y) <= set(result.coords["y"].values)
-    assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
 
 
 @pytest.mark.parametrize(

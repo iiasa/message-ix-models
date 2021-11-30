@@ -56,19 +56,13 @@ def test_demand_dummy(test_context, regions, years):
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     """Exogenous demand calculation succeeds."""
-    ctx = test_context
-    ctx.regions = regions
-    ctx.years = years
-    ctx.output_path = tmp_path
-
-    options = {"mode-share": mode_shares} if mode_shares is not None else dict()
-    configure(ctx, None, options)
-
-    spec = bare.get_spec(ctx)
-
-    rep = message_ix.Reporter()
-    demand.prepare_reporter(rep, context=ctx, exogenous_data=True, info=spec["add"])
-    rep.configure(output_dir=tmp_path)
+    rep, info = demand_computer(
+        test_context,
+        tmp_path,
+        regions,
+        years,
+        options={"mode-share": mode_shares} if mode_shares is not None else dict(),
+    )
 
     for key, unit in (
         ("population:n-y", "Mpassenger"),
@@ -106,7 +100,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"])
 
     # Demand covers the model horizon
-    assert spec["add"].Y[-1] == max(
+    assert info.Y[-1] == max(
         df["year"].unique()
     ), "`demand` does not cover the model horizon"
 
@@ -125,6 +119,58 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     # Plots can be generated
     rep.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
     rep.get("demand plots")
+
+
+def demand_computer(test_context, tmp_path, regions, years, options):
+    # TODO convert to a fixture
+    ctx = test_context
+    ctx.regions = regions
+    ctx.years = years
+    ctx.output_path = tmp_path
+
+    configure(ctx, options=options)
+
+    spec = bare.get_spec(ctx)
+
+    rep = message_ix.Reporter()
+    demand.prepare_reporter(rep, context=ctx, exogenous_data=True, info=spec["add"])
+    rep.configure(output_dir=tmp_path)
+
+    return rep, spec["add"]
+
+
+@pytest.mark.parametrize(
+    "regions,years,pop_scen",
+    [
+        ("R11", "A", "GEA mix"),
+        ("R11", "A", "GEA supply"),
+        ("R11", "A", "GEA eff"),
+        # Different years
+        ("R11", "B", "GEA mix"),
+        # Different regions & years
+        ("R14", "B", "SSP1"),
+        ("R14", "B", "SSP2"),
+        ("R14", "B", "SSP3"),
+        param("ISR", "B", "SSP2", marks=testing.NIE),
+    ],
+)
+def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
+    c, info = demand_computer(
+        test_context,
+        tmp_path,
+        regions,
+        years,
+        options={"data source": {"population": pop_scen}},
+    )
+
+    # Shares can be retrieved
+    key = Key("population", "n y area_type".split())
+    result = c.get(key)
+
+    assert key.dims == result.dims
+    assert set(info.N[1:]) == set(result.coords["n"].values)
+    assert set(info.Y) <= set(result.coords["y"].values)
+    assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
 
 
 @pytest.mark.skip(reason="Requires user's context")
