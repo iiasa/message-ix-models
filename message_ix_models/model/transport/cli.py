@@ -349,3 +349,39 @@ def export_emissions_factors(context, path_stem):
         )
         # Write data
         df.to_csv(path, mode="a", index=False)
+
+
+@cli.command()
+@click.option("--go", is_flag=True, help="Actually manipulate files.")
+def refresh(go):
+    """Overwrite a local database with a fresh copy.
+
+    Without --go, no action occurs.
+    """
+    # TODO move upstream, e.g. to ixmp JDBCBackend
+    import shutil
+
+    base = Path("/home/khaeru/data/ixmp")
+
+    SOURCE = "clone-2021-06-09"
+    TARGET = "local"
+
+    msg = "" if go else "(dry run) "
+
+    for path in base.glob(f"{TARGET}.*"):
+        if path.suffix == ".tmp":
+            continue
+        print(f"{msg}Unlink {path}")
+        if not go:
+            continue
+        path.unlink()
+
+    for path in base.joinpath("backup").glob(f"{SOURCE}.*"):
+        if path.suffix in (".log", ".properties"):
+            continue
+        dst = base.joinpath(TARGET).with_suffix(path.suffix)
+
+        print(f"{msg}Copy {path} → {dst}")
+        if not go:
+            continue
+        shutil.copyfile(path, dst)
