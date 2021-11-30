@@ -160,6 +160,7 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
         info.set["node"] = nodes[nodes.index("World")].child
 
     for key, value in (
+        ("c:transport", quote(info.set["commodity"])),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
         ("t:transport modes", quote(context["transport config"]["demand modes"])),
@@ -350,7 +351,17 @@ def prepare_reporter(
             _,
         ),
         # Dummy demands, if configured
-        (("demand dummy:ixmp", dummy, "nodes:ex world", "y:model", "config"), _),
+        (
+            (
+                "demand dummy:ixmp",
+                dummy,
+                "c:transport",
+                "nodes:ex world",
+                "y:model",
+                "config",
+            ),
+            _,
+        ),
     ]
 
     # Plots
