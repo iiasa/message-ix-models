@@ -145,6 +145,7 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
         .melt(id_vars=["Mode", "Year"], value_name="Value")
         .replace({"variable": VAR_MAP})
         .rename(columns={"Mode": "Mode/vehicle type"})
+        .rename(columns=lambda c: c.lower())
         .reset_index(drop=True)
     )
 
@@ -152,15 +153,13 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
         [
             df.drop("variable", axis=1),
             # Split "variable" and "units" columns
-            df["variable"]
-            .str.rsplit("_", n=1, expand=True)
-            .set_axis(["variable", "unit"], axis=1),
+            df["variable"].str.extract(r"(?P<variable>.*) \((?P<units>.*)\)"),
         ],
         axis=1,
     )
 
     # Get the input regional aggregation and add it as a column
-    df["Region"] = region[1]
+    df["region"] = region[1]
 
     if plot:
         # Path for debug output
