@@ -139,6 +139,34 @@ def demand_computer(test_context, tmp_path, regions, years, options):
     return rep, spec["add"]
 
 
+@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
+@pytest.mark.parametrize("years", ["B"])
+@pytest.mark.parametrize("pop_scen", ["SSP2"])
+def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
+    c, info = demand_computer(
+        test_context,
+        tmp_path,
+        regions,
+        years,
+        options={"data source": {"population": pop_scen}},
+    )
+
+    key = Key("cg share", "n y cg".split())
+    result = c.get(key)
+
+    # Data have the correct size
+    exp = dict(n=len(info.set["node"]) - 1, y=len(info.Y), cg=27)
+
+    # NB as of genno 1.3.0, can't use .sizes on AttrSeries:
+    # assert result.sizes == exp
+    obs = {dim: len(result.coords[dim]) for dim in exp.keys()}
+    assert exp == obs, result.coords
+
+    # Data sum to 1 across the consumer_group dimension, i.e. constitute a discrete
+    # distribution
+    assert (result.sum("cg") - 1.0 < 1e-08).all()
+
+
 @pytest.mark.parametrize(
     "regions,years,pop_scen",
     [
