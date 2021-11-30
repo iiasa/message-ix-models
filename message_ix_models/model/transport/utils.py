@@ -1,21 +1,27 @@
 """Utility code for MESSAGEix-Transport."""
+import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
-from typing import Union
+from typing import Dict, Union
 
 import pandas as pd
 import xarray as xr
+from message_ix import Scenario
 from message_ix_models import Context
+from message_ix_models.model import bare
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
     as_codes,
     eval_anno,
+    identify_nodes,
     load_private_data,
     private_data_path,
 )
 from sdmx.model import Code
+
+log = logging.getLogger(__name__)
 
 #: Valid values of Context.regions for MESSAGEix-Transport; default first.
 SETTINGS = dict(
@@ -34,6 +40,58 @@ METADATA = [
 ]
 
 
+def configure(
+    context: Context, scenario: Scenario = None, options: Dict = None
+) -> None:
+    """Configure `context` for building `MESSAGEix-Transport`.
+
+    Handle or set defaults for the following keys:
+
+    - ``years``, ``res_with_dummies``: per :data:`.bare.SETTINGS`.
+    - ``regions``: either by examining the ``node`` set of `scenario`, or per
+      :data:`.bare.SETTINGS`.
+    - ``future``: ID of a Transport Futures scenario.
+    """
+    # Handle arguments
+    options = options or dict()
+
+    try:
+        # Identify the node codelist used in `scenario`
+        regions = identify_nodes(scenario)
+    except (AttributeError, ValueError):
+        pass
+    else:
+        if context.get("regions") != regions:
+            log.info(f"Set Context.regions = {repr(regions)} from scenario contents")
+            context.regions = regions
+
+    # Use defaults for other settings
+    context.use_defaults(bare.SETTINGS)
+
+    # Read configuration files
+    read_config(context)
+
+    cfg = context["transport config"]  # Shorthand
+
+    # Set some defaults
+    for key, value in {
+        "data source": dict(),
+        "mode-share": "default",
+        "regions": context.regions,
+    }.items():
+        cfg.setdefault(key, value)
+
+    # data source: update
+    cfg["data source"].update(options.pop("data source", dict()))
+
+    # future: set the mode-share key
+    future = options.pop("futures-scenario", None)
+    if future is not None:
+        if future not in ("base", "A---"):
+            raise ValueError(f"unrecognized Transport Futures scenario {repr(future)}")
+        cfg["mode-share"] == future
+
+
 def read_config(context):
     """Read the transport model configuration / metadata and store on `context`.
 
@@ -44,9 +102,6 @@ def read_config(context):
     ``context.regions`` then the files are loaded from that subdirectory, e.g.
     e.g. :file:`data/transport/ISR/set.yaml` instead of :file:`data/transport/set.yaml`.
     """
-    # Apply a default setting, e.g. regions = R11
-    context.use_defaults(SETTINGS)
-
     try:
         # Confirm that the loaded config.yaml matches the current context.regions
         if context["transport config"]["regions"] == context.regions:
@@ -79,10 +134,6 @@ def read_config(context):
             info["add"] = as_codes(info["add"])
         except (KeyError, TypeError):
             pass
-
-    # Set some defaults
-    context["transport config"].setdefault("mode-share", "default")
-    context["transport config"].setdefault("regions", context.regions)
 
 
 def consumer_groups(rtype=Code):
