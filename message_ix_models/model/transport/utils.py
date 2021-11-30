@@ -1,10 +1,9 @@
 """Utility code for MESSAGEix-Transport."""
 import logging
-from collections import defaultdict
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import xarray as xr
@@ -130,58 +129,103 @@ def read_config(context):
 
     # Convert some values to codes
     for set_name, info in context["transport set"].items():
-        try:
-            info["add"] = as_codes(info["add"])
-        except (KeyError, TypeError):
-            pass
+        generate_set_elements(context, set_name)
 
 
-def consumer_groups(rtype=Code):
-    """Iterate over consumer groups defined in :file:`sets.yaml`.
+def generate_product(
+    context: Context, name: str, template: Code
+) -> Optional[Tuple[List[Code], Dict[str, xr.DataArray]]]:
+    """Generates codes from a product along 1 or more `dims`.
 
-    NB this low-level method requires the transport configuration to be loaded
-    (:func:`.read_config`), but does not perform this step itself.
+    :func:`generate_set_elements` is called for each of the `dims`, and these values
+    are used to format `base`.
 
     Parameters
     ----------
-    rtype : optional
-        Return type.
+    set_name : str
+
+    template : .Code
+        Must have Python format strings for its its :attr:`id` and :attr:`name`
+        attributes.
+    dims : dict of (str -> value)
+        (key, value) pairs are passed as arguments to :func:`generate_set_elements`.
     """
-    dims = ["area_type", "attitude", "driver_type"]
-    # Assemble group information
-    result = defaultdict(list)
+    # eval() and remove the original annotation
+    dims = eval_anno(template, "_generate")
+    template.pop_annotation(id="_generate")
 
-    # FIXME don't depend on the most recent Context instance being the correct one
-    set_config = Context.get_instance(-1)["transport set"]
+    def _base(dim, match):
+        """Return codes along dimension `dim`; if `match` is given, only children."""
+        dim_codes = context["transport set"][dim]["add"]
+        return dim_codes[dim_codes.index(match)].child if match else dim_codes
 
-    for indices in product(*[set_config[d]["add"] for d in dims]):
-        # Create a new code by combining three
-        result["code"].append(
-            Code(
-                id="".join(c.id for c in indices),
-                name=", ".join(str(c.name) for c in indices),
-            )
-        )
+    codes = []  # Accumulate codes and indices
+    indices = []
 
-        # Tuple of the values along each dimension
-        result["index"].append(tuple(c.id for c in indices))
+    # Iterate over the product of filtered codes for each dimension in
+    for item in product(*[_base(*dm) for dm in dims.items()]):
+        result = template.copy()  # Duplicate the template
 
-    if rtype == "indexers":
-        # Three tuples of members along each dimension
-        indexers = zip(*result["index"])
-        indexers = {
-            d: xr.DataArray(list(i), dims="consumer_group")
-            for d, i in zip(dims, indexers)
-        }
-        indexers["consumer_group"] = xr.DataArray(
-            [c.id for c in result["code"]],
-            dims="consumer_group",
-        )
-        return indexers
-    elif rtype is Code:
-        return sorted(result["code"], key=str)
-    else:
-        raise ValueError(rtype)
+        fmt = dict(zip(dims.keys(), item))  # Format the ID and name
+        result.id = result.id.format(**fmt)
+        result.name = str(result.name).format(**fmt)
+
+        codes.append(result)  # Store code and indices
+        indices.append(item)
+
+    # - Convert length-N sequence of D-tuples to D iterables each of length N.
+    # - Convert to D × 1-dimensional xr.DataArrays, each of length N.
+    tmp = zip(*indices)
+    indexers = {d: xr.DataArray(list(i), dims=name) for d, i in zip(dims.keys(), tmp)}
+    # Corresponding indexer with the full code IDs
+    indexers[name] = xr.DataArray([c.id for c in codes], dims=name)
+
+    return codes, indexers
+
+
+def generate_set_elements(context, name, match=None) -> List[Code]:
+    """Generate elements for set `name`.
+
+    This function converts the contents of :file:`transport/set.yaml` and
+    :file:`transport/technology.yaml` into lists of codes, of which the IDs are the
+    elements of sets (dimensions) in a scenario.
+
+    Parameters
+    ----------
+    set_name : str
+        Name of the set for which to generate elements.
+    match: str, optional
+        If given, only return Codes whose ID matches this value exactly, *or* children
+        of such codes.
+    """
+    hierarchical = name in {"technology"}
+
+    codes = []  # Accumulate codes
+    deferred = []
+    for code in as_codes(context["transport set"][name].get("add", [])):
+        if eval_anno(code, "_generate"):
+            # Requires a call to generate_product(); do these last
+            deferred.append(code)
+            continue
+
+        codes.append(code)
+
+        if hierarchical:
+            # Store the children of `code`
+            codes.extend(filter(lambda c: c not in codes, code.child))
+
+    # Store codes processed so far, in case used recursively by generate_product()
+    context["transport set"][name]["add"] = codes
+
+    # Use generate_product() to generate codes and indexers based on others sets
+    for code in deferred:
+        generated, indexers = generate_product(context, name, code)
+
+        # Store
+        context["transport set"][name]["add"].extend(generated)
+
+        # NB if there are >=2 generated groups, only indexers for the last are kept
+        context["transport set"][name]["indexers"] = indexers
 
 
 def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
