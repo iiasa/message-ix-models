@@ -110,7 +110,7 @@ def read_config(context):
         pass  # "transport config" not present
 
     # Temporary
-    if context.regions == "ISR":
+    if context.get("regions") == "ISR":
         raise NotImplementedError(
             "ISR transport config; see https://github.com/iiasa/message_data/pull/190"
         )
@@ -229,7 +229,7 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     """
     try:
         # Use a value from a Context object, or a default
-        regions = context_or_regions.regions or ""
+        regions = context_or_regions.get("regions", "")
     except AttributeError:
         # Value was a str instead
         regions = context_or_regions
