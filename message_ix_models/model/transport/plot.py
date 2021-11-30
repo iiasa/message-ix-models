@@ -365,6 +365,7 @@ class Stock0(Plot):
 
 class Stock1(Plot):
     """Same as Stock0, but for non-LDV techs only."""
+
     basename = "stock-non-ldv"
     inputs = ["non ldv stock:nl-t-ya"]
     _title_detail = "Non-LDV transport"
@@ -402,7 +403,7 @@ PLOTS = [
     DemandCalibratedCap,
 ]
 
-#: Plots of data from the exogenous demand calculation; see :func:`.from_external_data`.
+#: Plots of data from the exogenous demand calculation.
 DEMAND_PLOTS = [
     DemandExo,
     DemandExoCap,

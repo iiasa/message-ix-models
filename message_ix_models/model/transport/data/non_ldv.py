@@ -1,4 +1,4 @@
-"""Data for transport technologies outside of LDVs."""
+"""Data for transport modes and technologies outside of LDVs."""
 
 from typing import Dict
 
@@ -7,7 +7,7 @@ from message_ix import make_df
 from message_ix_models.util import broadcast, make_matched_dfs, merge_data, same_node
 
 
-def get_non_ldv_data(context):
+def get_non_ldv_data(context) -> Dict[str, pd.DataFrame]:
     source = context["transport config"]["data source"].get("non-LDV", None)
 
     if source == "IKARUS":

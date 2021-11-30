@@ -1,5 +1,6 @@
 """Freight transport data."""
 from collections import defaultdict
+from typing import Dict
 
 import pandas as pd
 from message_ix_models.util import broadcast, make_io, make_matched_dfs, same_node
@@ -7,7 +8,7 @@ from message_ix_models.util import broadcast, make_io, make_matched_dfs, same_no
 from message_data.model.transport.utils import input_commodity_level
 
 
-def get_freight_data(context):
+def get_freight_data(context) -> Dict[str, pd.DataFrame]:
     """Data for freight technologies.
 
     See also
