@@ -129,18 +129,25 @@ def test_from_scenario(user_context):
 
 
 @pytest.mark.parametrize(
-    "data_source",
+    "nodes, data_source",
     [
-        "GEA mix",
-        "SSP2",
-        "SHAPE innovation",
+        ("R11", "GEA mix"),
+        ("R14", "SSP2"),
+        ("R11", "SHAPE innovation"),
     ],
 )
-def test_cli(tmp_path, mix_models_cli, data_source):
+def test_cli(tmp_path, mix_models_cli, nodes, data_source):
     assert 0 == len(list(tmp_path.glob("*.csv")))
 
     result = mix_models_cli.invoke(
-        ["transport", "gen-demand", data_source, str(tmp_path)]
+        [
+            "transport",
+            "gen-demand",
+            f"--nodes={nodes}",
+            "--years=B",
+            data_source,
+            str(tmp_path),
+        ]
     )
     assert result.exit_code == 0, (result.exception, result.output)
 
