@@ -54,7 +54,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
         scenario,
         private_data_path("report", "global.yaml"),
         # "transport all",
-        "ldv stock:nl-t-ya-driver_type",
+        "stock:nl-t-ya-driver_type:ldv",
     )
     rep.configure(output_dir=tmp_path)
 

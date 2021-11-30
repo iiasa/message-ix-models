@@ -138,10 +138,10 @@ def callback(rep: Reporter):
             (("select", CAP_ldv, CAP, "t:transport LDV"), _si),
             (("select", CAP_nonldv, CAP, "t:transport non-LDV"), _si),
             # Vehicle stocks for LDV
-            ((dist_ldv, computations.ldv_distance, "config"), _si),
+            ((dist_ldv, computations.distance_ldv, "config"), _si),
             (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _si),
             # Vehicle stocks for non-LDV technologies
-            ((dist_nonldv, computations.non_ldv_distance, "config"), _si),
+            ((dist_nonldv, computations.distance_nonldv, "config"), _si),
             (("ratio", "stock:nl-t-ya:non-ldv", CAP_nonldv, dist_nonldv), _si),
         ]
     )
