@@ -18,7 +18,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
 from message_data.model.transport import computations
-from message_data.model.transport.data.groups import get_consumer_groups
+from message_data.model.transport.data import groups
 from message_data.model.transport.plot import DEMAND_PLOTS
 from message_data.model.transport.utils import path_fallback
 from message_data.tools import gdp_pop
@@ -225,7 +225,8 @@ def prepare_reporter(
     price_full = rep.full_key("PRICE_COMMODITY").drop("h", "l")
 
     # Keys for new quantities
-    pop = Key("population", "ny")
+    pop_at = Key("population", "n y area_type".split())
+    pop = pop_at.drop("area_type")
     cg = Key("cg share", "n y cg".split())
     gdp_ppp = Key("GDP", "ny", "PPP")
     gdp_ppp_cap = gdp_ppp.add_tag("capita")
@@ -264,10 +265,12 @@ def prepare_reporter(
         ),
         # Population data; data source according to config
         ((pop, partial(gdp_pop.population, extra_dims=False), "y", "config"), _),
+        # Population shares by area_type
+        ((pop_at, groups.urban_rural_shares, "y:model", "config"), _),
         # Consumer group sizes
         # TODO ixmp is picky here when there is no separate argument to the callable;
         # fix.
-        ((cg, get_consumer_groups, quote(context)), _),
+        ((cg, groups.cg_shares, pop_at, quote(context)), _),
         # PPP GDP, total and per capita
         (("product", gdp_ppp, gdp, mer_to_ppp), _),
         (("ratio", gdp_ppp_cap, gdp_ppp, pop), _),
