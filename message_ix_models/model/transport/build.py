@@ -78,9 +78,13 @@ def get_disutility_spec(context: Context) -> Spec:
     --------
     TEMPLATE
     """
+    # Identify LDV technologies
+    techs = context["transport set"]["technology"]["add"]
+    LDV_techs = techs[techs.index("LDV")].child
+
     return disutility.get_spec(
-        groups=consumer_groups(),
-        technologies=generate_set_elements(context, "technology", "LDV"),
+        groups=context["transport set"]["consumer_group"]["add"],
+        technologies=LDV_techs,
         template=TEMPLATE,
     )
 
