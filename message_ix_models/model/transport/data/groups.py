@@ -5,7 +5,6 @@ from copy import deepcopy
 import pandas as pd
 import xarray as xr
 from genno import computations
-from iam_units import registry
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models.util import adapt_R11_R14, check_support
 
@@ -90,18 +89,15 @@ def get_consumer_groups(context) -> Quantity:
     # applicable to the US in 2005.”
     # NB in the spreadsheet, the data are also filled forward to 2110
     ma3t_pop = computations.load_file(
-        path=path_fallback(context, "ma3t", "population.csv"),
-        units=registry.dimensionless,
+        path=path_fallback(context, "ma3t", "population.csv"), units=""
     )
 
     ma3t_attitude = computations.load_file(
-        path=path_fallback(context, "ma3t", "attitude.csv"),
-        units=registry.dimensionless,
+        path=path_fallback(context, "ma3t", "attitude.csv"), units=""
     )
 
     ma3t_driver = computations.load_file(
-        path=path_fallback(context, "ma3t", "driver.csv"),
-        units=registry.dimensionless,
+        path=path_fallback(context, "ma3t", "driver.csv"), units=""
     )
 
     # - Apply the trajectory of pop_share to the initial values of ma3t_pop.
@@ -160,7 +156,7 @@ def get_urban_rural_shares(context) -> Quantity:
 
         share = Quantity(
             xr.DataArray([0.8, 0.2], coords=[["UR+SU", "RU"]], dims=["area_type"]),
-            units=registry.dimensionless,
+            units="",
         )
         return computations.product(pop, share)
     else:
