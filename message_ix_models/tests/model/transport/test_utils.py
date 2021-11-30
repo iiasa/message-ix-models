@@ -20,6 +20,7 @@ def test_add_cl(test_context):
         ],
         columns=["node", "commodity", "level", "technology"],
     )
+    configure(test_context)
 
     df_out = input_commodity_level(df_in, default_level="foo")
 
