@@ -6,8 +6,6 @@ import pint
 import plotnine as p9
 from genno.compat.plotnine import Plot as BasePlot
 
-from message_data.model.transport.utils import consumer_groups
-
 log = logging.getLogger(__name__)
 
 
@@ -165,9 +163,9 @@ class LDVTechShare0(Plot):
 
 class LDVTechShare1(Plot):
     basename = "ldv-tech-share-by-cg"
-    inputs = ["out:nl-t-ya-c"]
+    inputs = ["out:nl-t-ya-c", "consumer groups"]
 
-    def generate(self, data):
+    def generate(self, data, cg):
         data = data.rename(columns={0: "out"})
 
         # TODO do these operations in reporting for broader reuse
@@ -182,7 +180,7 @@ class LDVTechShare1(Plot):
         )
 
         # Discard others, e.g. non-LDV activity
-        data = data.query(f"c in {list(map(str, consumer_groups()))}")
+        data = data.query(f"c in {list(map(str, cg))}")
 
         # DEBUG dump data
         data.to_csv(f"{self.basename}-1.csv")
