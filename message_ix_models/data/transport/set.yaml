@@ -5,6 +5,54 @@
 # - 'remove': elements to remove.
 # - 'add': elements to add. This is a mapping from element short names to a
 #   longer description.
+
+area_type:
+  add:
+    UR: Urban, or “Inside MSA - Central City”
+    SU: Suburban, or “Inside MSA - Suburb”
+    RU: Rural, or “Outside MSA”
+
+attitude:
+  add:
+    EA: Early Adopter
+    EM: Early Majority
+    LM: Late Majority
+
+driver_type:
+  add:
+    M: Moderate
+    A: Average
+    F: Frequent
+
+consumer_group:
+  add:
+    "{area_type.id}{attitude.id}{driver_type.id}":
+      _generate:
+        area_type: null
+        attitude: null
+        driver_type: null
+      name: "{area_type.name}, {attitude.name}, {driver_type.name}"
+
+technology:
+  remove:
+  - Trans_1
+  - Trans_2
+  - Trans_3
+  - Trans_4
+  - Trans_5
+  - back_trp
+  - coal_trp
+  - elec_trp
+  - eth_fc_trp
+  - eth_ic_trp
+  - foil_trp
+  - gas_trp
+  - h2_fc_trp
+  - loil_trp
+  - meth_fc_trp
+  - meth_ic_trp
+  # add: elements are generated from technology.yaml
+
 commodity:
   require:
   - coal
@@ -56,11 +104,9 @@ commodity:
       name: Activity for {technology.id} LDVs
 
     "transport pax {consumer_group.id}":
-      _generate: {consumer_group: LDV}
+      _generate: {consumer_group: null}
       name: Activity for {consumer_group.id} passengers
       demand: true
-
-
 
 level:
   require:
@@ -71,31 +117,10 @@ mode:
   require:
   - all
 
-
 node:
   # transport.build.get_spec() sets the list of required nodes
   require: []
   # No nodes added/removed
-
-technology:
-  remove:
-  - Trans_1
-  - Trans_2
-  - Trans_3
-  - Trans_4
-  - Trans_5
-  - back_trp
-  - coal_trp
-  - elec_trp
-  - eth_fc_trp
-  - eth_ic_trp
-  - foil_trp
-  - gas_trp
-  - h2_fc_trp
-  - loil_trp
-  - meth_fc_trp
-  - meth_ic_trp
-  # add: elements are generated from technology.yaml
 
 time:
   # NB cannot handle models with sub-annual time resolution
@@ -120,7 +145,6 @@ unit:
     # for US-TIMES MA3T
     USD / vehicle: USD per vehicle
 
-
 # MA3T sets
 census_division:
   add:
@@ -134,21 +158,3 @@ census_division:
     8: Mountain
     9: Pacific
     T: Total
-
-area_type:
-  add:
-    UR: Urban, or “Inside MSA - Central City”
-    SU: Suburban, or “Inside MSA - Suburb”
-    RU: Rural, or “Outside MSA”
-
-attitude:
-  add:
-    EA: Early Adopter
-    EM: Early Majority
-    LM: Late Majority
-
-driver_type:
-  add:
-    M: Moderate
-    A: Average
-    F: Frequent
