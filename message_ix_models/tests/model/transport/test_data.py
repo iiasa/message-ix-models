@@ -331,10 +331,13 @@ def test_get_gfei_data(test_context):
 
     df = get_gfei_data(ctx)
 
+    # Data have the expected size
+    assert 307 == len(df)
+
     # Data covers all historical periods from the Roadmap model
-    assert list(df["Year"].unique()) == [2017]
+    assert {2017} == set(df["year"].unique())
     # Modes match the list below
-    assert list(df["Mode/vehicle type"].unique()) == [
+    assert {
         "ICAe_ffv",
         "ICAm_ptrp",
         "ICH_chyb",
@@ -344,20 +347,18 @@ def test_get_gfei_data(test_context):
         "PHEV_ptrp",
         "ICE_nga",
         "HFC_ptrp",
-    ]
+    } == set(df["technology"].unique())
 
-    # Data have the correct size and format
-    assert len(df["Mode/vehicle type"]) == 307
-    assert list(df.columns) == [
-        "Country",
-        "Mode/vehicle type",
-        "Value",
+    # Data have the expected dimensions
+    assert {
+        "technology",
+        "value",
         "ISO_code",
-        "Region",
-        "Year",
-        "Variable",
-        "Units",
-    ]
+        "region",
+        "year",
+        "units",
+        "variable",
+    } == set(df.columns)
 
 
 @pytest.mark.skip("Pending https://github.com/transportenergy/database/issues/75")
