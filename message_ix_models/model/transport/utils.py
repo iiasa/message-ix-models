@@ -101,13 +101,6 @@ def read_config(context):
     ``context.regions`` then the files are loaded from that subdirectory, e.g.
     e.g. :file:`data/transport/ISR/set.yaml` instead of :file:`data/transport/set.yaml`.
     """
-    try:
-        # Confirm that the loaded config.yaml matches the current context.regions
-        if context["transport config"]["regions"] == context.regions:
-            return  # Already loaded
-    except KeyError:
-        pass  # "transport config" not present
-
     # Temporary
     if context.get("regions") == "ISR":
         raise NotImplementedError(
