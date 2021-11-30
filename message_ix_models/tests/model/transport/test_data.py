@@ -301,9 +301,9 @@ def test_get_afr_data(test_context, region, length):
     df = get_roadmap_data(ctx, region)
 
     # Data covers all historical periods from the Roadmap model
-    assert sorted(df["Year"].unique()) == [2000, 2005, 2010, 2015]
+    assert sorted(df["year"].unique()) == [2000, 2005, 2010, 2015]
     # Modes match the list below
-    assert list(df["Mode/vehicle type"].unique()) == [
+    assert list(df["mode/vehicle type"].unique()) == [
         "2W_3W",
         "Bus",
         "Cars/light trucks",
@@ -314,14 +314,14 @@ def test_get_afr_data(test_context, region, length):
     ]
 
     # Data have the correct size and format
-    assert len(df["Mode/vehicle type"]) == length
+    assert len(df["mode/vehicle type"]) == length
     assert list(df.columns) == [
-        "Mode/vehicle type",
-        "Year",
-        "Value",
-        "Variable",
-        "Units",
-        "Region",
+        "mode/vehicle type",
+        "year",
+        "value",
+        "variable",
+        "units",
+        "region",
     ]
 
 
