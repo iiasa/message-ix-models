@@ -1,3 +1,7 @@
+# TODO record provenance
+#
+# Units: Lge / 100 km
+#
 Country,FuelTypeReduced,2017
 Argentina,Diesel,8.2
 Argentina,Flexfuel,9
