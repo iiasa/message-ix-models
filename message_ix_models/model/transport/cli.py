@@ -241,11 +241,9 @@ def gen_demand(ctx, source, nodes, years, output_dir):
     # Read general transport config
     ctx.regions = nodes
     ctx.years = years
-    configure(ctx)
 
-    # Set input data sources from the command-line argument
-    ctx["transport config"]["data source"]["population"] = source
-    ctx["transport config"]["data source"]["gdp"] = source
+    options = {"data source": {"gdp": source, "population": source}}
+    configure(ctx, options=options)
 
     # Get a spec for the structure of a target model
     spec = build.get_spec(ctx)
