@@ -4,10 +4,10 @@ import message_ix
 import pytest
 from message_ix.reporting import Key
 from message_ix_models import testing
-from message_ix_models.model.bare import get_spec
+from message_ix_models.model import bare
 from pytest import param
 
-from message_data.model.transport import demand, read_config
+from message_data.model.transport import demand, configure
 from message_data.tools import assert_units
 
 log = logging.getLogger(__name__)
@@ -21,9 +21,9 @@ def test_demand_dummy(test_context, regions, years):
     ctx.regions = regions
     ctx.years = years
 
-    read_config(ctx)
+    configure(ctx)
 
-    info = get_spec(test_context)["add"]
+    info = bare.get_spec(ctx)["add"]
     args = (info.set["node"], info.set["year"], ctx["transport config"])
 
     # Returns empty dict without config flag set
@@ -54,12 +54,10 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     ctx.years = years
     ctx.output_path = tmp_path
 
-    read_config(ctx)
+    options = {"mode-share": mode_shares} if mode_shares is not None else dict()
+    configure(ctx, None, options)
 
-    if mode_shares is not None:
-        ctx["transport config"]["mode-share"] = mode_shares
-
-    spec = get_spec(ctx)
+    spec = bare.get_spec(ctx)
 
     rep = message_ix.Reporter()
     demand.prepare_reporter(rep, context=ctx, exogenous_data=True, info=spec["add"])

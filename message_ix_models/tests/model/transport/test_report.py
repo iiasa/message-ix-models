@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 from message_ix_models.util import private_data_path
 from message_ix_models.testing import NIE
 
-from message_data.model.transport import read_config
+from message_data.model.transport import configure
 from message_data.model.transport.report import callback, computations
 from message_data.reporting import prepare_reporter, register
 
@@ -42,13 +42,12 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     ctx.years = years
     ctx["output dir"] = tmp_path
 
-    read_config(ctx)
-
     scenario = built_transport(request, ctx, solved=solved)
 
-    dump_path = tmp_path / "scenario.xlsx"
-    log.info(f"Dump contents to {dump_path}")
-    scenario.to_excel(dump_path)
+    # commented: for debugging
+    # dump_path = tmp_path / "scenario.xlsx"
+    # log.info(f"Dump contents to {dump_path}")
+    # scenario.to_excel(dump_path)
 
     rep, key = prepare_reporter(
         scenario,
@@ -67,7 +66,8 @@ def test_distance_ldv(test_context, regions):
     "Test :func:`.computations.distance_ldv`."
     ctx = test_context
     ctx.regions = regions
-    read_config(ctx)
+
+    configure(ctx)
 
     # Fake reporting config from the context
     config = dict(transport=ctx["transport config"])
