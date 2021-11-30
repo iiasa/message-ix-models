@@ -5,9 +5,10 @@ import pytest
 from message_ix.reporting import Key
 from message_ix_models import testing
 from message_ix_models.model import bare
+from message_ix_models.model.structure import get_codes
 from pytest import param
 
-from message_data.model.transport import demand, configure
+from message_data.model.transport import build, demand, configure
 from message_data.tools import assert_units
 
 log = logging.getLogger(__name__)
@@ -23,8 +24,14 @@ def test_demand_dummy(test_context, regions, years):
 
     configure(ctx)
 
-    info = bare.get_spec(ctx)["add"]
-    args = (info.set["node"], info.set["year"], ctx["transport config"])
+    spec = build.get_spec(ctx)
+
+    args = (
+        spec["add"].set["commodity"],
+        spec["require"].set["node"],
+        get_codes(f"year/{years}"),  # FIXME should be present in the spec
+        ctx["transport config"],
+    )
 
     # Returns empty dict without config flag set
     ctx["transport config"]["data source"]["demand dummy"] = False
