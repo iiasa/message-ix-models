@@ -6,9 +6,8 @@ from dask.core import quote
 from message_ix.reporting import Key, Reporter
 from message_ix_models import Context
 
-from . import computations
+from . import configure, computations
 from .plot import PLOTS
-from .utils import read_config
 
 log = logging.getLogger(__name__)
 
@@ -57,14 +56,7 @@ def callback(rep: Reporter):
 
     # Read transport reporting configuration onto the latest Context
     context = Context.get_instance(-1)
-    read_config(context)
-
-    # Node list / regional aggregation
-    if "regions" not in context:
-        # Get the name of one node
-        _n = rep.get("n")[-1]
-        context.regions = _n.split("_")[0]
-        log.info(f"Infer regional aggregation {repr(context.regions)} from {repr(_n)}")
+    configure(context)
 
     config = context["transport config"]["report"]
     config.update(context["transport config"])
@@ -81,7 +73,7 @@ def callback(rep: Reporter):
 
     # Combine technologies from disutility formulation
     # TODO do this somewhere earlier, e.g. in build.get_spec()
-    disutil_spec = build.get_disutility_spec()
+    disutil_spec = build.get_disutility_spec(context)
     technologies.extend(disutil_spec["add"].set["technology"])
 
     rep.add("t:transport", quote(technologies))

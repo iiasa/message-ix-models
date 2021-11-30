@@ -37,10 +37,6 @@ log = logging.getLogger(__name__)
 @click.pass_obj
 def cli(context):
     """MESSAGEix-Transport variant."""
-    from .utils import read_config
-
-    # Ensure transport model configuration is loaded
-    read_config(context)
 
 
 @cli.command()
@@ -114,22 +110,9 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 )
 @click.option("--report", help="Path for diagnostic reports of the built scenario.")
 @click.pass_obj
-def build_cmd(context, dest, **options):
+def build_cmd(context, **options):
     """Prepare the model."""
-    from message_ix_models.model import bare
-
     from message_data.model.transport import build
-
-    # Handle --regions; use a sensible default for MESSAGEix-Transport
-    regions = options.pop("regions", None)
-    if not regions:
-        log.info("Use default --regions=R11")
-        regions = "R11"
-    context.regions = regions
-    context.years = "A"
-
-    # Other defaults from .model.bare
-    context.use_defaults(bare.SETTINGS)
 
     # Either clone from --dest, or create a new, bare RES
     scenario = context.clone_to_dest()
@@ -253,12 +236,12 @@ def gen_demand(ctx, source, nodes, years, output_dir):
     import message_ix
     from genno import Key
 
-    from message_data.model.transport import build, demand, read_config
+    from message_data.model.transport import build, configure, demand
 
     # Read general transport config
-    ctx.regions = nodes or "R11"
-    ctx.years = years or "A"
-    read_config(ctx)
+    ctx.regions = nodes
+    ctx.years = years
+    configure(ctx)
 
     # Set input data sources from the command-line argument
     ctx["transport config"]["data source"]["population"] = source

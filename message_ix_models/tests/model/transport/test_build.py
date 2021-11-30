@@ -8,7 +8,7 @@ from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import NIE
 
-from message_data.model.transport import build, report, read_config
+from message_data.model.transport import build, configure, report
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
 
     ctx.years = years
 
-    read_config(ctx)
+    configure(ctx)
 
     # The spec can be generated
     spec = build.get_spec(ctx)
@@ -68,22 +68,16 @@ def test_build_bare_res(
     request, tmp_path, test_context, regions, years, ldv, nonldv, solve
 ):
     """Test that model.transport.build works on the bare RES, and the model solves."""
-    # Pre-load transport config/metadata
     ctx = test_context
-    ctx.regions = regions
-    ctx.years = years
-
-    read_config(ctx)
-
-    # Manually modify some of the configuration per test parameters
-    ctx["transport config"]["data source"]["LDV"] = ldv
-    ctx["transport config"]["data source"]["non-LDV"] = nonldv
 
     # Generate the relevant bare RES
+    ctx.regions = regions
+    ctx.years = years
     scenario = testing.bare_res(request, ctx)
 
     # Build succeeds without error
-    build.main(ctx, scenario, fast=True)
+    options = {"data source": {"LDV": ldv, "non-LDV": nonldv}}
+    build.main(ctx, scenario, options, fast=True)
 
     # dump_path = tmp_path / "scenario.xlsx"
     # log.info(f"Dump contents to {dump_path}")

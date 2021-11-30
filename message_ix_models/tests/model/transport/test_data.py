@@ -65,7 +65,7 @@ def test_ikarus(test_context, regions, N_node, years):
     ctx.regions = regions
     ctx.years = years
 
-    read_config(ctx)
+    configure(ctx)
 
     # Information about the corresponding base model
     s_info = bare.get_spec(ctx)["add"]
@@ -195,7 +195,7 @@ def test_get_ldv_data(test_context, source, regions, years):
     ctx.regions = regions
     ctx.years = years
 
-    read_config(ctx)
+    configure(ctx)
 
     info = bare.get_spec(ctx)["add"]
 
@@ -236,7 +236,7 @@ def test_groups(test_context, regions, pop_scen):
     ctx.regions = regions
     ctx["transport population scenario"] = pop_scen
 
-    read_config(ctx)
+    configure(ctx)
 
     ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
 
@@ -275,9 +275,8 @@ def test_urban_rural_shares(test_context, regions, years, pop_scen):
     ctx.regions = regions
     ctx.years = years
 
-    read_config(ctx)
+    configure(ctx, options={"data source": {"population": pop_scen}})
 
-    ctx["transport config"] = {"data source": {"population": pop_scen}}
     ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
 
     # Shares can be retrieved
