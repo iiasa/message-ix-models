@@ -11,7 +11,6 @@ from pytest import param
 from message_data.model.transport import configure, data as data_module
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import get_emissions_data
-from message_data.model.transport.data.groups import cg_shares
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
 from message_data.model.transport.data.roadmap import get_roadmap_data
@@ -199,32 +198,6 @@ def test_get_ldv_data(test_context, source, regions, years):
         # Total length of data: # of regions × (11 technology × # of periods; plus 1
         # technology (historical ICE) for only 2010)
         assert len(info.N[1:]) * ((11 * len(exp)) + 1) == len(df)
-
-
-@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
-@pytest.mark.parametrize("pop_scen", ["GEA mix"])
-def test_groups(test_context, regions, pop_scen):
-    ctx = test_context
-    ctx.regions = regions
-    ctx["transport population scenario"] = pop_scen
-
-    configure(ctx)
-
-    ctx["transport build info"] = info = bare.get_spec(ctx)["add"]
-
-    result = get_consumer_groups(ctx)
-
-    # Data have the correct size
-    exp = dict(n=len(info.set["node"]) - 1, y=len(info.Y), cg=27)
-
-    # NB as of genno 1.3.0, can't use .sizes on AttrSeries:
-    # assert result.sizes == exp
-    obs = {dim: len(result.coords[dim]) for dim in exp.keys()}
-    assert exp == obs, result.coords
-
-    # Data sum to 1 across the consumer_group dimension, i.e. constitute a discrete
-    # distribution
-    assert (result.sum("cg") - 1.0 < 1e-08).all()
 
 
 @pytest.mark.parametrize(
