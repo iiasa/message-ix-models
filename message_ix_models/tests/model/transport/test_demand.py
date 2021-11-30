@@ -89,6 +89,20 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
             print(qty, qty.attrs)
             raise
 
+    # Demand is expressed for the expected quantities
+    data = rep.get("demand:ixmp")
+
+    # Returns a dict with a single key/DataFrame
+    df = data.pop("demand")
+    assert 0 == len(data)
+
+    assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"])
+
+    # Demand covers the model horizon
+    assert spec["add"].Y[-1] == max(
+        df["year"].unique()
+    ), "`demand` does not cover the model horizon"
+
     # Total demand by mode
     key = Key("transport pdt", "nyt")
 
