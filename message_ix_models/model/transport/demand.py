@@ -18,7 +18,6 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
 from message_data.model.transport import computations
-from message_data.model.transport.build import generate_set_elements
 from message_data.model.transport.data.groups import get_consumer_groups
 from message_data.model.transport.plot import DEMAND_PLOTS
 from message_data.model.transport.utils import path_fallback
@@ -27,7 +26,9 @@ from message_data.tools import gdp_pop
 log = logging.getLogger(__name__)
 
 
-def dummy(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFrame]:
+def dummy(
+    commodities: List, nodes: List[str], y: List[int], config: dict
+) -> Dict[str, pd.DataFrame]:
     """Dummy demands.
 
     Parameters
@@ -47,12 +48,11 @@ def dummy(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFram
 
     dfs = []
 
-    for commodity in generate_set_elements("commodity"):
+    for commodity in commodities:
         try:
             commodity.get_annotation(id="demand")
-        except KeyError:
-            # Not a demand commodity
-            continue
+        except (AttributeError, KeyError):
+            continue  # Not a demand commodity
 
         dfs.append(
             make_df(
