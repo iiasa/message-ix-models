@@ -4,10 +4,10 @@ import pytest
 import xarray as xr
 from iam_units import registry
 from message_ix_models import testing
+from message_ix_models.util import eval_anno
 from pytest import param
 
-from message_data.model.transport import read_config
-from message_data.model.transport.utils import consumer_groups, input_commodity_level
+from message_data.model.transport.utils import configure, input_commodity_level
 
 
 def test_add_cl(test_context):
@@ -43,19 +43,40 @@ def test_add_cl(test_context):
         param("ISR", marks=testing.NIE),
     ],
 )
-def test_read_config(test_context, regions):
-    """Configuration can be read from files."""
+def test_configure(test_context, regions):
+    """Configuration can be read from files.
+
+    This exercises both :func:`.transport.configure` and :func:`.transport.read_config`.
+    """
     # Set the regional aggregation to be used
     ctx = test_context
     if regions is not None:
         ctx.regions = regions
 
-    # read_config() returns nothing
-    assert read_config(ctx) is None
+    # configure() returns nothing
+    assert configure(ctx) is None
 
     # Scalar parameters are loaded
     assert "scaling" in ctx["transport config"]
     assert 200 * 8 == registry(ctx["transport config"]["work hours"]).magnitude
+
+    # Codes for the consumer_group set are generated
+    codes = ctx["transport set"]["consumer_group"]["add"]
+    assert 0 < len(codes)
+    RUEAA = codes[codes.index("RUEAA")]
+    assert "Rural, or “Outside MSA”, Early Adopter, Average" == str(RUEAA.name)
+
+    # xarray objects are generated for advanced indexing
+    indexers = ctx["transport set"]["consumer_group"]["indexers"]
+    assert all(isinstance(da, xr.DataArray) for da in indexers.values())
+
+    # Codes for commodities are generated
+    codes = ctx["transport set"]["commodity"]["add"]
+    assert 0 < len(codes)
+    print(codes)
+    RUEAA = codes[codes.index("transport pax RUEAA")]
+    print(RUEAA, RUEAA.annotations)
+    assert eval_anno(RUEAA, "demand") is True
 
     # If "ISR" was given as 'regions', then the corresponding config file was loaded
     if regions == "ISR":
@@ -63,16 +84,3 @@ def test_read_config(test_context, regions):
         assert {"Israel"} == set(
             ctx["transport config"]["node to census_division"].keys()
         )
-
-
-def test_consumer_groups(test_context):
-    read_config(test_context)
-
-    # Returns a list of codes
-    codes = consumer_groups()
-    RUEAA = codes[codes.index("RUEAA")]
-    assert "Rural, or “Outside MSA”, Early Adopter, Average" == str(RUEAA.name)
-
-    # Returns xarray objects for indexing
-    result = consumer_groups(rtype="indexers")
-    assert all(isinstance(da, xr.DataArray) for da in result.values())
