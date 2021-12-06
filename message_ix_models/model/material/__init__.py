@@ -131,6 +131,9 @@ def build_scen(context, datafile, tag):
         "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
     }.get(context.scenario_info["scenario"])
 
+    if type(output_scenario_name).__name__ == "NoneType":
+        output_scenario_name = context.scenario_info["scenario"]
+
     # context.metadata_path = context.metadata_path / "data"
     context.datafile = datafile
 

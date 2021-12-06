@@ -98,9 +98,11 @@ Use ``mix-models materials build`` to add the material implementation on top of 
       --url="ixmp://ixmp_dev/MESSAGEix-GLOBIOM_R12_CHN/baseline_new_macro#8" \
       --local-data "./data" material build
 
-Currently, a set of given base scenario names will be translated to own scenario names.
-The output scenario will be ``ixmp://ixmp_dev-ixmp/MESSAGEix-Materials/{name}``, where {name} is a shortened version of the input scenario name.
-Using an additional tag `--tag` can be used to add a suffix to the new scenario name.
+It can be helpful to note that this command will not work for all R12 scenarios because of dependencies on certain levels or commodities described in :file:`set.yaml`.
+Currently, a set of pre-defined base scenario names will be translated to own scenario names. But when an unknown base scenario name is given, we reuse it for the output scenario name.
+The output scenario will be ``ixmp://ixmp_dev-ixmp/MESSAGEix-Materials/{name}``, where {name} is the output scenario name.
+
+Using an additional tag `--tag` can be used to add an additional suffix to the new scenario name.
 This command line only builds the scenario but does not run it. To run the scenario, use ``mix-models materials solve``, giving the scenario name, e.g.::
 
     $ mix-models material solve --scenario_name NoPolicy_R12
