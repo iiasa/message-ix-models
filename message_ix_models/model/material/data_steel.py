@@ -24,13 +24,6 @@ from message_ix_models.util import (
 )
 from . import get_spec
 
-# annual average growth rate by decade (2020-2110)
-# gdp_growth = [0.121448215899944, 0.0733079014579874,
-#             0.0348154093342843, 0.021827616787921, \
-#             0.0134425983942219,  0.0108320197485592, \
-#             0.00884341208063,  0.00829374133206562, \
-#             0.00649794573935969, 0.00649794573935969]
-
 
 # Generate a fake steel demand
 def gen_mock_demand_steel(scenario):
@@ -88,47 +81,12 @@ def gen_mock_demand_steel(scenario):
         .multiply(demand2010_steel["Val"], axis=0)
     )
 
-    # Do this if we have 2020 demand values for buildings
-    # sp = get_spec()
-    # if 'buildings' in sp['add'].set['technology']:
-    #     val = get_scen_mat_demand("steel",scenario)
-    #     print("Base year demand of {}:".format("steel"), val)
-    #     # d = d - val.value
-    #     # Scale down all years' demand values by the 2020 ratio
-    #     demand2010_steel.iloc[:,3:] =  demand2010_steel.iloc[:,3:].\
-    #         multiply(demand2010_steel[2020]- val['value'], axis=0).\
-    #         div(demand2010_steel[2020], axis=0)
-    #     print("UPDATE {} demand for 2020!".format("steel"))
-    #
     demand2010_steel = pd.melt(
         demand2010_steel.drop(["Val", "Scenario"], axis=1),
         id_vars=["node"],
         var_name="year",
         value_name="value",
     )
-    #
-    # print("This is steel demand")
-    # print(demand2010_steel)
-    #
-    # baseyear = list(range(2020, 2110+1, 10))
-    # gdp_growth_interp = np.interp(modelyears, baseyear, gdp_growth)
-    #
-    # i = 0
-    # values = []
-    #
-    # # Assume 5 year duration at the beginning
-    # duration_period = (pd.Series(modelyears) - \
-    #     pd.Series(modelyears).shift(1)).tolist()
-    # duration_period[0] = 5
-    #
-    # val = (demand2010_steel.val * (1+ 0.147718884937996/2) ** duration_period[i])
-    # values.append(val)
-    #
-    # for element in gdp_growth_interp:
-    #     i = i + 1
-    #     if i < len(modelyears):
-    #         val = (val * (1+ element/2) ** duration_period[i])
-    #         values.append(val)
 
     return demand2010_steel
 
@@ -181,7 +139,11 @@ def gen_data_steel(scenario, dry_run=False):
 
         # Special treatment for time-varying params
         if t in tec_ts:
-            common = dict(time="year", time_origin="year", time_dest="year",)
+            common = dict(
+                time="year",
+                time_origin="year",
+                time_dest="year",
+            )
 
             param_name = data_steel_ts.loc[
                 (data_steel_ts["technology"] == t), "parameter"
@@ -317,7 +279,7 @@ def gen_data_steel(scenario, dry_run=False):
                         # Copy parameters to all regions, when node_loc is not GLB
                         if (len(regions) == 1) and (rg != global_region):
                             df["node_loc"] = None
-                            df = df.pipe(broadcast, node_loc=nodes)  # .pipe(same_node)
+                            df = df.pipe(broadcast, node_loc=nodes)
                             # Use same_node only for non-trade technologies
                             if (lev != "import") and (lev != "export"):
                                 df = df.pipe(same_node)
@@ -388,7 +350,10 @@ def gen_data_steel(scenario, dry_run=False):
             )
 
             common_rel = dict(
-                year_rel=modelyears, year_act=modelyears, mode="M1", relation=r,
+                year_rel=modelyears,
+                year_act=modelyears,
+                mode="M1",
+                relation=r,
             )
 
             for par_name in params:
@@ -475,11 +440,12 @@ def derive_steel_demand(scenario, dry_run=False):
     """Generate steel demand."""
     # paths to r code and lca data
     rcode_path = Path(__file__).parents[0] / "material_demand"
+    context = read_config()
 
     # source R code
     r = ro.r
     r.source(str(rcode_path / "init_modularized.R"))
-
+    context.get_local_path("material")
     # Read population and baseline demand for materials
     pop = scenario.par("bound_activity_up", {"technology": "Population"})
     pop = pop.loc[pop.year_act >= 2020].rename(
@@ -495,17 +461,13 @@ def derive_steel_demand(scenario, dry_run=False):
         columns={"value": "demand.tot.base", "node": "region"}
     )
 
-    # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
-    # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
-    #     columns={"value": "demand.tot.base", "node": "region"}
-    # )
-    # base_demand = base_demand[["region", "year", "demand.tot.base"]]
-
     # call R function with type conversion
     with localconverter(ro.default_converter + pandas2ri.converter):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
-        df = r.derive_steel_demand(pop, base_demand)
+        df = r.derive_steel_demand(
+            pop, base_demand, str(context.get_local_path("material"))
+        )
         df.year = df.year.astype(int)
 
     return df

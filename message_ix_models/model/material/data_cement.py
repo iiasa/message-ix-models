@@ -358,6 +358,7 @@ def derive_cement_demand(scenario, dry_run=False):
     """Generate cement demand."""
     # paths to r code and lca data
     rcode_path = Path(__file__).parents[0] / "material_demand"
+    context = read_config()
 
     # source R code
     r = ro.r
@@ -387,7 +388,9 @@ def derive_cement_demand(scenario, dry_run=False):
     with localconverter(ro.default_converter + pandas2ri.converter):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
-        df = r.derive_cement_demand(pop, base_demand)
+        df = r.derive_cement_demand(
+            pop, base_demand, str(context.get_local_path("material"))
+        )
         df.year = df.year.astype(int)
 
     return df

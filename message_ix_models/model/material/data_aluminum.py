@@ -45,7 +45,8 @@ def read_data_aluminum(scenario):
 
     # Read the file
     data_alu = pd.read_excel(
-        context.get_local_path("material", fname), sheet_name=sheet_n,
+        context.get_local_path("material", fname),
+        sheet_name=sheet_n,
     )
 
     # Drop columns that don't contain useful information
@@ -302,7 +303,11 @@ def gen_data_aluminum(scenario, dry_run=False):
     tec_ts = set(data_aluminum_ts.technology)  # set of tecs in timeseries sheet
 
     for t in tec_ts:
-        common = dict(time="year", time_origin="year", time_dest="year",)
+        common = dict(
+            time="year",
+            time_origin="year",
+            time_dest="year",
+        )
 
         param_name = data_aluminum_ts.loc[
             (data_aluminum_ts["technology"] == t), "parameter"
@@ -391,7 +396,10 @@ def gen_data_aluminum(scenario, dry_run=False):
 
                 # Use all the model years for other relations...
                 common_rel = dict(
-                    year_rel=modelyears, year_act=modelyears, mode="M1", relation=r,
+                    year_rel=modelyears,
+                    year_act=modelyears,
+                    mode="M1",
+                    relation=r,
                 )
 
             for par_name in params:
@@ -515,18 +523,6 @@ def gen_mock_demand_aluminum(scenario):
         .multiply(demand2020_al["Val"], axis=0)
     )
 
-    # Do this if we have 2020 demand values for buildings
-    # sp = get_spec()
-    # if 'buildings' in sp['add'].set['technology']:
-    #     val = get_scen_mat_demand("aluminum",scenario)
-    #     print("Base year demand of {}:".format("aluminum"), val)
-    #     # d = d - val.value
-    #     # Scale down all years' demand values by the 2020 ratio
-    #     demand2020_al.iloc[:,3:] =  demand2020_al.iloc[:,3:].\
-    #         multiply(demand2020_al[2020]- val['value'], axis=0).\
-    #         div(demand2020_al[2020], axis=0)
-    #     print("UPDATE {} demand for 2020!".format("aluminum"))
-    #
     demand2020_al = pd.melt(
         demand2020_al.drop(["Val", "Scenario"], axis=1),
         id_vars=["node"],
@@ -547,6 +543,7 @@ def derive_aluminum_demand(scenario, dry_run=False):
     """Generate aluminum demand."""
     # paths to r code and lca data
     rcode_path = Path(__file__).parents[0] / "material_demand"
+    context = read_config()
 
     # source R code
     r = ro.r
@@ -567,17 +564,13 @@ def derive_aluminum_demand(scenario, dry_run=False):
         columns={"value": "demand.tot.base", "node": "region"}
     )
 
-    # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
-    # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
-    #     columns={"value": "demand.tot.base", "node": "region"}
-    # )
-    # base_demand = base_demand[["region", "year", "demand.tot.base"]]
-
     # call R function with type conversion
     with localconverter(ro.default_converter + pandas2ri.converter):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
-        df = r.derive_aluminum_demand(pop, base_demand)
+        df = r.derive_aluminum_demand(
+            pop, base_demand, str(context.get_local_path("material"))
+        )
         df.year = df.year.astype(int)
 
     return df
