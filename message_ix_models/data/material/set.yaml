@@ -246,6 +246,8 @@ steel:
     - limestone_iron
     - coke_iron
     - slag_iron
+    - co_gas
+    - bf_gas
 
   level:
     add:
