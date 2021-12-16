@@ -201,3 +201,37 @@ class ScenarioInfo:
 
         # Store
         self.par["duration_period"] = pd.DataFrame(duration_period)
+
+
+class Spec(dict):
+    """A 'specification' for a model/variant interface."""
+
+    def __init__(
+        self,
+        add: ScenarioInfo = None,
+        remove: ScenarioInfo = None,
+        require: ScenarioInfo = None,
+    ):
+        super().__init__(
+            add=add or ScenarioInfo(),
+            remove=add or ScenarioInfo(),
+            require=add or ScenarioInfo(),
+        )
+
+    def __setitem__(self, key, value: ScenarioInfo):
+        if key not in {"add", "remove", "require"}:
+            raise KeyError(key)
+        elif not isinstance(value, ScenarioInfo):
+            raise TypeError(type(value))
+        super().__setitem__(key, value)
+
+    @staticmethod
+    def merge(a: "Spec", b: "Spec") -> "Spec":
+        """Merge two specs together."""
+        result = Spec()
+
+        for key in {"add", "remove", "require"}:
+            result[key].update(a[key])
+            result[key].update(b[key])
+
+        return result
