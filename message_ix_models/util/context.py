@@ -91,6 +91,9 @@ class Context(dict):
 
         return result
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} object at {id(self)} with {len(self)} keys"
+
     def delete(self):
         """Hide the current Context from future :meth:`.get_instance` calls."""
         # Index of the *last* matching instance
