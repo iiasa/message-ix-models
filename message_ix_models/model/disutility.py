@@ -31,13 +31,15 @@ def add(
     technologies: Sequence[Code],
     template: Code,
     **options,
-) -> None:
+) -> Dict[str, ScenarioInfo]:
     """Add disutility formulation to `scenario`."""
     # Generate the spec given the configuration options
     spec = get_spec(groups, technologies, template)
 
     # Apply spec and add data
     apply_spec(scenario, spec, partial(get_data, spec=spec), **options)
+
+    return spec
 
 
 def get_spec(
