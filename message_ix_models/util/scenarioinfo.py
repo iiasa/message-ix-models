@@ -106,6 +106,20 @@ class ScenarioInfo:
         """Elements of the set 'year' that are >= the first model year."""
         return list(filter(lambda y: y >= self.y0, self.set["year"]))
 
+    def update(self, other: "ScenarioInfo"):
+        """Update with the set elements of `other`."""
+        for name, data in other.set.items():
+            self.set[name].extend(filter(lambda id: id not in self.set[name], data))
+
+        for name, data in other.par.items():
+            raise NotImplementedError
+
+    def __repr__(self):
+        return (
+            f"<ScenarioInfo: {sum(len(v) for v in self.set.values())} codes in "
+            f"{len(self.set)} sets>"
+        )
+
     def year_from_codes(self, codes: List[sdmx.model.Code]):
         """Update using a list of `codes`.
 
