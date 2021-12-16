@@ -370,7 +370,9 @@ def make_matched_dfs(base, **par_value):
     }
 
 
-def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
+def make_source_tech(
+    info: Union[message_ix.Scenario, ScenarioInfo], common, **values
+) -> Dict[str, pd.DataFrame]:
     """Return parameter data for a ‘source’ technology.
 
     The technology has no inputs; its output commodity and/or level are determined by
@@ -379,7 +381,7 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
 
     Parameters
     ----------
-    info : ScenarioInfo
+    info : .Scenario or .ScenarioInfo
     common : dict
         Passed to :func:`make_df`.
     **values
@@ -392,6 +394,8 @@ def make_source_tech(info, common, **values) -> Dict[str, pd.DataFrame]:
         Suitable for :func:`add_par_data`.
     """
     # Check arguments
+    if isinstance(info, message_ix.Scenario):
+        info = ScenarioInfo(info)
     values.setdefault("capacity_factor", 1.0)
     missing = {"capacity_factor", "output", "var_cost"} - set(values.keys())
     if len(missing):
