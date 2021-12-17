@@ -19,6 +19,7 @@ from .common import (
     private_data_path,
 )
 from .node import adapt_R11_R14, identify_nodes
+from .scenarioinfo import ScenarioInfo
 
 __all__ = [
     "MESSAGE_DATA_PATH",
