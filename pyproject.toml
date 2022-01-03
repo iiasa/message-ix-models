@@ -5,3 +5,12 @@ requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
 addopts = "--cov=message_ix_models --cov-report="
 
 [tool.setuptools_scm]
+
+# ToDo: Remove the following as the code style is applied in ixmp, message_ix_models.
+[tool.mypy.overrides]
+module = [
+  "ixmp.model.dantzig",
+  "message_ix.models",
+  "message_ix_models.util.node",
+]
+ignore_errors = true
