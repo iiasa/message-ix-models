@@ -7,7 +7,9 @@ addopts = "--cov=message_ix_models --cov-report="
 [tool.setuptools_scm]
 
 # ToDo: Remove the following as the code style is applied in ixmp, message_ix_models.
-[tool.mypy.overrides]
+[tool.mypy]
+
+[[tool.mypy.overrides]]
 module = [
   "ixmp.model.dantzig",
   "message_ix.models",
