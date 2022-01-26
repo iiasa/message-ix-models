@@ -221,7 +221,7 @@ class Spec:
 
     Spec also provides:
 
-    - Dictionary-style access, e.g. ``s['add']`` is equivalent to ``s.add.``.
+    - Dictionary-style access, e.g. ``s["add"]`` is equivalent to ``s.add.``.
     - Error checking; setting keys other than add/remove/require results in an error.
     - :meth:`.merge`, a helper method.
     """
