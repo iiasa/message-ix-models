@@ -404,6 +404,7 @@ def make_source_tech(
     # Check arguments
     if isinstance(info, message_ix.Scenario):
         info = ScenarioInfo(info)
+
     values.setdefault("capacity_factor", 1.0)
     missing = {"capacity_factor", "output", "var_cost"} - set(values.keys())
     if len(missing):
