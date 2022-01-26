@@ -23,6 +23,7 @@ from message_ix_models.util import (
     iter_parameters,
     load_package_data,
     load_private_data,
+    local_data_path,
     make_source_tech,
     maybe_query,
     package_data_path,
@@ -241,7 +242,13 @@ def test_maybe_query():
     assert 2 == len(maybe_query(s, "bar == 'c'"))
 
 
-def test_package_data_path(*parts, suffix=None):
+def test_local_data_path(pytestconfig, tmp_env):
+    assert Path(pytestconfig.invocation_dir).joinpath("foo", "bar") == local_data_path(
+        "foo", "bar"
+    )
+
+
+def test_package_data_path():
     assert MESSAGE_MODELS_PATH.joinpath("data", "foo", "bar") == package_data_path(
         "foo", "bar"
     )
@@ -250,7 +257,7 @@ def test_package_data_path(*parts, suffix=None):
 @pytest.mark.xfail(
     condition=MESSAGE_DATA_PATH is None, reason="Requires message_data to be installed."
 )
-def test_private_data_path(*parts, suffix=None):
+def test_private_data_path():
     assert MESSAGE_DATA_PATH.joinpath("data", "foo", "bar") == private_data_path(
         "foo", "bar"
     )
