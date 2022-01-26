@@ -86,7 +86,7 @@ def configure(
     # future: set the mode-share key
     future = options.pop("futures-scenario", None)
     if future is not None:
-        if future not in ("default", "base", "A---"):
+        if future not in ("default", "base", "A---", "debug"):
             raise ValueError(f"unrecognized Transport Futures scenario {repr(future)}")
         cfg["mode-share"] == future
 
