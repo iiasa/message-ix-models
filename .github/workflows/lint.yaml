@@ -8,7 +8,7 @@ on:
 
 env:
   # Maximum McCabe complexity for code
-  max-complexity: 14
+  max-complexity: 15
 
 jobs:
   lint:
