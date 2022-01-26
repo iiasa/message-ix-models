@@ -28,7 +28,7 @@ def import_all(
     data_path.mkdir(exist_ok=True)
 
     if not (len(nodes) and nodes != [""]):
-        nodes = config["MESSAGE V"]["set"]["node"]
+        nodes = config["MESSAGE V"]["set"]["node"]  # noqa: F821
 
     # Import .dic and .chn files
     node_path = {n: path / f"{n}_geam.dic" for n in nodes}
@@ -100,7 +100,7 @@ def import_inp(node_path, version, verbose):
 
     # List of all technologies to import
     # TODO re-add old names like Load_factor_truck
-    tecs = list(transport_technologies(by_cg=True))
+    tecs = list(transport_technologies(by_cg=True))  # noqa: F821
 
     log.info(
         f"Importing from {len(node_path)} nodes × {len(tecs)} technology/"
@@ -192,7 +192,7 @@ def load_all(version):
 def load_inp(version):
     """Load cached .inp data for *version*."""
     return pd.read_csv(
-        data_path / f"{version}.csv.gz",
+        data_path / f"{version}.csv.gz",  # noqa: F821
         index_col="node technology param source year".split(),
     )
 
@@ -285,7 +285,7 @@ def transform(data, version, info):
     Data is written to data_path / version.
     """
     # Create output path
-    out_path = data_path / version
+    out_path = data_path / version  # noqa: F821
     out_path.mkdir(exist_ok=True)
 
     # Rename indices
