@@ -97,12 +97,11 @@ def as_codes(data: Union[List[str], Dict[str, Union[Dict, Code]]]) -> List[Code]
         raise TypeError(data)
 
     for id, info in data.items():
+        # Pass through Code; convert other types to dict()
         if isinstance(info, Code):
             result[info.id] = info
             continue
-
-        # Convert other types to dict()
-        if isinstance(info, str):
+        elif isinstance(info, str):
             info = dict(name=info)
         elif isinstance(info, Mapping):
             info = copy(info)
