@@ -7,7 +7,7 @@ from typing import Callable, List
 import genno.config
 from genno.compat.pyam import iamc as handle_iamc
 from message_ix.reporting import Reporter
-from message_ix_models.util import private_data_path
+from message_ix_models.util import local_data_path, private_data_path
 
 from . import computations, util
 
@@ -95,6 +95,8 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
     (:mod:`.reporting`) and 'legacy' (:mod:`.tools.post_processing`) reporting
     codes.
 
+    .. todo:: accept a :class:`.Context` object instead of a large set of options.
+
     Parameters
     ----------
     scenario : Scenario
@@ -161,6 +163,8 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
 def prepare_reporter(scenario, config, key=None, output_path=None):
     """Prepare to report *key* from *scenario*.
 
+    .. todo:: accept a :class:`.Context` object instead of a growing set of options.
+
     Parameters
     ----------
     scenario : ixmp.Scenario
@@ -211,7 +215,8 @@ def prepare_reporter(scenario, config, key=None, output_path=None):
     config.setdefault("output_path", output_path)
     # For genno.compat.plot
     # FIXME use a consistent set of names
-    config.setdefault("output_dir", output_path)
+    config.setdefault("output_dir", local_data_path("report"))
+    config["output_dir"].mkdir(exist_ok=True, parents=True)
 
     # Handle configuration
     rep.configure(**config, fail="raise" if scenario.has_solution() else logging.NOTSET)

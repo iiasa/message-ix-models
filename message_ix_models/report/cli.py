@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 import yaml
-from message_ix_models.util import private_data_path
+from message_ix_models.util import local_data_path, private_data_path
 from message_ix_models.util._logging import mark_time
 
 from message_data.reporting import register, report
@@ -64,7 +64,7 @@ def cli(context, config_file, module, output_path, from_file, dry_run, key):
     # --output/-o: handle "~"
     output_path = output_path.expanduser() if output_path else None
 
-    # Load modules
+    # --module/-m: load extra reporting config from modules
     module = module or ""
     for name in filter(lambda n: len(n), module.split(",")):
         name = f"message_data.{name}.report"
@@ -105,6 +105,7 @@ def cli(context, config_file, module, output_path, from_file, dry_run, key):
     else:
         # Single Scenario; identifiers were supplied to the top-level CLI
         context.output_path = output_path
+        context["report"] = dict(output_dir=local_data_path("report"))
         contexts.append(context)
 
     for ctx in contexts:
