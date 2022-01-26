@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Mapping
+from typing import Callable, Dict, List, Mapping, Union
 
 import pandas as pd
 from ixmp.utils import maybe_check_out, maybe_commit
@@ -7,14 +7,14 @@ from message_ix import Scenario
 from sdmx.model import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
-from message_ix_models.util.scenarioinfo import ScenarioInfo
+from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
 log = logging.getLogger(__name__)
 
 
 def apply_spec(
     scenario: Scenario,
-    spec: Mapping[str, ScenarioInfo],
+    spec: Union[Spec, Mapping[str, ScenarioInfo]],
     data: Callable = None,
     **options,
 ):
@@ -22,9 +22,8 @@ def apply_spec(
 
     Parameters
     ----------
-    spec
-        A 'specification': :class:`dict` with 'require', 'remove', and 'add' keys and
-        :class:`.ScenarioInfo` objects as values.
+    spec : .Spec
+        Specification of changes to make to `scenario`.
     data : callable, optional
         Function to add data to `scenario`. `data` can either manipulate the scenario
         directly, or return a :class:`dict` compatible with :func:`.add_par_data`.

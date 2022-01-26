@@ -34,6 +34,10 @@ class ScenarioInfo:
     ----------
     scenario : message_ix.Scenario
         If given, :attr:`.set` is initialized from this existing scenario.
+
+    See also
+    --------
+    .Spec
     """
 
     #: Elements of :mod:`ixmp`/:mod:`message_ix` sets.

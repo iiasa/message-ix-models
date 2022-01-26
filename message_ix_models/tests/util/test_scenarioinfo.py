@@ -6,7 +6,7 @@ from message_ix.testing import make_dantzig
 from pandas.testing import assert_frame_equal
 from sdmx.model import Code
 
-from message_ix_models import ScenarioInfo
+from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.structure import get_codes
 
 
@@ -136,3 +136,14 @@ class TestScenarioInfo:
 
         assert 3 == len(caplog.messages)
         assert all(msg.startswith("Discard existing") for msg in caplog.messages)
+
+
+class TestSpec:
+    def test_merge(self):
+        s1 = Spec()
+        s1.add.set["technology"] = ["t1", "t3", "t5"]
+        s2 = Spec()
+        s2.add.set["technology"] = ["t2", "t4", "t6"]
+
+        s3 = Spec.merge(s1, s2)
+        assert 6 == len(s3.add.set["technology"])
