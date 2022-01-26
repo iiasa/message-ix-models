@@ -1,27 +1,33 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2022.1.26
+=========
 
 - New :class:`.Spec` class for easier handling of specifications of model (or model variant) structure (:pull:`39`)
 - New utility function :func:`.util.local_data_path` (:pull:`39`).
 - :func:`.repr` of :class:`.Context` no longer prints a (potentially very long) list of all keys and settings (:pull:`39`).
 - :func:`.as_codes` accepts a :class:`.dict` with :class:`.Code` values (:pull:`39`).
 
+Earlier releases
+================
+
 2021.11.24
-==========
+----------
 
 - Add :command:`--years` and :command:`--nodes` to :func:`.common_params` (:pull:`35`).
 - New utility function :func:`.structure.codelists` (:pull:`35`).
 
 2021.7.27
-=========
+---------
 
 - Improve caching using  mod:`genno` v1.8.0 (:pull:`29`).
 
 2021.7.22
-=========
+---------
 
 - Migrate utilities :func:`cached`, :func:`.check_support`, :func:`.convert_units`, :func:`.maybe_query`, :func:`.series_of_pint_quantity` (:pull:`27`)
 - Add :data:`.testing.NIE`.
@@ -29,7 +35,7 @@ Next release
 - Remove :meth:`.Context.get_config_file`, :meth:`.get_path`, :meth:`.load_config`, and :meth:`.units`, all deprecated since 2021-02-28.
 
 2021.7.6
-========
+--------
 
 - Add :func:`identify_nodes`, a function for identifying a :doc:`pkg-data/node` based on a :class:`.Scenario` (:pull:`24`).
 - Add :func:`adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` (:pull:`24`).
@@ -40,23 +46,23 @@ Next release
 - Add the :ref:`R12` node code list (:pull:`14`).
 
 2021.4.7
-========
+--------
 
 - Add :mod:`.model.disutility`, code for setting up structure and data for generalized consumer disutility (:pull:`13`)
 
 2021.3.24
-=========
+---------
 
 - Add :doc:`pkg-data/year`, YAML data files, :meth:`.ScenarioInfo.year_from_codes` and associated tests (:issue:`11`, :pull:`12`)
 
 2021.3.22
-=========
+---------
 
 - Migrate :mod:`.model.bare`, :mod:`.model.build`, :mod:`.model.cli`, and associated documentation (:pull:`9`)
 - Migrate utilities: :class:`.ScenarioInfo`, :func:`.add_par_data`, :func:`.eval_anno`, :func:`.iter_parameters`, and :func:`.strip_par_data`.
 
 2021.3.3
-========
+--------
 
 - Migrate :mod:`.util.click`, :mod:`.util.logging`; expand documentation (:pull:`8`:).
 - :meth:`.Context.clone_to_dest` method replaces :func:`clone_to_dest` function.
@@ -65,7 +71,7 @@ Next release
 - Migrate :program:`mix-models techs` CLI command.
 
 2021.2.28
-=========
+---------
 
 - Migrate :class:`.Context` class and :mod:`.testing` module from :mod:`message_data` (:pull:`5`:).
 - Add :func:`.load_private_data`, :func:`.package_data_path`, :func:`.private_data_path`.
@@ -74,12 +80,12 @@ Next release
   For instance, ANT dissolved into BES, CUW, and SXM in 2010; all four are included in R11_LAM so this list can be used to handle data from either before or after 2010.
 
 2021.2.26
-=========
+---------
 
 - Add :func:`.get_codes` and related code lists (:pull:`2`:).
 - Add :class:`.MessageDataFinder` and document :doc:`migrate` (:pull:`3`:).
 
 2021.2.23
-=========
+---------
 
 Initial release.

@@ -26,6 +26,7 @@ __all__ = [
     "MESSAGE_DATA_PATH",
     "MESSAGE_MODELS_PATH",
     "adapt_R11_R14",
+    "as_codes",
     "cached",
     "check_support",
     "convert_units",
