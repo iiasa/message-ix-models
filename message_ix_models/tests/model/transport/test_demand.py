@@ -51,7 +51,7 @@ def test_demand_dummy(test_context, regions, years):
         ("R11", "B", 11, "debug"),
         ("R11", "B", 11, "A---"),
         ("R14", "B", 14, None),
-        param("ISR", "A", 1, None, marks=testing.NIE),
+        param("ISR", "A", 1, None, marks=pytest.mark.xfail(raises=KeyError)),
     ],
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
@@ -89,7 +89,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
             # Something else
             print(f"\n\n-- {key} --\n\n")
             print(rep.describe(key))
-            print(qty, qty.attrs)
+            print(qty, qty.attrs, qty.dims, qty.coords)
             raise
 
     # Demand is expressed for the expected quantities
@@ -105,6 +105,20 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     assert set(info.Y) == set(
         df["year"].unique()
     ), "`demand` does not cover the model horizon"
+
+
+def test_exo_report(test_context, tmp_path):
+    """Exogenous demand results can be plotted.
+
+    Separated from the above because the plotting step is slow.
+    """
+    rep, info = demand_computer(
+        test_context,
+        tmp_path,
+        regions="R14",
+        years="B",
+        options={"futures-scenario": "debug"},
+    )
 
     # Total demand by mode
     key = Key("transport pdt", "nyt")
@@ -141,7 +155,9 @@ def demand_computer(test_context, tmp_path, regions, years, options):
     return rep, spec["add"]
 
 
-@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
+@pytest.mark.parametrize(
+    "regions", ["R11", "R14", param("ISR", marks=pytest.mark.xfail(raises=KeyError))]
+)
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("pop_scen", ["SSP2"])
 def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
@@ -181,7 +197,7 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
         ("R14", "B", "SSP1"),
         ("R14", "B", "SSP2"),
         ("R14", "B", "SSP3"),
-        param("ISR", "B", "SSP2", marks=testing.NIE),
+        param("ISR", "B", "SSP2", marks=pytest.mark.xfail(raises=KeyError)),
     ],
 )
 def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
