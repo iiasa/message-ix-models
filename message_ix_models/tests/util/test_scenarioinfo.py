@@ -81,6 +81,11 @@ class TestScenarioInfo:
         assert 1963 == info.y0
         assert [1963, 1964, 1965] == info.Y
 
+    def test_repr(self):
+        si = ScenarioInfo()
+        si.set["foo"] = [1, 2, 3]
+        assert "<ScenarioInfo: 3 codes in 1 sets>" == repr(si)
+
     @pytest.mark.parametrize(
         "codelist, y0, N_all, N_Y, y_m1, dp_checks",
         [
@@ -139,6 +144,15 @@ class TestScenarioInfo:
 
 
 class TestSpec:
+    def test_getitem(self):
+        s = Spec()
+        with pytest.raises(KeyError):
+            s["foo"]
+
+    def test_setitem(self):
+        s = Spec()
+        s.add = ScenarioInfo()
+
     def test_merge(self):
         s1 = Spec()
         s1.add.set["technology"] = ["t1", "t3", "t5"]
