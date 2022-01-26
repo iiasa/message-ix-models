@@ -117,7 +117,7 @@ class ScenarioInfo:
             self.set[name].extend(filter(lambda id: id not in self.set[name], data))
 
         for name, data in other.par.items():
-            raise NotImplementedError
+            raise NotImplementedError("Merging parameter data")
 
     def __repr__(self):
         return (
