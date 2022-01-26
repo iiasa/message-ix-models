@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from dask.core import quote
 from genno import Computer, Key, KeyExistsError
+from genno.computations import interpolate
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix.reporting import Reporter
@@ -91,7 +92,7 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
     return rep
 
 
-def add_exogenous_data(c: Computer, context: Context) -> None:
+def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> None:
     """Add exogenous data to `c` that mocks data coming from an actual Scenario.
 
     The specific quantities added are:
@@ -131,14 +132,17 @@ def add_exogenous_data(c: Computer, context: Context) -> None:
         )
 
         # 2. Rename dimensions
-        k2 = key.add_tag("R11")
+        k2 = key.add_tag("rename")
         c.add(k2, computations.rename, k1, quote(RENAME_DIMS))
 
         # 3. Maybe transform from R11 to another node list
+        k3 = key.add_tag("R11")
         if context.regions == "R11":
-            c.add(key, k2, **si)  # No-op/pass-through
+            c.add(k3, k2)  # No-op/pass-through
         elif context.regions == "R14":
-            c.add(key, adapt_R11_R14, k2, **si)
+            c.add(k3, adapt_R11_R14, k2)
+
+        c.add(key, partial(interpolate, coords=dict(y=info.Y)), k3, **si)
 
     gdp_keys = c.add("GDP:n-y", gdp_pop.gdp, "y", "config", **si)
     c.add("PRICE_COMMODITY:n-c-y", (computations.dummy_prices, gdp_keys[0]), **si)
@@ -205,7 +209,7 @@ def prepare_reporter(
     add_structure(rep, context, info)
 
     if exogenous_data:
-        add_exogenous_data(rep, context)
+        add_exogenous_data(rep, context, info)
 
     # Transfer transport config to the Reporter
     rep.graph["config"].update(
