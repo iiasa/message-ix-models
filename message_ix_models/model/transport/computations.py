@@ -7,7 +7,6 @@ import pandas as pd
 import xarray as xr
 from genno import Quantity, computations
 from genno.computations import add, product, ratio
-from iam_units import registry
 from ixmp import Scenario
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
@@ -47,10 +46,8 @@ def base_shares(
     missing = [d for d in "nty" if d not in base.dims]
     log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
 
-    coords = [tuple(nodes), tuple(techs), tuple(y)]
-    return product(
-        base, Quantity(xr.DataArray(1.0, coords=coords, dims=["n", "t", "y"]), units="")
-    )
+    coords = [("n", nodes), ("t", techs), ("y", y)]
+    return product(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
 
 
 def cost(
@@ -270,8 +267,8 @@ def share_weight(
     years = list(filter(lambda year: year <= yC["y"], y))
 
     # Share weights
-    coords = [tuple(nodes), tuple(years), tuple(modes)]
-    weight = xr.DataArray(coords=coords, dims=["n", "y", "t"])
+    coords = [("n", nodes), ("y", years), ("t", modes)]
+    weight = xr.DataArray(np.nan, coords=coords)
 
     # Weights in y0 for all modes and nodes
     idx = dict(t=modes, n=nodes) | y0
@@ -318,27 +315,36 @@ def share_weight(
 
 def smooth(qty: Quantity) -> Quantity:
     """Smooth `qty` (e.g. PRICE_COMMODITY) in the ``y`` dimension."""
-    # Convert to xr.DataArray because genno.AttrSeries lacks a .shift() method.
-    # Conversion can be removed once Quantity is SparseDataArray.
-    q = xr.DataArray.from_series(qty.to_series())
-
-    y = q.coords["y"]
-
     # General smoothing
-    result = 0.25 * q.shift(y=-1) + 0.5 * q + 0.25 * q.shift(y=1)
+    result = computations.add(
+        0.25 * qty.shift(y=-1),
+        0.5 * qty,
+        0.25 * qty.shift(y=1),
+    )
+
+    y = qty.coords["y"].values
+
+    # Shorthand for weights
+    def _w(values, years):
+        return Quantity(xr.DataArray(values, coords=[("y", years)]))
 
     # First period
-    weights = xr.DataArray([0.4, 0.4, 0.2], coords=[tuple(y[:3])], dims=["y"])
-    result.loc[dict(y=y[0])] = (q * weights).sum("y", min_count=1)
+    r0 = (
+        product(qty, _w([0.4, 0.4, 0.2], y[:3]))
+        .sum("y", min_count=1)
+        .expand_dims(dict(y=[y[0]]))
+    )
 
     # Final period. “closer to the trend line”
     # NB the inherited R file used a formula equivalent to weights like
     #    [-1/8, 0, 3/8, 3/4]; didn't make much sense.
-    weights = xr.DataArray([0.2, 0.2, 0.6], coords=[tuple(y[-3:])], dims=["y"])
-    result.loc[dict(y=y[-1])] = (q * weights).sum("y", min_count=1)
+    r_m1 = (
+        product(qty, _w([0.2, 0.2, 0.6], y[-3:]))
+        .sum("y", min_count=1)
+        .expand_dims(dict(y=[y[-1]]))
+    )
 
-    # NB conversion can be removed once Quantity is SparseDataArray
-    return Quantity(result, units=qty.attrs["_unit"])
+    return computations.concat(r0, result.sel(y=y[1:-1]), r_m1)
 
 
 def speed(config: dict) -> Quantity:
@@ -382,11 +388,9 @@ def votm(gdp_ppp_cap: Quantity) -> Quantity:
         PPP GDP per capita.
     """
     assert_units(gdp_ppp_cap, "kUSD / passenger / year")
-
-    return Quantity(
-        1 / (1 + np.exp((30 - gdp_ppp_cap.to_numpy()) / 20)),
-        units=registry.dimensionless,
-    )
+    result = 1 / (1 + np.exp((30 - gdp_ppp_cap) / 20))
+    result.units = ""
+    return result
 
 
 def whour(config: dict) -> Quantity:
