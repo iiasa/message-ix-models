@@ -2,7 +2,7 @@
 import logging
 from collections import defaultdict
 from functools import partial
-from typing import Dict, List
+from typing import Dict, List, Mapping
 
 import pandas as pd
 from dask.core import quote
@@ -134,7 +134,7 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
         ("pax", 1.0, "km"),
     ]
 
-    data = defaultdict(list)
+    data: Mapping[str, List] = defaultdict(list)
     for mode, factor, output_unit in mode_info:
         i_o = make_io(
             (f"transport {mode} vehicle", "useful", "km"),

@@ -1,6 +1,6 @@
 """Freight transport data."""
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, List
 
 import pandas as pd
 from message_ix_models.util import broadcast, make_io, make_matched_dfs, same_node
@@ -28,7 +28,7 @@ def get_freight_data(context) -> Dict[str, pd.DataFrame]:
         time_origin="year",
     )
 
-    data = defaultdict(list)
+    data: Dict[str, List] = defaultdict(list)
     for tech in freight_truck.child:
         i_o = make_io(
             src=(None, None, "GWa"),

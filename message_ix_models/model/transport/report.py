@@ -1,6 +1,7 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
 from operator import attrgetter
+from typing import Dict, List, Tuple
 
 from dask.core import quote
 from message_ix.reporting import Key, Reporter
@@ -79,7 +80,7 @@ def callback(rep: Reporter):
     rep.add("t:transport", quote(technologies))
 
     # Subsets of transport technologies for aggregation and filtering
-    t_groups = dict(nonldv=[])
+    t_groups: Dict[str, List[str]] = dict(nonldv=[])
     for tech in filter(  # Only include those technologies with children
         lambda t: len(t.child), context["transport set"]["technology"]["add"]
     ):
@@ -101,7 +102,7 @@ def callback(rep: Reporter):
         rep.set_filters(t=list(map(str, sorted(technologies, key=attrgetter("id")))))
 
     # Queue of computations to add
-    queue = []
+    queue: List[Tuple[Tuple, Dict]] = []
 
     # Shorthands for queue of computations to add
     _s = dict(sums=True)
@@ -150,7 +151,8 @@ def callback(rep: Reporter):
             ((dist_ldv, computations.distance_ldv, "config"), _si),
             (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _si),
             # Vehicle stocks for non-LDV technologies
-            ((dist_nonldv, computations.distance_nonldv, "config"), _si),
+            # commented: distance_nonldv() is incomplete
+            # ((dist_nonldv, computations.distance_nonldv, "config"), _si),
             (("ratio", "stock:nl-t-ya:non-ldv", CAP_nonldv, dist_nonldv), _si),
         ]
     )
@@ -186,7 +188,7 @@ def add_plots(rep: Reporter):
     except KeyError:
         solved = False
 
-    queue = []
+    queue: List[Tuple[Tuple, Dict]] = []
 
     for plot in PLOTS:
         key = f"plot {plot.basename}"

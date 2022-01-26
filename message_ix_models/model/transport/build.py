@@ -10,12 +10,11 @@ from typing import Dict
 from message_ix import Scenario
 from message_ix_models import Context, Spec
 from message_ix_models.model import build, disutility
-from message_ix_models.model.structure import get_codes
 from message_ix_models.util import add_par_data
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
-from message_data.model.transport.utils import configure
+from message_data.model.transport.utils import configure, get_region_codes
 
 log = logging.getLogger(__name__)
 
@@ -59,8 +58,7 @@ def get_spec(context: Context) -> Spec:
             s[action].set[set_name].extend(config.get(action, []))
 
     # The set of required nodes varies according to context.regions
-    nodes = get_codes(f"node/{context.regions}")
-    s["require"].set["node"].extend(map(str, nodes[nodes.index("World")].child))
+    s["require"].set["node"].extend(map(str, get_region_codes(context.regions)))
 
     # Generate a spec for the generalized disutility formulation for LDVs
     s2 = get_disutility_spec(context)
