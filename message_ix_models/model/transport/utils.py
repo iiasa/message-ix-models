@@ -106,14 +106,9 @@ def read_config(context):
 
     If a subdirectory of :file:`data/transport/` exists corresponding to
     ``context.regions`` then the files are loaded from that subdirectory, e.g.
-    e.g. :file:`data/transport/ISR/set.yaml` instead of :file:`data/transport/set.yaml`.
+    e.g. :file:`data/transport/ISR/set.yaml` is preferred to
+    :file:`data/transport/set.yaml`.
     """
-    # Temporary
-    if context.get("regions") == "ISR":
-        raise NotImplementedError(
-            "ISR transport config; see https://github.com/iiasa/message_data/pull/190"
-        )
-
     # Load transport configuration YAML files and store on the Context
     for parts in METADATA:
         # Key for storing in the context, e.g. "transport config"
@@ -122,7 +117,7 @@ def read_config(context):
         # Load and store the data from the YAML file: either in a subdirectory for
         # context.regions, or the top-level data directory
         path = path_fallback(context, *parts).relative_to(private_data_path())
-        context[key] = load_private_data(*path.parts)
+        context[key] = load_private_data(*path.parts) or dict()
 
     # Merge technology.yaml with set.yaml
     context["transport set"]["technology"]["add"] = context.pop("transport technology")
