@@ -3,7 +3,6 @@ import pandas.testing as pdt
 import pytest
 import xarray as xr
 from iam_units import registry
-from message_ix_models import testing
 from message_ix_models.util import eval_anno
 from pytest import param
 
