@@ -1,6 +1,7 @@
 """:class:`ScenarioInfo` class."""
 import logging
 from collections import defaultdict
+from dataclasses import dataclass, field
 from itertools import product
 from typing import Dict, List
 
@@ -203,31 +204,56 @@ class ScenarioInfo:
         self.par["duration_period"] = pd.DataFrame(duration_period)
 
 
-class Spec(dict):
-    """A 'specification' for a model/variant interface."""
+@dataclass
+class Spec:
+    """A specification for the structure of a model or variant.
 
-    def __init__(
-        self,
-        add: ScenarioInfo = None,
-        remove: ScenarioInfo = None,
-        require: ScenarioInfo = None,
-    ):
-        super().__init__(
-            add=add or ScenarioInfo(),
-            remove=add or ScenarioInfo(),
-            require=add or ScenarioInfo(),
-        )
+    A Spec collects 3 :class:`.ScenarioInfo` instances at the attributes :attr:`.add`,
+    :attr:`.remove`, and :attr:`.require`. This is the type that is accepted by
+    :func:`.apply_spec`; :doc:`model-build` describes how a Spec is used to modify a
+    :class:`Scenario`. A Spec may also be used to express information about the target
+    structure of data to be prepared; like :class:`.ScenarioInfo`, this can happen
+    before the target :class:`.Scenario` exists.
+
+    Spec also provides:
+
+    - Dictionary-style access, e.g. ``s['add']`` is equivalent to ``s.add.``.
+    - Error checking; setting keys other than add/remove/require results in an error.
+    - :meth:`.merge`, a helper method.
+    """
+
+    #: Structure to be added to a base scenario.
+    add: ScenarioInfo = field(default_factory=ScenarioInfo)
+    #: Structure to be removed from a base scenario.
+    remove: ScenarioInfo = field(default_factory=ScenarioInfo)
+    #: Structure that must be present in a base scenario.
+    require: ScenarioInfo = field(default_factory=ScenarioInfo)
+
+    # Dict-like features
+
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
 
     def __setitem__(self, key, value: ScenarioInfo):
-        if key not in {"add", "remove", "require"}:
-            raise KeyError(key)
-        elif not isinstance(value, ScenarioInfo):
-            raise TypeError(type(value))
-        super().__setitem__(key, value)
+        setattr(self, key, value)
+
+    def values(self):
+        yield self.add
+        yield self.remove
+        yield self.require
+
+    # Static methods
 
     @staticmethod
     def merge(a: "Spec", b: "Spec") -> "Spec":
-        """Merge two specs together."""
+        """Merge Specs `a` and `b` together.
+
+        Returns a new Spec where each member is a union of the respective members of
+        `a` and `b`.
+        """
         result = Spec()
 
         for key in {"add", "remove", "require"}:
