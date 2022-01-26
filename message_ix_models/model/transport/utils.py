@@ -56,8 +56,7 @@ def configure(
 
     try:
         # Identify the node codelist used in `scenario`
-        if scenario:
-            regions = identify_nodes(scenario)
+        regions = identify_nodes(scenario) if scenario else context.get("regions")
     except (AttributeError, ValueError):
         pass
     else:
@@ -105,7 +104,7 @@ def get_region_codes(codelist: str) -> List[Code]:
 
     .. todo:: Move upstream to :mod:`message_ix_models`.
     """
-    nodes = get_codes("node/{codelist}")
+    nodes = get_codes(f"node/{codelist}")
     return nodes[nodes.index(Code(id="World"))].child
 
 
