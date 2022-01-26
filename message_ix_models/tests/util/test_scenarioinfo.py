@@ -162,6 +162,9 @@ class TestSpec:
         s = Spec()
         s.add = ScenarioInfo()
 
+        with pytest.raises(KeyError):
+            s["foo"] = ScenarioInfo()
+
     def test_merge(self):
         s1 = Spec()
         s1.add.set["technology"] = ["t1", "t3", "t5"]

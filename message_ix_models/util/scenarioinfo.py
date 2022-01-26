@@ -242,6 +242,8 @@ class Spec:
             raise KeyError(key)
 
     def __setitem__(self, key, value: ScenarioInfo):
+        if not hasattr(self, key):
+            raise KeyError(key)
         setattr(self, key, value)
 
     def values(self):
