@@ -161,6 +161,7 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
 
     for key, value in (
         ("c:transport", quote(info.set["commodity"])),
+        ("cg", quote(info.set["consumer_group"])),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
         ("t:transport modes", quote(context["transport config"]["demand modes"])),
