@@ -43,7 +43,6 @@ def adapt_R11_R14(data: Any):
     - :class:`dict` mapping :class:`str` parameter names to values (either of the above
       types).
     """
-    raise NotImplementedError
 
 
 # NB here would prefer to annotate `data` as Dict[str, Union[pd.DataFrame, Quantity]]),
