@@ -17,11 +17,11 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "regions_arg, regions_exp",
     [
-        (None, "R11"),
+        (None, "R14"),
         ("R11", "R11"),
-        param("R12", "R12", marks=pytest.mark.xfail(raises=FileNotFoundError)),
+        ("R12", "R12"),
         ("R14", "R14"),
-        param("ISR", "ISR", marks=testing.NIE),
+        ("ISR", "ISR"),
     ],
 )
 def test_get_spec(test_context, regions_arg, regions_exp, years):
@@ -39,8 +39,8 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
 
     # The required elements of the "node" set match the configuration
     nodes = get_codes(f"node/{regions_exp}")
-    exp = list(map(str, nodes[nodes.index("World")].child))
-    assert exp == spec["require"].set["node"]
+    expected = list(map(str, nodes[nodes.index("World")].child))
+    assert expected == spec["require"].set["node"]
 
 
 @pytest.mark.parametrize(
