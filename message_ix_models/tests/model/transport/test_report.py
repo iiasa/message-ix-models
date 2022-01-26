@@ -84,6 +84,7 @@ def test_distance_ldv(test_context, regions):
     )
 
 
+@pytest.mark.xfail(reason="Under development")
 @pytest.mark.parametrize("regions", ["R11"])
 def test_distance_nonldv(regions):
     "Test :func:`.computations.ldv_distance`."
