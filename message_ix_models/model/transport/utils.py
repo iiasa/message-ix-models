@@ -3,7 +3,7 @@ import logging
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import pandas as pd
 import xarray as xr
@@ -56,7 +56,8 @@ def configure(
 
     try:
         # Identify the node codelist used in `scenario`
-        regions = identify_nodes(scenario)
+        if scenario:
+            regions = identify_nodes(scenario)
     except (AttributeError, ValueError):
         pass
     else:
@@ -98,6 +99,16 @@ def configure(
     cfg["mode-share"] = options.pop("mode-share", cfg.get("mode-share", "default"))
 
 
+@lru_cache
+def get_region_codes(codelist: str) -> List[Code]:
+    """Return the codes that are children of "World" in the specified `codelist`.
+
+    .. todo:: Move upstream to :mod:`message_ix_models`.
+    """
+    nodes = get_codes("node/{codelist}")
+    return nodes[nodes.index(Code(id="World"))].child
+
+
 def read_config(context):
     """Read the transport model configuration / metadata and store on `context`.
 
@@ -129,7 +140,7 @@ def read_config(context):
 
 def generate_product(
     context: Context, name: str, template: Code
-) -> Optional[Tuple[List[Code], Dict[str, xr.DataArray]]]:
+) -> Tuple[List[Code], Dict[str, xr.DataArray]]:
     """Generates codes from a product along 1 or more `dims`.
 
     :func:`generate_set_elements` is called for each of the `dims`, and these values
@@ -163,7 +174,7 @@ def generate_product(
 
         fmt = dict(zip(dims.keys(), item))  # Format the ID and name
         result.id = result.id.format(**fmt)
-        result.name = str(result.name).format(**fmt)
+        result.name = str(result.name).format(**fmt)  # type: ignore [assignment]
 
         codes.append(result)  # Store code and indices
         indices.append(item)
@@ -178,7 +189,7 @@ def generate_product(
     return codes, indexers
 
 
-def generate_set_elements(context, name, match=None) -> List[Code]:
+def generate_set_elements(context, name, match=None) -> None:
     """Generate elements for set `name`.
 
     This function converts the contents of :file:`transport/set.yaml` and
@@ -266,12 +277,11 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     file exists in a subdirectory of :file:`data/transport/{regions}/`, return its
     path; otherwise, return the path in :file:`data/transport/`.
     """
-    try:
+    if isinstance(context_or_regions, str):
+        regions = context_or_regions
+    else:
         # Use a value from a Context object, or a default
         regions = context_or_regions.get("regions", "")
-    except AttributeError:
-        # Value was a str instead
-        regions = context_or_regions
 
     for candidate in (
         private_data_path("transport", regions, *parts),

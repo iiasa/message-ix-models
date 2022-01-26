@@ -47,11 +47,9 @@ def base_shares(
     missing = [d for d in "nty" if d not in base.dims]
     log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
 
+    coords = [tuple(nodes), tuple(techs), tuple(y)]
     return product(
-        base,
-        Quantity(
-            xr.DataArray(1.0, coords=[nodes, techs, y], dims=["n", "t", "y"]), units=""
-        ),
+        base, Quantity(xr.DataArray(1.0, coords=coords, dims=["n", "t", "y"]), units="")
     )
 
 
@@ -179,7 +177,7 @@ def dummy_prices(gdp: Quantity) -> Quantity:
     return Quantity(xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km")
 
 
-def _lambda(config: str) -> Quantity:
+def _lambda(config: dict) -> Quantity:
     """Return (scalar) lambda parameter for transport mode share equations."""
     return Quantity(config["transport"]["lambda"], units="")
 
@@ -272,11 +270,13 @@ def share_weight(
     years = list(filter(lambda year: year <= yC["y"], y))
 
     # Share weights
-    weight = xr.DataArray(coords=[nodes, years, modes], dims=["n", "y", "t"])
+    coords = [tuple(nodes), tuple(years), tuple(modes)]
+    weight = xr.DataArray(coords=coords, dims=["n", "y", "t"])
 
     # Weights in y0 for all modes and nodes
-    s_y0 = share.sel(**y0, t=modes, n=nodes)
-    c_y0 = cost.sel(**y0, t=modes, n=nodes).sel(c="transport", drop=True)
+    idx = dict(t=modes, n=nodes) | y0
+    s_y0 = share.sel(idx)
+    c_y0 = cost.sel(idx).sel(c="transport", drop=True)
     tmp = computations.pow(ratio(s_y0, c_y0), lamda)
 
     # Normalize against first mode's weight
@@ -294,15 +294,15 @@ def share_weight(
         ref_nodes = config["transport"]["share weight convergence"][node]
 
         # Ratio between this node's GDP and that of the first reference node
-        scale = float(
+        scale = (
             gdp_ppp_cap.sel(n=node, **yC, drop=True)
             / gdp_ppp_cap.sel(n=ref_nodes[0], **yC, drop=True)
-        )
+        ).item()
 
         # Scale weights in yC
-        weight.loc[dict(n=node, **yC)] = scale * weight.sel(n=ref_nodes, **y0).mean(
+        weight.loc[dict(n=node) | yC] = scale * weight.sel(dict(n=ref_nodes) | y0).mean(
             "n"
-        ) + (1 - scale) * weight.sel(n=node, **y0)
+        ) + (1 - scale) * weight.sel(dict(n=node) | y0)
 
     # Currently not enabled
     # “Set 2010 sweight to 2005 value in order not to have rail in 2010, where
@@ -328,13 +328,13 @@ def smooth(qty: Quantity) -> Quantity:
     result = 0.25 * q.shift(y=-1) + 0.5 * q + 0.25 * q.shift(y=1)
 
     # First period
-    weights = xr.DataArray([0.4, 0.4, 0.2], coords=[y[:3]], dims=["y"])
+    weights = xr.DataArray([0.4, 0.4, 0.2], coords=[tuple(y[:3])], dims=["y"])
     result.loc[dict(y=y[0])] = (q * weights).sum("y", min_count=1)
 
     # Final period. “closer to the trend line”
     # NB the inherited R file used a formula equivalent to weights like
     #    [-1/8, 0, 3/8, 3/4]; didn't make much sense.
-    weights = xr.DataArray([0.2, 0.2, 0.6], coords=[y[-3:]], dims=["y"])
+    weights = xr.DataArray([0.2, 0.2, 0.6], coords=[tuple(y[-3:])], dims=["y"])
     result.loc[dict(y=y[-1])] = (q * weights).sum("y", min_count=1)
 
     # NB conversion can be removed once Quantity is SparseDataArray
@@ -384,7 +384,8 @@ def votm(gdp_ppp_cap: Quantity) -> Quantity:
     assert_units(gdp_ppp_cap, "kUSD / passenger / year")
 
     return Quantity(
-        1 / (1 + np.exp((30 - gdp_ppp_cap) / 20)), units=registry.dimensionless
+        1 / (1 + np.exp((30 - gdp_ppp_cap.to_numpy()) / 20)),
+        units=registry.dimensionless,
     )
 
 

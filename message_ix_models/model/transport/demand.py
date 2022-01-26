@@ -21,7 +21,7 @@ from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 from message_data.model.transport import computations
 from message_data.model.transport.data import groups
 from message_data.model.transport.plot import DEMAND_PLOTS
-from message_data.model.transport.utils import path_fallback
+from message_data.model.transport.utils import get_region_codes, path_fallback
 from message_data.tools import gdp_pop
 
 log = logging.getLogger(__name__)
@@ -160,8 +160,7 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
     if not len(info.set["years"]):
         info.year_from_codes(get_codes(f"year/{context.years}"))
     if not len(info.set["node"]):
-        nodes = get_codes(f"node/{context.regions}")
-        info.set["node"] = nodes[nodes.index("World")].child
+        info.set["node"] = get_region_codes(context.regions)
 
     for key, value in (
         ("c:transport", quote(info.set["commodity"])),
@@ -206,9 +205,10 @@ def prepare_reporter(
         rep.modules.append(computations)
 
     # Always ensure structure is available
-    add_structure(rep, context, info)
+    add_structure(rep, context, info or ScenarioInfo())
 
     if exogenous_data:
+        assert info, "`info` arg required for prepare_reporter(…, exogenous_data=True)"
         add_exogenous_data(rep, context, info)
 
     # Transfer transport config to the Reporter

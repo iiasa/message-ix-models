@@ -5,7 +5,6 @@ from typing import Dict, List
 
 import pandas as pd
 from message_ix import make_df
-from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
     adapt_R11_R14,
     broadcast,
@@ -20,7 +19,7 @@ from message_ix_models.util import (
 )
 from openpyxl import load_workbook
 
-from message_data.model.transport.utils import input_commodity_level
+from message_data.model.transport.utils import get_region_codes, input_commodity_level
 
 log = logging.getLogger(__name__)
 
@@ -143,8 +142,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
 
     if context.regions == "R14":
         # Read data using the R11 nodes
-        node_cl = get_codes("node/R11")
-        read_nodes = node_cl[node_cl.index("World")].child
+        read_nodes = get_region_codes("R11")
     else:
         read_nodes = info.N[1:]
 

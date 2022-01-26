@@ -167,7 +167,7 @@ def urban_rural_shares(years: List[int], config: Dict) -> Quantity:
         log.warning("Need urban/suburban share data for SSP scenarios")
 
         share = Quantity(
-            xr.DataArray([0.6, 0.4], coords=[["UR+SU", "RU"]], dims=["area_type"]),
+            xr.DataArray([0.6, 0.4], coords=[("UR+SU", "RU")], dims=["area_type"]),
             units="",
         )
         return computations.product(pop, share)
