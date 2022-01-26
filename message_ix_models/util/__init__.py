@@ -15,6 +15,7 @@ from .common import (
     MESSAGE_MODELS_PATH,
     load_package_data,
     load_private_data,
+    local_data_path,
     package_data_path,
     private_data_path,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "identify_nodes",
     "load_package_data",
     "load_private_data",
+    "local_data_path",
     "maybe_query",
     "package_data_path",
     "private_data_path",
