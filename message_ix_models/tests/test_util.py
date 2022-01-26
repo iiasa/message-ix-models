@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from iam_units import registry
-from message_ix import make_df
+from message_ix import Scenario, make_df
 from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
@@ -23,6 +23,7 @@ from message_ix_models.util import (
     iter_parameters,
     load_package_data,
     load_private_data,
+    local_data_path,
     make_source_tech,
     maybe_query,
     package_data_path,
@@ -41,6 +42,9 @@ def test_as_codes():
     )
     result = as_codes(data)
     assert result[1] not in result[0].child
+
+    # With Codes already, the function is a pass-through
+    assert result == as_codes(result)
 
 
 def test_broadcast(caplog):
@@ -185,28 +189,33 @@ def test_load_private_data(*parts, suffix=None):
     load_private_data("sources.yaml")
 
 
-def test_make_source_tech():
+_MST_COMMON = dict(
+    commodity="commodity",
+    level="level",
+    mode="mode",
+    technology="technology",
+    time="time",
+    time_dest="time",
+    unit="unit",
+)
+_MST_VALUES = dict(
+    capacity_factor=1.0,
+    output=2.0,
+    var_cost=3.0,
+    technical_lifetime=4.0,
+)
+
+
+def test_make_source_tech0():
     info = ScenarioInfo()
     info.set["node"] = ["World", "node0", "node1"]
     info.set["year"] = [1, 2, 3]
 
-    values = dict(
-        capacity_factor=1.0,
-        output=2.0,
-        var_cost=3.0,
-        technical_lifetime=4.0,
-    )
-    common = dict(
-        commodity="commodity",
-        level="level",
-        mode="mode",
-        technology="technology",
-        time="time",
-        time_dest="time",
-        unit="unit",
-    )
+    values = _MST_VALUES.copy()
+
     # Code runs
-    result = make_source_tech(info, common, **values)
+    result = make_source_tech(info, _MST_COMMON, **values)
+
     # Result is dictionary with the expected keys
     assert isinstance(result, dict)
     assert set(result.keys()) == set(values.keys())
@@ -222,7 +231,18 @@ def test_make_source_tech():
 
     del values["var_cost"]
     with pytest.raises(ValueError, match=re.escape("needs values for {'var_cost'}")):
-        make_source_tech(info, common, **values)
+        make_source_tech(info, _MST_COMMON, **values)
+
+
+def test_make_source_tech1(test_mp):
+    """Test make_source_tech() with a Scenario object as input."""
+    s = Scenario(test_mp, model="model", scenario="scenario", version="new")
+    s.add_set("node", ["World", "node0", "node1"])
+    s.add_set("technology", ["t"])
+    s.add_horizon([1, 2, 3])
+    s.commit("")
+
+    make_source_tech(s, _MST_COMMON, **_MST_VALUES)
 
 
 def test_maybe_query():
@@ -241,7 +261,13 @@ def test_maybe_query():
     assert 2 == len(maybe_query(s, "bar == 'c'"))
 
 
-def test_package_data_path(*parts, suffix=None):
+def test_local_data_path(pytestconfig, tmp_env):
+    assert Path(pytestconfig.invocation_dir).joinpath("foo", "bar") == local_data_path(
+        "foo", "bar"
+    )
+
+
+def test_package_data_path():
     assert MESSAGE_MODELS_PATH.joinpath("data", "foo", "bar") == package_data_path(
         "foo", "bar"
     )
@@ -250,7 +276,7 @@ def test_package_data_path(*parts, suffix=None):
 @pytest.mark.xfail(
     condition=MESSAGE_DATA_PATH is None, reason="Requires message_data to be installed."
 )
-def test_private_data_path(*parts, suffix=None):
+def test_private_data_path():
     assert MESSAGE_DATA_PATH.joinpath("data", "foo", "bar") == private_data_path(
         "foo", "bar"
     )

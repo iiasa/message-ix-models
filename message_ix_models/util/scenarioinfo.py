@@ -1,6 +1,7 @@
 """:class:`ScenarioInfo` class."""
 import logging
 from collections import defaultdict
+from dataclasses import dataclass, field
 from itertools import product
 from typing import Dict, List
 
@@ -33,6 +34,10 @@ class ScenarioInfo:
     ----------
     scenario : message_ix.Scenario
         If given, :attr:`.set` is initialized from this existing scenario.
+
+    See also
+    --------
+    .Spec
     """
 
     #: Elements of :mod:`ixmp`/:mod:`message_ix` sets.
@@ -105,6 +110,20 @@ class ScenarioInfo:
     def Y(self):
         """Elements of the set 'year' that are >= the first model year."""
         return list(filter(lambda y: y >= self.y0, self.set["year"]))
+
+    def update(self, other: "ScenarioInfo"):
+        """Update with the set elements of `other`."""
+        for name, data in other.set.items():
+            self.set[name].extend(filter(lambda id: id not in self.set[name], data))
+
+        for name, data in other.par.items():
+            raise NotImplementedError("Merging parameter data")
+
+    def __repr__(self):
+        return (
+            f"<ScenarioInfo: {sum(len(v) for v in self.set.values())} code(s) in "
+            f"{len(self.set)} set(s)>"
+        )
 
     def year_from_codes(self, codes: List[sdmx.model.Code]):
         """Update using a list of `codes`.
@@ -187,3 +206,64 @@ class ScenarioInfo:
 
         # Store
         self.par["duration_period"] = pd.DataFrame(duration_period)
+
+
+@dataclass
+class Spec:
+    """A specification for the structure of a model or variant.
+
+    A Spec collects 3 :class:`.ScenarioInfo` instances at the attributes :attr:`.add`,
+    :attr:`.remove`, and :attr:`.require`. This is the type that is accepted by
+    :func:`.apply_spec`; :doc:`model-build` describes how a Spec is used to modify a
+    :class:`Scenario`. A Spec may also be used to express information about the target
+    structure of data to be prepared; like :class:`.ScenarioInfo`, this can happen
+    before the target :class:`.Scenario` exists.
+
+    Spec also provides:
+
+    - Dictionary-style access, e.g. ``s["add"]`` is equivalent to ``s.add.``.
+    - Error checking; setting keys other than add/remove/require results in an error.
+    - :meth:`.merge`, a helper method.
+    """
+
+    #: Structure to be added to a base scenario.
+    add: ScenarioInfo = field(default_factory=ScenarioInfo)
+    #: Structure to be removed from a base scenario.
+    remove: ScenarioInfo = field(default_factory=ScenarioInfo)
+    #: Structure that must be present in a base scenario.
+    require: ScenarioInfo = field(default_factory=ScenarioInfo)
+
+    # Dict-like features
+
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __setitem__(self, key, value: ScenarioInfo):
+        if not hasattr(self, key):
+            raise KeyError(key)
+        setattr(self, key, value)
+
+    def values(self):
+        yield self.add
+        yield self.remove
+        yield self.require
+
+    # Static methods
+
+    @staticmethod
+    def merge(a: "Spec", b: "Spec") -> "Spec":
+        """Merge Specs `a` and `b` together.
+
+        Returns a new Spec where each member is a union of the respective members of
+        `a` and `b`.
+        """
+        result = Spec()
+
+        for key in {"add", "remove", "require"}:
+            result[key].update(a[key])
+            result[key].update(b[key])
+
+        return result
