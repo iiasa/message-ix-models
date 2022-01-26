@@ -2,13 +2,13 @@ import logging
 from collections import defaultdict
 from functools import partial
 from itertools import product
-from typing import Dict, List, Mapping, Sequence, Union
+from typing import List, Mapping, Sequence, Union
 
 import message_ix
 import pandas as pd
 from sdmx.model import Annotation, Code
 
-from message_ix_models import ScenarioInfo
+from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.build import apply_spec
 from message_ix_models.util import (
     broadcast,
@@ -31,7 +31,7 @@ def add(
     technologies: Sequence[Code],
     template: Code,
     **options,
-) -> Dict[str, ScenarioInfo]:
+) -> Spec:
     """Add disutility formulation to `scenario`."""
     # Generate the spec given the configuration options
     spec = get_spec(groups, technologies, template)
@@ -43,10 +43,8 @@ def add(
 
 
 def get_spec(
-    groups: Sequence[Code],
-    technologies: Sequence[Code],
-    template: Code,
-) -> Dict[str, ScenarioInfo]:
+    groups: Sequence[Code], technologies: Sequence[Code], template: Code
+) -> Spec:
     """Get a spec for a disutility formulation.
 
     Parameters
@@ -58,18 +56,16 @@ def get_spec(
     template : .Code
 
     """
-    require = ScenarioInfo()
-    remove = ScenarioInfo()
-    add = ScenarioInfo()
+    s = Spec()
 
-    require.set["technology"].extend(technologies)
+    s.require.set["technology"].extend(technologies)
 
     # Disutility commodity and source
-    add.set["commodity"] = [Code(id="disutility")]
-    add.set["technology"] = [Code(id="disutility source")]
+    s.add.set["commodity"] = [Code(id="disutility")]
+    s.add.set["technology"] = [Code(id="disutility source")]
 
     # Disutility is unitless
-    add.set["unit"].append("")
+    s.add.set["unit"].append("")
 
     # Add conversion technologies
     for t, g in product(technologies, groups):
@@ -93,16 +89,16 @@ def get_spec(
         )
 
         # "commodity" set elements to add
-        add.set["commodity"].extend([input["commodity"], output["commodity"]])
+        s.add.set["commodity"].extend([input["commodity"], output["commodity"]])
 
         # "technology" set elements to add
         t_code.annotations.append(Annotation(id="input", text=repr(input)))
-        add.set["technology"].append(t_code)
+        s.add.set["technology"].append(t_code)
 
     # Deduplicate "commodity" set elements
-    add.set["commodity"] = sorted(map(str, set(add.set["commodity"])))
+    s.add.set["commodity"] = sorted(map(str, set(s.add.set["commodity"])))
 
-    return dict(require=require, remove=remove, add=add)
+    return s
 
 
 def get_data(scenario, spec, **kwargs) -> Mapping[str, pd.DataFrame]:
