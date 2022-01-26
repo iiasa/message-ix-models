@@ -1,7 +1,8 @@
 """Utilities for nodes."""
 import logging
+from collections.abc import Mapping
 from functools import singledispatch
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 import pandas as pd
 from message_ix import Scenario
@@ -25,7 +26,7 @@ NODE_DIMS = [
 
 
 @singledispatch
-def adapt_R11_R14(data: Dict[str, Union[pd.DataFrame, Quantity]]):
+def adapt_R11_R14(data: Any):
     """Adapt `data` from R11 to R14 node list.
 
     The data is adapted by:
@@ -42,12 +43,19 @@ def adapt_R11_R14(data: Dict[str, Union[pd.DataFrame, Quantity]]):
     - :class:`dict` mapping :class:`str` parameter names to values (either of the above
       types).
     """
+    raise NotImplementedError
+
+
+# NB here would prefer to annotate `data` as Dict[str, Union[pd.DataFrame, Quantity]]),
+#    but this kind of complex annotation is not supported by functools as of Python 3.9.
+@adapt_R11_R14.register
+def _dict(data: Mapping):
     # Dispatch to the methods for the value types
     return {par: adapt_R11_R14(value) for par, value in data.items()}
 
 
 @adapt_R11_R14.register
-def _0(df: pd.DataFrame) -> pd.DataFrame:
+def _df(df: pd.DataFrame) -> pd.DataFrame:
     """Adapt a :class:`pandas.DataFrame`."""
     # New values for columns indexed by node
     new_values = {}
@@ -82,7 +90,7 @@ def _0(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @adapt_R11_R14.register
-def _1(qty: Quantity) -> Quantity:
+def _qty(qty: Quantity) -> Quantity:
     """Adapt a :class:`genno.Quantity`."""
     s = qty.to_series()
     result = Quantity.from_series(
