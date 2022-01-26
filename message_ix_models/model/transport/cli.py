@@ -154,8 +154,9 @@ def build_cmd(context, **options):
 
 
 @cli.command()
+@click.option("--go", is_flag=True)
 @click.pass_context
-def batch(click_ctx):
+def batch(click_ctx, go):
     """Generate commands to handle batches of scenarios."""
     # from message_ix_models.cli import solve_cmd
 
@@ -163,7 +164,7 @@ def batch(click_ctx):
     actions = [
         "build",
         "solve",
-        # "report",
+        "report",
     ]
     model_names = ["ENGAGE_SSP2_v4.1.7"]
     scenario_version = [
@@ -178,6 +179,8 @@ def batch(click_ctx):
     # Accumulate command fragments
     commands = []
 
+    guard = "" if go else "$"
+
     for action, m, sv, (label, opt) in product(
         actions, model_names, scenario_version, options.items()
     ):
@@ -187,11 +190,20 @@ def batch(click_ctx):
 
         # Assemble a command fragment
         if action == "build":
-            print(f'$ mix-models --url="{src}" transport build --dest="{dest}" {opt}')
+            print(
+                f'{guard} mix-models --url="{src}" transport build --fast '
+                f'--dest="{dest}" {opt}'
+            )
             # commands.append([src, build_cmd, build_opts])
         elif action == "solve":
-            print(f'$ message-ix --url="{dest}" solve')
+            print(f'{guard} message-ix --url="{dest}" solve')
             # commands.append([dest, solve_cmd, dict()])
+        elif action == "report":
+            print(
+                f'{guard} mix-models --url="{dest}" report -m model.transport '
+                '"transport all"'
+            )
+            # commands.append([])
         else:
             raise NotImplementedError
 
