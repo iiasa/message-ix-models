@@ -102,7 +102,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"])
 
     # Demand covers the model horizon
-    assert info.Y[-1] == max(
+    assert set(info.Y) == set(
         df["year"].unique()
     ), "`demand` does not cover the model horizon"
 
