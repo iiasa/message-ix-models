@@ -121,8 +121,8 @@ class ScenarioInfo:
 
     def __repr__(self):
         return (
-            f"<ScenarioInfo: {sum(len(v) for v in self.set.values())} codes in "
-            f"{len(self.set)} sets>"
+            f"<ScenarioInfo: {sum(len(v) for v in self.set.values())} code(s) in "
+            f"{len(self.set)} set(s)>"
         )
 
     def year_from_codes(self, codes: List[sdmx.model.Code]):
