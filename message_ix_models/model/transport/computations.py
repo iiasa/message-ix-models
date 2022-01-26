@@ -87,6 +87,7 @@ def demand_ixmp(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
     pdt1: "transport pdt:n-y-t"
     pdt2: "transport ldv pdt:n-y-cg"
     """
+
     # Generate the demand data; convert to pd.DataFrame
     data = pdt1.to_series().reset_index(name="value")
 
