@@ -41,6 +41,7 @@ Commonly used:
    series_of_pint_quantity
    ~context.Context
    ~scenarioinfo.ScenarioInfo
+   ~scenarioinfo.Spec
 
 .. automodule:: message_ix_models.util
    :members:
