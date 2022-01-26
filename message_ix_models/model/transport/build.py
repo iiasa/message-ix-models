@@ -125,6 +125,11 @@ def main(context: Context, scenario: Scenario, options: Dict = None, **option_kw
 
     # Add disutility data separately
     d_spec = get_disutility_spec(context)
-    add_par_data(scenario, partial(disutility.get_data, spec=d_spec), **options)
+    with scenario.transact("Add disutility data"):
+        add_par_data(
+            scenario,
+            disutility.get_data(scenario, d_spec),
+            dry_run=options.get("dry_run", False),
+        )
 
     mark_time()
