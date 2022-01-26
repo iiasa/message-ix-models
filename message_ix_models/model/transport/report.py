@@ -7,7 +7,7 @@ from dask.core import quote
 from message_ix.reporting import Key, Reporter
 from message_ix_models import Context
 
-from . import configure, computations
+from . import computations, configure
 from .plot import PLOTS
 
 log = logging.getLogger(__name__)
