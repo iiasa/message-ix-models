@@ -2,6 +2,7 @@ import logging
 
 import pandas as pd
 import pytest
+from message_ix import make_df
 from message_ix.testing import make_dantzig
 from pandas.testing import assert_frame_equal
 from sdmx.model import Code
@@ -84,7 +85,15 @@ class TestScenarioInfo:
     def test_repr(self):
         si = ScenarioInfo()
         si.set["foo"] = [1, 2, 3]
-        assert "<ScenarioInfo: 3 codes in 1 sets>" == repr(si)
+        assert "<ScenarioInfo: 3 code(s) in 1 set(s)>" == repr(si)
+
+    def test_update(self):
+        si = ScenarioInfo()
+        si.par["demand"] = make_df("demand")
+
+        # update() fails
+        with pytest.raises(NotImplementedError):
+            ScenarioInfo().update(si)
 
     @pytest.mark.parametrize(
         "codelist, y0, N_all, N_Y, y_m1, dp_checks",
