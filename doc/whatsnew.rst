@@ -1,8 +1,13 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- New :class:`.Spec` class for easier handling of specifications of model (or model variant) structure (:pull:`39`)
+- New utility function :func:`.util.local_data_path` (:pull:`39`).
+- :func:`.repr` of :class:`.Context` no longer prints a (potentially very long) list of all keys and settings (:pull:`39`).
+- :func:`.as_codes` accepts a :class:`.dict` with :class:`.Code` values (:pull:`39`).
 
 2021.11.24
 ==========
