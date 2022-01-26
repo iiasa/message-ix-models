@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime
 
+import pandas as pd
 import pint
 import plotnine as p9
 from genno.compat.plotnine import Plot as BasePlot
@@ -55,7 +56,7 @@ class InvCost0(Plot):
                 + p9.geom_line()
                 + p9.geom_point()
                 + p9.expand_limits(y=[0, y_max])
-                + self.title(f"{self._title_detail} Investment cost [{unit}] {nl}")
+                + self.title(f"{self._title_detail} investment cost [{unit}] {nl}")
                 + self.static
             )
 
@@ -139,6 +140,8 @@ class LDV_IO(Plot):
 
 
 class LDVTechShare0(Plot):
+    """Only works with filter = True."""
+
     basename = "ldv-tech-share"
     inputs = ["out:nl-t-ya:transport"]
 
@@ -150,7 +153,6 @@ class LDVTechShare0(Plot):
 
         return (
             p9.ggplot(data, p9.aes(x="ya", y="out", fill="t"))
-            + p9.theme(figure_size=(11.7, 8.3))
             + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}"))
             + p9.geom_bar(stat="identity", width=4)
             + p9.labs(
@@ -158,6 +160,7 @@ class LDVTechShare0(Plot):
                 y="Activity [10⁹ km / y]",
                 fill="LDV technology",
             )
+            + self.static
         )
 
 
@@ -204,64 +207,53 @@ class LDVTechShare1(Plot):
 
 class DemandCalibrated(Plot):
     basename = "demand"
-    inputs = ["demand:n-c-y", "c:transport"]
+    inputs = ["demand:n-c-y", "c:transport", "cg"]
 
-    def generate(self, data, commodities):
+    def generate(self, data, commodities, cg):
         # Convert and select data
         data = data.rename(columns={0: "value"}).query(
             f"c in {repr(list(map(str, commodities)))}"
         )
+        data["c group"] = data["c"].apply(
+            lambda v: "transport pax LDV" if any(cg_.id in v for cg_ in cg) else v
+        )
 
         for node, node_data in data.groupby("n"):
             yield (
-                p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c"))
+                p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c group"))
                 + p9.geom_bar(stat="identity", width=4)
-                + p9.labs(
-                    x="Period",
-                    y=r"‘demand’ parameter [km / pass / a]",
-                    fill="Transport mode group",
-                )
-                + self.title(f"Investment cost {node}")
+                + p9.labs(x="Period", y=None, fill="Transport mode group")
+                + self.title(f"Transport demand [pass · km / a] {node}")
                 + self.static
             )
 
 
 class DemandCalibratedCap(Plot):
     basename = "demand-capita"
-    inputs = ["demand:n-c-y:capita", "c:transport"]
+    inputs = ["demand:n-c-y:capita", "c:transport", "cg"]
 
-    def generate(self, data, commodities):
-        # TODO handle this by adding additional computations in report.callback() or
-        #      functions it calls.
-        # try:
-        #     # Convert and select data
-        #     data = computations.ratio(demand, population)
-        # except TypeError:
-        #     log.error(f"Missing data to plot {self.basename}")
-        #     return []
+    def generate(self, data, commodities, cg):
+        # Convert and select data
+        print(data)
+        data = data.rename(columns={0: "value"}).query(
+            f"c in {repr(list(map(str, commodities)))}"
+        )
+        data["c group"] = data["c"].apply(
+            lambda v: "transport pax LDV" if any(cg_.id in v for cg_ in cg) else v
+        )
 
-        # TODO remove; this is now handled by genno…Plot
-        # df = (
-        #     data.to_series()
-        #     .rename("value")
-        #     .sort_index()
-        #     .reset_index()
-        #     .astype(dict(value=float))
-        #     .query(f"c in {repr(list(map(str, commodities)))}")
-        # )
-
-        for node, node_data in data.groupby("n"):
+        for node, group_df in data.groupby("n"):
             yield (
-                p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c"))
-                + p9.theme(figure_size=(11.7, 8.3))
+                p9.ggplot(p9.aes(x="y", y="value", fill="c"), group_df)
                 + p9.geom_bar(stat="identity", width=4)
-                + self.title(f"Node: {node}")
-                + p9.labs(
-                    x="Period",
-                    y=r"‘demand’ parameter [km / pass / a]",
-                    fill="Transport mode group",
-                )
+                + p9.labs(x="Period", y=None, fill="Transport mode group")
+                + self.title(f"Transport demand per capita [km / a] {node}")
+                + self.static
             )
+
+
+def _reduce_units(df: pd.DataFrame) -> pint.Unit:
+    return pint.Quantity(1, df["unit"].unique()[0]).to_reduced_units().units
 
 
 class DemandExo(Plot):
@@ -272,7 +264,7 @@ class DemandExo(Plot):
         # FIXME shouldn't need to change dtype here
         data = data.rename(columns={0: "value"}).astype(dict(value=float))
         y_max = max(data["value"])
-        unit = pint.Quantity(1, data["unit"].unique()[0]).to_reduced_units().units
+        unit = _reduce_units(data)
 
         scale = 1e6
 
@@ -295,7 +287,7 @@ class DemandExoCap(Plot):
         # FIXME shouldn't need to change dtype here
         data = data.rename(columns={0: "value"}).astype(dict(value=float))
         y_max = max(data["value"])
-        unit = pint.Quantity(1, data["unit"].unique()[0]).to_reduced_units().units
+        unit = _reduce_units(data)
 
         scale = 1e3
 
@@ -304,7 +296,7 @@ class DemandExoCap(Plot):
                 p9.ggplot(p9.aes(x="y", y=f"value / {scale}", fill="t"), group_df)
                 + p9.geom_bar(stat="identity", width=4)
                 + p9.expand_limits(y=[0, y_max / scale])
-                + p9.labs(x="Period", fill="Mode (tech group)")
+                + p9.labs(x="Period", y=None, fill="Mode (tech group)")
                 + self.title(
                     f"Passenger transport activity per person [10³ {unit:~}] {n}"
                 )
@@ -313,26 +305,26 @@ class DemandExoCap(Plot):
 
 
 class EnergyCmdty(Plot):
+    """Only works with filter = True."""
+
     basename = "energy-by-cmdty"
-    inputs = ["in:nl-t-ya-c"]
+    inputs = ["in:nl-ya-c"]
 
     def generate(self, data):
-        # Discard data for certain technologies
+        # Discard data for certain commodities
         data = data[
-            ~(
-                data.t.str.startswith("transport vehicle.*")
-                | data.t.str.startswith("disutility")
-            )
+            ~(data.c.str.startswith("transport") | (data.c == "disutility"))
         ].rename(columns={0: "in"})
+        unit = "GWa"
 
-        return (
-            p9.ggplot(data, p9.aes(x="ya", y="in", fill="c"))
-            + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("Node: {}"))
-            + p9.geom_bar(stat="identity", width=5, color="black")
-            + p9.labs(x="Period", y="Energy", fill="Commodity")
-            + self.title("Energy input to transport")
-            + self.static
-        )
+        for nl, group_df in data.groupby("nl"):
+            yield (
+                p9.ggplot(p9.aes(x="ya", y="in", fill="c"), group_df)
+                + p9.geom_bar(stat="identity", width=5, color="black")
+                + p9.labs(x="Period", y="Energy", fill="Commodity")
+                + self.title(f"Energy input to transport [{unit}] {nl}")
+                + self.static
+            )
 
 
 # class EmissionsTech(Plot):
@@ -342,17 +334,17 @@ class EnergyCmdty(Plot):
 
 class Stock0(Plot):
     basename = "stock-ldv"
-    inputs = ["ldv stock:nl-t-ya-driver_type"]
+    inputs = ["stock:nl-t-ya-driver_type:ldv"]
     _title_detail = "LDV transport"
 
     def generate(self, data):
-        data = data.rename(columns={0: "ldv stock"})
-        y_max = max(data["ldv stock"])
+        data = data.rename(columns={0: "stock"})
+        y_max = max(data["stock"])
         unit = data["unit"].unique()[0]
 
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(p9.aes(x="yv", y="ldv stock", color="t"), group_df)
+                p9.ggplot(p9.aes(x="yv", y="stock", color="t"), group_df)
                 + p9.geom_line()
                 + p9.geom_point()
                 + p9.expand_limits(y=[0, y_max])
@@ -365,17 +357,17 @@ class Stock1(Plot):
     """Same as Stock0, but for non-LDV techs only."""
 
     basename = "stock-non-ldv"
-    inputs = ["non ldv stock:nl-t-ya"]
+    inputs = ["stock:nl-t-ya:non-ldv"]
     _title_detail = "Non-LDV transport"
 
     def generate(self, data):
-        data = data.rename(columns={0: "ldv stock"})
-        y_max = max(data["ldv stock"])
+        data = data.rename(columns={0: "stock"})
+        y_max = max(data["stock"])
         unit = data["unit"].unique()[0]
 
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(p9.aes(x="yv", y="ldv stock", color="t"), group_df)
+                p9.ggplot(p9.aes(x="yv", y="stock", color="t"), group_df)
                 + p9.geom_line()
                 + p9.geom_point()
                 + p9.expand_limits(y=[0, y_max])
