@@ -86,9 +86,16 @@ def configure(
     # future: set the mode-share key
     future = options.pop("futures-scenario", None)
     if future is not None:
-        if future not in ("base", "A---"):
+        if future not in ("default", "base", "A---"):
             raise ValueError(f"unrecognized Transport Futures scenario {repr(future)}")
         cfg["mode-share"] == future
+
+        if future == "A---":
+            log.info(f"Set fixed demand for TF scenario {repr(future)}")
+            cfg["fixed demand"] = "275000 km / year"
+
+    # mode-share: overwrite
+    cfg["mode-share"] = options.pop("mode-share", cfg.get("mode-share", "default"))
 
 
 def read_config(context):
