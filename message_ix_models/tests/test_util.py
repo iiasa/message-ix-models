@@ -43,6 +43,9 @@ def test_as_codes():
     result = as_codes(data)
     assert result[1] not in result[0].child
 
+    # With Codes already, the function is a pass-through
+    assert result == as_codes(result)
+
 
 def test_broadcast(caplog):
     # Debug message logged with length-0 values
