@@ -120,6 +120,7 @@ def callback(rep: Reporter):
     # Keys
     dist_ldv = Key("distance", "nl driver_type".split(), "ldv")
     dist_nonldv = Key("distance", "nl", "non-ldv")
+    inv_cost = Key("inv_cost", "nl t yv".split())
     CAP = Key("CAP", "nl t ya".split())
     CAP_ldv = CAP.add_tag("ldv")
     CAP_nonldv = CAP.add_tag("non-ldv")
@@ -127,6 +128,22 @@ def callback(rep: Reporter):
     # Vehicle stocks
     queue.extend(
         [
+            # Per capita
+            (
+                ("ratio", "demand:n-c-y:capita", "demand:n-c-y", "population:n-y"),
+                dict(sums=False),
+            ),
+            # Investment costs
+            (("select", inv_cost.add_tag("ldv"), inv_cost, "t:transport LDV"), _si),
+            (
+                (
+                    "select",
+                    inv_cost.add_tag("non-ldv"),
+                    inv_cost,
+                    "t:transport non-LDV",
+                ),
+                _si,
+            ),
             (("select", CAP_ldv, CAP, "t:transport LDV"), _si),
             (("select", CAP_nonldv, CAP, "t:transport non-LDV"), _si),
             # Vehicle stocks for LDV
