@@ -61,7 +61,9 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         tmp_path,
         regions,
         years,
-        options={"mode-share": mode_shares} if mode_shares is not None else dict(),
+        options={"futures-scenario": mode_shares}
+        if mode_shares is not None
+        else dict(),
     )
 
     for key, unit in (
