@@ -78,7 +78,7 @@ def add_par_data(
     return total
 
 
-def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
+def as_codes(data: Union[List[str], Dict[str, Union[Dict, Code]]]) -> List[Code]:
     """Convert *data* to a :class:`list` of :class:`.Code` objects.
 
     Various inputs are accepted:
@@ -97,6 +97,11 @@ def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
         raise TypeError(data)
 
     for id, info in data.items():
+        if isinstance(info, Code):
+            result[info.id] = info
+            continue
+
+        # Convert other types to dict()
         if isinstance(info, str):
             info = dict(name=info)
         elif isinstance(info, Mapping):
@@ -104,6 +109,7 @@ def as_codes(data: Union[List[str], Dict[str, Dict]]) -> List[Code]:
         else:
             raise TypeError(info)
 
+        # Create a Code object
         code = Code(
             id=str(id),
             name=info.pop("name", str(id).title()),
