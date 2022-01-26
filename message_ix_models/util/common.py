@@ -115,11 +115,62 @@ def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs messag
     return _load(PRIVATE_DATA, MESSAGE_DATA_PATH / "data", *parts)
 
 
+def local_data_path(*parts) -> Path:
+    """Construct a path for local data.
+
+    The setting ``message local data`` in the user's :ref:`ixmp configuration file
+    <ixmp:configuration>` is used as a base path. If this is not configured, the
+    current working directory is used.
+
+    Parameters
+    ----------
+    parts : sequence of str or Path
+        Joined to the base path using :meth:`.Path.joinpath`.
+
+    See also
+    --------
+    :ref:`Choose locations for data <local-data>`
+    """
+    import ixmp
+
+    try:
+        base = Path(ixmp.config.get("message local data"))
+    except KeyError:
+        base = Path.cwd()
+    return _make_path(base, *parts)
+
+
 def package_data_path(*parts) -> Path:
-    """Construct a path to a file under :file:`message_ix_models/data/`."""
+    """Construct a path to a file under :file:`message_ix_models/data/`.
+
+    Use this function to access data packaged and installed with
+    :mod:`message_ix_models`.
+
+    Parameters
+    ----------
+    parts : sequence of str or Path
+        Joined to the base path using :meth:`.Path.joinpath`.
+
+    See also
+    --------
+    :ref:`Choose locations for data <package-data>`
+    """
     return _make_path(MESSAGE_MODELS_PATH / "data", *parts)
 
 
 def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
-    """Construct a path to a file under :file:`data/` in :mod:`message_data`."""
+    """Construct a path to a file under :file:`data/` in :mod:`message_data`.
+
+    Use this function to access non-public (e.g. embargoed or proprietary) data stored
+    in the :mod:`message_data` repository.
+
+    Parameters
+    ----------
+    parts : sequence of str or Path
+        Joined to the base path using :meth:`.Path.joinpath`.
+
+    See also
+    --------
+    :ref:`Choose locations for data <private-data>`
+    """
     return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)

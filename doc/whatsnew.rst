@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- New utility function :func:`.util.local_data_path` (:pull:`39`).
 
 2021.11.24
 ==========
