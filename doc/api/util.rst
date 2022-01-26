@@ -29,6 +29,7 @@ Commonly used:
    identify_nodes
    load_package_data
    load_private_data
+   local_data_path
    make_io
    make_matched_dfs
    make_source_tech
