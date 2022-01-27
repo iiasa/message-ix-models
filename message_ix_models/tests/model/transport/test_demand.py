@@ -1,5 +1,4 @@
 import logging
-import os
 
 import message_ix
 import pytest
@@ -43,9 +42,6 @@ def test_demand_dummy(test_context, regions, years):
     assert any(data["demand"]["commodity"] == "transport pax URLMM")
 
 
-@pytest.mark.xfail(
-    condition="GITHUB_ACTIONS" in os.environ, reason="Temporary, for #272"
-)
 @pytest.mark.parametrize(
     "regions,years,N_node,mode_shares",
     [
@@ -110,9 +106,6 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     ), "`demand` does not cover the model horizon"
 
 
-@pytest.mark.xfail(
-    condition="GITHUB_ACTIONS" in os.environ, reason="Temporary, for #272"
-)
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
 
@@ -233,9 +226,6 @@ def test_from_scenario(user_context):
     demand.from_scenario(scenario)
 
 
-@pytest.mark.xfail(
-    condition="GITHUB_ACTIONS" in os.environ, reason="Temporary, for #272"
-)
 @pytest.mark.parametrize(
     "nodes, data_source",
     [
