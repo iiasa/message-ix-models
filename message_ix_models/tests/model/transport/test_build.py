@@ -1,4 +1,5 @@
 import logging
+import os
 from copy import copy
 
 import pytest
@@ -43,6 +44,9 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
     assert expected == spec["require"].set["node"]
 
 
+@pytest.mark.xfail(
+    condition="GITHUB_ACTIONS" in os.environ, reason="Temporary, for #272"
+)
 @pytest.mark.parametrize(
     "regions, years, ldv, nonldv, solve",
     [
