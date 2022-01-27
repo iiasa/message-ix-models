@@ -1,5 +1,4 @@
 import logging
-import os
 
 import pytest
 from numpy.testing import assert_allclose
@@ -20,10 +19,6 @@ def test_register_cb():
     register(callback)
 
 
-@pytest.mark.skipif(
-    "TEAMCITY_BUILD_TRIGGERED_BY" in os.environ or "GITHUB_ACTIONS" in os.environ,
-    reason="Temporary (undiagnosed failures on TeamCity; passes locally)",
-)
 @pytest.mark.parametrize(
     "regions, years, solved",
     (
