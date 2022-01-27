@@ -1,9 +1,9 @@
 import logging
+import os
 
 import message_ix
 import pytest
 from message_ix.reporting import Key
-from message_ix_models import testing
 from message_ix_models.model import bare
 from message_ix_models.model.structure import get_codes
 from pytest import param
@@ -14,7 +14,7 @@ from message_data.tools import assert_units
 log = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=testing.NIE)])
+@pytest.mark.parametrize("regions", ["R11", "R14", "ISR"])
 @pytest.mark.parametrize("years", ["A", "B"])
 def test_demand_dummy(test_context, regions, years):
     """Consumer-group-specific commodities are generated."""
@@ -43,6 +43,9 @@ def test_demand_dummy(test_context, regions, years):
     assert any(data["demand"]["commodity"] == "transport pax URLMM")
 
 
+@pytest.mark.xfail(
+    condition="GITHUB_ACTIONS" in os.environ, reason="Temporary, for #272"
+)
 @pytest.mark.parametrize(
     "regions,years,N_node,mode_shares",
     [
@@ -107,6 +110,9 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     ), "`demand` does not cover the model horizon"
 
 
+@pytest.mark.xfail(
+    condition="GITHUB_ACTIONS" in os.environ, reason="Temporary, for #272"
+)
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
 
@@ -227,6 +233,9 @@ def test_from_scenario(user_context):
     demand.from_scenario(scenario)
 
 
+@pytest.mark.xfail(
+    condition="GITHUB_ACTIONS" in os.environ, reason="Temporary, for #272"
+)
 @pytest.mark.parametrize(
     "nodes, data_source",
     [
