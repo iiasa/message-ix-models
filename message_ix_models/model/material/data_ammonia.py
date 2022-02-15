@@ -89,7 +89,7 @@ def gen_data_ammonia(scenario, dry_run=False):
         for param in data['parameter'].unique():
             if (t == "electr_NH3") & (param == "input_fuel"):
                 continue
-            unit = data['Unit'][data['parameter'] == param].iloc[0]
+            unit = "t"
             cat = data['param_cat'][data['parameter'] == param].iloc[0]
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
@@ -135,8 +135,9 @@ def gen_data_ammonia(scenario, dry_run=False):
     )
     row = act2010
 
+    # Unit is Tg N/yr
     results["historical_activity"].append(
-        df.assign(value=row, unit='Tg N/yr', year_act=2010)
+        df.assign(value=row, unit="t", year_act=2010)
     )
     # 2015 activity necessary if this is 5-year step scenario
     # df['value'] = act2015 # total NH3 or N in Mt 2010 FAO Russia
@@ -155,8 +156,9 @@ def gen_data_ammonia(scenario, dry_run=False):
     capacity_factor = read_demand()['capacity_factor']
     row = act2010 * 1 / 15 / capacity_factor[0]
 
+    # Unit is Tg N/yr
     results["historical_new_capacity"].append(
-        df.assign(value=row, unit='Tg N/yr', year_act=2010)
+        df.assign(value=row, unit="t", year_act=2010)
     )
 
     # %% Secure feedstock balance (foil_fs, gas_fs, coal_fs)  loil_fs?
@@ -323,7 +325,7 @@ def gen_data_ccs(scenario, dry_run=False):
         #      t=NH3_to_N_fertil; use 'if' statements to fill in.
 
         for param in data['parameter'].unique():
-            unit = data['Unit'][data['parameter'] == param].iloc[0]
+            unit = "t"
             cat = data['param_cat'][data['parameter'] == param].iloc[0]
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
