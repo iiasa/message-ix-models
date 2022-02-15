@@ -98,7 +98,7 @@ def configure(
     cfg["mode-share"] = options.pop("mode-share", cfg.get("mode-share", "default"))
 
 
-@lru_cache
+@lru_cache()
 def get_region_codes(codelist: str) -> List[Code]:
     """Return the codes that are children of "World" in the specified `codelist`.
 
