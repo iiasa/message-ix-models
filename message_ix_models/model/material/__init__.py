@@ -45,6 +45,7 @@ SPEC_LIST = [
     "petro_chemicals",
     "buildings",
     "power_sector",
+    "fertilizer"
 ]
 
 
@@ -238,16 +239,19 @@ from .data_generic import gen_data_generic
 from .data_petro import gen_data_petro_chemicals
 from .data_buildings import gen_data_buildings
 from .data_power_sector import gen_data_power_sector
+from .data_ammonia import gen_data_ammonia
 
 
 DATA_FUNCTIONS = [
     # gen_data_buildings,
-    gen_data_steel,
-    gen_data_cement,
-    gen_data_aluminum,
-    gen_data_petro_chemicals,
-    gen_data_generic,
-    gen_data_power_sector,
+    #gen_data_steel,
+    #gen_data_cement,
+    #gen_data_aluminum,
+    #gen_data_petro_chemicals,
+    #gen_data_generic,
+    #gen_data_power_sector,
+    gen_data_ammonia,
+
 ]
 
 
