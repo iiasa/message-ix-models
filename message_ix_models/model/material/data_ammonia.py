@@ -17,7 +17,7 @@ CONVERSION_FACTOR_NH3_N = 17 / 14
 CONVERSION_FACTOR_PJ_GWa = 0.0317
 
 
-def gen_data(scenario, dry_run=False):
+def gen_data_ammonia(scenario, dry_run=False):
     """Generate data for materials representation of nitrogen fertilizers.
 
     .. note:: This code is only partially translated from
