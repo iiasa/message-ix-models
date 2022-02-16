@@ -30,8 +30,9 @@ def gen_data_ammonia(scenario, dry_run=False):
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
-    if "World" in nodes:
+    if (("World" in nodes) | ("R12_GLB" in nodes)):
         nodes.pop(nodes.index("World"))
+        nodes.pop(nodes.index("R12_GLB"))
     # Techno-economic assumptions
     data = read_data()
 
