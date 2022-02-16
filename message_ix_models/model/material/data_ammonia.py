@@ -182,7 +182,13 @@ def gen_data_ammonia(scenario, dry_run=False):
 
     # Globiom land input
     df = pd.read_excel(context.get_local_path('material','GLOBIOM_Fertilizer_use_N.xlsx'))
-
+    df = df.replace(regex=r'^R11', value="R12").replace(regex=r'^R12_CPA', value="R12_CHN")
+    df["unit"] = "t"
+    df.loc[df["node"] == "R12_CHN", "value"] *= 0.93 # hotfix to adjust to R12
+    df_rcpa = df.loc[df["node"] == "R12_CHN"].copy(deep=True)
+    df_rcpa["node"] = "R12_RCPA"
+    df_rcpa["value"] *= 0.07
+    df = df.append(df_rcpa)
     df = df.drop("Unnamed: 0", axis=1)
     results["land_input"].append(df)
 
