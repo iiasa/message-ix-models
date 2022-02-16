@@ -424,12 +424,12 @@ fertilizer:
     add:
     - NH3
     - Fertilizer Use|Nitrogen
-
+    - wastewater
   level:
     add:
     - material_interim
     - material_final
-
+    - wastewater
   technology:
     require:
     - h2_bio_ccs  # Reference for vent-to-storage ratio
