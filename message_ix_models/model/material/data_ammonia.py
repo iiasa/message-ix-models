@@ -47,7 +47,7 @@ def gen_data_ammonia(scenario, dry_run=False):
     output_commodity_dict = {
         "output_NH3": "NH3",
         "output_heat": "d_heat",
-        "output_water": ""  # ask Jihoon how to name
+        "output_water": "wastewater"  # ask Jihoon how to name
     }
     commodity_dict = {
         "output": output_commodity_dict,
@@ -95,7 +95,7 @@ def gen_data_ammonia(scenario, dry_run=False):
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
                 common["level"] = level_cat_dict[cat][param]
-                if t == "biomass_NH3":
+                if (t == "biomass_NH3") & (cat == "input"):
                     common["level"] = "primary"
             if (str(t) == "NH3_to_N_fertil") & (param == "output_NH3"):
                 common['commodity'] = "Fertilizer Use|Nitrogen"
@@ -148,7 +148,7 @@ def gen_data_ammonia(scenario, dry_run=False):
     df = (
         make_df("historical_new_capacity",
                 technology=[t for t in config["technology"]["add"]], # ], refactor to adjust to yaml structure
-                value=1, unit='t', years_act=s_info.Y, **common)
+                value=1, unit='t', years_act=s_info.Y, years_vtg=s_info.Y, **common)
             .pipe(broadcast, node_loc=nodes)
             .pipe(same_node)
     )
