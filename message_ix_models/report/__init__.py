@@ -2,11 +2,11 @@ import logging
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Union
 
 import genno.config
 from genno.compat.pyam import iamc as handle_iamc
-from message_ix.reporting import Reporter
+from message_ix import Scenario, Reporter
 from message_ix_models.util import local_data_path, private_data_path
 
 from . import computations, util
@@ -160,7 +160,13 @@ def report(scenario, key=None, config=None, output_path=None, dry_run=False, **k
     log.info(f"Result{msg}")
 
 
-def prepare_reporter(scenario, config, key=None, output_path=None):
+def prepare_reporter(
+    scenario_or_reporter: Union[Scenario, Reporter],
+    config,
+    key=None,
+    output_path=None,
+    callbacks=None,
+):
     """Prepare to report *key* from *scenario*.
 
     .. todo:: accept a :class:`.Context` object instead of a growing set of options.
@@ -189,8 +195,13 @@ def prepare_reporter(scenario, config, key=None, output_path=None):
     """
     log.info("Prepare reporter")
 
-    # Create a Reporter for *scenario*
-    rep = Reporter.from_scenario(scenario)
+    if isinstance(scenario_or_reporter, Scenario):
+        # Create a Reporter for *scenario*
+        rep = Reporter.from_scenario(scenario_or_reporter)
+        has_solution = scenario_or_reporter.has_solution()
+    else:
+        rep = scenario_or_reporter
+        has_solution = True
 
     # Append the message_data computations
     rep.modules.append(computations)
@@ -219,7 +230,7 @@ def prepare_reporter(scenario, config, key=None, output_path=None):
     config["output_dir"].mkdir(exist_ok=True, parents=True)
 
     # Handle configuration
-    rep.configure(**config, fail="raise" if scenario.has_solution() else logging.NOTSET)
+    rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
 
     for callback in CALLBACKS:
         callback(rep)
