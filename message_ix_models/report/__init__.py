@@ -212,7 +212,7 @@ def prepare_reporter(
             # Deepcopy to avoid destructive operations below
             config = deepcopy(config)
         else:
-            config = private_data_path("report", "global.yaml")
+            config = dict(path=private_data_path("report", "global.yaml"))
     else:
         # A non-dict *config* argument must be a Path
         path = Path(config)
