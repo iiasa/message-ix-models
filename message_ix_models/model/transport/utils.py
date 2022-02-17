@@ -77,6 +77,7 @@ def configure(
         "data source": dict(),
         "mode-share": "default",
         "regions": context.regions,
+        "report": dict(filter=False),
     }.items():
         cfg.setdefault(key, value)
 

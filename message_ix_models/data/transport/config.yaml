@@ -1,1 +1,13 @@
-# Default, empty configuration file
+# Default configuration file for MESSAGEix-Transport
+#
+# This example file contains the minimal entries necessary to run the basic
+# build-solve-report workflow. Other keys are given default values in
+# .model.transport.configure
+
+data source:
+  demand dummy: False
+  gdp: SSP2
+  population: SSP2
+
+# Set of modes handled by demand projection
+demand modes: [LDV, 2W, AIR, BUS, RAIL]
