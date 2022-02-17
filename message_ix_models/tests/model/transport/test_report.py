@@ -2,12 +2,16 @@ import logging
 
 import pytest
 from numpy.testing import assert_allclose
-
+from message_ix import Reporter
 from message_ix_models.util import private_data_path
 from message_ix_models.testing import NIE
 
 from message_data.model.transport import configure
-from message_data.model.transport.report import callback, computations
+from message_data.model.transport.report import (
+    callback,
+    computations,
+    simulated_solution,
+)
 from message_data.reporting import prepare_reporter, register
 
 from . import built_transport
@@ -93,3 +97,33 @@ def test_distance_nonldv(regions):
     assert ("nl", "t", "y") == result.dims
 
     # TODO Check some computed values
+
+
+@pytest.mark.parametrize("years", ["B"])
+@pytest.mark.parametrize("regions", ["R12"])
+def test_simulated_solution(test_context, regions, years):
+    from message_data.model.transport import build
+
+    # Generate the spec for a model
+    ctx = test_context
+    ctx.regions = regions
+    ctx.years = years
+    configure(ctx)
+    spec = build.get_spec(ctx)
+
+    # Create a reporter
+    rep = Reporter()
+
+    # Simulated solution data is added
+    simulated_solution(rep, spec)
+
+    # The overall prepare_reporter now works
+    register(callback)
+    prepare_reporter(rep, dict())
+
+    # A key for a MESSAGEix variable was added and can be retrieved
+    k = rep.full_key("ACT")
+    rep.get(k)
+
+    # TODO check get() on a computed key for MESSAGEix
+    # TODO check get() on a computed key for message_data
