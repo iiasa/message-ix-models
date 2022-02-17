@@ -121,9 +121,13 @@ def test_simulated_solution(test_context, regions, years):
     register(callback)
     prepare_reporter(rep, dict())
 
-    # A key for a MESSAGEix variable was added and can be retrieved
+    # A quantity for a MESSAGEix variable was added and can be retrieved
     k = rep.full_key("ACT")
     rep.get(k)
 
-    # TODO check get() on a computed key for MESSAGEix
-    # TODO check get() on a computed key for message_data
+    # A quantity for MESSAGEix can be computed
+    k = rep.full_key("out")
+    rep.get(k)
+
+    # A quantity for message_data.model.transport can be computed
+    rep.get("stock:nl-t-ya-driver_type:ldv")
