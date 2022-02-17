@@ -232,7 +232,7 @@ def prepare_reporter(
     # Handle configuration
     rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
 
-    for callback in CALLBACKS:
+    for callback in CALLBACKS + (callbacks or []):
         callback(rep)
 
     if key:
