@@ -17,7 +17,7 @@ CONVERSION_FACTOR_NH3_N = 17 / 14
 CONVERSION_FACTOR_PJ_GWa = 0.0317
 
 
-def gen_data_ammonia(scenario, dry_run=False):
+def gen_data(scenario, dry_run=False):
     """Generate data for materials representation of nitrogen fertilizers.
 
     .. note:: This code is only partially translated from
@@ -30,9 +30,11 @@ def gen_data_ammonia(scenario, dry_run=False):
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
-    if (("World" in nodes) | ("R12_GLB" in nodes)):
+    if "World" in nodes:
         nodes.pop(nodes.index("World"))
+    if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
+
     # Techno-economic assumptions
     data = read_data()
 
@@ -90,7 +92,7 @@ def gen_data_ammonia(scenario, dry_run=False):
         for param in data['parameter'].unique():
             if (t == "electr_NH3") & (param == "input_fuel"):
                 continue
-            unit = "t"
+            unit = data['Unit'][data['parameter'] == param].iloc[0]
             cat = data['param_cat'][data['parameter'] == param].iloc[0]
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
@@ -101,7 +103,7 @@ def gen_data_ammonia(scenario, dry_run=False):
                 common['commodity'] = "Fertilizer Use|Nitrogen"
                 common['level'] = "material_final"
             df = (
-                make_df(cat, technology=t, value=1, unit=unit, **common)
+                make_df(cat, technology=t, value=1, unit="-", **common)
                     .pipe(broadcast, node_loc=nodes)
                     .pipe(same_node)
             )
@@ -136,9 +138,8 @@ def gen_data_ammonia(scenario, dry_run=False):
     )
     row = act2010
 
-    # Unit is Tg N/yr
     results["historical_activity"].append(
-        df.assign(value=row, unit="t", year_act=2010)
+        df.assign(value=row, unit='t', year_act=2010)
     )
     # 2015 activity necessary if this is 5-year step scenario
     # df['value'] = act2015 # total NH3 or N in Mt 2010 FAO Russia
@@ -148,7 +149,7 @@ def gen_data_ammonia(scenario, dry_run=False):
     df = (
         make_df("historical_new_capacity",
                 technology=[t for t in config["technology"]["add"]], # ], refactor to adjust to yaml structure
-                value=1, unit='t', years_act=s_info.Y, years_vtg=s_info.Y, **common)
+                value=1, unit='t', **common)
             .pipe(broadcast, node_loc=nodes)
             .pipe(same_node)
     )
@@ -157,9 +158,8 @@ def gen_data_ammonia(scenario, dry_run=False):
     capacity_factor = read_demand()['capacity_factor']
     row = act2010 * 1 / 15 / capacity_factor[0]
 
-    # Unit is Tg N/yr
     results["historical_new_capacity"].append(
-        df.assign(value=row, unit="t", year_act=2010)
+        df.assign(value=row, unit='t', year_vtg=2010)
     )
 
     # %% Secure feedstock balance (foil_fs, gas_fs, coal_fs)  loil_fs?
@@ -181,6 +181,7 @@ def gen_data_ammonia(scenario, dry_run=False):
     results["demand"].append(df)
 
     # Globiom land input
+    """
     df = pd.read_excel(context.get_local_path('material','GLOBIOM_Fertilizer_use_N.xlsx'))
     df = df.replace(regex=r'^R11', value="R12").replace(regex=r'^R12_CPA', value="R12_CHN")
     df["unit"] = "t"
@@ -191,6 +192,12 @@ def gen_data_ammonia(scenario, dry_run=False):
     df = df.append(df_rcpa)
     df = df.drop("Unnamed: 0", axis=1)
     results["land_input"].append(df)
+    """
+
+    df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
+    df["level"] = "material_final"
+    results["land_input"].append(df)
+    #scenario.add_par("land_input", df)
 
     # add background parameters (growth rates and bounds)
 
@@ -332,13 +339,13 @@ def gen_data_ccs(scenario, dry_run=False):
         #      t=NH3_to_N_fertil; use 'if' statements to fill in.
 
         for param in data['parameter'].unique():
-            unit = "t"
+            unit = data['Unit'][data['parameter'] == param].iloc[0]
             cat = data['param_cat'][data['parameter'] == param].iloc[0]
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
                 common["level"] = level_cat_dict[cat][param]
             df = (
-                make_df(cat, technology=t, value=1, unit=unit, **common)
+                make_df(cat, technology=t, value=1, unit="-", **common)
                     .pipe(broadcast, node_loc=nodes)
                     .pipe(same_node)
             )
@@ -453,8 +460,8 @@ def read_demand():
 
     # Get historical N demand from SSP2-nopolicy (may need to vary for diff scenarios)
     N_demand_raw = N_demand_GLO.copy()
-    N_demand = N_demand_raw[(N_demand_raw.Scenario == "NoPolicy") & (N_demand_raw.Region != "World")].reset_index().loc[
-               :, 2010]  # 2010 tot N demand
+    N_demand = N_demand_raw[(N_demand_raw.Scenario == "NoPolicy") &
+                            (N_demand_raw.Region != "World")].reset_index().loc[:, 2010]  # 2010 tot N demand
     N_demand = N_demand.repeat(6)
 
     act2010 = (feedshare.values.flatten() * N_demand).reset_index(drop=True)
