@@ -112,7 +112,7 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
     """
     check_support(
         context,
-        settings=dict(regions=frozenset(["R11", "R14"])),
+        settings=dict(regions=frozenset(["R11", "R12", "R14"])),
         desc="Exogenous data for demand projection",
     )
 
