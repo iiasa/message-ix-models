@@ -165,7 +165,6 @@ def prepare_reporter(
     config,
     key=None,
     output_path=None,
-    callbacks=None,
 ):
     """Prepare to report *key* from *scenario*.
 
@@ -232,7 +231,7 @@ def prepare_reporter(
     # Handle configuration
     rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
 
-    for callback in CALLBACKS + (callbacks or []):
+    for callback in CALLBACKS:
         callback(rep)
 
     if key:
