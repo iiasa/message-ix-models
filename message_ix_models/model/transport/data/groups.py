@@ -163,8 +163,8 @@ def urban_rural_shares(years: List[int], config: Dict) -> Quantity:
         return computations.div(
             pop.sel(area_type=["UR+SU", "RU"]), pop.sel(area_type="total", drop=True)
         )
-    elif "SSP" in scenario:
-        log.warning("Need urban/suburban share data for SSP scenarios")
+    elif any(source in scenario for source in ("SSP", "SHAPE")):
+        log.warning(f"Need urban/suburban share data for {scenario}")
 
         share = Quantity(
             xr.DataArray([0.6, 0.4], coords=[("area_type", ["UR+SU", "RU"])]), units=""
