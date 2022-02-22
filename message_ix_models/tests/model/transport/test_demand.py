@@ -5,6 +5,7 @@ import pytest
 from message_ix.reporting import Key
 from message_ix_models.model import bare
 from message_ix_models.model.structure import get_codes
+from message_ix_models.testing import NIE
 from pytest import param
 
 from message_data.model.transport import build, demand, configure
@@ -50,7 +51,7 @@ def test_demand_dummy(test_context, regions, years):
         ("R11", "B", 11, "debug"),
         ("R11", "B", 11, "A---"),
         ("R14", "B", 14, None),
-        param("ISR", "A", 1, None, marks=pytest.mark.xfail(raises=KeyError)),
+        param("ISR", "A", 1, None, marks=NIE),
     ],
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
@@ -154,9 +155,7 @@ def demand_computer(test_context, tmp_path, regions, years, options):
     return rep, spec["add"]
 
 
-@pytest.mark.parametrize(
-    "regions", ["R11", "R14", param("ISR", marks=pytest.mark.xfail(raises=KeyError))]
-)
+@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=NIE)])
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("pop_scen", ["SSP2"])
 def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
@@ -196,7 +195,7 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
         ("R14", "B", "SSP1"),
         ("R14", "B", "SSP2"),
         ("R14", "B", "SSP3"),
-        param("ISR", "B", "SSP2", marks=pytest.mark.xfail(raises=KeyError)),
+        param("ISR", "B", "SSP2", marks=NIE),
     ],
 )
 def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
