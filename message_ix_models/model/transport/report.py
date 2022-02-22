@@ -9,7 +9,7 @@ import pandas as pd
 from dask.core import quote
 from ixmp.reporting import RENAME_DIMS
 from message_ix.models import MESSAGE_ITEMS
-from message_ix.reporting import Key, Reporter, Quantity
+from message_ix.reporting import Key, Quantity, Reporter
 from message_ix_models import Context, ScenarioInfo, Spec
 from pandas.api.types import is_scalar
 
