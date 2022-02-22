@@ -136,8 +136,8 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
         c.add(k2, computations.rename, k1, quote(RENAME_DIMS))
 
         # 3. Maybe transform from R11 to another node list
-        k3 = key.add_tag("R11")
-        if context.regions == "R11":
+        k3 = key.add_tag(context.regions)
+        if context.regions in ("R11", "R12"):
             c.add(k3, k2)  # No-op/pass-through
         elif context.regions == "R14":
             c.add(k3, adapt_R11_R14, k2)
