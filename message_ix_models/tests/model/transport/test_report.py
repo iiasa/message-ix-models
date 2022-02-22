@@ -1,4 +1,5 @@
 import logging
+import os
 
 import pytest
 from numpy.testing import assert_allclose
@@ -17,6 +18,11 @@ from message_data.reporting import prepare_reporter, register
 from . import built_transport
 
 log = logging.getLogger(__name__)
+
+
+# TODO copy to message_ix_models.testing
+def skip_on_ci(reason):
+    return pytest.mark.xfail(condition="GITHUB_ACTIONS" in os.environ, reason=reason)
 
 
 def test_register_cb():
@@ -99,9 +105,7 @@ def test_distance_nonldv(regions):
     # TODO Check some computed values
 
 
-@pytest.mark.parametrize("years", ["B"])
-@pytest.mark.parametrize("regions", ["R12"])
-def test_simulated_solution(test_context, regions, years):
+def _simulated(test_context, regions, years):
     from message_data.model.transport import build
 
     # Generate the spec for a model
@@ -117,9 +121,18 @@ def test_simulated_solution(test_context, regions, years):
     # Simulated solution data is added
     simulated_solution(rep, spec)
 
-    # The overall prepare_reporter now works
     register(callback)
     prepare_reporter(rep, dict())
+
+    return rep
+
+
+@skip_on_ci("Requires adjustments to message_ix.Reporter.")
+@pytest.mark.parametrize("years", ["B"])
+@pytest.mark.parametrize("regions", ["R12"])
+def test_simulated_solution(test_context, regions, years):
+    # The message_data.reporting.prepare_reporter works on the simulated data
+    rep = _simulated(test_context, regions, years)
 
     # A quantity for a MESSAGEix variable was added and can be retrieved
     k = rep.full_key("ACT")
@@ -131,3 +144,15 @@ def test_simulated_solution(test_context, regions, years):
 
     # A quantity for message_data.model.transport can be computed
     rep.get("stock:nl-t-ya-driver_type:ldv")
+
+
+@skip_on_ci("Requires adjustments to message_ix.Reporter.")
+@pytest.mark.parametrize("years", ["B"])
+@pytest.mark.parametrize("regions", ["R12"])
+def test_plot_simulated(test_context, regions, years):
+    """Plots are generated correctly using simulated data."""
+    rep = _simulated(test_context, regions, years)
+
+    print(rep.describe("plot stock-ldv"))
+
+    rep.get("plot stock-ldv")
