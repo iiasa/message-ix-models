@@ -71,13 +71,15 @@ These are listed in order of preference.
   In order of ascending precedence:
 
   1. The default location is the *current working directory*, i.e. whichever directory the :doc:`cli` is invoked in, or in which Python code is run that imports and uses :mod:`message_ix_models`.
-  2. The :mod:`ixmp` configuration setting ``message local data``.
+  2. The :mod:`ixmp` configuration file setting ``message local data``.
   3. The ``MESSAGE_LOCAL_DATA`` environment variable.
   4. The ``--local-data`` CLI option and related options such as ``--cache-path`` or the ``--output`` option to the ``report`` command.
   5. Code that directly modifies the ``local_data`` setting on :class:`.Context`.
 
   - This location **should** be outside the Git-controlled directories for :mod:`message_ix_models` or :mod:`message_data`.
     If not, use :file:`.gitignore` files to hide these from Git.
+
+- Use :meth:`.Context.get_local_path` and :func:`.local_data_path` to construct paths under this directory.
 
 
 General guidelines
