@@ -133,11 +133,8 @@ def local_data_path(*parts) -> Path:
     """
     import ixmp
 
-    try:
-        base = Path(ixmp.config.get("message local data"))
-    except KeyError:
-        base = Path.cwd()
-    return _make_path(base, *parts)
+    # The default value, Path.cwd(), is set in context.py
+    return _make_path(Path(ixmp.config.get("message local data")), *parts)
 
 
 def package_data_path(*parts) -> Path:
