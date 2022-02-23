@@ -1,6 +1,7 @@
 import logging
 from typing import Callable, Dict, List, Mapping, Union
 
+import ixmp
 import pandas as pd
 from ixmp.utils import maybe_check_out, maybe_commit
 from message_ix import Scenario
@@ -10,6 +11,19 @@ from message_ix_models.util import add_par_data, strip_par_data
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
 log = logging.getLogger(__name__)
+
+
+def _add_unit(mp: ixmp.Platform, unit: str, comment: str) -> None:
+    """Handle exceptions in :meth:`.Platform.add_unit`."""
+    # TODO move upstream to ixmp.JDBCBackend
+    log.info(f"Add unit {repr(unit)}")
+    try:
+        mp.add_unit(unit, comment)
+    except Exception as e:  # pragma: no cover
+        if "OracleDatabaseException" in str(e):
+            log.error("…skip (ixmp.JDBCBackend connected to Oracle database)")
+        else:
+            raise
 
 
 def apply_spec(
@@ -125,8 +139,7 @@ def apply_spec(
     # Add units to the Platform before adding data
     for unit in spec["add"].set["unit"]:
         unit = unit if isinstance(unit, Code) else Code(id=unit, name=unit)
-        log.info(f"Add unit {repr(unit)}")
-        scenario.platform.add_unit(unit.id, comment=str(unit.name))
+        _add_unit(scenario.platform, unit.id, str(unit.name))
 
     # Add data
     if callable(data):
