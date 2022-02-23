@@ -15,6 +15,9 @@ log = logging.getLogger(__name__)
 _CONTEXTS: List["Context"] = []
 
 
+ixmp.config.register("message local data", Path, Path.cwd())
+
+
 class Context(dict):
     """Context and settings for :mod:`message_ix_models` code."""
 
@@ -55,8 +58,7 @@ class Context(dict):
         # Default paths for local data
         default_local_data = Path(
             os.environ.get("MESSAGE_LOCAL_DATA", None)
-            or ixmp.config.values.get("message local data", None)
-            or Path.cwd()
+            or ixmp.config.get("message local data")
         ).resolve()
 
         for key, value in (
