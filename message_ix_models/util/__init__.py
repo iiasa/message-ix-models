@@ -448,7 +448,7 @@ def merge_data(base, *others):
     """Merge dictionaries of DataFrames together into `base`."""
     for other in others:
         for par, df in other.items():
-            base[par] = base[par].append(df) if par in base else df
+            base[par] = pd.concat([base.get(par, None), df])
 
 
 def same_node(df):
