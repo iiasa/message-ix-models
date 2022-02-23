@@ -243,17 +243,16 @@ from .data_ammonia import gen_data_ammonia
 
 
 DATA_FUNCTIONS = [
-    # gen_data_buildings,
-    #gen_data_steel,
-    #gen_data_cement,
-    #gen_data_aluminum,
-    #gen_data_petro_chemicals,
-    #gen_data_generic,
-    #gen_data_power_sector,
+    #gen_data_buildings,
+    gen_data_steel,
+    gen_data_cement,
+    gen_data_aluminum,
+    gen_data_petro_chemicals,
+    gen_data_generic,
+    gen_data_power_sector,
     gen_data_ammonia,
 
 ]
-
 
 # Try to handle multiple data input functions from different materials
 def add_data(scenario, dry_run=False):
