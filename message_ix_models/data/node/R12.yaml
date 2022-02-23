@@ -17,7 +17,7 @@ R12_AFR:
   name: Sub-Saharan Africa
   child: [AGO, BDI, BEN, BFA, BWA, CAF, CIV, CMR, COD, COG, COM, CPV, DJI, ERI, ETH, GAB, GHA, GIN, GMB, GNB, GNQ, KEN, LBR, LSO, MDG, MLI, MOZ, MRT, MUS, MWI, MYT, NAM, NER, NGA, REU, RWA, SEN, SHN, SLE, SOM, STP, SWZ, SYC, TCD, TGO, TZA, UGA, ZAF, ZMB, ZWE]
 
-R12_CPA:
+R12_RCPA:
   parent: World
   name: Rest Centrally Planned Asia
   child: [KHM, LAO, MNG, PRK, VNM]
