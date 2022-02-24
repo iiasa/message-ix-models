@@ -1,8 +1,11 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Register “message local data” ixmp configuration file setting and use to set the :attr:`.Context.local_path` when provided.
+  See :ref:`local-data` (:pull:`47`)
 
 2022.1.26
 =========

@@ -160,8 +160,13 @@ class TestSpec:
 
     def test_setitem(self):
         s = Spec()
-        s.add = ScenarioInfo()
 
+        # Setting a valid key via attribute access syntax works
+        s.add = ScenarioInfo()
+        # Setting a valid key via item access syntax works
+        s["add"] = ScenarioInfo()
+
+        # Setting an invalid key raises KeyError
         with pytest.raises(KeyError):
             s["foo"] = ScenarioInfo()
 
