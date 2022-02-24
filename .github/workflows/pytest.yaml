@@ -23,14 +23,16 @@ jobs:
   pytest:
     strategy:
       matrix:
-        os:
-        - macos-latest
-        - ubuntu-latest
-        - windows-latest
-        python-version:
-        # Latest version testable on GitHub Actions. This should match the
-        # version used in the 'pytest' workflows of both ixmp and message_ix.
-        - "3.9"
+        include:
+        # One job per OS; latest python version testable on GitHub actions.
+        # These should match the versions used in the "pytest" workflows of both
+        # ixmp and message_ix.
+        - os: macos-latest
+          python-version: "3.10"
+        - os: ubuntu-latest
+          python-version: "3.10"
+        - os: windows-latest
+          python-version: "3.9"
 
       fail-fast: false
 
@@ -72,14 +74,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Use OpenJDK 14 (macOS only)
-      # Using the default OpenJDK 1.8 on the macos-latest runner produces
-      # "Abort trap: 6" when JPype1 starts the JVM
-      if: ${{ startsWith(matrix.os, 'macos') }}
-      uses: actions/setup-java@v1
-      with:
-        java-version: '14'
-
     - name: Cache Python packages and GAMS installer
       uses: actions/cache@v2
       with:
@@ -116,6 +110,6 @@ jobs:
       run: make --directory=message-ix-models/doc html
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v1.2.1
+      uses: codecov/codecov-action@v2
       with:
-        root_dir: message-ix-models
+        directory: message-ix-models
