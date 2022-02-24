@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import broadcast, same_node
@@ -72,8 +73,8 @@ def gen_data(scenario, dry_run=False):
 
     # NH3 production processes
     common = dict(
-        year_act=s_info.Y,  # confirm if correct??
-        year_vtg=s_info.Y,
+        year_act=s_info.yv_ya.year_act,  # confirm if correct??
+        year_vtg=s_info.yv_ya.year_vtg,
         commodity="NH3",
         level="material_interim",
         mode="all",
@@ -87,7 +88,6 @@ def gen_data(scenario, dry_run=False):
     for t in config["technology"]["add"]: # : refactor to adjust to yaml structure
         # Output of NH3: same efficiency for all technologies
         # the output commodity and level are different for
-        #      t=NH3_to_N_fertil; use 'if' statements to fill in.
 
         for param in data['parameter'].unique():
             if (t == "electr_NH3") & (param == "input_fuel"):
@@ -166,6 +166,7 @@ def gen_data(scenario, dry_run=False):
 
     # Adjust i_feed demand
     N_energy = read_demand()['N_energy']
+    N_energy = read_demand()['N_feed'] # updated feed with imports accounted
 
     demand_fs_org = pd.read_excel(context.get_local_path('material','demand_i_feed_R12.xlsx'))
 
@@ -177,7 +178,7 @@ def gen_data(scenario, dry_run=False):
     df = df.drop('r_feed', axis=1)
     df = df.drop('Unnamed: 0', axis=1)
     # TODO: refactor with a more sophisticated solution to reduce i_feed
-    df.loc[df["value"] < 0, "value"] = 0  # tempoary solution to avoid negative values
+    df.loc[df["value"] < 0, "value"] = 0  # temporary solution to avoid negative values
     results["demand"].append(df)
 
     # Globiom land input
@@ -260,6 +261,80 @@ def gen_data(scenario, dry_run=False):
                     regs.loc[regs["node_loc"] == "R12_SAS", "value"] * \
                     scalers_dict["R12_SAS"][df.technology[0]]
             results[param][i] = regs.drop(["standard", "ccs"], axis="columns")
+
+    # add trade tecs (exp, imp, trd)
+
+    yv_ya_exp = s_info.yv_ya
+    yv_ya_exp = yv_ya_exp[yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] < 30]
+    yv_ya_same = yv_ya_exp[yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] == 0]
+
+    common = dict(
+        year_act=yv_ya_same.year_act,
+        year_vtg=yv_ya_same.year_vtg,
+        commodity="Fertilizer Use|Nitrogen",
+        level="material_final",
+        mode="M1",
+        time="year",
+        time_dest="year",
+        time_origin="year",
+    )
+
+    data = read_trade_data(context)
+
+    for i in data["var_name"].unique():
+        for tec in data["technology"].unique():
+            row = data[(data["var_name"] == i) & (data["technology"] == tec)]
+            if len(row):
+                if row["technology"].values[0] == "trade_NFert":
+                    node = ["R12_GLB"]
+                else:
+                    node = s_info.N[1:]
+                if tec == "export_NFert":
+                    common_exp = common
+                    common_exp["year_act"] = yv_ya_exp.year_act
+                    common_exp["year_vtg"] = yv_ya_exp.year_vtg
+                    df = make_df(i, technology=tec, value=row[2010].values[0],
+                                            unit="-", **common_exp).pipe(broadcast, node_loc=node).pipe(same_node)
+                else:
+                    df = make_df(i, technology=tec, value=row[2010].values[0],
+                                            unit="-", **common).pipe(broadcast, node_loc=node).pipe(same_node)
+                if (tec == "export_NFert") & (i == "output"):
+                    df["node_dest"] = "R12_GLB"
+                    df["level"] = "export"
+                elif (tec == "import_NFert") & (i == "input"):
+                    df["node_origin"] = "R12_GLB"
+                    df["level"] = "import"
+                else:
+                    df.pipe(same_node)
+                results[i].append(df)
+
+    common = dict(
+        commodity="Fertilizer Use|Nitrogen",
+        level="material_final",
+        mode="M1",
+        time="year",
+        time_dest="year",
+        time_origin="year",
+        unit="t"
+    )
+
+    N_trade_R12 = read_demand()["N_trade_R12"].assign(mode="M1")
+    N_trade_R12["technology"] = N_trade_R12["Element"].apply(
+        lambda x: "export_NFert" if x == "Export" else "import_NFert")
+    df_exp_imp_act = N_trade_R12.drop("Element", axis=1)
+
+    trd_act_years = N_trade_R12["year_act"].unique()
+    values = N_trade_R12.groupby(["year_act"]).sum().values.flatten()
+    fert_trd_hist = make_df("historical_activity", technology="trade_NFert",
+                                       year_act=trd_act_years, value=values,
+                                       node_loc="R12_GLB", **common)
+    results["historical_activity"].append(pd.concat([df_exp_imp_act, fert_trd_hist]))
+
+    df_hist_cap_new = N_trade_R12[N_trade_R12["technology"] == "export_NFert"].drop(columns=["time", "mode", "Element"])
+    df_hist_cap_new = df_hist_cap_new.rename(columns={"year_act": "year_vtg"})
+    # divide by export lifetime derived from coal_exp
+    df_hist_cap_new = df_hist_cap_new.assign(value=lambda x: x["value"] / 30)
+    results["historical_new_capacity"].append(df_hist_cap_new)
 
     # Concatenate to one dataframe per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
@@ -409,7 +484,7 @@ def gen_data_ccs(scenario, dry_run=False):
 
 def read_demand():
     """Read and clean data from :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
-    # %% Demand scenario [Mt N/year] from GLOBIOM
+    # Demand scenario [Mt N/year] from GLOBIOM
     context = read_config()
 
 
@@ -446,7 +521,46 @@ def read_demand():
     N_energy = pd.concat([N_energy.Region, N_energy.sum(axis=1)], axis=1).rename(
         columns={0: 'totENE', 'Region': 'node'})  # GWa
 
-    # %% Process the regional historical activities
+    N_trade_R12 = pd.read_csv(context.get_local_path("material","trade.FAO.R12.csv"), index_col=0)
+    N_trade_R12.msgregion = "R12_" + N_trade_R12.msgregion
+    N_trade_R12.Value = N_trade_R12.Value / 1e6
+    N_trade_R12.Unit = "t"
+    N_trade_R12 = N_trade_R12.assign(time="year")
+    N_trade_R12 = N_trade_R12.rename(
+        columns={
+            "Value": "value",
+            "Unit": "unit",
+            "msgregion": "node_loc",
+            "Year": "year_act",
+        }
+    )
+
+    df = N_trade_R12.loc[
+        N_trade_R12.year_act == 2010,
+    ]
+    df = df.pivot(index="node_loc", columns="Element", values="value")
+    NP = pd.DataFrame({"netimp": df.Import - df.Export, "demand": ND[2010]})
+    NP["prod"] = NP.demand - NP.netimp
+
+
+    # Derive total energy (GWa) of NH3 production (based on demand 2010)
+    N_feed = feedshare_GLO[feedshare_GLO.Region != "R11_GLB"].join(NP, on="Region")
+    N_feed = pd.concat(
+        [
+            N_feed.Region,
+            N_feed[["gas_pct", "coal_pct", "oil_pct"]].multiply(
+                N_feed["prod"], axis="index"
+            ),
+        ],
+        axis=1,
+    )
+    N_feed.gas_pct *= input_fuel[2] * 17 / 14
+    N_feed.coal_pct *= input_fuel[3] * 17 / 14
+    N_feed.oil_pct *= input_fuel[4] * 17 / 14
+    N_feed = pd.concat([N_feed.Region, N_feed.sum(axis=1)], axis=1).rename(
+        columns={0: "totENE", "Region": "node"})
+
+    # Process the regional historical activities
 
     fs_GLO = feedshare_GLO.copy()
     fs_GLO.insert(1, "bio_pct", 0)
@@ -467,7 +581,27 @@ def read_demand():
     act2010 = (feedshare.values.flatten() * N_demand).reset_index(drop=True)
 
     return {"feedshare_GLO": feedshare_GLO, "ND": ND, "N_energy": N_energy, "feedshare": feedshare, 'act2010': act2010,
-            'capacity_factor': capacity_factor}
+            'capacity_factor': capacity_factor, "N_feed":N_feed, "N_trade_R12":N_trade_R12}
+
+
+def read_trade_data(context):
+    data = pd.read_excel(
+        context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
+        sheet_name="Trade", engine="openpyxl", usecols=np.linspace(0, 7, 8, dtype=int))
+    data = data.assign(technology=lambda x: set_trade_tec(x["Variable"]))
+    return data
+
+
+def set_trade_tec(x):
+    arr=[]
+    for i in x:
+        if "Import" in i:
+            arr.append("import_NFert")
+        if "Export" in i:
+            arr.append("export_NFert")
+        if "Trade" in i:
+             arr.append("trade_NFert")
+    return arr
 
 
 def read_data():
