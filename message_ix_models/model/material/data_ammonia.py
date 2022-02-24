@@ -264,6 +264,23 @@ def gen_data(scenario, dry_run=False):
 
     # add trade tecs (exp, imp, trd)
 
+    newtechnames_trd = ["trade_NFert"]
+    newtechnames_imp = ["import_NFert"]
+    newtechnames_exp = ["export_NFert"]
+    scenario.check_out()
+    scenario.add_set(
+        "technology",
+        newtechnames_trd + newtechnames_imp + newtechnames_exp
+    )
+    cat_add = pd.DataFrame(
+        {
+            "type_tec": ["import", "export"],  # 'all' not need to be added here
+            "technology": newtechnames_imp + newtechnames_exp,
+        }
+    )
+    scenario.add_set("cat_tec", cat_add)
+    scenario.commit("add trade tec sets")
+
     yv_ya_exp = s_info.yv_ya
     yv_ya_exp = yv_ya_exp[yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] < 30]
     yv_ya_same = yv_ya_exp[yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] == 0]
