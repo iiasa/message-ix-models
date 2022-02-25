@@ -4,8 +4,10 @@ What's new
 Next release
 ============
 
+- Change the node name in R12.yaml from R12_CPA to R12_RCPA (:pull:`49`).
 - Register “message local data” ixmp configuration file setting and use to set the :attr:`.Context.local_path` when provided.
   See :ref:`local-data` (:pull:`47`)
+
 
 2022.1.26
 =========
