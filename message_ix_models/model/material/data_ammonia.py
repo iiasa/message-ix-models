@@ -267,7 +267,7 @@ def gen_data(scenario, dry_run=False):
     newtechnames_trd = ["trade_NFert"]
     newtechnames_imp = ["import_NFert"]
     newtechnames_exp = ["export_NFert"]
-    scenario.check_out()
+
     scenario.add_set(
         "technology",
         newtechnames_trd + newtechnames_imp + newtechnames_exp
@@ -279,7 +279,6 @@ def gen_data(scenario, dry_run=False):
         }
     )
     scenario.add_set("cat_tec", cat_add)
-    scenario.commit("add trade tec sets")
 
     yv_ya_exp = s_info.yv_ya
     yv_ya_exp = yv_ya_exp[yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] < 30]
