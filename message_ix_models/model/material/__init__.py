@@ -249,7 +249,7 @@ DATA_FUNCTIONS = [
     gen_data_aluminum,
     gen_data_petro_chemicals,
     gen_data_generic,
-    gen_data_power_sector,
+    #gen_data_power_sector,
     gen_data_ammonia,
 
 ]
