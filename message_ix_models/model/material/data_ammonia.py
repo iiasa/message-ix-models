@@ -71,10 +71,14 @@ def gen_data(scenario, dry_run=False):
         "input": input_level_dict
     }
 
+
+    vtg_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_vtg"]
+    act_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_act"]
+
     # NH3 production processes
     common = dict(
-        year_act=s_info.yv_ya.year_act,  # confirm if correct??
-        year_vtg=s_info.yv_ya.year_vtg,
+        year_act=act_years,  # confirm if correct??
+        year_vtg=vtg_years,
         commodity="NH3",
         level="material_interim",
         mode="all",
@@ -281,8 +285,8 @@ def gen_data(scenario, dry_run=False):
     scenario.add_set("cat_tec", cat_add)
 
     yv_ya_exp = s_info.yv_ya
-    yv_ya_exp = yv_ya_exp[yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] < 30]
-    yv_ya_same = yv_ya_exp[yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] == 0]
+    yv_ya_exp = yv_ya_exp[(yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] < 30) & (yv_ya_exp["year_vtg"] > 2000)]
+    yv_ya_same = yv_ya_exp[(yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] == 0) & ( yv_ya_exp["year_vtg"] == 2000)]
 
     common = dict(
         year_act=yv_ya_same.year_act,
