@@ -454,7 +454,6 @@ def gen_data_aluminum(scenario, dry_run=False):
     results_aluminum = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
     return results_aluminum
 
-
 def gen_mock_demand_aluminum(scenario):
 
     context = read_config()
