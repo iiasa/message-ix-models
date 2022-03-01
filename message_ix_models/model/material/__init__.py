@@ -195,7 +195,7 @@ def run_reporting(old_reporting, scenario_name, model_name):
     from ixmp import Platform
 
     print(model_name)
-    mp = Platform()
+    mp = Platform(jvmargs=['-Xmx12G'])
     scenario = Scenario(mp, model_name, scenario_name)
     report(scenario, old_reporting)
 
@@ -216,7 +216,7 @@ def run_old_reporting(scenario_name, model_name):
 
     print(model_name)
     print(scenario_name)
-    mp = Platform()
+    mp = Platform(jvmargs=['-Xmx12G'])
     scenario = Scenario(mp, model_name, scenario_name)
 
     reporting(
@@ -244,14 +244,13 @@ from .data_ammonia import gen_data_ammonia
 
 DATA_FUNCTIONS = [
     #gen_data_buildings,
+    gen_data_ammonia,
+    gen_data_generic,
     gen_data_steel,
     gen_data_cement,
-    gen_data_aluminum,
     gen_data_petro_chemicals,
-    gen_data_generic,
     #gen_data_power_sector,
-    gen_data_ammonia,
-
+    gen_data_aluminum,
 ]
 
 # Try to handle multiple data input functions from different materials
