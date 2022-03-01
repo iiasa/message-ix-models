@@ -106,7 +106,7 @@ def gen_data_aluminum(scenario, dry_run=False):
             (data_aluminum["technology"] == t), "availability"
         ].values[0]
         modelyears = [year for year in modelyears if year >= av]
-        yva = yv_ya.loc[yv_ya.year_vtg >= av]
+        yv_ya = yv_ya.loc[yv_ya.year_vtg >= av]
 
         # Iterate over parameters
         for par in params:
@@ -441,7 +441,6 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     results_aluminum = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
     return results_aluminum
-
 
 def gen_mock_demand_aluminum(scenario):
 
