@@ -196,6 +196,7 @@ def gen_data_cement(scenario, dry_run=False):
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
     yv_ya = s_info.yv_ya
+    yv_ya = yv_ya.loc[yv_ya.year_vtg >= 1980]
     fmy = s_info.y0
     nodes.remove("World")
 
