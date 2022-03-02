@@ -6,9 +6,6 @@ data source:
   gdp: SSP2
   population: SSP2
 
-# This list must correspond to groups identified in technology.yaml
-demand modes: [LDV, 2W, AIR, BUS, RAIL]
-
 factor:
   activity:
     ldv:
@@ -30,8 +27,38 @@ ldv activity:
   R12_FSU: 11482
   R12_MEA: 14000
   R12_AFR: 10391
-  R12_CPA: 16000
+  R12_RCPA: 16000
   R12_CHN: 16000
   R12_PAO: 10000
   R12_PAS: 12000
   R12_SAS: 10400
+
+# (DLM) “Which US census region should be used as a proxy for the distribution
+# of driver types in this MESSAGE region?”
+node to census_division:
+  R12_AFR: 2
+  R12_CHN: 2
+  R12_RCPA: 2
+  R12_EEU: 2
+  R12_FSU: 2
+  R12_LAM: 2
+  R12_MEA: 2
+  R12_NAM: 2
+  R12_PAO: 2
+  R12_PAS: 2
+  R12_SAS: 2
+  R12_WEU: 2
+
+share weight convergence:
+  R12_AFR: [R12_PAO, R12_WEU]
+  R12_CHN: [R12_PAO, R12_WEU]
+  R12_RCPA: [R12_PAO, R12_WEU]
+  R12_EEU: [R12_PAO, R12_WEU]
+  R12_FSU: [R12_NAM]
+  R12_LAM: [R12_PAO, R12_WEU]
+  R12_MEA: [R12_NAM, R12_WEU]
+  R12_NAM: [R12_NAM]
+  R12_PAO: [R12_PAO, R12_WEU]
+  R12_PAS: [R12_PAO, R12_WEU]
+  R12_SAS: [R12_PAO, R12_WEU]
+  R12_WEU: [R12_PAO, R12_WEU]

@@ -160,37 +160,7 @@ ldv cost catch-up year:
   pas: 2030
   sas: 2040
 
-constraint:
-  LDV growth_activity: 0.0192  # = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years
-
-
 # Parameters used in demand and mode share calculations -----------------------
-
-# Set of modes handled by demand projection
-demand modes: [LDV, 2W, AIR, BUS, RAIL]
-
-# Base year shares of activity by mode. This should be the stem of a CSV file
-# in the directory data/transport/{regions}/mode-share/.
-mode-share: default
-
-# Speeds of transport modes
-# The labels on the 'technology' dimension match the aggregate groups listed in
-# technology.yaml.
-# Source: Schäefer et al. (2010)
-speeds:
-  _dim: t
-  _unit: km / hour
-  LDV: 54.5 # = 31 + 78 / 2
-  2W: 31
-  AIR: 270
-  BUS: 19
-  RAIL: 35
-
-# Year for share convergence
-year convergence: 2110
-
-# Scaling factors for production function [0]
-scaling: 1
 
 # Share weights for regions converge to the average of the regions in each list
 share weight convergence:
