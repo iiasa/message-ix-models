@@ -42,7 +42,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
 
     check_support(
         context,
-        settings=dict(regions=frozenset(["R11", "R14"])),
+        settings=dict(regions=frozenset(["R11", "R12"])),
         desc="Exogenous data for consumer group calculations",
     )
 
@@ -51,7 +51,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
     # - Fill backward 2010 to 2005, in order to compute.
     su_share = (
         computations.load_file(
-            path=path_fallback("R11", "population-suburb-share.csv"),
+            path=path_fallback(context.regions, "population-suburb-share.csv"),
             dims=RENAME_DIMS,
         )
         .ffill("y")
