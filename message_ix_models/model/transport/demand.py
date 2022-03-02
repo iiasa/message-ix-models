@@ -128,7 +128,7 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
         c.add(
             k1,
             partial(genno.computations.load_file, units=units),
-            path_fallback("R11", f"{basename}.csv"),
+            path_fallback(context, f"{basename}.csv"),
         )
 
         # 2. Rename dimensions
