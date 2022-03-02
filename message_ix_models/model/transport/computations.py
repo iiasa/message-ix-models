@@ -271,7 +271,8 @@ def share_weight(
     weight = xr.DataArray(np.nan, coords=coords)
 
     # Weights in y0 for all modes and nodes
-    idx = dict(t=modes, n=nodes) | y0
+    # NB here and below, with Python 3.9 one could do: dict(t=modes, n=nodes) | y0
+    idx = dict(t=modes, n=nodes, **y0)
     s_y0 = share.sel(idx)
     c_y0 = cost.sel(idx).sel(c="transport", drop=True)
     tmp = computations.pow(ratio(s_y0, c_y0), lamda)
@@ -297,9 +298,8 @@ def share_weight(
         ).item()
 
         # Scale weights in yC
-        weight.loc[dict(n=node) | yC] = scale * weight.sel(dict(n=ref_nodes) | y0).mean(
-            "n"
-        ) + (1 - scale) * weight.sel(dict(n=node) | y0)
+        _1, _2, _3 = dict(n=node, **yC), dict(n=ref_nodes, **yC), dict(n=node, **y0)
+        weight.loc[_1] = scale * weight.sel(_2).mean("n") + (1 - scale) * weight.sel(_3)
 
     # Currently not enabled
     # “Set 2010 sweight to 2005 value in order not to have rail in 2010, where
@@ -326,7 +326,7 @@ def smooth(qty: Quantity) -> Quantity:
 
     # Shorthand for weights
     def _w(values, years):
-        return Quantity(xr.DataArray(values, coords=[("y", years)]))
+        return Quantity(xr.DataArray(values, coords=[("y", years)]), units="")
 
     # First period
     r0 = (
