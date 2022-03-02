@@ -183,9 +183,6 @@ constraint:
 # Set of modes handled by demand projection
 demand modes: [LDV, 2W, AIR, BUS, RAIL]
 
-# Work hours per year, used to compute value of time
-work hours: "1600 hours / passenger / year"  # = 200 * 8
-
 # Speeds of transport modes
 # The labels on the 'technology' dimension match the aggregate groups listed in
 # technology.yaml.
@@ -199,19 +196,11 @@ speeds:
   BUS: 19
   RAIL: 35
 
-# Fixed future point for total passenger demand
-# “Assume only half the speed (330 km/h) and not as steep a curve.”
-fixed demand: "337327.9893 km / year"  # = 149500 * 1.12818725502081 * 2
-fixed GDP: "300 kUSD / passenger / year"
-
 # Year for share convergence
 year convergence: 2110
 
 # Scaling factors for production function [0]
 scaling: 1
-
-# Logit share exponents or cost distribution parameters [0]
-lambda: -2
 
 # Share weights for regions converge to the average of the regions in each list
 share weight convergence:
