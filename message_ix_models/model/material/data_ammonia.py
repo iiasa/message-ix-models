@@ -89,7 +89,8 @@ def gen_data(scenario, dry_run=False):
     )
 
     # Iterate over new technologies, using the configuration
-    for t in config["technology"]["add"]: # : refactor to adjust to yaml structure
+    for t in config["technology"]["add"][:6]:
+        # TODO: refactor to adjust to yaml structure
         # Output of NH3: same efficiency for all technologies
         # the output commodity and level are different for
 
@@ -288,7 +289,7 @@ def gen_data(scenario, dry_run=False):
 
     yv_ya_exp = s_info.yv_ya
     yv_ya_exp = yv_ya_exp[(yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] < 30) & (yv_ya_exp["year_vtg"] > 2000)]
-    yv_ya_same = yv_ya_exp[(yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] == 0) & ( yv_ya_exp["year_vtg"] == 2000)]
+    yv_ya_same = s_info.yv_ya[(s_info.yv_ya["year_act"] - s_info.yv_ya["year_vtg"] == 0) & ( s_info.yv_ya["year_vtg"] > 2000)]
 
     common = dict(
         year_act=yv_ya_same.year_act,
@@ -310,7 +311,7 @@ def gen_data(scenario, dry_run=False):
                 if row["technology"].values[0] == "trade_NFert":
                     node = ["R12_GLB"]
                 else:
-                    node = s_info.N[1:]
+                    node = nodes
                 if tec == "export_NFert":
                     common_exp = common
                     common_exp["year_act"] = yv_ya_exp.year_act
@@ -370,7 +371,7 @@ def gen_data_ccs(scenario, dry_run=False):
     .. note:: This code is only partially translated from
        :file:`SetupNitrogenBase.py`.
     """
-    config = read_config()["material"]["set"]
+    config = read_config()["material"]["fertilizer"]
     context = read_config()
 
     # Information about scenario, e.g. node, year
@@ -378,6 +379,8 @@ def gen_data_ccs(scenario, dry_run=False):
     nodes = s_info.N
     if "World" in nodes:
         nodes.pop(nodes.index("World"))
+    if "R12_GLB" in nodes:
+        nodes.pop(nodes.index("R12_GLB"))
 
     # Techno-economic assumptions
     data = read_data_ccs()
@@ -385,10 +388,13 @@ def gen_data_ccs(scenario, dry_run=False):
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
+    vtg_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_vtg"]
+    act_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_act"]
+
     # NH3 production processes
     common = dict(
-        year_vtg=s_info.Y,
-        year_act=s_info.Y, # confirm if correct??
+        year_vtg=vtg_years,
+        year_act=act_years, # confirm if correct??
         commodity="NH3",
         level="secondary_material",
         # TODO fill in remaining dimensions
@@ -430,7 +436,7 @@ def gen_data_ccs(scenario, dry_run=False):
     }
 
     # Iterate over new technologies, using the configuration
-    for t in config["technology"]["add"]["ccs"]:
+    for t in config["technology"]["add"][9:]:
         # Output of NH3: same efficiency for all technologies
         # TODO the output commodity and level are different for
         #      t=NH3_to_N_fertil; use 'if' statements to fill in.
@@ -671,7 +677,7 @@ def read_data():
 
     param_cat2 = []
     # print(param_cat)
-    for t in sets["technology"]["add"]: # : refactor to adjust to yaml structure
+    for t in sets["technology"]["add"][:6]: # : refactor to adjust to yaml structure
         # print(t)
         param_values.extend(params)
         tech_values.extend([t] * len(params))
@@ -702,11 +708,11 @@ def read_data_ccs():
     context = read_config()
 
     # Shorter access to sets configuration
-    sets = context["material"]["set"]
+    sets = context["material"]["fertilizer"]
 
     # Read the file
     data = pd.read_excel(
-        context.get_local_path("material", "n-fertilizer_techno-economic.xlsx"),
+        context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
         sheet_name="CCS",
     )
 
@@ -738,7 +744,8 @@ def read_data_ccs():
 
     param_cat2 = []
 
-    for t in sets["technology"]["add"]["ccs"]:
+
+    for t in sets["technology"]["add"][9:]:
         param_values.extend(params)
         tech_values.extend([t] * len(params))
         param_cat2.extend(param_cat)
