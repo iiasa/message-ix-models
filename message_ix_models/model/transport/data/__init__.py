@@ -130,7 +130,7 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
     )
 
     mode_info = [
-        ("freight", config["transport"]["factor"]["freight load"], "t km"),
+        ("freight", config["transport"]["freight load factor"], "t km"),
         ("pax", 1.0, "km"),
     ]
 
