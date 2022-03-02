@@ -1,9 +1,10 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
 from collections import ChainMap, defaultdict
+from collections.abc import Mapping
 from copy import deepcopy
 from operator import attrgetter
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 from dask.core import quote
@@ -243,7 +244,7 @@ MESSAGE_VARS = {
 }
 
 
-def simulate_qty(name: str, item_info: dict, **data) -> Tuple[Key, Quantity]:
+def simulate_qty(name: str, item_info: dict, **data_kw: Any) -> Tuple[Key, Quantity]:
     """Return simulated data for item `name`."""
     # NB this is code lightly modified from make_df
 
@@ -251,15 +252,15 @@ def simulate_qty(name: str, item_info: dict, **data) -> Tuple[Key, Quantity]:
     dims = list(
         map(
             lambda d: RENAME_DIMS.get(d, d),
-            item_info.get("idx_names") or item_info.get("idx_sets", []),
+            item_info.get("idx_names", []) or item_info.get("idx_sets", []),
         )
     )
 
     # Default values for every column
-    data = ChainMap(data, defaultdict(lambda: None))
+    data: Mapping = ChainMap(data_kw, defaultdict(lambda: None))
 
     # Arguments for pd.DataFrame constructor
-    args = dict(data={})
+    args: Dict[str, Any] = dict(data={})
 
     # Flag if all values in `data` are scalars
     all_scalar = True
@@ -309,4 +310,4 @@ def simulated_solution(rep: Reporter, spec: Spec):
             rep.add(key, data, sums=True, index=True)
 
     # Prepare the base MESSAGEix computations
-    rep._prepare("raise")
+    rep.add_tasks()
