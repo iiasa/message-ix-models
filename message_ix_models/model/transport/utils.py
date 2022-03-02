@@ -1,5 +1,6 @@
 """Utility code for MESSAGEix-Transport."""
 import logging
+from copy import deepcopy
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
@@ -119,8 +120,17 @@ def read_config(context):
     ``context.regions`` then the files are loaded from that subdirectory, e.g.
     e.g. :file:`data/transport/ISR/set.yaml` is preferred to
     :file:`data/transport/set.yaml`.
+
+    Keys in the main configuration file, if not set in the region-specific subdirectory,
+    (:file:`data/transport/{regions}/config.yaml`), default to the values in the base
+    directory (:file:`data/transport/config.yaml`).
     """
     # Load transport configuration YAML files and store on the Context
+
+    # Default configuration from the base directory
+    context["transport defaults"] = load_private_data("transport", *METADATA[0])
+
+    # Overrides specific to regional versions
     for parts in METADATA:
         # Key for storing in the context, e.g. "transport config"
         key = f"transport {' '.join(parts)}".split(".yaml")[0]
@@ -129,6 +139,11 @@ def read_config(context):
         # context.regions, or the top-level data directory
         path = path_fallback(context, *parts).relative_to(private_data_path())
         context[key] = load_private_data(*path.parts) or dict()
+
+    # Merge default config with region-specific config
+    config = deepcopy(context["transport defaults"])
+    config.update(context["transport config"])
+    context["transport config"] = config
 
     # Merge technology.yaml with set.yaml
     context["transport set"]["technology"]["add"] = context.pop("transport technology")
