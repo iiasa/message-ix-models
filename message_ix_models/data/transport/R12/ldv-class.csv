@@ -14,8 +14,8 @@ R12_AFR, Pickup truck,  0.05
 R12_AFR, Small SUV,     0.20
 R12_CHN, Compact,       0.98
 R12_CHN, Minivan,       0.02
-R12_CPA, Compact,       0.98
-R12_CPA, Minivan,       0.02
+R12_RCPA, Compact,       0.98
+R12_RCPA, Minivan,       0.02
 R12_EEU, Compact,       0.98
 R12_EEU, Minivan,       0.02
 R12_FSU, Compact,       0.40
