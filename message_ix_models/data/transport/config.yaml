@@ -1,15 +1,28 @@
 # Default configuration file for MESSAGEix-Transport
 #
-# This example file contains the minimal entries necessary to run the basic
-# build-solve-report workflow. Other keys are given default values in
-# .model.transport.configure
+# TODO move the following description to the documentation
+#
+# This file contains the default values for configuration keys that:
+#
+# - are not specific to a node (region) codelist, i.e. those without a 'node' or
+#   similar dimension.
+# - are not set programmatically in .model.transport.configure.
+#
+# Other keys that *are* specific to a node codelist include:
+#
+# - node to census region
+# - share weight convergence
 
 data source:
   demand dummy: False
   gdp: SSP2
   population: SSP2
 
-# Set of modes handled by demand projection
+constraint:
+  LDV growth_activity: 0.0192  # = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years
+
+# Set of modes handled by demand projection. This list must correspond to
+# groups specified in the corresponding technology.yaml file.
 demand modes: [LDV, 2W, AIR, BUS, RAIL]
 
 # Fixed future point for total passenger demand
@@ -22,5 +35,26 @@ freight load factor: 10  # tonne km per vehicle km
 # Logit share exponents or cost distribution parameters [0]
 lambda: -2
 
+# Base year shares of activity by mode. This should be the stem of a CSV file
+# in the directory data/transport/{regions}/mode-share/.
+mode-share: default
+
+# Scaling factors for production function [0]
+scaling: 1
+
+# Speeds of transport modes. The labels on the 't' dimension must match must
+# 'demand modes', above. Source: Schäefer et al. (2010)
+speeds:
+  _dim: t
+  _unit: km / hour
+  LDV: 54.5 # = 31 + 78 / 2
+  2W: 31
+  AIR: 270
+  BUS: 19
+  RAIL: 35
+
 # Work hours per year, used to compute value of time
 work hours: "1600 hours / passenger / year"  # = 200 * 8
+
+# Year for share convergence
+year convergence: 2110
