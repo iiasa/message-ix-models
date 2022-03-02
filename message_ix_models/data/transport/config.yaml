@@ -17,6 +17,8 @@ demand modes: [LDV, 2W, AIR, BUS, RAIL]
 fixed demand: "337327.9893 km / year"  # = 149500 * 1.12818725502081 * 2
 fixed GDP: "300 kUSD / passenger / year"
 
+freight load factor: 10  # tonne km per vehicle km
+
 # Logit share exponents or cost distribution parameters [0]
 lambda: -2
 

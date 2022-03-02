@@ -33,7 +33,6 @@ node to census_division:
 
 # TODO flatten this structure
 factor:
-  freight load: 10  # tonne km per vehicle km
   activity:
     # Annual driving distance
     # NB (DLM) “Modest and Frequent mileages for all non-NAM regions are scaled
