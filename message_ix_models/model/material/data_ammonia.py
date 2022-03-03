@@ -529,7 +529,7 @@ def read_demand():
     n_inputs_per_tech = 12  # Number of input params per technology
 
     input_fuel = te_params[2010][list(range(4, te_params.shape[0], n_inputs_per_tech))].reset_index(drop=True)
-    input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
+    #input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
 
     capacity_factor = te_params[2010][list(range(11, te_params.shape[0], n_inputs_per_tech))].reset_index(drop=True)
 
@@ -694,9 +694,9 @@ def read_data():
         # Set the data frame index for selection
     )
     data.loc[data['parameter'] == 'emission_factor', 2010] = \
-            data.loc[data['parameter'] == 'emission_factor', 2010] * CONVERSION_FACTOR_CO2_C
-    data.loc[data['parameter'] == 'input_elec', 2010] = \
-        data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa
+            data.loc[data['parameter'] == 'emission_factor', 2010]# * CONVERSION_FACTOR_CO2_C
+    #data.loc[data['parameter'] == 'input_elec', 2010] = \
+    #    data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa
 
     # TODO convert units for some parameters, per LoadParams.py
     return data
@@ -761,9 +761,11 @@ def read_data_ccs():
     )
     #unit conversions and extra electricity for CCS process
     data.loc[data['parameter'] == 'emission_factor', 2010] = \
-        data.loc[data['parameter'] == 'emission_factor', 2010] * CONVERSION_FACTOR_CO2_C
+        data.loc[data['parameter'] == 'emission_factor', 2010]# * CONVERSION_FACTOR_CO2_C
+    #data.loc[data['parameter'] == 'input_elec', 2010] = \
+    #    data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa + 0.005
     data.loc[data['parameter'] == 'input_elec', 2010] = \
-        data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa + 0.005
-
+        data.loc[data['parameter'] == 'input_elec', 2010] + (CONVERSION_FACTOR_PJ_GWa * 0.005)
+    # TODO: check this 0.005 hardcoded value for ccs elec input and move to excel
     # TODO convert units for some parameters, per LoadParams.py
     return data
