@@ -166,10 +166,10 @@ def batch(click_ctx, go):
         "solve",
         "report",
     ]
-    model_names = ["ENGAGE_SSP2_v4.1.7"]
+    model_names = ["MESSAGEix-Materials"]
     scenario_version = [
-        "baseline#1",
-        "EN_NPi2020_1000f#1",
+        "NoPolicy_GLOBIOM_R12_s#1",
+        # "EN_NPi2020_1000f#1",  # with model name "ENGAGE_SSP2_v4.1.7"
     ]
     options = {
         "": "",
