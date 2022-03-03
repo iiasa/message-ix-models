@@ -22,11 +22,9 @@ List existing platforms::
 
     $ ixmp platform list
 
-You probably want to add one of the IIASA ENE databases such as the main or ‘production’ database.
-These are listed on the `ENE wiki <https://github.com/iiasa/ene/wiki/Databases>`_.
-Use the ixmp CLI::
+To add a specific database, you can use the ixmp CLI [1]_::
 
-    $ ixmp platform add [PLATFORMNAME] jdbc oracle gp3.iiasa.ac.at:1521:GP2 [USERNAME] [PASSWORD]
+    $ ixmp platform add [PLATFORMNAME] jdbc oracle [COMPUTER]:[PORT]/[SERVICENAME] [USERNAME] [PASSWORD]
 
 You may also want to make this the *default* platform.
 Unless told otherwise, :mod:`message_ix_models` creates :class:`~.Platform` objects without any arguments (``mp = ixmp.Platform()``); this loads the default platform.
@@ -39,6 +37,7 @@ MESSAGEix-GLOBIOM uses the GAMS model files from the current :mod:`message_ix` `
 
 :mod:`message_ix_models` will use the :file:`config.json` value ``"message_local_data"`` for local data, if it is set and not overridden.
 
+.. [1] ``[COMPUTER]`` is in this case either the hostname or the IP address.
 
 Environment variables
 ---------------------
