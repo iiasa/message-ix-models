@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 # -- Project information ---------------------------------------------------------------
 
 project = "MESSAGEix-GLOBIOM tools"
-copyright = "2020–2021, IIASA Energy, Climate, and Environment (ECE) Program"
+copyright = "2020–2022, IIASA Energy, Climate, and Environment (ECE) Program"
 author = "IIASA Energy, Climate, and Environment (ECE) Program"
 
 
