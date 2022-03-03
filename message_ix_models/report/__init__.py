@@ -240,10 +240,9 @@ def prepare_reporter(
 
         if output_path and not output_path.is_dir():
             # Add a new computation that writes *key* to the specified file
-            key = rep.add(
-                "cli-output",
-                (partial(rep.get_comp("write_report"), path=output_path), key),
-            )
+            write_report = rep.get_comp("write_report")
+            assert write_report
+            key = rep.add("cli-output", (partial(write_report, path=output_path), key))
     else:
         log.info(f"No key given; will use default: {repr(key)}")
         key = rep.default_key
