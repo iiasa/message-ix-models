@@ -64,7 +64,7 @@ def gen_data(scenario, dry_run=False):
     output_level_dict = {
         "output_water": "wastewater",
         "output_heat": "secondary",
-        "output_NH3": "material_interim"
+        "output_NH3": "secondary_material"
     }
     level_cat_dict = {
         "output": output_level_dict,
@@ -80,8 +80,8 @@ def gen_data(scenario, dry_run=False):
         year_act=act_years,  # confirm if correct??
         year_vtg=vtg_years,
         commodity="NH3",
-        level="material_interim",
-        mode="all",
+        level="secondary_material",
+        mode="M1",
         time="year",
         time_dest="year",
         time_origin="year",
@@ -105,7 +105,7 @@ def gen_data(scenario, dry_run=False):
                     common["level"] = "primary"
             if (str(t) == "NH3_to_N_fertil") & (param == "output_NH3"):
                 common['commodity'] = "Fertilizer Use|Nitrogen"
-                common['level'] = "material_final"
+                common['level'] = "final_material"
             df = (
                 make_df(cat, technology=t, value=1, unit="-", **common)
                     .pipe(broadcast, node_loc=nodes)
@@ -126,8 +126,8 @@ def gen_data(scenario, dry_run=False):
     # Historical activities/capacities - Region specific
     common = dict(
         commodity="NH3",
-        level="material_interim",
-        mode="all",
+        level="secondary_material",
+        mode="M1",
         time="year",
         time_dest="year",
         time_origin="year",
@@ -200,7 +200,7 @@ def gen_data(scenario, dry_run=False):
     """
 
     df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
-    df["level"] = "material_final"
+    df["level"] = "final_material"
     results["land_input"].append(df)
     #scenario.add_par("land_input", df)
 
@@ -292,7 +292,7 @@ def gen_data(scenario, dry_run=False):
         year_act=yv_ya_same.year_act,
         year_vtg=yv_ya_same.year_vtg,
         commodity="Fertilizer Use|Nitrogen",
-        level="material_final",
+        level="final_material",
         mode="M1",
         time="year",
         time_dest="year",
@@ -330,7 +330,7 @@ def gen_data(scenario, dry_run=False):
 
     common = dict(
         commodity="Fertilizer Use|Nitrogen",
-        level="material_final",
+        level="final_material",
         mode="M1",
         time="year",
         time_dest="year",
@@ -388,9 +388,9 @@ def gen_data_ccs(scenario, dry_run=False):
         year_vtg=s_info.Y,
         year_act=s_info.Y, # confirm if correct??
         commodity="NH3",
-        level="material_interim",
+        level="secondary_material",
         # TODO fill in remaining dimensions
-        mode="all",
+        mode="M1",
         time="year",
         time_dest="year",
         time_origin="year",
@@ -420,7 +420,7 @@ def gen_data_ccs(scenario, dry_run=False):
     output_level_dict = {
         "output_water": "wastewater",
         "output_heat": "secondary",
-        "output_NH3": "material_interim"
+        "output_NH3": "secondary_material"
     }
     level_cat_dict = {
         "output": output_level_dict,
