@@ -25,6 +25,6 @@ See the `online documentation <https://docs.messageix.org/projects/models/>`_ fo
 License
 =======
 
-Copyright © 2017–2021 IIASA Energy, Climate, and Environment (ECE) program
+Copyright © 2020–2022 IIASA Energy, Climate, and Environment (ECE) program
 
 Licensed under the Apache License, version 2.0.
