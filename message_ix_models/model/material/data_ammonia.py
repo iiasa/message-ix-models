@@ -18,7 +18,7 @@ CONVERSION_FACTOR_NH3_N = 17 / 14
 CONVERSION_FACTOR_PJ_GWa = 0.0317
 
 
-def gen_data(scenario, dry_run=False):
+def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     """Generate data for materials representation of nitrogen fertilizers.
 
     .. note:: This code is only partially translated from
@@ -358,6 +358,10 @@ def gen_data(scenario, dry_run=False):
     # divide by export lifetime derived from coal_exp
     df_hist_cap_new = df_hist_cap_new.assign(value=lambda x: x["value"] / 30)
     results["historical_new_capacity"].append(df_hist_cap_new)
+
+    if add_ccs:
+        for k, v in gen_data_ccs(scenario).items():
+            results[k].append(v)
 
     # Concatenate to one dataframe per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
