@@ -65,6 +65,7 @@ def get_spec(
     s.add.set["technology"] = [Code(id="disutility source")]
 
     # Disutility is unitless
+    # NB this value is currently ignored by .build.apply_spec(). See #45.
     s.add.set["unit"].append("")
 
     # Add conversion technologies
