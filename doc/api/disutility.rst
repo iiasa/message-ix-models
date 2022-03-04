@@ -110,6 +110,12 @@ Next, :func:`add` uses :func:`data_conversion` and :func:`data_source` to genera
 Note that the `technologies` towards which the groups have disutility are assumed to already be configured to ``output`` to the corresponding commodities.
 For example, the technology “t0” outputs to the commodity “output of t0”; the ``output`` values for this technology are **not** added/introduced by :func:`add`.
 
+.. _disutility-units:
+
+(Dis)utility is generally dimensionless.
+In :mod:`pint` and thus also :mod:`message_ix_models`, this should be represented by ``""``.
+However, to work around `iiasa/ixmp#425 <https://github.com/iiasa/ixmp/issues/425>`__, :func:`data_conversion` and :func:`data_source` return data with ``"-"`` as units.
+See :issue:`45` for more information.
 
 Code reference
 ==============
