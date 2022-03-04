@@ -65,6 +65,7 @@ def get_spec(
     s.add.set["technology"] = [Code(id="disutility source")]
 
     # Disutility is unitless
+    # NB this value is currently ignored by .build.apply_spec(). See #45.
     s.add.set["unit"].append("")
 
     # Add conversion technologies
@@ -190,7 +191,7 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
             if par == "input":
                 # Add input of disutility
                 df = pd.concat(
-                    [df, df.assign(commodity="disutility", unit="")], ignore_index=True
+                    [df, df.assign(commodity="disutility", unit="-")], ignore_index=True
                 )
 
             data0[par].append(df)
