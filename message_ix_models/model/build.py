@@ -20,8 +20,8 @@ def _add_unit(mp: ixmp.Platform, unit: str, comment: str) -> None:
     try:
         mp.add_unit(unit, comment)
     except Exception as e:  # pragma: no cover
-        if "OracleDatabaseException" in str(e):
-            log.error("…skip (ixmp.JDBCBackend connected to Oracle database)")
+        if "Error assigning an unit-key-id mapping" in str(e) and "" == str(unit):
+            log.warning(f"…skip {repr(unit)} (ixmp.JDBCBackend with Oracle database)")
         else:
             raise
 
