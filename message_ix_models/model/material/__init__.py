@@ -219,7 +219,8 @@ def run_old_reporting(scenario_name, model_name):
     scenario = Scenario(mp, model_name, scenario_name)
 
     reporting(
-        mp, scenario, "False", base_model, scen_name, merge_hist=True, merge_ts=True
+        mp, scenario, "False", base_model, scen_name, merge_hist=True, merge_ts=True,
+        verbose= True
     )
 
 
