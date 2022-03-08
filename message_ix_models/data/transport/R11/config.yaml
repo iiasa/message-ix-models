@@ -47,17 +47,17 @@ factor:
   cost:
     # Regional cost multipliers in 2010
     ldv 2010:
-      nam: 1.0
-      lam: 0.9
-      weu: 1.0
-      eeu: 1.0
-      fsu: 1.0
-      mea: 0.9
-      afr: 0.9
-      cpa: 0.9
-      pao: 1.0
-      pas: 0.9
-      sas: 0.9
+      R11_NAM: 1.0
+      R11_LAM: 0.9
+      R11_WEU: 1.0
+      R11_EEU: 1.0
+      R11_FSU: 1.0
+      R11_MEA: 0.9
+      R11_AFR: 0.9
+      R11_CPA: 0.9
+      R11_PAO: 1.0
+      R11_PAS: 0.9
+      R11_SAS: 0.9
 
 ldv activity:
   # Extracted from the spreadsheet LDV_costs_efficiencies_US-TIMES_MA3T.xlsx,
