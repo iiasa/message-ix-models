@@ -189,8 +189,8 @@ def get_ikarus_data(context):
     # Retrieve the data from the spreadsheet. Use Additional output efficiency and
     # investment cost factors for some bus technologies
     data = read_ikarus_data(
-        occupancy=config["non-ldv"]["output"],
         k_inv_cost=config["factor"]["cost"]["bus inv"],
+        occupancy=config["non-ldv output"],
         k_output=config["efficiency"]["bus output"],
     )
 
