@@ -75,18 +75,6 @@ factor:
       FC_bus: 1.538  # ie. 200,000 / 130,000
       FCg_bus: 1.538
       FCm_bus: 1.538
-  efficiency:
-    '*': 0.2
-    hev: 0.2
-    phev: 0.2
-    fcev: 0.2
-    # Similar to 'cost/bus inv' above, except for output efficiency.
-    bus output:
-      ICH_bus: 1.424  # ie. 47.6 / 33.42
-      PHEV_bus: 1.424
-      FC_bus: 1.563  # ie. 52.25 / 33.42
-      FCg_bus: 1.563
-      FCm_bus: 1.563
 
 non-ldv:
   output:  # These are effectively occupancy/load factors, in [pkm / km]
