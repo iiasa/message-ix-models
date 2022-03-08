@@ -190,8 +190,8 @@ def get_ikarus_data(context):
     # investment cost factors for some bus technologies
     data = read_ikarus_data(
         occupancy=config["non-ldv"]["output"],
-        k_output=config["factor"]["efficiency"]["bus output"],
         k_inv_cost=config["factor"]["cost"]["bus inv"],
+        k_output=config["efficiency"]["bus output"],
     )
 
     # Create data frames to add imported params to MESSAGEix
