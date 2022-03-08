@@ -32,6 +32,7 @@ def test_data_files(test_context, parts):
     "regions, N_node",
     [
         ("R11", 11),
+        ("R12", 12),
         ("R14", 14),
         param("ISR", 1, marks=pytest.mark.xfail(raises=KeyError)),
     ],
