@@ -81,31 +81,6 @@ factor:
       FCg_bus: 1.538
       FCm_bus: 1.538
 
-non-ldv:
-  output:  # These are effectively occupancy/load factors, in [pkm / km]
-    # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
-    rail_pub: 80
-    # Intercity trains
-    dMspeed_rai: 200
-    Mspeed_rai: 200
-    Hspeed_rai: 200
-    # Aircrafts
-    con_ar: 115
-    conm_ar: 115
-    conE_ar: 115
-    conh_ar: 115
-    # Buses
-    ICE_M_bus: 20.9
-    ICE_H_bus: 20.9
-    ICG_bus: 20.9
-    ICAe_bus: 20.9
-    ICH_bus: 20.9
-    PHEV_bus: 20.9
-    FC_bus: 20.9
-    FCg_bus: 20.9
-    FCm_bus: 20.9
-    Trolley_bus: 20.9
-
 ldv activity:
   # Extracted from the spreadsheet LDV_costs_efficiencies_US-TIMES_MA3T.xlsx,
   # where the following comments are given by DLM:
