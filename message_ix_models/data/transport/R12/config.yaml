@@ -5,6 +5,7 @@ data source:
   demand dummy: false
   gdp: SSP2
   population: SSP2
+  non-LDV: IKARUS
 
 factor:
   activity:
