@@ -21,6 +21,25 @@ data source:
 constraint:
   LDV growth_activity: 0.0192  # = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years
 
+cost:
+  # Scaling factor to reduce the cost of NGA vehicles.
+  # NB (DLM) “applied to the original US-TIMES cost data. That original data
+  #    simply seems too high - much higher than conventional gasoline
+  #    vehicles in the base-year and in future, which is strange.
+  ldv nga: 0.85
+  # Investment costs of bus technologies are relative to the costs of ICG_bus.
+  # - Used in ikarus.py
+  # - This is from the IKARUS data in GEAM_TRP_Technologies.xlsx; sheet
+  #   'updateTRPdata', with the comment "Original data from Sei (PAO)."
+  # - This probably refers to some source that gave relative costs of
+  #   different buses, in PAO, for this year; it is applied across all years.
+  bus inv:
+    ICH_bus: 1.153  # ie. 150,000 / 130,000
+    PHEV_bus: 1.153
+    FC_bus: 1.538  # ie. 200,000 / 130,000
+    FCg_bus: 1.538
+    FCm_bus: 1.538
+
 # Set of modes handled by demand projection. This list must correspond to
 # groups specified in the corresponding technology.yaml file.
 demand modes: [LDV, 2W, AIR, BUS, RAIL]
