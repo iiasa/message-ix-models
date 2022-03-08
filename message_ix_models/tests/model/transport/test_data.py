@@ -13,6 +13,7 @@ from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_
 from message_data.model.transport.data.emissions import get_emissions_data
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
+from message_data.model.transport.data.non_ldv import get_non_ldv_data
 from message_data.model.transport.data.roadmap import get_roadmap_data
 from message_data.model.transport.utils import path_fallback
 from message_data.tools.gfei_fuel_economy import get_gfei_data
@@ -240,6 +241,27 @@ def test_get_afr_data(test_context, region, length):
         "units",
         "region",
     ]
+
+
+@pytest.mark.parametrize("regions", ["R11", "R12"])
+def test_get_non_ldv_data(test_context, regions):
+    """:func:`.get_non_ldv_data` returns the expected data."""
+    ctx = test_context
+
+    # Info about the corresponding RES
+    ctx.regions = regions
+    configure(ctx)
+
+    # Spec for a transport model
+    info = bare.get_spec(ctx)["add"]
+    ctx["transport build info"] = info
+
+    # Code runs
+    data = get_non_ldv_data(ctx)
+
+    # Output data exist for all non-LDV modes
+    modes = list(filter(lambda m: m != "LDV", ctx["transport config"]["demand modes"]))
+    assert len(modes) == len(data["output"]["commodity"].unique())
 
 
 def test_get_gfei_data(test_context):
