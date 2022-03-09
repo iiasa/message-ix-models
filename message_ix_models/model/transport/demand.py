@@ -334,7 +334,7 @@ def prepare_reporter(
         ),
         # Total PDT shared out by mode
         (("product", pdt_nyt, pdt_ny, "shares:n-t-y"), _),
-        # Per capita
+        # Per capita (for validation)
         (("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop), dict(sums=False)),
         # LDV PDT only
         (("select", "transport ldv pdt:n-y:total", pdt_nyt, dict(t=["LDV"])), _),
@@ -353,7 +353,7 @@ def prepare_reporter(
             (
                 "demand:ixmp",
                 computations.demand_ixmp,
-                "transport pdt:n-y-t",
+                pdt_nyt,
                 "transport ldv pdt:n-y-cg",
             ),
             _,
