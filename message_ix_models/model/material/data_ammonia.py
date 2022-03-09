@@ -106,6 +106,8 @@ def gen_data(scenario, dry_run=False):
             if (str(t) == "NH3_to_N_fertil") & (param == "output_NH3"):
                 common['commodity'] = "Fertilizer Use|Nitrogen"
                 common['level'] = "final_material"
+            if (str(t) == "NH3_to_N_fertil") & (param == "input_fuel"):
+                common['level'] = "secondary_material"
             df = (
                 make_df(cat, technology=t, value=1, unit="-", **common)
                     .pipe(broadcast, node_loc=nodes)
