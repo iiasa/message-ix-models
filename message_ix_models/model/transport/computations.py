@@ -298,7 +298,7 @@ def share_weight(
         ).item()
 
         # Scale weights in yC
-        _1, _2, _3 = dict(n=node, **yC), dict(n=ref_nodes, **yC), dict(n=node, **y0)
+        _1, _2, _3 = dict(n=node, **yC), dict(n=ref_nodes, **y0), dict(n=node, **y0)
         weight.loc[_1] = scale * weight.sel(_2).mean("n") + (1 - scale) * weight.sel(_3)
 
     # Currently not enabled
