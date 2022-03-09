@@ -11,6 +11,8 @@ from pytest import param
 from message_data.model.transport import build, demand, configure
 from message_data.tools import assert_units
 
+from . import MARK
+
 log = logging.getLogger(__name__)
 
 
@@ -50,7 +52,8 @@ def test_demand_dummy(test_context, regions, years):
         ("R11", "B", 11, None),
         ("R11", "B", 11, "debug"),
         ("R11", "B", 11, "A---"),
-        ("R14", "B", 14, None),
+        ("R12", "B", 12, None),
+        param("R14", "B", 14, None, marks=MARK[0]),
         param("ISR", "A", 1, None, marks=NIE),
     ],
 )
@@ -72,9 +75,9 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         ("votm:n-y", ""),
         ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
         ("cost:n-y-c-t", "USD / km"),
-        ("transport pdt:n-y-t", "passenger km / year"),
         # These units are implied by the test of "transport pdt:*":
         # "transport pdt:n-y:total" [=] Mm / year
+        ("transport pdt:n-y-t", "passenger km / year"),
     ):
         try:
             # Quantity can be computed
@@ -99,12 +102,14 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
     df = data.pop("demand")
     assert 0 == len(data)
 
+    # Both LDV and non-LDV commodities are demanded
     assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"])
 
     # Demand covers the model horizon
-    assert set(info.Y) == set(
-        df["year"].unique()
-    ), "`demand` does not cover the model horizon"
+    assert set(info.Y) == set(df["year"].unique()), (
+        "`demand` does not cover the model horizon",
+        df,
+    )
 
 
 def test_exo_report(test_context, tmp_path):
@@ -115,7 +120,7 @@ def test_exo_report(test_context, tmp_path):
     rep, info = demand_computer(
         test_context,
         tmp_path,
-        regions="R14",
+        regions="R12",
         years="B",
         options={"futures-scenario": "debug"},
     )
@@ -155,7 +160,9 @@ def demand_computer(test_context, tmp_path, regions, years, options):
     return rep, spec["add"]
 
 
-@pytest.mark.parametrize("regions", ["R11", "R14", param("ISR", marks=NIE)])
+@pytest.mark.parametrize(
+    "regions", ["R11", "R12", param("R14", marks=MARK[0]), param("ISR", marks=NIE)]
+)
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("pop_scen", ["SSP2"])
 def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
@@ -192,9 +199,9 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
         # Different years
         ("R11", "B", "GEA mix"),
         # Different regions & years
-        ("R14", "B", "SSP1"),
-        ("R14", "B", "SSP2"),
-        ("R14", "B", "SSP3"),
+        param("R14", "B", "SSP1", marks=MARK[0]),
+        param("R14", "B", "SSP2", marks=MARK[0]),
+        param("R14", "B", "SSP3", marks=MARK[0]),
         param("ISR", "B", "SSP2", marks=NIE),
     ],
 )
@@ -229,7 +236,8 @@ def test_from_scenario(user_context):
     "nodes, data_source",
     [
         ("R11", "GEA mix"),
-        ("R14", "SSP2"),
+        ("R12", "SSP2"),
+        param("R14", "SSP2", marks=MARK[0]),
         ("R11", "SHAPE innovation"),
     ],
 )
@@ -246,7 +254,9 @@ def test_cli(tmp_path, mix_models_cli, nodes, data_source):
             str(tmp_path),
         ]
     )
-    assert result.exit_code == 0, (result.exception, result.output)
+    if result.exit_code != 0:
+        print(result.output)
+        raise result.exception
 
     # 1 file created in the temporary path
     assert 1 == len(list(tmp_path.glob("*.csv")))

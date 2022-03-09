@@ -15,7 +15,7 @@ from message_data.model.transport.report import (
 )
 from message_data.reporting import prepare_reporter, register
 
-from . import built_transport
+from . import MARK, built_transport
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def test_register_cb():
     (
         pytest.param("R11", "A", False),
         pytest.param("R11", "A", True),
-        pytest.param("R14", "A", True, marks=NIE),
+        pytest.param("R14", "A", True, marks=MARK[0]),
         pytest.param("ISR", "A", True, marks=NIE),
     ),
 )

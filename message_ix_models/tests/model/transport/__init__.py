@@ -1,11 +1,19 @@
 import logging
 
+import pytest
 from message_ix import Scenario
 from message_ix_models import testing
 
 from message_data.model.transport import build
 
 log = logging.getLogger(__name__)
+
+
+MARK = (
+    pytest.mark.xfail(
+        reason="Missing R14 input data/assumptions", raises=FileNotFoundError
+    ),
+)
 
 
 def built_transport(request, context, options=dict(), solved=False):
