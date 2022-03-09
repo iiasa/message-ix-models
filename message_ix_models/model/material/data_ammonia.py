@@ -327,6 +327,10 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
                 elif (tec == "import_NFert") & (i == "input"):
                     df["node_origin"] = "R12_GLB"
                     df["level"] = "import"
+                elif (tec == "trade_NFert") & (i == "input"):
+                    df["level"] = "import"
+                elif (tec == "trade_NFert") & (i == "output"):
+                    df["level"] = "export"
                 else:
                     df.pipe(same_node)
                 results[i].append(df)
