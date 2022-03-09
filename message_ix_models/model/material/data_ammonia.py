@@ -138,7 +138,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     act2010 = read_demand()['act2010']
     df = (
         make_df("historical_activity",
-                technology=[t for t in config["technology"]["add"]], #], TODO: maybe reintroduce std/ccs in yaml
+                technology=[t for t in config["technology"]["add"][:6]], #], TODO: maybe reintroduce std/ccs in yaml
                 value=1, unit='t', years_act=s_info.Y, **common)
             .pipe(broadcast, node_loc=nodes)
             .pipe(same_node)
@@ -155,7 +155,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
 
     df = (
         make_df("historical_new_capacity",
-                technology=[t for t in config["technology"]["add"]], # ], refactor to adjust to yaml structure
+                technology=[t for t in config["technology"]["add"][:6]], # ], refactor to adjust to yaml structure
                 value=1, unit='t', **common)
             .pipe(broadcast, node_loc=nodes)
             .pipe(same_node)
@@ -210,12 +210,12 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     # add background parameters (growth rates and bounds)
 
     df = scenario.par('initial_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][:6]:
         df['technology'] = q
         results["initial_activity_lo"].append(df)
 
     df = scenario.par('growth_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][:6]:
         df['technology'] = q
         results["growth_activity_lo"].append(df)
 
@@ -475,12 +475,12 @@ def gen_data_ccs(scenario, dry_run=False):
     # add background parameters (growth rates and bounds)
 
     df = scenario.par('initial_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][9:]:
         df['technology'] = q
         results["initial_activity_lo"].append(df)
 
     df = scenario.par('growth_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][9:]:
         df['technology'] = q
         results["growth_activity_lo"].append(df)
 
