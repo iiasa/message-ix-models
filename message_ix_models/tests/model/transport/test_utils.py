@@ -40,7 +40,7 @@ def test_add_cl(test_context):
         None,  # Default, i.e. R11
         "R11",
         "R14",
-        param("ISR", marks=pytest.mark.xfail(raises=AssertionError)),
+        param("ISR", marks=pytest.mark.xfail(raises=KeyError)),
     ],
 )
 def test_configure(test_context, regions):

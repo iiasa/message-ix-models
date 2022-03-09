@@ -30,13 +30,7 @@ def test_data_files(test_context, parts):
 
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
-    "regions, N_node",
-    [
-        ("R11", 11),
-        ("R12", 12),
-        ("R14", 14),
-        param("ISR", 1, marks=pytest.mark.xfail(raises=KeyError)),
-    ],
+    "regions, N_node", [("R11", 11), ("R12", 12), ("R14", 14), ("ISR", 1)]
 )
 def test_ikarus(test_context, regions, N_node, years):
     ctx = test_context
