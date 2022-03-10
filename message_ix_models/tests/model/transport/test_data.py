@@ -40,8 +40,8 @@ def test_ikarus(test_context, regions, N_node, years):
     configure(ctx)
 
     # Information about the corresponding base model
-    s_info = bare.get_spec(ctx)["add"]
-    ctx["transport build info"] = s_info
+    info = bare.get_spec(ctx)["add"]
+    ctx["transport build info"] = info
 
     # get_ikarus_data() succeeds on the bare RES
     data = get_ikarus_data(ctx)
@@ -53,7 +53,7 @@ def test_ikarus(test_context, regions, N_node, years):
 
     # NB: *prep_years* is created to accommodate prepended years before than
     # *firstmodelyear*. See ikarus.py to check how/why those are prepended.
-    prep_years = (1 if years == "A" else 2) + len(s_info.Y)
+    prep_years = (1 if years == "A" else 2) + len(info.Y)
     # Regions * 13 years (inv_cost has 'year_vtg' but not 'year_act' dim)
     rows_per_tech = N_node * prep_years
     N_techs = 18
@@ -107,7 +107,7 @@ def test_ikarus(test_context, regions, N_node, years):
         dict(par="capacity_factor", year_vtg=2050, value=0.000886),
         dict(par="technical_lifetime", year_vtg=2050, value=15.0),
     ]
-    defaults = dict(node_loc=s_info.N[-1], technology="ICG_bus", time="year")
+    defaults = dict(node_loc=info.N[-1], technology="ICG_bus", time="year")
 
     for check in checks:
         # Create expected data
