@@ -66,6 +66,7 @@ migrate = [
   "git-filter-repo",
   "GitPython",
 ]
+r = ["rpy2"]
 report = ["plotnine", "xlsxwriter"]
 tests = [
   # For nbclient, thus nbformat
