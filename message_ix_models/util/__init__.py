@@ -68,7 +68,7 @@ def add_par_data(
     for par_name, values in data.items():
         N = values.shape[0]
         log.info(f"{N} rows in {repr(par_name)}")
-        log.debug(values.to_string(max_rows=5))
+        log.debug("\n" + values.to_string(max_rows=5))
 
         total += N
 
