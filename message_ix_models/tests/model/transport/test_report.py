@@ -4,8 +4,10 @@ import os
 import pytest
 from numpy.testing import assert_allclose
 from message_ix import Reporter
+from message_ix.reporting import ComputationError
 from message_ix_models.util import private_data_path
 from message_ix_models.testing import NIE
+from pytest import param
 
 from message_data.model.transport import configure
 from message_data.model.transport.report import (
@@ -32,10 +34,19 @@ def test_register_cb():
 @pytest.mark.parametrize(
     "regions, years, solved",
     (
-        pytest.param("R11", "A", False),
-        pytest.param("R11", "A", True),
-        pytest.param("R14", "A", True, marks=MARK[0]),
-        pytest.param("ISR", "A", True, marks=NIE),
+        param(
+            "R11",
+            "A",
+            False,
+            marks=pytest.mark.xfail(
+                raises=ComputationError,
+                reason="'CAP' input to stock is not available w/o solution.",
+            ),
+        ),
+        ("R11", "A", True),
+        ("R12", "A", True),
+        param("R14", "A", True, marks=MARK[0]),
+        param("ISR", "A", True, marks=NIE),
     ),
 )
 def test_report_bare(request, test_context, tmp_path, regions, years, solved):
