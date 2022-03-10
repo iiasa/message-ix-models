@@ -46,17 +46,15 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
 @pytest.mark.parametrize(
     "regions, years, ldv, nonldv, solve",
     [
-        # R11, A
-        ("R11", "A", None, None, False),  # 31 s
+        ("R11", "A", None, None, True),  # 44s; 31 s with solve=False
         ("R11", "B", None, None, False),
-        ("R11", "A", None, None, True),  # 44 s
         ("R11", "A", "US-TIMES MA3T", "IKARUS", False),  # 43 s
         param("R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
         # R11, B
         param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
         param("R11", "B", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),
         # R12, B
-        ("R12", "B", None, None, False),
+        ("R12", "B", None, None, True),
         # R14, A
         param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
         # Pending iiasa/message_data#190
