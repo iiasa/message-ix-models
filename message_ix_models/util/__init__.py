@@ -35,14 +35,9 @@ from .common import (
     package_data_path,
     private_data_path,
 )
-from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
-from .scenarioinfo import ScenarioInfo, Spec
-from .sdmx import CodeLike, as_codes, eval_anno
-
-if TYPE_CHECKING:
-    import genno
-
-    from message_ix_models.types import MutableParameterData, ParameterData
+from .node import adapt_R11_R14, identify_nodes
+from .r import get_r_func
+from .scenarioinfo import ScenarioInfo
 
 __all__ = [
     "HAS_MESSAGE_DATA",
@@ -63,6 +58,7 @@ __all__ = [
     "datetime_now_with_tz",
     "eval_anno",
     "ffill",
+    "get_r_func",
     "identify_nodes",
     "iter_keys",
     "load_package_data",
