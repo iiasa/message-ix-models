@@ -2,7 +2,7 @@
 import logging
 from collections.abc import Mapping
 from functools import singledispatch
-from typing import Any, Dict, Union
+from typing import Any
 
 import pandas as pd
 from message_ix import Scenario
@@ -32,7 +32,7 @@ def adapt_R11_R14(data: Any):
     The data is adapted by:
 
     - Renaming regions such as R11_NAM to R14_NAM.
-    - Copying the data for R11_FSU to R14_CAS, R14_RUS, R14_SCS, and R14_UBM.
+    - Copying the data for R11_FSU to each of R14_CAS, R14_RUS, R14_SCS, and R14_UBM.
 
     …wherever these appear in a column/dimension named ‘node’, ‘node_*’, or ‘n’.
 
@@ -43,6 +43,7 @@ def adapt_R11_R14(data: Any):
     - :class:`dict` mapping :class:`str` parameter names to values (either of the above
       types).
     """
+    raise TypeError(type(data))
 
 
 # NB here would prefer to annotate `data` as Dict[str, Union[pd.DataFrame, Quantity]]),
@@ -116,6 +117,7 @@ def adapt_R11_R12(data: Any):
 
     …wherever these appear in a column/dimension named ‘node’, ‘node_*’, or ‘n’.
     """
+    raise TypeError(type(data))
 
 
 # TODO this duplicates the analogous function for R11 → R14; remove
