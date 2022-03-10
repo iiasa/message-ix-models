@@ -93,14 +93,6 @@ ldv activity:
   R14_SCS: 11482
   R14_UBM: 11482
 
-# Vehicle lifetime
-ldv lifetime:
-  _dim: consumer type
-  _unit: year
-  modest: 20
-  average: 15
-  frequent: 10
-
 ldv cost catch-up year:
   R14_AFR: 2050
   R14_CPA: 2030

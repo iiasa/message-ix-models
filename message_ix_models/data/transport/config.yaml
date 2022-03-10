@@ -67,6 +67,14 @@ freight load factor: 10  # tonne km per vehicle km
 # Logit share exponents or cost distribution parameters [0]
 lambda: -2
 
+# Vehicle lifetime
+ldv lifetime:
+  _dim: consumer type
+  _unit: year
+  modest: 20
+  average: 15
+  frequent: 10
+
 # Base year shares of activity by mode. This should be the stem of a CSV file
 # in the directory data/transport/{regions}/mode-share/.
 mode-share: default
