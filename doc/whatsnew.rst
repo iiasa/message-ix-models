@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Add :func:`adapt_R11_R12`, a function for adapting data from the :ref:`R11` to the :ref:`R12` node lists (:pull:`56`).
 - Work around `iiasa/ixmp#425 <https://github.com/iiasa/ixmp/issues/425>`__ in :func:`.disutility.data_conversion` (:ref:`docs <disutility-units>`, :pull:`55`).
 
 2022.3.3
@@ -47,7 +48,7 @@ Earlier releases
 --------
 
 - Add :func:`identify_nodes`, a function for identifying a :doc:`pkg-data/node` based on a :class:`.Scenario` (:pull:`24`).
-- Add :func:`adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` (:pull:`24`).
+- Add :func:`adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` node lists (:pull:`24`).
 - Add :func:`.export_test_data` and :command:`mix-models export-test-data` command (:pull:`16`).
   See :ref:`export-test-data`.
 - Allow use of pytest's persistent cache across test sessions (:pull:`23`).
