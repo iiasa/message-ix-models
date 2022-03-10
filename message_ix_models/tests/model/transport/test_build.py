@@ -1,12 +1,12 @@
 import logging
 from copy import copy
 
+import ixmp
 import pytest
-from pytest import mark, param
-
 from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import NIE
+from pytest import mark, param
 
 from message_data.model.transport import build, configure, report
 
@@ -46,8 +46,18 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
 @pytest.mark.parametrize(
     "regions, years, ldv, nonldv, solve",
     [
-        ("R11", "A", None, None, True),  # 44s; 31 s with solve=False
         ("R11", "B", None, None, False),
+        param(  # 44s; 31 s with solve=False
+            "R11",
+            "A",
+            None,
+            None,
+            True,
+            marks=pytest.mark.xfail(
+                raises=ixmp.ModelError,
+                reason="No supply of non-LDV commodities w/o IKARUS data",
+            ),
+        ),
         ("R11", "A", "US-TIMES MA3T", "IKARUS", False),  # 43 s
         param("R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
         # R11, B
