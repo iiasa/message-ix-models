@@ -24,6 +24,11 @@ from message_data.model.transport.utils import get_region_codes, input_commodity
 log = logging.getLogger(__name__)
 
 
+# Pending iiasa/message-ix-models#56
+def adapt_R11_R12(data):
+    raise NotImplementedError
+
+
 def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
     """Load data for light-duty-vehicle technologies.
 
@@ -132,7 +137,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     # Compatibility checks
     check_support(
         context,
-        settings=dict(regions=frozenset(["R11", "R14"])),
+        settings=dict(regions=frozenset(["R11", "R12", "R14"])),
         desc="US-TIMES and MA3T data available",
     )
 
@@ -140,7 +145,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     technical_lifetime = context["transport config"]["ldv lifetime"]["average"]
     info = context["transport build info"]
 
-    if context.regions == "R14":
+    if context.regions in ("R12", "R14"):
         # Read data using the R11 nodes
         read_nodes = get_region_codes("R11")
     else:
@@ -149,8 +154,10 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     # Retrieve the data from the spreadsheet
     data = read_USTIMES_MA3T(read_nodes, subdir="R11")
 
-    if context.regions == "R14":
-        # Convert R11 to R14 data
+    # Convert R11 to R12 or R14 data, as necessary
+    if context.regions == "R12":
+        data = adapt_R11_R12(data)
+    elif context.regions == "R14":
         data = adapt_R11_R14(data)
 
     # List of years to include
