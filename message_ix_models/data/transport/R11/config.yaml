@@ -84,27 +84,18 @@ ldv activity:
   R11_PAS: 12000
   R11_SAS: 10400
 
-
-# Vehicle lifetime
-ldv lifetime:
-  _dim: consumer type
-  _unit: year
-  modest: 20
-  average: 15
-  frequent: 10
-
 ldv cost catch-up year:
-  nam: 1.0
-  lam: 2030
-  weu: 1990
-  eeu: 2010
-  fsu: 2010
-  mea: 2030
-  afr: 2050
-  cpa: 2030
-  pao: 1990
-  pas: 2030
-  sas: 2040
+  R11_NAM: 1.0
+  R11_LAM: 2030
+  R11_WEU: 1990
+  R11_EEU: 2010
+  R11_FSU: 2010
+  R11_MEA: 2030
+  R11_AFR: 2050
+  R11_CPA: 2030
+  R11_PAO: 1990
+  R11_PAS: 2030
+  R11_SAS: 2040
 
 # Parameters used in demand and mode share calculations -----------------------
 
