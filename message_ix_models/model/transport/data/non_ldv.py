@@ -1,14 +1,18 @@
 """Data for transport modes and technologies outside of LDVs."""
-
+import logging
 from typing import Dict
 
 import pandas as pd
 from message_ix import make_df
 from message_ix_models.util import broadcast, make_matched_dfs, merge_data, same_node
 
+log = logging.getLogger(__name__)
+
 
 def get_non_ldv_data(context) -> Dict[str, pd.DataFrame]:
     source = context["transport config"]["data source"].get("non-LDV", None)
+
+    log.info(f"from {source}")
 
     if source == "IKARUS":
         from .ikarus import get_ikarus_data
