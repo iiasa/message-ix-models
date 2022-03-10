@@ -264,18 +264,18 @@ def get_ikarus_data(context):
         # Broadcast across all nodes
         result[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))
 
+    # Directory for debug output (if any)
+    debug_dir = context.get_local_path("debug")
+    # Ensure the directory
+    debug_dir.mkdir(parents=True, exist_ok=True)
+
     # Concatenate data frames for each model parameter
     for par, list_of_df in result.items():
         result[par] = pd.concat(list_of_df)
 
-        # DEBUG write each parameter's data to a file
-
-        # Path for the file
-        target = context.get_local_path("debug", f"ikarus-{par}.csv")
-        # Ensure the directory containing the path exists
-        target.parent.mkdir(parents=True, exist_ok=True)
-
-        log.info(f"Dump data to {target}")
-        result[par].to_csv(target, index=False)
+        if context.get("debug", False):
+            target = debug_dir.joinpath(f"ikarus-{par}.csv")
+            log.info(f"Dump data to {target}")
+            result[par].to_csv(target, index=False)
 
     return result
