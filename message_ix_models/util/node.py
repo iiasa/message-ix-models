@@ -105,10 +105,72 @@ def _qty(qty: Quantity) -> Quantity:
     return result
 
 
-def adapt_R11_R12(
-    data: Dict[str, Union[pd.DataFrame, Quantity]]
-) -> Dict[str, Union[pd.DataFrame, Quantity]]:  # pragma: no cover
-    raise NotImplementedError
+@singledispatch
+def adapt_R11_R12(data: Any):
+    """Adapt `data` from R11 to R12 node list.
+
+    The data is adapted by:
+
+    - Renaming regions such as R11_NAM to R12_NAM.
+    - Copying the data for R11_CPA to both R12_CHN and R12_RCPA.
+
+    …wherever these appear in a column/dimension named ‘node’, ‘node_*’, or ‘n’.
+    """
+
+
+# TODO this duplicates the analogous function for R11 → R14; remove
+@adapt_R11_R12.register
+def _dict_R12(data: Mapping):
+    return {par: adapt_R11_R12(value) for par, value in data.items()}
+
+
+@adapt_R11_R12.register
+def _df_R12(df: pd.DataFrame) -> pd.DataFrame:
+    """Adapt a :class:`pandas.DataFrame`."""
+    # New values for columns indexed by node
+    new_values = {}
+    for dim in filter(lambda d: d in NODE_DIMS, df.columns):
+        # NB need astype() here in case the column contains Code objects; these must be
+        # first converted to str before pd.Series.str accessor can work
+        new_values[dim] = (
+            df[dim]
+            .astype(str)
+            .str.replace("R11_", "R12_")
+            .replace("R12_CPA", "R12_RCPA")
+        )
+
+    # List of data frames to be concatenated
+    result = [df.assign(**new_values)]
+
+    # True for rows where R12_RCPA appears in any column
+    mask = (result[0][list(new_values.keys())] == "R12_CPA").any(axis=1)
+
+    # Copy R11_FSU data
+    result.extend(
+        [
+            result[0][mask].replace("R12_RCPA", "R12_CHN"),
+        ]
+    )
+
+    # Concatenate and return
+    return pd.concat(result, ignore_index=True)
+
+
+@adapt_R11_R12.register
+def _qty_R12(qty: Quantity) -> Quantity:
+    """Adapt a :class:`genno.Quantity`."""
+    s = qty.to_series()
+    result = Quantity.from_series(
+        adapt_R11_R12(s.reset_index()).set_index(s.index.names)
+    )
+
+    try:
+        # Copy units
+        result.attrs["_unit"] = qty.attrs["_unit"]  # type: ignore [attr-defined]
+    except KeyError:  # pragma: no cover
+        pass
+
+    return result
 
 
 def identify_nodes(scenario: Scenario) -> str:
