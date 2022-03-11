@@ -58,12 +58,12 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     }
     input_level_dict = {
         "input_water": "water_supply",
-        "input_fuel": "secondary",
-        "input_elec": "secondary"
+        "input_fuel": "final",
+        "input_elec": "final"
     }
     output_level_dict = {
         "output_water": "wastewater",
-        "output_heat": "secondary",
+        "output_heat": "final",
         "output_NH3": "secondary_material"
     }
     level_cat_dict = {
@@ -510,12 +510,12 @@ def gen_data_ccs(scenario, dry_run=False):
     }
     input_level_dict = {
         "input_water": "water_supply",
-        "input_fuel": "secondary",
-        "input_elec": "secondary"
+        "input_fuel": "final",
+        "input_elec": "final"
     }
     output_level_dict = {
         "output_water": "wastewater",
-        "output_heat": "secondary",
+        "output_heat": "final",
         "output_NH3": "secondary_material"
     }
     level_cat_dict = {
