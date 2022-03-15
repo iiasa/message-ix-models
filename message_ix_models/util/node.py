@@ -138,21 +138,17 @@ def _df_R12(df: pd.DataFrame) -> pd.DataFrame:
             df[dim]
             .astype(str)
             .str.replace("R11_", "R12_")
-            .replace("R12_CPA", "R12_RCPA")
+            .str.replace("R12_CPA", "R12_RCPA")
         )
 
     # List of data frames to be concatenated
     result = [df.assign(**new_values)]
 
     # True for rows where R12_RCPA appears in any column
-    mask = (result[0][list(new_values.keys())] == "R12_CPA").any(axis=1)
+    mask = (result[0][list(new_values.keys())] == "R12_RCPA").any(axis=1)
 
-    # Copy R11_FSU data
-    result.extend(
-        [
-            result[0][mask].replace("R12_RCPA", "R12_CHN"),
-        ]
-    )
+    # Copy R11_CPA data
+    result.append(result[0][mask].replace("R12_RCPA", "R12_CHN"))
 
     # Concatenate and return
     return pd.concat(result, ignore_index=True)
