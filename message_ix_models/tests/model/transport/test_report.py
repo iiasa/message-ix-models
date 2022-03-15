@@ -138,7 +138,6 @@ def _simulated(test_context, regions, years):
     return rep
 
 
-@skip_on_ci("Requires adjustments to message_ix.Reporter.")
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("regions", ["R12"])
 def test_simulated_solution(test_context, regions, years):
@@ -157,7 +156,6 @@ def test_simulated_solution(test_context, regions, years):
     rep.get("stock:nl-t-ya-driver_type:ldv")
 
 
-@skip_on_ci("Requires adjustments to message_ix.Reporter.")
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("regions", ["R12"])
 def test_plot_simulated(test_context, regions, years):
