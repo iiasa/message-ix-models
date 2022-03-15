@@ -10,6 +10,8 @@ from pytest import mark, param
 
 from message_data.model.transport import build, configure, report
 
+from . import MARK
+
 log = logging.getLogger(__name__)
 
 
@@ -66,7 +68,7 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
         # R12, B
         ("R12", "B", None, "IKARUS", True),
         # R14, A
-        param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
+        param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=[mark.slow, MARK[0]]),
         # Pending iiasa/message_data#190
         param("ISR", "A", None, None, False, marks=NIE),
     ],
