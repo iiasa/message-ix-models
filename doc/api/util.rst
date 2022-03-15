@@ -138,6 +138,14 @@ Commonly used:
 .. automodule:: message_ix_models.util._logging
    :members:
 
+:mod:`.util.node`
+==================
+
+.. currentmodule:: message_ix_models.util.node
+
+.. automodule:: message_ix_models.util.node
+   :members:
+
 :mod:`.util.scenarioinfo`
 =========================
 

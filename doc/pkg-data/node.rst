@@ -8,7 +8,7 @@ The codes in these lists denote **regions** and **countries**.
 When loaded using :func:`.get_codes`, the :attr:`.Code.child` attribute is a list of child codes.
 See the function documentation for how to retrieve these.
 
-.. seealso:: :func:`.adapt_R11_R14`, :func:`.identify_nodes`.
+.. seealso:: :func:`.adapt_R11_R12`, :func:`.adapt_R11_R14`, :func:`.identify_nodes`.
 
 .. contents::
    :local:
