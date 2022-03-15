@@ -18,6 +18,7 @@ Commonly used:
 
 .. autosummary::
 
+   adapt_R11_R12
    adapt_R11_R14
    as_codes
    broadcast
@@ -135,6 +136,14 @@ Commonly used:
 .. currentmodule:: message_ix_models.util._logging
 
 .. automodule:: message_ix_models.util._logging
+   :members:
+
+:mod:`.util.node`
+==================
+
+.. currentmodule:: message_ix_models.util.node
+
+.. automodule:: message_ix_models.util.node
    :members:
 
 :mod:`.util.scenarioinfo`
