@@ -6,6 +6,7 @@ from typing import Dict, List
 import pandas as pd
 from message_ix import make_df
 from message_ix_models.util import (
+    adapt_R11_R12,
     adapt_R11_R14,
     broadcast,
     cached,
@@ -22,11 +23,6 @@ from openpyxl import load_workbook
 from message_data.model.transport.utils import get_region_codes, input_commodity_level
 
 log = logging.getLogger(__name__)
-
-
-# Pending iiasa/message-ix-models#56
-def adapt_R11_R12(data):
-    raise NotImplementedError
 
 
 def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
