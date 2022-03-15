@@ -19,7 +19,7 @@ CONVERSION_FACTOR_CO2_C = 12 / 44
 CONVERSION_FACTOR_NH3_N = 17 / 14
 CONVERSION_FACTOR_PJ_GWa = 0.0317
 
-def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
+def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = True):
     """Generate data for materials representation of nitrogen fertilizers.
 
     .. note:: This code is only partially translated from
@@ -64,7 +64,7 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
     output_level_dict = {
         "output_water": "wastewater",
         "output_heat": "secondary",
-        "output_NH3": "material_interim"
+        "output_NH3": "secondary_material"
     }
     level_cat_dict = {
         "output": output_level_dict,
@@ -80,16 +80,17 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
         year_act=act_years,  # confirm if correct??
         year_vtg=vtg_years,
         commodity="NH3",
-        level="material_interim",
-        mode="all",
+        level="secondary_material",
+        mode="M1",
         time="year",
         time_dest="year",
         time_origin="year",
-        emission="CO2"  # confirm if correct
+        emission="CO2_transformation"  # confirm if correct
     )
 
     # Iterate over new technologies, using the configuration
-    for t in config["technology"]["add"]: # : refactor to adjust to yaml structure
+    for t in config["technology"]["add"][:6]:
+        # TODO: refactor to adjust to yaml structure
         # Output of NH3: same efficiency for all technologies
         # the output commodity and level are different for
 
@@ -105,7 +106,10 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
                     common["level"] = "primary"
             if (str(t) == "NH3_to_N_fertil") & (param == "output_NH3"):
                 common['commodity'] = "Fertilizer Use|Nitrogen"
-                common['level'] = "material_final"
+                common['level'] = "final_material"
+            if (str(t) == "NH3_to_N_fertil") & (param == "input_fuel"):
+                common['level'] = "secondary_material"
+
             df = (
                 make_df(cat, technology=t, value=1, unit="-", **common)
                     .pipe(broadcast, node_loc=nodes)
@@ -126,8 +130,8 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
     # Historical activities/capacities - Region specific
     common = dict(
         commodity="NH3",
-        level="material_interim",
-        mode="all",
+        level="secondary_material",
+        mode="M1",
         time="year",
         time_dest="year",
         time_origin="year",
@@ -135,7 +139,7 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
     act2010 = read_demand()['act2010']
     df = (
         make_df("historical_activity",
-                technology=[t for t in config["technology"]["add"]], #], TODO: maybe reintroduce std/ccs in yaml
+                technology=[t for t in config["technology"]["add"][:6]], #], TODO: maybe reintroduce std/ccs in yaml
                 value=1, unit='t', years_act=s_info.Y, **common)
             .pipe(broadcast, node_loc=nodes)
             .pipe(same_node)
@@ -153,7 +157,7 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
 
     df = (
         make_df("historical_new_capacity",
-                technology=[t for t in config["technology"]["add"]], # ], refactor to adjust to yaml structure
+                technology=[t for t in config["technology"]["add"][:6]], # ], refactor to adjust to yaml structure
                 value=1, unit='t', **common)
             .pipe(broadcast, node_loc=nodes)
             .pipe(same_node)
@@ -202,19 +206,19 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
     """
 
     df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
-    df["level"] = "material_final"
+    df["level"] = "final_material"
     results["land_input"].append(df)
     #scenario.add_par("land_input", df)
 
     # add background parameters (growth rates and bounds)
 
     df = scenario.par('initial_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][:6]:
         df['technology'] = q
         results["initial_activity_lo"].append(df)
 
     df = scenario.par('growth_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][:6]:
         df['technology'] = q
         results["growth_activity_lo"].append(df)
 
@@ -274,36 +278,22 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
     newtechnames_imp = ["import_NFert"]
     newtechnames_exp = ["export_NFert"]
 
-    scenario.add_set(
-        "technology",
-        newtechnames_trd + newtechnames_imp + newtechnames_exp
-    )
-    cat_add = pd.DataFrame(
-        {
-            "type_tec": ["import", "export"],  # 'all' not need to be added here
-            "technology": newtechnames_imp + newtechnames_exp,
-        }
-    )
-    scenario.add_set("cat_tec", cat_add)
-    #scenario.commit("add trade tec sets")
-
     yv_ya_exp = s_info.yv_ya
     yv_ya_exp = yv_ya_exp[(yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] < 30) & (yv_ya_exp["year_vtg"] > 2000)]
-    yv_ya_same = yv_ya_exp[(yv_ya_exp["year_act"] - yv_ya_exp["year_vtg"] == 0) & ( yv_ya_exp["year_vtg"] == 2000)]
+    yv_ya_same = s_info.yv_ya[(s_info.yv_ya["year_act"] - s_info.yv_ya["year_vtg"] == 0) & ( s_info.yv_ya["year_vtg"] > 2000)]
 
     common = dict(
         year_act=yv_ya_same.year_act,
         year_vtg=yv_ya_same.year_vtg,
         commodity="Fertilizer Use|Nitrogen",
-        level="material_final",
+        level="final_material",
         mode="M1",
         time="year",
         time_dest="year",
         time_origin="year",
     )
 
-    data = read_trade_data(context)
-
+    data = read_trade_data(context, comm="NFert")
     for i in data["var_name"].unique():
         for tec in data["technology"].unique():
             row = data[(data["var_name"] == i) & (data["technology"] == tec)]
@@ -311,7 +301,7 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
                 if row["technology"].values[0] == "trade_NFert":
                     node = ["R12_GLB"]
                 else:
-                    node = s_info.N[1:]
+                    node = nodes
                 if tec == "export_NFert":
                     common_exp = common
                     common_exp["year_act"] = yv_ya_exp.year_act
@@ -327,13 +317,17 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
                 elif (tec == "import_NFert") & (i == "input"):
                     df["node_origin"] = "R12_GLB"
                     df["level"] = "import"
+                elif (tec == "trade_NFert") & (i == "input"):
+                    df["level"] = "export"
+                elif (tec == "trade_NFert") & (i == "output"):
+                    df["level"] = "import"
                 else:
                     df.pipe(same_node)
                 results[i].append(df)
 
     common = dict(
         commodity="Fertilizer Use|Nitrogen",
-        level="material_final",
+        level="final_material",
         mode="M1",
         time="year",
         time_dest="year",
@@ -359,8 +353,112 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = False):
     df_hist_cap_new = df_hist_cap_new.assign(value=lambda x: x["value"] / 30)
     results["historical_new_capacity"].append(df_hist_cap_new)
 
+    #NH3 trade
+    #_______________________________________________
+
+    common = dict(
+        year_act=yv_ya_same.year_act,
+        year_vtg=yv_ya_same.year_vtg,
+        commodity="NH3",
+        level="secondary_material",
+        mode="M1",
+        time="year",
+        time_dest="year",
+        time_origin="year",
+    )
+
+    data = read_trade_data(context, comm="NH3")
+
+    for i in data["var_name"].unique():
+        for tec in data["technology"].unique():
+            row = data[(data["var_name"] == i) & (data["technology"] == tec)]
+            if len(row):
+                if row["technology"].values[0] == "trade_NH3":
+                    node = ["R12_GLB"]
+                else:
+                    node = nodes
+                if tec == "export_NH3":
+                    common_exp = common
+                    common_exp["year_act"] = yv_ya_exp.year_act
+                    common_exp["year_vtg"] = yv_ya_exp.year_vtg
+                    df = make_df(i, technology=tec, value=row[2010].values[0],
+                                            unit="-", **common_exp).pipe(broadcast, node_loc=node).pipe(same_node)
+                else:
+                    df = make_df(i, technology=tec, value=row[2010].values[0],
+                                            unit="-", **common).pipe(broadcast, node_loc=node).pipe(same_node)
+                if (tec == "export_NH3") & (i == "output"):
+                    df["node_dest"] = "R12_GLB"
+                    df["level"] = "export"
+                elif (tec == "import_NH3") & (i == "input"):
+                    df["node_origin"] = "R12_GLB"
+                    df["level"] = "import"
+                elif (tec == "trade_NH3") & (i == "input"):
+                    df["level"] = "export"
+                elif (tec == "trade_NH3") & (i == "output"):
+                    df["level"] = "import"
+                else:
+                    df.pipe(same_node)
+                results[i].append(df)
+
+    common = dict(
+        commodity="NH3",
+        level="secondary_material",
+        mode="M1",
+        time="year",
+        time_dest="year",
+        time_origin="year",
+        unit="t"
+    )
+
+    N_trade_R12 = read_demand()["N_trade_R12"].assign(mode="M1")
+    N_trade_R12["technology"] = N_trade_R12["Element"].apply(
+        lambda x: "export_NH3" if x == "Export" else "import_NH3")
+    df_exp_imp_act = N_trade_R12.drop("Element", axis=1)
+
+    trd_act_years = N_trade_R12["year_act"].unique()
+    values = N_trade_R12.groupby(["year_act"]).sum().values.flatten()
+    fert_trd_hist = make_df("historical_activity", technology="trade_NH3",
+                                       year_act=trd_act_years, value=values,
+                                       node_loc="R12_GLB", **common)
+    results["historical_activity"].append(pd.concat([df_exp_imp_act, fert_trd_hist]))
+
+    df_hist_cap_new = N_trade_R12[N_trade_R12["technology"] == "export_NH3"].drop(columns=["time", "mode", "Element"])
+    df_hist_cap_new = df_hist_cap_new.rename(columns={"year_act": "year_vtg"})
+    # divide by export lifetime derived from coal_exp
+    df_hist_cap_new = df_hist_cap_new.assign(value=lambda x: x["value"] / 30)
+    results["historical_new_capacity"].append(df_hist_cap_new)
+    #___________________________________________________________________________
+
+    if add_ccs:
+        for k, v in gen_data_ccs(scenario).items():
+            results[k].append(v)
+
     # Concatenate to one dataframe per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    par = "emission_factor"
+    rel_df_cc = results[par]
+    rel_df_cc = rel_df_cc[rel_df_cc["emission"] == "CO2_transformation"]
+    rel_df_cc = rel_df_cc.assign(year_rel=rel_df_cc["year_act"],
+                                 node_rel=rel_df_cc["node_loc"],
+                                 relation="CO2_cc").drop(["emission", "year_vtg"], axis=1)
+    rel_df_cc = rel_df_cc[rel_df_cc["technology"] != "NH3_to_N_fertil"]
+    rel_df_cc = rel_df_cc[rel_df_cc["year_rel"] == rel_df_cc["year_act"]].drop_duplicates()
+    rel_df_cc[rel_df_cc["technology"] == "biomass_NH3_ccs"] = rel_df_cc[
+        rel_df_cc["technology"] == "biomass_NH3_ccs"].assign(
+        value=results[par][results[par]["technology"] == "biomass_NH3_ccs"]["value"].values[0])
+
+
+    rel_df_em = results[par]
+    rel_df_em = rel_df_em[rel_df_em["emission"] == "CO2"]
+    rel_df_em = rel_df_em.assign(year_rel=rel_df_em["year_act"],
+                                 node_rel=rel_df_em["node_loc"],
+                                 relation="CO2_Emission").drop(["emission", "year_vtg"], axis=1)
+    rel_df_em = rel_df_em[rel_df_em["technology"] != "NH3_to_N_fertil"]
+    rel_df_em[rel_df_em["year_rel"] == rel_df_em["year_act"]].drop_duplicates()
+    results["relation_activity"] = pd.concat([rel_df_cc, rel_df_em])
+
+    results["emission_factor"] = results["emission_factor"][results["emission_factor"]["technology"]!="NH3_to_N_fertil"]
 
     return results
 
@@ -371,7 +469,7 @@ def gen_data_ccs(scenario, dry_run=False):
     .. note:: This code is only partially translated from
        :file:`SetupNitrogenBase.py`.
     """
-    config = read_config()["material"]["set"]
+    config = read_config()["material"]["fertilizer"]
     context = read_config()
 
     # Information about scenario, e.g. node, year
@@ -379,6 +477,8 @@ def gen_data_ccs(scenario, dry_run=False):
     nodes = s_info.N
     if "World" in nodes:
         nodes.pop(nodes.index("World"))
+    if "R12_GLB" in nodes:
+        nodes.pop(nodes.index("R12_GLB"))
 
     # Techno-economic assumptions
     data = read_data_ccs()
@@ -386,14 +486,26 @@ def gen_data_ccs(scenario, dry_run=False):
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
+    vtg_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_vtg"]
+    act_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_act"]
+
     # NH3 production processes
+    # NOTE: The energy required for NH3 production process is retreived
+    # from secondary energy level for the moment. However, the energy that is used to
+    # produce ammonia as feedstock is accounted in Final Energy in reporting.
+    # The energy that is used to produce ammonia as fuel should be accounted in
+    # Secondary energy. At the moment all ammonia is used as feedstock.
+    # Later we can track the shares of feedstock vs fuel use of ammonia and
+    # divide final energy. Or create another set of technologies (only for fuel
+    # use vs. only for feedstock use).
+
     common = dict(
-        year_vtg=s_info.Y,
-        year_act=s_info.Y, # confirm if correct??
+        year_vtg=vtg_years,
+        year_act=act_years, # confirm if correct??
         commodity="NH3",
-        level="material_interim",
+        level="secondary_material",
         # TODO fill in remaining dimensions
-        mode="all",
+        mode="M1",
         time="year",
         time_dest="year",
         time_origin="year",
@@ -409,7 +521,7 @@ def gen_data_ccs(scenario, dry_run=False):
     output_commodity_dict = {
         "output_NH3": "NH3",
         "output_heat": "d_heat",
-        "output_water": ""  # ask Jihoon how to name
+        "output_water": "wastewater"
     }
     commodity_dict = {
         "output": output_commodity_dict,
@@ -423,7 +535,7 @@ def gen_data_ccs(scenario, dry_run=False):
     output_level_dict = {
         "output_water": "wastewater",
         "output_heat": "secondary",
-        "output_NH3": "material_interim"
+        "output_NH3": "secondary_material"
     }
     level_cat_dict = {
         "output": output_level_dict,
@@ -431,7 +543,7 @@ def gen_data_ccs(scenario, dry_run=False):
     }
 
     # Iterate over new technologies, using the configuration
-    for t in config["technology"]["add"]["ccs"]:
+    for t in config["technology"]["add"][12:]:
         # Output of NH3: same efficiency for all technologies
         # TODO the output commodity and level are different for
         #      t=NH3_to_N_fertil; use 'if' statements to fill in.
@@ -442,32 +554,41 @@ def gen_data_ccs(scenario, dry_run=False):
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
                 common["level"] = level_cat_dict[cat][param]
-            df = (
-                make_df(cat, technology=t, value=1, unit="-", **common)
-                    .pipe(broadcast, node_loc=nodes)
-                    .pipe(same_node)
-            )
+            if param == "emission_factor_trans":
+                _common = common.copy()
+                _common["emission"] = "CO2_transformation"
+                cat = "emission_factor"
+                df = (
+                    make_df(cat, technology=t, value=1, unit="-", **_common)
+                        .pipe(broadcast, node_loc=nodes)
+                        .pipe(same_node)
+                )
+
+            else:
+                df = (
+                    make_df(cat, technology=t, value=1, unit="-", **common)
+                        .pipe(broadcast, node_loc=nodes)
+                        .pipe(same_node)
+                )
             row = data[(data['technology'] == str(t)) &
                        (data['parameter'] == param)]
             df = df.assign(value=row[2010].values[0])
-
             if param == "input_fuel":
                 comm = data['technology'][(data['parameter'] == param) &
                                           (data["technology"] == t)].iloc[0].split("_")[0]
                 df = df.assign(commodity=comm)
-
             results[cat].append(df)
 
 
     # add background parameters (growth rates and bounds)
 
     df = scenario.par('initial_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][12:]:
         df['technology'] = q
         results["initial_activity_lo"].append(df)
 
     df = scenario.par('growth_activity_lo', {"technology": ["gas_extr_mpen"]})
-    for q in config["technology"]["add"]:
+    for q in config["technology"]["add"][12:]:
         df['technology'] = q
         results["growth_activity_lo"].append(df)
 
@@ -502,6 +623,9 @@ def gen_data_ccs(scenario, dry_run=False):
     # Concatenate to one dataframe per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
+    #results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+
     return results
 
 
@@ -524,7 +648,7 @@ def read_demand():
     n_inputs_per_tech = 12  # Number of input params per technology
 
     input_fuel = te_params[2010][list(range(4, te_params.shape[0], n_inputs_per_tech))].reset_index(drop=True)
-    input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
+    #input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
 
     capacity_factor = te_params[2010][list(range(11, te_params.shape[0], n_inputs_per_tech))].reset_index(drop=True)
 
@@ -607,11 +731,17 @@ def read_demand():
             'capacity_factor': capacity_factor, "N_feed":N_feed, "N_trade_R12":N_trade_R12}
 
 
-def read_trade_data(context):
-    data = pd.read_excel(
-        context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
-        sheet_name="Trade", engine="openpyxl", usecols=np.linspace(0, 7, 8, dtype=int))
-    data = data.assign(technology=lambda x: set_trade_tec(x["Variable"]))
+def read_trade_data(context, comm):
+    if comm == "NFert":
+        data = pd.read_excel(
+            context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
+            sheet_name="Trade", engine="openpyxl", usecols=np.linspace(0, 7, 8, dtype=int))
+        data = data.assign(technology=lambda x: set_trade_tec(x["Variable"]))
+    if comm == "NH3":
+        data = pd.read_excel(
+            context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
+            sheet_name="Trade_NH3", engine="openpyxl", usecols=np.linspace(0, 7, 8, dtype=int))
+        data = data.assign(technology=lambda x: set_trade_tec_NH3(x["Variable"]))
     return data
 
 
@@ -627,14 +757,26 @@ def set_trade_tec(x):
     return arr
 
 
+def set_trade_tec_NH3(x):
+    arr=[]
+    for i in x:
+        if "Import" in i:
+            arr.append("import_NH3")
+        if "Export" in i:
+            arr.append("export_NH3")
+        if "Trade" in i:
+             arr.append("trade_NH3")
+    return arr
+
+
 def read_data():
     """Read and clean data from :file:`n-fertilizer_techno-economic.xlsx`."""
     # Ensure config is loaded, get the context
     context = read_config()
-    print(context.get_local_path())
+    #print(context.get_local_path())
     #print(Path(__file__).parents[3]/"data"/"material")
     context.handle_cli_args(local_data=Path(__file__).parents[3]/"data")
-    print(context.get_local_path())
+    #print(context.get_local_path())
     # Shorter access to sets configuration
     sets = context["material"]["fertilizer"]
 
@@ -672,7 +814,7 @@ def read_data():
 
     param_cat2 = []
     # print(param_cat)
-    for t in sets["technology"]["add"]: # : refactor to adjust to yaml structure
+    for t in sets["technology"]["add"][:6]: # : refactor to adjust to yaml structure
         # print(t)
         param_values.extend(params)
         tech_values.extend([t] * len(params))
@@ -689,9 +831,9 @@ def read_data():
         # Set the data frame index for selection
     )
     data.loc[data['parameter'] == 'emission_factor', 2010] = \
-            data.loc[data['parameter'] == 'emission_factor', 2010] * CONVERSION_FACTOR_CO2_C
-    data.loc[data['parameter'] == 'input_elec', 2010] = \
-        data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa
+            data.loc[data['parameter'] == 'emission_factor', 2010]# * CONVERSION_FACTOR_CO2_C
+    #data.loc[data['parameter'] == 'input_elec', 2010] = \
+    #    data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa
 
     # TODO convert units for some parameters, per LoadParams.py
     return data
@@ -703,11 +845,11 @@ def read_data_ccs():
     context = read_config()
 
     # Shorter access to sets configuration
-    sets = context["material"]["set"]
+    sets = context["material"]["fertilizer"]
 
     # Read the file
     data = pd.read_excel(
-        context.get_local_path("material", "n-fertilizer_techno-economic.xlsx"),
+        context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
         sheet_name="CCS",
     )
 
@@ -728,7 +870,7 @@ def read_data_ccs():
         "output_water",
         "output_heat",
         "emission_factor",
-        "emission_factor",
+        "emission_factor_trans",
         "capacity_factor",
     ]
 
@@ -739,11 +881,11 @@ def read_data_ccs():
 
     param_cat2 = []
 
-    for t in sets["technology"]["add"]["ccs"]:
+    for t in sets["technology"]["add"][12:]:
         param_values.extend(params)
         tech_values.extend([t] * len(params))
         param_cat2.extend(param_cat)
-
+    #print(sets["technology"]["add"][12:])
     # Clean the data
     data = (
         # Insert "technology" and "parameter" columns
@@ -755,9 +897,11 @@ def read_data_ccs():
     )
     #unit conversions and extra electricity for CCS process
     data.loc[data['parameter'] == 'emission_factor', 2010] = \
-        data.loc[data['parameter'] == 'emission_factor', 2010] * CONVERSION_FACTOR_CO2_C
+        data.loc[data['parameter'] == 'emission_factor', 2010]# * CONVERSION_FACTOR_CO2_C
+    #data.loc[data['parameter'] == 'input_elec', 2010] = \
+    #    data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa + 0.005
     data.loc[data['parameter'] == 'input_elec', 2010] = \
-        data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa + 0.005
-
+        data.loc[data['parameter'] == 'input_elec', 2010] + (CONVERSION_FACTOR_PJ_GWa * 0.005)
+    # TODO: check this 0.005 hardcoded value for ccs elec input and move to excel
     # TODO convert units for some parameters, per LoadParams.py
     return data
