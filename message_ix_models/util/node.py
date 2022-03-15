@@ -1,12 +1,9 @@
 """Utilities for nodes."""
 import logging
-from collections.abc import Mapping
-from functools import singledispatch
-from typing import Any, Dict, Union
 
-import pandas as pd
 from message_ix import Scenario
-from message_ix.reporting import Quantity
+
+from .common import Adapter, MappingAdapter  # noqa: F401
 
 log = logging.getLogger(__name__)
 
@@ -24,91 +21,51 @@ NODE_DIMS = [
     "node_share",
 ]
 
+#: Mapping from R11 to R12 node IDs.
+R11_R12 = (
+    ("R11_AFR", "R12_AFR"),
+    ("R11_CPA", "R12_CHN"),
+    ("R11_EEU", "R12_EEU"),
+    ("R11_FSU", "R12_FSU"),
+    ("R11_LAM", "R12_LAM"),
+    ("R11_MEA", "R12_MEA"),
+    ("R11_NAM", "R12_NAM"),
+    ("R11_PAO", "R12_PAO"),
+    ("R11_PAS", "R12_PAS"),
+    ("R11_CPA", "R12_RCPA"),
+    ("R11_SAS", "R12_SAS"),
+    ("R11_WEU", "R12_WEU"),
+)
 
-@singledispatch
-def adapt_R11_R14(data: Any):
-    """Adapt `data` from R11 to R14 node list.
+#: Mapping from R11 to R14 node IDs.
+R11_R14 = (
+    ("R11_AFR", "R14_AFR"),
+    ("R11_FSU", "R14_CAS"),
+    ("R11_CPA", "R14_CPA"),
+    ("R11_EEU", "R14_EEU"),
+    ("R11_LAM", "R14_LAM"),
+    ("R11_MEA", "R14_MEA"),
+    ("R11_NAM", "R14_NAM"),
+    ("R11_PAO", "R14_PAO"),
+    ("R11_PAS", "R14_PAS"),
+    ("R11_FSU", "R14_RUS"),
+    ("R11_SAS", "R14_SAS"),
+    ("R11_FSU", "R14_SCS"),
+    ("R11_FSU", "R14_UBM"),
+    ("R11_WEU", "R14_WEU"),
+)
 
-    The data is adapted by:
+#: Adapt data from the R11 to the R14 node list.
+#:
+#: The data is adapted using the mappings in :data:`R11_R12` for each of the dimensions
+#: in :data:`NODE_DIMS`.
+adapt_R11_R12 = MappingAdapter({d: R11_R12 for d in NODE_DIMS})
 
-    - Renaming regions such as R11_NAM to R14_NAM.
-    - Copying the data for R11_FSU to R14_CAS, R14_RUS, R14_SCS, and R14_UBM.
-
-    …wherever these appear in a column/dimension named ‘node’, ‘node_*’, or ‘n’.
-
-    The function may be called with:
-
-    - :class:`pandas.DataFrame`,
-    - :class:`genno.Quantity`, or
-    - :class:`dict` mapping :class:`str` parameter names to values (either of the above
-      types).
-    """
-
-
-# NB here would prefer to annotate `data` as Dict[str, Union[pd.DataFrame, Quantity]]),
-#    but this kind of complex annotation is not supported by functools as of Python 3.9.
-@adapt_R11_R14.register
-def _dict(data: Mapping):
-    # Dispatch to the methods for the value types
-    return {par: adapt_R11_R14(value) for par, value in data.items()}
-
-
-@adapt_R11_R14.register
-def _df(df: pd.DataFrame) -> pd.DataFrame:
-    """Adapt a :class:`pandas.DataFrame`."""
-    # New values for columns indexed by node
-    new_values = {}
-    for dim in filter(lambda d: d in NODE_DIMS, df.columns):
-        # NB need astype() here in case the column contains Code objects; these must be
-        # first converted to str before pd.Series.str accessor can work
-        new_values[dim] = (
-            df[dim]
-            .astype(str)
-            .str.replace("R11_", "R14_")
-            # Map FSU to RUS directly
-            .str.replace("R14_FSU", "R14_RUS")
-        )
-
-    # List of data frames to be concatenated
-    result = [df.assign(**new_values)]
-
-    # True for rows where R14_RUS appears in any column
-    mask = (result[0][list(new_values.keys())] == "R14_RUS").any(axis=1)
-
-    # Copy R11_FSU data
-    result.extend(
-        [
-            result[0][mask].replace("R14_RUS", "R14_CAS"),
-            result[0][mask].replace("R14_RUS", "R14_SCS"),
-            result[0][mask].replace("R14_RUS", "R14_UBM"),
-        ]
-    )
-
-    # Concatenate and return
-    return pd.concat(result, ignore_index=True)
-
-
-@adapt_R11_R14.register
-def _qty(qty: Quantity) -> Quantity:
-    """Adapt a :class:`genno.Quantity`."""
-    s = qty.to_series()
-    result = Quantity.from_series(
-        adapt_R11_R14(s.reset_index()).set_index(s.index.names)
-    )
-
-    try:
-        # Copy units
-        result.attrs["_unit"] = qty.attrs["_unit"]  # type: ignore [attr-defined]
-    except KeyError:  # pragma: no cover
-        pass
-
-    return result
-
-
-def adapt_R11_R12(
-    data: Dict[str, Union[pd.DataFrame, Quantity]]
-) -> Dict[str, Union[pd.DataFrame, Quantity]]:  # pragma: no cover
-    raise NotImplementedError
+#: Adapt data from the R11 to the R14 node list.
+#:
+#: The data is adapted using the mappings in :data:`R11_R14` for each of the dimensions
+#: in :data:`NODE_DIMS`.
+adapt_R11_R14 = MappingAdapter({d: R11_R14 for d in NODE_DIMS})
 
 
 def identify_nodes(scenario: Scenario) -> str:

@@ -19,12 +19,13 @@ from .common import (
     package_data_path,
     private_data_path,
 )
-from .node import adapt_R11_R14, identify_nodes
+from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes
 from .scenarioinfo import ScenarioInfo
 
 __all__ = [
     "MESSAGE_DATA_PATH",
     "MESSAGE_MODELS_PATH",
+    "adapt_R11_R12",
     "adapt_R11_R14",
     "as_codes",
     "cached",
@@ -67,7 +68,7 @@ def add_par_data(
     for par_name, values in data.items():
         N = values.shape[0]
         log.info(f"{N} rows in {repr(par_name)}")
-        log.debug(values.to_string(max_rows=5))
+        log.debug("\n" + values.to_string(max_rows=5))
 
         total += N
 
