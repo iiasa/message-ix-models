@@ -66,7 +66,7 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
         param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
         param("R11", "B", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),
         # R12, B
-        ("R12", "B", None, "IKARUS", True),
+        ("R12", "B", "US-TIMES MA3T", "IKARUS", True),
         # R14, A
         param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=[mark.slow, MARK[0]]),
         # Pending iiasa/message_data#190
