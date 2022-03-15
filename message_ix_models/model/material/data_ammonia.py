@@ -58,12 +58,12 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     }
     input_level_dict = {
         "input_water": "water_supply",
-        "input_fuel": "final",
-        "input_elec": "final"
+        "input_fuel": "secondary",
+        "input_elec": "secondary"
     }
     output_level_dict = {
         "output_water": "wastewater",
-        "output_heat": "final",
+        "output_heat": "secondary",
         "output_NH3": "secondary_material"
     }
     level_cat_dict = {
@@ -480,6 +480,15 @@ def gen_data_ccs(scenario, dry_run=False):
     act_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_act"]
 
     # NH3 production processes
+    # NOTE: The energy required for NH3 production process is retreived
+    # from secondary energy level for the moment. However, the energy that is used to
+    # produce ammonia as feedstock is accounted in Final Energy in reporting.
+    # The energy that is used to produce ammonia as fuel should be accounted in
+    # Secondary energy. At the moment all ammonia is used as feedstock.
+    # Later we can track the shares of feedstock vs fuel use of ammonia and
+    # divide final energy. Or create another set of technologies (only for fuel
+    # use vs. only for feedstock use).
+
     common = dict(
         year_vtg=vtg_years,
         year_act=act_years, # confirm if correct??
@@ -510,12 +519,12 @@ def gen_data_ccs(scenario, dry_run=False):
     }
     input_level_dict = {
         "input_water": "water_supply",
-        "input_fuel": "final",
-        "input_elec": "final"
+        "input_fuel": "secondary",
+        "input_elec": "secondary"
     }
     output_level_dict = {
         "output_water": "wastewater",
-        "output_heat": "final",
+        "output_heat": "secondary",
         "output_NH3": "secondary_material"
     }
     level_cat_dict = {
