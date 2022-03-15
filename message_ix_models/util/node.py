@@ -1,13 +1,9 @@
 """Utilities for nodes."""
 import logging
-from abc import abstractmethod
-from collections.abc import Mapping
-from typing import Sequence, Tuple
 
-import pandas as pd
-from genno.computations import concat
 from message_ix import Scenario
-from message_ix.reporting import Quantity
+
+from .common import Adapter, MappingAdapter  # noqa: F401
 
 log = logging.getLogger(__name__)
 
@@ -24,101 +20,6 @@ NODE_DIMS = [
     "node_rel",
     "node_share",
 ]
-
-
-class Adapter:
-    """Adapt `data`.
-
-    Adapter is an abstract base class for tools that adapt data in any way, e.g.
-    between different code lists for certain dimensions. An instance of an Adapter can
-    be called with any of the following as `data`:
-
-    - :class:`genno.Quantity`,
-    - :class:`pandas.DataFrame`, or
-    - :class:`dict` mapping :class:`str` parameter names to values (either of the above
-      types).
-
-    …and will return data of the same type.
-    """
-
-    def __call__(self, data):
-        if isinstance(data, Quantity):
-            return self._adapt(data)
-        elif isinstance(data, pd.DataFrame):
-            # Convert to Quantity
-            qty = Quantity.from_series(
-                data.set_index(
-                    list(filter(lambda c: c not in ("value", "unit"), data.columns))
-                )["value"],
-            )
-
-            # Store units
-            if "unit" in data.columns:
-                units = data["unit"].unique()
-                assert 1 == len(units), f"Non-unique units {units}"
-                unit = units[0]
-            else:
-                unit = ""  # dimensionless
-
-            # Adapt, convert back to pd.DataFrame, return
-            return self._adapt(qty).to_dataframe().assign(unit=unit).reset_index()
-        elif isinstance(data, Mapping):
-            return {par: self(value) for par, value in data.items()}
-        else:
-            raise TypeError(type(data))
-
-    @abstractmethod
-    def _adapt(self, qty: Quantity) -> Quantity:
-        """Adapt data."""
-        pass
-
-
-class MappingAdapter(Adapter):
-    """Adapt data using mappings for 1 or more dimension(s).
-
-    Parameters
-    ----------
-    maps : dict of sequence of (str, str)
-        Keys are names of dimensions. Values are sequences of 2-tuples; each tuple
-        consists of an original label and a target label.
-
-    Examples
-    --------
-    >>> a = MappingAdapter({"foo": [("a", "x"), ("a", "y"), ("b", "z")]})
-    >>> df = pd.DataFrame(
-    ...     [["a", "m", 1], ["b", "n", 2]], columns=["foo", "bar", "value"]
-    ... )
-    >>> a(df)
-      foo  bar  value
-    0   x    m      1
-    1   y    m      1
-    2   z    n      2
-    """
-
-    maps: Mapping
-
-    def __init__(self, maps: Mapping[str, Sequence[Tuple[str, str]]]):
-        self.maps = maps
-
-    def _adapt(self, qty: Quantity) -> Quantity:
-        result = qty
-
-        for dim, labels in self.maps.items():
-            if dim not in qty.dims:  # type: ignore [attr-defined]
-                continue
-            result = concat(
-                *[
-                    qty.sel(
-                        {dim: label[0]}, drop=True
-                    ).expand_dims(  # type: ignore [attr-defined]
-                        {dim: [label[1]]}
-                    )
-                    for label in labels
-                ]
-            )
-
-        return result
-
 
 #: Mapping from R11 to R12 node IDs.
 R11_R12 = (
