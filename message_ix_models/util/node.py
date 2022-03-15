@@ -1,10 +1,11 @@
 """Utilities for nodes."""
 import logging
+from abc import abstractmethod
 from collections.abc import Mapping
-from functools import singledispatch
-from typing import Any
+from typing import Sequence, Tuple
 
 import pandas as pd
+from genno.computations import concat
 from message_ix import Scenario
 from message_ix.reporting import Quantity
 
@@ -25,150 +26,145 @@ NODE_DIMS = [
 ]
 
 
-@singledispatch
-def adapt_R11_R14(data: Any):
-    """Adapt `data` from R11 to R14 node list.
+class Adapter:
+    """Adapt `data`.
 
-    The data is adapted by:
+    Adapter is an abstract base class for tools that adapt data in any way, e.g.
+    between different code lists for certain dimensions. An instance of an Adapter can
+    be called with any of the following as `data`:
 
-    - Renaming regions such as R11_NAM to R14_NAM.
-    - Copying the data for R11_FSU to each of R14_CAS, R14_RUS, R14_SCS, and R14_UBM.
-
-    …wherever these appear in a column/dimension named ‘node’, ‘node_*’, or ‘n’.
-
-    The function may be called with:
-
-    - :class:`pandas.DataFrame`,
-    - :class:`genno.Quantity`, or
+    - :class:`genno.Quantity`,
+    - :class:`pandas.DataFrame`, or
     - :class:`dict` mapping :class:`str` parameter names to values (either of the above
       types).
+
+    …and will return data of the same type.
     """
-    raise TypeError(type(data))
 
+    def __call__(self, data):
+        if isinstance(data, Quantity):
+            return self._adapt(data)
+        elif isinstance(data, pd.DataFrame):
+            # Convert to Quantity
+            qty = Quantity.from_series(
+                data.set_index(
+                    list(filter(lambda c: c not in ("value", "unit"), data.columns))
+                )["value"],
+            )
 
-# NB here would prefer to annotate `data` as Dict[str, Union[pd.DataFrame, Quantity]]),
-#    but this kind of complex annotation is not supported by functools as of Python 3.9.
-@adapt_R11_R14.register
-def _dict(data: Mapping):
-    # Dispatch to the methods for the value types
-    return {par: adapt_R11_R14(value) for par, value in data.items()}
+            # Store units
+            if "unit" in data.columns:
+                units = data["unit"].unique()
+                assert 1 == len(units), f"Non-unique units {units}"
+                unit = units[0]
+            else:
+                unit = ""  # dimensionless
 
+            # Adapt, convert back to pd.DataFrame, return
+            return self._adapt(qty).to_dataframe().assign(unit=unit).reset_index()
+        elif isinstance(data, Mapping):
+            return {par: self(value) for par, value in data.items()}
+        else:
+            raise TypeError(type(data))
 
-@adapt_R11_R14.register
-def _df(df: pd.DataFrame) -> pd.DataFrame:
-    """Adapt a :class:`pandas.DataFrame`."""
-    # New values for columns indexed by node
-    new_values = {}
-    for dim in filter(lambda d: d in NODE_DIMS, df.columns):
-        # NB need astype() here in case the column contains Code objects; these must be
-        # first converted to str before pd.Series.str accessor can work
-        new_values[dim] = (
-            df[dim]
-            .astype(str)
-            .str.replace("R11_", "R14_")
-            # Map FSU to RUS directly
-            .str.replace("R14_FSU", "R14_RUS")
-        )
-
-    # List of data frames to be concatenated
-    result = [df.assign(**new_values)]
-
-    # True for rows where R14_RUS appears in any column
-    mask = (result[0][list(new_values.keys())] == "R14_RUS").any(axis=1)
-
-    # Copy R11_FSU data
-    result.extend(
-        [
-            result[0][mask].replace("R14_RUS", "R14_CAS"),
-            result[0][mask].replace("R14_RUS", "R14_SCS"),
-            result[0][mask].replace("R14_RUS", "R14_UBM"),
-        ]
-    )
-
-    # Concatenate and return
-    return pd.concat(result, ignore_index=True)
-
-
-@adapt_R11_R14.register
-def _qty(qty: Quantity) -> Quantity:
-    """Adapt a :class:`genno.Quantity`."""
-    s = qty.to_series()
-    result = Quantity.from_series(
-        adapt_R11_R14(s.reset_index()).set_index(s.index.names)
-    )
-
-    try:
-        # Copy units
-        result.attrs["_unit"] = qty.attrs["_unit"]  # type: ignore [attr-defined]
-    except KeyError:  # pragma: no cover
+    @abstractmethod
+    def _adapt(self, qty: Quantity) -> Quantity:
+        """Adapt data."""
         pass
 
-    return result
 
+class MappingAdapter(Adapter):
+    """Adapt data using mappings for 1 or more dimension(s).
 
-@singledispatch
-def adapt_R11_R12(data: Any):
-    """Adapt `data` from R11 to R12 node list.
+    Parameters
+    ----------
+    maps : dict of sequence of (str, str)
+        Keys are names of dimensions. Values are sequences of 2-tuples; each tuple
+        consists of an original label and a target label.
 
-    The data is adapted by:
-
-    - Renaming regions such as R11_NAM to R12_NAM.
-    - Copying the data for R11_CPA to both R12_CHN and R12_RCPA.
-
-    …wherever these appear in a column/dimension named ‘node’, ‘node_*’, or ‘n’.
+    Examples
+    --------
+    >>> a = MappingAdapter({"foo": [("a", "x"), ("a", "y"), ("b", "z")]})
+    >>> df = pd.DataFrame(
+    ...     [["a", "m", 1], ["b", "n", 2]], columns=["foo", "bar", "value"]
+    ... )
+    >>> a(df)
+      foo  bar  value
+    0   x    m      1
+    1   y    m      1
+    2   z    n      2
     """
-    raise TypeError(type(data))
+
+    maps: Mapping
+
+    def __init__(self, maps: Mapping[str, Sequence[Tuple[str, str]]]):
+        self.maps = maps
+
+    def _adapt(self, qty: Quantity) -> Quantity:
+        result = qty
+
+        for dim, labels in self.maps.items():
+            if dim not in qty.dims:  # type: ignore [attr-defined]
+                continue
+            result = concat(
+                *[
+                    qty.sel(
+                        {dim: label[0]}, drop=True
+                    ).expand_dims(  # type: ignore [attr-defined]
+                        {dim: [label[1]]}
+                    )
+                    for label in labels
+                ]
+            )
+
+        return result
 
 
-# TODO this duplicates the analogous function for R11 → R14; remove
-@adapt_R11_R12.register
-def _dict_R12(data: Mapping):
-    return {par: adapt_R11_R12(value) for par, value in data.items()}
+#: Mapping from R11 to R12 node IDs.
+R11_R12 = (
+    ("R11_AFR", "R12_AFR"),
+    ("R11_CPA", "R12_CHN"),
+    ("R11_EEU", "R12_EEU"),
+    ("R11_FSU", "R12_FSU"),
+    ("R11_LAM", "R12_LAM"),
+    ("R11_MEA", "R12_MEA"),
+    ("R11_NAM", "R12_NAM"),
+    ("R11_PAO", "R12_PAO"),
+    ("R11_PAS", "R12_PAS"),
+    ("R11_CPA", "R12_RCPA"),
+    ("R11_SAS", "R12_SAS"),
+    ("R11_WEU", "R12_WEU"),
+)
 
+#: Mapping from R11 to R14 node IDs.
+R11_R14 = (
+    ("R11_AFR", "R14_AFR"),
+    ("R11_FSU", "R14_CAS"),
+    ("R11_CPA", "R14_CPA"),
+    ("R11_EEU", "R14_EEU"),
+    ("R11_LAM", "R14_LAM"),
+    ("R11_MEA", "R14_MEA"),
+    ("R11_NAM", "R14_NAM"),
+    ("R11_PAO", "R14_PAO"),
+    ("R11_PAS", "R14_PAS"),
+    ("R11_FSU", "R14_RUS"),
+    ("R11_SAS", "R14_SAS"),
+    ("R11_FSU", "R14_SCS"),
+    ("R11_FSU", "R14_UBM"),
+    ("R11_WEU", "R14_WEU"),
+)
 
-@adapt_R11_R12.register
-def _df_R12(df: pd.DataFrame) -> pd.DataFrame:
-    """Adapt a :class:`pandas.DataFrame`."""
-    # New values for columns indexed by node
-    new_values = {}
-    for dim in filter(lambda d: d in NODE_DIMS, df.columns):
-        # NB need astype() here in case the column contains Code objects; these must be
-        # first converted to str before pd.Series.str accessor can work
-        new_values[dim] = (
-            df[dim]
-            .astype(str)
-            .str.replace("R11_", "R12_")
-            .str.replace("R12_CPA", "R12_RCPA")
-        )
+#: Adapt data from the R11 to the R14 node list.
+#:
+#: The data is adapted using the mappings in :data:`R11_R12` for each of the dimensions
+#: in :data:`NODE_DIMS`.
+adapt_R11_R12 = MappingAdapter({d: R11_R12 for d in NODE_DIMS})
 
-    # List of data frames to be concatenated
-    result = [df.assign(**new_values)]
-
-    # True for rows where R12_RCPA appears in any column
-    mask = (result[0][list(new_values.keys())] == "R12_RCPA").any(axis=1)
-
-    # Copy R11_CPA data
-    result.append(result[0][mask].replace("R12_RCPA", "R12_CHN"))
-
-    # Concatenate and return
-    return pd.concat(result, ignore_index=True)
-
-
-@adapt_R11_R12.register
-def _qty_R12(qty: Quantity) -> Quantity:
-    """Adapt a :class:`genno.Quantity`."""
-    s = qty.to_series()
-    result = Quantity.from_series(
-        adapt_R11_R12(s.reset_index()).set_index(s.index.names)
-    )
-
-    try:
-        # Copy units
-        result.attrs["_unit"] = qty.attrs["_unit"]  # type: ignore [attr-defined]
-    except KeyError:  # pragma: no cover
-        pass
-
-    return result
+#: Adapt data from the R11 to the R14 node list.
+#:
+#: The data is adapted using the mappings in :data:`R11_R14` for each of the dimensions
+#: in :data:`NODE_DIMS`.
+adapt_R11_R14 = MappingAdapter({d: R11_R14 for d in NODE_DIMS})
 
 
 def identify_nodes(scenario: Scenario) -> str:
