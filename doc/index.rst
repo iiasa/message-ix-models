@@ -33,6 +33,7 @@ Among other tasks, the tools allow modelers to:
    api/project
    api/tools
    api/util
+   api/r
    api/testing
 
 .. toctree::

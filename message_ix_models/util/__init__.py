@@ -20,6 +20,7 @@ from .common import (
     private_data_path,
 )
 from .node import adapt_R11_R14, identify_nodes
+from .r import get_r_func
 from .scenarioinfo import ScenarioInfo
 
 __all__ = [
@@ -30,6 +31,7 @@ __all__ = [
     "cached",
     "check_support",
     "convert_units",
+    "get_r_func",
     "identify_nodes",
     "load_package_data",
     "load_private_data",
