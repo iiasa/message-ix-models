@@ -29,6 +29,9 @@ def test_mapping_adapter():
 
     assert all(columns + ["unit"] == result.columns)
 
+    with pytest.raises(TypeError):
+        a(1.2)
+
 
 PAR = "technical_lifetime"
 VALUE = [0.1, 0.2]

@@ -42,18 +42,18 @@ class Adapter:
       types).
 
     …and will return data of the same type.
+
+    Subclasses can implement different adapter logic by overriding the abstract
+    :meth:`adapt` method.
     """
 
     def __call__(self, data):
         if isinstance(data, Quantity):
-            return self._adapt(data)
+            return self.adapt(data)
         elif isinstance(data, pd.DataFrame):
             # Convert to Quantity
-            qty = Quantity.from_series(
-                data.set_index(
-                    list(filter(lambda c: c not in ("value", "unit"), data.columns))
-                )["value"],
-            )
+            idx_cols = list(filter(lambda c: c not in ("value", "unit"), data.columns))
+            qty = Quantity.from_series(data.set_index(idx_cols)["value"])
 
             # Store units
             if "unit" in data.columns:
@@ -64,16 +64,15 @@ class Adapter:
                 unit = ""  # dimensionless
 
             # Adapt, convert back to pd.DataFrame, return
-            return self._adapt(qty).to_dataframe().assign(unit=unit).reset_index()
+            return self.adapt(qty).to_dataframe().assign(unit=unit).reset_index()
         elif isinstance(data, Mapping):
             return {par: self(value) for par, value in data.items()}
         else:
             raise TypeError(type(data))
 
     @abstractmethod
-    def _adapt(self, qty: Quantity) -> Quantity:
+    def adapt(self, qty: Quantity) -> Quantity:
         """Adapt data."""
-        pass
 
 
 class MappingAdapter(Adapter):
@@ -103,7 +102,7 @@ class MappingAdapter(Adapter):
     def __init__(self, maps: Mapping[str, Sequence[Tuple[str, str]]]):
         self.maps = maps
 
-    def _adapt(self, qty: Quantity) -> Quantity:
+    def adapt(self, qty: Quantity) -> Quantity:
         result = qty
 
         for dim, labels in self.maps.items():
