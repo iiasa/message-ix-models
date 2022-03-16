@@ -102,7 +102,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
                 common["level"] = level_cat_dict[cat][param]
-                if (t == "biomass_NH3") & (cat == "input"):
+                if (t == "biomass_NH3") & (param == "input_fuel"):
                     common["level"] = "primary"
             if (str(t) == "NH3_to_N_fertil") & (param == "output_NH3"):
                 common['commodity'] = "Fertilizer Use|Nitrogen"
@@ -554,6 +554,8 @@ def gen_data_ccs(scenario, dry_run=False):
             if cat in ["input", "output"]:
                 common["commodity"] = commodity_dict[cat][param]
                 common["level"] = level_cat_dict[cat][param]
+            if (t == "biomass_NH3_ccs") & (param == "input_fuel"):
+                common["level"] = "primary"
             if param == "emission_factor_trans":
                 _common = common.copy()
                 _common["emission"] = "CO2_transformation"
