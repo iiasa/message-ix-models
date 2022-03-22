@@ -85,7 +85,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
         time="year",
         time_dest="year",
         time_origin="year",
-        emission="CO2_transformation"  # confirm if correct
+        emission="CO2_industry"  # confirm if correct
     )
 
     # Iterate over new technologies, using the configuration
@@ -427,7 +427,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
 
     par = "emission_factor"
     rel_df_cc = results[par]
-    rel_df_cc = rel_df_cc[rel_df_cc["emission"] == "CO2_transformation"]
+    rel_df_cc = rel_df_cc[rel_df_cc["emission"] == "CO2_industry"]
     rel_df_cc = rel_df_cc.assign(year_rel=rel_df_cc["year_act"],
                                  node_rel=rel_df_cc["node_loc"],
                                  relation="CO2_cc").drop(["emission", "year_vtg"], axis=1)
@@ -548,7 +548,7 @@ def gen_data_ccs(scenario, dry_run=False):
                 common["level"] = "primary"
             if param == "emission_factor_trans":
                 _common = common.copy()
-                _common["emission"] = "CO2_transformation"
+                _common["emission"] = "CO2_industry"
                 cat = "emission_factor"
                 df = (
                     make_df(cat, technology=t, value=1, unit="-", **_common)
