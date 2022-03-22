@@ -377,6 +377,10 @@ def add_emission_accounting(scen):
 
     # Obtain the emission factors only for material related technologies
     # TODO: Also residential and commercial technologies should be added to this list.
+    # We dont need to add ammonia/fertilier production here. Because there are
+    # no extra process emissions that need to be accounted in emissions relations.
+    # CCS negative emission_factor are already handled in gen_data_ammonia.py.
+
     tec_list = scen.par("emission_factor")["technology"].unique()
     tec_list_materials = [
         i
