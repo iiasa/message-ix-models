@@ -56,6 +56,8 @@ def add_AFOLU_CO2_accounting(scen, relation_name, glb_reg='R11_GLB',
 
     # Retrieve LU_CO2 emissions
     loutput = scen.par('land_output', filters={'commodity': ['LU_CO2']})
+    if loutput.empty:
+        raise ValueError("'land_output' not available for commodity 'LU_CO2'")
 
     # Add land-use scenario `output` parameter onto new level/commodity
     df_land_output = loutput.copy()
