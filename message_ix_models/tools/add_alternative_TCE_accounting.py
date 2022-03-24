@@ -33,6 +33,8 @@ def main(scen):
 
     # Create emission factor from land_output 'LU_CO2'
     lu_co2 = scen.par('land_emission', filters={'emission': ['LU_CO2']})
+    if lu_co2.empty:
+        raise ValueError("'land_emission' not available for commodity 'LU_CO2'")
     lu_co2.emission = 'TCE_CO2'
     scen.check_out()
     scen.add_par('land_emission', lu_co2)
