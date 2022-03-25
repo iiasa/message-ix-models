@@ -127,11 +127,7 @@ correctly reports the aggregate variables such as Final Energy and Emissions.
 
 To run the first step of the reporting use ::
 
-$ mix-models material report-1 --model_name MESSAGEix-Materials --scenario_name xxxx
-
-To run the second step of the reporting use ::
-
-$ mix-models material report-2 --model_name MESSAGEix-Materials --scenario_name xxxx
+$ mix-models material report --model_name MESSAGEix-Materials --scenario_name xxxx
 
 Data, metadata, and configuration
 =================================
