@@ -5,8 +5,8 @@ import logging
 
 # from .build import apply_spec
 # from message_data.tools import ScenarioInfo
+from message_data.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
-from message_ix_models.model.build import apply_spec
 from message_ix_models.util.context import Context
 from message_ix_models.util import add_par_data
 
@@ -22,10 +22,13 @@ log = logging.getLogger(__name__)
 def build(scenario):
     """Set up materials accounting on `scenario`."""
     # Get the specification
-    spec = get_spec()
+
 
     # Apply to the base scenario
-    apply_spec(scenario, spec, add_data)  # dry_run=True
+    spec = get_spec()
+    apply_spec(scenario,spec, add_data_2)
+    spec = None
+    apply_spec(scenario, spec,add_data_1)  # dry_run=True
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the usefyl level industry technologies
@@ -114,25 +117,38 @@ def create_bare(context, regions, dry_run):
     help="File name for external data input",
 )
 @click.option("--tag", default="", help="Suffix to the scenario name")
+@click.option("--mode", default = 'by_url')
 @click.pass_obj
-def build_scen(context, datafile, tag):
+def build_scen(context, datafile, tag, mode):
     """Build a scenario.
 
     Use the --url option to specify the base scenario.
     """
-    # Determine the output scenario name based on the --url CLI option. If the
-    # user did not give a recognized value, this raises an error.
-    output_scenario_name = {
-        "baseline": "NoPolicy",
-        "baseline_macro": "NoPolicy",
-        "baseline_new": "NoPolicy",
-        "baseline_new_macro": "NoPolicy",
-        "NPi2020-con-prim-dir-ncr": "NPi",
-        "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
-        "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
-    }.get(context.scenario_info["scenario"])
+    from ixmp import Platform
+    import message_ix
 
-    if type(output_scenario_name).__name__ == "NoneType":
+    mp = Platform(name='ixmp_dev', jvmargs=['-Xmx16G'])
+
+    if mode == 'by_url':
+        # Determine the output scenario name based on the --url CLI option. If the
+        # user did not give a recognized value, this raises an error.
+        output_scenario_name = {
+            "baseline": "NoPolicy",
+            "baseline_macro": "NoPolicy",
+            "baseline_new": "NoPolicy",
+            "baseline_new_macro": "NoPolicy",
+            "NPi2020-con-prim-dir-ncr": "NPi",
+            "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
+            "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
+        }.get(context.scenario_info["scenario"])
+    # Create a two degrees scenario by copying carbon prices from another scenario.
+    elif mode == 'by_copy':
+        output_scenario_name = '2degrees'
+        mod_mitig = 'ENGAGE_SSP2_v4.1.8'
+        scen_mitig = 'EN_NPi2020_1000f'
+        scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
+        tax_emission_new = scen_mitig_prices.var("PRICE_EMISSION")
+    elif type(output_scenario_name).__name__ == "NoneType":
         output_scenario_name = context.scenario_info["scenario"]
 
     # context.metadata_path = context.metadata_path / "data"
@@ -147,6 +163,13 @@ def build_scen(context, datafile, tag):
             model="MESSAGEix-Materials", scenario=output_scenario_name + "_" + tag
         )
     )
+
+    if mode == 'by_copy':
+        scenario.check_out()
+        tax_emission_new.columns = scenario.par("tax_emission").columns
+        tax_emission_new["unit"] = "USD/tCO2"
+        scenario.add_par("tax_emission", tax_emission_new)
+        scenario.commit('2 degree prices are added')
 
     # Set the latest version as default
     scenario.set_as_default()
@@ -179,8 +202,8 @@ def solve_scen(context, datafile, model_name, scenario_name):
     # Solve
     scenario.solve()
 
-
-@cli.command("report-1")
+@cli.command("report")
+# @cli.command("report-1")
 @click.option(
     "--old_reporting",
     default=False,
@@ -191,14 +214,29 @@ def solve_scen(context, datafile, model_name, scenario_name):
 # @click.pass_obj
 def run_reporting(old_reporting, scenario_name, model_name):
     from message_data.reporting.materials.reporting import report
+    from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
     from message_ix import Scenario
     from ixmp import Platform
 
     print(model_name)
-    mp = Platform(jvmargs=['-Xmx12G'])
+    mp = Platform()
+
+    # Remove existing timeseries and add material timeseries
+    print("Reporting material-specific variables")
     scenario = Scenario(mp, model_name, scenario_name)
     report(scenario, old_reporting)
 
+    print("Reporting standard variables")
+    reporting(
+        mp,
+        scenario,
+        "False",
+        model_name,
+        scenario_name,
+        merge_hist=True,
+        merge_ts=True,
+        run_config="materials_run_config.yaml",
+    )
 
 @cli.command("report-2")
 @click.option("--scenario_name", default="NoPolicy")
@@ -216,7 +254,7 @@ def run_old_reporting(scenario_name, model_name):
 
     print(model_name)
     print(scenario_name)
-    mp = Platform(jvmargs=['-Xmx12G'])
+    mp = Platform(name='ixmp_dev', jvmargs=['-Xmx16G'])
     scenario = Scenario(mp, model_name, scenario_name)
 
     reporting(
@@ -242,11 +280,16 @@ from .data_power_sector import gen_data_power_sector
 from .data_ammonia import gen_data_ammonia
 
 
-DATA_FUNCTIONS = [
+DATA_FUNCTIONS_1 = [
     #gen_data_buildings,
     gen_data_ammonia,
     gen_data_generic,
     gen_data_steel,
+    #gen_data_power_sector,
+]
+
+DATA_FUNCTIONS_2 = [
+    #gen_data_buildings,
     gen_data_cement,
     gen_data_petro_chemicals,
     #gen_data_power_sector,
@@ -254,7 +297,7 @@ DATA_FUNCTIONS = [
 ]
 
 # Try to handle multiple data input functions from different materials
-def add_data(scenario, dry_run=False):
+def add_data_1(scenario, dry_run=False):
     """Populate `scenario` with MESSAGEix-Materials data."""
     # Information about `scenario`
     info = ScenarioInfo(scenario)
@@ -268,7 +311,28 @@ def add_data(scenario, dry_run=False):
         log.warning("Remove 'R12_GLB' from node list for data generation")
         info.set["node"].remove("R12_GLB")
 
-    for func in DATA_FUNCTIONS:
+    for func in DATA_FUNCTIONS_1:
+        # Generate or load the data; add to the Scenario
+        log.info(f"from {func.__name__}()")
+        add_par_data(scenario, func(scenario), dry_run=dry_run)
+
+    log.info("done")
+
+def add_data_2(scenario, dry_run=False):
+    """Populate `scenario` with MESSAGEix-Materials data."""
+    # Information about `scenario`
+    info = ScenarioInfo(scenario)
+
+    # Check for two "node" values for global data, e.g. in
+    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
+    if {"World", "R11_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R11_GLB' from node list for data generation")
+        info.set["node"].remove("R11_GLB")
+    if {"World", "R12_GLB"} < set(info.set["node"]):
+        log.warning("Remove 'R12_GLB' from node list for data generation")
+        info.set["node"].remove("R12_GLB")
+
+    for func in DATA_FUNCTIONS_2:
         # Generate or load the data; add to the Scenario
         log.info(f"from {func.__name__}()")
         add_par_data(scenario, func(scenario), dry_run=dry_run)
