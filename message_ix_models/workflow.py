@@ -46,7 +46,7 @@ class WorkflowStep:
         if self.solve:
             result.solve()
 
-        if self.report:
+        if self.report:  # pragma: no cover
             raise NotImplementedError  # TODO
 
         return result
