@@ -29,18 +29,25 @@ class WorkflowStep:
     report: bool = False
 
     def __init__(self, name: str, callback: Callable, solve=True):
+        # Unpack the target model/scenario name
         self.model_name, self.scenario_name = name.split("/")
+
+        # Store the callback and options
         self.callback = callback
         self.solve = solve
 
     def __call__(self, scenario: Optional[Scenario]) -> Scenario:
+        """Execute the workflow step."""
         if scenario is None:
-            s = None
+            s = None  # No precursor scenario
         else:
+            # Clone to target model/scenario name
             s = scenario.clone(
                 model=self.model_name, scenario=self.scenario_name, keep_solution=False
             )
 
+        # Invoke the callback. If it does not return, assume `s` contains the
+        # modifications
         result = cast(Scenario, self.callback(s) or s)
 
         if self.solve:
