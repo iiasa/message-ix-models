@@ -108,9 +108,12 @@ def modify_demand_and_hist_activity(scen):
 
     for r in df_feed["REGION"].unique():
 
+        # Temporary solution. With the addition of ammonia the residual demand
+        # becomes negative or zero. We assume all of the feedstock production
+        # is endogenously covered.
         i = 0
         df_feed_temp.at[i, "REGION"] = r
-        df_feed_temp.at[i, "i_feed"] = 0.7
+        df_feed_temp.at[i, "i_feed"] = 1
         i = i + 1
         df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
 
