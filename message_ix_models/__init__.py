@@ -6,9 +6,10 @@ from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.context import Context
 from message_ix_models.util.importlib import MessageDataFinder
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
+from message_ix_models.workflow import Workflow
 
 # Expose utility classes
-__all__ = ["Context", "ScenarioInfo", "Spec"]
+__all__ = ["Context", "ScenarioInfo", "Spec", "Workflow"]
 
 try:
     # Version string for reference in other code
