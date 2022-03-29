@@ -175,21 +175,21 @@ def gen_data_ammonia(scenario, dry_run=False, add_ccs: bool = True):
     # %% Secure feedstock balance (foil_fs, gas_fs, coal_fs)  loil_fs?
 
     # Adjust i_feed demand
-    N_energy = read_demand()['N_energy']
-    N_energy = read_demand()['N_feed'] # updated feed with imports accounted
-
-    demand_fs_org = pd.read_excel(context.get_local_path('material','demand_i_feed_R12.xlsx'))
-
-    df = demand_fs_org.loc[demand_fs_org.year == 2010, :].join(N_energy.set_index('node'), on='node')
-    sh = pd.DataFrame({'node': demand_fs_org.loc[demand_fs_org.year == 2010, 'node'],
-                       'r_feed': df.totENE / df.value})  # share of NH3 energy among total feedstock (no trade assumed)
-    df = demand_fs_org.join(sh.set_index('node'), on='node')
-    df.value *= 1 - df.r_feed  # Carve out the same % from tot i_feed values
-    df = df.drop('r_feed', axis=1)
-    df = df.drop('Unnamed: 0', axis=1)
-    # TODO: refactor with a more sophisticated solution to reduce i_feed
-    df.loc[df["value"] < 0, "value"] = 0  # temporary solution to avoid negative values
-    results["demand"].append(df)
+    # N_energy = read_demand()['N_energy']
+    # N_energy = read_demand()['N_feed'] # updated feed with imports accounted
+    #
+    # demand_fs_org = pd.read_excel(context.get_local_path('material','demand_i_feed_R12.xlsx'))
+    #
+    # df = demand_fs_org.loc[demand_fs_org.year == 2010, :].join(N_energy.set_index('node'), on='node')
+    # sh = pd.DataFrame({'node': demand_fs_org.loc[demand_fs_org.year == 2010, 'node'],
+    #                    'r_feed': df.totENE / df.value})  # share of NH3 energy among total feedstock (no trade assumed)
+    # df = demand_fs_org.join(sh.set_index('node'), on='node')
+    # df.value *= 1 - df.r_feed  # Carve out the same % from tot i_feed values
+    # df = df.drop('r_feed', axis=1)
+    # df = df.drop('Unnamed: 0', axis=1)
+    # # TODO: refactor with a more sophisticated solution to reduce i_feed
+    # df.loc[df["value"] < 0, "value"] = 0  # temporary solution to avoid negative values
+    # results["demand"].append(df)
 
     # Globiom land input
     """
