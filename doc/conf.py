@@ -99,3 +99,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),
 }
+
+# -- Options for sphinx.ext.todo -------------------------------------------------------
+
+todo_include_todos = True
