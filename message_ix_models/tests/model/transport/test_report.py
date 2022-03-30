@@ -178,10 +178,11 @@ def test_simulated_solution(test_context, regions, years):
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("regions", ["R12"])
-def test_plot_simulated(caplog, test_context, regions, years):
+@pytest.mark.parametrize("plot_name", ["energy-by-cmdty", "stock-ldv"])
+def test_plot_simulated(test_context, regions, years, plot_name):
     """Plots are generated correctly using simulated data."""
     rep = _simulated(test_context, regions, years)
 
-    print(rep.describe("plot stock-ldv"))
+    print(rep.describe(f"plot {plot_name}"))
 
-    rep.get("plot stock-ldv")
+    rep.get(f"plot {plot_name}")
