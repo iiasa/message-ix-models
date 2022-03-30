@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add :class:`.Workflow`; see :doc:`api/workflow` (:pull:`60`).
 
 2022.3.30
 =========
