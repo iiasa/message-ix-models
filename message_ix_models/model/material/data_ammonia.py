@@ -901,7 +901,6 @@ def read_data_ccs():
     #data.loc[data['parameter'] == 'input_elec', 2010] = \
     #    data.loc[data['parameter'] == 'input_elec', 2010] * CONVERSION_FACTOR_PJ_GWa + 0.005
     data.loc[data['parameter'] == 'input_elec', 2010] = \
-        data.loc[data['parameter'] == 'input_elec', 2010] + (CONVERSION_FACTOR_PJ_GWa * 0.005)
-    # TODO: check this 0.005 hardcoded value for ccs elec input and move to excel
+        data.loc[data['parameter'] == 'input_elec', 2010]
     # TODO convert units for some parameters, per LoadParams.py
     return data
