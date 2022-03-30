@@ -129,8 +129,18 @@ def _simulated(test_context, regions, years):
     # Create a reporter
     rep = Reporter()
 
+    data = dict(
+        CAP=dict(
+            nl=[spec.require.N[0]] * 2,
+            t=["ELC_100", "ELC_100"],
+            yv=[2020, 2020],
+            ya=[2020, 2025],
+            value=[1.0, 1.1],
+        )
+    )
+
     # Simulated solution data is added
-    simulated_solution(rep, spec)
+    simulated_solution(rep, spec, data)
 
     register(callback)
     prepare_reporter(rep, dict())
