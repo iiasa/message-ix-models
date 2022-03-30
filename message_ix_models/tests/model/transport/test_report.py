@@ -140,7 +140,9 @@ def _simulated(test_context, regions, years):
 
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("regions", ["R12"])
-def test_simulated_solution(test_context, regions, years):
+def test_simulated_solution(caplog, test_context, regions, years):
+    caplog.set_level(logging.WARNING, logger="genno")
+
     # The message_data.reporting.prepare_reporter works on the simulated data
     rep = _simulated(test_context, regions, years)
 
@@ -158,7 +160,9 @@ def test_simulated_solution(test_context, regions, years):
 
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("regions", ["R12"])
-def test_plot_simulated(test_context, regions, years):
+def test_plot_simulated(caplog, test_context, regions, years):
+    caplog.set_level(logging.WARNING, logger="genno")
+
     """Plots are generated correctly using simulated data."""
     rep = _simulated(test_context, regions, years)
 
