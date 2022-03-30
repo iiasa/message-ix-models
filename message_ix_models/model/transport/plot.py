@@ -344,7 +344,7 @@ class Stock0(Plot):
 
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(p9.aes(x="yv", y="stock", color="t"), group_df)
+                p9.ggplot(p9.aes(x="ya", y="stock", color="t"), group_df)
                 + p9.geom_line()
                 + p9.geom_point()
                 + p9.expand_limits(y=[0, y_max])
