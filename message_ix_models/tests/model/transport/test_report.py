@@ -165,7 +165,9 @@ def test_simulated_solution(caplog, test_context, regions, years):
     rep.get(k)
 
     # A quantity for message_data.model.transport can be computed
-    rep.get("stock:nl-t-ya-driver_type:ldv")
+    k = "stock:nl-t-ya-driver_type:ldv"
+    result = rep.get(k)
+    assert 0 < len(result)
 
 
 @pytest.mark.parametrize("years", ["B"])
