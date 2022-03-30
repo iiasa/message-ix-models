@@ -334,8 +334,15 @@ class EnergyCmdty(Plot):
 
 class Stock0(Plot):
     basename = "stock-ldv"
-    inputs = ["stock:nl-t-ya-driver_type:ldv"]
-    _title_detail = "LDV transport"
+    # Partial sum over driver_type dimension
+    inputs = ["stock:nl-t-ya:ldv"]
+    _title_detail = "LDV transport vehicle stock"
+    static = Plot.static + [
+        p9.aes(x="ya", y="stock", color="t"),
+        p9.geom_line(),
+        p9.geom_point(),
+        p9.labs(x="Period", color="Powertrain technology"),
+    ]
 
     def generate(self, data):
         data = data.rename(columns={0: "stock"})
@@ -344,12 +351,10 @@ class Stock0(Plot):
 
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(p9.aes(x="ya", y="stock", color="t"), group_df)
-                + p9.geom_line()
-                + p9.geom_point()
-                + p9.expand_limits(y=[0, y_max])
-                + self.title(f"{self._title_detail} Vehicle stock [{unit}] {nl}")
+                p9.ggplot(group_df)
                 + self.static
+                + p9.expand_limits(y=[0, y_max])
+                + self.title(f"{self._title_detail} [{unit}] {nl}")
             )
 
 
