@@ -281,7 +281,7 @@ def simulate_qty(name: str, item_info: dict, **data_kw: Any) -> Tuple[Key, Quant
     )
 
 
-def simulated_solution(rep: Reporter, spec: Spec):
+def simulated_solution(rep: Reporter, spec: Spec, data: Dict = None):
     """Add data for a simulated model solution to `rep`, given `spec`."""
     # Merge the "require" and "add" sets of the spec
     info = ScenarioInfo()
@@ -300,14 +300,16 @@ def simulated_solution(rep: Reporter, spec: Spec):
         }
     )
 
+    data = data or dict()
+
     for name, item_info in to_add.items():
         if item_info["ix_type"] == "set":
             # Add the set elements
             rep.add(RENAME_DIMS.get(name, name), quote(info.set[name]))
         elif item_info["ix_type"] in ("par", "var"):
-            key, data = simulate_qty(name, item_info)
+            key, qty = simulate_qty(name, item_info, **data.get(name, {}))
             # log.debug(f"{key}\n{data}")
-            rep.add(key, data, sums=True, index=True)
+            rep.add(key, qty, sums=True, index=True)
 
     # Prepare the base MESSAGEix computations
     rep.add_tasks()
