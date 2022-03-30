@@ -7,7 +7,7 @@ from message_ix import Reporter
 from message_ix.reporting import ComputationError
 from message_ix_models.util import private_data_path
 from message_ix_models.testing import NIE
-from pytest import param
+from pytest import mark, param
 
 from message_data.model.transport import configure
 from message_data.model.transport.report import (
@@ -148,11 +148,16 @@ def _simulated(test_context, regions, years):
     return rep
 
 
+@pytest.fixture
+def quiet_genno(caplog):
+    caplog.set_level(logging.WARNING, logger="genno.config")
+    caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
+
+
+@mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("regions", ["R12"])
-def test_simulated_solution(caplog, test_context, regions, years):
-    caplog.set_level(logging.WARNING, logger="genno")
-
+def test_simulated_solution(test_context, regions, years):
     # The message_data.reporting.prepare_reporter works on the simulated data
     rep = _simulated(test_context, regions, years)
 
@@ -170,11 +175,10 @@ def test_simulated_solution(caplog, test_context, regions, years):
     assert 0 < len(result)
 
 
+@mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("regions", ["R12"])
 def test_plot_simulated(caplog, test_context, regions, years):
-    caplog.set_level(logging.WARNING, logger="genno")
-
     """Plots are generated correctly using simulated data."""
     rep = _simulated(test_context, regions, years)
 
