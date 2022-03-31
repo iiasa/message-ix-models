@@ -145,10 +145,7 @@ def test_exo_report(test_context, tmp_path):
 def demand_computer(test_context, tmp_path, regions, years, options):
     # TODO convert to a fixture
     ctx = test_context
-    ctx.regions = regions
-    ctx.years = years
-    ctx.output_path = tmp_path
-
+    ctx.update(dict(regions=regions, years=years, output_path=tmp_path))
     configure(ctx, options=options)
 
     spec = bare.get_spec(ctx)
