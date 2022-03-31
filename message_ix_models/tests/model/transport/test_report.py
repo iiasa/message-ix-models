@@ -49,8 +49,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     register(callback)
 
     ctx = test_context
-    ctx.regions = regions
-    ctx.years = years
+    ctx.update(dict(regions=regions, years=years))
     ctx["output dir"] = tmp_path
 
     scenario = built_transport(request, ctx, solved=solved)

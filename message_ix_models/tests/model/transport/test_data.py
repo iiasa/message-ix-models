@@ -34,8 +34,7 @@ def test_data_files(test_context, parts):
 )
 def test_ikarus(test_context, regions, N_node, years):
     ctx = test_context
-    ctx.regions = regions
-    ctx.years = years
+    ctx.update(dict(regions=regions, years=years))
 
     configure(ctx)
 
@@ -161,11 +160,9 @@ def test_get_emissions_data(test_context, source, rows, regions):
     ],
 )
 def test_get_ldv_data(test_context, source, regions, years):
-    ctx = test_context
-
     # Info about the corresponding RES
-    ctx.regions = regions
-    ctx.years = years
+    ctx = test_context
+    ctx.update(dict(regions=regions, years=years))
 
     configure(ctx)
 
@@ -259,10 +256,9 @@ def test_get_non_ldv_data(test_context, regions):
 
 
 def test_get_gfei_data(test_context):
-    ctx = test_context
-    ctx.regions = "R11"
+    test_context.regions = "R11"
 
-    df = get_gfei_data(ctx)
+    df = get_gfei_data(test_context)
 
     # Data have the expected size
     assert 307 == len(df)
