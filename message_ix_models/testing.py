@@ -76,6 +76,9 @@ def session_context(pytestconfig, tmp_env):
     # Other local data in the temporary directory for this session only
     ctx.local_data = session_tmp_dir
 
+    # Also set the "message local data" key in the ixmp config
+    ixmp_config.set("message local data", session_tmp_dir)
+
     # If message_data is not installed, use a temporary path for private_data_path()
     message_data_path = util.MESSAGE_DATA_PATH
     if util.MESSAGE_DATA_PATH is None:
