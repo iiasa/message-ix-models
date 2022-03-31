@@ -1,5 +1,4 @@
 import logging
-import os
 
 import pytest
 from numpy.testing import assert_allclose
@@ -15,11 +14,6 @@ from message_data.reporting import prepare_reporter, register
 from . import MARK, built_transport, simulated_solution
 
 log = logging.getLogger(__name__)
-
-
-# TODO copy to message_ix_models.testing
-def skip_on_ci(reason):
-    return pytest.mark.xfail(condition="GITHUB_ACTIONS" in os.environ, reason=reason)
 
 
 def test_register_cb():
