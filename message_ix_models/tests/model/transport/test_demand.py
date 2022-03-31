@@ -2,6 +2,7 @@ import logging
 
 import message_ix
 import pytest
+from genno.testing import assert_units
 from message_ix.reporting import Key
 from message_ix_models.model import bare
 from message_ix_models.model.structure import get_codes
@@ -9,7 +10,6 @@ from message_ix_models.testing import NIE
 from pytest import param
 
 from message_data.model.transport import build, demand, configure
-from message_data.tools import assert_units
 
 from . import MARK
 
