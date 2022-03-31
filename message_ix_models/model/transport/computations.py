@@ -7,6 +7,7 @@ import pandas as pd
 import xarray as xr
 from genno import Quantity, computations
 from genno.computations import add, product, ratio
+from genno.testing import assert_units
 from ixmp import Scenario
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
@@ -14,7 +15,6 @@ from message_ix_models import ScenarioInfo
 
 from message_data.model.transport.utils import path_fallback
 from message_data.reporting.util import as_quantity
-from message_data.tools import assert_units
 from message_data.tools.iea_eei import get_eei_data
 
 log = logging.getLogger(__name__)
