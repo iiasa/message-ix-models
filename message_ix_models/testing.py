@@ -1,4 +1,5 @@
 import logging
+import os
 from copy import deepcopy
 from pathlib import Path
 
@@ -362,3 +363,14 @@ def export_test_data(context: Context):
 #: Shorthand for marking a parametrized test case that is expected to fail because it is
 #: not implemented.
 NIE = pytest.mark.xfail(raises=NotImplementedError)
+
+
+def not_ci(reason=None, action="skip"):
+    """Mark a test as xfail or skipif if on CI infrastructure.
+
+    Checks the ``GITHUB_ACTIONS`` environment variable; returns a pytest mark.
+    """
+    action = "skipif" if action == "skip" else action
+    return getattr(pytest.mark, action)(
+        condition="GITHUB_ACTIONS" in os.environ, reason=reason
+    )
