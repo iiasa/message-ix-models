@@ -87,18 +87,15 @@ def session_context(pytestconfig, tmp_env):
         # Create some subdirectories
         util.MESSAGE_DATA_PATH.joinpath("data", "tests").mkdir(parents=True)
 
-    platform_name = "message-ix-models"
-
     # Add a platform connected to an in-memory database
-    # NB cannot call Config.add_platform() here because it does not support supplying a
-    #    URL for a HyperSQL database.
-    # TODO add that feature upstream.
-    ixmp_config.values["platform"][platform_name] = {
-        "class": "jdbc",
-        "driver": "hsqldb",
-        "url": f"jdbc:hsqldb:mem://{platform_name}",
-        "jvmargs": pytestconfig.option.jvmargs,
-    }
+    platform_name = "message-ix-models"
+    ixmp_config.add_platform(
+        platform_name,
+        "jdbc",
+        "hsqldb",
+        url=f"jdbc:hsqldb:mem://{platform_name}",
+        jvmargs=pytestconfig.option.jvmargs,
+    )
 
     # Launch Platform and connect to testdb (reconnect if closed)
     mp = Platform(name=platform_name)
