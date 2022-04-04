@@ -34,6 +34,7 @@ Among other tasks, the tools allow modelers to:
    api/tools
    api/util
    api/testing
+   api/workflow
 
 .. toctree::
    :maxdepth: 2
