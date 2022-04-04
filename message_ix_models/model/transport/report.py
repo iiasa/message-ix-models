@@ -186,16 +186,19 @@ def callback(rep: Reporter):
 
 
 def add_plots(rep: Reporter):
+    """Add transport plots to `rep`.
+
+    If the scenario to be reported is not solved, only a subset of plots are added.
+    All available plots are collected under a key "transport plots".
+    """
     try:
         solved = rep.graph["scenario"].has_solution()
     except KeyError:
         solved = False
 
-    queue: List[Tuple[Tuple, Dict]] = []
-
-    for plot in PLOTS:
-        key = f"plot {plot.basename}"
-        queue.append(((key, plot.make_task()), dict()))
+    queue: List[Tuple[Tuple, Dict]] = [
+        ((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()
+    ]
 
     added = rep.add_queue(queue, max_tries=2, fail="raise" if solved else logging.INFO)
 
