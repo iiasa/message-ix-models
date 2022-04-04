@@ -1,0 +1,24 @@
+# Reporting configuration for MESSAGEix-Transport
+#
+# This file only contains a subset of computations, mostly related to
+# IAMC-format tables, that can be specified in this static YAML format. For the
+# rest, see message_data.model.transport.report.
+
+general:
+- key: transport file path
+  comp: make_output_path
+  inputs: [ config ]
+  args: { name: transport.csv }
+
+- key: transport iamc
+  comp: concat
+  inputs: [ stock ldv iamc ]
+
+- key: transport iamc file
+  comp: write_report
+  inputs: [ transport iamc, transport file path ]
+
+iamc:
+- variable: stock ldv iamc
+  base: stock:nl-t-ya:ldv
+  var: [ "Vehicle stock|LDV", t ]
