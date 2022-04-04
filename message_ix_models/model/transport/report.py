@@ -181,6 +181,9 @@ def callback(rep: Reporter):
     # Add plots
     add_plots(rep)
 
+    # Add IAMC tables defined in data/transport/report.yaml
+    rep.configure(**context["transport report"])
+
 
 def add_plots(rep: Reporter):
     try:
