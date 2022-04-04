@@ -382,24 +382,10 @@ class Stock1(Plot):
 
 
 #: Plots of data from the built (and maybe solved) MESSAGEix-Transport scenario.
-PLOTS = [
-    FixCost,
-    InvCost0,
-    InvCost1,
-    InvCost2,
-    VarCost,
-    EnergyCmdty,
-    LDV_IO,
-    LDVTechShare0,
-    LDVTechShare1,
-    Stock0,
-    Stock1,
-    DemandCalibrated,
-    DemandCalibratedCap,
-]
+PLOTS = {}
 
-#: Plots of data from the exogenous demand calculation.
-DEMAND_PLOTS = [
-    DemandExo,
-    DemandExoCap,
-]
+# Inspect the defined plots to populate the dict
+_ = obj = None
+for _, obj in globals().items():
+    if isinstance(obj, type) and issubclass(obj, Plot) and obj is not Plot:
+        PLOTS[obj.basename] = obj

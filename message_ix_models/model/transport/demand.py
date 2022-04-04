@@ -18,9 +18,8 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
-from message_data.model.transport import computations
+from message_data.model.transport import computations, plot
 from message_data.model.transport.data import groups
-from message_data.model.transport.plot import DEMAND_PLOTS
 from message_data.model.transport.utils import get_region_codes, path_fallback
 from message_data.tools import gdp_pop
 
@@ -373,8 +372,9 @@ def prepare_reporter(
     ]
 
     # Plots
-    queue.extend(
-        [((f"plot {plot.basename}", plot.make_task()), _) for plot in DEMAND_PLOTS]
-    )
+    for name, cls in plot.PLOTS.items():
+        if "demand" not in name:
+            continue
+        queue.append(((f"plot {name}", cls.make_task()), _))
 
     rep.add_queue(queue)
