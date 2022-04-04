@@ -34,7 +34,7 @@ def test_data_files(test_context, parts):
 )
 def test_ikarus(test_context, regions, N_node, years):
     ctx = test_context
-    ctx.update(dict(regions=regions, years=years))
+    ctx.update(regions=regions, years=years)
 
     configure(ctx)
 
@@ -162,7 +162,7 @@ def test_get_emissions_data(test_context, source, rows, regions):
 def test_get_ldv_data(test_context, source, regions, years):
     # Info about the corresponding RES
     ctx = test_context
-    ctx.update(dict(regions=regions, years=years))
+    ctx.update(regions=regions, years=years)
 
     configure(ctx)
 
