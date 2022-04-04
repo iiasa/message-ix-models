@@ -40,11 +40,12 @@ def iamc(c: Reporter, info):
       - The `y`, `ya`, and `yv` dimensions are mapped to the "year" column.
 
     - Use the MESSAGEix-GLOBIOM custom :func:`.util.collapse` callback to perform
-      renaming etc. while collapsing dimensions to the IAMC ones.
+      renaming etc. while collapsing dimensions to the IAMC ones. The "var" key from
+      the entry, if any, is passed to the `var` argument of that function.
     """
     # Use message_data custom collapse() method
     info.setdefault("collapse", {})
-    info["collapse"]["callback"] = util.collapse
+    info["collapse"]["callback"] = partial(util.collapse, var=info.pop("var", []))
 
     # Add standard renames
     info.setdefault("rename", {})
