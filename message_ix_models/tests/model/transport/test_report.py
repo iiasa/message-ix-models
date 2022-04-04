@@ -141,3 +141,20 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     # print(rep.describe(f"plot {plot_name}"))  # DEBUG
 
     print(rep.get(f"plot {plot_name}"))
+
+
+@mark.usefixtures("quiet_genno")
+def test_iamc_simulated(
+    request, tmp_path_factory, test_context, regions="R12", years="B"
+):
+    test_context.update(regions=regions, years=years)
+    rep = simulated_solution(request, test_context)
+
+    # print(rep.describe("transport iamc file"))  # DEBUG
+    rep.get("transport iamc file")
+
+    assert (
+        tmp_path_factory.getbasetemp()
+        .joinpath("data0", "report", "transport.csv")
+        .exists()
+    )
