@@ -10,6 +10,11 @@ import pandas as pd
 log = logging.getLogger(__name__)
 
 
+def make_output_path(config, name):
+    """Return a path under the "output_dir" Path from the reporter configuration."""
+    return config["output_dir"].joinpath(name)
+
+
 def gwp_factors():
     """Use :mod:`iam_units` to generate a Quantity of GWP factors.
 
