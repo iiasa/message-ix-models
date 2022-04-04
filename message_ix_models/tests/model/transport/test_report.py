@@ -43,7 +43,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     register(callback)
 
     ctx = test_context
-    ctx.update(dict(regions=regions, years=years))
+    ctx.update(regions=regions, years=years)
     ctx["output dir"] = tmp_path
 
     scenario = built_transport(request, ctx, solved=solved)
@@ -114,7 +114,7 @@ def quiet_genno(caplog):
 @mark.usefixtures("quiet_genno")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
     # The message_data.reporting.prepare_reporter works on the simulated data
-    test_context.update(dict(regions=regions, years=years))
+    test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context)
 
     # A quantity for a MESSAGEix variable was added and can be retrieved

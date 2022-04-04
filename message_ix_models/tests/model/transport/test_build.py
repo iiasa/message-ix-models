@@ -79,7 +79,7 @@ def test_build_bare_res(
     """Test that model.transport.build works on the bare RES, and the model solves."""
     # Generate the relevant bare RES
     ctx = test_context
-    ctx.update(dict(regions=regions, years=years))
+    ctx.update(regions=regions, years=years)
     scenario = testing.bare_res(request, ctx)
 
     # Build succeeds without error
