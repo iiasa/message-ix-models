@@ -35,6 +35,7 @@ METADATA = [
     ("config.yaml",),
     ("set.yaml",),
     ("technology.yaml",),
+    ("report.yaml",),
     # Information about MESSAGE(V)-Transport
     ("migrate", "set.yaml"),
 ]
