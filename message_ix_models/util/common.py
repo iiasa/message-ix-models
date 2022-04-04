@@ -1,8 +1,7 @@
 import logging
 from abc import abstractmethod
-from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, cast
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, cast
 
 import pandas as pd
 from genno.computations import concat
