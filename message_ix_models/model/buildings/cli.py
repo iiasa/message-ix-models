@@ -853,8 +853,9 @@ def cli(context, code_dir, dest):
             columns={"value": f"value{iterations}"}
         )
         price_sav[f"lvl{iterations}"] = prices_new["lvl"]
-        price_sav.to_csv("price_track.csv")
-        demand_sav.to_csv("demand_track.csv")
+
+        price_sav.to_csv(context.get_local_path("buildings", "price_track.csv"))
+        demand_sav.to_csv(context.get_local_path("buildings", "demand_track.csv"))
 
         iterations = iterations + 1
         old_diff = diff
