@@ -205,7 +205,8 @@ def _sturm_rscript(
     return sturm_scenarios, comm_sturm_scenarios
 
 
-def setup_scenario(
+# FIXME(PNK) Too complex; McCabe complexity of 17 > 14 for the rest of message_data
+def setup_scenario(  # noqa: C901
     scenario: message_ix.Scenario,
     info: ScenarioInfo,
     demand: pd.DataFrame,
@@ -468,11 +469,12 @@ def setup_scenario(
             scenario.add_par("relation_activity", build_rel)
 
 
+# FIXME(PNK) Too complex; McCabe complexity of 19 > 14 for the rest of message_data
 @click.command("buildings")
 @common_params("dest")
 @click.argument("code_dir", type=Path)
 @click.pass_obj
-def cli(context, code_dir, dest):
+def cli(context, code_dir, dest):  # noqa: C901
     """MESSAGEix-Buildings model.
 
     The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
@@ -546,12 +548,16 @@ def cli(context, code_dir, dest):
     # FIXME(PNK) `oscilation` is not used anywhere. Document its purpose or remove.
     done = iterations = oscilation = 0
     old_diff = -1
+    diff_dd = 1e6
 
     mark_time()
 
     # Placeholders; replaced on the first iteration
     demand = pd.DataFrame()
     comm_sturm_scenarios = pd.DataFrame()
+    # NB(PNK) Unless ACCESS is run, this will cause the code below to fail. Define and
+    # satisfy the minimum conditions for the remaining code.
+    e_use_scenarios = pd.DataFrame()
 
     # Non-model and model periods
     info = ScenarioInfo(scenario)
@@ -564,11 +570,7 @@ def cli(context, code_dir, dest):
         prices = get_prices(scen_to_clone if iterations == 0 else scenario)
 
         # Save demand from previous iteration for comparison
-        if iterations == 0:
-            demand_old = pd.DataFrame()
-            diff_dd = 1e6
-        else:
-            demand_old = demand.copy(True)
+        demand_old = demand.copy(True)
 
         # Run ACCESS-E-USE
         if config["run ACCESS"]:
@@ -579,10 +581,6 @@ def cli(context, code_dir, dest):
             )
 
             mark_time()
-        else:
-            # NB(PNK) This will cause the code below to fail. Define and satisfy the
-            # minimum conditions for the remaining code.
-            e_use_scenarios = pd.DataFrame()
 
         # Scale results to match historical activity
         # NOTE: ignore biomass, data was always imputed here
