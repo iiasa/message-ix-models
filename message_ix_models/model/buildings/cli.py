@@ -18,7 +18,7 @@ from message_ix_models.util.click import common_params
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
 #: Commodities for the buildings sector.
-build_commodities = [
+BUILD_COMMODITIES = [
     "resid_floor_construction",  # floorspace to be constructed
     "resid_floor_demolition",  # floorspace to be demolished
     "comm_floor_construction",  # floorspace to be constructed
@@ -27,7 +27,7 @@ build_commodities = [
 ]
 
 #: Technologies for the buildings sector.
-build_techs = [
+BUILD_TECHS = [
     # technology providing residential floorspace activity
     "construction_resid_build",
     "demolition_resid_build",
@@ -37,7 +37,7 @@ build_techs = [
 ]
 
 #: Commodity names to be converted for use in MESSAGEix-Materials.
-build_comm_convert = [
+BUILD_COMM_CONVERT = [
     "resid_mat_int_scrap_steel",
     "resid_mat_int_scrap_aluminum",
     "resid_mat_int_scrap_cement",
@@ -53,7 +53,7 @@ build_comm_convert = [
 ]
 
 #: Types of materials.
-materials = ["steel", "cement", "aluminum"]
+MATERIALS = ["steel", "cement", "aluminum"]
 
 # Columns for indexing demand parameter
 nclytu = ["node", "commodity", "level", "year", "time", "unit"]
@@ -205,7 +205,7 @@ def setup_scenario(
     first_iteration: bool,
 ):
     """Set up the structure and data for MESSAGE_Buildings on `scenario`."""
-    if build_commodities[0] in info.set["commodity"]:
+    if BUILD_COMMODITIES[0] in info.set["commodity"]:
         # Scenario already set up; do notihing
         return
 
@@ -218,8 +218,8 @@ def setup_scenario(
     scenario.platform.add_unit("Mm2/y", "mil. square meters by year")
 
     # Add new commodities and technologies
-    scenario.add_set("commodity", build_commodities)
-    scenario.add_set("technology", build_techs)
+    scenario.add_set("commodity", BUILD_COMMODITIES)
+    scenario.add_set("technology", BUILD_TECHS)
 
     # Find emissions in relation activity
     emiss_rel = list(
@@ -300,9 +300,9 @@ def setup_scenario(
         year_act=years_model,
     )
 
-    # Iterate over `build_comm_convert` and  nodes (excluding World and *_GLB)
+    # Iterate over `BUILD_COMM_CONVERT` and  nodes (excluding World and *_GLB)
     for c, n in product(
-        build_comm_convert, filter(lambda n: "World" not in n and "GLB" not in n, nodes)
+        BUILD_COMM_CONVERT, filter(lambda n: "World" not in n and "GLB" not in n, nodes)
     ):
         comm = c.split("_")[-1]
         typ = c.split("_")[-2]
