@@ -225,6 +225,9 @@ def setup_scenario(
     nodes = info.N
     years_model = info.Y
 
+    # Add floorspace unit
+    scenario.platform.add_unit("Mm2/y", "mil. square meters by year")
+
     # Add new commodities and technologies
     scenario.add_set("commodity", build_commodities)
     scenario.add_set("technology", build_techs)
@@ -481,6 +484,11 @@ def cli(context, code_dir):
         "ssp": "SSP2",
         "clim_scen": "BL",
         # "clim_scen": "2C", # Alternate option?
+        # Specify whether to solve MESSAGE-MACRO (True) or only MESSAGE (False)
+        "solve_macro": False,
+        # Specify whether to make a new copy from a baseline scenario or load an
+        # existing scenario
+        "clone": True,
     }
     context["buildings"] = config
 
@@ -491,43 +499,51 @@ def cli(context, code_dir):
     # Import from MESSAGE_Buildings
     from utils import add_globiom
 
-    # Load database
-    mp = context.get_platform()
-
-    # Add floorspace unit
-    mp.add_unit("Mm2/y", "mil. square meters by year")
-
-    # Specify whether to make a new copy from a baseline
-    # scenario or load an existing scenario
-    clone = 1
-
-    # Specify whether to solve MESSSGE (0) or MESSAGE-MACRO (1)
-    solve_macro = 0
-
     # Specify the scenario to be cloned
+    # NB(PNK) The code now uses message_ix_models.Context to load the platform and
+    # scenario(s). This opens the possibility to use command line options like
+    # --platform, --url, and --dest. For now, however, any values given in that way are
+    # squashed by the hard-coded values below.
+
     # NOTE: this scenario has the updated GLOBIOM matrix
 
     # # M -> BM baseline
-    # mod_orig = "MESSAGEix-GLOBIOM 1.1-M-R12-NGFS"
-    # scen_orig = "baseline"
-
-    # mod_new = "MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS"
-    # scen_new = "baseline"
+    # context.scenario = dict(
+    #     model="MESSAGEix-GLOBIOM 1.1-M-R12-NGFS",
+    #     scenario="baseline",
+    # )
+    #
+    # context.dest_scenario(
+    #     model="MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS",
+    #     scenario="baseline",
+    # )
 
     # BM NPi (after "run_cdlinks_setup" for NPi)
     # This has MACRO but here run MESSAGE only.
-    mod_orig = "MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS"
-    scen_orig = "NPi2020-con-prim-dir-ncr"
+    context.scenario_info = dict(
+        model="MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS",
+        scenario="NPi2020-con-prim-dir-ncr",
+    )
 
-    mod_new = "MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS"
-    scen_new = "NPi2020-con-prim-dir-ncr-building"
+    context.dest_scenario = dict(
+        model="MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS",
+        scenario="NPi2020-con-prim-dir-ncr-building",
+    )
 
-    scen_to_clone = message_ix.Scenario(mp, mod_orig, scen_orig)
+    raise NotImplementedError("Incomplete")
 
-    if clone:
-        scenario = scen_to_clone.clone(model=mod_new, scenario=scen_new)
+    # Either clone to dest_scenario, or load an existing scenario
+    if config["clone"]:
+        scenario = context.clone_to_dest(create=False)
+        # Also retrieve the base scenario
+        scen_to_clone = context.get_scenario()
     else:
-        scenario = message_ix.Scenario(mp, mod_new, scen_new)
+        # NB(PNK) Can this ever work? scen_to_clone seems to be used below on the first
+        # iteration
+        scenario = context.get_scenario()
+
+    # Store a reference to the platform
+    mp = scenario.platform
 
     # Open reference climate scenario if needed
     if context["buildings"]["clim_scen"] == "2C":
@@ -535,13 +551,10 @@ def cli(context, code_dir):
         scen_mitig = "EN_NPi2020_1000f"
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
 
-    done = 0
+    # FIXME(PNK) `oscilation` is not used anywhere. Document its purpose or remove.
+    done = iterations = oscilation = 0
     start_time = time()
-    iterations = 0
-
     old_diff = -1
-    # FIXME(PNK) This is not used anywhere. Document its purpose, or comment/remove.
-    oscilation = 0
 
     # Placeholders; replaced on the first iteration
     demand = pd.DataFrame()
@@ -752,7 +765,7 @@ def cli(context, code_dir):
         # Add bio backstop
         add_globiom.add_bio_backstop(scenario)
 
-        mod = "MESSAGE-MACRO" if solve_macro else "MESSAGE"
+        mod = "MESSAGE-MACRO" if config["solve_macro"] else "MESSAGE"
 
         try:
             # Solve LP with barrier method, faster
