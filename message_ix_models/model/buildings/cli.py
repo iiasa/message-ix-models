@@ -164,40 +164,18 @@ def cli(context):
     nodes = scenario.set("node")
 
     while done < 1:
-
         # Get prices from MESSAGE
-        # On the first iteration, from the parent scenario
-        if iterations == 0:
-            prices = scen_to_clone.var(
-                "PRICE_COMMODITY",
-                filters={
-                    "level": "final",
-                    "commodity": [
-                        "biomass",
-                        "coal",
-                        "lightoil",
-                        "gas",
-                        "electr",
-                        "d_heat",
-                    ],
-                },
-            )
-        # Onwards, from the current scenario
-        else:
-            prices = scenario.var(
-                "PRICE_COMMODITY",
-                filters={
-                    "level": "final",
-                    "commodity": [
-                        "biomass",
-                        "coal",
-                        "lightoil",
-                        "gas",
-                        "electr",
-                        "d_heat",
-                    ],
-                },
-            )
+        # On the first iteration, from the parent scenario; onwards, from the current
+        # scenario
+        price_source = scen_to_clone if iterations == 0 else scenario
+        prices = price_source.var(
+            "PRICE_COMMODITY",
+            filters={
+                "level": "final",
+                "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
+            },
+        )
+
         suffix = prices.node.str.split("_", expand=True)[0][0]
         prices = prices.loc[prices["node"] != suffix + "_GLB"]
 
@@ -295,7 +273,6 @@ def cli(context):
             del r
             gc.collect()
         else:
-
             print("rpy2 NOT found")
             # Prepare input files
             if not os.path.exists(str(Path(os.getcwd() + "/temp"))):
