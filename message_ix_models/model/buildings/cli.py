@@ -804,43 +804,27 @@ def cli(context, code_dir):
             print("Total time:", (time() - start_time) / 3600)
             # scenario.set_as_default()
 
+        # Columns for merging
+        nclytu = ["node", "commodity", "level", "year", "time", "unit"]
+
         if iterations > 10:
             done = 2
             print("Not Converged after 10 iterations!")
             print("Averaging last two demands and running MESSAGE one more time")
-            price_sav["lvl" + str(iterations)] = prices_new["lvl"]
-            demand_sav = demand_sav.merge(
-                demand,
-                on=["node", "commodity", "level", "year", "time", "unit"],
-                how="left",
-            )
-            demand_sav = demand_sav.rename(columns={"value": "value" + str(iterations)})
+            price_sav[f"lvl{iterations}"] = prices_new["lvl"]
+
+            demand_sav = demand_sav.merge(demand, on=nclytu, how="left")
+            demand_sav = demand_sav.rename(columns={"value": f"value{iterations}"})
             demand_sav.columns.isin(demand.columns)  # FIXME(PNK) this does nothing
             dd_avg = demand_sav[
-                [
-                    "node",
-                    "commodity",
-                    "level",
-                    "year",
-                    "time",
-                    "unit",
-                    "value" + str(iterations - 1),
-                    "value" + str(iterations),
-                ]
+                nclytu + [f"value{iterations - 1}", f"value{iterations}"]
             ].copy(True)
             dd_avg["value_avg"] = (
-                dd_avg["value" + str(iterations - 1)]
-                + dd_avg["value" + str(iterations)]
+                dd_avg[f"value{iterations - 1}"] + dd_avg[f"value{iterations}"]
             ) / 2
             dd_avg = dd_avg.loc[~dd_avg["value_avg"].isna()]
 
-            demand = demand.merge(
-                dd_avg[
-                    ["node", "commodity", "level", "year", "time", "unit", "value_avg"]
-                ],
-                on=["node", "commodity", "level", "year", "time", "unit"],
-                how="left",
-            )
+            demand = demand.merge(dd_avg[nclytu + ["value_avg"]], on=nclytu, how="left")
             demand.loc[~demand["value_avg"].isna(), "value"] = demand.loc[
                 ~demand["value_avg"].isna(), "value_avg"
             ]
@@ -860,12 +844,10 @@ def cli(context, code_dir):
             oscilation = 1
 
         # Keep track of results
-        demand_sav = demand_sav.merge(
-            demand,
-            on=["node", "commodity", "level", "year", "time", "unit"],
-            how="left",
-        ).rename(columns={"value": "value" + str(iterations)})
-        price_sav["lvl" + str(iterations)] = prices_new["lvl"]
+        demand_sav = demand_sav.merge(demand, on=nclytu, how="left").rename(
+            columns={"value": f"value{iterations}"}
+        )
+        price_sav[f"lvl{iterations}"] = prices_new["lvl"]
         price_sav.to_csv("price_track.csv")
         demand_sav.to_csv("demand_track.csv")
 
