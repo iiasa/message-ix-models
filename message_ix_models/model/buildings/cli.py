@@ -1,6 +1,7 @@
 """MESSAGEix-Buildings model."""
 import os
 import gc
+import sys
 from pathlib import Path
 from time import time
 
@@ -17,35 +18,41 @@ import pandas as pd
 try:
     # Check Python and R environments (for debugging)
     import rpy2.situation
+    import rpy2.robjects as ro
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
 
     rpy2_installed = 1
-
 except ImportError:
     rpy2_installed = 0
 
 
 @click.command("buildings")
+@click.argument("code_dir", type=Path)
 @click.pass_obj
-def cli(context):
-    """MESSAGEix-Buildings model."""
-    if rpy2_installed:
-        # load rpy2 modules
-        import rpy2.robjects as ro
-        from rpy2.robjects import pandas2ri
-        from rpy2.robjects.conversion import localconverter
+def cli(context, code_dir):
+    """MESSAGEix-Buildings model.
 
+    The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
+    """
+    base_path = code_dir.resolve()
+
+    # The MESSAGE_Buildings repo is not an installable Python package. Prepend its
+    # location to sys.path so code/modules within it can be imported
+    sys.path.append(str(base_path))
+
+    # Import from MESSAGE_Buildings
+    from E_USE_Model import Simulation_ACCESS_E_USE
+    from utils import rc_afofi, add_globiom
+
+    if rpy2_installed:
         for row in rpy2.situation.iter_info():
             print(row)
 
-        # paths to r code and lca data
-        rcode_path = os.getcwd() + "/STURM_model/"
-        data_path = os.getcwd() + "/STURM_data/"
-        rout_path = os.getcwd() + "/STURM_output/"
-
-    # TODO(PNK) this expects the MESSAGE_Buildings code in the same directory; instead
-    # read the location from the context
-    from E_USE_Model import Simulation_ACCESS_E_USE
-    from utils import rc_afofi, add_globiom
+        # Paths to R code and LCA data
+        rcode_path = base_path.joinpath("STURM_model")
+        data_path = base_path.joinpath("STURM_data")
+        rout_path = base_path.joinpath("STURM_output")
 
     # Load database
     mp = context.get_platform()
