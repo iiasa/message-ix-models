@@ -243,38 +243,30 @@ def cli(context, code_dir):
         e_use_scenarios = e_use_scenarios.loc[e_use_scenarios["year"] > 2010]
 
         # STURM
+        # TODO(PNK) Make this into two methods, and call one or the other
         if rpy2_installed:
-
             print("rpy2 found")
             # Source R code
             r = ro.r
             r.source(str(Path(rcode_path + "/F10_scenario_runs_MESSAGE_2100.R")))
 
+            # Common arguments for STURM invocations
+            args = dict(
+                run=ssp_scen,
+                scenario_name=f"{ssp_scen}_{clim_scen}",
+                prices=prices,
+                path_in=str(data_path),
+                path_rcode=str(rcode_path),
+                path_out=str(rout_path),
+                geo_level_report="R12",
+            )
             with localconverter(ro.default_converter + pandas2ri.converter):
                 # Residential
-                sturm_scenarios = r.run_scenario(
-                    run=ssp_scen,
-                    scenario_name=ssp_scen + "_" + clim_scen,
-                    prices=prices,
-                    path_in=str(data_path),
-                    path_rcode=str(rcode_path),
-                    path_out=str(rout_path),
-                    geo_level_report="R12",
-                    sector="resid",
-                )
+                sturm_scenarios = r.run_scenario(**args, sector="resid")
                 # Commercial
                 # NOTE: run only on the first iteration!
                 if iterations == 0:
-                    comm_sturm_scenarios = r.run_scenario(
-                        run=ssp_scen,
-                        scenario_name=ssp_scen + "_" + clim_scen,
-                        prices=prices,
-                        path_in=str(data_path),
-                        path_rcode=str(rcode_path),
-                        path_out=str(rout_path),
-                        geo_level_report="R12",
-                        sector="comm",
-                    )
+                    comm_sturm_scenarios = r.run_scenario(**args, sector="comm")
 
             del r
             gc.collect()
