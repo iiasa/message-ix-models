@@ -805,7 +805,7 @@ def cli(context, code_dir):
                 how="left",
             )
             demand_sav = demand_sav.rename(columns={"value": "value" + str(iterations)})
-            demand_sav.columns.isin(demand.columns)
+            demand_sav.columns.isin(demand.columns)  # FIXME(PNK) this does nothing
             dd_avg = demand_sav[
                 [
                     "node",
@@ -854,8 +854,7 @@ def cli(context, code_dir):
             demand,
             on=["node", "commodity", "level", "year", "time", "unit"],
             how="left",
-        )
-        demand_sav = demand_sav.rename(columns={"value": "value" + str(iterations)})
+        ).rename(columns={"value": "value" + str(iterations)})
         price_sav["lvl" + str(iterations)] = prices_new["lvl"]
         price_sav.to_csv("price_track.csv")
         demand_sav.to_csv("demand_track.csv")
