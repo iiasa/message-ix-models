@@ -473,7 +473,10 @@ def cli(context, code_dir):
     iterations = 0
 
     old_diff = -1
+    # FIXME(PNK) This is not used anywhere. Document its purpose, or comment/remove.
     oscilation = 0
+
+    demand = pd.DataFrame()
 
     # Non-model and model periods
     info = ScenarioInfo(scenario)
@@ -841,7 +844,7 @@ def cli(context, code_dir):
             print("Total time:", (time() - start_time) / 3600)
 
         if abs(old_diff - diff) < 1e-5:
-            oscilation = 1
+            oscilation = 1  # noqa: F841
 
         # Keep track of results
         demand_sav = demand_sav.merge(demand, on=nclytu, how="left").rename(
