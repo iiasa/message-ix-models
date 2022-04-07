@@ -65,6 +65,18 @@ build_comm_convert = [
 materials = ["steel", "cement", "aluminum"]
 
 
+def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
+    """Retrieve PRICE_COMMODITY for certain quantities; excluding _GLB node."""
+    result = s.var(
+        "PRICE_COMMODITY",
+        filters={
+            "level": "final",
+            "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
+        },
+    )
+    return result[~result["node"].str.endswith("_GLB")]
+
+
 @click.command("buildings")
 @click.argument("code_dir", type=Path)
 @click.pass_obj
@@ -172,20 +184,9 @@ def cli(context, code_dir):
         # Get prices from MESSAGE
         # On the first iteration, from the parent scenario; onwards, from the current
         # scenario
-        price_source = scen_to_clone if iterations == 0 else scenario
-        prices = price_source.var(
-            "PRICE_COMMODITY",
-            filters={
-                "level": "final",
-                "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
-            },
-        )
+        prices = get_prices(scen_to_clone if iterations == 0 else scenario)
 
-        suffix = prices.node.str.split("_", expand=True)[0][0]
-        prices = prices.loc[prices["node"] != suffix + "_GLB"]
-
-        # Save demand from previous iteration for
-        # comparison
+        # Save demand from previous iteration for comparison
         if iterations == 0:
             demand_old = pd.DataFrame()
             diff_dd = 1e6
@@ -784,14 +785,7 @@ def cli(context, code_dir):
             scenario.solve(model=mod, solve_options=dict(lpmethod=2))
 
         # Compare prices and see if they converge
-        prices_new = scenario.var(
-            "PRICE_COMMODITY",
-            filters={
-                "level": "final",
-                "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
-            },
-        )
-        prices_new = prices_new.loc[prices_new["node"] != suffix + "_GLB"]
+        prices_new = get_prices(scenario)
 
         # Create the DataFrames to keep track of demands and prices
         if iterations == 0:
@@ -876,21 +870,7 @@ def cli(context, code_dir):
             scenario.commit("buildings test")
             scenario.solve(model=mod)
             iterations = iterations + 0.5
-            prices_new = scenario.var(
-                "PRICE_COMMODITY",
-                filters={
-                    "level": "final",
-                    "commodity": [
-                        "biomass",
-                        "coal",
-                        "lightoil",
-                        "gas",
-                        "electr",
-                        "d_heat",
-                    ],
-                },
-            )
-            prices_new = prices_new.loc[prices_new["node"] != suffix + "_GLB"]
+            prices_new = get_prices(scenario)
             print("Final solution after Averaging last two demands")
             print("Total time:", (time() - start_time) / 3600)
 
