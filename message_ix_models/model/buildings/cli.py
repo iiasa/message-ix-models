@@ -15,19 +15,6 @@ from message_ix_models import Context, ScenarioInfo
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
-# Workaround if rpy2 not installed
-# (to avoid potential segfaults)
-try:
-    # Check Python and R environments (for debugging)
-    import rpy2.situation
-    import rpy2.robjects as ro
-    from rpy2.robjects import pandas2ri
-    from rpy2.robjects.conversion import localconverter
-
-    rpy2_installed = 1
-except ImportError:
-    rpy2_installed = 0
-
 #: Commodities for the buildings sector.
 build_commodities = [
     "resid_floor_construction",  # floorspace to be constructed
@@ -104,11 +91,17 @@ def run_sturm(
         The `comm_sturm_scenarios` data frame if `first_iteration` is :obj:`True`;
         otherwise :obj:`None`.
     """
-    if rpy2_installed:
-        print("rpy2 found")
+    try:
+        import rpy2.situation
+
+        if first_iteration:
+            print(*rpy2.situation.iter_info(), sep="\n")
+
         return _sturm_rpy2(context)
-    else:
-        print("rpy2 NOT found")
+    except ImportError:
+        if first_iteration:
+            print("rpy2 NOT found")
+
         return _sturm_rscript(context)
 
 
@@ -116,6 +109,10 @@ def _sturm_rpy2(
     context: Context, prices: pd.DataFrame, first_iteration: bool
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM using :mod:`rpy2`."""
+    import rpy2.robjects as ro
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
+
     # Retrieve info from the Context object
     config = context["buildings"]
 
@@ -214,6 +211,7 @@ def setup_scenario(
     comm_sturm_scenarios: pd.DataFrame,
     first_iteration: bool,
 ):
+    """Set up the structure and data for MESSAGE_Buildings on `scenario`."""
     if build_commodities[0] in info.set["commodity"]:
         # Scenario already set up; do notihing
         return
@@ -526,12 +524,7 @@ def cli(context, code_dir):
     sys.path.append(str(config["code_dir"]))
 
     # Import from MESSAGE_Buildings
-    from E_USE_Model import Simulation_ACCESS_E_USE
     from utils import add_globiom
-
-    if rpy2_installed:
-        for row in rpy2.situation.iter_info():
-            print(row)
 
     # Load database
     mp = context.get_platform()
@@ -608,6 +601,8 @@ def cli(context, code_dir):
 
         # Run ACCESS-E-USE
         if config["run ACCESS"]:
+            from E_USE_Model import Simulation_ACCESS_E_USE
+
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
                 scenario=config["ssp"], prices=prices
             )
