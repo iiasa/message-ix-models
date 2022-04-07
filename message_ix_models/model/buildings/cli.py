@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util._logging import mark_time
+from message_ix_models.util.click import common_params
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
@@ -470,9 +471,10 @@ def setup_scenario(
 
 
 @click.command("buildings")
+@common_params("dest")
 @click.argument("code_dir", type=Path)
 @click.pass_obj
-def cli(context, code_dir):
+def cli(context, code_dir, dest):
     """MESSAGEix-Buildings model.
 
     The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
