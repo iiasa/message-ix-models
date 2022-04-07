@@ -26,6 +26,44 @@ try:
 except ImportError:
     rpy2_installed = 0
 
+#: Commodities for the buildings sector.
+build_commodities = [
+    "resid_floor_construction",  # floorspace to be constructed
+    "resid_floor_demolition",  # floorspace to be demolished
+    "comm_floor_construction",  # floorspace to be constructed
+    "comm_floor_demolition",  # floorspace to be demolished
+    # TODO: Need to harmonize on the commodity names (remove the material name)
+]
+
+#: Technologies for the buildings sector.
+build_techs = [
+    # technology providing residential floorspace activity
+    "construction_resid_build",
+    "demolition_resid_build",
+    # technology providing commercial floorspace activity
+    "construction_comm_build",
+    "demolition_comm_build",
+]
+
+#: Commodity names to be converted for use in MESSAGEix-Materials.
+build_comm_convert = [
+    "resid_mat_int_scrap_steel",
+    "resid_mat_int_scrap_aluminum",
+    "resid_mat_int_scrap_cement",
+    "resid_mat_int_demand_steel",
+    "resid_mat_int_demand_aluminum",
+    "resid_mat_int_demand_cement",
+    "comm_mat_int_scrap_steel",
+    "comm_mat_int_scrap_aluminum",
+    "comm_mat_int_scrap_cement",
+    "comm_mat_int_demand_steel",
+    "comm_mat_int_demand_aluminum",
+    "comm_mat_int_demand_cement",
+]
+
+#: Types of materials.
+materials = ["steel", "cement", "aluminum"]
+
 
 @click.command("buildings")
 @click.argument("code_dir", type=Path)
@@ -113,44 +151,6 @@ def cli(context, code_dir):
 
     old_diff = -1
     oscilation = 0
-
-    # Commodities for the buildings sector
-    build_commodities = [
-        "resid_floor_construction",  # floorspace to be constructed
-        "resid_floor_demolition",  # floorspace to be demolished
-        "comm_floor_construction",  # floorspace to be constructed
-        "comm_floor_demolition",  # floorspace to be demolished
-        # TODO: Need to harmonize on the commodity names (remove the material name)
-    ]
-
-    # Technologies for the buildings sector
-    build_techs = [
-        # technology providing residential floorspace activity
-        "construction_resid_build",
-        "demolition_resid_build",
-        # technology providing commercial floorspace activity
-        "construction_comm_build",
-        "demolition_comm_build",
-    ]
-
-    # Commodity names to be converted for use in MESSAGEix-Material
-    build_comm_convert = [
-        "resid_mat_int_scrap_steel",
-        "resid_mat_int_scrap_aluminum",
-        "resid_mat_int_scrap_cement",
-        "resid_mat_int_demand_steel",
-        "resid_mat_int_demand_aluminum",
-        "resid_mat_int_demand_cement",
-        "comm_mat_int_scrap_steel",
-        "comm_mat_int_scrap_aluminum",
-        "comm_mat_int_scrap_cement",
-        "comm_mat_int_demand_steel",
-        "comm_mat_int_demand_aluminum",
-        "comm_mat_int_demand_cement",
-    ]
-
-    # Types of materials
-    materials = ["steel", "cement", "aluminum"]
 
     # Non Model and Model Years
     years_not_mod = [
