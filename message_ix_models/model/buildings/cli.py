@@ -774,28 +774,14 @@ def cli(context, code_dir):
         # Add bio backstop
         add_globiom.add_bio_backstop(scenario)
 
-        if solve_macro:
-            mod = "MESSAGE-MACRO"
-        else:
-            mod = "MESSAGE"
+        mod = "MESSAGE-MACRO" if solve_macro else "MESSAGE"
 
-        try:  # Try with barrier, faster
-            message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-                "advind": 0,
-                "lpmethod": 4,
-                "threads": 4,
-                "epopt": 1e-06,
-            }
-            scenario.solve(model=mod)
-        # If barrier doesn't work, try dual simplex
+        try:
+            # Solve LP with barrier method, faster
+            scenario.solve(model=mod, solve_options=dict(lpmethod=4))
         except Exception:
-            message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-                "advind": 0,
-                "lpmethod": 2,
-                "threads": 4,
-                "epopt": 1e-06,
-            }
-            scenario.solve(model=mod)
+            # Didn't work; try again with dual simplex (the default)
+            scenario.solve(model=mod, solve_options=dict(lpmethod=2))
 
         # Compare prices and see if they converge
         prices_new = scenario.var(
