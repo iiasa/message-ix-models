@@ -77,6 +77,18 @@ def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
     return result[~result["node"].str.endswith("_GLB")]
 
 
+def subset_demands(df: pd.DataFrame) -> pd.DataFrame:
+    return df.loc[
+        df["commodity"].isin(
+            [
+                c
+                for c in df["commodity"].unique()
+                if ("hotwater" in c) | ("cool" in c) | ("heat" in c)
+            ]
+        )
+    ]
+
+
 @click.command("buildings")
 @click.argument("code_dir", type=Path)
 @click.pass_obj
@@ -325,47 +337,25 @@ def cli(context, code_dir):
         ]
 
         # Subset desired energy demands
-        demand = e_use_scenarios.loc[
-            e_use_scenarios["commodity"].isin(
-                [
-                    com
-                    for com in e_use_scenarios["commodity"].unique()
-                    if "therm" not in com
-                ]
-            )
+        demands = [
+            # TODO generalize subset_demands() to also handle this case
+            e_use_scenarios.loc[
+                e_use_scenarios["commodity"].isin(
+                    [
+                        com
+                        for com in e_use_scenarios["commodity"].unique()
+                        if "therm" not in com
+                    ]
+                )
+            ],
+            subset_demands(sturm_scenarios),
         ]
-        demand = pd.concat(
-            [
-                demand,
-                sturm_scenarios.loc[
-                    sturm_scenarios["commodity"].isin(
-                        [
-                            com
-                            for com in sturm_scenarios["commodity"].unique()
-                            if ("hotwater" in com) | ("cool" in com) | ("heat" in com)
-                        ]
-                    )
-                ],
-            ]
-        )
         # Add commercial demand in first iteration
         if iterations == 0:
-            demand = pd.concat(
-                [
-                    demand,
-                    comm_sturm_scenarios.loc[
-                        comm_sturm_scenarios["commodity"].isin(
-                            [
-                                com
-                                for com in comm_sturm_scenarios["commodity"].unique()
-                                if ("hotwater" in com)
-                                | ("cool" in com)
-                                | ("heat" in com)
-                            ]
-                        )
-                    ],
-                ]
-            )
+            demands.append(subset_demands(comm_sturm_scenarios))
+
+        # Concatenate 2 or 3 data frames together
+        demand = pd.concat(demands)
 
         # Set energy demand level to useful (although it is final)
         # to be in line with 1 to 1 technologies btw final and useful
