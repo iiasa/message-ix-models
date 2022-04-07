@@ -71,18 +71,6 @@ def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
     return result[~result["node"].str.endswith("_GLB")]
 
 
-def subset_demands(df: pd.DataFrame) -> pd.DataFrame:
-    return df.loc[
-        df["commodity"].isin(
-            [
-                c
-                for c in df["commodity"].unique()
-                if ("hotwater" in c) | ("cool" in c) | ("heat" in c)
-            ]
-        )
-    ]
-
-
 def run_sturm(
     context: Context, prices: pd.DataFrame, first_iteration: bool
 ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
@@ -644,26 +632,27 @@ def cli(context, code_dir, dest):
         # TEMP: remove commodity "comm_heat_v_no_heat"
         if iterations == 0:
             comm_sturm_scenarios = comm_sturm_scenarios[
-                ~comm_sturm_scenarios.commodity.isin(
-                    ["comm_heat_v_no_heat", "comm_hotwater_v_no_heat"]
+                ~comm_sturm_scenarios.commodity.str.fullmatch(
+                    "comm_(heat|hotwater)_v_no_heat"
                 )
             ]
 
         # TEMP: remove commodity "resid_heat_v_no_heat"
         sturm_scenarios = sturm_scenarios[
-            ~sturm_scenarios.commodity.isin(
-                ["resid_heat_v_no_heat", "resid_hotwater_v_no_heat"]
-            )
+            ~sturm_scenarios.commodity.str.fullmatch("resid_(heat|hotwater)_v_no_heat")
         ]
 
         # Subset desired energy demands
+        expr = "(cool|heat|hotwater)"
         demands = [
             e_use_scenarios[~e_use_scenarios.commodity.str.contains("therm")],
-            subset_demands(sturm_scenarios),
+            sturm_scenarios[sturm_scenarios.commodity.str.match(expr)],
         ]
         # Add commercial demand in first iteration
         if iterations == 0:
-            demands.append(subset_demands(comm_sturm_scenarios))
+            demands.append(
+                comm_sturm_scenarios[comm_sturm_scenarios.commodity.str.match(expr)]
+            )
 
         # Concatenate 2 or 3 data frames together
         demand = pd.concat(demands)
@@ -678,8 +667,8 @@ def cli(context, code_dir, dest):
         demands = [
             demand,
             sturm_scenarios[
-                sturm_scenarios["commodity"].isin(
-                    ["resid_floor_construction", "resid_floor_demolition"]
+                sturm_scenarios.commodity.str.fullmatch(
+                    "resid_floor_(construc|demoli)tion"
                 )
             ],
         ]
@@ -687,8 +676,8 @@ def cli(context, code_dir, dest):
         if iterations == 0:
             demands.append(
                 comm_sturm_scenarios[
-                    comm_sturm_scenarios["commodity"].isin(
-                        ["comm_floor_construction", "comm_floor_demolition"]
+                    comm_sturm_scenarios.commodity.str.fullmatch(
+                        "comm_floor_(construc|demoli)tion"
                     )
                 ]
             )
