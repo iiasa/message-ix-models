@@ -577,10 +577,6 @@ def cli(context, code_dir):
         scen_mitig = "EN_NPi2020_1000f"
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
 
-    ######################
-    #  MESSAGE ITERATION #
-    ######################
-
     done = 0
     start_time = time()
     iterations = 0
@@ -610,12 +606,15 @@ def cli(context, code_dir):
         else:
             demand_old = demand.copy(True)
 
-        # Run Models
-
-        # ACCESS-E-USE
-        e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
-            scenario=ssp_scen, prices=prices
-        )
+        # Run ACCESS-E-USE
+        if config["run ACCESS"]:
+            e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
+                scenario=config["ssp"], prices=prices
+            )
+        else:
+            # NB(PNK) This will cause the code below to fail. Define and satisfy the
+            # minimum conditions for the remaining code.
+            e_use_scenarios = pd.DataFrame()
 
         # Scale results to match historical activity
         # NOTE: ignore biomass, data was always imputed here
