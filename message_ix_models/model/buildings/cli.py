@@ -10,6 +10,7 @@ import message_ix
 import message_ix_models.util as mutil
 import numpy as np
 import pandas as pd
+from message_ix_models import ScenarioInfo
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
@@ -176,21 +177,10 @@ def cli(context, code_dir):
     old_diff = -1
     oscilation = 0
 
-    # Non Model and Model Years
-    years_not_mod = [
-        year
-        for year in scenario.par("demand").year.unique()
-        if year < scenario.firstmodelyear
-    ]
-    years_not_mod.sort()
-    years_model = [
-        year
-        for year in scenario.par("demand").year.unique()
-        if year >= scenario.firstmodelyear
-    ]
-    years_model.sort()
-
-    nodes = scenario.set("node")
+    # Non-model and model periods
+    info = ScenarioInfo(scenario)
+    years_not_mod = list(filter(lambda y: y < info.y0, info.set["year"]))
+    years_model = info.Y
 
     while done < 1:
         # Get prices from MESSAGE
