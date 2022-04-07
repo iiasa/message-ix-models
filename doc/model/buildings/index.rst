@@ -10,14 +10,14 @@ Usage
 
 1. Clone the main MESSAGE_Buildings repo, linked above.
    Note the path.
-2. Invoke the model using:
+2. Invoke the model using, for example:
 
    .. code-block::
 
-       mix-models buildings /path/to/mb/repo
+       mix-models --platform=ixmp_dev buildings /path/to/mb/repo
 
 .. todo::
-   Currently, the CLI command uses hard-coded values for the platform, model, and scenario name(s).
+   Currently, the CLI command uses hard-coded values for the model and scenario name(s).
    Remove these.
    This will allow invocation by an explicit command like:
 
