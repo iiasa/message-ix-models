@@ -100,12 +100,12 @@ def run_sturm(
         if first_iteration:
             print(*rpy2.situation.iter_info(), sep="\n")
 
-        return _sturm_rpy2(context)
+        return _sturm_rpy2(context, prices, first_iteration)
     except ImportError:
         if first_iteration:
             print("rpy2 NOT found")
 
-        return _sturm_rscript(context)
+        return _sturm_rscript(context, prices, first_iteration)
 
 
 def _sturm_rpy2(
@@ -220,7 +220,7 @@ def setup_scenario(  # noqa: C901
         # Scenario already set up; do notihing
         return
 
-    from utils import rc_afofi
+    from utils import rc_afofi  # type: ignore
 
     nodes = info.N
     years_model = info.Y
@@ -280,10 +280,10 @@ def setup_scenario(  # noqa: C901
         filters = dict(filters={"technology": tech_orig})
         for name in ("input", "capacity_factor", "emission_factor"):
             scenario.add_par(
-                name, scenario.par(name, **filter).assign(technology=tech_new)
+                name, scenario.par(name, **filters).assign(technology=tech_new)
             )
 
-        afofi_out = scenario.par("output", **filter).assign(
+        afofi_out = scenario.par("output", **filters).assign(
             technology=tech_new,
             commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
         )
@@ -575,7 +575,7 @@ def cli(context, code_dir, dest):  # noqa: C901
 
         # Run ACCESS-E-USE
         if config["run ACCESS"]:
-            from E_USE_Model import Simulation_ACCESS_E_USE
+            from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
 
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
                 scenario=config["ssp"], prices=prices
