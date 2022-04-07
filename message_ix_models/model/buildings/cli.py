@@ -654,21 +654,24 @@ def cli(context, code_dir):
         # Append floorspace demand from sturm_scenarios
         # TODO: Need to harmonize on the commodity names
         # (remove the material names)
-        demand_resid_build = sturm_scenarios[
-            sturm_scenarios["commodity"].isin(
-                ["resid_floor_construction", "resid_floor_demolition"]
-            )
+        demands = [
+            demand,
+            sturm_scenarios[
+                sturm_scenarios["commodity"].isin(
+                    ["resid_floor_construction", "resid_floor_demolition"]
+                )
+            ],
         ]
-        demand = pd.concat([demand, demand_resid_build])
-
         # Add commercial demand in first iteration
         if iterations == 0:
-            demand_comm_build = comm_sturm_scenarios[
-                comm_sturm_scenarios["commodity"].isin(
-                    ["comm_floor_construction", "comm_floor_demolition"]
-                )
-            ]
-            demand = pd.concat([demand, demand_comm_build])
+            demands.append(
+                comm_sturm_scenarios[
+                    comm_sturm_scenarios["commodity"].isin(
+                        ["comm_floor_construction", "comm_floor_demolition"]
+                    )
+                ]
+            )
+        demand = pd.concat(demands)
 
         # Fill with zeros if nan
         demand = demand.fillna(0)
