@@ -490,9 +490,10 @@ def cli(context, code_dir, dest):  # noqa: C901
     # location to sys.path so code/modules within it can be imported
     sys.path.append(str(config["code_dir"]))
 
-    # Import from MESSAGE_Buildings
+    # Now can import from MESSAGE_Buildings
     from utils import add_globiom
 
+    ""  # to fool isort
     # Specify the scenario to be cloned
     # NB(PNK) The code now uses message_ix_models.Context to load the platform and
     # scenario(s). This opens the possibility to use command line options like
