@@ -2,6 +2,7 @@
 import gc
 import subprocess
 import sys
+from itertools import product
 from pathlib import Path
 from time import time
 from typing import Optional, Tuple
@@ -52,6 +53,9 @@ build_comm_convert = [
 
 #: Types of materials.
 materials = ["steel", "cement", "aluminum"]
+
+# Columns for indexing demand parameter
+nclytu = ["node", "commodity", "level", "year", "time", "unit"]
 
 
 def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
@@ -242,24 +246,23 @@ def setup_scenario(
     [perc_afofi_therm, perc_afofi_spec] = rc_afofi.return_PERC_AFOFI()
     afofi_dd = dd_replace.copy(True)
     for reg in perc_afofi_therm.index:
+        node = next(filter(lambda n: reg in n, nodes))
         afofi_dd.loc[
-            (afofi_dd["node"] == "R12_" + reg) & (afofi_dd["commodity"] == "rc_therm"),
+            (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_therm"),
             "value",
         ] = (
             afofi_dd.loc[
-                (afofi_dd["node"] == "R12_" + reg)
-                & (afofi_dd["commodity"] == "rc_therm"),
+                (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_therm"),
                 "value",
             ]
             * perc_afofi_therm.loc[reg][0]
         )
         afofi_dd.loc[
-            (afofi_dd["node"] == "R12_" + reg) & (afofi_dd["commodity"] == "rc_spec"),
+            (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_spec"),
             "value",
         ] = (
             afofi_dd.loc[
-                (afofi_dd["node"] == "R12_" + reg)
-                & (afofi_dd["commodity"] == "rc_spec"),
+                (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_spec"),
                 "value",
             ]
             * perc_afofi_spec.loc[reg][0]
@@ -278,24 +281,22 @@ def setup_scenario(
         if "RC" in tech_orig:
             tech_new = tech_orig.replace("RC", "AFOFI")
 
-        afofi_in = scenario.par("input", filters={"technology": tech_orig})
-        afofi_in["technology"] = tech_new
+        filters = dict(filters={"technology": tech_orig})
+        afofi_in = scenario.par("input", **filter).assign(technology=tech_new)
 
-        afofi_out = scenario.par("output", filters={"technology": tech_orig})
-        afofi_out["technology"] = tech_new
-        afofi_out["commodity"] = afofi_out["commodity"].str.replace("rc", "afofi")
+        afofi_out = scenario.par("output", **filter).assign(
+            technology=tech_new,
+            commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
+        )
 
-        afofi_cf = scenario.par("capacity_factor", filters={"technology": tech_orig})
-        afofi_cf["technology"] = tech_new
+        afofi_cf = scenario.par("capacity_factor", **filter).assign(technology=tech_new)
 
-        afofi_ef = scenario.par("emission_factor", filters={"technology": tech_orig})
-        afofi_ef["technology"] = tech_new
+        afofi_ef = scenario.par("emission_factor", **filter).assign(technology=tech_new)
 
         afofi_rel = scenario.par(
             "relation_activity",
             filters={"technology": tech_orig, "relation": emiss_rel},
-        )
-        afofi_rel["technology"] = tech_new
+        ).assign(technology=tech_new)
 
         scenario.add_set("technology", tech_new)
         scenario.add_par("input", afofi_in)
@@ -309,66 +310,64 @@ def setup_scenario(
     scenario.add_par("demand", dd_replace)
 
     # Create new input/output for building material intensities
-    for c in build_comm_convert:
+    # Iterate over `build_comm_convert` and  nodes (excluding World and *_GLB)
+    for c, n in product(
+        build_comm_convert, filter(lambda n: "World" not in n and "GLB" not in n, nodes)
+    ):
         comm = c.split("_")[-1]
         typ = c.split("_")[-2]
         rc = c.split("_")[-5]  # "resid" or "comm"
 
-        # Exclude World and GLB regions
-        for n in nodes.drop(index=[0, 5]):  # TODO: Avoid hard-coded index
-            if rc == "resid":
-                df_mat = sturm_scenarios.loc[
-                    (sturm_scenarios["commodity"] == c) & (sturm_scenarios["node"] == n)
-                ]
-            elif rc == "comm" and first_iteration:
-                df_mat = comm_sturm_scenarios.loc[
-                    (comm_sturm_scenarios["commodity"] == c)
-                    & (comm_sturm_scenarios["node"] == n)
-                ]
+        if rc == "resid":
+            df_mat = sturm_scenarios.loc[
+                (sturm_scenarios["commodity"] == c) & (sturm_scenarios["node"] == n)
+            ]
+        elif rc == "comm" and first_iteration:
+            df_mat = comm_sturm_scenarios.loc[
+                (comm_sturm_scenarios["commodity"] == c)
+                & (comm_sturm_scenarios["node"] == n)
+            ]
 
-            common = dict(
-                time="year",
-                time_origin="year",
-                time_dest="year",
-                mode="M1",
-                node_loc=n,
-                node_origin=n,
-                node_dest=n,
-                year_vtg=years_model,
-                year_act=years_model,
+        common = dict(
+            time="year",
+            time_origin="year",
+            time_dest="year",
+            mode="M1",
+            node_loc=n,
+            node_origin=n,
+            node_dest=n,
+            year_vtg=years_model,
+            year_act=years_model,
+        )
+
+        if typ == "demand":
+            tec = f"construction_{rc}_build"
+            # Need to take care of 2110 by appending the last value
+            df_demand = mutil.make_io(
+                (comm, "demand", "t"),
+                (f"{rc}_floor_construction", "demand", "t"),
+                efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
+                technology=tec,
+                **common,
             )
-
-            if typ == "demand":
-                tec = "construction_" + rc + "_build"
-                # Need to take care of 2110 by appending the last value
-                df_demand = mutil.make_io(
-                    (comm, "demand", "t"),
-                    (rc + "_floor_construction", "demand", "t"),
-                    efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
-                    technology=tec,
-                    **common,
-                )
-                scenario.add_par("input", df_demand["input"])
-                scenario.add_par("output", df_demand["output"])
-            elif typ == "scrap":
-                tec = "demolition_" + rc + "_build"
-                # Need to take care of 2110 by appending the last value
-                df_scrap = mutil.make_io(
-                    (comm, "end_of_life", "t"),  # will be flipped to output
-                    (rc + "_floor_demolition", "demand", "t"),
-                    efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
-                    technology=tec,
-                    **common,
-                )
-                # Flip input to output (no input for demolition)
-                df_temp = df_scrap["input"].rename(
-                    columns={
-                        "node_origin": "node_dest",
-                        "time_origin": "time_dest",
-                    }
-                )
-                scenario.add_par("output", df_temp)
-                scenario.add_par("output", df_scrap["output"])
+            scenario.add_par("input", df_demand["input"])
+            scenario.add_par("output", df_demand["output"])
+        elif typ == "scrap":
+            tec = f"demolition_{rc}_build"
+            # Need to take care of 2110 by appending the last value
+            df_scrap = mutil.make_io(
+                (comm, "end_of_life", "t"),  # will be flipped to output
+                (f"{rc}_floor_demolition", "demand", "t"),
+                efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
+                technology=tec,
+                **common,
+            )
+            # Flip input to output (no input for demolition)
+            df_temp = df_scrap["input"].rename(
+                columns={"node_origin": "node_dest", "time_origin": "time_dest"}
+            )
+            scenario.add_par("output", df_temp)
+            scenario.add_par("output", df_scrap["output"])
 
     # Subtract building material demand from existing demands in scenario
     for rc in ["resid", "comm"]:
@@ -384,14 +383,14 @@ def setup_scenario(
         df = df_out[
             df_out["commodity"].isin(
                 [
-                    rc + "_mat_demand_cement",
-                    rc + "_mat_demand_steel",
-                    rc + "_mat_demand_aluminum",
+                    f"{rc}_mat_demand_cement",
+                    f"{rc}_mat_demand_steel",
+                    f"{rc}_mat_demand_aluminum",
                 ]
             )
         ]  # .copy(True)
         df["commodity"] = df.apply(lambda x: x.commodity.split("_")[-1], axis=1)
-        df = df.rename(columns={"value": "demand_" + rc + "_const"}).drop(
+        df = df.rename(columns={"value": f"demand_{rc}_const"}).drop(
             columns=["level", "time", "unit"]
         )
         # df = df.stack()
@@ -405,9 +404,9 @@ def setup_scenario(
             .dropna()
         )
         mat_demand["value"] = np.maximum(
-            mat_demand["value"] - mat_demand["demand_" + rc + "_const"], 0
+            mat_demand["value"] - mat_demand[f"demand_{rc}_const"], 0
         )
-        scenario.add_par("demand", mat_demand.drop(columns="demand_" + rc + "_const"))
+        scenario.add_par("demand", mat_demand.drop(columns=f"demand_{rc}_const"))
 
     # Create new technologies for building energy
     rc_tech_fuel = pd.DataFrame(
@@ -433,32 +432,21 @@ def setup_scenario(
 
         # Remove lower bound in activity for older, now unused
         # rc techs to allow them to reach zero
-        act_lo = scenario.par(
-            "bound_activity_lo",
-            filters={"technology": tech_orig, "year_act": years_model},
-        )
-        act_lo["value"] = 0.0
+        filters = dict(filters={"technology": tech_orig, "year_act": years_model})
+        act_lo = scenario.par("bound_activity_lo", **filters).assign(value=0.0)
         scenario.add_par("bound_activity_lo", act_lo)
 
-        growth_act = scenario.par(
-            "growth_activity_lo",
-            filters={"technology": tech_orig, "year_act": years_model},
-        )
-        growth_act["value"] = -1.0
+        growth_act = scenario.par("growth_activity_lo", **filters).assign(value=-1.0)
         scenario.add_par("growth_activity_lo", growth_act)
 
-        soft_act = scenario.par(
-            "soft_activity_lo",
-            filters={"technology": tech_orig, "year_act": years_model},
-        )
-        soft_act["value"] = 0.0
+        soft_act = scenario.par("soft_activity_lo", **filters).assign(value=0.0)
         scenario.add_par("soft_activity_lo", soft_act)
 
         # Create the technologies for the new commodities
         for commodity in [
             com
             for com in demand["commodity"].unique()
-            if ("_" + fuel in com) or ("-" + fuel in com)
+            if (f"_{fuel}" in com or f"-{fuel}" in com)
         ]:
 
             # Fix for lightoil gas included
@@ -467,30 +455,27 @@ def setup_scenario(
             else:
                 tech_new = fuel + "_" + commodity.replace("_" + fuel, "")
 
-            build_in = scenario.par("input", filters={"technology": tech_orig})
-            build_in["technology"] = tech_new
-            build_in["value"] = 1.0
-
-            build_out = scenario.par("output", filters={"technology": tech_orig})
-            build_out["technology"] = tech_new
-            build_out["commodity"] = commodity
-            build_out["value"] = 1.0
-
-            build_cf = scenario.par(
-                "capacity_factor", filters={"technology": tech_orig}
+            filters = dict(filters={"technology": tech_orig})
+            build_in = scenario.par("input", **filters).assign(
+                technology=tech_new, value=1.0
             )
-            build_cf["technology"] = tech_new
 
-            build_ef = scenario.par(
-                "emission_factor", filters={"technology": tech_orig}
+            build_out = scenario.par("output", **filters).assign(
+                technology=tech_new, commodity=commodity, value=1.0
             )
-            build_ef["technology"] = tech_new
+
+            build_cf = scenario.par("capacity_factor", **filters).assign(
+                technology=tech_new
+            )
+
+            build_ef = scenario.par("emission_factor", **filters).assign(
+                technology=tech_new
+            )
 
             build_rel = scenario.par(
                 "relation_activity",
                 filters={"technology": tech_orig, "relation": emiss_rel},
-            )
-            build_rel["technology"] = tech_new
+            ).assign(technology=tech_new)
 
             scenario.add_set("commodity", commodity)
             scenario.add_set("technology", tech_new)
@@ -776,15 +761,7 @@ def cli(context, code_dir):
         )
 
         dd_2110["year"] = 2110
-        demand = pd.concat(
-            [
-                demand,
-                dd_2110[
-                    ["node", "commodity", "level", "year", "time", "value", "unit"]
-                ],
-            ],
-            ignore_index=True,
-        )
+        demand = pd.concat([demand, dd_2110[nclytu + ["value"]]], ignore_index=True)
 
         # Update demand in scenario
         demand = demand.sort_values(by=["node", "commodity", "year"])
@@ -853,9 +830,6 @@ def cli(context, code_dir):
             print("Converged in ", iterations, " iterations")
             print("Total time:", (time() - start_time) / 3600)
             # scenario.set_as_default()
-
-        # Columns for merging
-        nclytu = ["node", "commodity", "level", "year", "time", "unit"]
 
         if iterations > 10:
             done = 2
