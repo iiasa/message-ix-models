@@ -140,11 +140,11 @@ def cli(context, code_dir):
     mod_new = "MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS"
     scen_new = "NPi2020-con-prim-dir-ncr-building"
 
+    scen_to_clone = message_ix.Scenario(mp, mod_orig, scen_orig)
+
     if clone:
-        scen_to_clone = message_ix.Scenario(mp, mod_orig, scen_orig)
         scenario = scen_to_clone.clone(model=mod_new, scenario=scen_new)
     else:
-        scen_to_clone = message_ix.Scenario(mp, mod_orig, scen_orig)
         scenario = message_ix.Scenario(mp, mod_new, scen_new)
 
     # Open reference climate scenario if needed
