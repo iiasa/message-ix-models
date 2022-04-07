@@ -5,7 +5,6 @@ from pathlib import Path
 from time import time
 
 import click
-import ixmp
 import message_ix
 import message_ix_models.util as mutil
 import numpy as np
@@ -20,7 +19,6 @@ try:
     import rpy2.situation
 
     rpy2_installed = 1
-
 
 except ImportError:
     rpy2_installed = 0
@@ -50,10 +48,10 @@ def cli(context):
     from utils import rc_afofi, add_globiom
 
     # Load database
-    mp_ENE = ixmp.Platform("ixmp_dev")
+    mp = context.get_platform()
 
     # Add floorspace unit
-    mp_ENE.add_unit("Mm2/y", "mil. square meters by year")
+    mp.add_unit("Mm2/y", "mil. square meters by year")
 
     # Specify SSP and Climate scenario
     ssp_scen = "SSP2"
@@ -86,17 +84,17 @@ def cli(context):
     scen_new = "NPi2020-con-prim-dir-ncr-building"
 
     if clone:
-        scen_to_clone = message_ix.Scenario(mp_ENE, mod_orig, scen_orig)
+        scen_to_clone = message_ix.Scenario(mp, mod_orig, scen_orig)
         scenario = scen_to_clone.clone(model=mod_new, scenario=scen_new)
     else:
-        scen_to_clone = message_ix.Scenario(mp_ENE, mod_orig, scen_orig)
-        scenario = message_ix.Scenario(mp_ENE, mod_new, scen_new)
+        scen_to_clone = message_ix.Scenario(mp, mod_orig, scen_orig)
+        scenario = message_ix.Scenario(mp, mod_new, scen_new)
 
     # Open reference climate scenario if needed
     if clim_scen == "2C":
         mod_mitig = "ENGAGE_SSP2_v4.1.8"
         scen_mitig = "EN_NPi2020_1000f"
-        scen_mitig_prices = message_ix.Scenario(mp_ENE, mod_mitig, scen_mitig)
+        scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
 
     ######################
     #  MESSAGE ITERATION #
@@ -926,4 +924,4 @@ def cli(context):
     #     sc_macro = sc_macro.clone(scenario = "baseline_DEFAULT")
     #     sc_macro.set_as_default()
 
-    mp_ENE.close_db()
+    mp.close_db()
