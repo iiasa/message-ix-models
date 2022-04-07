@@ -21,6 +21,7 @@ from message_data.projects.ngfs.util import add_macro_COVID
 try:
     # Check Python and R environments (for debugging)
     import rpy2.situation
+
     rpy2_installed = 1
 except Exception:
     rpy2_installed = 0
@@ -31,6 +32,7 @@ if rpy2_installed:
     import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
+
     for row in rpy2.situation.iter_info():
         print(row)
 
@@ -58,12 +60,12 @@ clone = 1
 solve_macro = 0
 
 # Specify the scenario to be cloned
-# NOTE: this scenario has the updated GLOBIOM matrix 
+# NOTE: this scenario has the updated GLOBIOM matrix
 
 # # M -> BM baseline
-# mod_orig = "MESSAGEix-GLOBIOM 1.1-M-R12-NGFS" 
-# scen_orig = "baseline" 
- 
+# mod_orig = "MESSAGEix-GLOBIOM 1.1-M-R12-NGFS"
+# scen_orig = "baseline"
+
 # mod_new = "MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS"
 # scen_new = "baseline"
 
@@ -161,9 +163,7 @@ while done < 1:
             "PRICE_COMMODITY",
             filters={
                 "level": "final",
-                "commodity": ["biomass", "coal",
-                              "lightoil", "gas",
-                              "electr", "d_heat"],
+                "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
             },
         )
     # Onwards, from the current scenario
@@ -172,13 +172,11 @@ while done < 1:
             "PRICE_COMMODITY",
             filters={
                 "level": "final",
-                "commodity": ["biomass", "coal",
-                              "lightoil", "gas",
-                              "electr", "d_heat"],
+                "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
             },
         )
     suffix = prices.node.str.split("_", expand=True)[0][0]
-    prices = prices.loc[prices["node"] != suffix+"_GLB"]
+    prices = prices.loc[prices["node"] != suffix + "_GLB"]
 
     # Save demand from previous iteration for
     # comparison
@@ -192,39 +190,50 @@ while done < 1:
 
     # ACCESS-E-USE
     e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
-        scenario=ssp_scen, prices=prices)
+        scenario=ssp_scen, prices=prices
+    )
 
     # Scale results to match historical activity
     # NOTE: ignore biomass, data was always imputed here
     # so we are dealing with guesses over guesses
-    e_use_2010 = e_use_scenarios.loc[
-        e_use_scenarios["year"] == 2010].loc[
-        e_use_scenarios.commodity.isin(
-            com for com in e_use_scenarios["commodity"] if 
-            "bio" not in com and "non-comm" not in com)].groupby(
-            'node', as_index=False).sum()
+    e_use_2010 = (
+        e_use_scenarios.loc[e_use_scenarios["year"] == 2010]
+        .loc[
+            e_use_scenarios.commodity.isin(
+                com
+                for com in e_use_scenarios["commodity"]
+                if "bio" not in com and "non-comm" not in com
+            )
+        ]
+        .groupby("node", as_index=False)
+        .sum()
+    )
     rc_act_2010 = scen_to_clone.par(
-        'historical_activity', filters={
+        "historical_activity",
+        filters={
             "year_act": 2010,
-            "technology": [tec for tec in scenario.set("technology") 
-                           if "rc" in tec and "bio" not in tec]})
+            "technology": [
+                tec
+                for tec in scenario.set("technology")
+                if "rc" in tec and "bio" not in tec
+            ],
+        },
+    )
     rc_act_2010 = rc_act_2010.rename(columns={"node_loc": "node"})
-    rc_act_2010 = rc_act_2010[["node", "value"]].groupby(
-        "node", as_index=False).sum()
+    rc_act_2010 = rc_act_2010[["node", "value"]].groupby("node", as_index=False).sum()
 
     adj_fact = rc_act_2010.copy(True)
-    adj_fact["value"] = adj_fact["value"]/e_use_2010["value"]
+    adj_fact["value"] = adj_fact["value"] / e_use_2010["value"]
     adj_fact = adj_fact.rename(columns={"value": "adj_fact"})
 
     e_use_scenarios = e_use_scenarios.merge(adj_fact, on=["node"])
-    e_use_scenarios["value"] = e_use_scenarios["value"] * \
-        e_use_scenarios["adj_fact"]
+    e_use_scenarios["value"] = e_use_scenarios["value"] * e_use_scenarios["adj_fact"]
     e_use_scenarios = e_use_scenarios.drop("adj_fact", axis=1)
     e_use_scenarios = e_use_scenarios.loc[e_use_scenarios["year"] > 2010]
 
     # STURM
     if rpy2_installed:
-        
+
         print("rpy2 found")
         # Source R code
         r = ro.r
@@ -233,45 +242,45 @@ while done < 1:
         with localconverter(ro.default_converter + pandas2ri.converter):
             # Residential
             sturm_scenarios = r.run_scenario(
-                run=ssp_scen, 
-                scenario_name=ssp_scen+"_"+clim_scen,
+                run=ssp_scen,
+                scenario_name=ssp_scen + "_" + clim_scen,
                 prices=prices,
                 path_in=str(data_path),
-                path_rcode=str(rcode_path), 
+                path_rcode=str(rcode_path),
                 path_out=str(rout_path),
                 geo_level_report="R12",
-                sector="resid"
+                sector="resid",
             )
             # Commercial
             # NOTE: run only on the first iteration!
             if iterations == 0:
                 comm_sturm_scenarios = r.run_scenario(
-                    run=ssp_scen, 
-                    scenario_name=ssp_scen+"_"+clim_scen,
+                    run=ssp_scen,
+                    scenario_name=ssp_scen + "_" + clim_scen,
                     prices=prices,
                     path_in=str(data_path),
-                    path_rcode=str(rcode_path), 
+                    path_rcode=str(rcode_path),
                     path_out=str(rout_path),
                     geo_level_report="R12",
-                    sector="comm"
+                    sector="comm",
                 )
 
-        del(r)
+        del r
         gc.collect()
     else:
-        
+
         print("rpy2 NOT found")
         # Prepare input files
-        if not os.path.exists(str(Path(os.getcwd()+"/temp"))):
-            os.mkdir(str(Path(os.getcwd()+"/temp")))
+        if not os.path.exists(str(Path(os.getcwd() + "/temp"))):
+            os.mkdir(str(Path(os.getcwd() + "/temp")))
         prices.to_csv("./temp/prices.csv")
 
         # Residential
         with open("run_STURM.R", "r") as file:
             mm = file.readlines()
 
-        mm[8] = 'ssp_scen <- "'+ssp_scen+'"\n'
-        mm[9] = 'clim_scen <- "'+clim_scen+'"\n'
+        mm[8] = 'ssp_scen <- "' + ssp_scen + '"\n'
+        mm[9] = 'clim_scen <- "' + clim_scen + '"\n'
         mm[10] = 'sect <- "resid"\n'
 
         with open("run_STURM.R", "w") as file:
@@ -286,8 +295,8 @@ while done < 1:
             with open("run_STURM.R", "r") as file:
                 mm = file.readlines()
 
-            mm[8] = 'ssp_scen <- "'+ssp_scen+'"\n'
-            mm[9] = 'clim_scen <- "'+clim_scen+'"\n'
+            mm[8] = 'ssp_scen <- "' + ssp_scen + '"\n'
+            mm[9] = 'clim_scen <- "' + clim_scen + '"\n'
             mm[10] = 'sect <- "comm"\n'
 
             with open("run_STURM.R", "w") as file:
@@ -298,34 +307,57 @@ while done < 1:
             os.remove("./temp/comm_sturm.csv")
 
         os.remove("./temp/prices.csv")
-        os.rmdir(str(Path(os.getcwd()+"/temp")))
-            
+        os.rmdir(str(Path(os.getcwd() + "/temp")))
+
     # TEMP: remove commodity "comm_heat_v_no_heat"
     if iterations == 0:
         comm_sturm_scenarios = comm_sturm_scenarios.loc[
-            (comm_sturm_scenarios.commodity != "comm_heat_v_no_heat") &
-            (comm_sturm_scenarios.commodity != "comm_hotwater_v_no_heat")]
+            (comm_sturm_scenarios.commodity != "comm_heat_v_no_heat")
+            & (comm_sturm_scenarios.commodity != "comm_hotwater_v_no_heat")
+        ]
 
     # TEMP: remove commodity "resid_heat_v_no_heat"
     sturm_scenarios = sturm_scenarios.loc[
-        (sturm_scenarios.commodity != "resid_heat_v_no_heat") &
-        (sturm_scenarios.commodity != "resid_hotwater_v_no_heat")]
-    
+        (sturm_scenarios.commodity != "resid_heat_v_no_heat")
+        & (sturm_scenarios.commodity != "resid_hotwater_v_no_heat")
+    ]
+
     # Subset desired energy demands
     demand = e_use_scenarios.loc[
         e_use_scenarios["commodity"].isin(
-            [com for com in e_use_scenarios["commodity"].unique()
-             if "therm" not in com])]
-    demand = pd.concat([demand, sturm_scenarios.loc[
-        sturm_scenarios["commodity"].isin(
-            [com for com in sturm_scenarios["commodity"].unique()
-             if ("hotwater" in com) | ("cool" in com) | ("heat" in com)])]])
+            [com for com in e_use_scenarios["commodity"].unique() if "therm" not in com]
+        )
+    ]
+    demand = pd.concat(
+        [
+            demand,
+            sturm_scenarios.loc[
+                sturm_scenarios["commodity"].isin(
+                    [
+                        com
+                        for com in sturm_scenarios["commodity"].unique()
+                        if ("hotwater" in com) | ("cool" in com) | ("heat" in com)
+                    ]
+                )
+            ],
+        ]
+    )
     # Add commercial demand in first iteration
     if iterations == 0:
-        demand = pd.concat([demand, comm_sturm_scenarios.loc[
-            comm_sturm_scenarios["commodity"].isin(
-             [com for com in comm_sturm_scenarios["commodity"].unique()
-              if ("hotwater" in com) | ("cool" in com) | ("heat" in com)])]])
+        demand = pd.concat(
+            [
+                demand,
+                comm_sturm_scenarios.loc[
+                    comm_sturm_scenarios["commodity"].isin(
+                        [
+                            com
+                            for com in comm_sturm_scenarios["commodity"].unique()
+                            if ("hotwater" in com) | ("cool" in com) | ("heat" in com)
+                        ]
+                    )
+                ],
+            ]
+        )
 
     # Set energy demand level to useful (although it is final)
     # to be in line with 1 to 1 technologies btw final and useful
@@ -340,7 +372,7 @@ while done < 1:
         )
     ]
     demand = pd.concat([demand, demand_resid_build])
-    
+
     # Add commercial demand in first iteration
     if iterations == 0:
         demand_comm_build = comm_sturm_scenarios[
@@ -360,61 +392,73 @@ while done < 1:
     scenario.check_out()
 
     # Check if not buildings scenario
-    if build_commodities[0] not in scenario.par(
-            "demand")["commodity"].unique():
+    if build_commodities[0] not in scenario.par("demand")["commodity"].unique():
 
         # Add new commodities and technologies
         scenario.add_set("commodity", build_commodities)
         scenario.add_set("technology", build_techs)
 
         # Find emissions in relation activity
-        emiss_rel = [rel for rel in scenario.par(
-            "relation_activity").relation.unique() if "Emission" in rel]
+        emiss_rel = [
+            rel
+            for rel in scenario.par("relation_activity").relation.unique()
+            if "Emission" in rel
+        ]
 
         # Create new demands and techs for AFOFI
         # based on percentages between 2010 and 2015
         # (see rc_afofi.py in utils)
         dd_replace = scenario.par(
             "demand",
-            filters={"commodity": ["rc_spec", "rc_therm"], 
-                     "year": years_model},
+            filters={"commodity": ["rc_spec", "rc_therm"], "year": years_model},
         )
         [perc_afofi_therm, perc_afofi_spec] = rc_afofi.return_PERC_AFOFI()
         afofi_dd = dd_replace.copy(True)
         for reg in perc_afofi_therm.index:
-            afofi_dd.loc[(afofi_dd["node"] == "R12_"+reg) &
-                         (afofi_dd["commodity"] == "rc_therm"), "value"] = \
-                afofi_dd.loc[(afofi_dd["node"] == "R12_"+reg) &
-                             (afofi_dd["commodity"] == "rc_therm"), "value"] *\
-                perc_afofi_therm.loc[reg][0]
-            afofi_dd.loc[(afofi_dd["node"] == "R12_"+reg) &
-                         (afofi_dd["commodity"] == "rc_spec"), "value"] = \
-                afofi_dd.loc[(afofi_dd["node"] == "R12_"+reg) &
-                             (afofi_dd["commodity"] == "rc_spec"), "value"] *\
-                perc_afofi_spec.loc[reg][0]
+            afofi_dd.loc[
+                (afofi_dd["node"] == "R12_" + reg)
+                & (afofi_dd["commodity"] == "rc_therm"),
+                "value",
+            ] = (
+                afofi_dd.loc[
+                    (afofi_dd["node"] == "R12_" + reg)
+                    & (afofi_dd["commodity"] == "rc_therm"),
+                    "value",
+                ]
+                * perc_afofi_therm.loc[reg][0]
+            )
+            afofi_dd.loc[
+                (afofi_dd["node"] == "R12_" + reg)
+                & (afofi_dd["commodity"] == "rc_spec"),
+                "value",
+            ] = (
+                afofi_dd.loc[
+                    (afofi_dd["node"] == "R12_" + reg)
+                    & (afofi_dd["commodity"] == "rc_spec"),
+                    "value",
+                ]
+                * perc_afofi_spec.loc[reg][0]
+            )
 
-        afofi_dd["commodity"] = afofi_dd["commodity"].str.replace(
-            "rc", "afofi")
+        afofi_dd["commodity"] = afofi_dd["commodity"].str.replace("rc", "afofi")
         scenario.add_set("commodity", afofi_dd["commodity"].unique())
         scenario.add_par("demand", afofi_dd)
 
-        rc_techs = scenario.par("output", filters={
-            "commodity": ["rc_therm", "rc_spec"]})["technology"].unique()
+        rc_techs = scenario.par(
+            "output", filters={"commodity": ["rc_therm", "rc_spec"]}
+        )["technology"].unique()
 
         for tech_orig in rc_techs:
             tech_new = tech_orig.replace("rc", "afofi")
             if "RC" in tech_orig:
                 tech_new = tech_orig.replace("RC", "AFOFI")
 
-            afofi_in = scenario.par("input", filters={
-                    "technology": tech_orig})
+            afofi_in = scenario.par("input", filters={"technology": tech_orig})
             afofi_in["technology"] = tech_new
 
-            afofi_out = scenario.par("output", filters={
-                "technology": tech_orig})
+            afofi_out = scenario.par("output", filters={"technology": tech_orig})
             afofi_out["technology"] = tech_new
-            afofi_out["commodity"] = afofi_out["commodity"].str.replace(
-                "rc", "afofi")
+            afofi_out["commodity"] = afofi_out["commodity"].str.replace("rc", "afofi")
 
             afofi_cf = scenario.par(
                 "capacity_factor", filters={"technology": tech_orig}
@@ -427,11 +471,11 @@ while done < 1:
             afofi_ef["technology"] = tech_new
 
             afofi_rel = scenario.par(
-                "relation_activity", filters={"technology": tech_orig,
-                                              "relation": emiss_rel}
+                "relation_activity",
+                filters={"technology": tech_orig, "relation": emiss_rel},
             )
             afofi_rel["technology"] = tech_new
-            
+
             scenario.add_set("technology", tech_new)
             scenario.add_par("input", afofi_in)
             scenario.add_par("output", afofi_out)
@@ -453,15 +497,15 @@ while done < 1:
             for n in nodes.drop(index=[0, 5]):  # TODO: Avoid hard-coded index
                 if rc == "resid":
                     df_mat = sturm_scenarios.loc[
-                        (sturm_scenarios["commodity"] == c) & 
-                        (sturm_scenarios["node"] == n)
+                        (sturm_scenarios["commodity"] == c)
+                        & (sturm_scenarios["node"] == n)
                     ]
                 elif rc == "comm" and iterations == 0:
                     df_mat = comm_sturm_scenarios.loc[
-                        (comm_sturm_scenarios["commodity"] == c) & 
-                        (comm_sturm_scenarios["node"] == n)
+                        (comm_sturm_scenarios["commodity"] == c)
+                        & (comm_sturm_scenarios["node"] == n)
                     ]
-                    
+
                 common = dict(
                     time="year",
                     time_origin="year",
@@ -480,8 +524,7 @@ while done < 1:
                     df_demand = mutil.make_io(
                         (comm, "demand", "t"),
                         (rc + "_floor_construction", "demand", "t"),
-                        efficiency=pd.concat([df_mat.value, 
-                                              df_mat.value.tail(1)]),
+                        efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
                         technology=tec,
                         **common
                     )
@@ -493,15 +536,13 @@ while done < 1:
                     df_scrap = mutil.make_io(
                         (comm, "end_of_life", "t"),  # will be flipped to output
                         (rc + "_floor_demolition", "demand", "t"),
-                        efficiency=pd.concat([df_mat.value, 
-                                              df_mat.value.tail(1)]),
+                        efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
                         technology=tec,
                         **common
                     )
                     # Flip input to output (no input for demolition)
                     df_temp = df_scrap["input"].rename(
-                        columns={"node_origin": "node_dest", 
-                                 "time_origin": "time_dest"}
+                        columns={"node_origin": "node_dest", "time_origin": "time_dest"}
                     )
                     scenario.add_par("output", df_temp)
                     scenario.add_par("output", df_scrap["output"])
@@ -509,20 +550,22 @@ while done < 1:
         # Subtract building material demand from existing demands in scenario
         for rc in ["resid", "comm"]:
             if not (rc == "comm" and iterations > 0):
-                df_out = sturm_scenarios.copy(True) if rc == "resid" \
+                df_out = (
+                    sturm_scenarios.copy(True)
+                    if rc == "resid"
                     else comm_sturm_scenarios.copy(True)
+                )
                 df = df_out[
                     df_out["commodity"].isin(
                         [
-                            rc+"_mat_demand_cement",
-                            rc+"_mat_demand_steel",
-                            rc+"_mat_demand_aluminum",
+                            rc + "_mat_demand_cement",
+                            rc + "_mat_demand_steel",
+                            rc + "_mat_demand_aluminum",
                         ]
                     )
-                ]#.copy(True)
-                df["commodity"] = df.apply(
-                    lambda x: x.commodity.split("_")[-1], axis=1)
-                df = df.rename(columns={"value": "demand_"+rc+"_const"}).drop(
+                ]  # .copy(True)
+                df["commodity"] = df.apply(lambda x: x.commodity.split("_")[-1], axis=1)
+                df = df.rename(columns={"value": "demand_" + rc + "_const"}).drop(
                     columns=["level", "time", "unit"]
                 )
                 # df = df.stack()
@@ -536,77 +579,80 @@ while done < 1:
                     .dropna()
                 )
                 mat_demand["value"] = np.maximum(
-                    mat_demand["value"] - mat_demand["demand_"+rc+"_const"], 0
+                    mat_demand["value"] - mat_demand["demand_" + rc + "_const"], 0
                 )
-                scenario.add_par("demand", mat_demand.drop(
-                    columns="demand_"+rc+"_const"))
+                scenario.add_par(
+                    "demand", mat_demand.drop(columns="demand_" + rc + "_const")
+                )
 
         # Create new technologies for building energy
         rc_tech_fuel = pd.DataFrame(
-            {"fuel": ["biomass",
-                      "coal",
-                      "lightoil",
-                      "gas",
-                      "electr",
-                      "d_heat"],
-             "technology": ["biomass_rc",
-                            "coal_rc",
-                            "loil_rc",
-                            "gas_rc",
-                            "elec_rc",
-                            "heat_rc"]
-             })
+            {
+                "fuel": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
+                "technology": [
+                    "biomass_rc",
+                    "coal_rc",
+                    "loil_rc",
+                    "gas_rc",
+                    "elec_rc",
+                    "heat_rc",
+                ],
+            }
+        )
 
         # Add for fuels above
         for fuel in prices["commodity"].unique():
-            
+
             # Find the original rc technology for the fuel
             tech_orig = rc_tech_fuel.loc[
-                rc_tech_fuel["fuel"] == fuel, 
-                "technology"].values[0]
+                rc_tech_fuel["fuel"] == fuel, "technology"
+            ].values[0]
 
             # Remove lower bound in activity for older, now unused
             # rc techs to allow them to reach zero
-            act_lo = scenario.par("bound_activity_lo", 
-                                  filters={"technology": tech_orig,
-                                           "year_act": years_model})
+            act_lo = scenario.par(
+                "bound_activity_lo",
+                filters={"technology": tech_orig, "year_act": years_model},
+            )
             act_lo["value"] = 0.0
             scenario.add_par("bound_activity_lo", act_lo)
-            
-            growth_act = scenario.par("growth_activity_lo", 
-                                      filters={"technology": tech_orig,
-                                               "year_act": years_model})
+
+            growth_act = scenario.par(
+                "growth_activity_lo",
+                filters={"technology": tech_orig, "year_act": years_model},
+            )
             growth_act["value"] = -1.0
             scenario.add_par("growth_activity_lo", growth_act)
 
-            soft_act = scenario.par("soft_activity_lo", 
-                                    filters={"technology": tech_orig,
-                                             "year_act": years_model})
+            soft_act = scenario.par(
+                "soft_activity_lo",
+                filters={"technology": tech_orig, "year_act": years_model},
+            )
             soft_act["value"] = 0.0
             scenario.add_par("soft_activity_lo", soft_act)
-            
+
             # Create the technologies for the new commodities
-            for commodity in [com for com in demand["commodity"].unique() if 
-                              ("_" + fuel in com) or ("-" + fuel in com)]:
-            
+            for commodity in [
+                com
+                for com in demand["commodity"].unique()
+                if ("_" + fuel in com) or ("-" + fuel in com)
+            ]:
+
                 # Fix for lightoil gas included
                 if "lightoil-gas" in commodity:
-                    tech_new = fuel + "_lg_" + commodity.replace(
-                        "_lightoil-gas", "")
+                    tech_new = fuel + "_lg_" + commodity.replace("_lightoil-gas", "")
                 else:
                     tech_new = fuel + "_" + commodity.replace("_" + fuel, "")
-            
-                build_in = scenario.par("input", filters={
-                    "technology": tech_orig})
+
+                build_in = scenario.par("input", filters={"technology": tech_orig})
                 build_in["technology"] = tech_new
                 build_in["value"] = 1.0
-            
-                build_out = scenario.par("output", filters={
-                    "technology": tech_orig})
+
+                build_out = scenario.par("output", filters={"technology": tech_orig})
                 build_out["technology"] = tech_new
                 build_out["commodity"] = commodity
                 build_out["value"] = 1.0
-            
+
                 build_cf = scenario.par(
                     "capacity_factor", filters={"technology": tech_orig}
                 )
@@ -618,11 +664,11 @@ while done < 1:
                 build_ef["technology"] = tech_new
 
                 build_rel = scenario.par(
-                    "relation_activity", filters={"technology": tech_orig,
-                                                  "relation": emiss_rel}
+                    "relation_activity",
+                    filters={"technology": tech_orig, "relation": emiss_rel},
                 )
                 build_rel["technology"] = tech_new
-            
+
                 scenario.add_set("commodity", commodity)
                 scenario.add_set("technology", tech_new)
                 scenario.add_par("input", build_in)
@@ -632,8 +678,7 @@ while done < 1:
                 scenario.add_par("relation_activity", build_rel)
 
     # Rename non-comm
-    demand.loc[demand["commodity"] == "resid_cook_non-comm", 
-               "commodity"] = "non-comm"
+    demand.loc[demand["commodity"] == "resid_cook_non-comm", "commodity"] = "non-comm"
 
     # Fix years (they appear as float)
     demand["year"] = demand["year"].astype(int)
@@ -656,28 +701,31 @@ while done < 1:
     # unless the demand from 2090 is zero, which creates div by zero
     # in which case take the average (i.e. value for 2100 div by 2)
     # NOTE: no particular reason, just my choice!
-    dd_2110.loc[dd_2110[2090] == 0, "value"] = \
-        dd_2110.loc[dd_2110[2090] == 0, 2100] / 2
-    # or if the demand grows too much indicating a 
-    # relatively too low value for 2090 
-    dd_2110.loc[dd_2110["value"] > 3*dd_2110[2100], "value"] = \
-        dd_2110.loc[dd_2110["value"] > 3*dd_2110[2100], 2100] / 2
-    # or simply if there is an NA 
-    dd_2110.loc[dd_2110["value"].isna(), "value"] = \
+    dd_2110.loc[dd_2110[2090] == 0, "value"] = dd_2110.loc[dd_2110[2090] == 0, 2100] / 2
+    # or if the demand grows too much indicating a
+    # relatively too low value for 2090
+    dd_2110.loc[dd_2110["value"] > 3 * dd_2110[2100], "value"] = (
+        dd_2110.loc[dd_2110["value"] > 3 * dd_2110[2100], 2100] / 2
+    )
+    # or simply if there is an NA
+    dd_2110.loc[dd_2110["value"].isna(), "value"] = (
         dd_2110.loc[dd_2110["value"].isna(), 2100] / 2
+    )
 
     dd_2110["year"] = 2110
     demand = pd.concat(
-        [demand,
-         dd_2110[["node", "commodity", "level", "year", 
-                  "time", "value", "unit"]]],
-        ignore_index=True)
-    
+        [
+            demand,
+            dd_2110[["node", "commodity", "level", "year", "time", "value", "unit"]],
+        ],
+        ignore_index=True,
+    )
+
     # Update demand in scenario
     demand = demand.sort_values(by=["node", "commodity", "year"])
     scenario.add_par("demand", demand)
 
-    # Add tax emissions from mitigation scenario if running a 
+    # Add tax emissions from mitigation scenario if running a
     # climate scenario and if they are not already there
     if (scenario.par("tax_emission").size == 0) and (clim_scen != "BL"):
         tax_emission_new = scen_mitig_prices.var("PRICE_EMISSION")
@@ -690,15 +738,15 @@ while done < 1:
 
     # Run MESSAGE
     scenario.commit("buildings test")
-    
+
     # Add bio backstop
     add_globiom.add_bio_backstop(scenario)
-      
+
     if solve_macro:
         mod = "MESSAGE-MACRO"
     else:
         mod = "MESSAGE"
-        
+
     try:  # Try with barrier, faster
         message_ix.models.DEFAULT_CPLEX_OPTIONS = {
             "advind": 0,
@@ -722,11 +770,10 @@ while done < 1:
         "PRICE_COMMODITY",
         filters={
             "level": "final",
-            "commodity": ["biomass", "coal", "lightoil", 
-                          "gas", "electr", "d_heat"],
+            "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
         },
     )
-    prices_new = prices_new.loc[prices_new["node"] != suffix+"_GLB"]
+    prices_new = prices_new.loc[prices_new["node"] != suffix + "_GLB"]
 
     # Create the DataFrames to keep track of demands and prices
     if iterations == 0:
@@ -736,10 +783,11 @@ while done < 1:
     # Compare differences in mean percentage deviation
     diff = prices_new.merge(prices, on=["node", "commodity", "year"])
     diff = diff.loc[diff["year"] != 2110]
-    diff["diff"] = (diff["lvl_x"] - diff["lvl_y"]) / \
-                   (0.5*((diff["lvl_x"] + diff["lvl_y"])))
+    diff["diff"] = (diff["lvl_x"] - diff["lvl_y"]) / (
+        0.5 * ((diff["lvl_x"] + diff["lvl_y"]))
+    )
     diff = np.mean(abs(diff["diff"]))
-    
+
     print("Iteration:", iterations)
     print("Mean Percentage Deviation in Prices:", diff)
 
@@ -747,12 +795,13 @@ while done < 1:
     if iterations > 0:
         diff_dd = demand.merge(demand_old, on=["node", "commodity", "year"])
         diff_dd = diff_dd.loc[diff_dd["year"] != 2110]
-        diff_dd["diff_dd"] = (diff_dd["value_x"] - diff_dd["value_y"]) / \
-                             (0.5*((diff_dd["value_x"] + diff_dd["value_y"])))
+        diff_dd["diff_dd"] = (diff_dd["value_x"] - diff_dd["value_y"]) / (
+            0.5 * ((diff_dd["value_x"] + diff_dd["value_y"]))
+        )
         diff_dd = np.mean(abs(diff_dd["diff_dd"]))
         print("Mean Percentage Deviation in Demand:", diff_dd)
 
-    # Uncomment this on for testing 
+    # Uncomment this on for testing
     # diff = 0.0
 
     if (diff < 5e-3) or ((iterations > 0) & (diff_dd < 5e-3)):
@@ -765,26 +814,39 @@ while done < 1:
         done = 2
         print("Not Converged after 10 iterations!")
         print("Averaging last two demands and running MESSAGE one more time")
-        price_sav["lvl"+str(iterations)] = prices_new["lvl"]
-        demand_sav = demand_sav.merge(demand,
-                                      on=["node", "commodity", "level", 
-                                          "year", "time", "unit"], how="left")
-        demand_sav = demand_sav.rename(
-            columns={"value": "value"+str(iterations)})
+        price_sav["lvl" + str(iterations)] = prices_new["lvl"]
+        demand_sav = demand_sav.merge(
+            demand,
+            on=["node", "commodity", "level", "year", "time", "unit"],
+            how="left",
+        )
+        demand_sav = demand_sav.rename(columns={"value": "value" + str(iterations)})
         demand_sav.columns.isin(demand.columns)
-        dd_avg = demand_sav[["node", "commodity", "level", "year", "time", 
-                             "unit", "value"+str(iterations-1),
-                             "value"+str(iterations)]].copy(True)
-        dd_avg["value_avg"] = (dd_avg["value"+str(iterations-1)] +
-                               dd_avg["value"+str(iterations)])/2
+        dd_avg = demand_sav[
+            [
+                "node",
+                "commodity",
+                "level",
+                "year",
+                "time",
+                "unit",
+                "value" + str(iterations - 1),
+                "value" + str(iterations),
+            ]
+        ].copy(True)
+        dd_avg["value_avg"] = (
+            dd_avg["value" + str(iterations - 1)] + dd_avg["value" + str(iterations)]
+        ) / 2
         dd_avg = dd_avg.loc[~dd_avg["value_avg"].isna()]
 
-        demand = demand.merge(dd_avg[["node", "commodity", "level", "year", 
-                                      "time", "unit", "value_avg"]],
-                              on=["node", "commodity", "level", "year",
-                                  "time", "unit"], how="left")
-        demand.loc[~demand["value_avg"].isna(), "value"] = \
-            demand.loc[~demand["value_avg"].isna(), "value_avg"]
+        demand = demand.merge(
+            dd_avg[["node", "commodity", "level", "year", "time", "unit", "value_avg"]],
+            on=["node", "commodity", "level", "year", "time", "unit"],
+            how="left",
+        )
+        demand.loc[~demand["value_avg"].isna(), "value"] = demand.loc[
+            ~demand["value_avg"].isna(), "value_avg"
+        ]
         demand = demand.drop(columns="value_avg")
 
         scenario.remove_solution()
@@ -797,11 +859,10 @@ while done < 1:
             "PRICE_COMMODITY",
             filters={
                 "level": "final",
-                "commodity": ["biomass", "coal", "lightoil", 
-                              "gas", "electr", "d_heat"],
+                "commodity": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
             },
         )
-        prices_new = prices_new.loc[prices_new["node"] != suffix+"_GLB"]
+        prices_new = prices_new.loc[prices_new["node"] != suffix + "_GLB"]
         print("Final solution after Averaging last two demands")
         print("Total time:", (time() - start_time) / 3600)
 
@@ -809,11 +870,11 @@ while done < 1:
         oscilation = 1
 
     # Keep track of results
-    demand_sav = demand_sav.merge(demand,
-                                  on=["node", "commodity", "level", 
-                                      "year", "time", "unit"], how="left")
-    demand_sav = demand_sav.rename(columns={"value": "value"+str(iterations)})
-    price_sav["lvl"+str(iterations)] = prices_new["lvl"]
+    demand_sav = demand_sav.merge(
+        demand, on=["node", "commodity", "level", "year", "time", "unit"], how="left"
+    )
+    demand_sav = demand_sav.rename(columns={"value": "value" + str(iterations)})
+    price_sav["lvl" + str(iterations)] = prices_new["lvl"]
     price_sav.to_csv("price_track.csv")
     demand_sav.to_csv("demand_track.csv")
 
@@ -825,5 +886,5 @@ while done < 1:
 #     sc_macro = add_macro_COVID(scenario, reg="R12", check_converge=False)
 #     sc_macro = sc_macro.clone(scenario = "baseline_DEFAULT")
 #     sc_macro.set_as_default()
-    
+
 mp_ENE.close_db()
