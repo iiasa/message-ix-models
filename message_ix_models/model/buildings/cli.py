@@ -4,7 +4,6 @@ import subprocess
 import sys
 from itertools import product
 from pathlib import Path
-from time import time
 from typing import Optional, Tuple
 
 import click
@@ -13,6 +12,7 @@ import message_ix_models.util as mutil
 import numpy as np
 import pandas as pd
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.util._logging import mark_time
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
@@ -477,6 +477,8 @@ def cli(context, code_dir):
 
     The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
     """
+    mark_time()
+
     config = {
         "code_dir": code_dir.resolve(),
         "run ACCESS": True,
@@ -553,8 +555,9 @@ def cli(context, code_dir):
 
     # FIXME(PNK) `oscilation` is not used anywhere. Document its purpose or remove.
     done = iterations = oscilation = 0
-    start_time = time()
     old_diff = -1
+
+    mark_time()
 
     # Placeholders; replaced on the first iteration
     demand = pd.DataFrame()
@@ -584,6 +587,8 @@ def cli(context, code_dir):
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
                 scenario=config["ssp"], prices=prices
             )
+
+            mark_time()
         else:
             # NB(PNK) This will cause the code below to fail. Define and satisfy the
             # minimum conditions for the remaining code.
@@ -631,6 +636,8 @@ def cli(context, code_dir):
         # Run STURM
         sturm_scenarios, css = run_sturm(context, prices, iterations == 0)
         comm_sturm_scenarios = css or comm_sturm_scenarios
+
+        mark_time()
 
         # TEMP: remove commodity "comm_heat_v_no_heat"
         if iterations == 0:
@@ -701,6 +708,8 @@ def cli(context, code_dir):
             comm_sturm_scenarios,
             iterations == 0,
         )
+
+        mark_time()
 
         # Rename non-comm
         demand.loc[
@@ -809,7 +818,7 @@ def cli(context, code_dir):
         if (diff < 5e-3) or ((iterations > 0) & (diff_dd < 5e-3)):
             done = 1
             print("Converged in ", iterations, " iterations")
-            print("Total time:", (time() - start_time) / 3600)
+            mark_time()
             # scenario.set_as_default()
 
         if iterations > 10:
@@ -843,7 +852,7 @@ def cli(context, code_dir):
             iterations = iterations + 0.5
             prices_new = get_prices(scenario)
             print("Final solution after Averaging last two demands")
-            print("Total time:", (time() - start_time) / 3600)
+            mark_time()
 
         if abs(old_diff - diff) < 1e-5:
             oscilation = 1  # noqa: F841
