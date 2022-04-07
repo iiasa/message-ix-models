@@ -27,6 +27,37 @@ Usage
                  buildings \
                  --dest="ixmp://ixmp-dev/new model name/target scenario"
 
+Configuration
+-------------
+
+The code responds to the following keys in ``context["buildings"]``, a :class:`dict` within the :class:`Context`.
+
+.. list-table::
+   :widths: 20 10 70
+   :header-rows: 1
+
+   * - Key
+     - Value(s)
+     - Description
+   * - **ssp**
+     - "SSP"
+     - SSP scenario
+   * - **clim_scen**
+     - "BL", "2C"
+     - Climate scenario
+   * - **solve_macro**
+     - :obj:`False`
+     - Solve scenarios using MESSAGE-MACRO (:obj:`True`) or only MESSAGE.
+   * - **clone**
+     - :obj:`True`
+     - Clone the scenario to be used from a base scenario (:obj:`True`) or load and use an existing sceanrio directly.
+   * - **use ACCESS**
+     - :obj:`True`
+     - Run the ACCESS model on every iteration (experimental/untested)
+   * - **code_dir**
+     - —
+     - Path to the MESSAGE_Buildings code and data; passed via the command line (above).
+
 Code reference
 ==============
 

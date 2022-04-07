@@ -17,6 +17,16 @@ from message_ix_models.util.click import common_params
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
+#: Default values for Context["buildings"] keys that configure the code. See
+#: :doc:`model/buildings` for a full explanation.
+DEFAULTS = {
+    "clim_scen": "BL",  # or "2C"?
+    "clone": True,
+    "run ACCESS": True,
+    "solve_macro": False,
+    "ssp": "SSP2",
+}
+
 #: Commodities for the buildings sector.
 BUILD_COMMODITIES = [
     "resid_floor_construction",  # floorspace to be constructed
@@ -469,19 +479,9 @@ def cli(context, code_dir, dest):
     """
     mark_time()
 
-    config = {
-        "code_dir": code_dir.resolve(),
-        "run ACCESS": True,
-        # Specify SSP and climate scenarios
-        "ssp": "SSP2",
-        "clim_scen": "BL",
-        # "clim_scen": "2C", # Alternate option?
-        # Specify whether to solve MESSAGE-MACRO (True) or only MESSAGE (False)
-        "solve_macro": False,
-        # Specify whether to make a new copy from a baseline scenario or load an
-        # existing scenario
-        "clone": True,
-    }
+    # Handle configuration
+    config = DEFAULTS.copy()
+    config.update(code_dir=code_dir.resolve())
     context["buildings"] = config
 
     # The MESSAGE_Buildings repo is not an installable Python package. Prepend its
