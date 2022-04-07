@@ -1,16 +1,17 @@
 """MESSAGEix-Buildings model."""
-import os
 import gc
+import subprocess
 import sys
 from pathlib import Path
 from time import time
+from typing import Optional, Tuple
 
 import click
 import message_ix
 import message_ix_models.util as mutil
 import numpy as np
 import pandas as pd
-from message_ix_models import ScenarioInfo
+from message_ix_models import Context, ScenarioInfo
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
@@ -88,6 +89,120 @@ def subset_demands(df: pd.DataFrame) -> pd.DataFrame:
             ]
         )
     ]
+
+
+def run_sturm(
+    context: Context, prices: pd.DataFrame, first_iteration: bool
+) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+    """Invoke STURM, either using rpy2 or via Rscript.
+
+    Returns
+    -------
+    pd.DataFrame
+        The `sturm_scenarios` data frame.
+    pd.DataFrame or None
+        The `comm_sturm_scenarios` data frame if `first_iteration` is :obj:`True`;
+        otherwise :obj:`None`.
+    """
+    if rpy2_installed:
+        print("rpy2 found")
+        return _sturm_rpy2(context)
+    else:
+        print("rpy2 NOT found")
+        return _sturm_rscript(context)
+
+
+def _sturm_rpy2(
+    context: Context, prices: pd.DataFrame, first_iteration: bool
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Invoke STURM using :mod:`rpy2`."""
+    # Retrieve info from the Context object
+    config = context["buildings"]
+
+    # Path to R code
+    rcode_path = config["code_dir"].joinpath("STURM_model")
+
+    # Source R code
+    r = ro.r
+    r.source(str(rcode_path.joinpath("F10_scenario_runs_MESSAGE_2100.R")))
+
+    # Common arguments for invoking STURM
+    args = dict(
+        run=config["ssp"],
+        scenario_name=f"{config['ssp']}_{config['clim_scen']}",
+        prices=prices,
+        path_rcode=str(rcode_path),
+        path_in=str(config["code_dir"].joinpath("STURM_data")),
+        path_out=str(config["code_dir"].joinpath("STURM_output")),
+        geo_level_report=context.regions,  # Should be R12
+    )
+
+    with localconverter(ro.default_converter + pandas2ri.converter):
+        # Residential
+        sturm_scenarios = r.run_scenario(**args, sector="resid")
+        # Commercial
+        # NOTE: run only on the first iteration!
+        comm_sturm_scenarios = (
+            r.run_scenario(**args, sector="comm") if first_iteration else None
+        )
+
+    del r
+    gc.collect()
+
+    return sturm_scenarios, comm_sturm_scenarios
+
+
+def _sturm_rscript(
+    context: Context, prices: pd.DataFrame, first_iteration: bool
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Invoke STURM using :mod:`subprocess` and :program:`Rscript`."""
+    # Retrieve info from the Context object
+    config = context["buildings"]
+
+    # Prepare input files
+    # Temporary directory in the MESSAGE_Buildings directory
+    temp_dir = config["code_dir"].joinpath("temp")
+    temp_dir.mkdir(exist_ok=True)
+
+    # Write prices to file
+    input_path = temp_dir.joinpath("prices.csv")
+    prices.to_csv(input_path)
+
+    def run_edited(sector: str) -> pd.DataFrame:
+        """Edit the run_STURM.R script, then run it."""
+        # Read the script and split lines
+        script_path = config["code_dir"].joinpath("run_STURM.R")
+        lines = script_path.read_text().split("\n")
+
+        # Replace some lines
+        # FIXME(PNK) This is extremely fragile. Instead use a template or regex
+        # replacements
+        lines[8] = f"ssp_scen <- \"{config['ssp']}\""
+        lines[9] = f"clim_scen <- \"{config['clim_scen']}\""
+        lines[10] = f'sect <- "{sector}"'
+
+        script_path.write_text("\n".join(lines))
+
+        # Need to supply cwd= because the script uses R's getwd() to find others
+        subprocess.check_call(["Rscript", "run_STURM.R"], cwd=config["code_dir"])
+
+        # Read output, then remove the file
+        output_path = temp_dir.joinpath(f"{sector}_sturm.csv")
+        result = pd.read_csv(output_path)
+        output_path.unlink()
+
+        return result
+
+    # Residential
+    sturm_scenarios = run_edited(sector="resid")
+
+    # Commercial
+    comm_sturm_scenarios = run_edited(sector="comm") if first_iteration else None
+
+    input_path.unlink()
+    temp_dir.rmdir()
+
+    return sturm_scenarios, comm_sturm_scenarios
 
 
 def setup_scenario(
@@ -396,11 +511,19 @@ def cli(context, code_dir):
 
     The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
     """
-    base_path = code_dir.resolve()
+    config = {
+        "code_dir": code_dir.resolve(),
+        "run ACCESS": True,
+        # Specify SSP and climate scenarios
+        "ssp": "SSP2",
+        "clim_scen": "BL",
+        # "clim_scen": "2C", # Alternate option?
+    }
+    context["buildings"] = config
 
     # The MESSAGE_Buildings repo is not an installable Python package. Prepend its
     # location to sys.path so code/modules within it can be imported
-    sys.path.append(str(base_path))
+    sys.path.append(str(config["code_dir"]))
 
     # Import from MESSAGE_Buildings
     from E_USE_Model import Simulation_ACCESS_E_USE
@@ -410,21 +533,11 @@ def cli(context, code_dir):
         for row in rpy2.situation.iter_info():
             print(row)
 
-        # Paths to R code and LCA data
-        rcode_path = base_path.joinpath("STURM_model")
-        data_path = base_path.joinpath("STURM_data")
-        rout_path = base_path.joinpath("STURM_output")
-
     # Load database
     mp = context.get_platform()
 
     # Add floorspace unit
     mp.add_unit("Mm2/y", "mil. square meters by year")
-
-    # Specify SSP and Climate scenario
-    ssp_scen = "SSP2"
-    clim_scen = "BL"
-    # clim_scen = "2C"
 
     # Specify whether to make a new copy from a baseline
     # scenario or load an existing scenario
@@ -459,7 +572,7 @@ def cli(context, code_dir):
         scenario = message_ix.Scenario(mp, mod_new, scen_new)
 
     # Open reference climate scenario if needed
-    if clim_scen == "2C":
+    if context["buildings"]["clim_scen"] == "2C":
         mod_mitig = "ENGAGE_SSP2_v4.1.8"
         scen_mitig = "EN_NPi2020_1000f"
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
@@ -476,7 +589,9 @@ def cli(context, code_dir):
     # FIXME(PNK) This is not used anywhere. Document its purpose, or comment/remove.
     oscilation = 0
 
+    # Placeholders; replaced on the first iteration
     demand = pd.DataFrame()
+    comm_sturm_scenarios = pd.DataFrame()
 
     # Non-model and model periods
     info = ScenarioInfo(scenario)
@@ -544,74 +659,9 @@ def cli(context, code_dir):
         e_use_scenarios = e_use_scenarios.drop("adj_fact", axis=1)
         e_use_scenarios = e_use_scenarios.loc[e_use_scenarios["year"] > 2010]
 
-        # STURM
-        # TODO(PNK) Make this into two methods, and call one or the other
-        if rpy2_installed:
-            print("rpy2 found")
-            # Source R code
-            r = ro.r
-            r.source(str(Path(rcode_path + "/F10_scenario_runs_MESSAGE_2100.R")))
-
-            # Common arguments for STURM invocations
-            args = dict(
-                run=ssp_scen,
-                scenario_name=f"{ssp_scen}_{clim_scen}",
-                prices=prices,
-                path_in=str(data_path),
-                path_rcode=str(rcode_path),
-                path_out=str(rout_path),
-                geo_level_report="R12",
-            )
-            with localconverter(ro.default_converter + pandas2ri.converter):
-                # Residential
-                sturm_scenarios = r.run_scenario(**args, sector="resid")
-                # Commercial
-                # NOTE: run only on the first iteration!
-                if iterations == 0:
-                    comm_sturm_scenarios = r.run_scenario(**args, sector="comm")
-
-            del r
-            gc.collect()
-        else:
-            print("rpy2 NOT found")
-            # Prepare input files
-            if not os.path.exists(str(Path(os.getcwd() + "/temp"))):
-                os.mkdir(str(Path(os.getcwd() + "/temp")))
-            prices.to_csv("./temp/prices.csv")
-
-            # Residential
-            with open("run_STURM.R", "r") as file:
-                mm = file.readlines()
-
-            mm[8] = 'ssp_scen <- "' + ssp_scen + '"\n'
-            mm[9] = 'clim_scen <- "' + clim_scen + '"\n'
-            mm[10] = 'sect <- "resid"\n'
-
-            with open("run_STURM.R", "w") as file:
-                file.writelines(mm)
-
-            os.system("Rscript run_STURM.R")
-            sturm_scenarios = pd.read_csv("./temp/resid_sturm.csv")
-            os.remove("./temp/resid_sturm.csv")
-
-            # Commercial
-            if iterations == 0:
-                with open("run_STURM.R", "r") as file:
-                    mm = file.readlines()
-
-                mm[8] = 'ssp_scen <- "' + ssp_scen + '"\n'
-                mm[9] = 'clim_scen <- "' + clim_scen + '"\n'
-                mm[10] = 'sect <- "comm"\n'
-
-                with open("run_STURM.R", "w") as file:
-                    file.writelines(mm)
-
-                os.system("Rscript run_STURM.R")
-                comm_sturm_scenarios = pd.read_csv("./temp/comm_sturm.csv")
-                os.remove("./temp/comm_sturm.csv")
-
-            os.remove("./temp/prices.csv")
-            os.rmdir(str(Path(os.getcwd() + "/temp")))
+        # Run STURM
+        sturm_scenarios, css = run_sturm(context, prices, iterations == 0)
+        comm_sturm_scenarios = css or comm_sturm_scenarios
 
         # TEMP: remove commodity "comm_heat_v_no_heat"
         if iterations == 0:
@@ -748,7 +798,7 @@ def cli(context, code_dir):
 
         # Add tax emissions from mitigation scenario if running a
         # climate scenario and if they are not already there
-        if (scenario.par("tax_emission").size == 0) and (clim_scen != "BL"):
+        if (scenario.par("tax_emission").size == 0) and (config["clim_scen"] != "BL"):
             tax_emission_new = scen_mitig_prices.var("PRICE_EMISSION")
             tax_emission_new.columns = scenario.par("tax_emission").columns
             tax_emission_new["unit"] = "USD/tCO2"
