@@ -230,11 +230,12 @@ def setup_scenario(
     scenario.add_set("technology", build_techs)
 
     # Find emissions in relation activity
-    emiss_rel = [
-        rel
-        for rel in scenario.par("relation_activity").relation.unique()
-        if "Emission" in rel
-    ]
+    emiss_rel = list(
+        filter(
+            lambda rel: "Emission" in rel,
+            scenario.par("relation_activity").relation.unique(),
+        )
+    )
 
     # Create new demands and techs for AFOFI
     # based on percentages between 2010 and 2015
@@ -246,25 +247,16 @@ def setup_scenario(
     [perc_afofi_therm, perc_afofi_spec] = rc_afofi.return_PERC_AFOFI()
     afofi_dd = dd_replace.copy(True)
     for reg in perc_afofi_therm.index:
-        node = next(filter(lambda n: reg in n, nodes))
-        afofi_dd.loc[
-            (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_therm"),
-            "value",
-        ] = (
-            afofi_dd.loc[
-                (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_therm"),
-                "value",
-            ]
+        # Boolean mask for rows matching this `reg`
+        mask = afofi_dd["node"].str.endswith(reg)
+
+        # NB(PNK) This could probably be simplified using groupby()
+        afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_therm"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_therm"), "value"]
             * perc_afofi_therm.loc[reg][0]
         )
-        afofi_dd.loc[
-            (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_spec"),
-            "value",
-        ] = (
-            afofi_dd.loc[
-                (afofi_dd["node"] == node) & (afofi_dd["commodity"] == "rc_spec"),
-                "value",
-            ]
+        afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_spec"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_spec"), "value"]
             * perc_afofi_spec.loc[reg][0]
         )
 
@@ -278,20 +270,20 @@ def setup_scenario(
 
     for tech_orig in rc_techs:
         tech_new = tech_orig.replace("rc", "afofi")
+
         if "RC" in tech_orig:
             tech_new = tech_orig.replace("RC", "AFOFI")
 
         filters = dict(filters={"technology": tech_orig})
-        afofi_in = scenario.par("input", **filter).assign(technology=tech_new)
+        for name in ("input", "capacity_factor", "emission_factor"):
+            scenario.add_par(
+                name, scenario.par(name, **filter).assign(technology=tech_new)
+            )
 
         afofi_out = scenario.par("output", **filter).assign(
             technology=tech_new,
             commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
         )
-
-        afofi_cf = scenario.par("capacity_factor", **filter).assign(technology=tech_new)
-
-        afofi_ef = scenario.par("emission_factor", **filter).assign(technology=tech_new)
 
         afofi_rel = scenario.par(
             "relation_activity",
@@ -299,10 +291,7 @@ def setup_scenario(
         ).assign(technology=tech_new)
 
         scenario.add_set("technology", tech_new)
-        scenario.add_par("input", afofi_in)
         scenario.add_par("output", afofi_out)
-        scenario.add_par("capacity_factor", afofi_cf)
-        scenario.add_par("emission_factor", afofi_ef)
         scenario.add_par("relation_activity", afofi_rel)
 
     # Set model demands for rc_therm and rc_spec to zero
@@ -310,6 +299,15 @@ def setup_scenario(
     scenario.add_par("demand", dd_replace)
 
     # Create new input/output for building material intensities
+    common = dict(
+        time="year",
+        time_origin="year",
+        time_dest="year",
+        mode="M1",
+        year_vtg=years_model,
+        year_act=years_model,
+    )
+
     # Iterate over `build_comm_convert` and  nodes (excluding World and *_GLB)
     for c, n in product(
         build_comm_convert, filter(lambda n: "World" not in n and "GLB" not in n, nodes)
@@ -317,6 +315,8 @@ def setup_scenario(
         comm = c.split("_")[-1]
         typ = c.split("_")[-2]
         rc = c.split("_")[-5]  # "resid" or "comm"
+
+        common.update(node_loc=n, node_origin=n, node_dest=n)
 
         if rc == "resid":
             df_mat = sturm_scenarios.loc[
@@ -327,18 +327,6 @@ def setup_scenario(
                 (comm_sturm_scenarios["commodity"] == c)
                 & (comm_sturm_scenarios["node"] == n)
             ]
-
-        common = dict(
-            time="year",
-            time_origin="year",
-            time_dest="year",
-            mode="M1",
-            node_loc=n,
-            node_origin=n,
-            node_dest=n,
-            year_vtg=years_model,
-            year_act=years_model,
-        )
 
         if typ == "demand":
             tec = f"construction_{rc}_build"
@@ -433,21 +421,19 @@ def setup_scenario(
         # Remove lower bound in activity for older, now unused
         # rc techs to allow them to reach zero
         filters = dict(filters={"technology": tech_orig, "year_act": years_model})
-        act_lo = scenario.par("bound_activity_lo", **filters).assign(value=0.0)
-        scenario.add_par("bound_activity_lo", act_lo)
-
-        growth_act = scenario.par("growth_activity_lo", **filters).assign(value=-1.0)
-        scenario.add_par("growth_activity_lo", growth_act)
-
-        soft_act = scenario.par("soft_activity_lo", **filters).assign(value=0.0)
-        scenario.add_par("soft_activity_lo", soft_act)
+        for constraint, value in (
+            ("bound_activity", 0.0),
+            ("growth_activity", -1.0),
+            ("soft_activity", 0.0),
+        ):
+            name = f"{constraint}_lo"
+            scenario.add_par(name, scenario.par(name, **filters).assign(value=value))
 
         # Create the technologies for the new commodities
-        for commodity in [
-            com
-            for com in demand["commodity"].unique()
-            if (f"_{fuel}" in com or f"-{fuel}" in com)
-        ]:
+        for commodity in filter(
+            lambda com: f"_{fuel}" in com or f"-{fuel}" in com,
+            demand["commodity"].unique(),
+        ):
 
             # Fix for lightoil gas included
             if "lightoil-gas" in commodity:
