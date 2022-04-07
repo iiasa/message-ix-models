@@ -251,17 +251,17 @@ def setup_scenario(
         mask = afofi_dd["node"].str.endswith(reg)
 
         # NB(PNK) This could probably be simplified using groupby()
-        afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_therm"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_therm"), "value"]
+        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"]
             * perc_afofi_therm.loc[reg][0]
         )
-        afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_spec"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd["commodity"] == "rc_spec"), "value"]
+        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"]
             * perc_afofi_spec.loc[reg][0]
         )
 
-    afofi_dd["commodity"] = afofi_dd["commodity"].str.replace("rc", "afofi")
-    scenario.add_set("commodity", afofi_dd["commodity"].unique())
+    afofi_dd["commodity"] = afofi_dd.commodity.str.replace("rc", "afofi")
+    scenario.add_set("commodity", afofi_dd.commodity.unique())
     scenario.add_par("demand", afofi_dd)
 
     rc_techs = scenario.par("output", filters={"commodity": ["rc_therm", "rc_spec"]})[
@@ -369,13 +369,7 @@ def setup_scenario(
             else comm_sturm_scenarios.copy(True)
         )
         df = df_out[
-            df_out["commodity"].isin(
-                [
-                    f"{rc}_mat_demand_cement",
-                    f"{rc}_mat_demand_steel",
-                    f"{rc}_mat_demand_aluminum",
-                ]
-            )
+            df_out.commodity.str.fullmatch(f"{rc}_mat_demand_(cement|steel|aluminum)")
         ]  # .copy(True)
         df["commodity"] = df.apply(lambda x: x.commodity.split("_")[-1], axis=1)
         df = df.rename(columns={"value": f"demand_{rc}_const"}).drop(
@@ -586,13 +580,10 @@ def cli(context, code_dir):
         # NOTE: ignore biomass, data was always imputed here
         # so we are dealing with guesses over guesses
         e_use_2010 = (
-            e_use_scenarios.loc[e_use_scenarios["year"] == 2010]
-            .loc[
-                e_use_scenarios.commodity.isin(
-                    com
-                    for com in e_use_scenarios["commodity"]
-                    if "bio" not in com and "non-comm" not in com
-                )
+            e_use_scenarios[
+                (e_use_scenarios.year == 2010)
+                & ~e_use_scenarios.commodity.str.contains("bio")
+                & ~e_use_scenarios.commodity.str.contains("non-comm")
             ]
             .groupby("node", as_index=False)
             .sum()
@@ -601,11 +592,11 @@ def cli(context, code_dir):
             "historical_activity",
             filters={
                 "year_act": 2010,
-                "technology": [
-                    tec
-                    for tec in scenario.set("technology")
-                    if "rc" in tec and "bio" not in tec
-                ],
+                "technology": list(
+                    filter(
+                        lambda t: "rc" in t and "bio" not in t, info.set["technology"]
+                    )
+                ),
             },
         )
         rc_act_2010 = rc_act_2010.rename(columns={"node_loc": "node"})
@@ -630,29 +621,22 @@ def cli(context, code_dir):
 
         # TEMP: remove commodity "comm_heat_v_no_heat"
         if iterations == 0:
-            comm_sturm_scenarios = comm_sturm_scenarios.loc[
-                (comm_sturm_scenarios.commodity != "comm_heat_v_no_heat")
-                & (comm_sturm_scenarios.commodity != "comm_hotwater_v_no_heat")
+            comm_sturm_scenarios = comm_sturm_scenarios[
+                ~comm_sturm_scenarios.commodity.isin(
+                    ["comm_heat_v_no_heat", "comm_hotwater_v_no_heat"]
+                )
             ]
 
         # TEMP: remove commodity "resid_heat_v_no_heat"
-        sturm_scenarios = sturm_scenarios.loc[
-            (sturm_scenarios.commodity != "resid_heat_v_no_heat")
-            & (sturm_scenarios.commodity != "resid_hotwater_v_no_heat")
+        sturm_scenarios = sturm_scenarios[
+            ~sturm_scenarios.commodity.isin(
+                ["resid_heat_v_no_heat", "resid_hotwater_v_no_heat"]
+            )
         ]
 
         # Subset desired energy demands
         demands = [
-            # TODO generalize subset_demands() to also handle this case
-            e_use_scenarios.loc[
-                e_use_scenarios["commodity"].isin(
-                    [
-                        com
-                        for com in e_use_scenarios["commodity"].unique()
-                        if "therm" not in com
-                    ]
-                )
-            ],
+            e_use_scenarios[~e_use_scenarios.commodity.str.contains("therm")],
             subset_demands(sturm_scenarios),
         ]
         # Add commercial demand in first iteration
@@ -686,10 +670,8 @@ def cli(context, code_dir):
                     )
                 ]
             )
-        demand = pd.concat(demands)
-
-        # Fill with zeros if nan
-        demand = demand.fillna(0)
+        # Fill with zeros if NaN
+        demand = pd.concat(demands).fillna(0)
 
         # Update demands in the scenario
         if scenario.has_solution():
