@@ -137,7 +137,7 @@ def modify_demand_and_hist_activity(scen):
     # df_feed_new = df_feed_new.groupby(["REGION"]).sum().reset_index()
 
     # Retreive data for i_therm
-    # NOTE: It is assumped that 50% of the chemicals category is HVCs
+    # NOTE: It is assumped that 80% of i_therm is from ammonia and HVCs.
     # NOTE: Aluminum is excluded since refining process is not explicitly represented
     # NOTE: CPA has a 3% share while it used to be 30% previosuly ??
 
@@ -179,7 +179,7 @@ def modify_demand_and_hist_activity(scen):
     df_therm_new.drop(["FUEL", "RYEAR", "UNIT_OUT"], axis=1, inplace=True)
     df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"] = (
         df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"]
-        * 0.7
+        * 0.8
     )
 
     # Modify CPA based on https://www.iea.org/sankey/#?c=Japan&s=Final%20consumption.
