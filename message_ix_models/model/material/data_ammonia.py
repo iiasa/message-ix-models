@@ -138,7 +138,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     act2010 = read_demand()['act2010']
     df = (
         make_df("historical_activity",
-                technology=[t for t in config["technology"]["add"][:6]], #], TODO: maybe reintroduce std/ccs in yaml
+                technology=[t for t in config["technology"]["add"][:6]],
                 value=1, unit='t', years_act=s_info.Y, **common)
             .pipe(broadcast, node_loc=nodes)
             .pipe(same_node)
@@ -419,19 +419,19 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
         unit="t"
     )
 
-    N_trade_R12 = read_demand()["N_trade_R12"].assign(mode="M1")
-    N_trade_R12["technology"] = N_trade_R12["Element"].apply(
-        lambda x: "export_NH3" if x == "Export" else "import_NH3")
-    df_exp_imp_act = N_trade_R12.drop("Element", axis=1)
+    NH3_trade_R12 = read_demand()["NH3_trade_R12"].assign(mode="M1")
+    NH3_trade_R12["technology"] = NH3_trade_R12["type"].apply(
+        lambda x: "export_NH3" if x == "export" else "import_NH3")
+    df_exp_imp_act = NH3_trade_R12.drop("type", axis=1)
 
-    trd_act_years = N_trade_R12["year_act"].unique()
-    values = N_trade_R12.groupby(["year_act"]).sum().values.flatten()
+    trd_act_years = NH3_trade_R12["year_act"].unique()
+    values = NH3_trade_R12.groupby(["year_act"]).sum().values.flatten()
     fert_trd_hist = make_df("historical_activity", technology="trade_NH3",
                                        year_act=trd_act_years, value=values,
                                        node_loc="R12_GLB", **common)
     results["historical_activity"].append(pd.concat([df_exp_imp_act, fert_trd_hist]))
 
-    df_hist_cap_new = N_trade_R12[N_trade_R12["technology"] == "export_NH3"].drop(columns=["time", "mode", "Element"])
+    df_hist_cap_new = NH3_trade_R12[NH3_trade_R12["technology"] == "export_NH3"].drop(columns=["time", "mode", "type"])
     df_hist_cap_new = df_hist_cap_new.rename(columns={"year_act": "year_vtg"})
     # divide by export lifetime derived from coal_exp
     df_hist_cap_new = df_hist_cap_new.assign(value=lambda x: x["value"] / 30)
@@ -691,6 +691,19 @@ def read_demand():
     NP = pd.DataFrame({"netimp": df.Import - df.Export, "demand": ND[2010]})
     NP["prod"] = NP.demand - NP.netimp
 
+    NH3_trade_R12 = pd.read_csv(context.get_local_path("material","NH3_trade_BACI_R12_aggregation.csv"))#, index_col=0)
+    NH3_trade_R12.region = "R12_" + NH3_trade_R12.region
+    NH3_trade_R12.quantity = NH3_trade_R12.quantity / 1e6
+    NH3_trade_R12.unit = "t"
+    NH3_trade_R12 = NH3_trade_R12.assign(time="year")
+    NH3_trade_R12 = NH3_trade_R12.rename(
+        columns={
+            "quantity": "value",
+            "region": "node_loc",
+            "year": "year_act",
+        }
+    )
+
 
     # Derive total energy (GWa) of NH3 production (based on demand 2010)
     N_feed = feedshare_GLO[feedshare_GLO.Region != "R11_GLB"].join(NP, on="Region")
@@ -730,7 +743,7 @@ def read_demand():
     act2010 = (feedshare.values.flatten() * N_demand).reset_index(drop=True)
 
     return {"feedshare_GLO": feedshare_GLO, "ND": ND, "N_energy": N_energy, "feedshare": feedshare, 'act2010': act2010,
-            'capacity_factor': capacity_factor, "N_feed":N_feed, "N_trade_R12":N_trade_R12}
+            'capacity_factor': capacity_factor, "N_feed":N_feed, "N_trade_R12":N_trade_R12, "NH3_trade_R12":NH3_trade_R12}
 
 
 def read_trade_data(context, comm):
@@ -887,12 +900,10 @@ def read_data_ccs():
         param_values.extend(params)
         tech_values.extend([t] * len(params))
         param_cat2.extend(param_cat)
-    #print(sets["technology"]["add"][12:])
     # Clean the data
     data = (
         # Insert "technology" and "parameter" columns
         data.assign(technology=tech_values, parameter=param_values, param_cat=param_cat2)
-            # , param_cat=param_cat2)
             # Drop columns that don't contain useful information
             .drop(["Model", "Scenario", "Region"], axis=1)
         # Set the data frame index for selection
