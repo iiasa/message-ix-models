@@ -2,11 +2,13 @@ library(tidyverse)
 library(readxl)
 
 # Data file names and path
-datapath = '../../../../data/material/'
+# datapath = '../../../../data/material/'
+datapath = 'H:/GitHub/message_data/data/material/'
 
 file_cement = "CEMENT.BvR2010.xlsx"
 file_steel = "STEEL_database_2012.xlsx"
 file_al = "demand_aluminum.xlsx"
+file_petro = "/demand_petro.xlsx"
 
 #### Import raw data (from Bas) - Cement & Steel ####
 # Apparent consumption
@@ -29,6 +31,9 @@ df_gdp = read_excel(paste0(datapath, file_cement),
 
 df_raw_aluminum_consumption = read_excel(paste0(datapath, file_al),
                              sheet="final_table", n_max = 378) # kt
+
+df_raw_petro_consumption = read_excel(paste0(datapath, file_petro),
+                                      sheet="final_table", n_max = 362) #kg/cap
 
 #### Organize data ####
 names(df_raw_steel_consumption)[1] = names(df_raw_cement_consumption)[1] =
@@ -53,6 +58,11 @@ df_aluminum_consumption = df_raw_aluminum_consumption %>%
   drop_na() %>%
   filter(cons.pcap > 0)
 
+df_petro_consumption = df_raw_petro_consumption %>%
+  mutate(del.t= as.numeric(year) - 2010) %>% 
+  drop_na() %>%
+  filter(cons.pcap > 0)
+
 #### Fit models ####
 
 # Note: IMAGE adopts NLI for cement, NLIT for steel.
@@ -61,33 +71,41 @@ df_aluminum_consumption = df_raw_aluminum_consumption %>%
 lni.c = lm(log(cons.pcap) ~ I(1/gdp.pcap), data=df_cement_consumption)
 lni.s = lm(log(cons.pcap) ~ I(1/gdp.pcap), data=df_steel_consumption)
 lni.a = lm(log(cons.pcap) ~ I(1/gdp.pcap), data=df_aluminum_consumption)
+lni.p = lm(log(cons.pcap) ~ I(1/gdp.pcap), data=df_petro_consumption)
 summary(lni.c)
 summary(lni.s)
 summary(lni.a)
+summary(lni.p)
 
 lnit.c = lm(log(cons.pcap) ~ I(1/gdp.pcap)+del.t, data=df_cement_consumption)
 lnit.s = lm(log(cons.pcap) ~ I(1/gdp.pcap)+del.t, data=df_steel_consumption)
 lnit.a = lm(log(cons.pcap) ~ I(1/gdp.pcap)+del.t, data=df_aluminum_consumption)
+lnit.p = lm(log(cons.pcap) ~ I(1/gdp.pcap)+del.t, data=df_petro_consumption)
 summary(lnit.c)
 summary(lnit.s)
 summary(lnit.a) # better in linear
+summary(lnit.p)
 
 # . Non-linear ====
 nlni.c = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_cement_consumption, start=list(a=500, b=-3000))
 nlni.s = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_steel_consumption, start=list(a=600, b=-10000))
 nlni.a = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_aluminum_consumption, start=list(a=600, b=-10000))
+nlni.p = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_petro_consumption, start=list(a=600, b=-10000))
 
 summary(nlni.c)
 summary(nlni.s)
 summary(nlni.a)
+summary(nlni.p)
 
 nlnit.c = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_cement_consumption, start=list(a=500, b=-3000, m=0))
 nlnit.s = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_steel_consumption, start=list(a=600, b=-10000, m=0))
 nlnit.a = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_aluminum_consumption, start=list(a=600, b=-10000, m=0))
+nlnit.p = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_petro_consumption, start=list(a=600, b=-10000, m=0))
 
 summary(nlnit.c)
 summary(nlnit.s)
 summary(nlnit.a)
+summary(nlnit.p)
 
 
 #### Prediction ####
@@ -112,4 +130,13 @@ predict(nlni.a, df2)
 predict(nlnit.a, df2)
 exp(predict(lni.a, df2))
 exp(predict(lnit.a, df2))
+
+predict(nlni.p, df)
+predict(nlnit.p, df)
+exp(predict(lni.p, df))
+exp(predict(lnit.p, df))
+predict(nlni.p, df2)
+predict(nlnit.p, df2)
+exp(predict(lni.p, df2))
+exp(predict(lnit.p, df2))
 
