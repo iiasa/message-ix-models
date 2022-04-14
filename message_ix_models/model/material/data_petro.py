@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 from .data_util import read_timeseries
+from pathlib import Path
 
 import message_ix
 import ixmp
@@ -151,6 +152,51 @@ def gen_mock_demand_petro(scenario):
     # This makes 25 Mt ethylene, 25 Mt propylene, 21 Mt BTX
     # This can be verified by other sources.
 
+# load rpy2 modules
+# import rpy2.robjects as ro
+# from rpy2.robjects import pandas2ri
+# from rpy2.robjects.conversion import localconverter
+
+# This returns a df with columns ["region", "year", "demand.tot"]
+# def derive_petro_demand(scenario, dry_run=False):
+#     """Generate HVC demand."""
+#     # paths to r code and lca data
+#     rcode_path = Path(__file__).parents[0] / "material_demand"
+#     context = read_config()
+#
+#     # source R code
+#     r = ro.r
+#     r.source(str(rcode_path / "init_modularized.R"))
+#
+#     # Read population and baseline demand for materials
+#     pop = scenario.par("bound_activity_up", {"technology": "Population"})
+#     pop = pop.loc[pop.year_act >= 2020].rename(
+#         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
+#     )
+#
+#     # import pdb; pdb.set_trace()
+#
+#     pop = pop[["region", "year", "pop.mil"]]
+#
+#     base_demand = gen_mock_demand_petro(scenario)
+#     base_demand = base_demand.loc[base_demand.year == 2020].rename(
+#         columns={"value": "demand.tot.base", "node": "region"}
+#     )
+#
+#     print("base demand")
+#     print(base_demand)
+#
+#     # call R function with type conversion
+#     with localconverter(ro.default_converter + pandas2ri.converter):
+#         # GDP is only in MER in scenario.
+#         # To get PPP GDP, it is read externally from the R side
+#         df = r.derive_petro_demand(
+#             pop, base_demand, str(context.get_local_path("material"))
+#         )
+#         df.year = df.year.astype(int)
+#
+#     return df
+#
 
 def gen_data_petro_chemicals(scenario, dry_run=False):
     # Load configuration
@@ -342,7 +388,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # Add demand
     # Create external demand param
 
-    # demand_e,demand_p,demand_BTX = gen_mock_demand_petro(scenario)
+    #demand_HVC = derive_petro_demand(scenario)
     demand_HVC = gen_mock_demand_petro(scenario)
     paramname = "demand"
 
