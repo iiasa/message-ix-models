@@ -23,9 +23,16 @@ log = logging.getLogger(__name__)
 
 # Add to the configuration keys stored by Reporter.configure().
 genno.config.STORE.add("output_path")
+genno.config.STORE.add("output_dir")
 
 #: List of callbacks for preparing the Reporter.
 CALLBACKS: List[Callable] = []
+
+
+# Ignore a section in global.yaml used to define YAML anchors
+@genno.config.handles("_iamc formats")
+def _(c: Reporter, info):
+    pass
 
 
 @genno.config.handles("iamc")
