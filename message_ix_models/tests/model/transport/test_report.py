@@ -84,7 +84,9 @@ def test_distance_ldv(test_context, regions):
 
     # Check some computed values
     assert_allclose(
-        [13930, 45550], result.sel(nl="R11_NAM", driver_type=["M", "F"]), rtol=2e-4
+        [13930, 45550],
+        result.sel(nl=f"{regions}_NAM", driver_type=["M", "F"]),
+        rtol=2e-4,
     )
 
 
