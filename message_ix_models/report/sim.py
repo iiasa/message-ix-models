@@ -1,3 +1,4 @@
+import logging
 from collections import ChainMap, defaultdict
 from collections.abc import Mapping
 from copy import deepcopy
@@ -111,10 +112,15 @@ def add_simulated_solution(rep: Reporter, info: ScenarioInfo, data: Dict = None)
                 continue  # No data; don't overwrite existing task
 
             # log.debug(f"{key}\n{qty}")
-            rep.add(key, qty, sums=True, index=True)
+            rep.add(key, qty, sums=True)
 
     # Prepare the base MESSAGEix computations
     try:
+        gl = logging.getLogger("genno")
+        level = gl.getEffectiveLevel()
+        gl.setLevel(logging.ERROR + 1)
         rep.add_tasks()
     except KeyExistsError:
         pass  # `rep` was produced with Reporter.from_scenario()
+    finally:
+        gl.setLevel(level)
