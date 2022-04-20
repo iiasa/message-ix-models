@@ -1,13 +1,14 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
-from typing import Dict, Hashable, List, Mapping, Union
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from genno import Quantity, computations
-from genno.computations import add, product, ratio
+from genno.computations import add, product, ratio, relabel
 from genno.testing import assert_units
+from iam_units import registry
 from ixmp import Scenario
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
@@ -135,32 +136,46 @@ def distance_ldv(config: dict) -> Quantity:
     return result
 
 
+#: Mapping from technology names appearing in the IEA EEI data to those in
+#: MESSAGEix-Transport.
+EEI_TECH_MAP = {
+    "Buses": "BUS",
+    "Cars/light trucks": "LDV",
+    "Freight trains": "freight rail",
+    "Freight trucks": "freight truck",
+    "Motorcycles": "2W",
+    "Passenger trains": "RAIL",
+}
+
+
 def distance_nonldv(config: dict) -> Quantity:
     """Return annual travel distance per vehicle for non-LDV transport modes."""
-    # Load from get_eei_data
+    # Load from IEA EEI
     dfs = get_eei_data(config["transport"]["regions"])
-
-    # TODO adjust get_eei_data() to clean these and return separate quantities, or long-
-    #      form tidy data
-    cols = [
-        "ISO_code",
-        "Year",
-        "Mode/vehicle type",
-        "Vehicle stock (10^6)",
-        "Vehicle-kilometres (10^9 vkm)",
-    ]
-
     df = (
-        dfs["Activity"][cols]
-        .rename(columns={"ISO_code": "nl", "Year": "y", "Mode/vehicle type": "t"})
+        dfs["vehicle use"]
+        .rename(columns={"region": "nl", "year": "y", "Mode/vehicle type": "t"})
         .set_index(["nl", "t", "y"])
     )
-    # print(df)
 
-    result = Quantity(df[cols[4]], name="non-ldv distance")
-    # print(result)
+    # Check units
+    assert "kilovkm / vehicle" == registry.parse_units(
+        df["units"].unique()[0].replace("10^3 ", "k")
+    )
+    units = "Mm / vehicle / year"
 
-    return result
+    # Rename IEA EEI technology IDs to model-internal ones
+    result = relabel(
+        Quantity(df["value"], name="non-ldv distance", units=units),
+        dict(t=EEI_TECH_MAP),
+    )
+
+    # Select the latest year.
+    # TODO check whether coverage varies by year; if so, then fill-forward or
+    #      extrapolate
+    y_m1 = result.coords["y"].data[-1]
+    log.info(f"Return data for y={y_m1}")
+    return result.sel(y=y_m1, drop=True)
 
 
 def dummy_prices(gdp: Quantity) -> Quantity:

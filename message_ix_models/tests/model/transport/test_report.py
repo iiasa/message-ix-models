@@ -1,8 +1,9 @@
 import logging
 
 import pytest
+from genno.testing import assert_qty_equal
 from numpy.testing import assert_allclose
-from message_ix.reporting import ComputationError
+from message_ix.reporting import ComputationError, Quantity
 from message_ix_models.util import private_data_path
 from message_ix_models.testing import NIE
 from pytest import mark, param
@@ -90,7 +91,6 @@ def test_distance_ldv(test_context, regions):
     )
 
 
-@pytest.mark.xfail(reason="Under development")
 @pytest.mark.parametrize("regions", ["R11", "R12"])
 def test_distance_nonldv(regions):
     "Test :func:`.computations.ldv_distance`."
@@ -100,10 +100,15 @@ def test_distance_nonldv(regions):
     # Computation runs
     result = computations.distance_nonldv(config)
 
-    # Computed value has the expected dimensions
-    assert ("nl", "t", "y") == result.dims
+    # Computed value has the expected dimensions and units
+    assert ("nl", "t") == result.dims
+    assert result.units.is_compatible_with("km / vehicle / year")
 
-    # TODO Check some computed values
+    # Check a computed value
+    assert_qty_equal(
+        Quantity(32.7633, units="Mm / vehicle / year"),
+        result.sel(nl=f"{regions}_EEU", t="BUS", drop=True),
+    )
 
 
 @pytest.fixture
