@@ -55,13 +55,22 @@ def simulated_solution(request, context) -> Reporter:
     # Add simulated solution data
     # TODO expand
     data = dict(
+        ACT=dict(
+            nl=info.N[-1],
+            t="ELC_100",
+            yv=2020,
+            ya=2020,
+            m="all",
+            h="year",
+            value=1.0,
+        ),
         CAP=dict(
-            nl=[info.N[0]] * 2,
+            nl=[info.N[-1]] * 2,
             t=["ELC_100", "ELC_100"],
             yv=[2020, 2020],
             ya=[2020, 2025],
             value=[1.0, 1.1],
-        )
+        ),
     )
     add_simulated_solution(rep, info, data)
 
