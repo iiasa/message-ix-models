@@ -106,14 +106,14 @@ def callback(rep: Reporter):
     queue: List[Tuple[Tuple, Dict]] = []
 
     # Shorthands for queue of computations to add
+    _ = dict()  # = no keyword arguments
     _s = dict(sums=True)
-    _si = dict(sums=True, index=True)
 
     # Aggregate transport technologies
     for k in ("in", "out"):
         try:
             queue.append(
-                (("aggregate", rep.full_key(k), "transport", dict(t=t_groups)), _s)
+                (("aggregate", rep.full_key(k), "transport", dict(t=t_groups)), _)
             )
         except KeyError:
             if solved:
@@ -128,15 +128,13 @@ def callback(rep: Reporter):
     CAP_nonldv = CAP.add_tag("non-ldv")
 
     # Vehicle stocks
+
     queue.extend(
         [
             # Per capita
-            (
-                ("ratio", "demand:n-c-y:capita", "demand:n-c-y", "population:n-y"),
-                dict(sums=False),
-            ),
+            (("ratio", "demand:n-c-y:capita", "demand:n-c-y", "population:n-y"), _),
             # Investment costs
-            (("select", inv_cost.add_tag("ldv"), inv_cost, "t:transport LDV"), _si),
+            (("select", inv_cost.add_tag("ldv"), inv_cost, "t:transport LDV"), _),
             (
                 (
                     "select",
@@ -144,17 +142,16 @@ def callback(rep: Reporter):
                     inv_cost,
                     "t:transport non-LDV",
                 ),
-                _si,
+                _,
             ),
-            (("select", CAP_ldv, CAP, "t:transport LDV"), _si),
-            (("select", CAP_nonldv, CAP, "t:transport non-LDV"), _si),
+            (("select", CAP_ldv, CAP, "t:transport LDV"), _),
+            (("select", CAP_nonldv, CAP, "t:transport non-LDV"), _),
             # Vehicle stocks for LDV
-            ((dist_ldv, computations.distance_ldv, "config"), _si),
-            (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _si),
+            ((dist_ldv, computations.distance_ldv, "config"), _),
+            (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _s),
             # Vehicle stocks for non-LDV technologies
-            # commented: distance_nonldv() is incomplete
-            # ((dist_nonldv, computations.distance_nonldv, "config"), _si),
-            (("ratio", "stock:nl-t-ya:non-ldv", CAP_nonldv, dist_nonldv), _si),
+            ((dist_nonldv, computations.distance_nonldv, "config"), _),
+            (("ratio", "stock:nl-t-ya:non-ldv", CAP_nonldv, dist_nonldv), _),
         ]
     )
 
