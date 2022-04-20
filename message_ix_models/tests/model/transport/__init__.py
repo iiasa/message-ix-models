@@ -43,6 +43,8 @@ def built_transport(request, context, options=dict(), solved=False) -> Scenario:
 
 
 def simulated_solution(request, context) -> Reporter:
+    from message_data.model.transport.report import callback
+
     # Build the base model
     scenario = built_transport(request, context, solved=False)
 
@@ -75,7 +77,7 @@ def simulated_solution(request, context) -> Reporter:
     add_simulated_solution(rep, info, data)
 
     # Register the callback to set up transport reporting
-    reporting.register(transport.report.callback)
+    reporting.register(callback)
 
     # Prepare the reporter
     reporting.prepare_reporter(rep, dict())

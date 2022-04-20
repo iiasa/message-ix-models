@@ -2,7 +2,7 @@
 import logging
 from functools import partial
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, cast
 
 import genno.computations
 import message_ix
@@ -224,7 +224,7 @@ def prepare_reporter(
     # Existing keys, from Reporter.from_scenario() or add_structure() (above)
     gdp = rep.full_key("GDP")
     mer_to_ppp = rep.full_key("MERtoPPP")
-    price_full = rep.full_key("PRICE_COMMODITY").drop("h", "l")  # type: ignore
+    price_full = cast(Key, rep.full_key("PRICE_COMMODITY")).drop("h", "l")
 
     # Keys for new quantities
     pop_at = Key("population", "n y area_type".split())
