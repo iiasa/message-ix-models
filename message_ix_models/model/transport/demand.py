@@ -130,7 +130,7 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
 
         # 2. Rename dimensions
         k2 = key.add_tag("rename")
-        c.add(k2, computations.rename, k1, quote(RENAME_DIMS))
+        c.add("rename_dims", k2, k1, quote(RENAME_DIMS))
 
         # 3. Maybe transform from R11 to another node list
         k3 = key.add_tag(context.regions)
