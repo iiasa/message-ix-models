@@ -674,7 +674,7 @@ general:
 
 # For secondary energy, only the 'main' output of technologies that produce
 # hydrogen
-- key: out::h2
+- key: out:*:h2
   comp: select
   inputs: [out]
   args:
@@ -683,7 +683,7 @@ general:
       c: [hydrogen]
 
 # All other technologies not in out::h2
-- key: out::se_0
+- key: out:*:se_0
   comp: select
   inputs: [out]
   args:
@@ -725,7 +725,7 @@ general:
 #      below.
 
 # Re-combine only the 'main' outputs of technologies for SE computations
-- key: out::se_1
+- key: out:*:se_1
   comp: concat
   inputs:
   - out::h2
