@@ -18,6 +18,10 @@ general:
   comp: write_report
   inputs: [ transport iamc, transport file path ]
 
+- key: transport iamc store
+  comp: store_ts
+  inputs: [ scenario, transport iamc ]
+
 iamc:
 - variable: stock ldv iamc
   base: stock:nl-t-ya:ldv
