@@ -9,7 +9,11 @@ from message_ix_models.testing import NIE
 from pytest import mark, param
 
 from message_data.model.transport import configure
-from message_data.model.transport.report import callback, computations
+from message_data.model.transport.report import (  # noqa: F401
+    PLOTS,
+    callback,
+    computations,
+)
 from message_data.reporting import prepare_reporter, register
 
 from . import MARK, built_transport, simulated_solution
@@ -139,15 +143,26 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
 
 
 @mark.usefixtures("quiet_genno")
-@pytest.mark.parametrize("plot_name", ["energy-by-cmdty", "stock-ldv"])
+@pytest.mark.parametrize(
+    "plot_name",
+    # # All plots
+    # list(PLOTS.keys()),
+    # Only a subset
+    [
+        # "energy-by-cmdty",
+        "stock-ldv",
+        # "stock-non-ldv",
+    ],
+)
 def test_plot_simulated(request, test_context, plot_name, regions="R12", years="B"):
     """Plots are generated correctly using simulated data."""
-    test_context.update(dict(regions=regions, years=years))
+    test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context)
 
     # print(rep.describe(f"plot {plot_name}"))  # DEBUG
 
-    print(rep.get(f"plot {plot_name}"))
+    # Succeeds
+    rep.get(f"plot {plot_name}")
 
 
 @mark.usefixtures("quiet_genno")
@@ -157,11 +172,26 @@ def test_iamc_simulated(
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context)
 
-    # print(rep.describe("transport iamc file"))  # DEBUG
-    rep.get("transport iamc file")
+    # Key collecting both file output/scenario update
+    # NB the trailing colons are necessary because of how genno handles report.yaml
+    rep.add("test", ["transport iamc file:", "transport iamc store:"])
 
+    # print(rep.describe("transport iamc store"))  # DEBUG
+    # print(rep.describe("scenario"))  # DEBUG
+    # print(rep.describe("test"))  # DEBUG
+
+    rep.get("test")
+
+    # File with output was created
     assert (
         tmp_path_factory.getbasetemp()
         .joinpath("data0", "report", "transport.csv")
         .exists()
     )
+
+    # Retrieve time series data stored on the scenario object
+    ts = rep.get("scenario").timeseries()
+    # print(ts)  # DEBUG
+
+    # The reported variables were stored
+    assert "Vehicle stock|LDV|Elc_100" in ts["variable"].unique()
