@@ -1,5 +1,6 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
+from copy import deepcopy
 from operator import attrgetter
 from typing import Dict, List, Tuple
 
@@ -182,7 +183,7 @@ def callback(rep: Reporter):
     add_plots(rep)
 
     # Add IAMC tables defined in data/transport/report.yaml
-    rep.configure(**context["transport report"])
+    rep.configure(**deepcopy(context["transport report"]))
 
 
 def add_plots(rep: Reporter):
