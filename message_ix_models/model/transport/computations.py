@@ -233,18 +233,6 @@ def pdt_per_capita(gdp_ppp_cap: Quantity, config: dict) -> Quantity:
     return product(ratio(gdp_ppp_cap, fix_gdp), fix_demand)
 
 
-def rename(
-    qty: Quantity,
-    new_name_or_name_dict: Union[Hashable, Mapping[Hashable, Hashable]] = None,
-    **names: Hashable,
-) -> Quantity:
-    """Like :meth:`xarray.DataArray.rename`.
-
-    .. todo:: Upstream to :mod:`genno`.
-    """
-    return qty.rename(new_name_or_name_dict, **names)
-
-
 def share_weight(
     share: Quantity,
     gdp_ppp_cap: Quantity,
