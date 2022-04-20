@@ -115,8 +115,6 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
         desc="Exogenous data for demand projection",
     )
 
-    si = dict(sums=True, index=True)  # Shorthand
-
     # Data from files. Add 3 computations per quantity.
     for key, basename, units in (
         # (gdp_k, "gdp", "GUSD/year"),  # Handled below
@@ -141,10 +139,10 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
         elif context.regions == "R14":
             c.add(k3, adapt_R11_R14, k2)
 
-        c.add(key, partial(interpolate, coords=dict(y=info.Y)), k3, **si)
+        c.add(key, partial(interpolate, coords=dict(y=info.Y)), k3, sums=True)
 
-    gdp_keys = c.add("GDP:n-y", gdp_pop.gdp, "y", "config", **si)
-    c.add("PRICE_COMMODITY:n-c-y", (computations.dummy_prices, gdp_keys[0]), **si)
+    gdp_keys = c.add("GDP:n-y", gdp_pop.gdp, "y", "config", sums=True)
+    c.add("PRICE_COMMODITY:n-c-y", (computations.dummy_prices, gdp_keys[0]), sums=True)
 
 
 def add_structure(c: Computer, context: Context, info: ScenarioInfo):
