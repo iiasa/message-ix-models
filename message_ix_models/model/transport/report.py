@@ -78,7 +78,7 @@ def callback(rep: Reporter):
     disutil_spec = build.get_disutility_spec(context)
     technologies.extend(disutil_spec["add"].set["technology"])
 
-    rep.add("t:transport", quote(technologies))
+    rep.add("t::transport", quote(technologies))
 
     # Subsets of transport technologies for aggregation and filtering
     t_groups: Dict[str, List[str]] = dict(nonldv=[])
@@ -86,15 +86,15 @@ def callback(rep: Reporter):
         lambda t: len(t.child), context["transport set"]["technology"]["add"]
     ):
         t_groups[tech.id] = list(c.id for c in tech.child)
-        rep.add(f"t:transport {tech.id}", quote(dict(t=t_groups[tech.id])))
+        rep.add(f"t::transport {tech.id}", quote(dict(t=t_groups[tech.id])))
         # Store non-LDV technologies
         if tech.id != "LDV":
             t_groups["nonldv"].extend(t_groups[tech.id])
 
-    rep.add("t:transport non-LDV", quote(dict(t=t_groups["nonldv"])))
+    rep.add("t::transport non-LDV", quote(dict(t=t_groups["nonldv"])))
 
     # Set of all transport commodities
-    rep.add("c:transport", quote(spec["add"].set["commodity"]))
+    rep.add("c::transport", quote(spec["add"].set["commodity"]))
 
     # Apply filters if configured
     if config["filter"]:
@@ -121,7 +121,6 @@ def callback(rep: Reporter):
 
     # Keys
     dist_ldv = Key("distance", "nl driver_type".split(), "ldv")
-    dist_nonldv = Key("distance", "nl", "non-ldv")
     inv_cost = Key("inv_cost", "nl t yv".split())
     CAP = Key("CAP", "nl t ya".split())
     CAP_ldv = CAP.add_tag("ldv")
@@ -134,18 +133,18 @@ def callback(rep: Reporter):
             # Per capita
             (("ratio", "demand:n-c-y:capita", "demand:n-c-y", "population:n-y"), _),
             # Investment costs
-            (("select", inv_cost.add_tag("ldv"), inv_cost, "t:transport LDV"), _),
+            (("select", inv_cost.add_tag("ldv"), inv_cost, "t::transport LDV"), _),
             (
                 (
                     "select",
                     inv_cost.add_tag("non-ldv"),
                     inv_cost,
-                    "t:transport non-LDV",
+                    "t::transport non-LDV",
                 ),
                 _,
             ),
-            (("select", CAP_ldv, CAP, "t:transport LDV"), _),
-            (("select", CAP_nonldv, CAP, "t:transport non-LDV"), _),
+            (("select", CAP_ldv, CAP, "t::transport LDV"), _),
+            (("select", CAP_nonldv, CAP, "t::transport non-LDV"), _),
             # Vehicle stocks for LDV
             ((dist_ldv, computations.distance_ldv, "config"), _),
             (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _s),
@@ -158,6 +157,9 @@ def callback(rep: Reporter):
     # Add IAMC tables defined in data/transport/report.yaml
     rep.configure(**deepcopy(context["transport report"]))
 
+    # Add plots
+    add_plots(rep)
+
     # Add key collecting all others
     # FIXME `added` includes all partial sums of in::transport etc.
     rep.add("transport all", ["transport plots"])
@@ -166,9 +168,6 @@ def callback(rep: Reporter):
     demand.prepare_reporter(
         rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
     )
-
-    # Add plots
-    add_plots(rep)
 
 
 def add_plots(rep: Reporter):
