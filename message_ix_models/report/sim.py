@@ -105,14 +105,23 @@ def add_simulated_solution(rep: Reporter, info: ScenarioInfo, data: Dict = None)
             # Add the set elements
             rep.add(RENAME_DIMS.get(name, name), quote(info.set[name]))
         elif item_info["ix_type"] in ("par", "var"):
+            # Retrieve an existing key for `name`
+            try:
+                full_key = rep.full_key(name)
+            except KeyError:
+                full_key = None  # Not present in `rep`
+
+            # Simulated data for name
             item_data = data.get(name, {})
+
+            if full_key and not item_data:
+                # Don't overwrite existing task with empty data
+                continue
+
+            # Store simulated data for this quantity
             key, qty = simulate_qty(name, item_info, **item_data)
-
-            if name in rep and not item_data:
-                continue  # No data; don't overwrite existing task
-
-            # log.debug(f"{key}\n{qty}")
             rep.add(key, qty, sums=True)
+            # log.debug(f"{key}\n{qty}")
 
     # Prepare the base MESSAGEix computations
     try:
