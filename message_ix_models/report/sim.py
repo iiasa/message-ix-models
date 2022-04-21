@@ -12,6 +12,8 @@ from message_ix.reporting import Key, KeyExistsError, Quantity, Reporter
 from message_ix_models import ScenarioInfo
 from pandas.api.types import is_scalar
 
+from message_data.tools import silence_log
+
 
 # Shorthand for MESSAGE_VARS, below
 def item(ix_type, idx_names):
@@ -124,12 +126,8 @@ def add_simulated_solution(rep: Reporter, info: ScenarioInfo, data: Dict = None)
             # log.debug(f"{key}\n{qty}")
 
     # Prepare the base MESSAGEix computations
-    try:
-        gl = logging.getLogger("genno")
-        level = gl.getEffectiveLevel()
-        gl.setLevel(logging.ERROR + 1)
-        rep.add_tasks()
-    except KeyExistsError:
-        pass  # `rep` was produced with Reporter.from_scenario()
-    finally:
-        gl.setLevel(level)
+    with silence_log("genno", logging.CRITICAL):
+        try:
+            rep.add_tasks()
+        except KeyExistsError:
+            pass  # `rep` was produced with Reporter.from_scenario()
