@@ -21,6 +21,8 @@ MARK = (
 
 def built_transport(request, context, options=dict(), solved=False) -> Scenario:
     """Analogous to :func:`.testing.bare_res`, with transport detail added."""
+    options.setdefault("quiet", True)
+
     # Retrieve (maybe generate) the bare RES with the same settings
     res = testing.bare_res(request, context, solved)
 
@@ -32,7 +34,7 @@ def built_transport(request, context, options=dict(), solved=False) -> Scenario:
     except ValueError:
         log.info(f"Create '{model_name}/baseline' for testing")
         scenario = res.clone(model=model_name)
-        transport.build.main(context, scenario, options, fast=True, quiet=False)
+        transport.build.main(context, scenario, options, fast=True)
 
     if solved and not scenario.has_solution():
         log.info(f"Solve '{scenario.model}/{scenario.scenario}'")
