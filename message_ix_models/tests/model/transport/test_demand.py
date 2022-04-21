@@ -10,8 +10,7 @@ from message_ix_models.testing import NIE
 from pytest import param
 
 from message_data.model.transport import build, demand, configure
-
-from . import MARK
+from message_data.model.transport.testing import MARK
 
 log = logging.getLogger(__name__)
 

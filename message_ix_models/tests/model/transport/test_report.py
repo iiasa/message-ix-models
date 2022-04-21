@@ -15,8 +15,11 @@ from message_data.model.transport.report import (  # noqa: F401
     computations,
 )
 from message_data.reporting import prepare_reporter, register
-
-from . import MARK, built_transport, simulated_solution
+from message_data.model.transport.testing import (
+    MARK,
+    built_transport,
+    simulated_solution,
+)
 
 log = logging.getLogger(__name__)
 
