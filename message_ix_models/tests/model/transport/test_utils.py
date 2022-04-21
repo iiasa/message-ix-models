@@ -39,6 +39,7 @@ def test_add_cl(test_context):
     [
         None,  # Default, i.e. R11
         "R11",
+        "R12",
         "R14",
         param("ISR", marks=pytest.mark.xfail(raises=KeyError)),
     ],
@@ -73,9 +74,7 @@ def test_configure(test_context, regions):
     # Codes for commodities are generated
     codes = ctx["transport set"]["commodity"]["add"]
     assert 0 < len(codes)
-    print(codes)
     RUEAA = codes[codes.index("transport pax RUEAA")]
-    print(RUEAA, RUEAA.annotations)
     assert eval_anno(RUEAA, "demand") is True
 
     # If "ISR" was given as 'regions', then the corresponding config file was loaded
