@@ -149,27 +149,18 @@ def callback(rep: Reporter):
             # Vehicle stocks for LDV
             ((dist_ldv, computations.distance_ldv, "config"), _),
             (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _s),
-            # Vehicle stocks for non-LDV technologies
-            ((dist_nonldv, computations.distance_nonldv, "config"), _),
-            (("ratio", "stock:nl-t-ya:non-ldv", CAP_nonldv, dist_nonldv), _),
         ]
     )
 
     # Only viable keys added
     rep.add_queue(queue)
 
+    # Add IAMC tables defined in data/transport/report.yaml
+    rep.configure(**deepcopy(context["transport report"]))
+
     # Add key collecting all others
     # FIXME `added` includes all partial sums of in::transport etc.
     rep.add("transport all", ["transport plots"])
-
-    # Configuration for :func:`check`. Adds a single key, 'transport check', that
-    # depends on others and returns a :class:`pandas.Series` of :class:`bool`.
-    rep.add(
-        "transport check",
-        computations.transport_check,
-        "scenario",
-        Key("ACT", "nl t yv ya m h".split()),
-    )
 
     # Add ex-post mode and demand calculations
     demand.prepare_reporter(
@@ -178,9 +169,6 @@ def callback(rep: Reporter):
 
     # Add plots
     add_plots(rep)
-
-    # Add IAMC tables defined in data/transport/report.yaml
-    rep.configure(**deepcopy(context["transport report"]))
 
 
 def add_plots(rep: Reporter):

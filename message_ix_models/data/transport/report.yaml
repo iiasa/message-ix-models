@@ -5,6 +5,27 @@
 # rest, see message_data.model.transport.report.
 
 general:
+# Configuration for :func:`check`. Adds a single key, 'transport check', that
+# depends on others and returns a :class:`pandas.Series` of :class:`bool`.
+- comp: transport_check
+  key: transport check
+  inputs: [ scenario, ACT:nl-t-yv-va-m-h ]
+
+# Vehicle stocks for non-LDV technologies
+- comp: distance_nonldv
+  key: distance:nl:non-ldv
+  inputs: [ config ]
+
+- comp: ratio
+  key: stock:nl-t-ya:non-ldv
+  inputs: [ CAP:nl-t-ya:non-ldv, distance:nl:non-ldv ]
+  sums: true
+
+- comp: select
+  key: in:*:ldv
+  inputs: [ in, "t::transport LDV" ]
+  sums: true
+
 - key: transport file path
   comp: make_output_path
   inputs: [ config ]
@@ -12,7 +33,7 @@ general:
 
 - key: transport iamc
   comp: concat
-  inputs: [ stock ldv iamc ]
+  inputs: [ stock ldv iamc, transport input iamc ]
 
 - key: transport iamc file
   comp: write_report
@@ -26,3 +47,6 @@ iamc:
 - variable: stock ldv iamc
   base: stock:nl-t-ya:ldv
   var: [ "Vehicle stock|LDV", t ]
+- variable: transport input iamc
+  base: in:nl-t-ya:ldv
+  var: [ "|||Transport Energy|LDV", t ]
