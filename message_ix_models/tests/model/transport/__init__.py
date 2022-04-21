@@ -59,7 +59,7 @@ def simulated_solution(request, context) -> Reporter:
     data = dict(
         ACT=dict(
             nl=info.N[-1],
-            t="ELC_100",
+            t=["ELC_100", "FR_ICE_H", "ICE_H_bus"],
             yv=2020,
             ya=2020,
             m="all",

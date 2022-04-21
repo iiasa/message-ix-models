@@ -194,4 +194,4 @@ def test_iamc_simulated(
     # print(ts)  # DEBUG
 
     # The reported variables were stored
-    assert "Vehicle stock|LDV|Elc_100" in ts["variable"].unique()
+    assert {"Vehicle stock|LDV|Elc_100"} <= set(ts["variable"].unique())
