@@ -7,7 +7,11 @@ Reporting
 See also:
 
 - ``global.yaml``, the :doc:`reporting/default-config`.
-- Documentation for :mod:`genno`, :mod:`ixmp.reporting`, and :mod:`message_ix.reporting`.
+- Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.reporting`, and :mod:`message_ix.reporting`.
+- :doc:`/reference/tools/post_processing`, still in use.
+- Documentation for reporting specific to certain model variants:
+
+  - :doc:`/reference/model/transport/report`
 - `“Reporting” project board <https://github.com/orgs/iiasa/projects/3>`_ on GitHub for the initial development of these features.
 
 .. toctree::
