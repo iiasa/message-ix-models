@@ -1,0 +1,93 @@
+format: 1
+
+title: Materials + transport representation in MESSAGEix
+description: |-
+  These are the data required to parametrize a representation of materials use
+  in the transport sector, i.e. the integration of MESSAGEix-Materials and
+  MESSAGEix-Transport.
+provider:
+  organisation: International Institute for Applied Systems Analysis (IIASA)
+  contact: xum@iiasa.ac.at; lorenzo.usai@ntnu.no; kishimot@iiasa.ac.at
+
+classifiers:
+- "Kind :: Model input"
+
+dimension:
+  time: 
+    scope: 2010 to 2100
+    resolution: 5 years periods
+    description: |-
+      Historical data (2010-2020) + projections
+  space: 
+    scope: global
+    resolution: R11
+    description: |-
+      See https://docs.messageix.org/projects/models2/en/latest/pkg-data/node.html
+      or https://github.com/iiasa/message-ix-models/blob/main/message_ix_models/data/node/R11.yaml 
+  powertrain_technology:
+    scope: All powertrain technologies  
+    resolution: Powertrain technologies included in MESSAGEix (ICEV,BEV,PHEV,FCEV) 
+    description: |-
+      Even though for this analysis only PHEV and BEVs are relevant, 
+      we should probably take into account all powertrain technologies
+  battery_technology: 
+    scope: BEVs and PHEVs
+    description: Battery technology/chemistry that can be used by electric vehicles
+    resolution: |-
+      Three families of battery chemistries for current fleet of vehicles (NCA, NMC, LFP)
+      Possibly, think about two battery chemistries that may be used in the future. Candidates:
+        - Li-air
+        - Li-S 
+  vehicle_segment: 
+    scope: size of ELDVs
+    description: The vehicle class , which will affect the battery size 
+    resolution: |-
+      Confirm with Paul which vehicle segments are available in MESSAGEix-Transport
+      I suppose: micro, medium, SUV. I might be wrong. To each vehicle segment
+      a given battery size has to be assigned, based on current real fleet data
+      and then projected until 2050
+  
+
+measure: 
+  battery_size:
+    description: size of battery per vehicle segment and battery technology
+  Li_content: 
+    description: amount of Lithum in each battery chemistry
+  Co_content: 
+    description: amount of Cobalt in each battery chemistry
+  Ni_content: 
+    description: amount of Nickel in each battery chemistry
+  graphite_content: 
+    description: amount of graphite in each battery chemistry
+
+quantity:
+- measure: battery_size
+  dimensions: [time,space,powertrain_technology,vehicle segment]
+  units: kWh
+  description: |-
+    Size of the battery for a given combination of powertrain technology
+    and vehicle size
+- measure: Li_content
+  dimensions: [time,battery_technology]
+  units: kg/kWh
+  description: |-
+    Amount of Li in each battery chemistry. The material loading may vary 
+    in the future as a result of technology development
+- measure: Co_content
+  dimensions: [time, battery_technology]
+  units: kg/kWh
+  description: |-
+    Amount of Co in each battery chemistry. The material loading may vary 
+    in the future as a result of technology development
+- measure: Ni_content
+  dimensions: [time, battery_technology]
+  units: kg/kWh
+  description: |-
+    Amount of Ni in each battery chemistry. The material loading may vary 
+    in the future as a result of technology development
+- measure: graphite_content
+  dimensions: [time, battery_technology]
+  units: kg/kWh
+  description: |-
+    Amount of Graphite in each battery chemistry. The material loading may vary 
+    in the future as a result of technology development
