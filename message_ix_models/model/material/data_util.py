@@ -378,11 +378,12 @@ def add_emission_accounting(scen):
     context = read_config()
     s_info = ScenarioInfo(scen)
 
-    # Obtain the emission factors only for material related technologies
+    # Obtain the CO2 emission factors and add to CO2_Emission relation.
     # TODO: Also residential and commercial technologies should be added to this list.
     # We dont need to add ammonia/fertilier production here. Because there are
-    # no extra process emissions that need to be accounted in emissions relations.
-    # CCS negative emission_factor are already handled in gen_data_ammonia.py.
+    # no extra process emissions that need to be accounted in emissions relation.
+    # CCS negative emission_factor are added to this relation in gen_data_ammonia.py.
+    # Emissions from refining sector are categorized as 'CO2_transformation'.
 
     tec_list = scen.par("emission_factor")["technology"].unique()
     tec_list_materials = [
@@ -393,7 +394,7 @@ def add_emission_accounting(scen):
             | ("aluminum" in i)
             | ("petro" in i)
             | ("cement" in i)
-            | ("ref" in i)
+            | ('ref' in i)
         )
     ]
     tec_list_materials.remove("refrigerant_recovery")
@@ -414,6 +415,7 @@ def add_emission_accounting(scen):
     relation_activity = relation_activity[
         (relation_activity["relation"] != "PM2p5_Emission")
         & (relation_activity["relation"] != "CO2_industry_Emission")
+        & (relation_activity["relation"] != "CO2_transformation_Emission")
     ]
 
     scen.check_out()
