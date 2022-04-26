@@ -160,11 +160,11 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
         info.set["node"] = get_region_codes(context.regions)
 
     for key, value in (
-        ("c:transport", quote(info.set["commodity"])),
+        ("c::transport", quote(info.set["commodity"])),
         ("cg", quote(info.set["consumer_group"])),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
-        ("t:transport modes", quote(context["transport config"]["demand modes"])),
+        ("t::transport modes", quote(context["transport config"]["demand modes"])),
         ("y", quote(info.set["year"])),
         (
             "cat_year",
@@ -259,7 +259,7 @@ def prepare_reporter(
                 "base_shares",
                 "base shares:n-t-y",
                 "n:ex world",
-                "t:transport modes",
+                "t::transport modes",
                 "y:model",
                 "config",
             ),
@@ -360,7 +360,7 @@ def prepare_reporter(
             (
                 "demand dummy:ixmp",
                 dummy,
-                "c:transport",
+                "c::transport",
                 "nodes:ex world",
                 "y:model",
                 "config",
