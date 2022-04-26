@@ -43,7 +43,11 @@ general:
 
 - key: transport iamc
   comp: concat
-  inputs: [ stock ldv iamc, transport input iamc ]
+  inputs:
+  - transport iamc 0
+  - transport iamc 1
+  - transport iamc 2
+  # - transport iamc 3
 
 - key: transport iamc file
   comp: write_report
@@ -53,10 +57,19 @@ general:
   comp: store_ts
   inputs: [ scenario, transport iamc ]
 
+# NB these are currently tailored to produce the variable names expected for the
+#    NGFS project
 iamc:
-- variable: stock ldv iamc
+- variable: transport iamc 0
   base: stock:nl-t-ya:ldv
-  var: [ "Vehicle stock|LDV", t ]
-- variable: transport input iamc
+  var: [ "Transport|Stock|Road|Passenger|LDV", t ]
+- variable: transport iamc 1
   base: in:nl-t-ya:ldv
-  var: [ "|||Transport Energy|LDV", t ]
+  var: [ "Final Energy|Transportation|Road|Passenger|LDV", t ]
+- variable: transport iamc 2
+  base: in:nl-t-ya:non-ldv
+  var: [ "Final Energy|Transportation|", t ]
+- variable: transport iamc 3
+  # Auto-sum over dimensions yv, m, h
+  base: emi:nl-t-ya
+  var: [ "Emissions|CO2|Energy|Demand|Transportation|", t ]
