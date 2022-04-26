@@ -39,12 +39,7 @@ def dummy(
         # No dummy data → return nothing
         return dict()
 
-    common = dict(
-        level="useful",
-        time="year",
-        value=10 + np.arange(len(y)),
-        year=y,
-    )
+    common = dict(level="useful", time="year", value=10 + np.arange(len(y)), year=y)
 
     dfs = []
 
@@ -64,10 +59,8 @@ def dummy(
         )
 
     # # Dummy demand for light oil
-    # common['level'] = 'final'
-    # dfs.append(
-    #     make_df('demand', commodity='lightoil', **common)
-    # )
+    # common["level"] = "final"
+    # dfs.append(make_df("demand", commodity="lightoil", **common))
 
     return dict(demand=pd.concat(dfs).pipe(broadcast, node=nodes))
 
@@ -172,11 +165,9 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
         ),
     ):
         try:
-            # strict=True to raise an exception if `key` exists
-            c.add(key, value, strict=True)
+            c.add(key, value, strict=True)  # Raise an exception if `key` exists
         except KeyExistsError:
-            # Already present; don't overwrite
-            continue
+            continue  # Already present; don't overwrite
 
 
 def prepare_reporter(
