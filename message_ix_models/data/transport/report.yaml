@@ -11,19 +11,29 @@ general:
   key: transport check
   inputs: [ scenario, ACT:nl-t-yv-va-m-h ]
 
-# Vehicle stocks for non-LDV technologies
+# Exogenous data
+- comp: distance_ldv
+  key: distance:nl-driver_type:ldv
+  inputs: [ config ]
+
 - comp: distance_nonldv
   key: distance:nl:non-ldv
   inputs: [ config ]
 
+# Demand per capita
+- comp: ratio
+  key: demand:n-c-y:capita
+  inputs: [ demand:n-c-y, population:n-y ]
+
+# Vehicle stocks
 - comp: ratio
   key: stock:nl-t-ya:non-ldv
   inputs: [ CAP:nl-t-ya:non-ldv, distance:nl:non-ldv ]
   sums: true
 
-- comp: select
-  key: in:*:ldv
-  inputs: [ in, "t::transport LDV" ]
+- comp: ratio
+  key: stock:nl-t-ya-driver_type:ldv
+  inputs: [ CAP:nl-t-ya:ldv, distance:nl-driver_type:ldv ]
   sums: true
 
 - key: transport file path

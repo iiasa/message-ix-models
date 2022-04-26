@@ -6,10 +6,11 @@ from typing import Dict, List, Tuple
 
 from dask.core import quote
 from message_ix.reporting import Key, Reporter
-from message_ix_models import Context
+from message_ix_models import Context, Spec
 
-from . import computations, configure
-from .plot import PLOTS
+import message_data.tools.gdp_pop
+from message_data.model.transport import computations, configure
+from message_data.model.transport.plot import PLOTS
 
 log = logging.getLogger(__name__)
 
@@ -36,36 +37,9 @@ def check(scenario):
     return rep.get(key)
 
 
-def callback(rep: Reporter):
-    """:meth:`.prepare_reporter` callback for MESSAGE-Transport.
-
-    Adds:
-
-    - ``{in,out}::transport``: with outputs aggregated by technology group or
-      "mode".
-    - ``transport plots``: the plots from :mod:`.transport.plot`.
-    - ``transport all``: all of the above.
-    """
-    from . import build, demand
-
-    if computations not in rep.modules:
-        rep.modules.append(computations)
-
-    try:
-        solved = rep.graph["scenario"].has_solution()
-    except KeyError:
-        solved = False
-
-    # Read transport reporting configuration onto the latest Context
-    context = Context.get_instance(-1)
-    configure(context)
-
-    config = context["transport config"]["report"]
-    config.update(context["transport config"])
-
-    # Add configuration to the Reporter
-    rep.graph["config"].setdefault("transport", {})
-    rep.graph["config"]["transport"].update(config.copy())
+def transport_technologies(context) -> Tuple[Spec, List, Dict]:
+    """Return info about transport technologies, given `context`."""
+    from . import build
 
     # Get a specification that describes this setting
     spec = build.get_spec(context)
@@ -78,23 +52,78 @@ def callback(rep: Reporter):
     disutil_spec = build.get_disutility_spec(context)
     technologies.extend(disutil_spec["add"].set["technology"])
 
-    rep.add("t::transport", quote(technologies))
-
     # Subsets of transport technologies for aggregation and filtering
-    t_groups: Dict[str, List[str]] = dict(nonldv=[])
+    t_groups: Dict[str, List[str]] = {"non-ldv": []}
     for tech in filter(  # Only include those technologies with children
         lambda t: len(t.child), context["transport set"]["technology"]["add"]
     ):
         t_groups[tech.id] = list(c.id for c in tech.child)
-        rep.add(f"t::transport {tech.id}", quote(dict(t=t_groups[tech.id])))
         # Store non-LDV technologies
         if tech.id != "LDV":
-            t_groups["nonldv"].extend(t_groups[tech.id])
+            t_groups["non-ldv"].extend(t_groups[tech.id])
 
-    rep.add("t::transport non-LDV", quote(dict(t=t_groups["nonldv"])))
+    return spec, technologies, t_groups
 
-    # Set of all transport commodities
+
+def register_modules(rep: Reporter):
+    # NB this can be replaced by rep.require_compat(…) in genno >= 1.12
+    for mod in (computations, message_data.tools.gdp_pop):
+        if mod not in rep.modules:
+            rep.modules.append(mod)
+
+
+def callback(rep: Reporter):
+    """:meth:`.prepare_reporter` callback for MESSAGE-Transport.
+
+    Among others, adds:
+
+    - ``{in,out}::transport``: with outputs aggregated by technology group or
+      "mode".
+    - ``transport plots``: the plots from :mod:`.transport.plot`.
+
+      If the scenario to be reported is not solved, only a subset of plots are added.
+    - ``transport all``: all of the above.
+    """
+    from . import demand
+
+    register_modules(rep)
+
+    try:
+        solved = rep.graph["scenario"].has_solution()
+    except KeyError:
+        solved = False  # "scenario" is not present in the Reporter; may be added later
+
+    N_keys = len(rep.graph)
+
+    # Read transport configuration, including reporting config, onto the latest Context
+    context = Context.get_instance(-1)
+    configure(context)
+
+    config = context["transport config"]["report"]
+    config.update(context["transport config"])
+
+    # Add configuration to the Reporter
+    rep.graph["config"].setdefault("transport", {})
+    rep.graph["config"]["transport"].update(config.copy())
+
+    # Retrieve information about the model structure
+    spec, technologies, t_groups = transport_technologies(context)
+
+    # 1. Add ex-post mode and demand calculations
+    demand.prepare_reporter(
+        rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
+    )
+
+    # 2. Add model structure to the reporter
+    # NB demand.add_structure() has already added some
+
+    # Bare lists
+    rep.add("t::transport", quote(technologies))
     rep.add("c::transport", quote(spec["add"].set["commodity"]))
+
+    # Mappings for use with select()
+    for id, techs in t_groups.items():
+        rep.add(f"t::transport {id}", quote(dict(t=techs)))
 
     # Apply filters if configured
     if config["filter"]:
@@ -102,85 +131,41 @@ def callback(rep: Reporter):
         log.info("Filter out non-transport technologies")
         rep.set_filters(t=list(map(str, sorted(technologies, key=attrgetter("id")))))
 
-    # Queue of computations to add
+    # 3. Assemble a queue of computations to add
     queue: List[Tuple[Tuple, Dict]] = []
-
-    # Shorthands for queue of computations to add
-    _ = dict()  # = no keyword arguments
+    _ = dict()  # Shorthand for no keyword arguments
     _s = dict(sums=True)
 
     # Aggregate transport technologies
-    for k in ("in", "out"):
+    for key in ("in", "out"):
         try:
-            queue.append(
-                (("aggregate", rep.full_key(k), "transport", dict(t=t_groups)), _)
-            )
+            k = rep.full_key(key)
         except KeyError:
             if solved:
                 raise
+            else:
+                continue
+        queue.append((("aggregate", k, "transport", dict(t=t_groups)), _))
 
-    # Keys
-    dist_ldv = Key("distance", "nl driver_type".split(), "ldv")
-    inv_cost = Key("inv_cost", "nl t yv".split())
-    CAP = Key("CAP", "nl t ya".split())
-    CAP_ldv = CAP.add_tag("ldv")
-    CAP_nonldv = CAP.add_tag("non-ldv")
+    # Selected subsets of certain quantities
+    for key in (
+        Key("CAP", "nl t ya".split()),
+        Key("in", "nl t ya".split()),
+        Key("inv_cost", "nl t yv".split()),
+    ):
+        queue.append((("select", key.add_tag("ldv"), key, "t::transport LDV"), _s))
+        queue.append(
+            (("select", key.add_tag("non-ldv"), key, "t::transport non-ldv"), _s)
+        )
 
-    # Vehicle stocks
-
-    queue.extend(
-        [
-            # Per capita
-            (("ratio", "demand:n-c-y:capita", "demand:n-c-y", "population:n-y"), _),
-            # Investment costs
-            (("select", inv_cost.add_tag("ldv"), inv_cost, "t::transport LDV"), _),
-            (
-                (
-                    "select",
-                    inv_cost.add_tag("non-ldv"),
-                    inv_cost,
-                    "t::transport non-LDV",
-                ),
-                _,
-            ),
-            (("select", CAP_ldv, CAP, "t::transport LDV"), _),
-            (("select", CAP_nonldv, CAP, "t::transport non-LDV"), _),
-            # Vehicle stocks for LDV
-            ((dist_ldv, computations.distance_ldv, "config"), _),
-            (("ratio", "stock:nl-t-ya-driver_type:ldv", CAP_ldv, dist_ldv), _s),
-        ]
-    )
-
-    # Only viable keys added
+    # Add all the computations in `queue`. Some may be discarded if inputs are missing.
     rep.add_queue(queue)
 
-    # Add IAMC tables defined in data/transport/report.yaml
+    # 4. Add further computations (incl. IAMC tables) defined in
+    #    data/transport/report.yaml
     rep.configure(**deepcopy(context["transport report"]))
 
-    # Add plots
-    add_plots(rep)
-
-    # Add key collecting all others
-    # FIXME `added` includes all partial sums of in::transport etc.
-    rep.add("transport all", ["transport plots"])
-
-    # Add ex-post mode and demand calculations
-    demand.prepare_reporter(
-        rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
-    )
-
-
-def add_plots(rep: Reporter):
-    """Add transport plots to `rep`.
-
-    If the scenario to be reported is not solved, only a subset of plots are added.
-    All available plots are collected under a key "transport plots".
-    """
-    try:
-        solved = rep.graph["scenario"].has_solution()
-    except KeyError:
-        solved = False
-
+    # 5. Add plots
     queue: List[Tuple[Tuple, Dict]] = [
         ((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()
     ]
@@ -192,3 +177,11 @@ def add_plots(rep: Reporter):
     key = "transport plots"
     log.info(f"Add {repr(key)} collecting {len(plots)} plots")
     rep.add(key, plots)
+
+    # Add key collecting all others
+    rep.add(
+        "transport all",
+        ["transport plots", "transport iamc file", "transport iamc store"],
+    )
+
+    log.info(f"Added {len(rep.graph)-N_keys} keys")

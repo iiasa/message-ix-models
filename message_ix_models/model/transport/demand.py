@@ -20,6 +20,7 @@ from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
 from message_data.model.transport import computations, plot
 from message_data.model.transport.data import groups
+from message_data.model.transport.report import register_modules
 from message_data.model.transport.utils import get_region_codes, path_fallback
 from message_data.tools import gdp_pop
 
@@ -188,9 +189,7 @@ def prepare_reporter(
         # Configure the reporter; keys are stored
         rep.configure(transport=context["transport config"])
 
-    # Add message_data.model.transport.computations to look up computation names
-    if computations not in rep.modules:
-        rep.modules.append(computations)
+    register_modules(rep)
 
     # Always ensure structure is available
     add_structure(rep, context, info or ScenarioInfo())
