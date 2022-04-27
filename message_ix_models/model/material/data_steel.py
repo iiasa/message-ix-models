@@ -39,22 +39,22 @@ def gen_mock_demand_steel(scenario):
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
     #'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
-    # True steel use 2010 [Mt/year]
-    # https://www.worldsteel.org/en/dam/jcr:0474d208-9108-4927-ace8-4ac5445c5df8/World+Steel+in+Figures+2017.pdf
-
-    # For R12: China and CPA demand divided by 0.1 and 0.9.
+    # Finished steel demand from: https://www.oecd.org/industry/ind/Item_4b_Worldsteel.pdf
+    # For region definitions: https://worldsteel.org/wp-content/uploads/2021-World-Steel-in-Figures.pdf
+    # For detailed assumptions and calculation see: steel_demand_calculation.xlsx
+    # under https://iiasahub.sharepoint.com/sites/eceprog?cid=75ea8244-8757-44f1-83fd-d34f94ffd06a
 
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
         sheet_n = "data_R12"
         region_set = "R12_"
-        d = [35, 5.37, 70, 53, 49, 39, 130, 80, 45, 96, 100, 531.63]
+        d = [20.04, 12.08, 56.55, 56.5, 64.94, 54.26, 97.76, 91.3, 65.2, 164.28, 131.95, 980.1]
 
     else:
         nodes.remove("R11_GLB")
         sheet_n = "data_R11"
         region_set = "R11_"
-        d = [35, 537, 70, 53, 49, 39, 130, 80, 45, 96, 100]
+        d = [20.04, 992.18, 56.55, 56.5, 64.94, 54.26, 97.76, 91.3, 65.2, 164.28, 131.95]
         # MEA change from 39 to 9 to make it feasible (coal supply bound)
 
     # SSP2 R11 baseline GDP projection
@@ -69,26 +69,26 @@ def gen_mock_demand_steel(scenario):
 
     gdp_growth["Region"] = region_set + gdp_growth["Region"]
 
-    demand2010_steel = (
+    demand2020_steel = (
         pd.DataFrame({"Region": nodes, "Val": d})
         .join(gdp_growth.set_index("Region"), on="Region")
         .rename(columns={"Region": "node"})
     )
 
-    demand2010_steel.iloc[:, 3:] = (
-        demand2010_steel.iloc[:, 3:]
-        .div(demand2010_steel[2010], axis=0)
-        .multiply(demand2010_steel["Val"], axis=0)
+    demand2020_steel.iloc[:, 3:] = (
+        demand2020_steel.iloc[:, 3:]
+        .div(demand2020_steel[2020], axis=0)
+        .multiply(demand2020_steel["Val"], axis=0)
     )
 
-    demand2010_steel = pd.melt(
-        demand2010_steel.drop(["Val", "Scenario"], axis=1),
+    demand2020_steel = pd.melt(
+        demand2020_steel.drop(["Val", "Scenario"], axis=1),
         id_vars=["node"],
         var_name="year",
         value_name="value",
     )
 
-    return demand2010_steel
+    return demand2020_steel
 
 
 def gen_data_steel(scenario, dry_run=False):
