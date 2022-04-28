@@ -422,6 +422,34 @@ def add_emission_accounting(scen):
     scen.add_par("relation_activity", relation_activity)
     scen.commit("Emissions accounting for industry technologies added.")
 
+    # Correct CF4 Emission relations
+    # Remove transport related technologies from CF4_Emissions
+
+    scen.check_out()
+
+    CF4_trp_Emissions = scen.par("relation_activity", filters = {"relation": "CF4_Emission"})
+    list_tec_trp = [l for l in CF4_trp_Emissions["technology"].unique() if "trp" in l]
+    CF4_trp_Emissions = CF4_trp_Emissions[CF4_trp_Emissions["technology"].isin(list_tec_trp)]
+
+    scen.remove_par("relation_activity",CF4_trp_Emissions)
+
+    # Remove transport related technologies from CF4_alm_red and add aluminum tecs.
+
+    CF4_red = scen.par("relation_activity", filters = {"relation": "CF4_alm_red"})
+    list_tec_trp = [l for l in CF4_red["technology"].unique() if "trp" in l]
+    CF4_red = CF4_red[CF4_red["technology"].isin(list_tec_trp)]
+
+    scen.remove_par("relation_activity",CF4_red)
+
+    CF4_red_add = scen.par("emission_factor", filters = {"technology": ["soderberg_aluminum","prebake_aluminum"], "emission":"CF4"})
+    CF4_red_add.drop(["year_vtg","emission"], axis = 1, inplace = True)
+    CF4_red_add["relation"] = "CF4_alm_red"
+    CF4_red_add["unit"] = "???"
+    CF4_red_add["year_rel"] = CF4_red_add["year_act"]
+    CF4_red_add["node_rel"] = CF4_red_add["node_loc"]
+
+    scen.add_par("relation_activity",CF4_red_add)
+    scen.commit("CF4 relations corrected.")
 
 def read_sector_data(scenario, sectname):
 
