@@ -61,6 +61,8 @@ todo_include_todos = True
 
 # -- Options for HTML output -------------------------------------------------
 
+html_favicon = "_static/png_source_files/favicon.svg"
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = "sphinx_rtd_theme"
