@@ -418,6 +418,23 @@ def add_emission_accounting(scen):
         & (relation_activity["relation"] != "CO2_transformation_Emission")
     ]
 
+    # Add thermal industry technologies to CO2_ind relation
+
+    relation_activity_furnaces = scen.par(
+    "emission_factor", filters={"emission": 'CO2_industry',
+                                "technology": tec_list_materials})
+    relation_activity_furnaces['relation'] = 'CO2_ind'
+    relation_activity_furnaces["node_rel"] = relation_activity_furnaces["node_loc"]
+    relation_activity_furnaces.drop(["year_vtg", "emission"], axis=1, inplace=True)
+    relation_activity_furnaces["year_rel"] = relation_activity_furnaces["year_act"]
+    relation_activity_furnaces = relation_activity_furnaces[~relation_activity_furnaces['technology'].str.contains('_refining')]
+
+    scen.check_out()
+    scen.add_par("relation_activity", relation_activity)
+    scen.add_par("relation_activity", relation_activity_furnaces)
+    scen.commit("Emissions accounting for industry technologies added.")
+
+
     scen.check_out()
     scen.add_par("relation_activity", relation_activity)
     scen.commit("Emissions accounting for industry technologies added.")
