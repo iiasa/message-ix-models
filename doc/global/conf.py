@@ -6,7 +6,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "MESSAGEix-GLOBIOM"
+project = "message_doc"
 copyright = "2016–2020, IIASA Energy, Climate, and Environment (ECE) Program"
 author = "IIASA Energy, Climate, and Environment (ECE) Program"
 
