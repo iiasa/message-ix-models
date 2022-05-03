@@ -65,7 +65,7 @@ todo_include_todos = True
 # a list of builtin themes.
 html_theme = "sphinx_rtd_theme"
 
-html_logo = "_static/logo_white.png"
+html_logo = "_static/combined-logo-white.png"
 
 html_static_path = ["_static"]
 
