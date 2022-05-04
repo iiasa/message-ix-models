@@ -178,6 +178,7 @@ def gen_mock_demand_cement(scenario):
 def gen_data_cement(scenario, dry_run=False):
     """Generate data for materials representation of cement industry."""
     # Load configuration
+    context = read_config()
     config = read_config()["material"]["cement"]
 
     # Information about scenario, e.g. node, year
@@ -187,8 +188,8 @@ def gen_data_cement(scenario, dry_run=False):
     # TEMP: now add cement sector as well
     data_cement = read_sector_data(scenario, "cement")
     # Special treatment for time-dependent Parameters
-    # data_cement_vc = read_timeseries()
-    # tec_vc = set(data_cement_vc.technology) # set of tecs with var_cost
+    data_cement_ts = read_timeseries(scenario,context.datafile)
+    tec_ts = set(data_cement_ts.technology) # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -215,6 +216,72 @@ def gen_data_cement(scenario, dry_run=False):
         params = data_cement.loc[
             (data_cement["technology"] == t), "parameter"
         ].values.tolist()
+
+        # Special treatment for time-varying params
+        if t in tec_ts:
+            common = dict(
+                time="year",
+                time_origin="year",
+                time_dest="year",
+            )
+
+            param_name = data_cement_ts.loc[
+                (data_cement_ts["technology"] == t), "parameter"
+            ]
+
+            for p in set(param_name):
+                val = data_cement_ts.loc[
+                    (data_cement_ts["technology"] == t)
+                    & (data_cement_ts["parameter"] == p),
+                    "value",
+                ]
+                units = data_cement_ts.loc[
+                    (data_cement_ts["technology"] == t)
+                    & (data_cement_ts["parameter"] == p),
+                    "units",
+                ].values[0]
+                mod = data_cement_ts.loc[
+                    (data_cement_ts["technology"] == t)
+                    & (data_cement_ts["parameter"] == p),
+                    "mode",
+                ]
+                yr = data_cement_ts.loc[
+                    (data_cement_ts["technology"] == t)
+                    & (data_cement_ts["parameter"] == p),
+                    "year",
+                ]
+
+                if p == "var_cost":
+                    df = make_df(
+                        p,
+                        technology=t,
+                        value=val,
+                        unit="t",
+                        year_vtg=yr,
+                        year_act=yr,
+                        mode=mod,
+                        **common
+                    ).pipe(broadcast, node_loc=nodes)
+                else:
+                    rg = data_cement_ts.loc[
+                        (data_cement_ts["technology"] == t)
+                        & (data_cement_ts["parameter"] == p),
+                        "region",
+                    ]
+                    df = make_df(
+                        p,
+                        technology=t,
+                        value=val,
+                        unit="t",
+                        year_vtg=yr,
+                        year_act=yr,
+                        mode=mod,
+                        node_loc=rg,
+                        **common
+                    )
+
+                results[p].append(df)
+
 
         # Iterate over parameters
         for par in params:
