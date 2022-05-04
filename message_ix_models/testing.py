@@ -55,9 +55,23 @@ def pytest_sessionstart():
 
 @pytest.fixture(scope="session")
 def session_context(pytestconfig, tmp_env):
-    """A Context connected to a temporary, in-memory database.
+    """A :class:`.Context` connected to a temporary, in-memory database.
 
-    Uses the :func:`.tmp_env` fixture from ixmp.
+    This Context is suitable for modifying and running test code that does not affect
+    the user/developer's filesystem and configured :mod:`ixmp` databases.
+
+    Uses the :func:`.tmp_env` fixture from ixmp. This fixture also sets:
+
+    - :attr:`.Context.cache_path`, depending on whether the :program:`--local-cache` CLI
+      option was given:
+
+      - If not given: pytest's :doc:`standard cache directory <pytest:how-to/cache>`.
+      - If given: the :file:`/cache/` directory under the user's "message local data"
+        directory.
+
+    - the "message local data" config key to a temporary directory :file:`/data/` under
+      the :ref:`pytest tmp_path directory <pytest:tmp_path>`.
+
     """
     ctx = Context.only()
 
