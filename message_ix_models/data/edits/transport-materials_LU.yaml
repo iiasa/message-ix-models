@@ -14,17 +14,20 @@ classifiers:
 
 dimension:
   time: 
-    scope: 2010 to 2100
-    resolution: 5 years periods
+    scope: 1990 to 2100
+    resolution: 5- or 10-year periods
     description: |-
-      Historical data (2010-2020) + projections
+      Historical data (1990-2020) + projections. This is aligned with XM's approach.
+      In this case, from 1990 to 2010 the additions, capacity etc., will be 0
+      due to the lack of EVs and PHEVs in the fleet. Data from 2010 to 2020 based on 
+      historical yearly statistics. 
   space: 
     scope: global
     resolution: R11
     description: |-
       See https://docs.messageix.org/projects/models2/en/latest/pkg-data/node.html
       or https://github.com/iiasa/message-ix-models/blob/main/message_ix_models/data/node/R11.yaml 
-  powertrain_technology:
+  powertrain_type:
     scope: All powertrain technologies  
     resolution: Powertrain technologies included in MESSAGEix (ICEV,BEV,PHEV,FCEV) 
     description: |-
@@ -46,48 +49,30 @@ dimension:
       I suppose: micro, medium, SUV. I might be wrong. To each vehicle segment
       a given battery size has to be assigned, based on current real fleet data
       and then projected until 2050
-  
+  material_type: 
+    scope: Relevant materials used in Li-ion batteries
+    resolution: |-
+      4-point scale: Lithium, Cobalt, Nickel, Graphite. These are the 4 materials
+      of interest, however it may be necessary to include also copper, since in one pathway
+      Co is a by-product of Cu extraction. 
 
 measure: 
   battery_size:
     description: size of battery per vehicle segment and battery technology
-  Li_content: 
-    description: amount of Lithum in each battery chemistry
-  Co_content: 
-    description: amount of Cobalt in each battery chemistry
-  Ni_content: 
-    description: amount of Nickel in each battery chemistry
-  graphite_content: 
-    description: amount of graphite in each battery chemistry
+material_intensity:
+  description: Amount of material required per kWh of storage capacity in each battery type
 
 quantity:
 - measure: battery_size
-  dimensions: [time,space,powertrain_technology,vehicle segment]
+  dimensions: [time,space,powertrain_type,vehicle segment]
   units: kWh
   description: |-
-    Size of the battery for a given combination of powertrain technology
-    and vehicle size
-- measure: Li_content
-  dimensions: [time,battery_technology]
+    Size of the battery, measured in kWh, for a given combination of powertrain technology
+    and vehicle size.
+
+- measure: material_intensity
+  dimensions: [time, battery_technology, material_type]
   units: kg/kWh
-  description: |-
-    Amount of Li in each battery chemistry. The material loading may vary 
-    in the future as a result of technology development
-- measure: Co_content
-  dimensions: [time, battery_technology]
-  units: kg/kWh
-  description: |-
-    Amount of Co in each battery chemistry. The material loading may vary 
-    in the future as a result of technology development
-- measure: Ni_content
-  dimensions: [time, battery_technology]
-  units: kg/kWh
-  description: |-
-    Amount of Ni in each battery chemistry. The material loading may vary 
-    in the future as a result of technology development
-- measure: graphite_content
-  dimensions: [time, battery_technology]
-  units: kg/kWh
-  description: |-
-    Amount of Graphite in each battery chemistry. The material loading may vary 
-    in the future as a result of technology development
+  description: |- 
+    This captures the material intensity (Li,Co,Ni,C) of the different battery technologies 
+    analysed per kWh of storage capacity.
