@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Add new logo the documentation (:pull:`68`).
 - Add :class:`.Workflow`; see :doc:`api/workflow` (:pull:`60`).
 
 2022.3.30
