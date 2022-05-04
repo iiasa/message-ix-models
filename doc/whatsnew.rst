@@ -4,6 +4,8 @@ What's new
 Next release
 ============
 
+- Add :func:`.testing.not_ci` for marking tests not to be run on continuous integration services; improve :func:`~.testing.session_context` (:pull:`62`).
+- :fun:`.apply_spec` also adds elements of the "node" set using :meth:`.ixmp.Platform.add_region` (:pull:`62`).
 - Add new logo the documentation (:pull:`68`).
 - Add :class:`.Workflow`; see :doc:`api/workflow` (:pull:`60`).
 

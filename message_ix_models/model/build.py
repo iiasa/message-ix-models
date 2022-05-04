@@ -126,6 +126,11 @@ def apply_spec(
                 set_name,
                 element.id if isinstance(element, Code) else element,
             )
+            if set_name == "node":
+                scenario.platform.add_region(
+                    element.id if isinstance(element, Code) else element,
+                    "region",
+                )
 
         if len(add):
             log.info(f"  Add {len(add)} element(s)")
