@@ -434,9 +434,21 @@ def add_emission_accounting(scen):
     scen.add_par("relation_activity", relation_activity_furnaces)
     scen.commit("Emissions accounting for industry technologies added.")
 
+    # Add refinery technologies to CO2_cc
+
+    relation_activity_ref = scen.par(
+    "emission_factor", filters={"emission": 'CO2_transformation',
+                                "technology": tec_list_materials})
+    relation_activity_ref['relation'] = 'CO2_cc'
+    relation_activity_ref["node_rel"] = relation_activity_ref["node_loc"]
+    relation_activity_ref.drop(["year_vtg", "emission"], axis=1, inplace=True)
+    relation_activity_ref["year_rel"] = relation_activity_ref["year_act"]
+
 
     scen.check_out()
     scen.add_par("relation_activity", relation_activity)
+    scen.add_par("relation_activity", relation_activity_furnaces)
+    scen.add_par("relation_activity", relation_activity_ref)
     scen.commit("Emissions accounting for industry technologies added.")
 
     # Correct CF4 Emission relations
