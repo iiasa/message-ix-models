@@ -1,4 +1,5 @@
 import logging
+import os
 from copy import deepcopy
 from pathlib import Path
 
@@ -54,9 +55,23 @@ def pytest_sessionstart():
 
 @pytest.fixture(scope="session")
 def session_context(pytestconfig, tmp_env):
-    """A Context connected to a temporary, in-memory database.
+    """A :class:`.Context` connected to a temporary, in-memory database.
 
-    Uses the :func:`.tmp_env` fixture from ixmp.
+    This Context is suitable for modifying and running test code that does not affect
+    the user/developer's filesystem and configured :mod:`ixmp` databases.
+
+    Uses the :func:`.tmp_env` fixture from ixmp. This fixture also sets:
+
+    - :attr:`.Context.cache_path`, depending on whether the :program:`--local-cache` CLI
+      option was given:
+
+      - If not given: pytest's :doc:`standard cache directory <pytest:how-to/cache>`.
+      - If given: the :file:`/cache/` directory under the user's "message local data"
+        directory.
+
+    - the "message local data" config key to a temporary directory :file:`/data/` under
+      the :ref:`pytest tmp_path directory <pytest:tmp_path>`.
+
     """
     ctx = Context.only()
 
@@ -76,6 +91,9 @@ def session_context(pytestconfig, tmp_env):
     # Other local data in the temporary directory for this session only
     ctx.local_data = session_tmp_dir
 
+    # Also set the "message local data" key in the ixmp config
+    ixmp_config.set("message local data", session_tmp_dir)
+
     # If message_data is not installed, use a temporary path for private_data_path()
     message_data_path = util.MESSAGE_DATA_PATH
     if util.MESSAGE_DATA_PATH is None:
@@ -84,18 +102,15 @@ def session_context(pytestconfig, tmp_env):
         # Create some subdirectories
         util.MESSAGE_DATA_PATH.joinpath("data", "tests").mkdir(parents=True)
 
-    platform_name = "message-ix-models"
-
     # Add a platform connected to an in-memory database
-    # NB cannot call Config.add_platform() here because it does not support supplying a
-    #    URL for a HyperSQL database.
-    # TODO add that feature upstream.
-    ixmp_config.values["platform"][platform_name] = {
-        "class": "jdbc",
-        "driver": "hsqldb",
-        "url": f"jdbc:hsqldb:mem://{platform_name}",
-        "jvmargs": pytestconfig.option.jvmargs,
-    }
+    platform_name = "message-ix-models"
+    ixmp_config.add_platform(
+        platform_name,
+        "jdbc",
+        "hsqldb",
+        url=f"jdbc:hsqldb:mem://{platform_name}",
+        jvmargs=pytestconfig.option.jvmargs,
+    )
 
     # Launch Platform and connect to testdb (reconnect if closed)
     mp = Platform(name=platform_name)
@@ -362,3 +377,14 @@ def export_test_data(context: Context):
 #: Shorthand for marking a parametrized test case that is expected to fail because it is
 #: not implemented.
 NIE = pytest.mark.xfail(raises=NotImplementedError)
+
+
+def not_ci(reason=None, action="skip"):
+    """Mark a test as xfail or skipif if on CI infrastructure.
+
+    Checks the ``GITHUB_ACTIONS`` environment variable; returns a pytest mark.
+    """
+    action = "skipif" if action == "skip" else action
+    return getattr(pytest.mark, action)(
+        condition="GITHUB_ACTIONS" in os.environ, reason=reason
+    )

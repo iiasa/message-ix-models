@@ -261,10 +261,10 @@ def test_maybe_query():
     assert 2 == len(maybe_query(s, "bar == 'c'"))
 
 
-def test_local_data_path(pytestconfig, tmp_env):
-    assert Path(pytestconfig.invocation_dir).joinpath("foo", "bar") == local_data_path(
-        "foo", "bar"
-    )
+def test_local_data_path(tmp_path_factory, session_context):
+    assert tmp_path_factory.getbasetemp().joinpath(
+        "data0", "foo", "bar"
+    ) == local_data_path("foo", "bar")
 
 
 def test_package_data_path():
