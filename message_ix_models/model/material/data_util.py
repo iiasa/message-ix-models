@@ -386,6 +386,7 @@ def add_emission_accounting(scen):
     # Emissions from refining sector are categorized as 'CO2_transformation'.
 
     tec_list = scen.par("emission_factor")["technology"].unique()
+
     tec_list_materials = [
         i
         for i in tec_list
@@ -450,6 +451,46 @@ def add_emission_accounting(scen):
     scen.add_par("relation_activity", relation_activity_furnaces)
     scen.add_par("relation_activity", relation_activity_ref)
     scen.commit("Emissions accounting for industry technologies added.")
+
+    # Add feedstock using technologies to CO2_feedstocks
+    nodes =    scen.par("relation_activity", filters = {'relation':'CO2_feedstocks'})["node_rel"].unique()
+    years =    scen.par("relation_activity", filters = {'relation':'CO2_feedstocks'})["year_rel"].unique()
+
+    for n in nodes:
+        for t in ['steam_cracker_petro','gas_processing_petro']:
+            for m in ['atm_gasoil', 'vacuum_gasoil', 'naphtha']:
+                if t == 'steam_cracker_petro':
+                    if (m == 'atm_gasoil') | (m == 'vacuum_gasoil'):
+                        # fueloil emission factor * input
+                        val = 0.665 * 1.17683105
+                    else:
+                        val = 0.665 * 1.537442922
+
+                    co2_feedstocks = pd.DataFrame({'relation': 'CO2_feedstocks',
+                                  'node_rel': n,
+                                  'year_rel': years,
+                                  'node_loc': n,
+                                  'technology': t,
+                                  'year_act': years,
+                                  'mode': m,
+                                  'value': val,
+                                  'unit': 't'})
+                else:
+                    # gas emission factor * gas input
+                    val = 0.482 * 1.331811263
+
+                    co2_feedstocks = pd.DataFrame({'relation': 'CO2_feedstocks',
+                                  'node_rel': n,
+                                  'year_rel': years,
+                                  'node_loc': n,
+                                  'technology': t,
+                                  'year_act': years,
+                                  'mode': 'M1',
+                                  'value': val,
+                                  'unit': 't'})
+                scen.check_out()
+                scen.add_par('relation_activity', co2_feedstocks)
+                scen.commit('co2_feedstocks updated')
 
     # Correct CF4 Emission relations
     # Remove transport related technologies from CF4_Emissions
