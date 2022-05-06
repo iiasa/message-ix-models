@@ -64,11 +64,11 @@ iamc:
   base: stock:nl-t-ya:ldv
   var: [ "Transport|Stock|Road|Passenger|LDV", t ]
 - variable: transport iamc 1
-  base: in:nl-t-ya:ldv
-  var: [ "Final Energy|Transportation|Road|Passenger|LDV", t ]
+  base: in:nl-t-ya-c:ldv
+  var: [ "Final Energy|Transportation|Road|Passenger|LDV", t, c ]
 - variable: transport iamc 2
-  base: in:nl-t-ya:non-ldv
-  var: [ "Final Energy|Transportation|", t ]
+  base: in:nl-t-ya-c:non-ldv
+  var: [ "Final Energy|Transportation", t, c ]
 - variable: transport iamc 3
   # Auto-sum over dimensions yv, m, h
   base: emi:nl-t-ya
