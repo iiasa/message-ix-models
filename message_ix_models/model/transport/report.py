@@ -150,7 +150,7 @@ def callback(rep: Reporter):
     # Selected subsets of certain quantities
     for key in (
         Key("CAP", "nl t ya".split()),
-        Key("in", "nl t ya".split()),
+        Key("in", "nl t ya c".split()),
         Key("inv_cost", "nl t yv".split()),
     ):
         queue.append((("select", key.add_tag("ldv"), key, "t::transport LDV"), _s))
