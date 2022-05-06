@@ -56,13 +56,15 @@ def built_transport(request, context, options=dict(), solved=False) -> Scenario:
 
 
 def simulated_solution(request, context) -> Reporter:
-    from message_data.model.transport.report import callback
+    from message_data.model.transport.report import callback, transport_technologies
 
     # Build the base model
     scenario = built_transport(request, context, solved=False)
 
     # Info about the built model
     info = ScenarioInfo(scenario)
+
+    spec, technologies, t_info = transport_technologies(context)
 
     # Create a reporter
     rep = Reporter.from_scenario(scenario)
@@ -72,7 +74,7 @@ def simulated_solution(request, context) -> Reporter:
     data = dict(
         ACT=dict(
             nl=info.N[-1],
-            t=["ELC_100", "FR_ICE_H", "ICE_H_bus"],
+            t=technologies,
             yv=2020,
             ya=2020,
             m="all",
