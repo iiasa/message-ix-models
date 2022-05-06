@@ -31,7 +31,7 @@ jobs:
         - { os: ubuntu-latest, python: "3.10" }
         - { os: windows-latest, python: "3.9" }
         upstream-version:
-        - v3.3.0  # Minimum version given in setup.cfg
+        - v3.4.0  # Minimum version given in setup.cfg
         - v3.5.0  # Latest released version
         - main    # Development version
 
