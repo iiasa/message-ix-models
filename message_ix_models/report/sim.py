@@ -81,9 +81,11 @@ def simulate_qty(name: str, item_info: dict, **data_kw: Any) -> Tuple[Key, Quant
         # explicitly.
         args["index"] = [0]
 
-    return Key(name, dims), Quantity(
-        pd.DataFrame(**args).set_index(dims) if len(dims) else pd.DataFrame(**args)
-    )
+    data = pd.DataFrame(**args)
+    # Data must be entirely empty, or complete
+    assert not data.isna().any().any() or data.isna().all().all(), data
+
+    return Key(name, dims), Quantity(data.set_index(dims) if len(dims) else data)
 
 
 def add_simulated_solution(rep: Reporter, info: ScenarioInfo, data: Dict = None):
