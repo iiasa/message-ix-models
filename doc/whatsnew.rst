@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Bump minimum required version of :mod:`message_ix` to v3.3.0 from v3.2.0 (:pull:`71`).
 - Add a documentation page on :doc:`distrib` (:pull:`59`).
 - Add :func:`.testing.not_ci` for marking tests not to be run on continuous integration services; improve :func:`~.testing.session_context` (:pull:`62`).
 - :fun:`.apply_spec` also adds elements of the "node" set using :meth:`.ixmp.Platform.add_region` (:pull:`62`).
