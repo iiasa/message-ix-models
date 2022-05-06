@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2022.5.6
+========
 
 - Bump minimum required version of :mod:`message_ix` to v3.4.0 from v3.2.0 (:pull:`71`).
 - Add a documentation page on :doc:`distrib` (:pull:`59`).
