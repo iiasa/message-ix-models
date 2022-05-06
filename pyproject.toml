@@ -1,8 +1,29 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+requires = ["setuptools", "setuptools-scm"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=message_ix_models --cov-report="
+# Disable faulthandler plugin on Windows to prevent spurious console noise
+addopts = "-p no:faulthandler --cov=message_ix_models --cov-report="
 filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
 
-[tool.setuptools_scm]
+[tool.isort]
+profile = "black"
+
+[[tool.mypy.overrides]]
+module = [
+  "dask.*",
+  "colorama.*",
+  "jpype.*",
+  "matplotlib.*",
+  "message_data.*",
+  "pandas.*",
+  "pint.*",
+  "pyam.*",
+  "pycountry",
+  "setuptools",
+  # For ixmp.testing
+  "nbclient.*",
+  "nbformat.*",
+  "memory_profiler.*",
+]
+ignore_missing_imports = true
