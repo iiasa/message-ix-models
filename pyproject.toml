@@ -11,19 +11,18 @@ profile = "black"
 
 [[tool.mypy.overrides]]
 module = [
-  "dask.*",
-  "colorama.*",
-  "jpype.*",
+  "dask",
+  "colorama",
+  "jpype",
   "matplotlib.*",
   "message_data.*",
   "pandas.*",
-  "pint.*",
-  "pyam.*",
+  "pyam",
   "pycountry",
   "setuptools",
   # For ixmp.testing
-  "nbclient.*",
-  "nbformat.*",
-  "memory_profiler.*",
+  "nbclient",
+  "nbformat",
+  "memory_profiler",
 ]
 ignore_missing_imports = true
