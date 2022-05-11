@@ -374,8 +374,9 @@ def refresh(go):
     Without --go, no action occurs.
     """
     # TODO move upstream, e.g. to ixmp JDBCBackend
-    import ixmp
     import shutil
+
+    import ixmp
 
     # Read the from/to database names from user's ixmp config
     ixmp.config.register("transport refresh db", dict)
