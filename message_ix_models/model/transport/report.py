@@ -45,12 +45,7 @@ def transport_technologies(context) -> Tuple[Spec, List, Dict]:
     spec = build.get_spec(context)
 
     # Set of all transport technologies
-    technologies = spec["add"].set["technology"]
-
-    # Combine technologies from disutility formulation
-    # TODO do this somewhere earlier, e.g. in build.get_spec()
-    disutil_spec = build.get_disutility_spec(context)
-    technologies.extend(disutil_spec["add"].set["technology"])
+    technologies = spec["add"].set["technology"].copy()
 
     # Subsets of transport technologies for aggregation and filtering
     t_groups: Dict[str, List[str]] = {"non-ldv": []}
