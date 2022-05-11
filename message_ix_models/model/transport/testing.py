@@ -10,7 +10,6 @@ from message_data.model import transport
 from message_data.reporting.sim import add_simulated_solution
 from message_data.tools import silence_log
 
-
 log = logging.getLogger(__name__)
 
 # Common marks for transport code
