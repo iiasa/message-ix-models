@@ -3,7 +3,7 @@ import logging
 import pytest
 from genno.testing import assert_qty_equal
 from numpy.testing import assert_allclose
-from message_ix.reporting import ComputationError, Quantity
+from message_ix.reporting import MissingKeyError, Quantity
 from message_ix_models.util import private_data_path
 from message_ix_models.testing import NIE
 from pytest import mark, param
@@ -36,8 +36,8 @@ def test_register_cb():
             "A",
             False,
             marks=pytest.mark.xfail(
-                raises=ComputationError,
-                reason="'CAP' input to stock is not available w/o solution.",
+                raises=MissingKeyError,
+                reason="required key 'ACT:nl-t-yv-va-m-h' not defined w/o solution.",
             ),
         ),
         ("R11", "A", True),
