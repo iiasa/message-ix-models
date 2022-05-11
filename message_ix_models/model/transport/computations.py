@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from genno import Quantity, computations
-from genno.computations import add, product, ratio, relabel
+from genno.computations import add, apply_units, product, ratio, relabel
 from genno.testing import assert_units
 from iam_units import registry
 from ixmp import Scenario
@@ -73,7 +73,6 @@ def cost(
     # NB for some reason, the 'y' dimension of result becomes `float`, rather than
     # `int`, in this step
     result = add(price, ratio(product(gdp_ppp_cap, votm), product(speeds, whours)))
-
     return result.sel(y=y)
 
 
@@ -347,7 +346,9 @@ def smooth(qty: Quantity) -> Quantity:
         .expand_dims(dict(y=[y[-1]]))
     )
 
-    return computations.concat(r0, result.sel(y=y[1:-1]), r_m1)
+    # apply_units() is to work around khaeru/genno#64
+    # TODO remove when fixed upstream
+    return apply_units(computations.concat(r0, result.sel(y=y[1:-1]), r_m1), qty.units)
 
 
 def speed(config: dict) -> Quantity:
