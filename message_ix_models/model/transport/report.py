@@ -2,9 +2,10 @@
 import logging
 from copy import deepcopy
 from operator import attrgetter
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from dask.core import quote
+from genno import Computer
 from message_ix.reporting import Key, Reporter
 from message_ix_models import Context, Spec
 
@@ -60,7 +61,7 @@ def transport_technologies(context) -> Tuple[Spec, List, Dict]:
     return spec, technologies, t_groups
 
 
-def register_modules(rep: Reporter):
+def register_modules(rep: Computer):
     # NB this can be replaced by rep.require_compat(…) in genno >= 1.12
     for mod in (computations, message_data.tools.gdp_pop):
         if mod not in rep.modules:
@@ -132,6 +133,7 @@ def callback(rep: Reporter):
     _s = dict(sums=True)
 
     # Aggregate transport technologies
+    key: Any
     for key in ("in", "out"):
         try:
             k = rep.full_key(key)
@@ -161,9 +163,7 @@ def callback(rep: Reporter):
     rep.configure(**deepcopy(context["transport report"]))
 
     # 5. Add plots
-    queue: List[Tuple[Tuple, Dict]] = [
-        ((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()
-    ]
+    queue = [((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()]
 
     added = rep.add_queue(queue, max_tries=2, fail="raise" if solved else logging.INFO)
 
