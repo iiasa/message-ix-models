@@ -161,14 +161,29 @@ def aggregate_codes(df: pd.DataFrame, dim: str, codes):  # pragma: no cover
         print(key, group_series.replace({dim: mapping}))
 
 
-def broadcast(df, **kwargs):
+def broadcast(df, *args, **kwargs):
     """Fill missing data in `df` by broadcasting.
 
     Arguments
     ---------
+    args
+        tuble/dataframe mapping multiple dimensions to be fill.
     kwargs
         Keys are dimensions. Values are labels along that dimension to fill.
+ 
     """
+    labels = pd.DataFrame(*args)
+    if not labels.empty:
+        for cc in labels.columns:
+            if cc in df.columns:
+                assert df[cc].isna().all(), f"Dimension {dim} was not empty\n\n{df.head()}"
+                df.drop(cc, axis=1,inplace = True)
+                # add dummy common variable between df and labels
+        df['tmp'] = 1
+        labels['tmp'] = 1
+        df = pd.merge(df,labels).drop(columns ={'tmp'})
+    
+    # broadcasting 1-D variables
     for dim, levels in kwargs.items():
         # Checks
         assert df[dim].isna().all(), f"Dimension {dim} was not empty\n\n{df.head()}"
