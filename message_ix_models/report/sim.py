@@ -84,6 +84,7 @@ def simulate_qty(name: str, item_info: dict, **data_kw: Any) -> Tuple[Key, Quant
     data = pd.DataFrame(**args)
     # Data must be entirely empty, or complete
     assert not data.isna().any().any() or data.isna().all().all(), data
+    assert not data.duplicated().any(), f"Duplicate data for simulated {repr(name)}"
 
     return Key(name, dims), Quantity(data.set_index(dims) if len(dims) else data)
 
