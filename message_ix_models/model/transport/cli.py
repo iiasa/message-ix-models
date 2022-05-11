@@ -366,21 +366,32 @@ def export_emissions_factors(context, path_stem):
 @cli.command()
 @click.option("--go", is_flag=True, help="Actually manipulate files.")
 def refresh(go):
-    """Overwrite a local database with a fresh copy.
+    """Overwrite a local ixmp HyperSQL database with a fresh copy.
+
+    Source and target platforms are read from the "transport refresh db" key in the
+    user's ixmp config.json.
 
     Without --go, no action occurs.
     """
     # TODO move upstream, e.g. to ixmp JDBCBackend
+    import ixmp
     import shutil
 
-    base = Path("/home/khaeru/data/ixmp")
+    # Read the from/to database names from user's ixmp config
+    ixmp.config.register("transport refresh db", dict)
+    ixmp.config.read()
+    cfg = ixmp.config.get("transport refresh db")
 
-    SOURCE = "clone-2021-06-09"
-    TARGET = "local"
+    name_src = cfg["source"]
+    name_dest = cfg["dest"]
+
+    # Base paths for file operations
+    dir_src = Path(ixmp.config.get_platform_info(name_src)[1]["path"]).parent
+    dir_dest = Path(ixmp.config.get_platform_info(name_dest)[1]["path"]).parent
 
     msg = "" if go else "(dry run) "
 
-    for path in base.glob(f"{TARGET}.*"):
+    for path in dir_dest.glob(f"{name_dest}.*"):
         if path.suffix == ".tmp":
             continue
         print(f"{msg}Unlink {path}")
@@ -388,10 +399,10 @@ def refresh(go):
             continue
         path.unlink()
 
-    for path in base.joinpath("backup").glob(f"{SOURCE}.*"):
+    for path in dir_src.joinpath("backup").glob(f"{name_src}.*"):
         if path.suffix in (".log", ".properties"):
             continue
-        dst = base.joinpath(TARGET).with_suffix(path.suffix)
+        dst = dir_dest.joinpath(name_dest).with_suffix(path.suffix)
 
         print(f"{msg}Copy {path} → {dst}")
         if not go:
