@@ -1,3 +1,4 @@
+"""Utilities for testing :mod:`~message_data.model.transport`."""
 import logging
 from contextlib import nullcontext
 
@@ -58,6 +59,11 @@ def built_transport(request, context, options=dict(), solved=False) -> Scenario:
 
 
 def simulated_solution(request, context) -> Reporter:
+    """Return a :class:`.Reporter` with a simulated model solution.
+
+    The contents allow for fast testing of reporting code, without solving an actual
+    :class:`.Scenario`.
+    """
     from message_data.model.transport.report import callback, transport_technologies
 
     # Build the base model
