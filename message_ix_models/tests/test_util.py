@@ -54,6 +54,11 @@ def test_broadcast(caplog):
 
     assert "Don't broadcast over 'foo'; labels [] have length 0" in caplog.messages
 
+    # test usage with dataframe
+    data = pd.DataFrame({"foo": ["a"], "bar": [None]})
+    results = broadcast(data, pd.DataFrame({"bar": ["b"]}))
+    assert results.at[0, "bar"] == "b"
+
     # TODO expand
 
 
