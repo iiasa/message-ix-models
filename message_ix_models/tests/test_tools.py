@@ -27,3 +27,9 @@ def test_iea_web(test_context, tmp_path):
     )
 
 
+def test_generate_code_lists(test_context, tmp_path):
+    # Copy the data file to a temporary directory
+    copyfile(package_data_path("iea", iea_web.FILE), tmp_path.joinpath(iea_web.FILE))
+
+    # generate_code_lists() runs
+    iea_web.generate_code_lists(None)
