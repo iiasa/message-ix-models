@@ -1,0 +1,144 @@
+AGRICULT:
+  name: Agriculture/forestry
+AUTOCHP:
+  name: Autoproducer CHP plants
+AUTOELEC:
+  name: Autoproducer electricity plants
+AUTOHEAT:
+  name: Autoproducer heat plants
+AVBUNK:
+  name: International aviation bunkers
+CHEMICAL:
+  name: Chemical and petrochemical
+COMMPUB:
+  name: Commercial and public services
+CONSTRUC:
+  name: Construction
+DISTLOSS:
+  name: Losses
+DOMESAIR:
+  name: Domestic aviation
+DOMESNAV:
+  name: Domestic navigation
+ELAUTOC:
+  name: Electricity output (GWh)-autoproducer CHP plants
+ELAUTOE:
+  name: Electricity output (GWh)-autoproducer electricity plants
+ELMAINC:
+  name: Electricity output (GWh)-main activity producer CHP plants
+ELMAINE:
+  name: Electricity output (GWh)-main activity producer electricity plants
+ELOUTPUT:
+  name: Electricity output (GWh)
+EXPORTS:
+  name: Exports
+FISHING:
+  name: Fishing
+FOODPRO:
+  name: Food and tobacco
+HEATOUT:
+  name: Heat output
+HEAUTOC:
+  name: Heat output-autoproducer CHP plants
+HEAUTOH:
+  name: Heat output-autoproducer heat plants
+HEMAINC:
+  name: Heat output-main activity producer CHP plants
+HEMAINH:
+  name: Heat output-main activity producer heat plants
+IMPORTS:
+  name: Imports
+INDPROD:
+  name: Production
+INONSPEC:
+  name: Industry not elsewhere specified
+IRONSTL:
+  name: Iron and steel
+LIQUEFAC:
+  name: Liquefaction plants
+MACHINE:
+  name: Machinery
+MAINCHP:
+  name: Main activity producer CHP plants
+MAINELEC:
+  name: Main activity producer electricity plants
+MAINHEAT:
+  name: Main activity producer heat plants
+MARBUNK:
+  name: International marine bunkers
+MINING:
+  name: Mining and quarrying
+NECHEM:
+  name: 'Memo: Non-energy use in chemical/petrochemical'
+NEINTREN:
+  name: Non-energy use industry/transformation/energy
+NEOTHER:
+  name: Non-energy use in other sectors
+NETRANS:
+  name: Non-energy use in transport
+NONENUSE:
+  name: Non-energy use
+NONFERR:
+  name: Non-ferrous metals
+NONMET:
+  name: Non-metallic minerals
+ONONSPEC:
+  name: Final consumption not elsewhere specified
+OWNUSE:
+  name: Energy industry own use
+PAPERPRO:
+  name: Paper, pulp and printing
+PIPELINE:
+  name: Pipeline transport
+RAIL:
+  name: Rail
+RESIDENT:
+  name: Residential
+ROAD:
+  name: Road
+STATDIFF:
+  name: Statistical differences
+STOCKCHA:
+  name: Stock changes
+TBKB:
+  name: BKB/peat briquettes plants
+TBLASTFUR:
+  name: Blast furnaces
+TBOILER:
+  name: Electric boilers
+TCOKEOVS:
+  name: Coke ovens
+TELE:
+  name: Chemical heat for electricity production
+TEXTILES:
+  name: Textile and leather
+TFC:
+  name: Total final consumption
+TGASWKS:
+  name: Gas works
+THEAT:
+  name: Heat pumps
+TNONSPEC:
+  name: Other transformation
+TOTIND:
+  name: Industry
+TOTTRANS:
+  name: Transport
+TPATFUEL:
+  name: Patent fuel plants
+TPETCHEM:
+  name: Petrochemical plants
+TRANSEQ:
+  name: Transport equipment
+TRANSFER:
+  name: Transfers
+TREFINER:
+  name: Oil refineries
+TRNONSPE:
+  name: Transport not elsewhere specified
+WOODPRO:
+  name: Wood and wood products
+WORLDAV:
+  name: World aviation bunkers
+WORLDMAR:
+  name: World marine bunkers
