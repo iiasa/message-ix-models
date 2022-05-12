@@ -1,0 +1,30 @@
+COAL:
+  name: Coal and coal products
+COMRENEW:
+  name: Biofuels and waste
+CRNGFEED:
+  name: Crude, NGL and feedstocks
+ELECTR:
+  name: Electricity
+GEOTHERM:
+  name: Geothermal
+HEAT:
+  name: Heat
+HEATNS:
+  name: Heat production from non-specified combustible fuels
+HYDRO:
+  name: Hydro
+MRENEW:
+  name: 'Memo: Renewables'
+NATGAS:
+  name: Natural gas
+NUCLEAR:
+  name: Nuclear
+PEAT:
+  name: Peat and peat products
+SOLWIND:
+  name: Solar/wind/other
+TOTAL:
+  name: Total
+TOTPRODS:
+  name: Oil products

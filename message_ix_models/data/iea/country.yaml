@@ -1,0 +1,28 @@
+AFRIC:
+  name: Africa
+ASIA:
+  name: Non-OECD Asia (excluding China)
+ASME:
+  name: Middle East
+CHINAREG:
+  name: China (P.R. of China and Hong Kong, China)
+COD:
+  name: Democratic Republic of the Congo
+LATAMER:
+  name: Non-OECD Americas
+NON-OECDEUROPEANDEURASIA:
+  name: Non-OECD Europe and Eurasia
+OENN:
+  name: OECD Americas
+OEPN:
+  name: OECD Asia Oceania
+OEU:
+  name: OECD Europe
+TWN:
+  name: Chinese Taipei
+WLD:
+  name: World
+WORLDAV:
+  name: World aviation bunkers
+WORLDMAR:
+  name: World marine bunkers
