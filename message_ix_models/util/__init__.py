@@ -174,7 +174,7 @@ def broadcast(df, labels: Optional[pd.DataFrame] = None, **kwargs):
     # for multi-dim variables
     if labels is not None:
         for cc in labels.columns:
-            assert df[cc].isna().all(), f"Dimension {dim} was not empty\n\n{df.head()}"
+            assert df[cc].isna().all(), f"Dimension {cc} was not empty\n\n{df.head()}"
             df.drop(cc, axis=1, inplace=True)
         df = pd.concat(
             [df.assign(**row) for _, row in labels.iterrows()], ignore_index=True
