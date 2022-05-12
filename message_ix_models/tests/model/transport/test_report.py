@@ -3,7 +3,7 @@ import logging
 import pytest
 from genno.testing import assert_qty_equal
 from message_ix.reporting import MissingKeyError, Quantity
-from message_ix_models.testing import NIE, not_ci
+from message_ix_models.testing import NIE
 from message_ix_models.util import private_data_path
 from numpy.testing import assert_allclose
 from pytest import mark, param
@@ -145,7 +145,6 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     assert 0 < len(result)
 
 
-@not_ci("Temporarily disabled for #439")
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
     "plot_name",
@@ -169,7 +168,6 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
-@not_ci("Temporarily disabled for #439")
 @mark.usefixtures("quiet_genno")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
