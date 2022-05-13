@@ -2,6 +2,7 @@
 import logging
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import yaml
 from iam_units import registry
@@ -24,9 +25,9 @@ COLUMNS = {
 
 #: File name containing data.
 FILE = "WBAL_12052022124930839.csv"
-FILE = "cac5fa90-en.zip"
+# FILE = "cac5fa90-en.zip"
 
-NROWS = 1e7
+NROWS = 1e6
 
 
 def _read(base_path=None, **kwargs) -> pd.DataFrame:
@@ -142,3 +143,18 @@ def generate_code_lists(base_path: Path = None) -> None:
         cl_path.write_text(yaml.dump(data))
 
 
+def fuzz_data(base_path=None, target_path=None):
+    """Generate a fuzzed subset of the data for testing."""
+    df = _read(base_path)
+
+    # - Reduce the data by only taking 2 periods for each (flow, product, country).
+    # - Replace the actual values with random.
+    df = (
+        df.groupby(["FLOW", "PRODUCT", "COUNTRY"])
+        .take([0, -1])
+        .reset_index(drop=True)
+        .assign(Value=lambda df: np.random.rand(len(df)))
+    )
+
+    # TODO write to file
+    # path = (target_path or package_data_path("iea")).joinpath(f"fuzzed-{FILE}")

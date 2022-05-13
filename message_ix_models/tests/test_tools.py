@@ -33,3 +33,8 @@ def test_generate_code_lists(test_context, tmp_path):
 
     # generate_code_lists() runs
     iea_web.generate_code_lists(tmp_path)
+
+
+def test_fuzz_data(test_context, tmp_path):
+    # fuzz_data() runs
+    iea_web.fuzz_data(target_path=tmp_path)
