@@ -13,6 +13,7 @@ from message_ix_models.util import add_par_data
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity
 from .data_util import add_emission_accounting
+from .data_util import add_coal_lowerbound_2020
 from .util import read_config
 
 
@@ -31,9 +32,11 @@ def build(scenario):
     apply_spec(scenario, spec,add_data_1)  # dry_run=True
 
     # Adjust exogenous energy demand to incorporate the endogenized sectors
-    # Adjust the historical activity of the usefyl level industry technologies
+    # Adjust the historical activity of the useful level industry technologies
+    # Coal calibration 2020
     modify_demand_and_hist_activity(scenario)
     add_emission_accounting(scenario)
+    add_coal_lowerbound_2020(scenario)
 
     return scenario
 
@@ -124,6 +127,7 @@ def build_scen(context, datafile, tag, mode):
 
     Use the --url option to specify the base scenario.
     """
+
     from ixmp import Platform
     import message_ix
 
