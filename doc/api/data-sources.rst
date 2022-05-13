@@ -9,12 +9,19 @@ IEA World Energy Balances
 .. automodule:: message_ix_models.tools.iea_web
    :members:
 
-   The raw data are in CSV or compressed CSV format and have the following structure:
+   The raw data are in CSV or compressed CSV format.
+   They have file names like:
+
+   - :file:`cac5fa90-en.zip` —the complete, extended energy balances, ZIP compressed, containing a single file with a name like :file:`WBIG_2021-2021-1-EN-20211119T100005.csv`.
+
+   - :file:`WBAL_12052022124930839.csv` —a subset or ‘highlights’
+
+   The data have the following structure:
 
    =========== ======================
    Column name Example value
    =========== ======================
-   UNIT                          KTOE
+   UNIT [1]_                     KTOE
    Unit                          ktoe
    COUNTRY                        WLD
    Country                      World
@@ -28,6 +35,8 @@ IEA World Energy Balances
    Flag Codes                       M
    Flags       Missing value; data cannot exist
    =========== ======================
+
+   .. [1] the column is sometimes labelled "MEASURE", but the contents appear to be the same.
 
 Code lists
 ----------
