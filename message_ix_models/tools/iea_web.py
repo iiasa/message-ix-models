@@ -24,6 +24,7 @@ COLUMNS = {
 
 #: File name containing data.
 FILE = "WBAL_12052022124930839.csv"
+FILE = "cac5fa90-en.zip"
 
 
 @cached
@@ -62,6 +63,10 @@ def generate_code_lists(base_path: Path = None) -> None:
 
     log.info(f"Extract structure from {path}")
 
+    # 'Peek' at the data to inspect the column headers
+    peek = pd.read_csv(path, nrows=1)
+    unit_id_column = peek.columns[0]
+
     # Country names that are already in pycountry
     def _check0(row):
         try:
@@ -82,7 +87,7 @@ def generate_code_lists(base_path: Path = None) -> None:
         ("FLOW", "Flow"),
         ("PRODUCT", "Product"),
         ("TIME", "Time"),
-        ("UNIT", "Unit"),
+        (unit_id_column, "Unit"),
         ("Flag Codes", "Flags"),
     ]:
         # - Re-read the data, only two columns; slower, but less overhead
@@ -112,6 +117,7 @@ def generate_code_lists(base_path: Path = None) -> None:
             continue
 
         # Store
+        id = id.replace("MEASURE", "UNIT")  # If unit_id_column is "MEASURE"
         cl_path = (base_path or package_data_path("iea")).joinpath(
             f"{id.lower().replace(' ', '-')}.yaml"
         )
