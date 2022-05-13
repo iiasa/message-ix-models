@@ -32,4 +32,4 @@ def test_generate_code_lists(test_context, tmp_path):
     copyfile(package_data_path("iea", iea_web.FILE), tmp_path.joinpath(iea_web.FILE))
 
     # generate_code_lists() runs
-    iea_web.generate_code_lists(None)
+    iea_web.generate_code_lists(tmp_path)
