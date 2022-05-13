@@ -29,6 +29,23 @@ FILE = "cac5fa90-en.zip"
 NROWS = 1e7
 
 
+def _read(base_path=None, **kwargs) -> pd.DataFrame:
+    base_path = base_path or package_data_path("iea")
+    path = base_path.joinpath(FILE)
+
+    log.info(f"Read {path}")
+    if "nrows" not in kwargs:
+        # Only uncomment (a) or (b):
+        # (a)
+        log.warning(f"Development; only load {NROWS:.0f} observations")
+        kwargs["nrows"] = NROWS
+
+        # (b); fails (exhausts memory)
+        # kwargs.setdefault("engine", "pyarrow")
+
+    return pd.read_csv(path, **kwargs)
+
+
 @cached
 def load_data(base_path=None) -> pd.DataFrame:
     """Load data from the IEA World Energy Balances.
@@ -53,25 +70,13 @@ def load_data(base_path=None) -> pd.DataFrame:
         - unit
         - flag
     """
-    base_path = base_path or package_data_path("iea")
-    path = base_path.joinpath(FILE)
-
-    log.warning(f"Development; only {NROWS} loaded")
-
-    return pd.read_csv(path, usecols=COLUMNS.keys(), nrows=NROWS).rename(
-        columns=COLUMNS
-    )
+    return _read(base_path, usecols=COLUMNS.keys()).rename(columns=COLUMNS)
 
 
 def generate_code_lists(base_path: Path = None) -> None:
     """Extract structure from the data itself."""
-    base_path = base_path or package_data_path("iea")
-    path = base_path.joinpath(FILE)
-
-    log.info(f"Extract structure from {path}")
-
     # 'Peek' at the data to inspect the column headers
-    peek = pd.read_csv(path, nrows=1)
+    peek = _read(base_path, nrows=1)
     unit_id_column = peek.columns[0]
 
     # Country names that are already in pycountry
@@ -97,13 +102,11 @@ def generate_code_lists(base_path: Path = None) -> None:
         (unit_id_column, "Unit"),
         ("Flag Codes", "Flags"),
     ]:
-        log.warning(f"Development; only {NROWS} loaded")
-
         # - Re-read the data, only two columns; slower, but less overhead
         # - Drop empty rows and duplicates.
         # - Drop 'trivial' values, where the name and id are identical.
         df = (
-            pd.read_csv(path, usecols=[id, name], nrows=NROWS)
+            _read(base_path, usecols=[id, name])
             .set_axis(["id", "name"], axis=1)
             .dropna(how="all")
             .drop_duplicates()
