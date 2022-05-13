@@ -26,6 +26,8 @@ COLUMNS = {
 FILE = "WBAL_12052022124930839.csv"
 FILE = "cac5fa90-en.zip"
 
+NROWS = 1e7
+
 
 @cached
 def load_data(base_path=None) -> pd.DataFrame:
@@ -53,7 +55,12 @@ def load_data(base_path=None) -> pd.DataFrame:
     """
     base_path = base_path or package_data_path("iea")
     path = base_path.joinpath(FILE)
-    return pd.read_csv(path, usecols=COLUMNS.keys()).rename(columns=COLUMNS)
+
+    log.warning(f"Development; only {NROWS} loaded")
+
+    return pd.read_csv(path, usecols=COLUMNS.keys(), nrows=NROWS).rename(
+        columns=COLUMNS
+    )
 
 
 def generate_code_lists(base_path: Path = None) -> None:
@@ -90,11 +97,13 @@ def generate_code_lists(base_path: Path = None) -> None:
         (unit_id_column, "Unit"),
         ("Flag Codes", "Flags"),
     ]:
+        log.warning(f"Development; only {NROWS} loaded")
+
         # - Re-read the data, only two columns; slower, but less overhead
         # - Drop empty rows and duplicates.
         # - Drop 'trivial' values, where the name and id are identical.
         df = (
-            pd.read_csv(path, usecols=[id, name])
+            pd.read_csv(path, usecols=[id, name], nrows=NROWS)
             .set_axis(["id", "name"], axis=1)
             .dropna(how="all")
             .drop_duplicates()
