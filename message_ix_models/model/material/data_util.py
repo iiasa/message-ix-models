@@ -521,9 +521,11 @@ def add_emission_accounting(scen):
     scen.add_par("relation_activity",CF4_red_add)
     scen.commit("CF4 relations corrected.")
 
-def add_coal_lowerbound_2020(scen):
+def add_coal_lowerbound_2020(sc):
     '''Set lower bounds for coal and i_spec as a calibration for 2020'''
-    final_resid = pd.read_csv(private_data_path("projects", "ngfs", "residual_industry_2019.csv"))
+
+    context = read_config()
+    final_resid  = pd.read_csv(context.get_local_path("material", "residual_industry_2019.csv"))
 
     # read input parameters for relevant technology/commodity combinations for converting betwen final and useful energy
     input_residual_coal = sc.par('input',filters={"technology": "coal_i", "year_vtg": "2020", "year_act": "2020"})
