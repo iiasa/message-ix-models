@@ -167,7 +167,7 @@ def broadcast(df, labels: Optional[pd.DataFrame] = None, **kwargs):
     Arguments
     ---------
     labels
-        tuble/dataframe mapping multiple dimensions to be fill.
+        tuble/dataframe mapping multiple dimensions to fill.
     kwargs
         Keys are dimensions. Values are labels along that dimension to fill.
     """
