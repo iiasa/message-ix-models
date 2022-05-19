@@ -59,7 +59,10 @@ def test_broadcast(caplog):
     results = broadcast(data, pd.DataFrame({"bar": ["b"]}))
     assert results.at[0, "bar"] == "b"
 
-    # TODO expand
+    # test use with 1-D variable
+    data = pd.DataFrame({"foo": ["a"], "bar": [None]})
+    results = data.pipe(broadcast, bar=["c"])
+    assert results.at[0, "bar"] == "c"
 
 
 @pytest.mark.parametrize(
