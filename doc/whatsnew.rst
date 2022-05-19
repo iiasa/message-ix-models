@@ -4,6 +4,11 @@ What's new
 .. Next release
 .. ============
 
+2022.5.19
+=========
+
+- Expand :func:`.broadcast` to allow tuble/dataframe with multiple dimensions as input (:pull:`74`)
+
 2022.5.6
 ========
 
