@@ -14,6 +14,7 @@ from message_ix_models.util import add_par_data
 from .data_util import modify_demand_and_hist_activity
 from .data_util import add_emission_accounting
 from .data_util import add_coal_lowerbound_2020
+from .data_util import add_macro_COVID
 from .util import read_config
 
 
@@ -205,6 +206,15 @@ def solve_scen(context, datafile, model_name, scenario_name):
 
     # Solve
     scenario.solve()
+
+@cli.command("add_calibration")
+@click.option("--scenario_name", default="NoPolicy")
+@click.option("--model_name", default="MESSAGEix-Materials")
+@click.pass_obj
+def add_MACRO():
+    mp = Platform()
+    scenario = Scenario(mp, model_name, scenario_name)
+    add_macro_COVID(scenario,'R12-CHN-5y_materials_macro_data.xlsx')
 
 @cli.command("report")
 # @cli.command("report-1")

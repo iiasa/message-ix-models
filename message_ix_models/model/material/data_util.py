@@ -1,6 +1,9 @@
 from collections import defaultdict
 
 import pandas as pd
+import os
+import message_ix
+import ixmp
 
 from .util import read_config
 import re
@@ -10,6 +13,85 @@ from message_data.tools.utilities.get_optimization_years import (
     main as get_optimization_years,
 )
 
+def load_GDP_COVID():
+
+    context = read_config()
+    # Obtain 2015 and 2020 GDP values from NGFS baseline. These values are COVID corrected. (GDP MER)
+
+    mp = ixmp.Platform()
+    scen_NGFS = message_ix.Scenario(mp,'MESSAGEix-GLOBIOM 1.1-M-R12-NGFS','baseline', cache=True)
+    gdp_covid_2015 = scen_NGFS.par('gdp_calibrate', filters = {'year': 2015})
+
+    gdp_covid_2020 = scen_NGFS.par('gdp_calibrate', filters = {'year': 2020})
+    gdp_covid_2020 = gdp_covid_2020.drop(['year', 'unit'],axis = 1)
+
+    # Obtain SSP2 GDP growth rates after 2020 (from ENGAGE baseline)
+
+    f_name = 'iamc_db ENGAGE baseline GDP PPP.xlsx'
+
+    gdp_ssp2 = pd.read_excel(context.get_local_path('material', f_name),
+                                                    sheet_name = 'data_R12')
+    gdp_ssp2 = gdp_ssp2[gdp_ssp2['Scenario'] == 'baseline']
+    regions = 'R12_' + gdp_ssp2['Region']
+    gdp_ssp2 = gdp_ssp2.drop(['Model','Scenario','Unit','Region','Variable','Notes'],axis = 1)
+    gdp_ssp2 = gdp_ssp2.loc[:, 2020:]
+    gdp_ssp2 = gdp_ssp2.divide(gdp_ssp2[2020], axis = 0)
+    gdp_ssp2['node'] = regions
+    gdp_ssp2 = gdp_ssp2[gdp_ssp2['node'] != 'R12_World']
+
+    # Multiply 2020 COVID corrrected values with SSP2 growth rates
+
+    df_new = pd.DataFrame(columns = ['node','year','value'])
+
+    for ind in gdp_ssp2.index:
+
+        df_temp = pd.DataFrame(columns = ['node','year','value'])
+        region = gdp_ssp2.loc[ind, 'node']
+        mult_value = gdp_covid_2020.loc[gdp_covid_2020['node']== region, 'value'].values[0]
+        temp = gdp_ssp2.loc[ind, 2020:2110] * mult_value
+        region_list = [region] * temp.size
+
+        df_temp['node'] = region_list
+        df_temp['year'] = temp.index
+        df_temp['value'] = temp.values
+
+        df_new = pd.concat([df_new, df_temp])
+
+    df_new['unit'] = 'T$'
+    df_new = pd.concat([df_new,gdp_covid_2015])
+
+    return df_new
+
+def add_macro_COVID(scen, filename, check_converge=False):
+
+    context = read_config()
+    info = ScenarioInfo(scen)
+
+    # Excel file for calibration data
+    xls_file = os.path.join('P:', 'ene.model', 'MACRO', 'python', filename)
+
+    # Making a dictionary from the MACRO Excel file
+    xls = pd.ExcelFile(xls_file)
+    data = {}
+    for s in xls.sheet_names:
+        data[s] = xls.parse(s)
+
+    # Load the new GDP values
+    df_gdp = load_GDP_COVID()
+
+    # substitute the gdp_calibrate
+    parname = 'gdp_calibrate'
+
+    # keep the historical GDP to pass the GDP check at add_macro()
+    df_gdphist = data[parname]
+    df_gdphist = df_gdphist.loc[df_gdphist.year < info.y0]
+    data[parname] = df_gdphist.append(
+        df_gdp.loc[df_gdp.year >= info.y0],
+        ignore_index=True
+    )
+
+    # Calibration
+    scen = scen.add_macro(data, check_convergence=check_converge)
 
 def modify_demand_and_hist_activity(scen):
     """Take care of demand changes due to the introduction of material parents
