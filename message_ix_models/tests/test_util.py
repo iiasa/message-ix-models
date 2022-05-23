@@ -48,21 +48,58 @@ def test_as_codes():
 
 
 def test_broadcast(caplog):
-    # Debug message logged with length-0 values
+    # Base data frame to be broadcast, with 2 rows and dimensions:
+    # - a: length 2
+    # - b, c, d: missing
+    N_a = 2
+    base = pd.DataFrame([["a0", 1.2], ["a1", 3.4]], columns=["a", "value"]).assign(
+        b=None, c=None, d=None
+    )
+
+    # broadcast works with DataFrame.pipe(), using keyword arguments
+    result = base.pipe(
+        broadcast, b="b0 b1 b2".split(), c="c0 c1 c2 c3".split(), d=["d0"]
+    )
+    # Results have the expected length: original × cartesian product of 3, 4, and 1
+    assert N_a * 3 * 4 * 1 == len(result)
+    # Resulting array is completely full, no missing labels
+    assert not result.isna().any().any()
+
+    # Length zero labels for one dimension—debug message is logged
     with caplog.at_level(logging.DEBUG, logger="message_ix_models"):
-        broadcast(pd.DataFrame(columns=["foo", "bar"]), foo=[], bar=[])
+        result = base.pipe(broadcast, b="b0 b1".split(), c="c0 c1".split(), d=[])
 
-    assert "Don't broadcast over 'foo'; labels [] have length 0" in caplog.messages
+    # Debug message is logged
+    assert "Don't broadcast over 'd'; labels [] have length 0" in caplog.messages
+    caplog.clear()
+    assert N_a * 2 * 2 * 1 == len(result)  # Expected length
+    assert result["d"].isna().all()  # Dimension d remains empty
+    assert not result.drop("d", axis=1).isna().any().any()  # Others completely full
 
-    # test usage with dataframe
-    data = pd.DataFrame({"foo": ["a"], "bar": [None]})
-    results = broadcast(data, pd.DataFrame({"bar": ["b"]}))
-    assert results.at[0, "bar"] == "b"
+    # Using a DataFrame as the first/only positional argument, plus keyword arguments
+    labels = pd.DataFrame(dict(b="b0 b1 b2".split(), c="c0 c1 c2".split()))
 
-    # test use with 1-D variable
-    data = pd.DataFrame({"foo": ["a"], "bar": [None]})
-    results = data.pipe(broadcast, bar=["c"])
-    assert results.at[0, "bar"] == "c"
+    result = base.pipe(broadcast, labels, d="d0 d1".split())
+    assert N_a * 3 * 2 == len(result)  # (b, c) dimensions linked with 3 pairs of labels
+    assert not result.isna().any().any()  # Completely full
+
+    # Using a positional argument with only 1 column
+    result = base.pipe(broadcast, labels[["b"]], c="c0 c1 c2 c3".split(), d=["d0"])
+    assert N_a * 3 * 4 * 1 == len(result)  # Expected length
+    assert not result.isna().any().any()  # Completely full
+
+    # Overlap between columns in the positional argument and keywords
+    with pytest.raises(ValueError):
+        result = base.pipe(broadcast, labels, c="c0 c1 c2 c3".split(), d=["d0"])
+
+    # Extra, invalid dimensions result in ValueError
+    with pytest.raises(ValueError):
+        base.pipe(broadcast, b="b0 b1 b2".split(), c="c0 c1 c2 c3".split(), e=["e0"])
+
+    labels["e"] = "e0 e1 e2".split()
+
+    with pytest.raises(ValueError):
+        base.pipe(broadcast, labels, d=["d0"])
 
 
 @pytest.mark.parametrize(
