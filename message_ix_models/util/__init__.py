@@ -173,19 +173,27 @@ def broadcast(
     kwargs
         Keys are dimensions. Values are labels along that dimension to fill.
     """
-    # for multi-dim variables
+
+    def _check_dim(d):
+        try:
+            if not df[d].isna().all():
+                raise ValueError(f"Dimension {d} was not empty\n\n{df.head()}")
+        except KeyError:
+            raise ValueError(f"Dimension {d} not among {list(df.columns)}")
+
+    # Broadcast using matched labels for 1+ dimensions from a data frame
     if labels is not None:
-        for cc in labels.columns:
-            assert df[cc].isna().all(), f"Dimension {cc} was not empty\n\n{df.head()}"
-            df.drop(cc, axis=1, inplace=True)
+        # Check the dimensions
+        for dim in labels.columns:
+            _check_dim(dim)
+        # Concatenate 1 copy of `df` for each row in `labels`
         df = pd.concat(
             [df.assign(**row) for _, row in labels.iterrows()], ignore_index=True
         )
 
-    # broadcasting 1-D variables
+    # Next, broadcast other dimensions given as keyword arguments
     for dim, levels in kwargs.items():
-        # Checks
-        assert df[dim].isna().all(), f"Dimension {dim} was not empty\n\n{df.head()}"
+        _check_dim(dim)
         if len(levels) == 0:
             log.debug(
                 f"Don't broadcast over {repr(dim)}; labels {levels} have length 0"
