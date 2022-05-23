@@ -161,7 +161,9 @@ def aggregate_codes(df: pd.DataFrame, dim: str, codes):  # pragma: no cover
         print(key, group_series.replace({dim: mapping}))
 
 
-def broadcast(df, labels: Optional[pd.DataFrame] = None, **kwargs):
+def broadcast(
+    df: pd.DataFrame, labels: Optional[pd.DataFrame] = None, **kwargs
+) -> pd.DataFrame:
     """Fill missing data in `df` by broadcasting.
 
     Arguments
