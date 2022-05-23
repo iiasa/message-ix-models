@@ -168,7 +168,9 @@ def broadcast(
     """Fill missing data in `df` by broadcasting.
 
     :func:`broadcast` is suitable for use with partly-filled data frames returned by
-    :func:`.message_ix.make_df`, with 1 column per dimension, plus a "value" column.
+    :func:`.message_ix.util.make_df`, with 1 column per dimension, plus a "value"
+    column. It is also usable with :meth:`pandas.DataFrame.pipe` for chained operations.
+
     `labels` (if any) are handled first: one copy or duplicate of `df` is produced for
     each row (set of labels) in this argument. Then, `kwargs` are handled;
     :func:`broadcast` returns one copy for each element in the cartesian product of the
