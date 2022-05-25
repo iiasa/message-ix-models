@@ -93,7 +93,7 @@ def callback(rep: Reporter):
 
     # Read transport configuration, including reporting config, onto the latest Context
     context = Context.get_instance(-1)
-    configure(context)
+    configure(context, rep.graph.get("scenario"))
 
     config = context["transport config"]["report"]
     config.update(context["transport config"])
