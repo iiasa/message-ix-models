@@ -50,6 +50,9 @@ node to census_division:
   R12_SAS: 2
   R12_WEU: 2
 
+report:
+  filter: true
+
 share weight convergence:
   R12_AFR: [R12_PAO, R12_WEU]
   R12_CHN: [R12_PAO, R12_WEU]
