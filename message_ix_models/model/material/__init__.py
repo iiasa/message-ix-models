@@ -9,6 +9,9 @@ from message_data.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
 from message_ix_models.util.context import Context
 from message_ix_models.util import add_par_data
+from message_data.tools.utilities import calibrate_UE_gr_to_demand
+from message_data.tools.utilities import calibrate_UE_share_constraints
+from message_ix_models.util import private_data_path
 
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity
@@ -17,17 +20,16 @@ from .data_util import add_coal_lowerbound_2020
 from .data_util import add_macro_COVID
 from .util import read_config
 
-
 log = logging.getLogger(__name__)
 
 
 def build(scenario):
     """Set up materials accounting on `scenario`."""
+
     # Get the specification
-
-
     # Apply to the base scenario
     spec = get_spec()
+
     apply_spec(scenario,spec, add_data_2)
     spec = None
     apply_spec(scenario, spec,add_data_1)  # dry_run=True
@@ -39,8 +41,14 @@ def build(scenario):
     add_emission_accounting(scenario)
     add_coal_lowerbound_2020(scenario)
 
-    return scenario
+    # Market penetration adjustments
+    # NOTE: changing demand affects the market penetration levels for the enduse technologies.
+    # Note: context.ssp doesnt work
+    calibrate_UE_gr_to_demand(scenario, data_path=private_data_path(), ssp='SSP2')
+    calibrate_UE_share_constraints(scenario)
+    print('calibrate_UE')
 
+    return scenario
 
 # add as needed/implemented
 SPEC_LIST = [
@@ -211,10 +219,14 @@ def solve_scen(context, datafile, model_name, scenario_name):
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 @click.pass_obj
-def add_MACRO():
-    mp = Platform()
-    scenario = Scenario(mp, model_name, scenario_name)
-    add_macro_COVID(scenario,'R12-CHN-5y_materials_macro_data.xlsx')
+def add_MACRO(context, model_name, scenario_name):
+    from message_ix import Scenario
+    scenario = Scenario(context.get_platform(), model_name, scenario_name)
+    print(model_name)
+    print(scenario_name)
+
+    # Use the same calibration that was used in NGFS project rc and ind demand adjusted
+    add_macro_COVID(scenario,'R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj.xlsx')
 
 @cli.command("report")
 # @cli.command("report-1")
@@ -299,14 +311,12 @@ DATA_FUNCTIONS_1 = [
     gen_data_ammonia,
     gen_data_generic,
     gen_data_steel,
-    #gen_data_power_sector,
 ]
 
 DATA_FUNCTIONS_2 = [
-    #gen_data_buildings,
     gen_data_cement,
     gen_data_petro_chemicals,
-    #gen_data_power_sector,
+    gen_data_power_sector,
     gen_data_aluminum,
 ]
 
