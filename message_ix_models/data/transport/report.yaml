@@ -44,10 +44,14 @@ general:
 - key: transport iamc
   comp: concat
   inputs:
-  - transport iamc 0
-  - transport iamc 1
-  - transport iamc 2
-  # - transport iamc 3
+  - _transport 0::iamc
+  - _transport 1::iamc
+  - _transport 2a::iamc
+  - _transport 2b::iamc
+  - _transport 2c::iamc
+  - _transport 2d::iamc
+  - _transport 3::iamc
+  - _transport 4::iamc
 
 - key: transport iamc file
   comp: write_report
@@ -57,19 +61,40 @@ general:
   comp: store_ts
   inputs: [ scenario, transport iamc ]
 
+iamc:
 # NB these are currently tailored to produce the variable names expected for the
 #    NGFS project
-iamc:
-- variable: transport iamc 0
+- variable: _transport 0
   base: stock:nl-t-ya:ldv
   var: [ "Transport|Stock|Road|Passenger|LDV", t ]
-- variable: transport iamc 1
+
+- variable: _transport 1
   base: in:nl-t-ya-c:ldv
   var: [ "Final Energy|Transportation|Road|Passenger|LDV", t, c ]
-- variable: transport iamc 2
+
+# The following are 4 different partial sums of the full-resolution in::non-ldv
+- variable: _transport 2a
   base: in:nl-t-ya-c:non-ldv
   var: [ "Final Energy|Transportation", t, c ]
-- variable: transport iamc 3
+
+- variable: _transport 2b
+  base: in:nl-ya-c:non-ldv
+  var: [ "Final Energy|Transportation", c ]
+
+- variable: _transport 2c
+  base: in:nl-t-ya:non-ldv
+  var: [ "Final Energy|Transportation", t ]
+
+- variable: _transport 2d
+  base: in:nl-ya:non-ldv
+  var: [ "Final Energy|Transportation" ]
+
+- variable: _transport 3
   # Auto-sum over dimensions yv, m, h
   base: emi:nl-t-ya
   var: [ "Emissions|CO2|Energy|Demand|Transportation|", t ]
+
+# For debugging
+- variable: _transport 4
+  base: ACT:nl-t-ya
+  var: [ "Internal|ACT:nl-t-ya", t ]
