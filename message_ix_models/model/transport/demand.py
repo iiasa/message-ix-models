@@ -225,8 +225,9 @@ def prepare_reporter(
     pdt_nyt = Key("transport pdt", "nyt")  # Total PDT shared out by mode
     pdt_cap = pdt_nyt.drop("t").add_tag("capita")
     pdt_ny = pdt_nyt.drop("t").add_tag("total")
-    price_sel = price_full.add_tag("transport")
-    price = price_sel.add_tag("smooth")
+    price_sel1 = price_full.add_tag("transport")
+    price_sel0 = price_sel1.add_tag("raw units")
+    price = price_sel1.add_tag("smooth")
     cost = Key("cost", "nyct")
     sw = Key("share weight", "nty")
 
@@ -273,9 +274,10 @@ def prepare_reporter(
         (("votm", "votm:n-y", gdp_ppp_cap), _),
         # Select only the price of transport services
         # FIXME should be the full set of prices
-        (("select", price_sel, price_full, dict(c="transport")), _),
+        (("select", price_sel0, price_full, dict(c="transport")), _),
+        (("price_units", price_sel1, price_sel0), _),
         # Smooth prices to avoid zig-zag in share projections
-        (("smooth", price, price_sel), _),
+        (("smooth", price, price_sel1), _),
         # Transport costs by mode
         (
             (

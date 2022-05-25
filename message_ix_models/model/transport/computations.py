@@ -247,6 +247,14 @@ def pdt_per_capita(gdp_ppp_cap: Quantity, config: dict) -> Quantity:
     return product(ratio(gdp_ppp_cap, fix_gdp), fix_demand)
 
 
+def price_units(qty: Quantity) -> Quantity:
+    """Forcibly adjust price units, if necessary."""
+    target = "USD_2010 / km"
+    if not qty.units.is_compatible_with(target):
+        log.warning(f"Adjust price units from {qty.units} to {target}")
+    return apply_units(qty, target)
+
+
 def share_weight(
     share: Quantity,
     gdp_ppp_cap: Quantity,
