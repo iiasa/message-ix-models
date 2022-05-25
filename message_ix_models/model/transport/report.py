@@ -121,11 +121,19 @@ def callback(rep: Reporter):
     for id, techs in t_groups.items():
         rep.add(f"t::transport {id}", quote(dict(t=techs)))
 
-    # Apply filters if configured
     if config["filter"]:
-        # Include only technologies with "transport" in the name
         log.info("Filter out non-transport technologies")
-        rep.set_filters(t=list(map(str, sorted(technologies, key=attrgetter("id")))))
+
+        # Plain "transport" from the base model, for e.g. prices
+        t_filter = {"transport"}
+        # MESSAGEix-Transport -specific technologies
+        t_filter.update(map(str, technologies.copy()))
+        # Required commodities (e.g. fuel) from the base model
+        t_filter.update(spec.require.set["commodity"])
+
+        print(sorted(t_filter))
+
+        rep.set_filters(t=sorted(t_filter))
 
     # 3. Assemble a queue of computations to add
     queue: List[Tuple[Tuple, Dict]] = []
