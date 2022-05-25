@@ -29,7 +29,7 @@ def load_GDP_COVID():
 
     f_name = 'iamc_db ENGAGE baseline GDP PPP.xlsx'
 
-    gdp_ssp2 = pd.read_excel(context.get_local_path('material', f_name),
+    gdp_ssp2 = pd.read_excel(context.get_local_path('data','material', f_name),
                                                     sheet_name = 'data_R12')
     gdp_ssp2 = gdp_ssp2[gdp_ssp2['Scenario'] == 'baseline']
     regions = 'R12_' + gdp_ssp2['Region']
@@ -89,7 +89,6 @@ def add_macro_COVID(scen, filename, check_converge=False):
         df_gdp.loc[df_gdp.year >= info.y0],
         ignore_index=True
     )
-
     # Calibration
     scen = scen.add_macro(data, check_convergence=check_converge)
 
@@ -125,9 +124,6 @@ def modify_demand_and_hist_activity(scen):
         context.get_local_path("material", fname), sheet_name=sheet_n, usecols="A:F"
     )
 
-    print("Are the correct numbers read?")
-    print(df)
-
     # Filter the necessary variables
     df = df[
         (df["SECTOR"] == "feedstock (petrochemical industry)")
@@ -139,9 +135,6 @@ def modify_demand_and_hist_activity(scen):
         | (df["SECTOR"] == "industry (total)")
     ]
     df = df[df["RYEAR"] == 2015]
-
-    print("Is the filter correct?")
-    print(df)
 
     # Retreive data for i_spec (Excludes petrochemicals as the share is negligable)
     # Aluminum, cement and steel included.
@@ -174,8 +167,6 @@ def modify_demand_and_hist_activity(scen):
     )
 
     df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
-    print("spec")
-    print(df_spec_new)
 
     # Retreive data for i_feed: Only for petrochemicals
     # It is assumed that the sectors that are explicitly covered in MESSAGE are
@@ -198,9 +189,6 @@ def modify_demand_and_hist_activity(scen):
         df_feed_temp.at[i, "i_feed"] = 1
         i = i + 1
         df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
-
-        print("feed")
-        print(df_feed_new)
 
     # df_feed = df[(df["SECTOR"]== "feedstock (petrochemical industry)") & \
     #          (df["FUEL"]== "total") ]
@@ -275,9 +263,6 @@ def modify_demand_and_hist_activity(scen):
 
     df_therm_new = df_therm_new.groupby(["REGION"]).sum().reset_index()
 
-    print("therm")
-    print(df_therm_new)
-
     # TODO: Useful technology efficiencies will also be included
 
     # Add the modified demand and historical activity to the scenario
@@ -319,12 +304,6 @@ def modify_demand_and_hist_activity(scen):
     for r in df_therm_new["REGION"]:
         r_MESSAGE = region_type + r
 
-        if (r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN"):
-            print(r_MESSAGE)
-            print("Thermal before multiplication")
-            print(useful_thermal.loc[useful_thermal["node"] == r_MESSAGE])
-            print(thermal_df_hist.loc[thermal_df_hist["node_loc"] == r_MESSAGE])
-
         useful_thermal.loc[
             useful_thermal["node"] == r_MESSAGE, "value"
         ] = useful_thermal.loc[useful_thermal["node"] == r_MESSAGE, "value"] * (
@@ -337,20 +316,8 @@ def modify_demand_and_hist_activity(scen):
             1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0]
         )
 
-        if (r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN"):
-            print(r_MESSAGE)
-            print("Thermal after multiplication")
-            print(useful_thermal.loc[useful_thermal["node"] == r_MESSAGE])
-            print(thermal_df_hist.loc[thermal_df_hist["node_loc"] == r_MESSAGE])
-
     for r in df_spec_new["REGION"]:
         r_MESSAGE = region_type + r
-
-        if (r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN"):
-            print(r_MESSAGE)
-            print("Spec before multiplication")
-            print(useful_spec.loc[useful_spec["node"] == r_MESSAGE])
-            print(spec_df_hist.loc[spec_df_hist["node_loc"] == r_MESSAGE])
 
         useful_spec.loc[useful_spec["node"] == r_MESSAGE, "value"] = useful_spec.loc[
             useful_spec["node"] == r_MESSAGE, "value"
@@ -362,20 +329,8 @@ def modify_demand_and_hist_activity(scen):
             1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0]
         )
 
-        if (r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN"):
-            print(r_MESSAGE)
-            print("Spec after multiplication")
-            print(useful_spec.loc[useful_spec["node"] == r_MESSAGE])
-            print(spec_df_hist.loc[spec_df_hist["node_loc"] == r_MESSAGE])
-
     for r in df_feed_new["REGION"]:
         r_MESSAGE = region_type + r
-
-        if (r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN"):
-            print(r_MESSAGE)
-            print("Feedstock before multiplication")
-            print(useful_feed.loc[useful_feed["node"] == r_MESSAGE])
-            print(feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE])
 
         useful_feed.loc[useful_feed["node"] == r_MESSAGE, "value"] = useful_feed.loc[
             useful_feed["node"] == r_MESSAGE, "value"
@@ -386,12 +341,6 @@ def modify_demand_and_hist_activity(scen):
         ] = feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE, "value"] * (
             1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0]
         )
-
-        if (r_MESSAGE == "R12_RCPA") | (r_MESSAGE == "R12_CHN"):
-            print(r_MESSAGE)
-            print("Feedstock after multiplication")
-            print(useful_feed.loc[useful_feed["node"] == r_MESSAGE])
-            print(feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE])
 
     scen.check_out()
     scen.add_par("demand", useful_thermal)
