@@ -28,6 +28,7 @@ __all__ = [
     "adapt_R11_R12",
     "adapt_R11_R14",
     "as_codes",
+    "broadcast",
     "cached",
     "check_support",
     "convert_units",
@@ -161,17 +162,80 @@ def aggregate_codes(df: pd.DataFrame, dim: str, codes):  # pragma: no cover
         print(key, group_series.replace({dim: mapping}))
 
 
-def broadcast(df, **kwargs):
+def broadcast(
+    df: pd.DataFrame, labels: Optional[pd.DataFrame] = None, **kwargs
+) -> pd.DataFrame:
     """Fill missing data in `df` by broadcasting.
 
-    Arguments
-    ---------
+    :func:`broadcast` is suitable for use with partly-filled data frames returned by
+    :func:`.message_ix.util.make_df`, with 1 column per dimension, plus a "value"
+    column. It is also usable with :meth:`pandas.DataFrame.pipe` for chained operations.
+
+    `labels` (if any) are handled first: one copy or duplicate of `df` is produced for
+    each row (set of labels) in this argument. Then, `kwargs` are handled;
+    :func:`broadcast` returns one copy for each element in the cartesian product of the
+    dimension labels given by `kwargs`.
+
+    Parameters
+    ----------
+    labels : pandas.DataFrame
+        Each column (dimension) corresponds to one in `df`. Each row represents one
+        matched set of labels for those dimensions.
     kwargs
         Keys are dimensions. Values are labels along that dimension to fill.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The length is either 1 or an integer multiple of the length of `df`.
+
+    Raises
+    ------
+    ValueError
+        if any of the columns in `labels` or `kwargs` are not present in `df`, or if
+        those columns are present but not empty.
+
+    Examples
+    --------
+    >>> from message_ix import make_df
+    >>> from message_ix_models.util import broadcast
+    # Create a base data frame with some empty columns
+    >>> base = make_df("input", technology="t", value=[1.1, 2.2])
+    # Broadcast (duplicate) the data across 2 dimensions
+    >>> df = base.pipe(broadcast, node_loc=["node A", "node B"], mode=["m0", "m1"])
+    # Show part of the result
+    >>> df.dropna(axis=1)
+      mode node_loc technology  value
+    0   m0   node A          t    1.1
+    1   m0   node A          t    2.2
+    2   m0   node B          t    1.1
+    3   m0   node B          t    2.2
+    4   m1   node A          t    1.1
+    5   m1   node A          t    2.2
+    6   m1   node B          t    1.1
+    7   m1   node B          t    2.2
     """
+
+    def _check_dim(d):
+        try:
+            if not df[d].isna().all():
+                raise ValueError(f"Dimension {d} was not empty\n\n{df.head()}")
+        except KeyError:
+            raise ValueError(f"Dimension {d} not among {list(df.columns)}")
+
+    # Broadcast using matched labels for 1+ dimensions from a data frame
+    if labels is not None:
+        # Check the dimensions
+        for dim in labels.columns:
+            _check_dim(dim)
+        # Concatenate 1 copy of `df` for each row in `labels`
+        df = pd.concat(
+            [df.assign(**row) for _, row in labels.iterrows()], ignore_index=True
+        )
+
+    # Next, broadcast other dimensions given as keyword arguments
     for dim, levels in kwargs.items():
-        # Checks
-        assert df[dim].isna().all(), f"Dimension {dim} was not empty\n\n{df.head()}"
+        _check_dim(dim)
         if len(levels) == 0:
             log.debug(
                 f"Don't broadcast over {repr(dim)}; labels {levels} have length 0"
