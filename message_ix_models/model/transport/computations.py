@@ -268,12 +268,13 @@ def share_weight(
 ) -> Quantity:
     """Calculate mode share weights."""
     # Modes from configuration
-    modes = config["transport"]["demand modes"]
+    cfg = config["transport"]
+    modes = cfg["demand modes"]
 
     # Selectors
     t0 = dict(t=modes[0])
     y0 = dict(y=y[0])
-    yC = dict(y=config["transport"]["year convergence"])
+    yC = dict(y=cfg["year convergence"])
     years = list(filter(lambda year: year <= yC["y"], y))
 
     # Share weights
@@ -299,7 +300,7 @@ def share_weight(
     # Weights at the convergence year, yC
     for node in nodes:
         # Set of 1+ nodes to converge towards
-        ref_nodes = config["transport"]["share weight convergence"][node]
+        ref_nodes = cfg["share weight convergence"][node]
 
         # Ratio between this node's GDP and that of the first reference node
         scale = (
