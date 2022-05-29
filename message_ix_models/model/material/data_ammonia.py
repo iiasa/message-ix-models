@@ -27,7 +27,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     # Load configuration
     config = read_config()["material"]["fertilizer"]
     context = read_config()
-    #print(config_.get_local_path("material", "test.xlsx"))
+    #print(config_.get_local_path("material", "ammonia", "test.xlsx"))
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
@@ -175,7 +175,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     N_energy = read_demand()['N_energy']
     N_energy = read_demand()['N_feed'] # updated feed with imports accounted
 
-    demand_fs_org = pd.read_excel(context.get_local_path('material','demand_i_feed_R12.xlsx'))
+    demand_fs_org = pd.read_excel(context.get_local_path("material", "ammonia",'demand_i_feed_R12.xlsx'))
 
     df = demand_fs_org.loc[demand_fs_org.year == 2010, :].join(N_energy.set_index('node'), on='node')
     sh = pd.DataFrame({'node': demand_fs_org.loc[demand_fs_org.year == 2010, 'node'],
@@ -188,9 +188,9 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     df.loc[df["value"] < 0, "value"] = 0  # temporary solution to avoid negative values
     results["demand"].append(df)
 
-    # Globiom land input
+    # Globiom land input DEPRECATED
     """
-    df = pd.read_excel(context.get_local_path('material','GLOBIOM_Fertilizer_use_N.xlsx'))
+    df = pd.read_excel(context.get_local_path("material", "ammonia",'GLOBIOM_Fertilizer_use_N.xlsx'))
     df = df.replace(regex=r'^R11', value="R12").replace(regex=r'^R12_CPA', value="R12_CHN")
     df["unit"] = "t"
     df.loc[df["node"] == "R12_CHN", "value"] *= 0.93 # hotfix to adjust to R12
@@ -211,38 +211,18 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
 
     df = scenario.par('initial_activity_lo', {"technology": ["gas_extr_mpen"]})
     for q in config["technology"]["add"][:6]:
-        df['technology'] = q
-        results["initial_activity_lo"].append(df)
+        df1 = df.copy()
+        df1['technology'] = q
+        results["initial_activity_lo"].append(df1)
 
     df = scenario.par('growth_activity_lo', {"technology": ["gas_extr_mpen"]})
     for q in config["technology"]["add"][:6]:
-        df['technology'] = q
-        results["growth_activity_lo"].append(df)
-
-    # TODO add regional cost scaling for ccs
-    """
-    # tec_scale = (newtechnames + newtechnames_ccs)
-    tec_scale = [e for e in newtechnames if e not in ('NH3_to_N_fertil', 'electr_NH3')]
-
-    # Scale all NH3 tecs in each region with the scaler
-    for t in tec_scale:
-        for p in ['inv_cost', 'fix_cost', 'var_cost']:
-            df = Sc_nitro.par(p, {"technology": t})
-            df = results[p][results[p]["technology"]==t]
-            temp = df.join(scaler_cost.set_index('node_loc'), on='node_loc')
-            df.value = temp.value * temp.scaler_std
-            Sc_nitro.add_par(p, df)
-
-    for t in newtechnames_ccs:
-        for p in ['inv_cost', 'fix_cost', 'var_cost']:
-            df = Sc_nitro.par(p, {"technology": t})
-            temp = df.join(scaler_cost.set_index('node_loc'), on='node_loc')
-            df.value = temp.value * temp.scaler_ccs
-            Sc_nitro.add_par(p, df)
-    """
+        df1 = df.copy()
+        df1['technology'] = q
+        results["growth_activity_lo"].append(df1)
 
     cost_scaler = pd.read_excel(
-        context.get_local_path('material','regional_cost_scaler_R12.xlsx'), index_col=0).T
+        context.get_local_path("material", "ammonia",'regional_cost_scaler_R12.xlsx'), index_col=0).T
 
     scalers_dict = {
         "R12_CHN": {"coal_NH3": 0.75 * 0.91,  # gas/coal price ratio * discount
@@ -586,16 +566,18 @@ def gen_data_ccs(scenario, dry_run=False):
 
     df = scenario.par('initial_activity_lo', {"technology": ["gas_extr_mpen"]})
     for q in config["technology"]["add"][12:]:
-        df['technology'] = q
-        results["initial_activity_lo"].append(df)
+        df1 = df.copy()
+        df1['technology'] = q
+        results["initial_activity_lo"].append(df1)
 
     df = scenario.par('growth_activity_lo', {"technology": ["gas_extr_mpen"]})
     for q in config["technology"]["add"][12:]:
-        df['technology'] = q
-        results["growth_activity_lo"].append(df)
+        df1 = df.copy()
+        df1['technology'] = q
+        results["growth_activity_lo"].append(df1)
 
     cost_scaler = pd.read_excel(
-        context.get_local_path('material','regional_cost_scaler_R12.xlsx'), index_col=0).T
+        context.get_local_path("material", "ammonia",'regional_cost_scaler_R12.xlsx'), index_col=0).T
 
     scalers_dict = {
         "R12_CHN": {"coal_NH3": 0.75 * 0.91,  # gas/coal price ratio * discount
@@ -637,14 +619,14 @@ def read_demand():
     context = read_config()
 
 
-    N_demand_GLO = pd.read_excel(context.get_local_path('material','CD-Links SSP2 N-fertilizer demand.Global_R12_adaption.xlsx'), sheet_name='data')
+    N_demand_GLO = pd.read_excel(context.get_local_path("material", "ammonia",'CD-Links SSP2 N-fertilizer demand_R12.xlsx'), sheet_name='data')
 
     # NH3 feedstock share by region in 2010 (from http://ietd.iipnetwork.org/content/ammonia#benchmarks)
-    feedshare_GLO = pd.read_excel(context.get_local_path('material','Ammonia feedstock share.Global_R12.xlsx'), sheet_name='Sheet2', skiprows=14)
+    feedshare_GLO = pd.read_excel(context.get_local_path("material", "ammonia",'Ammonia feedstock share_R12.xlsx'), sheet_name='Sheet2', skiprows=14)
 
     # Read parameters in xlsx
     te_params = data = pd.read_excel(
-        context.get_local_path("material", "n-fertilizer_techno-economic.xlsx"),
+        context.get_local_path("material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"),
         sheet_name="Sheet1", engine="openpyxl", nrows=72
     )
     n_inputs_per_tech = 12  # Number of input params per technology
@@ -670,7 +652,7 @@ def read_demand():
     N_energy = pd.concat([N_energy.Region, N_energy.sum(axis=1)], axis=1).rename(
         columns={0: 'totENE', 'Region': 'node'})  # GWa
 
-    N_trade_R12 = pd.read_csv(context.get_local_path("material","trade.FAO.R12.csv"), index_col=0)
+    N_trade_R12 = pd.read_csv(context.get_local_path("material", "ammonia","trade.FAO.R12.csv"), index_col=0)
     N_trade_R12.msgregion = "R12_" + N_trade_R12.msgregion
     N_trade_R12.Value = N_trade_R12.Value / 1e6
     N_trade_R12.Unit = "t"
@@ -691,7 +673,7 @@ def read_demand():
     NP = pd.DataFrame({"netimp": df.Import - df.Export, "demand": ND[2010]})
     NP["prod"] = NP.demand - NP.netimp
 
-    NH3_trade_R12 = pd.read_csv(context.get_local_path("material","NH3_trade_BACI_R12_aggregation.csv"))#, index_col=0)
+    NH3_trade_R12 = pd.read_csv(context.get_local_path("material", "ammonia","NH3_trade_BACI_R12_aggregation.csv"))#, index_col=0)
     NH3_trade_R12.region = "R12_" + NH3_trade_R12.region
     NH3_trade_R12.quantity = NH3_trade_R12.quantity / 1e6
     NH3_trade_R12.unit = "t"
@@ -749,12 +731,12 @@ def read_demand():
 def read_trade_data(context, comm):
     if comm == "NFert":
         data = pd.read_excel(
-            context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
+            context.get_local_path("material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"),
             sheet_name="Trade", engine="openpyxl", usecols=np.linspace(0, 7, 8, dtype=int))
         data = data.assign(technology=lambda x: set_trade_tec(x["Variable"]))
     if comm == "NH3":
         data = pd.read_excel(
-            context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
+            context.get_local_path("material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"),
             sheet_name="Trade_NH3", engine="openpyxl", usecols=np.linspace(0, 7, 8, dtype=int))
         data = data.assign(technology=lambda x: set_trade_tec_NH3(x["Variable"]))
     return data
@@ -797,7 +779,7 @@ def read_data():
 
     # Read the file
     data = pd.read_excel(
-        context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
+        context.get_local_path("material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"),
         sheet_name="Sheet1", engine="openpyxl", nrows=72
     )
 
@@ -864,7 +846,7 @@ def read_data_ccs():
 
     # Read the file
     data = pd.read_excel(
-        context.get_local_path("material", "n-fertilizer_techno-economic_new.xlsx"),
+        context.get_local_path("material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"),
         sheet_name="CCS",
     )
 
