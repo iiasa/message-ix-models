@@ -1043,65 +1043,65 @@ iamc:
 report:
 - key: pe test
   members:
-#  - Primary Energy|Biomass:iamc
-  - Primary Energy|Coal:iamc
-  - Primary Energy|Gas:iamc
-  - Primary Energy|Hydro:iamc
-  - Primary Energy|Nuclear:iamc
-  - Primary Energy|Solar:iamc
-  - Primary Energy|Wind:iamc
+#  - Primary Energy|Biomass::iamc
+  - Primary Energy|Coal::iamc
+  - Primary Energy|Gas::iamc
+  - Primary Energy|Hydro::iamc
+  - Primary Energy|Nuclear::iamc
+  - Primary Energy|Solar::iamc
+  - Primary Energy|Wind::iamc
 
 - key: gdp test
   members:
-  - GDP|MER:iamc
-  - GDP|PPP:iamc
+  - GDP|MER::iamc
+  - GDP|PPP::iamc
 
 - key: se test
   members:
-  - Secondary Energy:iamc
-  - Secondary Energy|Electricity|Fossil:iamc
-  - Secondary Energy|Electricity|Fossil|w/ CCS:iamc
-  - Secondary Energy|Electricity|Fossil|w/o CCS:iamc
-  - Secondary Energy|Gases:iamc
-  - Secondary Energy|Liquids:iamc
-  - Secondary Energy|Solids:iamc
+  - Secondary Energy::iamc
+  - Secondary Energy|Electricity|Fossil::iamc
+  - Secondary Energy|Electricity|Fossil|w/ CCS::iamc
+  - Secondary Energy|Electricity|Fossil|w/o CCS::iamc
+  - Secondary Energy|Gases::iamc
+  - Secondary Energy|Liquids::iamc
+  - Secondary Energy|Solids::iamc
 
 - key: emissions
   members:
-  - Emissions:iamc
+  - Emissions::iamc
 
 - key: CH4 emissions
   members:
-  - Emissions|CH4:iamc
-  - land_out CH4:iamc
-  # - Emissions|CH4|Fossil Fuels and Industry:iamc
-  # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive:iamc
-  # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive:iamc
+  - Emissions|CH4::iamc
+  - land_out CH4::iamc
+  # - Emissions|CH4|Fossil Fuels and Industry::iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Biomass|Fugitive::iamc
+  # - Emissions|CH4|Energy|Supply|Gases|Natural Gas|Fugitive::iamc
+  # - Emissions|CH4|Energy|Supply|Solids|Biomass|Fugitive::iamc
+  # - Emissions|CH4|Energy|Supply|Solids|Coal|Fugitive::iamc
 
 - key: price test
   members:
-  - Price:iamc
-  - Price|Carbon:iamc
+  - Price::iamc
+  - Price|Carbon::iamc
   # commented: see above
-  # - Price w/o carbon:iamc
+  # - Price w/o carbon::iamc
 
   # TODO ensure these are covered by the preferred method, above, then remove
   #      these
-  - Price (legacy)|Primary Energy wo carbon price|Biomass:iamc
-  - Price (legacy)|Primary Energy wo carbon price|Coal:iamc
-  - Price (legacy)|Primary Energy wo carbon price|Gas:iamc
-  - Price (legacy)|Primary Energy wo carbon price|Oil:iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Electricity:iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Hydrogen:iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Biomass:iamc
-  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Oil:iamc
+  - Price (legacy)|Primary Energy wo carbon price|Biomass::iamc
+  - Price (legacy)|Primary Energy wo carbon price|Coal::iamc
+  - Price (legacy)|Primary Energy wo carbon price|Gas::iamc
+  - Price (legacy)|Primary Energy wo carbon price|Oil::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Electricity::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Hydrogen::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Biomass::iamc
+  - Price (legacy)|Secondary Energy wo carbon price|Liquids|Oil::iamc
   # NB for "Price|Secondary Energy|Liquids|Oil", the legacy reporting inserts a
   #    zero matrix.
-  - Price (legacy)|Final Energy wo carbon price|Residential|Electricity:iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Gases|Natural Gas:iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Biomass:iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Oil:iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Biomass:iamc
-  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Coal:iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Electricity::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Gases|Natural Gas::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Biomass::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Liquids|Oil::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Biomass::iamc
+  - Price (legacy)|Final Energy wo carbon price|Residential|Solids|Coal::iamc
