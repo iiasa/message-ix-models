@@ -114,6 +114,7 @@ def main(context: Context, scenario: Scenario, options: Dict = None, **option_kw
     # Generate the specification of the MESSAGEix-Transport structure: required, added,
     # and removed set items
     spec = get_spec(context)
+    context["transport spec"] = spec
 
     # Apply the structural changes AND add the data
     log.info("Build MESSAGEix-Transport")
