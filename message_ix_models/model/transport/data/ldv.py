@@ -268,7 +268,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
 
 
 def get_constraints(context) -> Dict[str, pd.DataFrame]:
-    """Return constraints on light-duty vehicle technology activity.
+    """Return constraints on light-duty vehicle technology activity and usage.
 
     Responds to the ``["transport config"]["constraint"]["LDV growth_activity"]``
     context setting, which should give the allowable *annual* increase/decrease in
@@ -281,9 +281,18 @@ def get_constraints(context) -> Dict[str, pd.DataFrame]:
     info = context["transport build info"]
     years = info.Y[1:]
 
-    # List of LDV technologies
-    all_techs = context["transport set"]["technology"]["add"]
-    ldv_techs = list(map(str, all_techs[all_techs.index("LDV")].child))
+    # Technologies as a hierarchical code list
+    codes = context["transport set"]["technology"]["add"]
+    ldv_codes = codes[codes.index("LDV")].child
+
+    # All technologies in the spec, as strings
+    all_techs = list(map(str, context["transport spec"].add.set["technology"]))
+
+    # List of technologies to constrain, including the LDV technologies, plus the
+    # corresponding "X usage by CG" pseudo-technologies
+    techs = []
+    for t in map(str, ldv_codes):
+        techs.extend(filter(lambda _t: t in _t, all_techs))
 
     # Constraint value
     annual = context["transport config"]["constraint"]["LDV growth_activity"]
@@ -293,6 +302,6 @@ def get_constraints(context) -> Dict[str, pd.DataFrame]:
         par = f"growth_activity_{bound}"
         data[par] = make_df(
             par, value=factor * annual, year_act=years, time="year", unit="-"
-        ).pipe(broadcast, node_loc=info.N[1:], technology=ldv_techs)
+        ).pipe(broadcast, node_loc=info.N[1:], technology=techs)
 
     return data
