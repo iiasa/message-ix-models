@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable, List, Union
 
 import genno.config
+from genno import Key
 from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Scenario, Reporter
 from message_ix_models.util import local_data_path, private_data_path
@@ -243,8 +244,8 @@ def prepare_reporter(
         callback(rep)
 
     if key:
-        # If needed, get the full key for *quantity*
-        key = rep.infer_keys(key)
+        # If just a bare name like "ACT" is given, infer the full key
+        key = rep.infer_keys(key) if Key.bare_name(key) else key
 
         if output_path and not output_path.is_dir():
             # Add a new computation that writes *key* to the specified file
