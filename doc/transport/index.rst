@@ -132,6 +132,9 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
 ``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_GLOBIOM_R12_s#1``
   regions=R12, years=B. Includes :doc:`material` detail.
 
+``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_2305#?`` (default version as of 2022-05-25)
+  regions=R12, years=B. Includes :doc:`material` detail.
+
 
 Structure of base scenarios
 ---------------------------
