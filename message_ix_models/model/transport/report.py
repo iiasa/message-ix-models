@@ -1,11 +1,11 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
 from copy import deepcopy
-from operator import attrgetter
 from typing import Any, Dict, List, Tuple
 
 from dask.core import quote
 from genno import Computer
+from genno.computations import aggregate
 from message_ix.reporting import Key, Reporter
 from message_ix_models import Context, Spec
 
@@ -117,7 +117,9 @@ def callback(rep: Reporter):
     rep.add("t::transport", quote(technologies))
     rep.add("c::transport", quote(spec["add"].set["commodity"]))
 
-    # Mappings for use with select()
+    # Mappings for use with aggregate, select, etc.
+    rep.add("t::transport agg", quote(dict(t=t_groups)))
+    rep.add("t::transport modes", quote(dict(t=list(t_groups.keys()))))
     for id, techs in t_groups.items():
         rep.add(f"t::transport {id}", quote(dict(t=techs)))
 
@@ -131,8 +133,6 @@ def callback(rep: Reporter):
         # Required commodities (e.g. fuel) from the base model
         t_filter.update(spec.require.set["commodity"])
 
-        print(sorted(t_filter))
-
         rep.set_filters(t=sorted(t_filter))
 
     # 3. Assemble a queue of computations to add
@@ -144,13 +144,17 @@ def callback(rep: Reporter):
     key: Any
     for key in ("in", "out"):
         try:
-            k = rep.full_key(key)
+            k1 = rep.full_key(key)
         except KeyError:
             if solved:
                 raise
             else:
                 continue
-        queue.append((("aggregate", k, "transport", dict(t=t_groups)), _))
+        k2 = k1.add_tag("transport agg")
+        k3 = k1.add_tag("transport")
+        # Reference the function to avoid the genno magic which would treat as sum()
+        queue.append(((k2, aggregate, k1, "t::transport agg", False), _))
+        queue.append((("select", k3, k2, "t::transport modes"), _s))
 
     # Selected subsets of certain quantities
     for key in (
