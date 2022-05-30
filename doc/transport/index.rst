@@ -62,7 +62,7 @@ Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for workin
 
 **Choose a platform.**
 This example uses a platform named ``mt``.
-If not already configured on your system, create the configuration for the platform to be used::
+If not already configured on your system, create the configuration for the platform to be used; something like::
 
     $ ixmp platform add mt jdbc hsqldb /path/to/db
 
@@ -95,13 +95,34 @@ The ``-m model.transport`` option indicates that additional reporting calculatio
 Utilities
 ---------
 
-The :command:`gen-demand` CLI command is provided to allow generating demand data without building a full scenario::
+There are several other sub-commands of :program:`mix-models transport` available.
+Use ``--help`` overall or for a particular command to learn more.
+
+:command:`batch`
+  Display (i.e. print to the console, but do not execute) shell commands (currently only for `bash <https://en.wikipedia.org/wiki/Bash_(Unix_shell)>`_ and similar \*nix shells) to build, solve, and report multiple scenarios.
+
+  These can be copied to a temporary location and pasted into a terminal instead of typing them manually.
+
+  As of 2022-05-25, the settings determining the scenarios, CLI options, etc. are hard-coded in the function; modify directly as needed.
+
+:command:`gen-demand`
+  Generate demand data without building a full scenario::
 
     $ mix-models transport gen-demand "SHAPE innovation" ../output_dir/
 
-Output is written to a CSV file in the indicated directory.
-See :func:`gdp_pop`, the ``--help`` text, and the command-line output.
+  Output is written to a CSV file in the indicated directory.
+  See :func:`gdp_pop`, the ``--help`` text, and the command-line output.
 
+:command:`refresh`
+  Overwrite one given local database (i.e. :mod:`ixmp.backend.jdbc.JDBCBackend` stored in a HyperSQL database) with another.
+  This reads configuration from ixmp configuration file; e.g. to replace the database named ``local`` with the one named ``clone-2022-05-25``, do this:
+
+  .. code-block:: json
+
+    {
+      "...": "...",
+      "transport refresh db": {"source": "clone-2022-05-25", "dest": "local"}
+    }
 
 .. _transport-base-scenarios:
 
