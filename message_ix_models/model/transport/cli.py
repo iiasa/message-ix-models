@@ -154,7 +154,7 @@ def build_cmd(context, **options):
 
 
 @cli.command()
-@click.option("--go", is_flag=True)
+@click.option("--go", is_flag=True, hidden=True)  # Currently unused
 @click.pass_context
 def batch(click_ctx, go):
     """Generate commands to handle batches of scenarios."""
@@ -168,12 +168,12 @@ def batch(click_ctx, go):
     ]
     model_names = ["MESSAGEix-Materials"]
     scenario_version = [
-        "NoPolicy_GLOBIOM_R12_s#1",
+        "NoPolicy_2305#1",
         # "EN_NPi2020_1000f#1",  # with model name "ENGAGE_SSP2_v4.1.7"
     ]
     options = {
         "": "",
-        "A---": '--future="A---"',
+        # "A---": '--future="A---"',
     }
 
     # Accumulate command fragments
