@@ -95,7 +95,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
             raise
 
     # Demand is expressed for the expected quantities
-    data = rep.get("demand:ixmp")
+    data = rep.get("demand::ixmp")
 
     # Returns a dict with a single key/DataFrame
     df = data.pop("demand")

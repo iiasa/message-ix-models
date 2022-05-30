@@ -39,7 +39,7 @@ DATA_FUNCTIONS = {
     "ldv": (ldv.get_ldv_data, "context"),
     "non_ldv": (non_ldv.get_non_ldv_data, "context"),
     "freight": (freight.get_freight_data, "context"),
-    "demand": ("demand:ixmp",),
+    "demand": ("demand::ixmp",),
 }
 
 
@@ -86,7 +86,7 @@ def add_data(scenario, context, dry_run=False):
     add = partial(add_par_data, dry_run=dry_run)
     for name, comp in DATA_FUNCTIONS.items():
         # Add 2 computations: one to generate the data
-        k1 = c.add(f"{name}:ixmp", *comp)
+        k1 = c.add(f"{name}::ixmp", *comp)
         # …one to add it to `scenario`
         all_keys.append(c.add(f"add {name}", add, "scenario", k1))
 
@@ -113,7 +113,7 @@ def strip_emissions_data(scenario, context):
     pass
 
 
-@provides_data("n:ex world", "y:model", "config")
+@provides_data("n::ex world", "y::model", "config")
 def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFrame]:
     """Input and output data for conversion technologies:
 

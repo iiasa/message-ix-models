@@ -240,18 +240,18 @@ def prepare_reporter(
         (("_lambda", "lambda:", "config"), _),
         # List of nodes excluding "World"
         # TODO move upstream to message_ix
-        (("nodes_ex_world", "n:ex world", "n"), _),
-        (("nodes_ex_world", "n:ex world+code", "nodes"), _),
+        (("nodes_ex_world", "n::ex world", "n"), _),
+        (("nodes_ex_world", "n::ex world+code", "nodes"), _),
         # List of model years
-        (("model_periods", "y:model", "y", "cat_year"), _),
+        (("model_periods", "y::model", "y", "cat_year"), _),
         # Base share data
         (
             (
                 "base_shares",
                 "base shares:n-t-y",
-                "n:ex world",
+                "n::ex world",
                 "t::transport modes",
-                "y:model",
+                "y::model",
                 "config",
             ),
             _,
@@ -259,7 +259,7 @@ def prepare_reporter(
         # Population data; data source according to config
         ((pop, partial(gdp_pop.population, extra_dims=False), "y", "config"), _),
         # Population shares by area_type
-        ((pop_at, groups.urban_rural_shares, "y:model", "config"), _),
+        ((pop_at, groups.urban_rural_shares, "y::model", "config"), _),
         # Consumer group sizes
         # TODO ixmp is picky here when there is no separate argument to the callable;
         # fix.
@@ -288,7 +288,7 @@ def prepare_reporter(
                 "whour:",
                 "speed:t",
                 "votm:n-y",
-                "y:model",
+                "y::model",
             ),
             _,
         ),
@@ -301,9 +301,9 @@ def prepare_reporter(
                 gdp_ppp_cap,
                 cost,
                 "lambda:",
-                "n:ex world",
-                "y:model",
-                "t:transport",
+                "n::ex world",
+                "y::model",
+                "t::transport",
                 "cat_year",
                 "config",
             ),
@@ -317,7 +317,7 @@ def prepare_reporter(
                 cost,
                 sw,
                 "lambda:",
-                "y:model",
+                "y::model",
             ),
             _,
         ),
@@ -340,21 +340,21 @@ def prepare_reporter(
         # Convert to ixmp format
         (
             (
-                "demand:ixmp",
+                "demand::ixmp",
                 computations.demand_ixmp,
                 pdt_nyt,
                 "transport ldv pdt:n-y-cg",
             ),
             _,
         ),
-        # Dummy demands, if configured
+        # Dummy demands, in case these are configured
         (
             (
-                "demand dummy:ixmp",
+                "demand dummy::ixmp",
                 dummy,
                 "c::transport",
-                "nodes:ex world",
-                "y:model",
+                "nodes::ex world",
+                "y::model",
                 "config",
             ),
             _,
