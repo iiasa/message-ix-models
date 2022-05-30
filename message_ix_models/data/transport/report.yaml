@@ -95,10 +95,19 @@ iamc:
   base: in:nl-ya:transport
   var: [ "Final Energy|Transportation" ]
 
+# Emissions using MESSAGEix emission_factor parameter
 - variable: _transport 3
   # Auto-sum over dimensions yv, m, h
-  base: emi:nl-t-ya
-  var: [ "Emissions|CO2|Energy|Demand|Transportation|", t ]
+  base: emi:nl-t-ya-e-gwp metric-e equivalent:gwpe+agg
+  var:
+  - "Emissions|CO2|Energy|Demand|Transportation|"
+  - t
+  # Same as in data/report/global.yaml
+  - e
+  - e equivalent
+  - gwp metric
+
+# TODO emissions using legacy relation approach
 
 # For debugging. "ZZZ" is needed because pyam.concat() sorts automatically
 - variable: _transport debug ACT
