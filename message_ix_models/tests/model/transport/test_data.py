@@ -8,7 +8,7 @@ from message_ix_models.model import bare
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from message_data.model.transport import configure
+from message_data.model.transport import build, configure
 from message_data.model.transport import data as data_module
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import get_emissions_data
@@ -154,9 +154,10 @@ def test_get_emissions_data(test_context, source, rows, regions):
     [
         (None, "R11", "A"),
         ("US-TIMES MA3T", "R11", "A"),
+        ("US-TIMES MA3T", "R11", "B"),
+        ("US-TIMES MA3T", "R12", "B"),
         ("US-TIMES MA3T", "R14", "A"),
         # Not implemented
-        ("US-TIMES MA3T", "R11", "B"),
         param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
     ],
 )
@@ -170,6 +171,7 @@ def test_get_ldv_data(test_context, source, regions, years):
     info = bare.get_spec(ctx)["add"]
 
     ctx["transport build info"] = info
+    ctx["transport spec"] = build.get_spec(ctx)
 
     # Method runs without error
     ctx["transport config"]["data source"]["LDV"] = source
@@ -181,6 +183,9 @@ def test_get_ldv_data(test_context, source, regions, years):
     for bound in ("lo", "up"):
         # Constraint data are returned. Use .pop() to exclude from the next assertions
         df = data.pop(f"growth_activity_{bound}")
+
+        # Usage technologies are included
+        assert "ELC_100 usage by URLMM" in df["technology"].unique()
 
         # Data covers all periods except the first
         assert info.Y[1:] == sorted(df["year_act"].unique())
