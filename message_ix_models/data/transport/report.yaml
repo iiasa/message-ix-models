@@ -44,12 +44,16 @@ general:
 - key: transport iamc
   comp: concat
   inputs:
-  - _transport 0::iamc
+  - _transport 0a::iamc
+  - _transport 0b::iamc
+  - _transport 0c::iamc
+  - _transport 0d::iamc
   - _transport 1::iamc
   - _transport 2a::iamc
   - _transport 2b::iamc
   - _transport 2c::iamc
   - _transport 2d::iamc
+  - _transport 2e::iamc
   - _transport 3::iamc
   # Debugging
   - _transport debug ACT::iamc
@@ -68,14 +72,27 @@ general:
 #    NGFS project
 iamc:
 
+# Activity
+- variable: _transport 0a
+  base: out:nl-t-ya-c:transport
+  var: [ "Energy Service|Transportation", t, c ]
+
+- variable: _transport 0b
+  base: out:nl-ya-c:transport
+  var: [ "Energy Service|Transportation", c ]
+
+- variable: _transport 0c
+  base: out:nl-t-ya:transport
+  var: [ "Energy Service|Transportation", t ]
+
+- variable: _transport 0d
+  base: out:nl-ya:transport
+  var: [ "Energy Service|Transportation" ]
+
 # Stock
-- variable: _transport 0
+- variable: _transport 1
   base: stock:nl-t-ya:ldv
   var: [ "Transport|Stock|Road|Passenger|LDV", t ]
-
-- variable: _transport 1
-  base: in:nl-t-ya-c:ldv
-  var: [ "Final Energy|Transportation|Road|Passenger|LDV", t, c ]
 
 # Final energy
 
@@ -96,6 +113,10 @@ iamc:
 - variable: _transport 2d
   base: in:nl-ya:transport
   var: [ "Final Energy|Transportation" ]
+
+- variable: _transport 2e
+  base: in:nl-t-ya-c:ldv
+  var: [ "Final Energy|Transportation|Road|Passenger|LDV", t, c ]
 
 # Emissions using MESSAGEix emission_factor parameter
 - variable: _transport 3
