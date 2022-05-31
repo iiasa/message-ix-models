@@ -130,8 +130,8 @@ def callback(rep: Reporter):
         t_filter = {"transport"}
         # MESSAGEix-Transport -specific technologies
         t_filter.update(map(str, technologies.copy()))
-        # Required commodities (e.g. fuel) from the base model
-        t_filter.update(spec.require.set["commodity"])
+        # # Required commodities (e.g. fuel) from the base model
+        # t_filter.update(spec.require.set["commodity"])
 
         rep.set_filters(t=sorted(t_filter))
 
