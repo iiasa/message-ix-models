@@ -131,4 +131,6 @@ def main(context: Context, scenario: Scenario, options: Dict = None, **option_kw
             dry_run=options.get("dry_run", False),
         )
 
+    scenario.set_as_default()
+
     mark_time()
