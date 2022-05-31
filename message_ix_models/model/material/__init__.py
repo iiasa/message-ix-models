@@ -18,6 +18,7 @@ from .data_util import modify_demand_and_hist_activity
 from .data_util import add_emission_accounting
 from .data_util import add_coal_lowerbound_2020
 from .data_util import add_macro_COVID
+from .data_util import add_elec_lowerbound_2020
 from .util import read_config
 
 log = logging.getLogger(__name__)
@@ -34,6 +35,9 @@ def build(scenario):
     spec = None
     apply_spec(scenario, spec,add_data_1)  # dry_run=True
 
+    s_info = ScenarioInfo(scenario)
+    nodes = s_info.N
+
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
@@ -46,7 +50,15 @@ def build(scenario):
     # Note: context.ssp doesnt work
     calibrate_UE_gr_to_demand(scenario, data_path=private_data_path(), ssp='SSP2')
     calibrate_UE_share_constraints(scenario)
-    print('calibrate_UE')
+
+    # Electricity calibration to avoid zero prices for CHN.
+    if 'R12_CHN' in nodes:
+        add_elec_lowerbound_2020(scenario)
+
+    # i_feed demand is zero creating a zero division error during MACRO calibration
+    scenario.check_out()
+    scenario.remove_set('sector','i_feed')
+    scenario.commit('i_feed removed from sectors.')
 
     return scenario
 
@@ -197,9 +209,10 @@ def build_scen(context, datafile, tag, mode):
     metavar="INPUT",
     help="File name for external data input",
 )
+@click.option("--add_macro", default=True)
 @click.pass_obj
 # @click.pass_obj
-def solve_scen(context, datafile, model_name, scenario_name):
+def solve_scen(context, datafile, model_name, scenario_name, add_macro):
     """Solve a scenario.
 
     Use the --model_name and --scenario_name option to specify the scenario to solve.
@@ -213,20 +226,19 @@ def solve_scen(context, datafile, model_name, scenario_name):
         scenario.remove_solution()
 
     # Solve
-    scenario.solve()
+    print('Solving the scenario without MACRO')
+    scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
+    scenario.set_as_default()
 
-@cli.command("add_calibration")
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--model_name", default="MESSAGEix-Materials")
-@click.pass_obj
-def add_MACRO(context, model_name, scenario_name):
-    from message_ix import Scenario
-    scenario = Scenario(context.get_platform(), model_name, scenario_name)
-    print(model_name)
-    print(scenario_name)
-
-    # Use the same calibration that was used in NGFS project rc and ind demand adjusted
-    add_macro_COVID(scenario,'R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj.xlsx')
+    if add_macro:
+        # After solving, add macro calibration
+        print('Scenario solved, now adding MACRO calibration')
+        scenario_macro = add_macro_COVID(scenario,'R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx')
+        print('Scenario calibrated.')
+        macro_scenario_name = scenario_name + '_macro'
+        scenario_macro = scenario_macro.clone(scenario= macro_scenario_name)
+        scenario_macro.solve(model="MESSAGE-MACRO", solve_options={"lpmethod": "4"})
+        scenario_macro.set_as_default()
 
 @cli.command("report")
 # @cli.command("report-1")
@@ -316,7 +328,7 @@ DATA_FUNCTIONS_1 = [
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    gen_data_power_sector,
+    # gen_data_power_sector,
     gen_data_aluminum,
 ]
 
