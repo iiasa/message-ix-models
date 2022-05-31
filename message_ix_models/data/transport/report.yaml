@@ -53,6 +53,8 @@ general:
   - _transport 3::iamc
   # Debugging
   - _transport debug ACT::iamc
+  - _transport debug CAP::iamc
+  - _transport debug CAP_NEW::iamc
 
 - key: transport iamc file
   comp: write_report
@@ -112,4 +114,12 @@ iamc:
 # For debugging. "ZZZ" is needed because pyam.concat() sorts automatically
 - variable: _transport debug ACT
   base: ACT:nl-t-ya
-  var: [ "ZZZ debug|ACT:nl-t-ya", t ]
+  var: [ "Zdebug   ACT:nl-t-ya", t ]
+
+- variable: _transport debug CAP
+  base: CAP:nl-t-ya
+  var: [ "Zdebug   CAP:nl-t-ya", t ]
+
+- variable: _transport debug CAP_NEW
+  base: CAP_NEW:nl-t-yv
+  var: [ "Zdebug   CAP_NEW:nl-t-yv", t ]
