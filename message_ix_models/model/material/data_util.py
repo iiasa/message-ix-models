@@ -66,6 +66,7 @@ def add_macro_COVID(scen, filename, check_converge=False):
 
     context = read_config()
     info = ScenarioInfo(scen)
+    nodes = info.N
 
     # Excel file for calibration data
     xls_file = os.path.join('P:', 'ene.model', 'MACRO', 'python', filename)
@@ -89,8 +90,11 @@ def add_macro_COVID(scen, filename, check_converge=False):
         df_gdp.loc[df_gdp.year >= info.y0],
         ignore_index=True
     )
+
     # Calibration
     scen = scen.add_macro(data, check_convergence=check_converge)
+
+    return scen
 
 def modify_demand_and_hist_activity(scen):
     """Take care of demand changes due to the introduction of material parents
@@ -551,6 +555,58 @@ def add_emission_accounting(scen):
 
     scen.add_par("relation_activity",CF4_red_add)
     scen.commit("CF4 relations corrected.")
+
+def add_elec_lowerbound_2020(scen):
+
+    # To avoid zero i_spec prices only for R12_CHN, add the below section.
+    # read input parameters for relevant technology/commodity combinations for
+    # converting betwen final and useful energy
+
+    context = read_config()
+
+    input_residual_electricity = scen.par('input',filters={"technology":
+                        "sp_el_I", "year_vtg": "2020", "year_act": "2020"})
+
+    # read processed final energy data from IEA extended energy balances
+    # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
+
+    final = pd.read_csv(context.get_local_path("material", 'residual_industry_2019.csv'))
+
+    # downselect needed fuels and sectors
+    final_residual_electricity = final.query('MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"')
+
+    # join final energy data from IEA energy balances and input coefficients
+    # from final-to-useful technologies from MESSAGEix
+    bound_residual_electricity = pd.merge(input_residual_electricity,
+    final_residual_electricity, left_on = "node_loc",
+    right_on = "MESSAGE_region", how = "inner")
+
+    # derive useful energy values by dividing final energy by
+    # input coefficient from final-to-useful technologies
+    bound_residual_electricity["value"] = bound_residual_electricity["Value"] / bound_residual_electricity["value"]
+
+    # downselect dataframe columns for MESSAGEix parameters
+    bound_residual_electricity = bound_residual_electricity.filter(items=['node_loc',
+    'technology', 'year_act', 'mode', 'time', 'value', 'unit_x'])
+    # rename columns if necessary
+    bound_residual_electricity.columns = ['node_loc', 'technology', 'year_act',
+                                            'mode', 'time', 'value', 'unit']
+
+    # Decrease 20% to aviod zero prices (the issue continiues otherwise)
+    bound_residual_electricity['value'] = bound_residual_electricity['value'] * 0.8
+    bound_residual_electricity = bound_residual_electricity[bound_residual_electricity['node_loc'] == 'R12_CHN']
+
+    scen.check_out()
+
+    # add parameter dataframes to ixmp
+    scen.add_par('bound_activity_lo', bound_residual_electricity)
+
+    # Remove the previous bounds
+    remove_par_lo = scen.par('growth_activity_lo', filters = {'technology':'sp_el_I','year_act':2020,'node_loc':'R12_CHN'})
+    scen.remove_par('growth_activity_lo',remove_par_lo)
+
+    scen.commit("added lower bound for activity of residual electricity technologies")
+
 
 def add_coal_lowerbound_2020(sc):
     '''Set lower bounds for coal and i_spec as a calibration for 2020'''
