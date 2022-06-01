@@ -433,9 +433,10 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
                                  relation="CO2_cc").drop(["emission", "year_vtg"], axis=1)
     rel_df_cc = rel_df_cc[rel_df_cc["technology"] != "NH3_to_N_fertil"]
     rel_df_cc = rel_df_cc[rel_df_cc["year_rel"] == rel_df_cc["year_act"]].drop_duplicates()
-    rel_df_cc[rel_df_cc["technology"] == "biomass_NH3_ccs"] = rel_df_cc[
-        rel_df_cc["technology"] == "biomass_NH3_ccs"].assign(
-        value=results[par][results[par]["technology"] == "biomass_NH3_ccs"]["value"].values[0])
+    if add_ccs:
+        rel_df_cc[rel_df_cc["technology"] == "biomass_NH3_ccs"] = rel_df_cc[
+            rel_df_cc["technology"] == "biomass_NH3_ccs"].assign(
+                value=results[par][results[par]["technology"] == "biomass_NH3_ccs"]["value"].values[0])
 
 
     rel_df_em = results[par]
@@ -501,7 +502,7 @@ def gen_data_ccs(scenario, dry_run=False):
     output_commodity_dict = {
         "output_NH3": "NH3",
         "output_heat": "d_heat",
-        "output_water": ""  # ask Jihoon how to name
+        "output_water": "wastewater"  # ask Jihoon how to name
     }
     commodity_dict = {
         "output": output_commodity_dict,
