@@ -5,6 +5,7 @@ data source:
   demand dummy: false
   gdp: SSP2
   population: SSP2
+  LDV: US-TIMES MA3T
   non-LDV: IKARUS
 
 factor:
