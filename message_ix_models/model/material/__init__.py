@@ -142,8 +142,9 @@ def create_bare(context, regions, dry_run):
 )
 @click.option("--tag", default="", help="Suffix to the scenario name")
 @click.option("--mode", default = 'by_url')
+@click.option("--scenario_name", default = 'NoPolicy_3105_macro')
 @click.pass_obj
-def build_scen(context, datafile, tag, mode):
+def build_scen(context, datafile, tag, mode, scenario_name):
     """Build a scenario.
 
     Use the --url option to specify the base scenario.
@@ -166,39 +167,46 @@ def build_scen(context, datafile, tag, mode):
             "NPi2020_1000-con-prim-dir-ncr": "NPi2020_1000",
             "NPi2020_400-con-prim-dir-ncr": "NPi2020_400",
         }.get(context.scenario_info["scenario"])
+
+        if type(output_scenario_name).__name__ == "NoneType":
+            output_scenario_name = context.scenario_info["scenario"]
+
+        # context.metadata_path = context.metadata_path / "data"
+        context.datafile = datafile
+
+        if context.scenario_info["model"] != "CD_Links_SSP2":
+            print("WARNING: this code is not tested with this base scenario!")
+
+        # Clone and set up
+        scenario = build(
+            context.get_scenario().clone(
+                model="MESSAGEix-Materials", scenario=output_scenario_name + "_" + tag
+            )
+        )
+        # Set the latest version as default
+        scenario.set_as_default()
+
     # Create a two degrees scenario by copying carbon prices from another scenario.
-    elif mode == 'by_copy':
+    if mode == 'by_copy':
         output_scenario_name = '2degrees'
         mod_mitig = 'ENGAGE_SSP2_v4.1.8'
         scen_mitig = 'EN_NPi2020_1000f'
+        print('Loading ' + mod_mitig + ' ' + scen_mitig + ' to retreive carbon prices.')
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
         tax_emission_new = scen_mitig_prices.var("PRICE_EMISSION")
-    elif type(output_scenario_name).__name__ == "NoneType":
-        output_scenario_name = context.scenario_info["scenario"]
 
-    # context.metadata_path = context.metadata_path / "data"
-    context.datafile = datafile
-
-    if context.scenario_info["model"] != "CD_Links_SSP2":
-        print("WARNING: this code is not tested with this base scenario!")
-
-    # Clone and set up
-    scenario = build(
-        context.get_scenario().clone(
-            model="MESSAGEix-Materials", scenario=output_scenario_name + "_" + tag
-        )
-    )
-
-    if mode == 'by_copy':
+        scenario = message_ix.Scenario(mp, 'MESSAGEix-Materials', scenario_name)
+        print('Base scenario is ' + scenario_name)
+        output_scenario_name = output_scenario_name + '_' + tag
+        scenario = scenario.clone('MESSAGEix-Materials',output_scenario_name , keep_solution=False)
         scenario.check_out()
         tax_emission_new.columns = scenario.par("tax_emission").columns
         tax_emission_new["unit"] = "USD/tCO2"
         scenario.add_par("tax_emission", tax_emission_new)
         scenario.commit('2 degree prices are added')
-
-    # Set the latest version as default
-    scenario.set_as_default()
-
+        print('New carbon prices added')
+        print('New scenario name is ' + output_scenario_name)
+        scenario.set_as_default()
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
@@ -210,9 +218,10 @@ def build_scen(context, datafile, tag, mode):
     help="File name for external data input",
 )
 @click.option("--add_macro", default=True)
+@click.option("--add_calibration", default=False)
 @click.pass_obj
 # @click.pass_obj
-def solve_scen(context, datafile, model_name, scenario_name, add_macro):
+def solve_scen(context, datafile, model_name, scenario_name, add_calibration, add_macro):
     """Solve a scenario.
 
     Use the --model_name and --scenario_name option to specify the scenario to solve.
@@ -225,20 +234,26 @@ def solve_scen(context, datafile, model_name, scenario_name, add_macro):
     if scenario.has_solution():
         scenario.remove_solution()
 
-    # Solve
-    print('Solving the scenario without MACRO')
-    scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
-    scenario.set_as_default()
+    if add_calibration:
+        # Solve
+        print('Solving the scenario without MACRO')
+        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
+        scenario.set_as_default()
 
-    if add_macro:
         # After solving, add macro calibration
         print('Scenario solved, now adding MACRO calibration')
-        scenario_macro = add_macro_COVID(scenario,'R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx')
+        scenario = add_macro_COVID(scenario,'R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx')
         print('Scenario calibrated.')
-        macro_scenario_name = scenario_name + '_macro'
-        scenario_macro = scenario_macro.clone(scenario= macro_scenario_name)
-        scenario_macro.solve(model="MESSAGE-MACRO", solve_options={"lpmethod": "4"})
-        scenario_macro.set_as_default()
+
+    if add_macro:
+        scenario.solve(model="MESSAGE-MACRO", solve_options={"lpmethod": "4"})
+        scenario.set_as_default()
+
+    if add_macro == False:
+        # Solve
+        print('Solving the scenario without MACRO')
+        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
+        scenario.set_as_default()
 
 @cli.command("report")
 # @cli.command("report-1")

@@ -102,10 +102,17 @@ It can be helpful to note that this command will not work for all R12 scenarios 
 Currently, a set of pre-defined base scenario names will be translated to own scenario names. But when an unknown base scenario name is given, we reuse it for the output scenario name.
 The output scenario will be ``ixmp://ixmp_dev-ixmp/MESSAGEix-Materials/{name}``, where {name} is the output scenario name.
 
-Using an additional tag `--tag` can be used to add an additional suffix to the new scenario name.
+An additional tag `--tag` can be used to add an additional suffix to the new scenario name.
+The mode option `--mode` has two different inputs 'by_url' (by default) or 'by_copy'. The first one uses the provided url to add the materials implementation on top of the scenario from the url.
+The latter is used to create a 2 degree mitigation scenario with materials by copying relevant carbon prices to the scenario that is specified by `--scenario_name`.
+
+    $ mix-models material build --tag test --mode by_copy --scenario_name NoPolicy_R12
+
 This command line only builds the scenario but does not run it. To run the scenario, use ``mix-models materials solve``, giving the scenario name, e.g.::
 
     $ mix-models material solve --scenario_name NoPolicy_R12
+
+The solve command has the `--add_calibration` option to add MACRO calibration to a baseline scenario. `--add_macro` option solves the scenario with MACRO.
 
 Reporting
 =========
