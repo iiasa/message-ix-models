@@ -132,5 +132,6 @@ def main(context: Context, scenario: Scenario, options: Dict = None, **option_kw
         )
 
     scenario.set_as_default()
+    log.info(f"Built {scenario.url} and set as default version")
 
     mark_time()

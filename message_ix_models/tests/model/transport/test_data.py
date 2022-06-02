@@ -180,6 +180,9 @@ def test_get_ldv_data(test_context, source, regions, years):
     # Output data is returned
     assert "output" in data
 
+    # Technical lifetime data is returned
+    assert "technical_lifetime" in data
+
     for bound in ("lo", "up"):
         # Constraint data are returned. Use .pop() to exclude from the next assertions
         df = data.pop(f"growth_activity_{bound}")
