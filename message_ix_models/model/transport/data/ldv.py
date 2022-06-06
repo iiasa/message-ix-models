@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Dict, List
 
 import pandas as pd
+from iam_units import registry
 from message_ix import make_df
 from message_ix_models.util import (
     adapt_R11_R12,
@@ -11,6 +12,7 @@ from message_ix_models.util import (
     broadcast,
     cached,
     check_support,
+    convert_units,
     ffill,
     make_io,
     make_matched_dfs,
@@ -20,7 +22,11 @@ from message_ix_models.util import (
 )
 from openpyxl import load_workbook
 
-from message_data.model.transport.utils import get_region_codes, input_commodity_level
+from message_data.model.transport.utils import (
+    get_region_codes,
+    input_commodity_level,
+    input_units,
+)
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +64,7 @@ FILE = "ldv-cost-efficiency.xlsx"
 #: (parameter name, cell range, units) for data to be read from multiple sheets in the
 #: :data:`FILE`.
 TABLES = [
-    ("efficiency", slice("B3", "Q15"), "10^9 v km / GW year"),
+    ("efficiency", slice("B3", "Q15"), "Gv km / (GW year)"),
     ("inv_cost", slice("B33", "Q45"), "USD / vehicle"),
     ("fix_cost", slice("B62", "Q74"), "USD / vehicle"),
 ]
@@ -83,7 +89,7 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
     data = defaultdict(list)
 
     # Iterate over regions/nodes
-    for node in nodes:
+    for node in map(str, nodes):
         # Worksheet for this region
         sheet_node = node.split("_")[-1].lower()
         sheet = wb[f"MESSAGE_LDV_{sheet_node}"]
@@ -127,8 +133,8 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     Returns
     -------
     dict of (str → pd.DataFrame)
-        Data for the ``input``, ``output``, ``technical_lifetime``, ``inv_cost``, and
-        ``fix_cost`` parameters.
+        Data for the ``input``, ``output``, ``capacity_factor, ``technical_lifetime``,
+        ``inv_cost``, and ``fix_cost`` parameters.
     """
     # Compatibility checks
     check_support(
@@ -174,23 +180,27 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
         )
 
     # Convert 'efficiency' into 'input' and 'output' parameter data
+
+    # Reciprocal units and value:
     base = data.pop("efficiency")
+    base_units = base["unit"].unique()
+    assert 1 == len(base_units)
+    src_units = (1.0 / registry.Unit(base_units[0])).units
+
     i_o = make_io(
-        src=(None, None, "GWa"),
+        src=(None, None, str(src_units)),
         dest=(None, "useful", "Gv km"),
-        # Convert 10^9 v km / GWh / year →
+        # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
         efficiency=1.0 / base["value"],
         on="input",
-        # Other dimensions
-        node_loc=base["node"],
+        node_loc=base["node"],  # Other dimensions
         node_origin=base["node"],
         node_dest=base["node"],
         technology=base["technology"],
         year_vtg=base["year"],
         year_act=base["year"],
         mode="all",
-        # No subannual detail
-        time="year",
+        time="year",  # No subannual detail
         time_origin="year",
         time_dest="year",
     )
@@ -198,14 +208,33 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     # Assign input commodity and level according to the technology
     data["input"] = input_commodity_level(i_o["input"], default_level="secondary")
 
+    # Convert units to the model's preferred input units for each commodity
+    target_units = (
+        data["input"]
+        .apply(
+            lambda row: input_units(row["technology"], row["commodity"], row["level"]),
+            axis=1,
+        )
+        .unique()
+    )
+    assert 1 == len(target_units)
+
+    data["input"]["value"] = convert_units(
+        data["input"]["value"], {"value": (1.0, src_units, target_units[0])}
+    )
+
     # Assign output commodity based on the technology name
     data["output"] = i_o["output"].assign(
         commodity=lambda df: "transport vehicle " + df["technology"]
     )
 
-    # Add technical lifetimes
+    # Add capacity factors and technical lifetimes
     data.update(
-        make_matched_dfs(base=data["output"], technical_lifetime=technical_lifetime)
+        make_matched_dfs(
+            base=data["output"],
+            capacity_factor=1.0,
+            technical_lifetime=technical_lifetime,
+        )
     )
 
     # Transform costs: rename "node" to "node_loc", "year" to "year_vtg" and "year_act"

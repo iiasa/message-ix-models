@@ -8,6 +8,7 @@ from typing import Dict, List, Tuple, Union
 
 import pandas as pd
 import xarray as xr
+from iam_units import registry
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model import bare
@@ -284,6 +285,81 @@ def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
 
     # Process every row in `df`; return a new DataFrame
     return df.combine_first(df["technology"].apply(t_cl))
+
+
+def input_units(technology, commodity, level):
+    """Return units for parameter ``input``.
+
+    The units are given by the ratio of the units for the input (`commodity`, `level`)
+    and those for the activity of the `technology`.
+
+    .. todo:: Migrate upstream.
+
+    See also
+    --------
+    units_for_act
+    units_for_cl
+    """
+    return units_for_cl(commodity, level) / units_for_act(technology)
+
+
+def output_units(technology, commodity, level):
+    """Return units for parameter ``output``.
+
+    The units are given by the ratio of the units for the activity of the `technology`
+    and those for the output (`commodity`, `level`).
+
+    .. todo:: Migrate upstream.
+
+    See also
+    --------
+    units_for_act
+    units_for_cl
+    """
+    return units_for_act(technology) / units_for_cl(commodity, level)
+
+
+def units_for_act(technology):
+    """Return the preferred units for the activity (``ACT``) of `technology`.
+
+    .. todo::
+       - Read from configuration files, e.g. :file:`set.yaml`.
+       - Migrate upstream.
+    """
+    return registry.Unit(
+        {
+            "ELC_100": "Gv km",
+            "HFC_ptrp": "Gv km",
+            "IAHe_ptrp": "Gv km",
+            "IAHm_ptrp": "Gv km",
+            "ICAe_ffv": "Gv km",
+            "ICAm_ptrp": "Gv km",
+            "ICE_conv": "Gv km",
+            "ICE_L_ptrp": "Gv km",
+            "ICE_nga": "Gv km",
+            "ICH_chyb": "Gv km",
+            "IGH_ghyb": "Gv km",
+            "PHEV_ptrp": "Gv km",
+        }.get(technology, "")
+    )
+
+
+def units_for_cl(commodity, level):
+    """Return the preferred units for a `commodity`, `level`.
+
+    .. todo::
+       - Read from configuration files, e.g. :file:`set.yaml`.
+       - Migrate upstream.
+    """
+    return registry.Unit(
+        {
+            ("electr", "secondary"): "GWa",
+            ("gas", "secondary"): "GWa",
+            ("hydrogen", "secondary"): "GWa",
+            ("lightoil", "secondary"): "GWa",
+            ("methanol", "secondary"): "GWa",
+        }.get((commodity, level), "")
+    )
 
 
 def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
