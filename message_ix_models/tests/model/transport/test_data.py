@@ -177,8 +177,15 @@ def test_get_ldv_data(test_context, source, regions, years):
     ctx["transport config"]["data source"]["LDV"] = source
     data = get_ldv_data(ctx)
 
-    # Output data is returned
-    assert "output" in data
+    # Input data is returned and has the correct units
+    input_units = data["input"]["unit"].unique()
+    assert 1 == len(input_units)
+    assert registry("1.0 GWa / (Gv km)") == registry.Quantity(1.0, input_units[0])
+
+    # Output data is returned and has the correct units
+    output_units = data["output"]["unit"].unique()
+    assert 1 == len(output_units)
+    assert registry.Unit("Gv km") == registry.Unit(output_units[0])
 
     # Technical lifetime data is returned
     assert "technical_lifetime" in data
