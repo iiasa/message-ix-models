@@ -2,10 +2,10 @@ import logging
 
 import pytest
 from genno.testing import assert_qty_equal
-from numpy.testing import assert_allclose
 from message_ix.reporting import MissingKeyError, Quantity
-from message_ix_models.util import private_data_path
 from message_ix_models.testing import NIE, not_ci
+from message_ix_models.util import private_data_path
+from numpy.testing import assert_allclose
 from pytest import mark, param
 
 from message_data.model.transport import configure
@@ -14,12 +14,12 @@ from message_data.model.transport.report import (  # noqa: F401
     callback,
     computations,
 )
-from message_data.reporting import prepare_reporter, register
 from message_data.model.transport.testing import (
     MARK,
     built_transport,
     simulated_solution,
 )
+from message_data.reporting import prepare_reporter, register
 
 log = logging.getLogger(__name__)
 
