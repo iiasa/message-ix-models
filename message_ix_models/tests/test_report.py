@@ -2,11 +2,10 @@
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from message_ix_models.util import private_data_path
 from message_ix_models import testing
+from message_ix_models.util import private_data_path
 
 from message_data.reporting import prepare_reporter, util
-
 
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
