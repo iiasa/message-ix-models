@@ -37,8 +37,7 @@ def main(
         current_cumulative_years = scen.set("cat_year", {"type_year": ["cumulative"]})
 
         remove_cumulative_years = current_cumulative_years[
-            current_cumulative_years["year"]
-            < scen.firstmodelyear
+            current_cumulative_years["year"] < scen.firstmodelyear
         ]
 
         if not remove_cumulative_years.empty:

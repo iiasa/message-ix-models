@@ -3,8 +3,7 @@ import pandas as pd
 from .remove_emission_bounds import main as remove_emission_bounds
 
 
-def main(scen, data, type_emission='TCE', unit='Mt C/yr',
-         remove_bounds_emission=True):
+def main(scen, data, type_emission="TCE", unit="Mt C/yr", remove_bounds_emission=True):
     """Modify *scen* to include an emission bound.
 
     Parameters
@@ -27,15 +26,16 @@ def main(scen, data, type_emission='TCE', unit='Mt C/yr',
 
     scen.check_out()
     for r in data.index.get_level_values(0).unique().tolist():
-        df = pd.DataFrame({
-            'node': r,
-            'type_emission': type_emission,
-            'type_tec': 'all',
-            'type_year': data.loc[r].index
-            .get_level_values(0).tolist(),
-            'value': data.loc[r].values.tolist(),
-            'unit': unit,
-        })
-        scen.add_par('bound_emission', df)
+        df = pd.DataFrame(
+            {
+                "node": r,
+                "type_emission": type_emission,
+                "type_tec": "all",
+                "type_year": data.loc[r].index.get_level_values(0).tolist(),
+                "value": data.loc[r].values.tolist(),
+                "unit": unit,
+            }
+        )
+        scen.add_par("bound_emission", df)
 
-    scen.commit('added emission trajectory')
+    scen.commit("added emission trajectory")
