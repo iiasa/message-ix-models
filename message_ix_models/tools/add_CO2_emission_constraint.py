@@ -3,7 +3,7 @@ import pandas as pd
 from .get_optimization_years import main as get_optimization_years
 
 
-def main(scen, relation_name, constraint_value, type_rel, reg='R11_GLB'):
+def main(scen, relation_name, constraint_value, type_rel, reg="R11_GLB"):
     """Adds bound for generic relation at the global level.
 
     This specific bound added to the scenario can be used to account
@@ -23,15 +23,19 @@ def main(scen, relation_name, constraint_value, type_rel, reg='R11_GLB'):
         node in scen to which constraitn should be applied
     """
 
-    df = pd.DataFrame({
-        'node_rel': reg,
-        'relation': relation_name,
-        'year_rel': get_optimization_years(scen),
-        'value': constraint_value,
-        'unit': 'tC',
-        })
+    df = pd.DataFrame(
+        {
+            "node_rel": reg,
+            "relation": relation_name,
+            "year_rel": get_optimization_years(scen),
+            "value": constraint_value,
+            "unit": "tC",
+        }
+    )
 
     scen.check_out()
-    scen.add_par('relation_{}'.format(type_rel), df)
-    scen.commit('added lower limit of zero for CO2 emissions'
-                + 'accounted for in the relation {}'.format(relation_name))
+    scen.add_par("relation_{}".format(type_rel), df)
+    scen.commit(
+        "added lower limit of zero for CO2 emissions"
+        + "accounted for in the relation {}".format(relation_name)
+    )
