@@ -9,13 +9,14 @@ from message_ix_models.util import (
     broadcast,
     cached,
     convert_units,
+    make_matched_dfs,
     private_data_path,
     same_node,
     series_of_pint_quantity,
 )
 from openpyxl import load_workbook
 
-from message_data.model.transport.utils import input_commodity_level
+from message_data.model.transport.utils import input_commodity_level, io_units
 
 log = logging.getLogger(__name__)
 
@@ -43,10 +44,11 @@ UNITS = dict(
     var_cost=(0.01, "EUR_2000 / kilometer", None),
     technical_lifetime=(1.0, "year", None),
     availability=(100, "kilometer / vehicle / year", None),
-    input=(0.01, "GJ / kilometer", None),
+    # NB this is written as "GJ / km" in the file
+    input=(0.01, "GJ / (vehicle kilometer)", None),
     output=(1.0, "", None),
     # Created below
-    capacity_factor=(1.0, None, "gigapassenger kilometre / vehicle / year"),
+    capacity_factor=(1.0, None, None),
 )
 
 #: Rows appearing in each cell range.
@@ -123,24 +125,17 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
             .apply(convert_units, unit_info=UNITS, store="quantity")
         )
 
-        # Conversion of IKARUS data to MESSAGEix-scheme parameters.
+        # Convert IKARUS data to MESSAGEix-scheme parameters
 
-        # Read output efficiency (occupancy) from config and apply units
-        output_value = occupancy[tec] * registry("pkm / km")
+        # Output efficiency: "availability" from input file, multiplied by occupancy and
+        # an efficiency factor from configuration
+        output = df["availability"] * occupancy[tec] * k_output.get(tec, 1.0)
 
-        # Convert to a Series so operations are element-wise
-        output = series_of_pint_quantity([output_value] * len(df.index), index=df.index)
-
-        # Compute output efficiency
-        df["output"] = output / df["input"] * k_output.get(tec, 1.0)
-
-        # Compute capacity factor = availability × output
-        df["capacity_factor"] = df["availability"] * output
-
-        # Check units: (km / vehicle / year) × (passenger km / km) [=] passenger km /
-        # vehicle / year
-        assert df["capacity_factor"].values[0].units == registry(
-            "passenger km / vehicle / year"
+        # Adjust units resulting from the above calculation to the expected
+        assert output.iloc[0].units == registry.Unit("km / vehicle / year")
+        cf = registry("1.0 passenger * year / km")
+        df["output"] = series_of_pint_quantity(
+            list(map(lambda v: v * cf, output)), index=df.index
         )
 
         df["inv_cost"] *= k_inv_cost.get(tec, 1.0)
@@ -186,7 +181,7 @@ def get_ikarus_data(context):
     tech_info = context["transport set"]["technology"]["add"]
     info = context["transport build info"]
 
-    # Retrieve the data from the spreadsheet. Use Additional output efficiency and
+    # Retrieve the data from the spreadsheet. Use additional output efficiency and
     # investment cost factors for some bus technologies
     data = read_ikarus_data(
         occupancy=config["non-ldv output"],
@@ -228,14 +223,12 @@ def get_ikarus_data(context):
             # Get the mode for a technology
             mode = tech_info[tech_info.index(tec)].parent.id
             args.update(dict(commodity=f"transport pax {mode.lower()}", level="useful"))
-        elif par == "capacity_factor":
-            # Convert to preferred units
-            group_data = group_data.apply(lambda v: v.to(UNITS[par][2]))
 
         # Units, as an abbreviated string
-        units = group_data.apply(lambda x: x.units).unique()
-        assert len(units) == 1, "Units must be unique per (tec, par)"
-        args["unit"] = f"{units[0]:~}"
+        _units = group_data.apply(lambda x: x.units).unique()
+        assert len(_units) == 1, "Units must be unique per (tec, par)"
+        units = _units[0]
+        args["unit"] = f"{units:~}"
 
         # Create data frame with values from *args*
         df = make_df(par, **args)
@@ -256,7 +249,24 @@ def get_ikarus_data(context):
         # registered, in this case for 2030.
         df["value"] = df["value"].fillna(method="ffill")
 
-        # Round up **technical_lifetime** values due to incompatibility in handling
+        # Convert to the model's preferred input/output units for each commodity
+        if par in ("input", "output"):
+            target_units = df.apply(
+                lambda row: io_units(row["technology"], row["commodity"], row["level"]),
+                axis=1,
+            ).unique()
+            assert 1 == len(target_units)
+        else:
+            target_units = []
+
+        if len(target_units):
+            # FIXME improve convert_units() to handle more of these steps
+            df["value"] = convert_units(
+                df["value"], {"value": (1.0, units, target_units[0])}
+            )
+            df["unit"] = f"{target_units[0]:~}"
+
+        # Round up technical_lifetime values due to incompatibility in handling
         # non-integer values in the GAMS code
         if par == "technical_lifetime":
             df["value"] = df["value"].round()
@@ -264,18 +274,23 @@ def get_ikarus_data(context):
         # Broadcast across all nodes
         result[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))
 
-    # Directory for debug output (if any)
-    debug_dir = context.get_local_path("debug")
-    # Ensure the directory
-    debug_dir.mkdir(parents=True, exist_ok=True)
-
     # Concatenate data frames for each model parameter
     for par, list_of_df in result.items():
         result[par] = pd.concat(list_of_df)
 
-        if context.get("debug", False):
-            target = debug_dir.joinpath(f"ikarus-{par}.csv")
+    # Capacity factors all 1.0
+    result.update(make_matched_dfs(result["output"], capacity_factor=1.0))
+    result["capacity_factor"]["unit"] = ""
+
+    if context.get("debug", False):
+        # Directory for debug output (if any)
+        debug_dir = context.get_local_path("debug")
+        # Ensure the directory
+        debug_dir.mkdir(parents=True, exist_ok=True)
+
+        for name, df in result.items():
+            target = debug_dir.joinpath(f"ikarus-{name}.csv")
             log.info(f"Dump data to {target}")
-            result[par].to_csv(target, index=False)
+            df.to_csv(target, index=False)
 
     return result

@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+import pint
 import pytest
 from genno import Quantity, computations
 from iam_units import registry
@@ -7,6 +9,7 @@ from message_ix_models import testing
 from message_ix_models.model import bare
 from pandas.testing import assert_series_equal
 from pytest import param
+from typing import Union
 
 from message_data.model.transport import build, configure
 from message_data.model.transport import data as data_module
@@ -18,6 +21,26 @@ from message_data.model.transport.data.non_ldv import get_non_ldv_data
 from message_data.model.transport.data.roadmap import get_roadmap_data
 from message_data.model.transport.utils import path_fallback
 from message_data.tools.gfei_fuel_economy import get_gfei_data
+
+
+def assert_units(
+    df: pd.DataFrame, expected: Union[str, dict, pint.Unit, pint.Quantity]
+):
+    """Assert that `df` has the unique, `expected` units."""
+    all_units = df["unit"].unique()
+    assert 1 == len(all_units), f"Non-unique {all_units = }"
+
+    # Convert the unique value to the same class as `expected`
+    cls = expected.__class__
+    if cls is registry.Quantity:
+        obs = cls(1.0, all_units[0])
+    elif cls is dict:
+        # Compare dimensionality of the units, rather than exact match
+        obs = registry(all_units[0]).dimensionality
+    else:
+        obs = cls(all_units[0])
+
+    assert expected == obs
 
 
 @pytest.mark.parametrize("parts", data_module.DATA_FILES)
@@ -33,7 +56,7 @@ def test_data_files(test_context, parts):
 @pytest.mark.parametrize(
     "regions, N_node", [("R11", 11), ("R12", 12), ("R14", 14), ("ISR", 1)]
 )
-def test_ikarus(test_context, regions, N_node, years):
+def test_get_ikarus_data(test_context, regions, N_node, years):
     ctx = test_context
     ctx.update(regions=regions, years=years)
 
@@ -47,6 +70,16 @@ def test_ikarus(test_context, regions, N_node, years):
     data = get_ikarus_data(ctx)
 
     # Returns a mapping
+    assert {
+        "capacity_factor",
+        "fix_cost",
+        "input",
+        "inv_cost",
+        "output",
+        "technical_lifetime",
+    } == set(data.keys())
+    assert all(map(lambda df: isinstance(df, pd.DataFrame), data.values()))
+
     # Retrieve DataFrame for par e.g. 'inv_cost' and tech e.g. 'rail_pub'
     inv = data["inv_cost"]
     inv_rail_pub = inv[inv["technology"] == "rail_pub"]
@@ -58,53 +91,34 @@ def test_ikarus(test_context, regions, N_node, years):
     rows_per_tech = N_node * prep_years
     N_techs = 18
 
-    # Data have been loaded with the correct shape, unit and magnitude:
-    # 1. Shape
+    # Data have been loaded with the correct shape and magnitude:
     assert inv_rail_pub.shape == (rows_per_tech, 5), inv_rail_pub
     assert inv.shape == (rows_per_tech * N_techs, 5)
 
-    # 2. Units
-    units = inv_rail_pub["unit"].unique()
-    assert len(units) == 1, "Units for each (par, tec) must be unique"
-
-    # Unit is parseable by pint
-    pint_unit = registry(units[0])
-
-    # Unit has the correct dimensionality
-    assert pint_unit.dimensionality == {"[currency]": 1, "[vehicle]": -1}
-
-    # 3. Magnitude for year e.g. 2020
+    # Magnitude for year e.g. 2020
     values = inv_rail_pub[inv_rail_pub["year_vtg"] == 2020]["value"]
     value = values.iloc[0]
     assert round(value, 3) == 3.233
 
+    # Units of each parameter have the correct dimensionality
     dims = {
-        "technical_lifetime": {"[time]": 1},
-        # Output units are in (passenger km) / energy, that's why mass and
-        # time dimensions have to be checked.
-        "output": {"[passenger]": 1, "[length]": -1, "[mass]": -1, "[time]": 2},
-        "capacity_factor": {
-            "[passenger]": 1,
-            "[length]": 1,
-            "[vehicle]": -1,
-            "[time]": -1,
-        },
+        "capacity_factor": {},  # always dimensionless
+        "inv_cost": {"[currency]": 1, "[vehicle]": -1},
         "fix_cost": {"[currency]": 1, "[vehicle]": -1, "[time]": -1},
+        "output": {"[passenger]": 1, "[vehicle]": -1},
+        "technical_lifetime": {"[time]": 1},
     }
-    # Check dimensionality of ikarus pars with items in dims:
     for par, dim in dims.items():
-        units = data[par]["unit"].unique()
-        assert len(units) == 1, "Units for each (par, tec) must be unique"
-        # Unit is parseable by pint
-        pint_unit = registry(units[0])
-        # Unit has the correct dimensionality
-        assert pint_unit.dimensionality == dim
+        print(par, data[par])
+        assert_units(data[par], dim)
 
     # Specific magnitudes of other values to check
     checks = [
-        dict(par="capacity_factor", year_vtg=2010, value=0.000905),
+        # commented (PNK 2022-06-17): corrected abuse of caapacity_factor to include
+        # unrelated concepts
+        # dict(par="capacity_factor", year_vtg=2010, value=0.000905),
+        # dict(par="capacity_factor", year_vtg=2050, value=0.000886),
         dict(par="technical_lifetime", year_vtg=2010, value=15.0),
-        dict(par="capacity_factor", year_vtg=2050, value=0.000886),
         dict(par="technical_lifetime", year_vtg=2050, value=15.0),
     ]
     defaults = dict(node_loc=info.N[-1], technology="ICG_bus", time="year")
@@ -177,18 +191,23 @@ def test_get_ldv_data(test_context, source, regions, years):
     ctx["transport config"]["data source"]["LDV"] = source
     data = get_ldv_data(ctx)
 
+    # Data are returned for the following parameters
+    assert {
+        "capacity_factor",
+        "growth_activity_lo",
+        "growth_activity_up",
+        "fix_cost",
+        "input",
+        "inv_cost",
+        "output",
+        "technical_lifetime",
+    } == set(data.keys())
+
     # Input data is returned and has the correct units
-    input_units = data["input"]["unit"].unique()
-    assert 1 == len(input_units)
-    assert registry("1.0 GWa / (Gv km)") == registry.Quantity(1.0, input_units[0])
+    assert_units(data["input"], registry("1.0 GWa / (Gv km)"))
 
     # Output data is returned and has the correct units
-    output_units = data["output"]["unit"].unique()
-    assert 1 == len(output_units)
-    assert registry.Unit("Gv km") == registry.Unit(output_units[0])
-
-    # Technical lifetime data is returned
-    assert "technical_lifetime" in data
+    assert_units(data["output"], registry.Unit("Gv km"))
 
     for bound in ("lo", "up"):
         # Constraint data are returned. Use .pop() to exclude from the next assertions
@@ -266,9 +285,26 @@ def test_get_non_ldv_data(test_context, regions):
     # Code runs
     data = get_non_ldv_data(ctx)
 
+    # Data are provided for the these parameters
+    assert {
+        "capacity_factor",
+        "fix_cost",
+        "input",
+        "inv_cost",
+        "output",
+        "technical_lifetime",
+        "var_cost",
+    } == set(data.keys())
+
+    # Input data have expected units
+    assert_units(data["input"], registry("1.0 GWa / (Gv km)"))
+
     # Output data exist for all non-LDV modes
     modes = list(filter(lambda m: m != "LDV", ctx["transport config"]["demand modes"]))
     assert len(modes) == len(data["output"]["commodity"].unique())
+
+    # Output data have expected units
+    assert_units(data["output"], {"[passenger]": 1, "[vehicle]": -1})
 
 
 def test_get_gfei_data(test_context):

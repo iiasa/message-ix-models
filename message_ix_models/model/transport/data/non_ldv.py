@@ -55,7 +55,7 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
             commodity="transport pax 2w",
             year_act=years,
             year_vtg=years,
-            unit="Gv km",
+            unit="Gp / Gv",
             level="useful",
             mode="all",
             time="year",
