@@ -25,7 +25,7 @@ from openpyxl import load_workbook
 from message_data.model.transport.utils import (
     get_region_codes,
     input_commodity_level,
-    input_units,
+    io_units,
 )
 
 log = logging.getLogger(__name__)
@@ -212,7 +212,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     target_units = (
         data["input"]
         .apply(
-            lambda row: input_units(row["technology"], row["commodity"], row["level"]),
+            lambda row: io_units(row["technology"], row["commodity"], row["level"]),
             axis=1,
         )
         .unique()
