@@ -287,11 +287,11 @@ def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
     return df.combine_first(df["technology"].apply(t_cl))
 
 
-def input_units(technology, commodity, level):
-    """Return units for parameter ``input``.
+def io_units(technology, commodity, level):
+    """Return units for parameter ``input`` or ``output``.
 
-    The units are given by the ratio of the units for the input (`commodity`, `level`)
-    and those for the activity of the `technology`.
+    The units are given by the ratio of the units for the input/output (`commodity`,
+    `level`) and those for the activity of the `technology`.
 
     .. todo:: Migrate upstream.
 
@@ -303,22 +303,6 @@ def input_units(technology, commodity, level):
     return units_for_cl(commodity, level) / units_for_act(technology)
 
 
-def output_units(technology, commodity, level):
-    """Return units for parameter ``output``.
-
-    The units are given by the ratio of the units for the activity of the `technology`
-    and those for the output (`commodity`, `level`).
-
-    .. todo:: Migrate upstream.
-
-    See also
-    --------
-    units_for_act
-    units_for_cl
-    """
-    return units_for_act(technology) / units_for_cl(commodity, level)
-
-
 def units_for_act(technology):
     """Return the preferred units for the activity (``ACT``) of `technology`.
 
@@ -328,6 +312,7 @@ def units_for_act(technology):
     """
     return registry.Unit(
         {
+            # LDV
             "ELC_100": "Gv km",
             "HFC_ptrp": "Gv km",
             "IAHe_ptrp": "Gv km",
@@ -340,6 +325,29 @@ def units_for_act(technology):
             "ICH_chyb": "Gv km",
             "IGH_ghyb": "Gv km",
             "PHEV_ptrp": "Gv km",
+            # non-LDV
+            "con_ar": "Gv km",
+            "conE_ar": "Gv km",
+            "conh_ar": "Gv km",
+            "conm_ar": "Gv km",
+            "crail_pub": "Gv km",
+            "dMspeed_rai": "Gv km",
+            "drail_pub": "Gv km",
+            "ELE_moto": "Gv km",
+            "FC_bus": "Gv km",
+            "FCg_bus": "Gv km",
+            "FCm_bus": "Gv km",
+            "Hspeed_rai": "Gv km",
+            "ICAe_bus": "Gv km",
+            "ICE_H_bus": "Gv km",
+            "ICE_H_moto": "Gv km",
+            "ICE_M_bus": "Gv km",
+            "ICG_bus": "Gv km",
+            "ICH_bus": "Gv km",
+            "Mspeed_rai": "Gv km",
+            "PHEV_bus": "Gv km",
+            "rail_pub": "Gv km",
+            "Trolley_bus": "Gv km",
         }.get(technology, "")
     )
 
@@ -358,6 +366,10 @@ def units_for_cl(commodity, level):
             ("hydrogen", "secondary"): "GWa",
             ("lightoil", "secondary"): "GWa",
             ("methanol", "secondary"): "GWa",
+            ("transport pax 2w", "useful"): "Gp km",
+            ("transport pax air", "useful"): "Gp km",
+            ("transport pax bus", "useful"): "Gp km",
+            ("transport pax rail", "useful"): "Gp km",
         }.get((commodity, level), "")
     )
 
