@@ -5,7 +5,9 @@ from collections import defaultdict
 import pandas as pd
 from iam_units import registry
 from message_ix import make_df
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
+    ScenarioInfo,
     broadcast,
     cached,
     convert_units,
@@ -16,7 +18,7 @@ from message_ix_models.util import (
 )
 from openpyxl import load_workbook
 
-from message_data.model.transport.utils import input_commodity_level, io_units
+from message_data.model.transport.utils import input_commodity_level
 
 log = logging.getLogger(__name__)
 
@@ -181,6 +183,12 @@ def get_ikarus_data(context):
     tech_info = context["transport set"]["technology"]["add"]
     info = context["transport build info"]
 
+    # Merge with base model commodity information for io_units() below
+    # TODO this duplicates code in .ldv; move to a common location
+    all_info = ScenarioInfo()
+    all_info.set["commodity"].extend(get_codes("commodity"))
+    all_info.update(context["transport spec"].add)
+
     # Retrieve the data from the spreadsheet. Use additional output efficiency and
     # investment cost factors for some bus technologies
     data = read_ikarus_data(
@@ -252,7 +260,9 @@ def get_ikarus_data(context):
         # Convert to the model's preferred input/output units for each commodity
         if par in ("input", "output"):
             target_units = df.apply(
-                lambda row: io_units(row["technology"], row["commodity"], row["level"]),
+                lambda row: all_info.io_units(
+                    row["technology"], row["commodity"], row["level"]
+                ),
                 axis=1,
             ).unique()
             assert 1 == len(target_units)

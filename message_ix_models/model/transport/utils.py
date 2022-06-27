@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple, Union
 
 import pandas as pd
 import xarray as xr
-from iam_units import registry
+from iam_units import registry  # noqa: F401
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model import bare
@@ -226,6 +226,18 @@ def generate_set_elements(context, name, match=None) -> None:
     codes = []  # Accumulate codes
     deferred = []
     for code in as_codes(context["transport set"][name].get("add", [])):
+        # Convert a "units" annotation to a code snippet that will return a pint.Unit
+        # via eval_anno()
+        try:
+            units_anno = code.get_annotation(id="units")
+        except KeyError:
+            pass
+        else:
+            units_anno.text = f'registry.Unit("{units_anno.text}")'
+            # Also annotate child codes
+            for c in code.child:
+                c.annotations.append(units_anno.copy())
+
         if eval_anno(code, "_generate"):
             # Requires a call to generate_product(); do these last
             deferred.append(code)
@@ -240,7 +252,7 @@ def generate_set_elements(context, name, match=None) -> None:
     # Store codes processed so far, in case used recursively by generate_product()
     context["transport set"][name]["add"] = codes
 
-    # Use generate_product() to generate codes and indexers based on others sets
+    # Use generate_product() to generate codes and indexers based on other sets
     for code in deferred:
         generated, indexers = generate_product(context, name, code)
 
@@ -285,93 +297,6 @@ def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
 
     # Process every row in `df`; return a new DataFrame
     return df.combine_first(df["technology"].apply(t_cl))
-
-
-def io_units(technology, commodity, level):
-    """Return units for parameter ``input`` or ``output``.
-
-    The units are given by the ratio of the units for the input/output (`commodity`,
-    `level`) and those for the activity of the `technology`.
-
-    .. todo:: Migrate upstream.
-
-    See also
-    --------
-    units_for_act
-    units_for_cl
-    """
-    return units_for_cl(commodity, level) / units_for_act(technology)
-
-
-def units_for_act(technology):
-    """Return the preferred units for the activity (``ACT``) of `technology`.
-
-    .. todo::
-       - Read from configuration files, e.g. :file:`set.yaml`.
-       - Migrate upstream.
-    """
-    return registry.Unit(
-        {
-            # LDV
-            "ELC_100": "Gv km",
-            "HFC_ptrp": "Gv km",
-            "IAHe_ptrp": "Gv km",
-            "IAHm_ptrp": "Gv km",
-            "ICAe_ffv": "Gv km",
-            "ICAm_ptrp": "Gv km",
-            "ICE_conv": "Gv km",
-            "ICE_L_ptrp": "Gv km",
-            "ICE_nga": "Gv km",
-            "ICH_chyb": "Gv km",
-            "IGH_ghyb": "Gv km",
-            "PHEV_ptrp": "Gv km",
-            # non-LDV
-            "con_ar": "Gv km",
-            "conE_ar": "Gv km",
-            "conh_ar": "Gv km",
-            "conm_ar": "Gv km",
-            "crail_pub": "Gv km",
-            "dMspeed_rai": "Gv km",
-            "drail_pub": "Gv km",
-            "ELE_moto": "Gv km",
-            "FC_bus": "Gv km",
-            "FCg_bus": "Gv km",
-            "FCm_bus": "Gv km",
-            "Hspeed_rai": "Gv km",
-            "ICAe_bus": "Gv km",
-            "ICE_H_bus": "Gv km",
-            "ICE_H_moto": "Gv km",
-            "ICE_M_bus": "Gv km",
-            "ICG_bus": "Gv km",
-            "ICH_bus": "Gv km",
-            "Mspeed_rai": "Gv km",
-            "PHEV_bus": "Gv km",
-            "rail_pub": "Gv km",
-            "Trolley_bus": "Gv km",
-        }.get(technology, "")
-    )
-
-
-def units_for_cl(commodity, level):
-    """Return the preferred units for a `commodity`, `level`.
-
-    .. todo::
-       - Read from configuration files, e.g. :file:`set.yaml`.
-       - Migrate upstream.
-    """
-    return registry.Unit(
-        {
-            ("electr", "secondary"): "GWa",
-            ("gas", "secondary"): "GWa",
-            ("hydrogen", "secondary"): "GWa",
-            ("lightoil", "secondary"): "GWa",
-            ("methanol", "secondary"): "GWa",
-            ("transport pax 2w", "useful"): "Gp km",
-            ("transport pax air", "useful"): "Gp km",
-            ("transport pax bus", "useful"): "Gp km",
-            ("transport pax rail", "useful"): "Gp km",
-        }.get((commodity, level), "")
-    )
 
 
 def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
