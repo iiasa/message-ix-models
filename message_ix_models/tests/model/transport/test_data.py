@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 import pandas as pd
 import pint
@@ -9,7 +11,6 @@ from message_ix_models import testing
 from message_ix_models.model import bare
 from pandas.testing import assert_series_equal
 from pytest import param
-from typing import Union
 
 from message_data.model.transport import build, configure
 from message_data.model.transport import data as data_module
