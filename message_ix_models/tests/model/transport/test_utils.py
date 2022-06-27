@@ -63,7 +63,6 @@ def test_configure(test_context, regions):
 
     # Codes for the consumer_group set are generated
     codes = ctx["transport set"]["consumer_group"]["add"]
-    assert 0 < len(codes)
     RUEAA = codes[codes.index("RUEAA")]
     assert "Rural, or “Outside MSA”, Early Adopter, Average" == str(RUEAA.name)
 
@@ -73,9 +72,16 @@ def test_configure(test_context, regions):
 
     # Codes for commodities are generated
     codes = ctx["transport set"]["commodity"]["add"]
-    assert 0 < len(codes)
     RUEAA = codes[codes.index("transport pax RUEAA")]
     assert eval_anno(RUEAA, "demand") is True
+
+    # …with expected units
+    assert registry.Unit("Gp km") == eval_anno(RUEAA, "units")
+
+    # Codes for technologies are generated, with annotations giving their units
+    codes = ctx["transport set"]["technology"]["add"]
+    ELC_100 = codes[codes.index("ELC_100")]
+    assert registry.Unit("Gv km") == eval_anno(ELC_100, "units")
 
     # If "ISR" was given as 'regions', then the corresponding config file was loaded
     if regions == "ISR":
