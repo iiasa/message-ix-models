@@ -143,6 +143,7 @@ def read_config(context):
         context[key] = load_private_data(*path.parts) or dict()
 
     # Merge default config with region-specific config
+    # TODO merge the contents of specific keys, e.g. "data source"
     config = deepcopy(context["transport defaults"])
     config.update(context["transport config"])
     context["transport config"] = config
