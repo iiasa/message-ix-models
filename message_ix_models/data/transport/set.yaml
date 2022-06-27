@@ -148,10 +148,14 @@ unit:
     km: kilometre
     t km: tonne kilometre (freight transport)
     Gv km: 10⁹ vehicle kilometre
+    # The following are equivalent, but not recognized as such by JDBCBackend
+    GWa / Gv / km: gigawatt-annum per billion vehicle kilometres
+    GW * a / Gv / km: gigawatt-annum per billion vehicle kilometres
     # for IKARUS
     a: year
     GJ / km: gigajoule per kilometre
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
+    Gp / Gv: passengers per vehicle
     pkm / GJ: passenger-kilometre per gigajoule
     MUSD / a / v: 10⁶ USD per vehicle-year
     MUSD / v: 10⁶ USD per vehicle
