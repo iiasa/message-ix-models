@@ -162,10 +162,15 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
 
 @provides_data("info")
 def dummy_supply(info) -> Dict[str, pd.DataFrame]:
+@provides_data("context", "info")
+def dummy_supply(context, info) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
     # TODO read the 'level' from config
     # TODO read the list of 'commodity' from context/config
     # TODO separate dummy supplies by commodity
+
+    if context["transport config"]["data source"]["dummy supply"] is not True:
+        return dict()
 
     data = make_source_tech(
         info,

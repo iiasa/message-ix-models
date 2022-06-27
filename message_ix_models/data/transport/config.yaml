@@ -14,7 +14,8 @@
 # - share weight convergence
 
 data source:
-  demand dummy: False
+  demand dummy: false  # true to include
+  supply dummy: false  # true to include
   gdp: SSP2
   population: SSP2
 
