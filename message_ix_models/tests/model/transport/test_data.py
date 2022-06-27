@@ -282,6 +282,7 @@ def test_get_non_ldv_data(test_context, regions):
     # Spec for a transport model
     info = bare.get_spec(ctx)["add"]
     ctx["transport build info"] = info
+    ctx["transport spec"] = build.get_spec(ctx)
 
     # Code runs
     data = get_non_ldv_data(ctx)
