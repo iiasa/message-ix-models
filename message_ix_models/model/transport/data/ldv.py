@@ -6,7 +6,9 @@ from typing import Dict, List
 import pandas as pd
 from iam_units import registry
 from message_ix import make_df
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
+    ScenarioInfo,
     adapt_R11_R12,
     adapt_R11_R14,
     broadcast,
@@ -22,11 +24,7 @@ from message_ix_models.util import (
 )
 from openpyxl import load_workbook
 
-from message_data.model.transport.utils import (
-    get_region_codes,
-    input_commodity_level,
-    io_units,
-)
+from message_data.model.transport.utils import get_region_codes, input_commodity_level
 
 log = logging.getLogger(__name__)
 
@@ -146,6 +144,13 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     # Retrieve configuration and ScenarioInfo
     technical_lifetime = context["transport config"]["ldv lifetime"]["average"]
     info = context["transport build info"]
+    spec = context["transport spec"]
+
+    # Merge with base model commodity information for io_units() below
+    # TODO this duplicates code in .ikarus; move to a common location
+    all_info = ScenarioInfo()
+    all_info.set["commodity"].extend(get_codes("commodity"))
+    all_info.update(spec.add)
 
     if context.regions in ("R12", "R14"):
         # Read data using the R11 nodes
@@ -188,7 +193,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     src_units = (1.0 / registry.Unit(base_units[0])).units
 
     i_o = make_io(
-        src=(None, None, str(src_units)),
+        src=(None, None, f"{src_units:~}"),
         dest=(None, "useful", "Gv km"),
         # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
         efficiency=1.0 / base["value"],
@@ -212,7 +217,9 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     target_units = (
         data["input"]
         .apply(
-            lambda row: io_units(row["technology"], row["commodity"], row["level"]),
+            lambda row: all_info.io_units(
+                row["technology"], row["commodity"], row["level"]
+            ),
             axis=1,
         )
         .unique()
