@@ -87,10 +87,21 @@ commodity:
       description: >-
         Not used when consumer group disutility formulation is in use.
 
-    transport pax air: Passenger transport by air
-    transport pax 2w: Passenger transport by 2-wheelers
-    transport pax bus: Passenger transport by bus
-    transport pax rail: Passenger transport by rail
+    transport pax air:
+      name: Passenger transport by air
+      units: Gp km
+
+    transport pax 2w:
+      name: Passenger transport by 2-wheelers
+      units: Gp km
+
+    transport pax bus:
+      name: Passenger transport by bus
+      units: Gp km
+
+    transport pax rail:
+      name: Passenger transport by rail
+      units: Gp km
 
     transport pax vehicle: Passenger transport vehicle distance travelled
 
@@ -102,10 +113,12 @@ commodity:
     "transport vehicle {technology.id}":
       _generate: {technology: LDV}
       name: Activity for {technology.id} LDVs
+      units: Gv km
 
     "transport pax {consumer_group.id}":
       _generate: {consumer_group: null}
       name: Activity for {consumer_group.id} passengers
+      units: Gp km
       demand: true
 
 level:
