@@ -7,6 +7,7 @@ from typing import Dict, List, Mapping
 import pandas as pd
 from dask.core import quote
 from genno import Computer
+from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     add_par_data,
@@ -160,8 +161,29 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
     return data
 
 
-@provides_data("info")
-def dummy_supply(info) -> Dict[str, pd.DataFrame]:
+@provides_data("info", "n::ex world", "y::model")
+def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
+    """Miscellaneous bounds for calibration/vetting."""
+
+    # Limit activity of methanol LDVs in the model base year
+    # TODO investigate the cause of the underlying behaviour; then remove this
+    name = "bound_activity_up"
+    data = {
+        name: make_df(
+            name,
+            technology="ICAm_ptrp",
+            year_act=y[0],
+            mode="all",
+            time="year",
+            value=0.0,
+            # unit=info.units_for("technology", "ICAm_ptrp"),
+            unit="Gv km",
+        ).pipe(broadcast, node_loc=nodes)
+    }
+
+    return data
+
+
 @provides_data("context", "info")
 def dummy_supply(context, info) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
@@ -169,7 +191,10 @@ def dummy_supply(context, info) -> Dict[str, pd.DataFrame]:
     # TODO read the list of 'commodity' from context/config
     # TODO separate dummy supplies by commodity
 
-    if context["transport config"]["data source"]["dummy supply"] is not True:
+    if (
+        context["transport config"]["data source"].setdefault("dummy supply", False)
+        is not True
+    ):
         return dict()
 
     data = make_source_tech(
