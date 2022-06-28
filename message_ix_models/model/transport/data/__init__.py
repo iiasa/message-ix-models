@@ -181,6 +181,7 @@ def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
         ).pipe(broadcast, node_loc=nodes)
     }
 
+    log.info("Miscellaneous bounds for calibration/vetting")
     return data
 
 

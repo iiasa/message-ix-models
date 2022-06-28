@@ -211,7 +211,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     )
 
     # Assign input commodity and level according to the technology
-    data["input"] = input_commodity_level(i_o["input"], default_level="secondary")
+    data["input"] = input_commodity_level(i_o["input"], default_level="final")
 
     # Convert units to the model's preferred input units for each commodity
     target_units = (
