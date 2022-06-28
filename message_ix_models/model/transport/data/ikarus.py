@@ -243,7 +243,7 @@ def get_ikarus_data(context):
 
         # Assign input commodity and level according to the technology
         if par == "input":
-            df = input_commodity_level(df, default_level="secondary")
+            df = input_commodity_level(df, default_level="final")
 
         # Copy data into the 'value' column, by vintage year
         for (year, *_), value in group_data.items():

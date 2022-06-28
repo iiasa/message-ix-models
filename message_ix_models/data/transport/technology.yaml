@@ -240,6 +240,7 @@ dMspeed_rai:
 
 drail_pub:
   description: Diesel-powered urban public rail transport
+  input: {commodity: lightoil}
   report: RAIL_urban_DSL
 
 Hspeed_rai:
