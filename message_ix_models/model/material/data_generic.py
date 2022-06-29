@@ -6,6 +6,7 @@ import pandas as pd
 from .util import read_config
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
+from .data_util import read_timeseries
 from message_ix_models.util import (
     broadcast,
     make_io,
@@ -15,11 +16,12 @@ from message_ix_models.util import (
 )
 
 
-def read_data_generic():
+def read_data_generic(scenario):
     """Read and clean data from :file:`generic_furnace_boiler_techno_economic.xlsx`."""
 
     # Ensure config is loaded, get the context
     context = read_config()
+    s_info = ScenarioInfo(scenario)
 
     # Shorter access to sets configuration
     # sets = context["material"]["generic"]
@@ -36,13 +38,14 @@ def read_data_generic():
     # Drop columns that don't contain useful information
 
     data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
+    data_generic_ts = read_timeseries(scenario, "generic_furnace_boiler_techno_economic.xlsx")
 
     # Unit conversion
 
     # At the moment this is done in the excel file, can be also done here
     # To make sure we use the same units
 
-    return data_generic
+    return data_generic, data_generic_ts
 
 
 def gen_data_generic(scenario, dry_run=False):
@@ -54,7 +57,7 @@ def gen_data_generic(scenario, dry_run=False):
     s_info = ScenarioInfo(scenario)
 
     # Techno-economic assumptions
-    data_generic = read_data_generic()
+    data_generic, data_generic_ts = read_data_generic(scenario)
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -68,11 +71,14 @@ def gen_data_generic(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
 
+
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
+        global_region = 'R11_GLB'
     if "R12_GLB" in nodes:
         nodes.remove("R12_GLB")
+        global_region = "R12_GLB"
 
     # 'World' is included by default when creating a message_ix.Scenario().
     # Need to remove it for the China bare model
@@ -180,6 +186,102 @@ def gen_data_generic(scenario, dry_run=False):
                 ).pipe(broadcast, node_loc=nodes)
 
                 results[param_name].append(df)
+
+    # Special treatment for time-varying params
+
+    tec_ts = set(data_generic_ts.technology)  # set of tecs in timeseries sheet
+
+    for t in tec_ts:
+        print(t)
+        common = dict(
+            time="year",
+            time_origin="year",
+            time_dest="year",
+        )
+
+        param_name = data_generic_ts.loc[
+            (data_generic_ts["technology"] == t), "parameter"
+        ]
+
+        for p in set(param_name):
+            print(p)
+            val = data_generic_ts.loc[
+                (data_generic_ts["technology"] == t)
+                & (data_generic_ts["parameter"] == p),
+                "value",
+            ]
+            regions = data_generic_ts.loc[
+                (
+                    (data_generic_ts["technology"] == t)
+                    & (data_generic_ts["parameter"] == p)
+                ),
+                "region",
+            ]
+            print('Regions')
+            print(regions)
+            print(len(regions))
+            units = data_generic_ts.loc[
+                (data_generic_ts["technology"] == t)
+                & (data_generic_ts["parameter"] == p),
+                "units",
+            ].values[0]
+            mod = data_generic_ts.loc[
+                (data_generic_ts["technology"] == t)
+                & (data_generic_ts["parameter"] == p),
+                "mode",
+            ]
+            yr = data_generic_ts.loc[
+                (data_generic_ts["technology"] == t)
+                & (data_generic_ts["parameter"] == p),
+                "year",
+            ]
+
+            if p == "var_cost":
+                df = make_df(
+                    p,
+                    technology=t,
+                    value=val,
+                    unit="t",
+                    year_vtg=yr,
+                    year_act=yr,
+                    mode=mod,
+                    **common
+                ).pipe(broadcast, node_loc=nodes)
+            else:
+                rg = data_generic_ts.loc[
+                    (data_generic_ts["technology"] == t)
+                    & (data_generic_ts["parameter"] == p),
+                    "region",
+                ]
+                df = make_df(
+                    p,
+                    technology=t,
+                    value=val,
+                    unit="t",
+                    year_vtg=yr,
+                    year_act=yr,
+                    mode=mod,
+                    node_loc=rg,
+                    **common
+                )
+
+            print('df node_loc')
+            print(df['node_loc'])
+
+            # Copy parameters to all regions
+            if (
+                (len(set(regions)) == 1)
+                and len(set(df["node_loc"])) == 1
+                and list(set(df["node_loc"]))[0] != global_region
+            ):
+                print('This is the length of the regions')
+                print(regions)
+                print(len(regions))
+                df["node_loc"] = None
+                df = df.pipe(broadcast, node_loc=nodes)
+
+            results[p].append(df)
+
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
