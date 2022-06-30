@@ -75,14 +75,14 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
 def test_build_bare_res(
     request, tmp_path, test_context, regions, years, ldv, nonldv, solve
 ):
-    """Test that model.transport.build works on the bare RES, and the model solves."""
+    """.transport.build() works on the bare RES, and the model solves."""
     # Generate the relevant bare RES
     ctx = test_context
     ctx.update(regions=regions, years=years)
     scenario = testing.bare_res(request, ctx)
 
     # Build succeeds without error
-    options = {"data source": {"LDV": ldv, "non-LDV": nonldv}}
+    options = {"data source": {"LDV": ldv, "non-LDV": nonldv, "dummy supply": True}}
     build.main(ctx, scenario, options, fast=True)
 
     # dump_path = tmp_path / "scenario.xlsx"
