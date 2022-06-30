@@ -129,16 +129,15 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
 
         # Convert IKARUS data to MESSAGEix-scheme parameters
 
-        # Output efficiency: "availability" from input file, multiplied by occupancy and
-        # an efficiency factor from configuration
-        output = df["availability"] * occupancy[tec] * k_output.get(tec, 1.0)
+        # TODO handle "availability" to provide distance_nonldv
 
-        # Adjust units resulting from the above calculation to the expected
-        assert output.iloc[0].units == registry.Unit("km / vehicle / year")
-        cf = registry("1.0 passenger * year / km")
-        df["output"] = series_of_pint_quantity(
-            list(map(lambda v: v * cf, output)), index=df.index
-        )
+        # Output efficiency: occupancy multiplied by an efficiency factor from config
+        # NB this no longer depends on the file contents, and could be moved out of this
+        #    function.
+        output = registry.Quantity(
+            occupancy[tec], "passenger / vehicle"
+        ) * k_output.get(tec, 1.0)
+        df["output"] = series_of_pint_quantity([output] * len(df.index), index=df.index)
 
         df["inv_cost"] *= k_inv_cost.get(tec, 1.0)
 
@@ -201,7 +200,7 @@ def get_ikarus_data(context):
 
     # Vintage and active years from scenario info
     # Prepend years between 2010 and *firstmodelyear* so that values are saved
-    missing_years = [x for x in info.set["year"] if (x >= 2010) and (x < info.y0)]
+    missing_years = [x for x in info.set["year"] if (2010 <= x < info.y0)]
     vtg_years = missing_years + info.yv_ya["year_vtg"].tolist()
     act_years = missing_years + info.yv_ya["year_act"].tolist()
 
