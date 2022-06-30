@@ -26,21 +26,48 @@ general:
   inputs: [ demand:n-c-y, population:n-y ]
 
 # Vehicle stocks
+- comp: apply_units
+  inputs: [ CAP:nl-t-ya:non-ldv ]
+  # FIXME should not need the extra [vehicle] in the numerator
+  args: {units: "v**2 Tm / a"}
+  key: CAP:nl-t-ya:non-ldv+units
+
 - comp: ratio
   key: stock:nl-t-ya:non-ldv
-  inputs: [ CAP:nl-t-ya:non-ldv, distance:nl:non-ldv ]
+  inputs: [ CAP:nl-t-ya:non-ldv+units, distance:nl:non-ldv ]
   sums: true
+
+- comp: apply_units
+  inputs: [ CAP:nl-t-ya:ldv ]
+  args: {units: "v ** 2 Tm / a"}
+  key: CAP:nl-t-ya:ldv+units
 
 - comp: ratio
   key: stock:nl-t-ya-driver_type:ldv
-  inputs: [ CAP:nl-t-ya:ldv, distance:nl-driver_type:ldv ]
+  inputs: [ CAP:nl-t-ya:ldv+units, distance:nl-driver_type:ldv ]
   sums: true
 
-- key: transport file path
-  comp: make_output_path
-  inputs: [ config ]
-  args: { name: transport.csv }
+# NB these units are correct for final energy only
+# FIXME should not need to specify the full set of dims for the output key
+- comp: apply_units
+  inputs: [ in::transport ]
+  args: {units: "GWa / a"}
+  key: in:nl-t-yv-ya-m-no-c-l-h-ho:transport+units
+  sums: true
 
+- comp: apply_units
+  inputs: [ in::ldv ]
+  args: {units: "GWa / a"}
+  key: in:nl-t-ya-c:ldv+units
+  sums: true
+
+- comp: apply_units
+  inputs: [ out::transport ]
+  args: {units: "Tm / a"}
+  key: out:nl-t-yv-ya-m-nd-c-l-h-hd:transport+units
+  sums: true
+
+# Concatenate IAMC-format tables
 - key: transport iamc
   comp: concat
   inputs:
@@ -60,13 +87,25 @@ general:
   - _transport debug CAP::iamc
   - _transport debug CAP_NEW::iamc
 
+# Path and comp for IAMC output to file
+- key: transport file path
+  comp: make_output_path
+  inputs: [ config ]
+  args: { name: transport.csv }
 - key: transport iamc file
   comp: write_report
   inputs: [ transport iamc, transport file path ]
 
+# Store IAMC data on scenario
 - key: transport iamc store
   comp: store_ts
   inputs: [ scenario, transport iamc ]
+
+
+# Groups of keys for re-use
+_iamc formats:
+  fe_unit: &fe_unit
+    unit: EJ / year
 
 # NB these are currently tailored to produce the variable names expected for the
 #    NGFS project
@@ -74,49 +113,55 @@ iamc:
 
 # Activity
 - variable: _transport 0a
-  base: out:nl-t-ya-c:transport
+  base: out:nl-t-ya-c:transport+units
   var: [ "Energy Service|Transportation", t, c ]
 
 - variable: _transport 0b
-  base: out:nl-ya-c:transport
+  base: out:nl-ya-c:transport+units
   var: [ "Energy Service|Transportation", c ]
 
 - variable: _transport 0c
-  base: out:nl-t-ya:transport
+  base: out:nl-t-ya:transport+units
   var: [ "Energy Service|Transportation", t ]
 
 - variable: _transport 0d
-  base: out:nl-ya:transport
+  base: out:nl-ya:transport+units
   var: [ "Energy Service|Transportation" ]
 
 # Stock
 - variable: _transport 1
   base: stock:nl-t-ya:ldv
   var: [ "Transport|Stock|Road|Passenger|LDV", t ]
+  unit: Mvehicle
 
 # Final energy
 
 # The following are 4 different partial sums of in::transport, in which
 # individual technologies are already aggregated to modes
 - variable: _transport 2a
-  base: in:nl-t-ya-c:transport
+  base: in:nl-t-ya-c:transport+units
   var: [ "Final Energy|Transportation", t, c ]
+  <<: *fe_unit
 
 - variable: _transport 2b
-  base: in:nl-ya-c:transport
+  base: in:nl-ya-c:transport+units
   var: [ "Final Energy|Transportation", c ]
+  <<: *fe_unit
 
 - variable: _transport 2c
-  base: in:nl-t-ya:transport
+  base: in:nl-t-ya:transport+units
   var: [ "Final Energy|Transportation", t ]
+  <<: *fe_unit
 
 - variable: _transport 2d
-  base: in:nl-ya:transport
+  base: in:nl-ya:transport+units
   var: [ "Final Energy|Transportation" ]
+  <<: *fe_unit
 
 - variable: _transport 2e
-  base: in:nl-t-ya-c:ldv
+  base: in:nl-t-ya-c:ldv+units
   var: [ "Final Energy|Transportation|Road|Passenger|LDV", t, c ]
+  <<: *fe_unit
 
 # Emissions using MESSAGEix emission_factor parameter
 - variable: _transport 3
@@ -132,15 +177,15 @@ iamc:
 
 # TODO emissions using legacy relation approach
 
-# For debugging. "ZZZ" is needed because pyam.concat() sorts automatically
+# For debugging
 - variable: _transport debug ACT
   base: ACT:nl-t-ya
-  var: [ "Zdebug   ACT:nl-t-ya", t ]
+  var: [ "(debug) ACT:nl-t-ya", t ]
 
 - variable: _transport debug CAP
   base: CAP:nl-t-ya
-  var: [ "Zdebug   CAP:nl-t-ya", t ]
+  var: [ "(debug) CAP:nl-t-ya", t ]
 
 - variable: _transport debug CAP_NEW
   base: CAP_NEW:nl-t-yv
-  var: [ "Zdebug   CAP_NEW:nl-t-yv", t ]
+  var: [ "(debug) CAP_NEW:nl-t-yv", t ]
