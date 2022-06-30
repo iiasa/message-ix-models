@@ -31,7 +31,7 @@ IAHm_ptrp:
 
 ICAe_ffv:
   description: Internal combustion engine light-duty vehicle using biofuels
-  input: {commodity: lightoil}
+  input: {commodity: ethanol}
   report: LDV_ffv
 
 ICAm_ptrp:
