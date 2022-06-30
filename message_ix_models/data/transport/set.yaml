@@ -155,6 +155,7 @@ unit:
     a: year
     GJ / km: gigajoule per kilometre
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
+    Gp km / a: 10⁹ passenger-kilometre per year
     Gp / Gv: passengers per vehicle
     pkm / GJ: passenger-kilometre per gigajoule
     MUSD / a / v: 10⁶ USD per vehicle-year
