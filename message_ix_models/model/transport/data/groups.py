@@ -121,7 +121,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
     )
 
     # Normalize so the sum across groups is always 1; convert to Quantity
-    return Quantity(groups / groups.sum("cg"))
+    return Quantity(groups / groups.sum("cg"), units="")
 
 
 def urban_rural_shares(years: List[int], config: Dict) -> Quantity:
