@@ -3,6 +3,7 @@ import logging
 import message_ix
 import pytest
 from genno.testing import assert_units
+from iam_units import registry
 from message_ix.reporting import Key
 from message_ix_models.model import bare
 from message_ix_models.model.structure import get_codes
@@ -70,6 +71,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
 
     for key, unit in (
         ("population:n-y", "Mpassenger"),
+        ("cg share:n-y-cg", ""),
         ("GDP:n-y:PPP+capita", "kUSD / passenger / year"),
         ("votm:n-y", ""),
         ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
@@ -77,6 +79,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         # These units are implied by the test of "transport pdt:*":
         # "transport pdt:n-y:total" [=] Mm / year
         ("transport pdt:n-y-t", "passenger km / year"),
+        ("transport ldv pdt:n-y-cg", "passenger km / year"),
     ):
         try:
             # Quantity can be computed
@@ -96,6 +99,10 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
 
     # Demand is expressed for the expected quantities
     data = rep.get("demand::ixmp")
+
+    units = data["demand"]["unit"].unique()
+    assert 1 == len(units)
+    assert registry.Unit("Gp km / a") == registry.Unit(units[0])
 
     # Returns a dict with a single key/DataFrame
     df = data.pop("demand")
