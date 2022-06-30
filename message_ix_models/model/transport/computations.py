@@ -51,6 +51,17 @@ def base_shares(
     return product(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
 
 
+def convert_units(qty: Quantity, units) -> Quantity:
+    """Converty `qty` to `units`.
+
+    .. todo:: move upstream to :mod:`genno`.
+    """
+    u = registry.Quantity(1.0, qty.units).to(units)
+    result = u.magnitude * qty
+    result.units = u.units
+    return result
+
+
 def cost(
     price: Quantity,
     gdp_ppp_cap: Quantity,
@@ -82,14 +93,15 @@ def demand_ixmp(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
     pdt1: "transport pdt:n-y-t"
     pdt2: "transport ldv pdt:n-y-cg"
     """
+    units = "Gp km / a"
 
     # Generate the demand data; convert to pd.DataFrame
-    data = pdt1.to_series().reset_index(name="value")
+    data = convert_units(pdt1, units).to_series().reset_index(name="value")
 
     common = dict(
         level="useful",
         time="year",
-        unit="km",  # TODO reduce this from the units of pdt1
+        unit=units,
     )
 
     # Convert to message_ix layout
@@ -104,7 +116,7 @@ def demand_ixmp(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
     )
     data = data[~data["commodity"].str.contains("ldv")]
 
-    data2 = pdt2.to_series().reset_index(name="value")
+    data2 = convert_units(pdt2, units).to_series().reset_index(name="value")
 
     data2 = make_df(
         "demand",
