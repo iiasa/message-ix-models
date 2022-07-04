@@ -1,6 +1,6 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
-from typing import Dict, List
+from typing import Dict, Hashable, List
 
 import numpy as np
 import pandas as pd
@@ -232,7 +232,10 @@ def logit(
 
 
 def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
-    """Return the elements of `y` beyond the firstmodelyear of `cat_year`."""
+    """Return the elements of `y` beyond the firstmodelyear of `cat_year`.
+
+    .. todo:: move upstream, to :mod:`message_ix`.
+    """
     return list(
         filter(
             lambda year: cat_year.query("type_year == 'firstmodelyear'")["year"].item()
@@ -243,8 +246,28 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
 
 
 def nodes_ex_world(nodes: list) -> List[str]:
-    """Nodes excluding 'World'."""
+    """Nodes excluding 'World'.
+
+    .. todo:: move upstream, to :mod:`message_ix`.
+    """
     return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
+
+
+def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[str, Dict]:
+    """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
+
+    .. todo:: move upstream, to :mod:`message_ix_models`.
+    """
+    from message_ix_models.model.structure import get_codes
+
+    for n in get_codes(f"node/{config['regions']}"):
+        # "World" node should have no parent and some children. Countries (from
+        # pycountry) that are omitted from a mapping have neither parent nor children.
+        if len(n.child) and n.parent is None:
+            return {dim: {str(n): list(map(str, n.child))}}
+
+    # Failed to identify the World node.
+    raise RuntimeError
 
 
 def pdt_per_capita(gdp_ppp_cap: Quantity, config: dict) -> Quantity:
