@@ -95,10 +95,9 @@ def callback(rep: Reporter):
     context = Context.get_instance(-1)
     configure(context, rep.graph.get("scenario"))
 
+    # Add configuration to the Reporter
     config = context["transport config"]["report"]
     config.update(context["transport config"])
-
-    # Add configuration to the Reporter
     rep.graph["config"].setdefault("transport", {})
     rep.graph["config"]["transport"].update(config.copy())
 
@@ -150,11 +149,13 @@ def callback(rep: Reporter):
                 raise
             else:
                 continue
-        k2 = k1.add_tag("transport agg")
-        k3 = k1.add_tag("transport")
+        k2 = k1.add_tag("transport agg 1")
+        k3 = k1.add_tag("transport agg 2")
+        k4 = k1.add_tag("transport")
         # Reference the function to avoid the genno magic which would treat as sum()
-        queue.append(((k2, aggregate, k1, "t::transport agg", False), _))
-        queue.append((("select", k3, k2, "t::transport modes"), _s))
+        queue.append(((k2, aggregate, k1, "nl::world agg", True), _))
+        queue.append(((k3, aggregate, k2, "t::transport agg", False), _))
+        queue.append((("select", k4, k3, "t::transport modes"), _s))
 
     # Selected subsets of certain quantities
     for key in (
