@@ -238,7 +238,7 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
     if add_calibration:
         # Solve
         print('Solving the scenario without MACRO')
-        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
+        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4', 'barcrossalg':'2'})
         scenario.set_as_default()
 
         # After solving, add macro calibration
@@ -246,7 +246,7 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
         scenario = add_macro_COVID(scenario,'R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx')
         print('Scenario calibrated.')
 
-    if add_macro:
+    if add_macro: # Default True
         scenario.solve(model="MESSAGE-MACRO", solve_options={"lpmethod": "4"})
         scenario.set_as_default()
 
@@ -263,10 +263,15 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
     default=False,
     help="If True old reporting is merged with the new variables.",
 )
+@click.option(
+    "--remove_ts",
+    default=False,
+    help="If True the existing timeseries in the scenario is removed.",
+)
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 # @click.pass_obj
-def run_reporting(old_reporting, scenario_name, model_name):
+def run_reporting(old_reporting, scenario_name, model_name, remove_ts):
     from message_data.reporting.materials.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
     from message_ix import Scenario
@@ -275,22 +280,35 @@ def run_reporting(old_reporting, scenario_name, model_name):
     print(model_name)
     mp = Platform()
 
-    # Remove existing timeseries and add material timeseries
-    print("Reporting material-specific variables")
     scenario = Scenario(mp, model_name, scenario_name)
-    report(scenario, old_reporting)
 
-    print("Reporting standard variables")
-    reporting(
-        mp,
-        scenario,
-        "False",
-        model_name,
-        scenario_name,
-        merge_hist=True,
-        merge_ts=True,
-        run_config="materials_run_config.yaml",
-    )
+    if remove_ts:
+
+        df_rem = scenario.timeseries()
+
+        if not df_rem.empty:
+            scenario.check_out(timeseries_only=True)
+            scenario.remove_timeseries(df_rem)
+            scenario.commit("Existing timeseries removed.")
+            print('Existing timeseries are removed.')
+        else:
+            print('There are no timeseries to be removed.')
+
+    if not remove_ts:
+        # Remove existing timeseries and add material timeseries
+        print("Reporting material-specific variables")
+        report(scenario)
+        print("Reporting standard variables")
+        reporting(
+            mp,
+            scenario,
+            "False",
+            model_name,
+            scenario_name,
+            merge_hist=True,
+            merge_ts=True,
+            run_config="materials_run_config.yaml",
+        )
 
 @cli.command("report-2")
 @click.option("--scenario_name", default="NoPolicy")
@@ -346,7 +364,7 @@ DATA_FUNCTIONS_1 = [
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    # gen_data_power_sector,
+    gen_data_power_sector,
     gen_data_aluminum,
 ]
 
