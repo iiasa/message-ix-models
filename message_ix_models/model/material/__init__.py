@@ -256,13 +256,23 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
         scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
         scenario.set_as_default()
 
+@cli.command("add_buildings_ts")
+@click.option("--scenario_name", default="NoPolicy")
+@click.option("--model_name", default="MESSAGEix-Materials")
+def add_building_ts(scenario_name, model_name):
+    from message_data.reporting.materials.add_buildings_ts import add_building_timeseries
+    from message_ix import Scenario
+    from ixmp import Platform
+
+    print(model_name)
+    mp = Platform()
+
+    scenario = Scenario(mp, model_name, scenario_name)
+
+    add_building_timeseries(scenario)
+
 @cli.command("report")
 # @cli.command("report-1")
-@click.option(
-    "--old_reporting",
-    default=False,
-    help="If True old reporting is merged with the new variables.",
-)
 @click.option(
     "--remove_ts",
     default=False,
@@ -271,7 +281,7 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 # @click.pass_obj
-def run_reporting(old_reporting, scenario_name, model_name, remove_ts):
+def run_reporting(old_reporting, scenario_name, model_name, remove_ts,key):
     from message_data.reporting.materials.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
     from message_ix import Scenario
