@@ -117,26 +117,33 @@ The solve command has the `--add_calibration` option to add MACRO calibration to
 Reporting
 =========
 
-The reporting of the scenarios involves two steps combined in one command.
-First step generates the specific variables that are related to materials and
-industry sectors. At the end of this step all the variables are uploaded as ixmp
+The reporting of the scenarios that include materials representation mainly involves
+two steps. In the first step the material specific variables are generated.
+At the end of this step all the variables are uploaded as ixmp
 timeseries objects to the scenario. The reporting file is generated under
 message_data\\reporting\\materials with the name “New_Reporting_MESSAGEix-Materials_scenario_name.xls”.
 In the second step, rest of the default reporting variables are obtained by running
 the general reporting code. This step combines all the variables that were uploaded
 as timeseries to the scenario together with the generic IAMC variables. It also
 correctly reports the aggregate variables such as Final Energy and Emissions.
-
-If the model is ran with other end-use modules such as buildings/appliances or
-transport, the new reporting variables from these should be uploaded to the scenario
-as timeseries object before running the below reporting command:
+The reporting is executed by the following command:
 
 $ mix-models material report --model_name MESSAGEix-Materials --scenario_name xxxx
 
-There should be no other existing timeseries (other than the ones coming from the end-use modules)
-in the scenario when running the reporting command to obtain correct results.
-To remove any existing timeseries in the scenario the following command can be used:
+If the model is ran with other end-use modules such as buildings/appliances or
+transport, the new reporting variables from these should be uploaded to the scenario
+as timeseries object before running the above command.
 
+It is possible to add reporting variables from the Buildings model results by using
+the following command:
+$ mix-models material add_buildings_ts --model_name xxxx --scenario_name xxxx
+The reporting output files in csv form should be located under
+message_data\\data\\material\\buildings.
+
+There should be no other existing timeseries (other than the ones from the end-use modules)
+in the scenario when running the reporting command to obtain correct results.
+
+To remove any existing timeseries in the scenario the following command can be used:
 $ mix-models material report --model_name MESSAGEix-Materials --scenario_name xxxx --remove_ts True
 
 Data, metadata, and configuration
