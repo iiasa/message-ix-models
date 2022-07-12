@@ -88,13 +88,20 @@ general:
   - _transport debug CAP_NEW::iamc
 
 # Path and comp for IAMC output to file
-- key: transport file path
+- key: transport CSV path
   comp: make_output_path
   inputs: [ config ]
   args: { name: transport.csv }
-- key: transport iamc file
+- key: transport XLSX path
+  comp: make_output_path
+  inputs: [ config ]
+  args: { name: transport.xlsx }
+- key: transport iamc CSV
   comp: write_report
-  inputs: [ transport iamc, transport file path ]
+  inputs: [ transport iamc, transport CSV path ]
+- key: transport iamc XLSX
+  comp: write_report
+  inputs: [ transport iamc, transport XLSX path ]
 
 # Store IAMC data on scenario
 - key: transport iamc store
