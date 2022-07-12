@@ -338,11 +338,22 @@ def prepare_reporter(
             ),
             _,
         ),
+        # Freight from IEA EEI
+        (("iea_eei", "iea fv:n-y", quote("tonne-kilometres"), "config"), _),
+        (
+            (
+                "transport demand freight::ixmp",
+                computations.demand_ixmp1,
+                "iea fv:n-y",
+                "y::model",
+            ),
+            _,
+        ),
         # Convert to ixmp format
         (
             (
-                "demand::ixmp",
-                computations.demand_ixmp,
+                "transport demand passenger::ixmp",
+                computations.demand_ixmp0,
                 pdt_nyt,
                 "transport ldv pdt:n-y-cg",
             ),

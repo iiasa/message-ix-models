@@ -87,11 +87,13 @@ def cost(
     return result.sel(y=y)
 
 
-def demand_ixmp(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
-    """Convert transport demands as model-ready ixmp format.
+def demand_ixmp0(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
+    """Convert passenger transport demands to ixmp format.
 
-    pdt1: "transport pdt:n-y-t"
-    pdt2: "transport ldv pdt:n-y-cg"
+    Expects the following inputs:
+
+    - pdt1: "transport pdt:n-y-t"
+    - pdt2: "transport ldv pdt:n-y-cg"
     """
     units = "Gp km / a"
 
@@ -128,6 +130,27 @@ def demand_ixmp(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
     )
 
     return dict(demand=pd.concat([data, data2]))
+
+
+def demand_ixmp1(fv: Quantity, years: List[int]) -> Dict[str, pd.DataFrame]:
+    """Convert freight transport demands to ixmp format."""
+    # Broadcast across all years
+    # FIXME use GDP trajectory
+
+    base = fv.to_series().reset_index(name="value")
+
+    common = dict(
+        commodity="transport freight",
+        level="useful",
+    )
+    data = pd.concat([base.assign(y=y) for y in years])
+    data = make_df("demand", node=data["n"], **common)
+
+    return dict(
+        demand=pd.concat([base.assign(y=y) for y in years]).assign(
+            commodity="transport freight", unit=f"{fv.units:~}"
+        )
+    )
 
 
 def distance_ldv(config: dict) -> Quantity:
@@ -229,6 +252,19 @@ def logit(
 
     # Logit probability
     return ratio(u, u.sum(dim))
+
+
+def iea_eei(name: str, config: Dict) -> Quantity:
+    """Returns base-year demand for freight from IEA EEI, with dimensions n-c-y."""
+    from message_data.tools.iea_eei import as_quantity
+
+    result = as_quantity(name, config["regions"])
+    ym1 = result.coords["y"].data[-1]
+
+    log.info(f"Use y={ym1} data for base-year freight transport activity")
+
+    assert set("nyt") == set(result.dims)
+    return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
 def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
