@@ -80,6 +80,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         # "transport pdt:n-y:total" [=] Mm / year
         ("transport pdt:n-y-t", "passenger km / year"),
         ("transport ldv pdt:n-y-cg", "passenger km / year"),
+        ("iea fv:n-y-t", "Gt km"),
     ):
         try:
             # Quantity can be computed
@@ -89,7 +90,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
             assert_units(qty, unit)
 
             # Quantity has the expected size on the n/node dimension
-            assert N_node == len(qty.coords["n"])
+            assert N_node == len(qty.coords["n"]), qty.coords["n"].data
         except AssertionError:
             # Something else
             print(f"\n\n-- {key} --\n\n")
@@ -97,8 +98,10 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
             print(qty, qty.attrs, qty.dims, qty.coords)
             raise
 
+    data = rep.get("transport demand freight::ixmp")
+
     # Demand is expressed for the expected quantities
-    data = rep.get("demand::ixmp")
+    data = rep.get("transport demand passenger::ixmp")
 
     units = data["demand"]["unit"].unique()
     assert 1 == len(units)
