@@ -40,7 +40,8 @@ DATA_FUNCTIONS = {
     "ldv": (ldv.get_ldv_data, "context"),
     "non_ldv": (non_ldv.get_non_ldv_data, "context"),
     "freight": (freight.get_freight_data, "context"),
-    "demand": ("demand::ixmp",),
+    "demand": ("transport demand passenger::ixmp",),
+    "freight demand": ("transport demand freight::ixmp",),
 }
 
 
