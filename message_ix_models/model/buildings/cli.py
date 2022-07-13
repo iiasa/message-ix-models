@@ -2,7 +2,7 @@
 import gc
 import subprocess
 import sys
-from itertools import product
+from itertools import count, product
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -22,6 +22,7 @@ from message_ix_models.util.click import common_params
 DEFAULTS = {
     "clim_scen": "BL",  # or "2C"?
     "clone": True,
+    "max_iterations": 10,
     "run ACCESS": True,
     "solve_macro": False,
     "ssp": "SSP2",
@@ -546,8 +547,9 @@ def cli(context, code_dir, dest):  # noqa: C901
         scen_mitig = "EN_NPi2020_1000f"
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
 
-    # FIXME(PNK) `oscilation` is not used anywhere. Document its purpose or remove.
-    done = iterations = oscilation = 0
+    # Loop variables
+    done = False
+    oscilation = False
     old_diff = -1
     diff_dd = 1e6
 
@@ -564,7 +566,7 @@ def cli(context, code_dir, dest):  # noqa: C901
     info = ScenarioInfo(scenario)
     years_not_mod = list(filter(lambda y: y < info.y0, info.set["year"]))
 
-    while done < 1:
+    for iterations in count():
         # Get prices from MESSAGE
         # On the first iteration, from the parent scenario; onwards, from the current
         # scenario
@@ -773,6 +775,8 @@ def cli(context, code_dir, dest):  # noqa: C901
             # Didn't work; try again with dual simplex (the default)
             scenario.solve(model=mod, solve_options=dict(lpmethod=2))
 
+        mark_time()
+
         # Compare prices and see if they converge
         prices_new = get_prices(scenario)
 
@@ -789,8 +793,11 @@ def cli(context, code_dir, dest):  # noqa: C901
         )
         diff = np.mean(abs(diff["diff"]))
 
-        print("Iteration:", iterations)
-        print("Mean Percentage Deviation in Prices:", diff)
+        print(f"Iteration: {iterations}\nMean Percentage Deviation in Prices: {diff}")
+
+        if config["max_iterations"] == 1 == iterations + 1:
+            # Once-through mode, e.g. for EF China / "MESSAGE-BUILDINGS-STURM config"
+            done = True
 
         # Compare differences in demand after the first iteration
         if iterations > 0:
@@ -806,14 +813,13 @@ def cli(context, code_dir, dest):  # noqa: C901
         # diff = 0.0
 
         if (diff < 5e-3) or ((iterations > 0) & (diff_dd < 5e-3)):
-            done = 1
+            done = True
             print("Converged in ", iterations, " iterations")
-            mark_time()
             # scenario.set_as_default()
 
-        if iterations > 10:
-            done = 2
-            print("Not Converged after 10 iterations!")
+        if iterations > config["max_iterations"]:
+            done = True
+            print(f"Not Converged after {max['max_iterations']} iterations!")
             print("Averaging last two demands and running MESSAGE one more time")
             price_sav[f"lvl{iterations}"] = prices_new["lvl"]
 
@@ -839,13 +845,13 @@ def cli(context, code_dir, dest):  # noqa: C901
             scenario.add_par("demand", demand)
             scenario.commit("buildings test")
             scenario.solve(model=mod)
-            iterations = iterations + 0.5
+
             prices_new = get_prices(scenario)
-            print("Final solution after Averaging last two demands")
-            mark_time()
+            print("Final solution after averaging last two demands")
 
         if abs(old_diff - diff) < 1e-5:
-            oscilation = 1  # noqa: F841
+            # FIXME(PNK) This is not used anywhere. What is it for?
+            oscilation = True  # noqa: F841
 
         # Keep track of results
         demand_sav = demand_sav.merge(demand, on=nclytu, how="left").rename(
@@ -856,7 +862,12 @@ def cli(context, code_dir, dest):  # noqa: C901
         price_sav.to_csv(context.get_local_path("buildings", "price_track.csv"))
         demand_sav.to_csv(context.get_local_path("buildings", "demand_track.csv"))
 
-        iterations = iterations + 1
+        # After all post-solve steps
+        mark_time()
+
+        if done:
+            break
+
         old_diff = diff
 
     # Calibrate MACRO with the outcome of MESSAGE baseline iterations
