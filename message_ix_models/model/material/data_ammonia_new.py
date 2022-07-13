@@ -12,6 +12,7 @@ from message_ix_models.util import broadcast, same_node
 from util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
+context = read_config()
 
 
 def gen_all_NH3_fert(scenario):
@@ -33,7 +34,15 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
     if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
 
-    df = pd.read_excel("fert_techno_economic.xlsx", sheet_name="data_R12")
+    df = pd.read_excel(
+        context.get_local_path(
+            "material",
+            "ammonia",
+            "new concise input files",
+            "fert_techno_economic.xlsx",
+        ),
+        sheet_name="data_R12",
+    )
     df.groupby("parameter")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
     for i in par_dict.keys():
@@ -97,7 +106,15 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
     if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
 
-    df = pd.read_excel("fert_techno_economic.xlsx", sheet_name="relations_R12")
+    df = pd.read_excel(
+        context.get_local_path(
+            "material",
+            "ammonia",
+            "new concise input files",
+            "fert_techno_economic.xlsx",
+        ),
+        sheet_name="relations_R12",
+    )
     df.groupby("parameter")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
     for i in par_dict.keys():
@@ -146,7 +163,15 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
     if "R12_GLB" in nodes:
         nodes.pop(nodes.index("R12_GLB"))
 
-    df = pd.read_excel("fert_techno_economic.xlsx", sheet_name="timeseries_R12")
+    df = pd.read_excel(
+        context.get_local_path(
+            "material",
+            "ammonia",
+            "new concise input files",
+            "fert_techno_economic.xlsx",
+        ),
+        sheet_name="timeseries_R12",
+    )
     df.groupby("parameter")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
     for i in par_dict.keys():
@@ -188,24 +213,24 @@ def read_demand():
 
     N_demand_GLO = pd.read_excel(
         context.get_local_path(
-            "material", "ammonia", "CD-Links SSP2 N-fertilizer demand_R12.xlsx"
+            "material",
+            "ammonia",
+            "new concise input files",
+            "nh3_fertilizer_demand.xlsx",
         ),
-        sheet_name="data",
-    )
-    N_demand_GLO = pd.read_excel(
-        "nh3_fertilizer_demand.xlsx", sheet_name="NFertilizer_demand"
+        sheet_name="NFertilizer_demand",
     )
 
     # NH3 feedstock share by region in 2010 (from http://ietd.iipnetwork.org/content/ammonia#benchmarks)
     feedshare_GLO = pd.read_excel(
         context.get_local_path(
-            "material", "ammonia", "Ammonia feedstock share_R12.xlsx"
+            "material",
+            "ammonia",
+            "new concise input files",
+            "nh3_fertilizer_demand.xlsx",
         ),
-        sheet_name="Sheet2",
+        sheet_name="NH3_feedstock_share",
         skiprows=14,
-    )
-    feedshare_GLO = pd.read_excel(
-        "nh3_fertilizer_demand.xlsx", sheet_name="NH3_feedstock_share", skiprows=14
     )
 
     # Read parameters in xlsx
@@ -257,7 +282,13 @@ def read_demand():
         context.get_local_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
     )
     N_trade_R12 = pd.read_excel(
-        "nh3_fertilizer_demand.xlsx", sheet_name="NFertilizer_trade"
+        context.get_local_path(
+            "material",
+            "ammonia",
+            "new concise input files",
+            "nh3_fertilizer_demand.xlsx",
+        ),
+        sheet_name="NFertilizer_trade",
     )  # , index_col=0)
 
     N_trade_R12.msgregion = "R12_" + N_trade_R12.msgregion
@@ -286,7 +317,13 @@ def read_demand():
         )
     )  # , index_col=0)
     NH3_trade_R12 = pd.read_excel(
-        "nh3_fertilizer_demand.xlsx", sheet_name="NH3_trade_R12_aggregated"
+        context.get_local_path(
+            "material",
+            "ammonia",
+            "new concise input files",
+            "nh3_fertilizer_demand.xlsx",
+        ),
+        sheet_name="NH3_trade_R12_aggregated",
     )
 
     NH3_trade_R12.region = "R12_" + NH3_trade_R12.region
