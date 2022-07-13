@@ -19,6 +19,7 @@ from .data_util import add_emission_accounting
 from .data_util import add_coal_lowerbound_2020
 from .data_util import add_macro_COVID
 from .data_util import add_elec_lowerbound_2020
+from .data_util import add_ccs_technologies
 from .util import read_config
 
 log = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ def build(scenario):
     # Adjust exogenous energy demand to incorporate the endogenized sectors
     # Adjust the historical activity of the useful level industry technologies
     # Coal calibration 2020
+    add_ccs_technologies(scenario)
     modify_demand_and_hist_activity(scenario)
     add_emission_accounting(scenario)
     add_coal_lowerbound_2020(scenario)
