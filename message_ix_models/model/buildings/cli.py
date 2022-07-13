@@ -34,7 +34,7 @@ BUILD_COMMODITIES = [
     "resid_floor_demolition",  # floorspace to be demolished
     "comm_floor_construction",  # floorspace to be constructed
     "comm_floor_demolition",  # floorspace to be demolished
-    # TODO: Need to harmonize on the commodity names (remove the material name)
+    # TODO Need to harmonize on the commodity names (remove the material name)
 ]
 
 #: Technologies for the buildings sector.
@@ -136,6 +136,8 @@ def _sturm_rpy2(
         path_in=str(config["code_dir"].joinpath("STURM_data")),
         path_out=str(config["code_dir"].joinpath("STURM_output")),
         geo_level_report=context.regions,  # Should be R12
+        report_type=["MESSAGE", "NGFS"],
+        report_var=["energy", "material"],
     )
 
     with localconverter(ro.default_converter + pandas2ri.converter):
@@ -157,6 +159,7 @@ def _sturm_rscript(
     context: Context, prices: pd.DataFrame, first_iteration: bool
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM using :mod:`subprocess` and :program:`Rscript`."""
+    # TODO report_type and report_var are not passed
     # Retrieve info from the Context object
     config = context["buildings"]
 
