@@ -476,9 +476,10 @@ def setup_scenario(  # noqa: C901
 # FIXME(PNK) Too complex; McCabe complexity of 19 > 14 for the rest of message_data
 @click.command("buildings")
 @common_params("dest")
+@click.option("climate-scen", help="Model/scenario name of reference climate scenario")
 @click.argument("code_dir", type=Path)
 @click.pass_obj
-def cli(context, code_dir, dest):  # noqa: C901
+def cli(context, climate_scen, code_dir, dest):  # noqa: C901
     """MESSAGEix-Buildings model.
 
     The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
@@ -497,41 +498,7 @@ def cli(context, code_dir, dest):  # noqa: C901
     # Now can import from MESSAGE_Buildings
     from utils import add_globiom
 
-    ""  # to fool isort
-    # Specify the scenario to be cloned
-    # NB(PNK) The code now uses message_ix_models.Context to load the platform and
-    # scenario(s). This opens the possibility to use command line options like
-    # --platform, --url, and --dest. For now, however, any values given in that way are
-    # squashed by the hard-coded values below.
-
-    # NOTE: this scenario has the updated GLOBIOM matrix
-
-    # # M -> BM baseline
-    # context.scenario = dict(
-    #     model="MESSAGEix-GLOBIOM 1.1-M-R12-NGFS",
-    #     scenario="baseline",
-    # )
-    #
-    # context.dest_scenario(
-    #     model="MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS",
-    #     scenario="baseline",
-    # )
-
-    # BM NPi (after "run_cdlinks_setup" for NPi)
-    # This has MACRO but here run MESSAGE only.
-    context.scenario_info = dict(
-        model="MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS",
-        scenario="NPi2020-con-prim-dir-ncr",
-    )
-
-    context.dest_scenario = dict(
-        model="MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS",
-        scenario="NPi2020-con-prim-dir-ncr-building",
-    )
-
-    raise NotImplementedError("Incomplete")
-
-    # Either clone to dest_scenario, or load an existing scenario
+    # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
         scenario = context.clone_to_dest(create=False)
         # Also retrieve the base scenario
@@ -544,10 +511,13 @@ def cli(context, code_dir, dest):  # noqa: C901
     # Store a reference to the platform
     mp = scenario.platform
 
+    # Update the configuration if --climate-scen was given on the command line
+    if climate_scen is not None:
+        config["clim_scen"] = "2C"
+
     # Open reference climate scenario if needed
-    if context["buildings"]["clim_scen"] == "2C":
-        mod_mitig = "ENGAGE_SSP2_v4.1.8"
-        scen_mitig = "EN_NPi2020_1000f"
+    if config["clim_scen"] == "2C":
+        mod_mitig, scen_mitig = climate_scen.split("/")
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
 
     # Loop variables

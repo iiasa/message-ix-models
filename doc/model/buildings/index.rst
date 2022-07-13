@@ -14,23 +14,74 @@ Usage
 
    .. code-block::
 
-       mix-models --platform=ixmp_dev buildings /path/to/mb/repo
+       mix-models \
+        --url="ixmp://ixmp-dev/model name/base scenario" \
+        buildings \
+        --dest="ixmp://ixmp-dev/new model name/target scenario"
+        /path/to/mb/repo
 
-.. todo::
-   Currently, the CLI command uses hard-coded values for the model and scenario name(s).
-   Remove these.
-   This will allow invocation by an explicit command like:
 
-   .. code-block::
+Base and destination scenarios
+------------------------------
 
-      mix-models --url="ixmp://ixmp-dev/model name/base scenario" \
-                 buildings \
-                 --dest="ixmp://ixmp-dev/new model name/target scenario"
+The following correspond to :file:`MESSAGE-BUILDINGS.py`, given with the comment “BM NPi (after "run_cdlinks_setup" for NPi). This has MACRO but here run MESSAGE only.”
+
+.. code-block::
+
+    mix-models \
+      --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr" \
+      buildings \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr-building" \
+      /path/to/mb/repo
+
+If using ``clim_scen="2C"``, the following scenario is used as the reference scenario for prices:
+
+.. code-block::
+
+    mix-models \
+      --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr" \
+      buildings \
+      --climate-scen="ENGAGE_SSP2_v4.1.8/EN_NPi2020_1000f" \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr-building" \
+      /path/to/mb/repo
+
+The following is commented in :file:`MESSAGE-BUILDINGS.py` with the comment “NOTE: this scenario has the updated GLOBIOM matrix.”
+
+.. code-block::
+
+    mix-models \
+      --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/baseline" \
+      buildings \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/baseline" \
+      /path/to/mb/repo
+
+The following correspond to :file:`MESSAGE-BUILDINGS-STURM.py`:
+
+.. code-block::
+
+    mix-models \
+      --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/baseline" \
+      buildings \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-EFC/baseline" \
+      /path/to/mb/repo
+
+and:
+
+.. code-block::
+
+    mix-models \
+      --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/baseline" \
+      buildings \
+      --climate-scen="MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/EN_NPi2020_1000" \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-EFC/baseline" \
+      /path/to/mb/repo
+
 
 Configuration
 -------------
 
 The code responds to the following keys in ``context["buildings"]``, a :class:`dict` within the :class:`Context`.
+Currently, these can be set in the :mod:`.buildings.cli` Python source file, in the variable :data:`DEFAULTS`.
 
 .. list-table::
    :widths: 20 10 70
@@ -44,13 +95,17 @@ The code responds to the following keys in ``context["buildings"]``, a :class:`d
      - SSP scenario
    * - **clim_scen**
      - "BL", "2C"
-     - Climate scenario
+     - Climate scenario.
+       If :prog:`--climate-scen` is given on the command line, this is set to "2C" automatically.
+   * - **max_iteration**
+     - 10
+     - Maximum number of iterations; set to 1 for once-through mode.
    * - **solve_macro**
      - :obj:`False`
      - Solve scenarios using MESSAGE-MACRO (:obj:`True`) or only MESSAGE.
    * - **clone**
      - :obj:`True`
-     - Clone the scenario to be used from a base scenario (:obj:`True`) or load and use an existing sceanrio directly.
+     - Clone the scenario to be used from a base scenario (:obj:`True`) or load and use an existing scenario directly.
    * - **use ACCESS**
      - :obj:`True`
      - Run the ACCESS model on every iteration (experimental/untested)
