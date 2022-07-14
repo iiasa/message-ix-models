@@ -182,16 +182,4 @@ def callback(rep: Reporter):
     log.info(f"Add {repr(key)} collecting {len(plots)} plots")
     rep.add(key, plots)
 
-    # Add key collecting all others
-    rep.add(
-        "transport all",
-        [
-            "transport plots",
-            # FIXME trailing colons should not be needed
-            "transport iamc CSV:",
-            "transport iamc XLSX:",
-            # "transport iamc store:",
-        ],
-    )
-
     log.info(f"Added {len(rep.graph)-N_keys} keys")
