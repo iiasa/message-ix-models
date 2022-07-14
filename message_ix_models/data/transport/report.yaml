@@ -102,12 +102,22 @@ general:
 - key: transport iamc XLSX
   comp: write_report
   inputs: [ transport iamc, transport XLSX path ]
+- key: transport iamc file
+  comp: null
+  inputs: [ transport iamc CSV, transport iamc XLSX ]
 
 # Store IAMC data on scenario
 - key: transport iamc store
   comp: store_ts
   inputs: [ scenario, transport iamc ]
 
+# Collecting all others
+- key: transport all
+  comp: null
+  inputs:
+  # - transport plots
+  - transport iamc file
+  - transport iamc store
 
 # Groups of keys for re-use
 _iamc formats:
@@ -117,7 +127,6 @@ _iamc formats:
 # NB these are currently tailored to produce the variable names expected for the
 #    NGFS project
 iamc:
-
 # Activity
 - variable: _transport 0a
   base: out:nl-t-ya-c:transport+units
