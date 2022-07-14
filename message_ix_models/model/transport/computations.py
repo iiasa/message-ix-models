@@ -132,27 +132,6 @@ def demand_ixmp0(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
     return dict(demand=pd.concat([data, data2]))
 
 
-def demand_ixmp1(fv: Quantity, years: List[int]) -> Dict[str, pd.DataFrame]:
-    """Convert freight transport demands to ixmp format."""
-    # Broadcast across all years
-    # FIXME use GDP trajectory
-
-    base = fv.to_series().reset_index(name="value")
-
-    common = dict(
-        commodity="transport freight",
-        level="useful",
-    )
-    data = pd.concat([base.assign(y=y) for y in years])
-    data = make_df("demand", node=data["n"], **common)
-
-    return dict(
-        demand=pd.concat([base.assign(y=y) for y in years]).assign(
-            commodity="transport freight", unit=f"{fv.units:~}"
-        )
-    )
-
-
 def distance_ldv(config: dict) -> Quantity:
     """Return annual driving distance per LDV.
 
