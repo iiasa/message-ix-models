@@ -118,7 +118,13 @@ def callback(rep: Reporter):
 
     # Mappings for use with aggregate, select, etc.
     rep.add("t::transport agg", quote(dict(t=t_groups)))
-    rep.add("t::transport modes", quote(dict(t=list(t_groups.keys()))))
+    # Sum across modes, including "non-ldv"
+    rep.add("t::transport modes 0", quote(dict(t=list(t_groups.keys()))))
+    # Sum across modes, excluding "non-ldv"
+    rep.add(
+        "t::transport modes 1",
+        quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
+    )
     for id, techs in t_groups.items():
         rep.add(f"t::transport {id}", quote(dict(t=techs)))
 
@@ -155,7 +161,7 @@ def callback(rep: Reporter):
         # Reference the function to avoid the genno magic which would treat as sum()
         queue.append(((k2, aggregate, k1, "nl::world agg", True), _))
         queue.append(((k3, aggregate, k2, "t::transport agg", False), _))
-        queue.append((("select", k4, k3, "t::transport modes"), _s))
+        queue.append((("select", k4, k3, "t::transport modes 1"), _s))
 
     # Selected subsets of certain quantities
     for key in (
