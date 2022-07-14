@@ -1,6 +1,7 @@
 """Demand calculation for MESSAGEix-Transport."""
 import logging
 from functools import partial
+from operator import itemgetter
 from pathlib import Path
 from typing import Dict, List, cast
 
@@ -8,7 +9,7 @@ import genno.computations
 import message_ix
 import numpy as np
 import pandas as pd
-from dask.core import quote
+from dask.core import literal, quote
 from genno import Computer, Key, KeyExistsError
 from genno.computations import interpolate
 from ixmp.reporting import RENAME_DIMS
@@ -222,6 +223,7 @@ def prepare_reporter(
     cg = Key("cg share", "n y cg".split())
     gdp_ppp = Key("GDP", "ny", "PPP")
     gdp_ppp_cap = gdp_ppp.add_tag("capita")
+    gdp_index = gdp_ppp_cap.add_tag("index")
     pdt_nyt = Key("transport pdt", "nyt")  # Total PDT shared out by mode
     pdt_cap = pdt_nyt.drop("t").add_tag("capita")
     pdt_ny = pdt_nyt.drop("t").add_tag("total")
@@ -268,6 +270,9 @@ def prepare_reporter(
         # PPP GDP, total and per capita
         (("product", gdp_ppp, gdp, mer_to_ppp), _),
         (("ratio", gdp_ppp_cap, gdp_ppp, pop), _),
+        # GDP index
+        (("y0", itemgetter(0), "y::model"), _),
+        (("index_to", gdp_index, gdp_ppp_cap, literal("y"), "y0"), _),
         # Total demand
         (("pdt_per_capita", pdt_cap, gdp_ppp_cap, "config"), _),
         (("product", pdt_ny, pdt_cap, pop), _),
@@ -339,17 +344,20 @@ def prepare_reporter(
             _,
         ),
         # Freight from IEA EEI
-        (("iea_eei", "iea fv:n-y", quote("tonne-kilometres"), "config"), _),
+        (("iea_eei", "fv:n-y:historical", quote("tonne-kilometres"), "config"), _),
+        (("product", "fv:n-y", "fv:n-y:historical", gdp_index), _),
+        # Convert to ixmp format
         (
             (
+                "as_message_df",
                 "transport demand freight::ixmp",
-                computations.demand_ixmp1,
-                "iea fv:n-y",
-                "y::model",
+                "fv:n-y",
+                "demand",
+                dict(node="n", year="y"),
+                dict(commodity="transport freight", level="useful", time="year"),
             ),
             _,
         ),
-        # Convert to ixmp format
         (
             (
                 "transport demand passenger::ixmp",

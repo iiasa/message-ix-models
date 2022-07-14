@@ -73,6 +73,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         ("population:n-y", "Mpassenger"),
         ("cg share:n-y-cg", ""),
         ("GDP:n-y:PPP+capita", "kUSD / passenger / year"),
+        ("GDP:n-y:PPP+capita+index", ""),
         ("votm:n-y", ""),
         ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
         ("cost:n-y-c-t", "USD / km"),
@@ -80,7 +81,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         # "transport pdt:n-y:total" [=] Mm / year
         ("transport pdt:n-y-t", "passenger km / year"),
         ("transport ldv pdt:n-y-cg", "passenger km / year"),
-        ("iea fv:n-y-t", "Gt km"),
+        ("fv:n-y", "Gt km"),
     ):
         try:
             # Quantity can be computed
@@ -91,14 +92,17 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
 
             # Quantity has the expected size on the n/node dimension
             assert N_node == len(qty.coords["n"]), qty.coords["n"].data
-        except AssertionError:
+        except Exception:
             # Something else
             print(f"\n\n-- {key} --\n\n")
             print(rep.describe(key))
             print(qty, qty.attrs, qty.dims, qty.coords)
             raise
 
+    # Freight demand is available
     data = rep.get("transport demand freight::ixmp")
+    assert {"demand"} == set(data.keys())
+    assert not data["demand"].isna().any().any()
 
     # Demand is expressed for the expected quantities
     data = rep.get("transport demand passenger::ixmp")

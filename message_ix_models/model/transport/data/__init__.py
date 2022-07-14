@@ -7,7 +7,7 @@ from typing import Dict, List, Mapping
 import pandas as pd
 from dask.core import quote
 from genno import Computer
-from message_ix import make_df
+from message_ix import Reporter, make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     add_par_data,
@@ -72,7 +72,8 @@ def add_data(scenario, context, dry_run=False):
         log.warning("Remove 'R11_GLB' from node list for data generation")
         info.set["node"].remove("R11_GLB")
 
-    c = Computer()
+    # NB use this class so computations defined by ixmp and message_ix are available
+    c: Computer = Reporter()
 
     # Reference values: the Context, Scenario, ScenarioInfo, and dry_run parameter
     for key, value in dict(
