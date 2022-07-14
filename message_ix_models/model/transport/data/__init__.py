@@ -133,14 +133,14 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
     )
 
     mode_info = [
-        ("freight", config["transport"]["freight load factor"], "t km"),
-        ("pax", 1.0, "km"),
+        ("freight", config["transport"]["freight load factor"], "Gt * km"),
+        ("pax", 1.0, "Gp km / a"),
     ]
 
     data: Mapping[str, List] = defaultdict(list)
     for mode, factor, output_unit in mode_info:
         i_o = make_io(
-            (f"transport {mode} vehicle", "useful", "km"),
+            (f"transport {mode} vehicle", "useful", "Gv km"),
             (f"transport {mode}", "useful", output_unit),
             factor,
             on="output",
