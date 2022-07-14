@@ -1,12 +1,12 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
 from copy import deepcopy
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 from dask.core import quote
-from genno import Computer
+from genno import Computer, MissingKeyError
 from genno.computations import aggregate
-from message_ix.reporting import Key, Reporter
+from message_ix.reporting import Reporter
 from message_ix_models import Context, Spec
 
 import message_data.tools.gdp_pop
@@ -68,6 +68,25 @@ def register_modules(rep: Computer):
             rep.modules.append(mod)
 
 
+def _gen0(c: Computer, *keys):
+    """Aggregate using groups of transport technologies."""
+    for k1 in keys:
+        k2 = k1.add_tag("transport agg 1")
+        k3 = k1.add_tag("transport agg 2")
+        k4 = k1.add_tag("transport")
+        # Reference the function to avoid the genno magic which would treat as sum()
+        c.add(k2, aggregate, k1, "nl::world agg", True)
+        c.add(k3, aggregate, k2, "t::transport agg", False)
+        c.add("select", k4, k3, "t::transport modes 1", sums=True)
+
+
+def _gen1(c: Computer, *keys):
+    """Selected subsets of of transport technologies."""
+    for key in keys:
+        c.add("select", key.add_tag("ldv"), key, "t::transport LDV", sums=True)
+        c.add("select", key.add_tag("non-ldv"), key, "t::transport non-ldv", sums=True)
+
+
 def callback(rep: Reporter):
     """:meth:`.prepare_reporter` callback for MESSAGE-Transport.
 
@@ -105,6 +124,7 @@ def callback(rep: Reporter):
     spec, technologies, t_groups = transport_technologies(context)
 
     # 1. Add ex-post mode and demand calculations
+    # TODO this calls add_structure(), which could be merged with (2) below
     demand.prepare_reporter(
         rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
     )
@@ -140,42 +160,14 @@ def callback(rep: Reporter):
 
         rep.set_filters(t=sorted(t_filter))
 
-    # 3. Assemble a queue of computations to add
-    queue: List[Tuple[Tuple, Dict]] = []
-    _ = dict()  # Shorthand for no keyword arguments
-    _s = dict(sums=True)
+    # 3. Apply some functions that generate sub-graphs
+    try:
+        rep.apply(_gen1, "in", "out")
+    except MissingKeyError:
+        if solved:
+            raise
 
-    # Aggregate transport technologies
-    key: Any
-    for key in ("in", "out"):
-        try:
-            k1 = rep.full_key(key)
-        except KeyError:
-            if solved:
-                raise
-            else:
-                continue
-        k2 = k1.add_tag("transport agg 1")
-        k3 = k1.add_tag("transport agg 2")
-        k4 = k1.add_tag("transport")
-        # Reference the function to avoid the genno magic which would treat as sum()
-        queue.append(((k2, aggregate, k1, "nl::world agg", True), _))
-        queue.append(((k3, aggregate, k2, "t::transport agg", False), _))
-        queue.append((("select", k4, k3, "t::transport modes 1"), _s))
-
-    # Selected subsets of certain quantities
-    for key in (
-        Key("CAP", "nl t ya".split()),
-        Key("in", "nl t ya c".split()),
-        Key("inv_cost", "nl t yv".split()),
-    ):
-        queue.append((("select", key.add_tag("ldv"), key, "t::transport LDV"), _s))
-        queue.append(
-            (("select", key.add_tag("non-ldv"), key, "t::transport non-ldv"), _s)
-        )
-
-    # Add all the computations in `queue`. Some may be discarded if inputs are missing.
-    rep.add_queue(queue)
+    rep.apply(_gen1, "CAP:nl-t-ya", "in:nl-t-ya-c", "inv_cost:nl-t-yv")
 
     # 4. Add further computations (incl. IAMC tables) defined in
     #    data/transport/report.yaml
@@ -183,9 +175,7 @@ def callback(rep: Reporter):
 
     # 5. Add plots
     queue = [((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()]
-
     added = rep.add_queue(queue, max_tries=2, fail="raise" if solved else logging.INFO)
-
     plots = list(k for k in added if str(k).startswith("plot"))
 
     key = "transport plots"
