@@ -145,8 +145,6 @@ unit:
     # TODO move this one upstream
     "": dimensionless
 
-    km: kilometre
-    t km: tonne kilometre (freight transport)
     Gv km: 10⁹ vehicle kilometre
     # The following are equivalent, but not recognized as such by JDBCBackend
     GWa / Gv / km: gigawatt-annum per billion vehicle kilometres
@@ -157,6 +155,7 @@ unit:
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
     Gp km / a: 10⁹ passenger-kilometre per year
     Gp / Gv: passengers per vehicle
+    Gt * km: 10⁹ tonne-kilometre
     pkm / GJ: passenger-kilometre per gigajoule
     MUSD / a / v: 10⁶ USD per vehicle-year
     MUSD / v: 10⁶ USD per vehicle
