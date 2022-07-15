@@ -4,18 +4,17 @@ import ixmp as ix
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
-from util import read_config
+from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
 
 
-def gen_all_NH3_fert(scenario):
+def gen_all_NH3_fert(scenario, dry_run=False):
     return {
         **gen_data(scenario),
         **gen_data_rel(scenario),
@@ -86,6 +85,8 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
                     ),
                 )
                 df_new["year_vtg"] = df_new["year_act"] - 5 * df_new["year_vtg"]
+                #remove years that are not in scenario set
+                df_new = df_new[~df_new["year_vtg"].isin([2065, 2075, 2085, 2095, 2105])]
         else:
             if "year_vtg" in df_new.columns:
                 df_new = df_new.pipe(same_node).pipe(broadcast, year_vtg=vtg_years)
@@ -178,7 +179,6 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
         par_dict[i] = par_dict[i].dropna(axis=1)
 
     for par_name in par_dict.keys():
-
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
@@ -195,6 +195,10 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
         # set import/export node_dest/origin to GLB for input/output
         set_exp_imp_nodes(df_new)
         par_dict[par_name] = df_new
+
+    #convert floats
+    par_dict["historical_activity"] = par_dict["historical_activity"].astype({'year_act': 'int32'})
+    par_dict["historical_new_capacity"] = par_dict["historical_new_capacity"].astype({'year_vtg': 'int32'})
 
     return par_dict
 
@@ -373,9 +377,9 @@ def read_demand():
     N_demand = (
         N_demand_raw[
             (N_demand_raw.Scenario == "NoPolicy") & (N_demand_raw.Region != "World")
-        ]
-        .reset_index()
-        .loc[:, 2010]
+            ]
+            .reset_index()
+            .loc[:, 2010]
     )  # 2010 tot N demand
     N_demand = N_demand.repeat(6)
 
@@ -418,10 +422,10 @@ def gen_demand():
     df = df.drop("Unnamed: 0", axis=1)
     # TODO: refactor with a more sophisticated solution to reduce i_feed
     df.loc[df["value"] < 0, "value"] = 0  # temporary solution to avoid negative values
-    return df
+    return {"demand": df}
 
 
 def gen_land_input(scenario):
     df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
     df["level"] = "final_material"
-    return df
+    return {"land_input": df}
