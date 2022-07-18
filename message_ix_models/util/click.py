@@ -123,7 +123,11 @@ PARAMS = {
         ["ssp"], callback=store_context, type=Choice(["SSP1", "SSP2", "SSP3"])
     ),
     "verbose": Option(
-        ["--verbose", "-v"], is_flag=True, help="Print DEBUG-level log messages."
+        # NB cannot use store_callback here; this is processed in the top-level CLI
+        #    before the message_ix_models.Context() object is set up
+        ["--verbose", "-v"],
+        is_flag=True,
+        help="Print DEBUG-level log messages.",
     ),
     "years": Option(
         ["--years"],

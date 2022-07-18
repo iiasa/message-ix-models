@@ -251,6 +251,7 @@ class Context(dict):
         scenario_name=None,
         version=None,
         local_data=None,
+        verbose=False,
         _store_as=("platform_info", "scenario_info"),
     ):
         """Handle command-line arguments.
@@ -258,6 +259,8 @@ class Context(dict):
         May update the :attr:`data_path`, :attr:`platform_info`, :attr:`scenario_info`,
         and/or :attr:`url` settings.
         """
+        self.verbose = verbose
+
         # Store the path to command-specific data and metadata
         if local_data:
             self.local_data = local_data
