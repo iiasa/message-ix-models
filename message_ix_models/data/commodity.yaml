@@ -1,13 +1,13 @@
 coal:
   name: Coal
-  unit: GWa
+  units: GWa
 
 crudeoil:
   name: Crude oil
   description: >-
     For secondary energy, use 'fueloil', 'lightoil', etc.
   level: primary
-  unit: GWa
+  units: GWa
 
 d_heat:
   name: (?) District heat
@@ -16,44 +16,45 @@ d_heat:
 
 electr:
   name: Electricity
-  unit: GWa
+  units: GWa
 
 ethanol:
   name: Ethanol
-  unit: GWa
+  units: GWa
 
 freshwater_supply:
   name: (?) Fresh water
   description: >-
     FIXME provide an unambiguous description of what this commodity represents.
+  units: foo bar
 
 fueloil:
   name: Fuel oil
   description: Heavy fuel oil.
   level: secondary
-  unit: GWa
+  units: GWa
 
 gas:
   name: Natural Gas
-  unit: GWa
+  units: GWa
 
 hydrogen:
   name: Gaseous hydrogen
-  unit: GWa
+  units: GWa
 
 lh2:
   name: Liquid hydrogen
-  unit: GWa
+  units: GWa
 
 lightoil:
   name: Light oil
   description: Includes gasoline, diesel oil.
-  level: secondary
-  unit: GWa
+  # level: secondary
+  units: GWa
 
 methanol:
   name: Methanol
-  unit: GWa
+  units: GWa
 
 transport:
   name: Transportation
@@ -62,7 +63,7 @@ transport:
     disaggregated set of transport service demands (representing e.g. light-
     duty vehicles, civil aviation, freight transport, etc.)
   level: useful
-  unit: GWa
+  units: GWa
 
 # The following codes also appear in a recent (2020-02-28) SSP2 scenario, but
 # are not currently used by model.bare.create_res.
