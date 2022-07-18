@@ -110,14 +110,19 @@ def apply_spec(
         # Remove elements and associated parameter values
         remove = spec["remove"].set[set_name]
         for element in remove:
-            msg = f"{repr(element)} and associated parameter elements"
+            if not options.get("fast", False):
+                log.info(f"  Remove data with {set_name}={repr(element)}")
+                strip_par_data(scenario, set_name, element, dry_run=dry_run, dump=dump)
 
-            if options.get("fast", False):
-                log.info(f"  Skip removing {msg} (fast=True)")
-                continue
-
-            log.info(f"  Remove {msg}")
-            strip_par_data(scenario, set_name, element, dry_run=dry_run, dump=dump)
+            try:
+                log.info(f"  Remove {repr(element)} from set {repr(set_name)}")
+                scenario.remove_set(set_name, element)
+            except Exception as e:
+                if "does not have an element" in str(e):
+                    log.info(f"  …not found")
+                    continue
+                else:
+                    raise
 
         # Add elements
         add = [] if dry_run else spec["add"].set[set_name]
