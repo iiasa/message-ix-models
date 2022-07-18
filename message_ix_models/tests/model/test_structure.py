@@ -4,7 +4,12 @@ from pathlib import Path
 import pytest
 from iam_units import registry
 
-from message_ix_models.model.structure import codelists, get_codes
+from message_ix_models.model.structure import (
+    codelists,
+    get_codes,
+    process_commodity_codes,
+)
+from message_ix_models.util import eval_anno
 
 
 @pytest.mark.parametrize(
@@ -65,11 +70,16 @@ class TestGetCodes:
 
         # Units for one commodity can be retrieved and parsed
         coal = data[data.index("coal")]
-        registry(str(coal.get_annotation(id="unit").text))
+        assert isinstance(eval_anno(coal, "units"), registry.Unit)
 
         # Descriptions are parsed without new lines
         crudeoil = data[data.index("crudeoil")]
         assert "\n" not in str(crudeoil.description)
+
+        # Processing a second time does not double-wrap the unit expressions
+        process_commodity_codes(data)
+        coal = data[data.index("coal")]
+        assert isinstance(eval_anno(coal, "units"), registry.Unit)
 
     def test_levels(self):
         data = get_codes("level")
