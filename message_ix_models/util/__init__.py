@@ -66,6 +66,8 @@ def add_par_data(
     --------
     strip_par_data
     """
+    # TODO optionally add units automatically
+
     total = 0
 
     for par_name, values in data.items():
@@ -78,7 +80,11 @@ def add_par_data(
         if dry_run:
             continue
 
-        scenario.add_par(par_name, values)
+        try:
+            scenario.add_par(par_name, values)
+        except Exception:
+            print(values.head())
+            raise
 
     return total
 
