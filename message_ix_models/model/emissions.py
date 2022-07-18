@@ -1,8 +1,22 @@
+import logging
+from typing import Optional
+
+import pandas as pd
+from iam_units import convert_gwp
+from message_ix import Scenario, make_df
+
 from message_ix_models import ScenarioInfo
 
+log = logging.getLogger(__name__)
 
-def add_tax_emission(scen, price, conversion_factor=44 / 12):
-    """Adds a global CO2 price to a scenario.
+
+def add_tax_emission(
+    scen: Scenario,
+    price: float,
+    conversion_factor: Optional[float] = None,
+    drate_parameter="drate",
+) -> None:
+    """Add a global CO₂ price to `scen`.
 
     A global carbon price is implemented with an annual growth rate equal to the
     discount rate.
@@ -11,42 +25,49 @@ def add_tax_emission(scen, price, conversion_factor=44 / 12):
     ----------
     scen : :class:`message_ix.Scenario`
         Scenario for which a carbon price should be added.
-    price : int
-        Carbon price which should be added to the model. This value will be applied from
-        the 'firstmodelyear' onwards.
+    price : float
+        Base year price in USD / tonne CO₂.
     conversion_factor : float
-        The conversion_factor with which the input value is multiplied. The default
-        assumption assumes that the price is specified in US$2005/tCO2, hence it is
-        converted to US$2005/tC as required by the model.
+        Factor for converting `price` into the model's internal emissions units,
+        currently tonne carbon.
+    drate_parameter : str; one of "drate" or "interestrate"
+        Name of the parameter to use for the growth rate of the carbon price.
     """
     years = ScenarioInfo(scen).Y
-    df = (
-        scen.par("duration_period", filters={"year": years})
-        .drop(["unit"], axis=1)
-        .rename(columns={"value": "duration"})
-        .set_index(["year"])
-    )
-    for yr in years:
-        if years.index(yr) == 0:
-            val = price * conversion_factor
-        else:
-            val = (
-                df.loc[years[years.index(yr) - 1]].value
-                * (1 + scen.par("drate").value.unique()[0]) ** df.loc[yr].duration
-            )
-        df.at[yr, "value"] = val
-    df = (
-        df.reset_index()
-        .drop(["duration"], axis=1)
-        .rename(columns={"year": "type_year"})
-        .assign(
-            node="World",
-            type_emission="TCE",
-            type_tec="all",
-            unit="USD/tC"
-        )
+    filters = dict(year=years)
+    # Default: since the mass of the species is in the denominator, take the inverse
+    conversion_factor = conversion_factor or 1.0 / convert_gwp(
+        "AR5GWP100", "1 t", "CO2", "C"
     )
 
-    scen.check_out()
-    scen.add_par("tax_emission", df)
-    scen.commit("Added carbon price")
+    # Duration of periods
+    dp = scen.par("duration_period", filters=filters).set_index("year")["value"]
+
+    # Retrieve the discount rate
+    if drate_parameter == "interestrate":
+        # MESSAGE parameter with "year" dimension
+        r = scen.par(drate_parameter, filters=filters).set_index("year")["value"]
+    else:
+        # MACRO parameter with "node" dimension
+        drates = scen.par(drate_parameter).value.unique()
+        if len(drates) > 1:
+            log.warning(f"Using the first of multiple discount rates: drate={drates}")
+        r = pd.Series([drates[0]] * len(years), index=pd.Index(years, name="year"))
+
+    # Compute cumulative growth versus the first period
+    r_cumulative = (r + 1).pow(dp.shift(-1)).cumprod().shift(1, fill_value=1.0)
+
+    # Assemble the parameter data
+    name = "tax_emission"
+    data = make_df(
+        name,
+        value=(price * conversion_factor * r_cumulative),
+        type_year=r_cumulative.index,
+        node="World",
+        type_emission="TCE",
+        type_tec="all",
+        unit="USD/tC",
+    )
+
+    with scen.transact("Added carbon price"):
+        scen.add_par(name, data)
