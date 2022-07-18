@@ -38,6 +38,7 @@ __all__ = [
     "load_package_data",
     "load_private_data",
     "local_data_path",
+    "make_io",
     "maybe_query",
     "package_data_path",
     "private_data_path",
