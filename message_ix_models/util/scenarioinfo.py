@@ -8,6 +8,8 @@ from typing import Dict, List
 import pandas as pd
 import sdmx.model
 
+from .sdmx import eval_anno
+
 log = logging.getLogger(__name__)
 
 
@@ -123,6 +125,29 @@ class ScenarioInfo:
         return (
             f"<ScenarioInfo: {sum(len(v) for v in self.set.values())} code(s) in "
             f"{len(self.set)} set(s)>"
+        )
+
+    def units_for(self, set_name, id, *args):
+        """Return the units associated with `id` in MESSAGE set `set_name`."""
+        try:
+            idx = self.set[set_name].index(id)
+        except ValueError:
+            print(self.set[set_name])
+            raise
+
+        return eval_anno(self.set[set_name][idx], "units")
+
+    def io_units(self, technology, commodity, level=None):
+        """Return units for the MESSAGE ``input`` or ``output`` parameters.
+
+        These are implicitly determined as the ratio of:
+
+        - The units for the origin (for ``input``) or destination `commodity`.
+        - The units of activity for the `technology`.
+        """
+        log.debug(f"{level = } ignored")
+        return self.units_for("commodity", commodity) / self.units_for(
+            "technology", technology
         )
 
     def year_from_codes(self, codes: List[sdmx.model.Code]):
