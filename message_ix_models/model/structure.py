@@ -4,16 +4,12 @@ from functools import lru_cache
 from typing import List
 
 import click
+import pandas as pd
 import pycountry
 from iam_units import registry
 from sdmx.model import Annotation, Code
 
-from message_ix_models.util import (
-    as_codes,
-    eval_anno,
-    load_package_data,
-    package_data_path,
-)
+from message_ix_models.util import as_codes, load_package_data, package_data_path
 
 log = logging.getLogger(__name__)
 
@@ -90,6 +86,44 @@ def get_codes(name: str) -> List[Code]:
     return data
 
 
+def process_units_anno(set_name, code, quiet=False):
+    level = logging.DEBUG if quiet else logging.WARNING
+    # Convert a "units" annotation to a code snippet that will return a pint.Unit
+    # via eval_anno()
+    try:
+        units_anno = code.get_annotation(id="units")
+    except KeyError:
+        log.log(level, f"{set_name.title()} {code} lacks defined units")
+        return
+
+    # First try the expression as-is, in case already processed
+    expr = None
+    for candidate in (str(units_anno.text), f'registry.Unit("{units_anno.text}")'):
+        # Check that the unit can be parsed by the pint.UnitRegistry
+        try:
+            result = eval(candidate)
+        except Exception:
+            continue
+        else:
+            if isinstance(result, registry.Unit):
+                expr = candidate
+                break
+
+    if not expr:  # pragma: no cover
+        # No coverage: code that triggers this exception should never be committed
+        log.log(
+            level,
+            f"Unit '{units_anno.text}' for {set_name} {code} not pint compatible",
+        )
+    else:
+        # Modify the annotation so eval_anno() can be used
+        units_anno.text = expr
+
+    # Also annotate child codes
+    for c in code.child:
+        c.annotations.append(units_anno.copy())
+
+
 def process_commodity_codes(codes):
     """Process a list of codes for ``commodity``.
 
@@ -97,17 +131,8 @@ def process_commodity_codes(codes):
     units.
     """
     for code in codes:
-        unit = eval_anno(code, "unit")
-        if unit is None:
-            log.warning(f"Commodity {code} lacks defined units")
-            continue
-
-        try:
-            # Check that the unit can be parsed by the pint.UnitRegistry
-            registry(unit)
-        except Exception:  # pragma: no cover
-            # No coverage: code that triggers this exception should never be committed
-            log.warning(f"Unit {unit} for commodity {code} not pint compatible")
+        # FIXME remove quiet=True; instead improve commodity.yaml with units
+        process_units_anno("commodity", code, quiet=True)
 
 
 def process_technology_codes(codes):
@@ -117,6 +142,9 @@ def process_technology_codes(codes):
     :obj:`False`.
     """
     for code in codes:
+        # FIXME remove quiet=True; instead improve technology.yaml with units
+        process_units_anno("technology", code, quiet=True)
+
         try:
             anno = code.pop_annotation(id="vintaged")
         except KeyError:
@@ -133,8 +161,6 @@ def cli(ctx):
 
     This command transforms the technology metadata from the YAML file to CSV format.
     """
-    import pandas as pd
-
     # Convert each code to a pd.Series
     data = []
     for code in get_codes("technology"):
