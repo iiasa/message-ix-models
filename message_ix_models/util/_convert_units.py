@@ -53,7 +53,7 @@ def convert_units(
         Same shape, index, and values as `s`, with output units.
     """
     if store not in "magnitude quantity":
-        raise ValueError(f"store={repr(store)}")
+        raise ValueError(f"{store = }")
 
     # Retrieve the information from `unit_info`
     factor, unit_in, unit_out = unit_info[s.name]
