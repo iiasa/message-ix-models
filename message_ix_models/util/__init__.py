@@ -6,7 +6,7 @@ from typing import Dict, List, Mapping, Optional, Sequence, Union
 import message_ix
 import pandas as pd
 from message_ix.models import MESSAGE_ITEMS
-from sdmx.model import AnnotableArtefact, Annotation, Code
+from sdmx.model import Annotation, Code
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
@@ -21,6 +21,7 @@ from .common import (
 )
 from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes
 from .scenarioinfo import ScenarioInfo
+from .sdmx import eval_anno
 
 __all__ = [
     "MESSAGE_DATA_PATH",
@@ -32,6 +33,7 @@ __all__ = [
     "cached",
     "check_support",
     "convert_units",
+    "eval_anno",
     "identify_nodes",
     "load_package_data",
     "load_private_data",
@@ -290,27 +292,6 @@ def copy_column(column_name):
     >>> df.assign(foo=copy_column('bar'), baz=3)
     """
     return lambda df: df[column_name]
-
-
-def eval_anno(obj: AnnotableArtefact, id: str):
-    """Retrieve the annotation `id` from `obj`, run :func:`eval` on its contents.
-
-    This can be used for unpacking Python values (e.g. :class:`dict`) stored as an
-    annotation on a :class:`~sdmx.model.Code`.
-
-    Returns :obj:`None` if no attribute exists with the given `id`.
-    """
-    try:
-        value = str(obj.get_annotation(id=id).text)
-    except KeyError:
-        # No such attribute
-        return None
-
-    try:
-        return eval(value)
-    except Exception:
-        # Something that can't be eval()'d, e.g. a string
-        return value
 
 
 def ffill(
