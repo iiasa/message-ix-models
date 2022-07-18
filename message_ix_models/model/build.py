@@ -119,7 +119,7 @@ def apply_spec(
                 scenario.remove_set(set_name, element)
             except Exception as e:
                 if "does not have an element" in str(e):
-                    log.info(f"  …not found")
+                    log.info("  …not found")
                     continue
                 else:
                     raise
