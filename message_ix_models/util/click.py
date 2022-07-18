@@ -3,9 +3,12 @@
 These are used for building CLIs using :mod:`click`.
 """
 import logging
+from typing import Union
 
+import click
 from click import Argument, Choice, Option
 
+from message_ix_models import Context
 from message_ix_models.model.structure import codelists
 
 log = logging.getLogger(__name__)
@@ -51,13 +54,17 @@ def default_path_cb(*default_parts):
     return _callback
 
 
-def store_context(context, param, value):
+def store_context(context: Union[click.Context, Context], param, value):
     """Callback that simply stores a value on the :class:`Context` object.
 
     Use this for parameters that are not used directly in a @click.command() function,
     but need to be carried by the Context for later use.
     """
-    setattr(context.obj, param.name, value)
+    setattr(
+        context.obj if isinstance(context, click.Context) else context,
+        param.name,
+        value,
+    )
     return value
 
 
@@ -69,7 +76,10 @@ PARAMS = {
         help="Destination URL for created scenario(s).",
     ),
     "dry_run": Option(
-        ["--dry-run"], is_flag=True, help="Only show what would be done."
+        ["--dry-run"],
+        is_flag=True,
+        callback=store_context,
+        help="Only show what would be done.",
     ),
     "force": Option(
         ["--force"],
