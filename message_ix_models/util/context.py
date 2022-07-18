@@ -210,11 +210,11 @@ class Context(dict):
     def get_platform(self, reload=False) -> ixmp.Platform:
         """Return a :class:`ixmp.Platform` from :attr:`platform_info`.
 
-        When used through the CLI, :attr:`platform_info` is a 'base' platform
-        as indicated by the --url or --platform  options.
+        When used through the CLI, :attr:`platform_info` is a 'base' platform as
+        indicated by the --url or --platform  options.
 
-        If a Platform has previously been instantiated with
-        :meth:`get_platform`, the same object is returned unless `reload=True`.
+        If a Platform has previously been instantiated with :meth:`get_platform`, the
+        same object is returned unless `reload=True`.
         """
         if not reload:
             # Return an existing Platform, if any
@@ -242,6 +242,12 @@ class Context(dict):
         options.
         """
         return message_ix.Scenario(self.get_platform(), **self.scenario_info)
+
+    def set_scenario(self, scenario: message_ix.Scenario):
+        """Update :attr:`scenario_info` to match an existing `scenario`."""
+        self["scenario_info"].update(
+            model=scenario.model, scenario=scenario.scenario, version=scenario.version
+        )
 
     def handle_cli_args(
         self,
