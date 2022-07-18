@@ -63,6 +63,7 @@ class Context(dict):
 
         for key, value in (
             ("platform_info", dict()),
+            ("report", dict()),
             ("scenario_info", dict()),
             ("local_data", default_local_data),
         ):
