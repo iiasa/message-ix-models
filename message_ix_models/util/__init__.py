@@ -83,7 +83,7 @@ def add_par_data(
 
         try:
             scenario.add_par(par_name, values)
-        except Exception:
+        except Exception:  # pragma: no cover
             print(values.head())
             raise
 
@@ -511,9 +511,21 @@ def same_node(df):
 
 
 def strip_par_data(
-    scenario, set_name, value, dry_run=False, dump: Dict[str, pd.DataFrame] = None
+    scenario: message_ix.Scenario,
+    set_name: str,
+    element: str,
+    dry_run: bool = False,
+    dump: Optional[Dict[str, pd.DataFrame]] = None,
 ):
-    """Remove data from parameters of *scenario* where *value* in *set_name*.
+    """Remove `element` from `set_name` in scenario, optionally dumping to `dump`.
+
+    Parameters
+    ----------
+    dry_run : bool, optional
+        If :data:`True`, only show what would be done.
+    dump : dict, optional
+        If provided, stripped data are stored in this dictionary. Otherwise, they are
+        simply discarded.
 
     Returns
     -------
@@ -527,12 +539,17 @@ def strip_par_data(
     no_data = []
     total = 0
 
-    # Iterate over parameters with ≥1 dimensions indexed by `set_name`
-    for par_name in iter_parameters(set_name):
+    if dump is not None:
+        log.info(f"Remove data with {set_name}={element!r}")
+        # Iterate over parameters with ≥1 dimensions indexed by `set_name`
+        pars = iter_parameters(set_name)
+    else:
+        pars = []
+
+    for par_name in pars:
         if par_name not in par_list:  # pragma: no cover
             log.warning(
-                f"MESSAGEix parameter {repr(par_name)} missing in Scenario "
-                f"{scenario.model}/{scenario.scenario}"
+                f"MESSAGEix parameter {par_name!r} missing in Scenario {scenario.url}"
             )
             continue
 
@@ -542,7 +559,7 @@ def strip_par_data(
             zip(scenario.idx_names(par_name), scenario.idx_sets(par_name)),
         ):
             # Check for contents of par_name that include *value*
-            par_data = scenario.par(par_name, filters={dim: value})
+            par_data = scenario.par(par_name, filters={dim: element})
             N = len(par_data)
 
             if N == 0:
@@ -554,7 +571,7 @@ def strip_par_data(
                     [dump.get(par_name, pd.DataFrame()), par_data]
                 )
 
-            log.info(f"Remove {N} rows in {repr(par_name)}")
+            log.info(f"Remove {N} rows in {par_name!r}")
 
             # Show some debug info
             for col in "commodity level technology".split():
@@ -572,8 +589,17 @@ def strip_par_data(
 
             total += N
 
-    level = logging.INFO if total > 0 else logging.DEBUG
-    log.log(level, f"{total} rows removed.")
+    log.log(logging.INFO if total > 0 else logging.DEBUG, f"{total} rows removed.")
     log.debug(f"No data removed from {len(no_data)} other parameters")
+
+    if not dry_run:
+        log.info(f"Remove {element!r} from set {set_name!r}")
+        try:
+            scenario.remove_set(set_name, element)
+        except Exception as e:
+            if "does not have an element" in str(e):
+                log.info("  …not found")
+            else:  # pragma: no cover
+                raise
 
     return total
