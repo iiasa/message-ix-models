@@ -69,7 +69,7 @@ def test_apply_spec1(caplog, scenario, spec):
 
 def test_apply_spec2(caplog, scenario, spec):
     """Remove an element, with fast=True."""
-    spec["remove"].set["node"] = ["new-york"]
+    spec["remove"].set["node"] = ["new-york", "not-a-node"]
 
     apply_spec(scenario, spec, fast=True)
 
@@ -79,6 +79,8 @@ def test_apply_spec2(caplog, scenario, spec):
         for msg in (
             "  Remove 'new-york' from set 'node'",
             "0 parameter elements removed",
+            "  Remove 'not-a-node' from set 'node'",
+            "  …not found",
         )
     ), caplog.messages
 
