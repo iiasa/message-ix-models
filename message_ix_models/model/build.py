@@ -121,8 +121,7 @@ def apply_spec(
                 if "does not have an element" in str(e):
                     log.info("  …not found")
                     continue
-                else:
-                    raise
+                raise  # pragma: no cover
 
         # Add elements
         add = [] if dry_run else spec["add"].set[set_name]
