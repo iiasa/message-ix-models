@@ -8,7 +8,8 @@ from pandas.testing import assert_frame_equal
 from sdmx.model import Code
 
 from message_ix_models import ScenarioInfo, Spec
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import get_codes, process_technology_codes
+from message_ix_models.util import as_codes
 
 
 class TestScenarioInfo:
@@ -44,6 +45,37 @@ class TestScenarioInfo:
 
         # Only years >= y0
         assert [1010, 1020, 1030] == info.Y
+
+    def test_units(self, caplog):
+        """Test both :meth:`.io_units` and :meth:`.units_for`."""
+        # Prepare ScenarioInfo with some commodities and technologies
+        info = ScenarioInfo()
+        info.set["commodity"] = get_codes("commodity")
+        # NB create a technology with units annotation, since technology.yaml lacks
+        #    units as of 2022-07-20
+        t = as_codes({"example tech": {"units": "coulomb"}})
+        process_technology_codes(t)
+        info.set["technology"].extend(t)
+
+        # units_for() runs, produces energy units
+        c_units = info.units_for("commodity", "electr")
+        assert {"[length]": 2, "[mass]": 1, "[time]": -2} == c_units.dimensionality
+
+        # units_for() runs, produces expected units
+        t_units = info.units_for("technology", "example tech")
+        assert {"[current]": 1, "[time]": 1} == t_units.dimensionality
+
+        # ValueError is raised for invalid input
+        with pytest.raises(ValueError):
+            info.units_for("commodity", "not a commodity")
+
+        # io_units() runs, produces a ratio of commodity / technology units
+        with caplog.at_level(logging.DEBUG, "message_ix_models"):
+            assert (c_units / t_units) == info.io_units(
+                "example tech", "electr", level="useful"
+            )
+        # level= keyword argument → logged warning
+        assert "level = 'useful' ignored" == caplog.messages[-1]
 
     def test_from_scenario(self, test_context):
         """ScenarioInfo initialized from an existing Scenario."""
