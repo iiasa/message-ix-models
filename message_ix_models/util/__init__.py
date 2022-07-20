@@ -542,7 +542,10 @@ def strip_par_data(
     if dump is None:
         pars = []  # Don't iterate over parameters unless dumping
     else:
-        log.info(f"Remove data with {set_name}={element!r}")
+        log.info(
+            f"Remove data with {set_name}={element!r}"
+            + (" (DRY RUN)" if dry_run else "")
+        )
         # Iterate over parameters with ≥1 dimensions indexed by `set_name`
         pars = iter_parameters(set_name)
 
