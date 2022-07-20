@@ -243,7 +243,7 @@ class Context(dict):
         """
         return message_ix.Scenario(self.get_platform(), **self.scenario_info)
 
-    def set_scenario(self, scenario: message_ix.Scenario):
+    def set_scenario(self, scenario: message_ix.Scenario) -> None:
         """Update :attr:`scenario_info` to match an existing `scenario`."""
         self["scenario_info"].update(
             model=scenario.model, scenario=scenario.scenario, version=scenario.version

@@ -18,18 +18,23 @@ def add_tax_emission(
 ) -> None:
     """Add a global CO₂ price to `scen`.
 
-    A global carbon price is implemented with an annual growth rate equal to the
-    discount rate.
+    A carbon price is implemented on node=“World” by populating the
+    :ref:`MESSAGEix parameter <message-ix:section_parameter_emissions>`
+    ``tax_emission``, starting from the first model year and covering the entire model
+    horizon. The tax has an annual growth rate equal to the discount rate.
+
+    The other dimensions of ``tax_emission`` are filled with type_emission=“TCE” and
+    type_tec=“all”.
 
     Parameters
     ----------
     scen : :class:`message_ix.Scenario`
-        Scenario for which a carbon price should be added.
     price : float
-        Base year price in USD / tonne CO₂.
-    conversion_factor : float
+        Price in the first model year, in USD / tonne CO₂.
+    conversion_factor : float, optional
         Factor for converting `price` into the model's internal emissions units,
-        currently tonne carbon.
+        currently USD / tonne carbon. Optional: a default value is retrieved from
+        :mod:`iam_units`.
     drate_parameter : str; one of "drate" or "interestrate"
         Name of the parameter to use for the growth rate of the carbon price.
     """
