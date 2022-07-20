@@ -132,8 +132,9 @@ def apply_spec(
 
         log.info("  ---")
 
-    N_removed = sum(len(d) for d in dump.values())
-    log.info(f"{N_removed} parameter elements removed")
+    if not fast:
+        N_removed = sum(len(d) for d in dump.values())
+        log.info(f"{N_removed} total rows removed")
 
     # Add units to the Platform before adding data
     for unit in spec["add"].set["unit"]:
