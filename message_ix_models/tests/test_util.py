@@ -155,7 +155,7 @@ def test_convert_units(recwarn):
     assert_series_equal(exp, convert_units(*args, store="magnitude"), check_dtype=False)
 
     # Other values for store= are errors
-    with pytest.raises(ValueError, match="store='foo'"):
+    with pytest.raises(ValueError, match="store = 'foo'"):
         convert_units(*args, store="foo")
 
     # series_of_pint_quantity() successfully caught warnings

@@ -77,7 +77,7 @@ def test_apply_spec2(caplog, scenario, spec):
     assert all(
         msg in caplog.messages
         for msg in (
-            "  Skip removing 'new-york' and associated parameter elements (fast=True)",
+            "  Remove 'new-york' from set 'node'",
             "0 parameter elements removed",
         )
     ), caplog.messages
@@ -93,7 +93,7 @@ def test_apply_spec3(caplog, scenario, spec):
     assert all(
         msg in caplog.messages
         for msg in (
-            "  Remove 'new-york' and associated parameter elements",
+            "  Remove data with node='new-york'",
             "Remove 1 rows in 'demand'",
             "Remove 2 rows in 'output'",
             "3 parameter elements removed",

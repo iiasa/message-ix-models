@@ -166,7 +166,7 @@ class TestContext:
 
     def test_repr(self):
         c = Context()
-        assert re.fullmatch("<Context object at [^ ]+ with 3 keys>", repr(c))
+        assert re.fullmatch("<Context object at [^ ]+ with 4 keys>", repr(c))
 
     def test_use_defaults(self, caplog):
         caplog.set_level(logging.INFO)
