@@ -8,8 +8,9 @@ from message_ix_models.model.structure import (
     codelists,
     get_codes,
     process_commodity_codes,
+    process_units_anno,
 )
-from message_ix_models.util import eval_anno
+from message_ix_models.util import as_codes, eval_anno
 
 
 @pytest.mark.parametrize(
@@ -170,3 +171,13 @@ def test_cli_techs(session_context, mix_models_cli):
         "CF4_TCE,CF4_TCE,Tetrafluoromethane (CF4) Total Carbon Emissions,"
         "primary,False,dummy,\"['dummy', 'primary']\",\n"
     )
+
+
+def test_process_units_anno():
+    # Prepare 2 codes: the parent has a units annotation, the child has none
+    codes = as_codes({"foo": {"units": "kg"}, "bar": {"parent": "foo"}})
+
+    process_units_anno("", codes[0])
+
+    # Parents' units are propagated to the child
+    assert registry.Unit("kg") == eval_anno(codes[1], "units")
