@@ -145,7 +145,8 @@ class ScenarioInfo:
         - The units for the origin (for ``input``) or destination `commodity`.
         - The units of activity for the `technology`.
         """
-        log.debug(f"{level = } ignored")
+        if level is not None:
+            log.debug(f"{level = } ignored")
         return self.units_for("commodity", commodity) / self.units_for(
             "technology", technology
         )
