@@ -77,9 +77,8 @@ def test_apply_spec2(caplog, scenario, spec):
     assert all(
         msg in caplog.messages
         for msg in (
-            "  Remove 'new-york' from set 'node'",
-            "0 parameter elements removed",
-            "  Remove 'not-a-node' from set 'node'",
+            "Remove 'new-york' from set 'node'",
+            "Remove 'not-a-node' from set 'node'",
             "  …not found",
         )
     ), caplog.messages
@@ -95,9 +94,9 @@ def test_apply_spec3(caplog, scenario, spec):
     assert all(
         msg in caplog.messages
         for msg in (
-            "  Remove data with node='new-york'",
-            "Remove 1 rows in 'demand'",
-            "Remove 2 rows in 'output'",
-            "3 parameter elements removed",
+            "Remove data with node='new-york'",
+            "  1 rows in 'demand'",
+            "  2 rows in 'output'",
+            "  3 rows total",
         )
     ), caplog.messages

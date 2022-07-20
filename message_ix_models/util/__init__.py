@@ -549,7 +549,7 @@ def strip_par_data(
     for par_name in pars:
         if par_name not in par_list:  # pragma: no cover
             log.warning(
-                f"MESSAGEix parameter {par_name!r} missing in Scenario {scenario.url}"
+                f"  MESSAGEix parameter {par_name!r} missing in Scenario {scenario.url}"
             )
             continue
 
@@ -571,7 +571,7 @@ def strip_par_data(
                     [dump.get(par_name, pd.DataFrame()), par_data]
                 )
 
-            log.info(f"Remove {N} rows in {par_name!r}")
+            log.info(f"  {N} rows in {par_name!r}")
 
             # Show some debug info
             for col in "commodity level technology".split():
@@ -589,8 +589,10 @@ def strip_par_data(
 
             total += N
 
-    log.log(logging.INFO if total > 0 else logging.DEBUG, f"{total} rows removed.")
-    log.debug(f"No data removed from {len(no_data)} other parameters")
+    if not dry_run and dump is not None:
+        log.info(f"  {total} rows total")
+    if no_data:
+        log.debug(f"No data removed from {len(no_data)} other parameters")
 
     if not dry_run:
         log.info(f"Remove {element!r} from set {set_name!r}")
