@@ -525,7 +525,7 @@ def strip_par_data(
         If :data:`True`, only show what would be done.
     dump : dict, optional
         If provided, stripped data are stored in this dictionary. Otherwise, they are
-        simply discarded.
+        discarded.
 
     Returns
     -------
@@ -536,15 +536,15 @@ def strip_par_data(
     add_par_data
     """
     par_list = scenario.par_list()
-    no_data = []
-    total = 0
+    no_data = set()  # Names of parameters with no data being stripped
+    total = 0  # Total observations stripped
 
-    if dump is not None:
+    if dump is None:
+        pars = []  # Don't iterate over parameters unless dumping
+    else:
         log.info(f"Remove data with {set_name}={element!r}")
         # Iterate over parameters with ≥1 dimensions indexed by `set_name`
         pars = iter_parameters(set_name)
-    else:
-        pars = []
 
     for par_name in pars:
         if par_name not in par_list:  # pragma: no cover
@@ -558,13 +558,14 @@ def strip_par_data(
             lambda item: item[1] == set_name,
             zip(scenario.idx_names(par_name), scenario.idx_sets(par_name)),
         ):
-            # Check for contents of par_name that include *value*
+            # Check for contents of par_name that include `element`
             par_data = scenario.par(par_name, filters={dim: element})
             N = len(par_data)
+            total += N
 
             if N == 0:
                 # No data; no need to do anything further
-                no_data.append(par_name)
+                no_data.add(par_name)
                 continue
             elif dump is not None:
                 dump[par_name] = pd.concat(
@@ -574,20 +575,20 @@ def strip_par_data(
             log.info(f"  {N} rows in {par_name!r}")
 
             # Show some debug info
-            for col in "commodity level technology".split():
-                if col == set_name or col not in par_data.columns:
-                    continue
-
+            for col in filter(
+                lambda c: c != set_name and c in par_data.columns,
+                ("commodity", "level", "technology"),
+            ):
                 log.info(f"  with {col}={sorted(par_data[col].unique())}")
 
-            if not dry_run:
-                # Actually remove the data
-                scenario.remove_par(par_name, key=par_data)
+            if dry_run:
+                continue
 
-                # NB would prefer to do the following, but raises an exception:
-                # scenario.remove_par(par_name, key={set_name: [value]})
+            # Actually remove the data
+            scenario.remove_par(par_name, key=par_data)
 
-            total += N
+            # NB would prefer to do the following, but raises an exception:
+            # scenario.remove_par(par_name, key={set_name: [value]})
 
     if not dry_run and dump is not None:
         log.info(f"  {total} rows total")
