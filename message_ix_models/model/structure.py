@@ -86,7 +86,27 @@ def get_codes(name: str) -> List[Code]:
     return data
 
 
-def process_units_anno(set_name, code, quiet=False):
+def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
+    """Process an annotation on `code` with id="units".
+
+    The annotation text is wrapped as ``'registry.Unit("{text}")'``, such that it can
+    be retrieved with :func:`.eval_anno` or :meth:`.ScenarioInfo.units_for`. If `code`
+    has direct children, the annotation is also copied to those codes.
+
+    Parameters
+    ----------
+    set_name : str
+        Used in logged messages when `quiet` is :data:`False`.
+    quiet : bool, optional
+        If :data:`False` (the default), log on level :ref:`WARNING <python:levels>` if:
+
+        - the annotation is missing, or
+        - its text is not parseable with the :mod:`pint` application registry, i.e.
+          :data:`iam_units.registry`.
+
+        Otherwise, log on :ref:`DEBUG <python:levels>`.
+
+    """
     level = logging.DEBUG if quiet else logging.WARNING
     # Convert a "units" annotation to a code snippet that will return a pint.Unit
     # via eval_anno()

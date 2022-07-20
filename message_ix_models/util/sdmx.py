@@ -1,3 +1,4 @@
+"""Utilities for handling objects from :mod:`sdmx`."""
 from iam_units import registry
 from sdmx.model import AnnotableArtefact
 
