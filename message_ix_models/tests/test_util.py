@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from iam_units import registry
+from ixmp.testing import assert_logs
 from message_ix import Scenario, make_df
+from message_ix.testing import make_dantzig
 from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
@@ -29,6 +31,7 @@ from message_ix_models.util import (
     package_data_path,
     private_data_path,
     series_of_pint_quantity,
+    strip_par_data,
 )
 
 _actual_package_data = Path(__file__).parents[1].joinpath("data")
@@ -325,3 +328,23 @@ def test_private_data_path():
     assert MESSAGE_DATA_PATH.joinpath("data", "foo", "bar") == private_data_path(
         "foo", "bar"
     )
+
+
+def test_strip_par_data(caplog, test_context):
+    """Test the "dry run" feature of :func:`.strip_par_data`."""
+    s = make_dantzig(test_context.get_platform())
+
+    N = len(s.par("output"))
+    strip_par_data(s, "technology", "canning_plant", dry_run=True, dump=dict())
+
+    assert_logs(
+        caplog,
+        [
+            "Remove data with technology='canning_plant' (DRY RUN)",
+            "2 rows in 'output'",
+            "with commodity=['cases']",
+            "with level=['supply']",
+        ],
+    )
+    # Nothing was actually removed
+    assert N == len(s.par("output"))
