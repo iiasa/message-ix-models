@@ -441,6 +441,24 @@ fertilizer:
     - fueloil_NH3
     - NH3_to_N_fertil
 
+methanol:
+  commodity:
+    require:
+    - electr
+    - biomass
+    - hydrogen
+    - d_heat
+    - ht_heat
+    add:
+    - methanol
+  level:
+    add:
+  technology:
+    require:
+    add:
+    - meth_bio
+    - meth_h2
+
 buildings:
   level:
     add:
