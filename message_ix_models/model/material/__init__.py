@@ -283,7 +283,7 @@ def add_building_ts(scenario_name, model_name):
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 # @click.pass_obj
-def run_reporting(old_reporting, scenario_name, model_name, remove_ts,key):
+def run_reporting(scenario_name, model_name, remove_ts):
     from message_data.reporting.materials.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
     from message_ix import Scenario
@@ -302,6 +302,7 @@ def run_reporting(old_reporting, scenario_name, model_name, remove_ts,key):
             scenario.check_out(timeseries_only=True)
             scenario.remove_timeseries(df_rem)
             scenario.commit("Existing timeseries removed.")
+            scenario.set_as_default()
             print('Existing timeseries are removed.')
         else:
             print('There are no timeseries to be removed.')
