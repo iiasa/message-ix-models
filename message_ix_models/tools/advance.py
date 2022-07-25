@@ -1,9 +1,10 @@
 """Handle data from the ADVANCE project."""
 import logging
 from pathlib import Path
-from typing import Optional
-from zipfile import ZipFile
+from typing import List, Optional, Tuple
+from zipfile import ZIP_DEFLATED, ZipFile
 
+import numpy as np
 import pandas as pd
 import pint
 from genno import Quantity
@@ -115,3 +116,50 @@ def _read_workdb_snapshot(path: Path, name: str) -> pd.Series:
                 .stack()
                 .rename_axis(DIMS)
             )
+
+
+def _fuzz_data(size=1e2, include: List[Tuple[str, str]] = []):
+    """Select a subset of the data for use in testing.
+
+    Parameters
+    ----------
+    size : numeric
+        Number of rows to include.
+    include : sequence of 2-tuple (str, str)
+        (variable name, unit) to include. The data will be partly duplicated to ensure
+        the given variable name(s) are included.
+    """
+    size = int(size)
+    rng = np.random.default_rng()
+
+    # - Select `size` rows at random from the full data set.
+    # - Use their index for a new pd.Series with random data.
+    # - Return to the original structure (pd.DataFrame, upper-case column names, wide)
+    dfs = [
+        pd.Series(rng.random(size), index=get_advance_data().sample(size).index)
+        .rename_axis(map(str.upper, DIMS))
+        .unstack("YEAR")
+        .reset_index()
+    ]
+
+    # Duplicate data for (variable, unit) pairs required per `include`
+    for variable, unit in include:
+        dfs.append(
+            dfs[0]
+            .query(f"VARIABLE != {variable!r}")
+            .assign(VARIABLE=variable, UNIT=unit)
+        )
+
+    # Path for output archive
+
+    # For ordinary testing, output to a temporary directory
+    target = local_data_path("test", *LOCATION)
+    # To update/overwrite the data file in the repo, uncomment this line
+    # target = package_data_path("test", *LOCATION)
+
+    target.parent.mkdir(exist_ok=True, parents=True)
+
+    # Concatenate data, write to the target member of the target
+    with ZipFile(target, "w", ZIP_DEFLATED) as zf:
+        with zf.open(NAME, "w") as f:
+            pd.concat(dfs).to_csv(f, index=False)
