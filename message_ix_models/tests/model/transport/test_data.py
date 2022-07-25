@@ -53,19 +53,26 @@ def test_data_files(test_context, parts):
     assert isinstance(result, Quantity)
 
 
+def configure_build(context, regions, years):
+    context.update(regions=regions, years=years)
+
+    configure(context)
+
+    # Information about the corresponding base model
+    info = bare.get_spec(context)["add"]
+    context["transport build info"] = info
+    context["transport spec"] = build.get_spec(context)
+
+    return info
+
+
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions, N_node", [("R11", 11), ("R12", 12), ("R14", 14), ("ISR", 1)]
 )
 def test_get_ikarus_data(test_context, regions, N_node, years):
     ctx = test_context
-    ctx.update(regions=regions, years=years)
-
-    configure(ctx)
-
-    # Information about the corresponding base model
-    info = bare.get_spec(ctx)["add"]
-    ctx["transport build info"] = info
+    info = configure_build(ctx, regions, years)
 
     # get_ikarus_data() succeeds on the bare RES
     data = get_ikarus_data(ctx)
@@ -179,17 +186,12 @@ def test_get_emissions_data(test_context, source, rows, regions):
 def test_get_ldv_data(test_context, source, regions, years):
     # Info about the corresponding RES
     ctx = test_context
-    ctx.update(regions=regions, years=years)
 
-    configure(ctx)
-
-    info = bare.get_spec(ctx)["add"]
-
-    ctx["transport build info"] = info
-    ctx["transport spec"] = build.get_spec(ctx)
+    info = configure_build(ctx, regions, years)
+    ctx["transport config"]["data source"]["LDV"] = source
 
     # Method runs without error
-    ctx["transport config"]["data source"]["LDV"] = source
+
     data = get_ldv_data(ctx)
 
     # Data are returned for the following parameters
@@ -291,18 +293,10 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
 
 
 @pytest.mark.parametrize("regions", ["R11", "R12"])
-def test_get_non_ldv_data(test_context, regions):
+def test_get_non_ldv_data(test_context, regions, years="B"):
     """:func:`.get_non_ldv_data` returns the expected data."""
     ctx = test_context
-
-    # Info about the corresponding RES
-    ctx.regions = regions
-    configure(ctx)
-
-    # Spec for a transport model
-    info = bare.get_spec(ctx)["add"]
-    ctx["transport build info"] = info
-    ctx["transport spec"] = build.get_spec(ctx)
+    configure_build(ctx, regions, years)
 
     # Code runs
     data = get_non_ldv_data(ctx)
