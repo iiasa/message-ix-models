@@ -268,7 +268,7 @@ def nodes_ex_world(nodes: list) -> List[str]:
     return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
 
 
-def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[str, Dict]:
+def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
     .. todo:: move upstream, to :mod:`message_ix_models`.
