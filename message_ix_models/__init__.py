@@ -1,5 +1,7 @@
 import sys
 
+import pint
+from iam_units import registry
 from pkg_resources import DistributionNotFound, get_distribution
 
 from message_ix_models.util._logging import setup as setup_logging
@@ -20,6 +22,9 @@ except DistributionNotFound:  # pragma: no cover
 
 # No logging to stdout (console) by default
 setup_logging(console=False)
+
+# Use iam_units.registry as the default pint.UnitsRegistry
+pint.set_application_registry(registry)
 
 # Ensure at least one Context instance is created
 Context()

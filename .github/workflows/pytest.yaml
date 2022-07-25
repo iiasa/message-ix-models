@@ -63,6 +63,7 @@ jobs:
     - name: Check out message-ix-models
       uses: actions/checkout@v3
       with:
+        lfs: true
         path: message-ix-models
         fetch-depth: ${{ env.depth }}
 

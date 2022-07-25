@@ -63,6 +63,7 @@ class Context(dict):
 
         for key, value in (
             ("platform_info", dict()),
+            ("report", dict()),
             ("scenario_info", dict()),
             ("local_data", default_local_data),
         ):
@@ -209,11 +210,11 @@ class Context(dict):
     def get_platform(self, reload=False) -> ixmp.Platform:
         """Return a :class:`ixmp.Platform` from :attr:`platform_info`.
 
-        When used through the CLI, :attr:`platform_info` is a 'base' platform
-        as indicated by the --url or --platform  options.
+        When used through the CLI, :attr:`platform_info` is a 'base' platform as
+        indicated by the --url or --platform  options.
 
-        If a Platform has previously been instantiated with
-        :meth:`get_platform`, the same object is returned unless `reload=True`.
+        If a Platform has previously been instantiated with :meth:`get_platform`, the
+        same object is returned unless `reload=True`.
         """
         if not reload:
             # Return an existing Platform, if any
@@ -242,6 +243,12 @@ class Context(dict):
         """
         return message_ix.Scenario(self.get_platform(), **self.scenario_info)
 
+    def set_scenario(self, scenario: message_ix.Scenario) -> None:
+        """Update :attr:`scenario_info` to match an existing `scenario`."""
+        self["scenario_info"].update(
+            model=scenario.model, scenario=scenario.scenario, version=scenario.version
+        )
+
     def handle_cli_args(
         self,
         url=None,
@@ -250,6 +257,7 @@ class Context(dict):
         scenario_name=None,
         version=None,
         local_data=None,
+        verbose=False,
         _store_as=("platform_info", "scenario_info"),
     ):
         """Handle command-line arguments.
@@ -257,6 +265,8 @@ class Context(dict):
         May update the :attr:`data_path`, :attr:`platform_info`, :attr:`scenario_info`,
         and/or :attr:`url` settings.
         """
+        self.verbose = verbose
+
         # Store the path to command-specific data and metadata
         if local_data:
             self.local_data = local_data
