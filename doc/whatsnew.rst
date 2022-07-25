@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2022.7.25
+=========
 
 - Add :func:`get_advance_data`, and related tools for data from the ADVANCE project, including the :ref:`node codelist <ADVANCE-nodes>` for the data (:pull:`76`).
 - Add unit annotations to :ref:`commodity-yaml` (:pull:`76`).
