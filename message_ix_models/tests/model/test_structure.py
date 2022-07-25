@@ -16,7 +16,7 @@ from message_ix_models.util import as_codes, eval_anno
 @pytest.mark.parametrize(
     "kind, exp",
     [
-        ("node", ["ISR", "R11", "R12", "R14", "R32", "RCP"]),
+        ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP"]),
         ("year", ["A", "B"]),
     ],
 )
