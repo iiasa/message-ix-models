@@ -4,7 +4,7 @@
 # Source: IEA (2017), “The Future of Trucks”, table 4, page 38
 # https://www.iea.org/reports/the-future-of-trucks
 #
-# Unit: 0.01 litre_of_diesel_equivalent / km
+# Unit: 0.01 litre_of_diesel_equivalent / (vehicle km)
 #
 node, technology, value
 USA,  LCV,          7.9
