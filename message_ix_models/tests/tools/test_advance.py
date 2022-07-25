@@ -35,4 +35,7 @@ def test_fuzz_data():
     the test specimen in the package directory that is used by
     :func:`test_get_advance_data`, see the body of _fuzz_data.
     """
-    _fuzz_data(include=[("Transport|Service demand|Road|Freight", "billion tkm/yr")])
+    # size argument should be a fraction (~= 0.1) of the size of the test specimen
+    _fuzz_data(
+        size=10, include=[("Transport|Service demand|Road|Freight", "billion tkm/yr")]
+    )
