@@ -3,7 +3,6 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 from message_ix_models import testing
-from message_ix_models.util import private_data_path
 
 from message_data.reporting import prepare_reporter, util
 
@@ -15,18 +14,13 @@ MIN_CONFIG = {
 }
 
 
-def test_report_bare_res(request, session_context):
+def test_report_bare_res(request, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
-    ctx = session_context
-
-    scenario = testing.bare_res(request, ctx, solved=True)
+    scenario = testing.bare_res(request, test_context, solved=True)
 
     # Prepare the reporter
-    reporter, key = prepare_reporter(
-        scenario,
-        config=private_data_path("report", "global.yaml"),
-        key="message:default",
-    )
+    test_context.report.update(config="global.yaml", key="message::default")
+    reporter, key = prepare_reporter(test_context, scenario)
 
     # Get the default report
     # NB commented because the bare RES currently contains no activity, so the
@@ -67,45 +61,44 @@ def test_apply_units(request, test_context, regions):
     config = MIN_CONFIG.copy()
 
     # Prepare the reporter
-    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
+    test_context.report.update(config=config, key=qty)
+    reporter, key = prepare_reporter(test_context, bare_res)
 
     # Add some data to the scenario
     inv_cost = DATA_INV_COST.copy()
     bare_res.remove_solution()
-    bare_res.check_out()
-    bare_res.add_par("inv_cost", inv_cost)
-    bare_res.commit("")
+    with bare_res.transact():
+        bare_res.add_par("inv_cost", inv_cost)
     bare_res.solve()
 
     # Units are retrieved
     USD_2005 = reporter.unit_registry.Unit("USD_2005")
-    assert reporter.get(key).attrs["_unit"] == USD_2005
+    assert USD_2005 == reporter.get(key).units
 
     # Add data with units that will be discarded
     inv_cost["unit"] = ["USD", "kg"]
     bare_res.remove_solution()
-    bare_res.check_out()
-    bare_res.add_par("inv_cost", inv_cost)
+    with bare_res.transact():
+        bare_res.add_par("inv_cost", inv_cost)
+    bare_res.solve()
 
     # Units are discarded
-    assert str(reporter.get(key).attrs["_unit"]) == "dimensionless"
+    assert "dimensionless" == str(reporter.get(key).units)
 
     # Update configuration, re-create the reporter
-    config["units"]["apply"] = {"inv_cost": "USD"}
-    bare_res.commit("")
-    bare_res.solve()
-    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
+    test_context.report["config"]["units"]["apply"] = {"inv_cost": "USD"}
+    reporter, key = prepare_reporter(test_context, bare_res)
 
     # Units are applied
-    assert str(reporter.get(key).attrs["_unit"]) == USD_2005
+    assert USD_2005 == reporter.get(key).units
 
     # Update configuration, re-create the reporter
-    config.update(INV_COST_CONFIG)
-    reporter, key = prepare_reporter(bare_res, config=config, key=qty)
+    test_context.report["config"].update(INV_COST_CONFIG)
+    reporter, key = prepare_reporter(test_context, bare_res)
 
     # Units are converted
-    df = reporter.get("Investment Cost:iamc").as_pandas()
-    assert set(df["unit"]) == {"EUR_2005"}
+    df = reporter.get("Investment Cost::iamc").as_pandas()
+    assert ["EUR_2005"] == df["unit"].unique()
 
 
 @pytest.mark.parametrize(
