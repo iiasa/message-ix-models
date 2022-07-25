@@ -7,6 +7,7 @@ import click
 import yaml
 from message_ix_models.util import local_data_path, private_data_path
 from message_ix_models.util._logging import mark_time
+from message_ix_models.util.click import common_params
 
 from message_data.reporting import register, report
 
@@ -14,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 @click.command(name="report")
-@click.pass_obj
+@common_params("dry_run")
 @click.option(
     "--config",
     "config_file",
@@ -37,9 +38,9 @@ log = logging.getLogger(__name__)
     type=click.Path(exists=True, dir_okay=False),
     help="Report multiple Scenarios listed in FILE.",
 )
-@click.option("--dry-run", "-n", is_flag=True, help="Only show what would be done.")
 @click.argument("key", default="message:default")
-def cli(context, config_file, module, output_path, from_file, dry_run, key):
+@click.pass_obj
+def cli(context, config_file, module, output_path, from_file, key, dry_run):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message:default', but may alsobe the name
@@ -70,7 +71,7 @@ def cli(context, config_file, module, output_path, from_file, dry_run, key):
         name = f"message_data.{name}.report"
         __import__(name)
         register(sys.modules[name].callback)
-        log.info(f"Registered reporting config from {name}")
+        log.info(f"Registered reporting from {name}")
 
     # Prepare a list of Context objects, each referring to one Scenario
     contexts = []
@@ -109,14 +110,7 @@ def cli(context, config_file, module, output_path, from_file, dry_run, key):
         contexts.append(context)
 
     for ctx in contexts:
-        # Load the Platform and Scenario
-        scenario = context.get_scenario()
+        # Update with common settings
+        context["report"].update(config=config, key=key)
+        report(ctx)
         mark_time()
-
-        report(
-            scenario,
-            config=config,
-            key=key,
-            output_path=ctx.output_path,
-            dry_run=dry_run,
-        )
