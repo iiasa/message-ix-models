@@ -39,7 +39,8 @@ DATA_FILES = [
 DATA_FUNCTIONS = {
     "ldv": (ldv.get_ldv_data, "context"),
     "non_ldv": (non_ldv.get_non_ldv_data, "context"),
-    "freight": (freight.get_freight_data, "context"),
+    "freight": (freight.get_freight_data, "n::ex world", "y::model", "context"),
+    # Keys added by demand.prepare_reporter()
     "demand": ("transport demand passenger::ixmp",),
     "freight demand": ("transport demand freight::ixmp",),
 }
