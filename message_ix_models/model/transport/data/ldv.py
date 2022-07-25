@@ -23,6 +23,7 @@ from message_ix_models.util import (
     same_node,
 )
 from openpyxl import load_workbook
+from sdmx.model import Code
 
 from message_data.model.transport.utils import get_region_codes, input_commodity_level
 
@@ -326,9 +327,9 @@ def get_constraints(context) -> Dict[str, pd.DataFrame]:
 
     # List of technologies to constrain, including the LDV technologies, plus the
     # corresponding "X usage by CG" pseudo-technologies
-    techs = []
+    techs: List[Code] = []
     for t in map(str, ldv_codes):
-        techs.extend(filter(lambda _t: t in _t, all_techs))
+        techs.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
 
     # Constraint value
     annual = context["transport config"]["constraint"]["LDV growth_activity"]
