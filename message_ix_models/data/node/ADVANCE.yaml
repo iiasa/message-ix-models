@@ -1,0 +1,35 @@
+# Node code list for the ADVANCE project
+#
+# Source: https://db1.ene.iiasa.ac.at/ADVANCEDB/dsd?Action=htmlpage&page=10
+# Transcribed 2022-07-22 by P.N. Kishimoto
+#
+
+World:
+  # Countries represented individually
+  child: [BRA, CHN, IND, JPN, RUS, USA]
+
+EU:
+  description: >-
+    European Union (28 member states from the accession of HRV in 2013 to the
+    withdrawal of GBR in 2020).
+  child: [AUT, BEL, BGR, CYP, CZE, DEU, DNK, ESP, EST, FIN, FRA, GBR, GRC, HRV, HUN, IRL, ITA, LTU, LUX, LVA, MLT, NLD, POL, PRT, ROU, SVK, SVN, SWE]
+
+OECD90+EU:
+  description: Includes the OECD 1990 countries as well as EU members and candidates.
+  child: [ALB, AUS, AUT, BEL, BGR, BIH, CAN, CHE, CYP, CZE, DEU, DNK, ESP, EST, FIN, FJI, FRA, GBR, GRC, GUM, HRV, HUN, IRL, ISL, ITA, JPN, LTU, LUX, LVA, MKD, MLT, MNE, NCL, NLD, NOR, NZL, POL, PRT, PYF, ROU, SLB, SRB, SVK, SVN, SWE, TUR, USA, VUT, WSM]
+
+REF:
+  description: Countries from the Reforming Ecomonies of the Former Soviet Union.
+  child: [ARM, AZE, BLR, GEO, KAZ, KGZ, MDA, RUS, TJK, TKM, UKR, UZB]
+
+ASIA:
+  description: The region includes most Asian countries with the exception of the Middle East, Japan and Former Soviet Union states.
+  child: [AFG, BGD, BRN, BTN, CHN, HKG, IDN, IND, KHM, KOR, LAO, LKA, MAC, MDV, MMR, MNG, MYS, NPL, PAK, PHL, PNG, PRK, SGP, THA, TMP, TWN, VNM]
+
+MAF:
+  description: This region includes the countries of the Middle East and Africa.
+  child: [DZA, AGO, ARE, BDA, BEN, BFA, BHR, BWA, CAF, CIV, CMR, COD, COG, COM, CPV, DJI, EGY, ERI, ESH, ETH, GAB, GHA, GIN, GMB, GNB, GNQ, IRN, IRQ, ISR, JOR, KEN, KWT, LBN, LBR, LBY, LSO, MAR, MDG, MLI, MOZ, MRT, MUS, MWI, NAM, NER, NGA, OMN, QAT, REU, RQA, SAU, SDN, SEN, SLE, SOM, SWZ, SYR, TCD, TGO, TUN, TZA, UGA, YEM, ZAF, ZMB, ZWE]
+
+LAM:
+  description: This region includes the countries of Latin America and the Caribbean.
+  child: [ARG, ANT, BHS, BLZ, BOL, BRA, BRB, CHL, COL, CRA, CUB, DOM, EDU, GLP, GTM, GUY, HND, HTI, JAM, MEX, MTQ, NIC, PAN, PER, PRI, PRY, SLV, SUR, TTO, URY, VEN]

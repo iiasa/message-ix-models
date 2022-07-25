@@ -60,7 +60,15 @@ Models with global scope
 Others
 ======
 
-These include models scoped to a single country or region, or a subset of all countries or regions.
+These include models scoped to a single country or region, or a subset of all countries or regions, as well as code lists used in specific data sets from which :mod:`message_ix_models` handles data.
+
+.. _ADVANCE:
+
+ADVANCE project (``ADVANCE``)
+-----------------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/ADVANCE.yaml
+   :language: yaml
 
 .. _ISR:
 
