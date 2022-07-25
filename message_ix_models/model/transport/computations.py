@@ -16,7 +16,7 @@ from message_ix_models import ScenarioInfo
 
 from message_data.model.transport.utils import path_fallback
 from message_data.reporting.util import as_quantity
-from message_data.tools.iea_eei import get_eei_data
+from message_data.tools import iea_eei
 
 log = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ EEI_TECH_MAP = {
 def distance_nonldv(config: dict) -> Quantity:
     """Return annual travel distance per vehicle for non-LDV transport modes."""
     # Load from IEA EEI
-    dfs = get_eei_data(config["transport"]["regions"])
+    dfs = iea_eei.get_eei_data(config["transport"]["regions"])
     df = (
         dfs["vehicle use"]
         .rename(columns={"region": "nl", "year": "y", "Mode/vehicle type": "t"})
@@ -233,11 +233,9 @@ def logit(
     return ratio(u, u.sum(dim))
 
 
-def iea_eei(name: str, config: Dict) -> Quantity:
+def iea_eei_fv(name: str, config: Dict) -> Quantity:
     """Returns base-year demand for freight from IEA EEI, with dimensions n-c-y."""
-    from message_data.tools.iea_eei import as_quantity
-
-    result = as_quantity(name, config["regions"])
+    result = iea_eei.as_quantity(name, config["regions"])
     ym1 = result.coords["y"].data[-1]
 
     log.info(f"Use y={ym1} data for base-year freight transport activity")

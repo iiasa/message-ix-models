@@ -33,13 +33,13 @@ def assert_units(
 
     # Convert the unique value to the same class as `expected`
     cls = expected.__class__
-    if cls is registry.Quantity:
-        obs = cls(1.0, all_units[0])
+    if issubclass(cls, registry.Quantity):
+        assert expected == cls(1.0, all_units[0])
     elif cls is dict:
         # Compare dimensionality of the units, rather than exact match
-        obs = registry(all_units[0]).dimensionality
+        assert expected == registry(all_units[0]).dimensionality
     else:
-        obs = cls(all_units[0])
+        assert expected == cls(all_units[0])
 
     assert expected == obs
 
