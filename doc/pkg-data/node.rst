@@ -62,7 +62,7 @@ Others
 
 These include models scoped to a single country or region, or a subset of all countries or regions, as well as code lists used in specific data sets from which :mod:`message_ix_models` handles data.
 
-.. _ADVANCE:
+.. _ADVANCE-nodes:
 
 ADVANCE project (``ADVANCE``)
 -----------------------------
