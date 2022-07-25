@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 def main(scenario):
     """Callback for :meth:`ixmp.Scenario.solve`."""
-    log.info("Executing callback on {!r}".format(scenario))
+    log.info(f"Executing callback on {scenario!r}")
 
     from .demand import from_scenario
 
