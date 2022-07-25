@@ -120,7 +120,7 @@ def strip_emissions_data(scenario, context):
 def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFrame]:
     """Input and output data for conversion technologies:
 
-    The technologies are named 'transport {mode} load factor'.
+    The technologies are named 'transport {service} load factor'.
     """
     common = dict(
         year_vtg=y,
@@ -132,19 +132,19 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
         time_dest="year",
     )
 
-    mode_info = [
-        ("freight", config["transport"]["freight load factor"], "Gt * km"),
+    service_info = [
+        ("freight", config["transport"]["freight load factor"], "Gt km"),
         ("pax", 1.0, "Gp km / a"),
     ]
 
     data: Mapping[str, List] = defaultdict(list)
-    for mode, factor, output_unit in mode_info:
+    for service, factor, output_unit in service_info:
         i_o = make_io(
-            (f"transport {mode} vehicle", "useful", "Gv km"),
-            (f"transport {mode}", "useful", output_unit),
+            (f"transport {service} vehicle", "useful", "Gv km"),
+            (f"transport {service}", "useful", output_unit),
             factor,
             on="output",
-            technology=f"transport {mode} load factor",
+            technology=f"transport {service} load factor",
             **common,
         )
         for par, df in i_o.items():
