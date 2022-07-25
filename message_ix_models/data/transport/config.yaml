@@ -63,6 +63,10 @@ efficiency:
 fixed demand: "337327.9893 km / year"  # = 149500 * 1.12818725502081 * 2
 fixed GDP: "300 kUSD / passenger / year"
 
+# Similar to Roadmap 2017 values
+# freight load factor: 5.0  # tonne km per vehicle km
+
+# Similar to IEA “Future of Trucks” (2017) values; see .transport.data.freight
 freight load factor: 10  # tonne km per vehicle km
 
 # Logit share exponents or cost distribution parameters [0]
