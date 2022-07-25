@@ -52,9 +52,11 @@ def iamc(c: Reporter, info):
       renaming etc. while collapsing dimensions to the IAMC ones. The "var" key from
       the entry, if any, is passed to the `var` argument of that function.
     """
+    from message_data.reporting.util import collapse
+
     # Use message_data custom collapse() method
     info.setdefault("collapse", {})
-    info["collapse"]["callback"] = partial(util.collapse, var=info.pop("var", []))
+    info["collapse"]["callback"] = partial(collapse, var=info.pop("var", []))
 
     # Add standard renames
     info.setdefault("rename", {})
