@@ -105,6 +105,6 @@ def simulated_solution(request, context) -> Reporter:
 
     # Prepare the reporter
     with silence_log("genno", logging.CRITICAL):
-        reporting.prepare_reporter(rep, dict())
+        reporting.prepare_reporter(context, reporter=rep)
 
     return rep

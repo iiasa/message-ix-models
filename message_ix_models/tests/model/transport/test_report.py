@@ -4,16 +4,11 @@ import pytest
 from genno.testing import assert_qty_equal
 from message_ix.reporting import MissingKeyError, Quantity
 from message_ix_models.testing import NIE
-from message_ix_models.util import private_data_path
 from numpy.testing import assert_allclose
 from pytest import mark, param
 
-from message_data.model.transport import configure
-from message_data.model.transport.report import (  # noqa: F401
-    PLOTS,
-    callback,
-    computations,
-)
+from message_data.model.transport import computations, configure
+from message_data.model.transport.report import PLOTS, callback  # noqa: F401
 from message_data.model.transport.testing import (
     MARK,
     built_transport,
@@ -51,7 +46,16 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     register(callback)
 
     ctx = test_context
-    ctx.update(regions=regions, years=years)
+    ctx.update(
+        regions=regions,
+        years=years,
+        report=dict(
+            config="global.yaml",
+            # key="transport all",
+            key="stock:nl-t-ya-driver_type:ldv",
+            output_dir=tmp_path,
+        ),
+    )
     ctx["output dir"] = tmp_path
 
     scenario = built_transport(request, ctx, solved=solved)
@@ -61,13 +65,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     # log.info(f"Dump contents to {dump_path}")
     # scenario.to_excel(dump_path)
 
-    rep, key = prepare_reporter(
-        scenario,
-        private_data_path("report", "global.yaml"),
-        # "transport all",
-        "stock:nl-t-ya-driver_type:ldv",
-    )
-    rep.configure(output_dir=tmp_path)
+    rep, key = prepare_reporter(test_context, scenario)
 
     # Get the catch-all key, including plots etc.
     rep.get(key)
