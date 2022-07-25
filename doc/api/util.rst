@@ -47,6 +47,8 @@ Commonly used:
 .. automodule:: message_ix_models.util
    :members:
 
+.. autodata:: message_ix_models.util.cache.SKIP_CACHE
+
 
 :mod:`.util.click`
 ==================
