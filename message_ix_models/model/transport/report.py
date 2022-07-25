@@ -1,16 +1,14 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import List, Mapping, Tuple
 
-from dask.core import quote
 from genno import Computer, MissingKeyError
 from genno.computations import aggregate
 from message_ix.reporting import Reporter
-from message_ix_models import Context, Spec
+from message_ix_models import Context
 
-import message_data.tools.gdp_pop
-from message_data.model.transport import computations, configure
+from message_data.model.transport import configure
 from message_data.model.transport.plot import PLOTS
 
 log = logging.getLogger(__name__)
@@ -38,37 +36,24 @@ def check(scenario):
     return rep.get(key)
 
 
-def transport_technologies(context) -> Tuple[Spec, List, Dict]:
-    """Return info about transport technologies, given `context`."""
-    from . import build
-
-    # Get a specification that describes this setting
-    spec = build.get_spec(context)
-
-    # Set of all transport technologies
-    technologies = spec["add"].set["technology"].copy()
-
-    # Subsets of transport technologies for aggregation and filtering
-    t_groups: Dict[str, List[str]] = {"non-ldv": []}
-    for tech in filter(  # Only include those technologies with children
-        lambda t: len(t.child), context["transport set"]["technology"]["add"]
-    ):
-        t_groups[tech.id] = list(c.id for c in tech.child)
-        # Store non-LDV technologies
-        if tech.id != "LDV":
-            t_groups["non-ldv"].extend(t_groups[tech.id])
-
-    return spec, technologies, t_groups
+def require_compat(c: Computer) -> None:
+    c.require_compat("message_data.model.transport.computations")
+    c.require_compat("message_data.tools.gdp_pop")
 
 
-def register_modules(rep: Computer):
-    # NB this can be replaced by rep.require_compat(…) in genno >= 1.12
-    for mod in (computations, message_data.tools.gdp_pop):
-        if mod not in rep.modules:
-            rep.modules.append(mod)
+def update_config(c: Computer, context: Context) -> None:
+    config = c.graph["config"]
+    config.setdefault("regions", context.regions)
+    config.setdefault("data source", {})
+    config["data source"].update(
+        {
+            k: context["transport config"]["data source"][k]
+            for k in ("demand dummy", "gdp", "population")
+        }
+    )
 
 
-def _gen0(c: Computer, *keys):
+def _gen0(c: Computer, *keys) -> None:
     """Aggregate using groups of transport technologies."""
     for k1 in keys:
         k2 = k1.add_tag("transport agg 1")
@@ -80,14 +65,14 @@ def _gen0(c: Computer, *keys):
         c.add("select", k4, k3, "t::transport modes 1", sums=True)
 
 
-def _gen1(c: Computer, *keys):
+def _gen1(c: Computer, *keys) -> None:
     """Selected subsets of of transport technologies."""
     for key in keys:
         c.add("select", key.add_tag("ldv"), key, "t::transport LDV", sums=True)
         c.add("select", key.add_tag("non-ldv"), key, "t::transport non-ldv", sums=True)
 
 
-def callback(rep: Reporter):
+def callback(rep: Reporter, context: Context) -> None:
     """:meth:`.prepare_reporter` callback for MESSAGE-Transport.
 
     Among others, adds:
@@ -101,7 +86,7 @@ def callback(rep: Reporter):
     """
     from . import demand
 
-    register_modules(rep)
+    require_compat(rep)
 
     try:
         solved = rep.graph["scenario"].has_solution()
@@ -110,18 +95,20 @@ def callback(rep: Reporter):
 
     N_keys = len(rep.graph)
 
-    # Read transport configuration, including reporting config, onto the latest Context
-    context = Context.get_instance(-1)
+    # Read transport configuration onto the Context, including reporting config
     configure(context, rep.graph.get("scenario"))
 
-    # Add configuration to the Reporter
+    # Transfer transport configuration to the Reporter
     config = context["transport config"]["report"]
     config.update(context["transport config"])
     rep.graph["config"].setdefault("transport", {})
     rep.graph["config"]["transport"].update(config.copy())
+    update_config(rep, context)
 
-    # Retrieve information about the model structure
-    spec, technologies, t_groups = transport_technologies(context)
+    from . import build
+
+    # Get a specification that describes this setting
+    spec = build.get_spec(context)
 
     # 1. Add ex-post mode and demand calculations
     # TODO this calls add_structure(), which could be merged with (2) below
@@ -129,32 +116,13 @@ def callback(rep: Reporter):
         rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
     )
 
-    # 2. Add model structure to the reporter
-    # NB demand.add_structure() has already added some
-
-    # Bare lists
-    rep.add("t::transport", quote(technologies))
-    rep.add("c::transport", quote(spec["add"].set["commodity"]))
-
-    # Mappings for use with aggregate, select, etc.
-    rep.add("t::transport agg", quote(dict(t=t_groups)))
-    # Sum across modes, including "non-ldv"
-    rep.add("t::transport modes 0", quote(dict(t=list(t_groups.keys()))))
-    # Sum across modes, excluding "non-ldv"
-    rep.add(
-        "t::transport modes 1",
-        quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
-    )
-    for id, techs in t_groups.items():
-        rep.add(f"t::transport {id}", quote(dict(t=techs)))
-
     if config["filter"]:
         log.info("Filter out non-transport technologies")
 
         # Plain "transport" from the base model, for e.g. prices
         t_filter = {"transport"}
         # MESSAGEix-Transport -specific technologies
-        t_filter.update(map(str, technologies.copy()))
+        t_filter.update(map(str, rep.get("t::transport").copy()))
         # # Required commodities (e.g. fuel) from the base model
         # t_filter.update(spec.require.set["commodity"])
 
@@ -162,7 +130,7 @@ def callback(rep: Reporter):
 
     # 3. Apply some functions that generate sub-graphs
     try:
-        rep.apply(_gen1, "in", "out")
+        rep.apply(_gen0, "in", "out")
     except MissingKeyError:
         if solved:
             raise
@@ -174,7 +142,9 @@ def callback(rep: Reporter):
     rep.configure(**deepcopy(context["transport report"]))
 
     # 5. Add plots
-    queue = [((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()]
+    queue: List[Tuple[Tuple, Mapping]] = [
+        ((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()
+    ]
     added = rep.add_queue(queue, max_tries=2, fail="raise" if solved else logging.INFO)
     plots = list(k for k in added if str(k).startswith("plot"))
 

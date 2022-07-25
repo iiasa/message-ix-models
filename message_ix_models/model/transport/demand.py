@@ -2,7 +2,6 @@
 import logging
 from functools import partial
 from operator import itemgetter
-from pathlib import Path
 from typing import Dict, List, cast
 
 import genno.computations
@@ -21,8 +20,12 @@ from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
 from message_data.model.transport import computations, plot
 from message_data.model.transport.data import groups
-from message_data.model.transport.report import register_modules
-from message_data.model.transport.utils import get_region_codes, path_fallback
+from message_data.model.transport.report import require_compat, update_config
+from message_data.model.transport.utils import (
+    get_region_codes,
+    get_techs,
+    path_fallback,
+)
 from message_data.tools import gdp_pop
 
 log = logging.getLogger(__name__)
@@ -171,6 +174,25 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
         except KeyExistsError:
             continue  # Already present; don't overwrite
 
+    # Retrieve information about the model structure
+    spec, technologies, t_groups = get_techs(context)
+
+    # Bare lists
+    c.add("t::transport", quote(technologies))
+    c.add("c::transport", quote(spec["add"].set["commodity"]))
+
+    # Mappings for use with aggregate, select, etc.
+    c.add("t::transport agg", quote(dict(t=t_groups)))
+    # Sum across modes, including "non-ldv"
+    c.add("t::transport modes 0", quote(dict(t=list(t_groups.keys()))))
+    # Sum across modes, excluding "non-ldv"
+    c.add(
+        "t::transport modes 1",
+        quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
+    )
+    for id, techs in t_groups.items():
+        c.add(f"t::transport {id}", quote(dict(t=techs)))
+
 
 def prepare_reporter(
     rep: Computer,
@@ -190,7 +212,8 @@ def prepare_reporter(
         # Configure the reporter; keys are stored
         rep.configure(transport=context["transport config"])
 
-    register_modules(rep)
+    require_compat(rep)
+    update_config(rep, context)
 
     # Always ensure structure is available
     add_structure(rep, context, info or ScenarioInfo())
@@ -198,18 +221,6 @@ def prepare_reporter(
     if exogenous_data:
         assert info, "`info` arg required for prepare_reporter(…, exogenous_data=True)"
         add_exogenous_data(rep, context, info)
-
-    # Transfer transport config to the Reporter
-    rep.graph["config"].update(
-        {
-            "data source": {
-                k: context["transport config"]["data source"][k]
-                for k in ("demand dummy", "gdp", "population")
-            },
-            "output_path": context.get("output_path", Path.cwd()),
-            "regions": context.regions,
-        }
-    )
 
     # Keys to refer to quantities
     # Existing keys, from Reporter.from_scenario() or add_structure() (above)

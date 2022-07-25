@@ -10,7 +10,7 @@ import pandas as pd
 import xarray as xr
 from iam_units import registry  # noqa: F401
 from message_ix import Scenario
-from message_ix_models import Context
+from message_ix_models import Context, Spec
 from message_ix_models.model import bare
 from message_ix_models.model.structure import get_codes, process_units_anno
 from message_ix_models.util import (
@@ -311,3 +311,26 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
         if candidate.exists():
             return candidate
     raise FileNotFoundError(candidate)
+
+
+def get_techs(context) -> Tuple[Spec, List, Dict]:
+    """Return info about transport technologies, given `context`."""
+    from . import build
+
+    # Get a specification that describes this setting
+    spec = build.get_spec(context)
+
+    # Set of all transport technologies
+    technologies = spec["add"].set["technology"].copy()
+
+    # Subsets of transport technologies for aggregation and filtering
+    t_groups: Dict[str, List[str]] = {"non-ldv": []}
+    for tech in filter(  # Only include those technologies with children
+        lambda t: len(t.child), context["transport set"]["technology"]["add"]
+    ):
+        t_groups[tech.id] = list(c.id for c in tech.child)
+        # Store non-LDV technologies
+        if tech.id != "LDV":
+            t_groups["non-ldv"].extend(t_groups[tech.id])
+
+    return spec, technologies, t_groups

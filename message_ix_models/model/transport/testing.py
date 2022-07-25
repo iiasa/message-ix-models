@@ -8,6 +8,7 @@ from message_ix_models import ScenarioInfo, testing
 
 from message_data import reporting
 from message_data.model import transport
+from message_data.model.transport.utils import get_techs
 from message_data.reporting.sim import add_simulated_solution
 from message_data.tools import silence_log
 
@@ -64,7 +65,7 @@ def simulated_solution(request, context) -> Reporter:
     The contents allow for fast testing of reporting code, without solving an actual
     :class:`.Scenario`.
     """
-    from message_data.model.transport.report import callback, transport_technologies
+    from message_data.model.transport.report import callback
 
     # Build the base model
     scenario = built_transport(request, context, solved=False)
@@ -72,7 +73,7 @@ def simulated_solution(request, context) -> Reporter:
     # Info about the built model
     info = ScenarioInfo(scenario)
 
-    spec, technologies, t_info = transport_technologies(context)
+    spec, technologies, t_info = get_techs(context)
 
     # Create a reporter
     rep = Reporter.from_scenario(scenario)
