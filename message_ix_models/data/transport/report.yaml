@@ -7,64 +7,64 @@
 general:
 # Configuration for :func:`check`. Adds a single key, 'transport check', that
 # depends on others and returns a :class:`pandas.Series` of :class:`bool`.
-- comp: transport_check
-  key: transport check
+- key: transport check
+  comp: transport_check
   inputs: [ scenario, ACT:nl-t-yv-va-m-h ]
 
 # Exogenous data
-- comp: distance_ldv
-  key: distance:nl-driver_type:ldv
+- key: distance:nl-driver_type:ldv
+  comp: distance_ldv
   inputs: [ config ]
-
-- comp: distance_nonldv
-  key: distance:nl:non-ldv
+- key: distance:nl:non-ldv
+  comp: distance_nonldv
   inputs: [ config ]
 
 # Demand per capita
-- comp: ratio
-  key: demand:n-c-y:capita
+- key: demand:*:capita
+  comp: ratio
   inputs: [ demand:n-c-y, population:n-y ]
 
 # Vehicle stocks
-- comp: apply_units
+- key: CAP:*:non-ldv+units
+  comp: apply_units
   inputs: [ CAP:nl-t-ya:non-ldv ]
   # FIXME should not need the extra [vehicle] in the numerator
   args: {units: "v**2 Tm / a"}
-  key: CAP:nl-t-ya:non-ldv+units
 
-- comp: ratio
-  key: stock:nl-t-ya:non-ldv
+- key: stock:*:non-ldv
+  comp: ratio
   inputs: [ CAP:nl-t-ya:non-ldv+units, distance:nl:non-ldv ]
   sums: true
 
-- comp: apply_units
+- key: CAP:*:ldv+units
+  comp: apply_units
   inputs: [ CAP:nl-t-ya:ldv ]
   args: {units: "v ** 2 Tm / a"}
-  key: CAP:nl-t-ya:ldv+units
 
-- comp: ratio
-  key: stock:nl-t-ya-driver_type:ldv
+
+- key: stock:*:ldv
+  comp: ratio
   inputs: [ CAP:nl-t-ya:ldv+units, distance:nl-driver_type:ldv ]
   sums: true
 
 # NB these units are correct for final energy only
 # FIXME should not need to specify the full set of dims for the output key
-- comp: apply_units
+- key: in:*:transport+units
+  comp: apply_units
   inputs: [ in::transport ]
   args: {units: "GWa / a"}
-  key: in:nl-t-yv-ya-m-no-c-l-h-ho:transport+units
   sums: true
 
-- comp: apply_units
+- key: in:*:ldv+units
+  comp: apply_units
   inputs: [ in::ldv ]
   args: {units: "GWa / a"}
-  key: in:nl-t-ya-c:ldv+units
   sums: true
 
-- comp: apply_units
+- key: out:*:transport+units
+  comp: apply_units
   inputs: [ out::transport ]
   args: {units: "Tm / a"}
-  key: out:nl-t-yv-ya-m-nd-c-l-h-hd:transport+units
   sums: true
 
 # Concatenate IAMC-format tables
@@ -183,15 +183,8 @@ iamc:
 - variable: _transport 3
   # Auto-sum over dimensions yv, m, h
   base: emi:nl-t-ya-e-gwp metric-e equivalent:gwpe+agg
-  var:
-  - "Emissions|CO2|Energy|Demand|Transportation|"
-  - t
   # Same as in data/report/global.yaml
-  - e
-  - e equivalent
-  - gwp metric
-
-# TODO emissions using legacy relation approach
+  var: [ "Emissions|CO2|Energy|Demand|Transportation", t, e, e equivalent, gwp metric ]
 
 # For debugging
 - variable: _transport debug ACT
