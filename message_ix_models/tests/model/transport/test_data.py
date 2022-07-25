@@ -270,6 +270,26 @@ def test_get_afr_data(test_context, region, length):
     ]
 
 
+def test_get_freight_data(test_context, regions="R12", years="B"):
+    ctx = test_context
+    ctx.update(regions=regions)
+
+    configure_build(ctx, regions, years)
+
+    info = ctx["transport build info"]
+
+    # Code runs
+    data = get_freight_data(info.N[1:], info.Y, ctx)
+
+    # Data are provided for these parameters
+    assert {
+        "capacity_factor",
+        "input",
+        "output",
+        "technical_lifetime",
+    } == set(data.keys())
+
+
 @pytest.mark.parametrize("regions", ["R11", "R12"])
 def test_get_non_ldv_data(test_context, regions):
     """:func:`.get_non_ldv_data` returns the expected data."""
