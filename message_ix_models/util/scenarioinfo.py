@@ -6,7 +6,10 @@ from itertools import product
 from typing import Dict, List
 
 import pandas as pd
+import pint
 import sdmx.model
+
+from .sdmx import eval_anno
 
 log = logging.getLogger(__name__)
 
@@ -24,8 +27,10 @@ class ScenarioInfo:
 
     .. autosummary::
        set
+       io_units
        is_message_macro
        N
+       units_for
        Y
        y0
        yv_ya
@@ -123,6 +128,57 @@ class ScenarioInfo:
         return (
             f"<ScenarioInfo: {sum(len(v) for v in self.set.values())} code(s) in "
             f"{len(self.set)} set(s)>"
+        )
+
+    def units_for(self, set_name: str, id: str) -> pint.Unit:
+        """Return the units associated with code `id` in MESSAGE set `set_name`.
+
+        :mod:`ixmp` (or the sole :class:`.JDBCBackend`, as of v3.5.0) does not handle
+        unit information for variables and equations (unlike parameter values), such as
+        MESSAGE decision variables ``ACT``, ``CAP``, etc. In :mod:`message_ix_models`
+        and :mod:`message_data`, the following conventions are (generally) followed:
+
+        - The units of ``ACT`` and others are consistent for each ``technology``.
+        - The units of ``COMMODITY_BALANCE``, ``STOCK``, ``commodity_stock``, etc. are
+          consistent for each ``commodity``.
+
+        Thus, codes for elements of these sets (e.g. :ref:`commodity-yaml`) can be used
+        to carry the standard units for the corresponding quantities. :func:`units_for`
+        retrieves these units, for use in model-building and reporting.
+
+        .. todo:: Expand this discussion and transfer to the :mod:`message_ix` docs.
+
+        See also
+        --------
+        io_units
+        """
+        try:
+            idx = self.set[set_name].index(id)
+        except ValueError:
+            print(self.set[set_name])
+            raise
+
+        return eval_anno(self.set[set_name][idx], "units")
+
+    def io_units(self, technology: str, commodity: str, level: str = None) -> pint.Unit:
+        """Return units for the MESSAGE ``input`` or ``output`` parameter.
+
+        These are implicitly determined as the ratio of:
+
+        - The units for the origin (for ``input``) or destination `commodity`, per
+          :meth:`.units_for`.
+        - The units of activity for the `technology`.
+
+        Parameters
+        ----------
+        level : str
+            Placeholder for future functionality, i.e. to use different units per
+            (commodity, level). Currently ignored. If given, a debug message is logged.
+        """
+        if level is not None:
+            log.debug(f"{level = } ignored")
+        return self.units_for("commodity", commodity) / self.units_for(
+            "technology", technology
         )
 
     def year_from_codes(self, codes: List[sdmx.model.Code]):

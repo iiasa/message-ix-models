@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+from ixmp.testing import assert_logs
 from message_ix import make_df
 from message_ix.testing import make_dantzig
 
@@ -53,7 +54,7 @@ def test_apply_spec1(caplog, scenario, spec):
     apply_spec(scenario, spec, data=add_data_func, dry_run=True)
 
     # Messages are logged about additions
-    assert "1 rows in 'demand'" in caplog.messages, caplog.messages
+    assert_logs(caplog, "1 rows in 'demand'")
     # …but no change because `dry_run`
     assert not any(301.0 == scenario.par("demand")["value"])
 
@@ -62,25 +63,26 @@ def test_apply_spec1(caplog, scenario, spec):
     apply_spec(scenario, spec, data=add_data_func)
 
     # Messages are logged about additions
-    assert "1 rows in 'demand'" in caplog.messages, caplog.messages
+    assert_logs(caplog, "1 rows in 'demand'")
     # Value was actually changed
     assert 1 == sum(301.0 == scenario.par("demand")["value"])
 
 
 def test_apply_spec2(caplog, scenario, spec):
     """Remove an element, with fast=True."""
-    spec["remove"].set["node"] = ["new-york"]
+    spec["remove"].set["node"] = ["new-york", "not-a-node"]
 
     apply_spec(scenario, spec, fast=True)
 
     # Messages are logged about removals
-    assert all(
-        msg in caplog.messages
-        for msg in (
-            "  Skip removing 'new-york' and associated parameter elements (fast=True)",
-            "0 parameter elements removed",
-        )
-    ), caplog.messages
+    assert_logs(
+        caplog,
+        (
+            "Remove 'new-york' from set 'node'",
+            "Remove 'not-a-node' from set 'node'",
+            "  …not found",
+        ),
+    )
 
 
 def test_apply_spec3(caplog, scenario, spec):
@@ -90,12 +92,12 @@ def test_apply_spec3(caplog, scenario, spec):
     apply_spec(scenario, spec)
 
     # Messages are logged about removals
-    assert all(
-        msg in caplog.messages
-        for msg in (
-            "  Remove 'new-york' and associated parameter elements",
-            "Remove 1 rows in 'demand'",
-            "Remove 2 rows in 'output'",
-            "3 parameter elements removed",
-        )
-    ), caplog.messages
+    assert_logs(
+        caplog,
+        (
+            "Remove data with node='new-york'",
+            "  1 rows in 'demand'",
+            "  2 rows in 'output'",
+            "  3 rows total",
+        ),
+    )

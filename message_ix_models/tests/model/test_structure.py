@@ -4,13 +4,19 @@ from pathlib import Path
 import pytest
 from iam_units import registry
 
-from message_ix_models.model.structure import codelists, get_codes
+from message_ix_models.model.structure import (
+    codelists,
+    get_codes,
+    process_commodity_codes,
+    process_units_anno,
+)
+from message_ix_models.util import as_codes, eval_anno
 
 
 @pytest.mark.parametrize(
     "kind, exp",
     [
-        ("node", ["ISR", "R11", "R12", "R14", "R32", "RCP"]),
+        ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP"]),
         ("year", ["A", "B"]),
     ],
 )
@@ -65,11 +71,16 @@ class TestGetCodes:
 
         # Units for one commodity can be retrieved and parsed
         coal = data[data.index("coal")]
-        registry(str(coal.get_annotation(id="unit").text))
+        assert isinstance(eval_anno(coal, "units"), registry.Unit)
 
         # Descriptions are parsed without new lines
         crudeoil = data[data.index("crudeoil")]
         assert "\n" not in str(crudeoil.description)
+
+        # Processing a second time does not double-wrap the unit expressions
+        process_commodity_codes(data)
+        coal = data[data.index("coal")]
+        assert isinstance(eval_anno(coal, "units"), registry.Unit)
 
     def test_levels(self):
         data = get_codes("level")
@@ -160,3 +171,13 @@ def test_cli_techs(session_context, mix_models_cli):
         "CF4_TCE,CF4_TCE,Tetrafluoromethane (CF4) Total Carbon Emissions,"
         "primary,False,dummy,\"['dummy', 'primary']\",\n"
     )
+
+
+def test_process_units_anno():
+    # Prepare 2 codes: the parent has a units annotation, the child has none
+    codes = as_codes({"foo": {"units": "kg"}, "bar": {"parent": "foo"}})
+
+    process_units_anno("", codes[0])
+
+    # Parents' units are propagated to the child
+    assert registry.Unit("kg") == eval_anno(codes[1], "units")

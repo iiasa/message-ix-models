@@ -121,7 +121,7 @@ except ImportError:
 else:  # pragma: no cover  (needs message_data)
     # Also add message_data submodules
     submodules.extend(
-        f"message_data.{name}" for name in message_data.cli.modules_with_cli
+        f"message_data.{name}" for name in message_data.cli.MODULES_WITH_CLI
     )
 
 for name in submodules:

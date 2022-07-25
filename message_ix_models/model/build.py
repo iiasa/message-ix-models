@@ -65,6 +65,7 @@ def apply_spec(
     .ScenarioInfo
     """
     dry_run = options.get("dry_run", False)
+    fast = options.get("fast", False)
 
     log.setLevel(logging.ERROR if options.get("quiet", False) else logging.DEBUG)
 
@@ -103,34 +104,27 @@ def apply_spec(
 
         # Raise an exception about the first missing element
         missing = list(filter(lambda e: e not in base, require))
-        if len(missing):
-            log.error(f"  {len(missing)} elements not found: {repr(missing)}")
+        if missing:
+            log.error(f"  {len(missing)} elements not found: {missing!r}")
             raise ValueError
 
         # Remove elements and associated parameter values
-        remove = spec["remove"].set[set_name]
-        for element in remove:
-            msg = f"{repr(element)} and associated parameter elements"
-
-            if options.get("fast", False):
-                log.info(f"  Skip removing {msg} (fast=True)")
-                continue
-
-            log.info(f"  Remove {msg}")
-            strip_par_data(scenario, set_name, element, dry_run=dry_run, dump=dump)
+        for element in spec["remove"].set[set_name]:
+            strip_par_data(
+                scenario,
+                set_name,
+                element,
+                dry_run=dry_run,
+                dump=None if fast else dump,
+            )
 
         # Add elements
         add = [] if dry_run else spec["add"].set[set_name]
         for element in add:
-            scenario.add_set(
-                set_name,
-                element.id if isinstance(element, Code) else element,
-            )
+            name = element.id if isinstance(element, Code) else element
+            scenario.add_set(set_name, name)
             if set_name == "node":
-                scenario.platform.add_region(
-                    element.id if isinstance(element, Code) else element,
-                    "region",
-                )
+                scenario.platform.add_region(name, "region")
 
         if len(add):
             log.info(f"  Add {len(add)} element(s)")
@@ -138,8 +132,9 @@ def apply_spec(
 
         log.info("  ---")
 
-    N_removed = sum(len(d) for d in dump.values())
-    log.info(f"{N_removed} parameter elements removed")
+    if not fast:
+        N_removed = sum(len(d) for d in dump.values())
+        log.info(f"{N_removed} total rows removed")
 
     # Add units to the Platform before adding data
     for unit in spec["add"].set["unit"]:

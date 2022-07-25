@@ -1,12 +1,13 @@
 import logging
-from collections import defaultdict
+from collections import ChainMap, defaultdict
 from copy import copy
-from typing import Dict, List, Mapping, Optional, Sequence, Union
+from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Union
 
 import message_ix
 import pandas as pd
+import pint
 from message_ix.models import MESSAGE_ITEMS
-from sdmx.model import AnnotableArtefact, Annotation, Code
+from sdmx.model import Annotation, Code
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
@@ -21,6 +22,7 @@ from .common import (
 )
 from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes
 from .scenarioinfo import ScenarioInfo
+from .sdmx import eval_anno
 
 __all__ = [
     "MESSAGE_DATA_PATH",
@@ -32,10 +34,12 @@ __all__ = [
     "cached",
     "check_support",
     "convert_units",
+    "eval_anno",
     "identify_nodes",
     "load_package_data",
     "load_private_data",
     "local_data_path",
+    "make_io",
     "maybe_query",
     "package_data_path",
     "private_data_path",
@@ -64,6 +68,8 @@ def add_par_data(
     --------
     strip_par_data
     """
+    # TODO optionally add units automatically
+
     total = 0
 
     for par_name, values in data.items():
@@ -76,7 +82,11 @@ def add_par_data(
         if dry_run:
             continue
 
-        scenario.add_par(par_name, values)
+        try:
+            scenario.add_par(par_name, values)
+        except Exception:  # pragma: no cover
+            print(values.head())
+            raise
 
     return total
 
@@ -292,27 +302,6 @@ def copy_column(column_name):
     return lambda df: df[column_name]
 
 
-def eval_anno(obj: AnnotableArtefact, id: str):
-    """Retrieve the annotation `id` from `obj`, run :func:`eval` on its contents.
-
-    This can be used for unpacking Python values (e.g. :class:`dict`) stored as an
-    annotation on a :class:`~sdmx.model.Code`.
-
-    Returns :obj:`None` if no attribute exists with the given `id`.
-    """
-    try:
-        value = str(obj.get_annotation(id=id).text)
-    except KeyError:
-        # No such attribute
-        return None
-
-    try:
-        return eval(value)
-    except Exception:
-        # Something that can't be eval()'d, e.g. a string
-        return value
-
-
 def ffill(
     df: pd.DataFrame, dim: str, values: Sequence[Union[str, Code]], expr: str = None
 ) -> pd.DataFrame:
@@ -416,32 +405,51 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
     )
 
 
-def make_matched_dfs(base, **par_value):
-    """Return data frames derived from *base* for multiple parameters.
+def make_matched_dfs(
+    base: MutableMapping, **par_value: Union[float, pint.Quantity]
+) -> Dict[str, pd.DataFrame]:
+    """Return data frames derived from `base` for multiple parameters.
 
-    *par_values* maps from parameter names (e.g. 'fix_cost') to values.
-    make_matched_dfs returns a :class:`dict` of :class:`pandas.DataFrame`, one for each
-    parameter in *par_value*. The contents of *base* are used to populate the columns
-    of each data frame, and the values of *par_value* overwrite the 'value' column.
-    Duplicates—which occur when the target parameter has fewer dimensions than
-    *base*—are dropped.
+    Creates one data frame per keyword argument.
+
+    Parameters
+    ----------
+    base : pd.DataFrame, dict, etc.
+        Used to populate other columns of each data frame.
+        Duplicates—which occur when the target parameter has fewer dimensions than
+        `base`—are dropped.
+    par_values :
+        Argument names (e.g. ‘fix_cost’) are passed to :func:`.make_df`.
+        If the value is :class:`float`, it overwrites the "value" column; if
+        :class:`pint.Quantity`, its magnitude overwrites "value" and its units the
+        "units" column, as a formatted string.
+
+    Returns
+    -------
+    :class:`dict` of :class:`pandas.DataFrame`
+        one for each parameter in `par_values`.
 
     Examples
     --------
-    >>> input = make_df('input', ...)
+    >>> input = make_df("input", ...)
     >>> cf_tl = make_matched_dfs(
     >>>     input,
     >>>     capacity_factor=1,
-    >>>     technical_lifetime=1,
+    >>>     technical_lifetime=pint.Quantity(8, "year"),
     >>> )
     """
-    data = {col: v for col, v in base.iteritems() if col != "value"}
-    return {
-        par: message_ix.make_df(par, **data, value=value)
-        .drop_duplicates()
-        .reset_index(drop=True)
-        for par, value in par_value.items()
-    }
+    data = ChainMap(dict(), base)
+    result = {}
+    for par, value in par_value.items():
+        data.maps[0] = (
+            dict(value=value.magnitude, unit=f"{value.units:~}")
+            if isinstance(value, pint.Quantity)
+            else dict(value=value)
+        )
+        result[par] = (
+            message_ix.make_df(par, **data).drop_duplicates().reset_index(drop=True)
+        )
+    return result
 
 
 def make_source_tech(
@@ -523,9 +531,21 @@ def same_node(df):
 
 
 def strip_par_data(
-    scenario, set_name, value, dry_run=False, dump: Dict[str, pd.DataFrame] = None
+    scenario: message_ix.Scenario,
+    set_name: str,
+    element: str,
+    dry_run: bool = False,
+    dump: Optional[Dict[str, pd.DataFrame]] = None,
 ):
-    """Remove data from parameters of *scenario* where *value* in *set_name*.
+    """Remove `element` from `set_name` in scenario, optionally dumping to `dump`.
+
+    Parameters
+    ----------
+    dry_run : bool, optional
+        If :data:`True`, only show what would be done.
+    dump : dict, optional
+        If provided, stripped data are stored in this dictionary. Otherwise, they are
+        discarded.
 
     Returns
     -------
@@ -536,15 +556,23 @@ def strip_par_data(
     add_par_data
     """
     par_list = scenario.par_list()
-    no_data = []
-    total = 0
+    no_data = set()  # Names of parameters with no data being stripped
+    total = 0  # Total observations stripped
 
-    # Iterate over parameters with ≥1 dimensions indexed by `set_name`
-    for par_name in iter_parameters(set_name):
+    if dump is None:
+        pars = []  # Don't iterate over parameters unless dumping
+    else:
+        log.info(
+            f"Remove data with {set_name}={element!r}"
+            + (" (DRY RUN)" if dry_run else "")
+        )
+        # Iterate over parameters with ≥1 dimensions indexed by `set_name`
+        pars = iter_parameters(set_name)
+
+    for par_name in pars:
         if par_name not in par_list:  # pragma: no cover
             log.warning(
-                f"MESSAGEix parameter {repr(par_name)} missing in Scenario "
-                f"{scenario.model}/{scenario.scenario}"
+                f"  MESSAGEix parameter {par_name!r} missing in Scenario {scenario.url}"
             )
             continue
 
@@ -553,39 +581,51 @@ def strip_par_data(
             lambda item: item[1] == set_name,
             zip(scenario.idx_names(par_name), scenario.idx_sets(par_name)),
         ):
-            # Check for contents of par_name that include *value*
-            par_data = scenario.par(par_name, filters={dim: value})
+            # Check for contents of par_name that include `element`
+            par_data = scenario.par(par_name, filters={dim: element})
             N = len(par_data)
+            total += N
 
             if N == 0:
                 # No data; no need to do anything further
-                no_data.append(par_name)
+                no_data.add(par_name)
                 continue
             elif dump is not None:
                 dump[par_name] = pd.concat(
                     [dump.get(par_name, pd.DataFrame()), par_data]
                 )
 
-            log.info(f"Remove {N} rows in {repr(par_name)}")
+            log.info(f"  {N} rows in {par_name!r}")
 
             # Show some debug info
-            for col in "commodity level technology".split():
-                if col == set_name or col not in par_data.columns:
-                    continue
-
+            for col in filter(
+                lambda c: c != set_name and c in par_data.columns,
+                ("commodity", "level", "technology"),
+            ):
                 log.info(f"  with {col}={sorted(par_data[col].unique())}")
 
-            if not dry_run:
-                # Actually remove the data
-                scenario.remove_par(par_name, key=par_data)
+            if dry_run:
+                continue
 
-                # NB would prefer to do the following, but raises an exception:
-                # scenario.remove_par(par_name, key={set_name: [value]})
+            # Actually remove the data
+            scenario.remove_par(par_name, key=par_data)
 
-            total += N
+            # NB would prefer to do the following, but raises an exception:
+            # scenario.remove_par(par_name, key={set_name: [value]})
 
-    level = logging.INFO if total > 0 else logging.DEBUG
-    log.log(level, f"{total} rows removed.")
-    log.debug(f"No data removed from {len(no_data)} other parameters")
+    if not dry_run and dump is not None:
+        log.info(f"  {total} rows total")
+    if no_data:
+        log.debug(f"No data removed from {len(no_data)} other parameters")
+
+    if not dry_run:
+        log.info(f"Remove {element!r} from set {set_name!r}")
+        try:
+            scenario.remove_set(set_name, element)
+        except Exception as e:
+            if "does not have an element" in str(e):
+                log.info("  …not found")
+            else:  # pragma: no cover
+                raise
 
     return total

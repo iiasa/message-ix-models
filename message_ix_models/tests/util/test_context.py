@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 import ixmp
 import pytest
+from message_ix import Scenario
 
 from message_ix_models import Context
 
@@ -115,6 +116,17 @@ class TestContext:
         with pytest.raises(ValueError):
             test_context.get_scenario()
 
+    def test_set_scenario(self, test_context):
+        mp = test_context.get_platform()
+        s = Scenario(mp, "foo", "bar", version="new")
+
+        # set_scenario() updates Context.scenario_info
+        test_context.scenario_info = dict()
+        test_context.set_scenario(s)
+        assert (
+            dict(model="foo", scenario="bar", version=0) == test_context.scenario_info
+        )
+
     def test_handle_cli_args(self):
         p = "platform name"
         m = "model name"
@@ -166,7 +178,7 @@ class TestContext:
 
     def test_repr(self):
         c = Context()
-        assert re.fullmatch("<Context object at [^ ]+ with 3 keys>", repr(c))
+        assert re.fullmatch("<Context object at [^ ]+ with 4 keys>", repr(c))
 
     def test_use_defaults(self, caplog):
         caplog.set_level(logging.INFO)
