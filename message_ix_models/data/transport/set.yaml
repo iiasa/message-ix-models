@@ -78,9 +78,11 @@ commodity:
     transport freight:
       name: Freight transport
       demand: true
+      units: Gt km
 
     transport freight vehicle:
       name: Freight transport vehicle distance travelled
+      units: Gv km
 
     transport pax:
       name: Passenger transport
@@ -103,10 +105,13 @@ commodity:
       name: Passenger transport by rail
       units: Gp km
 
-    transport pax vehicle: Passenger transport vehicle distance travelled
+    transport pax vehicle:
+      name: Passenger transport vehicle distance travelled
+      units: Gv km
 
     disutility:
       name: Generalized disutility
+      units: ""
 
     # These two keys are further processed by .model.transport.build to generate
     # a longer list of codes
@@ -145,7 +150,6 @@ unit:
     # TODO move this one upstream
     "": dimensionless
 
-    Gv km: 10⁹ vehicle kilometre
     # The following are equivalent, but not recognized as such by JDBCBackend
     GWa / Gv / km: gigawatt-annum per billion vehicle kilometres
     GW * a / Gv / km: gigawatt-annum per billion vehicle kilometres
@@ -155,7 +159,9 @@ unit:
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
     Gp km / a: 10⁹ passenger-kilometre per year
     Gp / Gv: passengers per vehicle
+    Gt km: 10⁹ tonne-kilometre
     Gt * km: 10⁹ tonne-kilometre
+    Gv km: 10⁹ vehicle kilometre
     pkm / GJ: passenger-kilometre per gigajoule
     MUSD / a / v: 10⁶ USD per vehicle-year
     MUSD / v: 10⁶ USD per vehicle
