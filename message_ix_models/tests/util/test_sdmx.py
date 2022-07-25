@@ -1,4 +1,5 @@
 import logging
+import re
 
 from sdmx.model import Annotation, Code
 
@@ -15,9 +16,9 @@ def test_eval_anno(caplog):
     with caplog.at_level(logging.DEBUG, logger="message_ix_models"):
         assert "bar baz" == eval_anno(c, "foo")
 
-    assert [
-        "Could not eval('bar baz'): invalid syntax (<string>, line 1)"
-    ] == caplog.messages
+    assert re.fullmatch(
+        r"Could not eval\('bar baz'\): .* \(<string>, line 1\)", caplog.messages[0]
+    )
 
     c.annotations.append(Annotation(id="qux", text="3 + 4"))
 
