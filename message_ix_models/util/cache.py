@@ -24,7 +24,8 @@ from .scenarioinfo import ScenarioInfo
 log = logging.getLogger(__name__)
 
 
-#: Set to :obj:`True` to force reload.
+#: Controls whether cached data is returned for functions decorated with
+#: :func:`.cached`. Set to :obj:`True` to force reload.
 SKIP_CACHE = False
 
 # Paths already logged, to decrease verbosity
@@ -54,7 +55,7 @@ def cached(func: Callable) -> Callable:
     :meth:`.Context.get_cache_path`. On subsequent calls, if the cache exists, it is
     used instead of calling the (possibly slow) `func`.
 
-    When :data:`SKIP_CACHE` is true, `func` is always called.
+    When :data:`.SKIP_CACHE` is true, `func` is always called.
 
     See also
     --------
