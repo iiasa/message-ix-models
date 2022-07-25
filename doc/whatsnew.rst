@@ -4,6 +4,16 @@ What's new
 Next release
 ============
 
+- Add :func:`get_advance_data`, and related tools for data from the ADVANCE project, including the :ref:`node codelist <ADVANCE-nodes>` for the data (:pull:`76`).
+- Add unit annotations to :ref:`commodity-yaml` (:pull:`76`).
+- New utility methods :meth:`.ScenarioInfo.io_units` to derive units for ``input`` and ``output`` parameters from :meth:`.units_for` commodity stocks and technology activities (:pull:`76`).
+- Transfer :func:`.add_tax_emission` from :mod:`message_data`, improve, and add tests (:pull:`76`).
+- Unit annotations on commodity and technology codes are copied to child codes using :func:`.process_units_anno` (:pull:`76`).
+- :func:`.make_matched_dfs` accepts :class:`pint.Quantity` to set both magnitude and units in generated data (:pull:`76`).
+- :func:`.strip_par_data` also removes the set element for which data is being stripped (:pull:`76`).
+- The common CLI options :program:`--verbose` and :program:`--dry-run` are stored on :class:`.Context` automatically (:pull:`76`).
+- New utility method :meth:`.Context.set_scenario` (:pull:`76`).
+- :data:`iam_units.registry` is the default unit registry even when :mod:`message_data` is not installed (:pull:`76`).
 - Expand :func:`.broadcast` to allow :class:`~.pandas.DataFrame` with multiple dimensions as input (:pull:`74`).
 
 2022.5.6
@@ -12,7 +22,7 @@ Next release
 - Bump minimum required version of :mod:`message_ix` to v3.4.0 from v3.2.0 (:pull:`71`).
 - Add a documentation page on :doc:`distrib` (:pull:`59`).
 - Add :func:`.testing.not_ci` for marking tests not to be run on continuous integration services; improve :func:`~.testing.session_context` (:pull:`62`).
-- :fun:`.apply_spec` also adds elements of the "node" set using :meth:`.ixmp.Platform.add_region` (:pull:`62`).
+- :func:`.apply_spec` also adds elements of the "node" set using :meth:`.ixmp.Platform.add_region` (:pull:`62`).
 - Add new logo the documentation (:pull:`68`).
 - Add :class:`.Workflow`; see :doc:`api/workflow` (:pull:`60`).
 
