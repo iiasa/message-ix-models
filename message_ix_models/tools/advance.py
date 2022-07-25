@@ -75,7 +75,7 @@ def advance_data(variable: str, query: Optional[str] = None) -> Quantity:
         .xs(variable, level="variable")
         .reset_index("unit")
     )
-    if len(data.unit.unique()) > 1:
+    if len(data.unit.unique()) > 1:  # pragma: no cover
         log.info(f"Non-unique units for {variable!r}; discarded")
         units = ""
     else:
@@ -85,7 +85,7 @@ def advance_data(variable: str, query: Optional[str] = None) -> Quantity:
 
     try:
         result.units = units
-    except pint.errors.PintError as e:
+    except pint.errors.PintError as e:  # pragma: no cover
         log.info(f'"{e}" when parsing {units!r}; discarded')
 
     return result
