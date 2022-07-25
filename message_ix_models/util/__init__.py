@@ -1,10 +1,11 @@
 import logging
-from collections import defaultdict
+from collections import ChainMap, defaultdict
 from copy import copy
-from typing import Dict, List, Mapping, Optional, Sequence, Union
+from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Union
 
 import message_ix
 import pandas as pd
+import pint
 from message_ix.models import MESSAGE_ITEMS
 from sdmx.model import Annotation, Code
 
@@ -404,32 +405,51 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
     )
 
 
-def make_matched_dfs(base, **par_value):
-    """Return data frames derived from *base* for multiple parameters.
+def make_matched_dfs(
+    base: MutableMapping, **par_value: Union[float, pint.Quantity]
+) -> Dict[str, pd.DataFrame]:
+    """Return data frames derived from `base` for multiple parameters.
 
-    *par_values* maps from parameter names (e.g. 'fix_cost') to values.
-    make_matched_dfs returns a :class:`dict` of :class:`pandas.DataFrame`, one for each
-    parameter in *par_value*. The contents of *base* are used to populate the columns
-    of each data frame, and the values of *par_value* overwrite the 'value' column.
-    Duplicates—which occur when the target parameter has fewer dimensions than
-    *base*—are dropped.
+    Creates one data frame per keyword argument.
+
+    Parameters
+    ----------
+    base : pd.DataFrame, dict, etc.
+        Used to populate other columns of each data frame.
+        Duplicates—which occur when the target parameter has fewer dimensions than
+        `base`—are dropped.
+    par_values :
+        Argument names (e.g. ‘fix_cost’) are passed to :func:`.make_df`.
+        If the value is :class:`float`, it overwrites the "value" column; if
+        :class:`pint.Quantity`, its magnitude overwrites "value" and its units the
+        "units" column, as a formatted string.
+
+    Returns
+    -------
+    :class:`dict` of :class:`pandas.DataFrame`
+        one for each parameter in `par_values`.
 
     Examples
     --------
-    >>> input = make_df('input', ...)
+    >>> input = make_df("input", ...)
     >>> cf_tl = make_matched_dfs(
     >>>     input,
     >>>     capacity_factor=1,
-    >>>     technical_lifetime=1,
+    >>>     technical_lifetime=pint.Quantity(8, "year"),
     >>> )
     """
-    data = {col: v for col, v in base.iteritems() if col != "value"}
-    return {
-        par: message_ix.make_df(par, **data, value=value)
-        .drop_duplicates()
-        .reset_index(drop=True)
-        for par, value in par_value.items()
-    }
+    data = ChainMap(dict(), base)
+    result = {}
+    for par, value in par_value.items():
+        data.maps[0] = (
+            dict(value=value.magnitude, unit=f"{value.units:~}")
+            if isinstance(value, pint.Quantity)
+            else dict(value=value)
+        )
+        result[par] = (
+            message_ix.make_df(par, **data).drop_duplicates().reset_index(drop=True)
+        )
+    return result
 
 
 def make_source_tech(
