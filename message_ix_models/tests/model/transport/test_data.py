@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pint
 import pytest
-from genno import Quantity, computations
+from genno import Quantity
 from iam_units import registry
 from message_ix import make_df
 from message_ix_models import testing
@@ -12,10 +12,11 @@ from message_ix_models.model import bare
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from message_data.model.transport import build, configure
+from message_data.model.transport import build, computations, configure
 from message_data.model.transport import data as data_module
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import get_emissions_data
+from message_data.model.transport.data.freight import get_freight_data
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.ldv import get_ldv_data
 from message_data.model.transport.data.non_ldv import get_non_ldv_data
@@ -47,9 +48,11 @@ def assert_units(
 @pytest.mark.parametrize("parts", data_module.DATA_FILES)
 def test_data_files(test_context, parts):
     """Input data can be read."""
+    from genno.computations import load_file
+
     test_context.regions = "R11"
 
-    result = computations.load_file(path_fallback(test_context, *parts))
+    result = load_file(path_fallback(test_context, *parts))
     assert isinstance(result, Quantity)
 
 
