@@ -12,7 +12,7 @@ from iam_units import registry  # noqa: F401
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model import bare
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import get_codes, process_units_anno
 from message_ix_models.util import (
     as_codes,
     eval_anno,
@@ -227,17 +227,8 @@ def generate_set_elements(context, name, match=None) -> None:
     codes = []  # Accumulate codes
     deferred = []
     for code in as_codes(context["transport set"][name].get("add", [])):
-        # Convert a "units" annotation to a code snippet that will return a pint.Unit
-        # via eval_anno()
-        try:
-            units_anno = code.get_annotation(id="units")
-        except KeyError:
-            pass
-        else:
-            units_anno.text = f'registry.Unit("{units_anno.text}")'
-            # Also annotate child codes
-            for c in code.child:
-                c.annotations.append(units_anno.copy())
+        if name in {"commodity", "technology"}:
+            process_units_anno(name, code, quiet=True)
 
         if eval_anno(code, "_generate"):
             # Requires a call to generate_product(); do these last
