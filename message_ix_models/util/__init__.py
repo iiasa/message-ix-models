@@ -82,6 +82,10 @@ def add_par_data(
         if dry_run:
             continue
 
+        # Work around iiasa/ixmp#425
+        if (values["unit"] == "").all():
+            values["unit"] = "-"
+
         try:
             scenario.add_par(par_name, values)
         except Exception:  # pragma: no cover
