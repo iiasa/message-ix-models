@@ -164,7 +164,7 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
     return data
 
 
-@provides_data("info", "n::ex world", "y::model")
+# @provides_data("info", "n::ex world", "y::model")
 def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
     """Miscellaneous bounds for calibration/vetting."""
 
