@@ -83,8 +83,7 @@ def add_par_data(
             continue
 
         # Work around iiasa/ixmp#425
-        if (values["unit"] == "").all():
-            values["unit"] = "-"
+        values["unit"] = values["unit"].str.replace("^$", "-", regex=True)
 
         try:
             scenario.add_par(par_name, values)
