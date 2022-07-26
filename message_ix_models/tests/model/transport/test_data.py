@@ -42,7 +42,14 @@ def assert_units(
     else:
         assert expected == cls(all_units[0])
 
-    assert expected == obs
+
+def test_advance_fv():
+    result = computations.advance_fv()
+
+    assert ("n",) == result.dims
+    # Results only for R12
+    assert 12 == len(result.coords["n"])
+    assert {"[mass]": 1, "[length]": 1, "[time]": -1} == result.units.dimensionality
 
 
 @pytest.mark.parametrize("parts", data_module.DATA_FILES)
