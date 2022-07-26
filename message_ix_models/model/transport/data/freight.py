@@ -100,6 +100,11 @@ def get_freight_data(
         .set_axis(["node_loc", "value"], axis=1)
     )
 
+    # NB currently unused. These values are in the range of 10–12 tonne / vehicle.
+    load_factor = (
+        iea_2017_t4(2).to_series().reset_index().set_axis(["node_loc", "value"], axis=1)
+    )
+    del load_factor
 
     data: Dict[str, List] = defaultdict(list)
     for t in technologies.child:
