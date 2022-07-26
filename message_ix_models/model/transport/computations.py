@@ -6,19 +6,45 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from genno import Quantity, computations
-from genno.computations import add, apply_units, product, ratio, relabel
-from genno.testing import assert_units
+from genno.computations import add, apply_units, product, ratio, relabel, rename_dims
+from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
 from ixmp import Scenario
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
+from message_ix_models.tools import advance
 
 from message_data.model.transport.utils import path_fallback
 from message_data.reporting.util import as_quantity
 from message_data.tools import iea_eei
 
 log = logging.getLogger(__name__)
+
+__all__ = [
+    "advance_fv",
+    "base_shares",
+    "convert_units",
+    "cost",
+    "demand_ixmp0",
+    "distance_ldv",
+    "distance_nonldv",
+    "dummy_prices",
+    "iea_eei_fv",
+    "_lambda",
+    "logit",
+    "model_periods",
+    "nodes_ex_world",
+    "nodes_world_agg",
+    "pdt_per_capita",
+    "price_units",
+    "share_weight",
+    "smooth",
+    "speed",
+    "transport_check",
+    "votm",
+    "whour",
+]
 
 
 def base_shares(
@@ -231,6 +257,76 @@ def logit(
 
     # Logit probability
     return ratio(u, u.sum(dim))
+
+
+def advance_fv(config: dict) -> Quantity:
+    import plotnine as p9
+    from genno.compat.plotnine import Plot
+
+    assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
+
+    class Plot1(Plot):
+        basename = "advance-fv-road-check"
+
+        def generate(self, data):
+            N = len(data)
+            data = data.query("activity > 0")
+            log.info(f"Discard {N-len(data)} rows with zero values")
+            return (
+                p9.ggplot(
+                    p9.aes(
+                        x="region",
+                        y="activity",
+                        color="model",
+                        # shape="scenario",
+                    ),
+                    data,
+                )
+                + p9.geom_point()
+                + p9.ggtitle("Freight activity — Road, 2020 [Gt km]")
+            )
+
+    data = advance.advance_data("Transport|Service demand|Road|Freight").sel(year=2020)
+    data.name = "activity"
+
+    # Debugging
+    # Plot1().save(dict(output_dir=Path.cwd()), data)
+
+    data = rename_dims(
+        data.sel(model="MESSAGE", scenario="ADV3TRAr2_Base", drop=True),
+        dict(region="n"),
+    )
+
+    # Map regions
+    results = []
+    for a, b, k in (
+        ("R12_CHN", "China", 1.0),
+        ("R12_LAM", "LAM", 1.0),
+        ("R12_SAS", "India", 1.0),
+        ("R12_NAM", "USA", 1.0),
+        ("R12_WEU", "EU", 0.5),
+        ("R12_EEU", "EU", 0.5),
+        ("R12_MEA", "MAF", 0.5),
+        ("R12_AFR", "MAF", 0.5),
+        ("R12_FSU", "REF", 1.0),
+        ("R12_RCPA", "ASIA", 0.1),
+        ("R12_PAO", "OECD90", 0.08),
+        ("R12_PAS", "ASIA", 0.5 - 0.1),
+    ):
+        results.append(relabel(k * data.sel(n=b), n={b: a}))
+
+    result = computations.concat(*results)
+
+    # Check
+    assert_qty_allclose(
+        computations.sum(result, dimensions="n"),
+        data.sel(n="World", drop=True),
+        rtol=0.05,
+    )
+    # FIXME guard with an assertion
+    result.units = "Gt km"
+
+    return result
 
 
 def iea_eei_fv(name: str, config: Dict) -> Quantity:

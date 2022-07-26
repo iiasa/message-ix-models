@@ -355,8 +355,10 @@ def prepare_reporter(
             _,
         ),
         # Freight from IEA EEI
-        (("iea_eei", "fv:n-y:historical", quote("tonne-kilometres"), "config"), _),
-        (("product", "fv:n-y", "fv:n-y:historical", gdp_index), _),
+        # (("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"), _),
+        # Freight from ADVANCE
+        (("advance_fv", "fv:n:historical", "config"), _),
+        (("product", "fv:n-y", "fv:n:historical", gdp_index), _),
         # Convert to ixmp format
         (
             (
