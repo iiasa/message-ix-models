@@ -305,6 +305,8 @@ steel:
       - ["steel","end_of_life"]
       - ["steel","product"]
       - ["steel","new_scrap"]
+      - ["steel","useful_material"]
+      - ["steel","final_material"]
 
 cement:
   commodity:
