@@ -459,6 +459,22 @@ methanol:
     - meth_bio
     - meth_h2
 
+  addon:
+    add:
+      - meth_h2
+
+  type_addon:
+    add:
+      - methanol_synthesis_addon
+
+  map_tec_addon:
+    add:
+      - [h2_elec, methanol_synthesis_addon]
+
+  cat_addon:
+    add:
+      - [methanol_synthesis_addon, meth_h2]
+
 buildings:
   level:
     add:
