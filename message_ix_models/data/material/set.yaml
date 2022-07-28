@@ -448,16 +448,19 @@ methanol:
     - biomass
     - hydrogen
     - d_heat
-    - ht_heat
     add:
     - methanol
+    - ht_heat
+
   level:
     add:
+    - final_material
+
   technology:
-    require:
     add:
     - meth_bio
     - meth_h2
+    - meth_bal_material
 
   addon:
     add:
@@ -474,6 +477,10 @@ methanol:
   cat_addon:
     add:
       - [methanol_synthesis_addon, meth_h2]
+
+  relation:
+    add:
+      - CO2_PtX_trans_disp_split
 
 buildings:
   level:
