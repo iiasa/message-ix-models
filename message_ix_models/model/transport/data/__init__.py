@@ -37,12 +37,15 @@ DATA_FILES = [
 
 #: Genno computations that generate model-ready data in ixmp format.
 DATA_FUNCTIONS = {
-    "ldv": (ldv.get_ldv_data, "context"),
-    "non_ldv": (non_ldv.get_non_ldv_data, "context"),
-    "freight": (freight.get_freight_data, "n::ex world", "y::model", "context"),
     # Keys added by demand.prepare_reporter()
     "demand": ("transport demand passenger::ixmp",),
     "freight demand": ("transport demand freight::ixmp",),
+    # Other data-generating functions.
+    "ldv": (ldv.get_ldv_data, "context"),
+    "ldv usage": (ldv.usage_data, "context"),
+    "ldv constraints": (ldv.constraint_data, "context"),
+    "non_ldv": (non_ldv.get_non_ldv_data, "context"),
+    "freight": (freight.get_freight_data, "n::ex world", "y::model", "context"),
 }
 
 
