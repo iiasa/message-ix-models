@@ -1,7 +1,6 @@
 """Build MESSAGEix-Transport on a base model.
 
 .. autodata:: TEMPLATE
-
 """
 import logging
 from functools import partial
@@ -10,7 +9,6 @@ from typing import Dict
 from message_ix import Scenario
 from message_ix_models import Context, Spec
 from message_ix_models.model import build, disutility
-from message_ix_models.util import add_par_data
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
@@ -115,6 +113,7 @@ def main(context: Context, scenario: Scenario, options: Dict = None, **option_kw
     # and removed set items
     spec = get_spec(context)
     context["transport spec"] = spec
+    context["transport spec disutility"] = get_disutility_spec(context)
 
     # Apply the structural changes AND add the data
     log.info("Build MESSAGEix-Transport")
@@ -122,16 +121,5 @@ def main(context: Context, scenario: Scenario, options: Dict = None, **option_kw
 
     mark_time()
 
-    # Add disutility data separately
-    d_spec = get_disutility_spec(context)
-    with scenario.transact("Add disutility data"):
-        add_par_data(
-            scenario,
-            disutility.get_data(scenario, d_spec),
-            dry_run=options.get("dry_run", False),
-        )
-
     scenario.set_as_default()
     log.info(f"Built {scenario.url} and set as default version")
-
-    mark_time()
