@@ -343,7 +343,37 @@ def prepare_reporter(
         # Per capita (for validation)
         (("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop), dict(sums=False)),
         # LDV PDT only
-        (("select", "transport ldv pdt:n-y:total", pdt_nyt, dict(t=["LDV"])), _),
+        (
+            (
+                "select",
+                "transport ldv pdt:n-y:ref",
+                pdt_nyt,
+                dict(t=["LDV"], drop=True),
+            ),
+            _,
+        ),
+        # Indexed to base year
+        (
+            (
+                "index_to",
+                "transport ldv pdt:n-y:index",
+                "transport ldv pdt:n-y:ref",
+                literal("y"),
+                "y0",
+            ),
+            _,
+        ),
+        (("advance_ldv_pdt", "transport ldv pdt:n:advance", "config"), _),
+        # Compute LDV PDT as ADVANCE base-year values indexed to overall growth
+        (
+            (
+                "product",
+                "transport ldv pdt::total",
+                "transport ldv pdt:n-y:index",
+                "transport ldv pdt:n:advance",
+            ),
+            _,
+        ),
         # LDV PDT shared out by consumer group
         (
             (

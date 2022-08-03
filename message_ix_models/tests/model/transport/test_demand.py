@@ -80,7 +80,9 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         # These units are implied by the test of "transport pdt:*":
         # "transport pdt:n-y:total" [=] Mm / year
         ("transport pdt:n-y-t", "passenger km / year"),
-        ("transport ldv pdt:n-y-cg", "passenger km / year"),
+        ("transport ldv pdt:n-y:total", "Gp km / a"),
+        # ("transport ldv pdt:n-y-cg", {"[length]": 1, "[passenger]": 1, "[time]": -1}),
+        ("transport ldv pdt:n-y-cg", "Gp km / a"),
         ("fv:n-y", "Gt km"),
     ):
         try:

@@ -259,6 +259,50 @@ def logit(
     return ratio(u, u.sum(dim))
 
 
+def advance_ldv_pdt(config: dict) -> Quantity:
+    assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
+
+    data = advance.advance_data("Transport|Service demand|Road|Passenger|LDV").sel(
+        year=2020
+    )
+    data.name = "activity"
+    data = rename_dims(
+        data.sel(model="MESSAGE", scenario="ADV3TRAr2_Base", drop=True),
+        dict(region="n"),
+    )
+
+    # Map regions
+    results = []
+    for a, b, k in (
+        ("R12_CHN", "China", 1.0),
+        ("R12_LAM", "LAM", 1.0),
+        ("R12_SAS", "India", 1.0),
+        ("R12_NAM", "USA", 1.0),
+        ("R12_WEU", "EU", 0.5),
+        ("R12_EEU", "EU", 0.5),
+        ("R12_MEA", "MAF", 0.5),
+        ("R12_AFR", "MAF", 0.5),
+        ("R12_FSU", "REF", 1.0),
+        ("R12_RCPA", "ASIA", 0.1),
+        ("R12_PAO", "OECD90", 0.08),
+        ("R12_PAS", "ASIA", 0.5 - 0.1),
+    ):
+        results.append(relabel(k * data.sel(n=b), n={b: a}))
+
+    result = computations.concat(*results)
+
+    # Check
+    assert_qty_allclose(
+        computations.sum(result, dimensions="n"),
+        data.sel(n="World", drop=True),
+        rtol=0.05,
+    )
+    # FIXME guard with an assertion
+    result.units = "Gp km / a"
+
+    return result
+
+
 def advance_fv(config: dict) -> Quantity:
     import plotnine as p9
     from genno.compat.plotnine import Plot
