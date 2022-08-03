@@ -118,14 +118,16 @@ def strip_emissions_data(scenario, context):
 
 
 @provides_data("n::ex world", "y::model", "config")
-def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.DataFrame]:
+def conversion(
+    nodes: List[str], years: List[int], config: dict
+) -> Dict[str, pd.DataFrame]:
     """Input and output data for conversion technologies:
 
     The technologies are named 'transport {service} load factor'.
     """
     common = dict(
-        year_vtg=y,
-        year_act=y,
+        year_vtg=years,
+        year_act=years,
         mode="all",
         # No subannual detail
         time="year",
@@ -134,7 +136,7 @@ def conversion(nodes: List[str], y: List[int], config: dict) -> Dict[str, pd.Dat
     )
 
     service_info = [
-        ("freight", config["transport"]["freight load factor"], "Gt km"),
+        ("freight", config["transport"]["load factor"]["freight"], "Gt km"),
         ("pax", 1.0, "Gp km / a"),
     ]
 
