@@ -1,11 +1,14 @@
-"""Data for light-duty passenger vehicles (LDVs)."""
+"""Data for light-duty vehicles (LDVs) for passenger transport."""
 import logging
 from collections import defaultdict
+from functools import lru_cache
 from typing import Dict, List
 
 import pandas as pd
+from genno import computations
 from iam_units import registry
 from message_ix import make_df
+from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
     ScenarioInfo,
@@ -25,13 +28,17 @@ from message_ix_models.util import (
 from openpyxl import load_workbook
 from sdmx.model import Code
 
-from message_data.model.transport.utils import get_region_codes, input_commodity_level
+from message_data.model.transport.utils import (
+    get_region_codes,
+    input_commodity_level,
+    path_fallback,
+)
 
 log = logging.getLogger(__name__)
 
 
 def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
-    """Load data for light-duty-vehicle technologies.
+    """Generate techno-economic data for light-duty-vehicle technologies.
 
     Responds to the ``["transport config"]["data source"]["LDV"]`` context setting:
 
@@ -43,16 +50,11 @@ def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
     source = context["transport config"]["data source"].get("LDV", None)
 
     if source == "US-TIMES MA3T":
-        data = get_USTIMES_MA3T(context)
+        return get_USTIMES_MA3T(context)
     elif source is None:
-        data = get_dummy(context)
+        return get_dummy(context)
     else:
         raise ValueError(f"invalid source for non-LDV data: {source}")
-
-    # Merge in constraint data
-    merge_data(data, get_constraints(context))
-
-    return data
 
 
 #: Input file containing structured data about LDV technologies.
@@ -304,7 +306,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
-def get_constraints(context) -> Dict[str, pd.DataFrame]:
+def constraint_data(context) -> Dict[str, pd.DataFrame]:
     """Return constraints on light-duty vehicle technology activity and usage.
 
     Responds to the ``["transport config"]["constraint"]["LDV growth_activity"]``
@@ -340,5 +342,47 @@ def get_constraints(context) -> Dict[str, pd.DataFrame]:
         data[par] = make_df(
             par, value=factor * annual, year_act=years, time="year", unit="-"
         ).pipe(broadcast, node_loc=info.N[1:], technology=techs)
+
+    return data
+
+
+def usage_data(context) -> Dict[str, pd.DataFrame]:
+    """Generate data for LDV usage technologies.
+
+    These technologies convert commodities like "transport ELC_100 vehicle" (i.e.
+    vehicle-distance traveled) into "transport pax RUEAM" (i.e. passenger-distance
+    traveled). These data incorporate:
+
+    1. Load factor, in the ``output`` efficiency.
+    2. Required consumption of a "disutility" commodity, in ``input``.
+    """
+    # Add disutility data separately
+    spec = context["transport spec disutility"]
+    info = context["transport build info"]
+
+    data = disutility.data_conversion(info, spec)
+
+    # Read load factor data from file
+    q = computations.load_file(
+        path_fallback(context.regions, "load-factor-ldv.csv"),
+        dims={"node": "node_loc"},
+        name="load factor",
+        units="",
+    )
+
+    # Fill load factor values in the "value" column for "output"
+    @lru_cache(len(q))
+    def _value_for(node_loc):
+        return q.sel(node_loc=node_loc).item()
+
+    data["output"]["value"] = data["output"]["node_loc"].apply(_value_for)
+    # Alternately —performance seems about the same
+    # (
+    #     output.merge(q.to_series(), left_on=q.dims, right_index=True)
+    #     .drop(columns="value")
+    #     .rename(columns={"load factor": "value"})
+    # )
+
+    merge_data(data, disutility.data_source(info, spec))
 
     return data
