@@ -1,0 +1,22 @@
+# Load factor (occupancy of) of LDVs
+#
+# Source: transcribed from MESSAGE (V) Transport .chn files
+# Original source unknown. The values appear to assume similarity
+# between certain regions. R12_CHN and R12_RCPA values filled from
+# R11_CPA.
+#
+node,     value
+R12_AFR,  1.807
+R12_RCPA, 1.892
+R12_CHN,  1.892
+R12_EEU,  1.643
+R12_FSU,  1.807
+R12_LAM,  1.807
+R12_MEA,  1.807
+R12_NAM,  1.53
+R12_PAO,  1.72
+R12_PAS,  1.892
+R12_SAS,  1.892
+R12_WEU,  1.643
+
+

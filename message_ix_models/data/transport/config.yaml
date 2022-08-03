@@ -67,7 +67,8 @@ fixed GDP: "300 kUSD / passenger / year"
 # freight load factor: 5.0  # tonne km per vehicle km
 
 # Similar to IEA “Future of Trucks” (2017) values; see .transport.data.freight
-freight load factor: 10  # tonne km per vehicle km
+load factor:
+  freight: 10  # tonne km per vehicle km
 
 # Logit share exponents or cost distribution parameters [0]
 lambda: -2
