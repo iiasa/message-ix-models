@@ -228,7 +228,7 @@ petro_chemicals:
     - import_petro
     - export_petro
     - feedstock_t/d
-    - demand_HVC
+    - production_HVC
     remove:
     # Any representation of refinery.
     - ref_hil
