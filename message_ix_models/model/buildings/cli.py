@@ -19,7 +19,7 @@ DEFAULTS = {
     "clim_scen": "BL",  # or "2C"?
     "clone": True,
     "max_iterations": 10,
-    "run ACCESS": True,
+    "run ACCESS": False,
     "solve_macro": False,
     "ssp": "SSP2",
 }
@@ -48,12 +48,15 @@ def cli(context, code_dir):
 @click.option(
     "--climate-scen", help="Model/scenario name of reference climate scenario"
 )
+@click.option("--run-access", is_flag=True, help="Run the ACCESS model.")
 @click.pass_obj
-def build_and_solve(context, climate_scen, dest):  # noqa: C901
+def build_and_solve(context, climate_scen, run_access, dest):  # noqa: C901
     """Build and solve the model."""
     mark_time()
 
+    # Update configuration
     config = context["buildings"]
+    config["run ACCESS"] = run_access
 
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
@@ -107,6 +110,12 @@ def build_and_solve(context, climate_scen, dest):  # noqa: C901
 
         # Run ACCESS-E-USE
         if config["run ACCESS"]:
+            import sys
+
+            # The MESSAGE_Buildings repo is not an installable Python package. Prepend
+            # its location to sys.path so code/modules within it can be imported
+            sys.path.append(str(config["code_dir"]))
+
             from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
 
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
