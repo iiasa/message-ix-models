@@ -49,7 +49,7 @@ def cli(context, code_dir):
     "--climate-scen", help="Model/scenario name of reference climate scenario"
 )
 @click.pass_obj
-def build_and_solve(context, climate_scen, code_dir, dest):  # noqa: C901
+def build_and_solve(context, climate_scen, dest):  # noqa: C901
     """Build and solve the model."""
     mark_time()
 
