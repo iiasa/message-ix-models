@@ -1,7 +1,6 @@
 """MESSAGEix-Buildings model."""
 import gc
 import subprocess
-import sys
 from itertools import count, product
 from pathlib import Path
 from typing import Optional, Tuple
@@ -68,6 +67,42 @@ MATERIALS = ["steel", "cement", "aluminum"]
 
 # Columns for indexing demand parameter
 nclytu = ["node", "commodity", "level", "year", "time", "unit"]
+
+
+def add_bio_backstop(scen):
+    """Fill the gap between the biomass demands & potential to avoid infeasibility.
+
+    .. todo:: Replace this with proper & complete use of the current
+       :mod:`message_data.tools.utilities.add_globiom`.
+
+       This function simplified from a version in the MESSAGE_Buildings/util/ directory,
+       itself modified from an old/outdated (before 2022-03) version of
+       :mod:`.add_globiom`.
+
+       See https://iiasa-ece.slack.com/archives/C03M5NX9X0D/p1659623091532079 for
+       discussion.
+    """
+    scen.check_out()
+
+    # Add a new technology
+    scen.add_set("technology", "bio_backstop")
+
+    # Retrieve technology for which will be used to create the backstop
+    filters = {"technology": "elec_rc", "node_loc": "R12_NAM"}
+
+    for node, par in product(["R12_AFR", "R12_SAS"], ["output", "var_cost"]):
+        values = dict(technology="bio_backstop", node_loc=node)
+
+        if par == "output":
+            values.update(commodity="biomass", node_dest=node, level="primary")
+        elif par == "var_cost":
+            values.update(value=1e5)
+
+        data = scen.par(par, filters=filters).assign(**values)
+        # print(df)
+        scen.add_par(par, data)
+
+    scen.commit("Add biomass dummy")
 
 
 def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
@@ -491,13 +526,6 @@ def cli(context, climate_scen, code_dir, dest):  # noqa: C901
     config.update(code_dir=code_dir.resolve())
     context["buildings"] = config
 
-    # The MESSAGE_Buildings repo is not an installable Python package. Prepend its
-    # location to sys.path so code/modules within it can be imported
-    sys.path.append(str(config["code_dir"]))
-
-    # Now can import from MESSAGE_Buildings
-    from utils import add_globiom
-
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
         scenario = context.clone_to_dest(create=False)
@@ -737,7 +765,7 @@ def cli(context, climate_scen, code_dir, dest):  # noqa: C901
         scenario.commit("buildings test")
 
         # Add bio backstop
-        add_globiom.add_bio_backstop(scenario)
+        add_bio_backstop(scenario)
 
         mod = "MESSAGE-MACRO" if config["solve_macro"] else "MESSAGE"
 
