@@ -46,10 +46,9 @@ def report(context, scenario: message_ix.Scenario):
 
     FE_rep = act.copy(True)
 
-    # Fix for non commercial biomass
-    # to be consistent with MESSAGE's original numbers
-    # which go directly from primary to useful
-    # so, we are "de-usefulizing" here using our conversion factor
+    # Fix for non commercial biomass to be consistent with MESSAGE's original numbers
+    # which go directly from primary to useful. So, we are "de-usefulizing" here using
+    # our conversion factor
     FE_rep.loc[FE_rep["technology"] == "biomass_nc", "lvl"] = (
         FE_rep.loc[FE_rep["technology"] == "biomass_nc", "lvl"] / 0.15
     )
@@ -67,12 +66,13 @@ def report(context, scenario: message_ix.Scenario):
         columns={"year_act": "year", "node_loc": "node", "lvl": "value"}
     )
 
+    # Calculate totals by (commodity, node, year)
     FE_rep = (
         FE_rep[["node", "commodity", "year", "value"]]
         .groupby(["node", "commodity", "year"])
         .sum()
         .reset_index()
-    )  # calculating the total commodity
+    )
 
     FE_rep["fuel"] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)[0]
     FE_rep["sector"] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)[1]
@@ -82,14 +82,13 @@ def report(context, scenario: message_ix.Scenario):
 
     FE_rep["variable"] = "Final Energy|" + FE_rep["sector"] + "|" + FE_rep["fuel"]
 
+    # Convert from internal ACT GWa to EJ
+    # FIXME(PNK) don't hard-code conversion factors; check input units
     FE_rep["unit"] = "EJ/yr"
-    FE_rep["value"] = (
-        FE_rep["value"] * 31.536 / 1e3
-    )  # from GWa (ACT of MESSAGEix model) to EJ
+    FE_rep["value"] = FE_rep["value"] * 31.536 / 1e3
 
-    FE_rep_tot = (
-        FE_rep.groupby(["node", "fuel", "unit", "year"]).sum().reset_index()
-    )  # sum commercial and residential by fuel type
+    # Sum commercial and residential by fuel type
+    FE_rep_tot = FE_rep.groupby(["node", "fuel", "unit", "year"]).sum().reset_index()
     FE_rep_tot["variable"] = (
         "Final Energy|" + "Residential and Commercial|" + FE_rep_tot["fuel"]
     )
@@ -98,10 +97,12 @@ def report(context, scenario: message_ix.Scenario):
         FE_rep_tot[["node", "variable", "unit", "year", "value"]], ignore_index=True
     )
 
+    # Compute a global total
     glob_rep = FE_rep.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_rep["node"] = "R12_GLB"
 
     FE_rep = FE_rep.append(glob_rep, ignore_index=True)
+
     FE_rep = FE_rep.sort_values(["node", "variable", "year"]).reset_index(drop=True)
 
     # Emissions from Demand
@@ -162,16 +163,16 @@ def report(context, scenario: message_ix.Scenario):
         emiss_tot[["node", "variable", "unit", "year", "value"]], ignore_index=True
     )
 
+    # Global total
     glob_emiss = emiss.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_emiss["node"] = "R12_GLB"
-
     emiss_rep = emiss.append(glob_emiss, ignore_index=True)
+
     emiss_rep = emiss_rep.sort_values(["node", "variable", "year"]).reset_index(
         drop=True
     )
 
     # Add STURM reporting
-
     if "baseline" in scenario.scenario:
         res_filename = "report_NGFS_SSP2_BL_resid_R12.csv"
         com_filename = "report_NGFS_SSP2_BL_comm_R12.csv"
@@ -190,13 +191,13 @@ def report(context, scenario: message_ix.Scenario):
     sturm_rep = sturm_rep.rename(columns={"Variable": "variable", "Unit": "unit"})
     sturm_rep = sturm_rep[FE_rep.columns]
 
-    # glob_sturm = sturm_rep.groupby(["variable", "unit", "year"]).sum(
-    #     ).reset_index()
+    # glob_sturm = sturm_rep.groupby(["variable", "unit", "year"]).sum().reset_index()
     # glob_sturm["node"] = "R12_GLB"
-
+    #
     # sturm_rep = sturm_rep.append(glob_sturm, ignore_index=True)
-    # sturm_rep = sturm_rep.sort_values(
-    #     ["node", "variable", "year"]).reset_index(drop=True)
+    # sturm_rep = sturm_rep.sort_values(["node", "variable", "year"]).reset_index(
+    #     drop=True
+    # )
 
     # ------------------------------------------------------------------------------
     # The part below is added for futher data wrangling on top of the orginal one
@@ -215,9 +216,8 @@ def report(context, scenario: message_ix.Scenario):
 
     # for dealing with the final energy related variable names
 
-    test_2 = test[~test["variable"].isin(var_list)].reset_index(
-        drop=True
-    )  # final energy related variables
+    # Final energy related variables
+    test_2 = test[~test["variable"].isin(var_list)].reset_index(drop=True)
 
     test_2["variable_head"] = test_2["variable"].str.split("|", 3, expand=True)[0]
     test_2["sector"] = test_2["variable"].str.split("|", 3, expand=True)[1]
@@ -230,9 +230,10 @@ def report(context, scenario: message_ix.Scenario):
         columns=["sector", "variable_rest", "variable_head", "variable"]
     )
 
+    # Sum of residential and commercial
     test_2 = (
         test_2.groupby(["node", "unit", "year", "new_var_name"]).sum().reset_index()
-    )  # sum of residetial and commercial
+    )
 
     test_2["new_var_head"] = test_2["new_var_name"].str.split("|", 1, expand=True)[0]
     test_2["new_var_rest"] = test_2["new_var_name"].str.split("|", 1, expand=True)[1]
@@ -253,11 +254,9 @@ def report(context, scenario: message_ix.Scenario):
 
     test_full = sturm_rep.append(test_2)
 
-    glob_sturm = (
-        test_full.groupby(["variable", "unit", "year"]).sum().reset_index()
-    )  # sum of the R12
+    # Global total
+    glob_sturm = test_full.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_sturm["node"] = "R12_GLB"
-
     test_full = test_full.append(glob_sturm, ignore_index=True)
 
     test_full = test_full.sort_values(["node", "variable", "year"]).reset_index(
@@ -278,12 +277,13 @@ def report(context, scenario: message_ix.Scenario):
         "Final Energy|Commercial|Solids|Biomass",
     ]
 
+    # Sum of fuel types for different building sub-setors (R, C and R+C)
     FE_rep_tot_fuel = (
         FE_rep[~FE_rep["variable"].isin(var_list_drop)]
         .groupby(["node", "unit", "year", "fuel_type"])
         .sum()
         .reset_index()
-    )  # sum of fuel types for different buidling sub-setors (R, C and R+C)
+    )
 
     FE_rep_tot_fuel["variable"] = "Final Energy|" + FE_rep_tot_fuel["fuel_type"]
 
