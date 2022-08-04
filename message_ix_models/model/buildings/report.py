@@ -1,12 +1,10 @@
-"""Reporting for MESSAGEix-Buildings.
-
-Adds final energy and emissions time series to the scenario and re-solve.
-"""
+"""Reporting for MESSAGEix-Buildings."""
 import message_ix
 import pandas as pd
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import local_data_path
 
+# Mappings for .replace()
 SECTOR_NAME_MAP = {"comm": "Commercial", "resid": "Residential"}
 FUEL_NAME_MAP = {
     "biomass": "Solids|Biomass",
@@ -19,13 +17,21 @@ FUEL_NAME_MAP = {
 }
 NAME_MAP = dict(fuel=FUEL_NAME_MAP, sector=SECTOR_NAME_MAP)
 
+# Common list of columns for several operations
+COLS = ["node", "variable", "unit", "year", "value"]
+
 
 def report(context, scenario: message_ix.Scenario):
-    years_model = ScenarioInfo(scenario).Y
+    """Report `scenario`.
+
+    STURM output data are loaded from CSV files and merged with computed values stored
+    as timeseries on the `scenario`.
+    """
+    info = ScenarioInfo(scenario)
 
     build_ene_tecs = [
         tec
-        for tec in scenario.set("technology")
+        for tec in info.set["technology"]
         if (
             (("resid" in tec) or ("comm" in tec))
             and (
@@ -38,11 +44,11 @@ def report(context, scenario: message_ix.Scenario):
         )
     ] + ["biomass_nc"]
 
+    filters = dict(technology=build_ene_tecs, year_act=info)
+
     # Final Energy Demand
 
-    act = scenario.var(
-        "ACT", filters={"technology": build_ene_tecs, "year_act": years_model}
-    )
+    act = scenario.var("ACT", filters=filters)
 
     FE_rep = act.copy(True)
 
@@ -74,8 +80,7 @@ def report(context, scenario: message_ix.Scenario):
         .reset_index()
     )
 
-    FE_rep["fuel"] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)[0]
-    FE_rep["sector"] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)[1]
+    FE_rep[["fuel", "sector"]] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)
 
     # Adjust sector and fuel names
     FE_rep.replace(NAME_MAP, inplace=True)
@@ -93,9 +98,7 @@ def report(context, scenario: message_ix.Scenario):
         "Final Energy|" + "Residential and Commercial|" + FE_rep_tot["fuel"]
     )
 
-    FE_rep = FE_rep[["node", "variable", "unit", "year", "value"]].append(
-        FE_rep_tot[["node", "variable", "unit", "year", "value"]], ignore_index=True
-    )
+    FE_rep = FE_rep[COLS].append(FE_rep_tot[COLS], ignore_index=True)
 
     # Compute a global total
     glob_rep = FE_rep.groupby(["variable", "unit", "year"]).sum().reset_index()
@@ -106,10 +109,7 @@ def report(context, scenario: message_ix.Scenario):
     FE_rep = FE_rep.sort_values(["node", "variable", "year"]).reset_index(drop=True)
 
     # Emissions from Demand
-    emiss = scenario.par(
-        "relation_activity",
-        filters={"technology": build_ene_tecs, "year_act": years_model},
-    )
+    emiss = scenario.par("relation_activity", filters=filters)
 
     emiss_rels = [rel for rel in emiss["relation"].unique() if "Emission" in rel]
 
@@ -134,8 +134,7 @@ def report(context, scenario: message_ix.Scenario):
 
     emiss = emiss.rename(columns={"year_act": "year", "node_loc": "node"})
 
-    emiss["fuel"] = emiss["commodity"].str.rsplit("_", 1, expand=True)[0]
-    emiss["sector"] = emiss["commodity"].str.rsplit("_", 1, expand=True)[1]
+    emiss[["fuel", "sector"]] = emiss["commodity"].str.rsplit("_", 1, expand=True)
 
     # Adjust sector and fuel names
     emiss.replace(NAME_MAP, inplace=True)
@@ -159,9 +158,7 @@ def report(context, scenario: message_ix.Scenario):
         + emiss_tot["fuel"]
     )
 
-    emiss = emiss[["node", "variable", "unit", "year", "value"]].append(
-        emiss_tot[["node", "variable", "unit", "year", "value"]], ignore_index=True
-    )
+    emiss = emiss[COLS].append(emiss_tot[COLS], ignore_index=True)
 
     # Global total
     glob_emiss = emiss.groupby(["variable", "unit", "year"]).sum().reset_index()
@@ -219,10 +216,9 @@ def report(context, scenario: message_ix.Scenario):
     # Final energy related variables
     test_2 = test[~test["variable"].isin(var_list)].reset_index(drop=True)
 
-    test_2["variable_head"] = test_2["variable"].str.split("|", 3, expand=True)[0]
-    test_2["sector"] = test_2["variable"].str.split("|", 3, expand=True)[1]
-    test_2["sub_sector"] = test_2["variable"].str.split("|", 3, expand=True)[2]
-    test_2["variable_rest"] = test_2["variable"].str.split("|", 3, expand=True)[3]
+    test_2[["variable_head", "sector", "sub_sector", "variable_rest"]] = test_2[
+        "variable"
+    ].str.split("|", 3, expand=True)
 
     test_2["new_var_name"] = test_2["variable_head"] + "|" + test_2["variable_rest"]
 
@@ -235,8 +231,9 @@ def report(context, scenario: message_ix.Scenario):
         test_2.groupby(["node", "unit", "year", "new_var_name"]).sum().reset_index()
     )
 
-    test_2["new_var_head"] = test_2["new_var_name"].str.split("|", 1, expand=True)[0]
-    test_2["new_var_rest"] = test_2["new_var_name"].str.split("|", 1, expand=True)[1]
+    test_2[["new_var_head", "new_var_rest"]] = test_2["new_var_name"].str.split(
+        "|", 1, expand=True
+    )
 
     test_2["sector"] = "|Residential and Commercial|"
 
@@ -248,9 +245,8 @@ def report(context, scenario: message_ix.Scenario):
         columns=["new_var_name", "new_var_head", "new_var_rest", "sector"]
     )
 
-    test_2 = test_2[
-        ["node", "variable", "unit", "year", "value"]
-    ]  # ordering the columns
+    # Order the columns
+    test_2 = test_2[COLS]
 
     test_full = sturm_rep.append(test_2)
 
@@ -291,10 +287,7 @@ def report(context, scenario: message_ix.Scenario):
 
     FE_rep = FE_rep.drop(columns=["fuel_type"])
 
-    FE_rep = FE_rep[["node", "variable", "unit", "year", "value"]].append(
-        FE_rep_tot_fuel[["node", "variable", "unit", "year", "value"]],
-        ignore_index=True,
-    )
+    FE_rep = FE_rep[COLS].append(FE_rep_tot_fuel[COLS], ignore_index=True)
 
     # End here
     # ------------------------------------------------------------------------------
