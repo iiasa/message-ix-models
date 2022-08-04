@@ -10,15 +10,27 @@ Usage
 
 1. Clone the main MESSAGE_Buildings repo, linked above.
    Note the path.
+
 2. Invoke the model using, for example:
 
    .. code-block::
 
-       mix-models \
+      mix-models \
         --url="ixmp://ixmp-dev/model name/base scenario" \
         buildings \
+        /path/to/mb/repo \
+        build-solve \
         --dest="ixmp://ixmp-dev/new model name/target scenario"
-        /path/to/mb/repo
+
+3. Run the reporting:
+
+   .. code-block::
+
+      mix-models \
+        --url="ixmp://ixmp-dev/new model name/target scenario" \
+        buildings \
+        /path/to/mb/repo \
+        report
 
 
 Base and destination scenarios
@@ -31,8 +43,9 @@ The following correspond to :file:`MESSAGE-BUILDINGS.py`, given with the comment
     mix-models \
       --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr" \
       buildings \
-      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr-building" \
-      /path/to/mb/repo
+      /path/to/mb/repo \
+      build-solve \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr-building"
 
 If using ``clim_scen="2C"``, the following scenario is used as the reference scenario for prices:
 
@@ -41,9 +54,10 @@ If using ``clim_scen="2C"``, the following scenario is used as the reference sce
     mix-models \
       --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr" \
       buildings \
+      /path/to/mb/repo \
+      build-solve \
       --climate-scen="ENGAGE_SSP2_v4.1.8/EN_NPi2020_1000f" \
-      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr-building" \
-      /path/to/mb/repo
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/NPi2020-con-prim-dir-ncr-building"
 
 The following is commented in :file:`MESSAGE-BUILDINGS.py` with the comment “NOTE: this scenario has the updated GLOBIOM matrix.”
 
@@ -52,8 +66,9 @@ The following is commented in :file:`MESSAGE-BUILDINGS.py` with the comment “N
     mix-models \
       --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/baseline" \
       buildings \
-      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/baseline" \
-      /path/to/mb/repo
+      /path/to/mb/repo \
+      build-solve \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-NGFS/baseline"
 
 The following correspond to :file:`MESSAGE-BUILDINGS-STURM.py`:
 
@@ -62,8 +77,9 @@ The following correspond to :file:`MESSAGE-BUILDINGS-STURM.py`:
     mix-models \
       --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/baseline" \
       buildings \
-      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-EFC/baseline" \
-      /path/to/mb/repo
+      /path/to/mb/repo \
+      build-solve \
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-EFC/baseline"
 
 and:
 
@@ -72,9 +88,20 @@ and:
     mix-models \
       --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/baseline" \
       buildings \
+      /path/to/mb/repo \
+      build-solve \
       --climate-scen="MESSAGEix-GLOBIOM 1.1-M-R12-NGFS/EN_NPi2020_1000" \
-      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-EFC/baseline" \
-      /path/to/mb/repo
+      --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-EFC/baseline"
+
+The following corresponds to :file:`reporting_EFC.py`:
+
+.. code-block::
+
+    mix-models \
+      --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BM-R12-EFC/baseline#24" \
+      buildings \
+      /path/to/mb/repo \
+      report
 
 
 Configuration
