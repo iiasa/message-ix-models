@@ -7,6 +7,18 @@ import pandas as pd
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import local_data_path
 
+SECTOR_NAME_MAP = {"comm": "Commercial", "resid": "Residential"}
+FUEL_NAME_MAP = {
+    "biomass": "Solids|Biomass",
+    "biomass_nc": "Solids|Biomass|Traditional",
+    "coal": "Solids|Coal",
+    "d_heat": "Heat",
+    "lightoil": "Liquids|Oil",
+    "gas": "Gases",
+    "electr": "Electricity",
+}
+NAME_MAP = dict(fuel=FUEL_NAME_MAP, sector=SECTOR_NAME_MAP)
+
 
 def report(context, scenario: message_ix.Scenario):
     years_model = ScenarioInfo(scenario).Y
@@ -65,18 +77,8 @@ def report(context, scenario: message_ix.Scenario):
     FE_rep["fuel"] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)[0]
     FE_rep["sector"] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)[1]
 
-    # Adjust Sector Names
-    FE_rep.loc[FE_rep["sector"] == "comm", "sector"] = "Commercial"
-    FE_rep.loc[FE_rep["sector"] == "resid", "sector"] = "Residential"
-
-    # Adjust Fuel Names
-    FE_rep.loc[FE_rep["fuel"] == "biomass", "fuel"] = "Solids|Biomass"
-    FE_rep.loc[FE_rep["fuel"] == "biomass_nc", "fuel"] = "Solids|Biomass|Traditional"
-    FE_rep.loc[FE_rep["fuel"] == "coal", "fuel"] = "Solids|Coal"
-    FE_rep.loc[FE_rep["fuel"] == "d_heat", "fuel"] = "Heat"
-    FE_rep.loc[FE_rep["fuel"] == "lightoil", "fuel"] = "Liquids|Oil"
-    FE_rep.loc[FE_rep["fuel"] == "gas", "fuel"] = "Gases"
-    FE_rep.loc[FE_rep["fuel"] == "electr", "fuel"] = "Electricity"
+    # Adjust sector and fuel names
+    FE_rep.replace(NAME_MAP, inplace=True)
 
     FE_rep["variable"] = "Final Energy|" + FE_rep["sector"] + "|" + FE_rep["fuel"]
 
@@ -134,18 +136,8 @@ def report(context, scenario: message_ix.Scenario):
     emiss["fuel"] = emiss["commodity"].str.rsplit("_", 1, expand=True)[0]
     emiss["sector"] = emiss["commodity"].str.rsplit("_", 1, expand=True)[1]
 
-    # Adjust Sector Names
-    emiss.loc[emiss["sector"] == "comm", "sector"] = "Commercial"
-    emiss.loc[emiss["sector"] == "resid", "sector"] = "Residential"
-
-    # Adjust Fuel Names
-    emiss.loc[emiss["fuel"] == "biomass", "fuel"] = "Solids|Biomass"
-    emiss.loc[emiss["fuel"] == "biomass_nc", "fuel"] = "Solids|Biomass|Traditional"
-    emiss.loc[emiss["fuel"] == "coal", "fuel"] = "Solids|Coal"
-    emiss.loc[emiss["fuel"] == "d_heat", "fuel"] = "Heat"
-    emiss.loc[emiss["fuel"] == "lightoil", "fuel"] = "Liquids|Oil"
-    emiss.loc[emiss["fuel"] == "gas", "fuel"] = "Gases"
-    emiss.loc[emiss["fuel"] == "electr", "fuel"] = "Electricity"
+    # Adjust sector and fuel names
+    emiss.replace(NAME_MAP, inplace=True)
 
     emiss["variable"] = (
         "Emissions|"
