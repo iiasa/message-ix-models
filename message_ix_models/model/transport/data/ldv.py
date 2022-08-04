@@ -1,6 +1,7 @@
 """Data for light-duty vehicles (LDVs) for passenger transport."""
 import logging
 from collections import defaultdict
+from copy import deepcopy
 from functools import lru_cache
 from typing import Dict, List
 
@@ -356,9 +357,12 @@ def usage_data(context) -> Dict[str, pd.DataFrame]:
     1. Load factor, in the ``output`` efficiency.
     2. Required consumption of a "disutility" commodity, in ``input``.
     """
+    from message_data.model.transport.computations import nodes_ex_world
+
     # Add disutility data separately
     spec = context["transport spec disutility"]
-    info = context["transport build info"]
+    info = deepcopy(context["transport build info"])
+    info.set["node"] = nodes_ex_world(info.set["node"])
 
     data = disutility.data_conversion(info, spec)
 
