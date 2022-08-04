@@ -150,13 +150,15 @@ def create_bare(context, regions, dry_run):
 def build_scen(context, datafile, tag, mode, scenario_name):
     """Build a scenario.
 
-    Use the --url option to specify the base scenario.
+    Use the --url option to specify the base scenario. If this scenario is on a
+    Platform stored with ixmp.JDBCBackend, it should be configured with >16 GB of
+    memory, i.e. ``jvmargs=["-Xmx16G"]``.
     """
 
     from ixmp import Platform
     import message_ix
 
-    mp = Platform(name='ixmp_dev', jvmargs=['-Xmx16G'])
+    mp = context.get_platform()
 
     if mode == 'by_url':
         # Determine the output scenario name based on the --url CLI option. If the
