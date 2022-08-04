@@ -119,14 +119,14 @@ def build_and_solve(context, climate_scen, run_access, dest):  # noqa: C901
             from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
 
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
-                scenario=config["ssp"], prices=prices
+                scenario=config["ssp"], prices=prices, base_path=config["code_dir"]
             )
 
             mark_time()
 
         # Scale results to match historical activity
-        # NOTE: ignore biomass, data was always imputed here
-        # so we are dealing with guesses over guesses
+        # NB ignore biomass, data was always imputed here so we are dealing with
+        #    guesses over guesses
         e_use_2010 = (
             e_use_scenarios[
                 (e_use_scenarios.year == 2010)
