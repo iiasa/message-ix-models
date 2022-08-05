@@ -498,7 +498,7 @@ def make_source_tech(
             year_vtg=info.Y,
             **common,
         )
-        .pipe(broadcast, node_loc=info.N[1:])
+        .pipe(broadcast, node_loc=nodes_ex_world(info.N))
         .pipe(same_node)
     )
 
@@ -525,6 +525,11 @@ def merge_data(base, *others):
     for other in others:
         for par, df in other.items():
             base[par] = pd.concat([base.get(par, None), df])
+
+
+def nodes_ex_world(nodes: list) -> List[str]:
+    """Nodes excluding 'World' and anything containing "GLB"."""
+    return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
 
 
 def same_node(df):
