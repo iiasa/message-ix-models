@@ -49,14 +49,28 @@ def cli(context, code_dir):
     "--climate-scen", help="Model/scenario name of reference climate scenario"
 )
 @click.option("--run-access", is_flag=True, help="Run the ACCESS model.")
+@click.option(
+    "--sturm",
+    "sturm_method",
+    type=click.Choice(["rpy2", "Rscript"]),
+    default="Rscript",
+    help="Method to invoke STURM.",
+)
 @click.pass_obj
-def build_and_solve(context, climate_scen, run_access, dest):  # noqa: C901
+def build_and_solve(
+    context,
+    climate_scen,
+    run_access,
+    sturm_method,
+    dest,
+):  # noqa: C901
     """Build and solve the model."""
     mark_time()
 
     # Update configuration
     config = context["buildings"]
     config["run ACCESS"] = run_access
+    config["sturm_method"] = sturm_method
 
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
