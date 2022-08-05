@@ -17,6 +17,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     make_source_tech,
     merge_data,
+    nodes_ex_world,
     same_node,
 )
 
@@ -145,11 +146,6 @@ def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:  # pragma: no cover
     return func
 
 
-def _nodes_ex_world(nodes: list) -> List[str]:
-    """Nodes excluding 'World' and anything containing "GLB"."""
-    return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
-
-
 def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
     """Generate input and output data for disutility conversion technologies."""
     common = dict(
@@ -191,7 +187,7 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
         )
         for par, df in i_o.items():
             # Broadcast across nodes
-            df = df.pipe(broadcast, node_loc=_nodes_ex_world(info.N)).pipe(same_node)
+            df = df.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(same_node)
 
             if par == "input":
                 # Add input of disutility
