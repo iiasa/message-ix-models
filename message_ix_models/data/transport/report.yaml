@@ -121,8 +121,10 @@ general:
 
 # Groups of keys for re-use
 _iamc formats:
+  # Units for final energy. This *exact* value (and not e.g. "EJ / year") is required
+  # for the legacy reporting to properly handle the result.
   fe_unit: &fe_unit
-    unit: EJ / year
+    unit: EJ/yr
 
 # NB these are currently tailored to produce the variable names expected for the
 #    NGFS project
