@@ -21,7 +21,9 @@ REPLACE_DIMS = {
         "Crudeoil": "Oil",
         "Electr": "Electricity",
         "Ethanol": "Liquids|Biomass",
+        "Gas": "Gases",
         "Lightoil": "Liquids|Oil",
+        "Methanol": "Liquids|Coal",
         # in land_out, for CH4 emissions from GLOBIOM
         "Agri_Ch4": "GLOBIOM|Emissions|CH4 Emissions Total",
     },
