@@ -1,10 +1,13 @@
 """Interface to STURM."""
 import gc
+import logging
 import subprocess
 from typing import Optional, Tuple
 
 import pandas as pd
 from message_ix_models import Context
+
+log = logging.getLogger(__name__)
 
 
 def run_sturm(
@@ -21,17 +24,27 @@ def run_sturm(
         otherwise :obj:`None`.
     """
     try:
-        import rpy2.situation
+        import rpy2  # noqa: F401
 
-        if first_iteration:
-            print(*rpy2.situation.iter_info(), sep="\n")
-
-        return _sturm_rpy2(context, prices, first_iteration)
+        has_rpy2 = True
     except ImportError:
-        if first_iteration:
-            print("rpy2 NOT found")
+        has_rpy2 = False
 
-        return _sturm_rscript(context, prices, first_iteration)
+    method = context["buildings"].get("sturm_method")
+    if method is None:
+        method = "rpy2" if has_rpy2 else "Rscript"
+    elif method == "rpy2" and not has_rpy2:
+        if first_iteration:
+            log.warning("rpy2 NOT found; will invoke STURM using Rscript")
+        method = "Rscript"
+    elif method not in ("rpy2", "Rscript"):
+        raise ValueError(method)
+
+    return (
+        _sturm_rpy2(context, prices, first_iteration)
+        if method == "rpy2"
+        else _sturm_rscript(context, prices, first_iteration)
+    )
 
 
 def _sturm_rpy2(
@@ -39,8 +52,12 @@ def _sturm_rpy2(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM using :mod:`rpy2`."""
     import rpy2.robjects as ro
+    import rpy2.situation
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
+
+    if first_iteration:
+        log.info("\n".join(rpy2.situation.iter_info()))
 
     # Retrieve info from the Context object
     config = context["buildings"]
@@ -98,22 +115,18 @@ def _sturm_rscript(
     prices.to_csv(input_path)
 
     def run_edited(sector: str) -> pd.DataFrame:
-        """Edit the run_STURM.R script, then run it."""
-        # Read the script and split lines
-        script_path = config["code_dir"].joinpath("run_STURM.R")
-        lines = script_path.read_text().split("\n")
-
-        # Replace some lines
-        # FIXME(PNK) This is extremely fragile. Instead use a template or regex
-        # replacements
-        lines[8] = f"ssp_scen <- \"{config['ssp']}\""
-        lines[9] = f"clim_scen <- \"{config['clim_scen']}\""
-        lines[10] = f'sect <- "{sector}"'
-
-        script_path.write_text("\n".join(lines))
-
+        """Invoke the run_STURM.R script and return its output."""
         # Need to supply cwd= because the script uses R's getwd() to find others
-        subprocess.check_call(["Rscript", "run_STURM.R"], cwd=config["code_dir"])
+        subprocess.check_call(
+            [
+                "Rscript",
+                "run_STURM.R",
+                f"--sector={sector}",
+                f"--ssp={config['clim_scen']}",
+                f"--ssp={config['ssp']}",
+            ],
+            cwd=config["code_dir"],
+        )
 
         # Read output, then remove the file
         output_path = temp_dir.joinpath(f"{sector}_sturm.csv")
