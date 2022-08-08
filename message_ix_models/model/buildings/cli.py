@@ -1,4 +1,5 @@
 """MESSAGEix-Buildings model."""
+import sys
 from itertools import count
 from pathlib import Path
 
@@ -73,6 +74,10 @@ def build_and_solve(
     config["run ACCESS"] = run_access
     config["sturm_method"] = sturm_method
 
+    # The MESSAGE_Buildings repo is not an installable Python package. Prepend
+    # its location to sys.path so code/modules within it can be imported
+    sys.path.append(str(config["code_dir"]))
+
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
         scenario = context.clone_to_dest(create=False)
@@ -139,12 +144,6 @@ def build_and_solve(
 
         # Run ACCESS-E-USE
         if config["run ACCESS"]:
-            import sys
-
-            # The MESSAGE_Buildings repo is not an installable Python package. Prepend
-            # its location to sys.path so code/modules within it can be imported
-            sys.path.append(str(config["code_dir"]))
-
             from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
 
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
