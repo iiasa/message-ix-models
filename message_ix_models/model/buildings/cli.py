@@ -200,7 +200,8 @@ def build_and_solve(
 
         # Run STURM
         sturm_scenarios, css = run_sturm(context, prices, iterations == 0)
-        comm_sturm_scenarios = css or comm_sturm_scenarios
+        if css is not None:
+            comm_sturm_scenarios = css
 
         mark_time()
 
