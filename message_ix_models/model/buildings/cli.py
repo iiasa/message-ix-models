@@ -7,6 +7,7 @@ import message_ix
 import numpy as np
 import pandas as pd
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import local_data_path
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
 
@@ -117,10 +118,24 @@ def build_and_solve(
         # Get prices from MESSAGE
         # On the first iteration, from the parent scenario; onwards, from the current
         # scenario
-        prices = get_prices(scen_to_clone if iterations == 0 else scenario)
+        price_cache_path = local_data_path("cache", "buildings-prices.csv")
+        if iterations == 0:
+            if config["run ACCESS"]:
+                prices = get_prices(scen_to_clone)
+
+                # Update the cache
+                prices.to_csv(price_cache_path)
+            else:
+                # Read prices from cache
+                prices = pd.read_csv(price_cache_path)
+        else:
+            prices = get_prices(scenario)
 
         # Save demand from previous iteration for comparison
         demand_old = demand.copy(True)
+
+        # Path to cache ACCESS_E_USE outputs
+        access_cache_path = local_data_path("cache", "buildings-access.csv")
 
         # Run ACCESS-E-USE
         if config["run ACCESS"]:
@@ -137,6 +152,12 @@ def build_and_solve(
             )
 
             mark_time()
+
+            # Update cached output
+            e_use_scenarios.to_csv(access_cache_path)
+        else:
+            # Read the cache
+            e_use_scenarios = pd.read_csv(access_cache_path)
 
         # Scale results to match historical activity
         # NB ignore biomass, data was always imputed here so we are dealing with
