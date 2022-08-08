@@ -1,4 +1,5 @@
 """MESSAGEix-Buildings model."""
+import logging
 import sys
 from itertools import count
 from pathlib import Path
@@ -14,6 +15,8 @@ from message_ix_models.util.click import common_params
 
 from . import add_bio_backstop, get_prices, setup_scenario
 from .sturm import run_sturm
+
+log = logging.getLogger(__name__)
 
 #: Default values for Context["buildings"] keys that configure the code. See
 #: :doc:`model/buildings` for a full explanation.
@@ -74,9 +77,12 @@ def build_and_solve(
     config["run ACCESS"] = run_access
     config["sturm_method"] = sturm_method
 
-    # The MESSAGE_Buildings repo is not an installable Python package. Prepend
-    # its location to sys.path so code/modules within it can be imported
-    sys.path.append(str(config["code_dir"]))
+    # The MESSAGE_Buildings repo is not an installable Python package. Add its location
+    # to sys.path so code/modules within it can be imported. This must go first, as the
+    # directory (=module) name "utils" is commonly used and can clash with those from
+    # other installed packages.
+    # TODO properly package MESSAGE_Buildings so this is not necessary
+    sys.path.insert(0, str(config["code_dir"]))
 
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
