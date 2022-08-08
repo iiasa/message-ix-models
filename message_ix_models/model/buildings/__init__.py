@@ -1,3 +1,4 @@
+import logging
 from itertools import product
 
 import message_ix
@@ -7,6 +8,8 @@ import pandas as pd
 from message_ix_models import ScenarioInfo
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
+
+log = logging.getLogger(__name__)
 
 #: Commodities for the buildings sector.
 BUILD_COMMODITIES = [
