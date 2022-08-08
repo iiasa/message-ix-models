@@ -165,30 +165,32 @@ def setup_scenario(  # noqa: C901
     ].unique()
 
     for tech_orig in rc_techs:
-        tech_new = tech_orig.replace("rc", "afofi")
-
-        if "RC" in tech_orig:
-            tech_new = tech_orig.replace("RC", "AFOFI")
-
+        # Filters for retrieving data
         filters = dict(filters={"technology": tech_orig})
+
+        # Derived name of new technology
+        tech_new = tech_orig.replace("rc", "afofi").replace("RC", "AFOFI")
+        scenario.add_set("technology", tech_new)
+
         for name in ("input", "capacity_factor", "emission_factor"):
             scenario.add_par(
                 name, scenario.par(name, **filters).assign(technology=tech_new)
             )
 
-        afofi_out = scenario.par("output", **filters).assign(
-            technology=tech_new,
-            commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
+        name = "output"
+        scenario.add_par(
+            name,
+            scenario.par(name, **filters).assign(
+                technology=tech_new,
+                commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
+            ),
         )
 
-        afofi_rel = scenario.par(
-            "relation_activity",
-            filters={"technology": tech_orig, "relation": emiss_rel},
-        ).assign(technology=tech_new)
-
-        scenario.add_set("technology", tech_new)
-        scenario.add_par("output", afofi_out)
-        scenario.add_par("relation_activity", afofi_rel)
+        name = "relation_activity"
+        filters["filters"].update(relation=emiss_rel)
+        scenario.add_par(
+            name, scenario.par(name, **filters).assign(technology=tech_new)
+        )
 
     # Set model demands for rc_therm and rc_spec to zero
     dd_replace["value"] = 0
