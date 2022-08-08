@@ -49,7 +49,7 @@ def run_sturm(
 
 def _sturm_rpy2(
     context: Context, prices: pd.DataFrame, first_iteration: bool
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
     """Invoke STURM using :mod:`rpy2`."""
     import rpy2.robjects as ro
     import rpy2.situation
@@ -99,7 +99,7 @@ def _sturm_rpy2(
 
 def _sturm_rscript(
     context: Context, prices: pd.DataFrame, first_iteration: bool
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
     """Invoke STURM using :mod:`subprocess` and :program:`Rscript`."""
     # TODO report_type and report_var are not passed
     # Retrieve info from the Context object
