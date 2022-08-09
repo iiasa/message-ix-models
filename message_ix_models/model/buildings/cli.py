@@ -84,6 +84,9 @@ def build_and_solve(
     # TODO properly package MESSAGE_Buildings so this is not necessary
     sys.path.insert(0, str(config["code_dir"]))
 
+    # Base path for output during iterations
+    output_path = context.get_local_path("buildings")
+
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
         scenario = context.clone_to_dest(create=False)
@@ -439,8 +442,11 @@ def build_and_solve(
         )
         price_sav[f"lvl{iterations}"] = prices_new["lvl"]
 
-        price_sav.to_csv(context.get_local_path("buildings", "price_track.csv"))
-        demand_sav.to_csv(context.get_local_path("buildings", "demand_track.csv"))
+        # Ensure the parent directory exists
+        output_path.mkdir(exist_ok=True)
+        # Write to file
+        price_sav.to_csv(output_path / "price-track.csv")
+        demand_sav.to_csv(output_path / "demand_track.csv")
 
         # After all post-solve steps
         mark_time()
