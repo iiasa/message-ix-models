@@ -59,7 +59,7 @@ class Context(dict):
         default_local_data = Path(
             os.environ.get("MESSAGE_LOCAL_DATA", None)
             or ixmp.config.get("message local data")
-        ).resolve()
+        ).expanduser().resolve()
 
         for key, value in (
             ("platform_info", dict()),
