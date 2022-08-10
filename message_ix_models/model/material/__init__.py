@@ -213,6 +213,7 @@ def build_scen(context, datafile, tag, mode, scenario_name):
         print('New scenario name is ' + output_scenario_name)
         scenario.set_as_default()
 
+
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
@@ -225,7 +226,6 @@ def build_scen(context, datafile, tag, mode, scenario_name):
 @click.option("--add_macro", default=True)
 @click.option("--add_calibration", default=False)
 @click.pass_obj
-# @click.pass_obj
 def solve_scen(context, datafile, model_name, scenario_name, add_calibration, add_macro):
     """Solve a scenario.
 
@@ -275,6 +275,7 @@ def add_building_ts(scenario_name, model_name):
 
     add_building_timeseries(scenario)
 
+
 @cli.command("report")
 # @cli.command("report-1")
 @click.option(
@@ -282,22 +283,17 @@ def add_building_ts(scenario_name, model_name):
     default=False,
     help="If True the existing timeseries in the scenario is removed.",
 )
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--model_name", default="MESSAGEix-Materials")
-# @click.pass_obj
-def run_reporting(scenario_name, model_name, remove_ts):
+@click.pass_obj
+def run_reporting(context, remove_ts):
+    """Run materials, then legacy reporting."""
     from message_data.reporting.materials.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
-    from message_ix import Scenario
-    from ixmp import Platform
 
-    print(model_name)
-    mp = Platform()
-
-    scenario = Scenario(mp, model_name, scenario_name)
+    # Retrieve the scenario given by the --url option
+    scenario = context.get_scenario()
+    mp = scenario.platform
 
     if remove_ts:
-
         df_rem = scenario.timeseries()
 
         if not df_rem.empty:
@@ -308,8 +304,7 @@ def run_reporting(scenario_name, model_name, remove_ts):
             print('Existing timeseries are removed.')
         else:
             print('There are no timeseries to be removed.')
-
-    if not remove_ts:
+    else:
         # Remove existing timeseries and add material timeseries
         print("Reporting material-specific variables")
         report(scenario)
@@ -317,13 +312,16 @@ def run_reporting(scenario_name, model_name, remove_ts):
         reporting(
             mp,
             scenario,
+            # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
+            #         string containing "True" or "False" instead of an actual bool.
             "False",
-            model_name,
-            scenario_name,
+            scenario.model,
+            scenario.scenario,
             merge_hist=True,
             merge_ts=True,
             run_config="materials_run_config.yaml",
         )
+
 
 @cli.command("report-2")
 @click.option("--scenario_name", default="NoPolicy")
