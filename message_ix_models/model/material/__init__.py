@@ -307,7 +307,7 @@ def run_reporting(context, remove_ts):
     else:
         # Remove existing timeseries and add material timeseries
         print("Reporting material-specific variables")
-        report(scenario)
+        report(context, scenario)
         print("Reporting standard variables")
         reporting(
             mp,
