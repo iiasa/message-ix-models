@@ -82,10 +82,10 @@ general:
   - _transport 2d::iamc
   - _transport 2e::iamc
   - _transport 3::iamc
-  # Debugging
-  - _transport debug ACT::iamc
-  - _transport debug CAP::iamc
-  - _transport debug CAP_NEW::iamc
+  # For debugging
+  # - _transport debug ACT::iamc
+  # - _transport debug CAP::iamc
+  # - _transport debug CAP_NEW::iamc
 
 # Path and comp for IAMC output to file
 - key: transport CSV path
