@@ -1,8 +1,12 @@
 """Reporting for MESSAGEix-Buildings."""
+import logging
+
 import message_ix
 import pandas as pd
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import local_data_path
+
+log = logging.getLogger(__name__)
 
 # Mappings for .replace()
 SECTOR_NAME_MAP = {"comm": "Commercial", "resid": "Residential"}
@@ -44,7 +48,7 @@ def report(context, scenario: message_ix.Scenario):
         )
     ] + ["biomass_nc"]
 
-    filters = dict(technology=build_ene_tecs, year_act=info)
+    filters = dict(technology=build_ene_tecs, year_act=info.Y)
 
     # Final Energy Demand
 
@@ -296,6 +300,7 @@ def report(context, scenario: message_ix.Scenario):
     # Add timeseries to the scenario
     # (Requires removing solution and re-solving)
     # scenario.remove_solution()
+
     scenario.check_out(timeseries_only=True)
 
     scenario.add_timeseries(FE_rep)
@@ -312,16 +317,17 @@ def report(context, scenario: message_ix.Scenario):
 
     scenario.commit("MESSAGEix-Buildings reporting")
     # scenario.solve()
-    scenario.set_as_default()
+    # scenario.set_as_default()
 
     # Also save timeseries data to files
 
-    base_path = local_data_path("report")
+    base_path = context.get_local_path("report")
+    base_path.mkdir(exist_ok=True)
 
-    FE_rep.to_csv(base_path / "FE_rep.csv")
-    emiss_rep.to_csv(base_path / "emiss_rep.csv")
-    sturm_rep.to_csv(base_path / "sturm_rep.csv")
-    test_full.to_csv(base_path / "sturm_rep_name_change.csv")
+    FE_rep.to_csv(base_path / "buildings-FE.csv")
+    emiss_rep.to_csv(base_path / "buildings-emiss.csv")
+    sturm_rep.to_csv(base_path / "sturm.csv")
+    test_full.to_csv(base_path / "sturm-name-change.csv")
 
     # commented: unused
     # Fei = mp_ENE.scenario_list(
