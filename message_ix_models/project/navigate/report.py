@@ -103,7 +103,9 @@ def _variable(value: str) -> str:
 
 def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> None:
     """Generate a configuration file for :mod:`.prep_submission`."""
-    ew = pd.ExcelWriter(private_data_path("navigate", "prep-submission.xlsx"))
+    path = private_data_path("navigate", "prep-submission.xlsx")
+    path.parent.mkdir(exist_ok=True)
+    ew = pd.ExcelWriter(path)
 
     sheet = "scenario_config"
     data = pd.DataFrame(
