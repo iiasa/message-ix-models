@@ -417,7 +417,15 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:
         # "World" node should have no parent and some children. Countries (from
         # pycountry) that are omitted from a mapping have neither parent nor children.
         if len(n.child) and n.parent is None:
-            return {dim: {str(n): list(map(str, n.child))}}
+            name = str(n)
+
+            # FIXME Remove. This is a hack to suit the legacy reporting, which expects
+            #       global aggregates at *_GLB rather than "World".
+            new_name = f"{config['regions']}_GLB"
+            log.info(f"Aggregates for {n!r} will be labelled {new_name!r}")
+            name = new_name
+
+            return {dim: {name: list(map(str, n.child))}}
 
     # Failed to identify the World node.
     raise RuntimeError
