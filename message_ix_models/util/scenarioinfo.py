@@ -108,7 +108,12 @@ class ScenarioInfo:
 
     @property
     def N(self):
-        """Elements of the set 'node'."""
+        """Elements of the set 'node'.
+
+        See also
+        --------
+        .nodes_ex_world
+        """
         return list(map(str, self.set["node"]))
 
     @property

@@ -36,6 +36,7 @@ Commonly used:
    make_source_tech
    maybe_query
    merge_data
+   ~node.nodes_ex_world
    package_data_path
    private_data_path
    same_node

@@ -1,0 +1,67 @@
+# Model 'registration' file for use with `nomenclature` package/IIASA Scenario Explorer
+# workflows
+#
+# TODO generate programmatically from node codelists
+
+model:
+- MESSAGEix-GLOBIOM 1.1-BM-R12
+- MESSAGEix-GLOBIOM 1.1-BMT-R12
+- MESSAGEix-GLOBIOM 1.1-M-R12
+- MESSAGEix-GLOBIOM 1.1-MT-R12
+
+native_regions:
+- R12_AFR: MESSAGEix-GLOBIOM 1.1-R12|Sub-saharan Africa
+- R12_CHN: MESSAGEix-GLOBIOM 1.1-R12|China
+- R12_EEU: MESSAGEix-GLOBIOM 1.1-R12|Eastern Europe
+- R12_FSU: MESSAGEix-GLOBIOM 1.1-R12|Former Soviet Union
+- R12_LAM: MESSAGEix-GLOBIOM 1.1-R12|Latin America and the Caribbean
+- R12_MEA: MESSAGEix-GLOBIOM 1.1-R12|Middle East and North Africa
+- R12_NAM: MESSAGEix-GLOBIOM 1.1-R12|North America
+- R12_PAO: MESSAGEix-GLOBIOM 1.1-R12|Pacific OECD
+- R12_PAS: MESSAGEix-GLOBIOM 1.1-R12|Other Pacific Asia
+- R12_RCPA: MESSAGEix-GLOBIOM 1.1-R12|Rest Centrally Planned Asia
+- R12_SAS: MESSAGEix-GLOBIOM 1.1-R12|South Asia
+- R12_WEU: MESSAGEix-GLOBIOM 1.1-R12|Western Europe
+
+common_regions:
+- World:
+  - R12_AFR
+  - R12_CHN
+  - R12_EEU
+  - R12_FSU
+  - R12_LAM
+  - R12_MEA
+  - R12_NAM
+  - R12_PAO
+  - R12_PAS
+  - R12_RCPA
+  - R12_SAS
+  - R12_WEU
+# R5 regions
+- R5ASIA:
+  - R12_CHN
+  - R12_PAS
+  - R12_RCPA
+  - R12_SAS
+- R5LAM:
+  - R12_LAM
+- R5MAF:
+  - R12_AFR
+  - R12_MEA
+- R5OECD90+EU:
+  - R12_EEU
+  - R12_NAM
+  - R12_PAO
+  - R12_WEU
+- R5REF:
+  - R12_FSU
+# Individual countries
+- CHN:
+  - R12_CHN
+- EU:
+  - R12_EEU
+  - R12_WEU
+- IND:
+  - R12_SAS
+- USA:
+  - R12_NAM
