@@ -17,6 +17,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     make_source_tech,
     merge_data,
+    nodes_ex_world,
     same_node,
 )
 
@@ -186,7 +187,7 @@ def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
         )
         for par, df in i_o.items():
             # Broadcast across nodes
-            df = df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node)
+            df = df.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(same_node)
 
             if par == "input":
                 # Add input of disutility
