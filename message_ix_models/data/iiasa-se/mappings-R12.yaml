@@ -38,22 +38,22 @@ common_regions:
   - R12_SAS
   - R12_WEU
 # R5 regions
-- Asia (R5):
+- R5ASIA:
   - R12_CHN
   - R12_PAS
   - R12_RCPA
   - R12_SAS
-- Latin America (R5):
+- R5LAM:
   - R12_LAM
-- Middle East & Africa (R5):
+- R5MAF:
   - R12_AFR
   - R12_MEA
-- OECD & EU (R5):
+- R5OECD90+EU:
   - R12_EEU
   - R12_NAM
   - R12_PAO
   - R12_WEU
-- Reforming Economies (R5):
+- R5REF:
   - R12_FSU
 # Individual countries
 - CHN:

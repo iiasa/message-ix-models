@@ -45,6 +45,7 @@ Among other tasks, the tools allow modelers to:
    pkg-data/node
    pkg-data/year
    pkg-data/codelists
+   pkg-data/iiasa-se
 
 .. toctree::
    :maxdepth: 2
