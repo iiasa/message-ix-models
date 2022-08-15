@@ -20,7 +20,7 @@ from .common import (
     package_data_path,
     private_data_path,
 )
-from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes
+from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
 from .scenarioinfo import ScenarioInfo
 from .sdmx import eval_anno
 
@@ -81,6 +81,9 @@ def add_par_data(
 
         if dry_run:
             continue
+
+        # Work around iiasa/ixmp#425
+        values["unit"] = values["unit"].str.replace("^$", "-", regex=True)
 
         try:
             scenario.add_par(par_name, values)
@@ -495,7 +498,7 @@ def make_source_tech(
             year_vtg=info.Y,
             **common,
         )
-        .pipe(broadcast, node_loc=info.N[1:])
+        .pipe(broadcast, node_loc=nodes_ex_world(info.N))
         .pipe(same_node)
     )
 
@@ -524,7 +527,7 @@ def merge_data(base, *others):
             base[par] = pd.concat([base.get(par, None), df])
 
 
-def same_node(df):
+def same_node(df: pd.DataFrame) -> pd.DataFrame:
     """Fill 'node_origin'/'node_dest' in `df` from 'node_loc'."""
     cols = list(set(df.columns) & {"node_origin", "node_dest"})
     return df.assign(**{c: copy_column("node_loc") for c in cols})
