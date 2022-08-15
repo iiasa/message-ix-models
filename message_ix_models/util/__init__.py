@@ -20,7 +20,7 @@ from .common import (
     package_data_path,
     private_data_path,
 )
-from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes
+from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
 from .scenarioinfo import ScenarioInfo
 from .sdmx import eval_anno
 
@@ -527,12 +527,7 @@ def merge_data(base, *others):
             base[par] = pd.concat([base.get(par, None), df])
 
 
-def nodes_ex_world(nodes: list) -> List[str]:
-    """Nodes excluding 'World' and anything containing "GLB"."""
-    return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
-
-
-def same_node(df):
+def same_node(df: pd.DataFrame) -> pd.DataFrame:
     """Fill 'node_origin'/'node_dest' in `df` from 'node_loc'."""
     cols = list(set(df.columns) & {"node_origin", "node_dest"})
     return df.assign(**{c: copy_column("node_loc") for c in cols})
