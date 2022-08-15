@@ -1,7 +1,9 @@
 """Utilities for nodes."""
 import logging
+from typing import List, Union
 
 from message_ix import Scenario
+from sdmx.model import Code
 
 from .common import Adapter, MappingAdapter  # noqa: F401
 
@@ -119,3 +121,13 @@ def identify_nodes(scenario: Scenario) -> str:
     else:
         log.info(f"Identified node codelist {repr(id)}")
         return id
+
+
+def nodes_ex_world(nodes: List[Union[str, Code]]) -> List[Union[str, Code]]:
+    """Exclude "World" and anything containing "GLB" from `nodes`.
+
+    May also be used as a reporting computation.
+
+    .. todo:: Make available from :mod:`message_ix_models.report`.
+    """
+    return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
