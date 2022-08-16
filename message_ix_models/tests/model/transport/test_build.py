@@ -47,23 +47,28 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
 @pytest.mark.parametrize(
     "regions, years, ldv, nonldv, solve",
     [
-        ("R11", "B", None, None, False),
+        param("R11", "B", None, None, False, marks=MARK[1]),
         param(  # 44s; 31 s with solve=False
             "R11",
             "A",
             None,
             None,
             True,
-            marks=pytest.mark.xfail(
-                raises=ixmp.ModelError,
-                reason="No supply of non-LDV commodities w/o IKARUS data",
-            ),
+            marks=[
+                MARK[1],
+                pytest.mark.xfail(
+                    raises=ixmp.ModelError,
+                    reason="No supply of non-LDV commodities w/o IKARUS data",
+                ),
+            ],
         ),
-        ("R11", "A", "US-TIMES MA3T", "IKARUS", False),  # 43 s
-        param("R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),  # 74 s
+        param("R11", "A", "US-TIMES MA3T", "IKARUS", False, marks=MARK[1]),  # 43 s
+        param(
+            "R11", "A", "US-TIMES MA3T", "IKARUS", True, marks=[mark.slow, MARK[1]]
+        ),  # 74 s
         # R11, B
-        param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=mark.slow),
-        param("R11", "B", "US-TIMES MA3T", "IKARUS", True, marks=mark.slow),
+        param("R11", "B", "US-TIMES MA3T", "IKARUS", False, marks=[mark.slow, MARK[1]]),
+        param("R11", "B", "US-TIMES MA3T", "IKARUS", True, marks=[mark.slow, MARK[1]]),
         # R12, B
         ("R12", "B", "US-TIMES MA3T", "IKARUS", True),
         # R14, A
