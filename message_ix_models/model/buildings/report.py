@@ -4,7 +4,6 @@ import logging
 import message_ix
 import pandas as pd
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import local_data_path
 
 log = logging.getLogger(__name__)
 
