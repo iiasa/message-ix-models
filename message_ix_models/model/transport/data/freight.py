@@ -106,7 +106,7 @@ def get_freight_data(
     )
     del load_factor
 
-    data: Dict[str, List] = defaultdict(list)
+    data0: Dict[str, List] = defaultdict(list)
     for t in technologies.child:
         units_in = info.io_units(t, "lightoil")
         units_out = info.io_units(t, "transport freight vehicle")
@@ -119,20 +119,20 @@ def get_freight_data(
             **common,
         )
 
-        data["input"].append(
+        data0["input"].append(
             input_commodity_level(i_o["input"], "final")
             .pipe(broadcast, efficiency)
             .pipe(same_node)
         )
-        data["output"].append(
+        data0["output"].append(
             i_o["output"].pipe(broadcast, node_loc=nodes).pipe(same_node)
         )
 
-    data = {par: pd.concat(dfs) for par, dfs in data.items()}
+    data1: Dict[str, pd.DataFrame] = {par: pd.concat(dfs) for par, dfs in data0.items()}
 
-    data.update(
+    data1.update(
         make_matched_dfs(
-            base=data["input"],
+            base=data1["input"],
             capacity_factor=registry.Quantity("1"),
             technical_lifetime=registry("10 year"),
         )
@@ -140,4 +140,4 @@ def get_freight_data(
 
     # TODO re-add emissions data from file
 
-    return data
+    return data1
