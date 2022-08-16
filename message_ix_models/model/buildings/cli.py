@@ -8,7 +8,7 @@ import click
 import message_ix
 import numpy as np
 import pandas as pd
-from message_ix_models import ScenarioInfo
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import local_data_path
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
@@ -47,7 +47,7 @@ def cli(context, code_dir):
     context["buildings"] = config
 
 
-# FIXME(PNK) Too complex; McCabe complexity of 19 > 14 for the rest of message_data
+# FIXME(PNK) Too complex; McCabe complexity of 25 > 14 for the rest of message_data
 @cli.command("build-solve")
 @common_params("dest")
 @click.option(
@@ -62,13 +62,13 @@ def cli(context, code_dir):
     help="Method to invoke STURM.",
 )
 @click.pass_obj
-def build_and_solve(
-    context,
-    climate_scen,
-    run_access,
-    sturm_method,
-    dest,
-):  # noqa: C901
+def build_and_solve(  # noqa: C901
+    context: Context,
+    climate_scen: str,
+    run_access: bool,
+    sturm_method: str,
+    dest: str,
+) -> None:
     """Build and solve the model."""
     mark_time()
 
