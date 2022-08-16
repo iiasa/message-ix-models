@@ -8,6 +8,7 @@ import yaml
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import nodes_ex_world, private_data_path
+from sdmx.model import Code
 
 log = logging.getLogger(__name__)
 
@@ -129,7 +130,7 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> None:
 
     sheet = "region_mapping"
     nodes = get_codes(f"node/{context.regions}")
-    nodes = nodes[nodes.index("World")].child
+    nodes = nodes[nodes.index(Code("World"))].child
 
     # Note that "source" and "target" have the opposite of the intuitive meanings
     data = pd.DataFrame(

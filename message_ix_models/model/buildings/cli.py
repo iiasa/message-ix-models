@@ -384,13 +384,13 @@ def build_and_solve(  # noqa: C901
 
         # Compare differences in demand after the first iteration
         if iterations > 0:
-            diff_dd = demand.merge(demand_old, on=["node", "commodity", "year"])
-            diff_dd = diff_dd.loc[diff_dd["year"] != 2110]
-            diff_dd["diff_dd"] = (diff_dd["value_x"] - diff_dd["value_y"]) / (
-                0.5 * ((diff_dd["value_x"] + diff_dd["value_y"]))
+            _dd = demand.merge(demand_old, on=["node", "commodity", "year"])
+            _dd = _dd.loc[_dd["year"] != 2110]
+            _dd["diff_dd"] = (_dd["value_x"] - _dd["value_y"]) / (
+                0.5 * (_dd["value_x"] + _dd["value_y"])
             )
-            diff_dd = np.mean(abs(diff_dd["diff_dd"]))
-            print("Mean Percentage Deviation in Demand:", diff_dd)
+            diff_dd = np.mean(abs(_dd["diff_dd"]))
+            print(f"Mean Percentage Deviation in Demand: {diff_dd}")
 
         # Uncomment this on for testing
         # diff = 0.0
@@ -402,7 +402,7 @@ def build_and_solve(  # noqa: C901
 
         if iterations > config["max_iterations"]:
             done = True
-            print(f"Not Converged after {max['max_iterations']} iterations!")
+            print(f"Not converged after {config['max_iterations']} iterations!")
             print("Averaging last two demands and running MESSAGE one more time")
             price_sav[f"lvl{iterations}"] = prices_new["lvl"]
 
