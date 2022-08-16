@@ -128,7 +128,7 @@ as timeseries to the scenario together with the generic IAMC variables. It also
 correctly reports the aggregate variables such as Final Energy and Emissions.
 The reporting is executed by the following command:
 
-$ mix-models material report --model_name MESSAGEix-Materials --scenario_name xxxx
+$ mix-models --url="ixmp://ixmp_dev/MESSAGEix-Materials/scenario_name" material report
 
 If the model is ran with other end-use modules such as buildings/appliances or
 transport, the new reporting variables from these should be uploaded to the scenario
@@ -144,7 +144,7 @@ There should be no other existing timeseries (other than the ones from the end-u
 in the scenario when running the reporting command to obtain correct results.
 
 To remove any existing timeseries in the scenario the following command can be used:
-$ mix-models material report --model_name MESSAGEix-Materials --scenario_name xxxx --remove_ts True
+$ mix-models --url="ixmp://ixmp_dev/MESSAGEix-Materials/scenario_name" material report --remove_ts True
 
 Data, metadata, and configuration
 =================================
