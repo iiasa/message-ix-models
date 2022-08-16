@@ -143,7 +143,7 @@ def conversion(
         ("pax", 1.0, "Gp km / a"),
     ]
 
-    data: Mapping[str, List] = defaultdict(list)
+    data0: Mapping[str, List] = defaultdict(list)
     for service, factor, output_unit in service_info:
         i_o = make_io(
             (f"transport {service} vehicle", "useful", "Gv km"),
@@ -154,19 +154,19 @@ def conversion(
             **common,
         )
         for par, df in i_o.items():
-            data[par].append(df.pipe(broadcast, node_loc=nodes).pipe(same_node))
+            data0[par].append(df.pipe(broadcast, node_loc=nodes).pipe(same_node))
 
-    data = {par: pd.concat(dfs) for par, dfs in data.items()}
+    data1 = {par: pd.concat(dfs) for par, dfs in data0.items()}
 
-    data.update(
+    data1.update(
         make_matched_dfs(
-            base=data["input"],
+            base=data1["input"],
             capacity_factor=1,
             technical_lifetime=10,
         )
     )
 
-    return data
+    return data1
 
 
 # @provides_data("info", "n::ex world", "y::model")

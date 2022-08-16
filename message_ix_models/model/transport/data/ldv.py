@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
-from typing import Dict, List
+from typing import Dict, List, Mapping
 
 import pandas as pd
 from genno import computations
@@ -347,7 +347,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
-def usage_data(context) -> Dict[str, pd.DataFrame]:
+def usage_data(context) -> Mapping[str, pd.DataFrame]:
     """Generate data for LDV usage technologies.
 
     These technologies convert commodities like "transport ELC_100 vehicle" (i.e.
