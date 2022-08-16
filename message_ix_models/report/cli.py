@@ -38,13 +38,13 @@ log = logging.getLogger(__name__)
     type=click.Path(exists=True, dir_okay=False),
     help="Report multiple Scenarios listed in FILE.",
 )
-@click.argument("key", default="message:default")
+@click.argument("key", default="message::default")
 @click.pass_obj
 def cli(context, config_file, module, output_path, from_file, key, dry_run):
     """Postprocess results.
 
-    KEY defaults to the comprehensive report 'message:default', but may alsobe the name
-    of a specific model quantity, e.g. 'output'.
+    KEY defaults to the comprehensive report 'message::default', but may also be the
+    name of a specific model quantity, e.g. 'output'.
 
     --config can give either the absolute path to a reporting configuration file, or
     the stem (i.e. name without .yaml extension) of a file in data/report.
