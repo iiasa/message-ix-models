@@ -30,12 +30,15 @@ def test_register_cb():
             "R11",
             "A",
             False,
-            marks=pytest.mark.xfail(
-                raises=MissingKeyError,
-                reason="required key 'ACT:nl-t-yv-va-m-h' not defined w/o solution.",
-            ),
+            marks=[
+                MARK[1],
+                pytest.mark.xfail(
+                    raises=MissingKeyError,
+                    reason="required key 'ACT:nl-t-yv-va-m-h' not defined w/o solution",
+                ),
+            ],
         ),
-        ("R11", "A", True),
+        param("R11", "A", True, marks=MARK[1]),
         ("R12", "A", True),
         param("R14", "A", True, marks=MARK[0]),
         param("ISR", "A", True, marks=NIE),

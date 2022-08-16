@@ -48,10 +48,10 @@ def test_demand_dummy(test_context, regions, years):
 @pytest.mark.parametrize(
     "regions,years,N_node,mode_shares",
     [
-        ("R11", "A", 11, None),
-        ("R11", "B", 11, None),
-        ("R11", "B", 11, "debug"),
-        ("R11", "B", 11, "A---"),
+        param("R11", "A", 11, None, marks=MARK[1]),
+        param("R11", "B", 11, None, marks=MARK[1]),
+        param("R11", "B", 11, "debug", marks=MARK[1]),
+        param("R11", "B", 11, "A---", marks=MARK[1]),
         ("R12", "B", 12, None),
         param("R14", "B", 14, None, marks=MARK[0]),
         param("ISR", "A", 1, None, marks=NIE),

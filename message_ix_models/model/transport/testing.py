@@ -19,6 +19,9 @@ MARK = (
     pytest.mark.xfail(
         reason="Missing R14 input data/assumptions", raises=FileNotFoundError
     ),
+    pytest.mark.skip(
+        reason="Currently only possible with regions=R12 input data/assumptions",
+    ),
 )
 
 

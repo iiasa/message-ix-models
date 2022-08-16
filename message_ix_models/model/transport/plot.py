@@ -345,7 +345,7 @@ class Stock0(Plot):
     ]
 
     def generate(self, data):
-        data = data.rename(columns={0: "stock"})
+        data = data.rename(columns={"value": "stock"})
         y_max = max(data["stock"])
         unit = data["unit"].unique()[0]
 
