@@ -35,12 +35,14 @@ DATA_FILES = [
     ("mode-share", "A---.csv"),
 ]
 
-#: Genno computations that generate model-ready data in ixmp format.
+#: Genno computations that generate model-ready data in ixmp format. This mapping is
+#: extended by functions decorated with @provides_data() in this module.
 DATA_FUNCTIONS = {
     # Keys added by demand.prepare_reporter()
     "demand": ("transport demand passenger::ixmp",),
+    "dummy demand": ("dummy demand::ixmp",),
     "freight demand": ("transport demand freight::ixmp",),
-    # Other data-generating functions.
+    # Data-generating functions in other modules
     "ldv": (ldv.get_ldv_data, "context"),
     "ldv usage": (ldv.usage_data, "context"),
     "ldv constraints": (ldv.constraint_data, "context"),
