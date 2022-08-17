@@ -23,6 +23,7 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     merge_data,
+    nodes_ex_world,
     private_data_path,
     same_node,
 )
@@ -357,8 +358,6 @@ def usage_data(context) -> Mapping[str, pd.DataFrame]:
     1. Load factor, in the ``output`` efficiency.
     2. Required consumption of a "disutility" commodity, in ``input``.
     """
-    from message_data.model.transport.computations import nodes_ex_world
-
     # Add disutility data separately
     spec = context["transport spec disutility"]
     info = deepcopy(context["transport build info"])
