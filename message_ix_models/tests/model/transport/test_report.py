@@ -60,6 +60,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
         ),
     )
     ctx["output dir"] = tmp_path
+    ctx["transport config"] = {"data source": {"dummy supply": True}}
 
     scenario = built_transport(request, ctx, solved=solved)
 
