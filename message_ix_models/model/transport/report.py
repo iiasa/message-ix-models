@@ -48,7 +48,7 @@ def update_config(c: Computer, context: Context) -> None:
     config["data source"].update(
         {
             k: context["transport config"]["data source"][k]
-            for k in ("demand dummy", "gdp", "population")
+            for k in ("demand dummy", "dummy supply", "gdp", "population")
         }
     )
 
