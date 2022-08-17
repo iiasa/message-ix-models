@@ -134,14 +134,18 @@ def _fuzz_data(size=1e2, include: List[Tuple[str, str]] = []):
 
     # - Select `size` rows at random from the full data set.
     # - Use their index for a new pd.Series with random data.
-    # - Drop duplicates.
-    # - Return to the original structure (pd.DataFrame, upper-case column names, wide)
+    # - Convert to pd.DataFrame with upper-case column names
+    # - Drop duplicated indices
+    # - Return to original wide format.
+    columns = list(map(str.upper, DIMS))
     dfs = [
-        pd.Series(rng.random(size), index=get_advance_data().sample(size).index)
-        .drop_duplicates()
-        .rename_axis(map(str.upper, DIMS))
-        .unstack("YEAR")
+        pd.Series(
+            rng.random(size), index=get_advance_data().sample(size).index, name="value"
+        )
+        .rename_axis(columns)
         .reset_index()
+        .drop_duplicates(subset=columns)
+        .pivot(index=columns[:-1], columns="YEAR", values="value")
     ]
 
     # Duplicate data for (variable, unit) pairs required per `include`
