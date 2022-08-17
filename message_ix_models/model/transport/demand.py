@@ -40,7 +40,7 @@ def dummy(
     ----------
     info : .ScenarioInfo
     """
-    if config["data source"]["demand dummy"] is not True:
+    if config["data source"]["dummy demand"] is not True:
         # No dummy data → return nothing
         return dict()
 
@@ -413,7 +413,7 @@ def prepare_reporter(
         # Dummy demands, in case these are configured
         (
             (
-                "demand dummy::ixmp",
+                "dummy demand::ixmp",
                 dummy,
                 "c::transport",
                 "nodes::ex world",

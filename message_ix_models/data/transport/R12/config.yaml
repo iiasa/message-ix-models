@@ -7,8 +7,8 @@ data source:
   LDV: US-TIMES MA3T
   non-LDV: IKARUS
   # TODO support merging these with the base / non-region-specific file
-  demand dummy: false  # true to include
-  supply dummy: false  # true to include
+  dummy demand: false  # true to include
+  dummy supply: false  # true to include
 
 factor:
   activity:
