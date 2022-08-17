@@ -49,7 +49,7 @@ def test_advance_fv():
     assert ("n",) == result.dims
     # Results only for R12
     assert 12 == len(result.coords["n"])
-    assert {"[mass]": 1, "[length]": 1, "[time]": -1} == result.units.dimensionality
+    assert {"[mass]": 1, "[length]": 1} == result.units.dimensionality, result
 
 
 @pytest.mark.parametrize("parts", data_module.DATA_FILES)
