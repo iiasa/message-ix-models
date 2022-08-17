@@ -4,7 +4,7 @@ from copy import deepcopy
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Mapping, MutableMapping, Tuple, Union
 
 import pandas as pd
 import xarray as xr
@@ -76,23 +76,22 @@ def configure(
     cfg = context["transport config"]  # Shorthand
 
     # Set some defaults
-    for key, value in {
-        "data source": dict(),
-        "mode-share": "default",
-        "regions": context.regions,
-        "report": dict(filter=False),
-    }.items():
-        cfg.setdefault(key, value)
-
-    # data source: update
-    cfg["data source"].update(options.pop("data source", dict()))
+    _setdefault_recursive(
+        cfg,
+        {
+            "data source": options.pop("data source", dict()),
+            "mode-share": "default",
+            "regions": context.regions,
+            "report": dict(filter=False),
+        },
+    )
 
     # future: set the mode-share key
     future = options.pop("futures-scenario", None)
     if future is not None:
         if future not in ("default", "base", "A---", "debug"):
             raise ValueError(f"unrecognized Transport Futures scenario {repr(future)}")
-        cfg["mode-share"] == future
+        cfg["mode-share"] = future
 
         if future == "A---":
             log.info(f"Set fixed demand for TF scenario {repr(future)}")
@@ -110,6 +109,32 @@ def get_region_codes(codelist: str) -> List[Code]:
     """
     nodes = get_codes(f"node/{codelist}")
     return nodes[nodes.index(Code(id="World"))].child
+
+
+def _setdefault_recursive(dest: MutableMapping, src: Mapping) -> None:
+    """Recursive version of :meth:`dict.setdefault`.
+
+    .. todo:: move upstream, e.g. to :mod:`message_ix_models.util.context`.
+    """
+    for key, value in src.items():
+        if isinstance(value, Mapping):
+            # Ensure a dictionary exist to copy into; then recurse
+            _setdefault_recursive(dest.setdefault(key, dict()), value)
+        else:
+            dest.setdefault(key, value)
+
+
+def _update_recursive(dest: MutableMapping, src: Mapping) -> None:
+    """Recursive version of :meth:`dict.update`.
+
+    .. todo:: move upstream, e.g. to :mod:`message_ix_models.util.context`.
+    """
+    for key, value in src.items():
+        if isinstance(value, Mapping):
+            # Ensure a dictionary exist to copy into; then recurse
+            _update_recursive(dest.setdefault(key, dict()), value)
+        else:
+            dest[key] = value
 
 
 def read_config(context):
@@ -132,6 +157,9 @@ def read_config(context):
     # Default configuration from the base directory
     context["transport defaults"] = load_private_data("transport", *METADATA[0])
 
+    # Preserve any existing configuration
+    prior_config = deepcopy(context.get("transport config", dict()))
+
     # Overrides specific to regional versions
     for parts in METADATA:
         # Key for storing in the context, e.g. "transport config"
@@ -140,15 +168,14 @@ def read_config(context):
         # Load and store the data from the YAML file: either in a subdirectory for
         # context.regions, or the top-level data directory
         path = path_fallback(context, *parts).relative_to(private_data_path())
-        context[key] = load_private_data(*path.parts) or dict()
+        context[key] = load_private_data(*path.parts) or context.get(key, dict())
 
-    # Merge default config with region-specific config
-    # TODO merge the contents of specific keys, e.g. "data source"
-    config = deepcopy(context["transport defaults"])
-    config.update(context["transport config"])
-    context["transport config"] = config
+    # Overwrite configuration from file with existing values
+    _update_recursive(context["transport config"], prior_config)
+    # Apply defaults where not set in the region-specific config
+    _setdefault_recursive(context["transport config"], context["transport defaults"])
 
-    # Merge technology.yaml with set.yaml
+    # Merge contents of technology.yaml into set.yaml
     context["transport set"]["technology"]["add"] = context.pop("transport technology")
 
     # Convert some values to codes
