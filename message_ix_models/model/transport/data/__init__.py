@@ -193,23 +193,20 @@ def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
     return data
 
 
-@provides_data("context", "info")
-def dummy_supply(context, info) -> Dict[str, pd.DataFrame]:
+@provides_data("config", "info")
+def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
-    # TODO read the 'level' from config
-    # TODO read the list of 'commodity' from context/config
-    # TODO separate dummy supplies by commodity
-
-    if (
-        context["transport config"]["data source"].setdefault("dummy supply", False)
-        is not True
-    ):
+    if config["data source"].setdefault("dummy supply", False) is not True:
         return dict()
 
+    # TODO read the list of 'commodity' from context/config
+    commodities = ["electr", "gas", "hydrogen", "lightoil", "methanol"]
+
+    # TODO separate dummy supplies by commodity
     data = make_source_tech(
         info,
         common=dict(
-            level="secondary",
+            level="final",  # TODO read the level from config
             mode="all",
             technology="DUMMY transport fuel",
             time="year",
@@ -222,12 +219,9 @@ def dummy_supply(context, info) -> Dict[str, pd.DataFrame]:
 
     # Broadcast across all fuel commodities
     for par_name in data:
-        if "commodity" not in data[par_name].columns:
-            continue
-
-        data[par_name] = data[par_name].pipe(
-            broadcast,
-            commodity=["lightoil", "gas", "methanol", "hydrogen", "electr"],
-        )
+        try:
+            data[par_name] = data[par_name].pipe(broadcast, commodity=commodities)
+        except ValueError:
+            pass  # No 'commodity' dimension
 
     return data
