@@ -14,6 +14,7 @@ from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools import advance
+from message_ix_models.util import nodes_ex_world
 
 from message_data.model.transport.utils import path_fallback
 from message_data.reporting.util import as_quantity
@@ -396,14 +397,6 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
             y,
         )
     )
-
-
-def nodes_ex_world(nodes: list) -> List[str]:
-    """Nodes excluding 'World'.
-
-    .. todo:: move upstream, to :mod:`message_ix`.
-    """
-    return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
 
 
 def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:
