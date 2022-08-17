@@ -6,8 +6,6 @@ data source:
   non-LDV: IKARUS
   # LDV technologies: 'US-TIMES MA3T' or null
   LDV: US-TIMES MA3T
-  # Demands: 'dummy' only
-  demand dummy: false
   # Population: 'GEA mix' only
   population: GEA mix
   #  GDP

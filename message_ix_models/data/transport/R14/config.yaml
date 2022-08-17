@@ -6,8 +6,6 @@ data source:
   non-LDV: IKARUS
   # LDV technologies: 'US-TIMES MA3T' or null
   LDV: US-TIMES MA3T
-  # Demands: 'dummy' only
-  demand dummy: false
   population: SSP2
   gdp: SSP2
   # Emissions: ID of a dump from a base scenario
