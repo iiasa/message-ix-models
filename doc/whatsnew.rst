@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2022.8.17
+=========
 
 - Add :func:`.nodes_ex_world` and use this in :func:`.disutility.data_conversion` instead of expected a "World" node ID to be the first element in :attr:`.ScenarioInfo.N` (:pull:`78`).
 - Add example files and documentation for :doc:`pkg-data/iiasa-se` (:pull:`78`).
