@@ -43,6 +43,8 @@ The code and data:
   through the ixmp callback feature, to set demand for specific transport
   technologies.
 
+.. _transport-usage:
+
 Usage
 =====
 
