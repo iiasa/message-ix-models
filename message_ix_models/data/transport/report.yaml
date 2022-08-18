@@ -81,7 +81,8 @@ general:
   - _transport 2c::iamc
   - _transport 2d::iamc
   - _transport 2e::iamc
-  - _transport 3::iamc
+  # Temporarily disabled to merge #370
+  # - _transport 3::iamc
   # For debugging
   # - _transport debug ACT::iamc
   # - _transport debug CAP::iamc
