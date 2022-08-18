@@ -179,7 +179,7 @@ def test_iamc_simulated(
 
     # Key collecting both file output/scenario update
     # NB the trailing colons are necessary because of how genno handles report.yaml
-    rep.add("test", ["transport iamc file:", "transport iamc store:"])
+    rep.add("test", ["transport iamc file", "transport iamc store"])
 
     # print(rep.describe("transport iamc store"))  # DEBUG
     # print(rep.describe("scenario"))  # DEBUG

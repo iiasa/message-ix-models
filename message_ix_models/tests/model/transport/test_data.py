@@ -127,7 +127,6 @@ def test_get_ikarus_data(test_context, regions, N_node, years):
         "technical_lifetime": {"[time]": 1},
     }
     for par, dim in dims.items():
-        print(par, data[par])
         assert_units(data[par], dim)
 
     # Specific magnitudes of other values to check
