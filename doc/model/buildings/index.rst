@@ -5,6 +5,8 @@ MESSAGEix-Buildings refers to a set of models including a specific configuration
 
 Code is maintained in the `iiasa/MESSAGE_Buildings <https://github.com/iiasa/MESSAGE_Buildings>`_ repository.
 
+.. _buildings-usage:
+
 Usage
 =====
 
