@@ -1,6 +1,5 @@
 """Utility code for MESSAGEix-Transport."""
 import logging
-from copy import deepcopy
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
@@ -79,12 +78,12 @@ def configure(
     _setdefault_recursive(
         cfg,
         {
-            "data source": options.pop("data source", dict()),
             "mode-share": "default",
             "regions": context.regions,
             "report": dict(filter=False),
         },
     )
+    _update_recursive(cfg, {"data source": options.pop("data source", dict())})
 
     # future: set the mode-share key
     future = options.pop("futures-scenario", None)
@@ -158,7 +157,8 @@ def read_config(context):
     context["transport defaults"] = load_private_data("transport", *METADATA[0])
 
     # Preserve any existing configuration
-    prior_config = deepcopy(context.get("transport config", dict()))
+    context.pop("transport config", None)
+    # prior_config = deepcopy(context.get("transport config", dict()))
 
     # Overrides specific to regional versions
     for parts in METADATA:
@@ -170,8 +170,6 @@ def read_config(context):
         path = path_fallback(context, *parts).relative_to(private_data_path())
         context[key] = load_private_data(*path.parts) or context.get(key, dict())
 
-    # Overwrite configuration from file with existing values
-    _update_recursive(context["transport config"], prior_config)
     # Apply defaults where not set in the region-specific config
     _setdefault_recursive(context["transport config"], context["transport defaults"])
 
