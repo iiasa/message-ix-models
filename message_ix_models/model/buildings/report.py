@@ -33,6 +33,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     """:meth:`.prepare_reporter` callback for MESSAGE-Buildings."""
     # Guess location of MESSAGE_Buildings code
     if "buildings" not in context:
+        assert MESSAGE_DATA_PATH is not None
         buildings_code_dir = MESSAGE_DATA_PATH.parent.joinpath("buildings")
         assert buildings_code_dir.exists()
         context.setdefault("buildings", dict(code_dir=buildings_code_dir))
