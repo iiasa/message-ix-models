@@ -41,9 +41,6 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         "sturm output path", context["buildings"]["code_dir"].joinpath("STURM_output")
     )
 
-    # Temporary; disable storing time series
-    rep.graph["config"]["buildings"] = dict(store_ts=False)
-
     # Buildings filters
     rep.add("buildings filters", buildings_filters, "t", "y::model")
 
@@ -53,9 +50,32 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     rep.add("buildings 2", report2, "scenario", "config", "sturm output path")
     rep.add("buildings 3", report3, "scenario", "buildings 2", "config")
 
+    # Temporary; disable storing time series data
+    store_enabled = False
+    # Add 1 key that stores the data on the scenario
+    if store_enabled:
+        rep.add(
+            "store_ts",
+            "buildings iamc store",
+            "scenario",
+            "buildings 0",
+            "buildings 1",
+            # "buildings 2",  # sturm_rep was commented in original
+            "buildings 3",
+        )
+    else:
+        rep.add("buildings iamc store", [])  # Does nothing
+
     # Add a key that invokes all buildings reporting
     rep.add(
-        "buildings all", ["buildings 0", "buildings 1", "buildings 2", "buildings 3"]
+        "buildings all",
+        [
+            "buildings iamc store",
+            "buildings 0",
+            "buildings 1",
+            "buildings 2",
+            "buildings 3",
+        ],
     )
 
 
@@ -175,15 +195,6 @@ def report0(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
 
     FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot_fuel[COLS]], ignore_index=True)
 
-    # Store time series data on `scenario`
-    # TODO use store_ts from ixmp
-    if config["buildings"]["store_ts"]:
-        scenario.check_out(timeseries_only=True)
-        scenario.add_timeseries(FE_rep)
-        scenario.commit("MESSAGEix-Buildings reporting")
-    else:
-        log.info("Skip storing data")
-
     # Write time series data to files
     # TODO use write_report from genno
     FE_rep.to_csv(config["output_path"] / "buildings-FE.csv")
@@ -255,15 +266,6 @@ def report1(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
         .reset_index(drop=True)
     )
 
-    # Store time series data on `scenario`
-    # TODO use store_ts from ixmp
-    if config["buildings"]["store_ts"]:
-        scenario.check_out(timeseries_only=True)
-        scenario.add_timeseries(emiss_rep)
-        scenario.commit("MESSAGEix-Buildings reporting")
-    else:
-        log.info("Skip storing data")
-
     # Write time series data to files
     # TODO use write_report from genno
     emiss_rep.to_csv(config["output_path"] / "buildings-emiss.csv")
@@ -291,15 +293,6 @@ def report2(
     sturm_rep["node"] = "R12_" + sturm_rep["Region"]
     sturm_rep = sturm_rep.rename(columns={"Variable": "variable", "Unit": "unit"})
     sturm_rep = sturm_rep[COLS]
-
-    # Store time series data on `scenario`
-    # TODO use store_ts from ixmp
-    if config["buildings"]["store_ts"]:
-        scenario.check_out(timeseries_only=True)
-        # scenario.add_timeseries(sturm_rep)
-        scenario.commit("MESSAGEix-Buildings reporting")
-    else:
-        log.info("Skip storing data")
 
     # Write time series data to files
     # TODO use write_report from genno
@@ -374,15 +367,6 @@ def report3(
     test_full = test_full.sort_values(["node", "variable", "year"]).reset_index(
         drop=True
     )
-
-    # Store time series data on `scenario`
-    # TODO use store_ts from ixmp
-    if config["buildings"]["store_ts"]:
-        scenario.check_out(timeseries_only=True)
-        scenario.add_timeseries(test_full)  # temp use
-        scenario.commit("MESSAGEix-Buildings reporting")
-    else:
-        log.info("Skip storing data")
 
     # Write time series data to files
     # TODO use write_report from genno
