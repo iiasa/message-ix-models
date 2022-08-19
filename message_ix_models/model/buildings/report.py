@@ -97,7 +97,7 @@ def report0(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
     FE_bio_to_add.loc[
         FE_bio_to_add["technology"] == "biomass_nc", "technology"
     ] = "biomass_resid_cook"
-    FE_rep = FE_rep.append(FE_bio_to_add)
+    FE_rep = pd.concat([FE_rep, FE_bio_to_add])
     FE_rep.loc[
         FE_rep["technology"] == "biomass_nc", "technology"
     ] = "biomass_nc_resid_cook"
@@ -134,15 +134,17 @@ def report0(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
         "Final Energy|" + "Residential and Commercial|" + FE_rep_tot["fuel"]
     )
 
-    FE_rep = FE_rep[COLS].append(FE_rep_tot[COLS], ignore_index=True)
+    FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot[COLS]], ignore_index=True)
 
     # Compute a global total
     glob_rep = FE_rep.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_rep["node"] = "R12_GLB"
 
-    FE_rep = FE_rep.append(glob_rep, ignore_index=True)
-
-    FE_rep = FE_rep.sort_values(["node", "variable", "year"]).reset_index(drop=True)
+    FE_rep = (
+        pd.concat([FE_rep, glob_rep], ignore_index=True)
+        .sort_values(["node", "variable", "year"])
+        .reset_index(drop=True)
+    )
 
     # sum of the building related Final Energy by fuel types to get the variable
     # "Final Energy|Residential and Commercial",
@@ -171,7 +173,7 @@ def report0(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
 
     FE_rep = FE_rep.drop(columns=["fuel_type"])
 
-    FE_rep = FE_rep[COLS].append(FE_rep_tot_fuel[COLS], ignore_index=True)
+    FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot_fuel[COLS]], ignore_index=True)
 
     # Store time series data on `scenario`
     # TODO use store_ts from ixmp
@@ -242,15 +244,15 @@ def report1(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
         + emiss_tot["fuel"]
     )
 
-    emiss = emiss[COLS].append(emiss_tot[COLS], ignore_index=True)
+    emiss = pd.concat([emiss[COLS], emiss_tot[COLS]], ignore_index=True)
 
     # Global total
     glob_emiss = emiss.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_emiss["node"] = "R12_GLB"
-    emiss_rep = emiss.append(glob_emiss, ignore_index=True)
-
-    emiss_rep = emiss_rep.sort_values(["node", "variable", "year"]).reset_index(
-        drop=True
+    emiss_rep = (
+        pd.concat([emiss, glob_emiss], ignore_index=True)
+        .sort_values(["node", "variable", "year"])
+        .reset_index(drop=True)
     )
 
     # Store time series data on `scenario`
@@ -283,7 +285,7 @@ def report2(
     sturm_res = pd.read_csv(sturm_output_path / res_filename)
     sturm_com = pd.read_csv(sturm_output_path / com_filename)
 
-    sturm_rep = sturm_res.append(sturm_com).melt(
+    sturm_rep = pd.concat([sturm_res, sturm_com]).melt(
         id_vars=["Model", "Scenario", "Region", "Variable", "Unit"], var_name="year"
     )
     sturm_rep["node"] = "R12_" + sturm_rep["Region"]
@@ -361,15 +363,13 @@ def report3(
     )
 
     # Order the columns
-    test_2 = test_2[COLS]
-
-    test_full = sturm_rep.append(test_2)
+    test_full = pd.concat([sturm_rep, test_2[COLS]])
 
     # Global total
     # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
     glob_sturm = test_full.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_sturm["node"] = "R12_GLB"
-    test_full = test_full.append(glob_sturm, ignore_index=True)
+    test_full = pd.concat([test_full, glob_sturm], ignore_index=True)
 
     test_full = test_full.sort_values(["node", "variable", "year"]).reset_index(
         drop=True
