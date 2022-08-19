@@ -463,12 +463,3 @@ def build_and_solve(  # noqa: C901
     #     sc_macro.set_as_default()
 
     mp.close_db()
-
-
-@cli.command("report")
-@click.pass_obj
-def report_cmd(context):
-    """Store reported results as time-series data."""
-    from .report import report
-
-    report(context, context.get_scenario())
