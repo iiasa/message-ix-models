@@ -288,8 +288,7 @@ def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFr
     else:
         filename = "report_IRP_SSP2_2C_{}_R12.csv"
 
-    # - Read the files.
-    # - Concatenate.
+    # - Read 2 files and concatenate.
     # - Melt into long format.
     # - Rename columns to lower case.
     # - Construct the region name by adding an R12_ prefix.
@@ -312,61 +311,46 @@ def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFr
 
 
 def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFrame:
-    # ------------------------------------------------------------------------------
-    # The part below is added for futher data wrangling on top of the orginal one
-    # Start from here
-    # change the variable name and do sum for sturm_rep
+    """Manipulate variable names for `sturm_rep` and compute additional sums."""
 
-    test = sturm_rep.copy(True)  # temp variable name used for trying
-
+    # Variables to exclude
     prefix = "Energy Service|Residential and Commercial|"
-    var_list = [
+    exclude = [
         f"{prefix}|Commercial",
         f"{prefix}|Residential|Multi-family|Floor space",
         f"{prefix}|Residential|Single-family|Floor space",
         f"{prefix}|Residential|Slum|Floor space",
     ]
 
-    # for dealing with the final energy related variable names
-
-    # Final energy related variables
-    test_2 = test[~test["variable"].isin(var_list)].reset_index(drop=True)
-
-    # Convert a name like A|B|C|D to A|D
-    test_2[["variable_head", "sector", "sub_sector", "variable_rest"]] = test_2[
-        "variable"
-    ].str.split("|", 3, expand=True)
-
-    test_2["new_var_name"] = test_2["variable_head"] + "|" + test_2["variable_rest"]
-
-    test_2 = test_2.drop(
-        columns=["sector", "variable_rest", "variable_head", "variable"]
+    # - Exclude certain variables.
+    # - Convert a name like A|B|C|D to A|Residential and Commercial|D.
+    data = (
+        sturm_rep[~sturm_rep["variable"].isin(exclude)]
+        .reset_index(drop=True)
+        .assign(
+            variable=lambda df: df["variable"].str.replace(
+                r"([^\|]*\|)([^\|]*\|)([^\|]*\|)(.*)",
+                r"\g<1>Residential and Commercial|\g<4>",
+            )
+        )
     )
 
-    # Sum of residential and commercial
-    test_2 = (
-        test_2.groupby(["node", "unit", "year", "new_var_name"]).sum().reset_index()
+    # Sum of residential and commercial, i.e. omitting the discarded "B|C" dimensions
+    sum_1 = data.groupby(["node", "variable", "unit", "year"]).sum().reset_index()
+    data = pd.concat([data, sum_1], ignore_index=True)
+
+    # Global total, i.e. omitting "node"
+    sum_2 = (
+        data.groupby(["variable", "unit", "year"])
+        .sum()
+        .reset_index()
+        .assign(node="R12_GLB")
     )
 
-    test_2[["new_var_head", "new_var_rest"]] = test_2["new_var_name"].str.split(
-        "|", 1, expand=True
-    )
-
-    # Convert A|D to A|Residential and Commercial|D
-    test_2["variable"] = (
-        test_2["new_var_head"] + "|Residential and Commercial|" + test_2["new_var_rest"]
-    )
-
-    test_full = pd.concat([sturm_rep, test_2[COLS]])
-
-    # Global total
-    # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
-    glob_sturm = test_full.groupby(["variable", "unit", "year"]).sum().reset_index()
-    glob_sturm["node"] = "R12_GLB"
-    test_full = (
-        pd.concat([test_full, glob_sturm], ignore_index=True)
+    data = (
+        pd.concat([data, sum_2], ignore_index=True)
         .sort_values(["node", "variable", "year"])
         .reset_index(drop=True)
     )
 
-    return test_full
+    return data
