@@ -1,6 +1,7 @@
 """Atomic reporting computations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
+from typing import List
 
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
@@ -9,10 +10,12 @@ import pandas as pd
 
 log = logging.getLogger(__name__)
 
-
-def make_output_path(config, name):
-    """Return a path under the "output_dir" Path from the reporter configuration."""
-    return config["output_dir"].joinpath(name)
+__all__ = [
+    "gwp_factors",
+    "make_output_path",
+    "model_periods",
+    "share_curtailment",
+]
 
 
 def gwp_factors():
@@ -46,6 +49,25 @@ def gwp_factors():
     # Convert to Quantity object and return
     return Quantity(
         pd.DataFrame(data, columns=dims + ["value"]).set_index(dims)["value"].dropna()
+    )
+
+
+def make_output_path(config, name):
+    """Return a path under the "output_dir" Path from the reporter configuration."""
+    return config["output_dir"].joinpath(name)
+
+
+def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
+    """Return the elements of `y` beyond the firstmodelyear of `cat_year`.
+
+    .. todo:: move upstream, to :mod:`message_ix`.
+    """
+    return list(
+        filter(
+            lambda year: cat_year.query("type_year == 'firstmodelyear'")["year"].item()
+            <= year,
+            y,
+        )
     )
 
 
