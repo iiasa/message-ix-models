@@ -104,6 +104,23 @@ def buildings_filters(all_techs: List[str], years: List) -> Dict:
     )
 
 
+def _add_global_total(df):
+    """Add a global total (across the "node" dimension to `df`."""
+    assert set(df.columns) == set(COLS)
+
+    total = (
+        df.groupby(["variable", "unit", "year"])
+        .sum()
+        .reset_index()
+        .assign(node="R12_GLB")
+    )
+    return (
+        pd.concat([df, total], ignore_index=True)
+        .sort_values(["node", "variable", "year"])
+        .reset_index(drop=True)
+    )
+
+
 def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     """Report `scenario`.
 
@@ -174,19 +191,7 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
 
     FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot[COLS]], ignore_index=True)
 
-    # Compute a global total
-    glob_rep = (
-        FE_rep.groupby(["variable", "unit", "year"])
-        .sum()
-        .reset_index()
-        .assign(node="R12_GLB")
-    )
-
-    FE_rep = (
-        pd.concat([FE_rep, glob_rep], ignore_index=True)
-        .sort_values(["node", "variable", "year"])
-        .reset_index(drop=True)
-    )
+    _add_global_total(FE_rep)
 
     # sum of the building related Final Energy by fuel types to get the variable
     # "Final Energy|Residential and Commercial",
@@ -215,7 +220,9 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
 
 
 def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
-    # Emissions from Demand
+    """Report buildings emissions using the ``relation_activity`` approach."""
+
+    # Retrieve data
     act = scenario.var("ACT", filters=filters)
     emiss = scenario.par("relation_activity", filters=filters)
 
@@ -223,7 +230,10 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     emiss = emiss.loc[emiss["relation"].str.contains("Emission")]
 
     emiss = emiss.merge(act).rename(columns={"year_act": "year", "node_loc": "node"})
-    emiss["value"] = emiss["value"] * emiss["lvl"]  # ?
+
+    # Product of the "value" (from relation_activity) and "lvl" (from ACT)
+    # TODO move this product (relation_activity * lvl) upstream to message_ix.reporting
+    emiss["value"] = emiss["value"] * emiss["lvl"]
 
     # Some fixes
     emiss = emiss.assign(
@@ -245,6 +255,7 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     # Adjust sector and fuel names
     emiss.replace(NAME_MAP, inplace=True)
 
+    # Assemble variable name
     emiss["variable"] = (
         "Emissions|"
         + emiss["emission"]
@@ -254,7 +265,7 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
         + emiss["fuel"]
     )
 
-    # Compute a total
+    # Compute a total across sector
     emiss_tot = (
         emiss.groupby(["node", "emission", "fuel", "unit", "year"]).sum().reset_index()
     ).assign(
@@ -267,22 +278,19 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     emiss = pd.concat([emiss[COLS], emiss_tot[COLS]], ignore_index=True)
 
     # Global total
-    glob_emiss = (
-        emiss.groupby(["variable", "unit", "year"])
-        .sum()
-        .reset_index()
-        .assign(node="R12_GLB")
-    )
-    emiss_rep = (
-        pd.concat([emiss, glob_emiss], ignore_index=True)
-        .sort_values(["node", "variable", "year"])
-        .reset_index(drop=True)
-    )
+    _add_global_total(emiss)
 
-    return emiss_rep
+    return emiss
 
 
 def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFrame:
+    """Load STURM reporting outputs from file and return.
+
+    This function does not do any numerical manipulations. The only changes applied are:
+
+    - Data is transformed from wide to long format.
+    - The "node" dimension labels have "R12_" prepended.
+    """
     # Add STURM reporting
     if "baseline" in scenario.scenario:
         filename = "report_NGFS_SSP2_BL_{}_R12.csv"
@@ -332,6 +340,7 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
             variable=lambda df: df["variable"].str.replace(
                 r"([^\|]*\|)([^\|]*\|)([^\|]*\|)(.*)",
                 r"\g<1>Residential and Commercial|\g<4>",
+                regex=True,
             )
         )
     )
@@ -341,17 +350,6 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
     data = pd.concat([data, sum_1], ignore_index=True)
 
     # Global total, i.e. omitting "node"
-    sum_2 = (
-        data.groupby(["variable", "unit", "year"])
-        .sum()
-        .reset_index()
-        .assign(node="R12_GLB")
-    )
-
-    data = (
-        pd.concat([data, sum_2], ignore_index=True)
-        .sort_values(["node", "variable", "year"])
-        .reset_index(drop=True)
-    )
+    _add_global_total(data)
 
     return data
