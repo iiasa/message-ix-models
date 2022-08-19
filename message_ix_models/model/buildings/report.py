@@ -332,6 +332,7 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
     # Final energy related variables
     test_2 = test[~test["variable"].isin(var_list)].reset_index(drop=True)
 
+    # Convert a name like A|B|C|D to A|D
     test_2[["variable_head", "sector", "sub_sector", "variable_rest"]] = test_2[
         "variable"
     ].str.split("|", 3, expand=True)
@@ -351,6 +352,7 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
         "|", 1, expand=True
     )
 
+    # Convert A|D to A|Residential and Commercial|D
     test_2["variable"] = (
         test_2["new_var_head"] + "|Residential and Commercial|" + test_2["new_var_rest"]
     )
