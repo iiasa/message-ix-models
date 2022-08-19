@@ -42,13 +42,21 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     # Temporary; disable storing time series
     rep.graph["config"]["buildings"] = dict(store_ts=False)
 
-    # Add a key which invokes the monolithic reporting function
-    rep.add("buildings all", report, "scenario", "config", "sturm output path")
+    # Add 1 key for each of the "tables"
+    rep.add("buildings 0", report0, "scenario", "config")
+    rep.add("buildings 1", report1, "scenario", "config")
+    # This requires the location of the STURM outputs, determined above
+    rep.add("buildings 2", report2, "scenario", "config", "sturm output path")
+    # This depends out the output of report2
+    rep.add("buildings 3", report3, "scenario", "buildings 2", "config")
+
+    # Add a key that invokes all buildings reporting
+    rep.add(
+        "buildings all", ["buildings 0", "buildings 1", "buildings 2", "buildings 3"]
+    )
 
 
-def report(
-    scenario: message_ix.Scenario, config: dict, sturm_output_path: Path
-) -> None:
+def report0(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
     """Report `scenario`.
 
     STURM output data are loaded from CSV files and merged with computed values stored
@@ -104,6 +112,7 @@ def report(
     )
 
     # Calculate totals by (commodity, node, year)
+    # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
     FE_rep = (
         FE_rep[["node", "commodity", "year", "value"]]
         .groupby(["node", "commodity", "year"])
@@ -139,6 +148,75 @@ def report(
 
     FE_rep = FE_rep.sort_values(["node", "variable", "year"]).reset_index(drop=True)
 
+    # sum of the building related Final Energy by fuel types to get the variable
+    # "Final Energy|Residential and Commercial",
+    # "Final Energy|Residential", and "Final Energy|Commercial"
+    # for FE_rep
+
+    FE_rep["fuel_type"] = FE_rep["variable"].str.split("|", 2, expand=True)[1]
+
+    var_list_drop = [
+        "Final Energy|Residential and Commercial|Solids|Biomass|Traditional",
+        "Final Energy|Residential|Solids|Biomass|Traditional",
+        "Final Energy|Commercial|Solids|Biomass",
+    ]
+
+    # Sum of fuel types for different building sub-setors (R, C and R+C)
+    FE_rep_tot_fuel = (
+        FE_rep[~FE_rep["variable"].isin(var_list_drop)]
+        .groupby(["node", "unit", "year", "fuel_type"])
+        .sum()
+        .reset_index()
+    )
+
+    FE_rep_tot_fuel["variable"] = "Final Energy|" + FE_rep_tot_fuel["fuel_type"]
+
+    FE_rep_tot_fuel = FE_rep_tot_fuel.drop(columns=["fuel_type"])
+
+    FE_rep = FE_rep.drop(columns=["fuel_type"])
+
+    FE_rep = FE_rep[COLS].append(FE_rep_tot_fuel[COLS], ignore_index=True)
+
+    # Store time series data on `scenario`
+    # TODO use store_ts from ixmp
+    if config["buildings"]["store_ts"]:
+        scenario.check_out(timeseries_only=True)
+        scenario.add_timeseries(FE_rep)
+        scenario.commit("MESSAGEix-Buildings reporting")
+    else:
+        log.info("Skip storing data")
+
+    # Write time series data to files
+    # TODO use write_report from genno
+    FE_rep.to_csv(config["output_path"] / "buildings-FE.csv")
+
+    return FE_rep
+
+
+def report1(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
+    info = ScenarioInfo(scenario)
+
+    build_ene_tecs = [
+        tec
+        for tec in info.set["technology"]
+        if (
+            (("resid" in tec) or ("comm" in tec))
+            and (
+                ("apps" in tec)
+                or ("cook" in tec)
+                or ("heat" in tec)
+                or ("hotwater" in tec)
+                or ("cool" in tec)
+            )
+        )
+    ] + ["biomass_nc"]
+
+    filters = dict(technology=build_ene_tecs, year_act=info.Y)
+
+    # Final Energy Demand
+
+    act = scenario.var("ACT", filters=filters)
+
     # Emissions from Demand
     emiss = scenario.par("relation_activity", filters=filters)
 
@@ -156,6 +234,7 @@ def report(
     emiss["emission"] = emiss["relation"].str.rsplit("_", 1, expand=True)[0]
     emiss["unit"] = "Mt " + emiss["emission"] + "/yr"
 
+    # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
     emiss = emiss[["node_loc", "year_act", "commodity", "emission", "unit", "value"]]
     emiss = (
         emiss.groupby(["node_loc", "year_act", "commodity", "emission", "unit"])
@@ -200,6 +279,27 @@ def report(
         drop=True
     )
 
+    # Store time series data on `scenario`
+    # TODO use store_ts from ixmp
+    if config["buildings"]["store_ts"]:
+        scenario.check_out(timeseries_only=True)
+
+        scenario.add_timeseries(emiss_rep)
+
+        scenario.commit("MESSAGEix-Buildings reporting")
+    else:
+        log.info("Skip storing data")
+
+    # Write time series data to files
+    # TODO use write_report from genno
+    emiss_rep.to_csv(config["output_path"] / "buildings-emiss.csv")
+
+    return emiss_rep
+
+
+def report2(
+    scenario: message_ix.Scenario, config: dict, sturm_output_path: Path
+) -> pd.DataFrame:
     # Add STURM reporting
     if "baseline" in scenario.scenario:
         res_filename = "report_NGFS_SSP2_BL_resid_R12.csv"
@@ -216,16 +316,29 @@ def report(
     )
     sturm_rep["node"] = "R12_" + sturm_rep["Region"]
     sturm_rep = sturm_rep.rename(columns={"Variable": "variable", "Unit": "unit"})
-    sturm_rep = sturm_rep[FE_rep.columns]
+    sturm_rep = sturm_rep[COLS]
 
-    # glob_sturm = sturm_rep.groupby(["variable", "unit", "year"]).sum().reset_index()
-    # glob_sturm["node"] = "R12_GLB"
-    #
-    # sturm_rep = sturm_rep.append(glob_sturm, ignore_index=True)
-    # sturm_rep = sturm_rep.sort_values(["node", "variable", "year"]).reset_index(
-    #     drop=True
-    # )
+    # Store time series data on `scenario`
+    # TODO use store_ts from ixmp
+    if config["buildings"]["store_ts"]:
+        scenario.check_out(timeseries_only=True)
+        # scenario.add_timeseries(sturm_rep)
+        scenario.commit("MESSAGEix-Buildings reporting")
+    else:
+        log.info("Skip storing data")
 
+    # Write time series data to files
+    # TODO use write_report from genno
+    sturm_rep.to_csv(config["output_path"] / "sturm.csv")
+
+    return sturm_rep
+
+
+def report3(
+    scenario: message_ix.Scenario,
+    sturm_rep: pd.DataFrame,
+    config: dict,
+) -> pd.DataFrame:
     # ------------------------------------------------------------------------------
     # The part below is added for futher data wrangling on top of the orginal one
     # Start from here
@@ -281,6 +394,7 @@ def report(
     test_full = sturm_rep.append(test_2)
 
     # Global total
+    # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
     glob_sturm = test_full.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_sturm["node"] = "R12_GLB"
     test_full = test_full.append(glob_sturm, ignore_index=True)
@@ -289,53 +403,17 @@ def report(
         drop=True
     )
 
-    # ----------------------------------------------
-    # sum of the building related Final Energy by fuel types to get the variable
-    # "Final Energy|Residential and Commercial",
-    # "Final Energy|Residential", and "Final Energy|Commercial"
-    # for FE_rep
-
-    FE_rep["fuel_type"] = FE_rep["variable"].str.split("|", 2, expand=True)[1]
-
-    var_list_drop = [
-        "Final Energy|Residential and Commercial|Solids|Biomass|Traditional",
-        "Final Energy|Residential|Solids|Biomass|Traditional",
-        "Final Energy|Commercial|Solids|Biomass",
-    ]
-
-    # Sum of fuel types for different building sub-setors (R, C and R+C)
-    FE_rep_tot_fuel = (
-        FE_rep[~FE_rep["variable"].isin(var_list_drop)]
-        .groupby(["node", "unit", "year", "fuel_type"])
-        .sum()
-        .reset_index()
-    )
-
-    FE_rep_tot_fuel["variable"] = "Final Energy|" + FE_rep_tot_fuel["fuel_type"]
-
-    FE_rep_tot_fuel = FE_rep_tot_fuel.drop(columns=["fuel_type"])
-
-    FE_rep = FE_rep.drop(columns=["fuel_type"])
-
-    FE_rep = FE_rep[COLS].append(FE_rep_tot_fuel[COLS], ignore_index=True)
-
     # Store time series data on `scenario`
     # TODO use store_ts from ixmp
     if config["buildings"]["store_ts"]:
         scenario.check_out(timeseries_only=True)
-
-        scenario.add_timeseries(FE_rep)
-        scenario.add_timeseries(emiss_rep)
-        # scenario.add_timeseries(sturm_rep)
         scenario.add_timeseries(test_full)  # temp use
-
         scenario.commit("MESSAGEix-Buildings reporting")
     else:
         log.info("Skip storing data")
 
     # Write time series data to files
     # TODO use write_report from genno
-    FE_rep.to_csv(config["output_path"] / "buildings-FE.csv")
-    emiss_rep.to_csv(config["output_path"] / "buildings-emiss.csv")
-    sturm_rep.to_csv(config["output_path"] / "sturm.csv")
     test_full.to_csv(config["output_path"] / "sturm-name-change.csv")
+
+    return test_full
