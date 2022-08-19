@@ -34,7 +34,6 @@ __all__ = [
     "iea_eei_fv",
     "_lambda",
     "logit",
-    "model_periods",
     "nodes_ex_world",
     "nodes_world_agg",
     "pdt_per_capita",
@@ -383,20 +382,6 @@ def iea_eei_fv(name: str, config: Dict) -> Quantity:
 
     assert set("nyt") == set(result.dims)
     return result.sel(y=ym1, t="Total freight transport", drop=True)
-
-
-def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
-    """Return the elements of `y` beyond the firstmodelyear of `cat_year`.
-
-    .. todo:: move upstream, to :mod:`message_ix`.
-    """
-    return list(
-        filter(
-            lambda year: cat_year.query("type_year == 'firstmodelyear'")["year"].item()
-            <= year,
-            y,
-        )
-    )
 
 
 def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:

@@ -73,7 +73,7 @@ def _gen1(c: Computer, *keys) -> None:
 
 
 def callback(rep: Reporter, context: Context) -> None:
-    """:meth:`.prepare_reporter` callback for MESSAGE-Transport.
+    """:meth:`.prepare_reporter` callback for MESSAGEix-Transport.
 
     Among others, adds:
 
