@@ -200,10 +200,6 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
 
     FE_rep_tot_fuel["variable"] = "Final Energy|" + FE_rep_tot_fuel["fuel_type"]
 
-    FE_rep_tot_fuel = FE_rep_tot_fuel.drop(columns=["fuel_type"])
-
-    FE_rep = FE_rep.drop(columns=["fuel_type"])
-
     FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot_fuel[COLS]], ignore_index=True)
 
     return FE_rep
