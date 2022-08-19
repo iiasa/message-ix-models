@@ -175,20 +175,24 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     # - Rename "biomass_nc" to "biomass_nc_resid_cook"
     # - Duplicate data as "biomass_resid_cook"
     # - Extract commodity from technology labels
-    FE_rep = pd.concat(
-        [
-            FE_rep.replace(dict(technology={"biomass_nc": "biomass_nc_resid_cook"})),
-            FE_rep[mask].assign(technology="biomass_resid_cook"),
-        ]
-    ).assign(commodity=lambda df: df["technology"].str.rsplit("_", 1, expand=True)[0])
-
+    # - Select some columns.
     # - Calculate totals by (commodity, node, year)
     #   NB(PNK) genno will do this automatically if FE_rep is described with sums=True
     # - Extract fuel and sector from commodity labels.
     # - Adjust sector and fuel names.
     # - Construct a variable label.
     FE_rep = (
-        FE_rep[["node", "commodity", "year", "value"]]
+        pd.concat(
+            [
+                FE_rep.replace(
+                    dict(technology={"biomass_nc": "biomass_nc_resid_cook"})
+                ),
+                FE_rep[mask].assign(technology="biomass_resid_cook"),
+            ]
+        )
+        .assign(
+            commodity=lambda df: df["technology"].str.rsplit("_", 1, expand=True)[0]
+        )[["node", "commodity", "year", "value"]]
         .pipe(sum_on, "node", "commodity", "year")
         .pipe(fuel_sector_from_commodity)
         .pipe(var_name, "Final Energy|{sector}|{fuel}")
@@ -246,7 +250,7 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     # - Merge ACT data
     # - Rename columns.
     # - Product of the "value" (from relation_activity) and "lvl" (from ACT)
-    #   TODO provider this product (relation_activity * lvl) from message_ix.reporting
+    #   TODO provide this product (relation_activity * lvl) from message_ix.reporting
     # - Adjust technology, commodity, emission, and unit labels.
     # - Select some columns.
     # - Compute sums.
@@ -332,13 +336,11 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
         f"{prefix}|Residential|Slum|Floor space",
     ]
 
-    mask = sturm_rep["variable"].isin(exclude)
-
     # - Exclude certain variables.
     # - Convert a name like A|B|C|D to A|Residential and Commercial|D.
     # - Sum, e.g. over the discarded B|C dimensions.
     data = (
-        sturm_rep[~mask]
+        sturm_rep[~sturm_rep["variable"].isin(exclude)]
         .reset_index(drop=True)
         .assign(
             variable=lambda df: df["variable"].str.replace(
