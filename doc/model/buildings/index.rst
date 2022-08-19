@@ -30,9 +30,7 @@ Usage
 
       mix-models \
         --url="ixmp://ixmp-dev/new model name/target scenario" \
-        buildings \
-        /path/to/mb/repo \
-        report
+        report -m model.buildings "buildings all"
 
 
 Base and destination scenarios

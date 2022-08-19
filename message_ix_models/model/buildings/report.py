@@ -1,9 +1,11 @@
 """Reporting for MESSAGEix-Buildings."""
 import logging
+from pathlib import Path
 
 import message_ix
 import pandas as pd
-from message_ix_models import ScenarioInfo
+from message_ix_models import Context, ScenarioInfo
+from message_ix_models.util import MESSAGE_DATA_PATH
 
 log = logging.getLogger(__name__)
 
@@ -24,11 +26,37 @@ NAME_MAP = dict(fuel=FUEL_NAME_MAP, sector=SECTOR_NAME_MAP)
 COLS = ["node", "variable", "unit", "year", "value"]
 
 
-def report(context, scenario: message_ix.Scenario):
+def callback(rep: message_ix.Reporter, context: Context) -> None:
+    """:meth:`.prepare_reporter` callback for MESSAGE-Buildings."""
+    # Guess location of MESSAGE_Buildings code
+    if "buildings" not in context:
+        buildings_code_dir = MESSAGE_DATA_PATH.parent.joinpath("buildings")
+        assert buildings_code_dir.exists()
+        context.setdefault("buildings", dict(code_dir=buildings_code_dir))
+
+    # Path where STURM output files are found
+    rep.add(
+        "sturm output path", context["buildings"]["code_dir"].joinpath("STURM_output")
+    )
+
+    # Temporary; disable storing time series
+    rep.graph["config"]["buildings"] = dict(store_ts=False)
+
+    # Add a key which invokes the monolithic reporting function
+    rep.add("buildings all", report, "scenario", "config", "sturm output path")
+
+
+def report(
+    scenario: message_ix.Scenario, config: dict, sturm_output_path: Path
+) -> None:
     """Report `scenario`.
 
     STURM output data are loaded from CSV files and merged with computed values stored
-    as timeseries on the `scenario`.
+    as timeseries on `scenario`.
+
+    Originally transcribed from :file:`reporting_EFC.py` in the buildings repository.
+
+    .. todo:: decompose further by making use of genno features.
     """
     info = ScenarioInfo(scenario)
 
@@ -180,9 +208,8 @@ def report(context, scenario: message_ix.Scenario):
         res_filename = "report_IRP_SSP2_2C_resid_R12.csv"
         com_filename = "report_IRP_SSP2_2C_comm_R12.csv"
 
-    sturm_output_dir = context["buildings"]["code_dir"].joinpath("STURM_output")
-    sturm_res = pd.read_csv(sturm_output_dir / res_filename)
-    sturm_com = pd.read_csv(sturm_output_dir / com_filename)
+    sturm_res = pd.read_csv(sturm_output_path / res_filename)
+    sturm_com = pd.read_csv(sturm_output_path / com_filename)
 
     sturm_rep = sturm_res.append(sturm_com).melt(
         id_vars=["Model", "Scenario", "Region", "Variable", "Unit"], var_name="year"
@@ -292,44 +319,23 @@ def report(context, scenario: message_ix.Scenario):
 
     FE_rep = FE_rep[COLS].append(FE_rep_tot_fuel[COLS], ignore_index=True)
 
-    # End here
-    # ------------------------------------------------------------------------------
+    # Store time series data on `scenario`
+    # TODO use store_ts from ixmp
+    if config["buildings"]["store_ts"]:
+        scenario.check_out(timeseries_only=True)
 
-    # -----------------------------------------------
-    # Add timeseries to the scenario
-    # (Requires removing solution and re-solving)
-    # scenario.remove_solution()
+        scenario.add_timeseries(FE_rep)
+        scenario.add_timeseries(emiss_rep)
+        # scenario.add_timeseries(sturm_rep)
+        scenario.add_timeseries(test_full)  # temp use
 
-    scenario.check_out(timeseries_only=True)
+        scenario.commit("MESSAGEix-Buildings reporting")
+    else:
+        log.info("Skip storing data")
 
-    scenario.add_timeseries(FE_rep)
-    scenario.add_timeseries(emiss_rep)
-    # scenario.add_timeseries(sturm_rep)
-    scenario.add_timeseries(test_full)  # temp use
-
-    # message_ix.models.DEFAULT_CPLEX_OPTIONS = {
-    #             "advind": 0,
-    #             "lpmethod": 4,
-    #             "threads": 4,
-    #             "epopt": 1e-06,
-    #         }
-
-    scenario.commit("MESSAGEix-Buildings reporting")
-    # scenario.solve()
-    # scenario.set_as_default()
-
-    # Also save timeseries data to files
-
-    base_path = context.get_local_path("report")
-    base_path.mkdir(exist_ok=True)
-
-    FE_rep.to_csv(base_path / "buildings-FE.csv")
-    emiss_rep.to_csv(base_path / "buildings-emiss.csv")
-    sturm_rep.to_csv(base_path / "sturm.csv")
-    test_full.to_csv(base_path / "sturm-name-change.csv")
-
-    # commented: unused
-    # Fei = mp_ENE.scenario_list(
-    #     model="MESSAGEix-GLOBIOM 1.1-BM-R12-EFC",
-    #     default=False,
-    # )
+    # Write time series data to files
+    # TODO use write_report from genno
+    FE_rep.to_csv(config["output_path"] / "buildings-FE.csv")
+    emiss_rep.to_csv(config["output_path"] / "buildings-emiss.csv")
+    sturm_rep.to_csv(config["output_path"] / "sturm.csv")
+    test_full.to_csv(config["output_path"] / "sturm-name-change.csv")
