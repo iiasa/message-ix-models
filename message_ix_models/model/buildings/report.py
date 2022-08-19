@@ -6,6 +6,7 @@ from typing import Dict, List
 
 import message_ix
 import pandas as pd
+from iam_units import registry
 from message_ix_models import Context
 from message_ix_models.util import MESSAGE_DATA_PATH
 
@@ -114,31 +115,30 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     """
     # Final Energy Demand
 
-    act = scenario.var("ACT", filters=filters)
-
-    FE_rep = act.copy(True)
+    # - Retrieve ACT data using `filters`
+    # - Rename dimensions.
+    FE_rep = scenario.var("ACT", filters=filters).rename(
+        columns={"year_act": "year", "node_loc": "node", "lvl": "value"}
+    )
 
     # Fix for non commercial biomass to be consistent with MESSAGE's original numbers
     # which go directly from primary to useful. So, we are "de-usefulizing" here using
     # our conversion factor
-    FE_rep.loc[FE_rep["technology"] == "biomass_nc", "lvl"] = (
-        FE_rep.loc[FE_rep["technology"] == "biomass_nc", "lvl"] / 0.15
-    )
-    FE_bio_to_add = FE_rep.loc[FE_rep["technology"] == "biomass_nc"].copy(True)
-    FE_bio_to_add.loc[
-        FE_bio_to_add["technology"] == "biomass_nc", "technology"
-    ] = "biomass_resid_cook"
-    FE_rep = pd.concat([FE_rep, FE_bio_to_add])
-    FE_rep.loc[
-        FE_rep["technology"] == "biomass_nc", "technology"
-    ] = "biomass_nc_resid_cook"
+    FE_rep.loc[FE_rep["technology"] == "biomass_nc", "value"] /= 0.15
 
-    FE_rep["commodity"] = FE_rep["technology"].str.rsplit("_", 1, expand=True)[0]
-    FE_rep = FE_rep.rename(
-        columns={"year_act": "year", "node_loc": "node", "lvl": "value"}
-    )
+    # - Rename "biomass_nc" to "biomass_nc_resid_cook"
+    # - Duplicate data as "biomass_resid_cook"
+    # - Extract commodity from technology labels
+    FE_rep = pd.concat(
+        [
+            FE_rep.replace(dict(technology={"biomass_nc": "biomass_nc_resid_cook"})),
+            FE_rep.query("technology == 'biomass_nc'").assign(
+                technology="biomass_resid_cook"
+            ),
+        ]
+    ).assign(commodity=lambda df: df["technology"].str.rsplit("_", 1, expand=True)[0])
 
-    # Calculate totals by (commodity, node, year)
+    # - Calculate totals by (commodity, node, year)
     # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
     FE_rep = (
         FE_rep[["node", "commodity", "year", "value"]]
@@ -147,29 +147,39 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
         .reset_index()
     )
 
+    # Extract fuel and sector from commodity labels
     FE_rep[["fuel", "sector"]] = FE_rep["commodity"].str.rsplit("_", 1, expand=True)
 
     # Adjust sector and fuel names
     FE_rep.replace(NAME_MAP, inplace=True)
 
+    # Construct a variable label
     FE_rep["variable"] = "Final Energy|" + FE_rep["sector"] + "|" + FE_rep["fuel"]
 
     # Convert from internal ACT GWa to EJ
-    # FIXME(PNK) don't hard-code conversion factors; check input units
-    FE_rep["unit"] = "EJ/yr"
-    FE_rep["value"] = FE_rep["value"] * 31.536 / 1e3
+    units_to = "EJ/yr"
+    converted = registry.Quantity(FE_rep["value"].values, "GWa/year").to("EJ/yr")
+    FE_rep = FE_rep.assign(value=converted.magnitude, unit=units_to)
 
     # Sum commercial and residential by fuel type
-    FE_rep_tot = FE_rep.groupby(["node", "fuel", "unit", "year"]).sum().reset_index()
-    FE_rep_tot["variable"] = (
-        "Final Energy|" + "Residential and Commercial|" + FE_rep_tot["fuel"]
+    FE_rep_tot = (
+        FE_rep.groupby(["node", "fuel", "unit", "year"])
+        .sum()
+        .reset_index()
+        .assign(
+            variable=lambda df: "Final Energy|Residential and Commercial|" + df["fuel"]
+        )
     )
 
     FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot[COLS]], ignore_index=True)
 
     # Compute a global total
-    glob_rep = FE_rep.groupby(["variable", "unit", "year"]).sum().reset_index()
-    glob_rep["node"] = "R12_GLB"
+    glob_rep = (
+        FE_rep.groupby(["variable", "unit", "year"])
+        .sum()
+        .reset_index()
+        .assign(node="R12_GLB")
+    )
 
     FE_rep = (
         pd.concat([FE_rep, glob_rep], ignore_index=True)
@@ -196,9 +206,7 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
         .groupby(["node", "unit", "year", "fuel_type"])
         .sum()
         .reset_index()
-    )
-
-    FE_rep_tot_fuel["variable"] = "Final Energy|" + FE_rep_tot_fuel["fuel_type"]
+    ).assign(variable=lambda df: "Final Energy|" + df["fuel_type"])
 
     FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot_fuel[COLS]], ignore_index=True)
 
@@ -210,29 +218,26 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     act = scenario.var("ACT", filters=filters)
     emiss = scenario.par("relation_activity", filters=filters)
 
-    emiss_rels = [rel for rel in emiss["relation"].unique() if "Emission" in rel]
+    # Subset of emissions data where the relation name contains "Emission"
+    emiss = emiss.loc[emiss["relation"].str.contains("Emission")]
 
-    emiss = emiss.loc[emiss["relation"].isin(emiss_rels)]
-    emiss = emiss.merge(act)
+    emiss = emiss.merge(act).rename(columns={"year_act": "year", "node_loc": "node"})
     emiss["value"] = emiss["value"] * emiss["lvl"]  # ?
 
     # Some fixes
-    emiss.loc[
-        emiss["technology"] == "biomass_nc", "technology"
-    ] = "biomass_nc_resid_cook"
-    emiss["commodity"] = emiss["technology"].str.rsplit("_", 1, expand=True)[0]
-    emiss["emission"] = emiss["relation"].str.rsplit("_", 1, expand=True)[0]
-    emiss["unit"] = "Mt " + emiss["emission"] + "/yr"
+    emiss = emiss.assign(
+        technology=emiss["technology"].replace("biomass_nc", "biomass_nc_resid_cook"),
+        commodity=emiss["technology"].str.rsplit("_", 1, expand=True)[0],
+        emission=emiss["relation"].str.rsplit("_", 1, expand=True)[0],
+        unit=lambda df: "Mt " + df["emission"] + "/yr",
+    )[["node", "year", "commodity", "emission", "unit", "value"]]
 
-    # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
-    emiss = emiss[["node_loc", "year_act", "commodity", "emission", "unit", "value"]]
+    # NB(PNK) genno will do this automatically if emiss is described with sums=True
     emiss = (
-        emiss.groupby(["node_loc", "year_act", "commodity", "emission", "unit"])
+        emiss.groupby(["node", "year", "commodity", "emission", "unit"])
         .sum()
         .reset_index()
     )
-
-    emiss = emiss.rename(columns={"year_act": "year", "node_loc": "node"})
 
     emiss[["fuel", "sector"]] = emiss["commodity"].str.rsplit("_", 1, expand=True)
 
@@ -248,21 +253,25 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
         + emiss["fuel"]
     )
 
+    # Compute a total
     emiss_tot = (
         emiss.groupby(["node", "emission", "fuel", "unit", "year"]).sum().reset_index()
-    )
-    emiss_tot["variable"] = (
-        "Emissions|"
-        + emiss_tot["emission"]
+    ).assign(
+        variable=lambda df: "Emissions|"
+        + df["emission"]
         + "|Energy|Demand|Residential and Commercial|"
-        + emiss_tot["fuel"]
+        + df["fuel"]
     )
 
     emiss = pd.concat([emiss[COLS], emiss_tot[COLS]], ignore_index=True)
 
     # Global total
-    glob_emiss = emiss.groupby(["variable", "unit", "year"]).sum().reset_index()
-    glob_emiss["node"] = "R12_GLB"
+    glob_emiss = (
+        emiss.groupby(["variable", "unit", "year"])
+        .sum()
+        .reset_index()
+        .assign(node="R12_GLB")
+    )
     emiss_rep = (
         pd.concat([emiss, glob_emiss], ignore_index=True)
         .sort_values(["node", "variable", "year"])
@@ -275,21 +284,29 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
 def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFrame:
     # Add STURM reporting
     if "baseline" in scenario.scenario:
-        res_filename = "report_NGFS_SSP2_BL_resid_R12.csv"
-        com_filename = "report_NGFS_SSP2_BL_comm_R12.csv"
+        filename = "report_NGFS_SSP2_BL_{}_R12.csv"
     else:
-        res_filename = "report_IRP_SSP2_2C_resid_R12.csv"
-        com_filename = "report_IRP_SSP2_2C_comm_R12.csv"
+        filename = "report_IRP_SSP2_2C_{}_R12.csv"
 
-    sturm_res = pd.read_csv(sturm_output_path / res_filename)
-    sturm_com = pd.read_csv(sturm_output_path / com_filename)
-
-    sturm_rep = pd.concat([sturm_res, sturm_com]).melt(
-        id_vars=["Model", "Scenario", "Region", "Variable", "Unit"], var_name="year"
+    # - Read the files.
+    # - Concatenate.
+    # - Melt into long format.
+    # - Rename columns to lower case.
+    # - Construct the region name by adding an R12_ prefix.
+    # - Drop others.
+    sturm_rep = (
+        pd.concat(
+            [
+                pd.read_csv(sturm_output_path / filename.format("resid")),
+                pd.read_csv(sturm_output_path / filename.format("comm")),
+            ]
+        )
+        .melt(
+            id_vars=["Model", "Scenario", "Region", "Variable", "Unit"], var_name="year"
+        )
+        .rename(columns=lambda c: c.lower())
+        .assign(node=lambda df: "R12_" + df["region"])[COLS]
     )
-    sturm_rep["node"] = "R12_" + sturm_rep["Region"]
-    sturm_rep = sturm_rep.rename(columns={"Variable": "variable", "Unit": "unit"})
-    sturm_rep = sturm_rep[COLS]
 
     return sturm_rep
 
@@ -334,27 +351,20 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
         "|", 1, expand=True
     )
 
-    test_2["sector"] = "|Residential and Commercial|"
-
     test_2["variable"] = (
-        test_2["new_var_head"] + test_2["sector"] + test_2["new_var_rest"]
+        test_2["new_var_head"] + "|Residential and Commercial|" + test_2["new_var_rest"]
     )
 
-    test_2 = test_2.drop(
-        columns=["new_var_name", "new_var_head", "new_var_rest", "sector"]
-    )
-
-    # Order the columns
     test_full = pd.concat([sturm_rep, test_2[COLS]])
 
     # Global total
     # NB(PNK) genno will do this automatically if FE_rep is described with sums=True
     glob_sturm = test_full.groupby(["variable", "unit", "year"]).sum().reset_index()
     glob_sturm["node"] = "R12_GLB"
-    test_full = pd.concat([test_full, glob_sturm], ignore_index=True)
-
-    test_full = test_full.sort_values(["node", "variable", "year"]).reset_index(
-        drop=True
+    test_full = (
+        pd.concat([test_full, glob_sturm], ignore_index=True)
+        .sort_values(["node", "variable", "year"])
+        .reset_index(drop=True)
     )
 
     return test_full
