@@ -1,10 +1,12 @@
 """Reporting for MESSAGEix-Buildings."""
 import logging
+import re
 from pathlib import Path
+from typing import Dict, List
 
 import message_ix
 import pandas as pd
-from message_ix_models import Context, ScenarioInfo
+from message_ix_models import Context
 from message_ix_models.util import MESSAGE_DATA_PATH
 
 log = logging.getLogger(__name__)
@@ -42,12 +44,13 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     # Temporary; disable storing time series
     rep.graph["config"]["buildings"] = dict(store_ts=False)
 
+    # Buildings filters
+    rep.add("buildings filters", buildings_filters, "t", "y::model")
+
     # Add 1 key for each of the "tables"
-    rep.add("buildings 0", report0, "scenario", "config")
-    rep.add("buildings 1", report1, "scenario", "config")
-    # This requires the location of the STURM outputs, determined above
+    rep.add("buildings 0", report0, "scenario", "buildings filters", "config")
+    rep.add("buildings 1", report1, "scenario", "buildings filters", "config")
     rep.add("buildings 2", report2, "scenario", "config", "sturm output path")
-    # This depends out the output of report2
     rep.add("buildings 3", report3, "scenario", "buildings 2", "config")
 
     # Add a key that invokes all buildings reporting
@@ -56,7 +59,19 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     )
 
 
-def report0(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
+def buildings_filters(all_techs: List[str], years: List) -> Dict:
+    """Return filters for buildings reporting."""
+    # Regular expression to match technology IDs relevant for buildings reporting
+    tech_re = re.compile("(resid|comm).*(apps|cool|cook|heat|hotwater)")
+    return dict(
+        technology=list(
+            filter(lambda t: tech_re.search(t) or t == "biomass_nc", all_techs)
+        ),
+        year_act=years,
+    )
+
+
+def report0(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.DataFrame:
     """Report `scenario`.
 
     STURM output data are loaded from CSV files and merged with computed values stored
@@ -66,25 +81,6 @@ def report0(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
 
     .. todo:: decompose further by making use of genno features.
     """
-    info = ScenarioInfo(scenario)
-
-    build_ene_tecs = [
-        tec
-        for tec in info.set["technology"]
-        if (
-            (("resid" in tec) or ("comm" in tec))
-            and (
-                ("apps" in tec)
-                or ("cook" in tec)
-                or ("heat" in tec)
-                or ("hotwater" in tec)
-                or ("cool" in tec)
-            )
-        )
-    ] + ["biomass_nc"]
-
-    filters = dict(technology=build_ene_tecs, year_act=info.Y)
-
     # Final Energy Demand
 
     act = scenario.var("ACT", filters=filters)
@@ -193,31 +189,9 @@ def report0(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
     return FE_rep
 
 
-def report1(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
-    info = ScenarioInfo(scenario)
-
-    build_ene_tecs = [
-        tec
-        for tec in info.set["technology"]
-        if (
-            (("resid" in tec) or ("comm" in tec))
-            and (
-                ("apps" in tec)
-                or ("cook" in tec)
-                or ("heat" in tec)
-                or ("hotwater" in tec)
-                or ("cool" in tec)
-            )
-        )
-    ] + ["biomass_nc"]
-
-    filters = dict(technology=build_ene_tecs, year_act=info.Y)
-
-    # Final Energy Demand
-
-    act = scenario.var("ACT", filters=filters)
-
+def report1(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.DataFrame:
     # Emissions from Demand
+    act = scenario.var("ACT", filters=filters)
     emiss = scenario.par("relation_activity", filters=filters)
 
     emiss_rels = [rel for rel in emiss["relation"].unique() if "Emission" in rel]
@@ -283,9 +257,7 @@ def report1(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
     # TODO use store_ts from ixmp
     if config["buildings"]["store_ts"]:
         scenario.check_out(timeseries_only=True)
-
         scenario.add_timeseries(emiss_rep)
-
         scenario.commit("MESSAGEix-Buildings reporting")
     else:
         log.info("Skip storing data")
