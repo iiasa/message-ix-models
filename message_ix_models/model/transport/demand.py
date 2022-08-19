@@ -256,8 +256,6 @@ def prepare_reporter(
         (("nodes_ex_world", "n::ex world", "n"), _),
         (("nodes_ex_world", "n::ex world+code", "nodes"), _),
         (("nodes_world_agg", "nl::world agg", "config"), _),
-        # List of model years
-        (("model_periods", "y::model", "y", "cat_year"), _),
         # Base share data
         (
             (
