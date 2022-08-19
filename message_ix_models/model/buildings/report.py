@@ -41,42 +41,53 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         "sturm output path", context["buildings"]["code_dir"].joinpath("STURM_output")
     )
 
-    # Buildings filters
+    # Filters for retrieving data. Use the keys "t" and "y::model" that are
+    # automatically populated by message_ix and message_data, respectively.
     rep.add("buildings filters", buildings_filters, "t", "y::model")
 
-    # Add 1 key for each of the "tables"
-    rep.add("buildings 0", report0, "scenario", "buildings filters", "config")
-    rep.add("buildings 1", report1, "scenario", "buildings filters", "config")
-    rep.add("buildings 2", report2, "scenario", "config", "sturm output path")
-    rep.add("buildings 3", report3, "scenario", "buildings 2", "config")
+    # Lists of keys for use later
+    store_keys = []
+    file_keys = []
 
-    # Temporary; disable storing time series data
-    store_enabled = False
-    # Add 1 key that stores the data on the scenario
-    if store_enabled:
-        rep.add(
-            "store_ts",
-            "buildings iamc store",
-            "scenario",
-            "buildings 0",
-            "buildings 1",
-            # "buildings 2",  # sturm_rep was commented in original
-            "buildings 3",
-        )
-    else:
-        rep.add("buildings iamc store", [])  # Does nothing
+    # Iterate over each of the "tables"
+    for i, (func, args, store_enabled, base) in {
+        # index: (function, inputs to the function, whether to store_ts, file basename)
+        0: (report0, ["buildings filters"], True, "buildings-FE"),
+        1: (report1, ["buildings filters"], True, "buildings-emiss"),
+        2: (report2, ["sturm output path"], False, "sturm"),
+        3: (report3, ["buildings 2"], True, "sturm-name-change"),
+    }.items():
+        # Short string to identify this table
+        k1 = f"buildings {i}"
 
-    # Add a key that invokes all buildings reporting
-    rep.add(
-        "buildings all",
-        [
-            "buildings iamc store",
-            "buildings 0",
-            "buildings 1",
-            "buildings 2",
-            "buildings 3",
-        ],
-    )
+        # Add a key to run the function, returning a pd.DataFrame
+        rep.add(k1, func, "scenario", *args)
+
+        # Maybe add to the list of data to be stored on the scenario
+        if store_enabled:
+            store_keys.append(k1)
+
+        # Make a path for file output
+        k2 = rep.add("make_output_path", f"{k1} path", "config", f"{base}.csv")
+
+        # Write the data frame to this path
+        # FIXME(PNK) upstream genno.computations.write_report handles only Quantity, not
+        #            pd.DataFrame. Add that feature, then remove the lambda function
+        k3 = rep.add(f"{k1} file", lambda df, path: df.to_csv(path), k1, k2)
+
+        # Add to the list of files to be stored
+        file_keys.append(k3)
+
+    # Add keys that collect others:
+    # 1. Store all data on the scenario.
+    # 2. Write all the data to respective files.
+    # 3. Do both 1 and 2.
+    rep.add("store_ts", "buildings iamc store", "scenario", *store_keys)
+    rep.add("buildings iamc file", file_keys)
+    rep.add("buildings all", ["buildings iamc store", "buildings iamc file"])
+
+    # Temporary: disable storing time series data by replacing with a no-op
+    rep.add("buildings iamc store", [])  # Does nothing
 
 
 def buildings_filters(all_techs: List[str], years: List) -> Dict:
@@ -91,7 +102,7 @@ def buildings_filters(all_techs: List[str], years: List) -> Dict:
     )
 
 
-def report0(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.DataFrame:
+def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     """Report `scenario`.
 
     STURM output data are loaded from CSV files and merged with computed values stored
@@ -195,14 +206,10 @@ def report0(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
 
     FE_rep = pd.concat([FE_rep[COLS], FE_rep_tot_fuel[COLS]], ignore_index=True)
 
-    # Write time series data to files
-    # TODO use write_report from genno
-    FE_rep.to_csv(config["output_path"] / "buildings-FE.csv")
-
     return FE_rep
 
 
-def report1(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.DataFrame:
+def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     # Emissions from Demand
     act = scenario.var("ACT", filters=filters)
     emiss = scenario.par("relation_activity", filters=filters)
@@ -266,16 +273,10 @@ def report1(scenario: message_ix.Scenario, filters: dict, config: dict) -> pd.Da
         .reset_index(drop=True)
     )
 
-    # Write time series data to files
-    # TODO use write_report from genno
-    emiss_rep.to_csv(config["output_path"] / "buildings-emiss.csv")
-
     return emiss_rep
 
 
-def report2(
-    scenario: message_ix.Scenario, config: dict, sturm_output_path: Path
-) -> pd.DataFrame:
+def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFrame:
     # Add STURM reporting
     if "baseline" in scenario.scenario:
         res_filename = "report_NGFS_SSP2_BL_resid_R12.csv"
@@ -294,18 +295,10 @@ def report2(
     sturm_rep = sturm_rep.rename(columns={"Variable": "variable", "Unit": "unit"})
     sturm_rep = sturm_rep[COLS]
 
-    # Write time series data to files
-    # TODO use write_report from genno
-    sturm_rep.to_csv(config["output_path"] / "sturm.csv")
-
     return sturm_rep
 
 
-def report3(
-    scenario: message_ix.Scenario,
-    sturm_rep: pd.DataFrame,
-    config: dict,
-) -> pd.DataFrame:
+def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFrame:
     # ------------------------------------------------------------------------------
     # The part below is added for futher data wrangling on top of the orginal one
     # Start from here
@@ -367,9 +360,5 @@ def report3(
     test_full = test_full.sort_values(["node", "variable", "year"]).reset_index(
         drop=True
     )
-
-    # Write time series data to files
-    # TODO use write_report from genno
-    test_full.to_csv(config["output_path"] / "sturm-name-change.csv")
 
     return test_full
