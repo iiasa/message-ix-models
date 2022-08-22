@@ -40,7 +40,7 @@ def gen_data_methanol(scenario):
     df = df[(~df["Region"].isna()) & (df["Region"] != "World")]
     df = df.dropna(axis=1)
     df_melt = df.melt(id_vars=["Region"], value_vars=df.columns[5:], var_name="year")
-    df_final = message_ix.make_df("demand", unit="Mt", level="demand", value=df_melt.value, time="year",
+    df_final = message_ix.make_df("demand", unit="t", level="demand", value=df_melt.value, time="year",
                                   commodity="methanol", year=df_melt.year, node=df_melt["Region"])
     df_final["value"] = df_final["value"].apply(lambda x: x * 0.75)
     new_dict2["demand"] = df_final
