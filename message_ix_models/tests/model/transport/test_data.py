@@ -257,6 +257,7 @@ def test_get_ldv_data(test_context, source, regions, years):
     # Data are returned for the following parameters
     assert {
         "capacity_factor",
+        "emission_factor",
         "fix_cost",
         "input",
         "inv_cost",
@@ -389,6 +390,7 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     # Data are provided for the these parameters
     assert {
         "capacity_factor",
+        "emission_factor",
         "fix_cost",
         "input",
         "inv_cost",
