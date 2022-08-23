@@ -6,6 +6,8 @@ import pandas as pd
 from message_ix import make_df
 from message_ix_models.util import broadcast, make_matched_dfs, merge_data, same_node
 
+from message_data.model.transport.data.emissions import ef_for_input
+
 log = logging.getLogger(__name__)
 
 
@@ -25,6 +27,9 @@ def get_non_ldv_data(context) -> Dict[str, pd.DataFrame]:
 
     # Merge in dummy/placeholder data for 2-wheelers (not present in IKARUS)
     merge_data(data, get_2w_dummies(context))
+
+    # Compute CO₂ emissions factors
+    data.update(ef_for_input(context, data["input"], species="CO2"))
 
     return data
 

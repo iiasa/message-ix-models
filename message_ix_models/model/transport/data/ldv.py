@@ -263,8 +263,8 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
             unit=base["unit"],
         )
 
-    # Compute emissions factors
-    data.update(ef_for_input(context, data["input"], "CO2"))
+    # Compute CO₂ emissions factors
+    data.update(ef_for_input(context, data["input"], species="CO2"))
 
     return data
 
