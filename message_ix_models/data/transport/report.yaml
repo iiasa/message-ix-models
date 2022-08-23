@@ -48,7 +48,6 @@ general:
   sums: true
 
 # NB these units are correct for final energy only
-# FIXME should not need to specify the full set of dims for the output key
 - key: in:*:transport+units
   comp: apply_units
   inputs: [ in::transport ]
