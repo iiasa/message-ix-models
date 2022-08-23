@@ -258,12 +258,11 @@ def prepare_reporter(
 
     # Check location of the reporting config file
     p = config.get("path")
-    if p:
-        if not p.exists() and not p.is_absolute():
-            # Try to resolve relative to the data/ directory
-            p = private_data_path("report", p)
-            assert p.exists(), p
-            config.update(path=p)
+    if p and not p.exists() and not p.is_absolute():
+        # Try to resolve relative to the data/ directory
+        p = private_data_path("report", p)
+        assert p.exists(), p
+        config.update(path=p)
 
     # Set defaults
     # Directory for reporting output
