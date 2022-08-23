@@ -212,8 +212,10 @@ def test_iamc_simulated(
     # print(ts, ts["variable"].unique(), sep="\n")  # DEBUG
 
     # The reported data was stored on the scenario, and has expected variable names
+    # print("\n".join(sorted(ts["variable"].unique())))  # DEBUG
     assert {
         "Emissions|CO2|Energy|Demand|Transportation|Ldv",
+        "Emissions|CO2|Energy|Demand|Transportation|Rail",
         "Transport|Stock|Road|Passenger|LDV|Elc_100",
     } <= set(ts["variable"].unique())
 
