@@ -30,6 +30,7 @@ from message_ix_models.util import (
 from openpyxl import load_workbook
 from sdmx.model import Code
 
+from message_data.model.transport.data.emissions import ef_for_input
 from message_data.model.transport.utils import (
     get_region_codes,
     input_commodity_level,
@@ -261,6 +262,9 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
             value=base["value"],
             unit=base["unit"],
         )
+
+    # Compute emissions factors
+    data.update(ef_for_input(context, data["input"], "CO2"))
 
     return data
 
