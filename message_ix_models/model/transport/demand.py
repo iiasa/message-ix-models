@@ -177,9 +177,11 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
     # Retrieve information about the model structure
     spec, technologies, t_groups = get_techs(context)
 
-    # Bare lists
-    c.add("t::transport", quote(technologies))
+    # Lists and subsets
     c.add("c::transport", quote(spec["add"].set["commodity"]))
+    c.add("t::transport", quote(technologies))
+    # TODO move upstream, e.g. to message_ix
+    c.add("model_periods", "y::model", "y", "cat_year")
 
     # Mappings for use with aggregate, select, etc.
     c.add("t::transport agg", quote(dict(t=t_groups)))
