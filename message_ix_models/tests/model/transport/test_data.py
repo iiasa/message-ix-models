@@ -9,6 +9,7 @@ from iam_units import registry
 from message_ix import make_df
 from message_ix_models import testing
 from message_ix_models.model import bare
+from message_ix_models.util import broadcast, same_node
 from pandas.testing import assert_series_equal
 from pytest import param
 
@@ -16,7 +17,7 @@ from message_data.model.transport import build, computations, configure
 from message_data.model.transport import data as data_module
 from message_data.model.transport.data import ldv
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
-from message_data.model.transport.data.emissions import get_emissions_data
+from message_data.model.transport.data.emissions import ef_for_input, get_emissions_data
 from message_data.model.transport.data.freight import get_freight_data
 from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.non_ldv import get_non_ldv_data
@@ -61,6 +62,49 @@ def test_data_files(test_context, parts):
 
     result = load_file(path_fallback(test_context, *parts))
     assert isinstance(result, Quantity)
+
+
+def test_ef_for_input(test_context):
+    # Generate a test "input" data frame
+    info = configure_build(test_context, regions="R11", years="B")
+    years = info.yv_ya
+    data = (
+        make_df(
+            "input",
+            year_vtg=years.year_vtg,
+            year_act=years.year_act,
+            technology="t",
+            mode="m",
+            commodity=None,
+            level="final",
+            time="year",
+            time_origin="year",
+            value=0.05,
+            unit="GWa / (Gv km)",
+        )
+        .pipe(broadcast, node_loc=info.N)
+        .pipe(same_node)
+    )
+
+    # Generate random commodity values
+    c = ("electr", "ethanol", "gas", "hydrogen", "lightoil", "methanol")
+    splitter = np.random.choice(np.arange(len(c)), len(data))
+    data = data.assign(
+        commodity=pd.Categorical.from_codes(splitter, categories=c),
+    )
+    assert not data.isna().any().any(), data
+
+    # Function runs successfully on these data
+    result = ef_for_input(test_context, data)
+
+    # Returns data for one parameter
+    assert {"emission_factor"} == set(result)
+    ef = result["emission_factor"]
+
+    # Data is complete
+    assert not ef.isna().any().any(), ef
+
+    # TODO test specific values
 
 
 def configure_build(context, regions, years):
