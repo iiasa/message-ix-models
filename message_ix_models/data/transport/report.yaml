@@ -66,6 +66,15 @@ general:
   args: {units: "Tm / a"}
   sums: true
 
+# Adjust for units of ACT not being carried:
+# - Add [time]: -1
+# - Remove [vehicle]: -1, [distance]: -1
+- key: emi:*:transport+units
+  comp: apply_units
+  inputs: [ emi::transport ]
+  args: {units: "kt / a"}
+  sums: true
+
 # Concatenate IAMC-format tables
 - key: transport iamc
   comp: concat
@@ -81,7 +90,9 @@ general:
   - _transport 2d::iamc
   - _transport 2e::iamc
   # Temporarily disabled to merge #370
-  # - _transport 3::iamc
+  # - _transport 3a::iamc
+  - _transport 3b::iamc
+  - _transport 3c::iamc
   # For debugging
   # - _transport debug ACT::iamc
   # - _transport debug CAP::iamc
@@ -125,6 +136,8 @@ _iamc formats:
   # for the legacy reporting to properly handle the result.
   fe_unit: &fe_unit
     unit: EJ/yr
+  emi_unit: &emi_unit
+    unit: Mt/yr
 
 # NB these are currently tailored to produce the variable names expected for the
 #    NGFS project
@@ -182,11 +195,21 @@ iamc:
   <<: *fe_unit
 
 # Emissions using MESSAGEix emission_factor parameter
-- variable: _transport 3
+- variable: _transport 3a
   # Auto-sum over dimensions yv, m, h
   base: emi:nl-t-ya-e-gwp metric-e equivalent:gwpe+agg
   # Same as in data/report/global.yaml
   var: [ "Emissions|CO2|Energy|Demand|Transportation", t, e, e equivalent, gwp metric ]
+
+- variable: _transport 3b
+  base: emi:nl-t-ya-e:transport+units
+  var: [ "Emissions", e, "Energy|Demand|Transportation", t]
+  <<: *emi_unit
+
+- variable: _transport 3c
+  base: emi:nl-ya-e:transport+units
+  var: [ "Emissions", e, "Energy|Demand|Transportation"]
+  <<: *emi_unit
 
 # For debugging
 - variable: _transport debug ACT

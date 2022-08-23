@@ -172,23 +172,33 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
-@mark.skip("Temporary, for merging #370")
-@mark.usefixtures("quiet_genno")
+# @mark.usefixtures("quiet_genno")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ):
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context)
 
+    # FIXME hack to ensure the platform accepts time series data, which is modified to
+    #       the expectations of the legacy reporting
+    mp = rep.graph["scenario"].platform
+    mp.add_region(f"{regions}_GLB", "World", "region")
+
     # Key collecting both file output/scenario update
     # NB the trailing colons are necessary because of how genno handles report.yaml
-    rep.add("test", ["transport iamc file", "transport iamc store"])
+    rep.add(
+        "test",
+        [
+            "transport iamc file",
+            "transport iamc store",
+            # Other keys, for debugging:
+            # "emi:nl-t-yv-ya-m-e-h:transport",
+        ],
+    )
 
-    # print(rep.describe("transport iamc store"))  # DEBUG
-    # print(rep.describe("scenario"))  # DEBUG
     # print(rep.describe("test"))  # DEBUG
-
-    rep.get("test")
+    result = rep.get("test")
+    # print(result[-1])  # DEBUG
 
     # File with output was created
     assert (
@@ -199,9 +209,12 @@ def test_iamc_simulated(
 
     # Retrieve time series data stored on the scenario object
     ts = rep.get("scenario").timeseries()
-    # print(ts)  # DEBUG
+    # print(ts, ts["variable"].unique(), sep="\n")  # DEBUG
 
-    # The reported variables were stored
-    assert {"Transport|Stock|Road|Passenger|LDV|Elc_100"} <= set(
-        ts["variable"].unique()
-    )
+    # The reported data was stored on the scenario, and has expected variable names
+    assert {
+        "Emissions|CO2|Energy|Demand|Transportation|Ldv",
+        "Transport|Stock|Road|Passenger|LDV|Elc_100",
+    } <= set(ts["variable"].unique())
+
+    del result
