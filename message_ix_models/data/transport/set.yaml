@@ -160,19 +160,24 @@ unit:
     # TODO move this one upstream
     "": dimensionless
 
-    # The following are equivalent, but not recognized as such by JDBCBackend
-    GWa / Gv / km: gigawatt-annum per billion vehicle kilometres
-    GW * a / Gv / km: gigawatt-annum per billion vehicle kilometres
-    # for IKARUS
-    a: year
-    GJ / km: gigajoule per kilometre
+    # Activity
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
     Gp km / a: 10⁹ passenger-kilometre per year
     Gp / Gv: passengers per vehicle
     Gt km: 10⁹ tonne-kilometre
     Gt * km: 10⁹ tonne-kilometre
     Gv km: 10⁹ vehicle kilometre
+    # for IKARUS
+    a: year
+
+    # Energy
+    # The following are equivalent, but not recognized as such by JDBCBackend
+    GWa / Gv / km: gigawatt-annum per billion vehicle kilometres
+    GW * a / Gv / km: gigawatt-annum per billion vehicle kilometres
+    GJ / km: gigajoule per kilometre
     pkm / GJ: passenger-kilometre per gigajoule
+
+    # Cost
     MUSD / a / v: 10⁶ USD per vehicle-year
     MUSD / v: 10⁶ USD per vehicle
     # for US-TIMES MA3T
