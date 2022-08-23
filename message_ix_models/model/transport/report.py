@@ -37,8 +37,9 @@ def check(scenario):
 
 
 def require_compat(c: Computer) -> None:
-    c.require_compat("message_data.model.transport.computations")
+    c.require_compat("message_data.reporting.computations")
     c.require_compat("message_data.tools.gdp_pop")
+    c.require_compat("message_data.model.transport.computations")
 
 
 def update_config(c: Computer, context: Context) -> None:
@@ -130,7 +131,7 @@ def callback(rep: Reporter, context: Context) -> None:
 
     # 3. Apply some functions that generate sub-graphs
     try:
-        rep.apply(_gen0, "in", "out")
+        rep.apply(_gen0, "in", "out", "emi")
     except MissingKeyError:
         if solved:
             raise
