@@ -55,6 +55,13 @@ def gen_data_methanol(scenario):
     hist_cap = message_ix.make_df("historical_new_capacity", node_loc="R12_CHN", technology="meth_coal", year_vtg=2015, value=9.6,
                        unit="GW")
     new_dict2["historical_new_capacity"] = hist_cap
+    # fix demand infeasibility
+    act = scenario.par("historical_activity")
+    row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
+    row["value"] = 0.0
+    new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], pd.DataFrame(row).T])
+    df_ng = pd.read_excel(context.get_local_path("material", "meth_ng_techno_economic.xlsx"))
+    new_dict2["historical_activity"] = new_dict2["historical_activity"].append(df_ng)
     return new_dict2
 
 
