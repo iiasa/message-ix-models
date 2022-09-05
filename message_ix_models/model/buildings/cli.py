@@ -1,7 +1,6 @@
 """MESSAGEix-Buildings model."""
 import logging
 import sys
-from itertools import count
 from pathlib import Path
 
 import click
@@ -23,7 +22,7 @@ log = logging.getLogger(__name__)
 DEFAULTS = {
     "clim_scen": "BL",  # or "2C"?
     "clone": True,
-    "max_iterations": 10,
+    "max_iterations": 0,
     "run ACCESS": False,
     "solve_macro": False,
     "ssp": "SSP2",
@@ -53,6 +52,14 @@ def cli(context, code_dir):
 @click.option(
     "--climate-scen", help="Model/scenario name of reference climate scenario"
 )
+@click.option(
+    "--iterations",
+    "-n",
+    "max_iterations",
+    type=int,
+    default=10,
+    help="Maximum number of iterations.",
+)
 @click.option("--run-access", is_flag=True, help="Run the ACCESS model.")
 @click.option(
     "--sturm",
@@ -65,6 +72,7 @@ def cli(context, code_dir):
 def build_and_solve(  # noqa: C901
     context: Context,
     climate_scen: str,
+    max_iterations: int,
     run_access: bool,
     sturm_method: str,
     dest: str,
@@ -74,6 +82,7 @@ def build_and_solve(  # noqa: C901
 
     # Update configuration
     config = context["buildings"]
+    config["max_iterations"] = max_iterations
     config["run ACCESS"] = run_access
     config["sturm_method"] = sturm_method
 
@@ -129,7 +138,7 @@ def build_and_solve(  # noqa: C901
     info = ScenarioInfo(scenario)
     years_not_mod = list(filter(lambda y: y < info.y0, info.set["year"]))
 
-    for iterations in count():
+    for iterations in range(config["max_iterations"]):
         # Get prices from MESSAGE
         # On the first iteration, from the parent scenario; onwards, from the current
         # scenario
@@ -408,6 +417,7 @@ def build_and_solve(  # noqa: C901
             print("Converged in ", iterations, " iterations")
             # scenario.set_as_default()
 
+        # TODO move outside of the loop
         if iterations > config["max_iterations"]:
             done = True
             print(f"Not converged after {config['max_iterations']} iterations!")

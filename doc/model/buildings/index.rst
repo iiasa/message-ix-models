@@ -125,7 +125,7 @@ Currently, these can be set in the :mod:`.buildings.cli` Python source file, in 
      - Climate scenario.
        If :prog:`--climate-scen` is given on the command line, this is set to "2C" automatically.
    * - **max_iteration**
-     - 10
+     - 0
      - Maximum number of iterations; set to 1 for once-through mode.
    * - **solve_macro**
      - :obj:`False`
