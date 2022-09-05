@@ -86,6 +86,7 @@ def build_and_solve(  # noqa: C901
 
     # Base path for output during iterations
     output_path = context.get_local_path("buildings")
+    output_path.mkdir(parents=True, exist_ok=True)
 
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
@@ -214,9 +215,8 @@ def build_and_solve(  # noqa: C901
         mark_time()
 
         # Dump data for debugging
-        debug_path = local_data_path("debug")
-        sturm_scenarios.to_csv(debug_path.joinpath("sturm-resid.csv"))
-        comm_sturm_scenarios.to_csv(debug_path.joinpath("sturm-comm.csv"))
+        sturm_scenarios.to_csv(output_path.joinpath("debug-sturm-resid.csv"))
+        comm_sturm_scenarios.to_csv(output_path.joinpath("debug-sturm-comm.csv"))
 
         # TEMP: remove commodity "comm_heat_v_no_heat"
         if iterations == 0:
@@ -274,7 +274,7 @@ def build_and_solve(  # noqa: C901
         demand = pd.concat(demands).fillna(0)
 
         # Dump data for debugging
-        demand.to_csv(debug_path.joinpath("buildings-demand.csv"))
+        demand.to_csv(output_path.joinpath("debug-demand.csv"))
 
         # Update demands in the scenario
         if scenario.has_solution():
@@ -450,8 +450,6 @@ def build_and_solve(  # noqa: C901
         )
         price_sav[f"lvl{iterations}"] = prices_new["lvl"]
 
-        # Ensure the parent directory exists
-        output_path.mkdir(exist_ok=True)
         # Write to file
         price_sav.to_csv(output_path / "price-track.csv")
         demand_sav.to_csv(output_path / "demand_track.csv")

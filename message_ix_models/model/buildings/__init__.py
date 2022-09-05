@@ -341,8 +341,8 @@ def setup_scenario(  # noqa: C901
             else:
                 tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
 
-            # TEMPORARY for debugging
-            print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
+            # commented: for debugging
+            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
 
             filters = dict(filters={"technology": tech_orig})
             build_in = scenario.par("input", **filters).assign(
