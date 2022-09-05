@@ -213,6 +213,11 @@ def build_and_solve(  # noqa: C901
 
         mark_time()
 
+        # Dump data for debugging
+        debug_path = local_data_path("debug")
+        sturm_scenarios.to_csv(debug_path.joinpath("sturm-resid.csv"))
+        comm_sturm_scenarios.to_csv(debug_path.joinpath("sturm-comm.csv"))
+
         # TEMP: remove commodity "comm_heat_v_no_heat"
         if iterations == 0:
             comm_sturm_scenarios = comm_sturm_scenarios[
@@ -267,6 +272,9 @@ def build_and_solve(  # noqa: C901
             )
         # Fill with zeros if NaN
         demand = pd.concat(demands).fillna(0)
+
+        # Dump data for debugging
+        demand.to_csv(debug_path.joinpath("buildings-demand.csv"))
 
         # Update demands in the scenario
         if scenario.has_solution():

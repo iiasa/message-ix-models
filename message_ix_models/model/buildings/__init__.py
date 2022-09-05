@@ -108,7 +108,15 @@ def setup_scenario(  # noqa: C901
     comm_sturm_scenarios: pd.DataFrame,
     first_iteration: bool,
 ):
-    """Set up the structure and data for MESSAGE_Buildings on `scenario`."""
+    """Set up the structure and data for MESSAGE_Buildings on `scenario`.
+
+    Parameters
+    ----------
+    scenario
+        Scenario to set up.
+    info
+        Information about `scenario`.
+    """
     if BUILD_COMMODITIES[0] in info.set["commodity"]:
         # Scenario already set up; do notihing
         return
@@ -310,8 +318,8 @@ def setup_scenario(  # noqa: C901
             0
         ]
 
-        # Remove lower bound in activity for older, now unused
-        # rc techs to allow them to reach zero
+        # Remove lower bound in activity for older, now unused rc techs to allow them to
+        # reach zero
         filters = dict(filters={"technology": tech_orig, "year_act": years_model})
         for constraint, value in (
             ("bound_activity", 0.0),
@@ -329,9 +337,12 @@ def setup_scenario(  # noqa: C901
 
             # Fix for lightoil gas included
             if "lightoil-gas" in commodity:
-                tech_new = fuel + "_lg_" + commodity.replace("_lightoil-gas", "")
+                tech_new = f"{fuel}_lg_" + commodity.replace("_lightoil-gas", "")
             else:
-                tech_new = fuel + "_" + commodity.replace("_" + fuel, "")
+                tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
+
+            # TEMPORARY for debugging
+            print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
 
             filters = dict(filters={"technology": tech_orig})
             build_in = scenario.par("input", **filters).assign(
