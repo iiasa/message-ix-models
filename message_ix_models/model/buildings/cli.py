@@ -230,12 +230,12 @@ def build_and_solve(  # noqa: C901
         expr = "(cool|heat|hotwater)"
         demands = [
             e_use_scenarios[~e_use_scenarios.commodity.str.contains("therm")],
-            sturm_scenarios[sturm_scenarios.commodity.str.match(expr)],
+            sturm_scenarios[sturm_scenarios.commodity.str.search(expr)],
         ]
         # Add commercial demand in first iteration
         if iterations == 0:
             demands.append(
-                comm_sturm_scenarios[comm_sturm_scenarios.commodity.str.match(expr)]
+                comm_sturm_scenarios[comm_sturm_scenarios.commodity.str.search(expr)]
             )
 
         # Concatenate 2 or 3 data frames together
