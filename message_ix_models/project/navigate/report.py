@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import yaml
+from message_ix.reporting import Reporter
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import nodes_ex_world, private_data_path
@@ -130,7 +131,7 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> None:
 
     sheet = "region_mapping"
     nodes = get_codes(f"node/{context.regions}")
-    nodes = nodes[nodes.index(Code("World"))].child
+    nodes = nodes[nodes.index(Code(id="World"))].child
 
     # Note that "source" and "target" have the opposite of the intuitive meanings
     data = pd.DataFrame(
@@ -186,3 +187,18 @@ of which {len(names_3 & set(data['target_name']))} are accepted by NAVIGATE"""
     data.to_excel(ew, sheet_name=sheet, index=False)
 
     ew.close()
+
+
+def callback(rep: Reporter, context: Context) -> None:
+    """:meth:`.prepare_reporter` callback for NAVIGATE.
+
+    Adds a key "navigate bt" that invokes both buildings and transport reporting.
+    """
+    from message_data.model.buildings.report import callback as buildings_cb
+    from message_data.model.transport.report import callback as transport_cb
+
+    # Set up buildings and transport reporting
+    buildings_cb(rep, context)
+    transport_cb(rep, context)
+
+    rep.add("navigate bt", ["buildings all", "transport iamc store"])
