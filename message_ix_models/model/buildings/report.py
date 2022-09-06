@@ -88,9 +88,6 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     rep.add("buildings iamc file", file_keys)
     rep.add("buildings all", ["buildings iamc store", "buildings iamc file"])
 
-    # Temporary: disable storing time series data by replacing with a no-op
-    rep.add("buildings iamc store", [])  # Does nothing
-
 
 # Helper functions
 
