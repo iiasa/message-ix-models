@@ -22,19 +22,20 @@ Material_global_grpahs.pdf
 # foil_imp AFR, frunace_h2_aluminum, h2_i...
 
 # PACKAGES
+from functools import partial
 
 import matplotlib
+import message_ix
 import numpy as np
 import openpyxl
 import os
 import pandas as pd
 import pyam
 import xlsxwriter
-from ixmp.reporting import configure
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from message_ix_models import ScenarioInfo
-from message_ix.reporting import Reporter
+from message_ix_models import Context
 
 
 matplotlib.use("Agg")
@@ -176,7 +177,11 @@ def fix_excel(path_temp, path_new):
     new_workbook.save(path_new)
 
 
-def report(context, scenario):
+def report(
+    scenario: message_ix.Scenario,
+    message_df: pd.DataFrame,
+    context: Context,
+) -> None:
     """Produces the material related variables."""
 
     # Obtain scenario information and directory
@@ -215,11 +220,8 @@ def report(context, scenario):
     directory = context.get_local_path("report", "materials")
     directory.mkdir(exist_ok=True)
 
-    # Generate message_ix level reporting and dump to an excel file.
-
-    rep = Reporter.from_scenario(scenario)
-    configure(units={"replace": {"-": ""}})
-    df = rep.get("message::default")
+    # Dump output of message_ix built-in reporting to an Excel file
+    df = message_df
     name = os.path.join(directory, "message_ix_reporting.xlsx")
     df.to_excel(name)
     print("message_ix level reporting generated")
@@ -3316,3 +3318,16 @@ def report(context, scenario):
 
     pp.close()
     os.remove(path_temp)
+
+
+def callback(rep: message_ix.Reporter, context: Context) -> None:
+    """:meth:`.prepare_reporter` callback for MESSAGEix-Materials.
+
+    - "materials all": invokes :func:`report`.
+    """
+    rep.add(
+        "materials all",
+        partial(report, context=context),
+        "scenario",
+        "message::default",
+    )
