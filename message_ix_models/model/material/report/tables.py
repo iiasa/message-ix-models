@@ -37,7 +37,7 @@ _TECHS = {
         "fueloil_NH3_ccs",
         "gas_NH3_ccs",
     ],
-    "extra gas": [
+    "gas extra": [
         "furnace_gas_aluminum",
         "furnace_gas_petro",
         "furnace_gas_cement",
@@ -160,13 +160,6 @@ def retr_CO2emi(units_emi, units_ene_mdl):
                 "hp_gas_rc",
                 "gas_i",
                 "hp_gas_i",
-                "furnace_gas_aluminum",
-                "furnace_gas_petro",
-                "furnace_gas_cement",
-                "furnace_gas_refining",
-                "hp_gas_aluminum",
-                "hp_gas_petro",
-                "hp_gas_refining",
                 "gas_trp",
                 "gas_fs",
                 "gas_ppl",
@@ -174,7 +167,8 @@ def retr_CO2emi(units_emi, units_ene_mdl):
                 "gas_cc",
                 "gas_htfc",
                 "gas_hpl",
-            ],
+            ]
+            + TECHS["gas extra"],
             units_ene_mdl,
             inpfilter={"commodity": ["gas"]},
         )
@@ -260,14 +254,8 @@ def retr_CO2emi(units_emi, units_ene_mdl):
             [
                 "gas_i",
                 "hp_gas_i",
-                "furnace_gas_aluminum",
-                "furnace_gas_petro",
-                "furnace_gas_cement",
-                "furnace_gas_refining",
-                "hp_gas_aluminum",
-                "hp_gas_petro",
-                "hp_gas_refining",
-            ],
+            ]
+            + TECHS["gas extra"],
             units_ene_mdl,
             inpfilter={"commodity": ["gas"]},
         )
@@ -356,14 +344,8 @@ def retr_CO2emi(units_emi, units_ene_mdl):
             [
                 "gas_i",
                 "hp_gas_i",
-                "furnace_gas_aluminum",
-                "furnace_gas_petro",
-                "furnace_gas_cement",
-                "furnace_gas_refining",
-                "hp_gas_aluminum",
-                "hp_gas_petro",
-                "hp_gas_refining",
-            ],
+            ]
+            + TECHS["gas extra"],
             units_ene_mdl,
             inpfilter={"commodity": ["gas"]},
         )
@@ -718,9 +700,8 @@ def retr_CO2emi(units_emi, units_ene_mdl):
         [
             "clinker_dry_cement",
             "clinker_wet_cement",
-            "clinker_dry_ccs_cement",
-            "clinker_wet_ccs_cement",
-        ],
+        ]
+        + TECHS["cement with ccs"],
         units_ene_mdl,
         emifilter={"relation": ["CO2_Emission"]},
         emission_units=units_emi,
