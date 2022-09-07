@@ -1,5 +1,4 @@
 import logging
-import sys
 from copy import copy
 from pathlib import Path
 
@@ -67,10 +66,8 @@ def cli(context, config_file, module, output_path, from_file, key, dry_run):
 
     # --module/-m: load extra reporting config from modules
     module = module or ""
-    for name in filter(lambda n: len(n), module.split(",")):
-        name = f"message_data.{name}.report"
-        __import__(name)
-        register(sys.modules[name].callback)
+    for m in filter(len, module.split(",")):
+        name = register(m)
         log.info(f"Registered reporting from {name}")
 
     # Prepare a list of Context objects, each referring to one Scenario
