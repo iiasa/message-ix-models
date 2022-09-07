@@ -192,13 +192,16 @@ of which {len(names_3 & set(data['target_name']))} are accepted by NAVIGATE"""
 def callback(rep: Reporter, context: Context) -> None:
     """:meth:`.prepare_reporter` callback for NAVIGATE.
 
-    Adds a key "navigate bt" that invokes both buildings and transport reporting.
+    Adds a key "navigate bmt" that invokes buildings, materials, and transport
+    reporting.
     """
     from message_data.model.buildings.report import callback as buildings_cb
+    from message_data.model.materials.report import callback as materials_cb
     from message_data.model.transport.report import callback as transport_cb
 
-    # Set up buildings and transport reporting
+    # Set up reporting for each of the model variants
     buildings_cb(rep, context)
+    materials_cb(rep, context)
     transport_cb(rep, context)
 
-    rep.add("navigate bt", ["buildings all", "transport iamc store"])
+    rep.add("navigate bmt", ["buildings all", "materials all", "transport iamc store"])

@@ -30,7 +30,14 @@ COLS = ["node", "variable", "unit", "year", "value"]
 
 
 def callback(rep: message_ix.Reporter, context: Context) -> None:
-    """:meth:`.prepare_reporter` callback for MESSAGE-Buildings."""
+    """:meth:`.prepare_reporter` callback for MESSAGE-Buildings.
+
+    Adds the keys:
+
+    - "buildings iamc file": write IAMC-formatted reporting output to file.
+    - "buildings iamc store": store IAMC-formatted reporting on the scenario.
+    - "buildings all": both of the above.
+    """
     # Guess location of MESSAGE_Buildings code
     if "buildings" not in context:
         assert MESSAGE_DATA_PATH is not None
