@@ -10,11 +10,12 @@ urban_perc_data = None
 kyoto_hist_data = None
 lu_hist_data = None
 
-
-func_dict = {}
+# Dictionary where all functions defined in the script are stored.
+func_dict = {}  # type: dict
 
 
 def return_func_dict():
+    """Returns functions defined in script"""
     return func_dict
 
 
@@ -35,185 +36,6 @@ def _register(func):
 # -------------------
 # Reporting functions
 # -------------------
-
-
-@_register
-def retr_SE_solids(units):
-    """Energy: Secondary Energy solids.
-    Parameters
-    ----------
-    units : str
-        Units to which variables should be converted.
-    """
-
-    vars = {}
-
-    BiomassIND_resid = pp.inp("biomass_i", units)
-    BiomassIND_alu = pp.inp("furnace_biomass_aluminum", units)
-    BiomassIND_steel = pp.inp("furnace_biomass_steel", units)
-    BiomassIND_petro = pp.inp("furnace_biomass_petro", units)
-    BiomassIND_cement = pp.inp("furnace_biomass_cement", units)
-
-    BiomassRefining = pp.inp("furnace_biomass_refining", units)
-
-    BiomassNC = pp.inp("biomass_nc", units)
-    BiomassR_cook = pp.inp("biomass_resid_cook", units)
-    BiomassR_heat = pp.inp("biomass_resid_heat", units)
-    BiomassR_water = pp.inp("biomass_resid_hotwater", units)
-    BiomassC_heat = pp.inp("biomass_comm_heat", units)
-    BiomassC_water = pp.inp("biomass_comm_hotwater", units)
-
-    vars["Biomass"] = (
-        BiomassIND_resid
-        + BiomassIND_alu
-        + BiomassIND_steel
-        + BiomassIND_petro
-        + BiomassIND_cement
-        + BiomassNC
-        + BiomassR_cook
-        + BiomassR_heat
-        + BiomassR_water
-        + BiomassC_heat
-        + BiomassC_water
-        + BiomassRefining
-    )
-
-    CoalIND_resid = pp.inp(["coal_i", "coal_fs"], units)
-    CoalIND_alu = pp.inp(["furnace_coal_aluminum"], units)
-    CoalIND_steel = pp.inp(
-        ["furnace_coal_steel", "bf_steel", "cokeoven_steel", "sinter_steel"],
-        units,
-        inpfilter={"commodity": ["coal"], "level": ["final"]},
-    )
-    CoalIND_petro = pp.inp(["furnace_coal_petro"], units)
-    CoalIND_cement = pp.inp(["furnace_coal_cement"], units)
-
-    CoalRefining = pp.inp(["furnace_coal_refining"], units)
-
-    CoalR_heat = pp.inp("coal_resid_heat", units)
-    CoalR_hotwater = pp.inp("coal_resid_hotwater", units)
-    CoalC_heat = pp.inp("coal_comm_heat", units)
-    CoalC_water = pp.inp("coal_comm_hotwater", units)
-    CoalTRP = pp.inp("coal_trp", units)
-    vars["Coal"] = (
-        CoalIND_resid
-        + CoalIND_alu
-        + CoalIND_steel
-        + CoalIND_petro
-        + CoalIND_cement
-        + CoalR_heat
-        + CoalR_hotwater
-        + CoalC_heat
-        + CoalC_water
-        + CoalTRP
-        + CoalRefining
-    )
-    df = pp_utils.make_outputdf(vars, units)
-    return df
-
-
-@_register
-def retr_SE_synfuels(units):
-    """Energy: Secondary Energy synthetic fuels.
-    Parameters
-    ----------
-    units : str
-        Units to which variables should be converted.
-    """
-
-    vars = {}
-
-    vars["Liquids|Oil"] = (
-        pp.out(
-            "agg_ref",
-            units,
-            outfilter={"level": ["secondary"], "commodity": ["lightoil"]},
-        )
-        + pp.out(
-            "agg_ref",
-            units,
-            outfilter={"level": ["secondary"], "commodity": ["fueloil"]},
-        )
-        + pp.inp(
-            "steam_cracker_petro",
-            units,
-            inpfilter={
-                "level": ["final"],
-                "commodity": ["atm_gasoil", "vacuum_gasoil", "naphtha"],
-            },
-        )
-    )
-
-    vars["Liquids|Biomass|w/o CCS"] = pp.out(
-        ["eth_bio", "liq_bio"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["ethanol"]},
-    )
-
-    vars["Liquids|Biomass|w/ CCS"] = pp.out(
-        ["eth_bio_ccs", "liq_bio_ccs"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["ethanol"]},
-    )
-
-    vars["Liquids|Coal|w/o CCS"] = pp.out(
-        ["meth_coal", "syn_liq"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["methanol"]},
-    )
-
-    vars["Liquids|Coal|w/ CCS"] = pp.out(
-        ["meth_coal_ccs", "syn_liq_ccs"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["methanol"]},
-    )
-
-    vars["Liquids|Gas|w/o CCS"] = pp.out(
-        "meth_ng", units, outfilter={"level": ["primary"], "commodity": ["methanol"]}
-    )
-
-    vars["Liquids|Gas|w/ CCS"] = pp.out(
-        "meth_ng_ccs",
-        units,
-        outfilter={"level": ["primary"], "commodity": ["methanol"]},
-    )
-
-    vars["Hydrogen|Coal|w/o CCS"] = pp.out(
-        "h2_coal", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    vars["Hydrogen|Coal|w/ CCS"] = pp.out(
-        "h2_coal_ccs",
-        units,
-        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
-    )
-
-    vars["Hydrogen|Gas|w/o CCS"] = pp.out(
-        "h2_smr", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    vars["Hydrogen|Gas|w/ CCS"] = pp.out(
-        "h2_smr_ccs",
-        units,
-        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
-    )
-
-    vars["Hydrogen|Biomass|w/o CCS"] = pp.out(
-        "h2_bio", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    vars["Hydrogen|Biomass|w/ CCS"] = pp.out(
-        "h2_bio_ccs",
-        units,
-        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
-    )
-
-    vars["Hydrogen|Electricity"] = pp.out(
-        "h2_elec", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    df = pp_utils.make_outputdf(vars, units)
-    return df
 
 
 @_register
@@ -1682,6 +1504,189 @@ def retr_CO2emi(units_emi, units_ene_mdl):
 
     dfs.append(pp_utils.make_outputdf(vars, units_ene_mdl, glb=False))
     return pd.concat(dfs, sort=True)
+
+
+@_register
+def retr_SE_synfuels(units):
+    """Energy: Secondary Energy synthetic fuels.
+
+    Parameters
+    ----------
+
+    units : str
+        Units to which variables should be converted.
+    """
+
+    vars = {}
+
+    vars["Liquids|Oil"] = (
+        pp.out(
+            "agg_ref",
+            units,
+            outfilter={"level": ["secondary"], "commodity": ["lightoil"]},
+        )
+        + pp.out(
+            "agg_ref",
+            units,
+            outfilter={"level": ["secondary"], "commodity": ["fueloil"]},
+        )
+        + pp.inp(
+            "steam_cracker_petro",
+            units,
+            inpfilter={
+                "level": ["final"],
+                "commodity": ["atm_gasoil", "vacuum_gasoil", "naphtha"],
+            },
+        )
+    )
+
+    vars["Liquids|Biomass|w/o CCS"] = pp.out(
+        ["eth_bio", "liq_bio"],
+        units,
+        outfilter={"level": ["primary"], "commodity": ["ethanol"]},
+    )
+
+    vars["Liquids|Biomass|w/ CCS"] = pp.out(
+        ["eth_bio_ccs", "liq_bio_ccs"],
+        units,
+        outfilter={"level": ["primary"], "commodity": ["ethanol"]},
+    )
+
+    vars["Liquids|Coal|w/o CCS"] = pp.out(
+        ["meth_coal", "syn_liq"],
+        units,
+        outfilter={"level": ["primary"], "commodity": ["methanol"]},
+    )
+
+    vars["Liquids|Coal|w/ CCS"] = pp.out(
+        ["meth_coal_ccs", "syn_liq_ccs"],
+        units,
+        outfilter={"level": ["primary"], "commodity": ["methanol"]},
+    )
+
+    vars["Liquids|Gas|w/o CCS"] = pp.out(
+        "meth_ng", units, outfilter={"level": ["primary"], "commodity": ["methanol"]}
+    )
+
+    vars["Liquids|Gas|w/ CCS"] = pp.out(
+        "meth_ng_ccs",
+        units,
+        outfilter={"level": ["primary"], "commodity": ["methanol"]},
+    )
+
+    vars["Hydrogen|Coal|w/o CCS"] = pp.out(
+        "h2_coal", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
+    )
+
+    vars["Hydrogen|Coal|w/ CCS"] = pp.out(
+        "h2_coal_ccs",
+        units,
+        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
+    )
+
+    vars["Hydrogen|Gas|w/o CCS"] = pp.out(
+        "h2_smr", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
+    )
+
+    vars["Hydrogen|Gas|w/ CCS"] = pp.out(
+        "h2_smr_ccs",
+        units,
+        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
+    )
+
+    vars["Hydrogen|Biomass|w/o CCS"] = pp.out(
+        "h2_bio", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
+    )
+
+    vars["Hydrogen|Biomass|w/ CCS"] = pp.out(
+        "h2_bio_ccs",
+        units,
+        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
+    )
+
+    vars["Hydrogen|Electricity"] = pp.out(
+        "h2_elec", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
+    )
+
+    df = pp_utils.make_outputdf(vars, units)
+    return df
+
+
+@_register
+def retr_SE_solids(units):
+    """Energy: Secondary Energy solids.
+
+    Parameters
+    ----------
+
+    units : str
+        Units to which variables should be converted.
+    """
+
+    vars = {}
+
+    BiomassIND_resid = pp.inp("biomass_i", units)
+    BiomassIND_alu = pp.inp("furnace_biomass_aluminum", units)
+    BiomassIND_steel = pp.inp("furnace_biomass_steel", units)
+    BiomassIND_petro = pp.inp("furnace_biomass_petro", units)
+    BiomassIND_cement = pp.inp("furnace_biomass_cement", units)
+
+    BiomassRefining = pp.inp("furnace_biomass_refining", units)
+
+    BiomassNC = pp.inp("biomass_nc", units)
+    BiomassR_cook = pp.inp("biomass_resid_cook", units)
+    BiomassR_heat = pp.inp("biomass_resid_heat", units)
+    BiomassR_water = pp.inp("biomass_resid_hotwater", units)
+    BiomassC_heat = pp.inp("biomass_comm_heat", units)
+    BiomassC_water = pp.inp("biomass_comm_hotwater", units)
+
+    vars["Biomass"] = (
+        BiomassIND_resid
+        + BiomassIND_alu
+        + BiomassIND_steel
+        + BiomassIND_petro
+        + BiomassIND_cement
+        + BiomassNC
+        + BiomassR_cook
+        + BiomassR_heat
+        + BiomassR_water
+        + BiomassC_heat
+        + BiomassC_water
+        + BiomassRefining
+    )
+
+    CoalIND_resid = pp.inp(["coal_i", "coal_fs"], units)
+    CoalIND_alu = pp.inp(["furnace_coal_aluminum"], units)
+    CoalIND_steel = pp.inp(
+        ["furnace_coal_steel", "bf_steel", "cokeoven_steel", "sinter_steel"],
+        units,
+        inpfilter={"commodity": ["coal"], "level": ["final"]},
+    )
+    CoalIND_petro = pp.inp(["furnace_coal_petro"], units)
+    CoalIND_cement = pp.inp(["furnace_coal_cement"], units)
+
+    CoalRefining = pp.inp(["furnace_coal_refining"], units)
+
+    CoalR_heat = pp.inp("coal_resid_heat", units)
+    CoalR_hotwater = pp.inp("coal_resid_hotwater", units)
+    CoalC_heat = pp.inp("coal_comm_heat", units)
+    CoalC_water = pp.inp("coal_comm_hotwater", units)
+    CoalTRP = pp.inp("coal_trp", units)
+    vars["Coal"] = (
+        CoalIND_resid
+        + CoalIND_alu
+        + CoalIND_steel
+        + CoalIND_petro
+        + CoalIND_cement
+        + CoalR_heat
+        + CoalR_hotwater
+        + CoalC_heat
+        + CoalC_water
+        + CoalTRP
+        + CoalRefining
+    )
+    df = pp_utils.make_outputdf(vars, units)
+    return df
 
 
 @_register
