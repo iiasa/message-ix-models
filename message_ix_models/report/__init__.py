@@ -1,8 +1,9 @@
 import logging
+import sys
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, Union
 
 import genno.config
 from dask.core import literal
@@ -73,31 +74,55 @@ def iamc(c: Reporter, info):
     handle_iamc(c, info)
 
 
-def register(callback) -> None:
+def register(name_or_callback: Union[Callable, str]) -> str:
     """Register a callback function for :meth:`prepare_reporter`.
 
     Each registered function is called by :meth:`prepare_reporter`, in order to add or
     modify reporting keys. Specific model variants and projects can register a callback
     to extend the reporting graph.
 
-    Callback functions must take one argument, the Reporter:
+    Callback functions must take two arguments: the Reporter, and a :class:`.Context`:
 
     .. code-block:: python
 
         from message_ix.reporting import Reporter
+        from message_ix_models import Context
         from message_data.reporting import register
 
-        def cb(rep: Reporter):
+        def cb(rep: Reporter, ctx: Context):
             # Modify `rep` by calling its methods ...
             pass
 
         register(cb)
+
+    Parameters
+    ----------
+    name_or_callback
+        If a string, this may be a submodule of :mod:`.message_data`, in which case the
+        function :func:`message_data.{name}.report.callback` is used. Or, it may be a
+        fully-resolved package/module name, in which case :func:`{name}.callback` is
+        used. If a callable (function), it is used directly.
     """
+    if isinstance(name_or_callback, str):
+        # Resolve a string
+        try:
+            # …as a submodule of message_data
+            name = f"message_data.{name_or_callback}.report"
+            __import__(name)
+        except ImportError:
+            # …as a fully-resolved package/module name
+            name = name_or_callback
+            __import__(name)
+        callback = sys.modules[name].callback
+    else:
+        callback = name_or_callback
+
     if callback in CALLBACKS:
         log.info(f"Already registered: {callback}")
         return
 
     CALLBACKS.append(callback)
+    return name
 
 
 def report(context: Context):
