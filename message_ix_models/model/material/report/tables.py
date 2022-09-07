@@ -30,6 +30,12 @@ def return_func_dict():
 #: Lists of technologies for materials variant.
 _TECHS = {
     "cement with ccs": ["clinker_dry_ccs_cement", "clinker_wet_ccs_cement"],
+    "industry with ccs": [
+        "biomass_NH3_ccs",
+        "coal_NH3_ccs",
+        "fueloil_NH3_ccs",
+        "gas_NH3_ccs",
+    ],
     "extra gas": [
         "furnace_gas_aluminum",
         "furnace_gas_petro",
@@ -84,178 +90,6 @@ def _register(func):
 # -------------------
 # Reporting functions
 # -------------------
-
-
-@_register
-def retr_CO2_CCS(units_emi, units_ene):
-    """Carbon sequestration.
-
-    Energy and land-use related carbon seuqestration.
-
-    Parameters
-    ----------
-
-    units_emi : str
-        Units to which emission variables should be converted.
-    units_ene : str
-        Units to which energy variables should be converted.
-    """
-
-    vars = {}
-
-    # --------------------------------
-    # Calculation of helping variables
-    # --------------------------------
-
-    # Biogas share calculation
-    _Biogas = pp.out("gas_bio", units_ene)
-
-    _gas_inp_tecs = [
-        "gas_ppl",
-        "gas_cc",
-        "gas_cc_ccs",
-        "gas_ct",
-        "gas_htfc",
-        "gas_hpl",
-        "meth_ng",
-        "meth_ng_ccs",
-        "h2_smr",
-        "h2_smr_ccs",
-        "gas_t_d",
-        "gas_t_d_ch4",
-    ]
-
-    _totgas = pp.inp(_gas_inp_tecs, units_ene, inpfilter={"commodity": ["gas"]})
-
-    _BGas_share = (_Biogas / _totgas).fillna(0)
-
-    # Calulation of CCS components
-
-    _CCS_coal_elec = -1.0 * pp.emi(
-        ["c_ppl_co2scr", "coal_adv_ccs", "igcc_ccs", "igcc_co2scr"],
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_coal_liq = -1.0 * pp.emi(
-        ["syn_liq_ccs", "meth_coal_ccs"],
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_coal_hydrogen = -1.0 * pp.emi(
-        "h2_coal_ccs",
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_cement = -1.0 * pp.emi(
-        ["clinker_dry_ccs_cement", "clinker_wet_ccs_cement"],
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_ammonia = -1.0 * pp.emi(
-        ["biomass_NH3_ccs", "gas_NH3_ccs", "coal_NH3_ccs", "fueloil_NH3_ccs"],
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_bio_elec = -1.0 * pp.emi(
-        ["bio_ppl_co2scr", "bio_istig_ccs"],
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_bio_liq = -1.0 * pp.emi(
-        ["eth_bio_ccs", "liq_bio_ccs"],
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_bio_hydrogen = -1.0 * pp.emi(
-        "h2_bio_ccs",
-        "GWa",
-        emifilter={"relation": ["CO2_Emission"]},
-        emission_units=units_emi,
-    )
-
-    _CCS_gas_elec = (
-        -1.0
-        * pp.emi(
-            ["g_ppl_co2scr", "gas_cc_ccs"],
-            "GWa",
-            emifilter={"relation": ["CO2_Emission"]},
-            emission_units=units_emi,
-        )
-        * (1.0 - _BGas_share)
-    )
-
-    _CCS_gas_liq = (
-        -1.0
-        * pp.emi(
-            "meth_ng_ccs",
-            "GWa",
-            emifilter={"relation": ["CO2_Emission"]},
-            emission_units=units_emi,
-        )
-        * (1.0 - _BGas_share)
-    )
-
-    _CCS_gas_hydrogen = (
-        -1.0
-        * pp.emi(
-            "h2_smr_ccs",
-            "GWa",
-            emifilter={"relation": ["CO2_Emission"]},
-            emission_units=units_emi,
-        )
-        * (1.0 - _BGas_share)
-    )
-
-    vars["CCS|Fossil|Energy|Supply|Electricity"] = _CCS_coal_elec + _CCS_gas_elec
-
-    vars["CCS|Fossil|Energy|Supply|Liquids"] = _CCS_coal_liq + _CCS_gas_liq
-
-    vars["CCS|Fossil|Energy|Supply|Hydrogen"] = _CCS_coal_hydrogen + _CCS_gas_hydrogen
-
-    vars["CCS|Biomass|Energy|Supply|Electricity"] = (
-        _CCS_bio_elec + _CCS_gas_elec * _BGas_share
-    )
-
-    vars["CCS|Biomass|Energy|Supply|Liquids"] = (
-        _CCS_bio_liq + _CCS_gas_liq * _BGas_share
-    )
-
-    vars["CCS|Biomass|Energy|Supply|Hydrogen"] = (
-        _CCS_bio_hydrogen + _CCS_gas_hydrogen * _BGas_share
-    )
-
-    vars["CCS|Industrial Processes"] = _CCS_cement + _CCS_ammonia
-
-    vars["Land Use"] = -pp.land_out(
-        lu_out_filter={
-            "level": ["land_use_reporting"],
-            "commodity": ["Emissions|CO2|AFOLU|Negative"],
-        }
-    )
-
-    vars["Land Use|Afforestation"] = -pp.land_out(
-        lu_out_filter={
-            "level": ["land_use_reporting"],
-            "commodity": ["Emissions|CO2|AFOLU|Afforestation"],
-        }
-    )
-
-    df = pp_utils.make_outputdf(vars, units_emi)
-    return df
 
 
 @_register
