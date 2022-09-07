@@ -1,5 +1,6 @@
 import pandas as pd
 
+from message_data.tools.post_processing import default_tables
 from message_data.tools.post_processing.default_tables import TECHS, _pe_wCCSretro
 import message_data.tools.post_processing.pp_utils as pp_utils
 
@@ -69,6 +70,28 @@ _TECHS = {
         "solar_refining",
         "vacuum_distillation_ref",
         "visbreaker_ref",
+    ],
+    "se solids biomass extra": [
+        "biomass_comm_heat",
+        "biomass_comm_hotwater",
+        "biomass_resid_cook",
+        "biomass_resid_heat",
+        "biomass_resid_hotwater",
+        "furnace_biomass_aluminum",
+        "furnace_biomass_cement",
+        "furnace_biomass_petro",
+        "furnace_biomass_refining",
+        "furnace_biomass_steel",
+    ],
+    "se solids coal extra": [
+        "furnace_coal_aluminum",
+        "furnace_coal_petro",
+        "furnace_coal_cement",
+        "furnace_coal_refining",
+        "coal_resid_heat",
+        "coal_resid_hotwater",
+        "coal_comm_heat",
+        "coal_comm_hotwater",
     ],
 }
 
@@ -1504,68 +1527,22 @@ def retr_SE_solids(units):
     units : str
         Units to which variables should be converted.
     """
+    # Call the function in default_tables()
+    base = default_tables.retr_SE_solids(units)
 
-    vars = {}
-
-    BiomassIND_resid = pp.inp("biomass_i", units)
-    BiomassIND_alu = pp.inp("furnace_biomass_aluminum", units)
-    BiomassIND_steel = pp.inp("furnace_biomass_steel", units)
-    BiomassIND_petro = pp.inp("furnace_biomass_petro", units)
-    BiomassIND_cement = pp.inp("furnace_biomass_cement", units)
-
-    BiomassRefining = pp.inp("furnace_biomass_refining", units)
-
-    BiomassNC = pp.inp("biomass_nc", units)
-    BiomassR_cook = pp.inp("biomass_resid_cook", units)
-    BiomassR_heat = pp.inp("biomass_resid_heat", units)
-    BiomassR_water = pp.inp("biomass_resid_hotwater", units)
-    BiomassC_heat = pp.inp("biomass_comm_heat", units)
-    BiomassC_water = pp.inp("biomass_comm_hotwater", units)
-
-    vars["Biomass"] = (
-        BiomassIND_resid
-        + BiomassIND_alu
-        + BiomassIND_steel
-        + BiomassIND_petro
-        + BiomassIND_cement
-        + BiomassNC
-        + BiomassR_cook
-        + BiomassR_heat
-        + BiomassR_water
-        + BiomassC_heat
-        + BiomassC_water
-        + BiomassRefining
+    # Extra retrieval requiring special filters
+    vars = dict(
+        Coal=pp.inp(
+            [
+                "bf_steel",
+                "cokeoven_steel",
+                "furnace_coal_steel",
+                "sinter_steel",
+            ],
+            units,
+            inpfilter={"commodity": ["coal"], "level": ["final"]},
+        )
     )
 
-    CoalIND_resid = pp.inp(["coal_i", "coal_fs"], units)
-    CoalIND_alu = pp.inp(["furnace_coal_aluminum"], units)
-    CoalIND_steel = pp.inp(
-        ["furnace_coal_steel", "bf_steel", "cokeoven_steel", "sinter_steel"],
-        units,
-        inpfilter={"commodity": ["coal"], "level": ["final"]},
-    )
-    CoalIND_petro = pp.inp(["furnace_coal_petro"], units)
-    CoalIND_cement = pp.inp(["furnace_coal_cement"], units)
-
-    CoalRefining = pp.inp(["furnace_coal_refining"], units)
-
-    CoalR_heat = pp.inp("coal_resid_heat", units)
-    CoalR_hotwater = pp.inp("coal_resid_hotwater", units)
-    CoalC_heat = pp.inp("coal_comm_heat", units)
-    CoalC_water = pp.inp("coal_comm_hotwater", units)
-    CoalTRP = pp.inp("coal_trp", units)
-    vars["Coal"] = (
-        CoalIND_resid
-        + CoalIND_alu
-        + CoalIND_steel
-        + CoalIND_petro
-        + CoalIND_cement
-        + CoalR_heat
-        + CoalR_hotwater
-        + CoalC_heat
-        + CoalC_water
-        + CoalTRP
-        + CoalRefining
-    )
-    df = pp_utils.make_outputdf(vars, units)
-    return df
+    # Combine with `base`
+    return base + pp_utils.make_outputdf(vars, units)
