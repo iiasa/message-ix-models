@@ -195,13 +195,11 @@ def callback(rep: Reporter, context: Context) -> None:
     Adds a key "navigate bmt" that invokes buildings, materials, and transport
     reporting.
     """
-    from message_data.model.buildings.report import callback as buildings_cb
-    from message_data.model.materials.report import callback as materials_cb
-    from message_data.model.transport.report import callback as transport_cb
+    from message_data.reporting import register
 
     # Set up reporting for each of the model variants
-    buildings_cb(rep, context)
-    materials_cb(rep, context)
-    transport_cb(rep, context)
+    register("model.buildings")
+    register("model.materials")
+    register("model.transport")
 
     rep.add("navigate bmt", ["buildings all", "materials all", "transport iamc store"])
