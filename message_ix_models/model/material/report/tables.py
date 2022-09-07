@@ -93,6 +93,18 @@ _TECHS = {
         "coal_comm_heat",
         "coal_comm_hotwater",
     ],
+    "synfuels oil": [
+        (
+            "agg_ref",
+            "out",
+            dict(level=["secondary"], commodity=["lightoil", "fueloil"]),
+        ),
+        (
+            "steam_cracker_petro",
+            "inp",
+            dict(level=["final"], commodity=["atm_gasoil", "naphtha", "vacuum_gasoil"]),
+        ),
+    ],
 }
 
 
@@ -1409,112 +1421,6 @@ def retr_CO2emi(units_emi, units_ene_mdl):
 
     dfs.append(pp_utils.make_outputdf(vars, units_ene_mdl, glb=False))
     return pd.concat(dfs, sort=True)
-
-
-@_register
-def retr_SE_synfuels(units):
-    """Energy: Secondary Energy synthetic fuels.
-
-    Parameters
-    ----------
-
-    units : str
-        Units to which variables should be converted.
-    """
-
-    vars = {}
-
-    vars["Liquids|Oil"] = (
-        pp.out(
-            "agg_ref",
-            units,
-            outfilter={"level": ["secondary"], "commodity": ["lightoil"]},
-        )
-        + pp.out(
-            "agg_ref",
-            units,
-            outfilter={"level": ["secondary"], "commodity": ["fueloil"]},
-        )
-        + pp.inp(
-            "steam_cracker_petro",
-            units,
-            inpfilter={
-                "level": ["final"],
-                "commodity": ["atm_gasoil", "vacuum_gasoil", "naphtha"],
-            },
-        )
-    )
-
-    vars["Liquids|Biomass|w/o CCS"] = pp.out(
-        ["eth_bio", "liq_bio"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["ethanol"]},
-    )
-
-    vars["Liquids|Biomass|w/ CCS"] = pp.out(
-        ["eth_bio_ccs", "liq_bio_ccs"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["ethanol"]},
-    )
-
-    vars["Liquids|Coal|w/o CCS"] = pp.out(
-        ["meth_coal", "syn_liq"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["methanol"]},
-    )
-
-    vars["Liquids|Coal|w/ CCS"] = pp.out(
-        ["meth_coal_ccs", "syn_liq_ccs"],
-        units,
-        outfilter={"level": ["primary"], "commodity": ["methanol"]},
-    )
-
-    vars["Liquids|Gas|w/o CCS"] = pp.out(
-        "meth_ng", units, outfilter={"level": ["primary"], "commodity": ["methanol"]}
-    )
-
-    vars["Liquids|Gas|w/ CCS"] = pp.out(
-        "meth_ng_ccs",
-        units,
-        outfilter={"level": ["primary"], "commodity": ["methanol"]},
-    )
-
-    vars["Hydrogen|Coal|w/o CCS"] = pp.out(
-        "h2_coal", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    vars["Hydrogen|Coal|w/ CCS"] = pp.out(
-        "h2_coal_ccs",
-        units,
-        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
-    )
-
-    vars["Hydrogen|Gas|w/o CCS"] = pp.out(
-        "h2_smr", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    vars["Hydrogen|Gas|w/ CCS"] = pp.out(
-        "h2_smr_ccs",
-        units,
-        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
-    )
-
-    vars["Hydrogen|Biomass|w/o CCS"] = pp.out(
-        "h2_bio", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    vars["Hydrogen|Biomass|w/ CCS"] = pp.out(
-        "h2_bio_ccs",
-        units,
-        outfilter={"level": ["secondary"], "commodity": ["hydrogen"]},
-    )
-
-    vars["Hydrogen|Electricity"] = pp.out(
-        "h2_elec", units, outfilter={"level": ["secondary"], "commodity": ["hydrogen"]}
-    )
-
-    df = pp_utils.make_outputdf(vars, units)
-    return df
 
 
 @_register
