@@ -1,0 +1,39 @@
+# Legacy reporting config ("run config") for MESSAGEix-Materials
+
+report_config:
+  table_def: message_data.model.materials.report.tables
+  unit_yaml: materials_units.yaml
+
+run_tables:
+  LU_Agr_fert_int:
+    root: Fertilizer
+    active: False
+    function: retr_fertilizer_int
+    args:
+       units_nitrogen: t N/ha/yr
+       units_phosphorus: t P/ha/yr
+
+  # Used with ENGAGE_SSP2_v417_tables.py, otherwise error
+  LU_glo:
+    root: GLOBIOM
+    active: False
+    function: retr_globiom
+    args:
+      units_ghg: Mt CO2eq/yr
+      units_co2: Mt CO2/yr
+      units_energy: EJ/yr
+      units_volume: Mm3
+      units_area: million ha
+
+  Glob_fdbk:
+    root: GLOBIOM Feedback
+    active: True
+    function: retr_globiom_feedback
+    args:
+      units_emi_CH4: Mt CH4/yr
+      units_emi_CO2: Mt CO2/yr
+      units_emi_N2O: kt N2O/yr
+      units_ene: EJ/yr
+      units_CPrc_co2: US$2005/tCO2
+      units_CPrc_co2_outp: US$2005/t CO2
+      units_gdp: billion US$2005/yr
