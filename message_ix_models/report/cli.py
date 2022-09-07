@@ -22,6 +22,7 @@ log = logging.getLogger(__name__)
     show_default=True,
     help="Path or stem for reporting config file.",
 )
+@click.option("--legacy", "-L", is_flag=True, help="Invoke legacy reporking.")
 @click.option(
     "--module", "-m", metavar="MODULES", help="Add extra reporting for MODULES."
 )
@@ -39,7 +40,7 @@ log = logging.getLogger(__name__)
 )
 @click.argument("key", default="message::default")
 @click.pass_obj
-def cli(context, config_file, module, output_path, from_file, key, dry_run):
+def cli(context, config_file, legacy, module, output_path, from_file, key, dry_run):
     """Postprocess results.
 
     KEY defaults to the comprehensive report 'message::default', but may also be the
@@ -69,6 +70,9 @@ def cli(context, config_file, module, output_path, from_file, key, dry_run):
     for m in filter(len, module.split(",")):
         name = register(m)
         log.info(f"Registered reporting from {name}")
+
+    # Common settings to apply in all contexts
+    common = dict(config=config, key=key, legacy=legacy)
 
     # Prepare a list of Context objects, each referring to one Scenario
     contexts = []
@@ -108,6 +112,6 @@ def cli(context, config_file, module, output_path, from_file, key, dry_run):
 
     for ctx in contexts:
         # Update with common settings
-        context["report"].update(config=config, key=key)
+        context["report"].update(common)
         report(ctx)
         mark_time()

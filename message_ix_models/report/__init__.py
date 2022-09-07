@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
 
 import genno.config
+import yaml
 from dask.core import literal
 from genno import Key
 from genno.compat.pyam import iamc as handle_iamc
@@ -158,24 +159,12 @@ def report(context: Context):
     - ``report/config`` is set to :file:`report/globa.yaml`, if not set.
 
     """
-    if "legacy" in context.report:
-        log.info("Using legacy tools.post_processing.iamc_report_hackathon")
-        from message_data.tools.post_processing import iamc_report_hackathon
-
-        # Default settings
-        context.report["legacy"].setdefault("merge_hist", True)
-
-        # Retrieve the Scenario and Platform
-        scenario = context.get_scenario()
-        mark_time()
-
-        return iamc_report_hackathon.report(
-            mp=scenario.platform, scen=scenario, **context.report["legacy"]
-        )
-
     # Default arguments
-    context.report.setdefault("key", "default")
     context.report.setdefault("config", private_data_path("report", "global.yaml"))
+    context.report.setdefault("key", "default")
+
+    if context.report.get("legacy"):
+        return _invoke_legacy_reporting(context)
 
     rep, key = prepare_reporter(context)
 
@@ -195,6 +184,28 @@ def report(context: Context):
     # Display information about the result
     op = rep.graph["config"]["output_path"]
     log.info("Result" + (f" written to {op}" if op else f":\n{result}"))
+
+
+def _invoke_legacy_reporting(context):
+    log.info("Using legacy tools.post_processing.iamc_report_hackathon")
+    from message_data.tools.post_processing import iamc_report_hackathon
+
+    # Read a configuration file and update the arguments
+    config = context.report.pop("config")
+    if isinstance(config, Path) and config.exists():
+        with open(config, "r") as f:
+            context.report["legacy"] = yaml.safe_load(f)
+
+    # Default settings
+    context.report["legacy"].setdefault("merge_hist", True)
+
+    # Retrieve the Scenario and Platform
+    scenario = context.get_scenario()
+    mark_time()
+
+    return iamc_report_hackathon.report(
+        mp=scenario.platform, scen=scenario, **context.report["legacy"]
+    )
 
 
 def prepare_reporter(
