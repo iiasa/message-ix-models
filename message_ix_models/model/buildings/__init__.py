@@ -101,7 +101,6 @@ def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
 # FIXME(PNK) Too complex; McCabe complexity of 17 > 14 for the rest of message_data
 def setup_scenario(  # noqa: C901
     scenario: message_ix.Scenario,
-    info: ScenarioInfo,
     demand: pd.DataFrame,
     prices: pd.DataFrame,
     sturm_scenarios: pd.DataFrame,
@@ -117,14 +116,15 @@ def setup_scenario(  # noqa: C901
     info
         Information about `scenario`.
     """
+    info = ScenarioInfo(scenario)
+
     if BUILD_COMMODITIES[0] in info.set["commodity"]:
         # Scenario already set up; do notihing
         return
 
     scenario.check_out()
 
-    nodes = info.N
-    years_model = info.Y
+    from utils.rc_afofi import return_PERC_AFOFI  # type: ignore
 
     # Add floorspace unit
     scenario.platform.add_unit("Mm2/y", "mil. square meters by year")
@@ -145,10 +145,9 @@ def setup_scenario(  # noqa: C901
     # based on percentages between 2010 and 2015
     # (see rc_afofi.py in utils)
     dd_replace = scenario.par(
-        "demand",
-        filters={"commodity": ["rc_spec", "rc_therm"], "year": years_model},
+        "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
     )
-    [perc_afofi_therm, perc_afofi_spec] = rc_afofi.return_PERC_AFOFI()
+    perc_afofi_therm, perc_afofi_spec = return_PERC_AFOFI()
     afofi_dd = dd_replace.copy(True)
     for reg in perc_afofi_therm.index:
         # Boolean mask for rows matching this `reg`
@@ -210,17 +209,13 @@ def setup_scenario(  # noqa: C901
         time_origin="year",
         time_dest="year",
         mode="M1",
-        year_vtg=years_model,
-        year_act=years_model,
+        year_vtg=info.Y,
+        year_act=info.Y,
     )
 
-    # Iterate over `BUILD_COMM_CONVERT` and  nodes (excluding World and *_GLB)
-    for c, n in product(
-        BUILD_COMM_CONVERT, filter(lambda n: "World" not in n and "GLB" not in n, nodes)
-    ):
-        comm = c.split("_")[-1]
-        typ = c.split("_")[-2]
-        rc = c.split("_")[-5]  # "resid" or "comm"
+    # Iterate over `BUILD_COMM_CONVERT` and nodes (excluding World and *_GLB)
+    for c, n in product(BUILD_COMM_CONVERT, nodes_ex_world(info.N)):
+        rc, *_, typ, comm = c.split("_")  # First, second-to-last, and last entries
 
         common.update(node_loc=n, node_origin=n, node_dest=n)
 
