@@ -223,15 +223,10 @@ def setup_scenario(  # noqa: C901
 
         common.update(node_loc=n, node_origin=n, node_dest=n)
 
-        if rc == "resid":
-            df_mat = sturm_scenarios.loc[
-                (sturm_scenarios["commodity"] == c) & (sturm_scenarios["node"] == n)
-            ]
-        elif rc == "comm" and first_iteration:
-            df_mat = comm_sturm_scenarios.loc[
-                (comm_sturm_scenarios["commodity"] == c)
-                & (comm_sturm_scenarios["node"] == n)
-            ]
+        # Select data for (rc, c, n)
+        df_mat = (sturm_scenarios if rc == "resid" else comm_sturm_scenarios).query(
+            f"commodity == '{c}' and node == '{n}'"
+        )
 
         if typ == "demand":
             tec = f"construction_{rc}_build"
