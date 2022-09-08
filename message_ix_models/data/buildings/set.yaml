@@ -1,0 +1,43 @@
+# Set configuration for the MESSAGE-Buildings model
+#
+# This is not the authoritative list, but is used by utility code/reporting.
+
+# Not in MESSAGE formulation
+
+sector:
+  add:
+    comm: Commercial
+    resid: Residential
+
+enduse:
+  add:
+    apps: Appliances
+    cook: Cooking
+    cool: Space cooling
+    heat: Space heating
+    hotwater: Hot water
+
+# MESSAGE sets
+
+commodity:
+  add:
+  - biomass
+  - electr
+  - coal
+  - d_heat
+  - gas
+  - lightoil
+
+  # NB others like afofi_spec are generated in .buildings.build
+
+
+technology:
+  add:
+    "{commodity.id}_{sector.id}_{enduse.id}":
+      _generate:
+        commodity: null  # Use all values appearing under commodity/add, above
+        sector: null
+        enduse: null
+      name: "{commodity.name}, {sector.name}, {enduse.name}"
+
+    # NB others like meth_afofi are generated in .buildings.build
