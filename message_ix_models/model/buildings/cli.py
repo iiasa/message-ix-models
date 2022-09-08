@@ -291,7 +291,6 @@ def build_and_solve(  # noqa: C901
 
         setup_scenario(
             scenario,
-            info,
             demand,
             prices,
             sturm_scenarios,
