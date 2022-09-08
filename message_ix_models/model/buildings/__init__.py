@@ -121,7 +121,7 @@ def setup_scenario(  # noqa: C901
         # Scenario already set up; do notihing
         return
 
-    from utils import rc_afofi  # type: ignore
+    scenario.check_out()
 
     nodes = info.N
     years_model = info.Y
@@ -361,15 +361,5 @@ def setup_scenario(  # noqa: C901
                 technology=tech_new
             )
 
-            build_rel = scenario.par(
-                "relation_activity",
-                filters={"technology": tech_orig, "relation": emiss_rel},
-            ).assign(technology=tech_new)
-
-            scenario.add_set("commodity", commodity)
-            scenario.add_set("technology", tech_new)
-            scenario.add_par("input", build_in)
-            scenario.add_par("output", build_out)
-            scenario.add_par("capacity_factor", build_cf)
-            scenario.add_par("emission_factor", build_ef)
-            scenario.add_par("relation_activity", build_rel)
+    scenario.commit("message_data.model.buildings.setup_scenario()")
+    scenario.set_as_default()

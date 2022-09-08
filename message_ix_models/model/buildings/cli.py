@@ -285,11 +285,9 @@ def build_and_solve(  # noqa: C901
         # Dump data for debugging
         demand.to_csv(output_path.joinpath("debug-demand.csv"))
 
-        # Update demands in the scenario
+        # Set up structure and apply one-time data modifications to the scenario
         if scenario.has_solution():
             scenario.remove_solution()
-
-        scenario.check_out()
 
         setup_scenario(
             scenario,
@@ -298,10 +296,13 @@ def build_and_solve(  # noqa: C901
             prices,
             sturm_scenarios,
             comm_sturm_scenarios,
-            iterations == 0,
+            first_iteration=iterations == 0,
         )
 
         mark_time()
+
+        # Update demands in the scenario
+        scenario.check_out()
 
         # Rename non-comm
         demand.loc[
@@ -361,7 +362,7 @@ def build_and_solve(  # noqa: C901
             scenario.init_set("time_relative")
 
         # Run MESSAGE
-        scenario.commit("buildings test")
+        scenario.commit("message_data.model.buildings.cli.build_and_solve()")
 
         # Add bio backstop
         add_bio_backstop(scenario)
