@@ -23,6 +23,7 @@ Material_global_grpahs.pdf
 
 # PACKAGES
 from functools import partial
+from typing import List
 
 import matplotlib
 import message_ix
@@ -34,7 +35,6 @@ import pyam
 import xlsxwriter
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from message_ix_models import ScenarioInfo
 from message_ix_models import Context
 
 
@@ -180,14 +180,12 @@ def fix_excel(path_temp, path_new):
 def report(
     scenario: message_ix.Scenario,
     message_df: pd.DataFrame,
+    years: List[int],
+    nodes: List[str],
+    config: dict,
     context: Context,
 ) -> None:
     """Produces the material related variables."""
-
-    # Obtain scenario information and directory
-
-    s_info = ScenarioInfo(scenario)
-
     # In order to avoid confusion in the second reporting stage there should
     # no existing timeseries uploaded in the scenairo. Clear these except the
     # residential and commercial ones since they should be always included.
@@ -205,30 +203,19 @@ def report(
     # scenario.add_timeseries(df_transport)
     # scenario.commit('Added transport timeseries')
 
-    years = s_info.Y
-    nodes = []
-    for n in s_info.N:
-        n = n + "*"
-        nodes.append(n)
-
-    if "R11_GLB*" in nodes:
-        nodes.remove("R11_GLB*")
-    elif "R12_GLB*" in nodes:
-        nodes.remove("R12_GLB*")
-
     # Path for materials reporting output
-    directory = context.get_local_path("report", "materials")
+    directory = config["output_path"].joinpath("materials")
     directory.mkdir(exist_ok=True)
 
     # Dump output of message_ix built-in reporting to an Excel file
     df = message_df
-    name = os.path.join(directory, "message_ix_reporting.xlsx")
+    name = directory.joinpath("message_ix_reporting.xlsx")
     df.to_excel(name)
     print("message_ix level reporting generated")
 
     # Obtain a pyam dataframe / filter / global aggregation
 
-    path = os.path.join(directory, "message_ix_reporting.xlsx")
+    path = directory.joinpath("message_ix_reporting.xlsx")
     report = pd.read_excel(path)
     report.Unit.fillna("", inplace=True)
     df = pyam.IamDataFrame(report)
@@ -303,7 +290,7 @@ def report(
     )
     variables = df.variable
     df.aggregate_region(variables, region="World", method=sum, append=True)
-    name = os.path.join(directory, "check.xlsx")
+    name = directory.joinpath("check.xlsx")
     df.to_excel(name)
     print("Necessary variables are filtered")
 
@@ -344,7 +331,7 @@ def report(
     print("Empty template for new variables created")
 
     # Create a pdf file with figures
-    path = os.path.join(directory, "Material_global_graphs.pdf")
+    path = directory.joinpath("Material_global_graphs.pdf")
     pp = PdfPages(path)
     # pp = PdfPages("Material_global_graphs.pdf")
 
@@ -3289,12 +3276,10 @@ def report(
     # Print the new variables to an excel file.
     # Change the naming convention and save to another excel file.
 
-    name_temp = os.path.join(directory, "temp_new_reporting.xlsx")
-    df_final.to_excel(name_temp, sheet_name="data", index=False)
-    path_temp = os.path.join(directory, name_temp)
+    path_temp = directory.joinpath("temp_new_reporting.xlsx")
+    path_new = directory.joinpath(f"New_Reporting_{model_name}_{scenario_name}.xlsx")
 
-    excel_name_new = "New_Reporting_" + model_name + "_" + scenario_name + ".xlsx"
-    path_new = os.path.join(directory, excel_name_new)
+    df_final.to_excel(path_temp, sheet_name="data", index=False)
 
     fix_excel(path_temp, path_new)
     print("New reporting file generated.")
@@ -3330,4 +3315,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         partial(report, context=context),
         "scenario",
         "message::default",
+        "y::model",
+        "n::ex world",
+        "config",
     )
