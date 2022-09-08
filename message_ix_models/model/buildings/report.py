@@ -10,9 +10,13 @@ from iam_units import registry
 from message_ix_models import Context
 from message_ix_models.util import MESSAGE_DATA_PATH
 
+from .build import get_spec, get_techs
+
 log = logging.getLogger(__name__)
 
-# Mappings for .replace()
+#: Mappings for .replace().
+#:
+#: .. todo:: combine and use with those defined in .reporting.util.
 SECTOR_NAME_MAP = {"comm": "Commercial", "resid": "Residential"}
 FUEL_NAME_MAP = {
     "biomass": "Solids|Biomass",
@@ -94,6 +98,25 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     rep.add("store_ts", "buildings iamc store", "scenario", *store_keys)
     rep.add("buildings iamc file", file_keys)
     rep.add("buildings all", ["buildings iamc store", "buildings iamc file"])
+
+
+def configure_legacy_reporting(config):
+    context = Context.get_instance()
+
+    # FIXME don't hard-code this
+    context.setdefault("regions", "R12")
+
+    spec = get_spec(context)
+
+    # Generate some lists
+    for c in "back biomass coal d_heat elec eth foil gas h2 loil meth solar".split():
+        _c = {"elec": "electr", "heat": "d_heat", "loil": "lightoil"}.get(c, c)
+        config[f"rc {c}"] = get_techs(spec, commodity=_c)
+
+    # Extend some groups
+    # TODO group automatically based on attributes
+    config["rc elec"].extend(get_techs(spec, commodity="hp_el"))
+    config["rc gas"].extend(get_techs(spec, commodity="hp_gas"))
 
 
 # Helper functions
