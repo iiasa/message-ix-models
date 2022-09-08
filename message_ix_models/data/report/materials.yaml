@@ -1,8 +1,8 @@
 # Legacy reporting config ("run config") for MESSAGEix-Materials
 
 report_config:
-  table_def: message_data.model.materials.report.tables
-  unit_yaml: materials_units.yaml
+  table_def: message_data.model.material.report.tables
+  unit_yaml: materials-units.yaml
 
 run_tables:
   LU_Agr_fert_int:
