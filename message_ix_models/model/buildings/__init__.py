@@ -1,4 +1,5 @@
 import logging
+import re
 from itertools import product
 
 import message_ix
@@ -6,6 +7,7 @@ import message_ix_models.util as mutil
 import numpy as np
 import pandas as pd
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import nodes_ex_world
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
@@ -119,7 +121,7 @@ def setup_scenario(  # noqa: C901
     info = ScenarioInfo(scenario)
 
     if BUILD_COMMODITIES[0] in info.set["commodity"]:
-        # Scenario already set up; do notihing
+        # Scenario already set up; do nothing
         return
 
     scenario.check_out()
@@ -130,6 +132,7 @@ def setup_scenario(  # noqa: C901
     scenario.platform.add_unit("Mm2/y", "mil. square meters by year")
 
     # Add new commodities and technologies
+    # TODO use message_ix_model.build.apply_spec() pattern, like materials & transport
     scenario.add_set("commodity", BUILD_COMMODITIES)
     scenario.add_set("technology", BUILD_TECHS)
 
@@ -141,9 +144,7 @@ def setup_scenario(  # noqa: C901
         )
     )
 
-    # Create new demands and techs for AFOFI
-    # based on percentages between 2010 and 2015
-    # (see rc_afofi.py in utils)
+    # Create new demands and techs for AFOFI based on percentages between 2010 and 2015
     dd_replace = scenario.par(
         "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
     )
@@ -179,11 +180,13 @@ def setup_scenario(  # noqa: C901
         tech_new = tech_orig.replace("rc", "afofi").replace("RC", "AFOFI")
         scenario.add_set("technology", tech_new)
 
+        # Copy data for input, capacity_factor, and emission_factor
         for name in ("input", "capacity_factor", "emission_factor"):
             scenario.add_par(
                 name, scenario.par(name, **filters).assign(technology=tech_new)
             )
 
+        # Replace commodity name in output
         name = "output"
         scenario.add_par(
             name,
@@ -193,6 +196,7 @@ def setup_scenario(  # noqa: C901
             ),
         )
 
+        # Only copy relation_activity data for emiss_rel
         name = "relation_activity"
         filters["filters"].update(relation=emiss_rel)
         scenario.add_par(
@@ -292,42 +296,28 @@ def setup_scenario(  # noqa: C901
         scenario.add_par("demand", mat_demand.drop(columns=f"demand_{rc}_const"))
 
     # Create new technologies for building energy
-    rc_tech_fuel = pd.DataFrame(
-        {
-            "fuel": ["biomass", "coal", "lightoil", "gas", "electr", "d_heat"],
-            "technology": [
-                "biomass_rc",
-                "coal_rc",
-                "loil_rc",
-                "gas_rc",
-                "elec_rc",
-                "heat_rc",
-            ],
-        }
-    )
+
+    # Mapping from commodity to base model's *_rc technology
+    rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
 
     # Add for fuels above
     for fuel in prices["commodity"].unique():
         # Find the original rc technology for the fuel
-        tech_orig = rc_tech_fuel.loc[rc_tech_fuel["fuel"] == fuel, "technology"].values[
-            0
-        ]
+        tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
 
         # Remove lower bound in activity for older, now unused rc techs to allow them to
         # reach zero
-        filters = dict(filters={"technology": tech_orig, "year_act": years_model})
-        for constraint, value in (
-            ("bound_activity", 0.0),
-            ("growth_activity", -1.0),
-            ("soft_activity", 0.0),
+        filters = dict(filters={"technology": tech_orig, "year_act": info.Y})
+        for name, value in (
+            ("bound_activity_lo", 0.0),
+            ("growth_activity_lo", -1.0),
+            ("soft_activity_lo", 0.0),
         ):
-            name = f"{constraint}_lo"
             scenario.add_par(name, scenario.par(name, **filters).assign(value=value))
 
         # Create the technologies for the new commodities
         for commodity in filter(
-            lambda com: f"_{fuel}" in com or f"-{fuel}" in com,
-            demand["commodity"].unique(),
+            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
         ):
 
             # Fix for lightoil gas included
@@ -339,22 +329,25 @@ def setup_scenario(  # noqa: C901
             # commented: for debugging
             # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
 
-            filters = dict(filters={"technology": tech_orig})
-            build_in = scenario.par("input", **filters).assign(
-                technology=tech_new, value=1.0
-            )
+            # Add new commodities and technologies
+            scenario.add_set("commodity", commodity)
+            scenario.add_set("technology", tech_new)
 
-            build_out = scenario.par("output", **filters).assign(
-                technology=tech_new, commodity=commodity, value=1.0
-            )
-
-            build_cf = scenario.par("capacity_factor", **filters).assign(
-                technology=tech_new
-            )
-
-            build_ef = scenario.par("emission_factor", **filters).assign(
-                technology=tech_new
-            )
+            # Modify data
+            for name, filters, extra in (
+                ("input", {}, dict(value=1.0)),
+                ("output", {}, dict(commodity=commodity, value=1.0)),
+                ("capacity_factor", {}, {}),
+                ("emission_factor", {}, {}),
+                ("relation_activity", dict(relation=emiss_rel), {}),
+            ):
+                filters["technology"] = tech_orig
+                scenario.add_par(
+                    name,
+                    scenario.par(name, filters=filters).assign(
+                        technology=tech_new, **extra
+                    ),
+                )
 
     scenario.commit("message_data.model.buildings.setup_scenario()")
     scenario.set_as_default()
