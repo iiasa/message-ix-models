@@ -41,3 +41,7 @@ technology:
       name: "{commodity.name}, {sector.name}, {enduse.name}"
 
     # NB others like meth_afofi are generated in .buildings.build
+
+unit:
+  add:
+    Mm2/y: mil. square meters by year
