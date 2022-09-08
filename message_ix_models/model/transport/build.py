@@ -12,7 +12,8 @@ from message_ix_models.model import build, disutility
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
-from message_data.model.transport.utils import configure, get_region_codes
+from message_data.model.transport.utils import configure
+from message_data.tools import get_region_codes
 
 log = logging.getLogger(__name__)
 

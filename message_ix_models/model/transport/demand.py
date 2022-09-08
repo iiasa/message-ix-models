@@ -21,12 +21,8 @@ from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 from message_data.model.transport import computations, plot
 from message_data.model.transport.data import groups
 from message_data.model.transport.report import require_compat, update_config
-from message_data.model.transport.utils import (
-    get_region_codes,
-    get_techs,
-    path_fallback,
-)
-from message_data.tools import gdp_pop
+from message_data.model.transport.utils import get_techs, path_fallback
+from message_data.tools import gdp_pop, get_region_codes
 
 log = logging.getLogger(__name__)
 

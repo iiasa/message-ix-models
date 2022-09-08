@@ -31,11 +31,8 @@ from openpyxl import load_workbook
 from sdmx.model import Code
 
 from message_data.model.transport.data.emissions import ef_for_input
-from message_data.model.transport.utils import (
-    get_region_codes,
-    input_commodity_level,
-    path_fallback,
-)
+from message_data.model.transport.utils import input_commodity_level, path_fallback
+from message_data.tools import get_region_codes
 
 log = logging.getLogger(__name__)
 
