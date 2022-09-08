@@ -1,25 +1,23 @@
 """Utility code for MESSAGEix-Transport."""
 import logging
 from functools import lru_cache
-from itertools import product
 from pathlib import Path
 from typing import Dict, List, Mapping, MutableMapping, Tuple, Union
 
 import pandas as pd
-import xarray as xr
 from iam_units import registry  # noqa: F401
 from message_ix import Scenario
 from message_ix_models import Context, Spec
 from message_ix_models.model import bare
-from message_ix_models.model.structure import get_codes, process_units_anno
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
-    as_codes,
     eval_anno,
     identify_nodes,
     load_private_data,
     private_data_path,
 )
-from sdmx.model import Code
+
+from message_data.tools import generate_set_elements
 
 log = logging.getLogger(__name__)
 
@@ -100,16 +98,6 @@ def configure(
     cfg["mode-share"] = options.pop("mode-share", cfg.get("mode-share", "default"))
 
 
-@lru_cache()
-def get_region_codes(codelist: str) -> List[Code]:
-    """Return the codes that are children of "World" in the specified `codelist`.
-
-    .. todo:: Move upstream to :mod:`message_ix_models`.
-    """
-    nodes = get_codes(f"node/{codelist}")
-    return nodes[nodes.index(Code(id="World"))].child
-
-
 def _setdefault_recursive(dest: MutableMapping, src: Mapping) -> None:
     """Recursive version of :meth:`dict.setdefault`.
 
@@ -179,105 +167,6 @@ def read_config(context):
     # Convert some values to codes
     for set_name, info in context["transport set"].items():
         generate_set_elements(context, set_name)
-
-
-def generate_product(
-    context: Context, name: str, template: Code
-) -> Tuple[List[Code], Dict[str, xr.DataArray]]:
-    """Generates codes from a product along 1 or more `dims`.
-
-    :func:`generate_set_elements` is called for each of the `dims`, and these values
-    are used to format `base`.
-
-    Parameters
-    ----------
-    set_name : str
-
-    template : .Code
-        Must have Python format strings for its its :attr:`id` and :attr:`name`
-        attributes.
-    dims : dict of (str -> value)
-        (key, value) pairs are passed as arguments to :func:`generate_set_elements`.
-    """
-    # eval() and remove the original annotation
-    dims = eval_anno(template, "_generate")
-    template.pop_annotation(id="_generate")
-
-    def _base(dim, match):
-        """Return codes along dimension `dim`; if `match` is given, only children."""
-        dim_codes = context["transport set"][dim]["add"]
-        return dim_codes[dim_codes.index(match)].child if match else dim_codes
-
-    codes = []  # Accumulate codes and indices
-    indices = []
-
-    # Iterate over the product of filtered codes for each dimension in
-    for item in product(*[_base(*dm) for dm in dims.items()]):
-        result = template.copy()  # Duplicate the template
-
-        fmt = dict(zip(dims.keys(), item))  # Format the ID and name
-        result.id = result.id.format(**fmt)
-        result.name = str(result.name).format(**fmt)  # type: ignore [assignment]
-
-        codes.append(result)  # Store code and indices
-        indices.append(item)
-
-    # - Convert length-N sequence of D-tuples to D iterables each of length N.
-    # - Convert to D × 1-dimensional xr.DataArrays, each of length N.
-    tmp = zip(*indices)
-    indexers = {d: xr.DataArray(list(i), dims=name) for d, i in zip(dims.keys(), tmp)}
-    # Corresponding indexer with the full code IDs
-    indexers[name] = xr.DataArray([c.id for c in codes], dims=name)
-
-    return codes, indexers
-
-
-def generate_set_elements(context, name, match=None) -> None:
-    """Generate elements for set `name`.
-
-    This function converts the contents of :file:`transport/set.yaml` and
-    :file:`transport/technology.yaml` into lists of codes, of which the IDs are the
-    elements of sets (dimensions) in a scenario.
-
-    Parameters
-    ----------
-    set_name : str
-        Name of the set for which to generate elements.
-    match: str, optional
-        If given, only return Codes whose ID matches this value exactly, *or* children
-        of such codes.
-    """
-    hierarchical = name in {"technology"}
-
-    codes = []  # Accumulate codes
-    deferred = []
-    for code in as_codes(context["transport set"][name].get("add", [])):
-        if name in {"commodity", "technology"}:
-            process_units_anno(name, code, quiet=True)
-
-        if eval_anno(code, "_generate"):
-            # Requires a call to generate_product(); do these last
-            deferred.append(code)
-            continue
-
-        codes.append(code)
-
-        if hierarchical:
-            # Store the children of `code`
-            codes.extend(filter(lambda c: c not in codes, code.child))
-
-    # Store codes processed so far, in case used recursively by generate_product()
-    context["transport set"][name]["add"] = codes
-
-    # Use generate_product() to generate codes and indexers based on other sets
-    for code in deferred:
-        generated, indexers = generate_product(context, name, code)
-
-        # Store
-        context["transport set"][name]["add"].extend(generated)
-
-        # NB if there are >=2 generated groups, only indexers for the last are kept
-        context["transport set"][name]["indexers"] = indexers
 
 
 def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
