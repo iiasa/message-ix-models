@@ -1,7 +1,11 @@
 import pandas as pd
 
 from message_data.tools.post_processing import default_tables
-from message_data.tools.post_processing.default_tables import TECHS, _pe_wCCSretro
+from message_data.tools.post_processing.default_tables import (
+    TECHS,
+    rc_techs,
+    _pe_wCCSretro,
+)
 import message_data.tools.post_processing.pp_utils as pp_utils
 
 pp = None
@@ -24,6 +28,11 @@ def return_func_dict():
     # FIXME(PNK) read these from proper hierarchical technology code lists; store on a
     #            Context object.
     TECHS.update(_TECHS)
+
+    # Invoke similar code associated with MESSAGEix-Buildings
+    from message_data.model.building.report import configure_legacy_reporting
+
+    configure_legacy_reporting(TECHS)
 
     return func_dict
 
@@ -72,11 +81,6 @@ _TECHS = {
         "visbreaker_ref",
     ],
     "se solids biomass extra": [
-        "biomass_comm_heat",
-        "biomass_comm_hotwater",
-        "biomass_resid_cook",
-        "biomass_resid_heat",
-        "biomass_resid_hotwater",
         "furnace_biomass_aluminum",
         "furnace_biomass_cement",
         "furnace_biomass_petro",
@@ -88,10 +92,6 @@ _TECHS = {
         "furnace_coal_petro",
         "furnace_coal_cement",
         "furnace_coal_refining",
-        "coal_resid_heat",
-        "coal_resid_hotwater",
-        "coal_comm_heat",
-        "coal_comm_hotwater",
     ],
     "synfuels oil": [
         (
@@ -156,8 +156,6 @@ def retr_CO2emi(units_emi, units_ene_mdl):
     _inp_nonccs_gas_tecs = (
         pp.inp(
             [
-                "gas_rc",
-                "hp_gas_rc",
                 "gas_i",
                 "hp_gas_i",
                 "gas_trp",
@@ -168,6 +166,7 @@ def retr_CO2emi(units_emi, units_ene_mdl):
                 "gas_htfc",
                 "gas_hpl",
             ]
+            + TECHS["rc gas"]
             + TECHS["gas extra"],
             units_ene_mdl,
             inpfilter={"commodity": ["gas"]},
@@ -268,7 +267,7 @@ def retr_CO2emi(units_emi, units_ene_mdl):
     ).fillna(0)
 
     _Biogas_res = _Biogas_tot * (
-        pp.inp(["gas_rc", "hp_gas_rc"], units_ene_mdl, inpfilter={"commodity": ["gas"]})
+        pp.inp(TECHS["rc gas"], units_ene_mdl, inpfilter={"commodity": ["gas"]})
         / _inp_all_gas_tecs
     ).fillna(0)
 
@@ -358,7 +357,7 @@ def retr_CO2emi(units_emi, units_ene_mdl):
     ).fillna(0)
 
     _Hydrogen_res = _Hydrogen_tot * (
-        pp.inp(["gas_rc", "hp_gas_rc"], units_ene_mdl, inpfilter={"commodity": ["gas"]})
+        pp.inp(TECHS["rc gas"], units_ene_mdl, inpfilter={"commodity": ["gas"]})
         / _inp_nonccs_gas_tecs_wo_CCSRETRO
     ).fillna(0)
 
@@ -454,7 +453,7 @@ def retr_CO2emi(units_emi, units_ene_mdl):
     )
 
     _FE_Res_com = pp.emi(
-        ["coal_rc", "foil_rc", "loil_rc", "gas_rc", "meth_rc", "hp_gas_rc"],
+        rc_techs("coal foil gas loil meth"),
         units_ene_mdl,
         emifilter={"relation": ["CO2_r_c"]},
         emission_units=units_emi,
