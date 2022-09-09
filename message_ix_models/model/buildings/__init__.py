@@ -346,3 +346,4 @@ def setup_scenario(  # noqa: C901
 
     scenario.commit("message_data.model.buildings.setup_scenario()")
     scenario.set_as_default()
+    log.info(f"Built {scenario.url} and set as default")
