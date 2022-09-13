@@ -22,6 +22,7 @@ Material_global_grpahs.pdf
 # foil_imp AFR, frunace_h2_aluminum, h2_i...
 
 # PACKAGES
+import logging
 from functools import partial
 from typing import List
 
@@ -37,6 +38,7 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from message_ix_models import Context
 
+log = logging.getLogger(__name__)
 
 matplotlib.use("Agg")
 
@@ -204,23 +206,29 @@ def report(
     # scenario.commit('Added transport timeseries')
 
     # Path for materials reporting output
-    directory = config["output_path"].joinpath("materials")
+    directory = config["output_path"].expanduser().joinpath("materials")
     directory.mkdir(exist_ok=True)
 
+
+    # Replace erroneous region labels like R12_AFR|R12_AFR with simply R12_AFR
+    # TODO locate the cause of this upstream and fix
+    df = message_df.rename({"region": {f"{n}|{n}": n for n in nodes}})
+
     # Dump output of message_ix built-in reporting to an Excel file
-    df = message_df
     name = directory.joinpath("message_ix_reporting.xlsx")
     df.to_excel(name)
-    print("message_ix level reporting generated")
+    log.info(f"'message::default' report written to {name}")
+    log.info(f"{len(df)} rows")
+    log.info(f"{len(df.variable)} unique variable names")
 
-    # Obtain a pyam dataframe / filter / global aggregation
+    # Obtain a pyam dataframe
+    # FIXME(PNK) this re-reads the file above. This seems unnecessary, and can be slow.
+    df = pyam.IamDataFrame(pd.read_excel(name).fillna(dict(Unit="")))
 
-    path = directory.joinpath("message_ix_reporting.xlsx")
-    report = pd.read_excel(path)
-    report.Unit.fillna("", inplace=True)
-    df = pyam.IamDataFrame(report)
-    df.filter(region=nodes, year=years, inplace=True)
+    # Filter variables necessary for materials reporting
     df.filter(
+        region=nodes,
+        year=years,
         variable=[
             "out|new_scrap|aluminum|*",
             "out|final_material|aluminum|prebake_aluminum|M1",
@@ -288,11 +296,14 @@ def report(
         ],
         inplace=True,
     )
+    log.info(f"{df = }\n{len(df.variable)} unique variable names")
+
+    # Compute global totals
     variables = df.variable
     df.aggregate_region(variables, region="World", method=sum, append=True)
-    name = directory.joinpath("check.xlsx")
-    df.to_excel(name)
-    print("Necessary variables are filtered")
+
+    df.to_excel(directory.joinpath("check.xlsx"))
+    log.info(f"Necessary variables are filtered; {len(df)} in total")
 
     # Obtain the model and scenario name
     model_name = df.model[0]
@@ -300,7 +311,8 @@ def report(
 
     # Create an empty pyam dataframe to store the new variables
 
-    workbook = xlsxwriter.Workbook("empty_template.xlsx")
+    empty_template_path = directory.joinpath("empty_template.xlsx")
+    workbook = xlsxwriter.Workbook(empty_template_path)
     worksheet = workbook.add_worksheet()
     worksheet.write("A1", "Model")
     worksheet.write("B1", "Scenario")
@@ -327,7 +339,7 @@ def report(
         worksheet.write(col, yr)
     workbook.close()
 
-    df_final = pyam.IamDataFrame("empty_template.xlsx")
+    df_final = pyam.IamDataFrame(empty_template_path)
     print("Empty template for new variables created")
 
     # Create a pdf file with figures
@@ -3279,8 +3291,9 @@ def report(
     path_temp = directory.joinpath("temp_new_reporting.xlsx")
     path_new = directory.joinpath(f"New_Reporting_{model_name}_{scenario_name}.xlsx")
 
+    # FIXME(PNK) manipulate the data directly instead of writing to disk, modifying,
+    # then re-reading
     df_final.to_excel(path_temp, sheet_name="data", index=False)
-
     fix_excel(path_temp, path_new)
     print("New reporting file generated.")
     df_final = pd.read_excel(path_new)
