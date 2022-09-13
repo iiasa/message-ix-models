@@ -309,7 +309,10 @@ def prepare_reporter(
     # For genno.compat.plot
     # FIXME use a consistent set of names
     config.setdefault("output_dir", default_output_dir)
-    config["output_dir"].mkdir(exist_ok=True, parents=True)
+
+    for k in ("output_dir", "output_path"):
+        config[k] = config[k].expanduser()
+        config[k].mkdir(exist_ok=True, parents=True)
 
     # Pass configuration to the reporter
     rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
