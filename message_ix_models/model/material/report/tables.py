@@ -1432,6 +1432,11 @@ def retr_SE_solids(units):
             inpfilter={"commodity": ["coal"], "level": ["final"]},
         )
     )
+    df = pp_utils.make_outputdf(vars, units)
 
-    # Combine with `base`
-    return base + pp_utils.make_outputdf(vars, units)
+    # Combine with `base`; sum at matching indices
+    return (
+        pd.concat([base, df])
+        .groupby(["Model", "Scenario", "Variable", "Unit", "Region"], as_index=False)
+        .sum()
+    )
