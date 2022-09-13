@@ -65,8 +65,9 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     # Iterate over each of the "tables"
     for i, (func, args, store_enabled, base) in {
         # index: (function, inputs to the function, whether to store_ts, file basename)
-        0: (report0, ["buildings filters"], True, "buildings-FE"),
-        1: (report1, ["buildings filters"], True, "buildings-emiss"),
+        # commented: 2022-09-09 temporary
+        # 0: (report0, ["buildings filters"], True, "buildings-FE"),
+        # 1: (report1, ["buildings filters"], True, "buildings-emiss"),
         2: (report2, ["sturm output path"], False, "sturm"),
         3: (report3, ["buildings 2"], True, "sturm-name-change"),
     }.items():
