@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 
 from message_data.tools.post_processing import default_tables
@@ -7,6 +8,8 @@ from message_data.tools.post_processing.default_tables import (
     _pe_wCCSretro,
 )
 import message_data.tools.post_processing.pp_utils as pp_utils
+
+log = logging.getLogger(__name__)
 
 pp = None
 mu = None
@@ -30,9 +33,11 @@ def return_func_dict():
     TECHS.update(_TECHS)
 
     # Invoke similar code associated with MESSAGEix-Buildings
-    from message_data.model.building.report import configure_legacy_reporting
+    from message_data.model.buildings.report import configure_legacy_reporting
 
     configure_legacy_reporting(TECHS)
+
+    log.info(f"Configured legacy reporting for -BM model variants:\n{TECHS = }")
 
     return func_dict
 
