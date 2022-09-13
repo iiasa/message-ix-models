@@ -199,7 +199,7 @@ def callback(rep: Reporter, context: Context) -> None:
 
     # Set up reporting for each of the model variants
     register("model.buildings")
-    register("model.materials")
+    register("model.material")
     register("model.transport")
 
     rep.add("navigate bmt", ["buildings all", "materials all", "transport iamc store"])
