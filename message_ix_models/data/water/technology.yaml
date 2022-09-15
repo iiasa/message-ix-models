@@ -1,14 +1,28 @@
 #  Water technologies
 nexus:
-  extract_freshwater_supply:
+  extract_surfacewater:
     description: >-
       Freshwater extraction technology
     input: {commodity: freshwater_supply}
 
-  extract_saline_supply:
+  extract_salinewater:
     description: >-
-      Freshwater extraction technology
-    input: {commodity: saline_supply_ppl}
+      Sea water extraction used for cooling technologies requiring seawater
+    input: {commodity: saline_supply}
+
+  extract_groundwater:
+    description: >-
+      Groundwater extraction technology
+    input: {commodity: freshwater_supply}
+
+  extract_gw_fossil:
+    description: >-
+      Groundwater extraction from fossil reservoirs (unlimited used as slack)
+
+  extract_salinewater_basin:
+    description: >-
+      Sea water extraction used for desalination and providing freshwater
+    input: {commodity: saline_supply_basin}
 
   bio_hpl__ot_fresh:
     description: >-
@@ -36,8 +50,8 @@ nexus:
 
   bio_istig__ot_fresh:
     description: >-
-    # TODO fill in description of bio_istig cooling by once through cooling
-    # technology using freshwater
+      # TODO fill in description of bio_istig cooling by once through cooling
+      # technology using freshwater
     input: {commodity: freshwater_supply}
 
   bio_istig__cl_fresh:
@@ -592,9 +606,9 @@ nexus:
       untreated urban water
     input: {commodity: urban_uncollected_wst}
 
-  urban_treatment:
+  urban_discharge:
     description: >-
-      treated urban water
+      treated urban water which is discharged
     input: {commodity: electr, urban_collected_wst}
 
   urban_recycle:
@@ -602,9 +616,9 @@ nexus:
       treated wastewater used as available water
     input: {commodity: electr, urban_collected_wst}
 
-  rural_treatment:
+  rural_discharge:
     description: >-
-      treated rural water
+      treated rural water which is discharged
     input: {commodity: rural_collected_wst}
 
   rural_untreated:
@@ -614,18 +628,19 @@ nexus:
 
   membrane:
     description: >-
-      # TODO add description
+      desalination technology using membrane i.e water and salts is separated
+      through a semipermeable membrane
     input: {commodity: electr,saline_supply}
 
   distillation:
     description: >-
-      # TODO add description
+      traditional desalination technology i.e boiling and recondensation of
+      seawater to leave salt  and impurities behin
     input: {commodity: electr,saline_supply,d_heat}
 
   desal_t_d:
     description: >-
-      Light oil combined cycle cooling by once through cooling technology using
-      freshwater supply
+      Desalinated water transmission and distribution
     input: {commodity: desalinated_water}
 
   saline_ppl_t_d:
@@ -634,9 +649,9 @@ nexus:
       # TODO verify description
     input: {commodity: saline_supply}
 
-  water_to_en:
+  basin_to_reg:
     description: >-
-      dummy technology to map water supply to energy technologies
+      dummy technology to map basin technologies water supply to energy technologies
 
     input: {commodity: freshwater_supply}
 
@@ -696,29 +711,56 @@ nexus:
 
   return_flow:
     description: >-
-      remaining water left after consumption
+      remaining surface water left after consumption
+
+  gw_recharge:
+    description: >-
+      remaining groundwater left after consumption
 
   rural_recycle:
     description: >-
       recycled water after rural treatment
 
-
   rural_sewerage:
     description: >-
       treated rural water
 
+  irrigation_oilcrops:
+    description: >-
+      Irrigation technology connecting irrigation withdrawals with the demands
+    input: {commodity: freshwater}
+
+  irrigation_sugarcrops:
+    description: >-
+      Irrigation technology connecting irrigation withdrawals with the demands
+    input: {commodity: freshwater}
+
+  irrigation_cereal:
+    description: >-
+      Irrigation technology connecting irrigation withdrawals with the demands
+    input: {commodity: freshwater}
+
+  salinewater_return:
+    description: >-
+      remaining salinewater left after consumption
+
+
 cooling:
   #  Water technologies
-
-  extract_freshwater_supply:
+  extract_surfacewater:
     description: >-
       Freshwater extraction technology
     input: {commodity: freshwater_supply}
 
-  extract_saline_supply:
+  extract_salinewater:
     description: >-
-      Freshwater extraction technology
+      Sea water extraction used for cooling technologies requiring seawater
     input: {commodity: saline_supply_ppl}
+
+  extract_groundwater:
+    description: >-
+      Groundwater extraction technology
+    input: {commodity: freshwater_supply}
 
   bio_hpl__ot_fresh:
     description: >-

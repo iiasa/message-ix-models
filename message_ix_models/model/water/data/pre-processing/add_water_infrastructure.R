@@ -1,4 +1,4 @@
-Creates 4 new IAM scenarios including a representation of
+#Creates 4 new IAM scenarios including a representation of
 # Solves the models on the local machine
 # Uploads the solutions to the ix DB
 
@@ -3022,7 +3022,7 @@ for( sc in 1:nrow(model_scenarios) )
 
    } ) } )
 
- # # Add future constraints  - no expansion of seawater cooling beyonf current capacity
+ # # Add future constraints  - no expansion of seawater cooling beyond current capacity
  ret = lapply( region, function(rr){ lapply( model_years[ which( model_years > 2010 ) ], function(yy){
    ixDS$add_par( 'bound_activity_up', # parameter name
          paste(  rr, tt, yy, mode_common , model_time, sep = '.' ), # set key

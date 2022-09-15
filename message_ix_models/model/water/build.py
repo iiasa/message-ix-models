@@ -44,6 +44,113 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
             # Elements to add
             add.set[set_name].extend(config.get("add", []))
 
+        # The set of required nodes varies according to context.regions
+        nodes = get_codes(f"node/{context.regions}")
+        nodes = list(map(str, nodes[nodes.index("World")].child))
+        require.set["node"].extend(nodes)
+
+        # Share commodity for groundwater
+        results = {}
+        df_node = context.all_nodes
+        n = len(df_node.values)
+
+        d = {
+            "shares": ["share_low_lim_GWat"] * n,
+            "node_share": df_node,
+            "node": df_node,
+            "type_tec": ["share_low_lim_GWat_share"] * n,
+            "mode": ["M1"] * n,
+            "commodity": ["groundwater_basin"] * n,
+            "level": ["water_avail_basin"] * n,
+        }
+
+        df_share = pd.DataFrame(data=d)
+        df_list = df_share.values.tolist()
+        results["map_shares_commodity_share"] = df_list
+
+        d = {
+            "shares": ["share_low_lim_GWat"] * n,
+            "node_share": df_node,
+            "node": df_node,
+            "type_tec": ["share_low_lim_GWat_total"] * n,
+            "mode": ["M1"] * n,
+            "commodity": ["surfacewater_basin"] * n,
+            "level": ["water_avail_basin"] * n,
+        }
+
+        df_share = pd.DataFrame(data=d)
+
+        d2 = {
+            "shares": ["share_low_lim_GWat"] * n,
+            "node_share": df_node,
+            "node": df_node,
+            "type_tec": ["share_low_lim_GWat_total"] * n,
+            "mode": ["M1"] * n,
+            "commodity": ["groundwater_basin"] * n,
+            "level": ["water_avail_basin"] * n,
+        }
+
+        df_share2 = pd.DataFrame(data=d2)
+
+        df_share = df_share.append(df_share2)
+        df_list = df_share.values.tolist()
+
+        results["map_shares_commodity_total"] = df_list
+
+        for set_name, config in results.items():
+            # Sets  to add
+            add.set[set_name].extend(config)
+
+        results = {}
+
+        # Share commodity for urban water recycling
+        d = {
+            "shares": ["share_wat_recycle"] * n,
+            "node_share": df_node,
+            "node": df_node,
+            "type_tec": ["share_wat_recycle_share"] * n,
+            "mode": ["M1"] * n,
+            "commodity": ["urban_collected_wst"] * n,
+            "level": ["water_treat"] * n,
+        }
+
+        df_share = pd.DataFrame(data=d)
+        df_list = df_share.values.tolist()
+        results["map_shares_commodity_share"] = df_list
+
+        d = {
+            "shares": ["share_wat_recycle"] * n,
+            "node_share": df_node,
+            "node": df_node,
+            "type_tec": ["share_wat_recycle_total"] * n,
+            "mode": ["M1"] * n,
+            "commodity": ["urban_collected_wst"] * n,
+            "level": ["water_treat"] * n,
+        }
+
+        df_share = pd.DataFrame(data=d)
+
+        d2 = {
+            "shares": ["share_wat_recycle"] * n,
+            "node_share": df_node,
+            "node": df_node,
+            "type_tec": ["share_wat_recycle_total"] * n,
+            "mode": ["M1"] * n,
+            "commodity": ["urban_collected_wst"] * n,
+            "level": ["water_treat"] * n,
+        }
+
+        df_share2 = pd.DataFrame(data=d2)
+
+        df_share = df_share.append(df_share2)
+        df_list = df_share.values.tolist()
+
+        results["map_shares_commodity_total"] = df_list
+
+        for set_name, config in results.items():
+            # Sets  to add
+            add.set[set_name].extend(config)
+
     elif context.nexus_set == "cooling":
         # Merge technology.yaml with set.yaml
         context["water set"]["cooling"]["technology"]["add"] = context[
@@ -60,11 +167,8 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
             # Elements to add
             add.set[set_name].extend(config.get("add", []))
 
-    # The set of required nodes varies according to context.regions
-    nodes = get_codes(f"node/{context.regions}")
-    nodes = list(map(str, nodes[nodes.index("World")].child))
-    require.set["node"].extend(nodes)
-    # create a mapping ISO code : region name, for other scripts
+    # create a mapping ISO code :
+    # region name, for other scripts
     # only needed for 1-country models
     if context.type_reg == "country":
         map_ISO_c = {context.regions: nodes[0]}
@@ -129,6 +233,8 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     nodes = df_node.values.tolist()
 
     results["map_node"] = nodes
+
+    context.all_nodes = df["node"]
 
     for set_name, config in results.items():
         # Sets  to add
