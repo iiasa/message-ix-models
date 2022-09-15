@@ -3,10 +3,11 @@ import itertools
 import logging
 from typing import List
 
+import ixmp
+import pandas as pd
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
-import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ __all__ = [
     "gwp_factors",
     "make_output_path",
     "model_periods",
+    "remove_all_ts",
     "share_curtailment",
 ]
 
@@ -69,6 +71,26 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
             y,
         )
     )
+
+
+def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> None:
+    """Remove all time series data from `scenario.
+
+    .. todo:: move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
+    """
+    data = scenario.timeseries()
+    log.warning(f"Remove {len(data)} rows of time series data from {scenario.url}")
+
+    if dump:
+        raise NotImplementedError
+
+    scenario.check_out()
+    try:
+        scenario.remove_timeseries(data)
+    except Exception:
+        scenario.discard_changes()
+    else:
+        scenario.commit(f"Remove time serie data ({__name__}.remove_all_ts)")
 
 
 # commented: currently unused
