@@ -13,18 +13,15 @@ from message_ix_models.util import (
 # water & electricity for cooling technologies
 def cool_tech(context):
     """Process cooling technology data for a scenario instance.
-
     The input values of parent technologies are read in from a scenario instance and
     then cooling fractions are calculated by using the data from
     ``tech_water_performance_ssp_msg.csv``.
     It adds cooling  technologies as addons to the parent technologies.The
     nomenclature for cooling technology is <parenttechnologyname>__<coolingtype>.
     E.g: `coal_ppl__ot_fresh`
-
     Parameters
     ----------
     context : .Context
-
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -144,13 +141,11 @@ def cool_tech(context):
 
     def cooling_fr(x):
         """Calculate cooling fraction
-
         Returns the calculated cooling fraction after for two categories;
         1. Technologies that produce heat as an output
             cooling_fraction(h_cool) = input value(hi) - 1
         Simply subtract 1 from the heating value since the rest of the part is already
         accounted in the heating value
-
         2. Rest of technologies
             h_cool  =  hi -Hi* h_fg - 1,
             where:
@@ -164,6 +159,7 @@ def cool_tech(context):
     input_cool["cooling_fraction"] = input_cool.apply(cooling_fr, axis=1)
 
     # Converting water withdrawal units to Km3/GWa
+    # this refers to activity per cooling requirement (heat)
     input_cool["value_cool"] = (
         input_cool["water_withdrawal_mid_m3_per_output"]
         * 60
@@ -172,6 +168,23 @@ def cool_tech(context):
         * 365
         * 1e-9
         / input_cool["cooling_fraction"]
+    )
+
+    input_cool["return_rate"] = 1 - (
+        input_cool["water_consumption_mid_m3_per_output"]
+        / input_cool["water_withdrawal_mid_m3_per_output"]
+    )
+    # consumption to be saved in emissions rates for reporting purposes
+    input_cool["consumption_rate"] = (
+        input_cool["water_consumption_mid_m3_per_output"]
+        / input_cool["water_withdrawal_mid_m3_per_output"]
+    )
+
+    input_cool["value_return"] = input_cool["return_rate"] * input_cool["value_cool"]
+
+    # only for reporting purposes
+    input_cool["value_consumption"] = (
+        input_cool["consumption_rate"] * input_cool["value_cool"]
     )
 
     # def foo3(x):
@@ -217,7 +230,7 @@ def cool_tech(context):
         value=electr["value_cool"],
         unit="GWa",
     )
-
+    # once through and closed loop freshwater
     inp = inp.append(
         make_df(
             "input",
@@ -235,7 +248,7 @@ def cool_tech(context):
             unit="km3/GWa",
         )
     )
-
+    # saline cooling technologies
     inp = inp.append(
         make_df(
             "input",
@@ -246,7 +259,7 @@ def cool_tech(context):
             mode=saline_df["mode"],
             node_origin=saline_df["node_origin"],
             commodity="saline_ppl",
-            level="water_supply",
+            level="saline_supply",
             time="year",
             time_origin="year",
             value=saline_df["value_cool"],
@@ -258,8 +271,102 @@ def cool_tech(context):
     inp = inp.dropna(subset=["value"])
 
     # append the input data to results
-    # results["input"] = inp
+    results["input"] = inp
 
+    # add water consumption as emission factor, also for saline tecs
+    emiss_df = input_cool[(~con2)]
+    emi = make_df(
+        "emission_factor",
+        node_loc=emiss_df["node_loc"],
+        technology=emiss_df["technology_name"],
+        year_vtg=emiss_df["year_vtg"],
+        year_act=emiss_df["year_act"],
+        mode=emiss_df["mode"],
+        emission="fresh_return",
+        value=emiss_df["value_return"],
+        unit="km3/yr",
+    )
+
+    results["emission_factor"] = emi
+
+    # add water return flows for cooling tecs
+    # Use share of basin availability to distribute the return flow from
+    path3 = private_data_path(
+        "water", "water_availability", f"qtot_{context.RCP}_{context.REL}.csv"
+    )
+    df_sw = pd.read_csv(path3)
+
+    # reading sample for assiging basins
+    PATH = private_data_path("water", "water_availability", "sample.csv")
+    df_x = pd.read_csv(PATH)
+
+    # Reading data, the data is spatially and temporally aggregated from GHMs
+    df_sw["BCU_name"] = df_x["BCU_name"]
+    df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
+
+    # Storing the energy MESSAGE region names
+    node_region = df_sw["MSGREG"].unique()
+
+    df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
+    df_sw.drop(columns="Unnamed: 0", inplace=True)
+
+    years = list(range(2010, 2105, 5))
+    df_sw.columns = years
+    df_sw[2110] = df_sw[2100]
+    df_sw.drop(columns=[2065, 2075, 2085, 2095], inplace=True)
+
+    # Calculating ratio of water availability in basin by region
+    df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
+    df_sw.reset_index(inplace=True)
+    df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
+    df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
+
+    df_sw["node_dest"] = "B" + df_sw["BCU_name"].astype(str)
+    df_sw.drop(columns=["BCU_name"], inplace=True)
+    df_sw.set_index(["MSGREG", "node_dest"], inplace=True)
+    df_sw = df_sw.stack().reset_index(level=0).reset_index()
+    df_sw.columns = ["node_dest", "year_act", "node_loc", "share"]
+    df_sw.sort_values(["node_dest", "year_act", "node_loc", "share"], inplace=True)
+    df_sw["year_act"] = df_sw["year_act"]
+    df_sw.fillna(0, inplace=True)
+    df_sw.reset_index(drop=True, inplace=True)
+
+    if context.nexus_set == "nexus":
+        out = pd.DataFrame()
+        for nn in icmse_df.node_loc.unique():
+            # input cooling fresh basin
+            icfb_df = icmse_df[icmse_df["node_loc"] == nn]
+            bs = list(df_node[df_node["region"] == nn]["node"])
+
+            out_t = (
+                make_df(
+                    "output",
+                    node_loc=icfb_df["node_loc"],
+                    technology=icfb_df["technology_name"],
+                    year_vtg=icfb_df["year_vtg"],
+                    year_act=icfb_df["year_act"],
+                    mode=icfb_df["mode"],
+                    # node_origin=icmse_df["node_origin"],
+                    commodity="surfacewater_basin",
+                    level="water_avail_basin",
+                    time="year",
+                    time_dest="year",
+                    value=icfb_df["value_return"],
+                    unit="km3/GWa",
+                )
+                .pipe(broadcast, node_dest=bs)
+                .merge(df_sw, how="left")
+            )
+            # multiply by basin water availability share
+            out_t["value"] = out_t["value"] * out_t["share"]
+            out_t.drop(columns={"share"}, inplace=True)
+            out = out.append(out_t)
+
+        out = out.dropna(subset=["value"])
+        out.reset_index(drop=True, inplace=True)
+        results["output"] = out
+
+    # costs and historical parameters
     path1 = private_data_path("water", "ppl_cooling_tech", FILE1)
     cost = pd.read_csv(path1)
     # Combine technology name to get full cooling tech names
@@ -281,7 +388,6 @@ def cool_tech(context):
 
     def shares(x, context):
         """Process share and cooling fraction.
-
         Returns
         -------
         Product of value of shares of cooling technology types of regions with
@@ -317,7 +423,6 @@ def cool_tech(context):
     def hist_act(x, context):
         """Calculate historical activity of cooling technology.
         The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
-
         Returns
         -------
         hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
@@ -423,7 +528,7 @@ def cool_tech(context):
         time="year",
         value=act_value_df["new_value"],
         # TODO finalize units
-        unit="km3/GWa",
+        unit="GWa",
     )
 
     results["historical_activity"] = h_act
@@ -434,13 +539,54 @@ def cool_tech(context):
         technology=cap_value_df["cooling_technology"],
         year_vtg=cap_value_df["year_vtg"],
         value=cap_value_df["new_value"],
-        unit="km3/GWa",
+        unit="GWa",
     )
 
     results["historical_new_capacity"] = h_cap
 
+    # Add upper bound for seawater cooling
+    # sums up all the historical activities of seawater cooling technologies
+    # h_act_saline = h_act[h_act["technology"].str.endswith("saline")]
+    # h_act_saline = h_act_saline[h_act_saline["year_act"] == 2015]
+    # h_act_saline.drop(columns=["year_act", "mode", "time", "unit"], inplace=True)
+    # h_act_saline = h_act_saline.groupby(["node_loc"]).sum()
+
+    # inp_saline = inp[inp["technology"].str.endswith("ot_saline")]
+    # inp_saline = inp_saline[
+    #     (inp_saline["year_vtg"] == 2015) & (inp_saline["year_act"] == 2015)
+    # ]
+    # inp_saline.drop(
+    #     columns=[
+    #         "year_vtg",
+    #         "commodity",
+    #         "year_act",
+    #         "mode",
+    #         "level",
+    #         "time",
+    #         "time_origin",
+    #         "unit",
+    #         "node_origin",
+    #     ],
+    #     inplace=True,
+    # )
+    # water_fr = inp_saline.groupby(["node_loc"]).mean()
+    # # multiplying input values of water withdrawal with
+    # bound_saline = water_fr.mul(h_act_saline)
+
+    # bound_up = make_df(
+    #     "bound_activity_up",
+    #     node_loc=bound_saline.index,
+    #     technology="extract_salinewater",
+    #     mode="M1",
+    #     time="year",
+    #     value=bound_saline["value"].values,
+    #     unit="km3/year",
+    # ).pipe(broadcast, year_act=info.Y)
+
+    # results["bound_activity_up"] = bound_up
+
     # Filter out just cl_fresh & air technologies for adding inv_cost in model,
-    # The rest fo technologies are assumed to have costs included in parent technologies
+    # The rest of technologies are assumed to have costs included in parent technologies
     # con3 = cost['technology'].str.endswith("cl_fresh")
     # con4 = cost['technology'].str.endswith("air")
     # con5 = cost.technology.isin(input_cool['technology_name'])
@@ -476,7 +622,7 @@ def cool_tech(context):
             unit="USD/GWa",
         )
         .pipe(same_node)
-        .pipe(broadcast, node_loc=info.N[1:13], year_vtg=info.Y)
+        .pipe(broadcast, node_loc=node_region, year_vtg=info.Y)
     )
 
     results["inv_cost"] = inv_cost
@@ -525,247 +671,237 @@ def cool_tech(context):
             value=30,
             unit="year",
         )
-        .pipe(broadcast, year_vtg=year, node_loc=info.N[1:13])
+        .pipe(broadcast, year_vtg=year, node_loc=node_region)
         .pipe(same_node)
     )
 
     results["technical_lifetime"] = tl
 
-    if context.nexus_set == "cooling":
-        # Add output df  for freshwater supply for regions
-        output_df = (
-            make_df(
-                "output",
-                technology="extract_freshwater_supply",
-                value=1,
-                unit="km3",
-                year_vtg=info.Y,
-                year_act=info.Y,
-                level="water_supply",
-                commodity="freshwater",
-                mode="M1",
-                time="year",
-                time_dest="year",
-                time_origin="year",
-            )
-            .pipe(broadcast, node_loc=info.N[1:13])
-            .pipe(same_node)
-        )
-        # Add output of saline water supply for regions
-        output_df = output_df.append(
-            (
-                make_df(
-                    "output",
-                    technology="extract_saline_supply",
-                    value=1,
-                    unit="km3",
-                    year_vtg=info.Y,
-                    year_act=info.Y,
-                    level="water_supply",
-                    commodity="saline_ppl",
-                    mode="M1",
-                    time="year",
-                    time_dest="year",
-                    time_origin="year",
-                )
-                .pipe(broadcast, node_loc=info.N[1:13])
-                .pipe(same_node)
-            )
-        )
-
-        results["output"] = output_df
-
     cap_fact = make_matched_dfs(inp, capacity_factor=1)
-    results["capacity_factor"] = cap_fact["capacity_factor"]
+    # Climate Impacts on freshwater cooling capacity
+    # Taken from https://www.sciencedirect.com/science/article/pii/S0959378016301236?via%3Dihub#sec0080
+    if context.RCP == "no_climate":
+        df = cap_fact["capacity_factor"]
+    elif context.RCP == "2p6":
+        df = cap_fact["capacity_factor"]
+        # North America
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"] == "R11_NAM"),
+            "value",
+        ] = 0.9
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"] == "R11_NAM"),
+            "value",
+        ] = 0.95
+
+        # South America
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"] == "R11_LAM"),
+            "value",
+        ] = 0.78
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"] == "R11_LAM"),
+            "value",
+        ] = 0.89
+        # Western Europe
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
+            "value",
+        ] = 0.78
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
+            "value",
+        ] = 0.89
+        # Africa
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
+            "value",
+        ] = 0.82
+
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
+            "value",
+        ] = 0.91
+        # Pacific OECD
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"] == "R11_PAO"),
+            "value",
+        ] = 0.975
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"] == "R11_PAO"),
+            "value",
+        ] = 0.9875
+        # Asia
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
+            "value",
+        ] = 0.975
+
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
+            "value",
+        ] = 0.9875
+    elif context.RCP == "6p0":
+        df = cap_fact["capacity_factor"]
+        # North America
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"] == "R11_NAM"),
+            "value",
+        ] = 0.62
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"] == "R11_NAM"),
+            "value",
+        ] = 0.81
+        # South America
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"] == "R11_LAM"),
+            "value",
+        ] = 0.42
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"] == "R11_LAM"),
+            "value",
+        ] = 0.71
+        # Western Europe
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
+            "value",
+        ] *= 0.62
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
+            "value",
+        ] = 0.81
+        # Africa
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
+            "value",
+        ] *= 0.6
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
+            "value",
+        ] = 0.8
+        # Pacific OECD
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"] == "R11_PAO"),
+            "value",
+        ] = 0.85
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"] == "R11_PAO"),
+            "value",
+        ] = 0.925
+        # Asia
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] >= 2060)
+            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
+            "value",
+        ] = 0.975
+        df.loc[
+            (df["technology"].str.contains("fresh"))
+            & (df["year_act"] <= 2055)
+            & (df["year_act"] >= 2025)
+            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
+            "value",
+        ] = 0.9875
+
+    results["capacity_factor"] = df
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
-    if context.nexus_set == "nexus":
-        # input dataframe  for slack technology balancing equality with demands
-        inp = inp.append(
-            make_df(
-                "input",
-                technology="return_flow",
-                value=1,
-                unit="-",
-                level="water_avail_basin",
-                commodity="freshwater_basin",
-                mode="M1",
-                time="year",
-                time_origin="year",
-                node_origin=df_node["node"],
-                node_loc=df_node["node"],
-            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
-        )
 
-        # input dataframe  for freshwater supply
-        inp = inp.append(
-            make_df(
-                "input",
-                technology="extract_freshwater_supply",
-                value=1,
-                unit="-",
-                level="water_avail_basin",
-                commodity="freshwater_basin",
-                mode="M1",
-                time="year",
-                time_origin="year",
-                node_origin=df_node["node"],
-                node_loc=df_node["node"],
-            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
-        )
+    # growth activity low to allow the cooling techs to be operational
+    g_lo = make_df(
+        "growth_activity_lo",
+        technology=inp["technology"].drop_duplicates(),
+        value=-0.05,
+        unit="%",
+        time="year",
+    ).pipe(broadcast, year_act=info.Y, node_loc=node_region)
+    # Alligining certain technologies with growth constriants
+    g_lo.loc[g_lo["technology"].str.contains("bio_ppl|loil_ppl"), "value"] = -0.5
+    g_lo.loc[g_lo["technology"].str.contains("coal_ppl_u|coal_ppl"), "value"] = -0.5
+    g_lo.loc[
+        (g_lo["technology"].str.contains("coal_ppl_u|coal_ppl"))
+        & (g_lo["node_loc"].str.contains("CPA|PAS")),
+        "value",
+    ] = -1
+    results["growth_activity_lo"] = g_lo
 
-        # electricity input dataframe  for extract freshwater supply
-        inp = inp.append(
-            make_df(
-                "input",
-                technology="extract_freshwater_supply",
-                value=0.2 * (1e3 / (24 * 365)),
-                unit="-",
-                level="final",
-                commodity="electr",
-                mode="M1",
-                time="year",
-                time_origin="year",
-                node_origin=df_node["region"],
-                node_loc=df_node["node"],
-            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
-        )
+    # growth activity up on saline water
+    inp_saline = inp[inp["technology"].str.endswith("ot_saline")]
 
-        # Add output df  for freshwater supply for basins
-        output_df = make_df(
-            "output",
-            technology="extract_freshwater_supply",
-            value=1,
-            unit="-",
-            level="water_supply_basin",
-            commodity="freshwater_basin",
-            mode="M1",
-            node_loc=df_node["node"],
-            node_dest=df_node["node"],
-            time="year",
-            time_dest="year",
-            time_origin="year",
-        ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
+    g_up = make_df(
+        "growth_activity_up",
+        technology=inp_saline["technology"].drop_duplicates(),
+        value=0.05,
+        unit="%",
+        time="year",
+    ).pipe(broadcast, year_act=info.Y, node_loc=node_region)
+    results["growth_activity_up"] = g_up
 
-        # Add output of saline water supply for regions
-        output_df = output_df.append(
-            (
-                make_df(
-                    "output",
-                    technology="extract_saline_supply",
-                    value=1,
-                    unit="km3",
-                    year_vtg=info.Y,
-                    year_act=info.Y,
-                    level="water_supply",
-                    commodity="saline_ppl",
-                    mode="M1",
-                    time="year",
-                    time_dest="year",
-                    time_origin="year",
-                )
-                .pipe(broadcast, node_loc=info.N[1:13])
-                .pipe(same_node)
-            )
-        )
-
-        # output dataframe linking water supply to energy dummy technology
-        output_df = output_df.append(
-            make_df(
-                "output",
-                technology="water_to_en",
-                value=1,
-                unit="-",
-                level="water_supply",
-                commodity="freshwater",
-                mode=df_node["mode"],
-                node_loc=df_node["region"],
-                node_dest=df_node["region"],
-                time="year",
-                time_dest="year",
-                time_origin="year",
-            ).pipe(
-                broadcast,
-                year_vtg=info.Y,
-                year_act=info.Y,
-            )
-        )
-
-        results["output"] = output_df
-
-        # input dataframe  linking water supply to energy dummy technology
-        inp = inp.append(
-            make_df(
-                "input",
-                technology="water_to_en",
-                value=1,
-                unit="-",
-                level="water_supply_basin",
-                commodity="freshwater_basin",
-                mode=df_node["mode"],
-                time="year",
-                time_origin="year",
-                node_origin=df_node["node"],
-                node_loc=df_node["region"],
-            ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
-        )
-        results["input"] = inp
-
-        # dummy variable cost for dummy water to energy technology
-        var = make_df(
-            "var_cost",
-            technology="water_to_en",
-            mode=df_node["mode"],
-            node_loc=df_node["region"],
-            time="year",
-            value=20,
-            unit="-",
-        ).pipe(broadcast, year_vtg=info.Y, year_act=info.Y)
-        results["var_cost"] = var
-
-        # reading flow availability data for defining share constraints of basins in each recgion
-        path2 = private_data_path(
-            "water", "water_availability", "dis_rcp26_5y_meansd.csv"
-        )
-        df_wat = pd.read_csv(path2)
-        df_wat.fillna(0, inplace=True)
-        df_wat["region"] = f"{context.regions}_" + df_wat["BCU_name"].str[-3:]
-        df_wat_1 = df_wat.drop(
-            columns=[
-                "Unnamed: 0",
-                "BASIN_ID",
-                "unit",
-                "BCU_name",
-                "2065",
-                "2075",
-                "2085",
-                "2095",
-            ],
-            axis=1,
-        )
-        df_wat_1["2110"] = 1.1 * df_wat_1["2100"]
-        # Calculating ratio of water availability in basin by region
-        df_wat_1 = df_wat_1.groupby(["region"]).apply(lambda x: x / x.sum())
-        df_wat_1["node"] = "B" + df_wat["BCU_name"].astype(str)
-        df_wat_1["mode"] = "M" + df_node["BCU_name"].astype(str)
-        df_wat_1["region"] = df_wat["region"].astype(str)
-        # restacking dataframe to be compatible with MESSAGE format
-        df_wat_1 = df_wat_1.set_index(["node", "region", "mode"])
-        df_wat_1 = df_wat_1.stack().reset_index(level=0).reset_index()
-        df_wat_1.columns = ["region", "mode", "year", "node", "value"]
-        df_wat_1.sort_values(["region", "mode", "year", "node", "value"], inplace=True)
-
-        share = make_df(
-            "share_mode_up",
-            shares="share_basin",
-            technology="water_to_en",
-            mode=df_wat_1["mode"],
-            node_share=df_wat_1["region"],
-            time="year",
-            value=df_wat_1["value"],
-            unit="-",
-            year_act=df_wat_1["year"],
-        )
-        results["share_mode_up"] = share
+    # # adding initial activity
+    # in_lo = h_act.copy()
+    # in_lo.drop(columns='mode', inplace=True)
+    # in_lo = in_lo[in_lo['year_act'] == 2015]
+    # in_lo_1 = make_df('initial_activity_lo',
+    #                   node_loc=in_lo['node_loc'],
+    #                   technology=in_lo['technology'],
+    #                   time='year',
+    #                   value=in_lo['value'],
+    #                   unit='GWa').pipe(broadcast, year_act=[2015, 2020])
+    # results['initial_activity_lo'] = in_lo_1
 
     return results
 
@@ -773,14 +909,11 @@ def cool_tech(context):
 # Water use & electricity for non-cooling technologies
 def non_cooling_tec(context):
     """Process data for water usage of power plants (non-cooling technology related).
-
     Water withdrawal values for power plants are read in from
     ``tech_water_performance_ssp_msg.csv``
-
     Parameters
     ----------
     context : .Context
-
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -851,25 +984,5 @@ def non_cooling_tec(context):
 
     # append the input data to results
     results["input"] = inp_n_cool
-
-    # # technical lifetime
-    # year = info.Y
-    # if 2010 in year:
-    #     pass
-    # else:
-    #     year.insert(0, 2010)
-
-    # tl = (
-    #     make_df(
-    #         "technical_lifetime",
-    #         technology=inp_n_cool["technology"].drop_duplicates(),
-    #         value=20,
-    #         unit="year",
-    #     )
-    #     .pipe(broadcast, year_vtg=year, node_loc=info.N[1:13])
-    #     .pipe(same_node)
-    # )
-    #
-    # results["technical_lifetime"] = tl
 
     return results

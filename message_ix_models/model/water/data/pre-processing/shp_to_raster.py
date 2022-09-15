@@ -9,7 +9,8 @@ import xarray as xr
 from message_ix_models.util import private_data_path
 
 # NB The code runs only when the data is in local folder because of salem package dependency
-wdshapes = private_data_path("water", "delineation")
+# wdshapes =
+wdshapes = r"C:\Users\awais\Documents\GitHub\agg_data\delineation"
 
 
 manual_edit = False
@@ -21,7 +22,7 @@ ny = 360
 grid = salem.Grid(proj=salem.wgs84, x0y0=(-180, -90), nxny=(nx, ny), dxdy=(0.5, 0.5))
 # temporary netcdf that gives the dimensions of output file,should match the salem.Grid defined below
 # should be copied from P:\ene.model\NEST\delineation\data\delineated_basins
-tempgrid = wdshapes + "template360x720_05.nc"
+tempgrid = wdshapes + "\\template360x720_05.nc"
 
 
 # Define custom fucntions
@@ -86,7 +87,7 @@ def create_raster(
     fname = shp_fn[:-4]
     if all_touched:
         fname = fname
-    nd.to_netcdf(fname + ".nc")
+    nd.to_netcdf(fname + "0.05" ".nc")
 
     # Downsized
     xmin = shapes.min_x[0]
@@ -106,7 +107,7 @@ def create_raster(
 
 # NB The shapefiles are located in P:\ene.model\NEST\delineation\data\delineated_basins_new and should be copied in
 # wdhsapes folder. Below is an example for R11
-shp_fn = wdshapes + "basins_by_region_simpl_R11.shp"
+shp_fn = wdshapes + "\\basins_by_region_simpl_R11.shp"
 
 create_raster(
     shp_fn,
