@@ -84,7 +84,7 @@ def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> 
     if dump:
         raise NotImplementedError
 
-    scenario.check_out()
+    scenario.check_out(timeseries_only=True)
     try:
         scenario.remove_timeseries(data)
     except Exception:
