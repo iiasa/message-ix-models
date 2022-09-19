@@ -182,8 +182,10 @@ def report(context: Context):
     result = rep.get(key)
 
     # Display information about the result
-    op = rep.graph["config"]["output_path"]
-    log.info("Result" + (f" written to {op}" if op else f":\n{result}"))
+    log.info(f"Result:\n\n{result}\n")
+    log.info(
+        f"File output(s), if any, written under:\n{rep.graph['config']['output_path']}"
+    )
 
 
 def _invoke_legacy_reporting(context):
