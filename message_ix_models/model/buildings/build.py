@@ -4,11 +4,15 @@ from itertools import product
 from typing import List
 
 import message_ix
-import numpy as np
 import pandas as pd
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import load_private_data, make_io, nodes_ex_world
+from message_ix_models.util import (
+    add_par_data,
+    load_private_data,
+    make_io,
+    nodes_ex_world,
+)
 from sdmx.model import Code
 
 from message_data.tools import generate_set_elements, get_region_codes
@@ -366,63 +370,73 @@ def materials(
         )
 
         if typ == "demand":
-            tec = f"construction_{rc}_build"
             # Need to take care of 2110 by appending the last value
-            df_demand = make_io(
+            data = make_io(
                 (comm, "demand", "t"),
                 (f"{rc}_floor_construction", "demand", "t"),
                 efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
-                technology=tec,
+                technology=f"construction_{rc}_build",
                 **common,
             )
-            scenario.add_par("input", df_demand["input"])
-            scenario.add_par("output", df_demand["output"])
         elif typ == "scrap":
-            tec = f"demolition_{rc}_build"
             # Need to take care of 2110 by appending the last value
-            df_scrap = make_io(
+            data = make_io(
                 (comm, "end_of_life", "t"),  # will be flipped to output
                 (f"{rc}_floor_demolition", "demand", "t"),
                 efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
-                technology=tec,
+                technology=f"demolition_{rc}_build",
                 **common,
             )
             # Flip input to output (no input for demolition)
-            df_temp = df_scrap["input"].rename(
-                columns={"node_origin": "node_dest", "time_origin": "time_dest"}
+            data["output"] = pd.concat(
+                [
+                    data["output"],
+                    data.pop("input").rename(
+                        columns={"node_origin": "node_dest", "time_origin": "time_dest"}
+                    ),
+                ]
             )
-            scenario.add_par("output", df_temp)
-            scenario.add_par("output", df_scrap["output"])
+
+        # Update `scenario` with data for output and possibly input
+        add_par_data(scenario, data)
+
+    # Retrieve data once
+    demand_data = scenario.par("demand", {"level": "demand"})
 
     # Subtract building material demand from existing demands in scenario
-    for rc in ["resid", "comm"]:
+    for rc, base_data in (("resid", sturm_scenarios), ("comm", comm_sturm_scenarios)):
         # Don't do this for commercial demands in the first iteration
         if rc == "comm" and first_iteration:
             continue
 
-        df_out = (
-            sturm_scenarios.copy(True)
-            if rc == "resid"
-            else comm_sturm_scenarios.copy(True)
-        )
-        df = df_out[
-            df_out.commodity.str.fullmatch(f"{rc}_mat_demand_(cement|steel|aluminum)")
-        ]  # .copy(True)
-        df["commodity"] = df.apply(lambda x: x.commodity.split("_")[-1], axis=1)
-        df = df.rename(columns={"value": f"demand_{rc}_const"}).drop(
-            columns=["level", "time", "unit"]
-        )
-        # df = df.stack()
-        mat_demand = (
-            scenario.par("demand", {"level": "demand"})
-            .join(
-                df.set_index(["node", "year", "commodity"]),
-                on=["node", "year", "commodity"],
-                how="left",
+        # - Drop columns.
+        # - Rename "value" to e.g. "demand_resid_const".
+        # - Extract MESSAGEix-Materials commodity name from STURM commodity name.
+        # - Drop other rows.
+        # - Set index.
+        df = (
+            base_data.drop(columns=["level", "time", "unit"])
+            .rename(columns={"value": f"demand_{rc}_const"})
+            .assign(
+                commodity=lambda _df: _df.commodity.str.extract(
+                    f"{rc}_mat_demand_(cement|steel|aluminum)"
+                )
             )
+            .dropna(subset=["commodity"])
+            .set_index(["node", "year", "commodity"])
+        )
+
+        # - Merge existing demands at level "demand".
+        #   TODO check if this can be done with df.merge(…, how="left")
+        # - Compute new value = (existing value - STURM value), but no less than 0.
+        # - Drop intermediate column.
+        mat_demand = (
+            demand_data.join(df, on=["node", "year", "commodity"], how="left")
             .dropna()
+            .assign(
+                value=lambda _df: (_df["value"] - _df[f"demand_{rc}_const"]).clip(0)
+            )
+            .drop(columns=f"demand_{rc}_const")
         )
-        mat_demand["value"] = np.maximum(
-            mat_demand["value"] - mat_demand[f"demand_{rc}_const"], 0
-        )
-        scenario.add_par("demand", mat_demand.drop(columns=f"demand_{rc}_const"))
+
+        scenario.add_par("demand", mat_demand)
