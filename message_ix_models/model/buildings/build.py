@@ -22,6 +22,8 @@ from message_data.tools import generate_set_elements, get_region_codes
 log = logging.getLogger(__name__)
 
 #: Commodities for the buildings sector.
+#:
+#: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
 BUILD_COMMODITIES = [
     "resid_floor_construction",  # floorspace to be constructed
     "resid_floor_demolition",  # floorspace to be demolished
@@ -31,6 +33,8 @@ BUILD_COMMODITIES = [
 ]
 
 #: Technologies for the buildings sector.
+#:
+#: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
 BUILD_TECHS = [
     # technology providing residential floorspace activity
     "construction_resid_build",
@@ -41,6 +45,8 @@ BUILD_TECHS = [
 ]
 
 #: Commodity names to be converted for use in MESSAGEix-Materials.
+#:
+#: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
 BUILD_COMM_CONVERT = [
     "resid_mat_int_scrap_steel",
     "resid_mat_int_scrap_aluminum",
@@ -57,6 +63,8 @@ BUILD_COMM_CONVERT = [
 ]
 
 #: Types of materials.
+#:
+#: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
 MATERIALS = ["steel", "cement", "aluminum"]
 
 
@@ -67,6 +75,9 @@ def get_spec(context: Context) -> Spec:
     ----------
     context : .Context
         The key ``regions`` determines the regional aggregation used.
+
+    .. todo:: Expand to handle :data:`BUILD_COMMODITIES`, :data:`BUILD_TECHS`, and
+       :data:`BUILD_COMM_CONVERT`.
     """
     load_config(context)
 
@@ -287,8 +298,9 @@ def main(
         # Find the original rc technology for the fuel
         tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
 
-        # Remove lower bound in activity for older, now unused rc techs to allow them to
-        # reach zero
+        # Reduce lower bound in activity for existing, now unused rc techs to allow them
+        # to reach zero
+        # FIXME this should be handled by removing those technologies altogether
         filters = dict(filters={"technology": tech_orig, "year_act": info.Y})
         for name, value in (
             ("bound_activity_lo", 0.0),
