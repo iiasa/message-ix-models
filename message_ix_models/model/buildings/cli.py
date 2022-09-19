@@ -1,4 +1,8 @@
-"""MESSAGEix-Buildings model."""
+"""Command-line interface for MESSAGEix-Buildings.
+
+This module currently includes the main algorithm for iterating between the models
+ACCESS and STURM and MESSAGEix itself.
+"""
 import logging
 import sys
 from pathlib import Path
@@ -12,7 +16,8 @@ from message_ix_models.util import local_data_path
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
 
-from . import add_bio_backstop, get_prices, setup_scenario
+from . import build
+from .build import add_bio_backstop, get_prices
 from .sturm import run_sturm
 
 log = logging.getLogger(__name__)
@@ -289,7 +294,7 @@ def build_and_solve(  # noqa: C901
         if scenario.has_solution():
             scenario.remove_solution()
 
-        setup_scenario(
+        build.main(
             scenario,
             demand,
             prices,
