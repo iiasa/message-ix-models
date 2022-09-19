@@ -1,6 +1,15 @@
-"""Reporting for MESSAGEix-Buildings."""
+"""Reporting for MESSAGEix-Buildings.
+
+STURM output data are loaded from CSV files, manipulated, and stored as timeseries on a
+scenario.
+
+Originally transcribed from :file:`reporting_EFC.py` in the buildings repository.
+
+.. todo:: decompose further by making use of genno features.
+"""
 import logging
 import re
+from functools import lru_cache, partial
 from pathlib import Path
 from typing import Dict, List
 
@@ -66,6 +75,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     for i, (func, args, store_enabled, base) in {
         # index: (function, inputs to the function, whether to store_ts, file basename)
         # commented: 2022-09-09 temporary
+        # Disabled
         # 0: (report0, ["buildings filters"], True, "buildings-FE"),
         # 1: (report1, ["buildings filters"], True, "buildings-emiss"),
         2: (report2, ["sturm output path"], False, "sturm"),
@@ -101,7 +111,8 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     rep.add("buildings all", ["buildings iamc store", "buildings iamc file"])
 
 
-def configure_legacy_reporting(config):
+def configure_legacy_reporting(config: dict) -> None:
+    """Callback to configure the legacy reporting."""
     context = Context.get_instance()
 
     # FIXME don't hard-code this
@@ -177,15 +188,7 @@ def buildings_filters(all_techs: List[str], years: List) -> Dict:
 
 
 def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
-    """Report `scenario`.
-
-    STURM output data are loaded from CSV files and merged with computed values stored
-    as timeseries on `scenario`.
-
-    Originally transcribed from :file:`reporting_EFC.py` in the buildings repository.
-
-    .. todo:: decompose further by making use of genno features.
-    """
+    """Report buildings final energy."""
     # Final Energy Demand
 
     # - Retrieve ACT data using `filters`
@@ -338,49 +341,122 @@ def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFr
     sturm_rep = (
         pd.concat(
             [
-                pd.read_csv(sturm_output_path / filename.format("resid")),
-                pd.read_csv(sturm_output_path / filename.format("comm")),
+                pd.read_csv(sturm_output_path / filename.format(rc))
+                for rc in ("resid", "comm")
             ]
         )
-        .melt(
-            id_vars=["Model", "Scenario", "Region", "Variable", "Unit"], var_name="year"
-        )
         .rename(columns=lambda c: c.lower())
-        .assign(node=lambda df: "R12_" + df["region"])[COLS]
+        .assign(node=lambda df: "R12_" + df["region"])
+        .drop(["model", "scenario", "region"], axis=1)
+        .melt(id_vars=COLS[:-2], var_name="year")
     )
 
     return sturm_rep
 
 
-def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFrame:
-    """Manipulate variable names for `sturm_rep` and compute additional sums."""
+MAPS = (
+    {
+        "Energy Service|Residential|Floor space": [
+            "Energy Service|Residential|Multi-family|Floor space",
+            "Energy Service|Residential|Single-family|Floor space",
+            "Energy Service|Residential|Slum|Floor space",
+        ],
+        "Final Energy|Commercial": [
+            "Final Energy|Commercial|Electricity",
+            "Final Energy|Commercial|Gases",
+            "Final Energy|Commercial|Heat",
+            "Final Energy|Commercial|Liquids",
+            "Final Energy|Commercial|Solids|Biomass",
+            "Final Energy|Commercial|Solids|Coal",
+        ],
+        "Final Energy|Residential": [
+            "Final Energy|Residential|Electricity",
+            "Final Energy|Residential|Gases",
+            "Final Energy|Residential|Heat",
+            "Final Energy|Residential|Liquids",
+            "Final Energy|Residential|Solids|Biomass",
+            "Final Energy|Residential|Solids|Coal",
+        ],
+    },
+    {
+        "Energy Service|Residential and Commercial|Floor space": [
+            "Energy Service|Commercial",
+            "Energy Service|Residential|Floor space",
+        ],
+    },
+)
 
-    # Variables to exclude from the manipulations
-    prefix = "Energy Service|Residential and Commercial"
-    exclude = [
-        f"{prefix}|Commercial",
-        f"{prefix}|Residential|Multi-family|Floor space",
-        f"{prefix}|Residential|Single-family|Floor space",
-        f"{prefix}|Residential|Slum|Floor space",
-    ]
 
-    # - Exclude certain variables.
-    # - Convert a name like A|B|C|D to A|Residential and Commercial|D.
-    # - Sum, e.g. over the discarded B|C dimensions.
-    data = (
-        sturm_rep[~sturm_rep["variable"].isin(exclude)]
-        .reset_index(drop=True)
-        .assign(
-            variable=lambda df: df["variable"].str.replace(
-                r"([^\|]*\|)([^\|]*\|)([^\|]*\|)(.*)",
-                r"\g<1>Residential and Commercial|\g<4>",
-                regex=True,
-            )
+@lru_cache(maxsize=len(MAPS))
+def _groups(map_index: int) -> dict:
+    """Return a reversed mapping for element `map_index` of :data:`MAPS`."""
+    # Reverse the mapping
+    result = dict()
+    for k, names in MAPS[map_index].items():
+        result.update({v: k for v in names})
+    return result
+
+
+@lru_cache()
+def grouper(value: tuple, idx: int, map_index: int) -> tuple:
+    # Map the variable name
+    mapped = _groups(map_index).get(value[idx])
+
+    if mapped is None:
+        # Not to be aggregated → catch-all group
+        return (None, None, None, None)
+    else:
+        return value[:idx] + (mapped,) + value[idx + 1 :]
+
+
+def add_aggregates(df: pd.DataFrame, map_index: int) -> pd.DataFrame:
+    """Add aggregates to `df` using element `map_index` from :data:`MAPS`.
+
+    Uses pandas' groupby features for performance.
+    """
+    columns = COLS[:-1]
+
+    # Function to group `df` by `columns`
+    _grouper = partial(grouper, idx=columns.index("variable"), map_index=map_index)
+
+    # Compute grouped sum
+    sums = df.set_index(columns).groupby(_grouper).sum()
+
+    # - Restore index to columns (pandas doesn't seem to do this automatically)
+    # - Drop the catch-all group.
+    # - Drop the index generated by groupby().
+    result = (
+        pd.concat(
+            [sums, sums.index.to_series().apply(pd.Series, index=columns)], axis=1
         )
-        .pipe(sum_on, "node", "variable", "unit", "year")
+        .dropna(subset=COLS[:-1], how="all")
+        .reset_index(drop=True)
     )
 
-    # Reassemble; compute global total
-    data = pd.concat([sturm_rep, data], ignore_index=True).pipe(add_global_total)
+    return pd.concat([df, result], ignore_index=True)
 
-    return data
+
+def _rename(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert variable names like "A|Residential and Commercial|B|C…" to "A|B|C…"."""
+    return df.assign(
+        variable=df["variable"].str.replace(
+            r"([^\|]*)\|Residential and Commercial\|(.*)",
+            r"\g<1>|\g<2>",
+            regex=True,
+        )
+    )
+
+
+def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFrame:
+    """Manipulate variable names for `sturm_rep` and compute additional sums."""
+    # - Munge names.
+    # - Compute global totals.
+    # - Add aggregates in 2 stages.
+    # - Sort.
+    return (
+        sturm_rep.pipe(_rename)
+        .pipe(add_global_total)
+        .pipe(add_aggregates, 0)
+        .pipe(add_aggregates, 1)
+        .sort_values(COLS)
+    )
