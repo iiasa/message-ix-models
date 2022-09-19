@@ -162,8 +162,7 @@ def add_bio_backstop(scen):
     scen.commit("Add biomass dummy")
 
 
-# FIXME(PNK) Too complex; McCabe complexity of 17 > 14 for the rest of message_data
-def main(  # noqa: C901
+def main(
     scenario: message_ix.Scenario,
     demand: pd.DataFrame,
     prices: pd.DataFrame,
@@ -269,6 +268,82 @@ def main(  # noqa: C901
     dd_replace["value"] = 0
     scenario.add_par("demand", dd_replace)
 
+    # TODO replace with an actual check so this code does *not* run on a non-materials
+    #      base `scenario`
+    if True:
+        materials(scenario, sturm_scenarios, comm_sturm_scenarios, first_iteration)
+
+    # Create new technologies for building energy
+
+    # Mapping from commodity to base model's *_rc technology
+    rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
+
+    # Add for fuels above
+    for fuel in prices["commodity"].unique():
+        # Find the original rc technology for the fuel
+        tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
+
+        # Remove lower bound in activity for older, now unused rc techs to allow them to
+        # reach zero
+        filters = dict(filters={"technology": tech_orig, "year_act": info.Y})
+        for name, value in (
+            ("bound_activity_lo", 0.0),
+            ("growth_activity_lo", -1.0),
+            ("soft_activity_lo", 0.0),
+        ):
+            scenario.add_par(name, scenario.par(name, **filters).assign(value=value))
+
+        # Create the technologies for the new commodities
+        for commodity in filter(
+            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
+        ):
+
+            # Fix for lightoil gas included
+            if "lightoil-gas" in commodity:
+                tech_new = f"{fuel}_lg_" + commodity.replace("_lightoil-gas", "")
+            else:
+                tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
+
+            # commented: for debugging
+            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
+
+            # Add new commodities and technologies
+            scenario.add_set("commodity", commodity)
+            scenario.add_set("technology", tech_new)
+
+            # Modify data
+            for name, filters, extra in (
+                ("input", {}, dict(value=1.0)),
+                ("output", {}, dict(commodity=commodity, value=1.0)),
+                ("capacity_factor", {}, {}),
+                ("emission_factor", {}, {}),
+                ("relation_activity", dict(relation=emiss_rel), {}),
+            ):
+                filters["technology"] = tech_orig
+                scenario.add_par(
+                    name,
+                    scenario.par(name, filters=filters).assign(
+                        technology=tech_new, **extra
+                    ),
+                )
+
+    scenario.commit("message_data.model.buildings.setup_scenario()")
+    scenario.set_as_default()
+    log.info(f"Built {scenario.url} and set as default")
+
+
+def materials(
+    scenario: message_ix.Scenario,
+    sturm_scenarios: pd.DataFrame,
+    comm_sturm_scenarios: pd.DataFrame,
+    first_iteration: bool,
+) -> None:
+    """Integrate with MESSAGEix-Materials.
+
+    This function adjusts `scenario` to work with :mod:`.model.material`.
+    """
+    info = ScenarioInfo(scenario)
+
     # Create new input/output for building material intensities
     common = dict(
         time="year",
@@ -351,61 +426,3 @@ def main(  # noqa: C901
             mat_demand["value"] - mat_demand[f"demand_{rc}_const"], 0
         )
         scenario.add_par("demand", mat_demand.drop(columns=f"demand_{rc}_const"))
-
-    # Create new technologies for building energy
-
-    # Mapping from commodity to base model's *_rc technology
-    rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
-
-    # Add for fuels above
-    for fuel in prices["commodity"].unique():
-        # Find the original rc technology for the fuel
-        tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
-
-        # Remove lower bound in activity for older, now unused rc techs to allow them to
-        # reach zero
-        filters = dict(filters={"technology": tech_orig, "year_act": info.Y})
-        for name, value in (
-            ("bound_activity_lo", 0.0),
-            ("growth_activity_lo", -1.0),
-            ("soft_activity_lo", 0.0),
-        ):
-            scenario.add_par(name, scenario.par(name, **filters).assign(value=value))
-
-        # Create the technologies for the new commodities
-        for commodity in filter(
-            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
-        ):
-
-            # Fix for lightoil gas included
-            if "lightoil-gas" in commodity:
-                tech_new = f"{fuel}_lg_" + commodity.replace("_lightoil-gas", "")
-            else:
-                tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
-
-            # commented: for debugging
-            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
-
-            # Add new commodities and technologies
-            scenario.add_set("commodity", commodity)
-            scenario.add_set("technology", tech_new)
-
-            # Modify data
-            for name, filters, extra in (
-                ("input", {}, dict(value=1.0)),
-                ("output", {}, dict(commodity=commodity, value=1.0)),
-                ("capacity_factor", {}, {}),
-                ("emission_factor", {}, {}),
-                ("relation_activity", dict(relation=emiss_rel), {}),
-            ):
-                filters["technology"] = tech_orig
-                scenario.add_par(
-                    name,
-                    scenario.par(name, filters=filters).assign(
-                        technology=tech_new, **extra
-                    ),
-                )
-
-    scenario.commit("message_data.model.buildings.setup_scenario()")
-    scenario.set_as_default()
-    log.info(f"Built {scenario.url} and set as default")
