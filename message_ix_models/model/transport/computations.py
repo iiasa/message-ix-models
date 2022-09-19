@@ -1,5 +1,6 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
+from functools import partial
 from typing import Dict, Hashable, List
 
 import numpy as np
@@ -259,58 +260,14 @@ def logit(
     return ratio(u, u.sum(dim))
 
 
-def advance_ldv_pdt(config: dict) -> Quantity:
-    assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
-
-    data = advance.advance_data("Transport|Service demand|Road|Passenger|LDV").sel(
-        year=2020
-    )
-    data.name = "activity"
-    data = rename_dims(
-        data.sel(model="MESSAGE", scenario="ADV3TRAr2_Base", drop=True),
-        dict(region="n"),
-    )
-
-    # Map regions
-    results = []
-    for a, b, k in (
-        ("R12_CHN", "China", 1.0),
-        ("R12_LAM", "LAM", 1.0),
-        ("R12_SAS", "India", 1.0),
-        ("R12_NAM", "USA", 1.0),
-        ("R12_WEU", "EU", 0.5),
-        ("R12_EEU", "EU", 0.5),
-        ("R12_MEA", "MAF", 0.5),
-        ("R12_AFR", "MAF", 0.5),
-        ("R12_FSU", "REF", 1.0),
-        ("R12_RCPA", "ASIA", 0.1),
-        ("R12_PAO", "OECD90", 0.08),
-        ("R12_PAS", "ASIA", 0.5 - 0.1),
-    ):
-        results.append(relabel(k * data.sel(n=b), n={b: a}))
-
-    result = computations.concat(*results)
-
-    # Check
-    assert_qty_allclose(
-        computations.sum(result, dimensions="n"),
-        data.sel(n="World", drop=True),
-        rtol=0.05,
-    )
-    # FIXME guard with an assertion
-    result.units = "Gp km / a"
-
-    return result
-
-
-def advance_fv(config: dict) -> Quantity:
+def _advance_data_for(config: dict, variable: str, units) -> Quantity:
     import plotnine as p9
     from genno.compat.plotnine import Plot
 
     assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
 
     class Plot1(Plot):
-        basename = "advance-fv-road-check"
+        basename = f"advance-check-{hash(variable)}"
 
         def generate(self, data):
             N = len(data)
@@ -321,16 +278,16 @@ def advance_fv(config: dict) -> Quantity:
                     p9.aes(
                         x="region",
                         y="activity",
-                        color="model",
+                        color="model"
                         # shape="scenario",
                     ),
                     data,
                 )
                 + p9.geom_point()
-                + p9.ggtitle("Freight activity — Road, 2020 [Gt km]")
+                + p9.ggtitle(f"{variable}, 2020 [{units}]")
             )
 
-    data = advance.advance_data("Transport|Service demand|Road|Freight").sel(year=2020)
+    data = advance.advance_data(variable).sel(year=2020)
     data.name = "activity"
 
     # Debugging
@@ -343,22 +300,21 @@ def advance_fv(config: dict) -> Quantity:
 
     # Map regions
     results = []
-    for a, b, k in (
-        ("R12_CHN", "China", 1.0),
-        ("R12_LAM", "LAM", 1.0),
-        ("R12_SAS", "India", 1.0),
-        ("R12_NAM", "USA", 1.0),
-        ("R12_WEU", "EU", 0.5),
-        ("R12_EEU", "EU", 0.5),
-        ("R12_MEA", "MAF", 0.5),
-        ("R12_AFR", "MAF", 0.5),
-        ("R12_FSU", "REF", 1.0),
-        ("R12_RCPA", "ASIA", 0.1),
-        ("R12_PAO", "OECD90", 0.08),
-        ("R12_PAS", "ASIA", 0.5 - 0.1),
+    for source, share, dest in (
+        ("ASIA", 0.1, "R12_RCPA"),
+        ("ASIA", 0.5 - 0.1, "R12_PAS"),
+        ("China", 1.0, "R12_CHN"),
+        ("EU", 0.5, "R12_EEU"),
+        ("EU", 0.5, "R12_WEU"),
+        ("India", 1.0, "R12_SAS"),
+        ("LAM", 1.0, "R12_LAM"),
+        ("MAF", 0.5, "R12_AFR"),
+        ("MAF", 0.5, "R12_MEA"),
+        ("OECD90", 0.08, "R12_PAO"),
+        ("REF", 1.0, "R12_FSU"),
+        ("USA", 1.0, "R12_NAM"),
     ):
-        results.append(relabel(k * data.sel(n=b), n={b: a}))
-
+        results.append(relabel(share * data.sel(n=source), n={source: dest}))
     result = computations.concat(*results)
 
     # Check
@@ -368,9 +324,22 @@ def advance_fv(config: dict) -> Quantity:
         rtol=0.05,
     )
     # FIXME guard with an assertion
-    result.units = "Gt km"
+    result.units = units
 
     return result
+
+
+advance_ldv_pdt = partial(
+    _advance_data_for,
+    variable="Transport|Service demand|Road|Passenger|LDV",
+    units="Gp km / a",
+)
+
+advance_fv = partial(
+    _advance_data_for,
+    variable="Transport|Service demand|Road|Freight",
+    units="Gt km",
+)
 
 
 def iea_eei_fv(name: str, config: Dict) -> Quantity:
