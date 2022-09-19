@@ -23,7 +23,7 @@ from .sturm import run_sturm
 log = logging.getLogger(__name__)
 
 #: Default values for Context["buildings"] keys that configure the code. See
-#: :doc:`model/buildings` for a full explanation.
+#: :doc:`/model/buildings` for a full explanation.
 DEFAULTS = {
     "clim_scen": "BL",  # or "2C"?
     "clone": True,
