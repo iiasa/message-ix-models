@@ -342,9 +342,24 @@ def materials(
     comm_sturm_scenarios: pd.DataFrame,
     first_iteration: bool,
 ) -> None:
-    """Integrate with MESSAGEix-Materials.
+    """Integrate MESSAGEix-Buildings with MESSAGEix-Materials.
 
-    This function adjusts `scenario` to work with :mod:`.model.material`.
+    This function adjusts `scenario` to work with :mod:`.model.material`. It makes the
+    following changes:
+
+    1. Create new technologies like ``(construction|demolition)_(resid|comm)_build``.
+
+       - The ``construction_*`` technologies take input of commodities steel, aluminum,
+         and cement (cf :data:`BUILD_COMM_CONVERT`) from ``l="product"``, and output to
+         ``c="(comm|resid)_floor_construction, l="demand"``.
+       - The ``demolition_*`` technologies have no input, but output to both
+         ``c="(comm|resid)_floor_demolition, l="demand"`` *and* commodities (same 3) at
+         ``l="end_of_life"``.
+
+    2. Adjust existing demand parameter data at ``l="demand"`` for steel, aluminum, and
+       cement by subtracting the amounts from ``sturm_scenarios`` and
+       ``comm_sturm_scenarios`` (except when ``first_iteration`` is :data:`True`). The
+       demands are not reduced below zero.
     """
     info = ScenarioInfo(scenario)
 
@@ -372,7 +387,7 @@ def materials(
         if typ == "demand":
             # Need to take care of 2110 by appending the last value
             data = make_io(
-                (comm, "demand", "t"),
+                (comm, "product", "t"),
                 (f"{rc}_floor_construction", "demand", "t"),
                 efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
                 technology=f"construction_{rc}_build",
