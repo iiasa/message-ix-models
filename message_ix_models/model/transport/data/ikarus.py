@@ -12,6 +12,7 @@ from message_ix_models.util import (
     cached,
     convert_units,
     make_matched_dfs,
+    nodes_ex_world,
     private_data_path,
     same_node,
     series_of_pint_quantity,
@@ -281,7 +282,9 @@ def get_ikarus_data(context):
             df["value"] = df["value"].round()
 
         # Broadcast across all nodes
-        result[par].append(df.pipe(broadcast, node_loc=info.N[1:]).pipe(same_node))
+        result[par].append(
+            df.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(same_node)
+        )
 
     # Concatenate data frames for each model parameter
     for par, list_of_df in result.items():
