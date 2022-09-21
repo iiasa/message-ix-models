@@ -123,12 +123,14 @@ general:
   inputs: [ scenario, transport iamc ]
 
 # Collecting all others
+- key: transport iamc all
+  comp: null
+  inputs: [ transport iamc file, transport iamc store ]
 - key: transport all
   comp: null
   inputs:
   # - transport plots
-  - transport iamc file
-  - transport iamc store
+  - transport iamc all
 
 # Groups of keys for re-use
 _iamc formats:
