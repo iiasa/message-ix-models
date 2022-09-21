@@ -50,29 +50,16 @@ def print_full(x):
     pd.reset_option("display.max_rows")
 
 
-def change_names(s):
-
-    """Change the sector names according to IMAC format."""
-
-    if s == "aluminum":
-        s = "Non-Ferrous Metals|Aluminium"
-    elif s == "steel":
-        s = "Steel"
-    elif s == "cement":
-        s = "Non-Metallic Minerals|Cement"
-    elif s == "petro":
-        s = "Chemicals|High Value Chemicals"
-    elif s == "ammonia":
-        s = "Chemicals|Ammonia"
-    elif s == "BCA":
-        s = "BC"
-    elif s == "OCA":
-        s = "OC"
-    elif s == "CO2_industry":
-        s == "CO2"
-    else:
-        s == s
-    return s
+NAME_MAP = {
+    "aluminum": "Non-Ferrous Metals|Aluminium",
+    "steel": "Steel",
+    "cement": "Non-Metallic Minerals|Cement",
+    "petro": "Chemicals|High Value Chemicals",
+    "ammonia": "Chemicals|Ammonia",
+    "BCA": "BC",
+    "OCA": "OC",
+    "CO2_industry": "CO2",
+}
 
 
 def fix_excel(path_temp, path_new):
@@ -1845,7 +1832,7 @@ def report(
             tec = [t for t in aux2_df["technology"].values if s in t]
             aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
 
-        s = change_names(s)
+        s = NAME_MAP.get(s, s)
 
         # Lists to keep commodity, aggregate and variable names.
 
@@ -2073,7 +2060,7 @@ def report(
 
         aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
 
-        s = change_names(s)
+        s = NAME_MAP.get(s, s)
 
         # Lists to keep commodity, aggregate and variable names.
 
@@ -2250,7 +2237,7 @@ def report(
             unit = "kt " + e + "/yr"
             df_emi.convert_unit("", to=unit, factor=1, inplace=True)
         else:
-            e = change_names(e)
+            e = NAME_MAP.get(e, e)
             # From kt/yr to Mt/yr
             unit = "Mt " + e + "/yr"
             df_emi.convert_unit("", to=unit, factor=0.001, inplace=True)
@@ -2443,7 +2430,7 @@ def report(
                         if ((s in t) & ("furnace" in t))
                     ]
             # Adjust the sector names
-            s = change_names(s)
+            s = NAME_MAP.get(s, s)
 
             aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
             # If there are no emission types for that setor skip
@@ -2827,7 +2814,7 @@ def report(
     #
     #             # For each commodity collect the variable name, create an aggregate
     #             # name
-    #             s = change_names(s)
+    #             s = NAME_MAP.get(s, s)
     #             for c in np.unique(aux2_df["commodity"].values):
     #                 var = np.unique(
     #                     aux2_df.loc[aux2_df["commodity"] == c, "variable"].values
@@ -2895,7 +2882,7 @@ def report(
     #                           'in|end_of_life|' + m + '|total_EOL_' + m + '|M1']
     #             print(filt_power)
     #
-    #             m = change_names(m)
+    #             m = NAME_MAP.get(m, m)
     #             var_name_buildings = 'Total Scrap|Residential and Commercial|' + m
     #             var_name_other = 'Total Scrap|Other|' + m
     #             var_name_power = 'Total Scrap|Power Sector|' + m
@@ -2925,7 +2912,7 @@ def report(
     #                           'out|end_of_life|' + m + '|demolition_build|M1',
     #                           'in|end_of_life|' + m + '|total_EOL_' + m + '|M1']
     #             print(filt_power)
-    #             m = change_names(m)
+    #             m = NAME_MAP.get(m, m)
     #             var_name_buildings = 'Total Scrap|Residential and Commercial|' + m
     #             print(var_name_buildings)
     #             var_name_power = 'Total Scrap|Power Sector|' + m
@@ -3168,7 +3155,7 @@ def report(
     # material_needs_all["model"] = model_name
     # material_needs_all["unit"] = "Mt/yr"
     # material_needs_all["commodity"] = material_needs_all.apply(
-    #     lambda x: change_names(x["commodity"]), axis=1
+    #     lambda x: NAME_MAP.get(x["commodity"], x["commodity"]), axis=1
     # )
     # material_needs_all = material_needs_all.assign(
     #     variable=lambda x: "Material Demand|Power Sector|" + x["commodity"]
