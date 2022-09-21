@@ -52,7 +52,13 @@ def _region(value: str) -> str:
 VARIABLE_SUB = (
     (re.compile(r"^Carbon Sequestration\|CCS(.*)$"), r"Carbon Capture|Storage\g<1>"),
     (re.compile(r"^Carbon Sequestration(\|Land Use.*)$"), r"Carbon Removal\g<1>"),
-    (re.compile(r"\|Industry excl Non-Energy Use\|"), "|Industry|"),
+    (
+        re.compile(
+            r"\|Industry excl Non-Energy Use\|(Chemicals|Non-Ferrous Metals|"
+            "Non-Metallic Minerals|Steel)"
+        ),
+        "|Industry|\g<1>",
+    ),
     # NB this does *not* apply to Final Energy|Solids|Coal, only names with additional
     #    parts
     (re.compile(r"^(Final Energy\|.*\|Solids\|)Coal"), r"\g<1>Fossil"),
@@ -76,7 +82,8 @@ VARIABLE_SUB = (
         re.compile(r"^(Production\|)Non-ferrous metals"),
         r"\g<1>Non-Ferrous Metals|Volume",
     ),
-    (re.compile(r"^(Production\|)Steel"), r"\g<1>Iron and Steel|Volume"),
+    (re.compile(r"\|Steel"), r"|Iron and Steel"),
+    (re.compile(r"^(Production\|Iron and Steel)$"), r"\g<1>|Volume"),
     # For NGFS, apparently not needed for NAVIGATE
     # ("Commercial", "Residential and Commercial|Commercial"),
     # ("Residential", "Residential and Commercial|Residential"),
