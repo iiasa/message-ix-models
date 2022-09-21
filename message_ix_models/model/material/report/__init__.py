@@ -1877,24 +1877,19 @@ def report(
                     aux2_df.loc[aux2_df["commodity"] == "electr", "variable"].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|"
-                    + s
-                    + "|"
-                    + "Electricity"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Electricity"
                 )
             elif c == "gas":
                 var = np.unique(
                     aux2_df.loc[aux2_df["commodity"] == "gas", "variable"].values
                 ).tolist()
-                aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|" + s + "|" + "Gases"
-                )
+                aggregate_name = f"Final Energy|Industry excl Non-Energy Use|{s}|Gases"
             elif c == "hydrogen":
                 var = np.unique(
                     aux2_df.loc[aux2_df["commodity"] == "hydrogen", "variable"].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|" + s + "|" + "Hydrogen"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Hydrogen"
                 )
             elif c == "liquids":
                 var = np.unique(
@@ -1909,7 +1904,7 @@ def report(
                     ].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|" + s + "|" + "Liquids"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Liquids"
                 )
             elif c == "liquid_bio":
                 var = np.unique(
@@ -1919,10 +1914,7 @@ def report(
                     ].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|"
-                    + s
-                    + "|"
-                    + "Liquids|Biomass"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Liquids|Biomass"
                 )
             elif c == "liquid_fossil":
                 var = np.unique(
@@ -1935,10 +1927,7 @@ def report(
                     ].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|"
-                    + s
-                    + "|"
-                    + "Liquids|Oil"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Liquids|Oil"
                 )
             elif c == "liquid_other":
                 var = np.unique(
@@ -1948,10 +1937,7 @@ def report(
                     ].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|"
-                    + s
-                    + "|"
-                    + "Liquids|Coal"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Liquids|Coal"
                 )
             elif c == "solids":
                 var = np.unique(
@@ -1964,18 +1950,13 @@ def report(
                         "variable",
                     ].values
                 ).tolist()
-                aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|" + s + "|" + "Solids"
-                )
+                aggregate_name = f"Final Energy|Industry excl Non-Energy Use|{s}|Solids"
             elif c == "solids_bio":
                 var = np.unique(
                     aux2_df.loc[(aux2_df["commodity"] == "biomass"), "variable"].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|"
-                    + s
-                    + "|"
-                    + "Solids|Biomass"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Solids|Biomass"
                 )
             elif c == "solids_fossil":
                 var = np.unique(
@@ -1988,21 +1969,16 @@ def report(
                     ].values
                 ).tolist()
                 aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|"
-                    + s
-                    + "|"
-                    + "Solids|Coal"
+                    f"Final Energy|Industry excl Non-Energy Use|{s}|Solids|Coals"
                 )
             elif c == "heat":
                 var = np.unique(
                     aux2_df.loc[(aux2_df["commodity"] == "d_heat"), "variable"].values
                 ).tolist()
-                aggregate_name = (
-                    "Final Energy|Industry excl Non-Energy Use|" + s + "|" + "Heat"
-                )
+                aggregate_name = f"Final Energy|Industry excl Non-Energy Use|{s}|Heat"
             elif c == "all":
                 var = aux2_df["variable"].tolist()
-                aggregate_name = "Final Energy|Industry excl Non-Energy Use|" + s
+                aggregate_name = f"Final Energy|Industry excl Non-Energy Use|{s}"
 
             aggregate_list.append(aggregate_name)
             var_list.append(var)
@@ -2122,7 +2098,7 @@ def report(
                 var = np.unique(
                     aux2_df.loc[aux2_df["commodity"] == "gas", "variable"].values
                 ).tolist()
-                aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Gases"
+                aggregate_name = f"Final Energy|Non-Energy Use|{s}|Gases"
 
             elif c == "liquids":
                 var = np.unique(
@@ -2138,7 +2114,7 @@ def report(
                     ].values
                 ).tolist()
 
-                aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Liquids"
+                aggregate_name = f"Final Energy|Non-Energy Use|{s}|Liquids"
             elif c == "liquid_bio":
                 var = np.unique(
                     aux2_df.loc[
@@ -2146,9 +2122,7 @@ def report(
                         "variable",
                     ].values
                 ).tolist()
-                aggregate_name = (
-                    "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Biomass"
-                )
+                aggregate_name = f"Final Energy|Non-Energy Use|{s}|Liquids|Biomass"
             elif c == "liquid_oil":
                 var = np.unique(
                     aux2_df.loc[
@@ -2162,9 +2136,7 @@ def report(
                     ].values
                 ).tolist()
 
-                aggregate_name = (
-                    "Final Energy|Non-Energy Use|" + s + "|" + "Liquids|Oil"
-                )
+                aggregate_name = f"Final Energy|Non-Energy Use|{s}|Liquids|Oil"
 
             elif c == "solids":
                 var = np.unique(
@@ -2176,10 +2148,10 @@ def report(
                         "variable",
                     ].values
                 ).tolist()
-                aggregate_name = "Final Energy|Non-Energy Use|" + s + "|" + "Solids"
+                aggregate_name = f"Final Energy|Non-Energy Use|{s}|Solids"
             elif c == "all":
                 var = aux2_df["variable"].tolist()
-                aggregate_name = "Final Energy|Non-Energy Use|" + s
+                aggregate_name = f"Final Energy|Non-Energy Use|{s}"
 
             aggregate_list.append(aggregate_name)
             var_list.append(var)
@@ -2500,17 +2472,13 @@ def report(
             else:
                 if (typ == "demand") & (e != "CO2"):
                     if e != "CO2_industry":
-                        aggregate_name = (
-                            "Emissions|" + e + "|Energy|Demand|Industry|" + s
-                        )
+                        aggregate_name = f"Emissions|{e}|Energy|Demand|Industry|{s}"
                         aggregate_list.append(aggregate_name)
                     else:
-                        aggregate_name = (
-                            "Emissions|" + "CO2" + "|Energy|Demand|Industry|" + s
-                        )
+                        aggregate_name = f"Emissions|CO2|Energy|Demand|Industry|{s}"
                         aggregate_list.append(aggregate_name)
                 if (typ == "process") & (e != "CO2_industry"):
-                    aggregate_name = "Emissions|" + e + "|Industrial Processes|" + s
+                    aggregate_name = f"Emissions|{e}|Industrial Processes|{s}"
                     aggregate_list.append(aggregate_name)
 
         # To plot:   Obtain the iamc format dataframe again
