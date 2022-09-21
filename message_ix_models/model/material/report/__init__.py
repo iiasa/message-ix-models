@@ -1,16 +1,18 @@
-# -*- coding: utf-8 -*-
-"""
+"""Reporting for MESSAGEix-Materials.
+
 Created on Mon Mar  8 12:58:21 2021
-This code produces the follwoing outputs:
-message_ix_reporting.xlsx: message_ix level reporting
-check.xlsx: can be used for checking the filtered variables
-New_Reporting_Model_Scenario.xlsx: Reporting including the material variables
-Merged_Model_Scenario.xlsx: Includes all IAMC variables
-Material_global_grpahs.pdf
-
 @author: unlu
-"""
 
+This code produces the following outputs:
+
+- message_ix_reporting.xlsx: message_ix level reporting
+- check.xlsx: can be used for checking the filtered variables
+- New_Reporting_Model_Scenario.xlsx: Reporting including the material variables
+- Merged_Model_Scenario.xlsx: Includes all IAMC variables
+- Material_global_graphs.pdf
+"""
+# NB(PNK) as of 2022-09-21, the following appears to be outdated; this code runs with
+#         pyam 1.5.0 within the NAVIGATE workflow. Check and maybe remove.
 # NOTE: Works with pyam-iamc version 0.9.0
 # Problems with the most recent versions:
 # 0.11.0 --> Filtering with asterisk * does not work, dataframes are empty.
@@ -23,7 +25,6 @@ Material_global_grpahs.pdf
 
 # PACKAGES
 import logging
-from functools import partial
 from itertools import product
 from typing import List
 
@@ -252,9 +253,11 @@ def report(
     years: List[int],
     nodes: List[str],
     config: dict,
-    context: Context,
 ) -> None:
-    """Produces the material related variables."""
+    """Produces the material related variables.
+
+    .. todo:: Expand docstring.
+    """
     # In order to avoid confusion in the second reporting stage there should
     # no existing timeseries uploaded in the scenairo. Clear these except the
     # residential and commercial ones since they should be always included.
@@ -3176,7 +3179,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     """
     rep.add(
         "materials all",
-        partial(report, context=context),
+        report,
         "scenario",
         "message::default",
         "y::model",
