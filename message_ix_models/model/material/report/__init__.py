@@ -967,7 +967,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "gas":
+        elif c == "gas":
 
             # Can not distinguish by type Gases (natural gas, biomass, synthetic
             # fossil, efuel) (coal_gas), from biomass (gas_bio), natural gas
@@ -989,7 +989,7 @@ def report(
             )
             df_final.append(df_final_energy, inplace=True)
 
-        if c == "liquids":
+        elif c == "liquids":
 
             # All liquids
             df_final_energy.aggregate(
@@ -1053,7 +1053,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "solids":
+        elif c == "solids":
 
             # All
             df_final_energy.aggregate(
@@ -1135,11 +1135,10 @@ def report(
                 ],
                 inplace=True,
             )
-        if c == "gas":
+        elif c == "gas":
             df_final_energy.filter(variable=["in|final|gas|*"], inplace=True)
-
-        # Do not include gasoil and naphtha feedstock
-        if c == "liquids":
+        elif c == "liquids":
+            # Do not include gasoil and naphtha feedstock
             df_final_energy.filter(
                 variable=[
                     "in|final|ethanol|*",
@@ -1149,7 +1148,7 @@ def report(
                 ],
                 inplace=True,
             )
-        if c == "solids":
+        elif c == "solids":
             df_final_energy.filter(
                 variable=[
                     "in|final|biomass|*",
@@ -1158,14 +1157,13 @@ def report(
                 ],
                 inplace=True,
             )
-
-        if c == "hydrogen":
+        elif c == "hydrogen":
             df_final_energy.filter(variable=["in|final|hydrogen|*"], inplace=True)
-        if c == "heat":
+        elif c == "heat":
             df_final_energy.filter(variable=["in|final|d_heat|*"], inplace=True)
-        if c == "other":
+        elif c == "other":
             df_final_energy.filter(variable=["out|useful|i_therm|*"], inplace=True)
-        if c == "all":
+        elif c == "all":
             df_final_energy.filter(
                 variable=[
                     "in|final|*",
@@ -1244,7 +1242,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "electr":
+        elif c == "electr":
 
             df_final_energy.aggregate(
                 "Final Energy|Industry excl Non-Energy Use|Electricity",
@@ -1259,7 +1257,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "gas":
+        elif c == "gas":
 
             # Can not distinguish by type Gases (natural gas, biomass, synthetic
             # fossil, efuel) (coal_gas), from biomass (gas_bio), natural gas
@@ -1281,7 +1279,7 @@ def report(
             )
             df_final.append(df_final_energy, inplace=True)
 
-        if c == "hydrogen":
+        elif c == "hydrogen":
             df_final_energy.aggregate(
                 "Final Energy|Industry excl Non-Energy Use|Hydrogen",
                 components=var_sectors,
@@ -1296,7 +1294,7 @@ def report(
             )
             df_final.append(df_final_energy, inplace=True)
 
-        if c == "liquids":
+        elif c == "liquids":
 
             # All liquids
             df_final_energy.aggregate(
@@ -1355,7 +1353,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "solids":
+        elif c == "solids":
 
             # All
             df_final_energy.aggregate(
@@ -1393,7 +1391,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "heat":
+        elif c == "heat":
             df_final_energy.aggregate(
                 "Final Energy|Industry excl Non-Energy Use|Heat",
                 components=var_sectors,
@@ -1407,7 +1405,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "other":
+        elif c == "other":
             df_final_energy.aggregate(
                 "Final Energy|Industry excl Non-Energy Use|Other",
                 components=var_sectors,
@@ -1452,7 +1450,7 @@ def report(
             df_final_energy.filter(
                 variable=["out|useful|i_therm|solar_i|M1"], inplace=True
             )
-        if c == "electr":
+        elif c == "electr":
             df_final_energy.filter(
                 variable=[
                     "in|final|electr|*",
@@ -1470,7 +1468,7 @@ def report(
                 inplace=True,
             )
 
-        if c == "gas":
+        elif c == "gas":
             df_final_energy.filter(
                 variable=[
                     "in|final|gas|*",
@@ -1480,8 +1478,8 @@ def report(
                 inplace=True,
             )
 
-        # Include gasoil and naphtha feedstock
-        if c == "liquids":
+        elif c == "liquids":
+            # Include gasoil and naphtha feedstock
             df_final_energy.filter(
                 variable=[
                     "in|final|ethanol|*",
@@ -1496,7 +1494,7 @@ def report(
                 ],
                 inplace=True,
             )
-        if c == "solids":
+        elif c == "solids":
             df_final_energy.filter(
                 variable=[
                     "in|final|biomass|*",
@@ -1510,11 +1508,11 @@ def report(
                 inplace=True,
             )
 
-        if c == "hydrogen":
+        elif c == "hydrogen":
             df_final_energy.filter(variable=["in|final|hydrogen|*"], inplace=True)
-        if c == "heat":
+        elif c == "heat":
             df_final_energy.filter(variable=["in|final|d_heat|*"], inplace=True)
-        if c == "all":
+        elif c == "all":
             df_final_energy.filter(
                 variable=[
                     "in|final|*",
@@ -1588,7 +1586,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "all":
+        elif c == "all":
             df_final_energy.aggregate(
                 "Final Energy|Industry",
                 components=var_sectors,
@@ -1599,7 +1597,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "electr":
+        elif c == "electr":
 
             df_final_energy.aggregate(
                 "Final Energy|Industry|Electricity",
@@ -1614,7 +1612,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "gas":
+        elif c == "gas":
 
             # Can not distinguish by type Gases (natural gas, biomass, synthetic
             # fossil, efuel) (coal_gas), from biomass (gas_bio), natural gas
@@ -1636,7 +1634,7 @@ def report(
             )
             df_final.append(df_final_energy, inplace=True)
 
-        if c == "hydrogen":
+        elif c == "hydrogen":
             df_final_energy.aggregate(
                 "Final Energy|Industry|Hydrogen",
                 components=var_sectors,
@@ -1651,7 +1649,7 @@ def report(
             )
             df_final.append(df_final_energy, inplace=True)
 
-        if c == "liquids":
+        elif c == "liquids":
 
             # All liquids
             df_final_energy.aggregate(
@@ -1715,7 +1713,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "solids":
+        elif c == "solids":
 
             # All
             df_final_energy.aggregate(
@@ -1755,7 +1753,7 @@ def report(
                 "GWa", to="EJ/yr", factor=0.03154, inplace=True
             )
             df_final.append(df_final_energy, inplace=True)
-        if c == "heat":
+        elif c == "heat":
             df_final_energy.aggregate(
                 "Final Energy|Industry|Heat",
                 components=var_sectors,
@@ -2094,7 +2092,7 @@ def report(
         # Filter the technologies only for the certain industry sector
         if s == "petro":
             tec = [t for t in aux2_df["technology"].values if (s in t)]
-        if s == "ammonia":
+        elif s == "ammonia":
             tec = [t for t in aux2_df["technology"].values if ("NH3" in t)]
 
         aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
