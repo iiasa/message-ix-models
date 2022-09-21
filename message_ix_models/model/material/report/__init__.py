@@ -308,7 +308,7 @@ def report(
     directory = config["output_path"].expanduser().joinpath("materials")
     directory.mkdir(exist_ok=True)
 
-    # Replace erroneous region labels like R12_AFR|R12_AFR with simply R12_AFR
+    # Replace region labels like R12_AFR|R12_AFR with simply R12_AFR
     # TODO locate the cause of this upstream and fix
     df = message_df.rename({"region": {f"{n}|{n}": n for n in nodes}})
 
@@ -322,6 +322,10 @@ def report(
     # Obtain a pyam dataframe
     # FIXME(PNK) this re-reads the file above. This seems unnecessary, and can be slow.
     df = pyam.IamDataFrame(pd.read_excel(name).fillna(dict(Unit="")))
+
+    # Subsequent code expects that the nodes set contains "World", but not "_GLB"
+    # NB cannot use message_ix_models.util.nodes_ex_world(), which excludes both
+    nodes = list(filter(lambda n: not n.endswith("_GLB"), nodes))
 
     # Filter variables necessary for materials reporting
     df.filter(
@@ -3215,6 +3219,6 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         "scenario",
         "message::default",
         "y::model",
-        "n::ex world",
+        "n",
         "config",
     )
