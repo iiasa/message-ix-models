@@ -167,6 +167,117 @@ def fix_excel(path_temp, path_new):
     new_workbook.save(path_new)
 
 
+def plot_production_al(df: pyam.IamDataFrame, ax, r: str) -> None:
+    df = df.copy()
+
+    df.filter(
+        variable=[
+            "out|useful_material|aluminum|import_aluminum|*",
+            "out|final_material|aluminum|prebake_aluminum|*",
+            "out|final_material|aluminum|soderberg_aluminum|*",
+            "out|new_scrap|aluminum|*",
+        ],
+        inplace=True,
+    )
+
+    if r == "World":
+        df.filter(
+            variable=[
+                "out|final_material|aluminum|prebake_aluminum|*",
+                "out|final_material|aluminum|soderberg_aluminum|*",
+                "out|new_scrap|aluminum|*",
+            ],
+            inplace=True,
+        )
+
+    df.plot.stack(ax=ax)
+    ax.legend(
+        [
+            "Prebake",
+            "Soderberg",
+            "Newscrap",
+            "Oldscrap_min",
+            "Oldscrap_av",
+            "Oldscrap_max",
+            "import",
+        ],
+        bbox_to_anchor=(-0.4, 1),
+        loc="upper left",
+    )
+    ax.set_title(f"Aluminium Production_{r}")
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Mt")
+
+
+def plot_production_steel(df: pyam.IamDataFrame, ax, r: str) -> None:
+    df = df.copy()
+    df.filter(
+        variable=[
+            "out|final_material|steel|*",
+            "out|useful_material|steel|import_steel|*",
+        ],
+        inplace=True,
+    )
+
+    if r == "World":
+        df.filter(variable=["out|final_material|steel|*"], inplace=True)
+
+    df.plot.stack(ax=ax)
+    ax.legend(
+        ["Bof steel", "Eaf steel M1", "Eaf steel M2", "Import"],
+        bbox_to_anchor=(-0.4, 1),
+        loc="upper left",
+    )
+    ax.set_title(f"Steel Production_{r}")
+    ax.set_ylabel("Mt")
+
+
+def plot_petro(df: pyam.IamDataFrame, ax, r: str) -> None:
+    df.plot.stack(ax=ax)
+    ax.legend(
+        ["atm_gasoil", "naphtha", "vacuum_gasoil", "bioethanol", "ethane", "propane"],
+        bbox_to_anchor=(-0.4, 1),
+        loc="upper left",
+    )
+    ax.set_title(f"HVC feedstock {r}")
+    ax.set_xlabel("Years")
+    ax.set_ylabel("GWa")
+
+
+def plot_production_cement(df: pyam.IamDataFrame, ax, r: str) -> None:
+    df.plot.stack(ax=ax)
+    ax.legend(
+        ["Ballmill Grinding", "Vertical Mill Grinding"],
+        bbox_to_anchor=(-0.6, 1),
+        loc="upper left",
+    )
+    ax.set_title(f"Final Cement Production_{r}")
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Mt")
+
+
+def plot_production_cement_clinker(df: pyam.IamDataFrame, ax, r: str) -> None:
+    df.plot.stack(ax=ax)
+    ax.legend(
+        ["Dry Clinker", "Wet Clinker"], bbox_to_anchor=(-0.5, 1), loc="upper left"
+    )
+    ax.set_title(f"Clinker Cement Production_{r}")
+    ax.set_xlabel("Year")
+    ax.set_ylabel("Mt")
+
+
+def plot_emi_aggregates(df: pyam.IamDataFrame, pp, r: str, e: str) -> None:
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+    df.plot.stack(ax=ax)
+    ax.set_title(f"Emissions_{r}_{e}")
+    ax.set_ylabel("Mt")
+    ax.legend(bbox_to_anchor=(0.3, 1))
+
+    plt.close()
+    pp.savefig(fig)
+
+
 def report(
     scenario: message_ix.Scenario,
     message_df: pd.DataFrame,
@@ -306,21 +417,7 @@ def report(
     worksheet.write("C1", "Region")
     worksheet.write("D1", "Variable")
     worksheet.write("E1", "Unit")
-    columns = [
-        "F1",
-        "G1",
-        "H1",
-        "I1",
-        "J1",
-        "K1",
-        "L1",
-        "M1",
-        "N1",
-        "O1",
-        "P1",
-        "Q1",
-        "R1",
-    ]
+    columns = "F1 G1 H1 I1 J1 K1 L1 M1 N1 O1 P1 Q1 R1".split()
 
     for yr, col in zip(years, columns):
         worksheet.write(col, yr)
@@ -345,49 +442,12 @@ def report(
         fig.tight_layout(pad=10.0)
 
         # ALUMINUM
-        df_al = df.copy()
-        df_al.filter(region=r, year=years, inplace=True)
-        df_al.filter(variable=["out|*|aluminum|*", "in|*|aluminum|*"], inplace=True)
-        df_al.convert_unit("", to="Mt/yr", factor=1, inplace=True)
-        df_al_graph = df_al.copy()
-
-        df_al_graph.filter(
-            variable=[
-                "out|useful_material|aluminum|import_aluminum|*",
-                "out|final_material|aluminum|prebake_aluminum|*",
-                "out|final_material|aluminum|soderberg_aluminum|*",
-                "out|new_scrap|aluminum|*",
-            ],
-            inplace=True,
+        df_al = df.filter(
+            region=r, year=years, variable=["out|*|aluminum|*", "in|*|aluminum|*"]
         )
+        df_al.convert_unit("", to="My/yr", factor=1, inplace=True)
 
-        if r == "World":
-            df_al_graph.filter(
-                variable=[
-                    "out|final_material|aluminum|prebake_aluminum|*",
-                    "out|final_material|aluminum|soderberg_aluminum|*",
-                    "out|new_scrap|aluminum|*",
-                ],
-                inplace=True,
-            )
-
-        df_al_graph.plot.stack(ax=ax1)
-        ax1.legend(
-            [
-                "Prebake",
-                "Soderberg",
-                "Newscrap",
-                "Oldscrap_min",
-                "Oldscrap_av",
-                "Oldscrap_max",
-                "import",
-            ],
-            bbox_to_anchor=(-0.4, 1),
-            loc="upper left",
-        )
-        ax1.set_title("Aluminium Production_" + r)
-        ax1.set_xlabel("Year")
-        ax1.set_ylabel("Mt")
+        plot_production_al(df_al, ax1, r)
 
         # STEEL
 
@@ -396,32 +456,7 @@ def report(
         df_steel.filter(variable=["out|*|steel|*", "in|*|steel|*"], inplace=True)
         df_steel.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
-        df_steel_graph = df_steel.copy()
-        df_steel_graph.filter(
-            variable=[
-                "out|final_material|steel|*",
-                "out|useful_material|steel|import_steel|*",
-            ],
-            inplace=True,
-        )
-
-        if r == "World":
-            df_steel.filter(variable=["out|*|steel|*", "in|*|steel|*"], inplace=True)
-            df_steel_graph.filter(
-                variable=[
-                    "out|final_material|steel|*",
-                ],
-                inplace=True,
-            )
-
-        df_steel_graph.plot.stack(ax=ax2)
-        ax2.legend(
-            ["Bof steel", "Eaf steel M1", "Eaf steel M2", "Import"],
-            bbox_to_anchor=(-0.4, 1),
-            loc="upper left",
-        )
-        ax2.set_title("Steel Production_" + r)
-        ax2.set_ylabel("Mt")
+        plot_production_steel(df_steel, ax2, r)
 
         # PETRO
 
@@ -438,7 +473,6 @@ def report(
         df_petro.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
         if r == "World":
-
             df_petro.filter(
                 variable=[
                     "in|final|ethanol|ethanol_to_ethylene_petro|M1",
@@ -448,22 +482,7 @@ def report(
                 inplace=True,
             )
 
-        df_petro.plot.stack(ax=ax3)
-        ax3.legend(
-            [
-                "atm_gasoil",
-                "naphtha",
-                "vacuum_gasoil",
-                "bioethanol",
-                "ethane",
-                "propane",
-            ],
-            bbox_to_anchor=(-0.4, 1),
-            loc="upper left",
-        )
-        ax3.set_title("HVC feedstock" + r)
-        ax3.set_xlabel("Years")
-        ax3.set_ylabel("GWa")
+        plot_petro(df_petro, ax3, r)
 
         plt.close()
         pp.savefig(fig)
@@ -753,10 +772,9 @@ def report(
         df_final.append(df_al, inplace=True)
         df_final.append(df_steel, inplace=True)
         df_final.append(df_chemicals, inplace=True)
+
     # CEMENT
-
     for r in nodes:
-
         # PRODUCTION - PLOT
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 10))
@@ -769,28 +787,16 @@ def report(
         df_cement_clinker.filter(
             variable=["out|tertiary_material|clinker_cement|*"], inplace=True
         )
-        df_cement_clinker.plot.stack(ax=ax1)
-        ax1.legend(
-            ["Dry Clinker", "Wet Clinker"], bbox_to_anchor=(-0.5, 1), loc="upper left"
-        )
-        ax1.set_title("Clinker Cement Production_" + r)
-        ax1.set_xlabel("Year")
-        ax1.set_ylabel("Mt")
+
+        plot_production_cement_clinker(df_cement_clinker, ax1, r)
 
         # Final prodcut cement
 
         df_cement = df.copy()
         df_cement.filter(region=r, year=years, inplace=True)
         df_cement.filter(variable=["out|demand|cement|*"], inplace=True)
-        df_cement.plot.stack(ax=ax2)
-        ax2.legend(
-            ["Ballmill Grinding", "Vertical Mill Grinding"],
-            bbox_to_anchor=(-0.6, 1),
-            loc="upper left",
-        )
-        ax2.set_title("Final Cement Production_" + r)
-        ax2.set_xlabel("Year")
-        ax2.set_ylabel("Mt")
+
+        plot_production_cement(df_cement, ax2, r)
 
         plt.close()
         pp.savefig(fig)
@@ -2482,21 +2488,14 @@ def report(
 
         # Aggregation over emission type for each sector if there are elements
         # to aggregate
+        for i in range(len(aggregate_list)):
+            df_emi.aggregate(aggregate_list[i], components=var_list[i], append=True)
 
-        if len(aggregate_list) != 0:
-            for i in range(len(aggregate_list)):
-                df_emi.aggregate(aggregate_list[i], components=var_list[i], append=True)
-
-            fig, ax1 = plt.subplots(1, 1, figsize=(10, 10))
-            df_emi.filter(variable=aggregate_list).plot.stack(ax=ax1)
+        if len(aggregate_list):
             df_emi.filter(variable=aggregate_list, inplace=True)
             df_final.append(df_emi, inplace=True)
-            ax1.set_title("Emissions_" + r + "_" + e)
-            ax1.set_ylabel("Mt")
-            ax1.legend(bbox_to_anchor=(0.3, 1))
 
-            plt.close()
-            pp.savefig(fig)
+            plot_emi_aggregates(df_emi, pp)
 
     # PLOTS
     #
