@@ -30,8 +30,6 @@ from typing import List
 import matplotlib
 import message_ix
 import numpy as np
-import openpyxl
-import os
 import pandas as pd
 import pyam
 import xlsxwriter
@@ -50,6 +48,7 @@ def print_full(x):
     pd.reset_option("display.max_rows")
 
 
+#: Replacements applied during processing of specific quantities.
 NAME_MAP = {
     "aluminum": "Non-Ferrous Metals|Aluminium",
     "steel": "Steel",
@@ -61,110 +60,79 @@ NAME_MAP = {
     "CO2_industry": "CO2",
 }
 
-
-def fix_excel(path_temp, path_new):
-
-    """
-    Fix the names of the regions or variables to be compatible
-    with IAMC format. This is done in the final reported excel file
-    (path_temp) and written to a new excel file (path_new).
-
-    """
-    # read Excel file and sheet by name
-    workbook = openpyxl.load_workbook(path_temp)
-    sheet = workbook["data"]
-
-    new_workbook = openpyxl.Workbook()
-    new_sheet = new_workbook["Sheet"]
-    new_sheet.title = "data"
-    new_sheet = new_workbook.active
-
-    replacement = {
-        "CO2_industry": "CO2",
-        "R11_AFR|R11_AFR": "R11_AFR",
-        "R11_CPA|R11_CPA": "R11_CPA",
-        "R11_MEA|R11_MEA": "R11_MEA",
-        "R11_FSU|R11_FSU": "R11_FSU",
-        "R11_PAS|R11_PAS": "R11_PAS",
-        "R11_SAS|R11_SAS": "R11_SAS",
-        "R11_LAM|R11_LAM": "R11_LAM",
-        "R11_NAM|R11_NAM": "R11_NAM",
-        "R11_PAO|R11_PAO": "R11_PAO",
-        "R11_EEU|R11_EEU": "R11_EEU",
-        "R11_WEU|R11_WEU": "R11_WEU",
-        "R11_AFR": "R11_AFR",
-        "R11_CPA": "R11_CPA",
-        "R11_MEA": "R11_MEA",
-        "R11_FSU": "R11_FSU",
-        "R11_PAS": "R11_PAS",
-        "R11_SAS": "R11_SAS",
-        "R11_LAM": "R11_LAM",
-        "R11_NAM": "R11_NAM",
-        "R11_PAO": "R11_PAO",
-        "R11_EEU": "R11_EEU",
-        "R11_WEU": "R11_WEU",
-        "R12_AFR|R12_AFR": "R12_AFR",
-        "R12_RCPA|R12_RCPA": "R12_RCPA",
-        "R12_MEA|R12_MEA": "R12_MEA",
-        "R12_FSU|R12_FSU": "R12_FSU",
-        "R12_PAS|R12_PAS": "R12_PAS",
-        "R12_SAS|R12_SAS": "R12_SAS",
-        "R12_LAM|R12_LAM": "R12_LAM",
-        "R12_NAM|R12_NAM": "R12_NAM",
-        "R12_PAO|R12_PAO": "R12_PAO",
-        "R12_EEU|R12_EEU": "R12_EEU",
-        "R12_WEU|R12_WEU": "R12_WEU",
-        "R12_CHN|R12_CHN": "R12_CHN",
-        "R12_AFR": "R12_AFR",
-        "R12_RCPA": "R12_RCPA",
-        "R12_MEA": "R12_MEA",
-        "R12_FSU": "R12_FSU",
-        "R12_PAS": "R12_PAS",
-        "R12_SAS": "R12_SAS",
-        "R12_LAM": "R12_LAM",
-        "R12_NAM": "R12_NAM",
-        "R12_PAO": "R12_PAO",
-        "R12_EEU": "R12_EEU",
-        "R12_WEU": "R12_WEU",
-        "R12_CHN": "R12_CHN",
-        "World": "R12_GLB",
-        "model": "Model",
-        "scenario": "Scenario",
-        "variable": "Variable",
-        "region": "Region",
-        "unit": "Unit",
-        "BCA": "BC",
-        "OCA": "OC",
-        "Final Energy|Non-Energy Use|Chemicals|Ammonia": (
-            "Final Energy|Industry|Chemicals|Ammonia"
-        ),
-        "Final Energy|Non-Energy Use|Chemicals|Ammonia|Gases": (
-            "Final Energy|Industry|Chemicals|Ammonia|Gases"
-        ),
-        "Final Energy|Non-Energy Use|Chemicals|Ammonia|Liquids": (
-            "Final Energy|Industry|Chemicals|Ammonia|Liquids"
-        ),
-        "Final Energy|Non-Energy Use|Chemicals|Ammonia|Liquids|Oil": (
-            "Final Energy|Industry|Chemicals|Ammonia|Liquids|Oil"
-        ),
-        "Final Energy|Non-Energy Use|Chemicals|Ammonia|Solids": (
-            "Final Energy|Industry|Chemicals|Ammonia|Solids"
-        ),
-    }
-    # Iterate over the rows and replace
-    for i in range(1, ((sheet.max_row) + 1)):
-        data = [
-            sheet.cell(row=i, column=col).value
-            for col in range(1, ((sheet.max_column) + 1))
-        ]
-        for index, value in enumerate(data):
-            col_no = index + 1
-            if value in replacement.keys():
-                new_sheet.cell(row=i, column=col_no).value = replacement.get(value)
-            else:
-                new_sheet.cell(row=i, column=col_no).value = value
-
-    new_workbook.save(path_new)
+#: Replacements applied to the final results.
+NAME_MAP1 = {
+    "CO2_industry": "CO2",
+    "R11_AFR|R11_AFR": "R11_AFR",
+    "R11_CPA|R11_CPA": "R11_CPA",
+    "R11_MEA|R11_MEA": "R11_MEA",
+    "R11_FSU|R11_FSU": "R11_FSU",
+    "R11_PAS|R11_PAS": "R11_PAS",
+    "R11_SAS|R11_SAS": "R11_SAS",
+    "R11_LAM|R11_LAM": "R11_LAM",
+    "R11_NAM|R11_NAM": "R11_NAM",
+    "R11_PAO|R11_PAO": "R11_PAO",
+    "R11_EEU|R11_EEU": "R11_EEU",
+    "R11_WEU|R11_WEU": "R11_WEU",
+    "R11_AFR": "R11_AFR",
+    "R11_CPA": "R11_CPA",
+    "R11_MEA": "R11_MEA",
+    "R11_FSU": "R11_FSU",
+    "R11_PAS": "R11_PAS",
+    "R11_SAS": "R11_SAS",
+    "R11_LAM": "R11_LAM",
+    "R11_NAM": "R11_NAM",
+    "R11_PAO": "R11_PAO",
+    "R11_EEU": "R11_EEU",
+    "R11_WEU": "R11_WEU",
+    "R12_AFR|R12_AFR": "R12_AFR",
+    "R12_RCPA|R12_RCPA": "R12_RCPA",
+    "R12_MEA|R12_MEA": "R12_MEA",
+    "R12_FSU|R12_FSU": "R12_FSU",
+    "R12_PAS|R12_PAS": "R12_PAS",
+    "R12_SAS|R12_SAS": "R12_SAS",
+    "R12_LAM|R12_LAM": "R12_LAM",
+    "R12_NAM|R12_NAM": "R12_NAM",
+    "R12_PAO|R12_PAO": "R12_PAO",
+    "R12_EEU|R12_EEU": "R12_EEU",
+    "R12_WEU|R12_WEU": "R12_WEU",
+    "R12_CHN|R12_CHN": "R12_CHN",
+    "R12_AFR": "R12_AFR",
+    "R12_RCPA": "R12_RCPA",
+    "R12_MEA": "R12_MEA",
+    "R12_FSU": "R12_FSU",
+    "R12_PAS": "R12_PAS",
+    "R12_SAS": "R12_SAS",
+    "R12_LAM": "R12_LAM",
+    "R12_NAM": "R12_NAM",
+    "R12_PAO": "R12_PAO",
+    "R12_EEU": "R12_EEU",
+    "R12_WEU": "R12_WEU",
+    "R12_CHN": "R12_CHN",
+    "World": "R12_GLB",
+    "model": "Model",
+    "scenario": "Scenario",
+    "variable": "Variable",
+    "region": "Region",
+    "unit": "Unit",
+    "BCA": "BC",
+    "OCA": "OC",
+    "Final Energy|Non-Energy Use|Chemicals|Ammonia": (
+        "Final Energy|Industry|Chemicals|Ammonia"
+    ),
+    "Final Energy|Non-Energy Use|Chemicals|Ammonia|Gases": (
+        "Final Energy|Industry|Chemicals|Ammonia|Gases"
+    ),
+    "Final Energy|Non-Energy Use|Chemicals|Ammonia|Liquids": (
+        "Final Energy|Industry|Chemicals|Ammonia|Liquids"
+    ),
+    "Final Energy|Non-Energy Use|Chemicals|Ammonia|Liquids|Oil": (
+        "Final Energy|Industry|Chemicals|Ammonia|Liquids|Oil"
+    ),
+    "Final Energy|Non-Energy Use|Chemicals|Ammonia|Solids": (
+        "Final Energy|Industry|Chemicals|Ammonia|Solids"
+    ),
+}
 
 
 def plot_production_al(df: pyam.IamDataFrame, ax, r: str) -> None:
@@ -401,15 +369,14 @@ def report(
     log.info(f"{df = }\n{len(df.variable)} unique variable names")
 
     # Compute global totals
-    variables = df.variable
-    df.aggregate_region(variables, region="World", method=sum, append=True)
+    df.aggregate_region(df.variable, region="World", method=sum, append=True)
 
     df.to_excel(directory.joinpath("check.xlsx"))
     log.info(f"Necessary variables are filtered; {len(df)} in total")
 
     # Obtain the model and scenario name
-    model_name = df.model[0]
-    scenario_name = df.scenario[0]
+    model_name = scenario.model
+    scenario_name = scenario.scenario
 
     # Create an empty pyam dataframe to store the new variables
 
@@ -3172,40 +3139,34 @@ def report(
     #
     # df_final = pd.concat([df_final, material_needs_all])
 
-    # Trade
-    # ....................
+    # Plotting is complete
+    pp.close()
 
-    # Print the new variables to an excel file.
-    # Change the naming convention and save to another excel file.
+    # - Convert from pyam.IamDataFrame to pandas.DataFrame.
+    # - Apply the replacements in NAME_MAP1.
+    df = df_final.as_pandas().replace(NAME_MAP1)
 
-    path_temp = directory.joinpath("temp_new_reporting.xlsx")
+    # Store
     path_new = directory.joinpath(f"New_Reporting_{model_name}_{scenario_name}.xlsx")
+    df.to_excel(path_new, sheet_name="data")
+    log.info(f"Wrote output to {path_new}")
 
-    # FIXME(PNK) manipulate the data directly instead of writing to disk, modifying,
-    # then re-reading
-    df_final.to_excel(path_temp, sheet_name="data", index=False)
-    fix_excel(path_temp, path_new)
-    print("New reporting file generated.")
-    df_final = pd.read_excel(path_new)
+    scenario.check_out(timeseries_only=True)
+    log.info(f"Store timeseries on scenario:\n\n{df.head()}")
+    scenario.add_timeseries(df)
 
+    # NB(PNK) Appears to be old code that handled buildings reporting output
     # df_resid = pd.read_csv(path_resid)
     # df_resid["Model"] = model_name
     # df_resid["Scenario"] = scenario_name
     # df_comm = pd.read_csv(path_comm)
     # df_comm["Model"] = model_name
     # df_comm["Scenario"] = scenario_name
-
-    scenario.check_out(timeseries_only=True)
-    print("Starting to upload timeseries")
-    print(df_final.head())
-    scenario.add_timeseries(df_final)
     # scenario.add_timeseries(df_resid)
     # scenario.add_timeseries(df_comm)
-    print("Finished uploading timeseries")
-    scenario.commit("Reporting uploaded as timeseries")
 
-    pp.close()
-    os.remove(path_temp)
+    log.info("…finished.")
+    scenario.commit("material.report.report()")
 
 
 def callback(rep: message_ix.Reporter, context: Context) -> None:
