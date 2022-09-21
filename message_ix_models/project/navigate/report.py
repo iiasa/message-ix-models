@@ -211,11 +211,10 @@ def callback(rep: Reporter, context: Context) -> None:
 
     rep.add("remove_all_ts", "remove all ts data", "scenario", "config")
     rep.add(
-        "navigate bmt",
+        "navigate all",
         [
-            "remove all ts data",
             "buildings all",
             "materials all",
-            "transport iamc store",
+            "transport iamc all",
         ],
     )
