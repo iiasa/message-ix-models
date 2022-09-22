@@ -356,10 +356,14 @@ def iea_eei_fv(name: str, config: Dict) -> Quantity:
 def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
+    This mapping should be used with :func:`.genno.computations.aggregate`, giving the
+    argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
+
     .. todo:: move upstream, to :mod:`message_ix_models`.
     """
     from message_ix_models.model.structure import get_codes
 
+    result = {}
     for n in get_codes(f"node/{config['regions']}"):
         # "World" node should have no parent and some children. Countries (from
         # pycountry) that are omitted from a mapping have neither parent nor children.
@@ -372,10 +376,15 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:
             log.info(f"Aggregates for {n!r} will be labelled {new_name!r}")
             name = new_name
 
-            return {dim: {name: list(map(str, n.child))}}
+            # Global total as aggregate of child nodes
+            result = {name: list(map(str, n.child))}
 
-    # Failed to identify the World node.
-    raise RuntimeError
+            # Also add "no-op" aggregates e.g. "R12_AFR" is the sum of ["R12_AFR"]
+            result.update({str(c): [c] for c in n.child})
+
+            return {dim: result}
+
+    raise RuntimeError("Failed to identify the World node")
 
 
 def pdt_per_capita(gdp_ppp_cap: Quantity, config: dict) -> Quantity:

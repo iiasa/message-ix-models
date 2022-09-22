@@ -61,7 +61,7 @@ def _gen0(c: Computer, *keys) -> None:
         k3 = k1.add_tag("transport agg 2")
         k4 = k1.add_tag("transport")
         # Reference the function to avoid the genno magic which would treat as sum()
-        c.add(k2, aggregate, k1, "nl::world agg", True)
+        c.add(k2, aggregate, k1, "nl::world agg", False)
         c.add(k3, aggregate, k2, "t::transport agg", False)
         c.add("select", k4, k3, "t::transport modes 1", sums=True)
 
