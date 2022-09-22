@@ -421,7 +421,7 @@ def report(
         )
         df_al.convert_unit("", to="My/yr", factor=1, inplace=True)
 
-        plot_production_al(df_al, ax1, r)
+        plot_production_al(df_al.copy(), ax1, r)
 
         # STEEL
 
@@ -430,7 +430,7 @@ def report(
         df_steel.filter(variable=["out|*|steel|*", "in|*|steel|*"], inplace=True)
         df_steel.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
-        plot_production_steel(df_steel, ax2, r)
+        plot_production_steel(df_steel.copy(), ax2, r)
 
         # PETRO
 
@@ -456,7 +456,7 @@ def report(
                 inplace=True,
             )
 
-        plot_petro(df_petro, ax3, r)
+        plot_petro(df_petro.copy(), ax3, r)
 
         plt.close()
         pp.savefig(fig)
@@ -2469,7 +2469,7 @@ def report(
             df_emi.filter(variable=aggregate_list, inplace=True)
             df_final.append(df_emi, inplace=True)
 
-            plot_emi_aggregates(df_emi, pp)
+            plot_emi_aggregates(df_emi, pp, r, e)
 
     # PLOTS
     #
