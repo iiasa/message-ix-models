@@ -328,8 +328,10 @@ def prepare_reporter(
         # If just a bare name like "ACT" is given, infer the full key
         if Key.bare_name(key):
             msg = f"for {key!r}"
-            key = rep.infer_keys(key)
-            log.info(f"Infer {key!r} {msg}")
+            inferred = rep.infer_keys(key)
+            if inferred != key:
+                log.info(f"Infer {key!r} {msg}")
+                key = inferred
 
         if config["output_path"] and not config["output_path"].is_dir():
             # Add a new computation that writes *key* to the specified file
