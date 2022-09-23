@@ -359,17 +359,17 @@ def export_test_data(context: Context):
         # Copy the sheet from temporary to final file
         reader.parse(name).to_excel(writer, sheet_name=name, index=False)
 
+    # Close and remove the temporary file
+    reader.close()
+    tmp_file.unlink()
+
     # Write the mapping
     ix_type_mapping.reset_index().to_excel(
         writer, sheet_name="ix_type_mapping", index=False
     )
 
-    # Save the final file
-    writer.save()
-
-    # Close and remove the temporary file
-    reader.close()
-    tmp_file.unlink()
+    # Close the final file
+    writer.close()
 
     mark_time()
 
