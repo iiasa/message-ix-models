@@ -17,6 +17,7 @@ module = [
   "matplotlib.*",
   "message_data.*",
   "pandas.*",
+  "pint._vendor",
   "pyam",
   "pycountry",
   "setuptools",

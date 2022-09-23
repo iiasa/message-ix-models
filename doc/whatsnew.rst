@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Adjust for pandas 1.5.0 (:pull:`81`).
 
 2022.8.17
 =========
