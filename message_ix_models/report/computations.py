@@ -76,6 +76,9 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
 def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> None:
     """Remove all time series data from `scenario.
 
+    .. todo:: improve to provide the option to remove only those periods in the model
+       horizon.
+
     .. todo:: move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
     """
     data = scenario.timeseries()
@@ -90,7 +93,7 @@ def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> 
     except Exception:
         scenario.discard_changes()
     else:
-        scenario.commit(f"Remove time serie data ({__name__}.remove_all_ts)")
+        scenario.commit(f"Remove time series data ({__name__}.remove_all_ts)")
 
 
 # commented: currently unused
