@@ -50,13 +50,9 @@ def test_cli_export_test_data(monkeypatch, session_context, mix_models_cli, tmp_
     # Release the database lock
     mp.close_db()
 
-    try:
-        # Export works
-        result = mix_models_cli.assert_exit_0([f"--url={url}", "export-test-data"])
+    # Export works
+    result = mix_models_cli.assert_exit_0([f"--url={url}", "export-test-data"])
 
-        # The file is created in the expected location
-        assert str(dest_file) in result.output
-        assert dest_file.exists()
-    finally:
-        # Remove this temporary file
-        dest_file.unlink()
+    # The file is created in the expected location
+    assert str(dest_file) in result.output
+    assert dest_file.exists()
