@@ -2,6 +2,7 @@ import logging
 import os
 from copy import deepcopy
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import click.testing
 import message_ix
@@ -311,7 +312,8 @@ def export_test_data(context: Context):
         "tests", f"{scen.model}_{scen.scenario}_{'_'.join(technology)}.xlsx"
     )
     # Temporary file name
-    tmp_file = dest_file.with_name("export_test_data.xlsx")
+    td = TemporaryDirectory()
+    tmp_file = Path(td.name).joinpath("export_test_data.xlsx")
 
     # Ensure the target directory exists
     dest_file.parent.mkdir(exist_ok=True)
@@ -359,9 +361,8 @@ def export_test_data(context: Context):
         # Copy the sheet from temporary to final file
         reader.parse(name).to_excel(writer, sheet_name=name, index=False)
 
-    # Close and remove the temporary file
+    # Close the temporary file
     reader.close()
-    tmp_file.unlink()
 
     # Write the mapping
     ix_type_mapping.reset_index().to_excel(
