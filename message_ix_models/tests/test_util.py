@@ -66,7 +66,7 @@ def test_broadcast(caplog):
     # Results have the expected length: original × cartesian product of 3, 4, and 1
     assert N_a * 3 * 4 * 1 == len(result)
     # Resulting array is completely full, no missing labels
-    assert not result.isna().any().any()
+    assert not result.isna().any(axis=None)
 
     # Length zero labels for one dimension—debug message is logged
     with caplog.at_level(logging.DEBUG, logger="message_ix_models"):
@@ -77,19 +77,19 @@ def test_broadcast(caplog):
     caplog.clear()
     assert N_a * 2 * 2 * 1 == len(result)  # Expected length
     assert result["d"].isna().all()  # Dimension d remains empty
-    assert not result.drop("d", axis=1).isna().any().any()  # Others completely full
+    assert not result.drop("d", axis=1).isna().any(axis=None)  # Others completely full
 
     # Using a DataFrame as the first/only positional argument, plus keyword arguments
     labels = pd.DataFrame(dict(b="b0 b1 b2".split(), c="c0 c1 c2".split()))
 
     result = base.pipe(broadcast, labels, d="d0 d1".split())
     assert N_a * 3 * 2 == len(result)  # (b, c) dimensions linked with 3 pairs of labels
-    assert not result.isna().any().any()  # Completely full
+    assert not result.isna().any(axis=None)  # Completely full
 
     # Using a positional argument with only 1 column
     result = base.pipe(broadcast, labels[["b"]], c="c0 c1 c2 c3".split(), d=["d0"])
     assert N_a * 3 * 4 * 1 == len(result)  # Expected length
-    assert not result.isna().any().any()  # Completely full
+    assert not result.isna().any(axis=None)  # Completely full
 
     # Overlap between columns in the positional argument and keywords
     with pytest.raises(ValueError):
@@ -275,7 +275,7 @@ def test_make_source_tech0():
         # Results have 2 nodes × 3 years
         assert len(df) == 2 * 3
         # No empty values
-        assert not df.isna().any(None)
+        assert not df.isna().any(axis=None)
 
     del values["var_cost"]
     with pytest.raises(ValueError, match=re.escape("needs values for {'var_cost'}")):
