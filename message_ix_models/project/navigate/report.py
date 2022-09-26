@@ -111,7 +111,7 @@ UNIT_MAP = {
     ("My/yr", "Collected Scrap|Non-Ferrous Metals"): "Mt/yr",
     ("My/yr", "Total Scrap|Non-Ferrous Metals"): "Mt/yr",
     ("Mt / a", "Emissions|BC"): "Mt BC/yr",
-    ("Mt / a ", "Emissions|CF4"): "kt CF4/yr",  # TODO check which prefix is correct
+    ("Mt / a", "Emissions|CF4"): "kt CF4/yr",  # TODO check which prefix is correct
     ("Mt / a", "Emissions|CH4"): "Mt CH4/yr",
     # FIXME this is fragile; correct behaviour depends on CO2 appearing first in the
     #       list because prep_submission.map_units() uses str.startswith. Probably use
@@ -122,7 +122,7 @@ UNIT_MAP = {
     ("Mt / a", "Emissions|NH3"): "Mt NH3/yr",
     ("Mt / a", "Emissions|NOx"): "Mt NO2/yr",
     ("Mt / a", "Emissions|OC"): "Mt OC/yr",
-    ("million m3/yr", "Forestry Production\|Forest Residues"): "million t DM/yr",
+    ("million m3/yr", "Forestry Production|Forest Residues"): "million t DM/yr",
     (
         "Index (2005 = 1)",
         "Price|Agriculture|Non-Energy Crops and Livestock|Index",
