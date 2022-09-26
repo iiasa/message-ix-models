@@ -1,33 +1,19 @@
 """Reporting for NAVIGATE."""
 import logging
 import re
+from itertools import count
 from pathlib import Path
 
 import pandas as pd
-import yaml
 from message_ix.reporting import Reporter
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import nodes_ex_world, private_data_path
 from sdmx.model import Code
 
-log = logging.getLogger(__name__)
+from message_data.tools.prep_submission import Config, ScenarioConfig
 
-#: Format of the prep_submission configuration file. `sheet name` → expected columns.
-SHEET_COL = dict(
-    scenario_config=(
-        "source_model_name",
-        "source_scenario_name",
-        "target_model_name",
-        "target_scenario_name",
-        "final_scenario",
-        "reference_scenario",
-        "sheet_name",
-    ),
-    region_mapping=("source_name", "target_name"),
-    variable_mapping=("source_name", "target_name"),
-    unit_mapping=("source_name", "target_name"),
-)
+log = logging.getLogger(__name__)
 
 
 # Functions that perform mapping of certain codes/labels
@@ -112,45 +98,53 @@ def _variable(value: str) -> str:
     return result
 
 
-def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> None:
-    """Generate a configuration file for :mod:`.prep_submission`."""
-    path = private_data_path("navigate", "prep-submission.xlsx")
-    path.parent.mkdir(exist_ok=True)
-    ew = pd.ExcelWriter(path)
+UNIT_MAP = {
+    ("GW", "Capacity Additions|Electricity|Storage Capacity"): "GWh/yr",
+    ("GW", "Capacity Additions|"): "GW/yr",
+    ("Mt NOx/yr", None): "Mt NO2/yr",
+    ("US$2010/t CO2 or local currency/t CO2", None): "US$2010/t CO2",
+    ("US$2010/GJ or local currency/GJ", None): "US$2010/GJ",
+}
 
-    sheet = "scenario_config"
-    data = pd.DataFrame(
-        dict(
-            source_model_name=["MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)"],
-            source_scenario_name=["baseline"],
-            final_scenario=["TRUE"],
-            reference_scenario=["baseline"],
-        ),
-        columns=SHEET_COL[sheet],
-        index=[0],
+
+def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
+    """Generate configuration for :mod:`.prep_submission`."""
+    # Identify the file path for output
+    date = "%Y-%m-%d"
+    for index in count():
+        out_file = context.get_local_path(
+            "report", f"{date.today().strftime('%Y-%m-%d')}_{index}.xlsx"
+        )
+        if not out_file.exists():
+            break
+
+    cfg = Config(
+        source_dir=fn_ref_1.parent,
+        out_fil=out_file,
     )
 
-    data = data.assign(
-        target_model_name=lambda df: df["source_model_name"].apply(_model_name),
-        target_scenario_name=lambda df: df["source_scenario_name"].apply(
-            _scenario_name
-        ),
-    )
-    data.to_excel(ew, sheet_name=sheet, index=False)
+    # Read the variable list to keep from the NAVIGATE repository
+    cfg.read_nomenclature(fn_ref_2)
 
-    sheet = "region_mapping"
+    for (m_source, s_source) in (
+        ("MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)", "baseline"),
+    ):
+        cfg.scenario[(m_source, s_source)] = ScenarioConfig(
+            model=_model_name(m_source),
+            scenario=_scenario_name(s_source),
+            final_scenario=True,
+            reference_scenario="baseline",
+        )
+
+    # Region name mapping
     nodes = get_codes(f"node/{context.regions}")
     nodes = nodes[nodes.index(Code(id="World"))].child
+    cfg.name_map["Region"] = {_region(node): node for node in nodes_ex_world(nodes)}
 
-    # Note that "source" and "target" have the opposite of the intuitive meanings
-    data = pd.DataFrame(
-        map(str, nodes_ex_world(nodes)), columns=["target_name"]
-    ).assign(source_name=lambda df: df["target_name"].apply(_region))
-    assert set(SHEET_COL[sheet]) == set(data.columns)
-    data.to_excel(ew, sheet_name=sheet, index=False)
+    # Unit mapping
+    cfg.unit_map = UNIT_MAP.copy()
 
-    sheet = "variable_mapping"
-
+    # Variable name mapping
     names_1 = set(pd.read_excel(fn_ref_1, usecols=["Variable"])["Variable"])
     names_2 = set(
         pd.read_csv(
@@ -158,8 +152,7 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> None:
             usecols=["Variable"],
         )["Variable"]
     )
-    with open(fn_ref_2) as f:
-        names_3 = set(map(lambda entry: entry.popitem()[0], yaml.safe_load(f)))
+    names_3 = cfg.variable_keep
 
     # Display diagnostic information
     log.info(
@@ -174,28 +167,21 @@ in NAVIGATE variables.yaml          {len(names_3) = }
 {len(names_3 - (names_1 | names_2)) = }"""
     )
 
-    data = (
-        pd.DataFrame(sorted(names_1 | names_2), columns=["source_name"])
-        .assign(target_name=lambda df: df["source_name"].apply(_variable))
-        .query("target_name != source_name")
-    )
+    cfg.name_map["Variable"] = dict()
+    for var in sorted(names_1 | names_2):
+        target = _variable(var)
+        if target != var:
+            cfg.name_map["Variable"][var] = target
 
     # More diagnostic info
+    names_4 = set(cfg.name_map["Variable"].values())
     log.info(
         f"""Variable mappings constructed
-for      {len(data)} names
-of which {len(names_3 & set(data['target_name']))} are accepted by NAVIGATE"""
+for      {len(names_4)} names
+of which {len(names_3 & names_4)} are accepted by NAVIGATE"""
     )
 
-    assert set(SHEET_COL[sheet]) == set(data.columns)
-    data.to_excel(ew, sheet_name=sheet, index=False)
-
-    sheet = "unit_mapping"
-    data = pd.DataFrame(columns=SHEET_COL[sheet])
-    assert set(SHEET_COL[sheet]) == set(data.columns)
-    data.to_excel(ew, sheet_name=sheet, index=False)
-
-    ew.close()
+    return cfg
 
 
 def callback(rep: Reporter, context: Context) -> None:

@@ -13,19 +13,24 @@ def cli(context):
     """NAVIGATE project."""
 
 
-@cli.command("gen-config")
-@click.argument("f1", type=click.Path(exists=True, path_type=Path))
-@click.argument("f2", type=click.Path(exists=True, path_type=Path))
+@cli.command("prep-submission")
+@click.argument("f1", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("f2", type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.pass_obj
-def gen_config_cmd(context, f1, f2):
-    """Generate configuration for :mod:`.prep_submission`.
+def prep_submission_cmd(context, f1, f2):
+    """Prepare data for submission.
 
     F1 is the path to a reporting output file in .xlsx format.
-    F2 is the path to the variables.yaml in the NAVIGATE workflow repository.
+    F2 is the base path of the NAVIGATE workflow repository.
     """
-    from .report import gen_config
+    from message_data.projects.navigate.report import gen_config
+    from message_data.tools.prep_submission import main
 
     # Fixed values
     context.regions = "R12"
 
-    gen_config(context, f1, f2)
+    # Generate a prep_submission.Config object
+    config = gen_config(context, f1, f2)
+    print(config)
+
+    main(config)
