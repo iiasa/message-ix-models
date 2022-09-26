@@ -159,14 +159,16 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
         cfg.scenario[(m_source, s_source)] = ScenarioConfig(
             model=_model_name(m_source),
             scenario=_scenario_name(s_source),
-            final_scenario=True,
             reference_scenario="baseline",
+            final=True,
         )
 
     # Region name mapping
     nodes = get_codes(f"node/{context.regions}")
     nodes = nodes[nodes.index(Code(id="World"))].child
-    cfg.name_map["Region"] = {_region(node): node for node in nodes_ex_world(nodes)}
+    cfg.name_map["Region"] = {
+        _region(node): node for node in map(str, nodes_ex_world(nodes))
+    }
 
     # Unit mapping
     cfg.unit_map = UNIT_MAP.copy()
