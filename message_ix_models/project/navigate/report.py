@@ -39,8 +39,10 @@ def _model_name(value: str) -> str:
 
 
 def _scenario_name(value: str) -> str:
-    # No change
-    return value
+    return {
+        # NB "baseline" does not appear in the NAVIGATE codelist; choose another value
+        "baseline": "DIAG-Base",
+    }.get(value, value)
 
 
 def _region(value: str) -> str:
