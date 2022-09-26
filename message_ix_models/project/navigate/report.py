@@ -28,7 +28,7 @@ def _model_name(value: str) -> str:
 def _scenario_name(value: str) -> str:
     return {
         # NB "baseline" does not appear in the NAVIGATE codelist; choose another value
-        "baseline": "DIAG-Base",
+        "baseline": "NAV_Dem-NPi-ref",
     }.get(value, value)
 
 
