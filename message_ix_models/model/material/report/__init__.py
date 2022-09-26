@@ -419,7 +419,7 @@ def report(
         df_al = df.filter(
             region=r, year=years, variable=["out|*|aluminum|*", "in|*|aluminum|*"]
         )
-        df_al.convert_unit("", to="My/yr", factor=1, inplace=True)
+        df_al.convert_unit("", to="Mt/yr", factor=1, inplace=True)
 
         plot_production_al(df_al.copy(), ax1, r)
 
