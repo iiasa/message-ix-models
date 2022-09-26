@@ -1,6 +1,7 @@
 """Reporting for NAVIGATE."""
 import logging
 import re
+from datetime import date
 from itertools import count
 from pathlib import Path
 
@@ -110,11 +111,9 @@ UNIT_MAP = {
 def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
     """Generate configuration for :mod:`.prep_submission`."""
     # Identify the file path for output
-    date = "%Y-%m-%d"
+    today = date.today().strftime("%Y-%m-%d")
     for index in count():
-        out_file = context.get_local_path(
-            "report", f"{date.today().strftime('%Y-%m-%d')}_{index}.xlsx"
-        )
+        out_file = context.get_local_path("report", f"{today}_{index}.xlsx")
         if not out_file.exists():
             break
 
