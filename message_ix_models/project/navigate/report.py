@@ -105,6 +105,34 @@ UNIT_MAP = {
     ("Mt NOx/yr", None): "Mt NO2/yr",
     ("US$2010/t CO2 or local currency/t CO2", None): "US$2010/t CO2",
     ("US$2010/GJ or local currency/GJ", None): "US$2010/GJ",
+    #
+    # The following based on error output from the NAVIGATE scenario Explorer
+    # TODO fix these in the reporting per se
+    ("My/yr", "Collected Scrap|Non-Ferrous Metals"): "Mt/yr",
+    ("My/yr", "Total Scrap|Non-Ferrous Metals"): "Mt/yr",
+    ("Mt / a", "Emissions|BC"): "Mt BC/yr",
+    ("Mt / a ", "Emissions|CF4"): "kt CF4/yr",  # TODO check which prefix is correct
+    ("Mt / a", "Emissions|CH4"): "Mt CH4/yr",
+    # FIXME this is fragile; correct behaviour depends on CO2 appearing first in the
+    #       list because prep_submission.map_units() uses str.startswith. Probably use
+    #       regular expressions instead
+    ("Mt / a", "Emissions|CO2"): "Mt CO2/yr",
+    ("Mt / a", "Emissions|CO"): "Mt CO/yr",
+    ("Mt / a", "Emissions|N2O"): "kt N2O/yr",  # TODO check which prefix is correct
+    ("Mt / a", "Emissions|NH3"): "Mt NH3/yr",
+    ("Mt / a", "Emissions|NOx"): "Mt NO2/yr",
+    ("Mt / a", "Emissions|OC"): "Mt OC/yr",
+    ("million m3/yr", "Forestry Production\|Forest Residues"): "million t DM/yr",
+    (
+        "Index (2005 = 1)",
+        "Price|Agriculture|Non-Energy Crops and Livestock|Index",
+    ): "Index (2020 = 1)",
+    (
+        "Index (2005 = 1)",
+        "Price|Agriculture|Non-Energy Crops|Index",
+    ): "Index (2020 = 1)",
+    ("EJ/yr", re.compile("^Trade$")): "billion US$2010/yr",
+    ("Mt CO2-equiv/yr", re.compile("^Trade$")): "billion US$2010/yr",
 }
 
 
