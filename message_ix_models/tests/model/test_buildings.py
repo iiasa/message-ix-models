@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 import pytest
-from message_ix_models.util import MESSAGE_DATA_PATH
 
 from message_data.model.buildings.build import get_spec, get_techs
 from message_data.model.buildings.report import (
@@ -34,10 +33,11 @@ def test_configure_legacy_reporting(test_context):
     assert "h2_fc_AFOFI" in config["rc h2"]
 
 
-def test_report3():
+def test_report3(test_data_path):
     s = namedtuple("Scenario", "scenario")("baseline")
 
-    sturm_rep = report2(
-        s, MESSAGE_DATA_PATH.parent.joinpath("buildings", "STURM_output")
-    )
-    report3(s, sturm_rep)
+    sturm_rep = report2(s, test_data_path.joinpath("buildings", "STURM_output"))
+    result = report3(s, sturm_rep)
+
+    # TODO add assertions
+    del result
