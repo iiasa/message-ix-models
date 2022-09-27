@@ -117,6 +117,7 @@ def register(name_or_callback: Union[Callable, str]) -> str:
         callback = sys.modules[name].callback
     else:
         callback = name_or_callback
+        name = callback.__name__
 
     if callback in CALLBACKS:
         log.info(f"Already registered: {callback}")
