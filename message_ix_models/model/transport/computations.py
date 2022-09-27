@@ -380,7 +380,7 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:
             result = {name: list(map(str, n.child))}
 
             # Also add "no-op" aggregates e.g. "R12_AFR" is the sum of ["R12_AFR"]
-            result.update({str(c): [c] for c in n.child})
+            result.update({c: [c] for c in map(str, n.child)})
 
             return {dim: result}
 
