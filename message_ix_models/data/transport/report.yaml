@@ -73,7 +73,6 @@ general:
 # When run together with global.yaml reporting, emi:* is assigned units
 # of "Mt / year". Using apply_units() causes these to be *converted* to
 # kt/a, i.e. increasing the magnitude; so use assign_units() instead.
-Adjust for units of ACT not being carried:
 - key: emi:*:transport+units
   comp: assign_units
   inputs: [ emi::transport ]

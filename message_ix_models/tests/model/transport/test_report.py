@@ -201,11 +201,8 @@ def test_iamc_simulated(
     # print(result[-1])  # DEBUG
 
     # File with output was created
-    assert (
-        tmp_path_factory.getbasetemp()
-        .joinpath("data0", "report", "transport.csv")
-        .exists()
-    )
+    path = tmp_path_factory.getbasetemp().joinpath("data0", "report", "transport.csv")
+    assert path.exists(), path
 
     # Retrieve time series data stored on the scenario object
     ts = rep.get("scenario").timeseries()
