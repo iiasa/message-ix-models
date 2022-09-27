@@ -1,4 +1,4 @@
-"""Command-line interface for NAVIGATE project."""
+"""Command-line tools specific to the NAVIGATE project."""
 import logging
 from pathlib import Path
 
@@ -17,8 +17,8 @@ def cli(context):
 @click.argument("f1", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("f2", type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.pass_obj
-def prep_submission_cmd(context, f1, f2):
-    """Prepare data for submission.
+def prep_submission(context, f1, f2):
+    """Prepare data for NAVIGATE submission.
 
     F1 is the path to a reporting output file in .xlsx format.
     F2 is the base path of the NAVIGATE workflow repository.
