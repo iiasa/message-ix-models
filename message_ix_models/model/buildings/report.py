@@ -341,7 +341,7 @@ def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFr
     sturm_rep = (
         pd.concat(
             [
-                pd.read_csv(sturm_output_path / filename.format(rc))
+                pd.read_csv(sturm_output_path / filename.format(rc), comment="#")
                 for rc in ("resid", "comm")
             ]
         )
