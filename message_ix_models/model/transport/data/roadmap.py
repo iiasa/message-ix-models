@@ -140,7 +140,7 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
     df = (
         df.replace({"Mode": MODE_MAP})
         .groupby(by=["Year", "Mode"], as_index=False)
-        .sum()
+        .sum(numeric_only=True)
         .sort_values(by=["Mode", "Year"])
         .melt(id_vars=["Mode", "Year"], value_name="Value")
         .replace({"variable": VAR_MAP})
