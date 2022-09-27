@@ -172,7 +172,9 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
-# @mark.usefixtures("quiet_genno")
+@pytest.mark.xfail(
+    reason="Temporary, for #397; identify_nodes(…) incorrectly gives R14 on GHA"
+)
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ):
