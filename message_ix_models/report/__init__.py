@@ -75,7 +75,7 @@ def iamc(c: Reporter, info):
     handle_iamc(c, info)
 
 
-def register(name_or_callback: Union[Callable, str]) -> str:
+def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     """Register a callback function for :meth:`prepare_reporter`.
 
     Each registered function is called by :meth:`prepare_reporter`, in order to add or
@@ -121,7 +121,7 @@ def register(name_or_callback: Union[Callable, str]) -> str:
 
     if callback in CALLBACKS:
         log.info(f"Already registered: {callback}")
-        return
+        return None
 
     CALLBACKS.append(callback)
     return name
