@@ -140,7 +140,7 @@ def add_global_total(df: pd.DataFrame) -> pd.DataFrame:
 
     total = (
         df.groupby(["variable", "unit", "year"])
-        .sum()
+        .sum(numeric_only=True)
         .reset_index()
         .assign(node="R12_GLB")
     )
