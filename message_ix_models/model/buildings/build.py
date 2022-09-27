@@ -1,7 +1,7 @@
 import logging
 import re
 from itertools import product
-from typing import List
+from typing import Iterable, List
 
 import message_ix
 import pandas as pd
@@ -123,11 +123,11 @@ def get_prices(s: message_ix.Scenario) -> pd.DataFrame:
 
 def get_techs(spec: Spec, commodity=None) -> List[str]:
     """Return a list of buildings technologies."""
-    result = spec.add.set["technology"]
+    codes: Iterable[Code] = spec.add.set["technology"]
     if commodity:
-        result = filter(lambda s: s.id.startswith(commodity), result)
+        codes = filter(lambda s: s.id.startswith(commodity), codes)
 
-    return sorted(map(str, result))
+    return sorted(map(str, codes))
 
 
 def load_config(context):
@@ -332,7 +332,7 @@ def main(
             scenario.add_set("technology", tech_new)
 
             # Modify data
-            for name, filters, extra in (
+            for name, filters, extra in (  # type: ignore
                 ("input", {}, dict(value=1.0)),
                 ("output", {}, dict(commodity=commodity, value=1.0)),
                 ("capacity_factor", {}, {}),

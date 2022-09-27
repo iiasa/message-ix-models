@@ -171,7 +171,7 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
     }
 
     # Unit mapping
-    cfg.unit_map = UNIT_MAP.copy()
+    cfg.unit_map.update(UNIT_MAP)
 
     # Variable name mapping
     names_1 = set(pd.read_excel(fn_ref_1, usecols=["Variable"])["Variable"])
