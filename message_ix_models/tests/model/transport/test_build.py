@@ -27,11 +27,11 @@ log = logging.getLogger(__name__)
 )
 def test_get_spec(test_context, regions_arg, regions_exp, years):
     ctx = test_context
-    if regions_arg:
-        # Non-default value
-        ctx.regions = regions_arg
+    ctx.update(regions=regions_arg, years=years)
 
-    ctx.years = years
+    if regions_arg is None:
+        # Ensure configure() can handle a missing value
+        ctx.pop("regions", None)
 
     configure(ctx)
 
