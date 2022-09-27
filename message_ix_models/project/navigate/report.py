@@ -46,7 +46,7 @@ VARIABLE_SUB = (
             r"\|Industry excl Non-Energy Use\|(Chemicals|Non-Ferrous Metals|"
             "Non-Metallic Minerals|Steel)"
         ),
-        "|Industry|\g<1>",
+        r"|Industry|\g<1>",
     ),
     # NB this does *not* apply to Final Energy|Solids|Coal, only names with additional
     #    parts
