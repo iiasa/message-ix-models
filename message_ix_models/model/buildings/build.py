@@ -140,6 +140,10 @@ def load_config(context):
     for set_name, info in context["buildings set"].items():
         generate_set_elements(context, set_name, kind="buildings")
 
+    # Currently unused, and generates issues when caching functions where context is an
+    # argument
+    context["buildings set"]["technology"].pop("indexers", None)
+
 
 def add_bio_backstop(scen):
     """Fill the gap between the biomass demands & potential to avoid infeasibility.
