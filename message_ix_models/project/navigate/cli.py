@@ -3,11 +3,30 @@ import logging
 from pathlib import Path
 
 import click
+from message_ix_models.util.click import store_context
 
 log = logging.getLogger(__name__)
 
 
-@click.group("navigate")
+#: Codes for NAVIGATE T3.5 scenarios. These are abbreviated by removing "NAV_Dem-".
+SCENARIOS = [
+    "NPi-ref",
+    "NPi-act",
+    "NPi-tec",
+    "NPi-ele",
+    "NPi-all",
+]
+
+scenario_option = click.Option(
+    ["-s", "--scenario", "navigate_scenario"],
+    default="ref",
+    type=click.Choice(SCENARIOS),
+    callback=store_context,
+    help="NAVIGATE T3.5 scenario ID.",
+)
+
+
+@click.group("navigate", params=[scenario_option])
 @click.pass_obj
 def cli(context):
     """NAVIGATE project."""
