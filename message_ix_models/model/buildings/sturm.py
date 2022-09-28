@@ -32,19 +32,16 @@ def run_sturm(
 
     method = context["buildings"].get("sturm_method")
     if method is None:
-        method = "rpy2" if has_rpy2 else "Rscript"
+        m, func = ("rpy2", _sturm_rpy2) if has_rpy2 else ("Rscript", _sturm_rscript)
+        log.info(f"Will invoke STURM using {m}")
     elif method == "rpy2" and not has_rpy2:
         if first_iteration:
             log.warning("rpy2 NOT found; will invoke STURM using Rscript")
-        method = "Rscript"
+        func = _sturm_rscript
     elif method not in ("rpy2", "Rscript"):
         raise ValueError(method)
 
-    return (
-        _sturm_rpy2(context, prices, first_iteration)
-        if method == "rpy2"
-        else _sturm_rscript(context, prices, first_iteration)
-    )
+    return func(context, prices, first_iteration)
 
 
 def _sturm_rpy2(
@@ -106,7 +103,7 @@ def _sturm_rscript(
     config = context["buildings"]
 
     # Prepare input files
-    # Temporary directory in the MESSAGE_Buildings directory
+    # Temporary directory within the MESSAGE_Buildings directory
     temp_dir = config["code_dir"].joinpath("temp")
     temp_dir.mkdir(exist_ok=True)
 
@@ -114,7 +111,7 @@ def _sturm_rscript(
     input_path = temp_dir.joinpath("prices.csv")
     prices.to_csv(input_path)
 
-    def run_edited(sector: str) -> pd.DataFrame:
+    def check_call(sector: str) -> pd.DataFrame:
         """Invoke the run_STURM.R script and return its output."""
         # Need to supply cwd= because the script uses R's getwd() to find others
         subprocess.check_call(
@@ -136,10 +133,10 @@ def _sturm_rscript(
         return result
 
     # Residential
-    sturm_scenarios = run_edited(sector="resid")
+    sturm_scenarios = check_call(sector="resid")
 
     # Commercial
-    comm_sturm_scenarios = run_edited(sector="comm") if first_iteration else None
+    comm_sturm_scenarios = check_call(sector="comm") if first_iteration else None
 
     input_path.unlink()
     temp_dir.rmdir()
