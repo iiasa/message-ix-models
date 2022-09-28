@@ -68,8 +68,8 @@ def _sturm_rpy2(
 
     # Common arguments for invoking STURM
     args = dict(
-        run=config["ssp"],
-        scenario_name=f"{config['ssp']}_{config['clim_scen']}",
+        run=config["sturm scenario"],
+        scenario_name=config["sturm scenario"],
         prices=prices,
         path_rcode=str(rcode_path),
         path_in=str(config["code_dir"].joinpath("STURM_data")),

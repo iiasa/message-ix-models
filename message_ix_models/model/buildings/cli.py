@@ -16,6 +16,8 @@ from message_ix_models.util import local_data_path
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
 
+from message_data.projects.navigate.cli import scenario_option
+
 from . import build
 from .build import add_bio_backstop, get_prices
 from .sturm import run_sturm
@@ -30,7 +32,8 @@ DEFAULTS = {
     "max_iterations": 0,
     "run ACCESS": False,
     "solve_macro": False,
-    "ssp": "SSP2",
+    # "ssp": "SSP2",  # No longer used
+    "sturm scenario": None,
 }
 
 # Columns for indexing demand parameter
@@ -52,7 +55,7 @@ def cli(context, code_dir):
 
 
 # FIXME(PNK) Too complex; McCabe complexity of 25 > 14 for the rest of message_data
-@cli.command("build-solve")
+@cli.command("build-solve", params=[scenario_option])
 @common_params("dest")
 @click.option(
     "--climate-scen", help="Model/scenario name of reference climate scenario"
@@ -70,7 +73,6 @@ def cli(context, code_dir):
     "--sturm",
     "sturm_method",
     type=click.Choice(["rpy2", "Rscript"]),
-    default="Rscript",
     help="Method to invoke STURM.",
 )
 @click.pass_obj
@@ -81,6 +83,7 @@ def build_and_solve(  # noqa: C901
     run_access: bool,
     sturm_method: str,
     dest: str,
+    **kwargs,
 ) -> None:
     """Build and solve the model."""
     mark_time()
@@ -90,6 +93,10 @@ def build_and_solve(  # noqa: C901
     config["max_iterations"] = max_iterations
     config["run ACCESS"] = run_access
     config["sturm_method"] = sturm_method
+
+    # Scenario (~input data) to use for STURM
+    # Other possible values include "SSP"
+    config["sturm scenario"] = f"NAV_Dem-{context['navigate_scenario']}"
 
     # The MESSAGE_Buildings repo is not an installable Python package. Add its location
     # to sys.path so code/modules within it can be imported. This must go first, as the
@@ -101,6 +108,7 @@ def build_and_solve(  # noqa: C901
     # Base path for output during iterations
     output_path = context.get_local_path("buildings")
     output_path.mkdir(parents=True, exist_ok=True)
+    config["output path"] = output_path
 
     # Either clone the base scenario to dest_scenario, or load an existing scenario
     if config["clone"]:
