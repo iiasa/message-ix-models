@@ -78,7 +78,7 @@ def _sturm_rpy2(
         path_in=str(config["code_dir"].joinpath("STURM_data")),
         path_out=str(config["code_dir"].joinpath("STURM_output")),
         geo_level_report=context.regions,  # Should be R12
-        report_type=["MESSAGE", "NGFS"],
+        report_type=["MESSAGE", "NAVIGATE"],
         report_var=["energy", "material"],
     )
 
