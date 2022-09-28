@@ -329,7 +329,7 @@ def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFr
     """
     # Add STURM reporting
     if "baseline" in scenario.scenario:
-        filename = "report_NGFS_SSP2_BL_{}_R12.csv"
+        filename = "report_NAVIGATE_SSP2_BL_{}_R12.csv"
     else:
         filename = "report_IRP_SSP2_2C_{}_R12.csv"
 
