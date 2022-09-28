@@ -4,22 +4,19 @@ STURM output data are loaded from CSV files, manipulated, and stored as timeseri
 scenario.
 
 Originally transcribed from :file:`reporting_EFC.py` in the buildings repository.
-
-.. todo:: decompose further by making use of genno features.
 """
 import logging
 import re
 from functools import lru_cache, partial
-from pathlib import Path
 from typing import Dict, List
 
 import message_ix
 import pandas as pd
 from iam_units import registry
 from message_ix_models import Context
-from message_ix_models.util import MESSAGE_DATA_PATH
 
 from .build import get_spec, get_techs
+from .sturm import scenario_name
 
 log = logging.getLogger(__name__)
 
@@ -51,16 +48,10 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     - "buildings iamc store": store IAMC-formatted reporting on the scenario.
     - "buildings all": both of the above.
     """
-    # Guess location of MESSAGE_Buildings code
-    if "buildings" not in context:
-        assert MESSAGE_DATA_PATH is not None
-        buildings_code_dir = MESSAGE_DATA_PATH.parent.joinpath("buildings")
-        assert buildings_code_dir.exists()
-        context.setdefault("buildings", dict(code_dir=buildings_code_dir))
 
     # Path where STURM output files are found
-    rep.add(
-        "sturm output path", context["buildings"]["code_dir"].joinpath("STURM_output")
+    rep.graph["config"].setdefault(
+        "sturm output path", context.get_local_path("buildings")
     )
 
     # Filters for retrieving data. Use the keys "t" and "y::model" that are
@@ -78,8 +69,8 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         # Disabled
         # 0: (report0, ["buildings filters"], True, "buildings-FE"),
         # 1: (report1, ["buildings filters"], True, "buildings-emiss"),
-        2: (report2, ["sturm output path"], False, "sturm"),
-        3: (report3, ["buildings 2"], True, "sturm-name-change"),
+        2: (report2, ["config"], False, "sturm-raw"),
+        3: (report3, ["buildings 2"], True, "buildings"),
     }.items():
         # Short string to identify this table
         k1 = f"buildings {i}"
@@ -319,19 +310,22 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     return emiss
 
 
-def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFrame:
+def report2(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
     """Load STURM reporting outputs from file and return.
+
+    The files are located with names like::
+
+       report_NAVIGATE_{scenario}_[comm|resid]_{regions}.csv
 
     This function does not do any numerical manipulations. The only changes applied are:
 
     - Data is transformed from wide to long format.
     - The "node" dimension labels have "R12_" prepended.
     """
-    # Add STURM reporting
-    if "baseline" in scenario.scenario:
-        filename = "report_NAVIGATE_SSP2_BL_{}_R12.csv"
-    else:
-        filename = "report_IRP_SSP2_2C_{}_R12.csv"
+    # Directory containing STURM output files
+    base = config["sturm output path"]
+    # File name template, using the STURM name corresponding to the MESSAGE name
+    fn = f"report_NAVIGATE_{scenario_name(scenario.scenario)}_{{}}_R12.csv"
 
     # - Read 2 files and concatenate.
     # - Melt into long format.
@@ -340,10 +334,7 @@ def report2(scenario: message_ix.Scenario, sturm_output_path: Path) -> pd.DataFr
     # - Drop others.
     sturm_rep = (
         pd.concat(
-            [
-                pd.read_csv(sturm_output_path / filename.format(rc), comment="#")
-                for rc in ("resid", "comm")
-            ]
+            [pd.read_csv(base / fn.format(rc), comment="#") for rc in ("resid", "comm")]
         )
         .rename(columns=lambda c: c.lower())
         .assign(node=lambda df: "R12_" + df["region"])
