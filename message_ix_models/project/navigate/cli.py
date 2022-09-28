@@ -8,8 +8,10 @@ from message_ix_models.util.click import store_context
 log = logging.getLogger(__name__)
 
 
-#: Codes for NAVIGATE T3.5 scenarios. These are abbreviated by removing "NAV_Dem-".
+#: Codes for NAVIGATE T3.5 scenarios. All but "baseline" are abbreviated by removing
+#: "NAV_Dem-".
 SCENARIOS = [
+    "baseline",
     "NPi-ref",
     "NPi-act",
     "NPi-tec",

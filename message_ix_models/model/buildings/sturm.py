@@ -10,7 +10,7 @@ from message_ix_models import Context
 log = logging.getLogger(__name__)
 
 
-def run_sturm(
+def run(
     context: Context, prices: pd.DataFrame, first_iteration: bool
 ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
     """Invoke STURM, either using rpy2 or via Rscript.
@@ -73,7 +73,7 @@ def _sturm_rpy2(
         prices=prices,
         path_rcode=str(rcode_path),
         path_in=str(config["code_dir"].joinpath("STURM_data")),
-        path_out=str(config["code_dir"].joinpath("STURM_output")),
+        path_out=str(config["output path"]),
         geo_level_report=context.regions,  # Should be R12
         report_type=["MESSAGE", "NAVIGATE"],
         report_var=["energy", "material"],
@@ -142,3 +142,10 @@ def _sturm_rscript(
     temp_dir.rmdir()
 
     return sturm_scenarios, comm_sturm_scenarios
+
+
+def scenario_name(name: str) -> str:
+    """Return a STURM scenario name for a corresponding MESSAGEix-GLOBIOM name."""
+    return {
+        "baseline": "SSP2_BL",
+    }.get(name, f"NAV_Dem-{name}")

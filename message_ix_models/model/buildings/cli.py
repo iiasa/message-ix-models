@@ -18,9 +18,8 @@ from message_ix_models.util.click import common_params
 
 from message_data.projects.navigate.cli import scenario_option
 
-from . import build
+from . import build, sturm
 from .build import add_bio_backstop, get_prices
-from .sturm import run_sturm
 
 log = logging.getLogger(__name__)
 
@@ -96,7 +95,7 @@ def build_and_solve(  # noqa: C901
 
     # Scenario (~input data) to use for STURM
     # Other possible values include "SSP"
-    config["sturm scenario"] = f"NAV_Dem-{context['navigate_scenario']}"
+    config["sturm scenario"] = sturm.scenario_name(context["navigate_scenario"])
 
     # The MESSAGE_Buildings repo is not an installable Python package. Add its location
     # to sys.path so code/modules within it can be imported. This must go first, as the
@@ -230,7 +229,7 @@ def build_and_solve(  # noqa: C901
         e_use_scenarios = e_use_scenarios.loc[e_use_scenarios["year"] > 2010]
 
         # Run STURM
-        sturm_scenarios, css = run_sturm(context, prices, iterations == 0)
+        sturm_scenarios, css = sturm.run(context, prices, iterations == 0)
         if css is not None:
             comm_sturm_scenarios = css
 
