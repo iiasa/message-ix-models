@@ -25,6 +25,7 @@ This code produces the following outputs:
 
 # PACKAGES
 import logging
+import re
 from itertools import product
 from typing import List
 
@@ -830,6 +831,9 @@ def report(
     # Ammonia is not seperately included as the model input valus are combined for
     # feedstock and energy.
 
+    # The ammonia related variables are not included in the main filter but left in the
+    # remaining code to be reference for the future changes.
+
     print("Final Energy by fuels only non-energy use is being printed.")
     commodities = ["gas", "liquids", "solids", "all"]
 
@@ -936,11 +940,10 @@ def report(
             df_final.append(df_final_energy, inplace=True)
         elif c == "gas":
 
-            # Can not distinguish by type Gases (natural gas, biomass, synthetic
-            # fossil, efuel) (coal_gas), from biomass (gas_bio), natural gas
-            # (gas_bal): All go into secondary level
+            # Can not distinguish by type Gases (natural gas, biomass, synthetic fossil,
+            # efuel) (coal_gas), from biomass (gas_bio), natural gas (gas_bal): All go
+            # into secondary level.
             # Can not be distinguished in the final level.
-
             df_final_energy.aggregate(
                 "Final Energy|Non-Energy Use|Gases",
                 components=var_sectors,
@@ -1160,36 +1163,22 @@ def report(
             axis=1,
         )
 
-        # Include only the related industry sector variables
-
-        var_sectors = [
-            v
-            for v in aux2_df["variable"].values
-            if (
-                (
-                    ("cement" in v)
-                    | ("steel" in v)
-                    | ("aluminum" in v)
-                    | ("petro" in v)
-                    | ("_i" in v)
-                    | ("_I" in v)
-                    | ("NH3" in v)
+        # Include only the related industry sector variables and state some exceptions
+        var_sectors = list(
+            filter(
+                # 4th element (technology) ends with one of the following
+                lambda v: re.match(
+                    ".*_(cement|steel|aluminum|petro|i|I|NH3)$", v.split("|")[3]
                 )
-                & (
-                    ("eth_ic_trp" not in v)
-                    & ("meth_ic_trp" not in v)
-                    & ("ethanol_to_ethylene_petro" not in v)
-                    & ("gas_processing_petro" not in v)
-                    & ("in|final|atm_gasoil|steam_cracker_petro|atm_gasoil" not in v)
-                    & (
-                        "in|final|vacuum_gasoil|steam_cracker_petro|vacuum_gasoil"
-                        not in v
-                    )
-                    & ("in|final|naphtha|steam_cracker_petro|naphtha" not in v)
-                )
+                # Exclude specific technologies
+                and not re.match("(ethanol_to_ethylene|gas_processing)_petro", v)
+                # Exclude inputs of 3 specific commodities to steam_cracker_petro
+                and not re.match(
+                    r"^in.final.((atm|vacuum)_gasoil|naphtha).steam_cracker_petro.\1", v
+                ),
+                aux2_df["variable"].values,
             )
-        ]
-
+        )
         aux2_df = aux2_df[aux2_df["variable"].isin(var_sectors)]
 
         df_final_energy.filter(variable=var_sectors, inplace=True)
@@ -1517,23 +1506,14 @@ def report(
 
         # Include only the related industry sector variables
 
-        var_sectors = [
-            v
-            for v in aux2_df["variable"].values
-            if (
-                (
-                    ("cement" in v)
-                    | ("steel" in v)
-                    | ("aluminum" in v)
-                    | ("petro" in v)
-                    | ("_i" in v)
-                    | ("_I" in v)
-                    | ("_fs" in v)
-                    | ("NH3" in v)
-                )
-                & (("eth_ic_trp" not in v) & ("meth_ic_trp" not in v))
+        var_sectors = list(
+            filter(
+                lambda v: re.match(
+                    "_(aluminum|cement|fs|i|I|NH3|petro|steel)", v.split("|")[3]
+                ),
+                aux2_df["variable"].values,
             )
-        ]
+        )
         aux2_df = aux2_df[aux2_df["variable"].isin(var_sectors)]
 
         df_final_energy.filter(variable=var_sectors, inplace=True)
@@ -1801,11 +1781,9 @@ def report(
             ]
             aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
         elif s == "Other Sector":
-            tec = [
-                t
-                for t in aux2_df["technology"].values
-                if ((("_i" in t) | ("_I" in t)) & ("trp" not in t))
-            ]
+            tec = list(
+                filter(lambda t: re.match("_[iI]$", t), aux2_df["technology"].values)
+            )
             aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
         else:
             # Filter the technologies only for the certain industry sector
