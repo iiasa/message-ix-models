@@ -1,7 +1,7 @@
 """Context and settings for :mod:`message_ix_models` code."""
 import logging
-import os
 from copy import deepcopy
+from dataclasses import fields
 from pathlib import Path
 from typing import List
 
@@ -9,13 +9,35 @@ import ixmp
 import message_ix
 from click import BadOptionUsage
 
+from .config import Config
+
 log = logging.getLogger(__name__)
 
 #: List of Context instances, from first created to last.
 _CONTEXTS: List["Context"] = []
 
 
-ixmp.config.register("message local data", Path, Path.cwd())
+# Configuration keys which can be accessed directly on context
+_ALIAS = dict()
+_ALIAS.update({f.name: "core" for f in fields(Config)})
+
+
+def _dealiased(base, data):
+    """Separate values from `data` which belong on `base` according to `_ALIAS`."""
+    result = {}
+    for name, path in filter(lambda ap: ap[1] == base, _ALIAS.items()):
+        try:
+            result[name] = data.pop(name)
+        except KeyError:
+            pass
+
+    if len(result):
+        log.warning(
+            f"Create a Config instance instead of passing {list(result.keys())} to"
+            " Context()"
+        )
+
+    return result
 
 
 class Context(dict):
@@ -49,32 +71,39 @@ class Context(dict):
         return _CONTEXTS[0]
 
     def __init__(self, *args, **kwargs):
+        from message_ix_models.model import Config as ModelConfig
+
         if len(_CONTEXTS) == 0:
             log.info("Create root Context")
+
+        # Handle keyword arguments going to known config dataclasses
+        kwargs["core"] = Config(**_dealiased(kwargs, "core"))
+        kwargs["model"] = ModelConfig(**_dealiased(kwargs, "model"))
 
         # Store any keyword arguments
         super().__init__(*args, **kwargs)
 
-        # Default paths for local data
-        default_local_data = (
-            Path(
-                os.environ.get("MESSAGE_LOCAL_DATA", None)
-                or ixmp.config.get("message local data")
-            )
-            .expanduser()
-            .resolve()
-        )
-
-        for key, value in (
-            ("platform_info", dict()),
-            ("report", dict()),
-            ("scenario_info", dict()),
-            ("local_data", default_local_data),
-        ):
-            self.setdefault(key, value)
-
         # Store a reference for get_instance()
         _CONTEXTS.append(self)
+
+    def _dealias(self, name):
+        base = _ALIAS[name]
+        if base != "core":
+            log.info(f"Use Context.{base}.{name} instead of Context.{name}")
+        return getattr(self, base), name
+
+    # Item access
+    def __getitem__(self, name):
+        try:
+            return getattr(*self._dealias(name))
+        except KeyError:
+            return super().__getitem__(name)
+
+    def __setitem__(self, name, value):
+        try:
+            return setattr(*self._dealias(name), value)
+        except KeyError:
+            super().__setitem__(name, value)
 
     # Attribute access
     def __setattr__(self, name, value):
