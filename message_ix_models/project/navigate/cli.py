@@ -21,7 +21,7 @@ SCENARIOS = [
 
 scenario_option = click.Option(
     ["-s", "--scenario", "navigate_scenario"],
-    default="ref",
+    default="baseline",
     type=click.Choice(SCENARIOS),
     callback=store_context,
     help="NAVIGATE T3.5 scenario ID.",
