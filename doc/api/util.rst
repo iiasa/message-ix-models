@@ -75,6 +75,13 @@ Commonly used:
    Context is a subclass of :class:`dict`, so common methods like :meth:`~dict.copy` and :meth:`~dict.setdefault` may be used to handle settings.
    To be forgiving, it also provides attribute access; ``context.foo`` is equivalent to ``context["foo"]``.
 
+   A Context instance always has the following members:
+
+   - ``core``: an instance of :class:`message_ix_models.Config`.
+   - ``model``: an instance of :class:`message_ix_models.model.Config`.
+
+   Attributes of these classes may be accessed by shorthand, e.g. ``context.regions`` is shorthand for ``context.model.regions``.
+
    Context provides additional methods to do common tasks that depend on configurable settings:
 
    .. autosummary::
@@ -108,7 +115,7 @@ Commonly used:
          def foo(context, dest):
              scenario, mp = context.clone_to_dest()
 
-      or, store the settings ``dest_scenario`` and ``dest_platform`` on `context`:
+      or, store the settings :attr:`.Config.dest_scenario` and optionally :attr:`.Config.dest_platform` on `context`:
 
       .. code-block:: python
 
