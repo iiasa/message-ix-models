@@ -12,31 +12,11 @@ In contrast to :mod:`.model.create`, this module creates the RES 'from scratch'.
 :func:`.bare.get_spec` can also be used directly, to get a *description* of the RES based on certain settings/options, but without any need to connect to a database, load an existing Scenario, or call :func:`.bare.create_res`.
 This can be useful in code that processes data into a form compatible with MESSAGEix-GLOBIOM.
 
+Configuration
+=============
 
-Context settings
-================
+The code obeys the settings on the :class:`.model.Config` instance stored at ``context.model``.
 
-.. list-table::
-   :width: 100%
-   :widths: 25 25 50
-   :header-rows: 1
-
-   * - Setting
-     - Type
-     - Description
-   * - regions
-     - str
-     - The 'node' set (regional aggregation) to use; must be "R14" (default), "R11", "RCP" or "ISR".
-   * - years
-     - str
-     - The 'year' set (time periods) to use; must be "B" (default) or "A".
-   * - res_with_dummies
-     - bool
-     - If :obj:`True`, create and include dummy technologies.
-       See :func:`.get_dummy_data`.
-       Default :obj:`False`
-
-See documentation for further context settings in :ref:`context`.
 
 Code reference
 ==============
