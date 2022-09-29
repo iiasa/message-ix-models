@@ -30,7 +30,7 @@ def run(
     except ImportError:
         has_rpy2 = False
 
-    method = context["buildings"].get("sturm_method")
+    method = context["buildings"].sturm_method
     if method is None:
         m, func = ("rpy2", _sturm_rpy2) if has_rpy2 else ("Rscript", _sturm_rscript)
         log.info(f"Will invoke STURM using {m}")
@@ -60,7 +60,7 @@ def _sturm_rpy2(
     config = context["buildings"]
 
     # Path to R code
-    rcode_path = config["code_dir"].joinpath("STURM_model")
+    rcode_path = config.code_dir.joinpath("STURM_model")
 
     # Source R code
     r = ro.r
@@ -68,12 +68,12 @@ def _sturm_rpy2(
 
     # Common arguments for invoking STURM
     args = dict(
-        run=config["sturm scenario"],
-        scenario_name=config["sturm scenario"],
+        run=config.sturm_scenario,
+        scenario_name=config.sturm_scenario,
         prices=prices,
         path_rcode=str(rcode_path),
-        path_in=str(config["code_dir"].joinpath("STURM_data")),
-        path_out=str(config["output path"]),
+        path_in=str(config.code_dir.joinpath("STURM_data")),
+        path_out=str(config._output_path),
         geo_level_report=context.regions,  # Should be R12
         report_type=["MESSAGE", "NAVIGATE"],
         report_var=["energy", "material"],
@@ -104,7 +104,7 @@ def _sturm_rscript(
 
     # Prepare input files
     # Temporary directory within the MESSAGE_Buildings directory
-    temp_dir = config["code_dir"].joinpath("temp")
+    temp_dir = config.code_dir.joinpath("temp")
     temp_dir.mkdir(exist_ok=True)
 
     # Write prices to file
@@ -119,8 +119,8 @@ def _sturm_rscript(
                 "Rscript",
                 "run_STURM.R",
                 f"--sector={sector}",
-                f"--ssp={config['clim_scen']}",
-                f"--ssp={config['ssp']}",
+                f"--ssp={config.climate_scenario}",
+                f"--ssp={config.ssp}",
             ],
             cwd=config["code_dir"],
         )
