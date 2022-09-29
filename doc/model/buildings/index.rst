@@ -103,42 +103,14 @@ The following corresponds to :file:`reporting_EFC.py`:
       /path/to/mb/repo \
       report
 
-
 Configuration
--------------
+=============
 
-The code responds to the following keys in ``context["buildings"]``, a :class:`dict` within the :class:`Context`.
-Currently, these can be set in the :mod:`.buildings.cli` Python source file, in the variable :data:`DEFAULTS`.
+The class :class:`.buildings.Config` defines all the options to which the code responds, as well as default values.
+Values given in code or on the command line will override these.
 
-.. list-table::
-   :widths: 20 10 70
-   :header-rows: 1
-
-   * - Key
-     - Value(s)
-     - Description
-   * - **ssp**
-     - "SSP"
-     - SSP scenario
-   * - **clim_scen**
-     - "BL", "2C"
-     - Climate scenario.
-       If :prog:`--climate-scen` is given on the command line, this is set to "2C" automatically.
-   * - **max_iteration**
-     - 0
-     - Maximum number of iterations; set to 1 for once-through mode.
-   * - **solve_macro**
-     - :obj:`False`
-     - Solve scenarios using MESSAGE-MACRO (:obj:`True`) or only MESSAGE.
-   * - **clone**
-     - :obj:`True`
-     - Clone the scenario to be used from a base scenario (:obj:`True`) or load and use an existing scenario directly.
-   * - **use ACCESS**
-     - :obj:`True`
-     - Run the ACCESS model on every iteration (experimental/untested)
-   * - **code_dir**
-     - —
-     - Path to the MESSAGE_Buildings code and data; passed via the command line (above).
+.. autoclass:: message_data.model.buildings.Config
+   :members:
 
 Code reference
 ==============
