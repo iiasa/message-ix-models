@@ -2494,7 +2494,7 @@ co2_tr_dis:
   sector: other conversion
   output: [exports, secondary]
 
-back_RC:
+back_rc:
   name: back_RC
   description: Backstop for diagnosing model infeasibility
   type: useful
@@ -2550,7 +2550,7 @@ foil_rc:
 
 h2_rc:
   name: h2_rc
-  description: Hydrogen (gaseous) catalytic heating in
+  description: Hydrogen (gaseous) catalytic heating in the residential/commercial sector
   type: secondary
   sector: residential/commercial
   input: [hydrogen, final]
