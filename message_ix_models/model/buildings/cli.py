@@ -5,6 +5,7 @@ ACCESS and STURM and MESSAGEix itself.
 """
 import logging
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import click
@@ -18,22 +19,11 @@ from message_ix_models.util.click import common_params
 
 from message_data.projects.navigate.cli import scenario_option
 
-from . import build, sturm
+from . import Config, build, sturm
 from .build import add_bio_backstop, get_prices
 
 log = logging.getLogger(__name__)
 
-#: Default values for Context["buildings"] keys that configure the code. See
-#: :doc:`/model/buildings` for a full explanation.
-DEFAULTS = {
-    "clim_scen": "BL",  # or "2C"?
-    "clone": True,
-    "max_iterations": 0,
-    "run ACCESS": False,
-    "solve_macro": False,
-    # "ssp": "SSP2",  # No longer used
-    "sturm scenario": None,
-}
 
 # Columns for indexing demand parameter
 nclytu = ["node", "commodity", "level", "year", "time", "unit"]
@@ -47,17 +37,18 @@ def cli(context, code_dir):
 
     The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
     """
-    # Handle configuration
-    config = DEFAULTS.copy()
-    config.update(code_dir=code_dir.resolve())
-    context["buildings"] = config
+    # Handle configuration, store on context
+    context["buildings"] = Config(code_dir=code_dir.resolve())
 
 
 # FIXME(PNK) Too complex; McCabe complexity of 25 > 14 for the rest of message_data
 @cli.command("build-solve", params=[scenario_option])
 @common_params("dest")
 @click.option(
-    "--climate-scen", help="Model/scenario name of reference climate scenario"
+    "--climate-scenario",
+    type=click.Choice(["BL", "2C"]),
+    default="BL",
+    help="Model/scenario name of reference climate scenario",
 )
 @click.option(
     "--iterations",
@@ -75,42 +66,34 @@ def cli(context, code_dir):
     help="Method to invoke STURM.",
 )
 @click.pass_obj
-def build_and_solve(  # noqa: C901
-    context: Context,
-    climate_scen: str,
-    max_iterations: int,
-    run_access: bool,
-    sturm_method: str,
-    dest: str,
-    **kwargs,
-) -> None:
+def build_and_solve(context: Context, **kwargs) -> None:
     """Build and solve the model."""
     mark_time()
 
-    # Update configuration
-    config = context["buildings"]
-    config["max_iterations"] = max_iterations
-    config["run ACCESS"] = run_access
-    config["sturm_method"] = sturm_method
+    # Handle CLI arguments
+    kwargs.pop("dest")
+    # Scenario (~input data) to use for STURM. Other possible values include "SSP".
+    kwargs.update(sturm_scenario=sturm.scenario_name(kwargs.pop("navigate_scenario")))
 
-    # Scenario (~input data) to use for STURM
-    # Other possible values include "SSP"
-    config["sturm scenario"] = sturm.scenario_name(context["navigate_scenario"])
+    # Update configuration with remaining options/parameters
+    context["buildings"] = replace(context["buildings"], **kwargs)
+    # Shorthand
+    config = context["buildings"]
 
     # The MESSAGE_Buildings repo is not an installable Python package. Add its location
     # to sys.path so code/modules within it can be imported. This must go first, as the
     # directory (=module) name "utils" is commonly used and can clash with those from
     # other installed packages.
     # TODO properly package MESSAGE_Buildings so this is not necessary
-    sys.path.insert(0, str(config["code_dir"]))
+    sys.path.insert(0, str(config.code_dir))
 
     # Base path for output during iterations
     output_path = context.get_local_path("buildings")
     output_path.mkdir(parents=True, exist_ok=True)
-    config["output path"] = output_path
+    config._output_path = output_path
 
     # Either clone the base scenario to dest_scenario, or load an existing scenario
-    if config["clone"]:
+    if config.clone:
         scenario = context.clone_to_dest(create=False)
         # Also retrieve the base scenario
         scen_to_clone = context.get_scenario()
@@ -122,13 +105,11 @@ def build_and_solve(  # noqa: C901
     # Store a reference to the platform
     mp = scenario.platform
 
-    # Update the configuration if --climate-scen was given on the command line
-    if climate_scen is not None:
-        config["clim_scen"] = "2C"
-
     # Open reference climate scenario if needed
-    if config["clim_scen"] == "2C":
-        mod_mitig, scen_mitig = climate_scen.split("/")
+    # FIXME(PNK) this doesn't appear to make sense given the advertised possible values
+    # for this option
+    if config.climate_scenario == "2C":
+        mod_mitig, scen_mitig = config.climate_scenario.split("/")
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
 
     # Loop variables
@@ -150,7 +131,7 @@ def build_and_solve(  # noqa: C901
     info = ScenarioInfo(scenario)
     years_not_mod = list(filter(lambda y: y < info.y0, info.set["year"]))
 
-    for iterations in range(config["max_iterations"]):
+    for iterations in range(config.max_iterations):
         # Get prices from MESSAGE
         # On the first iteration, from the parent scenario; onwards, from the current
         # scenario
@@ -174,7 +155,7 @@ def build_and_solve(  # noqa: C901
         access_cache_path = local_data_path("cache", "buildings-access.csv")
 
         # Run ACCESS-E-USE
-        if config["run ACCESS"]:
+        if config.run_access:
             from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
 
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
@@ -363,7 +344,9 @@ def build_and_solve(  # noqa: C901
 
         # Add tax emissions from mitigation scenario if running a
         # climate scenario and if they are not already there
-        if (scenario.par("tax_emission").size == 0) and (config["clim_scen"] != "BL"):
+        if (scenario.par("tax_emission").size == 0) and (
+            config.climate_scenario != "BL"
+        ):
             tax_emission_new = scen_mitig_prices.var("PRICE_EMISSION")
             tax_emission_new.columns = scenario.par("tax_emission").columns
             tax_emission_new["unit"] = "USD/tCO2"
@@ -378,14 +361,14 @@ def build_and_solve(  # noqa: C901
         # Add bio backstop
         add_bio_backstop(scenario)
 
-        mod = "MESSAGE-MACRO" if config["solve_macro"] else "MESSAGE"
+        model = "MESSAGE-MACRO" if config.solve_macro else "MESSAGE"
 
         try:
             # Solve LP with barrier method, faster
-            scenario.solve(model=mod, solve_options=dict(lpmethod=4))
+            scenario.solve(model=model, solve_options=dict(lpmethod=4))
         except Exception:
             # Didn't work; try again with dual simplex (the default)
-            scenario.solve(model=mod, solve_options=dict(lpmethod=2))
+            scenario.solve(model=model, solve_options=dict(lpmethod=2))
 
         mark_time()
 
@@ -407,7 +390,7 @@ def build_and_solve(  # noqa: C901
 
         print(f"Iteration: {iterations}\nMean Percentage Deviation in Prices: {diff}")
 
-        if config["max_iterations"] == 1 == iterations + 1:
+        if config.max_iterations == 1 == iterations + 1:
             # Once-through mode, e.g. for EF China / "MESSAGE-BUILDINGS-STURM config"
             done = True
 
@@ -430,7 +413,7 @@ def build_and_solve(  # noqa: C901
             # scenario.set_as_default()
 
         # TODO move outside of the loop
-        if iterations > config["max_iterations"]:
+        if iterations > config.max_iterations:
             done = True
             print(f"Not converged after {config['max_iterations']} iterations!")
             print("Averaging last two demands and running MESSAGE one more time")
@@ -457,7 +440,7 @@ def build_and_solve(  # noqa: C901
             scenario.check_out()
             scenario.add_par("demand", demand)
             scenario.commit("buildings test")
-            scenario.solve(model=mod)
+            scenario.solve(model=model)
 
             prices_new = get_prices(scenario)
             print("Final solution after averaging last two demands")
@@ -485,7 +468,7 @@ def build_and_solve(  # noqa: C901
         old_diff = diff
 
     # Calibrate MACRO with the outcome of MESSAGE baseline iterations
-    # if done and solve_macro==0 and clim_scen=="BL":
+    # if done and solve_macro==0 and climate_scenario=="BL":
     #     sc_macro = add_macro_COVID(scenario, reg="R12", check_converge=False)
     #     sc_macro = sc_macro.clone(scenario = "baseline_DEFAULT")
     #     sc_macro.set_as_default()
