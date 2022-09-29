@@ -155,6 +155,7 @@ Commonly used:
 
 .. automodule:: message_ix_models.util.node
    :members:
+   :exclude-members: identify_nodes
 
 :mod:`.util.scenarioinfo`
 =========================
