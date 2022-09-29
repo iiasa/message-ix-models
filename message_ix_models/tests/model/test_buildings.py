@@ -34,9 +34,11 @@ def test_configure_legacy_reporting(test_context):
 
 
 def test_report3(test_data_path):
+    # Mock contents of the Reporter
     s = namedtuple("Scenario", "scenario")("baseline")
+    config = {"sturm output path": test_data_path.joinpath("buildings", "sturm")}
 
-    sturm_rep = report2(s, test_data_path.joinpath("buildings", "STURM_output"))
+    sturm_rep = report2(s, config)
     result = report3(s, sturm_rep)
 
     # TODO add assertions
