@@ -232,8 +232,6 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     """
     from message_ix_models.model import bare
 
-    context.use_defaults(bare.SETTINGS)
-
     name = bare.name(context)
     mp = context.get_platform()
 
@@ -241,7 +239,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
         base = message_ix.Scenario(mp, name, "baseline")
     except ValueError:
         log.info(f"Create '{name}/baseline' for testing")
-        context.scenario_info.update(dict(model=name, scenario="baseline"))
+        context.scenario_info.update(model=name, scenario="baseline")
         base = bare.create_res(context)
 
     if solved and not base.has_solution():
