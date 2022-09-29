@@ -124,8 +124,8 @@ def test_check_support(test_context):
     args = [test_context, dict(regions=["R11", "R14"]), "Test data available"]
 
     # Setting not set → KeyError
-    with pytest.raises(KeyError, match="regions"):
-        check_support(*args)
+    with pytest.raises(KeyError, match="baz"):
+        check_support(test_context, dict(baz=["baz"]), "Baz is not set")
 
     # Accepted value
     test_context.regions = "R11"
