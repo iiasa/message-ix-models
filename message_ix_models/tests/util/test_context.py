@@ -37,9 +37,8 @@ class TestContext:
         c = deepcopy(ctx)
 
         # Force the base scenario info to be empty
-        c["scenario_info"] = dict()
-
-        c["dest_scenario"] = dict(model=model_name, scenario=scenario_name)
+        c.scenario_info.clear()
+        c.dest_scenario = dict(model=model_name, scenario=scenario_name)
 
         # Fails with create=False
         with pytest.raises(
@@ -56,19 +55,19 @@ class TestContext:
         # Works with a URL to parse and no base scenario
         url = f"ixmp://{platform_name}/{model_name}/{scenario_name}"
 
-        c = deepcopy(ctx)
-        c["scenario_info"] = dict()
-        c["dest"] = url
-        s = c.clone_to_dest()
+        c2 = deepcopy(ctx)
+        c2.scenario_info.clear()
+        c2.dest = url
+        s = c2.clone_to_dest()
         assert model_name == s.model and scenario_name == s.scenario
 
         del s
 
         # Works with a base scenario
-        c.handle_cli_args(url=url)
-        c["dest_scenario"] = dict(model="baz model", scenario="baz scenario")
-        del c["dest_platform"]
-        s = c.clone_to_dest()
+        c2.handle_cli_args(url=url)
+        c2.dest_scenario = dict(model="baz model", scenario="baz scenario")
+        c2.dest_platform.clear()
+        s = c2.clone_to_dest()
 
         assert s.model.startswith("baz") and s.scenario.startswith("baz")
 
@@ -178,7 +177,7 @@ class TestContext:
 
     def test_repr(self):
         c = Context()
-        assert re.fullmatch("<Context object at [^ ]+ with 4 keys>", repr(c))
+        assert re.fullmatch("<Context object at [^ ]+ with 2 keys>", repr(c))
 
     def test_use_defaults(self, caplog):
         caplog.set_level(logging.INFO)
