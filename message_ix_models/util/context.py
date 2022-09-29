@@ -167,11 +167,12 @@ class Context(dict):
         --------
         create_res
         """
-        if "dest_scenario" not in self:
+        cfg = self.core
+        if not cfg.dest_scenario:
             # No information on the destination; try to parse a URL, storing the keys
             # dest_platform and dest_scenario.
             self.handle_cli_args(
-                url=self["dest"], _store_as=("dest_platform", "dest_scenario")
+                url=cfg.dest, _store_as=("dest_platform", "dest_scenario")
             )
 
         try:
@@ -182,17 +183,13 @@ class Context(dict):
             mp_dest = scenario_base.platform
 
             try:
-                # Get information about a destination platform
-                info = self["dest_platform"]
-            except KeyError:
-                pass  # dest_platform not set; use the same as scenario_base
-            else:  # pragma: no cover
-                # Not tested; current test fixtures make it difficult to create *two*
-                # temporary platforms simultaneously
-                if info["name"] != mp_dest.name:
+                if cfg.dest_platform["name"] != mp_dest.name:
                     # Different platform
-                    mp_dest = ixmp.Platform(**info)
-
+                    # Not tested; current test fixtures make it difficult to create
+                    # *two* temporary platforms simultaneously
+                    mp_dest = ixmp.Platform(**cfg.dest_platform)  # pragma: no cover
+            except KeyError:
+                pass
         except Exception as e:
             log.info("Base scenario not given or found")
             log.debug(f"{type(e).__name__}: {e}")
@@ -206,17 +203,16 @@ class Context(dict):
             from message_ix_models.model.bare import create_res
 
             # Create on the destination platform
-            c = deepcopy(self)
-            c.platform_info.update(self.get("dest_platform", {}))
-
-            scenario_base = create_res(c)
+            ctx = deepcopy(self)
+            ctx.core.platform_info.update(cfg.dest_platform)
+            scenario_base = create_res(ctx)
 
             # Clone to the same platform
             mp_dest = scenario_base.platform
 
         # Clone
-        log.info(f"Clone to {repr(self.dest_scenario)}")
-        return scenario_base.clone(platform=mp_dest, **self["dest_scenario"])
+        log.info(f"Clone to {repr(cfg.dest_scenario)}")
+        return scenario_base.clone(platform=mp_dest, **cfg.dest_scenario)
 
     def close_db(self):
         try:
@@ -226,8 +222,14 @@ class Context(dict):
             pass
 
     def get_cache_path(self, *parts) -> Path:
-        """Return a path to a local cache file."""
-        base = self.get("cache_path", self.local_data.joinpath("cache"))
+        """Return a path to a local cache file, i.e. within :attr:`.Config.cache_path`.
+
+        The directory containing the resulting path is created if it does not already
+        exist.
+        """
+        # Construct relative to local_data if cache_path is not defined
+        base = self.core.cache_path or self.core.local_data.joinpath("cache")
+
         result = base.joinpath(*parts)
 
         # Ensure the directory exists
@@ -235,10 +237,19 @@ class Context(dict):
 
         return result
 
-    def get_local_path(self, *parts, suffix=None):
-        """Return a path under ``local_data``."""
-        result = self.local_data.joinpath(*parts)
-        return result.with_suffix(suffix or result.suffix)
+    def get_local_path(self, *parts: str, suffix=None):
+        """Return a path under :attr:`.Config.local_data`.
+
+        Parameters
+        ==========
+        parts :
+            Path fragments, e.g. directories, passed to :meth:`Path.joinpath`.
+        suffix :
+            File name suffix including a ".", e.g. ".csv", passed to
+            :meth:`Path.with_suffix`.
+        """
+        result = self.core.local_data.joinpath(*parts)
+        return result.with_suffix(suffix) if suffix else result
 
     def get_platform(self, reload=False) -> ixmp.Platform:
         """Return a :class:`ixmp.Platform` from :attr:`platform_info`.
@@ -264,7 +275,7 @@ class Context(dict):
             pass
 
         # Create a Platform
-        self["_mp"] = ixmp.Platform(**self.platform_info)
+        self["_mp"] = ixmp.Platform(**self.core.platform_info)
         return self["_mp"]
 
     def get_scenario(self) -> message_ix.Scenario:
@@ -274,11 +285,11 @@ class Context(dict):
         operation, indicated by the ``--url`` or ``--platform/--model/--scenario``
         options.
         """
-        return message_ix.Scenario(self.get_platform(), **self.scenario_info)
+        return message_ix.Scenario(self.get_platform(), **self.core.scenario_info)
 
     def set_scenario(self, scenario: message_ix.Scenario) -> None:
         """Update :attr:`scenario_info` to match an existing `scenario`."""
-        self["scenario_info"].update(
+        self.core.scenario_info.update(
             model=scenario.model, scenario=scenario.scenario, version=scenario.version
         )
 
@@ -298,15 +309,15 @@ class Context(dict):
         May update the :attr:`data_path`, :attr:`platform_info`, :attr:`scenario_info`,
         and/or :attr:`url` settings.
         """
-        self.verbose = verbose
+        self.core.verbose = verbose
 
         # Store the path to command-specific data and metadata
         if local_data:
-            self.local_data = local_data
+            self.core.local_data = local_data
 
         # References to the Context settings to be updated
-        platform_info = self.setdefault(_store_as[0], dict())
-        scenario_info = self.setdefault(_store_as[1], dict())
+        platform_info = getattr(self.core, _store_as[0])
+        scenario_info = getattr(self.core, _store_as[1])
 
         # Store information for the target Platform
         if url:
@@ -316,7 +327,7 @@ class Context(dict):
                     " redundant with --url",
                 )
 
-            self.url = url
+            self.core.url = url
             urlinfo = ixmp.utils.parse_url(url)
             platform_info.update(urlinfo[0])
             scenario_info.update(urlinfo[1])
