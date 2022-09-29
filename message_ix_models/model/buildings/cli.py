@@ -5,8 +5,6 @@ ACCESS and STURM and MESSAGEix itself.
 """
 import logging
 import sys
-from dataclasses import replace
-from pathlib import Path
 
 import click
 import message_ix
@@ -30,15 +28,9 @@ nclytu = ["node", "commodity", "level", "year", "time", "unit"]
 
 
 @click.group("buildings")
-@click.argument("code_dir", type=Path)
 @click.pass_obj
-def cli(context, code_dir):
-    """MESSAGEix-Buildings model.
-
-    The (required) argument CODE_DIR is the path to the MESSAGE_Buildings repo/code.
-    """
-    # Handle configuration, store on context
-    context["buildings"] = Config(code_dir=code_dir.resolve())
+def cli(context):
+    """MESSAGEix-Buildings model."""
 
 
 # FIXME(PNK) Too complex; McCabe complexity of 25 > 14 for the rest of message_data
@@ -76,9 +68,7 @@ def build_and_solve(context: Context, **kwargs) -> None:
     kwargs.update(sturm_scenario=sturm.scenario_name(kwargs.pop("navigate_scenario")))
 
     # Update configuration with remaining options/parameters
-    context["buildings"] = replace(context["buildings"], **kwargs)
-    # Shorthand
-    config = context["buildings"]
+    config = context["buildings"] = Config(**kwargs)
 
     # The MESSAGE_Buildings repo is not an installable Python package. Add its location
     # to sys.path so code/modules within it can be imported. This must go first, as the
