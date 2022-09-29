@@ -47,7 +47,7 @@ Data are stored in a location described by the :class:`.Context` setting ``cache
 The test suite interacts with caches in two ways:
 
 - ``--local-cache``: Giving this option causes pytest to use whatever cache directory is configured for normal runs/usage of :mod:`message_ix_models` or :command:`mix-models`.
-- By default (without ``--local-cache``), the test suite uses :doc:`pytest's built-in cache fixture <pytest:cache>`.
+- By default (without ``--local-cache``), the test suite uses :ref:`pytest's built-in cache fixture <pytest:cache>`.
   This creates and uses a temporary directory, usually :file:`.pytest_cache/d/cache/` within the repository root.
   This location is used *only* by tests, and not by normal runs/usage of the code.
 

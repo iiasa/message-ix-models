@@ -11,7 +11,7 @@ Concept & design
 Research with MESSAGEix models often involves multiple scenarios that are related to one another or derived from one another by certain modifications.
 Together, the solutions/reported information from these scenarios provide the output data used in research products, e.g. a plot comparing total emissions in a policy scenario to a reference scenario.
 
-:mod:`.model.build` provides tools to build models or scenarios based on (possibly empty) base scenarios; and :mod:`.tools` provides tools for manipulating scenarios or model input data (parameters).
+:mod:`.model.build` provides tools to build models or scenarios based on (possibly empty) base scenarios; and :mod:`~message_ix_models.tools` provides tools for manipulating scenarios or model input data (parameters).
 The :class:`.Workflow` API provided in this module allows researchers to use these pieces and atomic, reusable functions to define arbitrarily complex workflows involving many, related scenarios; and then to solve, report, or otherwise operate on those scenarios.
 
 The generic pattern for workflows is:
