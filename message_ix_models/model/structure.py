@@ -9,11 +9,13 @@ import pycountry
 from iam_units import registry
 from sdmx.model import Annotation, Code
 
-from message_ix_models.util import as_codes, load_package_data, package_data_path
+from message_ix_models.util import load_package_data, package_data_path
+from message_ix_models.util.sdmx import as_codes
 
 log = logging.getLogger(__name__)
 
 
+@lru_cache()
 def codelists(kind: str) -> List[str]:
     """Return a valid IDs for code lists of `kind`.
 
