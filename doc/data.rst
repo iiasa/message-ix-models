@@ -202,7 +202,7 @@ Other patterns
 
 Some other patterns exist, but should not be repeated in new code, and should be migrated to one of the above patterns.
 
-- SQL queries against a Oracle/JDBC database. See :ref:`data-iea`, below, and `issue #53 <https://github.com/iiasa/message_data/issues/53#issuecomment-669117393>`_ for a description of how to replace/simplify this code.
+- SQL queries against a Oracle/JDBC database. See :ref:`message_data:data-iea` (in :mod:`message_data`) and `issue #53 <https://github.com/iiasa/message_data/issues/53#issuecomment-669117393>`_ for a description of how to replace/simplify this code.
 
 
 Configuration
