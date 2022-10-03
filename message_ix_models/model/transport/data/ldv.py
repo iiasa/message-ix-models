@@ -10,7 +10,7 @@ from genno import computations
 from iam_units import registry
 from message_ix import make_df
 from message_ix_models.model import disutility
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import get_codes, get_region_codes
 from message_ix_models.util import (
     ScenarioInfo,
     adapt_R11_R12,
@@ -32,7 +32,6 @@ from sdmx.model import Code
 
 from message_data.model.transport.data.emissions import ef_for_input
 from message_data.model.transport.utils import input_commodity_level, path_fallback
-from message_data.tools import get_region_codes
 
 log = logging.getLogger(__name__)
 
