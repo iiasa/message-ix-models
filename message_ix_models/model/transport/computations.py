@@ -7,7 +7,15 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from genno import Quantity, computations
-from genno.computations import add, apply_units, product, ratio, relabel, rename_dims
+from genno.computations import (
+    add,
+    apply_units,
+    convert_units,
+    product,
+    ratio,
+    relabel,
+    rename_dims,
+)
 from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
 from ixmp import Scenario
@@ -26,7 +34,6 @@ log = logging.getLogger(__name__)
 __all__ = [
     "advance_fv",
     "base_shares",
-    "convert_units",
     "cost",
     "demand_ixmp0",
     "distance_ldv",
@@ -76,17 +83,6 @@ def base_shares(
 
     coords = [("n", nodes), ("t", techs), ("y", y)]
     return product(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
-
-
-def convert_units(qty: Quantity, units) -> Quantity:
-    """Converty `qty` to `units`.
-
-    .. todo:: move upstream to :mod:`genno`.
-    """
-    u = registry.Quantity(1.0, qty.units).to(units)
-    result = u.magnitude * qty
-    result.units = u.units
-    return result
 
 
 def cost(
