@@ -4,6 +4,9 @@
 # IAMC-format tables, that can be specified in this static YAML format. For the
 # rest, see message_data.model.transport.report.
 
+MESSAGEix-Transport:
+  filter: False
+
 general:
 # Configuration for :func:`check`. Adds a single key, 'transport check', that
 # depends on others and returns a :class:`pandas.Series` of :class:`bool`.

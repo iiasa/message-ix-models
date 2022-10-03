@@ -1,12 +1,13 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
-from copy import deepcopy
 from typing import List, Mapping, Tuple
 
+import genno.config
 from genno import Computer, MissingKeyError
 from genno.computations import aggregate
 from message_ix.reporting import Reporter
 from message_ix_models import Context
+from message_ix_models.util import private_data_path
 
 from message_data.model.transport import configure
 from message_data.model.transport.plot import PLOTS
@@ -71,6 +72,22 @@ def _gen1(c: Computer, *keys) -> None:
         c.add("select", key.add_tag("non-ldv"), key, "t::transport non-ldv", sums=True)
 
 
+@genno.config.handles("MESSAGEix-Transport", iterate=False)
+def _handler(c: Reporter, info):
+    """Handle the ``MESSAGEix-Transport:`` config section."""
+    if info.get("filter", False):
+        log.info("Filter out non-transport technologies")
+
+        # Plain "transport" from the base model, for e.g. prices
+        t_filter = {"transport"}
+        # MESSAGEix-Transport -specific technologies
+        t_filter.update(map(str, c.get("t::transport").copy()))
+        # # Required commodities (e.g. fuel) from the base model
+        # t_filter.update(spec.require.set["commodity"])
+
+        c.set_filters(t=sorted(t_filter))
+
+
 def callback(rep: Reporter, context: Context) -> None:
     """:meth:`.prepare_reporter` callback for MESSAGEix-Transport.
 
@@ -83,7 +100,7 @@ def callback(rep: Reporter, context: Context) -> None:
       If the scenario to be reported is not solved, only a subset of plots are added.
     - ``transport all``: all of the above.
     """
-    from . import demand
+    from . import build, demand
 
     require_compat(rep)
 
@@ -100,8 +117,6 @@ def callback(rep: Reporter, context: Context) -> None:
     # Transfer transport configuration to the Reporter
     update_config(rep, context)
 
-    from . import build
-
     # Get a specification that describes this setting
     spec = build.get_spec(context)
 
@@ -111,19 +126,7 @@ def callback(rep: Reporter, context: Context) -> None:
         rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
     )
 
-    if config["filter"]:
-        log.info("Filter out non-transport technologies")
-
-        # Plain "transport" from the base model, for e.g. prices
-        t_filter = {"transport"}
-        # MESSAGEix-Transport -specific technologies
-        t_filter.update(map(str, rep.get("t::transport").copy()))
-        # # Required commodities (e.g. fuel) from the base model
-        # t_filter.update(spec.require.set["commodity"])
-
-        rep.set_filters(t=sorted(t_filter))
-
-    # 3. Apply some functions that generate sub-graphs
+    # 2. Apply some functions that generate sub-graphs
     try:
         rep.apply(_gen0, "in", "out", "emi")
     except MissingKeyError:
