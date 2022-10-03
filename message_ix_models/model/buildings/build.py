@@ -6,7 +6,11 @@ from typing import Iterable, List
 import message_ix
 import pandas as pd
 from message_ix_models import Context, ScenarioInfo, Spec
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import (
+    generate_set_elements,
+    get_codes,
+    get_region_codes,
+)
 from message_ix_models.util import (
     add_par_data,
     load_private_data,
@@ -14,8 +18,6 @@ from message_ix_models.util import (
     nodes_ex_world,
 )
 from sdmx.model import Code
-
-from message_data.tools import generate_set_elements, get_region_codes
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
