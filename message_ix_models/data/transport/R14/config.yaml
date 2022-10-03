@@ -127,10 +127,3 @@ share weight convergence:
   R14_CAS: [R14_NAM]
   R14_SCS: [R14_NAM]
   R14_UBM: [R14_NAM]
-
-# -- Reporting -----------------------------------------------------------------
-
-report:
-  # Set 'true' to include only technologies with "transport" in the name, e.g.
-  # if full-resolution reporting of ACT leads to memory issues
-  filter: true

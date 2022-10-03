@@ -5,6 +5,8 @@
 # rest, see message_data.model.transport.report.
 
 MESSAGEix-Transport:
+  # Set 'true' to include only technologies with "transport" in the name, e.g.
+  # if full-resolution reporting of ACT leads to memory issues.
   filter: False
 
 general:

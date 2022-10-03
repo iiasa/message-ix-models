@@ -104,15 +104,23 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 
 @cli.command("build")
 @common_params("dest dry_run regions quiet")
-@click.option("--future", help="Transport futures scenario")
+@click.option("--future", "futures_scenario", help="Transport futures scenario")
 @click.option(
     "--fast", is_flag=True, help="Skip removing data for removed set elements."
 )
-@click.option("--report", help="Path for diagnostic reports of the built scenario.")
+@click.option(
+    "--report",
+    "report_build",
+    is_flag=True,
+    help="Generate diagnostic reports of the built scenario.",
+)
 @click.pass_obj
-def build_cmd(context, **options):
+def build_cmd(context, report_build, **options):
     """Prepare the model."""
     from message_data.model.transport import build
+
+    # Tidy options that were already handled by the top-level CLI
+    [options.pop(k) for k in "dest dry_run regions quiet".split()]
 
     # Either clone from --dest, or create a new, bare RES
     scenario = context.clone_to_dest()
@@ -123,7 +131,7 @@ def build_cmd(context, **options):
 
     mark_time()
 
-    if options["report"]:
+    if report_build:
         # Also output diagnostic reports
         from message_data.model.transport import report
         from message_data.reporting import prepare_reporter, register
@@ -133,7 +141,6 @@ def build_cmd(context, **options):
         rep, key = prepare_reporter(
             scenario, context.get_config_file("report", "global")
         )
-        rep.configure(output_dir=Path(options["report"]).expanduser())
 
         # Add a catch-all key, including plots etc.
         rep.add(
