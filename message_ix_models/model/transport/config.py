@@ -302,11 +302,6 @@ class Config(ConfigHelper):
 
         # Separate data source options
         ds_options = options.pop("data source", {})
-
-        for name in {"quiet"}:
-            if name in options:
-                log.debug(f"Discard option {name}={options.pop(name)!r}")
-
         # Update values, store on context
         context["transport"] = replace(
             config, **options, data_source=config.data_source.replace(**ds_options)
