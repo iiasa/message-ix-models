@@ -246,9 +246,9 @@ def prepare_reporter(
 
     queue = [
         # Values based on configuration
-        (("speed", "speed:t", "config"), _),
-        (("whour", "whour:", "config"), _),
-        (("_lambda", "lambda:", "config"), _),
+        (("quantity_from_config", "speed:t", "config", quote("speeds")), _),
+        (("quantity_from_config", "whour:", "config", quote("work_hours")), _),
+        (("quantity_from_config", "lambda:", "config", quote("lamda")), _),
         # List of nodes excluding "World"
         # TODO move upstream to message_ix
         (("nodes_ex_world", "n::ex world", "n"), _),
