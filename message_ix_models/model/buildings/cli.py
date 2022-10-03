@@ -11,7 +11,7 @@ import message_ix
 import numpy as np
 import pandas as pd
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util import local_data_path
+from message_ix_models.util import identify_nodes, local_data_path
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
 
@@ -95,6 +95,8 @@ def build_and_solve(context: Context, **kwargs) -> None:
     # Store a reference to the platform
     mp = scenario.platform
 
+    context.model.regions = identify_nodes(scenario)
+
     # Open reference climate scenario if needed
     # FIXME(PNK) this doesn't appear to make sense given the advertised possible values
     # for this option
@@ -127,7 +129,7 @@ def build_and_solve(context: Context, **kwargs) -> None:
         # scenario
         price_cache_path = local_data_path("cache", "buildings-prices.csv")
         if iterations == 0:
-            if config["run ACCESS"]:
+            if config.run_access:
                 prices = get_prices(scen_to_clone)
 
                 # Update the cache
@@ -149,7 +151,7 @@ def build_and_solve(context: Context, **kwargs) -> None:
             from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
 
             e_use_scenarios = Simulation_ACCESS_E_USE.run_E_USE(
-                scenario=config["ssp"], prices=prices, base_path=config["code_dir"]
+                scenario=config.ssp, prices=prices, base_path=config.code_dir
             )
 
             mark_time()
