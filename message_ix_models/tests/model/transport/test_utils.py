@@ -2,11 +2,13 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 import xarray as xr
+from genno.testing import assert_qty_equal
 from iam_units import registry
 from message_ix_models.util import eval_anno
-from pytest import param
 
+from message_data.model.transport.config import DataSourceConfig
 from message_data.model.transport.utils import configure, input_commodity_level
+from message_data.reporting.util import as_quantity
 
 
 def test_add_cl(test_context):
@@ -37,41 +39,46 @@ def test_add_cl(test_context):
 @pytest.mark.parametrize(
     "regions",
     [
-        None,  # Default, i.e. R11
+        None,  # Default per message_ix_models.model.Config
         "R11",
         "R12",
         "R14",
-        param("ISR", marks=pytest.mark.xfail(raises=KeyError)),
+        pytest.param("ISR", marks=pytest.mark.xfail(raises=AssertionError)),
     ],
 )
 def test_configure(test_context, regions):
     """Configuration can be read from files.
 
-    This exercises both :func:`.transport.configure` and :func:`.transport.read_config`.
+    This exercises :meth:`.Config.from_context`.
     """
     # Set the regional aggregation to be used
     ctx = test_context
-    if regions is not None:
-        ctx.regions = regions
+    if regions:
+        ctx.model.regions = regions
 
     # configure() returns nothing
     assert configure(ctx) is None
 
+    cfg = ctx["transport"]
+
+    # Attributes have the correct types
+    assert isinstance(cfg.data_source, DataSourceConfig)
+
     # Scalar parameters are loaded
-    assert "scaling" in ctx["transport config"]
-    assert 200 * 8 == registry(ctx["transport config"]["work hours"]).magnitude
+    assert cfg.scaling
+    assert_qty_equal(as_quantity("200 * 8 hours / passenger / year"), cfg.work_hours)
 
     # Codes for the consumer_group set are generated
-    codes = ctx["transport set"]["consumer_group"]["add"]
+    codes = cfg.set["consumer_group"]["add"]
     RUEAA = codes[codes.index("RUEAA")]
     assert "Rural, or “Outside MSA”, Early Adopter, Average" == str(RUEAA.name)
 
     # xarray objects are generated for advanced indexing
-    indexers = ctx["transport set"]["consumer_group"]["indexers"]
+    indexers = cfg.set["consumer_group"]["indexers"]
     assert all(isinstance(da, xr.DataArray) for da in indexers.values())
 
     # Codes for commodities are generated
-    codes = ctx["transport set"]["commodity"]["add"]
+    codes = cfg.set["commodity"]["add"]
     RUEAA = codes[codes.index("transport pax RUEAA")]
     assert eval_anno(RUEAA, "demand") is True
 
@@ -79,13 +86,31 @@ def test_configure(test_context, regions):
     assert registry.Unit("Gp km") == eval_anno(RUEAA, "units")
 
     # Codes for technologies are generated, with annotations giving their units
-    codes = ctx["transport set"]["technology"]["add"]
+    codes = cfg.set["technology"]["add"]
     ELC_100 = codes[codes.index("ELC_100")]
     assert registry.Unit("Gv km") == eval_anno(ELC_100, "units")
 
     # If "ISR" was given as 'regions', then the corresponding config file was loaded
     if regions == "ISR":
         # Check one config value to confirm
-        assert {"Israel"} == set(
-            ctx["transport config"]["node to census_division"].keys()
-        )
+        assert {"Israel"} == set(cfg.node_to_census_division.keys())
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {},
+        pytest.param(
+            {"mode-share": "default"}, marks=pytest.mark.xfail(raises=TypeError)
+        ),
+        {"mode_share": "default"},
+        {"mode_share": "INVALID"},
+        {"futures_scenario": "default"},
+        {"futures_scenario": "base"},
+        {"futures_scenario": "A---"},
+        {"futures_scenario": "debug"},
+    ],
+)
+def test_configure_options(test_context, options):
+    """:func:`.configure` operates with various options."""
+    configure(test_context, options=options)
