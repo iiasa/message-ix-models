@@ -21,8 +21,8 @@ log = logging.getLogger(__name__)
 def test_demand_dummy(test_context, regions, years):
     """Consumer-group-specific commodities are generated."""
     ctx = test_context
-    ctx.regions = regions
-    ctx.years = years
+    ctx.model.regions = regions
+    ctx.model.years = years
 
     configure(ctx)
 

@@ -57,7 +57,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
         .bfill("y")
     )
 
-    if context.regions == "R14":
+    if context.model.regions == "R14":
         su_share = adapt_R11_R14(su_share)
 
     # Assumption: each global node is equivalent to a certain U.S. census_division

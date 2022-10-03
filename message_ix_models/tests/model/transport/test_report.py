@@ -80,7 +80,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
 def test_distance_ldv(test_context, regions):
     "Test :func:`.computations.distance_ldv`."
     ctx = test_context
-    ctx.regions = regions
+    ctx.model.regions = regions
 
     configure(ctx)
 
