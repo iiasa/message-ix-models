@@ -70,16 +70,23 @@ REPLACE_VARS = {
 }
 
 
-def as_quantity(info: Union[dict, str]) -> Quantity:
-    """Convert values from a :class:`dict` to Quantity."""
+def as_quantity(info: Union[dict, float, str]) -> Quantity:
+    """Convert values from a :class:`dict` to Quantity.
+
+    .. todo:: move upstream, to :mod:`genno`.
+    """
     if isinstance(info, str):
         q = registry.Quantity(info)
         return Quantity(q.magnitude, units=q.units)
-    else:
+    elif isinstance(info, float):
+        return Quantity(info)
+    elif isinstance(info, dict):
         data = info.copy()
         dim = data.pop("_dim")
         unit = data.pop("_unit")
         return Quantity(pd.Series(data).rename_axis(dim), units=unit)
+    else:
+        raise TypeError(type(info))
 
 
 def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
