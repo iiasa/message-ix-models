@@ -62,15 +62,15 @@ def input_commodity_level(
 def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     """Return a :class:`.Path` constructed from `parts`.
 
-    If ``context.regions`` (or a string value as the first argument) is defined and the
-    file exists in a subdirectory of :file:`data/transport/{regions}/`, return its
-    path; otherwise, return the path in :file:`data/transport/`.
+    If ``context.model.regions`` (or a string value as the first argument) is defined
+    and the file exists in a subdirectory of :file:`data/transport/{regions}/`, return
+    its path; otherwise, return the path in :file:`data/transport/`.
     """
     if isinstance(context_or_regions, str):
         regions = context_or_regions
     else:
-        # Use the value from a Context object, maybe its default
-        regions = context_or_regions.model.regions or ""
+        # Use a value from a Context object, or a default
+        regions = context_or_regions.model.regions
 
     for candidate in (
         private_data_path("transport", regions, *parts),

@@ -96,8 +96,8 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
 
       .. todo:: Add an external data source.
 
-    - ``MERtoPPP:n-y``, from :file:`mer-to-ppp.csv`. If ``context.regions`` is “R14”,
-      data are adapted from R11 using :func:`.adapt_R11_R14`.
+    - ``MERtoPPP:n-y``, from :file:`mer-to-ppp.csv`. If ``context.model.regions`` is
+      “R14”, data are adapted from R11 using :func:`.adapt_R11_R14`.
 
     See also
     --------
@@ -127,10 +127,10 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
         c.add("rename_dims", k2, k1, quote(RENAME_DIMS))
 
         # 3. Maybe transform from R11 to another node list
-        k3 = key.add_tag(context.regions)
-        if context.regions in ("R11", "R12"):
+        k3 = key.add_tag(context.model.regions)
+        if context.model.regions in ("R11", "R12"):
             c.add(k3, k2)  # No-op/pass-through
-        elif context.regions == "R14":
+        elif context.model.regions == "R14":
             c.add(k3, adapt_R11_R14, k2)
 
         c.add(key, partial(interpolate, coords=dict(y=info.Y)), k3, sums=True)
@@ -151,7 +151,7 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
     if not len(info.set["years"]):
         info.year_from_codes(get_codes(f"year/{context.years}"))
     if not len(info.set["node"]):
-        info.set["node"] = get_region_codes(context.regions)
+        info.set["node"] = get_region_codes(context.model.regions)
 
     for key, value in (
         ("c::transport", quote(info.set["commodity"])),

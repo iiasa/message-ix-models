@@ -296,7 +296,7 @@ def debug(context):
     from message_data.reporting import prepare_reporter, register
 
     request = None
-    context.regions = "R11"
+    context.model.regions = "R11"
     context.years = "A"
     context.res_with_dummies = True
 

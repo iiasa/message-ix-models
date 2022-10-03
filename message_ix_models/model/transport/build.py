@@ -56,7 +56,7 @@ def get_spec(context: Context) -> Spec:
         for action in {"add", "remove", "require"}:
             s[action].set[set_name].extend(config.get(action, []))
 
-    # The set of required nodes varies according to context.regions
+    # The set of required nodes varies according to context.model.regions
     codelist = context.model.regions
     try:
         s["require"].set["node"].extend(map(str, get_region_codes(codelist)))

@@ -14,10 +14,11 @@ from message_data.model.transport.testing import MARK
 log = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("years", ["A", "B"])
+@pytest.mark.parametrize("years", [None, "A", "B"])
 @pytest.mark.parametrize(
     "regions_arg, regions_exp",
     [
+        (None, "R14"),  # R14 is the default in message_ix_models.model.Config
         ("R11", "R11"),
         ("R12", "R12"),
         ("R14", "R14"),
@@ -26,7 +27,12 @@ log = logging.getLogger(__name__)
 )
 def test_get_spec(test_context, regions_arg, regions_exp, years):
     ctx = test_context
-    ctx.update(regions=regions_arg, years=years)
+
+    # With None values, defaults are used
+    if regions_arg:
+        ctx.update(regions=regions_arg)
+    if years:
+        ctx.update(years=years)
 
     configure(ctx)
 

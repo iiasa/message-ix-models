@@ -168,7 +168,7 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
         # Plot all indicators as grid, per mode, and store them into PNG images
         save_as_pdf_pages(
             plot_params_per_mode(df),
-            filename=f"{context.regions}_AFR_Indicators_per_mode.pdf",
+            filename=f"{context.model.regions}_AFR_Indicators_per_mode.pdf",
             path=debug_path,
         )
 

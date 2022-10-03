@@ -57,7 +57,7 @@ def test_data_files(test_context, parts):
     """Input data can be read."""
     from genno.computations import load_file
 
-    test_context.regions = "R11"
+    test_context.model.regions = "R11"
 
     result = load_file(path_fallback(test_context, *parts))
     assert isinstance(result, Quantity)
@@ -211,12 +211,8 @@ def test_get_ikarus_data(test_context, regions, N_node, years):
 @pytest.mark.parametrize("regions", ["R11"])
 def test_get_emissions_data(test_context, source, rows, regions):
     # Set the value; don't need to read_config()
-    test_context.update(
-        {
-            "transport config": {"data source": {"emissions": source}},
-            "regions": regions,
-        }
-    )
+    test_context.model.regions = regions
+    test_context.transport = Config(data_source=DataSourceConfig(emissions=source))
 
     data = get_emissions_data(test_context)
     assert {"emission_factor"} == set(data.keys())
@@ -410,7 +406,7 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
 
 
 def test_get_gfei_data(test_context):
-    test_context.regions = "R11"
+    test_context.model.regions = "R11"
 
     df = get_gfei_data(test_context)
 

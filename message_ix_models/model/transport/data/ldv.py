@@ -155,7 +155,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     all_info.set["commodity"].extend(get_codes("commodity"))
     all_info.update(spec.add)
 
-    if context.regions in ("R12", "R14"):
+    if context.model.regions in ("R12", "R14"):
         # Read data using the R11 nodes
         read_nodes = get_region_codes("R11")
     else:
@@ -165,9 +165,9 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     data = read_USTIMES_MA3T(read_nodes, subdir="R11")
 
     # Convert R11 to R12 or R14 data, as necessary
-    if context.regions == "R12":
+    if context.model.regions == "R12":
         data = adapt_R11_R12(data)
-    elif context.regions == "R14":
+    elif context.model.regions == "R14":
         data = adapt_R11_R14(data)
 
     # List of years to include
@@ -372,7 +372,7 @@ def usage_data(context) -> Mapping[str, pd.DataFrame]:
 
     # Read load factor data from file
     q = computations.load_file(
-        path_fallback(context.regions, "load-factor-ldv.csv"),
+        path_fallback(context.model.regions, "load-factor-ldv.csv"),
         dims={"node": "node_loc"},
         name="load factor",
         units="",
