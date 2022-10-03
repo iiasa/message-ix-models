@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 _CONTEXTS: List["Context"] = []
 
 
-# Configuration keys which can be accessed directly on context
+# Configuration keys which can be accessed directly on Context.
 _ALIAS = dict()
 _ALIAS.update({f.name: "core" for f in fields(Config)})
 
@@ -88,8 +88,11 @@ class Context(dict):
 
     def _dealias(self, name):
         base = _ALIAS[name]
-        if base != "core":
-            log.info(f"Use Context.{base}.{name} instead of Context.{name}")
+
+        # Warn about direct reference to aliased attributes
+        if base not in {"core", "model"}:
+            log.warnings(f"Use Context.{base}.{name} instead of Context.{name}")
+
         return getattr(self, base), name
 
     # Item access
@@ -104,6 +107,11 @@ class Context(dict):
             return setattr(*self._dealias(name), value)
         except KeyError:
             super().__setitem__(name, value)
+
+    def update(self, arg=None, **kwargs):
+        # Force update() to use the __setitem__ above
+        for k, v in dict(*filter(None, [arg]), **kwargs).items():
+            self.__setitem__(k, v)
 
     # Attribute access
     def __setattr__(self, name, value):
