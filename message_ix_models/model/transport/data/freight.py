@@ -17,7 +17,6 @@ from message_ix_models.util import (
     same_node,
 )
 
-from message_data.model.transport.computations import convert_units
 from message_data.model.transport.utils import input_commodity_level
 
 
@@ -94,7 +93,7 @@ def get_freight_data(
 
     # Efficiency information
     efficiency = (
-        convert_units(iea_2017_t4(1), "GWa / (Gv km)")
+        computations.convert_units(iea_2017_t4(1), "GWa / (Gv km)")
         .to_series()
         .reset_index()
         .set_axis(["node_loc", "value"], axis=1)
