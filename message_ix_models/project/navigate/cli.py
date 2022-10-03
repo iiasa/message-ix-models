@@ -30,7 +30,7 @@ scenario_option = click.Option(
 
 @click.group("navigate", params=[scenario_option])
 @click.pass_obj
-def cli(context):
+def cli(context, navigate_scenario):
     """NAVIGATE project."""
 
 
@@ -55,3 +55,71 @@ def prep_submission(context, f1, f2):
     print(config)
 
     main(config)
+
+
+COMMANDS = (
+    """
+    $ mix-models
+    --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#{v[0]}"
+    --local-data "./data" material build --tag "NAVIGATE_test"
+    """,
+    """
+    $ mix-models
+    --url="ixmp://ixmp-dev/MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE_test#{v[1]}"
+    transport build --fast
+    --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s[0]}"
+    """,
+    "# CHECK RESULTING VERSION",
+    """
+    $ message-ix
+    --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s[0]}#{v[2]}"
+    solve
+    """,
+    """
+    $ mix-models
+    --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s[0]}#{v[2]}"
+    buildings build-solve
+    --dest="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s[0]}"
+    --run-access --iterations=1 --scenario={s[0]}
+    """,
+    "# CHECK RESULTING VERSION",
+    """
+    $ mix-models
+    --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s[0]}#{v[3]}"
+    report -m projects.navigate "remove all ts data"
+    """,
+    """
+    $ mix-models
+    --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s[0]}#{v[3]}"
+    report -m projects.navigate "navigate all"
+    """,
+    """
+    $ mix-models
+    --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/baseline#{v[3]}"
+    report --legacy --config=navigate
+    """,
+    r"""
+    $ mix-models navigate prep-submission
+    $HOME/data/messageix/report/legacy/MESSAGEix-GLOBIOM\ 1.1-BMT-R12\ \(NAVIGATE\)_baseline.xlsx
+    $HOME/vc/iiasa/navigate-workflow
+    """,  # noqa: E501
+)
+
+
+@cli.command("gen-workflow")
+@click.argument("versions", nargs=4)
+@click.pass_obj
+def gen_workflow(context, versions):
+    """Print commands for the NAVIGATE workflow.
+
+    VERSIONS are 4 version numbers for the scenarios used at different stages. Use
+    values like A B C Das placeholders.
+    """
+    import re
+
+    s = [context.navigate_scenario]
+
+    whitespace = re.compile(r"\s\s+")
+
+    for cmd in COMMANDS:
+        print(whitespace.sub(" ", cmd).strip().format(v=versions, s=s), end="\n\n")
