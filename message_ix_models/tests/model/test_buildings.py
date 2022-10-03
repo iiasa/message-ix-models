@@ -1,7 +1,9 @@
 from collections import namedtuple
 
+import pandas as pd
 import pytest
 
+from message_data.model.buildings import Config, sturm
 from message_data.model.buildings.build import get_spec, get_techs
 from message_data.model.buildings.report import (
     configure_legacy_reporting,
@@ -43,3 +45,21 @@ def test_report3(test_data_path):
 
     # TODO add assertions
     del result
+
+
+@pytest.mark.skip(reason="Slow")
+@pytest.mark.parametrize("sturm_method", ["rpy2", "Rscript"])
+def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
+    """Test that STURM can be run by either method."""
+    test_context.model.regions = "R12"
+    test_context.buildings = Config(
+        sturm_method=sturm_method,
+        sturm_scenario="NAV_Dem-NPi-ref",
+        _output_path=tmp_path,
+    )
+
+    prices = pd.read_csv(
+        test_data_path.joinpath("buildings", "prices.csv"), comment="#"
+    )
+
+    sturm.run(test_context, prices, True)
