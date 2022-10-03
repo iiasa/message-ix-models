@@ -85,7 +85,7 @@ def test_distance_ldv(test_context, regions):
     configure(ctx)
 
     # Fake reporting config from the context
-    config = dict(transport=ctx["transport config"])
+    config = dict(transport=ctx.transport)
 
     # Computation runs
     result = computations.distance_ldv(config)

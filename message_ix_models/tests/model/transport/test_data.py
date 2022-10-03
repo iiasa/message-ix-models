@@ -13,7 +13,13 @@ from message_ix_models.util import broadcast, same_node
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from message_data.model.transport import build, computations, configure
+from message_data.model.transport import (
+    Config,
+    DataSourceConfig,
+    build,
+    computations,
+    configure,
+)
 from message_data.model.transport import data as data_module
 from message_data.model.transport.data import ldv
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
@@ -243,7 +249,7 @@ def test_get_ldv_data(test_context, source, regions, years):
     ctx = test_context
 
     info = configure_build(ctx, regions, years)
-    ctx["transport config"]["data source"]["LDV"] = source
+    ctx.transport.data_source.LDV = source
 
     # Method runs without error
 
@@ -297,7 +303,7 @@ def test_ldv_constraint_data(test_context, source, regions, years):
     ctx = test_context
 
     info = configure_build(ctx, regions, years)
-    ctx["transport config"]["data source"]["LDV"] = source
+    ctx.transport.data_source.LDV = source
 
     # Method runs without error
 
@@ -398,7 +404,7 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     assert_units(data["input"], registry("1.0 GWa / (Gv km)"))
 
     # Output data exist for all non-LDV modes
-    modes = list(filter(lambda m: m != "LDV", ctx["transport config"]["demand modes"]))
+    modes = list(filter(lambda m: m != "LDV", ctx.transport.demand_modes))
     assert len(modes) == len(data["output"]["commodity"].unique())
 
     # Output data have expected units

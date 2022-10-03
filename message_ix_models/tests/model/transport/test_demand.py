@@ -32,14 +32,14 @@ def test_demand_dummy(test_context, regions, years):
         spec["add"].set["commodity"],
         spec["require"].set["node"],
         get_codes(f"year/{years}"),  # FIXME should be present in the spec
-        ctx["transport config"],
+        ctx.transport,
     )
 
     # Returns empty dict without config flag set
-    ctx["transport config"]["data source"]["dummy demand"] = False
+    ctx.transport.data_source.dummy_demand = False
     assert dict() == demand.dummy(*args)
 
-    ctx["transport config"]["data source"]["dummy demand"] = True
+    ctx.transport.data_source.dummy_demand = True
     data = demand.dummy(*args)
 
     assert any(data["demand"]["commodity"] == "transport pax URLMM")
@@ -137,7 +137,7 @@ def test_exo_report(test_context, tmp_path):
         tmp_path,
         regions="R12",
         years="B",
-        options={"futures-scenario": "debug"},
+        options=dict(futures_scenario="debug"),
     )
 
     # Total demand by mode
