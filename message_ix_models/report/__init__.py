@@ -323,6 +323,7 @@ def prepare_reporter(
     rep.require_compat("message_data.tools.gdp_pop")
 
     # Handle `report/config` setting passed from calling code
+    context.setdefault("report", dict())
     context.report.setdefault("config", dict())
     if isinstance(context.report["config"], dict):
         # Dictionary of existing settings; deepcopy to protect from destructive
