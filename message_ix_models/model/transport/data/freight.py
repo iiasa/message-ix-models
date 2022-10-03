@@ -120,7 +120,7 @@ def get_freight_data(
         )
 
         data0["input"].append(
-            input_commodity_level(i_o["input"], "final")
+            input_commodity_level(i_o["input"], "final", context=context)
             .pipe(broadcast, efficiency)
             .pipe(same_node)
         )

@@ -21,7 +21,7 @@ def test_add_cl(test_context):
     )
     configure(test_context)
 
-    df_out = input_commodity_level(df_in, default_level="foo")
+    df_out = input_commodity_level(df_in, default_level="foo", context=test_context)
 
     # Output is the same shape
     assert df_out.shape == (2, 4)
