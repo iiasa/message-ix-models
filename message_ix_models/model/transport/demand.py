@@ -15,14 +15,14 @@ from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix.reporting import Reporter
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.model.structure import get_codes
+from message_ix_models.model.structure import get_codes, get_region_codes
 from message_ix_models.util import adapt_R11_R14, broadcast, check_support
 
 from message_data.model.transport import computations, plot
 from message_data.model.transport.data import groups
 from message_data.model.transport.report import require_compat, update_config
 from message_data.model.transport.utils import get_techs, path_fallback
-from message_data.tools import gdp_pop, get_region_codes
+from message_data.tools import gdp_pop
 
 log = logging.getLogger(__name__)
 
