@@ -23,12 +23,12 @@ def configure(
     Config.from_context(context, scenario, options)
 
 
-def input_commodity_level(df: pd.DataFrame, default_level=None) -> pd.DataFrame:
+def input_commodity_level(
+    df: pd.DataFrame, default_level=None, context: Context = None
+) -> pd.DataFrame:
     """Add input 'commodity' and 'level' to `df` based on 'technology'."""
     # Retrieve transport technology information from configuration
-    # FIXME don't depend on the most recent Context instance being the correct one
-    ctx = Context.get_instance(-1)
-    t_info = ctx["transport set"]["technology"]["add"]
+    t_info = context.transport.set["technology"]["add"]
 
     # Retrieve general commodity information
     c_info = get_codes("commodity")
