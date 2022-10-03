@@ -51,7 +51,7 @@ def get_spec(context: Context) -> Spec:
     """
     s = Spec()
 
-    for set_name, config in context["transport set"].items():
+    for set_name, config in context.transport.set.items():
         # Elements to add, remove, and require
         for action in {"add", "remove", "require"}:
             s[action].set[set_name].extend(config.get(action, []))
@@ -82,11 +82,11 @@ def get_disutility_spec(context: Context) -> Spec:
     TEMPLATE
     """
     # Identify LDV technologies
-    techs = context["transport set"]["technology"]["add"]
+    techs = context.transport.set["technology"]["add"]
     LDV_techs = techs[techs.index("LDV")].child
 
     return disutility.get_spec(
-        groups=context["transport set"]["consumer_group"]["add"],
+        groups=context.transport.set["consumer_group"]["add"],
         technologies=LDV_techs,
         template=TEMPLATE,
     )

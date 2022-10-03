@@ -13,9 +13,9 @@ from message_data.model.transport.utils import path_fallback
 
 def get_emissions_data(context: Context) -> Dict[str, pd.DataFrame]:
     """Load emissions data from a file."""
-    source = context["transport config"]["data source"]["emissions"]
 
-    qty = load_file(path_fallback(context, "emi", f"{source}-emission_factor.csv"))
+    fn = f"{context.transport.data_source.emissions}-emission_factor.csv"
+    qty = load_file(path_fallback(context, "emi", fn))
 
     return dict(emission_factor=qty.to_dataframe())
 

@@ -36,7 +36,7 @@ def dummy(
     ----------
     info : .ScenarioInfo
     """
-    if config["data source"]["dummy demand"] is not True:
+    if not config["transport"].data_source.dummy_demand:
         # No dummy data → return nothing
         return dict()
 
@@ -158,7 +158,7 @@ def add_structure(c: Computer, context: Context, info: ScenarioInfo):
         ("cg", quote(info.set["consumer_group"])),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
-        ("t::transport modes", quote(context["transport config"]["demand modes"])),
+        ("t::transport modes", quote(context.transport.demand_modes)),
         ("y", quote(info.set["year"])),
         (
             "cat_year",
@@ -208,7 +208,7 @@ def prepare_reporter(
     """
     if configure:
         # Configure the reporter; keys are stored
-        rep.configure(transport=context["transport config"])
+        rep.configure(transport=context.transport)
 
     require_compat(rep)
     update_config(rep, context)

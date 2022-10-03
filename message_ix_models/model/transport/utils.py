@@ -94,7 +94,7 @@ def get_techs(context) -> Tuple[Spec, List, Dict]:
     # Subsets of transport technologies for aggregation and filtering
     t_groups: Dict[str, List[str]] = {"non-ldv": []}
     for tech in filter(  # Only include those technologies with children
-        lambda t: len(t.child), context["transport set"]["technology"]["add"]
+        lambda t: len(t.child), context.transport.set["technology"]["add"]
     ):
         t_groups[tech.id] = list(c.id for c in tech.child)
         # Store non-LDV technologies

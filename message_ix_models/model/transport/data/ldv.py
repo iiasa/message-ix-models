@@ -47,7 +47,7 @@ def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
 
     In both cases, :func:`get_constraints` is used to generate constraints.
     """
-    source = context["transport config"]["data source"].get("LDV", None)
+    source = context.transport.data_source.LDV
 
     if source == "US-TIMES MA3T":
         return get_USTIMES_MA3T(context)
@@ -145,7 +145,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     )
 
     # Retrieve configuration and ScenarioInfo
-    technical_lifetime = context["transport config"]["ldv lifetime"]["average"]
+    technical_lifetime = context.transport.ldv_lifetime["average"]
     info = context["transport build info"]
     spec = context["transport spec"]
 
@@ -275,7 +275,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
     years = list(filter(lambda y: y >= 2010, info.set["year"]))
 
     # List of LDV technologies
-    all_techs = context["transport set"]["technology"]["add"]
+    all_techs = context.transport.set["technology"]["add"]
     ldv_techs = list(map(str, all_techs[all_techs.index("LDV")].child))
 
     # 'output' parameter values: all 1.0 (ACT units == output units)
@@ -319,12 +319,14 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     For example, a value of 0.01 means the activity may increase (or decrease) by 1%
     from one year to the next. For periods of length >1 year, this value is compounded.
     """
+    config = context.transport
+
     # Information about the target structure
     info = context["transport build info"]
     years = info.Y[1:]
 
     # Technologies as a hierarchical code list
-    codes = context["transport set"]["technology"]["add"]
+    codes = config.set["technology"]["add"]
     ldv_codes = codes[codes.index("LDV")].child
 
     # All technologies in the spec, as strings
@@ -337,7 +339,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
         techs.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
 
     # Constraint value
-    annual = context["transport config"]["constraint"]["LDV growth_activity"]
+    annual = config.constraint["LDV growth_activity"]
 
     data = dict()
     for bound, factor in (("lo", -1.0), ("up", 1.0)):
