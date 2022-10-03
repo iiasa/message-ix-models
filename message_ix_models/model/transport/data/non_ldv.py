@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def get_non_ldv_data(context) -> Dict[str, pd.DataFrame]:
-    source = context["transport config"]["data source"].get("non-LDV", None)
+    source = context.transport.data_source.non_LDV
 
     log.info(f"from {source}")
 
@@ -23,7 +23,7 @@ def get_non_ldv_data(context) -> Dict[str, pd.DataFrame]:
     elif source is None:
         data = dict()  # Don't add any data
     else:
-        raise ValueError(f"invalid source for non-LDV data: {source}")
+        raise ValueError(f"Unknown source for non-LDV data: {source!r}")
 
     # Merge in dummy/placeholder data for 2-wheelers (not present in IKARUS)
     merge_data(data, get_2w_dummies(context))
@@ -46,7 +46,7 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     years = list(filter(lambda y: y >= 2010, info.set["year"]))
 
     # List of 2-wheeler technologies
-    all_techs = context["transport set"]["technology"]["add"]
+    all_techs = context.transport.set["technology"]["add"]
     techs = list(map(str, all_techs[all_techs.index("2W")].child))
 
     # 'output' parameter values: all 1.0 (ACT units == output units)

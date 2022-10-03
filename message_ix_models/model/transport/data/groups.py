@@ -37,7 +37,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
     .Quantity
         Dimensions: n, y, cg. Units.dimensionless.
     """
-    cg_indexers = deepcopy(context["transport set"]["consumer_group"]["indexers"])
+    cg_indexers = deepcopy(context.transport.set["consumer_group"]["indexers"])
     consumer_group = cg_indexers.pop("consumer_group")
 
     check_support(
@@ -51,8 +51,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
     # - Fill backward 2010 to 2005, in order to compute.
     su_share = (
         computations.load_file(
-            path=path_fallback(context.regions, "population-suburb-share.csv"),
-            dims=RENAME_DIMS,
+            path=path_fallback(context, "population-suburb-share.csv"), dims=RENAME_DIMS
         )
         .ffill("y")
         .bfill("y")
@@ -64,7 +63,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
     # Assumption: each global node is equivalent to a certain U.S. census_division
 
     # Convert setting from config file into a set of indexers
-    n_cd_map = context["transport config"]["node to census_division"]
+    n_cd_map = context.transport.node_to_census_division
     n, cd = zip(*n_cd_map.items())
     n_cd_indexers = dict(
         n=xr.DataArray(list(n), dims="n"),

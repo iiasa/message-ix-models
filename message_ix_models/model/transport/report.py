@@ -44,13 +44,11 @@ def require_compat(c: Computer) -> None:
 
 def update_config(c: Computer, context: Context) -> None:
     config = c.graph["config"]
-    config.setdefault("regions", context.regions)
-    config.setdefault("data source", {})
+    config.setdefault("regions", context.model.regions)
+    config["transport"] = context.transport
+    config.setdefault("data source", dict())
     config["data source"].update(
-        {
-            k: context["transport config"]["data source"][k]
-            for k in ("dummy demand", "dummy supply", "gdp", "population")
-        }
+        {k: getattr(context.transport.data_source, k) for k in ("gdp", "population")}
     )
 
 
@@ -100,10 +98,6 @@ def callback(rep: Reporter, context: Context) -> None:
     configure(context, rep.graph.get("scenario"))
 
     # Transfer transport configuration to the Reporter
-    config = context["transport config"]["report"]
-    config.update(context["transport config"])
-    rep.graph["config"].setdefault("transport", {})
-    rep.graph["config"]["transport"].update(config.copy())
     update_config(rep, context)
 
     from . import build
@@ -138,11 +132,10 @@ def callback(rep: Reporter, context: Context) -> None:
 
     rep.apply(_gen1, "CAP:nl-t-ya", "in:nl-t-ya-c", "inv_cost:nl-t-yv")
 
-    # 4. Add further computations (incl. IAMC tables) defined in
-    #    data/transport/report.yaml
-    rep.configure(**deepcopy(context["transport report"]))
+    # 3. Add further computations (incl. IAMC tables) defined in a file
+    rep.configure(path=private_data_path("transport", "report.yaml"))
 
-    # 5. Add plots
+    # 4. Add plots
     queue: List[Tuple[Tuple, Mapping]] = [
         ((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()
     ]

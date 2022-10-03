@@ -179,8 +179,8 @@ def get_ikarus_data(context):
         ``context["transport build info"]``, plus the additional year 2010.
     """
     # Reference to the transport configuration
-    config = context["transport config"]
-    tech_info = context["transport set"]["technology"]["add"]
+    config = context.transport
+    tech_info = context.transport.set["technology"]["add"]
     info = context["transport build info"]
 
     # Merge with base model commodity information for io_units() below
@@ -192,9 +192,9 @@ def get_ikarus_data(context):
     # Retrieve the data from the spreadsheet. Use additional output efficiency and
     # investment cost factors for some bus technologies
     data = read_ikarus_data(
-        occupancy=config["non-ldv output"],
-        k_output=config["efficiency"]["bus output"],
-        k_inv_cost=config["cost"]["bus inv"],
+        occupancy=config.non_ldv_output,
+        k_output=config.efficiency["bus output"],
+        k_inv_cost=config.cost["bus inv"],
     )
 
     # Create data frames to add imported params to MESSAGEix

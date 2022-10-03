@@ -65,7 +65,7 @@ def base_shares(
     """
     # TODO write tests
     path = path_fallback(
-        config["regions"], "mode-share", f"{config['transport']['mode-share']}.csv"
+        config["regions"], "mode-share", f"{config['transport'].mode_share}.csv"
     )
     log.info(f"Read base mode shares from {path}")
 
@@ -167,8 +167,8 @@ def distance_ldv(config: dict) -> Quantity:
     """
     # Load from config.yaml
     result = product(
-        as_quantity(config["transport"]["ldv activity"]),
-        as_quantity(config["transport"]["factor"]["activity"]["ldv"]),
+        as_quantity(config["transport"].ldv_activity),
+        as_quantity(config["transport"].factor["activity"]["ldv"]),
     )
 
     result.name = "ldv distance"
@@ -393,10 +393,13 @@ def pdt_per_capita(gdp_ppp_cap: Quantity, config: dict) -> Quantity:
     Simplification of Schäefer et al. (2010): linear interpolation between (0, 0) and
     the configuration keys "fixed demand" and "fixed GDP".
     """
-    fix_gdp = as_quantity(config["transport"]["fixed GDP"])
-    fix_demand = as_quantity(config["transport"]["fixed demand"])
-
-    return product(ratio(gdp_ppp_cap, fix_gdp), fix_demand)
+    return product(
+        ratio(
+            gdp_ppp_cap,
+            config["transport"].fixed_GDP,
+        ),
+        config["transport"].fixed_demand,
+    )
 
 
 def price_units(qty: Quantity) -> Quantity:
@@ -421,12 +424,12 @@ def share_weight(
     """Calculate mode share weights."""
     # Modes from configuration
     cfg = config["transport"]
-    modes = cfg["demand modes"]
+    modes = cfg.demand_modes
 
     # Selectors
     t0 = dict(t=modes[0])
     y0 = dict(y=y[0])
-    yC = dict(y=cfg["year convergence"])
+    yC = dict(y=cfg.year_convergence)
     years = list(filter(lambda year: year <= yC["y"], y))
 
     # Share weights
@@ -452,7 +455,7 @@ def share_weight(
     # Weights at the convergence year, yC
     for node in nodes:
         # Set of 1+ nodes to converge towards
-        ref_nodes = cfg["share weight convergence"][node]
+        ref_nodes = cfg.share_weight_convergence[node]
 
         # Ratio between this node's GDP and that of the first reference node
         scale = (

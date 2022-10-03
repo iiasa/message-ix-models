@@ -141,7 +141,7 @@ def conversion(
     )
 
     service_info = [
-        ("freight", config["transport"]["load factor"]["freight"], "Gt km"),
+        ("freight", config["transport"].load_factor["freight"], "Gt km"),
         ("pax", 1.0, "Gp km / a"),
     ]
 
@@ -198,7 +198,7 @@ def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
 @provides_data("config", "info")
 def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
-    if config["data source"].setdefault("dummy supply", False) is not True:
+    if not config["transport"].data_source.dummy_supply:
         return dict()
 
     # TODO read the list of 'commodity' from context/config
