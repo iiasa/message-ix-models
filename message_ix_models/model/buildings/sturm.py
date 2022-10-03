@@ -2,7 +2,7 @@
 import gc
 import logging
 import subprocess
-from typing import Optional, Tuple
+from typing import Mapping, Optional, Tuple
 
 import pandas as pd
 from message_ix_models import Context
@@ -30,7 +30,10 @@ def run(
     except ImportError:
         has_rpy2 = False
 
-    method = context["buildings"].sturm_method
+    # Retrieve config from the Context object
+    config = context.buildings
+
+    method = config.sturm_method
     if method is None:
         m, func = ("rpy2", _sturm_rpy2) if has_rpy2 else ("Rscript", _sturm_rscript)
         log.info(f"Will invoke STURM using {m}")
@@ -38,14 +41,31 @@ def run(
         if first_iteration:
             log.warning("rpy2 NOT found; will invoke STURM using Rscript")
         func = _sturm_rscript
-    elif method not in ("rpy2", "Rscript"):
+    elif method == "Rscript":
+        func = _sturm_rscript
+    else:
         raise ValueError(method)
 
-    return func(context, prices, first_iteration)
+    # Common arguments for invoking STURM
+    args = dict(
+        run=config.sturm_scenario,
+        scenario_name=config.sturm_scenario,
+        path_rcode=str(config.code_dir.joinpath("STURM_model")),
+        path_in=str(config.code_dir.joinpath("STURM_data")),
+        path_out=str(config._output_path),
+        geo_level_report=context.model.regions,
+        report_type=["MESSAGE", "NAVIGATE"],
+        report_var=["energy", "material"],
+    )
+
+    if args["geo_level_report"] != "R12":
+        raise NotImplementedError
+
+    return func(context, prices, args, first_iteration)
 
 
 def _sturm_rpy2(
-    context: Context, prices: pd.DataFrame, first_iteration: bool
+    context: Context, prices: pd.DataFrame, args: Mapping, first_iteration: bool
 ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
     """Invoke STURM using :mod:`rpy2`."""
     import rpy2.robjects as ro
@@ -53,39 +73,19 @@ def _sturm_rpy2(
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
 
-    if first_iteration:
-        log.info("\n".join(rpy2.situation.iter_info()))
-
-    # Retrieve info from the Context object
-    config = context["buildings"]
-
-    # Path to R code
-    rcode_path = config.code_dir.joinpath("STURM_model")
+    args.update(prices=prices)
 
     # Source R code
     r = ro.r
     r.source(str(rcode_path.joinpath("F10_scenario_runs_MESSAGE_2100.R")))
 
-    # Common arguments for invoking STURM
-    args = dict(
-        run=config.sturm_scenario,
-        scenario_name=config.sturm_scenario,
-        prices=prices,
-        path_rcode=str(rcode_path),
-        path_in=str(config.code_dir.joinpath("STURM_data")),
-        path_out=str(config._output_path),
-        geo_level_report=context.regions,  # Should be R12
-        report_type=["MESSAGE", "NAVIGATE"],
-        report_var=["energy", "material"],
-    )
-
     with localconverter(ro.default_converter + pandas2ri.converter):
         # Residential
-        sturm_scenarios = r.run_scenario(**args, sector="resid")
+        sturm_scenarios = r.run_scenario(sector="resid", prices=prices, **args)
         # Commercial
         # NOTE: run only on the first iteration!
         comm_sturm_scenarios = (
-            r.run_scenario(**args, sector="comm") if first_iteration else None
+            r.run_scenario(sector="comm", **args) if first_iteration else None
         )
 
     del r
@@ -95,40 +95,41 @@ def _sturm_rpy2(
 
 
 def _sturm_rscript(
-    context: Context, prices: pd.DataFrame, first_iteration: bool
+    context: Context, prices: pd.DataFrame, args: Mapping, first_iteration: bool
 ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
     """Invoke STURM using :mod:`subprocess` and :program:`Rscript`."""
-    # TODO report_type and report_var are not passed
     # Retrieve info from the Context object
-    config = context["buildings"]
+    config = context.buildings
 
-    # Prepare input files
-    # Temporary directory within the MESSAGE_Buildings directory
-    temp_dir = config.code_dir.joinpath("temp")
-    temp_dir.mkdir(exist_ok=True)
-
-    # Write prices to file
+    # Write prices to a temporary file
+    temp_dir = context.get_local_path("buildings", "temp")
+    temp_dir.mkdir(exist_ok=True, parents=True)
     input_path = temp_dir.joinpath("prices.csv")
     prices.to_csv(input_path)
+
+    # Prepare command-line call
+    command = [
+        "Rscript",
+        "run_STURM.R",
+        # Format contents of `args`
+        f"--scenario={args['scenario_name']}",
+        f"--path_out={args['path_out']}",
+        f"--geo_level_report={args['geo_level_report']}",
+        f"--report_type={','.join(args['report_type'])}",
+        f"--report_var={','.join(args['report_var'])}",
+        # Input data path
+        f"--price_data={input_path}",
+    ]
+    log.debug(command)
 
     def check_call(sector: str) -> pd.DataFrame:
         """Invoke the run_STURM.R script and return its output."""
         # Need to supply cwd= because the script uses R's getwd() to find others
-        subprocess.check_call(
-            [
-                "Rscript",
-                "run_STURM.R",
-                f"--sector={sector}",
-                f"--ssp={config.climate_scenario}",
-                f"--ssp={config.ssp}",
-            ],
-            cwd=config["code_dir"],
-        )
-
+        subprocess.check_call(command + [f"--sector={sector}"], cwd=config.code_dir)
         # Read output, then remove the file
-        output_path = temp_dir.joinpath(f"{sector}_sturm.csv")
-        result = pd.read_csv(output_path)
-        output_path.unlink()
+        of = config._output_path.joinpath(f"{sector}_sturm.csv")
+        result = pd.read_csv(of)
+        of.unlink()
 
         return result
 
