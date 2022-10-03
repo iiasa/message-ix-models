@@ -1,7 +1,9 @@
 """MESSAGEix-Transport."""
-from .utils import configure, read_config
+from .config import Config, DataSourceConfig
+from .utils import configure
 
 __all__ = [
+    "Config",
+    "DataSourceConfig",
     "configure",
-    "read_config",
 ]
