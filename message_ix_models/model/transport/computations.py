@@ -40,18 +40,16 @@ __all__ = [
     "distance_nonldv",
     "dummy_prices",
     "iea_eei_fv",
-    "_lambda",
     "logit",
     "nodes_ex_world",
     "nodes_world_agg",
     "pdt_per_capita",
     "price_units",
+    "quantity_from_config",
     "share_weight",
     "smooth",
-    "speed",
     "transport_check",
     "votm",
-    "whour",
 ]
 
 
@@ -223,11 +221,6 @@ def dummy_prices(gdp: Quantity) -> Quantity:
     shape = list(len(c[1]) for c in coords)
 
     return Quantity(xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km")
-
-
-def _lambda(config: dict) -> Quantity:
-    """Return (scalar) lambda parameter for transport mode share equations."""
-    return Quantity(config["transport"]["lambda"], units="")
 
 
 def logit(
@@ -406,6 +399,17 @@ def price_units(qty: Quantity) -> Quantity:
     return apply_units(qty, target)
 
 
+def quantity_from_config(
+    config: dict, name: str, dimensionality: Dict = None
+) -> Quantity:
+    if dimensionality:
+        raise NotImplementedError
+    result = getattr(config["transport"], name)
+    if not isinstance(result, Quantity):
+        result = as_quantity(result)
+    return result
+
+
 def share_weight(
     share: Quantity,
     gdp_ppp_cap: Quantity,
@@ -501,14 +505,6 @@ def smooth(qty: Quantity) -> Quantity:
     return apply_units(concat(r0, result.sel(y=y[1:-1]), r_m1), qty.units)
 
 
-def speed(config: dict) -> Quantity:
-    """Return travel speed [distance / time].
-
-    The returned Quantity has dimension ``t`` (technology).
-    """
-    return as_quantity(config["transport"]["speeds"])
-
-
 def transport_check(scenario: Scenario, ACT: Quantity) -> pd.Series:
     """Reporting computation for :func:`check`.
 
@@ -545,8 +541,3 @@ def votm(gdp_ppp_cap: Quantity) -> Quantity:
     result = 1 / (1 + np.exp((30 - gdp_ppp_cap) / 20))
     result.units = ""
     return result
-
-
-def whour(config: dict) -> Quantity:
-    """Return work duration [hours / person-year]."""
-    return as_quantity(config["transport"]["work hours"])
