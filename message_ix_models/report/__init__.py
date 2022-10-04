@@ -128,6 +128,16 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     return name
 
 
+def log_before(context, rep, key):
+    log.info(f"Prepare to report {'(DRY RUN)' if context.dry_run else ''}")
+    log.info(key)
+    log.log(
+        logging.INFO if (context.dry_run or context.verbose) else logging.DEBUG,
+        "\n" + rep.describe(key),
+    )
+    mark_time()
+
+
 def report(context: Context, *args, **kwargs):
     """Run complete reporting on a :class:`.message_ix.Scenario`.
 
@@ -198,13 +208,7 @@ def report(context: Context, *args, **kwargs):
 
     rep, key = prepare_reporter(context)
 
-    log.info(f"Prepare to report {'(DRY RUN)' if context.dry_run else ''}")
-    log.info(key)
-    log.log(
-        logging.INFO if (context.dry_run or context.verbose) else logging.DEBUG,
-        "\n" + rep.describe(key),
-    )
-    mark_time()
+    log_before(context, rep, key)
 
     if context.dry_run:
         return
