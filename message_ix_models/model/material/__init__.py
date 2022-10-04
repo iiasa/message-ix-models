@@ -372,6 +372,7 @@ def add_data_1(scenario, dry_run=False):
 
     log.info("done")
 
+
 def add_data_2(scenario, dry_run=False):
     """Populate `scenario` with MESSAGEix-Materials data."""
     # Information about `scenario`
