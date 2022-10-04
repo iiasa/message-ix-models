@@ -11,6 +11,8 @@ from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
 from .util import read_config
 
+context = read_config()
+
 
 def gen_data_methanol(scenario):
     dict1 = gen_data_meth_h2()
