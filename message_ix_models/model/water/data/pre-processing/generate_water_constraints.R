@@ -506,7 +506,8 @@ if( scn %in% c('sdg6') ){
 
 #### format OUTPUT ####
 cccc = dat.df
-
+#one can run also simply for a country
+# reg = 'ZMB'
 for(reg in c('R11','R12')){
   #### Make spatial####
   dat.spdf = cccc
