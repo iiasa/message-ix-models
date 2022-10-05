@@ -12,7 +12,7 @@ from typing import Optional, cast
 import ixmp
 import message_ix
 import pandas as pd
-from message_ix import Scenario
+from message_ix import Scenario, make_df
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import MESSAGE_DATA_PATH, identify_nodes, local_data_path
 from message_ix_models.util._logging import mark_time
@@ -121,9 +121,10 @@ def build_and_solve(context: Context) -> Scenario:
 
     # Data storage across iterations
     data = dict(
-        converged=False,
-        oscilation=False,
-        diff_log=list(),
+        converged=False,  # True if convergence reached at/before max_iterations
+        oscilation=False,  # TODO clarify what this is intended for
+        diff_log=list(),  # Log of price mean percent deviation, latest first
+        demand=pd.DataFrame(),  # Replaced by pre_solve()
     )
 
     # Either clone the base scenario to dest_scenario, or load an existing scenario
@@ -183,9 +184,9 @@ def build_and_solve(context: Context) -> Scenario:
     # Scenario.solve(…, callback=…) does not run the callback for the first time until
     # *after* MESSAGE(-MACRO) has solved, while the MESSAGE_Buildings linkage requires
     # that ACCESS (maybe) and STURM are run *before* MESSAGE. Thus invoke pre_solve()
-    # explicitly with iterations=-1.
+    # explicitly with iterations=0.
     mark_time()
-    data.update(iterations=-1)
+    data.update(iterations=0)
     pre_solve(scenario, context, data)
 
     mark_time()
@@ -207,7 +208,7 @@ def build_and_solve(context: Context) -> Scenario:
     scenario.solve(model=model, callback=_callback)
 
     # Handle non-convergence
-    if data["iterations"] > config.max_iterations and not data["converged"]:
+    if not data["converged"] and data["iterations"] == config.max_iterations > 1:
         # NB(PNK) use of cast() here may indicate that data should be a typed dataclass
         i = cast(int, data["iterations"])
         log.info(f"Not converged after {i} iterations!")
@@ -255,7 +256,7 @@ def pre_solve(scenario: Scenario, context, data):
     - Call :func:`.add_bio_backstop`.
     """
     config = context.buildings
-    first_iteration = data["iterations"] < 0
+    first_iteration = data["iterations"] == 0
 
     # Get prices from MESSAGE
     # On the first iteration, from the parent scenario; onwards, from the current
@@ -317,7 +318,7 @@ def pre_solve(scenario: Scenario, context, data):
         .query("year > 2010")
     )
 
-    # Run STURM. If first_iteration is False, sturm_c will be empty
+    # Run STURM. If first_iteration is False, sturm_c will be empty.
     sturm_r, sturm_c = sturm.run(context, prices, first_iteration)
 
     mark_time()
@@ -331,8 +332,9 @@ def pre_solve(scenario: Scenario, context, data):
     sturm_r = sturm_r[~sturm_r.commodity.str.fullmatch(expr)]
     sturm_c = sturm_c[~sturm_c.commodity.str.fullmatch(expr)]
 
-    # - Subset desired energy demands; concatenate together. sturm_c is empty after the
-    #   first iteration, so will contribute no rows.
+    # - Subset desired energy demands. sturm_c is empty after the
+    #   first iteration, so will contribute no rows
+    # - Concatenate.
     # - Set energy demand level to useful (although it is final) to be in line with 1 to
     #   1 technologies btw final and useful.
     expr = "(cool|heat|hotwater)"
@@ -415,14 +417,22 @@ def pre_solve(scenario: Scenario, context, data):
 
     # Add tax emissions from mitigation scenario if running a climate scenario and if
     # they are not already there
-    if (scenario.par("tax_emission").size == 0) and (config.climate_scenario != "BL"):
-        tax_emission_new = data["PRICE_EMISSION_ref"]
-        tax_emission_new.columns = scenario.par("tax_emission").columns
-        tax_emission_new["unit"] = "USD/tCO2"
-        scenario.add_par("tax_emission", tax_emission_new)
-
-    if "time_relative" not in scenario.set_list():
-        scenario.init_set("time_relative")
+    name = "tax_emission"
+    te = scenario.par(name)
+    if config.climate_scenario != "BL" and not len(te):
+        base = data["PRICE_EMISSION_ref"]
+        scenario.add_par(
+            name,
+            make_df(
+                name,
+                node=base["node"],
+                type_emission=base["emission"],
+                type_tec=base["technology"],
+                type_year=base["year"],
+                unit="USD/tCO2",
+                value=base["value"],
+            ),
+        )
 
     # Run MESSAGE
     scenario.commit(f"{__name__}.pre_solve()")
@@ -457,8 +467,8 @@ def log_data(config, data, demand, price, i: int):
     data["price_log"][f"lvl{i}"] = price["lvl"]
 
     # Write to file
-    data["price_log"].to_csv(config._output_path.joinpath("price-track.csv"))
     data["demand_log"].to_csv(config._output_path.joinpath("demand-track.csv"))
+    data["price_log"].to_csv(config._output_path.joinpath("price-track.csv"))
 
 
 def post_solve(scenario: Scenario, context, data):
@@ -487,15 +497,11 @@ def post_solve(scenario: Scenario, context, data):
     # Uncomment this for testing
     # diff = 0.0
 
-    if (
-        (iterations + 1 == config.max_iterations == 1)  # Once-through mode
-        or (diff < 5e-3)
-        or (iterations > 0 and diff_dd < 5e-3)
-    ):
+    if (diff < 5e-3) or (iterations > 0 and diff_dd < 5e-3):
         done = True
         data["converged"] = True
         log.info("Converged")
-    elif iterations > config.max_iterations:
+    elif iterations >= config.max_iterations:
         done = True
         data["converged"] = False
     elif abs(data["diff_log"][-2] - diff) < 1e-5:
