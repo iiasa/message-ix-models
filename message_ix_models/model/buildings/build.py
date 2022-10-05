@@ -210,6 +210,12 @@ def main(
     # Add floorspace unit
     scenario.platform.add_unit("Mm2/y", "mil. square meters by year")
 
+    try:
+        # TODO explain what this is for
+        scenario.init_set("time_relative")
+    except ValueError:
+        pass  # Already exists
+
     # Add new commodities and technologies
     # TODO use message_ix_model.build.apply_spec() pattern, like materials & transport
     scenario.add_set("commodity", BUILD_COMMODITIES)
