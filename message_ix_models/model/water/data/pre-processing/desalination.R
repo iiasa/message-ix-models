@@ -19,7 +19,7 @@ library(zoo)
 library(readxl)
 library(corrplot)
 library(plm)
-# library(car)
+library(car)
 # library(gghighlight)
 
 library(tidyverse)
@@ -217,7 +217,7 @@ gdp = read.csv('P:/ene.model/NEST/GDP/WB_GDP_2021/GDP_country_cleaned.csv') %>%
 
 gdp_historical<-read.csv("P:/ene.model/NEST/governance/governance_2021/input/navigate_ssp.csv") %>%
   filter(scenario=="WDI_2021", variable=="gdppc") %>%
-  rename(iso3=ï..region) %>%
+  rename(iso3=region) %>%
   select(-c(scenario, variable)) %>%
   pivot_longer(!iso3, names_to = "Year", values_to = "gdp") %>%
   mutate(year = as.numeric(gsub('X','',Year))) %>%
@@ -405,22 +405,22 @@ ggplot(pred1)+
 #### fixed effect test ####
 # 1) way
 # lm2 <- lm(log_desal ~ log_gdp + pol.stab + gov.eff + log_wsi + log_coast + factor(iso3) -1, data = master)
-lm2 <- lm(log_desal ~ log_gdp + gov + log_wsi + log_coast + factor(iso3) -1, data = master)
-summary(lm2)
-
-predictions2 = lm2 %>% predict()
-# remove countries that do not have enough data
-# BHS, HKG, MLT, PSE
-test.data2 = test.data %>% filter(!iso3 %in% c('BHS','HKG','MLT','PSE' ))
-predictions2 = lm2 %>% predict(test.data2)
-pred2 = test.data2 %>% bind_cols(prediction = predictions2)
-
-ggplot(pred2)+
-  geom_point(aes(x = log_desal,y = prediction, color = iso3))+
-  geom_abline()+
-  scale_x_continuous(limits = c(0,20))+
-  scale_y_continuous(limits = c(0,20))+
-  xlab('log desal cap')+ylab('predictions')
+# lm2 <- lm(log_desal ~ log_gdp + gov + log_wsi + log_coast + factor(iso3) -1, data = master)
+# summary(lm2)
+# 
+# predictions2 = lm2 %>% predict()
+# # remove countries that do not have enough data
+# # BHS, HKG, MLT, PSE
+# test.data2 = test.data %>% filter(!iso3 %in% c('BHS','HKG','MLT','PSE' ))
+# predictions2 = lm2 %>% predict(test.data2)
+# pred2 = test.data2 %>% bind_cols(prediction = predictions2)
+# 
+# ggplot(pred2)+
+#   geom_point(aes(x = log_desal,y = prediction, color = iso3))+
+#   geom_abline()+
+#   scale_x_continuous(limits = c(0,20))+
+#   scale_y_continuous(limits = c(0,20))+
+#   xlab('log desal cap')+ylab('predictions')
 
 # 2) way, with plm
 lm3 <- plm(log_desal ~ log_gdp + gov + log_wsi + log_coast,
@@ -615,8 +615,11 @@ ggplot(projected %>% filter( iso3 %in%  quantiles[quantiles$quant == 'q3_3',]$is
 ###########################
 
 #### TAKE MESSAGE REGION-BASIN structure ####
-reg = 'R11'
+reg = 'R11' # or R12 or a ISO3
 scen = 'SSP2'
+if (!reg %in% master$iso3){
+  print(paste0("ATTENTION ",reg," is not in the dataset, continue only if its is a non-country (e.g. R11)"))
+}
 basin_by_region.spdf = readOGR('P:/ene.model/NEST/delineation/data/delineated_basins_new',
                                paste0('basins_by_region_simpl_',reg), verbose=FALSE)
 row.names(basin_by_region.spdf@data) = 1:length(basin_by_region.spdf$BASIN)
@@ -652,6 +655,7 @@ basin_info = over(start.spdf,basin_by_region.spdf)
 country_info = over(start.spdf,countries.spdf)
 
 for (rcp in RCPs) {
+  print(paste0("RCP: ",rcp))
   if (rcp == '2p6'){
     nc = nc_open( paste0(data_path,'/water_scarcity/wsi_memean_ssp1_rcp4p5.nc'), verbose=FALSE)
     watstress.brick = brick( paste0(data_path,'/water_scarcity/wsi_memean_ssp1_rcp4p5.nc') )
@@ -703,7 +707,7 @@ for (rcp in RCPs) {
   # GDP
   gdp_proj<-read.csv("P:/ene.model/NEST/governance/governance_2021/input/navigate_ssp.csv") %>%
     filter(scenario=="SSP2", variable=="gdppc") %>%
-    rename(iso3=ï..region) %>%
+    rename(iso3=region) %>%
     select(-c(scenario, variable)) %>%
     pivot_longer(!iso3, names_to = "Year", values_to = "gdp") %>%
     mutate(year = as.numeric(gsub('X','',Year))) %>%
@@ -841,7 +845,7 @@ comp = comp %>%
 
 # output
 write.csv(comp %>% select(BCU_name,rcp,year,cap_km3_year),
-          'P:/ene.model/NEST/desalination/projected_desalination_potential_km3_year.csv',
+          paste0('P:/ene.model/NEST/desalination/projected_desalination_potential_km3_year_',reg,'.csv'),
           row.names = F)
 
 
@@ -907,5 +911,26 @@ hist_cap.out = hist_cap.out %>% left_join(high2020) %>%
   mutate(cap_km3_year = if_else(!is.na(Xhist),cap_km3_year / (Xhist * 1.05),cap_km3_year )) %>% 
   select(-Xhist)
 
-write.csv(hist_cap.out,'P:/ene.model/NEST/desalination/historical_capacity_desalination_km3_year.csv',
+write.csv(hist_cap.out,
+          paste0('P:/ene.model/NEST/desalination/historical_capacity_desalination_km3_year_',reg,'.csv'),
+          row.names = F)
+
+# for countries with no desalination"))
+hist_cap.out2 = data.frame(BCU_name = basin_by_region.spdf$BCU_name) %>% 
+  crossing(year = c(2010,2015)) %>% 
+  crossing(tec_type = c("membrane","distillation")) %>% 
+  mutate(cap_km3_year = 0)
+
+write.csv(hist_cap.out,
+          paste0('P:/ene.model/NEST/desalination/historical_capacity_desalination_km3_year_',reg,'.csv'),
+          row.names = F)
+
+# projection
+comp2 = data.frame(BCU_name = basin_by_region.spdf$BCU_name) %>% 
+  crossing(rcp = RCPs) %>% 
+  crossing(year = seq(2020, 2090, 5)) %>% 
+  mutate(cap_km3_year = 0.001)
+
+write.csv(comp2 %>% select(BCU_name,rcp,year,cap_km3_year),
+          paste0('P:/ene.model/NEST/desalination/projected_desalination_potential_km3_year_',reg,'.csv'),
           row.names = F)
