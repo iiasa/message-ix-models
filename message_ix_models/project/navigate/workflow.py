@@ -3,6 +3,7 @@ from pathlib import Path
 
 from message_ix import Scenario
 from message_ix_models import Context
+from message_ix_models.util import MESSAGE_DATA_PATH
 from message_ix_models.workflow import Workflow
 
 from .report import gen_config
@@ -15,9 +16,11 @@ def build_materials(context: Context, scenario: Scenario) -> Scenario:
     from message_data.model.material import build
 
     raise NotImplementedError(
-        f"""Requires code on the material-R12-rebase branch. Switch to that branch and run:
+        f"""Requires code on the material-R12-rebase branch.
 
-$ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data "./data" material build --tag=NAVIGATE
+Switch to that branch and run:
+
+$ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data "{MESSAGE_DATA_PATH}/data" material build --tag=NAVIGATE
 """  # noqa: E501
     )
 
@@ -33,24 +36,16 @@ def build_transport(context: Context, scenario: Scenario) -> Scenario:
 
 def build_buildings(context: Context, scenario: Scenario) -> Scenario:
     """Workflow steps 5–7."""
-    from message_data.model.buildings import cli
+    from message_data.model.buildings import Config, build_and_solve, sturm
 
-    # NB this invokes the CLI command function directly; preferably use a separate
-    #    function that is also called by the CLI
-    cli.build_and_solve(
-        context,
+    # Configure
+    context.buildings = Config(
         max_iterations=1,
         sturm_method="Rscript",
-        run_access=True,
-        navigate_scenario="baseline",
-        # Defaults
-        climate_scenario="BL",
+        run_access=False,
+        sturm_scenario=sturm.scenario_name(context.navigate_scenario),
     )
-
-    # The CLI command function returns nothing; load the scenario for use by subsequent
-    # steps
-    mp = context.get_platform()
-    return Scenario(mp, **context.dest_scenario)
+    return build_and_solve(context)
 
 
 def report(context: Context, scenario: Scenario) -> Scenario:
@@ -89,6 +84,8 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     config = gen_config(context, f1, f2)
     prep_submission.main(config)
 
+    return scenario
+
 
 def solve(context, scenario):
     scenario.solve()
@@ -98,6 +95,8 @@ def solve(context, scenario):
 def generate(context: Context) -> Workflow:
     wf = Workflow(context)
 
+    # Use the navigate_scenario setting, e.g. from the --scenario CLI option, to
+    # construct target scenario names
     s = context.navigate_scenario
 
     # Step 1
