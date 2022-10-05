@@ -103,15 +103,19 @@ class WorkflowStep:
             log.info(f"Clone to {repr(self.scenario_info)}")
             s = s.clone(**self.scenario_info, keep_solution=False)
 
-        # Invoke the callback. If it does not return, assume `s` contains the
-        # modifications
-        if self.action:
-            log.info(f"Execute {self.action!r}")
+        if not self.action:
+            return s
+
+        log.info(f"Execute {self.action!r}")
+        try:
+            # Invoke the callback
             result = self.action(context, s, **self.kwargs)
-            if result is None:
-                log.info("…nothing returned, continue with {s.url}")
-                result = s
-        else:
+        except Exception:
+            s.platform.close_db()  # Avoid locking the scenario
+            raise
+
+        if result is None:
+            log.info(f"…nothing returned, continue with {s.url}")
             result = s
 
         return result
