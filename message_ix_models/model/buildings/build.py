@@ -187,9 +187,8 @@ def main(
     scenario: message_ix.Scenario,
     demand: pd.DataFrame,
     prices: pd.DataFrame,
-    sturm_scenarios: pd.DataFrame,
-    comm_sturm_scenarios: pd.DataFrame,
-    first_iteration: bool,
+    sturm_r: pd.DataFrame,
+    sturm_c: pd.DataFrame,
 ):
     """Set up the structure and data for MESSAGE_Buildings on `scenario`.
 
@@ -197,8 +196,6 @@ def main(
     ----------
     scenario
         Scenario to set up.
-    info
-        Information about `scenario`.
     """
     info = ScenarioInfo(scenario)
 
@@ -292,7 +289,8 @@ def main(
     # TODO replace with an actual check so this code does *not* run on a non-materials
     #      base `scenario`
     if True:
-        materials(scenario, sturm_scenarios, comm_sturm_scenarios, first_iteration)
+        # Set up buildings-materials linkage
+        materials(scenario, sturm_r, sturm_c)
 
     # Create new technologies for building energy
 
@@ -355,10 +353,7 @@ def main(
 
 
 def materials(
-    scenario: message_ix.Scenario,
-    sturm_scenarios: pd.DataFrame,
-    comm_sturm_scenarios: pd.DataFrame,
-    first_iteration: bool,
+    scenario: message_ix.Scenario, sturm_r: pd.DataFrame, sturm_c: pd.DataFrame
 ) -> None:
     """Integrate MESSAGEix-Buildings with MESSAGEix-Materials.
 
@@ -375,9 +370,8 @@ def materials(
          ``l="end_of_life"``.
 
     2. Adjust existing demand parameter data at ``l="demand"`` for steel, aluminum, and
-       cement by subtracting the amounts from ``sturm_scenarios`` and
-       ``comm_sturm_scenarios`` (except when ``first_iteration`` is :data:`True`). The
-       demands are not reduced below zero.
+       cement by subtracting the amounts from ``sturm_r`` and ``sturm_c``. The demands
+       are not reduced below zero.
     """
     info = ScenarioInfo(scenario)
 
@@ -398,7 +392,7 @@ def materials(
         common.update(node_loc=n, node_origin=n, node_dest=n)
 
         # Select data for (rc, c, n)
-        df_mat = (sturm_scenarios if rc == "resid" else comm_sturm_scenarios).query(
+        df_mat = (sturm_r if rc == "resid" else sturm_c).query(
             f"commodity == '{c}' and node == '{n}'"
         )
 
@@ -437,11 +431,7 @@ def materials(
     demand_data = scenario.par("demand", {"level": "demand"})
 
     # Subtract building material demand from existing demands in scenario
-    for rc, base_data in (("resid", sturm_scenarios), ("comm", comm_sturm_scenarios)):
-        # Don't do this for commercial demands in the first iteration
-        if rc == "comm" and first_iteration:
-            continue
-
+    for rc, base_data in (("resid", sturm_r), ("comm", sturm_c)):
         # - Drop columns.
         # - Rename "value" to e.g. "demand_resid_const".
         # - Extract MESSAGEix-Materials commodity name from STURM commodity name.
