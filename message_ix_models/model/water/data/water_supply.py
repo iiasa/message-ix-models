@@ -288,12 +288,13 @@ def add_water_supply(context):
             ).pipe(broadcast, yv_ya_gw)
         )
 
-        inp.loc[
-            (inp["technology"].str.contains("extract_gw_fossil"))
-            & (inp["year_act"] == 2020)
-            & (inp["node_loc"] == "R11_SAS"),
-            "value",
-        ] *= 0.5
+        if context.type_reg == "global":
+            inp.loc[
+                (inp["technology"].str.contains("extract_gw_fossil"))
+                & (inp["year_act"] == 2020)
+                & (inp["node_loc"] == "R11_SAS"),
+                "value",
+            ] *= 0.5
 
         results["input"] = inp
 
@@ -452,7 +453,7 @@ def add_water_supply(context):
         df_sw = pd.read_csv(path1)
 
         # reading sample for assiging basins
-        PATH = private_data_path("water", "water_availability", "sample.csv")
+        PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.region}.csv")
         df_x = pd.read_csv(PATH)
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
