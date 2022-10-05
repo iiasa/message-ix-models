@@ -6,7 +6,9 @@ import ixmp
 from message_ix_models.util import MESSAGE_DATA_PATH
 
 ixmp.config.register(
-    "message buildings dir", Path, MESSAGE_DATA_PATH.parent.joinpath("buildings")
+    "message buildings dir",
+    Path,
+    cast(Path, MESSAGE_DATA_PATH).parent.joinpath("buildings"),
 )
 
 
@@ -23,6 +25,9 @@ class Config:
         :attr:`code_dir`) does not point to a valid location.
     """
 
+    #: Name or ID of STURM scenario to run.
+    sturm_scenario: str
+
     #: Climate scenario. Either "BL" or "2C".
     climate_scenario: str = "BL"
 
@@ -38,34 +43,31 @@ class Config:
     #: configuration file <ixmp:configuration>`; if not set, it defaults to a directory
     #: named "buildings" located in the same parent directory that contains
     #: :mod:`message_data`.
-    code_dir: Path = None
+    code_dir: Optional[Path] = None
 
     #: Maximum number of iterations of the ACCESS–STURM–MESSAGE loop. Set to 1 for
     #: once-through mode.
     max_iterations: int = 0
 
     #: Path for STURM output.
-    _output_path: Path = None
+    _output_path: Optional[Path] = None
 
-    #: Run the ACCESS model on every iteration (experimental/untested).
+    #: Run the ACCESS model on every iteration.
     run_access: bool = False
 
     #: Solve scenarios using :class:`.MESSAGE_MACRO` (:obj:`True`) or only
     #: :class:`.MESSAGE`.
     solve_macro: bool = False
 
-    #: No longer used
+    #: .. todo:: Document the meaning of this setting.
     ssp: str = "SSP2"
 
     #: Method for running STURM. See :func:`.sturm.run`.
-    sturm_method: str = None
-
-    #: STURM scenario to run.
-    sturm_scenario: str = None
+    sturm_method: str = "Rscript"
 
     def __post_init__(self):
         try:
-            self.code_dir = (
+            self.code_dir = self.code_dir or (
                 Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
             )
         except KeyError:
