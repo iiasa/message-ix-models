@@ -1,9 +1,10 @@
 from collections import namedtuple
 
+import numpy as np
 import pandas as pd
 import pytest
 
-from message_data.model.buildings import Config, sturm
+from message_data.model.buildings import Config, _mpd, sturm
 from message_data.model.buildings.build import get_spec, get_techs
 from message_data.model.buildings.report import (
     configure_legacy_reporting,
@@ -33,6 +34,22 @@ def test_configure_legacy_reporting(test_context):
     # Generated technology names are added to the appropriate sets
     assert ["meth_afofi"] == config["rc meth"]
     assert "h2_fc_AFOFI" in config["rc h2"]
+
+
+def test_mpd():
+    columns = ["node", "commodity", "year", "value"]
+
+    # Function runs
+    a = pd.DataFrame([["n1", "c1", "y1", 1.0]], columns=columns)
+    b = pd.DataFrame([["n1", "c1", "y1", 1.1]], columns=columns)
+    assert np.isclose(0.1 / (0.5 * 2.1), _mpd(a, b, "value"))
+
+    # Returns NaN for various empty data frames
+    c = pd.DataFrame()
+    d = pd.DataFrame(columns=columns)
+    assert np.isnan(_mpd(a, c, "value"))
+    assert np.isnan(_mpd(a, d, "value"))
+    assert np.isnan(_mpd(c, c, "value"))
 
 
 def test_report3(test_data_path):

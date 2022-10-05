@@ -11,6 +11,7 @@ from typing import Optional, cast
 
 import ixmp
 import message_ix
+import numpy as np
 import pandas as pd
 from message_ix import Scenario, make_df
 from message_ix_models import Context, ScenarioInfo
@@ -446,7 +447,11 @@ def pre_solve(scenario: Scenario, context, data):
 
 def _mpd(x: pd.DataFrame, y: pd.DataFrame, col: str) -> float:
     """Mean percentage deviation between columns `col` in `x` and `y`."""
-    df = x.merge(y, on=["node", "commodity", "year"]).query("year != 2110")
+    try:
+        df = x.merge(y, on=["node", "commodity", "year"]).query("year != 2110")
+    except KeyError:
+        # Either x or y is missing one of the columns; likely empty
+        return np.nan
     return (
         ((df[f"{col}_x"] - df[f"{col}_y"]) / (0.5 * (df[f"{col}_x"] + df[f"{col}_y"])))
         .abs()
