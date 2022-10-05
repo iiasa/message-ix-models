@@ -102,7 +102,7 @@ class WorkflowStep:
 
         if self.clone:
             # Clone to target model/scenario name
-            log.info(f"Clone to {model}/{scenario}".format(**self.scenario_info))
+            log.info("Clone to {model}/{scenario}".format(**self.scenario_info))
             s = s.clone(**self.scenario_info, keep_solution=False)
 
         if not self.action:
