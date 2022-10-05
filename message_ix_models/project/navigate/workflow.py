@@ -92,6 +92,7 @@ def report(context: Context, scenario: Scenario) -> Scenario:
 
 def solve(context, scenario):
     scenario.solve()
+    return scenario
 
 
 def generate(context: Context) -> Workflow:
@@ -118,6 +119,7 @@ def generate(context: Context) -> Workflow:
         "M built",
         build_transport,
         target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
+        clone=True,
     )
     # Step 4
     wf.add_step("MT solved", "MT built", solve)
