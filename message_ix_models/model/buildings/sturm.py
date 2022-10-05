@@ -2,7 +2,7 @@
 import gc
 import logging
 import subprocess
-from typing import Mapping, Optional, Tuple
+from typing import Mapping, MutableMapping, Tuple
 
 import pandas as pd
 from message_ix_models import Context
@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 def run(
     context: Context, prices: pd.DataFrame, first_iteration: bool
-) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM, either using rpy2 or via Rscript.
 
     Returns
@@ -20,8 +20,8 @@ def run(
     pd.DataFrame
         The `sturm_scenarios` data frame.
     pd.DataFrame or None
-        The `comm_sturm_scenarios` data frame if `first_iteration` is :obj:`True`;
-        otherwise :obj:`None`.
+        The `comm_sturm_scenarios` data frame. If `first_iteration` is :obj:`False`,
+        this is empty.
     """
     try:
         import rpy2  # noqa: F401
@@ -65,11 +65,10 @@ def run(
 
 
 def _sturm_rpy2(
-    context: Context, prices: pd.DataFrame, args: Mapping, first_iteration: bool
-) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+    context: Context, prices: pd.DataFrame, args: MutableMapping, first_iteration: bool
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM using :mod:`rpy2`."""
     import rpy2.robjects as ro
-    import rpy2.situation
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
 
@@ -77,7 +76,7 @@ def _sturm_rpy2(
 
     # Source R code
     r = ro.r
-    r.source(str(rcode_path.joinpath("F10_scenario_runs_MESSAGE_2100.R")))
+    r.source(str(args["path_rcode"].joinpath("F10_scenario_runs_MESSAGE_2100.R")))
 
     with localconverter(ro.default_converter + pandas2ri.converter):
         # Residential
@@ -85,7 +84,9 @@ def _sturm_rpy2(
         # Commercial
         # NOTE: run only on the first iteration!
         comm_sturm_scenarios = (
-            r.run_scenario(sector="comm", **args) if first_iteration else None
+            r.run_scenario(sector="comm", **args)
+            if first_iteration
+            else pd.DataFrame(columns=sturm_scenarios.index)
         )
 
     del r
@@ -96,7 +97,7 @@ def _sturm_rpy2(
 
 def _sturm_rscript(
     context: Context, prices: pd.DataFrame, args: Mapping, first_iteration: bool
-) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Invoke STURM using :mod:`subprocess` and :program:`Rscript`."""
     # Retrieve info from the Context object
     config = context.buildings
@@ -137,7 +138,11 @@ def _sturm_rscript(
     sturm_scenarios = check_call(sector="resid")
 
     # Commercial
-    comm_sturm_scenarios = check_call(sector="comm") if first_iteration else None
+    comm_sturm_scenarios = (
+        check_call(sector="comm")
+        if first_iteration
+        else pd.DataFrame(columns=sturm_scenarios.columns)
+    )
 
     input_path.unlink()
     temp_dir.rmdir()
