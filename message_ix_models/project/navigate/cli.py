@@ -142,7 +142,7 @@ def run(context, dry_run, truncate_step, target_step):
         if truncate_step:
             raise
 
-    log.info(f"Execute workflow:\n{wf._computer.describe(target_step)})")
+    log.info(f"Execute workflow:\n{wf._computer.describe(target_step)}")
 
     if dry_run:
         return
