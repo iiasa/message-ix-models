@@ -85,7 +85,7 @@ class WorkflowStep:
             # No base scenario
             if self.action:
                 raise RuntimeError(
-                    "Workflow step with action {self.action!r} requires a base scenario"
+                    f"Step with action {self.action!r} requires a base scenario"
                 )
             # Use Context to retrieve the identified scenario
             context.platform_info.update(self.platform_info)
@@ -97,10 +97,12 @@ class WorkflowStep:
             context.set_scenario(scenario)
             context.dest_scenario.update(self.scenario_info)
             s = scenario
+            log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
+            log.info(f" with context.dest_scenario={context.dest_scenario}")
 
         if self.clone:
             # Clone to target model/scenario name
-            log.info(f"Clone to {repr(self.scenario_info)}")
+            log.info(f"Clone to {model}/{scenario}".format(**self.scenario_info))
             s = s.clone(**self.scenario_info, keep_solution=False)
 
         if not self.action:
