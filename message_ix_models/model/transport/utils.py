@@ -24,7 +24,7 @@ def configure(
 
 
 def input_commodity_level(
-    df: pd.DataFrame, default_level=None, context: Context = None
+    context: Context, df: pd.DataFrame, default_level=None
 ) -> pd.DataFrame:
     """Add input 'commodity' and 'level' to `df` based on 'technology'."""
     # Retrieve transport technology information from configuration
