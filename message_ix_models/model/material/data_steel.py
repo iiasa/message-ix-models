@@ -21,6 +21,7 @@ from message_ix_models.util import (
     same_node,
     copy_column,
     add_par_data,
+    private_data_path,
 )
 from . import get_spec
 
@@ -48,18 +49,43 @@ def gen_mock_demand_steel(scenario):
         nodes.remove("R12_GLB")
         sheet_n = "data_R12"
         region_set = "R12_"
-        d = [20.04, 12.08, 56.55, 56.5, 64.94, 54.26, 97.76, 91.3, 65.2, 164.28, 131.95, 980.1]
+        d = [
+            20.04,
+            12.08,
+            56.55,
+            56.5,
+            64.94,
+            54.26,
+            97.76,
+            91.3,
+            65.2,
+            164.28,
+            131.95,
+            980.1,
+        ]
 
     else:
         nodes.remove("R11_GLB")
         sheet_n = "data_R11"
         region_set = "R11_"
-        d = [20.04, 992.18, 56.55, 56.5, 64.94, 54.26, 97.76, 91.3, 65.2, 164.28, 131.95]
+        d = [
+            20.04,
+            992.18,
+            56.55,
+            56.5,
+            64.94,
+            54.26,
+            97.76,
+            91.3,
+            65.2,
+            164.28,
+            131.95,
+        ]
         # MEA change from 39 to 9 to make it feasible (coal supply bound)
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        context.get_local_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        private_data_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 

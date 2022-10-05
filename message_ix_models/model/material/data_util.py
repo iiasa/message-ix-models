@@ -9,6 +9,8 @@ from .util import read_config
 import re
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import private_data_path
+
 from message_data.tools.utilities.get_optimization_years import (
     main as get_optimization_years,
 )
@@ -22,48 +24,56 @@ def load_GDP_COVID():
     # Obtain 2015 and 2020 GDP values from NGFS baseline. These values are COVID corrected. (GDP MER)
 
     mp = ixmp.Platform()
-    scen_NGFS = message_ix.Scenario(mp,'MESSAGEix-GLOBIOM 1.1-M-R12-NGFS','baseline', cache=True)
-    gdp_covid_2015 = scen_NGFS.par('gdp_calibrate', filters = {'year': 2015})
+    scen_NGFS = message_ix.Scenario(
+        mp, "MESSAGEix-GLOBIOM 1.1-M-R12-NGFS", "baseline", cache=True
+    )
+    gdp_covid_2015 = scen_NGFS.par("gdp_calibrate", filters={"year": 2015})
 
-    gdp_covid_2020 = scen_NGFS.par('gdp_calibrate', filters = {'year': 2020})
-    gdp_covid_2020 = gdp_covid_2020.drop(['year', 'unit'],axis = 1)
+    gdp_covid_2020 = scen_NGFS.par("gdp_calibrate", filters={"year": 2020})
+    gdp_covid_2020 = gdp_covid_2020.drop(["year", "unit"], axis=1)
 
     # Obtain SSP2 GDP growth rates after 2020 (from ENGAGE baseline)
 
-    f_name = 'iamc_db ENGAGE baseline GDP PPP.xlsx'
+    f_name = "iamc_db ENGAGE baseline GDP PPP.xlsx"
 
-    gdp_ssp2 = pd.read_excel(context.get_local_path('data','material', f_name),
-                                                    sheet_name = 'data_R12')
-    gdp_ssp2 = gdp_ssp2[gdp_ssp2['Scenario'] == 'baseline']
-    regions = 'R12_' + gdp_ssp2['Region']
-    gdp_ssp2 = gdp_ssp2.drop(['Model','Scenario','Unit','Region','Variable','Notes'],axis = 1)
+    gdp_ssp2 = pd.read_excel(
+        context.get_local_path("data", "material", f_name), sheet_name="data_R12"
+    )
+    gdp_ssp2 = gdp_ssp2[gdp_ssp2["Scenario"] == "baseline"]
+    regions = "R12_" + gdp_ssp2["Region"]
+    gdp_ssp2 = gdp_ssp2.drop(
+        ["Model", "Scenario", "Unit", "Region", "Variable", "Notes"], axis=1
+    )
     gdp_ssp2 = gdp_ssp2.loc[:, 2020:]
-    gdp_ssp2 = gdp_ssp2.divide(gdp_ssp2[2020], axis = 0)
-    gdp_ssp2['node'] = regions
-    gdp_ssp2 = gdp_ssp2[gdp_ssp2['node'] != 'R12_World']
+    gdp_ssp2 = gdp_ssp2.divide(gdp_ssp2[2020], axis=0)
+    gdp_ssp2["node"] = regions
+    gdp_ssp2 = gdp_ssp2[gdp_ssp2["node"] != "R12_World"]
 
     # Multiply 2020 COVID corrrected values with SSP2 growth rates
 
-    df_new = pd.DataFrame(columns = ['node','year','value'])
+    df_new = pd.DataFrame(columns=["node", "year", "value"])
 
     for ind in gdp_ssp2.index:
 
-        df_temp = pd.DataFrame(columns = ['node','year','value'])
-        region = gdp_ssp2.loc[ind, 'node']
-        mult_value = gdp_covid_2020.loc[gdp_covid_2020['node']== region, 'value'].values[0]
+        df_temp = pd.DataFrame(columns=["node", "year", "value"])
+        region = gdp_ssp2.loc[ind, "node"]
+        mult_value = gdp_covid_2020.loc[
+            gdp_covid_2020["node"] == region, "value"
+        ].values[0]
         temp = gdp_ssp2.loc[ind, 2020:2110] * mult_value
         region_list = [region] * temp.size
 
-        df_temp['node'] = region_list
-        df_temp['year'] = temp.index
-        df_temp['value'] = temp.values
+        df_temp["node"] = region_list
+        df_temp["year"] = temp.index
+        df_temp["value"] = temp.values
 
         df_new = pd.concat([df_new, df_temp])
 
-    df_new['unit'] = 'T$'
-    df_new = pd.concat([df_new,gdp_covid_2015])
+    df_new["unit"] = "T$"
+    df_new = pd.concat([df_new, gdp_covid_2015])
 
     return df_new
+
 
 def add_macro_COVID(scen, filename, check_converge=False):
 
@@ -72,7 +82,7 @@ def add_macro_COVID(scen, filename, check_converge=False):
     nodes = info.N
 
     # Excel file for calibration data
-    xls_file = os.path.join('P:', 'ene.model', 'MACRO', 'python', filename)
+    xls_file = os.path.join("P:", "ene.model", "MACRO", "python", filename)
 
     # Making a dictionary from the MACRO Excel file
     xls = pd.ExcelFile(xls_file)
@@ -84,20 +94,20 @@ def add_macro_COVID(scen, filename, check_converge=False):
     df_gdp = load_GDP_COVID()
 
     # substitute the gdp_calibrate
-    parname = 'gdp_calibrate'
+    parname = "gdp_calibrate"
 
     # keep the historical GDP to pass the GDP check at add_macro()
     df_gdphist = data[parname]
     df_gdphist = df_gdphist.loc[df_gdphist.year < info.y0]
     data[parname] = df_gdphist.append(
-        df_gdp.loc[df_gdp.year >= info.y0],
-        ignore_index=True
+        df_gdp.loc[df_gdp.year >= info.y0], ignore_index=True
     )
 
     # Calibration
     scen = scen.add_macro(data, check_convergence=check_converge)
 
     return scen
+
 
 def modify_demand_and_hist_activity(scen):
     """Take care of demand changes due to the introduction of material parents
@@ -128,7 +138,7 @@ def modify_demand_and_hist_activity(scen):
         region_name_CHN = ""
 
     df = pd.read_excel(
-        context.get_local_path("material", fname), sheet_name=sheet_n, usecols="A:F"
+        private_data_path("material", fname), sheet_name=sheet_n, usecols="A:F"
     )
 
     # Filter the necessary variables
@@ -433,7 +443,7 @@ def add_emission_accounting(scen):
             | ("aluminum" in i)
             | ("petro" in i)
             | ("cement" in i)
-            | ('ref' in i)
+            | ("ref" in i)
         )
     ]
     tec_list_materials.remove("refrigerant_recovery")
@@ -460,13 +470,16 @@ def add_emission_accounting(scen):
     # Add thermal industry technologies to CO2_ind relation
 
     relation_activity_furnaces = scen.par(
-    "emission_factor", filters={"emission": 'CO2_industry',
-                                "technology": tec_list_materials})
-    relation_activity_furnaces['relation'] = 'CO2_ind'
+        "emission_factor",
+        filters={"emission": "CO2_industry", "technology": tec_list_materials},
+    )
+    relation_activity_furnaces["relation"] = "CO2_ind"
     relation_activity_furnaces["node_rel"] = relation_activity_furnaces["node_loc"]
     relation_activity_furnaces.drop(["year_vtg", "emission"], axis=1, inplace=True)
     relation_activity_furnaces["year_rel"] = relation_activity_furnaces["year_act"]
-    relation_activity_furnaces = relation_activity_furnaces[~relation_activity_furnaces['technology'].str.contains('_refining')]
+    relation_activity_furnaces = relation_activity_furnaces[
+        ~relation_activity_furnaces["technology"].str.contains("_refining")
+    ]
 
     scen.check_out()
     scen.add_par("relation_activity", relation_activity)
@@ -476,13 +489,13 @@ def add_emission_accounting(scen):
     # Add refinery technologies to CO2_cc
 
     relation_activity_ref = scen.par(
-    "emission_factor", filters={"emission": 'CO2_transformation',
-                                "technology": tec_list_materials})
-    relation_activity_ref['relation'] = 'CO2_cc'
+        "emission_factor",
+        filters={"emission": "CO2_transformation", "technology": tec_list_materials},
+    )
+    relation_activity_ref["relation"] = "CO2_cc"
     relation_activity_ref["node_rel"] = relation_activity_ref["node_loc"]
     relation_activity_ref.drop(["year_vtg", "emission"], axis=1, inplace=True)
     relation_activity_ref["year_rel"] = relation_activity_ref["year_act"]
-
 
     scen.check_out()
     scen.add_par("relation_activity", relation_activity)
@@ -491,73 +504,96 @@ def add_emission_accounting(scen):
     scen.commit("Emissions accounting for industry technologies added.")
 
     # Add feedstock using technologies to CO2_feedstocks
-    nodes =    scen.par("relation_activity", filters = {'relation':'CO2_feedstocks'})["node_rel"].unique()
-    years =    scen.par("relation_activity", filters = {'relation':'CO2_feedstocks'})["year_rel"].unique()
+    nodes = scen.par("relation_activity", filters={"relation": "CO2_feedstocks"})[
+        "node_rel"
+    ].unique()
+    years = scen.par("relation_activity", filters={"relation": "CO2_feedstocks"})[
+        "year_rel"
+    ].unique()
 
     for n in nodes:
-        for t in ['steam_cracker_petro','gas_processing_petro']:
-            for m in ['atm_gasoil', 'vacuum_gasoil', 'naphtha']:
-                if t == 'steam_cracker_petro':
-                    if (m == 'atm_gasoil') | (m == 'vacuum_gasoil'):
+        for t in ["steam_cracker_petro", "gas_processing_petro"]:
+            for m in ["atm_gasoil", "vacuum_gasoil", "naphtha"]:
+                if t == "steam_cracker_petro":
+                    if (m == "atm_gasoil") | (m == "vacuum_gasoil"):
                         # fueloil emission factor * input
                         val = 0.665 * 1.17683105
                     else:
                         val = 0.665 * 1.537442922
 
-                    co2_feedstocks = pd.DataFrame({'relation': 'CO2_feedstocks',
-                                  'node_rel': n,
-                                  'year_rel': years,
-                                  'node_loc': n,
-                                  'technology': t,
-                                  'year_act': years,
-                                  'mode': m,
-                                  'value': val,
-                                  'unit': 't'})
+                    co2_feedstocks = pd.DataFrame(
+                        {
+                            "relation": "CO2_feedstocks",
+                            "node_rel": n,
+                            "year_rel": years,
+                            "node_loc": n,
+                            "technology": t,
+                            "year_act": years,
+                            "mode": m,
+                            "value": val,
+                            "unit": "t",
+                        }
+                    )
                 else:
                     # gas emission factor * gas input
                     val = 0.482 * 1.331811263
 
-                    co2_feedstocks = pd.DataFrame({'relation': 'CO2_feedstocks',
-                                  'node_rel': n,
-                                  'year_rel': years,
-                                  'node_loc': n,
-                                  'technology': t,
-                                  'year_act': years,
-                                  'mode': 'M1',
-                                  'value': val,
-                                  'unit': 't'})
+                    co2_feedstocks = pd.DataFrame(
+                        {
+                            "relation": "CO2_feedstocks",
+                            "node_rel": n,
+                            "year_rel": years,
+                            "node_loc": n,
+                            "technology": t,
+                            "year_act": years,
+                            "mode": "M1",
+                            "value": val,
+                            "unit": "t",
+                        }
+                    )
                 scen.check_out()
-                scen.add_par('relation_activity', co2_feedstocks)
-                scen.commit('co2_feedstocks updated')
+                scen.add_par("relation_activity", co2_feedstocks)
+                scen.commit("co2_feedstocks updated")
 
     # Correct CF4 Emission relations
     # Remove transport related technologies from CF4_Emissions
 
     scen.check_out()
 
-    CF4_trp_Emissions = scen.par("relation_activity", filters = {"relation": "CF4_Emission"})
+    CF4_trp_Emissions = scen.par(
+        "relation_activity", filters={"relation": "CF4_Emission"}
+    )
     list_tec_trp = [l for l in CF4_trp_Emissions["technology"].unique() if "trp" in l]
-    CF4_trp_Emissions = CF4_trp_Emissions[CF4_trp_Emissions["technology"].isin(list_tec_trp)]
+    CF4_trp_Emissions = CF4_trp_Emissions[
+        CF4_trp_Emissions["technology"].isin(list_tec_trp)
+    ]
 
-    scen.remove_par("relation_activity",CF4_trp_Emissions)
+    scen.remove_par("relation_activity", CF4_trp_Emissions)
 
     # Remove transport related technologies from CF4_alm_red and add aluminum tecs.
 
-    CF4_red = scen.par("relation_activity", filters = {"relation": "CF4_alm_red"})
+    CF4_red = scen.par("relation_activity", filters={"relation": "CF4_alm_red"})
     list_tec_trp = [l for l in CF4_red["technology"].unique() if "trp" in l]
     CF4_red = CF4_red[CF4_red["technology"].isin(list_tec_trp)]
 
-    scen.remove_par("relation_activity",CF4_red)
+    scen.remove_par("relation_activity", CF4_red)
 
-    CF4_red_add = scen.par("emission_factor", filters = {"technology": ["soderberg_aluminum","prebake_aluminum"], "emission":"CF4"})
-    CF4_red_add.drop(["year_vtg","emission"], axis = 1, inplace = True)
+    CF4_red_add = scen.par(
+        "emission_factor",
+        filters={
+            "technology": ["soderberg_aluminum", "prebake_aluminum"],
+            "emission": "CF4",
+        },
+    )
+    CF4_red_add.drop(["year_vtg", "emission"], axis=1, inplace=True)
     CF4_red_add["relation"] = "CF4_alm_red"
     CF4_red_add["unit"] = "???"
     CF4_red_add["year_rel"] = CF4_red_add["year_act"]
     CF4_red_add["node_rel"] = CF4_red_add["node_loc"]
 
-    scen.add_par("relation_activity",CF4_red_add)
+    scen.add_par("relation_activity", CF4_red_add)
     scen.commit("CF4 relations corrected.")
+
 
 def add_elec_lowerbound_2020(scen):
 
@@ -567,101 +603,203 @@ def add_elec_lowerbound_2020(scen):
 
     context = read_config()
 
-    input_residual_electricity = scen.par('input',filters={"technology":
-                        "sp_el_I", "year_vtg": "2020", "year_act": "2020"})
+    input_residual_electricity = scen.par(
+        "input",
+        filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"},
+    )
 
     # read processed final energy data from IEA extended energy balances
     # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
 
-    final = pd.read_csv(context.get_local_path("material", 'residual_industry_2019.csv'))
+    final = pd.read_csv(private_data_path("material", "residual_industry_2019.csv"))
 
     # downselect needed fuels and sectors
-    final_residual_electricity = final.query('MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"')
+    final_residual_electricity = final.query(
+        'MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"'
+    )
 
     # join final energy data from IEA energy balances and input coefficients
     # from final-to-useful technologies from MESSAGEix
-    bound_residual_electricity = pd.merge(input_residual_electricity,
-    final_residual_electricity, left_on = "node_loc",
-    right_on = "MESSAGE_region", how = "inner")
+    bound_residual_electricity = pd.merge(
+        input_residual_electricity,
+        final_residual_electricity,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
 
     # derive useful energy values by dividing final energy by
     # input coefficient from final-to-useful technologies
-    bound_residual_electricity["value"] = bound_residual_electricity["Value"] / bound_residual_electricity["value"]
+    bound_residual_electricity["value"] = (
+        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
+    )
 
     # downselect dataframe columns for MESSAGEix parameters
-    bound_residual_electricity = bound_residual_electricity.filter(items=['node_loc',
-    'technology', 'year_act', 'mode', 'time', 'value', 'unit_x'])
+    bound_residual_electricity = bound_residual_electricity.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
     # rename columns if necessary
-    bound_residual_electricity.columns = ['node_loc', 'technology', 'year_act',
-                                            'mode', 'time', 'value', 'unit']
+    bound_residual_electricity.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
 
     # Decrease 20% to aviod zero prices (the issue continiues otherwise)
-    bound_residual_electricity['value'] = bound_residual_electricity['value'] * 0.8
-    bound_residual_electricity = bound_residual_electricity[bound_residual_electricity['node_loc'] == 'R12_CHN']
+    bound_residual_electricity["value"] = bound_residual_electricity["value"] * 0.8
+    bound_residual_electricity = bound_residual_electricity[
+        bound_residual_electricity["node_loc"] == "R12_CHN"
+    ]
 
     scen.check_out()
 
     # add parameter dataframes to ixmp
-    scen.add_par('bound_activity_lo', bound_residual_electricity)
+    scen.add_par("bound_activity_lo", bound_residual_electricity)
 
     # Remove the previous bounds
-    remove_par_lo = scen.par('growth_activity_lo', filters = {'technology':'sp_el_I','year_act':2020,'node_loc':'R12_CHN'})
-    scen.remove_par('growth_activity_lo',remove_par_lo)
+    remove_par_lo = scen.par(
+        "growth_activity_lo",
+        filters={"technology": "sp_el_I", "year_act": 2020, "node_loc": "R12_CHN"},
+    )
+    scen.remove_par("growth_activity_lo", remove_par_lo)
 
     scen.commit("added lower bound for activity of residual electricity technologies")
 
 
 def add_coal_lowerbound_2020(sc):
-    '''Set lower bounds for coal and i_spec as a calibration for 2020'''
+    """Set lower bounds for coal and i_spec as a calibration for 2020"""
 
     context = read_config()
-    final_resid  = pd.read_csv(context.get_local_path("material", "residual_industry_2019.csv"))
+    final_resid = pd.read_csv(
+        private_data_path("material", "residual_industry_2019.csv")
+    )
 
     # read input parameters for relevant technology/commodity combinations for converting betwen final and useful energy
-    input_residual_coal = sc.par('input',filters={"technology": "coal_i", "year_vtg": "2020", "year_act": "2020"})
-    input_cement_coal = sc.par('input',filters={"technology": "furnace_coal_cement", "year_vtg": "2020", "year_act": "2020", "mode": "high_temp"})
-    input_residual_electricity = sc.par('input',filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"})
+    input_residual_coal = sc.par(
+        "input",
+        filters={"technology": "coal_i", "year_vtg": "2020", "year_act": "2020"},
+    )
+    input_cement_coal = sc.par(
+        "input",
+        filters={
+            "technology": "furnace_coal_cement",
+            "year_vtg": "2020",
+            "year_act": "2020",
+            "mode": "high_temp",
+        },
+    )
+    input_residual_electricity = sc.par(
+        "input",
+        filters={"technology": "sp_el_I", "year_vtg": "2020", "year_act": "2020"},
+    )
 
     # downselect needed fuels and sectors
-    final_residual_coal = final_resid.query('MESSAGE_fuel=="coal" & MESSAGE_sector=="industry_residual"')
-    final_cement_coal = final_resid.query('MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"')
-    final_residual_electricity = final_resid.query('MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"')
+    final_residual_coal = final_resid.query(
+        'MESSAGE_fuel=="coal" & MESSAGE_sector=="industry_residual"'
+    )
+    final_cement_coal = final_resid.query(
+        'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
+    )
+    final_residual_electricity = final_resid.query(
+        'MESSAGE_fuel=="electr" & MESSAGE_sector=="industry_residual"'
+    )
 
     # join final energy data from IEA energy balances and input coefficients from final-to-useful technologies from MESSAGEix
-    bound_coal = pd.merge(input_residual_coal, final_residual_coal, left_on = "node_loc", right_on = "MESSAGE_region", how = "inner")
-    bound_cement_coal = pd.merge(input_cement_coal, final_cement_coal, left_on = "node_loc", right_on = "MESSAGE_region", how = "inner")
-    bound_residual_electricity = pd.merge(input_residual_electricity, final_residual_electricity, left_on = "node_loc", right_on = "MESSAGE_region", how = "inner")
+    bound_coal = pd.merge(
+        input_residual_coal,
+        final_residual_coal,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+    bound_cement_coal = pd.merge(
+        input_cement_coal,
+        final_cement_coal,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+    bound_residual_electricity = pd.merge(
+        input_residual_electricity,
+        final_residual_electricity,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
 
     # derive useful energy values by dividing final energy by input coefficient from final-to-useful technologies
     bound_coal["value"] = bound_coal["Value"] / bound_coal["value"]
     bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
-    bound_residual_electricity["value"] = bound_residual_electricity["Value"] / bound_residual_electricity["value"]
+    bound_residual_electricity["value"] = (
+        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
+    )
 
     # downselect dataframe columns for MESSAGEix parameters
-    bound_coal = bound_coal.filter(items=['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit_x'])
-    bound_cement_coal = bound_cement_coal.filter(items=['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit_x'])
-    bound_residual_electricity = bound_residual_electricity.filter(items=['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit_x'])
+    bound_coal = bound_coal.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+    bound_cement_coal = bound_cement_coal.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+    bound_residual_electricity = bound_residual_electricity.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
 
     # rename columns if necessary
-    bound_coal.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit']
-    bound_cement_coal.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit']
-    bound_residual_electricity.columns = ['node_loc', 'technology', 'year_act', 'mode', 'time', 'value', 'unit']
+    bound_coal.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+    bound_cement_coal.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+    bound_residual_electricity.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
 
     # (Artificially) lower bounds when i_spec act is too close to the bounds (avoid 0-price for macro calibration)
     more = ["R12_MEA", "R12_EEU", "R12_SAS", "R12_PAS"]
     # import pdb; pdb.set_trace()
-    bound_residual_electricity.loc[bound_residual_electricity.node_loc.isin(["R12_PAO"]), 'value'] *= 0.80
-    bound_residual_electricity.loc[bound_residual_electricity.node_loc.isin(more), 'value'] *= 0.85
+    bound_residual_electricity.loc[
+        bound_residual_electricity.node_loc.isin(["R12_PAO"]), "value"
+    ] *= 0.80
+    bound_residual_electricity.loc[
+        bound_residual_electricity.node_loc.isin(more), "value"
+    ] *= 0.85
 
     sc.check_out()
 
     # add parameter dataframes to ixmp
-    sc.add_par('bound_activity_lo', bound_coal)
-    sc.add_par('bound_activity_lo', bound_cement_coal)
-    sc.add_par('bound_activity_lo', bound_residual_electricity)
+    sc.add_par("bound_activity_lo", bound_coal)
+    sc.add_par("bound_activity_lo", bound_cement_coal)
+    sc.add_par("bound_activity_lo", bound_residual_electricity)
 
     # commit scenario to ixmp backend
-    sc.commit("added lower bound for activity of residual industrial coal and cement coal furnace technologies and adjusted 2020 residual industrial electricity demand")
+    sc.commit(
+        "added lower bound for activity of residual industrial coal and cement coal furnace technologies and adjusted 2020 residual industrial electricity demand"
+    )
+
 
 def read_sector_data(scenario, sectname):
 
@@ -682,7 +820,8 @@ def read_sector_data(scenario, sectname):
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        context.get_local_path("material", context.datafile), sheet_name=sheet_n,
+        private_data_path("material", context.datafile),
+        sheet_name=sheet_n,
     )
 
     # Clean the data
@@ -725,6 +864,7 @@ def read_sector_data(scenario, sectname):
 
     return data_df
 
+
 # Add the relevant ccs technologies to the co2_trans_disp and bco2_trans_disp
 # relations
 def add_ccs_technologies(scen):
@@ -735,34 +875,40 @@ def add_ccs_technologies(scen):
     # The relation coefficients for CO2_Emision and bco2_trans_disp and
     # co2_trans_disp are both MtC. The emission factor for CCS add_ccs_technologies
     # are specified in MtC as well.
-    bco2_trans_relation  = scen.par('emission_factor',
-                                filters = {'technology':'biomass_NH3_ccs',
-                                'emission':'CO2'})
-    co2_trans_relation =  scen.par('emission_factor',
-                                filters = {'technology':['clinker_dry_ccs_cement',
-                                                         'clinker_wet_ccs_cement',
-                                                          'gas_NH3_ccs',
-                                                           'coal_NH3_ccs',
-                                                           'fueloil_NH3_ccs'],
-                                                           'emission':'CO2'})
+    bco2_trans_relation = scen.par(
+        "emission_factor", filters={"technology": "biomass_NH3_ccs", "emission": "CO2"}
+    )
+    co2_trans_relation = scen.par(
+        "emission_factor",
+        filters={
+            "technology": [
+                "clinker_dry_ccs_cement",
+                "clinker_wet_ccs_cement",
+                "gas_NH3_ccs",
+                "coal_NH3_ccs",
+                "fueloil_NH3_ccs",
+            ],
+            "emission": "CO2",
+        },
+    )
 
-    bco2_trans_relation.drop(['year_vtg','emission','unit'], axis = 1,
-                                                             inplace = True)
-    bco2_trans_relation['relation'] = 'bco2_trans_disp'
-    bco2_trans_relation['node_rel'] = bco2_trans_relation['node_loc']
-    bco2_trans_relation['year_rel'] = bco2_trans_relation['year_act']
-    bco2_trans_relation['unit'] = '???'
+    bco2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
+    bco2_trans_relation["relation"] = "bco2_trans_disp"
+    bco2_trans_relation["node_rel"] = bco2_trans_relation["node_loc"]
+    bco2_trans_relation["year_rel"] = bco2_trans_relation["year_act"]
+    bco2_trans_relation["unit"] = "???"
 
-    co2_trans_relation.drop(['year_vtg','emission','unit'], axis = 1, inplace = True)
-    co2_trans_relation['relation'] = 'co2_trans_disp'
-    co2_trans_relation['node_rel'] = co2_trans_relation['node_loc']
-    co2_trans_relation['year_rel'] = co2_trans_relation['year_act']
-    co2_trans_relation['unit'] = '???'
+    co2_trans_relation.drop(["year_vtg", "emission", "unit"], axis=1, inplace=True)
+    co2_trans_relation["relation"] = "co2_trans_disp"
+    co2_trans_relation["node_rel"] = co2_trans_relation["node_loc"]
+    co2_trans_relation["year_rel"] = co2_trans_relation["year_act"]
+    co2_trans_relation["unit"] = "???"
 
     scen.check_out()
-    scen.add_par('relation_activity', bco2_trans_relation)
-    scen.add_par('relation_activity', co2_trans_relation)
-    scen.commit('New CCS technologies added to the CO2 accounting relations.')
+    scen.add_par("relation_activity", bco2_trans_relation)
+    scen.add_par("relation_activity", co2_trans_relation)
+    scen.commit("New CCS technologies added to the CO2 accounting relations.")
+
 
 # Read in time-dependent parameters
 # Now only used to add fuel cost for bare model
@@ -785,7 +931,7 @@ def read_timeseries(scenario, filename):
         sheet_n = "timeseries_R11"
 
     # Read the file
-    df = pd.read_excel(context.get_local_path("material", filename), sheet_name=sheet_n)
+    df = pd.read_excel(private_data_path("material", filename), sheet_name=sheet_n)
 
     import numbers
 
@@ -819,7 +965,8 @@ def read_rel(scenario, filename):
 
     # Read the file
     data_rel = pd.read_excel(
-        context.get_local_path("material", filename), sheet_name=sheet_n,
+        private_data_path("material", filename),
+        sheet_name=sheet_n,
     )
 
     return data_rel

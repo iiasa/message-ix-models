@@ -17,6 +17,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     same_node,
     add_par_data,
+    private_data_path,
 )
 
 
@@ -34,9 +35,7 @@ def read_data_petrochemicals(scenario):
         sheet_n = "data_R11"
 
     # Read the file
-    data_petro = pd.read_excel(
-        context.get_local_path("material", fname), sheet_name=sheet_n
-    )
+    data_petro = pd.read_excel(private_data_path("material", fname), sheet_name=sheet_n)
     # Clean the data
 
     data_petro = data_petro.drop(["Source", "Description"], axis=1)
@@ -90,7 +89,7 @@ def gen_mock_demand_petro(scenario):
         # 7.4503, 7.497867, 17.30965, 11.1014]
 
     gdp_growth = pd.read_excel(
-        context.get_local_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        private_data_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -152,6 +151,7 @@ def gen_mock_demand_petro(scenario):
     # This makes 25 Mt ethylene, 25 Mt propylene, 21 Mt BTX
     # This can be verified by other sources.
 
+
 # load rpy2 modules
 # import rpy2.robjects as ro
 # from rpy2.robjects import pandas2ri
@@ -197,6 +197,7 @@ def gen_mock_demand_petro(scenario):
 #
 #     return df
 #
+
 
 def gen_data_petro_chemicals(scenario, dry_run=False):
     # Load configuration
@@ -388,7 +389,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # Add demand
     # Create external demand param
 
-    #demand_HVC = derive_petro_demand(scenario)
+    # demand_HVC = derive_petro_demand(scenario)
     demand_HVC = gen_mock_demand_petro(scenario)
     paramname = "demand"
 
@@ -424,7 +425,11 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     tec_ts = set(data_petro_ts.technology)  # set of tecs in timeseries sheet
 
     for t in tec_ts:
-        common = dict(time="year", time_origin="year", time_dest="year",)
+        common = dict(
+            time="year",
+            time_origin="year",
+            time_dest="year",
+        )
 
         param_name = data_petro_ts.loc[(data_petro_ts["technology"] == t), "parameter"]
 
