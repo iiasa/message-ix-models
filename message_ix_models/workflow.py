@@ -106,7 +106,7 @@ class WorkflowStep:
         # Invoke the callback. If it does not return, assume `s` contains the
         # modifications
         if self.action:
-            log.info("Execute {self.action!r}")
+            log.info(f"Execute {self.action!r}")
             result = self.action(context, s, **self.kwargs)
             if result is None:
                 log.info("…nothing returned, continue with {s.url}")
@@ -194,13 +194,16 @@ class Workflow:
         KeyError
             if step `name` does not exist.
         """
-        # Retrieve the existing step
-        existing = self._computer.graph[name][0]
+        def _recurse_info(kind: str, step_name: str):
+            """Traverse the graph looking for non-empty platform_info/scenario_info."""
+            task = self._computer.graph[step_name]
+            return getattr(task[0], f"{kind}_info") or _recurse_info(kind, task[2])
 
-        # Generate a new step that merely loads the scenario identified by `existing`
+        # Generate a new step that merely loads the scenario identified by `name` or
+        # its base
         step = WorkflowStep(None)
-        step.platform_info = existing.platform_info
-        step.scenario_info = existing.scenario_info
+        step.platform_info = _recurse_info("platform", name)
+        step.scenario_info = _recurse_info("scenario", name)
 
         # Replace the existing step
         self._computer.add_single(name, step, "context", None)
