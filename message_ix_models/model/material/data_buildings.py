@@ -17,6 +17,7 @@ from message_ix_models.util import (
     same_node,
     copy_column,
     add_par_data,
+    private_data_path,
 )
 
 CASE_SENS = "ref"  # 'min', 'max'
@@ -34,7 +35,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
     nodes = s_info.N
 
     # Read the file and filter the given sensitivity case
-    bld_input_raw = pd.read_csv(context.get_local_path("material", filename))
+    bld_input_raw = pd.read_csv(private_data_path("material", filename))
     bld_input_raw = bld_input_raw.loc[bld_input_raw.Sensitivity == case]
 
     bld_input_mat = bld_input_raw[

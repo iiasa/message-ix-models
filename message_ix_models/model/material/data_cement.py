@@ -16,6 +16,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     same_node,
     add_par_data,
+    private_data_path,
 )
 
 # Get endogenous material demand from buildings interface
@@ -92,7 +93,7 @@ def gen_mock_demand_cement(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        context.get_local_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        private_data_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -105,7 +106,7 @@ def gen_mock_demand_cement(scenario):
 
     # # Regions setting for IMAGE
     # region_cement = pd.read_excel(
-    #     context.get_local_path("material", "CEMENT.BvR2010.xlsx"),
+    #     private_data_path("material",  "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
     #     .drop_duplicates().sort_values(by='Region #')
     #
@@ -127,7 +128,7 @@ def gen_mock_demand_cement(scenario):
     #
     # # Cement demand 2010 [Mt/year] (IMAGE)
     # demand2010_cement = pd.read_excel(
-    #     context.get_local_path("material", "CEMENT.BvR2010.xlsx"),
+    #     private_data_path("material",  "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Domestic Consumption", skiprows=range(0,3)).\
     #     groupby(by=["Region #"]).sum()[[2010]].\
     #     join(region_cement.set_index('Region #'), on='Region #').\
@@ -188,8 +189,8 @@ def gen_data_cement(scenario, dry_run=False):
     # TEMP: now add cement sector as well
     data_cement = read_sector_data(scenario, "cement")
     # Special treatment for time-dependent Parameters
-    data_cement_ts = read_timeseries(scenario,context.datafile)
-    tec_ts = set(data_cement_ts.technology) # set of tecs with var_cost
+    data_cement_ts = read_timeseries(scenario, context.datafile)
+    tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
@@ -281,7 +282,6 @@ def gen_data_cement(scenario, dry_run=False):
                     )
 
                 results[p].append(df)
-
 
         # Iterate over parameters
         for par in params:
