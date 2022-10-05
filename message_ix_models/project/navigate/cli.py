@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 import click
-from message_ix_models.util.click import store_context
+from message_ix_models.util.click import common_params, store_context
 
 log = logging.getLogger(__name__)
 
@@ -123,3 +123,28 @@ def gen_workflow(context, versions):
 
     for cmd in COMMANDS:
         print(whitespace.sub(" ", cmd).strip().format(v=versions, s=s), end="\n\n")
+
+
+@cli.command("run")
+@common_params("dry_run")
+@click.option("--from", "truncate_step", help="Run workflow from this step.")
+@click.argument("target_step", metavar="TARGET")
+@click.pass_obj
+def run(context, dry_run, truncate_step, target_step):
+    """Run the NAVIGATE workflow up to step TARGET."""
+    from . import workflow
+
+    wf = workflow.generate(context)
+
+    try:
+        wf.truncate(truncate_step)
+    except KeyError:
+        if truncate_step:
+            raise
+
+    log.info(f"Execute workflow:\n{wf._computer.describe(target_step)})")
+
+    if dry_run:
+        return
+
+    wf.run(target_step)
