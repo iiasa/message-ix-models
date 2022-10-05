@@ -63,7 +63,7 @@ def build_and_solve(context: Context, **kwargs) -> None:
     mark_time()
 
     # Handle CLI arguments
-    kwargs.pop("dest")
+    kwargs.pop("dest", None)
     # Scenario (~input data) to use for STURM. Other possible values include "SSP".
     kwargs.update(sturm_scenario=sturm.scenario_name(kwargs.pop("navigate_scenario")))
 
