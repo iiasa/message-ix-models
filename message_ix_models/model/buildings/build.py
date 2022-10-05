@@ -140,7 +140,7 @@ def load_config(context):
 
     # Generate set elements from a product of others
     for set_name, info in context["buildings set"].items():
-        generate_set_elements(context, set_name, kind="buildings")
+        generate_set_elements(context["buildings set"], set_name)
 
     # Currently unused, and generates issues when caching functions where context is an
     # argument
