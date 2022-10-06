@@ -297,9 +297,7 @@ def add_sectoral_demands(context):
             x.replace("baseline", "sdg") for x in all_rates_sdg["variable"]
         ]
         all_rates = pd.concat([all_rates_base, all_rates_sdg])
-        save_path = private_data_path(
-            "water", "demands", "harmonized", context.regions
-        )
+        save_path = private_data_path("water", "demands", "harmonized", context.regions)
         # save all the rates for reporting purposes
         all_rates.to_csv(save_path / "all_rates_SSP2.csv", index=False)
 
@@ -579,19 +577,23 @@ def add_water_availability(context):
     # Adding freshwater supply constraints
     # Reading data, the data is spatially and temprally aggregated from GHMs
     path1 = private_data_path(
-        "water", "availability", f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv"
+        "water",
+        "availability",
+        f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
     )
-    
+
     df_sw = pd.read_csv(path1)
     # reading sample for assiging basins
-    PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.regions}.csv")
+    PATH = private_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+    )
     df_x = pd.read_csv(PATH)
-    df_sw.drop(["Unnamed: 0"], axis=1, inplace=True) 
+    df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
     years = list(range(2010, 2105, 5))
     df_sw.columns = years
     df_sw.index = df_x["BCU_name"]
     df_sw[2110] = df_sw[2100]
-    df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace = True)
+    df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
     df_sw = df_sw.stack().reset_index()
     df_sw.columns = ["Region", "years", "value"]
     df_sw.sort_values(["Region", "years", "value"], inplace=True)
@@ -608,7 +610,7 @@ def add_water_availability(context):
     df_gw.columns = years
     df_gw.index = df_x["BCU_name"]
     df_gw[2110] = df_gw[2100]
-    df_gw.drop(columns=[col for col in df_gw if col not in info.Y], inplace = True)
+    df_gw.drop(columns=[col for col in df_gw if col not in info.Y], inplace=True)
     df_gw = df_gw.stack().reset_index()
     df_gw.columns = ["Region", "years", "value"]
     df_gw.sort_values(["Region", "years", "value"], inplace=True)

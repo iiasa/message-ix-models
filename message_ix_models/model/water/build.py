@@ -167,7 +167,6 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
             # Elements to add
             add.set[set_name].extend(config.get("add", []))
 
-
     return dict(require=require, remove=remove, add=add)
 
 

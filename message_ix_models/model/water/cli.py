@@ -74,16 +74,8 @@ _REL = ["low", "med", "high"]
 
 @cli.command("nexus")
 @click.pass_obj
-@click.option(
-    "--rcps",
-    default="6p0",
-    type=click.Choice(_RCPS)
-)
-@click.option(
-    "--rels",
-    default="med",
-    type=click.Choice(_REL)
-)
+@click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
+@click.option("--rels", default="med", type=click.Choice(_REL))
 @click.option(
     "--sdgs",
     is_flag=True,

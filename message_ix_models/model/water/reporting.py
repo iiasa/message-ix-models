@@ -42,7 +42,7 @@ def remove_duplicate(data):
         oprlist = reg_index(strr)
         if i in indexes:
             if len(oprlist) > 1:
-                final_list.append(strr[oprlist[0] + 1:])
+                final_list.append(strr[oprlist[0] + 1 :])
             elif len(oprlist) == 1 and oprlist[0] > 6:
                 final_list.append(strr[: oprlist[0]])
             else:
