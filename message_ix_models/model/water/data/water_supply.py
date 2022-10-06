@@ -49,7 +49,10 @@ def add_water_supply(context):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    if context.type_reg == "country":
+        df_node["region"] = context.map_ISO_c[context.regions]
+    else:
+        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # Storing the energy MESSAGE region names
     node_region = df_node["region"].unique()
@@ -58,7 +61,10 @@ def add_water_supply(context):
     FILE1 = f"gw_energy_intensity_depth_{context.regions}.csv"
     PATH1 = private_data_path("water", "availability", FILE1)
     df_gwt = pd.read_csv(PATH1)
-    df_gwt["REGION"] = f"{context.regions}_" + df_gwt["REGION"].astype(str)
+    if context.type_reg == "country":
+        df_gwt["region"] = context.map_ISO_c[context.regions]
+    else:
+        df_gwt["REGION"] = f"{context.regions}_" + df_gwt["REGION"].astype(str)
 
     # reading groundwater energy intensity data
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
@@ -448,26 +454,29 @@ def add_water_supply(context):
         results["var_cost"] = var
 
         path1 = private_data_path(
-            "water", "availability", f"qtot_{context.RCP}_{context.REL}.csv"
+            "water", "availability", 
+            f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv"
         )
         df_sw = pd.read_csv(path1)
 
         # reading sample for assiging basins
-        PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.region}.csv")
+        PATH = private_data_path("water", "delineation", 
+        f"basins_by_region_simpl_{context.regions}.csv")
         df_x = pd.read_csv(PATH)
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
         df_sw["BCU_name"] = df_x["BCU_name"]
-        df_sw["MSGREG"] = (
-            f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
-        )  # R11 hard coded, TODO remove
+        if context.type_reg == "country":
+            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
+        else:
+            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
         df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
         df_sw.drop(columns="Unnamed: 0", inplace=True)
 
         years = list(range(2010, 2105, 5))
         df_sw.columns = years
         df_sw[2110] = df_sw[2100]
-        df_sw.drop(columns=[2065, 2075, 2085, 2095], inplace=True)
+        df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
 
         # Calculating ratio of water availability in basin by region
         df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
@@ -591,14 +600,16 @@ def add_e_flow(context):
     # define an empty dictionary
     results = {}
 
+    info = context["water build info"]
+
     # Adding freshwater supply constraints
     # Reading data, the data is spatially and temprally aggregated from GHMs
     path1 = private_data_path(
-        "water", "availability", f"qtot_{context.RCP}_{context.REL}.csv"
+        "water", "availability", f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv"
     )
     df_sw = pd.read_csv(path1)
     # reading sample for assiging basins
-    PATH = private_data_path("water", "availability", "sample.csv")
+    PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.regions}.csv")
     df_x = pd.read_csv(PATH)
 
     df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -606,7 +617,7 @@ def add_e_flow(context):
     df_sw.columns = years
     df_sw.index = df_x["BCU_name"]
     df_sw[2110] = df_sw[2100]
-    df_sw.drop(columns=[2065, 2075, 2085, 2095], inplace=True)
+    df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
     df_sw = df_sw.stack().reset_index()
     df_sw.columns = ["Region", "years", "value"]
     df_sw.sort_values(["Region", "years", "value"], inplace=True)
@@ -615,7 +626,7 @@ def add_e_flow(context):
 
     # Reading data, the data is spatially and temporally aggregated from GHMs
     path1 = private_data_path(
-        "water", "availability", f"qr_{context.RCP}_{context.REL}.csv"
+        "water", "availability", f"qr_{context.RCP}_{context.REL}_{context.regions}.csv"
     )
     df_gw = pd.read_csv(path1)
 
@@ -644,7 +655,7 @@ def add_e_flow(context):
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x >= 0 else 0)
 
     # Reading e flow data
-    PATH = private_data_path("water", "availability", f"e-flow_{context.RCP}.csv")
+    PATH = private_data_path("water", "availability", f"e-flow_{context.RCP}_{context.regions}.csv")
     df_env = pd.read_csv(PATH)
 
     df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -652,7 +663,7 @@ def add_e_flow(context):
     df_env.columns = years
     df_env.index = df_x["BCU_name"]
     df_env[2110] = df_env[2100]
-    df_env.drop(columns=[2065, 2075, 2085, 2095], inplace=True)
+    df_env.drop(columns=[col for col in df_env if col not in info.Y], inplace=True)
     df_env = df_env.stack().reset_index()
     df_env.columns = ["Region", "years", "value"]
     df_env.sort_values(["Region", "years", "value"], inplace=True)

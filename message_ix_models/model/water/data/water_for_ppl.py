@@ -56,7 +56,10 @@ def cool_tech(context):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    if context.type_reg == "country":
+        df_node["region"] = context.map_ISO_c[context.regions]
+    else:
+        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # reading ppl cooling tech dataframe
     path = private_data_path("water", "ppl_cooling_tech", FILE)
@@ -298,7 +301,7 @@ def cool_tech(context):
     df_sw = pd.read_csv(path3)
 
     # reading sample for assiging basins
-    PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.region}.csv")
+    PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.regions}.csv")
     df_x = pd.read_csv(PATH)
 
     # Reading data, the data is spatially and temporally aggregated from GHMs
@@ -315,7 +318,7 @@ def cool_tech(context):
     df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
     df_sw.drop(columns="Unnamed: 0", inplace=True)
 
-    years = list(range(2010, 2110, 5))
+    years = list(range(2010, 2105, 5))
     df_sw.columns = years
     df_sw[2110] = df_sw[2100]
     df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
