@@ -6,6 +6,7 @@ from message_ix_models import Context
 from message_ix_models.util import MESSAGE_DATA_PATH
 from message_ix_models.workflow import Workflow
 
+from . import SCENARIOS
 from .report import gen_config
 
 log = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     log_before(context, rep, key)
     rep.get(key)
 
-    key = "navigate bmt"
+    key = "navigate all"
     log_before(context, rep, key)
     rep.get(key)
 
@@ -97,7 +98,7 @@ def generate(context: Context) -> Workflow:
 
     # Use the navigate_scenario setting, e.g. from the --scenario CLI option, to
     # construct target scenario names
-    s = context.navigate_scenario
+    s = context.navigate_scenario or "NPi-act"
 
     # Step 1
     wf.add_step(
@@ -122,14 +123,20 @@ def generate(context: Context) -> Workflow:
     )
     # Step 4
     wf.add_step("MT solved", "MT built", solve)
-    # Steps 5–7
-    wf.add_step(
-        "BMT solved",
-        "MT solved",
-        build_buildings,
-        target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
-    )
-    # Steps 8–10
-    wf.add_step("report", "BMT solved", report)
+
+    # Branch for different NAVIGATE T3.5 scenarios
+    for s in SCENARIOS:
+        # Steps 5–7
+        wf.add_step(
+            f"BMT {s} solved",
+            "MT solved",
+            build_buildings,
+            target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
+            navigate_scenario=s,
+        )
+        # Steps 8–10
+        wf.add_step(f"report {s}", f"BMT {s} solved", report)
+
+    wf.add("report all", *[f"report {s}" for s in SCENARIOS])
 
     return wf
