@@ -292,17 +292,22 @@ def cool_tech(context):
     # add water return flows for cooling tecs
     # Use share of basin availability to distribute the return flow from
     path3 = private_data_path(
-        "water", "availability", f"qtot_{context.RCP}_{context.REL}.csv"
+        "water","availability", 
+        f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv"
     )
     df_sw = pd.read_csv(path3)
 
     # reading sample for assiging basins
-    PATH = private_data_path("water", "availability", "sample.csv")
+    PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.region}.csv")
     df_x = pd.read_csv(PATH)
 
     # Reading data, the data is spatially and temporally aggregated from GHMs
     df_sw["BCU_name"] = df_x["BCU_name"]
-    df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
+    
+    if context.type_reg == "country":
+        df_sw["MSGREG"] = context.map_ISO_c[context.regions]
+    else:
+        df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
 
     # Storing the energy MESSAGE region names
     node_region = df_sw["MSGREG"].unique()
@@ -310,10 +315,10 @@ def cool_tech(context):
     df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
     df_sw.drop(columns="Unnamed: 0", inplace=True)
 
-    years = list(range(2010, 2105, 5))
+    years = list(range(2010, 2110, 5))
     df_sw.columns = years
     df_sw[2110] = df_sw[2100]
-    df_sw.drop(columns=[2065, 2075, 2085, 2095], inplace=True)
+    df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
 
     # Calculating ratio of water availability in basin by region
     df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
@@ -380,7 +385,7 @@ def cool_tech(context):
     # Rename column names to R11 to match with the previous df
 
     cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
-    search_cols = [col for col in cost.columns if "R11" in col or "technology" in col]
+    search_cols = [col for col in cost.columns if context.regions in col or "technology" in col]
     hold_df = input_cool_2010[
         ["node_loc", "technology_name", "cooling_fraction"]
     ].drop_duplicates()
