@@ -35,7 +35,7 @@ DATA_FUNCTIONS_COUNTRY = [
     add_irrigation_demand,
     add_infrastructure_techs,
     add_desalination,
-    add_e_flow,
+    # add_e_flow,
 ]
 
 
@@ -50,7 +50,7 @@ def add_data(scenario, context, dry_run=False):
         if context.nexus_set == "cooling"
         else 
             DATA_FUNCTIONS
-            if context.type_region == "global"
+            if context.type_reg == "global"
             else
             DATA_FUNCTIONS_COUNTRY
     )
