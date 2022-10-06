@@ -5,19 +5,10 @@ from pathlib import Path
 import click
 from message_ix_models.util.click import common_params, store_context
 
+from . import SCENARIOS
+
 log = logging.getLogger(__name__)
 
-
-#: Codes for NAVIGATE T3.5 scenarios. All but "baseline" are abbreviated by removing
-#: "NAV_Dem-".
-SCENARIOS = [
-    "baseline",
-    "NPi-ref",
-    "NPi-act",
-    "NPi-tec",
-    "NPi-ele",
-    "NPi-all",
-]
 
 scenario_option = click.Option(
     ["-s", "--scenario", "navigate_scenario"],
