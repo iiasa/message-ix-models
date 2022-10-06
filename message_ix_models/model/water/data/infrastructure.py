@@ -55,7 +55,7 @@ def add_infrastructure_techs(context):
     df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # Reading water distribution mapping from csv
-    path = private_data_path("water", "water_dist", "water_distribution.xlsx")
+    path = private_data_path("water", "infrastructure", "water_distribution.xlsx")
     df = pd.read_excel(path)
 
     techs = ["urban_t_d", "urban_unconnected", "rural_t_d", "rural_unconnected"]
@@ -546,13 +546,13 @@ def add_desalination(context):
     first_year = scen.firstmodelyear
 
     # Reading water distribution mapping from csv
-    path = private_data_path("water", "water_dist", "desalination.xlsx")
+    path = private_data_path("water", "infrastructure", "desalination.xlsx")
     path2 = private_data_path(
-        "water", "water_dist", 
+        "water", "infrastructure",
         f"historical_capacity_desalination_km3_year_{context.region}.csv"
     )
     path3 = private_data_path(
-        "water", "water_dist", 
+        "water", "infrastructure",
         f"projected_desalination_potential_km3_year_{context.region}.csv"
     )
     # Reading dataframes

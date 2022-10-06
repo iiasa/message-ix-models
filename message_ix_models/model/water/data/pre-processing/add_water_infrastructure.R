@@ -3079,7 +3079,7 @@ for( sc in 1:nrow(model_scenarios) )
  # message_ix_path = Sys.getenv("MESSAGE_IX_PATH")
 
  # # Country region mapping key
- # country_region_map_key.df = data.frame( read.csv('P:/ene.model/data/Water/water_demands/country_region_map_key.csv', stringsAsFactors=FALSE) )
+ # country_region_map_key.df = data.frame( read.csv('P:/ene.model/data/Water/demands/country_region_map_key.csv', stringsAsFactors=FALSE) )
 
  # # SSP scenario
  # ssss = 'SSP2'
