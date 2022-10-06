@@ -41,7 +41,9 @@ model and scenario specifications can be either set manually in ``cli.py`` or sp
 Country vs Global implementation
 --------------------------------
 
-The :mod:`message_data.model.water` is designed to being able to add water components to either a global R11 model or any country model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
+The :mod:`message_data.model.water` is designed to being able to add water components to either a global R11 (or R12) model or any country model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
+For any of the region configuration a shapefile is needed to run the pre-processing part, while once the data is prepared only a .csv file similar to those in `message_data.data.water.delineation` are needed
+
 To work with a country model please ensure that:
 
 1. country model and scenario are specified either in ``--url`` or in the ``cli.py`` script
@@ -114,8 +116,11 @@ Pre-processing
 ==============
 - :file:`data/water/`: contains scripts used in pre-processing source data for the water sector implementation
 
-  - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop pathways for sectoral water withdrawals, return flows and infrastructure penetration rates in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
+  
   - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
+  - :file:`groundwater_harmonize.r`: contains workflow to calculate historical capcity of renewable groundwater, table depth and energy consumption
+  - :file:`generate_water_constraints.r`: contains function to calculate municipal, manufactury, rural water demands, water access and sanitation rates
+  - :file:`desalination.r`: contains script for assessing the historical and possible future desalination capacity of a region or country
   - :file:`hydro_agg_temp1.py`: contains workflow for processing the hydrological data in NC4 and adjust the unit conversions, daily to monthly aggregation.
   - :file:`hydro_agg_spatial.R`: contains workflow for spatially aggregating monthly hydrological data onto basin using appropriate raster masking onto shapefiles
   - :file:`hydro_agg_temp2.py`: contains workflow for aggregating monthly data to 5 yearly averages using appropriate statistical methods (quantiles, averages etc.). It also caculates e flows based on Variable MF method.
@@ -130,6 +135,7 @@ Deprecated R Code
 
   - :file:`Figures.R`: R script for producing figures
   - :file:`cooling_tech_av.R`: contains similar code as in the above-mentioned scripts, but this was originated from another workstream
+  - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop pathways for sectoral water withdrawals, return flows and infrastructure penetration rates in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
 
 
 Reference

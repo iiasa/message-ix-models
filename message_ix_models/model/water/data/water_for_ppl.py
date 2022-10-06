@@ -295,18 +295,21 @@ def cool_tech(context):
     # add water return flows for cooling tecs
     # Use share of basin availability to distribute the return flow from
     path3 = private_data_path(
-        "water","availability", 
-        f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv"
+        "water",
+        "availability",
+        f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
     )
     df_sw = pd.read_csv(path3)
 
     # reading sample for assiging basins
-    PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.regions}.csv")
+    PATH = private_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+    )
     df_x = pd.read_csv(PATH)
 
     # Reading data, the data is spatially and temporally aggregated from GHMs
     df_sw["BCU_name"] = df_x["BCU_name"]
-    
+
     if context.type_reg == "country":
         df_sw["MSGREG"] = context.map_ISO_c[context.regions]
     else:
@@ -388,7 +391,9 @@ def cool_tech(context):
     # Rename column names to R11 to match with the previous df
 
     cost.rename(columns=lambda name: name.replace("mix_", ""), inplace=True)
-    search_cols = [col for col in cost.columns if context.regions in col or "technology" in col]
+    search_cols = [
+        col for col in cost.columns if context.regions in col or "technology" in col
+    ]
     hold_df = input_cool_2010[
         ["node_loc", "technology_name", "cooling_fraction"]
     ].drop_duplicates()
