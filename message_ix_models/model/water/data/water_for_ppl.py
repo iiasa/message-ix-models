@@ -292,12 +292,12 @@ def cool_tech(context):
     # add water return flows for cooling tecs
     # Use share of basin availability to distribute the return flow from
     path3 = private_data_path(
-        "water", "water_availability", f"qtot_{context.RCP}_{context.REL}.csv"
+        "water", "availability", f"qtot_{context.RCP}_{context.REL}.csv"
     )
     df_sw = pd.read_csv(path3)
 
     # reading sample for assiging basins
-    PATH = private_data_path("water", "water_availability", "sample.csv")
+    PATH = private_data_path("water", "availability", "sample.csv")
     df_x = pd.read_csv(PATH)
 
     # Reading data, the data is spatially and temporally aggregated from GHMs

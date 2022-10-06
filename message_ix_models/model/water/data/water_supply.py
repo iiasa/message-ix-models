@@ -56,13 +56,13 @@ def add_water_supply(context):
 
     # reading groundwater energy intensity data
     FILE1 = f"gw_energy_intensity_depth_{context.regions}.csv"
-    PATH1 = private_data_path("water", "water_availability", FILE1)
+    PATH1 = private_data_path("water", "availability", FILE1)
     df_gwt = pd.read_csv(PATH1)
     df_gwt["REGION"] = f"{context.regions}_" + df_gwt["REGION"].astype(str)
 
     # reading groundwater energy intensity data
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
-    PATH2 = private_data_path("water", "water_availability", FILE2)
+    PATH2 = private_data_path("water", "availability", FILE2)
     df_hist = pd.read_csv(PATH2)
     df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
@@ -448,7 +448,7 @@ def add_water_supply(context):
         results["var_cost"] = var
 
         path1 = private_data_path(
-            "water", "water_availability", f"qtot_{context.RCP}_{context.REL}.csv"
+            "water", "availability", f"qtot_{context.RCP}_{context.REL}.csv"
         )
         df_sw = pd.read_csv(path1)
 
@@ -594,11 +594,11 @@ def add_e_flow(context):
     # Adding freshwater supply constraints
     # Reading data, the data is spatially and temprally aggregated from GHMs
     path1 = private_data_path(
-        "water", "water_availability", f"qtot_{context.RCP}_{context.REL}.csv"
+        "water", "availability", f"qtot_{context.RCP}_{context.REL}.csv"
     )
     df_sw = pd.read_csv(path1)
     # reading sample for assiging basins
-    PATH = private_data_path("water", "water_availability", "sample.csv")
+    PATH = private_data_path("water", "availability", "sample.csv")
     df_x = pd.read_csv(PATH)
 
     df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -615,7 +615,7 @@ def add_e_flow(context):
 
     # Reading data, the data is spatially and temporally aggregated from GHMs
     path1 = private_data_path(
-        "water", "water_availability", f"qr_{context.RCP}_{context.REL}.csv"
+        "water", "availability", f"qr_{context.RCP}_{context.REL}.csv"
     )
     df_gw = pd.read_csv(path1)
 
@@ -644,7 +644,7 @@ def add_e_flow(context):
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x >= 0 else 0)
 
     # Reading e flow data
-    PATH = private_data_path("water", "water_availability", f"e-flow_{context.RCP}.csv")
+    PATH = private_data_path("water", "availability", f"e-flow_{context.RCP}.csv")
     df_env = pd.read_csv(PATH)
 
     df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
