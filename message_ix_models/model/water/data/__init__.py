@@ -48,11 +48,9 @@ def add_data(scenario, context, dry_run=False):
     data_funcs = (
         [add_water_supply, cool_tech, non_cooling_tec]
         if context.nexus_set == "cooling"
-        else 
-            DATA_FUNCTIONS
-            if context.type_reg == "global"
-            else
-            DATA_FUNCTIONS_COUNTRY
+        else DATA_FUNCTIONS
+        if context.type_reg == "global"
+        else DATA_FUNCTIONS_COUNTRY
     )
 
     for func in data_funcs:

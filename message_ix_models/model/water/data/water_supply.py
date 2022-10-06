@@ -454,14 +454,16 @@ def add_water_supply(context):
         results["var_cost"] = var
 
         path1 = private_data_path(
-            "water", "availability", 
-            f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv"
+            "water",
+            "availability",
+            f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
         )
         df_sw = pd.read_csv(path1)
 
         # reading sample for assiging basins
-        PATH = private_data_path("water", "delineation", 
-        f"basins_by_region_simpl_{context.regions}.csv")
+        PATH = private_data_path(
+            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+        )
         df_x = pd.read_csv(PATH)
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
@@ -605,11 +607,15 @@ def add_e_flow(context):
     # Adding freshwater supply constraints
     # Reading data, the data is spatially and temprally aggregated from GHMs
     path1 = private_data_path(
-        "water", "availability", f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv"
+        "water",
+        "availability",
+        f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
     )
     df_sw = pd.read_csv(path1)
     # reading sample for assiging basins
-    PATH = private_data_path("water", "delineation", f"basins_by_region_simpl_{context.regions}.csv")
+    PATH = private_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+    )
     df_x = pd.read_csv(PATH)
 
     df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -655,7 +661,9 @@ def add_e_flow(context):
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x >= 0 else 0)
 
     # Reading e flow data
-    PATH = private_data_path("water", "availability", f"e-flow_{context.RCP}_{context.regions}.csv")
+    PATH = private_data_path(
+        "water", "availability", f"e-flow_{context.RCP}_{context.regions}.csv"
+    )
     df_env = pd.read_csv(PATH)
 
     df_env.drop(["Unnamed: 0"], axis=1, inplace=True)

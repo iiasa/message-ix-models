@@ -551,12 +551,14 @@ def add_desalination(context):
     # Reading water distribution mapping from csv
     path = private_data_path("water", "infrastructure", "desalination.xlsx")
     path2 = private_data_path(
-        "water", "infrastructure",
-        f"historical_capacity_desalination_km3_year_{context.regions}.csv"
+        "water",
+        "infrastructure",
+        f"historical_capacity_desalination_km3_year_{context.regions}.csv",
     )
     path3 = private_data_path(
-        "water", "infrastructure",
-        f"projected_desalination_potential_km3_year_{context.regions}.csv"
+        "water",
+        "infrastructure",
+        f"projected_desalination_potential_km3_year_{context.regions}.csv",
     )
     # Reading dataframes
     df_desal = pd.read_excel(path)
