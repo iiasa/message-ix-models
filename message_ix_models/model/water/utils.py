@@ -83,7 +83,8 @@ def map_add_on(rtype=Code):
             for d, i in zip(dims, indexers)
         }
         indexers["consumer_group"] = xr.DataArray(
-            [c.id for c in result["code"]], dims="consumer_group",
+            [c.id for c in result["code"]],
+            dims="consumer_group",
         )
         return indexers
     elif rtype is Code:
@@ -121,6 +122,7 @@ def add_commodity_and_level(df, default_level=None):
 
 def map_yv_ya_lt(periods: Tuple[int, ...], lt, ya=None) -> pd.DataFrame:
     """All meaningful combinations of (vintage year, active year) given `periods`.
+
     Parameters
     ----------
     labels : pandas.DataFrame
