@@ -74,7 +74,7 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
 
 
 def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> None:
-    """Remove all time series data from `scenario.
+    """Remove all time series data from `scenario`.
 
     .. todo:: improve to provide the option to remove only those periods in the model
        horizon.
