@@ -35,7 +35,7 @@ DATA_FUNCTIONS_COUNTRY = [
     add_irrigation_demand,
     add_infrastructure_techs,
     add_desalination,
-    # add_e_flow,
+    add_e_flow,
 ]
 
 
