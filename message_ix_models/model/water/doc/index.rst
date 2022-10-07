@@ -1,5 +1,5 @@
-MESSAGEix-Nexus (:mod:`.water`)
-*******************************
+MESSAGEix-Nexus (:mod:`~messag_data.model.water`)
+*************************************************
 
 .. warning::
 
@@ -20,7 +20,7 @@ The resulting model is referred to as **“MESSAGEix-Nexus”**. This work exten
 CLI usage
 =========
 
-Use the :doc:`CLI <cli>` command ``mix-data water`` to invoke the commands defined in :mod:`.water.cli`. Example:
+Use the :doc:`CLI <message_ix_models:cli>` command ``mix-data water`` to invoke the commands defined in :mod:`.water.cli`. Example:
 ``mix-models --url=ixmp://ixmp_dev/ENGAGE_SSP2_v4.1.7/baseline_clone_test water cooling``
 model and scenario specifications can be either set manually in ``cli.py`` or specificed in the ``--url`` option
 
