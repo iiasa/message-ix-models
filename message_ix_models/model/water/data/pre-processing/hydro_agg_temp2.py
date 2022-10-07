@@ -6,10 +6,27 @@ It calculates environmental flows using Variable Monthly Flow method
 """
 
 
+from sqlite3 import TimeFromTicks
 import numpy as np
 import pandas as pd
+import os
 
-wd = r"P:\ene.model\NEST\hydrology\post-processed"
+type_reg = 'country' # else 'global'
+country = 'ZMB'
+global_reg = 'R11'
+
+
+if type_reg == 'global':
+    wd = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
+    # upload_files = glob.glob(os.path.join(upload_dir, "MESSAGEix*.xlsx"))
+elif type_reg == 'country':
+    # This is for Zambia
+    wd = os.path.join("p:", "ene.model", "NEST", country, "hydrology")
+   
+
+# Define the scenario 'extreme' or 'normal'
+extreme_scen = 'med'
+
 
 # climate forcing
 scenarios = ["rcp26", "rcp60"]
@@ -26,39 +43,44 @@ var = "qr"
 # climate model
 climmodels = ["gfdl-esm2m", "hadgem2-es", "ipsl-cm5a-lr", "miroc5"]
 climmodel = "miroc5"
+timestep = '5y'
 
 
 # select interpolation method 
 intp = 'linear'
-quant = 0.3
+quant = 0.5
 env_flow = True
 
-df_2p6_temp = df_2p6.iloc[:, :216]
+# Read sample file to keep all columns
+df_chk = pd.read_csv(wd + r"\qtot_monthly_miroc5_rcp26.csv")
 
-# rcp 6p0
-df5 = pd.read_csv(wd + r"\qtot_monthly_miroc5_rcp60.csv").iloc[:, 8:]
-df6 = pd.read_csv(wd + r"\qtot_monthly_gfdl-esm2m_rcp60.csv").iloc[:, 8:]
-df7 = pd.read_csv(wd + r"\qtot_monthly_hadgem2-es_rcp60.csv").iloc[:, 8:]
-df8 = pd.read_csv(wd + r"\qtot_monthly_ipsl-cm5a-lr_rcp60.csv").iloc[:, 8:]
+# Reading files and taking multimodel ensemble
+df1 = pd.read_csv(wd + f"\{var}_{timestep}_miroc5_{scen}.csv").iloc[:, 8:]
+df2 = pd.read_csv(wd + f"\{var}_{timestep}_gfdl-esm2m_{scen}.csv").iloc[:, 8:]
+df3 = pd.read_csv(wd + f"\{var}_{timestep}_hadgem2-es_{scen}.csv").iloc[:, 8:]
+df4 = pd.read_csv(wd + f"\{var}_{timestep}_ipsl-cm5a-lr_{scen}.csv").iloc[:, 8:]
 
-df_6p0 = pd.concat([df5, df6, df7, df8]).groupby(level=0).mean()
-df_6p0["basin"] = "B" + df_chk["BCU_name"]
-df_6p0.to_csv(wd + r"\qtot_monthly_multimodelmean_rcp6p0.csv")
+data = pd.concat([df1, df2, df3, df4]).groupby(level=0).mean()
+data["basin"] = "B" + df_chk["BCU_name"]
 
-    if extreme_scen == 'extreme':
-        data = data.rolling(240,
-                            min_periods = 1,
-                            axis = 1).quantile(
-                                quant, interpolation= intp)
-            # data = data.rolling(
-            #     240, min_periods = 1, axis = 1).mean()
-    elif extreme_scen == 'normal':
-        data = data.rolling(240,
-                            min_periods = 1,
-                            axis = 1).quantile(
-                                .5, interpolation= intp)
+data.to_csv(wd + f"\{var}_{timestep}_{scen}_{extreme_scen}_{country}.csv")
+
+if extreme_scen == 'high':
+    data = data.rolling(240,
+                        min_periods = 1,
+                        axis = 1).quantile(
+                            quant, interpolation= intp)
         # data = data.rolling(
         #     240, min_periods = 1, axis = 1).mean()
+elif extreme_scen == 'med':
+    data = data.rolling(240,
+                        min_periods = 1,
+                        axis = 1).quantile(
+                            .5, interpolation= intp)
+    # data = data.rolling(
+    #     240, min_periods = 1, axis = 1).mean()
+
+data.to_csv(wd + f"\{var}_{timestep}_multimodelmean_{scen}_{extreme_scen}_{country}.csv")
 
 df_6p0_temp = df_6p0.iloc[:, :216]
 
@@ -158,9 +180,9 @@ df_6p0_temp1.to_csv(wd + r"\qtot_wetdry_multimodelmean_rcp6p0.csv")
     #         final_array.append(data_2_mean.iloc[i].values)
         # else:
         #     final_array.append(data_3_mean.iloc[i].values)
-    if GCM == 'dry':
-        # Final data frame after choosing driest GCM
-        dfs_dry[scen] = pd.DataFrame(final_array, columns = data_0_mean.columns)
+if GCM == 'dry':
+    # Final data frame after choosing driest GCM
+    dfs_dry[scen] = pd.DataFrame(final_array, columns = data_0_mean.columns)
 
 # Calculating environmental flows using wet and dry seasonal calculations
 for i in range(len(final_data.columns) // 2):
@@ -201,3 +223,107 @@ print("Done")
 #             PCT_data = pd.concat([PCT_data, tmp_data], axis=1)
 
 #     return PCT_data
+
+dfs_dry = {}
+df_mmmean = {}
+dfs_wd = {}
+dfs_ann = {}
+df_env = {}
+eflow = {}
+eflow1 = {}
+eflow2 = {}
+dffinal = {}
+var = 'qtot'
+env_flow = True
+
+for scen in scenarios:
+    # Reading data files from four GCMs
+    df = pd.read_csv(
+        wd + f"\{var}_monthly_{climmodels[0]}_{scen}.csv")
+
+    df1 = pd.read_csv(
+        wd + f"\{var}_monthly_{climmodels[1]}_{scen}.csv")
+
+
+    df2 = pd.read_csv(
+        wd + f"\{var}_monthly_{climmodels[2]}_{scen}.csv")
+
+    df3 = pd.read_csv(
+        wd + f"\{var}_monthly_{climmodels[3]}_{scen}.csv")
+
+
+        
+    # Final data frame after choosing multi model mean
+    df_mmmean[scen] = pd.concat(
+        [df1, df2, df3]).groupby(
+            level=0).mean()
+
+
+    df_env[scen] = df_mmmean[scen].iloc[:,5:]
+
+    eflow[scen] = []
+
+    # df = data.iloc[:,5:]
+    for z in range(len(df_env[scen].columns) // 12):
+
+        col_start = 0 if z == 0 else col_end  # start col number
+        col_end = (z + 1) * 12  # ending col number
+        temp = df_env[scen].iloc[:, col_start:col_end]  # assigning relevant data
+
+        col_names = temp.columns  # getting column names
+        MAF = temp.mean(axis = 1) # take mean acorss 
+
+        for j in range(len(temp.columns)):
+            temp.iloc[:,j] = np.where(temp.iloc[:,j] > 0.8 * MAF,
+                                        temp.iloc[:,j]*0.2, 
+                                        np.where(
+                                            (temp.iloc[:,j] > 0.4 * MAF) & 
+                                                                    (temp.iloc[:,j] <= 0.8 * MAF), 
+                                                                        temp.iloc[:,j]*0.45, temp.iloc[:,j]*0.6))
+        
+        if z == 0:
+            eflow[scen] = temp
+        else:
+            eflow[scen] = pd.concat((eflow[scen], temp), axis = 1)
+
+    # Convert to 5 year annual values 
+    new_cols = pd.to_datetime(eflow[scen].columns, format='sum.X%Y.%m.%d')
+    eflow[scen].columns = new_cols
+    eflow[scen] = eflow[scen].resample('5Y',axis = 1).mean() 
+    eflow[scen].to_csv(wd + f"\e-flow_{scen}.csv") 
+
+    # df = eflow[scen]
+
+    # for i in range(1, round(len(df.transpose())/60+1)):
+    #     start = 0 if i == 1 else end
+    #     end = i*60
+
+    #     temp = df.transpose().iloc[start:end]
+
+    #     name = str(temp.index[-1].year)
+    #     temp = temp.groupby(temp.index.month).mean()
+    #     col_name = [name + "," + str(i) for i in range(1, 13)]
+
+    #     if i == 1:
+    #         eflow2[scen] = temp.transpose()
+    #         eflow2[scen] = eflow2[scen].set_axis(col_name, axis=1)
+    #     else:
+    #         eflow1[scen] = temp.transpose()
+    #         eflow1[scen] = eflow1[scen].set_axis(col_name, axis=1)
+    #         eflow2[scen] = pd.concat((eflow2[scen], eflow1[scen]), axis = 1)        
+            
+    # new_cols = pd.to_datetime(eflow2[scen].columns, format='%Y,%m')
+    # eflow2[scen].columns = new_cols
+    # eflow2[scen] = eflow2[scen].resample('5Y',axis = 1).mean()  
+
+        
+    # eflow2[scen].to_csv(wd + f"\e-flow_{var}_{scen}.csv") 
+
+        
+    # df1 = pd.read_csv(wd + f"\e-flow_{variables[3]}_{scen}.csv")
+    # df2 = pd.read_csv(wd + f"\e-flow_{variables[0]}_{scen}.csv")
+    
+    # df2.subtract(df1,axis = 1).drop(columns = 'Unnamed: 0').to_csv(wd + f"\e-flow__{scen}.csv")
+    
+    
+    print("Environmental Flow Values processed")
