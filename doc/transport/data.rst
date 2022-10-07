@@ -10,7 +10,7 @@ This page describes the structure and format of data required for building MESSA
 In files under :file:`/data/transport/`
 =======================================
 
-In most cases, these files are read from a subdirectory like :file:`/data/transport/{id}/`, using the `id` of the :doc:`node code list <message-ix-models:pkg-data/node>`, e.g. "R12".
+In most cases, these files are read from a subdirectory like :file:`/data/transport/{id}/`, using the `id` of the :doc:`node code list <message_ix_models:pkg-data/node>`, e.g. "R12".
 Files **must** be placed in these subdirectories if the corresponding quantity has a node (:math:`n`) dimension, because any such data will not be suitable for use in models with different spatial representation.
 
 Where the file is missing, the version in :file:`/data/transport/` is used as a default.

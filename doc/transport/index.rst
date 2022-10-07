@@ -203,6 +203,7 @@ The :class:`.transport.Config` class stores all the settings understood by the c
    :noindex:
 
    .. automethod:: from_context
+      :noindex:
 
       :func:`from_context` reads configuration files from :file:`data/transport/…` **or** a subdirectory, e.g. :file:`data/transport/R12/…`.
       This allows to separate input data files according to the node list used by the base model.

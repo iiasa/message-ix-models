@@ -1,8 +1,9 @@
 """Command-line interface for MESSAGEix-Transport.
 
-Use the :doc:`CLI <cli>` command ``mix-models transport`` to invoke the commands
-defined in this module.
-Use :command:`mix-models transport --help` to show a help text like::
+Use the :doc:`CLI <message_ix_models:cli>` command :program:`mix-models transport` to
+invoke the commands defined in this module.
+
+Use :program:`mix-models transport --help` to show a help text like::
 
     Usage: mix-models transport [OPTIONS] COMMAND [ARGS]...
 
@@ -18,7 +19,7 @@ Use :command:`mix-models transport --help` to show a help text like::
       migrate     Migrate data from MESSAGE(V)-Transport.
       solve       Run the model.
 
-Each individual command also has its own help text; try e.g. :command:`mix-models
+Each individual command also has its own help text; try e.g. :program:`mix-models
 transport build --help`.
 
 """
