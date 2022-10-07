@@ -137,20 +137,22 @@ class Config(ConfigHelper):
     #: Logit share exponents or cost distribution parameters [0]
     lamda: float = -2.0
 
-    #: LDV activity for average drivers in the model base year. Dimensions: (node,).
-    #: Units: [vehicle-distance / time].
+    #: LDV activity for average drivers in the model base year.
+    #: Dimensions: (node,). Units: [vehicle-distance / time].
     ldv_activity: Optional[Quantity] = None
 
-    #: Period in which LDV costs match those of a reference region. Dimensions: (node,).
+    #: Period in which LDV costs match those of a reference region.
+    #: Dimensions: (node,).
     ldv_cost_catch_up_year: Dict = field(default_factory=dict)
 
-    #: Lifetime of light duty vehicles. Dimensions: (consumer type,). Units: [time].
+    #: Lifetime of light duty vehicles.
+    #: Dimensions: (consumer type,). Units: [time].
     ldv_lifetime: Quantity = quantity_field(
         dict(modest=20, average=15, frequent=10, _dim="consumer type", _unit="year")
     )
 
     #: Base year shares of activity by mode. This should be the stem of a CSV file in
-    #: the directory data/transport/{regions}/mode-share/.
+    #: the directory :file:`data/transport/{regions}/mode-share/`.
     mode_share: str = "default"
 
     #: Used by :func:`.get_USTIMES_MA3T` to map MESSAGE regions to U.S. census divisions

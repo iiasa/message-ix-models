@@ -189,14 +189,23 @@ The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.create` or :mod:`.model.bare`) cont
   - Disaggregated technologies must match these totals.
 
 
-Data, metadata, and config files
-================================
+Data, metadata, and configuration
+=================================
 
-See also: :doc:`transport/files` and :doc:`transport/data`.
+→ See also: :doc:`transport/files` and :doc:`transport/data`.
 
-:func:`~.transport.read_config` reads files from :file:`data/transport/` **or** a subdirectory.
-This allows to separate input data files according to the node list used by the base model.
-See the function docs for details.
+The :class:`.transport.Config` class stores all the settings understood by the code for building, solving, and reporting MESSAGEix-Transport, including their default values:
+
+.. currentmodule:: message_data.model.transport.config
+
+.. autoclass:: message_data.model.transport.config.Config
+   :members:
+   :noindex:
+
+   .. automethod:: from_context
+
+      :func:`from_context` reads configuration files from :file:`data/transport/…` **or** a subdirectory, e.g. :file:`data/transport/R12/…`.
+      This allows to separate input data files according to the node list used by the base model.
 
 Other data files include:
 
