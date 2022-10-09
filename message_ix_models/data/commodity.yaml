@@ -26,7 +26,6 @@ freshwater_supply:
   name: (?) Fresh water
   description: >-
     FIXME provide an unambiguous description of what this commodity represents.
-  units: foo bar
 
 fueloil:
   name: Fuel oil
