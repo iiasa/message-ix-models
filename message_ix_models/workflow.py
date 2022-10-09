@@ -98,7 +98,7 @@ class WorkflowStep:
             context.dest_scenario.update(self.scenario_info)
             s = scenario
             log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
-            log.info(f" with context.dest_scenario={context.dest_scenario}")
+            log.info(f"  with context.dest_scenario={context.dest_scenario}")
 
         if self.clone:
             # Clone to target model/scenario name
@@ -130,7 +130,7 @@ class WorkflowStep:
         return f"<Step {action}{dest}>"
 
 
-class Workflow:
+class Workflow(Computer):
     """Workflow for operations on multiple :class:`Scenarios <.Scenario>`.
 
     Parameters
@@ -139,11 +139,9 @@ class Workflow:
         Context object with settings common to the entire workflow.
     """
 
-    _computer: Computer
-
     def __init__(self, context: Context):
-        self._computer = Computer()
-        self._computer.add("context", context)
+        super().__init__()
+        self.add_single("context", context)
 
     def add_step(
         self,
@@ -175,7 +173,7 @@ class Workflow:
         step = WorkflowStep(action, **kwargs)
 
         # Add to the Computer
-        self._computer.add_single(name, step, "context", base, strict=True)
+        self.add_single(name, step, "context", base, strict=True)
 
         return step
 
@@ -187,7 +185,7 @@ class Workflow:
         name_or_names: str or list of str
             Identifier(s) of steps to run.
         """
-        return self._computer.get(name_or_names)
+        return self.get(name_or_names)
 
     def truncate(self, name: str):
         """Truncate the workflow at the step `name`.
@@ -200,16 +198,30 @@ class Workflow:
         KeyError
             if step `name` does not exist.
         """
+
         def _recurse_info(kind: str, step_name: str):
             """Traverse the graph looking for non-empty platform_info/scenario_info."""
-            task = self._computer.graph[step_name]
+            task = self.graph[step_name]
             return getattr(task[0], f"{kind}_info") or _recurse_info(kind, task[2])
 
         # Generate a new step that merely loads the scenario identified by `name` or
         # its base
         step = WorkflowStep(None)
-        step.platform_info = _recurse_info("platform", name)
         step.scenario_info = _recurse_info("scenario", name)
+        try:
+            step.platform_info = _recurse_info("platform", name)
+        except KeyError as e:
+            if e.args[0] is None:
+                raise RuntimeError(
+                    f"Unable to locate platform info for {step.scenario_info}"
+                )
+            else:
+                raise
 
         # Replace the existing step
-        self._computer.add_single(name, step, "context", None)
+        self.add_single(name, step, "context", None)
+
+
+def solve(context, scenario):
+    scenario.solve()
+    return scenario
