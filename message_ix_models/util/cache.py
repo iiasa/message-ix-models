@@ -10,7 +10,9 @@ included in the computed cache key:
 - :class:`ScenarioInfo`: only the :attr:`~ScenarioInfo.set` entries are hashed.
 
 """
+import json
 import logging
+from dataclasses import asdict, is_dataclass
 from typing import Callable
 
 import genno.caching
@@ -38,6 +40,11 @@ PATHS_SEEN = set()
 @genno.caching.Encoder.register
 def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
     return str(o)
+
+
+@genno.caching.Encoder.register
+def _dataclass(o: object):
+    return asdict(o) if is_dataclass(o) else json.JSONEncoder().default(o)
 
 
 @genno.caching.Encoder.register

@@ -4,6 +4,10 @@ What's new
 Next release
 ============
 
+- New :class:`~message_ix_models.Config` and :class:`.model.Config` :py:mod:`dataclasses` for clearer description/handling of recognized settings stored on :class:`.Context` (:pull:`82`).
+  :class:`.ConfigHelper` for convenience/utility functionality in :mod:`message_ix_models`-based code.
+- New functions :func:`.generate_product`, :func:`.generate_set_elements`, :func:`.get_region_codes` in :mod:`.model.structure` (:pull:`82`).
+- Revise and improve the :doc:`Workflow API </api/workflow>` (:pull:`82`).
 - Adjust for pandas 1.5.0 (:pull:`81`).
 
 2022.8.17

@@ -202,7 +202,7 @@ Other patterns
 
 Some other patterns exist, but should not be repeated in new code, and should be migrated to one of the above patterns.
 
-- SQL queries against a Oracle/JDBC database. See :ref:`data-iea`, below, and `issue #53 <https://github.com/iiasa/message_data/issues/53#issuecomment-669117393>`_ for a description of how to replace/simplify this code.
+- SQL queries against a Oracle/JDBC database. See :ref:`message_data:data-iea` (in :mod:`message_data`) and `issue #53 <https://github.com/iiasa/message_data/issues/53#issuecomment-669117393>`_ for a description of how to replace/simplify this code.
 
 
 Configuration
@@ -247,35 +247,16 @@ The settings are populated based on the command-line parameters given to ``mix-m
 Top-level settings
 ------------------
 
-See model- and project-specific documentation for further context settings, e.g. :mod:`.model.bare`.
+These are defined by :class:`message_ix_models.Config`.
 
-.. list-table::
-   :width: 100%
-   :widths: 25 25 50
-   :header-rows: 1
+Specific modules for model variants, projects, etc. **should**:
 
-   * - Setting
-     - Type
-     - Description
-   * - cache_path
-     - Path
-     - Base path cache, e.g. as given by the ``--cache-path`` CLI option.
-       Default :file:`{local_data}/cache/`.
-   * - dry_run
-     - bool
-     - Whether an operation should be carried out, or only previewed.
-   * - local_data
-     - Path
-     - Base path for system-specific (3) data, e.g. as given by the ``--local-data`` CLI option.
-   * - platform_info
-     - dict
-     - Dictionary with keyword arguments for the :class:`ixmp.Platform` constructor, from the ``--platform`` or ``--url`` CLI options.
-   * - scenario_info
-     - dict
-     - Dictionary with keys 'model' and 'scenario' as given by the ``--model``/``--scenario`` or ``--url`` CLI options.
-   * - url
-     - dict
-     - A scenario URL, e.g. as given by the ``--url`` CLI option.
-   * - units
-     - pint.UnitRegistry
-     - **Deprecated.** Use ``from iam_units import registry``.
+- Define a single :mod:`dataclass <dataclasses>` to express the configuration options they understand.
+  See for example :class:`.model.Config` (for constructing new models), and :class:`message_data.model.buildings.Config` (for the MESSAGEix-Buildings model variant / linkage).
+- Store this on the :class:`Context` at a simple key.
+  For example :class:`.model.Config` is stored at ``context.model`` or ``context["model"]``.
+- Retrieve and respect configuration from existing objects, i.e. only duplicate settings with the same meaning when strictly necessary.
+- Communicate to other modules by setting the appropriate configuration values.
+
+.. autoclass:: message_ix_models.Config
+   :members:

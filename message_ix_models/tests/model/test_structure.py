@@ -3,10 +3,13 @@ from pathlib import Path
 
 import pytest
 from iam_units import registry
+from sdmx.model import Annotation, Code
 
 from message_ix_models.model.structure import (
     codelists,
+    generate_set_elements,
     get_codes,
+    get_region_codes,
     process_commodity_codes,
     process_units_anno,
 )
@@ -116,6 +119,12 @@ class TestGetCodes:
         # A specific country is present in the region
         assert member in code.child
 
+        # get_region_codes() also works
+        region_codes = get_region_codes(codelist)
+        assert to_check in region_codes
+        # Does not include codes that are not children of "World"
+        assert member not in region_codes
+
     def test_node_historic_country(self):
         """get_codes() handles ISO 3166 alpha-3 codes for historic countries."""
         assert "SCG" in get_codes("node/R11")
@@ -170,6 +179,33 @@ def test_cli_techs(session_context, mix_models_cli):
         "id,name,description,type,vintaged,sector,output,input\n"
         "CF4_TCE,CF4_TCE,Tetrafluoromethane (CF4) Total Carbon Emissions,"
         "primary,False,dummy,\"['dummy', 'primary']\",\n"
+    )
+
+
+def test_generate_set_elements():
+    data = {
+        "colour": {"add": as_codes(["blue", "green", "red"])},
+        "technology": {
+            "add": [
+                # This is configuration to generate codes based on the contents of the
+                # colour set
+                Code(
+                    id="foo-{colour.id}",
+                    annotations=[
+                        Annotation(id="_generate", text=repr(dict(colour=None)))
+                    ],
+                ),
+                Code(id="bar"),
+            ]
+        },
+    }
+
+    # Code runs
+    generate_set_elements(data, "technology")
+
+    # Codes are generated according to the contents of the _generate annotation
+    assert {"foo-blue", "foo-green", "foo-red", "bar"} == set(
+        map(str, data["technology"]["add"])
     )
 
 

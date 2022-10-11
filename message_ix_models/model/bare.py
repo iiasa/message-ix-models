@@ -1,18 +1,19 @@
 import logging
 from copy import copy
 from functools import partial
-from typing import Mapping
 from urllib.parse import urlunsplit
 
 import message_ix
 from sdmx.model import Code
 
 import message_ix_models
-from message_ix_models import ScenarioInfo
-from message_ix_models.model.build import apply_spec
-from message_ix_models.model.data import get_data
-from message_ix_models.model.structure import codelists, get_codes
+from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.util import eval_anno
+
+from .build import apply_spec
+from .config import Config
+from .data import get_data
+from .structure import codelists, get_codes
 
 log = logging.getLogger(__name__)
 
@@ -21,12 +22,7 @@ def _default_first(kind, default):
     return [default] + list(filter(lambda id: id != default, codelists(kind)))
 
 
-#: Settings and valid values; the default is listed first.
-#:
-#: - ``regions``: recognized lists of nodes; these match the files
-#:   :file:`data/node/*.yaml`.
-#: - ``years``: recognized lists of time periods ("years"); these match the files
-#:   :file:`data/year/*.yaml`
+#: Deprecated; use :class:`.model.Config` instead.
 SETTINGS = dict(
     # Place the default value first
     regions=_default_first("node", "R14"),
@@ -92,14 +88,22 @@ def create_res(context, quiet=True):
     return scenario
 
 
-def get_spec(context) -> Mapping[str, ScenarioInfo]:
+def get_spec(context) -> Spec:
     """Return the spec for the MESSAGE-GLOBIOM global model RES.
+
+    If :attr:`.Config.res_with_dummies` is set, additional elements are added:
+
+    - ``commodity``: "dummy"
+    - ``technology``: "dummy", "dummy supply"
+
+    These **may** be used for testing purposes, but **should not** be used in production
+    models.
 
     Returns
     -------
     :class:`dict` of :class:`.ScenarioInfo` objects
     """
-    context.use_defaults(SETTINGS)
+    context.setdefault("model", Config())
 
     add = ScenarioInfo()
 
@@ -109,7 +113,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     # Add regions
 
     # Load configuration for the specified region mapping
-    nodes = get_codes(f"node/{context.regions}")
+    nodes = get_codes(f"node/{context.model.regions}")
 
     # Top-level "World" node
     # FIXME typing ignored temporarily for PR#9
@@ -119,7 +123,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     add.set["node"] = [world] + world.child
 
     # Initialize time periods
-    add.year_from_codes(get_codes(f"year/{context.years}"))
+    add.year_from_codes(get_codes(f"year/{context.model.years}"))
 
     # Add levels
     add.set["level"] = get_codes("level")
@@ -133,14 +137,14 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
     # but reduces duplicate log entries
     add.set["unit"] = sorted(filter(None, units))
 
-    if context.res_with_dummies:
+    if context.model.res_with_dummies:
         # Add dummy technologies
         add.set["technology"].extend([Code(id="dummy"), Code(id="dummy source")])
         # Add a dummy commodity
         add.set["commodity"].append(Code(id="dummy"))
 
-    # The RES is the base, so does not require/remove any elements
-    return dict(add=add, remove=ScenarioInfo(), require=ScenarioInfo())
+    # The RES is the base, so does not require or remove any elements
+    return Spec(add=add)
 
 
 def name(context):
@@ -153,10 +157,11 @@ def name(context):
     where:
 
     - "R99" is the node list/regional aggregation.
-    - "YA" indicates the year codelist from :file:`data/year/A.yaml` is used.
-    - "+D" indicates dummy set elements are included in the structure.
+    - "YA" indicates the year codelist (:doc:`/pkg-data/year`).
+    - "+D" appears if :attr:`.Config.res_with_dummies` is true.
 
     """
-    return f"MESSAGEix-GLOBIOM {context.regions} Y{context.years}" + (
-        " +D" if context.get("res_with_dummies", False) else ""
+    cfg = context.model
+    return f"MESSAGEix-GLOBIOM {cfg.regions} Y{cfg.years}" + (
+        " +D" if cfg.res_with_dummies else ""
     )
