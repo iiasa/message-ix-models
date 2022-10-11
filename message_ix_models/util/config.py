@@ -85,7 +85,7 @@ class ConfigHelper:
         else:
             raise NotImplementedError(f"Read from {path.suffix}")
 
-        for key, value in self._munge_dict(data, "raise", "file section"):
+        for key, value in self._munge_dict(data, fail, "file section"):
             existing = getattr(self, key, None)
             if is_dataclass(existing):
                 # Attribute value is also a dataclass; update it recursively
