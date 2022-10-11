@@ -40,13 +40,8 @@ def gen_data_methanol(scenario):
             new_dict2[i] = dict3[i]
         if ~(i in dict3.keys()) & (i in new_dict.keys()):
             new_dict2[i] = new_dict[i]
-    # still contains ref_activity parameter! remove!
-    df = pd.read_excel(context.get_local_path("material", "methanol demand.xlsx"), sheet_name="methanol_demand")
-    df = df[(~df["Region"].isna()) & (df["Region"] != "World")]
-    df = df.dropna(axis=1)
-    df_melt = df.melt(id_vars=["Region"], value_vars=df.columns[5:], var_name="year")
-    df_final = message_ix.make_df("demand", unit="t", level="final_material", value=df_melt.value, time="year",
-                                  commodity="methanol", year=df_melt.year, node=("R12_"+df_melt["Region"]))
+
+    df_final = gen_meth_residual_demand(pars["methanol_elasticity"])
     df_final["value"] = df_final["value"].apply(lambda x: x * 0.5)
     new_dict2["demand"] = df_final
 
@@ -240,3 +235,40 @@ def gen_resin_demand(scenario, resin_share, sector):
     df_demand["value"] = df_demand["resin_demand"]
     df_demand = make_df("demand", **df_demand)
     return df_demand
+
+
+def gen_meth_residual_demand(gdp_elasticity):
+    def get_demand_t1_with_income_elasticity(demand_t0, income_t0, income_t1, elasticity):
+        return (elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)) + demand_t0
+
+    df_gdp = pd.read_excel(
+        context.get_local_path("material", "methanol demand.xlsx"),
+        sheet_name="GDP_baseline")
+
+    df = df_gdp[(~df_gdp["Region"].isna()) & (df_gdp["Region"] != "World")]
+    df = df.dropna(axis=1)
+
+    df_demand_meth = pd.read_excel(context.get_local_path("material", "methanol demand.xlsx"),
+                                   sheet_name="methanol_demand", skiprows=[12])
+    df_demand_meth = df_demand_meth[(~df_demand_meth["Region"].isna()) & (df_demand_meth["Region"] != "World")]
+    df_demand_meth = df_demand_meth.dropna(axis=1)
+
+    df_demand = df.copy(deep=True)
+    df_demand = df_demand.drop([2010, 2015, 2020], axis=1)
+
+    years = list(df_demand_meth.columns[5:])
+    dem_2020 = df_demand_meth[2020].values
+    for i in range(len(years) - 1):
+        income_year1 = years[i]
+        income_year2 = years[i + 1]
+
+        dem_2020 = get_demand_t1_with_income_elasticity(dem_2020,
+                                                        df[income_year1],
+                                                        df[income_year2],
+                                                        gdp_elasticity)
+        df_demand[income_year2] = dem_2020
+
+    df_melt = df_demand.melt(id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year")
+    return message_ix.make_df("demand", unit="t", level="final_material", value=df_melt.value,
+                              time="year", commodity="methanol", year=df_melt.year,
+                              node=("R12_" + df_melt["Region"]))
