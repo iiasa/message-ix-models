@@ -112,7 +112,7 @@ class WorkflowStep:
         try:
             # Invoke the callback
             result = self.action(context, s, **self.kwargs)
-        except Exception:
+        except Exception:  # pragma: no cover
             s.platform.close_db()  # Avoid locking the scenario
             raise
 
@@ -215,8 +215,8 @@ class Workflow(Computer):
                 raise RuntimeError(
                     f"Unable to locate platform info for {step.scenario_info}"
                 )
-            else:
-                raise
+            else:  # pragma: no cover
+                raise  # Something else
 
         # Replace the existing step
         self.add_single(name, step, "context", None)
