@@ -15,8 +15,11 @@ context = read_config()
 
 
 def gen_data_methanol(scenario):
-    df_pars = pd.read_excel(context.get_local_path("material", "methanol_sensitivity_pars.xlsx"),
-                            sheet_name="Sheet1", dtype=object)
+    df_pars = pd.read_excel(
+        context.get_local_path("material", "methanol_sensitivity_pars.xlsx"),
+        sheet_name="Sheet1",
+        dtype=object,
+    )
     pars = df_pars.set_index("par").to_dict()["value"]
 
     dict1 = gen_data_meth_h2()
@@ -29,7 +32,10 @@ def gen_data_methanol(scenario):
         else:
             new_dict[i] = dict1[i]
 
-    dict3 = pd.read_excel(context.get_local_path("material", "meth_t_d_material_pars.xlsx"), sheet_name=None)
+    dict3 = pd.read_excel(
+        context.get_local_path("material", "meth_t_d_material_pars.xlsx"),
+        sheet_name=None,
+    )
 
     keys = set(list(dict3.keys()) + list(new_dict.keys()))
     new_dict2 = {}
@@ -47,21 +53,36 @@ def gen_data_methanol(scenario):
 
     # fix demand infeasibility
     act = scenario.par("historical_activity")
-    row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
+    row = (
+        act[act["technology"].str.startswith("meth")]
+        .sort_values("value", ascending=False)
+        .iloc[0]
+    )
     # china meth_coal production (90% coal share on 2015 47 Mt total; 1.348 = Mt to GWa )
     row["value"] = (47 / 1.3498) * 0.9
-    new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], pd.DataFrame(row).T])
+    new_dict2["historical_activity"] = pd.concat(
+        [new_dict2["historical_activity"], pd.DataFrame(row).T]
+    )
     # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
-    hist_cap = message_ix.make_df("historical_new_capacity", node_loc="R12_CHN", technology="meth_coal", year_vtg=2015,
-                                  value=9.6,
-                                  unit="GW")
+    hist_cap = message_ix.make_df(
+        "historical_new_capacity",
+        node_loc="R12_CHN",
+        technology="meth_coal",
+        year_vtg=2015,
+        value=9.6,
+        unit="GW",
+    )
     new_dict2["historical_new_capacity"] = hist_cap
     # fix demand infeasibility
     # act = scenario.par("historical_activity")
     # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
     # row["value"] = 0.0
-    new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], pd.DataFrame(row).T])
-    df_ng = pd.read_excel(context.get_local_path("material", "meth_ng_techno_economic.xlsx"))
+    new_dict2["historical_activity"] = pd.concat(
+        [new_dict2["historical_activity"], pd.DataFrame(row).T]
+    )
+    df_ng = pd.read_excel(
+        context.get_local_path("material", "meth_ng_techno_economic.xlsx")
+    )
     new_dict2["historical_activity"] = new_dict2["historical_activity"].append(df_ng)
 
     mto_dict = gen_data_meth_chemicals(scenario, "MTO")
@@ -88,8 +109,14 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in resin_dict.keys()):
             new_dict2[i] = resin_dict[i]
 
-    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "residential", pars["wood_scenario"]))
-    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "comm",  pars["wood_scenario"]))
+    new_dict2["demand"] = new_dict2["demand"].append(
+        gen_resin_demand(
+            scenario, pars["resin_share"], "residential", pars["wood_scenario"]
+        )
+    )
+    new_dict2["demand"] = new_dict2["demand"].append(
+        gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"])
+    )
     new_dict2["input"].append(add_methanol_trp_additives(scenario))
 
     if pars["cbudget"]:
@@ -98,35 +125,49 @@ def gen_data_methanol(scenario):
             "type_emission": "TCE_CO2",
             "type_tec": "all",
             "type_year": "cumulative",
-            "unit": "???"
+            "unit": "???",
         }
-        new_dict2["bound_emission"] = make_df("bound_emission", value=3667, **emission_dict)
+        new_dict2["bound_emission"] = make_df(
+            "bound_emission", value=3667, **emission_dict
+        )
 
     return new_dict2
 
 
 def gen_data_meth_h2():
     context = read_config()
-    df_h2 = pd.read_excel(context.get_local_path("material", "meth_h2_techno_economic.xlsx"), sheet_name=None)
+    df_h2 = pd.read_excel(
+        context.get_local_path("material", "meth_h2_techno_economic.xlsx"),
+        sheet_name=None,
+    )
     return df_h2
 
 
 def gen_data_meth_bio():
     context = read_config()
     context.get_local_path("material", "meth_bio_techno_economic.xlsx")
-    df_h2 = pd.read_excel(context.get_local_path("material", "meth_bio_techno_economic.xlsx"), sheet_name=None)
+    df_h2 = pd.read_excel(
+        context.get_local_path("material", "meth_bio_techno_economic.xlsx"),
+        sheet_name=None,
+    )
     return df_h2
 
 
 def gen_data_meth_chemicals(scenario, chemical):
-    df = pd.read_excel(context.get_local_path("material", "MTO data collection.xlsx"),
-                       sheet_name=chemical,
-                       usecols=[1, 2, 3, 4, 6, 7])
+    df = pd.read_excel(
+        context.get_local_path("material", "MTO data collection.xlsx"),
+        sheet_name=chemical,
+        usecols=[1, 2, 3, 4, 6, 7],
+    )
     # exclude emissions for now
     if chemical == "MTO":
-        df = df.iloc[:10, ]
+        df = df.iloc[
+            :10,
+        ]
     if chemical == "Formaldehyde":
-        df = df.iloc[:9, ]
+        df = df.iloc[
+            :9,
+        ]
 
     common = dict(
         # commodity="NH3",
@@ -136,7 +177,7 @@ def gen_data_meth_chemicals(scenario, chemical):
         time_dest="year",
         time_origin="year",
         emission="CO2_industry",  # confirm if correct
-        relation="CO2_cc"
+        relation="CO2_cc",
     )
 
     all_years = scenario.vintage_and_active_years()
@@ -149,9 +190,10 @@ def gen_data_meth_chemicals(scenario, chemical):
     for i in df["parameter"]:
         for index, row in df[df["parameter"] == i].iterrows():
             par_dict[i] = par_dict[i].append(
-                make_df(i, **all_years.to_dict(orient="list"), **row, **common).pipe(broadcast,
-                                                                                     node_loc=nodes).pipe(
-                    same_node))
+                make_df(i, **all_years.to_dict(orient="list"), **row, **common)
+                .pipe(broadcast, node_loc=nodes)
+                .pipe(same_node)
+            )
 
             if i == "relation_activity":
                 par_dict[i]["year_rel"] = par_dict[i]["year_act"]
@@ -165,14 +207,19 @@ def gen_data_meth_chemicals(scenario, chemical):
         "technology": "MTO",
         "mode": "M1",
         "time": "year",
-        "unit": "???"
+        "unit": "???",
     }
     if chemical == "MTO":
-        par_dict["historical_activity"] = make_df("historical_activity", value=4.5, year_act=2015, **hist_dict)
+        par_dict["historical_activity"] = make_df(
+            "historical_activity", value=4.5, year_act=2015, **hist_dict
+        )
         # par_dict["historical_new_capacity"] = make_df("historical_new_capacity", value=[1.2, 1.2], year_vtg=[2015, 2020], **hist_dict)
-        par_dict["historical_new_capacity"] = make_df("historical_new_capacity", value=1.2, year_vtg=2015,
-                                                      **hist_dict)
-        par_dict["bound_total_capacity_lo"] = make_df("bound_total_capacity_lo", year_act=2020, value=9, **hist_dict)
+        par_dict["historical_new_capacity"] = make_df(
+            "historical_new_capacity", value=1.2, year_vtg=2015, **hist_dict
+        )
+        par_dict["bound_total_capacity_lo"] = make_df(
+            "bound_total_capacity_lo", year_act=2020, value=9, **hist_dict
+        )
 
     return par_dict
 
@@ -182,20 +229,31 @@ def add_methanol_trp_additives(scenario):
     df_loil = df_loil[df_loil["technology"] == "loil_trp"]
 
     df_mtbe = pd.read_excel(
-        context.get_local_path("material", "Methanol production statistics (version 1).xlsx"),
+        context.get_local_path(
+            "material", "Methanol production statistics (version 1).xlsx"
+        ),
         # usecols=[1,2,3,4,6,7],
-        skiprows=np.linspace(0, 65, 66), sheet_name="MTBE calc")
-    df_mtbe = df_mtbe.iloc[1:13, ]
+        skiprows=np.linspace(0, 65, 66),
+        sheet_name="MTBE calc",
+    )
+    df_mtbe = df_mtbe.iloc[
+        1:13,
+    ]
     df_mtbe["node_loc"] = "R12_" + df_mtbe["node_loc"]
     df_mtbe = df_mtbe[["node_loc", "methanol energy%"]]
     df_biodiesel = pd.read_excel(
-        context.get_local_path("material", "Methanol production statistics (version 1).xlsx"),
+        context.get_local_path(
+            "material", "Methanol production statistics (version 1).xlsx"
+        ),
         skiprows=np.linspace(0, 37, 38),
         usecols=[1, 2],
-        sheet_name="Biodiesel")
+        sheet_name="Biodiesel",
+    )
     df_biodiesel["node_loc"] = "R12_" + df_biodiesel["node_loc"]
     df_total = df_biodiesel.merge(df_mtbe)
-    df_total = df_total.assign(value=lambda x: x["methanol energy %"] + x["methanol energy%"])
+    df_total = df_total.assign(
+        value=lambda x: x["methanol energy %"] + x["methanol energy%"]
+    )
 
     def get_meth_share(df, node):
         return df[df["node_loc"] == node["node_loc"]]["value"].values[0]
@@ -210,10 +268,13 @@ def add_methanol_trp_additives(scenario):
 
 def gen_resin_demand(scenario, resin_share, sector, buildings_scen):
     df = pd.read_csv(
-        context.get_local_path("material", "results_material_SHAPE_" + sector + ".csv"))
+        context.get_local_path("material", "results_material_SHAPE_" + sector + ".csv")
+    )
     resin_intensity = resin_share
     df = df[df["scenario"] == buildings_scen]
-    df = df[df["material"] == "wood"].assign(resin_demand=df["mat_demand_Mt"] * resin_intensity)
+    df = df[df["material"] == "wood"].assign(
+        resin_demand=df["mat_demand_Mt"] * resin_intensity
+    )
     df["R12"] = "R12_" + df["R12"]
 
     common = dict(
@@ -225,35 +286,51 @@ def gen_resin_demand(scenario, resin_share, sector, buildings_scen):
         relation="CO2_cc",
         commodity="fcoh_resin",
         unit="???",
-        level="final_material"
+        level="final_material",
     )
     all_years = scenario.vintage_and_active_years()
     all_years = all_years[all_years["year_vtg"] > 1990]
     nodes = scenario.set("node")[1:]
     nodes = nodes.drop(5).reset_index(drop=True)
 
-    df_demand = make_df("demand", year=all_years["year_act"].unique()[:-1], **common).pipe(broadcast,
-                                                                                           node=nodes).merge(
-        df[["R12", "year", "resin_demand"]], left_on=["node", "year"], right_on=["R12", "year"])
+    df_demand = (
+        make_df("demand", year=all_years["year_act"].unique()[:-1], **common)
+        .pipe(broadcast, node=nodes)
+        .merge(
+            df[["R12", "year", "resin_demand"]],
+            left_on=["node", "year"],
+            right_on=["R12", "year"],
+        )
+    )
     df_demand["value"] = df_demand["resin_demand"]
     df_demand = make_df("demand", **df_demand)
     return df_demand
 
 
 def gen_meth_residual_demand(gdp_elasticity):
-    def get_demand_t1_with_income_elasticity(demand_t0, income_t0, income_t1, elasticity):
-        return (elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)) + demand_t0
+    def get_demand_t1_with_income_elasticity(
+        demand_t0, income_t0, income_t1, elasticity
+    ):
+        return (
+            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
+        ) + demand_t0
 
     df_gdp = pd.read_excel(
         context.get_local_path("material", "methanol demand.xlsx"),
-        sheet_name="GDP_baseline")
+        sheet_name="GDP_baseline",
+    )
 
     df = df_gdp[(~df_gdp["Region"].isna()) & (df_gdp["Region"] != "World")]
     df = df.dropna(axis=1)
 
-    df_demand_meth = pd.read_excel(context.get_local_path("material", "methanol demand.xlsx"),
-                                   sheet_name="methanol_demand", skiprows=[12])
-    df_demand_meth = df_demand_meth[(~df_demand_meth["Region"].isna()) & (df_demand_meth["Region"] != "World")]
+    df_demand_meth = pd.read_excel(
+        context.get_local_path("material", "methanol demand.xlsx"),
+        sheet_name="methanol_demand",
+        skiprows=[12],
+    )
+    df_demand_meth = df_demand_meth[
+        (~df_demand_meth["Region"].isna()) & (df_demand_meth["Region"] != "World")
+    ]
     df_demand_meth = df_demand_meth.dropna(axis=1)
 
     df_demand = df.copy(deep=True)
@@ -265,13 +342,21 @@ def gen_meth_residual_demand(gdp_elasticity):
         income_year1 = years[i]
         income_year2 = years[i + 1]
 
-        dem_2020 = get_demand_t1_with_income_elasticity(dem_2020,
-                                                        df[income_year1],
-                                                        df[income_year2],
-                                                        gdp_elasticity)
+        dem_2020 = get_demand_t1_with_income_elasticity(
+            dem_2020, df[income_year1], df[income_year2], gdp_elasticity
+        )
         df_demand[income_year2] = dem_2020
 
-    df_melt = df_demand.melt(id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year")
-    return message_ix.make_df("demand", unit="t", level="final_material", value=df_melt.value,
-                              time="year", commodity="methanol", year=df_melt.year,
-                              node=("R12_" + df_melt["Region"]))
+    df_melt = df_demand.melt(
+        id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
+    )
+    return message_ix.make_df(
+        "demand",
+        unit="t",
+        level="final_material",
+        value=df_melt.value,
+        time="year",
+        commodity="methanol",
+        year=df_melt.year,
+        node=("R12_" + df_melt["Region"]),
+    )
