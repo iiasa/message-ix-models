@@ -1,13 +1,11 @@
 import logging
 from collections import ChainMap, defaultdict
-from copy import copy
-from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Union
+from typing import Dict, Mapping, MutableMapping, Optional, Sequence, Union
 
 import message_ix
 import pandas as pd
 import pint
 from message_ix.models import MESSAGE_ITEMS
-from sdmx.model import Annotation, Code
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
@@ -22,7 +20,7 @@ from .common import (
 )
 from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
 from .scenarioinfo import ScenarioInfo
-from .sdmx import eval_anno
+from .sdmx import CodeLike, as_codes, eval_anno
 
 __all__ = [
     "MESSAGE_DATA_PATH",
@@ -92,74 +90,6 @@ def add_par_data(
             raise
 
     return total
-
-
-def as_codes(data: Union[List[str], Dict[str, Union[Dict, Code]]]) -> List[Code]:
-    """Convert *data* to a :class:`list` of :class:`.Code` objects.
-
-    Various inputs are accepted:
-
-    - :class:`list` of :class:`str`.
-    - :class:`dict`, in which keys are :attr:`.Code.id` and values are further
-      :class:`dict` with keys matching other :class:`.Code` attributes.
-    """
-    # Assemble results as a dictionary
-    result: Dict[str, Code] = {}
-
-    if isinstance(data, list):
-        # FIXME typing ignored temporarily for PR#9
-        data = dict(zip(data, data))  # type: ignore [arg-type]
-    elif not isinstance(data, Mapping):
-        raise TypeError(data)
-
-    for id, info in data.items():
-        # Pass through Code; convert other types to dict()
-        if isinstance(info, Code):
-            result[info.id] = info
-            continue
-        elif isinstance(info, str):
-            info = dict(name=info)
-        elif isinstance(info, Mapping):
-            info = copy(info)
-        else:
-            raise TypeError(info)
-
-        # Create a Code object
-        code = Code(
-            id=str(id),
-            name=info.pop("name", str(id).title()),
-        )
-
-        # Store the description, if any
-        try:
-            code.description = info.pop("description")
-        except KeyError:
-            pass
-
-        # Associate with a parent
-        try:
-            parent_id = info.pop("parent")
-        except KeyError:
-            pass  # No parent
-        else:
-            result[parent_id].append_child(code)
-
-        # Associate with any children
-        for id in info.pop("child", []):
-            try:
-                code.append_child(result[id])
-            except KeyError:
-                pass  # Not parsed yet
-
-        # Convert other dictionary (key, value) pairs to annotations
-        for id, value in info.items():
-            code.annotations.append(
-                Annotation(id=id, text=value if isinstance(value, str) else repr(value))
-            )
-
-        result[code.id] = code
-
-    return list(result.values())
 
 
 def aggregate_codes(df: pd.DataFrame, dim: str, codes):  # pragma: no cover
@@ -306,7 +236,7 @@ def copy_column(column_name):
 
 
 def ffill(
-    df: pd.DataFrame, dim: str, values: Sequence[Union[str, Code]], expr: str = None
+    df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: str = None
 ) -> pd.DataFrame:
     """Forward-fill `df` on `dim` to cover `values`.
 
