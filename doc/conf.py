@@ -77,8 +77,8 @@ autosummary_generate = True
 # -- Options for sphinx.ext.extlinks ---------------------------------------------------
 
 extlinks = {
-    "issue": ("https://github.com/iiasa/message-ix-models/issue/%s", "GH #"),
-    "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #"),
+    "issue": ("https://github.com/iiasa/message-ix-models/issue/%s", "GH #%s"),
+    "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #%s"),
 }
 
 
