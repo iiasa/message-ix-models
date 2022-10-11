@@ -32,7 +32,8 @@ jobs:
         - { os: windows-latest, python: "3.9" }
         upstream-version:
         - v3.4.0  # Minimum version given in setup.cfg
-        - v3.5.0  # Latest released version
+        - v3.5.0
+        - v3.6.0  # Latest released version
         - main    # Development version
 
       fail-fast: false
