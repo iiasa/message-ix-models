@@ -88,8 +88,8 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in resin_dict.keys()):
             new_dict2[i] = resin_dict[i]
 
-    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "residential"))
-    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "comm"))
+    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "residential", pars["wood_scenario"]))
+    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "comm",  pars["wood_scenario"]))
     new_dict2["input"].append(add_methanol_trp_additives(scenario))
 
     if pars["cbudget"]:
@@ -208,11 +208,11 @@ def add_methanol_trp_additives(scenario):
     return pd.concat([df_loil, df_loil_meth])
 
 
-def gen_resin_demand(scenario, resin_share, sector):
+def gen_resin_demand(scenario, resin_share, sector, buildings_scen):
     df = pd.read_csv(
         context.get_local_path("material", "results_material_SHAPE_" + sector + ".csv"))
     resin_intensity = resin_share
-    df = df[df["scenario"] == "SH2"]
+    df = df[df["scenario"] == buildings_scen]
     df = df[df["material"] == "wood"].assign(resin_demand=df["mat_demand_Mt"] * resin_intensity)
     df["R12"] = "R12_" + df["R12"]
 
