@@ -167,14 +167,6 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
             # Elements to add
             add.set[set_name].extend(config.get("add", []))
 
-    # create a mapping ISO code :
-    # region name, for other scripts
-    # only needed for 1-country models
-    if context.type_reg == "country":
-        map_ISO_c = {context.regions: nodes[0]}
-        context.map_ISO_c = map_ISO_c
-        log.info(f"mapping {context.map_ISO_c[context.regions]}")
-
     return dict(require=require, remove=remove, add=add)
 
 
@@ -222,7 +214,11 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     # Assigning proper nomenclature
     df["node"] = "B" + df["BCU_name"].astype(str)
     df["mode"] = "M" + df["BCU_name"].astype(str)
-    df["region"] = f"{context.regions}_" + df["REGION"].astype(str)
+    if context.type_reg == "country":
+        df["region"] = context.map_ISO_c[context.regions]
+    else:
+        df["region"] = f"{context.regions}_" + df["REGION"].astype(str)
+
     results["node"] = df["node"]
     results["mode"] = df["mode"]
     # map nodes as per dimensions

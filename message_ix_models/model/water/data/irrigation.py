@@ -31,7 +31,10 @@ def add_irr_structure(context):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    if context.type_reg == "country":
+        df_node["region"] = context.map_ISO_c[context.regions]
+    else:
+        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # Reference to the water configuration
     info = context["water build info"]

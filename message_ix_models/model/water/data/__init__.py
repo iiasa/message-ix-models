@@ -26,6 +26,18 @@ DATA_FUNCTIONS = [
     add_irr_structure,
 ]
 
+DATA_FUNCTIONS_COUNTRY = [
+    add_water_supply,
+    cool_tech,  # Water & parasitic_electricity requirements for cooling technologies
+    non_cooling_tec,
+    add_sectoral_demands,
+    add_water_availability,
+    add_irrigation_demand,
+    add_infrastructure_techs,
+    add_desalination,
+    add_e_flow,
+]
+
 
 def add_data(scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGEix-Nexus data."""
@@ -37,6 +49,8 @@ def add_data(scenario, context, dry_run=False):
         [add_water_supply, cool_tech, non_cooling_tec]
         if context.nexus_set == "cooling"
         else DATA_FUNCTIONS
+        if context.type_reg == "global"
+        else DATA_FUNCTIONS_COUNTRY
     )
 
     for func in data_funcs:

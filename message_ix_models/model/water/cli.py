@@ -2,6 +2,7 @@ import logging
 
 import click
 from message_ix_models.util.click import common_params
+from message_ix_models.model.structure import get_codes
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +57,16 @@ def water_ini(context, regions):
         context.type_reg = "country"
     context.regions = regions
 
+    # create a mapping ISO code :
+    # region name, for other scripts
+    # only needed for 1-country models
+    nodes = get_codes(f"node/{context.regions}")
+    nodes = list(map(str, nodes[nodes.index("World")].child))
+    if context.type_reg == "country":
+        map_ISO_c = {context.regions: nodes[0]}
+        context.map_ISO_c = map_ISO_c
+        log.info(f"mapping {context.map_ISO_c[context.regions]}")
+
 
 _RCPS = ["no_climate", "6p0", "2p6"]
 _REL = ["low", "med", "high"]
@@ -63,8 +74,8 @@ _REL = ["low", "med", "high"]
 
 @cli.command("nexus")
 @click.pass_obj
-@click.option("--rcps", type=click.Choice(_RCPS))
-@click.option("--rels", type=click.Choice(_REL))
+@click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
+@click.option("--rels", default="med", type=click.Choice(_REL))
 @click.option(
     "--sdgs",
     is_flag=True,

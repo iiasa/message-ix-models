@@ -52,10 +52,13 @@ def add_infrastructure_techs(context):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    if context.type_reg == "country":
+        df_node["region"] = context.map_ISO_c[context.regions]
+    else:
+        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # Reading water distribution mapping from csv
-    path = private_data_path("water", "water_dist", "water_distribution.xlsx")
+    path = private_data_path("water", "infrastructure", "water_distribution.xlsx")
     df = pd.read_excel(path)
 
     techs = ["urban_t_d", "urban_unconnected", "rural_t_d", "rural_unconnected"]
@@ -546,12 +549,16 @@ def add_desalination(context):
     first_year = scen.firstmodelyear
 
     # Reading water distribution mapping from csv
-    path = private_data_path("water", "water_dist", "desalination.xlsx")
+    path = private_data_path("water", "infrastructure", "desalination.xlsx")
     path2 = private_data_path(
-        "water", "water_dist", "historical_capacity_desalination_km3_year.csv"
+        "water",
+        "infrastructure",
+        f"historical_capacity_desalination_km3_year_{context.regions}.csv",
     )
     path3 = private_data_path(
-        "water", "water_dist", "projected_desalination_potential_km3_year.csv"
+        "water",
+        "infrastructure",
+        f"projected_desalination_potential_km3_year_{context.regions}.csv",
     )
     # Reading dataframes
     df_desal = pd.read_excel(path)
@@ -560,6 +567,7 @@ def add_desalination(context):
     df_proj = df_proj[df_proj["rcp"] == f"{context.RCP}"]
     df_proj = df_proj[~(df_proj["year"] == 2065) & ~(df_proj["year"] == 2075)]
     df_proj.reset_index(inplace=True, drop=True)
+    df_proj = df_proj[df_proj["year"].isin(info.Y)]
 
     # reading basin_delineation
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
@@ -569,7 +577,10 @@ def add_desalination(context):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    if context.type_reg == "country":
+        df_node["region"] = context.map_ISO_c[context.regions]
+    else:
+        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
     # output dataframe linking to desal tech types
     out_df = (
         make_df(

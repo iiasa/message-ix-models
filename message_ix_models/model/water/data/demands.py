@@ -185,7 +185,7 @@ def add_sectoral_demands(context):
 
     # defines path to read in demand data
     region = f"{context.regions}"
-    path = private_data_path("water", "water_demands", "harmonized", region, ".")
+    path = private_data_path("water", "demands", "harmonized", region, ".")
     # make sure all of the csvs have format, otherwise it might not work
     list_of_csvs = list(path.glob("*_baseline.csv"))
     # define names for variables
@@ -297,9 +297,7 @@ def add_sectoral_demands(context):
             x.replace("baseline", "sdg") for x in all_rates_sdg["variable"]
         ]
         all_rates = pd.concat([all_rates_base, all_rates_sdg])
-        save_path = private_data_path(
-            "water", "water_demands", "harmonized", context.regions
-        )
+        save_path = private_data_path("water", "demands", "harmonized", context.regions)
         # save all the rates for reporting purposes
         all_rates.to_csv(save_path / "all_rates_SSP2.csv", index=False)
 
@@ -436,7 +434,7 @@ def add_sectoral_demands(context):
             unit="km3/year",
         )
     )
-
+    dmd_df = dmd_df[dmd_df["year"].isin(info.Y)]
     results["demand"] = dmd_df
 
     # Add 2010 & 2015 values as historical activities to corresponding technologies
@@ -503,6 +501,7 @@ def add_sectoral_demands(context):
         value=df_recycling["value"],
         unit="-",
     )
+    df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
     results["share_commodity_lo"] = df_share_wat
 
     # rel = make_df(
@@ -578,19 +577,23 @@ def add_water_availability(context):
     # Adding freshwater supply constraints
     # Reading data, the data is spatially and temprally aggregated from GHMs
     path1 = private_data_path(
-        "water", "water_availability", f"qtot_{context.RCP}_{context.REL}.csv"
+        "water",
+        "availability",
+        f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
     )
+
     df_sw = pd.read_csv(path1)
     # reading sample for assiging basins
-    PATH = private_data_path("water", "water_availability", "sample.csv")
+    PATH = private_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+    )
     df_x = pd.read_csv(PATH)
-
     df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
     years = list(range(2010, 2105, 5))
     df_sw.columns = years
     df_sw.index = df_x["BCU_name"]
     df_sw[2110] = df_sw[2100]
-    df_sw.drop(columns=[2065, 2075, 2085, 2095], inplace=True)
+    df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
     df_sw = df_sw.stack().reset_index()
     df_sw.columns = ["Region", "years", "value"]
     df_sw.sort_values(["Region", "years", "value"], inplace=True)
@@ -599,7 +602,7 @@ def add_water_availability(context):
 
     # Reading data, the data is spatially and temporally aggregated from GHMs
     path1 = private_data_path(
-        "water", "water_availability", f"qr_{context.RCP}_{context.REL}.csv"
+        "water", "availability", f"qr_{context.RCP}_{context.REL}_{context.regions}.csv"
     )
     df_gw = pd.read_csv(path1)
 
@@ -607,7 +610,7 @@ def add_water_availability(context):
     df_gw.columns = years
     df_gw.index = df_x["BCU_name"]
     df_gw[2110] = df_gw[2100]
-    df_gw.drop(columns=[2065, 2075, 2085, 2095], inplace=True)
+    df_gw.drop(columns=[col for col in df_gw if col not in info.Y], inplace=True)
     df_gw = df_gw.stack().reset_index()
     df_gw.columns = ["Region", "years", "value"]
     df_gw.sort_values(["Region", "years", "value"], inplace=True)

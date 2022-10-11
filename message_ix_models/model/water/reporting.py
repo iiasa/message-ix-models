@@ -42,7 +42,7 @@ def remove_duplicate(data):
         oprlist = reg_index(strr)
         if i in indexes:
             if len(oprlist) > 1:
-                final_list.append(strr[oprlist[0] + 1:])
+                final_list.append(strr[oprlist[0] + 1 :])
             elif len(oprlist) == 1 and oprlist[0] > 6:
                 final_list.append(strr[: oprlist[0]])
             else:
@@ -868,7 +868,7 @@ def report(sc=False, sdgs=False):
         print("Check the region of the model is consistent with R11,R12")
 
     # load data on water and sanitation access
-    load_path = private_data_path("water", "water_demands", "harmonized", reg)
+    load_path = private_data_path("water", "demands", "harmonized", reg)
     all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
 
     pop_check = sc.timeseries(variable=("Population"))
