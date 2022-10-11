@@ -21,7 +21,7 @@ def gen_data_methanol(scenario):
 
     dict1 = gen_data_meth_h2()
     dict2 = gen_data_meth_bio()
-    keys = set(list(dict1.keys())+list(dict2.keys()))
+    keys = set(list(dict1.keys()) + list(dict2.keys()))
     new_dict = {}
     for i in keys:
         if (i in dict2.keys()) & (i in dict1.keys()):
@@ -31,7 +31,7 @@ def gen_data_methanol(scenario):
 
     dict3 = pd.read_excel(context.get_local_path("material", "meth_t_d_material_pars.xlsx"), sheet_name=None)
 
-    keys = set(list(dict3.keys())+list(new_dict.keys()))
+    keys = set(list(dict3.keys()) + list(new_dict.keys()))
     new_dict2 = {}
     for i in keys:
         if (i in dict3.keys()) & (i in new_dict.keys()):
@@ -52,18 +52,19 @@ def gen_data_methanol(scenario):
     row["value"] = (47 / 1.3498) * 0.9
     new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], pd.DataFrame(row).T])
     # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
-    hist_cap = message_ix.make_df("historical_new_capacity", node_loc="R12_CHN", technology="meth_coal", year_vtg=2015, value=9.6,
-                       unit="GW")
+    hist_cap = message_ix.make_df("historical_new_capacity", node_loc="R12_CHN", technology="meth_coal", year_vtg=2015,
+                                  value=9.6,
+                                  unit="GW")
     new_dict2["historical_new_capacity"] = hist_cap
     # fix demand infeasibility
-    #act = scenario.par("historical_activity")
-    #row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
-    #row["value"] = 0.0
+    # act = scenario.par("historical_activity")
+    # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
+    # row["value"] = 0.0
     new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], pd.DataFrame(row).T])
     df_ng = pd.read_excel(context.get_local_path("material", "meth_ng_techno_economic.xlsx"))
     new_dict2["historical_activity"] = new_dict2["historical_activity"].append(df_ng)
 
-    mto_dict = gen_data_mto(scenario, "MTO")
+    mto_dict = gen_data_meth_chemicals(scenario, "MTO")
     keys = set(list(new_dict2.keys()) + list(mto_dict.keys()))
     for i in keys:
         if (i in new_dict2.keys()) & (i in mto_dict.keys()):
@@ -71,7 +72,7 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in mto_dict.keys()):
             new_dict2[i] = mto_dict[i]
 
-    ch2o_dict = gen_data_mto(scenario, "Formaldehyde")
+    ch2o_dict = gen_data_meth_chemicals(scenario, "Formaldehyde")
     keys = set(list(new_dict2.keys()) + list(ch2o_dict.keys()))
     for i in keys:
         if (i in new_dict2.keys()) & (i in ch2o_dict.keys()):
@@ -79,7 +80,7 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in ch2o_dict.keys()):
             new_dict2[i] = ch2o_dict[i]
 
-    resin_dict = gen_data_mto(scenario, "Resins")
+    resin_dict = gen_data_meth_chemicals(scenario, "Resins")
     keys = set(list(new_dict2.keys()) + list(resin_dict.keys()))
     for i in keys:
         if (i in new_dict2.keys()) & (i in resin_dict.keys()):
@@ -117,11 +118,11 @@ def gen_data_meth_bio():
     return df_h2
 
 
-def gen_data_mto(scenario, chemical):
+def gen_data_meth_chemicals(scenario, chemical):
     df = pd.read_excel(context.get_local_path("material", "MTO data collection.xlsx"),
                        sheet_name=chemical,
                        usecols=[1, 2, 3, 4, 6, 7])
-    #exclude emissions for now
+    # exclude emissions for now
     if chemical == "MTO":
         df = df.iloc[:10, ]
     if chemical == "Formaldehyde":
@@ -209,7 +210,7 @@ def add_methanol_trp_additives(scenario):
 
 def gen_resin_demand(scenario, resin_share, sector):
     df = pd.read_csv(
-        context.get_local_path("material", "results_material_SHAPE_"+sector+".csv"))
+        context.get_local_path("material", "results_material_SHAPE_" + sector + ".csv"))
     resin_intensity = resin_share
     df = df[df["scenario"] == "SH2"]
     df = df[df["material"] == "wood"].assign(resin_demand=df["mat_demand_Mt"] * resin_intensity)
@@ -232,7 +233,7 @@ def gen_resin_demand(scenario, resin_share, sector):
     nodes = nodes.drop(5).reset_index(drop=True)
 
     df_demand = make_df("demand", year=all_years["year_act"].unique()[:-1], **common).pipe(broadcast,
-                                                                                               node=nodes).merge(
+                                                                                           node=nodes).merge(
         df[["R12", "year", "resin_demand"]], left_on=["node", "year"], right_on=["R12", "year"])
     df_demand["value"] = df_demand["resin_demand"]
     df_demand = make_df("demand", **df_demand)
