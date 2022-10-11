@@ -26,13 +26,14 @@ def _local_data_factory():
 class ConfigHelper:
     """Mix-in for :class:`dataclass`-based configuration classes.
 
-    This provides 3 methods—:meth:`read_file`, :meth:`replace`, and :meth:`from_dict`
-    that help to use :class:`dataclass` classes.
+    This provides 3 methods—:meth:`read_file`, :meth:`replace`, and :meth:`from_dict`—
+    that help to use :class:`dataclass` classes for handling :mod:`message_ix_models`
+    configuration.
 
     All 3 methods take advantage of name manipulations: the characters "-" and " " are
     replaced with underscores ("_"). This allows to write the names of attributes in
-    legible ways e.g. "attribute name" instead of "attribute_name" in configuration
-    files and/or code.
+    legible ways—e.g. "attribute name" or “attribute-name” instead of "attribute_name"—
+    in configuration files and/or code.
     """
 
     @classmethod
