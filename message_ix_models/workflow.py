@@ -16,21 +16,7 @@ CallbackType = Callable[[Context, Scenario], Scenario]
 class WorkflowStep:
     """Single step in a multi-scenario workflow.
 
-    Nothing occurs when the WorkflowStep is instantiated. When called:
-
-    1. A base scenario is obtained:
-
-      - if the `scenario` argument is provided, this is used directly.
-      - if the `scenario` argument and :attr:`action` are both :data:`None`: the
-        scenario identified by :attr:`platform_info`, :attr:`scenario_info` is loaded.
-
-    2. If attr:`clone` is :obj:`True`, this scenario is then cloned with
-       `keep_solution=False`.
-
-    3. The :attr:`action`, if any, is called on the scenario. This function may return
-       the base scenario (equivalently :data:`None`) or a different scenario.
-
-    The step returns the resulting scenario.
+    Nothing occurs when the WorkflowStep is instantiated.
 
     Parameters
     ----------
@@ -38,15 +24,17 @@ class WorkflowStep:
         ``"model name/scenario name"`` for the :class:`.Scenario` produced by the step.
     action : CallbackType, optional
         Function to be executed to modify the base into the target Scenario.
-    target : str, optional
-        URL for the scenario produced by the workflow step.
     clone : bool, optional
         :obj:`True` to clone the base scenario the target.
+    target : str, optional
+        URL for the scenario produced by the workflow step. Parsed to
+        :attr:`scenario_info` and :attr:`platform_info`.
     kwargs
         Keyword arguments for `action`.
     """
 
-    #: Function to be executed on the subject scenario.
+    #: Function to be executed on the subject scenario. If :obj:`None`, the target
+    #: scenario is loaded via :meth:`Context.get_scenario`.
     action: Optional[CallbackType] = None
 
     #: :obj:`True` to clone before :attr:`action` is executed.
@@ -148,6 +136,7 @@ class Workflow(Computer):
         name: str,
         base: Optional[str] = None,
         action: Optional[CallbackType] = None,
+        replace=False,
         **kwargs,
     ) -> WorkflowStep:
         """Add a :class:`WorkflowStep` to the workflow.
@@ -160,6 +149,8 @@ class Workflow(Computer):
             Previous step that produces the a pre-requisite scenario for this step.
         action : CallbackType
             Function to be executed to modify the base into the target Scenario.
+        replace : bool
+            :data:`True` to replace an existing step.
         kwargs
             Keyword arguments for `action`; passed to and stored on the
             :class:`WorkflowStep` until used.
@@ -168,9 +159,19 @@ class Workflow(Computer):
         -------
         WorkflowStep
             a reference to the added step, for optional further modification.
+
+        Raises
+        ------
+        genno.KeyExistsError
+            if the step `name` already exists. Use `replace` to force overwriting an
+            existing step.
         """
         # Create the workflow step
         step = WorkflowStep(action, **kwargs)
+
+        if replace:
+            # Remove any existing step
+            self.graph.pop(name, None)
 
         # Add to the Computer
         self.add_single(name, step, "context", base, strict=True)
@@ -222,6 +223,6 @@ class Workflow(Computer):
         self.add_single(name, step, "context", None)
 
 
-def solve(context, scenario):
-    scenario.solve()
+def solve(context, scenario, **kwargs):
+    scenario.solve(**kwargs)
     return scenario
