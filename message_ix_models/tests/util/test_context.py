@@ -71,6 +71,21 @@ class TestContext:
 
         assert s.model.startswith("baz") and s.scenario.startswith("baz")
 
+    def test_dealias(self, caplog):
+        """Aliasing works with :meth:`Context.__init__`, :meth:`Context.update`."""
+        c = Context()
+        c.update(regions="R99")
+        assert [] == caplog.messages  # No log warnings for core Config, .model.Config
+        assert "R99" == c.model.regions
+
+        c = Context(regions="R98")
+        assert [
+            "Create a Config instance instead of passing ['regions'] to Context()"
+        ] == caplog.messages
+        caplog.clear()
+        assert "R98" == c.model.regions == c.regions
+        assert [] == caplog.messages  # No log warnings for access
+
     def test_default_value(self, test_context):
         # Setting is missing
         with pytest.raises(AttributeError):

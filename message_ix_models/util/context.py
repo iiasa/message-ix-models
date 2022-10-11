@@ -22,7 +22,7 @@ _ALIAS = dict()
 _ALIAS.update({f.name: "core" for f in fields(Config)})
 
 
-def _dealiased(base, data):
+def _dealiased(base: str, data: dict) -> dict:
     """Separate values from `data` which belong on `base` according to `_ALIAS`."""
     result = {}
     for name, path in filter(lambda ap: ap[1] == base, _ALIAS.items()):
@@ -77,8 +77,8 @@ class Context(dict):
             log.info("Create root Context")
 
         # Handle keyword arguments going to known config dataclasses
-        kwargs["core"] = Config(**_dealiased(kwargs, "core"))
-        kwargs["model"] = ModelConfig(**_dealiased(kwargs, "model"))
+        kwargs["core"] = Config(**_dealiased("core", kwargs))
+        kwargs["model"] = ModelConfig(**_dealiased("model", kwargs))
 
         # Store any keyword arguments
         super().__init__(*args, **kwargs)
@@ -90,7 +90,7 @@ class Context(dict):
         base = _ALIAS[name]
 
         # Warn about direct reference to aliased attributes
-        if base not in {"core", "model"}:
+        if base not in {"core", "model"}:  # pragma: no cover
             log.warnings(f"Use Context.{base}.{name} instead of Context.{name}")
 
         return getattr(self, base), name

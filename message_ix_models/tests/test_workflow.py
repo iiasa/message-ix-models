@@ -32,6 +32,15 @@ def changes_b(c, s, value=None):
 
 
 class TestWorkflowStep:
+    def test_call(self, test_context):
+        def action(c, s):
+            pass  # pragma: no cover
+
+        ws = WorkflowStep(action=action)
+
+        with pytest.raises(RuntimeError):
+            ws(test_context, None)
+
     def test_repr(self):
         assert "<Step load>" == repr(WorkflowStep(None))
 
