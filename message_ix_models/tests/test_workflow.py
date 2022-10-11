@@ -1,5 +1,6 @@
 import re
 
+import ixmp
 import pytest
 from genno import KeyExistsError
 from message_ix import make_df
@@ -35,6 +36,10 @@ class TestWorkflowStep:
         assert "<Step load>" == repr(WorkflowStep(None))
 
 
+@pytest.mark.skipif(
+    condition=ixmp.__version__ < "3.5",
+    reason="ixmp.TimeSeries.url not available prior to ixmp 3.5.0",
+)
 def test_workflow(caplog, request, test_context):
     # FIXME disentangle this to fewer tests of atomic behaviour
     base_scenario = testing.bare_res(request, test_context, solved=False)
