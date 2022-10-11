@@ -1,6 +1,7 @@
 import re
 
 import pytest
+from genno import KeyExistsError
 from message_ix import make_df
 
 from message_ix_models import Workflow, testing
@@ -35,6 +36,7 @@ class TestWorkflowStep:
 
 
 def test_workflow(caplog, request, test_context):
+    # FIXME disentangle this to fewer tests of atomic behaviour
     base_scenario = testing.bare_res(request, test_context, solved=False)
     base_url = base_scenario.url
     base_platform = base_scenario.platform.name
@@ -46,18 +48,18 @@ def test_workflow(caplog, request, test_context):
     wf = Workflow(test_context)
 
     # Model/base is created from nothing by calling base_scenario
-    wf.add_step("Model/base", None, target=base_url)
+    wf.add_step("base", None, target=base_url)
     # Model/A is created from Model/base by calling changes_a
-    wf.add_step("Model/A", "Model/base", changes_a)
+    wf.add_step("A", "base", changes_a)
     # Model/B is created from Model/A by calling changes_b
-    wf.add_step("Model/B", "Model/A", changes_b, value=100.0)
+    wf.add_step("B", "A", changes_b, value=100.0)
 
     # "B solved" is created from "Model/B" by clone and running solve()
     # clone=True without target= raises an exception
     with pytest.raises(TypeError, match="target= must be supplied"):
-        wf.add_step("B solved", "Model/B", solve, clone=True)
+        wf.add_step("B solved", "B", solve, clone=True)
 
-    wf.add_step("B solved", "Model/B", solve, clone=True, target="foo/bar")
+    wf.add_step("B solved", "B", solve, clone=True, target="foo/bar")
 
     # Trigger the creation and solve of Model/B and all required precursor scenarios
     s = wf.run("B solved")
@@ -69,7 +71,8 @@ def test_workflow(caplog, request, test_context):
     assert s.has_solution()
 
     # Log messages reflect workflow steps executed
-    mp = "message-ix-models"
+    start_index = 1 if caplog.messages[0].startswith("Cull") else 0
+    mp = base_platform
     m = "MESSAGEix-GLOBIOM R14 YB"
     messages = [
         f"Loaded ixmp://{mp}/{m}/test_workflow#1",
@@ -86,15 +89,44 @@ def test_workflow(caplog, request, test_context):
         "Clone to foo/bar",
         "Execute <function solve at [^>]*>",
     ]
-    for expr, message in zip(messages, caplog.messages[1:]):
+    for expr, message in zip(messages, caplog.messages[start_index:]):
         assert re.match(expr, message)
+
+    assert re.match(
+        r"""'B':
+- <Step changes_b\(\)>
+- 'context':
+  - <Context object at \w+ with \d+ keys>
+- 'A':
+  - <Step changes_a\(\)>
+  - 'context' \(above\)
+  - 'base':
+    - <Step load -> MESSAGEix-GLOBIOM R14 YB/test_workflow>
+    - 'context' \(above\)
+    - None""",
+        wf.describe("B"),
+    )
 
     # Now truncate the workflow at "Model/A"
     with pytest.raises(RuntimeError, match="Unable to locate platform info for"):
-        wf.truncate("Model/A")
+        wf.truncate("A")
 
     # Add a full URL including platform info
-    wf.add_step("Model/base", None, target=f"ixmp://{base_platform}/{base_url}")
-    wf.truncate("Model/A")
+    with pytest.raises(KeyExistsError):
+        wf.add_step("base", None, target=f"ixmp://{base_platform}/{base_url}")
 
-    assert "Foo" == wf.describe("Model/A")
+    wf.add_step("base", None, target=f"ixmp://{base_platform}/{base_url}", replace=True)
+    wf.truncate("A")
+
+    # Description reflects that changes_a() will no longer be called
+    assert re.match(
+        r"""'B':
+- <Step changes_b\(\)>
+- 'context':
+  - <Context object at \w+ with \d+ keys>
+- 'A':
+  - <Step load -> MESSAGEix-GLOBIOM R14 YB/test_workflow>
+  - 'context' \(above\)
+  - None""",
+        wf.describe("B"),
+    )
