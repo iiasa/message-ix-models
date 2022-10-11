@@ -118,4 +118,4 @@ jobs:
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3
       with:
-        directory: message-ix-models
+        root_dir: message-ix-models
