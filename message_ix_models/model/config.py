@@ -6,7 +6,7 @@ from message_ix_models.util.context import _ALIAS
 
 @dataclass
 class Config:
-    """Settings and valid values."""
+    """Settings and valid values for :mod:`message_ix_models.model` and submodules."""
 
     #: The 'node' codelist (regional aggregation) to use. Must be one of the lists of
     #: nodes described at :doc:`/pkg-data/node`.

@@ -12,7 +12,19 @@ Models and variants (:mod:`~message_ix_models.model`)
 .. currentmodule:: message_ix_models.model.structure
 
 .. automodule:: message_ix_models.model.structure
-   :members: codelists, process_units_anno
+   :members:
+   :exclude-members: get_codes
+
+   .. autosummary::
+
+      codelists
+      generate_product
+      generate_set_elements
+      get_codes
+      get_region_codes
+      process_units_anno
+      process_commodity_codes
+      process_technology_codes
 
 .. autofunction:: get_codes
 

@@ -18,6 +18,11 @@ Commonly used:
 
 .. autosummary::
 
+   ~config.Config
+   ~config.ConfigHelper
+   ~context.Context
+   ~scenarioinfo.ScenarioInfo
+   ~scenarioinfo.Spec
    adapt_R11_R12
    adapt_R11_R14
    as_codes
@@ -41,9 +46,6 @@ Commonly used:
    private_data_path
    same_node
    series_of_pint_quantity
-   ~context.Context
-   ~scenarioinfo.ScenarioInfo
-   ~scenarioinfo.Spec
 
 .. automodule:: message_ix_models.util
    :members:
@@ -58,6 +60,15 @@ Commonly used:
 
 .. automodule:: message_ix_models.util.click
    :members:
+
+:mod:`.util.config`
+===================
+
+.. currentmodule:: message_ix_models.util.config
+
+.. automodule:: message_ix_models.util.config
+   :members:
+   :exclude-members: Config
 
 :mod:`.util.context`
 ====================
