@@ -167,10 +167,12 @@ def gen_data_mto(scenario, chemical):
         "unit": "???"
     }
     if chemical == "MTO":
-        par_dict["historical_activity"] = make_df("historical_activity", value=[4.5, 11], year_act=[2015, 2020], **hist_dict)
-        #par_dict["historical_new_capacity"] = make_df("historical_new_capacity", value=[1.2, 1.2], year_vtg=[2015, 2020], **hist_dict)
+        par_dict["historical_activity"] = make_df("historical_activity", value=4.5, year_act=2015, **hist_dict)
+        # par_dict["historical_new_capacity"] = make_df("historical_new_capacity", value=[1.2, 1.2], year_vtg=[2015, 2020], **hist_dict)
         par_dict["historical_new_capacity"] = make_df("historical_new_capacity", value=1.2, year_vtg=2015,
-                                                  **hist_dict)
+                                                      **hist_dict)
+        par_dict["bound_total_capacity_lo"] = make_df("bound_total_capacity_lo", year_act=2020, value=9, **hist_dict)
+
     return par_dict
 
 
