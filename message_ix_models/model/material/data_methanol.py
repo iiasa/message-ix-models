@@ -29,7 +29,7 @@ def gen_data_methanol(scenario):
         else:
             new_dict[i] = dict1[i]
 
-    dict3 = pd.read_excel(context.get_local_path("material", "meth_bal_pars.xlsx"), sheet_name=None)
+    dict3 = pd.read_excel(context.get_local_path("material", "meth_t_d_material_pars.xlsx"), sheet_name=None)
 
     keys = set(list(dict3.keys())+list(new_dict.keys()))
     new_dict2 = {}
