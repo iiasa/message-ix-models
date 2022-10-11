@@ -15,6 +15,10 @@ context = read_config()
 
 
 def gen_data_methanol(scenario):
+    df_pars = pd.read_excel(context.get_local_path("material", "methanol_sensitivity_pars.xlsx"),
+                            sheet_name="Sheet1", dtype=object)
+    pars = df_pars.set_index("par").to_dict()["value"]
+
     dict1 = gen_data_meth_h2()
     dict2 = gen_data_meth_bio()
     keys = set(list(dict1.keys())+list(dict2.keys()))
@@ -88,18 +92,19 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in resin_dict.keys()):
             new_dict2[i] = resin_dict[i]
 
-    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, 0.03, "residential"))
-    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, 0.03, "comm"))
+    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "residential"))
+    new_dict2["demand"] = new_dict2["demand"].append(gen_resin_demand(scenario, pars["resin_share"], "comm"))
     new_dict2["input"].append(add_methanol_trp_additives(scenario))
 
-    emission_dict = {
-        "node": "World",
-        "type_emission": "TCE_CO2",
-        "type_tec": "all",
-        "type_year": "cumulative",
-        "unit": "???"
-    }
-    new_dict2["bound_emission"] = make_df("bound_emission", value=3667, **emission_dict)
+    if pars["cbudget"]:
+        emission_dict = {
+            "node": "World",
+            "type_emission": "TCE_CO2",
+            "type_tec": "all",
+            "type_year": "cumulative",
+            "unit": "???"
+        }
+        new_dict2["bound_emission"] = make_df("bound_emission", value=3667, **emission_dict)
 
     return new_dict2
 
