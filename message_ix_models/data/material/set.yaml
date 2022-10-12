@@ -466,7 +466,7 @@ methanol:
     add:
     - meth_bio
     - meth_h2
-    - meth_bal_material
+    - meth_t_d_material
     - MTO
     - CH2O_synth
     - CH2O_to_resin
