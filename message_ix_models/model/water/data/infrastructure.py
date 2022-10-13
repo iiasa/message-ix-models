@@ -10,6 +10,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     private_data_path,
     same_node,
+    same_time
 )
 
 from message_data.model.water.utils import map_yv_ya_lt
@@ -34,7 +35,7 @@ def add_infrastructure_techs(context):
 
     # define an empty dictionary
     results = {}
-
+    sub_time = context.time
     # load the scenario from context
     scen = context.get_scenario()
 
@@ -69,9 +70,10 @@ def add_infrastructure_techs(context):
     df_elec = df[df["incmd"] == "electr"].reset_index()
 
     inp_df = pd.DataFrame([])
+    
     # Input Dataframe for non elec commodities
     for index, rows in df_non_elec.iterrows():
-        inp_df = inp_df.append(
+        inp_df = pd.concat([inp_df,
             (
                 make_df(
                     "input",
@@ -81,17 +83,17 @@ def add_infrastructure_techs(context):
                     level=rows["inlvl"],
                     commodity=rows["incmd"],
                     mode="M1",
-                    time="year",
-                    time_origin="year",
-                    node_loc=df_node["node"],
+                    node_loc= df_node["node"],
                 )
                 .pipe(
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
+                    time = sub_time,
                 )
                 .pipe(same_node)
+                .pipe(same_time)
             )
-        )
+        ])
 
     if context.SDG:
         for index, rows in df_dist.iterrows():
