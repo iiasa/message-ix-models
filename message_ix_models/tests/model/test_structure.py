@@ -19,7 +19,7 @@ from message_ix_models.util import as_codes, eval_anno
 @pytest.mark.parametrize(
     "kind, exp",
     [
-        ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP"]),
+        ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP", "ZMB"]),
         ("year", ["A", "B"]),
     ],
 )
@@ -42,6 +42,7 @@ class TestGetCodes:
             "node/R14",
             "node/R32",
             "node/RCP",
+            "node/ZMB",
             "technology",
             "year/A",
             "year/B",
