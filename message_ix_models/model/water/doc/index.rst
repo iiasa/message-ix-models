@@ -51,6 +51,15 @@ To work with a country model please ensure that:
 3. Following the Israel example add a 'country'.yaml file in `message_ix_models.data.node` for the specific country
 4. Following the Israel example add the country ISO3 code in the 'regions' options in `message_ix_models.utils.click`
 
+Annual vs Sub-anunal implementation
+-----------------------------------
+
+if a sub-annual timestep is defined (e.g. seasons or months), the water module will automatically generate the water system with seasonality, using the `time` set components that is not `year` (assuming that the data has been prepared accordingly).
+
+In the case you want to add seasonality in the water sector to a model with only annual timesteps, the best way is to pre-define the required sets (e.g. `time` and `map_time`). Then, runing the water nexus module will automatically build the sub-annual water module.
+
+In the case there are already multiple sub-annual time-steps levels already defined and not all are relevant to the water module, the components of the set `time` that are of interest for the water module should be manually added as a cli option (e.g. `--time=year` or `--time=[1,2]`)
+
 Code reference
 ==============
 
