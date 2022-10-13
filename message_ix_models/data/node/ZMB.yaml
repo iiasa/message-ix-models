@@ -1,9 +1,10 @@
-# Codes for the "node" dimension of the MESSAGE-IL model
+# Codes for the "node" dimension of the MESSAGE-ZM model
 
 World:
   name: World
-  description: MESSAGE-ZA regions
+  description: MESSAGE-ZM regions
 
 Zambia:
   name: Zambia
   parent: World
+  child: [ZMB]
