@@ -4,6 +4,8 @@ What's new
 Next release
 ============
 
+- Add the :ref:`ZMB` node code list (:pull:`83`).
+- Add the utility :func:`same_time`, to copy the set time in paramenters (:pull:`83`).
 - New :class:`~message_ix_models.Config` and :class:`.model.Config` :py:mod:`dataclasses` for clearer description/handling of recognized settings stored on :class:`.Context` (:pull:`82`).
   :class:`.ConfigHelper` for convenience/utility functionality in :mod:`message_ix_models`-based code.
 - New functions :func:`.generate_product`, :func:`.generate_set_elements`, :func:`.get_region_codes` in :mod:`.model.structure` (:pull:`82`).

@@ -463,6 +463,12 @@ def same_node(df: pd.DataFrame) -> pd.DataFrame:
     return df.assign(**{c: copy_column("node_loc") for c in cols})
 
 
+def same_time(df: pd.DataFrame) -> pd.DataFrame:
+    """Fill 'time_origin'/'time_dest' in `df` from 'time'."""
+    cols = list(set(df.columns) & {"time_origin", "time_dest"})
+    return df.assign(**{c: copy_column("time") for c in cols})
+
+
 def strip_par_data(
     scenario: message_ix.Scenario,
     set_name: str,
