@@ -10,12 +10,13 @@ log = logging.getLogger(__name__)
 # allows to activate water module
 @click.group("water")
 @common_params("regions")
+@click.option('--time',help='Manually defined time')
 @click.pass_obj
-def cli(context, regions):
-    water_ini(context, regions)
+def cli(context, regions,time):
+    water_ini(context, regions,time)
 
 
-def water_ini(context, regions):
+def water_ini(context, regions,time):
     """Add components of the MESSAGEix-Nexus module
 
     This function modifies model name & scenario name
@@ -66,6 +67,23 @@ def water_ini(context, regions):
         map_ISO_c = {context.regions: nodes[0]}
         context.map_ISO_c = map_ISO_c
         log.info(f"mapping {context.map_ISO_c[context.regions]}")
+
+    # deinfe the timestep
+    if not time:
+        sc_ref = context.get_scenario()
+        time = sc_ref.set("time")
+        sub_time = time[time != "year"]
+        if sub_time.empty:
+            context.time = "year"
+        else:
+            context.time = sub_time
+    else:
+        context.time = time
+    log.info(f"Using the following time-step for the water module: {context.time}")
+        
+    # setting the time information in context
+    
+
 
 
 _RCPS = ["no_climate", "6p0", "2p6"]
