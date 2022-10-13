@@ -77,3 +77,11 @@ Israel (``ISR``)
 
 .. literalinclude:: ../../message_ix_models/data/node/ISR.yaml
    :language: yaml
+
+.. _ZMB:
+
+Zambia (``ZMB``)
+----------------
+
+.. literalinclude:: ../../message_ix_models/data/node/ZMB.yaml
+   :language: yaml

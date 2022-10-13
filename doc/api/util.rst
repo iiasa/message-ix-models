@@ -45,6 +45,7 @@ Commonly used:
    package_data_path
    private_data_path
    same_node
+   same_time
    series_of_pint_quantity
 
 .. automodule:: message_ix_models.util
