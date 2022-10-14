@@ -557,6 +557,109 @@ def add_sectoral_demands(context):
     return results
 
 
+
+def read_water_availability(context):
+    # Reference to the water configuration
+    # info = context["water build info"]
+    # reading sample for assiging basins
+    PATH = private_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+    )
+    df_x = pd.read_csv(PATH)
+
+    if context.time == "year":
+        # Adding freshwater supply constraints
+        # Reading data, the data is spatially and temprally aggregated from GHMs
+        path1 = private_data_path(
+            "water",
+            "availability",
+            f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+        )
+        df_sw = pd.read_csv(path1)
+        df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        new_cols = pd.to_datetime(df_sw.columns, format='sum.X%Y.%m.%d')
+        df_sw.columns = new_cols
+        df_sw.index = df_x["BCU_name"]
+        df_sw = df_sw.stack().reset_index()
+        df_sw.columns = ["Region", "years", "value"]
+        df_sw.sort_values(["Region", "years", "value"], inplace=True)
+        df_sw.fillna(0, inplace=True)
+        df_sw.reset_index(drop=True, inplace=True)
+        df_sw['year'] = pd.DatetimeIndex(df_sw['years']).year
+        df_sw2210 = df_sw[df_sw['year'] == 2100]
+        df_sw2210['year'] = 2110
+        df_sw = pd.concat([df_sw, df_sw2210])
+        df_sw = df_sw[df_sw['year'].isin(info.Y)]
+
+        # Reading data, the data is spatially and temporally aggregated from GHMs
+        path1 = private_data_path(
+            "water", "availability", f"qr_5y_{context.RCP}_{context.REL}_{context.regions}.csv"
+        )
+        df_gw = pd.read_csv(path1)
+        df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        new_cols = pd.to_datetime(df_gw.columns, format='sum.X%Y.%m.%d')
+        df_gw.columns = new_cols
+        df_gw.index = df_x["BCU_name"]
+        df_gw = df_gw.stack().reset_index()
+        df_gw.columns = ["Region", "years", "value"]
+        df_gw.sort_values(["Region", "years", "value"], inplace=True)
+        df_gw.fillna(0, inplace=True)
+        df_gw.reset_index(drop=True, inplace=True)
+        df_gw['year'] = pd.DatetimeIndex(df_gw['years']).year
+        df_gw2210 = df_gw[df_gw['year'] == 2100]
+        df_gw2210['year'] = 2110
+        df_gw = pd.concat([df_gw, df_gw2210])
+        df_gw = df_gw[df_gw['year'].isin(info.Y)]
+
+    else:
+        # Adding freshwater supply constraints
+        # Reading data, the data is spatially and temprally aggregated from GHMs
+        path1 = private_data_path(
+            "water",
+            "availability",
+            f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
+        )
+        df_sw = pd.read_csv(path1)
+        df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        new_cols = pd.to_datetime(df_sw.columns, format='sum.X%Y.%m.%d')
+        df_sw.columns = new_cols
+        df_sw.index = df_x["BCU_name"]
+        df_sw = df_sw.stack().reset_index()
+        df_sw.columns = ["Region", "years", "value"]
+        df_sw.sort_values(["Region", "years", "value"], inplace=True)
+        df_sw.fillna(0, inplace=True)
+        df_sw.reset_index(drop=True, inplace=True)
+        df_sw['year'] = pd.DatetimeIndex(df_sw['years']).year
+        df_sw['month'] = pd.DatetimeIndex(df_sw['years']).month
+        df_sw2210 = df_sw[df_sw['year'] == 2100]
+        df_sw2210['year'] = 2110
+        df_sw = pd.concat([df_sw, df_sw2210])
+        df_sw = df_sw[df_sw['year'].isin(info.Y)]
+
+        # Reading data, the data is spatially and temporally aggregated from GHMs
+        path1 = private_data_path(
+            "water", "availability", f"qr_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv"
+        )
+        df_gw = pd.read_csv(path1)
+        df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
+        new_cols = pd.to_datetime(df_gw.columns, format='sum.X%Y.%m.%d')
+        df_gw.columns = new_cols
+        df_gw.index = df_x["BCU_name"]
+        df_gw = df_gw.stack().reset_index()
+        df_gw.columns = ["Region", "years", "value"]
+        df_gw.sort_values(["Region", "years", "value"], inplace=True)
+        df_gw.fillna(0, inplace=True)
+        df_gw.reset_index(drop=True, inplace=True)
+        df_gw['year'] = pd.DatetimeIndex(df_gw['years']).year
+        df_gw['month'] = pd.DatetimeIndex(df_gw['years']).month
+        df_gw2210 = df_gw[df_gw['year'] == 2100]
+        df_gw2210['year'] = 2110
+        df_gw = pd.concat([df_gw, df_sw2210])
+        df_gw = df_gw[df_gw['year'].isin(info.Y)]
+        
+    return df_sw, df_gw
+
+
 def add_water_availability(context):
     """
     Adds water supply constraints
@@ -576,46 +679,8 @@ def add_water_availability(context):
     results = {}
     # Adding freshwater supply constraints
     # Reading data, the data is spatially and temprally aggregated from GHMs
-    path1 = private_data_path(
-        "water",
-        "availability",
-        f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
-    )
-
-    df_sw = pd.read_csv(path1)
-    # reading sample for assiging basins
-    PATH = private_data_path(
-        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
-    )
-    df_x = pd.read_csv(PATH)
-    df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
-    years = list(range(2010, 2105, 5))
-    df_sw.columns = years
-    df_sw.index = df_x["BCU_name"]
-    df_sw[2110] = df_sw[2100]
-    df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
-    df_sw = df_sw.stack().reset_index()
-    df_sw.columns = ["Region", "years", "value"]
-    df_sw.sort_values(["Region", "years", "value"], inplace=True)
-    df_sw.fillna(0, inplace=True)
-    df_sw.reset_index(drop=True, inplace=True)
-
-    # Reading data, the data is spatially and temporally aggregated from GHMs
-    path1 = private_data_path(
-        "water", "availability", f"qr_{context.RCP}_{context.REL}_{context.regions}.csv"
-    )
-    df_gw = pd.read_csv(path1)
-
-    df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
-    df_gw.columns = years
-    df_gw.index = df_x["BCU_name"]
-    df_gw[2110] = df_gw[2100]
-    df_gw.drop(columns=[col for col in df_gw if col not in info.Y], inplace=True)
-    df_gw = df_gw.stack().reset_index()
-    df_gw.columns = ["Region", "years", "value"]
-    df_gw.sort_values(["Region", "years", "value"], inplace=True)
-    df_gw.fillna(0, inplace=True)
-    df_gw.reset_index(drop=True, inplace=True)
+    
+    df_sw, df_gw = read_water_availability(context)
 
     dmd_df = make_df(
         "demand",
@@ -623,7 +688,7 @@ def add_water_availability(context):
         commodity="surfacewater_basin",
         level="water_avail_basin",
         year=df_sw["years"],
-        time="year",
+        time="year" if context.time == 'year' else df_sw['month'],
         value=-df_sw["value"],
         unit="km3/year",
     )
@@ -634,8 +699,8 @@ def add_water_availability(context):
             node="B" + df_gw["Region"].astype(str),
             commodity="groundwater_basin",
             level="water_avail_basin",
-            year=df_gw["years"],
-            time="year",
+            year= "year"
+            time="year" if context.time == 'year' else df_gw['month'],
             value=-df_gw["value"],
             unit="km3/year",
         )
@@ -651,7 +716,7 @@ def add_water_availability(context):
         shares="share_low_lim_GWat",
         node_share="B" + df_gw["Region"],
         year_act=df_gw["years"],
-        time="year",
+        time="year" if context.time == 'year' else df_gw['month'],
         value=df_gw["value"]
         / (df_sw["value"] + df_gw["value"])
         * 0.95,  # 0.95 buffer factor to avoid numerical error

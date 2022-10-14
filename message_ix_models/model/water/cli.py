@@ -75,6 +75,7 @@ def water_ini(context, regions,time):
         sub_time = time[time != "year"]
         if sub_time.empty:
             context.time = "year"
+            
         else:
             context.time = sub_time
     else:
@@ -93,7 +94,7 @@ _REL = ["low", "med", "high"]
 @cli.command("nexus")
 @click.pass_obj
 @click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
-@click.option("--rels", default="med", type=click.Choice(_REL))
+@click.option("--rels", default="low", type=click.Choice(_REL))
 @click.option(
     "--sdgs",
     is_flag=True,
