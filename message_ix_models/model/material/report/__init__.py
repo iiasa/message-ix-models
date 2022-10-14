@@ -765,7 +765,7 @@ def report(
 
         plot_production_cement_clinker(df_cement_clinker, ax1, r)
 
-        # Final prodcut cement
+        # Final product cement
 
         df_cement = df.copy()
         df_cement.filter(region=r, year=years, inplace=True)
@@ -1164,19 +1164,19 @@ def report(
         )
 
         # Include only the related industry sector variables and state some exceptions
-        var_sectors = list(
+        var_sectors = sorted(
             filter(
                 # 4th element (technology) ends with one of the following
-                lambda v: re.match(
-                    ".*_(cement|steel|aluminum|petro|i|I|NH3)$", v.split("|")[3]
+                lambda v: re.search(
+                    "_(cement|steel|aluminum|petro|i|I|NH3)$", v.split("|")[3]
                 )
                 # Exclude specific technologies
-                and not re.match("(ethanol_to_ethylene|gas_processing)_petro", v)
+                and not re.search("(ethanol_to_ethylene|gas_processing)_petro", v)
                 # Exclude inputs of 3 specific commodities to steam_cracker_petro
-                and not re.match(
+                and not re.search(
                     r"^in.final.((atm|vacuum)_gasoil|naphtha).steam_cracker_petro.\1", v
                 ),
-                aux2_df["variable"].values,
+                aux2_df["variable"].unique(),
             )
         )
         aux2_df = aux2_df[aux2_df["variable"].isin(var_sectors)]
@@ -1505,13 +1505,12 @@ def report(
         )
 
         # Include only the related industry sector variables
-
-        var_sectors = list(
+        var_sectors = sorted(
             filter(
-                lambda v: re.match(
+                lambda v: re.search(
                     "_(aluminum|cement|fs|i|I|NH3|petro|steel)", v.split("|")[3]
                 ),
-                aux2_df["variable"].values,
+                aux2_df["variable"].unique(),
             )
         )
         aux2_df = aux2_df[aux2_df["variable"].isin(var_sectors)]
@@ -1545,7 +1544,6 @@ def report(
             )
             df_final.append(df_final_energy, inplace=True)
         elif c == "electr":
-
             df_final_energy.aggregate(
                 "Final Energy|Industry|Electricity",
                 components=var_sectors,
@@ -1782,7 +1780,7 @@ def report(
             aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
         elif s == "Other Sector":
             tec = list(
-                filter(lambda t: re.match("_[iI]$", t), aux2_df["technology"].values)
+                filter(lambda t: re.search("_[iI]$", t), aux2_df["technology"].values)
             )
             aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
         else:
@@ -1794,11 +1792,10 @@ def report(
 
         # Lists to keep commodity, aggregate and variable names.
 
-        commodity_list = []
         aggregate_list = []
         var_list = []
 
-        # For the categoris below filter the required variable names,
+        # For the categories below filter the required variable names,
         # create a new aggregate name
 
         commodity_list = [
@@ -1837,17 +1834,14 @@ def report(
                     f"Final Energy|Industry excl Non-Energy Use|{s}|Hydrogen"
                 )
             elif c == "liquids":
-                var = np.unique(
+                var = sorted(
                     aux2_df.loc[
-                        (
-                            (aux2_df["commodity"] == "fueloil")
-                            | (aux2_df["commodity"] == "lightoil")
-                            | (aux2_df["commodity"] == "methanol")
-                            | (aux2_df["commodity"] == "ethanol")
+                        aux2_df["commodity"].isin(
+                            ["ethanol", "fueloil", "lightoil", "methanol"]
                         ),
                         "variable",
-                    ].values
-                ).tolist()
+                    ].unique()
+                )
                 aggregate_name = (
                     f"Final Energy|Industry excl Non-Energy Use|{s}|Liquids"
                 )
@@ -1938,12 +1932,13 @@ def report(
         df_final_energy = pyam.IamDataFrame(data=aux2_df)
 
         # Aggregate the commodities in iamc object
-        i = 0
-        for c in commodity_list:
+        for i, c in enumerate(commodity_list):
+            if not var_list[i]:
+                log.info(f"Nothing to aggregate for '{aggregate_list[i]}'")
+                continue
             df_final_energy.aggregate(
                 aggregate_list[i], components=var_list[i], append=True
             )
-            i = i + 1
 
         df_final_energy.filter(variable=aggregate_list, inplace=True)
         df_final_energy.convert_unit("GWa", to="EJ/yr", factor=0.03154, inplace=True)
