@@ -60,7 +60,6 @@ def report(context: Context, scenario: Scenario) -> Scenario:
         prepare_reporter,
         register,
     )
-    from message_data.tools import prep_submission
 
     # Step 8
     register("projects.navigate")
@@ -80,15 +79,40 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     )
 
     # Step 9
+    # Set the path to the file containing the legacy reporting configuration.
+    # Could instead set values on context.report["legacy"] directly.
+    context.report["config"] = private_data_path("report", "navigate.yaml")
     _invoke_legacy_reporting(context)
 
     # Step 10
-    f1 = Path("~/data/messageix/report/legacy/{s.url}.xlsx").expanduser()
-    f2 = Path("~/vc/iiasa/navigate-workflow")
-    config = gen_config(context, f1, f2)
-    prep_submission.main(config)
+    prep_submission(context, scenario)
 
-    return scenario
+
+def legacy_output_path(context: Context, scenario: Scenario) -> Path:
+    """Return the path where the legacy reporting wrote output for `scenario`.
+
+    .. todo:: provide this from a function within the legacy reporting submodule; call
+       that function both here and in :func:`.pp_utils.write_xlsx`.
+    """
+    return context.get_local_path(
+        "reporting_output", f"{scenario.model}_{scenario.scenario}.xlsx"
+    )
+
+
+def prep_submission(context: Context, scenario: Scenario):
+    """Workflow step 10."""
+    from message_data.tools.prep_submission import main
+
+    # Step 10
+    config = gen_config(
+        context,
+        legacy_output_path(context, scenario),
+        Path("~/vc/iiasa/navigate-workflow").expanduser(),
+    )
+
+    main(config)
+
+    log.info(f"Merged output written to {config.out_fil}")
 
 
 def solve(context, scenario):
@@ -139,6 +163,7 @@ def generate(context: Context) -> Workflow:
         )
         # Steps 8–10
         wf.add_step(f"report {s}", f"BMT {s} solved", report)
+        wf.add_step(f"prep {s}", f"BMT {s} solved", prep_submission)
 
     wf.add("report all", *[f"report {s}" for s in SCENARIOS])
 
