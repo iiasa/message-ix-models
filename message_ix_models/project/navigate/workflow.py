@@ -3,7 +3,7 @@ from pathlib import Path
 
 from message_ix import Scenario
 from message_ix_models import Context
-from message_ix_models.util import MESSAGE_DATA_PATH
+from message_ix_models.util import private_data_path
 from message_ix_models.workflow import Workflow
 
 from . import SCENARIOS
@@ -16,12 +16,13 @@ def build_materials(context: Context, scenario: Scenario) -> Scenario:
     """Workflow step 2."""
     from message_data.model.material import build
 
+    p = private_data_path("data")
     raise NotImplementedError(
         f"""Requires code on the material-R12-rebase branch.
 
 Switch to that branch and run:
 
-$ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data "{MESSAGE_DATA_PATH}/data" material build --tag=NAVIGATE
+$ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data "{p}" material build --tag=NAVIGATE
 """  # noqa: E501
     )
 
@@ -35,7 +36,9 @@ def build_transport(context: Context, scenario: Scenario) -> Scenario:
     return build.main(context, scenario, fast=True)
 
 
-def build_buildings(context: Context, scenario: Scenario) -> Scenario:
+def build_buildings(
+    context: Context, scenario: Scenario, navigate_scenario: str
+) -> Scenario:
     """Workflow steps 5–7."""
     from message_data.model.buildings import Config, build_and_solve, sturm
 
@@ -44,7 +47,7 @@ def build_buildings(context: Context, scenario: Scenario) -> Scenario:
         max_iterations=1,
         sturm_method="Rscript",
         run_access=False,
-        sturm_scenario=sturm.scenario_name(context.navigate_scenario),
+        sturm_scenario=sturm.scenario_name(navigate_scenario),
     )
     return build_and_solve(context)
 
@@ -63,7 +66,7 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     register("projects.navigate")
     rep, _ = prepare_reporter(context)
 
-    key = "remove all ts data"
+    key = "remove ts data"
     log_before(context, rep, key)
     rep.get(key)
 
