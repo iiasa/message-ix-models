@@ -126,7 +126,11 @@ def _sturm_rscript(
     def check_call(sector: str) -> pd.DataFrame:
         """Invoke the run_STURM.R script and return its output."""
         # Need to supply cwd= because the script uses R's getwd() to find others
-        subprocess.check_call(command + [f"--sector={sector}"], cwd=config.code_dir)
+        try:
+            subprocess.run(command + [f"--sector={sector}"], cwd=config.code_dir)
+        except CalledProcessError as e:
+            print(f"{e.output = } {e.stderr = }")
+            raise
         # Read output, then remove the file
         of = config._output_path.joinpath(f"{sector}_sturm.csv")
         result = pd.read_csv(of)
