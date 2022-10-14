@@ -83,7 +83,7 @@ def gen_data_methanol(scenario):
     df_ng = pd.read_excel(
         context.get_local_path("material", "meth_ng_techno_economic.xlsx")
     )
-    new_dict2["historical_activity"] = new_dict2["historical_activity"].append(df_ng)
+    new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], df_ng])
 
     mto_dict = gen_data_meth_chemicals(scenario, "MTO")
     keys = set(list(new_dict2.keys()) + list(mto_dict.keys()))
@@ -109,15 +109,15 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in resin_dict.keys()):
             new_dict2[i] = resin_dict[i]
 
-    new_dict2["demand"] = new_dict2["demand"].append(
+    new_dict2["demand"] = pd.concat([new_dict2["demand"],
         gen_resin_demand(
-            scenario, pars["resin_share"], "residential", pars["wood_scenario"]
-        )
+            scenario, pars["resin_share"], "residential", pars["wood_scenario"])
+                                     ]
     )
-    new_dict2["demand"] = new_dict2["demand"].append(
+    new_dict2["demand"] = pd.concat([new_dict2["demand"],
         gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"])
-    )
-    new_dict2["input"].append(add_methanol_trp_additives(scenario))
+    ])
+    new_dict2["input"] = pd.concat([new_dict2["input"], add_methanol_trp_additives(scenario)])
 
     if pars["cbudget"]:
         emission_dict = {
@@ -189,10 +189,10 @@ def gen_data_meth_chemicals(scenario, chemical):
     par_dict = {k: pd.DataFrame() for k in (df["parameter"])}
     for i in df["parameter"]:
         for index, row in df[df["parameter"] == i].iterrows():
-            par_dict[i] = par_dict[i].append(
+            par_dict[i] = pd.concat([par_dict[i],
                 make_df(i, **all_years.to_dict(orient="list"), **row, **common)
                 .pipe(broadcast, node_loc=nodes)
-                .pipe(same_node)
+                .pipe(same_node)]
             )
 
             if i == "relation_activity":
