@@ -15,7 +15,7 @@ __all__ = [
     "gwp_factors",
     "make_output_path",
     "model_periods",
-    "remove_all_ts",
+    "remove_ts",
     "share_curtailment",
 ]
 
@@ -73,7 +73,9 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
     )
 
 
-def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> None:
+def remove_ts(
+    scenario: ixmp.Scenario, config: dict, after: int = None, dump: bool = False
+) -> None:
     """Remove all time series data from `scenario`.
 
     .. todo:: improve to provide the option to remove only those periods in the model
@@ -82,11 +84,17 @@ def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> 
     .. todo:: move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
     """
     data = scenario.timeseries()
-    log.warning(f"Remove {len(data)} rows of time series data from {scenario.url}")
+    N = len(data)
+    count = f"{N}"
 
-    if dump:
-        raise NotImplementedError
+    if after:
+        query = f"{after} <= year"
+        data = data.query(query)
+        count = f"{len(data)} of {N} ({query})"
 
+    log.info(f"Remove {count} rows of time series data from {scenario.url}")
+
+    # TODO improve scenario.transact() to allow timeseries_only=True; use here
     scenario.check_out(timeseries_only=True)
     try:
         scenario.remove_timeseries(data)
@@ -94,6 +102,9 @@ def remove_all_ts(scenario: ixmp.Scenario, config: dict, dump: bool = False) -> 
         scenario.discard_changes()
     else:
         scenario.commit(f"Remove time series data ({__name__}.remove_all_ts)")
+
+    if dump:
+        raise NotImplementedError
 
 
 # commented: currently unused
