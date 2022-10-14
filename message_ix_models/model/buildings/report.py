@@ -327,6 +327,10 @@ def report2(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
     # File name template, using the STURM name corresponding to the MESSAGE name
     fn = f"report_NAVIGATE_{scenario_name(scenario.scenario)}_{{}}_R12.csv"
 
+    @lru_cache()
+    def _add_R12_prefix(value :str) -> str:
+        return value if value.startswith("R12_") else f"R12_{value}"
+
     # - Read 2 files and concatenate.
     # - Melt into long format.
     # - Rename columns to lower case.
@@ -337,7 +341,7 @@ def report2(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
             [pd.read_csv(base / fn.format(rc), comment="#") for rc in ("resid", "comm")]
         )
         .rename(columns=lambda c: c.lower())
-        .assign(node=lambda df: "R12_" + df["region"])
+        .assign(node=lambda df: df["region"].apply(_add_R12_prefix))
         .drop(["model", "scenario", "region"], axis=1)
         .melt(id_vars=COLS[:-2], var_name="year")
     )

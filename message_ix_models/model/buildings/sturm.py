@@ -153,5 +153,5 @@ def _sturm_rscript(
 def scenario_name(name: str) -> str:
     """Return a STURM scenario name for a corresponding MESSAGEix-GLOBIOM name."""
     return {
-        "baseline": "SSP2_BL",
+        "baseline": "SSP2",
     }.get(name, f"NAV_Dem-{name}")
