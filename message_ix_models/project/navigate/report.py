@@ -137,7 +137,15 @@ UNIT_MAP = {
 
 
 def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
-    """Generate configuration for :mod:`.prep_submission`."""
+    """Generate configuration for :mod:`.prep_submission`.
+
+    Parameters
+    ----------
+    fn_ref_1
+        Path for a file containing legacy reporting output for a scenario.
+    fn_ref_2
+        The base path (directory) for the NAVIGATE workflow repository.
+    """
     # Identify the file path for output
     today = date.today().strftime("%Y-%m-%d")
     for index in count():
@@ -153,6 +161,8 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
     # Read the variable list to keep from the NAVIGATE repository
     cfg.read_nomenclature(fn_ref_2)
 
+    # Iterate over scenarios to include
+    # TODO expand list/make configurable
     for (m_source, s_source) in (
         ("MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)", "baseline"),
     ):
