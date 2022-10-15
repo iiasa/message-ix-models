@@ -596,7 +596,7 @@ def add_emission_accounting(scen):
 
     # copy CO2_cc values to CO2_industry for conventional methanol tecs
     scen.check_out()
-    meth_arr = ["meth_ng", "meth_coal"]
+    meth_arr = ["meth_ng", "meth_coal", "meth_coal_ccs", "meth_ng_ccs"]
     df = scen.par("relation_activity", filters={"relation": "CO2_cc", "technology": meth_arr})
     df = df.rename({"year_rel": "year_vtg"}, axis=1)
     values = dict(zip(df["technology"], df["value"]))
