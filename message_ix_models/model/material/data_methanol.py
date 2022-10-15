@@ -338,6 +338,7 @@ def gen_meth_residual_demand(gdp_elasticity):
 
     years = list(df_demand_meth.columns[5:])
     dem_2020 = df_demand_meth[2020].values
+    df_demand[2020] = dem_2020
     for i in range(len(years) - 1):
         income_year1 = years[i]
         income_year2 = years[i + 1]
@@ -346,6 +347,8 @@ def gen_meth_residual_demand(gdp_elasticity):
             dem_2020, df[income_year1], df[income_year2], gdp_elasticity
         )
         df_demand[income_year2] = dem_2020
+
+
 
     df_melt = df_demand.melt(
         id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
