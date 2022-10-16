@@ -363,3 +363,18 @@ def gen_meth_residual_demand(gdp_elasticity):
         year=df_melt.year,
         node=("R12_" + df_melt["Region"]),
     )
+
+
+def get_meth_bio_cost_ratio(scenario, tec_name, cost_type):
+
+    df = scenario.par(cost_type)
+    df = df[df["technology"]==tec_name]
+    df= df[df["year_vtg"]>=2020]
+    if cost_type in ["fix_cost", "var_cost"]:
+        df = df[df["year_vtg"]==df["year_act"]]
+
+    df_nam = df[df["node_loc"]=="R12_NAM"].sort_values("year_vtg")
+    df = df.merge(df_nam[["value", "year_vtg"]],left_on="year_vtg", right_on="year_vtg")
+    df["ratio"] = df["value_x"]/df["value_y"]
+
+    return df["ratio"]
