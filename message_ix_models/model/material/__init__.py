@@ -382,7 +382,7 @@ DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
     #gen_data_power_sector,
-    gen_data_aluminum,
+    #gen_data_aluminum,
 ]
 
 # Try to handle multiple data input functions from different materials
