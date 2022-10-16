@@ -258,7 +258,7 @@ def read_demand():
         list(range(11, te_params.shape[0], n_inputs_per_tech))
     ].reset_index(drop=True)
 
-    # Regional N demaand in 2010
+    # Regional N demand in 2010
     ND = N_demand_GLO.loc[N_demand_GLO.Scenario == "NoPolicy", ["Region", 2010]]
     ND = ND[ND.Region != "World"]
     ND.Region = "R12_" + ND.Region
@@ -282,9 +282,9 @@ def read_demand():
         columns={0: "totENE", "Region": "node"}
     )  # GWa
 
-    N_trade_R12 = pd.read_csv(
-        context.get_local_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
-    )
+    #N_trade_R12 = pd.read_csv(
+    #    context.get_local_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
+    #)
     N_trade_R12 = pd.read_excel(
         context.get_local_path(
             "material",
@@ -314,11 +314,11 @@ def read_demand():
     NP = pd.DataFrame({"netimp": df["import"] - df.export, "demand": ND[2010]})
     NP["prod"] = NP.demand - NP.netimp
 
-    NH3_trade_R12 = pd.read_csv(
-        context.get_local_path(
-            "material", "ammonia", "NH3_trade_BACI_R12_aggregation.csv"
-        )
-    )  # , index_col=0)
+    #NH3_trade_R12 = pd.read_csv(
+    #    context.get_local_path(
+    #        "material", "ammonia", "NH3_trade_BACI_R12_aggregation.csv"
+    #    )
+    #)  # , index_col=0)
     NH3_trade_R12 = pd.read_excel(
         context.get_local_path(
             "material",
