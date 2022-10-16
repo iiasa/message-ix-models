@@ -295,24 +295,23 @@ def read_demand():
         sheet_name="NFertilizer_trade",
     )  # , index_col=0)
 
-    N_trade_R12.msgregion = "R12_" + N_trade_R12.msgregion
-    N_trade_R12.Value = N_trade_R12.Value / 1e6
-    N_trade_R12.Unit = "t"
+    N_trade_R12.region = "R12_" + N_trade_R12.region
+    N_trade_R12.quantity = N_trade_R12.quantity
+    N_trade_R12.unit = "t"
     N_trade_R12 = N_trade_R12.assign(time="year")
     N_trade_R12 = N_trade_R12.rename(
         columns={
-            "Value": "value",
-            "Unit": "unit",
-            "msgregion": "node_loc",
-            "Year": "year_act",
+            "quantity": "value",
+            "region": "node_loc",
+            "year": "year_act",
         }
     )
 
     df = N_trade_R12.loc[
         N_trade_R12.year_act == 2010,
     ]
-    df = df.pivot(index="node_loc", columns="Element", values="value")
-    NP = pd.DataFrame({"netimp": df.Import - df.Export, "demand": ND[2010]})
+    df = df.pivot(index="node_loc", columns="type", values="value")
+    NP = pd.DataFrame({"netimp": df["import"] - df.export, "demand": ND[2010]})
     NP["prod"] = NP.demand - NP.netimp
 
     NH3_trade_R12 = pd.read_csv(
