@@ -3,6 +3,8 @@ from typing import Mapping
 import click
 import logging
 
+import ixmp
+
 # from .build import apply_spec
 # from message_data.tools import ScenarioInfo
 from message_data.model.material.build import apply_spec
@@ -234,7 +236,9 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
     # Clone and set up
     from message_ix import Scenario
 
-    scenario = Scenario(context.get_platform(), model_name, scenario_name)
+    mp = ixmp.Platform("ixmp_dev")
+    scenario = Scenario(mp, model_name, scenario_name)
+    #scenario = Scenario(context.get_platform(), model_name, scenario_name)
 
     if scenario.has_solution():
         scenario.remove_solution()
@@ -368,16 +372,16 @@ from .data_methanol import gen_data_methanol
 
 DATA_FUNCTIONS_1 = [
     #gen_data_buildings,
-    gen_data_methanol
-    #gen_data_ammonia,
-    #gen_data_generic,
-    #gen_data_steel,
+    gen_data_methanol,
+    gen_data_ammonia,
+    gen_data_generic,
+    gen_data_steel,
 ]
 
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    gen_data_power_sector,
+    #gen_data_power_sector,
     gen_data_aluminum,
 ]
 
