@@ -95,7 +95,17 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
         set_exp_imp_nodes(df_new)
         par_dict[par_name] = df_new
 
+    df = par_dict.get("technical_lifetime")
+    dict_lifetime = df.loc[:,["technology", "value"]].set_index("technology").to_dict()[
+        "value"]
+    for i in par_dict.keys():
+        if ("year_vtg" in par_dict[i].columns) & ("year_act" in par_dict[i].columns):
+            df_temp = par_dict[i]
+            df_temp["lifetime"] = df_temp["technology"].map(dict_lifetime)
+            df_temp = df_temp[(df_temp["year_act"] - df_temp["year_vtg"]) < df_temp["lifetime"]]
+            par_dict[i] = df_temp.drop("lifetime", axis="columns")
     return par_dict
+
 
 
 def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
