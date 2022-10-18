@@ -131,6 +131,10 @@ def gen_data_methanol(scenario):
             "bound_emission", value=3667, **emission_dict
         )
 
+    df = scenario.par("input", filters={"technology": "meth_t_d"})
+    df["value"] = 1
+    new_dict2["input"] = pd.concat([new_dict2["input"], df])
+
     return new_dict2
 
 
