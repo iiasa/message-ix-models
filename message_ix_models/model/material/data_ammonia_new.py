@@ -247,7 +247,7 @@ def read_demand():
         skiprows=14,
     )
 
-    # Read parameters in xlsx
+    """# Read parameters in xlsx
     te_params = data = pd.read_excel(
         context.get_local_path(
             "material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"
@@ -261,12 +261,34 @@ def read_demand():
 
     input_fuel = te_params[2010][
         list(range(4, te_params.shape[0], n_inputs_per_tech))
-    ].reset_index(drop=True)
+    ].reset_index(drop=True)"""
     # input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
 
-    capacity_factor = te_params[2010][
-        list(range(11, te_params.shape[0], n_inputs_per_tech))
-    ].reset_index(drop=True)
+    te_params_new = pd.read_excel(
+        context.get_local_path(
+            "material",
+            "ammonia",
+            "new concise input files",
+            "fert_techno_economic.xlsx"),
+            sheet_name="data_R12")
+
+    tec_dict = [
+        "biomass_NH3",
+        "electr_NH3",
+        "gas_NH3",
+        "coal_NH3",
+        "fueloil_NH3",
+        "NH3_to_N_fertil",
+    ]
+
+    input_fuel = te_params_new[
+        (te_params_new["parameter"] == "input") & ~(te_params_new["commodity"].isin(["freshwater_supply"])) & (
+            te_params_new["technology"].isin(tec_dict))]
+    input_fuel = input_fuel.iloc[[0, 2, 4, 5, 7, 9]].set_index("technology").loc[tec_dict, "value"]
+
+    #capacity_factor = te_params[2010][
+    #    list(range(11, te_params.shape[0], n_inputs_per_tech))
+    #].reset_index(drop=True)
 
     # Regional N demand in 2010
     ND = N_demand_GLO.loc[N_demand_GLO.Scenario == "NoPolicy", ["Region", 2010]]
@@ -400,7 +422,7 @@ def read_demand():
         "N_energy": N_energy,
         "feedshare": feedshare,
         "act2010": act2010,
-        "capacity_factor": capacity_factor,
+        #"capacity_factor": capacity_factor,
         "N_feed": N_feed,
         "N_trade_R12": N_trade_R12,
         "NH3_trade_R12": NH3_trade_R12,
