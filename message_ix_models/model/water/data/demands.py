@@ -185,6 +185,7 @@ def add_sectoral_demands(context):
 
     # defines path to read in demand data
     region = f"{context.regions}"
+    sub_time = context.time
     path = private_data_path("water", "demands", "harmonized", region, ".")
     # make sure all of the csvs have format, otherwise it might not work
     list_of_csvs = list(path.glob("*_baseline.csv"))
@@ -216,13 +217,51 @@ def add_sectoral_demands(context):
     df_dmds = df_f.stack().reset_index(level=0).reset_index()
     df_dmds.columns = ["year", "node", "variable", "value"]
     df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
+    
+    df_dmds["time"] = "year"
+    
+    
 
     # Write final interpolated values as csv
     # df2_f.to_csv('final_interpolated_values.csv')
+    
+    # if we are using sub-annual timesteps we replace the rural and municipal
+    # withdrawals and return flows with monthly data and also add industrial
+    if context.time != "year":
+        PATH = private_data_path(
+            "water", "demands","harmonized", region,
+            "ssp2_m_water_demands.csv"
+        )
+        df_m = pd.read_csv(PATH)
+        df_m.value *= 30 # from mcm/day to mcm/month
+        df_m["sector"][df_m["sector"]== "industry"] = "manufacturing"
+        df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
+        df_m["variable"].replace(
+            "urban_withdrawal_baseline", "urban_withdrawal2_baseline", inplace=True
+        )
+        df_m["variable"].replace(
+            "urban_return_baseline", "urban_return2_baseline", inplace=True
+        )
+        df_m = df_m[["year","pid","variable","value","month"]]
+        df_m.columns = ["year", "node", "variable", "value","time"]
+        
+        # remove yearly parts from df_dms
+        df_dmds = df_dmds[~df_dmds["variable"].isin(
+            ["urban_withdrawal2_baseline",
+             "rural_withdrawal_baseline",
+             "manufacturing_withdrawal_baseline",
+             "manufacturing_return_baseline",
+             "urban_return2_baseline",
+             "rural_return_baseline"])]
+        # attach the monthly demand
+        df_dmds = pd.concat([df_dmds,df_m])
+        
 
-    urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal_baseline"]
+    urban_withdrawal_df = df_dmds[df_dmds["variable"] == "urban_withdrawal2_baseline"]
     rual_withdrawal_df = df_dmds[df_dmds["variable"] == "rural_withdrawal_baseline"]
-    urban_return_df = df_dmds[df_dmds["variable"] == "urban_return_baseline"]
+    industrial_withdrawals_df = df_dmds[df_dmds["variable"] == "manufacturing_withdrawal_baseline"]
+    industrial_return_df = df_dmds[df_dmds["variable"] == "manufacturing_return_baseline"]
+    urban_return_df = df_dmds[df_dmds["variable"] == "urban_return2_baseline"]
     urban_return_df.reset_index(drop=True, inplace=True)
     rural_return_df = df_dmds[df_dmds["variable"] == "rural_return_baseline"]
     rural_return_df.reset_index(drop=True, inplace=True)
@@ -301,8 +340,13 @@ def add_sectoral_demands(context):
         # save all the rates for reporting purposes
         all_rates.to_csv(save_path / "all_rates_SSP2.csv", index=False)
 
+    # urban water demand and return. 1e-3 from mcm to km3
     urban_mw = urban_withdrawal_df.reset_index(drop=True)
-    urban_mw["value"] = (1e-3 * urban_mw["value"]) * urban_connection_rate_df["value"]
+    urban_mw = urban_mw.merge(
+        urban_connection_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
+    urban_mw["value"] = (1e-3 * urban_mw["value"]) * urban_mw["rate"]
 
     dmd_df = make_df(
         "demand",
@@ -310,13 +354,17 @@ def add_sectoral_demands(context):
         commodity="urban_mw",
         level="final",
         year=urban_mw["year"],
-        time="year",
+        time=urban_mw["time"],
         value=urban_mw["value"],
         unit="km3/year",
     )
     urban_dis = urban_withdrawal_df.reset_index(drop=True)
+    urban_dis = urban_dis.merge(
+        urban_connection_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
     urban_dis["value"] = (1e-3 * urban_dis["value"]) * (
-        1 - urban_connection_rate_df["value"]
+        1 - urban_dis["rate"]
     )
 
     dmd_df = dmd_df.append(
@@ -326,13 +374,18 @@ def add_sectoral_demands(context):
             commodity="urban_disconnected",
             level="final",
             year=urban_dis["year"],
-            time="year",
+            time=urban_dis["time"],
             value=urban_dis["value"],
             unit="km3/year",
         )
     )
+    # rural water demand and return
     rural_mw = rual_withdrawal_df.reset_index(drop=True)
-    rural_mw["value"] = (1e-3 * rural_mw["value"]) * rural_connection_rate_df["value"]
+    rural_mw = rural_mw.merge(
+        rural_connection_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
+    rural_mw["value"] = (1e-3 * rural_mw["value"]) * rural_mw["rate"]
 
     dmd_df = dmd_df.append(
         make_df(
@@ -341,15 +394,19 @@ def add_sectoral_demands(context):
             commodity="rural_mw",
             level="final",
             year=rural_mw["year"],
-            time="year",
+            time=rural_mw["time"],
             value=rural_mw["value"],
             unit="km3/year",
         )
     )
 
     rural_dis = rual_withdrawal_df.reset_index(drop=True)
+    rural_dis = rural_dis.merge(
+        rural_connection_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
     rural_dis["value"] = (1e-3 * rural_dis["value"]) * (
-        1 - rural_connection_rate_df["value"]
+        1 - rural_dis["rate"]
     )
 
     dmd_df = dmd_df.append(
@@ -359,15 +416,54 @@ def add_sectoral_demands(context):
             commodity="rural_disconnected",
             level="final",
             year=rural_dis["year"],
-            time="year",
+            time=rural_dis["time"],
             value=rural_dis["value"],
             unit="km3/year",
         )
     )
+    
+    # manufactury/ industry water demand and return    
+    manuf_mw = industrial_withdrawals_df.reset_index(drop=True)
+    manuf_mw["value"] = (1e-3 * manuf_mw["value"])
+
+    dmd_df = dmd_df.append(
+        make_df(
+            "demand",
+            node="B" + manuf_mw["node"],
+            commodity="industry_mw",
+            level="final",
+            year=manuf_mw["year"],
+            time=manuf_mw["time"],
+            value=manuf_mw["value"],
+            unit="km3/year",
+        )
+    )
+
+    manuf_uncollected_wst = industrial_return_df.reset_index(drop=True)
+    manuf_uncollected_wst["value"] = (1e-3 * manuf_uncollected_wst["value"])
+
+    dmd_df = dmd_df.append(
+        make_df(
+            "demand",
+            node="B" + manuf_uncollected_wst["node"],
+            commodity="industry_uncollected_wst",
+            level="final",
+            year=manuf_uncollected_wst["year"],
+            time=manuf_uncollected_wst["time"],
+            value=manuf_uncollected_wst["value"],
+            unit="km3/year",
+        )
+    )
+    
+    
     urban_collected_wst = urban_return_df.reset_index(drop=True)
+    urban_collected_wst = urban_collected_wst.merge(
+        urban_treatment_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
     urban_collected_wst["value"] = (
         1e-3 * urban_return_df["value"]
-    ) * urban_treatment_rate_df["value"]
+    ) * urban_collected_wst["rate"]
 
     dmd_df = dmd_df.append(
         make_df(
@@ -376,16 +472,20 @@ def add_sectoral_demands(context):
             commodity="urban_collected_wst",
             level="final",
             year=urban_collected_wst["year"],
-            time="year",
+            time=urban_collected_wst["time"],
             value=-urban_collected_wst["value"],
             unit="km3/year",
         )
     )
 
     rural_collected_wst = rural_return_df.reset_index(drop=True)
+    rural_collected_wst = rural_collected_wst.merge(
+        rural_treatment_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
     rural_collected_wst["value"] = (
         1e-3 * rural_return_df["value"]
-    ) * rural_treatment_rate_df["value"]
+    ) * rural_collected_wst["rate"]
 
     dmd_df = dmd_df.append(
         make_df(
@@ -394,14 +494,18 @@ def add_sectoral_demands(context):
             commodity="rural_collected_wst",
             level="final",
             year=rural_collected_wst["year"],
-            time="year",
+            time=rural_collected_wst["time"],
             value=-rural_collected_wst["value"],
             unit="km3/year",
         )
     )
     urban_uncollected_wst = urban_return_df.reset_index(drop=True)
+    urban_uncollected_wst = urban_uncollected_wst.merge(
+        urban_treatment_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
     urban_uncollected_wst["value"] = (1e-3 * urban_return_df["value"]) * (
-        1 - urban_treatment_rate_df["value"]
+        1 - urban_uncollected_wst["rate"]
     )
 
     dmd_df = dmd_df.append(
@@ -411,15 +515,19 @@ def add_sectoral_demands(context):
             commodity="urban_uncollected_wst",
             level="final",
             year=urban_uncollected_wst["year"],
-            time="year",
+            time=urban_uncollected_wst["time"],
             value=-urban_uncollected_wst["value"],
             unit="km3/year",
         )
     )
 
     rural_uncollected_wst = rural_return_df.reset_index(drop=True)
+    rural_uncollected_wst = rural_uncollected_wst.merge(
+        rural_treatment_rate_df.drop(columns=["variable","time"]
+                                      ).rename(
+                                          columns={"value": "rate"}))
     rural_uncollected_wst["value"] = (1e-3 * rural_return_df["value"]) * (
-        1 - rural_treatment_rate_df["value"]
+        1 - rural_uncollected_wst["rate"]
     )
 
     dmd_df = dmd_df.append(
@@ -429,42 +537,47 @@ def add_sectoral_demands(context):
             commodity="rural_uncollected_wst",
             level="final",
             year=rural_uncollected_wst["year"],
-            time="year",
+            time=rural_uncollected_wst["time"],
             value=-rural_uncollected_wst["value"],
             unit="km3/year",
         )
     )
-    dmd_df = dmd_df[dmd_df["year"].isin(info.Y)]
-    results["demand"] = dmd_df
-
     # Add 2010 & 2015 values as historical activities to corresponding technologies
     h_act = dmd_df[dmd_df["year"].isin([2010, 2015])]
+    
+    dmd_df = dmd_df[dmd_df["year"].isin(info.Y)]
+    results["demand"] = dmd_df
 
     # create a list of our conditions
     conditions = [
         (h_act["commodity"] == "urban_mw"),
+        (h_act["commodity"] == "industry_mw"),
         (h_act["commodity"] == "rural_mw"),
         (h_act["commodity"] == "urban_disconnected"),
         (h_act["commodity"] == "rural_disconnected"),
         (h_act["commodity"] == "urban_collected_wst"),
         (h_act["commodity"] == "rural_collected_wst"),
         (h_act["commodity"] == "urban_uncollected_wst"),
+        (h_act["commodity"] == "industry_uncollected_wst"),
         (h_act["commodity"] == "rural_uncollected_wst"),
     ]
 
     # create a list of the values we want to assign for each condition
     values = [
         "urban_t_d",
+        "industry_unconnected",
         "rural_t_d",
         "urban_unconnected",
         "rural_unconnected",
         "urban_sewerage",
         "rural_sewerage",
         "urban_untreated",
+        "industry_untreated",
         "rural_untreated",
     ]
     # create a new column and use np.select to assign values to it using our lists as arguments
     h_act["commodity"] = np.select(conditions, values)
+    h_act["value"] = h_act["value"].abs()
 
     hist_act = make_df(
         "historical_activity",
@@ -472,20 +585,27 @@ def add_sectoral_demands(context):
         technology=h_act["commodity"],
         year_act=h_act["year"],
         mode="M1",
-        time="year",
-        value=h_act["value"].abs(),
+        time=h_act["time"],
+        value=h_act["value"],
         unit="km3/year",
     )
     results["historical_activity"] = hist_act
 
     h_cap = h_act[h_act["year"] >= 2015]
+    h_cap = (
+            h_cap.groupby(["node", "commodity", "level", "year", "unit"])[
+                "value"
+            ]
+            .sum()
+            .reset_index()
+        )
 
     hist_cap = make_df(
         "historical_new_capacity",
         node_loc=h_cap["node"],
         technology=h_cap["commodity"],
         year_vtg=h_cap["year"],
-        value=h_cap["value"].abs() / 5,
+        value=h_cap["value"] / 5,
         unit="km3/year",
     )
 
@@ -497,10 +617,13 @@ def add_sectoral_demands(context):
         shares="share_wat_recycle",
         node_share="B" + df_recycling["node"],
         year_act=df_recycling["year"],
-        time="year",
         value=df_recycling["value"],
         unit="-",
-    )
+    ).pipe(
+        broadcast,
+        time = sub_time,
+        )
+        
     df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
     results["share_commodity_lo"] = df_share_wat
 
@@ -687,7 +810,7 @@ def add_water_availability(context):
         node="B" + df_sw["Region"].astype(str),
         commodity="surfacewater_basin",
         level="water_avail_basin",
-        year=df_sw["years"],
+        year=df_sw["year"],
         time="year" if context.time == 'year' else df_sw['month'],
         value=-df_sw["value"],
         unit="km3/year",
@@ -699,7 +822,7 @@ def add_water_availability(context):
             node="B" + df_gw["Region"].astype(str),
             commodity="groundwater_basin",
             level="water_avail_basin",
-            year= "year"
+            year=df_gw["year"],
             time="year" if context.time == 'year' else df_gw['month'],
             value=-df_gw["value"],
             unit="km3/year",
