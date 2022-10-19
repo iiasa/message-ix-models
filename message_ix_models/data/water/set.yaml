@@ -68,6 +68,8 @@ nexus:
     - rural_collected_wst
     - rural_uncollected_wst
     - urban_mw
+    - industry_mw
+    - industry_uncollected_wst
     - urban_disconnected
     - rural_mw
     - rural_disconnected
