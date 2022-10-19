@@ -709,6 +709,7 @@ def read_water_availability(context):
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
         df_sw['year'] = pd.DatetimeIndex(df_sw['years']).year
+        df_sw['time'] = "year"
         df_sw2210 = df_sw[df_sw['year'] == 2100]
         df_sw2210['year'] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
@@ -729,6 +730,7 @@ def read_water_availability(context):
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)
         df_gw['year'] = pd.DatetimeIndex(df_gw['years']).year
+        df_gw['time'] = "year"
         df_gw2210 = df_gw[df_gw['year'] == 2100]
         df_gw2210['year'] = 2110
         df_gw = pd.concat([df_gw, df_gw2210])
@@ -753,7 +755,7 @@ def read_water_availability(context):
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
         df_sw['year'] = pd.DatetimeIndex(df_sw['years']).year
-        df_sw['month'] = pd.DatetimeIndex(df_sw['years']).month
+        df_sw['time'] = pd.DatetimeIndex(df_sw['years']).month
         df_sw2210 = df_sw[df_sw['year'] == 2100]
         df_sw2210['year'] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
@@ -774,7 +776,7 @@ def read_water_availability(context):
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)
         df_gw['year'] = pd.DatetimeIndex(df_gw['years']).year
-        df_gw['month'] = pd.DatetimeIndex(df_gw['years']).month
+        df_gw['time'] = pd.DatetimeIndex(df_gw['years']).month
         df_gw2210 = df_gw[df_gw['year'] == 2100]
         df_gw2210['year'] = 2110
         df_gw = pd.concat([df_gw, df_sw2210])
@@ -811,7 +813,7 @@ def add_water_availability(context):
         commodity="surfacewater_basin",
         level="water_avail_basin",
         year=df_sw["year"],
-        time="year" if context.time == 'year' else df_sw['month'],
+        time=df_sw['time'],
         value=-df_sw["value"],
         unit="km3/year",
     )
@@ -823,7 +825,7 @@ def add_water_availability(context):
             commodity="groundwater_basin",
             level="water_avail_basin",
             year=df_gw["year"],
-            time="year" if context.time == 'year' else df_gw['month'],
+            time=df_gw['time'],
             value=-df_gw["value"],
             unit="km3/year",
         )
@@ -839,7 +841,7 @@ def add_water_availability(context):
         shares="share_low_lim_GWat",
         node_share="B" + df_gw["Region"],
         year_act=df_gw["years"],
-        time="year" if context.time == 'year' else df_gw['month'],
+        time=df_gw['time'],
         value=df_gw["value"]
         / (df_sw["value"] + df_gw["value"])
         * 0.95,  # 0.95 buffer factor to avoid numerical error
