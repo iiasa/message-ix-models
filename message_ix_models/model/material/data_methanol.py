@@ -377,4 +377,17 @@ def get_meth_bio_cost_ratio(scenario, tec_name, cost_type):
     df = df.merge(df_nam[["value", "year_vtg"]],left_on="year_vtg", right_on="year_vtg")
     df["ratio"] = df["value_x"]/df["value_y"]
 
-    return df["ratio"]
+    return df[["node_loc","year_vtg", "ratio"]]
+
+def get_meth_bio_cost_ratio_2020(scenario, tec_name, cost_type):
+
+    df = scenario.par(cost_type)
+    df = df[df["technology"]==tec_name]
+    df= df[df["year_vtg"]>=2020]
+    if cost_type in ["fix_cost", "var_cost"]:
+        df = df[df["year_vtg"]==df["year_act"]]
+
+    val_nam_2020 = df.loc[(df["node_loc"]=="R12_NAM") & (df["year_vtg"]==2020), "value"].iloc[0]
+    df["ratio"] = df["value"]/ val_nam_2020
+
+    return df[["node_loc","year_vtg", "ratio"]]
