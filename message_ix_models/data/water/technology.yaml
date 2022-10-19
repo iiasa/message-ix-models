@@ -586,6 +586,16 @@ nexus:
       Rural water transmission & distribution
     input: {commodity: freshwater_supply}
 
+  industry_unconnected:
+    description: >-
+      unconnected industry water not connected to system
+    input: {commodity: freshwater_supply}
+
+  industry_untreated:
+    description: >-
+      untreated industry water return flows
+    input: {commodity: urban_uncollected_wst}
+
   urban_unconnected:
     description: >-
       untreated urban water not connected to system
@@ -603,7 +613,7 @@ nexus:
 
   urban_untreated:
     description: >-
-      untreated urban water
+      untreated urban water return flows
     input: {commodity: urban_uncollected_wst}
 
   urban_discharge:
@@ -623,7 +633,7 @@ nexus:
 
   rural_untreated:
     description: >-
-      untreated rural water
+      untreated rural water return flows
     input: {commodity: rural_collected_wst}
 
   membrane:
