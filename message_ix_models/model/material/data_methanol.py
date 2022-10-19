@@ -109,14 +109,12 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in resin_dict.keys()):
             new_dict2[i] = resin_dict[i]
 
-    new_dict2["demand"] = pd.concat([new_dict2["demand"],
-        gen_resin_demand(
-            scenario, pars["resin_share"], "residential", pars["wood_scenario"])
-                                     ]
-    )
-    new_dict2["demand"] = pd.concat([new_dict2["demand"],
-        gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"])
-    ])
+    df_comm = gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"])
+    df_resid = gen_resin_demand(scenario, pars["resin_share"], "residential", pars["wood_scenario"])
+    df_resin_demand = df_comm.copy(deep=True)
+    df_resin_demand["value"] = df_comm["value"] + df_resid["value"]
+    new_dict2["demand"] = pd.concat([new_dict2["demand"], df_resin_demand])
+
     new_dict2["input"] = pd.concat([new_dict2["input"], add_methanol_trp_additives(scenario)])
 
     if pars["cbudget"]:
@@ -351,8 +349,6 @@ def gen_meth_residual_demand(gdp_elasticity):
             dem_2020, df[income_year1], df[income_year2], gdp_elasticity
         )
         df_demand[income_year2] = dem_2020
-
-
 
     df_melt = df_demand.melt(
         id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
