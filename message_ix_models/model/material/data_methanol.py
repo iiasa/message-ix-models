@@ -109,8 +109,8 @@ def gen_data_methanol(scenario):
         if ~(i in new_dict2.keys()) & (i in resin_dict.keys()):
             new_dict2[i] = resin_dict[i]
 
-    df_comm = gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"])
-    df_resid = gen_resin_demand(scenario, pars["resin_share"], "residential", pars["wood_scenario"])
+    df_comm = gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"], pars["pathway"])
+    df_resid = gen_resin_demand(scenario, pars["resin_share"], "residential", pars["wood_scenario"], pars["pathway"])
     df_resin_demand = df_comm.copy(deep=True)
     df_resin_demand["value"] = df_comm["value"] + df_resid["value"]
     new_dict2["demand"] = pd.concat([new_dict2["demand"], df_resin_demand])
@@ -268,9 +268,9 @@ def add_methanol_trp_additives(scenario):
     return pd.concat([df_loil, df_loil_meth])
 
 
-def gen_resin_demand(scenario, resin_share, sector, buildings_scen):
+def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHAPE"):
     df = pd.read_csv(
-        context.get_local_path("material", "results_material_SHAPE_" + sector + ".csv")
+        context.get_local_path("material", "results_material_"+ pathway +"_" + sector + ".csv")
     )
     resin_intensity = resin_share
     df = df[df["scenario"] == buildings_scen]
