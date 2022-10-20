@@ -593,7 +593,7 @@ def add_e_flow(context):
         node="B" + df_sw["Region"].astype(str),
         commodity="surfacewater_basin",
         level="water_avail_basin",
-        year=df_sw["years"],
+        year=df_sw["year"],
         time=df_sw["time"],
         value=df_sw["value"],
         unit="km3/year",
@@ -619,6 +619,55 @@ def add_e_flow(context):
     df_env.fillna(0, inplace=True)
     df_env.reset_index(drop=True, inplace=True)
 
+    if context.time == 'year':
+        # Reading data, the data is spatially and temporally aggregated from GHMs
+        path1 = private_data_path(
+            "water",
+            "availability",
+
+        f"e-flow_{context.RCP}_{context.regions}.csv",
+        )
+        df_env = pd.read_csv(path1)
+        df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
+        new_cols = pd.to_datetime(df_env.columns, format="%m/%d/%Y")
+        df_env.columns = new_cols
+        df_env.index = df_x["BCU_name"]
+        df_env = df_env.stack().reset_index()
+        df_env.columns = ["Region", "years", "value"]
+        df_env.sort_values(["Region", "years", "value"], inplace=True)
+        df_env.fillna(0, inplace=True)
+        df_env.reset_index(drop=True, inplace=True)
+        df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
+        df_env["time"] = "year"
+        df_env2210 = df_env[df_env["year"] == 2100]
+        df_env2210["year"] = 2110
+        df_env = pd.concat([df_env, df_env2210])
+        df_env = df_env[df_env["year"].isin(info.Y)]
+    else:
+        # Reading data, the data is spatially and temporally aggregated from GHMs
+        path1 = private_data_path(
+            "water",
+            "availability",
+
+        f"e-flow_5y_m_{context.RCP}_{context.regions}.csv",
+        )
+        df_env = pd.read_csv(path1)
+        df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
+        new_cols = pd.to_datetime(df_env.columns, format="%Y-%m-%d")
+        df_env.columns = new_cols
+        df_env.index = df_x["BCU_name"]
+        df_env = df_env.stack().reset_index()
+        df_env.columns = ["Region", "years", "value"]
+        df_env.sort_values(["Region", "years", "value"], inplace=True)
+        df_env.fillna(0, inplace=True)
+        df_env.reset_index(drop=True, inplace=True)
+        df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
+        df_env["time"] = pd.DatetimeIndex(df_env["years"]).month
+        df_env2210 = df_env[df_env["year"] == 2100]
+        df_env2210["year"] = 2110
+        df_env = pd.concat([df_env, df_env2210])
+        df_env = df_env[df_env["year"].isin(info.Y)]    
+
     # Return a processed dataframe for env flow calculations
     if context.SDG:
         # dataframe to put constraints on env flows
@@ -626,9 +675,9 @@ def add_e_flow(context):
             "bound_activity_lo",
             node_loc="B" + df_env["Region"],
             technology="return_flow",
-            year_act=df_env["years"],
+            year_act=df_env["year"],
             mode="M1",
-            time="year",
+            time= df_env['time'],
             value=df_env["value"],
             unit="km3/year",
         )
