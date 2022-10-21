@@ -72,14 +72,14 @@ def water_ini(context, regions,time):
     if not time:
         sc_ref = context.get_scenario()
         time = sc_ref.set("time")
-        sub_time = time[time != "year"]
-        if sub_time.empty:
-            context.time = "year"
+        sub_time = list(time[time != "year"])
+        if len(sub_time) == 0:
+            context.time = ["year"]
             
         else:
             context.time = sub_time
     else:
-        context.time = time
+        context.time = list(time)
     log.info(f"Using the following time-step for the water module: {context.time}")
         
     # setting the time information in context

@@ -225,7 +225,7 @@ def add_sectoral_demands(context):
 
     # if we are using sub-annual timesteps we replace the rural and municipal
     # withdrawals and return flows with monthly data and also add industrial
-    if context.time != "year":
+    if "year" not in context.time:
         PATH = private_data_path(
             "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
         )
@@ -455,7 +455,7 @@ def add_sectoral_demands(context):
             level="final",
             year=manuf_uncollected_wst["year"],
             time=manuf_uncollected_wst["time"],
-            value=manuf_uncollected_wst["value"],
+            value=-manuf_uncollected_wst["value"],
             unit="km3/year",
         )
     )
@@ -687,12 +687,14 @@ def read_water_availability(context):
     # Reference to the water configuration
     # info = context["water build info"]
     # reading sample for assiging basins
+    info = context["water build info"]
+    
     PATH = private_data_path(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
     df_x = pd.read_csv(PATH)
 
-    if context.time == "year":
+    if "year" in context.time:
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = private_data_path(
@@ -854,7 +856,7 @@ def add_water_availability(context):
         "share_commodity_lo",
         shares="share_low_lim_GWat",
         node_share="B" + df_gw["Region"],
-        year_act=df_gw["years"],
+        year_act=df_gw["year"],
         time=df_gw["time"],
         value=df_gw["value"]
         / (df_sw["value"] + df_gw["value"])

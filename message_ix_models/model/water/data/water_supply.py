@@ -8,6 +8,119 @@ from message_ix_models.util import broadcast, private_data_path, same_node, same
 from message_data.model.water.utils import map_yv_ya_lt
 from message_data.model.water.data.demands import read_water_availability
 
+def map_basin_region_wat(context):
+    """
+    Calculate share of water avaialbility of basins per each parent region. 
+
+    The parent region could be global message regions or country 
+
+    Parameters
+    ----------
+    context : .Context
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
+        are data frames ready for :meth:`~.Scenario.add_par`.
+    """
+    info = context["water build info"]
+    
+    if "year" in context.time:
+        # add water return flows for cooling tecs
+        # Use share of basin availability to distribute the return flow from
+        path3 = private_data_path(
+            "water",
+            "availability",
+            f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+        )
+        df_sw = pd.read_csv(path3)
+
+        # reading sample for assiging basins
+        PATH = private_data_path(
+            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+        )
+        df_x = pd.read_csv(PATH)
+
+        # Reading data, the data is spatially and temporally aggregated from GHMs
+        df_sw["BCU_name"] = df_x["BCU_name"]
+
+        if context.type_reg == "country":
+            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
+        else:
+            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
+
+        df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
+        df_sw.drop(columns="Unnamed: 0", inplace=True)
+
+        new_cols = (
+            pd.to_datetime(df_sw.columns, format="%m/%d/%Y")
+            if context.regions == "R11"
+            else pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
+        )
+        df_sw.columns = new_cols
+
+        # Calculating ratio of water availability in basin by region
+        df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
+        df_sw.reset_index(inplace=True)
+        df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
+        df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
+        df_sw.drop(columns=["BCU_name"], inplace=True)
+        df_sw.set_index(["MSGREG", "Region","Mode"], inplace=True)
+        df_sw = df_sw.stack().reset_index(level=0).reset_index()
+        df_sw.columns = ["region", "mode", "date","MSGREG", "share"]
+        df_sw.sort_values(["region", "date", "MSGREG", "share"], inplace=True)
+        df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
+        df_sw["time"] = "year"
+        df_sw = df_sw[df_sw["year"].isin(info.Y)]
+        df_sw.reset_index(drop = True,inplace=True)
+
+    else:
+        # add water return flows for cooling tecs
+        # Use share of basin availability to distribute the return flow from
+        path3 = private_data_path(
+            "water",
+            "availability",
+            f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
+        )
+        df_sw = pd.read_csv(path3)
+
+        # reading sample for assiging basins
+        PATH = private_data_path(
+            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+        )
+        df_x = pd.read_csv(PATH)
+
+        # Reading data, the data is spatially and temporally aggregated from GHMs
+        df_sw["BCU_name"] = df_x["BCU_name"]
+
+        if context.type_reg == "country":
+            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
+        else:
+            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
+
+        df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
+        df_sw.drop(columns="Unnamed: 0", inplace=True)
+
+        new_cols = pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
+        df_sw.columns = new_cols
+
+        # Calculating ratio of water availability in basin by region
+        df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
+        df_sw.reset_index(inplace=True)
+        df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
+        df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
+        df_sw.drop(columns=["BCU_name"], inplace=True)
+        df_sw.set_index(["MSGREG", "Region","Mode"], inplace=True)
+        df_sw = df_sw.stack().reset_index(level=0).reset_index()
+        df_sw.columns = ["node", "mode", "date","MSGREG", "share"]
+        df_sw.sort_values(["node", "date", "MSGREG", "share"], inplace=True)
+        df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
+        df_sw["time"] = pd.DatetimeIndex(df_sw["date"]).month
+        df_sw = df_sw[df_sw["year"].isin(info.Y)]
+        df_sw.reset_index(drop = True,inplace=True)
+
+    return df_sw
+
 
 def add_water_supply(context):
     """Add Water supply infrastructure
@@ -184,12 +297,12 @@ def add_water_supply(context):
                 level="water_supply_basin",
                 commodity="freshwater_basin",
                 mode=df_node["mode"],
-                time="year",
                 node_origin=df_node["node"],
                 node_loc=df_node["region"],
             )
             .pipe(broadcast, year_vtg=year_wat,
-                   time_origin = sub_time,)
+                   time = sub_time,)
+            .pipe(same_time)
         )
         inp["year_act"] = inp["year_vtg"]
         # # input data frame  for slack technology balancing equality with demands
@@ -416,13 +529,12 @@ def add_water_supply(context):
                 unit="-",
                 level="water_supply",
                 commodity="freshwater",
-                time="year",
                 time_dest="year",
-                time_origin="year",
                 node_loc=df_node["region"],
                 node_dest=df_node["region"],
                 mode=df_node["mode"],
-            ).pipe(broadcast, year_vtg=year_wat)
+            ).pipe(broadcast, year_vtg=year_wat,
+                   time = sub_time)
         )
 
         output_df["year_act"] = output_df["year_vtg"]
@@ -435,10 +547,10 @@ def add_water_supply(context):
             technology="basin_to_reg",
             mode=df_node["mode"],
             node_loc=df_node["region"],
-            time="year",
             value=20,
             unit="-",
-        ).pipe(broadcast, year_vtg=year_wat)
+        ).pipe(broadcast, year_vtg=year_wat,
+               time = sub_time)
         var["year_act"] = var["year_vtg"]
         # # Dummy cost for extract surface ewater to prioritize water sources
         # var = var.append(make_df(
@@ -462,65 +574,20 @@ def add_water_supply(context):
         # ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat, node_loc=df_node["node"])
         #                )
         results["var_cost"] = var
-
-        path3 = private_data_path(
-            "water",
-            "availability",
-            f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
-        )
-        df_sw = pd.read_csv(path3)
-
-        # reading sample for assiging basins
-        PATH = private_data_path(
-            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
-        )
-        df_x = pd.read_csv(PATH)
-
-        # Reading data, the data is spatially and temporally aggregated from GHMs
-        df_sw["BCU_name"] = df_x["BCU_name"]
-
-        if context.type_reg == "country":
-            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
-        else:
-            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
-
-        # Storing the energy MESSAGE region names
-        node_region = df_sw["MSGREG"].unique()
-
-        df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
-        df_sw.drop(columns="Unnamed: 0", inplace=True)
-
-        years = list(range(2010, 2105, 5))
-        df_sw.columns = years
-        df_sw[2110] = df_sw[2100]
-        df_sw.drop(columns=[col for col in df_sw if col not in info.Y], inplace=True)
-
-        # Calculating ratio of water availability in basin by region
-        df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
-        df_sw.reset_index(inplace=True)
-        df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
-        df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
-
-        df_sw["node_dest"] = "B" + df_sw["BCU_name"].astype(str)
-        df_sw.drop(columns=["BCU_name"], inplace=True)
-        df_sw.set_index(["MSGREG", "node_dest"], inplace=True)
-        df_sw = df_sw.stack().reset_index(level=0).reset_index()
-        df_sw.columns = ["node_dest", "year_act", "node_loc", "share"]
-        df_sw.sort_values(["node_dest", "year_act", "node_loc", "share"], inplace=True)
-        df_sw["year_act"] = df_sw["year_act"]
-        df_sw.fillna(0, inplace=True)
-        df_sw.reset_index(drop=True, inplace=True)
+        
+        # load the share of sw
+        df_sw = map_basin_region_wat(context)
 
         share = make_df(
             "share_mode_up",
             shares="share_basin",
             technology="basin_to_reg",
-            mode=df_sw["Mode"],
-            node_share=df_sw["Region"],
-            time="year",
-            value=df_sw["value"],
+            mode=df_sw["mode"],
+            node_share=df_sw["MSGREG"],
+            time=df_sw["time"],
+            value=df_sw["share"],
             unit="%",
-            year_act=df_sw["years"],
+            year_act=df_sw["year"],
         )
 
         results["share_mode_up"] = share
@@ -663,7 +730,7 @@ def add_e_flow(context):
     df_env.fillna(0, inplace=True)
     df_env.reset_index(drop=True, inplace=True)
 
-    if context.time == 'year':
+    if "year" in context.time:
         # Reading data, the data is spatially and temporally aggregated from GHMs
         path1 = private_data_path(
             "water",
@@ -739,123 +806,4 @@ def add_e_flow(context):
 
     return results
 
-
-def map_basin_region_wat(context):
-    """
-    Calculate share of water avaialbility of basins per each parent region. 
-
-    The parent region could be global message regions or country 
-
-    Parameters
-    ----------
-    context : .Context
-    Returns
-    -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
-        are data frames ready for :meth:`~.Scenario.add_par`.
-    """
-
-    if context.time == 'year':
-        # add water return flows for cooling tecs
-        # Use share of basin availability to distribute the return flow from
-        path3 = private_data_path(
-            "water",
-            "availability",
-            f"qtot_{context.RCP}_{context.REL}_{context.regions}.csv",
-        )
-        path3 = 'C:/Users/awais/Documents/GitHub/awais/message_data_water/data/water/availability/qtot_5y_6p0_low_ZMB.csv'
-        df_sw = pd.read_csv(path3)
-
-        # reading sample for assiging basins
-        PATH = private_data_path(
-            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
-        )
-        PATH = 'C:/Users/awais/Documents/GitHub/awais/message_data_water/data/water/delineation/basins_by_region_simpl_ZMB.csv'
-
-        df_x = pd.read_csv(PATH)
-
-        # Reading data, the data is spatially and temporally aggregated from GHMs
-        df_sw["BCU_name"] = df_x["BCU_name"]
-
-        if context.type_reg == "country":
-            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
-        else:
-            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
-
-        # Storing the energy MESSAGE region names
-        node_region = df_sw["MSGREG"].unique()
-
-        df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
-        df_sw.drop(columns="Unnamed: 0", inplace=True)
-
-        new_cols = (
-            pd.to_datetime(df_sw.columns, format="%m/%d/%Y")
-            if context.regions == "R11"
-            else pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
-        )
-        df_sw.columns = new_cols
-
-        # Calculating ratio of water availability in basin by region
-        df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
-        df_sw.reset_index(inplace=True)
-        df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
-        df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
-        df_sw.drop(columns=["BCU_name"], inplace=True)
-        df_sw.set_index(["MSGREG", "Region","Mode"], inplace=True)
-        df_sw = df_sw.stack().reset_index(level=0).reset_index()
-        df_sw.columns = ["region", "mode", "date","MSGREG", "share"]
-        df_sw.sort_values(["region", "date", "MSGREG", "share"], inplace=True)
-        df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
-        df_sw["time"] = "year"
-
-    else:
-        # add water return flows for cooling tecs
-        # Use share of basin availability to distribute the return flow from
-        path3 = private_data_path(
-            "water",
-            "availability",
-            f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
-        )
-        
-        df_sw = pd.read_csv(path3)
-
-        # reading sample for assiging basins
-        PATH = private_data_path(
-            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
-        )
-    
-        df_x = pd.read_csv(PATH)
-
-        # Reading data, the data is spatially and temporally aggregated from GHMs
-        df_sw["BCU_name"] = df_x["BCU_name"]
-
-        if context.type_reg == "country":
-            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
-        else:
-            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
-
-        # Storing the energy MESSAGE region names
-        node_region = df_sw["MSGREG"].unique()
-
-        df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
-        df_sw.drop(columns="Unnamed: 0", inplace=True)
-
-        new_cols = pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
-        df_sw.columns = new_cols
-
-        # Calculating ratio of water availability in basin by region
-        df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
-        df_sw.reset_index(inplace=True)
-        df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
-        df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
-        df_sw.drop(columns=["BCU_name"], inplace=True)
-        df_sw.set_index(["MSGREG", "Region","Mode"], inplace=True)
-        df_sw = df_sw.stack().reset_index(level=0).reset_index()
-        df_sw.columns = ["node", "mode", "date","MSGREG", "share"]
-        df_sw.sort_values(["node", "date", "MSGREG", "share"], inplace=True)
-        df_sw["year"] = pd.DatetimeIndex(df_sw["date"]).year
-        df_sw["time"] = pd.DatetimeIndex(df_sw["date"]).month
-
-    return df_sw, node_region
         
