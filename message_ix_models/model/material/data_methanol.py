@@ -389,5 +389,12 @@ def get_meth_bio_cost_ratio_2020(scenario, tec_name, cost_type):
 
     val_nam_2020 = df.loc[(df["node_loc"]=="R12_NAM") & (df["year_vtg"]==2020), "value"].iloc[0]
     df["ratio"] = df["value"]/ val_nam_2020
-
     return df[["node_loc","year_vtg", "ratio"]]
+
+
+def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_tec):
+    df = get_meth_bio_cost_ratio_2020(scenario, proxy_tec, cost_type)
+    df["value"] = value * df["ratio"]
+    df["technology"] = new_tec
+    df["unit"] = "-"
+    return message_ix.make_df(cost_type, **df)
