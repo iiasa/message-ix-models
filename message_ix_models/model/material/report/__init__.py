@@ -2127,34 +2127,35 @@ def report(
     # If CCS technologies are used,
 
     sectors = [
-        "aluminum",
-        "steel",
-        "petro",
-        "cement",
-        "ammonia",
         "all",
+        "aluminum",
+        "ammonia",
+        "cement",
         "Chemicals",
         "Other Sector",
+        "petro",
+        "steel",
     ]
     emission_type = [
-        "CO2_industry",
+        "BCA",
+        "CF4",
         "CH4",
+        "CO",
+        "CO2_industry",
         "CO2",
+        "N2O",
         "NH3",
         "NOx",
-        "CF4",
-        "N2O",
-        "BCA",
-        "CO",
         "OCA",
     ]
 
     print("Emissions are being printed.")
     for typ, r, e in product(["demand", "process"], nodes, emission_type):
-        df_emi = df.copy()
-        df_emi.filter(region=r, year=years, inplace=True)
-        #  CCS technologies for ammonia has both CO2 and CO2_industry
-        #  at the same time.
+        # Filter on region and years
+        df_emi = df.filter(region=r, year=years)
+
+        # Identify variables to filter
+        # CCS technologies for ammonia have both CO2 and CO2_industry at the same time
         if e == "CO2_industry":
             emi_filter = [
                 "emis|CO2|biomass_NH3_ccs|*",
@@ -2172,9 +2173,9 @@ def report(
                 "emis|CO2_industry|electr_NH3|*",
                 "emis|CO2_industry|*",
             ]
-            df_emi.filter(variable=emi_filter, inplace=True)
         else:
-            emi_filter = ["emis|" + e + "|*"]
+            emi_filter = [f"emis|{e}|*"]
+            # When e=CO2, these were already handled above
             exclude = [
                 "emis|CO2|biomass_NH3_ccs|*",
                 "emis|CO2|gas_NH3_ccs|*",
@@ -2182,264 +2183,142 @@ def report(
                 "emis|CO2|fueloil_NH3_ccs|*",
             ]
             df_emi.filter(variable=exclude, keep=False, inplace=True)
-            df_emi.filter(variable=emi_filter, inplace=True)
-        if (e == "CO2") | (e == "CO2_industry"):
+
+        df_emi.filter(variable=emi_filter, inplace=True)
+
+        # Convert units
+        log.info(f"Units for {typ = }, {r = }, {e = }: {df_emi.unit}")
+        if e in {"CO2", "CO2_industry"}:
             # From MtC to Mt CO2/yr
             df_emi.convert_unit("", to="Mt CO2/yr", factor=44 / 12, inplace=True)
-        elif (e == "N2O") | (e == "CF4"):
-            unit = "kt " + e + "/yr"
+        elif e in {"N2O", "CF4"}:
+            unit = f"kt {e}/yr"
             df_emi.convert_unit("", to=unit, factor=1, inplace=True)
         else:
             e = NAME_MAP.get(e, e)
             # From kt/yr to Mt/yr
-            unit = "Mt " + e + "/yr"
+            unit = f"Mt {e}/yr"
             df_emi.convert_unit("", to=unit, factor=0.001, inplace=True)
 
         all_emissions = df_emi.timeseries().reset_index()
 
-        # Split the strings in the identified variables for further processing
-        splitted_vars = [v.split("|") for v in all_emissions.variable]
-        # Lists to later keep the variables and names to aggregate
-        var_list = []
-        aggregate_list = []
+        # Mapping from aggregate variable name to list of variables to be aggregated
+        aggregates = dict()
+
+        # Expression for _i/_I technologies, used below in 2 places
+        expr_i = (
+            "(biomass|coal|elec|m?eth|[fl]oil|gas|h2|heat|hp_el|hp_gas)_i"
+            "|(sp_(coal|el|eth|liq|meth)|h2_fc)_I"
+        )
+        # Expression for _trp and _tmp technologies
+        expr_tmptrp = re.compile("m?eth_ic_trp|(coal|elec|[fl]oil|gas|m?eth)_tmp")
 
         # Collect the same emission type for each sector
+        # NB this loop does not modify `df_emi` or `all_emissions`; it only uses their
+        #    contents to populate `aggregates`
         for s in sectors:
-            # Create auxilary dataframes for processing
-            aux1_df = pd.DataFrame(
-                splitted_vars,
-                columns=["emission", "type", "technology", "mode"],
-            )
-            aux2_df = pd.concat(
-                [
-                    all_emissions.reset_index(drop=True),
-                    aux1_df.reset_index(drop=True),
-                ],
-                axis=1,
-            )
-            # Filter the technologies only for the sector
+            # Determine the aggregate name
+            aggregate_name = None
+            _e = NAME_MAP.get(e, e)  # Maybe change "CO2_industry" to "CO2"
+            if s == "all":
+                if typ == "demand" and e != "CO2":
+                    aggregate_name = f"Emissions|{_e}|Energy|Demand|Industry"
+                elif typ == "process" and e != "CO2_industry":
+                    aggregate_name = f"Emissions|{e}|Industrial Processes"
+            else:
+                # Adjust the sector names
+                _s = NAME_MAP.get(s, s)
+                if typ == "demand" and e != "CO2":
+                    aggregate_name = f"Emissions|{_e}|Energy|Demand|Industry|{_s}"
+                elif typ == "process" and e != "CO2_industry":
+                    aggregate_name = f"Emissions|{e}|Industrial Processes|{_s}"
 
-            if (typ == "process") & (s == "all") & (e != "CO2_industry"):
-                tec = [
-                    t
-                    for t in aux2_df["technology"].values
-                    if (
-                        (
-                            (
-                                ("cement" in t)
-                                | ("steel" in t)
-                                | ("aluminum" in t)
-                                | ("petro" in t)
-                            )
-                            & ("furnace" not in t)
-                        )
-                    )
-                ]
-            if (typ == "process") & (s != "all"):
-                tec = [
-                    t
-                    for t in aux2_df["technology"].values
-                    if ((s in t) & ("furnace" not in t) & ("NH3" not in t))
-                ]
-
-            if (typ == "demand") & (s == "Chemicals"):
-                tec = [
-                    t
-                    for t in aux2_df["technology"].values
-                    if (("NH3" in t) | (("petro" in t) & ("furnace" in t)))
-                ]
-
-            if (typ == "demand") & (s == "Other Sector") & (e != "CO2"):
-                tec = [
-                    t
-                    for t in aux2_df["technology"].values
-                    if (
-                        (
-                            ("biomass_i" in t)
-                            | ("coal_i" in t)
-                            | ("elec_i" in t)
-                            | ("eth_i" in t)
-                            | ("foil_i" in t)
-                            | ("gas_i" in t)
-                            | ("h2_i" in t)
-                            | ("heat_i" in t)
-                            | ("hp_el_i" in t)
-                            | ("hp_gas_i" in t)
-                            | ("loil_i" in t)
-                            | ("meth_i" in t)
-                            | ("sp_coal_I" in t)
-                            | ("sp_el_I" in t)
-                            | ("sp_eth_I" in t)
-                            | ("sp_liq_I" in t)
-                            | ("sp_meth_I" in t)
-                            | ("h2_fc_I" in t)
-                        )
-                        & (
-                            ("eth_ic_trp" not in t)
-                            & ("meth_ic_trp" not in t)
-                            & ("coal_imp" not in t)
-                            & ("foil_imp" not in t)
-                            & ("gas_imp" not in t)
-                            & ("elec_imp" not in t)
-                            & ("eth_imp" not in t)
-                            & ("meth_imp" not in t)
-                            & ("loil_imp" not in t)
-                        )
-                    )
-                ]
-
-            if (typ == "demand") & (s == "all") & (e != "CO2"):
-                tec = [
-                    t
-                    for t in aux2_df["technology"].values
-                    if (
-                        (
-                            (
-                                ("cement" in t)
-                                | ("steel" in t)
-                                | ("aluminum" in t)
-                                | ("petro" in t)
-                            )
-                            & ("furnace" in t)
-                        )
-                        | (
-                            ("biomass_i" in t)
-                            | ("coal_i" in t)
-                            | ("elec_i" in t)
-                            | ("eth_i" in t)
-                            | ("foil_i" in t)
-                            | ("gas_i" in t)
-                            | ("h2_i" in t)
-                            | ("heat_i" in t)
-                            | ("hp_el_i" in t)
-                            | ("hp_gas_i" in t)
-                            | ("loil_i" in t)
-                            | ("meth_i" in t)
-                            | ("sp_coal_I" in t)
-                            | ("sp_el_I" in t)
-                            | ("sp_eth_I" in t)
-                            | ("sp_liq_I" in t)
-                            | ("sp_meth_I" in t)
-                            | ("h2_fc_I" in t)
-                            | ("DUMMY_limestone_supply_cement" in t)
-                            | ("DUMMY_limestone_supply_steel" in t)
-                            | ("eaf_steel" in t)
-                            | ("DUMMY_coal_supply" in t)
-                            | ("DUMMY_gas_supply" in t)
-                            | ("NH3" in t)
-                        )
-                        & (
-                            ("eth_ic_trp" not in t)
-                            & ("meth_ic_trp" not in t)
-                            & ("coal_imp" not in t)
-                            & ("foil_imp" not in t)
-                            & ("gas_imp" not in t)
-                            & ("elec_imp" not in t)
-                            & ("eth_imp" not in t)
-                            & ("meth_imp" not in t)
-                            & ("loil_imp" not in t)
-                        )
-                    )
-                ]
-
-            if (
-                (typ == "demand")
-                & (s != "all")
-                & (s != "Other Sector")
-                & (s != "Chemicals")
-            ):
-
-                if s == "steel":
-                    # Furnaces are not used as heat source for iron&steel
-                    # Dummy supply technologies help accounting the emissions
-                    # from cokeoven_steel, bf_steel, dri_steel, eaf_steel,
-                    # sinter_steel.
-
-                    tec = [
-                        t
-                        for t in aux2_df["technology"].values
-                        if (
-                            ("DUMMY_coal_supply" in t)
-                            | ("DUMMY_gas_supply" in t)
-                            | ("DUMMY_limestone_supply_steel" in t)
-                        )
-                    ]
-
-                elif s == "cement":
-                    tec = [
-                        t
-                        for t in aux2_df["technology"].values
-                        if (
-                            ((s in t) & ("furnace" in t))
-                            | ("DUMMY_limestone_supply_cement" in t)
-                        )
-                    ]
-                elif s == "ammonia":
-                    tec = [t for t in aux2_df["technology"].values if (("NH3" in t))]
-                else:
-                    tec = [
-                        t
-                        for t in aux2_df["technology"].values
-                        if ((s in t) & ("furnace" in t))
-                    ]
-            # Adjust the sector names
-            s = NAME_MAP.get(s, s)
-
-            aux2_df = aux2_df[aux2_df["technology"].isin(tec)]
-            # If there are no emission types for that setor skip
-            if aux2_df.empty:
+            if aggregate_name is None:
+                log.info(f"No aggregate name for {s = }, {typ = }, {e = }; skip")
                 continue
 
-            # Add elements to lists for aggregation over emission type
-            # for each sector
-            var = aux2_df["variable"].values.tolist()
-            var_list.append(var)
+            # Recover dimensions that were concatenated into the variable name
+            aux_df = pd.concat(
+                [
+                    all_emissions,
+                    all_emissions.variable.str.split("|", expand=True).set_axis(
+                        ["emission", "type", "technology", "mode"], axis=1
+                    ),
+                ]
+            )
+            # Unique list of all technologies to be filtered
+            all_t = aux_df["technology"].unique()
 
-            # Aggregate names:
-            if s == "all":
-                if (typ == "demand") & (e != "CO2"):
-                    if e != "CO2_industry":
-                        aggregate_name = "Emissions|" + e + "|Energy|Demand|Industry"
-                        aggregate_list.append(aggregate_name)
-                    else:
-                        aggregate_name = (
-                            "Emissions|" + "CO2" + "|Energy|Demand|Industry"
-                        )
-                        aggregate_list.append(aggregate_name)
-                if (typ == "process") & (e != "CO2_industry"):
-                    aggregate_name = "Emissions|" + e + "|Industrial Processes"
-                    aggregate_list.append(aggregate_name)
-            else:
-                if (typ == "demand") & (e != "CO2"):
-                    if e != "CO2_industry":
-                        aggregate_name = f"Emissions|{e}|Energy|Demand|Industry|{s}"
-                        aggregate_list.append(aggregate_name)
-                    else:
-                        aggregate_name = f"Emissions|CO2|Energy|Demand|Industry|{s}"
-                        aggregate_list.append(aggregate_name)
-                if (typ == "process") & (e != "CO2_industry"):
-                    aggregate_name = f"Emissions|{e}|Industrial Processes|{s}"
-                    aggregate_list.append(aggregate_name)
+            # Filter the technologies only for the sector
+            if typ == "process" and s == "all" and e != "CO2_industry":
+                tec = filter(
+                    lambda t: re.search("aluminum|cement|steel|petro", t)
+                    and ("furnace" not in t),
+                    all_t,
+                )
+            elif typ == "process" and s != "all":
+                tec = filter(
+                    lambda t: s in t and not re.search("furnace|NH3", t), all_t
+                )
+            elif typ == "demand" and s == "Chemicals":
+                tec = filter(
+                    lambda t: "NH3" in t or ("petro" in t and "furnace" in t), all_t
+                )
+            elif typ == "demand" and s == "Other Sector" and e != "CO2":
+                tec = filter(
+                    lambda t: re.search(expr_i, t) and not expr_tmptrp.search(t), all_t
+                )
+            elif typ == "demand" and s == "all" and e != "CO2":
+                tec = filter(
+                    lambda t: (
+                        re.search("aluminum|cement|steel|petro", t) and "furnace" in t
+                    )
+                    or re.search(
+                        expr_i + "|eaf_steel|NH3|"
+                        "DUMMY_(limestone_supply_(cement|steel)|(coal|gas)_supply)",
+                        t,
+                    )
+                    and not expr_tmptrp.search(t),
+                    all_t,
+                )
+            elif typ == "demand" and s not in {"all", "Other Sector", "Chemicals"}:
+                if s == "steel":
+                    # Furnaces are not used as heat source for iron & steel. Dummy
+                    # supply technologies help accounting the emissions from
+                    # cokeoven_steel, bf_steel, dri_steel, eaf_steel, and sinter_steel.
+                    tec = filter(
+                        lambda t: re.search(
+                            "DUMMY_((coal|gas)_supply|limestone_supply_steel)", t
+                        ),
+                        all_t,
+                    )
+                elif s == "cement":
+                    tec = filter(
+                        lambda t: (s in t and "furnace" in t)
+                        or ("DUMMY_limestone_supply_cement" in t),
+                        all_t,
+                    )
+                elif s == "ammonia":
+                    tec = filter(lambda t: "NH3" in t, all_t)
+                else:
+                    tec = filter(lambda t: s in t and "furnace" in t, all_t)
 
-        # To plot:   Obtain the iamc format dataframe again
+            aux_df = aux_df[aux_df["technology"].isin(list(tec))]
 
-        aux2_df = pd.concat(
-            [
-                all_emissions.reset_index(drop=True),
-                aux1_df.reset_index(drop=True),
-            ],
-            axis=1,
-        )
-        aux2_df.drop(["emission", "type", "technology", "mode"], axis=1, inplace=True)
-        df_emi = pyam.IamDataFrame(data=aux2_df)
+            # If there are no emission types for that sector skip
+            if aux_df.empty:
+                continue
 
-        # Aggregation over emission type for each sector if there are elements
-        # to aggregate
-        for i in range(len(aggregate_list)):
-            df_emi.aggregate(aggregate_list[i], components=var_list[i], append=True)
+            # Add elements to lists for aggregation over emission type for each sector
+            aggregates[aggregate_name] = sorted(aux_df["variable"].unique())
 
-        if len(aggregate_list):
-            df_emi.filter(variable=aggregate_list, inplace=True)
+        # Aggregate over emission type for each sector if there are elements to
+        # aggregate
+        for variable, components in aggregates.items():
+            df_emi.aggregate(variable, components, append=True)
+
+        if len(aggregates):
+            df_emi.filter(variable=aggregates.keys(), inplace=True)
             df_final.append(df_emi, inplace=True)
 
             plot_emi_aggregates(df_emi, pp, r, e)
