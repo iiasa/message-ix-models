@@ -118,15 +118,23 @@ def gen_workflow(context, versions):
 @cli.command("run")
 @common_params("dry_run")
 @click.option("--from", "truncate_step", help="Run workflow from this step.")
+@click.option(
+    "--dsd",
+    type=click.Choice(["navigate", "iiasa-ece"]),
+    default="navigate",
+    help="Target data structure for submission prep.",
+)
 @click.argument("target_step", metavar="TARGET")
 @click.pass_obj
-def run(context, dry_run, truncate_step, target_step):
+def run(context, dry_run, truncate_step, dsd, target_step):
     """Run the NAVIGATE workflow up to step TARGET.
 
     --from is interpreted as a regular expression, and the workflow is truncated at
     every point matching this expression.
     """
     from . import workflow
+
+    context.navigate_dsd = dsd
 
     wf = workflow.generate(context)
 
