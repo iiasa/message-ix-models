@@ -236,16 +236,17 @@ def plot_production_cement_clinker(df: pyam.IamDataFrame, ax, r: str) -> None:
     ax.set_ylabel("Mt")
 
 
-def plot_emi_aggregates(df: pyam.IamDataFrame, pp, r: str, e: str) -> None:
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+def plot_emi_aggregates(df: pyam.IamDataFrame, pp, e: str) -> None:
+    for r in df.region:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 
-    df.plot.stack(ax=ax)
-    ax.set_title(f"Emissions_{r}_{e}")
-    ax.set_ylabel("Mt")
-    ax.legend(bbox_to_anchor=(0.3, 1))
+        df.filter(region=r).plot.stack(ax=ax)
+        ax.set_title(f"Emissions_{r}_{e}")
+        ax.set_ylabel("Mt")
+        ax.legend(bbox_to_anchor=(0.3, 1))
 
-    plt.close()
-    pp.savefig(fig)
+        plt.close()
+        pp.savefig(fig)
 
 
 def report(
@@ -2150,9 +2151,9 @@ def report(
     ]
 
     print("Emissions are being printed.")
-    for typ, r, e in product(["demand", "process"], nodes, emission_type):
+    for typ, e in product(["demand", "process"], emission_type):
         # Filter on region and years
-        df_emi = df.filter(region=r, year=years)
+        df_emi = df.filter(year=years)
 
         # Identify variables to filter
         # CCS technologies for ammonia have both CO2 and CO2_industry at the same time
@@ -2321,7 +2322,7 @@ def report(
             df_emi.filter(variable=aggregates.keys(), inplace=True)
             df_final.append(df_emi, inplace=True)
 
-            plot_emi_aggregates(df_emi, pp, r, e)
+            plot_emi_aggregates(df_emi, pp, e)
 
     # PLOTS
     #
