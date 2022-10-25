@@ -2266,7 +2266,7 @@ def report(
                 )
             elif typ == "demand" and s == "Chemicals":
                 tec = filter(
-                    lambda t: "NH3" in t or ("petro" in t and "furnace" in t), all_t
+                    lambda t: "NH3" in t or re.search("furnace_.*_petro", t), all_t
                 )
             elif typ == "demand" and s == "Other Sector" and e != "CO2":
                 tec = filter(
@@ -2298,14 +2298,16 @@ def report(
                     )
                 elif s == "cement":
                     tec = filter(
-                        lambda t: (s in t and "furnace" in t)
+                        lambda t: re.search(f"furnace_.*{s}", t)
                         or ("DUMMY_limestone_supply_cement" in t),
                         all_t,
                     )
                 elif s == "ammonia":
                     tec = filter(lambda t: "NH3" in t, all_t)
                 else:
-                    tec = filter(lambda t: s in t and "furnace" in t, all_t)
+                    tec = filter(lambda t: re.search(f"furnace_.*{s}", t), all_t)
+            else:
+                log.warning(f"No technology filters for {typ = }, {e = }, {s = }")
 
             aux_df = aux_df[aux_df["technology"].isin(list(tec))]
 
