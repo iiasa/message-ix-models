@@ -86,7 +86,7 @@ def report(context: Context, scenario: Scenario) -> Scenario:
 
 
 def prep_submission(context: Context, *scenarios: Scenario):
-    """Workflow step 10."""
+    """Workflow step 10 (only)."""
     from message_data.tools.prep_submission import main
 
     # Generate configuration
@@ -162,9 +162,9 @@ def generate(context: Context) -> Workflow:
         wf.add_step(f"prep {s}", reported[-1], prep_submission)
 
     # Steps 8–9 for all scenarios
-    wf.add("report all", *reported)
+    wf.add_single("report all", *reported)
 
     # Step 10 for all scenarios
-    wf.add("prep all", prep_submission, "context", *reported)
+    wf.add_single("prep all", prep_submission, "context", *reported)
 
     return wf
