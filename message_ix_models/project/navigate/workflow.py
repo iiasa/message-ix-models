@@ -84,6 +84,8 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     context.report["config"] = private_data_path("report", "navigate.yaml")
     _invoke_legacy_reporting(context)
 
+    return scenario
+
 
 def prep_submission(context: Context, *scenarios: Scenario):
     """Workflow step 10 (only)."""
@@ -149,7 +151,7 @@ def generate(context: Context) -> Workflow:
         wf.add_step(
             BMT_solved,
             "MT solved",
-            build_buildings,
+            build_buildings,  # type: ignore
             target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
             navigate_scenario=s,
         )

@@ -4,7 +4,7 @@ import re
 from datetime import date
 from itertools import count
 from pathlib import Path
-from typing import Collection
+from typing import Collection, Optional
 
 import pandas as pd
 from message_ix import Reporter, Scenario
@@ -28,7 +28,7 @@ def _model_name(value: str) -> str:
     return value.split(" (NAVIGATE)")[0]
 
 
-def _scenario_name(value: str) -> str:
+def _scenario_name(value: str) -> Optional[str]:
     """Return a valid ID from the NAVIGATE scenarios codelist.
 
     NB "baseline" does not appear in the NAVIGATE codelist.
@@ -179,12 +179,18 @@ def gen_config(
     # Iterate over scenarios to include
     regions = set()
     for s in scenarios:
+        _name = _scenario_name(s.scenario)
+        if _name is None:
+            log.info(f"No target scenario name for {s.url}; skip")
+            continue
+
         cfg.scenario[(s.model, s.scenario)] = ScenarioConfig(
             model=_model_name(s.model),
-            scenario=_scenario_name(s.scenario),
+            scenario=_name,
             reference_scenario="baseline",
             final=True,
         )
+
         # Identify the node code list for region mapping, below
         regions.add(identify_nodes(s))
         # Construct a filename to read the variable names reported, below
@@ -197,16 +203,20 @@ def gen_config(
 
     # Region name mapping
     nodes = get_codes(f"node/{node_cl}")
-    nodes = map(str, nodes_ex_world(nodes[nodes.index(Code(id="World"))].child))
+    nodes = nodes[nodes.index(Code(id="World"))].child
     if context.navigate_dsd == "navigate":
         # navigate: map e.g. "R12_AFR" to "AFR". This is currently redundant, because
         # the legacy reporting (or its interaction with ixmp's region-alias feature and
         # the particular metadata in the ixmp-dev database) appears to perform this
         # transformation before this point.
-        cfg.name_map["Region"] = {n: _region(node_cl, n) for n in nodes}
+        cfg.name_map["Region"] = {
+            n: _region(node_cl, n) for n in map(str, nodes_ex_world(nodes))
+        }
     else:
         # iiasa-ece: restore e.g. "AFR" produced by legacy reporting to "R12_AFR"
-        cfg.name_map["Region"] = {_region(node_cl, n): n for n in nodes}
+        cfg.name_map["Region"] = {
+            _region(node_cl, n): n for n in map(str, nodes_ex_world(nodes))
+        }
 
     log.debug(
         f"Region code mapping for target DSD {context.navigate_dsd!r}:\n"
