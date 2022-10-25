@@ -37,7 +37,7 @@ def return_func_dict():
 
     configure_legacy_reporting(TECHS)
 
-    log.info(f"Configured legacy reporting for -BM model variants:\n{TECHS = }")
+    log.debug(f"Configured legacy reporting for -BM model variants:\n{TECHS = }")
 
     return func_dict
 
