@@ -1,5 +1,6 @@
 """Command-line tools specific to the NAVIGATE project."""
 import logging
+import re
 from pathlib import Path
 
 import click
@@ -120,16 +121,24 @@ def gen_workflow(context, versions):
 @click.argument("target_step", metavar="TARGET")
 @click.pass_obj
 def run(context, dry_run, truncate_step, target_step):
-    """Run the NAVIGATE workflow up to step TARGET."""
+    """Run the NAVIGATE workflow up to step TARGET.
+
+    --from is interpreted as a regular expression, and the workflow is truncated at
+    every point matching this expression.
+    """
     from . import workflow
 
     wf = workflow.generate(context)
 
+    # Truncate the workflow
     try:
-        wf.truncate(truncate_step)
-    except KeyError:
-        if truncate_step:
-            raise
+        expr = re.compile(truncate_step.replace("\\", ""))
+    except AttributeError:
+        pass  # truncate_step is None
+    else:
+        for step in filter(expr.search, wf.keys()):
+            log.info(f"Truncate workflow at {step!r}")
+            wf.truncate(step)
 
     log.info(f"Execute workflow:\n{wf.describe(target_step)}")
 
