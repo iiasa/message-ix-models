@@ -4,9 +4,10 @@ import re
 from datetime import date
 from itertools import count
 from pathlib import Path
+from typing import Collection
 
 import pandas as pd
-from message_ix.reporting import Reporter
+from message_ix import Reporter, Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import nodes_ex_world, private_data_path
@@ -136,15 +137,17 @@ UNIT_MAP = {
 }
 
 
-def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
+def gen_config(
+    context: Context, workflow_dir: Path, scenarios: Collection[Scenario]
+) -> Config:
     """Generate configuration for :mod:`.prep_submission`.
 
     Parameters
     ----------
-    fn_ref_1
-        Path for a file containing legacy reporting output for a scenario.
-    fn_ref_2
+    workflow_dir
         The base path (directory) for the NAVIGATE workflow repository.
+    scenarios
+        Collection of scenarios.
     """
     # Identify the file path for output
     today = date.today().strftime("%Y-%m-%d")
@@ -153,25 +156,24 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
         if not out_file.exists():
             break
 
+    # Create base configuration for prep_submission
     cfg = Config(
-        source_dir=fn_ref_1.parent,
+        source_dir=context.get_local_path("reporting_output"),
         out_fil=out_file,
     )
 
     # Read the variable list to keep from the NAVIGATE repository
-    cfg.read_nomenclature(fn_ref_2)
+    cfg.read_nomenclature(workflow_dir)
 
     # Iterate over scenarios to include
-    # TODO expand list/make configurable
-    for (m_source, s_source) in (
-        ("MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)", "baseline"),
-    ):
-        cfg.scenario[(m_source, s_source)] = ScenarioConfig(
-            model=_model_name(m_source),
-            scenario=_scenario_name(s_source),
+    for s in scenarios:
+        cfg.scenario[(s.model, s.scenario)] = ScenarioConfig(
+            model=_model_name(s.model),
+            scenario=_scenario_name(s.scenario),
             reference_scenario="baseline",
             final=True,
         )
+        filename = legacy_output_path(context, s)
 
     # Region name mapping
     nodes = get_codes(f"node/{context.regions}")
@@ -184,13 +186,19 @@ def gen_config(context: Context, fn_ref_1: Path, fn_ref_2: Path) -> Config:
     cfg.unit_map.update(UNIT_MAP)
 
     # Variable name mapping
-    names_1 = set(pd.read_excel(fn_ref_1, usecols=["Variable"])["Variable"])
+
+    # Names from the legacy reporting output. Arbitrarily used the filename for the last
+    # scenario handled in the above loop; this assumes that the set of variable names in
+    # each file is the same (as they should be).
+    names_1 = set(pd.read_excel(filename, usecols=["Variable"])["Variable"])
+    # Names from the legacy reporting configuration
     names_2 = set(
         pd.read_csv(
             private_data_path("report", "default_variable_definitions.csv"),
             usecols=["Variable"],
         )["Variable"]
     )
+    # Names from configuration
     names_3 = cfg.variable_keep
 
     # Display diagnostic information
@@ -206,13 +214,16 @@ in NAVIGATE variables.yaml          {len(names_3) = }
 {len(names_3 - (names_1 | names_2)) = }"""
     )
 
+    # Iterate over names_1 and names_2
     cfg.name_map["Variable"] = dict()
     for var in sorted(names_1 | names_2):
+        # Attempt to transform the variable name
         target = _variable(var)
+        # Name is different; record it as one to be mapped
         if target != var:
             cfg.name_map["Variable"][var] = target
 
-    # More diagnostic info
+    # Log more diagnostic info
     names_4 = set(cfg.name_map["Variable"].values())
     log.info(
         f"""Variable mappings constructed
@@ -244,4 +255,15 @@ def callback(rep: Reporter, context: Context) -> None:
             "materials all",
             "transport iamc all",
         ],
+    )
+
+
+def legacy_output_path(context: Context, scenario: Scenario) -> Path:
+    """Return the path where the legacy reporting wrote output for `scenario`.
+
+    .. todo:: provide this from a function within the legacy reporting submodule; call
+       that function both here and in :func:`.pp_utils.write_xlsx`.
+    """
+    return context.get_local_path(
+        "reporting_output", f"{scenario.model}_{scenario.scenario}.xlsx"
     )

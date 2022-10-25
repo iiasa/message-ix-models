@@ -26,14 +26,12 @@ def cli(context, navigate_scenario):
 
 
 @cli.command("prep-submission")
-@click.argument("f1", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.argument("f2", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.argument("wf_dir", type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.pass_obj
-def prep_submission(context, f1, f2):
+def prep_submission(context, wf_dir):
     """Prepare data for NAVIGATE submission.
 
-    F1 is the path to a reporting output file in .xlsx format.
-    F2 is the base path of the NAVIGATE workflow repository.
+    WF_DIR is the base path of the NAVIGATE workflow repository.
     """
     from message_data.projects.navigate.report import gen_config
     from message_data.tools.prep_submission import main
@@ -42,7 +40,7 @@ def prep_submission(context, f1, f2):
     context.regions = "R12"
 
     # Generate a prep_submission.Config object
-    config = gen_config(context, f1, f2)
+    config = gen_config(context, wf_dir, [context.get_scenario()])
     print(config)
 
     main(config)
