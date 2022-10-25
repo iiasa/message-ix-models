@@ -14,6 +14,7 @@ from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_
 from sdmx.model import Code
 
 from message_data.tools.prep_submission import Config, ScenarioConfig
+
 from . import SCENARIOS
 
 log = logging.getLogger(__name__)
