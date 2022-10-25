@@ -1934,7 +1934,7 @@ def report(
         # Aggregate the commodities in iamc object
         for i, c in enumerate(commodity_list):
             if not var_list[i]:
-                log.info(f"Nothing to aggregate for '{aggregate_list[i]}'")
+                # log.debug(f"Nothing to aggregate for '{aggregate_list[i]}'")
                 continue
             df_final_energy.aggregate(
                 aggregate_list[i], components=var_list[i], append=True
@@ -2187,7 +2187,6 @@ def report(
         df_emi.filter(variable=emi_filter, inplace=True)
 
         # Convert units
-        log.info(f"Units for {typ = }, {r = }, {e = }: {df_emi.unit}")
         if e in {"CO2", "CO2_industry"}:
             # From MtC to Mt CO2/yr
             df_emi.convert_unit("", to="Mt CO2/yr", factor=44 / 12, inplace=True)
@@ -2234,7 +2233,7 @@ def report(
                     aggregate_name = f"Emissions|{e}|Industrial Processes|{_s}"
 
             if aggregate_name is None:
-                log.info(f"No aggregate name for {s = }, {typ = }, {e = }; skip")
+                log.debug(f"No aggregate name for {typ = }, {e = }, {s = }; skip")
                 continue
 
             # Recover dimensions that were concatenated into the variable name
@@ -2314,6 +2313,7 @@ def report(
 
         # Aggregate over emission type for each sector if there are elements to
         # aggregate
+        log.debug(f"Compute emissions aggregates: {aggregates}")
         for variable, components in aggregates.items():
             df_emi.aggregate(variable, components, append=True)
 
