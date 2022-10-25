@@ -328,7 +328,7 @@ def report2(scenario: message_ix.Scenario, config: dict) -> pd.DataFrame:
     fn = f"report_NAVIGATE_{scenario_name(scenario.scenario)}_{{}}_R12.csv"
 
     @lru_cache()
-    def _add_R12_prefix(value :str) -> str:
+    def _add_R12_prefix(value: str) -> str:
         return value if value.startswith("R12_") else f"R12_{value}"
 
     # - Read 2 files and concatenate.

@@ -128,7 +128,7 @@ def _sturm_rscript(
         # Need to supply cwd= because the script uses R's getwd() to find others
         try:
             subprocess.run(command + [f"--sector={sector}"], cwd=config.code_dir)
-        except CalledProcessError as e:
+        except subprocess.CalledProcessError as e:
             print(f"{e.output = } {e.stderr = }")
             raise
         # Read output, then remove the file
