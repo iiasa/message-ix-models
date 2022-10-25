@@ -2224,27 +2224,23 @@ def report(
         # NB this loop does not modify `df_emi` or `all_emissions`; it only uses their
         #    contents to populate `aggregates`
         for s in sectors:
-            # Determine the aggregate name
+            # Determine a variable name for the aggregate
             aggregate_name = None
-            _e = NAME_MAP.get(e, e)  # Maybe change "CO2_industry" to "CO2"
-            if s == "all":
-                if typ == "demand" and e != "CO2":
-                    aggregate_name = f"Emissions|{_e}|Energy|Demand|Industry"
-                elif typ == "process" and e != "CO2_industry":
-                    aggregate_name = f"Emissions|{e}|Industrial Processes"
-            else:
-                # Adjust the sector names
-                _s = NAME_MAP.get(s, s)
-                if typ == "demand" and e != "CO2":
-                    aggregate_name = f"Emissions|{_e}|Energy|Demand|Industry|{_s}"
-                elif typ == "process" and e != "CO2_industry":
-                    aggregate_name = f"Emissions|{e}|Industrial Processes|{_s}"
+            # Mapped sector name fragment
+            _s = "" if s == "all" else f"|{NAME_MAP.get(s, s)}"
+            if typ == "demand" and e != "CO2":
+                # Maybe change "CO2_industry" to "CO2"
+                _e = NAME_MAP.get(e, e)
+                aggregate_name = f"Emissions|{_e}|Energy|Demand|Industry{_s}"
+            elif typ == "process" and e != "CO2_industry":
+                aggregate_name = f"Emissions|{e}|Industrial Processes{_s}"
 
             if aggregate_name is None:
                 log.debug(f"No aggregate name for {typ = }, {e = }, {s = }; skip")
                 continue
 
             # Recover dimensions that were concatenated into the variable name
+            # NB only "technology" and "variable" are used
             aux_df = pd.concat(
                 [
                     all_emissions,
