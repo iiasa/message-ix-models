@@ -84,32 +84,16 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     context.report["config"] = private_data_path("report", "navigate.yaml")
     _invoke_legacy_reporting(context)
 
-    # Step 10
-    prep_submission(context, scenario)
 
-
-def legacy_output_path(context: Context, scenario: Scenario) -> Path:
-    """Return the path where the legacy reporting wrote output for `scenario`.
-
-    .. todo:: provide this from a function within the legacy reporting submodule; call
-       that function both here and in :func:`.pp_utils.write_xlsx`.
-    """
-    return context.get_local_path(
-        "reporting_output", f"{scenario.model}_{scenario.scenario}.xlsx"
-    )
-
-
-def prep_submission(context: Context, scenario: Scenario):
+def prep_submission(context: Context, *scenarios: Scenario):
     """Workflow step 10."""
     from message_data.tools.prep_submission import main
 
-    # Step 10
+    # Generate configuration
     config = gen_config(
-        context,
-        legacy_output_path(context, scenario),
-        Path("~/vc/iiasa/navigate-workflow").expanduser(),
+        context, Path("~/vc/iiasa/navigate-workflow").expanduser(), scenarios
     )
-
+    # Invoke prep_submission
     main(config)
 
     log.info(f"Merged output written to {config.out_fil}")
@@ -121,11 +105,12 @@ def solve(context, scenario):
 
 
 def generate(context: Context) -> Workflow:
+    """Create the NAVIGATE workflow."""
     wf = Workflow(context)
 
     # Use the navigate_scenario setting, e.g. from the --scenario CLI option, to
     # construct target scenario names
-    s = context.navigate_scenario or "NPi-act"
+    s = context.navigate_scenario or "NPi-ref"
 
     # Step 1
     wf.add_step(
@@ -133,6 +118,7 @@ def generate(context: Context) -> Workflow:
         None,
         target="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7",
     )
+
     # Step 2
     wf.add_step(
         "M built",
@@ -140,6 +126,7 @@ def generate(context: Context) -> Workflow:
         build_materials,
         target="MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE",
     )
+
     # Step 3
     wf.add_step(
         "MT built",
@@ -148,23 +135,36 @@ def generate(context: Context) -> Workflow:
         target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
         clone=True,
     )
+
     # Step 4
     wf.add_step("MT solved", "MT built", solve)
+
+    # Step IDs for results of step 8
+    reported = []
 
     # Branch for different NAVIGATE T3.5 scenarios
     for s in SCENARIOS:
         # Steps 5–7
+        BMT_solved = f"BMT {s} solved"
         wf.add_step(
-            f"BMT {s} solved",
+            BMT_solved,
             "MT solved",
             build_buildings,
             target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
             navigate_scenario=s,
         )
-        # Steps 8–10
-        wf.add_step(f"report {s}", f"BMT {s} solved", report)
-        wf.add_step(f"prep {s}", f"BMT {s} solved", prep_submission)
 
-    wf.add("report all", *[f"report {s}" for s in SCENARIOS])
+        # Step 8–9 for individual scenarios
+        reported.append(f"report {s}")
+        wf.add_step(reported[-1], BMT_solved, report)
+
+        # Step 10 for individual scenarios
+        wf.add_step(f"prep {s}", reported[-1], prep_submission)
+
+    # Steps 8–9 for all scenarios
+    wf.add("report all", *reported)
+
+    # Step 10 for all scenarios
+    wf.add("prep all", prep_submission, "context", *reported)
 
     return wf
