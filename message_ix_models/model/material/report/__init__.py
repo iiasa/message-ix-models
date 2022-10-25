@@ -2247,10 +2247,11 @@ def report(
                     all_emissions.variable.str.split("|", expand=True).set_axis(
                         ["emission", "type", "technology", "mode"], axis=1
                     ),
-                ]
+                ],
+                axis=1,
             )
             # Unique list of all technologies to be filtered
-            all_t = aux_df["technology"].unique()
+            all_t = sorted(aux_df["technology"].unique())
 
             # Filter the technologies only for the sector
             if typ == "process" and s == "all" and e != "CO2_industry":
