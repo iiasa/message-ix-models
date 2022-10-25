@@ -143,7 +143,7 @@ def generate(context: Context) -> Workflow:
     reported = []
 
     # Branch for different NAVIGATE T3.5 scenarios
-    for s in SCENARIOS:
+    for s in filter(lambda _s: _s != "baseline", SCENARIOS):
         # Steps 5–7
         BMT_solved = f"BMT {s} solved"
         wf.add_step(

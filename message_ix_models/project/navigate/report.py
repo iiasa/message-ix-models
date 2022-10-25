@@ -14,6 +14,7 @@ from message_ix_models.util import nodes_ex_world, private_data_path
 from sdmx.model import Code
 
 from message_data.tools.prep_submission import Config, ScenarioConfig
+from . import SCENARIOS
 
 log = logging.getLogger(__name__)
 
@@ -27,10 +28,18 @@ def _model_name(value: str) -> str:
 
 
 def _scenario_name(value: str) -> str:
-    return {
-        # NB "baseline" does not appear in the NAVIGATE codelist; choose another value
-        "baseline": "NAV_Dem-NPi-ref",
-    }.get(value, value)
+    """Return a valid ID from the NAVIGATE scenarios codelist.
+
+    NB "baseline" does not appear in the NAVIGATE codelist.
+    """
+    if value not in SCENARIOS:
+        return None
+    # Comment to exclude for submission to navigate SE instance; leave uncommented for
+    # ECE-internal
+    elif value == "baseline":
+        return None
+    else:
+        return f"NAV_Dem-{value}"
 
 
 def _region(value: str) -> str:
