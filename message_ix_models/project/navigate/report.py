@@ -10,7 +10,7 @@ import pandas as pd
 from message_ix import Reporter, Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import nodes_ex_world, private_data_path
+from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
 from sdmx.model import Code
 
 from message_data.tools.prep_submission import Config, ScenarioConfig
@@ -42,9 +42,9 @@ def _scenario_name(value: str) -> str:
         return f"NAV_Dem-{value}"
 
 
-def _region(value: str) -> str:
-    # Discard the "R12_" prefix
-    return value.split("R12_")[-1]
+def _region(codelist_id: str, value: str) -> str:
+    # Discard the prefix
+    return value.split(f"{codelist_id}_")[-1]
 
 
 #: Regular expression patterns and replacements for variable names
@@ -160,8 +160,9 @@ def gen_config(
     """
     # Identify the file path for output
     today = date.today().strftime("%Y-%m-%d")
+    _dsd = "" if context.navigate_dsd == "navigate" else f"_{context.navigate_dsd}"
     for index in count():
-        out_file = context.get_local_path("report", f"{today}_{index}.xlsx")
+        out_file = context.get_local_path("report", f"{today}_{index}{_dsd}.xlsx")
         if not out_file.exists():
             break
 
@@ -175,6 +176,7 @@ def gen_config(
     cfg.read_nomenclature(workflow_dir)
 
     # Iterate over scenarios to include
+    regions = set()
     for s in scenarios:
         cfg.scenario[(s.model, s.scenario)] = ScenarioConfig(
             model=_model_name(s.model),
@@ -182,14 +184,33 @@ def gen_config(
             reference_scenario="baseline",
             final=True,
         )
+        # Identify the node code list for region mapping, below
+        regions.add(identify_nodes(s))
+        # Construct a filename to read the variable names reported, below
         filename = legacy_output_path(context, s)
 
+    assert 1 == len(
+        regions
+    ), f"{len(scenarios)} scenarios have {len(regions)} distinct regions: {regions}"
+    node_cl = list(regions)[0]
+
     # Region name mapping
-    nodes = get_codes(f"node/{context.regions}")
-    nodes = nodes[nodes.index(Code(id="World"))].child
-    cfg.name_map["Region"] = {
-        _region(node): node for node in map(str, nodes_ex_world(nodes))
-    }
+    nodes = get_codes(f"node/{node_cl}")
+    nodes = map(str, nodes_ex_world(nodes[nodes.index(Code(id="World"))].child))
+    if context.navigate_dsd == "navigate":
+        # navigate: map e.g. "R12_AFR" to "AFR". This is currently redundant, because
+        # the legacy reporting (or its interaction with ixmp's region-alias feature and
+        # the particular metadata in the ixmp-dev database) appears to perform this
+        # transformation before this point.
+        cfg.name_map["Region"] = {n: _region(node_cl, n) for n in nodes}
+    else:
+        # iiasa-ece: restore e.g. "AFR" produced by legacy reporting to "R12_AFR"
+        cfg.name_map["Region"] = {_region(node_cl, n): n for n in nodes}
+
+    log.debug(
+        f"Region code mapping for target DSD {context.navigate_dsd!r}:\n"
+        + repr(cfg.name_map["Region"])
+    )
 
     # Unit mapping
     cfg.unit_map.update(UNIT_MAP)
