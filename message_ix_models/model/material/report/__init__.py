@@ -2187,16 +2187,23 @@ def report(
 
         df_emi.filter(variable=emi_filter, inplace=True)
 
+        # Check units
+        log.debug(f"Units for {typ = }, {e = }: {df_emi.unit}")
+        assert ("",) == tuple(
+            df_emi.unit
+        ), f"Unexpected units for {typ = }, {e = }: {df_emi.unit}"
+
         # Convert units
         if e in {"CO2", "CO2_industry"}:
-            # From MtC to Mt CO2/yr
+            # The model represents the in Mt (Carbon) / year
             df_emi.convert_unit("", to="Mt CO2/yr", factor=44 / 12, inplace=True)
         elif e in {"N2O", "CF4"}:
+            # The model represents these in kt (species) / year
             unit = f"kt {e}/yr"
             df_emi.convert_unit("", to=unit, factor=1, inplace=True)
         else:
             e = NAME_MAP.get(e, e)
-            # From kt/yr to Mt/yr
+            # The model represents these in kt (species) / year, but we report in Mt
             unit = f"Mt {e}/yr"
             df_emi.convert_unit("", to=unit, factor=0.001, inplace=True)
 
