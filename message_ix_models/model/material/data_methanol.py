@@ -105,8 +105,9 @@ def gen_data_methanol(scenario):
     df["value"] = 1
     new_dict2["input"] = pd.concat([new_dict2["input"], df])
 
-    cost_dict = update_methanol_costs(scenario)
-    new_dict2 = combine_df_dictionaries(new_dict2, cost_dict)
+    if pars["update_old_tecs"]:
+        cost_dict = update_methanol_costs(scenario)
+        new_dict2 = combine_df_dictionaries(new_dict2, cost_dict)
 
     return new_dict2
 
