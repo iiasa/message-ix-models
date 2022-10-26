@@ -465,6 +465,7 @@ methanol:
   technology:
     add:
     - meth_bio
+    - meth_bio_ccs
     - meth_h2
     - meth_t_d_material
     - MTO
