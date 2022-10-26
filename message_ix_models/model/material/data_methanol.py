@@ -23,29 +23,17 @@ def gen_data_methanol(scenario):
     pars = df_pars.set_index("par").to_dict()["value"]
 
     dict1 = gen_data_meth_h2()
-    dict2 = gen_data_meth_bio()
-    keys = set(list(dict1.keys()) + list(dict2.keys()))
-    new_dict = {}
-    for i in keys:
-        if (i in dict2.keys()) & (i in dict1.keys()):
-            new_dict[i] = pd.concat([dict1[i], dict2[i]])
-        else:
-            new_dict[i] = dict1[i]
+    dict2 = gen_data_meth_bio(scenario)
+    new_dict = combine_df_dictionaries(dict1, dict2)
+    dict3 = gen_meth_bio_ccs(scenario)
+    new_dict = combine_df_dictionaries(new_dict, dict3)
 
     dict3 = pd.read_excel(
         context.get_local_path("material", "meth_t_d_material_pars.xlsx"),
         sheet_name=None,
     )
 
-    keys = set(list(dict3.keys()) + list(new_dict.keys()))
-    new_dict2 = {}
-    for i in keys:
-        if (i in dict3.keys()) & (i in new_dict.keys()):
-            new_dict2[i] = pd.concat([new_dict[i], dict3[i]])
-        if (i in dict3.keys()) & ~(i in new_dict.keys()):
-            new_dict2[i] = dict3[i]
-        if ~(i in dict3.keys()) & (i in new_dict.keys()):
-            new_dict2[i] = new_dict[i]
+    new_dict2 = combine_df_dictionaries(new_dict, dict3)
 
     df_final = gen_meth_residual_demand(pars["methanol_elasticity"])
     df_final["value"] = df_final["value"].apply(lambda x: x * 0.5)
@@ -86,28 +74,12 @@ def gen_data_methanol(scenario):
     new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], df_ng])
 
     mto_dict = gen_data_meth_chemicals(scenario, "MTO")
-    keys = set(list(new_dict2.keys()) + list(mto_dict.keys()))
-    for i in keys:
-        if (i in new_dict2.keys()) & (i in mto_dict.keys()):
-            new_dict2[i] = pd.concat([new_dict2[i], mto_dict[i]])
-        if ~(i in new_dict2.keys()) & (i in mto_dict.keys()):
-            new_dict2[i] = mto_dict[i]
+    new_dict2 = combine_df_dictionaries(new_dict2, mto_dict)
 
     ch2o_dict = gen_data_meth_chemicals(scenario, "Formaldehyde")
-    keys = set(list(new_dict2.keys()) + list(ch2o_dict.keys()))
-    for i in keys:
-        if (i in new_dict2.keys()) & (i in ch2o_dict.keys()):
-            new_dict2[i] = pd.concat([new_dict2[i], ch2o_dict[i]])
-        if ~(i in new_dict2.keys()) & (i in ch2o_dict.keys()):
-            new_dict2[i] = ch2o_dict[i]
-
+    new_dict2 = combine_df_dictionaries(new_dict2, ch2o_dict)
     resin_dict = gen_data_meth_chemicals(scenario, "Resins")
-    keys = set(list(new_dict2.keys()) + list(resin_dict.keys()))
-    for i in keys:
-        if (i in new_dict2.keys()) & (i in resin_dict.keys()):
-            new_dict2[i] = pd.concat([new_dict2[i], resin_dict[i]])
-        if ~(i in new_dict2.keys()) & (i in resin_dict.keys()):
-            new_dict2[i] = resin_dict[i]
+    new_dict2 = combine_df_dictionaries(new_dict2, resin_dict)
 
     df_comm = gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"], pars["pathway"])
     df_resid = gen_resin_demand(scenario, pars["resin_share"], "residential", pars["wood_scenario"], pars["pathway"])
