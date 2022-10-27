@@ -684,6 +684,21 @@ def add_sectoral_demands(context):
 
 
 def read_water_availability(context):
+    """
+    Reads water availability data and bias correct it for the historical years and no climate 
+    scenario assumptions. 
+
+
+    Parameters
+    ----------
+    context : .Context
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
+        are data frames ready for :meth:`~.Scenario.add_par`.
+    """
+
     # Reference to the water configuration
     # info = context["water build info"]
     # reading sample for assiging basins
@@ -695,25 +710,66 @@ def read_water_availability(context):
     df_x = pd.read_csv(PATH)
 
     if "year" in context.time:
+        # path for reading basin delineation file
+        PATH = private_data_path(
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+        )
+        df_x = pd.read_csv(PATH)
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = private_data_path(
             "water",
             "availability",
-            f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qtot_5y_2p6_{context.REL}_{context.regions}.csv",
         )
-        df_sw = pd.read_csv(path1)
-        df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
+
+        path2 =  private_data_path(
+            "water",
+            "availability",
+            f"qtot_5y_6p0_{context.REL}_{context.regions}.csv",
+        )
+
+        # Read rcp 2.6 data 
+        df_sw26 = pd.read_csv(path1)
+        df_sw26.drop(["Unnamed: 0"], axis=1, inplace=True)
         new_cols = (
-            pd.to_datetime(df_sw.columns, format="%m/%d/%Y")
+            pd.to_datetime(df_sw26.columns, format="%m/%d/%Y")
             if context.regions == "R11"
-            else pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
+            else pd.to_datetime(df_sw26.columns, format="sum.X%Y.%m.%d")
         )
-        df_sw.columns = new_cols
+        df_sw26.columns = new_cols
+        
+        df_sw60 = pd.read_csv(path2)
+        df_sw60.drop(["Unnamed: 0"], axis=1, inplace=True)
+        new_cols = (
+            pd.to_datetime(df_sw26.columns, format="%m/%d/%Y")
+            if context.regions == "R11"
+            else pd.to_datetime(df_sw26.columns, format="sum.X%Y.%m.%d")
+        )
+        df_sw60.columns = new_cols
+
+        # Bias adjustment in the data 
+        val2020 = (df_sw60.iloc[:,:5].mean(axis =1) + df_sw26.iloc[:,:5].mean(axis =1))/2
+        delta60 = df_sw60.iloc[:,:5].mean(axis =1) - val2020
+        delta26 = df_sw26.iloc[:,:5].mean(axis =1) - val2020
+
+        df_sw26_adjusted = df_sw26.apply(lambda x:x - delta26)
+        df_sw60_adjusted = df_sw60.apply(lambda x:x - delta60)
+        df_sw26_adjusted['2020-12-31'] = val2020
+        df_sw60_adjusted['2020-12-31'] = val2020
+
+
+        if context.RCP == '2p6':
+            df_sw = df_sw26_adjusted
+        elif context.RCP == '6p0':
+            df_sw = df_sw60_adjusted
+        elif context.RCP == 'no_climate':
+            df_sw  = df_sw60_adjusted.apply(lambda x:val2020)
+
         df_sw.index = df_x["BCU_name"]
         df_sw = df_sw.stack().reset_index()
         df_sw.columns = ["Region", "years", "value"]
-        df_sw.sort_values(["Region", "years", "value"], inplace=True)
+        # df_sw.sort_values(["Region", "years", "value"], inplace=True)
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
@@ -723,24 +779,61 @@ def read_water_availability(context):
         df_sw = pd.concat([df_sw, df_sw2210])
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
 
-        # Reading data, the data is spatially and temporally aggregated from GHMs
+        # Adding groundwater supply constraints
+        # Reading data, the data is spatially and temprally aggregated from GHMs
         path1 = private_data_path(
             "water",
             "availability",
-            f"qr_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
+            f"qr_5y_2p6_{context.REL}_{context.regions}.csv",
         )
-        df_gw = pd.read_csv(path1)
-        df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
+
+        path2 =  private_data_path(
+            "water",
+            "availability",
+            f"qr_5y_6p0_{context.REL}_{context.regions}.csv",
+        )
+
+        
+        # Read rcp 2.6 data 
+        df_gw26 = pd.read_csv(path1)
+        df_gw26.drop(["Unnamed: 0"], axis=1, inplace=True)
         new_cols = (
-            pd.to_datetime(df_sw.columns, format="%m/%d/%Y")
+            pd.to_datetime(df_gw26.columns, format="%m/%d/%Y")
             if context.regions == "R11"
-            else pd.to_datetime(df_gw.columns, format="sum.X%Y.%m.%d")
+            else pd.to_datetime(df_gw26.columns, format="sum.X%Y.%m.%d")
         )
-        df_gw.columns = new_cols
+        new_cols = (
+            pd.to_datetime(df_gw26.columns, format="%m/%d/%Y")
+            if context.regions == "R11"
+            else pd.to_datetime(df_gw26.columns, format="sum.X%Y.%m.%d")
+        )
+
+        df_gw26.columns = new_cols
+        
+        df_gw60 = pd.read_csv(path2)
+        df_gw60.drop(["Unnamed: 0"], axis=1, inplace=True)
+        df_gw60.columns = new_cols
+
+        val2020 = (df_gw60.iloc[:,:5].mean(axis =1) + df_gw26.iloc[:,:5].mean(axis =1))/2
+        delta60 = df_gw60.iloc[:,:5].mean(axis =1) - val2020
+        delta26 = df_gw26.iloc[:,:5].mean(axis =1) - val2020
+        df_gw26_adjusted = df_gw26.apply(lambda x:x - delta26)
+        df_gw60_adjusted = df_gw60.apply(lambda x:x - delta60)
+        df_gw26_adjusted['2020-12-31'] = val2020
+        df_gw60_adjusted['2020-12-31'] = val2020
+
+
+        if context.RCP == '2p6':
+            df_gw = df_gw26_adjusted
+        elif context.RCP == '6p0':
+            df_gw = df_gw60_adjusted
+        elif context.RCP == 'no_climate':
+            df_gw  = df_gw60_adjusted.apply(lambda x:val2020)
+
         df_gw.index = df_x["BCU_name"]
         df_gw = df_gw.stack().reset_index()
         df_gw.columns = ["Region", "years", "value"]
-        df_gw.sort_values(["Region", "years", "value"], inplace=True)
+        # df_gw.sort_values(["Region", "years", "value"], inplace=True)
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
