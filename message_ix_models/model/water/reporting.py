@@ -150,6 +150,11 @@ def report(sc=False, sdgs=False):
         "CAP_NEW|new capacity|urban_untreated",
     ]
 
+    industry_unconnected = [
+        "CAP_NEW|new capacity|industry_unconnected",
+        "CAP_NEW|new capacity|industry_untreated",
+    ]
+
     extrt_sw_cap = ["CAP_NEW|new capacity|extract_surfacewater"]
     extrt_gw_cap = ["CAP_NEW|new capacity|extract_groundwater"]
     extrt_fgw_cap = ["CAP_NEW|new capacity|extract_gw_fossil"]
@@ -283,7 +288,7 @@ def report(sc=False, sdgs=False):
     urban_mwdem_unconnected = ["out|final|urban_disconnected|urban_unconnected|M1"]
     urban_mwdem_unconnected_eff = ["out|final|urban_disconnected|urban_unconnected|Mf"]
     urban_mwdem_connected = ["out|final|urban_mw|urban_t_d|M1"]
-    urban_mwdem_connected_eff = ["out|final|urban_mw|urban_t_d|Mf"]
+    industry_mwdem_unconnected = ["out|final|industry_mw|industry_unconnected|M1"]
 
     electr_gw = ["in|final|electr|extract_groundwater|M1"]
     electr_fgw = ["in|final|electr|extract_gw_fossil|M1"]
