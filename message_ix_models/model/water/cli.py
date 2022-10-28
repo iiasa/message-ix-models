@@ -101,6 +101,11 @@ _REL = ["low", "med", "high"]
     is_flag=True,
     help="Defines whether water SDG measures are activated or not",
 )
+@click.option(
+    "--macro",
+    is_flag=True,
+    help="Defines whether the model solves with macro",
+)
 @common_params("regions")
 def nexus_cli(context, regions, rcps, sdgs, rels, macro=False):
     """
