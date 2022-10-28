@@ -435,7 +435,10 @@ def gen_demand():
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
     demand_fs_org = pd.read_excel(
-        context.get_local_path("material", "ammonia", "demand_i_feed_R12.xlsx")
+        context.get_local_path("material", "ammonia",
+                               "new concise input files",
+                               "nh3_fertilizer_demand.xlsx"),
+        sheet_name="demand_i_feed_R12"
     )
 
     df = demand_fs_org.loc[demand_fs_org.year == 2010, :].join(
