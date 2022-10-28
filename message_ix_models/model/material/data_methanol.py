@@ -109,6 +109,8 @@ def gen_data_methanol(scenario):
         cost_dict = update_methanol_costs(scenario)
         new_dict2 = combine_df_dictionaries(new_dict2, cost_dict)
 
+    new_dict2 = combine_df_dictionaries(new_dict2, add_meth_trade_historic())
+
     return new_dict2
 
 
@@ -412,6 +414,14 @@ def gen_meth_bio_ccs(scenario):
         par_dict["output"].loc[par_dict["output"]["commodity"]=="electr", "value"] - 0.019231  # from meth_coal_ccs
 
     return par_dict
+
+
+def add_meth_trade_historic():
+    par_dict_trade = pd.read_excel(
+        context.get_local_path("material", "meth_trd_pars.xlsx"),
+        sheet_name=None,
+    )
+    return par_dict_trade
 
 
 def combine_df_dictionaries(dict1, dict2):
