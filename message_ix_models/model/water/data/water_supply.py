@@ -26,20 +26,55 @@ def map_basin_region_wat(context):
     info = context["water build info"]
     
     if "year" in context.time:
-        # add water return flows for cooling tecs
-        # Use share of basin availability to distribute the return flow from
-        path3 = private_data_path(
-            "water",
-            "availability",
-            f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
-        )
-        df_sw = pd.read_csv(path3)
-
-        # reading sample for assiging basins
+        
         PATH = private_data_path(
-            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
+        # Adding freshwater supply constraints
+        # Reading data, the data is spatially and temprally aggregated from GHMs
+        path1 = private_data_path(
+            "water",
+            "availability",
+            f"qtot_5y_2p6_{context.REL}_{context.regions}.csv",
+        )
+
+        path2 =  private_data_path(
+            "water",
+            "availability",
+            f"qtot_5y_6p0_{context.REL}_{context.regions}.csv",
+        )
+
+
+        df_sw26 = pd.read_csv(path1)
+        df_sw26.drop(["Unnamed: 0"], axis=1, inplace=True)
+        years = np.arange(2010, 2105, 5)
+        new_cols = (
+            pd.to_datetime(df_sw26.columns, format="%m/%d/%Y")
+            if context.regions == "R11"
+            else pd.to_datetime(df_sw26.columns, format="sum.X%Y.%m.%d")
+        )
+        df_sw26.columns = new_cols
+
+        df_sw60 = pd.read_csv(path2)
+        df_sw60.drop(["Unnamed: 0"], axis=1, inplace=True)
+        df_sw60.columns = new_cols
+
+        val2020 = (df_sw60.iloc[:,:5].mean(axis =1) + df_sw26.iloc[:,:5].mean(axis =1))/2
+        delta60 = df_sw60.iloc[:,:5].mean(axis =1) - val2020
+        delta26 = df_sw26.iloc[:,:5].mean(axis =1) - val2020
+        df_sw26_adjusted = df_sw26.apply(lambda x:x - delta26)
+        df_sw60_adjusted = df_sw60.apply(lambda x:x - delta60)
+        df_sw26_adjusted['2020-12-31'] = val2020
+        df_sw60_adjusted['2020-12-31'] = val2020
+
+
+        if context.RCP == '2p6':
+            df_sw = df_sw26_adjusted
+        elif context.RCP == '6p0':
+            df_sw = df_sw60_adjusted
+        elif context.RCP == 'no_climate':
+            df_sw  = df_sw60_adjusted.apply(lambda x:val2020)
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
         df_sw["BCU_name"] = df_x["BCU_name"]
@@ -50,14 +85,6 @@ def map_basin_region_wat(context):
             df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
 
         df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
-        df_sw.drop(columns="Unnamed: 0", inplace=True)
-
-        new_cols = (
-            pd.to_datetime(df_sw.columns, format="%m/%d/%Y")
-            if context.regions == "R11"
-            else pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
-        )
-        df_sw.columns = new_cols
 
         # Calculating ratio of water availability in basin by region
         df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
