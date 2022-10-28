@@ -404,19 +404,21 @@ def read_demand():
     feedshare = fs_GLO.sort_values(["Region"]).set_index("Region").drop("R12_GLB")
 
     # Get historical N demand from SSP2-nopolicy (may need to vary for diff scenarios)
-    N_demand_raw = N_demand_GLO.copy()
+    N_demand_raw = N_demand_GLO[N_demand_GLO["Region"]!="World"].copy()
+    N_demand_raw["Region"] = "R12_" + N_demand_raw["Region"]
+    N_demand_raw = N_demand_raw.set_index("Region")
     N_demand = (
-        N_demand_raw[
-            (N_demand_raw.Scenario == "NoPolicy") & (N_demand_raw.Region != "World")
+        N_demand_raw.loc[
+            (N_demand_raw.Scenario == "NoPolicy")# & (N_demand_raw.Region != "World")
             ]
-            .reset_index()
+            #.reset_index()
             .loc[:, 2010]
     )  # 2010 tot N demand
-    N_demand = N_demand.repeat(6)
-
-    act2010 = (feedshare.values.flatten() * N_demand).reset_index(drop=True)
+    #N_demand = N_demand.repeat(6)
+    #act2010 = (feedshare.values.flatten() * N_demand).reset_index(drop=True)
 
     return {
+        "act2010": feedshare.mul(N_demand, axis=0),
         "feedshare_GLO": feedshare_GLO,
         "ND": ND,
         "N_energy": N_energy,
