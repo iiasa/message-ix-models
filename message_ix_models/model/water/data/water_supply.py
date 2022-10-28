@@ -712,24 +712,6 @@ def add_e_flow(context):
     dmd_df = dmd_df[dmd_df["year"] >= 2025].reset_index(drop=True)
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x >= 0 else 0)
 
-    # Reading e flow data
-    PATH = private_data_path(
-        "water", "availability", f"e-flow_{context.RCP}_{context.regions}.csv"
-    )
-    df_env = pd.read_csv(PATH)
-
-    df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
-    years = list(range(2010, 2105, 5))
-    df_env.columns = years
-    df_env.index = df_x["BCU_name"]
-    df_env[2110] = df_env[2100]
-    df_env.drop(columns=[col for col in df_env if col not in info.Y], inplace=True)
-    df_env = df_env.stack().reset_index()
-    df_env.columns = ["Region", "years", "value"]
-    df_env.sort_values(["Region", "years", "value"], inplace=True)
-    df_env.fillna(0, inplace=True)
-    df_env.reset_index(drop=True, inplace=True)
-
     if "year" in context.time:
         # Reading data, the data is spatially and temporally aggregated from GHMs
         path1 = private_data_path(
