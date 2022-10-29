@@ -16,7 +16,9 @@ context = read_config()
 
 def gen_data_methanol(scenario):
     df_pars = pd.read_excel(
-        context.get_local_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+        context.get_local_path(
+            "material", "methanol", "methanol_sensitivity_pars.xlsx"
+        ),
         sheet_name="Sheet1",
         dtype=object,
     )
@@ -71,7 +73,9 @@ def gen_data_methanol(scenario):
     df_ng = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx")
     )
-    new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], df_ng])
+    new_dict2["historical_activity"] = pd.concat(
+        [new_dict2["historical_activity"], df_ng]
+    )
 
     mto_dict = gen_data_meth_chemicals(scenario, "MTO")
     new_dict2 = combine_df_dictionaries(new_dict2, mto_dict)
@@ -81,13 +85,23 @@ def gen_data_methanol(scenario):
     resin_dict = gen_data_meth_chemicals(scenario, "Resins")
     new_dict2 = combine_df_dictionaries(new_dict2, resin_dict)
 
-    df_comm = gen_resin_demand(scenario, pars["resin_share"], "comm", pars["wood_scenario"], pars["pathway"])
-    df_resid = gen_resin_demand(scenario, pars["resin_share"], "residential", pars["wood_scenario"], pars["pathway"])
+    df_comm = gen_resin_demand(
+        scenario, pars["resin_share"], "comm", pars["wood_scenario"], pars["pathway"]
+    )
+    df_resid = gen_resin_demand(
+        scenario,
+        pars["resin_share"],
+        "residential",
+        pars["wood_scenario"],
+        pars["pathway"],
+    )
     df_resin_demand = df_comm.copy(deep=True)
     df_resin_demand["value"] = df_comm["value"] + df_resid["value"]
     new_dict2["demand"] = pd.concat([new_dict2["demand"], df_resin_demand])
 
-    new_dict2["input"] = pd.concat([new_dict2["input"], add_methanol_trp_additives(scenario)])
+    new_dict2["input"] = pd.concat(
+        [new_dict2["input"], add_methanol_trp_additives(scenario)]
+    )
 
     if pars["cbudget"]:
         emission_dict = {
@@ -130,16 +144,75 @@ def gen_data_meth_bio(scenario):
         sheet_name=None,
     )
     coal_ratio = get_meth_bio_cost_ratio_2020(scenario, "meth_coal", "fix_cost")
-    merge = df_bio["fix_cost"].merge(on=["node_loc", "year_vtg", "year_act"],
-                                  right=coal_ratio.drop(["technology", "unit", "value"], axis=1))
-    df_bio["fix_cost"] = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop("ratio", axis=1)
+    merge = df_bio["fix_cost"].merge(
+        on=["node_loc", "year_vtg", "year_act"],
+        right=coal_ratio.drop(["technology", "unit", "value"], axis=1),
+    )
+    df_bio["fix_cost"] = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
+        "ratio", axis=1
+    )
 
     coal_ratio = get_meth_bio_cost_ratio_2020(scenario, "meth_coal", "inv_cost")
-    merge = df_bio["inv_cost"].merge(on=["node_loc", "year_vtg"],
-                                  right=coal_ratio.drop(["technology", "unit", "value"], axis=1))
-    df_bio["inv_cost"] = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop("ratio", axis=1)
+    merge = df_bio["inv_cost"].merge(
+        on=["node_loc", "year_vtg"],
+        right=coal_ratio.drop(["technology", "unit", "value"], axis=1),
+    )
+    df_bio["inv_cost"] = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
+        "ratio", axis=1
+    )
 
     return df_bio
+
+
+def gen_meth_bio_ccs(scenario):
+    par_dict = gen_data_meth_bio(scenario)
+    for k in par_dict.keys():
+        par_dict[k]["technology"] = "meth_bio_ccs"
+
+    df_bio = par_dict["inv_cost"]
+    df = scenario.par("inv_cost")
+    df_std = df[df["technology"] == "meth_coal"]
+    df_ccs = df[df["technology"] == "meth_coal_ccs"]
+    merge = df_std.merge(
+        on=["year_vtg", "node_loc"], right=df_ccs.drop(["technology", "unit"], axis=1)
+    )
+    ratio = merge.assign(ratio=lambda x: x["value_x"] / x["value_y"]).drop(
+        ["value_x", "value_y"], axis=1
+    )
+    merge = df_bio.merge(
+        on=["year_vtg", "node_loc"], right=ratio.drop(["technology", "unit"], axis=1)
+    )
+    merge = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
+        ["ratio"], axis=1
+    )
+    par_dict["inv_cost"] = merge
+
+    df_bio = par_dict["fix_cost"]
+    df = scenario.par("fix_cost")
+    df_std = df[df["technology"] == "meth_coal"]
+    df_ccs = df[df["technology"] == "meth_coal_ccs"]
+    merge = df_std.merge(
+        on=["node_loc", "year_vtg", "year_act"],
+        right=df_ccs.drop(["technology", "unit"], axis=1),
+    )
+    ratio = merge.assign(ratio=lambda x: x["value_x"] / x["value_y"]).drop(
+        ["value_x", "value_y"], axis=1
+    )
+    merge = df_bio.merge(
+        on=["node_loc", "year_vtg", "year_act"],
+        right=ratio.drop(["technology", "unit"], axis=1),
+    )
+    merge = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
+        ["ratio"], axis=1
+    )
+    par_dict["fix_cost"] = merge
+
+    par_dict["output"].loc[par_dict["output"]["commodity"] == "electr", "value"] = (
+        par_dict["output"].loc[par_dict["output"]["commodity"] == "electr", "value"]
+        - 0.019231
+    )  # from meth_coal_ccs
+
+    return par_dict
 
 
 def gen_data_meth_chemicals(scenario, chemical):
@@ -178,10 +251,13 @@ def gen_data_meth_chemicals(scenario, chemical):
     par_dict = {k: pd.DataFrame() for k in (df["parameter"])}
     for i in df["parameter"]:
         for index, row in df[df["parameter"] == i].iterrows():
-            par_dict[i] = pd.concat([par_dict[i],
-                make_df(i, **all_years.to_dict(orient="list"), **row, **common)
-                .pipe(broadcast, node_loc=nodes)
-                .pipe(same_node)]
+            par_dict[i] = pd.concat(
+                [
+                    par_dict[i],
+                    make_df(i, **all_years.to_dict(orient="list"), **row, **common)
+                    .pipe(broadcast, node_loc=nodes)
+                    .pipe(same_node),
+                ]
             )
 
             if i == "relation_activity":
@@ -255,9 +331,47 @@ def add_methanol_trp_additives(scenario):
     return pd.concat([df_loil, df_loil_meth])
 
 
+def add_meth_trade_historic():
+    par_dict_trade = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_trd_pars.xlsx"),
+        sheet_name=None,
+    )
+    return par_dict_trade
+
+
+def update_methanol_costs(scenario):
+    df_inv = pd.concat(
+        [
+            get_scaled_cost_from_proxy_tec(
+                842, scenario, "meth_coal", "inv_cost", "meth_coal"
+            ),
+            get_scaled_cost_from_proxy_tec(
+                350, scenario, "meth_ng", "inv_cost", "meth_ng"
+            ),
+        ]
+    )
+    # get_scaled_cost_from_proxy_tec(4800, scenario, "meth_ng", "inv_cost", "meth_bio"),
+    df_fix = pd.concat(
+        [
+            get_scaled_cost_from_proxy_tec(
+                42.1, scenario, "meth_coal", "fix_cost", "meth_coal"
+            ),
+            get_scaled_cost_from_proxy_tec(
+                8.75, scenario, "meth_ng", "fix_cost", "meth_ng"
+            ),
+        ]
+    )
+    # get_scaled_cost_from_proxy_tec(290, scenario, "meth_ng", "fix_cost", "meth_bio")])
+    return {"inv_cost": df_inv, "fix_cost": df_fix}
+
+
 def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHAPE"):
     df = pd.read_csv(
-        context.get_local_path("material", "methanol", "results_material_"+ pathway +"_" + sector + ".csv")
+        context.get_local_path(
+            "material",
+            "methanol",
+            "results_material_" + pathway + "_" + sector + ".csv",
+        )
     )
     resin_intensity = resin_share
     df = df[df["scenario"] == buildings_scen]
@@ -356,13 +470,15 @@ def get_meth_bio_cost_ratio_2020(scenario, tec_name, cost_type):
 
     df = scenario.par(cost_type)
     df = df[df["technology"] == tec_name]
-    df= df[df["year_vtg"] >= 2020]
-    #if cost_type in ["fix_cost", "var_cost"]:
+    df = df[df["year_vtg"] >= 2020]
+    # if cost_type in ["fix_cost", "var_cost"]:
     #    df = df[df["year_vtg"] == df["year_act"]]
 
-    val_nam_2020 = df.loc[(df["node_loc"]=="R12_NAM") & (df["year_vtg"]==2020), "value"].iloc[0]
-    df["ratio"] = df["value"]/ val_nam_2020
-    return df#[["node_loc","year_vtg", "ratio"]]
+    val_nam_2020 = df.loc[
+        (df["node_loc"] == "R12_NAM") & (df["year_vtg"] == 2020), "value"
+    ].iloc[0]
+    df["ratio"] = df["value"] / val_nam_2020
+    return df  # [["node_loc","year_vtg", "ratio"]]
 
 
 def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_tec):
@@ -371,57 +487,6 @@ def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_te
     df["technology"] = new_tec
     df["unit"] = "-"
     return message_ix.make_df(cost_type, **df)
-
-
-def update_methanol_costs(scenario):
-    df_inv = pd.concat([
-    get_scaled_cost_from_proxy_tec(842, scenario, "meth_coal", "inv_cost", "meth_coal"),
-    get_scaled_cost_from_proxy_tec(350, scenario, "meth_ng", "inv_cost", "meth_ng")])
-    #get_scaled_cost_from_proxy_tec(4800, scenario, "meth_ng", "inv_cost", "meth_bio"),
-    df_fix = pd.concat([
-    get_scaled_cost_from_proxy_tec(42.1, scenario, "meth_coal", "fix_cost", "meth_coal"),
-    get_scaled_cost_from_proxy_tec(8.75, scenario, "meth_ng", "fix_cost", "meth_ng")])
-    #get_scaled_cost_from_proxy_tec(290, scenario, "meth_ng", "fix_cost", "meth_bio")])
-    return {"inv_cost": df_inv, "fix_cost": df_fix}
-
-
-def gen_meth_bio_ccs(scenario):
-    par_dict = gen_data_meth_bio(scenario)
-    for k in par_dict.keys():
-        par_dict[k]["technology"] = "meth_bio_ccs"
-
-    df_bio = par_dict["inv_cost"]
-    df = scenario.par("inv_cost")
-    df_std = df[df["technology"] == "meth_coal"]
-    df_ccs = df[df["technology"] == "meth_coal_ccs"]
-    merge = df_std.merge(on=["year_vtg", "node_loc"], right=df_ccs.drop(["technology", "unit"], axis=1))
-    ratio = merge.assign(ratio=lambda x: x["value_x"] / x["value_y"]).drop(["value_x", "value_y"], axis=1)
-    merge = df_bio.merge(on=["year_vtg", "node_loc"], right=ratio.drop(["technology", "unit"], axis=1))
-    merge = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(["ratio"], axis=1)
-    par_dict["inv_cost"] = merge
-
-    df_bio = par_dict["fix_cost"]
-    df = scenario.par("fix_cost")
-    df_std = df[df["technology"] == "meth_coal"]
-    df_ccs = df[df["technology"] == "meth_coal_ccs"]
-    merge = df_std.merge(on=["node_loc", "year_vtg", "year_act"], right=df_ccs.drop(["technology", "unit"], axis=1))
-    ratio = merge.assign(ratio=lambda x: x["value_x"] / x["value_y"]).drop(["value_x", "value_y"], axis=1)
-    merge = df_bio.merge(on=["node_loc", "year_vtg", "year_act"], right=ratio.drop(["technology", "unit"], axis=1))
-    merge = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(["ratio"], axis=1)
-    par_dict["fix_cost"] = merge
-
-    par_dict["output"].loc[par_dict["output"]["commodity"]=="electr", "value"] = \
-        par_dict["output"].loc[par_dict["output"]["commodity"]=="electr", "value"] - 0.019231  # from meth_coal_ccs
-
-    return par_dict
-
-
-def add_meth_trade_historic():
-    par_dict_trade = pd.read_excel(
-        context.get_local_path("material", "methanol", "meth_trd_pars.xlsx"),
-        sheet_name=None,
-    )
-    return par_dict_trade
 
 
 def combine_df_dictionaries(dict1, dict2):
