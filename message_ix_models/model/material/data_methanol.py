@@ -1,12 +1,7 @@
 import message_ix
-import message_data
-import ixmp as ix
-
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
-from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
 from util import read_config
@@ -71,7 +66,8 @@ def gen_data_methanol(scenario):
         [new_dict2["historical_activity"], pd.DataFrame(row).T]
     )
     df_ng = pd.read_excel(
-        context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx")
+        context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
+        sheet_name="Sheet1"
     )
     new_dict2["historical_activity"] = pd.concat(
         [new_dict2["historical_activity"], df_ng]
@@ -129,7 +125,6 @@ def gen_data_methanol(scenario):
 
 
 def gen_data_meth_h2():
-    context = read_config()
     df_h2 = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_h2_techno_economic.xlsx"),
         sheet_name=None,
@@ -138,7 +133,6 @@ def gen_data_meth_h2():
 
 
 def gen_data_meth_bio(scenario):
-    context = read_config()
     df_bio = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_bio_techno_economic.xlsx"),
         sheet_name=None,
@@ -278,7 +272,6 @@ def gen_data_meth_chemicals(scenario, chemical):
         par_dict["historical_activity"] = make_df(
             "historical_activity", value=4.5, year_act=2015, **hist_dict
         )
-        # par_dict["historical_new_capacity"] = make_df("historical_new_capacity", value=[1.2, 1.2], year_vtg=[2015, 2020], **hist_dict)
         par_dict["historical_new_capacity"] = make_df(
             "historical_new_capacity", value=1.2, year_vtg=2015, **hist_dict
         )
