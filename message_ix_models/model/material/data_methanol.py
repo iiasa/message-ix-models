@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
-from .util import read_config
+from util import read_config
 
 context = read_config()
 
 
 def gen_data_methanol(scenario):
     df_pars = pd.read_excel(
-        context.get_local_path("material", "methanol_sensitivity_pars.xlsx"),
+        context.get_local_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
         sheet_name="Sheet1",
         dtype=object,
     )
@@ -29,7 +29,7 @@ def gen_data_methanol(scenario):
     new_dict = combine_df_dictionaries(new_dict, dict3)
 
     dict3 = pd.read_excel(
-        context.get_local_path("material", "meth_t_d_material_pars.xlsx"),
+        context.get_local_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
         sheet_name=None,
     )
 
@@ -69,7 +69,7 @@ def gen_data_methanol(scenario):
         [new_dict2["historical_activity"], pd.DataFrame(row).T]
     )
     df_ng = pd.read_excel(
-        context.get_local_path("material", "meth_ng_techno_economic.xlsx")
+        context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx")
     )
     new_dict2["historical_activity"] = pd.concat([new_dict2["historical_activity"], df_ng])
 
@@ -117,7 +117,7 @@ def gen_data_methanol(scenario):
 def gen_data_meth_h2():
     context = read_config()
     df_h2 = pd.read_excel(
-        context.get_local_path("material", "meth_h2_techno_economic.xlsx"),
+        context.get_local_path("material", "methanol", "meth_h2_techno_economic.xlsx"),
         sheet_name=None,
     )
     return df_h2
@@ -126,7 +126,7 @@ def gen_data_meth_h2():
 def gen_data_meth_bio(scenario):
     context = read_config()
     df_bio = pd.read_excel(
-        context.get_local_path("material", "meth_bio_techno_economic.xlsx"),
+        context.get_local_path("material", "methanol", "meth_bio_techno_economic.xlsx"),
         sheet_name=None,
     )
     coal_ratio = get_meth_bio_cost_ratio_2020(scenario, "meth_coal", "fix_cost")
@@ -144,7 +144,7 @@ def gen_data_meth_bio(scenario):
 
 def gen_data_meth_chemicals(scenario, chemical):
     df = pd.read_excel(
-        context.get_local_path("material", "MTO data collection.xlsx"),
+        context.get_local_path("material", "methanol", "MTO data collection.xlsx"),
         sheet_name=chemical,
         usecols=[1, 2, 3, 4, 6, 7],
     )
@@ -219,7 +219,7 @@ def add_methanol_trp_additives(scenario):
 
     df_mtbe = pd.read_excel(
         context.get_local_path(
-            "material", "Methanol production statistics (version 1).xlsx"
+            "material", "methanol", "Methanol production statistics (version 1).xlsx"
         ),
         # usecols=[1,2,3,4,6,7],
         skiprows=np.linspace(0, 65, 66),
@@ -232,7 +232,7 @@ def add_methanol_trp_additives(scenario):
     df_mtbe = df_mtbe[["node_loc", "methanol energy%"]]
     df_biodiesel = pd.read_excel(
         context.get_local_path(
-            "material", "Methanol production statistics (version 1).xlsx"
+            "material", "methanol", "Methanol production statistics (version 1).xlsx"
         ),
         skiprows=np.linspace(0, 37, 38),
         usecols=[1, 2],
@@ -257,7 +257,7 @@ def add_methanol_trp_additives(scenario):
 
 def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHAPE"):
     df = pd.read_csv(
-        context.get_local_path("material", "results_material_"+ pathway +"_" + sector + ".csv")
+        context.get_local_path("material", "methanol", "results_material_"+ pathway +"_" + sector + ".csv")
     )
     resin_intensity = resin_share
     df = df[df["scenario"] == buildings_scen]
@@ -305,7 +305,7 @@ def gen_meth_residual_demand(gdp_elasticity):
         ) + demand_t0
 
     df_gdp = pd.read_excel(
-        context.get_local_path("material", "methanol demand.xlsx"),
+        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="GDP_baseline",
     )
 
@@ -313,7 +313,7 @@ def gen_meth_residual_demand(gdp_elasticity):
     df = df.dropna(axis=1)
 
     df_demand_meth = pd.read_excel(
-        context.get_local_path("material", "methanol demand.xlsx"),
+        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="methanol_demand",
         skiprows=[12],
     )
@@ -418,7 +418,7 @@ def gen_meth_bio_ccs(scenario):
 
 def add_meth_trade_historic():
     par_dict_trade = pd.read_excel(
-        context.get_local_path("material", "meth_trd_pars.xlsx"),
+        context.get_local_path("material", "methanol", "meth_trd_pars.xlsx"),
         sheet_name=None,
     )
     return par_dict_trade
