@@ -373,7 +373,8 @@ from .data_methanol import gen_data_methanol
 DATA_FUNCTIONS_1 = [
     #gen_data_buildings,
     gen_data_methanol,
-    gen_data_ammonia,
+    gen_all_NH3_fert,
+    #gen_data_ammonia,
     gen_data_generic,
     gen_data_steel,
 ]
