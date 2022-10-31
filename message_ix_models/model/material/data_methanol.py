@@ -4,7 +4,7 @@ import numpy as np
 
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
-from util import read_config
+from .util import read_config
 
 context = read_config()
 
@@ -82,7 +82,7 @@ def gen_data_methanol(scenario):
     new_dict2 = combine_df_dictionaries(new_dict2, resin_dict)
 
     df_comm = gen_resin_demand(
-        scenario, pars["resin_share"], "comm", pars["wood_scenario"], pars["pathway"]
+        scenario, pars["resin_share"], "comm", "SH2", "SHAPE", #pars["wood_scenario"],  #pars["pathway"]
     )
     df_resid = gen_resin_demand(
         scenario,
@@ -301,7 +301,8 @@ def add_methanol_trp_additives(scenario):
         1:13,
     ]
     df_mtbe["node_loc"] = "R12_" + df_mtbe["node_loc"]
-    df_mtbe = df_mtbe[["node_loc", "methanol energy%"]]
+    #df_mtbe = df_mtbe[["node_loc", "methanol energy%"]]
+    df_mtbe = df_mtbe[["node_loc", "% share on trp"]]
     df_biodiesel = pd.read_excel(
         context.get_local_path(
             "material", "methanol", "Methanol production statistics (version 1).xlsx"
@@ -312,10 +313,12 @@ def add_methanol_trp_additives(scenario):
     )
     df_biodiesel["node_loc"] = "R12_" + df_biodiesel["node_loc"]
     df_total = df_biodiesel.merge(df_mtbe)
+    #df_total = df_total.assign(
+    #    value=lambda x: (x["methanol energy %"] + x["methanol energy%"])
+    #)
     df_total = df_total.assign(
-        value=lambda x: x["methanol energy %"] + x["methanol energy%"]
+        value=lambda x: (x["methanol energy %"] + x["% share on trp"])
     )
-
     def get_meth_share(df, node):
         return df[df["node_loc"] == node["node_loc"]]["value"].values[0]
 
