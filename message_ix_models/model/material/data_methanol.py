@@ -137,7 +137,7 @@ def gen_data_meth_bio(scenario):
         context.get_local_path("material", "methanol", "meth_bio_techno_economic.xlsx"),
         sheet_name=None,
     )
-    coal_ratio = get_meth_bio_cost_ratio_2020(scenario, "meth_coal", "fix_cost")
+    coal_ratio = get_cost_ratio_2020(scenario, "meth_coal", "fix_cost")#.drop("value", axis=1)
     merge = df_bio["fix_cost"].merge(
         on=["node_loc", "year_vtg", "year_act"],
         right=coal_ratio.drop(["technology", "unit", "value"], axis=1),
@@ -145,16 +145,17 @@ def gen_data_meth_bio(scenario):
     df_bio["fix_cost"] = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
         "ratio", axis=1
     )
-
-    coal_ratio = get_meth_bio_cost_ratio_2020(scenario, "meth_coal", "inv_cost")
-    merge = df_bio["inv_cost"].merge(
-        on=["node_loc", "year_vtg"],
-        right=coal_ratio.drop(["technology", "unit", "value"], axis=1),
-    )
-    df_bio["inv_cost"] = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
-        "ratio", axis=1
-    )
-
+    df_bio_inv = df_bio["inv_cost"]
+    for y in df_bio["inv_cost"]["year_vtg"].unique():
+        coal_ratio = get_cost_ratio_2020(scenario, "meth_coal", "inv_cost", ref_reg="R12_WEU", year=y).drop("value", axis=1)
+        merge = df_bio_inv.loc[df_bio_inv["year_vtg"] == y].merge(
+            on=["node_loc", "year_vtg"],
+            right=coal_ratio.drop(["technology", "unit"], axis=1),
+        )
+        df_bio_inv.loc[df_bio_inv["year_vtg"] == y, "value"] = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
+            "ratio", axis=1
+        )["value"].values
+    df_bio["inv_cost"] = df_bio_inv
     return df_bio
 
 
@@ -176,7 +177,7 @@ def gen_meth_bio_ccs(scenario):
     merge = df_bio.merge(
         on=["year_vtg", "node_loc"], right=ratio.drop(["technology", "unit"], axis=1)
     )
-    merge = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
+    merge = merge.assign(value=lambda x: x["value"] / x["ratio"]).drop(
         ["ratio"], axis=1
     )
     par_dict["inv_cost"] = merge
@@ -196,7 +197,7 @@ def gen_meth_bio_ccs(scenario):
         on=["node_loc", "year_vtg", "year_act"],
         right=ratio.drop(["technology", "unit"], axis=1),
     )
-    merge = merge.assign(value=lambda x: x["value"] * x["ratio"]).drop(
+    merge = merge.assign(value=lambda x: x["value"] / x["ratio"]).drop(
         ["ratio"], axis=1
     )
     par_dict["fix_cost"] = merge
@@ -205,7 +206,9 @@ def gen_meth_bio_ccs(scenario):
         par_dict["output"].loc[par_dict["output"]["commodity"] == "electr", "value"]
         - 0.019231
     )  # from meth_coal_ccs
-
+    for par in ["input", "output"]:
+        df = par_dict[par]
+        par_dict[par] = df[df["year_act"] > 2025]
     return par_dict
 
 
@@ -459,23 +462,27 @@ def gen_meth_residual_demand(gdp_elasticity):
     )
 
 
-def get_meth_bio_cost_ratio_2020(scenario, tec_name, cost_type):
+def get_cost_ratio_2020(scenario, tec_name, cost_type, ref_reg="R12_NAM", year="all"):
 
-    df = scenario.par(cost_type)
-    df = df[df["technology"] == tec_name]
-    df = df[df["year_vtg"] >= 2020]
-    # if cost_type in ["fix_cost", "var_cost"]:
-    #    df = df[df["year_vtg"] == df["year_act"]]
+    df = scenario.par(cost_type, filters={"technology": tec_name})
+    if year == "all":
+        df = df[df["year_vtg"] >= 2020]
+        val_nam_2020 = df.loc[
+            (df["node_loc"] == ref_reg) & (df["year_vtg"] == 2020), "value"
+        ].iloc[0]
+        df["ratio"] = df["value"] / val_nam_2020
+    else:
+        df = df[df["year_vtg"] == year]
+        val_nam_2020 = df.loc[
+            (df["node_loc"] == ref_reg) & (df["year_vtg"] == year), "value"
+        ].iloc[0]
+        df["ratio"] = df["value"] / val_nam_2020
 
-    val_nam_2020 = df.loc[
-        (df["node_loc"] == "R12_NAM") & (df["year_vtg"] == 2020), "value"
-    ].iloc[0]
-    df["ratio"] = df["value"] / val_nam_2020
     return df  # [["node_loc","year_vtg", "ratio"]]
 
 
 def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_tec):
-    df = get_meth_bio_cost_ratio_2020(scenario, proxy_tec, cost_type)
+    df = get_cost_ratio_2020(scenario, proxy_tec, cost_type)
     df["value"] = value * df["ratio"]
     df["technology"] = new_tec
     df["unit"] = "-"
