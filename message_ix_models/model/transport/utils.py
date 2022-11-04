@@ -215,8 +215,8 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     if isinstance(context_or_regions, str):
         regions = context_or_regions
     else:
-        # Use a value from a Context object, or a default
-        regions = context_or_regions.get("regions", "")
+        # Use the value from a Context object, maybe its default
+        regions = context_or_regions.model.regions or ""
 
     for candidate in (
         private_data_path("transport", regions, *parts),

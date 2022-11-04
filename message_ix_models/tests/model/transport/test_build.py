@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "regions_arg, regions_exp",
     [
-        (None, "R14"),
         ("R11", "R11"),
         ("R12", "R12"),
         ("R14", "R14"),
@@ -28,10 +27,6 @@ log = logging.getLogger(__name__)
 def test_get_spec(test_context, regions_arg, regions_exp, years):
     ctx = test_context
     ctx.update(regions=regions_arg, years=years)
-
-    if regions_arg is None:
-        # Ensure configure() can handle a missing value
-        ctx.pop("regions", None)
 
     configure(ctx)
 
