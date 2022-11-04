@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -34,14 +34,13 @@ def assert_units(
     assert 1 == len(all_units), f"Non-unique {all_units = }"
 
     # Convert the unique value to the same class as `expected`
-    cls = expected.__class__
-    if issubclass(cls, registry.Quantity):
-        assert expected == cls(1.0, all_units[0])
-    elif cls is dict:
+    if isinstance(expected, pint.Quantity):
+        assert expected == expected.__class__(1.0, all_units[0])
+    elif isinstance(expected, Mapping):
         # Compare dimensionality of the units, rather than exact match
-        assert expected == registry(all_units[0]).dimensionality
+        assert expected == registry.Quantity(all_units[0] or "0").dimensionality
     else:
-        assert expected == cls(all_units[0])
+        assert expected == expected.__class__(all_units[0])
 
 
 def test_advance_fv():
