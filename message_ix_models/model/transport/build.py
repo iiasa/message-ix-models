@@ -57,7 +57,13 @@ def get_spec(context: Context) -> Spec:
             s[action].set[set_name].extend(config.get(action, []))
 
     # The set of required nodes varies according to context.regions
-    s["require"].set["node"].extend(map(str, get_region_codes(context.regions)))
+    codelist = context.model.regions
+    try:
+        s["require"].set["node"].extend(map(str, get_region_codes(codelist)))
+    except FileNotFoundError:
+        raise ValueError(
+            f"Cannot get spec for MESSAGEix-Transport with regions={codelist!r}"
+        ) from None
 
     # Generate a spec for the generalized disutility formulation for LDVs
     s2 = get_disutility_spec(context)
