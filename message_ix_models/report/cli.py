@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
     show_default=True,
     help="Path or stem for reporting config file.",
 )
-@click.option("--legacy", "-L", is_flag=True, help="Invoke legacy reporking.")
+@click.option("--legacy", "-L", is_flag=True, help="Invoke legacy reporting.")
 @click.option(
     "--module", "-m", metavar="MODULES", help="Add extra reporting for MODULES."
 )
