@@ -151,6 +151,9 @@ def run(context, dry_run, truncate_step, dsd, target_step):
     log.info(f"Execute workflow:\n{wf.describe(target_step)}")
 
     if dry_run:
+        path = context.get_local_path("navigate-workflow.svg")
+        wf.visualize(path)
+        log.info(f"Workflow diagram written to {path}")
         return
 
     wf.run(target_step)
