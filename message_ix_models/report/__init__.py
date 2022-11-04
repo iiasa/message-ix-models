@@ -4,6 +4,7 @@ from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
+from warnings import warn
 
 import genno.config
 import yaml
@@ -127,7 +128,7 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     return name
 
 
-def report(context: Context):
+def report(context: Context, *args, **kwargs):
     """Run complete reporting on a :class:`.message_ix.Scenario`.
 
     This function provides a single, common interface to call both the 'new'
@@ -160,6 +161,34 @@ def report(context: Context):
     - ``report/config`` is set to :file:`report/globa.yaml`, if not set.
 
     """
+    # Handle deprecated usage that appears in:
+    # - .model.cli.new_baseline()
+    # - .model.create.solve()
+    # - .projects.covid.scenario_runner.ScenarioRunner.solve()
+    if isinstance(context, Scenario):
+        warn(
+            "Calling report(scenario, path, legacy=…); pass a Context instead",
+            category=DeprecationWarning,
+        )
+        # Ensure `context` is actually a Context object for the following code
+        scenario = context
+        context = Context.get_instance(-1)
+
+        # Transfer args, kwargs to context
+        context.set_scenario(scenario)
+        context.report["legacy"] = kwargs.pop("legacy")
+
+        if len(args) + len(set(kwargs.keys()) & {"path"}) != 1:
+            raise TypeError(
+                f"Unknown mix of deprecated positional {args!r} "
+                f"and keyword arguments {kwargs!r}"
+            )
+        elif len(args) == 1:
+            out_dir = args[0]
+        else:
+            out_dir = kwargs.pop("path")
+        context.report["legacy"].setdefault("out_dir", out_dir)
+
     legacy = context.report.get("legacy")
     if legacy or isinstance(legacy, dict):
         return _invoke_legacy_reporting(context)

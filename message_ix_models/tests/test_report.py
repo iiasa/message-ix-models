@@ -28,10 +28,11 @@ def test_report_bare_res(request, test_context):
     # reporter.get(key)
 
 
-def test_report_legacy(caplog, request, test_context):
+def test_report_legacy(caplog, request, tmp_path, test_context):
     """Legacy reporting can be invoked through :func:`.report()`."""
     # Create a target scenario
-    test_context.set_scenario(testing.bare_res(request, test_context, solved=False))
+    scenario = testing.bare_res(request, test_context, solved=False)
+    test_context.set_scenario(scenario)
     # Set dry_run = True to not actually perform any calculations or modifications
     test_context.dry_run = True
     # Ensure the legacy reporting is used, with default settings
@@ -42,6 +43,30 @@ def test_report_legacy(caplog, request, test_context):
 
     # Dry-run message is logged
     assert "DRY RUN" in caplog.messages
+    caplog.clear()
+
+    # Other deprecated usage
+
+    # As called in .model.cli.new_baseline() and .model.create.solve(), with path as a
+    # positional argument
+    legacy_arg = dict(
+        ref_sol="True",  # Must be literal "True" or "False"
+        merge_hist=True,
+        xlsx=test_context.get_local_path("rep_template.xlsx"),
+    )
+    with (
+        pytest.warns(DeprecationWarning, match="pass a Context instead"),
+        pytest.raises(TypeError, match="unexpected keyword argument 'xlsx'"),
+    ):
+        report(scenario, tmp_path, legacy=legacy_arg)
+
+    # As called in .projects.covid.scenario_runner.ScenarioRunner.solve(), with path as
+    # a keyword argument
+    with (
+        pytest.warns(DeprecationWarning, match="pass a Context instead"),
+        pytest.raises(TypeError, match="unexpected keyword argument 'xlsx'"),
+    ):
+        report(scenario, path=tmp_path, legacy=legacy_arg)
 
 
 # Common data for tests
