@@ -73,7 +73,7 @@ REPLACE_VARS = {
 def as_quantity(info: Union[dict, str]) -> Quantity:
     """Convert values from a :class:`dict` to Quantity."""
     if isinstance(info, str):
-        q = registry(info)
+        q = registry.Quantity(info)
         return Quantity(q.magnitude, units=q.units)
     else:
         data = info.copy()
