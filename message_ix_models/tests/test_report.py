@@ -4,7 +4,7 @@ import pandas.testing as pdt
 import pytest
 from message_ix_models import testing
 
-from message_data.reporting import prepare_reporter, util
+from message_data.reporting import prepare_reporter, report, util
 
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
@@ -26,6 +26,22 @@ def test_report_bare_res(request, test_context):
     # NB commented because the bare RES currently contains no activity, so the
     #    reporting steps fail
     # reporter.get(key)
+
+
+def test_report_legacy(caplog, request, test_context):
+    """Legacy reporting can be invoked through :func:`.report()`."""
+    # Create a target scenario
+    test_context.set_scenario(testing.bare_res(request, test_context, solved=False))
+    # Set dry_run = True to not actually perform any calculations or modifications
+    test_context.dry_run = True
+    # Ensure the legacy reporting is used, with default settings
+    test_context.report = {"legacy": dict()}
+
+    # Call succeeds
+    report(test_context)
+
+    # Dry-run message is logged
+    assert "DRY RUN" in caplog.messages
 
 
 # Common data for tests
