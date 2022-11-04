@@ -160,12 +160,13 @@ def report(context: Context):
     - ``report/config`` is set to :file:`report/globa.yaml`, if not set.
 
     """
-    # Default arguments
-    context.report.setdefault("config", private_data_path("report", "global.yaml"))
-    context.report.setdefault("key", "default")
-
-    if context.report.get("legacy"):
+    legacy = context.report.get("legacy")
+    if legacy or isinstance(legacy, dict):
         return _invoke_legacy_reporting(context)
+
+    # Default arguments for genno-based reporting
+    context.report.setdefault("key", "default")
+    context.report.setdefault("config", private_data_path("report", "global.yaml"))
 
     rep, key = prepare_reporter(context)
 
@@ -194,7 +195,7 @@ def _invoke_legacy_reporting(context):
     from message_data.tools.post_processing import iamc_report_hackathon
 
     # Read a configuration file and update the arguments
-    config = context.report.pop("config")
+    config = context.report.get("config")
     if isinstance(config, Path) and config.exists():
         with open(config, "r") as f:
             context.report["legacy"] = yaml.safe_load(f)
@@ -207,7 +208,7 @@ def _invoke_legacy_reporting(context):
     mark_time()
 
     return iamc_report_hackathon.report(
-        mp=scenario.platform, scen=scenario, **context.report["legacy"]
+        mp=scenario.platform, scen=scenario, context=context, **context.report["legacy"]
     )
 
 
