@@ -5,6 +5,7 @@
 #      Christoph's folders.”
 
 ELC_100:
+  name: Battery-electric LDV
   description: >-
     Battery-electric light-duty vehicle using electricity-only (100-mile
     all-electric range)
