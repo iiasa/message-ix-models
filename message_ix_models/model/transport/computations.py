@@ -478,12 +478,10 @@ def share_weight(
 
 def smooth(qty: Quantity) -> Quantity:
     """Smooth `qty` (e.g. PRICE_COMMODITY) in the ``y`` dimension."""
+    from genno.computations import add, concat, mul
+
     # General smoothing
-    result = computations.add(
-        0.25 * qty.shift(y=-1),
-        0.5 * qty,
-        0.25 * qty.shift(y=1),
-    )
+    result = add(0.25 * qty.shift(y=-1), 0.5 * qty, 0.25 * qty.shift(y=1))
 
     y = qty.coords["y"].values
 
@@ -492,24 +490,16 @@ def smooth(qty: Quantity) -> Quantity:
         return Quantity(xr.DataArray(values, coords=[("y", years)]), units="")
 
     # First period
-    r0 = (
-        product(qty, _w([0.4, 0.4, 0.2], y[:3]))
-        .sum("y", min_count=1)
-        .expand_dims(dict(y=[y[0]]))
-    )
+    r0 = mul(qty, _w([0.4, 0.4, 0.2], y[:3])).sum("y").expand_dims(dict(y=y[:1]))
 
     # Final period. “closer to the trend line”
-    # NB the inherited R file used a formula equivalent to weights like
-    #    [-1/8, 0, 3/8, 3/4]; didn't make much sense.
-    r_m1 = (
-        product(qty, _w([0.2, 0.2, 0.6], y[-3:]))
-        .sum("y", min_count=1)
-        .expand_dims(dict(y=[y[-1]]))
-    )
+    # NB the inherited R file used a formula equivalent to weights like [-⅛, 0, ⅜, ¾];
+    # didn't make much sense.
+    r_m1 = mul(qty, _w([0.2, 0.2, 0.6], y[-3:])).sum("y").expand_dims(dict(y=y[-1:]))
 
     # apply_units() is to work around khaeru/genno#64
     # TODO remove when fixed upstream
-    return apply_units(computations.concat(r0, result.sel(y=y[1:-1]), r_m1), qty.units)
+    return apply_units(concat(r0, result.sel(y=y[1:-1]), r_m1), qty.units)
 
 
 def speed(config: dict) -> Quantity:
