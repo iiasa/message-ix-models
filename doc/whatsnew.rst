@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2022.11.7
+=========
 
 - Add the :ref:`ZMB` node code list (:pull:`83`).
 - Add the utility :func:`same_time`, to copy the set time in paramenters (:pull:`83`).
