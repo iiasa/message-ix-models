@@ -25,13 +25,8 @@ jobs:
         # is not the latest 3.x stable version, adjust here to match:
         # python-version: "3.x"
         python-version: "3.10.6"  # Work around python/mypy#13627
-
-    - name: Cache Python packages
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/pip
-        key: lint-${{ runner.os }}
+        cache: pip
+        cache-dependency-path: "**/setup.cfg"
 
     - name: Upgrade pip and install requirements
       run: |
