@@ -10,7 +10,9 @@ from message_ix_models.util.context import Context
 
 log = logging.getLogger(__name__)
 
-CallbackType = Callable[[Context, Scenario], Scenario]
+# commented: this conflicts with option keyword arguments to workflow step functions
+# CallbackType = Callable[[Context, Scenario], Scenario]
+CallbackType = Callable
 
 
 class WorkflowStep:
