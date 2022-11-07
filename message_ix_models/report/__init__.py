@@ -189,8 +189,7 @@ def report(context: Context, *args, **kwargs):
             out_dir = kwargs.pop("path")
         context.report["legacy"].setdefault("out_dir", out_dir)
 
-    legacy = context.report.get("legacy")
-    if legacy or isinstance(legacy, dict):
+    if "legacy" in context.report:
         return _invoke_legacy_reporting(context)
 
     # Default arguments for genno-based reporting
@@ -220,25 +219,33 @@ def report(context: Context, *args, **kwargs):
 
 
 def _invoke_legacy_reporting(context):
-    log.info("Using legacy tools.post_processing.iamc_report_hackathon")
+    log.info("Using tools.post_processing.iamc_report_hackathon")
     from message_data.tools.post_processing import iamc_report_hackathon
+
+    # Convert "legacy" config to keyword arguments for .iamc_report_hackathon.report()
+    args = context.report.setdefault("legacy", dict())
+    if not isinstance(args, dict):
+        raise TypeError(
+            f'Cannot handle Context["report"]["legacy"]={args!r} of type {type(args)}'
+        )
 
     # Read a configuration file and update the arguments
     config = context.report.get("config")
     if isinstance(config, Path) and config.exists():
         with open(config, "r") as f:
-            context.report["legacy"] = yaml.safe_load(f)
+            args.update(yaml.safe_load(f))
 
     # Default settings
-    context.report["legacy"].setdefault("merge_hist", True)
+    args.setdefault("merge_hist", True)
 
     # Retrieve the Scenario and Platform
-    scenario = context.get_scenario()
+    scen = context.get_scenario()
+    mp = scen.platform
+
     mark_time()
 
-    return iamc_report_hackathon.report(
-        mp=scenario.platform, scen=scenario, context=context, **context.report["legacy"]
-    )
+    # `context` is passed only for the "dry_run" setting
+    return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **args)
 
 
 def prepare_reporter(

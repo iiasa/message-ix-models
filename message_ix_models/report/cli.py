@@ -72,7 +72,11 @@ def cli(context, config_file, legacy, module, output_path, from_file, key, dry_r
         log.info(f"Registered reporting from {name}")
 
     # Common settings to apply in all contexts
-    common = dict(config=config, key=key, legacy=legacy)
+    common = dict(config=config, key=key)
+
+    # --legacy/-L: cue report() to invoke the legacy, instead of genno-based reporting
+    if legacy:
+        common["legacy"] = dict()
 
     # Prepare a list of Context objects, each referring to one Scenario
     contexts = []
