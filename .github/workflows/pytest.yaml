@@ -29,7 +29,8 @@ jobs:
         version:
         - { os: macos-latest, python: "3.10" }
         - { os: ubuntu-latest, python: "3.10" }
-        - { os: windows-latest, python: "3.9" }
+        - { os: windows-latest, python: "3.10" }
+        # Versions of both ixmp and message_ix to use
         upstream-version:
         - v3.4.0  # Minimum version given in setup.cfg
         - v3.5.0
