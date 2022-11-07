@@ -43,7 +43,7 @@ jobs:
 
     steps:
     - name: Cancel previous runs that have not completed
-      uses: styfle/cancel-workflow-action@0.9.1
+      uses: styfle/cancel-workflow-action@0.11.0
 
     - name: Check out ixmp
       uses: actions/checkout@v3
@@ -75,7 +75,7 @@ jobs:
         (cd message-ix-models; git fetch --tags --depth=${{ env.depth }})
       shell: bash
 
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.version.python }}
 
