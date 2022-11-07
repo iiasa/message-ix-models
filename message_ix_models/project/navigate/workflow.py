@@ -79,9 +79,18 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     )
 
     # Step 9
-    # Set the path to the file containing the legacy reporting configuration.
-    # Could instead set values on context.report["legacy"] directly.
-    context.report["config"] = private_data_path("report", "navigate.yaml")
+    # Configuration for legacy reporting; matches values in data/report/navigate.yaml
+    # used when running the workflow steps manually.
+    context.report["legacy"] = dict(
+        merge_hist=True,
+        merge_ts=True,
+        # Specify output directory
+        out_dir=context.get_local_path("report", "legacy"),
+        # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a string
+        #         containing "True" or "False" instead of an actual bool.
+        ref_sol="False",
+        run_config="materials.yaml",
+    )
     _invoke_legacy_reporting(context)
 
     return scenario

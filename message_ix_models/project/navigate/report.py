@@ -169,8 +169,7 @@ def gen_config(
 
     # Create base configuration for prep_submission
     cfg = Config(
-        source_dir=context.get_local_path("reporting_output"),
-        out_fil=out_file,
+        out_fil=out_file, source_dir=context.get_local_path("report", "legacy")
     )
 
     # Read the variable list to keep from the NAVIGATE repository
@@ -194,7 +193,7 @@ def gen_config(
         # Identify the node code list for region mapping, below
         regions.add(identify_nodes(s))
         # Construct a filename to read the variable names reported, below
-        filename = legacy_output_path(context, s)
+        filename = legacy_output_path(cfg.source_dir, s)
 
     assert 1 == len(
         regions
@@ -299,12 +298,10 @@ def callback(rep: Reporter, context: Context) -> None:
     )
 
 
-def legacy_output_path(context: Context, scenario: Scenario) -> Path:
-    """Return the path where the legacy reporting wrote output for `scenario`.
+def legacy_output_path(base_path: Path, scenario: Scenario) -> Path:
+    """Return the path where the legacy reporting writes output for `scenario`.
 
     .. todo:: provide this from a function within the legacy reporting submodule; call
        that function both here and in :func:`.pp_utils.write_xlsx`.
     """
-    return context.get_local_path(
-        "reporting_output", f"{scenario.model}_{scenario.scenario}.xlsx"
-    )
+    return base_path.joinpath(f"{scenario.model}_{scenario.scenario}.xlsx")
