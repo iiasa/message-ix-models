@@ -17,7 +17,7 @@ jobs:
     continue-on-error: true
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - uses: actions/setup-python@v4
       with:
@@ -27,7 +27,7 @@ jobs:
         python-version: "3.10.6"  # Work around python/mypy#13627
 
     - name: Cache Python packages
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/.cache/pip
@@ -47,13 +47,13 @@ jobs:
         isort --check-only .
 
     - name: Check out ixmp
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: iiasa/ixmp
         path: ixmp
 
     - name: Check out message-ix
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: iiasa/message_ix
         path: message-ix
