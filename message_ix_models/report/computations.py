@@ -1,7 +1,7 @@
 """Atomic reporting computations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
-from typing import List
+from typing import List, Optional
 
 import ixmp
 import pandas as pd
@@ -74,7 +74,10 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
 
 
 def remove_ts(
-    scenario: ixmp.Scenario, config: dict, after: int = None, dump: bool = False
+    scenario: ixmp.Scenario,
+    config: dict,
+    after: Optional[int] = None,
+    dump: bool = False,
 ) -> None:
     """Remove all time series data from `scenario`.
 

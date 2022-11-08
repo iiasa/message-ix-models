@@ -2,7 +2,7 @@ import logging
 from collections import ChainMap, defaultdict
 from collections.abc import Mapping
 from copy import deepcopy
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 from dask.core import quote
@@ -89,7 +89,9 @@ def simulate_qty(name: str, item_info: dict, **data_kw: Any) -> Tuple[Key, Quant
     return Key(name, dims), Quantity(df.set_index(dims) if len(dims) else df)
 
 
-def add_simulated_solution(rep: Reporter, info: ScenarioInfo, data: Dict = None):
+def add_simulated_solution(
+    rep: Reporter, info: ScenarioInfo, data: Optional[Dict] = None
+):
     """Add a simulated model solution to `rep`, given `info` and `data`."""
     # Populate the sets (from `info`, maybe empty) and pars (empty)
     to_add = deepcopy(MESSAGE_ITEMS)
