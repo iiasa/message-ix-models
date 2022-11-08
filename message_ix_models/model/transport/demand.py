@@ -2,7 +2,7 @@
 import logging
 from functools import partial
 from operator import itemgetter
-from typing import Dict, List, cast
+from typing import Dict, List, Optional, cast
 
 import genno.computations
 import message_ix
@@ -197,7 +197,7 @@ def prepare_reporter(
     context: Context,
     configure: bool = True,
     exogenous_data: bool = False,
-    info: ScenarioInfo = None,
+    info: Optional[ScenarioInfo] = None,
 ) -> None:
     """Prepare `rep` for calculating transport demand.
 

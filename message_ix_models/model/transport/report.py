@@ -1,11 +1,11 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
-from typing import List, Mapping, Tuple
+from typing import List, Mapping, Tuple, cast
 
 import genno.config
 from genno import Computer, MissingKeyError
 from genno.computations import aggregate
-from message_ix.reporting import Reporter
+from message_ix import Reporter, Scenario
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
 
@@ -112,7 +112,7 @@ def callback(rep: Reporter, context: Context) -> None:
     N_keys = len(rep.graph)
 
     # Read transport configuration onto the Context, including reporting config
-    configure(context, rep.graph.get("scenario"))
+    configure(context, cast(Scenario, rep.graph.get("scenario")))
 
     # Transfer transport configuration to the Reporter
     update_config(rep, context)

@@ -4,7 +4,7 @@
 """
 import logging
 from functools import partial
-from typing import Dict
+from typing import Dict, Optional
 
 from message_ix import Scenario
 from message_ix_models import Context, Spec
@@ -92,7 +92,12 @@ def get_disutility_spec(context: Context) -> Spec:
     )
 
 
-def main(context: Context, scenario: Scenario, options: Dict = None, **option_kwargs):
+def main(
+    context: Context,
+    scenario: Scenario,
+    options: Optional[Dict] = None,
+    **option_kwargs,
+):
     """Build MESSAGEix-Transport on `scenario`.
 
     See also

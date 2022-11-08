@@ -2,7 +2,7 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from iam_units import registry  # noqa: F401
@@ -17,7 +17,9 @@ log = logging.getLogger(__name__)
 
 
 def configure(
-    context: Context, scenario: Scenario = None, options: Dict = None
+    context: Context,
+    scenario: Optional[Scenario] = None,
+    options: Optional[Dict] = None,
 ) -> None:
     # TODO warn about deprecation
     Config.from_context(context, scenario, options)
