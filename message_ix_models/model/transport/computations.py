@@ -1,7 +1,7 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
 from functools import partial
-from typing import Dict, Hashable, List
+from typing import Dict, Hashable, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -400,7 +400,7 @@ def price_units(qty: Quantity) -> Quantity:
 
 
 def quantity_from_config(
-    config: dict, name: str, dimensionality: Dict = None
+    config: dict, name: str, dimensionality: Optional[Dict] = None
 ) -> Quantity:
     if dimensionality:
         raise NotImplementedError

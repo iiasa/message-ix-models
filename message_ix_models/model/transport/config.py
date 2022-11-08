@@ -236,7 +236,10 @@ class Config(ConfigHelper):
 
     @classmethod
     def from_context(
-        cls, context: Context, scenario: Scenario = None, options: Dict = None
+        cls,
+        context: Context,
+        scenario: Optional[Scenario] = None,
+        options: Optional[Dict] = None,
     ):
         """Configure `context` for building MESSAGEix-Transport.
 
