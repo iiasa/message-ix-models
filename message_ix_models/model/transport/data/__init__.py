@@ -7,7 +7,7 @@ from typing import Dict, List, Mapping
 import pandas as pd
 from dask.core import quote
 from genno import Computer
-from message_ix import Reporter, make_df
+from message_ix import Reporter, Scenario, make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     add_par_data,
@@ -61,7 +61,7 @@ def provides_data(*args):
     return decorator
 
 
-def add_data(scenario, context, dry_run=False):
+def add_data(scenario: Scenario, context, dry_run=False):
     """Populate `scenario` with MESSAGE-Transport data."""
     from message_data.model.transport import demand
 
