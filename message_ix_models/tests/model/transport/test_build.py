@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "regions_arg, regions_exp",
     [
-        (None, "R14"),  # R14 is the default in message_ix_models.model.Config
         ("R11", "R11"),
         ("R12", "R12"),
         ("R14", "R14"),
