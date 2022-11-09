@@ -1,10 +1,11 @@
 """Utilities for testing :mod:`~message_data.model.transport`."""
 import logging
 from contextlib import nullcontext
+from typing import Optional
 
 import pytest
 from message_ix import Reporter, Scenario
-from message_ix_models import ScenarioInfo, testing
+from message_ix_models import Context, ScenarioInfo, testing
 
 from message_data import reporting
 from message_data.model import transport
@@ -25,9 +26,15 @@ MARK = (
 )
 
 
-def built_transport(request, context, options=dict(), solved=False) -> Scenario:
+def built_transport(
+    request,
+    context: Context,
+    options: Optional[dict] = None,
+    solved: bool = False,
+    quiet: bool = True,
+) -> Scenario:
     """Analogous to :func:`.testing.bare_res`, with transport detail added."""
-    options.setdefault("quiet", True)
+    options = options or dict()
 
     # Retrieve (maybe generate) the bare RES with the same settings
     res = testing.bare_res(request, context, solved)
@@ -43,7 +50,7 @@ def built_transport(request, context, options=dict(), solved=False) -> Scenario:
         # Optionally silence logs for code used via build.main()
         log_cm = (
             silence_log(["genno", "message_data.model.transport", "message_ix_models"])
-            if options["quiet"]
+            if quiet
             else nullcontext()
         )
 
