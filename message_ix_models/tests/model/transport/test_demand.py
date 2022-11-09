@@ -32,7 +32,7 @@ def test_demand_dummy(test_context, regions, years):
         spec["add"].set["commodity"],
         spec["require"].set["node"],
         get_codes(f"year/{years}"),  # FIXME should be present in the spec
-        ctx.transport,
+        {"transport": ctx.transport},  # Minimal config object
     )
 
     # Returns empty dict without config flag set
