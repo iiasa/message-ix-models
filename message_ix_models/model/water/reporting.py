@@ -62,7 +62,7 @@ def report(sc=False, sdgs=False):
 
     # Generating reporter
     rep = Reporter.from_scenario(sc)
-    report = rep.get("message:default")
+    report = rep.get("message::default")
     # Create a timeseries dataframe
     report_df = report.timeseries()
     report_df.reset_index(inplace=True)
