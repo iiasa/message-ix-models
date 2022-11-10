@@ -22,13 +22,14 @@ def gen_data_methanol(scenario):
     dict1 = gen_data_meth_h2()
     dict2 = gen_data_meth_bio(scenario)
     new_dict = combine_df_dictionaries(dict1, dict2)
-    dict3 = gen_meth_bio_ccs(scenario)
-    new_dict = combine_df_dictionaries(new_dict, dict3)
+    #dict3 = gen_meth_bio_ccs(scenario)
+    #new_dict = combine_df_dictionaries(new_dict, dict3)
 
     dict3 = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
         sheet_name=None,
     )
+    dict3.pop("relation_activity")  # remove negative emissions for now
 
     new_dict2 = combine_df_dictionaries(new_dict, dict3)
 
@@ -102,7 +103,7 @@ def gen_data_methanol(scenario):
     if pars["cbudget"]:
         emission_dict = {
             "node": "World",
-            "type_emission": "TCE_CO2",
+            "type_emission": "TCE",
             "type_tec": "all",
             "type_year": "cumulative",
             "unit": "???",
@@ -347,9 +348,14 @@ def update_methanol_costs(scenario):
             get_scaled_cost_from_proxy_tec(
                 350, scenario, "meth_ng", "inv_cost", "meth_ng"
             ),
+            get_scaled_cost_from_proxy_tec(
+                500, scenario, "meth_ng_ccs", "inv_cost", "meth_ng_ccs"
+            ),
+            get_scaled_cost_from_proxy_tec(
+                1430, scenario, "meth_coal_ccs", "inv_cost", "meth_coal_ccs"
+            ),
         ]
     )
-    # get_scaled_cost_from_proxy_tec(4800, scenario, "meth_ng", "inv_cost", "meth_bio"),
     df_fix = pd.concat(
         [
             get_scaled_cost_from_proxy_tec(
@@ -358,8 +364,15 @@ def update_methanol_costs(scenario):
             get_scaled_cost_from_proxy_tec(
                 8.75, scenario, "meth_ng", "fix_cost", "meth_ng"
             ),
+            get_scaled_cost_from_proxy_tec(
+                12.5, scenario, "meth_ng_ccs", "fix_cost", "meth_ng_ccs"
+            ),
+            get_scaled_cost_from_proxy_tec(
+                67, scenario, "meth_coal_ccs", "fix_cost", "meth_coal_ccs"
+            ),
         ]
     )
+    df_inv["unit"] = "-"
     # get_scaled_cost_from_proxy_tec(290, scenario, "meth_ng", "fix_cost", "meth_bio")])
     return {"inv_cost": df_inv, "fix_cost": df_fix}
 
@@ -469,9 +482,13 @@ def get_cost_ratio_2020(scenario, tec_name, cost_type, ref_reg="R12_NAM", year="
 
     df = scenario.par(cost_type, filters={"technology": tec_name})
     if year == "all":
-        df = df[df["year_vtg"] >= 2020]
+        if 2020 in df.year_vtg.unique():
+            ref_year = 2020
+        else:
+            ref_year = min(df.year_vtg.unique())
+        df = df[df["year_vtg"] >= ref_year]
         val_nam_2020 = df.loc[
-            (df["node_loc"] == ref_reg) & (df["year_vtg"] == 2020), "value"
+            (df["node_loc"] == ref_reg) & (df["year_vtg"] == ref_year), "value"
         ].iloc[0]
         df["ratio"] = df["value"] / val_nam_2020
     else:
@@ -484,8 +501,8 @@ def get_cost_ratio_2020(scenario, tec_name, cost_type, ref_reg="R12_NAM", year="
     return df  # [["node_loc","year_vtg", "ratio"]]
 
 
-def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_tec):
-    df = get_cost_ratio_2020(scenario, proxy_tec, cost_type)
+def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_tec, year="all"):
+    df = get_cost_ratio_2020(scenario, proxy_tec, cost_type, year=year)
     df["value"] = value * df["ratio"]
     df["technology"] = new_tec
     df["unit"] = "-"
