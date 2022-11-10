@@ -5,13 +5,12 @@ It calculates environmental flows using Variable Monthly Flow method
 
 """
 
-
 from sqlite3 import TimeFromTicks
 import numpy as np
 import pandas as pd
 import os
 
-type_reg = 'country' # else 'global'
+type_reg = 'global' # else 'global'
 country = 'ZMB'
 global_reg = 'R11'
 
@@ -19,13 +18,16 @@ global_reg = 'R11'
 if type_reg == 'global':
     wd = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
     # upload_files = glob.glob(os.path.join(upload_dir, "MESSAGEix*.xlsx"))
+    wd_out = os.path.join("p:", "ene.model", "NEST","hydrology" ,"post-processed_qs",f"global_{global_reg}")
+
+
 elif type_reg == 'country':
     # This is for Zambia
     wd = os.path.join("p:", "ene.model", "NEST", country, "hydrology")
    
 
 # Define the scenario 'extreme' or 'normal'
-extreme_scen = 'med'
+extreme_scen = 'high'
 
 
 # climate forcing
@@ -43,7 +45,7 @@ var = "qr"
 # climate model
 climmodels = ["gfdl-esm2m", "hadgem2-es", "ipsl-cm5a-lr", "miroc5"]
 climmodel = "miroc5"
-timestep = '5y'
+timestep = 'monthly'
 
 
 # select interpolation method 
@@ -55,15 +57,17 @@ env_flow = True
 df_chk = pd.read_csv(wd + r"\qtot_monthly_miroc5_rcp26.csv")
 
 # Reading files and taking multimodel ensemble
-df1 = pd.read_csv(wd + f"\{var}_{timestep}_miroc5_{scen}.csv").iloc[:, 8:]
+# df1 = pd.read_csv(wd + f"\{var}_{timestep}_miroc5_{scen}.csv").iloc[:, 8:]
 df2 = pd.read_csv(wd + f"\{var}_{timestep}_gfdl-esm2m_{scen}.csv").iloc[:, 8:]
 df3 = pd.read_csv(wd + f"\{var}_{timestep}_hadgem2-es_{scen}.csv").iloc[:, 8:]
 df4 = pd.read_csv(wd + f"\{var}_{timestep}_ipsl-cm5a-lr_{scen}.csv").iloc[:, 8:]
 
-data = pd.concat([df1, df2, df3, df4]).groupby(level=0).mean()
+
+
+data = pd.concat([ df2, df3, df4]).groupby(level=0).mean()
 data["basin"] = "B" + df_chk["BCU_name"]
 
-data.to_csv(wd + f"\{var}_{timestep}_{scen}_{extreme_scen}_{country}.csv")
+# data.to_csv(wd + f"\{var}_{timestep}_{scen}_{extreme_scen}_{country}.csv")
 
 if extreme_scen == 'high':
     data = data.rolling(240,
@@ -80,88 +84,94 @@ elif extreme_scen == 'med':
     # data = data.rolling(
     #     240, min_periods = 1, axis = 1).mean()
 
-data.to_csv(wd + f"\{var}_{timestep}_multimodelmean_{scen}_{extreme_scen}_{country}.csv")
+new_cols = pd.to_datetime(data.columns, format="sum.X%Y.%m.%d")    
+data.columns = new_cols
+if var == 'qr':
+    data = data.iloc[:,48:]  
+data = data.resample('5Y', axis = 1).mean()  
 
-df_6p0_temp = df_6p0.iloc[:, :216]
+data.to_csv(wd_out + f"\{var}_5y_mmean_{scen}_q50.csv")
 
-df = df_6p0_temp.copy()
+# df_6p0_temp = df_6p0.iloc[:, :216]
 
-# Convert monthly values to wet and dry
-for z in range(len(df.columns) // 12):
-    col_end = (z + 1) * 12  # ending col number
-    col_start = 0 if z == 0 else col_end  # start col number
+# df = df_6p0_temp.copy()
 
-    data = df.iloc[:, col_start:col_end]  # assigning relevant data
-    maxindex = data.idxmax(axis=1)  # getting max indexes
+# # Convert monthly values to wet and dry
+# for z in range(len(df.columns) // 12):
+#     col_end = (z + 1) * 12  # ending col number
+#     col_start = 0 if z == 0 else col_end  # start col number
 
-    wet_name = "mean." + maxindex[0][4:9] + "_wet"
-    dry_name = "mean." + maxindex[0][4:9] + "_dry"
+#     data = df.iloc[:, col_start:col_end]  # assigning relevant data
+#     maxindex = data.idxmax(axis=1)  # getting max indexes
 
-    year_data = pd.DataFrame(
-        columns=[wet_name, dry_name]
-    )  # creaing and empty data frame
+#     wet_name = "mean." + maxindex[0][4:9] + "_wet"
+#     dry_name = "mean." + maxindex[0][4:9] + "_dry"
 
-    for i in range(len(maxindex)):
-        col_names = data.columns  # getting column names
-        get_col_index = col_names == maxindex[i]  # getting match column index
-        wet_start = (
-            0
-            if np.where(get_col_index)[0] - 3 < 0
-            else np.where(get_col_index)[0][0] - 3
-        )  # condition for negative col
-        wet_add = np.where(get_col_index)[0] - 3  # getting negative columns
-        wet_end = np.where(get_col_index)[0] + 2
-        wet_col = col_names[wet_start : wet_end[0] + 1].tolist()
+#     year_data = pd.DataFrame(
+#         columns=[wet_name, dry_name]
+#     )  # creaing and empty data frame
 
-        # for adding negative columns
-        if np.where(get_col_index)[0] - 3 >= 0:
-            wet_col
-        else:
-            wet_col.extend(col_names[wet_add[0] :].tolist())
+#     for i in range(len(maxindex)):
+#         col_names = data.columns  # getting column names
+#         get_col_index = col_names == maxindex[i]  # getting match column index
+#         wet_start = (
+#             0
+#             if np.where(get_col_index)[0] - 3 < 0
+#             else np.where(get_col_index)[0][0] - 3
+#         )  # condition for negative col
+#         wet_add = np.where(get_col_index)[0] - 3  # getting negative columns
+#         wet_end = np.where(get_col_index)[0] + 2
+#         wet_col = col_names[wet_start : wet_end[0] + 1].tolist()
 
-        # for adding positive columns
-        if len(wet_col) < 6:
-            col_add = 6 - len(wet_col)
-            wet_col.extend(col_names[:col_add])
+#         # for adding negative columns
+#         if np.where(get_col_index)[0] - 3 >= 0:
+#             wet_col
+#         else:
+#             wet_col.extend(col_names[wet_add[0] :].tolist())
 
-        start_row = 0 if i == 0 else end_row
-        end_row = i + 1
+#         # for adding positive columns
+#         if len(wet_col) < 6:
+#             col_add = 6 - len(wet_col)
+#             wet_col.extend(col_names[:col_add])
 
-        wet_mean = data.iloc[start_row:end_row, :][wet_col].mean(axis=1)
-        dry_mean = (
-            data.iloc[start_row:end_row, :]
-            .loc[:, ~data.iloc[start_row:end_row, :].columns.isin(wet_col)]
-            .mean(axis=1)
-        )
+#         start_row = 0 if i == 0 else end_row
+#         end_row = i + 1
 
-        row_array = np.array([wet_mean[i], dry_mean[i]])  # making an array
+#         wet_mean = data.iloc[start_row:end_row, :][wet_col].mean(axis=1)
+#         dry_mean = (
+#             data.iloc[start_row:end_row, :]
+#             .loc[:, ~data.iloc[start_row:end_row, :].columns.isin(wet_col)]
+#             .mean(axis=1)
+#         )
 
-        year_data.loc[len(year_data)] = row_array  # appending an array
+#         row_array = np.array([wet_mean[i], dry_mean[i]])  # making an array
+
+#         year_data.loc[len(year_data)] = row_array  # appending an array
 
     
-    #
-    # Final data frame after choosing multi model mean
-    df_mmmean[scen] = pd.concat(
-        [df1, df2, df3]).groupby(
-            level=0).mean()
+#     #
+#     # Final data frame after choosing multi model mean
+#     df_mmmean[scen] = pd.concat(
+#         [df1, df2, df3]).groupby(
+#             level=0).mean()
             
-    dffinal[scen] = temporal_agg(df_mmmean[scen],extreme_scen)
+#     dffinal[scen] = temporal_agg(df_mmmean[scen],extreme_scen)
    
-    # data_1_mean = temporal_agg(df2,extreme_scen)
-    # data_2_mean = temporal_agg(df3,extreme_scen)
-    # data_3_mean = temporal_agg(df4,extreme_scen)
+#     # data_1_mean = temporal_agg(df2,extreme_scen)
+#     # data_2_mean = temporal_agg(df3,extreme_scen)
+#     # data_3_mean = temporal_agg(df4,extreme_scen)
 
-print("Done")
+# print("Done")
 
-df_2p6_temp1 = final_data.copy()
-df_2p6_temp1.to_csv(wd + r"\qtot_wetdry_multimodelmean_rcp2p6.csv")
+# df_2p6_temp1 = final_data.copy()
+# df_2p6_temp1.to_csv(wd + r"\qtot_wetdry_multimodelmean_rcp2p6.csv")
 
-# df_2p6_temp1 = pd.read_csv(wd + r"\qtot_wetdry_multimodelmean_rcp2p6.csv")
+# # df_2p6_temp1 = pd.read_csv(wd + r"\qtot_wetdry_multimodelmean_rcp2p6.csv")
 
-final_data = df_2p6_temp1.copy()
+# final_data = df_2p6_temp1.copy()
 
-df_6p0_temp1 = final_data.copy()
-df_6p0_temp1.to_csv(wd + r"\qtot_wetdry_multimodelmean_rcp6p0.csv")
+# df_6p0_temp1 = final_data.copy()
+# df_6p0_temp1.to_csv(wd + r"\qtot_wetdry_multimodelmean_rcp6p0.csv")
 
 # df_6p0_temp1 = pd.read_csv(wd + r"\qtot_wetdry_multimodelmean_rcp6p0.csv")
 
@@ -327,3 +337,6 @@ for scen in scenarios:
     
     
     print("Environmental Flow Values processed")
+
+
+## Adjusting bias for the data in qs and return 

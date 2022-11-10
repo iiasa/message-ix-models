@@ -34,15 +34,22 @@ variables = [
     "qr",
 ]  # groudnwater recharge
 var = "dis"
+
+isimip = '2b'
+
 # climate model
-climmodels = ["gfdl-esm2m", "hadgem2-es", "ipsl-cm5a-lr", "miroc5"]
+if isimip == '2b':
+    climmodels = ["gfdl-esm2m", "hadgem2-es", "ipsl-cm5a-lr", "miroc5"]
+elif:
+    climmodels = ["gfdl-esm2m", "hadgem2-es", "ipsl-cm5a-lr", "miroc5"]
+
 climmodel = "hadgem2-es"
 # Define if monthly aggregation is required
-monthlyscale = True
+monthlyscale = False
 # define qauantile for statistical aggregation
-quant = 0.75
+quant = 0.1
 # define if multi climate models mean
-multimodelensemble = False
+multimodelensemble = True
 # deinfe lat and long chunk for reducing computational load
 latchunk = 120
 lonchunk = 640
@@ -77,6 +84,9 @@ area = xr.open_dataarray(wd1 + "\landareamaskmap0.nc")
 
 # TO AVOID ERROR WHEN OPENING AND SLICING INPUT DATA - CHECK!
 dask.config.set({"array.slicing.split-large-chunks": False})
+
+
+
 
 
 #%%
