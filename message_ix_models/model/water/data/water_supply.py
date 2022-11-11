@@ -715,8 +715,6 @@ def add_e_flow(context):
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
-        new_cols = pd.to_datetime(df_env.columns, format="%m/%d/%Y")
-        df_env.columns = new_cols
         df_env.index = df_x["BCU_name"]
         df_env = df_env.stack().reset_index()
         df_env.columns = ["Region", "years", "value"]
