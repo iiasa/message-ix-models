@@ -769,6 +769,11 @@ def add_e_flow(context):
         eflow_df["value"] = eflow_df["value"].apply(lambda x: x if x >= 0 else 0)
         eflow_df = eflow_df[eflow_df["year_act"] >= 2025].reset_index(drop=True)
 
+        dmd_df.sort_values(by = ['node','year'],inplace = True)
+        dmd_df.reset_index(drop = True, inplace= True)
+        eflow_df.sort_values(by = ['node_loc','year_act'],inplace = True)
+        eflow_df.reset_index(drop = True, inplace= True)
+
         eflow_df["value"] = np.where(
             eflow_df["value"] >= 0.7 * dmd_df["value"],
             0.7 * dmd_df["value"],
