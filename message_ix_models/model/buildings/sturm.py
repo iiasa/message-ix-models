@@ -1,6 +1,7 @@
 """Interface to STURM."""
 import gc
 import logging
+import re
 import subprocess
 from typing import Mapping, MutableMapping, Tuple
 
@@ -155,7 +156,19 @@ def _sturm_rscript(
 
 
 def scenario_name(name: str) -> str:
-    """Return a STURM scenario name for a corresponding MESSAGEix-GLOBIOM name."""
+    """Return a STURM scenario name for a corresponding NAVIGATE scenario name.
+
+    STURM works from prepared data that is available for a subset of all the NAVIGATE
+    scenario IDs. Perform the following mapping:
+
+    - Replace "15C" or "20C" with "NPi": i.e. use the same STURM input data regardless
+      of the climate policy scenario.
+    - Remove trailing "_d" and "_u", e.g. "…-act_u" becomes "…-act".
+    - Map the string "baseline" to "SSP2".
+
+    Other values pass through unaltered.
+    """
+    result = re.sub("^(NAV_Dem)-(15C|20C|NPi)-(...)(_[du])?$", r"\1-NPi-\3", name)
     return {
         "baseline": "SSP2",
-    }.get(name, f"NAV_Dem-{name}")
+    }.get(result, result)
