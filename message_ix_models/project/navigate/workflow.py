@@ -113,6 +113,10 @@ def prep_submission(context: Context, *scenarios: Scenario):
 
 
 def solve(context, scenario):
+    """Plain solve.
+
+    The ENGAGE workflow steps use :func:`.engage.workflow.solve` instead.
+    """
     scenario.solve()
     return scenario
 
