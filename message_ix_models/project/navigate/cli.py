@@ -6,15 +6,12 @@ from pathlib import Path
 import click
 from message_ix_models.util.click import common_params, store_context
 
-from . import SCENARIOS
-
 log = logging.getLogger(__name__)
 
 
 scenario_option = click.Option(
     ["-s", "--scenario", "navigate_scenario"],
     default="baseline",
-    type=click.Choice(SCENARIOS),
     callback=store_context,
     help="NAVIGATE T3.5 scenario ID.",
 )

@@ -15,7 +15,7 @@ from sdmx.model import Code
 
 from message_data.tools.prep_submission import Config, ScenarioConfig
 
-from . import SCENARIOS
+from . import iter_scenario_codes
 
 log = logging.getLogger(__name__)
 
@@ -28,16 +28,16 @@ def _model_name(value: str) -> str:
     return value.split(" (NAVIGATE)")[0]
 
 
-def _scenario_name(value: str) -> Optional[str]:
+def _scenario_name(context: Context, value: str) -> Optional[str]:
     """Return a valid ID from the NAVIGATE scenarios codelist.
 
     NB "baseline" does not appear in the NAVIGATE codelist.
     """
-    if value not in SCENARIOS:
-        return None
     # Comment to exclude for submission to navigate SE instance; leave uncommented for
     # ECE-internal
-    elif value == "baseline":
+    if value == "baseline":
+        return None
+    elif value not in [code.id for code in iter_scenario_codes(context)]:
         return None
     else:
         return f"NAV_Dem-{value}"
@@ -178,7 +178,7 @@ def gen_config(
     # Iterate over scenarios to include
     regions = set()
     for s in scenarios:
-        _name = _scenario_name(s.scenario)
+        _name = _scenario_name(context, s.scenario)
         if _name is None:
             log.info(f"No target scenario name for {s.url}; skip")
             continue
