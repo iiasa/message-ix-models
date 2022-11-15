@@ -149,7 +149,7 @@ def run(context, dry_run, truncate_step, dsd, target_step):
 
     if dry_run:
         path = context.get_local_path("navigate-workflow.svg")
-        wf.visualize(path)
+        wf.visualize(str(path))
         log.info(f"Workflow diagram written to {path}")
         return
 
