@@ -80,3 +80,18 @@ def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
     )
 
     sturm.run(test_context, prices, True)
+
+
+@pytest.mark.parametrize(
+    "expected, input",
+    [
+        ("SSP2", "baseline"),
+        ("NAV_Dem-NPi-act", "NPi-act"),
+        ("NAV_Dem-NPi-all", "NPi-all"),
+        ("NAV_Dem-NPi-ele", "NPi-ele"),
+        ("NAV_Dem-NPi-ref", "NPi-ref"),
+        ("NAV_Dem-NPi-ref", "NPi-ref"),
+    ],
+)
+def test_sturm_scenario_name(input, expected):
+    assert expected == sturm.scenario_name(input)
