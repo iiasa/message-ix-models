@@ -6,6 +6,8 @@ from message_ix_models import Context
 from message_ix_models.util import private_data_path
 from message_ix_models.workflow import Workflow
 
+from message_data.projects.engage import workflow as engage
+
 from . import SCENARIOS
 from .report import gen_config
 
@@ -115,6 +117,24 @@ def solve(context, scenario):
     return scenario
 
 
+#: Values from engage/config.yaml, expressed as objects.
+#:
+#: .. todo:: The low_dem_scen values appear to form a "waterfall", with each
+#:    successively lower budget referencing the previous. Investigate how to run only
+#:    some budgets without the previous ones.
+ENGAGE_CONFIG = {
+    # No climate policy
+    engage.PolicyConfig(steps=[], label="foo"),
+    # Only step 1
+    engage.PolicyConfig(
+        steps=[1], label=1000, budget=2449, low_dem_scen="EN_NPi2020_1200_step1"
+    ),
+    # All steps 1–3
+    engage.PolicyConfig(label=1000, budget=2449, low_dem_scen="EN_NPi2020_1200_step1"),
+    engage.PolicyConfig(label=600, budget=1288, low_dem_scen="EN_NPi2020_700_step1"),
+}
+
+
 def generate(context: Context) -> Workflow:
     """Create the NAVIGATE workflow."""
     wf = Workflow(context)
@@ -151,11 +171,12 @@ def generate(context: Context) -> Workflow:
     wf.add_step("MT solved", "MT built", solve)
 
     # Step IDs for results of step 8
-    reported = []
+    reported_all = []
 
     # Branch for different NAVIGATE T3.5 scenarios
     for s in filter(lambda _s: _s != "baseline", SCENARIOS):
         # Steps 5–7
+        # TODO incorporate different climate policies
         BMT_solved = f"BMT {s} solved"
         wf.add_step(
             BMT_solved,
@@ -166,16 +187,26 @@ def generate(context: Context) -> Workflow:
         )
 
         # Step 8–9 for individual scenarios
-        reported.append(f"report {s}")
-        wf.add_step(reported[-1], BMT_solved, report)
+        BMT_reported = f"{s} reported"
+        wf.add_step(BMT_reported, BMT_solved, report)
 
-        # Step 10 for individual scenarios
-        wf.add_step(f"prep {s}", reported[-1], prep_submission)
+        # Branch for climate policies
+        # NB this must occur here because engage.step_1 requires data which is currently
+        #    only available from legacy reporting output.
+        for label, config in zip("ABCD", ENGAGE_CONFIG):
+            added = engage.add_steps(
+                wf, base=BMT_reported, config=config, name=f"{s} {label}"
+            )
+
+            # Step 10 for individual scenarios
+            wf.add_step(f"prep {s} {label}", added, prep_submission)
+
+            reported_all.append(added)
 
     # Steps 8–9 for all scenarios
-    wf.add_single("report all", *reported)
+    wf.add_single("report all", *reported_all)
 
     # Step 10 for all scenarios
-    wf.add_single("prep all", prep_submission, "context", *reported)
+    wf.add_single("prep all", prep_submission, "context", *reported_all)
 
     return wf
