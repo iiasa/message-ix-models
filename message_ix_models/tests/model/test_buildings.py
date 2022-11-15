@@ -86,11 +86,12 @@ def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
     "expected, input",
     [
         ("SSP2", "baseline"),
-        ("NAV_Dem-NPi-act", "NPi-act"),
-        ("NAV_Dem-NPi-all", "NPi-all"),
-        ("NAV_Dem-NPi-ele", "NPi-ele"),
-        ("NAV_Dem-NPi-ref", "NPi-ref"),
-        ("NAV_Dem-NPi-ref", "NPi-ref"),
+        ("NAV_Dem-NPi-act", "NAV_Dem-NPi-act"),
+        ("NAV_Dem-NPi-act", "NAV_Dem-20C-act_u"),
+        ("NAV_Dem-NPi-all", "NAV_Dem-NPi-all"),
+        ("NAV_Dem-NPi-ele", "NAV_Dem-NPi-ele"),
+        ("NAV_Dem-NPi-ref", "NAV_Dem-NPi-ref"),
+        ("NAV_Dem-NPi-ref", "NAV_Dem-NPi-ref"),
     ],
 )
 def test_sturm_scenario_name(input, expected):
