@@ -291,13 +291,26 @@ def add_steps(
     # Base name for the added steps
     name_root = f"{name or base} + ENGAGE step"
 
+    # Model and scenario name for the scenario produced by the base step
+    # TODO this may not work if the previous step is a passthrough; make more robust
+    info = workflow.graph[base][0].scenario_info.copy()
+
     _base = base
     for step in config.steps:
         # Name for the output of this step
         new_name = f"{name_root} {step}"
 
         # Add step
-        workflow.add_step(new_name, _base, globals()[f"step_{step}"], config=config)
+        s = workflow.add_step(new_name, _base, globals()[f"step_{step}"], config=config)
+
+        # Configure clone for step 1, with the output model and scenario name
+        if step == 1:
+            s.clone = True
+            # Set the output model and scenario name
+            s.scenario_info = dict(
+                model=info["model"], scenario=f"{info['scenario']} + ENGAGE step 1"
+            )
+
         workflow.add_step(f"{new_name} solved", new_name, solve, config=config)
 
         # Update the base step/scenario for the next iteration
