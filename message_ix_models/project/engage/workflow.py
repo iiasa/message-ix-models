@@ -164,7 +164,11 @@ def solve(context: Context, scenario: Scenario, config: PolicyConfig):
     if config.reserve_margin:
         res_marg(scenario)
 
-    scenario.solve(var_list=["I", "C", "GDP"], **config.solve)
+    var_list = ["I", "C"]
+    if config.solve["model"] == "MESSAGE-MACRO":
+        var_list.append("GDP")
+
+    scenario.solve(var_list=var_list, **config.solve)
 
     return scenario
 
@@ -217,6 +221,8 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     sr = ScenarioRunner(context)
     df = sr.retr_CO2_trajectory(scenario)
 
+    scenario.remove_solution()
+
     # Add this trajectory as bound_emission values
     add_emission_trajectory(
         scenario,
@@ -250,6 +256,8 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     #   i.e. `scenario` must have solution data.
     sr = ScenarioRunner(context)
     df = sr.retr_CO2_price(scenario, new_type_emission="TCE_non-CO2")
+
+    scenario.remove_solution()
 
     with scenario.transact(message="Add price for TCE_non-CO2"):
         scenario.add_par("tax_emission", df)
