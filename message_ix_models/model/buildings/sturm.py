@@ -164,11 +164,17 @@ def scenario_name(name: str) -> str:
     - Replace "15C" or "20C" with "NPi": i.e. use the same STURM input data regardless
       of the climate policy scenario.
     - Remove trailing "_d" and "_u", e.g. "…-act_u" becomes "…-act".
+    - Remove trailing " + ENGAGE step #".
+    - "NAV_Dem-" is prepended if it is missing.
     - Map the string "baseline" to "SSP2".
 
     Other values pass through unaltered.
     """
-    result = re.sub("^(NAV_Dem)-(15C|20C|NPi)-(...)(_[du])?$", r"\1-NPi-\3", name)
+    result = re.sub(
+        r"^(NAV_Dem-)?(15C|20C|NPi)-(...)(_[du])?( \+ ENGAGE step [123])?$",
+        r"NAV_Dem-NPi-\3",
+        name,
+    )
     return {
         "baseline": "SSP2",
     }.get(result, result)

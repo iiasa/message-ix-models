@@ -150,7 +150,7 @@ def generate(context: Context) -> Workflow:
 
     # Use the navigate_scenario setting, e.g. from the --scenario CLI option, to
     # construct target scenario names
-    s = context.navigate_scenario or "NPi-ref"
+    s = context.navigate_scenario or "NAV_Dem-NPi-ref"
 
     # Step 1
     wf.add_step(
