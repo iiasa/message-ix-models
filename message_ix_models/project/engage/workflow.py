@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 from iam_units import convert_gwp
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.util import identify_nodes
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.workflow import Workflow
 
@@ -179,12 +180,13 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     """
     remove_emission_bounds(scenario)
 
+    context.model.regions = identify_nodes(scenario)
     add_CO2_emission_constraint(
         scenario,
         relation_name=RELATION_GLOBAL_CO2,
         constraint_value=0.0,
         type_rel="lower",
-        reg=f"{context.regions}_GLB",
+        reg=f"{context.model.regions}_GLB",
     )
 
     # Calculate **and apply** budget
