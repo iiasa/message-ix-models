@@ -286,6 +286,8 @@ def add_steps(
     str
         name of the last workflow step added, or `base` if none are added.
     """
+    workflow.graph["context"].setdefault("run_reporting_only", False)
+
     # Base name for the added steps
     name_root = f"{name or base} + ENGAGE step"
 
