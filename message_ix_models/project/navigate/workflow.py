@@ -8,7 +8,7 @@ from message_ix_models.workflow import Workflow
 
 from message_data.projects.engage import workflow as engage
 
-from . import iter_scenario_codes
+from . import CLIMATE_POLICY, iter_scenario_codes
 from .report import gen_config
 
 log = logging.getLogger(__name__)
@@ -119,29 +119,6 @@ def solve(context, scenario):
     """
     scenario.solve()
     return scenario
-
-
-#: Values from engage/config.yaml, expressed as objects.
-#:
-#: .. todo:: The low_dem_scen values appear to form a "waterfall", with each
-#:    successively lower budget referencing the previous. Investigate how to run only
-#:    some budgets without the previous ones.
-CLIMATE_POLICY = {
-    pc.label: pc
-    for pc in (
-        # No climate policy
-        engage.PolicyConfig("NPi", steps=[]),
-        # Only step 1
-        engage.PolicyConfig(
-            "1000 Gt", steps=[1], budget=2449, low_dem_scen="EN_NPi2020_1200_step1"
-        ),
-        # All steps 1–3
-        # From an entry labelled "1000" in engage/config.yaml
-        engage.PolicyConfig("20C", budget=2449, low_dem_scen="EN_NPi2020_1200_step1"),
-        # From an entry labelled "600" in engage/config.yaml
-        engage.PolicyConfig("15C", budget=1288, low_dem_scen="EN_NPi2020_700_step1"),
-    )
-}
 
 
 def generate(context: Context) -> Workflow:
