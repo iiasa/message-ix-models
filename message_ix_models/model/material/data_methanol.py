@@ -377,7 +377,8 @@ def update_methanol_costs(scenario):
             ),
         ]
     )
-    df_inv["unit"] = "-"
+    df_inv["unit"] = "USD/GWa"
+    df_fix["unit"] = "USD/GWa"
     # get_scaled_cost_from_proxy_tec(290, scenario, "meth_ng", "fix_cost", "meth_bio")])
     return {"inv_cost": df_inv, "fix_cost": df_fix}
 
