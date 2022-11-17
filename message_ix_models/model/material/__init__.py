@@ -2,9 +2,9 @@ from typing import Mapping
 
 import click
 import logging
-
 import ixmp
-
+import os
+from pathlib import Path
 # from .build import apply_spec
 # from message_data.tools import ScenarioInfo
 from message_data.model.material.build import apply_spec
@@ -325,6 +325,9 @@ def run_reporting(context, remove_ts):
             merge_ts=True,
             run_config="materials_run_config.yaml",
         )
+        util.prepare_xlsx_for_explorer(
+            Path(os.getcwd()).parents[3].joinpath(
+                "reporting_output", scenario.model+scenario.scenario+".xlsx"))
 
 
 @cli.command("report-2")
