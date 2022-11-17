@@ -336,6 +336,11 @@ def add_meth_trade_historic():
         context.get_local_path("material", "methanol", "meth_trd_pars.xlsx"),
         sheet_name=None,
     )
+    par_dict_trade2 = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_trade_additions.xlsx"),
+        sheet_name=None,
+    )
+    par_dict_trade = combine_df_dictionaries(par_dict_trade, par_dict_trade2)
     return par_dict_trade
 
 
