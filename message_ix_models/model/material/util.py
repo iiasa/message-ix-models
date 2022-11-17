@@ -44,3 +44,18 @@ def read_config():
     # )
 
     return context
+
+
+def prepare_xlsx_for_explorer(filepath):
+    import pandas as pd
+    df = pd.read_excel(filepath)
+
+    def add_R12(str):
+        if len(str) < 5:
+            return "R12_" + str
+        else:
+            return str
+
+    df = df[~df["Region"].isna()]
+    df["Region"] = df["Region"].map(add_R12)
+    df.to_excel(filepath, index=False)
