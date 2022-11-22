@@ -103,6 +103,14 @@ class Config:
                 f"MESSAGE_Buildings code directory not found at {self.code_dir}"
             )
 
+        # The MESSAGE_Buildings repo is not an installable Python package. Add its
+        # location to sys.path so code/modules within it can be imported. This must go
+        # first, as the directory (=module) name "utils" is commonly used and can clash
+        # with those from other installed packages.
+        # TODO properly package MESSAGE_Buildings so this is not necessary
+        if str(self.code_dir) not in sys.path:
+            sys.path.insert(0, str(self.code_dir))
+
     def set_output_path(self, context: Context):
         # Base path for output during iterations
         self._output_path = context.get_local_path("buildings")
@@ -116,13 +124,6 @@ nclytu = ["node", "commodity", "level", "year", "time", "unit"]
 def build_and_solve(context: Context) -> Scenario:
     """Build MESSAGEix-Buildings and solve."""
     config = context.buildings
-
-    # The MESSAGE_Buildings repo is not an installable Python package. Add its location
-    # to sys.path so code/modules within it can be imported. This must go first, as the
-    # directory (=module) name "utils" is commonly used and can clash with those from
-    # other installed packages.
-    # TODO properly package MESSAGE_Buildings so this is not necessary
-    sys.path.insert(0, str(config.code_dir))
 
     config.set_output_path(context)
 
