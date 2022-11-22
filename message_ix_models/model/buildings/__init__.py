@@ -103,6 +103,11 @@ class Config:
                 f"MESSAGE_Buildings code directory not found at {self.code_dir}"
             )
 
+    def set_output_path(self, context: Context):
+        # Base path for output during iterations
+        self._output_path = context.get_local_path("buildings")
+        self._output_path.mkdir(parents=True, exist_ok=True)
+
 
 # Columns for indexing demand parameter
 nclytu = ["node", "commodity", "level", "year", "time", "unit"]
@@ -119,10 +124,7 @@ def build_and_solve(context: Context) -> Scenario:
     # TODO properly package MESSAGE_Buildings so this is not necessary
     sys.path.insert(0, str(config.code_dir))
 
-    # Base path for output during iterations
-    output_path = context.get_local_path("buildings")
-    output_path.mkdir(parents=True, exist_ok=True)
-    config._output_path = output_path
+    config.set_output_path(context)
 
     # Data storage across iterations
     data = dict(
