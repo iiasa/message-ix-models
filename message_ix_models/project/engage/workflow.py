@@ -288,7 +288,7 @@ def add_steps(
     workflow.graph["context"].setdefault("run_reporting_only", False)
 
     # Base name for the added steps
-    name_root = f"{name or base} + ENGAGE step"
+    name_root = f"{name or base} EN"
 
     # Model and scenario name for the scenario produced by the base step
     # TODO this may not work if the previous step is a passthrough; make more robust
@@ -297,7 +297,7 @@ def add_steps(
     _base = base
     for step in config.steps:
         # Name for the output of this step
-        new_name = f"{name_root} {step}"
+        new_name = f"{name_root}{step}"
 
         # Add step
         s = workflow.add_step(new_name, _base, globals()[f"step_{step}"], config=config)
@@ -307,7 +307,8 @@ def add_steps(
             s.clone = True
             # Set the output model and scenario name
             s.scenario_info = dict(
-                model=info["model"], scenario=f"{info['scenario']} + ENGAGE step 1"
+                model=info["model"],
+                scenario=f"{info['scenario']}_EN1_{config.label.replace(' ', '_')}",
             )
 
         workflow.add_step(f"{new_name} solved", new_name, solve, config=config)
