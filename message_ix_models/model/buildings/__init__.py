@@ -5,9 +5,9 @@ ACCESS and STURM and MESSAGEix itself.
 """
 import logging
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import ixmp
 import message_ix
@@ -77,9 +77,9 @@ class Config:
     #: Run the ACCESS model on every iteration.
     run_access: bool = False
 
-    #: Solve scenarios using :class:`.MESSAGE_MACRO` (:obj:`True`) or only
-    #: :class:`.MESSAGE`.
-    solve_macro: bool = False
+    #: Keyword arguments for :meth:`.message_ix.Scenario.solve`. Set
+    #: ``model="MESSAGE_MACRO" to solve scenarios using MESSAGE_MACRO.
+    solve: Dict[str, Any] = field(default_factory=lambda: dict(model="MESSAGE"))
 
     #: .. todo:: Document the meaning of this setting.
     ssp: str = "SSP2"
@@ -201,16 +201,16 @@ def build_and_solve(context: Context) -> Scenario:
         # First run the convergence checks and other post-solve steps
         data.update(iterations=s.iteration)
         done = post_solve(s, context, data)
-        if done:
+
+        if done:  # Convergence achieved or iteration limit reached
             return True
 
-        # Run the pre-solve steps, including ACCESS (maybe) and STURM, before the next
-        # solve of MESSAGE
+        # Prepare for next iteration: run the pre-solve steps, including ACCESS (maybe)
+        # and STURM, before the next solve of MESSAGE
         pre_solve(s, context, data)
 
-    # Start iterated solution
-    model = "MESSAGE-MACRO" if config.solve_macro else "MESSAGE"
-    scenario.solve(model=model, callback=_callback)
+    # Start (possibly iterated) solution
+    scenario.solve(callback=_callback, **config.solve)
 
     # Handle non-convergence
     if not data["converged"] and data["iterations"] == config.max_iterations > 1:
@@ -237,7 +237,7 @@ def build_and_solve(context: Context) -> Scenario:
         scenario.check_out()
         scenario.add_par("demand", demand)
         scenario.commit("buildings test")
-        scenario.solve(model=model)
+        scenario.solve(**config.solve)
 
         log.info("Final solution after averaging last two demands")
         log_data(config, data, demand, get_prices(scenario), i + 1)
@@ -337,8 +337,8 @@ def pre_solve(scenario: Scenario, context, data):
     sturm_r = sturm_r[~sturm_r.commodity.str.fullmatch(expr)]
     sturm_c = sturm_c[~sturm_c.commodity.str.fullmatch(expr)]
 
-    # - Subset desired energy demands. sturm_c is empty after the
-    #   first iteration, so will contribute no rows
+    # - Subset desired energy demands. sturm_c is empty after the first iteration, so
+    #   will contribute no rows
     # - Concatenate.
     # - Set energy demand level to useful (although it is final) to be in line with 1 to
     #   1 technologies btw final and useful.
