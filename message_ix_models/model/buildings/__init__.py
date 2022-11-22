@@ -67,6 +67,10 @@ class Config:
     #: once-through mode.
     max_iterations: int = 0
 
+    #: :obj:`True` if the MESSAGEix-Materials + MESSAGEix-Buildings combination is
+    #: active
+    with_materials: bool = True
+
     #: Path for STURM output.
     _output_path: Optional[Path] = None
 
@@ -366,7 +370,10 @@ def pre_solve(scenario: Scenario, context, data):
     if scenario.has_solution():
         scenario.remove_solution()
 
-    build.main(scenario, demand, prices, sturm_r, sturm_c)
+    # TODO pass the config entirely; requires moving code to avoid circular imports
+    build.main(
+        scenario, demand, prices, sturm_r, sturm_c, with_materials=config.with_materials
+    )
 
     mark_time()
 

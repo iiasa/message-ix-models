@@ -1,7 +1,7 @@
 import logging
 import re
 from itertools import product
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 import message_ix
 import pandas as pd
@@ -189,6 +189,7 @@ def main(
     prices: pd.DataFrame,
     sturm_r: pd.DataFrame,
     sturm_c: pd.DataFrame,
+    with_materials: Optional[bool] = True,
 ):
     """Set up the structure and data for MESSAGE_Buildings on `scenario`.
 
@@ -197,11 +198,15 @@ def main(
     scenario
         Scenario to set up.
     """
+    # FIXME disentangle the structure and data portions of this code. The structure must
+    #       be set up once, but if the buildings scenario is re-run (e.g. in the
+    #       NAVIGATE workflow) then the structure is already in place, and only data
+    #       need be modified
     info = ScenarioInfo(scenario)
 
-    if BUILD_COMMODITIES[0] in info.set["commodity"]:
-        # Scenario already set up; do nothing
-        return
+    # if BUILD_COMMODITIES[0] in info.set["commodity"]:
+    #     # Scenario already set up; do nothing
+    #     return
 
     scenario.check_out()
 
@@ -292,9 +297,7 @@ def main(
     dd_replace["value"] = 0
     scenario.add_par("demand", dd_replace)
 
-    # TODO replace with an actual check so this code does *not* run on a non-materials
-    #      base `scenario`
-    if True:
+    if with_materials:
         # Set up buildings-materials linkage
         materials(scenario, sturm_r, sturm_c)
 
