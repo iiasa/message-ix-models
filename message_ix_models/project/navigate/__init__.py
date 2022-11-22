@@ -1,7 +1,8 @@
 """NAVIGATE project."""
 import logging
+from functools import lru_cache
 from pathlib import Path
-from typing import Generator, Mapping, Optional
+from typing import Generator, List, Mapping, Optional
 
 import yaml
 from message_ix_models.util import as_codes
@@ -64,18 +65,10 @@ EXTRA_SCENARIOS = [
 ]
 
 
-def iter_scenario_codes(
-    context, filters: Optional[Mapping] = None
-) -> Generator[Code, None, None]:
-    """Iterate over the scenarios defined in the ``navigate-workflow`` repository.
-
-    Parameters
-    ----------
-    filters : dict (str -> any), optional
-        Only codes with annotations that match these filters are returned.
-    """
-    filters = filters or dict()
-
+@lru_cache()
+def _read() -> List[Code]:
+    """Read the codes from the NAVIGATE workflow directory."""
+    # FIXME read this path from config
     workflow_dir = Path("~/vc/iiasa/navigate-workflow").expanduser()
 
     # Use the particular path scheme of Scenario Explorer config repositories
@@ -93,7 +86,22 @@ def iter_scenario_codes(
             content.update(item)
 
     # Transform to a list of SDMX codes
-    codes = as_codes(content)
+    return as_codes(content)
+
+
+def iter_scenario_codes(
+    context, filters: Optional[Mapping] = None
+) -> Generator[Code, None, None]:
+    """Iterate over the scenarios defined in the ``navigate-workflow`` repository.
+
+    Parameters
+    ----------
+    filters : dict (str -> any), optional
+        Only codes with annotations that match these filters are returned.
+    """
+    filters = filters or dict()
+
+    codes = _read()
 
     # Yield codes whose annotations match `filters`
     for code in codes + EXTRA_SCENARIOS:
