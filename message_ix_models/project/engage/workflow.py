@@ -21,7 +21,6 @@ from message_data.tools.utilities import (
     add_CO2_emission_constraint,
     add_emission_trajectory,
     remove_emission_bounds,
-    transfer_demands,
 )
 
 from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
