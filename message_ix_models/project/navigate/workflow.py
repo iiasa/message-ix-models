@@ -1,11 +1,14 @@
 import logging
+from dataclasses import replace
 from pathlib import Path
+from typing import Optional
 
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
 from message_ix_models.workflow import Workflow
 
+from message_data.model import buildings
 from message_data.projects.engage import workflow as engage
 
 from . import CLIMATE_POLICY, iter_scenario_codes
@@ -38,20 +41,33 @@ def build_transport(context: Context, scenario: Scenario) -> Scenario:
     return build.main(context, scenario, fast=True)
 
 
-def build_buildings(
-    context: Context, scenario: Scenario, navigate_scenario: str
+#: Common settings to use when invoking MESSAGEix-Buildings. The value for
+#: "sturm_scenario" is a placeholder, replaced in :func:`build_solve_buildings`.
+BUILDINGS_CONFIG = buildings.Config(
+    max_iterations=1,
+    run_access=False,
+    sturm_method="Rscript",
+    sturm_scenario="",
+)
+
+
+def build_solve_buildings(
+    context: Context,
+    scenario: Scenario,
+    navigate_scenario: str,
+    config: Optional[dict] = None,
 ) -> Scenario:
     """Workflow steps 5–7."""
-    from message_data.model.buildings import Config, build_and_solve, sturm
+    from message_data.model.buildings import sturm
 
     # Configure
-    context.buildings = Config(
-        max_iterations=1,
-        sturm_method="Rscript",
-        run_access=False,
+    context.buildings = replace(
+        BUILDINGS_CONFIG,
         sturm_scenario=sturm.scenario_name(navigate_scenario),
+        **(config or {}),
     )
-    return build_and_solve(context)
+
+    return buildings.build_and_solve(context)
 
 
 def report(context: Context, scenario: Scenario) -> Scenario:
@@ -181,7 +197,7 @@ def generate(context: Context) -> Workflow:
         wf.add_step(
             name,
             "MT solved",
-            build_buildings,  # type: ignore
+            build_solve_buildings,  # type: ignore
             target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
             navigate_scenario=s,
         )
@@ -204,7 +220,29 @@ def generate(context: Context) -> Workflow:
         #    requires data which is currently only available from legacy reporting
         #    output, and the ENGAGE steps must take place after step 9 (running legacy
         #    reporting, below)
-        policy_solved = engage.add_steps(wf, base=base, config=policy_config, name=s)
+        name = engage.add_steps(wf, base=base, config=policy_config, name=s)
+
+        if name == base:
+            policy_solved = name
+        else:
+            # Re-solve with buildings at the last stage
+
+            # Retrieve options on the solve step added by engage.add_steps()
+            solve_kw = wf.graph[name][0].kwargs["config"].solve
+
+            # Create a new step with the same name and base, but invoking
+            # MESSAGEix-Buildings instead.
+            # - Override default buildings.Config.clone = True.
+            # - Use the same Scenario.solve() keyword arguments as for the ENGAGE step,
+            #   e.g. including "model" and ``solve_options["barcrossalg"]``.
+            policy_solved = f"{name} again"
+            wf.add_step(
+                policy_solved,
+                name,
+                build_solve_buildings,
+                navigate_scenario=s,
+                config=dict(clone=False, solve=solve_kw),
+            )
 
         # Step 8–9 for individual scenarios
         reported = f"{s} reported"
