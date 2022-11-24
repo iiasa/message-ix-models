@@ -521,3 +521,15 @@ def combine_df_dictionaries(dict1, dict2):
     for i in keys:
         new_dict[i] = pd.concat([dict1.get(i), dict2.get(i)])
     return new_dict
+
+
+def add_meth_tec_vintages():
+    par_dict_trade = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_ng_additions.xlsx"),
+        sheet_name=None,
+    )
+    par_dict_trade2 = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_coal_additions.xlsx"),
+        sheet_name=None,
+    )
+    return combine_df_dictionaries(par_dict_trade, par_dict_trade2)
