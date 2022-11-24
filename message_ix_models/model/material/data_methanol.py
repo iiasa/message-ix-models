@@ -100,18 +100,6 @@ def gen_data_methanol(scenario):
         [new_dict2["input"], add_methanol_trp_additives(scenario)]
     )
 
-    if pars["cbudget"]:
-        emission_dict = {
-            "node": "World",
-            "type_emission": "TCE",
-            "type_tec": "all",
-            "type_year": "cumulative",
-            "unit": "???",
-        }
-        new_dict2["bound_emission"] = make_df(
-            "bound_emission", value=3667, **emission_dict
-        )
-
     df = scenario.par("input", filters={"technology": "meth_t_d"})
     df["value"] = 1
     new_dict2["input"] = pd.concat([new_dict2["input"], df])
@@ -282,6 +270,15 @@ def gen_data_meth_chemicals(scenario, chemical):
         par_dict["bound_total_capacity_lo"] = make_df(
             "bound_total_capacity_lo", year_act=2020, value=9, **hist_dict
         )
+        par_dict["bound_activity_lo"] = make_df(
+            "bound_activity_lo", year_act=2020, value=8, **hist_dict
+        )
+        df = par_dict["growth_activity_lo"]
+        par_dict["growth_activity_lo"] = df[~((df["node_loc"] == "R12_CHN") & ((df["year_act"] == 2020)))]
+        df = par_dict["growth_activity_up"]
+        par_dict["growth_activity_up"] = df[~((df["node_loc"] == "R12_CHN") & ((df["year_act"] == 2020)))]
+        #par_dict.pop("growth_activity_up")
+        #par_dict.pop("growth_activity_lo")
 
     return par_dict
 
@@ -340,6 +337,9 @@ def add_meth_trade_historic():
         context.get_local_path("material", "methanol", "meth_trade_additions.xlsx"),
         sheet_name=None,
     )
+    df = par_dict_trade["historical_new_capacity"]
+    df.loc[df["value"] < 0, "value"] = 0
+    par_dict_trade["historical_new_capacity"] = df[(df["technology"] != "meth_imp")]
     par_dict_trade = combine_df_dictionaries(par_dict_trade, par_dict_trade2)
     return par_dict_trade
 
