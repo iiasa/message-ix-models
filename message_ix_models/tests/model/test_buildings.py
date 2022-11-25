@@ -91,6 +91,8 @@ def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
         ("NAV_Dem-NPi-act", "NAV_Dem-20C-act_u + ENGAGE step 2"),
         # Without "NAV_Dem-"
         ("NAV_Dem-NPi-act", "20C-act_u + ENGAGE step 2"),
+        # New naming as of 2022-11-22
+        ("NAV_Dem-NPi-ref", "NPi-ref_EN1_1000_Gt"),
         ("NAV_Dem-NPi-all", "NAV_Dem-NPi-all"),
         ("NAV_Dem-NPi-ele", "NAV_Dem-NPi-ele"),
         ("NAV_Dem-NPi-ref", "NAV_Dem-NPi-ref"),
