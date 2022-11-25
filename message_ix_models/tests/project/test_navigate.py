@@ -3,6 +3,38 @@ from pathlib import Path
 
 import ixmp
 
+from message_data.projects.navigate.workflow import generate
+
+
+def test_generate_workflow(test_context):
+    # Set an empty value
+    test_context["navigate_scenario"] = None
+
+    # Same as in test_generate_workflow_cli
+    wf = generate(test_context)
+    wf.truncate("M built")
+
+    # Check the pre-requisite steps of some workflow steps. This is the 2nd entry in the
+    # dask task tuple in wf.graph.
+    assert wf.graph["MT solved"][2] == "MT built"
+    assert wf.graph["MT built"][2] == "M built"
+
+    # Workflow is truncated at "M built"
+    assert wf.graph["M built"][2] is None
+    assert wf.graph["M built"][0].scenario_info == dict(
+        model="MESSAGEix-Materials", scenario="baseline_DEFAULT_NAVIGATE"
+    )
+
+    for s in ("act", "all", "ele", "ref", "tec"):
+        # Depends on the corresponding solved BMT model
+        assert wf.graph[f"NPi-{s} reported"][2] == f"BMT NPi-{s} solved"
+
+        # Scenario name as expected
+        assert wf.graph[f"BMT NPi-{s} solved"][0].scenario_info == dict(
+            model="MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)", scenario=f"NPi-{s}"
+        )
+
+
 # Chunks of text to look for in the --dry-run output. The text cannot be matched exactly
 # because the order of traversing the graph is non-deterministic, i.e. which step
 # displays "MT solved" and its subtree may vary.
@@ -20,45 +52,10 @@ BLOCKS = [
           - <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
           - {context}
           - None""",  # noqa: E501
-    r"""
-- 'report NPi-act':
-  - <Step report\(\)>
-  - 'context'.*
-  - 'BMT NPi-act solved':
-    - <Step build_buildings\(\) -> MESSAGEix-GLOBIOM 1.1-BMT-R12 \(NAVIGATE\)/NPi-act>
-    """,
-    r"""
-- 'report NPi-all':
-  - <Step report\(\)>
-  - 'context'.*
-  - 'BMT NPi-all solved':
-    - <Step build_buildings\(\) -> MESSAGEix-GLOBIOM 1.1-BMT-R12 \(NAVIGATE\)/NPi-all>
-    """,
-    r"""
-- 'report NPi-ele':
-  - <Step report\(\)>
-  - 'context'.*
-  - 'BMT NPi-ele solved':
-    - <Step build_buildings\(\) -> MESSAGEix-GLOBIOM 1.1-BMT-R12 \(NAVIGATE\)/NPi-ele>
-    """,
-    r"""
-- 'report NPi-ref':
-  - <Step report\(\)>
-  - 'context'.*
-  - 'BMT NPi-ref solved':
-    - <Step build_buildings\(\) -> MESSAGEix-GLOBIOM 1.1-BMT-R12 \(NAVIGATE\)/NPi-ref>
-    """,
-    r"""
-- 'report NPi-tec':
-  - <Step report\(\)>
-  - 'context'.*
-  - 'BMT NPi-tec solved':
-    - <Step build_buildings\(\) -> MESSAGEix-GLOBIOM 1.1-BMT-R12 \(NAVIGATE\)/NPi-tec>
-    """,
 ]
 
 
-def test_generate_workflow(mix_models_cli):
+def test_generate_workflow_cli(mix_models_cli):
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
 
     # CLI command to run
