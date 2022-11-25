@@ -12,7 +12,9 @@ from message_data.projects.engage.workflow import PolicyConfig
 
 log = logging.getLogger(__name__)
 
-#: Values from engage/config.yaml, expressed as objects.
+#: Mapping of climate policy labels to :class:`.engage.workflow.PolicyConfig` objects.
+#:
+#: Some of the values are from engage/config.yaml.
 #:
 #: .. todo:: The low_dem_scen values appear to form a "waterfall", with each
 #:    successively lower budget referencing the previous. Investigate how to run only
@@ -21,9 +23,9 @@ _so = dict(model="MESSAGE", solve_options=dict(barcrossalg=2))
 CLIMATE_POLICY = {
     pc.label: pc
     for pc in (
-        # No climate policy
+        # No climate policy → no ENGAGE workflow steps
         PolicyConfig("NPi", steps=[], solve=_so),
-        # Only step 1. This value does not appear in the official NAVIGATE scenarios
+        # Only step 1. This item does not appear in the official NAVIGATE scenarios
         # list, but is used in EXTRA_SCENARIOS below.
         PolicyConfig(
             "1000 Gt",
@@ -33,34 +35,49 @@ CLIMATE_POLICY = {
             solve=_so,
         ),
         # All steps 1–3
-        # From an entry labelled "1000" in engage/config.yaml
-        PolicyConfig(
+        PolicyConfig(  # From an item labelled "1000" in engage/config.yaml
             "20C", budget=2449, low_dem_scen="EN_NPi2020_1200_step1", solve=_so
         ),
-        # From an entry labelled "600" in engage/config.yaml
-        PolicyConfig(
+        PolicyConfig(  # From an item labelled "600" in engage/config.yaml
             "15C", budget=1288, low_dem_scen="EN_NPi2020_700_step1", solve=_so
+        ),
+        #
+        # The following do not appear in the official NAVIGATE scenarios list, but are
+        # used in EXTRA_SCENARIOS below.
+        PolicyConfig(  # From an item labelled "1600" in engage/config.yaml
+            "1600 Gt", budget=4162, low_dem_scen="EN_NPi2020_1800_step1", solve=_so
+        ),
+        PolicyConfig(  # From an item labelled "2000" in engage/config.yaml
+            "2000 Gt", budget=5320, low_dem_scen="EN_NPi2020_2500_step1", solve=_so
         ),
     )
 }
 
 
+# Common annotations for EXTRA_SCENARIOS
+_A = [
+    Annotation(id="navigate-T3.5-policy", text=""),
+    Annotation(id="navigate-task", text="T3.5"),
+]
+
+#: Extra scenario IDs not appearing in the authoritative NAVIGATE list per the workflow
+#: repository. These each have the same 3 annotations.
 EXTRA_SCENARIOS = [
     Code(
         id="NAV_Dem-20C-ref",
-        annotations=[
-            Annotation(id="navigate-climate-policy", text="20C"),
-            Annotation(id="navigate-T3.5-policy", text=""),
-            Annotation(id="navigate-task", text="T3.5"),
-        ],
+        annotations=[Annotation(id="navigate-climate-policy", text="20C")] + _A,
     ),
     Code(
         id="NAV_Dem-1000 Gt-ref",
-        annotations=[
-            Annotation(id="navigate-climate-policy", text="1000 Gt"),
-            Annotation(id="navigate-T3.5-policy", text=""),
-            Annotation(id="navigate-task", text="T3.5"),
-        ],
+        annotations=[Annotation(id="navigate-climate-policy", text="1000 Gt")] + _A,
+    ),
+    Code(
+        id="NAV_Dem-1600 Gt-ref",
+        annotations=[Annotation(id="navigate-climate-policy", text="1600 Gt")] + _A,
+    ),
+    Code(
+        id="NAV_Dem-2000 Gt-ref",
+        annotations=[Annotation(id="navigate-climate-policy", text="2000 Gt")] + _A,
     ),
 ]
 
