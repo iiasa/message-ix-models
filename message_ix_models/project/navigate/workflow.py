@@ -189,6 +189,10 @@ def generate(context: Context) -> Workflow:
     # Steps 5–7 are only run for the "NPi" (baseline) climate policy
     filters = {"navigate-task": "T3.5", "navigate-climate-policy": "NPi"}
     for s, _, T35_policy in iter_scenarios(filters):
+        # Skip these for now
+        if s.endswith("_d"):
+            continue
+
         # Name of the step
         name = f"BMT {s} solved"
         BMT_solved[T35_policy] = name
