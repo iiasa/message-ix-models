@@ -2,11 +2,21 @@ import re
 from pathlib import Path
 
 import ixmp
+import pytest
 
-from message_data.projects.navigate.workflow import generate
+
+@pytest.fixture(scope="session")
+def message_buildings_dir():
+    """Create :attr:`.buildings.Config.code_dir, if it does not exist."""
+    code_dir = Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
+    if not code_dir.exists():
+        code_dir.mkdir(parents=True, exist_ok=True)
 
 
+@pytest.mark.usefixtures("message_buildings_dir")
 def test_generate_workflow(test_context):
+    from message_data.projects.navigate.workflow import generate
+
     # Set an empty value
     test_context["navigate_scenario"] = None
 
@@ -55,18 +65,12 @@ BLOCKS = [
 ]
 
 
+@pytest.mark.usefixtures("message_buildings_dir")
 def test_generate_workflow_cli(mix_models_cli):
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
 
     # CLI command to run
     cmd = ["navigate", "run", "--from=M built", "--dry-run", "report all"]
-
-    # Create the expected buildings repo directory for .buildings.Config, even if it
-    # does not exist
-    code_dir = Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
-    if not code_dir.exists():
-        code_dir.mkdir(parents=True, exist_ok=True)
-
     result = mix_models_cli.invoke(cmd)
 
     # Workflow has the expected scenarios in it
