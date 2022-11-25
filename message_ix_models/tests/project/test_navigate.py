@@ -1,4 +1,7 @@
 import re
+from pathlib import Path
+
+import ixmp
 
 # Chunks of text to look for in the --dry-run output. The text cannot be matched exactly
 # because the order of traversing the graph is non-deterministic, i.e. which step
@@ -58,15 +61,16 @@ BLOCKS = [
 def test_generate_workflow(mix_models_cli):
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
 
-    result = mix_models_cli.invoke(
-        [
-            "navigate",
-            "run",
-            "--from=M built",
-            "--dry-run",
-            "report all",
-        ]
-    )
+    # CLI command to run
+    cmd = ["navigate", "run", "--from=M built", "--dry-run", "report all"]
+
+    # Create the expected buildings repo directory for .buildings.Config, even if it
+    # does not exist
+    code_dir = Path(ixmp.config.get("message buildings dir")).expanduser().resolve()
+    if not code_dir.exists():
+        code_dir.mkdir(parents=True, exist_ok=True)
+
+    result = mix_models_cli.invoke(cmd)
 
     # Workflow has the expected scenarios in it
     for b in BLOCKS:
