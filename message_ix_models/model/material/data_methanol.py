@@ -118,6 +118,19 @@ def gen_data_methanol(scenario):
         new_dict2 = combine_df_dictionaries(new_dict2, cost_dict)
 
     new_dict2 = combine_df_dictionaries(new_dict2, add_meth_trade_historic())
+    new_dict2 = combine_df_dictionaries(add_meth_tec_vintages(), new_dict2)
+
+    for i in new_dict2.keys():
+        new_dict2[i] = new_dict2[i].drop_duplicates()
+
+    pars = ["input", "output"]
+    #scenario.check_out()
+    for i in pars:
+        df = scenario.par(i, filters={"technology": ["sp_meth_I", "meth_rc",
+                                                     "meth_ic_trp", "meth_fc_trp",
+                                                     "meth_i"]})
+        scenario.remove_par(i, df)
+    #scenario.commit("remove old methanol end use tecs")
 
     return new_dict2
 
