@@ -145,7 +145,7 @@ def gen_data_meth_h2():
 
 def gen_data_meth_bio(scenario):
     df_bio = pd.read_excel(
-        context.get_local_path("material", "methanol", "meth_bio_techno_economic.xlsx"),
+        context.get_local_path("material", "methanol", "meth_bio_techno_economic_new.xlsx"),
         sheet_name=None,
     )
     coal_ratio = get_cost_ratio_2020(scenario, "meth_coal", "fix_cost")#.drop("value", axis=1)
