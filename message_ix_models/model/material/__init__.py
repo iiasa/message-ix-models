@@ -215,6 +215,27 @@ def build_scen(context, datafile, tag, mode, scenario_name):
         print('New scenario name is ' + output_scenario_name)
         scenario.set_as_default()
 
+    if mode == 'cbudget':
+        scenario = context.get_scenario()
+        print('Base scenario is: ' + scenario.scenario + ", version: " + scenario.version)
+        output_scenario_name = scenario.scenario + '_' + tag
+        scenario_new = scenario.clone('MESSAGEix-Materials', output_scenario_name,
+                                  keep_solution=False, shift_first_model_year=2025)
+        emission_dict = {
+            "node": "World",
+            "type_emission": "TCE",
+            "type_tec": "all",
+            "type_year": "cumulative",
+            "unit": "???",
+        }
+        df = message_ix.make_df("bound_emission", value=3667, **emission_dict)
+        scenario_new.check_out()
+        scenario_new.add_par("bound_emission", df)
+        scenario_new.commit("add emission bound")
+        print('New carbon budget added')
+        print('New scenario name is ' + output_scenario_name)
+        scenario_new.set_as_default()
+
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
