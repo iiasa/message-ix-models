@@ -4,7 +4,7 @@ import numpy as np
 
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
-from .util import read_config
+from util import read_config
 
 context = read_config()
 
@@ -31,14 +31,18 @@ def gen_data_methanol(scenario):
     )
     df_rel = dict3["relation_activity"]
 
-    def get_embodied_emi(row, pars):
+    def get_embodied_emi(row, pars, share_par):
         if row["year_act"] < pars["incin_trend_end"]:
             share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
         else:
             share = 0.5
-        return row["value"] * (1 - share) * pars["hvc_plastics_share"]
+        return row["value"] * (1 - share) * pars[share_par]
 
-    df_rel["value"] = df_rel.apply(lambda x: get_embodied_emi(x, pars), axis=1)
+    df_rel_meth = df_rel.loc[df_rel["technology"] == "meth_t_d_material",:]
+    df_rel_meth["value"] = df_rel_meth.apply(lambda x: get_embodied_emi(x, pars, "meth_plastics_share"), axis=1)
+    df_rel_hvc = df_rel.loc[df_rel["technology"] == "steam_cracker_petro",:]
+    df_rel_hvc["value"] = df_rel_hvc.apply(lambda x: get_embodied_emi(x, pars, "hvc_plastics_share"), axis=1)
+    dict3["relation_activity"] = pd.concat([df_rel_meth, df_rel_hvc])
     # dict3.pop("relation_activity")  # remove negative emissions for now
     new_dict2 = combine_df_dictionaries(new_dict, dict3)
 
