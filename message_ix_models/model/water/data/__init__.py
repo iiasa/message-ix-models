@@ -32,10 +32,11 @@ DATA_FUNCTIONS_COUNTRY = [
     non_cooling_tec,
     add_sectoral_demands,
     add_water_availability,
-    add_irrigation_demand,
+    # add_irrigation_demand, # not used and coming from GLOBIOM for the global region
     add_infrastructure_techs,
     add_desalination,
     add_e_flow,
+    # add if statement: if irrigation: land component from external model
 ]
 
 
