@@ -467,7 +467,7 @@ def add_sectoral_demands(context):
         )
     )
     urban_collected_wst["value"] = (
-        1e-3 * urban_return_df["value"]
+        1e-3 * urban_collected_wst["value"]
     ) * urban_collected_wst["rate"]
 
     dmd_df = dmd_df.append(
@@ -490,7 +490,7 @@ def add_sectoral_demands(context):
         )
     )
     rural_collected_wst["value"] = (
-        1e-3 * rural_return_df["value"]
+        1e-3 * rural_collected_wst["value"]
     ) * rural_collected_wst["rate"]
 
     dmd_df = dmd_df.append(
@@ -511,7 +511,7 @@ def add_sectoral_demands(context):
             columns={"value": "rate"}
         )
     )
-    urban_uncollected_wst["value"] = (1e-3 * urban_return_df["value"]) * (
+    urban_uncollected_wst["value"] = (1e-3 * urban_uncollected_wst["value"]) * (
         1 - urban_uncollected_wst["rate"]
     )
 
@@ -534,7 +534,7 @@ def add_sectoral_demands(context):
             columns={"value": "rate"}
         )
     )
-    rural_uncollected_wst["value"] = (1e-3 * rural_return_df["value"]) * (
+    rural_uncollected_wst["value"] = (1e-3 * rural_uncollected_wst["value"]) * (
         1 - rural_uncollected_wst["rate"]
     )
 

@@ -162,6 +162,15 @@ desal_new_cap2.df = desaldata.df %>%
   group_by(iso3) %>%
   mutate(cum_desal = cumsum(desal_cap)) %>% ungroup()
 
+desal_new_cap_glb.df = desal_new_cap2.df %>% group_by(year) %>% 
+  summarise(desal_cap = sum(desal_cap),
+            cum_desal = sum(cum_desal)) %>% ungroup() %>% 
+  mutate(cum_desal2 = cumsum(desal_cap)) %>% 
+  gather(key = "cum_type",value = "value",cum_desal,cum_desal2)
+
+ggplot(desal_new_cap_glb.df)+
+  geom_line(aes(x = year,y = value, color = cum_type))
+
 #comparison
 desal_comp = desal_new_cap.df %>%
   left_join(desal_new_cap2.df  %>%

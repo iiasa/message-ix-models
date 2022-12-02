@@ -737,7 +737,7 @@ def add_e_flow(context):
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
-        new_cols = pd.to_datetime(df_env.columns, format="%m/%d/%Y")
+        new_cols = pd.to_datetime(df_env.columns, format="%Y/%m/%d")
         df_env.columns = new_cols
         df_env.index = df_x["BCU_name"]
         df_env = df_env.stack().reset_index()
@@ -756,7 +756,7 @@ def add_e_flow(context):
     if context.SDG:
         # dataframe to put constraints on env flows
         eflow_df = make_df(
-            "bound_activity_lo",
+            "bound_activity_lo",    
             node_loc="B" + df_env["Region"],
             technology="return_flow",
             year_act=df_env["year"],
