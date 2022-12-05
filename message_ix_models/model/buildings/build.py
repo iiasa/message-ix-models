@@ -1,11 +1,13 @@
 import logging
 import re
+from collections import defaultdict
 from itertools import product
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 import message_ix
 import pandas as pd
 from message_ix_models import Context, ScenarioInfo, Spec
+from message_ix_models.model import build
 from message_ix_models.model.structure import (
     generate_set_elements,
     get_codes,
@@ -154,6 +156,131 @@ def add_bio_backstop(scen):
     scen.commit("Add biomass dummy")
 
 
+def prepare_data(
+    scenario: message_ix.Scenario,
+    info: ScenarioInfo,
+    demand: pd.DataFrame,
+    prices: pd.DataFrame,
+    with_materials: bool,
+    relations: List[str],
+) -> Dict[str, pd.DataFrame]:
+    from utils.rc_afofi import return_PERC_AFOFI  # type: ignore
+
+    # Accumulate a list of data frames for each parameter
+    result = defaultdict(list)
+
+    # Create new demands and techs for AFOFI based on percentages between 2010 and 2015
+    dd_replace = scenario.par(
+        "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
+    )
+    perc_afofi_therm, perc_afofi_spec = return_PERC_AFOFI()
+    afofi_dd = dd_replace.copy(True)
+    for reg in perc_afofi_therm.index:
+        # Boolean mask for rows matching this `reg`
+        mask = afofi_dd["node"].str.endswith(reg)
+
+        # NB(PNK) This could probably be simplified using groupby()
+        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"]
+            * perc_afofi_therm.loc[reg][0]
+        )
+        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"]
+            * perc_afofi_spec.loc[reg][0]
+        )
+
+    afofi_dd["commodity"] = afofi_dd.commodity.str.replace("rc", "afofi")
+    result["demand"].append(afofi_dd)
+
+    # Set model demands for rc_therm and rc_spec to zero
+    dd_replace["value"] = 0
+    result["demand"].append(dd_replace)
+
+    rc_techs = scenario.par("output", filters={"commodity": ["rc_therm", "rc_spec"]})[
+        "technology"
+    ].unique()
+
+    for tech_orig in rc_techs:
+        # Filters for retrieving data
+        filters = dict(filters={"technology": tech_orig})
+
+        # Derived name of new technology
+        tech_new = tech_orig.replace("rc", "afofi").replace("RC", "AFOFI")
+        scenario.add_set("technology", tech_new)
+
+        # Copy data for input, capacity_factor, and emission_factor
+        for name in ("input", "capacity_factor", "emission_factor"):
+            result[name].append(
+                scenario.par(name, **filters).assign(technology=tech_new)
+            )
+
+        # Replace commodity name in output
+        name = "output"
+        result[name].append(
+            scenario.par(name, **filters).assign(
+                technology=tech_new,
+                commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
+            )
+        )
+
+        # Only copy relation_activity data for certain relations
+        name = "relation_activity"
+        filters["filters"].update(relation=relations)
+        result[name].append(scenario.par(name, **filters).assign(technology=tech_new))
+
+    # Create new technologies for building energy
+
+    # Mapping from commodity to base model's *_rc technology
+    rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
+
+    # Add for fuels above
+    for fuel in prices["commodity"].unique():
+        # Find the original rc technology for the fuel
+        tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
+
+        # Reduce lower bound in activity for existing, now unused rc techs to allow them
+        # to reach zero
+        # FIXME this should be handled by removing those technologies altogether
+        filters = dict(filters={"technology": tech_orig, "year_act": info.Y})
+        for name, value in (
+            ("bound_activity_lo", 0.0),
+            ("growth_activity_lo", -1.0),
+            ("soft_activity_lo", 0.0),
+        ):
+            result[name].append(scenario.par(name, **filters).assign(value=value))
+
+        # Create the technologies for the new commodities
+        for commodity in filter(
+            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
+        ):
+            # Fix for lightoil gas included
+            if "lightoil-gas" in commodity:
+                tech_new = f"{fuel}_lg_" + commodity.replace("_lightoil-gas", "")
+            else:
+                tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
+
+            # commented: for debugging
+            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
+
+            # Modify data
+            for name, filters, extra in (  # type: ignore
+                ("input", {}, dict(value=1.0)),
+                ("output", {}, dict(commodity=commodity, value=1.0)),
+                ("capacity_factor", {}, {}),
+                ("emission_factor", {}, {}),
+                ("relation_activity", dict(relation=relations), {}),
+            ):
+                filters["technology"] = tech_orig
+                result[name].append(
+                    scenario.par(name, filters=filters).assign(
+                        technology=tech_new, **extra
+                    )
+                )
+
+    # Concatenate data frames together
+    return {k: pd.concat(v) for k, v in result.items()}
+
+
 def main(
     scenario: message_ix.Scenario,
     demand: pd.DataFrame,
@@ -181,154 +308,48 @@ def main(
 
     scenario.check_out()
 
-    from utils.rc_afofi import return_PERC_AFOFI  # type: ignore
-
-    # Add floorspace unit
-    scenario.platform.add_unit("Mm2/y", "mil. square meters by year")
-
     try:
         # TODO explain what this is for
         scenario.init_set("time_relative")
     except ValueError:
         pass  # Already exists
 
-    # Add new commodities and technologies
-    # TODO use message_ix_model.build.apply_spec() pattern, like materials & transport
-    scenario.add_set("commodity", BUILD_COMMODITIES)
-    scenario.add_set("technology", BUILD_TECHS)
+    # Generate a spec for the model
+    spec = get_spec()
 
-    # Find emissions in relation activity
-    emiss_rel = list(
-        filter(
-            lambda rel: "Emission" in rel,
-            scenario.par("relation_activity").relation.unique(),
-        )
+    # Prepare data based on the contents of `scenario`
+    data = prepare_data(
+        scenario,
+        info,
+        demand,
+        prices,
+        with_materials,
+        relations=spec.require.set["relation"],
     )
-
-    # Create new demands and techs for AFOFI based on percentages between 2010 and 2015
-    dd_replace = scenario.par(
-        "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
-    )
-    perc_afofi_therm, perc_afofi_spec = return_PERC_AFOFI()
-    afofi_dd = dd_replace.copy(True)
-    for reg in perc_afofi_therm.index:
-        # Boolean mask for rows matching this `reg`
-        mask = afofi_dd["node"].str.endswith(reg)
-
-        # NB(PNK) This could probably be simplified using groupby()
-        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"]
-            * perc_afofi_therm.loc[reg][0]
-        )
-        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"]
-            * perc_afofi_spec.loc[reg][0]
-        )
-
-    afofi_dd["commodity"] = afofi_dd.commodity.str.replace("rc", "afofi")
-    scenario.add_set("commodity", afofi_dd.commodity.unique())
-    scenario.add_par("demand", afofi_dd)
-
-    rc_techs = scenario.par("output", filters={"commodity": ["rc_therm", "rc_spec"]})[
-        "technology"
-    ].unique()
-
-    for tech_orig in rc_techs:
-        # Filters for retrieving data
-        filters = dict(filters={"technology": tech_orig})
-
-        # Derived name of new technology
-        tech_new = tech_orig.replace("rc", "afofi").replace("RC", "AFOFI")
-        scenario.add_set("technology", tech_new)
-
-        # Copy data for input, capacity_factor, and emission_factor
-        for name in ("input", "capacity_factor", "emission_factor"):
-            scenario.add_par(
-                name, scenario.par(name, **filters).assign(technology=tech_new)
-            )
-
-        # Replace commodity name in output
-        name = "output"
-        scenario.add_par(
-            name,
-            scenario.par(name, **filters).assign(
-                technology=tech_new,
-                commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
-            ),
-        )
-
-        # Only copy relation_activity data for emiss_rel
-        name = "relation_activity"
-        filters["filters"].update(relation=emiss_rel)
-        scenario.add_par(
-            name, scenario.par(name, **filters).assign(technology=tech_new)
-        )
-
-    # Set model demands for rc_therm and rc_spec to zero
-    dd_replace["value"] = 0
-    scenario.add_par("demand", dd_replace)
 
     if with_materials:
         # Set up buildings-materials linkage
-        materials(scenario, sturm_r, sturm_c)
+        merge_data(data, materials(scenario, sturm_r, sturm_c))
 
-    # Create new technologies for building energy
+    # DEBUG
+    print(sorted(data["demand"].commodity.unique()))
+    print(sorted(data["input"].commodity.unique()))
+    print(sorted(data["output"].commodity.unique()))
+    print(sorted(spec.add.set["commodity"]))
+    print(sorted(data["demand"].technology.unique()))
+    print(sorted(data["input"].technology.unique()))
+    print(sorted(data["output"].technology.unique()))
+    print(sorted(spec.add.set["technology"]))
 
-    # Mapping from commodity to base model's *_rc technology
-    rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
+    # Simple callback for apply_spec()
+    def _add_data(s, *kw):
+        return data
 
-    # Add for fuels above
-    for fuel in prices["commodity"].unique():
-        # Find the original rc technology for the fuel
-        tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
+    assert False  # DEBUG
+    build.apply_spec(scenario, spec, _add_data)
 
-        # Reduce lower bound in activity for existing, now unused rc techs to allow them
-        # to reach zero
-        # FIXME this should be handled by removing those technologies altogether
-        filters = dict(filters={"technology": tech_orig, "year_act": info.Y})
-        for name, value in (
-            ("bound_activity_lo", 0.0),
-            ("growth_activity_lo", -1.0),
-            ("soft_activity_lo", 0.0),
-        ):
-            scenario.add_par(name, scenario.par(name, **filters).assign(value=value))
-
-        # Create the technologies for the new commodities
-        for commodity in filter(
-            re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
-        ):
-
-            # Fix for lightoil gas included
-            if "lightoil-gas" in commodity:
-                tech_new = f"{fuel}_lg_" + commodity.replace("_lightoil-gas", "")
-            else:
-                tech_new = f"{fuel}_" + commodity.replace(f"_{fuel}", "")
-
-            # commented: for debugging
-            # print(f"{fuel = }", f"{commodity = }", f"{tech_new = }", sep="\n")
-
-            # Add new commodities and technologies
-            scenario.add_set("commodity", commodity)
-            scenario.add_set("technology", tech_new)
-
-            # Modify data
-            for name, filters, extra in (  # type: ignore
-                ("input", {}, dict(value=1.0)),
-                ("output", {}, dict(commodity=commodity, value=1.0)),
-                ("capacity_factor", {}, {}),
-                ("emission_factor", {}, {}),
-                ("relation_activity", dict(relation=emiss_rel), {}),
-            ):
-                filters["technology"] = tech_orig
-                scenario.add_par(
-                    name,
-                    scenario.par(name, filters=filters).assign(
-                        technology=tech_new, **extra
-                    ),
-                )
-
-    scenario.commit("message_data.model.buildings.setup_scenario()")
     scenario.set_as_default()
+
     log.info(f"Built {scenario.url} and set as default")
 
 
