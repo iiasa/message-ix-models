@@ -70,16 +70,11 @@ def get_spec(context: Context) -> Spec:
     for c in filter(lambda x: x.id.startswith("rc_"), get_codes("commodity")):
         s.add.set["commodity"].append(Code(id=c.id.replace("rc_", "afofi_")))
 
-    # Generate technologies that replace corresponding *_rc in the base model
+    # Generate technologies that replace corresponding *_rc|RC in the base model
     expr = re.compile("_(rc|RC)$")
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
-        new_id = t.id.replace("_rc", "_afofi").replace("_RC", "_AFOFI")
-
-        # FIXME would prefer to do the following, but .buildings.setup_scenario()
-        # currently preserves capitalization
-        # new_id = expr.sub("_afofi", t.id)
-
-        s.add.set["technology"].append(Code(id=new_id))
+        s.add.set["technology"].append(Code(id=expr.sub("_afofi", t.id)))
+        s.remove.set["technology"].append(t)
 
     # The set of required nodes varies according to context.regions
     s.require.set["node"].extend(map(str, get_region_codes(context.regions)))
