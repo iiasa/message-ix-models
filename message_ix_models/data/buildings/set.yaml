@@ -20,6 +20,8 @@ enduse:
 # MESSAGE sets
 
 commodity:
+  # NB this should be 'require', but the _generate feature below uses 'add'
+  # TODO remove this restriction
   add:
   - biomass
   - electr
@@ -28,17 +30,52 @@ commodity:
   - gas
   - lightoil
 
+  # Below are formerly the BUILD_TECHS variable
+  - resid_floor_construction  # floorspace to be constructed
+  - resid_floor_demolition  # floorspace to be demolished
+  - comm_floor_construction  # floorspace to be constructed
+  - comm_floor_demolition  # floorspace to be demolished
+
   # NB others like afofi_spec are generated in .buildings.build
+
+
+relation:
+  # Relations for which data should be adapted
+  require:
+  - BCA_Emission
+  - CH4_Emission
+  - CO2_r_c
+  - CO_Emission
+  - HFC_Emission
+  - HFC_foam_red
+  - HFC_rescom_red
+  - N2O_Emission
+  - NH3_Emission
+  - NOx_Emission
+  - OCA_Emission
+  - SO2_Emission
+  - VOC_Emission
+  - h2mix_direct
+  - oper_res
+  - solar_th_pot
 
 
 technology:
   add:
     "{commodity.id}_{sector.id}_{enduse.id}":
       _generate:
-        commodity: null  # Use all values appearing under commodity/add, above
+        # Use some values appearing under commodity/add, above
+        commodity: "^.*(?<!demolition|construction)$"
         sector: null
         enduse: null
       name: "{commodity.name}, {sector.name}, {enduse.name}"
+
+    construction_resid_build:
+      description: Technology providing residential floorspace activity.
+    demolition_resid_build: {}
+    construction_comm_build:
+      description: Technology providing commercial floorspace activity.
+    demolition_comm_build: {}
 
     # NB others like meth_afofi are generated in .buildings.build
 

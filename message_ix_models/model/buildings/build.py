@@ -23,32 +23,8 @@ from sdmx.model import Code
 
 log = logging.getLogger(__name__)
 
-#: Commodities for the buildings sector.
-#:
-#: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
-BUILD_COMMODITIES = [
-    "resid_floor_construction",  # floorspace to be constructed
-    "resid_floor_demolition",  # floorspace to be demolished
-    "comm_floor_construction",  # floorspace to be constructed
-    "comm_floor_demolition",  # floorspace to be demolished
-    # TODO Need to harmonize on the commodity names (remove the material name)
-]
-
-#: Technologies for the buildings sector.
-#:
-#: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
-BUILD_TECHS = [
-    # technology providing residential floorspace activity
-    "construction_resid_build",
-    "demolition_resid_build",
-    # technology providing commercial floorspace activity
-    "construction_comm_build",
-    "demolition_comm_build",
-]
-
-#: Commodity names to be converted for use in MESSAGEix-Materials.
-#:
-#: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
+#: STURM commodity names to be converted for use in MESSAGEix-Materials; see
+#: :func:`materials`.
 BUILD_COMM_CONVERT = [
     "resid_mat_int_scrap_steel",
     "resid_mat_int_scrap_aluminum",
