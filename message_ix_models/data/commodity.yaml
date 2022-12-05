@@ -55,6 +55,12 @@ methanol:
   name: Methanol
   units: GWa
 
+rc_spec:
+  name: Residential and commercial ?
+
+rc_therm:
+  name: Residential and commercial thermal
+
 transport:
   name: Transportation
   description: >-
@@ -258,8 +264,6 @@ transport:
 # pu
 # puq
 # puq2
-# rc_spec
-# rc_therm
 # saline_supply
 # SawmillResidues
 # SawmillResidues_G4M
