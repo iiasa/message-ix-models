@@ -20,6 +20,7 @@ from message_ix_models.util import as_codes, eval_anno
     "kind, exp",
     [
         ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP", "ZMB"]),
+        ("relation", ["CDLINKS", "real"]),
         ("year", ["A", "B"]),
     ],
 )
@@ -130,6 +131,22 @@ class TestGetCodes:
         """get_codes() handles ISO 3166 alpha-3 codes for historic countries."""
         assert "SCG" in get_codes("node/R11")
 
+    def test_relation(self):
+        d1 = get_codes("relation/CDLINKS")
+        d2 = get_codes("relation/real")
+
+        groups = dict()
+        for code in d1:
+            try:
+                group = str(code.get_annotation(id="group").text)
+            except KeyError:
+                continue
+            groups.setdefault(group, 0)
+            groups[group] += 1
+
+        print(groups)
+        del d2
+
     def test_technologies(self):
         # Retrieve the tech info without calling technologies.cli
         data = get_codes("technology")
@@ -183,7 +200,7 @@ def test_cli_techs(session_context, mix_models_cli):
     )
 
 
-def test_generate_set_elements():
+def test_generate_set_elements0():
     data = {
         "colour": {"add": as_codes(["blue", "green", "red"])},
         "technology": {
@@ -208,6 +225,33 @@ def test_generate_set_elements():
     assert {"foo-blue", "foo-green", "foo-red", "bar"} == set(
         map(str, data["technology"]["add"])
     )
+
+
+def test_generate_set_elements1():
+    data = {
+        "colour": {"add": as_codes(["blue", "green", "red"])},
+        "technology": {
+            "add": [
+                # This is configuration to generate codes based on the contents of the
+                # colour set
+                Code(
+                    id="foo-{colour.id}",
+                    annotations=[
+                        Annotation(
+                            id="_generate", text=repr(dict(colour="^.*(?<!red)$"))
+                        )
+                    ],
+                ),
+                Code(id="bar"),
+            ]
+        },
+    }
+
+    # Code runs
+    generate_set_elements(data, "technology")
+
+    # Codes are generated according to the contents of the _generate annotation
+    assert {"foo-blue", "foo-green", "bar"} == set(map(str, data["technology"]["add"]))
 
 
 def test_process_units_anno():
