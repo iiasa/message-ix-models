@@ -14,9 +14,9 @@ from message_ix_models.model.structure import (
     get_region_codes,
 )
 from message_ix_models.util import (
-    add_par_data,
     load_private_data,
     make_io,
+    merge_data,
     nodes_ex_world,
 )
 from sdmx.model import Code
@@ -354,8 +354,11 @@ def main(
 
 
 def materials(
-    scenario: message_ix.Scenario, sturm_r: pd.DataFrame, sturm_c: pd.DataFrame
-) -> None:
+    scenario: message_ix.Scenario,
+    info: ScenarioInfo,
+    sturm_r: pd.DataFrame,
+    sturm_c: pd.DataFrame,
+) -> Dict[str, pd.DataFrame]:
     """Integrate MESSAGEix-Buildings with MESSAGEix-Materials.
 
     This function adjusts `scenario` to work with :mod:`.model.material`. It makes the
@@ -374,7 +377,8 @@ def materials(
        cement by subtracting the amounts from ``sturm_r`` and ``sturm_c``. The demands
        are not reduced below zero.
     """
-    info = ScenarioInfo(scenario)
+    # Accumulate a list of data frames for each parameter
+    result = defaultdict(list)
 
     # Create new input/output for building material intensities
     common = dict(
@@ -425,8 +429,8 @@ def materials(
                 ]
             )
 
-        # Update `scenario` with data for output and possibly input
-        add_par_data(scenario, data)
+        for name, df in data.items():
+            result[name].append(df)
 
     # Retrieve data once
     demand_data = scenario.par("demand", {"level": "demand"})
@@ -463,4 +467,7 @@ def materials(
             .drop(columns=f"demand_{rc}_const")
         )
 
-        scenario.add_par("demand", mat_demand)
+        result["demand"].append(mat_demand)
+
+    # Concatenate data frames together
+    return {k: pd.concat(v) for k, v in result.items()}
