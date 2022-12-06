@@ -27,7 +27,7 @@ SECTOR_NAME_MAP = {"comm": "Commercial", "resid": "Residential"}
 FUEL_NAME_MAP = {
     "biomass": "Solids|Biomass",
     "biomass_nc": "Solids|Biomass|Traditional",
-    "coal": "Solids|Coal",
+    "coal": "Solids|Fossil",
     "d_heat": "Heat",
     "lightoil": "Liquids|Oil",
     "gas": "Gases",
@@ -362,7 +362,7 @@ MAPS = (
             "Final Energy|Commercial|Heat",
             "Final Energy|Commercial|Liquids",
             "Final Energy|Commercial|Solids|Biomass",
-            "Final Energy|Commercial|Solids|Coal",
+            "Final Energy|Commercial|Solids|Fossil",
         ],
         "Final Energy|Residential": [
             "Final Energy|Residential|Electricity",
@@ -370,7 +370,7 @@ MAPS = (
             "Final Energy|Residential|Heat",
             "Final Energy|Residential|Liquids",
             "Final Energy|Residential|Solids|Biomass",
-            "Final Energy|Residential|Solids|Coal",
+            "Final Energy|Residential|Solids|Fossil",
         ],
     },
     {
