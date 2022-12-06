@@ -42,15 +42,30 @@ def read_data_petrochemicals(scenario):
 
     return data_petro
 
-
-def gen_mock_demand_petro(scenario):
+def gen_mock_demand_petro(scenario, gdp_elasticity):
 
     context = read_config()
     s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y  # s_info.Y is only for modeling years
-    fmy = s_info.y0
+    modelyears = s_info.Y #s_info.Y is only for modeling years
     nodes = s_info.N
-    nodes.remove("World")
+
+    def get_demand_t1_with_income_elasticity(
+        demand_t0, income_t0, income_t1, elasticity
+    ):
+        return (
+            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
+        ) + demand_t0
+
+    df_gdp = pd.read_excel(
+        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
+        sheet_name="GDP_baseline",
+    )
+
+    df = df_gdp[(~df_gdp["Region"].isna()) & (df_gdp["Region"] != "World")]
+    df = df.dropna(axis=1)
+
+    df_demand = df.copy(deep=True)
+    df_demand = df_demand.drop([2010, 2015, 2020], axis=1)
 
     # 2018 production
     # Use as 2020
@@ -58,146 +73,59 @@ def gen_mock_demand_petro(scenario):
     # Projections here do not show too much growth until 2050 for some regions.
     # For division of some regions assumptions made:
     # PAO, PAS, SAS, EEU,WEU
-
     # For R12: China and CPA demand divided by 0.1 and 0.9.
-
     # SSP2 R11 baseline GDP projection
-
     # The orders of the regions
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
     #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
-        sheet_n = "data_R12"
-        region_set = "R12_"
-
-        d_HVC = [2, 7.5, 30, 4, 11, 42, 60, 32, 30, 29, 35, 67.5]
+        region_set = 'R12_'
+        dem_2020 = np.array([2, 7.5, 30, 4, 11, 42, 60, 32, 30, 29, 35, 67.5])
+        dem_2020 = pd.Series(dem_2020)
 
     else:
         nodes.remove("R11_GLB")
-        sheet_n = "data_R11"
-        region_set = "R11_"
+        region_set = 'R11_'
+        dem_2020 = np.array([2, 75, 30, 4, 11, 42, 60, 32, 30, 29, 35])
+        dem_2020 = pd.Series(dem_2020)
 
-        d_HVC = [2, 75, 30, 4, 11, 42, 60, 32, 30, 29, 35]
+    df_demand[2020] = dem_2020
 
-        # d_ethylene = [0.853064, 32.04327, 2.88788, 8.780442, 8.831229,21.58509,
-        # 32.54942, 8.94036, 7.497867, 28.12818, 16.65209]
-        # d_propylene = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 10.79255,
-        # 16.27471, 7.4503, 7.497867, 17.30965, 11.1014]
-        # d_BTX = [0.426532, 32.04327, 2.88788, 1.463407, 5.298738, 12.95105, 16.27471,
-        # 7.4503, 7.497867, 17.30965, 11.1014]
+    for i in range(len(modelyears) - 1):
+        income_year1 = modelyears[i]
+        income_year2 = modelyears[i + 1]
 
-    gdp_growth = pd.read_excel(
-        private_data_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
-        sheet_name=sheet_n,
+        dem_2020 = get_demand_t1_with_income_elasticity(
+            dem_2020, df[income_year1], df[income_year2], gdp_elasticity
+        )
+        df_demand[income_year2] = dem_2020
+
+    df_melt = df_demand.melt(
+        id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
     )
 
-    gdp_growth = gdp_growth.loc[
-        (gdp_growth["Scenario"] == "baseline") & (gdp_growth["Region"] != "World")
-    ].drop(["Model", "Variable", "Unit", "Notes", 2000, 2005], axis=1)
+    df_final = message_ix.make_df(
+        "demand",
+        unit="t",
+        level="demand",
+        value=df_melt.value,
+        time="year",
+        commodity="HVC",
+        year=df_melt.year,
+        node=(region_set + df_melt["Region"]))
 
-    gdp_growth["Region"] = region_set + gdp_growth["Region"]
-
-    # list = []
-    #
-    # for e in ["ethylene","propylene","BTX"]:
-    #     if e == "ethylene":
-    #         demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_ethylene}).\
-    #         join(gdp_growth.set_index('Region'), on='Region').\
-    #         rename(columns={'Region':'node'})
-    #
-    #     if e == "propylene":
-    #         demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_propylene}).\
-    #         join(gdp_growth.set_index('Region'), on='Region').\
-    #         rename(columns={'Region':'node'})
-    #
-    #     if e == "BTX":
-    #         demand2020 = pd.DataFrame({'Region':nodes, 'Val':d_BTX}).\
-    #         join(gdp_growth.set_index('Region'), on='Region').\
-    #         rename(columns={'Region':'node'})
-
-    demand2020 = (
-        pd.DataFrame({"Region": nodes, "Val": d_HVC})
-        .join(gdp_growth.set_index("Region"), on="Region")
-        .rename(columns={"Region": "node"})
+    return message_ix.make_df(
+        "demand",
+        unit="t",
+        level="demand",
+        value=df_melt.value,
+        time="year",
+        commodity="HVC",
+        year=df_melt.year,
+        node=(region_set + df_melt["Region"]),
     )
-
-    demand2020.iloc[:, 3:] = (
-        demand2020.iloc[:, 3:]
-        .div(demand2020[2020], axis=0)
-        .multiply(demand2020["Val"], axis=0)
-    )
-
-    demand2020 = pd.melt(
-        demand2020.drop(["Val", "Scenario"], axis=1),
-        id_vars=["node"],
-        var_name="year",
-        value_name="value",
-    )
-
-    # list.append(demand2020)
-
-    # return list[0], list[1], list[2]
-    return demand2020
-
-    # China 2006: 22 kg/cap HVC demand. 2006 population: 1.311 billion
-    # This makes 28.842 Mt. (IEA Energy Technology Transitions for Industry)
-    # In 2010: 43.263 Mt (1.5 times of 2006)
-    # In 2015 72.105 Mt (1.56 times of 2010)
-    # Grwoth rates are from CECDATA (assuming same growth rate as ethylene).
-    # Distribution in 2015 for China: 6:6:5 (ethylene,propylene,BTX)
-    # Future of Petrochemicals Methodological Annex
-    # This makes 25 Mt ethylene, 25 Mt propylene, 21 Mt BTX
-    # This can be verified by other sources.
-
-
-# load rpy2 modules
-# import rpy2.robjects as ro
-# from rpy2.robjects import pandas2ri
-# from rpy2.robjects.conversion import localconverter
-
-# This returns a df with columns ["region", "year", "demand.tot"]
-# def derive_petro_demand(scenario, dry_run=False):
-#     """Generate HVC demand."""
-#     # paths to r code and lca data
-#     rcode_path = Path(__file__).parents[0] / "material_demand"
-#     context = read_config()
-#
-#     # source R code
-#     r = ro.r
-#     r.source(str(rcode_path / "init_modularized.R"))
-#
-#     # Read population and baseline demand for materials
-#     pop = scenario.par("bound_activity_up", {"technology": "Population"})
-#     pop = pop.loc[pop.year_act >= 2020].rename(
-#         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
-#     )
-#
-#     # import pdb; pdb.set_trace()
-#
-#     pop = pop[["region", "year", "pop.mil"]]
-#
-#     base_demand = gen_mock_demand_petro(scenario)
-#     base_demand = base_demand.loc[base_demand.year == 2020].rename(
-#         columns={"value": "demand.tot.base", "node": "region"}
-#     )
-#
-#     print("base demand")
-#     print(base_demand)
-#
-#     # call R function with type conversion
-#     with localconverter(ro.default_converter + pandas2ri.converter):
-#         # GDP is only in MER in scenario.
-#         # To get PPP GDP, it is read externally from the R side
-#         df = r.derive_petro_demand(
-#             pop, base_demand, str(context.get_local_path("material"))
-#         )
-#         df.year = df.year.astype(int)
-#
-#     return df
-#
-
 
 def gen_data_petro_chemicals(scenario, dry_run=False):
     # Load configuration
@@ -390,20 +318,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # Create external demand param
 
     # demand_HVC = derive_petro_demand(scenario)
-    demand_HVC = gen_mock_demand_petro(scenario)
-    paramname = "demand"
-
-    df_HVC = make_df(
-        paramname,
-        level="demand",
-        commodity="HVC",
-        value=demand_HVC.value,
-        unit="t",
-        year=demand_HVC.year,
-        time="year",
-        node=demand_HVC.node,
-    )  # .pipe(broadcast, node=nodes)
-    results["demand"].append(df_HVC)
+    default_gdp_elasticity = float(0.93)
+    demand_HVC = gen_mock_demand_petro(scenario, default_gdp_elasticity)
+    results["demand"].append(demand_HVC)
 
     # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
     # value=demand_e.value, unit='t',year=demand_e.year, time='year', \
