@@ -55,7 +55,7 @@ VARIABLE_SUB = (
     (
         re.compile(
             r"\|Industry excl Non-Energy Use\|(Chemicals|Non-Ferrous Metals|"
-            "Non-Metallic Minerals|Steel)"
+            "Non-Metallic Minerals|Steel|Other Sector)"
         ),
         r"|Industry|\g<1>",
     ),
@@ -78,12 +78,15 @@ VARIABLE_SUB = (
     (re.compile(r"^(Secondary Energy\|Solids\|)Coal"), r"\g<1>Fossil"),
     (re.compile(r"^(Production\|)Cement"), r"\g<1>Non-Metallic Minerals|Cement|Volume"),
     (re.compile(r"^(Production\|)Chemicals"), r"\g<1>Chemicals|Volume"),
-    (
+        (
         re.compile(r"^(Production\|)Non-ferrous metals"),
         r"\g<1>Non-Ferrous Metals|Volume",
     ),
     (re.compile(r"\|Steel"), r"|Iron and Steel"),
     (re.compile(r"^(Production\|Iron and Steel)$"), r"\g<1>|Volume"),
+    (re.compile(r"^(Emissions|CO2|Energy|Demand|Industry\|)Non-Metallic Minerals|Cement"), r"\g<1>Non-Metallic Minerals"),
+    (re.compile(r"^(Emissions|CO2|Energy|Demand|Industry\|)Non-Ferrous Metals|Aluminium"), r"\g<1>Non-Ferrous Metals")
+
     # For NGFS, apparently not needed for NAVIGATE
     # ("Commercial", "Residential and Commercial|Commercial"),
     # ("Residential", "Residential and Commercial|Residential"),
