@@ -50,6 +50,22 @@ def _region(codelist_id: str, value: str) -> str:
 
 #: Regular expression patterns and replacements for variable names
 VARIABLE_SUB = (
+
+    # Check if it will work as intended 
+    # (
+    #     re.compile(
+    #         r"\|Industry\|(Electricity|Gases|Heat|Hydrogen|Liquids|Other|Solids)"
+    #     ),
+    #     r"",
+    # ),
+    #
+    # (
+    #     re.compile(
+    #         r"\|Industry excl Non-Energy Use\|(Electricity|Gases|Heat|Hydrogen|Liquids|Other|Solids)"
+    #     ),
+    #     r"|Industry|\g<1>",
+    # ),
+
     (re.compile(r"^Carbon Sequestration\|CCS(.*)$"), r"Carbon Capture|Storage\g<1>"),
     (re.compile(r"^Carbon Sequestration(\|Land Use.*)$"), r"Carbon Removal\g<1>"),
     (
