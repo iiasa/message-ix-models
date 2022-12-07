@@ -198,9 +198,7 @@ def modify_demand_and_hist_activity(scen):
 
     for r in df_feed["REGION"].unique():
 
-        # Temporary solution. With the addition of ammonia the residual demand
-        # becomes negative or zero. We assume all of the feedstock production
-        # is endogenously covered.
+
         i = 0
         df_feed_temp.at[i, "REGION"] = r
         df_feed_temp.at[i, "i_feed"] = 1
@@ -481,10 +479,17 @@ def add_emission_accounting(scen):
         ~relation_activity_furnaces["technology"].str.contains("_refining")
     ]
 
-    scen.check_out()
-    scen.add_par("relation_activity", relation_activity)
-    scen.add_par("relation_activity", relation_activity_furnaces)
-    scen.commit("Emissions accounting for industry technologies added.")
+    # Add steel energy input technologies to CO2_ind relation
+
+    relation_activity_steel = scen.par(
+        "emission_factor",
+        filters={"emission": "CO2_industry", 
+        "technology": ["DUMMY_coal_supply", "DUMMY_gas_supply"]},
+    )
+    relation_activity_steel["relation"] = "CO2_ind"
+    relation_activity_steel["node_rel"] = relation_activity_steel["node_loc"]
+    relation_activity_steel.drop(["year_vtg", "emission"], axis=1, inplace=True)
+    relation_activity_steel["year_rel"] = relation_activity_steel["year_act"]
 
     # Add refinery technologies to CO2_cc
 
@@ -500,6 +505,7 @@ def add_emission_accounting(scen):
     scen.check_out()
     scen.add_par("relation_activity", relation_activity)
     scen.add_par("relation_activity", relation_activity_furnaces)
+    scen.add_par("relation_activity", relation_activity_steel)
     scen.add_par("relation_activity", relation_activity_ref)
     scen.commit("Emissions accounting for industry technologies added.")
 
