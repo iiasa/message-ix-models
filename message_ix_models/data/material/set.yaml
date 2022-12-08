@@ -101,6 +101,7 @@ generic:
     - furnace_coal_cement
     - furnace_elec_cement
     - furnace_h2_cement
+    - hp_gas_cement
     - furnace_coal_aluminum
     - furnace_foil_aluminum
     - furnace_loil_aluminum
