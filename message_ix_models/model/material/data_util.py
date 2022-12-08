@@ -424,6 +424,111 @@ def add_emission_accounting(scen):
     context = read_config()
     s_info = ScenarioInfo(scen)
 
+    # Add non-CO2 gases to the relevant relations
+
+    tec_list_residual = scen.par("emission_factor")["technology"].unique()
+    tec_list_input = scen.par("input")["technology"].unique()
+
+    # The technology list to retrieve the input values
+    tec_list_input = [
+        i
+        for i in tec_list_input
+        if (
+            ("furnace" in i) |
+            ("hp_gas_" in i)
+
+        )
+    ]
+    tec_list_input.remove('hp_gas_i')
+    tec_list_input.remove('hp_gas_rc')
+
+    # The technology list to retreive the emission_factors
+    tec_list_residual = [
+        i
+        for i in tec_list_residual
+        if (
+        (('biomass_i' in i) |
+        ('coal_i' in i) |
+        ('foil_i' in i) |
+        ('gas_i' in i) |
+        ('hp_gas_i' in i) |
+        ('loil_i' in i) |
+        ('meth_i' in i)) &
+        ('imp' not in i) &
+        ('trp' not in i)
+        )
+    ]
+
+    # Retrieve the input values
+    input_df = scen.par('input', filters = {'technology':tec_list_input})
+    input_df.drop(['node_origin','commodity','level','time','time_origin','unit'],
+    axis = 1, inplace = True)
+    input_df.drop_duplicates(inplace = True)
+    input_df = input_df[input_df['year_act']>=2020]
+
+    # Retrieve the emission factors
+
+    emission_df = scen.par("emission_factor", filters={"technology": tec_list_residual})
+    emission_df.drop(['unit','mode'], axis = 1, inplace = True)
+    emission_df = emission_df[emission_df['year_act']>=2020]
+    emission_df.drop_duplicates(inplace = True)
+
+    # Mapping to multiply the emission_factor with the corresponding input values from new indsutry technologies
+
+    dic = {"foil_i" : ['furnace_foil_steel', 'furnace_foil_aluminum',
+           'furnace_foil_cement', 'furnace_foil_petro', 'furnace_foil_refining'],
+           "biomass_i" : ['furnace_biomass_steel', 'furnace_biomass_aluminum',
+           'furnace_biomass_cement', 'furnace_biomass_petro',
+           'furnace_biomass_refining'],
+           "coal_i": ['furnace_coal_steel', 'furnace_coal_aluminum',
+           'furnace_coal_cement', 'furnace_coal_petro', 'furnace_coal_refining',
+           'furnace_coke_petro', 'furnace_coke_refining'],
+           "loil_i" : ['furnace_loil_steel', 'furnace_loil_aluminum',
+           'furnace_loil_cement', 'furnace_loil_petro', 'furnace_loil_refining'],
+           "gas_i":['furnace_gas_steel', 'furnace_gas_aluminum',
+           'furnace_gas_cement', 'furnace_gas_petro', 'furnace_gas_refining'],
+           'meth_i': ['furnace_methanol_steel', 'furnace_methanol_aluminum',
+           'furnace_methanol_cement', 'furnace_methanol_petro', 'furnace_methanol_refining'],
+           'hp_gas_i': ['hp_gas_steel', 'hp_gas_aluminum','hp_gas_cement',
+           'hp_gas_petro', 'hp_gas_refining']}
+
+    # Create an empty dataframe
+    df_non_co2_emissions = pd.DataFrame()
+
+    # Find the technology, year_act, year_vtg, emission, node_loc combination
+    emissions = [e for e in emission_df['emission'].unique()]
+    emissions.remove('CO2_industry')
+    emissions.remove('CO2_res_com')
+
+    for t in emission_df['technology'].unique():
+        for e in emissions:
+            # This should be a dataframe
+            emission_df_filt = emission_df.loc[((emission_df['technology'] == t)\
+            & (emission_df['emission'] == e))]
+            # Filter the technologies that we need the input value
+            # This should be a dataframe
+            input_df_filt = input_df[input_df['technology'].isin(dic[t])]
+            if ((emission_df_filt.empty) | (input_df_filt.empty)):
+                continue
+            else:
+                df_merged = pd.merge(emission_df_filt, input_df_filt, on = \
+                ['year_act', 'year_vtg', 'node_loc'])
+                df_merged['value'] = df_merged['value_x'] * df_merged['value_y']
+                df_merged.drop(['technology_x','value_x','value_y', 'year_vtg',
+                'emission'], axis= 1, inplace = True)
+                df_merged.rename(columns={'technology_y':'technology'},
+                inplace = True)
+                relation_name = e + '_Emission'
+                df_merged['relation'] = relation_name
+                df_merged['node_rel'] = df_merged['node_loc']
+                df_merged['year_rel'] = df_merged['year_act']
+                df_merged['unit'] = '???'
+                df_non_co2_emissions = pd.concat([df_non_co2_emissions,df_merged])
+
+        scen.check_out()
+        scen.add_par("relation_activity", df_non_co2_emissions)
+        scen.commit("Non-CO2 Emissions accounting for industry technologies added.")
+
     # Obtain the CO2 emission factors and add to CO2_Emission relation.
     # TODO: Also residential and commercial technologies should be added to this list.
     # We dont need to add ammonia/fertilier production here. Because there are
@@ -451,20 +556,6 @@ def add_emission_accounting(scen):
         "emission_factor", filters={"technology": tec_list_materials}
     )
 
-    # Note: Emission factors for non-CO2 gases are in kt/ACT. For CO2 MtC/ACT.
-
-    relation_activity = emission_factors.assign(
-        relation=lambda x: (x["emission"] + "_Emission")
-    )
-    relation_activity["node_rel"] = relation_activity["node_loc"]
-    relation_activity.drop(["year_vtg", "emission"], axis=1, inplace=True)
-    relation_activity["year_rel"] = relation_activity["year_act"]
-    relation_activity = relation_activity[
-        (relation_activity["relation"] != "PM2p5_Emission")
-        & (relation_activity["relation"] != "CO2_industry_Emission")
-        & (relation_activity["relation"] != "CO2_transformation_Emission")
-    ]
-
     # Add thermal industry technologies to CO2_ind relation
 
     relation_activity_furnaces = scen.par(
@@ -483,7 +574,7 @@ def add_emission_accounting(scen):
 
     relation_activity_steel = scen.par(
         "emission_factor",
-        filters={"emission": "CO2_industry", 
+        filters={"emission": "CO2_industry",
         "technology": ["DUMMY_coal_supply", "DUMMY_gas_supply"]},
     )
     relation_activity_steel["relation"] = "CO2_ind"
@@ -503,7 +594,6 @@ def add_emission_accounting(scen):
     relation_activity_ref["year_rel"] = relation_activity_ref["year_act"]
 
     scen.check_out()
-    scen.add_par("relation_activity", relation_activity)
     scen.add_par("relation_activity", relation_activity_furnaces)
     scen.add_par("relation_activity", relation_activity_steel)
     scen.add_par("relation_activity", relation_activity_ref)
