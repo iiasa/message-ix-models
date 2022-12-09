@@ -424,7 +424,9 @@ def add_emission_accounting(scen):
     context = read_config()
     s_info = ScenarioInfo(scen)
 
-    # Add non-CO2 gases to the relevant relations
+    # (1) ******* Add non-CO2 gases to the relevant relations. ********
+    # This is done by multiplying the input values and emission_factor
+    # per year,region and technology.
 
     tec_list_residual = scen.par("emission_factor")["technology"].unique()
     tec_list_input = scen.par("input")["technology"].unique()
@@ -473,7 +475,8 @@ def add_emission_accounting(scen):
     emission_df = emission_df[emission_df['year_act']>=2020]
     emission_df.drop_duplicates(inplace = True)
 
-    # Mapping to multiply the emission_factor with the corresponding input values from new indsutry technologies
+    # Mapping to multiply the emission_factor with the corresponding
+    # input values from new indsutry technologies
 
     dic = {"foil_i" : ['furnace_foil_steel', 'furnace_foil_aluminum',
            'furnace_foil_cement', 'furnace_foil_petro', 'furnace_foil_refining'],
@@ -529,15 +532,13 @@ def add_emission_accounting(scen):
         scen.add_par("relation_activity", df_non_co2_emissions)
         scen.commit("Non-CO2 Emissions accounting for industry technologies added.")
 
-    # Obtain the CO2 emission factors and add to CO2_Emission relation.
-    # TODO: Also residential and commercial technologies should be added to this list.
+    # ***** (2) Add the CO2 emission factors to CO2_Emission relation. ******
     # We dont need to add ammonia/fertilier production here. Because there are
     # no extra process emissions that need to be accounted in emissions relation.
     # CCS negative emission_factor are added to this relation in gen_data_ammonia.py.
     # Emissions from refining sector are categorized as 'CO2_transformation'.
 
     tec_list = scen.par("emission_factor")["technology"].unique()
-
     tec_list_materials = [
         i
         for i in tec_list
@@ -553,10 +554,22 @@ def add_emission_accounting(scen):
     tec_list_materials.remove("replacement_so2")
     tec_list_materials.remove("SO2_scrub_ref")
     emission_factors = scen.par(
-        "emission_factor", filters={"technology": tec_list_materials}
+        "emission_factor", filters={"technology": tec_list_materials, 'emission':'CO2'}
     )
+    # Note: Emission for CO2 MtC/ACT.
+    relation_activity = emission_factors.assign(
+        relation=lambda x: (x["emission"] + "_Emission")
+    )
+    relation_activity["node_rel"] = relation_activity["node_loc"]
+    relation_activity.drop(["year_vtg", "emission"], axis=1, inplace=True)
+    relation_activity["year_rel"] = relation_activity["year_act"]
+    relation_activity_co2 = relation_activity[
+        (relation_activity["relation"] != "PM2p5_Emission")
+        & (relation_activity["relation"] != "CO2_industry_Emission")
+        & (relation_activity["relation"] != "CO2_transformation_Emission")
+    ]
 
-    # Add thermal industry technologies to CO2_ind relation
+    # ***** (3) Add thermal industry technologies to CO2_ind relation ******
 
     relation_activity_furnaces = scen.par(
         "emission_factor",
@@ -570,7 +583,7 @@ def add_emission_accounting(scen):
         ~relation_activity_furnaces["technology"].str.contains("_refining")
     ]
 
-    # Add steel energy input technologies to CO2_ind relation
+    # ***** (4) Add steel energy input technologies to CO2_ind relation ****
 
     relation_activity_steel = scen.par(
         "emission_factor",
@@ -582,7 +595,7 @@ def add_emission_accounting(scen):
     relation_activity_steel.drop(["year_vtg", "emission"], axis=1, inplace=True)
     relation_activity_steel["year_rel"] = relation_activity_steel["year_act"]
 
-    # Add refinery technologies to CO2_cc
+    # ***** (5) Add refinery technologies to CO2_cc ******
 
     relation_activity_ref = scen.par(
         "emission_factor",
@@ -594,12 +607,13 @@ def add_emission_accounting(scen):
     relation_activity_ref["year_rel"] = relation_activity_ref["year_act"]
 
     scen.check_out()
+    scen.add_par("relation_activity", relation_activity_co2)
     scen.add_par("relation_activity", relation_activity_furnaces)
     scen.add_par("relation_activity", relation_activity_steel)
     scen.add_par("relation_activity", relation_activity_ref)
     scen.commit("Emissions accounting for industry technologies added.")
 
-    # Add feedstock using technologies to CO2_feedstocks
+    # ***** (6) Add feedstock using technologies to CO2_feedstocks *****
     nodes = scen.par("relation_activity", filters={"relation": "CO2_feedstocks"})[
         "node_rel"
     ].unique()
@@ -651,7 +665,7 @@ def add_emission_accounting(scen):
                 scen.add_par("relation_activity", co2_feedstocks)
                 scen.commit("co2_feedstocks updated")
 
-    # Correct CF4 Emission relations
+    # **** (7) Correct CF4 Emission relations *****
     # Remove transport related technologies from CF4_Emissions
 
     scen.check_out()
