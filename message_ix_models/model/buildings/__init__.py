@@ -312,7 +312,7 @@ def pre_solve(scenario: Scenario, context, data):
     #      with its cached output). Define and satisfy the minimum conditions for the
     #      remaining code.
     e_use_2010 = (
-        e_use[(e_use.year == 2010) & ~e_use.commodity.str.contains("(bio|non-comm)")]
+        e_use[(e_use.year == 2010) & ~e_use.commodity.str.contains("bio|non-comm")]
         .groupby("node", as_index=False)
         .sum()
     )
@@ -345,7 +345,7 @@ def pre_solve(scenario: Scenario, context, data):
     # - Concatenate.
     # - Set energy demand level to useful (although it is final) to be in line with 1 to
     #   1 technologies btw final and useful.
-    expr = "(cool|heat|hotwater)"
+    expr = "cool|heat|hotwater"
     demand = pd.concat(
         [
             e_use[~e_use.commodity.str.contains("therm")],
