@@ -1,6 +1,7 @@
 import logging
 import re
 from collections import defaultdict
+from copy import deepcopy
 from itertools import product
 from typing import Dict, Iterable, List, Optional
 
@@ -61,22 +62,7 @@ def get_spec(context: Context) -> Spec:
     """
     load_config(context)
 
-    s = Spec()
-
-    for set_name, config in context["buildings set"].items():
-        # Elements to add, remove, and require
-        for action in {"add", "remove", "require"}:
-            s[action].set[set_name].extend(config.get(action, []))
-
-    # Generate commodities that replace corresponding rc_* in the base model
-    for c in filter(lambda x: x.id.startswith("rc_"), get_codes("commodity")):
-        s.add.set["commodity"].append(Code(id=c.id.replace("rc_", "afofi_")))
-
-    # Generate technologies that replace corresponding *_rc|RC in the base model
-    expr = re.compile("_(rc|RC)$")
-    for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
-        s.add.set["technology"].append(Code(id=expr.sub("_afofi", t.id)))
-        s.remove.set["technology"].append(t)
+    s = deepcopy(context["buildings spec"])
 
     # The set of required nodes varies according to context.regions
     s.require.set["node"].extend(map(str, get_region_codes(context.regions)))
@@ -106,18 +92,39 @@ def get_techs(spec: Spec, commodity=None) -> List[str]:
 
 
 def load_config(context):
-    if "buildings set" in context:
+    if "buildings spec" in context:
         return
 
-    context["buildings set"] = load_private_data("buildings", "set.yaml")
+    set_info = load_private_data("buildings", "set.yaml")
 
     # Generate set elements from a product of others
-    for set_name, info in context["buildings set"].items():
-        generate_set_elements(context["buildings set"], set_name)
+    for set_name, info in set_info.items():
+        generate_set_elements(set_info, set_name)
 
     # Currently unused, and generates issues when caching functions where context is an
     # argument
-    context["buildings set"]["technology"].pop("indexers", None)
+    set_info["technology"].pop("indexers", None)
+
+    # Create a spec
+    s = Spec()
+
+    for set_name, info in set_info.items():
+        # Elements to add, remove, and require
+        for action in ("add", "remove", "require"):
+            s[action].set[set_name].extend(info.get(action, []))
+
+    # Generate commodities that replace corresponding rc_* in the base model
+    for c in filter(lambda x: x.id.startswith("rc_"), get_codes("commodity")):
+        s.add.set["commodity"].append(Code(id=c.id.replace("rc_", "afofi_")))
+
+    # Generate technologies that replace corresponding *_rc|RC in the base model
+    expr = re.compile("^RC|(?<=_)(rc|RC)$")
+    for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
+        s.add.set["technology"].append(Code(id=expr.sub("afofi", t.id)))
+        s.remove.set["technology"].append(t)
+
+    # Store
+    context["buildings spec"] = s
 
 
 def add_bio_backstop(scen):
@@ -192,21 +199,22 @@ def prepare_data(
     afofi_dd["commodity"] = afofi_dd.commodity.str.replace("rc", "afofi")
     result["demand"].append(afofi_dd)
 
-    # Set model demands for rc_therm and rc_spec to zero
-    dd_replace["value"] = 0
-    result["demand"].append(dd_replace)
+    # commented: as of 2022-12-01, we remove these commodities entirely
+    # # Set model demands for rc_therm and rc_spec to zero
+    # dd_replace["value"] = 0
+    # result["demand"].append(dd_replace)
 
     rc_techs = scenario.par("output", filters={"commodity": ["rc_therm", "rc_spec"]})[
         "technology"
     ].unique()
 
+    # NB(PNK): this probably does not need to be a loop
     for tech_orig in rc_techs:
         # Filters for retrieving data
         filters = dict(filters={"technology": tech_orig})
 
         # Derived name of new technology
-        tech_new = tech_orig.replace("rc", "afofi").replace("RC", "AFOFI")
-        scenario.add_set("technology", tech_new)
+        tech_new = tech_orig.replace("rc", "afofi").replace("RC", "afofi")
 
         # Copy data for input, capacity_factor, and emission_factor
         for name in ("input", "capacity_factor", "emission_factor"):
@@ -238,17 +246,6 @@ def prepare_data(
         # Find the original rc technology for the fuel
         tech_orig = rc_tech_fuel.get(fuel, f"{fuel}_rc")
 
-        # Reduce lower bound in activity for existing, now unused rc techs to allow them
-        # to reach zero
-        # FIXME this should be handled by removing those technologies altogether
-        filters = dict(filters={"technology": tech_orig, "year_act": info.Y})
-        for name, value in (
-            ("bound_activity_lo", 0.0),
-            ("growth_activity_lo", -1.0),
-            ("soft_activity_lo", 0.0),
-        ):
-            result[name].append(scenario.par(name, **filters).assign(value=value))
-
         # Create the technologies for the new commodities
         for commodity in filter(
             re.compile(f"[_-]{fuel}").search, demand["commodity"].unique()
@@ -278,10 +275,45 @@ def prepare_data(
                 )
 
     # Concatenate data frames together
-    return {k: pd.concat(v) for k, v in result.items()}
+    data = {k: pd.concat(v) for k, v in result.items()}
+    log.info(
+        "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in data.items())
+    )
+    return data
+
+
+def prune_spec(spec: Spec, data: Dict[str, pd.DataFrame]) -> None:
+    """Remove extraneous entries from `spec`."""
+    for name in ("commodity", "technology"):
+        values = set(data["input"][name]) | set(data["output"][name])
+
+        # DEBUG
+        # print(
+        #     "\n".join(
+        #         sorted(
+        #             map(
+        #                 lambda c: c.id,
+        #                 filter(lambda c: c.id not in values, spec.add.set[name]),
+        #             )
+        #         )
+        #     )
+        # )
+
+        N = len(spec.add.set[name])
+        spec.add.set[name] = sorted(
+            filter(lambda c: c.id in values, spec.add.set[name])
+        )
+        log.info(f"Prune {N-len(spec.add.set[name])} {name} codes with no data")
+
+        missing = values - set(spec.add.set[name]) - set(spec.require.set[name])
+        if len(missing):
+            log.warning(
+                f"Missing {len(missing)} values:\n" + "\n".join(sorted(missing))
+            )
 
 
 def main(
+    context: Context,
     scenario: message_ix.Scenario,
     demand: pd.DataFrame,
     prices: pd.DataFrame,
@@ -315,7 +347,11 @@ def main(
         pass  # Already exists
 
     # Generate a spec for the model
-    spec = get_spec()
+    spec = get_spec(context)
+
+    # TODO move into get_spec() or similar
+    if with_materials:
+        spec.require.set["commodity"].extend(MATERIALS)
 
     # Prepare data based on the contents of `scenario`
     data = prepare_data(
@@ -329,24 +365,16 @@ def main(
 
     if with_materials:
         # Set up buildings-materials linkage
-        merge_data(data, materials(scenario, sturm_r, sturm_c))
+        merge_data(data, materials(scenario, info, sturm_r, sturm_c))
 
-    # DEBUG
-    print(sorted(data["demand"].commodity.unique()))
-    print(sorted(data["input"].commodity.unique()))
-    print(sorted(data["output"].commodity.unique()))
-    print(sorted(spec.add.set["commodity"]))
-    print(sorted(data["demand"].technology.unique()))
-    print(sorted(data["input"].technology.unique()))
-    print(sorted(data["output"].technology.unique()))
-    print(sorted(spec.add.set["technology"]))
+    prune_spec(spec, data)
 
     # Simple callback for apply_spec()
-    def _add_data(s, *kw):
+    def _add_data(s, **kw):
         return data
 
-    assert False  # DEBUG
-    build.apply_spec(scenario, spec, _add_data)
+    options = dict(fast=True)
+    build.apply_spec(scenario, spec, _add_data, **options)
 
     scenario.set_as_default()
 

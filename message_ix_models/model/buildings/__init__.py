@@ -375,7 +375,13 @@ def pre_solve(scenario: Scenario, context, data):
 
     # TODO pass the config entirely; requires moving code to avoid circular imports
     build.main(
-        scenario, demand, prices, sturm_r, sturm_c, with_materials=config.with_materials
+        context,
+        scenario,
+        demand,
+        prices,
+        sturm_r,
+        sturm_c,
+        with_materials=config.with_materials,
     )
 
     mark_time()
