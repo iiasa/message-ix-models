@@ -53,7 +53,7 @@ VARIABLE_SUB = (
 
     (re.compile(r"^Carbon Sequestration\|CCS(.*)$"), r"Carbon Capture|Storage\g<1>"),
     (re.compile(r"^Carbon Sequestration(\|Land Use.*)$"), r"Carbon Removal\g<1>"),
-    (re.compile(r"\|Industry excl Non-Energy Use\|"), r"|Industry|\g<1>"),
+    (re.compile(r"(.*)\|Industry excl Non-Energy Use\|(.*)"), r"\g<1>|Industry|\g<2>"),
     # NB this does *not* apply to Final Energy|Solids|Coal, only names with additional
     #    parts
     (re.compile(r"^(Final Energy\|.*\|Solids\|)Coal"), r"\g<1>Fossil"),
@@ -73,9 +73,12 @@ VARIABLE_SUB = (
     (re.compile(r"^(Secondary Energy\|Solids\|)Coal"), r"\g<1>Fossil"),
     (re.compile(r"^(Production\|)Cement"), r"\g<1>Non-Metallic Minerals|Cement|Volume"),
     (re.compile(r"^(Production\|)Chemicals"), r"\g<1>Chemicals|Volume"),
-        (
-        re.compile(r"^(Production\|)Non-ferrous metals"),
-        r"\g<1>Non-Ferrous Metals|Volume",
+    (
+        re.compile(r"^(Production\|Chemicals\|)High Value Chemicals"),
+        r"\g<1>High Value Chemicals|Volume"),
+    (
+        re.compile(r"^(Production\|Non-Ferrous Metals\|)Aluminium"),
+        r"\g<1>Aluminium\|Volume",
     ),
     (re.compile(r"\|Steel"), r"|Iron and Steel"),
     (re.compile(r"^(Production\|Iron and Steel)$"), r"\g<1>|Volume"),
