@@ -19,7 +19,7 @@ from message_ix_models.util import MESSAGE_DATA_PATH, identify_nodes, local_data
 from message_ix_models.util._logging import mark_time
 
 from . import build, sturm
-from .build import add_bio_backstop, get_prices
+from .build import get_prices
 
 log = logging.getLogger(__name__)
 
@@ -261,7 +261,6 @@ def pre_solve(scenario: Scenario, context, data):
     - Run STURM.
     - Call :func:`.buildings.build.main`.
     - Update the ``demand`` parameter of `scenario`.
-    - Call :func:`.add_bio_backstop`.
     """
     config = context.buildings
     first_iteration = data["iterations"] == 0
@@ -373,16 +372,7 @@ def pre_solve(scenario: Scenario, context, data):
     if scenario.has_solution():
         scenario.remove_solution()
 
-    # TODO pass the config entirely; requires moving code to avoid circular imports
-    build.main(
-        context,
-        scenario,
-        demand,
-        prices,
-        sturm_r,
-        sturm_c,
-        with_materials=config.with_materials,
-    )
+    build.main(context, scenario, demand, prices, sturm_r, sturm_c)
 
     mark_time()
 
@@ -453,9 +443,6 @@ def pre_solve(scenario: Scenario, context, data):
 
     # Run MESSAGE
     scenario.commit(f"{__name__}.pre_solve()")
-
-    # Add bio backstop
-    add_bio_backstop(scenario)
 
     # Store data for post_solve()
     data.update(demand=demand, prices=prices)
