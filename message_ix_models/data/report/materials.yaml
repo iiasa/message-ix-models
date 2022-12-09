@@ -3,6 +3,7 @@
 report_config:
   table_def: message_data.model.material.report.tables
   unit_yaml: materials-units.yaml
+  aggr_def:  'navigate_aggregates.csv'
 
 run_tables:
   LU_Agr_fert_int:
