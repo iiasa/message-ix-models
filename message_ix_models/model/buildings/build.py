@@ -64,6 +64,12 @@ def get_spec(context: Context) -> Spec:
 
     s = deepcopy(context["buildings spec"])
 
+    if context.buildings.with_materials:
+        s.require.set["commodity"].extend(MATERIALS)
+
+    # Temporary
+    s.add.set["technology"].append(Code(id="bio_backstop"))
+
     # The set of required nodes varies according to context.regions
     s.require.set["node"].extend(map(str, get_region_codes(context.regions)))
 
@@ -127,7 +133,7 @@ def load_config(context):
     context["buildings spec"] = s
 
 
-def add_bio_backstop(scen):
+def bio_backstop(scen):
     """Fill the gap between the biomass demands & potential to avoid infeasibility.
 
     .. todo:: Replace this with proper & complete use of the current
@@ -140,27 +146,24 @@ def add_bio_backstop(scen):
        See https://iiasa-ece.slack.com/archives/C03M5NX9X0D/p1659623091532079 for
        discussion.
     """
-    scen.check_out()
-
-    # Add a new technology
-    scen.add_set("technology", "bio_backstop")
-
     # Retrieve technology for which will be used to create the backstop
-    filters = {"technology": "elec_rc", "node_loc": "R12_NAM"}
+    filters = dict(technology="elec_rc", node_loc="R12_NAM", year_act=2020)
 
-    for node, par in product(["R12_AFR", "R12_SAS"], ["output", "var_cost"]):
+    data = defaultdict(list)
+
+    for node, name in product(["R12_AFR", "R12_SAS"], ["output", "var_cost"]):
         values = dict(technology="bio_backstop", node_loc=node)
 
-        if par == "output":
+        if name == "output":
             values.update(commodity="biomass", node_dest=node, level="primary")
-        elif par == "var_cost":
+        elif name == "var_cost":
             values.update(value=1e5)
 
-        data = scen.par(par, filters=filters).assign(**values)
-        # print(df)
-        scen.add_par(par, data)
+        data[name].append(scen.par(name, filters=filters).assign(**values))
 
-    scen.commit("Add biomass dummy")
+    result = {k: pd.concat(v) for k, v in data.items()}
+    log.info(repr(result))
+    return result
 
 
 def prepare_data(
@@ -168,9 +171,12 @@ def prepare_data(
     info: ScenarioInfo,
     demand: pd.DataFrame,
     prices: pd.DataFrame,
+    sturm_r: pd.DataFrame,
+    sturm_c: pd.DataFrame,
     with_materials: bool,
     relations: List[str],
 ) -> Dict[str, pd.DataFrame]:
+    """Derive data for MESSAGEix-Buildings from `scenario`."""
     from utils.rc_afofi import return_PERC_AFOFI  # type: ignore
 
     # Accumulate a list of data frames for each parameter
@@ -279,6 +285,13 @@ def prepare_data(
     log.info(
         "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in data.items())
     )
+
+    if with_materials:
+        # Set up buildings-materials linkage
+        merge_data(data, materials(scenario, info, sturm_r, sturm_c))
+
+    merge_data(data, bio_backstop(scenario))
+
     return data
 
 
@@ -319,7 +332,6 @@ def main(
     prices: pd.DataFrame,
     sturm_r: pd.DataFrame,
     sturm_c: pd.DataFrame,
-    with_materials: Optional[bool] = True,
 ):
     """Set up the structure and data for MESSAGE_Buildings on `scenario`.
 
@@ -328,10 +340,6 @@ def main(
     scenario
         Scenario to set up.
     """
-    # FIXME disentangle the structure and data portions of this code. The structure must
-    #       be set up once, but if the buildings scenario is re-run (e.g. in the
-    #       NAVIGATE workflow) then the structure is already in place, and only data
-    #       need be modified
     info = ScenarioInfo(scenario)
 
     # if BUILD_COMMODITIES[0] in info.set["commodity"]:
@@ -349,24 +357,19 @@ def main(
     # Generate a spec for the model
     spec = get_spec(context)
 
-    # TODO move into get_spec() or similar
-    if with_materials:
-        spec.require.set["commodity"].extend(MATERIALS)
-
     # Prepare data based on the contents of `scenario`
     data = prepare_data(
         scenario,
         info,
         demand,
         prices,
-        with_materials,
+        sturm_r,
+        sturm_c,
+        context.buildings.with_materials,
         relations=spec.require.set["relation"],
     )
 
-    if with_materials:
-        # Set up buildings-materials linkage
-        merge_data(data, materials(scenario, info, sturm_r, sturm_c))
-
+    # Remove unused commodities and technologies
     prune_spec(spec, data)
 
     # Simple callback for apply_spec()
