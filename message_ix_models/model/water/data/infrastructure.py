@@ -10,7 +10,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     private_data_path,
     same_node,
-    same_time
+    same_time,
 )
 
 from message_data.model.water.utils import map_yv_ya_lt
@@ -62,7 +62,13 @@ def add_infrastructure_techs(context):
     path = private_data_path("water", "infrastructure", "water_distribution.xlsx")
     df = pd.read_excel(path)
 
-    techs = ["urban_t_d", "urban_unconnected","industry_unconnected", "rural_t_d", "rural_unconnected"]
+    techs = [
+        "urban_t_d",
+        "urban_unconnected",
+        "industry_unconnected",
+        "rural_t_d",
+        "rural_unconnected",
+    ]
 
     df_non_elec = df[df["incmd"] != "electr"].reset_index()
     df_dist = df_non_elec[df_non_elec["tec"].isin(techs)]
@@ -70,77 +76,92 @@ def add_infrastructure_techs(context):
     df_elec = df[df["incmd"] == "electr"].reset_index()
 
     inp_df = pd.DataFrame([])
-    
+
     # Input Dataframe for non elec commodities
     for index, rows in df_non_elec.iterrows():
-        inp_df = pd.concat([inp_df,
-            (
-                make_df(
-                    "input",
-                    technology=rows["tec"],
-                    value=rows["value_mid"],
-                    unit="-",
-                    level=rows["inlvl"],
-                    commodity=rows["incmd"],
-                    mode="M1",
-                    node_loc= df_node["node"],
-                )
-                .pipe(
-                    broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
-                    time = sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time)
-            )
-        ])
+        inp_df = pd.concat(
+            [
+                inp_df,
+                (
+                    make_df(
+                        "input",
+                        technology=rows["tec"],
+                        value=rows["value_mid"],
+                        unit="-",
+                        level=rows["inlvl"],
+                        commodity=rows["incmd"],
+                        mode="M1",
+                        node_loc=df_node["node"],
+                    )
+                    .pipe(
+                        broadcast,
+                        map_yv_ya_lt(
+                            year_wat, rows["technical_lifetime_mid"], first_year
+                        ),
+                        time=sub_time,
+                    )
+                    .pipe(same_node)
+                    .pipe(same_time)
+                ),
+            ]
+        )
 
     if context.SDG:
         for index, rows in df_dist.iterrows():
-            inp_df = pd.concat([inp_df,
-            (
-                make_df(
-                    "input",
-                    technology=rows["tec"],
-                    value=rows["value_high"],
-                    unit="-",
-                    level=rows["inlvl"],
-                    commodity=rows["incmd"],
-                    mode="Mf",
-                )
-                .pipe(
-                    broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
-                    node_loc=df_node["node"],
-                    time = sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time)
+            inp_df = pd.concat(
+                [
+                    inp_df,
+                    (
+                        make_df(
+                            "input",
+                            technology=rows["tec"],
+                            value=rows["value_high"],
+                            unit="-",
+                            level=rows["inlvl"],
+                            commodity=rows["incmd"],
+                            mode="Mf",
+                        )
+                        .pipe(
+                            broadcast,
+                            map_yv_ya_lt(
+                                year_wat, rows["technical_lifetime_mid"], first_year
+                            ),
+                            node_loc=df_node["node"],
+                            time=sub_time,
+                        )
+                        .pipe(same_node)
+                        .pipe(same_time)
+                    ),
+                ]
             )
-            ])
     else:
         for index, rows in df_dist.iterrows():
-            inp_df = pd.concat([inp_df,
-                (
-                    make_df(
-                    "input",
-                    technology=rows["tec"],
-                    value=rows["value_mid"],
-                    unit="-",
-                    level=rows["inlvl"],
-                    commodity=rows["incmd"],
-                    mode="M1",
-                )
-                .pipe(
-                    broadcast,
-                    map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
-                    node_loc=df_node["node"],
-                    time = sub_time,
-                )
-                .pipe(same_node)
-                .pipe(same_time)
-                )
-            ])
+            inp_df = pd.concat(
+                [
+                    inp_df,
+                    (
+                        make_df(
+                            "input",
+                            technology=rows["tec"],
+                            value=rows["value_mid"],
+                            unit="-",
+                            level=rows["inlvl"],
+                            commodity=rows["incmd"],
+                            mode="M1",
+                        )
+                        .pipe(
+                            broadcast,
+                            map_yv_ya_lt(
+                                year_wat, rows["technical_lifetime_mid"], first_year
+                            ),
+                            node_loc=df_node["node"],
+                            time=sub_time,
+                        )
+                        .pipe(same_node)
+                        .pipe(same_time)
+                    ),
+                ]
+            )
 
             inp_df = inp_df.append(
                 (
@@ -159,7 +180,7 @@ def add_infrastructure_techs(context):
                             year_wat, rows["technical_lifetime_mid"], first_year
                         ),
                         node_loc=df_node["node"],
-                        time = sub_time,
+                        time=sub_time,
                     )
                     .pipe(same_node)
                     .pipe(same_time)
@@ -189,7 +210,7 @@ def add_infrastructure_techs(context):
                         1,
                         first_year,
                     ),
-                    time = sub_time,
+                    time=sub_time,
                 )
 
                 result_dc["input"].append(inp)
@@ -213,7 +234,7 @@ def add_infrastructure_techs(context):
                         1,
                         first_year,
                     ),
-                    time = sub_time,
+                    time=sub_time,
                 )
 
                 inp = inp.append(
@@ -232,7 +253,7 @@ def add_infrastructure_techs(context):
                         broadcast,
                         # 1 because elec commodities don't have technical lifetime
                         map_yv_ya_lt(year_wat, 1, first_year),
-                        time = sub_time,
+                        time=sub_time,
                     )
                 )
 
@@ -249,11 +270,7 @@ def add_infrastructure_techs(context):
                 time_origin="year",
                 node_loc=df_node["node"],
                 node_origin=df_node["region"],
-            ).pipe(
-                broadcast,
-                map_yv_ya_lt(year_wat, 1, first_year),
-                time = sub_time,
-            )
+            ).pipe(broadcast, map_yv_ya_lt(year_wat, 1, first_year), time=sub_time,)
 
             result_dc["input"].append(inp)
 
@@ -285,7 +302,7 @@ def add_infrastructure_techs(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
                 .pipe(same_node)
                 .pipe(same_time)
@@ -307,7 +324,7 @@ def add_infrastructure_techs(context):
                 broadcast,
                 map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                 node_loc=df_node["node"],
-                time = sub_time,
+                time=sub_time,
             )
             .pipe(same_node)
             .pipe(same_time)
@@ -327,7 +344,7 @@ def add_infrastructure_techs(context):
                 broadcast,
                 map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                 node_loc=df_node["node"],
-                time = sub_time,
+                time=sub_time,
             )
             .pipe(same_node)
             .pipe(same_time)
@@ -346,7 +363,7 @@ def add_infrastructure_techs(context):
                 broadcast,
                 map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                 node_loc=df_node["node"],
-                time = sub_time,
+                time=sub_time,
             )
             .pipe(same_node)
             .pipe(same_time)
@@ -370,7 +387,7 @@ def add_infrastructure_techs(context):
                 broadcast,
                 map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                 node_loc=df_node["node"],
-                time = sub_time,
+                time=sub_time,
             )
             .pipe(same_node)
         )
@@ -453,7 +470,7 @@ def add_infrastructure_techs(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
             )
 
@@ -470,7 +487,7 @@ def add_infrastructure_techs(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
             )
         results["var_cost"] = var_cost
@@ -488,7 +505,7 @@ def add_infrastructure_techs(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
             )
 
@@ -504,7 +521,7 @@ def add_infrastructure_techs(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
             )
 
@@ -519,7 +536,7 @@ def add_infrastructure_techs(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
             )
         results["var_cost"] = var_cost
@@ -603,8 +620,10 @@ def add_desalination(context):
             mode="M1",
         )
         .pipe(
-            broadcast, map_yv_ya_lt(year_wat, 20, first_year), node_loc=df_node["node"],
-            time = sub_time,
+            broadcast,
+            map_yv_ya_lt(year_wat, 20, first_year),
+            node_loc=df_node["node"],
+            time=sub_time,
         )
         .pipe(same_node)
         .pipe(same_time)
@@ -694,7 +713,7 @@ def add_desalination(context):
                 broadcast,
                 map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
                 node_loc=df_node["node"],
-                time = sub_time,
+                time=sub_time,
             )
         )
 
@@ -749,7 +768,7 @@ def add_desalination(context):
         ).pipe(
             broadcast,
             map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
-            time = sub_time,
+            time=sub_time,
         )
 
         result_dc["input"].append(inp)
@@ -778,8 +797,8 @@ def add_desalination(context):
         ).pipe(
             broadcast,
             map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
-            time = sub_time,
-            )
+            time=sub_time,
+        )
 
         result_dc["input"].append(inp)
 
@@ -805,7 +824,7 @@ def add_desalination(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
                 .pipe(same_node)
                 .pipe(same_time)
@@ -831,7 +850,7 @@ def add_desalination(context):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time = sub_time,
+                    time=sub_time,
                 )
                 .pipe(same_node)
                 .pipe(same_time)
@@ -849,11 +868,7 @@ def add_desalination(context):
         mode="M1",
         value=df_bound["cap_km3_year"],
         unit="km3/year",
-    ).pipe(
-        broadcast,
-        year_act=year_wat,
-        time = sub_time,
-        )
+    ).pipe(broadcast, year_act=year_wat, time=sub_time,)
 
     bound_lo = bound_lo[bound_lo["year_act"] <= 2030]
     # Divide the histroical capacity by 5 since the existing data is summed over
