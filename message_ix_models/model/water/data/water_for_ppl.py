@@ -8,6 +8,7 @@ from message_ix_models.util import (
     private_data_path,
     same_node,
 )
+
 from message_data.model.water.data.water_supply import map_basin_region_wat
 
 
@@ -62,7 +63,7 @@ def cool_tech(context):
         df_node["region"] = context.map_ISO_c[context.regions]
     else:
         df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
-        
+
     node_region = df_node["region"].unique()
     # reading ppl cooling tech dataframe
     path = private_data_path("water", "ppl_cooling_tech", FILE)
@@ -298,10 +299,11 @@ def cool_tech(context):
     # add water return flows for cooling tecs
     # Use share of basin availability to distribute the return flow from
     df_sw = map_basin_region_wat(context)
-    df_sw.drop(columns = {"mode","date","MSGREG"}, inplace=True)
-    df_sw.rename(columns = {"region":"node_dest",
-                            "time":"time_dest",
-                            "year":"year_act"}, inplace=True)
+    df_sw.drop(columns={"mode", "date", "MSGREG"}, inplace=True)
+    df_sw.rename(
+        columns={"region": "node_dest", "time": "time_dest", "year": "year_act"},
+        inplace=True,
+    )
     df_sw["time_dest"] = df_sw["time_dest"].astype(str)
     if context.nexus_set == "nexus":
         out = pd.DataFrame()
@@ -325,8 +327,7 @@ def cool_tech(context):
                     value=icfb_df["value_return"],
                     unit="km3/GWa",
                 )
-                .pipe(broadcast, node_dest=bs,
-                      time_dest = sub_time)
+                .pipe(broadcast, node_dest=bs, time_dest=sub_time)
                 .merge(df_sw, how="left")
             )
             # multiply by basin water availability share

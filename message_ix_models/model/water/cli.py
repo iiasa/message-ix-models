@@ -2,8 +2,8 @@ import logging
 
 import click
 
-from message_ix_models.util.click import common_params
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util.click import common_params
 
 log = logging.getLogger(__name__)
 
@@ -11,13 +11,13 @@ log = logging.getLogger(__name__)
 # allows to activate water module
 @click.group("water")
 @common_params("regions")
-@click.option('--time',help='Manually defined time')
+@click.option("--time", help="Manually defined time")
 @click.pass_obj
-def cli(context, regions,time):
-    water_ini(context, regions,time)
+def cli(context, regions, time):
+    water_ini(context, regions, time)
 
 
-def water_ini(context, regions,time):
+def water_ini(context, regions, time):
     """Add components of the MESSAGEix-Nexus module
 
     This function modifies model name & scenario name
@@ -76,16 +76,14 @@ def water_ini(context, regions,time):
         sub_time = list(time[time != "year"])
         if len(sub_time) == 0:
             context.time = ["year"]
-            
+
         else:
             context.time = sub_time
     else:
         context.time = list(time)
     log.info(f"Using the following time-step for the water module: {context.time}")
-        
-    # setting the time information in context
-    
 
+    # setting the time information in context
 
 
 _RCPS = ["no_climate", "6p0", "2p6"]
@@ -269,7 +267,6 @@ def report_cli(context, output_model, sdgs):
     """
     import ixmp
     import message_ix
-
     from message_data.model.water.reporting import report_full
 
     sc = context.get_scenario()
