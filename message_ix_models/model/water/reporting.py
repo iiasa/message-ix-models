@@ -420,7 +420,7 @@ def report(sc=False, sdgs=False):
                 + urban_mwdem_connected
                 + urban_mwdem_connected_eff
                 + urban_mwdem_unconnected
-                + urban_mwdem_unconnected_eff,
+                + urban_mwdem_unconnected_eff
                 + industry_mwdem_unconnected,
                 "km3/yr",
             ],
@@ -445,7 +445,7 @@ def report(sc=False, sdgs=False):
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction",
-                extrt_sw_cap + extrt_gw_cap,
+                extrt_sw_cap + extrt_gw_cap + extrt_fgw_cap,
                 "km3/yr",
             ],
             [
@@ -459,14 +459,12 @@ def report(sc=False, sdgs=False):
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Extraction|\
-                Groundwater|Renewable",
+                "Capacity Additions|Infrastructure|Water|Extraction|Groundwater|Renewable",
                 extrt_gw_cap,
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Extraction|\
-                Groundwater|Fossil",
+                "Capacity Additions|Infrastructure|Water|Extraction|Groundwater|Fossil",
                 extrt_fgw_cap,
                 "km3/yr",
             ],
@@ -486,14 +484,12 @@ def report(sc=False, sdgs=False):
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|\
-                Urban",
+                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Urban",
                 urban_treatment_recycling,
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|\
-                Rural",
+                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Rural",
                 rural_treatment_recycling,
                 "km3/yr",
             ],
@@ -682,7 +678,7 @@ def report(sc=False, sdgs=False):
                 + cooling_cl_fresh
                 + cooling_saline_inv
                 + cooling_air_inv,
-                + industry_unconnected_inv,
+                +industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
@@ -800,7 +796,9 @@ def report(sc=False, sdgs=False):
             ],
             [
                 "Investment|Infrastructure|Water|Unconnected",
-                rural_unconnected_inv + urban_unconnected_inv + industry_unconnected_inv,
+                rural_unconnected_inv
+                + urban_unconnected_inv
+                + industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
@@ -834,61 +832,54 @@ def report(sc=False, sdgs=False):
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Treatment & Recycling",
+                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling",
                 urban_treatment_recycling_totalom + rural_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Treatment & Recycling|Urban",
+                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling|Urban",
                 urban_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Treatment & Recycling|Rural",
+                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling|Rural",
                 rural_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Distribution",
+                "Total Operation Management Cost|Infrastructure|Water| Distribution",
                 rural_dist_totalom + rural_dist_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Distribution|Rural",
+                "Total Operation Management Cost|Infrastructure|Water|Distribution|Rural",
                 rural_dist_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Costs|Infrastructure|Water|\
-                Distribution|Urban",
+                "Total Operation Management Cost|Infrastructure|Water|Distribution|Urban",
                 urban_dist_totalom,
                 "million US$2010/yr",
             ],
             [
                 "Total Operation Management Cost|Infrastructure|Water|Unconnected",
-                rural_unconnected_totalom + urban_unconnected_totalom + industry_unconnected_totalom,
+                rural_unconnected_totalom
+                + urban_unconnected_totalom
+                + industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Unconnected|Rural",
+                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Rural",
                 rural_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Unconnected|Urban",
+                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Urban",
                 urban_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Unconnected|Industry",
+                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Industry",
                 industry_unconnected_totalom,
                 "million US$2010/yr",
             ],

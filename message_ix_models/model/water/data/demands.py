@@ -703,7 +703,7 @@ def read_water_availability(context):
     info = context["water build info"]
     # reading sample for assiging basins
     # info = context["water build info"]
-    
+
     PATH = private_data_path(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
@@ -712,7 +712,7 @@ def read_water_availability(context):
     if "year" in context.time:
         # path for reading basin delineation file
         PATH = private_data_path(
-        "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
+            "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
         # Adding freshwater supply constraints
@@ -722,11 +722,10 @@ def read_water_availability(context):
             "availability",
             f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
         )
-        # Read rcp 2.6 data 
+        # Read rcp 2.6 data
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
-    
-    
+
         df_sw.index = df_x["BCU_name"]
         df_sw = df_sw.stack().reset_index()
         df_sw.columns = ["Region", "years", "value"]
@@ -748,7 +747,7 @@ def read_water_availability(context):
             f"qr_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
         )
 
-        # Read groundwater data 
+        # Read groundwater data
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
         df_gw.index = df_x["BCU_name"]
