@@ -33,14 +33,15 @@ def _scenario_name(context: Context, value: str) -> Optional[str]:
 
     NB "baseline" does not appear in the NAVIGATE codelist.
     """
-    # Comment to exclude for submission to navigate SE instance; leave uncommented for
-    # ECE-internal
     if value == "baseline":
-        return None
-    elif value not in [code.id for code in iter_scenario_codes(context)]:
-        return None
-    else:
-        return f"NAV_Dem-{value}"
+        return value if context.get("navigate_dsd") == "iiasa-ece" else None
+
+    candidate = f"NAV_Dem-{value}"
+    for code in iter_scenario_codes(context):
+        if code.id == candidate:
+            return candidate
+
+    return None
 
 
 def _region(codelist_id: str, value: str) -> str:

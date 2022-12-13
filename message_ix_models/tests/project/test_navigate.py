@@ -4,6 +4,8 @@ from pathlib import Path
 import ixmp
 import pytest
 
+from message_data.projects.navigate.report import _scenario_name
+
 
 @pytest.fixture(scope="session")
 def message_buildings_dir():
@@ -76,3 +78,14 @@ def test_generate_workflow_cli(mix_models_cli):
     # Workflow has the expected scenarios in it
     for b in BLOCKS:
         assert re.search(b, result.output, flags=re.DOTALL), result.output
+
+
+@pytest.mark.parametrize(
+    "input, expected",
+    (
+        ("NPi-ref", "NAV_Dem-NPi-ref"),
+        ("baseline", None),
+    ),
+)
+def test_scenario_name(test_context, input, expected):
+    assert expected == _scenario_name(test_context, input)
