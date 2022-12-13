@@ -729,7 +729,6 @@ def read_water_availability(context):
         df_sw.index = df_x["BCU_name"]
         df_sw = df_sw.stack().reset_index()
         df_sw.columns = ["Region", "years", "value"]
-        # df_sw.sort_values(["Region", "years", "value"], inplace=True)
         df_sw.fillna(0, inplace=True)
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
@@ -753,7 +752,6 @@ def read_water_availability(context):
         df_gw.index = df_x["BCU_name"]
         df_gw = df_gw.stack().reset_index()
         df_gw.columns = ["Region", "years", "value"]
-        # df_gw.sort_values(["Region", "years", "value"], inplace=True)
         df_gw.fillna(0, inplace=True)
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
@@ -773,8 +771,7 @@ def read_water_availability(context):
         )
         df_sw = pd.read_csv(path1)
         df_sw.drop(["Unnamed: 0"], axis=1, inplace=True)
-        new_cols = pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
-        df_sw.columns = new_cols
+
         df_sw.index = df_x["BCU_name"]
         df_sw = df_sw.stack().reset_index()
         df_sw.columns = ["Region", "years", "value"]
@@ -796,8 +793,7 @@ def read_water_availability(context):
         )
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
-        new_cols = pd.to_datetime(df_gw.columns, format="sum.X%Y.%m.%d")
-        df_gw.columns = new_cols
+        
         df_gw.index = df_x["BCU_name"]
         df_gw = df_gw.stack().reset_index()
         df_gw.columns = ["Region", "years", "value"]

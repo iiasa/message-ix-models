@@ -95,8 +95,6 @@ def map_basin_region_wat(context):
         df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
         df_sw.drop(columns="Unnamed: 0", inplace=True)
 
-        new_cols = pd.to_datetime(df_sw.columns, format="sum.X%Y.%m.%d")
-        df_sw.columns = new_cols
 
         # Calculating ratio of water availability in basin by region
         df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
