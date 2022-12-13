@@ -51,7 +51,6 @@ def _region(codelist_id: str, value: str) -> str:
 
 #: Regular expression patterns and replacements for variable names
 VARIABLE_SUB = (
-
     (re.compile(r"^Carbon Sequestration\|CCS(.*)$"), r"Carbon Capture|Storage\g<1>"),
     (re.compile(r"^Carbon Sequestration(\|Land Use.*)$"), r"Carbon Removal\g<1>"),
     (re.compile(r"(.*)\|Industry excl Non-Energy Use\|(.*)"), r"\g<1>|Industry|\g<2>"),
@@ -76,16 +75,28 @@ VARIABLE_SUB = (
     (re.compile(r"^(Production\|)Chemicals"), r"\g<1>Chemicals|Volume"),
     (
         re.compile(r"^(Production\|Chemicals\|)High Value Chemicals"),
-        r"\g<1>High Value Chemicals|Volume"),
+        r"\g<1>High Value Chemicals|Volume",
+    ),
     (
         re.compile(r"^(Production\|Non-Ferrous Metals\|)Aluminium"),
         r"\g<1>Aluminium\|Volume",
     ),
     (re.compile(r"\|Steel"), r"|Iron and Steel"),
     (re.compile(r"^(Production\|Iron and Steel)$"), r"\g<1>|Volume"),
-    (re.compile(r"^(Emissions\|CO2\|Energy\|Demand\|Industry\|Non-Metallic Minerals)\|Cement"), r"\g<1>"),
-    (re.compile(r"^(Emissions\|CO2\|Energy\|Demand\|Industry\|Non-Ferrous Metals)\|Aluminium"), r"\g<1>"),
-
+    (
+        re.compile(
+            r"^(Emissions\|CO2\|Energy\|Demand\|Industry\|Non-Metallic Minerals)\|"
+            "Cement"
+        ),
+        r"\g<1>",
+    ),
+    (
+        re.compile(
+            r"^(Emissions\|CO2\|Energy\|Demand\|Industry\|Non-Ferrous Metals)\|"
+            "Aluminium"
+        ),
+        r"\g<1>",
+    ),
     # For NGFS, apparently not needed for NAVIGATE
     # ("Commercial", "Residential and Commercial|Commercial"),
     # ("Residential", "Residential and Commercial|Residential"),
