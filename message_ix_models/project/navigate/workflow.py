@@ -137,6 +137,20 @@ def solve(context, scenario):
     return scenario
 
 
+def tax_emission(context, scenario, price: float):
+    """Workflow callable for :mod:`.tools.utilities.add_tax_emission`."""
+    from message_data.tools.utilities import add_tax_emission
+
+    try:
+        scenario.remove_solution()
+    except ValueError:
+        pass
+
+    add_tax_emission(scenario, price)
+
+    return scenario
+
+
 def generate(context: Context) -> Workflow:
     """Create the NAVIGATE workflow."""
     wf = Workflow(context)
@@ -218,21 +232,38 @@ def generate(context: Context) -> Workflow:
         # Identify the base scenario
         base = BMT_solved[T35_policy]
 
-        # Add 0 or more steps for climate policies
-        # NB this can occur here so long as PolicyConfig.method = "calc" is NOT used by
-        #    any of the objects in ENGAGE_CONFIG. If "calc" appears, then engage.step_1
-        #    requires data which is currently only available from legacy reporting
-        #    output, and the ENGAGE steps must take place after step 9 (running legacy
-        #    reporting, below)
-        name = engage.add_steps(wf, base=base, config=policy_config, name=s)
+        if not isinstance(policy_config, engage.PolicyConfig):
+            assert climate_policy == "Ctax"
+            # Carbon tax; not an implementation of an ENGAGE climate policy
+            wf.add_step(
+                s,
+                base,
+                tax_emission,
+                target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
+                clone=True,
+                price=200.0,
+            )
+            name = f"{s} solved"
+            wf.add_step(name, s, solve)
+        else:
+            # Add 0 or more steps for climate policies
+            # NB this can occur here so long as PolicyConfig.method = "calc" is NOT used
+            #    by any of the objects in ENGAGE_CONFIG. If "calc" appears, then
+            #    engage.step_1 requires data which is currently only available from
+            #    legacy reporting output, and the ENGAGE steps must take place after
+            #    step 9 (running legacy reporting, below)
+            name = engage.add_steps(wf, base=base, config=policy_config, name=s)
 
-        if name == base:
+        if name == base or climate_policy == "Ctax":
             policy_solved = name
         else:
             # Re-solve with buildings at the last stage
 
             # Retrieve options on the solve step added by engage.add_steps()
-            solve_kw = wf.graph[name][0].kwargs["config"].solve
+            try:
+                solve_kw = wf.graph[name][0].kwargs["config"].solve
+            except KeyError:
+                solve_kw = dict()
 
             # Create a new step with the same name and base, but invoking
             # MESSAGEix-Buildings instead.
