@@ -19,12 +19,15 @@ log = logging.getLogger(__name__)
 #: .. todo:: The low_dem_scen values appear to form a "waterfall", with each
 #:    successively lower budget referencing the previous. Investigate how to run only
 #:    some budgets without the previous ones.
-_so = dict(model="MESSAGE", solve_options=dict(barcrossalg=2))
+_kw = dict(
+    reserve_margin=False,
+    solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
+)
 CLIMATE_POLICY = {
     pc.label: pc
     for pc in (
         # No climate policy → no ENGAGE workflow steps
-        PolicyConfig("NPi", steps=[], solve=_so),
+        PolicyConfig("NPi", steps=[], **_kw),
         # Only step 1. This item does not appear in the official NAVIGATE scenarios
         # list, but is used in EXTRA_SCENARIOS below.
         PolicyConfig(
@@ -32,23 +35,23 @@ CLIMATE_POLICY = {
             steps=[1],
             budget=2449,
             low_dem_scen="EN_NPi2020_1200_step1",
-            solve=_so,
+            **_kw,
         ),
         # All steps 1–3
-        PolicyConfig(  # From an item labelled "1000" in engage/config.yaml
-            "20C", budget=2449, low_dem_scen="EN_NPi2020_1200_step1", solve=_so
-        ),
-        PolicyConfig(  # From an item labelled "600" in engage/config.yaml
-            "15C", budget=1288, low_dem_scen="EN_NPi2020_700_step1", solve=_so
-        ),
+        # From an item labelled "1000" in engage/config.yaml
+        PolicyConfig("20C", budget=2449, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
+        # From an item labelled "600" in engage/config.yaml
+        PolicyConfig("15C", budget=1288, low_dem_scen="EN_NPi2020_700_step1", **_kw),
         #
         # The following do not appear in the official NAVIGATE scenarios list, but are
         # used in EXTRA_SCENARIOS below.
-        PolicyConfig(  # From an item labelled "1600" in engage/config.yaml
-            "1600 Gt", budget=4162, low_dem_scen="EN_NPi2020_1800_step1", solve=_so
+        # From an item labelled "1600" in engage/config.yaml
+        PolicyConfig(
+            "1600 Gt", budget=4162, low_dem_scen="EN_NPi2020_1800_step1", **_kw
         ),
-        PolicyConfig(  # From an item labelled "2000" in engage/config.yaml
-            "2000 Gt", budget=5320, low_dem_scen="EN_NPi2020_2500_step1", solve=_so
+        # From an item labelled "2000" in engage/config.yaml
+        PolicyConfig(
+            "2000 Gt", budget=5320, low_dem_scen="EN_NPi2020_2500_step1", **_kw
         ),
     )
 }
