@@ -13,7 +13,7 @@ import os
 type_reg = 'global' # else 'global'
 country = 'ZMB'
 global_reg = 'R11'
-
+isimip = '3b'
 
 if type_reg == 'global':
     wd = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
@@ -24,7 +24,26 @@ if type_reg == 'global':
 elif type_reg == 'country':
     # This is for Zambia
     wd = os.path.join("p:", "ene.model", "NEST", country, "hydrology")
+    wd_out = os.path.join("p:", "ene.model", "NEST", country, "hydrology","post-processed")
    
+
+# climate model
+if isimip == '2b':
+    climmodels = ["gfdl-esm2m", "hadgem2-es", "ipsl-cm5a-lr", "miroc5"]
+    climmodel = "gfdl-esm2m"
+    # climate forcing
+    scenarios = ["rcp26", "rcp60"]
+    scen = "rcp26"
+    wd1 =  os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
+    wd =  os.path.join("p:", "watxene", "ISIMIP","ISIMIP2b" ,"output","LPJmL")
+    wd2 =  os.path.join("p:", "ene.model", "NEST", "hydrology","processed_nc4")
+else:
+    climmodels = ["gfdl-esm4", "ipsl-cm6a-lr", "mpi-esm1-2-hr", "mri-esm2-0","ukesm1-0-ll"]
+    scenarios = ["ssp126", "ssp370","ssp585"]
+    scen= "ssp126"
+    wd1 =  os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
+    wd =  os.path.join("p:", "watxene", "ISIMIP","ISIMIP3b" ,"CWatM_results",f"{cl}",f"{data}")
+    wd2 =  os.path.join("p:", "ene.model", "NEST", "hydrology","processed_nc4")
 
 # Define the scenario 'extreme' or 'normal'
 extreme_scen = 'high'
@@ -33,7 +52,7 @@ extreme_scen = 'high'
 # climate forcing
 scenarios = ["rcp26", "rcp60"]
 
-scen = "rcp26"
+scen = "rcp60"
 # variable, for detailed symbols, refer to ISIMIP2b documentation
 variables = [
     "qtot",  # total runoff
@@ -54,7 +73,7 @@ quant = 0.5
 env_flow = True
 
 # Read sample file to keep all columns
-df_chk = pd.read_csv(wd + r"\qtot_monthly_miroc5_rcp26.csv")
+df_chk = pd.read_csv(wd + f"\{var}_monthly_miroc5_rcp26.csv")
 
 # Reading files and taking multimodel ensemble
 # df1 = pd.read_csv(wd + f"\{var}_{timestep}_miroc5_{scen}.csv").iloc[:, 8:]
@@ -63,9 +82,8 @@ df3 = pd.read_csv(wd + f"\{var}_{timestep}_hadgem2-es_{scen}.csv").iloc[:, 8:]
 df4 = pd.read_csv(wd + f"\{var}_{timestep}_ipsl-cm5a-lr_{scen}.csv").iloc[:, 8:]
 
 
-
 data = pd.concat([ df2, df3, df4]).groupby(level=0).mean()
-data["basin"] = "B" + df_chk["BCU_name"]
+# data["basin"] = "B" + df_chk["BCU_name"]
 
 # data.to_csv(wd + f"\{var}_{timestep}_{scen}_{extreme_scen}_{country}.csv")
 
@@ -86,11 +104,10 @@ elif extreme_scen == 'med':
 
 new_cols = pd.to_datetime(data.columns, format="sum.X%Y.%m.%d")    
 data.columns = new_cols
-if var == 'qr':
-    data = data.iloc[:,48:]  
-data = data.resample('5Y', axis = 1).mean()  
+data = data.iloc[:,48:]  
+# data = data.resample('5Y', axis = 1).mean()  
 
-data.to_csv(wd_out + f"\{var}_5y_mmean_{scen}_q50.csv")
+data.to_csv(wd_out + f"\{var}_monthly_mmean_{scen}.csv")
 
 # df_6p0_temp = df_6p0.iloc[:, :216]
 
@@ -258,8 +275,8 @@ for scen in scenarios:
     df2 = pd.read_csv(
         wd + f"\{var}_monthly_{climmodels[2]}_{scen}.csv")
 
-    df3 = pd.read_csv(
-        wd + f"\{var}_monthly_{climmodels[3]}_{scen}.csv")
+    # df3 = pd.read_csv(
+    #     wd + f"\{var}_monthly_{climmodels[3]}_{scen}.csv")
 
 
         
@@ -299,8 +316,9 @@ for scen in scenarios:
     # Convert to 5 year annual values 
     new_cols = pd.to_datetime(eflow[scen].columns, format='sum.X%Y.%m.%d')
     eflow[scen].columns = new_cols
+    eflow[scen] = eflow[scen].iloc[:,48:] 
     eflow[scen] = eflow[scen].resample('5Y',axis = 1).mean() 
-    eflow[scen].to_csv(wd + f"\e-flow_{scen}.csv") 
+    eflow[scen].to_csv(wd_out + f"\e-flow_{scen}.csv") 
 
     # df = eflow[scen]
 
