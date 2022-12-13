@@ -270,12 +270,13 @@ def generate(context: Context) -> Workflow:
             # - Override default buildings.Config.clone = True.
             # - Use the same Scenario.solve() keyword arguments as for the ENGAGE step,
             #   e.g. including "model" and ``solve_options["barcrossalg"]``.
+            # - Use the same NAVIGATE scenario as the base scenario.
             policy_solved = f"{name} again"
             wf.add_step(
                 policy_solved,
                 name,
                 build_solve_buildings,
-                navigate_scenario=s,
+                navigate_scenario=wf.graph[base][0].kwargs["navigate_scenario"],
                 config=dict(clone=False, solve=solve_kw),
             )
 
