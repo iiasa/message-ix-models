@@ -53,7 +53,6 @@ def _region(codelist_id: str, value: str) -> str:
 VARIABLE_SUB = (
     (re.compile(r"^Carbon Sequestration\|CCS(.*)$"), r"Carbon Capture|Storage\g<1>"),
     (re.compile(r"^Carbon Sequestration(\|Land Use.*)$"), r"Carbon Removal\g<1>"),
-    (re.compile(r"(.*)\|Industry excl Non-Energy Use\|(.*)"), r"\g<1>|Industry|\g<2>"),
     # NB this does *not* apply to Final Energy|Solids|Coal, only names with additional
     #    parts
     (re.compile(r"^(Final Energy\|.*\|Solids\|)Coal"), r"\g<1>Fossil"),
