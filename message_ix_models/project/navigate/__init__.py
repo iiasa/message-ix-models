@@ -47,14 +47,24 @@ CLIMATE_POLICY = {
         # used in EXTRA_SCENARIOS below.
         # From an item labelled "1600" in engage/config.yaml
         PolicyConfig(
-            "1600 Gt", budget=4162, low_dem_scen="EN_NPi2020_1800_step1", **_kw
+            "1600 Gt",
+            steps=[1],
+            budget=4162,
+            low_dem_scen="EN_NPi2020_1800_step1",
+            **_kw,
         ),
         # From an item labelled "2000" in engage/config.yaml
         PolicyConfig(
-            "2000 Gt", budget=5320, low_dem_scen="EN_NPi2020_2500_step1", **_kw
+            "2000 Gt",
+            steps=[1],
+            budget=5320,
+            low_dem_scen="EN_NPi2020_2500_step1",
+            **_kw,
         ),
     )
 }
+# Placeholder
+CLIMATE_POLICY["Ctax"] = None
 
 
 # Common annotations for EXTRA_SCENARIOS
@@ -81,6 +91,10 @@ EXTRA_SCENARIOS = [
     Code(
         id="NAV_Dem-2000 Gt-ref",
         annotations=[Annotation(id="navigate-climate-policy", text="2000 Gt")] + _A,
+    ),
+    Code(
+        id="NAV_Dem-Ctax-ref",
+        annotations=[Annotation(id="navigate-climate-policy", text="Ctax")] + _A,
     ),
 ]
 
