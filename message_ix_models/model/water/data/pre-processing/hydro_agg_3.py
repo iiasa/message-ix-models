@@ -5,6 +5,7 @@ It calculates environmental flows using Variable Monthly Flow method
 
 """
 
+
 from sqlite3 import TimeFromTicks
 import numpy as np
 import pandas as pd
@@ -13,14 +14,14 @@ import os
 type_reg = 'global' # else 'global'
 country = 'ZMB'
 global_reg = 'R11'
-
+type_reg = 'ZMB'
 
 if type_reg == 'global':
     wd = os.path.join("p:", "ene.model", "NEST","hydrology" ,"post-processed_qs",f"global_{global_reg}")
     # upload_files = glob.glob(os.path.join(upload_dir, "MESSAGEix*.xlsx"))
 elif type_reg == 'country':
     # This is for Zambia
-    wd = os.path.join("p:", "ene.model", "NEST", country, "hydrology")
+    wd = os.path.join("p:", "ene.model", "NEST", country, "hydrology","post-processed")
    
 
 # climate forcing
@@ -34,7 +35,7 @@ variables = [
     "qg",    # groundwater runoff
     "qr",    # groundwater recharge
 ]  
-var = "qtot"
+var = "qr"
 timestep = '5y'
 
 # read quantiles
@@ -141,31 +142,32 @@ df_60_q90['2045-12-31'] =  df_60_q90['2045-12-31'] - (0.2 * delta60)
 
 df_26_q90.to_csv(wd + f"\{var}_{timestep}_mmean_{scenarios[0]}_q90_ba.csv")
 df_60_q90.to_csv(wd + f"\{var}_{timestep}_mmean_{scenarios[1]}_q90_ba.csv")
-
+df_noclim_q90 = df_60_q90.apply(lambda x:val2020_q90)
+df_noclim_q90.to_csv(wd + f"\{var}_{timestep}_mmean_no_climate_q90_ba.csv")
 
 # Reliability Scenarios 
 # Low Reliability = q50 
-df_60_q50.to_csv(wd + f"\{var}_{timestep}_2p6_low_R11.csv")
-df_26_q50.to_csv(wd + f"\{var}_{timestep}_6p0_low_R11.csv")
+df_60_q50.to_csv(wd + f"\{var}_{timestep}_2p6_low_{type_reg}.csv")
+df_26_q50.to_csv(wd + f"\{var}_{timestep}_6p0_low_{type_reg}.csv")
 
 df_sw_noclimate  = df_60_q50.apply(lambda x:val2020_q50)
-df_sw_noclimate.to_csv(wd + f"\{var}_{timestep}_no_climate_low_R11.csv")
+df_sw_noclimate.to_csv(wd + f"\{var}_{timestep}_no_climate_low_{type_reg}.csv")
 
 # Medium Reliability = q70 
 df_med_26_1 = df_26_q50.iloc[:,:3]
 df_med_26_2 = df_26_q70.iloc[:,3:]
 df_med_26 = pd.concat([df_med_26_1, df_med_26_2], axis = 1)
-df_med_26.to_csv(wd + f"\{var}_{timestep}_2p6_med_R11.csv")
+df_med_26.to_csv(wd + f"\{var}_{timestep}_2p6_med_{type_reg}.csv")
 
 df_med_60_1 = df_60_q50.iloc[:,:3]
 df_med_60_2 = df_60_q70.iloc[:,3:]
 df_med_60 = pd.concat([df_med_60_1, df_med_60_2], axis = 1)
-df_med_60.to_csv(wd + f"\{var}_{timestep}_6p0_med_R11.csv")
+df_med_60.to_csv(wd + f"\{var}_{timestep}_6p0_med_{type_reg}.csv")
 
 df_med_noclimate_1  = df_med_60.iloc[:,:3].apply(lambda x:val2020_q50)
 df_med_noclimate_2 =  df_med_60.iloc[:,4:].apply(lambda x:val2020_q70)
 df_med_noclimate = pd.concat([df_med_noclimate_1, df_med_noclimate_2], axis = 1)
-df_med_noclimate.to_csv(wd + f"\{var}_{timestep}_no_climate_med_R11.csv")
+df_med_noclimate.to_csv(wd + f"\{var}_{timestep}_no_climate_med_{type_reg}.csv")
 
 df_med_noclimate.iloc[:,:3] = df_sw_noclimate.iloc[:,:3]
 
@@ -174,19 +176,19 @@ df_high_26_1 = df_26_q50.iloc[:,:3]
 df_high_26_2 = df_26_q70.iloc[:,3:6]
 df_high_26_3 = df_26_q90.iloc[:,6:]
 df_high_26 = pd.concat([df_high_26_1, df_high_26_2,df_high_26_3], axis = 1)
-df_high_26.to_csv(wd + f"\{var}_{timestep}_2p6_high_R11.csv")
+df_high_26.to_csv(wd + f"\{var}_{timestep}_2p6_high_{type_reg}.csv")
 
 df_high_60_1 = df_60_q50.iloc[:,:3]
 df_high_60_2 = df_60_q70.iloc[:,3:6]
 df_high_60_3 = df_60_q90.iloc[:,6:]
 df_high_60 = pd.concat([df_high_60_1, df_high_60_2,df_high_60_3], axis = 1)
-df_high_60.to_csv(wd + f"\{var}_{timestep}_6p0_high_R11.csv")
+df_high_60.to_csv(wd + f"\{var}_{timestep}_6p0_high_{type_reg}.csv")
 
 df_high_noclimate_1  = df_high_60.iloc[:,:3].apply(lambda x:val2020_q50)
 df_high_noclimate_2 =  df_high_60.iloc[:,3:6].apply(lambda x:val2020_q70)
 df_high_noclimate_3 =  df_high_60.iloc[:,6:].apply(lambda x:val2020_q90)
 df_high_noclimate = pd.concat([df_high_noclimate_1, df_high_noclimate_2, df_high_noclimate_3], axis = 1)
-df_high_noclimate.to_csv(wd + f"\{var}_{timestep}_no_climate_high_R11.csv")
+df_high_noclimate.to_csv(wd + f"\{var}_{timestep}_no_climate_high_{type_reg}.csv")
 
 
 
@@ -223,9 +225,9 @@ df_60['2035-12-31'] =  df_60['2035-12-31'] - (0.6 * delta60)
 df_60['2040-12-31'] =  df_60['2040-12-31'] - (0.4 * delta60)
 df_60['2045-12-31'] =  df_60['2045-12-31'] - (0.2 * delta60)
 
-df_60.to_csv(wd + f"\e-flow_2p6_R11.csv")
+df_60.to_csv(wd + f"\e-flow_2p6_{type_reg}.csv")
 df_26.to_csv(wd + f"\e-flow_6p0_R11.csv")
 
 df_noclim = df_60.apply(lambda x:val2020)
-df_noclim.to_csv(wd + f"\e-flow_no_climate_R11.csv" )
+df_noclim.to_csv(wd + f"\e-flow_no_climate_{type_reg}.csv" )
 
