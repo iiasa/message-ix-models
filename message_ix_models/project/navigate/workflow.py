@@ -37,6 +37,13 @@ $ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data
 def build_transport(context: Context, scenario: Scenario) -> Scenario:
     """Workflow step 3."""
     from message_data.model.transport import build
+    from message_data.tools.utilities import update_h2_blending
+
+    # NB this could occur earlier in the workflow, e.g. before the "M built" step/
+    #    build_materials(), above. However, since that step currently requires switching
+    #    to a different branch, we keep it here so it can be run together with all the
+    #    other steps on the current branch.
+    update_h2_blending(scenario)
 
     return build.main(context, scenario, fast=True)
 
