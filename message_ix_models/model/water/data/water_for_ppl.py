@@ -657,181 +657,25 @@ def cool_tech(context):
     # Taken from https://www.sciencedirect.com/science/article/pii/S0959378016301236?via%3Dihub#sec0080
     if context.RCP == "no_climate":
         df = cap_fact["capacity_factor"]
-    elif context.RCP == "2p6":
+    else:
         df = cap_fact["capacity_factor"]
-        # North America
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"] == "R11_NAM"),
-            "value",
-        ] = 0.9
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"] == "R11_NAM"),
-            "value",
-        ] = 0.95
+        # reading ppl cooling impact dataframe
+        path = private_data_path("water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx")
+        df_impact = pd.read_excel(path, sheet_name = f"{context.regions}_{context.RCP}")
 
-        # South America
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"] == "R11_LAM"),
-            "value",
-        ] = 0.78
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"] == "R11_LAM"),
-            "value",
-        ] = 0.89
-        # Western Europe
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
-            "value",
-        ] = 0.78
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
-            "value",
-        ] = 0.89
-        # Africa
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
-            "value",
-        ] = 0.82
+        for n in df_impact['node']:
+            conditions = [
+                df["technology"].str.contains("fresh") & (df["year_act"] >= 2025) & (df["year_act"] < 2050) & (df["node_loc"] == n),
+                df["technology"].str.contains("fresh") & (df["year_act"] >= 2050) & (df["year_act"] < 2070) & (df["node_loc"] == n),
+                df["technology"].str.contains("fresh") & (df["year_act"] >= 2070)  & (df["node_loc"] == n),
 
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
-            "value",
-        ] = 0.91
-        # Pacific OECD
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"] == "R11_PAO"),
-            "value",
-        ] = 0.975
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"] == "R11_PAO"),
-            "value",
-        ] = 0.9875
-        # Asia
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
-            "value",
-        ] = 0.975
+            ]
 
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
-            "value",
-        ] = 0.9875
-    elif context.RCP == "6p0":
-        df = cap_fact["capacity_factor"]
-        # North America
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"] == "R11_NAM"),
-            "value",
-        ] = 0.62
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"] == "R11_NAM"),
-            "value",
-        ] = 0.81
-        # South America
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"] == "R11_LAM"),
-            "value",
-        ] = 0.42
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"] == "R11_LAM"),
-            "value",
-        ] = 0.71
-        # Western Europe
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
-            "value",
-        ] *= 0.62
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"].isin(["R11_WEU", "R11_EEU"])),
-            "value",
-        ] = 0.81
-        # Africa
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
-            "value",
-        ] *= 0.6
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"].isin(["R11_AFR", "R11_PAS"])),
-            "value",
-        ] = 0.8
-        # Pacific OECD
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"] == "R11_PAO"),
-            "value",
-        ] = 0.85
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"] == "R11_PAO"),
-            "value",
-        ] = 0.925
-        # Asia
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] >= 2060)
-            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
-            "value",
-        ] = 0.975
-        df.loc[
-            (df["technology"].str.contains("fresh"))
-            & (df["year_act"] <= 2055)
-            & (df["year_act"] >= 2025)
-            & (df["node_loc"].isin(["R11_SAS", "R11_PAS", "R11_FSU", "R11_CPA"])),
-            "value",
-        ] = 0.9875
+            choices = [df_impact[(df_impact['node'] == n)]["2025s"],
+            df_impact[(df_impact['node'] == n)]["2050s"], df_impact[(df_impact['node'] == n)]["2070s"]
+            ]
+
+            df['value'] = np.select(conditions, choices,default = df['value'])
 
     results["capacity_factor"] = df
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
