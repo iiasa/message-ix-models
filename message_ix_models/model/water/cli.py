@@ -85,7 +85,7 @@ def water_ini(context, regions, time):
     # setting the time information in context
 
 
-_RCPS = ["no_climate", "6p0", "2p6","7p0"]
+_RCPS = ["no_climate", "6p0", "2p6", "7p0"]
 _REL = ["low", "med", "high"]
 
 
@@ -99,7 +99,9 @@ _REL = ["low", "med", "high"]
     help="Defines whether water SDG measures are activated or not",
 )
 @click.option(
-    "--macro", is_flag=True, help="Defines whether the model solves with macro",
+    "--macro",
+    is_flag=True,
+    help="Defines whether the model solves with macro",
 )
 @common_params("regions")
 def nexus_cli(context, regions, rcps, sdgs, rels, macro=False):
