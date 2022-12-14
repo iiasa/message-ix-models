@@ -296,20 +296,21 @@ def add_steps(
 
     _base = base
     for step in config.steps:
-        # Name for the output of this step
+        # Name for this step
         new_name = f"{name_root}{step}"
 
-        # Add step
-        s = workflow.add_step(new_name, _base, globals()[f"step_{step}"], config=config)
+        # New scenario name
+        s = f"{info['scenario']}_ENGAGE_{config.label.replace(' ', '_')}_step-{step}"
 
-        # Configure clone for step 1, with the output model and scenario name
-        if step == 1:
-            s.clone = True
-            # Set the output model and scenario name
-            s.scenario_info = dict(
-                model=info["model"],
-                scenario=f"{info['scenario']}_EN1_{config.label.replace(' ', '_')}",
-            )
+        # Add step; always clone to a new model/scenario name
+        workflow.add_step(
+            new_name,
+            _base,
+            globals()[f"step_{step}"],
+            clone=True,
+            target=f"{info['model']}/{s}",
+            config=config,
+        )
 
         workflow.add_step(f"{new_name} solved", new_name, solve, config=config)
 
