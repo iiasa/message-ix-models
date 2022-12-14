@@ -660,22 +660,33 @@ def cool_tech(context):
     else:
         df = cap_fact["capacity_factor"]
         # reading ppl cooling impact dataframe
-        path = private_data_path("water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx")
-        df_impact = pd.read_excel(path, sheet_name = f"{context.regions}_{context.RCP}")
+        path = private_data_path(
+            "water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx"
+        )
+        df_impact = pd.read_excel(path, sheet_name=f"{context.regions}_{context.RCP}")
 
-        for n in df_impact['node']:
+        for n in df_impact["node"]:
             conditions = [
-                df["technology"].str.contains("fresh") & (df["year_act"] >= 2025) & (df["year_act"] < 2050) & (df["node_loc"] == n),
-                df["technology"].str.contains("fresh") & (df["year_act"] >= 2050) & (df["year_act"] < 2070) & (df["node_loc"] == n),
-                df["technology"].str.contains("fresh") & (df["year_act"] >= 2070)  & (df["node_loc"] == n),
-
+                df["technology"].str.contains("fresh")
+                & (df["year_act"] >= 2025)
+                & (df["year_act"] < 2050)
+                & (df["node_loc"] == n),
+                df["technology"].str.contains("fresh")
+                & (df["year_act"] >= 2050)
+                & (df["year_act"] < 2070)
+                & (df["node_loc"] == n),
+                df["technology"].str.contains("fresh")
+                & (df["year_act"] >= 2070)
+                & (df["node_loc"] == n),
             ]
 
-            choices = [df_impact[(df_impact['node'] == n)]["2025s"],
-            df_impact[(df_impact['node'] == n)]["2050s"], df_impact[(df_impact['node'] == n)]["2070s"]
+            choices = [
+                df_impact[(df_impact["node"] == n)]["2025s"],
+                df_impact[(df_impact["node"] == n)]["2050s"],
+                df_impact[(df_impact["node"] == n)]["2070s"],
             ]
 
-            df['value'] = np.select(conditions, choices,default = df['value'])
+            df["value"] = np.select(conditions, choices, default=df["value"])
 
     results["capacity_factor"] = df
     # results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}

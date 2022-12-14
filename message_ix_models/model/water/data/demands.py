@@ -625,7 +625,10 @@ def add_sectoral_demands(context):
         year_act=df_recycling["year"],
         value=df_recycling["value"],
         unit="-",
-    ).pipe(broadcast, time=sub_time,)
+    ).pipe(
+        broadcast,
+        time=sub_time,
+    )
 
     df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
     results["share_commodity_lo"] = df_share_wat
@@ -685,8 +688,8 @@ def add_sectoral_demands(context):
 
 def read_water_availability(context):
     """
-    Reads water availability data and bias correct it for the historical years and no climate 
-    scenario assumptions. 
+    Reads water availability data and bias correct it for the historical years and no climate
+    scenario assumptions.
 
 
     Parameters
@@ -793,7 +796,7 @@ def read_water_availability(context):
         )
         df_gw = pd.read_csv(path1)
         df_gw.drop(["Unnamed: 0"], axis=1, inplace=True)
-        
+
         df_gw.index = df_x["BCU_name"]
         df_gw = df_gw.stack().reset_index()
         df_gw.columns = ["Region", "years", "value"]
