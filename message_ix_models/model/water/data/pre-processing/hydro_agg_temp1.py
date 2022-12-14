@@ -5,6 +5,7 @@ script specifically aggregates global gridded hydrological data onto the basin
 """
 import sys
 import os
+
 print(sys.executable)
 #  Import packages
 from datetime import datetime as dt
@@ -22,7 +23,6 @@ from dask.diagnostics import ProgressBar
 # from salem import open_wrf_dataset, get_demo_file
 
 
-
 # variable, for detailed symbols, refer to ISIMIP2b documentation
 variables = [
     "qtot",  # total runoff
@@ -32,9 +32,9 @@ variables = [
 ]  # groudnwater recharge
 var = "qr"
 
-isimip = '3b'
+isimip = "3b"
 
-data = "future" # else future
+data = "future"  # else future
 
 #%%
 # if multimodelensemble:
@@ -60,23 +60,30 @@ data = "future" # else future
 
 for cl in climmodels:
     # climate model
-    if isimip == '2b':
+    if isimip == "2b":
         climmodels = ["gfdl-esm2m", "hadgem2-es", "ipsl-cm5a-lr", "miroc5"]
         climmodel = "gfdl-esm2m"
         # climate forcing
         scenarios = ["rcp26", "rcp60"]
         scen = "rcp26"
-        wd1 =  os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
-        wd =  os.path.join("p:", "watxene", "ISIMIP","ISIMIP2b" ,"output","LPJmL")
-        wd2 =  os.path.join("p:", "ene.model", "NEST", "hydrology","processed_nc4")
+        wd1 = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
+        wd = os.path.join("p:", "watxene", "ISIMIP", "ISIMIP2b", "output", "LPJmL")
+        wd2 = os.path.join("p:", "ene.model", "NEST", "hydrology", "processed_nc4")
     else:
-        climmodels = ["gfdl-esm4", "ipsl-cm6a-lr", "mpi-esm1-2-hr", "mri-esm2-0","ukesm1-0-ll"]
-        scenarios = ["ssp126", "ssp370","ssp585"]
-        scen= "ssp126"
-        wd1 =  os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
-        wd =  os.path.join("p:", "watxene", "ISIMIP","ISIMIP3b" ,"CWatM_results",f"{cl}",f"{data}")
-        wd2 =  os.path.join("p:", "ene.model", "NEST", "hydrology","processed_nc4")
-
+        climmodels = [
+            "gfdl-esm4",
+            "ipsl-cm6a-lr",
+            "mpi-esm1-2-hr",
+            "mri-esm2-0",
+            "ukesm1-0-ll",
+        ]
+        scenarios = ["ssp126", "ssp370", "ssp585"]
+        scen = "ssp126"
+        wd1 = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
+        wd = os.path.join(
+            "p:", "watxene", "ISIMIP", "ISIMIP3b", "CWatM_results", f"{cl}", f"{data}"
+        )
+        wd2 = os.path.join("p:", "ene.model", "NEST", "hydrology", "processed_nc4")
 
     # Define if monthly aggregation is required
     monthlyscale = True
@@ -89,7 +96,6 @@ for cl in climmodels:
     lonchunk = 640
     # Define if use all touched raster
     all_touched = True
-
 
     if var == "dis":
         # define a spatial method to aggregate
@@ -115,7 +121,6 @@ for cl in climmodels:
     # TO AVOID ERROR WHEN OPENING AND SLICING INPUT DATA - CHECK!
     dask.config.set({"array.slicing.split-large-chunks": False})
 
-
     if data == "historical":
         hydro_data = wd + f"\*{cl}*{var}*monthly*.nc"
     elif data == "future":
@@ -131,7 +136,6 @@ for cl in climmodels:
         # da["time"] = pd.date_range(start="1/1/2015", end="31/12/2100", freq="M")
 
         # da.to_netcdf(wd+f'\{var}_memean_{scen}.nc')
-
 
     if monthlyscale:
         # da = da.sel(time=slice('2010-01-01', '2025-12-31'))
@@ -149,7 +153,6 @@ for cl in climmodels:
     #     da = da.rolling(time=3, min_periods=1).mean()
 
     # da = da.fillna(0)
-
 
     #%%
     if monthlyscale:
@@ -238,7 +241,6 @@ for cl in climmodels:
 
             # Resample daily data to monthly (by summing daily values)
             # da = da.resample(time="M").mean()
-            
 
             # da.rolling(time=12, center=True).construct(
             #     'tmp').quantile(.1, dim='tmp', skipna=False).dropna(
@@ -263,7 +265,6 @@ for cl in climmodels:
             # )
 
             da.to_netcdf(wd2 + f"\{var}_monthly_{cl}_{scen}_{data}.nc")
-
 
     else:
         if var == "dis":
@@ -297,7 +298,9 @@ for cl in climmodels:
 
             da.to_netcdf(wd2 + f"\output\{var}_5y__{climmodel}_{scen}_temp_agg.nc")
             # read in saved data again to further process
-            da = xr.open_dataset(wd2 + f"\output\{var}_5y__{climmodel}_{scen}_temp_agg.nc")
+            da = xr.open_dataset(
+                wd2 + f"\output\{var}_5y__{climmodel}_{scen}_temp_agg.nc"
+            )
 
         elif var == "qtot":
             da["qtot"] = da.qtot.chunk(
@@ -479,4 +482,3 @@ for cl in climmodels:
 
 # da = da.qtot.isel(time=da.time.isin(year)).salem.quick_map()
 # da.salem.quick_map()
-

@@ -270,7 +270,11 @@ def add_infrastructure_techs(context):
                 time_origin="year",
                 node_loc=df_node["node"],
                 node_origin=df_node["region"],
-            ).pipe(broadcast, map_yv_ya_lt(year_wat, 1, first_year), time=sub_time,)
+            ).pipe(
+                broadcast,
+                map_yv_ya_lt(year_wat, 1, first_year),
+                time=sub_time,
+            )
 
             result_dc["input"].append(inp)
 
@@ -868,7 +872,11 @@ def add_desalination(context):
         mode="M1",
         value=df_bound["cap_km3_year"],
         unit="km3/year",
-    ).pipe(broadcast, year_act=year_wat, time=sub_time,)
+    ).pipe(
+        broadcast,
+        year_act=year_wat,
+        time=sub_time,
+    )
 
     bound_lo = bound_lo[bound_lo["year_act"] <= 2030]
     # Divide the histroical capacity by 5 since the existing data is summed over

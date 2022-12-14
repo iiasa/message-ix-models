@@ -86,7 +86,7 @@ def water_ini(context, regions, time):
     # setting the time information in context
 
 
-_RCPS = ["no_climate", "6p0", "2p6","7p0"]
+_RCPS = ["no_climate", "6p0", "2p6", "7p0"]
 _REL = ["low", "med", "high"]
 
 
