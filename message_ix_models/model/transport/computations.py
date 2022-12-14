@@ -305,6 +305,7 @@ def _advance_data_for(config: dict, variable: str, units) -> Quantity:
     ):
         results.append(relabel(share * data.sel(n=source), n={source: dest}))
     result = computations.concat(*results)
+    result.units = data.units  # FIXME should not be necessary
 
     # Check
     assert_qty_allclose(
