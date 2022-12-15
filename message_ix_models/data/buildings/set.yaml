@@ -11,11 +11,21 @@ sector:
 
 enduse:
   add:
-    apps: Appliances
-    cook: Cooking
-    cool: Space cooling
-    heat: Space heating
-    hotwater: Hot water
+    apps:
+      name: Appliances
+      report: Appliances
+    cook:
+      name: Cooking
+      report: Cooking
+    cool:
+      name: Space cooling
+      report: Cooling
+    heat:
+      name: Space heating
+      report: Heating|Space
+    hotwater:
+      name: Hot water
+      report: Heating|Water
 
 # MESSAGE sets
 
