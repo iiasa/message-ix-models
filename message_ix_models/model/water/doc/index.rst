@@ -42,7 +42,7 @@ Country vs Global implementation
 --------------------------------
 
 The :mod:`message_data.model.water` is designed to being able to add water components to either a global R11 (or R12) model or any country model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
-For any of the region configuration a shapefile is needed to run the pre-processing part, while once the data is prepared only a .csv file similar to those in `message_data.data.water.delineation` are needed
+For any of the region configuration a shapefile is needed to run the pre-processing part, while, once the data is prepared, only a .csv file similar to those in `message_data.data.water.delineation` is needed.
 
 To work with a country model please ensure that:
 
@@ -105,6 +105,17 @@ Utilities and CLI
 
 .. automodule:: message_data.model.water.cli
    :members:
+
+Reporting
+---------
+
+.. warning::
+
+   The current reporting features only work for the global model
+
+.. automodule:: message_data.model.water.reporting
+   :members:
+
 
 
 Data, metadata, and config files
