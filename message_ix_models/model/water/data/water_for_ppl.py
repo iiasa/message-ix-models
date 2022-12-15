@@ -1,6 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
 import pandas as pd
+import numpy as np
 from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
