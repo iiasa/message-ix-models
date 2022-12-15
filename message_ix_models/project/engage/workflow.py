@@ -307,7 +307,7 @@ def add_steps(
             new_name,
             _base,
             globals()[f"step_{step}"],
-            clone=True,
+            clone=dict(shift_first_model_year=2025) if step == 1 else True,
             target=f"{info['model']}/{s}",
             config=config,
         )
