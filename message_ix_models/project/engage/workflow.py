@@ -220,7 +220,10 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     sr = ScenarioRunner(context)
     df = sr.retr_CO2_trajectory(scenario)
 
-    scenario.remove_solution()
+    try:
+        scenario.remove_solution()
+    except ValueError:
+        pass  # Solution did not exist
 
     # Add this trajectory as bound_emission values
     add_emission_trajectory(
@@ -256,7 +259,10 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     sr = ScenarioRunner(context)
     df = sr.retr_CO2_price(scenario, new_type_emission="TCE_non-CO2")
 
-    scenario.remove_solution()
+    try:
+        scenario.remove_solution()
+    except ValueError:
+        pass  # Solution did not exist
 
     with scenario.transact(message="Add price for TCE_non-CO2"):
         scenario.add_par("tax_emission", df)
