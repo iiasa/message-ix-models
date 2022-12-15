@@ -360,14 +360,51 @@ def gen_data_steel(scenario, dry_run=False):
 
                 results[param_name].append(df)
 
+    # Add relation for the maximum global scrap use in 2020
+
+    df_max_recycling = pd.DataFrame({'relation': 'max_global_recycling_steel',
+                       'node_rel': 'R12_GLB',
+                       'year_rel': 2020,
+                       'year_act': 2020,
+                       'node_loc': nodes,
+                       'technology': 'scrap_recovery_steel',
+                       'mode': 'M1',
+                       'unit': '???',
+                       'value': data_steel_rel.loc[((data_steel_rel['relation'] \
+                       == 'max_global_recycling_steel') & (data_steel_rel['parameter'] \
+                       == 'relation_activity')), 'value'].values[0]})
+
+    df_max_recycling_upper = pd.DataFrame({'relation': 'max_global_recycling_steel',
+    'node_rel': 'R12_GLB',
+    'year_rel': 2020,
+    'unit': '???',
+    'value': data_steel_rel.loc[((data_steel_rel['relation'] \
+    == 'max_global_recycling_steel') & (data_steel_rel['parameter'] \
+    == 'relation_upper')), 'value'].values[0]}, index = [0])
+    df_max_recycling_lower = pd.DataFrame({'relation': 'max_global_recycling_steel',
+    'node_rel': 'R12_GLB',
+    'year_rel': 2020,
+    'unit': '???',
+    'value': data_steel_rel.loc[((data_steel_rel['relation'] \
+    == 'max_global_recycling_steel') & (data_steel_rel['parameter'] \
+    == 'relation_lower')), 'value'].values[0]}, index = [0])
+
+    results['relation_activity'].append(df_max_recycling)
+    results['relation_upper'].append(df_max_recycling_upper)
+    results['relation_lower'].append(df_max_recycling_lower)
+
     # Add relations for scrap grades and availability
-
     regions = set(data_steel_rel["Region"].values)
-
     for reg in regions:
         for r in data_steel_rel["relation"]:
+            model_years_rel = modelyears.copy()
             if r is None:
                 break
+            if r == 'max_global_recycling_steel':
+                continue
+            if r == 'minimum_recycling_steel':
+                # Do not implement the minimum recycling rate for the year 2020
+                model_years_rel.remove(2020)
 
             params = set(
                 data_steel_rel.loc[
@@ -376,12 +413,12 @@ def gen_data_steel(scenario, dry_run=False):
             )
 
             common_rel = dict(
-                year_rel=modelyears,
-                year_act=modelyears,
+                year_rel=model_years_rel,
+                year_act=model_years_rel,
                 mode="M1",
                 relation=r,
             )
-
+            
             for par_name in params:
                 if par_name == "relation_activity":
 
@@ -394,7 +431,6 @@ def gen_data_steel(scenario, dry_run=False):
                     ]
 
                     for tec in tec_list.unique():
-
                         val = data_steel_rel.loc[
                             (
                                 (data_steel_rel["relation"] == r)
@@ -418,7 +454,6 @@ def gen_data_steel(scenario, dry_run=False):
                         results[par_name].append(df)
 
                 elif (par_name == "relation_upper") | (par_name == "relation_lower"):
-
                     val = data_steel_rel.loc[
                         (
                             (data_steel_rel["relation"] == r)
