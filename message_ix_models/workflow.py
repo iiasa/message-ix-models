@@ -39,8 +39,9 @@ class WorkflowStep:
     #: scenario is loaded via :meth:`Context.get_scenario`.
     action: Optional[CallbackType] = None
 
-    #: :obj:`True` to clone before :attr:`action` is executed.
-    clone: bool = False
+    #: :obj:`True` or a :class:`dict` with keyword arguments to clone before
+    #: :attr:`action` is executed. Default: :obj:`False`, do not clone.
+    clone: Union[bool, dict] = False
 
     #: Keyword arguments passed to :attr:`action`.
     kwargs: dict
@@ -58,7 +59,7 @@ class WorkflowStep:
             # Store platform and scenario info by parsing the `target` URL
             self.platform_info, self.scenario_info = parse_url(target)
         except (AttributeError, ValueError):
-            if clone:
+            if clone is not False:
                 raise TypeError("target= must be supplied for clone=True")
             self.platform_info = self.scenario_info = dict()
 
@@ -90,10 +91,19 @@ class WorkflowStep:
             log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
             log.info(f"  with context.dest_scenario={context.dest_scenario}")
 
-        if self.clone:
+        if self.clone is not False:
             # Clone to target model/scenario name
             log.info("Clone to {model}/{scenario}".format(**self.scenario_info))
-            s = s.clone(**self.scenario_info, keep_solution=False)
+            s = s.clone(
+                **self.scenario_info,
+                # If clone contains keyword arguments, e.g. shift_first_model_year, use
+                # these
+                **(
+                    self.clone
+                    if isinstance(self.clone, dict)
+                    else dict(keep_solution=False)
+                ),
+            )
 
         if not self.action:
             return s
