@@ -264,9 +264,7 @@ def report_cli(context, output_model, sdgs):
     output_model : str (optional, otherwise default args used)
         Specifies the model name of the scenarios which are run.
     """
-    import ixmp
-    import message_ix
-
+   
     from message_data.model.water.reporting import report_full
 
     sc = context.get_scenario()
