@@ -169,6 +169,9 @@ def solve(context: Context, scenario: Scenario, config: PolicyConfig):
 
     scenario.solve(var_list=var_list, **config.solve)
 
+    # Solve was successful; set default version
+    scenario.set_as_default()
+
     return scenario
 
 
