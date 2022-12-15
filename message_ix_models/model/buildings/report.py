@@ -488,22 +488,6 @@ MAPS = (
             "Energy Service|Residential|Single-family|Floor space",
             "Energy Service|Residential|Slum|Floor space",
         ],
-        "Final Energy|Commercial": [
-            "Final Energy|Commercial|Electricity",
-            "Final Energy|Commercial|Gases",
-            "Final Energy|Commercial|Heat",
-            "Final Energy|Commercial|Liquids",
-            "Final Energy|Commercial|Solids|Biomass",
-            "Final Energy|Commercial|Solids|Fossil",
-        ],
-        "Final Energy|Residential": [
-            "Final Energy|Residential|Electricity",
-            "Final Energy|Residential|Gases",
-            "Final Energy|Residential|Heat",
-            "Final Energy|Residential|Liquids",
-            "Final Energy|Residential|Solids|Biomass",
-            "Final Energy|Residential|Solids|Fossil",
-        ],
     },
     {
         "Energy Service|Residential and Commercial|Floor space": [
@@ -574,6 +558,16 @@ def _rename(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def _drop_unused(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop unused values from STURM reporting.
+
+    - All "Final Energy…" variable names.
+    """
+    mask = df["variable"].str.match("^Final Energy")
+
+    return df[~mask]
+
+
 def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFrame:
     """Manipulate variable names for `sturm_rep` and compute additional sums."""
     # - Munge names.
@@ -582,6 +576,7 @@ def report3(scenario: message_ix.Scenario, sturm_rep: pd.DataFrame) -> pd.DataFr
     # - Sort.
     return (
         sturm_rep.pipe(_rename)
+        .pipe(_drop_unused)
         .pipe(add_global_total)
         .pipe(add_aggregates, 0)
         .pipe(add_aggregates, 1)
