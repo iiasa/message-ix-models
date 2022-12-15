@@ -7,23 +7,32 @@ Originally transcribed from :file:`reporting_EFC.py` in the buildings repository
 """
 import logging
 import re
+from collections import defaultdict
 from functools import lru_cache, partial
+from itertools import product
 from typing import Dict, List
 
 import message_ix
 import pandas as pd
+from genno import Key, computations
 from iam_units import registry
-from message_ix_models import Context
+from message_ix_models import Context, Spec
+from message_ix_models.util import eval_anno
 
+from message_data.model.transport.computations import nodes_world_agg
+from message_data.reporting import iamc as add_iamc
+from . import Config
 from .build import get_spec, get_techs
 from .sturm import scenario_name
 
 log = logging.getLogger(__name__)
 
-#: Mappings for .replace().
-#:
-#: .. todo:: combine and use with those defined in .reporting.util.
-SECTOR_NAME_MAP = {"comm": "Commercial", "resid": "Residential"}
+#: Mappings for :func:`.reporting.util.collapse`. See :func:`.callback`.
+SECTOR_NAME_MAP = {
+    "comm": "Commercial",
+    "rc": "Residential and Commercial",
+    "resid": "Residential",
+}
 FUEL_NAME_MAP = {
     "biomass": "Solids|Biomass",
     "biomass_nc": "Solids|Biomass|Traditional",
@@ -48,27 +57,99 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     - "buildings iamc store": store IAMC-formatted reporting on the scenario.
     - "buildings all": both of the above.
     """
+    from message_data.reporting.util import REPLACE_DIMS
 
     # Path where STURM output files are found
     rep.graph["config"].setdefault(
         "sturm output path", context.get_local_path("buildings")
     )
+    # FIXME don't hard-code this
+    rep.graph["config"].setdefault("regions", "R12")
+
+    context.setdefault(
+        "buildings",
+        Config(sturm_scenario=scenario_name(rep.graph["scenario"].scenario)),
+    )
+
+    # Store a Spec in the graph for use by e.g. buildings_agg0()
+    spec = get_spec(context)
+    rep.add("buildings spec", spec)
+
+    # Configure message_data.reporting.util.collapse to map commodity and technology IDs
+    REPLACE_DIMS.setdefault("t", dict())
+    REPLACE_DIMS["c"].update({k.title(): v for k, v in FUEL_NAME_MAP.items()})
+    for (s_id, s_name), enduse in product(
+        SECTOR_NAME_MAP.items(), spec.add.set["enduse"]
+    ):
+        # Append "$" so the expressions only match the full/end of string
+        REPLACE_DIMS["t"][
+            f"{s_id.title()} {enduse.id.title()}$"
+        ] = f"{s_name}|{eval_anno(enduse, 'report')}"
+        REPLACE_DIMS["t"][f"{s_id.title()}$"] = s_name
+
+    log.info(f"Will replace:\n{REPLACE_DIMS!r}")
 
     # Filters for retrieving data. Use the keys "t" and "y::model" that are
     # automatically populated by message_ix and message_data, respectively.
-    rep.add("buildings filters", buildings_filters, "t", "y::model")
+    rep.add("buildings filters 0", buildings_filters0, "t", "y::model")
+    rep.add("buildings filters 1", buildings_filters1, "y::model")
+
+    # Mapping for aggregation
+    rep.add("buildings agg", buildings_agg0, "buildings spec", "config")
+    # Aggregate
+    rep.add(
+        "in:nl-t-ya-c-l:buildings",
+        computations.aggregate,
+        "in:nl-t-ya-c-l",
+        "buildings agg",
+        False,
+    )
+    # Select for final energy
+    rep.add(
+        "select",
+        "buildings fe:nl-t-ya-c-l:0",
+        "in:nl-t-ya-c-l:buildings",
+        "buildings filters 1",
+    )
+    # Apply and convert units
+    k = Key.from_str_or_key("buildings fe:nl-t-ya-c-l")
+    k2 = k.add_tag("2")
+    rep.add("assign_units", k.add_tag("1"), k.add_tag("0"), "GWa/year")
+    rep.add("convert_units", k2, k.add_tag("1"), "EJ/yr", sums=True)
+
+    # Conversion to IAMC data format
+    # FIXME this duplicates reporting structures used in .model.transport; use a common
+    #       function to set up both
+    add_iamc(
+        rep,
+        dict(
+            base=k2.drop("l"), variable="_buildings fe0", var=["Final Energy", "t", "c"]
+        ),
+    )
+    add_iamc(
+        rep,
+        dict(
+            base=k2.drop("c", "l"), variable="_buildings fe1", var=["Final Energy", "t"]
+        ),
+    )
+    rep.add(
+        "concat", "buildings fe::iamc", "_buildings fe0::iamc", "_buildings fe1::iamc"
+    )
 
     # Lists of keys for use later
-    store_keys = []
+    store_keys = ["buildings fe::iamc"]
     file_keys = []
 
     # Iterate over each of the "tables"
     for i, (func, args, store_enabled, base) in {
         # index: (function, inputs to the function, whether to store_ts, file basename)
-        # commented: 2022-09-09 temporary
-        # Disabled
-        # 0: (report0, ["buildings filters"], True, "buildings-FE"),
+        #
+        # NB(PNK 2022-12-15) temporarily re-enabled for comparison
+        0: (report0, ["buildings filters 0"], True, "final-energy-old"),
+        #
+        # commented: 2022-09-09 temporarily disabled
         # 1: (report1, ["buildings filters"], True, "buildings-emiss"),
+        #
         2: (report2, ["config"], False, "sturm-raw"),
         3: (report3, ["buildings 2"], True, "buildings"),
     }.items():
@@ -92,6 +173,14 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
 
         # Add to the list of files to be stored
         file_keys.append(k3)
+
+    # Same for final energy
+    k1 = "buildings fe::iamc"
+    k2 = rep.add(
+        "make_output_path", "buildings fe path", "config", "final-energy-new.csv"
+    )
+    k3 = rep.add("buildings fe file", lambda df, path: df.to_csv(path), k1, k2)
+    file_keys.append(k3)
 
     # Add keys that collect others:
     # 1. Store all data on the scenario.
@@ -166,7 +255,7 @@ def var_name(df: pd.DataFrame, expr: str) -> pd.DataFrame:
 # Reporting computations/atomic steps
 
 
-def buildings_filters(all_techs: List[str], years: List) -> Dict:
+def buildings_filters0(all_techs: List[str], years: List) -> Dict:
     """Return filters for buildings reporting."""
     # Regular expression to match technology IDs relevant for buildings reporting
     tech_re = re.compile("(resid|comm).*(apps|cool|cook|heat|hotwater)")
@@ -176,6 +265,49 @@ def buildings_filters(all_techs: List[str], years: List) -> Dict:
         ),
         year_act=years,
     )
+
+
+def buildings_filters1(years: List) -> Dict:
+    """Return filters for buildings reporting."""
+    # Regular expression to match technology IDs relevant for buildings reporting
+    return dict(l=["final"], ya=years)
+
+
+def buildings_agg0(spec: Spec, config: Dict) -> Dict:
+    """Return mapping for buildings aggregation."""
+    techs = defaultdict(list)
+
+    sector_expr = re.compile("_(comm|resid)_")
+    enduse_expr = re.compile("_(apps|cook|cool|heat|hotwater)$")
+
+    for t in spec.add.set["technology"]:
+        sector_match = sector_expr.search(t.id)
+        try:
+            sector = sector_match.group(1)
+        except AttributeError:
+            pass
+        else:
+            techs[sector].append(t.id)
+            techs["rc"].append(t.id)
+
+        enduse_match = enduse_expr.search(t.id)
+        try:
+            enduse = enduse_match.group(1)
+        except AttributeError:
+            pass
+        else:
+            techs[f"{sector} {enduse}"].append(t.id)
+            techs[f"rc {enduse}"].append(t.id)
+
+        if t.id.endswith("_afofi"):
+            techs["rc"].append(t.id)
+
+    result = nodes_world_agg(config)
+    result["t"] = techs
+
+    log.info(f"Will aggregate:\n{result!r}")
+
+    return result
 
 
 def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
@@ -249,7 +381,7 @@ def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
         "Final Energy|Commercial|Solids|Biomass",
     ]
 
-    # Sum of fuel types for different building sub-setors (R, C and R+C)
+    # Sum of fuel types for different building sub-sectors (R, C and R+C)
     FE_rep_tot_fuel = (
         FE_rep[~FE_rep["variable"].isin(exclude)]
         .pipe(sum_on, "node", "unit", "year", "fuel_type")
