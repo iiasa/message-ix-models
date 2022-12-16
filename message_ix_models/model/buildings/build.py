@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List
 
 import message_ix
 import pandas as pd
@@ -464,10 +464,13 @@ def materials(
             result[name].append(df)
 
     # Retrieve data once
-    demand_data = scenario.par("demand", {"level": "demand"})
+    mat_demand = scenario.par("demand", {"level": "demand"})
+    index_cols = ["node", "year", "commodity"]
 
     # Subtract building material demand from existing demands in scenario
-    for rc, base_data in (("resid", sturm_r), ("comm", sturm_c)):
+    for rc, base_data, how in (("resid", sturm_r, "right"), ("comm", sturm_c, "outer")):
+        new_col = f"demand_{rc}_const"
+
         # - Drop columns.
         # - Rename "value" to e.g. "demand_resid_const".
         # - Extract MESSAGEix-Materials commodity name from STURM commodity name.
@@ -475,30 +478,30 @@ def materials(
         # - Set index.
         df = (
             base_data.drop(columns=["level", "time", "unit"])
-            .rename(columns={"value": f"demand_{rc}_const"})
+            .rename(columns={"value": new_col})
             .assign(
                 commodity=lambda _df: _df.commodity.str.extract(
                     f"{rc}_mat_demand_(cement|steel|aluminum)"
                 )
             )
             .dropna(subset=["commodity"])
-            .set_index(["node", "year", "commodity"])
+            .set_index(index_cols)
         )
 
-        # - Merge existing demands at level "demand".
-        #   TODO check if this can be done with df.merge(…, how="left")
-        # - Compute new value = (existing value - STURM value), but no less than 0.
-        # - Drop intermediate column.
-        mat_demand = (
-            demand_data.join(df, on=["node", "year", "commodity"], how="left")
-            .dropna()
-            .assign(
-                value=lambda _df: (_df["value"] - _df[f"demand_{rc}_const"]).clip(0)
-            )
-            .drop(columns=f"demand_{rc}_const")
-        )
+        # Merge existing demands at level "demand".
+        # - how="right": drop all rows in par("demand", …) that have no match in `df`.
+        # - how="outer": keep the union of rows in `mat_demand` (e.g. from sturm_r) and
+        #   in `df` (from sturm_c); fill NA with zeroes.
+        mat_demand = mat_demand.join(df, on=index_cols, how=how).fillna(0)
 
-        result["demand"].append(mat_demand)
+    # - Compute new value = (existing value - STURM values), but no less than 0.
+    # - Drop intermediate column.
+    # - Add to combined data.
+    result["demand"].append(
+        mat_demand.eval("value = value - demand_comm_const - demand_resid_const")
+        .assign(value=lambda df: df["value"].clip(0))
+        .drop(columns=["demand_comm_const", "demand_resid_const"])
+    )
 
     # Concatenate data frames together
     return {k: pd.concat(v) for k, v in result.items()}
