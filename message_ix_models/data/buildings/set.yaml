@@ -101,7 +101,6 @@ relation:
   - OCA_Emission
   - SO2_Emission
   - VOC_Emission
-  - h2mix_direct
   - oper_res
   - solar_th_pot
 
