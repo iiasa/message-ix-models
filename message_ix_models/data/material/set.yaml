@@ -355,6 +355,7 @@ cement:
     - grinding_vertmill_cement
     - DUMMY_limestone_supply_cement
     - total_EOL_cement
+    - other_EOL_cement
     - scrap_recovery_cement
     remove:
     - cement_co2scr
