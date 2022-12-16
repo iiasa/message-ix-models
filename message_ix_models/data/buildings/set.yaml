@@ -26,6 +26,9 @@ enduse:
     hotwater:
       name: Hot water
       report: Heating|Water
+    other_uses:
+      name: Other
+      report: Other uses
 
 # MESSAGE sets
 
