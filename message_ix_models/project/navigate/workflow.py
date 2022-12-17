@@ -266,7 +266,7 @@ def generate(context: Context) -> Workflow:
             #    step 9 (running legacy reporting, below)
             name = engage.add_steps(wf, base=base, config=policy_config, name=s)
 
-        if name == base or climate_policy == "Ctax":
+        if name == base:
             policy_solved = name
         else:
             # Re-solve with buildings at the last stage
