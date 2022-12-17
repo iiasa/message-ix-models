@@ -16,6 +16,8 @@ from .report import gen_config
 
 log = logging.getLogger(__name__)
 
+# Functions for individual workflow steps
+
 
 def build_materials(context: Context, scenario: Scenario) -> Scenario:
     """Workflow step 2."""
@@ -34,7 +36,7 @@ $ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data
     return build(scenario)
 
 
-def build_transport(context: Context, scenario: Scenario) -> Scenario:
+def build_transport(context: Context, scenario: Scenario, **options) -> Scenario:
     """Workflow step 3."""
     from message_data.model.transport import build
     from message_data.tools.utilities import update_h2_blending
@@ -45,7 +47,8 @@ def build_transport(context: Context, scenario: Scenario) -> Scenario:
     #    other steps on the current branch.
     update_h2_blending(scenario)
 
-    return build.main(context, scenario, fast=True)
+    options.setdefault("fast", True)
+    return build.main(context, scenario, options)
 
 
 #: Common settings to use when invoking MESSAGEix-Buildings. The value for
@@ -182,18 +185,6 @@ def generate(context: Context) -> Workflow:
         target="MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE",
     )
 
-    # Step 3
-    wf.add_step(
-        "MT built",
-        "M built",
-        build_transport,
-        target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
-        clone=True,
-    )
-
-    # Step 4
-    wf.add_step("MT solved", "MT built", solve)
-
     BMT_solved = {}  # Step names for results of step 7
     reported_all = []  # Step IDs for results of step 8
 
@@ -208,25 +199,38 @@ def generate(context: Context) -> Workflow:
                 str(code.get_annotation(id="navigate-T3.5-policy").text),
             )
 
-    # Steps 5–7 are only run for the "NPi" (baseline) climate policy
+    # Steps 3–7 are only run for the "NPi" (baseline) climate policy
     filters = {"navigate-task": "T3.5", "navigate-climate-policy": "NPi"}
     for s, _, T35_policy in iter_scenarios(filters):
         # Skip these for now
         if s.endswith("_d"):
             continue
 
-        # Name of the step
-        name = f"BMT {s} solved"
-        BMT_solved[T35_policy] = name
+        # Step 3
+        wf.add_step(
+            f"MT {s} built",
+            "M built",
+            build_transport,
+            target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
+            clone=True,
+            navigate_scenario=T35_policy,
+        )
+
+        # Step 4
+        wf.add_step(f"MT {s} solved", f"MT {s} built", solve)
 
         # Steps 5–7
+        name = f"BMT {s} solved"
         wf.add_step(
             name,
-            "MT solved",
+            f"MT {s} solved",
             build_solve_buildings,  # type: ignore
             target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
             navigate_scenario=s,
         )
+
+        # Store the step name as a starting point for climate policy steps, below
+        BMT_solved[T35_policy] = name
 
     # Now iterate over all scenarios
     filters.pop("navigate-climate-policy")
@@ -297,10 +301,10 @@ def generate(context: Context) -> Workflow:
 
         reported_all.append(reported)
 
-    # Steps 8–9 for all scenarios
+    # Steps 8–9 for all scenarios in a batch
     wf.add_single("report all", *reported_all)
 
-    # Step 10 for all scenarios
+    # Step 10 for all scenarios in a batch
     wf.add_single("prep all", prep_submission, "context", *reported_all)
 
     return wf
