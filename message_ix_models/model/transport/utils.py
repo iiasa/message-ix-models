@@ -2,27 +2,15 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import pandas as pd
 from iam_units import registry  # noqa: F401
-from message_ix import Scenario
 from message_ix_models import Context, Spec
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import eval_anno, private_data_path
 
-from .config import Config
-
 log = logging.getLogger(__name__)
-
-
-def configure(
-    context: Context,
-    scenario: Optional[Scenario] = None,
-    options: Optional[Dict] = None,
-) -> None:
-    # TODO warn about deprecation
-    Config.from_context(context, scenario, options)
 
 
 def input_commodity_level(

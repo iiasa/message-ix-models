@@ -116,6 +116,14 @@ class ScenarioFlags(Flag):
 
 @dataclass
 class Config(ConfigHelper):
+    """Configuration for MESSAGEix-Transport.
+
+    This dataclass stores and documents all configuration settings required and used by
+    :mod:`.transport`. It also handles (via :meth:`.from_context`) loading configuration
+    and values from files like :file:`config.yaml`, while respecting higher-level
+    configuration, e.g. :attr:`.model.Config.regions`.
+    """
+
     #: Values for constraints:
     #:
     #: ``LDV growth_activity``
@@ -399,6 +407,11 @@ class Config(ConfigHelper):
         )
 
     def set_futures_scenario(self, value: Optional[str]):
+        """Update :attr:`flags` from a string indicating a Transport Futures scenario.
+
+        See :meth:`ScenarioFlags.parse_futures`. This method alters :attr:`mode_share`
+        and :attr:`fixed_demand` according to the `value` (if any).
+        """
         self.flags = self.flags.parse_futures(value)
 
         if not self.flags & ScenarioFlags.FUTURES:
@@ -411,11 +424,8 @@ class Config(ConfigHelper):
             self.fixed_demand = as_quantity("275000 km / year")
 
     def set_navigate_scenario(self, value: Optional[str]):
-        """Update :attr:`flags` from a string.
+        """Update :attr:`flags` from a string representing a NAVIGATE scenario.
 
-        Parameters
-        ----------
-        value : str
-            Zero or more of "act", "ele", and/or "tec", joined with strings.
+        See :meth:`ScenarioFlags.parse_navigate`.
         """
         self.flags = self.flags.parse_navigate(value)

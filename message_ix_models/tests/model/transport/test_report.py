@@ -7,7 +7,7 @@ from message_ix_models.testing import NIE
 from numpy.testing import assert_allclose
 from pytest import mark, param
 
-from message_data.model.transport import computations, configure
+from message_data.model.transport import Config, computations
 from message_data.model.transport.report import PLOTS, callback  # noqa: F401
 from message_data.model.transport.testing import (
     MARK,
@@ -82,7 +82,7 @@ def test_distance_ldv(test_context, regions):
     ctx = test_context
     ctx.model.regions = regions
 
-    configure(ctx)
+    Config.from_context(ctx)
 
     # Fake reporting config from the context
     config = dict(transport=ctx.transport)
