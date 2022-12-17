@@ -9,7 +9,7 @@ from message_ix import Reporter, Scenario
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
 
-from message_data.model.transport import configure
+from message_data.model.transport import Config
 from message_data.model.transport.plot import PLOTS
 
 log = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ def callback(rep: Reporter, context: Context) -> None:
     N_keys = len(rep.graph)
 
     # Read transport configuration onto the Context, including reporting config
-    configure(context, cast(Scenario, rep.graph.get("scenario")))
+    Config.from_context(context, cast(Scenario, rep.graph.get("scenario")))
 
     # Transfer transport configuration to the Reporter
     update_config(rep, context)

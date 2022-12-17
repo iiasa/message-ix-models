@@ -13,13 +13,7 @@ from message_ix_models.util import broadcast, same_node
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from message_data.model.transport import (
-    Config,
-    DataSourceConfig,
-    build,
-    computations,
-    configure,
-)
+from message_data.model.transport import Config, DataSourceConfig, build, computations
 from message_data.model.transport import data as data_module
 from message_data.model.transport.data import ldv
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
@@ -115,7 +109,7 @@ def test_ef_for_input(test_context):
 def configure_build(context, regions, years):
     context.update(regions=regions, years=years)
 
-    configure(context)
+    Config.from_context(context)
 
     # Information about the corresponding base model
     info = bare.get_spec(context)["add"]

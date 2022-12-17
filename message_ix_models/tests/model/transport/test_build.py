@@ -8,7 +8,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import NIE
 from pytest import mark, param
 
-from message_data.model.transport import build, configure, report
+from message_data.model.transport import Config, build, report
 from message_data.model.transport.testing import MARK
 
 log = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
     if years:
         ctx.update(years=years)
 
-    configure(ctx)
+    Config.from_context(ctx)
 
     # The spec can be generated
     spec = build.get_spec(ctx)

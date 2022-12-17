@@ -6,8 +6,8 @@ from genno.testing import assert_qty_equal
 from iam_units import registry
 from message_ix_models.util import eval_anno
 
-from message_data.model.transport.config import DataSourceConfig
-from message_data.model.transport.utils import configure, input_commodity_level
+from message_data.model.transport.config import Config, DataSourceConfig
+from message_data.model.transport.utils import input_commodity_level
 from message_data.reporting.util import as_quantity
 
 
@@ -21,7 +21,7 @@ def test_add_cl(test_context):
         ],
         columns=["node", "commodity", "level", "technology"],
     )
-    configure(test_context)
+    Config.from_context(test_context)
 
     df_out = input_commodity_level(test_context, df_in, default_level="foo")
 
@@ -56,8 +56,8 @@ def test_configure(test_context, regions):
     if regions:
         ctx.model.regions = regions
 
-    # configure() returns nothing
-    assert configure(ctx) is None
+    # Returns nothing
+    assert Config.from_context(ctx) is None
 
     cfg = ctx["transport"]
 
@@ -113,4 +113,4 @@ def test_configure(test_context, regions):
 )
 def test_configure_options(test_context, options):
     """:func:`.configure` operates with various options."""
-    configure(test_context, options=options)
+    Config.from_context(test_context, options=options)

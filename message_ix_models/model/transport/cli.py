@@ -256,14 +256,14 @@ def gen_demand(ctx, source, nodes, years, output_dir):
     import message_ix
     from genno import Key
 
-    from message_data.model.transport import build, configure, demand
+    from message_data.model.transport import Config, build, demand
 
     # Read general transport config
     ctx.regions = nodes
     ctx.years = years
 
     options = {"data source": {"gdp": source, "population": source}}
-    configure(ctx, options=options)
+    Config.from_context(ctx, options=options)
 
     # Get a spec for the structure of a target model
     spec = build.get_spec(ctx)

@@ -10,7 +10,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import NIE
 from pytest import param
 
-from message_data.model.transport import build, configure, demand
+from message_data.model.transport import Config, build, demand
 from message_data.model.transport.testing import MARK
 
 log = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ def test_demand_dummy(test_context, regions, years):
     ctx.model.regions = regions
     ctx.model.years = years
 
-    configure(ctx)
+    Config.from_context(ctx)
 
     spec = build.get_spec(ctx)
 
@@ -161,7 +161,7 @@ def demand_computer(test_context, tmp_path, regions, years, options):
     # TODO convert to a fixture
     ctx = test_context
     ctx.update(regions=regions, years=years, output_path=tmp_path)
-    configure(ctx, options=options)
+    Config.from_context(ctx, options=options)
 
     spec = bare.get_spec(ctx)
 

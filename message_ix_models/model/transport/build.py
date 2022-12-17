@@ -13,7 +13,7 @@ from message_ix_models.model.structure import get_region_codes
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
-from message_data.model.transport.utils import configure
+from message_data.model.transport.config import Config
 
 log = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ def main(
     mark_time()
 
     # Configure; consumes some of the `options`
-    configure(context, scenario, options)
+    Config.from_context(context, scenario, options)
 
     # Generate the specification of the MESSAGEix-Transport structure: required, added,
     # and removed set items
