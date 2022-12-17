@@ -1,9 +1,12 @@
 import logging
+import operator
 from dataclasses import InitVar, dataclass, field, replace
+from enum import Flag, auto
+from functools import reduce
 from typing import Dict, List, Optional
 
+import message_ix
 from genno import Quantity
-from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import generate_set_elements
 from message_ix_models.util import identify_nodes, load_private_data, private_data_path
@@ -37,6 +40,78 @@ class DataSourceConfig(ConfigHelper):
 def quantity_field(value):
     """Field with a mutable default value that is a :class:`.Quantity`."""
     return field(default_factory=lambda: as_quantity(value))
+
+
+class ScenarioFlags(Flag):
+    """Flags for features of MESSAGEix-Transport scenarios."""
+
+    DEFAULT = 0
+
+    # Transport Futures flags
+    BASE = auto()
+    A___ = auto()  # NB use underscores because "-" is invalid in Python names
+    DEBUG = auto()
+
+    FUTURES = BASE | A___ | DEBUG
+
+    # NAVIGATE flags
+    ACT = auto()
+    ELE = auto()
+    TEC = auto()
+
+    NAVIGATE = ACT | ELE | TEC
+
+    def _assert_not(self, name: str, other: str, value: Optional[int]):
+        if self & self.__class__[other] and value is not None:
+            raise ValueError(f"{name} scenario {value!r} clashes with existing {self}")
+
+    def parse_futures(self, value: Optional[int]):
+        """Parse a Transport Futures scenario from a string.
+
+        Parameters
+        ----------
+        value : str
+            One of "base", "A---", or "debug".
+
+        Raises
+        ------
+        ValueError
+            if `self` is already set to any NAVIGATE scenario.
+        """
+        self._assert_not("Transport Futures", "NAVIGATE", value)
+
+        try:
+            return self.__class__[(value or "default").upper().replace("-", "_")]
+        except KeyError:
+            raise ValueError(f"Unknown Transport Futures scenario {value!r}")
+
+    def futures_id(self) -> str:
+        return self.name.replace("_", "-") if "_" in self.name else self.name.lower()
+
+    def parse_navigate(self, value: Optional[int]):
+        """Parse a NAVIGATE scenario from a string.
+
+        Parameters
+        ----------
+        value : str
+            Zero or more of "act", "ele", and/or "tec", joined with "+".
+
+        Raises
+        ------
+        ValueError
+            if `self` is already set to any Transport Futures scenario.
+        """
+        self._assert_not("NAVIGATE", "FUTURES", value)
+        cls = self.__class__
+
+        try:
+            return reduce(
+                operator.or_,
+                map(cls.__getitem__, filter(None, (value or "").upper().split("+"))),
+                self,
+            )
+        except KeyError as e:
+            raise ValueError(f"Unknown NAVIGATE scenario {e.args[0]}") from None
 
 
 @dataclass
@@ -125,6 +200,16 @@ class Config(ConfigHelper):
 
     #: Fixed future point for total passenger activity.
     fixed_GDP: Quantity = quantity_field("300 kUSD / passenger / year")
+
+    #: Flags for distinct scenario features. In addition to providing zero or more
+    #: :class:`ScenarioFlags` directly, this can be set by passing
+    #: :attr:`futures_scenario` or :attr:`navigate_scenario` to the constructor, or by
+    #: calling :meth:`set_futures_scenario` or :meth:`set_navigate_scenario` on an
+    #: existing Config instance.
+    #:
+    #: :mod:`.transport.build` and :mod:`.transport.report` code will respond to these
+    #: settings in documented ways.
+    flags: ScenarioFlags = ScenarioFlags.DEFAULT
 
     #: Load factors for vehicles.
     #:
@@ -217,28 +302,29 @@ class Config(ConfigHelper):
     #: :file:`set.yaml` and :file:`technology.yaml`.
     set: Dict = field(default_factory=dict, repr=False)
 
-    #: Identifier of a Transport Futures scenario.
-    futures_scenario: InitVar[str] = None
-
     #: Sources for input data.
     data_source: DataSourceConfig = field(default_factory=DataSourceConfig)
 
-    def __post_init__(self, futures_scenario):
-        if futures_scenario not in (None, "default", "base", "A---", "debug"):
-            raise ValueError(f"Unknown Transport Futures scenario {futures_scenario!r}")
+    # Init-only variables
 
-        if futures_scenario:
-            self.mode_share = futures_scenario
+    #: Identifier of a Transport Futures scenario, used to update :attr:`flags` via
+    #: :meth:`.ScenarioFlags.parse_futures`.
+    futures_scenario: InitVar[str] = None
 
-            if self.mode_share == "A---":
-                log.info(f"Set fixed demand for TF scenario {futures_scenario!r}")
-                self.fixed_demand = as_quantity("275000 km / year")
+    #: Identifiers of NAVIGATE T3.5 demand-side scenarios, used to update :attr:`flags`
+    #: via :meth:`.ScenarioFlags.parse_navigate`.
+    navigate_scenario: InitVar[str] = None
+
+    def __post_init__(self, futures_scenario, navigate_scenario):
+        """Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`."""
+        self.set_futures_scenario(futures_scenario)
+        self.set_navigate_scenario(navigate_scenario)
 
     @classmethod
     def from_context(
         cls,
         context: Context,
-        scenario: Optional[Scenario] = None,
+        scenario: Optional[message_ix.Scenario] = None,
         options: Optional[Dict] = None,
     ):
         """Configure `context` for building MESSAGEix-Transport.
@@ -311,3 +397,25 @@ class Config(ConfigHelper):
         context["transport"] = replace(
             config, **options, data_source=config.data_source.replace(**ds_options)
         )
+
+    def set_futures_scenario(self, value: Optional[str]):
+        self.flags = self.flags.parse_futures(value)
+
+        if not self.flags & ScenarioFlags.FUTURES:
+            return
+
+        self.mode_share = self.flags.futures_id()
+
+        if self.mode_share == "A---":
+            log.info(f"Set fixed demand for TF scenario {value!r}")
+            self.fixed_demand = as_quantity("275000 km / year")
+
+    def set_navigate_scenario(self, value: Optional[str]):
+        """Update :attr:`flags` from a string.
+
+        Parameters
+        ----------
+        value : str
+            Zero or more of "act", "ele", and/or "tec", joined with strings.
+        """
+        self.flags = self.flags.parse_navigate(value)
