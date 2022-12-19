@@ -4,7 +4,7 @@ import numpy as np
 
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
-from util import read_config
+from .util import read_config
 
 context = read_config()
 
