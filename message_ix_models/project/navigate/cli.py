@@ -25,8 +25,14 @@ def cli(context, navigate_scenario):
 
 @cli.command("prep-submission")
 @click.argument("wf_dir", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option(
+    "--dsd",
+    type=click.Choice(["navigate", "iiasa-ece"]),
+    default="navigate",
+    help="Target data structure for submission prep.",
+)
 @click.pass_obj
-def prep_submission(context, wf_dir):
+def prep_submission(context, wf_dir, dsd):
     """Prepare data for NAVIGATE submission.
 
     WF_DIR is the base path of the NAVIGATE workflow repository.
@@ -34,6 +40,7 @@ def prep_submission(context, wf_dir):
     from message_data.projects.navigate.report import gen_config
     from message_data.tools.prep_submission import main
 
+    context.navigate_dsd = dsd
     # Fixed values
     context.regions = "R12"
 
