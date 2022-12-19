@@ -23,8 +23,9 @@ from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools import advance
-from message_ix_models.util import nodes_ex_world
+from message_ix_models.util import broadcast, nodes_ex_world
 
+from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.utils import path_fallback
 from message_data.reporting.util import as_quantity
 from message_data.tools import iea_eei
@@ -221,6 +222,67 @@ def dummy_prices(gdp: Quantity) -> Quantity:
     shape = list(len(c[1]) for c in coords)
 
     return Quantity(xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km")
+
+
+def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
+    """Scaling factor for freight activity."""
+    # Empty data frame
+    df = pd.DataFrame(columns=["value"], index=pd.Index(y, name="y"))
+
+    df.iloc[0, :] = 1.0
+
+    if ScenarioFlags.ACT & config["transport"].flags:
+        # NAVIGATE T3.5 "act" demand-side scenario
+        years = list(filter(lambda y: y <= 2050, y))
+        df.iloc[: len(years), 0] = np.interp(years, [y[0], 2050], [1.0, 0.865])
+
+    # - Fill all values forward from the latest.
+    # - Convert to long format.
+    # - Broadcast over all nodes `n`.
+    # - Set dimensions as index.
+    return Quantity(
+        df.ffill()
+        .reset_index()
+        .assign(n=None)
+        .pipe(broadcast, n=n)
+        .set_index(["n", "y"])["value"],
+        units="",
+    )
+
+
+def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quantity:
+    """Scaling factor for passenger activity.
+
+    When :attr:`.Config.scenarios` includes :attr:`ScenarioFlags.ACT` (i.e. NAVIGATE
+    Task 3.5, demand-side scenario "act"), the value of 0.8 is specified for LDV, 2050,
+    and all regions. This function implements this as a linear decrease between the
+    first model period (currently 2020) and that point.
+    """
+    # Empty data frame
+    df = pd.DataFrame(columns=t, index=pd.Index(y, name="y"))
+
+    # Set 1.0 (no scaling) for first period
+    df.iloc[0, :] = 1.0
+
+    # Handle particular scenarios
+    if ScenarioFlags.ACT & config["transport"].flags:
+        # NAVIGATE T3.5 "act" demand-side scenario
+        years = list(filter(lambda y: y <= 2050, y))
+        df["LDV"].iloc[: len(years)] = np.interp(years, [y[0], 2050], [1.0, 0.8])
+
+    # - Fill all values forward from the latest.
+    # - Convert to long format.
+    # - Broadcast over all nodes `n`.
+    # - Set dimensions as index.
+    return Quantity(
+        df.ffill()
+        .reset_index()
+        .melt(id_vars="y", var_name="t")
+        .assign(n=None)
+        .pipe(broadcast, n=n)
+        .set_index(["n", "y", "t"])["value"],
+        units="",
+    )
 
 
 def logit(
