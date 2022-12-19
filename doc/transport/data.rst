@@ -19,6 +19,8 @@ Files for quantities without a :math:`n` dimension **may** be placed here.
 :file:`demand-scale.csv`
 ------------------------
 
+Currently unused.
+
 :file:`ldv-class.csv`
 ---------------------
 

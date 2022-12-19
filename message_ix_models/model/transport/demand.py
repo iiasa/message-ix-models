@@ -50,14 +50,8 @@ def dummy(
         except (AttributeError, KeyError):
             continue  # Not a demand commodity
 
-        dfs.append(
-            make_df(
-                "demand",
-                commodity=commodity.id,
-                unit="t km" if "freight" in commodity.id else "km",
-                **common,
-            )
-        )
+        unit = "t km" if "freight" in commodity.id else "km"
+        dfs.append(make_df("demand", commodity=commodity.id, unit=unit, **common))
 
     # # Dummy demand for light oil
     # common["level"] = "final"
@@ -233,7 +227,7 @@ def prepare_reporter(
     gdp_ppp = Key("GDP", "ny", "PPP")
     gdp_ppp_cap = gdp_ppp.add_tag("capita")
     gdp_index = gdp_ppp_cap.add_tag("index")
-    pdt_nyt = Key("transport pdt", "nyt")  # Total PDT shared out by mode
+    pdt_nyt = Key("pdt", "nyt")  # Total PDT shared out by mode
     pdt_cap = pdt_nyt.drop("t").add_tag("capita")
     pdt_ny = pdt_nyt.drop("t").add_tag("total")
     price_sel1 = price_full.add_tag("transport")
@@ -242,181 +236,124 @@ def prepare_reporter(
     cost = Key("cost", "nyct")
     sw = Key("share weight", "nty")
 
-    _ = dict()
+    n = "n::ex world"
+    y = "y::model"
 
+    # Inputs for Computer.add_queue()
+    # NB the genno method actually requires an iterable of (tuple, dict), where the dict
+    #    is keyword arguments to Computer.add(). In all cases here, this would be empty,
+    #    so for simplicity the dict is added below in the call to add_queue()
+    # TODO enhance genno so the empty dict() is optional.
     queue = [
         # Values based on configuration
-        (("quantity_from_config", "speed:t", "config", quote("speeds")), _),
-        (("quantity_from_config", "whour:", "config", quote("work_hours")), _),
-        (("quantity_from_config", "lambda:", "config", quote("lamda")), _),
+        ("quantity_from_config", "speed:t", "config", quote("speeds")),
+        ("quantity_from_config", "whour:", "config", quote("work_hours")),
+        ("quantity_from_config", "lambda:", "config", quote("lamda")),
         # List of nodes excluding "World"
         # TODO move upstream to message_ix
-        (("nodes_ex_world", "n::ex world", "n"), _),
-        (("nodes_ex_world", "n::ex world+code", "nodes"), _),
-        (("nodes_world_agg", "nl::world agg", "config"), _),
+        ("nodes_ex_world", "n::ex world", "n"),
+        ("nodes_ex_world", "n::ex world+code", "nodes"),
+        ("nodes_world_agg", "nl::world agg", "config"),
         # Base share data
-        (
-            (
-                "base_shares",
-                "base shares:n-t-y",
-                "n::ex world",
-                "t::transport modes",
-                "y::model",
-                "config",
-            ),
-            _,
-        ),
+        ("base_shares", "base shares:n-t-y", n, "t::transport modes", y, "config"),
         # Population data; data source according to config
-        ((pop, partial(gdp_pop.population, extra_dims=False), "y", "config"), _),
+        (pop, partial(gdp_pop.population, extra_dims=False), "y", "config"),
         # Population shares by area_type
-        ((pop_at, groups.urban_rural_shares, "y::model", "config"), _),
+        (pop_at, groups.urban_rural_shares, y, "config"),
         # Consumer group sizes
         # TODO ixmp is picky here when there is no separate argument to the callable;
         # fix.
-        ((cg, groups.cg_shares, pop_at, quote(context)), _),
+        (cg, groups.cg_shares, pop_at, quote(context)),
         # PPP GDP, total and per capita
-        (("product", gdp_ppp, gdp, mer_to_ppp), _),
-        (("ratio", gdp_ppp_cap, gdp_ppp, pop), _),
+        ("product", gdp_ppp, gdp, mer_to_ppp),
+        ("ratio", gdp_ppp_cap, gdp_ppp, pop),
         # GDP index
-        (("y0", itemgetter(0), "y::model"), _),
-        (("index_to", gdp_index, gdp_ppp_cap, literal("y"), "y0"), _),
+        ("y0", itemgetter(0), y),
+        ("index_to", gdp_index, gdp_ppp_cap, literal("y"), "y0"),
         # Total demand
-        (("pdt_per_capita", pdt_cap, gdp_ppp_cap, "config"), _),
-        (("product", pdt_ny, pdt_cap, pop), _),
+        ("pdt_per_capita", pdt_cap, gdp_ppp_cap, "config"),
+        ("product", pdt_ny, pdt_cap, pop),
         # Value-of-time multiplier
-        (("votm", "votm:n-y", gdp_ppp_cap), _),
+        ("votm", "votm:n-y", gdp_ppp_cap),
         # Select only the price of transport services
         # FIXME should be the full set of prices
-        (("select", price_sel0, price_full, dict(c="transport")), _),
-        (("price_units", price_sel1, price_sel0), _),
+        ("select", price_sel0, price_full, dict(c="transport")),
+        ("price_units", price_sel1, price_sel0),
         # Smooth prices to avoid zig-zag in share projections
-        (("smooth", price, price_sel1), _),
+        ("smooth", price, price_sel1),
         # Transport costs by mode
-        (
-            (
-                "cost",
-                cost,
-                price,
-                gdp_ppp_cap,
-                "whour:",
-                "speed:t",
-                "votm:n-y",
-                "y::model",
-            ),
-            _,
-        ),
+        ("cost", cost, price, gdp_ppp_cap, "whour:", "speed:t", "votm:n-y", y),
         # Share weights
         (
-            (
-                "share_weight",
-                sw,
-                "base shares:n-t-y",
-                gdp_ppp_cap,
-                cost,
-                "lambda:",
-                "n::ex world",
-                "y::model",
-                "t::transport",
-                "cat_year",
-                "config",
-            ),
-            _,
+            "share_weight",
+            sw,
+            "base shares:n-t-y",
+            gdp_ppp_cap,
+            cost,
+            "lambda:",
+            n,
+            y,
+            "t::transport",
+            "cat_year",
+            "config",
         ),
         # Shares
-        (
-            (
-                "shares:n-t-y",
-                partial(computations.logit, dim="t"),
-                cost,
-                sw,
-                "lambda:",
-                "y::model",
-            ),
-            _,
-        ),
+        ("shares:n-t-y", partial(computations.logit, dim="t"), cost, sw, "lambda:", y),
         # Total PDT shared out by mode
-        (("product", pdt_nyt, pdt_ny, "shares:n-t-y"), _),
+        ("product", pdt_nyt.add_tag("0"), pdt_ny, "shares:n-t-y"),
+        # Adjustment factor
+        ("factor_pdt", "pdt factor:n-y-t", n, y, "t::transport modes", "config"),
+        # Only the LDV values
+        (
+            "select",
+            "ldv pdt factor:n-y",
+            "pdt factor:n-y-t",
+            dict(t=["LDV"], drop=True),
+        ),
+        ("product", pdt_nyt, pdt_nyt.add_tag("0"), "pdt factor:n-y-t"),
         # Per capita (for validation)
-        (("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop), dict(sums=False)),
+        ("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop),
         # LDV PDT only
-        (
-            (
-                "select",
-                "transport ldv pdt:n-y:ref",
-                pdt_nyt,
-                dict(t=["LDV"], drop=True),
-            ),
-            _,
-        ),
+        ("select", "ldv pdt:n-y:ref", pdt_nyt, dict(t=["LDV"], drop=True)),
         # Indexed to base year
-        (
-            (
-                "index_to",
-                "transport ldv pdt:n-y:index",
-                "transport ldv pdt:n-y:ref",
-                literal("y"),
-                "y0",
-            ),
-            _,
-        ),
-        (("advance_ldv_pdt", "transport ldv pdt:n:advance", "config"), _),
+        ("index_to", "ldv pdt:n-y:index", "ldv pdt:n-y:ref", literal("y"), "y0"),
+        ("advance_ldv_pdt", "ldv pdt:n:advance", "config"),
         # Compute LDV PDT as ADVANCE base-year values indexed to overall growth
-        (
-            (
-                "product",
-                "transport ldv pdt::total",
-                "transport ldv pdt:n-y:index",
-                "transport ldv pdt:n:advance",
-            ),
-            _,
-        ),
+        ("product", "ldv pdt::total+0", "ldv pdt:n-y:index", "ldv pdt:n:advance"),
+        ("product", "ldv pdt::total", "ldv pdt:n-y:total+0", "ldv pdt factor:n-y"),
         # LDV PDT shared out by consumer group
-        (
-            (
-                "product",
-                "transport ldv pdt",
-                "transport ldv pdt:n-y:total",
-                cg,
-            ),
-            _,
-        ),
+        ("product", "ldv pdt", "ldv pdt:n-y:total", cg),
         # Freight from IEA EEI
-        # (("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"), _),
+        # (("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
         # Freight from ADVANCE
-        (("advance_fv", "fv:n:historical", "config"), _),
-        (("product", "fv:n-y", "fv:n:historical", gdp_index), _),
+        ("advance_fv", "fv:n:historical", "config"),
+        ("product", "fv:n-y:0", "fv:n:historical", gdp_index),
+        # Adjustment factor
+        ("factor_fv", "fv factor:n-y", n, y, "config"),
+        ("product", "fv:n-y", "fv:n-y:0", "fv factor:n-y"),
         # Convert to ixmp format
         (
-            (
-                "as_message_df",
-                "transport demand freight::ixmp",
-                "fv:n-y",
-                "demand",
-                dict(node="n", year="y"),
-                dict(commodity="transport freight", level="useful", time="year"),
-            ),
-            _,
+            "as_message_df",
+            "transport demand freight::ixmp",
+            "fv:n-y",
+            "demand",
+            dict(node="n", year="y"),
+            dict(commodity="transport freight", level="useful", time="year"),
         ),
         (
-            (
-                "transport demand passenger::ixmp",
-                computations.demand_ixmp0,
-                pdt_nyt,
-                "transport ldv pdt:n-y-cg",
-            ),
-            _,
+            "transport demand passenger::ixmp",
+            computations.demand_ixmp0,
+            pdt_nyt,
+            "ldv pdt:n-y-cg",
         ),
         # Dummy demands, in case these are configured
         (
-            (
-                "dummy demand::ixmp",
-                dummy,
-                "c::transport",
-                "nodes::ex world",
-                "y::model",
-                "config",
-            ),
-            _,
+            "dummy demand::ixmp",
+            dummy,
+            "c::transport",
+            "nodes::ex world",
+            "y::model",
+            "config",
         ),
     ]
 
@@ -424,6 +361,6 @@ def prepare_reporter(
     for name, cls in plot.PLOTS.items():
         if "demand" not in name:
             continue
-        queue.append(((f"plot {name}", cls.make_task()), _))
+        queue.append((f"plot {name}", cls.make_task()))
 
-    rep.add_queue(queue)
+    rep.add_queue((item, dict()) for item in queue)
