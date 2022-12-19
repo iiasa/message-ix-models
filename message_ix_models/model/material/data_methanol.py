@@ -19,11 +19,10 @@ def gen_data_methanol(scenario):
     )
     pars = df_pars.set_index("par").to_dict()["value"]
 
-    dict1 = gen_data_meth_h2()
-    dict2 = gen_data_meth_bio(scenario)
-    new_dict = combine_df_dictionaries(dict1, dict2)
-    dict_bio_ccs = gen_meth_bio_ccs(scenario)
-    new_dict = combine_df_dictionaries(new_dict, dict_bio_ccs)
+    meth_h2_dict = gen_data_meth_h2()
+    meth_bio_dict = gen_data_meth_bio(scenario)
+    meth_bio_ccs_dict = gen_meth_bio_ccs(scenario)
+    new_dict = combine_df_dictionaries(meth_h2_dict, meth_bio_dict, meth_bio_ccs_dict)
 
     dict3 = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
@@ -50,50 +49,12 @@ def gen_data_methanol(scenario):
     df_final["value"] = df_final["value"].apply(lambda x: x * 0.5)
     new_dict2["demand"] = df_final
 
-    # fix demand infeasibility
-    act = scenario.par("historical_activity")
-    row = (
-        act[act["technology"].str.startswith("meth")]
-        .sort_values("value", ascending=False)
-        .iloc[0]
-    )
-    # china meth_coal production (90% coal share on 2015 47 Mt total; 1.348 = Mt to GWa )
-    row["value"] = (47 / 1.3498) * 0.9
-    new_dict2["historical_activity"] = pd.concat(
-        [new_dict2["historical_activity"], pd.DataFrame(row).T]
-    )
-    # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
-    hist_cap = message_ix.make_df(
-        "historical_new_capacity",
-        node_loc="R12_CHN",
-        technology="meth_coal",
-        year_vtg=2015,
-        value=9.6,
-        unit="GW",
-    )
-    new_dict2["historical_new_capacity"] = hist_cap
-    # fix demand infeasibility
-    # act = scenario.par("historical_activity")
-    # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
-    # row["value"] = 0.0
-    new_dict2["historical_activity"] = pd.concat(
-        [new_dict2["historical_activity"], pd.DataFrame(row).T]
-    )
-    df_ng = pd.read_excel(
-        context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
-        sheet_name="Sheet1"
-    )
-    new_dict2["historical_activity"] = pd.concat(
-        [new_dict2["historical_activity"], df_ng]
-    )
+    new_dict2 = combine_df_dictionaries(new_dict2, add_meth_hist_act(scenario))
 
     mto_dict = gen_data_meth_chemicals(scenario, "MTO")
-    new_dict2 = combine_df_dictionaries(new_dict2, mto_dict)
-
     ch2o_dict = gen_data_meth_chemicals(scenario, "Formaldehyde")
-    new_dict2 = combine_df_dictionaries(new_dict2, ch2o_dict)
     resin_dict = gen_data_meth_chemicals(scenario, "Resins")
-    new_dict2 = combine_df_dictionaries(new_dict2, resin_dict)
+    chemicals_dict = combine_df_dictionaries(mto_dict, ch2o_dict, resin_dict)
 
     df_comm = gen_resin_demand(
         scenario, pars["resin_share"], "comm", "SH2", "SHAPE", #pars["wood_scenario"],  #pars["pathway"]
@@ -121,8 +82,8 @@ def gen_data_methanol(scenario):
         cost_dict = update_methanol_costs(scenario)
         new_dict2 = combine_df_dictionaries(new_dict2, cost_dict)
 
-    new_dict2 = combine_df_dictionaries(new_dict2, add_meth_trade_historic())
-    new_dict2 = combine_df_dictionaries(add_meth_tec_vintages(), new_dict2)
+    new_dict2 = combine_df_dictionaries(new_dict2, add_meth_trade_historic(),
+                                        chemicals_dict, add_meth_tec_vintages())
 
     for i in new_dict2.keys():
         new_dict2[i] = new_dict2[i].drop_duplicates()
@@ -515,12 +476,14 @@ def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_te
     return message_ix.make_df(cost_type, **df)
 
 
-def combine_df_dictionaries(dict1, dict2):
-    keys = set(list(dict1.keys()) + list(dict2.keys()))
-    new_dict = {}
+def combine_df_dictionaries(*args):
+    keys = set([key for tup in args for key in tup])
+    #keys = set(list(dict1.keys()) + list(dict2.keys()))
+    comb_dict = {}
     for i in keys:
-        new_dict[i] = pd.concat([dict1.get(i), dict2.get(i)])
-    return new_dict
+        #comb_dict[i] = pd.concat([dict1.get(i), dict2.get(i)])
+        comb_dict[i] = pd.concat([j.get(i) for j in args])
+    return comb_dict
 
 
 def add_meth_tec_vintages():
