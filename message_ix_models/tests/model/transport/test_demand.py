@@ -46,29 +46,23 @@ def test_demand_dummy(test_context, regions, years):
 
 
 @pytest.mark.parametrize(
-    "regions,years,N_node,mode_shares",
+    "regions, years, N_node, options",
     [
-        param("R11", "A", 11, None, marks=MARK[1]),
-        param("R11", "B", 11, None, marks=MARK[1]),
-        param("R11", "B", 11, "debug", marks=MARK[1]),
-        param("R11", "B", 11, "A---", marks=MARK[1]),
-        ("R12", "B", 12, None),
-        param("R14", "B", 14, None, marks=MARK[0]),
-        param("ISR", "A", 1, None, marks=NIE),
+        param("R11", "A", 11, dict(), marks=MARK[1]),
+        param("R11", "B", 11, dict(), marks=MARK[1]),
+        param("R11", "B", 11, dict(futures_scenario="debug"), marks=MARK[1]),
+        param("R11", "B", 11, dict(futures_scenario="A---"), marks=MARK[1]),
+        ("R12", "B", 12, dict()),
+        ("R12", "B", 12, dict(navigate_scenario="act+ele+tec")),
+        param("R14", "B", 14, dict(), marks=MARK[0]),
+        param("ISR", "A", 1, dict(), marks=NIE),
     ],
 )
-def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
+def test_exo(test_context, tmp_path, regions, years, N_node, options):
     """Exogenous demand calculation succeeds."""
-    rep, info = demand_computer(
-        test_context,
-        tmp_path,
-        regions,
-        years,
-        options={"futures-scenario": mode_shares}
-        if mode_shares is not None
-        else dict(),
-    )
+    rep, info = demand_computer(test_context, tmp_path, regions, years, options=options)
 
+    # Check that some keys (a) can be computed without error and (b) have correct units
     for key, unit in (
         ("population:n-y", "Mpassenger"),
         ("cg share:n-y-cg", ""),
@@ -79,10 +73,12 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
         ("cost:n-y-c-t", "USD / km"),
         # These units are implied by the test of "transport pdt:*":
         # "transport pdt:n-y:total" [=] Mm / year
-        ("transport pdt:n-y-t", "passenger km / year"),
-        ("transport ldv pdt:n-y:total", "Gp km / a"),
+        ("pdt:n-y-t", "passenger km / year"),
+        ("ldv pdt:n-y:total", "Gp km / a"),
         # ("transport ldv pdt:n-y-cg", {"[length]": 1, "[passenger]": 1, "[time]": -1}),
-        ("transport ldv pdt:n-y-cg", "Gp km / a"),
+        ("ldv pdt:n-y-cg", "Gp km / a"),
+        ("pdt factor:n-y-t", ""),
+        ("fv factor:n-y", ""),
         ("fv:n-y", "Gt km"),
     ):
         try:
@@ -94,6 +90,12 @@ def test_exo(test_context, tmp_path, regions, years, N_node, mode_shares):
 
             # Quantity has the expected size on the n/node dimension
             assert N_node == len(qty.coords["n"]), qty.coords["n"].data
+
+            if "factor" in key:
+                fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
+                dump = tmp_path.joinpath(fn).with_suffix(".csv")
+                print(f"Dumped to {dump}")
+                qty.to_series().to_csv(dump)
         except Exception:
             # Something else
             print(f"\n\n-- {key} --\n\n")
