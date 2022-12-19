@@ -229,10 +229,10 @@ def gen_data_meth_chemicals(scenario, chemical):
             "historical_new_capacity", value=1.2, year_vtg=2015, **hist_dict
         )
         par_dict["bound_total_capacity_lo"] = make_df(
-            "bound_total_capacity_lo", year_act=2020, value=9, **hist_dict
+            "bound_total_capacity_lo", year_act=2020, value=11, **hist_dict
         )
         par_dict["bound_activity_lo"] = make_df(
-            "bound_activity_lo", year_act=2020, value=8, **hist_dict
+            "bound_activity_lo", year_act=2020, value=10, **hist_dict
         )
         df = par_dict["growth_activity_lo"]
         par_dict["growth_activity_lo"] = df[~((df["node_loc"] == "R12_CHN") & ((df["year_act"] == 2020)))]
@@ -487,12 +487,50 @@ def combine_df_dictionaries(*args):
 
 
 def add_meth_tec_vintages():
-    par_dict_trade = pd.read_excel(
-        context.get_local_path("material", "methanol", "meth_ng_additions.xlsx"),
+    par_dict_ng = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
         sheet_name=None,
     )
-    par_dict_trade2 = pd.read_excel(
+    par_dict_ng.pop("historical_activity")
+    par_dict_coal = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_coal_additions.xlsx"),
         sheet_name=None,
     )
-    return combine_df_dictionaries(par_dict_trade, par_dict_trade2)
+    return combine_df_dictionaries(par_dict_ng, par_dict_coal)
+
+
+def add_meth_hist_act(scenario):
+    # fix demand infeasibility
+    par_dict = {}
+    act = scenario.par("historical_activity")
+    row = (
+        act[act["technology"].str.startswith("meth")]
+        .sort_values("value", ascending=False)
+        .iloc[0]
+    )
+    # china meth_coal production (90% coal share on 2015 47 Mt total; 1.348 = Mt to GWa )
+    row["value"] = (47 * 0.6976) * 0.9
+    row["technology"] = "meth_coal"
+    par_dict["historical_activity"] = pd.DataFrame(row).T
+    # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
+    hist_cap = message_ix.make_df(
+        "historical_new_capacity",
+        node_loc="R12_CHN",
+        technology="meth_coal",
+        year_vtg=2015,
+        value=9.6,
+        unit="GW",
+    )
+    par_dict["historical_new_capacity"] = hist_cap
+    # fix demand infeasibility
+    # act = scenario.par("historical_activity")
+    # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
+    # row["value"] = 0.0
+    df_ng = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
+        sheet_name="historical_activity"
+    )
+    par_dict["historical_activity"] = pd.concat(
+        [par_dict["historical_activity"], df_ng]
+    )
+    return par_dict
