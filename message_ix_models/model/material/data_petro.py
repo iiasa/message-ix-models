@@ -106,16 +106,6 @@ def gen_mock_demand_petro(scenario, gdp_elasticity):
         id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
     )
 
-    df_final = message_ix.make_df(
-        "demand",
-        unit="t",
-        level="demand",
-        value=df_melt.value,
-        time="year",
-        commodity="HVC",
-        year=df_melt.year,
-        node=(region_set + df_melt["Region"]))
-
     return message_ix.make_df(
         "demand",
         unit="t",
