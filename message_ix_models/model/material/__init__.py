@@ -217,7 +217,8 @@ def build_scen(context, datafile, tag, mode, scenario_name):
 
     if mode == 'cbudget':
         scenario = context.get_scenario()
-        print('Base scenario is: ' + scenario.scenario + ", version: " + scenario.version)
+        print(scenario.version)
+        #print('Base scenario is: ' + scenario.scenario + ", version: " + scenario.version)
         output_scenario_name = scenario.scenario + '_' + tag
         scenario_new = scenario.clone('MESSAGEix-Materials', output_scenario_name,
                                   keep_solution=False, shift_first_model_year=2025)
