@@ -75,6 +75,7 @@ generic:
     - useful_aluminum
     - useful_refining
     - useful_petro
+    - useful_resins
 
   technology:
     add:
@@ -146,6 +147,20 @@ generic:
     - fc_h2_refining
     - solar_refining
     - dheat_refining
+    - furnace_coal_resins
+    - furnace_foil_resins
+    - furnace_loil_resins
+    - furnace_ethanol_resins
+    - furnace_biomass_resins
+    - furnace_methanol_resins
+    - furnace_gas_resins
+    - furnace_elec_resins
+    - furnace_h2_resins
+    - hp_gas_resins
+    - hp_elec_resins
+    - fc_h2_resins
+    - solar_resins
+    - dheat_resins
   mode:
     add:
     - low_temp
@@ -432,8 +447,8 @@ fertilizer:
     - wastewater
   level:
     add:
-    - material_interim
-    - material_final
+    - secondary_material
+    - final_material
     - wastewater
   technology:
     require:
@@ -445,6 +460,17 @@ fertilizer:
     - coal_NH3
     - fueloil_NH3
     - NH3_to_N_fertil
+    - trade_NFert
+    - export_NFert
+    - import_NFert
+    - trade_NH3
+    - export_NH3
+    - import_NH3
+    - residual_NH3
+    - biomass_NH3_ccs
+    - gas_NH3_ccs
+    - coal_NH3_ccs
+    - fueloil_NH3_ccs
 
 methanol:
   commodity:
@@ -471,7 +497,7 @@ methanol:
     - meth_bio_ccs
     - meth_h2
     - meth_t_d_material
-    - MTO
+    - MTO_petro
     - CH2O_synth
     - CH2O_to_resin
 

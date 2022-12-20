@@ -126,6 +126,52 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
 
             results[cat].append(df)
 
+    # Create residual_NH3 technology input and outputs
+
+    common = dict(
+        commodity="NH3",
+        technology = 'residual_NH3',
+        mode="M1",
+        year_act=act_years,
+        year_vtg=vtg_years,
+        time="year",
+        time_dest="year",
+        time_origin="year",
+    )
+
+    df_input_resid = (
+        make_df(
+            "input",
+            value=1,
+            unit="t",
+            level = 'secondary_material',
+            **common
+        )
+        .pipe(broadcast, node_loc=nodes)
+        .pipe(same_node)
+    )
+
+    df_output_resid = (
+        make_df(
+            "output",
+            value=1,
+            unit="t",
+            level = 'final_material',
+            **common
+        )
+        .pipe(broadcast, node_loc=nodes)
+        .pipe(same_node)
+    )
+
+    results['input'].append(df_input_resid)
+    results['output'].append(df_output_resid)
+
+    # Add residual NH3 demand
+
+    default_gdp_elasticity = float(0.65)
+    demand_resid_NH3 = gen_resid_demand_NH3(scenario, default_gdp_elasticity)
+    results["demand"].append(demand_resid_NH3)
+
     # Historical activities/capacities - Region specific
     common = dict(
         commodity="NH3",
@@ -533,7 +579,7 @@ def gen_data_ccs(scenario, dry_run=False):
     }
 
     # Iterate over new technologies, using the configuration
-    for t in config["technology"]["add"][12:]:
+    for t in config["technology"]["add"][13:]:
         # Output of NH3: same efficiency for all technologies
         # TODO the output commodity and level are different for
         #      t=NH3_to_N_fertil; use 'if' statements to fill in.
@@ -578,13 +624,17 @@ def gen_data_ccs(scenario, dry_run=False):
     for q in config["technology"]["add"][12:]:
         df1 = df.copy()
         df1['technology'] = q
-        results["initial_activity_lo"].append(df1)
+        if not q == 'residual_NH3':
+            df["technology"] = q
+            results["initial_activity_lo"].append(df1)
 
     df = scenario.par('growth_activity_lo', {"technology": ["gas_extr_mpen"]})
     for q in config["technology"]["add"][12:]:
         df1 = df.copy()
         df1['technology'] = q
-        results["growth_activity_lo"].append(df1)
+        if not q == 'residual_NH3':
+            df["technology"] = q
+            results["growth_activity_lo"].append(df1)
 
     cost_scaler = pd.read_excel(
         context.get_local_path("material", "ammonia",'regional_cost_scaler_R12.xlsx'), index_col=0).T
@@ -622,6 +672,83 @@ def gen_data_ccs(scenario, dry_run=False):
 
     return results
 
+def gen_resid_demand_NH3(scenario, gdp_elasticity):
+
+    context = read_config()
+    s_info = ScenarioInfo(scenario)
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+    nodes = s_info.N
+
+    def get_demand_t1_with_income_elasticity(
+        demand_t0, income_t0, income_t1, elasticity
+    ):
+        return (
+            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
+        ) + demand_t0
+
+    df_gdp = pd.read_excel(
+        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
+        sheet_name="GDP_baseline",
+    )
+
+    df = df_gdp[(~df_gdp["Region"].isna()) & (df_gdp["Region"] != "World")]
+    df = df.dropna(axis=1)
+
+    df_demand = df.copy(deep=True)
+    df_demand = df_demand.drop([2010, 2015, 2020], axis=1)
+
+    # Ammonia Technology Roadmap IEA. 2019 Global NH3 production = 182 Mt.
+    # 70% is used for nitrogen fertilizer production. Rest is 54.7 Mt.
+    # Approxiamte regional shares are from Future of Petrochemicals
+    # Methodological Annex page 7. Total production for regions:
+    # Asia Pacific (RCPA, CHN, SAS, PAS, PAO) = 90 Mt
+    # Eurasia (FSU) = 20 Mt, Middle East (MEA) = 15, Africa (AFR) = 5
+    # Europe (WEU, EEU) = 25 Mt, Central&South America (LAM) = 5
+    # North America (NAM) = 20 Mt.
+    # Regional shares are derived. They are based on production values not demand.
+    # Some assumptions made for the regions that are not explicitly covered in IEA.
+    # (CHN produces the 30% of the ammonia globaly and India 10%.)
+    # The orders of the regions
+    # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
+    #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+
+    if "R12_CHN" in nodes:
+        nodes.remove("R12_GLB")
+        region_set = 'R12_'
+        dem_2020 = np.array([1.5, 1.5, 3, 6, 1.5, 4.6, 6, 1.5, 1.5, 6, 4.6, 17])
+        dem_2020 = pd.Series(dem_2020)
+
+    else:
+        nodes.remove("R11_GLB")
+        region_set = 'R11_'
+        dem_2020 = np.array([1.5, 18.5, 3, 6, 1.5, 4.6, 6, 1.5, 1.5, 6, 4.6])
+        dem_2020 = pd.Series(dem_2020)
+
+    df_demand[2020] = dem_2020
+
+    for i in range(len(modelyears) - 1):
+        income_year1 = modelyears[i]
+        income_year2 = modelyears[i + 1]
+
+        dem_2020 = get_demand_t1_with_income_elasticity(
+            dem_2020, df[income_year1], df[income_year2], gdp_elasticity
+        )
+        df_demand[income_year2] = dem_2020
+
+    df_melt = df_demand.melt(
+        id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
+    )
+
+    return make_df(
+        "demand",
+        unit="t",
+        level="final_material",
+        value=df_melt.value,
+        time="year",
+        commodity="NH3",
+        year=df_melt.year,
+        node=(region_set + df_melt["Region"]),
+    )
 
 def read_demand():
     """Read and clean data from :file:`CD-Links SSP2 N-fertilizer demand.Global.xlsx`."""
@@ -888,9 +1015,9 @@ def read_data_ccs():
 
     param_cat2 = []
 
-    for t in sets["technology"]["add"][12:]:
-        param_values.extend(params)
+    for t in sets["technology"]["add"][13:]:
         tech_values.extend([t] * len(params))
+        param_values.extend(params)
         param_cat2.extend(param_cat)
     # Clean the data
     data = (
