@@ -12,7 +12,7 @@ from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
-
+default_gdp_elasticity = float(0.65)
 
 def gen_all_NH3_fert(scenario, dry_run=False):
     return {
@@ -21,10 +21,11 @@ def gen_all_NH3_fert(scenario, dry_run=False):
         **gen_data_ts(scenario),
         **gen_demand(),
         **gen_land_input(scenario),
+        **gen_resid_demand_NH3(scenario, default_gdp_elasticity)
     }
 
 
-def gen_data(scenario, dry_run=False, add_ccs: bool = True):
+def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs = False):
     s_info = ScenarioInfo(scenario)
     # s_info.yv_ya
     nodes = s_info.N
@@ -37,7 +38,6 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
         context.get_local_path(
             "material",
             "ammonia",
-            "new concise input files",
             "fert_techno_economic.xlsx",
         ),
         sheet_name="data_R12",
@@ -49,12 +49,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
 
     vtg_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_vtg"]
     act_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_act"]
-
-    try:
-        max_lt = par_dict["technical_lifetime"].value.max()
-    except KeyError:
-        print("lifetime not in xlsx")
-
+    max_lt = par_dict["technical_lifetime"].value.max()
     vtg_years = vtg_years.drop_duplicates()
     act_years = act_years.drop_duplicates()
 
@@ -95,9 +90,19 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True):
         set_exp_imp_nodes(df_new)
         par_dict[par_name] = df_new
 
-    df = par_dict.get("technical_lifetime")
-    dict_lifetime = df.loc[:,["technology", "value"]].set_index("technology").to_dict()[
-        "value"]
+    if lower_costs:
+        par_doct = experiment_lower_CPA_SAS_costs(par_dict)
+
+    df_lifetime = par_dict.get("technical_lifetime")
+    dict_lifetime =  ( df_lifetime.loc[:,["technology", "value"]]
+                     .set_index("technology")
+                     .to_dict()["value"] )
+
+    class missingdict(dict):
+        def __missing__(self,key):
+            return 1
+
+    dict_lifetime = missingdict(dict_lifetime)
     for i in par_dict.keys():
         if ("year_vtg" in par_dict[i].columns) & ("year_act" in par_dict[i].columns):
             df_temp = par_dict[i]
@@ -121,7 +126,6 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
         context.get_local_path(
             "material",
             "ammonia",
-            "new concise input files",
             "fert_techno_economic.xlsx",
         ),
         sheet_name="relations_R12",
@@ -178,7 +182,6 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
         context.get_local_path(
             "material",
             "ammonia",
-            "new concise input files",
             "fert_techno_economic.xlsx",
         ),
         sheet_name="timeseries_R12",
@@ -247,7 +250,7 @@ def read_demand():
         skiprows=14,
     )
 
-    """# Read parameters in xlsx
+    # Read parameters in xlsx
     te_params = data = pd.read_excel(
         context.get_local_path(
             "material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"
@@ -261,34 +264,12 @@ def read_demand():
 
     input_fuel = te_params[2010][
         list(range(4, te_params.shape[0], n_inputs_per_tech))
-    ].reset_index(drop=True)"""
+    ].reset_index(drop=True)
     # input_fuel[0:5] = input_fuel[0:5] * CONVERSION_FACTOR_PJ_GWa  # 0.0317 GWa/PJ, GJ/t = PJ/Mt NH3
 
-    te_params_new = pd.read_excel(
-        context.get_local_path(
-            "material",
-            "ammonia",
-            "new concise input files",
-            "fert_techno_economic.xlsx"),
-            sheet_name="data_R12")
-
-    tec_dict = [
-        "biomass_NH3",
-        "electr_NH3",
-        "gas_NH3",
-        "coal_NH3",
-        "fueloil_NH3",
-        "NH3_to_N_fertil",
-    ]
-
-    input_fuel = te_params_new[
-        (te_params_new["parameter"] == "input") & ~(te_params_new["commodity"].isin(["freshwater_supply"])) & (
-            te_params_new["technology"].isin(tec_dict))]
-    input_fuel = input_fuel.iloc[[0, 2, 4, 5, 7, 9]].set_index("technology").loc[tec_dict, "value"]
-
-    #capacity_factor = te_params[2010][
-    #    list(range(11, te_params.shape[0], n_inputs_per_tech))
-    #].reset_index(drop=True)
+    capacity_factor = te_params[2010][
+        list(range(11, te_params.shape[0], n_inputs_per_tech))
+    ].reset_index(drop=True)
 
     # Regional N demand in 2010
     ND = N_demand_GLO.loc[N_demand_GLO.Scenario == "NoPolicy", ["Region", 2010]]
@@ -314,14 +295,13 @@ def read_demand():
         columns={0: "totENE", "Region": "node"}
     )  # GWa
 
-    #N_trade_R12 = pd.read_csv(
+    # N_trade_R12 = pd.read_csv(
     #    context.get_local_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
-    #)
+    # )
     N_trade_R12 = pd.read_excel(
         context.get_local_path(
             "material",
             "ammonia",
-            "new concise input files",
             "nh3_fertilizer_demand.xlsx",
         ),
         sheet_name="NFertilizer_trade",
@@ -346,16 +326,15 @@ def read_demand():
     NP = pd.DataFrame({"netimp": df["import"] - df.export, "demand": ND[2010]})
     NP["prod"] = NP.demand - NP.netimp
 
-    #NH3_trade_R12 = pd.read_csv(
+    # NH3_trade_R12 = pd.read_csv(
     #    context.get_local_path(
     #        "material", "ammonia", "NH3_trade_BACI_R12_aggregation.csv"
     #    )
-    #)  # , index_col=0)
+    # )  # , index_col=0)
     NH3_trade_R12 = pd.read_excel(
         context.get_local_path(
             "material",
             "ammonia",
-            "new concise input files",
             "nh3_fertilizer_demand.xlsx",
         ),
         sheet_name="NH3_trade_R12_aggregated",
@@ -404,18 +383,18 @@ def read_demand():
     feedshare = fs_GLO.sort_values(["Region"]).set_index("Region").drop("R12_GLB")
 
     # Get historical N demand from SSP2-nopolicy (may need to vary for diff scenarios)
-    N_demand_raw = N_demand_GLO[N_demand_GLO["Region"]!="World"].copy()
+    N_demand_raw = N_demand_GLO[N_demand_GLO["Region"] != "World"].copy()
     N_demand_raw["Region"] = "R12_" + N_demand_raw["Region"]
     N_demand_raw = N_demand_raw.set_index("Region")
     N_demand = (
         N_demand_raw.loc[
-            (N_demand_raw.Scenario == "NoPolicy")# & (N_demand_raw.Region != "World")
-            ]
-            #.reset_index()
-            .loc[:, 2010]
+            (N_demand_raw.Scenario == "NoPolicy")  # & (N_demand_raw.Region != "World")
+        ]
+        # .reset_index()
+        .loc[:, 2010]
     )  # 2010 tot N demand
-    #N_demand = N_demand.repeat(6)
-    #act2010 = (feedshare.values.flatten() * N_demand).reset_index(drop=True)
+    # N_demand = N_demand.repeat(6)
+    # act2010 = (feedshare.values.flatten() * N_demand).reset_index(drop=True)
 
     return {
         "act2010": feedshare.mul(N_demand, axis=0),
@@ -423,13 +402,12 @@ def read_demand():
         "ND": ND,
         "N_energy": N_energy,
         "feedshare": feedshare,
-        "act2010": act2010,
-        #"capacity_factor": capacity_factor,
+        # "act2010": act2010,
+        "capacity_factor": capacity_factor,
         "N_feed": N_feed,
         "N_trade_R12": N_trade_R12,
         "NH3_trade_R12": NH3_trade_R12,
     }
-
 
 def gen_demand():
     context = read_config()
@@ -438,7 +416,6 @@ def gen_demand():
 
     demand_fs_org = pd.read_excel(
         context.get_local_path("material", "ammonia",
-                               "new concise input files",
                                "nh3_fertilizer_demand.xlsx"),
         sheet_name="demand_i_feed_R12"
     )
@@ -460,8 +437,111 @@ def gen_demand():
     df.loc[df["value"] < 0, "value"] = 0  # temporary solution to avoid negative values
     return {"demand": df}
 
+def gen_resid_demand_NH3(scenario, gdp_elasticity):
+
+    context = read_config()
+    s_info = ScenarioInfo(scenario)
+    modelyears = s_info.Y #s_info.Y is only for modeling years
+    nodes = s_info.N
+
+    def get_demand_t1_with_income_elasticity(
+        demand_t0, income_t0, income_t1, elasticity
+    ):
+        return (
+            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
+        ) + demand_t0
+
+    df_gdp = pd.read_excel(
+        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
+        sheet_name="GDP_baseline",
+    )
+
+    df = df_gdp[(~df_gdp["Region"].isna()) & (df_gdp["Region"] != "World")]
+    df = df.dropna(axis=1)
+
+    df_demand = df.copy(deep=True)
+    df_demand = df_demand.drop([2010, 2015, 2020], axis=1)
+
+    # Ammonia Technology Roadmap IEA. 2019 Global NH3 production = 182 Mt.
+    # 70% is used for nitrogen fertilizer production. Rest is 54.7 Mt.
+    # Approxiamte regional shares are from Future of Petrochemicals
+    # Methodological Annex page 7. Total production for regions:
+    # Asia Pacific (RCPA, CHN, SAS, PAS, PAO) = 90 Mt
+    # Eurasia (FSU) = 20 Mt, Middle East (MEA) = 15, Africa (AFR) = 5
+    # Europe (WEU, EEU) = 25 Mt, Central&South America (LAM) = 5
+    # North America (NAM) = 20 Mt.
+    # Regional shares are derived. They are based on production values not demand.
+    # Some assumptions made for the regions that are not explicitly covered in IEA.
+    # (CHN produces the 30% of the ammonia globaly and India 10%.)
+    # The orders of the regions
+    # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
+    #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
+
+    if "R12_CHN" in nodes:
+        nodes.remove("R12_GLB")
+        region_set = 'R12_'
+        dem_2020 = np.array([1.5, 1.5, 3, 6, 1.5, 4.6, 6, 1.5, 1.5, 6, 4.6, 17])
+        dem_2020 = pd.Series(dem_2020)
+
+    else:
+        nodes.remove("R11_GLB")
+        region_set = 'R11_'
+        dem_2020 = np.array([1.5, 18.5, 3, 6, 1.5, 4.6, 6, 1.5, 1.5, 6, 4.6])
+        dem_2020 = pd.Series(dem_2020)
+
+    df_demand[2020] = dem_2020
+
+    for i in range(len(modelyears) - 1):
+        income_year1 = modelyears[i]
+        income_year2 = modelyears[i + 1]
+
+        dem_2020 = get_demand_t1_with_income_elasticity(
+            dem_2020, df[income_year1], df[income_year2], gdp_elasticity
+        )
+        df_demand[income_year2] = dem_2020
+
+    df_melt = df_demand.melt(
+        id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
+    )
+
+    df_residual = make_df(
+        "demand",
+        unit="t",
+        level="final_material",
+        value=df_melt.value,
+        time="year",
+        commodity="NH3",
+        year=df_melt.year,
+        node=(region_set + df_melt["Region"]),
+    )
+
+    return {"demand": df_residual}
 
 def gen_land_input(scenario):
     df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
     df["level"] = "final_material"
     return {"land_input": df}
+
+def experiment_lower_CPA_SAS_costs(par_dict):
+    cost_list = ["inv_cost", "fix_cost"]
+    scaler = {
+        "R12_RCPA": [0.66 * 0.91, 0.75 * 0.9],
+        "R12_CHN": [0.66 * 0.91, 0.75 * 0.9],
+        "R12_SAS": [0.59, 1],
+    }
+    tec_list = ["fueloil_NH3", "coal_NH3"]
+    for c in cost_list:
+        df = par_dict[c]
+        for k in scaler.keys():
+            df_tmp = df.loc[df["node_loc"] == k]
+            for e, t in enumerate(tec_list):
+                df_tmp.loc[df_tmp["technology"] == t, "value"] = df_tmp.loc[
+                    df_tmp["technology"] == t, "value"
+                ].mul(scaler.get(k)[e])
+                df_tmp.loc[df_tmp["technology"] == t + "_ccs", "value"] = df_tmp.loc[
+                    df_tmp["technology"] == t + "_ccs", "value"
+                ].mul(scaler.get(k)[e])
+            df.loc[df["node_loc"] == k] = df_tmp
+        par_dict[c] = df
+
+    return par_dict
