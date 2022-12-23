@@ -232,7 +232,6 @@ def read_demand():
         context.get_local_path(
             "material",
             "ammonia",
-            "new concise input files",
             "nh3_fertilizer_demand.xlsx",
         ),
         sheet_name="NFertilizer_demand",
@@ -243,7 +242,6 @@ def read_demand():
         context.get_local_path(
             "material",
             "ammonia",
-            "new concise input files",
             "nh3_fertilizer_demand.xlsx",
         ),
         sheet_name="NH3_feedstock_share",
@@ -253,9 +251,9 @@ def read_demand():
     # Read parameters in xlsx
     te_params = data = pd.read_excel(
         context.get_local_path(
-            "material", "ammonia", "n-fertilizer_techno-economic_new.xlsx"
+            "material", "ammonia", "nh3_fertilizer_demand.xlsx"
         ),
-        sheet_name="Sheet1",
+        sheet_name="old_TE_sheet",
         engine="openpyxl",
         nrows=72,
     )
