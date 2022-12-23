@@ -52,7 +52,7 @@ def build(scenario):
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration levels for the enduse technologies.
     # Note: context.ssp doesnt work
-    calibrate_UE_gr_to_demand(scenario, data_path=private_data_path(), ssp='SSP2')
+    calibrate_UE_gr_to_demand(scenario, data_path=private_data_path(), ssp='SSP2', region = 'R12')
     calibrate_UE_share_constraints(scenario)
 
     # Electricity calibration to avoid zero prices for CHN.
@@ -391,7 +391,6 @@ from .data_generic import gen_data_generic
 from .data_petro import gen_data_petro_chemicals
 from .data_buildings import gen_data_buildings
 from .data_power_sector import gen_data_power_sector
-from .data_ammonia import gen_data_ammonia
 from .data_methanol import gen_data_methanol
 from .data_ammonia_new import gen_all_NH3_fert
 
