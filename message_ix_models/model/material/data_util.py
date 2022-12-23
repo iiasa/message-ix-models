@@ -153,7 +153,14 @@ def modify_demand_and_hist_activity(scen):
     ]
     df = df[df["RYEAR"] == 2015]
 
-    # Retreive data for i_spec (Excludes petrochemicals as the share is negligable)
+    # NOTE: Total cehmical industry energy: 27% thermal, 8% electricity, 65% feedstock
+    # SOURCE: IEA Sankey 2020: https://www.iea.org/sankey/#?c=World&s=Final%20consumption
+    # 67% of total chemicals energy is used for primary chemicals (ammonia,methnol,HVCs)
+    # SOURCE: https://www.iea.org/data-and-statistics/charts/primary-chemical-production-in-the-sustainable-development-scenario-2000-2030
+
+    # Retreive data for i_spec
+    # 67% of total chemcials electricity demand comes from primary chemicals (IEA)
+    # (Excludes petrochemicals as the share is negligable)
     # Aluminum, cement and steel included.
     # NOTE: Steel has high shares (previously it was not inlcuded in i_spec)
 
@@ -180,49 +187,34 @@ def modify_demand_and_hist_activity(scen):
 
     df_spec_new.drop(["FUEL", "RYEAR", "UNIT_OUT", "RESULT"], axis=1, inplace=True)
     df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] = (
-        df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] * 0.7
+        df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] * 0.67
     )
 
     df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
 
-    # Retreive data for i_feed: Only for petrochemicals
-    # It is assumed that the sectors that are explicitly covered in MESSAGE are
-    # 50% of the total feedstock.
-
-    df_feed = df[
-        (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
-    ]
-    df_feed_total = df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
-    df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
-    df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
-
-    for r in df_feed["REGION"].unique():
-
-
-        i = 0
-        df_feed_temp.at[i, "REGION"] = r
-        df_feed_temp.at[i, "i_feed"] = 1
-        i = i + 1
-        df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
-
-    # df_feed = df[(df["SECTOR"]== "feedstock (petrochemical industry)") & \
-    #          (df["FUEL"]== "total") ]
-    # df_feed_total = df[(df["SECTOR"]== "feedstock (total)") \
-    #                     & (df["FUEL"]== "total")]
+    # Already set to zero: ammonia, methanol, HVCs cover most of the feedstock
+    # # Retreive data for i_feed: Only for petrochemicals
+    # # It is assumed that the sectors that are explicitly covered in MESSAGE are
+    # # 50% of the total feedstock.
     #
-    # df_feed_new = pd.DataFrame(columns=["REGION","SECTOR","FUEL",\
-    #                                     "RYEAR","UNIT_OUT","RESULT"])
+    # df_feed = df[
+    #     (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
+    # ]
+    # df_feed_total = df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
+    # df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
+    # df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
+    #
     # for r in df_feed["REGION"].unique():
-    #     df_feed_temp = df_feed[df_feed["REGION"]==r]
-    #     df_feed_total_temp = df_feed_total[df_feed_total["REGION"] == r]
-    #     df_feed_temp["i_feed"] = df_feed_temp["RESULT"]/df_feed_total_temp["RESULT"].values[0]
-    #     df_feed_new = pd.concat([df_feed_temp,df_feed_new],ignore_index = True)
     #
-    # df_feed_new.drop(["FUEL","RYEAR","UNIT_OUT","RESULT"],axis=1, inplace=True)
-    # df_feed_new = df_feed_new.groupby(["REGION"]).sum().reset_index()
+    #
+    #     i = 0
+    #     df_feed_temp.at[i, "REGION"] = r
+    #     df_feed_temp.at[i, "i_feed"] = 1
+    #     i = i + 1
+    #     df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
 
     # Retreive data for i_therm
-    # NOTE: It is assumped that 80% of i_therm is from ammonia and HVCs.
+    # 67% of chemical thermal energy chemicals comes from primary chemicals. (IEA)
     # NOTE: Aluminum is excluded since refining process is not explicitly represented
     # NOTE: CPA has a 3% share while it used to be 30% previosuly ??
 
@@ -264,7 +256,7 @@ def modify_demand_and_hist_activity(scen):
     df_therm_new.drop(["FUEL", "RYEAR", "UNIT_OUT"], axis=1, inplace=True)
     df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"] = (
         df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"]
-        * 0.8
+        * 0.67
     )
 
     # Modify CPA based on https://www.iea.org/sankey/#?c=Japan&s=Final%20consumption.
