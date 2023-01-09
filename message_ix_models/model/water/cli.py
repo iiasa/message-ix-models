@@ -1,8 +1,8 @@
 import logging
 
 import click
-from message_ix_models.util.click import common_params
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util.click import common_params
 
 log = logging.getLogger(__name__)
 
@@ -10,12 +10,13 @@ log = logging.getLogger(__name__)
 # allows to activate water module
 @click.group("water")
 @common_params("regions")
+@click.option("--time", help="Manually defined time")
 @click.pass_obj
-def cli(context, regions):
-    water_ini(context, regions)
+def cli(context, regions, time):
+    water_ini(context, regions, time)
 
 
-def water_ini(context, regions):
+def water_ini(context, regions, time):
     """Add components of the MESSAGEix-Nexus module
 
     This function modifies model name & scenario name
@@ -67,19 +68,40 @@ def water_ini(context, regions):
         context.map_ISO_c = map_ISO_c
         log.info(f"mapping {context.map_ISO_c[context.regions]}")
 
+    # deinfe the timestep
+    if not time:
+        sc_ref = context.get_scenario()
+        time = sc_ref.set("time")
+        sub_time = list(time[time != "year"])
+        if len(sub_time) == 0:
+            context.time = ["year"]
 
-_RCPS = ["no_climate", "6p0", "2p6"]
+        else:
+            context.time = sub_time
+    else:
+        context.time = list(time)
+    log.info(f"Using the following time-step for the water module: {context.time}")
+
+    # setting the time information in context
+
+
+_RCPS = ["no_climate", "6p0", "2p6", "7p0"]
 _REL = ["low", "med", "high"]
 
 
 @cli.command("nexus")
 @click.pass_obj
 @click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
-@click.option("--rels", default="med", type=click.Choice(_REL))
+@click.option("--rels", default="low", type=click.Choice(_REL))
 @click.option(
     "--sdgs",
     is_flag=True,
     help="Defines whether water SDG measures are activated or not",
+)
+@click.option(
+    "--macro",
+    is_flag=True,
+    help="Defines whether the model solves with macro",
 )
 @common_params("regions")
 def nexus_cli(context, regions, rcps, sdgs, rels, macro=False):
@@ -242,8 +264,6 @@ def report_cli(context, output_model, sdgs):
     output_model : str (optional, otherwise default args used)
         Specifies the model name of the scenarios which are run.
     """
-    import ixmp
-    import message_ix
 
     from message_data.model.water.reporting import report_full
 

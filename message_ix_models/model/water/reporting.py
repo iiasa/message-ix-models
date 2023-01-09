@@ -22,7 +22,10 @@ def run_old_reporting(sc=False):
         f"for the scenario {sc.model}.{sc.scenario}"
     )
     old_reporting(
-        mp=mp2, scen=sc, merge_hist=True, merge_ts=False,
+        mp=mp2,
+        scen=sc,
+        merge_hist=True,
+        merge_ts=False,
     )
 
 
@@ -42,7 +45,7 @@ def remove_duplicate(data):
         oprlist = reg_index(strr)
         if i in indexes:
             if len(oprlist) > 1:
-                final_list.append(strr[oprlist[0] + 1 :])
+                final_list.append(strr[oprlist[0] + 1:])
             elif len(oprlist) == 1 and oprlist[0] > 6:
                 final_list.append(strr[: oprlist[0]])
             else:
@@ -62,7 +65,7 @@ def report(sc=False, sdgs=False):
 
     # Generating reporter
     rep = Reporter.from_scenario(sc)
-    report = rep.get("message:default")
+    report = rep.get("message::default")
     # Create a timeseries dataframe
     report_df = report.timeseries()
     report_df.reset_index(inplace=True)
@@ -150,6 +153,11 @@ def report(sc=False, sdgs=False):
         "CAP_NEW|new capacity|urban_untreated",
     ]
 
+    industry_unconnected = [
+        "CAP_NEW|new capacity|industry_unconnected",
+        "CAP_NEW|new capacity|industry_untreated",
+    ]
+
     extrt_sw_cap = ["CAP_NEW|new capacity|extract_surfacewater"]
     extrt_gw_cap = ["CAP_NEW|new capacity|extract_groundwater"]
     extrt_fgw_cap = ["CAP_NEW|new capacity|extract_gw_fossil"]
@@ -212,6 +220,11 @@ def report(sc=False, sdgs=False):
         "inv cost|urban_untreated",
     ]
 
+    industry_unconnected_inv = [
+        "inv cost|industry_unconnected",
+        "inv cost|industry_untreated",
+    ]
+
     saline_inv = [
         "inv cost|membrane",
         "inv cost|distillation",
@@ -266,6 +279,11 @@ def report(sc=False, sdgs=False):
         "total om cost|urban_untreated",
     ]
 
+    industry_unconnected_totalom = [
+        "total om cost|industry_unconnected",
+        "total om cost|industry_untreated",
+    ]
+
     extract_sw = ["in|water_avail_basin|surfacewater_basin|extract_surfacewater|M1"]
 
     extract_gw = ["in|water_avail_basin|groundwater_basin|extract_groundwater|M1"]
@@ -284,6 +302,7 @@ def report(sc=False, sdgs=False):
     urban_mwdem_unconnected_eff = ["out|final|urban_disconnected|urban_unconnected|Mf"]
     urban_mwdem_connected = ["out|final|urban_mw|urban_t_d|M1"]
     urban_mwdem_connected_eff = ["out|final|urban_mw|urban_t_d|Mf"]
+    industry_mwdem_unconnected = ["out|final|industry_mw|industry_unconnected|M1"]
 
     electr_gw = ["in|final|electr|extract_groundwater|M1"]
     electr_fgw = ["in|final|electr|extract_gw_fossil|M1"]
@@ -404,7 +423,8 @@ def report(sc=False, sdgs=False):
                 + urban_mwdem_connected
                 + urban_mwdem_connected_eff
                 + urban_mwdem_unconnected
-                + urban_mwdem_unconnected_eff,
+                + urban_mwdem_unconnected_eff
+                + industry_mwdem_unconnected,
                 "km3/yr",
             ],
             ["Water Withdrawal|Energy techs & Irrigation", region_withdr, "km3/yr"],
@@ -422,12 +442,13 @@ def report(sc=False, sdgs=False):
                 + urban_dist
                 + rural_dist
                 + rural_unconnected
-                + urban_unconnected,
+                + urban_unconnected
+                + industry_unconnected,
                 "km3/yr",
             ],
             [
                 "Capacity Additions|Infrastructure|Water|Extraction",
-                extrt_sw_cap + extrt_gw_cap,
+                extrt_sw_cap + extrt_gw_cap + extrt_fgw_cap,
                 "km3/yr",
             ],
             [
@@ -441,14 +462,12 @@ def report(sc=False, sdgs=False):
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Extraction|\
-                Groundwater|Renewable",
+                "Capacity Additions|Infrastructure|Water|Extraction|Groundwater|Renewable",
                 extrt_gw_cap,
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Extraction|\
-                Groundwater|Fossil",
+                "Capacity Additions|Infrastructure|Water|Extraction|Groundwater|Fossil",
                 extrt_fgw_cap,
                 "km3/yr",
             ],
@@ -463,14 +482,17 @@ def report(sc=False, sdgs=False):
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|\
-                Urban",
+                "Capacity Additions|Infrastructure|Water|Industrial",
+                industry_unconnected,
+                "km3/yr",
+            ],
+            [
+                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Urban",
                 urban_treatment_recycling,
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|\
-                Rural",
+                "Capacity Additions|Infrastructure|Water|Treatment & Recycling|Rural",
                 rural_treatment_recycling,
                 "km3/yr",
             ],
@@ -546,6 +568,11 @@ def report(sc=False, sdgs=False):
             [
                 "Water Withdrawal|Municipal Water|Connected|Urban Eff",
                 urban_mwdem_connected_eff,
+                "km3/yr",
+            ],
+            [
+                "Water Withdrawal|Industrial Water|Unconnected",
+                industry_mwdem_unconnected,
                 "km3/yr",
             ],
             # ["Water Withdrawal|Irrigation", irr_water, "km3/yr"],
@@ -654,6 +681,7 @@ def report(sc=False, sdgs=False):
                 + cooling_cl_fresh
                 + cooling_saline_inv
                 + cooling_air_inv,
+                +industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
@@ -735,6 +763,11 @@ def report(sc=False, sdgs=False):
                 "million US$2010/yr",
             ],
             [
+                "Investment|Infrastructure|Water|Industrial",
+                industry_unconnected_inv,
+                "million US$2010/yr",
+            ],
+            [
                 "Investment|Infrastructure|Water|Treatment & Recycling",
                 urban_treatment_recycling_inv + rural_treatment_recycling_inv,
                 "million US$2010/yr",
@@ -766,7 +799,9 @@ def report(sc=False, sdgs=False):
             ],
             [
                 "Investment|Infrastructure|Water|Unconnected",
-                rural_unconnected_inv + urban_unconnected_inv,
+                rural_unconnected_inv
+                + urban_unconnected_inv
+                + industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
@@ -800,56 +835,55 @@ def report(sc=False, sdgs=False):
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Treatment & Recycling",
+                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling",
                 urban_treatment_recycling_totalom + rural_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Treatment & Recycling|Urban",
+                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling|Urban",
                 urban_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Treatment & Recycling|Rural",
+                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling|Rural",
                 rural_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Distribution",
+                "Total Operation Management Cost|Infrastructure|Water| Distribution",
                 rural_dist_totalom + rural_dist_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Distribution|Rural",
+                "Total Operation Management Cost|Infrastructure|Water|Distribution|Rural",
                 rural_dist_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Costs|Infrastructure|Water|\
-                Distribution|Urban",
+                "Total Operation Management Cost|Infrastructure|Water|Distribution|Urban",
                 urban_dist_totalom,
                 "million US$2010/yr",
             ],
             [
                 "Total Operation Management Cost|Infrastructure|Water|Unconnected",
-                rural_unconnected_totalom + urban_unconnected_totalom,
+                rural_unconnected_totalom
+                + urban_unconnected_totalom
+                + industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Unconnected|Rural",
+                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Rural",
                 rural_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|\
-                Unconnected|Urban",
+                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Urban",
                 urban_unconnected_totalom,
+                "million US$2010/yr",
+            ],
+            [
+                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Industry",
+                industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
         ],
