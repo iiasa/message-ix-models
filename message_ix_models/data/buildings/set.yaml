@@ -28,7 +28,7 @@ enduse:
       report: Heating|Water
     other_uses: # STURM; simplification for other commercial uses, etc.
       name: Other
-      report: Other uses
+      report: Other End-uses
 
 # MESSAGE sets
 
