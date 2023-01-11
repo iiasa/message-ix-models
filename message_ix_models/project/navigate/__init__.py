@@ -69,8 +69,8 @@ CLIMATE_POLICY["Ctax"] = None
 
 # Common annotations for EXTRA_SCENARIOS
 _A = [
-    Annotation(id="navigate-T3.5-policy", text=""),
-    Annotation(id="navigate-task", text="T3.5"),
+    Annotation(id="navigate_T35_policy", text=""),
+    Annotation(id="navigate_task", text="T3.5"),
 ]
 
 #: Extra scenario IDs not appearing in the authoritative NAVIGATE list per the workflow
@@ -78,23 +78,23 @@ _A = [
 EXTRA_SCENARIOS = [
     Code(
         id="NAV_Dem-20C-ref",
-        annotations=[Annotation(id="navigate-climate-policy", text="20C")] + _A,
+        annotations=[Annotation(id="navigate_climate_policy", text="20C")] + _A,
     ),
     Code(
         id="NAV_Dem-1000 Gt-ref",
-        annotations=[Annotation(id="navigate-climate-policy", text="1000 Gt")] + _A,
+        annotations=[Annotation(id="navigate_climate_policy", text="1000 Gt")] + _A,
     ),
     Code(
         id="NAV_Dem-1600 Gt-ref",
-        annotations=[Annotation(id="navigate-climate-policy", text="1600 Gt")] + _A,
+        annotations=[Annotation(id="navigate_climate_policy", text="1600 Gt")] + _A,
     ),
     Code(
         id="NAV_Dem-2000 Gt-ref",
-        annotations=[Annotation(id="navigate-climate-policy", text="2000 Gt")] + _A,
+        annotations=[Annotation(id="navigate_climate_policy", text="2000 Gt")] + _A,
     ),
     Code(
         id="NAV_Dem-Ctax-ref",
-        annotations=[Annotation(id="navigate-climate-policy", text="Ctax")] + _A,
+        annotations=[Annotation(id="navigate_climate_policy", text="Ctax")] + _A,
     ),
 ]
 
