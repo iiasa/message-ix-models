@@ -9,7 +9,13 @@ from message_ix_models.util.click import common_params, store_context
 log = logging.getLogger(__name__)
 
 
-scenario_option = click.Option(
+_DSD = click.Option(
+    ["--dsd"],
+    type=click.Choice(["navigate", "iiasa-ece"]),
+    default="navigate",
+    help="Target data structure for submission prep.",
+)
+_SCENARIO = click.Option(
     ["-s", "--scenario", "navigate_scenario"],
     default="baseline",
     callback=store_context,
@@ -17,20 +23,14 @@ scenario_option = click.Option(
 )
 
 
-@click.group("navigate", params=[scenario_option])
+@click.group("navigate", params=[_SCENARIO])
 @click.pass_obj
 def cli(context, navigate_scenario):
     """NAVIGATE project."""
 
 
-@cli.command("prep-submission")
+@cli.command("prep-submission", params=[_DSD])
 @click.argument("wf_dir", type=click.Path(exists=True, file_okay=False, path_type=Path))
-@click.option(
-    "--dsd",
-    type=click.Choice(["navigate", "iiasa-ece"]),
-    default="navigate",
-    help="Target data structure for submission prep.",
-)
 @click.pass_obj
 def prep_submission(context, wf_dir, dsd):
     """Prepare data for NAVIGATE submission.
@@ -119,15 +119,9 @@ def gen_workflow(context, versions):
         print(whitespace.sub(" ", cmd).strip().format(v=versions, s=s), end="\n\n")
 
 
-@cli.command("run")
+@cli.command("run", params=[_DSD])
 @common_params("dry_run")
 @click.option("--from", "truncate_step", help="Run workflow from this step.")
-@click.option(
-    "--dsd",
-    type=click.Choice(["navigate", "iiasa-ece"]),
-    default="navigate",
-    help="Target data structure for submission prep.",
-)
 @click.argument("target_step", metavar="TARGET")
 @click.pass_obj
 def run(context, dry_run, truncate_step, dsd, target_step):

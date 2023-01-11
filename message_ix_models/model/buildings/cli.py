@@ -3,7 +3,7 @@ import click
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
 
-from message_data.projects.navigate.cli import scenario_option
+from message_data.projects.navigate.cli import _SCENARIO
 
 from . import Config, build_and_solve, sturm
 
@@ -14,7 +14,7 @@ def cli(context):
     """MESSAGEix-Buildings model."""
 
 
-@cli.command("build-solve", params=[scenario_option])
+@cli.command("build-solve", params=[_SCENARIO])
 @common_params("dest")
 @click.option(
     "--climate-scenario",
