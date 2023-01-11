@@ -146,7 +146,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         # index: (function, inputs to the function, whether to store_ts, file basename)
         #
         # NB(PNK 2022-12-15) temporarily re-enabled for comparison
-        0: (report0, ["buildings filters 0"], True, "final-energy-old"),
+        0: (report0, ["buildings filters 0"], False, "debug-report0"),
         #
         # commented: 2022-09-09 temporarily disabled
         # 1: (report1, ["buildings filters"], True, "buildings-emiss"),
