@@ -21,6 +21,7 @@ from message_ix_models.util import eval_anno
 
 from message_data.model.transport.computations import nodes_world_agg
 from message_data.reporting import iamc as add_iamc
+
 from . import Config
 from .build import get_spec, get_techs
 from .sturm import scenario_name
@@ -311,7 +312,13 @@ def buildings_agg0(spec: Spec, config: Dict) -> Dict:
 
 
 def report0(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
-    """Report buildings final energy."""
+    """Report buildings final energy.
+
+    This function descends from logic in :file:`reporting_EFC.py` in the
+    MESSAGE_Buildings repository. It is suspected the values could be incorrect, because
+    ``ACT`` is not multiplied by ``input``. Per :func:`callback`; the values returned
+    are not currently stored as time series data, or used further.
+    """
     # Final Energy Demand
 
     # - Retrieve ACT data using `filters`

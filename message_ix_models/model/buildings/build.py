@@ -183,6 +183,8 @@ def prepare_data(
     result = defaultdict(list)
 
     # Create new demands and techs for AFOFI based on percentages between 2010 and 2015
+    # NB this should not be run after initial setup when rc_spec/rc_therm have been
+    #    stripped out. At the moment it appears it would be a no-op.
     dd_replace = scenario.par(
         "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
     )
@@ -376,6 +378,8 @@ def main(
     def _add_data(s, **kw):
         return data
 
+    # FIXME check whether this works correctly on the re-solve of a scenario that has
+    #       already been set up
     options = dict(fast=True)
     build.apply_spec(scenario, spec, _add_data, **options)
 
