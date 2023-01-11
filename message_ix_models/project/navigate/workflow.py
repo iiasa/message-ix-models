@@ -195,12 +195,12 @@ def generate(context: Context) -> Workflow:
             # Unpack information from the code
             yield (
                 code.id.split("NAV_Dem-")[1],  # Short label
-                str(code.get_annotation(id="navigate-climate-policy").text),
-                str(code.get_annotation(id="navigate-T3.5-policy").text),
+                str(code.get_annotation(id="navigate_climate_policy").text),
+                str(code.get_annotation(id="navigate_T35_policy").text),
             )
 
     # Steps 3–7 are only run for the "NPi" (baseline) climate policy
-    filters = {"navigate-task": "T3.5", "navigate-climate-policy": "NPi"}
+    filters = {"navigate_task": "T3.5", "navigate_climate_policy": "NPi"}
     for s, _, T35_policy in iter_scenarios(filters):
         # Skip these for now
         if s.endswith("_d"):
@@ -233,7 +233,7 @@ def generate(context: Context) -> Workflow:
         BMT_solved[T35_policy] = name
 
     # Now iterate over all scenarios
-    filters.pop("navigate-climate-policy")
+    filters.pop("navigate_climate_policy")
     for s, climate_policy, T35_policy in iter_scenarios(filters):
         # Skip these for now
         if s.endswith("_d"):
