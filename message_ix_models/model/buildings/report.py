@@ -112,33 +112,41 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         "in:nl-t-ya-c-l:buildings",
         "buildings filters 1",
     )
-    # Apply and convert units
+    # Assign missing units, then convert to EJ / a
     k = Key.from_str_or_key("buildings fe:nl-t-ya-c-l")
     k2 = k.add_tag("2")
     rep.add("assign_units", k.add_tag("1"), k.add_tag("0"), "GWa/year")
-    rep.add("convert_units", k2, k.add_tag("1"), "EJ/yr", sums=True)
+    rep.add("convert_units", k2, k.add_tag("1"), "EJ / a", sums=True)
 
-    # Conversion to IAMC data format
+    # Convert to IAMC structure
+    # - Ensure the unit string is "EJ/yr", nor "EJ / a".
     # FIXME this duplicates reporting structures used in .model.transport; use a common
     #       function to set up both
     add_iamc(
         rep,
         dict(
-            base=k2.drop("l"), variable="_buildings fe0", var=["Final Energy", "t", "c"]
+            base=k2.drop("l"),
+            variable="_buildings fe0",
+            var=["Final Energy", "t", "c"],
+            unit="EJ/yr",
         ),
     )
     add_iamc(
         rep,
         dict(
-            base=k2.drop("c", "l"), variable="_buildings fe1", var=["Final Energy", "t"]
+            base=k2.drop("c", "l"),
+            variable="_buildings fe1",
+            var=["Final Energy", "t"],
+            unit="EJ/yr",
         ),
     )
+    # Concatenate
     rep.add(
         "concat", "buildings fe::iamc", "_buildings fe0::iamc", "_buildings fe1::iamc"
     )
 
     # Lists of keys for use later
-    store_keys = ["buildings fe::iamc"]
+    store_keys = []
     file_keys = []
 
     # Iterate over each of the "tables"
@@ -177,6 +185,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
 
     # Same for final energy
     k1 = "buildings fe::iamc"
+    store_keys.append(k1)
     k2 = rep.add(
         "make_output_path", "buildings fe path", "config", "final-energy-new.csv"
     )
@@ -270,7 +279,6 @@ def buildings_filters0(all_techs: List[str], years: List) -> Dict:
 
 def buildings_filters1(years: List) -> Dict:
     """Return filters for buildings reporting."""
-    # Regular expression to match technology IDs relevant for buildings reporting
     return dict(l=["final"], ya=years)
 
 
