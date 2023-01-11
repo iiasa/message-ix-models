@@ -340,11 +340,12 @@ def pre_solve(scenario: Scenario, context, data):
     sturm_c = sturm_c[~sturm_c.commodity.str.fullmatch(expr)]
 
     # - Subset desired energy demands. sturm_c is empty after the first iteration, so
-    #   will contribute no rows
+    #   will contribute no rows. This expression identifies only the end-uses modeled by
+    #   STURM.
     # - Concatenate.
     # - Set energy demand level to useful (although it is final) to be in line with 1 to
     #   1 technologies btw final and useful.
-    expr = "cool|heat|hotwater"
+    expr = "cool|heat|hotwater|other_uses"
     demand = pd.concat(
         [
             e_use[~e_use.commodity.str.contains("therm")],
