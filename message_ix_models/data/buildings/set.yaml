@@ -11,22 +11,22 @@ sector:
 
 enduse:
   add:
-    apps:
+    apps:  # ACCESS; resid only
       name: Appliances
       report: Appliances
-    cook:
+    cook:  # ACCESS; resid only
       name: Cooking
       report: Cooking
-    cool:
+    cool:  # STURM; both comm/resid
       name: Space cooling
       report: Cooling
-    heat:
+    heat:  # STURM; both comm/resid
       name: Space heating
       report: Heating|Space
-    hotwater:
+    hotwater:  # STURM; both comm/resid
       name: Hot water
       report: Heating|Water
-    other_uses:
+    other_uses: # STURM; simplification for other commercial uses, etc.
       name: Other
       report: Other uses
 
