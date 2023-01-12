@@ -16,7 +16,7 @@ enduse:
       report: Appliances
     cook:  # ACCESS; resid only
       name: Cooking
-      report: Cooking
+      report: Heating|Cooking
     cool:  # STURM; both comm/resid
       name: Space cooling
       report: Cooling
