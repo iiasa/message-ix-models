@@ -20,7 +20,7 @@ from message_ix_models.util import (
     merge_data,
     nodes_ex_world,
 )
-from sdmx.model import Code
+from sdmx.model import Annotation, Code
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
@@ -126,7 +126,12 @@ def load_config(context):
     # Generate technologies that replace corresponding *_rc|RC in the base model
     expr = re.compile("^RC|(?<=_)(rc|RC)$")
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
-        s.add.set["technology"].append(Code(id=expr.sub("afofi", t.id)))
+        s.add.set["technology"].append(
+            Code(
+                id=expr.sub("afofi", t.id),
+                annotations=[Annotation(id="derived-from", text=t.id)],
+            )
+        )
         s.remove.set["technology"].append(t)
 
     # Store
@@ -222,7 +227,7 @@ def prepare_data(
         filters = dict(filters={"technology": tech_orig})
 
         # Derived name of new technology
-        tech_new = tech_orig.replace("rc", "afofi").replace("RC", "afofi")
+        tech_new = re.sub("(rc|RC)", "afofi", tech_orig)
 
         # Copy data for input, capacity_factor, and emission_factor
         for name in ("input", "capacity_factor", "emission_factor"):
