@@ -426,6 +426,7 @@ def materials(
     )
 
     # Iterate over `BUILD_COMM_CONVERT` and nodes (excluding World and *_GLB)
+    # NB probably could vectorize over `n`.
     for c, n in product(BUILD_COMM_CONVERT, nodes_ex_world(info.N)):
         rc, *_, typ, comm = c.split("_")  # First, second-to-last, and last entries
 
@@ -435,22 +436,25 @@ def materials(
         df_mat = (sturm_r if rc == "resid" else sturm_c).query(
             f"commodity == '{c}' and node == '{n}'"
         )
+        # Input or output efficiency:
+        # - Duplicate the final (2100) value for 2110.
+        # - Take a number of values corresponding to len(info.Y), allowing the first
+        #   model year to be 2020 or 2025.
+        eff = pd.concat([df_mat.value, df_mat.value.tail(1)]).iloc[-len(info.Y) :]
 
         if typ == "demand":
-            # Need to take care of 2110 by appending the last value
             data = make_io(
                 (comm, "product", "t"),
                 (f"{rc}_floor_construction", "demand", "t"),
-                efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
+                efficiency=eff,
                 technology=f"construction_{rc}_build",
                 **common,
             )
         elif typ == "scrap":
-            # Need to take care of 2110 by appending the last value
             data = make_io(
                 (comm, "end_of_life", "t"),  # will be flipped to output
                 (f"{rc}_floor_demolition", "demand", "t"),
-                efficiency=pd.concat([df_mat.value, df_mat.value.tail(1)]),
+                efficiency=eff,
                 technology=f"demolition_{rc}_build",
                 **common,
             )
