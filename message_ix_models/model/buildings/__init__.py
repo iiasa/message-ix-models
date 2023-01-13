@@ -298,32 +298,29 @@ def pre_solve(scenario: Scenario, context, data):
 
         mark_time()
 
+        # Scale ACCESS results to match historical activity
+        # NB ignore biomass, data was always imputed here so we are dealing with guesses
+        #    over guesses
+        e_use_2010 = (
+            e_use[(e_use.year == 2010) & ~e_use.commodity.str.contains("bio|non-comm")]
+            .groupby("node", as_index=False)
+            .sum()
+        )
+        adj_fact = data["rc_act_2010"].copy(True)
+        adj_fact["adj_fact"] = adj_fact["value"] / e_use_2010["value"]
+        adj_fact = adj_fact.rename(columns={"value": "adj_fact"})
+        e_use = (
+            e_use.merge(adj_fact.drop("value"), on=["node"])
+            .eval("value = value * adj_fact")
+            .drop("adj_fact", axis=1)
+            .query("year > 2010")
+        )
+
         # Update cached output
         e_use.to_csv(access_cache_path)
     else:
         # Read the cache
         e_use = pd.read_csv(access_cache_path)
-
-    # Scale ACCESS results to match historical activity
-    # NB ignore biomass, data was always imputed here so we are dealing with guesses
-    #    over guesses
-    # TODO (PNK) this code appears to be unable to work unless run_access is given (or
-    #      with its cached output). Define and satisfy the minimum conditions for the
-    #      remaining code.
-    e_use_2010 = (
-        e_use[(e_use.year == 2010) & ~e_use.commodity.str.contains("bio|non-comm")]
-        .groupby("node", as_index=False)
-        .sum()
-    )
-    adj_fact = data["rc_act_2010"].copy(True)
-    adj_fact["value"] = adj_fact["value"] / e_use_2010["value"]
-    adj_fact = adj_fact.rename(columns={"value": "adj_fact"})
-    e_use = (
-        e_use.merge(adj_fact, on=["node"])
-        .assign(value=lambda df: df["value"] * df["adj_fact"])
-        .drop("adj_fact", axis=1)
-        .query("year > 2010")
-    )
 
     # Run STURM. If first_iteration is False, sturm_c will be empty.
     sturm_r, sturm_c = sturm.run(context, prices, first_iteration)
