@@ -30,6 +30,7 @@ log = logging.getLogger(__name__)
 
 #: Mappings for :func:`.reporting.util.collapse`. See :func:`.callback`.
 SECTOR_NAME_MAP = {
+    "afofi": "AFOFI",
     "comm": "Commercial",
     "rc": "Residential and Commercial",
     "resid": "Residential",
@@ -287,7 +288,7 @@ def buildings_agg0(spec: Spec, config: Dict) -> Dict:
     techs = defaultdict(list)
 
     sector_expr = re.compile("_(comm|resid)_")
-    enduse_expr = re.compile("_(apps|cook|cool|heat|hotwater)$")
+    enduse_expr = re.compile("_(apps|cook|cool|heat|hotwater|other_uses)$")
 
     for t in spec.add.set["technology"]:
         sector_match = sector_expr.search(t.id)
@@ -308,8 +309,8 @@ def buildings_agg0(spec: Spec, config: Dict) -> Dict:
             techs[f"{sector} {enduse}"].append(t.id)
             techs[f"rc {enduse}"].append(t.id)
 
-        if t.id.endswith("_afofi"):
-            techs["rc"].append(t.id)
+        if "afofi" in t.id:  # Appears at start (e.g. from RCtherm_1) or end (back_rc)
+            techs["afofi"].append(t.id)
 
     result = nodes_world_agg(config)
     result["t"] = techs
