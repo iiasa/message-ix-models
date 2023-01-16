@@ -462,6 +462,8 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
 
     # Ammonia Technology Roadmap IEA. 2019 Global NH3 production = 182 Mt.
     # 70% is used for nitrogen fertilizer production. Rest is 54.7 Mt.
+    # 12 Mt is missing from nitrogen fertilizer part. Possibly due to low demand
+    # coming from GLOBIOM updates. Also add this to the residual demand. (66.7 Mt)
     # Approxiamte regional shares are from Future of Petrochemicals
     # Methodological Annex page 7. Total production for regions:
     # Asia Pacific (RCPA, CHN, SAS, PAS, PAO) = 90 Mt
@@ -478,13 +480,13 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
         region_set = 'R12_'
-        dem_2020 = np.array([1.5, 1.5, 3, 6, 1.5, 4.6, 6, 1.5, 1.5, 6, 4.6, 17])
+        dem_2020 = np.array([2.5, 2.5, 4, 7, 2.5, 5.6, 7, 2.5, 2.5, 7, 5.6, 18])
         dem_2020 = pd.Series(dem_2020)
 
     else:
         nodes.remove("R11_GLB")
         region_set = 'R11_'
-        dem_2020 = np.array([1.5, 18.5, 3, 6, 1.5, 4.6, 6, 1.5, 1.5, 6, 4.6])
+        dem_2020 = np.array([2.5, 19.5, 4, 7, 2.5, 5.6, 7, 2.5, 2.5, 7, 5.6])
         dem_2020 = pd.Series(dem_2020)
 
     df_demand[2020] = dem_2020

@@ -193,25 +193,20 @@ def modify_demand_and_hist_activity(scen):
     df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
 
     # Already set to zero: ammonia, methanol, HVCs cover most of the feedstock
-    # # Retreive data for i_feed: Only for petrochemicals
-    # # It is assumed that the sectors that are explicitly covered in MESSAGE are
-    # # 50% of the total feedstock.
-    #
-    # df_feed = df[
-    #     (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
-    # ]
-    # df_feed_total = df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
-    # df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
-    # df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
-    #
-    # for r in df_feed["REGION"].unique():
-    #
-    #
-    #     i = 0
-    #     df_feed_temp.at[i, "REGION"] = r
-    #     df_feed_temp.at[i, "i_feed"] = 1
-    #     i = i + 1
-    #     df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
+
+    df_feed = df[
+        (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
+    ]
+    df_feed_total = df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
+    df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
+    df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
+
+    for r in df_feed["REGION"].unique():
+        i = 0
+        df_feed_temp.at[i, "REGION"] = r
+        df_feed_temp.at[i, "i_feed"] = 1
+        i = i + 1
+        df_feed_new = pd.concat([df_feed_temp, df_feed_new], ignore_index=True)
 
     # Retreive data for i_therm
     # 67% of chemical thermal energy chemicals comes from primary chemicals. (IEA)
