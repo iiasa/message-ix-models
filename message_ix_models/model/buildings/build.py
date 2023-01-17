@@ -507,14 +507,19 @@ def materials(
         #   in `df` (from sturm_c); fill NA with zeroes.
         mat_demand = mat_demand.join(df, on=index_cols, how=how).fillna(0)
 
-    # - Compute new value = (existing value - STURM values), but no less than 0.
-    # - Drop intermediate column.
-    # - Add to combined data.
-    result["demand"].append(
-        mat_demand.eval("value = value - demand_comm_const - demand_resid_const")
-        .assign(value=lambda df: df["value"].clip(0))
-        .drop(columns=["demand_comm_const", "demand_resid_const"])
-    )
+    # False if main() is being run for the second time on `scenario`
+    first_pass = "construction_resid_build" not in info.set["technology"]
+
+    # If not on the first pass, this modification is already performed; skip
+    if first_pass:
+        # - Compute new value = (existing value - STURM values), but no less than 0.
+        # - Drop intermediate column.
+        # - Add to combined data.
+        result["demand"].append(
+            mat_demand.eval("value = value - demand_comm_const - demand_resid_const")
+            .assign(value=lambda df: df["value"].clip(0))
+            .drop(columns=["demand_comm_const", "demand_resid_const"])
+        )
 
     # Concatenate data frames together
     return {k: pd.concat(v) for k, v in result.items()}
