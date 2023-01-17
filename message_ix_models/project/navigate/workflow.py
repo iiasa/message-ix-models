@@ -269,13 +269,21 @@ def generate(context: Context) -> Workflow:
         if name == base:
             policy_solved = name
         else:
-            # Re-solve with buildings at the last stage
+            # Re-solve with buildings at the last step
+
+            # Prior two steps added by engage.add_steps()
+            step_m1 = wf.graph[name][0]
+            step_m2 = wf.graph[wf.graph[name][2]][0]
 
             # Retrieve options on the solve step added by engage.add_steps()
             try:
-                solve_kw = wf.graph[name][0].kwargs["config"].solve
+                solve_kw = step_m1.kwargs["config"].solve
             except KeyError:
                 solve_kw = dict()
+            # Retrieve the target scenario from the
+            # TODO remove the need to look up step_m2 by allowing a callback to give the
+            #      new model/scenario name
+            target = step_m2.scenario_info
 
             # Create a new step with the same name and base, but invoking
             # MESSAGEix-Buildings instead.
@@ -288,6 +296,10 @@ def generate(context: Context) -> Workflow:
                 policy_solved,
                 name,
                 build_solve_buildings,
+                # Clone before this step
+                clone=True,
+                target="{model}/{scenario}+B".format(**target),
+                # Keyword arguments for build_solve_buildings
                 navigate_scenario=wf.graph[base][0].kwargs["navigate_scenario"],
                 config=dict(clone=False, solve=solve_kw),
             )
