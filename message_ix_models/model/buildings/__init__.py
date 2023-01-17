@@ -327,10 +327,6 @@ def pre_solve(scenario: Scenario, context, data):
 
     mark_time()
 
-    # Dump data for debugging
-    sturm_r.to_csv(config._output_path.joinpath("debug-sturm-resid.csv"))
-    sturm_c.to_csv(config._output_path.joinpath("debug-sturm-comm.csv"))
-
     # TEMP: remove commodity "(comm|resid)_heat_v_no_heat"
     expr = "(comm|resid)_(heat|hotwater)_v_no_heat"
     sturm_r = sturm_r[~sturm_r.commodity.str.fullmatch(expr)]
