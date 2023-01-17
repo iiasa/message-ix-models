@@ -62,7 +62,13 @@ def run(
     if args["geo_level_report"] != "R12":
         raise NotImplementedError
 
-    return func(context, prices, args, first_iteration)
+    result = func(context, prices, args, first_iteration)
+
+    # Dump data for debugging
+    result[0].to_csv(config._output_path.joinpath("debug-sturm-resid.csv"))
+    result[1].to_csv(config._output_path.joinpath("debug-sturm-comm.csv"))
+
+    return result
 
 
 def _sturm_rpy2(
