@@ -187,41 +187,41 @@ def prepare_data(
     # Accumulate a list of data frames for each parameter
     result = defaultdict(list)
 
-    # Create new demands and techs for AFOFI based on percentages between 2010 and 2015
-    # NB this should not be run after initial setup when rc_spec/rc_therm have been
-    #    stripped out. At the moment it appears it would be a no-op.
-    dd_replace = scenario.par(
-        "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
-    )
+    # Use code from the MESSAGE_Buildings repo that queries the ECE IEA database
     perc_afofi_therm, perc_afofi_spec = return_PERC_AFOFI()
-    afofi_dd = dd_replace.copy(True)
+
+    # Create new demands for AFOFI based on percentages between 2010 and 2015.
+    # NB on a second pass (after main() has already run once), rc_spec and rc_therm have
+    #    been stripped out, so `dd_replace` and `afofi_dd` are empty.
+    afofi_dd = scenario.par(
+        "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
+    ).assign(commodity=lambda df: df["commodity"].str.replace("rc", "afofi"))
+
+    # NB(PNK) this probably does not need to be a loop
     for reg in perc_afofi_therm.index:
         # Boolean mask for rows matching this `reg`
         mask = afofi_dd["node"].str.endswith(reg)
 
-        # NB(PNK) This could probably be simplified using groupby()
-        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_therm"), "value"]
+        # NB(PNK) this could probably be simplified using groupby()
+        afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_therm"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_therm"), "value"]
             * perc_afofi_therm.loc[reg][0]
         )
-        afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd.commodity == "rc_spec"), "value"]
+        afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_spec"), "value"] = (
+            afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_spec"), "value"]
             * perc_afofi_spec.loc[reg][0]
         )
-
-    afofi_dd["commodity"] = afofi_dd.commodity.str.replace("rc", "afofi")
     result["demand"].append(afofi_dd)
 
-    # commented: as of 2022-12-01, we remove these commodities entirely
-    # # Set model demands for rc_therm and rc_spec to zero
-    # dd_replace["value"] = 0
-    # result["demand"].append(dd_replace)
+    # Copy technology parameter values from rc_spec and rc_therm to new afofi. Again,
+    # once rc_(spec|therm) are stripped, .par() returns nothing here, so rc_techs is
+    # empty and the following loop does not run
 
-    rc_techs = scenario.par("output", filters={"commodity": ["rc_therm", "rc_spec"]})[
+    rc_techs = scenario.par("output", filters={"commodity": ["rc_spec", "rc_therm"]})[
         "technology"
     ].unique()
 
-    # NB(PNK): this probably does not need to be a loop
+    # NB(PNK) this probably does not need to be a loop
     for tech_orig in rc_techs:
         # Filters for retrieving data
         filters = dict(filters={"technology": tech_orig})
@@ -347,11 +347,10 @@ def main(
     scenario
         Scenario to set up.
     """
+    # Info about the `scenario` to be modified. If build.main() has already been run on
+    # the scenario, this will reflect that, e.g. will include the structures from
+    # buildings/set.yaml.
     info = ScenarioInfo(scenario)
-
-    # if BUILD_COMMODITIES[0] in info.set["commodity"]:
-    #     # Scenario already set up; do nothing
-    #     return
 
     scenario.check_out()
 
@@ -401,21 +400,24 @@ def materials(
 ) -> Dict[str, pd.DataFrame]:
     """Integrate MESSAGEix-Buildings with MESSAGEix-Materials.
 
-    This function adjusts `scenario` to work with :mod:`.model.material`. It makes the
-    following changes:
+    This function prepares data for `scenario` to work with :mod:`.model.material`.
+    Structural changes (addition/removal of technologies and commodities) are handled
+    by :func:`get_spec` and :func:`main`.
 
-    1. Create new technologies like ``(construction|demolition)_(resid|comm)_build``.
+    The data is for the "output", "input", and "demand" MESSAGE parameters. It includes:
 
-       - The ``construction_*`` technologies take input of commodities steel, aluminum,
+    1. For new technologies like ``(construction|demolition)_(resid|comm)_build``:
+
+       - For ``construction_*`` technologies, input of the commodities steel, aluminum,
          and cement (cf :data:`BUILD_COMM_CONVERT`) from ``l="product"``, and output to
          ``c="(comm|resid)_floor_construction, l="demand"``.
-       - The ``demolition_*`` technologies have no input, but output to both
+       - For the ``demolition_*`` technologies, no input, but output to both
          ``c="(comm|resid)_floor_demolition, l="demand"`` *and* commodities (same 3) at
          ``l="end_of_life"``.
 
-    2. Adjust existing demand parameter data at ``l="demand"`` for steel, aluminum, and
-       cement by subtracting the amounts from ``sturm_r`` and ``sturm_c``. The demands
-       are not reduced below zero.
+    2. Adjusted values for existing "demand" parameter data at ``l="demand"`` for steel,
+       aluminum, and cement by subtracting the amounts from ``sturm_r`` and ``sturm_c``.
+       The demands are not reduced below zero.
     """
     # Accumulate a list of data frames for each parameter
     result = defaultdict(list)

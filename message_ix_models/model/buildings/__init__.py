@@ -327,6 +327,7 @@ def pre_solve(scenario: Scenario, context, data):
 
     mark_time()
 
+    # TODO describe why this is necessary, and why it should be temporary
     # TEMP: remove commodity "(comm|resid)_heat_v_no_heat"
     expr = "(comm|resid)_(heat|hotwater)_v_no_heat"
     sturm_r = sturm_r[~sturm_r.commodity.str.fullmatch(expr)]
@@ -377,8 +378,8 @@ def pre_solve(scenario: Scenario, context, data):
     # - Ensure years are integers.
     demand = demand.replace("resid_cook_non-comm", "non-comm").astype({"year": int})
 
-    # Fill missing years...
-    # ...with zeroes before model starts
+    # Fill missing years…
+    # …with zeroes before model starts
     fill_dd = demand.loc[demand["year"] == scenario.firstmodelyear].assign(value=0)
     for year in data["years_not_mod"]:
         fill_dd["year"] = year
@@ -394,16 +395,15 @@ def pre_solve(scenario: Scenario, context, data):
         .reset_index()
         .assign(value=lambda df: df[2100] * df[2100] / df[2090])
     )
-    # unless the demand from 2090 is zero, which creates div by zero
-    # in which case take the average (i.e. value for 2100 div by 2)
+    # …unless the demand from 2090 is zero, which creates div by zero in which case take
+    # the average (i.e. value for 2100 div by 2)
     # NOTE: no particular reason, just my choice!
     dd_2110.loc[dd_2110[2090] == 0, "value"] = dd_2110.loc[dd_2110[2090] == 0, 2100] / 2
-    # or if the demand grows too much indicating a
-    # relatively too low value for 2090
+    # …or if the demand grows too much indicating a relatively too low value for 2090
     dd_2110.loc[dd_2110["value"] > 3 * dd_2110[2100], "value"] = (
         dd_2110.loc[dd_2110["value"] > 3 * dd_2110[2100], 2100] / 2
     )
-    # or simply if there is an NA
+    # …or simply if there is an NA
     dd_2110.loc[dd_2110["value"].isna(), "value"] = (
         dd_2110.loc[dd_2110["value"].isna(), 2100] / 2
     )
