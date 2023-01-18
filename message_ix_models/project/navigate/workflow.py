@@ -1,10 +1,12 @@
 import logging
+import re
 from dataclasses import replace
 from pathlib import Path
 from typing import Optional
 
 from message_ix import Scenario
 from message_ix_models import Context
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import private_data_path
 from message_ix_models.workflow import Workflow
 
@@ -61,6 +63,21 @@ BUILDINGS_CONFIG = buildings.Config(
 )
 
 
+def _strip(scenario: Scenario):
+    """Remove certain technologies identified as irrelevant to NAVIGATE."""
+    from message_ix_models import Spec
+    from message_ix_models.model import build
+
+    # The spec only contains a list of technologies to remove
+    tech_expr = re.compile("^RC(spec|therm)_")
+    s = Spec()
+    s.remove.set["technology"] = [
+        t for t in get_codes("technology") if tech_expr.match(t.id)
+    ]
+
+    build.apply_spec(scenario, s, fast=True)
+
+
 def build_solve_buildings(
     context: Context,
     scenario: Scenario,
@@ -69,6 +86,8 @@ def build_solve_buildings(
 ) -> Scenario:
     """Workflow steps 5–7."""
     from message_data.model.buildings import sturm
+
+    _strip(scenario)
 
     # Configure
     context.buildings = replace(
