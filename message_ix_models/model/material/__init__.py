@@ -353,36 +353,30 @@ def run_reporting(context, remove_ts):
 
 
 @cli.command("report-2")
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--model_name", default="MESSAGEix-Materials")
-# @click.pass_obj
-def run_old_reporting(scenario_name, model_name):
+@click.pass_obj
+def run_old_reporting(context):
     from message_ix import Scenario
     from ixmp import Platform
     from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
 
-    base_model = model_name
-    scen_name = scenario_name
-
-    print(model_name)
-    print(scenario_name)
-    mp = Platform(name='ixmp_dev', jvmargs=['-Xmx16G'])
-    scenario = Scenario(mp, model_name, scenario_name)
+    # Retrieve the scenario given by the --url option
+    scenario = context.get_scenario()
+    mp = scenario.platform
 
     reporting(
         mp,
         scenario,
+        # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
+        #         string containing "True" or "False" instead of an actual bool.
         "False",
-        base_model,
-        scen_name,
+        scenario.model,
+        scenario.scenario,
         merge_hist=True,
         merge_ts=True,
         run_config="materials_run_config.yaml",
-        verbose = True
     )
-
 
 from .data_cement import gen_data_cement
 from .data_steel import gen_data_steel
