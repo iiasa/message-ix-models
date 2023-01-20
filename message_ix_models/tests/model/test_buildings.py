@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from message_data.model.buildings import Config, _mpd, sturm
-from message_data.model.buildings.build import get_spec, get_techs
+from message_data.model.buildings.build import get_spec, get_tech_groups, get_techs
 from message_data.model.buildings.report import (
     configure_legacy_reporting,
     report2,
@@ -24,6 +24,43 @@ def test_get_techs(test_context, commodity):
 
     # Generated technologies for residuals of corresponding *_rc in the base model spec
     assert "gas_afofi" in result
+
+
+@pytest.mark.parametrize(
+    "args, present, absent",
+    (
+        # Default values of arguments, i.e. include="commodity enduse", legacy=False
+        (dict(), {"rc", "comm hydrogen", "resid hotwater"}, set()),
+        # As used e.g. in buildings reporting
+        (dict(include="enduse"), {"resid hotwater", "rc"}, {"comm coal"}),
+        # As used e.g. in legacy reporting. Assert that names like "h2" are used instead
+        # of "hydrogen", and that end-use groups are not included.
+        (
+            dict(include="commodity", legacy=True),
+            {"afofi", "comm h2", "resid heat"},
+            {"comm other_uses"},
+        ),
+    ),
+)
+def test_get_tech_groups(test_context, args, present, absent):
+    test_context.buildings = Config(sturm_scenario="")
+    test_context.regions = "R12"
+
+    spec = get_spec(test_context)
+
+    # Function runs
+    result = get_tech_groups(spec, **args)
+
+    # # For debugging
+    # for k in sorted(result.keys()):
+    #     print(f"{k}:")
+    #     print("  " + "\n  ".join(sorted(result[k])))
+
+    # Certain keys are present
+    assert set() == present - set(result)
+
+    # Certain keys are absent
+    assert set() == absent & set(result)
 
 
 def test_configure_legacy_reporting(test_context):
