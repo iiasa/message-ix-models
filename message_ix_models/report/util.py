@@ -1,35 +1,33 @@
 import logging
-from typing import Union
+from typing import Iterable, Union
 
 import pandas as pd
 from genno import Quantity
 from genno.compat.pyam.util import collapse as genno_collapse
 from iam_units import registry
+from message_ix_models.util import eval_anno
+from sdmx.model import Code
 
 
 log = logging.getLogger(__name__)
 
 
 #: Replacements used in :meth:`collapse`.
-#: These are applied using :meth:`pandas.DataFrame.replace` with ``regex=True``; see
-#: the documentation of that method.
+#: These are applied using :meth:`pandas.DataFrame.replace` with ``regex=True``; see the
+#: documentation of that method.
 #:
 #: - Applied to whole strings along each dimension.
 #: - These columns have :meth:`str.title` applied before these replacements.
 REPLACE_DIMS = {
     "c": {
-        "Crudeoil": "Oil",
-        "Electr": "Electricity",
-        "Ethanol": "Liquids|Biomass",
-        "Gas": "Gases",
-        "Lightoil": "Liquids|Oil",
-        "Methanol": "Liquids|Coal",
         # in land_out, for CH4 emissions from GLOBIOM
         "Agri_Ch4": "GLOBIOM|Emissions|CH4 Emissions Total",
     },
     "l": {
+        # FIXME this is probably not generally applicable and should be removed
         "Final Energy": "Final Energy|Residential",
     },
+    "t": dict(),
 }
 
 #: Replacements used in :meth:`collapse` after the 'variable' column is assembled.
@@ -167,3 +165,11 @@ def collapse_gwp_info(df, var):
     # Remove columns from further processing
     [var.remove(c) for c in cols]
     return df.drop(cols, axis=1), var
+
+
+def add_replacements(dim: str, codes: Iterable[Code]) -> None:
+    """Update :data:`REPLACE_DIMS` for dimension `dim` with values from `codes`."""
+    for code in codes:
+        label = eval_anno(code, "report")
+        if label is not None:
+            REPLACE_DIMS[dim][f"{code.id.title()}$"] = label
