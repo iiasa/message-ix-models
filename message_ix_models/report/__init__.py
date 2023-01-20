@@ -13,8 +13,11 @@ from genno import Key
 from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Reporter, Scenario
 from message_ix_models import Context
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import local_data_path, private_data_path
 from message_ix_models.util._logging import mark_time
+
+from .util import add_replacements
 
 
 __all__ = [
@@ -361,6 +364,10 @@ def prepare_reporter(
 
     # Pass configuration to the reporter
     rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
+
+    # Add mappings for conversions to IAMC data structures
+    add_replacements("c", get_codes("commodity"))
+    add_replacements("t", get_codes("technology"))
 
     # Apply callbacks for other modules which define additional reporting computations
     for callback in CALLBACKS:
