@@ -293,7 +293,11 @@ def pre_solve(scenario: Scenario, context, data):
         from E_USE_Model import Simulation_ACCESS_E_USE  # type: ignore
 
         e_use = Simulation_ACCESS_E_USE.run_E_USE(
-            scenario=config.ssp, prices=prices, base_path=config.code_dir
+            scenario=config.ssp,
+            prices=prices,
+            base_path=config.code_dir,
+            full_access=False,
+            reporting=False,
         )
 
         mark_time()
