@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Sequence
 
 import message_ix
 import pandas as pd
@@ -15,6 +15,7 @@ from message_ix_models.model.structure import (
     get_region_codes,
 )
 from message_ix_models.util import (
+    eval_anno,
     load_private_data,
     make_io,
     merge_data,
@@ -50,15 +51,14 @@ MATERIALS = ["steel", "cement", "aluminum"]
 
 
 def get_spec(context: Context) -> Spec:
-    """Return the specification for MESSAGEix-Transport.
+    """Return the specification for MESSAGEix-Buildings.
 
     Parameters
     ----------
     context : .Context
         The key ``regions`` determines the regional aggregation used.
 
-    .. todo:: Expand to handle :data:`BUILD_COMMODITIES`, :data:`BUILD_TECHS`, and
-       :data:`BUILD_COMM_CONVERT`.
+    .. todo:: Expand to handle :data:`BUILD_COMM_CONVERT`.
     """
     load_config(context)
 
@@ -95,6 +95,88 @@ def get_techs(spec: Spec, commodity=None) -> List[str]:
         codes = filter(lambda s: s.id.startswith(commodity), codes)
 
     return sorted(map(str, codes))
+
+
+def get_tech_groups(
+    spec: Spec, include="commodity enduse", legacy=False
+) -> Dict[str, Sequence[str]]:
+    """Return groups of buildings technologies from `spec`.
+
+    These are suitable for aggregation, e.g. in data preparation or reporting.
+
+    Parameters
+    ----------
+    spec
+        The result of :func:`get_spec`.
+    include : str or sequence of str
+        May include specific values to control what is returned:
+
+        - "commodity": include keys like "resid gas", where "gas" is a commodity,
+          collecting technologies which consume this commodity.
+        - "enduse": include keys like "comm other_uses", where "other_uses" is a
+          buildings energy end-use, collecting technologies which represent this
+          end-use.
+    legacy
+        if :data:`True`, apply mapping from commodity names to labels used in legacy
+        reporting code; e.g. "electr" becomes "elec".
+    """
+    techs = defaultdict(list)
+
+    # Expression to match technology IDs generated per buildings/set.yaml
+    # - The 'c' (commodity) group matches only the "lightoil" in "lightoil_lg"
+    expr = re.compile(
+        "^(?P<c>.*?)(_lg)?_((?P<sector>comm|resid)_(?P<enduse>.*)|afofi)$"
+    )
+
+    def _store(value, c, e, s):
+        """Update 1 or more lists in `techs` with `value`."""
+        techs[s].append(value)
+        if "commodity" in include:
+            techs[f"{s} {c}"].append(value)
+        if "enduse" in include and e:
+            techs[f"{s} {e}"].append(value)
+
+    # Iterate over technologies
+    for t in spec.add.set["technology"]:
+        # Extract commodity, end-use, and sector from `expr`
+        match = expr.match(t.id)
+        if match is None:
+            continue
+
+        sector = match.group("sector") or "afofi"
+        commodity, enduse = match.group("c", "enduse")  # For sector=AFOFI, enduse=None
+
+        # Omit technologies for the buildings-materials linkage
+        if commodity in {"construction", "demolition"}:
+            continue
+
+        # For some base model technologies, e.g. `hp_el_rc`, thus for `hp_el_afofi`, the
+        # ID does not contain the ID of the input commodity. Look up the actual input
+        # commodity from annotations in technology.yaml.
+        try:
+            commodity = eval_anno(t, "input")[0]
+        except TypeError:
+            pass  # No such annotation
+
+        if legacy:
+            # Map to labels used in legacy reporting
+            commodity = {
+                "d_heat": "heat",
+                "electr": "elec",
+                "ethanol": "eth",
+                "fueloil": "foil",
+                "hydrogen": "h2",
+                "lightoil": "loil",
+                "methanol": "meth",
+                "solar_pv": "solar",
+            }.get(commodity, commodity)
+
+        # Update lists
+        _store(match.string, commodity, enduse, sector)
+        # Also update "rc" totals
+        _store(match.string, commodity, enduse, "rc")
+
+    return techs
 
 
 def load_config(context):
