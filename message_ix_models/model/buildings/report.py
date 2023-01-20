@@ -7,7 +7,6 @@ Originally transcribed from :file:`reporting_EFC.py` in the buildings repository
 """
 import logging
 import re
-from collections import defaultdict
 from functools import lru_cache, partial
 from itertools import product
 from typing import Dict, List
@@ -24,7 +23,7 @@ from message_data.reporting import iamc as add_iamc
 from message_data.reporting.util import add_replacements
 
 from . import Config
-from .build import get_spec, get_techs
+from .build import get_spec, get_tech_groups
 from .sturm import scenario_name
 
 log = logging.getLogger(__name__)
@@ -190,15 +189,8 @@ def configure_legacy_reporting(config: dict) -> None:
 
     spec = get_spec(context)
 
-    # Generate some lists
-    for c in "back biomass coal d_heat elec eth foil gas h2 loil meth solar".split():
-        _c = {"elec": "electr", "heat": "d_heat", "loil": "lightoil"}.get(c, c)
-        config[f"rc {c}"] = get_techs(spec, commodity=_c)
-
-    # Extend some groups
-    # TODO group automatically based on attributes
-    config["rc elec"].extend(get_techs(spec, commodity="hp_el"))
-    config["rc gas"].extend(get_techs(spec, commodity="hp_gas"))
+    # Update using tech groups
+    config.update(get_tech_groups(spec, "commodity", legacy=True))
 
 
 # Helper functions
@@ -268,35 +260,8 @@ def buildings_filters1(years: List) -> Dict:
 
 def buildings_agg0(spec: Spec, config: Dict) -> Dict:
     """Return mapping for buildings aggregation."""
-    techs = defaultdict(list)
-
-    sector_expr = re.compile("_(comm|resid)_")
-    enduse_expr = re.compile("_(apps|cook|cool|heat|hotwater|other_uses)$")
-
-    for t in spec.add.set["technology"]:
-        sector_match = sector_expr.search(t.id)
-        try:
-            sector = sector_match.group(1)
-        except AttributeError:
-            pass
-        else:
-            techs[sector].append(t.id)
-            techs["rc"].append(t.id)
-
-        enduse_match = enduse_expr.search(t.id)
-        try:
-            enduse = enduse_match.group(1)
-        except AttributeError:
-            pass
-        else:
-            techs[f"{sector} {enduse}"].append(t.id)
-            techs[f"rc {enduse}"].append(t.id)
-
-        if "afofi" in t.id:  # Appears at start (e.g. from RCtherm_1) or end (back_rc)
-            techs["afofi"].append(t.id)
-
     result = nodes_world_agg(config)
-    result["t"] = techs
+    result["t"] = get_tech_groups(spec, include="enduse")
 
     log.info(f"Will aggregate:\n{result!r}")
 
