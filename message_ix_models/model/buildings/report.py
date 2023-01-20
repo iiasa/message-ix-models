@@ -21,30 +21,13 @@ from message_ix_models.util import eval_anno
 
 from message_data.model.transport.computations import nodes_world_agg
 from message_data.reporting import iamc as add_iamc
+from message_data.reporting.util import add_replacements
 
 from . import Config
 from .build import get_spec, get_techs
 from .sturm import scenario_name
 
 log = logging.getLogger(__name__)
-
-#: Mappings for :func:`.reporting.util.collapse`. See :func:`.callback`.
-SECTOR_NAME_MAP = {
-    "afofi": "AFOFI",
-    "comm": "Commercial",
-    "rc": "Residential and Commercial",
-    "resid": "Residential",
-}
-FUEL_NAME_MAP = {
-    "biomass": "Solids|Biomass",
-    "biomass_nc": "Solids|Biomass|Traditional",
-    "coal": "Solids|Fossil",
-    "d_heat": "Heat",
-    "lightoil": "Liquids|Oil",
-    "gas": "Gases",
-    "electr": "Electricity",
-}
-NAME_MAP = dict(fuel=FUEL_NAME_MAP, sector=SECTOR_NAME_MAP)
 
 # Common list of columns for several operations
 COLS = ["node", "variable", "unit", "year", "value"]
@@ -78,16 +61,12 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     rep.add("buildings spec", spec)
 
     # Configure message_data.reporting.util.collapse to map commodity and technology IDs
-    REPLACE_DIMS.setdefault("t", dict())
-    REPLACE_DIMS["c"].update({k.title(): v for k, v in FUEL_NAME_MAP.items()})
-    for (s_id, s_name), enduse in product(
-        SECTOR_NAME_MAP.items(), spec.add.set["enduse"]
-    ):
+    add_replacements("t", spec.add.set["sector"])
+    for s, e in product(spec.add.set["sector"], spec.add.set["enduse"]):
         # Append "$" so the expressions only match the full/end of string
         REPLACE_DIMS["t"][
-            f"{s_id.title()} {enduse.id.title()}$"
-        ] = f"{s_name}|{eval_anno(enduse, 'report')}"
-        REPLACE_DIMS["t"][f"{s_id.title()}$"] = s_name
+            f"{s.id.title()} {e.id.title()}$"
+        ] = f"{eval_anno(s, 'report')}|{eval_anno(e, 'report')}"
 
     log.info(f"Will replace:\n{REPLACE_DIMS!r}")
 
@@ -244,6 +223,10 @@ def add_global_total(df: pd.DataFrame) -> pd.DataFrame:
 
 def fuel_sector_from_commodity(df: pd.DataFrame) -> pd.DataFrame:
     """Extract "fuel" and "sector" from "commodity" in `df`; apply `NAME_MAP`."""
+    raise NotImplementedError("NAME_MAP no longer defined")
+
+    NAME_MAP = dict()
+
     f_s = df["commodity"].str.rsplit("_", 1, expand=True)
     return df.assign(fuel=f_s[0], sector=f_s[1]).replace(NAME_MAP)
 
