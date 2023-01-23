@@ -35,11 +35,8 @@ consumer_group:
 
 technology:
   remove:
-  - Trans_1
-  - Trans_2
-  - Trans_3
-  - Trans_4
-  - Trans_5
+  # Base model transport technologies. See technology.yaml in message-ix-models
+  # for details
   - back_trp
   - coal_trp
   - elec_trp
@@ -51,6 +48,13 @@ technology:
   - loil_trp
   - meth_fc_trp
   - meth_ic_trp
+  # May be related to MCMA; see parallel RC(spec|therm)_1 for buildings
+  - Trans_1
+  - Trans_2
+  - Trans_3
+  - Trans_4
+  - Trans_5
+
   # add: elements are generated from technology.yaml
 
 commodity:
