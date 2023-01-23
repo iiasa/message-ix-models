@@ -132,11 +132,9 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     for i, (func, args, store_enabled, base) in {
         # index: (function, inputs to the function, whether to store_ts, file basename)
         #
-        # NB(PNK 2022-12-15) temporarily re-enabled for comparison
-        0: (report0, ["buildings filters 0"], False, "debug-report0"),
-        #
         # commented: 2022-09-09 temporarily disabled
-        # 1: (report1, ["buildings filters"], True, "buildings-emiss"),
+        # 0: (report0, ["buildings filters 0"], False, "debug-report0"),
+        # 1: (report1, ["buildings filters 0"], False, "debug-report1"),
         #
         2: (report2, ["config"], False, "sturm-raw"),
         3: (report3, ["buildings 2"], True, "buildings"),
