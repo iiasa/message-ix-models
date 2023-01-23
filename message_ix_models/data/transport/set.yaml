@@ -33,6 +33,24 @@ consumer_group:
         driver_type: null
       name: "{area_type.name}, {attitude.name}, {driver_type.name}"
 
+relation:
+  # Relations for which data should be adapted in order to integrate with legacy
+  # reporting, per "20221129_relation_comparison.xlsx"
+  require:
+  - BCA_Emission
+  - CH4_Emission
+  - CO2_trp
+  - CO_Emission
+  - HFC_Emission
+  - HFC_mobile_red
+  - N2O_Emission
+  - NH3_Emission
+  - NOx_Emission
+  - OCA_Emission
+  - SF6_Emission
+  - SF6_mag_red
+  - VOC_Emission
+
 technology:
   remove:
   # Base model transport technologies. See technology.yaml in message-ix-models
