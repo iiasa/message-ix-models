@@ -180,6 +180,15 @@ def get_tech_groups(
 
 
 def load_config(context):
+    """Load MESSAGEix-Buildings configuration from file and store on `context`.
+
+    Model structure information is loaded from :file:`data/buildings/set.yaml` and
+    derived from the base model structures.
+
+    This function does most of the work for :func:`get_spec` (the parts that do not vary
+    vary according to :class:`.buildings.Config`) and stores the result as the
+    :class:`Context` key "buildings spec".
+    """
     if "buildings spec" in context:
         return
 
@@ -203,17 +212,22 @@ def load_config(context):
 
     # Generate commodities that replace corresponding rc_* in the base model
     for c in filter(lambda x: x.id.startswith("rc_"), get_codes("commodity")):
-        s.add.set["commodity"].append(Code(id=c.id.replace("rc_", "afofi_")))
+        new = deepcopy(c)
+        new.id = c.id.replace("rc_", "afofi_")
+        s.add.set["commodity"].append(new)
 
     # Generate technologies that replace corresponding *_rc|RC in the base model
-    expr = re.compile("^RC|(?<=_)(rc|RC)$")
+    expr = re.compile("_(rc|RC)$")
     for t in filter(lambda x: expr.search(x.id), get_codes("technology")):
-        s.add.set["technology"].append(
-            Code(
-                id=expr.sub("afofi", t.id),
-                annotations=[Annotation(id="derived-from", text=t.id)],
-            )
-        )
+        # Generate a new Code object, preserving annotations
+        new = deepcopy(t)
+        new.id = expr.sub("_afofi", t.id)
+        new.annotations.append(Annotation(id="derived-from", text=t.id))
+
+        # This will be added
+        s.add.set["technology"].append(new)
+
+        # The original technology will be removed
         s.remove.set["technology"].append(t)
 
     # Store
