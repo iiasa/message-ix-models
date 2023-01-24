@@ -49,9 +49,8 @@ class Config:
     #: Climate scenario. Either "BL" or "2C".
     climate_scenario: str = "BL"
 
-    #: :obj:`True` if the base scenario should be cloned. If :program:`--climate-scen`
-    #: is given on the command line, this is set to "2C" automatically.
-    clone: bool = True
+    #: :obj:`True` if the base scenario should be cloned.
+    clone: bool = False
 
     #: Path to the MESSAGE_Buildings code and data. This repository is not an
     #: installable Python package, so it cannot be imported without information on its
