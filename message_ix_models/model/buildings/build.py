@@ -120,6 +120,12 @@ def get_tech_groups(
         if :data:`True`, apply mapping from commodity names to labels used in legacy
         reporting code; e.g. "electr" becomes "elec".
     """
+    if legacy:
+        from message_data.tools.post_processing.default_tables import COMMODITY
+    else:
+        COMMODITY = dict()
+
+    # Results
     techs = defaultdict(list)
 
     # Expression to match technology IDs generated per buildings/set.yaml
@@ -158,18 +164,8 @@ def get_tech_groups(
         except TypeError:
             pass  # No such annotation
 
-        if legacy:
-            # Map to labels used in legacy reporting
-            commodity = {
-                "d_heat": "heat",
-                "electr": "elec",
-                "ethanol": "eth",
-                "fueloil": "foil",
-                "hydrogen": "h2",
-                "lightoil": "loil",
-                "methanol": "meth",
-                "solar_pv": "solar",
-            }.get(commodity, commodity)
+        # Maybe map to labels used in legacy reporting
+        commodity = COMMODITY.get(commodity, commodity)
 
         # Update lists
         _store(match.string, commodity, enduse, sector)
