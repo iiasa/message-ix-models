@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 import pytest
 from genno.testing import assert_qty_equal
@@ -8,7 +9,11 @@ from numpy.testing import assert_allclose
 from pytest import mark, param
 
 from message_data.model.transport import Config, computations
-from message_data.model.transport.report import PLOTS, callback  # noqa: F401
+from message_data.model.transport.report import (  # noqa: F401
+    PLOTS,
+    callback,
+    configure_legacy_reporting,
+)
 from message_data.model.transport.testing import (
     MARK,
     built_transport,
@@ -17,6 +22,30 @@ from message_data.model.transport.testing import (
 from message_data.reporting import prepare_reporter, register
 
 log = logging.getLogger(__name__)
+
+
+def test_configure_legacy():
+    from message_data.tools.post_processing.default_tables import TECHS
+
+    config = deepcopy(TECHS)
+
+    configure_legacy_reporting(config)
+
+    expected = {
+        "trp back": 0,
+        "trp coal": 0,
+        "trp elec": 6,
+        "trp eth": 1,
+        "trp foil": 0,
+        "trp gas": 6,
+        "trp h2": 4,
+        "trp loil": 20,
+        "trp meth": 5,
+    }
+
+    # Resulting lists have the expected length, or are unaltered
+    for k, v in config.items():
+        assert expected.get(k, len(TECHS[k])) == len(v), k
 
 
 def test_register_cb():
