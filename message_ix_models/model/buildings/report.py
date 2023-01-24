@@ -167,6 +167,8 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
 
 def configure_legacy_reporting(config: dict) -> None:
     """Callback to configure the legacy reporting."""
+    # NB the legacy reporting doesn't pass a context object to the hook that calls this
+    #    function, so get an instance directly
     context = Context.get_instance()
 
     # FIXME don't hard-code this
