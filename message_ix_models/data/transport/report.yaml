@@ -88,24 +88,17 @@ general:
 - key: transport iamc
   comp: concat
   inputs:
-  - _transport 0a::iamc
-  - _transport 0b::iamc
-  - _transport 0c::iamc
-  - _transport 0d::iamc
-  - _transport 1::iamc
-  - _transport 2a::iamc
-  - _transport 2b::iamc
-  - _transport 2c::iamc
-  - _transport 2d::iamc
-  - _transport 2e::iamc
+  - transport activity::iamc
+  - transport stock::iamc
+  - transport fe::iamc
+  - transport fe ldv::iamc
   # Temporarily disabled to merge #370
-  # - _transport 3a::iamc
-  - _transport 3b::iamc
-  - _transport 3c::iamc
+  # - transport emi 0::iamc
+  - transport emi 1::iamc
   # For debugging
-  # - _transport debug ACT::iamc
-  # - _transport debug CAP::iamc
-  # - _transport debug CAP_NEW::iamc
+  # - transport debug ACT::iamc
+  # - transport debug CAP::iamc
+  # - transport debug CAP_NEW::iamc
 
 # Path and comp for IAMC output to file
 - key: transport CSV path
@@ -154,24 +147,13 @@ _iamc formats:
 #    NGFS project
 iamc:
 # Activity
-- variable: _transport 0a
+- variable: transport activity
   base: out:nl-t-ya-c:transport+units
   var: [ "Energy Service|Transportation", t, c ]
-
-- variable: _transport 0b
-  base: out:nl-ya-c:transport+units
-  var: [ "Energy Service|Transportation", c ]
-
-- variable: _transport 0c
-  base: out:nl-t-ya:transport+units
-  var: [ "Energy Service|Transportation", t ]
-
-- variable: _transport 0d
-  base: out:nl-ya:transport+units
-  var: [ "Energy Service|Transportation" ]
+  sums: ["c", "t", "c-t"]
 
 # Stock
-- variable: _transport 1
+- variable: transport stock
   base: stock:nl-t-ya:ldv
   var: [ "Transport|Stock|Road|Passenger|LDV", t ]
   unit: Mvehicle
@@ -180,57 +162,39 @@ iamc:
 
 # The following are 4 different partial sums of in::transport, in which
 # individual technologies are already aggregated to modes
-- variable: _transport 2a
+- variable: transport fe
   base: in:nl-t-ya-c:transport+units
   var: [ "Final Energy|Transportation", t, c ]
+  sums: ["c", "t", "c-t"]
   <<: *fe_unit
 
-- variable: _transport 2b
-  base: in:nl-ya-c:transport+units
-  var: [ "Final Energy|Transportation", c ]
-  <<: *fe_unit
-
-- variable: _transport 2c
-  base: in:nl-t-ya:transport+units
-  var: [ "Final Energy|Transportation", t ]
-  <<: *fe_unit
-
-- variable: _transport 2d
-  base: in:nl-ya:transport+units
-  var: [ "Final Energy|Transportation" ]
-  <<: *fe_unit
-
-- variable: _transport 2e
+- variable: transport fe ldv
   base: in:nl-t-ya-c:ldv+units
   var: [ "Final Energy|Transportation|Road|Passenger|LDV", t, c ]
   <<: *fe_unit
 
 # Emissions using MESSAGEix emission_factor parameter
-- variable: _transport 3a
+- variable: transport emi 0
   # Auto-sum over dimensions yv, m, h
   base: emi:nl-t-ya-e-gwp metric-e equivalent:gwpe+agg
   # Same as in data/report/global.yaml
   var: [ "Emissions|CO2|Energy|Demand|Transportation", t, e, e equivalent, gwp metric ]
 
-- variable: _transport 3b
+- variable: transport emi 1
   base: emi:nl-t-ya-e:transport+units
   var: [ "Emissions", e, "Energy|Demand|Transportation", t]
-  <<: *emi_unit
-
-- variable: _transport 3c
-  base: emi:nl-ya-e:transport+units
-  var: [ "Emissions", e, "Energy|Demand|Transportation"]
+  sums: ["t"]
   <<: *emi_unit
 
 # For debugging
-- variable: _transport debug ACT
+- variable: transport debug ACT
   base: ACT:nl-t-ya
   var: [ "(debug) ACT:nl-t-ya", t ]
 
-- variable: _transport debug CAP
+- variable: transport debug CAP
   base: CAP:nl-t-ya
   var: [ "(debug) CAP:nl-t-ya", t ]
 
-- variable: _transport debug CAP_NEW
+- variable: transport debug CAP_NEW
   base: CAP_NEW:nl-t-yv
   var: [ "(debug) CAP_NEW:nl-t-yv", t ]
