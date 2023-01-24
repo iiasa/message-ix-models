@@ -1,0 +1,1025 @@
+#Set configuration for the MESSAGE-Water model
+
+# For each set in the MESSAGEix framework, the group contains:
+# - 'require': elements that must be present for the model to be set up.
+# - 'remove': elements to remove.
+# - 'add': elements to add. This is a mapping from element short names to a
+#   longer description.
+
+nexus:
+  commodity:
+    require:
+    - electr
+
+    remove:
+    # removing all technologies which are related to water in the previous model
+    # Re added in the newer implementation with lesser commodities
+    - saline_supply
+    #- freshwater_instream
+    - freshwater_supply
+    - desalinated_water
+    - saline_supply_ppl
+    - urban_collected_wst
+    - urban_uncollected_wst
+    - yield_freshwater_suply
+    - rural_collected_wst
+    - rural_uncollected_wst
+    - urban_mw
+    - urban_dis
+    - rural_mw
+    - rural_dis
+    - cooling__bio_hpl
+    - cooling__bio_ppl
+    - cooling__bio_istig
+    - cooling__bio_ppl
+    - cooling__coal_adv
+    - cooling__coal_adv_ccs
+    - cooling__coal_ppl
+    - cooling__coal_ppl_u
+    - cooling__foil_hpl
+    - cooling__foil_ppl
+    - cooling__gas_cc
+    - cooling__gas_cc_ccs
+    - cooling__gas_hpl
+    - cooling__gas_ppl
+    - cooling__geo_hpl
+    - cooling__geo_ppl
+    - cooling__igcc
+    - cooling__igcc_ccs
+    - cooling__loil_cc
+    - cooling__loil_ppl
+    - cooling__nuc_hc
+    - cooling__solar_th_ppl
+
+    add:
+    - electr
+    - salinewater
+    - freshwater_instream
+    - freshwater
+    - freshwater_basin
+    - surfacewater_basin
+    - groundwater_basin
+    - salinewater_basin
+    - desalinated_water
+    - saline_ppl
+    - urban_collected_wst
+    - urban_uncollected_wst
+    - yield_freshwater_suply
+    - rural_collected_wst
+    - rural_uncollected_wst
+    - urban_mw
+    - industry_mw
+    - industry_uncollected_wst
+    - urban_disconnected
+    - rural_mw
+    - rural_disconnected
+
+
+  level:
+    require:
+    - secondary
+
+    remove:
+    - water_supply
+    - cooling
+    - desalination_supply
+    - water_treat
+    add:
+    - water_supply
+    - water_supply_basin
+    - saline_supply_basin
+    - water_treat
+    - water_avail_basin
+    - saline_supply
+    - irr_cereal
+    - irr_sugarcrops
+    - irr_oilcrops
+
+  mode:
+    require:
+    - all
+    add:
+    - Mf # efficient mode
+
+  technology:
+    remove:
+    - rural_treatment
+    - urban_treatment
+    - extract__saline_supply
+    - bio_hpl__ot_fresh
+    - bio_hpl__cl_fresh
+    - bio_hpl__cl_fresh
+    - bio_hpl__ot_saline
+    - bio_hpl__air
+    - bio_istig__ot_fresh
+    - bio_istig__cl_fresh
+    - bio_istig__cl_fresh
+    - bio_istig__ot_saline
+    - bio_istig__air
+    - bio_istig_ccs__ot_fresh
+    - bio_istig_ccs__cl_fresh
+    - bio_istig_ccs__cl_fresh
+    - bio_istig_ccs__ot_saline
+    - bio_istig_ccs__air
+    - bio_ppl__ot_fresh
+    - bio_ppl__cl_fresh
+    - bio_ppl__cl_fresh
+    - bio_ppl__ot_saline
+    - bio_ppl__air
+    - coal_adv__ot_fresh
+    - coal_adv__cl_fresh
+    - coal_adv__cl_fresh
+    - coal_adv__ot_saline
+    - coal_adv__air
+    - coal_adv_ccs__ot_fresh
+    - coal_adv_ccs__cl_fresh
+    - coal_adv_ccs__cl_fresh
+    - coal_adv_ccs__ot_saline
+    - coal_ppl__ot_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl__ot_saline
+    - coal_ppl__air
+    - coal_ppl_u__ot_fresh
+    - coal_ppl_u__cl_fresh
+    - coal_ppl_u__cl_fresh
+    - coal_ppl_u__ot_saline
+    - coal_ppl_u__air
+    - foil_hpl__ot_fresh
+    - foil_hpl__cl_fresh
+    - foil_hpl__cl_fresh
+    - foil_hpl__ot_saline
+    - foil_hpl__air
+    - foil_ppl__ot_fresh
+    - foil_ppl__cl_fresh
+    - foil_ppl__cl_fresh
+    - foil_ppl__ot_saline
+    - foil_ppl__air
+    - gas_cc__ot_fresh
+    - gas_cc__cl_fresh
+    - gas_cc__cl_fresh
+    - gas_cc__ot_saline
+    - gas_cc__air
+    - gas_cc_ccs__ot_fresh
+    - gas_cc_ccs__cl_fresh
+    - gas_cc_ccs__cl_fresh
+    - gas_cc_ccs__ot_saline
+    - gas_hpl__ot_fresh
+    - gas_hpl__cl_fresh
+    - gas_hpl__cl_fresh
+    - gas_hpl__ot_saline
+    - gas_hpl__air
+    - gas_ppl__ot_fresh
+    - gas_ppl__cl_fresh
+    - gas_ppl__cl_fresh
+    - gas_ppl__ot_saline
+    - gas_ppl__air
+    - geo_hpl__ot_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__ot_saline
+    - geo_hpl__air
+    - geo_ppl__ot_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__ot_saline
+    - geo_ppl__air
+    - igcc__ot_fresh
+    - igcc__cl_fresh
+    - igcc__cl_fresh
+    - igcc__ot_saline
+    - igcc__air
+    - igcc_ccs__ot_fresh
+    - igcc_ccs__cl_fresh
+    - igcc_ccs__cl_fresh
+    - igcc_ccs__ot_saline
+    - loil_cc__ot_fresh
+    - loil_cc__cl_fresh
+    - loil_cc__cl_fresh
+    - loil_cc__ot_saline
+    - loil_cc__air
+    - loil_ppl__ot_fresh
+    - loil_ppl__cl_fresh
+    - loil_ppl__cl_fresh
+    - loil_ppl__ot_saline
+    - loil_ppl__air
+    - nuc_hc__ot_fresh
+    - nuc_hc__cl_fresh
+    - nuc_hc__cl_fresh
+    - nuc_hc__ot_saline
+    - solar_th_ppl__ot_fresh
+    - solar_th_ppl__cl_fresh
+    - solar_th_ppl__cl_fresh
+    - solar_th_ppl__ot_saline
+    - solar_th_ppl__air
+    - extract__freshwater_supply
+    - extract__freshwater_instream
+    - extract__saline_supply
+    #add:
+    # Adds all technologies from technologies.yaml file again to reconfigure
+
+  time:
+    # NB cannot handle models with sub-annual time resolution
+    require:
+    - year
+
+  # Addon techs include cooling technologies for now
+
+  addon:
+    add:
+    - bio_hpl__ot_fresh
+    - bio_hpl__cl_fresh
+    - bio_hpl__ot_saline
+    - bio_hpl__air
+    - bio_istig__ot_fresh
+    - bio_istig__cl_fresh
+    - bio_istig__ot_saline
+    - bio_istig__air
+    - bio_istig_ccs__ot_fresh
+    - bio_istig_ccs__cl_fresh
+    - bio_istig_ccs__ot_saline
+    - bio_istig_ccs__air
+    - bio_ppl__ot_fresh
+    - bio_ppl__cl_fresh
+    - bio_ppl__ot_saline
+    - bio_ppl__air
+    - coal_adv__ot_fresh
+    - coal_adv__cl_fresh
+    - coal_adv__ot_saline
+    - coal_adv__air
+    - coal_adv_ccs__ot_fresh
+    - coal_adv_ccs__cl_fresh
+    - coal_adv_ccs__ot_saline
+    - coal_adv_ccs__air
+    - coal_ppl__ot_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl__ot_saline
+    - coal_ppl__air
+    - coal_ppl_u__ot_fresh
+    - coal_ppl_u__cl_fresh
+    - coal_ppl_u__ot_saline
+    - coal_ppl_u__air
+    - foil_ppl__ot_fresh
+    - foil_ppl__cl_fresh
+    - foil_ppl__ot_saline
+    - foil_ppl__air
+    - foil_hpl__ot_fresh
+    - foil_hpl__cl_fresh
+    - foil_hpl__ot_saline
+    - foil_hpl__air
+    - gas_cc__ot_fresh
+    - gas_cc__cl_fresh
+    - gas_cc__ot_saline
+    - gas_cc__air
+    - gas_cc_ccs__ot_fresh
+    - gas_cc_ccs__cl_fresh
+    - gas_cc_ccs__ot_saline
+    - gas_cc_ccs__air
+    - gas_hpl__ot_fresh
+    - gas_hpl__cl_fresh
+    - gas_hpl__ot_saline
+    - gas_hpl__air
+    - gas_ppl__ot_fresh
+    - gas_ppl__cl_fresh
+    - gas_ppl__ot_saline
+    - gas_ppl__air
+    - geo_hpl__ot_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__ot_saline
+    - geo_hpl__air
+    - geo_ppl__ot_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__ot_saline
+    - geo_ppl__air
+    - igcc__ot_fresh
+    - igcc__cl_fresh
+    - igcc__ot_saline
+    - igcc__air
+    - igcc_ccs__ot_fresh
+    - igcc_ccs__cl_fresh
+    - igcc_ccs__ot_saline
+    - igcc_ccs__air
+    - loil_cc__ot_fresh
+    - loil_cc__cl_fresh
+    - loil_cc__ot_saline
+    - loil_cc__air
+    - loil_ppl__ot_fresh
+    - loil_ppl__cl_fresh
+    - loil_ppl__ot_saline
+    - loil_ppl__air
+    - nuc_hc__ot_fresh
+    - nuc_hc__cl_fresh
+    - nuc_hc__ot_saline
+    - nuc_hc__air
+    - solar_th_ppl__ot_fresh
+    - solar_th_ppl__cl_fresh
+    - solar_th_ppl__ot_saline
+    - solar_th_ppl__air
+
+  # cat_addon includes cooling technology addons for parent technologies
+  type_addon:
+    add:
+    - cooling__bio_hpl
+    - cooling__bio_istig
+    - cooling__bio_istig_ccs
+    - cooling__bio_ppl
+    - cooling__coal_adv
+    - cooling__coal_adv_ccs
+    - cooling__coal_ppl
+    - cooling__coal_ppl_u
+    - cooling__foil_hpl
+    - cooling__foil_ppl
+    - cooling__gas_cc
+    - cooling__gas_cc_ccs
+    - cooling__gas_hpl
+    - cooling__gas_ppl
+    - cooling__geo_hpl
+    - cooling__geo_ppl
+    - cooling__igcc
+    - cooling__igcc_ccs
+    - cooling__loil_cc
+    - cooling__loil_ppl
+    - cooling__nuc_hc
+    - cooling__nuc_lc
+    - cooling__solar_th_ppl
+
+  map_tec_addon:
+    add:
+    - [bio_hpl,cooling__bio_hpl]
+    - [bio_istig, cooling__bio_istig]
+    - [bio_istig_ccs, cooling__bio_istig_ccs]
+    - [bio_ppl,cooling__bio_ppl]
+    - [coal_adv, cooling__coal_adv]
+    - [coal_adv_ccs, cooling__coal_adv_ccs]
+    - [coal_ppl, cooling__coal_ppl]
+    - [coal_ppl_u, cooling__coal_ppl_u]
+    - [foil_hpl, cooling__foil_hpl]
+    - [foil_ppl, cooling__foil_ppl]
+    - [gas_cc, cooling__gas_cc]
+    - [gas_cc_ccs, cooling__gas_cc_ccs]
+    - [gas_hpl, cooling__gas_hpl]
+    - [gas_ppl, cooling__gas_ppl]
+    - [geo_hpl, cooling__geo_hpl]
+    - [geo_ppl, cooling__geo_ppl]
+    - [igcc, cooling__igcc]
+    - [igcc_ccs, cooling__igcc_ccs]
+    - [loil_cc, cooling__loil_cc]
+    - [loil_ppl, cooling__loil_ppl]
+    - [nuc_hc, cooling__nuc_hc]
+    - [nuc_lc, cooling__nuc_lc]
+    - [solar_th_ppl, cooling__solar_th_ppl]
+
+
+  cat_addon:
+  #   #TODO check whether these needs to be added ?
+    add:
+    - [cooling__bio_hpl, bio_hpl__ot_fresh]
+    - [cooling__bio_hpl, bio_hpl__cl_fresh]
+    - [cooling__bio_hpl, bio_hpl__ot_saline]
+    - [cooling__bio_hpl, bio_hpl__air]
+    - [cooling__bio_istig, bio_istig__ot_fresh]
+    - [cooling__bio_istig, bio_istig__cl_fresh]
+    - [cooling__bio_istig, bio_istig__ot_saline]
+    - [cooling__bio_istig, bio_istig__air]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__ot_fresh]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__cl_fresh]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__ot_saline]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__air]
+    - [cooling__coal_adv, coal_adv__ot_fresh]
+    - [cooling__coal_adv, coal_adv__cl_fresh]
+    - [cooling__coal_adv, coal_adv__ot_saline]
+    - [cooling__coal_adv, coal_adv__air]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__ot_fresh]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__cl_fresh]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__ot_saline]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__air]
+    - [cooling__bio_ppl, bio_ppl__ot_fresh]
+    - [cooling__bio_ppl, bio_ppl__cl_fresh]
+    - [cooling__bio_ppl, bio_ppl__ot_saline]
+    - [cooling__bio_ppl, bio_ppl__air]
+    - [cooling__coal_ppl, coal_ppl__ot_fresh]
+    - [cooling__coal_ppl, coal_ppl__cl_fresh]
+    - [cooling__coal_ppl, coal_ppl__ot_saline]
+    - [cooling__coal_ppl, coal_ppl__air]
+    - [cooling__coal_ppl_u, coal_ppl_u__ot_fresh]
+    - [cooling__coal_ppl_u, coal_ppl_u__cl_fresh]
+    - [cooling__coal_ppl_u, coal_ppl_u__ot_saline]
+    - [cooling__coal_ppl_u, coal_ppl_u__air]
+    - [cooling__foil_hpl, foil_hpl__ot_fresh]
+    - [cooling__foil_hpl, foil_hpl__cl_fresh]
+    - [cooling__foil_hpl, foil_hpl__ot_saline]
+    - [cooling__foil_hpl, foil_hpl__air]
+    - [cooling__foil_ppl, foil_ppl__ot_fresh]
+    - [cooling__foil_ppl, foil_ppl__cl_fresh]
+    - [cooling__foil_ppl, foil_ppl__ot_saline]
+    - [cooling__foil_ppl, foil_ppl__air]
+    - [cooling__gas_cc, gas_cc__ot_fresh]
+    - [cooling__gas_cc, gas_cc__cl_fresh]
+    - [cooling__gas_cc, gas_cc__ot_saline]
+    - [cooling__gas_cc, gas_cc__air]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__ot_fresh]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__cl_fresh]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__ot_saline]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__air]
+    - [cooling__gas_hpl, gas_hpl__ot_fresh]
+    - [cooling__gas_hpl, gas_hpl__cl_fresh]
+    - [cooling__gas_hpl, gas_hpl__ot_saline]
+    - [cooling__gas_hpl, gas_hpl__air]
+    - [cooling__gas_ppl, gas_ppl__ot_fresh]
+    - [cooling__gas_ppl, gas_ppl__cl_fresh]
+    - [cooling__gas_ppl, gas_ppl__ot_saline]
+    - [cooling__gas_ppl, gas_ppl__air]
+    - [cooling__geo_hpl, gas_hpl__ot_fresh]
+    - [cooling__geo_hpl, gas_hpl__cl_fresh]
+    - [cooling__geo_hpl, gas_hpl__ot_saline]
+    - [cooling__geo_hpl, gas_hpl__air]
+    - [cooling__geo_ppl, geo_ppl__ot_fresh]
+    - [cooling__geo_ppl, geo_ppl__cl_fresh]
+    - [cooling__geo_ppl, geo_ppl__ot_saline]
+    - [cooling__geo_ppl, geo_ppl__air]
+    - [cooling__igcc, igcc__ot_fresh]
+    - [cooling__igcc, igcc__cl_fresh]
+    - [cooling__igcc, igcc__ot_saline]
+    - [cooling__igcc, igcc__air]
+    - [cooling__igcc_ccs, igcc_ccs__ot_fresh]
+    - [cooling__igcc_ccs, igcc_ccs__cl_fresh]
+    - [cooling__igcc_ccs, igcc_ccs__ot_saline]
+    - [cooling__igcc_ccs, igcc_ccs__air]
+    - [cooling__loil_cc, loil_cc__ot_fresh]
+    - [cooling__loil_cc, loil_cc__cl_fresh]
+    - [cooling__loil_cc, loil_cc__ot_saline]
+    - [cooling__loil_cc, loil_cc__air]
+    - [cooling__loil_ppl, loil_ppl__ot_fresh]
+    - [cooling__loil_ppl, loil_ppl__cl_fresh]
+    - [cooling__loil_ppl, loil_ppl__ot_saline]
+    - [cooling__loil_ppl, loil_ppl__air]
+    - [cooling__nuc_hc, nuc_hc__ot_fresh]
+    - [cooling__nuc_hc, nuc_hc__cl_fresh]
+    - [cooling__nuc_hc, nuc_hc__ot_saline]
+    - [cooling__nuc_hc, nuc_hc__air]
+    - [cooling__nuc_lc, nuc_lc__ot_fresh]
+    - [cooling__nuc_lc, nuc_lc__cl_fresh]
+    - [cooling__nuc_lc, nuc_lc__ot_saline]
+    - [cooling__nuc_lc, nuc_lc__air]
+    - [cooling__solar_th_ppl, solar_th_ppl__ot_fresh]
+    - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
+    - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
+    - [cooling__solar_th_ppl, solar_th_ppl__air]
+
+  type_tec:
+    add:
+    - water_distribution
+    - water_efficiency
+    - wastewater_treatment
+    - desalination
+    - share_low_lim_GWat_total
+    - share_low_lim_GWat_share
+    - share_wat_recycle_total
+    - share_wat_recycle_share
+
+  cat_tec:
+    add:
+    - [share_low_lim_GWat_total, extract_surfacewater]
+    - [share_low_lim_GWat_total, extract_groundwater]
+    - [share_low_lim_GWat_share, extract_groundwater]
+    - [share_wat_recycle_total,urban_recycle]
+    - [share_wat_recycle_total,urban_discharge]
+    - [share_wat_recycle_share,urban_recycle]
+    - [water_distribution, urban_t_d]
+    - [water_distribution, rural_t_d]
+    - [water_distribution, urban_unconnected]
+    - [water_distribution, rural_unconnected]
+    - [water_distribution, urban_sewerage]
+    - [wastewater_treatment, urban_sewerage]
+    - [wastewater_treatment, urban_untreated]
+    - [wastewater_treatment, urban_recycle]
+    - [wastewater_treatment, rural_sewerage]
+    - [wastewater_treatment, rural_untreated]
+    - [water_efficiency, ueff1]
+    - [water_efficiency, ueff2]
+    - [water_efficiency, ueff3]
+    - [water_efficiency, reff1]
+    - [water_efficiency, reff2]
+    - [water_efficiency, reff3]
+    - [water_efficiency, ieff1]
+    - [water_efficiency, ieff2]
+    - [water_efficiency, ieff3]
+    #- [water_resource_extraction, extract_upstream_landuse]
+    - [water_resource_extraction, extract_surfacewater]
+    #- [water_resource_extraction, extract_freshwater_instream]
+    - [water_resource_extraction, extract_salinewater]
+    - [water_resource_extraction, extract_groundwater]
+    - [water_resource_extraction, extract_gw_fossil]
+    - [desalination, membrane]
+    - [desalination, distillation]
+
+  balance_equality:
+    add:
+    - [freshwater, water_supply]
+    - [freshwater_basin, water_supply_basin]
+    - [surfacewater_basin, water_avail_basin]
+    - [groundwater_basin, water_avail_basin]
+    - [salinewater_basin,water_avail_basin]
+    - [urban_collected_wst, final]
+    - [urban_collected_wst, water_treat]
+    - [urban_uncollected_wst, final]
+    - [industry_uncollected_wst,final]
+    - [rural_collected_wst, final]
+    - [rural_collected_wst, water_treat]
+    - [rural_uncollected_wst, final]
+    - [urban_mw, final]
+    - [industry_mw,final]
+    - [urban_disconnected, final]
+    - [rural_mw, final]
+    - [rural_disconnected, final]
+
+
+  shares:
+    add:
+    - share_basin
+    - share_low_lim_GWat
+    - share_wat_recycle
+
+  # relation:
+  #   add:
+    # - gw_share
+
+  unit:
+    add:
+    - km3/GWa
+    - km3
+    - km3/year
+    - USD/km3
+
+  emission:
+    add:
+    - fresh_return
+
+  type_emission:
+    add:
+    - water_consumption
+
+  cat_emission:
+    add:
+    - [water_consumption, fresh_return]
+
+cooling:
+  commodity:
+    require:
+    - electr
+
+    remove:
+    # removing all technologies which are related to water in the previous model
+    # Re added in the newer implementation with lesser commodities
+    - saline_supply
+    #- freshwater_instream
+    - freshwater_supply
+    - desalinated_water
+    - saline_supply_ppl
+    - urban_collected_wst
+    - urban_uncollected_wst
+    - yield_freshwater_suply
+    - rural_collected_wst
+    - rual_uncollected_wst
+    - urban_mw
+    - urban_dis
+    - rural_mw
+    - rural_dis
+    - cooling__bio_hpl
+    - cooling__bio_ppl
+    - cooling__bio_istig
+    - cooling__bio_ppl
+    - cooling__coal_adv
+    - cooling__coal_adv_ccs
+    - cooling__coal_ppl
+    - cooling__coal_ppl_u
+    - cooling__foil_hpl
+    - cooling__foil_ppl
+    - cooling__gas_cc
+    - cooling__gas_cc_ccs
+    - cooling__gas_hpl
+    - cooling__gas_ppl
+    - cooling__geo_hpl
+    - cooling__geo_ppl
+    - cooling__igcc
+    - cooling__igcc_ccs
+    - cooling__loil_cc
+    - cooling__loil_ppl
+    - cooling__nuc_hc
+    - cooling__solar_th_ppl
+
+    add:
+    - electr
+    - salinewater
+    - freshwater_instream
+    - freshwater
+    - freshwater_basin
+    - surfacewater_basin
+    - groundwater_basin
+    - desalinated_water
+    - saline_ppl
+
+
+  level:
+    require:
+    - secondary
+
+    remove:
+    - water_supply
+    - cooling
+    - desalination_supply
+    - water_treat
+    add:
+    - water_supply
+    - saline_supply
+
+  mode:
+    require:
+    - all
+
+  technology:
+    remove:
+    - extract__saline_supply
+    - bio_hpl__ot_fresh
+    - bio_hpl__cl_fresh
+    - bio_hpl__cl_fresh
+    - bio_hpl__ot_saline
+    - bio_hpl__air
+    - bio_istig__ot_fresh
+    - bio_istig__cl_fresh
+    - bio_istig__cl_fresh
+    - bio_istig__ot_saline
+    - bio_istig__air
+    - bio_istig_ccs__ot_fresh
+    - bio_istig_ccs__cl_fresh
+    - bio_istig_ccs__cl_fresh
+    - bio_istig_ccs__ot_saline
+    - bio_istig_ccs__air
+    - bio_ppl__ot_fresh
+    - bio_ppl__cl_fresh
+    - bio_ppl__cl_fresh
+    - bio_ppl__ot_saline
+    - bio_ppl__air
+    - coal_adv__ot_fresh
+    - coal_adv__cl_fresh
+    - coal_adv__cl_fresh
+    - coal_adv__ot_saline
+    - coal_adv__air
+    - coal_adv_ccs__ot_fresh
+    - coal_adv_ccs__cl_fresh
+    - coal_adv_ccs__cl_fresh
+    - coal_adv_ccs__ot_saline
+    - coal_ppl__ot_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl__ot_saline
+    - coal_ppl__air
+    - coal_ppl_u__ot_fresh
+    - coal_ppl_u__cl_fresh
+    - coal_ppl_u__cl_fresh
+    - coal_ppl_u__ot_saline
+    - coal_ppl_u__air
+    - foil_hpl__ot_fresh
+    - foil_hpl__cl_fresh
+    - foil_hpl__cl_fresh
+    - foil_hpl__ot_saline
+    - foil_hpl__air
+    - foil_ppl__ot_fresh
+    - foil_ppl__cl_fresh
+    - foil_ppl__cl_fresh
+    - foil_ppl__ot_saline
+    - foil_ppl__air
+    - gas_cc__ot_fresh
+    - gas_cc__cl_fresh
+    - gas_cc__cl_fresh
+    - gas_cc__ot_saline
+    - gas_cc__air
+    - gas_cc_ccs__ot_fresh
+    - gas_cc_ccs__cl_fresh
+    - gas_cc_ccs__cl_fresh
+    - gas_cc_ccs__ot_saline
+    - gas_hpl__ot_fresh
+    - gas_hpl__cl_fresh
+    - gas_hpl__cl_fresh
+    - gas_hpl__ot_saline
+    - gas_hpl__air
+    - gas_ppl__ot_fresh
+    - gas_ppl__cl_fresh
+    - gas_ppl__cl_fresh
+    - gas_ppl__ot_saline
+    - gas_ppl__air
+    - geo_hpl__ot_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__ot_saline
+    - geo_hpl__air
+    - geo_ppl__ot_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__ot_saline
+    - geo_ppl__air
+    - igcc__ot_fresh
+    - igcc__cl_fresh
+    - igcc__cl_fresh
+    - igcc__ot_saline
+    - igcc__air
+    - igcc_ccs__ot_fresh
+    - igcc_ccs__cl_fresh
+    - igcc_ccs__cl_fresh
+    - igcc_ccs__ot_saline
+    - loil_cc__ot_fresh
+    - loil_cc__cl_fresh
+    - loil_cc__cl_fresh
+    - loil_cc__ot_saline
+    - loil_cc__air
+    - loil_ppl__ot_fresh
+    - loil_ppl__cl_fresh
+    - loil_ppl__cl_fresh
+    - loil_ppl__ot_saline
+    - loil_ppl__air
+    - nuc_hc__ot_fresh
+    - nuc_hc__cl_fresh
+    - nuc_hc__cl_fresh
+    - nuc_hc__ot_saline
+    - solar_th_ppl__ot_fresh
+    - solar_th_ppl__cl_fresh
+    - solar_th_ppl__cl_fresh
+    - solar_th_ppl__ot_saline
+    - solar_th_ppl__air
+    - extract__upstream_landuse
+    - extract__saline_supply
+    - extract__freshwater_supply
+    - extract__freshwater_instream
+
+    #add:
+    # Adds all technologies from technologies.yaml file again to reconfigure
+
+  time:
+    # NB cannot handle models with sub-annual time resolution
+    require:
+    - year
+
+  # Addon techs include cooling technologies for now
+  addon:
+    add:
+    - bio_hpl__ot_fresh
+    - bio_hpl__cl_fresh
+    - bio_hpl__ot_saline
+    - bio_hpl__air
+    - bio_istig__ot_fresh
+    - bio_istig__cl_fresh
+    - bio_istig__ot_saline
+    - bio_istig__air
+    - bio_istig_ccs__ot_fresh
+    - bio_istig_ccs__cl_fresh
+    - bio_istig_ccs__ot_saline
+    - bio_istig_ccs__air
+    - bio_ppl__ot_fresh
+    - bio_ppl__cl_fresh
+    - bio_ppl__ot_saline
+    - bio_ppl__air
+    - coal_adv__ot_fresh
+    - coal_adv__cl_fresh
+    - coal_adv__ot_saline
+    - coal_adv__air
+    - coal_adv_ccs__ot_fresh
+    - coal_adv_ccs__cl_fresh
+    - coal_adv_ccs__ot_saline
+    - coal_adv_ccs__air
+    - coal_ppl__ot_fresh
+    - coal_ppl__cl_fresh
+    - coal_ppl__ot_saline
+    - coal_ppl__air
+    - coal_ppl_u__ot_fresh
+    - coal_ppl_u__cl_fresh
+    - coal_ppl_u__ot_saline
+    - coal_ppl_u__air
+    - foil_ppl__ot_fresh
+    - foil_ppl__cl_fresh
+    - foil_ppl__ot_saline
+    - foil_ppl__air
+    - foil_hpl__ot_fresh
+    - foil_hpl__cl_fresh
+    - foil_hpl__ot_saline
+    - foil_hpl__air
+    - gas_cc__ot_fresh
+    - gas_cc__cl_fresh
+    - gas_cc__ot_saline
+    - gas_cc__air
+    - gas_cc_ccs__ot_fresh
+    - gas_cc_ccs__cl_fresh
+    - gas_cc_ccs__ot_saline
+    - gas_cc_ccs__air
+    - gas_hpl__ot_fresh
+    - gas_hpl__cl_fresh
+    - gas_hpl__ot_saline
+    - gas_hpl__air
+    - gas_ppl__ot_fresh
+    - gas_ppl__cl_fresh
+    - gas_ppl__ot_saline
+    - gas_ppl__air
+    - geo_hpl__ot_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__cl_fresh
+    - geo_hpl__ot_saline
+    - geo_hpl__air
+    - geo_ppl__ot_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__cl_fresh
+    - geo_ppl__ot_saline
+    - geo_ppl__air
+    - igcc__ot_fresh
+    - igcc__cl_fresh
+    - igcc__ot_saline
+    - igcc__air
+    - igcc_ccs__ot_fresh
+    - igcc_ccs__cl_fresh
+    - igcc_ccs__ot_saline
+    - igcc_ccs__air
+    - loil_cc__ot_fresh
+    - loil_cc__cl_fresh
+    - loil_cc__ot_saline
+    - loil_cc__air
+    - loil_ppl__ot_fresh
+    - loil_ppl__cl_fresh
+    - loil_ppl__ot_saline
+    - loil_ppl__air
+    - nuc_hc__ot_fresh
+    - nuc_hc__cl_fresh
+    - nuc_hc__ot_saline
+    - nuc_hc__air
+    - solar_th_ppl__ot_fresh
+    - solar_th_ppl__cl_fresh
+    - solar_th_ppl__ot_saline
+    - solar_th_ppl__air
+
+  # cat_addon includes cooling technology addons for parent technologies
+  type_addon:
+    add:
+    - cooling__bio_hpl
+    - cooling__bio_istig
+    - cooling__bio_istig_ccs
+    - cooling__bio_ppl
+    - cooling__coal_adv
+    - cooling__coal_adv_ccs
+    - cooling__coal_ppl
+    - cooling__coal_ppl_u
+    - cooling__foil_hpl
+    - cooling__foil_ppl
+    - cooling__gas_cc
+    - cooling__gas_cc_ccs
+    - cooling__gas_hpl
+    - cooling__gas_ppl
+    - cooling__geo_hpl
+    - cooling__geo_ppl
+    - cooling__igcc
+    - cooling__igcc_ccs
+    - cooling__loil_cc
+    - cooling__loil_ppl
+    - cooling__nuc_hc
+    - cooling__nuc_lc
+    - cooling__solar_th_ppl
+
+  map_tec_addon:
+    add:
+    - [bio_hpl,cooling__bio_hpl]
+    - [bio_istig, cooling__bio_istig]
+    - [bio_istig_ccs, cooling__bio_istig_ccs]
+    - [bio_ppl,cooling__bio_ppl]
+    - [coal_adv, cooling__coal_adv]
+    - [coal_adv_ccs, cooling__coal_adv_ccs]
+    - [coal_ppl, cooling__coal_ppl]
+    - [coal_ppl_u, cooling__coal_ppl_u]
+    - [foil_hpl, cooling__foil_hpl]
+    - [foil_ppl, cooling__foil_ppl]
+    - [gas_cc, cooling__gas_cc]
+    - [gas_cc_ccs, cooling__gas_cc_ccs]
+    - [gas_hpl, cooling__gas_hpl]
+    - [gas_ppl, cooling__gas_ppl]
+    - [geo_hpl, cooling__geo_hpl]
+    - [geo_ppl, cooling__geo_ppl]
+    - [igcc, cooling__igcc]
+    - [igcc_ccs, cooling__igcc_ccs]
+    - [loil_cc, cooling__loil_cc]
+    - [loil_ppl, cooling__loil_ppl]
+    - [nuc_hc, cooling__nuc_hc]
+    - [nuc_lc, cooling__nuc_lc]
+    - [solar_th_ppl, cooling__solar_th_ppl]
+
+
+  cat_addon:
+  #   #TODO check whether these needs to be added ?
+    add:
+    - [cooling__bio_hpl, bio_hpl__ot_fresh]
+    - [cooling__bio_hpl, bio_hpl__cl_fresh]
+    - [cooling__bio_hpl, bio_hpl__ot_saline]
+    - [cooling__bio_hpl, bio_hpl__air]
+    - [cooling__bio_istig, bio_istig__ot_fresh]
+    - [cooling__bio_istig, bio_istig__cl_fresh]
+    - [cooling__bio_istig, bio_istig__ot_saline]
+    - [cooling__bio_istig, bio_istig__air]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__ot_fresh]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__cl_fresh]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__ot_saline]
+    - [cooling__bio_istig_ccs, bio_istig_ccs__air]
+    - [cooling__coal_adv, coal_adv__ot_fresh]
+    - [cooling__coal_adv, coal_adv__cl_fresh]
+    - [cooling__coal_adv, coal_adv__ot_saline]
+    - [cooling__coal_adv, coal_adv__air]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__ot_fresh]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__cl_fresh]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__ot_saline]
+    - [cooling__coal_adv_ccs, coal_adv_ccs__air]
+    - [cooling__bio_ppl, bio_ppl__ot_fresh]
+    - [cooling__bio_ppl, bio_ppl__cl_fresh]
+    - [cooling__bio_ppl, bio_ppl__ot_saline]
+    - [cooling__bio_ppl, bio_ppl__air]
+    - [cooling__coal_ppl, coal_ppl__ot_fresh]
+    - [cooling__coal_ppl, coal_ppl__cl_fresh]
+    - [cooling__coal_ppl, coal_ppl__ot_saline]
+    - [cooling__coal_ppl, coal_ppl__air]
+    - [cooling__coal_ppl_u, coal_ppl_u__ot_fresh]
+    - [cooling__coal_ppl_u, coal_ppl_u__cl_fresh]
+    - [cooling__coal_ppl_u, coal_ppl_u__ot_saline]
+    - [cooling__coal_ppl_u, coal_ppl_u__air]
+    - [cooling__foil_hpl, foil_hpl__ot_fresh]
+    - [cooling__foil_hpl, foil_hpl__cl_fresh]
+    - [cooling__foil_hpl, foil_hpl__ot_saline]
+    - [cooling__foil_hpl, foil_hpl__air]
+    - [cooling__foil_ppl, foil_ppl__ot_fresh]
+    - [cooling__foil_ppl, foil_ppl__cl_fresh]
+    - [cooling__foil_ppl, foil_ppl__ot_saline]
+    - [cooling__foil_ppl, foil_ppl__air]
+    - [cooling__gas_cc, gas_cc__ot_fresh]
+    - [cooling__gas_cc, gas_cc__cl_fresh]
+    - [cooling__gas_cc, gas_cc__ot_saline]
+    - [cooling__gas_cc, gas_cc__air]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__ot_fresh]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__cl_fresh]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__ot_saline]
+    - [cooling__gas_cc_ccs, gas_cc_ccs__air]
+    - [cooling__gas_hpl, gas_hpl__ot_fresh]
+    - [cooling__gas_hpl, gas_hpl__cl_fresh]
+    - [cooling__gas_hpl, gas_hpl__ot_saline]
+    - [cooling__gas_hpl, gas_hpl__air]
+    - [cooling__gas_ppl, gas_ppl__ot_fresh]
+    - [cooling__gas_ppl, gas_ppl__cl_fresh]
+    - [cooling__gas_ppl, gas_ppl__ot_saline]
+    - [cooling__gas_ppl, gas_ppl__air]
+    - [cooling__geo_hpl, gas_hpl__ot_fresh]
+    - [cooling__geo_hpl, gas_hpl__cl_fresh]
+    - [cooling__geo_hpl, gas_hpl__ot_saline]
+    - [cooling__geo_hpl, gas_hpl__air]
+    - [cooling__geo_ppl, geo_ppl__ot_fresh]
+    - [cooling__geo_ppl, geo_ppl__cl_fresh]
+    - [cooling__geo_ppl, geo_ppl__ot_saline]
+    - [cooling__geo_ppl, geo_ppl__air]
+    - [cooling__igcc, igcc__ot_fresh]
+    - [cooling__igcc, igcc__cl_fresh]
+    - [cooling__igcc, igcc__ot_saline]
+    - [cooling__igcc, igcc__air]
+    - [cooling__igcc_ccs, igcc_ccs__ot_fresh]
+    - [cooling__igcc_ccs, igcc_ccs__cl_fresh]
+    - [cooling__igcc_ccs, igcc_ccs__ot_saline]
+    - [cooling__igcc_ccs, igcc_ccs__air]
+    - [cooling__loil_cc, loil_cc__ot_fresh]
+    - [cooling__loil_cc, loil_cc__cl_fresh]
+    - [cooling__loil_cc, loil_cc__ot_saline]
+    - [cooling__loil_cc, loil_cc__air]
+    - [cooling__loil_ppl, loil_ppl__ot_fresh]
+    - [cooling__loil_ppl, loil_ppl__cl_fresh]
+    - [cooling__loil_ppl, loil_ppl__ot_saline]
+    - [cooling__loil_ppl, loil_ppl__air]
+    - [cooling__nuc_hc, nuc_hc__ot_fresh]
+    - [cooling__nuc_hc, nuc_hc__cl_fresh]
+    - [cooling__nuc_hc, nuc_hc__ot_saline]
+    - [cooling__nuc_hc, nuc_hc__air]
+    - [cooling__nuc_lc, nuc_lc__ot_fresh]
+    - [cooling__nuc_lc, nuc_lc__cl_fresh]
+    - [cooling__nuc_lc, nuc_lc__ot_saline]
+    - [cooling__nuc_lc, nuc_lc__air]
+    - [cooling__solar_th_ppl, solar_th_ppl__ot_fresh]
+    - [cooling__solar_th_ppl, solar_th_ppl__cl_fresh]
+    - [cooling__solar_th_ppl, solar_th_ppl__ot_saline]
+    - [cooling__solar_th_ppl, solar_th_ppl__air]
+
+
+  unit:
+    add:
+    - km3/GWa
+    - km3
+    - km3/year
+
+  emission:
+    add:
+    - fresh_return
+
+  type_emission:
+    add:
+    - water_consumption
+
+  cat_emission:
+    add:
+    - [water_consumption, fresh_return]
