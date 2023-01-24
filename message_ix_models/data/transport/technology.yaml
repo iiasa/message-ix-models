@@ -86,11 +86,13 @@ ICE_H_moto:
   description: >-
     High-efficiency internal combustion engine two-wheeler/motorcycle using
     gasoline/diesel
+  input: {commodity: lightoil}
   report: 2W_ICE_H
 
 ELE_moto:
   description: >-
     Battery-electric two-wheeler/motorcycle using electricity-only
+  input: {commodity: electr}
   report: 2W_ELE
 
 ICE_H_bus:
