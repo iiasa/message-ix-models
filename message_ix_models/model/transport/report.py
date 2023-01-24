@@ -150,3 +150,8 @@ def callback(rep: Reporter, context: Context) -> None:
     rep.add(key, plots)
 
     log.info(f"Added {len(rep.graph)-N_keys} keys")
+
+
+def configure_legacy_reporting(config: dict) -> None:
+    """Callback to configure the legacy reporting."""
+    raise NotImplementedError
