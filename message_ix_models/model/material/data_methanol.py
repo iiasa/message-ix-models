@@ -4,7 +4,7 @@ import numpy as np
 
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
-from .util import read_config
+from util import read_config
 
 context = read_config()
 
@@ -616,6 +616,7 @@ def add_meth_tec_vintages():
     )
     par_dict_ng.pop("historical_activity")
     par_dict_ng_fs.pop("historical_activity")
+
     par_dict_coal = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_coal_additions.xlsx"),
         sheet_name=None,
@@ -624,22 +625,23 @@ def add_meth_tec_vintages():
         context.get_local_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
         sheet_name=None,
     )
+    par_dict_coal.pop("historical_activity")
+    par_dict_coal_fs.pop("historical_activity")
     return combine_df_dictionaries(par_dict_ng, par_dict_ng_fs, par_dict_coal, par_dict_coal_fs)
 
 
 def add_meth_hist_act(scenario):
     # fix demand infeasibility
     par_dict = {}
-    act = scenario.par("historical_activity")
-    row = (
-        act[act["technology"].str.startswith("meth")]
-        .sort_values("value", ascending=False)
-        .iloc[0]
+    df_fs = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
+        sheet_name="historical_activity"
     )
-    # china meth_coal production (90% coal share on 2015 47 Mt total; 1.348 = Mt to GWa )
-    row["value"] = (47 * 0.6976) * 0.9
-    row["technology"] = "meth_coal"
-    par_dict["historical_activity"] = pd.DataFrame(row).T
+    df_fuel = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_coal_additions.xlsx"),
+        sheet_name="historical_activity"
+    )
+    par_dict["historical_activity"] = pd.concat([df_fs, df_fuel])
     # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
     hist_cap = message_ix.make_df(
         "historical_new_capacity",
@@ -658,7 +660,11 @@ def add_meth_hist_act(scenario):
         context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
         sheet_name="historical_activity"
     )
+    df_ng_fs = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
+        sheet_name="historical_activity"
+    )
     par_dict["historical_activity"] = pd.concat(
-        [par_dict["historical_activity"], df_ng]
+        [par_dict["historical_activity"], df_ng, df_ng_fs]
     )
     return par_dict
