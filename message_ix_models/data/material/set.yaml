@@ -494,6 +494,15 @@ methanol:
   level:
     add:
     - final_material
+    - secondary_material
+    - primary_material
+    - export_fs
+    - import_fs
+
+  mode:
+    add:
+    - feedstock
+    - fuel
 
   technology:
     add:

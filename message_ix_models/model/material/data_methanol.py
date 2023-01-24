@@ -19,16 +19,126 @@ def gen_data_methanol(scenario):
     )
     pars = df_pars.set_index("par").to_dict()["value"]
 
-    meth_h2_dict = gen_data_meth_h2()
+
+    meth_h2_fs_dict = gen_data_meth_h2()
+    meth_h2_fuel_dict = gen_data_meth_h2()
     meth_bio_dict = gen_data_meth_bio(scenario)
     meth_bio_ccs_dict = gen_meth_bio_ccs(scenario)
-    new_dict = combine_df_dictionaries(meth_h2_dict, meth_bio_dict, meth_bio_ccs_dict)
+    meth_fs_dic = combine_df_dictionaries(meth_h2_fs_dict, gen_data_meth_bio(scenario),
+                                          gen_meth_bio_ccs(scenario))
+    meth_fuel_dic = combine_df_dictionaries(meth_h2_fuel_dict, meth_bio_dict, meth_bio_ccs_dict)
+    for k in meth_h2_fuel_dict.keys():
+        df_fuel = meth_fuel_dic[k]
+        df_fs = meth_fs_dic[k]
+        if "mode" in df_fuel.columns:
+            df_fuel["mode"] = "fuel"
+            df_fs["mode"] = "feedstock"
 
-    dict3 = pd.read_excel(
+    df = meth_fs_dic["output"]
+    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
+    meth_fs_dic["output"] = df
+
+
+    #add meth prod fs mode
+    par_dict_fs = {}
+    for i in scenario.par_list():
+        try:
+            df = scenario.par(i, filters={"technology": ["meth_ng",
+                                                         "meth_coal", "meth_ng_ccs",
+                                                         "meth_coal_ccs"]})
+            if df.size != 0:
+                par_dict_fs[i] = df
+        except:
+            pass
+    for i in par_dict_fs.keys():
+        if "mode" in par_dict_fs[i].columns:
+            par_dict_fs[i]["mode"] = "feedstock"
+    df = par_dict_fs["output"]
+    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
+    par_dict_fs["output"] = df
+
+    par_dict = {}
+    for i in scenario.par_list():
+        try:
+            df = scenario.par(i, filters={"technology": ["meth_ng",
+                                                         "meth_coal", "meth_ng_ccs",
+                                                         "meth_coal_ccs"]})
+            if df.size != 0:
+                par_dict[i] = df
+        except:
+            pass
+    for i in par_dict.keys():
+        if "mode" in par_dict[i].columns:
+            par_dict[i]["mode"] = "fuel"
+    df = par_dict["output"]
+    par_dict["output"] = df
+
+
+    #add meth_bal fs mode
+    bal_fs_dict = {}
+    bal_fuel_dict = {}
+    for i in scenario.par_list():
+        try:
+            df = scenario.par(i, filters={"technology": "meth_bal"})
+            if df.size != 0:
+                bal_fs_dict[i] = df
+                bal_fuel_dict[i] = df.copy(deep=True)
+        except:
+            pass
+    for i in bal_fs_dict.keys():
+        if "mode" in bal_fs_dict[i].columns:
+            bal_fs_dict[i]["mode"] = "feedstock"
+            bal_fuel_dict[i]["mode"] = "fuel"
+
+    df = bal_fs_dict["input"]
+    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
+    bal_fs_dict["input"] = df
+    df = bal_fs_dict["output"]
+    df.loc[df["commodity"] == "methanol", "level"] = "secondary_material"
+    bal_fs_dict["output"] = df
+
+
+    # add meth trade fs mode
+    trade_dict_fs = {}
+    trade_dict_fuel = {}
+    for i in scenario.par_list():
+        try:
+            df = scenario.par(i, filters={"technology": ["meth_imp",
+                                                         "meth_exp",
+                                                         "meth_trd"]})
+            if df.size != 0:
+                trade_dict_fs[i] = df
+                trade_dict_fuel[i] = df.copy(deep=True)
+        except:
+            pass
+    for i in trade_dict_fs.keys():
+        if "mode" in trade_dict_fs[i].columns:
+            trade_dict_fs[i]["mode"] = "feedstock"
+            trade_dict_fuel[i]["mode"] = "fuel"
+
+    df = trade_dict_fs["output"]
+    df.loc[df["technology"]=="meth_imp", "level"] = "secondary_material"
+    df.loc[df["technology"] == "meth_exp", "level"] = "export_fs"
+    df.loc[df["technology"] == "meth_trd", "level"] = "import_fs"
+    trade_dict_fs["output"] = df
+
+    df = trade_dict_fs["input"]
+    df.loc[df["technology"] == "meth_imp", "level"] = "import_fs"
+    df.loc[df["technology"] == "meth_trd", "level"] = "export_fs"
+    df.loc[df["technology"] == "meth_exp", "level"] = "primary_material"
+    trade_dict_fs["input"] = df
+
+
+    dict_t_d_fs = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
         sheet_name=None,
     )
-    df_rel = dict3["relation_activity"]
+    dict_t_d_fuel = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_t_d_fuel.xlsx"),
+        sheet_name=None,
+    )
+
+    df_rel = dict_t_d_fs["relation_activity"]
 
     def get_embodied_emi(row, pars, share_par):
         if row["year_act"] < pars["incin_trend_end"]:
@@ -37,13 +147,32 @@ def gen_data_methanol(scenario):
             share = 0.5
         return row["value"] * (1 - share) * pars[share_par]
 
-    df_rel_meth = df_rel.loc[df_rel["technology"] == "meth_t_d_material",:]
+    df_rel_meth = df_rel.loc[df_rel["technology"] == "meth_t_d",:]
     df_rel_meth["value"] = df_rel_meth.apply(lambda x: get_embodied_emi(x, pars, "meth_plastics_share"), axis=1)
     df_rel_hvc = df_rel.loc[df_rel["technology"] == "steam_cracker_petro",:]
     df_rel_hvc["value"] = df_rel_hvc.apply(lambda x: get_embodied_emi(x, pars, "hvc_plastics_share"), axis=1)
-    dict3["relation_activity"] = pd.concat([df_rel_meth, df_rel_hvc])
+    dict_t_d_fs["relation_activity"] = pd.concat([df_rel_meth, df_rel_hvc])
     # dict3.pop("relation_activity")  # remove negative emissions for now
-    new_dict2 = combine_df_dictionaries(new_dict, dict3)
+    new_dict2 = combine_df_dictionaries(meth_fuel_dic, meth_fs_dic,
+                                        par_dict_fs, par_dict,
+                                        bal_fs_dict, bal_fuel_dict,
+                                        trade_dict_fuel, trade_dict_fs,
+                                        dict_t_d_fs, dict_t_d_fuel)
+
+
+    for i in scenario.par_list():
+        try:
+            df = scenario.par(i, filters={"technology": ["meth_ng",
+                                                         "meth_coal", "meth_ng_ccs",
+                                                         "meth_coal_ccs", "meth_exp",
+                                                         "meth_imp", "meth_trd", "meth_bal", "meth_t_d"],
+                                          "mode": "M1"})
+            if df.size != 0:
+                scenario.remove_par(i, df)
+        except:
+            pass
+
+
 
     df_final = gen_meth_residual_demand(pars["methanol_elasticity"])
     df_final["value"] = df_final["value"].apply(lambda x: x * 0.5)
@@ -481,12 +610,21 @@ def add_meth_tec_vintages():
         context.get_local_path("material", "methanol", "meth_ng_techno_economic.xlsx"),
         sheet_name=None,
     )
+    par_dict_ng_fs = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_ng_techno_economic_fs.xlsx"),
+        sheet_name=None,
+    )
     par_dict_ng.pop("historical_activity")
+    par_dict_ng_fs.pop("historical_activity")
     par_dict_coal = pd.read_excel(
         context.get_local_path("material", "methanol", "meth_coal_additions.xlsx"),
         sheet_name=None,
     )
-    return combine_df_dictionaries(par_dict_ng, par_dict_coal)
+    par_dict_coal_fs = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_coal_additions_fs.xlsx"),
+        sheet_name=None,
+    )
+    return combine_df_dictionaries(par_dict_ng, par_dict_ng_fs, par_dict_coal, par_dict_coal_fs)
 
 
 def add_meth_hist_act(scenario):
