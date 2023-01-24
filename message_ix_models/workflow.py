@@ -84,8 +84,7 @@ class WorkflowStep:
             s = context.get_scenario()
             log.info(f"Loaded ixmp://{s.platform.name}/{s.url}")
         else:
-            # Modify the context to identify source and destination scenarios
-            context.set_scenario(scenario)
+            # Modify the context to identify destination scenario; possibly nothing
             context.dest_scenario.update(self.scenario_info)
             s = scenario
             log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
@@ -109,6 +108,10 @@ class WorkflowStep:
             return s
 
         log.info(f"Execute {self.action!r}")
+
+        # Modify context to identify the target scenario
+        context.set_scenario(s)
+
         try:
             # Invoke the callback
             result = self.action(context, s, **self.kwargs)
