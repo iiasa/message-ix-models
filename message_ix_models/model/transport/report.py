@@ -7,9 +7,10 @@ from genno import Computer, MissingKeyError
 from genno.computations import aggregate
 from message_ix import Reporter, Scenario
 from message_ix_models import Context
-from message_ix_models.util import private_data_path
+from message_ix_models.util import eval_anno, private_data_path
 
 from message_data.model.transport import Config
+from message_data.model.transport.build import get_spec
 from message_data.model.transport.plot import PLOTS
 
 log = logging.getLogger(__name__)
@@ -100,7 +101,7 @@ def callback(rep: Reporter, context: Context) -> None:
       If the scenario to be reported is not solved, only a subset of plots are added.
     - ``transport all``: all of the above.
     """
-    from . import build, demand
+    from . import demand
 
     require_compat(rep)
 
@@ -118,7 +119,7 @@ def callback(rep: Reporter, context: Context) -> None:
     update_config(rep, context)
 
     # Get a specification that describes this setting
-    spec = build.get_spec(context)
+    spec = get_spec(context)
 
     # 1. Add ex-post mode and demand calculations
     # TODO this calls add_structure(), which could be merged with (2) below
@@ -154,4 +155,41 @@ def callback(rep: Reporter, context: Context) -> None:
 
 def configure_legacy_reporting(config: dict) -> None:
     """Callback to configure the legacy reporting."""
-    raise NotImplementedError
+    from message_data.tools.post_processing.default_tables import COMMODITY
+
+    # NB the legacy reporting doesn't pass a context object to the hook that calls this
+    #    function, so get an instance directly
+    context = Context.get_instance()
+
+    # If it does not already exist, read transport configuration onto the Context,
+    # including reporting config
+    context.setdefault("transport", Config.from_context(context))
+
+    # Get a spec
+    spec = get_spec(context)
+
+    # Clear existing entries
+    # NB it should not have any effect to leave these in
+    for key in config:
+        if key.startswith("trp "):
+            # log.debug(f"Discard '{key}': {config[key]}")
+            config[key] = []
+
+    # Iterate over technologies in the transport model spec
+    for t in spec.add.set["technology"]:
+        try:
+            # Retrieve the input commodity for this technology
+            commodity = eval_anno(t, "input")["commodity"]
+        except (TypeError, KeyError):  # No annotation, or no "commodity" info
+            commodity = None
+        else:
+            # Map to the shorthands used in legacy reporting
+            commodity = COMMODITY.get(commodity)
+
+        if commodity is None:
+            # log.debug(f"{t}: No legacy reporting")  # Verbose
+            continue
+
+        group = f"trp {commodity}"
+        # log.debug(f"{t} → '{group}'")
+        config[group].append(t.id)
