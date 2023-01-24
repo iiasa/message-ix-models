@@ -1,0 +1,1326 @@
+#  Water technologies
+nexus:
+  extract_surfacewater:
+    description: >-
+      Freshwater extraction technology
+    input: {commodity: freshwater_supply}
+
+  extract_salinewater:
+    description: >-
+      Sea water extraction used for cooling technologies requiring seawater
+    input: {commodity: saline_supply}
+
+  extract_groundwater:
+    description: >-
+      Groundwater extraction technology
+    input: {commodity: freshwater_supply}
+
+  extract_gw_fossil:
+    description: >-
+      Groundwater extraction from fossil reservoirs (unlimited used as slack)
+
+  extract_salinewater_basin:
+    description: >-
+      Sea water extraction used for desalination and providing freshwater
+    input: {commodity: saline_supply_basin}
+
+  bio_hpl__ot_fresh:
+    description: >-
+      Biomass heating power plant cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_hpl__cl_fresh:
+    description: >-
+      Biomass heating power plant cooling by closed loop cooling technology
+      using freshwater  & freshwater supply
+    input: {commodity: freshwater_supply, electr}
+
+  bio_hpl__ot_saline:
+    description: >-
+      Biomass heating power plant cooling by once through cooling technology
+      using saline
+    input: {commodity: saline_supply_ppl}
+
+  bio_hpl__air:
+    description: >-
+      Biomass heating power plant cooling by air cooled technology
+      using freshwater supply
+    input: {commodity: electr}
+
+  bio_istig__ot_fresh:
+    description: >-
+      # TODO fill in description of bio_istig cooling by once through cooling
+      # technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_istig__cl_fresh:
+    description: >-
+    # TODO fill in description of bio_istig cooling by closed loop  cooling
+    # technology using freshwater
+    input: {commodity: freshwater_supply,electr}
+
+  bio_istig__ot_saline:
+    description: >-
+    #   TODO fill in description of bio_istig through once through cooling
+    #   technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  bio_istig__air:
+    description: >-
+    #   TODO fill in description of bio_istig through air cooled
+    #   technology using freshwater supply
+    input: {commodity: electr}
+
+
+  bio_istig_ccs__ot_fresh:
+    description: >-
+    # TODO fill in description of bio_istig cooling by once through cooling
+    # technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_istig_ccs__cl_fresh:
+    description: >-
+    # TODO fill in description of bio_istig cooling by closed loop  cooling
+    # technology using freshwater
+    input: {commodity: freshwater_supply,electr}
+
+  bio_istig_ccs__ot_saline:
+    description: >-
+    #   TODO fill in description of bio_istig through once through cooling
+    #   technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  bio_istig_ccs__air:
+    description: >-
+    #   TODO fill in description of bio_istig through air cooled
+    #   technology using freshwater supply
+    input: {commodity: electr}
+
+  bio_ppl__ot_fresh:
+    description: >-
+      Bio power plant cooling by once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_ppl__cl_fresh:
+    description: >-
+      Bio power plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply, electr}
+
+  bio_ppl__ot_saline:
+    description: >-
+      Bio power plant cooling by once through cooling technology
+      using saline water
+    input: {commodity: saline_supply_ppl}
+
+  bio_ppl__air:
+    description: >-
+      Biopower plant cooling by air cooled technology
+      using freshwater supply
+    input: {commodity: electr}
+
+  coal_adv__ot_fresh:
+    description: >-
+      Advanced coal power plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_adv__cl_fresh:
+    description: >-
+      Advanced coal power plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  coal_adv__ot_saline:
+    description: >-
+      Advanced coal power plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  coal_adv__air:
+    description: >-
+      Advanced coal power plant cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  coal_adv_ccs__ot_fresh:
+    description: >-
+      Advanced coal power plant with carbon capture and storage cooling by once
+      through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_adv_ccs__cl_fresh:
+    description: >-
+      Advanced coal power plant with carbon capture and storage by closed loop
+      cooling technology using freshwater
+    input: {commodity: freshwater_supply, electr}
+
+  coal_adv_ccs__ot_saline:
+    description: >-
+      Advanced coal power plant with carbon capture and storage by once through
+      cooling technology using freshwater
+    input: {commodity: saline_supply_ppl}
+
+  coal_adv_ccs__air:
+    description: >-
+      Advanced coal power plant with carbon capture and storage by air cooled
+      cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  coal_ppl__ot_fresh:
+    description: >-
+      Coal power plant cooling by once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_ppl__cl_fresh:
+    description: >-
+      Coal power plant cooling by closed loop cooling technology using freshwater
+      & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  coal_ppl__ot_saline:
+    description: >-
+      Coal power plant cooling by once through cooling technology using freshwater
+    input: {commodity: saline_supply_ppl}
+
+  coal_ppl__air:
+    description: >-
+      Coal power plant cooling by air cooled cooling technology using parasitic
+      electricity
+    input: {commodity: electr}
+
+  coal_ppl_u__ot_fresh:
+    description: >-
+      Coal power plant without abatement measures cooling by once through
+      cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_ppl_u__cl_fresh:
+    description: >-
+      Coal power plant without abatement measures cooling by closed loop
+      cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  coal_ppl_u__ot_saline:
+    description: >-
+      Coal power plant without abatement measures cooling by once through
+      cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  coal_ppl_u__air:
+    description: >-
+      Coal power plant without abatement measures cooling by air cooled
+      cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  foil_ppl__ot_fresh:
+    description: >-
+      New standard oil power plant (Rankine cycle), cooling by once through
+      cooling technology using freshwater
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  foil_ppl__cl_fresh:
+    description: >-
+      New standard oil power plant (Rankine cycle),cooling by closed loop
+      cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply, electr}
+
+  foil_ppl__ot_saline:
+    description: >-
+      New standard oil power plant (Rankine cycle),cooling by once through
+      cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  foil_ppl__air:
+    description: >-
+      New standard oil power plant (Rankine cycle),cooling by air cooled
+      cooling technology using parasitic electricity
+    input: {commodity: electr}
+
+  foil_hpl__ot_fresh:
+    description: >-
+      Fuel oil heating plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  foil_hpl__cl_fresh:
+    description: >-
+      Fuel oil heating plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  foil_hpl__ot_saline:
+    description: >-
+      Fuel oil heating plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  foil_hpl__air:
+    description: >-
+      Fuel oil heating plant cooling by cooling by air cooled cooling technology
+      using parasitic electricity
+    input: {commodity: electr}
+
+  gas_cc__ot_fresh:
+    description: >-
+      Gas combined cycle power plant cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_cc__cl_fresh:
+    description: >-
+      Gas combined cycle power plant cooling by closed loop cooling technology
+      using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_cc__ot_saline:
+    description: >-
+      Gas combined cycle power plant cooling by once through cooling technology
+      using saline water
+    input: {commodity: saline_supply_ppl}
+
+  gas_cc__air:
+    description: >-
+      Gas combined cycle power plant cooling by air cooled cooling technology
+      using parasitic electricity
+    input: {commodity: electr}
+
+  gas_cc_ccs__ot_fresh:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_cc_ccs__cl_fresh:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      closed loop cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_cc_ccs__ot_saline:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      once through cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  gas_cc_ccs__air:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      air cooled cooling technology using parasitic electricity
+    input: {commodity: electr}
+
+  gas_hpl__ot_fresh:
+    description: >-
+      Natural gas heating plant plant cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_hpl__cl_fresh:
+    description: >-
+      Natural gas heating plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_hpl__ot_saline:
+    description: >-
+      Natural gas heating plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  gas_hpl__air:
+    description: >-
+      Natural gas heating plant cooling by once through cooling technology by
+      air cooled cooling technology using parasitic electricity
+    input: {commodity: electr}
+
+  gas_ppl__ot_fresh:
+    description: >-
+      Gas power plant (Rankine cycle) cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_ppl__cl_fresh:
+    description: >-
+      Gas power plant (Rankine cycle) cooling by closed loop cooling technology
+      using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_ppl__ot_saline:
+    description: >-
+      Biomass heating power plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: saline_supply_ppl}
+
+  gas_ppl__air:
+    description: >-
+      Biomass heating power plant cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  geo_hpl__ot_fresh:
+    description: >-
+      Geothermal heat plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  geo_hpl__cl_fresh:
+    description: >-
+      Geothermal heat plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  geo_hpl__ot_saline:
+    description: >-
+      Geothermal heat plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  geo_hpl__air:
+    description: >-
+      Geothermal heat plant cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  geo_ppl__ot_fresh:
+    description: >-
+      Geothermal power plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  geo_ppl__cl_fresh:
+    description: >-
+      Geothermal power plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  geo_ppl__ot_saline:
+    description: >-
+      Geothermal power plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  geo_ppl__air:
+    description: >-
+      Geothermal power plant cooling by closed loop cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  igcc__ot_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by once
+      through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  igcc__cl_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by closed
+      loop cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  igcc__ot_saline:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by once
+      through cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  igcc__air:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by air cooled
+      cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  igcc_ccs__ot_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  igcc_ccs__cl_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by closed loop cooling technology using freshwater &
+      freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  igcc_ccs__ot_saline:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by once through cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  igcc_ccs__air:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by air cooled cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  loil_cc__ot_fresh:
+    description: >-
+      Light oil combined cycle cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  loil_cc__cl_fresh:
+    description: >-
+      Light oil combined cycle cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  loil_cc__ot_saline:
+    description: >-
+      Light oil combined cycle cooling by once through cooling technology using
+      saline supply
+    input: {commodity: saline_supply_ppl}
+
+  loil_cc__air:
+    description: >-
+      Light oil combined cycle cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  loil_ppl__ot_fresh:
+    description: >-
+      Existing light oil power plant cooling by once through cooling technology
+      using extract_freshwater_supply
+    input: {commodity: freshwater_supply}
+
+  loil_ppl__cl_fresh:
+    description: >-
+      Existing light oil power plant cooling by once through cooling technology using
+      freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  loil_ppl__ot_saline:
+    description: >-
+      Existing light oil power plant cooling by once through cooling technology
+      using freshwater supply
+    input: {commodity: electr}
+
+  loil_ppl__air:
+    description: >-
+      Existing light oil power plant cooling by air cooled cooling technology
+      using parasitic electricity
+    input: {commodity: electr}
+
+  nuc_hc__ot_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  nuc_hc__cl_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by closed loop cooling
+      technology using freshwater supply & parasitic
+    input: {commodity: freshwater_supply,electr}
+
+  nuc_hc__ot_saline:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by once through cooling
+      technology using saline water supply
+    input: {commodity: saline_supply_ppl}
+
+  nuc_hc__air:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  nuc_lc__ot_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  nuc_lc__cl_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by closed loop cooling
+      technology using freshwater supply & parasitic
+    input: {commodity: freshwater_supply,electr}
+
+  nuc_lc__ot_saline:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by once through cooling
+      technology using saline water supply
+    input: {commodity: saline_supply_ppl}
+
+  nuc_lc__air:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  solar_th_ppl__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  solar_th_ppl__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed loop cooling
+      technology using freshwater supply & parasitic electricity
+    input: {commodity: freshwater_supply,electr}
+
+  solar_th_ppl__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: saline_supply_ppl}
+
+  solar_th_ppl__air:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  urban_t_d:
+    description: >-
+      Urban water transmission & distribution
+    input: {commodity: freshwater_supply}
+
+  rural_t_d:
+    description: >-
+      Rural water transmission & distribution
+    input: {commodity: freshwater_supply}
+
+  industry_unconnected:
+    description: >-
+      unconnected industry water not connected to system
+    input: {commodity: freshwater_supply}
+
+  industry_untreated:
+    description: >-
+      untreated industry water return flows
+    input: {commodity: urban_uncollected_wst}
+
+  urban_unconnected:
+    description: >-
+      untreated urban water not connected to system
+    input: {commodity: freshwater_supply}
+
+  rural_unconnected:
+    description: >-
+      untreated rural water not connected to system
+    input: {commodity: freshwater_supply}
+
+  urban_sewerage:
+    description: >-
+      urban wastewater
+    input: {commodity: freshwater_supply}
+
+  urban_untreated:
+    description: >-
+      untreated urban water return flows
+    input: {commodity: urban_uncollected_wst}
+
+  urban_discharge:
+    description: >-
+      treated urban water which is discharged
+    input: {commodity: electr, urban_collected_wst}
+
+  urban_recycle:
+    description: >-
+      treated wastewater used as available water
+    input: {commodity: electr, urban_collected_wst}
+
+  rural_discharge:
+    description: >-
+      treated rural water which is discharged
+    input: {commodity: rural_collected_wst}
+
+  rural_untreated:
+    description: >-
+      untreated rural water return flows
+    input: {commodity: rural_collected_wst}
+
+  membrane:
+    description: >-
+      desalination technology using membrane i.e water and salts is separated
+      through a semipermeable membrane
+    input: {commodity: electr,saline_supply}
+
+  distillation:
+    description: >-
+      traditional desalination technology i.e boiling and recondensation of
+      seawater to leave salt  and impurities behin
+    input: {commodity: electr,saline_supply,d_heat}
+
+  desal_t_d:
+    description: >-
+      Desalinated water transmission and distribution
+    input: {commodity: desalinated_water}
+
+  saline_ppl_t_d:
+    description: >-
+      Saline power plant transmission & distribution
+      # TODO verify description
+    input: {commodity: saline_supply}
+
+  basin_to_reg:
+    description: >-
+      dummy technology to map basin technologies water supply to energy technologies
+
+    input: {commodity: freshwater_supply}
+
+  ueff1:
+    description: >-
+      low urban efficiency
+
+    input: {commodity: urban_mw, urban_collected_wst}
+
+  ueff2:
+    description: >-
+      low urban efficiency
+
+    input: {commodity: urban_mw, urban_collected_wst}
+
+  ueff3:
+    description: >-
+      low urban efficiency
+
+    input: {commodity: urban_mw, urban_collected_wst}
+
+  reff1:
+    description: >-
+      low rural efficiency
+
+    input: {commodity: rural_mw, rural_collected_wst}
+
+  reff2:
+    description: >-
+      mid rural efficiency
+
+    input: {commodity: rural_mw, rural_collected_wst}
+
+  reff3:
+    description: >-
+      high rural efficiency
+
+    input: {commodity: rural_mw, rural_collected_wst}
+
+  ieff1:
+    description: >-
+      low irrigation efficiency
+
+    input: {commodity: freshwater_supply}
+
+  ieff2:
+    description: >-
+      mid irrigation efficiency
+
+    input: {commodity: freshwater_supply}
+
+  ieff3:
+    description: >-
+      high irrigation efficiency
+
+    input: {commodity: freshwater_supply}
+
+  return_flow:
+    description: >-
+      remaining surface water left after consumption
+
+  gw_recharge:
+    description: >-
+      remaining groundwater left after consumption
+
+  rural_recycle:
+    description: >-
+      recycled water after rural treatment
+
+  rural_sewerage:
+    description: >-
+      treated rural water
+
+  irrigation_oilcrops:
+    description: >-
+      Irrigation technology connecting irrigation withdrawals with the demands
+    input: {commodity: freshwater}
+
+  irrigation_sugarcrops:
+    description: >-
+      Irrigation technology connecting irrigation withdrawals with the demands
+    input: {commodity: freshwater}
+
+  irrigation_cereal:
+    description: >-
+      Irrigation technology connecting irrigation withdrawals with the demands
+    input: {commodity: freshwater}
+
+  salinewater_return:
+    description: >-
+      remaining salinewater left after consumption
+
+
+cooling:
+  #  Water technologies
+  extract_surfacewater:
+    description: >-
+      Freshwater extraction technology
+    input: {commodity: freshwater_supply}
+
+  extract_salinewater:
+    description: >-
+      Sea water extraction used for cooling technologies requiring seawater
+    input: {commodity: saline_supply_ppl}
+
+  extract_groundwater:
+    description: >-
+      Groundwater extraction technology
+    input: {commodity: freshwater_supply}
+
+  bio_hpl__ot_fresh:
+    description: >-
+      Biomass heating power plant cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_hpl__cl_fresh:
+    description: >-
+      Biomass heating power plant cooling by closed loop cooling technology
+      using freshwater  & freshwater supply
+    input: {commodity: freshwater_supply, electr}
+
+  bio_hpl__ot_saline:
+    description: >-
+      Biomass heating power plant cooling by once through cooling technology
+      using saline
+    input: {commodity: saline_supply_ppl}
+
+  bio_hpl__air:
+    description: >-
+      Biomass heating power plant cooling by air cooled technology
+      using freshwater supply
+    input: {commodity: electr}
+
+  bio_istig__ot_fresh:
+    description: >-
+    # TODO fill in description of bio_istig cooling by once through cooling
+    # technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_istig__cl_fresh:
+    description: >-
+    # TODO fill in description of bio_istig cooling by closed loop  cooling
+    # technology using freshwater
+    input: {commodity: freshwater_supply,electr}
+
+  bio_istig__ot_saline:
+    description: >-
+    #   TODO fill in description of bio_istig through once through cooling
+    #   technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  bio_istig__air:
+    description: >-
+    #   TODO fill in description of bio_istig through air cooled
+    #   technology using freshwater supply
+    input: {commodity: electr}
+
+
+  bio_istig_ccs__ot_fresh:
+    description: >-
+    # TODO fill in description of bio_istig cooling by once through cooling
+    # technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_istig_ccs__cl_fresh:
+    description: >-
+    # TODO fill in description of bio_istig cooling by closed loop  cooling
+    # technology using freshwater
+    input: {commodity: freshwater_supply,electr}
+
+  bio_istig_ccs__ot_saline:
+    description: >-
+    #   TODO fill in description of bio_istig through once through cooling
+    #   technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  bio_istig_ccs__air:
+    description: >-
+    #   TODO fill in description of bio_istig through air cooled
+    #   technology using freshwater supply
+    input: {commodity: electr}
+
+  bio_ppl__ot_fresh:
+    description: >-
+      Bio power plant cooling by once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  bio_ppl__cl_fresh:
+    description: >-
+      Bio power plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply, electr}
+
+  bio_ppl__ot_saline:
+    description: >-
+      Bio power plant cooling by once through cooling technology
+      using saline water
+    input: {commodity: saline_supply_ppl}
+
+  bio_ppl__air:
+    description: >-
+      Biopower plant cooling by air cooled technology
+      using freshwater supply
+    input: {commodity: electr}
+
+  coal_adv__ot_fresh:
+    description: >-
+      Advanced coal power plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_adv__cl_fresh:
+    description: >-
+      Advanced coal power plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  coal_adv__ot_saline:
+    description: >-
+      Advanced coal power plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  coal_adv__air:
+    description: >-
+      Advanced coal power plant cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  coal_adv_ccs__ot_fresh:
+    description: >-
+      Advanced coal power plant with carbon capture and storage cooling by once
+      through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_adv_ccs__cl_fresh:
+    description: >-
+      Advanced coal power plant with carbon capture and storage by closed loop
+      cooling technology using freshwater
+    input: {commodity: freshwater_supply, electr}
+
+  coal_adv_ccs__ot_saline:
+    description: >-
+      Advanced coal power plant with carbon capture and storage by once through
+      cooling technology using freshwater
+    input: {commodity: saline_supply_ppl}
+
+  coal_adv_ccs__air:
+    description: >-
+      Advanced coal power plant with carbon capture and storage by air cooled
+      cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  coal_ppl__ot_fresh:
+    description: >-
+      Coal power plant cooling by once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_ppl__cl_fresh:
+    description: >-
+      Coal power plant cooling by closed loop cooling technology using freshwater
+      & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  coal_ppl__ot_saline:
+    description: >-
+      Coal power plant cooling by once through cooling technology using freshwater
+    input: {commodity: saline_supply_ppl}
+
+  coal_ppl__air:
+    description: >-
+      Coal power plant cooling by air cooled cooling technology using parasitic
+      electricity
+    input: {commodity: electr}
+
+  coal_ppl_u__ot_fresh:
+    description: >-
+      Coal power plant without abatement measures cooling by once through
+      cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  coal_ppl_u__cl_fresh:
+    description: >-
+      Coal power plant without abatement measures cooling by closed loop
+      cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  coal_ppl_u__ot_saline:
+    description: >-
+      Coal power plant without abatement measures cooling by once through
+      cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  coal_ppl_u__air:
+    description: >-
+      Coal power plant without abatement measures cooling by air cooled
+      cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  foil_ppl__ot_fresh:
+    description: >-
+      New standard oil power plant (Rankine cycle), cooling by once through
+      cooling technology using freshwater
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  foil_ppl__cl_fresh:
+    description: >-
+      New standard oil power plant (Rankine cycle),cooling by closed loop
+      cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply, electr}
+
+  foil_ppl__ot_saline:
+    description: >-
+      New standard oil power plant (Rankine cycle),cooling by once through
+      cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  foil_ppl__air:
+    description: >-
+      New standard oil power plant (Rankine cycle),cooling by air cooled
+      cooling technology using parasitic electricity
+    input: {commodity: electr}
+
+  foil_hpl__ot_fresh:
+    description: >-
+      Fuel oil heating plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  foil_hpl__cl_fresh:
+    description: >-
+      Fuel oil heating plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  foil_hpl__ot_saline:
+    description: >-
+      Fuel oil heating plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  foil_hpl__air:
+    description: >-
+      Fuel oil heating plant cooling by cooling by air cooled cooling technology
+      using parasitic electricity
+    input: {commodity: electr}
+
+  gas_cc__ot_fresh:
+    description: >-
+      Gas combined cycle power plant cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_cc__cl_fresh:
+    description: >-
+      Gas combined cycle power plant cooling by closed loop cooling technology
+      using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_cc__ot_saline:
+    description: >-
+      Gas combined cycle power plant cooling by once through cooling technology
+      using saline water
+    input: {commodity: saline_supply_ppl}
+
+  gas_cc__air:
+    description: >-
+      Gas combined cycle power plant cooling by air cooled cooling technology
+      using parasitic electricity
+    input: {commodity: electr}
+
+  gas_cc_ccs__ot_fresh:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_cc_ccs__cl_fresh:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      closed loop cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_cc_ccs__ot_saline:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      once through cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  gas_cc_ccs__air:
+    description: >-
+      Gas combined cycle power-plant with carbon capture and storage cooling by
+      air cooled cooling technology using parasitic electricity
+    input: {commodity: electr}
+
+  gas_hpl__ot_fresh:
+    description: >-
+      Natural gas heating plant plant cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_hpl__cl_fresh:
+    description: >-
+      Natural gas heating plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_hpl__ot_saline:
+    description: >-
+      Natural gas heating plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  gas_hpl__air:
+    description: >-
+      Natural gas heating plant cooling by once through cooling technology by
+      air cooled cooling technology using parasitic electricity
+    input: {commodity: electr}
+
+  gas_ppl__ot_fresh:
+    description: >-
+      Gas power plant (Rankine cycle) cooling by once through cooling technology
+      using freshwater
+    input: {commodity: freshwater_supply}
+
+  gas_ppl__cl_fresh:
+    description: >-
+      Gas power plant (Rankine cycle) cooling by closed loop cooling technology
+      using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  gas_ppl__ot_saline:
+    description: >-
+      Biomass heating power plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: saline_supply_ppl}
+
+  gas_ppl__air:
+    description: >-
+      Biomass heating power plant cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  geo_hpl__ot_fresh:
+    description: >-
+      Geothermal heat plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  geo_hpl__cl_fresh:
+    description: >-
+      Geothermal heat plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  geo_hpl__ot_saline:
+    description: >-
+      Geothermal heat plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  geo_hpl__air:
+    description: >-
+      Geothermal heat plant cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  geo_ppl__ot_fresh:
+    description: >-
+      Geothermal power plant cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  geo_ppl__cl_fresh:
+    description: >-
+      Geothermal power plant cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  geo_ppl__ot_saline:
+    description: >-
+      Geothermal power plant cooling by once through cooling technology using
+      saline water
+    input: {commodity: saline_supply_ppl}
+
+  geo_ppl__air:
+    description: >-
+      Geothermal power plant cooling by closed loop cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  igcc__ot_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by once
+      through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  igcc__cl_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by closed
+      loop cooling technology using freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  igcc__ot_saline:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by once
+      through cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  igcc__air:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant cooling by air cooled
+      cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  igcc_ccs__ot_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by once through cooling technology using freshwater
+    input: {commodity: freshwater_supply}
+
+  igcc_ccs__cl_fresh:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by closed loop cooling technology using freshwater &
+      freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  igcc_ccs__ot_saline:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by once through cooling technology using saline water
+    input: {commodity: saline_supply_ppl}
+
+  igcc_ccs__air:
+    description: >-
+      Integrated gasification combined cycle (IGCC) power plant with carbon capture
+      and storage cooling by air cooled cooling technology using freshwater supply
+    input: {commodity: electr}
+
+  loil_cc__ot_fresh:
+    description: >-
+      Light oil combined cycle cooling by once through cooling technology using
+      freshwater
+    input: {commodity: freshwater_supply}
+
+  loil_cc__cl_fresh:
+    description: >-
+      Light oil combined cycle cooling by closed loop cooling technology using
+      freshwater & freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  loil_cc__ot_saline:
+    description: >-
+      Light oil combined cycle cooling by once through cooling technology using
+      saline supply
+    input: {commodity: saline_supply_ppl}
+
+  loil_cc__air:
+    description: >-
+      Light oil combined cycle cooling by air cooled cooling technology using
+      freshwater supply
+    input: {commodity: electr}
+
+  loil_ppl__ot_fresh:
+    description: >-
+      Existing light oil power plant cooling by once through cooling technology
+      using extract_freshwater_supply
+    input: {commodity: freshwater_supply}
+
+  loil_ppl__cl_fresh:
+    description: >-
+      Existing light oil power plant cooling by once through cooling technology using
+      freshwater supply
+    input: {commodity: freshwater_supply,electr}
+
+  loil_ppl__ot_saline:
+    description: >-
+      Existing light oil power plant cooling by once through cooling technology
+      using freshwater supply
+    input: {commodity: electr}
+
+  loil_ppl__air:
+    description: >-
+      Existing light oil power plant cooling by air cooled cooling technology
+      using parasitic electricity
+    input: {commodity: electr}
+
+  nuc_hc__ot_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  nuc_hc__cl_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by closed loop cooling
+      technology using freshwater supply & parasitic
+    input: {commodity: freshwater_supply,electr}
+
+  nuc_hc__ot_saline:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by once through cooling
+      technology using saline water supply
+    input: {commodity: saline_supply_ppl}
+
+  nuc_hc__air:
+    description: >-
+      Nuclear power plant (~GEN III+) (high cost) cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  nuc_lc__ot_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  nuc_lc__cl_fresh:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by closed loop cooling
+      technology using freshwater supply & parasitic
+    input: {commodity: freshwater_supply,electr}
+
+  nuc_lc__ot_saline:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by once through cooling
+      technology using saline water supply
+    input: {commodity: saline_supply_ppl}
+
+  nuc_lc__air:
+    description: >-
+      Nuclear power plant (~GEN III+) (low cost) cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
+  solar_th_ppl__ot_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: freshwater_supply}
+
+  solar_th_ppl__cl_fresh:
+    description: >-
+      Solar thermal power plant with storage cooling by closed loop cooling
+      technology using freshwater supply & parasitic electricity
+    input: {commodity: freshwater_supply,electr}
+
+  solar_th_ppl__ot_saline:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using freshwater supply
+    input: {commodity: saline_supply_ppl}
+
+  solar_th_ppl__air:
+    description: >-
+      Solar thermal power plant with storage cooling by once through cooling
+      technology using parasitic electricity
+    input: {commodity: electr}
+
