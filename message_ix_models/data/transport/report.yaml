@@ -92,9 +92,9 @@ general:
   - transport stock::iamc
   - transport fe::iamc
   - transport fe ldv::iamc
-  # Temporarily disabled to merge #370
+  # Temporarily disabled for NAVIGATE
   # - transport emi 0::iamc
-  - transport emi 1::iamc
+  # - transport emi 1::iamc
   # For debugging
   # - transport debug ACT::iamc
   # - transport debug CAP::iamc
