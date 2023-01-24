@@ -88,21 +88,21 @@ class WorkflowStep:
             context.dest_scenario.update(self.scenario_info)
             s = scenario
             log.info(f"Step runs on ixmp://{s.platform.name}/{s.url}")
+
+        if context.dest_scenario:
             log.info(f"  with context.dest_scenario={context.dest_scenario}")
 
         if self.clone is not False:
             # Clone to target model/scenario name
             log.info("Clone to {model}/{scenario}".format(**self.scenario_info))
-            s = s.clone(
-                **self.scenario_info,
-                # If clone contains keyword arguments, e.g. shift_first_model_year, use
-                # these
-                **(
-                    self.clone
-                    if isinstance(self.clone, dict)
-                    else dict(keep_solution=False)
-                ),
+            kw = self.scenario_info.copy()
+            # If clone contains keyword arguments, e.g. shift_first_model_year, use them
+            kw.update(
+                self.clone
+                if isinstance(self.clone, dict)
+                else dict(keep_solution=False)
             )
+            s = s.clone(**kw)
 
         if not self.action:
             return s
@@ -120,7 +120,7 @@ class WorkflowStep:
             raise
 
         if result is None:
-            log.info(f"…nothing returned, continue with {s.url}")
+            log.info(f"…nothing returned, workflow will continue with {s.url}")
             result = s
 
         return result
