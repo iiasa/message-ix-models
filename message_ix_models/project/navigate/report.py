@@ -1,6 +1,7 @@
 """Reporting for NAVIGATE."""
 import logging
 import re
+import sys
 from datetime import date
 from itertools import count
 from pathlib import Path
@@ -13,6 +14,19 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
 from sdmx.model import Code
 
+# Legacy reporting expect to find the following variables in the global namespace of the
+# module that contains return_func_dict(), regardless of where the functions are. We
+# ensure these are the same references used in the .material.report.tables file where
+# the functions are defined.
+from message_data.model.material.report.tables import (  # noqa: F401
+    func_dict,
+    kyoto_hist_data,
+    lu_hist_data,
+    mu,
+    pp,
+    run_history,
+    urban_perc_data,
+)
 from message_data.tools.prep_submission import Config, ScenarioConfig
 
 from . import iter_scenario_codes
@@ -308,7 +322,7 @@ def callback(rep: Reporter, context: Context) -> None:
         [
             "buildings all",
             "materials all",
-            "transport iamc all",
+            "transport iamc all",  # Excludes plots
         ],
     )
 
@@ -320,3 +334,22 @@ def legacy_output_path(base_path: Path, scenario: Scenario) -> Path:
        that function both here and in :func:`.pp_utils.write_xlsx`.
     """
     return base_path.joinpath(f"{scenario.model}_{scenario.scenario}.xlsx")
+
+
+def return_func_dict():
+    """Hook for legacy reporting."""
+    from message_data.tools.post_processing.default_tables import TECHS
+
+    # Invoke a function from each module to adjust `TECHS`
+    for module in ("buildings", "materials", "transport"):
+        name = f"message_data.model.{module}.report"
+        __import__(name)
+        func = getattr(sys.modules[name], "configure_legacy_reporting")
+
+        func(TECHS)
+
+    log.debug(f"Configured legacy reporting for -BMT model variants:\n{TECHS = }")
+
+    # This refers to the functions in .model.material.tables; .model.buildings and
+    # .model.transport do not override any of the legacy reporting functions
+    return func_dict
