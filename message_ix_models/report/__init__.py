@@ -47,7 +47,7 @@ def _(c: Reporter, info):
 def iamc(c: Reporter, info):
     """Handle one entry from the ``iamc:`` config section.
 
-    This version overrides the version fron :mod:`genno.config` to:
+    This version overrides the version from :mod:`genno.config` to:
 
     - Set some defaults for the `rename` argument for :meth:`.convert_pyam`:
 
@@ -57,12 +57,22 @@ def iamc(c: Reporter, info):
     - Use the MESSAGEix-GLOBIOM custom :func:`.util.collapse` callback to perform
       renaming etc. while collapsing dimensions to the IAMC ones. The "var" key from
       the entry, if any, is passed to the `var` argument of that function.
+
+    - Provide optional partial sums. The "sums" key of the entry can give a list of
+      strings such as ``["x", "y", "x-y"]``; in this case, the conversion to IAMC format
+      is also applied to the same "base" key with a partial sum over the dimension "x";
+      over "y", and over both "x" and "y". The corresponding dimensions are omitted from
+      "var". All data are concatenated.
     """
+    # FIXME the upstream key "variable" for the configuration is confusing; choose a
+    #       better name
     from message_data.reporting.util import collapse
+
+    # Common
+    base_key = Key.from_str_or_key(info["base"])
 
     # Use message_data custom collapse() method
     info.setdefault("collapse", {})
-    info["collapse"]["callback"] = partial(collapse, var=info.pop("var", []))
 
     # Add standard renames
     info.setdefault("rename", {})
@@ -75,8 +85,34 @@ def iamc(c: Reporter, info):
     ):
         info["rename"].setdefault(dim, target)
 
-    # Invoke the genno built-in handler
-    handle_iamc(c, info)
+    # Iterate over partial sums
+    # TODO move some or all of this logic upstream
+    keys = []  # Resulting keys
+    for dims in [""] + info.pop("sums", []):
+        # Dimensions to partial
+        # TODO allow iterable of str
+        dims = dims.split("-")
+
+        label = f"{info['variable']} {'-'.join(dims) or 'full'}"
+
+        # Modified copy of `info` for this invocation
+        _info = info.copy()
+        # Base key: use the partial sum over any `dims`. Use a distinct variable name.
+        _info.update(base=base_key.drop(*dims), variable=label)
+        # Exclude any summed dimensions from the IAMC Variable to be constructed
+        _info["collapse"].update(
+            callback=partial(
+                collapse, var=list(filter(lambda v: v not in dims, info["var"]))
+            )
+        )
+
+        # Invoke the genno built-in handler
+        handle_iamc(c, _info)
+
+        keys.append(f"{label}::iamc")
+
+    # Concatenate together the multiple tables
+    c.add("concat", f"{info['variable']}::iamc", *keys)
 
 
 def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
