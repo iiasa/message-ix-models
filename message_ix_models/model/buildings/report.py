@@ -99,29 +99,16 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
 
     # Convert to IAMC structure
     # - Ensure the unit string is "EJ/yr", nor "EJ / a".
-    # FIXME this duplicates reporting structures used in .model.transport; use a common
-    #       function to set up both
+    # - Include partial sums over commodities.
     add_iamc(
         rep,
         dict(
             base=k2.drop("l"),
-            variable="_buildings fe0",
+            variable="buildings fe",
             var=["Final Energy", "t", "c"],
+            sums=["c"],
             unit="EJ/yr",
         ),
-    )
-    add_iamc(
-        rep,
-        dict(
-            base=k2.drop("c", "l"),
-            variable="_buildings fe1",
-            var=["Final Energy", "t"],
-            unit="EJ/yr",
-        ),
-    )
-    # Concatenate
-    rep.add(
-        "concat", "buildings fe::iamc", "_buildings fe0::iamc", "_buildings fe1::iamc"
     )
 
     # Lists of keys for use later
