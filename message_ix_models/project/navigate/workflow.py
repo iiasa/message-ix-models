@@ -245,6 +245,7 @@ def generate(context: Context) -> Workflow:
             f"MT {s} solved",
             build_solve_buildings,  # type: ignore
             target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
+            clone=True,
             navigate_scenario=s,
         )
 
@@ -316,11 +317,11 @@ def generate(context: Context) -> Workflow:
                 name,
                 build_solve_buildings,
                 # Clone before this step
-                clone=True,
                 target="{model}/{scenario}+B".format(**target),
+                clone=True,
                 # Keyword arguments for build_solve_buildings
                 navigate_scenario=wf.graph[base][0].kwargs["navigate_scenario"],
-                config=dict(clone=False, solve=solve_kw),
+                config=dict(solve=solve_kw),
             )
 
         # Step 8–9 for individual scenarios
