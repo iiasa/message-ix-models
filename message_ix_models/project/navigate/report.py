@@ -50,6 +50,12 @@ def _scenario_name(context: Context, value: str) -> Optional[str]:
     if value == "baseline":
         return value if context.get("navigate_dsd") == "iiasa-ece" else None
 
+    # Transform a complex scenario name from the workflow to the corresponding NAVIGATE
+    # identifier
+    match = re.match(r"^NPi-(.*)_ENGAGE_([^_]+)_step-[123](\+B)?$", value)
+    if match:
+        value = f"{match.group(2)}-{match.group(1)}"
+
     candidate = f"NAV_Dem-{value}"
     for code in iter_scenario_codes(context):
         if code.id == candidate:
