@@ -137,7 +137,7 @@ def report(context: Context, scenario: Scenario) -> Scenario:
         # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a string
         #         containing "True" or "False" instead of an actual bool.
         ref_sol="False",
-        run_config="materials.yaml",
+        run_config="navigate-rc.yaml",
     )
     _invoke_legacy_reporting(context)
 
