@@ -347,9 +347,9 @@ def run_reporting(context, remove_ts):
             merge_ts=True,
             run_config="materials_run_config.yaml",
         )
-        util.prepare_xlsx_for_explorer(
-            Path(os.getcwd()).parents[0].joinpath(
-                "reporting_output", scenario.model+"_"+scenario.scenario+".xlsx"))
+        # util.prepare_xlsx_for_explorer(
+        #     Path(os.getcwd()).parents[0].joinpath(
+        #         "reporting_output", scenario.model+"_"+scenario.scenario+".xlsx"))
 
 
 @cli.command("report-2")
