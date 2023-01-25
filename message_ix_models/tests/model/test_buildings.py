@@ -134,6 +134,8 @@ def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
         ("NAV_Dem-NPi-ele", "NAV_Dem-NPi-ele"),
         ("NAV_Dem-NPi-ref", "NAV_Dem-NPi-ref"),
         ("NAV_Dem-NPi-ref", "NAV_Dem-NPi-ref"),
+        ("NAV_Dem-NPi-ref", "NPi-ref_ENGAGE_20C_step-3+B"),
+        ("NAV_Dem-NPi-ref", "Ctax-ref+B"),
     ],
 )
 def test_sturm_scenario_name(input, expected):
