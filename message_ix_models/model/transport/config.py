@@ -313,6 +313,9 @@ class Config(ConfigHelper):
     #: Sources for input data.
     data_source: DataSourceConfig = field(default_factory=DataSourceConfig)
 
+    #: Generate relation entries for emissions.
+    emission_relations: bool = True
+
     # Init-only variables
 
     #: Identifier of a Transport Futures scenario, used to update :attr:`flags` via
