@@ -167,17 +167,17 @@ def scenario_name(name: str) -> str:
     STURM works from prepared data that is available for a subset of all the NAVIGATE
     scenario IDs. Perform the following mapping:
 
-    - Replace "15C" or "20C" with "NPi": i.e. use the same STURM input data regardless
-      of the climate policy scenario.
+    - Replace "15C", "20C", or other policy labels with "NPi": i.e. use the same STURM
+      input data regardless of the climate policy scenario.
     - Remove trailing "_d" and "_u", e.g. "…-act_u" becomes "…-act".
-    - Remove trailing " + ENGAGE step #".
+    - Remove trailing text like " + ENGAGE step #".
     - "NAV_Dem-" is prepended if it is missing.
     - Map the string "baseline" to "SSP2".
 
     Other values pass through unaltered.
     """
     result = re.sub(
-        r"^(NAV_Dem-)?(15C|20C|NPi)-(...)(_[du])?.*",
+        r"^(NAV_Dem-)?(15C|20C|NPi|Ctax|1\d00 Gt)-(...)(_[du])?.*",
         r"NAV_Dem-NPi-\3",
         name,
     )
