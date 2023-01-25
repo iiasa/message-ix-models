@@ -347,7 +347,7 @@ def return_func_dict():
     from message_data.tools.post_processing.default_tables import TECHS
 
     # Invoke a function from each module to adjust `TECHS`
-    for module in ("buildings", "materials", "transport"):
+    for module in ("buildings", "material", "transport"):
         name = f"message_data.model.{module}.report"
         __import__(name)
         func = getattr(sys.modules[name], "configure_legacy_reporting")
