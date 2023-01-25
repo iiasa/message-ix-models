@@ -96,12 +96,18 @@ def test_ef_for_input(test_context):
     # Function runs successfully on these data
     result = ef_for_input(test_context, data)
 
-    # Returns data for one parameter
-    assert {"emission_factor"} == set(result)
+    # Returns data for two parameters if transport.Config.emission_relations is True
+    # (the default)
+    assert {"emission_factor", "relation_activity"} == set(result)
     ef = result["emission_factor"]
 
     # Data is complete
     assert not ef.isna().any().any(), ef
+
+    ra = result["relation_activity"]
+    assert not ra.isna().any(axis=None), ra
+
+    # print(ra.to_string())
 
     # TODO test specific values
 
