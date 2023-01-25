@@ -84,6 +84,7 @@ def test_generate_workflow_cli(mix_models_cli):
     "input, expected",
     (
         ("NPi-ref", "NAV_Dem-NPi-ref"),
+        ("NPi-ref_ENGAGE_20C_step-3+B", "NAV_Dem-20C-ref"),
         ("baseline", None),
     ),
 )
