@@ -90,11 +90,3 @@ def test_generate_workflow_cli(mix_models_cli):
 )
 def test_scenario_name(test_context, input, expected):
     assert expected == _scenario_name(test_context, input)
-
-
-def test_legacy_report(test_context):
-    import message_data.model.material.report.tables as A
-    import message_data.projects.navigate.report as B
-
-    A.pp = "foo"
-    assert "foo" == B.pp
