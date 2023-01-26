@@ -207,6 +207,7 @@ unit:
 
     # Emissions
     kt / Gv / km: kilotonnes emitted per 10⁹ vehicle kilometres
+    Mt / Gv / km: megatonnes emitted per 10⁹ vehicle kilometres
 
 # MA3T sets
 census_division:
