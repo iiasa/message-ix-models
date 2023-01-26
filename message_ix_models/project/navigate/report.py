@@ -5,7 +5,7 @@ import sys
 from datetime import date
 from itertools import count
 from pathlib import Path
-from typing import Any, Collection, Optional
+from typing import Collection, Optional
 
 import pandas as pd
 from message_ix import Reporter, Scenario
@@ -331,7 +331,13 @@ def legacy_output_path(base_path: Path, scenario: Scenario) -> Path:
 
 
 def return_func_dict():
-    """Hook for legacy reporting."""
+    """Hook for legacy reporting.
+
+    This function contains a crude hack. :func:`.iamc_report_hackathon.report`, per a
+    "run config" YAML file, e.g. :file:`data/report/navigate-rc.yaml`, finds and calls
+    this function to retrieve the list of functions ("tables") in the file. At that
+    point, we modify the lists of technologies define in :data:`.default_tables.TECHS`.
+    """
     from message_data.tools.post_processing.default_tables import TECHS
 
     # Invoke a function from each module to adjust `TECHS`
@@ -355,24 +361,3 @@ def return_func_dict():
     # This refers to the functions in .model.material.tables; .model.buildings and
     # .model.transport do not override any of the legacy reporting functions
     return message_data.model.material.report.tables.func_dict
-
-
-def __getattr__(name: str) -> Any:
-    """Attribute lookup for this module.
-
-    Legacy reporting expect to find the following variables in the global namespace of
-    the module that contains :func:`return_func_dict`, regardless of where the functions
-    are. We ensure these are the same references used in :mod:`.material.report.tables`
-    where those functions are defined.
-    """
-    if name in (
-        "kyoto_hist_data",
-        "lu_hist_data",
-        "mu",
-        "pp",
-        "run_history",
-        "urban_perc_data",
-    ):
-        return getattr(message_data.model.material.report.tables, name)
-    else:
-        raise AttributeError(name)
