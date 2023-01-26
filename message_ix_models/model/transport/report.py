@@ -168,12 +168,13 @@ def configure_legacy_reporting(config: dict) -> None:
     # Get a spec
     spec = get_spec(context)
 
-    # Clear existing entries
-    # NB it should not have any effect to leave these in
-    for key in config:
-        if key.startswith("trp "):
-            # log.debug(f"Discard '{key}': {config[key]}")
-            config[key] = []
+    # Commented: pp_utils._retr_act_data() raises IndexError if lists are empty
+    # # Clear existing entries
+    # # NB it should not have any effect to leave these in
+    # for key in config:
+    #     if key.startswith("trp "):
+    #         # log.debug(f"Discard '{key}': {config[key]}")
+    #         config[key] = []
 
     # Iterate over technologies in the transport model spec
     for t in spec.add.set["technology"]:
