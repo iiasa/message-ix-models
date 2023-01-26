@@ -97,6 +97,7 @@ class WorkflowStep:
             log.info("Clone to {model}/{scenario}".format(**self.scenario_info))
             kw = self.scenario_info.copy()
             # If clone contains keyword arguments, e.g. shift_first_model_year, use them
+            # NB user code should give clone = dict(keep_solution=True) if desired
             kw.update(
                 self.clone
                 if isinstance(self.clone, dict)
