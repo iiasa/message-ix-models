@@ -5,7 +5,7 @@ import sys
 from datetime import date
 from itertools import count
 from pathlib import Path
-from typing import Collection, Optional
+from typing import Any, Collection, Optional
 
 import pandas as pd
 from message_ix import Reporter, Scenario
@@ -14,19 +14,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
 from sdmx.model import Code
 
-# Legacy reporting expect to find the following variables in the global namespace of the
-# module that contains return_func_dict(), regardless of where the functions are. We
-# ensure these are the same references used in the .material.report.tables file where
-# the functions are defined.
-from message_data.model.material.report.tables import (  # noqa: F401
-    func_dict,
-    kyoto_hist_data,
-    lu_hist_data,
-    mu,
-    pp,
-    run_history,
-    urban_perc_data,
-)
+import message_data.model.material.report.tables
 from message_data.tools.prep_submission import Config, ScenarioConfig
 
 from . import iter_scenario_codes
@@ -358,4 +346,25 @@ def return_func_dict():
 
     # This refers to the functions in .model.material.tables; .model.buildings and
     # .model.transport do not override any of the legacy reporting functions
-    return func_dict
+    return message_data.model.material.report.tables.func_dict
+
+
+def __getattr__(name: str) -> Any:
+    """Attribute lookup for this module.
+
+    Legacy reporting expect to find the following variables in the global namespace of
+    the module that contains :func:`return_func_dict`, regardless of where the functions
+    are. We ensure these are the same references used in :mod:`.material.report.tables`
+    where those functions are defined.
+    """
+    if name in (
+        "kyoto_hist_data",
+        "lu_hist_data",
+        "mu",
+        "pp",
+        "run_history",
+        "urban_perc_data",
+    ):
+        return getattr(message_data.model.material.report.tables, name)
+    else:
+        raise AttributeError(name)
