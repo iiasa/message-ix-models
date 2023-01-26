@@ -344,6 +344,14 @@ def return_func_dict():
 
     log.debug(f"Configured legacy reporting for -BMT model variants:\n{TECHS = }")
 
+    # DEBUG
+    log.info(f"{message_data.model.material.report.tables.pp = }")
+    log.info(f"{message_data.model.material.report.tables.mu = }")
+    log.info(f"{message_data.model.material.report.tables.run_history = }")
+    log.info(f"{message_data.model.material.report.tables.urban_perc_data = }")
+    log.info(f"{message_data.model.material.report.tables.kyoto_hist_data = }")
+    log.info(f"{message_data.model.material.report.tables.lu_hist_data = }")
+
     # This refers to the functions in .model.material.tables; .model.buildings and
     # .model.transport do not override any of the legacy reporting functions
     return message_data.model.material.report.tables.func_dict
