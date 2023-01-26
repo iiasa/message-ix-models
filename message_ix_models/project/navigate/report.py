@@ -33,8 +33,13 @@ def _model_name(value: str) -> str:
 def _scenario_name(context: Context, value: str) -> Optional[str]:
     """Return a valid ID from the NAVIGATE scenarios codelist.
 
-    NB "baseline" does not appear in the NAVIGATE codelist.
+    `value` should be a scenario name (:attr:`.Scenario.scenario`) constructed by
+    :mod:`.navigate.workflow`.
+
+    Returns :data:`None` if the value does not appear in list. If
+    ``context.navigate_dsd`` is "iiasa-ece", a string is always returned.
     """
+    # Special handling for "baseline"
     if value == "baseline":
         return value if context.get("navigate_dsd") == "iiasa-ece" else None
 
@@ -49,7 +54,7 @@ def _scenario_name(context: Context, value: str) -> Optional[str]:
         if code.id == candidate:
             return candidate
 
-    return None
+    return candidate if context.get("navigate_dsd") == "iiasa-ece" else None
 
 
 def _region(codelist_id: str, value: str) -> str:
