@@ -105,16 +105,18 @@ def ef_for_input(
 
         # FIXME these units are hard-coded, particular to CO2 in MESSAGEix-GLOBIOM
         ra = convert_units(mul(input_qty, ei), "Mt / (Gv km)")
-        print(ra)
 
-        data["relation_activity"] = make_df(
-            "relation_activity",
-            **ra.to_dataframe().reset_index(),
-            node_rel=input_data["node_loc"],
-            year_rel=input_data["year_act"],
-            relation=relation,
-            unit=ra.units,
-        ).dropna()
-        print(data["relation_activity"].head(1).transpose())
+        data["relation_activity"] = (
+            make_df(
+                "relation_activity",
+                **ra.to_dataframe().reset_index(),
+                node_rel=input_data["node_loc"],
+                year_rel=input_data["year_act"],
+                relation=relation,
+                unit=f"{ra.units:~}",
+            )
+            .dropna()
+            .astype({"year_act": int})
+        )
 
     return data
