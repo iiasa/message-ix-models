@@ -1,5 +1,8 @@
 # Carbon emissions intensity of transport fuel use
 #
+# These values are in GWP-equivalent mass of carbon; not in mass of
+# the emissions species.
+#
 # Sources:
 # A: Exported 2021-06-09T23:52:44.140235 from
 #    ixmp://cloned-2021-06-09/ENGAGE_SSP2_v4.1.7/baseline
