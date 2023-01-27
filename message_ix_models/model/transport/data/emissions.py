@@ -103,20 +103,26 @@ def ef_for_input(
         dims = list(filter(lambda c: c not in ("value", "unit"), input_data.columns))
         input_qty = Quantity(input_data.set_index(dims)["value"], units=units[0])
 
+        # Convert units
         # FIXME these units are hard-coded, particular to CO2 in MESSAGEix-GLOBIOM
         ra = convert_units(mul(input_qty, ei), "Mt / (Gv km)")
 
-        data["relation_activity"] = (
-            make_df(
-                "relation_activity",
-                **ra.to_dataframe().reset_index(),
-                node_rel=input_data["node_loc"],
-                year_rel=input_data["year_act"],
-                relation=relation,
-                unit=f"{ra.units:~}",
-            )
-            .dropna()
+        # - Convert to pd.DataFrame.
+        # - Ensure year_act is integer.
+        # - Populate node_rel and year_rel from node_loc and year_act, respectively.
+        #   NB eval() approach does not work for strings in node_rel, for some reason.
+        # - Drop duplicates.
+        tmp = (
+            ra.to_dataframe()
+            .reset_index()
             .astype({"year_act": int})
+            .assign(node_rel=lambda df: df["node_loc"])
+            .eval("year_rel = year_act")
+            .drop_duplicates(
+                subset="node_rel year_rel node_loc technology year_act mode".split()
+            )
         )
+        name = "relation_activity"
+        data[name] = make_df(name, **tmp, relation=relation, unit=f"{ra.units:~}")
 
     return data
