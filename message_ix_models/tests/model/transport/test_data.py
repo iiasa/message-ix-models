@@ -398,6 +398,7 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
         "input",
         "inv_cost",
         "output",
+        "relation_activity",
         "technical_lifetime",
         "var_cost",
     } == set(data.keys())
