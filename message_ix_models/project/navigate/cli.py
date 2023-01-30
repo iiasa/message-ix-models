@@ -136,13 +136,17 @@ def run(context, dry_run, truncate_step, dsd, target_step):
 
     wf = workflow.generate(context)
 
+    # TODO move the following upstream to message-ix-models as a utility function, since
+    #      most packages/modules using the Workflow pattern will also likely need to
+    #      define a CLI.
+
     # Truncate the workflow
     try:
         expr = re.compile(truncate_step.replace("\\", ""))
     except AttributeError:
         pass  # truncate_step is None
     else:
-        for step in filter(expr.search, wf.keys()):
+        for step in filter(expr.fullmatch, wf.keys()):
             log.info(f"Truncate workflow at {step!r}")
             wf.truncate(step)
 
