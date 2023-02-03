@@ -38,9 +38,11 @@ CLIMATE_POLICY = {
             **_kw,
         ),
         # All steps 1–3
-        # From an item labelled "1000" in engage/config.yaml
-        PolicyConfig("20C", budget=2449, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
+        # Originally from an item labelled "1000" in engage/config.yaml; updated per
+        # manual extrapolation using ENGAGE budget spreadsheet.
+        PolicyConfig("20C", budget=2913, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
         # From an item labelled "600" in engage/config.yaml
+        # TODO replace with value from interpolation
         PolicyConfig("15C", budget=1288, low_dem_scen="EN_NPi2020_700_step1", **_kw),
         #
         # The following do not appear in the official NAVIGATE scenarios list, but are
@@ -76,6 +78,10 @@ _A = [
 #: Extra scenario IDs not appearing in the authoritative NAVIGATE list per the workflow
 #: repository. These each have the same 3 annotations.
 EXTRA_SCENARIOS = [
+    Code(
+        id="NAV_Dem-15C-ref",
+        annotations=[Annotation(id="navigate_climate_policy", text="15C")] + _A,
+    ),
     Code(
         id="NAV_Dem-20C-ref",
         annotations=[Annotation(id="navigate_climate_policy", text="20C")] + _A,
