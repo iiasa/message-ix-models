@@ -38,14 +38,10 @@ CLIMATE_POLICY = {
             **_kw,
         ),
         # All steps 1–3
-        # Both of the following were updated per manual extrapolation using
-        # engage/doc/v4.1.7_budget_calculation comparing a run with budget=2449 and a
-        # Ctax-ref scenario with an achieved budget of 11.88 and an effective
-        # budget=837.
-        # Originally budget=2449 from an item labelled "1000" in engage/config.yaml.
-        PolicyConfig("20C", budget=2913, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
-        # Originally budget=1228 from an item labelled "600" in engage/config.yaml.
-        PolicyConfig("15C", budget=2001, low_dem_scen="EN_NPi2020_700_step1", **_kw),
+        # From an item labelled "1000" in engage/config.yaml
+        PolicyConfig("20C", budget=3128, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
+        # From an item labelled "600" in engage/config.yaml
+        PolicyConfig("15C", budget=2122, low_dem_scen="EN_NPi2020_700_step1", **_kw),
         #
         # The following do not appear in the official NAVIGATE scenarios list, but are
         # used in EXTRA_SCENARIOS below.
