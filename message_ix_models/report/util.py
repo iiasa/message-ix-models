@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, Union
+from typing import Dict, Iterable, Union
 
 import pandas as pd
 from genno import Quantity
@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 #:
 #: - Applied to whole strings along each dimension.
 #: - These columns have :meth:`str.title` applied before these replacements.
-REPLACE_DIMS = {
+REPLACE_DIMS: Dict[str, Dict[str, str]] = {
     "c": {
         # in land_out, for CH4 emissions from GLOBIOM
         "Agri_Ch4": "GLOBIOM|Emissions|CH4 Emissions Total",
