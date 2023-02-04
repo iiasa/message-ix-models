@@ -61,11 +61,11 @@ class ScenarioFlags(Flag):
 
     NAVIGATE = ACT | ELE | TEC
 
-    def _assert_not(self, name: str, other: str, value: Optional[int]):
+    def _assert_not(self, name: str, other: str, value: Optional[str]):
         if self & self.__class__[other] and value is not None:
             raise ValueError(f"{name} scenario {value!r} clashes with existing {self}")
 
-    def parse_futures(self, value: Optional[int]):
+    def parse_futures(self, value: Optional[str]):
         """Parse a Transport Futures scenario from a string.
 
         Parameters
@@ -86,9 +86,10 @@ class ScenarioFlags(Flag):
             raise ValueError(f"Unknown Transport Futures scenario {value!r}")
 
     def futures_id(self) -> str:
+        assert self.name
         return self.name.replace("_", "-") if "_" in self.name else self.name.lower()
 
-    def parse_navigate(self, value: Optional[int]):
+    def parse_navigate(self, value: Optional[str]):
         """Parse a NAVIGATE scenario from a string.
 
         Parameters

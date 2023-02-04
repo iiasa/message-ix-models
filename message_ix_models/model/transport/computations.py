@@ -1,7 +1,7 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
 from functools import partial
-from typing import Dict, Hashable, List, Optional
+from typing import Dict, Hashable, List, Mapping, Optional
 
 import numpy as np
 import pandas as pd
@@ -405,7 +405,7 @@ def iea_eei_fv(name: str, config: Dict) -> Quantity:
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
-def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Dict]:
+def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
     This mapping should be used with :func:`.genno.computations.aggregate`, giving the

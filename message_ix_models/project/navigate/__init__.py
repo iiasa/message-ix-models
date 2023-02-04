@@ -2,7 +2,7 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Generator, List, Mapping, Optional
+from typing import Any, Dict, Generator, List, Mapping, Optional, Union
 
 import yaml
 from message_ix_models.util import as_codes
@@ -19,11 +19,11 @@ log = logging.getLogger(__name__)
 #: .. todo:: The low_dem_scen values appear to form a "waterfall", with each
 #:    successively lower budget referencing the previous. Investigate how to run only
 #:    some budgets without the previous ones.
-_kw = dict(
+_kw: Mapping = dict(
     reserve_margin=False,
     solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
 )
-CLIMATE_POLICY = {
+CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
     pc.label: pc
     for pc in (
         # No climate policy → no ENGAGE workflow steps
@@ -116,7 +116,7 @@ def _read() -> List[Code]:
         _content = yaml.safe_load(f)
 
     # Transform into a form intelligible by as_codes()
-    content = {}
+    content: Dict[str, Union[str, Code]] = {}
     for item in _content:
         if isinstance(item, str):
             content[item] = Code(id=item, name=item)

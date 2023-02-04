@@ -113,7 +113,7 @@ def ef_for_input(
         #   NB eval() approach does not work for strings in node_rel, for some reason.
         # - Drop duplicates.
         tmp = (
-            ra.to_dataframe()
+            ra.to_series()
             .reset_index()
             .astype({"year_act": int})
             .assign(node_rel=lambda df: df["node_loc"])
