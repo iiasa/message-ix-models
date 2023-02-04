@@ -109,7 +109,7 @@ def calc_hist_cum_CO2(
 def calc_budget(
     context: Context,
     scenario: Scenario,
-    bdgt: int,
+    bdgt: float,
     method: Union[int, Literal["calc"]],
     type_emission="TCE",
 ) -> None:
@@ -199,7 +199,7 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     calc_budget(
         context,
         scenario,
-        bdgt=config.label,
+        bdgt=int(config.label),
         method=config.budget,
         type_emission="TCE_CO2",
     )
@@ -309,7 +309,8 @@ def add_steps(
         new_name = f"{name_root}{step}"
 
         # New scenario name
-        s = f"{info['scenario']}_ENGAGE_{config.label.replace(' ', '_')}_step-{step}"
+        label = str(config.label).replace(" ", "_")
+        s = f"{info['scenario']}_ENGAGE_{label}_step-{step}"
 
         # Add step; always clone to a new model/scenario name
         workflow.add_step(

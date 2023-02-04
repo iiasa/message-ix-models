@@ -59,7 +59,7 @@ def built_transport(
             transport.build.main(context, scenario, options, fast=True)
     else:
         # Loaded existing Scenario; ensure config files are loaded on `context`
-        transport.configure(context, options=options)
+        transport.Config.from_context(context, options=options)
 
     if solved and not scenario.has_solution():
         log.info(f"Solve '{scenario.model}/{scenario.scenario}'")
