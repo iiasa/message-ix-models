@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
-from typing import Dict, Iterable, List, Sequence
+from typing import Dict, Iterable, List, Mapping, Sequence
 
 import message_ix
 import pandas as pd
@@ -99,7 +99,7 @@ def get_techs(spec: Spec, commodity=None) -> List[str]:
 
 def get_tech_groups(
     spec: Spec, include="commodity enduse", legacy=False
-) -> Dict[str, Sequence[str]]:
+) -> Mapping[str, Sequence[str]]:
     """Return groups of buildings technologies from `spec`.
 
     These are suitable for aggregation, e.g. in data preparation or reporting.
