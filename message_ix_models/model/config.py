@@ -12,6 +12,10 @@ class Config:
     #: nodes described at :doc:`/pkg-data/node`.
     regions: str = "R14"
 
+    #: The 'relations' codelist to use. Must be one of the lists of relations described
+    #: at :doc:`/pkg-data/relation`.
+    relations: str = "A"
+
     #: The 'year' codelist (time periods) to use, Must be one of the lists of periods
     #: described at :doc:`/pkg-data/year`.
     years: str = "B"
