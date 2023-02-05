@@ -122,6 +122,9 @@ def get_spec(context) -> Spec:
     # Set elements: World, followed by the direct children of World
     add.set["node"] = [world] + world.child
 
+    # Add relations
+    add.set["relation"] = get_codes(f"relation/{context.model.relations}")
+
     # Initialize time periods
     add.year_from_codes(get_codes(f"year/{context.model.years}"))
 
