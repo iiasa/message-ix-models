@@ -1,0 +1,1939 @@
+# Relation codes
+#
+# The IDs, descriptions, and other annotations are derived from a spreadsheet
+# appearing in IIASA ECE SharePoint, related to the CD-LINKS project.
+#
+# The entries appear in the same order as in the file.
+
+BCA_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    BC emission from international shipping (bunker fuel)
+  group: removed
+CO_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    CO emission from international shipping (bunker fuel)
+  group: removed
+CO2_cc:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    Emissions of CO2 in central conversion and extraction
+  group: removed
+CO2_ind:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    CO2 emissions of industry sector
+  group: removed
+CO2_r_c:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    CO2 emissions of residential and commercial sector
+  # NB despite this annotation, the relation still has entries in current
+  #    scenarios; see A.yaml and B.yaml
+  group: removed
+CO2_trp:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    CO2 esmissions of transport sector
+  # NB despite this annotation, the relation still has entries in current
+  #    scenarios; see A.yaml and B.yaml
+  group: removed
+coal_extr:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    In R11 GLB only - used for accounting or limiting global coal extraction
+    (currently inactive as only positive entries)
+  group: removed
+elec_relations2_coal:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    "(?) Counter - electricty from coal (inactive as no -1)
+  group: removed
+elec_relations2_gas:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    "(?) Counter - electricty from gas (inactive as no -1)
+  group: removed
+elec_relations2_hydro:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    "(?) Counter - electricty from hydro (inactive as no -1)
+  group: removed
+elec_relations2_nuclear:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    "(?) Counter - electricty from nuclear (inactive as no -1)
+  group: removed
+elec_relations2_oil:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    "(?) Counter - electricty from oil (inactive as no -1)
+  group: removed
+elec_relations2_renewable:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    "(?) Counter - electricty from renewable (inactive as no -1)
+  group: removed
+extraction_coal:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    Constrains/calibrates historical coal extraction (inactive as no -1)
+  group: removed
+extraction_gas:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    Constrains/calibrates historical gas extraction (inactive as no -1)
+  group: removed
+extraction_oil:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    Constrains/calibrates historical oil extraction (inactive as no -1)
+  group: removed
+FE_coal:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_electricity:
+  kind:
+  technology-entry: 1
+  parameters2: upper
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_feedstock:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_final_energy:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_gaseous:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_industry:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_liquids:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_new_biomass:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_old_biomass:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_resid_comm:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy accounting equation
+  group: removed
+FE_transport:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    final energy use in transport sector
+  group: removed
+global_GCO2:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    R11-GLB only - Total CO2 emissions
+  group: removed
+global_GSO2:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    R11-GLB only - Total SO2 Emissions
+  group: removed
+import_dependence:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    maximum import dependence
+  group: removed
+NOx_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    NOx emission from international shipping (bunker fuel)
+  group: removed
+nuc_lc_in_el:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    Constrains nuc_lc contribution to electricity production
+  group: removed
+OCA_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    OC emission from international shipping (bunker fuel)
+  group: removed
+oil_prod:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    R11-NAM only - Limits import dependence of crude oil to max 60% (inactive
+    as there are no negative entries and no limits)
+  group: removed
+oil_trd:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    In R11 GLB only - penalty for international trade introduced to reflect
+    costs for importing region. In SOME other regions - links/limits net oil
+    product imports to fraction of net crude imports.
+  group: removed
+OilPrices:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    crude oil import prices
+  group: removed
+PE_BACKSTOPS:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_coal:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_gas:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_hydro:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_new_renewables:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_nuclear:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_oil:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_old_renewables:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_synliquids:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_total_direct:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_total_engineering:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+PE_total_traditional:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    primary energy accounting equation
+  group: removed
+prod_low_lim_BIEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_BIFU:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_BIHE:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_COEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_GAEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_GEEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_HYEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_NUEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_OIEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_SOEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+prod_low_lim_WIEL:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    INDC Policy constraint
+  group: removed
+share_low_lim_NFEG:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    removed
+share_low_lim_NFPE:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    removed
+share_low_lim_PEGas:
+  technology-entry: 0
+  parameters: ""
+  description: >-
+    removed
+share_low_lim_REEG:
+  technology-entry: 0
+  parameters: ""
+  group: removed
+share_low_lim_REFE:
+  technology-entry: 0
+  parameters: ""
+  group: removed
+share_low_lim_REPE:
+  technology-entry: 0
+  parameters: ""
+  group: removed
+SO2_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    SO2 emission from international shipping (bunker fuel)
+  group: removed
+TCE_Emission_AFR_CPA_LAC_MEA_PAS_SAS:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total carbon-equivalent emissions for set of regions
+  group: removed
+TCE_Emission_FSU_MEA:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total carbon-equivalent emissions for set of regions
+  group: removed
+TCE_Emission_NAM_PAO_EEU_WEU:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total carbon-equivalent emissions for set of regions
+  group: removed
+TCE_Emission_NAM_PAO_EEU_WEU_FSU:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total carbon-equivalent emissions for set of regions
+  group: removed
+TCE_regional:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total carbon-equivalent emission equation (regional)
+  group: removed
+TCE_rel2020:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    "(?) Counter - TCE in 2020
+  group: removed
+TCE_trade:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    trade in carbon-equivalent emissions
+  group: removed
+TCF4_Emission:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    R11-GLB only - Total Emissions of CF4 (weight as CF4, kg CF4 per kWyr)
+  group: removed
+TCH4_Emission:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total CH4 emission equation
+  group: removed
+TCO2_Emission:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total CO2 emission equation
+  group: removed
+THFC_Emission:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    R11-GLB only - Counter for HFC emissions
+  group: removed
+TN2O_Emission:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    total N2O emission equation
+  group: removed
+total_TCO2:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    Total CO2 emissions including feedstocks
+  group: removed
+trp_energy:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    limits total final energy in transport, if necessary (inactive as set to
+    free)
+  group: removed
+TSF6_Emission:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    R11-GLB only - Total Emissions of SF6 (weight as SF6, kg SF6 per kWyr)
+  group: removed
+VOC_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    VOC emission from international shipping (bunker fuel)
+  group: removed
+VOC_IndThermLink:
+  technology-entry: 1
+  parameters: activity
+  description: >-
+    Constraint links VOC solvent emissions to its driver: the industrial themal
+    demand.
+  group: removed
+BCA_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of BCA (weight as BCA, kg BCA per kWyr)
+  group: emission_factor
+bco2_trans_disp:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    CO2 transport and injection from BECCS
+bio_extr_mpen_c:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link equation for joint diffusion constraint of biomass extraction technologies (deprecated?)
+bio_scrub_lim:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on CO2 scrubber application (CCS add-on) for biomass power plants
+cement_pro:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    relation for cement production linked to ind thermal
+cement_scrub_lim:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Constraint limiting cement scrubber activity to cement CO2 production
+CF4_alm_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link CF4 emissions from aluminum to reduction efficiency of
+    abatement technologies.
+  group: add-on
+CF4_Emission:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of CF4 (weight as CF4, kg CF4 per kWyr)
+  group: emission_factor
+CH4_Emission:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of CH4 (weight as CH4, kg CH4 per kWyr)
+  group: emission_factor
+CH4_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Counter - R11-GLB only - CH4 emissions of international shipping
+  group: emission_factor
+CH4_new_Emission:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Counter for CH4 emissions from newly added sources
+  group: emission_factor
+CH4_nonenergy:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of CH4 from nonenergy sources (weight as CH4, kg CH4 per kWyr)
+  group: emission_factor
+CH4_RemainingLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint links the remaining CH4 emissions to oil extraction
+  group: emission_factor
+CH4n_landfills_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link landfill emissions to reduction efficiency of CH4
+    abatement technologies.
+  group: add-on
+CO_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of CO (weight as CO, kg CO per kWyr)
+  group: emission_factor
+co_gen_limit:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Limits cogeneration as share of total central heat production
+  group: share-constraint formulation
+CO_nonenergy:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    CO emission from non-energy sectors
+  group: emission_factor
+CO2_Emission:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of CO2 (weight as carbon, ton C/kWyr)
+  group: emission_factor
+CO2_feedstocks:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    CO2 emissions of feedstock use (non-energy use)
+  group: emission_factor
+CO2_shipping:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Counter - R11-GLB only - CO2 emissions of international shipping
+  group: emission_factor
+CO2_trade:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Counter - R11-GLB only - CO2 emissions of energy trade
+  group: emission_factor
+co2_trans_disp:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint to connect captured carbon to transportation and disposal
+  group: add-on
+coal_extr_mpen_c:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link equation for joint diffusion constraint of coal extraction technologies
+  group: fossil resources
+coal_scrub_lim:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on CO2 scrubber application (CCS add-on) for coal power plants
+  group: add-on
+coal-exp:
+  parameters: activity, upper
+  technology-entry: 1
+  description: >-
+    Restricts coal exports to hard coal only  by limiting lignite to power
+    plants and other central conversion.
+  group: share-constraint formulation
+csp_japan_limit:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on renewable resource use of Japan in PAO region
+  group: renewable formulation
+demb_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint linking mpa for additional VOM costs for breaching share
+    constraints related to Industrial Thermal sector to growth rate
+  group: share-constraint formulation
+demF_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint linking mpa for additional VOM costs for breaching share
+    constraints related to Feedstock sector to growth rate
+  group: share-constraint formulation
+demI_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint linking mpa for additional VOM costs for breaching share
+    constraints related to Industrial Specific sector to growth rate (currently
+    inactive as all technologies have bda up 0)
+  group: share-constraint formulation
+demp_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint linking mpa for additional VOM costs for breaching share
+    constraints related to Transport sector to growth rate
+  group: share-constraint formulation
+demR_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint linking mpa for additional VOM costs for breaching share
+    constraints related to Residential Commercial Specific sector to growth rate
+  group: share-constraint formulation
+demt_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint linking mpa for additional VOM costs for breaching share
+    constraints related to Residential Commercial Thermal sector to growth rate
+  group: share-constraint formulation
+domestic_coal:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11-PAO only - Constraint - limits domestic coal use to x% of total primary
+    energy.
+  group: share-constraint formulation
+domestic_gas:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11-PAO only - Constraint - limits domestic coal use to x% of total primary
+    energy.
+  group: share-constraint formulation
+ele_nuc:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constrains/calibrates historical nuclear
+  group: hisc
+elec_coal:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constrains/calibrates historical electricity production from coal
+  group: hisc
+elec_gas:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constrains/calibrates historical electricity production from natural gas
+  group: hisc
+elec_hydro:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constrains/calibrates historical electricity production from hydro
+  group: hisc
+elec_nuclear:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constrains/calibrates historical electricity production from nuclear
+  group: hisc
+foil_prod:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constrains/calibrates historical refinery output
+  group: hisc
+gas_export:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constrains/calibrates historical gas exports
+  group: hisc
+gas_extr_mpen_c:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link equation for joint diffusion constraint of gas extraction technologies
+  group: fossil resources
+gas_mix_lim:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11-AFR only - Constrains hydrogen contribution to final gas usage
+  group: share-constraint formulation
+gas_prod:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    links and stabilizes gas production (currently inactive - no positive entry)
+  group: obsolete (?)
+gas_scrub_lim:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on CO2 scrubber application (CCS add-on) for gas power plants
+  group: add-on
+gas_util:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Links gas infrastructure growth between utilities versus residential and
+    industry (inactive as not negative entry).
+  group: obsolete (?)
+h2_exp_limit:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    limits hydrogen exports as share of total hydrogen production
+  group: share-constraint formulation
+h2_scrub_limit:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    scrubbing limit of CO2 from natural gas due to hydrogen blending
+  group: add-on
+h2mix_direct:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    blending of hydrogen into gas grid
+  group: RES
+HFC_Emission:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of HFC (weight as HFC, kg HFC-134a-equivalent per kWyr)
+  group: emission_factor
+HFC_foam_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link HFC emissions from insulation foams to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+HFC_mobile_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link HFC emissions from mobile airconditioning to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+HFC_rescom_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link HFC emissions from residential & commercial refrigeration
+    & AC to reduction efficiency of abatement technologies.
+  group: emission_factor
+HFCequivOther:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Counter for the HFC-134 equiv. emissions from solvents, fire extinguishers,
+    aerosols MDI, aerosols non-MDI.
+  group: emission_factor
+hydro_min:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint limiting minimum hydro production
+  group: hydro resource
+hydro_pot:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Constraint limiting maximum hydro potential
+  group: hydro resource
+IndGDPAdLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link of GDP to adipic acid
+  group: emission_factor
+IndGDPNiLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link of GDP to nitric acid
+  group: emission_factor
+IndThermDemLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint links industry waste water CH4 emissions to its driver: the
+    industrial themal demand.
+  group: emission_factor
+lfil_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint limiting gr of landfill mitigaiton technology activty (mpa)
+  group: emission_factor
+lim_exp_afr_coal:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on coal exports
+  group: share-constraint formulation
+lim_exp_afr_eth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on hydrogen exports
+  group: share-constraint formulation
+lim_exp_afr_LNG:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11_GLB only - limits LNG exports from afr
+  group: share-constraint formulation
+lim_exp_afr_meth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on methanol (synthetic fossil fuel) exports
+  group: share-constraint formulation
+lim_exp_cpa_oil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on oil exports
+  group: share-constraint formulation
+lim_exp_eeu_eth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on ethanol (biofuel) exports
+  group: share-constraint formulation
+lim_exp_eeu_meth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on methanol (synthetic fossil fuel) exports
+  group: share-constraint formulation
+lim_exp_fsu_coal:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on coal exports
+  group: share-constraint formulation
+lim_exp_fsu_eth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on ethanol (biofuel) exports
+  group: share-constraint formulation
+lim_exp_fsu_LNG:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11_GLB only - limits LNG exports from fsu
+  group: share-constraint formulation
+lim_exp_fsu_meth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on methanol (synthetic fossil fuel) exports
+  group: share-constraint formulation
+lim_exp_fsu_oil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on oil exports
+  group: share-constraint formulation
+lim_exp_lam_LNG:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11_GLB only - limits LNG exports from lam
+  group: share-constraint formulation
+lim_exp_lam_oil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on oil exports
+  group: share-constraint formulation
+lim_exp_mea_LNG:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11_GLB only - limits LNG exports from mea
+  group: share-constraint formulation
+lim_exp_mea_oil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on oil exports
+  group: share-constraint formulation
+lim_exp_nam_coal:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on coal exports
+  group: share-constraint formulation
+lim_exp_nam_LNG:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11_GLB only - limits LNG exports from nam
+  group: share-constraint formulation
+lim_exp_pao_coal:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on coal exports
+  group: share-constraint formulation
+lim_exp_pao_eth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on ethanol (biofuel) exports
+  group: share-constraint formulation
+lim_exp_pao_meth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on methanol (synthetic fossil fuel) exports
+  group: share-constraint formulation
+lim_exp_pas_LNG:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11_GLB only - limits LNG exports from pas
+  group: share-constraint formulation
+lim_exp_weu_eth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on ethanol (biofuel) exports
+  group: share-constraint formulation
+lim_exp_weu_meth:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on methanol (synthetic fossil fuel) exports
+  group: share-constraint formulation
+limit_tot_BECCS:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    limit on BECCS application
+  group: share-constraint formulation
+max_coal_ind:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    R11-NAM only - limits coal to max of 50% of gas in industries
+  group: share-constraint formulation
+meth_exp_limit:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    limits methanol exports as share of total methanol production
+  group: share-constraint formulation
+min-liquids_industry:
+  technology-entry: 1
+  parameters:  activity, lower
+  group: share-constraint formulation
+min-liquids_res_com:
+  technology-entry: 1
+  parameters: activity, lower
+  group: share-constraint formulation
+N2O_Emission:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of N2O (weight as N2O, kg N2O per kWyr)
+  group: emission_factor
+N2O_Emission_bunkers:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Counter - R11-GLB only - N2O emissions of international shipping
+  group: emission_factor
+N2O_nonenergy:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of N2O from nonenergy sources (weight as N2O, kg N2O per kWyr)
+  group: emission_factor
+N2On_adipic_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link adipic acid emissions to reduction efficiency of N2O
+    abatement technologies.
+  group: emission_factor
+N2On_nitric_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link nitric acid emissions to reduction efficiency of N2O
+    abatement technologies.
+  group: emission_factor
+N2Oother:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Counter for the N2O emissions from Manure Management, Human Sewage, Other
+    Agricultural sources, Other Non Ag Sources.
+  group: emission_factor
+NH3_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of NH3 (weight as NH3, kg NH3 per kWyr)
+  group: emission_factor
+nica_limit:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Constraint limiting gr of catalytic converter (mitigaiton) technology
+    activty (mpa).
+  group: emission_factor
+NOx_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of NOx (weight as NOx, kg NOx per kWyr)
+  group: emission_factor
+NOx_nonenergy:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    NOx emission from non-energy sectors
+  group: emission_factor
+OCA_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of OCA (weight as OCA, kg OCA per kWyr)
+  group: emission_factor
+oil_based_elec_gen:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constrains/calibrates historical minimum share of oil for electricity
+    generation.
+  group: hisc
+oil_extr_mpen_c:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link equation for joint diffusion constraint of oil extraction technologies
+  group: fossil resources
+oil_imp_c:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11-NAM only - Limits import dependence of crude oil in relation to oil
+    extraction.
+  group: share-constraint formulation
+oper_res:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    operating reserve equation for electricity systems integration
+  group: renewable formulation
+pass_out_trb:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    link to use of passout turbine from thermal generators
+  group: add-on
+PE_domestic_total:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    primary energy accounting equation
+  group: obsolete (?)
+PE_export_total:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    primary energy accounting equation
+  group: obsolete (?)
+PE_import_share:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    primary energy accounting equation
+  group: obsolete (?)
+PE_import_total:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    primary energy accounting equation
+  group: obsolete (?)
+PM2_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    PM2.5 emission
+  group: emission_factor
+POPtoAeroNonMDILink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from population to aerosol non-medical use (driver for F gas emission)
+  group: emission_factor
+POPtoAerosolMDILink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from population to aerosol medical use (driver for F gas emission)
+  group: emission_factor
+POPtoDomWasteWaLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from population to domestic waste water
+  group: emission_factor
+POPtoFireExtLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from population to fire extiguisher (driver for F gas emission)
+  group: emission_factor
+POPtoHuSewageLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from population to human sewage
+  group: emission_factor
+POPtoSolvent:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from population to solvent use
+  group: emission_factor
+res_japan_limit:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    limit on renewable resource use of Japan in PAO region
+  group: fossil resources
+res_marg:
+  parameters: activity, new_capacity, total_capacity
+  technology-entry: 3
+  parameters2: lower
+  description: >-
+    electricity systems integration - reserve margin
+  group: renewable formulation
+RES_variable_limt:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    variable renewable energy limit
+  group: "share-constraint formulation, renewable formulation"
+SF6_elec_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link SF6 emissions from electrical equipment to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+SF6_Emission:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Emissions of SF6 (weight as SF6, kg SF6 per kWyr)
+  group: emission_factor
+SF6_mag_red:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Constraint to link SF6 emissions from electrical equipment to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+sm1_ppl_res:
+  technology-entry: 1
+  parameters: total_capacity, lower, upper
+  description: >-
+    renewable formulation
+sm3_ppl_res:
+  technology-entry: 1
+  parameters: total_capacity, lower, upper
+  description: >-
+    renewable formulation
+SO2_elec:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of SO2 in ppl, counter for DESOX (formerly SO2_emi_el)
+  group: emission_factor
+SO2_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of SO2 (weight as SO2, kg SO2 per kWyr)
+  group: emission_factor
+SO2_import:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Import of of low sulfur coal (0.6% S)
+  group: emission_factor
+SO2_ind:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Counter - Emissions of CO2 in industrial sector
+  group: obsolete (?)
+SO2_r_c:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Counter - Emissions of CO2 in residential/commercial sector
+  group: obsolete (?)
+SO2_red_ref:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Limit on SO2 Emission reduction in refinery products
+  group: emission_factor
+SO2_red_synf:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Limit on SO2 Emission reduction in synfuel production
+  group: emission_factor
+solar_csp_pot:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_csp_pot1:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_csp_pot2:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_csp_pot3:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_csp_pot4:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_csp_pot5:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_csp_pot6:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_csp_pot7:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    CSP resource potential category
+  group: renewable formulation
+solar_curtailment_1:
+  parameters: activity, total_capacity
+  technology-entry: 2
+  parameters2: upper
+  description: >-
+    electricity systems integration constraint (curtailment)
+  group: renewable formulation
+solar_curtailment_2:
+  parameters: activity, total_capacity
+  technology-entry: 2
+  parameters2: upper
+  description: >-
+    electricity systems integration constraint (curtailment)
+  group: renewable formulation
+solar_curtailment_3:
+  parameters: activity, total_capacity
+  technology-entry: 2
+  parameters2: upper
+  description: >-
+    electricity systems integration constraint (curtailment)
+  group: renewable formulation
+solar_pot:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_pot2:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_pot3:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_pot4:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_pot5:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_pot6:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_pot7:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_pot8:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar PV resource potential
+  group: renewable formulation
+solar_ppl_res:
+  technology-entry: 1
+  parameters: total_capacity, lower, upper
+  group: renewable formulation
+solar_res_cv:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    balances the solar_res and solar_cv technologies
+  group: renewable formulation
+solar_step:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    first step of solar PV generation is limited to a certain fraction of load
+    (higher steps have worse oper and resm).
+  group: renewable formulation
+solar_step2:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    second step of solar PV generation is limited to a certain fraction of load
+    (higher steps have worse oper and resm).
+  group: renewable formulation
+solar_step3:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    third step of solar PV generation is limited to a certain fraction of load
+    (higher steps have worse oper and resm).
+  group: renewable formulation
+solar_th_pot:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    solar thermal potential
+  group: renewable formulation
+SolWaPOPLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from population to solid waste
+  group: emission_factor
+syn_liq_exp:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11-FSU only - constraints the export of synthetic liquids to x% of
+    indigenous oil use.
+  group: share-constraint formulation
+TCE_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    R11-only - total carbon-equivalent emission equation
+  group: emission_factor
+TCEl:
+  technology-entry: 0
+  parameters: lower
+  group: obsolete (?)
+UE_feedstock:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Feedstock share constraint - connects all relevant technologies
+  group: share-constraint formulation
+UE_feedstock_coal:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Feedstock share constraint - restrict contribution of coal to x % of
+    feedstock demand.
+  group: share-constraint formulation
+UE_feedstock_foil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Feedstock share constraint - restrict contribution of liquid fuels to x % of
+    feedstock demand.
+  group: share-constraint formulation
+UE_feedstock_gas:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Feedstock share constraint - restrict contribution of heavy fuel oil to x %
+    of feedstock demand.
+  group: share-constraint formulation
+UE_feedstock_liquid:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Feedstock share constraint - restrict contribution of gaseous fuels to x %
+    of feedstock demand.
+  group: share-constraint formulation
+UE_industry_sp:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    share constraint for useful energy industry specific
+  group: share-constraint formulation
+UE_industry_sp_fc:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for fuel cell (onsite FC) useful energy industry specific
+  group: share-constraint formulation
+UE_industry_sp_liquid:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for liquids (onsite IC generator) useful energy industry
+    specific.
+  group: share-constraint formulation
+UE_industry_sp_solar:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Industry Specific sahre constraint - restrict contribution of solar
+    technologies to x % of industry thermal energy demand.
+  group: share-constraint formulation
+UE_industry_th:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    share constraint for useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_electric:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for electric useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_foil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for fuel oil useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_gas:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for gas useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_hydrogen:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for hydrogen useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_liquid:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for liquids useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_low_temp_heat:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for low temperature heat useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_solar:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for solar thermal useful energy industry thermal
+  group: share-constraint formulation
+UE_industry_th_solid:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    share constraint for solids useful energy industry thermal
+  group: share-constraint formulation
+UE_res_comm_sp:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Residential&Commercial Specific share constraint  - connects all relevant
+    technologies.
+  group: share-constraint formulation
+UE_res_comm_sp_fc:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Specific share constraint - restrict contribution of
+    fuel cell technologies to x % of residential specific energy demand.
+  group: share-constraint formulation
+UE_res_comm_sp_solar:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Specific share constraint - restrict contribution of
+    solar technologies to x % of residential specific energy demand.
+  group: share-constraint formulation
+UE_res_comm_th:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - connects all relevant
+    technologies.
+  group: share-constraint formulation
+UE_res_comm_th_biomass:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    biomass technologies to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_electric:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    electricity to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_foil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    heavy fuel oil to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_gas:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    gaseous fuels to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_heat:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    district heat to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_hp:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    heat pumps to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_hydrogen:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    hydrogen to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_liquid:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    liquid fuels to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_solar:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    solar technologies to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_res_comm_th_solids:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Residential&Commercial Thermal share constraint  - restrict contribution of
+    solid fuels to x % of residential/commercial thermal energy demand.
+  group: share-constraint formulation
+UE_transport:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    Transport share constraint  - connects all relevant technologies
+  group: share-constraint formulation
+UE_transport_electric:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Transport share constraint  - restrict contribution of electric technologies
+    to x % of transport energy demand.
+  group: share-constraint formulation
+UE_transport_electric_Minimum:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Transport share constraint  - restrict LOWER contribution of electric
+    technologies to x % of transport energy demand.
+  group: share-constraint formulation
+UE_transport_fc:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Transport share constraint  - restrict contribution of fuel cell
+    technologies to x % of transport energy demand.
+  group: share-constraint formulation
+UE_transport_foil:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Transport share constraint  - restrict contribution of heavy fuel oil to x %
+    of transport energy demand.
+  group: share-constraint formulation
+UE_transport_gas:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Transport share constraint  - restrict contribution of gaseous fuels to x %
+    of transport energy demand.
+  group: share-constraint formulation
+UE_transport_liquid:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    Transport share constraint  - restrict contribution of liquid fuels to x %
+    of transport energy demand.
+  group: share-constraint formulation
+unabated_coal_lim:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    R11-PAO, R11-NAM, R11-WEU only - Limits unabated coal power plants to
+    present share.
+  group: share-constraint formulation
+VOC_Emission:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    Emissions of VOC (weight as VOC, kg VOC per kWyr)
+  group: emission_factor
+VOC_nonenergy:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    VOC emission from non-energy sectors
+  group: emission_factor
+WasteGenToBCALink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to BC
+  group: emission_factor
+WasteGenToCH4Link:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to CH4
+  group: emission_factor
+WasteGenToCOLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to CO
+  group: emission_factor
+WasteGenToNOxLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to Nox
+  group: emission_factor
+WasteGenToOCALink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to OC
+  group: emission_factor
+WasteGenToPM2Link:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to PM2.5
+  group: emission_factor
+WasteGenToSO2Link:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to SO2
+  group: emission_factor
+WasteGenToVOCLink:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    link from waste generation to VOC
+  group: emission_factor
+weight_ind:
+  technology-entry: 1
+  parameters: activity, cost
+  description: >-
+    Weight factor representing costs, inconvenience, etc  in lieu of end-use
+    technology costs in industries.
+weight_rc:
+  technology-entry: 1
+  parameters: activity, cost
+  description: >-
+    inconvenience costs for residential and commercial sector
+weight_trp:
+  technology-entry: 1
+  parameters: activity, cost
+  description: >-
+    inconvenience costs for transport sector
+wind_curtailment_1:
+  parameters: activity, total_capacity
+  technology-entry: 2
+  parameters2: upper
+  description: >-
+    electricity systems integration constraint (curtailment)
+  group: renewable formulation
+wind_curtailment_2:
+  parameters: activity, total_capacity
+  technology-entry: 2
+  parameters2: upper
+  description: >-
+    electricity systems integration constraint (curtailment)
+  group: renewable formulation
+wind_curtailment_3:
+  parameters: activity, total_capacity
+  technology-entry: 2
+  parameters2: upper
+  description: >-
+    electricity systems integration constraint (curtailment)
+  group: renewable formulation
+wind_pof:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    offshore wind resource potential
+  group: renewable formulation
+wind_pof2:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    offshore wind resource potential
+  group: renewable formulation
+wind_pof3:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    offshore wind resource potential
+  group: renewable formulation
+wind_pof4:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    offshore wind resource potential
+  group: renewable formulation
+wind_pof5:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    offshore wind resource potential
+  group: renewable formulation
+wind_pot:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    onshore wind resource potential
+  group: renewable formulation
+wind_pot2:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    onshore wind resource potential
+  group: renewable formulation
+wind_pot3:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    onshore wind resource potential
+  group: renewable formulation
+wind_pot4:
+  technology-entry: 1
+  parameters: activity, upper
+  description: >-
+    onshore wind resource potential
+  group: renewable formulation
+wind_ppl_offshore_res:
+  technology-entry: 1
+  parameters: total_capacity, lower, upper
+  group: renewable formulation
+wind_ppl_res:
+  technology-entry: 1
+  parameters: total_capacity, lower, upper
+  group: renewable formulation
+wind_res_cv:
+  technology-entry: 1
+  parameters: activity, lower, upper
+  description: >-
+    balances the wind_res and wind_cv technologies
+  group: renewable formulation
+wind_step:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    first step of wind generation is limited to a certain fraction of load
+    (higher steps have worse oper and resm).
+  group: renewable formulation
+wind_step2:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    second step of wind generation is limited to a certain fraction of load
+    (higher steps have worse oper and resm).
+  group: renewable formulation
+wind_step3:
+  technology-entry: 1
+  parameters: activity, lower
+  description: >-
+    third step of wind generation is limited to a certain fraction of load
+    (higher steps have worse oper and resm).
+  group: renewable formulation
