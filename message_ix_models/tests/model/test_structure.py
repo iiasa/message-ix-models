@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 from pathlib import Path
 
 import pytest
@@ -20,7 +21,7 @@ from message_ix_models.util import as_codes, eval_anno
     "kind, exp",
     [
         ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP", "ZMB"]),
-        ("relation", ["CDLINKS", "real"]),
+        ("relation", ["A", "B", "CD-LINKS"]),
         ("year", ["A", "B"]),
     ],
 )
@@ -45,6 +46,9 @@ class TestGetCodes:
             "node/RCP",
             "node/ZMB",
             "technology",
+            "relation/A",
+            "relation/B",
+            "relation/CD-LINKS",
             "year/A",
             "year/B",
         ),
@@ -131,21 +135,35 @@ class TestGetCodes:
         """get_codes() handles ISO 3166 alpha-3 codes for historic countries."""
         assert "SCG" in get_codes("node/R11")
 
-    def test_relation(self):
-        d1 = get_codes("relation/CDLINKS")
-        d2 = get_codes("relation/real")
+    @pytest.mark.parametrize(
+        "codelist, length, expected",
+        [
+            ("A", 19, {"emission_factor": 7, "renewable formulation": 2}),
+            ("B", 319, {}),
+            ("CD-LINKS", 314, {"removed": 80}),
+        ],
+    )
+    def test_relation(self, codelist, length, expected):
+        # Codelist can be loaded
+        data = get_codes(f"relation/{codelist}")
 
-        groups = dict()
-        for code in d1:
+        # Number of codes is as expected
+        assert length == len(data)
+
+        # Count codes by "group" annotation
+        group_count = defaultdict(lambda: 0)
+        for code in data:
             try:
                 group = str(code.get_annotation(id="group").text)
             except KeyError:
                 continue
-            groups.setdefault(group, 0)
-            groups[group] += 1
+            group_count[group] += 1
 
-        print(groups)
-        del d2
+        # print(groups)
+
+        # Each group has the expected number of members
+        for group, N in expected.items():
+            assert N == group_count[group]
 
     def test_technologies(self):
         # Retrieve the tech info without calling technologies.cli
