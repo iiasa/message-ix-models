@@ -30,6 +30,8 @@ from message_ix_models.util import (
     maybe_query,
     package_data_path,
     private_data_path,
+    same_node,
+    same_time,
     series_of_pint_quantity,
     strip_par_data,
 )
@@ -328,6 +330,27 @@ def test_private_data_path():
     assert MESSAGE_DATA_PATH.joinpath("data", "foo", "bar") == private_data_path(
         "foo", "bar"
     )
+
+
+@pytest.mark.parametrize(
+    "name, func, col", [("node", same_node, "node_loc"), ("time", same_time, "time")]
+)
+def test_same(name, func, col):
+    """Test both :func:`.same_node` and :func:`.same_time`."""
+    df_in = pd.DataFrame(
+        {
+            col: ["foo", "bar", "baz"],
+            f"{name}_dest": None,
+            f"{name}_origin": None,
+            "value": [1.1, 2.2, 3.3],
+        }
+    )
+
+    df_out = func(df_in)
+
+    assert not df_out.isna().any(axis=None)
+    assert_series_equal(df_out[f"{name}_dest"], df_in[col], check_names=False)
+    assert_series_equal(df_out[f"{name}_origin"], df_in[col], check_names=False)
 
 
 def test_strip_par_data(caplog, test_context):
