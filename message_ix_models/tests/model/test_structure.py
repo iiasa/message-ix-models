@@ -205,7 +205,7 @@ def test_cli_techs(session_context, mix_models_cli):
     assert result.output.endswith("[5 rows x 8 columns]\n")
 
     # Path to the temporary file written by the command
-    path = Path(re.match("Write to (.*.csv)", result.output)[1])
+    path = Path(re.search("Write to (.*.csv)", result.output)[1])
 
     # File was written in the local data directory
     assert Path("technology.csv") == path.relative_to(session_context.local_data)
