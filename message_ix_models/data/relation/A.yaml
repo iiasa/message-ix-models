@@ -34,7 +34,7 @@ CO_Emission:
   technology-entry: 1
 
 CO2_r_c:
-  description: CO₂ emissions of residential and commercial sector
+  description: CO₂ emissions of residential and commercial buildings sector.
 
 CO2_trp:
   description: CO₂ emissions of transport sector.
@@ -70,27 +70,73 @@ HFC_rescom_red:
   parameters: activity, lower
   technology-entry: 1
 
-N2O_Emission: {}
+N2O_Emission:
+  description: >-
+    Emissions of N₂O
 
-NH3_Emission: {}
+    Weight as N₂O, kg N₂O per kW·a.
+  group: emission_factor
+  parameters: activity, lower, upper
+  technology-entry: 1
 
-NOx_Emission: {}
+NH3_Emission:
+  description: >-
+    Emissions of NH₃
 
-OCA_Emission: {}
+    Weight as NH₃, kg NH₃ per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+NOx_Emission:
+  description: >-
+    Emissions of nitrous oxides (NOx)
+
+    Weight as NOx, kg NOx per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+OCA_Emission:
+  description: >-
+    Emissions of OCA
+
+    Weight as OCA, kg OCA per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
 
 oper_res:
-  description: Operating reserve equation for electricity systems integration
+  description: Operating reserve equation for electricity systems integration.
   technology-entry: 1
   parameters: activity, lower
   group: renewable formulation
 
-SF6_Emission: {}
+SF6_Emission:
+  description: >-
+    Emissions of SF₆
 
+    Weight as SF₆, kg SF₆ per kW·a.
+  group: emission_factor
+  parameters: activity, lower, upper
+  technology-entry: 1
 
-SF6_mag_red: {}
+SF6_mag_red:
+  description: >-
+    Constraint to link SF₆ emissions from electrical equipment to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
 
+SO2_Emission:
+  description: >-
+    Emissions of SO₂
 
-SO2_Emission: {}
+    Weight as SO₂, kg SO₂ per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
 
 solar_th_pot:
   description: Solar thermal potential
@@ -98,4 +144,11 @@ solar_th_pot:
   parameters: activity, upper
   group: renewable formulation
 
-VOC_Emission: {}
+VOC_Emission:
+  description: >-
+    Emissions of volatile organic compounds (VOCs)
+
+    Weight as VOC, kg VOC per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
