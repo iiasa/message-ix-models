@@ -236,7 +236,7 @@ def copy_column(column_name):
 
 
 def ffill(
-    df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: str = None
+    df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: Optional[str] = None
 ) -> pd.DataFrame:
     """Forward-fill `df` on `dim` to cover `values`.
 
