@@ -53,6 +53,10 @@ def _scenario_name(context: Context, value: str) -> Optional[str]:
     for code in iter_scenario_codes(context):
         if code.id == candidate:
             return candidate
+        elif code.id == candidate + "_u":
+            # _u and _d scenarios are not implemented currently. Allow a match with the
+            # former
+            return candidate + "_u"
 
     return candidate if context.get("navigate_dsd") == "iiasa-ece" else None
 
