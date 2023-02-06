@@ -19,6 +19,7 @@ def temporary_command(group, func):
 
 def test_default_path_cb(session_context, mix_models_cli):
     """Test :func:`.default_path_cb`."""
+
     # Create a hidden command and attach it to the CLI
     @click.command(name="_test_default_path_cb", hidden=True)
     @common_params("rep_out_path")
@@ -43,6 +44,7 @@ def test_default_path_cb(session_context, mix_models_cli):
 
 def test_store_context(mix_models_cli):
     """Test :func:`.store_context`."""
+
     # Create a hidden command and attach it to the CLI
     @click.command(name="_test_store_context", hidden=True)
     @common_params("ssp")

@@ -26,6 +26,7 @@ def common_params(param_names: str):
         def mycmd(ssp, force, output_model)
             # ...
     """
+
     # Simplified from click.decorators._param_memo
     def decorator(f):
         if not hasattr(f, "__click_params__"):
