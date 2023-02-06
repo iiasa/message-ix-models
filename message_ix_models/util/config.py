@@ -2,7 +2,7 @@ import logging
 import os
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Any, Hashable, Mapping, MutableMapping, Optional, Set
+from typing import Any, Hashable, Mapping, MutableMapping, Optional, Sequence, Set
 
 import ixmp
 
@@ -142,6 +142,9 @@ class Config:
     #: Base path for cached data, e.g. as given by the :program:`--cache-path` CLI
     #: option. Default: :file:`{local_data}/cache/`.
     cache_path: Optional[str] = None
+
+    #: Paths of files containing debug outputs. See :meth:`Context.write_debug_archive`.
+    debug_paths: Sequence[str] = field(default_factory=list)
 
     #: Whether an operation should be carried out, or only previewed. Different modules
     #: will respect :attr:`dry_run` in distinct ways, if at all, and **should** document
