@@ -139,7 +139,7 @@ class TestGetCodes:
     @pytest.mark.parametrize(
         "codelist, length, expected",
         [
-            ("A", 19, {"emission_factor": 7, "renewable formulation": 2}),
+            ("A", 19, {"emission_factor": 15, "renewable formulation": 2}),
             ("B", 319, {}),
             ("CD-LINKS", 314, {"removed": 80}),
         ],
