@@ -133,4 +133,5 @@ dmypy.json
 /**/.idea
 
 # Generated and temporary data files
+debug/
 cache/
