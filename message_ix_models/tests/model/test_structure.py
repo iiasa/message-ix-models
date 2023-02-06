@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -218,58 +219,34 @@ def test_cli_techs(session_context, mix_models_cli):
     )
 
 
-def test_generate_set_elements0():
-    data = {
-        "colour": {"add": as_codes(["blue", "green", "red"])},
-        "technology": {
-            "add": [
-                # This is configuration to generate codes based on the contents of the
-                # colour set
-                Code(
-                    id="foo-{colour.id}",
-                    annotations=[
-                        Annotation(id="_generate", text=repr(dict(colour=None)))
-                    ],
-                ),
-                Code(id="bar"),
-            ]
-        },
-    }
+GSE_DATA = {
+    "colour": {"add": as_codes(["blue", "green", "red"])},
+    # This is configuration to generate codes based on the colour set
+    "technology": {"add": [Code(id="foo-{colour.id}"), Code(id="bar")]},
+}
+
+
+@pytest.mark.parametrize(
+    "colour_expr, expected",
+    [
+        (None, {"foo-blue", "foo-green", "foo-red", "bar"}),
+        ("red", {"bar"}),  # "red" has no .child codes
+        ("^.*(?<!red)$", {"foo-blue", "foo-green", "bar"}),
+    ],
+)
+def test_generate_set_elements(colour_expr, expected):
+    data = deepcopy(GSE_DATA)
+
+    # Add a _generate annotation
+    data["technology"]["add"][0].annotations = [
+        Annotation(id="_generate", text=repr(dict(colour=colour_expr)))
+    ]
 
     # Code runs
     generate_set_elements(data, "technology")
 
     # Codes are generated according to the contents of the _generate annotation
-    assert {"foo-blue", "foo-green", "foo-red", "bar"} == set(
-        map(str, data["technology"]["add"])
-    )
-
-
-def test_generate_set_elements1():
-    data = {
-        "colour": {"add": as_codes(["blue", "green", "red"])},
-        "technology": {
-            "add": [
-                # This is configuration to generate codes based on the contents of the
-                # colour set
-                Code(
-                    id="foo-{colour.id}",
-                    annotations=[
-                        Annotation(
-                            id="_generate", text=repr(dict(colour="^.*(?<!red)$"))
-                        )
-                    ],
-                ),
-                Code(id="bar"),
-            ]
-        },
-    }
-
-    # Code runs
-    generate_set_elements(data, "technology")
-
-    # Codes are generated according to the contents of the _generate annotation
-    assert {"foo-blue", "foo-green", "bar"} == set(map(str, data["technology"]["add"]))
+    assert expected == set(map(str, data["technology"]["add"]))
 
 
 def test_process_units_anno():

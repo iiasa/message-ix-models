@@ -121,7 +121,9 @@ def generate_product(
     template.pop_annotation(id="_generate")
 
     def _base(dim, match):
-        """Return codes along dimension `dim`; if `match` is given, only children."""
+        """Return codes along dimension `dim`.
+
+        If `match` is given, only children matching an expression."""
         dim_codes = data[dim]["add"]
 
         try:
