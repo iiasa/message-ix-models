@@ -141,6 +141,41 @@ class TestContext:
             dict(model="foo", scenario="bar", version=0) == test_context.scenario_info
         )
 
+    def test_write_debug_archive(self, mix_models_cli):
+        """:meth:`.write_debug_archive` works."""
+        # Create a CLI command attached to the hidden "_test" group
+
+        from message_ix_models.testing import cli_test_group
+
+        @cli_test_group.command("write-debug-archive")
+        @click.pass_obj
+        def _(context):
+            # Register one file to be archived
+            p = context.core.local_data.joinpath("foo.txt")
+            context.core.debug_paths.append(p)
+
+            # Write some text to this file
+            p.write_text("Here is some debug output in a file.")
+
+            # Register a non-existent path
+            context.core.debug_paths.append(p.with_name("bar.txt"))
+
+            # Write the archive
+            context.write_debug_archive()
+
+        # Invoke the command; I/O occurs in a temporary directory
+        result = mix_models_cli.invoke(["_test", "write-debug-archive"])
+
+        # Output path is constructed as expected; file exists
+        match = re.search(
+            r"Write to: (.*main-_test-write-debug-archive-[\dabcdefT\-]+.zip)",
+            result.output,
+        )
+        assert Path(match.group(1)).exists()
+
+        # Log output is generated for the non-existent path in Context.debug_paths
+        assert re.search(r"Not found: .*bar.txt", result.output)
+
     def test_handle_cli_args(self):
         p = "platform name"
         m = "model name"
