@@ -154,7 +154,11 @@ class Context(dict):
     def write_debug_archive(self) -> None:
         """Write an archive containing the files listed in :attr:`.debug_paths`.
 
-        The file path is constructed using :func:`.unique_id`.
+        The archive file name is constructed using :func:`.unique_id` and appears in a
+        :file:`debug` subdirectory under the :ref:`local data path <local-data>`.
+
+        The archive also contains a file :file:`command.txt` that gives the full
+        command-line used to invoke :program:`mix-models`.
         """
         from zipfile import ZIP_DEFLATED, ZipFile
 
