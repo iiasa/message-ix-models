@@ -109,8 +109,8 @@ def calc_hist_cum_CO2(
 def calc_budget(
     context: Context,
     scenario: Scenario,
-    bdgt: float,
-    method: Union[int, Literal["calc"]],
+    bdgt: Union[float, str],
+    method: Union[float, Literal["calc"]],
     type_emission="TCE",
 ) -> None:
     """Calculate **and apply** budget.
@@ -124,16 +124,23 @@ def calc_budget(
       ScenarioRunner.
     - :mod:`iam_units` is used for unit conversion.
 
+    .. todo:: Fix confusing semantics, here and/or in the original; e.g. use a `value`
+       argument and/or config class.
+
     Parameters
     ----------
-    bdgt
-        Budget in gigatonnes of CO₂ for the period 2010–2100, or the value "calc".
+    bdgt : float or str
+        If `method` is "calc", this must be the budget expressed as total gigatonnes of
+        CO₂ for the period 2010–2100. Otherwise, the argument is ignored.
+    method : float or str
+        Literal "calc" to calculate a constraint budget based on `bdgt`; otherwise,
+        budget constraint value expressed as average Mt C-eq / a.
     """
     if method == "calc":
         info = ScenarioInfo(scenario)
 
         # Target is provided in cumulative Gt 2010-2100
-        value = bdgt
+        value = float(bdgt)
         # Convert Gt CO2 to Mt CO2
         value *= 1000
 
@@ -199,7 +206,7 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     calc_budget(
         context,
         scenario,
-        bdgt=int(config.label),
+        bdgt=config.label,
         method=config.budget,
         type_emission="TCE_CO2",
     )
