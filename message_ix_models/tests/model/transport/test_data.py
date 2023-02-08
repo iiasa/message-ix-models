@@ -265,6 +265,7 @@ def test_get_ldv_data(test_context, source, regions, years):
         "input",
         "inv_cost",
         "output",
+        "relation_activity",
         "technical_lifetime",
     } == set(data.keys())
 
@@ -280,6 +281,9 @@ def test_get_ldv_data(test_context, source, regions, years):
 
     # Remaining data have the correct size
     for par_name, df in data.items():
+        if "year_vtg" not in df.columns:
+            continue
+
         # Data covers these periods
         assert exp == sorted(df["year_vtg"].unique())
 
