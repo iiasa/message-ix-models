@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2023.2.8
+========
 
 - Codelists for the ``relation`` :ref:`MESSAGEix set <message-ix:section_set_def>` (:pull:`85`):
 
