@@ -28,8 +28,8 @@ def test_generate_workflow(test_context):
 
     # Check the pre-requisite steps of some workflow steps. This is the 2nd entry in the
     # dask task tuple in wf.graph.
-    assert wf.graph["MT solved"][2] == "MT built"
-    assert wf.graph["MT built"][2] == "M built"
+    assert wf.graph["MT NPi-ref solved"][2] == "MT NPi-ref built"
+    assert wf.graph["MT NPi-ref built"][2] == "M built"
 
     # Workflow is truncated at "M built"
     assert wf.graph["M built"][2] is None
@@ -54,11 +54,11 @@ context = r"'context' \(above\)"
 BLOCKS = [
     "Truncate workflow at 'M built'",
     rf"""
-    - 'MT solved':
+    - 'MT NPi-ref solved':
       - <Step solve\(\)>
       - {context}
-      - 'MT built':
-        - <Step build_transport\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12 \(NAVIGATE\)/baseline>
+      - 'MT NPi-ref built':
+        - <Step build_transport\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12 \(NAVIGATE\)/NPi-ref>
         - {context}
         - 'M built':
           - <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
