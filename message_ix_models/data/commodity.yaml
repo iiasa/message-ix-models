@@ -1,6 +1,11 @@
+biomass:
+  units: GWa
+  report: Solids|Biomass
+
 coal:
   name: Coal
   units: GWa
+  report: Solids|Fossil
 
 crudeoil:
   name: Crude oil
@@ -8,19 +13,23 @@ crudeoil:
     For secondary energy, use 'fueloil', 'lightoil', etc.
   level: primary
   units: GWa
+  report: Oil
 
 d_heat:
   name: (?) District heat
   description: >-
     FIXME provide an unambiguous description of what this commodity represents.
+  report: Heat
 
 electr:
   name: Electricity
   units: GWa
+  report: Electricity
 
 ethanol:
   name: Ethanol
   units: GWa
+  report: Liquids|Biomass
 
 freshwater_supply:
   name: (?) Fresh water
@@ -36,6 +45,7 @@ fueloil:
 gas:
   name: Natural Gas
   units: GWa
+  report: Gases
 
 hydrogen:
   name: Gaseous hydrogen
@@ -50,10 +60,23 @@ lightoil:
   description: Includes gasoline, diesel oil.
   # level: secondary
   units: GWa
+  report: Liquids|Oil
 
 methanol:
   name: Methanol
   units: GWa
+  report: Liquids|Coal
+
+non-comm:
+  name: Non-commercial biomass
+  units: GWa
+  report: Solids|Biomass|Traditional
+
+rc_spec:
+  name: Residential and commercial non-substitutable fuels
+
+rc_therm:
+  name: Residential and commercial thermal
 
 transport:
   name: Transportation
@@ -93,7 +116,6 @@ transport:
 # Biodiesel_G1
 # bioenergy
 # Bioethanol_G1
-# biomass
 # CalAnim
 # CalCrop
 # CalTot
@@ -231,7 +253,6 @@ transport:
 # NH3_RiceEM
 # NH3_SavanBurnEM
 # NH3_SoilEM
-# non-comm
 # NOx_LandUseChangeEM
 # NOx_SavanBurnEM
 # NOx_SoilEM
@@ -258,8 +279,6 @@ transport:
 # pu
 # puq
 # puq2
-# rc_spec
-# rc_therm
 # saline_supply
 # SawmillResidues
 # SawmillResidues_G4M

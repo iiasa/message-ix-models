@@ -198,6 +198,16 @@ def mix_models_cli(request, session_context, tmp_env):
     yield CliRunner(env=tmp_env)
 
 
+@cli.main.group("_test", hidden=True)
+def cli_test_group():
+    """Hidden group of CLI commands.
+
+    Other code which needs to test CLI behaviour **may** attach temporary/throw-away
+    commands to this group and then invoke them using :func:`mix_models_cli`. This
+    avoids the need to expose additional commands for testing purposes only.
+    """
+
+
 # Testing utility functions
 
 

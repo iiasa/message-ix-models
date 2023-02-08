@@ -1,4 +1,6 @@
 import re
+from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -20,6 +22,7 @@ from message_ix_models.util import as_codes, eval_anno
     "kind, exp",
     [
         ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP", "ZMB"]),
+        ("relation", ["A", "B", "CD-LINKS"]),
         ("year", ["A", "B"]),
     ],
 )
@@ -44,6 +47,9 @@ class TestGetCodes:
             "node/RCP",
             "node/ZMB",
             "technology",
+            "relation/A",
+            "relation/B",
+            "relation/CD-LINKS",
             "year/A",
             "year/B",
         ),
@@ -130,6 +136,36 @@ class TestGetCodes:
         """get_codes() handles ISO 3166 alpha-3 codes for historic countries."""
         assert "SCG" in get_codes("node/R11")
 
+    @pytest.mark.parametrize(
+        "codelist, length, expected",
+        [
+            ("A", 19, {"emission_factor": 15, "renewable formulation": 2}),
+            ("B", 319, {}),
+            ("CD-LINKS", 314, {"removed": 80}),
+        ],
+    )
+    def test_relation(self, codelist, length, expected):
+        # Codelist can be loaded
+        data = get_codes(f"relation/{codelist}")
+
+        # Number of codes is as expected
+        assert length == len(data)
+
+        # Count codes by "group" annotation
+        group_count = defaultdict(lambda: 0)
+        for code in data:
+            try:
+                group = str(code.get_annotation(id="group").text)
+            except KeyError:
+                continue
+            group_count[group] += 1
+
+        # print(groups)
+
+        # Each group has the expected number of members
+        for group, N in expected.items():
+            assert N == group_count[group]
+
     def test_technologies(self):
         # Retrieve the tech info without calling technologies.cli
         data = get_codes("technology")
@@ -170,7 +206,7 @@ def test_cli_techs(session_context, mix_models_cli):
     assert result.output.endswith("[5 rows x 8 columns]\n")
 
     # Path to the temporary file written by the command
-    path = Path(re.match("Write to (.*.csv)", result.output)[1])
+    path = Path(re.search("Write to (.*.csv)", result.output)[1])
 
     # File was written in the local data directory
     assert Path("technology.csv") == path.relative_to(session_context.local_data)
@@ -183,31 +219,34 @@ def test_cli_techs(session_context, mix_models_cli):
     )
 
 
-def test_generate_set_elements():
-    data = {
-        "colour": {"add": as_codes(["blue", "green", "red"])},
-        "technology": {
-            "add": [
-                # This is configuration to generate codes based on the contents of the
-                # colour set
-                Code(
-                    id="foo-{colour.id}",
-                    annotations=[
-                        Annotation(id="_generate", text=repr(dict(colour=None)))
-                    ],
-                ),
-                Code(id="bar"),
-            ]
-        },
-    }
+GSE_DATA = {
+    "colour": {"add": as_codes(["blue", "green", "red"])},
+    # This is configuration to generate codes based on the colour set
+    "technology": {"add": [Code(id="foo-{colour.id}"), Code(id="bar")]},
+}
+
+
+@pytest.mark.parametrize(
+    "colour_expr, expected",
+    [
+        (None, {"foo-blue", "foo-green", "foo-red", "bar"}),
+        ("red", {"bar"}),  # "red" has no .child codes
+        ("^.*(?<!red)$", {"foo-blue", "foo-green", "bar"}),
+    ],
+)
+def test_generate_set_elements(colour_expr, expected):
+    data = deepcopy(GSE_DATA)
+
+    # Add a _generate annotation
+    data["technology"]["add"][0].annotations = [
+        Annotation(id="_generate", text=repr(dict(colour=colour_expr)))
+    ]
 
     # Code runs
     generate_set_elements(data, "technology")
 
     # Codes are generated according to the contents of the _generate annotation
-    assert {"foo-blue", "foo-green", "foo-red", "bar"} == set(
-        map(str, data["technology"]["add"])
-    )
+    assert expected == set(map(str, data["technology"]["add"]))
 
 
 def test_process_units_anno():

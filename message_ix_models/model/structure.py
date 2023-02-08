@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import ChainMap
 from functools import lru_cache
 from itertools import product
@@ -120,9 +121,21 @@ def generate_product(
     template.pop_annotation(id="_generate")
 
     def _base(dim, match):
-        """Return codes along dimension `dim`; if `match` is given, only children."""
+        """Return codes along dimension `dim`.
+
+        If `match` is given, only children matching an expression."""
         dim_codes = data[dim]["add"]
-        return dim_codes[dim_codes.index(match)].child if match else dim_codes
+
+        try:
+            i = dim_codes.index(match)
+        except ValueError:
+            if isinstance(match, str):
+                expr = re.compile(match)
+                dim_codes = list(filter(lambda c: expr.match(c.id), dim_codes))
+        else:
+            dim_codes = dim_codes[i].child
+
+        return dim_codes
 
     codes = []  # Accumulate codes and indices
     indices = []

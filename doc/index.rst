@@ -43,6 +43,7 @@ Among other tasks, the tools allow modelers to:
    :caption: Package data
 
    pkg-data/node
+   pkg-data/relation
    pkg-data/year
    pkg-data/codelists
    pkg-data/iiasa-se

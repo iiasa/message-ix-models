@@ -1,8 +1,24 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Codelists for the ``relation`` :ref:`MESSAGEix set <message-ix:section_set_def>` (:pull:`85`):
+
+  - Add :ref:`three relation codelists <relation-yaml>`.
+  - The :doc:`“bare” reference energy system <api/model-bare>` now includes relations from the codelist indicated by :attr:`.model.Config.relations`; default "A".
+
+- :ref:`commodity-yaml` (:pull:`85`):
+
+  - Add "biomass", "non-comm", "rc_spec", and "rc_therm".
+  - Add "report" annotations for some items.
+    These include string fragments to be used in variable names when reporting data in the IAMC data structure.
+
+- :func:`.generate_product` (and :func:`.generate_set_elements`) can handle a :doc:`regular expression <python:library/re>` to select a subset of codes for the Cartesian product (:pull:`85`).
+- New utility method :meth:`.Context.write_debug_archive` writes a ZIP archive containing files listed by :attr:`.Config.debug_paths` (:pull:`85`).
+- :class:`.WorkflowStep` can store and apply keyword options for the optional :meth:`~.message_ix.Scenario.clone` step at the start of the step execution (:pull:`85`).
+- Bugfix: :meth:`.WorkflowStep.__call__` ensures that :attr:`.Config.scenario_info` on the :class:`.Context` instance passed to its callback matches the target scenario (:pull:`85`).
 
 2022.11.7
 =========

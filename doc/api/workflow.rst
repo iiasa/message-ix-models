@@ -158,3 +158,8 @@ API reference
 
 .. automodule:: message_ix_models.workflow
    :members:
+   :exclude-members: WorkflowStep
+
+.. autoclass:: WorkflowStep
+   :members:
+   :special-members: __call__

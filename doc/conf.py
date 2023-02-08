@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 # -- Project information ---------------------------------------------------------------
 
 project = "message-ix-models"
-copyright = "2020–2022, IIASA Energy, Climate, and Environment (ECE) Program"
+copyright = "2020–2023, IIASA Energy, Climate, and Environment (ECE) Program"
 author = "IIASA Energy, Climate, and Environment (ECE) Program"
 
 

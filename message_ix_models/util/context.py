@@ -151,6 +151,38 @@ class Context(dict):
 
         self.close_db()
 
+    def write_debug_archive(self) -> None:
+        """Write an archive containing the files listed in :attr:`.debug_paths`.
+
+        The archive file name is constructed using :func:`.unique_id` and appears in a
+        :file:`debug` subdirectory under the :ref:`local data path <local-data>`.
+
+        The archive also contains a file :file:`command.txt` that gives the full
+        command-line used to invoke :program:`mix-models`.
+        """
+        from zipfile import ZIP_DEFLATED, ZipFile
+
+        from .click import format_sys_argv, unique_id
+
+        # Output file
+        target = self.core.local_data.joinpath("debug", f"{unique_id()}.zip")
+        log.info(f"Write to: {target}")
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        with ZipFile(target, mode="w", compression=ZIP_DEFLATED) as zf:
+            # Write a file that contains the CLI invocation
+            zf.writestr("command.txt", format_sys_argv())
+
+            # Write the identified files
+            for dp in self.core.debug_paths:
+                if not dp.exists():
+                    log.info(f"Not found: {dp}")
+                    continue
+
+                zf.write(dp, arcname=dp.relative_to(self.core.local_data))
+                # log.info(debug_path)
+
     def clone_to_dest(self, create=True) -> message_ix.Scenario:
         """Return a scenario based on the ``--dest`` command-line option.
 
@@ -245,7 +277,7 @@ class Context(dict):
 
         return result
 
-    def get_local_path(self, *parts: str, suffix=None):
+    def get_local_path(self, *parts: str, suffix=None) -> Path:
         """Return a path under :attr:`.Config.local_data`.
 
         Parameters

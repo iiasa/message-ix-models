@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Mapping, Union
+from typing import Callable, Dict, List, Mapping, Optional, Union
 
 import ixmp
 import pandas as pd
@@ -29,7 +29,7 @@ def _add_unit(mp: ixmp.Platform, unit: str, comment: str) -> None:
 def apply_spec(
     scenario: Scenario,
     spec: Union[Spec, Mapping[str, ScenarioInfo]],
-    data: Callable = None,
+    data: Optional[Callable] = None,
     **options,
 ):
     """Apply `spec` to `scenario`.

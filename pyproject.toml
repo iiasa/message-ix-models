@@ -27,3 +27,11 @@ module = [
   "memory_profiler",
 ]
 ignore_missing_imports = true
+
+
+[[tool.mypy.overrides]]
+# Work around iiasa/ixmp#465 and similar
+module = [
+  "ixmp.*",
+]
+no_implicit_optional = false
