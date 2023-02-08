@@ -6,10 +6,11 @@ from message_ix_models.model.bare import Config
 
 #: Number of items in the respective YAML files.
 SET_SIZE = dict(
-    commodity=13,
+    commodity=17,
     level=6,
-    technology=377,
     node=14 + 1,  # R14 is default, and 'World' exists automatically
+    relation=19,
+    technology=377,
     year=28,  # YB is default: 1950, ..., 2020, 2025, ..., 2055, 2060, ..., 2110
 )
 

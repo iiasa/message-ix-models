@@ -231,12 +231,19 @@ def copy_column(column_name):
     'bar' into column 'foo'.
 
     >>> df.assign(foo=copy_column('bar'), baz=3)
+
+    Note that a similar assignment can be achieved with :meth:`~pandas.DataFrame.eval`:
+
+    >>> df.eval("foo = bar")
+
+    :func:`copy_column` is useful in the context of more complicated calls to
+    :meth:`~pandas.DataFrame.assign`.
     """
     return lambda df: df[column_name]
 
 
 def ffill(
-    df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: str = None
+    df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: Optional[str] = None
 ) -> pd.DataFrame:
     """Forward-fill `df` on `dim` to cover `values`.
 

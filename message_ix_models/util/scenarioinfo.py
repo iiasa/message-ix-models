@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from itertools import product
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 import pint
@@ -165,7 +165,9 @@ class ScenarioInfo:
 
         return eval_anno(self.set[set_name][idx], "units")
 
-    def io_units(self, technology: str, commodity: str, level: str = None) -> pint.Unit:
+    def io_units(
+        self, technology: str, commodity: str, level: Optional[str] = None
+    ) -> pint.Unit:
         """Return units for the MESSAGE ``input`` or ``output`` parameter.
 
         These are implicitly determined as the ratio of:

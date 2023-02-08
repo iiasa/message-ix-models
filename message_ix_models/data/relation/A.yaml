@@ -1,0 +1,154 @@
+# Relation codes
+#
+# This set includes all those expected by code in message_data as of 2023-02-04.
+# It is the union of entries from:
+#
+# - data/buildings/set.yaml
+# - data/transport/set.yaml
+#
+# The descriptions are derived from CD-LINKS.yaml
+
+BCA_Emission:
+  description: >-
+    Emissions of BCA.
+
+    Weight as BCA, kg BCA per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+CH4_Emission:
+  description: >-
+    Emissions of CH4
+
+    Weight as CH4, kg CH4 per kW·a.
+  group: emission_factor
+  parameters: activity, lower, upper
+  technology-entry: 1
+
+CO_Emission:
+  description: >-
+    Emissions of CO (weight as CO, kg CO per kWyr)
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+CO2_r_c:
+  description: CO₂ emissions of residential and commercial buildings sector.
+
+CO2_trp:
+  description: CO₂ emissions of transport sector.
+
+HFC_Emission:
+  description: >-
+    Emissions of HFC (weight as HFC, kg HFC-134a-equivalent per kWyr)
+  group: emission_factor
+  parameters: activity, lower, upper
+  technology-entry: 1
+
+HFC_foam_red:
+  description: >-
+    Constraint to link HFC emissions from insulation foams to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+HFC_mobile_red:
+  description: >-
+    Constraint to link HFC emissions from mobile air conditioning to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+HFC_rescom_red:
+  description: >-
+    Constraint to link HFC emissions from residential & commercial refrigeration
+    & AC to reduction efficiency of abatement technologies.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+N2O_Emission:
+  description: >-
+    Emissions of N₂O
+
+    Weight as N₂O, kg N₂O per kW·a.
+  group: emission_factor
+  parameters: activity, lower, upper
+  technology-entry: 1
+
+NH3_Emission:
+  description: >-
+    Emissions of NH₃
+
+    Weight as NH₃, kg NH₃ per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+NOx_Emission:
+  description: >-
+    Emissions of nitrous oxides (NOx)
+
+    Weight as NOx, kg NOx per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+OCA_Emission:
+  description: >-
+    Emissions of OCA
+
+    Weight as OCA, kg OCA per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+oper_res:
+  description: Operating reserve equation for electricity systems integration.
+  technology-entry: 1
+  parameters: activity, lower
+  group: renewable formulation
+
+SF6_Emission:
+  description: >-
+    Emissions of SF₆
+
+    Weight as SF₆, kg SF₆ per kW·a.
+  group: emission_factor
+  parameters: activity, lower, upper
+  technology-entry: 1
+
+SF6_mag_red:
+  description: >-
+    Constraint to link SF₆ emissions from electrical equipment to reduction
+    efficiency of abatement technologies.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+SO2_Emission:
+  description: >-
+    Emissions of SO₂
+
+    Weight as SO₂, kg SO₂ per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1
+
+solar_th_pot:
+  description: Solar thermal potential
+  technology-entry: 1
+  parameters: activity, upper
+  group: renewable formulation
+
+VOC_Emission:
+  description: >-
+    Emissions of volatile organic compounds (VOCs)
+
+    Weight as VOC, kg VOC per kW·a.
+  group: emission_factor
+  parameters: activity, lower
+  technology-entry: 1

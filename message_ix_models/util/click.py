@@ -3,7 +3,8 @@
 These are used for building CLIs using :mod:`click`.
 """
 import logging
-from typing import Union
+from datetime import datetime
+from typing import Optional, Union
 
 import click
 from click import Argument, Choice, Option
@@ -26,6 +27,7 @@ def common_params(param_names: str):
         def mycmd(ssp, force, output_model)
             # ...
     """
+
     # Simplified from click.decorators._param_memo
     def decorator(f):
         if not hasattr(f, "__click_params__"):
@@ -54,6 +56,19 @@ def default_path_cb(*default_parts):
     return _callback
 
 
+def format_sys_argv() -> str:
+    """Format :data:`sys.argv` in a readable manner."""
+    import sys
+
+    lines = ["Invoked:"]
+    indent = ""
+    for item in sys.argv:
+        lines.append(f"{indent}{item} \\")
+        indent = "  "
+
+    return "\n".join(lines)[:-2]
+
+
 def store_context(context: Union[click.Context, Context], param, value):
     """Callback that simply stores a value on the :class:`Context` object.
 
@@ -66,6 +81,37 @@ def store_context(context: Union[click.Context, Context], param, value):
         value,
     )
     return value
+
+
+def unique_id() -> str:
+    """Return a unique ID for a CLI invocation.
+
+    The return value resembles "mix-models-debug-3332d415ef65bf2a-2023-02-02T162931" and
+    contains:
+
+    - The CLI name and (sub)commands.
+    - A hash of all the CLI parameters (options and arguments).
+    - The current date and time, in ISO format with Windows-incompatible ":" removed.
+
+    """
+    click_context = click.get_current_context()
+
+    # Collapse CLI (sub)commands and their arguments to a hashable data structure
+    # This also includes CLI options *not* given
+    c: Optional[click.Context] = click_context
+    data = []
+    while c is not None:
+        data.append((c.command.name, tuple(sorted(c.params.items()))))
+        c = c.parent
+
+    # Assemble parts
+    return "-".join(
+        [
+            click_context.command_path.replace(" ", "-"),
+            f"{hash(tuple(reversed(data))):x}",
+            datetime.now().isoformat(timespec="seconds").replace(":", ""),
+        ]
+    )
 
 
 #: Common command-line parameters (arguments and options). See :func:`common_params`.

@@ -12,6 +12,10 @@ class Config:
     #: nodes described at :doc:`/pkg-data/node`.
     regions: str = "R14"
 
+    #: The 'relations' codelist to use. Must be one of the lists of relations described
+    #: at :doc:`/pkg-data/relation`.
+    relations: str = "A"
+
     #: The 'year' codelist (time periods) to use, Must be one of the lists of periods
     #: described at :doc:`/pkg-data/year`.
     years: str = "B"
@@ -21,11 +25,16 @@ class Config:
     res_with_dummies: bool = False
 
     def check(self):
-        """Check the validity of :attr:`regions` and :attr:`years`."""
-        if self.regions not in codelists("node"):
-            raise ValueError(f"regions={self.regions!r} not among {codelists('node')}")
-        if self.years not in codelists("year"):
-            raise ValueError(f"regions={self.years!r} not among {codelists('year')}")
+        """Check the validity of :attr:`regions`, :attr:`relations`, :attr:`years`."""
+        for attr, name in [
+            ("regions", "node"),
+            ("relations", "relation"),
+            ("years", "year"),
+        ]:
+            if getattr(self, attr) not in codelists(name):
+                raise ValueError(
+                    f"{attr}={getattr(self, attr)!r} not among {codelists(name)}"
+                )
 
 
 # Extend the list of settings that can be set directly on a Context instance.
