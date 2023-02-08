@@ -4,6 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Mapping, Optional, Union
 
+import ixmp
 import yaml
 from message_ix_models.util import as_codes
 from sdmx.model import Annotation, Code
@@ -106,8 +107,7 @@ EXTRA_SCENARIOS = [
 @lru_cache()
 def _read() -> List[Code]:
     """Read the codes from the NAVIGATE workflow directory."""
-    # FIXME read this path from config
-    workflow_dir = Path("~/vc/iiasa/navigate-workflow").expanduser()
+    workflow_dir = Path(ixmp.config.get("navigate workflow dir")).expanduser().resolve()
 
     # Use the particular path scheme of Scenario Explorer config repositories
     path = workflow_dir.joinpath("definitions", "scenario", "scenarios.yaml")
