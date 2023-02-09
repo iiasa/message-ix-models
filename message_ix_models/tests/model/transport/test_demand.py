@@ -143,7 +143,7 @@ def test_exo_report(test_context, tmp_path):
     )
 
     # Total demand by mode
-    key = Key("transport pdt", "nyt")
+    key = Key("pdt", "nyt")
 
     # Graph structure can be visualized
     import dask
