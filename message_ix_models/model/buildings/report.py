@@ -169,7 +169,7 @@ def configure_legacy_reporting(config: dict) -> None:
     """Callback to configure the legacy reporting."""
     # NB the legacy reporting doesn't pass a context object to the hook that calls this
     #    function, so get an instance directly
-    context = Context.get_instance()
+    context = Context.get_instance(-1)
 
     # FIXME don't hard-code this
     context.setdefault("regions", "R12")
