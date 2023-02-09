@@ -13,10 +13,21 @@ from message_data.model.buildings.report import (
 )
 
 
+@pytest.fixture(scope="function")
+def buildings_context(test_context):
+    """A version of :func:`.test_context` with a :class:`.buildings.Config` stored."""
+    test_context["buildings"] = Config(sturm_scenario="")
+
+    yield test_context
+
+    test_context.pop("buildings")
+
+
 @pytest.mark.parametrize("commodity", [None, "gas"])
-def test_get_techs(test_context, commodity):
-    test_context.regions = "R12"
-    spec = get_spec(test_context)
+def test_get_techs(buildings_context, commodity):
+    ctx = buildings_context
+    ctx.regions = "R12"
+    spec = get_spec(ctx)
     result = get_techs(spec, commodity)
 
     # Generated technologies with buildings sector and end-use
@@ -63,14 +74,14 @@ def test_get_tech_groups(test_context, args, present, absent):
     assert set() == absent & set(result)
 
 
-def test_configure_legacy_reporting(test_context):
+def test_configure_legacy_reporting(buildings_context):
     config = dict()
 
     configure_legacy_reporting(config)
 
     # Generated technology names are added to the appropriate sets
-    assert ["meth_afofi"] == config["rc meth"]
-    assert "h2_fc_AFOFI" in config["rc h2"]
+    assert {"meth_afofi"} < set(config["rc meth"])
+    assert "h2_fc_afofi" in config["rc h2"]
 
 
 def test_mpd():
