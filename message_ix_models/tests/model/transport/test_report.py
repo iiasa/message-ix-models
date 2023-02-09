@@ -45,7 +45,7 @@ def test_configure_legacy():
 
     # Resulting lists have the expected length, or are unaltered
     for k, v in config.items():
-        assert expected.get(k, len(TECHS[k])) == len(v), k
+        assert expected.get(k, 0) + len(TECHS[k]) == len(v), k
 
 
 def test_register_cb():
