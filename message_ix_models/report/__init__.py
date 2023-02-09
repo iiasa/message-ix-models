@@ -102,7 +102,7 @@ def iamc(c: Reporter, info):
         # Exclude any summed dimensions from the IAMC Variable to be constructed
         _info["collapse"].update(
             callback=partial(
-                collapse, var=list(filter(lambda v: v not in dims, info["var"]))
+                collapse, var=list(filter(lambda v: v not in dims, info.get("var", [])))
             )
         )
 
