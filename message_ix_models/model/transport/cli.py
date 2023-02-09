@@ -279,7 +279,7 @@ def gen_demand(ctx, source, nodes, years, output_dir):
     )
 
     # Compute total demand by mode
-    key = Key("transport pdt", "nyt")
+    key = Key("pdt", "nyt")
     rep.add("write_report", "gen-demand", key, output_path)
 
     log.info(f"Compute {repr(key)}")
