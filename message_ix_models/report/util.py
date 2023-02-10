@@ -1,10 +1,12 @@
 import logging
-from typing import Dict, Iterable, Union
+from typing import Dict, Iterable, Optional, Union
 
 import pandas as pd
+from dask.core import literal
 from genno import Quantity
 from genno.compat.pyam.util import collapse as genno_collapse
 from iam_units import registry
+from message_ix.reporting import Key, Reporter
 from message_ix_models.util import eval_anno
 from sdmx.model import Code
 
@@ -165,6 +167,31 @@ def collapse_gwp_info(df, var):
     # Remove columns from further processing
     [var.remove(c) for c in cols]
     return df.drop(cols, axis=1), var
+
+
+def copy_ts(rep: Reporter, other: str, filters: Optional[dict]) -> Key:
+    """Prepare `rep` to copy time series data from `other` to `scenario`.
+
+    Parameters
+    ----------
+    other_url : str
+       URL of the other scenario from which to copy time series data.
+    filters : dict, optional
+       Filters; passed via :func:`.store_ts` to :meth:`ixmp.TimeSeries.timeseries`.
+
+    Returns
+    -------
+    str
+        Key for the copy operation.
+    """
+
+    # A unique ID for this copy operation, to avoid collision if copy_ts() used multiple
+    # times
+    _id = f"{hash(other + repr(filters)):x}"
+
+    k1 = rep.add("from_url", f"scenario {_id}", literal(other))
+    k2 = rep.add("get_ts", f"ts data {_id}", k1, filters)
+    return rep.add("store_ts", f"copy ts {_id}", "scenario", k2)
 
 
 def add_replacements(dim: str, codes: Iterable[Code]) -> None:
