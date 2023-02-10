@@ -15,6 +15,7 @@ from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_
 from sdmx.model import Code
 
 import message_data.model.material.report.tables
+from message_data.reporting.util import copy_ts
 from message_data.tools.prep_submission import Config, ScenarioConfig
 
 from . import iter_scenario_codes
@@ -328,6 +329,30 @@ def callback(rep: Reporter, context: Context) -> None:
             "transport iamc all",  # Excludes plots
         ],
     )
+
+    # Add an operation to copy time-series data from a corresponding reference scenario
+    copy_ts_keys = []
+
+    si = context["navigate copy ts"]
+    if si:
+        # URL of the other scenario
+        platform_name = rep.get("scenario").platform.name
+        other_url = f"ixmp://{platform_name}/{si['model']}/{si['scenario']}"
+
+        # Identify period(s) to copy
+        y0 = rep.get("y::model")[0]
+        y = rep.get("y")
+        index = y.index(y0)
+        to_copy = y[index - 1 : index]
+
+        log.info(f"Will infill reporting data for year={to_copy} from {other_url}")
+
+        # Add several steps to copy the data
+        key = copy_ts(rep, other_url, dict(year=to_copy))
+        copy_ts_keys.append(key)
+
+    # Possibly an empty list → no-op
+    rep.add("navigate copy ts", copy_ts_keys)
 
 
 def legacy_output_path(base_path: Path, scenario: Scenario) -> Path:
