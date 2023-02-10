@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import replace
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 from message_ix import Scenario
 from message_ix_models import Context
@@ -99,7 +99,9 @@ def build_solve_buildings(
     return buildings.build_and_solve(context)
 
 
-def report(context: Context, scenario: Scenario) -> Scenario:
+def report(
+    context: Context, scenario: Scenario, other_scenario_info: Optional[Dict]
+) -> Scenario:
     """Workflow steps 8–10."""
     from message_data.reporting import (
         _invoke_legacy_reporting,
@@ -107,6 +109,9 @@ def report(context: Context, scenario: Scenario) -> Scenario:
         prepare_reporter,
         register,
     )
+
+    # Identify other scenario for .navigate.report.callback
+    context["navigate copy ts"] = other_scenario_info
 
     # Step 8
     register("projects.navigate")
@@ -116,6 +121,16 @@ def report(context: Context, scenario: Scenario) -> Scenario:
     log_before(context, rep, key)
     rep.get(key)
 
+    # Possibly copy time-series data for the period before the first model period; i.e.
+    # 2020 in policy scenarios wherein the first_model_year is advanced to 2025.
+    # NB this could also be done by making the "navigate remove ts" operation
+    #    configurable, and assuming the time series data are already present in the
+    #    current scenario, i.e. it has been cloned from `other_scenario_info`.
+    key = "navigate copy ts"
+    log_before(context, rep, key)
+    rep.get(key)
+
+    # Perform reporting for buildings, materials, and transport
     key = "navigate all"
     log_before(context, rep, key)
     rep.get(key)
@@ -326,7 +341,15 @@ def generate(context: Context) -> Workflow:
 
         # Step 8–9 for individual scenarios
         reported = f"{s} reported"
-        wf.add_step(reported, policy_solved, report)
+        wf.add_step(
+            reported,
+            policy_solved,
+            report,
+            # Identify other scenario from which to copy historical time series data
+            other_scenario_info=(
+                wf.graph[base][0].scenario_info if policy_solved != base else None
+            ),
+        )
 
         # Step 10 for individual scenarios
         wf.add_step(f"{s} prepped", reported, prep_submission)
