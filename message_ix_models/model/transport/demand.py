@@ -250,9 +250,8 @@ def prepare_reporter(
         ("quantity_from_config", "whour:", "config", quote("work_hours")),
         ("quantity_from_config", "lambda:", "config", quote("lamda")),
         # List of nodes excluding "World"
-        # TODO move upstream to message_ix
-        ("nodes_ex_world", "n::ex world", "n"),
-        ("nodes_ex_world", "n::ex world+code", "nodes"),
+        ("nodes_ex_world", "n::ex world", "n"),  # TODO move upstream to message_ix
+        ("nodes_ex_world", "n::ex world+code", "nodes"),  # TODO ditto
         ("nodes_world_agg", "nl::world agg", "config"),
         # Base share data
         ("base_shares", "base shares:n-t-y", n, "t::transport modes", y, "config"),
@@ -268,7 +267,7 @@ def prepare_reporter(
         ("product", gdp_ppp, gdp, mer_to_ppp),
         ("ratio", gdp_ppp_cap, gdp_ppp, pop),
         # GDP index
-        ("y0", itemgetter(0), y),
+        ("y0", itemgetter(0), y),  # TODO move upstream to message_ix
         ("index_to", gdp_index, gdp_ppp_cap, literal("y"), "y0"),
         # Total demand
         ("pdt_per_capita", pdt_cap, gdp_ppp_cap, "config"),
