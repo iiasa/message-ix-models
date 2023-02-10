@@ -4,6 +4,7 @@ import logging
 from typing import List, Optional, Union
 
 import ixmp
+import message_ix
 import pandas as pd
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
@@ -129,14 +130,29 @@ def remove_ts(
         raise NotImplementedError
 
 
-def from_url(url: str) -> ixmp.TimeSeries:
-    """Return a :class:`ixmp.TimeSeries` (or :class:`ixmp.Scenario`) given its `url`.
+# Non-weak references to objects to keep them alive
+_FROM_URL_REF = set()
 
-    .. todo:: move upstream to :mod:`ixmp.reporting`.
-    """
-    s, mp = ixmp.TimeSeries.from_url(url)
-    assert s is not None
-    return s
+# def from_url(url: str) -> message_ix.Scenario:
+#     """Return a :class:`message_ix.Scenario` given its `url`.
+#
+#     .. todo:: move upstream to :mod:`message_ix.reporting`.
+#     .. todo:: Create a similar method in :mod:`ixmp.reporting` to load and return
+#        :class:`ixmp.TimeSeries` (or :class:`ixmp.Scenario`) given its `url`.
+#     """
+#     s, mp = message_ix.Scenario.from_url(url)
+#     assert s is not None
+#     _FROM_URL_REF.add(s)
+#     _FROM_URL_REF.add(mp)
+#     return s
+
+def from_url(url: str) -> ixmp.TimeSeries:
+    """Return a :class:`ixmp.TimeSeries` given its `url`."""
+    ts, mp = ixmp.TimeSeries.from_url(url)
+    assert ts is not None
+    _FROM_URL_REF.add(ts)
+    _FROM_URL_REF.add(mp)
+    return ts
 
 
 # commented: currently unused
