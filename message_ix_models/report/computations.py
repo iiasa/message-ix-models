@@ -1,10 +1,9 @@
 """Atomic reporting computations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Set, Union
 
 import ixmp
-import message_ix
 import pandas as pd
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
@@ -131,7 +130,7 @@ def remove_ts(
 
 
 # Non-weak references to objects to keep them alive
-_FROM_URL_REF = set()
+_FROM_URL_REF: Set[Any] = set()
 
 # def from_url(url: str) -> message_ix.Scenario:
 #     """Return a :class:`message_ix.Scenario` given its `url`.
@@ -145,6 +144,7 @@ _FROM_URL_REF = set()
 #     _FROM_URL_REF.add(s)
 #     _FROM_URL_REF.add(mp)
 #     return s
+
 
 def from_url(url: str) -> ixmp.TimeSeries:
     """Return a :class:`ixmp.TimeSeries` given its `url`."""
