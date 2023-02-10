@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Iterable, Optional, Union
 
 import pandas as pd
-from dask.core import literal
+from dask.core import quote
 from genno import Quantity
 from genno.compat.pyam.util import collapse as genno_collapse
 from iam_units import registry
@@ -189,7 +189,7 @@ def copy_ts(rep: Reporter, other: str, filters: Optional[dict]) -> Key:
     # times
     _id = f"{hash(other + repr(filters)):x}"
 
-    k1 = rep.add("from_url", f"scenario {_id}", literal(other))
+    k1 = rep.add("from_url", f"scenario {_id}", quote(other))
     k2 = rep.add("get_ts", f"ts data {_id}", k1, filters)
     return rep.add("store_ts", f"copy ts {_id}", "scenario", k2)
 
