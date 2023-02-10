@@ -12,6 +12,7 @@ from ixmp.reporting import Quantity
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "from_url",
     "gwp_factors",
     "make_output_path",
     "model_periods",
@@ -108,6 +109,16 @@ def remove_ts(
 
     if dump:
         raise NotImplementedError
+
+
+def from_url(url: str) -> ixmp.TimeSeries:
+    """Return a :class:`ixmp.TimeSeries` (or :class:`ixmp.Scenario`) given its `url`.
+
+    .. todo:: move upstream to :mod:`ixmp.reporting`.
+    """
+    s, mp = ixmp.TimeSeries.from_url(url)
+    assert s is not None
+    return s
 
 
 # commented: currently unused
