@@ -320,7 +320,7 @@ def callback(rep: Reporter, context: Context) -> None:
     register("model.material")
     register("model.transport")
 
-    rep.add("remove_ts", "remove ts data", "scenario", "config", "y0")
+    rep.add("remove_ts", "navigate remove ts", "scenario", "config", "y0")
     rep.add(
         "navigate all",
         [
