@@ -2,6 +2,7 @@ import logging
 import sys
 from copy import deepcopy
 from functools import partial
+from operator import itemgetter
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
 from warnings import warn
@@ -401,9 +402,17 @@ def prepare_reporter(
     # Pass configuration to the reporter
     rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
 
+    # TODO perhaps move all default reporting computations for message_ix_models to a
+    #      `CALLBACK` that is included by default. This would avoid defining any
+    #      tasks in this function.
     # Add mappings for conversions to IAMC data structures
     add_replacements("c", get_codes("commodity"))
     add_replacements("t", get_codes("technology"))
+
+    # Ensure "y::model" and "y0" are present
+    # TODO move upstream, e.g. to message_ix
+    rep.add("model_periods", "y::model", "y", "cat_year")
+    rep.add("y0", itemgetter(0), "y::model")
 
     # Apply callbacks for other modules which define additional reporting computations
     for callback in CALLBACKS:
