@@ -1,7 +1,7 @@
 """Atomic reporting computations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import ixmp
 import pandas as pd
@@ -13,12 +13,30 @@ log = logging.getLogger(__name__)
 
 __all__ = [
     "from_url",
+    "get_ts",
     "gwp_factors",
     "make_output_path",
     "model_periods",
     "remove_ts",
     "share_curtailment",
 ]
+
+
+def get_ts(
+    scenario: ixmp.Scenario,
+    filters: Optional[dict] = None,
+    iamc: bool = False,
+    subannual: Union[bool, str] = "auto",
+):
+    """Retrieve timeseries data from `scenario`.
+
+    Corresponds to :meth:`ixmp.Scenario.timeseries`.
+
+    .. todo:: move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
+    """
+    filters = filters or dict()
+
+    return scenario.timeseries(iamc=iamc, subannual=subannual, **filters)
 
 
 def gwp_factors():
