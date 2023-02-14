@@ -227,15 +227,17 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
         node_loc=base["n"],  # Other dimensions
         technology=base["t"],
         year_vtg=base["y"],
-        year_act=base["y"],
         **common,
     )
 
     # Assign input commodity and level according to the technology
     result = {}
-    result["input"] = input_commodity_level(
-        context, i_o["input"], default_level="final"
-    ).pipe(same_node)
+    result["input"] = (
+        input_commodity_level(context, i_o["input"], default_level="final")
+        .pipe(broadcast, year_act=info.Y)
+        .query("year_act >= year_vtg")
+        .pipe(same_node)
+    )
 
     # Convert units to the model's preferred input units for each commodity
     @lru_cache
@@ -260,6 +262,8 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     result["output"] = (
         i_o["output"]
         .assign(commodity=lambda df: "transport vehicle " + df["technology"])
+        .pipe(broadcast, year_act=info.Y)
+        .query("year_act >= year_vtg")
         .pipe(same_node)
     )
 
@@ -272,7 +276,7 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
         )
     )
 
-    # Transform costs: rename "node" to "node_loc", "year" to "year_vtg" and "year_act"
+    # Transform costs
     for name in "fix_cost", "inv_cost":
         base = data[name].to_series().reset_index()
         result[name] = make_df(
@@ -280,10 +284,14 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
             node_loc=base["n"],
             technology=base["t"],
             year_vtg=base["y"],
-            year_act=base["y"],
             value=base[name],
             unit=f"{data[name].units:~}",
         )
+    result["fix_cost"] = (
+        result["fix_cost"]
+        .pipe(broadcast, year_act=info.Y)
+        .query("year_act >= year_vtg")
+    )
 
     # Compute CO₂ emissions factors
     result.update(ef_for_input(context, result["input"], species="CO2"))
