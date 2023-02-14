@@ -204,6 +204,7 @@ unit:
     MUSD / v: 10⁶ USD per vehicle
     # for US-TIMES MA3T
     USD / vehicle: USD per vehicle
+    USD_2010 / v: USD per vehicle
 
     # Emissions
     kt / Gv / km: kilotonnes emitted per 10⁹ vehicle kilometres
