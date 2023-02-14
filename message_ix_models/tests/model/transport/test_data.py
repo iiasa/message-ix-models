@@ -1,21 +1,14 @@
-from typing import Mapping, Union
-
 import numpy as np
 import pandas as pd
-import pint
 import pytest
 from genno import Quantity
 from iam_units import registry
 from message_ix import make_df
-from message_ix_models import testing
-from message_ix_models.model import bare
 from message_ix_models.util import broadcast, same_node
 from pandas.testing import assert_series_equal
-from pytest import param
 
-from message_data.model.transport import Config, DataSourceConfig, build, computations
+from message_data.model.transport import Config, DataSourceConfig, computations
 from message_data.model.transport import data as data_module
-from message_data.model.transport.data import ldv
 from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.data.emissions import ef_for_input, get_emissions_data
 from message_data.model.transport.data.freight import get_freight_data
@@ -23,24 +16,9 @@ from message_data.model.transport.data.ikarus import get_ikarus_data
 from message_data.model.transport.data.non_ldv import get_non_ldv_data
 from message_data.model.transport.data.roadmap import get_roadmap_data
 from message_data.model.transport.utils import path_fallback
+from message_data.testing import assert_units
+from message_data.tests.model.transport import configure_build
 from message_data.tools.gfei_fuel_economy import get_gfei_data
-
-
-def assert_units(
-    df: pd.DataFrame, expected: Union[str, dict, pint.Unit, pint.Quantity]
-):
-    """Assert that `df` has the unique, `expected` units."""
-    all_units = df["unit"].unique()
-    assert 1 == len(all_units), f"Non-unique {all_units = }"
-
-    # Convert the unique value to the same class as `expected`
-    if isinstance(expected, pint.Quantity):
-        assert expected == expected.__class__(1.0, all_units[0])
-    elif isinstance(expected, Mapping):
-        # Compare dimensionality of the units, rather than exact match
-        assert expected == registry.Quantity(all_units[0] or "0").dimensionality
-    else:
-        assert expected == expected.__class__(all_units[0])
 
 
 def test_advance_fv():
@@ -112,19 +90,6 @@ def test_ef_for_input(test_context):
     # print(ra.to_string())
 
     # TODO test specific values
-
-
-def configure_build(context, regions, years):
-    context.update(regions=regions, years=years)
-
-    Config.from_context(context)
-
-    # Information about the corresponding base model
-    info = bare.get_spec(context)["add"]
-    context["transport build info"] = info
-    context["transport spec"] = build.get_spec(context)
-
-    return info
 
 
 @pytest.mark.parametrize("years", ["A", "B"])
@@ -225,108 +190,6 @@ def test_get_emissions_data(test_context, source, rows, regions):
     data = get_emissions_data(test_context)
     assert {"emission_factor"} == set(data.keys())
     assert rows == len(data["emission_factor"])
-
-
-@pytest.mark.parametrize(
-    "source, regions, years",
-    [
-        param(
-            None,
-            "R11",
-            "A",
-            marks=pytest.mark.xfail(
-                raises=AssertionError, reason="Returns extra var_cost data"
-            ),
-        ),
-        ("US-TIMES MA3T", "R11", "A"),
-        ("US-TIMES MA3T", "R11", "B"),
-        ("US-TIMES MA3T", "R12", "B"),
-        ("US-TIMES MA3T", "R14", "A"),
-        # Not implemented
-        param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
-    ],
-)
-def test_get_ldv_data(test_context, source, regions, years):
-    # Info about the corresponding RES
-    ctx = test_context
-
-    info = configure_build(ctx, regions, years)
-    ctx.transport.data_source.LDV = source
-
-    # Method runs without error
-
-    data = ldv.get_ldv_data(ctx)
-
-    # Data are returned for the following parameters
-    assert {
-        "capacity_factor",
-        "emission_factor",
-        "fix_cost",
-        "input",
-        "inv_cost",
-        "output",
-        "relation_activity",
-        "technical_lifetime",
-    } == set(data.keys())
-
-    # Input data is returned and has the correct units
-    assert_units(data["input"], registry("1.0 GWa / (Gv km)"))
-
-    # Output data is returned and has the correct units
-    assert_units(data["output"], registry.Unit("Gv km"))
-
-    # Historical periods from 2010 + all model periods
-    i = info.set["year"].index(2010)
-    exp = info.set["year"][i:]
-
-    # Remaining data have the correct size
-    for par_name, df in data.items():
-        if "year_vtg" not in df.columns:
-            continue
-
-        # Data covers these periods
-        assert exp == sorted(df["year_vtg"].unique())
-
-        # Total length of data: # of regions × (11 technology × # of periods; plus 1
-        # technology (historical ICE) for only 2010)
-        assert len(info.N[1:]) * ((11 * len(exp)) + 1) == len(df)
-
-
-@pytest.mark.parametrize(
-    "source, regions, years",
-    [
-        (None, "R11", "A"),
-        ("US-TIMES MA3T", "R11", "A"),
-        ("US-TIMES MA3T", "R11", "B"),
-        ("US-TIMES MA3T", "R12", "B"),
-        ("US-TIMES MA3T", "R14", "A"),
-        # Not implemented
-        param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
-    ],
-)
-def test_ldv_constraint_data(test_context, source, regions, years):
-    # Info about the corresponding RES
-    ctx = test_context
-
-    info = configure_build(ctx, regions, years)
-    ctx.transport.data_source.LDV = source
-
-    # Method runs without error
-
-    data = ldv.constraint_data(ctx)
-
-    # Data are returned for the following parameters
-    assert {"growth_activity_lo", "growth_activity_up"} == set(data.keys())
-
-    for bound in ("lo", "up"):
-        # Constraint data are returned. Use .pop() to exclude from the next assertions
-        df = data.pop(f"growth_activity_{bound}")
-
-        # Usage technologies are included
-        assert "ELC_100 usage by URLMM" in df["technology"].unique()
-
-        # Data covers all periods except the first
-        assert info.Y[1:] == sorted(df["year_act"].unique())
 
 
 @pytest.mark.parametrize(
