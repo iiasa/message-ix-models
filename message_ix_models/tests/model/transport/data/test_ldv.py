@@ -62,6 +62,11 @@ def test_get_ldv_data(test_context, source, regions, years):
     # Output data is returned and has the correct units
     assert_units(data["output"], registry.Unit("Gv km"))
 
+    # Data are generated for multiple year_act for each year_vtg of a particular tech
+    for name in "fix_cost", "input", "output":
+        tmp = data[name].query("technology == 'ELC_100' and year_vtg == 2050")
+        assert 1 < len(tmp["year_act"].unique()), tmp
+
     # Output data is returned and has the correct units
     for name in ("fix_cost", "inv_cost"):
         assert_units(data[name], registry.Unit("USD_2010 / vehicle"))
