@@ -3,11 +3,11 @@ import logging
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
-from typing import Dict, List, Mapping
+from typing import Any, Dict, List, Mapping, Sequence, Union
 
 import pandas as pd
 from genno import computations
-from iam_units import registry
+from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix import make_df
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes, get_region_codes
@@ -63,15 +63,15 @@ FILE = "ldv-cost-efficiency.xlsx"
 
 #: (parameter name, cell range, units) for data to be read from multiple sheets in the
 #: :data:`FILE`.
-TABLES = [
-    ("efficiency", slice("B3", "Q15"), "Gv km / (GW year)"),
-    ("inv_cost", slice("B33", "Q45"), "USD / vehicle"),
-    ("fix_cost", slice("B62", "Q74"), "USD / vehicle"),
-]
+TABLES = {
+    "efficiency": (slice("B3", "Q15"), "Gv km / (GW year)"),
+    "inv_cost": (slice("B33", "Q45"), "USD / vehicle"),
+    "fix_cost": (slice("B62", "Q74"), "USD / vehicle"),
+}
 
 
 @cached
-def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
+def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, Quantity]:
     """Read the US-TIMES MA3T data from :data:`FILE`.
 
     No transformation is performed.
@@ -98,7 +98,7 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
         # NB fix_cost varies by distance driven, thus this is the value for average
         #    driving.
         # TODO calculate the values for modest and frequent driving
-        for par_name, cells, unit in TABLES:
+        for par_name, (cells, _) in TABLES.items():
             df = pd.DataFrame(list(sheet[cells])).applymap(lambda c: c.value)
 
             # - Make the first row the headers.
@@ -112,16 +112,26 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
                 df.iloc[1:, :]
                 .set_axis(df.loc[0, :], axis=1)
                 .drop(["Technology", "Description"], axis=1)
-                .rename(columns={"MESSAGE name": "technology"})
-                .melt(id_vars=["technology"], var_name="year")
-                .astype({"year": int})
-                .assign(node=node, unit=unit)
+                .rename(columns={"MESSAGE name": "t"})
+                .melt(id_vars=["t"], var_name="y")
+                .astype({"y": int})
+                .assign(n=node)
                 .dropna(subset=["value"])
             )
 
+    # Combine data frames, convert to Quantity
+    qty = {}
+    for par_name, dfs in data.items():
+        qty[par_name] = Quantity(
+            pd.concat(dfs, ignore_index=True).set_index(["n", "t", "y"]),
+            units=TABLES[par_name][1],
+            name=par_name,
+        )
+
+    return qty
 
 
-def read_USTIMES_MA3T_2(nodes: Any, subdir=None):
+def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, Quantity]:
     """Same as :func:`read_USTIMES_MA3T`, but from CSV files."""
     result = {}
     for name in "fix_cost", "efficiency", "inv_cost":
