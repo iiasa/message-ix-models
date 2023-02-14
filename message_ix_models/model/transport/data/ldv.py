@@ -119,8 +119,20 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, pd.DataFrame]:
                 .dropna(subset=["value"])
             )
 
-    # Combine data frames
-    return {par: pd.concat(dfs, ignore_index=True) for par, dfs in data.items()}
+
+
+def read_USTIMES_MA3T_2(nodes: Any, subdir=None):
+    """Same as :func:`read_USTIMES_MA3T`, but from CSV files."""
+    result = {}
+    for name in "fix_cost", "efficiency", "inv_cost":
+        result[name] = computations.load_file(
+            path=private_data_path("transport", subdir or "", f"ldv-{name}.csv"),
+            dims=RENAME_DIMS,
+            name=name,  # FIXME this appears to not pass through ffill()
+        ).ffill("y")
+        result[name].name = name
+
+    return result
 
 
 def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
