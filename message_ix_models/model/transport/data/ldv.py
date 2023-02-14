@@ -19,7 +19,6 @@ from message_ix_models.util import (
     cached,
     check_support,
     convert_units,
-    ffill,
     make_io,
     make_matched_dfs,
     merge_data,
@@ -178,12 +177,12 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
 
     if context.model.regions in ("R12", "R14"):
         # Read data using the R11 nodes
-        read_nodes = get_region_codes("R11")
+        read_nodes: Sequence[Union[str, Code]] = get_region_codes("R11")
     else:
-        read_nodes = info.N[1:]
+        read_nodes = nodes_ex_world(info.N)
 
-    # Retrieve the data from the spreadsheet
-    data = read_USTIMES_MA3T(read_nodes, subdir="R11")
+    # Retrieve the input data
+    data = read_USTIMES_MA3T_2(read_nodes, subdir="R11")
 
     # Convert R11 to R12 or R14 data, as necessary
     if context.model.regions == "R12":
@@ -192,99 +191,104 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
         data = adapt_R11_R14(data)
 
     # List of years to include
-    years = list(filter(lambda y: y >= 2010, info.set["year"]))
+    target_years = list(filter(lambda y: y >= 2010, info.set["year"]))
+    for name, qty in data.items():
+        # Select only the periods appearing in the target scenario
+        tmp = qty.sel(y=target_years)
 
-    for par, df in data.items():
-        # Dimension to forward fill along
-        col = next(filter(lambda c: c in "year_vtg year", df.columns))
+        # Fill forward over uncovered periods in the model horizon
+        # TODO move this operation upstream
+        years = tmp.coords["y"].to_index()
+        missing = sorted(set(target_years) - set(years))
 
-        # - Select only the periods appearing in the target scenario.
-        # - Forward-fill over uncovered periods in the model horizon; copy year_vtg
-        #   values into year_act.
-        data[par] = df.query(f"year in {repr(years)}").pipe(
-            ffill,
-            col,
-            info.Y,
-            expr="year_act = year_vtg" if col == "year_vtg" else None,
-        )
+        log.info(f"{name}: fill from {years[-1]} → {missing}")
+        quantities = [tmp] + [
+            computations.relabel(tmp.sel(y=years[-1:]), y={years[-1]: m})
+            for m in missing
+        ]
+        data[name] = computations.concat(*quantities)
 
     # Convert 'efficiency' into 'input' and 'output' parameter data
 
     # Reciprocal units and value:
-    base = data.pop("efficiency")
-    base_units = base["unit"].unique()
-    assert 1 == len(base_units)
-    src_units = (1.0 / registry.Unit(base_units[0])).units
+    name = "efficiency"
+    qty = data.pop(name)
+    base = qty.to_series().reset_index()
+    src_units = (1.0 / qty.units).units
+
+    common = dict(mode="all", time="year", time_dest="year", time_origin="year")
 
     i_o = make_io(
         src=(None, None, f"{src_units:~}"),
         dest=(None, "useful", "Gv km"),
         # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
-        efficiency=1.0 / base["value"],
+        efficiency=1.0 / base[name],
         on="input",
-        node_loc=base["node"],  # Other dimensions
-        node_origin=base["node"],
-        node_dest=base["node"],
-        technology=base["technology"],
-        year_vtg=base["year"],
-        year_act=base["year"],
-        mode="all",
-        time="year",  # No subannual detail
-        time_origin="year",
-        time_dest="year",
+        node_loc=base["n"],  # Other dimensions
+        technology=base["t"],
+        year_vtg=base["y"],
+        year_act=base["y"],
+        **common,
     )
 
     # Assign input commodity and level according to the technology
-    data["input"] = input_commodity_level(context, i_o["input"], default_level="final")
+    result = {}
+    result["input"] = input_commodity_level(
+        context, i_o["input"], default_level="final"
+    ).pipe(same_node)
 
     # Convert units to the model's preferred input units for each commodity
+    @lru_cache
+    def _io_units(t, c, l):  # noqa: E741
+        return all_info.io_units(t, c, l)
+
     target_units = (
-        data["input"]
+        result["input"]
         .apply(
-            lambda row: all_info.io_units(
-                row["technology"], row["commodity"], row["level"]
-            ),
+            lambda row: _io_units(row["technology"], row["commodity"], row["level"]),
             axis=1,
         )
         .unique()
     )
     assert 1 == len(target_units)
 
-    data["input"]["value"] = convert_units(
-        data["input"]["value"], {"value": (1.0, src_units, target_units[0])}
+    result["input"]["value"] = convert_units(
+        result["input"]["value"], {"value": (1.0, src_units, target_units[0])}
     )
 
     # Assign output commodity based on the technology name
-    data["output"] = i_o["output"].assign(
-        commodity=lambda df: "transport vehicle " + df["technology"]
+    result["output"] = (
+        i_o["output"]
+        .assign(commodity=lambda df: "transport vehicle " + df["technology"])
+        .pipe(same_node)
     )
 
     # Add capacity factors and technical lifetimes
-    data.update(
+    result.update(
         make_matched_dfs(
-            base=data["output"],
+            base=result["output"],
             capacity_factor=1.0,
             technical_lifetime=technical_lifetime,
         )
     )
 
     # Transform costs: rename "node" to "node_loc", "year" to "year_vtg" and "year_act"
-    for par in "fix_cost", "inv_cost":
-        base = data.pop(par)
-        data[par] = make_df(
-            par,
-            node_loc=base["node"],
-            technology=base["technology"],
-            year_vtg=base["year"],
-            year_act=base["year"],
-            value=base["value"],
-            unit=base["unit"],
+    for name in "fix_cost", "inv_cost":
+        base = data[name].to_series().reset_index()
+        result[name] = make_df(
+            name,
+            node_loc=base["n"],
+            technology=base["t"],
+            year_vtg=base["y"],
+            year_act=base["y"],
+            value=base[name],
+            unit=f"{data[name].units:~}",
         )
 
     # Compute CO₂ emissions factors
-    data.update(ef_for_input(context, data["input"], species="CO2"))
+    result.update(ef_for_input(context, result["input"], species="CO2"))
 
-    return data
+    return result
 
 
 def get_dummy(context) -> Dict[str, pd.DataFrame]:
