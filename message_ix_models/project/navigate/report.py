@@ -236,19 +236,12 @@ def gen_config(
     # Region name mapping
     nodes = get_codes(f"node/{node_cl}")
     nodes = nodes[nodes.index(Code(id="World"))].child
-    if context.navigate_dsd == "navigate":
-        # navigate: map e.g. "R12_AFR" to "AFR". This is currently redundant, because
-        # the legacy reporting (or its interaction with ixmp's region-alias feature and
-        # the particular metadata in the ixmp-dev database) appears to perform this
-        # transformation before this point.
-        cfg.name_map["Region"] = {
-            n: _region(node_cl, n) for n in map(str, nodes_ex_world(nodes))
-        }
-    else:
-        # iiasa-ece: restore e.g. "AFR" produced by legacy reporting to "R12_AFR"
-        cfg.name_map["Region"] = {
-            _region(node_cl, n): n for n in map(str, nodes_ex_world(nodes))
-        }
+    # map e.g. "AFR" to "R12_AFR". The former are produced by legacy reporting and/or
+    # its interaction with the IIASA ECE Oracle database and particular region aliases
+    # configured through ixmp that exist only in that database.
+    cfg.name_map["Region"] = {
+        _region(node_cl, n): n for n in map(str, nodes_ex_world(nodes))
+    }
 
     log.debug(
         f"Region code mapping for target DSD {context.navigate_dsd!r}:\n"
