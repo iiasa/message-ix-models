@@ -64,6 +64,14 @@ The process:
   It uses bash shell scripts that may not run in the same way on other systems.
 - May need modification depending on the target code.
 
+Requirements:
+
+- Install :program:`git lfs`.
+- Install :program:`git-filter-repo`.
+  This is a Python package, so e.g.::
+
+    $ pip install git-filter-repo
+
 1. Create a temporary directory::
 
    $ mkdir tmp
@@ -191,7 +199,7 @@ The process:
    The pull request is partly to help you diagnose whether the above steps produced a reasonable result.
    The branch can also be inspected by others, e.g. to compare it to the source in :mod:`.message_data`.
 
-12. Clean up.
+9.  Clean up.
 
     Push further changes to the branch to:
 
@@ -221,7 +229,7 @@ The process:
       - Add tests, or exclude files from test coverage.
       - Lint files, or exclude files from linting.
 
-13. Invite review of your PR.
+10. Invite review of your PR.
 
 At any time:
 
