@@ -5,6 +5,7 @@ from typing import Any, List, Optional, Set, Union
 
 import ixmp
 import pandas as pd
+from genno.computations import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
@@ -20,6 +21,19 @@ __all__ = [
     "remove_ts",
     "share_curtailment",
 ]
+
+
+def compound_growth(qty: Quantity, dim: str) -> Quantity:
+    """Compute compound growth along `dim` of `qty`."""
+    # Compute intervals along `dim`
+    # The value at index d is the duration between d and the next index d+1
+    c = qty.coords[dim]
+    dur = (c - c.shift({dim: 1})).fillna(0).shift({dim: -1})
+    # - Raise the values of `qty` to the power of the duration.
+    # - Compute cumulative product along `dim` from the first index.
+    # - Shift, so the value at index d is the growth relative to the prior index d-1
+    # - Fill in 1.0 for the first index.
+    return pow(qty, Quantity(dur)).cumprod(dim).shift({dim: 1}).fillna(1.0)
 
 
 def get_ts(
