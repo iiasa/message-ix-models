@@ -23,10 +23,11 @@ from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools import advance
-from message_ix_models.util import broadcast, nodes_ex_world
+from message_ix_models.util import broadcast, eval_anno, nodes_ex_world
 
 from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.utils import path_fallback
+from message_data.reporting.computations import compound_growth
 from message_data.reporting.util import as_quantity
 from message_data.tools import iea_eei
 
@@ -255,6 +256,52 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
         .set_index(["n", "y"])["value"],
         units="",
     )
+
+
+def factor_input(y: List[int], t: List[str], t_agg: Dict, config: dict) -> Quantity:
+    """Scaling factor for ``input`` (energy intensity of activity).
+
+    If :attr:`.Config.flags` is :data:`ScenarioFlags.TEC`, the value declines from 1.0
+    at the first `y` to 0.865 (reduction of 13.5%) at y=2050, then constant thereafter.
+
+    Otherwise, the value is 1.0 for every (`t`, `y`).
+    """
+
+    def _not_disutility(tech):
+        return eval_anno(tech, "is-disutility") is None
+
+    techs = list(filter(_not_disutility, t))
+
+    # Empty data frame
+    df = pd.DataFrame(columns=pd.Index(techs, name="t"), index=pd.Index(y, name="y"))
+
+    # Default value
+    df.iloc[0, :] = 1.0
+
+    # NAVIGATE T3.5 "tec" demand-side scenario
+    if ScenarioFlags.TEC & config["transport"].flags:
+        years = list(filter(lambda y: y < 2050, y))
+
+        # Prepare a dictionary mapping technologies to their respective EI improvement
+        # rates
+        t_groups = t_agg["t"]
+        value = {}
+        for group, v in {
+            "2W": 1.5,
+            "BUS": 1.5,
+            "LDV": 1.5,
+            "freight truck": 2.0,
+            "AIR": 1.3,
+        }.items():
+            value.update({t: 1 - (v / 100.0) for t in t_groups[group]})
+
+        # Apply the rates, or 1.0 if none set for a particular technology
+        for t_ in map(str, techs):
+            df.loc[years, t_] = value.get(t_, 1.0)
+
+    qty = Quantity(df.fillna(1.0).reset_index().set_index("y").stack())
+
+    return compound_growth(qty, "y")
 
 
 def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quantity:
