@@ -340,7 +340,7 @@ class Config(ConfigHelper):
         context: Context,
         scenario: Optional[message_ix.Scenario] = None,
         options: Optional[Dict] = None,
-    ):
+    ) -> "Config":
         """Configure `context` for building MESSAGEix-Transport.
 
         1. If `scenario` is given, ``context.model.regions`` is updated to match. See
@@ -411,6 +411,8 @@ class Config(ConfigHelper):
         context["transport"] = replace(
             config, **options, data_source=config.data_source.replace(**ds_options)
         )
+
+        return context["transport"]
 
     def set_futures_scenario(self, value: Optional[str]):
         """Update :attr:`flags` from a string indicating a Transport Futures scenario.
