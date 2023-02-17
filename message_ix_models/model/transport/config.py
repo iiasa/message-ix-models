@@ -329,6 +329,8 @@ class Config(ConfigHelper):
 
     def __post_init__(self, futures_scenario, navigate_scenario):
         """Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`."""
+        if self.flags != ScenarioFlags.DEFAULT:
+            return
         self.set_futures_scenario(futures_scenario)
         self.set_navigate_scenario(navigate_scenario)
 
