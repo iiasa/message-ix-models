@@ -69,6 +69,11 @@ def get_spec(
     # NB this value is currently ignored by .build.apply_spec(). See #45.
     s.add.set["unit"].append("")
 
+    # Unrelated annotations in the template
+    other_anno = list(
+        filter(lambda a: a.id not in ("input", "output"), template.annotations)
+    )
+
     # Add conversion technologies
     for t, g in product(technologies, groups):
         # String formatting arguments
@@ -81,13 +86,15 @@ def get_spec(
         }
 
         # - Format the ID string from the template
-        # - Copy the "output" annotation without modification
+        # - Create new "input" and "output" annotations
+        # - Copy other annotations unmodified
         t_code = Code(
             id=template.id.format(**fmt),
             annotations=[
                 Annotation(id="input", text=repr(input)),
                 Annotation(id="output", text=repr(output)),
-            ],
+            ]
+            + [a.copy() for a in other_anno],
         )
 
         # "commodity" set elements to add
