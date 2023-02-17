@@ -67,6 +67,7 @@ def add_par_data(
     strip_par_data
     """
     # TODO optionally add units automatically
+    # TODO allow units column entries to be pint.Unit objects
 
     total = 0
 
