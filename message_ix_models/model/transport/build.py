@@ -37,6 +37,7 @@ TEMPLATE = Code(
                 dict(commodity="transport pax {group}", level="useful", unit="km")
             ),
         ),
+        Annotation(id="is-disutility", text=repr(True)),
     ],
 )
 
