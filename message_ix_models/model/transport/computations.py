@@ -225,16 +225,23 @@ def dummy_prices(gdp: Quantity) -> Quantity:
 
 
 def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
-    """Scaling factor for freight activity."""
+    """Scaling factor for freight activity.
+
+    If :attr:`.Config.flags` is :data:`ScenarioFlags.ACT`, the value declines from 1.0
+    at the first `y` to 0.865 (reduction of 13.5%) at y=2050, then constant thereafter.
+
+    Otherwise, the value is 1.0 for every (`n`, `y`).
+    """
     # Empty data frame
     df = pd.DataFrame(columns=["value"], index=pd.Index(y, name="y"))
 
+    # Default value
     df.iloc[0, :] = 1.0
 
+    # NAVIGATE T3.5 "act" demand-side scenario
     if ScenarioFlags.ACT & config["transport"].flags:
-        # NAVIGATE T3.5 "act" demand-side scenario
         years = list(filter(lambda y: y <= 2050, y))
-        df.iloc[: len(years), 0] = np.interp(years, [y[0], 2050], [1.0, 0.865])
+        df.loc[years, "value"] = np.interp(years, [y[0], 2050], [1.0, 0.865])
 
     # - Fill all values forward from the latest.
     # - Convert to long format.
@@ -257,6 +264,8 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quanti
     Task 3.5, demand-side scenario "act"), the value of 0.8 is specified for LDV, 2050,
     and all regions. This function implements this as a linear decrease between the
     first model period (currently 2020) and that point.
+
+    Otherwise, the value is 1.0 for every (`n`, `t`, `y`).
     """
     # Empty data frame
     df = pd.DataFrame(columns=t, index=pd.Index(y, name="y"))
@@ -268,7 +277,7 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quanti
     if ScenarioFlags.ACT & config["transport"].flags:
         # NAVIGATE T3.5 "act" demand-side scenario
         years = list(filter(lambda y: y <= 2050, y))
-        df["LDV"].iloc[: len(years)] = np.interp(years, [y[0], 2050], [1.0, 0.8])
+        df.loc[years, "LDV"] = np.interp(years, [y[0], 2050], [1.0, 0.8])
 
     # - Fill all values forward from the latest.
     # - Convert to long format.
