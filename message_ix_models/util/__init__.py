@@ -12,6 +12,8 @@ from .cache import cached
 from .common import (
     MESSAGE_DATA_PATH,
     MESSAGE_MODELS_PATH,
+    Adapter,
+    MappingAdapter,
     load_package_data,
     load_private_data,
     local_data_path,
@@ -25,6 +27,8 @@ from .sdmx import CodeLike, as_codes, eval_anno
 __all__ = [
     "MESSAGE_DATA_PATH",
     "MESSAGE_MODELS_PATH",
+    "Adapter",
+    "MappingAdapter",
     "adapt_R11_R12",
     "adapt_R11_R14",
     "as_codes",
@@ -466,8 +470,8 @@ def merge_data(base, *others):
 
 
 def same_node(df: pd.DataFrame) -> pd.DataFrame:
-    """Fill 'node_origin'/'node_dest' in `df` from 'node_loc'."""
-    cols = list(set(df.columns) & {"node_origin", "node_dest"})
+    """Fill 'node_{dest,origin,rel}' in `df` from 'node_loc'."""
+    cols = list(set(df.columns) & {"node_origin", "node_dest", "node_rel"})
     return df.assign(**{c: copy_column("node_loc") for c in cols})
 
 
