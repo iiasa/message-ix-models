@@ -37,7 +37,7 @@ from message_data.model.transport.utils import input_commodity_level, path_fallb
 log = logging.getLogger(__name__)
 
 
-def prepare(c: Computer, context):
+def prepare_computer(c: Computer):
     """Set up `c` to compute techno-economic data for light-duty-vehicle technologies.
 
     Results in a key ``ldv::ixmp`` that triggers computation of :mod:`ixmp`-ready
@@ -49,7 +49,7 @@ def prepare(c: Computer, context):
 
     In both cases, :func:`get_constraints` is used to generate constraints.
     """
-    source = context.transport.data_source.LDV
+    source = c.graph["context"].transport.data_source.LDV
 
     # Add all the following computations, even if they will not be used
 
@@ -88,7 +88,22 @@ def prepare(c: Computer, context):
     if final is None:
         raise ValueError(f"invalid source for non-LDV data: {source}")
 
-    return c.add("ldv::ixmp", *final)
+    keys = [
+        c.add("ldv tech::ixmp", *final),
+        c.add("ldv usage::ixmp", usage_data, "context"),
+        c.add("ldv constraints::ixmp", constraint_data, "context"),
+    ]
+
+    # Slightly modified from message_ix_models.util
+    # TODO move upstream or merge functionality
+    def merge_data(*others):
+        base = dict()
+        for other in others:
+            for par, df in other.items():
+                base[par] = pd.concat([base.get(par, None), df])
+        return base
+
+    return c.add("transport ldv::ixmp", merge_data, *keys)
 
 
 #: Input file containing structured data about LDV technologies.
