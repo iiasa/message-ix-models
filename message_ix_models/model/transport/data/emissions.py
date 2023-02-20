@@ -46,6 +46,17 @@ EI_TEMP = {
 }
 
 
+@lru_cache
+def _ef_cached(commodity, species, units_in, units_out) -> pd.Series:
+    # Product of the input efficiency [energy / activity units] and emissions
+    # intensity for the input commodity [mass / energy] → [mass / activity units]
+    result = (
+        registry.Quantity(1.0, units_in)
+        * registry(EI_TEMP.get((species, commodity), "0 g / J"))
+    ).to(units_out)
+    return result.magnitude, f"{result.units:~}"
+
+
 def ef_for_input(
     context: Context,
     input_data: pd.DataFrame,
@@ -54,36 +65,29 @@ def ef_for_input(
 ) -> Dict[str, pd.DataFrame]:
     """Calculate emissions factors given data for the ``input`` parameter."""
 
-    # Helper methods for pd.DataFrame.apply(). Since pd.Series is not hashable, cannot
-    # apply lru_cache() here
-    def _ef0(row: pd.Series) -> pd.Series:
-        return _ef1(row["commodity"], row["value"], row["unit"])
-
-    @lru_cache
-    def _ef1(commodity, value, unit) -> pd.Series:
-        # Product of the input efficiency [energy / activity units] and emissions
-        # intensity for the input commodity [mass / energy] → [mass / activity units]
-        result = (
-            registry.Quantity(value, unit)
-            * registry(EI_TEMP.get((species, commodity), "0 g / J"))
-        ).to(units_out)
-        return pd.Series(dict(value=result.magnitude, unit=f"{result.units:~}"))
-
-    # Generate emissions_factor:
-    # - Fill `species` as the "emissions" label.
-    # - Discard the "value" and "unit" passed through make_df() from `input_data`.
-    # - Concatenate column with the retrieved
-    data = dict(
-        emission_factor=pd.concat(
-            [
-                make_df("emission_factor", **input_data, emission=species).drop(
-                    ["value", "unit"], axis=1
-                ),
-                input_data.apply(_ef0, axis=1),
-            ],
-            axis=1,
+    # Since pd.DataFrame is not hashable, cannot apply lru_cache() here…
+    def _ef(df: pd.DataFrame) -> pd.DataFrame:
+        # This call is cached
+        ef, unit = _ef_cached(
+            df["commodity"].iloc[0], species, df["unit"].iloc[0], units_out
         )
+        return df.assign(_ef=ef, unit=unit)
+
+    # Generate emissions_factor data
+    # - Create a message_ix-ready data frame; fill `species` as the "emissions" label.
+    # - Add the input commodity.
+    # - Group by commodity and (input) unit.
+    # - Fill the "ef" column with appropriate values and replace "unit".
+    # - Compute new value.
+    df = (
+        make_df("emission_factor", **input_data, emission=species)
+        .assign(commodity=input_data["commodity"])
+        .groupby(["commodity", "unit"], group_keys=False)
+        .apply(_ef)
+        .eval("value = value * _ef")
+        .drop("_ef", axis=1)
     )
+    result = dict(emission_factor=df)
 
     # Emissions intensity values excerpted from existing scenarios
     ei = get_intensity(context).sel(emission=species, drop=True)
@@ -123,6 +127,6 @@ def ef_for_input(
             )
         )
         name = "relation_activity"
-        data[name] = make_df(name, **tmp, relation=relation, unit=f"{ra.units:~}")
+        result[name] = make_df(name, **tmp, relation=relation, unit=f"{ra.units:~}")
 
-    return data
+    return result
