@@ -77,7 +77,7 @@ def from_scenario(scenario: message_ix.Scenario) -> Reporter:
     return rep
 
 
-def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> None:
+def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     """Add exogenous data to `c` that mocks data coming from an actual Scenario.
 
     The specific quantities added are:
@@ -95,6 +95,8 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
     --------
     :doc:`/reference/model/transport/data`
     """
+    context = c.graph["context"]
+
     # Data from files. Add 3 computations per quantity.
     for key, basename, units in (
         # (gdp_k, "gdp", "GUSD/year"),  # Handled below
