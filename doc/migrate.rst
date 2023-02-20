@@ -114,7 +114,7 @@ Requirements:
    - Uses :program:`git-filter-repo` (`docs <https://htmlpreview.github.io/?https://github.com/newren/git-filter-repo/blob/docs/html/git-filter-repo.html>`_) to:
 
      - Move code.
-       For example, all commits pertaining to a file like :file:`message_data/model/foo/bar.py` are preserved, except they they now appear to describe changes to :file:`message_ix_models/model/foo/bar.py`.
+       For example, all commits pertaining to a file like :file:`message_data/model/foo/bar.py` are preserved, except they now appear to describe changes to :file:`message_ix_models/model/foo/bar.py`.
      - Move data.
        Data is moved from the unpackaged, private, top-level :file:`data/` directory in :mod:`message_data`, to the packageable :file:`message_ix_models/data/` directory.
        There are further considerations; see :doc:`data/` and below.
