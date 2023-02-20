@@ -71,6 +71,6 @@ def convert_units(
     return series_of_pint_quantity(
         result.magnitude if store == "magnitude" else result.tolist(),
         index=s.index,
-        dtype=object,
+        dtype=(float if store == "magnitude" else object),
         name=s.name,
     )
