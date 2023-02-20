@@ -133,13 +133,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     c.add("PRICE_COMMODITY:n-c-y", (computations.dummy_prices, gdp_keys[0]), sums=True)
 
 
-def prepare_reporter(
-    rep: Computer,
-    context: Context,
-    configure: bool = True,
-    exogenous_data: bool = False,
-    info: Optional[ScenarioInfo] = None,
-) -> None:
+def prepare_computer(c: Computer) -> None:
     """Prepare `rep` for calculating transport demand.
 
     Parameters
@@ -147,25 +141,11 @@ def prepare_reporter(
     rep : Reporter
         Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
     """
-    if configure:
-        # Configure the reporter; keys are stored
-        rep.configure(transport=context.transport)
-
-    require_compat(rep)
-    update_config(rep, context)
-
-    # Always ensure structure is available
-    add_structure(rep, context, info or ScenarioInfo())
-
-    if exogenous_data:
-        assert info, "`info` arg required for prepare_reporter(…, exogenous_data=True)"
-        add_exogenous_data(rep, context, info)
-
     # Keys to refer to quantities
     # Existing keys, from Reporter.from_scenario() or add_structure() (above)
-    gdp = rep.full_key("GDP")
-    mer_to_ppp = rep.full_key("MERtoPPP")
-    price_full = cast(Key, rep.full_key("PRICE_COMMODITY")).drop("h", "l")
+    gdp = c.full_key("GDP")
+    mer_to_ppp = c.full_key("MERtoPPP")
+    price_full = cast(Key, c.full_key("PRICE_COMMODITY")).drop("h", "l")
 
     # Keys for new quantities
     pop_at = Key("population", "n y area_type".split())
@@ -209,7 +189,7 @@ def prepare_reporter(
         # Consumer group sizes
         # TODO ixmp is picky here when there is no separate argument to the callable;
         # fix.
-        (cg, groups.cg_shares, pop_at, quote(context)),
+        (cg, groups.cg_shares, pop_at, "context"),
         # PPP GDP, total and per capita
         ("product", gdp_ppp, gdp, mer_to_ppp),
         ("ratio", gdp_ppp_cap, gdp_ppp, pop),
