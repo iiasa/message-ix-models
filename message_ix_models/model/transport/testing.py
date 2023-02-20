@@ -23,6 +23,9 @@ MARK = (
     pytest.mark.skip(
         reason="Currently only possible with regions=R12 input data/assumptions",
     ),
+    lambda t: pytest.mark.xfail(
+        reason="Missing input data/assumptions for this node codelist", raises=t
+    ),
 )
 
 
