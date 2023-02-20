@@ -1,6 +1,7 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
 from functools import partial
+from operator import gt, le
 from typing import Dict, Hashable, List, Mapping, Optional
 
 import numpy as np
@@ -24,6 +25,7 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools import advance
 from message_ix_models.util import broadcast, eval_anno, nodes_ex_world
+from sdmx.model import Code
 
 from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.utils import path_fallback
@@ -258,13 +260,15 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
     )
 
 
-def factor_input(y: List[int], t: List[str], t_agg: Dict, config: dict) -> Quantity:
+def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quantity:
     """Scaling factor for ``input`` (energy intensity of activity).
 
     If :attr:`.Config.flags` is :data:`ScenarioFlags.TEC`, the value declines from 1.0
     at the first `y` to 0.865 (reduction of 13.5%) at y=2050, then constant thereafter.
 
     Otherwise, the value is 1.0 for every (`t`, `y`).
+
+    The return value includes ``y`` from 2010 onwards.
     """
 
     def _not_disutility(tech):
@@ -273,14 +277,17 @@ def factor_input(y: List[int], t: List[str], t_agg: Dict, config: dict) -> Quant
     techs = list(filter(_not_disutility, t))
 
     # Empty data frame
-    df = pd.DataFrame(columns=pd.Index(techs, name="t"), index=pd.Index(y, name="y"))
+    df = pd.DataFrame(
+        columns=pd.Index(techs, name="t"),
+        index=pd.Index(filter(partial(le, 2010), y), name="y"),
+    )
 
     # Default value
     df.iloc[0, :] = 1.0
 
     # NAVIGATE T3.5 "tec" demand-side scenario
     if ScenarioFlags.TEC & config["transport"].flags:
-        years = list(filter(lambda y: y < 2050, y))
+        years = list(filter(partial(gt, 2050), df.index))
 
         # Prepare a dictionary mapping technologies to their respective EI improvement
         # rates
