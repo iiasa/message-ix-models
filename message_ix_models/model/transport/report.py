@@ -46,16 +46,6 @@ def require_compat(c: Computer) -> None:
     c.require_compat("message_data.model.transport.computations")
 
 
-def update_config(c: Computer, context: Context) -> None:
-    config = c.graph["config"]
-    config.setdefault("regions", context.model.regions)
-    config["transport"] = context.transport
-    config.setdefault("data source", dict())
-    config["data source"].update(
-        {k: getattr(context.transport.data_source, k) for k in ("gdp", "population")}
-    )
-
-
 def _gen0(c: Computer, *keys) -> None:
     """Aggregate using groups of transport technologies."""
     for k1 in keys:
@@ -76,8 +66,11 @@ def _gen1(c: Computer, *keys) -> None:
 
 
 @genno.config.handles("MESSAGEix-Transport", iterate=False)
-def _handler(c: Reporter, info):
+def _handler(c: Computer, info):
     """Handle the ``MESSAGEix-Transport:`` config section."""
+    # Require modules with computations
+    require_compat(c)
+
     if info.get("filter", False):
         log.info("Filter out non-transport technologies")
 
@@ -89,6 +82,16 @@ def _handler(c: Reporter, info):
         # t_filter.update(spec.require.set["commodity"])
 
         c.set_filters(t=sorted(t_filter))
+
+    context = c.graph["context"]
+    config = c.graph["config"]
+    config.setdefault("regions", context.model.regions)
+    config["transport"] = context.transport
+    config.setdefault("data source", dict())
+    config["data source"].update(
+        {k: getattr(context.transport.data_source, k) for k in ("gdp", "population")}
+    )
+    config["output_dir"] = context.get_local_path()
 
 
 def callback(rep: Reporter, context: Context) -> None:
