@@ -9,11 +9,7 @@ from numpy.testing import assert_allclose
 from pytest import mark, param
 
 from message_data.model.transport import Config, computations
-from message_data.model.transport.report import (  # noqa: F401
-    PLOTS,
-    callback,
-    configure_legacy_reporting,
-)
+from message_data.model.transport.report import callback, configure_legacy_reporting
 from message_data.model.transport.testing import (
     MARK,
     built_transport,
