@@ -133,6 +133,65 @@ def get_spec(context: Context) -> Spec:
     return s
 
 
+def get_computer(
+    context: Context, obj: Optional[Computer] = None, **kwargs
+) -> Computer:
+    """Return a :class:`genno.Computer` set up for model-building calculations."""
+    from . import data, demand, plot
+    from .data import ldv
+
+    # Configure
+    Config.from_context(context, **kwargs)
+
+    # Structure information for the base model
+    scenario = kwargs.get("scenario")
+    if scenario:
+        base_info = ScenarioInfo(scenario)
+    else:
+        base_spec = bare.get_spec(context)
+        base_info = base_spec["add"]
+
+    context["transport build info"] = base_info
+
+    # Structure information for MESSAGEix-Transport
+    spec = get_spec(context)
+    context["transport spec"] = spec
+    context["transport spec disutility"] = get_disutility_spec(context)
+
+    # Create a Computer, attach the context
+    c = obj or Computer()
+    c.add("context", context)
+    if scenario:
+        c.add("scenario", scenario)
+
+    # .report._handle_config() does more of the low-level setup, including
+    # - Require modules with computations.
+    # - Transfer data from `context` to `config`.
+    c.configure(config={"MESSAGEix-Transport": {}})
+
+    # From .data.add_data()
+    # # Reference values: the Context, Scenario, ScenarioInfo, and dry_run parameter
+    # for key, value in dict(
+    #     # scenario=scenario,
+    #     # info=info,
+    #     # dry_run=dry_run,
+    # ).items():
+    #     c.add(key, quote(value))
+
+    # Add structure-related keys
+    add_structure(c)
+
+    # Add exogenous data
+    if context.transport.exogenous_data:
+        demand.add_exogenous_data(c, base_info)
+
+    # Prepare other calculations
+    for module in (demand, ldv, plot, data):
+        module.prepare_computer(c)
+
+    return c
+
+
 def get_disutility_spec(context: Context) -> Spec:
     """Return the spec for the disutility formulation on LDVs.
 
