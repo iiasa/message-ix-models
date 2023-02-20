@@ -8,7 +8,7 @@ from pytest import param
 from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.data.ldv import (
     constraint_data,
-    prepare,
+    prepare_computer,
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
@@ -48,7 +48,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
     c.add("context", ctx)
 
     # Add items to the computer
-    prepare(c, ctx)
+    prepare_computer(c)
 
     # Earlier keys in the process, for debugging
     # key = "ldv fuel economy:n-t-y:exo"
