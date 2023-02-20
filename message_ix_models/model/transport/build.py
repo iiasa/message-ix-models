@@ -224,8 +224,6 @@ def main(
     apply_spec
     get_spec
     """
-    from .data import add_data
-
     # Check arguments
     options = dict() if options is None else options.copy()
     dupe = set(options.keys()) & set(option_kwargs.keys())
@@ -236,18 +234,21 @@ def main(
     log.info("Configure MESSAGEix-Transport")
     mark_time()
 
-    # Configure; consumes some of the `options`
-    Config.from_context(context, scenario, options)
+    # Set up a Computer for input data calculations. This also:
+    # - Creates a Config instance
+    # - Generates and stores context["transport spec"], i.e the specification of the
+    #   MESSAGEix-Transport structure: required, added, and removed set items
+    # - Prepares the "add transport data" key used below
+    c = get_computer(context, scenario=scenario, options=options)
 
-    # Generate the specification of the MESSAGEix-Transport structure: required, added,
-    # and removed set items
-    spec = get_spec(context)
-    context["transport spec"] = spec
-    context["transport spec disutility"] = get_disutility_spec(context)
+    def _add_data(s, **kw):
+        assert s is c.graph["scenario"]
+        result = c.get("add transport data")
+        log.info(f"Added {sum(result)} total obs")
 
     # Apply the structural changes AND add the data
     log.info("Build MESSAGEix-Transport")
-    build.apply_spec(scenario, spec, partial(add_data, context=context), **options)
+    build.apply_spec(scenario, context["transport spec"], data=_add_data, **options)
 
     mark_time()
 
