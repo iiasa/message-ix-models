@@ -62,13 +62,16 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
         # Use a value from a Context object, or a default
         regions = context_or_regions.model.regions
 
-    for candidate in (
+    candidates = (
         private_data_path("transport", regions, *parts),
         private_data_path("transport", *parts),
-    ):
-        if candidate.exists():
-            return candidate
-    raise FileNotFoundError(candidate)
+    )
+
+    for c in candidates:
+        if c.exists():
+            return c
+
+    raise FileNotFoundError(candidates)
 
 
 def get_techs(context) -> Tuple[Spec, List, Dict]:
