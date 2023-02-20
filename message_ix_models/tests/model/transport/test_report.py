@@ -4,7 +4,6 @@ from copy import deepcopy
 import pytest
 from genno.testing import assert_qty_equal
 from message_ix.reporting import MissingKeyError, Quantity
-from message_ix_models.testing import NIE
 from numpy.testing import assert_allclose
 from pytest import mark, param
 
@@ -65,8 +64,8 @@ def test_register_cb():
         ),
         param("R11", "A", True, marks=MARK[1]),
         ("R12", "A", True),
-        param("R14", "A", True, marks=MARK[0]),
-        param("ISR", "A", True, marks=NIE),
+        param("R14", "A", True, marks=MARK[2](AttributeError)),
+        param("ISR", "A", True, marks=MARK[2](AttributeError)),
     ),
 )
 def test_report_bare(request, test_context, tmp_path, regions, years, solved):
