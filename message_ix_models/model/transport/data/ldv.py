@@ -63,7 +63,7 @@ FILE = "ldv-cost-efficiency.xlsx"
 #: (parameter name, cell range, units) for data to be read from multiple sheets in the
 #: :data:`FILE`.
 TABLES = {
-    "efficiency": (slice("B3", "Q15"), "Gv km / (GW year)"),
+    "fuel economy": (slice("B3", "Q15"), "Gv km / (GW year)"),
     "inv_cost": (slice("B33", "Q45"), "USD / vehicle"),
     "fix_cost": (slice("B62", "Q74"), "USD / vehicle"),
 }
@@ -133,13 +133,14 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, Quantity]:
 def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, Quantity]:
     """Same as :func:`read_USTIMES_MA3T`, but from CSV files."""
     result = {}
-    for name in "fix_cost", "efficiency", "inv_cost":
+    for name in "fix_cost", "fuel economy", "inv_cost":
         result[name] = computations.load_file(
-            path=private_data_path("transport", subdir or "", f"ldv-{name}.csv"),
+            path=private_data_path(
+                "transport", subdir or "", f"ldv-{name.replace(' ', '-')}.csv"
+            ),
             dims=RENAME_DIMS,
-            name=name,  # FIXME this appears to not pass through ffill()
+            name=name,
         ).ffill("y")
-        result[name].name = name
 
     return result
 
