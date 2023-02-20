@@ -18,7 +18,7 @@ from message_ix_models.util import (
     same_node,
 )
 
-from . import freight, ldv, non_ldv
+from . import freight, non_ldv
 
 log = logging.getLogger(__name__)
 
@@ -42,10 +42,9 @@ DATA_FUNCTIONS = {
     "demand": ("transport demand passenger::ixmp",),
     "dummy demand": ("dummy demand::ixmp",),
     "freight demand": ("transport demand freight::ixmp",),
-    # Data-generating functions in other modules
+    # Key added by ldv.prepare_computer()
     "ldv": ("transport ldv::ixmp",),
-    "ldv usage": (ldv.usage_data, "context"),
-    "ldv constraints": (ldv.constraint_data, "context"),
+    # Data-generating functions in other modules
     "non_ldv": (non_ldv.get_non_ldv_data, "context"),
     "freight": (freight.get_freight_data, "n::ex world", "y::model", "context"),
 }
