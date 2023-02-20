@@ -194,6 +194,9 @@ class Config(ConfigHelper):
         }
     )
 
+    #: Add exogenous data for demand calculations.
+    exogenous_data: bool = True
+
     #: Various other factors.
     factor: Dict = field(default_factory=dict)
 
