@@ -43,6 +43,7 @@ __all__ = [
     "local_data_path",
     "make_io",
     "maybe_query",
+    "merge_data",
     "package_data_path",
     "private_data_path",
     "series_of_pint_quantity",
