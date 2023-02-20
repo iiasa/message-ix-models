@@ -5,6 +5,7 @@ from datetime import datetime
 import pandas as pd
 import pint
 import plotnine as p9
+from genno import Computer
 from genno.compat.plotnine import Plot as BasePlot
 
 log = logging.getLogger(__name__)
@@ -389,3 +390,21 @@ _ = obj = None
 for _, obj in globals().items():
     if isinstance(obj, type) and issubclass(obj, Plot) and obj is not Plot:
         PLOTS[obj.basename] = obj
+
+
+def prepare_computer(c: Computer):
+    keys = []
+    queue = []
+
+    # Plots
+    for name, cls in PLOTS.items():
+        if "demand" not in name:
+            continue
+        keys.append(f"plot {name}")
+        queue.append((keys[-1], cls.make_task()))
+
+    c.add_queue((item, dict()) for item in queue)
+
+    key = "transport plots"
+    log.info(f"Add {repr(key)} collecting {len(key)} plots")
+    c.add(key, keys)
