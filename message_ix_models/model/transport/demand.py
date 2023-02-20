@@ -2,26 +2,24 @@
 import logging
 from functools import partial
 from operator import itemgetter
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, cast
 
 import genno.computations
 import message_ix
 import numpy as np
 import pandas as pd
 from dask.core import literal, quote
-from genno import Computer, Key, KeyExistsError
+from genno import Computer, Key
 from genno.computations import interpolate
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix.reporting import Reporter
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.model.structure import get_codes, get_region_codes
 from message_ix_models.util import adapt_R11_R14, broadcast
 
-from message_data.model.transport import computations, plot
+from message_data.model.transport import computations
 from message_data.model.transport.data import groups
-from message_data.model.transport.report import require_compat, update_config
-from message_data.model.transport.utils import get_techs, path_fallback
+from message_data.model.transport.utils import path_fallback
 from message_data.tools import gdp_pop
 
 log = logging.getLogger(__name__)
@@ -131,59 +129,6 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
 
     gdp_keys = c.add("GDP:n-y", gdp_pop.gdp, "y", "config", sums=True)
     c.add("PRICE_COMMODITY:n-c-y", (computations.dummy_prices, gdp_keys[0]), sums=True)
-
-
-def add_structure(c: Computer, context: Context, info: ScenarioInfo):
-    """Add keys to `c` for model structure required by demand computations.
-
-    This uses `info` to mock the contents that would be reported from an already-
-    populated Scenario for sets "node", "year", and "cat_year".
-    """
-    # `info` contains only structure to be added, not existing/required structure. Add
-    # information about the year dimension, to be used below.
-    # TODO accomplish this by 'merging' the ScenarioInfo/spec.
-    if not len(info.set["years"]):
-        info.year_from_codes(get_codes(f"year/{context.years}"))
-    if not len(info.set["node"]):
-        info.set["node"] = get_region_codes(context.model.regions)
-
-    for key, value in (
-        ("c::transport", quote(info.set["commodity"])),
-        ("cg", quote(info.set["consumer_group"])),
-        ("n", quote(list(map(str, info.set["node"])))),
-        ("nodes", quote(info.set["node"])),
-        ("t::transport modes", quote(context.transport.demand_modes)),
-        ("y", quote(info.set["year"])),
-        (
-            "cat_year",
-            pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
-        ),
-    ):
-        try:
-            c.add(key, value, strict=True)  # Raise an exception if `key` exists
-        except KeyExistsError:
-            continue  # Already present; don't overwrite
-
-    # Retrieve information about the model structure
-    spec, technologies, t_groups = get_techs(context)
-
-    # Lists and subsets
-    c.add("c::transport", quote(spec["add"].set["commodity"]))
-    c.add("t::transport", quote(technologies))
-    # TODO move upstream, e.g. to message_ix
-    c.add("model_periods", "y::model", "y", "cat_year")
-
-    # Mappings for use with aggregate, select, etc.
-    c.add("t::transport agg", quote(dict(t=t_groups)))
-    # Sum across modes, including "non-ldv"
-    c.add("t::transport modes 0", quote(dict(t=list(t_groups.keys()))))
-    # Sum across modes, excluding "non-ldv"
-    c.add(
-        "t::transport modes 1",
-        quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
-    )
-    for id, techs in t_groups.items():
-        c.add(f"t::transport {id}", quote(dict(t=techs)))
 
 
 def prepare_reporter(

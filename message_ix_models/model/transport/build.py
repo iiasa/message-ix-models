@@ -3,17 +3,19 @@
 .. autodata:: TEMPLATE
 """
 import logging
-from functools import partial
 from typing import Dict, Optional
 
+import pandas as pd
+from genno import Computer, KeyExistsError, quote
 from message_ix import Scenario
-from message_ix_models import Context, Spec
-from message_ix_models.model import build, disutility
-from message_ix_models.model.structure import get_region_codes
+from message_ix_models import Context, ScenarioInfo, Spec
+from message_ix_models.model import bare, build, disutility
+from message_ix_models.model.structure import get_codes, get_region_codes
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
-from message_data.model.transport.config import Config
+from .config import Config
+from .utils import get_techs
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +42,62 @@ TEMPLATE = Code(
         Annotation(id="is-disutility", text=repr(True)),
     ],
 )
+
+
+def add_structure(c: Computer):
+    """Add keys to `c` for model structure required by demand computations.
+
+    This uses `info` to mock the contents that would be reported from an already-
+    populated Scenario for sets "node", "year", and "cat_year".
+    """
+    context = c.graph["context"]
+    info = context["transport build info"]
+
+    # `info` contains only structure to be added, not existing/required structure. Add
+    # information about the year dimension, to be used below.
+    # TODO accomplish this by 'merging' the ScenarioInfo/spec.
+    if not len(info.set["years"]):
+        info.year_from_codes(get_codes(f"year/{context.years}"))
+    if not len(info.set["node"]):
+        info.set["node"] = get_region_codes(context.model.regions)
+
+    for key, value in (
+        ("c::transport", quote(info.set["commodity"])),
+        ("cg", quote(info.set["consumer_group"])),
+        ("n", quote(list(map(str, info.set["node"])))),
+        ("nodes", quote(info.set["node"])),
+        ("t::transport modes", quote(context.transport.demand_modes)),
+        ("y", quote(info.set["year"])),
+        (
+            "cat_year",
+            pd.DataFrame([["firstmodelyear", info.y0]], columns=["type_year", "year"]),
+        ),
+    ):
+        try:
+            c.add(key, value, strict=True)  # Raise an exception if `key` exists
+        except KeyExistsError:
+            continue  # Already present; don't overwrite
+
+    # Retrieve information about the model structure
+    spec, technologies, t_groups = get_techs(context)
+
+    # Lists and subsets
+    c.add("c::transport", quote(spec["add"].set["commodity"]))
+    c.add("t::transport", quote(technologies))
+    # TODO move upstream, e.g. to message_ix
+    c.add("model_periods", "y::model", "y", "cat_year")
+
+    # Mappings for use with aggregate, select, etc.
+    c.add("t::transport agg", quote(dict(t=t_groups)))
+    # Sum across modes, including "non-ldv"
+    c.add("t::transport modes 0", quote(dict(t=list(t_groups.keys()))))
+    # Sum across modes, excluding "non-ldv"
+    c.add(
+        "t::transport modes 1",
+        quote(dict(t=list(filter(lambda k: k != "non-ldv", t_groups.keys())))),
+    )
+    for id, techs in t_groups.items():
+        c.add(f"t::transport {id}", quote(dict(t=techs)))
 
 
 def get_spec(context: Context) -> Spec:
