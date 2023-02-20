@@ -1,17 +1,15 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
-from typing import List, Mapping, Tuple, cast
 
 import genno.config
 from genno import Computer, MissingKeyError
 from genno.computations import aggregate
-from message_ix import Reporter, Scenario
+from message_ix import Reporter
 from message_ix_models import Context
 from message_ix_models.util import eval_anno, private_data_path
 
 from message_data.model.transport import Config
 from message_data.model.transport.build import get_spec
-from message_data.model.transport.plot import PLOTS
 
 log = logging.getLogger(__name__)
 
@@ -138,17 +136,6 @@ def callback(rep: Reporter, context: Context) -> None:
 
     # Add further computations (including conversions to IAMC tables) defined in a file
     rep.configure(path=private_data_path("transport", "report.yaml"))
-
-    # 4. Add plots
-    queue: List[Tuple[Tuple, Mapping]] = [
-        ((f"plot {name}", cls.make_task()), dict()) for name, cls in PLOTS.items()
-    ]
-    added = rep.add_queue(queue, max_tries=2, fail="raise" if solved else logging.INFO)
-    plots = list(k for k in added if str(k).startswith("plot"))
-
-    key = "transport plots"
-    log.info(f"Add {repr(key)} collecting {len(plots)} plots")
-    rep.add(key, plots)
 
     log.info(f"Added {len(rep.graph)-N_keys} keys")
 

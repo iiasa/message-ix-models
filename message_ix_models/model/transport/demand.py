@@ -303,10 +303,4 @@ def prepare_reporter(
         ),
     ]
 
-    # Plots
-    for name, cls in plot.PLOTS.items():
-        if "demand" not in name:
-            continue
-        queue.append((f"plot {name}", cls.make_task()))
-
-    rep.add_queue((item, dict()) for item in queue)
+    c.add_queue((item, dict()) for item in queue)
