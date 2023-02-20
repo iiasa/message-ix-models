@@ -3,7 +3,7 @@ import operator
 from dataclasses import InitVar, dataclass, field, replace
 from enum import Flag, auto
 from functools import reduce
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional, Union
 
 import message_ix
 from genno import Quantity
@@ -32,7 +32,8 @@ class DataSourceConfig(ConfigHelper):
 
     population: str = "SSP2"
 
-    LDV: str = "US-TIMES MA3T"
+    #: Light-duty vehicle techno-economic data.
+    LDV: Union[None, Literal["US-TIMES MA3T"]] = "US-TIMES MA3T"
 
     non_LDV: str = "IKARUS"
 
