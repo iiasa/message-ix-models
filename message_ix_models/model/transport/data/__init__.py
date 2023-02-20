@@ -43,7 +43,7 @@ DATA_FUNCTIONS = {
     "dummy demand": ("dummy demand::ixmp",),
     "freight demand": ("transport demand freight::ixmp",),
     # Data-generating functions in other modules
-    "ldv": (ldv.get_ldv_data, "context"),
+    "ldv": ("transport ldv::ixmp",),
     "ldv usage": (ldv.usage_data, "context"),
     "ldv constraints": (ldv.constraint_data, "context"),
     "non_ldv": (non_ldv.get_non_ldv_data, "context"),
@@ -101,6 +101,8 @@ def add_data(scenario: Scenario, context, dry_run=False):
 
     # Prepare demand calculations
     demand.prepare_reporter(c, context, exogenous_data=True, info=info)
+    # Prepare LDV calculations
+    ldv.prepare(c, context)
 
     # Add a key to trigger generating and adding all data
     c.add("add transport data", all_keys)

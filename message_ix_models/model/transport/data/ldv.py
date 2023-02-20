@@ -2,16 +2,18 @@
 import logging
 from collections import defaultdict
 from copy import deepcopy
-from functools import lru_cache
-from typing import Any, Dict, List, Mapping, Sequence, Union
+from functools import lru_cache, partial
+from operator import itemgetter, le, lt
+from typing import Any, Dict, List, Mapping
 
 import pandas as pd
-from genno import computations
+from genno import Computer, computations, quote
 from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix import make_df
 from message_ix_models.model import disutility
-from message_ix_models.model.structure import get_codes, get_region_codes
+from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
+    MappingAdapter,
     ScenarioInfo,
     adapt_R11_R12,
     adapt_R11_R14,
@@ -35,24 +37,58 @@ from message_data.model.transport.utils import input_commodity_level, path_fallb
 log = logging.getLogger(__name__)
 
 
-def get_ldv_data(context) -> Dict[str, pd.DataFrame]:
-    """Generate techno-economic data for light-duty-vehicle technologies.
+def prepare(c: Computer, context):
+    """Set up `c` to compute techno-economic data for light-duty-vehicle technologies.
 
-    Responds to the ``["transport config"]["data source"]["LDV"]`` context setting:
+    Results in a key ``ldv::ixmp`` that triggers computation of :mod:`ixmp`-ready
+    parameter data for LDV technologies. These computations respond to
+    :attr:`.DataSourceConfig.LDV`:
 
-    - :obj:`None`: calls :func:`get_dummy`.
-    - “US-TIMES MA3T”: calls :func:`get_USTIMES_MA3T`.
+    - :obj:`None`: :func:`get_dummy` is used.
+    - “US-TIMES MA3T”: :func:`get_USTIMES_MA3T` is used.
 
     In both cases, :func:`get_constraints` is used to generate constraints.
     """
     source = context.transport.data_source.LDV
 
-    if source == "US-TIMES MA3T":
-        return get_USTIMES_MA3T(context)
-    elif source is None:
-        return get_dummy(context)
-    else:
+    # Add all the following computations, even if they will not be used
+
+    k1 = c.add("US-TIMES MA3T all", read_USTIMES_MA3T_2, None, quote("R11"))
+    for name in TABLES:
+        c.add(f"ldv {name}:n-t-y:exo", itemgetter(name), k1)
+
+    # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
+    c.add("div", "ldv efficiency:n-t-y", Quantity(1.0), "ldv fuel economy:n-t-y:exo")
+
+    # Compute the input efficiency adjustment factor
+    k2 = c.add(
+        "factor_input",
+        "transport input factor:t-y",
+        "y",
+        "t::transport",
+        "t::transport agg",
+        "config",
+    )
+    # Product of input factor and LDV efficiency
+    k3 = c.add_product("ldv efficiency::adj", k2, "ldv efficiency")
+    # TODO add product of input factor and non-LDV efficiency in .non_ldv
+
+    # Select a task for the final step that computes "ldv::ixmp"
+    final = {
+        "US-TIMES MA3T": (
+            get_USTIMES_MA3T,
+            "context",
+            k3,
+            "ldv inv_cost:n-t-y:exo",
+            "ldv fix_cost:n-t-y:exo",
+        ),
+        None: (get_dummy, "context"),
+    }.get(source)
+
+    if final is None:
         raise ValueError(f"invalid source for non-LDV data: {source}")
+
+    return c.add("ldv::ixmp", *final)
 
 
 #: Input file containing structured data about LDV technologies.
@@ -145,7 +181,9 @@ def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, Quantity]:
     return result
 
 
-def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
+def get_USTIMES_MA3T(
+    context, efficiency: Quantity, inv_cost: Quantity, fix_cost: Quantity
+) -> Dict[str, pd.DataFrame]:
     """Prepare LDV data from US-TIMES and MA3T.
 
     .. todo:: Some calculations are performed in the spreadsheet; transfer to code.
@@ -176,14 +214,14 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     all_info.set["commodity"].extend(get_codes("commodity"))
     all_info.update(spec.add)
 
-    if context.model.regions in ("R12", "R14"):
-        # Read data using the R11 nodes
-        read_nodes: Sequence[Union[str, Code]] = get_region_codes("R11")
-    else:
-        read_nodes = nodes_ex_world(info.N)
+    # if context.model.regions in ("R12", "R14"):
+    #     # Read data using the R11 nodes
+    #     read_nodes: Sequence[Union[str, Code]] = get_region_codes("R11")
+    # else:
+    #     read_nodes = nodes_ex_world(info.N)
 
     # Retrieve the input data
-    data = read_USTIMES_MA3T_2(read_nodes, subdir="R11")
+    data = dict(efficiency=efficiency, inv_cost=inv_cost, fix_cost=fix_cost)
 
     # Convert R11 to R12 or R14 data, as necessary
     if context.model.regions == "R12":
@@ -191,42 +229,36 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     elif context.model.regions == "R14":
         data = adapt_R11_R14(data)
 
-    # List of years to include
-    target_years = list(filter(lambda y: y >= 2010, info.set["year"]))
+    # Years to include
+    target_years = set(filter(partial(le, 2010), info.set["year"]))
     for name, qty in data.items():
-        # Select only the periods appearing in the target scenario
-        tmp = qty.sel(y=target_years)
-
         # Fill forward over uncovered periods in the model horizon
         # TODO move this operation upstream
-        years = tmp.coords["y"].to_index()
-        missing = sorted(set(target_years) - set(years))
 
-        log.info(f"{name}: fill from {years[-1]} → {missing}")
-        quantities = [tmp] + [
-            computations.relabel(tmp.sel(y=years[-1:]), y={years[-1]: m})
-            for m in missing
-        ]
-        data[name] = computations.concat(*quantities)
+        # Subset of `target_years` appearing in `qty`
+        years = sorted(set(qty.to_series().reset_index()["y"].unique()) & target_years)
+        # Subset of `target_years` to fill forward from the last period in `qty`
+        ffill = sorted(filter(partial(lt, years[-1]), target_years))
 
-    # Convert 'efficiency' into 'input' and 'output' parameter data
+        log.info(f"{name}: fill from {years[-1]} → {ffill}")
 
-    # Reciprocal units and value:
+        # Use message_ix_models MappingAdapter to do the work
+        y_map = [(y, y) for y in years] + [(years[-1], y) for y in ffill]
+        data[name] = MappingAdapter({"y": y_map})(qty)
+
+    # Prepare "input" and "output" parameter data from `efficiency`
     name = "efficiency"
-    qty = data.pop(name)
-    base = qty.to_series().reset_index()
-    src_units = (1.0 / qty.units).units
+    base = data.pop(name).to_series().rename("value").reset_index()
 
     common = dict(mode="all", time="year", time_dest="year", time_origin="year")
 
     i_o = make_io(
-        src=(None, None, f"{src_units:~}"),
+        src=(None, None, f"{efficiency.units:~}"),
         dest=(None, "useful", "Gv km"),
-        # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
-        efficiency=1.0 / base[name],
+        efficiency=base["value"],
         on="input",
         node_loc=base["n"],  # Other dimensions
-        technology=base["t"],
+        technology=base["t"].astype(str),
         year_vtg=base["y"],
         **common,
     )
@@ -256,7 +288,8 @@ def get_USTIMES_MA3T(context) -> Dict[str, pd.DataFrame]:
     assert 1 == len(target_units)
 
     result["input"]["value"] = convert_units(
-        result["input"]["value"], {"value": (1.0, src_units, target_units[0])}
+        result["input"]["value"],
+        {"value": (1.0, f"{efficiency.units:~}", target_units[0])},
     )
 
     # Assign output commodity based on the technology name
