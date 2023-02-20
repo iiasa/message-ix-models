@@ -253,25 +253,19 @@ def gen_demand(ctx, source, nodes, years, output_dir):
     The indicated DATASOURCE is used for exogenous GDP and population data; both inputs
     to the calculation of demands.
     """
-    import message_ix
     from genno import Key
 
-    from message_data.model.transport import Config, build, demand
+    from message_data.model.transport import build
 
     # Read general transport config
-    ctx.regions = nodes
-    ctx.years = years
+    ctx.update(regions=nodes, years=years)
 
-    options = {"data source": {"gdp": source, "population": source}}
-    Config.from_context(ctx, options=options)
+    # Prepare a Computer instance for demand calculations
+    c = build.get_computer(
+        ctx, options={"data source": {"gdp": source, "population": source}}
+    )
 
-    # Get a spec for the structure of a target model
-    spec = build.get_spec(ctx)
-
-    # Prepare a Reporter object for demand calculations
-    rep = message_ix.Reporter()
-    demand.prepare_reporter(rep, context=ctx, exogenous_data=True, info=spec["add"])
-    rep.configure(output_dir=output_dir)
+    c.configure(output_dir=output_dir)
 
     output_dir = output_dir or ctx.get_local_path("output")
     output_path = output_dir.joinpath(
@@ -280,11 +274,11 @@ def gen_demand(ctx, source, nodes, years, output_dir):
 
     # Compute total demand by mode
     key = Key("pdt", "nyt")
-    rep.add("write_report", "gen-demand", key, output_path)
+    c.add("write_report", "gen-demand", key, output_path)
 
     log.info(f"Compute {repr(key)}")
     output_dir.mkdir(exist_ok=True, parents=True)
-    rep.get("gen-demand")
+    c.get("gen-demand")
     log.info(f"Wrote to {output_path}")
 
     # # Generate diagnostic plots

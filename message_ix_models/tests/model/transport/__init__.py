@@ -1,17 +1,9 @@
-from message_ix_models.model import bare
-
-from message_data.model.transport import Config, build
+from message_data.model.transport import build
 
 
 def configure_build(context, regions, years):
-    # FIXME this overlaps with test_demand.demand_computer; combine
     context.update(regions=regions, years=years)
 
-    Config.from_context(context)
+    build.get_computer(context)
 
-    # Information about the corresponding base model
-    info = bare.get_spec(context)["add"]
-    context["transport build info"] = info
-    context["transport spec"] = build.get_spec(context)
-
-    return info
+    return context["transport build info"]

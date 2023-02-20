@@ -5,7 +5,6 @@ import pytest
 from genno.testing import assert_units
 from iam_units import registry
 from message_ix.reporting import Key
-from message_ix_models.model import bare
 from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import NIE
 from pytest import param
@@ -160,19 +159,9 @@ def test_exo_report(test_context, tmp_path):
 
 
 def demand_computer(test_context, tmp_path, regions, years, options):
-    # TODO convert to a fixture
-    # FIXME this overlaps with .model.transport.configure_build; combine
-    ctx = test_context
-    ctx.update(regions=regions, years=years, output_path=tmp_path)
-    Config.from_context(ctx, options=options)
-
-    spec = bare.get_spec(ctx)
-
-    rep = message_ix.Reporter()
-    demand.prepare_reporter(rep, context=ctx, exogenous_data=True, info=spec["add"])
-    rep.configure(output_dir=tmp_path)
-
-    return rep, spec["add"]
+    test_context.update(regions=regions, years=years, output_path=tmp_path)
+    c = build.get_computer(test_context, options=options)
+    return c, test_context["transport build info"]
 
 
 @pytest.mark.parametrize(

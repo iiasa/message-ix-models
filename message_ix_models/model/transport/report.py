@@ -106,33 +106,28 @@ def callback(rep: Reporter, context: Context) -> None:
       If the scenario to be reported is not solved, only a subset of plots are added.
     - ``transport all``: all of the above.
     """
-    from . import demand
-
-    require_compat(rep)
-
-    try:
-        solved = rep.graph["scenario"].has_solution()
-    except KeyError:
-        solved = False  # "scenario" is not present in the Reporter; may be added later
+    from . import build
 
     N_keys = len(rep.graph)
 
-    # Read transport configuration onto the Context, including reporting config
-    Config.from_context(context, cast(Scenario, rep.graph.get("scenario")))
+    scenario = rep.graph.get("scenario")
+    try:
+        solved = scenario.has_solution()
+    except AttributeError:
+        solved = False  # "scenario" is not present in the Reporter; may be added later
 
-    # Transfer transport configuration to the Reporter
-    update_config(rep, context)
-
-    # Get a specification that describes this setting
-    spec = get_spec(context)
-
-    # 1. Add ex-post mode and demand calculations
-    # TODO this calls add_structure(), which could be merged with (2) below
-    demand.prepare_reporter(
-        rep, context, configure=False, exogenous_data=not solved, info=spec["add"]
+    # - Configure MESSAGEix-Transport.
+    # - Add structure and other information.
+    # - Call, inter alia:
+    #   - demand.prepare_computer() for ex-post mode and demand calculations
+    #   - plot.prepare_computer() for plots
+    check = build.get_computer(
+        context, obj=rep, scenario=scenario, options=dict(exogenous_data=not solved)
     )
 
-    # 2. Apply some functions that generate sub-graphs
+    assert check is rep
+
+    # Apply some functions that generate sub-graphs
     try:
         rep.apply(_gen0, "in", "out", "emi")
     except MissingKeyError:
@@ -141,7 +136,7 @@ def callback(rep: Reporter, context: Context) -> None:
 
     rep.apply(_gen1, "CAP:nl-t-ya", "in:nl-t-ya-c", "inv_cost:nl-t-yv")
 
-    # 3. Add further computations (incl. IAMC tables) defined in a file
+    # Add further computations (including conversions to IAMC tables) defined in a file
     rep.configure(path=private_data_path("transport", "report.yaml"))
 
     # 4. Add plots
