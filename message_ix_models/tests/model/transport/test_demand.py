@@ -161,6 +161,7 @@ def test_exo_report(test_context, tmp_path):
 
 def demand_computer(test_context, tmp_path, regions, years, options):
     # TODO convert to a fixture
+    # FIXME this overlaps with .model.transport.configure_build; combine
     ctx = test_context
     ctx.update(regions=regions, years=years, output_path=tmp_path)
     Config.from_context(ctx, options=options)

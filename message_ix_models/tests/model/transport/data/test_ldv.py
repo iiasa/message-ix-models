@@ -1,12 +1,14 @@
 import pytest
+from genno import ComputationError
 from iam_units import registry
 from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
 from pytest import param
 
+from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.data.ldv import (
     constraint_data,
-    get_ldv_data,
+    prepare,
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
@@ -14,35 +16,55 @@ from message_data.testing import assert_units
 from message_data.tests.model.transport import configure_build
 
 
+@pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
+@pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
-    "source, regions, years",
+    "regions",
     [
         param(
-            None,
-            "R11",
-            "A",
-            marks=pytest.mark.xfail(
-                raises=AssertionError, reason="Returns extra var_cost data"
-            ),
+            "ISR",
+            marks=pytest.mark.xfail(raises=(AssertionError, ComputationError)),
         ),
-        ("US-TIMES MA3T", "R11", "A"),
-        ("US-TIMES MA3T", "R11", "B"),
-        ("US-TIMES MA3T", "R12", "B"),
-        ("US-TIMES MA3T", "R14", "A"),
-        # Not implemented
-        param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
+        "R11",
+        "R12",
+        "R14",
     ],
 )
-def test_get_ldv_data(test_context, source, regions, years):
+def test_get_ldv_data(tmp_path, test_context, source, regions, years):
+    from message_data.tests.model.transport.test_demand import demand_computer
+
     # Info about the corresponding RES
     ctx = test_context
 
     info = configure_build(ctx, regions, years)
     ctx.transport.data_source.LDV = source
+    ctx.transport.flags = ScenarioFlags.TEC
+
+    # Prepare a Computer for LDV data calculations
+    c, _ = demand_computer(ctx, tmp_path, regions, years, options={})
+
+    # FIXME should not be overwritten by demand_computer() or similar method
+    ctx.transport.flags = ScenarioFlags.TEC
+    c.add("context", ctx)
+
+    # Add items to the computer
+    prepare(c, ctx)
+
+    # Earlier keys in the process, for debugging
+    # key = "ldv fuel economy:n-t-y:exo"
+    # key = "ldv efficiency:n-t-y"
+    # key = "transport input factor:t-y"
+    # key = "ldv efficiency:n-t-y:adj"
+
+    key = "ldv::ixmp"
+
+    # print(c.describe(key))  # DEBUG
 
     # Method runs without error
+    data = c.get(key)
 
-    data = get_ldv_data(ctx)
+    # print(data)  # DEBUG
+    # print(data.to_series().to_string())  # DEBUG
 
     # Data are returned for the following parameters
     assert {
@@ -84,7 +106,7 @@ def test_get_ldv_data(test_context, source, regions, years):
             continue
 
         # Data covers these periods
-        assert exp == sorted(df["year_vtg"].unique())
+        assert exp == sorted(df["year_vtg"].unique()), (par_name, df)
 
         # Total length of data: # of regions × (11 technology × # of periods; plus 1
         # technology (historical ICE) for only 2010)
