@@ -16,7 +16,7 @@ from message_ix import make_df
 from message_ix.reporting import Reporter
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model.structure import get_codes, get_region_codes
-from message_ix_models.util import adapt_R11_R14, broadcast, check_support
+from message_ix_models.util import adapt_R11_R14, broadcast
 
 from message_data.model.transport import computations, plot
 from message_data.model.transport.data import groups
@@ -97,12 +97,6 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
     --------
     :doc:`/reference/model/transport/data`
     """
-    check_support(
-        context,
-        settings=dict(regions=frozenset(["R11", "R12", "R14"])),
-        desc="Exogenous data for demand projection",
-    )
-
     # Data from files. Add 3 computations per quantity.
     for key, basename, units in (
         # (gdp_k, "gdp", "GUSD/year"),  # Handled below
@@ -110,11 +104,17 @@ def add_exogenous_data(c: Computer, context: Context, info: ScenarioInfo) -> Non
     ):
         # 1. Load the file
         k1 = Key(key.name, tag="raw")
-        c.add(
-            k1,
-            partial(genno.computations.load_file, units=units),
-            path_fallback(context, f"{basename}.csv"),
-        )
+        try:
+            c.add(
+                k1,
+                partial(genno.computations.load_file, units=units),
+                path_fallback(context, f"{basename}.csv"),
+            )
+        except FileNotFoundError as e:
+            paths = "\n".join(map(str, e.args[0]))
+            log.warning(f"Not found:\n{paths}")
+            log.warning(f"Computing {k1!r} or its dependents may fail")
+            c.add(k1, None)
 
         # 2. Rename dimensions
         k2 = key.add_tag("rename")
