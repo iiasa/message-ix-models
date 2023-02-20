@@ -56,10 +56,10 @@ def test_configure(test_context, regions):
     if regions:
         ctx.model.regions = regions
 
-    # Returns nothing
-    assert Config.from_context(ctx) is None
+    # Returns the same object stored as Context["transport"]
+    cfg = Config.from_context(ctx)
 
-    cfg = ctx["transport"]
+    assert cfg is ctx["transport"]
 
     # Attributes have the correct types
     assert isinstance(cfg.data_source, DataSourceConfig)
