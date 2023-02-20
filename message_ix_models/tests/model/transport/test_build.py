@@ -5,7 +5,6 @@ import ixmp
 import pytest
 from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
-from message_ix_models.testing import NIE
 from pytest import mark, param
 
 from message_data.model.transport import Config, build, report
@@ -72,9 +71,16 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
         # R12, B
         ("R12", "B", "US-TIMES MA3T", "IKARUS", True),
         # R14, A
-        param("R14", "A", "US-TIMES MA3T", "IKARUS", False, marks=[mark.slow, MARK[0]]),
+        param(
+            "R14",
+            "A",
+            "US-TIMES MA3T",
+            "IKARUS",
+            False,
+            marks=[mark.slow, MARK[2](AttributeError)],
+        ),
         # Pending iiasa/message_data#190
-        param("ISR", "A", None, None, False, marks=NIE),
+        param("ISR", "A", None, None, False, marks=MARK[2](AttributeError)),
     ],
 )
 def test_build_bare_res(

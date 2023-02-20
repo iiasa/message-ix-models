@@ -53,7 +53,7 @@ def test_demand_dummy(test_context, regions, years):
         param("R11", "B", 11, dict(futures_scenario="A---"), marks=MARK[1]),
         ("R12", "B", 12, dict()),
         ("R12", "B", 12, dict(navigate_scenario="act+ele+tec")),
-        param("R14", "B", 14, dict(), marks=MARK[0]),
+        param("R14", "B", 14, dict(), marks=NIE),
         param("ISR", "A", 1, dict(), marks=NIE),
     ],
 )
@@ -165,7 +165,13 @@ def demand_computer(test_context, tmp_path, regions, years, options):
 
 
 @pytest.mark.parametrize(
-    "regions", ["R11", "R12", param("R14", marks=MARK[0]), param("ISR", marks=NIE)]
+    "regions",
+    [
+        param("ISR", marks=NIE),
+        "R11",
+        "R12",
+        param("R14", marks=NIE),
+    ],
 )
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("pop_scen", ["SSP2"])
@@ -203,10 +209,10 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
         # Different years
         ("R11", "B", "GEA mix"),
         # Different regions & years
-        param("R14", "B", "SSP1", marks=MARK[0]),
-        param("R14", "B", "SSP2", marks=MARK[0]),
-        param("R14", "B", "SSP3", marks=MARK[0]),
-        param("ISR", "B", "SSP2", marks=NIE),
+        ("R14", "B", "SSP1"),
+        ("R14", "B", "SSP2"),
+        ("R14", "B", "SSP3"),
+        ("ISR", "B", "SSP2"),
     ],
 )
 def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
@@ -241,7 +247,7 @@ def test_from_scenario(user_context):
     [
         ("R11", "GEA mix"),
         ("R12", "SSP2"),
-        param("R14", "SSP2", marks=MARK[0]),
+        param("R14", "SSP2", marks=MARK[2](AttributeError)),
         ("R11", "SHAPE innovation"),
     ],
 )
