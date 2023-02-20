@@ -140,7 +140,7 @@ def test_distance_nonldv(regions):
 
     # Check a computed value
     assert_qty_equal(
-        Quantity(32.7633, units="Mm / vehicle / year"),
+        Quantity(32.7633, units="Mm / vehicle / year", name="non-ldv distance"),
         result.sel(nl=f"{regions}_EEU", t="BUS", drop=True),
     )
 
