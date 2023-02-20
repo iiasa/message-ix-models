@@ -28,6 +28,12 @@ PACKAGE_DATA: Dict[str, Any] = dict()
 PRIVATE_DATA: Dict[str, Any] = dict()
 
 
+__all__ = [
+    "Adapter",
+    "MappingAdapter",
+]
+
+
 class Adapter:
     """Adapt `data`.
 
