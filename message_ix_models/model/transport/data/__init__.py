@@ -5,9 +5,8 @@ from functools import partial
 from typing import Dict, List, Mapping
 
 import pandas as pd
-from dask.core import quote
-from genno import Computer
-from message_ix import Reporter, Scenario, make_df
+from genno import Computer, quote
+from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     add_par_data,
@@ -38,7 +37,7 @@ DATA_FILES = [
 #: Genno computations that generate model-ready data in ixmp format. This mapping is
 #: extended by functions decorated with @provides_data() in this module.
 DATA_FUNCTIONS = {
-    # Keys added by demand.prepare_reporter()
+    # Keys added by demand.prepare_computer()
     "demand": ("transport demand passenger::ixmp",),
     "dummy demand": ("dummy demand::ixmp",),
     "freight demand": ("transport demand freight::ixmp",),
@@ -60,16 +59,16 @@ def provides_data(*args):
     return decorator
 
 
-def add_data(scenario: Scenario, context, dry_run=False):
+def prepare_computer(c: Computer):
     """Populate `scenario` with MESSAGE-Transport data."""
-    from message_data.model.transport import demand
+    context = c.graph["context"]
+    scenario = c.graph.get("scenario")
 
     # First strip existing emissions data
     strip_emissions_data(scenario, context)
 
-    # Information about the base `scenario`
-    info = ScenarioInfo(scenario)
-    context["transport build info"] = info
+    # Information about the base scenario
+    info = context["transport build info"]
 
     # Check for two "node" values for global data, e.g. in
     # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
@@ -77,41 +76,29 @@ def add_data(scenario: Scenario, context, dry_run=False):
         log.warning("Remove 'R11_GLB' from node list for data generation")
         info.set["node"].remove("R11_GLB")
 
-    # NB use this class so computations defined by ixmp and message_ix are available
-    c: Computer = Reporter()
-
     # Reference values: the Context, Scenario, ScenarioInfo, and dry_run parameter
-    for key, value in dict(
-        context=context,
-        scenario=scenario,
-        info=info,
-        dry_run=dry_run,
-    ).items():
+    for key, value in dict(info=info, dry_run=context.dry_run).items():
         c.add(key, quote(value))
 
     # Data-generating calculations
     all_keys = []
-    add = partial(add_par_data, dry_run=dry_run)
+    add = partial(add_par_data, dry_run=context.dry_run)
     for name, comp in DATA_FUNCTIONS.items():
-        # Add 2 computations: one to generate the data
-        k1 = c.add(f"{name}::ixmp", *comp)
+        if len(comp) > 1:
+            # Add 2 computations: one to generate the data
+            k1 = c.add(f"{name}::ixmp", *comp)
+        else:
+            k1 = comp[0]
         # …one to add it to `scenario`
         all_keys.append(c.add(f"add {name}", add, "scenario", k1))
 
-    # Prepare demand calculations
-    demand.prepare_reporter(c, context, exogenous_data=True, info=info)
-    # Prepare LDV calculations
-    ldv.prepare(c, context)
-
     # Add a key to trigger generating and adding all data
-    c.add("add transport data", all_keys)
+    key = c.add("add transport data", all_keys)
 
     # commented: extremely verbose
     # log.debug(c.describe("add transport data"))
 
-    # Actually add the data
-    result = c.get("add transport data")
-    log.info(f"Added {sum(result)} total obs")
+    return key
 
 
 def strip_emissions_data(scenario, context):
