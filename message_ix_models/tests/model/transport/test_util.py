@@ -7,7 +7,7 @@ from iam_units import registry
 from message_ix_models.util import eval_anno
 
 from message_data.model.transport.config import Config, DataSourceConfig
-from message_data.model.transport.utils import input_commodity_level
+from message_data.model.transport.util import input_commodity_level
 from message_data.reporting.util import as_quantity
 
 

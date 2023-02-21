@@ -11,7 +11,7 @@ from message_ix import make_df
 from message_ix_models import Context
 from message_ix_models.util import private_data_path
 
-from message_data.model.transport.utils import path_fallback
+from .util import path_fallback
 
 log = logging.getLogger(__name__)
 

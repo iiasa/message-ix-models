@@ -6,7 +6,7 @@ import pandas as pd
 from message_ix import make_df
 from message_ix_models.util import broadcast, make_matched_dfs, merge_data, same_node
 
-from message_data.model.transport.data.emissions import ef_for_input
+from .emission import ef_for_input
 
 log = logging.getLogger(__name__)
 

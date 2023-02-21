@@ -9,13 +9,13 @@ from pandas.testing import assert_series_equal
 
 from message_data.model.transport import Config, DataSourceConfig, computations
 from message_data.model.transport import data as data_module
-from message_data.model.transport.data.CHN_IND import get_chn_ind_data, get_chn_ind_pop
-from message_data.model.transport.data.emissions import ef_for_input, get_emissions_data
-from message_data.model.transport.data.freight import get_freight_data
-from message_data.model.transport.data.ikarus import get_ikarus_data
-from message_data.model.transport.data.non_ldv import get_non_ldv_data
-from message_data.model.transport.data.roadmap import get_roadmap_data
-from message_data.model.transport.utils import path_fallback
+from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
+from message_data.model.transport.emission import ef_for_input, get_emissions_data
+from message_data.model.transport.freight import get_freight_data
+from message_data.model.transport.ikarus import get_ikarus_data
+from message_data.model.transport.non_ldv import get_non_ldv_data
+from message_data.model.transport.roadmap import get_roadmap_data
+from message_data.model.transport.util import path_fallback
 from message_data.testing import assert_units
 from message_data.tests.model.transport import configure_build
 from message_data.tools.gfei_fuel_economy import get_gfei_data

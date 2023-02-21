@@ -8,8 +8,8 @@ from message_ix import Reporter
 from message_ix_models import Context
 from message_ix_models.util import eval_anno, private_data_path
 
-from message_data.model.transport import Config
-from message_data.model.transport.build import get_spec
+from . import Config
+from .build import get_spec
 
 log = logging.getLogger(__name__)
 

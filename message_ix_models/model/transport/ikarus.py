@@ -19,7 +19,7 @@ from message_ix_models.util import (
 )
 from openpyxl import load_workbook
 
-from message_data.model.transport.utils import input_commodity_level
+from .util import input_commodity_level
 
 log = logging.getLogger(__name__)
 

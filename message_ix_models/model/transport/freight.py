@@ -17,7 +17,7 @@ from message_ix_models.util import (
     same_node,
 )
 
-from message_data.model.transport.utils import input_commodity_level
+from .util import input_commodity_level
 
 
 def iea_2017_t4(measure: int):

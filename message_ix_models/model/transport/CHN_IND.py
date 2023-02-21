@@ -54,7 +54,7 @@ FILL_VALUES = {
 #  current way (converting per var names in columns) or axis=0 (converting per rows
 #  as coded in _covert below).
 def _convert(group_df):
-    """""Convert units of a pandas.groupby object based on UNITS."""
+    """ ""Convert units of a pandas.groupby object based on UNITS."""
     info = UNITS.get(group_df["Variable"].unique()[0], None)
     if not info:
         return group_df

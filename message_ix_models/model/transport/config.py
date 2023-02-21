@@ -227,7 +227,7 @@ class Config(ConfigHelper):
     #: Load factors for vehicles.
     #:
     #: ``freight``: similar to IEA “Future of Trucks” (2017) values; see
-    #: .transport.data.freight. Alternately use 5.0, similar to Roadmap 2017 values.
+    #: .transport.freight. Alternately use 5.0, similar to Roadmap 2017 values.
     load_factor: Dict = field(
         default_factory=lambda: {"freight": 10.0}  # tonne km per vehicle km
     )
@@ -362,7 +362,7 @@ class Config(ConfigHelper):
            e.g. :file:`data/transport/ISR/set.yaml` is preferred to
            :file:`data/transport/set.yaml`.
         """
-        from message_data.model.transport.utils import path_fallback
+        from .util import path_fallback
 
         # Handle arguments
         options = options or dict()

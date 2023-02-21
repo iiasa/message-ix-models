@@ -6,7 +6,7 @@ from message_ix_models.model.structure import get_codes
 from pytest import param
 
 from message_data.model.transport.config import ScenarioFlags
-from message_data.model.transport.data.ldv import (
+from message_data.model.transport.ldv import (
     constraint_data,
     prepare_computer,
     read_USTIMES_MA3T,
