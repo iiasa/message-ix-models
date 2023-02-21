@@ -1,15 +1,7 @@
 # Configuration for MESSAGEix-Transport
 
-# Sources for input data
-data source:
-  # Non-LDV technologies: 'IKARUS' or null
-  non-LDV: IKARUS
-  # LDV technologies: 'US-TIMES MA3T' or null
-  LDV: US-TIMES MA3T
-  population: SSP2
-  gdp: SSP2
-  # Emissions: ID of a dump from a base scenario
-  emissions: "1"
+# Sources for input data: defaults
+data source: {}
 
 # (DLM) “Which US census region should be used as a proxy for the distribution
 # of driver types in this MESSAGE region?”

@@ -1,14 +1,7 @@
 # Configuration for MESSAGEix-Transport
 
-# Sources for input data
-data source:
-  gdp: SSP2
-  population: SSP2
-  LDV: US-TIMES MA3T
-  non-LDV: IKARUS
-  # TODO support merging these with the base / non-region-specific file
-  dummy demand: false  # true to include
-  dummy supply: false  # true to include
+# Sources for input data: defaults
+data source: {}
 
 factor:
   activity:
