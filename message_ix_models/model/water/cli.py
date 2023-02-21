@@ -101,7 +101,9 @@ _REL = ["low", "med", "high"]
     help="Defines whether water SDG measures are activated or not",
 )
 @click.option(
-    "--macro", is_flag=True, help="Defines whether the model solves with macro",
+    "--macro",
+    is_flag=True,
+    help="Defines whether the model solves with macro",
 )
 @common_params("regions")
 def nexus_cli(context, regions, rcps, sdgs, rels, macro=False):
@@ -169,7 +171,6 @@ def nexus(context, regions, rcps, sdgs, rels, macro=False):
 
     # Solve
     if macro:
-
         scen.solve(
             model="MESSAGE-MACRO",
             solve_options={"lpmethod": "4", "scaind": "1"},

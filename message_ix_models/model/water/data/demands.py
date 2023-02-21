@@ -33,7 +33,6 @@ def target_rate(df, basin, val):
 
         if len(sizes) > 1:
             if sizes["DEV"] > sizes["IND"] or sizes["DEV"] == sizes["IND"]:
-
                 # for j in urban[urban["node"] == i][urban[urban["node"] == i]["year"] == 2030].index:
                 #      if urban[urban["node"] == i][urban[urban["node"] == i]["year"] == 2030].at[j, "value"] < np.float64(0.75):
                 #          value.append([j, np.float64(0.75)])
@@ -121,7 +120,6 @@ def target_rate_trt(df, basin):
 
         if len(sizes) > 1:
             if sizes["DEV"] > sizes["IND"] or sizes["DEV"] == sizes["IND"]:
-
                 for j in df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].index:
                     temp = df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].at[
                         j, "value"
@@ -137,7 +135,6 @@ def target_rate_trt(df, basin):
                     value.append([j, np.float64(temp)])
         else:
             if sizes.index[0] == "DEV":
-
                 for j in df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].index:
                     temp = df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].at[
                         j, "value"
@@ -626,7 +623,10 @@ def add_sectoral_demands(context):
         year_act=df_recycling["year"],
         value=df_recycling["value"],
         unit="-",
-    ).pipe(broadcast, time=sub_time,)
+    ).pipe(
+        broadcast,
+        time=sub_time,
+    )
 
     df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
     results["share_commodity_lo"] = df_share_wat

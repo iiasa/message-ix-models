@@ -84,7 +84,8 @@ def map_add_on(rtype=Code):
             for d, i in zip(dims, indexers)
         }
         indexers["consumer_group"] = xr.DataArray(
-            [c.id for c in result["code"]], dims="consumer_group",
+            [c.id for c in result["code"]],
+            dims="consumer_group",
         )
         return indexers
     elif rtype is Code:

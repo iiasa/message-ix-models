@@ -27,7 +27,6 @@ def map_basin_region_wat(context):
     info = context["water build info"]
 
     if "year" in context.time:
-
         PATH = private_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
@@ -253,7 +252,11 @@ def add_water_supply(context):
                 year_vtg=year_wat,
                 year_act=year_wat,
             )
-            .pipe(broadcast, node_loc=df_node["node"], time=sub_time,)
+            .pipe(
+                broadcast,
+                node_loc=df_node["node"],
+                time=sub_time,
+            )
             .pipe(same_node)
             .pipe(same_time)
         )
@@ -271,7 +274,11 @@ def add_water_supply(context):
                 year_vtg=year_wat,
                 year_act=year_wat,
             )
-            .pipe(broadcast, node_loc=df_node["node"], time=sub_time,)
+            .pipe(
+                broadcast,
+                node_loc=df_node["node"],
+                time=sub_time,
+            )
             .pipe(same_node)
             .pipe(same_time)
         )
@@ -289,7 +296,11 @@ def add_water_supply(context):
                 node_origin=df_node["node"],
                 node_loc=df_node["region"],
             )
-            .pipe(broadcast, year_vtg=year_wat, time=sub_time,)
+            .pipe(
+                broadcast,
+                year_vtg=year_wat,
+                time=sub_time,
+            )
             .pipe(same_time)
         )
         inp["year_act"] = inp["year_vtg"]
@@ -325,7 +336,11 @@ def add_water_supply(context):
                 node_origin=df_node["node"],
                 node_loc=df_node["node"],
             )
-            .pipe(broadcast, yv_ya_sw, time=sub_time,)
+            .pipe(
+                broadcast,
+                yv_ya_sw,
+                time=sub_time,
+            )
             .pipe(same_time)
         )
 
@@ -343,7 +358,11 @@ def add_water_supply(context):
                 node_origin=df_node["node"],
                 node_loc=df_node["node"],
             )
-            .pipe(broadcast, yv_ya_gw, time=sub_time,)
+            .pipe(
+                broadcast,
+                yv_ya_gw,
+                time=sub_time,
+            )
             .pipe(same_time)
         )
 
@@ -362,7 +381,9 @@ def add_water_supply(context):
                 node_origin=df_node["region"],
                 node_loc=df_node["node"],
             ).pipe(
-                broadcast, yv_ya_sw, time=sub_time,
+                broadcast,
+                yv_ya_sw,
+                time=sub_time,
             )
         )
 
@@ -379,7 +400,9 @@ def add_water_supply(context):
                 node_origin=df_gwt["REGION"],
                 node_loc=df_node["node"],
             ).pipe(
-                broadcast, yv_ya_gw, time=sub_time,
+                broadcast,
+                yv_ya_gw,
+                time=sub_time,
             )
         )
 
@@ -397,7 +420,9 @@ def add_water_supply(context):
                 node_origin=df_gwt["REGION"],
                 node_loc=df_node["node"],
             ).pipe(
-                broadcast, yv_ya_gw, time=sub_time,
+                broadcast,
+                yv_ya_gw,
+                time=sub_time,
             )
         )
 
@@ -424,7 +449,11 @@ def add_water_supply(context):
                 node_loc=df_node["node"],
                 node_dest=df_node["node"],
             )
-            .pipe(broadcast, yv_ya_sw, time=sub_time,)
+            .pipe(
+                broadcast,
+                yv_ya_sw,
+                time=sub_time,
+            )
             .pipe(same_time)
         )
         # Add output df  for groundwater supply for basins
@@ -440,7 +469,11 @@ def add_water_supply(context):
                 node_loc=df_node["node"],
                 node_dest=df_node["node"],
             )
-            .pipe(broadcast, yv_ya_gw, time=sub_time,)
+            .pipe(
+                broadcast,
+                yv_ya_gw,
+                time=sub_time,
+            )
             .pipe(same_time)
         )
 
@@ -458,7 +491,11 @@ def add_water_supply(context):
                 node_dest=df_node["node"],
                 time_origin="year",
             )
-            .pipe(broadcast, yv_ya_gw, time=sub_time,)
+            .pipe(
+                broadcast,
+                yv_ya_gw,
+                time=sub_time,
+            )
             .pipe(same_time)
         )
 
@@ -611,7 +648,10 @@ def add_water_supply(context):
 
         # Prepare dataframe for investments
         inv_cost = make_df(
-            "inv_cost", technology="extract_surfacewater", value=155.57, unit="USD/km3",
+            "inv_cost",
+            technology="extract_surfacewater",
+            value=155.57,
+            unit="USD/km3",
         ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
 
         inv_cost = inv_cost.append(
@@ -697,7 +737,9 @@ def add_e_flow(context):
     if "year" in context.time:
         # Reading data, the data is spatially and temporally aggregated from GHMs
         path1 = private_data_path(
-            "water", "availability", f"e-flow_{context.RCP}_{context.regions}.csv",
+            "water",
+            "availability",
+            f"e-flow_{context.RCP}_{context.regions}.csv",
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
@@ -716,7 +758,9 @@ def add_e_flow(context):
     else:
         # Reading data, the data is spatially and temporally aggregated from GHMs
         path1 = private_data_path(
-            "water", "availability", f"e-flow_5y_m_{context.RCP}_{context.regions}.csv",
+            "water",
+            "availability",
+            f"e-flow_5y_m_{context.RCP}_{context.regions}.csv",
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)

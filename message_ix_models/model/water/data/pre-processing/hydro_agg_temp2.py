@@ -295,7 +295,6 @@ for scen in scenarios:
 
     # df = data.iloc[:,5:]
     for z in range(len(df_env[scen].columns) // 12):
-
         col_start = 0 if z == 0 else col_end  # start col number
         col_end = (z + 1) * 12  # ending col number
         temp = df_env[scen].iloc[:, col_start:col_end]  # assigning relevant data

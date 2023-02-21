@@ -103,7 +103,6 @@ delta26 = (
 
 
 def bias_correction(df):
-
     """ias corrects the data such that 2020 value is same
     for both scenario and then apply
     Input
@@ -121,18 +120,14 @@ def bias_correction(df):
     delta_multiply = 1
 
     for year in np.arange(2020, 2105, 5):
-
         # for 2020 delta all scenario data frame will be same
         if year == 2020:
             df[pd.date_range("2020-01-01", periods=12, freq="M")] = val_2020
 
         else:
-
             # for delta years after 2020
             if delta_multiply > 0.1:
-
                 for i in np.arange(4, -1, -1):
-
                     if i == 4:
                         delta60.columns = pd.date_range(
                             str(year - i) + "-01-01", periods=12, freq="M"
@@ -191,7 +186,6 @@ def bias_correction(df):
                 delta_multiply -= 0.2
 
             else:
-
                 # after detlta years
                 temp_daterange = pd.date_range(
                     str(year - 4) + "-01-01", periods=60, freq="M"
@@ -281,7 +275,6 @@ df_env = df_monthly_70
 
 # df = data.iloc[:,5:]
 for z in range(len(df_env.columns) // 12):
-
     col_start = 0 if z == 0 else col_end  # start col number
     col_end = (z + 1) * 12  # ending col number
     temp = df_env.iloc[:, col_start:col_end]  # assigning relevant data
@@ -313,15 +306,12 @@ eflow_5y.to_csv(wd11 + f"/e-flow_7p0_ZMB.csv")
 
 for year in np.arange(2020, 2105, 5):
     for i in np.arange(4, -1, -1):
-
         if i == 4:
-
             final_temp = eflow[
                 pd.date_range(str(year - i) + "-01-01", periods=12, freq="M")
             ]
 
         else:
-
             final_temp = eflow[
                 pd.date_range(str(year - i) + "-01-01", periods=12, freq="M")
             ]

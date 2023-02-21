@@ -37,7 +37,7 @@ isimip = "3b"
 
 data = "future"  # else future
 
-#%%
+# %%
 # if multimodelensemble:
 #     # iterate through scenarios (3)
 #     for model in climmodels:
@@ -155,7 +155,7 @@ for cl in climmodels:
 
     # da = da.fillna(0)
 
-    #%%
+    # %%
     if monthlyscale:
         # dpm = {
         #     "noleap": [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
@@ -366,7 +366,7 @@ for cl in climmodels:
             # read in saved data again to further process
             # da = xr.\
         #     open_dataset( wd+f'\output\{var}_5y__{climmodel}_{scen}_temp_agg.nc')
-#%%
+# %%
 # if all_touched:
 #     # open raster fle in wdhsapes directory, if not there copy from p drive
 #     basinraster = xr.open_dataarray(

@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 
 
 def run_old_reporting(sc=False):
-
     mp2 = sc.platform
 
     log.info(
@@ -26,7 +25,10 @@ def run_old_reporting(sc=False):
         f"for the scenario {sc.model}.{sc.scenario}"
     )
     old_reporting(
-        mp=mp2, scen=sc, merge_hist=True, merge_ts=False,
+        mp=mp2,
+        scen=sc,
+        merge_hist=True,
+        merge_ts=False,
     )
 
 
