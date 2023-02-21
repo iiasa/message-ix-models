@@ -123,6 +123,15 @@ SOURCE = {
 COLUMNS = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
 
+def make_indexers(*args) -> Dict[str, xr.DataArray]:
+    """Return indexers corresponding to `SOURCE`."""
+    t_new, source, t = zip(*[(k, v[0], v[1]) for k, v in SOURCE.items()])
+    return dict(
+        source=xr.DataArray(list(source), dims="t_new", coords={"t_new": list(t_new)}),
+        t=xr.DataArray(list(t), dims="t_new"),
+    )
+
+
 @cached
 def read_ikarus_data(occupancy, k_output, k_inv_cost):
     """Read the IKARUS data from :data:`FILE`.
