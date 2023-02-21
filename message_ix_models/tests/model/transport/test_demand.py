@@ -59,7 +59,7 @@ def test_demand_dummy(test_context, regions, years):
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, options):
     """Exogenous demand calculation succeeds."""
-    rep, info = demand_computer(test_context, tmp_path, regions, years, options=options)
+    c, info = demand_computer(test_context, tmp_path, regions, years, options=options)
 
     # Check that some keys (a) can be computed without error and (b) have correct units
     for key, unit in (
@@ -82,7 +82,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
     ):
         try:
             # Quantity can be computed
-            qty = rep.get(key)
+            qty = c.get(key)
 
             # Quantity has the expected units
             assert_units(qty, unit)
@@ -98,17 +98,17 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
         except Exception:
             # Something else
             print(f"\n\n-- {key} --\n\n")
-            print(rep.describe(key))
+            print(c.describe(key))
             print(qty, qty.attrs, qty.dims, qty.coords)
             raise
 
     # Freight demand is available
-    data = rep.get("transport demand freight::ixmp")
+    data = c.get("transport demand freight::ixmp")
     assert {"demand"} == set(data.keys())
     assert not data["demand"].isna().any().any()
 
     # Demand is expressed for the expected quantities
-    data = rep.get("transport demand passenger::ixmp")
+    data = c.get("transport demand passenger::ixmp")
 
     units = data["demand"]["unit"].unique()
     assert 1 == len(units)
@@ -133,7 +133,7 @@ def test_exo_report(test_context, tmp_path):
 
     Separated from the above because the plotting step is slow.
     """
-    rep, info = demand_computer(
+    c, info = demand_computer(
         test_context,
         tmp_path,
         regions="R12",
@@ -148,14 +148,14 @@ def test_exo_report(test_context, tmp_path):
     import dask
     from dask.optimization import cull
 
-    dsk, deps = cull(rep.graph, key)
+    dsk, deps = cull(c.graph, key)
     path = tmp_path / "demand-graph.pdf"
     log.info(f"Visualize compute graph at {path}")
     dask.visualize(dsk, filename=str(path))
 
     # Plots can be generated
-    rep.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
-    rep.get("demand plots")
+    c.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
+    c.get("demand plots")
 
 
 def demand_computer(test_context, tmp_path, regions, years, options=None):
