@@ -1,10 +1,15 @@
 """Prepare non-LDV data from the IKARUS model via :file:`GEAM_TRP_techinput.xlsx`."""
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from functools import partial
+from operator import le
+from typing import Dict
 
 import pandas as pd
+import xarray as xr
+from genno import Computer, Key, quote
 from iam_units import registry
+from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
@@ -21,9 +26,6 @@ from message_ix_models.util import (
 from openpyxl import load_workbook
 
 from .util import input_commodity_level
-
-if TYPE_CHECKING:
-    import genno
 
 log = logging.getLogger(__name__)
 
@@ -198,8 +200,26 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
     )
 
 
-def prepare_computer(c: "genno.Computer"):
-    # Computations to load files
+def prepare_computer(c: Computer):
+    RENAME_DIMS.setdefault("source", "source")
+
+    base_path = private_data_path("transport", "ikarus")
+
+    c.add_single("ikarus indexers", quote(make_indexers()))
+    c.add_single("y::ikarus", lambda data: list(filter(partial(le, 2000), data)), "y")
+
+    # NB this (harmlessly) duplicates an addition in .ldv.prepare_computer()
+    # TODO deduplicate
+    k_fi = c.add(
+        "factor_input",
+        "transport input factor:t-y",
+        "y",
+        "t::transport",
+        "t::transport agg",
+        "config",
+    )
+
+    final = {}
     for name in (
         "availability",
         "fix_cost",
@@ -208,11 +228,24 @@ def prepare_computer(c: "genno.Computer"):
         "technical_lifetime",
         "var_cost",
     ):
-        c.add(
-            "load_file",
-            private_data_path("transport", "ikarus", f"{name}.csv"),
-            key=f"ikarus {name}::raw",
-        )
+        k = Key(f"ikarus {name}")
+
+        # Load data from file
+        path = base_path.joinpath(f"{name}.csv")
+        k0 = c.add("load_file", path, key=k.add_tag("0"), dims=RENAME_DIMS, name=name)
+
+        # Extend over missing periods in the model horizon
+        k1 = c.add("extend_y", k.add_tag("1"), k0, "y::ikarus")
+
+        # Select desired values
+        k2 = c.add("select", k.add_tag("2"), k1, "ikarus indexers")
+        k3 = c.add("rename_dims", k.add_tag("3"), k2, {"t_new": "t"})
+        final[name] = k3
+
+    k = c.add_product("nonldv efficiency::adj", k_fi, final["input"])
+
+    # TODO convert using availability:
+    # - inv_cost from MEUR to [currency] / [activity], e.g. MEUR per billion vkm
 
     raise NotImplementedError("Incomplete")
 
