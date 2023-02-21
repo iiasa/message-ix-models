@@ -56,7 +56,7 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
     # key = "transport input factor:t-y"
     # key = "ldv efficiency:n-t-y:adj"
 
-    key = "ldv::ixmp"
+    key = "transport ldv::ixmp"
 
     # print(c.describe(key))  # DEBUG
 
