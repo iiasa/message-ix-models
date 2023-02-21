@@ -10,8 +10,9 @@ from ixmp.reporting import RENAME_DIMS, Quantity
 from message_ix_models import Context
 from message_ix_models.util import adapt_R11_R14, check_support
 
-from message_data.model.transport.utils import path_fallback
 from message_data.tools.gdp_pop import population
+
+from .util import path_fallback
 
 log = logging.getLogger(__name__)
 

@@ -17,10 +17,10 @@ from message_ix.reporting import Reporter
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import adapt_R11_R14, broadcast
 
-from message_data.model.transport import computations
-from message_data.model.transport.data import groups
-from message_data.model.transport.utils import path_fallback
 from message_data.tools import gdp_pop
+
+from . import computations, groups
+from .util import path_fallback
 
 log = logging.getLogger(__name__)
 

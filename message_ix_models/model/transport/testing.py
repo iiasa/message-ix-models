@@ -9,9 +9,10 @@ from message_ix_models import Context, ScenarioInfo, testing
 
 from message_data import reporting
 from message_data.model import transport
-from message_data.model.transport.utils import get_techs
 from message_data.reporting.sim import add_simulated_solution
 from message_data.tools import silence_log
+
+from .util import get_techs
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def simulated_solution(request, context) -> Reporter:
     The contents allow for fast testing of reporting code, without solving an actual
     :class:`.Scenario`.
     """
-    from message_data.model.transport.report import callback
+    from .report import callback
 
     # Build the base model
     scenario = built_transport(request, context, solved=False)

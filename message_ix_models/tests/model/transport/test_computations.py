@@ -3,7 +3,7 @@ import pytest
 from message_data.model.transport import Config
 from message_data.model.transport.computations import factor_input
 from message_data.model.transport.config import ScenarioFlags
-from message_data.model.transport.utils import get_techs
+from message_data.model.transport.util import get_techs
 
 
 @pytest.mark.parametrize(

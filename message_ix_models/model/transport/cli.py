@@ -118,7 +118,7 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
 @click.pass_obj
 def build_cmd(context, report_build, **options):
     """Prepare the model."""
-    from message_data.model.transport import build
+    from . import build
 
     # Tidy options that were already handled by the top-level CLI
     [options.pop(k) for k in "dest dry_run regions quiet".split()]
@@ -134,8 +134,9 @@ def build_cmd(context, report_build, **options):
 
     if report_build:
         # Also output diagnostic reports
-        from message_data.model.transport import report
         from message_data.reporting import prepare_reporter, register
+
+        from . import report
 
         register(report.callback)
 
@@ -255,7 +256,7 @@ def gen_demand(ctx, source, nodes, years, output_dir):
     """
     from genno import Key
 
-    from message_data.model.transport import build
+    from . import build
 
     # Read general transport config
     ctx.update(regions=nodes, years=years)
@@ -293,9 +294,10 @@ def debug(context):
     from message_ix_models import testing
     from message_ix_models.util import private_data_path
 
-    from message_data.model.transport import build
-    from message_data.model.transport.report import callback
     from message_data.reporting import prepare_reporter, register
+
+    from . import build
+    from .transport.report import callback
 
     request = None
     context.model.regions = "R11"

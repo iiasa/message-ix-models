@@ -27,11 +27,12 @@ from message_ix_models.tools import advance
 from message_ix_models.util import broadcast, eval_anno, nodes_ex_world
 from sdmx.model import Code
 
-from message_data.model.transport.config import ScenarioFlags
-from message_data.model.transport.utils import path_fallback
 from message_data.reporting.computations import compound_growth
 from message_data.reporting.util import as_quantity
 from message_data.tools import iea_eei
+
+from .config import ScenarioFlags
+from .util import path_fallback
 
 log = logging.getLogger(__name__)
 
