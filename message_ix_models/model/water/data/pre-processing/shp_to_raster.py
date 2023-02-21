@@ -3,9 +3,11 @@
 
 # Import packages
 from datetime import datetime as dt
+
 import numpy as np
 import salem
 import xarray as xr
+
 from message_ix_models.util import private_data_path
 
 # NB The code runs only when the data is in local folder because of salem package dependency

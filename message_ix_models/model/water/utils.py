@@ -6,10 +6,11 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import xarray as xr
+from sdmx.model import Code
+
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import load_private_data
-from sdmx.model import Code
 
 # Configuration files
 METADATA = [
@@ -83,8 +84,7 @@ def map_add_on(rtype=Code):
             for d, i in zip(dims, indexers)
         }
         indexers["consumer_group"] = xr.DataArray(
-            [c.id for c in result["code"]],
-            dims="consumer_group",
+            [c.id for c in result["code"]], dims="consumer_group",
         )
         return indexers
     elif rtype is Code:

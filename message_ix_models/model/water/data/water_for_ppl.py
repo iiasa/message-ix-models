@@ -1,16 +1,16 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from message_ix import make_df
+
+from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
     private_data_path,
     same_node,
 )
-
-from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 
 
 # water & electricity for cooling technologies
