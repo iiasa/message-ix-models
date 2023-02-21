@@ -1,6 +1,7 @@
 """Prepare non-LDV data from the IKARUS model via :file:`GEAM_TRP_techinput.xlsx`."""
 import logging
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from iam_units import registry
@@ -20,6 +21,9 @@ from message_ix_models.util import (
 from openpyxl import load_workbook
 
 from .util import input_commodity_level
+
+if TYPE_CHECKING:
+    import genno
 
 log = logging.getLogger(__name__)
 
@@ -90,6 +94,31 @@ CELL_RANGE = {
     "Trolley_bus": ["C229", "I235"],
 }
 
+#: Same as :data:`CELL_RANGE`, but referring to index entries in the extracted files.
+SOURCE = {
+    "rail_pub": ("IKARUS", "regional train electric efficient"),  # C103:I109
+    "dMspeed_rai": ("IKARUS", "intercity train diesel efficient"),  # C125:I131
+    "Mspeed_rai": ("IKARUS", "intercity train electric efficient"),  # C147:I153
+    "Hspeed_rai": ("IKARUS", "high speed train efficient"),  # C169:I175
+    "con_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
+    # Same parametrization as 'con_ar' (per cell references in spreadsheet):
+    "conm_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
+    "conE_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
+    "conh_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
+    "ICE_M_bus": ("Krey/Linßen", "Bus diesel"),  # C197:I203
+    "ICE_H_bus": ("Krey/Linßen", "Bus diesel efficent"),  # C205:I211
+    "ICG_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    # Same parametrization as 'ICG_bus'. Conversion factors will be applied.
+    "ICAe_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    "ICH_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    "PHEV_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    "FC_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    # Both equivalent to 'FC_bus'
+    "FCg_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    "FCm_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    "Trolley_bus": ("Krey/Linßen", "Bus electric"),  # C229:I235
+}
+
 #: Years appearing in the input file.
 COLUMNS = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
@@ -158,6 +187,25 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
         .rename_axis(index="year")
         .stack(["technology", "param"])
     )
+
+
+def prepare_computer(c: "genno.Computer"):
+    # Computations to load files
+    for name in (
+        "availability",
+        "fix_cost",
+        "input",
+        "inv_cost",
+        "technical_lifetime",
+        "var_cost",
+    ):
+        c.add(
+            "load_file",
+            private_data_path("transport", "ikarus", f"{name}.csv"),
+            key=f"ikarus {name}::raw",
+        )
+
+    raise NotImplementedError("Incomplete")
 
 
 def get_ikarus_data(context):
