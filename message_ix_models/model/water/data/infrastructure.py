@@ -13,7 +13,7 @@ from message_ix_models.util import (
     same_time,
 )
 
-from message_data.model.water.utils import map_yv_ya_lt
+from message_ix_models.model.water.utils import map_yv_ya_lt
 
 
 def add_infrastructure_techs(context):
