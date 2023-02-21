@@ -5,10 +5,11 @@ It calculates environmental flows using Variable Monthly Flow method
 
 """
 
+import os
 from sqlite3 import TimeFromTicks
+
 import numpy as np
 import pandas as pd
-import os
 
 type_reg = "global"  # else 'global'
 country = "ZMB"
