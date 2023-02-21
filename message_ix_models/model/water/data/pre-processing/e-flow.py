@@ -46,9 +46,10 @@ eflow = {}
 eflow1 = {}
 eflow2 = {}
 dffinal = {}
-#%%
-def temporal_agg(data, extreme_scen):
 
+
+# %%
+def temporal_agg(data, extreme_scen):
     # data = data.set_axis(pd.date_range(
     #     '2006-1-1', '2099-12-31', freq = 'M'), axis=1)
 
@@ -86,7 +87,7 @@ def temporal_agg(data, extreme_scen):
     return final_data
 
 
-#%%
+# %%
 for scen in scenarios:
     # Reading data files from four GCMs
     df = (
@@ -182,7 +183,6 @@ for scen in scenarios:
         print("5 year annual values processed")
 
     elif GCM == "mmean":
-
         # Final data frame after choosing multi model mean
         # df_mmmean[scen] = pd.concat(
         #     [data_0_mean, data_1_mean, data_2_mean]).groupby(
@@ -284,7 +284,7 @@ for scen in scenarios:
     #         dfs_ann[scen] = pd.concat([dfs_ann[scen], tmp_data], axis=1)
 
 
-#%%
+# %%
 var = "qtot"
 
 if env_flow:
@@ -306,7 +306,6 @@ if env_flow:
 
         # df = data.iloc[:,5:]
         for z in range(len(df_env[scen].columns) // 12):
-
             col_start = 0 if z == 0 else col_end  # start col number
             col_end = (z + 1) * 12  # ending col number
             temp = df_env[scen].iloc[:, col_start:col_end]  # assigning relevant data
@@ -368,7 +367,7 @@ if env_flow:
     )
 
     print("Environmental Flow Values processed")
-#%%
+# %%
 ## Unporcessed monthly data dry and extreme for comparison
 
 
@@ -445,7 +444,6 @@ for scen in scenarios:
         df = dfs_dry[scen]
 
     elif GCM == "mmean":
-
         # Final data frame after choosing multi model mean
         df_mmmean[scen] = (
             pd.concat([data_0_mean, data_1_mean, data_2_mean]).groupby(level=0).mean()
@@ -559,7 +557,7 @@ for scen in scenarios:
     # print("5 year annual values processed")
 
 
-#%%
+# %%
 # def env_flow(df, context, wetvaldev, dryvaldev, wetvalind, dryvalind):
 
 #     # reading basin mapping to countries
