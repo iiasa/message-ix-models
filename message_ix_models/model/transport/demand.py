@@ -142,7 +142,9 @@ def prepare_computer(c: Computer) -> None:
         Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
     """
     # Keys to refer to quantities
-    # Existing keys, from Reporter.from_scenario() or add_structure() (above)
+    # Existing keys, either from Reporter.from_scenario() or .build.add_structure()
+    # NB if not using `c` here, then the entire `queue` could be moved out of the
+    #    function
     gdp = c.full_key("GDP")
     mer_to_ppp = c.full_key("MERtoPPP")
     price_full = cast(Key, c.full_key("PRICE_COMMODITY")).drop("h", "l")
