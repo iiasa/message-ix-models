@@ -6,7 +6,7 @@
 #   - "IKARUS": IKARUS transport model
 #   - "Krey/Linßen": "Diss Krey 2006" and "Linßen u.a. 2003"
 #
-# Unit: EUR / 100 km
+# Unit: EUR_2000 / 100 km
 #
 source,technology,commodity,year,value
 IKARUS,tram,electr,2000,403.0
