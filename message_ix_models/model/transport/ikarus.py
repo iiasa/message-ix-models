@@ -100,13 +100,13 @@ SOURCE = {
     "dMspeed_rai": ("IKARUS", "intercity train diesel efficient"),  # C125:I131
     "Mspeed_rai": ("IKARUS", "intercity train electric efficient"),  # C147:I153
     "Hspeed_rai": ("IKARUS", "high speed train efficient"),  # C169:I175
-    "con_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
+    "con_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
     # Same parametrization as 'con_ar' (per cell references in spreadsheet):
-    "conm_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
-    "conE_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
-    "conh_ar": ("Krey/Linßen", "Aircraft jet"),  # C179:I185
+    "conm_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
+    "conE_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
+    "conh_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
     "ICE_M_bus": ("Krey/Linßen", "Bus diesel"),  # C197:I203
-    "ICE_H_bus": ("Krey/Linßen", "Bus diesel efficent"),  # C205:I211
+    "ICE_H_bus": ("Krey/Linßen", "Bus diesel efficient"),  # C205:I211
     "ICG_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
     # Same parametrization as 'ICG_bus'. Conversion factors will be applied.
     "ICAe_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
