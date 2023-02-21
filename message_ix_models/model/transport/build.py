@@ -10,7 +10,7 @@ from genno import Computer, KeyExistsError, quote
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import bare, build, disutility
-from message_ix_models.model.structure import get_codes, get_region_codes
+from message_ix_models.model.structure import get_region_codes
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
@@ -52,14 +52,6 @@ def add_structure(c: Computer):
     """
     context = c.graph["context"]
     info = context["transport build info"]
-
-    # `info` contains only structure to be added, not existing/required structure. Add
-    # information about the year dimension, to be used below.
-    # TODO accomplish this by 'merging' the ScenarioInfo/spec.
-    if not len(info.set["years"]):
-        info.year_from_codes(get_codes(f"year/{context.years}"))
-    if not len(info.set["node"]):
-        info.set["node"] = get_region_codes(context.model.regions)
 
     for key, value in (
         ("c::transport", quote(info.set["commodity"])),
