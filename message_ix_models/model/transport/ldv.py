@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache, partial
-from operator import itemgetter, le, lt
+from operator import itemgetter, le
 from typing import Any, Dict, List, Mapping
 
 import pandas as pd
@@ -13,7 +13,6 @@ from message_ix import make_df
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
-    MappingAdapter,
     ScenarioInfo,
     adapt_R11_R12,
     adapt_R11_R14,
@@ -31,6 +30,7 @@ from message_ix_models.util import (
 from openpyxl import load_workbook
 from sdmx.model import Code
 
+from .computations import extend_y
 from .emission import ef_for_input
 from .util import input_commodity_level, path_fallback
 
@@ -245,21 +245,9 @@ def get_USTIMES_MA3T(
         data = adapt_R11_R14(data)
 
     # Years to include
-    target_years = set(filter(partial(le, 2010), info.set["year"]))
-    for name, qty in data.items():
-        # Fill forward over uncovered periods in the model horizon
-        # TODO move this operation upstream
-
-        # Subset of `target_years` appearing in `qty`
-        years = sorted(set(qty.to_series().reset_index()["y"].unique()) & target_years)
-        # Subset of `target_years` to fill forward from the last period in `qty`
-        ffill = sorted(filter(partial(lt, years[-1]), target_years))
-
-        log.info(f"{name}: fill from {years[-1]} → {ffill}")
-
-        # Use message_ix_models MappingAdapter to do the work
-        y_map = [(y, y) for y in years] + [(years[-1], y) for y in ffill]
-        data[name] = MappingAdapter({"y": y_map})(qty)
+    target_years = filter(partial(le, 2010), info.set["year"])
+    # Extend over missing periods in the model horizon
+    data = {name: extend_y(qty, target_years) for name, qty in data.items()}
 
     # Prepare "input" and "output" parameter data from `efficiency`
     name = "efficiency"
