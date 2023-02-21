@@ -10,7 +10,7 @@ from message_ix_models.util import (
     same_node,
 )
 
-from message_data.model.water.data.water_supply import map_basin_region_wat
+from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 
 
 # water & electricity for cooling technologies

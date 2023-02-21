@@ -266,7 +266,7 @@ def report_cli(context, output_model, sdgs):
         Specifies the model name of the scenarios which are run.
     """
 
-    from message_data.model.water.reporting import report_full
+    from message_ix_models.model.water.reporting import report_full
 
     sc = context.get_scenario()
     report_full(sc, sdgs)
