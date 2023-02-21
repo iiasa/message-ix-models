@@ -2,6 +2,7 @@
 
 import pandas as pd
 from message_ix import make_df
+
 from message_ix_models.util import broadcast, private_data_path
 
 
@@ -180,8 +181,7 @@ def add_irr_structure(context):
             node_loc=df_node["region"],
             node_dest=df_node["region"],
         ).pipe(
-            broadcast,
-            year_vtg=info.Y,
+            broadcast, year_vtg=info.Y,
         )
     )
 
@@ -199,8 +199,7 @@ def add_irr_structure(context):
             node_loc=df_node["region"],
             node_dest=df_node["region"],
         ).pipe(
-            broadcast,
-            year_vtg=info.Y,
+            broadcast, year_vtg=info.Y,
         )
     )
 

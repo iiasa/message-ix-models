@@ -3,19 +3,20 @@ This script aggregates the global gridded data to any scale. The following
 script specifically aggregates global gridded hydrological data onto the basin
  mapping used in the nexus module.
 """
-import sys
 import os
+import sys
 
 print(sys.executable)
-#  Import packages
-from datetime import datetime as dt
-import xarray as xr
-import numpy as np
-import pandas as pd
-
 # import salem
 import glob
+
+#  Import packages
+from datetime import datetime as dt
+
 import dask
+import numpy as np
+import pandas as pd
+import xarray as xr
 
 start = dt.now()
 from dask.diagnostics import ProgressBar

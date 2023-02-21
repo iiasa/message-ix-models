@@ -4,12 +4,12 @@ import logging
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data
-from .infrastructure import add_infrastructure_techs
-from .water_for_ppl import cool_tech, non_cooling_tec
-from .demands import add_sectoral_demands, add_water_availability, add_irrigation_demand
-from .infrastructure import add_infrastructure_techs, add_desalination
-from .water_supply import add_water_supply, add_e_flow
+
+from .demands import add_irrigation_demand, add_sectoral_demands, add_water_availability
+from .infrastructure import add_desalination, add_infrastructure_techs
 from .irrigation import add_irr_structure
+from .water_for_ppl import cool_tech, non_cooling_tec
+from .water_supply import add_e_flow, add_water_supply
 
 log = logging.getLogger(__name__)
 

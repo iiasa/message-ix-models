@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from message_ix import make_df
+
 from message_ix_models.util import broadcast, private_data_path
 
 
@@ -625,10 +626,7 @@ def add_sectoral_demands(context):
         year_act=df_recycling["year"],
         value=df_recycling["value"],
         unit="-",
-    ).pipe(
-        broadcast,
-        time=sub_time,
-    )
+    ).pipe(broadcast, time=sub_time,)
 
     df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
     results["share_commodity_lo"] = df_share_wat

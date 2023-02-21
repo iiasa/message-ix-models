@@ -4,11 +4,12 @@ import numpy as np
 import pandas as pd
 import pyam
 from message_ix.reporting import Reporter
+
 from message_ix_models.util import private_data_path
 
 try:
     from message_data.tools.post_processing.iamc_report_hackathon import (
-        report as old_reporting
+        report as old_reporting,
     )
 except ImportError:  # message_data not installed
     old_reporting = None
@@ -25,10 +26,7 @@ def run_old_reporting(sc=False):
         f"for the scenario {sc.model}.{sc.scenario}"
     )
     old_reporting(
-        mp=mp2,
-        scen=sc,
-        merge_hist=True,
-        merge_ts=False,
+        mp=mp2, scen=sc, merge_hist=True, merge_ts=False,
     )
 
 
@@ -48,7 +46,7 @@ def remove_duplicate(data):
         oprlist = reg_index(strr)
         if i in indexes:
             if len(oprlist) > 1:
-                final_list.append(strr[oprlist[0] + 1:])
+                final_list.append(strr[oprlist[0] + 1 :])
             elif len(oprlist) == 1 and oprlist[0] > 6:
                 final_list.append(strr[: oprlist[0]])
             else:
