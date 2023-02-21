@@ -162,13 +162,13 @@ def test_read_USTIMES_MA3T(func):
     data = func(nodes, "R11")
 
     # Expected contents
-    names = ["efficiency", "fix_cost", "inv_cost"]
+    names = ["fix_cost", "fuel economy", "inv_cost"]
     assert set(names) == set(data.keys())
 
     # Correct units
     assert data["inv_cost"].units.dimensionality == {"[currency]": 1, "[vehicle]": -1}
     assert data["fix_cost"].units.dimensionality == {"[currency]": 1, "[vehicle]": -1}
-    assert data["efficiency"].units.dimensionality == {
+    assert data["fuel economy"].units.dimensionality == {
         "[vehicle]": 1,
         "[length]": -1,
         "[mass]": -1,
