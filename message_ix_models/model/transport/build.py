@@ -14,8 +14,8 @@ from message_ix_models.model.structure import get_codes, get_region_codes
 from message_ix_models.util._logging import mark_time
 from sdmx.model import Annotation, Code
 
-from .config import Config
-from .utils import get_techs
+from . import Config
+from .util import get_techs
 
 log = logging.getLogger(__name__)
 
