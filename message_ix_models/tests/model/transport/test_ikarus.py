@@ -3,7 +3,7 @@ import pytest
 from message_ix import make_df
 from pandas.testing import assert_series_equal
 
-from message_data.model.transport.ikarus import get_ikarus_data
+from message_data.model.transport import ScenarioFlags, ikarus
 from message_data.testing import assert_units
 from message_data.tests.model.transport import configure_build
 
@@ -19,7 +19,7 @@ def test_get_ikarus_data(test_context, regions, N_node, years):
     info = configure_build(ctx, regions, years)
 
     # get_ikarus_data() succeeds on the bare RES
-    data = get_ikarus_data(ctx)
+    data = ikarus.get_ikarus_data(ctx)
 
     # Returns a mapping
     assert {
@@ -102,9 +102,10 @@ def test_get_ikarus_data(test_context, regions, N_node, years):
 @pytest.mark.parametrize(
     "regions, N_node", [("R11", 11), ("R12", 12), ("R14", 14), ("ISR", 1)]
 )
-def test_get_ikarus_data1(test_context, regions, N_node, years):
+@pytest.mark.parametrize("options", [{}, dict(flags=ScenarioFlags.TEC)])
+def test_get_ikarus_data1(test_context, regions, N_node, years, options):
     ctx = test_context
-    c, info = demand_computer(ctx, None, regions, years)
+    c, info = demand_computer(ctx, None, regions, years, options)
 
     for name in (
         "availability",
@@ -114,4 +115,7 @@ def test_get_ikarus_data1(test_context, regions, N_node, years):
         "technical_lifetime",
         "var_cost",
     ):
-        print(c.get(f"ikarus {name}::raw"))
+        c.get(f"ikarus {name}::3")
+
+    # For a manual check that the options have an effect
+    # print(c.get("nonldv efficiency:t-y:adj").to_series().to_string())
