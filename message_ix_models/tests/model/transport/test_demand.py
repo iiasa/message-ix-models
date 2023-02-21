@@ -158,7 +158,7 @@ def test_exo_report(test_context, tmp_path):
     rep.get("demand plots")
 
 
-def demand_computer(test_context, tmp_path, regions, years, options):
+def demand_computer(test_context, tmp_path, regions, years, options=None):
     test_context.update(regions=regions, years=years, output_path=tmp_path)
     c = build.get_computer(test_context, options=options)
     return c, test_context["transport build info"]

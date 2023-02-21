@@ -137,8 +137,7 @@ def get_computer(
     context: Context, obj: Optional[Computer] = None, **kwargs
 ) -> Computer:
     """Return a :class:`genno.Computer` set up for model-building calculations."""
-    from . import data, demand, plot
-    from .data import ldv
+    from . import data, demand, ikarus, ldv, plot
 
     # Configure
     Config.from_context(context, **kwargs)
@@ -186,7 +185,7 @@ def get_computer(
         demand.add_exogenous_data(c, base_info)
 
     # Prepare other calculations
-    for module in (demand, ldv, plot, data):
+    for module in (demand, ikarus, ldv, plot, data):
         module.prepare_computer(c)
 
     return c
