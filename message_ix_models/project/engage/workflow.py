@@ -4,7 +4,7 @@ These functions emulate the collective behaviour of :class:`.engage.runscript_ma
 :class:`.engage.scenario_runner` and the associated configuration, but are adapted to be
 reusable, particularly in the Workflow pattern used in e.g. :mod:`.projects.navigate`.
 """
-
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -17,14 +17,19 @@ from message_ix_models.workflow import Workflow
 
 from message_data.scenario_generation.reserve_margin.res_marg import main as res_marg
 from message_data.tools.utilities import (
+    add_AFOLU_CO2_accounting,
+    add_alternative_TCE_accounting,
     add_budget,
     add_CO2_emission_constraint,
     add_emission_trajectory,
+    add_FFI_CO2_accounting,
     remove_emission_bounds,
 )
 
 from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
 from .scenario_runner import ScenarioRunner
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -193,14 +198,19 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     """
     remove_emission_bounds(scenario)
 
+    # Identify the node codelist used by `scenario` (in case it is not set on `context`)
     context.model.regions = identify_nodes(scenario)
-    add_CO2_emission_constraint(
-        scenario,
-        relation_name=RELATION_GLOBAL_CO2,
-        constraint_value=0.0,
-        type_rel="lower",
-        reg=f"{context.model.regions}_GLB",
-    )
+
+    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
+
+    # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
+    log.info("Add separate FFI and AFOLU CO2 accounting")
+    add_FFI_CO2_accounting(scenario, **kw)
+    add_AFOLU_CO2_accounting(scenario, **kw)
+    log.info("Add alternative TCE accounting")
+    add_alternative_TCE_accounting(scenario)
+
+    add_CO2_emission_constraint(scenario, **kw, constraint_value=0.0, type_rel="lower")
 
     # Calculate **and apply** budget
     calc_budget(
