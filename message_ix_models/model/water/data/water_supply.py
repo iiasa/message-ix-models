@@ -5,8 +5,8 @@ import pandas as pd
 from message_ix import make_df
 from message_ix_models.util import broadcast, private_data_path, same_node, same_time
 
-from message_data.model.water.data.demands import read_water_availability
-from message_data.model.water.utils import map_yv_ya_lt
+from message_ix_models.model.water.data.demands import read_water_availability
+from message_ix_models.model.water.utils import map_yv_ya_lt
 
 
 def map_basin_region_wat(context):
