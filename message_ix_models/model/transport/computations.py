@@ -1,7 +1,7 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
 from functools import partial
-from operator import gt, le
+from operator import gt, le, lt
 from typing import Dict, Hashable, List, Mapping, Optional
 
 import numpy as np
@@ -24,7 +24,7 @@ from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools import advance
-from message_ix_models.util import broadcast, eval_anno, nodes_ex_world
+from message_ix_models.util import MappingAdapter, broadcast, eval_anno, nodes_ex_world
 from sdmx.model import Code
 
 from message_data.reporting.computations import compound_growth
@@ -226,6 +226,22 @@ def dummy_prices(gdp: Quantity) -> Quantity:
     shape = list(len(c[1]) for c in coords)
 
     return Quantity(xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km")
+
+
+def extend_y(qty: Quantity, y: List[int]) -> Quantity:
+    """Extend `qty` along the "y" dimension to cover `y`."""
+    y_ = set(y)
+
+    # Subset of `y` appearing in `qty`
+    y_qty = sorted(set(qty.to_series().reset_index()["y"].unique()) & y_)
+    # Subset of `target_years` to fill forward from the last period in `qty`
+    y_to_fill = sorted(filter(partial(lt, y_qty[-1]), y_))
+
+    log.info(f"{qty.name}: extend from {y_qty[-1]} → {y_to_fill}")
+
+    # Use message_ix_models MappingAdapter to do the work
+    y_map = [(y, y) for y in y_qty] + [(y_qty[-1], y) for y in y_to_fill]
+    return MappingAdapter({"y": y_map})(qty)
 
 
 def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
