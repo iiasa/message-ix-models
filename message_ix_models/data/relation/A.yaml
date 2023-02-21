@@ -33,6 +33,11 @@ CO_Emission:
   parameters: activity, lower
   technology-entry: 1
 
+CO2_Emission_Global_Total:
+  description: >-
+    Used by message_data.tools.utilities to constrain global total CO₂ emissions
+    to be non-negative.
+
 CO2_r_c:
   description: CO₂ emissions of residential and commercial buildings sector.
 
