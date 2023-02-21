@@ -9,11 +9,12 @@ log = logging.getLogger(__name__)
 
 
 # allows to activate water module
-@click.group("water")
+@click.group("water-ix")
 @common_params("regions")
 @click.option("--time", help="Manually defined time")
 @click.pass_obj
 def cli(context, regions, time):
+    """MESSAGEix-Water and Nexus variant."""
     water_ini(context, regions, time)
 
 

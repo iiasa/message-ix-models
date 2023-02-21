@@ -107,6 +107,7 @@ def debug(ctx):
 submodules = [
     "message_ix_models.model.cli",
     "message_ix_models.model.structure",
+    "message_ix_models.model.water.cli",
 ]
 
 try:
