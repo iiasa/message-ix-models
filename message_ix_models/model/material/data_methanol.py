@@ -222,6 +222,11 @@ def gen_data_methanol(scenario):
     for i in new_dict2.keys():
         new_dict2[i] = new_dict2[i].drop_duplicates()
 
+    # model MTBE phase out legislation
+    if pars["mtbe_scenario"] == "phase_out":
+        new_dict2 = combine_df_dictionaries(new_dict2, add_mtbe_act_bound(scenario))
+
+    # remove old methanol end use tecs
     #scenario.check_out()
     #scenario.commit("remove old methanol end use tecs")
 
@@ -370,14 +375,23 @@ def gen_data_meth_chemicals(scenario, chemical):
         par_dict["growth_activity_up"] = df[~((df["node_loc"] == "R12_CHN") & ((df["year_act"] == 2020)))]
         #par_dict.pop("growth_activity_up")
         #par_dict.pop("growth_activity_lo")
+        par_dict["inv_cost"] = update_costs_with_loc_factor(par_dict["inv_cost"])
+        par_dict["fix_cost"] = update_costs_with_loc_factor(par_dict["fix_cost"])
 
     return par_dict
 
 
-def add_methanol_trp_additives(scenario):
-    df_loil = scenario.par("input", filters={"technology": "loil_trp"})
-    if df_loil.index.size == 0:
-        return pd.DataFrame()
+def add_methanol_fuel_additives(scenario):
+    par_dict_loil = {}
+    pars = ['output', 'var_cost', 'relation_activity', 'input', 'emission_factor']
+    for i in pars:
+        try:
+            df = scenario.par(i, filters={"technology": "loil_trp", "mode": "M1"})
+            if df.size != 0:
+                par_dict_loil[i] = df.copy(deep=True)
+        except:
+            pass
+    par_dict_loil["input"] = par_dict_loil["input"][par_dict_loil["input"]["commodity"] == "lightoil"]
 
     df_mtbe = pd.read_excel(
         context.get_local_path(
@@ -409,11 +423,27 @@ def add_methanol_trp_additives(scenario):
 
     def get_meth_share(df, node):
         return df[df["node_loc"] == node["node_loc"]]["value"].values[0]
-    df_loil_meth = df_loil.copy(deep=True)
+    df_loil_meth = par_dict_loil["input"].copy(deep=True)
     df_loil_meth["value"] = df_loil_meth.apply(lambda x: get_meth_share(df_total, x), axis=1)
     df_loil_meth["commodity"] = "methanol"
-    df_loil["value"] = df_loil["value"] - df_loil_meth["value"]
-    return pd.concat([df_loil, df_loil_meth])
+    par_dict_loil["input"]["value"] = par_dict_loil["input"]["value"] - df_loil_meth["value"]
+
+    df_loil_eth = df_loil_meth.copy(deep=True)
+    df_loil_eth["commodity"] = "ethanol"
+    df_loil_eth["mode"] = "ethanol"
+    df_loil_eth["value"] = df_loil_eth["value"] * 1.6343 # energy ratio methanol/ethanol in MTBE vs ETBE
+
+    df_loil_eth_mode = par_dict_loil["input"].copy(deep=True)
+    df_loil_eth_mode["mode"] = "ethanol"
+    df_loil_eth_mode["value"] = df_loil_eth_mode["value"] - df_loil_eth["value"]
+
+    par_dict_loil_eth = copy.deepcopy(par_dict_loil)
+    par_dict_loil_eth.pop("input")
+    for i in par_dict_loil_eth.keys():
+        par_dict_loil_eth[i]["mode"] = "ethanol"
+
+    df_input = pd.concat([par_dict_loil["input"], df_loil_meth, df_loil_eth, df_loil_eth_mode])
+    return combine_df_dictionaries(par_dict_loil_eth, {"input": df_input})
 
 
 def add_meth_trade_historic():
@@ -661,3 +691,35 @@ def add_meth_hist_act():
         [par_dict["historical_activity"], df_ng, df_ng_fs]
     )
     return par_dict
+
+
+def update_costs_with_loc_factor(df):
+    loc_fact = pd.read_excel(
+        "C:/Users\maczek\PycharmProjects\message_data\data\material\methanol/location factor collection.xlsx",
+        sheet_name="comparison", index_col=0)
+    cost_conv = pd.read_excel(
+        "C:/Users\maczek\PycharmProjects\message_data\data\material\methanol/location factor collection.xlsx",
+        sheet_name="cost_convergence", index_col=0)
+    loc_fact = loc_fact.loc["WEU normalized"]
+    loc_fact.index = ("R12_" + loc_fact.index)
+    df = df.merge(loc_fact, left_on="node_loc", right_index=True)
+    df = df.merge(cost_conv, left_on="year_vtg", right_index=True)
+    df["value"] = df["value"] - (1 - df["WEU normalized"]) * df["value"] * df["convergence"]
+    return df[df.columns[:-2]]
+
+
+def add_mtbe_act_bound(scenario):
+    mtbe_dict = {}
+    year = [i for i in range(2030, 2056, 5)] + [i for i in range(2060, 2111, 10)]
+    par_dict = {
+        "technology": "loil_trp",
+        "mode": "M1",
+        "unit": "-",
+        "time": "year",
+        "year_act": year,
+        "value": 0
+    }
+    nodes = scenario.set("node").drop(0).drop(5)
+    mtbe_dict["bound_activity_up"] = \
+        make_df("bound_activity_up", **par_dict).pipe(broadcast, node_loc=nodes)
+    return mtbe_dict
