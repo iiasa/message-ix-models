@@ -3,26 +3,19 @@ from typing import Mapping
 import click
 import logging
 import ixmp
-import os
-from pathlib import Path
 # from .build import apply_spec
 # from message_data.tools import ScenarioInfo
 from message_data.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
 from message_ix_models.util.context import Context
-from message_ix_models.util import add_par_data
-from message_data.tools.utilities import calibrate_UE_gr_to_demand
-from message_data.tools.utilities import calibrate_UE_share_constraints
-from message_ix_models.util import private_data_path
+from message_ix_models.util import add_par_data, private_data_path
+from message_data.tools.utilities import calibrate_UE_gr_to_demand, add_globiom,\
+    calibrate_UE_share_constraints
 
 # from .data import add_data
-from .data_util import modify_demand_and_hist_activity
-from .data_util import add_emission_accounting
-from .data_util import add_coal_lowerbound_2020
-from .data_util import add_macro_COVID
-from .data_util import add_elec_lowerbound_2020
-from .data_util import add_ccs_technologies
-from .util import read_config
+from .data_util import modify_demand_and_hist_activity, add_emission_accounting
+from .data_util import add_coal_lowerbound_2020, add_macro_COVID
+from .data_util import add_elec_lowerbound_2020, add_ccs_technologies, read_config
 
 log = logging.getLogger(__name__)
 
@@ -400,7 +393,6 @@ DATA_FUNCTIONS_1 = [
     gen_data_generic,
     gen_data_steel,
 ]
-
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
