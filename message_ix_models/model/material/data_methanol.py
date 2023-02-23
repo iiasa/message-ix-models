@@ -369,6 +369,9 @@ def gen_data_meth_chemicals(scenario, chemical):
         par_dict["bound_activity_lo"] = make_df(
             "bound_activity_lo", year_act=2020, value=10, **hist_dict
         )
+        par_dict["bound_activity_up"] = make_df(
+            "bound_activity_up", year_act=2020, value=12, **hist_dict
+        )
         df = par_dict["growth_activity_lo"]
         par_dict["growth_activity_lo"] = df[~((df["node_loc"] == "R12_CHN") & ((df["year_act"] == 2020)))]
         df = par_dict["growth_activity_up"]
