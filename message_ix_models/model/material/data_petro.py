@@ -39,7 +39,8 @@ def read_data_petrochemicals(scenario):
 
     return data_petro
 
-def gen_mock_demand_petro(scenario, gdp_elasticity):
+
+def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
 
     context = read_config()
     s_info = ScenarioInfo(scenario)
@@ -94,9 +95,14 @@ def gen_mock_demand_petro(scenario, gdp_elasticity):
         income_year1 = modelyears[i]
         income_year2 = modelyears[i + 1]
 
-        dem_2020 = get_demand_t1_with_income_elasticity(
-            dem_2020, df[income_year1], df[income_year2], gdp_elasticity
-        )
+        if income_year2 >= 2030:
+            dem_2020 = get_demand_t1_with_income_elasticity(
+                dem_2020, df[income_year1], df[income_year2], gdp_elasticity_2030
+            )
+        else:
+            dem_2020 = get_demand_t1_with_income_elasticity(
+                dem_2020, df[income_year1], df[income_year2], gdp_elasticity_2020
+            )
         df_demand[income_year2] = dem_2020
 
     df_melt = df_demand.melt(
@@ -354,7 +360,18 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # demand_HVC = derive_petro_demand(scenario)
     default_gdp_elasticity = float(0.93)
     context = read_config()
-    demand_HVC = gen_mock_demand_petro(scenario, default_gdp_elasticity)
+
+    df_pars = pd.read_excel(
+        context.get_local_path(
+            "material", "methanol", "methanol_sensitivity_pars.xlsx"
+        ),
+        sheet_name="Sheet1",
+        dtype=object,
+    )
+    pars = df_pars.set_index("par").to_dict()["value"]
+    default_gdp_elasticity_2020 = pars["hvc_elasticity_2020"]
+    default_gdp_elasticity_2030 = pars["hvc_elasticity_2030"]
+    demand_HVC = gen_mock_demand_petro(scenario, default_gdp_elasticity_2020, default_gdp_elasticity_2030)
     results["demand"].append(demand_HVC)
 
     # df_e = make_df(paramname, level='final_material', commodity="ethylene", \

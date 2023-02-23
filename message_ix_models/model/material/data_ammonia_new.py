@@ -8,7 +8,16 @@ from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
-default_gdp_elasticity = float(0.65)
+default_gdp_elasticity = pd.read_excel(
+        context.get_local_path(
+            "data",
+            "material",
+            "methanol",
+            "methanol_sensitivity_pars.xlsx",
+        )
+    ).set_index("par").to_dict()["value"]["nh3_elasticity"]
+# float(0.65) # old default value
+
 
 def gen_all_NH3_fert(scenario, dry_run=False):
     return {
