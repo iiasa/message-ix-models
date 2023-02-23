@@ -1,7 +1,3 @@
-import message_ix
-import message_data
-import ixmp as ix
-
 import pandas as pd
 import numpy as np
 
@@ -25,7 +21,7 @@ def gen_all_NH3_fert(scenario, dry_run=False):
     }
 
 
-def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs = False):
+def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
     s_info = ScenarioInfo(scenario)
     # s_info.yv_ya
     nodes = s_info.N
@@ -91,7 +87,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs = False)
         par_dict[par_name] = df_new
 
     if lower_costs:
-        par_doct = experiment_lower_CPA_SAS_costs(par_dict)
+        par_dict = experiment_lower_CPA_SAS_costs(par_dict)
 
     df_lifetime = par_dict.get("technical_lifetime")
     dict_lifetime =  ( df_lifetime.loc[:,["technology", "value"]]
@@ -110,7 +106,6 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs = False)
             df_temp = df_temp[(df_temp["year_act"] - df_temp["year_vtg"]) < df_temp["lifetime"]]
             par_dict[i] = df_temp.drop("lifetime", axis="columns")
     return par_dict
-
 
 
 def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
@@ -407,6 +402,7 @@ def read_demand():
         "NH3_trade_R12": NH3_trade_R12,
     }
 
+
 def gen_demand():
     context = read_config()
 
@@ -434,6 +430,7 @@ def gen_demand():
     # TODO: refactor with a more sophisticated solution to reduce i_feed
     df.loc[df["value"] < 0, "value"] = 0  # temporary solution to avoid negative values
     return {"demand": df}
+
 
 def gen_resid_demand_NH3(scenario, gdp_elasticity):
 
@@ -464,7 +461,7 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
     # 70% is used for nitrogen fertilizer production. Rest is 54.7 Mt.
     # 12 Mt is missing from nitrogen fertilizer part. Possibly due to low demand
     # coming from GLOBIOM updates. Also add this to the residual demand. (66.7 Mt)
-    # Approxiamte regional shares are from Future of Petrochemicals
+    # Approximate regional shares are from Future of Petrochemicals
     # Methodological Annex page 7. Total production for regions:
     # Asia Pacific (RCPA, CHN, SAS, PAS, PAO) = 90 Mt
     # Eurasia (FSU) = 20 Mt, Middle East (MEA) = 15, Africa (AFR) = 5
@@ -472,7 +469,7 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
     # North America (NAM) = 20 Mt.
     # Regional shares are derived. They are based on production values not demand.
     # Some assumptions made for the regions that are not explicitly covered in IEA.
-    # (CHN produces the 30% of the ammonia globaly and India 10%.)
+    # (CHN produces the 30% of the ammonia globally and India 10%.)
     # The orders of the regions
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
     #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
@@ -517,10 +514,12 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
 
     return {"demand": df_residual}
 
+
 def gen_land_input(scenario):
     df = scenario.par("land_output", {"commodity": "Fertilizer Use|Nitrogen"})
     df["level"] = "final_material"
     return {"land_input": df}
+
 
 def experiment_lower_CPA_SAS_costs(par_dict):
     cost_list = ["inv_cost", "fix_cost"]
