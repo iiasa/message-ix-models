@@ -176,12 +176,12 @@ def gen_data_methanol(scenario):
             pass
 
 
-
-    df_final = gen_meth_residual_demand(pars["methanol_elasticity"])
-    df_final["value"] = df_final["value"].apply(lambda x: x * 0.5)
+    df_final = gen_meth_residual_demand(pars["methanol_elasticity_2020"], pars["methanol_elasticity_2030"])
+    df_final["value"] = df_final["value"].apply(
+        lambda x: x * pars["methanol_resid_demand_share"])
     new_dict2["demand"] = df_final
 
-    new_dict2 = combine_df_dictionaries(new_dict2, add_meth_hist_act(scenario))
+    new_dict2 = combine_df_dictionaries(new_dict2, add_meth_hist_act())
 
     mto_dict = gen_data_meth_chemicals(scenario, "MTO")
     ch2o_dict = gen_data_meth_chemicals(scenario, "Formaldehyde")
@@ -564,7 +564,7 @@ def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHA
     return df_demand
 
 
-def gen_meth_residual_demand(gdp_elasticity):
+def gen_meth_residual_demand(gdp_elasticity_2020, gdp_elasticity_2030):
     def get_demand_t1_with_income_elasticity(
         demand_t0, income_t0, income_t1, elasticity
     ):
@@ -599,10 +599,14 @@ def gen_meth_residual_demand(gdp_elasticity):
     for i in range(len(years) - 1):
         income_year1 = years[i]
         income_year2 = years[i + 1]
-
-        dem_2020 = get_demand_t1_with_income_elasticity(
-            dem_2020, df[income_year1], df[income_year2], gdp_elasticity
-        )
+        if income_year2 >= 2030:
+            dem_2020 = get_demand_t1_with_income_elasticity(
+                dem_2020, df[income_year1], df[income_year2], gdp_elasticity_2030
+            )
+        else:
+            dem_2020 = get_demand_t1_with_income_elasticity(
+                dem_2020, df[income_year1], df[income_year2], gdp_elasticity_2020
+            )
         df_demand[income_year2] = dem_2020
 
     df_melt = df_demand.melt(
