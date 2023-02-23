@@ -1,15 +1,15 @@
-import message_ix
+import copy
 import pandas as pd
-import numpy as np
 
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
-from .util import read_config
+from .util import read_config, combine_df_dictionaries
 
 context = read_config()
 
 
 def gen_data_methanol(scenario):
+    # read sensitivity file
     df_pars = pd.read_excel(
         context.get_local_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
@@ -20,6 +20,7 @@ def gen_data_methanol(scenario):
     pars = df_pars.set_index("par").to_dict()["value"]
 
 
+    # read new meth tec parameters
     meth_h2_fs_dict = gen_data_meth_h2()
     meth_h2_fuel_dict = gen_data_meth_h2()
     meth_bio_dict = gen_data_meth_bio(scenario)
@@ -184,6 +185,8 @@ def gen_data_methanol(scenario):
     resin_dict = gen_data_meth_chemicals(scenario, "Resins")
     chemicals_dict = combine_df_dictionaries(mto_dict, ch2o_dict, resin_dict)
 
+
+    # generate resin demand from STURM results
     df_comm = gen_resin_demand(
         scenario, pars["resin_share"], "comm", "SH2", "SHAPE", #pars["wood_scenario"],  #pars["pathway"]
     )
@@ -198,14 +201,17 @@ def gen_data_methanol(scenario):
     df_resin_demand["value"] = df_comm["value"] + df_resid["value"]
     new_dict2["demand"] = pd.concat([new_dict2["demand"], df_resin_demand])
 
-    new_dict2["input"] = pd.concat(
-        [new_dict2["input"], add_methanol_trp_additives(scenario)]
-    )
 
+    # modify loil_trp inputs
+    new_dict2 = combine_df_dictionaries(new_dict2,
+                                        add_methanol_fuel_additives(scenario))
+
+    # fix efficiency of meth_t_d
     df = scenario.par("input", filters={"technology": "meth_t_d"})
     df["value"] = 1
     new_dict2["input"] = pd.concat([new_dict2["input"], df])
 
+    # update production costs with IEA data
     if pars["update_old_tecs"]:
         cost_dict = update_methanol_costs(scenario)
         new_dict2 = combine_df_dictionaries(new_dict2, cost_dict)
@@ -227,6 +233,8 @@ def gen_data_meth_h2():
         context.get_local_path("material", "methanol", "meth_h2_techno_economic.xlsx"),
         sheet_name=None,
     )
+    df_h2["inv_cost"] = update_costs_with_loc_factor(df_h2["inv_cost"])
+    df_h2["inv_cost"] = update_costs_with_loc_factor(df_h2["fix_cost"])
     return df_h2
 
 
@@ -376,7 +384,7 @@ def add_methanol_trp_additives(scenario):
             "material", "methanol", "Methanol production statistics (version 1).xlsx"
         ),
         # usecols=[1,2,3,4,6,7],
-        skiprows=np.linspace(0, 65, 66),
+        skiprows=[i for i in range(66)],
         sheet_name="MTBE calc",
     )
     df_mtbe = df_mtbe.iloc[
@@ -389,7 +397,7 @@ def add_methanol_trp_additives(scenario):
         context.get_local_path(
             "material", "methanol", "Methanol production statistics (version 1).xlsx"
         ),
-        skiprows=np.linspace(0, 37, 38),
+        skiprows=[i for i in range(38)],
         usecols=[1, 2],
         sheet_name="Biodiesel",
     )
@@ -547,7 +555,7 @@ def gen_meth_residual_demand(gdp_elasticity):
     df_melt = df_demand.melt(
         id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
     )
-    return message_ix.make_df(
+    return make_df(
         "demand",
         unit="t",
         level="final_material",
@@ -579,7 +587,7 @@ def get_cost_ratio_2020(scenario, tec_name, cost_type, ref_reg="R12_NAM", year="
         ].iloc[0]
         df["ratio"] = df["value"] / val_nam_2020
 
-    return df  # [["node_loc","year_vtg", "ratio"]]
+    return df
 
 
 def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_tec, year="all"):
@@ -587,17 +595,7 @@ def get_scaled_cost_from_proxy_tec(value, scenario, proxy_tec, cost_type, new_te
     df["value"] = value * df["ratio"]
     df["technology"] = new_tec
     df["unit"] = "-"
-    return message_ix.make_df(cost_type, **df)
-
-
-def combine_df_dictionaries(*args):
-    keys = set([key for tup in args for key in tup])
-    #keys = set(list(dict1.keys()) + list(dict2.keys()))
-    comb_dict = {}
-    for i in keys:
-        #comb_dict[i] = pd.concat([dict1.get(i), dict2.get(i)])
-        comb_dict[i] = pd.concat([j.get(i) for j in args])
-    return comb_dict
+    return make_df(cost_type, **df)
 
 
 def add_meth_tec_vintages():
@@ -625,7 +623,7 @@ def add_meth_tec_vintages():
     return combine_df_dictionaries(par_dict_ng, par_dict_ng_fs, par_dict_coal, par_dict_coal_fs)
 
 
-def add_meth_hist_act(scenario):
+def add_meth_hist_act():
     # fix demand infeasibility
     par_dict = {}
     df_fs = pd.read_excel(
@@ -638,7 +636,7 @@ def add_meth_hist_act(scenario):
     )
     par_dict["historical_activity"] = pd.concat([df_fs, df_fuel])
     # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
-    hist_cap = message_ix.make_df(
+    hist_cap = make_df(
         "historical_new_capacity",
         node_loc="R12_CHN",
         technology="meth_coal",
