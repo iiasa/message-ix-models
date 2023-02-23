@@ -207,6 +207,7 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
     #convert floats
     par_dict["historical_activity"] = par_dict["historical_activity"].astype({'year_act': 'int32'})
     par_dict["historical_new_capacity"] = par_dict["historical_new_capacity"].astype({'year_vtg': 'int32'})
+    par_dict["bound_activity_lo"] = par_dict["bound_activity_lo"].astype({'year_act': 'int32'})
 
     return par_dict
 
