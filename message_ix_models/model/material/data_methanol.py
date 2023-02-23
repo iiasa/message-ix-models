@@ -217,13 +217,11 @@ def gen_data_methanol(scenario):
     for i in new_dict2.keys():
         new_dict2[i] = new_dict2[i].drop_duplicates()
 
-    pars = ["input", "output"]
+    # remove old methanol end use tecs
     #scenario.check_out()
-    for i in pars:
-        df = scenario.par(i, filters={"technology": ["sp_meth_I", "meth_rc",
-                                                     "meth_ic_trp", "meth_fc_trp",
-                                                     "meth_i"]})
-        scenario.remove_par(i, df)
+    scenario.remove_set("technology", ["sp_meth_I", "meth_rc",
+                            "meth_ic_trp", "meth_fc_trp",
+                            "meth_i"])
     #scenario.commit("remove old methanol end use tecs")
 
     return new_dict2
