@@ -1,14 +1,11 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-from .data_util import read_timeseries
-from pathlib import Path
+from .data_util import read_timeseries, read_rel
 
 import message_ix
-import ixmp
 
 from .util import read_config
-from .data_util import read_rel
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
@@ -116,6 +113,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity):
         year=df_melt.year,
         node=(region_set + df_melt["Region"]),
     )
+
 
 def gen_data_petro_chemicals(scenario, dry_run=False):
     # Load configuration

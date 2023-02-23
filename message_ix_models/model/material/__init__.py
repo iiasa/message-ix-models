@@ -34,9 +34,9 @@ def build(scenario):
     # Apply to the base scenario
     spec = get_spec()
 
-    apply_spec(scenario,spec, add_data_2)
+    apply_spec(scenario, spec, add_data_2)
     spec = None
-    apply_spec(scenario, spec,add_data_1)  # dry_run=True
+    apply_spec(scenario, spec, add_data_1)  # dry_run=True
 
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
@@ -61,7 +61,7 @@ def build(scenario):
 
     # i_feed demand is zero creating a zero division error during MACRO calibration
     scenario.check_out()
-    scenario.remove_set('sector','i_feed')
+    scenario.remove_set('sector', 'i_feed')
     scenario.commit('i_feed removed from sectors.')
 
     return scenario
@@ -396,6 +396,7 @@ DATA_FUNCTIONS_1 = [
     #gen_data_buildings,
     gen_data_methanol,
     gen_all_NH3_fert,
+    #gen_data_ammonia, ## deprecated module!
     gen_data_generic,
     gen_data_steel,
 ]
@@ -406,6 +407,7 @@ DATA_FUNCTIONS_2 = [
     #gen_data_power_sector,
     gen_data_aluminum
 ]
+
 
 # Try to handle multiple data input functions from different materials
 def add_data_1(scenario, dry_run=False):

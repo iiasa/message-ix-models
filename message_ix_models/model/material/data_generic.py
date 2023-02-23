@@ -103,7 +103,7 @@ def gen_data_generic(scenario, dry_run=False):
         # Iterate over parameters
         for par in params:
             split = par.split("|")
-            param_name = par.split("|")[0]
+            param_name = split[0]
 
             val = data_generic.loc[
                 (
@@ -177,7 +177,7 @@ def gen_data_generic(scenario, dry_run=False):
                     results[param_name].append(df_low)
                     results[param_name].append(df_high)
 
-            # Rest of the parameters apart from inpput, output and emission_factor
+            # Rest of the parameters apart from input, output and emission_factor
 
             else:
 
