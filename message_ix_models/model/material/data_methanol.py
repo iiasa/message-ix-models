@@ -188,14 +188,14 @@ def gen_data_methanol(scenario):
 
     # generate resin demand from STURM results
     df_comm = gen_resin_demand(
-        scenario, pars["resin_share"], "comm", "SH2", "SHAPE", #pars["wood_scenario"],  #pars["pathway"]
+        scenario, pars["resin_share"], "comm", "REF", "SSP2", #pars["wood_scenario"],  #pars["pathway"]
     )
     df_resid = gen_resin_demand(
         scenario,
         pars["resin_share"],
         "residential",
         pars["wood_scenario"],
-        pars["pathway"],
+        "SSP2",
     )
     df_resin_demand = df_comm.copy(deep=True)
     df_resin_demand["value"] = df_comm["value"] + df_resid["value"]
