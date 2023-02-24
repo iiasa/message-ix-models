@@ -513,6 +513,12 @@ methanol:
     - MTO_petro
     - CH2O_synth
     - CH2O_to_resin
+    remove:
+    - sp_meth_I
+    - meth_rc
+    - meth_ic_trp
+    - meth_fc_trp
+    - meth_i
 
   addon:
     add:
