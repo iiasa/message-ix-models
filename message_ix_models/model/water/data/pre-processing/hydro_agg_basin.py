@@ -1,13 +1,13 @@
-import matplotlib.pylab as plt
-import seaborn as sns
+"""
+This script aggregates the global gridded data to any scale. The following
+script specifically aggregates global gridded hydrological data onto the basin
+ mapping used in the nexus module.
+"""
 
-sns.set()
+import os
+
 import numpy as np
 import pandas as pd
-import seaborn as sns
-
-sns.set_style("whitegrid")
-import os
 
 # variable, for detailed symbols, refer to ISIMIP2b documentation
 variables = ["qtot", "dis", "qr"]  # total runoff  # discharge  # groundwater run
@@ -28,9 +28,10 @@ if isimip == "2b":
     # climate forcing
     scenarios = ["rcp26", "rcp60"]
     scen = "rcp26"
-    wd1 = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
-    wd = os.path.join("p:", "watxene", "ISIMIP", "ISIMIP2b", "output", "LPJmL")
-    wd2 = os.path.join("p:", "ene.model", "NEST", "hydrology", "processed_nc4")
+    # This is an internal IIASA directory path
+    wd1 = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg") + os.sep
+    wd = os.path.join("p:", "watxene", "ISIMIP", "ISIMIP2b", "output", "LPJmL") + os.sep
+    wd2 = os.path.join("p:", "ene.model", "NEST", "hydrology", "processed_nc4") + os.sep
 else:
     climmodels = [
         "gfdl-esm4",
@@ -42,12 +43,14 @@ else:
     cl = "gfdl-esm4"
     scenarios = ["ssp126", "ssp370", "ssp585"]
     scen = "ssp126"
-    wd1 = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg")
-    wd11 = os.path.join("p:", "ene.model", "NEST", iso3, "hydrology", "isimip3B_CWatM")
+    wd1 = os.path.join("p:", "ene.model", "NEST", "hydrological_data_agg") + os.sep
+    wd11 = (
+        os.path.join("p:", "ene.model", "NEST", iso3, "hydrology", "isimip3B_CWatM")
+        + os.sep
+    )
 
 
-#
-qtot_7p0_gfdl = pd.read_csv(wd11 + f"\{var}_monthly_gfdl-esm4_ssp370_future.csv").drop(
+qtot_7p0_gfdl = pd.read_csv(wd11 + f"{var}_monthly_gfdl-esm4_ssp370_future.csv").drop(
     [
         "Unnamed: 0",
         "NAME",
@@ -66,7 +69,7 @@ new_cols = pd.date_range("2015-01-01", periods=1032, freq="M")
 qtot_7p0_gfdl.columns = new_cols
 
 
-qtot_2p6_gfdl = pd.read_csv(wd11 + f"\{var}_monthly_gfdl-esm4_ssp126_future.csv").drop(
+qtot_2p6_gfdl = pd.read_csv(wd11 + f"{var}_monthly_gfdl-esm4_ssp126_future.csv").drop(
     [
         "Unnamed: 0",
         "NAME",
@@ -115,8 +118,10 @@ def bias_correction(df):
     df_5y_m: bias corrected 5 y monthly
     df_5y: bias corrected 5 y average
     """
-    # Starting value of delat is 1 and then it will reduce to zero with each 5 year timestep
-    # till 2045 with a difference of 0.2. This means the bias correction will fade away till 2045
+    # Starting value of delat is 1
+    # it will reduce to zero with each 5 year timestep
+    # till 2045 with a difference of 0.2.
+    # This means the bias correction will fade away till 2045
     delta_multiply = 1
 
     for year in np.arange(2020, 2105, 5):
@@ -267,12 +272,9 @@ df_q70_70.apply(lambda x: val_2020_annual).to_csv(
 df_q90_70.apply(lambda x: val_2020_annual).to_csv(
     wd11 + f"/{var}_5y_no_climate_high_{iso3}.csv"
 )
-
-
-## Environmental Flow
-
+# Environmental Flow
 df_env = df_monthly_70
-
+col_end = None
 # df = data.iloc[:,5:]
 for z in range(len(df_env.columns) // 12):
     col_start = 0 if z == 0 else col_end  # start col number
@@ -302,7 +304,7 @@ for z in range(len(df_env.columns) // 12):
 
 # Convert to 5 year annual values
 eflow_5y = eflow.resample("5Y", axis=1).mean()
-eflow_5y.to_csv(wd11 + f"/e-flow_7p0_ZMB.csv")
+eflow_5y.to_csv(wd11 + f"e-flow_7p0_{iso3}.csv")
 
 for year in np.arange(2020, 2105, 5):
     for i in np.arange(4, -1, -1):
@@ -322,14 +324,13 @@ for year in np.arange(2020, 2105, 5):
     ] = final_temp.groupby(final_temp.columns.month, axis=1).mean()
 
     eflow_5y_m = eflow[eflow.columns[eflow.columns.year.isin(years)]]
+    eflow_5y_m.to_csv(wd11 + f"e-flow_5y_m_7p0_{iso3}.csv")
 
-    eflow_5y_m.to_csv(wd11 + f"/e-flow_5y_m_7p0_ZMB.csv")
-
-val_2020_eflow = eflow_5y_m[pd.date_range(f"2020-01-01", periods=12, freq="M")].values()
+val_2020_eflow = eflow_5y_m[pd.date_range("2020-01-01", periods=12, freq="M")].values()
 val_2020_eflowy = eflow_5y["2020-12-31"]
-eflow_5y.apply(lambda x: val_2020_eflowy).to_csv(wd11 + f"/e-flow_no_climate_ZMB.csv")
+eflow_5y.apply(lambda x: val_2020_eflowy).to_csv(wd11 + f"e-flow_no_climate_{iso3}.csv")
 
 for y in years:
     eflow_5y_m[pd.date_range(f"{y}-01-01", periods=12, freq="M")] = val_2020_eflow
 
-eflow_5y_m.to_csv(wd11 + f"/e-flow_5y_m_no_climate_ZMB.csv")
+eflow_5y_m.to_csv(wd11 + f"e-flow_5y_m_no_climate_{iso3}.csv")

@@ -655,7 +655,9 @@ def cool_tech(context):
 
     cap_fact = make_matched_dfs(inp, capacity_factor=1)
     # Climate Impacts on freshwater cooling capacity
-    # Taken from https://www.sciencedirect.com/science/article/pii/S0959378016301236?via%3Dihub#sec0080
+    # Taken from
+    # https://www.sciencedirect.com/science/article/
+    #  pii/S0959378016301236?via%3Dihub#sec0080
     if context.RCP == "no_climate":
         df = cap_fact["capacity_factor"]
     else:

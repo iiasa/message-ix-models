@@ -579,7 +579,8 @@ def add_water_supply(context):
         #     unit="USD/km3",
         #     mode="M1",
         #     time="year",
-        #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat, node_loc=df_node["node"]
+        #     ).pipe(broadcast, year_vtg=year_wat,
+        #       year_act=year_wat, node_loc=df_node["node"]
         #        )
         #                  )
         # # Dummy cost for extract groundwater
@@ -590,7 +591,8 @@ def add_water_supply(context):
         #     unit="USD/km3",
         #     mode="M1",
         #     time="year",
-        # ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat, node_loc=df_node["node"])
+        # ).pipe(broadcast, year_vtg=year_wat,
+        #   year_act=year_wat, node_loc=df_node["node"])
         #                )
         results["var_cost"] = var
 
