@@ -19,7 +19,8 @@ def target_rate(df, basin, val):
     If the number of developing and developed countries are equal in a basin, then
     the basin is assumed developing.
     For developed basins target is set at 2030.
-    For developing basins, the access target is set at 2040 and 2035 target is the average of
+    For developing basins, the access target is set at
+    2040 and 2035 target is the average of
     2030 original rate and 2040 target.
     Returns
     -------
@@ -33,8 +34,11 @@ def target_rate(df, basin, val):
 
         if len(sizes) > 1:
             if sizes["DEV"] > sizes["IND"] or sizes["DEV"] == sizes["IND"]:
-                # for j in urban[urban["node"] == i][urban[urban["node"] == i]["year"] == 2030].index:
-                #      if urban[urban["node"] == i][urban[urban["node"] == i]["year"] == 2030].at[j, "value"] < np.float64(0.75):
+                # for j in urban[urban["node"] == i]
+                # [urban[urban["node"] == i]["year"] == 2030].index:
+                #      if urban[urban["node"] == i]
+                # [urban[urban["node"] == i]["year"] == 2030]
+                # .at[j, "value"] < np.float64(0.75):
                 #          value.append([j, np.float64(0.75)])
 
                 for ind, j in enumerate(
@@ -62,8 +66,11 @@ def target_rate(df, basin, val):
                         value.append([j, np.float64(val)])
         else:
             if sizes.index[0] == "DEV":
-                # for j in urban[urban["node"] == i][urban[urban["node"] == i]["year"] == 2030].index:
-                #       if urban[urban["node"] == i][urban[urban["node"] == i]["year"] == 2030].at[j, "value"] < np.float64(0.75):
+                # for j in urban[urban["node"] == i]
+                # [urban[urban["node"] == i]["year"] == 2030].index:
+                #       if urban[urban["node"] == i]
+                # [urban[urban["node"] == i]["year"] == 2030]
+                # .at[j, "value"] < np.float64(0.75):
                 #           value.append([j, np.float64(0.75)])
 
                 for ind, j in enumerate(
@@ -581,7 +588,8 @@ def add_sectoral_demands(context):
         "industry_untreated",
         "rural_untreated",
     ]
-    # create a new column and use np.select to assign values to it using our lists as arguments
+    # create a new column and use np.select to assign
+    # values to it using our lists as arguments
     h_act["commodity"] = np.select(conditions, values)
     h_act["value"] = h_act["value"].abs()
 
@@ -686,9 +694,9 @@ def add_sectoral_demands(context):
 
 def read_water_availability(context):
     """
-    Reads water availability data and bias correct it for the historical years and no climate
+    Reads water availability data and bias correct
+    it for the historical years and no climate
     scenario assumptions.
-
 
     Parameters
     ----------
@@ -703,8 +711,6 @@ def read_water_availability(context):
     # Reference to the water configuration
     info = context["water build info"]
     # reading sample for assiging basins
-    # info = context["water build info"]
-
     PATH = private_data_path(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
@@ -823,8 +829,6 @@ def add_water_availability(context):
         Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
         are data frames ready for :meth:`~.Scenario.add_par`.
     """
-    # Reference to the water configuration
-    info = context["water build info"]
 
     # define an empty dictionary
     results = {}
