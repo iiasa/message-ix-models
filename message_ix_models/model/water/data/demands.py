@@ -37,17 +37,16 @@ def set_target_rate_developed(df, node, target):
 
 def set_target_rate_developing(df, node, target):
     """Sets target rate for a developing basin"""
+    for i in df.index:
+        if df.at[i, "node"] == node and df.at[i, "year"] == 2030:
+            value_2030 = df.at[i, "value"]
+            break
+
     set_target_rate(
         df,
         node,
         2035,
-        (
-            df[df["node"] == node][df[df["node"] == node]["year"] == 2030].at[
-                j, "value"
-            ]
-            + target
-        )
-        / 2,
+        (value_2030 + target) / 2,
     )
     set_target_rate(df, node, 2040, target)
 
@@ -65,13 +64,15 @@ def set_target_rates(df, basin, val):
 def target_rate(df, basin, val):
     """
     Sets target connection and sanitation rates for SDG scenario.
-    The function filters out the basins as developing and developed based on the countries
-    overlapping basins. If the number of developing countries in the basins are
+    The function filters out the basins as developing and
+    developed based on the countries overlapping basins.
+    If the number of developing countries in the basins are
     more than basin is categorized as developing and vice versa.
-    If the number of developing and developed countries are equal in a basin, then
-    the basin is assumed developing.
+    If the number of developing and developed countries are equal
+    in a basin, then the basin is assumed developing.
     For developed basins, target is set at 2030.
-    For developing basins, the access target is set at 2040 and 2035 target is the average of
+    For developing basins, the access target is set at
+    2040 and 2035 target is the average of
     2030 original rate and 2040 target.
     Returns:
         df (pandas.DataFrame): Data frame with updated value column.
