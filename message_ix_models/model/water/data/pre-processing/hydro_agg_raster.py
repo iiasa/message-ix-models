@@ -216,9 +216,7 @@ for cl in climmodels:
             davg["dis"] = davg.dis.chunk(
                 {"lat": latchunk, "lon": lonchunk, "time": len(davg.dis.time)}
             )
-            davg.to_netcdf(
-                wd2 + f"{var}_90Y_avg_5y__{climmodel}_{scen}_temp_agg.nc"
-            )
+            davg.to_netcdf(wd2 + f"{var}_90Y_avg_5y__{climmodel}_{scen}_temp_agg.nc")
 
             # Now resample to an average value for each 5-year block, and
             # offset by 2 years so that the value is centred to start 2101
@@ -226,9 +224,7 @@ for cl in climmodels:
 
             da.to_netcdf(wd2 + f"{var}_5y__{climmodel}_{scen}_temp_agg.nc")
             # read in saved data again to further process
-            da = xr.open_dataset(
-                wd2 + f"{var}_5y__{climmodel}_{scen}_temp_agg.nc"
-            )
+            da = xr.open_dataset(wd2 + f"{var}_5y__{climmodel}_{scen}_temp_agg.nc")
 
         elif var == "qtot":
             da["qtot"] = da.qtot.chunk(
