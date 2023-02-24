@@ -93,8 +93,10 @@ def add_irr_structure(context):
     inp["year_act"] = inp["year_vtg"]
 
     # Electricity values per unit of irrigation water supply
-    # Reference: Evaluation of Water and Energy Use in Pressurized Irrigation Networks in Southern Spain
-    # Diaz et al. 2011 https://ascelibrary.org/doi/10.1061/%28ASCE%29IR.1943-4774.0000338
+    # Reference: Evaluation of Water and Energy Use in
+    # Pressurized Irrigation Networks in Southern Spain
+    # Diaz et al. 2011 https://ascelibrary.org/
+    # doi/10.1061/%28ASCE%29IR.1943-4774.0000338
     # Low Value :0.04690743
     # Average Value :0.101598174
     # High Value : 0.017123288
