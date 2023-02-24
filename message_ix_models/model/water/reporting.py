@@ -21,7 +21,7 @@ def run_old_reporting(sc=False):
     mp2 = sc.platform
 
     log.info(
-        f" Start reporting of the global energy system (old reporting scheme)"
+        " Start reporting of the global energy system (old reporting scheme)"
         f"for the scenario {sc.model}.{sc.scenario}"
     )
     old_reporting(
@@ -465,7 +465,10 @@ def report(sc=False, sdgs=False):
                 "km3/yr",
             ],
             [
-                "Capacity Additions|Infrastructure|Water|Extraction|Groundwater|Renewable",
+                (
+                    "Capacity"
+                    " Additions|Infrastructure|Water|Extraction|Groundwater|Renewable"
+                ),
                 extrt_gw_cap,
                 "km3/yr",
             ],
@@ -838,17 +841,26 @@ def report(sc=False, sdgs=False):
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling",
+                (
+                    "Total Operation Management Cost|Infrastructure|Water|Treatment &"
+                    " Recycling"
+                ),
                 urban_treatment_recycling_totalom + rural_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling|Urban",
+                (
+                    "Total Operation Management Cost|Infrastructure|Water|Treatment &"
+                    " Recycling|Urban"
+                ),
                 urban_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Treatment & Recycling|Rural",
+                (
+                    "Total Operation Management Cost|Infrastructure|Water|Treatment &"
+                    " Recycling|Rural"
+                ),
                 rural_treatment_recycling_totalom,
                 "million US$2010/yr",
             ],
@@ -858,12 +870,18 @@ def report(sc=False, sdgs=False):
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Distribution|Rural",
+                (
+                    "Total Operation Management"
+                    " Cost|Infrastructure|Water|Distribution|Rural"
+                ),
                 rural_dist_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Distribution|Urban",
+                (
+                    "Total Operation Management"
+                    " Cost|Infrastructure|Water|Distribution|Urban"
+                ),
                 urban_dist_totalom,
                 "million US$2010/yr",
             ],
@@ -875,17 +893,26 @@ def report(sc=False, sdgs=False):
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Rural",
+                (
+                    "Total Operation Management"
+                    " Cost|Infrastructure|Water|Unconnected|Rural"
+                ),
                 rural_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Urban",
+                (
+                    "Total Operation Management"
+                    " Cost|Infrastructure|Water|Unconnected|Urban"
+                ),
                 urban_unconnected_totalom,
                 "million US$2010/yr",
             ],
             [
-                "Total Operation Management Cost|Infrastructure|Water|Unconnected|Industry",
+                (
+                    "Total Operation Management"
+                    " Cost|Infrastructure|Water|Unconnected|Industry"
+                ),
                 industry_unconnected_totalom,
                 "million US$2010/yr",
             ],
@@ -908,7 +935,7 @@ def report(sc=False, sdgs=False):
     load_path = private_data_path("water", "demands", "harmonized", reg)
     all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
 
-    pop_check = sc.timeseries(variable=("Population"))
+    pop_check = sc.timeseries(variable="Population")
     pop_check = pop_check[pop_check.year >= 2020]
     if pop_check.empty:
         print("The Population data does not exist or timeseries() has no future values")
