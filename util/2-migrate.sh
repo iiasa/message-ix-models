@@ -45,13 +45,15 @@ git checkout -b $BRANCH $SRC/$SRC_BRANCH
 # - Module data.
 # - Module code. The "/model/" path fragment could also be "/project/", or
 #   removed entirely.
+# - Module tests.
 #
-# NB can add lines to also preserve docs, tests, e.g.:
-# --path-rename message_data/tests/model/$MOD/:$D_PACKAGE/tests/model/$MOD/
+# Add or remove lines here as necessary; not all modules have all the above
+# pieces, and some modules have additional pieces.
 git filter-repo \
   --refs $BRANCH --force --debug \
   --path-rename data/$MOD/:$D_PACKAGE/data/$MOD/ \
-  --path-rename $S_PACKAGE/model/$MOD/:$D_PACKAGE/model/$MOD/
+  --path-rename $S_PACKAGE/model/$MOD/:$D_PACKAGE/model/$MOD/ \
+  --path-rename $S_PACKAGE/tests/model/$MOD/:$D_PACKAGE/tests/model/$MOD/
 
 # --path = keep only a subset of files and directories.
 #
