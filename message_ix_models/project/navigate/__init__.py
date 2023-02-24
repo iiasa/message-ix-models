@@ -40,9 +40,10 @@ CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
         ),
         # All steps 1–3
         # From an item labelled "1000" in engage/config.yaml
-        PolicyConfig("20C", budget=3128, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
+        PolicyConfig("20C", budget=3000, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
         # From an item labelled "600" in engage/config.yaml
-        PolicyConfig("15C", budget=2122, low_dem_scen="EN_NPi2020_700_step1", **_kw),
+        # 2200 based on Ctax run with price=1000, which gave 2160 (908Gt)
+        PolicyConfig("15C", budget=2200, low_dem_scen="EN_NPi2020_700_step1", **_kw),
         #
         # The following do not appear in the official NAVIGATE scenarios list, but are
         # used in EXTRA_SCENARIOS below.
