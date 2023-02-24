@@ -6,7 +6,7 @@ from .get_optimization_years import main as get_optimization_years
 
 
 def add_AFOLU_CO2_accounting(
-    scen, relation_name, glb_reg="R11_GLB", constraint_value=None
+    scen, relation_name, reg="R11_GLB", constraint_value=None
 ):
     """Adds regional CO2 entries from AFOLU to a generic relation in a
     specified region.
@@ -32,7 +32,8 @@ def add_AFOLU_CO2_accounting(
     constraint_value: number (optional)
         value for which the lower constraint should be set
     """
-
+    glb_reg = reg
+    
     if relation_name not in scen.set("relation").tolist():
         scen.check_out()
         scen.add_set("relation", relation_name)
