@@ -7,7 +7,7 @@ from typing import Dict, Optional
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import private_data_path
+from message_ix_models.util import private_data_path, identify_nodes
 from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
@@ -183,9 +183,16 @@ def solve(context, scenario):
     return scenario
 
 
-def tax_emission(context, scenario, price: float):
+def tax_emission(context: Context, scenario: Scenario, price: float):
     """Workflow callable for :mod:`.tools.utilities.add_tax_emission`."""
-    from message_data.tools.utilities import add_tax_emission
+    from message_data.tools.utilities import (
+        add_tax_emission,
+        add_AFOLU_CO2_accounting,
+        add_alternative_TCE_accounting,
+        add_CO2_emission_constraint,
+        add_FFI_CO2_accounting,
+    )
+    from message_data.projects.engage.runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
 
     try:
         scenario.remove_solution()
@@ -193,6 +200,20 @@ def tax_emission(context, scenario, price: float):
         pass
 
     add_tax_emission(scenario, price)
+
+    # Identify the node codelist used by `scenario` (in case it is not set on `context`)
+    context.model.regions = identify_nodes(scenario)
+
+    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
+
+    # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
+    log.info("Add separate FFI and AFOLU CO2 accounting")
+    add_FFI_CO2_accounting(scenario, **kw)
+    add_AFOLU_CO2_accounting(scenario, **kw)
+    log.info("Add alternative TCE accounting")
+    add_alternative_TCE_accounting(scenario)
+
+    add_CO2_emission_constraint(scenario, **kw, constraint_value=0.0, type_rel="lower")
 
     return scenario
 
