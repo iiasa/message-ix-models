@@ -141,11 +141,10 @@ Pre-processing
   - :file:`groundwater_harmonize.r`: contains workflow to calculate historical capcity of renewable groundwater, table depth and energy consumption
   - :file:`generate_water_constraints.r`: contains function to calculate municipal, manufactury, rural water demands, water access and sanitation rates
   - :file:`desalination.r`: contains script for assessing the historical and possible future desalination capacity of a region or country
-  - :file:`hydro_agg_temp1.py`: contains workflow for processing the hydrological data in NC4 and adjust the unit conversions, daily to monthly aggregation.
+  - :file:`hydro_agg_raster.py`: contains workflow for processing the hydrological data in NC4 and adjust the unit conversions, daily to monthly aggregation.
   - :file:`hydro_agg_spatial.R`: contains workflow for spatially aggregating monthly hydrological data onto basin using appropriate raster masking onto shapefiles
-  - :file:`hydro_agg_temp2.py`: contains workflow for aggregating monthly data to 5 yearly averages using appropriate statistical methods (quantiles, averages etc.). It also caculates e flows based on Variable MF method.
-  - :file:`shp_to_raster.py`: converts shapefile to raster
-
+  - :file:`hydro_agg_basin.py`: contains workflow for aggregating monthly data to 5 yearly averages using appropriate statistical methods (quantiles, averages etc.). It also caculates e flows based on Variable MF method.
+ 
 
 
 Deprecated R Code
