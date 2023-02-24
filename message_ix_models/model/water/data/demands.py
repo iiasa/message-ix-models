@@ -10,102 +10,73 @@ from message_ix import make_df
 from message_ix_models.util import broadcast, private_data_path
 
 
+def get_basin_sizes(basin, node):
+    """Returns the sizes of developing and developed basins for a given node"""
+    temp = basin[basin["BCU_name"] == node]
+    sizes = temp.pivot_table(index=["STATUS"], aggfunc="size")
+    return sizes["DEV"], sizes["IND"]
+
+
+def set_target_rate(df, node, year, target):
+    """Sets the target value for a given node and year"""
+    indices = df[df["node"] == node][df[df["node"] == node]["year"] == year].index
+    for index in indices:
+        if (
+            df[df["node"] == node][df[df["node"] == node]["year"] == year].at[
+                index, "value"
+            ]
+            < target
+        ):
+            df.at[index, "value"] = target
+
+
+def set_target_rate_developed(df, node, target):
+    """Sets target rate for a developed basin"""
+    set_target_rate(df, node, 2030, target)
+
+
+def set_target_rate_developing(df, node, target):
+    """Sets target rate for a developing basin"""
+    set_target_rate(
+        df,
+        node,
+        2035,
+        (
+            df[df["node"] == node][df[df["node"] == node]["year"] == 2030].at[
+                j, "value"
+            ]
+            + target
+        )
+        / 2,
+    )
+    set_target_rate(df, node, 2040, target)
+
+
+def set_target_rates(df, basin, val):
+    """Sets target rates for all nodes in a given basin"""
+    for node in df.node.unique():
+        dev_size, ind_size = get_basin_sizes(basin, node)
+        if dev_size >= ind_size:
+            set_target_rate_developed(df, node, val)
+        else:
+            set_target_rate_developing(df, node, val)
+
+
 def target_rate(df, basin, val):
     """
-    Sets target connection and sanitation rates for SDG scenario
-    It filters out the basins as developing and developed baed on the countries
-    overlapping basins. If the numbers of developing countries in the basins are
-    more than basin is cateogirzez as developing and vice versa.
+    Sets target connection and sanitation rates for SDG scenario.
+    The function filters out the basins as developing and developed based on the countries
+    overlapping basins. If the number of developing countries in the basins are
+    more than basin is categorized as developing and vice versa.
     If the number of developing and developed countries are equal in a basin, then
     the basin is assumed developing.
-    For developed basins target is set at 2030.
-    For developing basins, the access target is set at
-    2040 and 2035 target is the average of
+    For developed basins, target is set at 2030.
+    For developing basins, the access target is set at 2040 and 2035 target is the average of
     2030 original rate and 2040 target.
-    Returns
-    -------
-    data : dict of (str -> pandas.DataFrame)
+    Returns:
+        df (pandas.DataFrame): Data frame with updated value column.
     """
-    value = []
-    for i in df.node.unique():
-        temp = basin[basin["BCU_name"] == i]
-
-        sizes = temp.pivot_table(index=["STATUS"], aggfunc="size")
-
-        if len(sizes) > 1:
-            if sizes["DEV"] > sizes["IND"] or sizes["DEV"] == sizes["IND"]:
-                # for j in urban[urban["node"] == i]
-                # [urban[urban["node"] == i]["year"] == 2030].index:
-                #      if urban[urban["node"] == i]
-                # [urban[urban["node"] == i]["year"] == 2030]
-                # .at[j, "value"] < np.float64(0.75):
-                #          value.append([j, np.float64(0.75)])
-
-                for ind, j in enumerate(
-                    df[df["node"] == i][df[df["node"] == i]["year"] == 2030].index
-                ):
-                    jj = df[df["node"] == i][df[df["node"] == i]["year"] == 2035].index
-                    temp = (
-                        df[df["node"] == i][df[df["node"] == i]["year"] == 2030].at[
-                            j, "value"
-                        ]
-                        + val
-                    ) / 2
-                    value.append([jj[ind], np.float64(temp)])
-
-                for j in df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].index:
-                    if df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].at[
-                        j, "value"
-                    ] < np.float64(val):
-                        value.append([j, np.float64(val)])
-            else:
-                for j in df[df["node"] == i][df[df["node"] == i]["year"] >= 2030].index:
-                    if df[df["node"] == i][df[df["node"] == i]["year"] >= 2030].at[
-                        j, "value"
-                    ] < np.float64(val):
-                        value.append([j, np.float64(val)])
-        else:
-            if sizes.index[0] == "DEV":
-                # for j in urban[urban["node"] == i]
-                # [urban[urban["node"] == i]["year"] == 2030].index:
-                #       if urban[urban["node"] == i]
-                # [urban[urban["node"] == i]["year"] == 2030]
-                # .at[j, "value"] < np.float64(0.75):
-                #           value.append([j, np.float64(0.75)])
-
-                for ind, j in enumerate(
-                    df[df["node"] == i][df[df["node"] == i]["year"] == 2030].index
-                ):
-                    jj = df[df["node"] == i][df[df["node"] == i]["year"] == 2035].index
-                    temp = (
-                        df[df["node"] == i][df[df["node"] == i]["year"] == 2030].at[
-                            j, "value"
-                        ]
-                        + val
-                    ) / 2
-                    value.append([jj[ind], np.float64(temp)])
-
-                for j in df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].index:
-                    if df[df["node"] == i][df[df["node"] == i]["year"] >= 2040].at[
-                        j, "value"
-                    ] < np.float64(val):
-                        value.append([j, np.float64(val)])
-            else:
-                for j in df[df["node"] == i][df[df["node"] == i]["year"] >= 2030].index:
-                    if df[df["node"] == i][df[df["node"] == i]["year"] >= 2030].at[
-                        j, "value"
-                    ] < np.float64(val):
-                        value.append([j, np.float64(val)])
-    valuetest = pd.DataFrame(data=value, columns=["Index", "Value"])
-
-    for i in range(len(valuetest["Index"])):
-        df.at[valuetest["Index"][i], "Value"] = valuetest["Value"][i]
-
-    real_value = df["Value"].combine_first(df["value"])
-
-    df.drop(["value", "Value"], axis=1, inplace=True)
-    df["value"] = real_value
-
+    set_target_rates(df, basin, val)
     return df
 
 
