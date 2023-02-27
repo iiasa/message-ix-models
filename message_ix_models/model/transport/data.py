@@ -17,7 +17,7 @@ from message_ix_models.util import (
     same_node,
 )
 
-from . import freight, non_ldv
+from . import freight
 
 log = logging.getLogger(__name__)
 
@@ -44,9 +44,8 @@ DATA_FUNCTIONS = {
     # Key added by ldv.prepare_computer()
     "ldv": ("transport ldv::ixmp",),
     # Key added by ikarus.prepare_computer()
-    # "non_ldv": ("transport nonldv::ixmp",),  # In progress
+    "non_ldv": ("transport nonldv::ixmp",),  # In progress
     # Data-generating functions in other modules
-    "non_ldv": (non_ldv.get_non_ldv_data, "context"),
     "freight": (freight.get_freight_data, "n::ex world", "y::model", "context"),
 }
 

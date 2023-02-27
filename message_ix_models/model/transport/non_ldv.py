@@ -1,9 +1,13 @@
 """Data for transport modes and technologies outside of LDVs."""
 import logging
+from functools import partial
+from operator import itemgetter
 from typing import Dict, List, Mapping
 
 import pandas as pd
+from genno import Computer, Key, Quantity
 from iam_units import registry
+from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
@@ -16,6 +20,7 @@ from message_ix_models.util import (
 from sdmx.model import Code
 
 from .emission import ef_for_input
+from .util import path_fallback
 
 log = logging.getLogger(__name__)
 
@@ -35,27 +40,53 @@ UNITS = dict(
 )
 
 
-def get_non_ldv_data(context) -> Dict[str, pd.DataFrame]:
-    source = context.transport.data_source.non_LDV
+def prepare_computer(c: Computer):
+    source = c.graph["context"].transport.data_source.non_LDV
+    log.info(f"non-LDV data from {source}")
 
-    log.info(f"from {source}")
+    # Load the load-factor data
+    k_lf = c.add(
+        "load_file",
+        path_fallback(c.graph["context"].model.regions, "load-factor-nonldv.csv"),
+        key="load factor:t:nonldv",
+        dims=RENAME_DIMS,
+        name="load factor",
+    )
+
+    keys = []
 
     if source == "IKARUS":
-        from .ikarus import get_ikarus_data
-
-        data = get_ikarus_data(context)
+        keys.append("transport nonldv::ixmp+ikarus")
     elif source is None:
-        data = dict()  # Don't add any data
+        pass  # Don't add any data
     else:
         raise ValueError(f"Unknown source for non-LDV data: {source!r}")
 
-    # Merge in dummy/placeholder data for 2-wheelers (not present in IKARUS)
-    merge_data(data, get_2w_dummies(context))
+    # Dummy/placeholder data for 2-wheelers (not present in IKARUS)
+    keys.append(c.add("transport 2W::ixmp", get_2w_dummies, "context"))
 
     # Compute CO₂ emissions factors
-    data.update(ef_for_input(context, data["input"], species="CO2"))
+    for k in map(Key.from_str_or_key, list(keys[:-1])):
+        key = c.add(k.add_tag("input"), itemgetter("input"), k)
+        keys.append(
+            c.add(
+                k.add_tag("emi"), partial(ef_for_input, species="CO2"), "context", key
+            )
+        )
 
-    return data
+    # Data for usage technologies
+    keys.append(
+        c.add(
+            "transport nonldv usage::ixmp",
+            usage_data,
+            k_lf,
+            "t::transport modes",
+            "n::ex world",
+            "y::model",
+        )
+    )
+
+    return c.add("merge_data", "transport nonldv::ixmp", *keys)
 
 
 def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
