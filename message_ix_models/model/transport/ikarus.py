@@ -284,6 +284,10 @@ def prepare_computer(c: Computer):
             key = c.add("drop_vars", key.drop("c"), key, quote("c"))
             # Fill (c, l) dimensions based on t
             key = c.add_product(k.add_tag(next(i)), key, "broadcast:t-c-l")
+        elif name == "technical_lifetime":
+            # Round up technical_lifetime values due to incompatibility in handling
+            # non-integer values in the GAMS code
+            key = c.add("round", k.add_tag(next(i)), key)
 
         # Broadcast across "n" dimension
         key = c.add_product(k.add_tag(next(i)), key, "n:n:ex world")
