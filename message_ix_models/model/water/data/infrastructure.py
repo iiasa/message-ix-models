@@ -16,7 +16,7 @@ from message_ix_models.util import (
 )
 
 
-def add_infrastructure_techs(context):
+def add_infrastructure_techs(context):   # noqa: C901
     """Process water distribution data for a scenario instance.
     Parameters
     ----------
@@ -29,7 +29,7 @@ def add_infrastructure_techs(context):
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
     """
-
+    # TODO reduce complexity of this function from 18 to 15 or less
     # Reference to the water configuration
     info = context["water build info"]
 

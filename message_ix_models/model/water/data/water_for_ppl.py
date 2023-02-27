@@ -14,7 +14,7 @@ from message_ix_models.util import (
 
 
 # water & electricity for cooling technologies
-def cool_tech(context):
+def cool_tech(context):  # noqa: C901
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and
     then cooling fractions are calculated by using the data from
@@ -33,6 +33,7 @@ def cool_tech(context):
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
     """
+    # TODO reduce complexity of this function from 18 to 15 or less
     #: Name of the input file.
     # The input file mentions water withdrawals and emission heating fractions for
     # cooling technologies alongwith parent technologies:
