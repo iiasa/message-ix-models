@@ -178,10 +178,6 @@ def prepare_computer(c: Computer) -> None:
         ("quantity_from_config", "speed:t", "config", quote("speeds")),
         ("quantity_from_config", "whour:", "config", quote("work_hours")),
         ("quantity_from_config", "lambda:", "config", quote("lamda")),
-        # List of nodes excluding "World"
-        ("nodes_ex_world", "n::ex world", "n"),  # TODO move upstream to message_ix
-        ("nodes_ex_world", "n::ex world+code", "nodes"),  # TODO ditto
-        ("nodes_world_agg", "nl::world agg", "config"),
         # Base share data
         ("base_shares", "base shares:n-t-y", n, "t::transport modes", y, "config"),
         # Population data; data source according to config
