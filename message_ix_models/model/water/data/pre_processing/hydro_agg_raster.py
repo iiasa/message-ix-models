@@ -5,10 +5,12 @@ script specifically aggregates global gridded hydrological
 data onto the basin
  mapping used in the nexus module.
 """
+import glob
+
 #  Import packages
 import os
-import glob
 from datetime import datetime as dt
+
 import dask
 import numpy as np
 import xarray as xr
