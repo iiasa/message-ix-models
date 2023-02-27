@@ -61,69 +61,48 @@ _UNITS = dict(
     capacity_factor=(1.0, None, None),
 )
 
-#: Rows appearing in each cell range.
-ROWS = [
-    "inv_cost",
-    "fix_cost",
-    "var_cost",
-    "technical_lifetime",
-    "availability",
-    "input",
-    "output",
-]
+#: Rows and columns appearing in each :data:`CELL_RANGE`.
+_SHEET_INDEX = dict(
+    index=[
+        "inv_cost",
+        "fix_cost",
+        "var_cost",
+        "technical_lifetime",
+        "availability",
+        "input",
+        "output",
+    ],
+    columns=[2000, 2005, 2010, 2015, 2020, 2025, 2030],
+)
 
-#: Starting and final cells delimiting tables in sheet.
-CELL_RANGE = {
-    "rail_pub": ["C103", "I109"],
-    "dMspeed_rai": ["C125", "I131"],
-    "Mspeed_rai": ["C147", "I153"],
-    "Hspeed_rai": ["C169", "I175"],
-    "con_ar": ["C179", "I185"],
-    # Same parametrization as 'con_ar' (per cell references in spreadsheet):
-    "conm_ar": ["C179", "I185"],
-    "conE_ar": ["C179", "I185"],
-    "conh_ar": ["C179", "I185"],
-    "ICE_M_bus": ["C197", "I203"],
-    "ICE_H_bus": ["C205", "I211"],
-    "ICG_bus": ["C213", "I219"],
-    # Same parametrization as 'ICG_bus'. Conversion factors will be applied.
-    "ICAe_bus": ["C213", "I219"],
-    "ICH_bus": ["C213", "I219"],
-    "PHEV_bus": ["C213", "I219"],
-    "FC_bus": ["C213", "I219"],
-    # Both equivalent to 'FC_bus'
-    "FCg_bus": ["C213", "I219"],
-    "FCm_bus": ["C213", "I219"],
-    "Trolley_bus": ["C229", "I235"],
-}
-
-#: Same as :data:`CELL_RANGE`, but referring to index entries in the extracted files.
+#: For each technology (keys), values are 3-tuples giving:
+#:
+#: 1. source index entry in the extracted files.
+#: 2. technology index entry in the extracted files.
+#: 3. starting and final cells delimiting tables in :data:`FILE`.
 SOURCE = {
-    "rail_pub": ("IKARUS", "regional train electric efficient"),  # C103:I109
-    "dMspeed_rai": ("IKARUS", "intercity train diesel efficient"),  # C125:I131
-    "Mspeed_rai": ("IKARUS", "intercity train electric efficient"),  # C147:I153
-    "Hspeed_rai": ("IKARUS", "high speed train efficient"),  # C169:I175
-    "con_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
+    "rail_pub": ("IKARUS", "regional train electric efficient", "C103:I109"),
+    "dMspeed_rai": ("IKARUS", "intercity train diesel efficient", "C125:I131"),
+    "Mspeed_rai": ("IKARUS", "intercity train electric efficient", "C147:I153"),
+    "Hspeed_rai": ("IKARUS", "high speed train efficient", "C169:I175"),
+    "con_ar": ("Krey/Linßen", "Airplane jet", "C179:I185"),
     # Same parametrization as 'con_ar' (per cell references in spreadsheet):
-    "conm_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
-    "conE_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
-    "conh_ar": ("Krey/Linßen", "Airplane jet"),  # C179:I185
-    "ICE_M_bus": ("Krey/Linßen", "Bus diesel"),  # C197:I203
-    "ICE_H_bus": ("Krey/Linßen", "Bus diesel efficient"),  # C205:I211
-    "ICG_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    "conm_ar": ("Krey/Linßen", "Airplane jet", "C179:I185"),
+    "conE_ar": ("Krey/Linßen", "Airplane jet", "C179:I185"),
+    "conh_ar": ("Krey/Linßen", "Airplane jet", "C179:I185"),
+    "ICE_M_bus": ("Krey/Linßen", "Bus diesel", "C197:I203"),
+    "ICE_H_bus": ("Krey/Linßen", "Bus diesel efficient", "C205:I211"),
+    "ICG_bus": ("Krey/Linßen", "Bus CNG", "C213:I219"),
     # Same parametrization as 'ICG_bus'. Conversion factors will be applied.
-    "ICAe_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
-    "ICH_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
-    "PHEV_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
-    "FC_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
+    "ICAe_bus": ("Krey/Linßen", "Bus CNG", "C213:I219"),
+    "ICH_bus": ("Krey/Linßen", "Bus CNG", "C213:I219"),
+    "PHEV_bus": ("Krey/Linßen", "Bus CNG", "C213:I219"),
+    "FC_bus": ("Krey/Linßen", "Bus CNG", "C213:I219"),
     # Both equivalent to 'FC_bus'
-    "FCg_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
-    "FCm_bus": ("Krey/Linßen", "Bus CNG"),  # C213:I219
-    "Trolley_bus": ("Krey/Linßen", "Bus electric"),  # C229:I235
+    "FCg_bus": ("Krey/Linßen", "Bus CNG", "C213:I219"),
+    "FCm_bus": ("Krey/Linßen", "Bus CNG", "C213:I219"),
+    "Trolley_bus": ("Krey/Linßen", "Bus electric", "C229:I235"),
 }
-
-#: Years appearing in the input file.
-COLUMNS = [2000, 2005, 2010, 2015, 2020, 2025, 2030]
 
 
 def make_indexers(*args) -> Dict[str, xr.DataArray]:
@@ -178,7 +157,7 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
 
     # 'technology name' -> pd.DataFrame
     dfs = {}
-    for tec, cell_range in CELL_RANGE.items():
+    for tec, (*_, cell_range) in SOURCE.items():
         # - Read values from table for one technology, e.g. "regional train electric
         #   efficient" = rail_pub.
         # - Extract the value from each openpyxl cell object.
@@ -186,7 +165,7 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
         # - Transpose so that each variable is in one column.
         # - Convert from input units to desired units.
         df = (
-            pd.DataFrame(list(sheet[slice(*cell_range)]), index=ROWS, columns=COLUMNS)
+            pd.DataFrame(list(sheet[slice(*cell_range.split(":"))]), **_SHEET_INDEX)
             .applymap(lambda c: c.value)
             .apply(pd.to_numeric, errors="coerce")
             .transpose()
