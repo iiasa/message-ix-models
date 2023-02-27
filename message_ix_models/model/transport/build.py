@@ -6,7 +6,8 @@ import logging
 from typing import Dict, Optional
 
 import pandas as pd
-from genno import Computer, KeyExistsError, quote
+import xarray as xr
+from genno import Computer, KeyExistsError, Quantity, quote
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import bare, build, disutility
@@ -52,6 +53,15 @@ def add_structure(c: Computer):
     """
     context = c.graph["context"]
     info = context["transport build info"]
+
+    # Create a quantity for broadcasting y to (yv, ya)
+    tmp = (
+        info.yv_ya.rename(columns={"year_vtg": "yv", "year_act": "ya"})
+        .eval("y = yv")
+        .assign(value=1.0)
+    )
+    qty = Quantity(tmp.set_index(["y", "ya", "yv"])["value"])
+    c.add("broadcast:y-yv-ya", qty)
 
     for key, value in (
         ("c::transport", quote(info.set["commodity"])),
