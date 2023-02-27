@@ -6,7 +6,7 @@
 #   - "IKARUS": IKARUS transport model
 #   - "Krey/Linßen": "Diss Krey 2006" and "Linßen u.a. 2003"
 #
-# Unit: GJ / 100 km
+# Unit: GJ / (100 vehicle km)
 #
 # Note: the "Krey/Linßen" entries do not state these units, instead including
 # e.g. "CNG" in the "unit" column. The units are assumed to be the same.
