@@ -169,8 +169,8 @@ def test_get_ikarus_data1(test_context, regions, N_node, years, options):
     par_name = "technical_lifetime"
     defaults = dict(node_loc=info.N[-1], technology="ICG_bus", time="year")
     checks = [
-        dict(year_vtg=2010, value=14.7),
-        dict(year_vtg=2050, value=14.7),
+        dict(year_vtg=2010, value=15.0),  # values of 14.7 are rounded to 15.0
+        dict(year_vtg=2050, value=15.0),  # values of 14.7 are rounded to 15.0
     ]
 
     for check in checks:
