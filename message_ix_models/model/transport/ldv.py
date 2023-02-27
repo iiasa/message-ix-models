@@ -244,7 +244,7 @@ def get_USTIMES_MA3T(
         data = adapt_R11_R14(data)
 
     # Years to include
-    target_years = filter(partial(le, 2010), info.set["year"])
+    target_years = list(filter(partial(le, 2010), info.set["year"]))
     # Extend over missing periods in the model horizon
     data = {name: extend_y(qty, target_years) for name, qty in data.items()}
 
