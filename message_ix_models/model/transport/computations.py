@@ -1,6 +1,6 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
-from functools import partial
+from functools import partial, reduce
 from operator import gt, le, lt
 from typing import Dict, Hashable, List, Mapping, Optional
 
@@ -430,6 +430,18 @@ def logit(
 
     # Logit probability
     return ratio(u, u.sum(dim))
+
+
+def merge_data(
+    *others: Mapping[Hashable, pd.DataFrame]
+) -> Dict[Hashable, pd.DataFrame]:
+    """Slightly modified from message_ix_models.util.
+
+    .. todo: move upstream or merge functionality with
+       :func:`message_ix_models.util.merge_data`.
+    """
+    keys = reduce(lambda x, y: x | y.keys(), others, set())
+    return {k: pd.concat([o.get(k, None) for o in others]) for k in keys}
 
 
 def _advance_data_for(config: dict, variable: str, units) -> Quantity:

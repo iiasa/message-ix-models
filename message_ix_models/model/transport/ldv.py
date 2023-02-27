@@ -93,16 +93,7 @@ def prepare_computer(c: Computer):
         c.add("ldv constraints::ixmp", constraint_data, "context"),
     ]
 
-    # Slightly modified from message_ix_models.util
-    # TODO move upstream or merge functionality
-    def merge_data(*others):
-        base = dict()
-        for other in others:
-            for par, df in other.items():
-                base[par] = pd.concat([base.get(par, None), df])
-        return base
-
-    return c.add("transport ldv::ixmp", merge_data, *keys)
+    return c.add("merge_data", "transport ldv::ixmp", *keys)
 
 
 #: Input file containing structured data about LDV technologies.
