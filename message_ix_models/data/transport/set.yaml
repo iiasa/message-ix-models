@@ -111,18 +111,15 @@ commodity:
       description: >-
         Not used when consumer group disutility formulation is in use.
 
-    transport pax air:
-      name: Passenger transport by air
-      units: Gp km
-
     transport pax 2w:
       name: Passenger transport by 2-wheelers
       units: Gp km
-
+    transport pax air:
+      name: Passenger transport by air
+      units: Gp km
     transport pax bus:
       name: Passenger transport by bus
       units: Gp km
-
     transport pax rail:
       name: Passenger transport by rail
       units: Gp km
@@ -131,12 +128,25 @@ commodity:
       name: Passenger transport vehicle distance travelled
       units: Gv km
 
+    transport vehicle 2w:
+      name: Activity of 2-wheel passenger transport vehicles
+      units: Gv km
+    transport vehicle air:
+      name: Activity of air passenger transport vehicles
+      units: Gv km
+    transport vehicle bus:
+      name: Activity of bus passenger transport vehicles
+      units: Gv km
+    transport vehicle rail:
+      name: Activity of rail passenger transport vehicles
+      units: Gv km
+
     disutility:
       name: Generalized disutility
       units: ""
 
-    # These two keys are further processed by .model.transport.build to generate
-    # a longer list of codes
+    # These keys are further processed by .model.transport.build to generate a
+    # longer list of codes
     "transport vehicle {technology.id}":
       _generate: {technology: LDV}
       name: Activity for {technology.id} LDVs
@@ -184,11 +194,13 @@ unit:
 
     # Activity
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
+    Gp km: 10⁹ passenger-kilometre
     Gp km / a: 10⁹ passenger-kilometre per year
     Gp / Gv: passengers per vehicle
     Gt km: 10⁹ tonne-kilometre
     Gt * km: 10⁹ tonne-kilometre
     Gv km: 10⁹ vehicle kilometre
+    Gv * km: 10⁹ vehicle kilometre
     # for IKARUS
     a: year
 
@@ -202,6 +214,7 @@ unit:
     # Cost
     MUSD / a / v: 10⁶ USD per vehicle-year
     MUSD / v: 10⁶ USD per vehicle
+    GUSD_2010 / Gv / km: 10⁹ USD per 10⁹ vehicle kilometres
     # for US-TIMES MA3T
     USD / vehicle: USD per vehicle
     USD_2010 / v: USD per vehicle

@@ -271,6 +271,20 @@ transport pax load factor:
   description: >-
     Conversion from vehicle-distance traveled to passenger transport activity
 
+transport 2w usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+transport air usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+transport bus usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+transport rail usage:
+  description: >-
+    Conversion from vehicle-distance traveled to passenger transport activity
+
+
 DUMMY transport fuel:
   description: >-
     Dummy technology for development; should not appear in the final model.
