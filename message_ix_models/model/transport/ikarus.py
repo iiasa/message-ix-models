@@ -2,6 +2,7 @@
 import logging
 from collections import defaultdict
 from functools import lru_cache, partial
+from itertools import count
 from operator import le
 from typing import Dict
 
@@ -21,6 +22,7 @@ from message_ix_models.util import (
     nodes_ex_world,
     private_data_path,
     same_node,
+    same_time,
     series_of_pint_quantity,
 )
 from openpyxl import load_workbook
@@ -205,12 +207,15 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
 
 
 def prepare_computer(c: Computer):
+    """Prepare `c` to perform model data preparation using IKARUS data."""
+    # TODO identify whether capacity_factor is needed
     RENAME_DIMS.setdefault("source", "source")
 
     base_path = private_data_path("transport", "ikarus")
 
     c.add_single("ikarus indexers", quote(make_indexers()))
     c.add_single("y::ikarus", lambda data: list(filter(partial(le, 2000), data)), "y")
+    k_u = c.add("ikarus adjust units", Quantity(1.0, units="(vehicle year) ** -1"))
 
     # NB this (harmlessly) duplicates an addition in .ldv.prepare_computer()
     # TODO deduplicate
@@ -225,58 +230,95 @@ def prepare_computer(c: Computer):
 
     parameters = ["fix_cost", "input", "inv_cost", "technical_lifetime", "var_cost"]
 
-    dims_common = dims = dict(
-        node_loc="n",
-        node_origin="n",
-        node_dest="n",
-        technology="t",
-    )
+    # For as_message_df(), common mapping from message_ix dimension IDs to short IDs in
+    # computed quantities
+    dims_common = dict(commodity="c", node_loc="n", node_origin="n", technology="t")
+    # For as_message_df(), fixed values for all data
+    common = dict(mode="all", time="year", time_origin="year")
 
+    # Create a chain of computations for each parameter
     final = {}
     for name in ["availability"] + parameters:
-        k = Key(f"ikarus {name}")
+        # Base key for computations related to parameter `name`
+        k = Key(f"ikarus {name}", "tyc")
+        # Helper iterator: yields "0", "1", "2", etc. to be used as tags for a sequence
+        # of keys based on `k`
+        i = map(str, count())
 
         # Load data from file
         path = base_path.joinpath(f"{name}.csv")
-        k0 = c.add("load_file", path, key=k.add_tag("0"), dims=RENAME_DIMS, name=name)
-
-        # TODO convert using availability:
-        # - inv_cost from MEUR to [currency] / [activity], e.g. MEUR per billion vkm
+        key = c.add(
+            "load_file", path, key=k.add_tag(next(i)), dims=RENAME_DIMS, name=name
+        )
 
         # Extend over missing periods in the model horizon
-        k1 = c.add("extend_y", k.add_tag("1"), k0, "y::ikarus")
+        key = c.add("extend_y", k.add_tag(next(i)), key, "y::ikarus")
+
+        if name in ("fix_cost", "inv_cost"):
+            # Adjust for "availability". The IKARUS source gives these costs, and
+            # simultaneously an "availability" in [length]. Implicitly, the costs are
+            # those to construct/operate enough vehicles/infrastructure to provide that
+            # amount of availability. E.g. a cost of 1000 EUR and availability of 10 km
+            # give a cost of 100 EUR / km.
+            key = c.add(
+                "div", k.add_tag(next(i)), key, Key("ikarus availability", "tyc", "1")
+            )
+            # Adjust units
+            key = c.add("mul", k.add_tag(next(i)), key, k_u)
 
         # Select desired values
-        k2 = c.add("select", k.add_tag("2"), k1, "ikarus indexers")
-        k3 = c.add("rename_dims", k.add_tag("3"), k2, {"t_new": "t"})
+        key = c.add("select", k.add_tag(next(i)), key, "ikarus indexers")
+        key = c.add("rename_dims", k.add_tag(next(i)), key, {"t_new": "t"})
 
         if name == "input":
             # Apply scenario-specific input efficiency factor
-            k4 = c.add_product("nonldv efficiency::adj", k_fi, k3)
-        else:
-            k4 = k3
-
-        # TODO fill (c, l) dimensions for "input", "output"
+            key = c.add_product("nonldv efficiency::adj", k_fi, key)
+            # Fill (c, l) dimensions
+            key = c.add_product(k.add_tag(next(i)), key, "broadcast:t-c-l")
 
         # Broadcast across "n" dimension
-        k5 = c.add_product(k.add_tag("5"), k4, "n:n:ex world")
+        key = c.add_product(k.add_tag(next(i)), key, "n:n:ex world")
 
-        dims = dims_common.copy()
         if name in ("fix_cost", "input", "var_cost"):
             # Broadcast across valid (yv, ya) pairs
-            k6 = c.add_product(k.add_tag("6"), k5, "broadcast:y-yv-ya")
-            dims.update(year_act="ya", year_vtg="yv")
+            key = c.add_product(k.add_tag(next(i)), key, "broadcast:y-yv-ya")
+
+        # Convert to target units
+        try:
+            target_units = quote(UNITS[name])
+        except KeyError:  # "availability"
+            pass
         else:
-            k6 = k5
-            dims.update(year_vtg="y")
+            key = c.add("convert_units", k.add_tag(next(i)), key, target_units)
+
+        # Mapping between short dimension IDs in the computed quantities and the
+        # dimensions in the respective MESSAGE parameters
+        dims = dims_common.copy()
+        dims.update(
+            {
+                "fix_cost": dict(year_act="ya", year_vtg="yv"),
+                "input": dict(year_act="ya", year_vtg="yv", level="l"),
+                "var_cost": dict(year_act="ya", year_vtg="yv"),
+            }.get(name, dict(year_vtg="y"))
+        )
 
         # Convert to message_ix-compatible data frames
-        # NB the "availability" task will error, since it is not a MESSAGE parameter
-        common = dict(mode="all", time="year", time_dest="year", time_origin="year")
-        k7 = f"transport nonldv {name}::ixmp"
-        c.add("as_message_df", k7, k6, name, dims, common)
+        key = c.add(
+            "as_message_df", f"transport nonldv {name}::ixmp", key, name, dims, common
+        )
 
-        final[name] = k7
+        if name in parameters:
+            # The "availability" task would error, since it is not a MESSAGE parameter
+            final[name] = key
+
+    # Derive "output" data from "input"
+    key = "transport nonldv output::ixmp"
+    final["output"] = c.add(
+        key, make_output, "transport nonldv input::ixmp", "t::transport"
+    )
+
+    # Merge all data together
+    return c.add("merge_data", "transport nonldv::ixmp+ikarus", *final.values())
 
 
 def get_ikarus_data(context):
