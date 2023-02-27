@@ -1,10 +1,19 @@
 """Data for transport modes and technologies outside of LDVs."""
 import logging
-from typing import Dict
+from typing import Dict, List, Mapping
 
 import pandas as pd
+from iam_units import registry
 from message_ix import make_df
-from message_ix_models.util import broadcast, make_matched_dfs, merge_data, same_node
+from message_ix_models.util import (
+    broadcast,
+    make_io,
+    make_matched_dfs,
+    merge_data,
+    same_node,
+    same_time,
+)
+from sdmx.model import Code
 
 from .emission import ef_for_input
 
@@ -90,3 +99,48 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     data["output"] = output
 
     return data
+
+
+def usage_data(
+    load_factor: Quantity, modes: List[Code], nodes: List[str], years: List[int]
+) -> Mapping[str, pd.DataFrame]:
+    """Generate data for non-LDV usage "virtual" technologies.
+
+    These technologies convert commodities like "transport vehicle rail" (i.e.
+    vehicle-distance traveled) into "transport pax rail" (i.e. passenger-distance
+    traveled), through use of a load factor in the ``output`` efficiency.
+
+    They are "virtual" in the sense they have no cost, lifetime, or other physical
+    properties.
+    """
+    common = dict(year_vtg=years, year_act=years, mode="all", time="year")
+
+    data = []
+    for mode in filter(lambda m: m != "LDV", modes):
+        data.append(
+            make_io(
+                src=(f"transport vehicle {mode.lower()}", "useful", "Gv km"),
+                dest=(f"transport pax {mode.lower()}", "useful", "Gp km"),
+                efficiency=load_factor.sel(t=mode.upper()).item(),
+                on="output",
+                technology=f"transport {mode.lower()} usage",
+                # Other data
+                **common,
+            )
+        )
+
+    result = dict()
+    merge_data(result, *data)
+
+    for k, v in result.items():
+        result[k] = v.pipe(broadcast, node_loc=nodes).pipe(same_node).pipe(same_time)
+
+    result.update(
+        make_matched_dfs(
+            result["output"],
+            capacity_factor=registry("1.0"),
+            technical_lifetime=registry("10 year"),
+        )
+    )
+
+    return result
