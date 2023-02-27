@@ -240,9 +240,11 @@ def extend_y(qty: Quantity, y: List[int]) -> Quantity:
 
     log.info(f"{qty.name}: extend from {y_qty[-1]} → {y_to_fill}")
 
-    # Use message_ix_models MappingAdapter to do the work
+    # Map existing labels to themselves, and missing labels to the last existing one
     y_map = [(y, y) for y in y_qty] + [(y_qty[-1], y) for y in y_to_fill]
-    return MappingAdapter({"y": y_map})(qty)
+    # - Forward-fill *within* `qty` existing values.
+    # - Use message_ix_models MappingAdapter to do the rest.
+    return MappingAdapter({"y": y_map})(qty.ffill("y"))
 
 
 def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
