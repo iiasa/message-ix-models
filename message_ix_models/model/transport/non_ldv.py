@@ -6,7 +6,6 @@ from typing import Dict, List, Mapping
 
 import pandas as pd
 from genno import Computer, Key, Quantity
-from iam_units import registry
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models.util import (
@@ -165,13 +164,5 @@ def usage_data(
 
     for k, v in result.items():
         result[k] = v.pipe(broadcast, node_loc=nodes).pipe(same_node).pipe(same_time)
-
-    result.update(
-        make_matched_dfs(
-            result["output"],
-            capacity_factor=registry("1.0"),
-            technical_lifetime=registry("10 year"),
-        )
-    )
 
     return result
