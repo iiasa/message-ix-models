@@ -1,9 +1,12 @@
 import pandas as pd
 import pytest
+from iam_units import registry
 from message_ix import make_df
+from numpy.testing import assert_allclose
 from pandas.testing import assert_series_equal
 
 from message_data.model.transport import ScenarioFlags, ikarus
+from message_data.model.transport.non_ldv import UNITS
 from message_data.testing import assert_units
 from message_data.tests.model.transport import configure_build
 
@@ -65,7 +68,7 @@ def test_get_ikarus_data(test_context, regions, N_node, years):
 
     # Specific magnitudes of other values to check
     checks = [
-        # commented (PNK 2022-06-17): corrected abuse of caapacity_factor to include
+        # commented (PNK 2022-06-17): corrected abuse of capacity_factor to include
         # unrelated concepts
         # dict(par="capacity_factor", year_vtg=2010, value=0.000905),
         # dict(par="capacity_factor", year_vtg=2050, value=0.000886),
@@ -104,18 +107,89 @@ def test_get_ikarus_data(test_context, regions, N_node, years):
 )
 @pytest.mark.parametrize("options", [{}, dict(flags=ScenarioFlags.TEC)])
 def test_get_ikarus_data1(test_context, regions, N_node, years, options):
+    """Test genno-based IKARUS data prep."""
     ctx = test_context
     c, info = demand_computer(ctx, None, regions, years, options)
 
-    for name in (
-        "availability",
+    # commented: for a manual check that `options` have an effect
+    # print(c.get("nonldv efficiency:t-y:adj").to_series().to_string())
+
+    k = "transport nonldv::ixmp+ikarus"
+
+    # commented: for debugging
+    # print(k)
+    # print(c.describe(k))
+
+    # All calculations complete without error
+    data = c.get(k)
+
+    parameters = (
         "fix_cost",
         "input",
         "inv_cost",
+        "output",
         "technical_lifetime",
         "var_cost",
-    ):
-        c.get(f"ikarus {name}::3")
+    )
 
-    # For a manual check that the options have an effect
-    # print(c.get("nonldv efficiency:t-y:adj").to_series().to_string())
+    for name in parameters:
+        assert name in data
+
+        v = data[name]
+
+        # commented: for debugging
+        # print(name)
+        # print(v.head().to_string())
+        # print(f"{len(v) = }")
+
+        # No null keys or values
+        assert not v.isna().any(axis=None)
+
+        # Data have the expected units for the respective parameter
+        assert_units(v, registry(UNITS[name]))
+
+        # Data cover the entire model horizon
+        assert set(info.Y) <= set(v["year_vtg"].unique())
+
+        # Aviation technologies are present
+        assert "con_ar" in v["technology"].unique()
+
+    # Test a particular value in inv_cost
+    row = (
+        data["inv_cost"]
+        .query("technology == 'rail_pub' and year_vtg == 2020")
+        .iloc[0, :]
+    )
+    assert "GUSD_2010 / Gv / km" == row["unit"]
+    assert_allclose(23.696128, row["value"])
+
+    # Specific magnitudes of other values to check
+    # TODO use testing tools to make the following less verbose
+    par_name = "technical_lifetime"
+    defaults = dict(node_loc=info.N[-1], technology="ICG_bus", time="year")
+    checks = [
+        dict(year_vtg=2010, value=14.7),
+        dict(year_vtg=2050, value=14.7),
+    ]
+
+    for check in checks:
+        # Create expected data
+        check["year_act"] = check["year_vtg"]
+        exp = make_df(par_name, **defaults, **check)
+        assert len(exp) == 1, "Single row for expected value"
+
+        # Use merge() to find data with matching column values
+        columns = sorted(set(exp.columns) - {"value", "unit"})
+        result = exp.merge(data[par_name], on=columns, how="inner")
+
+        # Single row matches
+        assert len(result) == 1, result
+
+        # Values match
+        assert_series_equal(
+            result["value_x"],
+            result["value_y"],
+            check_exact=False,
+            check_names=False,
+            atol=1e-4,
+        )
