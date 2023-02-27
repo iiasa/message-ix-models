@@ -16,7 +16,11 @@ log = logging.getLogger(__name__)
 def input_commodity_level(
     context: Context, df: pd.DataFrame, default_level=None
 ) -> pd.DataFrame:
-    """Add input 'commodity' and 'level' to `df` based on 'technology'."""
+    """Add input 'commodity' and 'level' to `df` based on 'technology'.
+
+    .. deprecated:: 2023-02-27
+       Use :func:`.computations.input_commodity_level` instead.
+    """
     # Retrieve transport technology information from configuration
     t_info = context.transport.set["technology"]["add"]
 
