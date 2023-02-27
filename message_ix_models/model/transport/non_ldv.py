@@ -11,6 +11,21 @@ from .emission import ef_for_input
 log = logging.getLogger(__name__)
 
 
+#: Target units for data produced for non-LDV technologies.
+#:
+#: .. todo: this should be read from general model configuration.
+UNITS = dict(
+    # Appearing in input file
+    inv_cost="GUSD_2010 / (Gv km)",  # Gv km of CAP
+    fix_cost="GUSD_2010 / (Gv km)",  # Gv km of CAP
+    var_cost="GUSD_2010 / (Gv km)",  # Gv km of ACT
+    technical_lifetime="a",
+    input="1.0 GWa / (Gv km)",
+    output="Gv km",
+    capacity_factor="",
+)
+
+
 def get_non_ldv_data(context) -> Dict[str, pd.DataFrame]:
     source = context.transport.data_source.non_LDV
 
