@@ -13,11 +13,12 @@ from message_data.tests.model.transport import configure_build
 from .test_demand import demand_computer
 
 
+@pytest.mark.skip(reason="Deprecated, slow")
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions, N_node", [("R11", 11), ("R12", 12), ("R14", 14), ("ISR", 1)]
 )
-def test_get_ikarus_data(test_context, regions, N_node, years):
+def test_get_ikarus_data0(test_context, regions, N_node, years):
     ctx = test_context
     info = configure_build(ctx, regions, years)
 
