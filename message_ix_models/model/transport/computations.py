@@ -23,6 +23,7 @@ from ixmp import Scenario
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.structure import get_codes
 from message_ix_models.tools import advance
 from message_ix_models.util import MappingAdapter, broadcast, eval_anno, nodes_ex_world
 from sdmx.model import Code
@@ -363,6 +364,46 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quanti
         .set_index(["n", "y", "t"])["value"],
         units="",
     )
+
+
+def input_commodity_level(t: List[Code], default_level=None) -> Quantity:
+    """Return a Quantity for broadcasting dimension (t) to (c, l) for ``input``.
+
+    .. todo:: This essentially replaces :func:`.transport.util.input_commodity_level`,
+       and is much faster. Replace usage of the other function with this one, then
+       remove the other.
+    """
+
+    c_info = get_codes("commodity")
+
+    # Map each `tech` to a `commodity` and `level`
+    data = []
+    for tech in t:
+        # Retrieve the "input" annotation for this technology
+        input_ = eval_anno(tech, "input")
+
+        # Retrieve the code for this commodity
+        try:
+            # Commodity ID
+            commodity = input_["commodity"]
+            c_code = c_info[c_info.index(commodity)]
+        except (KeyError, ValueError, TypeError):
+            # TypeError: input_ is None
+            # KeyError: "commodity" not in the annotation
+            # ValueError: `commodity` not in c_info
+            continue
+
+        # Level, in order of precedence:
+        # 1. Technology-specific input level from `t_code`.
+        # 2. Default level for the commodity from `c_code`.
+        # 3. `default_level` argument to this function.
+        level = input_.get("level") or eval_anno(c_code, id="level") or default_level
+
+        data.append((tech.id, commodity, level))
+
+    idx = pd.MultiIndex.from_frame(pd.DataFrame(data, columns=["t", "c", "l"]))
+    s = pd.Series(1.0, index=idx)
+    return Quantity(s)
 
 
 def logit(
