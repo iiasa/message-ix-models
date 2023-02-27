@@ -16,7 +16,7 @@ from message_ix_models.util import (
 )
 
 
-def add_infrastructure_techs(context):   # noqa: C901
+def add_infrastructure_techs(context):  # noqa: C901
     """Process water distribution data for a scenario instance.
     Parameters
     ----------
