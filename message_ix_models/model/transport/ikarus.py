@@ -108,7 +108,12 @@ SOURCE = {
 
 
 def make_indexers(*args) -> Dict[str, xr.DataArray]:
-    """Return indexers corresponding to `SOURCE`."""
+    """Return indexers corresponding to `SOURCE`.
+
+    These can be used for :mod:`xarray`-style advanced indexing to select from the data
+    in the IKARUS CSV files using the dimensions (source, t) and yield a new dimension
+    ``t_new``.
+    """
     t_new, source, t = zip(*[(k, v[0], v[1]) for k, v in SOURCE.items()])
     return dict(
         source=xr.DataArray(list(source), dims="t_new", coords={"t_new": list(t_new)}),
@@ -149,6 +154,8 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
     **NB** this function takes only simple arguments so that :func:`.cached` computes
     the same key every time to avoid the slow step of opening/reading the spreadsheet.
     :func:`get_ikarus_data` then conforms the data to particular context settings.
+
+    .. note:: superseded by the computations set up by :func:`prepare_computer`.
     """
     # Open the input file using openpyxl
     wb = load_workbook(
@@ -326,6 +333,8 @@ def get_ikarus_data(context):
 
     The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed data is
     exported into ``non_LDV_techs_wrapped.csv``.
+
+    .. note:: superseded by the computations set up by :func:`prepare_computer`.
 
     Parameters
     ----------
