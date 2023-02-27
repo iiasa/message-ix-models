@@ -219,20 +219,25 @@ def prepare_computer(c: Computer):
         "config",
     )
 
+    parameters = ["fix_cost", "input", "inv_cost", "technical_lifetime", "var_cost"]
+
+    dims_common = dims = dict(
+        node_loc="n",
+        node_origin="n",
+        node_dest="n",
+        technology="t",
+    )
+
     final = {}
-    for name in (
-        "availability",
-        "fix_cost",
-        "input",
-        "inv_cost",
-        "technical_lifetime",
-        "var_cost",
-    ):
+    for name in ["availability"] + parameters:
         k = Key(f"ikarus {name}")
 
         # Load data from file
         path = base_path.joinpath(f"{name}.csv")
         k0 = c.add("load_file", path, key=k.add_tag("0"), dims=RENAME_DIMS, name=name)
+
+        # TODO convert using availability:
+        # - inv_cost from MEUR to [currency] / [activity], e.g. MEUR per billion vkm
 
         # Extend over missing periods in the model horizon
         k1 = c.add("extend_y", k.add_tag("1"), k0, "y::ikarus")
@@ -240,14 +245,34 @@ def prepare_computer(c: Computer):
         # Select desired values
         k2 = c.add("select", k.add_tag("2"), k1, "ikarus indexers")
         k3 = c.add("rename_dims", k.add_tag("3"), k2, {"t_new": "t"})
-        final[name] = k3
 
-    k = c.add_product("nonldv efficiency::adj", k_fi, final["input"])
+        if name == "input":
+            # Apply scenario-specific input efficiency factor
+            k4 = c.add_product("nonldv efficiency::adj", k_fi, k3)
+        else:
+            k4 = k3
 
-    # TODO convert using availability:
-    # - inv_cost from MEUR to [currency] / [activity], e.g. MEUR per billion vkm
+        # TODO fill (c, l) dimensions for "input", "output"
 
-    raise NotImplementedError("Incomplete")
+        # Broadcast across "n" dimension
+        k5 = c.add_product(k.add_tag("5"), k4, "n:n:ex world")
+
+        dims = dims_common.copy()
+        if name in ("fix_cost", "input", "var_cost"):
+            # Broadcast across valid (yv, ya) pairs
+            k6 = c.add_product(k.add_tag("6"), k5, "broadcast:y-yv-ya")
+            dims.update(year_act="ya", year_vtg="yv")
+        else:
+            k6 = k5
+            dims.update(year_vtg="y")
+
+        # Convert to message_ix-compatible data frames
+        # NB the "availability" task will error, since it is not a MESSAGE parameter
+        common = dict(mode="all", time="year", time_dest="year", time_origin="year")
+        k7 = f"transport nonldv {name}::ixmp"
+        c.add("as_message_df", k7, k6, name, dims, common)
+
+        final[name] = k7
 
 
 def get_ikarus_data(context):
