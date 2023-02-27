@@ -280,7 +280,9 @@ def prepare_computer(c: Computer):
         if name == "input":
             # Apply scenario-specific input efficiency factor
             key = c.add_product("nonldv efficiency::adj", k_fi, key)
-            # Fill (c, l) dimensions
+            # Drop existing "c" dimension
+            key = c.add("drop_vars", key.drop("c"), key, quote("c"))
+            # Fill (c, l) dimensions based on t
             key = c.add_product(k.add_tag(next(i)), key, "broadcast:t-c-l")
 
         # Broadcast across "n" dimension
