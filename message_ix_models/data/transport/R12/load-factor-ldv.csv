@@ -1,4 +1,4 @@
-# Load factor (occupancy of) of LDVs
+# Load factor (occupancy) of LDVs
 #
 # Source: transcribed from MESSAGE (V) Transport .chn files
 # Original source unknown. The values appear to assume similarity
@@ -18,5 +18,3 @@ R12_PAO,  1.72
 R12_PAS,  1.892
 R12_SAS,  1.892
 R12_WEU,  1.643
-
-

@@ -257,34 +257,6 @@ class Config(ConfigHelper):
     #: appearing in MA³T.
     node_to_census_division: Dict = field(default_factory=dict)
 
-    #: Load factors/occupancy in [passenger km / vehicle km].
-    non_ldv_output: Dict = field(
-        default_factory=lambda: {
-            # Urban public rail transport (agg. of metro, trams, regional trains, etc.)
-            "rail_pub": 80,
-            # Intercity trains
-            "dMspeed_rai": 200,
-            "Mspeed_rai": 200,
-            "Hspeed_rai": 200,
-            # Aircraft
-            "con_ar": 115,
-            "conm_ar": 115,
-            "conE_ar": 115,
-            "conh_ar": 115,
-            # Buses
-            "ICE_M_bus": 20.9,
-            "ICE_H_bus": 20.9,
-            "ICG_bus": 20.9,
-            "ICAe_bus": 20.9,
-            "ICH_bus": 20.9,
-            "PHEV_bus": 20.9,
-            "FC_bus": 20.9,
-            "FCg_bus": 20.9,
-            "FCm_bus": 20.9,
-            "Trolley_bus": 20.9,
-        }
-    )
-
     #: Scaling factors for production function [0]
     scaling: float = 1.0
 
