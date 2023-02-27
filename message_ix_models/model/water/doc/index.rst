@@ -134,7 +134,7 @@ See also: :doc:`water/files`.
 
 Pre-processing
 ==============
-- :file:`data/water/`: contains scripts used in pre-processing source data for the water sector implementation
+- :file:`data/water/`: contains scripts used in pre_processing source data for the water sector implementation
 
   
   - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
