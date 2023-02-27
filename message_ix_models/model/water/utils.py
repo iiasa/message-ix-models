@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -121,7 +121,9 @@ def add_commodity_and_level(df, default_level=None):
     return df.apply(func, axis=1)
 
 
-def map_yv_ya_lt(periods: Tuple[int, ...], lt, ya=None) -> pd.DataFrame:
+def map_yv_ya_lt(
+    periods: Tuple[int, ...], lt: int, ya: Optional[int] = None
+) -> pd.DataFrame:
     """All meaningful combinations of (vintage year, active year) given `periods`.
 
     Parameters
@@ -144,15 +146,16 @@ def map_yv_ya_lt(periods: Tuple[int, ...], lt, ya=None) -> pd.DataFrame:
         raise ValueError("Add a fixed lifetime parameter 'lt'")
 
     # Create a mesh grid using numpy built-ins
-    data = np.meshgrid(periods, periods, indexing="ij")
+    data: np.ndarray = np.meshgrid(periods, periods, indexing="ij")
     # Take the upper-triangular portion (setting the rest to 0), reshape
     data = np.triu(data).reshape((2, -1))
     # Filter only non-zero pairs
     df = pd.DataFrame(
-        filter(sum, zip(data[0, :], data[1, :])),
+        filter(lambda x: sum(x) > 0, list(zip(data[0, :], data[1, :]))),
         columns=["year_vtg", "year_act"],
         dtype=np.int64,
     )
+
     df = df[df.year_act >= ya]
     df = df[(df.year_act - df.year_vtg) <= lt]
     return df
