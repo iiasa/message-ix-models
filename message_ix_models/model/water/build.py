@@ -1,6 +1,6 @@
 import logging
 from functools import lru_cache, partial
-from typing import Mapping
+from typing import List, Mapping
 
 import pandas as pd
 
@@ -47,7 +47,9 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
         # The set of required nodes varies according to context.regions
         nodes = get_codes(f"node/{context.regions}")
-        nodes = list(map(str, nodes[nodes.index("World")].child))
+        nodes = [str(child) for child in nodes[nodes.index("World")].child]
+        nodes = list(nodes[nodes.find("World")].child)
+
         require.set["node"].extend(nodes)
 
         # Share commodity for groundwater
