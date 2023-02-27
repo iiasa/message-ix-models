@@ -87,6 +87,9 @@ def add_structure(c: Computer):
     c.add("c::transport", quote(spec["add"].set["commodity"]))
     c.add("t::transport", quote(technologies))
 
+    # Create a quantity for broadcasting t to t, c, l
+    c.add("input_commodity_level", "broadcast:t-c-l", "t::transport", quote("final"))
+
     # List of nodes excluding "World"
     # TODO move upstream, to message_ix
     c.add("nodes_ex_world", "n::ex world", "n"),
