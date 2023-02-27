@@ -1,13 +1,13 @@
 """Prepare non-LDV data from the IKARUS model via :file:`GEAM_TRP_techinput.xlsx`."""
 import logging
 from collections import defaultdict
-from functools import partial
+from functools import lru_cache, partial
 from operator import le
 from typing import Dict
 
 import pandas as pd
 import xarray as xr
-from genno import Computer, Key, quote
+from genno import Computer, Key, Quantity, quote
 from iam_units import registry
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
@@ -25,6 +25,7 @@ from message_ix_models.util import (
 )
 from openpyxl import load_workbook
 
+from .non_ldv import UNITS
 from .util import input_commodity_level
 
 log = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ FILE = "GEAM_TRP_techinput.xlsx"
 #: 1. Factor for units appearing in the input file.
 #: 2. Units appearing in the input file.
 #: 3. Target units for MESSAGEix-GLOBIOM.
-UNITS = dict(
+_UNITS = dict(
     # Appearing in input file
     inv_cost=(1.0e6, "EUR_2000 / vehicle", "MUSD_2005 / vehicle"),
     fix_cost=(1000.0, "EUR_2000 / vehicle / year", "MUSD_2005 / vehicle / year"),
@@ -132,6 +133,30 @@ def make_indexers(*args) -> Dict[str, xr.DataArray]:
         source=xr.DataArray(list(source), dims="t_new", coords={"t_new": list(t_new)}),
         t=xr.DataArray(list(t), dims="t_new"),
     )
+
+
+def make_output(input_data: Dict[str, pd.DataFrame], techs) -> Dict[str, pd.DataFrame]:
+    """Make ``output`` data corresponding to IKARUS ``input`` data."""
+    result = make_matched_dfs(
+        input_data["input"], output=registry.Quantity(1.0, UNITS["output"])
+    )
+
+    @lru_cache
+    def c_for(t: str) -> str:
+        """Return e.g. "transport vehicle rail" for a specific rail technology `t`."""
+        return f"transport vehicle {techs[techs.index(t)].parent.id.lower()}"
+
+    # - Set "commodity" and "level" labels.
+    # - Set units.
+    # - Fill "node_dest" and "time_dest".
+    result["output"] = (
+        result["output"]
+        .assign(commodity=lambda df: df["technology"].apply(c_for), level="useful")
+        .pipe(same_node)
+        .pipe(same_time)
+    )
+
+    return result
 
 
 @cached
