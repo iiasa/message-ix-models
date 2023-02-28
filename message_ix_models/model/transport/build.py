@@ -3,6 +3,7 @@
 .. autodata:: TEMPLATE
 """
 import logging
+from importlib import import_module
 from typing import Dict, Optional
 
 import pandas as pd
@@ -154,7 +155,7 @@ def get_computer(
     context: Context, obj: Optional[Computer] = None, **kwargs
 ) -> Computer:
     """Return a :class:`genno.Computer` set up for model-building calculations."""
-    from . import data, demand, ikarus, ldv, non_ldv, plot
+    from .demand import add_exogenous_data
 
     # Configure
     Config.from_context(context, **kwargs)
@@ -199,10 +200,11 @@ def get_computer(
 
     # Add exogenous data
     if context.transport.exogenous_data:
-        demand.add_exogenous_data(c, base_info)
+        add_exogenous_data(c, base_info)
 
     # Prepare other calculations
-    for module in (demand, ikarus, ldv, non_ldv, plot, data):
+    for name in "demand freight ikarus ldv non_ldv plot data".split():
+        module = import_module(f"..{name}", __name__)
         module.prepare_computer(c)
 
     return c
