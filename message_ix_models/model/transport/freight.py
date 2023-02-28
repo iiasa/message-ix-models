@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Dict, List
 
 import pandas as pd
-from genno import Quantity, computations
+from genno import Computer, Quantity, computations
 from genno.computations import broadcast_map, load_file
 from iam_units import registry
 from ixmp.reporting.computations import map_as_qty
@@ -16,6 +16,7 @@ from message_ix_models.util import (
     private_data_path,
     same_node,
 )
+from sdmx.model import Code
 
 from .util import input_commodity_level
 
@@ -66,8 +67,19 @@ def iea_2017_t4(measure: int):
     return computations.sum(result, share, "t")
 
 
+def prepare_computer(c: Computer):
+    return c.add(
+        "transport freight::ixmp",
+        get_freight_data,
+        "n::ex world",
+        "t::transport",
+        "y::model",
+        "context",
+    )
+
+
 def get_freight_data(
-    nodes: List[str], years: List[int], context: Context
+    nodes: List[str], techs: List[Code], years: List[int], context: Context
 ) -> Dict[str, pd.DataFrame]:
     """Data for freight technologies.
 
@@ -78,8 +90,8 @@ def get_freight_data(
     # Info about the model structure being built
     info = context["transport spec"].add
     info.set["commodity"].extend(get_codes("commodity"))
-    codes = info.set["technology"]
-    technologies = codes[codes.index("freight truck")]
+
+    technologies = techs[techs.index("freight truck")].child
 
     # Information for data creation
     common = dict(
@@ -106,7 +118,7 @@ def get_freight_data(
     del load_factor
 
     data0: Dict[str, List] = defaultdict(list)
-    for t in technologies.child:
+    for t in technologies:
         units_in = info.io_units(t, "lightoil")
         units_out = info.io_units(t, "transport freight vehicle")
         i_o = make_io(
