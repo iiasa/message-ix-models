@@ -16,8 +16,9 @@ from message_ix_models.util import (
     make_source_tech,
     same_node,
 )
+from sdmx.model import Code
 
-from . import freight
+from .config import ScenarioFlags
 
 log = logging.getLogger(__name__)
 
@@ -45,8 +46,8 @@ DATA_FUNCTIONS = {
     "ldv": ("transport ldv::ixmp",),
     # Key added by ikarus.prepare_computer()
     "non_ldv": ("transport nonldv::ixmp",),  # In progress
-    # Data-generating functions in other modules
-    "freight": (freight.get_freight_data, "n::ex world", "y::model", "context"),
+    # Key added by .freight.prepare_computer()
+    "freight": ("transport freight::ixmp",),
 }
 
 
