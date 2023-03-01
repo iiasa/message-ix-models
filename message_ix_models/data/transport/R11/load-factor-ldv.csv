@@ -1,0 +1,18 @@
+# Load factor (occupancy) of LDVs
+#
+# Source: transcribed from MESSAGE (V) Transport .chn files
+# Original source unknown. The values appear to assume similarity
+# between certain regions.
+#
+node,     value
+R11_AFR, 1.807
+R11_CPA, 1.892
+R11_EEU, 1.643
+R11_FSU, 1.807
+R11_LAM, 1.807
+R11_MEA, 1.807
+R11_NAM, 1.53
+R11_PAO, 1.72
+R11_PAS, 1.892
+R11_SAS, 1.892
+R11_WEU, 1.643
