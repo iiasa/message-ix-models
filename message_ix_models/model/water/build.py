@@ -1,6 +1,6 @@
 import logging
 from functools import lru_cache, partial
-from typing import List, Mapping
+from typing import Mapping
 
 import pandas as pd
 
