@@ -6,7 +6,12 @@ from iam_units import registry
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
 
-from message_data.model.transport import Config, DataSourceConfig, computations
+from message_data.model.transport import (
+    Config,
+    DataSourceConfig,
+    ScenarioFlags,
+    computations,
+)
 from message_data.model.transport import data as data_module
 from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.emission import ef_for_input, get_emissions_data
@@ -16,6 +21,8 @@ from message_data.model.transport.util import path_fallback
 from message_data.testing import assert_units
 from message_data.tests.model.transport import configure_build
 from message_data.tools.gfei_fuel_economy import get_gfei_data
+
+from .test_demand import demand_computer
 
 
 def test_advance_fv():
@@ -294,3 +301,36 @@ def test_get_chn_ind_pop():
         "Value",
         "Variable",
     ]
+
+
+@pytest.mark.parametrize("years", ["A", "B"])
+@pytest.mark.parametrize("regions", ["ISR", "R11", "R12", "R14"])
+@pytest.mark.parametrize("options", [{}, dict(flags=ScenarioFlags.ELE)])
+def test_navigate_ele(test_context, regions, years, options):
+    """Test genno-based IKARUS data prep."""
+    ctx = test_context
+    c, info = demand_computer(ctx, None, regions, years, options)
+
+    k = "navigate_ele::ixmp"
+
+    # Computation runs without error
+    result = c.get(k)
+
+    if 0 == len(options):
+        assert 0 == len(result)
+        return
+
+    # Result contains data for 1 parameter
+    assert {"bound_new_capacity_up"} == set(result)
+    bncu = result["bound_new_capacity_up"]
+
+    # Constraint values are only generated for 2040 onwards
+    assert 2040 == np.min(bncu.year_vtg)
+
+    # Certain fossil fueled technologies are constrained
+    techs = set(bncu["technology"].unique())
+    print(f"{techs = }")
+    assert {"ICAe_ffv", "ICE_nga", "IGH_ghyb", "FR_ICE_M", "FR_ICE_L"} <= techs
+
+    # Electric technologies are not constrained
+    assert {"ELC_100", "FR_FCH"}.isdisjoint(techs)
