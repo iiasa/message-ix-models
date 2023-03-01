@@ -2,6 +2,7 @@
 import logging
 from collections import defaultdict
 from functools import partial
+from operator import itemgetter
 from typing import Dict, List, Mapping
 
 import pandas as pd
@@ -53,6 +54,7 @@ DATA_FUNCTIONS = {
 
 def provides_data(*args):
     """Decorator that adds a function to :data:`DATA_FUNCTIONS`."""
+    # TODO eliminate this
 
     def decorator(f):
         DATA_FUNCTIONS[f.__name__] = tuple([f] + list(args))
@@ -62,29 +64,25 @@ def provides_data(*args):
 
 
 def prepare_computer(c: Computer):
-    """Populate `scenario` with MESSAGE-Transport data."""
+    """Prepare the "all transport data" key.
+
+    This key triggers adding all MESSAGEix-Transport data to the "scenario" identified
+    in `c`.
+    """
     context = c.graph["context"]
+    dry_run = context.core.dry_run
     scenario = c.graph.get("scenario")
 
     # First strip existing emissions data
     strip_emissions_data(scenario, context)
 
-    # Information about the base scenario
-    info = context["transport build info"]
-
-    # Check for two "node" values for global data, e.g. in
-    # ixmp://ene-ixmp/CD_Links_SSP2_v2.1_clean/baseline
-    if {"World", "R11_GLB"} < set(info.set["node"]):
-        log.warning("Remove 'R11_GLB' from node list for data generation")
-        info.set["node"].remove("R11_GLB")
-
-    # Reference values: the Context, Scenario, ScenarioInfo, and dry_run parameter
-    for key, value in dict(info=info, dry_run=context.dry_run).items():
-        c.add(key, quote(value))
+    # Reference values: the ScenarioInfo, and dry_run parameter
+    c.add("info", itemgetter("transport build info"), "context")
+    c.add("dry_run", quote(dry_run))
 
     # Data-generating calculations
     all_keys = []
-    add = partial(add_par_data, dry_run=context.dry_run)
+    add = partial(add_par_data, dry_run=dry_run)
     for name, comp in DATA_FUNCTIONS.items():
         if len(comp) > 1:
             # Add 2 computations: one to generate the data

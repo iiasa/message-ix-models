@@ -186,15 +186,6 @@ def get_computer(
     # - Transfer data from `context` to `config`.
     c.configure(config={"MESSAGEix-Transport": {}})
 
-    # From .data.add_data()
-    # # Reference values: the Context, Scenario, ScenarioInfo, and dry_run parameter
-    # for key, value in dict(
-    #     # scenario=scenario,
-    #     # info=info,
-    #     # dry_run=dry_run,
-    # ).items():
-    #     c.add(key, quote(value))
-
     # Add structure-related keys
     add_structure(c)
 
