@@ -5,12 +5,9 @@ from message_ix import make_df
 from numpy.testing import assert_allclose
 from pandas.testing import assert_series_equal
 
-from message_data.model.transport import ScenarioFlags, ikarus
+from message_data.model.transport import ScenarioFlags, ikarus, testing
 from message_data.model.transport.non_ldv import UNITS
 from message_data.testing import assert_units
-from message_data.tests.model.transport import configure_build
-
-from .test_demand import demand_computer
 
 
 @pytest.mark.skip(reason="Deprecated, slow")
@@ -20,7 +17,7 @@ from .test_demand import demand_computer
 )
 def test_get_ikarus_data0(test_context, regions, N_node, years):
     ctx = test_context
-    info = configure_build(ctx, regions, years)
+    _, info = testing.configure_build(ctx, regions=regions, years=years)
 
     # get_ikarus_data() succeeds on the bare RES
     data = ikarus.get_ikarus_data(ctx)
@@ -110,7 +107,7 @@ def test_get_ikarus_data0(test_context, regions, N_node, years):
 def test_get_ikarus_data1(test_context, regions, N_node, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context
-    c, info = demand_computer(ctx, None, regions, years, options)
+    c, info = testing.configure_build(ctx, None, regions, years, options)
 
     # commented: for a manual check that `options` have an effect
     # print(c.get("nonldv efficiency:t-y:adj").to_series().to_string())

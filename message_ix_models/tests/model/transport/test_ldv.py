@@ -1,19 +1,18 @@
 import pytest
 from genno import ComputationError
 from iam_units import registry
-from message_ix_models import testing
 from message_ix_models.model.structure import get_codes
+from message_ix_models.testing import NIE
 from pytest import param
 
+from message_data.model.transport import testing
 from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.ldv import (
     constraint_data,
-    prepare_computer,
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
 from message_data.testing import assert_units
-from message_data.tests.model.transport import configure_build
 
 
 @pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
@@ -30,25 +29,17 @@ from message_data.tests.model.transport import configure_build
         "R14",
     ],
 )
-def test_get_ldv_data(tmp_path, test_context, source, regions, years):
-    from message_data.tests.model.transport.test_demand import demand_computer
-
+def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years):
     # Info about the corresponding RES
     ctx = test_context
-
-    info = configure_build(ctx, regions, years)
-    ctx.transport.data_source.LDV = source
-    ctx.transport.flags = ScenarioFlags.TEC
-
     # Prepare a Computer for LDV data calculations
-    c, _ = demand_computer(ctx, tmp_path, regions, years, options={})
-
-    # FIXME should not be overwritten by demand_computer() or similar method
-    ctx.transport.flags = ScenarioFlags.TEC
-    c.add("context", ctx)
-
-    # Add items to the computer
-    prepare_computer(c)
+    c, info = testing.configure_build(
+        ctx,
+        tmp_path,
+        regions,
+        years,
+        options={"data source": {"LDV": source}, "flags": ScenarioFlags.TEC},
+    )
 
     # Earlier keys in the process, for debugging
     # key = "ldv fuel economy:n-t-y:exo"
@@ -127,15 +118,15 @@ def test_get_ldv_data(tmp_path, test_context, source, regions, years):
         ("US-TIMES MA3T", "R12", "B"),
         ("US-TIMES MA3T", "R14", "A"),
         # Not implemented
-        param("US-TIMES MA3T", "ISR", "A", marks=testing.NIE),
+        param("US-TIMES MA3T", "ISR", "A", marks=NIE),
     ],
 )
 def test_ldv_constraint_data(test_context, source, regions, years):
     # Info about the corresponding RES
     ctx = test_context
-
-    info = configure_build(ctx, regions, years)
-    ctx.transport.data_source.LDV = source
+    _, info = testing.configure_build(
+        ctx, regions=regions, years=years, options={"data source": {"LDV": source}}
+    )
 
     # Method runs without error
 
