@@ -1,9 +1,11 @@
 """Utilities for testing :mod:`~message_data.model.transport`."""
 import logging
 from contextlib import nullcontext
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Tuple
 
 import pytest
+from genno import Computer
 from message_ix import Reporter, Scenario
 from message_ix_models import Context, ScenarioInfo, testing
 
@@ -12,6 +14,7 @@ from message_data.model import transport
 from message_data.reporting.sim import add_simulated_solution
 from message_data.tools import silence_log
 
+from . import build
 from .util import get_techs
 
 log = logging.getLogger(__name__)
@@ -28,6 +31,14 @@ MARK = (
         reason="Missing input data/assumptions for this node codelist", raises=t
     ),
 )
+
+
+def configure_build(
+    test_context: Context, tmp_path: Path, regions: str, years: str, options=None
+) -> Tuple[Computer, ScenarioInfo]:
+    test_context.update(regions=regions, years=years, output_path=tmp_path)
+    c = build.get_computer(test_context, options=options)
+    return c, test_context["transport build info"]
 
 
 def built_transport(

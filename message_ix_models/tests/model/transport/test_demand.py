@@ -9,7 +9,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import NIE
 from pytest import param
 
-from message_data.model.transport import Config, build, demand
+from message_data.model.transport import Config, build, demand, testing
 from message_data.model.transport.testing import MARK
 
 log = logging.getLogger(__name__)
@@ -59,7 +59,9 @@ def test_demand_dummy(test_context, regions, years):
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, options):
     """Exogenous demand calculation succeeds."""
-    c, info = demand_computer(test_context, tmp_path, regions, years, options=options)
+    c, info = testing.configure_build(
+        test_context, tmp_path, regions, years, options=options
+    )
 
     # Check that some keys (a) can be computed without error and (b) have correct units
     for key, unit in (
@@ -133,7 +135,7 @@ def test_exo_report(test_context, tmp_path):
 
     Separated from the above because the plotting step is slow.
     """
-    c, info = demand_computer(
+    c, info = testing.configure_build(
         test_context,
         tmp_path,
         regions="R12",
@@ -158,12 +160,6 @@ def test_exo_report(test_context, tmp_path):
     c.get("demand plots")
 
 
-def demand_computer(test_context, tmp_path, regions, years, options=None):
-    test_context.update(regions=regions, years=years, output_path=tmp_path)
-    c = build.get_computer(test_context, options=options)
-    return c, test_context["transport build info"]
-
-
 @pytest.mark.parametrize(
     "regions",
     [
@@ -176,7 +172,7 @@ def demand_computer(test_context, tmp_path, regions, years, options=None):
 @pytest.mark.parametrize("years", ["B"])
 @pytest.mark.parametrize("pop_scen", ["SSP2"])
 def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
-    c, info = demand_computer(
+    c, info = testing.configure_build(
         test_context,
         tmp_path,
         regions,
@@ -216,7 +212,7 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
     ],
 )
 def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
-    c, info = demand_computer(
+    c, info = testing.configure_build(
         test_context,
         tmp_path,
         regions,

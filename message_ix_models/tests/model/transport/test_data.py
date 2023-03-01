@@ -13,16 +13,14 @@ from message_data.model.transport import (
     computations,
 )
 from message_data.model.transport import data as data_module
+from message_data.model.transport import testing
 from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.emission import ef_for_input, get_emissions_data
 from message_data.model.transport.freight import get_freight_data
 from message_data.model.transport.roadmap import get_roadmap_data
 from message_data.model.transport.util import path_fallback
 from message_data.testing import assert_units
-from message_data.tests.model.transport import configure_build
 from message_data.tools.gfei_fuel_economy import get_gfei_data
-
-from .test_demand import demand_computer
 
 
 def test_advance_fv():
@@ -47,7 +45,7 @@ def test_data_files(test_context, parts):
 
 def test_ef_for_input(test_context):
     # Generate a test "input" data frame
-    info = configure_build(test_context, regions="R11", years="B")
+    _, info = testing.configure_build(test_context, regions="R11", years="B")
     years = info.yv_ya
     data = (
         make_df(
@@ -146,11 +144,7 @@ def test_get_afr_data(test_context, region, length):
 
 def test_get_freight_data(test_context, regions="R12", years="B"):
     ctx = test_context
-    ctx.update(regions=regions)
-
-    configure_build(ctx, regions, years)
-
-    info = ctx["transport build info"]
+    _, info = testing.configure_build(ctx, regions, years)
 
     # Code runs
     data = get_freight_data(info.N[1:], info.Y, ctx)
@@ -169,7 +163,7 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
 def test_get_non_ldv_data(test_context, regions, years="B"):
     """:func:`.get_non_ldv_data` returns the expected data."""
     ctx = test_context
-    configure_build(ctx, regions, years)
+    testing.configure_build(ctx, regions=regions, years=years)
 
     # Code runs
     data = get_non_ldv_data(ctx)
@@ -309,7 +303,7 @@ def test_get_chn_ind_pop():
 def test_navigate_ele(test_context, regions, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context
-    c, info = demand_computer(ctx, None, regions, years, options)
+    c, info = testing.configure_build(ctx, None, regions, years, options)
 
     k = "navigate_ele::ixmp"
 
