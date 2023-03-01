@@ -2,7 +2,7 @@
 import logging
 from collections import defaultdict
 from functools import partial
-from operator import itemgetter
+from operator import itemgetter, le
 from typing import Dict, List, Mapping
 
 import pandas as pd
@@ -12,6 +12,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     add_par_data,
     broadcast,
+    eval_anno,
     make_io,
     make_matched_dfs,
     make_source_tech,
@@ -215,3 +216,65 @@ def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
             pass  # No 'commodity' dimension
 
     return data
+
+
+@provides_data("n::ex world", "t::transport", "t::transport agg", "y::model", "config")
+def navigate_ele(
+    nodes: List[str], techs: List[Code], t_groups, years: List[int], config
+) -> Dict[str, pd.DataFrame]:
+    """Return constraint data for :attr:`ScenarioFlags.ELE`.
+
+    The text reads as follows as of 2023-02-15:
+
+    1. Land-based transport: Fuel/technology mandates ensure full electrification (BEV
+       and/or FCEV) of passenger vehicles and light-duty trucks by 2040.
+    2. Because there are much larger hurdles for full electrification of heavy-duty
+       vehicles (Gray et al., 2021; Mulholland et al., 2018), we only assume a phase-out
+       of diesel engines in the fleet of heavy-duty vehicles (HDV) by 2040.
+    3. We assume that electric short-haul planes become available after 2050 (based on
+       Barzkar & Ghassemi, 2020).
+    4. Further, we assume full electrification of ports (and a reduction of auxiliary
+       engines needed in ships) by 2030. In alignment with this, vessels are adapted to
+       zero-emission berth standards by 2040. This timeline for port electrification is
+       loosely based on Gillingham & Huang (2020) and the Global EV Outlook (IEA,
+       2020a). Assuming that ships spend approximately 15% of the time at berth and that
+       15% of their total fuel consumption is related to the auxiliary engine, we assume
+       that 2.3% of the total fuel consumption can be saved by cold ironing (in line
+       with Bauman et al., 2017).
+    5. Fuels standards/mandates, infrastructure development and removing blending
+       restrictions increase the use of alternative fuels (biofuels/electrofuels).
+       Following the Sustainable Development Scenario (IEA, 2020b) the share of hydrogen
+       in final energy demand grows to 40% in the aviation sector and to 50% in the
+       shipping sector by 2070. The share of biofuels increases to 15% for both the
+       aviation and shipping sector.
+
+    Currently only items (1) and (2) are implemented.
+    """
+    if not (ScenarioFlags.ELE & config["transport"].flags):
+        return dict()
+
+    # Technologies to constrain for items (1) and (2)
+    to_constrain = []
+
+    # Item (1): identify LDV technologies with inputs other than electricity or hydrogen
+    for code in map(lambda t: techs[techs.index(t)], t_groups["t"]["LDV"]):
+        input_info = eval_anno(code, "input")
+
+        if input_info.get("commodity") not in ("electr", "hydrogen"):
+            to_constrain.append(code.id)
+
+    # Item (2): identify diesel-fueled freight truck technologies
+    for code in map(lambda t: techs[techs.index(t)], t_groups["t"]["freight truck"]):
+        if "diesel" in str(code.description):
+            to_constrain.append(code.id)
+
+    # Create data
+    name = "bound_new_capacity_up"
+    data = make_df(name, value=0, unit="Gv km").pipe(
+        broadcast,
+        node_loc=nodes,
+        technology=to_constrain,
+        year_vtg=list(filter(partial(le, 2040), years)),
+    )
+
+    return {name: data}
