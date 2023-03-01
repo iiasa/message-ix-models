@@ -60,7 +60,7 @@ def test_demand_dummy(test_context, regions, years):
 def test_exo(test_context, tmp_path, regions, years, N_node, options):
     """Exogenous demand calculation succeeds."""
     c, info = testing.configure_build(
-        test_context, tmp_path, regions, years, options=options
+        test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
 
     # Check that some keys (a) can be computed without error and (b) have correct units
@@ -137,7 +137,7 @@ def test_exo_report(test_context, tmp_path):
     """
     c, info = testing.configure_build(
         test_context,
-        tmp_path,
+        tmp_path=tmp_path,
         regions="R12",
         years="B",
         options=dict(futures_scenario="debug"),
@@ -174,9 +174,9 @@ def test_exo_report(test_context, tmp_path):
 def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
     c, info = testing.configure_build(
         test_context,
-        tmp_path,
-        regions,
-        years,
+        tmp_path=tmp_path,
+        regions=regions,
+        years=years,
         options={"data source": {"population": pop_scen}},
     )
 
@@ -214,9 +214,9 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
 def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
     c, info = testing.configure_build(
         test_context,
-        tmp_path,
-        regions,
-        years,
+        tmp_path=tmp_path,
+        regions=regions,
+        years=years,
         options={"data source": {"population": pop_scen}},
     )
 

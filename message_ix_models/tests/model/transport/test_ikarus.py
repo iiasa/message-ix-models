@@ -107,7 +107,9 @@ def test_get_ikarus_data0(test_context, regions, N_node, years):
 def test_get_ikarus_data1(test_context, regions, N_node, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context
-    c, info = testing.configure_build(ctx, None, regions, years, options)
+    c, info = testing.configure_build(
+        ctx, regions=regions, years=years, options=options
+    )
 
     # commented: for a manual check that `options` have an effect
     # print(c.get("nonldv efficiency:t-y:adj").to_series().to_string())
