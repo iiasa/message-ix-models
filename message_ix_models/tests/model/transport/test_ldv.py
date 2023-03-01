@@ -35,9 +35,9 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
     # Prepare a Computer for LDV data calculations
     c, info = testing.configure_build(
         ctx,
-        tmp_path,
-        regions,
-        years,
+        tmp_path=tmp_path,
+        regions=regions,
+        years=years,
         options={"data source": {"LDV": source}, "flags": ScenarioFlags.TEC},
     )
 

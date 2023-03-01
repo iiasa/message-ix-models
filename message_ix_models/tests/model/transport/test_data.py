@@ -144,10 +144,10 @@ def test_get_afr_data(test_context, region, length):
 
 def test_get_freight_data(test_context, regions="R12", years="B"):
     ctx = test_context
-    _, info = testing.configure_build(ctx, regions, years)
+    c, info = testing.configure_build(ctx, regions=regions, years=years)
 
     # Code runs
-    data = get_freight_data(info.N[1:], info.Y, ctx)
+    result = c.get("transport freight::ixmp")
 
     # Data are provided for these parameters
     assert {
@@ -155,7 +155,7 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
         "input",
         "output",
         "technical_lifetime",
-    } == set(data.keys())
+    } == set(result.keys())
 
 
 @pytest.mark.skip(reason="TEMPORARY. TODO realign with test_ikarus.py; add options")
@@ -303,7 +303,9 @@ def test_get_chn_ind_pop():
 def test_navigate_ele(test_context, regions, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context
-    c, info = testing.configure_build(ctx, None, regions, years, options)
+    c, info = testing.configure_build(
+        ctx, regions=regions, years=years, options=options
+    )
 
     k = "navigate_ele::ixmp"
 

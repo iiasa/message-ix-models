@@ -34,7 +34,12 @@ MARK = (
 
 
 def configure_build(
-    test_context: Context, tmp_path: Path, regions: str, years: str, options=None
+    test_context: Context,
+    *,
+    regions: str,
+    years: str,
+    tmp_path: Optional[Path] = None,
+    options=None,
 ) -> Tuple[Computer, ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
     c = build.get_computer(test_context, options=options)
