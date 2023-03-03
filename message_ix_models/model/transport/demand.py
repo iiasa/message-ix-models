@@ -5,7 +5,6 @@ from operator import itemgetter
 from typing import Dict, List, cast
 
 import genno.computations
-import message_ix
 import numpy as np
 import pandas as pd
 from dask.core import literal, quote
@@ -13,8 +12,7 @@ from genno import Computer, Key
 from genno.computations import interpolate
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
-from message_ix.reporting import Reporter
-from message_ix_models import Context, ScenarioInfo
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import adapt_R11_R14, broadcast
 
 from message_data.tools import gdp_pop
@@ -56,25 +54,6 @@ def dummy(
     # dfs.append(make_df("demand", commodity="lightoil", **common))
 
     return dict(demand=pd.concat(dfs).pipe(broadcast, node=nodes))
-
-
-def from_scenario(scenario: message_ix.Scenario) -> Reporter:
-    """Return a Reporter for calculating demand based on `scenario`.
-
-    Parameters
-    ----------
-    Scenario
-        Solved Scenario
-
-    Returns
-    -------
-    Reporter
-    """
-    rep = Reporter.from_scenario(scenario)
-
-    prepare_reporter(rep, Context.get_instance())
-
-    return rep
 
 
 def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:

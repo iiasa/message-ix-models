@@ -1,6 +1,5 @@
 import logging
 
-import message_ix
 import pytest
 from genno.testing import assert_units
 from iam_units import registry
@@ -228,14 +227,6 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
     assert set(info.N[1:]) == set(result.coords["n"].values)
     assert set(info.Y) <= set(result.coords["y"].values)
     assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
-
-
-@pytest.mark.skip(reason="Requires user's context")
-def test_from_scenario(user_context):
-    url = "ixmp://reporting/CD_Links_SSP2_v2.1_clean/baseline"
-    scenario, mp = message_ix.Scenario.from_url(url)
-
-    demand.from_scenario(scenario)
 
 
 @pytest.mark.parametrize(
