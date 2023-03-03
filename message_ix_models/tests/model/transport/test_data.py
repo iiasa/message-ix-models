@@ -16,7 +16,6 @@ from message_data.model.transport import data as data_module
 from message_data.model.transport import testing
 from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.emission import ef_for_input, get_emissions_data
-from message_data.model.transport.freight import get_freight_data
 from message_data.model.transport.roadmap import get_roadmap_data
 from message_data.model.transport.util import path_fallback
 from message_data.testing import assert_units
@@ -158,15 +157,16 @@ def test_get_freight_data(test_context, regions="R12", years="B"):
     } == set(result.keys())
 
 
-@pytest.mark.skip(reason="TEMPORARY. TODO realign with test_ikarus.py; add options")
 @pytest.mark.parametrize("regions", ["R11", "R12"])
 def test_get_non_ldv_data(test_context, regions, years="B"):
-    """:func:`.get_non_ldv_data` returns the expected data."""
+    """:mod:`.non_ldv` returns the expected data."""
+    # TODO realign with test_ikarus.py
+    # TODO add options
     ctx = test_context
-    testing.configure_build(ctx, regions=regions, years=years)
+    c, _ = testing.configure_build(ctx, regions=regions, years=years)
 
     # Code runs
-    data = get_non_ldv_data(ctx)
+    data = c.get("transport nonldv::ixmp")
 
     # Data are provided for the these parameters
     assert {
