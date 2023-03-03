@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ main, "migrate-*"]
 
-env:
-  # Maximum McCabe complexity for code
-  max-complexity: 15
-
 jobs:
   lint:
     runs-on: ubuntu-latest
