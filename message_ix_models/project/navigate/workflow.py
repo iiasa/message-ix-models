@@ -7,7 +7,7 @@ from typing import Dict, Optional
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import private_data_path, identify_nodes
+from message_ix_models.util import identify_nodes, private_data_path
 from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
@@ -185,14 +185,16 @@ def solve(context, scenario):
 
 def tax_emission(context: Context, scenario: Scenario, price: float):
     """Workflow callable for :mod:`.tools.utilities.add_tax_emission`."""
+    from message_data.projects.engage.runscript_main import (
+        glb_co2_relation as RELATION_GLOBAL_CO2,
+    )
     from message_data.tools.utilities import (
-        add_tax_emission,
         add_AFOLU_CO2_accounting,
         add_alternative_TCE_accounting,
         add_CO2_emission_constraint,
         add_FFI_CO2_accounting,
+        add_tax_emission,
     )
-    from message_data.projects.engage.runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
 
     try:
         scenario.remove_solution()
