@@ -121,7 +121,7 @@ Reporting
 Data, metadata, and config files
 ================================
 
-See also: :doc:`water/files`.
+See also :doc:`/water/files`.
 
 - :file:`data/water/`: contains input data used for building the Nexus module
 
@@ -136,7 +136,7 @@ Pre-processing
 ==============
 - :file:`data/water/`: contains scripts used in pre_processing source data for the water sector implementation
 
-  
+
   - :file:`calculate_ppl_cooling_technology_shares.r`: contains script for processing cooling technology shares at global level for different regional specifications.
   - :file:`groundwater_harmonize.r`: contains workflow to calculate historical capcity of renewable groundwater, table depth and energy consumption
   - :file:`generate_water_constraints.r`: contains function to calculate municipal, manufactury, rural water demands, water access and sanitation rates
@@ -144,7 +144,7 @@ Pre-processing
   - :file:`hydro_agg_raster.py`: contains workflow for processing the hydrological data in NC4 and adjust the unit conversions, daily to monthly aggregation.
   - :file:`hydro_agg_spatial.R`: contains workflow for spatially aggregating monthly hydrological data onto basin using appropriate raster masking onto shapefiles
   - :file:`hydro_agg_basin.py`: contains workflow for aggregating monthly data to 5 yearly averages using appropriate statistical methods (quantiles, averages etc.). It also caculates e flows based on Variable MF method.
- 
+
 
 
 Deprecated R Code
@@ -163,4 +163,4 @@ Reference
 .. toctree::
    :maxdepth: 2
 
-   water/files
+   /water/files
