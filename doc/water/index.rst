@@ -1,17 +1,7 @@
-MESSAGEix-Nexus (:mod:`~messag_data.model.water`)
-*************************************************
+MESSAGEix-Nexus (:mod:`.model.water`)
+*************************************
 
-.. warning::
-
-   MESSAGEix-Nexus is **under development**.
-
-   For details, see the
-   `water <https://github.com/iiasa/message_data/labels/water>`_ label,
-   `project board <https://github.com/iiasa/message_data/projects/7>`_, and
-   `current tracking issue (#246) <https://github.com/iiasa/message_data/issues/246>`_.
-
-
-:mod:`message_data.model.water` adds water usage and demand related representation to the MESSAGEix-GLOBIOM global model.
+:mod:`message_ix_models.model.water` adds water usage and demand related representation to the MESSAGEix-GLOBIOM global model.
 The resulting model is referred to as **“MESSAGEix-Nexus”**. This work extends the water sector linkage described by Parkinson et al. (2019) :cite:`parkinson2019`.
 
 .. contents::
@@ -41,8 +31,8 @@ model and scenario specifications can be either set manually in ``cli.py`` or sp
 Country vs Global implementation
 --------------------------------
 
-The :mod:`message_data.model.water` is designed to being able to add water components to either a global R11 (or R12) model or any country model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
-For any of the region configuration a shapefile is needed to run the pre-processing part, while, once the data is prepared, only a .csv file similar to those in `message_data.data.water.delineation` is needed.
+The :mod:`message_ix_models.model.water` is designed to being able to add water components to either a global R11 (or R12) model or any country model designed with `the MESSAGEix single country <https://github.com/iiasa/message_single_country>`_ model prototype.
+For any of the region configuration a shapefile is needed to run the pre-processing part, while, once the data is prepared, only a .csv file similar to those in `message_ix_models.data.water.delineation` is needed.
 
 To work with a country model please ensure that:
 
@@ -63,47 +53,46 @@ In the case there are already multiple sub-annual time-steps levels already defi
 Code reference
 ==============
 
-.. currentmodule:: message_data.model.water
+.. currentmodule:: message_ix_models.model.water
 
-.. automodule:: message_data.model.water
+.. automodule:: message_ix_models.model.water
    :members:
 
 Build and run
 -------------
-.. automodule:: message_data.model.water.build
-   :members:
 
+.. automodule:: message_ix_models.model.water.build
+   :members:
 
 Data preparation
 ----------------
 
-.. automodule:: message_data.model.water.data
+.. automodule:: message_ix_models.model.water.data
    :members:
 
-.. automodule:: message_data.model.water.data.water_for_ppl
+.. automodule:: message_ix_models.model.water.data.water_for_ppl
    :members:
 
-.. automodule:: message_data.model.water.data.demands
+.. automodule:: message_ix_models.model.water.data.demands
    :members:
 
-.. automodule:: message_data.model.water.data.infrastructure
+.. automodule:: message_ix_models.model.water.data.infrastructure
    :members:
 
-.. automodule:: message_data.model.water.data.water_supply
+.. automodule:: message_ix_models.model.water.data.water_supply
    :members:
 
-.. automodule:: message_data.model.water.data.irrigation
+.. automodule:: message_ix_models.model.water.data.irrigation
    :members:
-
 
 Utilities and CLI
 -----------------
 
-.. automodule:: message_data.model.water.utils
+.. automodule:: message_ix_models.model.water.utils
    :members:
    :exclude-members: read_config
 
-.. automodule:: message_data.model.water.cli
+.. automodule:: message_ix_models.model.water.cli
    :members:
 
 Reporting
@@ -111,12 +100,10 @@ Reporting
 
 .. warning::
 
-   The current reporting features only work for the global model
+   The current reporting features only work for the global model.
 
-.. automodule:: message_data.model.water.reporting
+.. automodule:: message_ix_models.model.water.reporting
    :members:
-
-
 
 Data, metadata, and config files
 ================================
@@ -145,8 +132,6 @@ Pre-processing
   - :file:`hydro_agg_spatial.R`: contains workflow for spatially aggregating monthly hydrological data onto basin using appropriate raster masking onto shapefiles
   - :file:`hydro_agg_basin.py`: contains workflow for aggregating monthly data to 5 yearly averages using appropriate statistical methods (quantiles, averages etc.). It also caculates e flows based on Variable MF method.
 
-
-
 Deprecated R Code
 =================
 
@@ -155,7 +140,6 @@ Deprecated R Code
   - :file:`Figures.R`: R script for producing figures
   - :file:`cooling_tech_av.R`: contains similar code as in the above-mentioned scripts, but this was originated from another workstream
   - :file:`add_water_infrastructure.R`: contains spatially-explicit analysis of gridded demands and socioeconomic indicators to develop pathways for sectoral water withdrawals, return flows and infrastructure penetration rates in each MESSAGE region. The pathways feature branching points reflecting a specific water sector development narrative (e.g., convergence towards achieving specific SDG targets).
-
 
 Reference
 =========
