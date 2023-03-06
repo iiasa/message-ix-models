@@ -22,6 +22,7 @@ Among other tasks, the tools allow modelers to:
    cli
    repro
    distrib
+   bibliography
 
 .. toctree::
    :maxdepth: 2

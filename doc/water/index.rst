@@ -2,7 +2,8 @@ MESSAGEix-Nexus (:mod:`.model.water`)
 *************************************
 
 :mod:`message_ix_models.model.water` adds water usage and demand related representation to the MESSAGEix-GLOBIOM global model.
-The resulting model is referred to as **“MESSAGEix-Nexus”**. This work extends the water sector linkage described by Parkinson et al. (2019) :cite:`parkinson2019`.
+The resulting model is referred to as **“MESSAGEix-Nexus”**.
+This work extends the water sector linkage described by Parkinson et al. (2019) :cite:`parkinson-2019`.
 
 .. contents::
    :local:
@@ -148,3 +149,5 @@ Reference
    :maxdepth: 2
 
    /water/files
+
+.. footbibliography::
