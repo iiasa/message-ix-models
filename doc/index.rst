@@ -40,6 +40,12 @@ Among other tasks, the tools allow modelers to:
 
 .. toctree::
    :maxdepth: 2
+   :caption: Variants and projects
+
+   water/index
+
+.. toctree::
+   :maxdepth: 2
    :caption: Package data
 
    pkg-data/node
