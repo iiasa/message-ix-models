@@ -146,7 +146,7 @@ def map_yv_ya_lt(
         raise ValueError("Add a fixed lifetime parameter 'lt'")
 
     # Create a mesh grid using numpy built-ins
-    data: np.ndarray = np.meshgrid(periods, periods, indexing="ij")
+    data = np.meshgrid(periods, periods, indexing="ij")
     # Take the upper-triangular portion (setting the rest to 0), reshape
     data = np.triu(data).reshape((2, -1))
     # Filter only non-zero pairs
