@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add :doc:`/water/index` (:pull:`88`, :pull:`91`).
 
 2023.2.8
 ========
