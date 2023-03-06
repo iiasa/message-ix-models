@@ -3,6 +3,7 @@ from functools import lru_cache, partial
 from typing import Mapping
 
 import pandas as pd
+from sdmx.model import Code
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model import build
@@ -46,10 +47,8 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
             add.set[set_name].extend(config.get("add", []))
 
         # The set of required nodes varies according to context.regions
-        nodes = get_codes(f"node/{context.regions}")
-        nodes = [str(child) for child in nodes[nodes.index("World")].child]
-        nodes = list(nodes[nodes.find("World")].child)
-
+        n_codes = get_codes(f"node/{context.regions}")
+        nodes = list(map(str, n_codes[n_codes.index(Code(id="World"))].child))
         require.set["node"].extend(nodes)
 
         # Share commodity for groundwater
