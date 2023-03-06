@@ -21,14 +21,17 @@ from message_ix_models.util import as_codes, eval_anno
 @pytest.mark.parametrize(
     "kind, exp",
     [
-        ("node", ["ADVANCE", "ISR", "R11", "R12", "R14", "R32", "RCP", "ZMB"]),
-        ("relation", ["A", "B", "CD-LINKS"]),
-        ("year", ["A", "B"]),
+        (
+            "node",
+            {"ADVANCE", "B210-R11", "ISR", "R11", "R12", "R14", "R32", "RCP", "ZMB"},
+        ),
+        ("relation", {"A", "B", "CD-LINKS"}),
+        ("year", {"A", "B"}),
     ],
 )
 def test_codelists(kind, exp):
     """:func:`codelists` returns the expected IDs."""
-    assert exp == codelists(kind)
+    assert exp == set(codelists(kind))
 
 
 class TestGetCodes:

@@ -1,6 +1,7 @@
-# Basin code list 
+# Basin code list
+#
 # This structure is used in nexus module where 210
-#  basins are interesected with R11 regions
+# basins are intersected with R11 regions
 
 - 1|AFR:
     area: '1037882.76894644'
