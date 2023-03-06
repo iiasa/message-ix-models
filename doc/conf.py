@@ -28,6 +28,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.bibtex",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -105,3 +106,7 @@ intersphinx_mapping = {
 # -- Options for sphinx.ext.todo -------------------------------------------------------
 
 todo_include_todos = True
+
+# -- Options for sphinxcontrib.bibtex --------------------------------------------------
+
+bibtex_bibfiles = ["main.bib"]
