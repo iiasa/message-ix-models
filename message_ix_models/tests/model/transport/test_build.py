@@ -137,7 +137,7 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
 
     # Destination for built scenarios: uncomment one of
     # the platform prepared by the text fixture…
-    ctx.dest_platform = copy(ctx.platform)
+    ctx.dest_platform = copy(ctx.platform_info)
     # # or, a specific, named platform.
     # ctx.dest_platform = dict(name="local")
 
