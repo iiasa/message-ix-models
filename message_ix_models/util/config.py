@@ -39,7 +39,9 @@ class ConfigHelper:
     @classmethod
     def _fields(cls) -> Set[str]:
         """Names of fields in `cls`."""
-        return set(map(lambda f: f.name, fields(cls))) | set(dir(cls))
+        if is_dataclass(cls):
+            return set(map(lambda f: f.name, fields(cls)))
+        return set(dir(cls))
 
     @classmethod
     def _canonical_name(cls, name: Hashable) -> Optional[str]:
@@ -92,7 +94,7 @@ class ConfigHelper:
                 if isinstance(existing, ConfigHelper):
                     # Use name manipulation on the attribute value also
                     value = existing.replace(**value)
-                else:
+                elif not isinstance(existing, type):
                     value = replace(existing, **value)
             setattr(self, key, value)
 
