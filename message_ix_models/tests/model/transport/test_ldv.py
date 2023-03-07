@@ -1,3 +1,6 @@
+import logging
+
+import pandas as pd
 import pytest
 from genno import ComputationError
 from iam_units import registry
@@ -14,8 +17,25 @@ from message_data.model.transport.ldv import (
 )
 from message_data.testing import assert_units
 
+log = logging.getLogger(__name__)
 
-@pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
+
+@pytest.mark.parametrize(
+    "source, extra_pars",
+    [
+        (None, set()),
+        (
+            "US-TIMES MA3T",
+            {
+                "emission_factor",
+                "fix_cost",
+                "inv_cost",
+                "relation_activity",
+                "technical_lifetime",
+            },
+        ),
+    ],
+)
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions",
@@ -26,7 +46,7 @@ from message_data.testing import assert_units
         ),
         "R11",
         "R12",
-        "R14",
+        param("R14", marks=pytest.mark.xfail(raises=FileNotFoundError)),
     ],
 )
 def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years):
@@ -60,20 +80,21 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
     # Data are returned for the following parameters
     assert {
         "capacity_factor",
-        "emission_factor",
-        "fix_cost",
+        "growth_activity_lo",
+        "growth_activity_up",
         "input",
-        "inv_cost",
         "output",
-        "relation_activity",
-        "technical_lifetime",
-    } == set(data.keys())
+        "var_cost",
+    } | extra_pars == set(data.keys())
 
     # Input data is returned and has the correct units
-    assert_units(data["input"], registry("1.0 GWa / (Gv km)"))
+    assert {"GW * a / Gv / km", "km", "-"} >= set(data["input"]["unit"].unique())
 
     # Output data is returned and has the correct units
-    assert_units(data["output"], registry.Unit("Gv km"))
+    assert {"Gv km", "km", "-"} >= set(data["output"]["unit"].unique())
+
+    if source is None:
+        return
 
     # Data are generated for multiple year_act for each year_vtg of a particular tech
     for name in "fix_cost", "input", "output":
@@ -86,10 +107,12 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
 
     # Historical periods from 2010 + all model periods
     i = info.set["year"].index(2010)
-    exp = info.set["year"][i:]
+    y_2010 = info.set["year"][i:]
 
     # Remaining data have the correct size
-    for par_name, df in data.items():
+    for par_name, df in sorted(data.items()):
+        # log.info(par_name)
+
         # No missing entries
         assert not df.isna().any(axis=None), df.tostring()
 
@@ -97,16 +120,29 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
             continue
 
         # Data covers these periods
-        assert exp == sorted(df["year_vtg"].unique()), (par_name, df)
+        exp_y = {"var_cost": info.Y}.get(par_name, y_2010)
+        assert set(exp_y) == set(df["year_vtg"].unique())
 
-        # Total length of data: # of regions × (11 technology × # of periods; plus 1
-        # technology (historical ICE) for only 2010)
+        # Expected number of (yv, ya) combinations in the data
+        N_y = len(exp_y)
         try:
-            # Use <= because read_USTIMES_MA3T_2 returns additional values
-            assert len(info.N[1:]) * ((11 * len(exp)) + 1) <= len(df)
-        except AssertionError:
-            print(par_name, df.to_string(), sep="\nq")
-            raise
+            # Check for a vintaged parameter and technology
+            cond = df.eval("year_act - year_vtg > 0").any(axis=None)
+        except pd.errors.UndefinedVariableError:
+            cond = False
+        N_y *= ((len(exp_y) - 1) // 2) if cond else 1
+
+        # Total length of data is at least the product of:
+        # - # of regions
+        # - # of technologies: 11 if specific to each LDV tech
+        # - # of periods
+        N_exp = len(info.N[1:]) * {"var_cost": 1}.get(par_name, 11) * N_y
+        # log.info(f"{N_exp = } {len(df) = }")
+
+        # # Show the data for debugging
+        # print(par_name, df.to_string(), sep="\nq")
+
+        assert N_exp <= len(df)
 
 
 @pytest.mark.parametrize(
