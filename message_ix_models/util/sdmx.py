@@ -71,7 +71,9 @@ def as_codes(data: Union[List[str], Dict[str, CodeLike]]) -> List[Code]:
         # Convert other dictionary (key, value) pairs to annotations
         for id, value in _info.items():
             value_string = value if isinstance(value, str) else repr(value)
-            code.annotations.append(Annotation(id=id, text=InternationalString(value)))
+            code.annotations.append(
+                Annotation(id=id, text=InternationalString(value_string))
+            )
 
         result[code.id] = code
 
