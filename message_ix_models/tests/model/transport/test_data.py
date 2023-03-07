@@ -182,14 +182,20 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     } == set(data.keys())
 
     # Input data have expected units
-    assert_units(data["input"], registry("1.0 GWa / (Gv km)"))
+    mask = data["input"]["technology"].str.endswith(" usage")
+
+    assert_units(data["input"][~mask], registry("1.0 GWa / (Gv km)"))
+    assert_units(data["input"][mask], registry("Gv km"))
 
     # Output data exist for all non-LDV modes
     modes = list(filter(lambda m: m != "LDV", ctx.transport.demand_modes))
-    assert len(modes) == len(data["output"]["commodity"].unique())
+    obs = set(data["output"]["commodity"].unique())
+    assert len(modes) * 2 == len(obs)
 
     # Output data have expected units
-    assert_units(data["output"], {"[passenger]": 1, "[vehicle]": -1})
+    mask = data["output"]["technology"].str.endswith(" usage")
+    assert_units(data["output"][~mask], {"[vehicle]": 1, "[length]": 1})
+    assert_units(data["output"][mask], {"[passenger]": 1, "[length]": 1})
 
 
 def test_get_gfei_data(test_context):
