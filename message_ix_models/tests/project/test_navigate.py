@@ -67,7 +67,7 @@ BLOCKS = [
 ]
 
 
-@pytest.mark.usefixtures("message_buildings_dir")
+@pytest.mark.usefixtures("message_buildings_dir", "test_context")
 def test_generate_workflow_cli(mix_models_cli):
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
 
