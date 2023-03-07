@@ -5,9 +5,10 @@ from message_ix.testing import make_dantzig
 
 from message_ix_models import util
 
-SUBCOMMANDS = [
+COMMANDS = [
     tuple(),
     ("debug",),
+    ("water-ix",),
 ]
 
 
@@ -15,10 +16,10 @@ def _cli_help_id(argvalue):
     return f"mix-models {' '.join(argvalue)} --help"
 
 
-@pytest.mark.parametrize("subcommand", SUBCOMMANDS, ids=_cli_help_id)
-def test_cli_help(mix_models_cli, subcommand):
+@pytest.mark.parametrize("command", COMMANDS, ids=_cli_help_id)
+def test_cli_help(mix_models_cli, command):
     """--help works for every CLI command."""
-    mix_models_cli.assert_exit_0(list(subcommand) + ["--help"])
+    mix_models_cli.assert_exit_0(list(command) + ["--help"])
 
 
 def test_cli_debug(mix_models_cli):

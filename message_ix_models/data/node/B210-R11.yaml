@@ -1,0 +1,845 @@
+# Basin code list
+#
+# This structure is used in nexus module where 210
+# basins are intersected with R11 regions
+
+- 1|AFR:
+    area: '1037882.76894644'
+    basin: Africa East Central Coast
+    parent: AFR
+- 2|AFR:
+    area: '243855.520601478'
+    basin: Africa Indian Ocean Coast
+    parent: AFR
+- 3|AFR:
+    area: '1209583.91920788'
+    basin: Africa North Interior
+    parent: AFR
+- 4|AFR:
+    area: '298358.803422463'
+    basin: Africa North West Coast
+    parent: AFR
+- 5|AFR:
+    area: '585875.53107604'
+    basin: Africa Red Sea Gulf of Aden Coast
+    parent: AFR
+- 6|AFR:
+    area: '863900.710817653'
+    basin: Africa South Interior
+    parent: AFR
+- 7|AFR:
+    area: '822675.54975777'
+    basin: Africa West Coast
+    parent: AFR
+- 8|AFR:
+    area: '195431.122629738'
+    basin: Africa West Coast
+    parent: AFR
+- 13|AFR:
+    area: '506476.213575093'
+    basin: Angola Coast
+    parent: AFR
+- 38|AFR:
+    area: '3688579.83075963'
+    basin: Congo
+    parent: AFR
+- 57|AFR:
+    area: '707835.222908555'
+    basin: Gulf of Guinea
+    parent: AFR
+- 78|AFR:
+    area: '2244982.26774017'
+    basin: Lake Chad
+    parent: AFR
+- 80|AFR:
+    area: '411554.731175708'
+    basin: Limpopo
+    parent: AFR
+- 82|AFR:
+    area: '592819.418887292'
+    basin: Madagascar
+    parent: AFR
+- 92|AFR:
+    area: '260117.79685527'
+    basin: Namibia Coast
+    parent: AFR
+- 95|AFR:
+    area: '1954323.88325475'
+    basin: Niger
+    parent: AFR
+- 96|AFR:
+    area: '848882.4077457'
+    basin: Nile
+    parent: AFR
+- 107|AFR:
+    area: '975747.978369644'
+    basin: Orange
+    parent: AFR
+- 121|AFR:
+    area: '642737.024116911'
+    basin: Rift Valley
+    parent: AFR
+- 129|AFR:
+    area: '456422.165841646'
+    basin: Senegal
+    parent: AFR
+- 130|AFR:
+    area: '794459.122507797'
+    basin: Shebelli Juba
+    parent: AFR
+- 135|AFR:
+    area: '402661.737993571'
+    basin: South Africa South Coast
+    parent: AFR
+- 136|AFR:
+    area: '110986.621626996'
+    basin: South Africa West Coast
+    parent: AFR
+- 158|AFR:
+    area: '410993.756248921'
+    basin: Volta
+    parent: AFR
+- 161|AFR:
+    area: '1373243.10573904'
+    basin: Zambezi
+    parent: AFR
+- 11|CPA:
+    area: '1240189.46233942'
+    basin: Amur
+    parent: CPA
+- 35|CPA:
+    area: '370017.172369047'
+    basin: China Coast
+    parent: CPA
+- 53|CPA:
+    area: '315782.155003207'
+    basin: Ganges Bramaputra
+    parent: CPA
+- 54|CPA:
+    area: '1852165.81703544'
+    basin: Gobi Interior
+    parent: CPA
+- 59|CPA:
+    area: '40586.4646767074'
+    basin: Gulf of Thailand Coast Chao Phraya
+    parent: CPA
+- 60|CPA:
+    area: '34161.7683490367'
+    basin: Hainan
+    parent: CPA
+- 61|CPA:
+    area: '759908.086292201'
+    basin: Hong Red River Xun Jiang South China Sea Coast
+    parent: CPA
+- 62|CPA:
+    area: '963359.282520628'
+    basin: Huang He
+    parent: CPA
+- 67|CPA:
+    area: '95601.7096913068'
+    basin: Indus
+    parent: CPA
+- 70|CPA:
+    area: '158257.727003225'
+    basin: Irrawaddy Salween Sittang
+    parent: CPA
+- 77|CPA:
+    area: '77304.9437385897'
+    basin: Lake Balkash
+    parent: CPA
+- 88|CPA:
+    area: '563659.426441573'
+    basin: Mekong
+    parent: CPA
+- 98|CPA:
+    area: '420357.959354959'
+    basin: North and South Korea Bo Hai Korean Bay North Coast
+    parent: CPA
+- 105|CPA:
+    area: '100049.474331047'
+    basin: Ob
+    parent: CPA
+- 118|CPA:
+    area: '398525.040794704'
+    basin: Plateau of Tibet Interior
+    parent: CPA
+- 123|CPA:
+    area: '49902.0966368428'
+    basin: Russia South East Coast
+    parent: CPA
+- 148|CPA:
+    area: '1583756.50134361'
+    basin: Tarim Interior
+    parent: CPA
+- 156|CPA:
+    area: '192524.548362678'
+    basin: Vietnam Coast
+    parent: CPA
+- 159|CPA:
+    area: '1922680.37228977'
+    basin: Yangtze
+    parent: CPA
+- 160|CPA:
+    area: '327652.619005671'
+    basin: Yenisey
+    parent: CPA
+- 162|CPA:
+    area: '342529.496351531'
+    basin: Ziya He Interior
+    parent: CPA
+- 0|EEU:
+    area: '173360.131117452'
+    basin: Adriatic Sea Greece Black Sea Coast
+    parent: EEU
+- 39|EEU:
+    area: '611033.580717153'
+    basin: Danube
+    parent: EEU
+- 48|EEU:
+    area: '50029.5402654319'
+    basin: Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast
+    parent: EEU
+- 106|EEU:
+    area: '495681.712643732'
+    basin: Oder Wisla Neman Daugava Neva Poland Baltic Coast
+    parent: EEU
+- 10|FSU:
+    area: '638906.573770219'
+    basin: Amu Darya
+    parent: FSU
+- 11|FSU:
+    area: '1005818.45008491'
+    basin: Amur
+    parent: FSU
+- 16|FSU:
+    area: '95057.5876321176'
+    basin: Arctic Ocean Islands
+    parent: FSU
+- 23|FSU:
+    area: '989916.066022257'
+    basin: Barents Sea Coast Northern Dvina
+    parent: FSU
+- 25|FSU:
+    area: '179793.206147971'
+    basin: Black Sea North Coast
+    parent: FSU
+- 26|FSU:
+    area: '31887.7223126976'
+    basin: Black Sea South Coast
+    parent: FSU
+- 30|FSU:
+    area: '526067.152495628'
+    basin: Caspian Sea East Coast
+    parent: FSU
+- 31|FSU:
+    area: '338404.567356661'
+    basin: Caspian Sea South West Coast
+    parent: FSU
+- 39|FSU:
+    area: '41698.2760108575'
+    basin: Danube
+    parent: FSU
+- 42|FSU:
+    area: '511732.109698435'
+    basin: Dnieper
+    parent: FSU
+- 43|FSU:
+    area: '162733.918605575'
+    basin: Dniester Black Sea North Coast
+    parent: FSU
+- 44|FSU:
+    area: '439101.261444294'
+    basin: Don
+    parent: FSU
+- 51|FSU:
+    area: '234074.124175411'
+    basin: Finland Neva
+    parent: FSU
+- 54|FSU:
+    area: '24997.2544078962'
+    basin: Gobi Interior
+    parent: FSU
+- 71|FSU:
+    area: '6531.47363726511'
+    basin: Japan
+    parent: FSU
+- 74|FSU:
+    area: '672073.41803226'
+    basin: Kara Sea Coast
+    parent: FSU
+- 77|FSU:
+    area: '401878.021749035'
+    basin: Lake Balkash
+    parent: FSU
+- 79|FSU:
+    area: '2477735.6443715'
+    basin: Lena
+    parent: FSU
+- 105|FSU:
+    area: '3002628.16594503'
+    basin: Ob
+    parent: FSU
+- 106|FSU:
+    area: '192320.114728868'
+    basin: Oder Wisla Neman Daugava Neva Poland Baltic Coast
+    parent: FSU
+- 123|FSU:
+    area: '111164.148936144'
+    basin: Russia South East Coast
+    parent: FSU
+- 127|FSU:
+    area: '236144.046628967'
+    basin: Scandinavia North Coast
+    parent: FSU
+- 131|FSU:
+    area: '1204021.88291073'
+    basin: Siberia North Coast
+    parent: FSU
+- 132|FSU:
+    area: '3030293.70139549'
+    basin: Siberia West Coast
+    parent: FSU
+- 146|FSU:
+    area: '1039662.16780112'
+    basin: Syr Darya
+    parent: FSU
+- 148|FSU:
+    area: '26147.6632795119'
+    basin: Tarim Interior
+    parent: FSU
+- 154|FSU:
+    area: '735663.518828763'
+    basin: Ural Caspian Sea Coast
+    parent: FSU
+- 157|FSU:
+    area: '1410759.65307498'
+    basin: Volga
+    parent: FSU
+- 160|FSU:
+    area: '2190490.67482451'
+    basin: Yenisey
+    parent: FSU
+- 9|LAM:
+    area: '5925340.76088454'
+    basin: Amazon
+    parent: LAM
+- 27|LAM:
+    area: '133749.326140125'
+    basin: California
+    parent: LAM
+- 28|LAM:
+    area: '210085.44469636'
+    basin: Caribbean
+    parent: LAM
+- 29|LAM:
+    area: '342219.993346387'
+    basin: Carribean Coast
+    parent: LAM
+- 32|LAM:
+    area: '906227.484068446'
+    basin: Central America Carribean Coast
+    parent: LAM
+- 33|LAM:
+    area: '886386.017761382'
+    basin: Central America Pacific Coast
+    parent: LAM
+- 37|LAM:
+    area: '207399.927897362'
+    basin: Columbia Ecuador Pacific Coast
+    parent: LAM
+- 46|LAM:
+    area: '285367.670890867'
+    basin: East Brazil South Atlantic Coast
+    parent: LAM
+- 75|LAM:
+    area: '2659219.12283955'
+    basin: La Plata
+    parent: LAM
+- 76|LAM:
+    area: '326103.029843302'
+    basin: La Puna Region
+    parent: LAM
+- 83|LAM:
+    area: '259587.072441182'
+    basin: Magdalena
+    parent: LAM
+- 84|LAM:
+    area: '307893.829004607'
+    basin: Mar Chiquita Salinas Grandes
+    parent: LAM
+- 93|LAM:
+    area: '705672.62120951'
+    basin: Negro Central Patagonia South Argentina South Atlantic Coast
+    parent: LAM
+- 97|LAM:
+    area: '14428.0988413646'
+    basin: North America Colorado
+    parent: LAM
+- 99|LAM:
+    area: '270247.011565055'
+    basin: North Brazil South Atlantic Coast
+    parent: LAM
+- 100|LAM:
+    area: '413908.774428511'
+    basin: North Chile Pacific Coast
+    parent: LAM
+- 101|LAM:
+    area: '561127.334257519'
+    basin: North East South America South Atlantic Coast
+    parent: LAM
+- 108|LAM:
+    area: '937326.639238973'
+    basin: Orinoco
+    parent: LAM
+- 111|LAM:
+    area: '391688.587559004'
+    basin: Pampas Region North Argentina South Atlantic Coast
+    parent: LAM
+- 113|LAM:
+    area: '331490.653414183'
+    basin: Parnaiba
+    parent: LAM
+- 116|LAM:
+    area: '290682.114318487'
+    basin: Peru Pacific Coast
+    parent: LAM
+- 122|LAM:
+    area: '503794.099316689'
+    basin: Rio Grande Mexico Interior
+    parent: LAM
+- 125|LAM:
+    area: '634831.294103836'
+    basin: Sao Francisco
+    parent: LAM
+- 134|LAM:
+    area: '7971.80286133216'
+    basin: Soth Chile Pacific Coast
+    parent: LAM
+- 137|LAM:
+    area: '400825.377308938'
+    basin: South America Colorado
+    parent: LAM
+- 139|LAM:
+    area: '323444.133040015'
+    basin: South Chile Pacific Coast
+    parent: LAM
+- 152|LAM:
+    area: '959983.755258664'
+    basin: Tocantins
+    parent: LAM
+- 155|LAM:
+    area: '1207149.81288145'
+    basin: Uruguay Brazil South Atlantic Coast
+    parent: LAM
+- 3|MEA:
+    area: '4307472.99211422'
+    basin: Africa North Interior
+    parent: MEA
+- 4|MEA:
+    area: '523691.655466494'
+    basin: Africa North West Coast
+    parent: MEA
+- 5|MEA:
+    area: '167557.38728701'
+    basin: Africa Red Sea Gulf of Aden Coast
+    parent: MEA
+- 14|MEA:
+    area: '2138127.15305716'
+    basin: Arabian Peninsula
+    parent: MEA
+- 30|MEA:
+    area: '84782.1183667905'
+    basin: Caspian Sea East Coast
+    parent: MEA
+- 31|MEA:
+    area: '184874.204150633'
+    basin: Caspian Sea South West Coast
+    parent: MEA
+- 34|MEA:
+    area: '816395.315578667'
+    basin: Central Iran
+    parent: MEA
+- 40|MEA:
+    area: '229199.261942839'
+    basin: Dead Sea Eastern Jordan Syria
+    parent: MEA
+- 50|MEA:
+    area: '111204.497306477'
+    basin: Farahud Hamun-i-Mashkel Helmand
+    parent: MEA
+- 78|MEA:
+    area: '217413.538330411'
+    basin: Lake Chad
+    parent: MEA
+- 85|MEA:
+    area: '100987.361585762'
+    basin: Mediterranean Sea East Coast
+    parent: MEA
+- 87|MEA:
+    area: '560741.360325022'
+    basin: Mediterranean South Coast
+    parent: MEA
+- 95|MEA:
+    area: '160992.837708166'
+    basin: Niger
+    parent: MEA
+- 96|MEA:
+    area: '2234557.76591728'
+    basin: Nile
+    parent: MEA
+- 115|MEA:
+    area: '260549.405111984'
+    basin: Persian Gulf Coast
+    parent: MEA
+- 120|MEA:
+    area: '550393.099985064'
+    basin: Red Sea East Coast
+    parent: MEA
+- 121|MEA:
+    area: '15393.8287554467'
+    basin: Rift Valley
+    parent: MEA
+- 151|MEA:
+    area: '743261.214281586'
+    basin: Tigris Euphrates
+    parent: MEA
+- 17|NAM:
+    area: '700680.246616945'
+    basin: Atlantic Ocean Seaboard
+    parent: NAM
+- 27|NAM:
+    area: '289656.391070281'
+    basin: California
+    parent: NAM
+- 28|NAM:
+    area: '8984.76246971829'
+    basin: Caribbean
+    parent: NAM
+- 33|NAM:
+    area: '17345.2653367855'
+    basin: Central America Pacific Coast
+    parent: NAM
+- 36|NAM:
+    area: '671052.441923377'
+    basin: Columbia
+    parent: NAM
+- 52|NAM:
+    area: '664893.237097467'
+    basin: Fraser Pacific Arctic Coast
+    parent: NAM
+- 55|NAM:
+    area: '521503.768749663'
+    basin: Great Basin
+    parent: NAM
+- 56|NAM:
+    area: '464520.69804179'
+    basin: Gulf Coast
+    parent: NAM
+- 58|NAM:
+    area: '711632.739850163'
+    basin: Gulf of Mexico North Atlantic Coast
+    parent: NAM
+- 63|NAM:
+    area: '1639399.14112076'
+    basin: Hudson Bay Coast
+    parent: NAM
+- 81|NAM:
+    area: '1805875.59838491'
+    basin: Mackenzie
+    parent: NAM
+- 90|NAM:
+    area: '3289922.97488576'
+    basin: Mississippi Missouri
+    parent: NAM
+- 97|NAM:
+    area: '646794.437152917'
+    basin: North America Colorado
+    parent: NAM
+- 103|NAM:
+    area: '2967257.12238662'
+    basin: Northwest Territories
+    parent: NAM
+- 104|NAM:
+    area: '44961.5949373347'
+    basin: Northwestern United States
+    parent: NAM
+- 109|NAM:
+    area: '1826024.49235586'
+    basin: Pacific and Arctic Coast
+    parent: NAM
+- 122|NAM:
+    area: '344058.186312776'
+    basin: Rio Grande Mexico Interior
+    parent: NAM
+- 126|NAM:
+    area: '1110611.19616507'
+    basin: Saskatchewan Nelson
+    parent: NAM
+- 132|NAM:
+    area: '2123.63819554413'
+    basin: Siberia West Coast
+    parent: NAM
+- 142|NAM:
+    area: '1288095.359333'
+    basin: St. Lawrence
+    parent: NAM
+- 153|NAM:
+    area: '394964.42498439'
+    basin: United States North Atlantic Coast
+    parent: NAM
+- 18|PAO:
+    area: '673836.245623707'
+    basin: Australia East Coast
+    parent: PAO
+- 19|PAO:
+    area: '3293726.56622247'
+    basin: Australia Interior
+    parent: PAO
+- 20|PAO:
+    area: '1280003.42051306'
+    basin: Australia North Coast
+    parent: PAO
+- 21|PAO:
+    area: '479727.488022838'
+    basin: Australia South Coast
+    parent: PAO
+- 22|PAO:
+    area: '833933.002518445'
+    basin: Australia West Coast
+    parent: PAO
+- 71|PAO:
+    area: '372331.666071583'
+    basin: Japan
+    parent: PAO
+- 91|PAO:
+    area: '1054599.47347905'
+    basin: Murray Darling
+    parent: PAO
+- 94|PAO:
+    area: '269074.84878399'
+    basin: New Zealand
+    parent: PAO
+- 149|PAO:
+    area: '68369.9489798718'
+    basin: Tasmania
+    parent: PAO
+- 24|PAS:
+    area: '54084.1195590202'
+    basin: Bay of Bengal North East Coast
+    parent: PAS
+- 59|PAS:
+    area: '193018.177249192'
+    basin: Gulf of Thailand Coast Chao Phraya
+    parent: PAS
+- 69|PAS:
+    area: '808378.03538473'
+    basin: Irian Jaya Coast
+    parent: PAS
+- 70|PAS:
+    area: '570226.971880858'
+    basin: Irrawaddy Salween Sittang
+    parent: PAS
+- 72|PAS:
+    area: '228450.784581086'
+    basin: Java Timor
+    parent: PAS
+- 73|PAS:
+    area: '739357.606383824'
+    basin: Kalimantan North Borneo Coast
+    parent: PAS
+- 88|PAS:
+    area: '209527.134238845'
+    basin: Mekong
+    parent: PAS
+- 98|PAS:
+    area: '99831.0475401134'
+    basin: North and South Korea Bo Hai Korean Bay North Coast
+    parent: PAS
+- 110|PAS:
+    area: '63407.0120213796'
+    basin: Palau East Indonesia
+    parent: PAS
+- 112|PAS:
+    area: '54590.5433353988'
+    basin: Papua New Guinea Coast
+    parent: PAS
+- 114|PAS:
+    area: '286682.089429954'
+    basin: Peninsula Malaysia
+    parent: PAS
+- 117|PAS:
+    area: '294934.045002804'
+    basin: Philippines
+    parent: PAS
+- 133|PAS:
+    area: '36542.9713413'
+    basin: Solomon Islands
+    parent: PAS
+- 140|PAS:
+    area: '49768.692118861'
+    basin: South Pacific Islands
+    parent: PAS
+- 143|PAS:
+    area: '190783.501590708'
+    basin: Sulawesi
+    parent: PAS
+- 144|PAS:
+    area: '471999.246228484'
+    basin: Sumatra
+    parent: PAS
+- 147|PAS:
+    area: '36252.1186648962'
+    basin: Taiwan
+    parent: PAS
+- 10|SAS:
+    area: '166771.464109163'
+    basin: Amu Darya
+    parent: SAS
+- 12|SAS:
+    area: '7382.90877836589'
+    basin: Andaman Nicobar Islands
+    parent: SAS
+- 15|SAS:
+    area: '34845.0664634199'
+    basin: Arabian Sea Coast
+    parent: SAS
+- 24|SAS:
+    area: '40602.9640624049'
+    basin: Bay of Bengal North East Coast
+    parent: SAS
+- 30|SAS:
+    area: '77637.2256248934'
+    basin: Caspian Sea East Coast
+    parent: SAS
+- 50|SAS:
+    area: '454051.157894415'
+    basin: Farahud Hamun-i-Mashkel Helmand
+    parent: SAS
+- 53|SAS:
+    area: '1265279.17542597'
+    basin: Ganges Bramaputra
+    parent: SAS
+- 65|SAS:
+    area: '1240076.77861252'
+    basin: India East Coast Pennar Mahandi Krishna Cauvery Brahamini Yasai
+    parent: SAS
+- 66|SAS:
+    area: '315053.638475558'
+    basin: India West Coast Tapti Narmada Mahi
+    parent: SAS
+- 67|SAS:
+    area: '768342.18343615'
+    basin: Indus
+    parent: SAS
+- 70|SAS:
+    area: '17483.7867817002'
+    basin: Irrawaddy Salween Sittang
+    parent: SAS
+- 115|SAS:
+    area: '81273.2807386681'
+    basin: Persian Gulf Coast
+    parent: SAS
+- 124|SAS:
+    area: '525238.965513579'
+    basin: Sabarmati
+    parent: SAS
+- 141|SAS:
+    area: '65886.881826475'
+    basin: Sri Lanka
+    parent: SAS
+- 148|SAS:
+    area: '2118.01341964893'
+    basin: Tarim Interior
+    parent: SAS
+- 0|WEU:
+    area: '158492.060537312'
+    basin: Adriatic Sea Greece Black Sea Coast
+    parent: WEU
+- 4|WEU:
+    area: '8357.74871883614'
+    basin: Africa North West Coast
+    parent: WEU
+- 16|WEU:
+    area: '2148129.87488679'
+    basin: Arctic Ocean Islands
+    parent: WEU
+- 26|WEU:
+    area: '318487.994482144'
+    basin: Black Sea South Coast
+    parent: WEU
+- 31|WEU:
+    area: '29504.5044260304'
+    basin: Caspian Sea South West Coast
+    parent: WEU
+- 39|WEU:
+    area: '139184.600958488'
+    basin: Danube
+    parent: WEU
+- 41|WEU:
+    area: '74239.2246396063'
+    basin: Denmark Germany Coast
+    parent: WEU
+- 45|WEU:
+    area: '400738.956550463'
+    basin: Douro Guadalquivir Tagus Guadiana Spain Portugal Atlantic Coast
+    parent: WEU
+- 47|WEU:
+    area: '310132.626420233'
+    basin: Ebro Spain France South Coast Rhone
+    parent: WEU
+- 48|WEU:
+    area: '783666.528722479'
+    basin: Elbe Ems Gironde Loire Maas Rhine Scheldt Seine France West Coast
+    parent: WEU
+- 49|WEU:
+    area: '229390.171236448'
+    basin: England Wales Scotland
+    parent: WEU
+- 51|WEU:
+    area: '289746.372656555'
+    basin: Finland Neva
+    parent: WEU
+- 64|WEU:
+    area: '101871.903033485'
+    basin: Iceland
+    parent: WEU
+- 68|WEU:
+    area: '84328.9691683287'
+    basin: Ireland
+    parent: WEU
+- 85|WEU:
+    area: '226182.637087686'
+    basin: Mediterranean Sea East Coast
+    parent: WEU
+- 86|WEU:
+    area: '63898.6746765254'
+    basin: Mediterranean Sea Islands
+    parent: WEU
+- 106|WEU:
+    area: '5719.72716463104'
+    basin: Oder Wisla Neman Daugava Neva Poland Baltic Coast
+    parent: WEU
+- 119|WEU:
+    area: '166461.512041307'
+    basin: Po Italy East Coast
+    parent: WEU
+- 127|WEU:
+    area: '337117.202014231'
+    basin: Scandinavia North Coast
+    parent: WEU
+- 128|WEU:
+    area: '1385.15060460695'
+    basin: Scotland
+    parent: WEU
+- 145|WEU:
+    area: '478577.508515245'
+    basin: Sweden
+    parent: WEU
+- 150|WEU:
+    area: '86211.9260586064'
+    basin: Tiber Italy West Coast
+    parent: WEU
+- 151|WEU:
+    area: '192100.93829125'
+    basin: Tigris Euphrates
+    parent: WEU
