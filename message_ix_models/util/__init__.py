@@ -474,7 +474,9 @@ def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
     return series if query is None else series.to_frame().query(query)[0]
 
 
-def merge_data(base, *others):
+def merge_data(
+    base: MutableMapping[str, pd.DataFrame], *others: Mapping[str, pd.DataFrame]
+) -> None:
     """Merge dictionaries of DataFrames together into `base`."""
     for other in others:
         for par, df in other.items():
