@@ -1,6 +1,6 @@
 import logging
 from collections import ChainMap, defaultdict
-from typing import Dict, Mapping, MutableMapping, Optional, Sequence, Union
+from typing import Collection, Dict, Mapping, MutableMapping, Optional, Sequence, Union
 
 import message_ix
 import pandas as pd
@@ -21,7 +21,7 @@ from .common import (
     private_data_path,
 )
 from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
-from .scenarioinfo import ScenarioInfo
+from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
 __all__ = [
@@ -46,6 +46,7 @@ __all__ = [
     "merge_data",
     "package_data_path",
     "private_data_path",
+    "replace_par_data",
     "series_of_pint_quantity",
 ]
 
@@ -468,6 +469,67 @@ def merge_data(base, *others):
     for other in others:
         for par, df in other.items():
             base[par] = pd.concat([base.get(par, None), df])
+
+
+def replace_par_data(
+    scenario: message_ix.Scenario,
+    parameters: Union[str, Sequence[str]],
+    filters: Mapping[str, Union[str, int, Collection[str], Collection[int]]],
+    to_replace: Mapping[str, Union[Mapping[str, str], Mapping[int, int]]],
+) -> None:
+    """Replace data in `parameters` of `scenario`.
+
+    Parameters
+    ----------
+    scenario
+        Scenario in which to replace data.
+    parameters : str or sequence of str
+        Name(s) of parameters in which to replace data.
+    filters
+        Passed to :meth:`.Scenario.par` argument of the same name.
+    to_replace
+        Passed to :meth:`pandas.DataFrame.replace` argument of the same name.
+
+    Examples
+    --------
+    Replace data in the "relation_activity" parameter for a particular technology and
+    relation: assign the same values as entries in a different relation name for the
+    same technology.
+
+    >>> replace_par_data(
+    ...     scenario,
+    ...     "relation_activity",
+    ...     dict(technology="hp_gas_i", relation="CO2_r_c"),
+    ...     dict(relation={"CO2_r_c": "CO2_ind"}),
+    ... )
+
+    """
+    from message_ix_models.model.build import apply_spec
+
+    pars = parameters.split() if isinstance(parameters, str) else parameters
+
+    # Create a Spec that requires `scenario` to have all the set elements mentioned by
+    # `filters` and/or `replacements`
+    s = Spec()
+    for k, v in filters.items():
+        s.require.set[k].extend([v] if isinstance(v, (str, int)) else v)
+    for k, v in to_replace.items():
+        s.require.set[k].extend(v.keys())
+        s.require.set[k].extend(v.values())
+
+    # Use apply_spec() simply to check that `scenario` contains the expected items,
+    # before attempting to modify data
+    apply_spec(scenario, s)
+
+    msg = f"Replace {filters!r} with {to_replace!r}"
+    for par_name in pars:
+        with scenario.transact(f"{msg} in {par_name!r}"):
+            # Base data, to be replaced
+            to_remove = scenario.par(par_name, filters=filters)
+            # Remove the base data
+            scenario.remove_par(par_name, to_remove.drop(columns=["value", "unit"]))
+            # Add the modified data
+            scenario.add_par(par_name, to_remove.replace(to_replace))
 
 
 def same_node(df: pd.DataFrame) -> pd.DataFrame:
