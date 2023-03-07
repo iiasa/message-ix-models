@@ -111,10 +111,10 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
         make_df(
             "output",
             value=1.0,
-            commodity="transport pax 2w",
+            commodity="transport vehicle 2w",
             year_act=years,
             year_vtg=years,
-            unit="Gp / Gv",
+            unit="Gv * km",
             level="useful",
             mode="all",
             time="year",
