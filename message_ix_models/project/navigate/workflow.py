@@ -7,7 +7,7 @@ from typing import Dict, Optional
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import identify_nodes, private_data_path
+from message_ix_models.util import identify_nodes, private_data_path, replace_par_data
 from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
@@ -48,6 +48,16 @@ def build_transport(context: Context, scenario: Scenario, **options) -> Scenario
     #    to a different branch, we keep it here so it can be run together with all the
     #    other steps on the current branch.
     update_h2_blending(scenario)
+
+    # NB ditto above
+    # Correct a known error in the base scenarios used for NAVIGATE: move
+    # relation_activity entries for t=hp_gas_i from r=CO2_r_c to r=CO2_ind.
+    replace_par_data(
+        scenario,
+        "relation_activity",
+        dict(technology="hp_gas_i", relation="CO2_r_c"),
+        dict(relation={"CO2_r_c": "CO2_ind"}),
+    )
 
     options.setdefault("fast", True)
     return build.main(context, scenario, options)
@@ -206,6 +216,7 @@ def tax_emission(context: Context, scenario: Scenario, price: float):
     # Identify the node codelist used by `scenario` (in case it is not set on `context`)
     context.model.regions = identify_nodes(scenario)
 
+    # The following preparatory steps mirror those used in .engage.workflow.step_1()
     kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
 
     # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
@@ -234,6 +245,10 @@ def generate(context: Context) -> Workflow:
         None,
         target="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7",
     )
+
+    # NB some preparatory changes are instead done in step 3; see build_transport():
+    # - update_h2_blending().
+    # - replace_par_data() to move hp_gas_i entries from CO2_r_c to CO2_ind.
 
     # Step 2
     wf.add_step(
