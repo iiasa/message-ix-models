@@ -534,6 +534,7 @@ def replace_par_data(
     apply_spec(scenario, s)
 
     msg = f"Replace {filters!r} with {to_replace!r}"
+    log.info(msg)
     for par_name in pars:
         with scenario.transact(f"{msg} in {par_name!r}"):
             # Base data, to be replaced
@@ -542,6 +543,8 @@ def replace_par_data(
             scenario.remove_par(par_name, to_remove.drop(columns=["value", "unit"]))
             # Add the modified data
             scenario.add_par(par_name, to_remove.replace(to_replace))
+
+            log.info(f"{len(to_remove)} obs in {par_name!r}")
 
 
 def same_node(df: pd.DataFrame) -> pd.DataFrame:
