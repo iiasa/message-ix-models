@@ -8,6 +8,8 @@ from message_ix import Reporter
 from message_ix_models import Context
 from message_ix_models.util import eval_anno, private_data_path
 
+from message_data.reporting.util import add_replacements
+
 from . import Config
 from .build import get_spec
 
@@ -124,6 +126,10 @@ def callback(rep: Reporter, context: Context) -> None:
     )
 
     assert check is rep
+
+    # Configure replacements for conversion to IAMC data structure
+    spec = context["transport spec"]
+    add_replacements("t", spec.add.set["technology"])
 
     # Apply some functions that generate sub-graphs
     try:

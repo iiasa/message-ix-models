@@ -83,6 +83,8 @@ def get_techs(context) -> Tuple[Spec, List, Dict]:
     from . import build
 
     # Get a specification that describes this setting
+    # TODO assume this is on `context`. This is valid within the code proper, but some
+    #      tests currently rely on get_spec() being called here.
     spec = build.get_spec(context)
 
     # Set of all transport technologies

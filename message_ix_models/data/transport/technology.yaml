@@ -9,11 +9,13 @@ ELC_100:
   description: >-
     Battery-electric light-duty vehicle using electricity-only (100-mile
     all-electric range)
+  report: BEV
   input: {commodity: electr}
   report: LDV_ELE
 
 HFC_ptrp:
   description: Hybridized fuel cell light-duty vehicle using hydrogen
+  report: FCEV
   input: {commodity: hydrogen}
   report: LDV_HFC
 
@@ -79,6 +81,7 @@ PHEV_ptrp:
   description: >-
     Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
     all-electric range)
+  report: PHEV
   input: {commodity: lightoil}
   report: LDV_PHEV
 
@@ -305,6 +308,7 @@ transport disutility:
 
 LDV:
   name: Light-duty vehicles
+  report: LDV
   description: >-
     Passenger cars and trucks.
 
@@ -328,6 +332,7 @@ LDV:
 
 freight truck:
   name: Freight trucks
+  report: Truck
   description: >-
     In MESSAGE-V, the output of all freight technologies was labelled: f-u
   child: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
@@ -336,6 +341,7 @@ freight truck:
 
 AIR:
   name: Aviation
+  report: "Domestic Aviation"
   description: >-
     Aviation (passenger aircraft only, ignoring shared freight component).
 
