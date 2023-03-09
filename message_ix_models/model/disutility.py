@@ -6,7 +6,7 @@ from typing import List, Mapping, Sequence, Union
 
 import message_ix
 import pandas as pd
-from sdmx.model import Annotation, Code, InternationalString
+from sdmx.model import Annotation, Code
 
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.build import apply_spec
@@ -85,8 +85,8 @@ def get_spec(
         t_code = Code(
             id=template.id.format(**fmt),
             annotations=[
-                Annotation(id="input", text=InternationalString(value=repr(input))),
-                Annotation(id="output", text=InternationalString(value=repr(output))),
+                Annotation(id="input", text=repr(input)),
+                Annotation(id="output", text=repr(output)),
             ],
         )
 
@@ -94,9 +94,7 @@ def get_spec(
         s.add.set["commodity"].extend([input["commodity"], output["commodity"]])
 
         # "technology" set elements to add
-        t_code.annotations.append(
-            Annotation(id="input", text=InternationalString(repr(input)))
-        )
+        t_code.annotations.append(Annotation(id="input", text=repr(input)))
         s.add.set["technology"].append(t_code)
 
     # Deduplicate "commodity" set elements
