@@ -320,6 +320,18 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
                 results[param_name].append(df)
 
+    share_dict = {
+        "shares": "steam_cracker",
+        "node_share": ["R12_MEA", "R12_NAM"],
+        "technology": "steam_cracker_petro",
+        "mode": "ethane",
+        "year_act": "2020",
+        "time": "year",
+        "value": [0.4, 0.4],
+        "unit": "-"
+    }
+    results["share_mode_lo"].append(message_ix.make_df("share_mode_lo", **share_dict))
+
     # Add demand
     # Create external demand param
 
