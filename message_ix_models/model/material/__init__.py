@@ -305,8 +305,9 @@ def add_building_ts(scenario_name, model_name):
     default=False,
     help="If True the existing timeseries in the scenario is removed.",
 )
+@click.option("--profile", default=False)
 @click.pass_obj
-def run_reporting(context, remove_ts):
+def run_reporting(context, remove_ts, profile):
     """Run materials, then legacy reporting."""
     from message_data.reporting.materials.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
@@ -327,23 +328,59 @@ def run_reporting(context, remove_ts):
         else:
             print('There are no timeseries to be removed.')
     else:
-        # Remove existing timeseries and add material timeseries
-        print("Reporting material-specific variables")
-        report(context, scenario)
-        print("Reporting standard variables")
-        reporting(
-            mp,
-            scenario,
-            # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-            #         string containing "True" or "False" instead of an actual bool.
-            "False",
-            scenario.model,
-            scenario.scenario,
-            merge_hist=True,
-            merge_ts=True,
-            run_config="materials_run_config.yaml",
-        )
-        # util.prepare_xlsx_for_explorer(
+
+        if profile:
+            import cProfile
+            import pstats
+            import io
+            import atexit
+
+            print("Profiling...")
+            pr = cProfile.Profile()
+            pr.enable()
+            print("Reporting material-specific variables")
+            report(context, scenario)
+            print("Reporting standard variables")
+            reporting(
+                mp,
+                scenario,
+                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
+                #         string containing "True" or "False" instead of an actual bool.
+                "False",
+                scenario.model,
+                scenario.scenario,
+                merge_hist=True,
+                merge_ts=True,
+                run_config="materials_run_config.yaml",
+            )
+
+            def exit():
+                pr.disable()
+                print("Profiling completed")
+                s = io.StringIO()
+                pstats.Stats(pr, stream=s).sort_stats("cumulative").dump_stats("profiling.dmp")
+                print(s.getvalue())
+
+            atexit.register(exit)
+        else:
+
+            # Remove existing timeseries and add material timeseries
+            print("Reporting material-specific variables")
+            report(context, scenario)
+            print("Reporting standard variables")
+            reporting(
+                mp,
+                scenario,
+                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
+                #         string containing "True" or "False" instead of an actual bool.
+                "False",
+                scenario.model,
+                scenario.scenario,
+                merge_hist=True,
+                merge_ts=True,
+                run_config="materials_run_config.yaml",
+            )
+        #util.prepare_xlsx_for_explorer(
         #     Path(os.getcwd()).parents[0].joinpath(
         #         "reporting_output", scenario.model+"_"+scenario.scenario+".xlsx"))
 
