@@ -44,7 +44,11 @@ def _sdmx_identifiable(o: sdmx.model.IdentifiableArtefact):
 
 @genno.caching.Encoder.register
 def _dataclass(o: object):
-    return asdict(o) if is_dataclass(o) else json.JSONEncoder().default(o)
+    return (
+        asdict(o)
+        if (is_dataclass(o) and not isinstance(o, type))
+        else json.JSONEncoder().default(o)
+    )
 
 
 @genno.caching.Encoder.register
