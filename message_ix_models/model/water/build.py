@@ -8,7 +8,7 @@ from sdmx.model.v21 import Code
 from message_ix_models import ScenarioInfo
 from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 from .utils import read_config
 
@@ -211,7 +211,7 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     # read csv file for basin names and region mapping
     # reading basin_delineation
     FILE = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = private_data_path("water", "delineation", FILE)
+    PATH = package_data_path("water", "delineation", FILE)
 
     df = pd.read_csv(PATH)
     # Assigning proper nomenclature

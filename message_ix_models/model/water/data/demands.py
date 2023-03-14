@@ -7,7 +7,7 @@ import pandas as pd
 import xarray as xr
 from message_ix import make_df
 
-from message_ix_models.util import broadcast, private_data_path
+from message_ix_models.util import broadcast, package_data_path
 
 
 def get_basin_sizes(basin, node):
@@ -163,7 +163,7 @@ def add_sectoral_demands(context):
     # defines path to read in demand data
     region = f"{context.regions}"
     sub_time = context.time
-    path = private_data_path("water", "demands", "harmonized", region, ".")
+    path = package_data_path("water", "demands", "harmonized", region, ".")
     # make sure all of the csvs have format, otherwise it might not work
     list_of_csvs = list(path.glob("*_baseline.csv"))
     # define names for variables
@@ -203,7 +203,7 @@ def add_sectoral_demands(context):
     # if we are using sub-annual timesteps we replace the rural and municipal
     # withdrawals and return flows with monthly data and also add industrial
     if "year" not in context.time:
-        PATH = private_data_path(
+        PATH = package_data_path(
             "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
         )
         df_m = pd.read_csv(PATH)
@@ -282,7 +282,7 @@ def add_sectoral_demands(context):
     if context.SDG:
         # reading basin mapping to countries
         FILE2 = f"basins_country_{context.regions}.csv"
-        PATH = private_data_path("water", "delineation", FILE2)
+        PATH = package_data_path("water", "delineation", FILE2)
 
         df_basin = pd.read_csv(PATH)
 
@@ -318,7 +318,7 @@ def add_sectoral_demands(context):
             x.replace("baseline", "sdg") for x in all_rates_sdg["variable"]
         ]
         all_rates = pd.concat([all_rates_base, all_rates_sdg])
-        save_path = private_data_path("water", "demands", "harmonized", context.regions)
+        save_path = package_data_path("water", "demands", "harmonized", context.regions)
         # save all the rates for reporting purposes
         all_rates.to_csv(save_path / "all_rates_SSP2.csv", index=False)
 
@@ -683,20 +683,20 @@ def read_water_availability(context):
     # Reference to the water configuration
     info = context["water build info"]
     # reading sample for assiging basins
-    PATH = private_data_path(
+    PATH = package_data_path(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
     df_x = pd.read_csv(PATH)
 
     if "year" in context.time:
         # path for reading basin delineation file
-        PATH = private_data_path(
+        PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
-        path1 = private_data_path(
+        path1 = package_data_path(
             "water",
             "availability",
             f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
@@ -719,7 +719,7 @@ def read_water_availability(context):
 
         # Adding groundwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
-        path1 = private_data_path(
+        path1 = package_data_path(
             "water",
             "availability",
             f"qr_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
@@ -743,7 +743,7 @@ def read_water_availability(context):
     else:
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
-        path1 = private_data_path(
+        path1 = package_data_path(
             "water",
             "availability",
             f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
@@ -765,7 +765,7 @@ def read_water_availability(context):
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
-        path1 = private_data_path(
+        path1 = package_data_path(
             "water",
             "availability",
             f"qr_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
