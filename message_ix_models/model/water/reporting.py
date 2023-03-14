@@ -5,7 +5,7 @@ import pandas as pd
 import pyam
 from message_ix.reporting import Reporter
 
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 try:
     from message_data.tools.post_processing.iamc_report_hackathon import (
@@ -932,7 +932,7 @@ def report(sc=False, sdgs=False):
         print("Check the region of the model is consistent with R11,R12")
 
     # load data on water and sanitation access
-    load_path = private_data_path("water", "demands", "harmonized", reg)
+    load_path = package_data_path("water", "demands", "harmonized", reg)
     all_rates = pd.read_csv(load_path / "all_rates_SSP2.csv")
 
     pop_check = sc.timeseries(variable="Population")
@@ -1187,7 +1187,7 @@ def report_full(sc=False, sdgs=False):
     # add ad-hoc caplculated variables with a function
     ts = sc.timeseries()
 
-    out_path = private_data_path().parents[0] / "reporting_output/NAVIGATE"
+    out_path = package_data_path().parents[0] / "reporting_output/NAVIGATE"
 
     if not out_path.exists():
         out_path.mkdir()

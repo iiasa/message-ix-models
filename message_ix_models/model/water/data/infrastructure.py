@@ -10,7 +10,7 @@ from message_ix_models.model.water.utils import map_yv_ya_lt
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
-    private_data_path,
+    package_data_path,
     same_node,
     same_time,
 )
@@ -47,7 +47,7 @@ def add_infrastructure_techs(context):  # noqa: C901
 
     # reading basin_delineation
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = private_data_path("water", "delineation", FILE2)
+    PATH = package_data_path("water", "delineation", FILE2)
 
     df_node = pd.read_csv(PATH)
     # Assigning proper nomenclature
@@ -59,7 +59,7 @@ def add_infrastructure_techs(context):  # noqa: C901
         df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
 
     # Reading water distribution mapping from csv
-    path = private_data_path("water", "infrastructure", "water_distribution.xlsx")
+    path = package_data_path("water", "infrastructure", "water_distribution.xlsx")
     df = pd.read_excel(path)
 
     techs = [
@@ -106,7 +106,7 @@ def add_infrastructure_techs(context):  # noqa: C901
             ]
         )
 
-    if context.SDG:
+    if context.SDG != "baseline":
         for index, rows in df_dist.iterrows():
             inp_df = pd.concat(
                 [
@@ -190,7 +190,7 @@ def add_infrastructure_techs(context):  # noqa: C901
 
     for index, rows in df_elec.iterrows():
         if rows["tec"] in techs:
-            if context.SDG:
+            if context.SDG != "baseline":
                 inp = make_df(
                     "input",
                     technology=rows["tec"],
@@ -313,7 +313,7 @@ def add_infrastructure_techs(context):  # noqa: C901
             )
         )
 
-    if context.SDG:
+    if context.SDG != "baseline":
         out_df = out_df.append(
             make_df(
                 "output",
@@ -459,7 +459,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     df_var = df_inv[~df_inv["tec"].isin(techs)]
     df_var_dist = df_inv[df_inv["tec"].isin(techs)]
 
-    if context.SDG:
+    if context.SDG != "baseline":
         for index, rows in df_var.iterrows():
             # Variable cost
             var_cost = var_cost.append(
@@ -579,13 +579,13 @@ def add_desalination(context):
     first_year = scen.firstmodelyear
 
     # Reading water distribution mapping from csv
-    path = private_data_path("water", "infrastructure", "desalination.xlsx")
-    path2 = private_data_path(
+    path = package_data_path("water", "infrastructure", "desalination.xlsx")
+    path2 = package_data_path(
         "water",
         "infrastructure",
         f"historical_capacity_desalination_km3_year_{context.regions}.csv",
     )
-    path3 = private_data_path(
+    path3 = package_data_path(
         "water",
         "infrastructure",
         f"projected_desalination_potential_km3_year_{context.regions}.csv",
@@ -601,7 +601,7 @@ def add_desalination(context):
 
     # reading basin_delineation
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = private_data_path("water", "delineation", FILE2)
+    PATH = package_data_path("water", "delineation", FILE2)
 
     df_node = pd.read_csv(PATH)
     # Assigning proper nomenclature
