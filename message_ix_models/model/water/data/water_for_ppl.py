@@ -8,7 +8,7 @@ from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 from message_ix_models.util import (
     broadcast,
     make_matched_dfs,
-    private_data_path,
+    package_data_path,
     same_node,
 )
 
@@ -55,7 +55,7 @@ def cool_tech(context):  # noqa: C901
 
     # reading basin_delineation
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = private_data_path("water", "delineation", FILE2)
+    PATH = package_data_path("water", "delineation", FILE2)
 
     df_node = pd.read_csv(PATH)
     # Assigning proper nomenclature
@@ -68,7 +68,7 @@ def cool_tech(context):  # noqa: C901
 
     node_region = df_node["region"].unique()
     # reading ppl cooling tech dataframe
-    path = private_data_path("water", "ppl_cooling_tech", FILE)
+    path = package_data_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
     cooling_df = df.loc[df["technology_group"] == "cooling"]
     # Separate a column for parent technologies of respective cooling
@@ -342,7 +342,7 @@ def cool_tech(context):  # noqa: C901
         results["output"] = out
 
     # costs and historical parameters
-    path1 = private_data_path("water", "ppl_cooling_tech", FILE1)
+    path1 = package_data_path("water", "ppl_cooling_tech", FILE1)
     cost = pd.read_csv(path1)
     # Combine technology name to get full cooling tech names
     cost["technology"] = cost["utype"] + "__" + cost["cooling"]
@@ -664,7 +664,7 @@ def cool_tech(context):  # noqa: C901
     else:
         df = cap_fact["capacity_factor"]
         # reading ppl cooling impact dataframe
-        path = private_data_path(
+        path = package_data_path(
             "water", "ppl_cooling_tech", "power_plant_cooling_impact_MESSAGE.xlsx"
         )
         df_impact = pd.read_excel(path, sheet_name=f"{context.regions}_{context.RCP}")
@@ -759,7 +759,7 @@ def non_cooling_tec(context):
     results = {}
 
     FILE = "tech_water_performance_ssp_msg.csv"
-    path = private_data_path("water", "ppl_cooling_tech", FILE)
+    path = package_data_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
     cooling_df = df.loc[df["technology_group"] == "cooling"]
     # Separate a column for parent technologies of respective cooling
