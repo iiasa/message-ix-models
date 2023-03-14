@@ -1,12 +1,13 @@
 """Plots for MESSAGEix-Transport reporting."""
 import logging
 from datetime import datetime
+from typing import Tuple
 
 import pandas as pd
-import pint
 import plotnine as p9
 from genno import Computer
 from genno.compat.plotnine import Plot as BasePlot
+from iam_units import registry
 
 log = logging.getLogger(__name__)
 
@@ -253,29 +254,33 @@ class DemandCalibratedCap(Plot):
             )
 
 
-def _reduce_units(df: pd.DataFrame) -> pint.Unit:
-    return pint.Quantity(1, df["unit"].unique()[0]).to_reduced_units().units
+def _reduce_units(df: pd.DataFrame, target_units) -> Tuple[pd.DataFrame, str]:
+    df_units = df["unit"].unique()
+    assert 1 == len(df_units)
+    tmp = registry.Quantity(1.0, df_units[0]).to(target_units)
+    return (
+        df.eval("value = value * @tmp.magnitude").assign(unit=f"{tmp.units:~}"),
+        f"{tmp.units:~}",
+    )
 
 
 class DemandExo(Plot):
     basename = "demand-exo"
-    inputs = ["transport pdt:n-y-t"]
+    inputs = ["pdt:n-y-t"]
 
     def generate(self, data):
         # FIXME shouldn't need to change dtype here
         data = data.rename(columns={0: "value"}).astype(dict(value=float))
+        data, unit = _reduce_units(data, "Gp km / a")
         y_max = max(data["value"])
-        unit = _reduce_units(data)
-
-        scale = 1e6
 
         for n, group_df in data.groupby("n"):
             yield (
-                p9.ggplot(p9.aes(x="y", y=f"value / {scale}", fill="t"), group_df)
+                p9.ggplot(p9.aes(x="y", y="value", fill="t"), group_df)
                 + p9.geom_bar(stat="identity", width=4)
-                + p9.expand_limits(y=[0, y_max / scale])
-                + p9.labs(x="Period", fill="Mode (tech group)")
-                + self.title(f"Passenger transport activity [10⁶ {unit:~}] {n}")
+                + p9.expand_limits(y=[0, y_max])
+                + p9.labs(x="Period", y=None, fill="Mode (tech group)")
+                + self.title(f"Passenger transport activity [{unit}] {n}")
                 + self.static
             )
 
@@ -287,20 +292,16 @@ class DemandExoCap(Plot):
     def generate(self, data):
         # FIXME shouldn't need to change dtype here
         data = data.rename(columns={0: "value"}).astype(dict(value=float))
+        data, unit = _reduce_units(data, "Mm / a")
         y_max = max(data["value"])
-        unit = _reduce_units(data)
-
-        scale = 1e3
 
         for n, group_df in data.groupby("n"):
             yield (
-                p9.ggplot(p9.aes(x="y", y=f"value / {scale}", fill="t"), group_df)
+                p9.ggplot(p9.aes(x="y", y="value", fill="t"), group_df)
                 + p9.geom_bar(stat="identity", width=4)
-                + p9.expand_limits(y=[0, y_max / scale])
+                + p9.expand_limits(y=[0, y_max])
                 + p9.labs(x="Period", y=None, fill="Mode (tech group)")
-                + self.title(
-                    f"Passenger transport activity per person [10³ {unit:~}] {n}"
-                )
+                + self.title(f"Passenger transport activity per person [{unit}] {n}")
                 + self.static
             )
 
