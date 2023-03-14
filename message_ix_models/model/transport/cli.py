@@ -266,20 +266,24 @@ def gen_demand(ctx, source, nodes, years, output_dir):
         ctx, options={"data source": {"gdp": source, "population": source}}
     )
 
-    c.configure(output_dir=output_dir)
-
     output_dir = output_dir or ctx.get_local_path("output")
     output_path = output_dir.joinpath(
         f"demand-{source.replace(' ', '_')}-{ctx.regions}-{ctx.years}.csv"
     )
 
+    c.configure(output_dir=output_dir)
+
     # Compute total demand by mode
     key = Key("pdt", "nyt")
-    c.add("write_report", "gen-demand", key, output_path)
+    c.add("write_report", "gen-demand 1", key, output_path)
 
-    log.info(f"Compute {repr(key)}")
+    key = c.add(
+        "gen-demand", ["gen-demand 1", "plot demand-exo", "plot demand-exo-capita"]
+    )
+
+    log.info(f"Compute {repr(key)}\n{c.describe(key)}")
     output_dir.mkdir(exist_ok=True, parents=True)
-    c.get("gen-demand")
+    c.get(key)
     log.info(f"Wrote to {output_path}")
 
     # # Generate diagnostic plots
