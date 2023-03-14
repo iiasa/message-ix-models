@@ -90,16 +90,12 @@ def water_ini(context, regions, time):
 _RCPS = ["no_climate", "6p0", "2p6", "7p0"]
 _REL = ["low", "med", "high"]
 
-
 @cli.command("nexus")
 @click.pass_obj
 @click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
 @click.option("--rels", default="low", type=click.Choice(_REL))
-@click.option(
-    "--sdgs",
-    is_flag=True,
-    help="Defines whether water SDG measures are activated or not",
-)
+@click.option("--sdgs", default="baseline",
+              help="Defines if and what water SDG measures are activated")
 @click.option(
     "--macro",
     is_flag=True,
@@ -129,8 +125,8 @@ def nexus(context, regions, rcps, sdgs, rels, macro=False):
         Specifies what region definition is used ['R11','R12','ISO3']
     RCP : str
         Specifies the climate scenario used ['no_climate','6p0','2p6']
-    SDG : True/False
-        Defines whether water SDG measures are activated or not
+    SDG : Str
+        Defines if and what water SDG measures are activated
     REL: str
         Specifies the reliability of hydrological data ['low','mid','high']
     """
@@ -248,11 +244,8 @@ def cooling(context, regions, rcps, rels):
 
 @cli.command("report")
 @click.pass_obj
-@click.option(
-    "--sdgs",
-    is_flag=True,
-    help="Defines whether water SDG measures are activated or not",
-)
+@click.option("--sdgs", default="baseline",
+              help="Defines if and what water SDG measures are activated")
 @common_params("output_model")
 def report_cli(context, output_model, sdgs):
     """function to run the water report_full from cli to the
@@ -264,6 +257,8 @@ def report_cli(context, output_model, sdgs):
         Information about target Scenario.
     output_model : str (optional, otherwise default args used)
         Specifies the model name of the scenarios which are run.
+    SDG : Str
+        Defines if and what water SDG measures are activated
     """
 
     from message_ix_models.model.water.reporting import report_full
