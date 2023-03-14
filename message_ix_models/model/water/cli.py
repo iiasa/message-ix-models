@@ -90,11 +90,12 @@ def water_ini(context, regions, time):
 _RCPS = ["no_climate", "6p0", "2p6", "7p0"]
 _REL = ["low", "med", "high"]
 
-
 @cli.command("nexus")
 @click.pass_obj
 @click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
 @click.option("--rels", default="low", type=click.Choice(_REL))
+@click.option("--sdgs", default="baseline",
+              help="Defines if and what water SDG measures are activated")
 @click.option(
     "--sdgs",
     default="baseline",
