@@ -3,7 +3,7 @@
 import pandas as pd
 from message_ix import make_df
 
-from message_ix_models.util import broadcast, private_data_path
+from message_ix_models.util import broadcast, package_data_path
 
 
 # water & electricity for irrigation
@@ -27,7 +27,7 @@ def add_irr_structure(context):
 
     # reading basin_delineation
     FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = private_data_path("water", "delineation", FILE2)
+    PATH = package_data_path("water", "delineation", FILE2)
     df_node = pd.read_csv(PATH)
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)

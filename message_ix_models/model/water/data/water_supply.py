@@ -6,7 +6,7 @@ from message_ix import make_df
 
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import map_yv_ya_lt
-from message_ix_models.util import broadcast, private_data_path, same_node, same_time
+from message_ix_models.util import broadcast, package_data_path, same_node, same_time
 
 
 def map_basin_region_wat(context):
@@ -27,13 +27,13 @@ def map_basin_region_wat(context):
     info = context["water build info"]
 
     if "year" in context.time:
-        PATH = private_data_path(
+        PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
         # Adding freshwater supply constraints
         # Reading data, the data is spatially and temprally aggregated from GHMs
-        path1 = private_data_path(
+        path1 = package_data_path(
             "water",
             "availability",
             f"qtot_5y_{context.RCP}_{context.REL}_{context.regions}.csv",
@@ -70,7 +70,7 @@ def map_basin_region_wat(context):
     else:
         # add water return flows for cooling tecs
         # Use share of basin availability to distribute the return flow from
-        path3 = private_data_path(
+        path3 = package_data_path(
             "water",
             "availability",
             f"qtot_5y_m_{context.RCP}_{context.REL}_{context.regions}.csv",
@@ -78,7 +78,7 @@ def map_basin_region_wat(context):
         df_sw = pd.read_csv(path3)
 
         # reading sample for assiging basins
-        PATH = private_data_path(
+        PATH = package_data_path(
             "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
         )
         df_x = pd.read_csv(PATH)
@@ -148,7 +148,7 @@ def add_water_supply(context):
 
     # reading basin_delineation
     FILE = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = private_data_path("water", "delineation", FILE)
+    PATH = package_data_path("water", "delineation", FILE)
 
     df_node = pd.read_csv(PATH)
     # Assigning proper nomenclature
@@ -164,7 +164,7 @@ def add_water_supply(context):
 
     # reading groundwater energy intensity data
     FILE1 = f"gw_energy_intensity_depth_{context.regions}.csv"
-    PATH1 = private_data_path("water", "availability", FILE1)
+    PATH1 = package_data_path("water", "availability", FILE1)
     df_gwt = pd.read_csv(PATH1)
     if context.type_reg == "country":
         df_gwt["region"] = context.map_ISO_c[context.regions]
@@ -173,7 +173,7 @@ def add_water_supply(context):
 
     # reading groundwater energy intensity data
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
-    PATH2 = private_data_path("water", "availability", FILE2)
+    PATH2 = package_data_path("water", "availability", FILE2)
     df_hist = pd.read_csv(PATH2)
     df_hist["BCU_name"] = "B" + df_hist["BCU_name"].astype(str)
 
@@ -718,7 +718,7 @@ def add_e_flow(context):
     df_sw, df_gw = read_water_availability(context)
 
     # reading sample for assiging basins
-    PATH = private_data_path(
+    PATH = package_data_path(
         "water", "delineation", f"basins_by_region_simpl_{context.regions}.csv"
     )
     df_x = pd.read_csv(PATH)
@@ -738,7 +738,7 @@ def add_e_flow(context):
 
     if "year" in context.time:
         # Reading data, the data is spatially and temporally aggregated from GHMs
-        path1 = private_data_path(
+        path1 = package_data_path(
             "water",
             "availability",
             f"e-flow_{context.RCP}_{context.regions}.csv",
@@ -759,7 +759,7 @@ def add_e_flow(context):
         df_env = df_env[df_env["year"].isin(info.Y)]
     else:
         # Reading data, the data is spatially and temporally aggregated from GHMs
-        path1 = private_data_path(
+        path1 = package_data_path(
             "water",
             "availability",
             f"e-flow_5y_m_{context.RCP}_{context.regions}.csv",
@@ -782,7 +782,7 @@ def add_e_flow(context):
         df_env = df_env[df_env["year"].isin(info.Y)]
 
     # Return a processed dataframe for env flow calculations
-    if context.SDG:
+    if context.SDG != "baseline":
         # dataframe to put constraints on env flows
         eflow_df = make_df(
             "bound_activity_lo",
