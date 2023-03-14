@@ -165,7 +165,7 @@ def add_sectoral_demands(context):
     sub_time = context.time
     path = package_data_path("water", "demands", "harmonized", region, ".")
     # make sure all of the csvs have format, otherwise it might not work
-    list_of_csvs = list(path.glob("*_baseline.csv"))
+    list_of_csvs = list(path.glob("ssp2_regional_*.csv"))
     # define names for variables
     fns = [os.path.splitext(os.path.basename(x))[0] for x in list_of_csvs]
     fns = " ".join(fns).replace("ssp2_regional_", "").split()
@@ -279,31 +279,63 @@ def add_sectoral_demands(context):
         ]
     )
 
-    if context.SDG:
-        # reading basin mapping to countries
-        FILE2 = f"basins_country_{context.regions}.csv"
-        PATH = package_data_path("water", "delineation", FILE2)
+    if context.SDG != "baseline":
+        # only if SDG exactly equal to SDG, otherwise other policies are possible
+        if context.SDG == "SDG":
+            # reading basin mapping to countries
+            FILE2 = f"basins_country_{context.regions}.csv"
+            PATH = package_data_path("water", "delineation", FILE2)
 
-        df_basin = pd.read_csv(PATH)
+            df_basin = pd.read_csv(PATH)
 
-        # Applying 80% sanitation rate for rural sanitation
-        rural_treatment_rate_df = rural_treatment_rate_df_sdg = target_rate(
-            rural_treatment_rate_df, df_basin, 0.8
-        )
-        # Applying 95% sanitation rate for urban sanitation
-        urban_treatment_rate_df = urban_treatment_rate_df_sdg = target_rate(
-            urban_treatment_rate_df, df_basin, 0.95
-        )
-        # Applying 99% connection rate for urban infrastructure
-        urban_connection_rate_df = urban_connection_rate_df_sdg = target_rate(
-            urban_connection_rate_df, df_basin, 0.99
-        )
-        # Applying 80% connection rate for rural infrastructure
-        rural_connection_rate_df = rural_connection_rate_df_sdg = target_rate(
-            rural_connection_rate_df, df_basin, 0.8
-        )
-        # Applying sdg6 waste water treatment target
-        df_recycling = df_recycling_sdg = target_rate_trt(df_recycling, df_basin)
+            # Applying 80% sanitation rate for rural sanitation
+            rural_treatment_rate_df = rural_treatment_rate_df_sdg = target_rate(
+                rural_treatment_rate_df, df_basin, 0.8
+            )
+            # Applying 95% sanitation rate for urban sanitation
+            urban_treatment_rate_df = urban_treatment_rate_df_sdg = target_rate(
+                urban_treatment_rate_df, df_basin, 0.95
+            )
+            # Applying 99% connection rate for urban infrastructure
+            urban_connection_rate_df = urban_connection_rate_df_sdg = target_rate(
+                urban_connection_rate_df, df_basin, 0.99
+            )
+            # Applying 80% connection rate for rural infrastructure
+            rural_connection_rate_df = rural_connection_rate_df_sdg = target_rate(
+                rural_connection_rate_df, df_basin, 0.8
+            )
+            # Applying sdg6 waste water treatment target
+            df_recycling = df_recycling_sdg = target_rate_trt(df_recycling, df_basin)
+
+        else:
+            pol_scen = context.SDG
+
+            # check if data is there
+            check_dm = df_dmds[df_dmds["variable"] == "urban_connection_rate_" + pol_scen]
+            if check_dm.empty:
+                raise ValueError(f"Policy data is missing for the {pol_scen} scenario.")
+            urban_connection_rate_df = urban_connection_rate_df_sdg = df_dmds[
+                df_dmds["variable"] == "urban_connection_rate_" + pol_scen
+            ]
+            urban_connection_rate_df.reset_index(drop=True, inplace=True)
+            rural_connection_rate_df = rural_connection_rate_df_sdg = df_dmds[
+                df_dmds["variable"] == "rural_connection_rate_" + pol_scen
+            ]
+            rural_connection_rate_df.reset_index(drop=True, inplace=True)
+
+            urban_treatment_rate_df = urban_treatment_rate_df_sdg = df_dmds[
+                df_dmds["variable"] == "urban_treatment_rate_" + pol_scen
+            ]
+            urban_treatment_rate_df.reset_index(drop=True, inplace=True)
+
+            rural_treatment_rate_df = rural_treatment_rate_df_sdg = df_dmds[
+                df_dmds["variable"] == "rural_treatment_rate_" + pol_scen
+            ]
+            rural_treatment_rate_df.reset_index(drop=True, inplace=True)
+
+            df_recycling = df_recycling_sdg = df_dmds[
+                df_dmds["variable"] == "urban_recycling_rate_" + pol_scen]
+            df_recycling.reset_index(drop=True, inplace=True)
 
         all_rates_sdg = pd.concat(
             [
@@ -315,7 +347,7 @@ def add_sectoral_demands(context):
             ]
         )
         all_rates_sdg["variable"] = [
-            x.replace("baseline", "sdg") for x in all_rates_sdg["variable"]
+            x.replace("baseline", pol_scen) for x in all_rates_sdg["variable"]
         ]
         all_rates = pd.concat([all_rates_base, all_rates_sdg])
         save_path = package_data_path("water", "demands", "harmonized", context.regions)
