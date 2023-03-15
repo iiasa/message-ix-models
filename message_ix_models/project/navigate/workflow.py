@@ -327,7 +327,7 @@ def generate(context: Context) -> Workflow:
                 tax_emission,
                 target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
                 clone=dict(shift_first_model_year=2025),
-                price=200.0,
+                price=1000.0,
             )
             name = f"{s} solved"
             wf.add_step(name, s, solve)
