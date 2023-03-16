@@ -46,24 +46,28 @@ def remove_duplicate(data):
     for i in data["Region"].index:
         strr = data["Region"][i]
         oprlist = reg_index(strr)
-        if i in indexes:
-            if len(oprlist) > 1:
-                final_list.append(strr[oprlist[0] + 1 :])
-            elif len(oprlist) == 1 and oprlist[0] > 6:
-                final_list.append(strr[: oprlist[0]])
-            else:
-                final_list.append(strr)
+        # cover the case of repeated region name (e.g. Zambia|Zambia)
+        if ("|" in strr) and (strr.split("|")[0] == strr.split("|")[1]):
+            final_list.append(strr.split("|")[0])
         else:
-            if len(oprlist) > 1:
-                final_list.append(strr[: oprlist[1]])
-            elif len(oprlist) == 1 and oprlist[0] > 6:
-                final_list.append(strr[: oprlist[0]])
+            if i in indexes:
+                if len(oprlist) > 1:
+                    final_list.append(strr[oprlist[0] + 1:])
+                elif len(oprlist) == 1 and oprlist[0] > 6:
+                    final_list.append(strr[: oprlist[0]])
+                else:
+                    final_list.append(strr)
             else:
-                final_list.append(strr)
+                if len(oprlist) > 1:
+                    final_list.append(strr[: oprlist[1]])
+                elif len(oprlist) == 1 and oprlist[0] > 6:
+                    final_list.append(strr[: oprlist[0]])
+                else:
+                    final_list.append(strr)
     return final_list
 
 
-def report(sc=False, sdgs=False):
+def report(sc=False, reg="", sdgs=False):
     """Report nexus module results"""
 
     # Generating reporter
@@ -686,8 +690,8 @@ def report(sc=False, sdgs=False):
                 + cooling_ot_fresh
                 + cooling_cl_fresh
                 + cooling_saline_inv
-                + cooling_air_inv,
-                +industry_unconnected_inv,
+                + cooling_air_inv
+                + industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
@@ -924,12 +928,13 @@ def report(sc=False, sdgs=False):
     mp2 = sc.platform
     map_node = sc.set("map_node")
     # this might not be the best way to get the region, better from context
-    if "R11" in map_node.node.to_list()[1]:
-        reg = "R11"
-    elif "R12" in map_node.node.to_list()[1]:
-        reg = "R12"
-    else:
-        print("Check the region of the model is consistent with R11,R12")
+    if not reg:
+        if "R11" in map_node.node.to_list()[1]:
+            reg = "R11"
+        elif "R12" in map_node.node.to_list()[1]:
+            reg = "R12"
+        else:
+            print("Check the region of the model is consistent with R11,R12")
 
     # load data on water and sanitation access
     load_path = package_data_path("water", "demands", "harmonized", reg)
@@ -1138,7 +1143,11 @@ def report(sc=False, sdgs=False):
     report_pd = report_pd[-report_pd.variable.isin(water_hydro_var)]
 
     # add water population
-    report_pd = report_pd.append(pop_sdg6)
+    if pop_check.empty:
+        print("The Population data does not exist or timeseries() has no future values")
+    else:
+        report_pd = report_pd.append(pop_sdg6)
+    
     # add units
     for index, row in map_agg_pd.iterrows():
         report_pd.loc[(report_pd.variable == row["names"]), "unit"] = row["unit"]
@@ -1165,7 +1174,7 @@ def report(sc=False, sdgs=False):
     sc.commit("Reporting uploaded as timeseries")
 
 
-def report_full(sc=False, sdgs=False):
+def report_full(sc=False, reg="", sdgs=False):
     """Combine old and new reporting workflows"""
     a = sc.timeseries()
     # keep historical part, if present
@@ -1181,13 +1190,13 @@ def report_full(sc=False, sdgs=False):
     run_old_reporting(sc)
     print("First part of reporting completed, now procede with the water variables")
 
-    report(sc, sdgs)
+    report(sc, reg, sdgs)
     print("overall NAVIGATE reporting completed")
 
     # add ad-hoc caplculated variables with a function
     ts = sc.timeseries()
 
-    out_path = package_data_path().parents[0] / "reporting_output/NAVIGATE"
+    out_path = package_data_path().parents[0] / "reporting_output/"
 
     if not out_path.exists():
         out_path.mkdir()
