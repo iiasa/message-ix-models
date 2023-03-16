@@ -81,7 +81,7 @@ def water_ini(context, regions, time):
         else:
             context.time = sub_time
     else:
-        context.time = list(time)
+        context.time = [time]
     log.info(f"Using the following time-step for the water module: {context.time}")
 
     # setting the time information in context
@@ -263,5 +263,6 @@ def report_cli(context, output_model, sdgs):
 
     from message_ix_models.model.water.reporting import report_full
 
+    reg = context.regions
     sc = context.get_scenario()
-    report_full(sc, sdgs)
+    report_full(sc, reg, sdgs)
