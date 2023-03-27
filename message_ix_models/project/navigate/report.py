@@ -326,7 +326,12 @@ def callback(rep: Reporter, context: Context) -> None:
     # Add an operation to copy time-series data from a corresponding reference scenario
     copy_ts_keys = []
 
-    si = context["navigate copy ts"]
+    try:
+        si = context["navigate copy ts"]
+    except KeyError:
+        print('navigate copy ts is not in the context')
+        si = None
+
     if si:
         # URL of the other scenario
         platform_name = rep.get("scenario").platform.name
