@@ -79,7 +79,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity):
     if "R12_CHN" in nodes:
         nodes.remove("R12_GLB")
         region_set = 'R12_'
-        dem_2020 = np.array([2, 7.5, 30, 4, 11, 42, 60, 32, 30, 29, 35, 67.5])
+        dem_2020 = np.array([2.4, 0.44, 3, 5, 11, 40.3, 49.8, 11, 37.5, 10.7, 29.2, 50.5])
         dem_2020 = pd.Series(dem_2020)
 
     else:
@@ -306,6 +306,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                         node_loc=rg,
                         **common
                     )
+                    df = df.drop_duplicates()
 
                 # Copy parameters to all regions
                 if (len(regions) == 1) and (rg != global_region):
@@ -418,5 +419,40 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
             results[p].append(df)
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+
+    # modify steam cracker hist data (naphtha -> gasoil) to make model feasible
+    df_cap = pd.read_csv(context.get_local_path(
+            "material", "methanol", "steam_cracking_hist_new_cap.csv"
+        ))
+    df_act = pd.read_csv(context.get_local_path(
+            "material", "methanol", "steam_cracking_hist_act.csv"
+        ))
+    df_act.loc[df_act["mode"]=="naphtha", "mode"] = "vacuum_gasoil"
+    df = results["historical_activity"]
+    results["historical_activity"] = pd.concat([df.loc[df["technology"]!="steam_cracker_petro"], df_act])
+    df = results["historical_new_capacity"]
+    results["historical_new_capacity"] = pd.concat([df.loc[df["technology"]!="steam_cracker_petro"], df_cap])
+
+    # remove growth constraint for R12_AFR to make trade constraints feasible
+    df = results["growth_activity_up"]
+    results["growth_activity_up"] = df[~((df["technology"]=="steam_cracker_petro") &
+                                          (df["node_loc"]=="R12_AFR") &
+                                          (df["year_act"]==2020))]
+
+    # add 25% total trade bound
+    df_dem = results["demand"]
+    df_dem = df_dem.groupby("year").sum() * 0.25
+    df_dem = df_dem.reset_index()
+    df_dem = df_dem.rename({"year": "year_act"}, axis=1)
+
+    par_dict = {
+        "node_loc": "R12_GLB",
+        "technology": "trade_petro",
+        "mode": "M1",
+        "time": "year",
+        "unit": "-",
+    }
+    results["bound_activity_up"] = pd.concat([results["bound_activity_up"],
+                                              message_ix.make_df("bound_activity_up", **df_dem, **par_dict)])
 
     return results
