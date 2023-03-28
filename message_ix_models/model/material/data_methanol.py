@@ -674,15 +674,15 @@ def add_meth_hist_act():
     )
     par_dict["historical_activity"] = pd.concat([df_fs, df_fuel])
     # derived from graphic in "Methanol production statstics.xlsx/China demand split" diagram
-    hist_cap = make_df(
-        "historical_new_capacity",
-        node_loc="R12_CHN",
-        technology="meth_coal",
-        year_vtg=2015,
-        value=9.6,
-        unit="GW",
-    )
-    par_dict["historical_new_capacity"] = hist_cap
+    # hist_cap = make_df(
+    #     "historical_new_capacity",
+    #     node_loc="R12_CHN",
+    #     technology="meth_coal",
+    #     year_vtg=2015,
+    #     value=9.6,
+    #     unit="GW",
+    # )
+    # par_dict["historical_new_capacity"] = hist_cap
     # fix demand infeasibility
     # act = scenario.par("historical_activity")
     # row = act[act["technology"].str.startswith("meth")].sort_values("value", ascending=False).iloc[0]
