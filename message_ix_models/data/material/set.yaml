@@ -544,6 +544,7 @@ methanol:
   relation:
     add:
       - CO2_PtX_trans_disp_split
+      - meth_exp_tot
 
 buildings:
   level:
