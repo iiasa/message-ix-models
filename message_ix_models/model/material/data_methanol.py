@@ -454,6 +454,11 @@ def add_meth_trade_historic():
         context.get_local_path("material", "methanol", "meth_trade_techno_economic.xlsx"),
         sheet_name=None,
     )
+    par_dict_trade_fs = pd.read_excel(
+        context.get_local_path("material", "methanol", "meth_trade_techno_economic_fs.xlsx"),
+        sheet_name=None,
+    )
+    par_dict_trade = combine_df_dictionaries(par_dict_trade_fs, par_dict_trade)
     df = par_dict_trade["historical_new_capacity"]
     df.loc[df["value"] < 0, "value"] = 0
     par_dict_trade["historical_new_capacity"] = df[(df["technology"] != "meth_imp")]
