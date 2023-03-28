@@ -369,6 +369,8 @@ def gen_data_meth_chemicals(scenario, chemical):
 
 def add_methanol_trp_additives(scenario):
     df_loil = scenario.par("input", filters={"technology": "loil_trp"})
+    if df_loil.index.size == 0:
+        return pd.DataFrame()
 
     df_mtbe = pd.read_excel(
         context.get_local_path(
