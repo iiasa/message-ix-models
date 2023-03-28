@@ -226,10 +226,6 @@ def gen_data_methanol(scenario):
     if pars["mtbe_scenario"] == "phase_out":
         new_dict2 = combine_df_dictionaries(new_dict2, add_mtbe_act_bound(scenario))
 
-    # remove old methanol end use tecs
-    #scenario.check_out()
-    #scenario.commit("remove old methanol end use tecs")
-
     return new_dict2
 
 
@@ -387,6 +383,10 @@ def gen_data_meth_chemicals(scenario, chemical):
 def add_methanol_fuel_additives(scenario):
     par_dict_loil = {}
     pars = ['output', 'var_cost', 'relation_activity', 'input', 'emission_factor']
+    if "loil_trp" not in scenario.set("technology"):
+        print(
+            "It seems that the selected scenario does not contain the technology: loil_trp. Methanol fuel blending could not be calculated and was skipped")
+        return par_dict_loil
     for i in pars:
         try:
             df = scenario.par(i, filters={"technology": "loil_trp", "mode": "M1"})
@@ -394,6 +394,7 @@ def add_methanol_fuel_additives(scenario):
                 par_dict_loil[i] = df.copy(deep=True)
         except:
             pass
+
     par_dict_loil["input"] = par_dict_loil["input"][par_dict_loil["input"]["commodity"] == "lightoil"]
 
     df_mtbe = pd.read_excel(
