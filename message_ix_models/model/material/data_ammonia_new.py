@@ -181,7 +181,8 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
         ),
         sheet_name="timeseries_R12",
     )
-    df.groupby("parameter")
+    df["year_act"] = df["year_act"].astype("Int64")
+    df["year_vtg"] = df["year_vtg"].astype("Int64")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
     for i in par_dict.keys():
         par_dict[i] = par_dict[i].dropna(axis=1)
