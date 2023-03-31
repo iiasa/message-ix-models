@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from functools import partial
 from itertools import product
-from typing import List, Mapping, Sequence, Union
+from typing import List, Mapping, MutableMapping, Sequence, Union
 
 import message_ix
 import pandas as pd
@@ -153,7 +153,7 @@ def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:  # pragma: no cover
     return func
 
 
-def data_conversion(info, spec) -> Mapping[str, pd.DataFrame]:
+def data_conversion(info, spec) -> MutableMapping[str, pd.DataFrame]:
     """Generate input and output data for disutility conversion technologies."""
     common = dict(
         mode="all",
