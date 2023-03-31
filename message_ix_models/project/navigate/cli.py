@@ -150,13 +150,17 @@ def run(context, dry_run, truncate_step, dsd, target_step):
             log.info(f"Truncate workflow at {step!r}")
             wf.truncate(step)
 
-    # Possibly select 2 or more targets based on a regular expression in `target_step`
+    # Select 1 or more targets based on a regular expression in `target_step`
     target_expr = re.compile(target_step)
     target_steps = sorted(filter(lambda k: target_expr.fullmatch(k), wf.keys()))
-    if len(target_steps) > 1:
+    if len(target_steps):
         # Create a new target that collects the selected ones
         target_step = "cli-targets"
         wf.add(target_step, target_steps)
+    else:
+        raise click.ClickException(
+            "No step(s) matched {target_expr!r} among:\n{sorted(wf.keys())}"
+        )
 
     log.info(f"Execute workflow:\n{wf.describe(target_step)}")
 
