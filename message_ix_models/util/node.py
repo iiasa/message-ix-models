@@ -3,7 +3,7 @@ import logging
 from typing import List, Sequence, Union
 
 from message_ix import Scenario
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from .common import Adapter, MappingAdapter  # noqa: F401
 

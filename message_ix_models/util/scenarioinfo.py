@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 import pint
-import sdmx.model
+import sdmx.model.v21 as sdmx_model
 
 from .sdmx import eval_anno
 
@@ -188,7 +188,7 @@ class ScenarioInfo:
             "technology", technology
         )
 
-    def year_from_codes(self, codes: List[sdmx.model.Code]):
+    def year_from_codes(self, codes: List[sdmx_model.Code]):
         """Update using a list of `codes`.
 
         The following are updated:
