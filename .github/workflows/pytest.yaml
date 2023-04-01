@@ -48,22 +48,6 @@ jobs:
     name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream-version }}
 
     steps:
-    - name: Check out ixmp
-      uses: actions/checkout@v3
-      with:
-        repository: iiasa/ixmp
-        ref: ${{ matrix.upstream-version }}
-        path: ixmp
-        fetch-depth: ${{ env.depth }}
-
-    - name: Check out message-ix
-      uses: actions/checkout@v3
-      with:
-        repository: iiasa/message_ix
-        ref: ${{ matrix.upstream-version }}
-        path: message-ix
-        fetch-depth: ${{ env.depth }}
-
     - name: Check out message-ix-models
       uses: actions/checkout@v3
       with:
@@ -72,10 +56,7 @@ jobs:
         fetch-depth: ${{ env.depth }}
 
     - name: Fetch tags (for setuptools-scm)
-      run: |
-        (cd ixmp; git fetch --tags --depth=${{ env.depth }})
-        (cd message-ix; git fetch --tags --depth=${{ env.depth }})
-        (cd message-ix-models; git fetch --tags --depth=${{ env.depth }})
+      run: (cd message-ix-models; git fetch --tags --depth=${{ env.depth }})
       shell: bash
 
     - uses: actions/setup-python@v4
@@ -94,8 +75,8 @@ jobs:
 
     - name: Install packages and dependencies
       run: |
-        pip install ./ixmp
-        pip install ./message-ix[tests]
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream-version }}"
+        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream-version }}"
         pip install ./message-ix-models[tests]
 
     - name: Run test suite using pytest
