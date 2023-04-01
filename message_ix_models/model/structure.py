@@ -10,7 +10,7 @@ import pandas as pd
 import pycountry
 import xarray as xr
 from iam_units import registry
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models.util import eval_anno, load_package_data, package_data_path
 from message_ix_models.util.sdmx import as_codes

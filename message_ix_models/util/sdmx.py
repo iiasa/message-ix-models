@@ -4,7 +4,7 @@ from copy import copy
 from typing import Dict, List, Mapping, Union
 
 from iam_units import registry
-from sdmx.model import AnnotableArtefact, Annotation, Code, InternationalString
+from sdmx.model.v21 import AnnotableArtefact, Annotation, Code, InternationalString
 
 log = logging.getLogger(__name__)
 

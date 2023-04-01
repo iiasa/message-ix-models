@@ -5,6 +5,11 @@ Next release
 ============
 
 - Add :doc:`/water/index` (:pull:`88`, :pull:`91`).
+- New utility function :func:`.replace_par_data` (:pull:`90`).
+- :func:`.disutility.get_spec` preserves all :class:`Annotations <~.sdmx.model.v21.Annotation>` attached to the :class:`~.sdmx.model.v21.Code` object used as a template for usage technologies (:pull:`90`).
+- Add ``CO2_Emission_Global_Total`` to the :ref:`“A” relation codelist <relation-yaml>` (:pull:`90`).
+- :class:`.Adapter` and :class:`.MappingAdapter` can be imported from :mod:`message_ix_models.util` (:pull:`90`).
+- Bump :mod:`sdmx` requirement from v2.2.0 to v2.8.0 (:pull:`90`).
 
 2023.2.8
 ========

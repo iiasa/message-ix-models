@@ -9,6 +9,9 @@ filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
 [tool.isort]
 profile = "black"
 
+[tool.mypy]
+exclude = ["doc/"]
+
 [[tool.mypy.overrides]]
 module = [
   "dask",

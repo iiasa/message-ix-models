@@ -9,6 +9,11 @@ on:
   # 05:00 UTC = 06:00 CET = 07:00 CEST
   - cron: "0 5 * * *"
 
+# Cancel previous runs that have not completed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   # For setuptools-scm. With fetch --tags below, this ensures that enough
   # history is fetched to contain the latest tag, so that setuptools-scm can
@@ -43,25 +48,6 @@ jobs:
     name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream-version }}
 
     steps:
-    - name: Cancel previous runs that have not completed
-      uses: styfle/cancel-workflow-action@0.11.0
-
-    - name: Check out ixmp
-      uses: actions/checkout@v3
-      with:
-        repository: iiasa/ixmp
-        ref: ${{ matrix.upstream-version }}
-        path: ixmp
-        fetch-depth: ${{ env.depth }}
-
-    - name: Check out message-ix
-      uses: actions/checkout@v3
-      with:
-        repository: iiasa/message_ix
-        ref: ${{ matrix.upstream-version }}
-        path: message-ix
-        fetch-depth: ${{ env.depth }}
-
     - name: Check out message-ix-models
       uses: actions/checkout@v3
       with:
@@ -70,10 +56,7 @@ jobs:
         fetch-depth: ${{ env.depth }}
 
     - name: Fetch tags (for setuptools-scm)
-      run: |
-        (cd ixmp; git fetch --tags --depth=${{ env.depth }})
-        (cd message-ix; git fetch --tags --depth=${{ env.depth }})
-        (cd message-ix-models; git fetch --tags --depth=${{ env.depth }})
+      run: (cd message-ix-models; git fetch --tags --depth=${{ env.depth }})
       shell: bash
 
     - uses: actions/setup-python@v4
@@ -82,9 +65,6 @@ jobs:
         cache: pip
         cache-dependency-path: "**/setup.cfg"
 
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
-
     - uses: iiasa/actions/setup-gams@main
       with:
         version: 25.1.1
@@ -92,13 +72,13 @@ jobs:
 
     - name: Install packages and dependencies
       run: |
-        pip install ./ixmp
-        pip install ./message-ix[tests]
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream-version }}"
+        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream-version }}"
         pip install ./message-ix-models[tests]
 
     - name: Run test suite using pytest
       working-directory: message-ix-models
-      run: pytest message_ix_models -rA --verbose --color=yes --cov-report=xml --cov-report=term-missing
+      run: pytest message_ix_models -rA --verbose --color=yes --cov-report=xml --cov-report=term-missing --numprocesses=auto
 
     - name: Test documentation build using Sphinx
       if: startsWith(matrix.os, 'ubuntu')

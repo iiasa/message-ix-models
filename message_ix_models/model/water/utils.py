@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import numpy as np
 import pandas as pd
 import xarray as xr
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes

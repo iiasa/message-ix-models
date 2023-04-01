@@ -5,7 +5,7 @@ Tools for MESSAGEix-GLOBIOM models
    :alt: PyPI version
    :target: https://pypi.python.org/pypi/message-ix-models/
 
-.. image:: https://readthedocs.com/projects/iiasa-energy-program-message-ix-models/badge/?version=latest&token=e26aafa64d5e0792f1198aa1cc328a453f7bc63360efbe1031a13f13c7ba286f
+.. image:: https://readthedocs.com/projects/iiasa-energy-program-message-ix-models/badge/?version=latest
    :alt: Documentation status
    :target: https://docs.messageix.org/projects/models/en/latest/?badge=latest
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from iam_units import registry
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models.model.structure import (
     codelists,
@@ -142,7 +142,7 @@ class TestGetCodes:
     @pytest.mark.parametrize(
         "codelist, length, expected",
         [
-            ("A", 19, {"emission_factor": 15, "renewable formulation": 2}),
+            ("A", 20, {"emission_factor": 15, "renewable formulation": 2}),
             ("B", 319, {}),
             ("CD-LINKS", 314, {"removed": 80}),
         ],

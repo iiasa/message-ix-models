@@ -30,6 +30,7 @@ from message_ix_models.util import (
     maybe_query,
     package_data_path,
     private_data_path,
+    replace_par_data,
     same_node,
     same_time,
     series_of_pint_quantity,
@@ -351,6 +352,31 @@ def test_same(name, func, col):
     assert not df_out.isna().any(axis=None)
     assert_series_equal(df_out[f"{name}_dest"], df_in[col], check_names=False)
     assert_series_equal(df_out[f"{name}_origin"], df_in[col], check_names=False)
+
+
+def test_replace_par_data(caplog, test_context):
+    """Test :func:`.replace_par_data`."""
+    # Generate a scenario. This scenario has 3 data points in each of "input" and
+    # "output" with technology="transport_from_seattle".
+    s = make_dantzig(test_context.get_platform())
+
+    # Arguments to replace_par_data()
+    parameters = ["input", "output"]
+    filters = dict(mode=["to_chicago", "to_topeka"])
+    to_replace = dict(technology={"transport_from_seattle": "tfs"})
+
+    with s.transact("Add a new set element, to which values will be renamed"):
+        s.add_set("technology", "tfs")
+
+    # Function runs
+    replace_par_data(s, parameters, filters=filters, to_replace=to_replace)
+
+    for data in map(lambda n: s.par(n, filters=dict(node_loc="seattle")), parameters):
+        # Data points selected by `filters` have been relabeled
+        assert 2 == len(data.query("technology == 'tfs'"))
+
+        # Data points not selected by `filters` are not affected
+        assert 1 == len(data.query("technology == 'transport_from_seattle'"))
 
 
 def test_strip_par_data(caplog, test_context):
