@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from iam_units import registry
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models.model.structure import (
     codelists,

@@ -5,7 +5,7 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 from message_ix import make_df
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.model import disutility
