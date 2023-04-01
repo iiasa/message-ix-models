@@ -18,7 +18,7 @@ from message_ix_models.util import (
     make_source_tech,
     same_node,
 )
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from .config import ScenarioFlags
 

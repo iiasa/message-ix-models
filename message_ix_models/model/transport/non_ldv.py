@@ -16,7 +16,7 @@ from message_ix_models.util import (
     same_node,
     same_time,
 )
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
 from .util import path_fallback

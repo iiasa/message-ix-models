@@ -16,7 +16,7 @@ from message_ix_models.util import (
     private_data_path,
     same_node,
 )
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from .util import input_commodity_level
 

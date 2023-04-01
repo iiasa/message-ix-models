@@ -26,7 +26,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.tools import advance
 from message_ix_models.util import MappingAdapter, broadcast, eval_anno, nodes_ex_world
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from message_data.reporting.computations import compound_growth
 from message_data.reporting.util import as_quantity
