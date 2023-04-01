@@ -14,7 +14,7 @@ from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import bare, build, disutility
 from message_ix_models.model.structure import get_region_codes
 from message_ix_models.util._logging import mark_time
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from . import Config
 from .util import get_techs
