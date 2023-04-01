@@ -7,7 +7,7 @@ from typing import Any, Dict, Generator, List, Mapping, Optional, Union
 import ixmp
 import yaml
 from message_ix_models.util import as_codes
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from message_data.projects.engage.workflow import PolicyConfig
 
@@ -42,12 +42,12 @@ CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
         # From an item labelled "1000" in engage/config.yaml
         PolicyConfig("20C", budget=2700, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
         # From an item labelled "600" in engage/config.yaml
-
         # With current transport demand update, '15C' scenarios can achieve the levels below.
-        # Numbers based on Ctax runs with price=$1000/tCO2. 
+        # Numbers based on Ctax runs with price=$1000/tCO2.
         # PolicyConfig("15C", budget=1357, low_dem_scen="EN_NPi2020_700_step1", **_kw), # for non-ref aiming for 650Gt after TRP update
-        PolicyConfig("15C", budget=1840, low_dem_scen="EN_NPi2020_700_step1", **_kw),   # for ref aiming for 850t after TRP update
-        
+        PolicyConfig(
+            "15C", budget=1840, low_dem_scen="EN_NPi2020_700_step1", **_kw
+        ),  # for ref aiming for 850t after TRP update
         # The following do not appear in the official NAVIGATE scenarios list, but are
         # used in EXTRA_SCENARIOS below.
         # From an item labelled "1600" in engage/config.yaml
