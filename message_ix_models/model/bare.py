@@ -4,7 +4,7 @@ from functools import partial
 from urllib.parse import urlunsplit
 
 import message_ix
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 import message_ix_models
 from message_ix_models import ScenarioInfo, Spec

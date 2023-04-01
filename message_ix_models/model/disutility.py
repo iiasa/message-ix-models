@@ -6,7 +6,7 @@ from typing import List, Mapping, MutableMapping, Sequence, Union
 
 import message_ix
 import pandas as pd
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.build import apply_spec
