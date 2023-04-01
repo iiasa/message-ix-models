@@ -8,7 +8,7 @@ from genno.compat.pyam.util import collapse as genno_collapse
 from iam_units import registry
 from message_ix.reporting import Key, Reporter
 from message_ix_models.util import eval_anno
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 
 log = logging.getLogger(__name__)
