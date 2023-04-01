@@ -23,6 +23,7 @@ def _local_data_factory():
     )
 
 
+@dataclass
 class ConfigHelper:
     """Mix-in for :class:`dataclass`-based configuration classes.
 
@@ -90,7 +91,7 @@ class ConfigHelper:
 
         for key, value in self._munge_dict(data, fail, "file section"):
             existing = getattr(self, key, None)
-            if is_dataclass(existing):
+            if is_dataclass(existing) and not isinstance(existing, type):
                 # Attribute value is also a dataclass; update it recursively
                 if isinstance(existing, ConfigHelper):
                     # Use name manipulation on the attribute value also

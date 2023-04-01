@@ -6,59 +6,24 @@ on:
   pull_request:
     branches: [ main, "migrate-*"]
 
-env:
-  # Maximum McCabe complexity for code
-  max-complexity: 15
+# Cancel previous runs that have not completed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
-
-    continue-on-error: true
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - uses: actions/setup-python@v4
-      with:
-        # If the "Latest version testable on GitHub Actions" in pytest.yaml
-        # is not the latest 3.x stable version, adjust here to match:
-        # python-version: "3.x"
-        python-version: "3.10"
-        cache: pip
-        cache-dependency-path: "**/setup.cfg"
-
-    - name: Upgrade pip and install requirements
-      run: |
-        python -m pip install --upgrade pip
-        pip install black flake8 isort mypy setuptools-scm twine wheel
-
-    - name: Check "black" code style
-      run: black --check .
-
-    - name: Lint with flake8 & isort
-      run: |
-        flake8 --count --max-complexity=${{ env.max-complexity }} --show-source --statistics
-        isort --check-only .
-
-    - name: Check out ixmp
-      uses: actions/checkout@v3
-      with:
-        repository: iiasa/ixmp
-        path: ixmp
-
-    - name: Check out message-ix
-      uses: actions/checkout@v3
-      with:
-        repository: iiasa/message_ix
-        path: message-ix
-
-    - name: Check typing with mypy
-      # Give the paths to ixmp and message_ix sources. These need not be
-      # installed for static type checking
-      env:
-        MYPYPATH: "./ixmp/:./message-ix/"
-      # Also install stub packages and others that provide type hints
-      run: |
-        pip install genno iam-units pytest sdmx1 types-PyYAML types-setuptools
-        mypy ./message_ix_models
+    uses: iiasa/actions/.github/workflows/lint.yaml@main
+    with:
+      # If the "Latest version testable on GitHub Actions" in pytest.yaml
+      # is not the latest 3.x stable version, adjust here to match:
+      python-version: "3.10"
+      type-hint-packages: >-
+        genno
+        iam-units
+        pytest
+        sdmx1
+        types-PyYAML
+        types-setuptools
+        "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
+        "message-ix @ git+https://github.com/iiasa/message_ix.git@main"

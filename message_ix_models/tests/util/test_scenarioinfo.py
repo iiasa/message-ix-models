@@ -5,7 +5,7 @@ import pytest
 from message_ix import make_df
 from message_ix.testing import make_dantzig
 from pandas.testing import assert_frame_equal
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.structure import get_codes, process_technology_codes

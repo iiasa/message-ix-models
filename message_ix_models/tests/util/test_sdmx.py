@@ -1,7 +1,7 @@
 import logging
 import re
 
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models.util.sdmx import eval_anno
 
