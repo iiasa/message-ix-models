@@ -54,16 +54,16 @@ context = r"'context' \(above\)"
 BLOCKS = [
     "Truncate workflow at 'M built'",
     rf"""
-    - 'MT NPi-ref solved':
-      - <Step solve\(\)>
-      - {context}
-      - 'MT NPi-ref built':
-        - <Step build_transport\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12 \(NAVIGATE\)/NPi-ref>
-        - {context}
-        - 'M built':
-          - <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
+        - 'MT NPi-ref solved':
+          - <Step solve\(\)>
           - {context}
-          - None""",  # noqa: E501
+          - 'MT NPi-ref built':
+            - <Step build_transport\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12 \(NAVIGATE\)/NPi-ref>
+            - {context}
+            - 'M built':
+              - <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
+              - {context}
+              - None""",  # noqa: E501
 ]
 
 
