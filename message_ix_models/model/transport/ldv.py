@@ -28,7 +28,7 @@ from message_ix_models.util import (
     same_node,
 )
 from openpyxl import load_workbook
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from .computations import extend_y
 from .emission import ef_for_input
