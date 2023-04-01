@@ -21,7 +21,7 @@ from message_ix_models.util import (
     merge_data,
     nodes_ex_world,
 )
-from sdmx.model import Annotation, Code
+from sdmx.model.v21 import Annotation, Code
 
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
