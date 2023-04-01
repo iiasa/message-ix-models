@@ -65,7 +65,7 @@ def test_register_cb():
         param("R11", "A", True, marks=MARK[1]),
         ("R12", "A", True),
         param("R14", "A", True, marks=MARK[2](AttributeError)),
-        param("ISR", "A", True, marks=MARK[2](AttributeError)),
+        param("ISR", "A", True, marks=MARK[2](AssertionError)),
     ),
 )
 def test_report_bare(request, test_context, tmp_path, regions, years, solved):
