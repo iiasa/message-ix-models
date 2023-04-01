@@ -12,7 +12,7 @@ from message_ix import Reporter, Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 import message_data.model.material.report.tables
 from message_data.reporting.util import copy_ts
@@ -329,7 +329,7 @@ def callback(rep: Reporter, context: Context) -> None:
     try:
         si = context["navigate copy ts"]
     except KeyError:
-        print('navigate copy ts is not in the context')
+        print("navigate copy ts is not in the context")
         si = None
 
     if si:
