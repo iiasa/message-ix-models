@@ -3,7 +3,7 @@ from functools import lru_cache, partial
 from typing import Mapping
 
 import pandas as pd
-from sdmx.model import Code
+from sdmx.model.v21 import Code
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model import build

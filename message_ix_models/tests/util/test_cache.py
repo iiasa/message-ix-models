@@ -2,7 +2,7 @@ import logging
 from copy import deepcopy
 
 import pytest
-import sdmx.model
+import sdmx.model.v21 as sdmx_model
 import xarray as xr
 from genno.caching import hash_args
 from ixmp.testing import assert_logs
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class TestEncoder:
     def test_sdmx(self):
         """:mod:`message_ix_models` configures :class:`.Encoder` for :class:`.Code`."""
-        codes0 = [sdmx.model.Code(id=f"FOO{i}", name="foo") for i in range(5)]
+        codes0 = [sdmx_model.Code(id=f"FOO{i}", name="foo") for i in range(5)]
         codes1 = [f"FOO{i}" for i in range(5)]
 
         # List of codes hashes the same as a list of their string IDs
