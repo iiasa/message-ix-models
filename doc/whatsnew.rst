@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+2023.4.2
+========
 
 - Add :doc:`/water/index` (:pull:`88`, :pull:`91`).
 - New utility function :func:`.replace_par_data` (:pull:`90`).
