@@ -146,7 +146,7 @@ def usage_data(
     common = dict(year_vtg=years, year_act=years, mode="all", time="year")
 
     data = []
-    for mode in filter(lambda m: m != "LDV", modes):
+    for mode in filter(lambda m: m != "LDV", map(str, modes)):
         data.append(
             make_io(
                 src=(f"transport vehicle {mode.lower()}", "useful", "Gv km"),
@@ -159,7 +159,7 @@ def usage_data(
             )
         )
 
-    result = dict()
+    result: Dict[str, pd.DataFrame] = dict()
     merge_data(result, *data)
 
     for k, v in result.items():

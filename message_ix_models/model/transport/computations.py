@@ -2,7 +2,7 @@
 import logging
 from functools import partial, reduce
 from operator import gt, le, lt
-from typing import Dict, Hashable, List, Mapping, Optional
+from typing import Dict, Hashable, List, Mapping, Optional, Set
 
 import numpy as np
 import pandas as pd
@@ -442,7 +442,7 @@ def merge_data(
     .. todo: move upstream or merge functionality with
        :func:`message_ix_models.util.merge_data`.
     """
-    keys = reduce(lambda x, y: x | y.keys(), others, set())
+    keys: Set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
     return {k: pd.concat([o.get(k, None) for o in others]) for k in keys}
 
 

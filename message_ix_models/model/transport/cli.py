@@ -72,11 +72,10 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
     Data is transformed to be suitable for the target scenario, and stored in
     migrate/VERSION/*.csv.
     """
-    from message_data.tools import ScenarioInfo
+    from message_data.tools import ScenarioInfo, silence_log
 
     from .build import main as build
     from .migrate import import_all, load_all, transform
-    from .utils import silence_log
 
     # Load the target scenario from database
     # mp = context.get_platform()
@@ -301,7 +300,7 @@ def debug(context):
     from message_data.reporting import prepare_reporter, register
 
     from . import build
-    from .transport.report import callback
+    from .report import callback
 
     request = None
     context.model.regions = "R11"
