@@ -1,5 +1,6 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
+from typing import cast
 
 import genno.config
 from genno import Computer, MissingKeyError
@@ -81,7 +82,7 @@ def _handler(c: Computer, info):
         # # Required commodities (e.g. fuel) from the base model
         # t_filter.update(spec.require.set["commodity"])
 
-        c.set_filters(t=sorted(t_filter))
+        cast(Reporter, c).set_filters(t=sorted(t_filter))
 
     context = c.graph["context"]
     config = c.graph["config"]
@@ -112,7 +113,7 @@ def callback(rep: Reporter, context: Context) -> None:
 
     scenario = rep.graph.get("scenario")
     try:
-        solved = scenario.has_solution()
+        solved = scenario.has_solution() if scenario else False
     except AttributeError:
         solved = False  # "scenario" is not present in the Reporter; may be added later
 
