@@ -13,17 +13,22 @@ from message_data.projects.engage.workflow import PolicyConfig
 
 log = logging.getLogger(__name__)
 
-#: Mapping of climate policy labels to :class:`.engage.workflow.PolicyConfig` objects.
-#:
-#: Some of the values are from engage/config.yaml.
-#:
-#: .. todo:: The low_dem_scen values appear to form a "waterfall", with each
-#:    successively lower budget referencing the previous. Investigate how to run only
-#:    some budgets without the previous ones.
+# Shorthand for use in `CLIMATE_POLICY`
 _kw: Mapping = dict(
     reserve_margin=False,
     solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
 )
+
+#: Mapping of climate policy labels to :class:`.engage.workflow.PolicyConfig` objects.
+#:
+#: - Some of the ``budget`` values were originally from
+#:   :file:`message_data/projects/engage/config.yaml`, but have been updated using the
+#:   results of diagnostic Ctax runs and the ENGAGE budget calculator
+#:   :file:`message_data/projects/engage/doc/v4.1.7_T4.5_budget_calculation_r3.1.xlsx`.
+#: - The values for ``low_dem_scen`` have no effect in the NAVIGATE workflow as
+#:   currently implemented. In the :file:`engage/config.yaml`, they appear to form a
+#:   "waterfall", with each successively lower budget referencing the previous, which
+#:   seems to preclude running lower budgets without first running every larger budget.
 CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
     pc.label: pc
     for pc in (
@@ -39,15 +44,19 @@ CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
             **_kw,
         ),
         # All steps 1–3
-        # From an item labelled "1000" in engage/config.yaml
+        # Originally from an item labelled "1000" in engage/config.yaml
         PolicyConfig("20C", budget=2700, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
-        # From an item labelled "600" in engage/config.yaml
-        # With current transport demand update, '15C' scenarios can achieve the levels below.
-        # Numbers based on Ctax runs with price=$1000/tCO2.
-        # PolicyConfig("15C", budget=1357, low_dem_scen="EN_NPi2020_700_step1", **_kw), # for non-ref aiming for 650Gt after TRP update
+        # Originally from an item labelled "600" in engage/config.yaml. Current values
+        # calculated based on Ctax runs with price of 1000 USD / t CO₂.
         PolicyConfig(
-            "15C", budget=1840, low_dem_scen="EN_NPi2020_700_step1", **_kw
-        ),  # for ref aiming for 850t after TRP update
+            "15C",
+            # Achievable for non-ref demand-side scenarios aiming for 650 Gt:
+            # budget=1357,
+            # Achievable for -ref demand-side scenario aiming for 850 Gt:
+            budget=1840,
+            low_dem_scen="EN_NPi2020_700_step1",
+            **_kw,
+        ),
         # The following do not appear in the official NAVIGATE scenarios list, but are
         # used in EXTRA_SCENARIOS below.
         # From an item labelled "1600" in engage/config.yaml
@@ -72,7 +81,7 @@ CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
 CLIMATE_POLICY["Ctax"] = None
 
 
-# Common annotations for EXTRA_SCENARIOS
+# Common annotations for `EXTRA_SCENARIOS`
 _A = [
     Annotation(id="navigate_T35_policy", text=""),
     Annotation(id="navigate_task", text="T3.5"),
@@ -80,6 +89,11 @@ _A = [
 
 #: Extra scenario IDs not appearing in the authoritative NAVIGATE list per the workflow
 #: repository. These each have the same 3 annotations.
+#:
+#: - ``NAV_Dem-15C-ref`` and ``NAV_Dem-20C-ref`` were added to the NAVIGATE list in
+#:   iiasa/navigate-workflow#43, but with invalid "navigate_T35_policy" annotations.
+#:   Retained here pending iiasa/navigate-workflow#47. cf. corresponding pin to an
+#:   earlier commit in :file:`pytest.yaml` workflow.
 EXTRA_SCENARIOS = [
     Code(
         id="NAV_Dem-15C-ref",
