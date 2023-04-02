@@ -244,7 +244,7 @@ def extend_y(qty: Quantity, y: List[int]) -> Quantity:
     y_map = [(y, y) for y in y_qty] + [(y_qty[-1], y) for y in y_to_fill]
     # - Forward-fill *within* `qty` existing values.
     # - Use message_ix_models MappingAdapter to do the rest.
-    return MappingAdapter({"y": y_map})(qty.ffill("y"))
+    return MappingAdapter({"y": y_map})(qty.ffill("y"))  # type: ignore [attr-defined]
 
 
 def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
