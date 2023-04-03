@@ -232,7 +232,7 @@ def tax_emission(context: Context, scenario: Scenario, price: float):
 
 
 def generate(context: Context) -> Workflow:
-    """Create the NAVIGATE workflow."""
+    """Create the NAVIGATE workflow for T3.5, T6.1, and T6.2."""
     wf = Workflow(context)
 
     # Use the navigate_scenario setting, e.g. from the --scenario CLI option, to
@@ -251,6 +251,7 @@ def generate(context: Context) -> Workflow:
     # - replace_par_data() to move hp_gas_i entries from CO2_r_c to CO2_ind.
 
     # Step 2
+    # TODO modify target= according to the WP6 setting
     wf.add_step(
         "M built",
         "base",
@@ -266,16 +267,24 @@ def generate(context: Context) -> Workflow:
         """Iterate over scenario codes while unpacking information."""
         for code in iter_scenario_codes(context, filters):
             # Unpack information from the code
-            yield (
-                code.id.split("NAV_Dem-")[1],  # Short label
-                str(code.get_annotation(id="navigate_climate_policy").text),
-                str(code.get_annotation(id="navigate_T35_policy").text),
-            )
+            try:
+                info = (
+                    re.match("(NAV_Dem|PC|PEP)-(.*)", code.id).group(2),  # Short label
+                    str(code.get_annotation(id="navigate_climate_policy").text),
+                    str(code.get_annotation(id="navigate_T35_policy").text),
+                )
+            except KeyError as e:
+                log.debug(f"Skip {code}: {e!r}")
+            else:
+                yield info
 
     # Steps 3–7 are only run for the "NPi" (baseline) climate policy
-    filters = {"navigate_task": "T3.5", "navigate_climate_policy": "NPi"}
+    filters = {
+        "navigate_task": {"T3.5", "T6.1", "T6.2"},
+        "navigate_climate_policy": "NPi",
+    }
     for s, _, T35_policy in iter_scenarios(filters):
-        # Skip these for now
+        # Not implemented: T3.5 scenarios with regionally differentiated carbon prices
         if s.endswith("_d"):
             continue
 
