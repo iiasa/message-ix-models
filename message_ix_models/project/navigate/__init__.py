@@ -95,6 +95,15 @@ _A = [
 #:   Retained here pending iiasa/navigate-workflow#47. cf. corresponding pin to an
 #:   earlier commit in :file:`pytest.yaml` workflow.
 EXTRA_SCENARIOS = [
+    # In order to have a no-policy corresponding to PC-15C-LowCE
+    Code(
+        id="PC-NPi-LowCE",
+        annotations=[
+            Annotation(id="navigate_climate_policy", text="NPi"),
+            Annotation(id="navigate_T35_policy", text="act+tec"),
+            Annotation(id="navigate_task", text="T6.1"),
+        ],
+    ),
     Code(
         id="NAV_Dem-15C-ref",
         annotations=[Annotation(id="navigate_climate_policy", text="15C")] + _A,
@@ -172,7 +181,7 @@ def iter_scenario_codes(
         match = True
         for key, value in filters.items():
             try:
-                if str(code.get_annotation(id=key).text) != value:
+                if str(code.get_annotation(id=key).text) not in value:
                     match = False
                     break
             except KeyError:
