@@ -105,6 +105,39 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
             df_temp["lifetime"] = df_temp["technology"].map(dict_lifetime)
             df_temp = df_temp[(df_temp["year_act"] - df_temp["year_vtg"]) < df_temp["lifetime"]]
             par_dict[i] = df_temp.drop("lifetime", axis="columns")
+    pars = ["inv_cost", "fix_cost"]
+    tec_list = ["biomass_NH3",
+                "electr_NH3",
+                "gas_NH3",
+                "coal_NH3",
+                "fueloil_NH3",
+                "biomass_NH3_ccs",
+                "gas_NH3_ccs",
+                "coal_NH3_ccs",
+                "fueloil_NH3_ccs"]
+    cost_conv = pd.read_excel(
+        "C:/Users\maczek\PycharmProjects\message_data\data\material\methanol/location factor collection.xlsx",
+        sheet_name="cost_convergence", index_col=0)
+    for p in pars:
+        conv_cost_df = pd.DataFrame()
+        df = par_dict[p]
+        for tec in tec_list:
+            if p == "inv_cost":
+                year_col = "year_vtg"
+            else:
+                year_col = "year_act"
+
+            df_tecs = df[df["technology"]==tec]
+            df_tecs = df_tecs.merge(cost_conv, left_on=year_col, right_index=True)
+            df_tecs_nam = df_tecs[df_tecs["node_loc"] == "R12_NAM"]
+            df_tecs = df_tecs.merge(df_tecs_nam[[year_col, "value"]], left_on=year_col, right_on=year_col)
+            df_tecs["diff"] = df_tecs["value_x"] - df_tecs["value_y"]
+            df_tecs["diff"] = df_tecs["diff"] * (1 - df_tecs["convergence"])
+            df_tecs["new_val"] = df_tecs["value_x"] - df_tecs["diff"]
+            df_tecs["value"] = df_tecs["new_val"]
+            conv_cost_df = pd.concat([conv_cost_df, make_df(p, **df_tecs)])
+        par_dict[p] = pd.concat([df[~df["technology"].isin(tec_list)], conv_cost_df])
+
     return par_dict
 
 
