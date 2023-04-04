@@ -127,8 +127,8 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
     )
     df.groupby("parameter")
     par_dict = {key: value for (key, value) in df.groupby("parameter")}
-    for i in par_dict.keys():
-        par_dict[i] = par_dict[i].dropna(axis=1)
+    #for i in par_dict.keys():
+        #par_dict[i] = par_dict[i].dropna(axis=1)
 
     act_years = s_info.yv_ya[s_info.yv_ya.year_vtg > 2000]["year_act"]
     act_years = act_years.drop_duplicates()
@@ -137,29 +137,42 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
 
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
-        df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
+        df["node_rel"] = df["node_rel"].apply(lambda x: None if x == "all" else x)
         df = df.to_dict()
-
-        df_new = make_df(par_name, **df)
+        df = make_df(par_name, **df)
         # split df into df with default values and df with regionalized values
-        df_new_no_reg = df_new[df_new["node_loc"].isna()]
-        df_new_reg = df_new[~df_new["node_loc"].isna()]
+        df_all_regs = df[df["node_rel"].isna()]
+        df_single_regs = df[~df["node_rel"].isna()]
+
         # broadcast regions to default parameter values
-        df_new_no_reg = df_new_no_reg.pipe(broadcast, node_rel=nodes)
-        if "node_loc" in df_new_no_reg.columns:
-            df_new_no_reg["node_loc"] = df_new_no_reg["node_rel"]
-        df_new = pd.concat([df_new_reg, df_new_no_reg])
+        df_all_regs = df_all_regs.pipe(broadcast, node_rel=nodes)
+
+        def same_node_if_nan(df):
+            if df["node_loc"] == "same":
+                df["node_loc"] = df["node_rel"]
+            return df
+
+        if "node_loc" in df_all_regs.columns:
+            df_all_regs = df_all_regs.apply(lambda x: same_node_if_nan(x), axis=1)
+
+        if "node_loc" in df_single_regs.columns:
+            df_single_regs["node_loc"] = df_single_regs["node_loc"].apply(lambda x: None if x == "all" else x)
+            df_new_reg_all_regs = df_single_regs[df_single_regs["node_loc"].isna()]
+            df_new_reg_all_regs = df_new_reg_all_regs.pipe(broadcast, node_loc=nodes)
+            df_single_regs = pd.concat([df_single_regs[~df_single_regs["node_loc"].isna()], df_new_reg_all_regs])
+
+        df = pd.concat([df_single_regs, df_all_regs])
 
         # broadcast scenario years
-        if "year_rel" in df_new.columns:
-            df_new = df_new.pipe(same_node).pipe(broadcast, year_rel=act_years)
+        if "year_rel" in df.columns:
+            df = df.pipe(same_node).pipe(broadcast, year_rel=act_years)
 
-        if "year_act" in df_new.columns:
-            df_new["year_act"] = df_new["year_rel"]
+        if "year_act" in df.columns:
+            df["year_act"] = df["year_rel"]
 
         # set import/export node_dest/origin to GLB for input/output
-        set_exp_imp_nodes(df_new)
-        par_dict[par_name] = df_new
+        set_exp_imp_nodes(df)
+        par_dict[par_name] = df
 
     return par_dict
 
