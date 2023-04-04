@@ -479,6 +479,10 @@ fertilizer:
     - gas_NH3_ccs
     - coal_NH3_ccs
     - fueloil_NH3_ccs
+  relation:
+    add:
+      - NH3_trd_cap
+      - NFert_trd_cap
 
 methanol:
   commodity:
