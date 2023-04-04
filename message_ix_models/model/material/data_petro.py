@@ -261,21 +261,36 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
                     elif param_name == "var_cost":
                         mod = split[1]
-
-                        df = (
-                            make_df(
-                                param_name,
-                                technology=t,
-                                commodity=com,
-                                level=lev,
-                                mode=mod,
-                                value=val[regions[regions == rg].index[0]],
-                                unit="t",
-                                **common
+                        if rg != global_region:
+                            df = (
+                                make_df(
+                                    param_name,
+                                    technology=t,
+                                    commodity=com,
+                                    level=lev,
+                                    mode=mod,
+                                    value=val[regions[regions == rg].index[0]],
+                                    unit="t",
+                                    **common
+                                )
+                                .pipe(broadcast, node_loc=nodes)
+                                .pipe(same_node)
                             )
-                            .pipe(broadcast, node_loc=nodes)
-                            .pipe(same_node)
-                        )
+                        else:
+                            df = (
+                                make_df(
+                                    param_name,
+                                    technology=t,
+                                    commodity=com,
+                                    level=lev,
+                                    mode=mod,
+                                    value=val[regions[regions == rg].index[0]],
+                                    node_loc=rg,
+                                    unit="t",
+                                    **common
+                                )
+                                .pipe(same_node)
+                            )
 
                     elif param_name == "share_mode_up":
                         mod = split[1]
