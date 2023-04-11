@@ -277,6 +277,9 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
         print('Scenario calibrated.')
 
     if add_macro: # Default True
+        print('After macro calibration a new scneario with the suffix _macro is created.')
+        print('Make sure to use this scenario to solve with MACRO iterations.')
+
         scenario.solve(model="MESSAGE-MACRO", solve_options={"lpmethod": "4"})
         scenario.set_as_default()
 
