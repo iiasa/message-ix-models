@@ -79,6 +79,7 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
 
     # Data are returned for the following parameters
     assert {
+        "bound_new_capacity_up",
         "capacity_factor",
         "growth_activity_lo",
         "growth_activity_up",
@@ -120,7 +121,9 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
             continue
 
         # Data covers these periods
-        exp_y = {"var_cost": info.Y}.get(par_name, y_2010)
+        exp_y = {"bound_new_capacity_up": info.Y, "var_cost": info.Y}.get(
+            par_name, y_2010
+        )
         assert set(exp_y) == set(df["year_vtg"].unique())
 
         # Expected number of (yv, ya) combinations in the data
@@ -136,7 +139,11 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
         # - # of regions
         # - # of technologies: 11 if specific to each LDV tech
         # - # of periods
-        N_exp = len(info.N[1:]) * {"var_cost": 1}.get(par_name, 11) * N_y
+        N_exp = (
+            len(info.N[1:])
+            * {"bound_new_capacity_up": 1, "var_cost": 1}.get(par_name, 11)
+            * N_y
+        )
         # log.info(f"{N_exp = } {len(df) = }")
 
         # # Show the data for debugging
