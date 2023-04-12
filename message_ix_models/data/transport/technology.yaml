@@ -60,6 +60,7 @@ ICE_L_ptrp:
     Historical (2005 and before) Low-efficiency internal combustion engine
     light-duty vehicle using gasoline/diesel
   input: {commodity: lightoil}
+  historical-only: True
   message-v-report: LDV_ICE_L
 
 ICE_nga:
