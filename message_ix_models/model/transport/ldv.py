@@ -386,8 +386,8 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     years = info.Y[1:]
 
     # Technologies as a hierarchical code list
-    codes = config.set["technology"]["add"]
-    ldv_codes = codes[codes.index("LDV")].child
+    techs = config.set["technology"]["add"]
+    ldv_techs = techs[techs.index("LDV")].child
 
     # All technologies in the spec, as strings
     all_techs = list(map(str, context["transport spec"].add.set["technology"]))
@@ -395,7 +395,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     # List of technologies to constrain, including the LDV technologies, plus the
     # corresponding "X usage by CG" pseudo-technologies
     techs: List[Code] = []
-    for t in map(str, ldv_codes):
+    for t in map(str, ldv_techs):
         techs.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
 
     # Constraint value
