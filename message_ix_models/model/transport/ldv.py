@@ -395,9 +395,9 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
 
     # List of technologies to constrain, including the LDV technologies, plus the
     # corresponding "X usage by CG" pseudo-technologies
-    techs: List[Code] = []
+    constrained: List[Code] = []
     for t in map(str, ldv_techs):
-        techs.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
+        constrained.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
 
     # Constraint value
     annual = config.constraint["LDV growth_activity"]
@@ -407,7 +407,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
         par = f"growth_activity_{bound}"
         data[par] = make_df(
             par, value=factor * annual, year_act=years, time="year", unit="-"
-        ).pipe(broadcast, node_loc=info.N[1:], technology=techs)
+        ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
 
     # Prevent new capacity from being constructed for techs annotated
     # "historical-only: True"
