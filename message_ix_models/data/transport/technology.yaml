@@ -3,6 +3,10 @@
 # References:
 # [1] “The "GEAM_TRP_techinput.xls" workbook ("updateTRPdata" sheet) in
 #      Christoph's folders.”
+#
+# - "report" annotations are picked up by add_replacements() for reporting.
+# - "message-v-report" annotations appear in the US-TIMES–MA³T input data, but
+#   were apparently not used in MESSAGE-(V)-Transport.
 
 ELC_100:
   name: Battery-electric LDV
@@ -11,71 +15,71 @@ ELC_100:
     all-electric range)
   report: BEV
   input: {commodity: electr}
-  report: LDV_ELE
+  message-v-report: LDV_ELE
 
 HFC_ptrp:
   description: Hybridized fuel cell light-duty vehicle using hydrogen
   report: FCEV
   input: {commodity: hydrogen}
-  report: LDV_HFC
+  message-v-report: LDV_HFC
 
 IAHe_ptrp:
   description: >-
     Hybridized internal combustion engine light-duty vehicle using biofuels
   input: {commodity: lightoil}
-  report: LDV_EHYB
+  message-v-report: LDV_EHYB
 
 IAHm_ptrp:
   description: >-
     Hybridized internal combustion engine light-duty vehicle using methanol/
     synthetic fossil liquids
   input: {commodity: methanol}
-  report: LDV_MHYB
+  message-v-report: LDV_MHYB
 
 ICAe_ffv:
   description: Internal combustion engine light-duty vehicle using biofuels
   input: {commodity: ethanol}
-  report: LDV_ffv
+  message-v-report: LDV_ffv
 
 ICAm_ptrp:
   description: >-
     Internal combustion engine light-duty vehicle using methanol/synthetic
     fossil liquids
   input: {commodity: methanol}
-  report: LDV_meth
+  message-v-report: LDV_meth
 
 ICE_conv:
   description: >-
     Future (2005 and after) medium/high-efficiency internal combustion engine
     light-duty vehicle using gasoline/diesel
   input: {commodity: lightoil}
-  report: LDV_conv
+  message-v-report: LDV_conv
 
 ICE_L_ptrp:
   description: >-
     Historical (2005 and before) Low-efficiency internal combustion engine
     light-duty vehicle using gasoline/diesel
   input: {commodity: lightoil}
-  report: LDV_ICE_L
+  message-v-report: LDV_ICE_L
 
 ICE_nga:
   description: >-
     Internal combustion engine light-duty vehicle using natural gas
   input: {commodity: gas}
-  report: LDV_NGA
+  message-v-report: LDV_NGA
 
 ICH_chyb:
   description: >-
     Hybridized internal combustion engine light-duty vehicle using
     gasoline/diesel
   input: {commodity: lightoil}
-  report: LDV_CHYB
+  message-v-report: LDV_CHYB
 
 IGH_ghyb:
   description: >-
     Hybridized internal combustion engine light-duty vehicle using natural gas
   input: {commodity: gas}
-  report: LDV_GHYB
+  message-v-report: LDV_GHYB
 
 PHEV_ptrp:
   description: >-
@@ -83,7 +87,7 @@ PHEV_ptrp:
     all-electric range)
   report: PHEV
   input: {commodity: lightoil}
-  report: LDV_PHEV
+  message-v-report: LDV_PHEV
 
 ICE_H_moto:
   description: >-
