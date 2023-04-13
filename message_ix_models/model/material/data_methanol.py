@@ -231,7 +231,7 @@ def gen_data_meth_chemicals(scenario, chemical):
     # exclude emissions for now
     if chemical == "MTO":
         df = df.iloc[
-            :14,
+            :15,
         ]
     if chemical == "Formaldehyde":
         df = df.iloc[
