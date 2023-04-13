@@ -21,22 +21,25 @@ def gen_data_methanol(scenario):
 
 
     # read new meth tec parameters
-    meth_h2_fs_dict = gen_data_meth_h2()
-    meth_h2_fuel_dict = gen_data_meth_h2()
     meth_bio_dict = gen_data_meth_bio(scenario)
     meth_bio_ccs_dict = gen_meth_bio_ccs(scenario)
-    meth_fs_dic = combine_df_dictionaries(meth_h2_fs_dict, gen_data_meth_bio(scenario),
+    meth_fs_dic = combine_df_dictionaries(gen_data_meth_bio(scenario),
                                           gen_meth_bio_ccs(scenario))
-    meth_fuel_dic = combine_df_dictionaries(meth_h2_fuel_dict, meth_bio_dict, meth_bio_ccs_dict)
-    for k in meth_h2_fuel_dict.keys():
+    meth_fuel_dic = combine_df_dictionaries(meth_bio_dict, meth_bio_ccs_dict)
+    for k in meth_fs_dic.keys():
         df_fuel = meth_fuel_dic[k]
         df_fs = meth_fs_dic[k]
         if "mode" in df_fuel.columns:
             df_fuel["mode"] = "fuel"
             df_fs["mode"] = "feedstock"
 
+    meth_h2_fs_dict = gen_data_meth_h2("fs")
+    meth_h2_fuel_dict = gen_data_meth_h2("fuel")
+    meth_fuel_dic = combine_df_dictionaries(meth_fuel_dic, meth_h2_fuel_dict)
+    meth_fs_dic = combine_df_dictionaries(meth_fs_dic, meth_h2_fs_dict)
+
     df = meth_fs_dic["output"]
-    df.loc[df["commodity"] == "methanol", "level"] = "primary_material"
+    df.loc[(df["commodity"] == "methanol") & (df["level"] == "primary"), "level"] = "primary_material"
     meth_fs_dic["output"] = df
 
 
@@ -229,14 +232,15 @@ def gen_data_methanol(scenario):
     return new_dict2
 
 
-def gen_data_meth_h2():
-    df_h2 = pd.read_excel(
-        context.get_local_path("material", "methanol", "meth_h2_techno_economic.xlsx"),
+def gen_data_meth_h2(mode):
+    h2_par_dict = pd.read_excel(
+        context.get_local_path("material", "methanol", f"meth_h2_techno_economic_{mode}.xlsx"),
         sheet_name=None,
     )
-    df_h2["inv_cost"] = update_costs_with_loc_factor(df_h2["inv_cost"])
-    df_h2["inv_cost"] = update_costs_with_loc_factor(df_h2["fix_cost"])
-    return df_h2
+    if "inv_cost" in h2_par_dict.keys():
+        h2_par_dict["inv_cost"] = update_costs_with_loc_factor(h2_par_dict["inv_cost"])
+        h2_par_dict["fix_cost"] = update_costs_with_loc_factor(h2_par_dict["fix_cost"])
+    return h2_par_dict
 
 
 def gen_data_meth_bio(scenario):
@@ -383,7 +387,7 @@ def gen_data_meth_chemicals(scenario, chemical):
 def add_methanol_fuel_additives(scenario):
     par_dict_loil = {}
     pars = ['output', 'var_cost', 'relation_activity', 'input', 'emission_factor']
-    if "loil_trp" not in scenario.set("technology"):
+    if "loil_trp" not in scenario.set("technology").to_list():
         print(
             "It seems that the selected scenario does not contain the technology: loil_trp. Methanol fuel blending could not be calculated and was skipped")
         return par_dict_loil
