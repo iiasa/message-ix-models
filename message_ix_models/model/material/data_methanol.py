@@ -302,7 +302,7 @@ def gen_data_meth_chemicals(scenario, chemical):
     # exclude emissions for now
     if chemical == "MTO":
         df = df.iloc[
-            :14,
+            :15,
         ]
     if chemical == "Formaldehyde":
         df = df.iloc[
@@ -369,9 +369,9 @@ def gen_data_meth_chemicals(scenario, chemical):
             "bound_activity_up", year_act=2020, value=12, **hist_dict
         )
         df = par_dict["growth_activity_lo"]
-        par_dict["growth_activity_lo"] = df[~((df["node_loc"] == "R12_CHN") & ((df["year_act"] == 2020)))]
+        par_dict["growth_activity_lo"] = df[~((df["node_loc"] == "R12_CHN") & (df["year_act"] == 2020))]
         df = par_dict["growth_activity_up"]
-        par_dict["growth_activity_up"] = df[~((df["node_loc"] == "R12_CHN") & ((df["year_act"] == 2020)))]
+        par_dict["growth_activity_up"] = df[~((df["node_loc"] == "R12_CHN") & (df["year_act"] == 2020))]
         #par_dict.pop("growth_activity_up")
         #par_dict.pop("growth_activity_lo")
         par_dict["inv_cost"] = update_costs_with_loc_factor(par_dict["inv_cost"])
