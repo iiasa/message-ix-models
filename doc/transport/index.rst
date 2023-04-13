@@ -26,8 +26,11 @@ On other pages:
 - :doc:`transport/report`
 - :doc:`transport/old`
 
+Implementation
+==============
+
 Summary
-=======
+-------
 
 The code and data:
 
@@ -42,6 +45,13 @@ The code and data:
 - Provide an exogenous mode choice model that iterates with MESSAGEix-GLOBIOM
   through the ixmp callback feature, to set demand for specific transport
   technologies.
+
+Details
+-------
+
+- For light-duty vehicle technologies annotated with ``historical-only: True``, parameter data for ``bound_new_capacity_up`` are created value of 0.0.
+  These prevent new capacity of these technologies from being created during the model horizon, but allow pre-horizon installed capacity (represented by ``historical_new_capacity``) to continue to be operated within its technical lifetime.
+  (:pull:`441`)
 
 .. _transport-usage:
 
