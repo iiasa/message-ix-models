@@ -233,6 +233,7 @@ def build_scen(context, datafile, tag, mode, scenario_name):
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
+@click.option("--version", default=None)
 @click.option("--model_name", default="MESSAGEix-Materials")
 @click.option(
     "--datafile",
@@ -243,7 +244,7 @@ def build_scen(context, datafile, tag, mode, scenario_name):
 @click.option("--add_macro", default=True)
 @click.option("--add_calibration", default=False)
 @click.pass_obj
-def solve_scen(context, datafile, model_name, scenario_name, add_calibration, add_macro):
+def solve_scen(context, datafile, model_name, scenario_name, add_calibration, add_macro, version):
     """Solve a scenario.
 
     Use the --model_name and --scenario_name option to specify the scenario to solve.
@@ -252,7 +253,10 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
     from message_ix import Scenario
 
     mp = ixmp.Platform("ixmp_dev")
-    scenario = Scenario(mp, model_name, scenario_name)
+    if version:
+        scenario = Scenario(mp, model_name, scenario_name, version=int(version))
+    else:
+        scenario = Scenario(mp, model_name, scenario_name)
     #scenario = Scenario(context.get_platform(), model_name, scenario_name)
 
     if scenario.has_solution():
