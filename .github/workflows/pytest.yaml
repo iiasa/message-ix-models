@@ -76,7 +76,12 @@ jobs:
         pip install .[tests]
 
     - name: Run test suite using pytest
-      run: pytest message_ix_models -rA --verbose --color=yes --cov-report=xml --cov-report=term-missing --numprocesses=auto
+      run: |
+        pytest message_ix_models \
+          -rA --verbose --color=yes --durations=20 \
+          --cov-report=term-missing --cov-report=xml \
+          --numprocesses=auto
+      shell: bash
 
     - name: Test documentation build using Sphinx
       if: startsWith(matrix.os, 'ubuntu')
