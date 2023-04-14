@@ -14,16 +14,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-env:
-  # For setuptools-scm. With fetch --tags below, this ensures that enough
-  # history is fetched to contain the latest tag, so that setuptools-scm can
-  # generate the version number. Update:
-  # - See https://github.com/iiasa/message-ix-models/releases, at "NN commits to
-  #   main since this release". The value should be at least equal to NN + the
-  #   number of commits on any PR branch.
-  # - Reset to a lower value, e.g. 100, after a new release.
-  depth: 100
-
 jobs:
   pytest:
     strategy:
@@ -54,9 +44,6 @@ jobs:
       with:
         lfs: true
         fetch-depth: ${{ env.depth }}
-
-    - name: Fetch tags (for setuptools-scm)
-      run: git fetch --tags --depth=${{ env.depth }}
 
     - uses: actions/setup-python@v4
       with:
