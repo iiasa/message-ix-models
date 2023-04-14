@@ -49,7 +49,7 @@ jobs:
       with:
         python-version: ${{ matrix.version.python }}
         cache: pip
-        cache-dependency-path: "**/setup.cfg"
+        cache-dependency-path: "**/pyproject.toml"
 
     - uses: iiasa/actions/setup-gams@main
       with:
