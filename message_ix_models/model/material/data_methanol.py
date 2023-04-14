@@ -376,6 +376,8 @@ def gen_data_meth_chemicals(scenario, chemical):
         par_dict["growth_activity_lo"] = df[~((df["node_loc"] == "R12_CHN") & (df["year_act"] == 2020))]
         df = par_dict["growth_activity_up"]
         par_dict["growth_activity_up"] = df[~((df["node_loc"] == "R12_CHN") & (df["year_act"] == 2020))]
+        df = par_dict["initial_activity_up"]
+        par_dict["initial_activity_up"] = df[~((df["node_loc"] == "R12_CHN"))]# & (df["year_act"] == 2020))]
         #par_dict.pop("growth_activity_up")
         #par_dict.pop("growth_activity_lo")
         par_dict["inv_cost"] = update_costs_with_loc_factor(par_dict["inv_cost"])
