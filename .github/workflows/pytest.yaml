@@ -53,12 +53,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         lfs: true
-        path: message-ix-models
         fetch-depth: ${{ env.depth }}
 
     - name: Fetch tags (for setuptools-scm)
-      run: (cd message-ix-models; git fetch --tags --depth=${{ env.depth }})
-      shell: bash
+      run: git fetch --tags --depth=${{ env.depth }}
 
     - uses: actions/setup-python@v4
       with:
@@ -75,19 +73,16 @@ jobs:
       run: |
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream-version }}"
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream-version }}"
-        pip install ./message-ix-models[tests]
+        pip install .[tests]
 
     - name: Run test suite using pytest
-      working-directory: message-ix-models
       run: pytest message_ix_models -rA --verbose --color=yes --cov-report=xml --cov-report=term-missing --numprocesses=auto
 
     - name: Test documentation build using Sphinx
       if: startsWith(matrix.os, 'ubuntu')
       env:
         RTD_TOKEN_MESSAGE_DATA: ${{ secrets.RTD_TOKEN_MESSAGE_DATA }}
-      run: make --directory=message-ix-models/doc html
+      run: make --directory=doc html
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3
-      with:
-        root_dir: message-ix-models
