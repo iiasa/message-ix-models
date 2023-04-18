@@ -326,15 +326,10 @@ def callback(rep: Reporter, context: Context) -> None:
     # Add an operation to copy time-series data from a corresponding reference scenario
     copy_ts_keys = []
 
-    try:
-        si = context["navigate copy ts"]
-    except KeyError:
-        print("navigate copy ts is not in the context")
-        si = None
-
-    if si:
+    if context.navigate.copy_ts:
         # URL of the other scenario
         platform_name = rep.get("scenario").platform.name
+        si = context.navigate.copy_ts
         other_url = f"ixmp://{platform_name}/{si['model']}/{si['scenario']}"
 
         # Identify period(s) to copy

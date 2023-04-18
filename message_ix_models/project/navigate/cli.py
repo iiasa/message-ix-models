@@ -4,7 +4,9 @@ import re
 from pathlib import Path
 
 import click
-from message_ix_models.util.click import common_params, store_context
+from message_ix_models.util.click import common_params
+
+from . import Config
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +20,6 @@ _DSD = click.Option(
 _SCENARIO = click.Option(
     ["-s", "--scenario", "navigate_scenario"],
     default="baseline",
-    callback=store_context,
     help="NAVIGATE T3.5 scenario ID.",
 )
 
@@ -27,6 +28,8 @@ _SCENARIO = click.Option(
 @click.pass_obj
 def cli(context, navigate_scenario):
     """NAVIGATE project."""
+
+    context["navigate"] = Config(scenario=navigate_scenario)
 
 
 @cli.command("prep-submission", params=[_DSD])
@@ -40,7 +43,7 @@ def prep_submission(context, wf_dir, dsd):
     from message_data.projects.navigate.report import gen_config
     from message_data.tools.prep_submission import main
 
-    context.navigate_dsd = dsd
+    context.navigate.dsd = dsd
     # Fixed values
     context.regions = "R12"
 
@@ -111,7 +114,7 @@ def gen_workflow(context, versions):
     """
     import re
 
-    s = [context.navigate_scenario]
+    s = [context.navigate.scenario]
 
     whitespace = re.compile(r"\s\s+")
 
@@ -132,7 +135,8 @@ def run(context, dry_run, truncate_step, dsd, target_step):
     """
     from . import workflow
 
-    context.navigate_dsd = dsd
+    # Copy settings to the Config object
+    context.navigate.dsd = dsd
 
     wf = workflow.generate(context)
 
