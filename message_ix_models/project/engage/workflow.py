@@ -50,6 +50,10 @@ class PolicyConfig(ConfigHelper):
     #: TODO choose a more informative name.
     low_dem_scen: Optional[str] = None
 
+    #: Information on an optional, second scenario from which to copy tax_emission data
+    #: in :func:`step_3`.
+    tax_emission_scenario: Dict = field(default_factory=dict)
+
     #: :obj:`True` to call :func:`.reserve_margin.res_marg.main`.
     reserve_margin: bool = True
 
