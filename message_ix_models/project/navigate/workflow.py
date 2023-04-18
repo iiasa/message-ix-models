@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import replace
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from message_ix import Scenario
 from message_ix_models import Context
@@ -13,7 +13,7 @@ from message_ix_models.workflow import Workflow
 from message_data.model import buildings
 from message_data.projects.engage import workflow as engage
 
-from . import CLIMATE_POLICY, iter_scenario_codes
+from . import CLIMATE_POLICY
 from .report import gen_config
 
 log = logging.getLogger(__name__)
@@ -231,6 +231,32 @@ def tax_emission(context: Context, scenario: Scenario, price: float):
     return scenario
 
 
+def iter_scenarios(context, filters) -> Tuple[str, str, str, str]:
+    """Iterate over scenario codes while unpacking information.
+
+    Yields a sequence of 4-tuples:
+
+    1. Short label or identifier.
+    2. The value of the ``navigate_climate_policy`` annotation, if any.
+    3. The value of the ``navigate_T35_policy`` annotation, if any.
+    4. The value of the ``navigate_WP6_production`` annotation, if any.
+    """
+    from . import iter_scenario_codes
+
+    for code in iter_scenario_codes(context, filters):
+        # Short label from the code ID
+        info = [re.match("(NAV_Dem|PC|PEP)-(.*)", code.id).group(2)]
+
+        # Values for 3 annotations
+        for name in ("climate_policy", "T35_policy", "WP6_production"):
+            try:
+                info.append(str(code.get_annotation(id=f"navigate_{name}").text))
+            except KeyError:
+                info.append(None)  # Annotation does not exist on `code`
+
+        yield info
+
+
 def generate(context: Context) -> Workflow:
     """Create the NAVIGATE workflow for T3.5, T6.1, and T6.2."""
     wf = Workflow(context)
@@ -259,31 +285,14 @@ def generate(context: Context) -> Workflow:
         target="MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE",
     )
 
-    BMT_solved = {}  # Step names for results of step 7
-    reported_all = []  # Step IDs for results of step 8
-
-    # Shorthand, used twice
-    def iter_scenarios(filters):
-        """Iterate over scenario codes while unpacking information."""
-        for code in iter_scenario_codes(context, filters):
-            # Unpack information from the code
-            try:
-                info = (
-                    re.match("(NAV_Dem|PC|PEP)-(.*)", code.id).group(2),  # Short label
-                    str(code.get_annotation(id="navigate_climate_policy").text),
-                    str(code.get_annotation(id="navigate_T35_policy").text),
-                )
-            except KeyError as e:
-                log.debug(f"Skip {code}: {e!r}")
-            else:
-                yield info
+    baseline_solved = {}  # Step names for results of step 7
 
     # Steps 3–7 are only run for the "NPi" (baseline) climate policy
     filters = {
         "navigate_task": {"T3.5", "T6.1", "T6.2"},
         "navigate_climate_policy": "NPi",
     }
-    for s, _, T35_policy in iter_scenarios(filters):
+    for s, _, T35_policy, WP6_production in iter_scenarios(context, filters):
         # Not implemented: T3.5 scenarios with regionally differentiated carbon prices
         if s.endswith("_d"):
             continue
@@ -317,7 +326,9 @@ def generate(context: Context) -> Workflow:
 
     # Now iterate over all scenarios
     filters.pop("navigate_climate_policy")
-    for s, climate_policy, T35_policy in iter_scenarios(filters):
+    for s, climate_policy, T35_policy, WP6_production in iter_scenarios(
+        context, filters
+    ):
         # Skip these for now
         if s.endswith("_d"):
             continue
