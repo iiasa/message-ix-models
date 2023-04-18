@@ -45,8 +45,8 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "http://github.com/iiasa/message-ix-models"
-repository = "http://github.com/iiasa/message-ix-models"
+homepage = "https://github.com/iiasa/message-ix-models"
+repository = "https://github.com/iiasa/message-ix-models"
 documentation = "https://docs.messageix.org/models"
 
 [project.optional-dependencies]
