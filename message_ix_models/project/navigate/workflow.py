@@ -303,27 +303,33 @@ def generate(context: Context) -> Workflow:
         "navigate_climate_policy": "NPi",
     }
     for s, _, T35_policy, WP6_production in iter_scenarios(context, filters):
-        # TODO optionally skip this step
-        # Step 3
-        wf.add_step(
-            f"MT {s} built",
-            "M built",
-            build_transport,
-            target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
-            clone=True,
-            navigate_scenario=T35_policy,
-        )
+        base = "M built"
 
-        # Step 4
-        wf.add_step(f"MT {s} solved", f"MT {s} built", solve)
+        if context.navigate.transport:
+            # Step 3
+            name = f"MT {s} built"
+            wf.add_step(
+                name,
+                "M built",
+                build_transport,
+                target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
+                clone=True,
+                navigate_scenario=T35_policy,
+            )
+
+            # Step 4
+            wf.add_step(f"MT {s} solved", f"MT {s} built", solve)
+            base = f"MT {s} solved"
+
+        variant = "BM" + ("T" if context.navigate.transport else "")
 
         # Steps 5–7
-        name = f"BMT {s} solved"
+        name = f"{variant} {s} solved"
         wf.add_step(
             name,
-            f"MT {s} solved",
+            base,
             build_solve_buildings,  # type: ignore
-            target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
+            target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
             clone=True,
             navigate_scenario=s,
         )
@@ -361,7 +367,7 @@ def generate(context: Context) -> Workflow:
                 s,
                 base,
                 tax_emission,
-                target=f"MESSAGEix-GLOBIOM 1.1-BMT-R12 (NAVIGATE)/{s}",
+                target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
                 clone=dict(shift_first_model_year=2025),
                 price=1000.0,
             )
