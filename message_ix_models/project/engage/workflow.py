@@ -272,6 +272,13 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
 def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenario:
     """Step 3 of the ENGAGE climate policy workflow."""
+    if config.tax_emission_scenario:
+        # Retrieve CO2 prices from a different scenario
+        source = Scenario(scenario.platform, **config.tax_emission_scenario)
+    else:
+        # Retrieve CO2 prices from `scenario` itself
+        source = scenario
+
     # Retrieve a data frame with CO₂ prices
     #
     # NB this method:
@@ -279,9 +286,11 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     #   instance of ScenarioRunner.
     #   TODO separate the method from the class as a stand-alone function
     # - does not require legacy reporting output; only the variable "PRICE_EMISSION",
-    #   i.e. `scenario` must have solution data.
+    #   i.e. `source` must have solution data.
     sr = ScenarioRunner(context)
-    df = sr.retr_CO2_price(scenario, new_type_emission="TCE_non-CO2")
+    df = sr.retr_CO2_price(source, new_type_emission="TCE_non-CO2")
+
+    del source  # No longer used → free memory
 
     try:
         scenario.remove_solution()
@@ -339,7 +348,7 @@ def add_steps(
             _base,
             globals()[f"step_{step}"],
             clone=dict(shift_first_model_year=2025)
-            if step == 1
+            if step == config.steps[0]
             else dict(keep_solution=True),
             target=f"{info['model']}/{s}",
             config=config,
