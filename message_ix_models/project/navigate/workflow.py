@@ -285,7 +285,8 @@ def generate(context: Context) -> Workflow:
         target="MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE",
     )
 
-    baseline_solved = {}  # Step names for results of step 7
+    # Mapping from short IDs (`s`) to step names for results of step 7
+    baseline_solved = {}
 
     # Steps 3–7 are only run for the "NPi" (baseline) climate policy
     filters = {
@@ -297,6 +298,7 @@ def generate(context: Context) -> Workflow:
         if s.endswith("_d"):
             continue
 
+        # TODO optionally skip this step
         # Step 3
         wf.add_step(
             f"MT {s} built",
@@ -322,24 +324,40 @@ def generate(context: Context) -> Workflow:
         )
 
         # Store the step name as a starting point for climate policy steps, below
-        BMT_solved[T35_policy] = name
+        baseline_solved[(T35_policy, WP6_production)] = name
+
+    # Mapping from short IDs (`s`) to 2-tuples with:
+    # 1. name of the final step in the policy sequence (if any)
+    # 2. args for report(…, other_scenario_info=…) —either None or model/scenario name
+    to_report = {}
 
     # Now iterate over all scenarios
     filters.pop("navigate_climate_policy")
     for s, climate_policy, T35_policy, WP6_production in iter_scenarios(
         context, filters
     ):
-        # Skip these for now
-        if s.endswith("_d"):
+        # Not implemented:
+        # - T3.5 scenarios with regionally differentiated carbon prices.
+        # - Older T6.2 scenario codes that appear in the official list but are not
+        #   annotated.
+        if s.endswith("_d") or (T35_policy is WP6_production is None):
             continue
 
-        # Select right PolicyConfig object
-        policy_config = CLIMATE_POLICY[climate_policy]
-        # Identify the base scenario
-        base = BMT_solved[T35_policy]
+        # Identify the base scenario for the subsequent steps
+        base = baseline_solved[(T35_policy, WP6_production)]
 
-        if not isinstance(policy_config, engage.PolicyConfig):
-            assert climate_policy == "Ctax"
+        # Select the indicated PolicyConfig object
+        engage_policy_config = CLIMATE_POLICY.get(climate_policy)
+
+        if isinstance(engage_policy_config, engage.PolicyConfig):
+            # Add 0 or more steps for climate policies
+            # NB this can occur here so long as PolicyConfig.method = "calc" is NOT used
+            #    by any of the objects in ENGAGE_CONFIG. If "calc" appears, then
+            #    engage.step_1 requires data which is currently only available from
+            #    legacy reporting output, and the ENGAGE steps must take place after
+            #    step 9 (running legacy reporting, below)
+            name = engage.add_steps(wf, base=base, config=engage_policy_config, name=s)
+        elif climate_policy == "Ctax":
             # Carbon tax; not an implementation of an ENGAGE climate policy
             wf.add_step(
                 s,
@@ -351,74 +369,75 @@ def generate(context: Context) -> Workflow:
             )
             name = f"{s} solved"
             wf.add_step(name, s, solve)
+        elif climate_policy == "PEP-20C-Default":
+            # TODO add a separate set of steps for T6.2: non -Default scenarios copy an
+            #      emissions price trajectory from PEP-2C-Default
+            raise NotImplementedError
         else:
-            # Add 0 or more steps for climate policies
-            # NB this can occur here so long as PolicyConfig.method = "calc" is NOT used
-            #    by any of the objects in ENGAGE_CONFIG. If "calc" appears, then
-            #    engage.step_1 requires data which is currently only available from
-            #    legacy reporting output, and the ENGAGE steps must take place after
-            #    step 9 (running legacy reporting, below)
-            name = engage.add_steps(wf, base=base, config=policy_config, name=s)
+            raise ValueError(climate_policy)
 
         if name == base:
-            policy_solved = name
-        else:
-            # Re-solve with buildings at the last step
+            # No steps added, e.g. for "NPi" where engage.PolicyConfig.steps == []
+            # Store the reporting information
+            to_report[s] = (name, None)
+            continue
 
-            # Prior two steps added by engage.add_steps()
-            step_m1 = wf.graph[name][0]
-            step_m2 = wf.graph[wf.graph[name][2]][0]
+        # At least 1 policy step was added; re-solve the buildings model(s) to pick up
+        # price changes
 
-            # Retrieve options on the solve step added by engage.add_steps()
-            try:
-                solve_kw = step_m1.kwargs["config"].solve
-            except KeyError:
-                solve_kw = dict()
-            # Retrieve the target scenario from the
-            # TODO remove the need to look up step_m2 by allowing a callback to give the
-            #      new model/scenario name
-            target = step_m2.scenario_info
+        # Prior two steps added by engage.add_steps() or for Ctax
+        step_m1 = wf.graph[name][0]
+        step_m2 = wf.graph[wf.graph[name][2]][0]
 
-            # Create a new step with the same name and base, but invoking
-            # MESSAGEix-Buildings instead.
-            # - Override default buildings.Config.clone = True.
-            # - Use the same Scenario.solve() keyword arguments as for the ENGAGE step,
-            #   e.g. including "model" and ``solve_options["barcrossalg"]``.
-            # - Use the same NAVIGATE scenario as the base scenario.
-            policy_solved = f"{name} again"
-            wf.add_step(
-                policy_solved,
-                name,
-                build_solve_buildings,
-                # Clone before this step
-                target="{model}/{scenario}+B".format(**target),
-                clone=True,
-                # Keyword arguments for build_solve_buildings
-                navigate_scenario=wf.graph[base][0].kwargs["navigate_scenario"],
-                config=dict(solve=solve_kw),
-            )
+        # Retrieve options on the solve step added by engage.add_steps()
+        try:
+            solve_kw = step_m1.kwargs["config"].solve
+        except KeyError:
+            solve_kw = dict()
+        # Retrieve the target scenario from second-last step
+        # TODO remove the need to look up step_m2 by allowing a callback to give the
+        #      new model/scenario name
+        target = step_m2.scenario_info
 
-        # Step 8–9 for individual scenarios
-        reported = f"{s} reported"
+        # Create a new step with the same name and base, but invoking
+        # MESSAGEix-Buildings instead.
+        # - Override default buildings.Config.clone = True.
+        # - Use the same Scenario.solve() keyword arguments as for the ENGAGE step, e.g.
+        #   including "model" and ``solve_options["barcrossalg"]``.
+        # - Use the same NAVIGATE scenario as the base scenario.
+        re_solved = f"{name} again"
         wf.add_step(
-            reported,
-            policy_solved,
-            report,
-            # Identify other scenario from which to copy historical time series data
-            other_scenario_info=(
-                wf.graph[base][0].scenario_info if policy_solved != base else None
-            ),
+            re_solved,
+            name,
+            build_solve_buildings,
+            # Clone before this step
+            target="{model}/{scenario}+B".format(**target),
+            clone=True,
+            # Keyword arguments for build_solve_buildings
+            navigate_scenario=wf.graph[base][0].kwargs["navigate_scenario"],
+            config=dict(solve=solve_kw),
         )
 
+        # Store info to set up reporting, include other scenario from which to copy time
+        # series data for y=2020
+        to_report[s] = (re_solved, wf.graph[base][0].scenario_info)
+
+    # Step names for results of step 9
+    all_reported = []
+
+    for s, (base, other_scenario_info) in to_report.items():
+        # Step 8–9 for individual scenarios
+        name = f"{s} reported"
+        wf.add_step(name, base, report, other_scenario_info=other_scenario_info)
+        all_reported.append(name)
+
         # Step 10 for individual scenarios
-        wf.add_step(f"{s} prepped", reported, prep_submission)
+        wf.add_step(f"{s} prepped", name, prep_submission)
 
-        reported_all.append(reported)
+    # Steps 8–9 to report all scenarios
+    wf.add_single("all reported", *all_reported)
 
-    # Steps 8–9 for all scenarios in a batch
-    wf.add_single("report all", *reported_all)
-
-    # Step 10 for all scenarios in a batch
-    wf.add_single("prep all", prep_submission, "context", *reported_all)
+    # Step 10 for all scenarios as a batch
+    wf.add_single("all prepped", prep_submission, "context", *all_reported)
 
     return wf
