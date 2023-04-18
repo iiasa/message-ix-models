@@ -311,17 +311,14 @@ def callback(rep: Reporter, context: Context) -> None:
     # Set up reporting for each of the model variants
     register("model.buildings")
     register("model.material")
-    register("model.transport")
+    all_keys = ["buildings all", "materials all"]
+
+    if context.navigate.transport:
+        register("model.transport")
+        all_keys.append("transport iamc all")  # Excludes plots
 
     rep.add("remove_ts", "navigate remove ts", "scenario", "config", "y0")
-    rep.add(
-        "navigate all",
-        [
-            "buildings all",
-            "materials all",
-            "transport iamc all",  # Excludes plots
-        ],
-    )
+    rep.add("navigate all", all_keys)
 
     # Add an operation to copy time-series data from a corresponding reference scenario
     copy_ts_keys = []
