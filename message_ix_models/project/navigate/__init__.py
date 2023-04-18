@@ -82,60 +82,54 @@ CLIMATE_POLICY["Ctax"] = None
 
 
 # Common annotations for `EXTRA_SCENARIOS`
-_A = [
-    Annotation(id="navigate_T35_policy", text=""),
-    Annotation(id="navigate_task", text="T3.5"),
-]
+_A = {
+    "act+tec": Annotation(id="navigate_T35_policy", text="act+tec"),
+    "all": Annotation(id="navigate_T35_policy", text="act+ele+tec"),
+    "ele": Annotation(id="navigate_T35_policy", text="ele"),
+    "ref": Annotation(id="navigate_T35_policy", text=""),
+    "T3.5": Annotation(id="navigate_task", text="T3.5"),
+    "T6.1": Annotation(id="navigate_task", text="T6.1"),
+    "advanced": Annotation(id="navigate_WP6_production", text="advanced"),
+    "default": Annotation(id="navigate_WP6_production", text="default"),
+}
+
+
+def _anno(names: str, climate_policy) -> Dict[str, List[Annotation]]:
+    """Return the annotations given by `names` from :data:`_A`.
+
+    Shorthand function used to prepare :data:`EXTRA_SCENARIOS`.
+    """
+    # Collect predefined annotations from _A
+    result = [_A.get(name) for name in names.split()]
+
+    # Add an annotation with the value of the `climate_policy` argument
+    result.append(Annotation(id="navigate_climate_policy", text=climate_policy))
+
+    # Return as a keyword argument
+    return dict(annotations=result)
+
 
 #: Extra scenario IDs not appearing in the authoritative NAVIGATE list per the workflow
-#: repository. These each have the same 3 annotations.
+#: repository.
 #:
 #: - ``NAV_Dem-15C-ref`` and ``NAV_Dem-20C-ref`` were added to the NAVIGATE list in
 #:   iiasa/navigate-workflow#43, but with invalid "navigate_T35_policy" annotations.
 #:   Retained here pending iiasa/navigate-workflow#47. cf. corresponding pin to an
 #:   earlier commit in :file:`pytest.yaml` workflow.
+#: - ``NAV_Dem-(* Gt|Ctax)-*``: diagnostic scenarios
+#: - ``PC-*``: no-policy scenarios corresponding to WP6 scenarios.
 EXTRA_SCENARIOS = [
-    # In order to have a no-policy corresponding to PC-15C-LowCE
-    Code(
-        id="PC-NPi-LowCE",
-        annotations=[
-            Annotation(id="navigate_climate_policy", text="NPi"),
-            Annotation(id="navigate_T35_policy", text="act+tec"),
-            Annotation(id="navigate_task", text="T6.1"),
-        ],
-    ),
-    Code(
-        id="NAV_Dem-15C-ref",
-        annotations=[Annotation(id="navigate_climate_policy", text="15C")] + _A,
-    ),
-    Code(
-        id="NAV_Dem-20C-ref",
-        annotations=[Annotation(id="navigate_climate_policy", text="20C")] + _A,
-    ),
-    Code(
-        id="NAV_Dem-1000 Gt-ref",
-        annotations=[Annotation(id="navigate_climate_policy", text="1000 Gt")] + _A,
-    ),
-    Code(
-        id="NAV_Dem-1600 Gt-ref",
-        annotations=[Annotation(id="navigate_climate_policy", text="1600 Gt")] + _A,
-    ),
-    Code(
-        id="NAV_Dem-2000 Gt-ref",
-        annotations=[Annotation(id="navigate_climate_policy", text="2000 Gt")] + _A,
-    ),
-    Code(
-        id="NAV_Dem-Ctax-ref",
-        annotations=[Annotation(id="navigate_climate_policy", text="Ctax")] + _A,
-    ),
-    Code(
-        id="NAV_Dem-Ctax-all",
-        annotations=[
-            Annotation(id="navigate_climate_policy", text="Ctax"),
-            Annotation(id="navigate_T35_policy", text="act+ele+tec"),
-            Annotation(id="navigate_task", text="T3.5"),
-        ],
-    ),
+    # Code(id="NAV_Dem-15C-ref", **_anno("T3.5 ref", "15C")),
+    # Code(id="NAV_Dem-20C-ref", **_anno("T3.5 ref", "20C")),
+    Code(id="NAV_Dem-1000 Gt-ref", **_anno("T3.5 ref", "1000 Gt")),
+    Code(id="NAV_Dem-1600 Gt-ref", **_anno("T3.5 ref", "1600 Gt")),
+    Code(id="NAV_Dem-2000 Gt-ref", **_anno("T3.5 ref", "2000 Gt")),
+    Code(id="NAV_Dem-Ctax-ref", **_anno("T3.5 ref", "Ctax")),
+    Code(id="NAV_Dem-Ctax-all", **_anno("T3.5 all", "Ctax")),
+    Code(id="PC-NPi-Default", **_anno("T6.1 ref default", "NPi")),
+    Code(id="PC-NPi-AdvPE", **_anno("T6.1 ele advanced", "NPi")),
+    Code(id="PC-NPi-LowCE", **_anno("T6.1 act+tec default", "NPi")),
+    Code(id="PC-NPi-AllEn", **_anno("T6.1 all advanced", "NPi")),
 ]
 
 
