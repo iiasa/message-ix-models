@@ -147,6 +147,15 @@ def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
         ("NAV_Dem-NPi-ref", "NAV_Dem-NPi-ref"),
         ("NAV_Dem-NPi-ref", "NPi-ref_ENGAGE_20C_step-3+B"),
         ("NAV_Dem-NPi-ref", "Ctax-ref+B"),
+        # WP6 scenarios
+        # First pass
+        ("NAV_Dem-NPi-ref", "NPi-Default"),
+        ("NAV_Dem-NPi-ele", "NPi-AdvPE"),
+        ("NAV_Dem-NPi-act-tec", "NPi-LowCE"),
+        # Scenario name after climate policy steps
+        ("NAV_Dem-NPi-ref", "NPi-Default_ENGAGE_20C_step-3+B"),
+        ("NAV_Dem-NPi-ele", "NPi-AdvPE_ENGAGE_20C_step-3+B"),
+        ("NAV_Dem-NPi-act-tec", "NPi-LowCE_ENGAGE_20C_step-3+B"),
     ],
 )
 def test_sturm_scenario_name(input, expected):

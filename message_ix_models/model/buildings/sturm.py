@@ -177,10 +177,24 @@ def scenario_name(name: str) -> str:
     Other values pass through unaltered.
     """
     result = re.sub(
-        r"^(NAV_Dem-)?(15C|20C|NPi|Ctax|1\d00 Gt)-(...)(_[du])?.*",
+        r"^(NAV_Dem-)?(15C|20C|NPi|Ctax|1\d00 Gt)-([^_\+]+)(_[du])?.*",
         r"NAV_Dem-NPi-\3",
         name,
     )
+
+    # Replacements for WP6
+    # NB this could and maybe should be done by reference to the code list
+    for info in (
+        ("AdvPE", "ele"),
+        ("AdvPEL", "ele"),
+        ("AllEn", "all"),
+        ("AllEnL", "all"),
+        ("Default", "ref"),
+        ("LowCE", "act-tec"),
+        ("LowCEL", "act-tec"),
+    ):
+        result = result.replace(*info)
+
     return {
         "baseline": "SSP2",
     }.get(result, result)
