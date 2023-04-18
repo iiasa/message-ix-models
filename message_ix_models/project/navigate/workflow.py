@@ -121,7 +121,7 @@ def report(
     )
 
     # Identify other scenario for .navigate.report.callback
-    context["navigate copy ts"] = other_scenario_info
+    context.navigate.copy_ts = other_scenario_info
 
     # Step 8
     register("projects.navigate")
@@ -273,10 +273,6 @@ def iter_scenarios(
 def generate(context: Context) -> Workflow:
     """Create the NAVIGATE workflow for T3.5, T6.1, and T6.2."""
     wf = Workflow(context)
-
-    # Use the navigate_scenario setting, e.g. from the --scenario CLI option, to
-    # construct target scenario names
-    s = context.navigate_scenario or "NAV_Dem-NPi-ref"
 
     # Step 1
     wf.add_step(
