@@ -231,8 +231,10 @@ def tax_emission(context: Context, scenario: Scenario, price: float):
     return scenario
 
 
-def iter_scenarios(context, filters) -> Tuple[str, str, str, str]:
-    """Iterate over scenario codes while unpacking information.
+def iter_scenarios(
+    context, filters
+) -> Tuple[str, Optional[str], Optional[str], Optional[str]]:
+    """Iterate over filtered scenario codes while unpacking information.
 
     Yields a sequence of 4-tuples:
 
@@ -240,6 +242,13 @@ def iter_scenarios(context, filters) -> Tuple[str, str, str, str]:
     2. The value of the ``navigate_climate_policy`` annotation, if any.
     3. The value of the ``navigate_T35_policy`` annotation, if any.
     4. The value of the ``navigate_WP6_production`` annotation, if any.
+
+    Only the scenarios matching `filters` are included; see
+    :func:`navigate.iter_scenario_codes`. Certain other scenarios are also skipped:
+
+    - T3.5 scenarios with regionally differentiated carbon prices (indicated by "_d") in
+      the name.
+    - Older T6.2 scenario codes that appear in the official list but are not annotated.
     """
     from . import iter_scenario_codes
 
@@ -253,6 +262,10 @@ def iter_scenarios(context, filters) -> Tuple[str, str, str, str]:
                 info.append(str(code.get_annotation(id=f"navigate_{name}").text))
             except KeyError:
                 info.append(None)  # Annotation does not exist on `code`
+
+        # Skip scenarios not implemented
+        if info[0].endswith("_d") or (info[2] is info[3] is None):
+            continue
 
         yield info
 
@@ -294,10 +307,6 @@ def generate(context: Context) -> Workflow:
         "navigate_climate_policy": "NPi",
     }
     for s, _, T35_policy, WP6_production in iter_scenarios(context, filters):
-        # Not implemented: T3.5 scenarios with regionally differentiated carbon prices
-        if s.endswith("_d"):
-            continue
-
         # TODO optionally skip this step
         # Step 3
         wf.add_step(
@@ -336,13 +345,6 @@ def generate(context: Context) -> Workflow:
     for s, climate_policy, T35_policy, WP6_production in iter_scenarios(
         context, filters
     ):
-        # Not implemented:
-        # - T3.5 scenarios with regionally differentiated carbon prices.
-        # - Older T6.2 scenario codes that appear in the official list but are not
-        #   annotated.
-        if s.endswith("_d") or (T35_policy is WP6_production is None):
-            continue
-
         # Identify the base scenario for the subsequent steps
         base = baseline_solved[(T35_policy, WP6_production)]
 
