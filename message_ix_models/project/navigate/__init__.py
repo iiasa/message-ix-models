@@ -1,8 +1,9 @@
 """NAVIGATE project."""
 import logging
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Generator, List, Mapping, Optional, Union
+from typing import Dict, Generator, List, Literal, Mapping, Optional, Union
 
 import ixmp
 import yaml
@@ -181,3 +182,21 @@ def iter_scenario_codes(
                 break
         if match:
             yield code
+
+
+@dataclass
+class Config:
+    """Configuration for NAVIGATE."""
+
+    #: Other scenario from which to copy historical time series data for reporting.
+    copy_ts: Dict = field(default_factory=dict)
+
+    #: Target data structure for submission prep
+    dsd: Literal["iiasa-ece", "navigate"] = "navigate"
+
+    #: Single target scenario for :mod:`.navigate.workflow.generate_workflow`
+    scenario: Optional[str] = None
+
+    #: :data:`True` to use MESSAGEix-Transport (:mod:`.model.transport`) alongside
+    #: MESSAGEix-Buildings and MESSAGEix-Materials.
+    transport: bool = True
