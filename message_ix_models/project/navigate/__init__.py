@@ -2,7 +2,7 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Mapping, Optional, Union
+from typing import Dict, Generator, List, Mapping, Optional, Union
 
 import ixmp
 import yaml
@@ -29,7 +29,7 @@ _kw: Mapping = dict(
 #:   currently implemented. In the :file:`engage/config.yaml`, they appear to form a
 #:   "waterfall", with each successively lower budget referencing the previous, which
 #:   seems to preclude running lower budgets without first running every larger budget.
-CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
+CLIMATE_POLICY = {
     pc.label: pc
     for pc in (
         # No climate policy → no ENGAGE workflow steps
@@ -77,8 +77,6 @@ CLIMATE_POLICY: Dict[Any, Optional[PolicyConfig]] = {
         ),
     )
 }
-# Placeholder
-CLIMATE_POLICY["Ctax"] = None
 
 
 # Common annotations for `EXTRA_SCENARIOS`
