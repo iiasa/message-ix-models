@@ -118,8 +118,6 @@ def _anno(names: str, climate_policy) -> Dict[str, List[Annotation]]:
 #: - ``NAV_Dem-(* Gt|Ctax)-*``: diagnostic scenarios
 #: - ``PC-*``: no-policy scenarios corresponding to WP6 scenarios.
 EXTRA_SCENARIOS = [
-    # Code(id="NAV_Dem-15C-ref", **_anno("T3.5 ref", "15C")),
-    # Code(id="NAV_Dem-20C-ref", **_anno("T3.5 ref", "20C")),
     Code(id="NAV_Dem-1000 Gt-ref", **_anno("T3.5 ref", "1000 Gt")),
     Code(id="NAV_Dem-1600 Gt-ref", **_anno("T3.5 ref", "1600 Gt")),
     Code(id="NAV_Dem-2000 Gt-ref", **_anno("T3.5 ref", "2000 Gt")),
