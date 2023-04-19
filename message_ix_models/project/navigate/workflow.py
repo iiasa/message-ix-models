@@ -385,7 +385,7 @@ def generate(context: Context) -> Workflow:
             #   are retrieved from the indicated scenario.
             # - reserve_margin and solve are as in .navigate.__init__
             pc = engage.PolicyConfig(
-                "",
+                "20C",
                 steps=[3],
                 reserve_margin=False,
                 solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
