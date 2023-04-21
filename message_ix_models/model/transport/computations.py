@@ -298,7 +298,7 @@ def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quan
 
     # Empty data frame
     df = pd.DataFrame(
-        columns=pd.Index(techs, name="t"),
+        columns=pd.Index(map(str, techs), name="t"),
         index=pd.Index(filter(partial(le, 2010), y), name="y"),
     )
 
