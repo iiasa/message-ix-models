@@ -149,7 +149,7 @@ def generate_product(
         result.name = str(result.name).format(**fmt)  # type: ignore [assignment]
 
         codes.append(result)  # Store code and indices
-        indices.append(item)
+        indices.append(tuple(map(str, item)))
 
     # - Convert length-N sequence of D-tuples to D iterables each of length N.
     # - Convert to D × 1-dimensional xr.DataArrays, each of length N.
