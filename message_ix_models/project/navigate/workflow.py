@@ -281,15 +281,34 @@ def generate(context: Context) -> Workflow:
         target="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7",
     )
 
-    # NB some preparatory changes could be done at this point, but are instead done
-    # in step 3; see build_transport():
+    # NB some preparatory changes could be done at this point, but are instead done in
+    # step 3; see build_transport():
     # - update_h2_blending().
     # - replace_par_data() to move hp_gas_i entries from CO2_r_c to CO2_ind.
     #
-    # This is because the current materials code used to produce the "M built"
-    # scenario is not yet merged to `dev` or `main`, and cannot be run at the same
-    # time as the current code. So we typically use the "--from=" CLI option to start
-    # from the target= scenario specified as the output of step 2, below.
+    # This is because the current materials code used to produce the "M built" scenario
+    # is not yet merged to `dev` or `main`, and cannot be run at the same time as the
+    # current code. So we typically use the "--from=" CLI option to start from the
+    # target= scenario specified as the output of step 2, below.
+
+    # Step 2
+
+    M_built = {}
+    for WP6_production, label, target in (
+        (
+            "default",
+            "def",
+            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/SUP_1p5C_Comb_LimCCS_650",
+        ),
+        (
+            "advanced",
+            "adv",
+            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/SUP_1p5C_Elec_HighVRE_650",
+        ),
+        (None, "T3.5", "MESSAGEix-Materials/baseline_default_NAVIGATE"),
+    ):
+        M_built[WP6_production] = f"M {label} built"
+        wf.add_step(M_built[WP6_production], "base", build_materials, target=target)
 
     # Mapping from short IDs (`s`) to step names for results of step 7
     baseline_solved = {}
@@ -300,18 +319,7 @@ def generate(context: Context) -> Workflow:
         "navigate_climate_policy": "NPi",
     }
     for s, _, T35_policy, WP6_production in iter_scenarios(context, filters):
-        # Step 2
-
-        # Select target= according to the WP6 setting
-        if WP6_production == "default":
-            target = "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/SUP_1p5C_Comb_LimCCS_650"
-        elif WP6_production == "advanced":
-            target = "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/SUP_1p5C_Elec_HighVRE_650"
-        else:
-            # T3.5 or others
-            target = "MESSAGEix-Materials/baseline_default_NAVIGATE"
-
-        wf.add_step("M built", "base", build_materials, target=target)
+        base = M_built[WP6_production]
 
         # Steps 3–4
         if context.navigate.transport:
@@ -319,7 +327,7 @@ def generate(context: Context) -> Workflow:
             name = f"MT {s} built"
             wf.add_step(
                 name,
-                "M built",
+                M_built[WP6_production],
                 build_transport,
                 target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
                 clone=True,
@@ -329,8 +337,6 @@ def generate(context: Context) -> Workflow:
             # Step 4
             wf.add_step(f"MT {s} solved", f"MT {s} built", solve)
             base = f"MT {s} solved"
-        else:
-            base = "M built"
 
         variant = "BM" + ("T" if context.navigate.transport else "")
 
