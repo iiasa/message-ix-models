@@ -274,9 +274,6 @@ def gen_data_generic(scenario, dry_run=False):
                 and len(set(df["node_loc"])) == 1
                 and list(set(df["node_loc"]))[0] != global_region
             ):
-                print('This is the length of the regions')
-                print(regions)
-                print(len(regions))
                 df["node_loc"] = None
                 df = df.pipe(broadcast, node_loc=nodes)
 
