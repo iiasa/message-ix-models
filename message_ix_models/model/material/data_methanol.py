@@ -152,7 +152,6 @@ def gen_data_methanol(scenario):
     df_rel_hvc = df_rel.loc[df_rel["technology"] == "steam_cracker_petro",:]
     df_rel_hvc["value"] = df_rel_hvc.apply(lambda x: get_embodied_emi(x, pars, "hvc_plastics_share"), axis=1)
     dict_t_d_fs["relation_activity"] = pd.concat([df_rel_meth, df_rel_hvc])
-    # dict3.pop("relation_activity")  # remove negative emissions for now
     new_dict2 = combine_df_dictionaries(meth_fuel_dic, meth_fs_dic,
                                         par_dict_fs, par_dict,
                                         bal_fs_dict, bal_fuel_dict,

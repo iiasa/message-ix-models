@@ -613,10 +613,10 @@ def add_emission_accounting(scen):
             for m in ["atm_gasoil", "vacuum_gasoil", "naphtha"]:
                 if t == "steam_cracker_petro":
                     if (m == "atm_gasoil") | (m == "vacuum_gasoil"):
-                        # fueloil emission factor * input
-                        val = 0.665 * 1.17683105
-                    else:
-                        val = 0.665 * 1.537442922
+                        # crudeoil emission factor * input to steam cracker
+                        val = 0.631 * 1.17683105
+                    elif (m == "naphtha"):
+                        val = 0.631 * 1.537442922
 
                     co2_feedstocks = pd.DataFrame(
                         {
