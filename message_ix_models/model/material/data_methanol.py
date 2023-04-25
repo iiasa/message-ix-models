@@ -229,6 +229,14 @@ def gen_data_methanol(scenario):
     if pars["mtbe_scenario"] == "phase_out":
         new_dict2 = combine_df_dictionaries(new_dict2, add_mtbe_act_bound(scenario))
 
+
+    h2_modes = ["fs", "fuel"]
+    for mode in h2_modes:
+        new_dict2 = combine_df_dictionaries(new_dict2, pd.read_excel(
+            context.get_local_path("material", "methanol", f"h2_elec_{mode}.xlsx"),
+            sheet_name=None,
+        ))
+
     return new_dict2
 
 
