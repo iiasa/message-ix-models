@@ -280,7 +280,7 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
         scenario.solve(model="MESSAGE-MACRO", solve_options={"lpmethod": "4"})
         scenario.set_as_default()
 
-    if add_macro == False:
+    if not add_macro:
         # Solve
         print('Solving the scenario without MACRO')
         scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
