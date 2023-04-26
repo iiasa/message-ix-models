@@ -437,10 +437,10 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # modify steam cracker hist data (naphtha -> gasoil) to make model feasible
     df_cap = pd.read_csv(context.get_local_path(
-            "material", "methanol", "steam_cracking_hist_new_cap.csv"
+            "material", "steam_cracking_hist_new_cap.csv"
         ))
     df_act = pd.read_csv(context.get_local_path(
-            "material", "methanol", "steam_cracking_hist_act.csv"
+            "material", "steam_cracking_hist_act.csv"
         ))
     df_act.loc[df_act["mode"]=="naphtha", "mode"] = "vacuum_gasoil"
     df = results["historical_activity"]
