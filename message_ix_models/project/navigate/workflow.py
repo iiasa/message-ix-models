@@ -38,6 +38,16 @@ $ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data
     return build(scenario)
 
 
+def strip_policy_data(context: Context, scenario: Scenario) -> Scenario:
+    """Remove policy data, specifically ``tax_emission``."""
+    with scenario.transact(message=__doc__):
+        scenario.remove_par(scenario.par("tax_emission"))
+
+    scenario.set_as_default()
+
+    return scenario
+
+
 def build_transport(context: Context, scenario: Scenario, **options) -> Scenario:
     """Workflow step 3."""
     from message_data.model.transport import build
