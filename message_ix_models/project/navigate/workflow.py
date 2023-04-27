@@ -320,6 +320,17 @@ def generate(context: Context) -> Workflow:
         M_built[WP6_production] = f"M {label} built"
         wf.add_step(M_built[WP6_production], "base", build_materials, target=target)
 
+        # Strip data from tax_emission
+        name = "M {label} without policy"
+        wf.add_step(
+            name,
+            M_built[WP6_production],
+            strip_policy_data,
+            clone=True,
+            target=f"MESSAGEix-GLOBIOM 1.1-M-R12 (NAVIGATE)/{label}",
+        )
+        M_built[WP6_production] = name
+
     # Mapping from short IDs (`s`) to step names for results of step 7
     baseline_solved = {}
 
