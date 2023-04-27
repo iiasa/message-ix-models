@@ -321,7 +321,7 @@ def generate(context: Context) -> Workflow:
         wf.add_step(M_built[WP6_production], "base", build_materials, target=target)
 
         # Strip data from tax_emission
-        name = "M {label} without policy"
+        name = f"M {label} without policy"
         wf.add_step(
             name,
             M_built[WP6_production],
@@ -343,9 +343,10 @@ def generate(context: Context) -> Workflow:
         base = M_built[WP6_production]
 
         # Steps 3–4
+        variant = "M" + ("T" if context.navigate.transport else "")
         if context.navigate.transport:
             # Step 3
-            name = f"MT {s} built"
+            name = f"{variant} {s} built"
             wf.add_step(
                 name,
                 M_built[WP6_production],
@@ -354,14 +355,14 @@ def generate(context: Context) -> Workflow:
                 clone=True,
                 navigate_scenario=T35_policy,
             )
+            base = name
 
-            # Step 4
-            wf.add_step(f"MT {s} solved", f"MT {s} built", solve)
-            base = f"MT {s} solved"
-
-        variant = "BM" + ("T" if context.navigate.transport else "")
+        # Step 4
+        wf.add_step(f"{variant} {s} solved", base, solve)
+        base = f"{variant} {s} solved"
 
         # Steps 5–7
+        variant = "B" + variant
         name = f"{variant} {s} solved"
         wf.add_step(
             name,
