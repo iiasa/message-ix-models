@@ -39,9 +39,10 @@ $ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data
 
 
 def strip_policy_data(context: Context, scenario: Scenario) -> Scenario:
-    """Remove policy data, specifically ``tax_emission``."""
+    """Remove policy data, i.e. ``bound_emission`` and ``tax_emission``."""
     with scenario.transact(message=__doc__):
-        scenario.remove_par(scenario.par("tax_emission"))
+        for name in ("bound_emission", "tax_emission"):
+            scenario.remove_par(name, scenario.par(name))
 
     scenario.set_as_default()
 
