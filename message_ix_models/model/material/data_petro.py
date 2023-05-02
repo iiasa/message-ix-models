@@ -353,6 +353,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # demand_HVC = derive_petro_demand(scenario)
     default_gdp_elasticity = float(0.93)
+    context = read_config()
     demand_HVC = gen_mock_demand_petro(scenario, default_gdp_elasticity)
     results["demand"].append(demand_HVC)
 
