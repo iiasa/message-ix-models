@@ -192,7 +192,6 @@ def gen_data_generic(scenario, dry_run=False):
     tec_ts = set(data_generic_ts.technology)  # set of tecs in timeseries sheet
 
     for t in tec_ts:
-        print(t)
         common = dict(
             time="year",
             time_origin="year",
@@ -204,7 +203,6 @@ def gen_data_generic(scenario, dry_run=False):
         ]
 
         for p in set(param_name):
-            print(p)
             val = data_generic_ts.loc[
                 (data_generic_ts["technology"] == t)
                 & (data_generic_ts["parameter"] == p),
@@ -217,9 +215,6 @@ def gen_data_generic(scenario, dry_run=False):
                 ),
                 "region",
             ]
-            print('Regions')
-            print(regions)
-            print(len(regions))
             units = data_generic_ts.loc[
                 (data_generic_ts["technology"] == t)
                 & (data_generic_ts["parameter"] == p),
@@ -264,9 +259,6 @@ def gen_data_generic(scenario, dry_run=False):
                     node_loc=rg,
                     **common
                 )
-
-            print('df node_loc')
-            print(df['node_loc'])
 
             # Copy parameters to all regions
             if (
