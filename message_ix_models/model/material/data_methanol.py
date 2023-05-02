@@ -722,11 +722,11 @@ def add_meth_hist_act():
 
 def update_costs_with_loc_factor(df):
     loc_fact = pd.read_excel(
-        "C:/Users\maczek\PycharmProjects\message_data\data\material\methanol/location factor collection.xlsx",
-        sheet_name="comparison", index_col=0)
+              context.get_local_path("material","methanol","location factor collection.xlsx"),
+              sheet_name="comparison", index_col=0)
     cost_conv = pd.read_excel(
-        "C:/Users\maczek\PycharmProjects\message_data\data\material\methanol/location factor collection.xlsx",
-        sheet_name="cost_convergence", index_col=0)
+                context.get_local_path("material","methanol","location factor collection.xlsx"),
+                sheet_name="cost_convergence", index_col=0)
     loc_fact = loc_fact.loc["WEU normalized"]
     loc_fact.index = ("R12_" + loc_fact.index)
     df = df.merge(loc_fact, left_on="node_loc", right_index=True)
