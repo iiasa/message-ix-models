@@ -116,7 +116,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs"]
     cost_conv = pd.read_excel(
-        "C:/Users\maczek\PycharmProjects\message_data\data\material\methanol/location factor collection.xlsx",
+        context.get_local_path("material","methanol","location factor collection.xlsx"),
         sheet_name="cost_convergence", index_col=0)
     for p in pars:
         conv_cost_df = pd.DataFrame()
