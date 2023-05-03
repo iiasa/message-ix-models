@@ -639,10 +639,14 @@ def limit_h2(scen, type="green"):
         raise ValueError(f"No such type {type!r} is defined.")
 
     par = "bound_activity_up"
-    common = dict(mode="M1", time="year", value=0, unit="GWa")
 
     with scen.transact(message="Hydrogen limits added."):
-        df_h2 = make_df(par, **common).pipe(
-            broadcast, node_loc=node_list, technology=technology_list, year=period_list
+        scen.add_par(
+            par,
+            make_df(par, mode="M1", time="year", value=0, unit="GWa").pipe(
+                broadcast,
+                node_loc=node_list,
+                technology=technology_list,
+                year=period_list,
+            ),
         )
-        scen.add_par(par, df_h2)
