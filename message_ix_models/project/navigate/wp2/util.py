@@ -619,8 +619,16 @@ def add_LED_setup(scen):
     # node_list = useful_fuel['REGION'].unique()
     # useful_fuel = useful_fuel.dropna()
 
-    # useful_fuel.rename(columns = {'RELATION':'relation', 'TECHNOLOGY':'technology',
-    #'REGION':'node_loc', 'YEAR':'year_act','VALUE':'value'}, inplace = True )
+    # useful_fuel.rename(
+    #     columns={
+    #         "RELATION": "relation",
+    #         "TECHNOLOGY": "technology",
+    #         "REGION": "node_loc",
+    #         "YEAR": "year_act",
+    #         "VALUE": "value",
+    #     },
+    #     inplace=True,
+    # )
     # useful_fuel['unit'] = '???'
     # useful_fuel['node_rel'] = useful_fuel['node_loc']
     # useful_fuel['year_rel'] = useful_fuel['year_act']
