@@ -1,5 +1,6 @@
 import logging
 from itertools import product
+from typing import Literal
 
 import pandas as pd
 from message_ix import Scenario, make_df
@@ -10,67 +11,73 @@ from message_data.tools.utilities import get_nodes, get_optimization_years
 log = logging.getLogger(__name__)
 
 
-def add_CCS_constraint(scen, maximum_value, type_rel):
+def add_CCS_constraint(
+    scen: Scenario, maximum_value: float, type_rel: Literal["lower", "upper"]
+) -> None:
+    """Add a CCS limit.
+
+    The function assumes that `scen` uses the ``R12`` code list and has a set element
+    n=``R12_GLB``.
+
+    Parameters
+    ----------
+    maximum_value : str
+        This should correspond to units of Gt CO₂ / year. Note that if `type_rel` is
+        "lower", this is actually a *minimum* value.
+    """
     log.info("Add CCS limits")
 
-    # Maximum value should be in GtCO2/yr.
+    # Add a new global relation to limit CCS activity. Obtain positive coefficients for
+    # CCS technologies to put a limit to the overall CCS activity.
+    node = "R12_GLB"
+    relation = "global_co2_trans"
 
-    # Add a new global relation to limit CCS activity. Obtain positive
-    # coefficients for ccs technologies to put a limit to the
-    # overall CCS activity.
-
-    relation_name = "global_co2_trans"
-
-    scen.check_out()
-    scen.add_set("relation", relation_name)
-    df = scen.par(
-        "relation_activity", filters={"relation": ["bco2_trans_disp", "co2_trans_disp"]}
-    )
-    df["node_rel"] = "R12_GLB"
-    df["value"] *= -1  # Values were negative
-    df["relation"] = relation_name
-    scen.add_par("relation_activity", df)
-
-    # Remove the technologies that aggregate the CCS activity.
-    # Not needed in this relation.
-
-    df = scen.par(
-        "relation_activity",
-        filters={
-            "technology": ["bco2_tr_dis", "co2_tr_dis"],
-            "relation": ["bco2_trans_disp", "co2_trans_disp"],
-        },
-    )
-    df["node_rel"] = "R12_GLB"
-    df["relation"] = relation_name
-    scen.remove_par("relation_activity", df)
-    scen.commit("Global CCS relation set up.")
-
-    # The maximum allowed value should be converted to MtC.
-    # (assuming this is the activity of the CCS technologies)
-    # The unit MtC does not exist in the database!
-
-    maximum_value_converted = maximum_value * (10**3) * (12 / 44)
-
-    years = get_optimization_years(scen)
-    years = [x for x in years if x >= 2030]
-
-    df = pd.DataFrame(
-        {
-            "node_rel": "R12_GLB",
-            "relation": relation_name,
-            "year_rel": years,
-            "value": maximum_value_converted,
-            "unit": "tC",
-        }
+    # Prepare data
+    # - Select values for some existing relations
+    # - Exclude technologies that aggregate the CCS activity, which are not needed in
+    #   this relation.
+    # - Change negative values to positive
+    df = (
+        scen.par(
+            "relation_activity",
+            filters={"relation": ["bco2_trans_disp", "co2_trans_disp"]},
+        )
+        .where(lambda df: ~df["technology"].str.fullmatch("b?co2_tr_dis"))
+        .dropna()
+        .assign(node_rel=node, relation=relation, value=lambda df: df.value * -1)
     )
 
-    scen.check_out()
-    scen.add_par(f"relation_{type_rel}", df)
-    scen.commit(
-        "added upper limit of zero for CO2 emissions"
-        + f"accounted for in the relation {relation_name}"
-    )
+    # Add the data
+    with scen.transact("Global CCS relation set up"):
+        scen.add_set("relation", relation)
+        scen.add_par("relation_activity", df)
+
+    # Prepare entry for the limit
+    par = f"relation_{type_rel}"
+
+    # Convert `maximum_value` from Gt CO₂ / year to Mt C / year. This assumes that the
+    # activity of CCS technologies is expressed in the latter units.
+    value = maximum_value * (10**3) * (12 / 44)
+
+    years = filter(lambda x: x >= 2030, get_optimization_years(scen))
+
+    with scen.transact(
+        f"Add {type_rel} limit of {maximum_value} Gt CO₂ / year for CO2 emissions "
+        f"accounted in relation {relation!r}"
+    ):
+        # FIXME the unit MtC does not exist in the database, so this incorrect label is
+        #       used instead
+        scen.add_par(
+            par,
+            make_df(
+                par,
+                node_rel=node,
+                relation=relation,
+                year_rel=years,
+                value=value,
+                unit="tC",
+            ),
+        )
 
 
 def add_electrification_share(scen):
