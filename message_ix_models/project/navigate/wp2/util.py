@@ -3,7 +3,7 @@ from itertools import product
 
 import pandas as pd
 from message_ix import make_df
-from message_ix_models.util import broadcast, private_data_path
+from message_ix_models.util import ScenarioInfo, broadcast, private_data_path
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
 
@@ -624,8 +624,8 @@ def add_LED_setup(scen):
 
 def limit_h2(scen, type="green"):
     log.info("Add h2 limit")
-    node_list = get_nodes(scen)
-    period_list = get_optimization_years(scen)
+
+    info = ScenarioInfo(scen)
 
     # Exclude grey hydrogen options
     # In Blue hydrogen: h2_bio_ccs, h2_coal_ccs, h2_elec, h2_smr_ccs allowed.
@@ -645,8 +645,11 @@ def limit_h2(scen, type="green"):
             par,
             make_df(par, mode="M1", time="year", value=0, unit="GWa").pipe(
                 broadcast,
-                node_loc=node_list,
+                # NB here we might use message_ix_models.util.nodes_ex_world(info.N),
+                #    but it is unclear if entries for e.g. R12_GLB are important. So
+                #    exclude only "World", as message_data.tools.utilities.get_nodes().
+                node_loc=filter(lambda n: n != "World", info.N),
                 technology=technology_list,
-                year=period_list,
+                year=info.Y,
             ),
         )
