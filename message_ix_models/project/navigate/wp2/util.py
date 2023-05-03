@@ -552,20 +552,19 @@ def add_LED_setup(scen):
     node_subset = growth_activity_up["node_loc"]
     # node_subset = c("R11_CPA","R11_FSU","R11_LAM","R11_MEA","R11_NAM","R11_PAS")
 
-    for node in node_subset:
-        for year in years_subset:
-            df = pd.DataFrame(
-                {
-                    "node_loc": node,
-                    "technology": technology,
-                    "year_act": year,
-                    "time": "year",
-                    "value": 90,
-                    "unit": "GWa",
-                },
-                index=[0],
-            )
-            scen.add_par("initial_activity_up", df)
+    for node, year in product(node_subset, years_subset):
+        df = pd.DataFrame(
+            {
+                "node_loc": node,
+                "technology": technology,
+                "year_act": year,
+                "time": "year",
+                "value": 90,
+                "unit": "GWa",
+            },
+            index=[0],
+        )
+        scen.add_par("initial_activity_up", df)
 
     # Increase the initial starting point value for capacity growth bounds
     # on the solar PV technology (centralized generation)
@@ -573,20 +572,19 @@ def add_LED_setup(scen):
     years_subset = [2025, 2030, 2035, 2040, 2045, 2050]
     technology = "solar_pv_ppl"
 
-    for node in node_subset:
-        for year in years_subset:
-            df = pd.DataFrame(
-                {
-                    "node_loc": node,
-                    "technology": technology,
-                    "year_vtg": year,
-                    "time": "year",
-                    "value": 10,
-                    "unit": "GW",
-                },
-                index=[0],
-            )
-            scen.add_par("initial_new_capacity_up", df)
+    for node, year in product(node_subset, years_subset):
+        df = pd.DataFrame(
+            {
+                "node_loc": node,
+                "technology": technology,
+                "year_vtg": year,
+                "time": "year",
+                "value": 10,
+                "unit": "GW",
+            },
+            index=[0],
+        )
+        scen.add_par("initial_new_capacity_up", df)
 
     # Read useful level fuel potential contribution assumptions from xlsx file
     # Adjust limits to potential fuel-specific contributions at useful energy
@@ -634,44 +632,40 @@ def limit_h2(scen, type="green"):
 
     technology_list = ["h2_coal", "h2_smr", "h2_bio"]
 
-    for tec in technology_list:
-        for node in node_list:
-            for year in period_list:
-                df_h2 = pd.DataFrame(
-                    {
-                        "node_loc": node,
-                        "technology": tec,
-                        "year_act": year,
-                        "mode": "M1",
-                        "time": "year",
-                        "value": 0,
-                        "unit": "GWa",
-                    },
-                    index=[0],
-                )
-                scen.add_par("bound_activity_up", df_h2)
+    for tec, node, year in product(technology_list, node_list, period_list):
+        df_h2 = pd.DataFrame(
+            {
+                "node_loc": node,
+                "technology": tec,
+                "year_act": year,
+                "mode": "M1",
+                "time": "year",
+                "value": 0,
+                "unit": "GWa",
+            },
+            index=[0],
+        )
+        scen.add_par("bound_activity_up", df_h2)
 
     if type == "green":
         # Exclude blue hydrogen options as well
         # h2_bio_ccs, h2_elec allowed.
         technology_list_extra = ["h2_smr_ccs", "h2_coal_ccs"]
 
-        for tec in technology_list_extra:
-            for node in node_list:
-                for year in period_list:
-                    df_h2 = pd.DataFrame(
-                        {
-                            "node_loc": node,
-                            "technology": tec,
-                            "year_act": year,
-                            "mode": "M1",
-                            "time": "year",
-                            "value": 0,
-                            "unit": "GWa",
-                        },
-                        index=[0],
-                    )
-                    scen.add_par("bound_activity_up", df_h2)
+        for tec, node, year in (technology_list_extra, node_list, period_list):
+            df_h2 = pd.DataFrame(
+                {
+                    "node_loc": node,
+                    "technology": tec,
+                    "year_act": year,
+                    "mode": "M1",
+                    "time": "year",
+                    "value": 0,
+                    "unit": "GWa",
+                },
+                index=[0],
+            )
+            scen.add_par("bound_activity_up", df_h2)
     else:
         raise ValueError("No such type is defined.")
 
