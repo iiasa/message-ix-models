@@ -633,22 +633,17 @@ def limit_h2(scen, type="green"):
 
     technology_list = ["h2_coal", "h2_smr", "h2_bio"]
 
+    if type == "green":
+        # Exclude blue hydrogen options as well. h2_bio_ccs, h2_elec are allowed.
+        technology_list.extend(["h2_smr_ccs", "h2_coal_ccs"])
+    else:
+        raise ValueError(f"No such type {type!r} is defined.")
+
     par = "bound_activity_up"
     common = dict(mode="M1", time="year", value=0, unit="GWa")
 
     for tec, node, year in product(technology_list, node_list, period_list):
         df_h2 = make_df(par, node_loc=node, technology=tec, year_act=year, **common)
         scen.add_par(par, df_h2)
-
-    if type == "green":
-        # Exclude blue hydrogen options as well
-        # h2_bio_ccs, h2_elec allowed.
-        technology_list_extra = ["h2_smr_ccs", "h2_coal_ccs"]
-
-        for tec, node, year in (technology_list_extra, node_list, period_list):
-            df_h2 = make_df(par, node_loc=node, technology=tec, year_act=year, **common)
-            scen.add_par(par, df_h2)
-    else:
-        raise ValueError("No such type is defined.")
 
     scen.commit("Hydrogen limits added.")
