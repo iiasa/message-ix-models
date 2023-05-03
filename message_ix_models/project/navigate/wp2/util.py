@@ -445,7 +445,6 @@ def add_LED_setup(scen):
         var_name="YEAR",
         value_name="VALUE",
     )
-    relation_list_renew_steps = renew_steps["RELATION"].unique()
 
     # Adjust wind and solar PV resource steps (contribution to total electricity
     # generation). These changes allow for greater contribution of intermittent solar
@@ -481,7 +480,6 @@ def add_LED_setup(scen):
         var_name="YEAR",
         value_name="VALUE",
     )
-    relation_list_renew_oper = renew_oper["RELATION"].unique()
     renew_oper = renew_oper.dropna()
 
     # Adjust wind and solar PV operating reserve requirements (amount of flexible
@@ -523,7 +521,6 @@ def add_LED_setup(scen):
         var_name="YEAR",
         value_name="VALUE",
     )
-    relation_list_renew_resm = renew_resm["RELATION"].unique()
     renew_resm = renew_resm.dropna()
 
     # Adjust wind and solar PV reserve margin requirements (amount of firm capacity
