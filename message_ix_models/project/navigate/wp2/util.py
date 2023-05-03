@@ -1,8 +1,8 @@
 import logging
-import os
 from itertools import product
 
 import pandas as pd
+from message_ix_models.util import private_data_path
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
 
@@ -317,11 +317,8 @@ def add_LED_setup(scen):
 
     # Read technology investment costs from xlsx file and add to the scenario
 
-    path_costs = os.path.join(
-        "P:\\",
-        "ene.model",
-        "ALPS_1.5C_demand",
-        "technology_inp_files",
+    data_path = private_data_path("alps")
+    path_costs = data_path.joinpath(
         "granular-techs_cost_comparison_20170831_revAG_SDS_5year.xlsx",
     )
     inv_costs = pd.read_excel(path_costs, sheet_name="NewCosts_fixed")
@@ -429,11 +426,7 @@ def add_LED_setup(scen):
 
     # Read solar and wind intermittency assumptions from xlsx file
 
-    path_renew = os.path.join(
-        "P:\\",
-        "ene.model",
-        "ALPS_1.5C_demand",
-        "technology_inp_files",
+    path_renew = data_path.joinpath(
         "solar_wind_intermittency_20170831_5year.xlsx",
     )
     renew_steps = pd.read_excel(path_renew, sheet_name="steps_NEW")
@@ -599,14 +592,9 @@ def add_LED_setup(scen):
     # Adjust limits to potential fuel-specific contributions at useful energy
     # level (in each end-use sector separately)
 
-    # path_useful_fuel = os.path.join(
-    #     "P:\\",
-    #     "ene.model",
-    #     "ALPS_1.5C_demand",
-    #     "technology_inp_files",
+    # path_useful_fuel = data_path.joinpath(
     #     "useful_level_fuel_potential_contribution_20170907_5year.xlsx",
     # )
-    #
     # useful_fuel = pd.read_excel(path_useful_fuel, sheet_name = "UE_constraints_NEW")
     # year_columns = useful_fuel._get_numeric_data().columns.values.tolist()
     # useful_fuel = pd.melt(useful_fuel, id_vars=['TECHNOLOGY','REGION','RELATION'],
