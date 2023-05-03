@@ -626,7 +626,6 @@ def limit_h2(scen, type="green"):
     log.info("Add h2 limit")
     node_list = get_nodes(scen)
     period_list = get_optimization_years(scen)
-    scen.check_out()
 
     # Exclude grey hydrogen options
     # In Blue hydrogen: h2_bio_ccs, h2_coal_ccs, h2_elec, h2_smr_ccs allowed.
@@ -642,9 +641,8 @@ def limit_h2(scen, type="green"):
     par = "bound_activity_up"
     common = dict(mode="M1", time="year", value=0, unit="GWa")
 
-    df_h2 = make_df(par, **common).pipe(
-        broadcast, node_loc=node_list, technology=technology_list, year=period_list
-    )
-    scen.add_par(par, df_h2)
-
-    scen.commit("Hydrogen limits added.")
+    with scen.transact(message="Hydrogen limits added."):
+        df_h2 = make_df(par, **common).pipe(
+            broadcast, node_loc=node_list, technology=technology_list, year=period_list
+        )
+        scen.add_par(par, df_h2)
