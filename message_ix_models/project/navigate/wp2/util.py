@@ -2,7 +2,7 @@ import logging
 from itertools import product
 
 import pandas as pd
-from message_ix import make_df
+from message_ix import Scenario, make_df
 from message_ix_models.util import ScenarioInfo, broadcast, private_data_path
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
@@ -622,7 +622,25 @@ def add_LED_setup(scen):
     scen.commit("LED changes implemented.")
 
 
-def limit_h2(scen, type="green"):
+def limit_h2(scen: Scenario, type: str = "green") -> None:
+    """Limit hydrogen technology activities.
+
+    Entries are added to `scen` for ``bound_activity_up`` for technologies:
+
+    - h2_bio, h2_coal, h2_smr ("grey hydrogen" technologies), plus
+    - if `type` is "green" (the default and only allowed value): h2_coal_ccs and
+      h2_smr_ccs ("blue hydrogen" technologies).
+
+    The following "green hydrogen" technologies are *not* constrained: h2_bio_ccs and
+    h2_elec.
+
+    Parameters
+    ----------
+    type : str, optional
+        Type of hydrogen. :class:`ValueError` is raised for any value other than
+        "green", the default.
+
+    """
     log.info("Add h2 limit")
 
     info = ScenarioInfo(scen)
@@ -630,13 +648,13 @@ def limit_h2(scen, type="green"):
     # Exclude grey hydrogen options
     # In Blue hydrogen: h2_bio_ccs, h2_coal_ccs, h2_elec, h2_smr_ccs allowed.
 
-    technology_list = ["h2_coal", "h2_smr", "h2_bio"]
+    technology_list = ["h2_bio", "h2_coal", "h2_smr"]
 
     if type == "green":
         # Exclude blue hydrogen options as well. h2_bio_ccs, h2_elec are allowed.
         technology_list.extend(["h2_smr_ccs", "h2_coal_ccs"])
     else:
-        raise ValueError(f"No such type {type!r} is defined.")
+        raise ValueError(f"No such type {type!r} is defined")
 
     par = "bound_activity_up"
 
