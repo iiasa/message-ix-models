@@ -1,12 +1,15 @@
+import logging
 import os
 
 import pandas as pd
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
 
+log = logging.getLogger(__name__)
+
 
 def add_CCS_constraint(scen, maximum_value, type_rel):
-    print("Adding CCS limits")
+    log.info("Add CCS limits")
 
     # Maximum value should be in GtCO2/yr.
 
@@ -69,7 +72,7 @@ def add_CCS_constraint(scen, maximum_value, type_rel):
 
 
 def add_electrification_share(scen):
-    print("Adding share constraints for electrification in industry.")
+    log.info("Add share constraints for electrification in industry")
 
     node_list = get_nodes(scen)
 
@@ -290,7 +293,7 @@ def add_electrification_share(scen):
 
 
 def add_LED_setup(scen):
-    print("Adding LED setup to the scenario")
+    log.info("Add LED setup to the scenario")
 
     # This funciton is adjsuted based on:
     # https://github.com/volker-krey/message_data/blob/LED_update_materials/message_data/projects/led/LED_low_energy_demand_setup.R#L73
@@ -626,7 +629,7 @@ def add_LED_setup(scen):
 
 
 def limit_h2(scen, type="green"):
-    print("Adding h2 limit.")
+    log.info("Add h2 limit")
     node_list = get_nodes(scen)
     period_list = get_optimization_years(scen)
     scen.check_out()
