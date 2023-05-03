@@ -294,14 +294,17 @@ def add_electrification_share(scen):
 def add_LED_setup(scen):
     log.info("Add LED setup to the scenario")
 
-    # This funciton is adjsuted based on:
-    # https://github.com/volker-krey/message_data/blob/LED_update_materials/message_data/projects/led/LED_low_energy_demand_setup.R#L73
-    # Only relevant adjustments are choosen:
+    # This function is adjusted based on:
+    # https://github.com/volker-krey/message_data/blob/LED_update_materials/
+    # message_data/projects/led/LED_low_energy_demand_setup.R#L73
+    # Only relevant adjustments are chosen:
     # - Cost adjustments for VREs
-    # - Greater contribution of intermittent solar and wind to total electricity generation
+    # - Greater contribution of intermittent solar and wind to total electricity
+    #   generation
     # - Adjust wind and solar PV operating reserve requirements
     # - Adjust wind and solar PV reserve margin requirements
-    # - Increase the initial starting point value for activity growth bounds on the solar PV technology (centralized generation)
+    # - Increase the initial starting point value for activity growth bounds on the
+    #   solar PV technology (centralized generation)
 
     period_list = get_optimization_years(scen)
     [i for i in period_list if i >= 2025]
@@ -445,8 +448,9 @@ def add_LED_setup(scen):
     )
     relation_list_renew_steps = renew_steps["RELATION"].unique()
 
-    # Adjust wind and solar PV resource steps (contribution to total electricity generation)
-    # These changes allow for greater contribution of intermittent solar and wind to total electricity generation
+    # Adjust wind and solar PV resource steps (contribution to total electricity
+    # generation). These changes allow for greater contribution of intermittent solar
+    # and wind to total electricity generation.
 
     renew_steps = renew_steps.dropna()
     renew_steps.rename(
@@ -485,10 +489,10 @@ def add_LED_setup(scen):
     # generation that needs to be run for every unit of intermittent solar and wind
     # => variable renewables <0, non-dispatchable thermal 0, flexible >0);
 
-    # also adjust the contribution of electric transport technologies to the operating reserves,
-    # increasing the amount they can contribute (vehicle-to-grid)
-    # These changes reduce the effective cost of building and running intermittent
-    # solar and wind plants, since the amount of back-up capacity built is less than before
+    # Also adjust the contribution of electric transport technologies to the operating
+    # reserves, increasing the amount they can contribute (vehicle-to-grid). These
+    # changes reduce the effective cost of building and running intermittent solar and
+    # wind plants, since the amount of back-up capacity built is less than before.
 
     renew_oper.rename(
         columns={
