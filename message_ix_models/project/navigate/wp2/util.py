@@ -2,6 +2,7 @@ import logging
 from itertools import product
 
 import pandas as pd
+from message_ix import make_df
 from message_ix_models.util import private_data_path
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
@@ -632,20 +633,12 @@ def limit_h2(scen, type="green"):
 
     technology_list = ["h2_coal", "h2_smr", "h2_bio"]
 
+    par = "bound_activity_up"
+    common = dict(mode="M1", time="year", value=0, unit="GWa")
+
     for tec, node, year in product(technology_list, node_list, period_list):
-        df_h2 = pd.DataFrame(
-            {
-                "node_loc": node,
-                "technology": tec,
-                "year_act": year,
-                "mode": "M1",
-                "time": "year",
-                "value": 0,
-                "unit": "GWa",
-            },
-            index=[0],
-        )
-        scen.add_par("bound_activity_up", df_h2)
+        df_h2 = make_df(par, node_loc=node, technology=tec, year_act=year, **common)
+        scen.add_par(par, df_h2)
 
     if type == "green":
         # Exclude blue hydrogen options as well
@@ -653,19 +646,8 @@ def limit_h2(scen, type="green"):
         technology_list_extra = ["h2_smr_ccs", "h2_coal_ccs"]
 
         for tec, node, year in (technology_list_extra, node_list, period_list):
-            df_h2 = pd.DataFrame(
-                {
-                    "node_loc": node,
-                    "technology": tec,
-                    "year_act": year,
-                    "mode": "M1",
-                    "time": "year",
-                    "value": 0,
-                    "unit": "GWa",
-                },
-                index=[0],
-            )
-            scen.add_par("bound_activity_up", df_h2)
+            df_h2 = make_df(par, node_loc=node, technology=tec, year_act=year, **common)
+            scen.add_par(par, df_h2)
     else:
         raise ValueError("No such type is defined.")
 
