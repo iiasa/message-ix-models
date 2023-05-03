@@ -1,5 +1,6 @@
 import logging
 import os
+from itertools import product
 
 import pandas as pd
 
@@ -171,21 +172,20 @@ def add_electrification_share(scen):
 
     # Group 1:
     levels = ["useful_cement", "useful_aluminum", "useful_petro", "useful_resins"]
-    for n in node_list:
-        for l in levels:
-            df = pd.DataFrame(
-                {
-                    "shares": [shr_const],
-                    "node_share": n,
-                    "node": n,
-                    "type_tec": type_tec_shr,
-                    "mode": "high_temp",
-                    "commodity": "ht_heat",
-                    "level": l,
-                }
-            )
+    for n, level in product(node_list, levels):
+        df = pd.DataFrame(
+            {
+                "shares": [shr_const],
+                "node_share": n,
+                "node": n,
+                "type_tec": type_tec_shr,
+                "mode": "high_temp",
+                "commodity": "ht_heat",
+                "level": level,
+            }
+        )
 
-            scen.add_set("map_shares_commodity_share", df)
+        scen.add_set("map_shares_commodity_share", df)
 
     # Group 2:
     for n in node_list:
@@ -211,20 +211,19 @@ def add_electrification_share(scen):
 
     # Group 1:
     scen.check_out()
-    for n in node_list:
-        for l in levels:
-            df = pd.DataFrame(
-                {
-                    "shares": [shr_const],
-                    "node_share": n,
-                    "node": n,
-                    "type_tec": type_tec_tot,
-                    "mode": "high_temp",
-                    "commodity": "ht_heat",
-                    "level": l,
-                }
-            )
-            scen.add_set("map_shares_commodity_total", df)
+    for n, level in product(node_list, levels):
+        df = pd.DataFrame(
+            {
+                "shares": [shr_const],
+                "node_share": n,
+                "node": n,
+                "type_tec": type_tec_tot,
+                "mode": "high_temp",
+                "commodity": "ht_heat",
+                "level": level,
+            }
+        )
+        scen.add_set("map_shares_commodity_total", df)
 
     # Group 2:
     for n in node_list:
