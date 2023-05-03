@@ -360,30 +360,30 @@ def add_LED_setup(scen):
     )
     fom_costs = fom_costs.dropna()
 
-    for node in node_list:
-        for year_vtg in period_list:
-            for technology in fom_costs["TECHNOLOGY"].unique():
-                try:
-                    years_tec_active = scen.years_active(node, technology, year_vtg)
-                except:
-                    continue
+    for node, year_vtg, technology in product(
+        node_list, period_list, fom_costs["TECHNOLOGY"].unique()
+    ):
+        try:
+            years_tec_active = scen.years_active(node, technology, year_vtg)
+        except Exception:
+            continue
 
-                fom_costs_temp = fom_costs[
-                    (fom_costs["TECHNOLOGY"] == technology)
-                    & (fom_costs["REGION"] == node)
-                    & (fom_costs["YEAR"] == year_vtg)
-                ]
-                df = pd.DataFrame(
-                    {
-                        "technology": technology,
-                        "node_loc": node,
-                        "year_vtg": year_vtg,
-                        "value": fom_costs_temp["VALUE"].values[0],
-                        "unit": "USD/kWa",
-                        "year_act": years_tec_active,
-                    }
-                )
-                scen.add_par("fix_cost", df)
+        fom_costs_temp = fom_costs[
+            (fom_costs["TECHNOLOGY"] == technology)
+            & (fom_costs["REGION"] == node)
+            & (fom_costs["YEAR"] == year_vtg)
+        ]
+        df = pd.DataFrame(
+            {
+                "technology": technology,
+                "node_loc": node,
+                "year_vtg": year_vtg,
+                "value": fom_costs_temp["VALUE"].values[0],
+                "unit": "USD/kWa",
+                "year_act": years_tec_active,
+            }
+        )
+        scen.add_par("fix_cost", df)
 
     # Read technology variable O&M costs from xlsx file and add to the scenario
     vom_costs = pd.read_excel(path_costs, sheet_name="NewVOMCosts_fixed")
@@ -395,34 +395,33 @@ def add_LED_setup(scen):
         var_name="YEAR",
         value_name="VALUE",
     )
-    technology_list_vom = vom_costs["TECHNOLOGY"].unique()
 
-    for node in node_list:
-        for year_vtg in period_list:
-            for technology in vom_costs["TECHNOLOGY"].unique():
-                try:
-                    years_tec_active = scen.years_active(node, technology, year_vtg)
-                except:
-                    continue
+    for node, year_vtg_technology in product(
+        node_list, period_list, vom_costs["TECHNOLOGY"].unique()
+    ):
+        try:
+            years_tec_active = scen.years_active(node, technology, year_vtg)
+        except Exception:
+            continue
 
-                vom_costs_temp = vom_costs[
-                    (vom_costs["TECHNOLOGY"] == technology)
-                    & (vom_costs["REGION"] == node)
-                    & (vom_costs["YEAR"] == year_vtg)
-                ]
-                df = pd.DataFrame(
-                    {
-                        "technology": technology,
-                        "node_loc": node,
-                        "year_vtg": year_vtg,
-                        "value": vom_costs_temp["VALUE"].values[0],
-                        "unit": "USD/kWa",
-                        "year_act": years_tec_active,
-                        "mode": "M1",
-                        "time": "year",
-                    }
-                )
-                scen.add_par("var_cost", df)
+        vom_costs_temp = vom_costs[
+            (vom_costs["TECHNOLOGY"] == technology)
+            & (vom_costs["REGION"] == node)
+            & (vom_costs["YEAR"] == year_vtg)
+        ]
+        df = pd.DataFrame(
+            {
+                "technology": technology,
+                "node_loc": node,
+                "year_vtg": year_vtg,
+                "value": vom_costs_temp["VALUE"].values[0],
+                "unit": "USD/kWa",
+                "year_act": years_tec_active,
+                "mode": "M1",
+                "time": "year",
+            }
+        )
+        scen.add_par("var_cost", df)
 
     # Changing the renewable energy assumptions (steps) for the following technologies:
     # elec_t_d, h2_elec, relations: solar_step, solar_step2, solar_step3, wind_step,
