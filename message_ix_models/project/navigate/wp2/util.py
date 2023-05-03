@@ -65,10 +65,10 @@ def add_CCS_constraint(scen, maximum_value, type_rel):
     )
 
     scen.check_out()
-    scen.add_par("relation_{}".format(type_rel), df)
+    scen.add_par(f"relation_{type_rel}", df)
     scen.commit(
         "added upper limit of zero for CO2 emissions"
-        + "accounted for in the relation {}".format(relation_name)
+        + f"accounted for in the relation {relation_name}"
     )
 
 
