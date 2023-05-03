@@ -3,7 +3,7 @@ from itertools import product
 
 import pandas as pd
 from message_ix import make_df
-from message_ix_models.util import private_data_path
+from message_ix_models.util import broadcast, private_data_path
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
 
@@ -642,8 +642,9 @@ def limit_h2(scen, type="green"):
     par = "bound_activity_up"
     common = dict(mode="M1", time="year", value=0, unit="GWa")
 
-    for tec, node, year in product(technology_list, node_list, period_list):
-        df_h2 = make_df(par, node_loc=node, technology=tec, year_act=year, **common)
-        scen.add_par(par, df_h2)
+    df_h2 = make_df(par, **common).pipe(
+        broadcast, node_loc=node_list, technology=technology_list, year=period_list
+    )
+    scen.add_par(par, df_h2)
 
     scen.commit("Hydrogen limits added.")
