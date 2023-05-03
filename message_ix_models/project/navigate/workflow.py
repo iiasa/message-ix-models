@@ -39,12 +39,37 @@ $ mix-models --url="ixmp://{scenario.platform.name}/{scenario.url}" --local-data
 
 
 def strip_policy_data(context: Context, scenario: Scenario) -> Scenario:
-    """Remove policy data, i.e. ``bound_emission`` and ``tax_emission``."""
+    """Remove policy data, i.e. ``bound_emission`` and ``tax_emission``.
+
+    Currently unused.
+    """
     with scenario.transact(message=__doc__):
         for name in ("bound_emission", "tax_emission"):
             scenario.remove_par(name, scenario.par(name))
 
     scenario.set_as_default()
+
+    return scenario
+
+
+def adjust_materials(
+    context: Context, scenario: Scenario, *, WP6_production: str
+) -> Scenario:
+    """Apply adjustments from WP2 for WP6 scenarios."""
+    from message_data.projects.navigate.wp2.util import (
+        add_CCS_constraint,
+        add_electrification_share,
+        add_LED_setup,
+        limit_h2,
+    )
+
+    if WP6_production == "advanced":
+        add_LED_setup(scenario)
+        add_electrification_share(scenario)
+        limit_h2(scenario, "green")
+
+    # Constrain CCS at 2.0 Gt [units?]
+    add_CCS_constraint(scenario, 2.0, "upper")
 
     return scenario
 
@@ -309,12 +334,12 @@ def generate(context: Context) -> Workflow:
         (
             "default",
             "def",
-            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/SUP_1p5C_Comb_LimCCS_650",
+            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54",
         ),
         (
             "advanced",
             "adv",
-            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/SUP_1p5C_Elec_HighVRE_650",
+            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54",
         ),
         (None, "T3.5", "MESSAGEix-Materials/baseline_default_NAVIGATE"),
     ):
@@ -322,13 +347,14 @@ def generate(context: Context) -> Workflow:
         wf.add_step(M_built[WP6_production], "base", build_materials, target=target)
 
         # Strip data from tax_emission
-        name = f"M {label} without policy"
+        name = f"M {label} adjusted"
         wf.add_step(
             name,
             M_built[WP6_production],
-            strip_policy_data,
+            adjust_materials,
             clone=True,
             target=f"MESSAGEix-GLOBIOM 1.1-M-R12 (NAVIGATE)/{label}",
+            WP6_production=WP6_production,
         )
         M_built[WP6_production] = name
 
