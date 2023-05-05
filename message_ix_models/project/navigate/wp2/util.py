@@ -1,10 +1,15 @@
 import logging
-from itertools import product
+from functools import lru_cache
 from typing import Literal
 
 import pandas as pd
 from message_ix import Scenario, make_df
-from message_ix_models.util import ScenarioInfo, broadcast, private_data_path
+from message_ix_models.util import (
+    ScenarioInfo,
+    broadcast,
+    nodes_ex_world,
+    private_data_path,
+)
 
 from message_data.tools.utilities import get_nodes, get_optimization_years
 
@@ -76,219 +81,198 @@ def add_CCS_constraint(
                 year_rel=years,
                 value=value,
                 unit="tC",
-            ),
+            ).astype({"year_rel": int}),
         )
 
 
+#: List of technologies for :func:`add_electrification_share`
+#:
+#: Group 1: Final Energy Industry technologies that produce ht_heat
+NONELEC_IND_TECS_HT = [
+    # Cement industry
+    "furnace_foil_cement",
+    "furnace_loil_cement",
+    "furnace_biomass_cement",
+    "furnace_ethanol_cement",
+    "furnace_methanol_cement",
+    "furnace_gas_cement",
+    "furnace_coal_cement",
+    "furnace_h2_cement",
+    # Aluminum industry
+    "furnace_coal_aluminum",
+    "furnace_foil_aluminum",
+    "furnace_loil_aluminum",
+    "furnace_ethanol_aluminum",
+    "furnace_biomass_aluminum",
+    "furnace_methanol_aluminum",
+    "furnace_gas_aluminum",
+    "furnace_h2_aluminum",
+    # High Value Chemicals
+    "furnace_coke_petro",
+    "furnace_coal_petro",
+    "furnace_foil_petro",
+    "furnace_loil_petro",
+    "furnace_ethanol_petro",
+    "furnace_biomass_petro",
+    "furnace_methanol_petro",
+    "furnace_gas_petro",
+    "furnace_h2_petro",
+    # Resins
+    "furnace_coal_resins",
+    "furnace_foil_resins",
+    "furnace_loil_resins",
+    "furnace_ethanol_resins",
+    "furnace_biomass_resins",
+    "furnace_methanol_resins",
+    "furnace_gas_resins",
+    "furnace_h2_resins",
+]
+
+#: Group 2: Other Industry (produces i_therm)
+NON_ELEC_IND_TEC_OTH = [
+    "foil_i",
+    "loil_i",
+    "biomass_i",
+    "eth_i",
+    "gas_i",
+    "coal_i",
+    "h2_i",
+]
+
+#: Final Energy Industry Electricity Technologies for :func:`add_electrification_share`
+#:
+#: Group 1
+ELEC_IND_TECS_HT = [
+    "furnace_elec_cement",
+    "furnace_elec_aluminum",
+    "furnace_elec_petro",
+    "furnace_elec_resins",
+]
+
+#: Group 2
+ELEC_IND_TECS_OTH = ["elec_i"]
+
+ALL_IND_TECS = (
+    NONELEC_IND_TECS_HT + ELEC_IND_TECS_HT + NON_ELEC_IND_TEC_OTH + ELEC_IND_TECS_OTH
+)
+
+ELEC_IND_TECS = ELEC_IND_TECS_HT + ELEC_IND_TECS_OTH
+
+
 def add_electrification_share(scen):
+    """Add share constraints for electrification in industry.
+
+    There are no processes at the moment that use low temperature heat.
+
+    This implementation includes Other Industry, Cement, Aluminum, High Value Chemicals
+    and Resin production.
+
+    Iron and Steel are not included since implementation is more complicated.
+
+    Depends on scrap availability etc.
+    """
     log.info("Add share constraints for electrification in industry")
 
-    node_list = get_nodes(scen)
+    info = ScenarioInfo(scen)
+    node_list = nodes_ex_world(info.N)
 
-    # There are no processes at the moment that use low temperature heat
-    # This implementation includes Other Industry, Cement, Aluminum,
-    # High Value Chemicals and Resin production.
-    # Iron and Steel not included since implementation is more complicated.
-    # Depends on scrap availability etc.
+    constraint_name = "share_low_lim_elec_ind"
+    type_tec_share = "elec_ind"
+    type_tec_total = "all_ind"
 
-    # Group 1: Final Energy Industry technologies that produce ht_heat
+    with scen.transact("Add sets for add_electrification_share()"):
+        scen.add_set("shares", constraint_name)
+        scen.add_cat("technology", type_tec_share, ELEC_IND_TECS)
 
-    nonelec_ind_tecs_ht = [
-        # Cement industry
-        "furnace_foil_cement",
-        "furnace_loil_cement",
-        "furnace_biomass_cement",
-        "furnace_ethanol_cement",
-        "furnace_methanol_cement",
-        "furnace_gas_cement",
-        "furnace_coal_cement",
-        "furnace_h2_cement",
-        # Aluminum indutry
-        "furnace_coal_aluminum",
-        "furnace_foil_aluminum",
-        "furnace_loil_aluminum",
-        "furnace_ethanol_aluminum",
-        "furnace_biomass_aluminum",
-        "furnace_methanol_aluminum",
-        "furnace_gas_aluminum",
-        "furnace_h2_aluminum",
-        # High Value Chemicals
-        "furnace_coke_petro",
-        "furnace_coal_petro",
-        "furnace_foil_petro",
-        "furnace_loil_petro",
-        "furnace_ethanol_petro",
-        "furnace_biomass_petro",
-        "furnace_methanol_petro",
-        "furnace_gas_petro",
-        "furnace_h2_petro",
-        # Resins
-        "furnace_coal_resins",
-        "furnace_foil_resins",
-        "furnace_loil_resins",
-        "furnace_ethanol_resins",
-        "furnace_biomass_resins",
-        "furnace_methanol_resins",
-        "furnace_gas_resins",
-        "furnace_h2_resins",
-    ]
-
-    # Group 2: Other Industry (produces i_therm)
-    non_elec_ind_tec_oth = [
-        "foil_i",
-        "loil_i",
-        "biomass_i",
-        "eth_i",
-        "gas_i",
-        "coal_i",
-        "h2_i",
-    ]
-
-    # Final Energy Industry Electricity Technologies
-
-    # Group 1:
-    elec_ind_tecs_ht = [
-        "furnace_elec_cement",
-        "furnace_elec_aluminum",
-        "furnace_elec_petro",
-        "furnace_elec_resins",
-    ]
-
-    # Gruop 2:
-    elec_ind_tecs_oth = ["elec_i"]
-
-    all_ind_tecs = (
-        nonelec_ind_tecs_ht
-        + elec_ind_tecs_ht
-        + non_elec_ind_tec_oth
-        + elec_ind_tecs_oth
-    )
-
-    elec_ind_tecs = elec_ind_tecs_ht + elec_ind_tecs_oth
-
-    shr_const = "share_low_lim_elec_ind"
-    type_tec_shr = "elec_ind"
-    type_tec_tot = "all_ind"
-
-    scen.check_out()
-    scen.add_set("shares", shr_const)
-    scen.add_cat("technology", type_tec_shr, elec_ind_tecs)
-    scen.commit("sets added")
-
-    node_list.remove("R12_GLB")
     scen.check_out()
 
     # Group 1:
     levels = ["useful_cement", "useful_aluminum", "useful_petro", "useful_resins"]
-    for n, level in product(node_list, levels):
-        df = pd.DataFrame(
-            {
-                "shares": [shr_const],
-                "node_share": n,
-                "node": n,
-                "type_tec": type_tec_shr,
-                "mode": "high_temp",
-                "commodity": "ht_heat",
-                "level": level,
-            }
-        )
+    set_name = "map_shares_commodity_share"
 
-        scen.add_set("map_shares_commodity_share", df)
+    # NB cannot use make_df(), since this is a set rather than a parameter
+    cols = "shares node_share node type_tec mode commodity level"
+    base = pd.DataFrame(None, index=[0], columns=cols.split())
+    common = dict(shares=constraint_name, type_tec=type_tec_share)
+
+    df = (
+        base.assign(mode="high_temp", commodity="ht_heat", **common)
+        .pipe(broadcast, node=node_list, level=levels)
+        .assign(node_share=lambda df: df.node)
+    )
+    scen.add_set(set_name, df)
 
     # Group 2:
-    for n in node_list:
-        df = pd.DataFrame(
-            {
-                "shares": [shr_const],
-                "node_share": n,
-                "node": n,
-                "type_tec": type_tec_shr,
-                "mode": "M1",
-                "commodity": "i_therm",
-                "level": "useful",
-            }
+    df = (
+        base.assign(
+            shares=constraint_name,
+            type_tec=type_tec_total,
+            mode="M1",
+            commodity="i_therm",
+            level="useful",
         )
-        scen.add_set("map_shares_commodity_share", df)
+        .pipe(broadcast, node=node_list)
+        .assign(node_share=lambda df: df.node)
+    )
+    scen.add_set(set_name, df)
 
     scen.commit("Share mapping added.")
 
     # Add all technologies which make up the "Total"
-    scen.check_out()
-    scen.add_cat("technology", type_tec_tot, all_ind_tecs)
-    scen.commit("Total technology category added.")
+    with scen.transact(f"Populate technology category {type_tec_total!r}"):
+        scen.add_cat("technology", type_tec_total, ALL_IND_TECS)
 
     # Group 1:
     scen.check_out()
-    for n, level in product(node_list, levels):
-        df = pd.DataFrame(
-            {
-                "shares": [shr_const],
-                "node_share": n,
-                "node": n,
-                "type_tec": type_tec_tot,
-                "mode": "high_temp",
-                "commodity": "ht_heat",
-                "level": level,
-            }
-        )
-        scen.add_set("map_shares_commodity_total", df)
+    set_name = "map_shares_commodity_total"
+
+    common["type_tec"] = type_tec_total
+    df = (
+        base.assign(mode="high_temp", commodity="ht_heat", **common)
+        .pipe(broadcast, node=node_list, level=levels)
+        .assign(node_share=lambda df: df.node)
+    )
+    scen.add_set(set_name, df)
 
     # Group 2:
-    for n in node_list:
-        df = pd.DataFrame(
-            {
-                "shares": [shr_const],
-                "node_share": n,
-                "node": n,
-                "type_tec": type_tec_tot,
-                "mode": "M1",
-                "commodity": "i_therm",
-                "level": "useful",
-            }
+    df = (
+        base.assign(
+            shares=constraint_name,
+            type_tec=type_tec_total,
+            mode="M1",
+            commodity="i_therm",
+            level="useful",
         )
-        scen.add_set("map_shares_commodity_total", df)
+        .pipe(broadcast, node=node_list)
+        .assign(node_share=lambda df: df.node)
+    )
+    scen.add_set(set_name, df)
 
-        # Add lower bound share constraint for end of the century
-
-        for n in node_list:
-            df = pd.DataFrame(
-                {
-                    "shares": shr_const,
-                    "node_share": n,
-                    "year_act": [
-                        2030,
-                        2035,
-                        2040,
-                        2045,
-                        2050,
-                        2055,
-                        2060,
-                        2070,
-                        2080,
-                        2090,
-                        2100,
-                        2110,
-                    ],
-                    "time": "year",
-                    "value": [
-                        0.4,
-                        0.5,
-                        0.6,
-                        0.7,
-                        0.8,
-                        0.8,
-                        0.8,
-                        0.8,
-                        0.8,
-                        0.8,
-                        0.8,
-                        0.8,
-                    ],
-                    "unit": "%",
-                }
-            )
-
-            scen.add_par("share_commodity_lo", df)
+    # Add lower bound share constraint for end of the century
+    par_name = "share_commodity_lo"
+    ya_value = pd.DataFrame(
+        [
+            [2030, 0.4],
+            [2035, 0.5],
+            [2040, 0.6],
+            [2045, 0.7],
+            [2050, 0.8],
+            [2055, 0.8],
+            [2060, 0.8],
+            [2070, 0.8],
+            [2080, 0.8],
+            [2090, 0.8],
+            [2100, 0.8],
+            [2110, 0.8],
+        ],
+        columns=["year_act", "value"],
+    )
+    df = (
+        make_df(par_name, shares=constraint_name, time="year", unit="%")
+        .pipe(broadcast, ya_value, node_share=node_list)
+        .astype({"year_act": int})
+    )
+    scen.add_par(par_name, df)
 
     scen.commit("Add industry electricity share constraints")
 
@@ -299,134 +283,93 @@ def add_electrification_share(scen):
     # FE_industry
 
 
-def add_LED_setup(scen):
+def add_LED_setup(scen: Scenario):
+    """Add LED setup to the scenario.
+
+    This function is adjusted based on:
+
+    https://github.com/volker-krey/message_data/blob/LED_update_materials/
+    message_data/projects/led/LED_low_energy_demand_setup.R#L73
+
+    Only relevant adjustments are chosen:
+
+    - Cost adjustments for VREs.
+    - Greater contribution of intermittent solar and wind to total electricity
+      generation.
+    - Adjust wind and solar PV operating reserve requirements.
+    - Adjust wind and solar PV reserve margin requirements.
+    - Increase the initial starting point value for activity growth bounds on the solar
+      PV technology (centralized generation).
+    """
     log.info("Add LED setup to the scenario")
 
-    # This function is adjusted based on:
-    # https://github.com/volker-krey/message_data/blob/LED_update_materials/
-    # message_data/projects/led/LED_low_energy_demand_setup.R#L73
-    # Only relevant adjustments are chosen:
-    # - Cost adjustments for VREs
-    # - Greater contribution of intermittent solar and wind to total electricity
-    #   generation
-    # - Adjust wind and solar PV operating reserve requirements
-    # - Adjust wind and solar PV reserve margin requirements
-    # - Increase the initial starting point value for activity growth bounds on the
-    #   solar PV technology (centralized generation)
-
-    period_list = get_optimization_years(scen)
-    [i for i in period_list if i >= 2025]
+    # Information about the scenario
+    info = ScenarioInfo(scen)
     node_list = get_nodes(scen)
-    scen.check_out()
 
-    # Adjsut the investment costs, fixed O&M costs and variable O&M costs for
-    # the following technologies: solar_pv_ppl, stor_ppl, h2_elec, h2_fc_trp,
-    # solar_i, h2_fc_I, h2_fc_RC.
-
-    # Read technology investment costs from xlsx file and add to the scenario
+    # Common arguments for pd.DataFrame.melt
+    melt_args = dict(
+        id_vars=["TECHNOLOGY", "REGION"], var_name="year_vtg", value_name="value"
+    )
+    # Common arguments for pd.DataFrame.rename
+    rename_cols = {"TECHNOLOGY": "technology", "REGION": "node_loc"}
 
     data_path = private_data_path("alps")
-    path_costs = data_path.joinpath(
-        "granular-techs_cost_comparison_20170831_revAG_SDS_5year.xlsx",
-    )
-    inv_costs = pd.read_excel(path_costs, sheet_name="NewCosts_fixed")
-    year_columns = inv_costs._get_numeric_data().columns.values.tolist()
-    inv_costs = pd.melt(
-        inv_costs,
-        id_vars=["TECHNOLOGY", "REGION"],
-        value_vars=year_columns,
-        var_name="YEAR",
-        value_name="VALUE",
-    )
 
-    inv_costs = inv_costs.dropna()
-    inv_costs.rename(
-        columns={
-            "TECHNOLOGY": "technology",
-            "REGION": "node_loc",
-            "YEAR": "year_vtg",
-            "VALUE": "value",
-        },
-        inplace=True,
+    scen.check_out()
+
+    # Adjust the investment costs, fixed O&M costs and variable O&M costs for the
+    # following technologies: solar_pv_ppl, stor_ppl, h2_elec, h2_fc_trp, solar_i,
+    # h2_fc_I, h2_fc_RC.
+
+    # Read technology investment costs from xlsx file and add to the scenario
+    filename = "granular-techs_cost_comparison_20170831_revAG_SDS_5year.xlsx"
+    costs_file = pd.ExcelFile(data_path.joinpath(filename))
+
+    def _read(sheet_name: str) -> pd.DataFrame:
+        # Shorthand
+        return (
+            costs_file.parse(sheet_name="NewCosts_fixed")
+            .melt(**melt_args)
+            .dropna()
+            .rename(columns=rename_cols)
+        )
+
+    common = dict(year_vtg=-1, year_act=-1, unit="USD/KWa", time="year", mode="M1")
+
+    par_name = "inv_cost"
+    base = make_df(par_name, **common)
+    df = (
+        pd.concat([base, _read(sheet_name="NewCosts_fixed")], join="inner")
+        .ffill()
+        .dropna()
     )
-    inv_costs["unit"] = "USD/kWa"
-    scen.add_par("inv_cost", inv_costs)
+    scen.add_par(par_name, df)
 
     # Read technology fixed O&M costs from xlsx file and add to the scenario
-
-    fom_costs = pd.read_excel(path_costs, sheet_name="NewFOMCosts_fixed")
-    year_columns = fom_costs._get_numeric_data().columns.values.tolist()
-    fom_costs = pd.melt(
-        fom_costs,
-        id_vars=["TECHNOLOGY", "REGION"],
-        value_vars=year_columns,
-        var_name="YEAR",
-        value_name="VALUE",
-    )
-    fom_costs = fom_costs.dropna()
-
-    for node, year_vtg, technology in product(
-        node_list, period_list, fom_costs["TECHNOLOGY"].unique()
-    ):
-        try:
-            years_tec_active = scen.years_active(node, technology, year_vtg)
-        except Exception:
-            continue
-
-        fom_costs_temp = fom_costs[
-            (fom_costs["TECHNOLOGY"] == technology)
-            & (fom_costs["REGION"] == node)
-            & (fom_costs["YEAR"] == year_vtg)
-        ]
-        df = pd.DataFrame(
-            {
-                "technology": technology,
-                "node_loc": node,
-                "year_vtg": year_vtg,
-                "value": fom_costs_temp["VALUE"].values[0],
-                "unit": "USD/kWa",
-                "year_act": years_tec_active,
-            }
-        )
-        scen.add_par("fix_cost", df)
-
     # Read technology variable O&M costs from xlsx file and add to the scenario
-    vom_costs = pd.read_excel(path_costs, sheet_name="NewVOMCosts_fixed")
-    year_columns = vom_costs._get_numeric_data().columns.values.tolist()
-    vom_costs = pd.melt(
-        vom_costs,
-        id_vars=["TECHNOLOGY", "REGION"],
-        value_vars=year_columns,
-        var_name="YEAR",
-        value_name="VALUE",
-    )
+    def filter(df):
+        return df[df.node_loc.isin(node_list) & df.year_vtg.isin(info.Y)]
 
-    for node, year_vtg_technology in product(
-        node_list, period_list, vom_costs["TECHNOLOGY"].unique()
-    ):
+    @lru_cache(maxsize=256)
+    def _yv_ya(nl, t):
         try:
-            years_tec_active = scen.years_active(node, technology, year_vtg)
-        except Exception:
-            continue
+            return scen.vintage_and_active_years((nl, t))
+        except ValueError:
+            log.info(f"No vintage years for ({nl=}, {t=})")
+            return pd.DataFrame([], columns=["year_vtg", "year_act"])
 
-        vom_costs_temp = vom_costs[
-            (vom_costs["TECHNOLOGY"] == technology)
-            & (vom_costs["REGION"] == node)
-            & (vom_costs["YEAR"] == year_vtg)
-        ]
-        df = pd.DataFrame(
-            {
-                "technology": technology,
-                "node_loc": node,
-                "year_vtg": year_vtg,
-                "value": vom_costs_temp["VALUE"].values[0],
-                "unit": "USD/kWa",
-                "year_act": years_tec_active,
-                "mode": "M1",
-                "time": "year",
-            }
-        )
-        scen.add_par("var_cost", df)
+    for par_name, sheet_name in (
+        ("fix_cost", "NewFOMCosts_fixed"),
+        ("var_cost", "NewVOMCosts_fixed"),
+    ):
+        to_add = [make_df(par_name, **common)]
+        for (nl, t), data in (
+            _read(sheet_name).pipe(filter).groupby(["node_loc", "technology"])
+        ):
+            to_add.append(data.merge(_yv_ya(nl, t), on="year_vtg"))
+
+        scen.add_par(par_name, pd.concat(to_add).ffill().dropna())
 
     # Changing the renewable energy assumptions (steps) for the following technologies:
     # elec_t_d, h2_elec, relations: solar_step, solar_step2, solar_step3, wind_step,
@@ -434,197 +377,106 @@ def add_LED_setup(scen):
 
     # Read solar and wind intermittency assumptions from xlsx file
 
-    path_renew = data_path.joinpath(
-        "solar_wind_intermittency_20170831_5year.xlsx",
-    )
-    renew_steps = pd.read_excel(path_renew, sheet_name="steps_NEW")
-    year_columns = renew_steps._get_numeric_data().columns.values.tolist()
-    renew_steps = pd.melt(
-        renew_steps,
-        id_vars=["TECHNOLOGY", "REGION", "RELATION"],
-        value_vars=year_columns,
-        var_name="YEAR",
-        value_name="VALUE",
+    melt_args["id_vars"].append("RELATION")
+    rename_cols.update(RELATION="relation", year_vtg="year_act")
+    assign_args = dict(
+        unit="???",
+        mode="M1",
+        node_rel=lambda df: df.node_loc,
+        year_rel=lambda df: df.year_act,
     )
 
-    # Adjust wind and solar PV resource steps (contribution to total electricity
-    # generation). These changes allow for greater contribution of intermittent solar
-    # and wind to total electricity generation.
+    path_renew = data_path.joinpath("solar_wind_intermittency_20170831_5year.xlsx")
+    # - steps_NEW: Adjust wind and solar PV resource steps (contribution to total
+    #   electricity generation). These changes allow for greater contribution of
+    #   intermittent solar and wind to total electricity generation.
+    # - oper_NEW: adjust relation: oper_res, technologies: wind_cv1, windcv2, windcv3,
+    #   windcv4, solar_cv1, solar_cv2, solar_cv3, solar_cv4, elec_trp.
+    #
+    #   Adjust wind and solar PV operating reserve requirements (amount of flexible
+    #   generation that needs to be run for every unit of intermittent solar and wind
+    #   => variable renewables <0, non-dispatchable thermal 0, flexible >0);
+    #
+    #   Also adjust the contribution of electric transport technologies to the operating
+    #   reserves, increasing the amount they can contribute (vehicle-to-grid). These
+    #   changes reduce the effective cost of building and running intermittent solar and
+    #   wind plants, since the amount of back-up capacity built is less than before.
+    # - resm_NEW: relation: res_marg, Technology:  wind_cv1, windcv2, windcv3, windcv4,
+    #   solar_cv1, solar_cv2, solar_cv3, solar_cv4
+    #
+    #   Adjust wind and solar PV reserve margin requirements (amount of firm capacity
+    #   that needs to be run to meet peak load and contingencies; intermittent solar and
+    #   wind do not contribute a full 100% to the reserve margin). These changes allow
+    #   for greater contribution of intermittent solar and wind to total electricity
+    #   generation.
+    for sheet_name in ("steps_NEW", "oper_NEW", "resm_NEW"):
+        df = (
+            pd.read_excel(path_renew, sheet_name=sheet_name)
+            .melt(**melt_args)
+            .dropna()
+            .rename(columns=rename_cols)
+            .assign(**assign_args)
+        )
+        scen.add_par("relation_activity", df)
 
-    renew_steps = renew_steps.dropna()
-    renew_steps.rename(
-        columns={
-            "RELATION": "relation",
-            "TECHNOLOGY": "technology",
-            "REGION": "node_loc",
-            "YEAR": "year_act",
-            "VALUE": "value",
-        },
-        inplace=True,
-    )
-    renew_steps["unit"] = "???"
-    renew_steps["node_rel"] = renew_steps["node_loc"]
-    renew_steps["year_rel"] = renew_steps["year_act"]
-    renew_steps["mode"] = "M1"
-    scen.add_par("relation_activity", renew_steps)
+    # Increase the initial starting point value for activity growth bounds on the solar
+    # PV technology (centralized generation).
 
-    # Adjust relation: oper_res, technologies: wind_cv1, windcv2, windcv3, windcv4,
-    # solar_cv1, solar_cv2, solar_cv3, solar_cv4, elec_trp
+    technology = "solar_pv_ppl"
+    years_subset = [2025, 2030, 2035, 2040, 2045, 2050]
 
-    # Read solar and wind intermittency assumptions from xlsx file
-    renew_oper = pd.read_excel(path_renew, sheet_name="oper_NEW")
-    year_columns = renew_oper._get_numeric_data().columns.values.tolist()
-    renew_oper = pd.melt(
-        renew_oper,
-        id_vars=["TECHNOLOGY", "REGION", "RELATION"],
-        value_vars=year_columns,
-        var_name="YEAR",
-        value_name="VALUE",
-    )
-    renew_oper = renew_oper.dropna()
-
-    # Adjust wind and solar PV operating reserve requirements (amount of flexible
-    # generation that needs to be run for every unit of intermittent solar and wind
-    # => variable renewables <0, non-dispatchable thermal 0, flexible >0);
-
-    # Also adjust the contribution of electric transport technologies to the operating
-    # reserves, increasing the amount they can contribute (vehicle-to-grid). These
-    # changes reduce the effective cost of building and running intermittent solar and
-    # wind plants, since the amount of back-up capacity built is less than before.
-
-    renew_oper.rename(
-        columns={
-            "RELATION": "relation",
-            "TECHNOLOGY": "technology",
-            "REGION": "node_loc",
-            "YEAR": "year_act",
-            "VALUE": "value",
-        },
-        inplace=True,
-    )
-    renew_oper["unit"] = "???"
-    renew_oper["node_rel"] = renew_oper["node_loc"]
-    renew_oper["year_rel"] = renew_oper["year_act"]
-    renew_oper["mode"] = "M1"
-    scen.add_par("relation_activity", renew_oper)
-
-    # Relation: res_marg, Technology:  wind_cv1, windcv2, windcv3, windcv4,
-    # solar_cv1, solar_cv2, solar_cv3, solar_cv4
-
-    # Read solar and wind intermittency assumptions from xlsx file
-
-    renew_resm = pd.read_excel(path_renew, sheet_name="resm_NEW")
-    year_columns = renew_resm._get_numeric_data().columns.values.tolist()
-    renew_resm = pd.melt(
-        renew_resm,
-        id_vars=["TECHNOLOGY", "REGION", "RELATION"],
-        value_vars=year_columns,
-        var_name="YEAR",
-        value_name="VALUE",
-    )
-    renew_resm = renew_resm.dropna()
-
-    # Adjust wind and solar PV reserve margin requirements (amount of firm capacity
-    # that needs to be run to meet peak load and contingencies; intermittent
-    # solar and wind do not contribute a full 100% to the reserve margin)
-    # These changes allow for greater contribution of intermittent solar and
-    # wind to total electricity generation
-
-    renew_resm.rename(
-        columns={
-            "RELATION": "relation",
-            "TECHNOLOGY": "technology",
-            "REGION": "node_loc",
-            "YEAR": "year_act",
-            "VALUE": "value",
-        },
-        inplace=True,
-    )
-    renew_resm["unit"] = "???"
-    renew_resm["node_rel"] = renew_resm["node_loc"]
-    renew_resm["year_rel"] = renew_resm["year_act"]
-    renew_resm["mode"] = "M1"
-    scen.add_par("relation_activity", renew_resm)
-
-    # Increase the initial starting point value for activity growth bounds on
-    # the solar PV technology (centralized generation)
     # Only do this for a subset of the regions for which there are currently
-    # "growth_activity_up" (formerly "mpa up") values defined.
-    # We don't want to specify an "initial_activity_up" for a technology that
-    # does not have a "growth_activity_up".
-    years_subset = [2025, 2030, 2035, 2040, 2045, 2050]
-    technology = "solar_pv_ppl"
-    growth_activity_up = scen.par(
-        "growth_activity_up", filters={"technology": technology}
-    )
-    node_subset = growth_activity_up["node_loc"]
-    # node_subset = c("R11_CPA","R11_FSU","R11_LAM","R11_MEA","R11_NAM","R11_PAS")
+    # "growth_activity_up" (formerly "mpa up") values defined. We don't want to specify
+    # an "initial_activity_up" for a technology that does not have a
+    # "growth_activity_up".
+    node_subset = scen.par("growth_activity_up", filters={"technology": technology})[
+        "node_loc"
+    ].unique()
+    # NB(PNK 2023-05-05) Unclear what this line was for. It was (1) in R, (2) commented,
+    #    and (3) referred to R11 node codes whereas the function was being applied for
+    #    R12.
+    # node_subset = ["R11_CPA", "R11_FSU", "R11_LAM", "R11_MEA", "R11_NAM", "R11_PAS"]
 
-    for node, year in product(node_subset, years_subset):
-        df = pd.DataFrame(
-            {
-                "node_loc": node,
-                "technology": technology,
-                "year_act": year,
-                "time": "year",
-                "value": 90,
-                "unit": "GWa",
-            },
-            index=[0],
+    for par, magnitude, unit in (
+        ("initial_activity_up", 90, "GWa"),
+        # Increase the initial starting point value for capacity growth bounds on the
+        # solar PV technology (centralized generation)
+        ("initial_new_capacity_up", 10, "GW"),
+    ):
+        df = (
+            make_df(
+                par,
+                value=magnitude,
+                unit=unit,
+                technology=technology,
+                time="year",  # for initial_activity_up
+                year_act=years_subset,  # for initial_activity_up
+                year_vtg=years_subset,  # for initial_new_capacity_up
+            )
+            .pipe(broadcast, node_loc=node_subset)
+            .dropna(subset="node_loc")
         )
-        scen.add_par("initial_activity_up", df)
+        if not len(df):
+            log.warning(f"No {par!r} data added for t={technology!r}; {node_subset = }")
 
-    # Increase the initial starting point value for capacity growth bounds
-    # on the solar PV technology (centralized generation)
-
-    years_subset = [2025, 2030, 2035, 2040, 2045, 2050]
-    technology = "solar_pv_ppl"
-
-    for node, year in product(node_subset, years_subset):
-        df = pd.DataFrame(
-            {
-                "node_loc": node,
-                "technology": technology,
-                "year_vtg": year,
-                "time": "year",
-                "value": 10,
-                "unit": "GW",
-            },
-            index=[0],
-        )
-        scen.add_par("initial_new_capacity_up", df)
+        scen.add_par(par, df)
 
     # Read useful level fuel potential contribution assumptions from xlsx file
+    #
     # Adjust limits to potential fuel-specific contributions at useful energy
     # level (in each end-use sector separately)
-
+    #
     # path_useful_fuel = data_path.joinpath(
     #     "useful_level_fuel_potential_contribution_20170907_5year.xlsx",
     # )
-    # useful_fuel = pd.read_excel(path_useful_fuel, sheet_name = "UE_constraints_NEW")
-    # year_columns = useful_fuel._get_numeric_data().columns.values.tolist()
-    # useful_fuel = pd.melt(useful_fuel, id_vars=['TECHNOLOGY','REGION','RELATION'],
-    # value_vars= year_columns,var_name='YEAR', value_name='VALUE')
-
-    # relation_list_useful_fuel = useful_fuel['RELATION'].unique()
-    # node_list = useful_fuel['REGION'].unique()
-    # useful_fuel = useful_fuel.dropna()
-
-    # useful_fuel.rename(
-    #     columns={
-    #         "RELATION": "relation",
-    #         "TECHNOLOGY": "technology",
-    #         "REGION": "node_loc",
-    #         "YEAR": "year_act",
-    #         "VALUE": "value",
-    #     },
-    #     inplace=True,
+    # useful_fuel = (
+    #     pd.read_excel(path_useful_fuel, sheet_name="UE_constraints_NEW")
+    #     .melt(**melt_args)
+    #     .dropna()
+    #     .rename(columns=rename_cols)
+    #     .assign(**assign_args)
     # )
-    # useful_fuel['unit'] = '???'
-    # useful_fuel['node_rel'] = useful_fuel['node_loc']
-    # useful_fuel['year_rel'] = useful_fuel['year_act']
-    # useful_fuel['mode'] = 'M1'
-    # scen.add_par('relation_activity',useful_fuel)
+    # scen.add_par("relation_activity", useful_fuel)
 
     scen.commit("LED changes implemented.")
 
@@ -673,8 +525,8 @@ def limit_h2(scen: Scenario, type: str = "green") -> None:
                 # NB here we might use message_ix_models.util.nodes_ex_world(info.N),
                 #    but it is unclear if entries for e.g. R12_GLB are important. So
                 #    exclude only "World", as message_data.tools.utilities.get_nodes().
-                node_loc=filter(lambda n: n != "World", info.N),
+                node_loc=list(filter(lambda n: n != "World", info.N)),
                 technology=technology_list,
-                year=info.Y,
+                year_act=info.Y,
             ),
         )
