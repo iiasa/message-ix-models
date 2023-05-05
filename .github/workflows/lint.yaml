@@ -17,10 +17,13 @@ jobs:
     with:
       # If the "Latest version testable on GitHub Actions" in pytest.yaml
       # is not the latest 3.x stable version, adjust here to match:
+      # NB pint is normally implied by iam-units, but we force an earlier
+      #    version to work around https://github.com/hgrecco/pint/issues/1767
       python-version: "3.10"
       type-hint-packages: >-
         genno
         iam-units
+        "pint < 0.21"
         pytest
         sdmx1
         types-PyYAML
