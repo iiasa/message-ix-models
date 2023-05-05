@@ -3,7 +3,7 @@ import logging
 import re
 import sys
 from datetime import date
-from itertools import count
+from itertools import count, product
 from pathlib import Path
 from typing import Collection, Optional
 
@@ -27,42 +27,50 @@ log = logging.getLogger(__name__)
 
 
 def _model_name(value: str) -> str:
-    # Discard the internal " (NAVIGATE)" suffix
+    """Return a model ID for submission from the NAVIGATE models codelist.
+
+    `value` should be a model name (:attr:`.Scenario.model`) constructed by
+    :mod:`.navigate.workflow`.
+
+    The suffix " (NAVIGATE)" used in the internal IIASA ECE database is removed.
+    """
     return value.split(" (NAVIGATE)")[0]
 
 
 def _scenario_name(context: Context, value: str) -> Optional[str]:
-    """Return a valid ID from the NAVIGATE scenarios codelist.
+    """Return a scenario ID for submission from the NAVIGATE scenarios codelist.
 
     `value` should be a scenario name (:attr:`.Scenario.scenario`) constructed by
     :mod:`.navigate.workflow`.
 
     Returns :data:`None` if the value does not appear in list. If
-    ``context.navigate_dsd`` is "iiasa-ece", a string is always returned.
+    ``context.navigate.dsd`` is "iiasa-ece", some string is always returned.
     """
-    # Special handling for "baseline"
-    if value == "baseline":
-        return value if context.get("navigate_dsd") == "iiasa-ece" else None
-
     # Transform a complex scenario name from the workflow to the corresponding NAVIGATE
     # identifier
     match = re.match(r"^NPi-(.*)_ENGAGE_([^_]+)_step-[123](\+B)?$", value)
     if match:
         value = f"{match.group(2)}-{match.group(1)}"
 
-    candidate = f"NAV_Dem-{value}"
-    for code in iter_scenario_codes(context):
+    candidates = (
+        f"NAV_Dem-{value}",
+        # _u/_d scenarios are not implemented currently. Allow a match with the former.
+        f"NAV_Dem-{value}_u",
+        f"PC-{value}",
+    )
+    for code, candidate in product(iter_scenario_codes(context), candidates):
         if code.id == candidate:
             return candidate
-        elif code.id == candidate + "_u":
-            # _u and _d scenarios are not implemented currently. Allow a match with the
-            # former
-            return candidate + "_u"
 
-    return candidate if context.get("navigate_dsd") == "iiasa-ece" else None
+    # Use "baseline" as-is
+    if value == "baseline":
+        candidate = value
+
+    return candidate if context.navigate.dsd == "iiasa-ece" else None
 
 
 def _region(codelist_id: str, value: str) -> str:
+    """Return a region ID for submission from the NAVIGATE MESSAGE regions codelist."""
     # Discard the prefix
     return value.split(f"{codelist_id}_")[-1]
 
