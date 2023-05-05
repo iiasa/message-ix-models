@@ -50,6 +50,7 @@ def add_CCS_constraint(
         .where(lambda df: ~df["technology"].str.fullmatch("b?co2_tr_dis"))
         .dropna()
         .assign(node_rel=node, relation=relation, value=lambda df: df.value * -1)
+        .astype({"year_rel": int, "year_act": int})
     )
 
     # Add the data
