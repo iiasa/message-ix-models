@@ -194,9 +194,9 @@ def gen_config(
     """
     # Identify the file path for output
     today = date.today().strftime("%Y-%m-%d")
-    _dsd = "" if context.navigate_dsd == "navigate" else f"_{context.navigate_dsd}"
+    dsd_label = "" if context.navigate.dsd == "navigate" else f"_{context.navigate.dsd}"
     for index in count():
-        out_file = context.get_local_path("report", f"{today}_{index}{_dsd}.xlsx")
+        out_file = context.get_local_path("report", f"{today}_{index}{dsd_label}.xlsx")
         if not out_file.exists():
             break
 
@@ -244,7 +244,7 @@ def gen_config(
     }
 
     log.debug(
-        f"Region code mapping for target DSD {context.navigate_dsd!r}:\n"
+        f"Region code mapping for target DSD {context.navigate.dsd!r}:\n"
         + repr(cfg.name_map["Region"])
     )
 
