@@ -71,6 +71,8 @@ def adjust_materials(
     # Constrain CCS at 2.0 Gt [units?]
     add_CCS_constraint(scenario, 2.0, "upper")
 
+    scenario.set_as_default()
+
     return scenario
 
 
