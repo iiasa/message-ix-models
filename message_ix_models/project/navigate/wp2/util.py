@@ -340,7 +340,7 @@ def add_LED_setup(scen: Scenario):
             .rename(columns=rename_cols)
         )
 
-    common = dict(year_vtg=-1, year_act=-1, unit="USD/KWa", time="year", mode="M1")
+    common = dict(year_vtg=-1, year_act=-1, unit="USD/kWa", time="year", mode="M1")
 
     par_name = "inv_cost"
     base = make_df(par_name, **common)
