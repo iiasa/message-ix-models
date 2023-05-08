@@ -328,32 +328,14 @@ def add_LED_setup(scen: Scenario):
     # h2_fc_I, h2_fc_RC.
 
     # Read technology investment costs from xlsx file and add to the scenario
+    # Read technology fixed O&M costs from xlsx file and add to the scenario
+    # Read technology variable O&M costs from xlsx file and add to the scenario
     filename = "granular-techs_cost_comparison_20170831_revAG_SDS_5year.xlsx"
     costs_file = pd.ExcelFile(data_path.joinpath(filename))
 
-    def _read(sheet_name: str) -> pd.DataFrame:
-        # Shorthand
-        return (
-            costs_file.parse(sheet_name="NewCosts_fixed")
-            .melt(**melt_args)
-            .dropna()
-            .rename(columns=rename_cols)
-        )
-
     common = dict(year_vtg=-1, year_act=-1, unit="USD/kWa", time="year", mode="M1")
 
-    par_name = "inv_cost"
-    base = make_df(par_name, **common)
-    df = (
-        pd.concat([base, _read(sheet_name="NewCosts_fixed")], join="inner")
-        .ffill()
-        .dropna()
-    )
-    scen.add_par(par_name, df)
-
-    # Read technology fixed O&M costs from xlsx file and add to the scenario
-    # Read technology variable O&M costs from xlsx file and add to the scenario
-    def filter(df):
+    def _filter(df):
         return df[df.node_loc.isin(node_list) & df.year_vtg.isin(info.Y)]
 
     @lru_cache(maxsize=256)
@@ -365,14 +347,26 @@ def add_LED_setup(scen: Scenario):
             return pd.DataFrame([], columns=["year_vtg", "year_act"])
 
     for par_name, sheet_name in (
+        ("inv_cost", "NewCosts_fixed"),
         ("fix_cost", "NewFOMCosts_fixed"),
         ("var_cost", "NewVOMCosts_fixed"),
     ):
         to_add = [make_df(par_name, **common)]
-        for (nl, t), data in (
-            _read(sheet_name).pipe(filter).groupby(["node_loc", "technology"])
-        ):
-            to_add.append(data.merge(_yv_ya(nl, t), on="year_vtg"))
+
+        data = (
+            costs_file.parse(sheet_name)
+            .melt(**melt_args)
+            .dropna()
+            .rename(columns=rename_cols)
+            .pipe(_filter)
+        )
+
+        if par_name == "inv_cost":
+            to_add.append(data)
+        else:
+            # Broadcast across the set of years_act appropriate for (nl, t)
+            for (nl, t), group_data in data.groupby(["node_loc", "technology"]):
+                to_add.append(group_data.merge(_yv_ya(nl, t), on="year_vtg"))
 
         scen.add_par(par_name, pd.concat(to_add).ffill().dropna())
 

@@ -118,7 +118,12 @@ def test_add_LED_setup(request, test_context):
             year_vtg=info.Y,
         )
         scenario.add_par(par, df)
+
     add_LED_setup(scenario)
+
+    # Ensure units column was not dropped during data operations
+    df = scenario.par("inv_cost", filters={"technology": "solar_pv_ppl"})
+    assert "???" not in df.unit.unique()
 
 
 def test_limit_h2(request, test_context):
