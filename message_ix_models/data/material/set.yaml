@@ -321,6 +321,7 @@ steel:
     add:
       - minimum_recycling_steel
       - max_global_recycling_steel
+      - max_regional_recycling_steel
 
   balance_equality:
     add:
