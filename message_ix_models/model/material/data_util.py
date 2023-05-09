@@ -1052,7 +1052,7 @@ def read_timeseries(scenario, filename):
 
     df = pd.melt(
         df,
-        id_vars=["parameter", "region", "technology", "mode", "units"],
+        id_vars=["parameter", "region", "technology", "mode", "units","commodity","level"],
         value_vars=datayears,
         var_name="year",
     )

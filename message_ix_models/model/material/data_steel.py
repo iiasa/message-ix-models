@@ -197,7 +197,6 @@ def gen_data_steel(scenario, dry_run=False):
                     & (data_steel_ts["parameter"] == p),
                     "year",
                 ]
-
                 if p == "var_cost":
                     df = make_df(
                         p,
@@ -209,6 +208,39 @@ def gen_data_steel(scenario, dry_run=False):
                         mode=mod,
                         **common
                     ).pipe(broadcast, node_loc=nodes)
+                if p == "output":
+                    comm = data_steel_ts.loc[
+                    (data_steel_ts["technology"] == t)
+                    & (data_steel_ts["parameter"] == p),
+                    "commodity",
+                    ]
+
+                    lev = data_steel_ts.loc[
+                        (data_steel_ts["technology"] == t)
+                        & (data_steel_ts["parameter"] == p),
+                        "level",
+                    ]
+
+                    rg = data_steel_ts.loc[
+                        (data_steel_ts["technology"] == t)
+                        & (data_steel_ts["parameter"] == p),
+                        "region",
+                    ]
+
+                    df = make_df(
+                        p,
+                        technology=t,
+                        value=val,
+                        unit="t",
+                        year_vtg=yr,
+                        year_act=yr,
+                        mode=mod,
+                        node_loc=rg,
+                        node_dest=rg,
+                        commodity = comm,
+                        level = lev,
+                        **common
+                    )
                 else:
                     rg = data_steel_ts.loc[
                         (data_steel_ts["technology"] == t)
@@ -407,6 +439,9 @@ def gen_data_steel(scenario, dry_run=False):
             if r == 'minimum_recycling_steel':
                 # Do not implement the minimum recycling rate for the year 2020
                 model_years_rel.remove(2020)
+            if r == 'max_regional_recycling_steel':
+                # Do not implement the minimum recycling rate for the year 2020
+                model_years_rel.remove(2020)
 
             params = set(
                 data_steel_rel.loc[
@@ -420,7 +455,7 @@ def gen_data_steel(scenario, dry_run=False):
                 mode="M1",
                 relation=r,
             )
-            
+
             for par_name in params:
                 if par_name == "relation_activity":
 
