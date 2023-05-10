@@ -458,7 +458,7 @@ def generate(context: Context) -> Workflow:
                 reserve_margin=False,
                 solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
                 tax_emission_scenario=dict(
-                    model=info["model"], scenario="PEP-2C-Default_ENGAGE_20C_step-2"
+                    model=info["model"], scenario="NPi-Default_ENGAGE_20C_step-2"
                 ),
             )
             name = engage.add_steps(wf, base=base, config=pc, name=s)
