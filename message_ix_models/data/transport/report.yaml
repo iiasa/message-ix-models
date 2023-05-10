@@ -46,7 +46,6 @@ general:
   inputs: [ CAP:nl-t-ya:ldv ]
   args: {units: "v ** 2 Tm / a"}
 
-
 - key: stock:*:ldv
   comp: ratio
   inputs: [ CAP:nl-t-ya:ldv+units, distance:nl-driver_type:ldv ]
