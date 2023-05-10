@@ -2,7 +2,7 @@
 import logging
 from functools import partial
 from operator import itemgetter
-from typing import Dict, List, cast
+from typing import Dict, List, Tuple, cast
 
 import genno.computations
 import numpy as np
@@ -208,16 +208,14 @@ def prepare_computer(c: Computer) -> None:
         ("factor_pdt", "pdt factor:n-y-t", n, y, "t::transport modes", "config"),
         # Only the LDV values
         (
-            "select",
-            "ldv pdt factor:n-y",
-            "pdt factor:n-y-t",
-            dict(t=["LDV"], drop=True),
+            ("select", "ldv pdt factor:n-y", "pdt factor:n-y-t", dict(t=["LDV"])),
+            dict(drop=True),
         ),
         ("product", pdt_nyt, pdt_nyt.add_tag("0"), "pdt factor:n-y-t"),
         # Per capita (for validation)
         ("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop),
         # LDV PDT only
-        ("select", "ldv pdt:n-y:ref", pdt_nyt, dict(t=["LDV"], drop=True)),
+        (("select", "ldv pdt:n-y:ref", pdt_nyt, dict(t=["LDV"])), dict(drop=True)),
         # Indexed to base year
         ("index_to", "ldv pdt:n-y:index", "ldv pdt:n-y:ref", literal("y"), "y0"),
         ("advance_ldv_pdt", "ldv pdt:n:advance", "config"),
@@ -260,4 +258,14 @@ def prepare_computer(c: Computer) -> None:
         ),
     ]
 
-    c.add_queue((item, dict()) for item in queue)
+    # Add the empty dict() of kwargs for items without
+    # FIXME adjust add_queue to be more flexible
+    _queue: List[Tuple[Tuple, Dict]] = []
+    for elem in queue:
+        if len(elem) == 2 and isinstance(elem[0], tuple) and isinstance(elem[1], dict):
+            # NB could use a TypeGuard here, but Python 3.10 only
+            _queue.append(elem)  # type: ignore[arg-type]
+        else:
+            _queue.append((elem, dict()))
+
+    c.add_queue(_queue)
