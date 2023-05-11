@@ -138,3 +138,6 @@ cache/
 
 # VSCode settings
 .vscode
+
+# DS_store
+.DS_Store
