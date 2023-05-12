@@ -423,6 +423,17 @@ def generate(context: Context) -> Workflow:
 
         if isinstance(engage_policy_config, engage.PolicyConfig):
             # Add 0 or more steps for ENGAGE-style climate policy workflows
+
+            if climate_policy == "20C T6.2":
+                # Help identify the tax_emission_scenario from which to copy data
+
+                # Model and scenario for the scenario produced by the base step
+                # TODO this may not work if the previous step is a passthrough; make
+                #      more robust
+                info = wf.graph[base][0].scenario_info.copy()
+
+                engage_policy_config.tax_emission_scenario["model"] = info["model"]
+
             # NB this can occur here so long as PolicyConfig.method = "calc" is NOT used
             #    by any of the objects in CLIMATE_POLICY. If "calc" appears, then
             #    engage.step_1 requires data which is currently only available from
@@ -441,27 +452,6 @@ def generate(context: Context) -> Workflow:
             )
             name = f"{s} solved"
             wf.add_step(name, s, solve)
-        elif climate_policy == "20C T6.2":
-            # Model and scenario name for the scenario produced by the base step
-            # TODO this may not work if the previous step is a passthrough; make more
-            #      robust
-            info = wf.graph[base][0].scenario_info.copy()
-
-            # Policy configuration
-            # - Only ENGAGE step 3; i.e. not step 1 or 2.
-            # - tax_emission_scenario changes the behaviour of engage.step_3: CO2 prices
-            #   are retrieved from the indicated scenario.
-            # - reserve_margin and solve are as in .navigate.__init__
-            pc = engage.PolicyConfig(
-                "20C",
-                steps=[3],
-                reserve_margin=False,
-                solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
-                tax_emission_scenario=dict(
-                    model=info["model"], scenario="NPi-Default_ENGAGE_20C_step-2"
-                ),
-            )
-            name = engage.add_steps(wf, base=base, config=pc, name=s)
         else:
             raise ValueError(climate_policy)
 
