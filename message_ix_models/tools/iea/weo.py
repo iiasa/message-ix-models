@@ -8,10 +8,17 @@ from message_ix_models.util import package_data_path
 
 
 def get_weo_data():
+    """
+    Read in raw WEO investment/capital costs and O&M costs data (for all technologies and for STEPS scenario only).
+    Convert to long format
+    """
+
+    # Read in raw data file
     file_path = package_data_path(
         "iea", "WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb"
     )
 
+    # Dict of all of the technologies, their respective sheet in the Excel file, and the start row
     tech_rows = {
         "steam_coal_subcritical": ["Coal", 5],
         "steam_coal_supercritical": ["Coal", 15],
@@ -40,8 +47,11 @@ def get_weo_data():
         "marine": ["Renewables", 125],
     }
 
+    # Specify cost types to read in and the required columns
     cost_cols = {"capital_costs": "A,B:D", "annual_om_costs": "A,F:H"}
 
+    # Loop through each technology and cost type
+    # Read in data and convert to long format
     dfs_cost = []
     for tech_key in tech_rows:
         for cost_key in cost_cols:
@@ -64,7 +74,7 @@ def get_weo_data():
             df_long["cost_type"] = cost_key
             df_long["units"] = "usd_per_kw"
 
-            # reorganize columns
+            # Reorganize columns
             df_long = df_long[
                 [
                     "scenario",
