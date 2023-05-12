@@ -5,6 +5,7 @@ These functions emulate the collective behaviour of :class:`.engage.runscript_ma
 reusable, particularly in the Workflow pattern used in e.g. :mod:`.projects.navigate`.
 """
 import logging
+from copy import copy
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -15,16 +16,7 @@ from message_ix_models.util import identify_nodes
 from message_ix_models.util.config import ConfigHelper
 from message_ix_models.workflow import Workflow
 
-from message_data.scenario_generation.reserve_margin.res_marg import main as res_marg
-from message_data.tools.utilities import (
-    add_AFOLU_CO2_accounting,
-    add_alternative_TCE_accounting,
-    add_budget,
-    add_CO2_emission_constraint,
-    add_emission_trajectory,
-    add_FFI_CO2_accounting,
-    remove_emission_bounds,
-)
+from message_data.tools.utilities import transfer_demands
 
 from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
 from .scenario_runner import ScenarioRunner
@@ -145,6 +137,8 @@ def calc_budget(
         Literal "calc" to calculate a constraint budget based on `bdgt`; otherwise,
         budget constraint value expressed as average Mt C-eq / a.
     """
+    from message_data.tools.utilities import add_budget
+
     if method == "calc":
         info = ScenarioInfo(scenario)
 
@@ -176,8 +170,10 @@ def calc_budget(
 
 
 def solve(context: Context, scenario: Scenario, config: PolicyConfig):
+    from message_data.scenario_generation.reserve_margin import res_marg
+
     if config.reserve_margin:
-        res_marg(scenario)
+        res_marg.main(scenario)
 
     var_list = ["I", "C"]
     if config.solve["model"] == "MESSAGE-MACRO":
@@ -191,6 +187,36 @@ def solve(context: Context, scenario: Scenario, config: PolicyConfig):
     return scenario
 
 
+def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
+    """Preparation for the ENGAGE climate policy workflow.
+
+    These operations must occur no matter which combinations of 1 or more of
+    :func:`step_1`, :func:`step_2`, and/or :func:`step_3` are to be run on `scenario`.
+    """
+    from message_data.tools.utilities import (
+        add_AFOLU_CO2_accounting,
+        add_alternative_TCE_accounting,
+        add_FFI_CO2_accounting,
+        remove_emission_bounds,
+    )
+
+    remove_emission_bounds(scenario)
+
+    # Identify the node codelist used by `scenario` (in case it is not set on `context`)
+    context.model.regions = identify_nodes(scenario)
+
+    # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
+    log.info("Add separate FFI and AFOLU CO2 accounting")
+    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
+    add_FFI_CO2_accounting(scenario, **kw)
+    add_AFOLU_CO2_accounting(scenario, **kw)
+
+    log.info("Add alternative TCE accounting")
+    add_alternative_TCE_accounting(scenario)
+
+    return scenario
+
+
 def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenario:
     """Step 1 of the ENGAGE climate policy workflow.
 
@@ -200,21 +226,15 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     by the legacy reporting. If the attribute has a float value specifying a budget
     directly, this condition does not apply.
     """
-    remove_emission_bounds(scenario)
+    from message_data.tools.utilities import add_CO2_emission_constraint
 
-    # Identify the node codelist used by `scenario` (in case it is not set on `context`)
-    context.model.regions = identify_nodes(scenario)
-
-    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
-
-    # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
-    log.info("Add separate FFI and AFOLU CO2 accounting")
-    add_FFI_CO2_accounting(scenario, **kw)
-    add_AFOLU_CO2_accounting(scenario, **kw)
-    log.info("Add alternative TCE accounting")
-    add_alternative_TCE_accounting(scenario)
-
-    add_CO2_emission_constraint(scenario, **kw, constraint_value=0.0, type_rel="lower")
+    add_CO2_emission_constraint(
+        scenario,
+        relation_name=RELATION_GLOBAL_CO2,
+        reg=f"{context.model.regions}_GLB",
+        constraint_value=0.0,
+        type_rel="lower",
+    )
 
     # Calculate **and apply** budget
     calc_budget(
@@ -233,6 +253,8 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
 
 def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenario:
     """Step 2 of the ENGAGE climate policy workflow."""
+    from message_data.tools.utilities import add_emission_trajectory
+
     # Retrieve a pandas.DataFrame with the CO2 emissions trajectory
     #
     # NB this method:
@@ -328,35 +350,45 @@ def add_steps(
 
     # Base name for the added steps
     name_root = f"{name or base} EN"
+    # Label for steps
+    label = str(config.label).replace(" ", "_")
 
     # Model and scenario name for the scenario produced by the base step
     # TODO this may not work if the previous step is a passthrough; make more robust
     info = workflow.graph[base][0].scenario_info.copy()
 
+    # New model/scenario name at each step
+    target = f"{info['model']}/{info['scenario']}_ENGAGE_{label}_step-{{}}"
+
+    # If config.steps is non-empty, insert step_0. Otherwise, leave empty
+    steps = copy(config.steps)
+    if len(steps):
+        steps.insert(0, 0)
+
     _base = base
-    for step in config.steps:
+    for step in steps:
         # Name for this step
         new_name = f"{name_root}{step}"
-
-        # New scenario name
-        label = str(config.label).replace(" ", "_")
-        s = f"{info['scenario']}_ENGAGE_{label}_step-{step}"
 
         # Add step; always clone to a new model/scenario name
         workflow.add_step(
             new_name,
             _base,
-            globals()[f"step_{step}"],
+            action=globals()[f"step_{step}"],
             clone=dict(shift_first_model_year=2025)
-            if step == config.steps[0]
+            if step == 0
             else dict(keep_solution=True),
-            target=f"{info['model']}/{s}",
+            target=target.format(step),
             config=config,
         )
 
-        workflow.add_step(f"{new_name} solved", new_name, solve, config=config)
+        if step == 0:
+            # Don't solve after step_0
+            _base = new_name
+        else:
+            workflow.add_step(f"{new_name} solved", new_name, solve, config=config)
 
-        # Update the base step/scenario for the next iteration
-        _base = f"{new_name} solved"
+            # Update the base step/scenario for the next iteration
+            _base = f"{new_name} solved"
 
     return _base
