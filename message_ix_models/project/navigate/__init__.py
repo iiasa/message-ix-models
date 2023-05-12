@@ -60,6 +60,18 @@ CLIMATE_POLICY = {
     )
 }
 
+#: Special "20C" policy for Task 6.2:
+#:
+#: - Only ENGAGE step 3; i.e. not step 1 or 2.
+#: - tax_emission_scenario changes the behaviour of engage.step_3: CO2 prices are
+#:   retrieved from the indicated scenario.
+CLIMATE_POLICY["20C T6.2"] = PolicyConfig(
+    "20C",
+    steps=[3],
+    tax_emission_scenario=dict(scenario="NPi-Default_ENGAGE_20C_step-2"),
+    **_kw,
+)
+
 
 # Common annotations for `EXTRA_SCENARIOS`
 _A = {
