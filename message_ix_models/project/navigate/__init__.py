@@ -37,16 +37,10 @@ CLIMATE_POLICY = {
         PolicyConfig("NPi", steps=[], **_kw),
         # Only step 1. This item does not appear in the official NAVIGATE scenarios
         # list, but is used in EXTRA_SCENARIOS below.
-        PolicyConfig(
-            "1000 Gt",
-            steps=[1],
-            budget=2449,
-            low_dem_scen="EN_NPi2020_1200_step1",
-            **_kw,
-        ),
+        PolicyConfig("1000 Gt", steps=[1], budget=2449, **_kw),
         # All steps 1–3
         # Originally from an item labelled "1000" in engage/config.yaml
-        PolicyConfig("20C", budget=2700, low_dem_scen="EN_NPi2020_1200_step1", **_kw),
+        PolicyConfig("20C", budget=2700, **_kw),
         # Originally from an item labelled "600" in engage/config.yaml. Current values
         # calculated based on Ctax runs with price of 1000 USD / t CO₂.
         PolicyConfig(
@@ -55,27 +49,14 @@ CLIMATE_POLICY = {
             # budget=1357,
             # Achievable for -ref demand-side scenario aiming for 850 Gt:
             budget=1840,
-            low_dem_scen="EN_NPi2020_700_step1",
             **_kw,
         ),
         # The following do not appear in the official NAVIGATE scenarios list, but are
         # used in EXTRA_SCENARIOS below.
         # From an item labelled "1600" in engage/config.yaml
-        PolicyConfig(
-            "1600 Gt",
-            steps=[1],
-            budget=4162,
-            low_dem_scen="EN_NPi2020_1800_step1",
-            **_kw,
-        ),
+        PolicyConfig("1600 Gt", steps=[1], budget=4162, **_kw),
         # From an item labelled "2000" in engage/config.yaml
-        PolicyConfig(
-            "2000 Gt",
-            steps=[1],
-            budget=5320,
-            low_dem_scen="EN_NPi2020_2500_step1",
-            **_kw,
-        ),
+        PolicyConfig("2000 Gt", steps=[1], budget=5320, **_kw),
     )
 }
 
