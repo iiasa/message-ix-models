@@ -147,3 +147,6 @@ cache/
 
 # DS_store
 .DS_Store
+
+# Temporary Excel files
+*~$*
