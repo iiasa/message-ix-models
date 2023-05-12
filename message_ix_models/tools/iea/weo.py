@@ -7,7 +7,7 @@ import pandas as pd
 from message_ix_models.util import package_data_path
 
 
-def get_data():
+def get_weo_data():
     file_path = package_data_path(
         "iea", "WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb"
     )
