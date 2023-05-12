@@ -37,7 +37,8 @@ class PolicyConfig(ConfigHelper):
     #: :meth:`.ScenarioRunner.calc_budget`.
     budget: Union[int, Literal["calc"]] = "calc"
 
-    #: Scenario name of a reference scenario for copying demands.
+    #: Scenario name of a reference scenario for copying demands in :func:`step_1`
+    #: and/or :func:`step_2`. See also :func:`.transfer_demands`.
     #:
     #: TODO choose a more informative name.
     low_dem_scen: Optional[str] = None
@@ -46,7 +47,7 @@ class PolicyConfig(ConfigHelper):
     #: in :func:`step_3`.
     tax_emission_scenario: Dict = field(default_factory=dict)
 
-    #: :obj:`True` to call :func:`.reserve_margin.res_marg.main`.
+    #: :obj:`True` to call :func:`.reserve_margin.res_marg.main` at each :func:`solve`.
     reserve_margin: bool = True
 
     #: Which steps of the ENGAGE workflow to run. Empty list = don't run any steps.
@@ -245,8 +246,12 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
         type_emission="TCE_CO2",
     )
 
-    # commented: need reference scenario for NAVIGATE application
-    # transfer_demands(self.load_scenario(config.low_dem_scen), scenario)
+    if config.low_dem_scen:
+        # Retrieve certain demands from a different scenario
+        source = Scenario(
+            scenario.platform, model=scenario.model, scenario=config.low_dem_scen
+        )
+        transfer_demands(source, scenario)
 
     return scenario
 
@@ -286,8 +291,12 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
             name, scenario.par(name, filters={"relation": [RELATION_GLOBAL_CO2]})
         )
 
-    # commented: need reference scenario for NAVIGATE application
-    # transfer_demands(self.load_scenario(config.low_dem_scen), scenario)
+    if config.low_dem_scen:
+        # Retrieve certain demands from a different scenario
+        source = Scenario(
+            scenario.platform, model=scenario.model, scenario=config.low_dem_scen
+        )
+        transfer_demands(source, scenario)
 
     return scenario
 
