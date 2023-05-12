@@ -197,6 +197,7 @@ def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
     from message_data.tools.utilities import (
         add_AFOLU_CO2_accounting,
         add_alternative_TCE_accounting,
+        add_CO2_emission_constraint,
         add_FFI_CO2_accounting,
         remove_emission_bounds,
     )
@@ -206,14 +207,17 @@ def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
     # Identify the node codelist used by `scenario` (in case it is not set on `context`)
     context.model.regions = identify_nodes(scenario)
 
+    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
+
     # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
     log.info("Add separate FFI and AFOLU CO2 accounting")
-    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
     add_FFI_CO2_accounting(scenario, **kw)
     add_AFOLU_CO2_accounting(scenario, **kw)
 
     log.info("Add alternative TCE accounting")
     add_alternative_TCE_accounting(scenario)
+
+    add_CO2_emission_constraint(scenario, **kw, constraint_value=0.0, type_rel="lower")
 
     return scenario
 
@@ -227,16 +231,6 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     by the legacy reporting. If the attribute has a float value specifying a budget
     directly, this condition does not apply.
     """
-    from message_data.tools.utilities import add_CO2_emission_constraint
-
-    add_CO2_emission_constraint(
-        scenario,
-        relation_name=RELATION_GLOBAL_CO2,
-        reg=f"{context.model.regions}_GLB",
-        constraint_value=0.0,
-        type_rel="lower",
-    )
-
     # Calculate **and apply** budget
     calc_budget(
         context,
