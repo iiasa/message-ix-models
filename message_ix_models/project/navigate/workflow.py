@@ -7,7 +7,7 @@ from typing import Dict, Optional, Tuple
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import identify_nodes, private_data_path, replace_par_data
+from message_ix_models.util import private_data_path, replace_par_data
 from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
@@ -233,38 +233,19 @@ def solve(context, scenario):
 
 def tax_emission(context: Context, scenario: Scenario, price: float):
     """Workflow callable for :mod:`.tools.utilities.add_tax_emission`."""
-    from message_data.projects.engage.runscript_main import (
-        glb_co2_relation as RELATION_GLOBAL_CO2,
-    )
-    from message_data.tools.utilities import (
-        add_AFOLU_CO2_accounting,
-        add_alternative_TCE_accounting,
-        add_CO2_emission_constraint,
-        add_FFI_CO2_accounting,
-        add_tax_emission,
-    )
+    from message_data.projects.engage.workflow import step_0
+    from message_data.tools.utilities import add_tax_emission
 
     try:
         scenario.remove_solution()
     except ValueError:
         pass
 
+    # Use ENGAGE method to prepare `scenario` relations to respond correctly to
+    # `tax_emission` values
+    step_0(context, scenario)
+
     add_tax_emission(scenario, price)
-
-    # Identify the node codelist used by `scenario` (in case it is not set on `context`)
-    context.model.regions = identify_nodes(scenario)
-
-    # The following preparatory steps mirror those used in .engage.workflow.step_1()
-    kw = dict(relation_name=RELATION_GLOBAL_CO2, reg=f"{context.model.regions}_GLB")
-
-    # “Step1.3 Make changes required to run the ENGAGE setup” (per .runscript_main)
-    log.info("Add separate FFI and AFOLU CO2 accounting")
-    add_FFI_CO2_accounting(scenario, **kw)
-    add_AFOLU_CO2_accounting(scenario, **kw)
-    log.info("Add alternative TCE accounting")
-    add_alternative_TCE_accounting(scenario)
-
-    add_CO2_emission_constraint(scenario, **kw, constraint_value=0.0, type_rel="lower")
 
     return scenario
 
