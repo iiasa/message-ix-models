@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Adjust :func:`.generate_product` for pandas 2.0.0 (:pull:`98`).
 
 2023.4.2
 ========
