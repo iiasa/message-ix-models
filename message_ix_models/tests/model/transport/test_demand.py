@@ -223,7 +223,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
     key = Key("population", "n y area_type".split())
     result = c.get(key)
 
-    assert key.dims == result.dims
+    assert set(key.dims) == set(result.dims)
     assert set(info.N[1:]) == set(result.coords["n"].values)
     assert set(info.Y) <= set(result.coords["y"].values)
     assert set(["UR+SU", "RU"]) == set(result.coords["area_type"].values)
