@@ -15,6 +15,7 @@ def message_buildings_dir():
         code_dir.mkdir(parents=True, exist_ok=True)
 
 
+@pytest.mark.xfail(reason="TEMPORARY for #442; updated in #440")
 @pytest.mark.usefixtures("message_buildings_dir")
 def test_generate_workflow(test_context):
     from message_data.projects.navigate.workflow import generate
@@ -67,6 +68,7 @@ BLOCKS = [
 ]
 
 
+@pytest.mark.xfail(reason="TEMPORARY for #442; updated in #440")
 @pytest.mark.usefixtures("message_buildings_dir", "test_context")
 def test_generate_workflow_cli(mix_models_cli):
     """Test :func:`.navigate.workflow.generate` and associated CLI."""
