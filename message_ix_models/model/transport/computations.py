@@ -644,8 +644,7 @@ def share_weight(
     # Normalize against first mode's weight
     # TODO should be able to avoid a cast and align here
     tmp = tmp / tmp.sel(t0, drop=True)
-    *_, tmp = xr.align(weight.loc[y0], xr.DataArray.from_series(tmp).sel(y0))
-    weight.loc[y0] = tmp
+    *_, weight.loc[y0] = xr.align(weight.loc[y0], xr.DataArray.from_series(tmp).sel(y0))
 
     # Normalize to 1 across modes
     weight.loc[y0] = weight.loc[y0] / weight.loc[y0].sum("t")
