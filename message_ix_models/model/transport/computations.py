@@ -506,7 +506,7 @@ def _advance_data_for(config: dict, variable: str, units) -> Quantity:
 
     # Check
     assert_qty_allclose(
-        computations.sum(result, dimensions="n"),
+        computations.sum(result, dimensions=["n"]),
         data.sel(n="World", drop=True),
         rtol=0.05,
     )

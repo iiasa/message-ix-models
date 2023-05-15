@@ -64,7 +64,7 @@ def iea_2017_t4(measure: int):
     share = Quantity(
         pd.Series([0.1, 0.3, 0.6], index=pd.Index("LCV MFT HFT".split(), name="t"))
     )
-    return computations.sum(result, share, "t")
+    return computations.sum(result, share, dimensions=["t"])
 
 
 def prepare_computer(c: Computer):
