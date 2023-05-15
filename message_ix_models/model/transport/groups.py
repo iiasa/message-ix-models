@@ -84,7 +84,7 @@ def cg_shares(ursu_ru: Quantity, context: Context) -> Quantity:
     )
 
     # Index of pop_share versus the previous period
-    pop_share_index = (pop_share / pop_share.shift(y=1)).fillna(1.0)
+    pop_share_index = computations.index_to(pop_share, "y")
 
     # Population shares between urban, suburban, and rural
     # DLM: “Values from MA3T are based on 2001 NHTS survey and some more recent
