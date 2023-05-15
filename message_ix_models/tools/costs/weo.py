@@ -2,6 +2,7 @@
 Code for handling IEA WEO data
 """
 
+import numpy as np
 import pandas as pd
 
 from message_ix_models.util import package_data_path
@@ -11,6 +12,8 @@ def get_weo_data():
     """
     Read in raw WEO investment/capital costs and O&M costs data (for all technologies and for STEPS scenario only).
     Convert to long format
+
+    Returns DataFrame of processed data
     """
 
     # Read in raw data file
@@ -110,6 +113,90 @@ dict_weo_r11 = {
     "PAS": "India",
     "PAO": "Japan",
 }
+
+
+def get_cost_ratios(dict_reg):
+    """
+    Returns DataFrame of cost ratios (investment cost and O&M cost) for each R11 region, for each technology
+
+    Only returns values for the earliest year in the dataset (which, as of writing, is 2021)
+    """
+
+    # Get processed WEO data
+    df_weo = get_weo_data()
+
+    # Replace "n.a." strings with NaNs
+    df_weo["value"] = df_weo["value"].replace("n.a.", np.nan)
+
+    # Filter for only United States data (this is the NAM region)
+    df_us = df_weo.loc[df_weo.region == "United States"].copy()
+
+    # Rename the `value` column in the US dataframe to `us_value`
+    df_us.rename(columns={"value": "us_value"}, inplace=True)
+
+    # Drop `region`` and `units`` columns
+    df_us.drop(columns={"region", "units"}, inplace=True)
+
+    # Merge complete WEO data with only US data
+    df_merged = pd.merge(
+        df_weo, df_us, on=["scenario", "technology", "year", "cost_type"]
+    )
+
+    # Calculate cost ratio (region-specific cost divided by US value)
+    df_merged["cost_ratio"] = df_merged["value"] / df_merged["us_value"]
+
+    l_cost_ratio = []
+    for m, w in dict_reg.items():
+        df_sel = df_merged.loc[df_merged.year == min(df_merged.year)]
+        df_sel = df_sel.loc[df_sel.region == w].copy()
+        df_sel.rename(columns={"region": "weo_region"}, inplace=True)
+        df_sel["r11_region"] = m
+
+        df_sel = df_sel[
+            [
+                "scenario",
+                "technology",
+                "r11_region",
+                "weo_region",
+                "year",
+                "cost_type",
+                "cost_ratio",
+            ]
+        ]
+
+        # df_sel = df_sel.loc[df_sel.year == min(df_sel.year)]
+
+        l_cost_ratio.append(df_sel)
+
+    df_cost_ratio = pd.concat(l_cost_ratio)
+    df_cost_ratio.loc[df_cost_ratio.cost_ratio.isnull()]
+
+    # Replace NaN cost ratios with assumptions
+    # Assumption 1: For CSP in EEU and FSU, make cost ratio == 0
+    df_cost_ratio.loc[
+        (df_cost_ratio.technology == "csp")
+        & (df_cost_ratio.r11_region.isin(["EEU", "FSU"])),
+        "cost_ratio",
+    ] = 0
+
+    # Assumption 2: For pulverized coal with CCS and IGCC with CCS in MEA,
+    # make cost ratio the same as in the FSU region
+    # TODO: this method to replace the values seems a little prone to errors, so probably best to change later
+    df_cost_ratio.loc[
+        (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "MEA"),
+        "cost_ratio",
+    ] = df_cost_ratio.loc[
+        (df_cost_ratio.r11_region == "FSU")
+        & (df_cost_ratio.technology.isin(["pulverized_coal_ccs", "igcc_ccs"]))
+    ].cost_ratio.values
+
+    # Assumption 3: For CSP in PAO, assume the same as NAM region (cost ratio == 1)
+    df_cost_ratio.loc[
+        (df_cost_ratio.technology == "csp") & (df_cost_ratio.r11_region.isin(["PAO"])),
+        "cost_ratio",
+    ] = 1
+
+    return df_cost_ratio
 
 
 """
