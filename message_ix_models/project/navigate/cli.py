@@ -165,7 +165,7 @@ def run(context, dry_run, truncate_step, no_transport, dsd, target_step):
         wf.add(target_step, target_steps)
     else:
         raise click.ClickException(
-            "No step(s) matched {target_expr!r} among:\n{sorted(wf.keys())}"
+            f"No step(s) matched {target_expr!r} among:\n{sorted(wf.keys())}"
         )
 
     log.info(f"Execute workflow:\n{wf.describe(target_step)}")
@@ -177,3 +177,62 @@ def run(context, dry_run, truncate_step, no_transport, dsd, target_step):
         return
 
     wf.run(target_step)
+
+
+@cli.command("check-budget")
+@click.pass_obj
+def check_budget(context):
+    import numpy as np
+    import pandas as pd
+    from message_ix import Scenario
+
+    from message_data.tools import interpolate_budget
+
+    # Model name
+    # TODO make this configurable
+    m = "MESSAGEix-GLOBIOM 1.1-BM-R12 (NAVIGATE)"
+
+    mp = context.get_platform()
+    dfs = []
+    target = dict()
+    constraint = dict()
+
+    # Iterate over scenario names, target emission budgets, and constraint values
+    # TODO don't hard-code these values from .navigate.CLIMATE_POLICY
+    # TODO make the list configurable
+    for s_name, t, c in (
+        ("NPi-Default_ENGAGE_15C_step-3+B", 850, 1840),
+        ("NPi-Default_ENGAGE_20C_step-3+B", 1150, 2700),
+        ("NPi-Default", np.nan, np.nan),
+    ):
+        try:
+            s = Scenario(mp, model=m, scenario=s_name)
+        except Exception as e:
+            print(repr(e))
+            continue
+
+        # Retrieve the time series data stored by legacy reporting for one variable and
+        # region.
+        # NB this region ID is due to the automatic renaming that happens on ixmp-dev.
+        dfs.append(
+            s.timeseries(region="GLB region (R12)", variable="Emissions|CO2")
+            .set_index("year")["value"]
+            .rename(s_name)
+        )
+        target[s_name] = t
+        constraint[s_name] = c
+
+    mp.close_db()
+
+    data = pd.concat(dfs, axis=1)
+    print(f"{data =}")
+
+    result = interpolate_budget(data, target, constraint)
+    for s_name, value in result.items():
+        if np.isnan(value):
+            print(f"{s_name}: no result")
+            continue
+        print(
+            f"{s_name}: set budget={value:.3f} (currently {constraint[s_name]}) average"
+            f" Mt C-eq / y to achieve {target[s_name]} Gt CO₂ total"
+        )
