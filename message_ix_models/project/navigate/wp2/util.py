@@ -376,7 +376,7 @@ def add_LED_setup(scen: Scenario):
 
     # Read solar and wind intermittency assumptions from xlsx file
 
-    melt_args["id_vars"].append("RELATION")
+    melt_args["id_vars"].append("RELATION")  # type: ignore [attr-defined]
     rename_cols.update(RELATION="relation", year_vtg="year_act")
     assign_args = dict(
         unit="???",
