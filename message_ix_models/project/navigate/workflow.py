@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import replace
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Generator, List, Optional, Tuple
 
 from message_ix import Scenario
 from message_ix_models import Context
@@ -252,7 +252,7 @@ def tax_emission(context: Context, scenario: Scenario, price: float):
 
 def iter_scenarios(
     context, filters
-) -> Tuple[str, Optional[str], Optional[str], Optional[str]]:
+) -> Generator[Tuple[str, Optional[str], Optional[str], Optional[str]], None, None]:
     """Iterate over filtered scenario codes while unpacking information.
 
     Yields a sequence of 4-tuples:
@@ -273,7 +273,11 @@ def iter_scenarios(
 
     for code in iter_scenario_codes(context, filters):
         # Short label from the code ID
-        info = [re.match("(NAV_Dem|PC|PEP)-(.*)", code.id).group(2)]
+        match = re.match("(NAV_Dem|PC|PEP)-(.*)", code.id)
+        assert match
+        label = match.group(2)
+
+        info: List[Optional[str]] = []
 
         # Values for 3 annotations
         for name in ("climate_policy", "T35_policy", "WP6_production"):
@@ -283,10 +287,10 @@ def iter_scenarios(
                 info.append(None)  # Annotation does not exist on `code`
 
         # Skip scenarios not implemented
-        if info[0].endswith("_d") or (info[2] is info[3] is None):
+        if label.endswith("_d") or (info[1] is info[2] is None):
             continue
 
-        yield info
+        yield tuple([label] + info)  # type: ignore [misc]
 
 
 def generate(context: Context) -> Workflow:
@@ -457,7 +461,7 @@ def generate(context: Context) -> Workflow:
         # Retrieve the target scenario from second-last step
         # TODO remove the need to look up step_m2 by allowing a callback to give the
         #      new model/scenario name
-        target = step_m2.scenario_info
+        target = "{model}/{scenario}+B".format(**step_m2.scenario_info)
 
         # Create a new step with the same name and base, but invoking
         # MESSAGEix-Buildings instead.
@@ -471,7 +475,7 @@ def generate(context: Context) -> Workflow:
             name,
             build_solve_buildings,
             # Clone before this step
-            target="{model}/{scenario}+B".format(**target),
+            target=target,
             clone=True,
             # Keyword arguments for build_solve_buildings
             navigate_scenario=wf.graph[base][0].kwargs["navigate_scenario"],
