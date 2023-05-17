@@ -457,7 +457,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # add 25% total trade bound
     df_dem = results["demand"]
-    df_dem = df_dem.groupby("year").sum() * 0.25
+    df_dem = df_dem.groupby("year").sum(numeric_only=True) * 0.25
     df_dem = df_dem.reset_index()
     df_dem = df_dem.rename({"year": "year_act"}, axis=1)
 
