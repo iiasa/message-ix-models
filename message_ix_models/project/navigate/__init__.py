@@ -40,7 +40,12 @@ CLIMATE_POLICY = {
         PolicyConfig("1000 Gt", steps=[1], budget=2449, **_kw),
         # All steps 1–3
         # Originally from an item labelled "1000" in engage/config.yaml
-        PolicyConfig("20C", budget=2700, **_kw),
+        PolicyConfig(
+            "20C",
+            # budget=2700,  # for T3.5, initial WP6 with 1150 Gt target
+            budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
+            **_kw,
+        ),
         # Originally from an item labelled "600" in engage/config.yaml. Current values
         # calculated based on Ctax runs with price of 1000 USD / t CO₂.
         PolicyConfig(
@@ -86,7 +91,7 @@ _A = {
 }
 
 
-def _anno(names: str, climate_policy) -> Dict[str, List[Annotation]]:
+def _anno(names: str, climate_policy) -> Dict[Literal["annotations"], List[Annotation]]:
     """Return the annotations given by `names` from :data:`_A`.
 
     Shorthand function used to prepare :data:`EXTRA_SCENARIOS`.
