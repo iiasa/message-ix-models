@@ -198,7 +198,7 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
 
         # broadcast scenario years
         if "year_rel" in df.columns:
-            df = df.pipe(same_node).pipe(broadcast, year_rel=act_years)
+            df = df.pipe(broadcast, year_rel=act_years)
 
         if "year_act" in df.columns:
             df["year_act"] = df["year_rel"]
@@ -332,7 +332,7 @@ def read_demand():
     N_energy.gas_pct *= input_fuel[2] * CONVERSION_FACTOR_NH3_N  # NH3 / N
     N_energy.coal_pct *= input_fuel[3] * CONVERSION_FACTOR_NH3_N
     N_energy.oil_pct *= input_fuel[4] * CONVERSION_FACTOR_NH3_N
-    N_energy = pd.concat([N_energy.Region, N_energy.sum(axis=1)], axis=1).rename(
+    N_energy = pd.concat([N_energy.Region, N_energy.sum(axis=1, numeric_only=True)], axis=1).rename(
         columns={0: "totENE", "Region": "node"}
     )  # GWa
 
@@ -407,7 +407,7 @@ def read_demand():
     N_feed.gas_pct *= input_fuel[2] * 17 / 14
     N_feed.coal_pct *= input_fuel[3] * 17 / 14
     N_feed.oil_pct *= input_fuel[4] * 17 / 14
-    N_feed = pd.concat([N_feed.Region, N_feed.sum(axis=1)], axis=1).rename(
+    N_feed = pd.concat([N_feed.Region, N_feed.sum(axis=1, numeric_only=True)], axis=1).rename(
         columns={0: "totENE", "Region": "node"}
     )
 
