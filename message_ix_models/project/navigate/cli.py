@@ -211,16 +211,17 @@ def check_budget(context):
             print(repr(e))
             continue
 
+        key = f"{s_name}#{s.version}"
         # Retrieve the time series data stored by legacy reporting for one variable and
         # region.
         # NB this region ID is due to the automatic renaming that happens on ixmp-dev.
         dfs.append(
             s.timeseries(region="GLB region (R12)", variable="Emissions|CO2")
             .set_index("year")["value"]
-            .rename(s_name)
+            .rename(key)
         )
-        target[s_name] = t
-        constraint[s_name] = c
+        target[key] = t
+        constraint[key] = c
 
     mp.close_db()
 
@@ -228,11 +229,11 @@ def check_budget(context):
     print(f"{data =}")
 
     result = interpolate_budget(data, target, constraint)
-    for s_name, value in result.items():
+    for key, value in result.items():
         if np.isnan(value):
-            print(f"{s_name}: no result")
+            print(f"{key}: no result")
             continue
         print(
-            f"{s_name}: set budget={value:.3f} (currently {constraint[s_name]}) average"
-            f" Mt C-eq / y to achieve {target[s_name]} Gt CO₂ total"
+            f"{key}: set budget={value:.3f} (currently {constraint[key]}) average"
+            f" Mt C-eq / y to achieve {target[key]} Gt CO₂ total"
         )
