@@ -202,7 +202,7 @@ def check_budget(context):
     # TODO make the list configurable
     for s_name, t, c in (
         ("NPi-Default_ENGAGE_15C_step-3+B", 850, 1840),
-        ("NPi-Default_ENGAGE_20C_step-3+B", 1150, 2700),
+        ("NPi-Default_ENGAGE_20C_step-3+B", 900, 2700),
         ("NPi-Default", np.nan, np.nan),
     ):
         try:
