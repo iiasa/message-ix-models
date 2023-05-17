@@ -91,19 +91,19 @@ _A = {
 }
 
 
-def _anno(names: str, climate_policy) -> Dict[Literal["annotations"], List[Annotation]]:
+def _anno(names: str, climate_policy) -> List[Annotation]:
     """Return the annotations given by `names` from :data:`_A`.
 
     Shorthand function used to prepare :data:`EXTRA_SCENARIOS`.
     """
     # Collect predefined annotations from _A
-    result = [_A.get(name) for name in names.split()]
+    result = [_A[name] for name in names.split()]
 
     # Add an annotation with the value of the `climate_policy` argument
     result.append(Annotation(id="navigate_climate_policy", text=climate_policy))
 
-    # Return as a keyword argument
-    return dict(annotations=result)
+    # Return as a list of annotations
+    return result
 
 
 #: Extra scenario IDs not appearing in the authoritative NAVIGATE list per the workflow
@@ -116,15 +116,15 @@ def _anno(names: str, climate_policy) -> Dict[Literal["annotations"], List[Annot
 #: - ``NAV_Dem-(* Gt|Ctax)-*``: diagnostic scenarios
 #: - ``PC-*``: no-policy scenarios corresponding to WP6 scenarios.
 EXTRA_SCENARIOS = [
-    Code(id="NAV_Dem-1000 Gt-ref", **_anno("T3.5 ref", "1000 Gt")),
-    Code(id="NAV_Dem-1600 Gt-ref", **_anno("T3.5 ref", "1600 Gt")),
-    Code(id="NAV_Dem-2000 Gt-ref", **_anno("T3.5 ref", "2000 Gt")),
-    Code(id="NAV_Dem-Ctax-ref", **_anno("T3.5 ref", "Ctax")),
-    Code(id="NAV_Dem-Ctax-all", **_anno("T3.5 all", "Ctax")),
-    Code(id="PC-NPi-Default", **_anno("T6.1 ref default", "NPi")),
-    Code(id="PC-NPi-AdvPE", **_anno("T6.1 ele advanced", "NPi")),
-    Code(id="PC-NPi-LowCE", **_anno("T6.1 act+tec default", "NPi")),
-    Code(id="PC-NPi-AllEn", **_anno("T6.1 all advanced", "NPi")),
+    Code(id="NAV_Dem-1000 Gt-ref", annotations=_anno("T3.5 ref", "1000 Gt")),
+    Code(id="NAV_Dem-1600 Gt-ref", annotations=_anno("T3.5 ref", "1600 Gt")),
+    Code(id="NAV_Dem-2000 Gt-ref", annotations=_anno("T3.5 ref", "2000 Gt")),
+    Code(id="NAV_Dem-Ctax-ref", annotations=_anno("T3.5 ref", "Ctax")),
+    Code(id="NAV_Dem-Ctax-all", annotations=_anno("T3.5 all", "Ctax")),
+    Code(id="PC-NPi-Default", annotations=_anno("T6.1 ref default", "NPi")),
+    Code(id="PC-NPi-AdvPE", annotations=_anno("T6.1 ele advanced", "NPi")),
+    Code(id="PC-NPi-LowCE", annotations=_anno("T6.1 act+tec default", "NPi")),
+    Code(id="PC-NPi-AllEn", annotations=_anno("T6.1 all advanced", "NPi")),
 ]
 
 
