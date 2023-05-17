@@ -30,8 +30,8 @@ _kw: Mapping = dict(
 #:   currently implemented. In the :file:`engage/config.yaml`, they appear to form a
 #:   "waterfall", with each successively lower budget referencing the previous, which
 #:   seems to preclude running lower budgets without first running every larger budget.
-CLIMATE_POLICY = {
-    pc.label: pc
+CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
+    str(pc.label): pc
     for pc in (
         # No climate policy → no ENGAGE workflow steps
         PolicyConfig("NPi", steps=[], **_kw),
