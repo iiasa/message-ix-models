@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from copy import copy
 from functools import partial
 from itertools import product
 from typing import List, Mapping, MutableMapping, Sequence, Union
@@ -94,7 +95,7 @@ def get_spec(
                 Annotation(id="input", text=repr(input)),
                 Annotation(id="output", text=repr(output)),
             ]
-            + [a.copy() for a in other_anno],
+            + [copy(a) for a in other_anno],
         )
 
         # "commodity" set elements to add

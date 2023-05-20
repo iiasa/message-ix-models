@@ -1,6 +1,7 @@
 import logging
 import re
 from collections import ChainMap
+from copy import copy
 from functools import lru_cache
 from itertools import product
 from typing import Dict, List, Mapping, MutableMapping, Tuple
@@ -142,7 +143,7 @@ def generate_product(
 
     # Iterate over the product of filtered codes for each dimension in
     for item in product(*[_base(*dm) for dm in dims.items()]):
-        result = template.copy()  # Duplicate the template
+        result = copy(template)  # Duplicate the template
 
         fmt = dict(zip(dims.keys(), item))  # Format the ID and name
         result.id = result.id.format(**fmt)
@@ -262,7 +263,7 @@ def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
 
     # Also annotate child codes
     for c in code.child:
-        c.annotations.append(units_anno.copy())
+        c.annotations.append(copy(units_anno))
 
 
 def process_commodity_codes(codes):
