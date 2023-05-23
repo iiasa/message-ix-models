@@ -10,7 +10,8 @@ from message_ix_models.util import package_data_path
 
 def get_weo_data():
     """
-    Read in raw WEO investment/capital costs and O&M costs data (for all technologies and for STEPS scenario only).
+    Read in raw WEO investment/capital costs and O&M costs data
+    (for all technologies and for STEPS scenario only).
     Convert to long format
 
     Returns DataFrame of processed data
@@ -21,7 +22,8 @@ def get_weo_data():
         "iea", "WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb"
     )
 
-    # Dict of all of the technologies, their respective sheet in the Excel file, and the start row
+    # Dict of all of the technologies, their respective sheet in the Excel file,
+    # and the start row
     tech_rows = {
         "steam_coal_subcritical": ["Coal", 5],
         "steam_coal_supercritical": ["Coal", 15],
@@ -117,9 +119,11 @@ dict_weo_r11 = {
 
 def calculate_cost_ratios(weo_df, dict_reg):
     """
-    Returns DataFrame of cost ratios (investment cost and O&M cost) for each R11 region, for each technology
+    Returns DataFrame of cost ratios (investment cost and O&M cost) for each R11 region,
+    for each technology
 
-    Only returns values for the earliest year in the dataset (which, as of writing, is 2021)
+    Only returns values for the earliest year in the dataset
+    (which, as of writing, is 2021)
     """
 
     # Replace "n.a." strings with NaNs
@@ -178,7 +182,8 @@ def calculate_cost_ratios(weo_df, dict_reg):
 
     # Assumption 2: For pulverized coal with CCS and IGCC with CCS in MEA,
     # make cost ratio the same as in the FSU region
-    # TODO: this method to replace the values seems a little prone to errors, so probably best to change later
+    # TODO: this method to replace the values seems a little prone to errors,
+    # so probably best to change later
     df_cost_ratio.loc[
         (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "MEA"),
         "cost_ratio",
