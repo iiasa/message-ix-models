@@ -105,7 +105,7 @@ Match each R11 region with a WEO region
 dict_weo_r11 = {
     "NAM": "United States",
     "LAM": "Brazil",
-    "WEU": "Europe",
+    "WEU": "European Union",
     "EEU": "Russia",
     "FSU": "Russia",
     "AFR": "Africa",
