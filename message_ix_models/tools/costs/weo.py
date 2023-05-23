@@ -118,7 +118,7 @@ dict_weo_r11 = {
 }
 
 
-def calculate_cost_ratios(weo_df, dict_reg):
+def calculate_region_cost_ratios(weo_df, dict_reg):
     """
     Returns DataFrame of cost ratios (investment cost and O&M cost) for each R11 region,
     for each technology
@@ -267,7 +267,6 @@ dict_weo_technologies = {
     "csp_sm3_ppl": "csp",
 }
 
-first_model_year = 2020
 conversion_2017_to_2005_usd = 83.416 / 103.015
 
 
@@ -648,7 +647,7 @@ def get_region_differentiated_costs():
     ] = "marine"
 
     # Get ratios
-    df_ratios = calculate_cost_ratios(df_weo, dict_weo_r11)
+    df_ratios = calculate_region_cost_ratios(df_weo, dict_weo_r11)
     df_ratios.rename(columns={"technology": "weo_technology"}, inplace=True)
     df_ratios.drop(columns={"scenario", "year"}, inplace=True)
 
