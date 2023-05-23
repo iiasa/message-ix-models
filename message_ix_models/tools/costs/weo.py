@@ -340,20 +340,10 @@ def compare_original_and_weo_nam_costs(
     return df_nam_assumptions
 
 
-df_weo = get_weo_data()
-df_ratios = calculate_cost_ratios(df_weo, dict_weo_r11)
-df_eric = get_cost_assumption_data()
-df_nam_costs = compare_original_and_weo_nam_costs(
-    df_weo, df_eric, dict_weo_technologies, dict_weo_r11
-)
-
-
 # Type 1: WEO * conversion rate
 def adj_nam_cost_conversion(df_costs, conv_rate):
     df_costs["cost_NAM_adjusted"] = df_costs["cost_NAM_weo_2021"] * conv_rate
 
-
-adj_nam_cost_conversion(df_nam_costs, conversion_2017_to_2005_usd)
 
 # Type 2: Same as NAM original MESSAGE
 tech_same_orig_message_inv = [
@@ -419,10 +409,6 @@ def adj_nam_cost_message(df_costs, list_tech_inv, list_tech_fom):
     ]
 
 
-adj_nam_cost_message(
-    df_nam_costs, tech_same_orig_message_inv, tech_same_orig_message_fom
-)
-
 # Type 3: Manually assigned values
 dict_manual_nam_costs_inv = {
     "bio_istig": 4064,
@@ -470,9 +456,6 @@ def adj_nam_cost_manual(df_costs, dict_inv, dict_fom):
             & (df_costs.cost_type == "annual_om_costs"),
             "cost_NAM_adjusted",
         ] = dict_fom[f]
-
-
-adj_nam_cost_manual(df_nam_costs, dict_manual_nam_costs_inv, dict_manual_nam_costs_fom)
 
 
 # Type 4: function of another cost value (using ratio)
@@ -633,4 +616,53 @@ def adj_nam_cost_reference(df_costs, dict_inv, dict_fom):
         )
 
 
-adj_nam_cost_reference(df_nam_costs, dict_tech_ref_inv, dict_tech_ref_fom)
+def get_region_differentiated_costs():
+    df_weo = get_weo_data()
+    df_eric = get_cost_assumption_data()
+    df_nam_costs = compare_original_and_weo_nam_costs(
+        df_weo, df_eric, dict_weo_technologies, dict_weo_r11
+    )
+
+    adj_nam_cost_conversion(df_nam_costs, conversion_2017_to_2005_usd)
+    adj_nam_cost_message(
+        df_nam_costs, tech_same_orig_message_inv, tech_same_orig_message_fom
+    )
+    adj_nam_cost_manual(
+        df_nam_costs, dict_manual_nam_costs_inv, dict_manual_nam_costs_fom
+    )
+    adj_nam_cost_reference(df_nam_costs, dict_tech_ref_inv, dict_tech_ref_fom)
+
+    df_nam_adj_costs_only = df_nam_costs[
+        ["message_technology", "weo_technology", "cost_type", "cost_NAM_adjusted"]
+    ]
+
+    # assign fake WEO technology for stor_ppl and h2_elec so that dfs can be merged
+    df_nam_adj_costs_only.loc[
+        df_nam_adj_costs_only.message_technology.isin(["stor_ppl", "h2_elec"]),
+        "weo_technology",
+    ] = "marine"
+
+    # get ratios
+    df_ratios = calculate_cost_ratios(df_weo, dict_weo_r11)
+    df_ratios.rename(columns={"technology": "weo_technology"}, inplace=True)
+    df_ratios.drop(columns={"scenario", "year"}, inplace=True)
+
+    # merge costs
+    df_regiondiff = pd.merge(
+        df_ratios, df_nam_adj_costs_only, on=["weo_technology", "cost_type"]
+    )
+
+    # for stor_ppl and h2_elec, make ratios = 1 (all regions have the same cost)
+    df_regiondiff.loc[
+        df_regiondiff.message_technology.isin(["stor_ppl", "h2_elec"]), "cost_ratio"
+    ] = 1.0
+
+    # calculate region-specific costs
+    df_regiondiff["cost_region"] = (
+        df_regiondiff["cost_NAM_adjusted"] * df_regiondiff["cost_ratio"]
+    )
+
+    return df_regiondiff
+
+
+get_region_differentiated_costs()
