@@ -108,6 +108,7 @@ submodules = [
     "message_ix_models.model.cli",
     "message_ix_models.model.structure",
     "message_ix_models.model.water.cli",
+    "message_ix_models.util.pooch",
 ]
 
 try:
