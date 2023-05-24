@@ -45,6 +45,7 @@ dependencies = [
   "PyYAML",
   "sdmx1 >= 2.13.1",
   "tqdm",
+  "pyxlsb >= 1.0.10"
 ]
 
 [project.urls]
