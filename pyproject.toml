@@ -38,10 +38,12 @@ dependencies = [
   "genno >= 1.8.0",
   "iam_units",
   "message_ix >= 3.4.0",
+  "pooch",
   "pyam-iamc >= 0.6",
   "pycountry",
   "PyYAML",
   "sdmx1 >= 2.8.0",
+  "tqdm",
 ]
 
 [project.urls]
