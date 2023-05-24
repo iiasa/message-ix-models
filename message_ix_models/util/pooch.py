@@ -19,4 +19,7 @@ def cli():
 
 @cli.command()
 def fetch():
-    POOCH.fetch("MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline.xlsx")
+    path = POOCH.fetch(
+        "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline.xlsx", progressbar=True
+    )
+    print(f"Fetched/checked {path}")
