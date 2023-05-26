@@ -1,4 +1,5 @@
 """Prepare base models from snapshot data."""
+import logging
 from pathlib import Path
 
 import click
@@ -13,6 +14,8 @@ from message_ix_models.util.pooch import fetch
 from .build import apply_spec
 from .structure import get_codes
 
+log = logging.getLogger(__name__)
+
 #: Available snapshots.
 SNAPSHOTS = {
     0: dict(
@@ -26,11 +29,10 @@ SNAPSHOTS = {
 }
 
 
-def _unpack(path):
+def _unpack(path: Path) -> Path:
     """Unpack ixmp-format Excel file at `path`."""
-    p = Path(path)
-    assert p.suffix == ".xlsx"
-    base = p.with_suffix("")
+    assert path.suffix == ".xlsx"
+    base = path.with_suffix("")
     base.mkdir(exist_ok=True)
 
     # Get item name -> ixmp type mapping as a pd.Series
@@ -70,7 +72,7 @@ def _unpack(path):
     return base
 
 
-def _read_excel(scenario, path):
+def _read_excel(scenario: Scenario, path: Path) -> None:
     base = _unpack(path)
 
     scenario.read_excel(base.joinpath("sets.xlsx"))
@@ -113,8 +115,7 @@ def cli():
 
 
 @cli.command("fetch")
-@click.argument("id_", metavar="ID")
+@click.argument("id_", metavar="ID", type=int)
 def fetch_cmd(id_):
     """Fetch snapshot ID from Zenodo."""
-    path = fetch(SNAPSHOTS[id_])
-    print(f"Fetched/checked {path}")
+    fetch(SNAPSHOTS[id_])
