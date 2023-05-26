@@ -27,5 +27,6 @@ jobs:
         pytest
         sdmx1
         types-PyYAML
+        types-tqdm
         "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
         "message-ix @ git+https://github.com/iiasa/message_ix.git@main"
