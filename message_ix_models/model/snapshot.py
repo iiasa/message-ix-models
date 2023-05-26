@@ -118,4 +118,4 @@ def cli():
 @click.argument("id_", metavar="ID", type=int)
 def fetch_cmd(id_):
     """Fetch snapshot ID from Zenodo."""
-    fetch(SNAPSHOTS[id_])
+    fetch(SNAPSHOTS[id_], progressbar=True)
