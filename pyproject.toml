@@ -81,6 +81,7 @@ exclude = ["doc/"]
 module = [
   "colorama",
   "message_data.*",
+  "pooch",
   "pycountry",
   # Indirectly via message_ix
   # This should be a subset of the list in message_ix's pyproject.toml
