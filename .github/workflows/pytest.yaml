@@ -63,12 +63,20 @@ jobs:
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream-version }}"
         pip install .[tests]
 
+    - name: Configure local data path
+      run: |
+        mkdir -p message-local-data/cache
+        ixmp config set "message local data" "$(realpath message-local-data)"
+        ixmp config show
+      shell: bash
+
     - name: Run test suite using pytest
       run: |
         pytest message_ix_models \
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
-          --numprocesses=auto
+          --numprocesses=auto \
+          --local-cache
       shell: bash
 
     - name: Test documentation build using Sphinx
