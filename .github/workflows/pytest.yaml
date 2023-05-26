@@ -40,6 +40,12 @@ jobs:
     name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream-version }}
 
     steps:
+    - name: Cache test data
+      uses: actions/cache@v3
+      with:
+        path: message-local-data
+        key: ${{ matrix.version.os }}
+
     - name: Check out message-ix-models
       uses: actions/checkout@v3
       with:
