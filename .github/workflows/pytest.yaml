@@ -72,8 +72,8 @@ jobs:
     - name: Configure local data path
       run: |
         mkdir -p message-local-data/cache
-        ixmp config set "message local data" "$(realpath message-local-data)"
-        ixmp config show
+        mix-models config set "message local data" "$(realpath message-local-data)"
+        mix-models config show
       shell: bash
 
     - name: Run test suite using pytest
