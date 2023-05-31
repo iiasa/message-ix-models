@@ -412,7 +412,10 @@ aluminum:
     - secondary_material
     - demand
     - end_of_life
-    - dummy_end_of_life
+    - dummy_end_of_life_1
+    - dummy_end_of_life_2
+    - dummy_end_of_life_3
+
 
   technology:
     add:
@@ -424,7 +427,9 @@ aluminum:
     - prep_secondary_aluminum_3
     - finishing_aluminum
     - manuf_aluminum
-    - scrap_recovery_aluminum
+    - scrap_recovery_aluminum_1
+    - scrap_recovery_aluminum_2
+    - scrap_recovery_aluminum_3
     - DUMMY_alumina_supply
     - trade_aluminum
     - import_aluminum
@@ -435,6 +440,7 @@ aluminum:
   relation:
     add:
       - minimum_recycling_aluminum
+      - maximum_recycling_aluminum
 
   balance_equality:
     add:
