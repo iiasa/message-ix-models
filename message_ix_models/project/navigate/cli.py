@@ -200,13 +200,14 @@ def check_budget(context):
     # Iterate over scenario names, target emission budgets, and constraint values
     # TODO don't hard-code these values from .navigate.CLIMATE_POLICY
     # TODO make the list configurable
-    for s_name, t, c in (
-        ("NPi-Default_ENGAGE_15C_step-3+B", 850, 1840),
-        ("NPi-Default_ENGAGE_20C_step-3+B", 900, 2700),
-        ("NPi-Default", np.nan, np.nan),
+    for s_name, version, t, c in (
+        ("NPi-Default_ENGAGE_15C_step-3+B", None, 850, 1840),
+        ("NPi-Default_ENGAGE_20C_step-3+B", 2, 900, 1931),
+        ("NPi-Default_ENGAGE_20C_step-3+B", 1, 1150, 2700),
+        ("NPi-Default", None, np.nan, np.nan),
     ):
         try:
-            s = Scenario(mp, model=m, scenario=s_name)
+            s = Scenario(mp, model=m, scenario=s_name, version=version)
         except Exception as e:
             print(repr(e))
             continue
