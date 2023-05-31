@@ -129,6 +129,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
     )
 
 
+@pytest.mark.skip(reason="Temporary, for #440; crashes pytest-xdist worker")
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
 
