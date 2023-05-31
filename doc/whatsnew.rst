@@ -1,13 +1,14 @@
 What's new
 **********
 
-.. Next release
-.. ============
-
-v2023.5.13 (2023-05-13)
-=======================
+Next release
+============
 
 - Adjust :mod:`sdmx` usage for version 2.10.0 (:pull:`101`).
+
+v2023.5.13
+==========
+
 - Adjust :func:`.generate_product` for pandas 2.0.0 (:pull:`98`).
 
 2023.4.2
