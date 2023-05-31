@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2023.5.31
+==========
 
 - Adjust :mod:`sdmx` usage for version 2.10.0 (:pull:`101`).
 
