@@ -10,7 +10,6 @@ from message_ix.reporting import Key, Reporter
 from message_ix_models.util import eval_anno
 from sdmx.model.v21 import Code
 
-
 log = logging.getLogger(__name__)
 
 

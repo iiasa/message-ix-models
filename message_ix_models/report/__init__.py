@@ -20,7 +20,6 @@ from message_ix_models.util._logging import mark_time
 
 from .util import add_replacements
 
-
 __all__ = [
     "prepare_reporter",
     "register",
