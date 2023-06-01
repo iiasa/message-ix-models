@@ -1,20 +1,324 @@
-"""
-Code for handling IEA WEO data
-"""
+"""Code for handling IEA WEO data"""
+
+from itertools import product
 
 import numpy as np
 import pandas as pd
 
 from message_ix_models.util import package_data_path
 
+# Conversion rate from 2017 USD to 2005 USD
+# Taken from https://www.officialdata.org/us/inflation/2017?endYear=2005&amount=1
+conversion_2017_to_2005_usd = 0.8
 
-def get_weo_data():
-    """
-    Read in raw WEO investment/capital costs and O&M costs data
+# Dict of all of the technologies,
+# their respective sheet in the Excel file,
+# and the start row
+DICT_TECH_ROWS = {
+    "bioenergy_ccus": ["Renewables", 95],
+    "bioenergy_cofiring": ["Renewables", 75],
+    "bioenergy_large": ["Renewables", 65],
+    "bioenergy_medium_chp": ["Renewables", 85],
+    "ccgt": ["Gas", 5],
+    "ccgt_ccs": ["Fossil fuels equipped with CCUS", 25],
+    "ccgt_chp": ["Gas", 25],
+    "csp": ["Renewables", 105],
+    "fuel_cell": ["Gas", 35],
+    "gas_turbine": ["Gas", 15],
+    "geothermal": ["Renewables", 115],
+    "hydropower_large": ["Renewables", 45],
+    "hydropower_small": ["Renewables", 55],
+    "igcc": ["Coal", 35],
+    "igcc_ccs": ["Fossil fuels equipped with CCUS", 15],
+    "marine": ["Renewables", 125],
+    "nuclear": ["Nuclear", 5],
+    "pulverized_coal_ccs": ["Fossil fuels equipped with CCUS", 5],
+    "solarpv_buildings": ["Renewables", 15],
+    "solarpv_large": ["Renewables", 5],
+    "steam_coal_subcritical": ["Coal", 5],
+    "steam_coal_supercritical": ["Coal", 15],
+    "steam_coal_ultrasupercritical": ["Coal", 25],
+    "wind_offshore": ["Renewables", 35],
+    "wind_onshore": ["Renewables", 25],
+}
+
+# Dict of cost types to read in and the required columns
+DICT_COST_COLS = {"capital_costs": "A,B:D", "annual_om_costs": "A,F:H"}
+
+# Dict of each R11 region matched with a WEO region
+DICT_WEO_R11 = {
+    "AFR": "Africa",
+    "CPA": "China",
+    "EEU": "Russia",
+    "FSU": "Russia",
+    "LAM": "Brazil",
+    "MEA": "Middle East",
+    "NAM": "United States",
+    "PAO": "Japan",
+    "PAS": "India",
+    "SAS": "India",
+    "WEU": "European Union",
+}
+
+# Dict of WEO technologies and the corresponding MESSAGE technologies
+DICT_WEO_TECH = {
+    "bio_istig": "igcc",
+    "bio_istig_ccs": "igcc_ccs",
+    "bio_ppl": "bioenergy_large",
+    "bio_ppl_co2scr": "igcc_ccs",
+    "biomass_i": "bioenergy_medium_chp",
+    "c_ppl_co2scr": "pulverized_coal_ccs",
+    "coal_adv": "steam_coal_supercritical",
+    "coal_adv_ccs": "pulverized_coal_ccs",
+    "coal_i": "ccgt_chp",
+    "coal_ppl": "steam_coal_subcritical",
+    "coal_ppl_u": "steam_coal_subcritical",
+    "csp_sm1_ppl": "csp",
+    "csp_sm3_ppl": "csp",
+    "elec_i": "ccgt_chp",
+    "eth_bio": "igcc",
+    "eth_bio_ccs": "igcc_ccs",
+    "eth_i": "bioenergy_medium_chp",
+    "foil_i": "ccgt_chp",
+    "g_ppl_co2scr": "ccgt_ccs",
+    "gas_cc": "ccgt",
+    "gas_cc_ccs": "ccgt_ccs",
+    "gas_ct": "gas_turbine",
+    "gas_i": "ccgt_chp",
+    "gas_ppl": "gas_turbine",
+    "geo_hpl": "geothermal",
+    "geo_ppl": "geothermal",
+    "h2_bio": "igcc",
+    "h2_bio_ccs": "igcc_ccs",
+    "h2_coal": "igcc",
+    "h2_coal_ccs": "igcc_ccs",
+    "h2_elec": "",
+    "h2_i": "ccgt_chp",
+    "h2_smr": "igcc",
+    "h2_smr_ccs": "igcc_ccs",
+    "heat_i": "ccgt_chp",
+    "hp_el_i": "ccgt_chp",
+    "hp_gas_i": "ccgt_chp",
+    "hydro_hc": "hydropower_small",
+    "hydro_lc": "hydropower_large",
+    "igcc": "igcc",
+    "igcc_ccs": "igcc_ccs",
+    "liq_bio": "igcc",
+    "liq_bio_ccs": "igcc_ccs",
+    "loil_i": "ccgt_chp",
+    "meth_coal": "igcc",
+    "meth_coal_ccs": "igcc_ccs",
+    "meth_i": "bioenergy_medium_chp",
+    "meth_ng": "igcc",
+    "meth_ng_ccs": "igcc_ccs",
+    "nuc_hc": "nuclear",
+    "nuc_lc": "nuclear",
+    "solar_i": "solarpv_buildings",
+    "solar_pv_I": "solarpv_buildings",
+    "solar_pv_RC": "solarpv_buildings",
+    "solar_pv_ppl": "solarpv_large",
+    "solar_th_ppl": "csp",
+    "stor_ppl": "",
+    "syn_liq": "igcc",
+    "syn_liq_ccs": "igcc_ccs",
+    "wind_ppf": "wind_offshore",
+    "wind_ppl": "wind_onshore",
+}
+
+# Dict of technologies whose NAM investment costs are the same as in MESSAGE
+DICT_TECH_SAME_ORIG_MESSAGE_INV = [
+    "bio_ppl_co2scr",
+    "biomass_i",
+    "c_ppl_co2scr",
+    "coal_i",
+    "csp_sm1_ppl",
+    "csp_sm3_ppl",
+    "elec_i",
+    "eth_i",
+    "foil_i",
+    "g_ppl_co2scr",
+    "gas_i",
+    "geo_hpl",
+    "h2_i",
+    "heat_i",
+    "hp_el_i",
+    "hp_gas_i",
+    "loil_i",
+    "meth_i",
+    "nuc_hc",
+    "nuc_lc",
+    "stor_ppl",
+]
+
+# Dict of technologies whose NAM FO&M costs are the same as in MESSAGE
+DICT_TECH_SAME_ORIG_MESSAGE_FOM = [
+    "biomass_i",
+    "coal_i",
+    "elec_i",
+    "eth_i",
+    "foil_i",
+    "gas_i",
+    "h2_i",
+    "heat_i",
+    "hp_el_i",
+    "hp_gas_i",
+    "loil_i",
+    "meth_i",
+    "stor_ppl",
+]
+
+# Dict of technologies whose investment costs are manually specified
+# Values are taken directly from the "RegionDiff" sheet in p:/ene.model/MESSAGE-technology-costs/costs-spreadsheets/SSP1_techinput.xlsx
+DICT_MANUAL_NAM_COSTS_INV = {
+    "bio_istig": 4064,
+    "bio_istig_ccs": 5883,
+    "geo_ppl": 3030,
+    "h2_coal": 2127,
+    "h2_coal_ccs": 2215,
+    "h2_elec": 1120,
+    "h2_smr": 725,
+    "h2_smr_ccs": 1339,
+    "liq_bio": 4264,
+    "solar_pv_ppl": 1189,
+    "syn_liq": 3224,
+    "wind_ppf": 1771,
+    "wind_ppl": 1181,
+}
+
+# Dict of technologies whose FO&M costs are manually specified
+# Values are taken directly from the "RegionDiff" sheet in p:/ene.model/MESSAGE-technology-costs/costs-spreadsheets/SSP1_techinput.xlsx
+DICT_MANUAL_NAM_COSTS_FOM = {
+    "bio_istig": 163,
+    "bio_istig_ccs": 235,
+    "h2_coal": 106,
+    "h2_coal_ccs": 111,
+    "h2_elec": 17,
+    "h2_smr": 34,
+    "h2_smr_ccs": 40,
+    "liq_bio": 171,
+    "liq_bio_ccs": 174,
+    "syn_liq": 203,
+    "wind_ppf": 48,
+    "wind_ppl": 27,
+}
+
+# Dict of the technologies whose investment costs are in reference to other technologies.
+# Within the key, the `tech` refers to the reference tech,
+# and the `cost_type` refers to the reference cost type (either investment or FO&M cost)
+DICT_TECH_REF_INV = {
+    "coal_ppl_u": {
+        "tech": "coal_ppl",
+        "cost_type": "capital_costs",
+    },
+    "eth_bio": {"tech": "liq_bio", "cost_type": "capital_costs"},
+    "eth_bio_ccs": {
+        "tech": "eth_bio",
+        "cost_type": "capital_costs",
+    },
+    "gas_ppl": {"tech": "gas_cc", "cost_type": "capital_costs"},
+    "h2_bio": {"tech": "h2_coal", "cost_type": "capital_costs"},
+    "h2_bio_ccs": {"tech": "h2_bio", "cost_type": "capital_costs"},
+    "liq_bio_ccs": {
+        "tech": "liq_bio",
+        "cost_type": "capital_costs",
+    },
+    "meth_coal": {"tech": "syn_liq", "cost_type": "capital_costs"},
+    "meth_coal_ccs": {
+        "tech": "meth_coal",
+        "cost_type": "capital_costs",
+    },
+    "meth_ng": {"tech": "syn_liq", "cost_type": "capital_costs"},
+    "meth_ng_ccs": {
+        "tech": "meth_ng",
+        "cost_type": "capital_costs",
+    },
+    "solar_i": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "capital_costs",
+    },
+    "solar_pv_I": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "capital_costs",
+    },
+    "solar_pv_RC": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "capital_costs",
+    },
+    "solar_th_ppl": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "capital_costs",
+    },
+    "syn_liq_ccs": {
+        "tech": "syn_liq",
+        "cost_type": "capital_costs",
+    },
+}
+
+# Dict of the technologies whose FO&M costs are in reference to other technologies.
+# Within the key, the `tech` refers to the reference tech,
+# and the `cost_type` refers to the reference cost type (either investment or FO&M cost)
+DICT_TECH_REF_FOM = {
+    "coal_ppl_u": {
+        "tech": "coal_ppl",
+        "cost_type": "annual_om_costs",
+    },
+    "eth_bio": {"tech": "liq_bio", "cost_type": "annual_om_costs"},
+    "eth_bio_ccs": {
+        "tech": "eth_bio",
+        "cost_type": "annual_om_costs",
+    },
+    "gas_ppl": {"tech": "gas_cc", "cost_type": "annual_om_costs"},
+    "h2_bio": {"tech": "h2_coal", "cost_type": "annual_om_costs"},
+    "h2_bio_ccs": {
+        "tech": "h2_bio",
+        "cost_type": "annual_om_costs",
+    },
+    "liq_bio_ccs": {
+        "tech": "liq_bio",
+        "cost_type": "annual_om_costs",
+    },
+    "meth_coal": {
+        "tech": "syn_liq",
+        "cost_type": "annual_om_costs",
+    },
+    "meth_coal_ccs": {
+        "tech": "meth_coal",
+        "cost_type": "annual_om_costs",
+    },
+    "meth_ng": {"tech": "syn_liq", "cost_type": "annual_om_costs"},
+    "meth_ng_ccs": {
+        "tech": "meth_ng",
+        "cost_type": "annual_om_costs",
+    },
+    "solar_i": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "annual_om_costs",
+    },
+    "solar_pv_I": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "annual_om_costs",
+    },
+    "solar_pv_RC": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "annual_om_costs",
+    },
+    "solar_th_ppl": {
+        "tech": "solar_pv_ppl",
+        "cost_type": "annual_om_costs",
+    },
+    "syn_liq_ccs": {
+        "tech": "syn_liq",
+        "cost_type": "annual_om_costs",
+    },
+}
+
+
+def get_weo_data(dict_tech_rows, dict_cols):
+    """Read in raw WEO investment/capital costs and O&M costs data
     (for all technologies and for STEPS scenario only).
     Convert to long format
 
-    Returns DataFrame of processed data
+    Return DataFrame of processed data
     """
 
     # Read in raw data file
@@ -22,66 +326,28 @@ def get_weo_data():
         "iea", "WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb"
     )
 
-    # Dict of all of the technologies,
-    # their respective sheet in the Excel file,
-    # and the start row
-    tech_rows = {
-        "steam_coal_subcritical": ["Coal", 5],
-        "steam_coal_supercritical": ["Coal", 15],
-        "steam_coal_ultrasupercritical": ["Coal", 25],
-        "igcc": ["Coal", 35],
-        "ccgt": ["Gas", 5],
-        "gas_turbine": ["Gas", 15],
-        "ccgt_chp": ["Gas", 25],
-        "fuel_cell": ["Gas", 35],
-        "pulverized_coal_ccs": ["Fossil fuels equipped with CCUS", 5],
-        "igcc_ccs": ["Fossil fuels equipped with CCUS", 15],
-        "ccgt_ccs": ["Fossil fuels equipped with CCUS", 25],
-        "nuclear": ["Nuclear", 5],
-        "solarpv_large": ["Renewables", 5],
-        "solarpv_buildings": ["Renewables", 15],
-        "wind_onshore": ["Renewables", 25],
-        "wind_offshore": ["Renewables", 35],
-        "hydropower_large": ["Renewables", 45],
-        "hydropower_small": ["Renewables", 55],
-        "bioenergy_large": ["Renewables", 65],
-        "bioenergy_cofiring": ["Renewables", 75],
-        "bioenergy_medium_chp": ["Renewables", 85],
-        "bioenergy_ccus": ["Renewables", 95],
-        "csp": ["Renewables", 105],
-        "geothermal": ["Renewables", 115],
-        "marine": ["Renewables", 125],
-    }
-
-    # Specify cost types to read in and the required columns
-    cost_cols = {"capital_costs": "A,B:D", "annual_om_costs": "A,F:H"}
-
     # Loop through each technology and cost type
     # Read in data and convert to long format
     dfs_cost = []
-    for tech_key in tech_rows:
-        for cost_key in cost_cols:
-            df = pd.read_excel(
+    for tech_key, cost_key in product(dict_tech_rows, dict_cols):
+        df = (
+            pd.read_excel(
                 file_path,
-                sheet_name=tech_rows[tech_key][0],
+                sheet_name=dict_tech_rows[tech_key][0],
                 header=None,
-                skiprows=tech_rows[tech_key][1],
+                skiprows=dict_tech_rows[tech_key][1],
                 nrows=8,
-                usecols=cost_cols[cost_key],
+                usecols=dict_cols[cost_key],
             )
-
-            df.columns = ["region", "2021", "2030", "2050"]
-            df_long = pd.melt(
-                df, id_vars=["region"], var_name="year", value_name="value"
+            .set_axis(["region", "2021", "2030", "2050"], axis=1)
+            .melt(id_vars=["region"], var_name="year", value_name="value")
+            .assign(
+                scenario="stated_policies",
+                technology=tech_key,
+                cost_type=cost_key,
+                units="usd_per_kw",
             )
-
-            df_long["scenario"] = "stated_policies"
-            df_long["technology"] = tech_key
-            df_long["cost_type"] = cost_key
-            df_long["units"] = "usd_per_kw"
-
-            # Reorganize columns
-            df_long = df_long[
+            .reindex(
                 [
                     "scenario",
                     "technology",
@@ -90,86 +356,59 @@ def get_weo_data():
                     "cost_type",
                     "units",
                     "value",
-                ]
-            ]
+                ],
+                axis=1,
+            )
+            .replace({"value": "n.a."}, np.nan)
+        )
 
-            dfs_cost.append(df_long)
-
+        dfs_cost.append(df)
     all_cost_df = pd.concat(dfs_cost)
 
     return all_cost_df
 
 
-"""
-Match each R11 region with a WEO region
-"""
-dict_weo_r11 = {
-    "NAM": "United States",
-    "LAM": "Brazil",
-    "WEU": "European Union",
-    "EEU": "Russia",
-    "FSU": "Russia",
-    "AFR": "Africa",
-    "MEA": "Middle East",
-    "SAS": "India",
-    "CPA": "China",
-    "PAS": "India",
-    "PAO": "Japan",
-}
-
-
 def calculate_region_cost_ratios(weo_df, dict_reg):
-    """
-    Returns DataFrame of cost ratios (investment cost and O&M cost) for each R11 region,
+    """Return DataFrame of cost ratios (investment cost and O&M cost) for each R11 region,
     for each technology
 
-    Only returns values for the earliest year in the dataset
+    Only return values for the earliest year in the dataset
     (which, as of writing, is 2021)
     """
 
-    # Replace "n.a." strings with NaNs
-    weo_df["value"] = weo_df["value"].replace("n.a.", np.nan)
-
-    # Filter for only United States data (this is the NAM region)
-    df_us = weo_df.loc[weo_df.region == "United States"].copy()
-
-    # Rename the `value` column in the US dataframe to `us_value`
-    df_us.rename(columns={"value": "us_value"}, inplace=True)
-
-    # Drop `region`` and `units`` columns
-    df_us.drop(columns={"region", "units"}, inplace=True)
-
-    # Merge complete WEO data with only US data
-    df_merged = pd.merge(
-        weo_df, df_us, on=["scenario", "technology", "year", "cost_type"]
+    df = (
+        weo_df.loc[weo_df.region == "United States"]
+        .copy()
+        .rename(columns={"value": "us_value"})
+        .drop(columns={"region", "units"})
+        .merge(weo_df, on=["scenario", "technology", "year", "cost_type"])
+        .assign(cost_ratio=lambda x: x.value / x.us_value)
     )
-
-    # Calculate cost ratio (region-specific cost divided by US value)
-    df_merged["cost_ratio"] = df_merged["value"] / df_merged["us_value"]
 
     l_cost_ratio = []
     for m, w in dict_reg.items():
-        df_sel = df_merged.loc[df_merged.year == min(df_merged.year)]
-        df_sel = df_sel.loc[df_sel.region == w].copy()
-        df_sel.rename(columns={"region": "weo_region"}, inplace=True)
-        df_sel["r11_region"] = m
-
-        df_sel = df_sel[
-            [
-                "scenario",
-                "technology",
-                "r11_region",
-                "weo_region",
-                "year",
-                "cost_type",
-                "cost_ratio",
-            ]
-        ]
+        df_sel = (
+            df.loc[(df.year == min(df.year)) & (df.region == w)]
+            .copy()
+            .rename(columns={"region": "weo_region"})
+            .assign(r11_region=m)
+            .reindex(
+                [
+                    "scenario",
+                    "technology",
+                    "r11_region",
+                    "weo_region",
+                    "year",
+                    "cost_type",
+                    "cost_ratio",
+                ],
+                axis=1,
+            )
+        )
 
         l_cost_ratio.append(df_sel)
 
     df_cost_ratio = pd.concat(l_cost_ratio)
-    df_cost_ratio.loc[df_cost_ratio.cost_ratio.isnull()]
 
     # Replace NaN cost ratios with assumptions
     # Assumption 1: For CSP in EEU and FSU, make cost ratio == 0
@@ -200,97 +439,26 @@ def calculate_region_cost_ratios(weo_df, dict_reg):
     return df_cost_ratio
 
 
-"""
-Match each MESSAGEix technology with a WEO technology
-"""
-dict_weo_technologies = {
-    "coal_ppl": "steam_coal_subcritical",
-    "gas_ppl": "gas_turbine",
-    "gas_ct": "gas_turbine",
-    "gas_cc": "ccgt",
-    "bio_ppl": "bioenergy_large",
-    "coal_adv": "steam_coal_supercritical",
-    "igcc": "igcc",
-    "bio_istig": "igcc",
-    "coal_adv_ccs": "pulverized_coal_ccs",
-    "igcc_ccs": "igcc_ccs",
-    "gas_cc_ccs": "ccgt_ccs",
-    "bio_istig_ccs": "igcc_ccs",
-    "syn_liq": "igcc",
-    "meth_coal": "igcc",
-    "syn_liq_ccs": "igcc_ccs",
-    "meth_coal_ccs": "igcc_ccs",
-    "h2_coal": "igcc",
-    "h2_smr": "igcc",
-    "h2_bio": "igcc",
-    "h2_coal_ccs": "igcc_ccs",
-    "h2_smr_ccs": "igcc_ccs",
-    "h2_bio_ccs": "igcc_ccs",
-    "eth_bio": "igcc",
-    "eth_bio_ccs": "igcc_ccs",
-    "c_ppl_co2scr": "pulverized_coal_ccs",
-    "g_ppl_co2scr": "ccgt_ccs",
-    "bio_ppl_co2scr": "igcc_ccs",
-    "wind_ppl": "wind_onshore",
-    "wind_ppf": "wind_offshore",
-    "solar_th_ppl": "csp",
-    "solar_pv_I": "solarpv_buildings",
-    "solar_pv_RC": "solarpv_buildings",
-    "solar_pv_ppl": "solarpv_large",
-    "geo_ppl": "geothermal",
-    "hydro_lc": "hydropower_large",
-    "hydro_hc": "hydropower_small",
-    "meth_ng": "igcc",
-    "meth_ng_ccs": "igcc_ccs",
-    "coal_ppl_u": "steam_coal_subcritical",
-    "stor_ppl": "",
-    "h2_elec": "",
-    "liq_bio": "igcc",
-    "liq_bio_ccs": "igcc_ccs",
-    "coal_i": "ccgt_chp",
-    "foil_i": "ccgt_chp",
-    "loil_i": "ccgt_chp",
-    "gas_i": "ccgt_chp",
-    "biomass_i": "bioenergy_medium_chp",
-    "eth_i": "bioenergy_medium_chp",
-    "meth_i": "bioenergy_medium_chp",
-    "elec_i": "ccgt_chp",
-    "h2_i": "ccgt_chp",
-    "hp_el_i": "ccgt_chp",
-    "hp_gas_i": "ccgt_chp",
-    "solar_i": "solarpv_buildings",
-    "heat_i": "ccgt_chp",
-    "geo_hpl": "geothermal",
-    "nuc_lc": "nuclear",
-    "nuc_hc": "nuclear",
-    "csp_sm1_ppl": "csp",
-    "csp_sm3_ppl": "csp",
-}
-
-conversion_2017_to_2005_usd = 83.416 / 103.015
-
-
 def get_cost_assumption_data():
     # Read in raw data files
-    inv_file_path = package_data_path("costs", "eric-investment-costs.csv")
-    fom_file_path = package_data_path("costs", "eric-fom-costs.csv")
+    inv_file_path = package_data_path("costs", "investment_costs-0.csv")
+    fom_file_path = package_data_path("costs", "fixed_om_costs-0.csv")
 
-    df_inv = pd.read_csv(inv_file_path, header=8)
-    df_fom = pd.read_csv(fom_file_path, header=8)
-
-    # Rename columns
-    df_inv.rename(
-        columns={"investment_cost_nam_original_message": "cost_NAM_original_message"},
-        inplace=True,
-    )
-    df_fom.rename(
-        columns={"fom_cost_nam_original_message": "cost_NAM_original_message"},
-        inplace=True,
+    df_inv = (
+        pd.read_csv(inv_file_path, header=9)
+        .rename(
+            columns={
+                "investment_cost_nam_original_message": "cost_NAM_original_message"
+            }
+        )
+        .assign(cost_type="capital_costs")
     )
 
-    # Add cost type column
-    df_inv["cost_type"] = "capital_costs"
-    df_fom["cost_type"] = "annual_om_costs"
+    df_fom = (
+        pd.read_csv(fom_file_path, header=9)
+        .rename(columns={"fom_cost_nam_original_message": "cost_NAM_original_message"})
+        .assign(cost_type="annual_om_costs")
+    )
 
     # Concatenate dataframes
     df_costs = pd.concat([df_inv, df_fom]).reset_index()
@@ -308,34 +476,32 @@ def get_cost_assumption_data():
 def compare_original_and_weo_nam_costs(
     weo_df, eric_df, dict_weo_tech, dict_weo_regions
 ):
-    df_assumptions = eric_df.copy()
-    df_assumptions["technology"] = df_assumptions.message_technology.map(dict_weo_tech)
-
-    df_nam = weo_df.loc[
-        (weo_df.region == dict_weo_regions["NAM"]) & (weo_df.year == min(weo_df.year))
-    ].copy()
-
-    df_nam_assumptions = pd.merge(
-        df_assumptions, df_nam, on=["technology", "cost_type"], how="left"
+    df_assumptions = (
+        eric_df.copy()
+        .assign(technology=lambda x: x.message_technology.map(dict_weo_tech))
+        .merge(
+            weo_df.loc[
+                (weo_df.region == dict_weo_regions["NAM"])
+                & (weo_df.year == min(weo_df.year))
+            ].copy(),
+            on=["technology", "cost_type"],
+            how="left",
+        )
+        .drop(columns={"year", "region", "units", "scenario"})
+        .rename(columns={"value": "cost_NAM_weo_2021", "technology": "weo_technology"})
+        .reindex(
+            [
+                "message_technology",
+                "weo_technology",
+                "cost_type",
+                "cost_NAM_original_message",
+                "cost_NAM_weo_2021",
+            ],
+            axis=1,
+        )
     )
-    df_nam_assumptions.drop(
-        columns={"year", "region", "units", "scenario"}, inplace=True
-    )
-    df_nam_assumptions.rename(
-        columns={"value": "cost_NAM_weo_2021", "technology": "weo_technology"},
-        inplace=True,
-    )
-    df_nam_assumptions = df_nam_assumptions[
-        [
-            "message_technology",
-            "weo_technology",
-            "cost_type",
-            "cost_NAM_original_message",
-            "cost_NAM_weo_2021",
-        ]
-    ]
 
-    return df_nam_assumptions
+    return df_assumptions
 
 
 # Type 1: WEO * conversion rate
@@ -344,47 +510,6 @@ def adj_nam_cost_conversion(df_costs, conv_rate):
 
 
 # Type 2: Same as NAM original MESSAGE
-tech_same_orig_message_inv = [
-    "c_ppl_co2scr",
-    "g_ppl_co2scr",
-    "bio_ppl_co2scr",
-    "stor_ppl",
-    "coal_i",
-    "foil_i",
-    "loil_i",
-    "gas_i",
-    "biomass_i",
-    "eth_i",
-    "meth_i",
-    "elec_i",
-    "h2_i",
-    "hp_el_i",
-    "hp_gas_i",
-    "heat_i",
-    "geo_hpl",
-    "nuc_lc",
-    "nuc_hc",
-    "csp_sm1_ppl",
-    "csp_sm3_ppl",
-]
-
-tech_same_orig_message_fom = [
-    "stor_ppl",
-    "coal_i",
-    "foil_i",
-    "loil_i",
-    "gas_i",
-    "biomass_i",
-    "eth_i",
-    "meth_i",
-    "elec_i",
-    "h2_i",
-    "hp_el_i",
-    "hp_gas_i",
-    "heat_i",
-]
-
-
 def adj_nam_cost_message(df_costs, list_tech_inv, list_tech_fom):
     df_costs.loc[
         (df_costs.message_technology.isin(list_tech_inv))
@@ -408,38 +533,6 @@ def adj_nam_cost_message(df_costs, list_tech_inv, list_tech_fom):
 
 
 # Type 3: Manually assigned values
-dict_manual_nam_costs_inv = {
-    "bio_istig": 4064,
-    "bio_istig_ccs": 5883,
-    "syn_liq": 3224,  # US EIA
-    "h2_coal": 2127,  # IEA Future H2
-    "h2_smr": 725,  # IEA Future H2
-    "h2_coal_ccs": 2215,
-    "h2_smr_ccs": 1339,
-    "wind_ppl": 1181,
-    "wind_ppf": 1771,
-    "solar_pv_ppl": 1189,
-    "geo_ppl": 3030,
-    "h2_elec": 1120,
-    "liq_bio": 4264,
-}
-
-dict_manual_nam_costs_fom = {
-    "bio_istig": 163,
-    "bio_istig_ccs": 235,
-    "syn_liq": 203,
-    "h2_coal": 106,
-    "h2_smr": 34,
-    "h2_coal_ccs": 111,
-    "h2_smr_ccs": 40,
-    "wind_ppl": 27,
-    "wind_ppf": 48,
-    "h2_elec": 17,
-    "liq_bio": 171,
-    "liq_bio_ccs": 174,
-}
-
-
 def adj_nam_cost_manual(df_costs, dict_inv, dict_fom):
     for k in dict_inv:
         df_costs.loc[
@@ -489,119 +582,14 @@ def calc_nam_cost_ratio(
     # return c_adj_des
 
 
-dict_tech_ref_inv = {
-    "gas_ppl": {"reference_tech": "gas_cc", "reference_cost_type": "capital_costs"},
-    "meth_coal": {"reference_tech": "syn_liq", "reference_cost_type": "capital_costs"},
-    "syn_liq_ccs": {
-        "reference_tech": "syn_liq",
-        "reference_cost_type": "capital_costs",
-    },
-    "meth_coal_ccs": {
-        "reference_tech": "meth_coal",
-        "reference_cost_type": "capital_costs",
-    },
-    "h2_bio": {"reference_tech": "h2_coal", "reference_cost_type": "capital_costs"},
-    "h2_bio_ccs": {"reference_tech": "h2_bio", "reference_cost_type": "capital_costs"},
-    "eth_bio": {"reference_tech": "liq_bio", "reference_cost_type": "capital_costs"},
-    "eth_bio_ccs": {
-        "reference_tech": "eth_bio",
-        "reference_cost_type": "capital_costs",
-    },
-    "solar_th_ppl": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "capital_costs",
-    },
-    "solar_pv_I": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "capital_costs",
-    },
-    "solar_pv_RC": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "capital_costs",
-    },
-    "meth_ng": {"reference_tech": "syn_liq", "reference_cost_type": "capital_costs"},
-    "meth_ng_ccs": {
-        "reference_tech": "meth_ng",
-        "reference_cost_type": "capital_costs",
-    },
-    "coal_ppl_u": {
-        "reference_tech": "coal_ppl",
-        "reference_cost_type": "capital_costs",
-    },
-    "liq_bio_ccs": {
-        "reference_tech": "liq_bio",
-        "reference_cost_type": "capital_costs",
-    },
-    "solar_i": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "capital_costs",
-    },
-}
-
-dict_tech_ref_fom = {
-    "gas_ppl": {"reference_tech": "gas_cc", "reference_cost_type": "annual_om_costs"},
-    "meth_coal": {
-        "reference_tech": "syn_liq",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "syn_liq_ccs": {
-        "reference_tech": "syn_liq",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "meth_coal_ccs": {
-        "reference_tech": "meth_coal",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "h2_bio": {"reference_tech": "h2_coal", "reference_cost_type": "annual_om_costs"},
-    "h2_bio_ccs": {
-        "reference_tech": "h2_bio",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "eth_bio": {"reference_tech": "liq_bio", "reference_cost_type": "annual_om_costs"},
-    "eth_bio_ccs": {
-        "reference_tech": "eth_bio",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "solar_th_ppl": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "solar_pv_I": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "solar_pv_RC": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "meth_ng": {"reference_tech": "syn_liq", "reference_cost_type": "annual_om_costs"},
-    "meth_ng_ccs": {
-        "reference_tech": "meth_ng",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "coal_ppl_u": {
-        "reference_tech": "coal_ppl",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "liq_bio_ccs": {
-        "reference_tech": "liq_bio",
-        "reference_cost_type": "annual_om_costs",
-    },
-    "solar_i": {
-        "reference_tech": "solar_pv_ppl",
-        "reference_cost_type": "annual_om_costs",
-    },
-}
-
-
 def adj_nam_cost_reference(df_costs, dict_inv, dict_fom):
     for m in dict_inv:
         calc_nam_cost_ratio(
             df_costs,
             m,
             "capital_costs",
-            dict_inv[m]["reference_tech"],
-            dict_inv[m]["reference_cost_type"],
+            dict_inv[m]["tech"],
+            dict_inv[m]["cost_type"],
         )
 
     for n in dict_fom:
@@ -609,32 +597,32 @@ def adj_nam_cost_reference(df_costs, dict_inv, dict_fom):
             df_costs,
             n,
             "annual_om_costs",
-            dict_fom[n]["reference_tech"],
-            dict_fom[n]["reference_cost_type"],
+            dict_fom[n]["tech"],
+            dict_fom[n]["cost_type"],
         )
 
 
 def get_region_differentiated_costs():
     # Get WEO data
-    df_weo = get_weo_data()
+    df_weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
 
     # Get manual Eric data
     df_eric = get_cost_assumption_data()
 
     # Get comparison of original and WEO NAM costs
     df_nam_costs = compare_original_and_weo_nam_costs(
-        df_weo, df_eric, dict_weo_technologies, dict_weo_r11
+        df_weo, df_eric, DICT_WEO_TECH, DICT_WEO_R11
     )
 
     # Adjust NAM costs
     adj_nam_cost_conversion(df_nam_costs, conversion_2017_to_2005_usd)
     adj_nam_cost_message(
-        df_nam_costs, tech_same_orig_message_inv, tech_same_orig_message_fom
+        df_nam_costs, DICT_TECH_SAME_ORIG_MESSAGE_INV, DICT_TECH_SAME_ORIG_MESSAGE_FOM
     )
     adj_nam_cost_manual(
-        df_nam_costs, dict_manual_nam_costs_inv, dict_manual_nam_costs_fom
+        df_nam_costs, DICT_MANUAL_NAM_COSTS_INV, DICT_MANUAL_NAM_COSTS_FOM
     )
-    adj_nam_cost_reference(df_nam_costs, dict_tech_ref_inv, dict_tech_ref_fom)
+    adj_nam_cost_reference(df_nam_costs, DICT_TECH_REF_INV, DICT_TECH_REF_FOM)
 
     df_nam_adj_costs_only = df_nam_costs[
         ["message_technology", "weo_technology", "cost_type", "cost_NAM_adjusted"]
@@ -647,9 +635,11 @@ def get_region_differentiated_costs():
     ] = "marine"
 
     # Get ratios
-    df_ratios = calculate_region_cost_ratios(df_weo, dict_weo_r11)
-    df_ratios.rename(columns={"technology": "weo_technology"}, inplace=True)
-    df_ratios.drop(columns={"scenario", "year"}, inplace=True)
+    df_ratios = (
+        calculate_region_cost_ratios(df_weo, DICT_WEO_R11)
+        .rename(columns={"technology": "weo_technology"})
+        .drop(columns={"scenario", "year"})
+    )
 
     # Merge costs
     df_regiondiff = pd.merge(
@@ -669,4 +659,4 @@ def get_region_differentiated_costs():
     return df_regiondiff
 
 
-get_region_differentiated_costs()
+df = get_region_differentiated_costs()
