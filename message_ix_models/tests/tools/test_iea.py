@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 
 from message_ix_models.tools.iea.weo import (
+    DICT_COST_COLS,
+    DICT_TECH_ROWS,
+    DICT_WEO_R11,
+    DICT_WEO_TECH,
     adj_nam_cost_conversion,
     adj_nam_cost_manual,
     adj_nam_cost_message,
@@ -9,15 +13,13 @@ from message_ix_models.tools.iea.weo import (
     calculate_region_cost_ratios,
     compare_original_and_weo_nam_costs,
     conversion_2017_to_2005_usd,
-    dict_weo_r11,
-    dict_weo_technologies,
     get_cost_assumption_data,
     get_weo_data,
 )
 
 
 def test_get_weo_data():
-    result = get_weo_data()
+    result = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
 
     # Check that the minimum and maximum years are correct
     assert min(result.year) == "2021"
@@ -79,15 +81,13 @@ def test_get_cost_assumption_data():
 
 
 def test_compare_original_and_weo_nam_costs():
-    weo = get_weo_data()
+    weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
     orig = get_cost_assumption_data()
 
-    res = compare_original_and_weo_nam_costs(
-        weo, orig, dict_weo_technologies, dict_weo_r11
-    )
+    res = compare_original_and_weo_nam_costs(weo, orig, DICT_WEO_TECH, DICT_WEO_R11)
 
-    assert dict_weo_r11["NAM"] == "United States"
-    assert dict_weo_technologies["coal_ppl"] == "steam_coal_subcritical"
+    assert DICT_WEO_R11["NAM"] == "United States"
+    assert DICT_WEO_TECH["coal_ppl"] == "steam_coal_subcritical"
     assert min(weo.year) == "2021"
     assert (
         round(
@@ -112,7 +112,7 @@ def test_compare_original_and_weo_nam_costs():
 
 
 def test_conversion_rate():
-    assert round(conversion_2017_to_2005_usd, 2) == 0.81
+    assert round(conversion_2017_to_2005_usd, 2) == 0.80
 
 
 def test_adj_nam_cost_conversion():
@@ -207,12 +207,10 @@ def test_adj_nam_cost_manual():
     dummy_dict_all = dict(dummy_dict_inv)
     dummy_dict_all.update(dummy_dict_fom)
 
-    weo = get_weo_data()
+    weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
     orig = get_cost_assumption_data()
 
-    res = compare_original_and_weo_nam_costs(
-        weo, orig, dict_weo_technologies, dict_weo_r11
-    )
+    res = compare_original_and_weo_nam_costs(weo, orig, DICT_WEO_TECH, DICT_WEO_R11)
     res = res.loc[res.message_technology.isin(dummy_dict_all)]
     adj_nam_cost_manual(res, dummy_dict_inv, dummy_dict_fom)
 
@@ -271,12 +269,8 @@ def test_adj_nam_cost_reference():
 
     dummy_df = pd.concat([dummy_df1, dummy_df2])
 
-    dummy_dict_inv = {
-        "tech2": {"reference_tech": "tech1", "reference_cost_type": "capital_costs"}
-    }
-    dummy_dict_fom = {
-        "tech2": {"reference_tech": "tech3", "reference_cost_type": "annual_om_costs"}
-    }
+    dummy_dict_inv = {"tech2": {"tech": "tech1", "cost_type": "capital_costs"}}
+    dummy_dict_fom = {"tech2": {"tech": "tech3", "cost_type": "annual_om_costs"}}
 
     adj_nam_cost_reference(dummy_df, dummy_dict_inv, dummy_dict_fom)
 
@@ -306,8 +300,8 @@ def test_adj_nam_cost_reference():
 
 
 def test_calculate_region_cost_ratios():
-    weo = get_weo_data()
-    res = calculate_region_cost_ratios(weo, dict_weo_r11)
+    weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
+    res = calculate_region_cost_ratios(weo, DICT_WEO_R11)
 
     assert np.all(
         [
