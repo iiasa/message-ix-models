@@ -168,7 +168,8 @@ DICT_TECH_SAME_ORIG_MESSAGE_FOM = [
 ]
 
 # Dict of technologies whose investment costs are manually specified
-# Values are taken directly from the "RegionDiff" sheet in p:/ene.model/MESSAGE-technology-costs/costs-spreadsheets/SSP1_techinput.xlsx
+# Values are taken directly from the "RegionDiff" sheet
+# in p:/ene.model/MESSAGE-technology-costs/costs-spreadsheets/SSP1_techinput.xlsx
 DICT_MANUAL_NAM_COSTS_INV = {
     "bio_istig": 4064,
     "bio_istig_ccs": 5883,
@@ -186,7 +187,8 @@ DICT_MANUAL_NAM_COSTS_INV = {
 }
 
 # Dict of technologies whose FO&M costs are manually specified
-# Values are taken directly from the "RegionDiff" sheet in p:/ene.model/MESSAGE-technology-costs/costs-spreadsheets/SSP1_techinput.xlsx
+# Values are taken directly from the "RegionDiff" sheet
+# in p:/ene.model/MESSAGE-technology-costs/costs-spreadsheets/SSP1_techinput.xlsx
 DICT_MANUAL_NAM_COSTS_FOM = {
     "bio_istig": 163,
     "bio_istig_ccs": 235,
@@ -202,7 +204,8 @@ DICT_MANUAL_NAM_COSTS_FOM = {
     "wind_ppl": 27,
 }
 
-# Dict of the technologies whose investment costs are in reference to other technologies.
+# Dict of the technologies whose investment costs are in reference to
+# other technologies.
 # Within the key, the `tech` refers to the reference tech,
 # and the `cost_type` refers to the reference cost type (either investment or FO&M cost)
 DICT_TECH_REF_INV = {
@@ -369,8 +372,8 @@ def get_weo_data(dict_tech_rows, dict_cols):
 
 
 def calculate_region_cost_ratios(weo_df, dict_reg):
-    """Return DataFrame of cost ratios (investment cost and O&M cost) for each R11 region,
-    for each technology
+    """Return DataFrame of cost ratios (investment cost and O&M cost)
+    for each R11 region, for each technology
 
     Only return values for the earliest year in the dataset
     (which, as of writing, is 2021)
