@@ -2,9 +2,10 @@
 #
 # Units: 2005 USD per kW
 # 
-# - This is copied directly from the RegionDiff sheet in SSP1_techinput.xlsx
+# - This is copied directly from the RegionDiff sheet in p:/ene.model/MESSAGE-technology-costs/costs-spreadsheets/SSP1_techinput.xlsx
 # - The values are based on a lot of different assumptions (see the SSP2, Eric_WEO, and Eric_Summary sheets in the Excel file)
 # - For some (such as coal_i, foil_i, etc), I can't tell where the values are derived from (no linked source in RegionDiff)
+# - The spreadsheet seems to have had many authors over the years, but these values in this spreadsheet appear to have been prepared by Eric D. Larson
 # - MM note: Might be worth it at some point to derive these numbers
 message_technology,fom_cost_nam_original_message
 coal_ppl,57.39906238
