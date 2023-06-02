@@ -421,25 +421,42 @@ def calculate_region_cost_ratios(weo_df, dict_reg):
         "cost_ratio",
     ] = 0
 
-    # Assumption 2: For pulverized coal with CCS and IGCC with CCS in MEA,
-    # make cost ratio the same as in the FSU region
-    # TODO: this method to replace the values seems a little prone to errors,
-    # so probably best to change later
-    df_cost_ratio.loc[
-        (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "MEA"),
-        "cost_ratio",
-    ] = df_cost_ratio.loc[
-        (df_cost_ratio.r11_region == "FSU")
-        & (df_cost_ratio.technology.isin(["pulverized_coal_ccs", "igcc_ccs"]))
-    ].cost_ratio.values
-
-    # Assumption 3: For CSP in PAO, assume the same as NAM region (cost ratio == 1)
+    # Assumption 2: For CSP in PAO, assume the same as NAM region (cost ratio == 1)
     df_cost_ratio.loc[
         (df_cost_ratio.technology == "csp") & (df_cost_ratio.r11_region.isin(["PAO"])),
         "cost_ratio",
     ] = 1
 
-    return df_cost_ratio
+    # Assumption 3: For pulverized coal with CCS and IGCC with CCS in MEA,
+    # make cost ratio the same as in the FSU region
+    # TODO: this method to replace the values seems a little prone to errors,
+    # so probably best to change later
+    sub_mea = df_cost_ratio[
+        (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "MEA")
+    ].drop(columns={"cost_ratio"})
+
+    sub_fsu = df_cost_ratio.loc[
+        (df_cost_ratio.r11_region == "FSU")
+        & (df_cost_ratio.technology.isin(["pulverized_coal_ccs", "igcc_ccs"]))
+    ].drop(columns={"weo_region", "r11_region"})
+
+    sub_merge = sub_mea.merge(
+        sub_fsu, on=["scenario", "technology", "year", "cost_type"]
+    )
+
+    df_cost_ratio_fix = pd.concat(
+        [
+            df_cost_ratio[
+                ~(
+                    (df_cost_ratio.cost_ratio.isnull())
+                    & (df_cost_ratio.r11_region == "MEA")
+                )
+            ],
+            sub_merge,
+        ]
+    ).reset_index(drop=1)
+
+    return df_cost_ratio_fix
 
 
 def get_cost_assumption_data():
