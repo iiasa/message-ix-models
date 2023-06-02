@@ -1,6 +1,7 @@
 """Code for handling IEA WEO data"""
 
 from itertools import product
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -316,12 +317,27 @@ DICT_TECH_REF_FOM = {
 }
 
 
-def get_weo_data(dict_tech_rows, dict_cols):
-    """Read in raw WEO investment/capital costs and O&M costs data
-    (for all technologies and for STEPS scenario only).
-    Convert to long format
+def get_weo_data(
+    dict_tech_rows: Dict[str, Tuple[str, int]],
+    dict_cols: Dict[str, str],
+) -> pd.DataFrame:
+    """Read in raw WEO investment/capital costs and O&M costs data.
 
-    Return DataFrame of processed data
+    Data are read for all technologies and for STEPS scenario only from the file
+    :file:`data/iea/WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb`.
+
+    Parameters
+    ----------
+    dict_tech_rows : str -> tuple of (str, int)
+        Keys are the IDs of the technologies for which data are read.
+        Values give the sheet name, and the start row.
+
+    Returns
+    -------
+    pandas.DataFrame
+        with columns:
+
+        - year: values from 2021 to 2050, as appearing in the file.
     """
 
     # Read in raw data file
@@ -620,7 +636,29 @@ def adj_nam_cost_reference(df_costs, dict_inv, dict_fom):
         )
 
 
-def get_region_differentiated_costs():
+def get_region_differentiated_costs() -> pd.DataFrame:
+    """Perform all calculations needed to get regionally-differentiated costs.
+
+    The algorithm is roughly:
+
+    1. Retrieve data with :func:`.get_weo_data` and assumptions with
+       :func:`.get_cost_assumption_data`.
+    2. Adjust costs for the NAM region with reference to older MESSAGE data.
+    3. Compute cost ratios across regions, relative to ``*_NAM``, based on (1).
+    4. Apply the ratios from (3) to the adjusted data (2).
+
+    Returns
+    -------
+    pandas.DataFrame
+        with columns:
+
+        - cost_type: either "capital_costs" or "annual_om_costs".
+        - region
+        - technology
+        - value
+        - unit
+
+    """
     # Get WEO data
     df_weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
 
