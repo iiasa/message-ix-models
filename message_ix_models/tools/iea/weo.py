@@ -339,6 +339,8 @@ def get_weo_data(
 
         - year: values from 2021 to 2050, as appearing in the file.
     """
+    # Could possibly use the global directly instead of accepting it as an argument
+    # dict_tech_rows = DICT_TECH_ROWS
 
     # Read in raw data file
     file_path = package_data_path(
@@ -545,14 +547,11 @@ def adj_nam_cost_conversion(df_costs, conv_rate):
 
 # Type 2: Same as NAM original MESSAGE
 def adj_nam_cost_message(df_costs, list_tech_inv, list_tech_fom):
-    df_costs.loc[
-        (df_costs.message_technology.isin(list_tech_inv))
-        & (df_costs.cost_type == "capital_costs"),
-        "cost_NAM_adjusted",
-    ] = df_costs.loc[
-        (df_costs.message_technology.isin(list_tech_inv))
-        & (df_costs.cost_type == "capital_costs"),
-        "cost_NAM_original_message",
+    mask = (df_costs.message_technology.isin(list_tech_inv)) & (
+        df_costs.cost_type == "capital_costs"
+    )
+    df_costs.loc[mask, "cost_NAM_adjusted"] = df_costs.loc[
+        mask, "cost_NAM_original_message"
     ]
 
     df_costs.loc[
