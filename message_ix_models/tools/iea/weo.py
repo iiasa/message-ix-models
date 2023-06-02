@@ -429,8 +429,6 @@ def calculate_region_cost_ratios(weo_df, dict_reg):
 
     # Assumption 3: For pulverized coal with CCS and IGCC with CCS in MEA,
     # make cost ratio the same as in the FSU region
-    # TODO: this method to replace the values seems a little prone to errors,
-    # so probably best to change later
     sub_mea = df_cost_ratio[
         (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "MEA")
     ].drop(columns={"cost_ratio"})
