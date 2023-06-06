@@ -331,13 +331,21 @@ def get_weo_data(
     dict_tech_rows : str -> tuple of (str, int)
         Keys are the IDs of the technologies for which data are read.
         Values give the sheet name, and the start row.
+    dict_cols : str -> tuple of (str, str)
+        Keys are the cost types.
+        Values are the columns in the spreadsheets corresponding to the cost types.
 
     Returns
     -------
     pandas.DataFrame
-        with columns:
+        DataFrame with columns:
 
-        - year: values from 2021 to 2050, as appearing in the file.
+        - technology: WEO technologies, with shorthands as defined in `DICT_WEO_TECH`
+        - region: WEO regions
+        - year: values from 2021 to 2050, as appearing in the file
+        - cost type: either “capital_costs” or “annual_om_costs”
+        - units: "usd_per_kw"
+        - value: the cost value
     """
     # Could possibly use the global directly instead of accepting it as an argument
     # dict_tech_rows = DICT_TECH_ROWS
@@ -363,14 +371,12 @@ def get_weo_data(
             .set_axis(["region", "2021", "2030", "2050"], axis=1)
             .melt(id_vars=["region"], var_name="year", value_name="value")
             .assign(
-                scenario="stated_policies",
                 technology=tech_key,
                 cost_type=cost_key,
                 units="usd_per_kw",
             )
             .reindex(
                 [
-                    "scenario",
                     "technology",
                     "region",
                     "year",
@@ -389,25 +395,52 @@ def get_weo_data(
     return all_cost_df
 
 
-def calculate_region_cost_ratios(weo_df, dict_reg):
-    """Return DataFrame of cost ratios (investment cost and O&M cost)
-    for each R11 region, for each technology
+def calculate_region_cost_ratios(
+    weo_df: pd.DataFrame, dict_weo_regions: Dict[str, str]
+) -> pd.DataFrame:
+    """Calculate regional cost ratios (relative to NAM) using the WEO data
 
-    Only return values for the earliest year in the dataset
-    (which, as of writing, is 2021)
+    Some assumptions are made as well:
+        - For CSP in EEU and FSU, make cost ratio == 0.
+        - For CSP in PAO, assume the same as NAM region (cost ratio == 1).
+        - For pulverized coal with CCS and IGCC with CCS in MEA, \
+          make cost ratio the same as in the FSU region.
+
+    Parameters
+    ----------
+    weo_df : pandas.DataFrame
+        Created using :func:`.get_weo_data`
+    dict_weo_regions : str -> tuple of (str, str)
+        Keys are MESSAGE R11 regions.
+        Values are WEO region assigned to each R11 region.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+
+        - technology: WEO technologies, with shorthands as defined in `DICT_WEO_TECH`
+        - r11_region: MESSAGE R11 regions
+        - weo_region: the WEO region corresponding to the R11 region, \
+            as mapped in `DICT_WEO_R11`
+        - year: the latest year of data, in this case 2021
+        - cost_type: either “capital_costs” or “annual_om_costs”
+        - cost_ratio: value between 0-1; \
+          the cost ratio of each technology-region's cost \
+          relative to the NAM region's cost
+
     """
-
     df = (
         weo_df.loc[weo_df.region == "United States"]
         .copy()
         .rename(columns={"value": "us_value"})
         .drop(columns={"region", "units"})
-        .merge(weo_df, on=["scenario", "technology", "year", "cost_type"])
+        .merge(weo_df, on=["technology", "year", "cost_type"])
         .assign(cost_ratio=lambda x: x.value / x.us_value)
     )
 
     l_cost_ratio = []
-    for m, w in dict_reg.items():
+    for m, w in dict_weo_regions.items():
         df_sel = (
             df.loc[(df.year == min(df.year)) & (df.region == w)]
             .copy()
@@ -415,7 +448,6 @@ def calculate_region_cost_ratios(weo_df, dict_reg):
             .assign(r11_region=m)
             .reindex(
                 [
-                    "scenario",
                     "technology",
                     "r11_region",
                     "weo_region",
@@ -456,9 +488,7 @@ def calculate_region_cost_ratios(weo_df, dict_reg):
         & (df_cost_ratio.technology.isin(["pulverized_coal_ccs", "igcc_ccs"]))
     ].drop(columns={"weo_region", "r11_region"})
 
-    sub_merge = sub_mea.merge(
-        sub_fsu, on=["scenario", "technology", "year", "cost_type"]
-    )
+    sub_merge = sub_mea.merge(sub_fsu, on=["technology", "year", "cost_type"])
 
     df_cost_ratio_fix = pd.concat(
         [
@@ -475,7 +505,24 @@ def calculate_region_cost_ratios(weo_df, dict_reg):
     return df_cost_ratio_fix
 
 
-def get_cost_assumption_data():
+def get_cost_assumption_data() -> pd.DataFrame:
+    """Read in raw data on investment and fixed O&M costs in NAM region
+    from older MESSAGE data.
+
+    Data for investment costs and fixed O&M costs are read from the files
+    :file:`data/costs/investment_costs-0.csv` and
+    :file:`data/costs/fixed_om_costs-0.csv`, respectively.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+
+        - message_technology: technologies included in MESSAGE
+        - cost_type: either “capital_costs” or “annual_om_costs”
+        - cost_NAM_original_message: costs for each technology given \
+            in units of USD per kW
+    """
     # Read in raw data files
     inv_file_path = package_data_path("costs", "investment_costs-0.csv")
     fom_file_path = package_data_path("costs", "fixed_om_costs-0.csv")
@@ -510,10 +557,49 @@ def get_cost_assumption_data():
 
 
 def compare_original_and_weo_nam_costs(
-    weo_df, eric_df, dict_weo_tech, dict_weo_regions
-):
+    weo_df: pd.DataFrame,
+    orig_message_df: pd.DataFrame,
+    dict_weo_tech: Dict[str, str],
+    dict_weo_regions: Dict[str, str],
+) -> pd.DataFrame:
+    """Compare NAM costs in older MESSAGE data with NAM costs in WEO data
+
+    Merges the two NAM costs sources together.
+
+    The function only keeps the latest year from the WEO.
+
+    Parameters
+    ----------
+    weo_df : pandas.DataFrame
+        Output of :func:`.get_weo_data`.
+    orig_message_df : pandas.DataFrame
+        Output of :func:`.get_cost_assumption_data`.
+    dict_weo_tech : str -> tuple of (str, str)
+        Keys are MESSAGE technologies
+        Values are WEO technologies.
+    dict_weo_regions : str -> tuple of (str, str)
+        Keys are MESSAGE R11 regions.
+        Values are WEO region assigned to each R11 region.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+
+        - message_technology:
+        - weo_technology: WEO technologies, with shorthands \
+        as defined in `DICT_WEO_TECH`
+        - r11_region: MESSAGE R11 regions
+        - cost_type: either “capital_costs” or “annual_om_costs”
+        - cost_NAM_original_message: costs for each technology from old MESSAGE data \
+            given in units of USD per kW
+        - cost_NAM_weo_2021: costs for each technology from 2021 WEO given in \
+            units of USD per kW
+
+    """
+
     df_assumptions = (
-        eric_df.copy()
+        orig_message_df.copy()
         .assign(technology=lambda x: x.message_technology.map(dict_weo_tech))
         .merge(
             weo_df.loc[
@@ -523,7 +609,7 @@ def compare_original_and_weo_nam_costs(
             on=["technology", "cost_type"],
             how="left",
         )
-        .drop(columns={"year", "region", "units", "scenario"})
+        .drop(columns={"year", "region", "units"})
         .rename(columns={"value": "cost_NAM_weo_2021", "technology": "weo_technology"})
         .reindex(
             [
@@ -540,13 +626,41 @@ def compare_original_and_weo_nam_costs(
     return df_assumptions
 
 
-# Type 1: WEO * conversion rate
-def adj_nam_cost_conversion(df_costs, conv_rate):
+def adj_nam_cost_conversion(df_costs: pd.DataFrame, conv_rate: float):
+    """Convert NAM technology costs from 2017 USD to 2005 USD
+
+    Adjust values in-place
+
+    Parameters
+    ----------
+    df_costs : pandas.DataFrame
+        Output of `compare_original_and_weo_nam_costs`
+    conv_rate : float
+        Conversion rate from 2017 USD to 2006 USD
+    """
+
     df_costs["cost_NAM_adjusted"] = df_costs["cost_NAM_weo_2021"] * conv_rate
 
 
-# Type 2: Same as NAM original MESSAGE
-def adj_nam_cost_message(df_costs, list_tech_inv, list_tech_fom):
+def adj_nam_cost_message(
+    df_costs: pd.DataFrame, list_tech_inv: list, list_tech_fom: list
+):
+    """Set specified technologies to have same NAM costs as older MESSAGE data
+
+    Adjust values in place
+
+    Parameters
+    ----------
+    df_costs : pandas.DataFrame
+        Output of `compare_original_and_weo_nam_costs`
+    list_tech_inv :
+        List of technologies whose investment costs should be
+        set to be the same as in older MESSAGE data
+    list_tech_fom:
+        List of technologies whose fixed O&M costs should be
+        set to be the same as in older MESSAGE data
+
+    """
     mask = (df_costs.message_technology.isin(list_tech_inv)) & (
         df_costs.cost_type == "capital_costs"
     )
@@ -565,27 +679,70 @@ def adj_nam_cost_message(df_costs, list_tech_inv, list_tech_fom):
     ]
 
 
-# Type 3: Manually assigned values
-def adj_nam_cost_manual(df_costs, dict_inv, dict_fom):
-    for k in dict_inv:
+def adj_nam_cost_manual(
+    df_costs: pd.DataFrame,
+    dict_manual_inv: Dict[str, float],
+    dict_manual_fom: Dict[str, float],
+):
+    """Assign manually-specified technology cost values to certain technologies
+
+    Adjust values in place
+
+    Parameters
+    ----------
+    df_costs : pandas.DataFrame
+        Output of :func:`.compare_original_and_weo_nam_costs`
+    dict_manual_inv : str -> tuple of (str, int)
+        Keys are the MESSAGE technologies whose investment costs in NAM region
+        should be manually set. Values are investment costs in units of USD per kW.
+    dict_manual_fom: str -> tuple of (str, int)
+        Keys are the MESSAGE technologies whose fixed O&M costs in NAM region
+        should be manually set. Values are investment costs in units of USD per kW.
+    """
+    for k in dict_manual_inv:
         df_costs.loc[
             (df_costs.message_technology == k)
             & (df_costs.cost_type == "capital_costs"),
             "cost_NAM_adjusted",
-        ] = dict_inv[k]
+        ] = dict_manual_inv[k]
 
-    for f in dict_fom:
+    for f in dict_manual_fom:
         df_costs.loc[
             (df_costs.message_technology == f)
             & (df_costs.cost_type == "annual_om_costs"),
             "cost_NAM_adjusted",
-        ] = dict_fom[f]
+        ] = dict_manual_fom[f]
 
 
-# Type 4: function of another cost value (using ratio)
 def calc_nam_cost_ratio(
-    df_costs, desired_tech, desired_cost_type, reference_tech, reference_cost_type
+    df_costs: pd.DataFrame,
+    desired_tech: str,
+    desired_cost_type: str,
+    reference_tech: str,
+    reference_cost_type: str,
 ):
+    """Calculate the cost of a desired technology based on a reference technology
+
+    This function calculates the ratio of investment or fixed O&M costs
+    (from older MESSAGE data) and uses this ratio to calculate an adjusted cost for
+    a desired technology.
+
+    Parameters
+    ----------
+    df_costs : pandas.DataFrame
+        Output of `compare_original_and_weo_nam_costs`
+    desired_tech : str
+        The MESSAGE technology whose costs need to be adjusted.
+    desired_cost_type: str
+        The cost type of the MESSAGE technology that is being changed.
+    desired_tech : str
+        The reference technology whose cost the desired technology is based off of.
+    desired_cost_type: str
+        The cost type of the reference technology that should be used \ 
+        for the calculation.
+
+    """
+
     c_adj_ref = df_costs.loc[
         (df_costs.message_technology == reference_tech)
         & (df_costs.cost_type == reference_cost_type),
@@ -612,26 +769,53 @@ def calc_nam_cost_ratio(
         "cost_NAM_adjusted",
     ] = c_adj_des
 
-    # return c_adj_des
 
+def adj_nam_cost_reference(
+    df_costs: pd.DataFrame,
+    dict_reference_inv: Dict,
+    dict_reference_fom: Dict,
+):
+    """Assign technology costs for using other technologies as references
 
-def adj_nam_cost_reference(df_costs, dict_inv, dict_fom):
-    for m in dict_inv:
+    The function :func:`.calc_nam_cost_ratio` is used to calculate the adjusted cost,
+    based on provided reference technology and cost type.
+
+    Since some technologies are similar to others, this function modifies the costs
+    of some technologies to be based off the costs other technologies. In a few cases,
+    the fixed O&M costs of a technology is based on the investment cost of
+    another technology, hence why the reference cost type is also specified.
+
+    Adjust values in place
+
+    Parameters
+    ----------
+    df_costs : pandas.DataFrame
+        Output of `compare_original_and_weo_nam_costs`
+    dict_reference_inv : str
+        Keys are the MESSAGE technologies whose investment costs in NAM region
+        should be changed. Values describe the reference technology and the
+        reference cost type that should be used for the calculation..
+    dict_reference_fom: str
+        Keys are the MESSAGE technologies whose fixed O&M costs in NAM region
+        should be changed. Values describe the reference technology and the
+        reference cost type that should be used for the calculation.
+    """
+    for m in dict_reference_inv:
         calc_nam_cost_ratio(
             df_costs,
             m,
             "capital_costs",
-            dict_inv[m]["tech"],
-            dict_inv[m]["cost_type"],
+            dict_reference_inv[m]["tech"],
+            dict_reference_inv[m]["cost_type"],
         )
 
-    for n in dict_fom:
+    for n in dict_reference_fom:
         calc_nam_cost_ratio(
             df_costs,
             n,
             "annual_om_costs",
-            dict_fom[n]["tech"],
-            dict_fom[n]["cost_type"],
+            dict_reference_fom[n]["tech"],
+            dict_reference_fom[n]["cost_type"],
         )
 
 
@@ -661,12 +845,12 @@ def get_region_differentiated_costs() -> pd.DataFrame:
     # Get WEO data
     df_weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
 
-    # Get manual Eric data
-    df_eric = get_cost_assumption_data()
+    # Get investment and fixed O&M cost assumptions data from older MESSAGE model
+    df_orig_message = get_cost_assumption_data()
 
     # Get comparison of original and WEO NAM costs
     df_nam_costs = compare_original_and_weo_nam_costs(
-        df_weo, df_eric, DICT_WEO_TECH, DICT_WEO_R11
+        df_weo, df_orig_message, DICT_WEO_TECH, DICT_WEO_R11
     )
 
     # Adjust NAM costs
@@ -693,7 +877,7 @@ def get_region_differentiated_costs() -> pd.DataFrame:
     df_ratios = (
         calculate_region_cost_ratios(df_weo, DICT_WEO_R11)
         .rename(columns={"technology": "weo_technology"})
-        .drop(columns={"scenario", "year"})
+        .drop(columns={"year"})
     )
 
     # Merge costs
@@ -712,6 +896,3 @@ def get_region_differentiated_costs() -> pd.DataFrame:
     )
 
     return df_regiondiff
-
-
-df = get_region_differentiated_costs()
