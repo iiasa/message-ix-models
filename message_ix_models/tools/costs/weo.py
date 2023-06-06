@@ -738,7 +738,7 @@ def calc_nam_cost_ratio(
     desired_tech : str
         The reference technology whose cost the desired technology is based off of.
     desired_cost_type: str
-        The cost type of the reference technology that should be used \ 
+        The cost type of the reference technology that should be used
         for the calculation.
 
     """
