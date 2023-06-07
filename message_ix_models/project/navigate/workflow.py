@@ -162,7 +162,12 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
             data[name] = pd.read_csv(filename, comment="#").reset_index()
         else:
             q = load_file(filename, name=name)
-            data[name] = q.to_frame().reset_index().assign(unit=f"{q.units:~}" or "-")
+            data[name] = (
+                q.to_frame()
+                .reset_index()
+                .rename(columns={name: "value"})
+                .assign(unit=f"{q.units:~}" or "-")
+            )
 
     # Calibrate; keep same URL, just a new version
     return scenario.add_macro(data, scenario=scenario.scenario, check_convergence=False)
