@@ -160,39 +160,37 @@ def build_solve_buildings(
 
 def add_macro(context: Context, scenario: Scenario) -> Scenario:
     """Invoke :meth:`.Scenario.add_macro`."""
-    import pandas as pd
     from genno.computations import load_file
-    from message_ix_models import Spec
-    from message_ix_models.model.build import apply_spec
+    from message_ix_models.model.build import _add_unit
+
+    from message_data.model import macro
 
     log_scenario_info("add_macro 1", scenario)
 
-    # Load macro data from file
-    base_path = private_data_path("macro", "navigate")
+    # Generate some MACRO data. These values are identical to those found in
+    # P:/ene.model/MACRO/python/R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx
+    data = dict(
+        # TODO adjust "rc_therm" to "afofi_therm" in commodity (but not sector) column
+        # of the "config" sheet
+        config=macro.generate("config", context),
+        aeei=macro.generate("aeei", context, value=0.02),
+        drate=macro.generate("drate", context, value=0.05),
+        depr=macro.generate("depr", context, value=0.05),
+        lotol=macro.generate("lotol", context, value=0.05),
+    )
 
-    data = {}
-    for filename in base_path.glob("*.csv"):
+    # Load other data from file
+    for filename in private_data_path("macro", "navigate").glob("*.csv"):
         name = filename.stem
-        if name == "config":
-            data[name] = pd.read_csv(filename, comment="#").reset_index()
-        else:
-            q = load_file(filename, name=name)
-            data[name] = (
-                q.to_frame()
-                .reset_index()
-                .rename(columns={name: "value"})
-                .assign(unit=f"{q.units:~}" or "-")
-            )
-            print(data[name])
-
-    # TODO adjust "rc_therm" to "afofi_therm" in commodity (but not sector) column of
-    # the "config" sheet
-
-    # Add units present in the MACRO input data which may yet be missing on the platform
-    # FIXME use consistent units in the MACRO input data and message-ix-models
-    spec = Spec()
-    spec.add.set["unit"].extend(["GUSD"])
-    apply_spec(scenario, spec)
+        q = load_file(filename, name=name)
+        unit = f"{q.units:~}" or "-"
+        data[name] = (
+            q.to_frame().reset_index().rename(columns={name: "value"}).assign(unit=unit)
+        )
+        # Add units present in the MACRO input data which may yet be missing on the
+        # platform
+        # FIXME use consistent units in the MACRO input data and message-ix-models
+        _add_unit(scenario.platform, unit, unit)
 
     log_scenario_info("add_macro 2", scenario)
 
