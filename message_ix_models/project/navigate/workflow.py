@@ -1,5 +1,6 @@
 import logging
 import re
+from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Tuple
@@ -158,6 +159,29 @@ def build_solve_buildings(
     return buildings.build_and_solve(context)
 
 
+@contextmanager
+def avoid_locking(scenario: Scenario):
+    """Avoid locking the scenario in the database.
+
+    .. todo:: move upstream to :mod:`ixmp`.
+    """
+    mp = scenario.platform
+    try:
+        yield
+    except Exception as e:
+        log.info(f"Avoid locking {scenario!r} before raising {e}")
+        try:
+            scenario.discard_changes()
+            log.info("Discard scenario changes")
+        except Exception:
+            pass
+        finally:
+            del scenario
+        mp.close_db()
+        log.info("Close database connection")
+        raise
+
+
 def add_macro(context: Context, scenario: Scenario) -> Scenario:
     """Invoke :meth:`.Scenario.add_macro`."""
     from genno.computations import load_file
@@ -193,26 +217,13 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
         _add_unit(scenario.platform, unit, unit)
 
     log_scenario_info("add_macro 2", scenario)
+    assert scenario.has_solution()
 
     # Calibrate; keep same URL, just a new version
-    try:
+    with avoid_locking(scenario):
         return scenario.add_macro(
             data, scenario=scenario.scenario, check_convergence=False
         )
-    except Exception:
-        # Avoid locking the scenario in the database
-        # FIXME move upstream to message_ix.macro
-        mp = scenario.platform
-        try:
-            scenario.discard_changes()
-            log.info("Discarded scenario changes")
-        except Exception:
-            pass
-        finally:
-            del scenario
-        mp.close_db()
-        log.info("Closed database connection")
-        raise
 
 
 def report(
