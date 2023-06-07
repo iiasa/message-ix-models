@@ -247,12 +247,12 @@ def prep_submission(context: Context, *scenarios: Scenario):
     log.info(f"Merged output written to {config.out_fil}")
 
 
-def solve(context, scenario):
+def solve(context, scenario, **kwargs):
     """Plain solve.
 
     The ENGAGE workflow steps use :func:`.engage.workflow.solve` instead.
     """
-    scenario.solve()
+    scenario.solve(**kwargs)
     return scenario
 
 
@@ -321,6 +321,10 @@ def iter_scenarios(
 def generate(context: Context) -> Workflow:
     """Create the NAVIGATE workflow for T3.5, T6.1, and T6.2."""
     wf = Workflow(context)
+
+    # Use MESSAGE if .model.transport is included. Otherwise, use MESSAGE-MACRO for
+    # additional demand-side flexibility in meeting low climate targets
+    solve_model = "MESSAGE" if context.navigate.transport else "MESSAGE-MACRO"
 
     # Step 1
     wf.add_step(
@@ -397,8 +401,15 @@ def generate(context: Context) -> Workflow:
             base = name
 
         # Step 4
-        wf.add_step(f"{variant} {s} solved", base, solve)
-        base = f"{variant} {s} solved"
+        name = f"{variant} {s} solved"
+        wf.add_step(name, base, solve)
+        base = name
+
+        if solve_model == "MESSAGE-MACRO":
+            # Calibrate MACRO
+            name = f"{variant} {s} with MACRO"
+            wf.add_step(name, base, add_macro)
+            base = name
 
         # Steps 5–7
         variant = "B" + variant
@@ -410,6 +421,8 @@ def generate(context: Context) -> Workflow:
             target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
             clone=True,
             navigate_scenario=s,
+            # Pass through model to be solved
+            config=dict(solve=dict(model=solve_model)),
         )
 
         # Store the step name as a starting point for climate policy steps, below
@@ -433,6 +446,9 @@ def generate(context: Context) -> Workflow:
 
         if isinstance(engage_policy_config, engage.PolicyConfig):
             # Add 0 or more steps for ENGAGE-style climate policy workflows
+
+            # Use MESSAGE or MESSAGE-MACRO as appropriate
+            engage_policy_config.solve["model"] = solve_model
 
             if climate_policy == "20C T6.2":
                 # Help identify the tax_emission_scenario from which to copy data
@@ -482,7 +498,7 @@ def generate(context: Context) -> Workflow:
         try:
             solve_kw = step_m1.kwargs["config"].solve
         except KeyError:
-            solve_kw = dict()
+            solve_kw = dict(model=solve_model)
         # Retrieve the target scenario from second-last step
         # TODO remove the need to look up step_m2 by allowing a callback to give the
         #      new model/scenario name
