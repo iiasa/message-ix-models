@@ -178,7 +178,19 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     apply_spec(scenario, spec)
 
     # Calibrate; keep same URL, just a new version
-    return scenario.add_macro(data, scenario=scenario.scenario, check_convergence=False)
+    try:
+        return scenario.add_macro(
+            data, scenario=scenario.scenario, check_convergence=False
+        )
+    except Exception:
+        # Avoid locking the scenario in the database
+        # FIXME move upstream to message_ix.macro
+        try:
+            scenario.discard_changes()
+        except Exception:
+            pass
+        scenario.platform.close_db()
+        raise
 
 
 def report(
