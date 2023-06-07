@@ -3,9 +3,11 @@ from pathlib import Path
 
 import ixmp
 import pytest
+from message_ix_models import testing
 
 from message_data.projects.navigate import Config
 from message_data.projects.navigate.report import _scenario_name
+from message_data.projects.navigate.workflow import add_macro
 
 
 @pytest.fixture(scope="session")
@@ -52,19 +54,19 @@ def test_generate_workflow(test_context):
 # Chunks of text to look for in the --dry-run output. The text cannot be matched exactly
 # because the order of traversing the graph is non-deterministic, i.e. which step
 # displays "MT solved" and its subtree may vary.
-context = r"'context' \(above\)"
+_context = r"'context' \(above\)"
 BLOCKS = [
     "Truncate workflow at 'M built'",
     rf"""
         - 'MT NPi-ref solved':
           - <Step solve\(\)>
-          - {context}
+          - {_context}
           - 'MT NPi-ref built':
             - <Step build_transport\(\) -> MESSAGEix-GLOBIOM 1.1-MT-R12 \(NAVIGATE\)/NPi-ref>
-            - {context}
+            - {_context}
             - 'M built':
               - <Step load -> MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE>
-              - {context}
+              - {_context}
               - None""",  # noqa: E501
 ]
 
@@ -98,3 +100,9 @@ def test_generate_workflow_cli(mix_models_cli):
 def test_scenario_name(test_context, input, expected):
     test_context.setdefault("navigate", Config())
     assert expected == _scenario_name(test_context, input)
+
+
+@pytest.mark.xfail(reason="Bare RES lacks detail sufficient for add_macro()")
+def test_add_macro(request, test_context):
+    scenario = testing.bare_res(request, test_context, solved=True)
+    add_macro(test_context, scenario)

@@ -147,6 +147,27 @@ def build_solve_buildings(
     return buildings.build_and_solve(context)
 
 
+def add_macro(context: Context, scenario: Scenario) -> Scenario:
+    """Invoke :meth:`.Scenario.add_macro`."""
+    import pandas as pd
+    from genno.computations import load_file
+
+    # Load macro data from file
+    base_path = private_data_path("macro", "navigate")
+
+    data = {}
+    for filename in base_path.glob("*.csv"):
+        name = filename.stem
+        if name == "config":
+            data[name] = pd.read_csv(filename, comment="#").reset_index()
+        else:
+            q = load_file(filename, name=name)
+            data[name] = q.to_frame().reset_index().assign(unit=f"{q.units:~}" or "-")
+
+    # Calibrate; keep same URL, just a new version
+    return scenario.add_macro(data, scenario=scenario.scenario, check_convergence=False)
+
+
 def report(
     context: Context, scenario: Scenario, other_scenario_info: Optional[Dict]
 ) -> Scenario:
