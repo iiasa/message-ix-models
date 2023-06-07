@@ -199,6 +199,10 @@ def get_computer(
         module = import_module(f"..{name}", __name__)
         module.prepare_computer(c)
 
+    path = context.get_local_path("transport", "build.svg")
+    c.visualize(filename=path, key="add transport data")
+    log.info(f"Visualization written to {path}")
+
     return c
 
 
