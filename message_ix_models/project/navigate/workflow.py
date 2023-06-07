@@ -357,7 +357,7 @@ def generate(context: Context) -> Workflow:
             "adv",
             "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54",
         ),
-        (None, "T3.5", "MESSAGEix-Materials/baseline_default_NAVIGATE"),
+        (None, "T3.5", "MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE"),
     ):
         M_built[WP6_production] = f"M {label} built"
         wf.add_step(M_built[WP6_production], "base", build_materials, target=target)
