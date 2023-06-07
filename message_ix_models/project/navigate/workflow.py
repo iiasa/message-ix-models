@@ -186,6 +186,7 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     """Invoke :meth:`.Scenario.add_macro`."""
     from genno.computations import load_file
     from message_ix_models.model.build import _add_unit
+    from message_ix_models.util import identify_nodes
 
     from message_data.model import macro
 
@@ -193,6 +194,7 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
 
     # Generate some MACRO data. These values are identical to those found in
     # P:/ene.model/MACRO/python/R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx
+    context.model.regions = identify_nodes(scenario)
     data = dict(
         # TODO adjust "rc_therm" to "afofi_therm" in commodity (but not sector) column
         # of the "config" sheet
