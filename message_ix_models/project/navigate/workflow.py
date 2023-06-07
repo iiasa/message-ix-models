@@ -151,6 +151,8 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     """Invoke :meth:`.Scenario.add_macro`."""
     import pandas as pd
     from genno.computations import load_file
+    from message_ix_models import Spec
+    from message_ix_models.model.build import apply_spec
 
     # Load macro data from file
     base_path = private_data_path("macro", "navigate")
@@ -168,6 +170,12 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
                 .rename(columns={name: "value"})
                 .assign(unit=f"{q.units:~}" or "-")
             )
+
+    # Add units present in the MACRO input data which may yet be missing on the platform
+    # FIXME use consistent units in the MACRO input data and message-ix-models
+    spec = Spec()
+    spec.add.set["unit"].extend(["GUSD"])
+    apply_spec(scenario, spec)
 
     # Calibrate; keep same URL, just a new version
     return scenario.add_macro(data, scenario=scenario.scenario, check_convergence=False)
