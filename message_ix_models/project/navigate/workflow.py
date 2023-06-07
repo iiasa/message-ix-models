@@ -52,6 +52,16 @@ def strip_policy_data(context: Context, scenario: Scenario) -> Scenario:
     return scenario
 
 
+def log_scenario_info(where: str, s: Scenario) -> None:
+    log.info(
+        f""" in {where})
+{repr(s) = }
+{s.url = }
+{s.has_solution() = }
+{s.is_default() = }"""
+    )
+
+
 def adjust_materials(
     context: Context, scenario: Scenario, *, WP6_production: str
 ) -> Scenario:
@@ -72,6 +82,7 @@ def adjust_materials(
     add_CCS_constraint(scenario, 2.0, "upper")
 
     scenario.set_as_default()
+    log_scenario_info("adjust_materials", scenario)
 
     return scenario
 
@@ -154,6 +165,8 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     from message_ix_models import Spec
     from message_ix_models.model.build import apply_spec
 
+    log_scenario_info("add_macro 1", scenario)
+
     # Load macro data from file
     base_path = private_data_path("macro", "navigate")
 
@@ -170,12 +183,18 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
                 .rename(columns={name: "value"})
                 .assign(unit=f"{q.units:~}" or "-")
             )
+            print(data[name])
+
+    # TODO adjust "rc_therm" to "afofi_therm" in commodity (but not sector) column of
+    # the "config" sheet
 
     # Add units present in the MACRO input data which may yet be missing on the platform
     # FIXME use consistent units in the MACRO input data and message-ix-models
     spec = Spec()
     spec.add.set["unit"].extend(["GUSD"])
     apply_spec(scenario, spec)
+
+    log_scenario_info("add_macro 2", scenario)
 
     # Calibrate; keep same URL, just a new version
     try:
@@ -185,11 +204,16 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     except Exception:
         # Avoid locking the scenario in the database
         # FIXME move upstream to message_ix.macro
+        mp = scenario.platform
         try:
             scenario.discard_changes()
+            log.info("Discarded scenario changes")
         except Exception:
             pass
-        scenario.platform.close_db()
+        finally:
+            del scenario
+        mp.close_db()
+        log.info("Closed database connection")
         raise
 
 
@@ -277,7 +301,12 @@ def solve(context, scenario, **kwargs):
 
     The ENGAGE workflow steps use :func:`.engage.workflow.solve` instead.
     """
+    log_scenario_info("solve 1", scenario)
+
     scenario.solve(**kwargs)
+    # TODO Maybe add set_as_default() here
+
+    log_scenario_info("solve 2", scenario)
     return scenario
 
 
