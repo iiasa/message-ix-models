@@ -165,6 +165,10 @@ def report(
     register("projects.navigate")
     rep, _ = prepare_reporter(context)
 
+    path = context.get_local_path("report", "navigate-all.svg")
+    rep.visualize(filename=path, key="navigate all")
+    log.info(f"Visualization written to {path}")
+
     # Remove time-series data preceding the first model period
     key = "navigate remove ts"
     log_before(context, rep, key)
