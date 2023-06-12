@@ -1,7 +1,7 @@
 """Code for handling IEA WEO data"""
 
 from itertools import product
-from typing import Dict, Tuple
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -318,7 +318,7 @@ DICT_TECH_REF_FOM = {
 
 
 def get_weo_data(
-    dict_tech_rows: Dict[str, Tuple[str, int]],
+    dict_tech_rows: Dict[str, list[object]],
     dict_cols: Dict[str, str],
 ) -> pd.DataFrame:
     """Read in raw WEO investment/capital costs and O&M costs data.
@@ -681,8 +681,8 @@ def adj_nam_cost_message(
 
 def adj_nam_cost_manual(
     df_costs: pd.DataFrame,
-    dict_manual_inv: Dict[str, float],
-    dict_manual_fom: Dict[str, float],
+    dict_manual_inv: Dict[str, int],
+    dict_manual_fom: Dict[str, int],
 ):
     """Assign manually-specified technology cost values to certain technologies
 
