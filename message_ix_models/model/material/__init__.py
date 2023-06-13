@@ -198,7 +198,8 @@ def build_scen(context, datafile, tag, mode, scenario_name):
         scenario = message_ix.Scenario(mp, 'MESSAGEix-Materials', scenario_name)
         print('Base scenario is ' + scenario_name)
         output_scenario_name = output_scenario_name + '_' + tag
-        scenario = scenario.clone('MESSAGEix-Materials',output_scenario_name , keep_solution=False)
+        scenario = scenario.clone('MESSAGEix-Materials',output_scenario_name , keep_solution=False,
+        shift_first_model_year=2025)
         scenario.check_out()
         tax_emission_new.columns = scenario.par("tax_emission").columns
         tax_emission_new["unit"] = "USD/tCO2"
@@ -265,7 +266,7 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
     if add_calibration:
         # Solve
         print('Solving the scenario without MACRO')
-        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4', 'barcrossalg':'2'})
+        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4', 'scaind':'-1'})
         scenario.set_as_default()
 
         # After solving, add macro calibration
@@ -277,13 +278,13 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
         print('After macro calibration a new scneario with the suffix _macro is created.')
         print('Make sure to use this scenario to solve with MACRO iterations.')
 
-        scenario.solve(model="MESSAGE-MACRO", solve_options={"lpmethod": "4"})
+        scenario.solve(model="MESSAGE-MACRO", solve_options={'lpmethod': '4', 'scaind':'-1'})
         scenario.set_as_default()
 
     if not add_macro:
         # Solve
         print('Solving the scenario without MACRO')
-        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4'})
+        scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4', 'scaind':'-1'})
         scenario.set_as_default()
 
 @cli.command("add_buildings_ts")
@@ -437,7 +438,7 @@ DATA_FUNCTIONS_1 = [
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
-    #gen_data_power_sector,
+    gen_data_power_sector,
     gen_data_aluminum
 ]
 
