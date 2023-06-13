@@ -10,7 +10,7 @@ import pandas as pd
 from message_ix_models.model.bare import get_spec
 from message_ix_models.util import nodes_ex_world
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from sdmx.model.v21 import Code
 
     from message_ix_models import Context
