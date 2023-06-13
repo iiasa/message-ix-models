@@ -357,7 +357,7 @@ def add_steps(
     label = str(config.label).replace(" ", "_")
 
     # Model and scenario name for the scenario produced by the base step
-    _, info = workflow.guess_target(base, "scenario")
+    info, _ = workflow.guess_target(base, "scenario")
 
     # New model/scenario name at each step
     target = f"{info['model']}/{info['scenario']}_ENGAGE_{label}_step-{{}}"
@@ -367,7 +367,7 @@ def add_steps(
     if len(steps):
         steps.insert(0, 0)
 
-    # Iterate over [0, 1, 2, 3] or fewer `steps`
+    # Iterate over [0, 1, 2, 3] or fewer ENGAGE `steps`
     _base = base
     for step in steps:
         # Add step; always clone to a new model/scenario name
@@ -382,12 +382,12 @@ def add_steps(
             config=config,
         )
 
-        # Update the `_base` (scenario) for the next workflow step
-        if step == 0:
-            # Don't solve after step_0
-            _base = name
-        else:
-            # Solve
-            _base = workflow.add_step(f"{name} solved", name, solve, config=config)
+        # Add a step to solve the scenario (except for after step_0); update the `_base`
+        # (scenario) for the next ENGAGE step
+        _base = (
+            workflow.add_step(f"{name} solved", name, solve, config=config)
+            if step > 0
+            else name
+        )
 
     return _base
