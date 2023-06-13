@@ -432,20 +432,17 @@ def generate(context: Context) -> Workflow:
         ),
         (None, "T3.5", "MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE"),
     ):
-        M_built[WP6_production] = f"M {label} built"
-        wf.add_step(M_built[WP6_production], "base", build_materials, target=target)
+        name = wf.add_step(f"M {label} built", "base", build_materials, target=target)
 
         # Strip data from tax_emission
-        name = f"M {label} adjusted"
-        wf.add_step(
+        M_built[WP6_production] = wf.add_step(
+            f"M {label} adjusted",
             name,
-            M_built[WP6_production],
             adjust_materials,
             clone=True,
             target=f"MESSAGEix-GLOBIOM 1.1-M-R12 (NAVIGATE)/{label}",
             WP6_production=WP6_production,
         )
-        M_built[WP6_production] = name
 
     # Mapping from short IDs (`s`) to step names for results of step 7
     baseline_solved = {}
@@ -462,33 +459,22 @@ def generate(context: Context) -> Workflow:
         variant = "M" + ("T" if context.navigate.transport else "")
         if context.navigate.transport:
             # Step 3
-            name = f"{variant} {s} built"
-            wf.add_step(
-                name,
-                M_built[WP6_production],
+            base = wf.add_step(
+                f"{variant} {s} built",
+                base,
                 build_transport,
                 target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
                 clone=True,
                 navigate_scenario=T35_policy,
             )
-            base = name
 
         # Step 4
-        name = f"{variant} {s} solved"
-        wf.add_step(name, base, solve)
-        base = name
-
-        if solve_model == "MESSAGE-MACRO":
-            # Calibrate MACRO
-            name = f"{variant} {s} with MACRO"
-            wf.add_step(name, base, add_macro)
-            base = name
+        base = wf.add_step(f"{variant} {s} solved", base, solve)
 
         # Steps 5–7
         variant = "B" + variant
-        name = f"{variant} {s} solved"
-        wf.add_step(
-            name,
+        base = wf.add_step(
+            f"{variant} {s} solved",
             base,
             build_solve_buildings,  # type: ignore
             target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
@@ -498,8 +484,12 @@ def generate(context: Context) -> Workflow:
             config=dict(solve=dict(model=solve_model)),
         )
 
+        if solve_model == "MESSAGE-MACRO":
+            # Calibrate MACRO
+            base = wf.add_step(f"{variant} {s} with MACRO", base, add_macro)
+
         # Store the step name as a starting point for climate policy steps, below
-        baseline_solved[(T35_policy, WP6_production)] = name
+        baseline_solved[(T35_policy, WP6_production)] = base
 
     # Mapping from short IDs (`s`) to 2-tuples with:
     # 1. name of the final step in the policy sequence (if any)
@@ -527,10 +517,7 @@ def generate(context: Context) -> Workflow:
                 # Help identify the tax_emission_scenario from which to copy data
 
                 # Model and scenario for the scenario produced by the base step
-                # TODO this may not work if the previous step is a passthrough; make
-                #      more robust
-                info = wf.graph[base][0].scenario_info.copy()
-
+                info, _ = wf.guess_target(base, "scenario")
                 engage_policy_config.tax_emission_scenario["model"] = info["model"]
 
             # NB this can occur here so long as PolicyConfig.method = "calc" is NOT used
@@ -541,7 +528,7 @@ def generate(context: Context) -> Workflow:
             name = engage.add_steps(wf, base=base, config=engage_policy_config, name=s)
         elif climate_policy == "Ctax":
             # Carbon tax; not an implementation of an ENGAGE climate policy
-            wf.add_step(
+            name = wf.add_step(
                 s,
                 base,
                 tax_emission,
@@ -549,8 +536,7 @@ def generate(context: Context) -> Workflow:
                 clone=dict(shift_first_model_year=2025),
                 price=1000.0,
             )
-            name = f"{s} solved"
-            wf.add_step(name, s, solve)
+            name = wf.add_step(f"{s} solved", name, solve)
         else:
             raise ValueError(climate_policy)
 
@@ -563,19 +549,18 @@ def generate(context: Context) -> Workflow:
         # At least 1 policy step was added; re-solve the buildings model(s) to pick up
         # price changes
 
-        # Prior two steps added by engage.add_steps() or for Ctax
+        # Prior step added by engage.add_steps() or for Ctax
         step_m1 = wf.graph[name][0]
-        step_m2 = wf.graph[wf.graph[name][2]][0]
 
         # Retrieve options on the solve step added by engage.add_steps()
         try:
             solve_kw = step_m1.kwargs["config"].solve
         except KeyError:
             solve_kw = dict(model=solve_model)
-        # Retrieve the target scenario from second-last step
-        # TODO remove the need to look up step_m2 by allowing a callback to give the
-        #      new model/scenario name
-        target = "{model}/{scenario}+B".format(**step_m2.scenario_info)
+
+        # Construct the target scenario URL
+        info, _ = wf.guess_target(name, "scenario")
+        target = "{model}/{scenario}+B".format(**info)
 
         # Create a new step with the same name and base, but invoking
         # MESSAGEix-Buildings instead.
@@ -583,34 +568,35 @@ def generate(context: Context) -> Workflow:
         # - Use the same Scenario.solve() keyword arguments as for the ENGAGE step, e.g.
         #   including "model" and ``solve_options["barcrossalg"]``.
         # - Use the same NAVIGATE scenario as the base scenario.
-        re_solved = f"{name} again"
-        wf.add_step(
-            re_solved,
+        name = wf.add_step(
+            f"{name} again",
             name,
             build_solve_buildings,
             # Clone before this step
             target=target,
             clone=True,
             # Keyword arguments for build_solve_buildings
-            navigate_scenario=wf.graph[base][0].kwargs["navigate_scenario"],
+            navigate_scenario=s,
             config=dict(solve=solve_kw),
         )
 
         # Store info to set up reporting, include other scenario from which to copy time
         # series data for y=2020
-        to_report[s] = (re_solved, wf.graph[base][0].scenario_info)
+        to_report[s] = (name, wf.guess_target(base, "scenario")[0])
 
     # Step names for results of step 9
     all_reported = []
 
     for s, (base, other_scenario_info) in to_report.items():
         # Step 8–9 for individual scenarios
-        name = f"{s} reported"
-        wf.add_step(name, base, report, other_scenario_info=other_scenario_info)
-        all_reported.append(name)
+        all_reported.append(
+            wf.add_step(
+                f"{s} reported", base, report, other_scenario_info=other_scenario_info
+            )
+        )
 
         # Step 10 for individual scenarios
-        wf.add_step(f"{s} prepped", name, prep_submission)
+        wf.add_step(f"{s} prepped", all_reported[-1], prep_submission)
 
     # Steps 8–9 to report all scenarios
     wf.add_single("all reported", *all_reported)
