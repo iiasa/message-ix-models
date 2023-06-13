@@ -1,6 +1,6 @@
 """Tools for modeling workflows."""
 import logging
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Literal, Mapping, Optional, Tuple, Union
 
 from genno import Computer
 from ixmp.utils import parse_url
@@ -213,18 +213,12 @@ class Workflow(Computer):
         KeyError
             if step `name` does not exist.
         """
-
-        def _recurse_info(kind: str, step_name: str):
-            """Traverse the graph looking for non-empty platform_info/scenario_info."""
-            task = self.graph[step_name]
-            return getattr(task[0], f"{kind}_info") or _recurse_info(kind, task[2])
-
-        # Generate a new step that merely loads the scenario identified by `name` or
-        # its base
+        # Generate a new step that merely loads the scenario identified by `name` or its
+        # base
         step = WorkflowStep(None)
-        step.scenario_info = _recurse_info("scenario", name)
+        _, step.scenario_info = self.guess_target(name, "scenario")
         try:
-            step.platform_info = _recurse_info("platform", name)
+            _, step.platform_info = self.guess_target(name, "platform")
         except KeyError as e:
             if e.args[0] is None:
                 raise RuntimeError(
@@ -235,6 +229,16 @@ class Workflow(Computer):
 
         # Replace the existing step
         self.add_single(name, step, "context", None)
+
+    def guess_target(
+        self, step_name: str, kind: Literal["platform", "scenario"] = "scenario"
+    ) -> Tuple[str, Mapping]:
+        """Traverse the graph looking for non-empty platform_info/scenario_info."""
+        task = self.graph[step_name]
+        return (
+            step_name,
+            getattr(task[0], f"{kind}_info").copy(),
+        ) or self.guess_target(task[2], kind)
 
 
 def solve(context, scenario, **kwargs):
