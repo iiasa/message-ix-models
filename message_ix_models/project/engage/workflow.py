@@ -357,8 +357,7 @@ def add_steps(
     label = str(config.label).replace(" ", "_")
 
     # Model and scenario name for the scenario produced by the base step
-    # TODO this may not work if the previous step is a passthrough; make more robust
-    info = workflow.graph[base][0].scenario_info.copy()
+    _, info = workflow.guess_target(base, "scenario")
 
     # New model/scenario name at each step
     target = f"{info['model']}/{info['scenario']}_ENGAGE_{label}_step-{{}}"
@@ -368,30 +367,27 @@ def add_steps(
     if len(steps):
         steps.insert(0, 0)
 
+    # Iterate over [0, 1, 2, 3] or fewer `steps`
     _base = base
     for step in steps:
-        # Name for this step
-        new_name = f"{name_root}{step}"
-
         # Add step; always clone to a new model/scenario name
-        workflow.add_step(
-            new_name,
+        name = workflow.add_step(
+            f"{name_root}{step}",  # Name for this step
             _base,
-            action=globals()[f"step_{step}"],
+            action=globals()[f"step_{step}"],  # Retrieve step_0() etc.
             clone=dict(shift_first_model_year=2025)
             if step == 0
             else dict(keep_solution=True),
-            target=target.format(step),
+            target=target.format(step),  # Target scenario URL
             config=config,
         )
 
+        # Update the `_base` (scenario) for the next workflow step
         if step == 0:
             # Don't solve after step_0
-            _base = new_name
+            _base = name
         else:
-            workflow.add_step(f"{new_name} solved", new_name, solve, config=config)
-
-            # Update the base step/scenario for the next iteration
-            _base = f"{new_name} solved"
+            # Solve
+            _base = workflow.add_step(f"{name} solved", name, solve, config=config)
 
     return _base
