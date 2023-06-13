@@ -55,11 +55,9 @@ def strip_policy_data(context: Context, scenario: Scenario) -> Scenario:
 
 def log_scenario_info(where: str, s: Scenario) -> None:
     log.info(
-        f""" in {where})
-{repr(s) = }
-{s.url = }
-{s.has_solution() = }
-{s.is_default() = }"""
+        f"""in {where}:
+   {repr(s)} = {s.url}
+   has_solution = {s.has_solution()}; is_default = {s.is_default()}"""
     )
 
 
