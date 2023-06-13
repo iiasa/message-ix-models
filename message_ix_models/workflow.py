@@ -216,9 +216,9 @@ class Workflow(Computer):
         # Generate a new step that merely loads the scenario identified by `name` or its
         # base
         step = WorkflowStep(None)
-        _, step.scenario_info = self.guess_target(name, "scenario")
+        step.scenario_info = self.guess_target(name, "scenario")[0]
         try:
-            _, step.platform_info = self.guess_target(name, "platform")
+            step.platform_info = self.guess_target(name, "platform")[0]
         except KeyError as e:
             if e.args[0] is None:
                 raise RuntimeError(
@@ -232,13 +232,14 @@ class Workflow(Computer):
 
     def guess_target(
         self, step_name: str, kind: Literal["platform", "scenario"] = "scenario"
-    ) -> Tuple[str, Mapping]:
-        """Traverse the graph looking for non-empty platform_info/scenario_info."""
+    ) -> Tuple[Mapping, str]:
+        """Traverse the graph looking for non-empty platform_info/scenario_info.
+
+        Returns the info, and the step name containing it.
+        """
         task = self.graph[step_name]
-        return (
-            step_name,
-            getattr(task[0], f"{kind}_info").copy(),
-        ) or self.guess_target(task[2], kind)
+        i = getattr(task[0], f"{kind}_info")
+        return (i.copy(), step_name) if len(i) else self.guess_target(task[2], kind)
 
 
 def solve(context, scenario, **kwargs):
