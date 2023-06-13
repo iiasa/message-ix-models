@@ -192,17 +192,28 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
 
     log_scenario_info("add_macro 1", scenario)
 
+    # List of commodities and associated MACRO sectors
+
+    def _c(id, sector):
+        return Code(id=id, annotations=[Annotation(id="macro-sector", text=sector)])
+
+    commodities = [
+        _c("i_therm", "i_therm"),
+        _c("i_spec", "i_spec"),
+        _c("afofi_spec", "rc_spec"),
+        _c("afofi_therm", "rc_therm"),
+        _c("transport", "transport"),
+    ]
+
     # Generate some MACRO data. These values are identical to those found in
     # P:/ene.model/MACRO/python/R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx
     context.model.regions = identify_nodes(scenario)
     data = dict(
-        # TODO adjust "rc_therm" to "afofi_therm" in commodity (but not sector) column
-        # of the "config" sheet
-        config=macro.generate("config", context),
-        aeei=macro.generate("aeei", context, value=0.02),
-        drate=macro.generate("drate", context, value=0.05),
-        depr=macro.generate("depr", context, value=0.05),
-        lotol=macro.generate("lotol", context, value=0.05),
+        config=macro.generate("config", context, commodities),
+        aeei=macro.generate("aeei", context, commodities, value=0.02),
+        drate=macro.generate("drate", context, commodities, value=0.05),
+        depr=macro.generate("depr", context, commodities, value=0.05),
+        lotol=macro.generate("lotol", context, commodities, value=0.05),
     )
 
     # Load other data from file
