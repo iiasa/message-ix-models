@@ -184,11 +184,10 @@ def avoid_locking(scenario: Scenario):
 
 def add_macro(context: Context, scenario: Scenario) -> Scenario:
     """Invoke :meth:`.Scenario.add_macro`."""
-    from genno.computations import load_file
+    from message_ix_models.model import macro
     from message_ix_models.model.build import _add_unit
     from message_ix_models.util import identify_nodes
-
-    from message_data.model import macro
+    from sdmx.model import Annotation, Code
 
     log_scenario_info("add_macro 1", scenario)
 
@@ -215,18 +214,14 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
         depr=macro.generate("depr", context, commodities, value=0.05),
         lotol=macro.generate("lotol", context, commodities, value=0.05),
     )
+    # Load other MACRO data from file
+    data2 = macro.load(private_data_path("macro", "navigate"))
+    data.update(data2)
 
-    # Load other data from file
-    for filename in private_data_path("macro", "navigate").glob("*.csv"):
-        name = filename.stem
-        q = load_file(filename, name=name)
-        unit = f"{q.units:~}" or "-"
-        data[name] = (
-            q.to_frame().reset_index().rename(columns={name: "value"}).assign(unit=unit)
-        )
-        # Add units present in the MACRO input data which may yet be missing on the
-        # platform
-        # FIXME use consistent units in the MACRO input data and message-ix-models
+    # Add units present in the MACRO input data which may yet be missing on the platform
+    # FIXME use consistent units in the MACRO input data and message-ix-models
+    for df in data2.values():
+        unit = df["unit"].unique()[0]
         _add_unit(scenario.platform, unit, unit)
 
     log_scenario_info("add_macro 2", scenario)
