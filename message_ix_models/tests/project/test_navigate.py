@@ -104,5 +104,6 @@ def test_scenario_name(test_context, input, expected):
 
 @pytest.mark.xfail(reason="Bare RES lacks detail sufficient for add_macro()")
 def test_add_macro(request, test_context):
+    test_context.regions = "R12"
     scenario = testing.bare_res(request, test_context, solved=True)
     add_macro(test_context, scenario)
