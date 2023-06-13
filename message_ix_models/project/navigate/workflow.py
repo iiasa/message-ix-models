@@ -229,9 +229,11 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
 
     # Calibrate; keep same URL, just a new version
     with avoid_locking(scenario):
-        return scenario.add_macro(
+        result = scenario.add_macro(
             data, scenario=scenario.scenario, check_convergence=False
         )
+    result.set_as_default()
+    return result
 
 
 def report(
