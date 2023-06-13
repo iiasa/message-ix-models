@@ -2,15 +2,17 @@
 import logging
 from functools import lru_cache
 from itertools import product
-from typing import TYPE_CHECKING, List, Literal, Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, List, Literal, Mapping, Optional, Union
 
 import pandas as pd
-from sdmx.model import Code
 
 from message_ix_models.model.bare import get_spec
 from message_ix_models.util import nodes_ex_world
 
 if TYPE_CHECKING:
+    from sdmx.model.v21 import Code
+
     from message_ix_models import Context
 
 log = logging.getLogger(__name__)
@@ -22,7 +24,7 @@ COMMODITY = ["i_therm", "i_spec", "rc_spec", "rc_therm", "transport"]
 def generate(
     parameter: Literal["aeei", "config", "depr", "drate", "lotol"],
     context: "Context",
-    commodities: List[str] = COMMODITY,
+    commodities: Union[List[str], List["Code"]] = COMMODITY,
     value: Optional[float] = None,
 ) -> pd.DataFrame:
     """Generate uniform data for one :mod:`message_ix.macro` `parameter`.
@@ -64,26 +66,25 @@ def generate(
     """
     spec = get_spec(context)
 
-    if isinstance(commodities[0], Code):
-        c_codes = commodities
-    else:
+    if isinstance(commodities[0], str):
         c_codes = spec.add.set["commodity"]
+    else:
+        c_codes = commodities
 
     @lru_cache
     def _sector(commodity: str) -> str:
         try:
             idx = c_codes.index(commodity)
-        except ValueError as e:
+            result = str(c_codes[idx].get_annotation(id="macro-sector").text)
+        except (KeyError, ValueError) as e:
             log.info(e)
             result = commodity
-        else:
-            result = c_codes[idx].eval_annotation(id="macro-sector")
-        return result or commodity
+        return result
 
     # AEEI data must begin from the period before the first model period
     ym1 = spec.add.set["year"].index(spec.add.y0) - 1
     iterables = dict(
-        commodity=commodities,
+        c_s=zip(commodities, map(_sector, commodities)),  # Paired commodity and sector
         level=["useful"],
         node=nodes_ex_world(spec.add.N),
         sector=map(_sector, commodities),
@@ -93,7 +94,7 @@ def generate(
     if parameter == "aeei":
         dims = ["node", "year", "sector"]
     elif parameter == "config":
-        dims = ["node", "sector", "commodity", "level", "year"]
+        dims = ["node", "c_s", "level", "year"]
         assert value is None
     elif parameter in ("depr", "drate", "lotol"):
         dims = ["node"]
@@ -105,4 +106,33 @@ def generate(
         columns=dims,
     )
 
-    return result if parameter == "config" else result.assign(value=value, unit="-")
+    if parameter == "config":
+        return pd.concat(
+            [
+                result.drop("c_s", axis=1),
+                pd.DataFrame(result["c_s"].tolist(), columns=["commodity", "sector"]),
+            ],
+            axis=1,
+        )
+    else:
+        return result.assign(value=value, unit="-")
+
+
+def load(base_path: Path) -> Mapping[str, pd.DataFrame]:
+    """Load MACRO data from CSV files."""
+    from genno.computations import load_file
+
+    result = {}
+    for filename in base_path.glob("*.csv"):
+        name = filename.stem
+
+        q = load_file(filename, name=name)
+
+        result[name] = (
+            q.to_frame()
+            .reset_index()
+            .rename(columns={name: "value"})
+            .assign(unit=f"{q.units:~}" or "-")
+        )
+
+    return result
