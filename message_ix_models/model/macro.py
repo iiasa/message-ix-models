@@ -82,17 +82,18 @@ def generate(
         return result
 
     # AEEI data must begin from the period before the first model period
-    ym1 = spec.add.set["year"].index(spec.add.y0) - 1
+    y0_index = spec.add.set["year"].index(spec.add.y0)
     iterables = dict(
         c_s=zip(commodities, map(_sector, commodities)),  # Paired commodity and sector
         level=["useful"],
         node=nodes_ex_world(spec.add.N),
         sector=map(_sector, commodities),
-        year=spec.add.set["year"][ym1:],
+        year=spec.add.set["year"][y0_index:],
     )
 
     if parameter == "aeei":
         dims = ["node", "year", "sector"]
+        iterables.update(year=spec.add.set["year"][y0_index - 1 :])
     elif parameter == "config":
         dims = ["node", "c_s", "level", "year"]
         assert value is None
