@@ -216,9 +216,9 @@ class Workflow(Computer):
         # Generate a new step that merely loads the scenario identified by `name` or its
         # base
         step = WorkflowStep(None)
-        step.scenario_info = self.guess_target(name, "scenario")[0]
+        step.scenario_info.update(self.guess_target(name, "scenario")[0])
         try:
-            step.platform_info = self.guess_target(name, "platform")[0]
+            step.platform_info.update(self.guess_target(name, "platform")[0])
         except KeyError as e:
             if e.args[0] is None:
                 raise RuntimeError(
