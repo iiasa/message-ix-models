@@ -483,6 +483,9 @@ def generate(context: Context) -> Workflow:
         if solve_model == "MESSAGE-MACRO":
             # Calibrate MACRO
             base = wf.add_step(f"{variant} {s} with MACRO", base, add_macro)
+            base = wf.add_step(
+                f"{base} solved", base, solve, solve_options=dict(model=solve_model)
+            )
 
         # Store the step name as a starting point for climate policy steps, below
         baseline_solved[(T35_policy, WP6_production)] = base
