@@ -478,8 +478,6 @@ def generate(context: Context) -> Workflow:
             target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
             clone=True,
             navigate_scenario=s,
-            # Pass through model to be solved
-            config=dict(solve=dict(model=solve_model)),
         )
 
         if solve_model == "MESSAGE-MACRO":
