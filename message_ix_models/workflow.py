@@ -61,7 +61,8 @@ class WorkflowStep:
         except (AttributeError, ValueError):
             if clone is not False:
                 raise TypeError("target= must be supplied for clone=True")
-            self.platform_info = self.scenario_info = dict()
+            self.platform_info = dict()
+            self.scenario_info = dict()
 
         # Store the callback and options
         self.action = action
