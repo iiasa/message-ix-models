@@ -329,7 +329,7 @@ def gen_data_meth_chemicals(scenario, chemical):
         time_dest="year",
         time_origin="year",
         emission="CO2_industry",  # confirm if correct
-        relation="CO2_cc",
+        relation="CO2_feedstocks",
     )
 
     all_years = scenario.vintage_and_active_years()
@@ -540,7 +540,7 @@ def gen_resin_demand(scenario, resin_share, sector, buildings_scen, pathway="SHA
         time_dest="year",
         time_origin="year",
         emission="CO2_industry",  # confirm if correct,
-        relation="CO2_cc",
+        relation="CO2_feedstocks",
         commodity="fcoh_resin",
         unit="???",
         level="final_material",
