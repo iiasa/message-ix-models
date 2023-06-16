@@ -75,16 +75,17 @@ def generate(
     def _sector(commodity: str) -> str:
         try:
             idx = c_codes.index(commodity)
-            result = str(c_codes[idx].get_annotation(id="macro-sector").text)
+            return str(c_codes[idx].get_annotation(id="macro-sector").text)
         except (KeyError, ValueError) as e:
             log.info(e)
-            result = commodity
-        return result
+            return str(commodity)
 
     # AEEI data must begin from the period before the first model period
     y0_index = spec.add.set["year"].index(spec.add.y0)
     iterables = dict(
-        c_s=zip(commodities, map(_sector, commodities)),  # Paired commodity and sector
+        c_s=zip(  # Paired commodity and sector
+            map(str, commodities), map(_sector, commodities)
+        ),
         level=["useful"],
         node=nodes_ex_world(spec.add.N),
         sector=map(_sector, commodities),
