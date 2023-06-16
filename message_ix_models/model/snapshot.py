@@ -46,7 +46,7 @@ def _unpack(path: Path) -> Path:
 
         # Collect data from repeated sheets due to max_row limit
         for x in filter(lambda n: n.startswith(name + "("), xf.sheet_names):
-            dfs.append(xf.parse(x))
+            dfs.append(xf.parse(x))  # pragma: no cover
 
         # Concatenate once and return
         return pd.concat(dfs, axis=0)
@@ -64,7 +64,7 @@ def _unpack(path: Path) -> Path:
 
             if ix_type == "set":
                 df.to_excel(ew, sheet_name=name, index=False)
-            else:
+            else:  # pragma: no cover
                 df.to_csv(item_path, index=False)
 
         name_type.query("ix_type == 'set'").to_excel(ew, sheet_name="ix_type_mapping")
@@ -110,12 +110,12 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
 
 
 @click.group("snapshot", help="__doc__")
-def cli():
+def cli():  # pragma: no cover
     pass
 
 
 @cli.command("fetch")
 @click.argument("id_", metavar="ID", type=int)
-def fetch_cmd(id_):
+def fetch_cmd(id_):  # pragma: no cover
     """Fetch snapshot ID from Zenodo."""
     fetch(SNAPSHOTS[id_], progressbar=True)
