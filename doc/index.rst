@@ -32,6 +32,7 @@ Among other tasks, the tools allow modelers to:
    api/model-bare
    api/model-build
    api/model-emissions
+   api/model-snapshot
    api/disutility
    api/project
    api/tools
