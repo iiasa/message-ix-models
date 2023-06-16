@@ -82,7 +82,7 @@ jobs:
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
           --numprocesses=auto \
-          --local-cache
+          --local-cache --jvmargs="-Xmx6G"
       shell: bash
 
     - name: Test documentation build using Sphinx
