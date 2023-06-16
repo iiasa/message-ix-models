@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from message_ix_models.tools.iea.weo import (
+from message_ix_models.tools.costs.weo import (
     DICT_COST_COLS,
     DICT_TECH_ROWS,
     DICT_WEO_R11,
