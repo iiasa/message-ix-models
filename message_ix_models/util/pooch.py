@@ -30,7 +30,7 @@ def fetch(args, **kwargs) -> Path:
 
     p = pooch.create(**args)
 
-    if len(p.registry) > 1:
+    if len(p.registry) > 1:  # pragma: no cover
         raise NotImplementedError("fetch() with registries with >1 files")
 
     path = Path(p.fetch(next(iter(p.registry.keys())), **kwargs))
