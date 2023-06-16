@@ -98,6 +98,7 @@ intersphinx_mapping = {
         None,
     ),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "pooch": ("https://www.fatiando.org/pooch/latest/", None),
     "pytest": ("https://docs.pytest.org/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),

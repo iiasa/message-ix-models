@@ -29,8 +29,23 @@ SNAPSHOTS = {
 }
 
 
-def _unpack(path: Path) -> Path:
-    """Unpack ixmp-format Excel file at `path`."""
+def unpack(path: Path) -> Path:
+    """Unpack :ref:`ixmp-format Excel file <ixmp:excel-data-format>` at `path`.
+
+    The file is unpacked into a directory with the same name stem as the file (that is,
+    without the :file:`.xlsx` suffix). In this directory are created:
+
+    - One :file:`.csv.gz` file for each MESSAGE and/or MACRO parameter.
+    - One file :file:`sets.xlsx` with only the :mod:`ixmp` sets, and no parameter data.
+
+    If the files exist, they are not updated.
+    To force re-unpacking, delete the files.
+
+    Returns
+    -------
+    Path
+        Path to the directory containing the unpacked files.
+    """
     assert path.suffix == ".xlsx"
     base = path.with_suffix("")
     base.mkdir(exist_ok=True)
@@ -72,8 +87,9 @@ def _unpack(path: Path) -> Path:
     return base
 
 
-def _read_excel(scenario: Scenario, path: Path) -> None:
-    base = _unpack(path)
+def read_excel(scenario: Scenario, path: Path) -> None:
+    """Similar to :meth:`.Scenario.read_excel`, but using :func:`unpack`."""
+    base = unpack(path)
 
     scenario.read_excel(base.joinpath("sets.xlsx"))
     with scenario.transact(f"Read snapshot from {path}"):
@@ -89,7 +105,7 @@ def _read_excel(scenario: Scenario, path: Path) -> None:
 
 
 def load(scenario: Scenario, snapshot_id: int) -> None:
-    """Load snapshot with ID `snapshot_id` into `scenario`.
+    """Fetch and load snapshot with ID `snapshot_id` into `scenario`.
 
     See also
     --------
@@ -106,7 +122,7 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     with scenario.transact("Prepare scenario for snapshot data"):
         MACRO.initialize(scenario)
 
-    _read_excel(scenario, path)
+    read_excel(scenario, path)
 
 
 @click.group("snapshot", help="__doc__")

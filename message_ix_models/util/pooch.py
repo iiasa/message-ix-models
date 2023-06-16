@@ -1,3 +1,4 @@
+"""Utilities for using :doc:`Pooch <pooch:about>`."""
 import logging
 from pathlib import Path
 
@@ -9,22 +10,26 @@ log = logging.getLogger(__name__)
 
 
 def fetch(args, **kwargs) -> Path:
-    """Create a :class:`.Pooch` instance and fetch a single file.
+    """Create a :class:`~pooch.Pooch` instance and fetch a single file.
 
-    Files are stored under the directory identified by :meth:`.get_cache_path`, unless
-    `args` provides another location.
+    Files are stored under the directory identified by :meth:`.Context.get_cache_path`,
+    unless `args` provides another location.
 
     Parameters
     ----------
     args
         Passed to :func:`pooch.create`.
     kwargs
-        Passed to :meth:`.Pooch.fetch`.
+        Passed to :meth:`pooch.Pooch.fetch`.
 
     Returns
     -------
     Path
         Path to the fetched file.
+
+    See also
+    --------
+    :func:`.snapshot.load`
     """
     args.setdefault("path", Context.get_instance(-1).get_cache_path())
 
