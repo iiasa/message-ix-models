@@ -1,10 +1,12 @@
 import logging
 import shutil
+import sys
 
 import pytest
 from message_ix import Scenario
 
 from message_ix_models.model import snapshot
+from message_ix_models.testing import GHA
 from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
@@ -32,6 +34,9 @@ def unpacked_snapshot_data(test_context, request):
     shutil.copytree(snapshot_data_path, dest, dirs_exist_ok=True)
 
 
+@pytest.mark.skipif(
+    condition=GHA and sys.platform in ("darwin", "win32"), reason="Slow."
+)
 @pytest.mark.usefixtures("unpacked_snapshot_data")
 @pytest.mark.parametrize("snapshot_id", snapshot.SNAPSHOTS.keys())
 def test_load(test_context, snapshot_id):
