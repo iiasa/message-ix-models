@@ -1,8 +1,11 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add code and CLI commands to :doc:`fetch and load MESSAGEix-GLOBIOM snapshots <api/model-snapshot>` (:pull:`102`).
+- Add :func:`.util.pooch.fetch`, a thin wrapper for using :doc:`Pooch <pooch:about>` (:pull:`102`).
 
 v2023.5.31
 ==========
