@@ -19,9 +19,9 @@ In code, use :func:`.snapshot.load`:
 .. code-block:: python
 
     from message_ix import Scenario
-    from message_ix_models import snapshot
+    from message_ix_models.model import snapshot
 
-    s = Scenario(...)
+    scenario = Scenario(...)
 
     snapshot.load(scenario, 0)
 
