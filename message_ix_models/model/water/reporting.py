@@ -686,8 +686,8 @@ def report(sc=False, sdgs=False):
                 + cooling_ot_fresh
                 + cooling_cl_fresh
                 + cooling_saline_inv
-                + cooling_air_inv,
-                +industry_unconnected_inv,
+                + cooling_air_inv
+                + industry_unconnected_inv,
                 "million US$2010/yr",
             ],
             [
