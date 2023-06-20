@@ -93,7 +93,7 @@ def gen_mock_demand_cement(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -189,7 +189,7 @@ def gen_data_cement(scenario, dry_run=False):
     # TEMP: now add cement sector as well
     data_cement = read_sector_data(scenario, "cement")
     # Special treatment for time-dependent Parameters
-    data_cement_ts = read_timeseries(scenario, context.datafile)
+    data_cement_ts = read_timeseries(scenario, "steel_cement", context.datafile)
     tec_ts = set(data_cement_ts.technology)  # set of tecs with var_cost
 
     # List of data frames, to be concatenated together at end
@@ -456,7 +456,7 @@ def derive_cement_demand(scenario, dry_run=False):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
         df = r.derive_cement_demand(
-            pop, base_demand, str(context.get_local_path("material"))
+            pop, base_demand, str(private_data_path("material"))
         )
         df.year = df.year.astype(int)
 
