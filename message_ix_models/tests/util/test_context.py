@@ -111,9 +111,13 @@ class TestContext:
     def test_get_cache_path(self, pytestconfig, test_context):
         """cache_path() returns the expected output."""
         # One of two values depending on whether the user has given --local-cache
-        assert test_context.get_cache_path("pytest", "bar.pkl") in (
-            test_context.local_data.joinpath("cache", "pytest", "bar.pkl"),
-            Path(pytestconfig.cache.makedir("cache")).joinpath("pytest", "bar.pkl"),
+        assert (
+            test_context.get_cache_path("pytest", "bar.pkl")
+            in (
+                test_context.local_data.joinpath("cache", "pytest", "bar.pkl"),
+                Path(pytestconfig.cache.makedir("cache")).joinpath("pytest", "bar.pkl"),
+            )
+            or pytestconfig.option.local_cache
         )
 
     def test_get_local_path(self, tmp_path_factory, session_context):

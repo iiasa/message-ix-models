@@ -1,3 +1,6 @@
 # Reduce the number of merge conflicts
 doc/whatsnew.rst merge=union
+# Git LFS
+*.csv.gz filter=lfs diff=lfs merge=lfs -text
+*.xlsx filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
