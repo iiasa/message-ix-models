@@ -19,21 +19,21 @@ derive_steel_demand <- function(df_pop, df_demand, datapath) {
   # gdp.pcap
   # population
 
-  gdp.ppp = read_excel(paste0(datapath, file_gdp), sheet="data_R12") %>% filter(Scenario == "baseline") %>%
+  gdp.ppp = read_excel(paste0(datapath, "/other", file_gdp), sheet="data_R12") %>% filter(Scenario == "baseline") %>%
     select(region=Region, `2020`:`2100`) %>%
     pivot_longer(cols=`2020`:`2100`, names_to="year", values_to="gdp.ppp") %>% # billion US$2010/yr OR local currency
     filter(region != "World") %>%
     mutate(year = as.integer(year), region = paste0('R12_', region))
 
-  df_raw_steel_consumption = read_excel(paste0(datapath, file_steel),
+  df_raw_steel_consumption = read_excel(paste0(datapath, "/steel_cement", file_steel),
                                         sheet="Consumption regions", n_max=27) %>%  # kt
     select(-2) %>%
     pivot_longer(cols="1970":"2012",
                  values_to='consumption', names_to='year')
-  df_population = read_excel(paste0(datapath, file_cement),
+  df_population = read_excel(paste0(datapath, "/steel_cement" ,file_cement),
                              sheet="Timer_POP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='pop', names_to='year')
-  df_gdp = read_excel(paste0(datapath, file_cement),
+  df_gdp = read_excel(paste0(datapath, "/steel_cement", file_cement),
                       sheet="Timer_GDPCAP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='gdp.pcap', names_to='year')
 
@@ -76,19 +76,19 @@ derive_cement_demand <- function(df_pop, df_demand, datapath) {
   # gdp.pcap
   # population (in mil.)
 
-  gdp.ppp = read_excel(paste0(datapath, file_gdp), sheet="data_R12") %>% filter(Scenario == "baseline") %>%
+  gdp.ppp = read_excel(paste0(datapath, "/other", file_gdp), sheet="data_R12") %>% filter(Scenario == "baseline") %>%
     select(region=Region, `2020`:`2100`) %>%
     pivot_longer(cols=`2020`:`2100`, names_to="year", values_to="gdp.ppp") %>% # billion US$2010/yr OR local currency
     filter(region != "World") %>%
     mutate(year = as.integer(year), region = paste0('R12_', region))
 
-  df_raw_cement_consumption = read_excel(paste0(datapath, file_cement),
+  df_raw_cement_consumption = read_excel(paste0(datapath, "/steel_cement", file_cement),
                                          sheet="Regions", skip=122, n_max=27) %>%  # kt
     pivot_longer(cols="1970":"2010", values_to='consumption', names_to='year')
-  df_population = read_excel(paste0(datapath, file_cement),
+  df_population = read_excel(paste0(datapath, "/steel_cement", file_cement),
                              sheet="Timer_POP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='pop', names_to='year')
-  df_gdp = read_excel(paste0(datapath, file_cement),
+  df_gdp = read_excel(paste0(datapath, "/steel_cement", file_cement),
                       sheet="Timer_GDPCAP", skip=3, n_max=27) %>%  # million
     pivot_longer(cols="1970":"2100", values_to='gdp.pcap', names_to='year')
 
@@ -127,14 +127,14 @@ derive_cement_demand <- function(df_pop, df_demand, datapath) {
 
 derive_aluminum_demand <- function(df_pop, df_demand, datapath) {
 
-  gdp.ppp = read_excel(paste0(datapath, file_gdp), sheet="data_R12") %>% filter(Scenario == "baseline") %>%
+  gdp.ppp = read_excel(paste0(datapath, "/other", file_gdp), sheet="data_R12") %>% filter(Scenario == "baseline") %>%
     select(region=Region, `2020`:`2100`) %>%
     pivot_longer(cols=`2020`:`2100`, names_to="year", values_to="gdp.ppp") %>% # billion US$2010/yr OR local currency
     filter(region != "World") %>%
     mutate(year = as.integer(year), region = paste0('R12_', region))
 
   # Aluminum xls input already has population and gdp
-  df_raw_aluminum_consumption = read_excel(paste0(datapath, file_al),
+  df_raw_aluminum_consumption = read_excel(paste0(datapath, "/aluminum", file_al),
                                            sheet="final_table", n_max = 378) # kt
 
   #### Organize data ####
@@ -163,26 +163,26 @@ derive_aluminum_demand <- function(df_pop, df_demand, datapath) {
 }
 
 #derive_petro_demand <- function(df_pop, df_demand, datapath) {
-  
+
 #  gdp.ppp = read_excel(paste0(datapath, file_gdp), sheet="data_R12") %>% filter(Scenario == "baseline") %>%
 #    select(region=Region, `2020`:`2100`) %>%
 #    pivot_longer(cols=`2020`:`2100`, names_to="year", values_to="gdp.ppp") %>% # billion US$2010/yr OR local currency
 #    filter(region != "World") %>%
 #    mutate(year = as.integer(year), region = paste0('R12_', region))
-#  
+#
 #  df_raw_petro_consumption = read_excel(paste0(datapath, file_petro),
 #                                        sheet="final_table", n_max = 362) #kg/cap
-  
+
   #### Organize data ####
 #  df_petro_consumption = df_raw_petro_consumption %>%
-#    mutate(del.t= as.numeric(year) - 2010) %>% 
+#    mutate(del.t= as.numeric(year) - 2010) %>%
 #    drop_na() %>%
 #    filter(cons.pcap > 0)
-  
+
   # nlnit.p = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_petro_consumption, start=list(a=600, b=-10000, m=0))
 #nlni.p = nls(cons.pcap ~ a * exp(b/gdp.pcap), data=df_petro_consumption, start=list(a=600, b=-10000))
   # lni.p = lm(log(cons.pcap) ~ I(1/gdp.pcap), data=df_petro_consumption)
-  
+
 #  df_in = df_pop %>% left_join(df_demand %>% select(-year)) %>% # df_demand is only for 2020
 #    inner_join(gdp.ppp) %>% mutate(gdp.pcap = gdp.ppp*giga/pop.mil/mega)
 #  demand = df_in %>%
@@ -192,10 +192,10 @@ derive_aluminum_demand <- function(df_pop, df_demand, datapath) {
 #    mutate(gap.base = first(demand.pcap.base - demand.pcap0)) %>%
 #    mutate(demand.pcap = demand.pcap0 + gap.base * gompertz(9, 0.1, y=year)) %>% # Bas' equation
 #    mutate(demand.tot = demand.pcap * pop.mil * mega / giga) # Mt
-  
+
   # Add 2110 spaceholder
 #  demand = demand %>% rbind(demand %>% filter(year==2100) %>% mutate(year = 2110))
-  
+
 #  return(demand %>% select(node=region, year, value=demand.tot) %>% arrange(year, node)) # Mt
 #}
 

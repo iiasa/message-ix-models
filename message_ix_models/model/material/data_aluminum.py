@@ -45,14 +45,14 @@ def read_data_aluminum(scenario):
         sheet_n_relations = "relations_R11"
 
     # Read the file
-    data_alu = pd.read_excel(private_data_path("material", fname), sheet_name=sheet_n)
+    data_alu = pd.read_excel(private_data_path("material", "aluminum", fname), sheet_name=sheet_n)
 
     # Drop columns that don't contain useful information
     data_alu = data_alu.drop(["Source", "Description"], axis=1)
 
-    data_alu_rel = read_rel(scenario, "aluminum_techno_economic.xlsx")
+    data_alu_rel = read_rel(scenario, "aluminum", "aluminum_techno_economic.xlsx")
 
-    data_aluminum_ts = read_timeseries(scenario, "aluminum_techno_economic.xlsx")
+    data_aluminum_ts = read_timeseries(scenario, "aluminum", "aluminum_techno_economic.xlsx")
 
     # Unit conversion
 
@@ -498,7 +498,7 @@ def gen_mock_demand_aluminum(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
