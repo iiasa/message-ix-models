@@ -207,6 +207,12 @@ petro_chemicals:
     - final_material
     - demand
 
+  balance_equality:
+    add:
+      - ["lightoil", "import"]
+      - ["lightoil", "export"]
+      - ["fueloil", "import"]
+      - ["fueloil", "export"]
   mode:
     add:
     - atm_gasoil
@@ -556,6 +562,14 @@ methanol:
     add:
       - CO2_PtX_trans_disp_split
       - meth_exp_tot
+
+  balance_equality:
+    add:
+    - ["methanol","export"]
+    - ["methanol","export_fs"]
+    - ["methanol","import"]
+    - ["methanol","import_fs"]
+    - ["methanol","final"]
 
 buildings:
   level:
