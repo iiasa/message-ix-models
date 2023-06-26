@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List, Mapping, Sequence
 
 import message_ix
 import pandas as pd
+from genno import Quantity
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
 from message_ix_models.model.structure import (
@@ -48,6 +49,15 @@ BUILD_COMM_CONVERT = [
 #:
 #: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
 MATERIALS = ["steel", "cement", "aluminum"]
+
+# Look up some genno computation functions
+_r = message_ix.Reporter()
+as_message_df = _r.get_comp("as_message_df")
+data_for_quantity = _r.get_comp("data_for_quantity")
+mul = _r.get_comp("mul")
+relabel = _r.get_comp("relabel")
+rename_dims = _r.get_comp("rename_dims")
+del _r
 
 
 def get_spec(context: Context) -> Spec:
@@ -263,6 +273,150 @@ def bio_backstop(scen):
     return result
 
 
+def scale_and_replace(
+    scenario: message_ix.Scenario,
+    replace: Dict,
+    q_scale: Quantity,
+    relations: List[str],
+):
+    # Filters for retrieving data
+    f_long = dict(filters={"technology": list(replace["technology"].keys())})
+    f_short = dict(filters={"t": list(replace["technology"].keys())})
+
+    dims = dict(mode="m", node_loc="nl", technology="t", time="h", year_act="ya")
+
+    # Use "nl" on scaling quantity to align with parameters modified
+    _q_scale = rename_dims(q_scale, {"n": "nl"}) if "n" in q_scale.dims else q_scale
+
+    # Copy data for certain parameters with renamed technology & commodity
+    result = dict()
+    for name, scale in (
+        ("input", False),
+        ("output", False),
+        ("capacity_factor", False),
+        ("emission_factor", False),
+        # Historical
+        ("historical_activity", True),
+        # Constraints
+        ("growth_activity_lo", False),
+        ("growth_activity_up", False),
+        ("bound_activity_lo", True),
+        ("bound_activity_up", True),
+        ("bound_new_capacity_lo", True),
+        ("bound_new_capacity_up", True),
+        ("bound_total_capacity_lo", True),
+        ("bound_total_capacity_up", True),
+        ("growth_activity_lo", False),
+        ("growth_activity_up", False),
+        ("initial_activity_lo", True),
+        ("initial_activity_up", True),
+        ("soft_activity_lo", False),
+        ("soft_activity_up", False),
+        ("growth_new_capacity_lo", False),
+        ("growth_new_capacity_up", False),
+        ("initial_new_capacity_lo", True),
+        ("initial_new_capacity_up", True),
+        ("soft_new_capacity_lo", False),
+        ("soft_new_capacity_up", False),
+    ):
+        if scale:
+            # Scale data for certain parameters
+            df = (
+                data_for_quantity("par", name, "value", scenario, config=f_short)
+                .pipe(mul, _q_scale)
+                .pipe(as_message_df, name, dims, {})
+                .pop(name)
+            )
+        else:
+            # Prepare filters
+            _f = deepcopy(f_long)
+            if name == "relation_activity":
+                # Only copy relation_activity data for certain relations
+                _f["filters"].update(relation=relations)
+
+            df = scenario.par(name, **_f)
+
+        if not len(df):
+            continue
+
+        result[name] = df.replace(replace)
+
+        # if name in (
+        #     "historical_activity",
+        #     "output",
+        # ):
+        #     print(name)
+        #     print(result[name].to_string())
+
+    log.info(f"Data for {len(result)} parameters")
+
+    return result
+
+
+def get_afofi_commodity_shares() -> Quantity:
+    """Wrap MESSAGE_Buildings code that queries the ECE IEA database.
+
+    This code:
+
+    - Is not packaged; so its location must be added to sys.path; see
+      buildings.Config.__post_init__().
+    - Has no documentation.
+    - Returns a 2-tuple of pd.DataFrame; the first pertains to rc_therm, the second to
+      rc_spec.
+    - Index axis named "regions", with indices like "AFR". These are the R12 nodes,
+      except the codes do not match codes like "R12_AFR" in the scenario. The code does
+      not support other codelists.
+    - Columns axis named "flow_code", with a single column named "perc_afofi".
+    - Values like 0.152, i.e. shares: note this contradicts "perc"ent in the function
+      and column name indicating percent values like 15.2.
+
+    Returns
+    -------
+    Quantity
+        with dimensions (n, c); c including "rc_spec" and "rc_therm".
+    """
+    from utils.rc_afofi import return_PERC_AFOFI  # type: ignore
+
+    # Invoke the function
+    therm, spec = return_PERC_AFOFI()
+
+    # - Rename dimensions
+    # - Prepend "R12_" to node codes.
+    # - Use "rc_therm" or "rc_spec" for the original tech to which the share is
+    # - applicable
+    dfs = [
+        df.rename_axis("n", axis=0)
+        .rename_axis("c", axis=1)
+        .rename(index=lambda s: f"R12_{s}", columns={"perc_afofi": f"rc_{name}"})
+        for name, df in (("therm", therm), ("spec", spec))
+    ]
+
+    # - Combine to a single pd.Series with multi-index
+    # - Convert to Quantity
+    return Quantity(pd.concat(dfs).stack(), name="afofi share")
+
+
+def get_afofi_technology_shares(c_shares, technologies) -> Quantity:
+    """Compute AFOFI shares by technology from shares by commodity."""
+    from genno.computations import aggregate, mul, rename_dims
+
+    agg = {}
+    weight = {}
+
+    for t in technologies:
+        agg[t] = {
+            "h2_fc_RC": ["rc_spec", "rc_therm"],
+            "sp_el_RC": ["rc_spec"],
+        }.get(t, ["rc_therm"])
+        weight[t] = {"h2_fc_rc": 0.5}.get(t, 1.0)
+
+    return (
+        c_shares.pipe(rename_dims, {"c": "t"})
+        .pipe(aggregate, {"t": agg}, keep=False)
+        .pipe(mul, Quantity(pd.Series(weight).rename_axis("t")))
+    )
+
+
 def prepare_data(
     scenario: message_ix.Scenario,
     info: ScenarioInfo,
@@ -274,78 +428,59 @@ def prepare_data(
     relations: List[str],
 ) -> Dict[str, pd.DataFrame]:
     """Derive data for MESSAGEix-Buildings from `scenario`."""
-    from utils.rc_afofi import return_PERC_AFOFI  # type: ignore
 
-    # Accumulate a list of data frames for each parameter
-    result = defaultdict(list)
+    # Data frames for each parameter
+    result = dict()
 
-    # Use code from the MESSAGE_Buildings repo that queries the ECE IEA database
-    perc_afofi_therm, perc_afofi_spec = return_PERC_AFOFI()
-
-    # Create new demands for AFOFI based on percentages between 2010 and 2015.
     # NB on a second pass (after main() has already run once), rc_spec and rc_therm have
-    #    been stripped out, so `dd_replace` and `afofi_dd` are empty.
-    afofi_dd = scenario.par(
-        "demand", filters={"commodity": ["rc_spec", "rc_therm"], "year": info.Y}
-    ).assign(commodity=lambda df: df["commodity"].str.replace("rc", "afofi"))
+    #    been stripped out, so `afofi_dd` is empty.
 
-    # NB(PNK) this probably does not need to be a loop
-    for reg in perc_afofi_therm.index:
-        # Boolean mask for rows matching this `reg`
-        mask = afofi_dd["node"].str.endswith(reg)
+    # Mapping from original to generated commodity names
+    c_map = {f"rc_{name}": f"afofi_{name}" for name in ("spec", "therm")}
 
-        # NB(PNK) this could probably be simplified using groupby()
-        afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_therm"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_therm"), "value"]
-            * perc_afofi_therm.loc[reg][0]
-        )
-        afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_spec"), "value"] = (
-            afofi_dd.loc[mask & (afofi_dd.commodity == "afofi_spec"), "value"]
-            * perc_afofi_spec.loc[reg][0]
-        )
-    result["demand"].append(afofi_dd)
+    # Retrieve shares of AFOFI within rc_spec or rc_therm; dimensions (c, n). These
+    # values are based on 2010 and 2015 data; see the code for details.
+    c_share = get_afofi_commodity_shares()
+
+    # Retrieve existing demands
+    filters = dict(filters={"c": ["rc_spec", "rc_therm"], "y": info.Y})
+    afofi_dd = data_for_quantity("par", "demand", "value", scenario, config=filters)
+
+    # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
+    # - Relabel commodities.
+    tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
+
+    # Convert back to a MESSAGE data frame
+    dims = dict(commodity="c", node="n", level="l", year="y", time="h")
+    result.update(as_message_df(tmp, "demand", dims, {}))
 
     # Copy technology parameter values from rc_spec and rc_therm to new afofi. Again,
     # once rc_(spec|therm) are stripped, .par() returns nothing here, so rc_techs is
     # empty and the following loop does not run
 
+    # Identify technologies that output to rc_spec or rc_therm
     rc_techs = scenario.par("output", filters={"commodity": ["rc_spec", "rc_therm"]})[
         "technology"
     ].unique()
 
-    # NB(PNK) this probably does not need to be a loop
-    for tech_orig in rc_techs:
-        # Filters for retrieving data
-        filters = dict(filters={"technology": tech_orig})
+    # Mapping from source to generated names for scale_and_replace
+    replace = {
+        "commodity": c_map,
+        "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs},
+    }
+    # Compute shares with dimensions (t, n) for scaling parameter data
+    t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
 
-        # Derived name of new technology
-        tech_new = re.sub("(rc|RC)", "afofi", tech_orig)
-
-        # Copy data for input, capacity_factor, and emission_factor
-        for name in ("input", "capacity_factor", "emission_factor"):
-            result[name].append(
-                scenario.par(name, **filters).assign(technology=tech_new)
-            )
-
-        # Replace commodity name in output
-        name = "output"
-        result[name].append(
-            scenario.par(name, **filters).assign(
-                technology=tech_new,
-                commodity=lambda df: df["commodity"].str.replace("rc", "afofi"),
-            )
-        )
-
-        # Only copy relation_activity data for certain relations
-        name = "relation_activity"
-        filters["filters"].update(relation=relations)
-        result[name].append(scenario.par(name, **filters).assign(technology=tech_new))
+    merge_data(
+        result, scale_and_replace(scenario, replace, t_shares, relations=relations)
+    )
 
     # Create new technologies for building energy
 
     # Mapping from commodity to base model's *_rc technology
     rc_tech_fuel = {"lightoil": "loil_rc", "electr": "elec_rc", "d_heat": "heat_rc"}
 
+    data = defaultdict(list)
     # Add for fuels above
     for fuel in prices["commodity"].unique():
         # Find the original rc technology for the fuel
@@ -373,25 +508,25 @@ def prepare_data(
                 ("relation_activity", dict(relation=relations), {}),
             ):
                 filters["technology"] = tech_orig
-                result[name].append(
+                data[name].append(
                     scenario.par(name, filters=filters).assign(
                         technology=tech_new, **extra
                     )
                 )
 
     # Concatenate data frames together
-    data = {k: pd.concat(v) for k, v in result.items()}
+    merge_data(result, {k: pd.concat(v) for k, v in data.items()})
     log.info(
-        "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in data.items())
+        "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in result.items())
     )
 
     if with_materials:
         # Set up buildings-materials linkage
-        merge_data(data, materials(scenario, info, sturm_r, sturm_c))
+        merge_data(result, materials(scenario, info, sturm_r, sturm_c))
 
-    merge_data(data, bio_backstop(scenario))
+    merge_data(result, bio_backstop(scenario))
 
-    return data
+    return result
 
 
 def prune_spec(spec: Spec, data: Dict[str, pd.DataFrame]) -> None:
