@@ -1,0 +1,90 @@
+name: MESSAGEix-Transport
+
+on:
+  # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
+  pull_request:
+    branches: [ main, dev ]
+  # push:
+  #   branches: [ main, dev ]
+  schedule:
+  # 01:00 UTC = 02:00 CET = 03:00 CEST
+  - cron: "0 1 * * *"
+  workflow_dispatch: {}
+
+# Cancel previous runs that have not completed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: self-hosted
+
+    # For IIASA self-hosted runner only
+
+    steps:
+    - uses: actions/setup-java@v3
+      with:
+        distribution: temurin
+        java-version: "17"
+
+    - name: Update Git LFS configuration
+      run: |
+        git lfs --version
+
+    # Steps from here to ##### are identical to pytest.yaml
+
+    - name: Check out message_data
+      uses: actions/checkout@v3
+      with:
+        path: message_data
+        # lfs: true
+        submodules: true
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Fetch Git LFS files
+      working-directory: message_data
+      run: git lfs checkout
+
+    # Other repositories required for testing
+
+    - uses: actions/setup-python@v4
+      with:
+        # Latest version testable on GitHub Actions
+        # Latest release 3.11 is pending wheels for cx-Oracle
+        python-version: "3.10"
+        cache: pip
+        cache-dependency-path: "**/pyproject.toml"
+
+    - name: Upgrade pip
+      run: python -m pip install --upgrade pip
+
+    - uses: iiasa/actions/setup-gams@main
+      with:
+        version: 35.2.0
+        license: ${{ secrets.GAMS_LICENSE }}
+
+    - name: Install package; upgrade dependencies
+      run: pip install --upgrade --upgrade-strategy=eager --editable ./message_data[dl,scgen,tests,transport]
+
+    # By default, the above installs ixmp, message_ix, and message-ix-models
+    # from PyPI. To run against unreleased code (on `main`, or other branches
+    # for open PRs), temporarily uncomment the lines below and edit as
+    # appropriate. DO NOT merge such changes to `main`. message-ix-models is
+    # released frequently and should always be installed from PyPI.
+    - name: Force upgrade to unreleased ixmp, message_ix, and/or message-ix-models
+      run: |
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
+        pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
+        pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
+
+    - name: Build, solve, and report MESSAGEix-Transport
+      working-directory: message_data
+      env:
+        BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline#17"
+        DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
+      run: |
+        mix-models config show
+        mix-models --url="${{ env.BASE }}" transport build --dest="${{ env.DEST }}"
+        message-ix --url="${{ env.DEST }}" solve
+        mix-models --url="${{ env.DEST }}" report -m model.transport "transport all"
