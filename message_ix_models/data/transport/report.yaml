@@ -130,7 +130,7 @@ general:
 - key: transport all
   comp: null
   inputs:
-  # - transport plots
+  - transport plots
   - transport iamc all
 
 # Groups of keys for re-use
