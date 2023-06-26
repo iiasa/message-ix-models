@@ -278,7 +278,34 @@ def scale_and_replace(
     replace: Dict,
     q_scale: Quantity,
     relations: List[str],
-):
+    relax: float = 0.0,
+) -> Mapping[str, pd.DataFrame]:
+    """Return scaled parameter data for certain technologies.
+
+    The function acts on the list of parameters below.
+
+    - For some parameters (scale is None), data are copied.
+    - For other parameters, data are scaled by multiplication with `q_scale`.
+
+      - For parameters with a relative sense, e.g. ``growth_activity_lo``, no further
+        scaling is applied.
+      - For parameters with an absolute sense, e.g. ``bound_activity_lo``, values are
+        additionally scaled by a “relaxation” factor of (1 + `relax`) for upper bounds
+        or (1 - `relax`) for lower bounds. Setting `relax` to 0 (the default) disables
+        this behaviour.
+
+    These operations are applied to all data for which the ``technology`` IDs appears
+    in ``replace["technology"]``.
+
+    Finally, ``replace`` is applied to optionally replace technology IDs or IDs for
+    other dimensions.
+
+    Returns
+    -------
+    dict of (str -> .DataFrame)
+        Keys are parameter names;
+    """
+
     # Filters for retrieving data
     f_long = dict(filters={"technology": list(replace["technology"].keys())})
     f_short = dict(filters={"t": list(replace["technology"].keys())})
@@ -291,43 +318,36 @@ def scale_and_replace(
     # Copy data for certain parameters with renamed technology & commodity
     result = dict()
     for name, scale in (
-        ("input", False),
-        ("output", False),
-        ("capacity_factor", False),
-        ("emission_factor", False),
+        ("input", None),
+        ("output", None),
+        ("capacity_factor", None),
+        ("emission_factor", None),
+        ("relation_activity", None),
         # Historical
-        ("historical_activity", True),
+        ("historical_activity", 1.0),
         # Constraints
-        ("growth_activity_lo", False),
-        ("growth_activity_up", False),
-        ("bound_activity_lo", True),
-        ("bound_activity_up", True),
-        ("bound_new_capacity_lo", True),
-        ("bound_new_capacity_up", True),
-        ("bound_total_capacity_lo", True),
-        ("bound_total_capacity_up", True),
-        ("growth_activity_lo", False),
-        ("growth_activity_up", False),
-        ("initial_activity_lo", True),
-        ("initial_activity_up", True),
-        ("soft_activity_lo", False),
-        ("soft_activity_up", False),
-        ("growth_new_capacity_lo", False),
-        ("growth_new_capacity_up", False),
-        ("initial_new_capacity_lo", True),
-        ("initial_new_capacity_up", True),
-        ("soft_new_capacity_lo", False),
-        ("soft_new_capacity_up", False),
+        ("growth_activity_lo", None),
+        ("growth_activity_up", None),
+        ("bound_activity_lo", 1 - relax),
+        ("bound_activity_up", 1 + relax),
+        ("bound_new_capacity_lo", 1 - relax),
+        ("bound_new_capacity_up", 1 + relax),
+        ("bound_total_capacity_lo", 1 - relax),
+        ("bound_total_capacity_up", 1 + relax),
+        ("growth_activity_lo", None),
+        ("growth_activity_up", None),
+        ("initial_activity_lo", 1 - relax),
+        ("initial_activity_up", 1 + relax),
+        ("soft_activity_lo", None),
+        ("soft_activity_up", None),
+        ("growth_new_capacity_lo", None),
+        ("growth_new_capacity_up", None),
+        ("initial_new_capacity_lo", 1 - relax),
+        ("initial_new_capacity_up", 1 + relax),
+        ("soft_new_capacity_lo", None),
+        ("soft_new_capacity_up", None),
     ):
-        if scale:
-            # Scale data for certain parameters
-            df = (
-                data_for_quantity("par", name, "value", scenario, config=f_short)
-                .pipe(mul, _q_scale)
-                .pipe(as_message_df, name, dims, {})
-                .pop(name)
-            )
-        else:
+        if scale is None:
             # Prepare filters
             _f = deepcopy(f_long)
             if name == "relation_activity":
@@ -335,12 +355,24 @@ def scale_and_replace(
                 _f["filters"].update(relation=relations)
 
             df = scenario.par(name, **_f)
+        else:
+            # - Retrieve data as a genno.quantity.
+            # - Multiply by scaling factors.
+            # - Convert back to message_ix data frame. as_message_df() returns
+            #   dict (str -> pd.DataFrame), so pop the single value.
+            df = (
+                data_for_quantity("par", name, "value", scenario, config=f_short)
+                .pipe(mul, _q_scale, Quantity(scale))
+                .pipe(as_message_df, name, dims, {})
+                .pop(name)
+            )
 
         if not len(df):
             continue
 
         result[name] = df.replace(replace)
 
+        # DEBUG
         # if name in (
         #     "historical_activity",
         #     "output",
@@ -472,7 +504,8 @@ def prepare_data(
     t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
 
     merge_data(
-        result, scale_and_replace(scenario, replace, t_shares, relations=relations)
+        result,
+        scale_and_replace(scenario, replace, t_shares, relations=relations, relax=0.2),
     )
 
     # Create new technologies for building energy
