@@ -200,6 +200,7 @@ def get_computer(
         module.prepare_computer(c)
 
     path = context.get_local_path("transport", "build.svg")
+    path.parent.mkdir(exist_ok=True)
     c.visualize(filename=path, key="add transport data")
     log.info(f"Visualization written to {path}")
 
