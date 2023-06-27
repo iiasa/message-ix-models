@@ -49,14 +49,11 @@ def require_compat(c: Computer) -> None:
 
 def _gen0(c: Computer, *keys) -> None:
     """Aggregate using groups of transport technologies."""
-    for k1 in keys:
-        k2 = k1.add_tag("transport agg 1")
-        k3 = k1.add_tag("transport agg 2")
-        k4 = k1.add_tag("transport")
+    for k0 in keys:
         # Reference the function to avoid the genno magic which would treat as sum()
-        c.add(k2, aggregate, k1, "nl::world agg", False)
-        c.add(k3, aggregate, k2, "t::transport agg", False)
-        c.add("select", k4, k3, "t::transport modes 1", sums=True)
+        k = c.add(k0.add_tag("world agg"), aggregate, k0, "nl::world agg", False)
+        k = c.add(k0.add_tag("transport agg"), aggregate, k, "t::transport agg", False)
+        c.add("select", k0.add_tag("transport"), k, "t::transport modes 1", sums=True)
 
 
 def _gen1(c: Computer, *keys) -> None:
