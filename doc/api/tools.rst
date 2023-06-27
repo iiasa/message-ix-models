@@ -100,13 +100,13 @@ IAMC data structures (:mod:`.tools.iamc`)
 IEA WEO data
 ============
 
-:mod:`.tools.iea.costs` reads data from the IEA WEO 2022 and prepares data for the MESSAGE cost parameters (``fix_cost`` and ``inv_cost``, but not ``var_cost``).
+:mod:`.tools.costs.weo` reads data from the IEA WEO 2022 and prepares data for the MESSAGE cost parameters (``fix_cost`` and ``inv_cost``, but not ``var_cost``).
 
 The function :func:`.get_region_differentiated_costs` displays all the steps from reading WEO 2022 data to producing data suitable for use in a MESSAGE model.
 
-.. currentmodule:: message_ix_models.tools.iea.weo
+.. currentmodule:: message_ix_models.tools.costs.weo
 
-.. automodule:: message_ix_models.tools.iea.weo
+.. automodule:: message_ix_models.tools.costs.weo
    :members:
 
 .. _tools-wb:
