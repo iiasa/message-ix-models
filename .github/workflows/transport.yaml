@@ -23,6 +23,7 @@ jobs:
     env:
       BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7"
       DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
+      report-key: "transport all"
 
     # For IIASA self-hosted runner only
 
@@ -91,4 +92,4 @@ jobs:
 
     - name: Report MESSAGEix-Transport
       run: |
-        mix-models --url="${{ env.DEST }}" report -m model.transport "transport all"
+        mix-models --url="${{ env.DEST }}" report -m model.transport "${{ env.report-key }}"
