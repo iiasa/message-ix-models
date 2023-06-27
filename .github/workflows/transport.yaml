@@ -84,6 +84,22 @@ jobs:
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
         pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
+    - name: Configure ixmp
+      run: |
+        from ixmp import config
+
+        config.add_platform(
+            "ixmp-dev",
+            "jdbc",
+            "oracle",
+            "x8oda.iiasa.ac.at:1521/PIXMP2.iiasa.ac.at",
+            "ixmp_dev",
+            "ixmp_dev",
+            jvmargs="-Xmx16G",
+        )
+        config.save()
+      shell: python
+
     - name: Build and solve MESSAGEix-Transport
       run: |
         mix-models config show
