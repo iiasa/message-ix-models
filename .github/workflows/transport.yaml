@@ -81,7 +81,7 @@ jobs:
     - name: Build, solve, and report MESSAGEix-Transport
       working-directory: message_data
       env:
-        BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline#17"
+        BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7"
         DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
       run: |
         mix-models config show

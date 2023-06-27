@@ -157,7 +157,9 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
    - a ‘new’ structure in which the ``emission_factor`` parameter is actually used.
 
 ``ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline#17``
-   regions=R12, years=B. Based on ENGAGE, without MACRO calibration.
+   years=B.
+   Based on ENGAGE, without MACRO calibration.
+   This scenario has a non-standard ``node`` code list: there are 12 nodes, as in the ``R12`` list, but their IDs are e.g. ``R11_CHN``, ``R11_RCPA``, etc.
 
 ``ixmp://ixmp-dev/MESSAGEix-GLOBIOM_R12_CHN/baseline_macro#3``
    regions=R12, years=B. Includes MACRO calibration
