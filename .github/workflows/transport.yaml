@@ -76,8 +76,9 @@ jobs:
     # for open PRs), temporarily uncomment the lines below and edit as
     # appropriate. DO NOT merge such changes to `main`. message-ix-models is
     # released frequently and should always be installed from PyPI.
-    - name: Force upgrade to unreleased ixmp, message_ix, and/or message-ix-models
+    - name: Force upgrade to unreleased dependencies
       run: |
+        pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@enh/2023-W26"
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
         pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
