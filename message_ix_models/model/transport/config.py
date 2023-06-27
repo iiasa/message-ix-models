@@ -347,7 +347,8 @@ class Config(ConfigHelper):
         else:
             if context.model.regions != regions:
                 log.info(
-                    f"Set Context.model.regions = {regions!r} from scenario contents"
+                    f"Override Context.model.regions={context.model.regions!r} with "
+                    f"{regions!r} from scenario contents"
                 )
                 context.model.regions = regions
 
