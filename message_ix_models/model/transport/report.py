@@ -51,8 +51,10 @@ def _gen0(c: Computer, *keys) -> None:
     """Aggregate using groups of transport technologies."""
     for k0 in keys:
         # Reference the function to avoid the genno magic which would treat as sum()
-        k = c.add(k0.add_tag("world agg"), aggregate, k0, "nl::world agg", False)
-        k = c.add(k0.add_tag("transport agg"), aggregate, k, "t::transport agg", False)
+        # NB aggregation on the nl dimension *could* come first, but this can use a lot
+        #    of memory when applied to e.g. out:*: for a full global model.
+        k = c.add(k0.add_tag("transport agg"), aggregate, k0, "t::transport agg", False)
+        k = c.add(k0.add_tag("world agg"), aggregate, k, "nl::world agg", False)
         c.add("select", k0.add_tag("transport"), k, "t::transport modes 1", sums=True)
 
 
