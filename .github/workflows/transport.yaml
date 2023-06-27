@@ -20,6 +20,10 @@ jobs:
   report:
     runs-on: self-hosted
 
+    env:
+      BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7"
+      DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
+
     # For IIASA self-hosted runner only
 
     steps:
@@ -78,13 +82,12 @@ jobs:
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
         pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
-    - name: Build, solve, and report MESSAGEix-Transport
-      working-directory: message_data
-      env:
-        BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7"
-        DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
+    - name: Build and solve MESSAGEix-Transport
       run: |
         mix-models config show
         mix-models --url="${{ env.BASE }}" transport build --dest="${{ env.DEST }}"
         message-ix --url="${{ env.DEST }}" solve
+
+    - name: Report MESSAGEix-Transport
+      run: |
         mix-models --url="${{ env.DEST }}" report -m model.transport "transport all"
