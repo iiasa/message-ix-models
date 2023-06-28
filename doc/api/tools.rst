@@ -116,3 +116,16 @@ World Bank structures (:mod:`.tools.wb`)
 
 .. automodule:: message_ix_models.tools.wb
    :members:
+
+
+GEA and SSP technological learning data
+=======================================
+
+:mod:`.tools.costs.learning` reads technology cost reduction rates data from the Global Energy Assessment (GEA) and determines cost reduction (learning) rates under SSP scenarios for technologies.
+
+The function :func:`.get_cost_reduction_data` pulls the raw GEA data and calculates learning rates under SSP1-5 scenarios.
+
+.. currentmodule:: message_ix_models.tools.costs.learning
+
+.. automodule:: message_ix_models.tools.costs.learning
+   :members:
