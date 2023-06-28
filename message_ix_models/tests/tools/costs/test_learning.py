@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 from message_ix_models.tools.costs.learning import (
     DICT_TECH_SSP_LEARNING,
