@@ -1,5 +1,3 @@
-"""Code for handling IEA WEO data"""
-
 from itertools import product
 from typing import Dict
 
