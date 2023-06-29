@@ -129,3 +129,16 @@ The function :func:`.get_cost_reduction_data` pulls the raw GEA data and calcula
 
 .. automodule:: message_ix_models.tools.costs.learning
    :members:
+
+SSP GDP data
+============
+
+:mod:`.tools.costs.gdp` uses GDP per capita data from the SSP database, along with the IEA WEO data, to develop linear relationships between GDP and technology costs.
+
+The function :func:`.get_gdp_data` pulls in the raw SSP GDP data and calculates regional ratios of GDP.
+The function :func:`.linearly_regress_tech_cost_vs_gdp_ratios` uses the regional GDP ratios and the regional technology cost ratios to compute a linear regression between the two.
+
+.. currentmodule:: message_ix_models.tools.costs.gdp
+
+.. automodule:: message_ix_models.tools.costs.gdp
+   :members:
