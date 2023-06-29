@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import linregress
+from scipy.stats import linregress  # type: ignore
 
 from message_ix_models.util import package_data_path
 
