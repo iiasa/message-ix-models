@@ -1,5 +1,3 @@
-"""Code to calculate SSP technological learning"""
-
 from typing import Dict
 
 import numpy as np
