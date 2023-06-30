@@ -1,13 +1,10 @@
 import numpy as np
 
-from message_ix_models.tools.costs.learning import (
-    DICT_TECH_SSP_LEARNING,
-    get_cost_reduction_data,
-)
+from message_ix_models.tools.costs.learning import get_cost_reduction_data
 
 
 def test_get_cost_reduction_data():
-    res = get_cost_reduction_data(DICT_TECH_SSP_LEARNING)
+    res = get_cost_reduction_data()
 
     # Check the manually assigned GEA values for gas_ppl is correct
     assert np.all(
