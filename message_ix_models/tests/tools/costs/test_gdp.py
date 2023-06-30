@@ -5,8 +5,6 @@ from message_ix_models.tools.costs.gdp import (
     linearly_regress_tech_cost_vs_gdp_ratios,
 )
 from message_ix_models.tools.costs.weo import (
-    DICT_COST_COLS,
-    DICT_TECH_ROWS,
     DICT_WEO_R11,
     calculate_region_cost_ratios,
     get_weo_data,
@@ -32,16 +30,9 @@ def test_get_gdp_data():
     assert max(res.loc[res.r11_region == "NAM", "gdp_ratio_oecd"]) == 1.0
 
 
-df_gdp = get_gdp_data()
-df_weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
-df_tech_cost_ratios = calculate_region_cost_ratios(df_weo, DICT_WEO_R11)
-
-dff = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
-
-
 def test_linearly_regress_tech_cost_vs_gdp_ratios():
     df_gdp = get_gdp_data()
-    df_weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
+    df_weo = get_weo_data()
     df_tech_cost_ratios = calculate_region_cost_ratios(df_weo, DICT_WEO_R11)
 
     res = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
