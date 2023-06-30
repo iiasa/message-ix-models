@@ -315,23 +315,11 @@ DICT_TECH_REF_FOM = {
 }
 
 
-def get_weo_data(
-    dict_tech_rows: Dict[str, list[object]],
-    dict_cols: Dict[str, str],
-) -> pd.DataFrame:
+def get_weo_data() -> pd.DataFrame:
     """Read in raw WEO investment/capital costs and O&M costs data.
 
     Data are read for all technologies and for STEPS scenario only from the file
     :file:`data/iea/WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb`.
-
-    Parameters
-    ----------
-    dict_tech_rows : str -> tuple of (str, int)
-        Keys are the IDs of the technologies for which data are read.
-        Values give the sheet name, and the start row.
-    dict_cols : str -> tuple of (str, str)
-        Keys are the cost types.
-        Values are the columns in the spreadsheets corresponding to the cost types.
 
     Returns
     -------
@@ -345,8 +333,9 @@ def get_weo_data(
         - units: "usd_per_kw"
         - value: the cost value
     """
-    # Could possibly use the global directly instead of accepting it as an argument
-    # dict_tech_rows = DICT_TECH_ROWS
+
+    dict_rows = DICT_TECH_ROWS
+    dict_cols = DICT_COST_COLS
 
     # Read in raw data file
     file_path = package_data_path(
@@ -356,13 +345,13 @@ def get_weo_data(
     # Loop through each technology and cost type
     # Read in data and convert to long format
     dfs_cost = []
-    for tech_key, cost_key in product(dict_tech_rows, dict_cols):
+    for tech_key, cost_key in product(dict_rows, dict_cols):
         df = (
             pd.read_excel(
                 file_path,
-                sheet_name=dict_tech_rows[tech_key][0],
+                sheet_name=dict_rows[tech_key][0],
                 header=None,
-                skiprows=dict_tech_rows[tech_key][1],
+                skiprows=dict_rows[tech_key][1],
                 nrows=8,
                 usecols=dict_cols[cost_key],
             )
@@ -488,17 +477,22 @@ def calculate_region_cost_ratios(
 
     sub_merge = sub_mea.merge(sub_fsu, on=["technology", "year", "cost_type"])
 
-    df_cost_ratio_fix = pd.concat(
-        [
-            df_cost_ratio[
-                ~(
-                    (df_cost_ratio.cost_ratio.isnull())
-                    & (df_cost_ratio.r11_region == "MEA")
-                )
-            ],
-            sub_merge,
-        ]
-    ).reset_index(drop=1)
+    df_cost_ratio_fix = (
+        pd.concat(
+            [
+                df_cost_ratio[
+                    ~(
+                        (df_cost_ratio.cost_ratio.isnull())
+                        & (df_cost_ratio.r11_region == "MEA")
+                    )
+                ],
+                sub_merge,
+            ]
+        )
+        .reset_index(drop=1)
+        .rename(columns={"technology": "weo_technology"})
+        .drop(columns={"year"})
+    )
 
     return df_cost_ratio_fix
 
@@ -817,7 +811,9 @@ def adj_nam_cost_reference(
         )
 
 
-def get_region_differentiated_costs() -> pd.DataFrame:
+def get_region_differentiated_costs(
+    df_weo, df_orig_message, df_cost_ratios
+) -> pd.DataFrame:
     """Perform all calculations needed to get regionally-differentiated costs.
 
     The algorithm is roughly:
@@ -827,6 +823,15 @@ def get_region_differentiated_costs() -> pd.DataFrame:
     2. Adjust costs for the NAM region with reference to older MESSAGE data.
     3. Compute cost ratios across regions, relative to ``*_NAM``, based on (1).
     4. Apply the ratios from (3) to the adjusted data (2).
+
+    Parameters
+    ----------
+    df_weo : pandas.DataFrame
+        Output of `get_weo_data`
+    df_orig_message : pandas.DataFrame
+        Output of `get_cost_assumption_data`
+    df_cost_ratios : pandas.DataFrame
+        Output of `calculate_region_cost_ratios`
 
     Returns
     -------
@@ -840,12 +845,6 @@ def get_region_differentiated_costs() -> pd.DataFrame:
         - unit
 
     """
-    # Get WEO data
-    df_weo = get_weo_data(DICT_TECH_ROWS, DICT_COST_COLS)
-
-    # Get investment and fixed O&M cost assumptions data from older MESSAGE model
-    df_orig_message = get_cost_assumption_data()
-
     # Get comparison of original and WEO NAM costs
     df_nam_costs = compare_original_and_weo_nam_costs(
         df_weo, df_orig_message, DICT_WEO_TECH, DICT_WEO_R11
@@ -871,16 +870,9 @@ def get_region_differentiated_costs() -> pd.DataFrame:
         "weo_technology",
     ] = "marine"
 
-    # Get ratios
-    df_ratios = (
-        calculate_region_cost_ratios(df_weo, DICT_WEO_R11)
-        .rename(columns={"technology": "weo_technology"})
-        .drop(columns={"year"})
-    )
-
     # Merge costs
     df_regiondiff = pd.merge(
-        df_ratios, df_nam_adj_costs_only, on=["weo_technology", "cost_type"]
+        df_cost_ratios, df_nam_adj_costs_only, on=["weo_technology", "cost_type"]
     )
 
     # For stor_ppl and h2_elec, make ratios = 1 (all regions have the same cost)
