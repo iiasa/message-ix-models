@@ -130,7 +130,7 @@ def linearly_regress_tech_cost_vs_gdp_ratios(
         ["scenario", "r11_region", "gdp_ratio_nam"]
     ].reset_index(drop=1)
     cost_capital_2021 = tech_cost_ratios[
-        ["technology", "r11_region", "cost_type", "cost_ratio"]
+        ["weo_technology", "r11_region", "cost_type", "cost_ratio"]
     ].reset_index(drop=1)
 
     df_gdp_cost = (
@@ -141,13 +141,13 @@ def linearly_regress_tech_cost_vs_gdp_ratios(
                 "cost_type",
                 "scenario",
                 "r11_region",
-                "technology",
+                "weo_technology",
                 "gdp_ratio_nam",
                 "cost_ratio",
             ],
             axis=1,
         )
-        .groupby(["cost_type", "scenario", "technology"])
+        .groupby(["cost_type", "scenario", "weo_technology"])
         .apply(lambda x: pd.Series(linregress(x["gdp_ratio_nam"], x["cost_ratio"])))
         .rename(
             columns={0: "slope", 1: "intercept", 2: "rvalue", 3: "pvalue", 4: "stderr"}
