@@ -881,7 +881,7 @@ def get_region_differentiated_costs(
     ] = 1.0
 
     # Calculate region-specific costs
-    df_regiondiff["cost_region"] = (
+    df_regiondiff["cost_region_2021"] = (
         df_regiondiff["cost_NAM_adjusted"] * df_regiondiff["cost_ratio"]
     )
 
