@@ -61,7 +61,7 @@ DICT_TECH_SSP_LEARNING = {
 }
 
 
-def get_cost_reduction_data(input_dict_tech_learning: Dict) -> pd.DataFrame:
+def get_cost_reduction_data() -> pd.DataFrame:
     """Create SSP technological learning data
 
     Raw data from GEA on cost reduction for technologies are read from \
@@ -75,13 +75,6 @@ def get_cost_reduction_data(input_dict_tech_learning: Dict) -> pd.DataFrame:
         values for that technology. If the SSP learning rate is "medium" or "high", \
         then the cost reduction rate is the median of the GEA scenarios or the maximum \
         of the GEA scenarios, respectively.
-
-    Parameters
-    ----------
-    input_dict_tech_learning : Dict
-        Keys are MESSAGE technology types.
-        Values are the learning rate categories (low, medium, or high) under each SSP \
-            scenario.
 
     Returns
     -------
@@ -100,6 +93,9 @@ def get_cost_reduction_data(input_dict_tech_learning: Dict) -> pd.DataFrame:
         - SSPX_cost_reduction: the cost reduction (%) of the technology under the \
             specific scenario
     """
+
+    input_dict_tech_learning = DICT_TECH_SSP_LEARNING
+
     # Read in raw data files
     gea_file_path = package_data_path("costs", "gea_cost_reduction.csv")
 
