@@ -399,7 +399,8 @@ def prepare_computer(c: Computer):
 
     # Plots
     for name, cls in PLOTS.items():
-        if "demand" not in name:
+        # Skip all but post-solve demand plots
+        if "-exo" in name:
             continue
         keys.append(f"plot {name}")
         queue.append((keys[-1], cls.make_task()))
