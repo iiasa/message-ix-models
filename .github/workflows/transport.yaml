@@ -108,4 +108,5 @@ jobs:
 
     - name: Report MESSAGEix-Transport
       run: |
+        mix-models --url="${{ env.DEST }}" report -m model.transport --dry-run "${{ env.report-key }}"
         mix-models --url="${{ env.DEST }}" report -m model.transport "${{ env.report-key }}"
