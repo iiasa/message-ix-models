@@ -84,8 +84,11 @@ jobs:
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
         pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
-    - name: Configure ixmp
+    - name: Configure
       run: |
+        from pathlib import Path
+
+        import message_ix_models
         from ixmp import config
 
         config.add_platform(
@@ -96,6 +99,9 @@ jobs:
             "ixmp_dev",
             "ixmp_dev",
             jvmargs="-Xmx16G",
+        )
+        config.set(
+            "message local data", Path("${{ github.workspace }}", "report"),
         )
         config.save()
       shell: python
@@ -108,5 +114,13 @@ jobs:
 
     - name: Report MESSAGEix-Transport
       run: |
+        mkdir -p ${{ github.workspace }}/report
         mix-models --url="${{ env.DEST }}" report -m model.transport --dry-run "${{ env.report-key }}"
-        mix-models --url="${{ env.DEST }}" report -m model.transport "${{ env.report-key }}"
+        mix-models --url="${{ env.DEST }}" report -m model.transport --output=${{ github.workspace }}/report "${{ env.report-key }}"
+
+    - name: Upload results as a build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: MESSAGEix-Transport
+        path: ${{ github.workspace }}/report/
+        if-no-files-found: error
