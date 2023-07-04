@@ -61,6 +61,9 @@ def _gen0(c: Computer, *keys) -> None:
 def _gen1(c: Computer, *keys) -> None:
     """Selected subsets of of transport technologies."""
     for key in keys:
+        c.add(
+            "select", key.add_tag("transport all"), key, "t::transport all", sums=True
+        )
         c.add("select", key.add_tag("ldv"), key, "t::transport LDV", sums=True)
         c.add("select", key.add_tag("non-ldv"), key, "t::transport non-ldv", sums=True)
 
@@ -133,12 +136,26 @@ def callback(rep: Reporter, context: Context) -> None:
 
     # Apply some functions that generate sub-graphs
     try:
+        # Aggregate by modes
         rep.apply(_gen0, "in", "out", "emi")
     except MissingKeyError:
         if solved:
             raise
 
-    rep.apply(_gen1, "CAP:nl-t-ya", "in:nl-t-ya-c", "inv_cost:nl-t-yv")
+    # Select only transport technologies
+    # TODO improve upstream to allow "*" here instead of explicit lists of dimensions
+    rep.apply(
+        _gen1,
+        # MESSAGE parameters
+        "fix_cost:nl-t-yv-ya",
+        "input:nl-t-yv-ya-m-no-c-l-h-ho",
+        "inv_cost:nl-t-yv",
+        "var_cost:nl-t-yv-ya-m-h",
+        # MESSAGE decision variables
+        "CAP:nl-t-ya",
+        # MESSAGE computed quantities
+        "in:nl-t-ya-c",
+    )
 
     # Add further computations (including conversions to IAMC tables) defined in a file
     rep.configure(path=private_data_path("transport", "report.yaml"))
