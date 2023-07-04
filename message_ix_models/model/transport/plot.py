@@ -171,21 +171,20 @@ class LDVTechShare1(Plot):
     inputs = ["out:nl-t-ya-c", "consumer groups"]
 
     def generate(self, data, cg):
-        data = data.rename(columns={0: "out"})
-
         # TODO do these operations in reporting for broader reuse
-        # Select a subset of commodities
-        data = data[data.c.str.contains("transport pax")]
-
+        # - Select a subset of commodities
         # - Remove the consumer group name from the technology name.
         # - Remove the prefix from the commodity name.
-        data = data.assign(
-            t=data.t.str.split(" usage by ", expand=True)[0],
-            c=data.c.str.replace("transport pax ", ""),
-        )
+        # - Discard others, e.g. non-LDV activity
 
-        # Discard others, e.g. non-LDV activity
-        data = data.query(f"c in {list(map(str, cg))}")
+        data = (
+            data[data.c.str.contains("transport pax")]
+            .assign(
+                t=lambda df: df.t.str.split(" usage by ", expand=True)[0],
+                c=lambda df: df.c.str.replace("transport pax ", ""),
+            )
+            .query(f"c in {list(map(str, cg))}")
+        )
 
         # DEBUG dump data
         data.to_csv(f"{self.basename}-1.csv")
@@ -194,7 +193,7 @@ class LDVTechShare1(Plot):
         # Select a subset of technologies
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(group_df, p9.aes(x="ya", y="out", fill="t"))
+                p9.ggplot(group_df, p9.aes(x="ya", y="value", fill="t"))
                 + p9.facet_wrap(["c"], ncol=5)
                 + p9.geom_bar(stat="identity", width=4)
                 + p9.labs(
