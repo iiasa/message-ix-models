@@ -505,7 +505,7 @@ def prepare_data(
 
     merge_data(
         result,
-        scale_and_replace(scenario, replace, t_shares, relations=relations, relax=0.2),
+        scale_and_replace(scenario, replace, t_shares, relations=relations, relax=0.05),
     )
 
     # Create new technologies for building energy
