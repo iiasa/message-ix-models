@@ -142,3 +142,15 @@ The function :func:`.linearly_regress_tech_cost_vs_gdp_ratios` uses the regional
 
 .. automodule:: message_ix_models.tools.costs.gdp
    :members:
+
+Polynomial regression of technology costs
+=========================================
+
+:mod:`.tools.costs.splines` applies a polynomial regression (degrees = 3) to each technology's projected costs in the NAM region and extracts the splines (coefficients).
+
+The function :func:`.apply_polynominal_regression_NAM_costs` uses projected technology costs in the NAM region to perform technology-level polynomial regressions and outputs coefficients and intercepts for each respective technology.
+
+.. currentmodule:: message_ix_models.tools.costs.splines
+
+.. automodule:: message_ix_models.tools.costs.splines
+   :members:
