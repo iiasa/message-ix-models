@@ -352,7 +352,7 @@ def get_weo_data() -> pd.DataFrame:
                 sheet_name=dict_rows[tech_key][0],
                 header=None,
                 skiprows=dict_rows[tech_key][1],
-                nrows=8,
+                nrows=9,
                 usecols=dict_cols[cost_key],
             )
             .set_axis(["region", "2021", "2030", "2050"], axis=1)
