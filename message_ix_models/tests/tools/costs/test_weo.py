@@ -35,6 +35,7 @@ def test_get_weo_data():
             "India",
             "Middle East",
             "Africa",
+            "Brazil",
         ]
         == result.region.unique()
     )
