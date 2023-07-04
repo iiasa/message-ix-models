@@ -113,6 +113,8 @@ module = [
   "dask.*",
   "jpype",
   "memory_profiler",
+  "scipy",
+  "sklearn",
 ]
 ignore_missing_imports = true
 
