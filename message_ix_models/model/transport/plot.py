@@ -44,7 +44,6 @@ class Plot(BasePlot):
 class InvCost0(Plot):
     basename = "inv-cost-transport"
     inputs = ["inv_cost:nl-t-yv:transport"]
-
     _title_detail = "All transport"
 
     def generate(self, data):
@@ -80,7 +79,7 @@ class InvCost2(InvCost0):
 
 class FixCost(Plot):
     basename = "fix-cost"
-    inputs = ["fix_cost:nl-t-yv-ya"]
+    inputs = ["fix_cost:nl-t-yv-ya:transport all"]
 
     def generate(self, data):
         y_max = max(data["fix_cost"])
@@ -99,7 +98,7 @@ class FixCost(Plot):
 
 class VarCost(Plot):
     basename = "var-cost"
-    inputs = ["var_cost:nl-t-yv-ya"]
+    inputs = ["var_cost:nl-t-yv-ya:transport all"]
 
     def generate(self, data):
         y_max = max(data["var_cost"])
@@ -118,7 +117,7 @@ class VarCost(Plot):
 
 class LDV_IO(Plot):
     basename = "ldv-efficiency"
-    inputs = ["input:nl-t-yv-ya"]
+    inputs = ["input:nl-t-yv-ya:transport all"]
 
     def generate(self, data):
         return (
@@ -293,7 +292,7 @@ class DemandExoCap(Plot):
 
 class EnergyCmdty(Plot):
     basename = "energy-by-cmdty"
-    inputs = ["in:nl-ya-c"]
+    inputs = ["in:nl-ya-c:transport all"]
 
     def generate(self, data):
         # Discard data for certain commodities
