@@ -129,7 +129,7 @@ def test_distance_ldv(test_context, regions):
 def test_distance_nonldv(regions):
     "Test :func:`.computations.ldv_distance`."
     # Configuration
-    config = dict(transport=dict(regions=regions))
+    config = dict(regions=regions)
 
     # Computation runs
     result = computations.distance_nonldv(config)
