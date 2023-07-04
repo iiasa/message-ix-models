@@ -482,7 +482,13 @@ def generate(context: Context) -> Workflow:
 
         if solve_model == "MESSAGE-MACRO":
             # Calibrate MACRO
-            base = wf.add_step(f"{variant} {s} with MACRO", base, add_macro)
+            base = wf.add_step(
+                f"{variant} {s} with MACRO",
+                base,
+                add_macro,
+                target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}+MACRO",
+                clone=dict(keep_solution=True),
+            )
             base = wf.add_step(
                 f"{base} solved", base, solve, solve_options=dict(model=solve_model)
             )
