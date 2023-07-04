@@ -116,6 +116,7 @@ def add_structure(c: Computer):
     )
     for id, techs in t_groups.items():
         c.add(f"t::transport {id}", quote(dict(t=techs)))
+    c.add("t::transport all", quote(dict(t=technologies)))
 
 
 def get_spec(context: Context) -> Spec:
