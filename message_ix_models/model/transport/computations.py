@@ -191,7 +191,7 @@ EEI_TECH_MAP = {
 def distance_nonldv(config: dict) -> Quantity:
     """Return annual travel distance per vehicle for non-LDV transport modes."""
     # Load from IEA EEI
-    dfs = iea_eei.get_eei_data(config["transport"]["regions"])
+    dfs = iea_eei.get_eei_data(config["regions"])
     df = (
         dfs["vehicle use"]
         .rename(columns={"region": "nl", "year": "y", "Mode/vehicle type": "t"})
