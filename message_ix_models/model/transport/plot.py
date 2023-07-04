@@ -48,7 +48,6 @@ class InvCost0(Plot):
     _title_detail = "All transport"
 
     def generate(self, data):
-        data = data.rename(columns={0: "inv_cost"})
         y_max = max(data["inv_cost"])
         unit = data["unit"].unique()[0]
 
@@ -84,7 +83,6 @@ class FixCost(Plot):
     inputs = ["fix_cost:nl-t-yv-ya"]
 
     def generate(self, data):
-        data = data.rename(columns={0: "fix_cost"})
         y_max = max(data["fix_cost"])
         unit = data["unit"].unique()[0]
 
@@ -104,7 +102,6 @@ class VarCost(Plot):
     inputs = ["var_cost:nl-t-yv-ya"]
 
     def generate(self, data):
-        data = data.rename(columns={0: "var_cost"})
         y_max = max(data["var_cost"])
         unit = data["unit"].unique()[0]
 
@@ -124,8 +121,6 @@ class LDV_IO(Plot):
     inputs = ["input:nl-t-yv-ya"]
 
     def generate(self, data):
-        data = data.rename(columns={0: "input"})
-
         return (
             p9.ggplot(data, p9.aes(x="ya", y="input", color="t"))
             + p9.theme(figure_size=(11.7, 8.3))
@@ -142,19 +137,15 @@ class LDV_IO(Plot):
 
 
 class LDVTechShare0(Plot):
-    """Only works with filter = True."""
-
     basename = "ldv-tech-share"
     inputs = ["out:nl-t-ya:transport"]
 
     def generate(self, data):
-        data = data.rename(columns={0: "out"})
-
         # # DEBUG dump data
         # data.to_csv(f"{self.basename}.csv")
 
         return (
-            p9.ggplot(data, p9.aes(x="ya", y="out", fill="t"))
+            p9.ggplot(data, p9.aes(x="ya", y="value", fill="t"))
             + p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}"))
             + p9.geom_bar(stat="identity", width=4)
             + p9.labs(
@@ -206,22 +197,24 @@ class LDVTechShare1(Plot):
             )
 
 
+def c_group(df: pd.DataFrame, cg):
+    return df.assign(
+        c_group=df.c.apply(
+            lambda v: "transport pax LDV" if any(cg_.id in v for cg_ in cg) else v
+        )
+    )
+
+
 class DemandCalibrated(Plot):
     basename = "demand"
-    inputs = ["demand:n-c-y", "c:transport", "cg"]
+    inputs = ["demand:n-c-y", "c::transport", "cg"]
 
     def generate(self, data, commodities, cg):
         # Convert and select data
-        data = data.rename(columns={0: "value"}).query(
-            f"c in {repr(list(map(str, commodities)))}"
-        )
-        data["c group"] = data["c"].apply(
-            lambda v: "transport pax LDV" if any(cg_.id in v for cg_ in cg) else v
-        )
-
+        data = data.query(f"c in {repr(list(map(str, commodities)))}").pipe(c_group, cg)
         for node, node_data in data.groupby("n"):
             yield (
-                p9.ggplot(node_data, p9.aes(x="y", y="value", fill="c group"))
+                p9.ggplot(node_data, p9.aes(x="y", y="demand", fill="c_group"))
                 + p9.geom_bar(stat="identity", width=4)
                 + p9.labs(x="Period", y=None, fill="Transport mode group")
                 + self.title(f"Transport demand [pass · km / a] {node}")
@@ -231,18 +224,11 @@ class DemandCalibrated(Plot):
 
 class DemandCalibratedCap(Plot):
     basename = "demand-capita"
-    inputs = ["demand:n-c-y:capita", "c:transport", "cg"]
+    inputs = ["demand:n-c-y:capita", "c::transport", "cg"]
 
     def generate(self, data, commodities, cg):
         # Convert and select data
-        print(data)
-        data = data.rename(columns={0: "value"}).query(
-            f"c in {repr(list(map(str, commodities)))}"
-        )
-        data["c group"] = data["c"].apply(
-            lambda v: "transport pax LDV" if any(cg_.id in v for cg_ in cg) else v
-        )
-
+        data = data.query(f"c in {repr(list(map(str, commodities)))}").pipe(c_group, cg)
         for node, group_df in data.groupby("n"):
             yield (
                 p9.ggplot(p9.aes(x="y", y="value", fill="c"), group_df)
@@ -269,7 +255,7 @@ class DemandExo(Plot):
 
     def generate(self, data):
         # FIXME shouldn't need to change dtype here
-        data = data.rename(columns={0: "value"}).astype(dict(value=float))
+        data = data.astype(dict(value=float))
         data, unit = _reduce_units(data, "Gp km / a")
         y_max = max(data["value"])
 
@@ -290,7 +276,7 @@ class DemandExoCap(Plot):
 
     def generate(self, data):
         # FIXME shouldn't need to change dtype here
-        data = data.rename(columns={0: "value"}).astype(dict(value=float))
+        data = data.astype(dict(value=float))
         data, unit = _reduce_units(data, "Mm / a")
         y_max = max(data["value"])
 
@@ -335,15 +321,14 @@ class Stock0(Plot):
     inputs = ["stock:nl-t-ya:ldv"]
     _title_detail = "LDV transport vehicle stock"
     static = Plot.static + [
-        p9.aes(x="ya", y="stock", color="t"),
+        p9.aes(x="ya", y="value", color="t"),
         p9.geom_line(),
         p9.geom_point(),
         p9.labs(x="Period", color="Powertrain technology"),
     ]
 
     def generate(self, data):
-        data = data.rename(columns={"value": "stock"})
-        y_max = max(data["stock"])
+        y_max = max(data["value"])
         unit = data["unit"].unique()[0]
 
         for nl, group_df in data.groupby("nl"):
@@ -363,13 +348,15 @@ class Stock1(Plot):
     _title_detail = "Non-LDV transport"
 
     def generate(self, data):
-        data = data.rename(columns={0: "stock"})
-        y_max = max(data["stock"])
+        if not len(data):
+            return
+
+        y_max = max(data["value"])
         unit = data["unit"].unique()[0]
 
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(p9.aes(x="yv", y="stock", color="t"), group_df)
+                p9.ggplot(p9.aes(x="yv", y="value", color="t"), group_df)
                 + p9.geom_line()
                 + p9.geom_point()
                 + p9.expand_limits(y=[0, y_max])
