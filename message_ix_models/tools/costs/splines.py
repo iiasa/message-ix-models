@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression  # type: ignore
@@ -17,7 +19,7 @@ def get_technology_first_year_data():
     return df
 
 
-def calculate_NAM_projected_capital_costs(
+def calculate_projected_capital_costs(
     df_learning_rates: pd.DataFrame,
     df_region_diff: pd.DataFrame,
     df_technology_first_year: pd.DataFrame,
@@ -40,10 +42,6 @@ def calculate_NAM_projected_capital_costs(
         - cost_type: the type of cost (`capital_costs` or `annual_om_costs`)
         - message_technology: technology in MESSAGEix
         - r11_region: R11 region in MESSAGEix
-        - cost_region_2021: the cost of that technology in that region in the \
-            year 2021 (from WEO data)
-        - cost_region_2100: the projected cost of the technology in that region \
-            in the year 2100 (based on SSP learning rate)
         - year: the year modeled (2020-2100)
         - cost_region_projected: the cost of the technology in that region for the
         year modeled (should be between the cost in the year 2021 and the cost in
@@ -94,7 +92,7 @@ def calculate_NAM_projected_capital_costs(
             r=lambda x: (1 / (last_model_year - first_model_year))
             * np.log((x.cost_region_2100 - x.b) / (x.cost_region_2021 - x.b)),
         )
-        .loc[lambda x: x["r11_region"] == "NAM"]
+        # .loc[lambda x: x["r11_region"] == "NAM"]
     )
 
     seq_years = list(range(first_model_year, last_model_year + 10, 10))
@@ -121,18 +119,45 @@ def calculate_NAM_projected_capital_costs(
                 "cost_region_2100",
             ],
             var_name="year",
-            value_name="cost_region_projected",
+            value_name="cost_region_projected_init",
         )
     )
 
-    return df
+    df_adj = (
+        df.loc[df.r11_region == "NAM"]
+        .reindex(
+            ["cost_type", "message_technology", "year", "cost_region_projected_init"],
+            axis=1,
+        )
+        .rename(columns={"cost_region_projected_init": "cost_region_projected_nam"})
+        .merge(df, on=["cost_type", "message_technology", "year"])
+        .assign(
+            cost_region_projected=lambda x: np.where(
+                x.year <= 2020,
+                x.cost_region_projected_init,
+                x.cost_region_projected_nam,
+            )
+        )
+        .reindex(
+            [
+                "cost_type",
+                "message_technology",
+                "r11_region",
+                "year",
+                "cost_region_projected",
+            ],
+            axis=1,
+        )
+    )
+
+    return df_adj
 
 
-def apply_polynominal_regression_NAM_costs(df_nam_costs: pd.DataFrame) -> pd.DataFrame:
+def apply_polynominal_regression_NAM_costs(df_tech_costs: pd.DataFrame) -> pd.DataFrame:
     """Perform polynomial regression on NAM projected costs and extract coefs/intercept
 
     This function applies a third degree polynominal regression on the projected
-    investment costs in the NAM region (2020-2100). The coefficients and intercept
+    investment costs in each region (2020-2100). The coefficients and intercept
     for each technology is saved in a dataframe.
 
     Parameters
@@ -146,6 +171,7 @@ def apply_polynominal_regression_NAM_costs(df_nam_costs: pd.DataFrame) -> pd.Dat
         DataFrame with columns:
 
         - message_technology: the technology in MESSAGEix
+        - r11_region: MESSAGEix R11 region
         - beta_1: the coefficient for x^1 for the specific technology
         - beta_2: the coefficient for x^2 for the specific technology
         - beta_3: the coefficient for x^3 for the specific technology
@@ -153,13 +179,17 @@ def apply_polynominal_regression_NAM_costs(df_nam_costs: pd.DataFrame) -> pd.Dat
 
     """
 
-    un_tech = df_nam_costs.message_technology.unique()
-
-    i = "gas_cc"
+    un_tech = df_tech_costs.message_technology.unique()
+    un_reg = df_tech_costs.r11_region.unique()
 
     data_reg = []
-    for i in un_tech:
-        tech = df_nam_costs.loc[df_nam_costs.message_technology == i]
+    for i, j in product(un_tech, un_reg):
+        tech = df_tech_costs.loc[
+            (df_tech_costs.message_technology == i) & (df_tech_costs.r11_region == j)
+        ]
+
+        if tech.size == 0:
+            continue
 
         x = tech.year.values
         y = tech.cost_region_projected.values
@@ -174,6 +204,7 @@ def apply_polynominal_regression_NAM_costs(df_nam_costs: pd.DataFrame) -> pd.Dat
         data = [
             [
                 i,
+                j,
                 poly_reg_model.coef_[0],
                 poly_reg_model.coef_[1],
                 poly_reg_model.coef_[2],
@@ -182,7 +213,14 @@ def apply_polynominal_regression_NAM_costs(df_nam_costs: pd.DataFrame) -> pd.Dat
         ]
         df = pd.DataFrame(
             data,
-            columns=["message_technology", "beta_1", "beta_2", "beta_3", "intercept"],
+            columns=[
+                "message_technology",
+                "r11_region",
+                "beta_1",
+                "beta_2",
+                "beta_3",
+                "intercept",
+            ],
         )
 
         data_reg.append(df)
