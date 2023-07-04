@@ -2,8 +2,8 @@ name: MESSAGEix-Transport
 
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
-  pull_request:
-    branches: [ main, dev ]
+  # pull_request:
+  #   branches: [ main, dev ]
   # push:
   #   branches: [ main, dev ]
   schedule:
@@ -72,17 +72,16 @@ jobs:
     - name: Install package; upgrade dependencies
       run: pip install --upgrade --upgrade-strategy=eager --editable ./message_data[dl,scgen,tests,transport]
 
-    # By default, the above installs ixmp, message_ix, and message-ix-models
-    # from PyPI. To run against unreleased code (on `main`, or other branches
-    # for open PRs), temporarily uncomment the lines below and edit as
-    # appropriate. DO NOT merge such changes to `main`. message-ix-models is
-    # released frequently and should always be installed from PyPI.
+    # By default, the above installs message_data dependencies from PyPI.
+    # To run against unreleased code (on `main`, or other branches for open
+    # PRs), temporarily uncomment the lines below and edit as appropriate.
+    # DO NOT merge such changes to `main`.
     - name: Force upgrade to unreleased dependencies
       run: |
         pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@enh/2023-W26"
-        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
-        pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
-        pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
+        # pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
+        # pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
+        # pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
     - name: Configure
       run: |
