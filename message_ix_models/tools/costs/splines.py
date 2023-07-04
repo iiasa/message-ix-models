@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression  # type: ignore
+from sklearn.preprocessing import PolynomialFeatures  # type: ignore
 
 from message_ix_models.util import package_data_path
 
