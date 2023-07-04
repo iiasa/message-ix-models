@@ -377,9 +377,14 @@ def get_weo_data() -> pd.DataFrame:
         )
 
         dfs_cost.append(df)
+
     all_cost_df = pd.concat(dfs_cost)
 
-    return all_cost_df
+    nonull_df = all_cost_df.loc[
+        ~all_cost_df.value.isnull()
+    ]  # filter out NaN cost values
+
+    return nonull_df
 
 
 def calculate_region_cost_ratios(
