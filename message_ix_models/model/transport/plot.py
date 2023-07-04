@@ -307,21 +307,17 @@ class DemandExoCap(Plot):
 
 
 class EnergyCmdty(Plot):
-    """Only works with filter = True."""
-
     basename = "energy-by-cmdty"
     inputs = ["in:nl-ya-c"]
 
     def generate(self, data):
         # Discard data for certain commodities
-        data = data[
-            ~(data.c.str.startswith("transport") | (data.c == "disutility"))
-        ].rename(columns={0: "in"})
+        data = data[~(data.c.str.startswith("transport") | (data.c == "disutility"))]
         unit = "GWa"
 
         for nl, group_df in data.groupby("nl"):
             yield (
-                p9.ggplot(p9.aes(x="ya", y="in", fill="c"), group_df)
+                p9.ggplot(p9.aes(x="ya", y="value", fill="c"), group_df)
                 + p9.geom_bar(stat="identity", width=5, color="black")
                 + p9.labs(x="Period", y="Energy", fill="Commodity")
                 + self.title(f"Energy input to transport [{unit}] {nl}")
