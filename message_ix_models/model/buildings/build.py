@@ -318,11 +318,14 @@ def scale_and_replace(
     # Copy data for certain parameters with renamed technology & commodity
     result = dict()
     for name, scale in (
-        ("input", None),
-        ("output", None),
         ("capacity_factor", None),
         ("emission_factor", None),
+        ("fix_cost", None),
+        ("input", None),
+        ("inv_cost", None),
+        ("output", None),
         ("relation_activity", None),
+        ("var_cost", None),
         # Historical
         ("historical_activity", 1.0),
         # Constraints
