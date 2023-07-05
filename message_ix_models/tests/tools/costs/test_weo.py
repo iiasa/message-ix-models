@@ -300,7 +300,7 @@ def test_adj_nam_cost_reference():
 
 def test_calculate_region_cost_ratios():
     weo = get_weo_data()
-    res = calculate_region_cost_ratios(weo, DICT_WEO_R11)
+    res = calculate_region_cost_ratios(weo)
 
     assert np.all(
         [
