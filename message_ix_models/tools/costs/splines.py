@@ -19,12 +19,12 @@ def get_technology_first_year_data():
     return df
 
 
-def calculate_projected_capital_costs(
+def project_capital_costs_using_learning_rates(
     df_learning_rates: pd.DataFrame,
     df_region_diff: pd.DataFrame,
     df_technology_first_year: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Calculate projected capital costs for NAM region until 2100
+    """Calculate projected technology capital costs until 2100 using learning rates
 
     Parameters
     ----------
