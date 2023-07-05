@@ -168,7 +168,9 @@ def project_capital_costs_using_learning_rates(
     return df_adj
 
 
-def apply_polynominal_regression_NAM_costs(df_tech_costs: pd.DataFrame) -> pd.DataFrame:
+def apply_polynominal_regression_NAM_costs(
+    df_proj_costs_learning: pd.DataFrame,
+) -> pd.DataFrame:
     """Perform polynomial regression on NAM projected costs and extract coefs/intercept
 
     This function applies a third degree polynominal regression on the projected
@@ -177,8 +179,8 @@ def apply_polynominal_regression_NAM_costs(df_tech_costs: pd.DataFrame) -> pd.Da
 
     Parameters
     ----------
-    df_nam_costs : pandas.DataFrame
-        Output of `calculate_NAM_projected_capital_costs`
+    df_proj_costs_learning : pandas.DataFrame
+        Output of `project_capital_costs_using_learning_rates`
 
     Returns
     -------
@@ -194,16 +196,16 @@ def apply_polynominal_regression_NAM_costs(df_tech_costs: pd.DataFrame) -> pd.Da
 
     """
 
-    un_ssp = df_tech_costs.ssp_scenario.unique()
-    un_tech = df_tech_costs.message_technology.unique()
-    un_reg = df_tech_costs.r11_region.unique()
+    un_ssp = df_proj_costs_learning.ssp_scenario.unique()
+    un_tech = df_proj_costs_learning.message_technology.unique()
+    un_reg = df_proj_costs_learning.r11_region.unique()
 
     data_reg = []
     for i, j, k in product(un_ssp, un_tech, un_reg):
-        tech = df_tech_costs.loc[
-            (df_tech_costs.ssp_scenario == i)
-            & (df_tech_costs.message_technology == j)
-            & (df_tech_costs.r11_region == k)
+        tech = df_proj_costs_learning.loc[
+            (df_proj_costs_learning.ssp_scenario == i)
+            & (df_proj_costs_learning.message_technology == j)
+            & (df_proj_costs_learning.r11_region == k)
         ]
 
         if tech.size == 0:
