@@ -60,8 +60,8 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     rep.add("buildings spec", spec)
 
     # Configure message_data.reporting.util.collapse to map commodity and technology IDs
-    add_replacements("t", spec.add.set["sector"])
-    for s, e in product(spec.add.set["sector"], spec.add.set["enduse"]):
+    add_replacements("t", spec.add.set["buildings_sector"])
+    for s, e in product(spec.add.set["buildings_sector"], spec.add.set["enduse"]):
         # Append "$" so the expressions only match the full/end of string
         REPLACE_DIMS["t"][
             f"{s.id.title()} {e.id.title()}$"
