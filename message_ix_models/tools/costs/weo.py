@@ -387,9 +387,7 @@ def get_weo_data() -> pd.DataFrame:
     return nonull_df
 
 
-def calculate_region_cost_ratios(
-    weo_df: pd.DataFrame, dict_weo_regions: Dict[str, str]
-) -> pd.DataFrame:
+def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
     """Calculate regional cost ratios (relative to NAM) using the WEO data
 
     Some assumptions are made as well:
@@ -402,9 +400,6 @@ def calculate_region_cost_ratios(
     ----------
     weo_df : pandas.DataFrame
         Created using :func:`.get_weo_data`
-    dict_weo_regions : str -> tuple of (str, str)
-        Keys are MESSAGE R11 regions.
-        Values are WEO region assigned to each R11 region.
 
     Returns
     -------
@@ -432,7 +427,7 @@ def calculate_region_cost_ratios(
     )
 
     l_cost_ratio = []
-    for m, w in dict_weo_regions.items():
+    for m, w in DICT_WEO_R11.items():
         df_sel = (
             df.loc[(df.year == min(df.year)) & (df.region == w)]
             .copy()
@@ -891,3 +886,45 @@ def get_region_differentiated_costs(
     )
 
     return df_regiondiff
+
+
+def calculate_fom_to_inv_cost_ratios(input_df_weo):
+    df_inv = (
+        input_df_weo.loc[
+            (input_df_weo.cost_type == "capital_costs")
+            & (input_df_weo.year == min(input_df_weo.year))
+        ]
+        .rename(columns={"value": "inv_cost"})
+        .drop(columns=["year", "cost_type", "units"])
+    )
+
+    df_fom = (
+        input_df_weo.loc[
+            (input_df_weo.cost_type == "annual_om_costs")
+            & (input_df_weo.year == min(input_df_weo.year))
+        ]
+        .rename(columns={"value": "fom_cost"})
+        .drop(columns=["year", "cost_type", "units"])
+    )
+
+    df_ratio = (
+        df_inv.merge(df_fom, on=["technology", "region"])
+        .assign(fom_to_inv_cost_ratio=lambda x: x.fom_cost / x.inv_cost)
+        .drop(columns=["inv_cost", "fom_cost"])
+    )
+
+    msg_tech = list(DICT_WEO_TECH.keys())
+    r11_reg = list(DICT_WEO_R11.keys())
+
+    tech_reg = (
+        pd.DataFrame(
+            list(product(msg_tech, r11_reg)),
+            columns=["message_technology", "r11_region"],
+        )
+        .assign(technology=lambda x: x.message_technology.map(DICT_WEO_TECH))
+        .assign(region=lambda x: x.r11_region.map(DICT_WEO_R11))
+        .merge(df_ratio, on=["technology", "region"])
+        .drop(columns=["technology", "region"])
+    )
+
+    return tech_reg
