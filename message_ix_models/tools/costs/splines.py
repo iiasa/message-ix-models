@@ -14,7 +14,13 @@ pre_last_year_rate = 0.01
 
 def get_technology_first_year_data():
     file = package_data_path("costs", "technology_first_year.csv")
-    df = pd.read_csv(file, header=3)
+    df = pd.read_csv(file, header=3).assign(
+        first_technology_year=lambda x: np.where(
+            x.first_year_original > first_model_year,
+            x.first_year_original,
+            first_model_year,
+        )
+    )
 
     return df
 
@@ -51,7 +57,6 @@ def project_capital_costs_using_learning_rates(
 
     # List of SSP scenarios
     scens = ["SSP1", "SSP2", "SSP3"]
-    # s = scens[0]
 
     list_dfs_cost = []
     for s in scens:
@@ -77,15 +82,11 @@ def project_capital_costs_using_learning_rates(
                 ["cost_type", "message_technology", "r11_region", "cost_region_2021"],
                 axis=1,
             )
-            .merge(df_technology_first_year, on=["message_technology"], how="right")
-            .assign(
-                first_technology_year=lambda x: np.where(
-                    x.first_year_original > first_model_year,
-                    x.first_year_original,
-                    first_model_year,
-                )
+            .merge(
+                df_technology_first_year.drop(columns=["first_year_original"]),
+                on=["message_technology"],
+                how="right",
             )
-            .drop(columns=["first_year_original"])
             .merge(df_cost_reduction, on=["message_technology"], how="left")
             .assign(
                 cost_region_2100=lambda x: x["cost_region_2021"]
@@ -250,3 +251,73 @@ def apply_polynominal_regression(
     df_regression = pd.concat(data_reg).reset_index(drop=1)
 
     return df_regression
+
+
+def project_capital_costs_using_splines(
+    input_df_region_diff,
+    input_df_technology_first_year,
+    input_df_poly_reg,
+    input_df_learning_projections,
+):
+    df = (
+        input_df_region_diff.loc[input_df_region_diff.cost_type == "capital_costs"]
+        .reindex(
+            ["cost_type", "message_technology", "r11_region", "cost_region_2021"],
+            axis=1,
+        )
+        .merge(
+            input_df_technology_first_year.drop(columns=["first_year_original"]),
+            on=["message_technology"],
+            how="right",
+        )
+        .merge(input_df_poly_reg, on=["message_technology", "r11_region"])
+    )
+
+    seq_years = list(range(first_model_year, last_model_year + 10, 10))
+    for y in seq_years:
+        df = df.assign(
+            ycur=lambda x: np.where(
+                y <= x.first_technology_year,
+                x.cost_region_2021,
+                (x.beta_1 * y)
+                + (x.beta_2 * (y**2))
+                + (x.beta_3 * (y**3))
+                + x.intercept,
+            )
+        ).rename(columns={"ycur": y})
+
+    df_long = (
+        df.drop(
+            columns=["first_technology_year", "beta_1", "beta_2", "beta_3", "intercept"]
+        )
+        .melt(
+            id_vars=[
+                "cost_type",
+                "ssp_scenario",
+                "message_technology",
+                "r11_region",
+                "cost_region_2021",
+            ],
+            var_name="year",
+            value_name="cost_projected_splines",
+        )
+        .merge(
+            input_df_learning_projections,
+            on=[
+                "cost_type",
+                "ssp_scenario",
+                "message_technology",
+                "r11_region",
+                "year",
+            ],
+        )
+        .assign(
+            cost_projected_final=lambda x: np.where(
+                x.r11_region == "NAM",
+                x.cost_projected_learning,
+                x.cost_projected_splines,
+            )
+        )
+    )
+
+    return df_long
