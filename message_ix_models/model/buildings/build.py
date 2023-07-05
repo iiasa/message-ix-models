@@ -325,6 +325,7 @@ def scale_and_replace(
         ("inv_cost", None),
         ("output", None),
         ("relation_activity", None),
+        ("technical_lifetime", None),
         ("var_cost", None),
         # Historical
         ("historical_activity", 1.0),
