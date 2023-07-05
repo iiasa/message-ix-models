@@ -253,11 +253,12 @@ def apply_polynominal_regression(
     return df_regression
 
 
-def project_capital_costs_using_splines(
+def project_costs_using_splines(
     input_df_region_diff,
     input_df_technology_first_year,
     input_df_poly_reg,
     input_df_learning_projections,
+    input_df_fom_inv_ratios,
 ):
     df = (
         input_df_region_diff.loc[input_df_region_diff.cost_type == "capital_costs"]
@@ -312,11 +313,24 @@ def project_capital_costs_using_splines(
             ],
         )
         .assign(
-            cost_projected_final=lambda x: np.where(
+            inv_cost=lambda x: np.where(
                 x.r11_region == "NAM",
                 x.cost_projected_learning,
                 x.cost_projected_splines,
             )
+        )
+        .merge(input_df_fom_inv_ratios, on=["message_technology", "r11_region"])
+        .assign(fix_cost=lambda x: x.inv_cost * x.fom_to_inv_cost_ratio)
+        .reindex(
+            [
+                "ssp_scenario",
+                "message_technology",
+                "r11_region",
+                "year",
+                "inv_cost",
+                "fix_cost",
+            ],
+            axis=1,
         )
     )
 
