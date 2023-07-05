@@ -43,9 +43,9 @@ def project_capital_costs_using_learning_rates(
         - message_technology: technology in MESSAGEix
         - r11_region: R11 region in MESSAGEix
         - year: the year modeled (2020-2100)
-        - cost_region_projected: the cost of the technology in that region for the
+        - cost_projected_learning: the cost of the technology in that region for the
         year modeled (should be between the cost in the year 2021 and the cost in
-        the year 2100)
+        the year 2100) based on the learning rates/cost reduction rates
 
     """
 
@@ -146,7 +146,7 @@ def project_capital_costs_using_learning_rates(
         .rename(columns={"cost_region_projected_init": "cost_region_projected_nam"})
         .merge(df_cost, on=["ssp_scenario", "cost_type", "message_technology", "year"])
         .assign(
-            cost_region_projected=lambda x: np.where(
+            cost_projected_learning=lambda x: np.where(
                 x.year <= 2020,
                 x.cost_region_projected_init,
                 x.cost_region_projected_nam,
@@ -159,7 +159,7 @@ def project_capital_costs_using_learning_rates(
                 "message_technology",
                 "r11_region",
                 "year",
-                "cost_region_projected",
+                "cost_projected_learning",
             ],
             axis=1,
         )
@@ -212,7 +212,7 @@ def apply_polynominal_regression(
             continue
 
         x = tech.year.values
-        y = tech.cost_region_projected.values
+        y = tech.cost_projected_learning.values
 
         # polynomial regression model
         poly = PolynomialFeatures(degree=3, include_bias=False)
