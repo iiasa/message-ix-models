@@ -168,10 +168,10 @@ def project_capital_costs_using_learning_rates(
     return df_adj
 
 
-def apply_polynominal_regression_NAM_costs(
+def apply_polynominal_regression(
     df_proj_costs_learning: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Perform polynomial regression on NAM projected costs and extract coefs/intercept
+    """Perform polynomial regression on projected costs and extract coefs/intercept
 
     This function applies a third degree polynominal regression on the projected
     investment costs in each region (2020-2100). The coefficients and intercept
