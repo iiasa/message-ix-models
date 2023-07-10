@@ -4,11 +4,7 @@ from message_ix_models.tools.costs.gdp import (
     get_gdp_data,
     linearly_regress_tech_cost_vs_gdp_ratios,
 )
-from message_ix_models.tools.costs.weo import (
-    DICT_WEO_R11,
-    calculate_region_cost_ratios,
-    get_weo_data,
-)
+from message_ix_models.tools.costs.weo import calculate_region_cost_ratios, get_weo_data
 
 res = get_gdp_data()
 
@@ -33,7 +29,7 @@ def test_get_gdp_data():
 def test_linearly_regress_tech_cost_vs_gdp_ratios():
     df_gdp = get_gdp_data()
     df_weo = get_weo_data()
-    df_tech_cost_ratios = calculate_region_cost_ratios(df_weo, DICT_WEO_R11)
+    df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
 
     res = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
 
