@@ -187,6 +187,8 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     from message_ix_models.util import identify_nodes
     from sdmx.model import Annotation, Code
 
+    from message_data.model.buildings.rc_afofi import get_afofi_commodity_shares
+
     log_scenario_info("add_macro 1", scenario)
 
     # List of commodities and associated MACRO sectors
@@ -212,9 +214,31 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
         depr=macro.generate("depr", context, commodities, value=0.05),
         lotol=macro.generate("lotol", context, commodities, value=0.05),
     )
+
     # Load other MACRO data from file
     data2 = macro.load(private_data_path("macro", "navigate"))
     data.update(data2)
+
+    # Scale the demand_ref data for the "rc_{spec,therm}" MACRO sectors (~
+    # "afofi_{spec,therm}" MESSAGE commodities)
+    # Retrieve the commodity shares of AFOFI in RC; convert to a data frame.
+    c_share = (
+        get_afofi_commodity_shares()
+        .to_dataframe()
+        .rename_axis(index=["node", "sector"])
+        .reset_index()
+    )
+    # - Merge with existing demand_ref data.
+    # - Use a scaling factor of 1.0 for unrelated sectors.
+    # - Recompute "value".
+    # - Drop the temporary column.
+    data["demand_ref"] = (
+        data["demand_ref"]
+        .merge(c_share, how="left", on=["node", "sector"])
+        .fillna({"afofi share": 1.0})
+        .eval("value = value * `afofi share`")
+        .drop("afofi share", axis=1)
+    )
 
     # Add units present in the MACRO input data which may yet be missing on the platform
     # FIXME use consistent units in the MACRO input data and message-ix-models
