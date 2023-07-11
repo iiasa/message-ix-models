@@ -24,6 +24,8 @@ from message_ix_models.util import (
 )
 from sdmx.model.v21 import Annotation, Code
 
+from .rc_afofi import get_afofi_commodity_shares, get_afofi_technology_shares
+
 # from message_data.projects.ngfs.util import add_macro_COVID  # Unused
 
 log = logging.getLogger(__name__)
@@ -387,70 +389,6 @@ def scale_and_replace(
     log.info(f"Data for {len(result)} parameters")
 
     return result
-
-
-def get_afofi_commodity_shares() -> Quantity:
-    """Wrap MESSAGE_Buildings code that queries the ECE IEA database.
-
-    This code:
-
-    - Is not packaged; so its location must be added to sys.path; see
-      buildings.Config.__post_init__().
-    - Has no documentation.
-    - Returns a 2-tuple of pd.DataFrame; the first pertains to rc_therm, the second to
-      rc_spec.
-    - Index axis named "regions", with indices like "AFR". These are the R12 nodes,
-      except the codes do not match codes like "R12_AFR" in the scenario. The code does
-      not support other codelists.
-    - Columns axis named "flow_code", with a single column named "perc_afofi".
-    - Values like 0.152, i.e. shares: note this contradicts "perc"ent in the function
-      and column name indicating percent values like 15.2.
-
-    Returns
-    -------
-    Quantity
-        with dimensions (n, c); c including "rc_spec" and "rc_therm".
-    """
-    from utils.rc_afofi import return_PERC_AFOFI  # type: ignore
-
-    # Invoke the function
-    therm, spec = return_PERC_AFOFI()
-
-    # - Rename dimensions
-    # - Prepend "R12_" to node codes.
-    # - Use "rc_therm" or "rc_spec" for the original tech to which the share is
-    # - applicable
-    dfs = [
-        df.rename_axis("n", axis=0)
-        .rename_axis("c", axis=1)
-        .rename(index=lambda s: f"R12_{s}", columns={"perc_afofi": f"rc_{name}"})
-        for name, df in (("therm", therm), ("spec", spec))
-    ]
-
-    # - Combine to a single pd.Series with multi-index
-    # - Convert to Quantity
-    return Quantity(pd.concat(dfs).stack(), name="afofi share")
-
-
-def get_afofi_technology_shares(c_shares, technologies) -> Quantity:
-    """Compute AFOFI shares by technology from shares by commodity."""
-    from genno.computations import aggregate, mul, rename_dims
-
-    agg = {}
-    weight = {}
-
-    for t in technologies:
-        agg[t] = {
-            "h2_fc_RC": ["rc_spec", "rc_therm"],
-            "sp_el_RC": ["rc_spec"],
-        }.get(t, ["rc_therm"])
-        weight[t] = {"h2_fc_rc": 0.5}.get(t, 1.0)
-
-    return (
-        c_shares.pipe(rename_dims, {"c": "t"})
-        .pipe(aggregate, {"t": agg}, keep=False)
-        .pipe(mul, Quantity(pd.Series(weight).rename_axis("t")))
-    )
 
 
 def prepare_data(

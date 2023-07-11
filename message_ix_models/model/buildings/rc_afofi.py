@@ -1,15 +1,111 @@
-"""Compute "AFOFI" share of "RC".
+"""Compute AFOFI shares of RC.
 
-This code copied 2023-07-11 from iiasa/MESSAGE_Buildings @ 7fb0e6fd.
+**AFOFI** is Agriculture, FOrestry, and FIsheries; **RC** is Residential and Commercial.
+
+In brief: the MESSAGEix-GLOBIOM "sector" (or group of sectors) referred to as "rc" or
+"RC" is inclusive of not only residential and commercial, but also agricultural,
+forestry, fisheries, and some other sectors.
+
+When linking the buildings models (ACCESS, STURM) to MESSAGEix-GLOBIOM, the specific
+residential and commercial sectors are represented by those models, but the remainder of
+the composite "RC" sector, i.e. AFOFI, must still be represented in MESSAGE.
+
+These functions give a share of AFOFI in RC for demands of the "rc_therm" and "rc_spec"
+commodities; or activities of the technologies producing these commodities.
+:func:`return_PERC_AFOFI` was brought into :mod:`message_data` from the (private,
+unpublished) iiasa/MESSAGE_Buildings repository.
 """
-from typing import Tuple
+from functools import lru_cache
+from typing import List, Tuple
 
 import pandas as pd
+from genno import Quantity
 from jaydebeapi import connect
 
+__all__ = [
+    "get_afofi_commodity_shares",
+    "get_afofi_technology_shares",
+]
 
+
+def get_afofi_commodity_shares() -> Quantity:
+    """Wrap MESSAGE_Buildings code that queries the ECE IEA database.
+
+    Returns
+    -------
+    Quantity
+        with dimensions (n, c); c including "rc_spec" and "rc_therm".
+    """
+    from .rc_afofi import return_PERC_AFOFI
+
+    # Invoke the function
+    therm, spec = return_PERC_AFOFI()
+
+    # - Rename dimensions
+    # - Prepend "R12_" to node codes.
+    # - Use "rc_therm" or "rc_spec" for the original tech to which the share is
+    # - applicable
+    dfs = [
+        df.rename_axis("n", axis=0)
+        .rename_axis("c", axis=1)
+        .rename(index=lambda s: f"R12_{s}", columns={"perc_afofi": f"rc_{name}"})
+        for name, df in (("therm", therm), ("spec", spec))
+    ]
+
+    # - Combine to a single pd.Series with multi-index
+    # - Convert to Quantity
+    return Quantity(pd.concat(dfs).stack(), name="afofi share")
+
+
+def get_afofi_technology_shares(
+    c_shares: Quantity, technologies: List[str]
+) -> Quantity:
+    """Compute AFOFI shares by technology from shares by commodity.
+
+    Returns
+    -------
+    Quantity
+        with dimensions (n, t); t including all of `technologies`.
+    """
+    from genno.computations import aggregate, mul, rename_dims
+
+    agg = {}
+    weight = {}
+
+    for t in technologies:
+        agg[t] = {
+            "h2_fc_RC": ["rc_spec", "rc_therm"],
+            "sp_el_RC": ["rc_spec"],
+        }.get(t, ["rc_therm"])
+        weight[t] = {"h2_fc_RC": 0.5}.get(t, 1.0)
+
+    return (
+        c_shares.pipe(rename_dims, {"c": "t"})
+        .pipe(aggregate, {"t": agg}, keep=False)
+        .pipe(mul, Quantity(pd.Series(weight).rename_axis("t")))
+    )
+
+
+@lru_cache
 def return_PERC_AFOFI() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Query the ECE IEA database and return the share of AFOFI in RC."""
+    """Query the ECE IEA database and return the share of AFOFI in RC.
+
+    This function copied 2023-07-11 from iiasa/MESSAGE_Buildings @ 7fb0e6fd.
+
+    .. todo:: Describe which data from the IEA data base are used for the calculation,
+       for instance by adding comments to the code.
+
+    Returns
+    -------
+    tuple (pandas.DataFrame, pandas.DataFrame)
+        - The first data frame pertains to rc_therm, the second to rc_spec.
+        - Index axis named "regions", with indices like "AFR". These are the R12 nodes,
+          except the codes do not match codes like "R12_AFR" in the scenario. The code
+          does not support other codelists.
+        - Columns axis named "flow_code", with a single column named "perc_afofi".
+        - Values like 0.152, i.e. **shares**: note this contradicts "perc"ent in the
+          function and column name, which would suggest percent values like 15.2.
+    """
 
     # Connect to database
     conn = connect(
