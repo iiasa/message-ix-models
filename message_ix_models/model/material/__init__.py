@@ -14,7 +14,7 @@ from message_data.tools.utilities import calibrate_UE_gr_to_demand, add_globiom,
 
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity, add_emission_accounting
-from .data_util import add_coal_lowerbound_2020, add_macro_COVID
+from .data_util import add_coal_lowerbound_2020, add_macro_COVID, add_cement_bounds_2020
 from .data_util import add_elec_lowerbound_2020, add_ccs_technologies, read_config
 
 log = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ def build(scenario):
     modify_demand_and_hist_activity(scenario)
     add_emission_accounting(scenario)
     add_coal_lowerbound_2020(scenario)
+    add_cement_bounds_2020(scenario)
 
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration levels for the enduse technologies.
