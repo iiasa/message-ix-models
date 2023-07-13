@@ -911,6 +911,253 @@ def add_coal_lowerbound_2020(sc):
         "added lower bound for activity of residual industrial coal and cement coal furnace technologies and adjusted 2020 residual industrial electricity demand"
     )
 
+def add_cement_bounds_2020(sc):
+
+    """Set lower and upper bounds for gas and oil as a calibration for 2020"""
+
+    context = read_config()
+    final_resid = pd.read_csv(
+        private_data_path("material", "other","residual_industry_2019.csv")
+    )
+
+    input_cement_foil = sc.par(
+        "input",
+        filters={
+            "technology": "furnace_foil_cement",
+            "year_vtg": "2020",
+            "year_act": "2020",
+            "mode": "high_temp",
+        },
+    )
+
+    input_cement_loil = sc.par(
+        "input",
+        filters={
+            "technology": "furnace_loil_cement",
+            "year_vtg": "2020",
+            "year_act": "2020",
+            "mode": "high_temp",
+        },
+    )
+
+    input_cement_gas = sc.par(
+        "input",
+        filters={
+            "technology": "furnace_gas_cement",
+            "year_vtg": "2020",
+            "year_act": "2020",
+            "mode": "high_temp",
+        },
+    )
+
+    input_cement_biomass = sc.par(
+        "input",
+        filters={
+            "technology": "furnace_biomass_cement",
+            "year_vtg": "2020",
+            "year_act": "2020",
+            "mode": "high_temp",
+        },
+    )
+
+    input_cement_coal = sc.par(
+        "input",
+        filters={
+            "technology": "furnace_coal_cement",
+            "year_vtg": "2020",
+            "year_act": "2020",
+            "mode": "high_temp",
+        },
+    )
+
+    # downselect needed fuels and sectors
+    final_cement_foil = final_resid.query(
+        'MESSAGE_fuel=="foil" & MESSAGE_sector=="cement"'
+    )
+
+    final_cement_loil = final_resid.query(
+        'MESSAGE_fuel=="loil" & MESSAGE_sector=="cement"'
+    )
+
+    final_cement_gas = final_resid.query(
+        'MESSAGE_fuel=="gas" & MESSAGE_sector=="cement"'
+    )
+
+    final_cement_biomass = final_resid.query(
+        'MESSAGE_fuel=="biomass" & MESSAGE_sector=="cement"'
+    )
+
+    final_cement_coal = final_resid.query(
+        'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
+    )
+
+
+    # join final energy data from IEA energy balances and input coefficients from final-to-useful technologies from MESSAGEix
+    bound_cement_loil = pd.merge(
+        input_cement_loil,
+        final_cement_loil,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+
+    bound_cement_foil = pd.merge(
+        input_cement_foil,
+        final_cement_foil,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+
+    bound_cement_gas = pd.merge(
+        input_cement_gas,
+        final_cement_gas,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+
+    bound_cement_biomass = pd.merge(
+        input_cement_biomass,
+        final_cement_biomass,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+
+    bound_cement_coal = pd.merge(
+        input_cement_coal,
+        final_cement_coal,
+        left_on="node_loc",
+        right_on="MESSAGE_region",
+        how="inner",
+    )
+
+    # derive useful energy values by dividing final energy by input coefficient from final-to-useful technologies
+    bound_cement_loil["value"] = bound_cement_loil["Value"] / bound_cement_loil["value"]
+    bound_cement_foil["value"] = bound_cement_foil["Value"] / bound_cement_foil["value"]
+    bound_cement_gas["value"] = bound_cement_gas["Value"] / bound_cement_gas["value"]
+    bound_cement_biomass["value"] = bound_cement_biomass["Value"] / bound_cement_biomass["value"]
+    bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
+
+
+    # downselect dataframe columns for MESSAGEix parameters
+    bound_cement_loil = bound_cement_loil.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+
+    bound_cement_foil = bound_cement_foil.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+
+    bound_cement_gas = bound_cement_gas.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+
+    bound_cement_biomass = bound_cement_biomass.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+
+    bound_cement_coal = bound_cement_coal.filter(
+        items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
+    )
+
+
+    # rename columns if necessary
+    bound_cement_loil.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+
+    bound_cement_foil.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+
+    bound_cement_gas.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+
+    bound_cement_biomass.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+
+    bound_cement_coal.columns = [
+        "node_loc",
+        "technology",
+        "year_act",
+        "mode",
+        "time",
+        "value",
+        "unit",
+    ]
+
+    sc.check_out()
+    nodes = bound_cement_loil["node_loc"].values
+    years = bound_cement_loil["year_act"].values
+
+    # add parameter dataframes to ixmp
+    sc.add_par("bound_activity_up", bound_cement_loil)
+    sc.add_par("bound_activity_up", bound_cement_foil)
+    sc.add_par("bound_activity_lo", bound_cement_gas)
+    sc.add_par("bound_activity_up", bound_cement_gas)
+    sc.add_par("bound_activity_up", bound_cement_biomass)
+    sc.add_par("bound_activity_up", bound_cement_coal)
+
+    for n in nodes:
+        bound_cement_meth = pd.DataFrame({
+        "node_loc": n,
+        "technology": "furnace_methanol_cement",
+        "year_act": years,
+        "mode":"high_temp",
+        "time":"year",
+        "value":0,
+        "unit": "???"
+        })
+
+        sc.add_par("bound_activity_lo", bound_cement_meth)
+        sc.add_par("bound_activity_up", bound_cement_meth)
+
+    for n in nodes:
+        bound_cement_eth = pd.DataFrame({
+        "node_loc": n,
+        "technology": "furnace_ethanol_cement",
+        "year_act": years,
+        "mode":"high_temp",
+        "time":"year",
+        "value":0,
+        "unit": "???"
+        })
+
+        sc.add_par("bound_activity_lo", bound_cement_eth)
+        sc.add_par("bound_activity_up", bound_cement_eth)
+
+    # commit scenario to ixmp backend
+    sc.commit(
+        "added lower and upper bound for fuels for cement 2020."
+    )
 
 def read_sector_data(scenario, sectname):
 
