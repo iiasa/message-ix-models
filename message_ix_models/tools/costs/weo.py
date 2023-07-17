@@ -380,11 +380,11 @@ def get_weo_data() -> pd.DataFrame:
 
     all_cost_df = pd.concat(dfs_cost)
 
-    nonull_df = all_cost_df.loc[
-        ~all_cost_df.value.isnull()
-    ]  # filter out NaN cost values
+    # nonull_df = all_cost_df.loc[
+    #     ~all_cost_df.value.isnull()
+    # ]  # filter out NaN cost values
 
-    return nonull_df
+    return all_cost_df
 
 
 def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
@@ -475,18 +475,35 @@ def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
         & (df_cost_ratio.technology.isin(["pulverized_coal_ccs", "igcc_ccs"]))
     ].drop(columns={"weo_region", "r11_region"})
 
-    sub_merge = sub_mea.merge(sub_fsu, on=["technology", "year", "cost_type"])
+    sub_merge_mea = sub_mea.merge(sub_fsu, on=["technology", "year", "cost_type"])
 
+    # Asusumption 4: for all missing LAM data (ratios), replace with AFR data (ratios)
+    sub_lam = df_cost_ratio.loc[
+        (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "LAM")
+    ].drop(columns={"cost_ratio"})
+
+    sub_afr = df_cost_ratio.loc[
+        (df_cost_ratio.r11_region == "AFR")
+        & (df_cost_ratio.technology.isin(sub_lam.technology.unique()))
+    ].drop(columns={"weo_region", "r11_region"})
+
+    sub_merge_lam = sub_lam.merge(sub_afr, on=["technology", "year", "cost_type"])
+
+    # Create completed dataframe
     df_cost_ratio_fix = (
         pd.concat(
             [
                 df_cost_ratio[
                     ~(
                         (df_cost_ratio.cost_ratio.isnull())
-                        & (df_cost_ratio.r11_region == "MEA")
+                        & (
+                            (df_cost_ratio.r11_region == "MEA")
+                            | (df_cost_ratio.r11_region == "LAM")
+                        )
                     )
                 ],
-                sub_merge,
+                sub_merge_mea,
+                sub_merge_lam,
             ]
         )
         .reset_index(drop=1)
