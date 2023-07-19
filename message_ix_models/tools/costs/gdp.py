@@ -117,13 +117,8 @@ def linearly_regress_tech_cost_vs_gdp_ratios(
     pandas.DataFrame
         DataFrame with columns:
 
-        - scenario: SSP1, SSP2, or SSP3
-        - r11_region: R11 region
-        - year: values from 2000 to 2100
-        - gdp_ppp_per_capita: GDP PPP per capita, in units of billion US$2005/yr/million
-        - gdp_ratio_oecd: the maximum ratio of each region's GDP compared to OECD \
-            regions
-        - gdp_ratio_nam: the ratio of each region's GDP compared to NAM region
+        -
+
     """
 
     gdp_2020 = gdp_ratios.loc[gdp_ratios.year == "2020"][
