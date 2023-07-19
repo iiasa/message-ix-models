@@ -1,9 +1,5 @@
 import numpy as np
 
-from message_ix_models.tools.costs.gdp import (
-    get_gdp_data,
-    linearly_regress_tech_cost_vs_gdp_ratios,
-)
 from message_ix_models.tools.costs.learning import get_cost_reduction_data
 from message_ix_models.tools.costs.splines import (
     apply_polynominal_regression,
