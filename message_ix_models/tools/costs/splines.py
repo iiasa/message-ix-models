@@ -334,35 +334,4 @@ def project_costs_using_splines(
         )
     )
 
-    df_iamc = (
-        df_long.melt(
-            id_vars=[
-                "ssp_scenario",
-                "message_technology",
-                "r11_region",
-                "year",
-            ],
-            var_name="cost_type",
-            value_name="cost_value",
-        )
-        .assign(
-            Variable=lambda x: np.where(
-                x.cost_type == "inv_cost",
-                "Capital Cost|Electricity|" + x.message_technology,
-                "OM Cost|Electricity|" + x.message_technology,
-            )
-        )
-        .rename(
-            columns={"ssp_scenario": "Scenario", "year": "Year", "r11_region": "Region"}
-        )
-        .drop(columns=["message_technology"])
-        .pivot(
-            index=["Scenario", "Region", "Variable"],
-            columns="Year",
-            values="cost_value",
-        )
-        .reset_index()
-        .rename_axis(None, axis=1)
-    )
-
-    return df_long, df_iamc
+    return df_long
