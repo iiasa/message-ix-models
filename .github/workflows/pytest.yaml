@@ -22,15 +22,16 @@ jobs:
         # These should match the versions used in the "pytest" workflows of both
         # ixmp and message_ix.
         version:
-        - { os: macos-latest, python: "3.10" }
-        - { os: ubuntu-latest, python: "3.10" }
-        - { os: windows-latest, python: "3.10" }
+        - { os: macos-latest, python: "3.11" }
+        - { os: ubuntu-latest, python: "3.11" }
+        - { os: windows-latest, python: "3.11" }
         # Versions of both ixmp and message_ix to use
         upstream-version:
         # Temporarily disabled (iiasa/ixmp#477)
         # - v3.4.0  # Minimum version given in setup.cfg
         # - v3.5.0
-        # - v3.6.0  # Latest released version
+        # - v3.6.0
+        - v3.7.0  # Latest released version
         - main    # Development version
 
       fail-fast: false
@@ -39,6 +40,12 @@ jobs:
     name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream-version }}
 
     steps:
+    - name: Cache test data
+      uses: actions/cache@v3
+      with:
+        path: message-local-data
+        key: ${{ matrix.version.os }}
+
     - name: Check out message-ix-models
       uses: actions/checkout@v3
       with:
@@ -62,12 +69,20 @@ jobs:
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream-version }}"
         pip install .[tests]
 
+    - name: Configure local data path
+      run: |
+        mkdir -p message-local-data/cache
+        mix-models config set "message local data" "$(realpath message-local-data)"
+        mix-models config show
+      shell: bash
+
     - name: Run test suite using pytest
       run: |
         pytest message_ix_models \
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
-          --numprocesses=auto
+          --numprocesses=auto \
+          --local-cache --jvmargs="-Xmx6G"
       shell: bash
 
     - name: Test documentation build using Sphinx

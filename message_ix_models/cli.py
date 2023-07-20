@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 import click
+from ixmp.cli import main as ixmp_cli
 
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util._logging import setup as setup_logging
@@ -101,11 +102,16 @@ def debug(ctx):
     log.debug(ctx.local_data)
 
 
+# Attach the ixmp "config" CLI
+main.add_command(ixmp_cli.commands["config"])
+
+
 #: List of submodules providing CLI (sub)commands accessible through `mix-models`.
 #: Each of these should contain a function named ``cli`` decorated with @click.command
 #: or @click.group.
 submodules = [
     "message_ix_models.model.cli",
+    "message_ix_models.model.snapshot",
     "message_ix_models.model.structure",
     "message_ix_models.model.water.cli",
 ]

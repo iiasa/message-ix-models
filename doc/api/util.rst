@@ -12,6 +12,8 @@ Submodules:
    context
    importlib
    _logging
+   node
+   pooch
    scenarioinfo
 
 Commonly used:
@@ -168,6 +170,15 @@ Commonly used:
 .. automodule:: message_ix_models.util.node
    :members:
    :exclude-members: identify_nodes
+
+:mod:`.util.pooch`
+==================
+
+.. currentmodule:: message_ix_models.util.pooch
+
+.. automodule:: message_ix_models.util.pooch
+   :members:
+
 
 :mod:`.util.scenarioinfo`
 =========================
