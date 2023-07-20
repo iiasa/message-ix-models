@@ -19,7 +19,7 @@ technologies and switch to more suitable alternatives.
 
 An important factor in this context that influences technology adoption in |MESSAGEix| are technology diffusion constraints. Technology diffusion in |MESSAGEix| is determined
 by dynamic constraints that relate the construction of a technology added or the activity (level of production) of a technology in a period *t* to construction or the
-activity in the previous period *t-1* (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. section :ref:`Dynamic constraints <message_ix:dynamic_constraints>`).
+activity in the previous period *t-1* (Messner and Strubegger, 1995 :cite:`messner_users_1995`, cf. section :ref:`Dynamic constraints <message-ix:dynamic_constraints>`).
 
 While limiting the possibility of flip-flop behavior as is frequently observed in unconstrained Linear Programming (LP) models such as |MESSAGEix|, a drawback of such hard
 growth constraints is that the relative advantage of some technology over another technology is not taken into account and therefore even for very competitive technologies,
@@ -35,4 +35,4 @@ while still reducing the flip-flop behavior and sudden penetration of technologi
 
    Illustration of maximum technology growth starting at a level of 1 in year t=0 for a set of soft diffusion constraints with effective growth rates r as shown in the legend.
 
-For a more detailed description of the implementation of technology diffusion constraints, see the Section :ref:`Dynamic constraints <message_ix:dynamic_constraints>` of the :doc:`|MESSAGEix| documentation <message_ix:index>`.
+For a more detailed description of the implementation of technology diffusion constraints, see the Section :ref:`Dynamic constraints <message-ix:dynamic_constraints>` of the :doc:`|MESSAGEix| documentation <message-ix:index>`.
