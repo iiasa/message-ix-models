@@ -8,7 +8,7 @@ General description of add-on technologies
 ------------------------------------------
 Add-on technologies can be defined using all the same parameters as any other technology.
 What makes a technology an `add-on technology`, is the fact that their activity is bound to the activity of one or more other technologies, henceforth referred to as the parent technology.
-The mathematical formulation can be found :ref:`here <message_ix:section_addon_technologies>`.
+The mathematical formulation can be found :ref:`here <message-ix:section_addon_technologies>`.
 One of the main benefits of the add-on technology formulation, over specifying an alternative `mode`, is that it allows a single add-on technology to be coupled to the activity of multiple parent technologies.
 Furthermore, multiple add-on technologies can be linked to the activity of a single parent technology.
 

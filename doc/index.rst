@@ -44,6 +44,7 @@ Among other tasks, the tools allow modelers to:
    :maxdepth: 2
    :caption: Variants and projects
 
+   global/index
    water/index
 
 .. toctree::

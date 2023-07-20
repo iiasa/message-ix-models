@@ -22,6 +22,7 @@ author = "IIASA Energy, Climate, and Environment (ECE) Program"
 # with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
@@ -31,13 +32,34 @@ extensions = [
     "sphinxcontrib.bibtex",
 ]
 
+# Figures, tables and code-blocks are automatically numbered if they have a caption
+numfig = True
+math_numfig = True
+math_eqref_format = "Eq.{number}"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_template"]
 
 # List of patterns, relative to source directory, that match files and directories to
 # ignore when looking for source files. This pattern also affects html_static_path and
 # html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    # See corresponding comment at the bottom of global/index.rst
+    "global/_extra/*.rst",
+    # Currently under development
+    "global/glossary.rst",
+]
+
+# A string of reStructuredText included at the beginning of every source file
+rst_prolog = r"""
+.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
+
+.. role:: strike
+.. role:: underline
+"""
 
 
 def setup(app: "sphinx.application.Sphinx") -> None:
@@ -69,6 +91,24 @@ html_static_path = ["_static"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for a list of
 # builtin themes.
 html_theme = "sphinx_rtd_theme"
+
+# -- Options for LaTeX output ----------------------------------------------------------
+
+# LaTeX engine to build the docs
+latex_engine = "lualatex"
+
+latex_elements = {
+    # Paper size option of the document class.
+    "papersize": "a4paper",
+    # Additional preamble content.
+    "preamble": r"""
+    \usepackage{tabularx}
+    """,
+}
+
+# The name of an image file (relative to this directory) to place at the top of
+# the title page.
+latex_logo = "_static/logo_blue.png"
 
 # -- Options for sphinx.ext.autosummary ------------------------------------------------
 
@@ -106,8 +146,9 @@ intersphinx_mapping = {
 
 # -- Options for sphinx.ext.todo -------------------------------------------------------
 
+# If true, `todo` and `todoList` produce output, else they produce nothing
 todo_include_todos = True
 
 # -- Options for sphinxcontrib.bibtex --------------------------------------------------
 
-bibtex_bibfiles = ["main.bib"]
+bibtex_bibfiles = ["main.bib", "messageix-globiom.bib"]

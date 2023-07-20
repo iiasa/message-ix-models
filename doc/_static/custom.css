@@ -13,7 +13,9 @@ IIASA secondary colours + two-stage gradient to white
 */
 
 /* Overall backgrounds */
-.wy-nav-side, .wy-side-nav-search, .wy-nav-top {
+.wy-nav-side,
+.wy-side-nav-search,
+.wy-nav-top {
   background: #00589d;
 }
 
@@ -29,13 +31,13 @@ IIASA secondary colours + two-stage gradient to white
 
 /* …: current items levels 1–3 */
 .wy-menu-vertical li.on a,
-.wy-menu-vertical li.current > a,
-.wy-menu-vertical li.toctree-l3.current > a {
+.wy-menu-vertical li.current>a,
+.wy-menu-vertical li.toctree-l3.current>a {
   color: #00589d;
 }
 
 /* …: current item level 4 */
-.wy-menu-vertical li.toctree-l3 > a {
+.wy-menu-vertical li.toctree-l3>a {
   color: #000000;
 }
 
@@ -44,34 +46,47 @@ IIASA secondary colours + two-stage gradient to white
   border-right: 1px solid #00589d;
 }
 
-.wy-menu-vertical li.toctree-l1.current > a {
+.wy-menu-vertical li.toctree-l1.current>a {
   border-bottom: 1px solid #00589d;
   border-right: none;
 }
 
 /* Gradient colouring of sub-menus */
 .wy-menu-vertical li.current,
-.wy-menu-vertical li.toctree-l2.current > a {
-  background: #bfd5e6; /* blue */
+.wy-menu-vertical li.toctree-l2.current>a {
+  background: #bfd5e6;
+  /* blue */
 }
 
 
-.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a {
-  background: #7fabce; /* blue */
+.wy-menu-vertical li.toctree-l2.current li.toctree-l3>a {
+  background: #7fabce;
+  /* blue */
 }
 
-.wy-menu-vertical li.toctree-l3.current li.toctree-l4 > a {
-  background: #3f81b5; /* blue */
+.wy-menu-vertical li.toctree-l3.current li.toctree-l4>a {
+  background: #3f81b5;
+  /* blue */
   color: #ffffff;
 }
 
 /* Hovered links; all the same colour */
-.wy-menu-vertical li > a:hover,
-.wy-menu-vertical li.current > a:hover,
-.wy-menu-vertical li.current li.toctree-l2 > a:hover,
-.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a:hover,
-.wy-menu-vertical li.toctree-l3.current li.toctree-l4 > a:hover {
+.wy-menu-vertical li>a:hover,
+.wy-menu-vertical li.current>a:hover,
+.wy-menu-vertical li.current li.toctree-l2>a:hover,
+.wy-menu-vertical li.toctree-l2.current li.toctree-l3>a:hover,
+.wy-menu-vertical li.toctree-l3.current li.toctree-l4>a:hover {
   /* white on purple */
   background: #6a4c93;
   color: #ffffff;
+}
+
+
+/* Custom roles */
+.strike {
+  text-decoration: line-through;
+}
+
+.underline {
+  text-decoration: underline;
 }
