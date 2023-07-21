@@ -69,3 +69,16 @@ nuc_lc,3800
 nuc_hc,5000
 csp_sm1_ppl,4609
 csp_sm3_ppl,9932
+furnace_coal_steel,170
+furnace_foil_steel,107
+furnace_loil_steel,93
+furnace_gas_steel,97
+furnace_biomass_steel,250
+furnace_eth_steel,93
+furnace_meth_steel,93
+furnace_elec_steel,50
+furnace_h2_steel,97
+hp_el_steel,800
+hp_gas_steel,880
+solar_steel,2200
+furnace_heat_steel,50

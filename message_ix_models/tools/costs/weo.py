@@ -122,6 +122,20 @@ DICT_WEO_TECH = {
     "syn_liq_ccs": "igcc_ccs",
     "wind_ppf": "wind_offshore",
     "wind_ppl": "wind_onshore",
+    "furnace_coal_steel": "ccgt_chp",
+    "furnace_elec_steel": "ccgt_chp",
+    "furnace_eth_steel": "bioenergy_medium_chp",
+    "furnace_foil_steel": "ccgt_chp",
+    "furnace_gas_steel": "ccgt_chp",
+    "furnace_h2_steel": "ccgt_chp",
+    "furnace_hp_el_steel": "ccgt_chp",
+    "furnace_hp_gas_steel": "ccgt_chp",
+    "furnace_heat_steel": "ccgt_chp",
+    "furnace_loil_steel": "ccgt_chp",
+    "furnace_meth_steel": "bioenergy_medium_chp",
+    "solar_steel": "solarpv_buildings"
+    "hp_el_steel": "ccgt_chp",
+    "hp_gas_steel": "ccgt_chp",
 }
 
 # Dict of technologies whose NAM investment costs are the same as in MESSAGE
@@ -147,6 +161,18 @@ DICT_TECH_SAME_ORIG_MESSAGE_INV = [
     "nuc_hc",
     "nuc_lc",
     "stor_ppl",
+    "furnace_coal_steel",
+    "furnace_elec_steel",
+    "furnace_eth_steel",
+    "furnace_foil_steel",
+    "furnace_gas_steel",
+    "furnace_h2_steel",
+    "furnace_heat_steel",
+    "furnace_loil_steel",
+    "furnace_meth_steel",
+    "solar_steel",
+    "hp_el_steel",
+    "hp_gas_steel",
 ]
 
 # Dict of technologies whose NAM FO&M costs are the same as in MESSAGE
@@ -164,6 +190,18 @@ DICT_TECH_SAME_ORIG_MESSAGE_FOM = [
     "loil_i",
     "meth_i",
     "stor_ppl",
+    "furnace_coal_steel",
+    "furnace_elec_steel",
+    "furnace_eth_steel",
+    "furnace_foil_steel",
+    "furnace_gas_steel",
+    "furnace_h2_steel",
+    "furnace_heat_steel",
+    "furnace_loil_steel",
+    "furnace_meth_steel",
+    "solar_steel",
+    "hp_el_steel",
+    "hp_gas_steel",
 ]
 
 # Dict of technologies whose investment costs are manually specified

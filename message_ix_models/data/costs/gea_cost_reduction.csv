@@ -63,3 +63,16 @@ heat_i,,0,0,0
 geo_hpl,Renewable,0.25,0.18,0.15
 nuc_lc,Nuclear,0,0,0
 nuc_hc,Nuclear,0,0.15,0.3
+furnace_coal_steel,Coal,0,0,0
+furnace_foil_steel,Gas/Oil,0,0,0
+furnace_loil_steel,Gas/Oil,0,0,0
+furnace_gas_steel,Gas/Oil,0,0,0
+furnace_biomass_steel,Biomass,0,0,0
+furnace_eth_steel,Biomass,0,0,0
+furnace_meth_steel,Coal,0,0,0
+furnace_elec_steel,,0,0,0
+furnace_h2_steel,,0,0,0
+hp_el_steel,Renewable,0.5,0.5,0.2
+hp_gas_steel,Gas/Oil,0.4,0.4,0.2
+solar_steel,Renewable,0.9,0.6,0.2
+furnace_heat_steel,,0,0,0
