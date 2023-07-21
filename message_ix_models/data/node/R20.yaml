@@ -32,9 +32,9 @@ R20_MNG:
   name: Mangolia
   child: [MNG]
 
-R20_EAS:
+R20_MSA:
   parent: World
-  name: East Asia
+  name: Mainland Southeast Asia
   child: [KHM, LAO, VNM]
 
 R20_JPN:
