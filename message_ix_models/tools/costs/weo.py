@@ -128,12 +128,10 @@ DICT_WEO_TECH = {
     "furnace_foil_steel": "ccgt_chp",
     "furnace_gas_steel": "ccgt_chp",
     "furnace_h2_steel": "ccgt_chp",
-    "furnace_hp_el_steel": "ccgt_chp",
-    "furnace_hp_gas_steel": "ccgt_chp",
     "furnace_heat_steel": "ccgt_chp",
     "furnace_loil_steel": "ccgt_chp",
     "furnace_meth_steel": "bioenergy_medium_chp",
-    "solar_steel": "solarpv_buildings"
+    "solar_steel": "solarpv_buildings",
     "hp_el_steel": "ccgt_chp",
     "hp_gas_steel": "ccgt_chp",
 }
