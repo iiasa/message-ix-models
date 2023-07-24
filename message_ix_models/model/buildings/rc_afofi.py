@@ -16,7 +16,7 @@ commodities; or activities of the technologies producing these commodities.
 unpublished) iiasa/MESSAGE_Buildings repository.
 """
 from functools import lru_cache
-from typing import List, Tuple
+from typing import Iterable, Tuple
 
 import pandas as pd
 from genno import Quantity
@@ -58,7 +58,7 @@ def get_afofi_commodity_shares() -> Quantity:
 
 
 def get_afofi_technology_shares(
-    c_shares: Quantity, technologies: List[str]
+    c_shares: Quantity, technologies: Iterable[str]
 ) -> Quantity:
     """Compute AFOFI shares by technology from shares by commodity.
 
@@ -80,7 +80,7 @@ def get_afofi_technology_shares(
         weight[t] = {"h2_fc_RC": 0.5}.get(t, 1.0)
 
     return (
-        c_shares.pipe(rename_dims, {"c": "t"})
+        c_shares.pipe(rename_dims, {"c": "t"})  # type: ignore [attr-defined]
         .pipe(aggregate, {"t": agg}, keep=False)
         .pipe(mul, Quantity(pd.Series(weight).rename_axis("t")))
     )
