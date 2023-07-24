@@ -18,8 +18,8 @@ On this page:
    :members:
 
 
-ADVANCE data
-============
+ADVANCE data (:mod:`.tools.advance`)
+====================================
 
 .. currentmodule:: message_ix_models.tools.advance
 

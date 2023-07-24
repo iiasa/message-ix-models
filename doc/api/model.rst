@@ -1,9 +1,31 @@
+.. currentmodule:: message_ix_models.model
+
 Models and variants (:mod:`~message_ix_models.model`)
 *****************************************************
 
-.. currentmodule:: message_ix_models.model
+Submodules described on this page:
+
+.. contents::
+   :local:
+   :backlinks: none
+
+Submodules described on separate pages:
+
+- :doc:`/api/model-bare`
+- :doc:`/api/model-build`
+- :doc:`/api/disutility`
+- :doc:`/api/model-emissions`
+- :doc:`/api/model-snapshot`
 
 .. automodule:: message_ix_models.model
+   :members:
+
+.. currentmodule:: message_ix_models.model.macro
+
+:mod:`.model.macro`: MESSAGE-MACRO
+==================================
+
+.. automodule:: message_ix_models.model.macro
    :members:
 
 :mod:`.model.structure`: Model structure information

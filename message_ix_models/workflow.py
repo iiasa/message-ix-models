@@ -155,7 +155,7 @@ class Workflow(Computer):
         action: Optional[CallbackType] = None,
         replace=False,
         **kwargs,
-    ) -> WorkflowStep:
+    ) -> str:
         """Add a :class:`WorkflowStep` to the workflow.
 
         Parameters
@@ -174,8 +174,8 @@ class Workflow(Computer):
 
         Returns
         -------
-        WorkflowStep
-            a reference to the added step, for optional further modification.
+        str
+            The same as `name`.
 
         Raises
         ------
@@ -236,7 +236,19 @@ class Workflow(Computer):
     ) -> Tuple[Mapping, str]:
         """Traverse the graph looking for non-empty platform_info/scenario_info.
 
-        Returns the info, and the step name containing it.
+        Returns the info, and the step name containing it. Usually, this will identify
+        the name of the platform, model, and/or scenario that is received and acted upon
+        by `step_name`. This may not be the case if preceding workflow steps perform
+        clone steps that are not recorded in the `target` parameter to
+        :class:`WorkflowStep`.
+
+        Parameters
+        ----------
+        step_name : str
+           Initial step from which to work backwards.
+        kind : str, "platform" or "scenario"
+           Whether to look up :attr:`~WorkflowStep.platform_info` or
+           :attr:`~WorkflowStep.scenario_info`.
         """
         task = self.graph[step_name]
         i = getattr(task[0], f"{kind}_info")

@@ -1,7 +1,7 @@
 .. currentmodule:: message_ix_models.model.snapshot
 
-Load MESSAGEix-GLOBIOM snapshots (:mod:`.model.snapshot`)
-*********************************************************
+Load model snapshots (:mod:`.model.snapshot`)
+*********************************************
 
 This code allows to fetch *snapshots* containing completely parametrized MESSAGEix-GLOBIOM model instances, and load these into :class:`Scenarios <message_ix.Scenario>`.
 

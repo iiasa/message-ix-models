@@ -1,4 +1,8 @@
-"""MACRO utilities."""
+"""Tools for calibrating MACRO for MESSAGEix-GLOBIOM.
+
+See :doc:`message-ix:macro` for *general* documentation on MACRO and MESSAGE-MACRO. This
+module contains tools specifically for using these models with MESSAGEix-GLOBIOM.
+"""
 import logging
 from functools import lru_cache
 from itertools import product
@@ -17,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 log = logging.getLogger(__name__)
 
-#: Default set of commodities to include.
+#: Default set of commodities to include in :func:`generate`.
 COMMODITY = ["i_therm", "i_spec", "rc_spec", "rc_therm", "transport"]
 
 
@@ -29,17 +33,19 @@ def generate(
 ) -> pd.DataFrame:
     """Generate uniform data for one :mod:`message_ix.macro` `parameter`.
 
-    :meth:`message_ix.Scenario.add_macro` expects as its `data` parameter a dictionary
-    mapping certain MACRO parameter names (or the special name "config") to
-    :class:`.pandas.DataFrame`. This function generates data for those data frames.
+    :meth:`message_ix.Scenario.add_macro` expects as its `data` parameter a
+    :class:`dict` that maps certain MACRO parameter names (or the special name "config")
+    to :class:`.pandas.DataFrame`. This function generates data for those data frames.
 
-    For the particular dimensions:
+    For the particular dimensions, generate automatically includes:
 
-    - "node": All nodes in the node code list given by :func:`.nodes_ex_world`.
+    - "node": All nodes in the node code list given by :func:`.nodes_ex_world`, for the
+      node list indicated by :attr:`.model.Config.regions`.
     - "year": All periods from the period *before* the first model year.
     - "commodity": The elements of `commodities`.
     - "sector": If each entry of `commodities` is a :class:`.Code` and has an annotation
-      with id="macro-sector", the given value. Otherwise, the same as `commodity`.
+      with id="macro-sector", the value of that annotation. Otherwise, the same as
+      `commodity`.
 
     `value` supplies the parameter value, which is the same for all observations.
     The labels level="useful" and unit="-" are fixed.
@@ -60,7 +66,7 @@ def generate(
     pandas.DataFrame
         The columns vary according to `parameter`:
 
-        - "aeei": node, year, sector, value, unit.
+        - "aeei": node, sector, year, value, unit.
         - "depr", "drate", or "lotol": node, value, unit.
         - "config": node, sector, commodity, level, year.
     """
@@ -121,7 +127,24 @@ def generate(
 
 
 def load(base_path: Path) -> Mapping[str, pd.DataFrame]:
-    """Load MACRO data from CSV files."""
+    """Load MACRO data from CSV files.
+
+    The function reads files in the simple/long CSV format understood by
+    :func:`genno.computations.load_file`. For use with
+    :meth:`~message_ix.Scenario.add_macro`, the dimension names should be given in full,
+    for instance "node" or "sector".
+
+    Parameters
+    ----------
+    base_path : pathlib.Path
+        Directory containing zero or more CSV files.
+
+    Returns
+    -------
+    dict of (str -> pandas.DataFrame)
+        Mapping from MACRO calibration parameter names to data; one entry for each file
+        in `base_path`.
+    """
     from genno.computations import load_file
 
     result = {}

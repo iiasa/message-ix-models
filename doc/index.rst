@@ -34,7 +34,6 @@ Among other tasks, the tools allow modelers to:
    api/model-emissions
    api/model-snapshot
    api/disutility
-   api/project
    api/tools
    api/util
    api/testing
@@ -45,6 +44,7 @@ Among other tasks, the tools allow modelers to:
    :caption: Variants and projects
 
    water/index
+   api/project
 
 .. toctree::
    :maxdepth: 2
