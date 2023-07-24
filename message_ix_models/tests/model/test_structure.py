@@ -124,6 +124,10 @@ class TestGetCodes:
         [
             ("RCP", "R5_MAF", 69, "CIV"),
             ("R11", "R11_AFR", 50, "CIV"),
+            ("R17", "R17_AFR", 50, "CIV"),
+            ("R17", "R17_CHN", 2, "CHN"),
+            ("R20", "R20_AFR", 50, "CIV"),
+            ("R20", "R20_CHN", 2, "CHN"),
             ("R14", "R14_AFR", 51, "CIV"),
             ("R32", "R32SSA-L", 41, "CIV"),
         ],
