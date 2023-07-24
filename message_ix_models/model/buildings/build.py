@@ -266,7 +266,8 @@ def bio_backstop(scen):
         if name == "output":
             values.update(commodity="biomass", node_dest=node, level="primary")
         elif name == "var_cost":
-            values.update(value=1e5)
+            # 2023-07-24 PNK: reduced from 1e5 to address MACRO calibration issues
+            values.update(value=1e1)
 
         data[name].append(scen.par(name, filters=filters).assign(**values))
 
