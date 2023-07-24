@@ -418,8 +418,10 @@ def prepare_data(
     c_share = get_afofi_commodity_shares()
 
     # Retrieve existing demands
-    filters = dict(filters={"c": ["rc_spec", "rc_therm"], "y": info.Y})
-    afofi_dd = data_for_quantity("par", "demand", "value", scenario, config=filters)
+    filters: Dict[str, Iterable] = dict(c=["rc_spec", "rc_therm"], y=info.Y)
+    afofi_dd = data_for_quantity(
+        "par", "demand", "value", scenario, config=dict(filters=filters)
+    )
 
     # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
     # - Relabel commodities.
@@ -483,7 +485,7 @@ def prepare_data(
                 ("emission_factor", {}, {}),
                 ("relation_activity", dict(relation=relations), {}),
             ):
-                filters["technology"] = tech_orig
+                filters["technology"] = [tech_orig]
                 data[name].append(
                     scenario.par(name, filters=filters).assign(
                         technology=tech_new, **extra
