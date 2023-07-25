@@ -424,13 +424,13 @@ from .data_generic import gen_data_generic
 from .data_petro import gen_data_petro_chemicals
 from .data_buildings import gen_data_buildings
 from .data_power_sector import gen_data_power_sector
-from .data_methanol import gen_data_methanol
+from .data_methanol_new import gen_data_methanol_new
 from .data_ammonia_new import gen_all_NH3_fert
 
 
 DATA_FUNCTIONS_1 = [
     #gen_data_buildings,
-    gen_data_methanol,
+    gen_data_methanol_new,
     gen_all_NH3_fert,
     #gen_data_ammonia, ## deprecated module!
     gen_data_generic,
