@@ -42,7 +42,7 @@ DICT_TECH_ROWS = {
 }
 
 # Dict of cost types to read in and the required columns
-DICT_COST_COLS = {"capital_costs": "A,B:D", "annual_om_costs": "A,F:H"}
+DICT_COST_COLS = {"inv_cost": "A,B:D", "fix_cost": "A,F:H"}
 
 # Dict of each R11 region matched with a WEO region
 DICT_WEO_R11 = {
@@ -210,49 +210,49 @@ DICT_MANUAL_NAM_COSTS_FOM = {
 DICT_TECH_REF_INV = {
     "coal_ppl_u": {
         "tech": "coal_ppl",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
-    "eth_bio": {"tech": "liq_bio", "cost_type": "capital_costs"},
+    "eth_bio": {"tech": "liq_bio", "cost_type": "inv_cost"},
     "eth_bio_ccs": {
         "tech": "eth_bio",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
-    "gas_ppl": {"tech": "gas_cc", "cost_type": "capital_costs"},
-    "h2_bio": {"tech": "h2_coal", "cost_type": "capital_costs"},
-    "h2_bio_ccs": {"tech": "h2_bio", "cost_type": "capital_costs"},
+    "gas_ppl": {"tech": "gas_cc", "cost_type": "inv_cost"},
+    "h2_bio": {"tech": "h2_coal", "cost_type": "inv_cost"},
+    "h2_bio_ccs": {"tech": "h2_bio", "cost_type": "inv_cost"},
     "liq_bio_ccs": {
         "tech": "liq_bio",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
-    "meth_coal": {"tech": "syn_liq", "cost_type": "capital_costs"},
+    "meth_coal": {"tech": "syn_liq", "cost_type": "inv_cost"},
     "meth_coal_ccs": {
         "tech": "meth_coal",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
-    "meth_ng": {"tech": "syn_liq", "cost_type": "capital_costs"},
+    "meth_ng": {"tech": "syn_liq", "cost_type": "inv_cost"},
     "meth_ng_ccs": {
         "tech": "meth_ng",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
     "solar_i": {
         "tech": "solar_pv_ppl",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
     "solar_pv_I": {
         "tech": "solar_pv_ppl",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
     "solar_pv_RC": {
         "tech": "solar_pv_ppl",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
     "solar_th_ppl": {
         "tech": "solar_pv_ppl",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
     "syn_liq_ccs": {
         "tech": "syn_liq",
-        "cost_type": "capital_costs",
+        "cost_type": "inv_cost",
     },
 }
 
@@ -262,55 +262,55 @@ DICT_TECH_REF_INV = {
 DICT_TECH_REF_FOM = {
     "coal_ppl_u": {
         "tech": "coal_ppl",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
-    "eth_bio": {"tech": "liq_bio", "cost_type": "annual_om_costs"},
+    "eth_bio": {"tech": "liq_bio", "cost_type": "fix_cost"},
     "eth_bio_ccs": {
         "tech": "eth_bio",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
-    "gas_ppl": {"tech": "gas_cc", "cost_type": "annual_om_costs"},
-    "h2_bio": {"tech": "h2_coal", "cost_type": "annual_om_costs"},
+    "gas_ppl": {"tech": "gas_cc", "cost_type": "fix_cost"},
+    "h2_bio": {"tech": "h2_coal", "cost_type": "fix_cost"},
     "h2_bio_ccs": {
         "tech": "h2_bio",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "liq_bio_ccs": {
         "tech": "liq_bio",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "meth_coal": {
         "tech": "syn_liq",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "meth_coal_ccs": {
         "tech": "meth_coal",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
-    "meth_ng": {"tech": "syn_liq", "cost_type": "annual_om_costs"},
+    "meth_ng": {"tech": "syn_liq", "cost_type": "fix_cost"},
     "meth_ng_ccs": {
         "tech": "meth_ng",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "solar_i": {
         "tech": "solar_pv_ppl",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "solar_pv_I": {
         "tech": "solar_pv_ppl",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "solar_pv_RC": {
         "tech": "solar_pv_ppl",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "solar_th_ppl": {
         "tech": "solar_pv_ppl",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
     "syn_liq_ccs": {
         "tech": "syn_liq",
-        "cost_type": "annual_om_costs",
+        "cost_type": "fix_cost",
     },
 }
 
@@ -329,7 +329,7 @@ def get_weo_data() -> pd.DataFrame:
         - technology: WEO technologies, with shorthands as defined in `DICT_WEO_TECH`
         - region: WEO regions
         - year: values from 2021 to 2050, as appearing in the file
-        - cost type: either “capital_costs” or “annual_om_costs”
+        - cost type: either “inv_cost” or “fix_cost”
         - units: "usd_per_kw"
         - value: the cost value
     """
@@ -411,7 +411,7 @@ def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
         - weo_region: the WEO region corresponding to the R11 region, \
             as mapped in `DICT_WEO_R11`
         - year: the latest year of data, in this case 2021
-        - cost_type: either “capital_costs” or “annual_om_costs”
+        - cost_type: either “inv_cost” or “fix_cost”
         - cost_ratio: value between 0-1; \
           the cost ratio of each technology-region's cost \
           relative to the NAM region's cost
@@ -528,7 +528,7 @@ def get_cost_assumption_data() -> pd.DataFrame:
         DataFrame with columns:
 
         - message_technology: technologies included in MESSAGE
-        - cost_type: either “capital_costs” or “annual_om_costs”
+        - cost_type: either “inv_cost” or “fix_cost”
         - cost_NAM_original_message: costs for each technology given \
             in units of USD per kW
     """
@@ -543,13 +543,13 @@ def get_cost_assumption_data() -> pd.DataFrame:
                 "investment_cost_nam_original_message": "cost_NAM_original_message"
             }
         )
-        .assign(cost_type="capital_costs")
+        .assign(cost_type="inv_cost")
     )
 
     df_fom = (
         pd.read_csv(fom_file_path, header=9)
         .rename(columns={"fom_cost_nam_original_message": "cost_NAM_original_message"})
-        .assign(cost_type="annual_om_costs")
+        .assign(cost_type="fix_cost")
     )
 
     # Concatenate dataframes
@@ -599,7 +599,7 @@ def compare_original_and_weo_nam_costs(
         - weo_technology: WEO technologies, with shorthands \
         as defined in `DICT_WEO_TECH`
         - r11_region: MESSAGE R11 regions
-        - cost_type: either “capital_costs” or “annual_om_costs”
+        - cost_type: either “inv_cost” or “fix_cost”
         - cost_NAM_original_message: costs for each technology from old MESSAGE data \
             given in units of USD per kW
         - cost_NAM_weo_2021: costs for each technology from 2021 WEO given in \
@@ -671,7 +671,7 @@ def adj_nam_cost_message(
 
     """
     mask = (df_costs.message_technology.isin(list_tech_inv)) & (
-        df_costs.cost_type == "capital_costs"
+        df_costs.cost_type == "inv_cost"
     )
     df_costs.loc[mask, "cost_NAM_adjusted"] = df_costs.loc[
         mask, "cost_NAM_original_message"
@@ -679,11 +679,11 @@ def adj_nam_cost_message(
 
     df_costs.loc[
         (df_costs.message_technology.isin(list_tech_fom))
-        & (df_costs.cost_type == "annual_om_costs"),
+        & (df_costs.cost_type == "fix_cost"),
         "cost_NAM_adjusted",
     ] = df_costs.loc[
         (df_costs.message_technology.isin(list_tech_fom))
-        & (df_costs.cost_type == "annual_om_costs"),
+        & (df_costs.cost_type == "fix_cost"),
         "cost_NAM_original_message",
     ]
 
@@ -710,15 +710,13 @@ def adj_nam_cost_manual(
     """
     for k in dict_manual_inv:
         df_costs.loc[
-            (df_costs.message_technology == k)
-            & (df_costs.cost_type == "capital_costs"),
+            (df_costs.message_technology == k) & (df_costs.cost_type == "inv_cost"),
             "cost_NAM_adjusted",
         ] = dict_manual_inv[k]
 
     for f in dict_manual_fom:
         df_costs.loc[
-            (df_costs.message_technology == f)
-            & (df_costs.cost_type == "annual_om_costs"),
+            (df_costs.message_technology == f) & (df_costs.cost_type == "fix_cost"),
             "cost_NAM_adjusted",
         ] = dict_manual_fom[f]
 
@@ -813,7 +811,7 @@ def adj_nam_cost_reference(
         calc_nam_cost_ratio(
             df_costs,
             m,
-            "capital_costs",
+            "inv_cost",
             dict_reference_inv[m]["tech"],
             dict_reference_inv[m]["cost_type"],
         )
@@ -822,7 +820,7 @@ def adj_nam_cost_reference(
         calc_nam_cost_ratio(
             df_costs,
             n,
-            "annual_om_costs",
+            "fix_cost",
             dict_reference_fom[n]["tech"],
             dict_reference_fom[n]["cost_type"],
         )
@@ -855,7 +853,7 @@ def get_region_differentiated_costs(
     pandas.DataFrame
         with columns:
 
-        - cost_type: either "capital_costs" or "annual_om_costs".
+        - cost_type: either "inv_cost" or "fix_cost".
         - region
         - technology
         - value
@@ -908,7 +906,7 @@ def get_region_differentiated_costs(
 def calculate_fom_to_inv_cost_ratios(input_df_weo):
     df_inv = (
         input_df_weo.loc[
-            (input_df_weo.cost_type == "capital_costs")
+            (input_df_weo.cost_type == "inv_cost")
             & (input_df_weo.year == min(input_df_weo.year))
         ]
         .rename(columns={"value": "inv_cost"})
@@ -917,7 +915,7 @@ def calculate_fom_to_inv_cost_ratios(input_df_weo):
 
     df_fom = (
         input_df_weo.loc[
-            (input_df_weo.cost_type == "annual_om_costs")
+            (input_df_weo.cost_type == "fix_cost")
             & (input_df_weo.year == min(input_df_weo.year))
         ]
         .rename(columns={"value": "fom_cost"})

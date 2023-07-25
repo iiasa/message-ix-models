@@ -3,6 +3,11 @@ import pandas as pd
 
 from message_ix_models.util import package_data_path
 
+# Global variables of model years
+FIRST_MODEL_YEAR = 2020
+LAST_MODEL_YEAR = 2100
+PRE_LAST_YEAR_RATE = 0.01
+
 # Dict of technology types and the learning rates under each SSP
 # Data translated from excel form into python form from Sheet 1 in
 # https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP_technology_learning.xlsx
@@ -57,6 +62,31 @@ DICT_TECH_SSP_LEARNING = {
         "SSP5": "none",
     },
 }
+
+
+def get_technology_first_year_data() -> pd.DataFrame:
+    """Read in technology first year data
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - message_technology: technology in MESSAGEix
+        - first_year_original: the original first year the technology is \
+            available in MESSAGEix
+        - first_technology_year: the adjusted first year the technology is \
+            available in MESSAGEix
+    """
+    file = package_data_path("costs", "technology_first_year.csv")
+    df = pd.read_csv(file, header=3).assign(
+        first_technology_year=lambda x: np.where(
+            x.first_year_original > FIRST_MODEL_YEAR,
+            x.first_year_original,
+            FIRST_MODEL_YEAR,
+        )
+    )
+
+    return df
 
 
 def get_cost_reduction_data() -> pd.DataFrame:
@@ -139,4 +169,145 @@ def get_cost_reduction_data() -> pd.DataFrame:
 
     assign_ssp_learning()
 
-    return df_gea
+    # Convert from wide to long
+    df_long = df_gea.melt(
+        id_vars=["message_technology", "technology_type"],
+        value_vars=[
+            "SSP1_cost_reduction",
+            "SSP2_cost_reduction",
+            "SSP3_cost_reduction",
+        ],
+        var_name="scenario",
+        value_name="cost_reduction",
+    ).assign(scenario=lambda x: x.scenario.str.replace("_cost_reduction", ""))
+
+    return df_long
+
+
+# Function to project capital costs using learning rates for NAM region only
+def project_NAM_capital_costs_using_learning_rates(
+    regional_diff_df: pd.DataFrame,
+    learning_rates_df: pd.DataFrame,
+    tech_first_year_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Project capital costs using learning rates for NAM region only
+
+    This function uses the learning rates for each technology under each SSP \
+        scenario to project the capital costs for each technology in the NAM \
+        region. The capital costs for each technology in the NAM region are \
+        first calculated by multiplying the regional cost ratio (relative to \
+        OECD) by the OECD capital costs. Then, the capital costs are projected \
+        using the learning rates under each SSP scenario.
+
+    Parameters
+    ----------
+    regional_diff_df : pandas.DataFrame
+        DataFrame with columns:
+
+        - message_technology: technologies included in MESSAGE
+        - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
+            renewable, nuclear, or NA)
+        - r11_region: R11 region
+        - cost_type: either "inv_cost" or "fom_cost"
+        - year: values from 2000 to 2100
+        - value: the capital cost (in units of million US$2005/yr)
+
+    learning_rates_df : pandas.DataFrame
+        DataFrame with columns:
+
+        - message_technology: technologies included in MESSAGE
+        - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
+            renewable, nuclear, or NA)
+        - GEAL: cost reduction in 2100 (%) under the low (L) GEA scenario
+        - GEAM: cost reduction in 2100 (%) under the medium (M) GEA scenario
+        - GEAH: cost reduction in 2100 (%) under the high (H) GEA scenario
+        - SSPX_learning: one corresponding column for each SSP scenario \
+            (SSP1, SSP2, SSP3, SSP4, SSP5). These columns specify the learning \
+            rate for each technology under that specific scenario
+        - SSPX_cost_reduction: the cost reduction (%) of the technology under the \
+            specific scenario
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+
+        - message_technology: technologies included in MESSAGE
+        - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
+            renewable, nuclear, or NA)
+        - r11_region: R11 region
+        - cost_type: either "inv_cost" or "fom_cost"
+        - year: values from 2000 to 2100
+
+    """
+
+    df_reg = regional_diff_df.copy()
+    df_discount = learning_rates_df.copy()
+    df_tech_first_year = tech_first_year_df.copy()
+
+    # Filter for NAM region and investment cost only, then merge with discount rates,
+    # then merge with first year data
+    df_nam = (
+        df_reg.loc[(df_reg.r11_region == "NAM") & (df_reg.cost_type == "inv_cost")]
+        .merge(df_discount, on="message_technology")
+        .merge(df_tech_first_year, on="message_technology")
+        .assign(
+            cost_region_2100=lambda x: x["cost_region_2021"]
+            - (x["cost_region_2021"] * x["cost_reduction"]),
+            b=lambda x: (1 - PRE_LAST_YEAR_RATE) * x["cost_region_2100"],
+            r=lambda x: (1 / (LAST_MODEL_YEAR - FIRST_MODEL_YEAR))
+            * np.log(
+                (x["cost_region_2100"] - x["b"]) / (x["cost_region_2021"] - x["b"])
+            ),
+        )
+    )
+
+    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + 10, 10))
+
+    for y in seq_years:
+        df_nam = df_nam.assign(
+            ycur=lambda x: np.where(
+                y <= FIRST_MODEL_YEAR,
+                x.cost_region_2021,
+                (x.cost_region_2021 - x.b) * np.exp(x.r * (y - x.first_technology_year))
+                + x.b,
+            )
+        ).rename(columns={"ycur": y})
+
+    df_nam = (
+        df_nam.drop(
+            columns=[
+                "b",
+                "r",
+                "r11_region",
+                "weo_region",
+                "cost_type",
+                "cost_NAM_adjusted",
+                "technology_type",
+                "cost_reduction",
+                "cost_ratio",
+                "first_year_original",
+                "first_technology_year",
+                "cost_region_2021",
+                "cost_region_2100",
+            ]
+        )
+        .melt(
+            id_vars=[
+                "scenario",
+                "message_technology",
+                "weo_technology",
+            ],
+            var_name="year",
+            value_name="inv_cost_learning_NAM",
+        )
+        .assign(year=lambda x: x.year.astype(int))
+    )
+
+    return df_nam
+
+
+# df = project_NAM_capital_costs_using_learning_rates(
+#     df_region_diff, df_learning_rates, df_technology_first_year
+# )
+# df
