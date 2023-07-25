@@ -8,7 +8,7 @@ from typing import Dict, Generator, List, Optional, Tuple
 from message_ix import Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import private_data_path, replace_par_data
+from message_ix_models.util import identify_nodes, private_data_path, replace_par_data
 from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
@@ -58,6 +58,28 @@ def log_scenario_info(where: str, s: Scenario) -> None:
         f"""in {where}:
    {repr(s)} = {s.url}
    has_solution = {s.has_solution()}; is_default = {s.is_default()}"""
+    )
+
+
+def add_globiom_step(context: Context, scenario: Scenario):
+    """Strip and re-add GLOBIOM structure and data."""
+    from message_data.tools.utilities.add_globiom import add_globiom, clean
+
+    # Strip out existing configuration and data
+    clean(scenario)
+
+    # Add GLOBIOM emulator
+    context.model.regions = identify_nodes(scenario)
+    add_globiom(
+        mp=scenario.platform,
+        scen=scenario,
+        ssp="SSP2",
+        data_path=private_data_path(),
+        calibration_year=2015,
+        # NB this presumes that data/globiom/config.yaml has a top-level key with this
+        #    name, e.g. "R12"
+        config_setup=context.model.regions,
+        verbose=context.verbose,
     )
 
 
@@ -184,7 +206,6 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     """Invoke :meth:`.Scenario.add_macro`."""
     from message_ix_models.model import macro
     from message_ix_models.model.build import _add_unit
-    from message_ix_models.util import identify_nodes
     from sdmx.model import Annotation, Code
 
     from message_data.model.buildings.rc_afofi import get_afofi_commodity_shares
