@@ -3,16 +3,23 @@ import logging
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Generator, List, Literal, Mapping, Optional, Union
+from typing import Dict, Generator, List, Literal, Mapping, Optional, Union, cast
 
 import ixmp
 import yaml
-from message_ix_models.util import as_codes
+from message_ix_models.util import MESSAGE_DATA_PATH, as_codes
 from sdmx.model.v21 import Annotation, Code
 
 from message_data.projects.engage.workflow import PolicyConfig
 
 log = logging.getLogger(__name__)
+
+ixmp.config.register(
+    "navigate workflow dir",
+    Path,
+    cast(Path, MESSAGE_DATA_PATH).parent.joinpath("navigate-workflow"),
+)
+
 
 # Shorthand for use in `CLIMATE_POLICY`
 _kw: Mapping = dict(
