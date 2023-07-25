@@ -79,8 +79,8 @@ def get_spec(context: Context) -> Spec:
     if context.buildings.with_materials:
         s.require.set["commodity"].extend(MATERIALS)
 
-    # Temporary
-    s.add.set["technology"].append(Code(id="bio_backstop"))
+    # commented: See docstring of bio_backstop and comments in prepare_data, below
+    # s.add.set["technology"].append(Code(id="bio_backstop"))
 
     # The set of required nodes varies according to context.regions
     s.require.set["node"].extend(map(str, get_region_codes(context.regions)))
@@ -242,25 +242,24 @@ def load_config(context):
     context["buildings spec"] = s
 
 
-def bio_backstop(scen):
-    """Fill the gap between the biomass demands & potential to avoid infeasibility.
+def bio_backstop(scen, nodes=["R12_AFR", "R12_SAS"]):
+    """Create a backstop supply of (biomass, primary) to avoid infeasibility.
 
-    .. todo:: Replace this with proper & complete use of the current
-       :mod:`message_data.tools.utilities.add_globiom`.
+    This is not currently in use; see comments in :func:`prepare_data`.
 
-       This function simplified from a version in the MESSAGE_Buildings/util/ directory,
-       itself modified from an old/outdated (before 2022-03) version of
-       :mod:`.add_globiom`.
+    This function simplified from a version in the MESSAGE_Buildings/util/ directory,
+    itself modified from an old/outdated (before 2022-03) version of
+    :mod:`.add_globiom`.
 
-       See https://iiasa-ece.slack.com/archives/C03M5NX9X0D/p1659623091532079 for
-       discussion.
+    See https://iiasa-ece.slack.com/archives/C03M5NX9X0D/p1659623091532079 for
+    discussion.
     """
     # Retrieve technology for which will be used to create the backstop
     filters = dict(technology="elec_rc", node_loc="R12_NAM", year_act=2020)
 
     data = defaultdict(list)
 
-    for node, name in product(["R12_AFR", "R12_SAS"], ["output", "var_cost"]):
+    for node, name in product(nodes, ["output", "var_cost"]):
         values = dict(technology="bio_backstop", node_loc=node)
 
         if name == "output":
@@ -272,7 +271,9 @@ def bio_backstop(scen):
         data[name].append(scen.par(name, filters=filters).assign(**values))
 
     result = {k: pd.concat(v) for k, v in data.items()}
-    log.info(repr(result))
+
+    log.debug(repr(result))
+
     return result
 
 
@@ -502,7 +503,9 @@ def prepare_data(
         # Set up buildings-materials linkage
         merge_data(result, materials(scenario, info, sturm_r, sturm_c))
 
-    merge_data(result, bio_backstop(scenario))
+    # commented: This is superseded by .navigate.workflow.add_globiom_step
+    # # Add data for a backstop supply of (biomass, secondary)
+    # merge_data(result, bio_backstop(scenario))
 
     return result
 
@@ -513,16 +516,10 @@ def prune_spec(spec: Spec, data: Dict[str, pd.DataFrame]) -> None:
         values = set(data["input"][name]) | set(data["output"][name])
 
         # DEBUG
-        # print(
-        #     "\n".join(
-        #         sorted(
-        #             map(
-        #                 lambda c: c.id,
-        #                 filter(lambda c: c.id not in values, spec.add.set[name]),
-        #             )
-        #         )
-        #     )
+        # missing = map(
+        #     lambda c: c.id, filter(lambda c: c.id not in values, spec.add.set[name])
         # )
+        # print("\n".join(sorted(missing)))
 
         N = len(spec.add.set[name])
         spec.add.set[name] = sorted(
