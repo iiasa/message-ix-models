@@ -3,7 +3,7 @@ import re
 from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Tuple
+from typing import Dict, Generator, List, Mapping, Optional, Tuple
 
 from message_ix import Scenario
 from message_ix_models import Context
@@ -478,13 +478,18 @@ def generate(context: Context) -> Workflow:
         name = wf.add_step(f"M {label} built", "base", build_materials, target=target)
 
         # Strip data from tax_emission
-        M_built[WP6_production] = wf.add_step(
+        base = wf.add_step(
             f"M {label} adjusted",
             name,
             adjust_materials,
             clone=True,
             target=f"MESSAGEix-GLOBIOM 1.1-M-R12 (NAVIGATE)/{label}",
             WP6_production=WP6_production,
+        )
+
+        # Update GLOBIOM
+        M_built[WP6_production] = wf.add_step(
+            f"M {label} adjusted + GLOBIOM", base, add_globiom_step
         )
 
     # Mapping from short IDs (`s`) to step names for results of step 7
@@ -544,7 +549,7 @@ def generate(context: Context) -> Workflow:
     # Mapping from short IDs (`s`) to 2-tuples with:
     # 1. name of the final step in the policy sequence (if any)
     # 2. args for report(…, other_scenario_info=…) —either None or model/scenario name
-    to_report = {}
+    to_report: Dict[str, Tuple[str, Optional[Mapping]]] = {}
 
     # Now iterate over all scenarios
     filters.pop("navigate_climate_policy")
