@@ -305,9 +305,3 @@ def project_NAM_capital_costs_using_learning_rates(
     )
 
     return df_nam
-
-
-# df = project_NAM_capital_costs_using_learning_rates(
-#     df_region_diff, df_learning_rates, df_technology_first_year
-# )
-# df
