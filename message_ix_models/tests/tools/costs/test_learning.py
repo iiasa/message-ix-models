@@ -1,5 +1,3 @@
-import numpy as np
-
 from message_ix_models.tools.costs.learning import get_cost_reduction_data
 
 
