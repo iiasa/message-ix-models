@@ -1,6 +1,7 @@
 import numpy as np
 
 from message_ix_models.tools.costs.gdp import (
+    calculate_adjusted_region_cost_ratios,
     get_gdp_data,
     linearly_regress_tech_cost_vs_gdp_ratios,
 )
@@ -37,3 +38,22 @@ def test_linearly_regress_tech_cost_vs_gdp_ratios():
     # The absolute value of the slopes should be less than 1 probably
     assert abs(min(res.slope)) <= 1
     assert abs(max(res.slope)) <= 1
+
+
+# Test function to calculate adjusted regionally differentiated cost ratios
+def test_calculate_adjusted_region_cost_ratios():
+    df_gdp = get_gdp_data()
+    df_weo = get_weo_data()
+    df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
+    df_linreg = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
+
+    res = calculate_adjusted_region_cost_ratios(df_gdp, df_linreg)
+
+    # Check SSP1, SSP2, and SSP3 are all present in the data
+    assert np.all(res.scenario.unique() == ["SSP1", "SSP2", "SSP3"])
+
+    # Check that the adjusted cost ratios are greater than zero
+    assert min(res.cost_ratio_adj) > 0
+
+    # Check that the adjusted cost ratios for NAM are equal to 1
+    assert min(res.loc[res.r11_region == "NAM", "cost_ratio_adj"]) == 1.0
