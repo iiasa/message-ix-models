@@ -63,13 +63,16 @@ def log_scenario_info(where: str, s: Scenario) -> None:
 
 def add_globiom_step(context: Context, scenario: Scenario):
     """Strip and re-add GLOBIOM structure and data."""
-    from message_data.tools.utilities.add_globiom import add_globiom, clean
+    from message_data.tools.utilities.add_globiom import add_globiom
 
-    # Strip out existing configuration and data
-    clean(scenario)
+    # from message_data.tools.utilities.add_globiom import clean
+    # commented: this step is extremely slow; at least 16 hours on hpg914.iiasa.ac.at
+    # # Strip out existing configuration and data
+    # clean(scenario)
+
+    context.model.regions = identify_nodes(scenario)
 
     # Add GLOBIOM emulator
-    context.model.regions = identify_nodes(scenario)
     add_globiom(
         mp=scenario.platform,
         scen=scenario,
