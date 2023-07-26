@@ -1,7 +1,13 @@
 import pytest
+from genno import Quantity
+from message_ix import Scenario
 
 from message_data.model.transport import Config
-from message_data.model.transport.computations import factor_input
+from message_data.model.transport.computations import (
+    factor_input,
+    iea_eei_fv,
+    transport_check,
+)
 from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.util import get_techs
 
@@ -40,3 +46,17 @@ def test_factor_input(test_context, options, any_change):
     # No change after 2050
     assert all(1.0 == result.sel(y=2060) / result.sel(y=2050))
     assert all(1.0 == result.sel(y=2110) / result.sel(y=2050))
+
+
+def test_iea_eei_fv():
+    # TODO expand with additional cases
+    result = iea_eei_fv("tonne-kilometres", dict(regions="R12"))
+
+    assert 12 == len(result)
+
+
+@pytest.mark.xfail(reason="Incomplete test")
+def test_transport_check(test_context):
+    s = Scenario(test_context.get_platform(), model="m", scenario="s", version="new")
+
+    transport_check(s, Quantity())
