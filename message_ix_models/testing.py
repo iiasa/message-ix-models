@@ -387,6 +387,9 @@ def export_test_data(context: Context):
 #: not implemented.
 NIE = pytest.mark.xfail(raises=NotImplementedError)
 
+#: :data:`True` if tests occur on GitHub Actions.
+GHA = "GITHUB_ACTIONS" in os.environ
+
 
 def not_ci(reason=None, action="skip"):
     """Mark a test as xfail or skipif if on CI infrastructure.
@@ -394,6 +397,4 @@ def not_ci(reason=None, action="skip"):
     Checks the ``GITHUB_ACTIONS`` environment variable; returns a pytest mark.
     """
     action = "skipif" if action == "skip" else action
-    return getattr(pytest.mark, action)(
-        condition="GITHUB_ACTIONS" in os.environ, reason=reason
-    )
+    return getattr(pytest.mark, action)(condition=GHA, reason=reason)

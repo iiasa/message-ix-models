@@ -25,6 +25,7 @@ classifiers = [
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: R",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Information Analysis"
@@ -38,10 +39,12 @@ dependencies = [
   "genno >= 1.8.0",
   "iam_units",
   "message_ix >= 3.4.0",
+  "pooch",
   "pyam-iamc >= 0.6",
   "pycountry",
   "PyYAML",
   "sdmx1 >= 2.8.0",
+  "tqdm",
 ]
 
 [project.urls]
@@ -79,6 +82,7 @@ exclude = ["doc/"]
 module = [
   "colorama",
   "message_data.*",
+  "pooch",
   "pycountry",
   # Indirectly via message_ix
   # This should be a subset of the list in message_ix's pyproject.toml
