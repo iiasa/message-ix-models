@@ -46,7 +46,7 @@ def test_get_weo_data():
             (result.technology == "steam_coal_subcritical")
             & (result.region == "United States")
             & (result.year == "2021")
-            & (result.cost_type == "capital_costs"),
+            & (result.cost_type == "inv_cost"),
             "value",
         ].values[0]
         == 1800
@@ -60,8 +60,7 @@ def test_get_cost_assumption_data():
     assert (
         round(
             res.loc[
-                (res.message_technology == "coal_ppl")
-                & (res.cost_type == "capital_costs"),
+                (res.message_technology == "coal_ppl") & (res.cost_type == "inv_cost"),
                 "cost_NAM_original_message",
             ].values[0]
         )
@@ -70,8 +69,7 @@ def test_get_cost_assumption_data():
     assert (
         round(
             res.loc[
-                (res.message_technology == "coal_ppl")
-                & (res.cost_type == "annual_om_costs"),
+                (res.message_technology == "coal_ppl") & (res.cost_type == "fix_cost"),
                 "cost_NAM_original_message",
             ].values[0]
         )
@@ -91,8 +89,7 @@ def test_compare_original_and_weo_nam_costs():
     assert (
         round(
             res.loc[
-                (res.message_technology == "coal_ppl")
-                & (res.cost_type == "capital_costs"),
+                (res.message_technology == "coal_ppl") & (res.cost_type == "inv_cost"),
                 "cost_NAM_original_message",
             ].values[0]
         )
@@ -101,8 +98,7 @@ def test_compare_original_and_weo_nam_costs():
     assert (
         round(
             res.loc[
-                (res.message_technology == "coal_ppl")
-                & (res.cost_type == "capital_costs"),
+                (res.message_technology == "coal_ppl") & (res.cost_type == "inv_cost"),
                 "cost_NAM_weo_2021",
             ].values[0]
         )
@@ -137,7 +133,7 @@ def test_adj_nam_cost_message():
         data=[
             dummy_message_tech,
             dummy_weo_tech,
-            ["capital_costs", "capital_costs", "capital_costs"],
+            ["inv_cost", "inv_cost", "inv_cost"],
             dummy_inv_cost,
         ],
     ).T
@@ -147,7 +143,7 @@ def test_adj_nam_cost_message():
         data=[
             dummy_message_tech,
             dummy_weo_tech,
-            ["annual_om_costs", "annual_om_costs", "annual_om_costs"],
+            ["fix_cost", "fix_cost", "fix_cost"],
             dummy_fom_cost,
         ],
     ).T
@@ -161,12 +157,12 @@ def test_adj_nam_cost_message():
         bool(
             dummy_df.loc[
                 (dummy_df.message_technology == "gas_ppl")
-                & (dummy_df.cost_type == "annual_om_costs"),
+                & (dummy_df.cost_type == "fix_cost"),
                 "cost_NAM_original_message",
             ].values[0]
             == dummy_df.loc[
                 (dummy_df.message_technology == "gas_ppl")
-                & (dummy_df.cost_type == "annual_om_costs"),
+                & (dummy_df.cost_type == "fix_cost"),
                 "cost_NAM_adjusted",
             ].values[0]
         )
@@ -177,12 +173,12 @@ def test_adj_nam_cost_message():
         bool(
             dummy_df.loc[
                 (dummy_df.message_technology == "gas_ppl")
-                & (dummy_df.cost_type == "annual_om_costs"),
+                & (dummy_df.cost_type == "fix_cost"),
                 "cost_NAM_original_message",
             ].values[0]
             == dummy_df.loc[
                 (dummy_df.message_technology == "gas_ppl")
-                & (dummy_df.cost_type == "annual_om_costs"),
+                & (dummy_df.cost_type == "fix_cost"),
                 "cost_NAM_adjusted",
             ].values[0]
         )
@@ -216,7 +212,7 @@ def test_adj_nam_cost_manual():
     assert np.all(
         res.loc[
             (res.message_technology.isin(dummy_dict_inv))
-            & (res.cost_type == "capital_costs"),
+            & (res.cost_type == "inv_cost"),
             "cost_NAM_adjusted",
         ].values
         == [i for i in dummy_dict_inv.values()]
@@ -225,7 +221,7 @@ def test_adj_nam_cost_manual():
     assert np.all(
         res.loc[
             (res.message_technology.isin(dummy_dict_fom))
-            & (res.cost_type == "annual_om_costs"),
+            & (res.cost_type == "fix_cost"),
             "cost_NAM_adjusted",
         ].values
         == [i for i in dummy_dict_fom.values()]
@@ -249,7 +245,7 @@ def test_adj_nam_cost_reference():
     dummy_df1 = pd.DataFrame(
         data=[
             dummy_message_tech,
-            ["capital_costs", "capital_costs", "capital_costs"],
+            ["inv_cost", "inv_cost", "inv_cost"],
             dummy_inv_cost,
             dummy_inv_cost_adj,
         ],
@@ -259,7 +255,7 @@ def test_adj_nam_cost_reference():
     dummy_df2 = pd.DataFrame(
         data=[
             dummy_message_tech,
-            ["annual_om_costs", "annual_om_costs", "annual_om_costs"],
+            ["fix_cost", "fix_cost", "fix_cost"],
             dummy_fom_cost,
             dummy_fom_cost_adj,
         ],
@@ -268,8 +264,8 @@ def test_adj_nam_cost_reference():
 
     dummy_df = pd.concat([dummy_df1, dummy_df2])
 
-    dummy_dict_inv = {"tech2": {"tech": "tech1", "cost_type": "capital_costs"}}
-    dummy_dict_fom = {"tech2": {"tech": "tech3", "cost_type": "annual_om_costs"}}
+    dummy_dict_inv = {"tech2": {"tech": "tech1", "cost_type": "inv_cost"}}
+    dummy_dict_fom = {"tech2": {"tech": "tech3", "cost_type": "fix_cost"}}
 
     adj_nam_cost_reference(dummy_df, dummy_dict_inv, dummy_dict_fom)
 
@@ -277,7 +273,7 @@ def test_adj_nam_cost_reference():
         bool(
             dummy_df.loc[
                 (dummy_df.message_technology == "tech2")
-                & (dummy_df.cost_type == "capital_costs"),
+                & (dummy_df.cost_type == "inv_cost"),
                 "cost_NAM_adjusted",
             ].values[0]
             == (1750 * (762 / 1555))
@@ -289,7 +285,7 @@ def test_adj_nam_cost_reference():
         bool(
             dummy_df.loc[
                 (dummy_df.message_technology == "tech2")
-                & (dummy_df.cost_type == "annual_om_costs"),
+                & (dummy_df.cost_type == "fix_cost"),
                 "cost_NAM_adjusted",
             ].values[0]
             == (27 * (45 / 30))
