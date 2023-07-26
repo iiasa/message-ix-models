@@ -5,8 +5,6 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
-from message_ix_models.tools.costs.weo import DICT_WEO_TECH
-
 # Global variables of model years
 FIRST_MODEL_YEAR = 2020
 LAST_MODEL_YEAR = 2100
