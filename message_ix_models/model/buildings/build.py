@@ -8,6 +8,9 @@ from typing import Dict, Iterable, List, Mapping, Sequence
 import message_ix
 import pandas as pd
 from genno import Quantity
+from genno.computations import mul, relabel, rename_dims
+from ixmp.reporting.computations import data_for_quantity
+from message_ix.reporting.computations import as_message_df
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
 from message_ix_models.model.structure import (
@@ -51,15 +54,6 @@ BUILD_COMM_CONVERT = [
 #:
 #: .. todo:: Move to and read from :file:`data/buildings/set.yaml`.
 MATERIALS = ["steel", "cement", "aluminum"]
-
-# Look up some genno computation functions
-_r = message_ix.Reporter()
-as_message_df = _r.get_comp("as_message_df")
-data_for_quantity = _r.get_comp("data_for_quantity")
-mul = _r.get_comp("mul")
-relabel = _r.get_comp("relabel")
-rename_dims = _r.get_comp("rename_dims")
-del _r
 
 
 def get_spec(context: Context) -> Spec:
@@ -406,7 +400,7 @@ def prepare_data(
     """Derive data for MESSAGEix-Buildings from `scenario`."""
 
     # Data frames for each parameter
-    result = dict()
+    result: Dict[str, pd.DataFrame] = dict()
 
     # NB on a second pass (after main() has already run once), rc_spec and rc_therm have
     #    been stripped out, so `afofi_dd` is empty.
