@@ -1,7 +1,7 @@
 from message_ix_models.tools.costs.learning import (
     get_cost_reduction_data,
     get_technology_first_year_data,
-    project_NAM_capital_costs_using_learning_rates,
+    project_NAM_inv_costs_using_learning_rates,
 )
 from message_ix_models.tools.costs.weo import (
     calculate_region_cost_ratios,
@@ -56,7 +56,7 @@ def test_get_cost_reduction_data():
 
 
 # Test function to project investment costs in NAM region using learning rates
-def test_project_NAM_capital_costs_using_learning_rates():
+def test_project_NAM_inv_costs_using_learning_rates():
     df_weo = get_weo_data()
     df_nam_orig_message = get_cost_assumption_data()
     df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
@@ -68,7 +68,7 @@ def test_project_NAM_capital_costs_using_learning_rates():
     df_learning_rates = get_cost_reduction_data()
     df_technology_first_year = get_technology_first_year_data()
 
-    res = project_NAM_capital_costs_using_learning_rates(
+    res = project_NAM_inv_costs_using_learning_rates(
         df_region_diff, df_learning_rates, df_technology_first_year
     )
 
