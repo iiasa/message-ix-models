@@ -1,7 +1,7 @@
 .. currentmodule:: message_ix_models.model.disutility
 
-Consumer disutility
-*******************
+Consumer disutility (:mod:`model.disutility`)
+*********************************************
 
 This module provides a generalized consumer disutility formulation, currently used by :mod:`message_data.model.transport`.
 The formulation rests on the concept of “consumer groups”; each consumer group may have a distinct disutility associated with using the outputs of each technology.
