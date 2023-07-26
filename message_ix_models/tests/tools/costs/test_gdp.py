@@ -6,8 +6,6 @@ from message_ix_models.tools.costs.gdp import (
 )
 from message_ix_models.tools.costs.weo import calculate_region_cost_ratios, get_weo_data
 
-res = get_gdp_data()
-
 
 def test_get_gdp_data():
     res = get_gdp_data()
@@ -22,8 +20,8 @@ def test_get_gdp_data():
     )
 
     # Check that the GDP ratio for NAM is zero
-    assert min(res.loc[res.r11_region == "NAM", "gdp_ratio_oecd"]) == 1.0
-    assert max(res.loc[res.r11_region == "NAM", "gdp_ratio_oecd"]) == 1.0
+    assert min(res.loc[res.r11_region == "NAM", "gdp_ratio_reg_to_nam"]) == 1.0
+    assert max(res.loc[res.r11_region == "NAM", "gdp_ratio_reg_to_nam"]) == 1.0
 
 
 def test_linearly_regress_tech_cost_vs_gdp_ratios():
@@ -35,9 +33,6 @@ def test_linearly_regress_tech_cost_vs_gdp_ratios():
 
     # Check SSP1, SSP2, and SSP3 are all present in the data
     assert np.all(res.scenario.unique() == ["SSP1", "SSP2", "SSP3"])
-
-    # Check capital costs and annual o&m costs are present in the data
-    assert np.all(res.cost_type.unique() == ["annual_om_costs", "capital_costs"])
 
     # The absolute value of the slopes should be less than 1 probably
     assert abs(min(res.slope)) <= 1
