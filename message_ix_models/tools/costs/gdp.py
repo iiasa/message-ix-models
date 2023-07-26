@@ -175,8 +175,8 @@ def calculate_adjusted_region_cost_ratios(gdp_df, linear_regression_df):
     This function calculates the adjusted region-differentiated cost ratios \
         using the results from the GDP linear regressions. The adjusted \
         region-differentiated cost ratios are calculated by multiplying the \
-        region-differentiated cost ratios by the ratio of the GDP of the \
-        region to the GDP of the NAM region.
+        slope of the linear regression with the GDP ratio of the region \
+        compared to NAM and adding the intercept.
 
     Parameters
     ----------
@@ -229,17 +229,17 @@ def calculate_adjusted_region_cost_ratios(gdp_df, linear_regression_df):
     return df
 
 
-# Function to project investment costs using GDP convergence by
+# Function to project investment costs by
 # multiplying the learning NAM costs with the adjusted regionally
 # differentiated cost ratios
 def project_gdp_converged_inv_costs(
     nam_learning_df: pd.DataFrame, adj_cost_ratios_df: pd.DataFrame
 ) -> pd.DataFrame:
-    """Project investment costs using GDP convergence
+    """Project investment costs using adjusted region-differentiated cost ratios
 
-    This function projects investment costs using GDP convergence by \
-        multiplying the learning NAM costs with the adjusted regionally \
-        differentiated cost ratios.
+    This function projects investment costs by \
+        multiplying the learning rates-projected NAM costs with the adjusted \
+            regionally differentiated cost ratios.
 
     Parameters
     ----------

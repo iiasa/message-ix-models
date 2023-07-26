@@ -9,7 +9,7 @@ from message_ix_models.tools.costs.gdp import (
 from message_ix_models.tools.costs.learning import (
     get_cost_reduction_data,
     get_technology_first_year_data,
-    project_NAM_capital_costs_using_learning_rates,
+    project_NAM_inv_costs_using_learning_rates,
 )
 from message_ix_models.tools.costs.splines import (
     apply_polynominal_regression,
@@ -41,7 +41,7 @@ def create_cost_inputs(cost_type, scenario="ssp2", format="message"):
     df_linreg = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
 
     df_adj_cost_ratios = calculate_adjusted_region_cost_ratios(df_gdp, df_linreg)
-    df_nam_learning = project_NAM_capital_costs_using_learning_rates(
+    df_nam_learning = project_NAM_inv_costs_using_learning_rates(
         df_region_diff, df_learning_rates, df_technology_first_year
     )
 
@@ -130,7 +130,7 @@ def create_all_costs():
     df_linreg = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
 
     df_adj_cost_ratios = calculate_adjusted_region_cost_ratios(df_gdp, df_linreg)
-    df_nam_learning = project_NAM_capital_costs_using_learning_rates(
+    df_nam_learning = project_NAM_inv_costs_using_learning_rates(
         df_region_diff, df_learning_rates, df_technology_first_year
     )
 

@@ -184,13 +184,13 @@ def get_cost_reduction_data() -> pd.DataFrame:
     return df_long
 
 
-# Function to project capital costs using learning rates for NAM region only
-def project_NAM_capital_costs_using_learning_rates(
+# Function to project investment costs using learning rates for NAM region only
+def project_NAM_inv_costs_using_learning_rates(
     regional_diff_df: pd.DataFrame,
     learning_rates_df: pd.DataFrame,
     tech_first_year_df: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Project capital costs using learning rates for NAM region only
+    """Project investment costs using learning rates for NAM region only
 
     This function uses the learning rates for each technology under each SSP \
         scenario to project the capital costs for each technology in the NAM \
@@ -202,30 +202,10 @@ def project_NAM_capital_costs_using_learning_rates(
     Parameters
     ----------
     regional_diff_df : pandas.DataFrame
-        DataFrame with columns:
-
-        - message_technology: technologies included in MESSAGE
-        - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
-            renewable, nuclear, or NA)
-        - r11_region: R11 region
-        - cost_type: either "inv_cost" or "fom_cost"
-        - year: values from 2000 to 2100
-        - value: the capital cost (in units of million US$2005/yr)
+        Dataframe output from :func:`get_region_differentiated_costs`
 
     learning_rates_df : pandas.DataFrame
-        DataFrame with columns:
-
-        - message_technology: technologies included in MESSAGE
-        - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
-            renewable, nuclear, or NA)
-        - GEAL: cost reduction in 2100 (%) under the low (L) GEA scenario
-        - GEAM: cost reduction in 2100 (%) under the medium (M) GEA scenario
-        - GEAH: cost reduction in 2100 (%) under the high (H) GEA scenario
-        - SSPX_learning: one corresponding column for each SSP scenario \
-            (SSP1, SSP2, SSP3, SSP4, SSP5). These columns specify the learning \
-            rate for each technology under that specific scenario
-        - SSPX_cost_reduction: the cost reduction (%) of the technology under the \
-            specific scenario
+        Dataframe output from :func:`get_cost_reduction_data`
 
     Returns
     -------
