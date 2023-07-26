@@ -1,11 +1,18 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2023.7.26
+==========
 
 - Add code and CLI commands to :doc:`fetch and load MESSAGEix-GLOBIOM snapshots <api/model-snapshot>` (:pull:`102`).
 - Add :func:`.util.pooch.fetch`, a thin wrapper for using :doc:`Pooch <pooch:about>` (:pull:`102`).
+- New module :mod:`message_ix_models.model.macro` with utilities for calibrating :mod:`message_ix.macro` (:pull:`104`).
+- New method :meth:`.Workflow.guess_target` (:pull:`104`).
+- Change in behaviour of :meth:`.Workflow.add_step`: the method now returns the name of the newly-added workflow step, rather than the :class:`WorkflowStep` object added to carry out the step (:pull:`104`).
+  The former is more frequently used in code that uses :class:`.Workflow`.
 
 v2023.5.31
 ==========
