@@ -6,7 +6,22 @@ from message_ix_models.util.context import _ALIAS
 
 @dataclass
 class Config:
-    """Settings and valid values for :mod:`message_ix_models.model` and submodules."""
+    """Settings and valid values for :mod:`message_ix_models.model` and submodules.
+
+    For backwards compatibility, it is possible to access these on a :class:`Context`
+    using:
+
+    .. code-block:: python
+
+       c = Context()
+       c.regions = "R14"
+
+    …however, it is best to access them explicitly as:
+
+    .. code-block:: python
+
+       c.model.regions = "R14"
+    """
 
     #: The 'node' codelist (regional aggregation) to use. Must be one of the lists of
     #: nodes described at :doc:`/pkg-data/node`.

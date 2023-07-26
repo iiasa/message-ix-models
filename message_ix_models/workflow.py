@@ -1,6 +1,6 @@
 """Tools for modeling workflows."""
 import logging
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Literal, Mapping, Optional, Tuple, Union
 
 from genno import Computer
 from ixmp.utils import parse_url
@@ -61,7 +61,8 @@ class WorkflowStep:
         except (AttributeError, ValueError):
             if clone is not False:
                 raise TypeError("target= must be supplied for clone=True")
-            self.platform_info = self.scenario_info = dict()
+            self.platform_info = dict()
+            self.scenario_info = dict()
 
         # Store the callback and options
         self.action = action
@@ -154,7 +155,7 @@ class Workflow(Computer):
         action: Optional[CallbackType] = None,
         replace=False,
         **kwargs,
-    ) -> WorkflowStep:
+    ) -> str:
         """Add a :class:`WorkflowStep` to the workflow.
 
         Parameters
@@ -173,8 +174,8 @@ class Workflow(Computer):
 
         Returns
         -------
-        WorkflowStep
-            a reference to the added step, for optional further modification.
+        str
+            The same as `name`.
 
         Raises
         ------
@@ -189,10 +190,8 @@ class Workflow(Computer):
             # Remove any existing step
             self.graph.pop(name, None)
 
-        # Add to the Computer
-        self.add_single(name, step, "context", base, strict=True)
-
-        return step
+        # Add to the Computer; return the name of the added step
+        return self.add_single(name, step, "context", base, strict=True)
 
     def run(self, name_or_names: Union[str, List[str]]):
         """Run all workflow steps necessary to produce `name_or_names`.
@@ -215,18 +214,12 @@ class Workflow(Computer):
         KeyError
             if step `name` does not exist.
         """
-
-        def _recurse_info(kind: str, step_name: str):
-            """Traverse the graph looking for non-empty platform_info/scenario_info."""
-            task = self.graph[step_name]
-            return getattr(task[0], f"{kind}_info") or _recurse_info(kind, task[2])
-
-        # Generate a new step that merely loads the scenario identified by `name` or
-        # its base
+        # Generate a new step that merely loads the scenario identified by `name` or its
+        # base
         step = WorkflowStep(None)
-        step.scenario_info = _recurse_info("scenario", name)
+        step.scenario_info.update(self.guess_target(name, "scenario")[0])
         try:
-            step.platform_info = _recurse_info("platform", name)
+            step.platform_info.update(self.guess_target(name, "platform")[0])
         except KeyError as e:
             if e.args[0] is None:
                 raise RuntimeError(
@@ -237,6 +230,29 @@ class Workflow(Computer):
 
         # Replace the existing step
         self.add_single(name, step, "context", None)
+
+    def guess_target(
+        self, step_name: str, kind: Literal["platform", "scenario"] = "scenario"
+    ) -> Tuple[Mapping, str]:
+        """Traverse the graph looking for non-empty platform_info/scenario_info.
+
+        Returns the info, and the step name containing it. Usually, this will identify
+        the name of the platform, model, and/or scenario that is received and acted upon
+        by `step_name`. This may not be the case if preceding workflow steps perform
+        clone steps that are not recorded in the `target` parameter to
+        :class:`WorkflowStep`.
+
+        Parameters
+        ----------
+        step_name : str
+           Initial step from which to work backwards.
+        kind : str, "platform" or "scenario"
+           Whether to look up :attr:`~WorkflowStep.platform_info` or
+           :attr:`~WorkflowStep.scenario_info`.
+        """
+        task = self.graph[step_name]
+        i = getattr(task[0], f"{kind}_info")
+        return (i.copy(), step_name) if len(i) else self.guess_target(task[2], kind)
 
 
 def solve(context, scenario, **kwargs):
