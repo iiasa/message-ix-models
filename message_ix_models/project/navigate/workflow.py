@@ -542,9 +542,7 @@ def generate(context: Context) -> Workflow:
                 target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}+MACRO",
                 clone=dict(keep_solution=True),
             )
-            base = wf.add_step(
-                f"{base} solved", base, solve, solve_options=dict(model=solve_model)
-            )
+            base = wf.add_step(f"{base} solved", base, solve, model=solve_model)
 
         # Store the step name as a starting point for climate policy steps, below
         baseline_solved[(T35_policy, WP6_production)] = base
