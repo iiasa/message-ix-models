@@ -5,17 +5,7 @@ from message_ix_models.tools.costs.gdp import (
     get_gdp_data,
     linearly_regress_tech_cost_vs_gdp_ratios,
 )
-from message_ix_models.tools.costs.learning import (
-    get_cost_reduction_data,
-    get_technology_first_year_data,
-    project_NAM_inv_costs_using_learning_rates,
-)
-from message_ix_models.tools.costs.weo import (
-    calculate_region_cost_ratios,
-    get_cost_assumption_data,
-    get_region_differentiated_costs,
-    get_weo_data,
-)
+from message_ix_models.tools.costs.weo import calculate_region_cost_ratios, get_weo_data
 
 
 def test_get_gdp_data():
