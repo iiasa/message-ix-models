@@ -60,7 +60,7 @@ R17_RPAS:
     but it was dissolved into MHL, FSM, MNP and PLW in 1986.
   child: [ASM, BRN, CCK, COK, CXR, FJI, FSM, IDN, KIR, MAC, MHL, MMR, MNP, MYS, NCL, NFK, NIU, NRU, PCI, PCN, PHL, PLW, PNG, PYF, SGP, SLB, THA, TKL, TLS, TON, TUV, TWN, VUT, WLF, WSM]
 
-R17_FSU:
+R17_RFSU:
   parent: World
   name: Former Soviet Union
   child: [ARM, AZE, BLR, GEO, KAZ, KGZ, MDA, TJK, TKM, UKR, UZB]
