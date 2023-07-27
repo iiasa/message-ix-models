@@ -13,6 +13,8 @@ v2023.7.26
 - New method :meth:`.Workflow.guess_target` (:pull:`104`).
 - Change in behaviour of :meth:`.Workflow.add_step`: the method now returns the name of the newly-added workflow step, rather than the :class:`WorkflowStep` object added to carry out the step (:pull:`104`).
   The former is more frequently used in code that uses :class:`.Workflow`.
+- Add the :ref:`R17` node code list (:pull:`109`).
+- Add the :ref:`R20` node code list (:pull:`109`).
 
 v2023.5.31
 ==========
