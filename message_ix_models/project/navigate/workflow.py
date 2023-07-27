@@ -54,6 +54,10 @@ def strip_policy_data(context: Context, scenario: Scenario) -> Scenario:
 
 
 def log_scenario_info(where: str, s: Scenario) -> None:
+    """Dump information about `s` to the log.
+
+    This can be useful to confirm scenarios are passed through the workflow correctly.
+    """
     log.info(
         f"""in {where}:
    {repr(s)} = {s.url}
@@ -61,19 +65,28 @@ def log_scenario_info(where: str, s: Scenario) -> None:
     )
 
 
-def add_globiom_step(context: Context, scenario: Scenario):
-    """Strip and re-add GLOBIOM structure and data."""
-    from message_data.tools.utilities.add_globiom import add_globiom
+def add_globiom(context: Context, scenario: Scenario, *, clean=False):
+    """Add GLOBIOM structure and data.
 
-    # from message_data.tools.utilities.add_globiom import clean
-    # commented: this step is extremely slow; at least 16 hours on hpg914.iiasa.ac.at
-    # # Strip out existing configuration and data
-    # clean(scenario)
+    Parameters
+    ----------
+    clean : bool
+        If :data:`True`, strip existing GLOBIOM structure and data first. Default
+        :data:`False` because the step can be extremely slow; at least 16 hours on
+        hpg914.iiasa.ac.at.
+    """
+    import message_data.tools.utilities.add_globiom as ag
+
+    # Disabled by default: this step is extremely slow; at least 16 hours on
+    # hpg914.iiasa.ac.at
+    # Strip out existing configuration and data
+    if clean:
+        ag.clean(scenario)
 
     context.model.regions = identify_nodes(scenario)
 
     # Add GLOBIOM emulator
-    add_globiom(
+    ag.add_globiom(
         mp=scenario.platform,
         scen=scenario,
         ssp="SSP2",
@@ -276,7 +289,13 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
     # Calibrate; keep same URL, just a new version
     with avoid_locking(scenario):
         result = scenario.add_macro(
-            data, scenario=scenario.scenario, check_convergence=False
+            data,
+            scenario=scenario.scenario,
+            # Skip convergence check: this uses a throwaway clone, but in the NAVIGATE
+            # workflow a solved scenario is needed anyway for subsequent steps. So we
+            # solve (see generate, below), confirm convergence there, and then the
+            # workflow proceeds.
+            check_convergence=False,
         )
     result.set_as_default()
     return result
@@ -463,19 +482,11 @@ def generate(context: Context) -> Workflow:
     # target= scenario specified as the output of step 2, below.
 
     # Step 2
-
     M_built = {}
+    _s = "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54"
     for WP6_production, label, target in (
-        (
-            "default",
-            "def",
-            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54",
-        ),
-        (
-            "advanced",
-            "adv",
-            "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54",
-        ),
+        ("default", "def", _s),
+        ("advanced", "adv", _s),
         (None, "T3.5", "MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE"),
     ):
         name = wf.add_step(f"M {label} built", "base", build_materials, target=target)
@@ -491,9 +502,7 @@ def generate(context: Context) -> Workflow:
         )
 
         # Update GLOBIOM
-        M_built[WP6_production] = wf.add_step(
-            f"M {label} adjusted + GLOBIOM", base, add_globiom_step
-        )
+        M_built[WP6_production] = wf.add_step(f"M {label} + GLOBIOM", base, add_globiom)
 
     # Mapping from short IDs (`s`) to step names for results of step 7
     baseline_solved = {}
@@ -643,12 +652,10 @@ def generate(context: Context) -> Workflow:
     # Step names for results of step 9
     all_reported = []
 
-    for s, (base, other_scenario_info) in to_report.items():
+    for s, (base, other) in to_report.items():
         # Step 8–9 for individual scenarios
         all_reported.append(
-            wf.add_step(
-                f"{s} reported", base, report, other_scenario_info=other_scenario_info
-            )
+            wf.add_step(f"{s} reported", base, report, other_scenario_info=other)
         )
 
         # Step 10 for individual scenarios
