@@ -3,7 +3,7 @@ import numpy as np
 
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node
+from message_ix_models.util import broadcast, same_node, private_data_path
 from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
@@ -125,8 +125,11 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs"]
     cost_conv = pd.read_excel(
-        context.get_local_path("material","methanol","location factor collection.xlsx"),
-        sheet_name="cost_convergence", index_col=0)
+        private_data_path(
+            "material",
+            "ammonia",
+            "cost_conv_nh3.xlsx"),
+        sheet_name="Sheet1", index_col=0)
     for p in pars:
         conv_cost_df = pd.DataFrame()
         df = par_dict[p]
