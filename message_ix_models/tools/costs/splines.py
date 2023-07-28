@@ -286,3 +286,76 @@ def project_costs_using_splines(
     )
 
     return df_long
+
+
+def project_adjusted_inv_costs_constant_learning(
+    nam_learning_df: pd.DataFrame,
+    adj_cost_ratios_df: pd.DataFrame,
+    reg_diff_df: pd.DataFrame,
+    use_gdp_flag: bool = False,
+) -> pd.DataFrame:
+    """Project investment costs using adjusted region-differentiated cost ratios
+
+    This function projects investment costs by \
+        multiplying the learning rates-projected NAM costs with the adjusted \
+            regionally differentiated cost ratios.
+
+    Parameters
+    ----------
+    nam_learning_df : pandas.DataFrame
+        Dataframe output from :func:`.project_NAM_capital_costs_using_learning_rates`
+    adj_cost_ratios_df : pandas.DataFrame
+        Dataframe output from :func:`.calculate_adjusted_region_cost_ratios`
+    reg_diff_df : pandas.DataFrame
+        Dataframe output from :func:`.get_region_differentiated_costs`
+    use_gdp_flag : bool, optional
+        If True, use GDP-adjusted cost ratios, by default False
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - scenario: SSP1, SSP2, or SSP3
+        - message_technology: MESSAGE technology name
+        - weo_technology: WEO technology name
+        - r11_region: R11 region
+        - year: values from 2020 to 2100
+        - inv_cost_learning_region: the adjusted investment cost \
+            (in units of million US$2005/yr) based on the NAM learned costs \
+            and the GDP adjusted region-differentiated cost ratios
+    """
+
+    df_learning_regions = (
+        nam_learning_df.merge(adj_cost_ratios_df, on=["weo_technology", "year"])
+        .merge(
+            reg_diff_df.loc[reg_diff_df.cost_type == "inv_cost"],
+            on=["message_technology", "weo_technology", "r11_region"],
+        )
+        .drop(columns=["weo_region", "cost_type", "cost_NAM_adjusted"])
+        .assign(
+            inv_cost_no_gdj_adj=lambda x: np.where(
+                x.year <= FIRST_MODEL_YEAR, x.cost_region_2021, x.inv_cost_learning_NAM
+            ),
+            inv_cost_gdp_adj=lambda x: np.where(
+                x.year <= FIRST_MODEL_YEAR,
+                x.cost_region_2021,
+                x.inv_cost_learning_NAM * x.cost_ratio_adj,
+            ),
+            inv_cost_learning_region=lambda x: np.where(
+                use_gdp_flag is True, x.inv_cost_gdp_adj, x.inv_cost_no_gdj_adj
+            ),
+        )
+        # .reindex(
+        #     [
+        #         "scenario",
+        #         "message_technology",
+        #         "weo_technology",
+        #         "r11_region",
+        #         "year",
+        #         "inv_cost_learning_region",
+        #     ],
+        #     axis=1,
+        # )
+    )
+
+    return df_learning_regions

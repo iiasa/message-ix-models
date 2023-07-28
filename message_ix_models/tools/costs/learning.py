@@ -285,3 +285,114 @@ def project_NAM_inv_costs_using_learning_rates(
     )
 
     return df_nam
+
+
+def project_NAM_inv_costs_using_learning_rates_constant_scenario(
+    regional_diff_df: pd.DataFrame,
+    learning_rates_df: pd.DataFrame,
+    tech_first_year_df: pd.DataFrame,
+    scen_name: str,
+) -> pd.DataFrame:
+    """Project investment costs using learning rates for NAM region only\
+        (using a constant scenario for learning rates)
+
+    This function uses the learning rates for each technology under each SSP \
+        scenario to project the capital costs for each technology in the NAM \
+        region. The capital costs for each technology in the NAM region are \
+        first calculated by multiplying the regional cost ratio (relative to \
+        OECD) by the OECD capital costs. Then, the capital costs are projected \
+        using the learning rates under each SSP scenario.
+
+    Parameters
+    ----------
+    regional_diff_df : pandas.DataFrame
+        Dataframe output from :func:`get_region_differentiated_costs`
+
+    learning_rates_df : pandas.DataFrame
+        Dataframe output from :func:`get_cost_reduction_data`
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+
+        - message_technology: technologies included in MESSAGE
+        - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
+            renewable, nuclear, or NA)
+        - r11_region: R11 region
+        - cost_type: either "inv_cost" or "fom_cost"
+        - year: values from 2000 to 2100
+
+    """
+
+    df_reg = regional_diff_df.copy()
+    df_discount = (
+        learning_rates_df.loc[learning_rates_df.scenario == scen_name]
+        .copy()
+        .drop(columns=["scenario"])
+    )
+    df_tech_first_year = tech_first_year_df.copy()
+
+    # Filter for NAM region and investment cost only, then merge with discount rates,
+    # then merge with first year data
+    df_nam = (
+        df_reg.loc[(df_reg.r11_region == "NAM") & (df_reg.cost_type == "inv_cost")]
+        .merge(df_discount, on="message_technology")
+        .merge(df_tech_first_year, on="message_technology")
+        .assign(
+            cost_region_2100=lambda x: x["cost_region_2021"]
+            - (x["cost_region_2021"] * x["cost_reduction"]),
+            b=lambda x: (1 - PRE_LAST_YEAR_RATE) * x["cost_region_2100"],
+            r=lambda x: (1 / (LAST_MODEL_YEAR - FIRST_MODEL_YEAR))
+            * np.log(
+                (x["cost_region_2100"] - x["b"]) / (x["cost_region_2021"] - x["b"])
+            ),
+        )
+    )
+
+    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + 10, 10))
+
+    for y in seq_years:
+        df_nam = df_nam.assign(
+            ycur=lambda x: np.where(
+                y <= FIRST_MODEL_YEAR,
+                x.cost_region_2021,
+                (x.cost_region_2021 - x.b) * np.exp(x.r * (y - x.first_technology_year))
+                + x.b,
+            )
+        ).rename(columns={"ycur": y})
+
+    df_nam = (
+        df_nam.drop(
+            columns=[
+                "b",
+                "r",
+                "r11_region",
+                "weo_region",
+                "cost_type",
+                "cost_NAM_adjusted",
+                "technology_type",
+                "cost_reduction",
+                "cost_ratio",
+                "first_year_original",
+                "first_technology_year",
+                "cost_region_2021",
+                "cost_region_2100",
+            ]
+        )
+        .assign(scenario_learning=scen_name)
+        .melt(
+            id_vars=[
+                "scenario_learning",
+                "message_technology",
+                "weo_technology",
+            ],
+            var_name="year",
+            value_name="inv_cost_learning_NAM",
+        )
+        .assign(
+            year=lambda x: x.year.astype(int),
+        )
+    )
+
+    return df_nam
