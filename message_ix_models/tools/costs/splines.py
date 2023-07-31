@@ -77,25 +77,6 @@ def project_adjusted_inv_costs(
                     x.inv_cost_learning_NAM,
                 ),
             ),
-            # inv_cost_region=lambda x: np.where(
-            #     converge_costs_flag is True,
-            #     x.inv_cost_converge,
-            #     np.where(
-            #         use_gdp_flag is True, x.inv_cost_gdp_adj, x.inv_cost_learning_only
-            #     ),
-            # ),
-            # inv_cost_no_gdj_adj=lambda x: np.where(
-            #     x.year <= FIRST_MODEL_YEAR,
-            # x.cost_region_2021, x.inv_cost_learning_NAM
-            # ),
-            # inv_cost_gdp_adj=lambda x: np.where(
-            #     x.year <= FIRST_MODEL_YEAR,
-            #     x.cost_region_2021,
-            #     x.inv_cost_learning_NAM * x.cost_ratio_adj,
-            # ),
-            # inv_cost_learning_region=lambda x: np.where(
-            #     use_gdp_flag is True, x.inv_cost_gdp_adj, x.inv_cost_no_gdj_adj
-            # ),
         )
         .reindex(
             [
@@ -285,15 +266,6 @@ def apply_splines_projection(
                 "year",
             ],
         )
-        # .assign(
-        #     inv_cost=lambda x: np.where(
-        #         x.r11_region == "NAM",
-        #         x.inv_cost_learning_region,
-        #         x.inv_cost_splines,
-        #     )
-        # )
-        # .merge(fom_inv_ratios_df, on=["message_technology", "r11_region"])
-        # .assign(fix_cost=lambda x: x.inv_cost * x.fom_to_inv_cost_ratio)
         .reindex(
             [
                 "scenario",
@@ -331,6 +303,10 @@ def project_final_inv_and_fom_costs(
         Output of :func:`apply_splines_projection`
     fom_inv_ratios_df : pandas.DataFrame
         Output of :func:`calculate_fom_to_inv_cost_ratios`
+    use_gdp_flag : bool, optional
+        If True, use GDP-adjusted cost ratios, by default False
+    converge_costs_flag : bool, optional
+        If True, converge costs, by default True
 
     Returns
     -------
