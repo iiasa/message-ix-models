@@ -15,7 +15,7 @@ def project_adjusted_inv_costs(
     nam_learning_df: pd.DataFrame,
     adj_cost_ratios_df: pd.DataFrame,
     reg_diff_df: pd.DataFrame,
-    use_gdp_flag: bool = False,
+    convergence_year_flag: int = 2050,
 ) -> pd.DataFrame:
     """Project investment costs using adjusted region-differentiated cost ratios
 
@@ -58,36 +58,65 @@ def project_adjusted_inv_costs(
         )
         .drop(columns=["weo_region", "cost_type", "cost_NAM_adjusted"])
         .assign(
-            inv_cost_no_gdj_adj=lambda x: np.where(
-                x.year <= FIRST_MODEL_YEAR, x.cost_region_2021, x.inv_cost_learning_NAM
+            inv_cost_learning_only=lambda x: np.where(
+                x.year <= FIRST_MODEL_YEAR,
+                x.cost_region_2021,
+                x.inv_cost_learning_NAM * x.cost_ratio,
             ),
             inv_cost_gdp_adj=lambda x: np.where(
                 x.year <= FIRST_MODEL_YEAR,
                 x.cost_region_2021,
                 x.inv_cost_learning_NAM * x.cost_ratio_adj,
             ),
-            inv_cost_learning_region=lambda x: np.where(
-                use_gdp_flag is True, x.inv_cost_gdp_adj, x.inv_cost_no_gdj_adj
+            inv_cost_converge=lambda x: np.where(
+                x.year <= FIRST_MODEL_YEAR,
+                x.cost_region_2021,
+                np.where(
+                    x.year < convergence_year_flag,
+                    x.inv_cost_learning_NAM * x.cost_ratio,
+                    x.inv_cost_learning_NAM,
+                ),
             ),
+            # inv_cost_region=lambda x: np.where(
+            #     converge_costs_flag is True,
+            #     x.inv_cost_converge,
+            #     np.where(
+            #         use_gdp_flag is True, x.inv_cost_gdp_adj, x.inv_cost_learning_only
+            #     ),
+            # ),
+            # inv_cost_no_gdj_adj=lambda x: np.where(
+            #     x.year <= FIRST_MODEL_YEAR,
+            # x.cost_region_2021, x.inv_cost_learning_NAM
+            # ),
+            # inv_cost_gdp_adj=lambda x: np.where(
+            #     x.year <= FIRST_MODEL_YEAR,
+            #     x.cost_region_2021,
+            #     x.inv_cost_learning_NAM * x.cost_ratio_adj,
+            # ),
+            # inv_cost_learning_region=lambda x: np.where(
+            #     use_gdp_flag is True, x.inv_cost_gdp_adj, x.inv_cost_no_gdj_adj
+            # ),
         )
-        # .reindex(
-        #     [
-        #         "scenario",
-        #         "message_technology",
-        #         "weo_technology",
-        #         "r11_region",
-        #         "year",
-        #         "inv_cost_learning_region",
-        #     ],
-        #     axis=1,
-        # )
+        .reindex(
+            [
+                "scenario",
+                "message_technology",
+                "weo_technology",
+                "r11_region",
+                "year",
+                "inv_cost_learning_only",
+                "inv_cost_gdp_adj",
+                "inv_cost_converge",
+            ],
+            axis=1,
+        )
     )
 
     return df_learning_regions
 
 
 def apply_polynominal_regression(
-    df_proj_costs_adj: pd.DataFrame,
+    proj_costs_adj_df: pd.DataFrame, convergence_year_flag: int = 2050
 ) -> pd.DataFrame:
     """Perform polynomial regression on projected costs and extract coefs/intercept
 
@@ -97,8 +126,8 @@ def apply_polynominal_regression(
 
     Parameters
     ----------
-    df_proj_costs_learning : pandas.DataFrame
-        Output of `project_inv_cost_using_learning_rates`
+    proj_costs_adj_df : pandas.DataFrame
+        Output of:func:`.project_adjusted_inv_costs`
 
     Returns
     -------
@@ -114,23 +143,27 @@ def apply_polynominal_regression(
 
     """
 
-    un_ssp = df_proj_costs_adj.scenario.unique()
-    un_tech = df_proj_costs_adj.message_technology.unique()
-    un_reg = df_proj_costs_adj.r11_region.unique()
+    un_ssp = proj_costs_adj_df.scenario.unique()
+    un_tech = proj_costs_adj_df.message_technology.unique()
+    un_reg = proj_costs_adj_df.r11_region.unique()
 
     data_reg = []
     for i, j, k in product(un_ssp, un_tech, un_reg):
-        tech = df_proj_costs_adj.loc[
-            (df_proj_costs_adj.scenario == i)
-            & (df_proj_costs_adj.message_technology == j)
-            & (df_proj_costs_adj.r11_region == k)
+        tech = proj_costs_adj_df.loc[
+            (proj_costs_adj_df.scenario == i)
+            & (proj_costs_adj_df.message_technology == j)
+            & (proj_costs_adj_df.r11_region == k)
+            & (
+                (proj_costs_adj_df.year == FIRST_MODEL_YEAR)
+                | (proj_costs_adj_df.year >= convergence_year_flag)
+            )
         ]
 
         if tech.size == 0:
             continue
 
         x = tech.year.values
-        y = tech.inv_cost_learning_region.values
+        y = tech.inv_cost_converge.values
 
         # polynomial regression model
         poly = PolynomialFeatures(degree=3, include_bias=False)
@@ -170,31 +203,24 @@ def apply_polynominal_regression(
     return df_regression
 
 
-def project_costs_using_splines(
-    input_df_region_diff: pd.DataFrame,
-    input_df_technology_first_year: pd.DataFrame,
-    input_df_poly_reg: pd.DataFrame,
-    input_df_learning_projections: pd.DataFrame,
-    input_df_fom_inv_ratios: pd.DataFrame,
+def apply_splines_projection(
+    region_diff_df: pd.DataFrame,
+    input_df_technology_first_year_df: pd.DataFrame,
+    poly_reg_df: pd.DataFrame,
+    learning_projections_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """Project costs using splines
 
     Parameters
     ----------
-    input_df_region_diff : pandas.DataFrame
+    region_diff_df : pandas.DataFrame
         Output of `get_region_differentiated_costs`
-    input_df_technology_first_year : pandas.DataFrame
-        Output of `get_technology_first_year_data`
-    input_df_poly_reg : pandas.DataFrame
+    input_df_technology_first_year_df : pandas.DataFrame
+        Output of `get_technology_first_year_df_data`
+    poly_reg_df : pandas.DataFrame
         Output of `apply_polynominal_regression`
-    input_df_learning_projections : pandas.DataFrame
-        Output of `project_inv_cost_using_learning_rates`
-    input_df_fom_inv_ratios : pandas.DataFrame
-        Output of `calculate_fom_to_inv_cost_ratios`
-    input_df_gdp_ratios : pandas.DataFrame
-        Output of `get_gdp_data`
-    input_df_gdp_reg : pandas.DataFrame
-        Output of `linearly_regress_tech_cost_vs_gdp_ratios`
+    learning_projections_df : pandas.DataFrame
+        Output of `project_adjusted_inv_costs`
 
     Returns
     -------
@@ -209,17 +235,17 @@ def project_costs_using_splines(
 
     """
     df = (
-        input_df_region_diff.loc[input_df_region_diff.cost_type == "inv_cost"]
+        region_diff_df.loc[region_diff_df.cost_type == "inv_cost"]
         .reindex(
             ["cost_type", "message_technology", "r11_region", "cost_region_2021"],
             axis=1,
         )
         .merge(
-            input_df_technology_first_year.drop(columns=["first_year_original"]),
+            input_df_technology_first_year_df.drop(columns=["first_year_original"]),
             on=["message_technology"],
             how="right",
         )
-        .merge(input_df_poly_reg, on=["message_technology", "r11_region"])
+        .merge(poly_reg_df, on=["message_technology", "r11_region"])
     )
 
     seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + 10, 10))
@@ -251,7 +277,7 @@ def project_costs_using_splines(
             value_name="inv_cost_splines",
         )
         .merge(
-            input_df_learning_projections,
+            learning_projections_df,
             on=[
                 "scenario",
                 "message_technology",
@@ -259,25 +285,25 @@ def project_costs_using_splines(
                 "year",
             ],
         )
-        .assign(
-            inv_cost=lambda x: np.where(
-                x.r11_region == "NAM",
-                x.inv_cost_learning_region,
-                x.inv_cost_splines,
-            )
-        )
-        .merge(input_df_fom_inv_ratios, on=["message_technology", "r11_region"])
-        .assign(fix_cost=lambda x: x.inv_cost * x.fom_to_inv_cost_ratio)
+        # .assign(
+        #     inv_cost=lambda x: np.where(
+        #         x.r11_region == "NAM",
+        #         x.inv_cost_learning_region,
+        #         x.inv_cost_splines,
+        #     )
+        # )
+        # .merge(fom_inv_ratios_df, on=["message_technology", "r11_region"])
+        # .assign(fix_cost=lambda x: x.inv_cost * x.fom_to_inv_cost_ratio)
         .reindex(
             [
                 "scenario",
                 "message_technology",
                 "r11_region",
                 "year",
-                "inv_cost_learning_region",
+                "inv_cost_learning_only",
+                "inv_cost_gdp_adj",
+                "inv_cost_converge",
                 "inv_cost_splines",
-                "inv_cost",
-                "fix_cost",
             ],
             axis=1,
         )
@@ -286,6 +312,66 @@ def project_costs_using_splines(
     )
 
     return df_long
+
+
+# Function to predict final investment costs and FOM costs based on just learning,
+# GDP adjusted,
+# and splines
+def project_final_inv_and_fom_costs(
+    splines_projection_df: pd.DataFrame,
+    fom_inv_ratios_df: pd.DataFrame,
+    use_gdp_flag: bool = False,
+    converge_costs_flag: bool = True,
+):
+    """Project final investment and FOM costs
+
+    Parameters
+    ----------
+    splines_projection_df : pandas.DataFrame
+        Output of :func:`apply_splines_projection`
+    fom_inv_ratios_df : pandas.DataFrame
+        Output of :func:`calculate_fom_to_inv_cost_ratios`
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - scenario: the SSP scenario
+        - message_technology: the technology in MESSAGEix
+        - r11_region: MESSAGEix R11 region
+        - year: the year modeled (2020-2100)
+        - inv_cost: the investment cost in units of USD/kW
+        - fix_cost: the fixed O&M cost in units of USD/kW
+    """
+
+    df = (
+        splines_projection_df.merge(
+            fom_inv_ratios_df, on=["message_technology", "r11_region"]
+        )
+        .assign(
+            inv_cost=lambda x: np.where(
+                converge_costs_flag is True,
+                x.inv_cost_splines,
+                np.where(
+                    use_gdp_flag is True, x.inv_cost_gdp_adj, x.inv_cost_learning_only
+                ),
+            )
+        )
+        .assign(fix_cost=lambda x: x.inv_cost * x.fom_to_inv_cost_ratio)
+        .reindex(
+            [
+                "scenario",
+                "message_technology",
+                "r11_region",
+                "year",
+                "inv_cost",
+                "fix_cost",
+            ],
+            axis=1,
+        )
+    )
+
+    return df
 
 
 def project_adjusted_inv_costs_constant_learning(
