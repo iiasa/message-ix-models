@@ -12,8 +12,9 @@ from message_ix_models.tools.costs.learning import (
 )
 from message_ix_models.tools.costs.splines import (
     apply_polynominal_regression,
+    apply_splines_projection,
     project_adjusted_inv_costs,
-    project_costs_using_splines,
+    project_final_inv_and_fom_costs,
 )
 from message_ix_models.tools.costs.weo import (
     calculate_fom_to_inv_cost_ratios,
@@ -23,8 +24,46 @@ from message_ix_models.tools.costs.weo import (
     get_weo_data,
 )
 
+# df_weo = get_weo_data()
+# df_nam_orig_message = get_cost_assumption_data()
+# df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
+# df_fom_inv_ratios = calculate_fom_to_inv_cost_ratios(df_weo)
 
-def create_cost_inputs(cost_type, scenario="ssp2", format="message", use_gdp=False):
+# df_region_diff = get_region_differentiated_costs(
+#     df_weo, df_nam_orig_message, df_tech_cost_ratios
+# )
+
+# df_learning_rates = get_cost_reduction_data()
+# df_technology_first_year = get_technology_first_year_data()
+
+# df_gdp = get_gdp_data()
+# df_linreg = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
+
+# df_adj_cost_ratios = calculate_adjusted_region_cost_ratios(df_gdp, df_linreg)
+# df_nam_learning = project_NAM_inv_costs_using_learning_rates(
+#     df_region_diff, df_learning_rates, df_technology_first_year
+# )
+
+# df_reg_learning = project_adjusted_inv_costs(
+#     df_nam_learning,
+#     df_adj_cost_ratios,
+#     df_region_diff,
+#     convergence_year_flag=2070,
+# )
+
+# df_reg_learning.to_csv('/Users/meas/Desktop/test-methods.csv', index=False)
+
+
+# Function to get cost projections based on method specified
+# (learning only, GDP adjusted, or convergence via spline projections)
+def get_cost_projections(
+    cost_type: str = "inv_cost",
+    scenario: str = "ssp2",
+    format: str = "message",
+    use_gdp: bool = False,
+    converge_costs: bool = True,
+    convergence_year: int = 2050,
+):
     df_weo = get_weo_data()
     df_nam_orig_message = get_cost_assumption_data()
     df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
@@ -46,20 +85,29 @@ def create_cost_inputs(cost_type, scenario="ssp2", format="message", use_gdp=Fal
     )
 
     df_reg_learning = project_adjusted_inv_costs(
-        df_nam_learning, df_adj_cost_ratios, df_region_diff, use_gdp_flag=use_gdp
-    )
-    df_poly_reg = apply_polynominal_regression(df_reg_learning)
-
-    df_spline_projections = project_costs_using_splines(
+        df_nam_learning,
+        df_adj_cost_ratios,
         df_region_diff,
-        df_technology_first_year,
-        df_poly_reg,
-        df_reg_learning,
+        convergence_year_flag=convergence_year,
+    )
+
+    df_poly_reg = apply_polynominal_regression(
+        df_reg_learning, convergence_year_flag=convergence_year
+    )
+
+    df_spline_projections = apply_splines_projection(
+        df_region_diff, df_technology_first_year, df_poly_reg, df_reg_learning
+    )
+
+    df_inv_fom = project_final_inv_and_fom_costs(
+        df_spline_projections,
         df_fom_inv_ratios,
+        use_gdp_flag=use_gdp,
+        converge_costs_flag=converge_costs,
     )
 
     df_message = (
-        df_spline_projections.loc[(df_spline_projections.scenario == scenario.upper())]
+        df_inv_fom.loc[(df_spline_projections.scenario == scenario.upper())]
         .assign(
             node_loc=lambda x: "R11_" + x.r11_region,
             technology=lambda x: x.message_technology,
@@ -67,12 +115,14 @@ def create_cost_inputs(cost_type, scenario="ssp2", format="message", use_gdp=Fal
             value=lambda x: x[cost_type],
             unit="USD/kW",
         )
-        .reindex(["node_loc", "technology", "year_vtg", "value", "unit"], axis=1)
+        .reindex(
+            ["scenario", "node_loc", "technology", "year_vtg", "value", "unit"], axis=1
+        )
         .reset_index(drop=1)
     )
 
     df_iamc = (
-        df_spline_projections.reindex(
+        df_inv_fom.reindex(
             ["scenario", "message_technology", "r11_region", "year", cost_type],
             axis=1,
         )
@@ -112,7 +162,11 @@ def create_cost_inputs(cost_type, scenario="ssp2", format="message", use_gdp=Fal
         return df_iamc
 
 
-def create_all_costs(use_gdp=False):
+def get_all_costs(
+    use_gdp: bool = False,
+    converge_costs: bool = True,
+    convergence_year: int = 2050,
+):
     df_weo = get_weo_data()
     df_nam_orig_message = get_cost_assumption_data()
     df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
@@ -134,16 +188,23 @@ def create_all_costs(use_gdp=False):
     )
 
     df_reg_learning = project_adjusted_inv_costs(
-        df_nam_learning, df_adj_cost_ratios, df_region_diff, use_gdp_flag=use_gdp
+        df_nam_learning,
+        df_adj_cost_ratios,
+        df_region_diff,
+        convergence_year_flag=convergence_year,
     )
+
     df_poly_reg = apply_polynominal_regression(df_reg_learning)
 
-    df_spline_projections = project_costs_using_splines(
-        df_region_diff,
-        df_technology_first_year,
-        df_poly_reg,
-        df_reg_learning,
-        df_fom_inv_ratios,
+    df_spline_projections = apply_splines_projection(
+        df_region_diff, df_technology_first_year, df_poly_reg, df_reg_learning
     )
 
-    return df_spline_projections
+    df_inv_fom = project_final_inv_and_fom_costs(
+        df_spline_projections,
+        df_fom_inv_ratios,
+        use_gdp_flag=use_gdp,
+        converge_costs_flag=converge_costs,
+    )
+
+    return df_inv_fom
