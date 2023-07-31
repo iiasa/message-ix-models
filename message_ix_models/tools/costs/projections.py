@@ -80,7 +80,7 @@ def get_cost_projections(
         df_region_diff, df_learning_rates, df_technology_first_year
     )
 
-    df_reg_learning = project_adjusted_inv_costs(
+    df_adj_inv = project_adjusted_inv_costs(
         df_nam_learning,
         df_adj_cost_ratios,
         df_region_diff,
@@ -88,11 +88,11 @@ def get_cost_projections(
     )
 
     df_poly_reg = apply_polynominal_regression(
-        df_reg_learning, convergence_year_flag=convergence_year
+        df_adj_inv, convergence_year_flag=convergence_year
     )
 
     df_spline_projections = apply_splines_projection(
-        df_region_diff, df_technology_first_year, df_poly_reg, df_reg_learning
+        df_region_diff, df_technology_first_year, df_poly_reg, df_adj_inv
     )
 
     df_inv_fom = project_final_inv_and_fom_costs(
