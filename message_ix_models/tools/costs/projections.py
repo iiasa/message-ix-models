@@ -24,35 +24,6 @@ from message_ix_models.tools.costs.weo import (
     get_weo_data,
 )
 
-# df_weo = get_weo_data()
-# df_nam_orig_message = get_cost_assumption_data()
-# df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
-# df_fom_inv_ratios = calculate_fom_to_inv_cost_ratios(df_weo)
-
-# df_region_diff = get_region_differentiated_costs(
-#     df_weo, df_nam_orig_message, df_tech_cost_ratios
-# )
-
-# df_learning_rates = get_cost_reduction_data()
-# df_technology_first_year = get_technology_first_year_data()
-
-# df_gdp = get_gdp_data()
-# df_linreg = linearly_regress_tech_cost_vs_gdp_ratios(df_gdp, df_tech_cost_ratios)
-
-# df_adj_cost_ratios = calculate_adjusted_region_cost_ratios(df_gdp, df_linreg)
-# df_nam_learning = project_NAM_inv_costs_using_learning_rates(
-#     df_region_diff, df_learning_rates, df_technology_first_year
-# )
-
-# df_reg_learning = project_adjusted_inv_costs(
-#     df_nam_learning,
-#     df_adj_cost_ratios,
-#     df_region_diff,
-#     convergence_year_flag=2070,
-# )
-
-# df_reg_learning.to_csv('/Users/meas/Desktop/test-methods.csv', index=False)
-
 
 # Function to get cost projections based on method specified
 # (learning only, GDP adjusted, or convergence via spline projections)
@@ -64,6 +35,31 @@ def get_cost_projections(
     converge_costs: bool = True,
     convergence_year: int = 2050,
 ):
+    """Get cost projections based on method specified
+
+    Parameters
+    ----------
+    cost_type : str, optional
+        Type of cost to project, by default "inv_cost"
+    scenario : str, optional
+        SSP scenario, by default "ssp2"
+    format : str, optional
+        Format of output, by default "message"
+    use_gdp : bool, optional
+        Whether to use GDP projections, by default False
+    converge_costs : bool, optional
+        Whether to converge costs, by default True
+    convergence_year : int, optional
+        Year to converge costs to, by default 2050
+
+    Returns
+    -------
+    pandas.DataFrame
+
+    Columns depend on the format specified:
+    - message: scenario, node_loc, technology, year_vtg, value, unit
+    - iamc: Scenario, Region, Variable, 2020, 2025, ..., 2100
+    """
     df_weo = get_weo_data()
     df_nam_orig_message = get_cost_assumption_data()
     df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
@@ -167,6 +163,29 @@ def get_all_costs(
     converge_costs: bool = True,
     convergence_year: int = 2050,
 ):
+    """Get all costs
+
+    Parameters
+    ----------
+    use_gdp : bool, optional
+        Whether to use GDP projections, by default False
+    converge_costs : bool, optional
+        Whether to converge costs, by default True
+    convergence_year : int, optional
+        Year to converge costs to, by default 2050
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - scenario: SSP1, SSP2, or SSP3
+        - message_technology: MESSAGEix technology name
+        - r11_region: R11 region
+        - year: year
+        - inv_cost: investment cost
+        - fix_cost: fixed cost
+
+    """
     df_weo = get_weo_data()
     df_nam_orig_message = get_cost_assumption_data()
     df_tech_cost_ratios = calculate_region_cost_ratios(df_weo)
