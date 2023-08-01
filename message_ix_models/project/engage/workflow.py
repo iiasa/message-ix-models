@@ -358,9 +358,11 @@ def add_steps(
 
     # Model and scenario name for the scenario produced by the base step
     info, _ = workflow.guess_target(base, "scenario")
-
-    # New model/scenario name at each step
+    # Template for new model/scenario name at each step
     target = f"{info['model']}/{info['scenario']}_ENGAGE_{label}_step-{{}}"
+
+    # Model to solve
+    solve_model = config.solve["model"]
 
     # If config.steps is non-empty, insert step_0. Otherwise, leave empty
     steps = copy(config.steps)
@@ -368,26 +370,35 @@ def add_steps(
         steps.insert(0, 0)
 
     # Iterate over [0, 1, 2, 3] or fewer ENGAGE `steps`
-    _base = base
+    s = base  # Current step name
     for step in steps:
-        # Add step; always clone to a new model/scenario name
-        name = workflow.add_step(
-            f"{name_root}{step}",  # Name for this step
-            _base,
-            action=globals()[f"step_{step}"],  # Retrieve step_0() etc.
+        # Duplicate `config` and modify for this particular step
+        cfg = config.replace()
+        if solve_model == "MESSAGE-MACRO" and step > 1:
+            # Give scenario name from which to copy "DEMAND" variable data; data is
+            # copied to the "demand" parameter
+            cfg.low_dem_scen = target.split("/")[-1].format(step - 1)
+        if step == 2:
+            # Do not solve MESSAGE-MACRO for step 2, even if doing so for steps 1/3
+            cfg.solve.update(model="MESSAGE")
+
+        # Add step
+        s = workflow.add_step(
+            f"{name_root}{step}",
+            s,
+            # Get a reference to the function step_0() etc.
+            action=globals()[f"step_{step}"],
+            # Always clone to new URL; if step_0, then shift the model horizon
             clone=dict(shift_first_model_year=2025)
             if step == 0
             else dict(keep_solution=True),
-            target=target.format(step),  # Target scenario URL
-            config=config,
+            target=target.format(step),  # Target URL
+            config=cfg,
         )
 
-        # Add a step to solve the scenario (except for after step_0); update the `_base`
-        # (scenario) for the next ENGAGE step
-        _base = (
-            workflow.add_step(f"{name} solved", name, solve, config=config)
-            if step > 0
-            else name
-        )
+        if step > 0:
+            # Add a step to solve the scenario (except for after step_0); update the
+            # step name for the next loop iteration
+            s = workflow.add_step(f"{s} solved", s, solve, config=cfg)
 
-    return _base
+    return s
