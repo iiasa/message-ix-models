@@ -69,6 +69,12 @@ jobs:
         version: 35.2.0
         license: ${{ secrets.GAMS_LICENSE }}
 
+    # NB the IIASA-hosted runner does not have permissions to do "sudo apt-get",
+    #    so the following doesn't work. Rather, the necessary packages
+    #    (graphviz libgraphviz-dev pkg-config) are manually installed on the
+    #    host system
+    # - uses: ts-graphviz/setup-graphviz@v1
+
     - name: Install package; upgrade dependencies
       run: pip install --upgrade --upgrade-strategy=eager --editable ./message_data[dl,scgen,tests,transport]
 
