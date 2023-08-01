@@ -550,20 +550,20 @@ methanol:
     - meth_exp
     - meth_imp
     remove:
-      - sp_meth_I
-      - meth_rc
-      - meth_ic_trp
-      - meth_fc_trp
-      - meth_i
-      - meth_coal
-      - meth_coal_ccs
-      - meth_ng
-      - meth_ng_ccs
-      - meth_t_d
-      - meth_bal
-      - meth_trd
-      - meth_exp
-      - meth_imp
+    - sp_meth_I
+    - meth_rc
+    - meth_ic_trp
+    - meth_fc_trp
+    - meth_i
+    - meth_coal
+    - meth_coal_ccs
+    - meth_ng
+    - meth_ng_ccs
+    - meth_t_d
+    - meth_bal
+    - meth_trd
+    - meth_exp
+    - meth_imp
 
   addon:
     add:
