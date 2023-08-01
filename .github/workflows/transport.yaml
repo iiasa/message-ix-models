@@ -21,7 +21,7 @@ jobs:
     runs-on: self-hosted
 
     env:
-      BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7"
+      BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
       DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
       report-key: "transport all"
 
