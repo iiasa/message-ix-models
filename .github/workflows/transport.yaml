@@ -109,13 +109,16 @@ jobs:
             "message local data", Path("${{ github.workspace }}", "report"),
         )
         config.save()
+
+        # Equivalent to "(ixmp|message-ix|mix-models) config show"
+        print(config.path.read_text())
       shell: python
 
-    - name: Build and solve MESSAGEix-Transport
-      run: |
-        mix-models config show
-        mix-models --url="${{ env.BASE }}" transport build --dest="${{ env.DEST }}"
-        message-ix --url="${{ env.DEST }}" solve
+    - name: Build MESSAGEix-Transport
+      run: mix-models --url="${{ env.BASE }}" transport build --dest="${{ env.DEST }}"
+
+    - name: Solve MESSAGEix-Tranport
+      run: message-ix --url="${{ env.DEST }}" solve
 
     - name: Report MESSAGEix-Transport
       run: |
