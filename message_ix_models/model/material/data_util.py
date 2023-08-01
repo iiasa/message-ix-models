@@ -692,19 +692,19 @@ def add_emission_accounting(scen):
     scen.commit("CF4 relations corrected.")
 
     # copy CO2_cc values to CO2_industry for conventional methanol tecs
-    scen.check_out()
-    meth_arr = ["meth_ng", "meth_coal", "meth_coal_ccs", "meth_ng_ccs"]
-    df = scen.par("relation_activity", filters={"relation": "CO2_cc", "technology": meth_arr})
-    df = df.rename({"year_rel": "year_vtg"}, axis=1)
-    values = dict(zip(df["technology"], df["value"]))
-
-    df_em = scen.par("emission_factor", filters={"emission": "CO2_transformation", "technology": meth_arr})
-    for i in meth_arr:
-        df_em.loc[df_em["technology"] == i, "value"] = values[i]
-    df_em["emission"] = "CO2_industry"
-
-    scen.add_par("emission_factor", df_em)
-    scen.commit("add methanol CO2_industry")
+    # scen.check_out()
+    # meth_arr = ["meth_ng", "meth_coal", "meth_coal_ccs", "meth_ng_ccs"]
+    # df = scen.par("relation_activity", filters={"relation": "CO2_cc", "technology": meth_arr})
+    # df = df.rename({"year_rel": "year_vtg"}, axis=1)
+    # values = dict(zip(df["technology"], df["value"]))
+    #
+    # df_em = scen.par("emission_factor", filters={"emission": "CO2_transformation", "technology": meth_arr})
+    # for i in meth_arr:
+    #     df_em.loc[df_em["technology"] == i, "value"] = values[i]
+    # df_em["emission"] = "CO2_industry"
+    #
+    # scen.add_par("emission_factor", df_em)
+    # scen.commit("add methanol CO2_industry")
 
 def add_elec_lowerbound_2020(scen):
 
