@@ -402,9 +402,6 @@ def prepare_data(
     # Data frames for each parameter
     result: Dict[str, pd.DataFrame] = dict()
 
-    # NB on a second pass (after main() has already run once), rc_spec and rc_therm have
-    #    been stripped out, so `afofi_dd` is empty.
-
     # Mapping from original to generated commodity names
     c_map = {f"rc_{name}": f"afofi_{name}" for name in ("spec", "therm")}
 
@@ -418,35 +415,40 @@ def prepare_data(
         "par", "demand", "value", scenario, config=dict(filters=filters)
     )
 
-    # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
-    # - Relabel commodities.
-    tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
+    # On a second pass (after main() has already run once), rc_spec and rc_therm have
+    # been stripped out, so `afofi_dd` is empty; skip manipulating it.
+    if len(afofi_dd):
+        # - Compute a share (c, n) of rc_* demand (c, n, …) = afofi_* demand
+        # - Relabel commodities.
+        tmp = relabel(mul(afofi_dd, c_share), {"c": c_map})
 
-    # Convert back to a MESSAGE data frame
-    dims = dict(commodity="c", node="n", level="l", year="y", time="h")
-    result.update(as_message_df(tmp, "demand", dims, {}))
+        # Convert back to a MESSAGE data frame
+        dims = dict(commodity="c", node="n", level="l", year="y", time="h")
+        result.update(as_message_df(tmp, "demand", dims, {}))
 
-    # Copy technology parameter values from rc_spec and rc_therm to new afofi. Again,
-    # once rc_(spec|therm) are stripped, .par() returns nothing here, so rc_techs is
-    # empty and the following loop does not run
+        # Copy technology parameter values from rc_spec and rc_therm to new afofi.
+        # Again, once rc_(spec|therm) are stripped, .par() returns nothing here, so
+        # rc_techs is empty and the following loop does not run
 
-    # Identify technologies that output to rc_spec or rc_therm
-    rc_techs = scenario.par("output", filters={"commodity": ["rc_spec", "rc_therm"]})[
-        "technology"
-    ].unique()
+        # Identify technologies that output to rc_spec or rc_therm
+        rc_techs = scenario.par(
+            "output", filters={"commodity": ["rc_spec", "rc_therm"]}
+        )["technology"].unique()
 
-    # Mapping from source to generated names for scale_and_replace
-    replace = {
-        "commodity": c_map,
-        "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs},
-    }
-    # Compute shares with dimensions (t, n) for scaling parameter data
-    t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
+        # Mapping from source to generated names for scale_and_replace
+        replace = {
+            "commodity": c_map,
+            "technology": {t: re.sub("(rc|RC)", "afofi", t) for t in rc_techs},
+        }
+        # Compute shares with dimensions (t, n) for scaling parameter data
+        t_shares = get_afofi_technology_shares(c_share, replace["technology"].keys())
 
-    merge_data(
-        result,
-        scale_and_replace(scenario, replace, t_shares, relations=relations, relax=0.05),
-    )
+        merge_data(
+            result,
+            scale_and_replace(
+                scenario, replace, t_shares, relations=relations, relax=0.05
+            ),
+        )
 
     # Create new technologies for building energy
 
