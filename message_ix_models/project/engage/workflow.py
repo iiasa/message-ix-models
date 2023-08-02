@@ -5,7 +5,7 @@ These functions emulate the collective behaviour of :class:`.engage.runscript_ma
 reusable, particularly in the Workflow pattern used in e.g. :mod:`.projects.navigate`.
 """
 import logging
-from copy import copy
+from copy import copy, deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -373,7 +373,7 @@ def add_steps(
     s = base  # Current step name
     for step in steps:
         # Duplicate `config` and modify for this particular step
-        cfg = config.replace()
+        cfg = deepcopy(config)
         if solve_model == "MESSAGE-MACRO" and step > 1:
             # Give scenario name from which to copy "DEMAND" variable data; data is
             # copied to the "demand" parameter
