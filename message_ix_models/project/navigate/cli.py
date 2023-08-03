@@ -202,10 +202,18 @@ def check_budget(context):
     # TODO don't hard-code these values from .navigate.CLIMATE_POLICY
     # TODO make the list configurable
     for s_name, version, t, c in (
-        ("NPi-Default_ENGAGE_15C_step-3+B", None, 850, 1840),
-        ("NPi-Default_ENGAGE_20C_step-3+B", 2, 900, 1931),
-        ("NPi-Default_ENGAGE_20C_step-3+B", 1, 1150, 2700),
         ("NPi-Default", None, np.nan, np.nan),
+        #
+        # From 2023-05-31
+        # ("NPi-Default_ENGAGE_15C_step-3+B", None, 850, 1840),
+        # ("NPi-Default_ENGAGE_20C_step-3+B", 2, 900, 1931),
+        # ("NPi-Default_ENGAGE_20C_step-3+B", 1, 1150, 2700),
+        #
+        # From 2023-08-03
+        ("NPi-act+MACRO_ENGAGE_20C_step-3+B", 3, 900, 1931),
+        # NB c=552 is the "Actual cumulative emissions". c=920 is the output (suggested
+        #    value for c) below when c=552 is set.
+        ("Ctax-ref+B", 1, 650, 920),
     ):
         try:
             s = Scenario(mp, model=m, scenario=s_name, version=version)
@@ -231,6 +239,8 @@ def check_budget(context):
     print(f"{data =}")
 
     result = interpolate_budget(data, target, constraint)
+
+    print("")
     for key, value in result.items():
         if np.isnan(value):
             print(f"{key}: no result")
