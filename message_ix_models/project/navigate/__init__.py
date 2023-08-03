@@ -60,7 +60,10 @@ CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
             # Achievable for non-ref demand-side scenarios aiming for 650 Gt:
             # budget=1357,
             # Achievable for -ref demand-side scenario aiming for 850 Gt:
-            budget=1840,
+            # budget=1840,
+            # Calculated using check-budget based on
+            # "NPi-act+MACRO_ENGAGE_20C_step-3+B#3" and "Ctax-ref+B#1"
+            budget=1190,
             **_kw,
         ),
         # The following do not appear in the official NAVIGATE scenarios list, but are
