@@ -1,6 +1,5 @@
 """Utilities for handling objects from :mod:`sdmx`."""
 import logging
-from copy import copy
 from typing import Dict, List, Mapping, Union
 
 from iam_units import registry
@@ -37,7 +36,7 @@ def as_codes(data: Union[List[str], Dict[str, CodeLike]]) -> List[Code]:
         elif isinstance(info, str):
             _info = dict(name=info)
         elif isinstance(info, Mapping):
-            _info = copy(info)
+            _info = dict(info)
         else:
             raise TypeError(info)
 
