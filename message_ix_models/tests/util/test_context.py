@@ -1,4 +1,6 @@
 import logging
+import os
+import platform
 import re
 from copy import deepcopy
 from pathlib import Path
@@ -134,6 +136,12 @@ class TestContext:
         with pytest.raises(ValueError):
             test_context.get_scenario()
 
+    @pytest.mark.flaky(
+        reruns=5,
+        rerun_delay=2,
+        condition="GITHUB_ACTIONS" in os.environ and platform.system() == "Darwin",
+        reason="Flaky; see iiasa/message-ix-models#112",
+    )
     def test_set_scenario(self, test_context):
         mp = test_context.get_platform()
         s = Scenario(mp, "foo", "bar", version="new")
