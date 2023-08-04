@@ -72,6 +72,8 @@ Requirements:
 
     $ pip install git-filter-repo
 
+Read through all the steps first before starting.
+
 1. Create a temporary directory::
 
    $ mkdir tmp
@@ -189,7 +191,7 @@ Requirements:
 
      Then, return to step (6) to adjust the list of commands, considering the history and apparent conflicts.
 
-8. Push to ``iiasa/message-ix-models``:
+8. Push to ``iiasa/message-ix-models``::
 
      $ git push --set-upstream=origin migrate-example
 
@@ -201,7 +203,12 @@ Requirements:
 
 9.  Clean up.
 
-    Push further changes to the branch to:
+    This can be done directly on the branch from (8).
+    However, a better option to create a secondary branch from the HEAD of (8), named like ``migrate-example-tidy``, and make clean-up commits to this branch.
+    Create a second pull request to merge this manual clean-up branch into the branch from (8).
+    (This way, if the semi-automated process needs to be repeated, it can be re-pushed to ``migrate-example``, and then the manual clean-up branch can be rebased on the newly updated ``migrate-example`` branch, with little disturbance.)
+
+    Push further changes to the clean-up branch to:
 
     - Modify imports and references.
 
@@ -221,7 +228,8 @@ Requirements:
 
     - Adjust data handling.
 
-      .. todo:: expand this point.
+      For example, usage of :func:`private_data_path` to locate data files must be modified to :func:`package_data_path` if the data files were moved during the migration.
+      Tests can help to ensure that these changes are effective.
 
     - Address CI checks.
       For example:
@@ -229,9 +237,47 @@ Requirements:
       - Add tests, or exclude files from test coverage.
       - Lint files, or exclude files from linting.
 
+    It is important to avoid *scope creep*: do not try to include large modifications, improvements, or refactoring of code in this step.
+    This will greatly increase the complexity of the task and make it harder to complete.
+    Instead, do these things either *after* or *before* migrating the code.
+
 10. Invite review of your PR.
+
+11. Merge the clean-up branch from (9) into (8), and then (8) into the target branch (currently ``dev``).
 
 At any time:
 
 - Run :program:`./reset.sh` from your temporary directory to delete the clone of :mod:`message_ix_models` and all other changes from step (4).
   Then you can restart from step (4).
+
+After migrating
+---------------
+
+Some follow-up actions that **may** or **should** take place after the migration is complete:
+
+- Discuss with the :mod:`message_ix_models` maintainers about releasing a new version of the package, so that the code is available in a released version.
+- Open (an) additional issue(s) or PR(s) to record or immediately address missing items—for example, documentation, tests, or small enhancements for reusability—that were identified during the migration.
+- Open a PR to *remove* the migrated code from :mod:`message_data`.
+  This is important because future development should target the code in its new home in :mod:`message_ix_models`; other projects, workflows, and colleagues should be discouraged to depend on the old code in :mod:`message_data`, where it may not receive updates.
+
+  The simplest way to do this is to delete the code entirely and adjust any other code that imports it to import from the new location in :mod:`message_ix_models`.
+  For temporary compatibility, it is also possible to use :func:`message_data.tools.migrated`.
+
+References
+----------
+
+:program:`git` and :program:`git filter-repo` are both flexible programs with plenty of power and flexibility.
+The above is one suggested way of using them to achieve a clean, history-preserving migration, but there are alternate options.
+
+- :program:`git filter-repo`
+  `README <https://github.com/newren/git-filter-repo>`_,
+  `user manual <https://htmlpreview.github.io/?https://github.com/newren/git-filter-repo/blob/docs/html/git-filter-repo.html>`_, and
+  `discussions <https://github.com/newren/git-filter-repo/discussions>`_
+- :program:`git rebase`
+  `documentation <https://git-scm.com/docs/git-rebase>`_, and
+  `in Chapter 3.6 of the Git Book <https://git-scm.com/book/en/v2/Git-Branching-Rebasing>`_.
+- The description of :pull:`86` describes an alternate process.
+- PRs that used this process include:
+
+  - :pull:`88` + :pull:`91`, plus `this comment <https://github.com/iiasa/message-ix-models/pull/89#issuecomment-1443393345>`_ showing the manual edits to :file:`rebase-todo.txt`.
+  - :pull:`107` + :pull:`110`.
