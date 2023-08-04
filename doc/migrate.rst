@@ -50,6 +50,8 @@ Use :mod:`message_ix_models.tools` and :mod:`~message_ix_models.util` in :mod:`m
    At some points, similar code may appear in both packages as it is being migrated.
    In such cases, always import and use the code in :mod:`message_ix_models`, making any adjustments that are necessary.
 
+.. _migrate-filter-repo:
+
 Migrating individual modules
 ============================
 
