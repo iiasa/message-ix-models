@@ -49,7 +49,7 @@ CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
         # Originally from an item labelled "1000" in engage/config.yaml
         PolicyConfig(
             "20C",
-            # budget=2700,  # for T3.5, initial WP6 with 1150 Gt target
+            # budget=2700,  # for T3.5 and initial WP6, with 1150 Gt target
             budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
             **_kw,
         ),
