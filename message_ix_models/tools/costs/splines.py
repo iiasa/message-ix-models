@@ -41,7 +41,7 @@ def project_adjusted_inv_costs(
         - scenario: SSP1, SSP2, or SSP3
         - message_technology: MESSAGE technology name
         - weo_technology: WEO technology name
-        - r11_region: R11 region
+        - region: region
         - year: values from 2020 to 2100
         - inv_cost_learning_region: the adjusted investment cost \
             (in units of million US$2005/yr) based on the NAM learned costs \
@@ -54,7 +54,7 @@ def project_adjusted_inv_costs(
         )
         .merge(
             reg_diff_df.loc[reg_diff_df.cost_type == "inv_cost"],
-            on=["message_technology", "weo_technology", "r11_region"],
+            on=["message_technology", "weo_technology", "region"],
         )
         .drop(columns=["weo_region", "cost_type", "cost_NAM_adjusted"])
         .assign(
@@ -80,10 +80,11 @@ def project_adjusted_inv_costs(
         )
         .reindex(
             [
+                "scenario_version",
                 "scenario",
                 "message_technology",
                 "weo_technology",
-                "r11_region",
+                "region",
                 "year",
                 "inv_cost_learning_only",
                 "inv_cost_gdp_adj",

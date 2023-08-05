@@ -46,18 +46,34 @@ DICT_COST_COLS = {"inv_cost": "A,B:D", "fix_cost": "A,F:H"}
 
 # Dict of each R11 region matched with a WEO region
 DICT_WEO_R11 = {
-    "AFR": "Africa",
-    "CPA": "China",
-    "EEU": "Russia",
-    "FSU": "Russia",
-    "LAM": "Brazil",
-    "MEA": "Middle East",
-    "NAM": "United States",
-    "PAO": "Japan",
-    "PAS": "India",
-    "SAS": "India",
-    "WEU": "European Union",
+    "R11_AFR": "Africa",
+    "R11_CPA": "China",
+    "R11_EEU": "Russia",
+    "R11_FSU": "Russia",
+    "R11_LAM": "Brazil",
+    "R11_MEA": "Middle East",
+    "R11_NAM": "United States",
+    "R11_PAO": "Japan",
+    "R11_PAS": "India",
+    "R11_SAS": "India",
+    "R11_WEU": "European Union",
 }
+
+DICT_WEO_R12 = {
+    "R12_AFR": "Africa",
+    "R12_RCPA": "China",
+    "R12_CHN": "China",
+    "R12_EEU": "Russia",
+    "R12_FSU": "Russia",
+    "R12_LAM": "Brazil",
+    "R12_MEA": "Middle East",
+    "R12_NAM": "United States",
+    "R12_PAO": "Japan",
+    "R12_PAS": "India",
+    "R12_SAS": "India",
+    "R12_WEU": "European Union",
+}
+
 
 # Dict of WEO technologies and the corresponding MESSAGE technologies
 DICT_WEO_TECH = {
@@ -387,7 +403,9 @@ def get_weo_data() -> pd.DataFrame:
     return all_cost_df
 
 
-def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
+def calculate_region_cost_ratios(
+    weo_df: pd.DataFrame, sel_node: str = "r12"
+) -> pd.DataFrame:
     """Calculate regional cost ratios (relative to NAM) using the WEO data
 
     Some assumptions are made as well:
@@ -407,7 +425,7 @@ def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
         DataFrame with columns:
 
         - technology: WEO technologies, with shorthands as defined in `DICT_WEO_TECH`
-        - r11_region: MESSAGE R11 regions
+        - region: MESSAGE R11 regions
         - weo_region: the WEO region corresponding to the R11 region, \
             as mapped in `DICT_WEO_R11`
         - year: the latest year of data, in this case 2021
@@ -417,6 +435,12 @@ def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
           relative to the NAM region's cost
 
     """
+
+    if sel_node.upper() == "R11":
+        dict_regions = DICT_WEO_R11
+    else:
+        dict_regions = DICT_WEO_R12
+
     df = (
         weo_df.loc[weo_df.region == "United States"]
         .copy()
@@ -427,16 +451,16 @@ def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
     )
 
     l_cost_ratio = []
-    for m, w in DICT_WEO_R11.items():
+    for m, w in dict_regions.items():
         df_sel = (
             df.loc[(df.year == min(df.year)) & (df.region == w)]
             .copy()
             .rename(columns={"region": "weo_region"})
-            .assign(r11_region=m)
+            .assign(region=m)
             .reindex(
                 [
                     "technology",
-                    "r11_region",
+                    "region",
                     "weo_region",
                     "year",
                     "cost_type",
@@ -454,38 +478,40 @@ def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
     # Assumption 1: For CSP in EEU and FSU, make cost ratio == 0
     df_cost_ratio.loc[
         (df_cost_ratio.technology == "csp")
-        & (df_cost_ratio.r11_region.isin(["EEU", "FSU"])),
+        & (df_cost_ratio.region.isin(["R11_EEU", "R11_FSU", "R12_EEU", "R12_FSU"])),
         "cost_ratio",
     ] = 0
 
     # Assumption 2: For CSP in PAO, assume the same as NAM region (cost ratio == 1)
     df_cost_ratio.loc[
-        (df_cost_ratio.technology == "csp") & (df_cost_ratio.r11_region.isin(["PAO"])),
+        (df_cost_ratio.technology == "csp")
+        & (df_cost_ratio.region.isin(["R11_PAO", "R12_PAO"])),
         "cost_ratio",
     ] = 1
 
     # Assumption 3: For pulverized coal with CCS and IGCC with CCS in MEA,
     # make cost ratio the same as in the FSU region
     sub_mea = df_cost_ratio[
-        (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "MEA")
+        (df_cost_ratio.cost_ratio.isnull())
+        & (df_cost_ratio.region.isin(["R11_MEA", "R12_MEA"]))
     ].drop(columns={"cost_ratio"})
 
     sub_fsu = df_cost_ratio.loc[
-        (df_cost_ratio.r11_region == "FSU")
+        (df_cost_ratio.region.isin(["R11_FSU", "R12_FSU"]))
         & (df_cost_ratio.technology.isin(["pulverized_coal_ccs", "igcc_ccs"]))
-    ].drop(columns={"weo_region", "r11_region"})
+    ].drop(columns={"weo_region", "region"})
 
     sub_merge_mea = sub_mea.merge(sub_fsu, on=["technology", "year", "cost_type"])
 
     # Asusumption 4: for all missing LAM data (ratios), replace with AFR data (ratios)
     sub_lam = df_cost_ratio.loc[
-        (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.r11_region == "LAM")
+        (df_cost_ratio.cost_ratio.isnull()) & (df_cost_ratio.region.str.contains("LAM"))
     ].drop(columns={"cost_ratio"})
 
     sub_afr = df_cost_ratio.loc[
-        (df_cost_ratio.r11_region == "AFR")
+        (df_cost_ratio.region.str.contains("AFR"))
         & (df_cost_ratio.technology.isin(sub_lam.technology.unique()))
-    ].drop(columns={"weo_region", "r11_region"})
+    ].drop(columns={"weo_region", "region"})
 
     sub_merge_lam = sub_lam.merge(sub_afr, on=["technology", "year", "cost_type"])
 
@@ -497,8 +523,8 @@ def calculate_region_cost_ratios(weo_df: pd.DataFrame) -> pd.DataFrame:
                     ~(
                         (df_cost_ratio.cost_ratio.isnull())
                         & (
-                            (df_cost_ratio.r11_region == "MEA")
-                            | (df_cost_ratio.r11_region == "LAM")
+                            (df_cost_ratio.region.str.contains("MEA"))
+                            | (df_cost_ratio.region.str.contains("LAM"))
                         )
                     )
                 ],
@@ -598,7 +624,7 @@ def compare_original_and_weo_nam_costs(
         - message_technology:
         - weo_technology: WEO technologies, with shorthands \
         as defined in `DICT_WEO_TECH`
-        - r11_region: MESSAGE R11 regions
+        - region: MESSAGE R11 regions
         - cost_type: either “inv_cost” or “fix_cost”
         - cost_NAM_original_message: costs for each technology from old MESSAGE data \
             given in units of USD per kW
@@ -612,7 +638,7 @@ def compare_original_and_weo_nam_costs(
         .assign(technology=lambda x: x.message_technology.map(dict_weo_tech))
         .merge(
             weo_df.loc[
-                (weo_df.region == dict_weo_regions["NAM"])
+                (weo_df.region == dict_weo_regions["R11_NAM"])
                 & (weo_df.year == min(weo_df.year))
             ].copy(),
             on=["technology", "cost_type"],
@@ -934,10 +960,10 @@ def calculate_fom_to_inv_cost_ratios(input_df_weo):
     tech_reg = (
         pd.DataFrame(
             list(product(msg_tech, r11_reg)),
-            columns=["message_technology", "r11_region"],
+            columns=["message_technology", "region"],
         )
         .assign(technology=lambda x: x.message_technology.map(DICT_WEO_TECH))
-        .assign(region=lambda x: x.r11_region.map(DICT_WEO_R11))
+        .assign(region=lambda x: x.region.map(DICT_WEO_R11))
         .merge(df_ratio, on=["technology", "region"])
         .drop(columns=["technology", "region"])
     )

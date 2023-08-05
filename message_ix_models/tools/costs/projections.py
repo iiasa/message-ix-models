@@ -30,6 +30,7 @@ from message_ix_models.tools.costs.weo import (
 def get_cost_projections(
     cost_type: str = "inv_cost",
     scenario: str = "ssp2",
+    version: str = "review",
     format: str = "message",
     use_gdp: bool = False,
     converge_costs: bool = True,
