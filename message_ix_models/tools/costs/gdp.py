@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import yaml
+from nomenclature import countries
 from scipy.stats import linregress  # type: ignore
 
 from message_ix_models.util import package_data_path
@@ -100,16 +102,186 @@ def get_gdp_data() -> pd.DataFrame:
     return df_gdp
 
 
+# Function to read in (under-review) SSP data
+def process_raw_ssp_data(
+    sel_node: str = "r12", reference_region: str = "R12_NAM"
+) -> pd.DataFrame:
+    """Read in raw SSP data and process it
+
+    This function takes in the raw SSP data (in IAMC format), aggregates \
+    it to a specified node/regional level, and calculates regional GDP \
+    per capita. The SSP data is read from the file \
+    :file:`data/iea/SSP-Review-Phase-1-subset.csv`.
+
+    Parameters
+    ----------
+    sel_node : str
+        The node/region to aggregate the SSP data to. Valid values are \
+        "R11", "R12", and "R20" (can be given in lowercase or uppercase). \
+        Defaults to "R12".
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - scenario: SSP scenario
+        - region: R11, R12, or R20 region
+        - year
+        - total_gdp: total GDP (in units of billion US$2005/yr)
+        - total_population: total population (in units of million)
+        - gdp_ppp_per_capita: GDP per capita (in units of billion US$2005/yr / million)
+    """
+    # Change node selection to upper case
+    node_up = sel_node.upper()
+
+    # Check if node selection is valid
+    if node_up not in ["R11", "R12", "R20"]:
+        print("Please select a valid region: R11, R12, or R20")
+
+    # Set data path for node file
+    node_file = package_data_path("node", node_up + ".yaml")
+
+    # Read in node file
+    with open(node_file, "r") as file:
+        nodes_data = yaml.load(file, Loader=yaml.FullLoader)
+
+    # Remove World from regions
+    nodes_data = {k: v for k, v in nodes_data.items() if k != "World"}
+
+    # Create dataframe with regions and their respective countries
+    regions_countries = (
+        pd.DataFrame.from_dict(nodes_data)
+        .stack()
+        .explode()
+        .reset_index()
+        .query("level_0 == 'child'")
+        .rename(columns={"level_1": "region", 0: "country_alpha_3"})
+        .drop(columns=["level_0"])
+    )
+
+    # Set data path for SSP data
+    f = package_data_path("ssp", "SSP-Review-Phase-1-subset.csv")
+
+    # Read in SSP data and do the following:
+    # - Rename columns
+    # - Melt dataframe to long format
+    # - Fix character errors in Réunion, Côte d'Ivoire, and Curaçao
+    # - Use nomenclature to add country alpha-3 codes
+    # - Drop model column and original country name column
+    # - Merge with regions_countries dataframe to get country-region matching
+    # - Aggregate GDP and population to model-scenario-region-year level
+    # - Calculate GDP per capita by dividing total GDP by total population
+    df = (
+        pd.read_csv(f)
+        .rename(
+            columns={
+                "Model": "model",
+                "Scenario": "scenario_version",
+                "Region": "country_name",
+                "Variable": "variable",
+                "Unit": "unit",
+                "Year": "year",
+                "Value": "value",
+            }
+        )
+        .melt(
+            id_vars=[
+                "model",
+                "scenario_version",
+                "country_name",
+                "variable",
+                "unit",
+            ],
+            var_name="year",
+            value_name="value",
+        )
+        .assign(
+            scenario=lambda x: x.scenario_version.str[:4],
+            year=lambda x: x.year.astype(int),
+            country_name_adj=lambda x: np.where(
+                x.country_name.str.contains("R?union"),
+                "Réunion",
+                np.where(
+                    x.country_name.str.contains("C?te d'Ivoire"),
+                    "Côte d'Ivoire",
+                    np.where(
+                        x.country_name.str.contains("Cura"),
+                        "Curaçao",
+                        x.country_name,
+                    ),
+                ),
+            ),
+            country_alpha_3=lambda x: x.country_name_adj.apply(
+                lambda y: countries.get(name=y).alpha_3
+            ),
+        )
+        .drop(columns=["model", "country_name", "unit"])
+        .merge(regions_countries, on=["country_alpha_3"], how="left")
+        .pivot(
+            index=[
+                "scenario_version",
+                "scenario",
+                "region",
+                "country_name_adj",
+                "country_alpha_3",
+                "year",
+            ],
+            columns="variable",
+            values="value",
+        )
+        .groupby(["scenario_version", "scenario", "region", "year"])
+        .agg(total_gdp=("GDP|PPP", "sum"), total_population=("Population", "sum"))
+        .reset_index()
+        .assign(gdp_ppp_per_capita=lambda x: x.total_gdp / x.total_population)
+    )
+
+    # If reference region is not in the list of regions, print error message
+    if reference_region.upper() not in df.region.unique():
+        print("Please select a valid reference region: " + str(df.region.unique()))
+    # If reference region is in the list of regions, calculate GDP ratios
+    else:
+        df = (
+            df.pipe(
+                lambda df_: pd.merge(
+                    df_,
+                    df_.loc[df_.region == reference_region.upper()][
+                        ["scenario_version", "scenario", "year", "gdp_ppp_per_capita"]
+                    ]
+                    .rename(columns={"gdp_ppp_per_capita": "gdp_per_capita_reference"})
+                    .reset_index(drop=1),
+                    on=["scenario_version", "scenario", "year"],
+                )
+            )
+            .assign(
+                gdp_ratio_reg_to_reference=lambda x: x.gdp_ppp_per_capita
+                / x.gdp_per_capita_reference,
+            )
+            .reindex(
+                [
+                    "scenario_version",
+                    "scenario",
+                    "region",
+                    "year",
+                    "gdp_ppp_per_capita",
+                    "gdp_ratio_reg_to_reference",
+                ],
+                axis=1,
+            )
+        )
+
+    return df
+
+
 def linearly_regress_tech_cost_vs_gdp_ratios(
-    gdp_ratios: pd.DataFrame, tech_cost_ratios: pd.DataFrame
+    gdp_ratios_df: pd.DataFrame, tech_cost_ratios_df: pd.DataFrame
 ) -> pd.DataFrame:
     """Compute linear regressions of technology cost ratios to GDP ratios
 
     Parameters
     ----------
-    gdp_ratios : pandas.DataFrame
+    gdp_ratios_df : pandas.DataFrame
         Dataframe output from :func:`.get_gdp_data`
-    tech_cost_ratios : str -> tuple of (str, str)
+    tech_cost_ratios_df : str -> tuple of (str, str)
         Dataframe output from :func:`.calculate_region_cost_ratios`
 
     Returns
@@ -126,30 +298,20 @@ def linearly_regress_tech_cost_vs_gdp_ratios(
         - stderr: standard error of the linear regression
     """
 
-    gdp_2020 = gdp_ratios.loc[gdp_ratios.year == "2020"][
-        ["scenario", "r11_region", "gdp_ratio_reg_to_nam"]
-    ].reset_index(drop=1)
-    cost_capital_2021 = tech_cost_ratios[
-        ["weo_technology", "r11_region", "cost_type", "cost_ratio"]
-    ].reset_index(drop=1)
+    gdp_2020 = gdp_ratios_df.query("year == 2020").reindex(
+        ["scenario_version", "scenario", "region", "gdp_ratio_reg_to_reference"], axis=1
+    )
+    cost_capital_2021 = tech_cost_ratios_df.reindex(
+        ["weo_technology", "region", "cost_type", "cost_ratio"], axis=1
+    )
 
     df_gdp_cost = (
-        pd.merge(gdp_2020, cost_capital_2021, on=["r11_region"])
-        .reset_index(drop=2)
-        .reindex(
-            [
-                "cost_type",
-                "scenario",
-                "r11_region",
-                "weo_technology",
-                "gdp_ratio_reg_to_nam",
-                "cost_ratio",
-            ],
-            axis=1,
-        )
-        .groupby(["cost_type", "scenario", "weo_technology"])
+        pd.merge(gdp_2020, cost_capital_2021, on=["region"])
+        .groupby(["cost_type", "scenario_version", "scenario", "weo_technology"])
         .apply(
-            lambda x: pd.Series(linregress(x["gdp_ratio_reg_to_nam"], x["cost_ratio"]))
+            lambda x: pd.Series(
+                linregress(x["gdp_ratio_reg_to_reference"], x["cost_ratio"])
+            )
         )
         .rename(
             columns={
@@ -169,14 +331,18 @@ def linearly_regress_tech_cost_vs_gdp_ratios(
 
 # Function to calculate adjusted region-differentiated cost ratios
 # using the results from the GDP linear regressions
-def calculate_adjusted_region_cost_ratios(gdp_df, linear_regression_df):
+def calculate_adjusted_region_cost_ratios(
+    gdp_df,
+    linear_regression_df,
+    reference_region: str = "R12_NAM",
+):
     """Calculate adjusted region-differentiated cost ratios
 
     This function calculates the adjusted region-differentiated cost ratios \
         using the results from the GDP linear regressions. The adjusted \
         region-differentiated cost ratios are calculated by multiplying the \
         slope of the linear regression with the GDP ratio of the region \
-        compared to NAM and adding the intercept.
+        compared to the reference region and adding the intercept.
 
     Parameters
     ----------
@@ -191,40 +357,45 @@ def calculate_adjusted_region_cost_ratios(gdp_df, linear_regression_df):
         DataFrame with columns:
         - scenario: SSP1, SSP2, or SSP3
         - weo_technology: WEO technology name
-        - r11_region: R11 region
+        - region: R11 region
         - cost_ratio_adj: the adjusted region-differentiated cost ratio
     """
 
-    df = (
-        linear_regression_df.loc[linear_regression_df.cost_type == "inv_cost"]
-        .drop(columns=["cost_type"])
-        .merge(gdp_df, on=["scenario"])
-        .drop(
-            columns=[
-                "gdp_ppp_per_capita",
-                "gdp_ratio_reg_to_oecd",
-                "rvalue",
-                "pvalue",
-                "stderr",
-            ]
+    if reference_region.upper() not in gdp_df.region.unique():
+        print("Please select a valid reference region: " + str(gdp_df.region.unique()))
+    else:
+        df = (
+            linear_regression_df.loc[linear_regression_df.cost_type == "inv_cost"]
+            .drop(columns=["cost_type"])
+            .merge(gdp_df, on=["scenario_version", "scenario"])
+            .drop(
+                columns=[
+                    "gdp_ppp_per_capita",
+                    "rvalue",
+                    "pvalue",
+                    "stderr",
+                ]
+            )
+            .assign(
+                cost_ratio_adj=lambda x: np.where(
+                    x.region == reference_region,
+                    1,
+                    x.slope * x.gdp_ratio_reg_to_reference + x.intercept,
+                ),
+                year=lambda x: x.year.astype(int),
+            )
+            .reindex(
+                [
+                    "scenario_version",
+                    "scenario",
+                    "weo_technology",
+                    "region",
+                    "year",
+                    "cost_ratio_adj",
+                ],
+                axis=1,
+            )
         )
-        .assign(
-            cost_ratio_adj=lambda x: np.where(
-                x.r11_region == "NAM", 1, x.slope * x.gdp_ratio_reg_to_nam + x.intercept
-            ),
-            year=lambda x: x.year.astype(int),
-        )
-        .reindex(
-            [
-                "scenario",
-                "weo_technology",
-                "r11_region",
-                "year",
-                "cost_ratio_adj",
-            ],
-            axis=1,
-        )
-    )
 
     return df
 
