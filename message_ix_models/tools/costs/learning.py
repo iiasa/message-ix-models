@@ -189,6 +189,7 @@ def project_NAM_inv_costs_using_learning_rates(
     regional_diff_df: pd.DataFrame,
     learning_rates_df: pd.DataFrame,
     tech_first_year_df: pd.DataFrame,
+    reference_region: str = "R12_NAM",
 ) -> pd.DataFrame:
     """Project investment costs using learning rates for NAM region only
 
@@ -215,7 +216,7 @@ def project_NAM_inv_costs_using_learning_rates(
         - message_technology: technologies included in MESSAGE
         - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
             renewable, nuclear, or NA)
-        - r11_region: R11 region
+        - region: region
         - cost_type: either "inv_cost" or "fom_cost"
         - year: values from 2000 to 2100
 
@@ -228,7 +229,9 @@ def project_NAM_inv_costs_using_learning_rates(
     # Filter for NAM region and investment cost only, then merge with discount rates,
     # then merge with first year data
     df_nam = (
-        df_reg.loc[(df_reg.r11_region == "NAM") & (df_reg.cost_type == "inv_cost")]
+        df_reg.loc[
+            (df_reg.region == reference_region) & (df_reg.cost_type == "inv_cost")
+        ]
         .merge(df_discount, on="message_technology")
         .merge(df_tech_first_year, on="message_technology")
         .assign(
@@ -259,7 +262,7 @@ def project_NAM_inv_costs_using_learning_rates(
             columns=[
                 "b",
                 "r",
-                "r11_region",
+                "region",
                 "weo_region",
                 "cost_type",
                 "cost_NAM_adjusted",
