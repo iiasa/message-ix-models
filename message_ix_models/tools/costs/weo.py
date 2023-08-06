@@ -5,11 +5,7 @@ import pandas as pd
 
 from message_ix_models.util import package_data_path
 
-# from typing import Dict
-
-
 BASE_YEAR = 2021
-ALT_BASE_YEAR = 2020
 
 # Conversion rate from 2021 USD to 2005 USD
 # Taken from https://www.officialdata.org/us/inflation/2021?endYear=2005&amount=1
@@ -187,7 +183,7 @@ def get_technology_mapping() -> pd.DataFrame:
             technology in the reference region (in 2005 USD)
     """
 
-    file_path = package_data_path("costs", "tech_map.csv")
+    file_path = package_data_path("costs", "technology_weo_map.csv")
     df_tech_map = pd.read_csv(file_path)
 
     return df_tech_map
