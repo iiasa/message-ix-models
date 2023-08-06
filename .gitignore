@@ -150,3 +150,6 @@ cache/
 
 # Temporary Excel files
 *~$*
+
+# Large SSP file
+SSP-Review-Phase-1.xlsx
