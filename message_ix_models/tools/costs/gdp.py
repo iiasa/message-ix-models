@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import yaml
+import yaml  # type: ignore
 from nomenclature import countries
 from scipy.stats import linregress  # type: ignore
 
