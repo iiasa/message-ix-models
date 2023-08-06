@@ -1,10 +1,10 @@
-# Cost reduction in 2100
-# 
-# Units: %  
-#
-# Data is copied from Sheet1 in https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP_technology_learning.xlsx
-# There are some manually changed assumptions to the original GEA data in the spreadsheet (can be seen in the spreadsheet as marked in yellow)
-Technologies,Type,GEAL,GEAM,GEAH
+# Cost reduction in 2100,,,,
+# ,,,,
+# Units: %  ,,,,
+#,,,,
+# Data is copied from Sheet1 in https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP_technology_learning.xlsx,,,,
+# There are some manually changed assumptions to the original GEA data in the spreadsheet (can be seen in the spreadsheet as marked in yellow),,,,
+message_technology,technology_type,GEAL,GEAM,GEAH
 coal_ppl,Coal,0,0.2,0.5
 gas_ppl,Gas/Oil,0.2,0.29,0.38
 gas_ct,Gas/Oil,0.2,0.29,0.38
@@ -54,12 +54,15 @@ gas_i,Gas/Oil,0,0,0
 biomass_i,Biomass,0,0,0
 eth_i,Biomass,0,0,0
 meth_i,Coal,0,0,0
-elec_i,,0,0,0
-h2_i,,0,0,0
+elec_i,NA,0,0,0
+h2_i,NA,0,0,0
 hp_el_i,Renewable,0.5,0.5,0.2
 hp_gas_i,Gas/Oil,0.4,0.4,0.2
 solar_i,Renewable,0.9,0.6,0.2
-heat_i,,0,0,0
+heat_i,NA,0,0,0
 geo_hpl,Renewable,0.25,0.18,0.15
 nuc_lc,Nuclear,0,0,0
 nuc_hc,Nuclear,0,0.15,0.3
+wind_ppf,NA,0,0,0
+csp_sm1_ppl,NA,0,0,0
+csp_sm3_ppl,NA,0,0,0
