@@ -6,11 +6,11 @@ from message_ix_models.util import package_data_path
 # Function to read in SSP Phase 1 Review data
 # and filter out data for only the variables of interest.
 def subset_ssp_phase_1_data():
-    """Read in SSP Phase 1 Review data and filter out data for only the variables of interest.
+    """Read in SSP Phase 1 Review data and only keep data with variables of interest.
 
     The reason for this function is because the complete data file is quite large
-    and takes too long to read in the module. This is not an integral part of the module,
-    only a fix during the development and exploration phase.
+    and takes too long to read in the module. This is not an integral part of \
+    the module, only a fix during the development and exploration phase.
 
     Returns
     -------
@@ -29,7 +29,8 @@ def subset_ssp_phase_1_data():
         pd.read_excel(f, sheet_name="data", usecols="A:Z")
         .query("Variable == 'Population' or Variable == 'GDP|PPP'")
         .query(
-            "Model.str.contains('IIASA-WiC POP') or Model.str.contains('OECD ENV-Growth')"
+            "Model.str.contains('IIASA-WiC POP') or\
+                Model.str.contains('OECD ENV-Growth')"
         )
         .query(
             "~(Region.str.contains('\(') or Region.str.contains('World'))",
