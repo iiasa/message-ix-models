@@ -103,9 +103,7 @@ def get_gdp_data() -> pd.DataFrame:
 
 
 # Function to read in (under-review) SSP data
-def process_raw_ssp_data(
-    sel_node: str = "r12", reference_region: str = "R12_NAM"
-) -> pd.DataFrame:
+def process_raw_ssp_data(input_node: str, input_ref_region: str) -> pd.DataFrame:
     """Read in raw SSP data and process it
 
     This function takes in the raw SSP data (in IAMC format), aggregates \
@@ -132,11 +130,22 @@ def process_raw_ssp_data(
         - gdp_ppp_per_capita: GDP per capita (in units of billion US$2005/yr / million)
     """
     # Change node selection to upper case
-    node_up = sel_node.upper()
+    node_up = input_node.upper()
 
     # Check if node selection is valid
     if node_up not in ["R11", "R12", "R20"]:
         print("Please select a valid region: R11, R12, or R20")
+
+    # Set default reference region
+    if input_ref_region is None:
+        if input_node.upper() == "R11":
+            input_ref_region = "R11_NAM"
+        if input_node.upper() == "R12":
+            input_ref_region = "R12_NAM"
+        if input_node.upper() == "R20":
+            input_ref_region = "R20_NAM"
+    else:
+        input_ref_region = input_ref_region
 
     # Set data path for node file
     node_file = package_data_path("node", node_up + ".yaml")
@@ -236,7 +245,8 @@ def process_raw_ssp_data(
     )
 
     # If reference region is not in the list of regions, print error message
-    if reference_region.upper() not in df.region.unique():
+    reference_region = input_ref_region.upper()
+    if reference_region not in df.region.unique():
         print("Please select a valid reference region: " + str(df.region.unique()))
     # If reference region is in the list of regions, calculate GDP ratios
     else:
@@ -244,7 +254,7 @@ def process_raw_ssp_data(
             df.pipe(
                 lambda df_: pd.merge(
                     df_,
-                    df_.loc[df_.region == reference_region.upper()][
+                    df_.loc[df_.region == reference_region][
                         ["scenario_version", "scenario", "year", "gdp_ppp_per_capita"]
                     ]
                     .rename(columns={"gdp_ppp_per_capita": "gdp_per_capita_reference"})
@@ -273,16 +283,18 @@ def process_raw_ssp_data(
 
 
 def linearly_regress_tech_cost_vs_gdp_ratios(
-    gdp_ratios_df: pd.DataFrame, tech_cost_ratios_df: pd.DataFrame
+    gdp_df: pd.DataFrame,
+    cost_ratios_df: pd.DataFrame,
+    input_base_year: int,
 ) -> pd.DataFrame:
     """Compute linear regressions of technology cost ratios to GDP ratios
 
     Parameters
     ----------
     gdp_ratios_df : pandas.DataFrame
-        Dataframe output from :func:`.get_gdp_data`
-    tech_cost_ratios_df : str -> tuple of (str, str)
-        Dataframe output from :func:`.calculate_region_cost_ratios`
+        Dataframe output from :func:`.process_raw_ssp_data`
+    region_diff_df : str -> tuple of (str, str)
+        Dataframe output from :func:`.get_weo_region_differentiated_costs`
 
     Returns
     -------
@@ -298,19 +310,19 @@ def linearly_regress_tech_cost_vs_gdp_ratios(
         - stderr: standard error of the linear regression
     """
 
-    gdp_2020 = gdp_ratios_df.query("year == 2020").reindex(
+    gdp_base_year = gdp_df.query("year == @input_base_year").reindex(
         ["scenario_version", "scenario", "region", "gdp_ratio_reg_to_reference"], axis=1
     )
-    cost_capital_2021 = tech_cost_ratios_df.reindex(
-        ["weo_technology", "region", "cost_type", "cost_ratio"], axis=1
+    inv_cost_base_year = cost_ratios_df.reindex(
+        ["message_technology", "region", "reg_cost_ratio"], axis=1
     )
 
     df_gdp_cost = (
-        pd.merge(gdp_2020, cost_capital_2021, on=["region"])
-        .groupby(["cost_type", "scenario_version", "scenario", "weo_technology"])
+        pd.merge(gdp_base_year, inv_cost_base_year, on=["region"])
+        .groupby(["scenario_version", "scenario", "message_technology"])
         .apply(
             lambda x: pd.Series(
-                linregress(x["gdp_ratio_reg_to_reference"], x["cost_ratio"])
+                linregress(x["gdp_ratio_reg_to_reference"], x["reg_cost_ratio"])
             )
         )
         .rename(
@@ -331,11 +343,9 @@ def linearly_regress_tech_cost_vs_gdp_ratios(
 
 # Function to calculate adjusted region-differentiated cost ratios
 # using the results from the GDP linear regressions
-def calculate_adjusted_region_cost_ratios(
-    gdp_df,
-    linear_regression_df,
-    reference_region: str = "R12_NAM",
-):
+def calculate_gdp_adjusted_region_cost_ratios(
+    region_diff_df, input_node, input_ref_region, input_base_year
+) -> pd.DataFrame:
     """Calculate adjusted region-differentiated cost ratios
 
     This function calculates the adjusted region-differentiated cost ratios \
@@ -361,13 +371,46 @@ def calculate_adjusted_region_cost_ratios(
         - cost_ratio_adj: the adjusted region-differentiated cost ratio
     """
 
-    if reference_region.upper() not in gdp_df.region.unique():
-        print("Please select a valid reference region: " + str(gdp_df.region.unique()))
+    df_gdp = process_raw_ssp_data(
+        input_node=input_node, input_ref_region=input_ref_region
+    ).query("year >= 2020")
+    df_cost_ratios = region_diff_df.copy()
+
+    # If base year does not exist in GDP data, then use earliest year in GDP data
+    # and give warning
+    base_year = int(input_base_year)
+    if int(base_year) not in df_gdp.year.unique():
+        base_year = int(min(df_gdp.year.unique()))
+        print(
+            f"Base year {input_base_year} not found in GDP data. \
+                Using {base_year} for GDP data instead."
+        )
+
+    # Set default values for input arguments
+    # If specified node is R11, then use R11_NAM as the reference region
+    # If specified node is R12, then use R12_NAM as the reference region
+    # If specified node is R20, then use R20_NAM as the reference region
+    # However, if a reference region is specified, then use that instead
+    if input_ref_region is None:
+        if input_node.upper() == "R11":
+            reference_region = "R11_NAM"
+        if input_node.upper() == "R12":
+            reference_region = "R12_NAM"
+        if input_node.upper() == "R20":
+            reference_region = "R20_NAM"
+    else:
+        reference_region = input_ref_region
+
+    # Linearly regress technology cost ratios to GDP ratios
+    df_linear_reg = linearly_regress_tech_cost_vs_gdp_ratios(
+        df_gdp, df_cost_ratios, input_base_year=base_year
+    )
+
+    if reference_region.upper() not in df_gdp.region.unique():
+        print("Please select a valid reference region: " + str(df_gdp.region.unique()))
     else:
         df = (
-            linear_regression_df.loc[linear_regression_df.cost_type == "inv_cost"]
-            .drop(columns=["cost_type"])
-            .merge(gdp_df, on=["scenario_version", "scenario"])
+            df_linear_reg.merge(df_gdp, on=["scenario_version", "scenario"])
             .drop(
                 columns=[
                     "gdp_ppp_per_capita",
@@ -377,21 +420,26 @@ def calculate_adjusted_region_cost_ratios(
                 ]
             )
             .assign(
-                cost_ratio_adj=lambda x: np.where(
+                reg_cost_ratio_adj=lambda x: np.where(
                     x.region == reference_region,
                     1,
                     x.slope * x.gdp_ratio_reg_to_reference + x.intercept,
                 ),
                 year=lambda x: x.year.astype(int),
+                scenario_version=lambda x: np.where(
+                    x.scenario_version.str.contains("2013"),
+                    "Previous (2013)",
+                    "Review (2023)",
+                ),
             )
             .reindex(
                 [
                     "scenario_version",
                     "scenario",
-                    "weo_technology",
+                    "message_technology",
                     "region",
                     "year",
-                    "cost_ratio_adj",
+                    "reg_cost_ratio_adj",
                 ],
                 axis=1,
             )

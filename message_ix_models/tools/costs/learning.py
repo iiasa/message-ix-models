@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 
+from message_ix_models.tools.costs.config import (
+    BASE_YEAR,
+    FIRST_MODEL_YEAR,
+    LAST_MODEL_YEAR,
+    PRE_LAST_YEAR_RATE,
+)
 from message_ix_models.util import package_data_path
-
-# Global variables of model years
-BASE_YEAR = 2021
-FIRST_MODEL_YEAR = 2020
-LAST_MODEL_YEAR = 2100
-PRE_LAST_YEAR_RATE = 0.01
 
 
 # Function to get GEA based cost reduction data
@@ -139,13 +139,13 @@ def project_ref_region_inv_costs_using_learning_rates(
     # Set default reference region
     if input_ref_region is None:
         if input_node.upper() == "R11":
-            input_ref_region = "R11_NAM"
+            reference_region = "R11_NAM"
         if input_node.upper() == "R12":
-            input_ref_region = "R12_NAM"
+            reference_region = "R12_NAM"
         if input_node.upper() == "R20":
-            input_ref_region = "R20_NAM"
+            reference_region = "R20_NAM"
     else:
-        input_ref_region = input_ref_region
+        reference_region = input_ref_region
 
     # Get cost reduction data
     df_cost_reduction = get_cost_reduction_data()
@@ -161,7 +161,7 @@ def project_ref_region_inv_costs_using_learning_rates(
     # Filter for reference region, then merge with learning scenarios and discount rates
     # Calculate cost in reference region in 2100
     df_ref = (
-        regional_diff_df.query("region == @input_ref_region")
+        regional_diff_df.query("region == @reference_region")
         .merge(df_learning_reduction, on="message_technology")
         .assign(
             cost_region_2100=lambda x: x.reg_cost_base_year
@@ -169,10 +169,11 @@ def project_ref_region_inv_costs_using_learning_rates(
             b=lambda x: (1 - PRE_LAST_YEAR_RATE) * x.cost_region_2100,
             r=lambda x: (1 / (LAST_MODEL_YEAR - input_base_year))
             * np.log((x.cost_region_2100 - x.b) / (x.reg_cost_base_year - x.b)),
+            reference_region=reference_region,
         )
     )
 
-    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + 10, 10))
+    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + 5, 5))
 
     for y in seq_years:
         df_ref = df_ref.assign(
@@ -194,7 +195,6 @@ def project_ref_region_inv_costs_using_learning_rates(
                 "reg_cost_ratio",
                 "reg_cost_base_year",
                 "fix_to_inv_cost_ratio",
-                "first_technology_year",
                 "learning_rate",
                 "technology_type",
                 "cost_reduction",
@@ -205,6 +205,8 @@ def project_ref_region_inv_costs_using_learning_rates(
             id_vars=[
                 "message_technology",
                 "scenario",
+                "reference_region",
+                "first_technology_year",
             ],
             var_name="year",
             value_name="inv_cost_ref_region_learning",

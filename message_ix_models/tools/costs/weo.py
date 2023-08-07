@@ -3,13 +3,8 @@ from itertools import product
 import numpy as np
 import pandas as pd
 
+from message_ix_models.tools.costs.config import CONVERSION_2021_TO_2005_USD
 from message_ix_models.util import package_data_path
-
-BASE_YEAR = 2021
-
-# Conversion rate from 2021 USD to 2005 USD
-# Taken from https://www.officialdata.org/us/inflation/2021?endYear=2005&amount=1
-CONVERSION_2021_TO_2005_USD = 0.72
 
 # Dict of all of the technologies,
 # their respective sheet in the Excel file,
@@ -191,9 +186,9 @@ def get_technology_mapping() -> pd.DataFrame:
 
 # Function to get WEO-based regional differentiation
 def get_weo_region_differentiated_costs(
-    input_node: str = "r12",
-    input_ref_region=None,
-    input_base_year: int = BASE_YEAR,
+    input_node,
+    input_ref_region,
+    input_base_year,
 ) -> pd.DataFrame:
     """Calculate regionally differentiated costs and fixed-to-investment cost ratios
 
