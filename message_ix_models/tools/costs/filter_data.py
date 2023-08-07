@@ -33,7 +33,7 @@ def subset_ssp_phase_1_data():
                 Model.str.contains('OECD ENV-Growth')"
         )
         .query(
-            "~(Region.str.contains('\(') or Region.str.contains('World'))",
+            r"~(Region.str.contains('\(') or Region.str.contains('World'))",
             engine="python",
         )
     )
