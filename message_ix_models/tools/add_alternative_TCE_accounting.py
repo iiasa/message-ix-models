@@ -24,11 +24,9 @@ def main(scen):
     # Copy all emission factors with string.find(CO2)
     emi_fac = scen.par("emission_factor", filters={"emission": ["TCE"]})
     emi = [e for e in emi_fac.technology.unique().tolist() if e.find("CO2") >= 0]
-    tce_co2 = emi_fac[emi_fac.technology.isin(emi)]
-    tce_co2.emission = "TCE_CO2"
-    scen.check_out()
-    scen.add_par("emission_factor", tce_co2)
-    scen.commit("added emission factors for type_emission TCE_CO2")
+    tce_co2 = emi_fac[emi_fac.technology.isin(emi)].assign(emission="TCE_CO2")
+    with scen.transact("added emission factors for type_emission TCE_CO2"):
+        scen.add_par("emission_factor", tce_co2)
 
     # Create emission factor from land_output 'LU_CO2'
     lu_co2 = scen.par("land_emission", filters={"emission": ["LU_CO2"]})
@@ -40,11 +38,9 @@ def main(scen):
     scen.commit("added land use emission factors for type_emission TCE_CO2")
 
     # Copy all emission factors with inverse of string.find(CO2)
-    tce_nonco2 = emi_fac[~emi_fac.technology.isin(emi)]
-    tce_nonco2.emission = "TCE_non-CO2"
-    scen.check_out()
-    scen.add_par("emission_factor", tce_nonco2)
-    scen.commit("added emission factors for type_emission TCE_non-CO2")
+    tce_nonco2 = emi_fac[~emi_fac.technology.isin(emi)].assign(emission="TCE_non-CO2")
+    with scen.transact("added emission factors for type_emission TCE_non-CO2"):
+        scen.add_par("emission_factor", tce_nonco2)
 
     # Create emission factor from land_use TCE - land_ouput 'LU_CO2'
     lu_co2.emission = "TCE_non-CO2"
