@@ -468,7 +468,7 @@ def generate(context: Context) -> Workflow:
     wf.add_step(
         "base",
         None,
-        target="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#7",
+        target="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21",
     )
 
     # NB some preparatory changes could be done at this point, but are instead done in
