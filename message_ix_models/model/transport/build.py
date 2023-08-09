@@ -297,8 +297,8 @@ def get_computer(
     add_exogenous_data(c, base_info)
 
     # Prepare other calculations
-    for name in "demand freight ikarus ldv non_ldv plot data".split():
-        module = import_module(f"..{name}", __name__)
+    for name in context.transport.modules:
+        module = import_module(name if "." in name else f"..{name}", __name__)
         module.prepare_computer(c)
 
     path = context.get_local_path("transport", "build.svg")
