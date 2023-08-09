@@ -458,11 +458,26 @@ def iter_scenarios(
 
 def generate(context: Context) -> Workflow:
     """Create the NAVIGATE workflow for T3.5, T6.1, and T6.2."""
+    # NB Step numbers below ("Step 1") refer to the list of steps in the documentation.
+    #    This list is not yet updated to include many intermediate steps with
+    #    adjustments needed for functional NAVIGATE workflows, so some .add_step() calls
+    #    don't have an associated number.
+    # TODO Renumber and update docs accordingly
+
     wf = Workflow(context)
 
     # Use MESSAGE if .model.transport is included. Otherwise, use MESSAGE-MACRO for
     # additional demand-side flexibility in meeting low climate targets
     solve_model = "MESSAGE" if context.navigate.transport else "MESSAGE-MACRO"
+
+    # Collections of names of intermediate steps in the workflow
+    M_built = {}  # Mapping from WP6_production → result of step 2
+    baseline_solved = {}  # Mapping from short ID (`s`) → result of step 7
+    # Mapping from short IDs → 2-tuple with:
+    # 1. Name of the final step in the policy sequence (if any).
+    # 2. Args for report(…, other_scenario_info=…) —either None or model/scenario name.
+    to_report: Dict[str, Tuple[str, Optional[Mapping]]] = {}
+    all_reported = []  # Result of step 9
 
     # Step 1
     wf.add_step(
@@ -481,14 +496,14 @@ def generate(context: Context) -> Workflow:
     # current code. So we typically use the "--from=" CLI option to start from the
     # target= scenario specified as the output of step 2, below.
 
-    # Step 2
-    M_built = {}
+    # Step 2 and related: different base scenarios according to WP6_production
     _s = "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54"
     for WP6_production, label, target in (
         ("default", "def", _s),
         ("advanced", "adv", _s),
         (None, "T3.5", "MESSAGEix-Materials/baseline_DEFAULT_NAVIGATE"),
     ):
+        # Step 2: Add materials
         name = wf.add_step(f"M {label} built", "base", build_materials, target=target)
 
         # Strip data from tax_emission
@@ -504,21 +519,20 @@ def generate(context: Context) -> Workflow:
         # Update GLOBIOM
         M_built[WP6_production] = wf.add_step(f"M {label} + GLOBIOM", base, add_globiom)
 
-    # Mapping from short IDs (`s`) to step names for results of step 7
-    baseline_solved = {}
-
-    # Steps 3–7 are only run for the "NPi" (baseline) climate policy
+    # Steps 3–7: only run for the "NPi" (baseline) climate policy
     filters = {
         "navigate_task": {"T3.5", "T6.1", "T6.2"},
         "navigate_climate_policy": "NPi",
     }
     for s, _, T35_policy, WP6_production in iter_scenarios(context, filters):
+        # Identify the base scenario for the next steps
         base = M_built[WP6_production]
 
-        # Steps 3–4
+        # Variant label for model name
         variant = "M" + ("T" if context.navigate.transport else "")
+
+        # Step 3: Add transport
         if context.navigate.transport:
-            # Step 3
             base = wf.add_step(
                 f"{variant} {s} built",
                 base,
@@ -528,10 +542,10 @@ def generate(context: Context) -> Workflow:
                 navigate_scenario=T35_policy,
             )
 
-        # Step 4
+        # Step 4: Solve
         base = wf.add_step(f"{variant} {s} solved", base, solve)
 
-        # Steps 5–7
+        # Steps 5–7: Add and solve buildings
         variant = "B" + variant
         base = wf.add_step(
             f"{variant} {s} solved",
@@ -542,8 +556,8 @@ def generate(context: Context) -> Workflow:
             navigate_scenario=s,
         )
 
+        # Calibrate MACRO
         if solve_model == "MESSAGE-MACRO":
-            # Calibrate MACRO
             base = wf.add_step(
                 f"{variant} {s} with MACRO",
                 base,
@@ -556,17 +570,12 @@ def generate(context: Context) -> Workflow:
         # Store the step name as a starting point for climate policy steps, below
         baseline_solved[(T35_policy, WP6_production)] = base
 
-    # Mapping from short IDs (`s`) to 2-tuples with:
-    # 1. name of the final step in the policy sequence (if any)
-    # 2. args for report(…, other_scenario_info=…) —either None or model/scenario name
-    to_report: Dict[str, Tuple[str, Optional[Mapping]]] = {}
-
     # Now iterate over all scenarios
     filters.pop("navigate_climate_policy")
     for s, climate_policy, T35_policy, WP6_production in iter_scenarios(
         context, filters
     ):
-        # Identify the base scenario for the subsequent steps
+        # Identify the base scenario for the next steps
         base = baseline_solved[(T35_policy, WP6_production)]
 
         # Select the indicated PolicyConfig object
@@ -579,14 +588,13 @@ def generate(context: Context) -> Workflow:
             engage_policy_config.solve["model"] = solve_model
 
             if climate_policy == "15C":
-                # Provide a reference scenario from which to copy demands
+                # Provide a reference scenario from which to copy DEMAND data
                 # NB this implies the referenced scenario must be solved first. This
                 #    value is only used in the first ENGAGE step; after this,
-                #    .engage.workflow.add_steps() overwrites with the prior step
+                #    .engage.workflow.add_steps() overwrites with the prior step.
                 engage_policy_config.low_dem_scen = "Ctax-ref"
             elif climate_policy == "20C T6.2":
-                # Help identify the tax_emission_scenario from which to copy data
-
+                # Provide a reference scenario from which to copy tax_emission data
                 # Model and scenario for the scenario produced by the base step
                 info, _ = wf.guess_target(base, "scenario")
                 engage_policy_config.tax_emission_scenario["model"] = info["model"]
@@ -598,7 +606,7 @@ def generate(context: Context) -> Workflow:
             #    step 9 (running legacy reporting, below)
             name = engage.add_steps(wf, base=base, config=engage_policy_config, name=s)
         elif climate_policy == "Ctax":
-            # Carbon tax; not an implementation of an ENGAGE climate policy
+            # Add a carbon tax (not an implementation of an ENGAGE climate policy)
             name = wf.add_step(
                 s,
                 base,
@@ -607,6 +615,8 @@ def generate(context: Context) -> Workflow:
                 clone=dict(shift_first_model_year=2025),
                 price=1000.0,
             )
+
+            # Solve
             name = wf.add_step(f"{s} solved", name, solve)
         else:
             raise ValueError(climate_policy)
@@ -617,14 +627,13 @@ def generate(context: Context) -> Workflow:
             to_report[s] = (name, None)
             continue
 
-        # At least 1 policy step was added; re-solve the buildings model(s) to pick up
+        # At least 1 policy step was added → re-solve the buildings model(s) to pick up
         # price changes
 
-        # Prior step added by engage.add_steps() or for Ctax
-        step_m1 = wf.graph[name][0]
-
-        # Retrieve options on the solve step added by engage.add_steps()
+        # Retrieve options on the solve step added by engage.add_steps() or Ctax
         try:
+            # Prior step added by engage.add_steps() or for Ctax
+            step_m1 = wf.graph[name][0]
             solve_kw = step_m1.kwargs["config"].solve
         except KeyError:
             solve_kw = dict(model=solve_model)
@@ -655,22 +664,20 @@ def generate(context: Context) -> Workflow:
         # series data for y=2020
         to_report[s] = (name, wf.guess_target(base, "scenario")[0])
 
-    # Step names for results of step 9
-    all_reported = []
-
+    # Steps 8–9
     for s, (base, other) in to_report.items():
-        # Step 8–9 for individual scenarios
+        # Steps 8–9: Report individual scenario (both genno and legacy reporting)
         all_reported.append(
             wf.add_step(f"{s} reported", base, report, other_scenario_info=other)
         )
 
-        # Step 10 for individual scenarios
+        # Step 10: Prepare individual scenario for submission
         wf.add_step(f"{s} prepped", all_reported[-1], prep_submission)
 
-    # Steps 8–9 to report all scenarios
+    # Key to invoke steps 8–9 for all scenarios as a batch
     wf.add_single("all reported", *all_reported)
 
-    # Step 10 for all scenarios as a batch
+    # Key to invoke step 10 for all scenarios as a batch
     wf.add_single("all prepped", prep_submission, "context", *all_reported)
 
     return wf
