@@ -1,0 +1,6 @@
+# Input file for pip-compile 
+# Only specify the packages necessary for [docs]
+
+sphinx==6.2.1
+sphinx-rtd-theme==1.2.2
+sphinxcontrib-bibtex==2.5.0
