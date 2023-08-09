@@ -323,10 +323,18 @@ def callback(rep: Reporter, context: Context) -> None:
     from message_ix_models.report import register
 
     # Set up reporting for each of the model variants
-    register("model.buildings")
-    register("model.material")
-    all_keys = ["buildings all", "materials all"]
+    all_keys = []
 
+    # Possibly include buildings reporting config
+    if context.navigate.buildings:
+        register("model.buildings")
+        all_keys.append("buildings all")
+
+    # Materials: always included
+    register("model.material")
+    all_keys.append("materials all")
+
+    # Possibly include transport reporting config
     if context.navigate.transport:
         register("model.transport")
         all_keys.append("transport iamc all")  # Excludes plots
@@ -377,15 +385,29 @@ def return_func_dict():
     """
     from message_data.tools.post_processing.default_tables import TECHS
 
+    # Retrieve a context reference
+    # FIXME Don't depend on this being the most recent instance; pass a particular
+    #       instance to get_func_dict
+    config = Context.get_instance(-1).navigate
+
+    # Label for the configured variant
+    variant = ""
+
     # Invoke a function from each module to adjust `TECHS`
     for module in ("buildings", "material", "transport"):
+        if not getattr(config, module, True):
+            # This module is disabled; do not configure legacy reporting
+            continue
+
         name = f"message_data.model.{module}.report"
         __import__(name)
         func = getattr(sys.modules[name], "configure_legacy_reporting")
 
         func(TECHS)
 
-    log.debug(f"Configured legacy reporting for -BMT model variants:\n{TECHS = }")
+        variant += module[0].upper()
+
+    log.debug(f"Configured legacy reporting for -{variant}- model variant:\n{TECHS = }")
 
     # DEBUG
     log.info(f"{message_data.model.material.report.tables.pp = }")
