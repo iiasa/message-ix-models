@@ -578,7 +578,13 @@ def generate(context: Context) -> Workflow:
             # Use MESSAGE or MESSAGE-MACRO as appropriate
             engage_policy_config.solve["model"] = solve_model
 
-            if climate_policy == "20C T6.2":
+            if climate_policy == "15C":
+                # Provide a reference scenario from which to copy demands
+                # NB this implies the referenced scenario must be solved first. This
+                #    value is only used in the first ENGAGE step; after this,
+                #    .engage.workflow.add_steps() overwrites with the prior step
+                engage_policy_config.low_dem_scen = "Ctax-ref"
+            elif climate_policy == "20C T6.2":
                 # Help identify the tax_emission_scenario from which to copy data
 
                 # Model and scenario for the scenario produced by the base step
