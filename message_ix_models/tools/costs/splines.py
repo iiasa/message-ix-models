@@ -5,14 +5,18 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
-from message_ix_models.tools.costs.config import FIRST_MODEL_YEAR, LAST_MODEL_YEAR
+from message_ix_models.tools.costs.config import (
+    FIRST_MODEL_YEAR,
+    LAST_MODEL_YEAR,
+    TIME_STEPS,
+)
 
 
 # Function to apply polynomial regression to convergence costs
 def apply_splines_to_convergence(
     input_df: pd.DataFrame,
-    column_name: str = "inv_cost_converge",
-    input_convergence_year: int = 2050,
+    column_name,
+    input_convergence_year,
 ):
     """Apply polynomial regression and splines to convergence"""
 
@@ -89,7 +93,7 @@ def apply_splines_to_convergence(
         )
     )
 
-    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + 5, 5))
+    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + TIME_STEPS, TIME_STEPS))
 
     for y in seq_years:
         df_wide = df_wide.assign(
@@ -133,9 +137,9 @@ def project_all_inv_costs(
     reg_diff_df: pd.DataFrame,
     ref_reg_learning_df: pd.DataFrame,
     gdp_adj_ratios_df: pd.DataFrame,
-    input_convergence_year: int = 2050,
-    input_scenario_version=None,
-    input_scenario=None,
+    input_convergence_year,
+    input_scenario_version,
+    input_scenario,
 ) -> pd.DataFrame:
     """Project investment costs using all methods
 

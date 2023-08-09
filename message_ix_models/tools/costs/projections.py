@@ -9,6 +9,14 @@ from message_ix_models.tools.costs.splines import (
 )
 from message_ix_models.tools.costs.weo import get_weo_region_differentiated_costs
 
+df_reg_diff = get_weo_region_differentiated_costs(
+    input_node="r12", input_ref_region="R12_NAM", input_base_year=2021
+)
+
+df_adj_cost_ratios = calculate_gdp_adjusted_region_cost_ratios(
+    df_reg_diff, input_node="r12", input_ref_region="R12_NAM", input_base_year=2021
+)
+
 
 # Function to get cost projections based on the following inputs:
 # - Spatial resolution
