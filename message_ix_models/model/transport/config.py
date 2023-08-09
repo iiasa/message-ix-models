@@ -167,6 +167,11 @@ class Config(ConfigHelper):
     #: the directory :file:`data/transport/{regions}/mode-share/`.
     mode_share: str = "default"
 
+    #: List of modules containing model-building calculations.
+    modules: List[str] = field(
+        default_factory=lambda: "demand freight ikarus ldv non_ldv plot data".split()
+    )
+
     #: Used by :func:`.get_USTIMES_MA3T` to map MESSAGE regions to U.S. census divisions
     #: appearing in MA³T.
     node_to_census_division: Dict = field(default_factory=dict)
