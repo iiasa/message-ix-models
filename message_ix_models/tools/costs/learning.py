@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 
 from message_ix_models.tools.costs.config import (
-    BASE_YEAR,
     FIRST_MODEL_YEAR,
     LAST_MODEL_YEAR,
     PRE_LAST_YEAR_RATE,
+    TIME_STEPS,
 )
 from message_ix_models.util import package_data_path
 
@@ -55,7 +55,7 @@ def get_cost_reduction_data() -> pd.DataFrame:
 
 # Function to get technology learning scenarios data
 def get_technology_learning_scenarios_data(
-    input_base_year: int = BASE_YEAR,
+    input_base_year,
 ) -> pd.DataFrame:
     """Read in technology first year and learning scenarios data
 
@@ -104,9 +104,9 @@ def get_technology_learning_scenarios_data(
 # Function to project reference region investment cost using learning rates
 def project_ref_region_inv_costs_using_learning_rates(
     regional_diff_df: pd.DataFrame,
-    input_node: str = "r12",
-    input_ref_region=None,
-    input_base_year: int = BASE_YEAR,
+    input_node,
+    input_ref_region,
+    input_base_year,
 ) -> pd.DataFrame:
     """Project investment costs using learning rates for reference region
 
@@ -173,7 +173,7 @@ def project_ref_region_inv_costs_using_learning_rates(
         )
     )
 
-    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + 5, 5))
+    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + TIME_STEPS, TIME_STEPS))
 
     for y in seq_years:
         df_ref = df_ref.assign(

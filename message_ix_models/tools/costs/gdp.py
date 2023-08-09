@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import yaml  # type: ignore
-from nomenclature import countries
+from nomenclature import countries  # type: ignore
 from scipy.stats import linregress  # type: ignore
 
 from message_ix_models.util import package_data_path
@@ -103,7 +103,7 @@ def get_gdp_data() -> pd.DataFrame:
 
 
 # Function to read in (under-review) SSP data
-def process_raw_ssp_data(input_node: str, input_ref_region: str) -> pd.DataFrame:
+def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
     """Read in raw SSP data and process it
 
     This function takes in the raw SSP data (in IAMC format), aggregates \
@@ -285,7 +285,7 @@ def process_raw_ssp_data(input_node: str, input_ref_region: str) -> pd.DataFrame
 def linearly_regress_tech_cost_vs_gdp_ratios(
     gdp_df: pd.DataFrame,
     cost_ratios_df: pd.DataFrame,
-    input_base_year: int,
+    input_base_year,
 ) -> pd.DataFrame:
     """Compute linear regressions of technology cost ratios to GDP ratios
 
