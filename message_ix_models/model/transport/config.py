@@ -172,6 +172,9 @@ class Config(ConfigHelper):
         default_factory=lambda: "demand freight ikarus ldv non_ldv plot data".split()
     )
 
+    #: Extra entries for :attr:`modules`, supplied to the constructor.
+    extra_modules: InitVar[Union[str, List[str]]] = []
+
     #: Used by :func:`.get_USTIMES_MA3T` to map MESSAGE regions to U.S. census divisions
     #: appearing in MA³T.
     node_to_census_division: Dict = field(default_factory=dict)
@@ -240,8 +243,13 @@ class Config(ConfigHelper):
     #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
-    def __post_init__(self, futures_scenario, navigate_scenario):
-        """Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`."""
+    def __post_init__(self, extra_modules, futures_scenario, navigate_scenario):
+        # Handle extra_modules
+        self.modules.extend(
+            [extra_modules] if isinstance(extra_modules, str) else extra_modules
+        )
+
+        # Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`
         self.set_futures_scenario(futures_scenario)
         self.set_navigate_scenario(navigate_scenario)
 
