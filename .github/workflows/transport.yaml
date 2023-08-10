@@ -38,14 +38,15 @@ jobs:
         git lfs --version
 
     # Steps from here to ##### are identical to pytest.yaml
-
+    - uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.MESSAGE_TRADE_PRIVATE_KEY }}
     - name: Check out message_data
       uses: actions/checkout@v3
       with:
         path: message_data
         # lfs: true
         submodules: true
-        token: ${{ secrets.GH_PAT }}
 
     - name: Fetch Git LFS files
       working-directory: message_data
