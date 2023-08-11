@@ -12,6 +12,7 @@ from message_ix_models.util import identify_nodes, private_data_path, replace_pa
 from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
+from message_data.model.transport.build import main as build_transport
 from message_data.projects.engage import workflow as engage
 
 from . import CLIMATE_POLICY
@@ -109,6 +110,7 @@ def adjust_materials(
         add_LED_setup,
         limit_h2,
     )
+    from message_data.tools.utilities import update_h2_blending
 
     if WP6_production == "advanced":
         add_LED_setup(scenario)
@@ -117,17 +119,6 @@ def adjust_materials(
 
     # Constrain CCS at 2.0 Gt [units?]
     add_CCS_constraint(scenario, 2.0, "upper")
-
-    scenario.set_as_default()
-    log_scenario_info("adjust_materials", scenario)
-
-    return scenario
-
-
-def build_transport(context: Context, scenario: Scenario, **options) -> Scenario:
-    """Workflow step 3."""
-    from message_data.model.transport import build
-    from message_data.tools.utilities import update_h2_blending
 
     # NB this could occur earlier in the workflow, e.g. before the "M built" step/
     #    build_materials(), above. However, since that step currently requires switching
@@ -145,8 +136,10 @@ def build_transport(context: Context, scenario: Scenario, **options) -> Scenario
         dict(relation={"CO2_r_c": "CO2_ind"}),
     )
 
-    options.setdefault("fast", True)
-    return build.main(context, scenario, options)
+    scenario.set_as_default()
+    log_scenario_info("adjust_materials", scenario)
+
+    return scenario
 
 
 #: Common settings to use when invoking MESSAGEix-Buildings. The value for
@@ -385,12 +378,10 @@ def solve(context, scenario, **kwargs):
 
     The ENGAGE workflow steps use :func:`.engage.workflow.solve` instead.
     """
-    log_scenario_info("solve 1", scenario)
-
     scenario.solve(**kwargs)
+
     # TODO Maybe add set_as_default() here
 
-    log_scenario_info("solve 2", scenario)
     return scenario
 
 
@@ -487,14 +478,14 @@ def generate(context: Context) -> Workflow:
     )
 
     # NB some preparatory changes could be done at this point, but are instead done in
-    # step 3; see build_transport():
+    # adjust_materials():
     # - update_h2_blending().
     # - replace_par_data() to move hp_gas_i entries from CO2_r_c to CO2_ind.
     #
     # This is because the current materials code used to produce the "M built" scenario
     # is not yet merged to `dev` or `main`, and cannot be run at the same time as the
     # current code. So we typically use the "--from=" CLI option to start from the
-    # target= scenario specified as the output of step 2, below.
+    # result of the "M […] built" step, below.
 
     # Step 2 and related: different base scenarios according to WP6_production
     _s = "MESSAGEix-GLOBIOM 1.1-M-R12-NAVIGATE/baseline_add_material#54"
@@ -506,7 +497,7 @@ def generate(context: Context) -> Workflow:
         # Step 2: Add materials
         name = wf.add_step(f"M {label} built", "base", build_materials, target=target)
 
-        # Strip data from tax_emission
+        # Adjust contents of the base model
         base = wf.add_step(
             f"M {label} adjusted",
             name,
@@ -539,6 +530,8 @@ def generate(context: Context) -> Workflow:
                 build_transport,
                 target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
                 clone=True,
+                # Passed directly to .transport.build.main
+                fast=True,
                 navigate_scenario=T35_policy,
             )
 
