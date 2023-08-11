@@ -529,7 +529,7 @@ def generate(context: Context) -> Workflow:
         name = wf.add_step(f"M {label} built", "base", build_materials, target=target)
 
         # Adjust contents of the base model
-        base = wf.add_step(
+        name = wf.add_step(
             f"M {label} adjusted",
             name,
             adjust_materials,
@@ -539,7 +539,10 @@ def generate(context: Context) -> Workflow:
         )
 
         # Update GLOBIOM
-        M_built[WP6_production] = wf.add_step(f"M {label} + GLOBIOM", base, add_globiom)
+        name = wf.add_step(f"M {label} + GLOBIOM", name, add_globiom)
+
+        # Store step name as starting point for further steps, below
+        M_built[WP6_production] = name
 
     # Steps 3–7: only run for the "NPi" (baseline) climate policy
     filters = {
@@ -547,17 +550,17 @@ def generate(context: Context) -> Workflow:
         "navigate_climate_policy": "NPi",
     }
     for s, _, T35_policy, WP6_production in iter_scenarios(context, filters):
-        # Identify the base scenario for the next steps
-        base = M_built[WP6_production]
+        # Identify the starting point for the next steps
+        name = M_built[WP6_production]
 
         # Variant label for model name
         variant = "M" + ("T" if context.navigate.transport else "")
 
         # Step 3: Add transport
         if context.navigate.transport:
-            base = wf.add_step(
+            name = wf.add_step(
                 f"{variant} {s} built",
-                base,
+                name,
                 build_transport,
                 target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
                 clone=True,
@@ -567,13 +570,13 @@ def generate(context: Context) -> Workflow:
             )
 
         # Step 4: Solve
-        base = wf.add_step(f"{variant} {s} solved", base, solve)
+        name = wf.add_step(f"{variant} {s} solved", name, solve)
 
         # Steps 5–7: Add and solve buildings
         variant = "B" + variant
-        base = wf.add_step(
+        name = wf.add_step(
             f"{variant} {s} solved",
-            base,
+            name,
             build_solve_buildings,  # type: ignore
             target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
             clone=True,
@@ -581,24 +584,24 @@ def generate(context: Context) -> Workflow:
         )
 
         # Add ENGAGE-style emissions accounting
-        base = wf.add_step(f"{variant} {s} with EA", base, engage.step_0)
+        name = wf.add_step(f"{variant} {s} with EA", name, engage.step_0)
 
         # Calibrate MACRO
         if solve_model == "MESSAGE-MACRO":
-            base = wf.add_step(
+            name = wf.add_step(
                 f"{variant} {s} with MACRO",
-                base,
+                name,
                 add_macro,
                 target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}+MACRO",
                 clone=dict(keep_solution=True),
             )
-            base = wf.add_step(f"{base} solved", base, solve, model=solve_model)
+            name = wf.add_step(f"{name} solved", name, solve, model=solve_model)
 
         # Calculate and set a limit on 2025 emissions versus 2020
-        base = wf.add_step(f"{s} with 2025 limit", base, limit_drop)
+        name = wf.add_step(f"{s} with 2025 limit", name, limit_drop)
 
         # Store the step name as a starting point for climate policy steps, below
-        baseline_solved[(T35_policy, WP6_production)] = base
+        baseline_solved[(T35_policy, WP6_production)] = name
 
     # Now iterate over all scenarios
     filters.pop("navigate_climate_policy")
@@ -695,10 +698,10 @@ def generate(context: Context) -> Workflow:
         to_report[s] = (name, wf.guess_target(base, "scenario")[0])
 
     # Steps 8–9
-    for s, (base, other) in to_report.items():
+    for s, (name, other) in to_report.items():
         # Steps 8–9: Report individual scenario (both genno and legacy reporting)
         all_reported.append(
-            wf.add_step(f"{s} reported", base, report, other_scenario_info=other)
+            wf.add_step(f"{s} reported", name, report, other_scenario_info=other)
         )
 
         # Step 10: Prepare individual scenario for submission
