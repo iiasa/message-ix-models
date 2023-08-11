@@ -5,7 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Dict, Generator, List, Mapping, Optional, Tuple
 
-from message_ix import Scenario
+from message_ix import Scenario, make_df
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import identify_nodes, private_data_path, replace_par_data
@@ -385,19 +385,50 @@ def solve(context, scenario, **kwargs):
     return scenario
 
 
+def limit_drop(
+    context: Context, scenario: Scenario, from_period=2020, to_period=2025, k=0.95
+):
+    # Retrieve EMISS values; analogous to .engage.ScenarioRunner.retr_CO2_trajectory
+    common = dict(node="World", type_tec="all")
+    ref = scenario.var(
+        "EMISS",
+        filters=dict(emission="TCE_CO2", year=from_period, **common),
+    )
+
+    # Set bound_emission value; analogous to add_emissions_trajectory() as called from
+    # .engage.workflow.step_2;
+    name = "bound_emission"
+    df = make_df(
+        name,
+        **common,
+        type_emission="TCE_CO2",
+        type_year=to_period,
+        value=k * ref.at[0, "value"],
+        unit="Mt C/yr",
+    )
+
+    msg = f"Limit emissions in {to_period} to {k} of emissions in {from_period}"
+
+    log.info(msg)
+    log.debug(f"{ref = }")
+    log.debug(f"{df = }")
+
+    with scenario.transact(msg):
+        scenario.add_par(name, df)
+
+
 def tax_emission(context: Context, scenario: Scenario, price: float):
     """Workflow callable for :mod:`.tools.utilities.add_tax_emission`."""
-    from message_data.projects.engage.workflow import step_0
+    # NB this requires the emissions accounting established by .engage.workflow.step_0.
+    #    In generate() in this file, that function is called earlier in the workflow.
+
+    # from message_data.projects.engage.workflow import step_0
     from message_data.tools.utilities import add_tax_emission
 
     try:
         scenario.remove_solution()
     except ValueError:
         pass
-
-    # Use ENGAGE method to prepare `scenario` relations to respond correctly to
-    # `tax_emission` values
-    step_0(context, scenario)
 
     add_tax_emission(scenario, price)
 
@@ -549,6 +580,9 @@ def generate(context: Context) -> Workflow:
             navigate_scenario=s,
         )
 
+        # Add ENGAGE-style emissions accounting
+        base = wf.add_step(f"{variant} {s} with EA", base, engage.step_0)
+
         # Calibrate MACRO
         if solve_model == "MESSAGE-MACRO":
             base = wf.add_step(
@@ -559,6 +593,9 @@ def generate(context: Context) -> Workflow:
                 clone=dict(keep_solution=True),
             )
             base = wf.add_step(f"{base} solved", base, solve, model=solve_model)
+
+        # Calculate and set a limit on 2025 emissions versus 2020
+        base = wf.add_step(f"{s} with 2025 limit", base, limit_drop)
 
         # Store the step name as a starting point for climate policy steps, below
         baseline_solved[(T35_policy, WP6_production)] = base
