@@ -76,18 +76,25 @@ def add_globiom(context: Context, scenario: Scenario, *, clean=False):
         :data:`False` because the step can be extremely slow; at least 16 hours on
         hpg914.iiasa.ac.at.
     """
-    import message_data.tools.utilities.add_globiom as ag
+    # NB the awkward imports here are needed because /tools/utilities/__init__.py
+    #    makes "add_globiom" a reference to the class "add_globiom", which obstructs
+    #    access to the module of the same name or its contents. We'd prefer:
+    # from message_data.tools.utilities import add_globiom as ag
+    # ag.clean(...)
+    # ag.add_globiom(...)
+    from message_data.tools.utilities.add_globiom import add_globiom as ag_main
+    from message_data.tools.utilities.add_globiom import clean as ag_clean
 
     # Disabled by default: this step is extremely slow; at least 16 hours on
     # hpg914.iiasa.ac.at
     # Strip out existing configuration and data
     if clean:
-        ag.clean(scenario)
+        ag_clean(scenario)
 
     context.model.regions = identify_nodes(scenario)
 
     # Add GLOBIOM emulator
-    ag.add_globiom(
+    ag_main(
         mp=scenario.platform,
         scen=scenario,
         ssp="SSP2",
