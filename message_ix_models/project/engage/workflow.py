@@ -202,6 +202,11 @@ def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
         remove_emission_bounds,
     )
 
+    try:
+        scenario.remove_solution()
+    except ValueError:
+        pass  # Solution did not exist
+
     remove_emission_bounds(scenario)
 
     # Identify the node codelist used by `scenario` (in case it is not set on `context`)
