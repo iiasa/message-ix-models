@@ -591,9 +591,6 @@ def generate(context: Context) -> Workflow:
             navigate_scenario=s,
         )
 
-        # Add ENGAGE-style emissions accounting
-        name = wf.add_step(f"{variant} {s} with EA", name, engage.step_0)
-
         # Calibrate MACRO
         if solve_model == "MESSAGE-MACRO":
             name = wf.add_step(
@@ -603,6 +600,9 @@ def generate(context: Context) -> Workflow:
                 target=f"{target}+MACRO",
                 clone=dict(keep_solution=True),
             )
+            # Add ENGAGE-style emissions accounting
+            # FIXME this step will not run if `solve_model` is "MESSAGE"
+            name = wf.add_step(f"{variant} {s} with EA", name, engage.step_0)
             name = wf.add_step(f"{name} solved", name, solve, model=solve_model)
 
         # Calculate and set a limit on 2025 emissions versus 2020
