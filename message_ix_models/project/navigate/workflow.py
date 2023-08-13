@@ -581,11 +581,12 @@ def generate(context: Context) -> Workflow:
 
         # Steps 5–7: Add and solve buildings
         variant = "B" + variant
+        target = f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}"
         name = wf.add_step(
             f"{variant} {s} solved",
             name,
             build_solve_buildings,  # type: ignore
-            target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
+            target=target,
             clone=True,
             navigate_scenario=s,
         )
@@ -599,7 +600,7 @@ def generate(context: Context) -> Workflow:
                 f"{variant} {s} with MACRO",
                 name,
                 add_macro,
-                target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}+MACRO",
+                target=f"{target}+MACRO",
                 clone=dict(keep_solution=True),
             )
             name = wf.add_step(f"{name} solved", name, solve, model=solve_model)
