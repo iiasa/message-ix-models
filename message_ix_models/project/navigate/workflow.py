@@ -395,31 +395,42 @@ def solve(context, scenario, **kwargs):
 def limit_drop(
     context: Context, scenario: Scenario, from_period=2020, to_period=2025, k=0.95
 ):
-    # Retrieve EMISS values; analogous to .engage.ScenarioRunner.retr_CO2_trajectory
-    common = dict(node="World", type_tec="all")
-    ref = scenario.var(
-        "EMISS",
-        filters=dict(emission="TCE_CO2", year=from_period, **common),
+    from numpy.testing import assert_allclose
+
+    from message_data.projects.engage.runscript_main import (
+        glb_co2_relation as RELATION_GLOBAL_CO2,
     )
+
+    years = [from_period, to_period]
+
+    # Retrieve EMISS values; analogous to .engage.ScenarioRunner.retr_CO2_trajectory
+    emiss = scenario.var(
+        "EMISS",
+        filters=dict(emission="TCE_CO2", year=years, node="World", type_tec="all"),
+    )
+    # Retrieve values for the global CO2 relation
+    common = dict(relation=RELATION_GLOBAL_CO2, node_rel="R12_GLB")
+    rel = scenario.var("REL", filters=dict(year_rel=years, **common))
+
+    # Log both for debugging
+    log.info(f"EMISS:\n{emiss}")
+    log.info(f"REL:\n{rel}")
+
+    # Ensure the values are consistent
+    value1 = emiss.query(f"year == {from_period}").at[0, "lvl"]
+    value2 = rel.query(f"year_rel == {from_period}").at[0, "lvl"]
+
+    assert_allclose(value1, value2, rtol=1e-5)
 
     # Set bound_emission value; analogous to add_emissions_trajectory() as called from
     # .engage.workflow.step_2;
-    name = "bound_emission"
-    df = make_df(
-        name,
-        **common,
-        type_emission="TCE_CO2",
-        type_year=to_period,
-        value=k * ref.at[0, "value"],
-        unit="Mt C/yr",
-    )
+    name = "relation_lower"
+    df = make_df(name, **common, year_rel=to_period, value=k * value2, unit="tC")
 
-    msg = f"Limit emissions in {to_period} to {k} of emissions in {from_period}"
-
+    msg = f"Limit emissions in {to_period} to {k} of emissions in {from_period}:\n{df}"
     log.info(msg)
-    log.debug(f"{ref = }")
-    log.debug(f"{df = }")
 
+    scenario.remove_solution()
     with scenario.transact(msg):
         scenario.add_par(name, df)
 
