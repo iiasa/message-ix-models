@@ -86,19 +86,23 @@ def test_generate_workflow_cli(mix_models_cli):
 
 
 @pytest.mark.parametrize(
-    "input, expected",
+    "dsd, input, expected",
     (
         # Task 3.5
-        ("NPi-ref", "NAV_Dem-NPi-ref"),
-        ("NPi-ref_ENGAGE_20C_step-3+B", "NAV_Dem-20C-ref"),
-        ("NPi-tec_ENGAGE_20C_step-3+B", "NAV_Dem-20C-tec_u"),
+        ("navigate", "NPi-ref", "NAV_Dem-NPi-ref"),
+        ("navigate", "NPi-ref+MACRO", "NAV_Dem-NPi-ref"),
+        ("navigate", "NPi-act+MACRO_ENGAGE_20C_step-3+B", "NAV_Dem-20C-act_u"),
+        ("navigate", "NPi-ref_ENGAGE_20C_step-3+B", "NAV_Dem-20C-ref"),
+        ("navigate", "NPi-tec_ENGAGE_20C_step-3+B", "NAV_Dem-20C-tec_u"),
         # Work package 6
-        ("NPi-Default", "PC-NPi-Default"),
-        ("baseline", None),
+        ("navigate", "NPi-Default", "PC-NPi-Default"),
+        # Others
+        ("iiasa-ece", "Ctax-ref", "NAV_Dem-Ctax-ref"),
+        ("navigate", "baseline", None),
     ),
 )
-def test_scenario_name(test_context, input, expected):
-    test_context.setdefault("navigate", Config())
+def test_scenario_name(test_context, dsd, input, expected):
+    test_context.setdefault("navigate", Config(dsd=dsd))
     assert expected == _scenario_name(test_context, input)
 
 
