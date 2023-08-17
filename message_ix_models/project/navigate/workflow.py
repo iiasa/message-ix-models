@@ -1,14 +1,21 @@
 import logging
+import pickle
 import re
 from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
 from typing import Dict, Generator, List, Mapping, Optional, Tuple
 
+from genno.caching import hash_args
 from message_ix import Scenario, make_df
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import identify_nodes, private_data_path, replace_par_data
+from message_ix_models.util import (
+    add_par_data,
+    identify_nodes,
+    private_data_path,
+    replace_par_data,
+)
 from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
@@ -392,7 +399,38 @@ def solve(context, scenario, **kwargs):
     return scenario
 
 
-def limit_drop(
+def _cache(context, scenario, name, data):
+    # Parts of the file name: function name, hash of arguments and code
+    name_parts = [
+        name,
+        hash_args(scenario.model, scenario.scenario),
+        str(scenario.version),
+    ]
+    # Path to the cache file
+    path = context.get_cache_path("-".join(name_parts)).with_suffix(".pkl")
+
+    log.info(f"Dump {name!r} data for {scenario.url} to:")
+    log.info(str(path))
+    with open(path, "wb") as f:
+        pickle.dump(data, f)
+
+
+def _load_latest_cache(context, info, name):
+    # Parts of the file name: cache name
+    name_parts = [name, hash_args(info["model"], info["scenario"]), "*"]
+    # Path to the cache file
+    paths = sorted(context.get_cache_path().glob("-".join(name_parts) + ".pkl"))
+
+    print(paths)
+
+    path = paths[-1]
+    log.info(f"Read {name!r} data for {info} from:")
+    log.info(str(path))
+    with open(path, "rb") as f:
+        return pickle.load(f)
+
+
+def compute_minimum_emissions(
     context: Context, scenario: Scenario, from_period=2020, to_period=2025, k=0.95
 ):
     """Limit global CO2 emissions in `to_period` to `k` × emissions in `from_period`."""
@@ -429,19 +467,24 @@ def limit_drop(
     name = "relation_lower"
     df = make_df(name, **common, year_rel=to_period, value=k * value2, unit="tC")
 
-    msg = f"Limit emissions in {to_period} to {k} of emissions in {from_period}:\n{df}"
+    msg = (
+        f"Limit emissions in {to_period} ≥ {k} × emissions in {from_period}: {name}\n"
+        + df.to_string()
+    )
     log.info(msg)
 
-    scenario.remove_solution()
-    with scenario.transact(msg):
-        scenario.add_par(name, df)
-        # Store EMISS level for `from_period` in parameter historical_emission
-        scenario.add_par(
-            "historical_emission",
-            emiss.rename(
-                columns=dict(emission="type_emission", year="type_year", lvl="value")
-            ).drop("mrg", axis=1),
-        )
+    # Cache the resulting data. We cannot add this directly to scenario() here, because
+    # that is only possible with scenario.remove_solution() which, in turn, defeats the
+    # behaviour of Scenario.clone(…, shift_first_model_year=…) that is essential for the
+    # feasibility of policy scenarios
+    _cache(context, scenario, "limit-drop", {name: df})
+
+
+def add_minimum_emissions(context, scenario, info: Dict):
+    data = _load_latest_cache(context, info, "limit-drop")
+
+    with scenario.transact():
+        add_par_data(scenario, data)
 
 
 def tax_emission(context: Context, scenario: Scenario, price: float):
@@ -566,7 +609,9 @@ def generate(context: Context) -> Workflow:
         )
 
         # Update GLOBIOM
-        name = wf.add_step(f"M {label} + GLOBIOM", name, add_globiom)
+        # NB use clean=True to strip all GLOBIOM data prior to re-adding; this takes
+        #    about 1 hour on hpg914
+        name = wf.add_step(f"M {label} + GLOBIOM", name, add_globiom, clean=False)
 
         # Store step name as starting point for further steps, below
         M_built[WP6_production] = name
@@ -582,6 +627,7 @@ def generate(context: Context) -> Workflow:
 
         # Variant label for model name
         variant = "M" + ("T" if context.navigate.transport else "")
+        model = f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)"
 
         # Step 3: Add transport
         if context.navigate.transport:
@@ -589,7 +635,7 @@ def generate(context: Context) -> Workflow:
                 f"{variant} {s} built",
                 name,
                 build_transport,
-                target=f"MESSAGEix-GLOBIOM 1.1-MT-R12 (NAVIGATE)/{s}",
+                target=f"{model}/{s}",
                 clone=True,
                 # Passed directly to .transport.build.main
                 fast=True,
@@ -601,7 +647,8 @@ def generate(context: Context) -> Workflow:
 
         # Steps 5–7: Add and solve buildings
         variant = "B" + variant
-        target = f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}"
+        model = f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)"
+        target = f"{model}/{s}"
         name = wf.add_step(
             f"{variant} {s} solved",
             name,
@@ -613,11 +660,12 @@ def generate(context: Context) -> Workflow:
 
         # Calibrate MACRO
         if solve_model == "MESSAGE-MACRO":
+            target = f"{target}+MACRO"
             name = wf.add_step(
                 f"{variant} {s} with MACRO",
                 name,
                 add_macro,
-                target=f"{target}+MACRO",
+                target=target,
                 clone=dict(keep_solution=True),
             )
             # Add ENGAGE-style emissions accounting
@@ -625,8 +673,13 @@ def generate(context: Context) -> Workflow:
             name = wf.add_step(f"{variant} {s} with EA", name, engage.step_0)
             name = wf.add_step(f"{name} solved", name, solve, model=solve_model)
 
-        # Calculate and set a limit on 2025 emissions versus 2020
-        name = wf.add_step(f"{s} with 2025 limit", name, limit_drop)
+        # Compute a minimum for 2025 emissions based on 2020 values in the solution.
+        # Values are cached, but not yet added to the scenario. That would require
+        # scenario.remove_solution(), but then the solution would be no longer present
+        # in a subsequent step that uses clone(shift_first_model_year=2025). Without a
+        # solution at that point, the 2020 solution data is not copied to historical
+        # parameters; an essential step for the feasibility of policy scenarios
+        name = wf.add_step(f"{s} 2025 limit computed", name, compute_minimum_emissions)
 
         # Store the step name as a starting point for climate policy steps, below
         baseline_solved[(T35_policy, WP6_production)] = name
@@ -638,9 +691,22 @@ def generate(context: Context) -> Workflow:
     ):
         # Identify the base scenario for the next steps
         base = baseline_solved[(T35_policy, WP6_production)]
+        info, _ = wf.guess_target(base, "scenario")
 
         # Select the indicated PolicyConfig object
         engage_policy_config = CLIMATE_POLICY.get(climate_policy)
+
+        if climate_policy == "Ctax" or len(getattr(engage_policy_config, "steps", [])):
+            name = wf.add_step(
+                f"{s} with 2025 minimum",
+                base,
+                add_minimum_emissions,
+                target=f"{info['model']}/{info['scenario']} 2025",
+                clone=dict(shift_first_model_year=2025),
+                info=info,
+            )
+        else:
+            name = base
 
         if isinstance(engage_policy_config, engage.PolicyConfig):
             # Add 0 or more steps for ENGAGE-style climate policy workflows
@@ -665,18 +731,12 @@ def generate(context: Context) -> Workflow:
             #    engage.step_1 requires data which is currently only available from
             #    legacy reporting output, and the ENGAGE steps must take place after
             #    step 9 (running legacy reporting, below)
-            name = engage.add_steps(wf, base=base, config=engage_policy_config, name=s)
+            name = engage.add_steps(wf, base=name, config=engage_policy_config, name=s)
         elif climate_policy == "Ctax":
             # Add a carbon tax (not an implementation of an ENGAGE climate policy)
             name = wf.add_step(
-                s,
-                base,
-                tax_emission,
-                target=f"MESSAGEix-GLOBIOM 1.1-{variant}-R12 (NAVIGATE)/{s}",
-                clone=dict(shift_first_model_year=2025),
-                price=1000.0,
+                s, name, tax_emission, target=f"{model}/{s}", clone=True, price=1000.0
             )
-
             # Solve
             name = wf.add_step(f"{s} solved", name, solve)
         else:
