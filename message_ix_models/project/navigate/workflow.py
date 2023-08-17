@@ -387,14 +387,15 @@ def prep_submission(context: Context, *scenarios: Scenario):
     log.info(f"Merged output written to {config.out_fil}")
 
 
-def solve(context, scenario, **kwargs):
+def solve(context, scenario, *, set_as_default=False, **kwargs):
     """Plain solve.
 
     The ENGAGE workflow steps use :func:`.engage.workflow.solve` instead.
     """
     scenario.solve(**kwargs)
 
-    # TODO Maybe add set_as_default() here
+    if set_as_default:
+        scenario.set_as_default()
 
     return scenario
 
@@ -742,7 +743,7 @@ def generate(context: Context) -> Workflow:
                 s, name, tax_emission, target=f"{model}/{s}", clone=True, price=1000.0
             )
             # Solve
-            name = wf.add_step(f"{s} solved", name, solve)
+            name = wf.add_step(f"{s} solved", name, solve, set_as_default=True)
         else:
             raise ValueError(climate_policy)
 
