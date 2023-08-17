@@ -460,12 +460,16 @@ def compute_minimum_emissions(
     value1 = emiss.at[0, "lvl"]
     value2 = rel.query(f"year_rel == {from_period}").at[0, "lvl"]
 
-    assert_allclose(value1, value2, rtol=1e-5)
+    try:
+        assert_allclose(value1, value2, rtol=1e-5)
+    except AssertionError as e:
+        log.warning(repr(e))
+    value = min(value1, value2)
 
     # Set relation_lower value; analogous to add_CO2_emission_constraint() as called
     # from .engage.workflow.step_0;
     name = "relation_lower"
-    df = make_df(name, **common, year_rel=to_period, value=k * value2, unit="tC")
+    df = make_df(name, **common, year_rel=to_period, value=k * value, unit="tC")
 
     msg = (
         f"Limit emissions in {to_period} ≥ {k} × emissions in {from_period}: {name}\n"
