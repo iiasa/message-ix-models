@@ -394,9 +394,7 @@ def add_steps(
             # Get a reference to the function step_0() etc.
             action=globals()[f"step_{step}"],
             # Always clone to new URL; if step_0, then shift the model horizon
-            clone=dict(shift_first_model_year=2025)
-            if step == 0
-            else dict(keep_solution=True),
+            clone=dict(keep_solution=True),
             target=target.format(step),  # Target URL
             config=cfg,
         )
