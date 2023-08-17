@@ -98,6 +98,7 @@ def test_generate_workflow_cli(mix_models_cli):
         ("navigate", "NPi-Default", "PC-NPi-Default"),
         # Others
         ("iiasa-ece", "Ctax-ref", "NAV_Dem-Ctax-ref"),
+        ("iiasa-ece", "Ctax-ref+B", "NAV_Dem-Ctax-ref"),
         ("navigate", "baseline", None),
     ),
 )

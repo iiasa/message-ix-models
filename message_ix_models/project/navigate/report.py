@@ -49,10 +49,10 @@ def _scenario_name(context: Context, value: str) -> Optional[str]:
     # Transform a complex scenario name from the workflow to the corresponding NAVIGATE
     # identifier
 
-    # Remove "+MACRO" entirely
-    value = "".join(value.split("+MACRO"))
+    # Discard "+B" and/or "+MACRO"
+    value = re.sub(r"(\+(B|MACRO))", "", value)
 
-    match = re.match(r"^NPi-(\w*)_ENGAGE_([^_]+)_step-[123](\+B)?$", value)
+    match = re.match(r"^NPi-(\w*)_ENGAGE_([^_]+)_step-[123]$", value)
     if match:
         value = f"{match.group(2)}-{match.group(1)}"
 
