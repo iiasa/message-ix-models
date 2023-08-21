@@ -20,6 +20,7 @@ from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
 from message_data.model.transport.build import main as build_transport
+from message_data.model.workflow import solve
 from message_data.projects.engage import workflow as engage
 
 from . import CLIMATE_POLICY
@@ -387,19 +388,6 @@ def prep_submission(context: Context, *scenarios: Scenario):
     log.info(f"Merged output written to {config.out_fil}")
 
 
-def solve(context, scenario, *, set_as_default=False, **kwargs):
-    """Plain solve.
-
-    The ENGAGE workflow steps use :func:`.engage.workflow.solve` instead.
-    """
-    scenario.solve(**kwargs)
-
-    if set_as_default:
-        scenario.set_as_default()
-
-    return scenario
-
-
 def _cache(context, scenario, name, data):
     # Parts of the file name: function name, hash of arguments and code
     name_parts = [
@@ -736,7 +724,9 @@ def generate(context: Context) -> Workflow:
                 # NB this implies the referenced scenario must be solved first. This
                 #    value is only used in the first ENGAGE step; after this,
                 #    .engage.workflow.add_steps() overwrites with the prior step.
-                engage_policy_config.low_dem_scen = "Ctax-ref"
+                engage_policy_config.demand_scenario.update(
+                    model=info["model"], scenario="Ctax-ref"
+                )
             elif climate_policy == "20C T6.2":
                 # Provide a reference scenario from which to copy tax_emission data
                 # Model and scenario for the scenario produced by the base step
