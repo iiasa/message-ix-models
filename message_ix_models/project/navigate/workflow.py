@@ -20,11 +20,11 @@ from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
 from message_data.model.transport.build import main as build_transport
-from message_data.model.workflow import Config as SolveConfig
+from message_data.model.workflow import Config as WfConfig
 from message_data.model.workflow import solve
 from message_data.projects.engage import workflow as engage
 
-from . import CLIMATE_POLICY
+from . import get_policy_config
 from .report import gen_config
 
 log = logging.getLogger(__name__)
@@ -703,7 +703,7 @@ def generate(context: Context) -> Workflow:
 
         # Select the indicated .model.workflow.Config or .engage.workflow.PolicyConfig
         # object, if any
-        config: SolveConfig = CLIMATE_POLICY.get(climate_policy, SolveConfig())
+        config: WfConfig = get_policy_config(climate_policy)
         # Use MESSAGE or MESSAGE-MACRO as appropriate
         config.solve.update(model=solve_model)
 
