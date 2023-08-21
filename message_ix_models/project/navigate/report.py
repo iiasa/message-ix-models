@@ -52,15 +52,17 @@ def _scenario_name(context: Context, value: str) -> Optional[str]:
     # Discard "+B" and/or "+MACRO"
     value = re.sub(r"(\+(B|MACRO))", "", value)
 
-    match = re.match(r"^NPi-(\w*)_ENGAGE_([^_]+)_step-[123]$", value)
+    match = re.match(r"^((15C|2C|20C|NPi)-(\w*)).ENGAGE_(?:15C|20C)_step-[123]$", value)
     if match:
-        value = f"{match.group(2)}-{match.group(1)}"
+        print(f"{match = }")
+        value = match.group(1)
 
     candidates = (
         f"NAV_Dem-{value}",
         # _u/_d scenarios are not implemented currently. Allow a match with the former.
         f"NAV_Dem-{value}_u",
         f"PC-{value}",
+        f"PEP-{value}",
     )
     for code, candidate in product(iter_scenario_codes(context), candidates):
         if code.id == candidate:

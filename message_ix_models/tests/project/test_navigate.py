@@ -91,11 +91,19 @@ def test_generate_workflow_cli(mix_models_cli):
         # Task 3.5
         ("navigate", "NPi-ref", "NAV_Dem-NPi-ref"),
         ("navigate", "NPi-ref+MACRO", "NAV_Dem-NPi-ref"),
-        ("navigate", "NPi-act+MACRO_ENGAGE_20C_step-3+B", "NAV_Dem-20C-act_u"),
-        ("navigate", "NPi-ref_ENGAGE_20C_step-3+B", "NAV_Dem-20C-ref"),
-        ("navigate", "NPi-tec_ENGAGE_20C_step-3+B", "NAV_Dem-20C-tec_u"),
+        ("navigate", "20C-act+MACRO_ENGAGE_20C_step-3+B", "NAV_Dem-20C-act_u"),
+        ("navigate", "20C-ref_ENGAGE_20C_step-3+B", "NAV_Dem-20C-ref"),
+        ("navigate", "20C-tec_ENGAGE_20C_step-3+B", "NAV_Dem-20C-tec_u"),
+        # Prior to 2023-08-21 "NPi" would appear in the scenario name even for policy
+        # scenarios; the 3 below are earlier forms of the 3 above
+        # ("navigate", "NPi-act+MACRO_ENGAGE_20C_step-3+B", "NAV_Dem-20C-act_u"),
+        # ("navigate", "NPi-ref_ENGAGE_20C_step-3+B", "NAV_Dem-20C-ref"),
+        # ("navigate", "NPi-tec_ENGAGE_20C_step-3+B", "NAV_Dem-20C-tec_u"),
+        ("navigate", "20C-tec_u ENGAGE_20C_step-3+B", "NAV_Dem-20C-tec_u"),
         # Work package 6
         ("navigate", "NPi-Default", "PC-NPi-Default"),
+        ("navigate", "2C-AllEn ENGAGE_20C_step-3+B", "PEP-2C-AllEn"),
+        ("navigate", "15C-LowCE ENGAGE_15C_step-3+B", "PC-15C-LowCE"),
         # Others
         ("iiasa-ece", "Ctax-ref", "NAV_Dem-Ctax-ref"),
         ("iiasa-ece", "Ctax-ref+B", "NAV_Dem-Ctax-ref"),
