@@ -366,7 +366,11 @@ def pre_solve(scenario: Scenario, context, data):
     mark_time()
 
     # Update demands in the scenario
-    scenario.check_out()
+    # NB here we would prefer to also use transfer_demands() in the case of tight policy
+    #    constraints, to copy the DEMAND variable from a previous MACRO iteration to
+    #    the demand parameter of `scenario`. However, that function and the code below
+    #    would likely interfere and produce unintended outputs.
+    # TODO create and test code to merge the two
 
     # - Rename non-comm.
     # - Ensure years are integers.
@@ -407,30 +411,31 @@ def pre_solve(scenario: Scenario, context, data):
         [demand, dd_2110[nclytu + ["value"]]], ignore_index=True
     ).sort_values(by=["node", "commodity", "year"])
 
-    # Update demand in scenario
-    scenario.add_par("demand", demand)
-
     # Add tax emissions from mitigation scenario if running a climate scenario and if
     # they are not already there
+    #
+    # TODO this seems to mostly duplicate the behaviour of
+    #      .engage.workflow.Config.tax_emission_scenario → deduplicate
     name = "tax_emission"
     te = scenario.par(name)
     if config.climate_scenario != "BL" and not len(te):
         base = data["PRICE_EMISSION_ref"]
-        scenario.add_par(
+        tax_emission = make_df(
             name,
-            make_df(
-                name,
-                node=base["node"],
-                type_emission=base["emission"],
-                type_tec=base["technology"],
-                type_year=base["year"],
-                unit="USD/tCO2",
-                value=base["value"],
-            ),
+            node=base["node"],
+            type_emission=base["emission"],
+            type_tec=base["technology"],
+            type_year=base["year"],
+            unit="USD/tCO2",
+            value=base["value"],
         )
+    else:
+        tax_emission = make_df(name).dropna()
 
-    # Run MESSAGE
-    scenario.commit(f"{__name__}.pre_solve()")
+    # Add data
+    with scenario.transact(f"{__name__}.pre_solve()"):
+        scenario.add_par("demand", demand)
+        scenario.add_par("tax_emission", tax_emission)
 
     # Store data for post_solve()
     data.update(demand=demand, prices=prices)
