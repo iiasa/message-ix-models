@@ -200,6 +200,9 @@ class Config:
     #: Target data structure for submission prep
     dsd: Literal["iiasa-ece", "navigate"] = "navigate"
 
+    #: First period for policy scenarios.
+    policy_year: Literal[2025, 2030] = 2025
+
     #: Single target scenario for :mod:`.navigate.workflow.generate_workflow`
     scenario: Optional[str] = None
 
