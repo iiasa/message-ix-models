@@ -201,7 +201,7 @@ class Config:
     dsd: Literal["iiasa-ece", "navigate"] = "navigate"
 
     #: First period for policy scenarios.
-    policy_year: Literal[2025, 2030] = 2025
+    policy_year: Literal[2025, 2030] = 2030
 
     #: Single target scenario for :mod:`.navigate.workflow.generate_workflow`
     scenario: Optional[str] = None
