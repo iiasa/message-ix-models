@@ -29,7 +29,7 @@ class PolicyConfig(Config):
 
     #: Label of the climate policy scenario, often related to a global carbon budget in
     #: Gt CO₂ for the 21st century (varies).
-    label: Union[int, str] = ""
+    label: str = ""
 
     #: Actual quantity of the carbon budget to be imposed, or the value "calc", in which
     #: case the value is calculated from :attr:`label` by

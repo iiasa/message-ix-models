@@ -1,6 +1,7 @@
 """NAVIGATE project."""
 import logging
-from dataclasses import dataclass, field
+from copy import deepcopy
+from dataclasses import asdict, dataclass, field, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Generator, List, Literal, Mapping, Optional, Union, cast
@@ -10,6 +11,7 @@ import yaml
 from message_ix_models.util import MESSAGE_DATA_PATH, as_codes
 from sdmx.model.v21 import Annotation, Code
 
+from message_data.model.workflow import Config as WfConfig
 from message_data.projects.engage.workflow import PolicyConfig
 
 log = logging.getLogger(__name__)
@@ -21,12 +23,6 @@ ixmp.config.register(
 )
 
 
-# Shorthand for use in `CLIMATE_POLICY`
-_kw: Mapping = dict(
-    reserve_margin=False,
-    solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
-)
-
 #: Mapping of climate policy labels to :class:`.engage.workflow.PolicyConfig` objects.
 #:
 #: - Some of the ``budget`` values were originally from
@@ -37,43 +33,48 @@ _kw: Mapping = dict(
 #:   currently implemented. In the :file:`engage/config.yaml`, they appear to form a
 #:   "waterfall", with each successively lower budget referencing the previous, which
 #:   seems to preclude running lower budgets without first running every larger budget.
-CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
-    str(pc.label): pc
-    for pc in (
-        # No climate policy → no ENGAGE workflow steps
-        PolicyConfig(label="NPi", steps=[], **_kw),
-        # Only step 1. This item does not appear in the official NAVIGATE scenarios
-        # list, but is used in EXTRA_SCENARIOS below.
-        PolicyConfig(label="1000 Gt", steps=[1], budget=2449, **_kw),
-        # All steps 1–3
-        # Originally from an item labelled "1000" in engage/config.yaml
-        PolicyConfig(
-            label="20C",
-            # budget=2700,  # for T3.5 and initial WP6, with 1150 Gt target
-            budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
-            **_kw,
-        ),
-        # Originally from an item labelled "600" in engage/config.yaml. Current values
-        # calculated based on Ctax runs with price of 1000 USD / t CO₂.
-        PolicyConfig(
-            label="15C",
-            # Achievable for non-ref demand-side scenarios aiming for 650 Gt:
-            # budget=1357,
-            # Achievable for -ref demand-side scenario aiming for 850 Gt:
-            # budget=1840,
-            # Calculated using check-budget based on
-            # "NPi-act+MACRO_ENGAGE_20C_step-3+B#3" and "Ctax-ref+B#1"
-            budget=1190,
-            **_kw,
-        ),
-        # The following do not appear in the official NAVIGATE scenarios list, but are
-        # used in EXTRA_SCENARIOS below.
-        # From an item labelled "1600" in engage/config.yaml
-        PolicyConfig(label="1600 Gt", steps=[1], budget=4162, **_kw),
-        # From an item labelled "2000" in engage/config.yaml
-        PolicyConfig(label="2000 Gt", steps=[1], budget=5320, **_kw),
-    )
+CLIMATE_POLICY: Dict[Optional[str], WfConfig] = {
+    # Default
+    None: WfConfig(
+        reserve_margin=False,
+        solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
+    ),
 }
+
+# Add further values, reusing the same defaults above
+for _pc in (
+    # No climate policy → no ENGAGE workflow steps
+    PolicyConfig(label="NPi", steps=[]),
+    # Only step 1. This item does not appear in the official NAVIGATE scenarios
+    # list, but is used in EXTRA_SCENARIOS below.
+    PolicyConfig(label="1000 Gt", steps=[1], budget=2449),
+    # All steps 1–3
+    # Originally from an item labelled "1000" in engage/config.yaml
+    PolicyConfig(
+        label="20C",
+        # budget=2700,  # for T3.5 and initial WP6, with 1150 Gt target
+        budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
+    ),
+    # Originally from an item labelled "600" in engage/config.yaml. Current values
+    # calculated based on Ctax runs with price of 1000 USD / t CO₂.
+    PolicyConfig(
+        label="15C",
+        # Achievable for non-ref demand-side scenarios aiming for 650 Gt:
+        # budget=1357,
+        # Achievable for -ref demand-side scenario aiming for 850 Gt:
+        # budget=1840,
+        # Calculated using check-budget based on "NPi-act+MACRO_ENGAGE_20C_step-3+B#3"
+        # and "Ctax-ref+B#1"
+        budget=1190,
+    ),
+    # The following do not appear in the official NAVIGATE scenarios list, but are
+    # used in EXTRA_SCENARIOS below.
+    # From an item labelled "1600" in engage/config.yaml
+    PolicyConfig(label="1600 Gt", steps=[1], budget=4162),
+    # From an item labelled "2000" in engage/config.yaml
+    PolicyConfig(label="2000 Gt", steps=[1], budget=5320),
+):
+    CLIMATE_POLICY[_pc.label] = replace(_pc, **asdict(CLIMATE_POLICY[None]))
 
 #: Special "20C" policy for Task 6.2:
 #:
@@ -84,7 +85,7 @@ CLIMATE_POLICY["20C T6.2"] = PolicyConfig(
     label="20C",
     steps=[3],
     tax_emission_scenario=dict(scenario="NPi-Default_ENGAGE_20C_step-2"),
-    **_kw,
+    **asdict(CLIMATE_POLICY[None]),
 )
 
 
@@ -159,6 +160,11 @@ def _read() -> List[Code]:
 
     # Transform to a list of SDMX codes
     return as_codes(content)
+
+
+def get_policy_config(label, **kwargs) -> WfConfig:
+    obj = CLIMATE_POLICY.get(label) or CLIMATE_POLICY[None]
+    return replace(deepcopy(obj), **kwargs)
 
 
 def iter_scenario_codes(
