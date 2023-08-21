@@ -41,14 +41,14 @@ CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
     str(pc.label): pc
     for pc in (
         # No climate policy → no ENGAGE workflow steps
-        PolicyConfig("NPi", steps=[], **_kw),
+        PolicyConfig(label="NPi", steps=[], **_kw),
         # Only step 1. This item does not appear in the official NAVIGATE scenarios
         # list, but is used in EXTRA_SCENARIOS below.
-        PolicyConfig("1000 Gt", steps=[1], budget=2449, **_kw),
+        PolicyConfig(label="1000 Gt", steps=[1], budget=2449, **_kw),
         # All steps 1–3
         # Originally from an item labelled "1000" in engage/config.yaml
         PolicyConfig(
-            "20C",
+            label="20C",
             # budget=2700,  # for T3.5 and initial WP6, with 1150 Gt target
             budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
             **_kw,
@@ -56,7 +56,7 @@ CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
         # Originally from an item labelled "600" in engage/config.yaml. Current values
         # calculated based on Ctax runs with price of 1000 USD / t CO₂.
         PolicyConfig(
-            "15C",
+            label="15C",
             # Achievable for non-ref demand-side scenarios aiming for 650 Gt:
             # budget=1357,
             # Achievable for -ref demand-side scenario aiming for 850 Gt:
@@ -69,9 +69,9 @@ CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
         # The following do not appear in the official NAVIGATE scenarios list, but are
         # used in EXTRA_SCENARIOS below.
         # From an item labelled "1600" in engage/config.yaml
-        PolicyConfig("1600 Gt", steps=[1], budget=4162, **_kw),
+        PolicyConfig(label="1600 Gt", steps=[1], budget=4162, **_kw),
         # From an item labelled "2000" in engage/config.yaml
-        PolicyConfig("2000 Gt", steps=[1], budget=5320, **_kw),
+        PolicyConfig(label="2000 Gt", steps=[1], budget=5320, **_kw),
     )
 }
 
@@ -81,7 +81,7 @@ CLIMATE_POLICY: Dict[Optional[str], PolicyConfig] = {
 #: - tax_emission_scenario changes the behaviour of engage.step_3: CO2 prices are
 #:   retrieved from the indicated scenario.
 CLIMATE_POLICY["20C T6.2"] = PolicyConfig(
-    "20C",
+    label="20C",
     steps=[3],
     tax_emission_scenario=dict(scenario="NPi-Default_ENGAGE_20C_step-2"),
     **_kw,
