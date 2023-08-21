@@ -410,12 +410,13 @@ def _load_latest_cache(context, info, name):
     name_parts = [name, hash_args(info["model"], info["scenario"]), "*"]
     # Path to the cache file
     paths = sorted(context.get_cache_path().glob("-".join(name_parts) + ".pkl"))
-
-    print(paths)
-
+    # print(paths)
     path = paths[-1]
-    log.info(f"Read {name!r} data for {info} from:")
-    log.info(str(path))
+
+    log.info(f"Read {name!r} data")
+    log.info(f"for {info}")
+    log.info(f"from {path}")
+
     with open(path, "rb") as f:
         return pickle.load(f)
 
@@ -485,10 +486,11 @@ def add_minimum_emissions(context, scenario, info: Dict):
     add_CO2_emission_constraint(
         scenario,
         relation_name=RELATION_GLOBAL_CO2,
-        reg=f"{context.model.regions}_GLB",
+        reg=f"{identify_nodes(scenario)}_GLB",
         constraint_value=0.0,
         type_rel="lower",
     )
+
     with scenario.transact():
         add_par_data(scenario, data)
 
