@@ -716,8 +716,9 @@ def generate(context: Context) -> Workflow:
             f"{s} with 2025 minimum",
             base,
             add_minimum_emissions,
-            target=f"{base_info['model']}/{base_info['scenario']} 2025",
-            clone=dict(shift_first_model_year=2025),
+            target=f"{base_info['model']}/{base_info['scenario']} "
+            + str(context.navigate.policy_year),
+            clone=dict(shift_first_model_year=context.navigate.policy_year),
             info=base_info,
         )
 
