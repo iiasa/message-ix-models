@@ -314,7 +314,7 @@ def add_steps(
     # Model and scenario name for the scenario produced by the base step
     info, _ = workflow.guess_target(base, "scenario")
     # Template for new model/scenario name at each step
-    target = f"{info['model']}/{info['scenario']}_ENGAGE_{label}_step-{{}}"
+    target = f"{info['model']}/{name or base} ENGAGE_{label}_step-{{}}"
 
     # Model to solve
     solve_model = config.solve["model"]
