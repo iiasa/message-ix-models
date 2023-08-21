@@ -20,6 +20,7 @@ from message_ix_models.workflow import Workflow
 
 from message_data.model import buildings
 from message_data.model.transport.build import main as build_transport
+from message_data.model.workflow import Config as SolveConfig
 from message_data.model.workflow import solve
 from message_data.projects.engage import workflow as engage
 
@@ -621,7 +622,7 @@ def generate(context: Context) -> Workflow:
         # Store step name as starting point for further steps, below
         M_built[WP6_production] = name
 
-    # Steps 3–7: only run for the "NPi" (baseline) climate policy
+    # Steps 3–7: iterate over all possible "NPi" (baseline) scenarios
     filters = {
         "navigate_task": {"T3.5", "T6.1", "T6.2"},
         "navigate_climate_policy": "NPi",
@@ -689,93 +690,79 @@ def generate(context: Context) -> Workflow:
         # Store the step name as a starting point for climate policy steps, below
         baseline_solved[(T35_policy, WP6_production)] = name
 
-    # Now iterate over all scenarios
+    # Now iterate over *all* end scenarios: baselines and climate policy scenarios
     filters.pop("navigate_climate_policy")
     for s, climate_policy, T35_policy, WP6_production in iter_scenarios(
         context, filters
     ):
         # Identify the base scenario for the next steps
         base = baseline_solved[(T35_policy, WP6_production)]
-        info, _ = wf.guess_target(base, "scenario")
+        base_info, _ = wf.guess_target(base, "scenario")
 
-        # Select the indicated PolicyConfig object
-        engage_policy_config = CLIMATE_POLICY.get(climate_policy)
+        # Select the indicated .model.workflow.Config or .engage.workflow.PolicyConfig
+        # object, if any
+        config: SolveConfig = CLIMATE_POLICY.get(climate_policy, SolveConfig())
+        # Use MESSAGE or MESSAGE-MACRO as appropriate
+        config.solve.update(model=solve_model)
 
-        if climate_policy == "Ctax" or len(getattr(engage_policy_config, "steps", [])):
-            name = wf.add_step(
-                f"{s} with 2025 minimum",
-                base,
-                add_minimum_emissions,
-                target=f"{info['model']}/{info['scenario']} 2025",
-                clone=dict(shift_first_model_year=2025),
-                info=info,
-            )
-        else:
-            name = base
+        if not (len(getattr(config, "steps", [])) or climate_policy == "Ctax"):
+            # No policy; simply add this baseline scenario to the list of scenarios to
+            # be reported
+            to_report[s] = (base, None)
+            continue
 
-        if isinstance(engage_policy_config, engage.PolicyConfig):
-            # Add 0 or more steps for ENGAGE-style climate policy workflows
+        # Shift first model year and add minimum constraint on emissions
+        name = wf.add_step(
+            f"{s} with 2025 minimum",
+            base,
+            add_minimum_emissions,
+            target=f"{base_info['model']}/{base_info['scenario']} 2025",
+            clone=dict(shift_first_model_year=2025),
+            info=base_info,
+        )
 
-            # Use MESSAGE or MESSAGE-MACRO as appropriate
-            engage_policy_config.solve["model"] = solve_model
-
+        if isinstance(config, engage.PolicyConfig):
+            # Add 1 or more steps for ENGAGE-style climate policy workflows
             if climate_policy == "15C":
                 # Provide a reference scenario from which to copy DEMAND data
                 # NB this implies the referenced scenario must be solved first. This
                 #    value is only used in the first ENGAGE step; after this,
                 #    .engage.workflow.add_steps() overwrites with the prior step.
-                engage_policy_config.demand_scenario.update(
-                    model=info["model"], scenario="Ctax-ref"
+                config.demand_scenario.update(
+                    model=base_info["model"], scenario="Ctax-ref"
                 )
             elif climate_policy == "20C T6.2":
                 # Provide a reference scenario from which to copy tax_emission data
                 # Model and scenario for the scenario produced by the base step
-                info, _ = wf.guess_target(base, "scenario")
-                engage_policy_config.tax_emission_scenario["model"] = info["model"]
+                config.tax_emission_scenario.update(model=base_info["model"])
 
+            # Invoke the function from .engage.workflow to add the ENGAGE step(s)
             # NB this can occur here so long as PolicyConfig.method = "calc" is NOT used
             #    by any of the objects in CLIMATE_POLICY. If "calc" appears, then
             #    engage.step_1 requires data which is currently only available from
             #    legacy reporting output, and the ENGAGE steps must take place after
             #    step 9 (running legacy reporting, below)
-            name = engage.add_steps(wf, base=name, config=engage_policy_config, name=s)
+            name = engage.add_steps(wf, base=name, config=config, name=s)
         elif climate_policy == "Ctax":
             # Add a carbon tax (not an implementation of an ENGAGE climate policy)
             name = wf.add_step(
                 s, name, tax_emission, target=f"{model}/{s}", clone=True, price=1000.0
             )
             # Solve
-            name = wf.add_step(f"{s} solved", name, solve, set_as_default=True)
+            name = wf.add_step(
+                f"{s} solved", name, solve, config=config, set_as_default=True
+            )
         else:
             raise ValueError(climate_policy)
 
-        if name == base:
-            # No steps added, e.g. for "NPi" where engage.PolicyConfig.steps == []
-            # Store the reporting information
-            to_report[s] = (name, None)
-            continue
-
-        # At least 1 policy step was added → re-solve the buildings model(s) to pick up
-        # price changes
-
-        # Retrieve options on the solve step added by engage.add_steps() or Ctax
-        try:
-            # Prior step added by engage.add_steps() or for Ctax
-            step_m1 = wf.graph[name][0]
-            solve_kw = step_m1.kwargs["config"].solve
-        except KeyError:
-            solve_kw = dict(model=solve_model)
+        # Re-solve the buildings model(s) to pick up price changes
 
         # Construct the target scenario URL
-        info, _ = wf.guess_target(name, "scenario")
-        target = "{model}/{scenario}+B".format(**info)
+        target = "{model}/{scenario}+B".format(**wf.guess_target(name, "scenario")[0])
 
-        # Create a new step with the same name and base, but invoking
-        # MESSAGEix-Buildings instead.
-        # - Override default buildings.Config.clone = True.
-        # - Use the same Scenario.solve() keyword arguments as for the ENGAGE step, e.g.
-        #   including "model" and ``solve_options["barcrossalg"]``.
-        # - Use the same NAVIGATE scenario as the base scenario.
+        # - Use the same NAVIGATE buildings scenario as the `base`.
+        # - Use the same Scenario.solve() keyword arguments, including `solve_model` and
+        #   ``solve_options["barcrossalg"]``.
         name = wf.add_step(
             f"{name} again",
             name,
@@ -785,12 +772,12 @@ def generate(context: Context) -> Workflow:
             clone=True,
             # Keyword arguments for build_solve_buildings
             navigate_scenario=s,
-            config=dict(solve=solve_kw),
+            config=dict(solve=config.solve),
         )
 
         # Store info to set up reporting, include other scenario from which to copy time
         # series data for y=2020
-        to_report[s] = (name, wf.guess_target(base, "scenario")[0])
+        to_report[s] = (name, base_info)
 
     # Steps 8–9
     for s, (name, other) in to_report.items():
