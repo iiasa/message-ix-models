@@ -724,13 +724,20 @@ def generate(context: Context) -> Workflow:
             info=base_info,
         )
 
+        if solve_model == "MESSAGE-MACRO":
+            # Provide a reference scenario from which to copy (MACRO) DEMAND variable
+            # data as a better starting point for (MESSAGE) demand parameter in
+            # MESSAGE-MACRO iteration
+            config.demand_scenario.update(**base_info)
+
         if isinstance(config, engage.PolicyConfig):
             # Add 1 or more steps for ENGAGE-style climate policy workflows
             if climate_policy == "15C":
-                # Provide a reference scenario from which to copy DEMAND data
+                # Use the Ctax-ref scenario as a better starting point
                 # NB this implies the referenced scenario must be solved first. This
                 #    value is only used in the first ENGAGE step; after this,
-                #    .engage.workflow.add_steps() overwrites with the prior step.
+                #    .engage.workflow.add_steps() overwrites with values from the prior
+                #    step.
                 config.demand_scenario.update(
                     model=base_info["model"], scenario="Ctax-ref"
                 )
@@ -744,7 +751,7 @@ def generate(context: Context) -> Workflow:
             #    by any of the objects in CLIMATE_POLICY. If "calc" appears, then
             #    engage.step_1 requires data which is currently only available from
             #    legacy reporting output, and the ENGAGE steps must take place after
-            #    step 9 (running legacy reporting, below)
+            #    step 9 (running legacy reporting, below), which is not implemented.
             name = engage.add_steps(wf, base=name, config=config, name=s)
         elif climate_policy == "Ctax":
             # Add a carbon tax (not an implementation of an ENGAGE climate policy)
