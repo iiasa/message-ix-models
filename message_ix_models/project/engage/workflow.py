@@ -7,16 +7,15 @@ reusable, particularly in the Workflow pattern used in e.g. :mod:`.projects.navi
 import logging
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from iam_units import convert_gwp
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import identify_nodes
-from message_ix_models.util.config import ConfigHelper
 from message_ix_models.workflow import Workflow
 
-from message_data.tools.utilities import transfer_demands
+from message_data.model.workflow import Config, solve
 
 from .runscript_main import glb_co2_relation as RELATION_GLOBAL_CO2
 from .scenario_runner import ScenarioRunner
@@ -25,41 +24,24 @@ log = logging.getLogger(__name__)
 
 
 @dataclass
-class PolicyConfig(ConfigHelper):
+class PolicyConfig(Config):
     """Configuration for the 3-step ENGAGE workflow for climate policy scenarios."""
 
     #: Label of the climate policy scenario, often related to a global carbon budget in
     #: Gt CO₂ for the 21st century (varies).
-    label: Union[int, str]
+    label: Union[int, str] = ""
 
     #: Actual quantity of the carbon budget to be imposed, or the value "calc", in which
     #: case the value is calculated from :attr:`label` by
     #: :meth:`.ScenarioRunner.calc_budget`.
     budget: Union[int, Literal["calc"]] = "calc"
 
-    #: Scenario name of a reference scenario for copying demands in :func:`step_1`
-    #: and/or :func:`step_2`. See also :func:`.transfer_demands`.
-    #:
-    #: TODO choose a more informative name.
-    low_dem_scen: Optional[str] = None
-
     #: Information on an optional, second scenario from which to copy tax_emission data
     #: in :func:`step_3`.
     tax_emission_scenario: Dict = field(default_factory=dict)
 
-    #: :obj:`True` to call :func:`.reserve_margin.res_marg.main` at each :func:`solve`.
-    reserve_margin: bool = True
-
     #: Which steps of the ENGAGE workflow to run. Empty list = don't run any steps.
     steps: List[int] = field(default_factory=lambda: [1, 2, 3])
-
-    #: Keyword arguments for :meth:`.message_ix.Scenario.solve`. To replicate the
-    #: behaviour of the `macro_params` argument to :meth:`.ScenarioRunner.run`, which in
-    #: turn sets the `convergence_issues` argument to :meth:`.ScenarioRunner.solve`,
-    #: set max_adjustment to 0.1.
-    solve: Dict[str, Any] = field(
-        default_factory=lambda: dict(model="MESSAGE-MACRO", max_adjustment=0.2)
-    )
 
 
 def calc_hist_cum_CO2(
@@ -170,24 +152,6 @@ def calc_budget(
     add_budget(scenario, value, type_emission=type_emission)
 
 
-def solve(context: Context, scenario: Scenario, config: PolicyConfig):
-    from message_data.scenario_generation.reserve_margin import res_marg
-
-    if config.reserve_margin:
-        res_marg.main(scenario)
-
-    var_list = ["I", "C"]
-    if config.solve["model"] == "MESSAGE-MACRO":
-        var_list.append("GDP")
-
-    scenario.solve(var_list=var_list, **config.solve)
-
-    # Solve was successful; set default version
-    scenario.set_as_default()
-
-    return scenario
-
-
 def step_0(context: Context, scenario: Scenario, **kwargs) -> Scenario:
     """Preparation for the ENGAGE climate policy workflow.
 
@@ -245,13 +209,6 @@ def step_1(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
         type_emission="TCE_CO2",
     )
 
-    if config.low_dem_scen:
-        # Retrieve certain demands from a different scenario
-        source = Scenario(
-            scenario.platform, model=scenario.model, scenario=config.low_dem_scen
-        )
-        transfer_demands(source, scenario)
-
     return scenario
 
 
@@ -289,13 +246,6 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
         scenario.remove_par(
             name, scenario.par(name, filters={"relation": [RELATION_GLOBAL_CO2]})
         )
-
-    if config.low_dem_scen:
-        # Retrieve certain demands from a different scenario
-        source = Scenario(
-            scenario.platform, model=scenario.model, scenario=config.low_dem_scen
-        )
-        transfer_demands(source, scenario)
 
     return scenario
 
@@ -380,9 +330,11 @@ def add_steps(
         # Duplicate `config` and modify for this particular step
         cfg = deepcopy(config)
         if solve_model == "MESSAGE-MACRO" and step > 1:
-            # Give scenario name from which to copy "DEMAND" variable data; data is
+            # Give scenario info from which to copy "DEMAND" variable data; data is
             # copied to the "demand" parameter
-            cfg.low_dem_scen = target.split("/")[-1].format(step - 1)
+            cfg.demand_scenario.update(
+                model=info["model"], scenario=target.split("/")[-1].format(step - 1)
+            )
         if step == 2:
             # Do not solve MESSAGE-MACRO for step 2, even if doing so for steps 1/3
             cfg.solve.update(model="MESSAGE")
@@ -402,6 +354,8 @@ def add_steps(
         if step > 0:
             # Add a step to solve the scenario (except for after step_0); update the
             # step name for the next loop iteration
-            s = workflow.add_step(f"{s} solved", s, solve, config=cfg)
+            s = workflow.add_step(
+                f"{s} solved", s, solve, config=cfg, set_as_default=True
+            )
 
     return s
