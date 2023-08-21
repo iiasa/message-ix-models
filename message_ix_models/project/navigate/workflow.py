@@ -486,8 +486,20 @@ def compute_minimum_emissions(
 
 
 def add_minimum_emissions(context, scenario, info: Dict):
+    from message_data.projects.engage.runscript_main import (
+        glb_co2_relation as RELATION_GLOBAL_CO2,
+    )
+    from message_data.tools.utilities import add_CO2_emission_constraint
+
     data = _load_latest_cache(context, info, "limit-drop")
 
+    add_CO2_emission_constraint(
+        scenario,
+        relation_name=RELATION_GLOBAL_CO2,
+        reg=f"{context.model.regions}_GLB",
+        constraint_value=0.0,
+        type_rel="lower",
+    )
     with scenario.transact():
         add_par_data(scenario, data)
 
