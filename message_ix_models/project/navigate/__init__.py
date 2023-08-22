@@ -55,7 +55,8 @@ for _pc in (
     PolicyConfig(
         label="20C",
         # budget=2700,  # for T3.5 and initial WP6, with 1150 Gt target
-        budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
+        # budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
+        budget=1239,  # 900 Gt target with y₀=2030, using "check-budget": 1847 - 558
     ),
     # Originally from an item labelled "600" in engage/config.yaml. Current values
     # calculated based on Ctax runs with price of 1000 USD / t CO₂.
