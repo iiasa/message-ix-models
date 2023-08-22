@@ -6,6 +6,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Dict, Generator, List, Mapping, Optional, Tuple
 
+from genno import KeyExistsError
 from genno.caching import hash_args
 from message_ix import Scenario, make_df
 from message_ix_models import Context
@@ -713,16 +714,20 @@ def generate(context: Context) -> Workflow:
             to_report[s] = (base, None)
             continue
 
-        # Shift first model year and add minimum constraint on emissions
-        name = wf.add_step(
-            f"{s} with 2025 minimum",
-            base,
-            add_minimum_emissions,
-            target=f"{base_info['model']}/{base_info['scenario']} "
-            + str(context.navigate.policy_year),
-            clone=dict(shift_first_model_year=context.navigate.policy_year),
-            info=base_info,
-        )
+        name = base.replace("computed", "added")
+        try:
+            # Shift first model year and add minimum constraint on emissions
+            wf.add_step(
+                name,
+                base,
+                add_minimum_emissions,
+                target=f"{base_info['model']}/{base_info['scenario']} "
+                + str(context.navigate.policy_year),
+                clone=dict(shift_first_model_year=context.navigate.policy_year),
+                info=base_info,
+            )
+        except KeyExistsError:
+            pass  # Already added
 
         if solve_model == "MESSAGE-MACRO":
             # Provide a reference scenario from which to copy (MACRO) DEMAND variable
