@@ -37,7 +37,9 @@ CLIMATE_POLICY: Dict[Optional[str], WfConfig] = {
     # Default
     None: WfConfig(
         reserve_margin=False,
-        solve=dict(model="MESSAGE", solve_options=dict(barcrossalg=2)),
+        solve=dict(
+            model="MESSAGE", solve_options=dict(barcrossalg=2), max_adjustment=0.1
+        ),
     ),
 }
 
