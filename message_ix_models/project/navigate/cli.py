@@ -211,6 +211,8 @@ def check_budget(context):
         #
         # From 2023-08-03
         ("NPi-act+MACRO_ENGAGE_20C_step-3+B", 3, 900, 1931),
+        ("NPi-ref+MACRO", 26, np.nan, np.nan),
+        ("Ctax-ref+B", 5, 650, 920),
         # NB c=552 is the "Actual cumulative emissions". c=920 is the output (suggested
         #    value for c) below when c=552 is set.
         ("Ctax-ref+B", 1, 650, 920),
@@ -236,7 +238,17 @@ def check_budget(context):
     mp.close_db()
 
     data = pd.concat(dfs, axis=1)
-    print(f"{data =}")
+
+    print(f'Data for v="Emissions|CO2" stored with scenarios:\n{data.to_string()}')
+
+    if data.isna().any(axis=None):
+        print(
+            "\nFill data to the right to cover missing values.\n"
+            "(Adjust scenario order to change fill values used.)"
+        )
+        mask = data.isna().any(axis=1)
+        data[mask] = data[mask].fillna(method="ffill", axis=1)
+        print(data[mask].to_string())
 
     result = interpolate_budget(data, target, constraint)
 
