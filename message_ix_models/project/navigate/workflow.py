@@ -495,6 +495,9 @@ def add_minimum_emissions(context, scenario, info: Dict):
     with scenario.transact():
         add_par_data(scenario, data)
 
+    # This step is preceded by a clone; ensure the new/modified version is default
+    scenario.set_as_default()
+
 
 def tax_emission(context: Context, scenario: Scenario, price: float):
     """Workflow callable for :mod:`.tools.utilities.add_tax_emission`."""
