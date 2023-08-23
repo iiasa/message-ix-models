@@ -260,16 +260,21 @@ def pre_solve(scenario: Scenario, context, data):
     # scenario
     price_cache_path = local_data_path("cache", "buildings-prices.csv")
     if first_iteration:
-        if config.run_access:
-            # Reference values from the base scenario
-            prices = data["price_ref"]
-
-            # Update the cache
-            prices.to_csv(price_cache_path)
-        else:
+        try:
             # Read prices from cache
             prices = pd.read_csv(price_cache_path)
+        except FileNotFoundError:
+            # Cache doesn't exist; use reference values from the base scenario
+            prices = data["price_ref"]
+
+        if config.run_access:
+            # Force use of price_ref in this case
+            prices = data["price_ref"]
+
+        # Update the cache
+        prices.to_csv(price_cache_path)
     else:
+        # Get updated prices directly from `scenario`
         prices = get_prices(scenario)
 
     # Save demand from previous iteration for comparison
