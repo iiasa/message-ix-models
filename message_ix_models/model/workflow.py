@@ -82,11 +82,11 @@ def solve(
     if config.solve["model"] == "MESSAGE-MACRO":
         var_list.append("GDP")
 
-        if config.demand_scenario:
-            # Retrieve DEMAND variable data from a different scenario and set as values
-            # for the demand parameter
-            source = Scenario(scenario.platform, **config.demand_scenario)
-            transfer_demands(source, scenario)
+    if config.demand_scenario:
+        # Retrieve DEMAND variable data from a different scenario and set as values
+        # for the demand parameter
+        source = Scenario(scenario.platform, **config.demand_scenario)
+        transfer_demands(source, scenario)
 
     scenario.solve(var_list=var_list, **config.solve)
 
