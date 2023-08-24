@@ -1,4 +1,9 @@
-from message_ix_models.tools.costs.config import BASE_YEAR
+from itertools import product
+
+import numpy as np
+import pandas as pd
+
+from message_ix_models.tools.costs.config import BASE_YEAR, LAST_MODEL_YEAR
 from message_ix_models.tools.costs.gdp import calculate_gdp_adjusted_region_cost_ratios
 from message_ix_models.tools.costs.learning import (
     project_ref_region_inv_costs_using_learning_rates,
@@ -8,14 +13,6 @@ from message_ix_models.tools.costs.splines import (
     project_all_inv_costs,
 )
 from message_ix_models.tools.costs.weo import get_weo_region_differentiated_costs
-
-df_reg_diff = get_weo_region_differentiated_costs(
-    input_node="r12", input_ref_region="R12_NAM", input_base_year=2021
-)
-
-df_adj_cost_ratios = calculate_gdp_adjusted_region_cost_ratios(
-    df_reg_diff, input_node="r12", input_ref_region="R12_NAM", input_base_year=2021
-)
 
 
 # Function to get cost projections based on the following inputs:
@@ -100,6 +97,150 @@ def get_cost_projections(
         df_inv_fom = get_final_inv_and_fom_costs(df_all_inv, input_method=sel_method)
 
         return df_inv_fom
+
+
+def create_message_inputs(df_proj: pd.DataFrame):
+    """Create inputs for MESSAGE
+
+    Parameters
+    ----------
+    df_proj : pd.DataFrame
+        Dataframe containing cost projections, output of :func:`get_cost_projections`
+
+    Returns
+    -------
+    """
+
+    HORIZON_START = 1960
+    HORIZON_END = 2110
+
+    # For investment costs, for each region-technology pair, repeat the cost up until base year and then use the projected values up until 2100
+    # For years up until the horizon end, repeat the 2100 value
+    un_vers = df_proj.scenario_version.unique()
+    un_scen = df_proj.scenario.unique()
+    un_tech = df_proj.message_technology.unique()
+    un_reg = df_proj.region.unique()
+
+    l_inv = []
+    l_fix = []
+    for h, i, j, k in product(un_vers, un_scen, un_tech, un_reg):
+        print(h, i, j, k)
+
+        def smaller_than(sequence, value):
+            return [item for item in sequence if item < value]
+
+        def larger_than(sequence, value):
+            return [item for item in sequence if item > value]
+
+        seq_years = list(range(HORIZON_START, HORIZON_END + 5, 5))
+        hist_years = smaller_than(seq_years, BASE_YEAR - 5)
+        fut_years = larger_than(seq_years, LAST_MODEL_YEAR)
+
+        tech = df_proj.query(
+            "scenario_version == @h and scenario == @i and message_technology == @j \
+                    and region == @k"
+        )
+
+        # For years up until the base year, repeat the 2020 value
+        l_hist = []
+        for year in hist_years:
+            df = tech.query("year == 2020").assign(year=year)
+            l_hist.append(df)
+
+        # For years after the final model year, repeat the 2100 value
+        l_fut = []
+        for year in fut_years:
+            df = tech.query("year == 2100").assign(year=year)
+            l_fut.append(df)
+
+        # Combine all dataframes
+        costs_hist = pd.concat(l_hist)
+        costs_fut = pd.concat(l_fut)
+        costs_tot = costs_hist._append([tech, costs_fut]).reset_index(drop=1)
+
+        # For investment costs, assign year as year_vtg and use value as inv_cost
+        tech_inv = costs_tot.assign(
+            year_vtg=lambda x: x.year,
+            value=lambda x: x.inv_cost,
+            unit="USD/kWa",
+            technology=lambda x: x.message_technology,
+            node_loc=lambda x: x.region,
+        ).reindex(
+            [
+                "scenario_version",
+                "scenario",
+                "node_loc",
+                "technology",
+                "year_vtg",
+                "value",
+                "unit",
+            ],
+            axis=1,
+        )
+
+        l_fom_updated = []
+        for y in seq_years:
+            fom = (
+                costs_tot.query("year >= @y")
+                .reindex(
+                    [
+                        "scenario_version",
+                        "scenario",
+                        "message_technology",
+                        "region",
+                        "year",
+                        "fix_cost",
+                    ],
+                    axis=1,
+                )
+                .assign(year_vtg=y)
+            )
+
+            if y <= 2020:
+                init_val = fom.query("year == 2020").fix_cost.values[0]
+            elif y > 2020:
+                init_val = fom.query("year == @y").fix_cost.values[0]
+
+            # Calculate value every year if val decreases by 0.5% every year
+            d = pd.DataFrame(data={"year": range(y, 2111)}).assign(
+                val=lambda x: init_val * (1 - 0.0025) ** (x.year - y),
+            )
+
+            fom_updated = (
+                fom.merge(d, on="year", how="left")
+                .assign(
+                    value=lambda x: np.where(x.year <= 2020, x.fix_cost, x.val),
+                    year_act=lambda x: x.year,
+                    unit="USD/kWa",
+                    technology=lambda x: x.message_technology,
+                    node_loc=lambda x: x.region,
+                )
+                .reindex(
+                    [
+                        "scenario_version",
+                        "scenario",
+                        "node_loc",
+                        "technology",
+                        "year_vtg",
+                        "year_act",
+                        "value",
+                        "unit",
+                    ],
+                    axis=1,
+                )
+            )
+
+            l_fom_updated.append(fom_updated)
+
+        tech_fom = pd.concat(l_fom_updated).reset_index(drop=1)
+
+        l_inv.append(tech_inv)
+        l_fix.append(tech_fom)
+
+    msg_inv = pd.concat(l_inv).reset_index(drop=1)
+    msg_fom = pd.concat(l_fix).reset_index(drop=1)
+
+    return msg_inv, msg_fom
 
 
 # # Function to get cost projections based on method specified
