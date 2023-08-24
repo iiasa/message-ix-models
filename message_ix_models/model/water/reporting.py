@@ -9,10 +9,10 @@ from message_ix_models.util import package_data_path
 
 try:
     from message_data.tools.post_processing.iamc_report_hackathon import (
-        report as old_reporting,
+        report as legacy_reporting,
     )
 except ImportError:  # message_data not installed
-    old_reporting = None
+    legacy_reporting = None
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def run_old_reporting(sc=False):
         " Start reporting of the global energy system (old reporting scheme)"
         f"for the scenario {sc.model}.{sc.scenario}"
     )
-    old_reporting(
+    legacy_reporting(
         mp=mp2,
         scen=sc,
         merge_hist=True,
