@@ -203,6 +203,9 @@ def iter_scenario_codes(
 class Config:
     """Configuration for NAVIGATE."""
 
+    #: Level of carbon tax for ``Ctax-*`` scenarios, via :func:`add_tax_emission`.
+    carbon_tax: float = 1000.0
+
     #: Other scenario from which to copy historical time series data for reporting.
     copy_ts: Dict = field(default_factory=dict)
 
