@@ -311,7 +311,9 @@ def add_sectoral_demands(context):
             pol_scen = context.SDG
 
             # check if data is there
-            check_dm = df_dmds[df_dmds["variable"] == "urban_connection_rate_" + pol_scen]
+            check_dm = df_dmds[
+                df_dmds["variable"] == "urban_connection_rate_" + pol_scen
+            ]
             if check_dm.empty:
                 raise ValueError(f"Policy data is missing for the {pol_scen} scenario.")
             urban_connection_rate_df = urban_connection_rate_df_sdg = df_dmds[
@@ -334,7 +336,8 @@ def add_sectoral_demands(context):
             rural_treatment_rate_df.reset_index(drop=True, inplace=True)
 
             df_recycling = df_recycling_sdg = df_dmds[
-                df_dmds["variable"] == "urban_recycling_rate_" + pol_scen]
+                df_dmds["variable"] == "urban_recycling_rate_" + pol_scen
+            ]
             df_recycling.reset_index(drop=True, inplace=True)
 
         all_rates_sdg = pd.concat(
