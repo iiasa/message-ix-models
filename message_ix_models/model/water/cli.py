@@ -256,7 +256,7 @@ def cooling(context, regions, rcps, rels):
 @click.option(
     "--water",
     is_flag=True,
-    help="By default running legacy and water (full) otherwise only water, if specified",
+    help="Default running legacy and water (full) otherwise only water, if specified",
 )
 @common_params("output_model")
 def report_cli(context, output_model, sdgs, water=False):
