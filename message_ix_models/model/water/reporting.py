@@ -52,7 +52,7 @@ def remove_duplicate(data):
         else:
             if i in indexes:
                 if len(oprlist) > 1:
-                    final_list.append(strr[oprlist[0] + 1:])
+                    final_list.append(strr[oprlist[0] + 1 :])
                 elif len(oprlist) == 1 and oprlist[0] > 6:
                     final_list.append(strr[: oprlist[0]])
                 else:
@@ -72,13 +72,15 @@ def report(sc=False, reg="", sdgs=False):
 
     # Generating reporter
     rep = Reporter.from_scenario(sc)
-    report = rep.get("message::default") # works also with suannual, but aggregates months
+    report = rep.get(
+        "message::default"
+    )  # works also with suannual, but aggregates months
     # Create a timeseries dataframe
     report_df = report.timeseries()
     report_df.reset_index(inplace=True)
     report_df.columns = report_df.columns.astype(str)
     report_df.columns = report_df.columns.str.title()
-    
+
     # Removing duplicate region names
     report_df["Region"] = remove_duplicate(report_df)
 
@@ -86,23 +88,24 @@ def report(sc=False, reg="", sdgs=False):
     # This is not automatically reported using message:default
     rep_dm = Reporter.from_scenario(sc)
     rep_dm.set_filters(l="water_avail_basin")
-    
+
     rep_dm2 = rep.get("demand:n-c-l-y-h")
     rep_dm_df = rep_dm2.to_dataframe()
     rep_dm_df.reset_index(inplace=True)
     df_dmd = rep_dm_df[rep_dm_df["l"] == "water_avail_basin"]
     # setting sub-annual option based on the demand
     suban = False if "year" in np.unique(df_dmd["h"]) else True
-    
+
     if not suban:
+
         def collapse_callback(df):
             """Callback function to populate the IAMC 'variable' column."""
             df["variable"] = "Water Resource|" + df["c"]
             return df.drop(["c"], axis=1)
-    
+
         # Mapping from dimension IDs to column names
         rename = dict(n="region", y="time")
-    
+
         key = rep_dm.convert_pyam("demand", rename=rename, collapse=collapse_callback)
         # Making a dataframe for demands
         df_dmd = rep.get(key).as_pandas()
@@ -111,12 +114,14 @@ def report(sc=False, reg="", sdgs=False):
         df_dmd["model"] = sc.model
         df_dmd["scenario"] = sc.scenario
         df_dmd["variable"] = "Water Resource|" + df_dmd["c"]
-        df_dmd.rename(columns={"n": "region", "y": "year",
-                                  "demand": "value","h": "subannual"},
-                         inplace = True)
-        df_dmd = df_dmd[["model","scenario","region","variable",
-                              "subannual","year","value"]]
-        
+        df_dmd.rename(
+            columns={"n": "region", "y": "year", "demand": "value", "h": "subannual"},
+            inplace=True,
+        )
+        df_dmd = df_dmd[
+            ["model", "scenario", "region", "variable", "subannual", "year", "value"]
+        ]
+
     df_dmd["value"] = df_dmd["value"].abs()
     df_dmd["variable"].replace(
         "Water Resource|groundwater_basin", "Water Resource|Groundwater", inplace=True
@@ -128,24 +133,25 @@ def report(sc=False, reg="", sdgs=False):
     )
     df_dmd["unit"] = "km3"
     df_dmd1 = pyam.IamDataFrame(df_dmd)
-    
+
     if not suban:
         report_iam = pyam.IamDataFrame(report_df)
     else:
         # Convert to pyam dataframe
         # if subannual, get and subsittute variables
-        vars_dic = ["in:nl-t-ya-m-h-no-c-l",
-                    "out:nl-t-ya-m-h-nd-c-l"]
-        
-        # other variables do not ahve sub-annual dimension, we just take 
+        vars_dic = ["in:nl-t-ya-m-h-no-c-l", "out:nl-t-ya-m-h-nd-c-l"]
+
+        # other variables do not ahve sub-annual dimension, we just take
         # annual values from report_df
-        vars_from_annual = ["CAP_NEW","inv cost","total om cost"]
-                # get annual variables
-        report_df1 = report_df[report_df['Variable'].str.contains('|'.join(vars_from_annual))]
+        vars_from_annual = ["CAP_NEW", "inv cost", "total om cost"]
+        # get annual variables
+        report_df1 = report_df[
+            report_df["Variable"].str.contains("|".join(vars_from_annual))
+        ]
         report_df1["subannual"] = "year"
         # Convert to pyam dataframe
         report_iam = pyam.IamDataFrame(report_df1)
-        
+
         report_df2 = pd.DataFrame()
         for vs in vars_dic:
             qty = rep.get(vs)
@@ -153,38 +159,72 @@ def report(sc=False, reg="", sdgs=False):
             df.reset_index(inplace=True)
             df["model"] = sc.model
             df["scenario"] = sc.scenario
-            df["variable"] = (vs.split(":")[0] + "|" + 
-                              df["l"] + "|"  + df["c"] + "|"  +
-                              df["t"] + "|"  + df["m"])
-                              
-            df.rename(columns={"no": "reg2", # needed to avoid dulicates
-                               "nd": "reg2",
-                               "nl": "reg1",
-                               "ya": "year",
-                               "h": "subannual"},
-                             inplace = True)
+            df["variable"] = (
+                vs.split(":")[0]
+                + "|"
+                + df["l"]
+                + "|"
+                + df["c"]
+                + "|"
+                + df["t"]
+                + "|"
+                + df["m"]
+            )
+
+            df.rename(
+                columns={
+                    "no": "reg2",  # needed to avoid dulicates
+                    "nd": "reg2",
+                    "nl": "reg1",
+                    "ya": "year",
+                    "h": "subannual",
+                },
+                inplace=True,
+            )
             # take the right node column in case nl and no/nd are different
-            df = df.groupby(["model","scenario","variable",
-                                  "subannual","year"]).apply(
-                lambda x: x.assign(region = x['reg2'] if len(x['reg2'].unique()) > len(x['reg1'].unique()) else x['reg1'])).reset_index(drop=True)
-            # case of 
+            df = (
+                df.groupby(["model", "scenario", "variable", "subannual", "year"])
+                .apply(
+                    lambda x: x.assign(
+                        region=x["reg2"]
+                        if len(x["reg2"].unique()) > len(x["reg1"].unique())
+                        else x["reg1"]
+                    )
+                )
+                .reset_index(drop=True)
+            )
+            # case of
             exeption = "in|water_supply_basin|freshwater_basin|basin_to_reg"
-            df["region"] = df.apply(lambda row: row["reg2"] if exeption in row["variable"] else row["region"], axis=1)
-            df = df[["model","scenario","region","variable",
-                                  "subannual","year","value"]]
-            report_df2 = pd.concat([report_df2,df])
-        
+            df["region"] = df.apply(
+                lambda row: row["reg2"]
+                if exeption in row["variable"]
+                else row["region"],
+                axis=1,
+            )
+            df = df[
+                [
+                    "model",
+                    "scenario",
+                    "region",
+                    "variable",
+                    "subannual",
+                    "year",
+                    "value",
+                ]
+            ]
+            report_df2 = pd.concat([report_df2, df])
+
         report_df2["unit"] = ""
         report_df2.columns = report_df2.columns.astype(str)
         report_df2.columns = report_df2.columns.str.title()
-        report_df2.reset_index(drop=True, inplace = True)
+        report_df2.reset_index(drop=True, inplace=True)
         report_df2["Region"] = remove_duplicate(report_df2)
         report_df2.columns = map(str.lower, report_df2.columns)
         # make iamc dataframe
         report_iam2 = pyam.IamDataFrame(report_df2)
         report_iam = report_iam.append(report_iam2)
     # endif
-    
+
     # Merge both dataframes in pyam
     report_iam = report_iam.append(df_dmd1)
 
@@ -1127,14 +1167,19 @@ def report(sc=False, reg="", sdgs=False):
     if not suban:
         ww = ww[["region", "year", "commodity", "wdr"]]
     else:
-        ww = ww[["region", "year","subannual", "commodity", "wdr"]] 
-        ww = pd.concat([
-            ww,
-            (ww.groupby(["region", "year", "commodity"])["wdr"]
-             .sum()
-             .reset_index().assign(subannual="year")
-             .loc[:, ["region", "year","subannual", "commodity", "wdr"]])
-            ]).reset_index(drop=True)
+        ww = ww[["region", "year", "subannual", "commodity", "wdr"]]
+        ww = pd.concat(
+            [
+                ww,
+                (
+                    ww.groupby(["region", "year", "commodity"])["wdr"]
+                    .sum()
+                    .reset_index()
+                    .assign(subannual="year")
+                    .loc[:, ["region", "year", "subannual", "commodity", "wdr"]]
+                ),
+            ]
+        ).reset_index(drop=True)
     # irrigation water, at regional level
     # need to update for global model now we have 3 irrigation
     # probably will need to do a scaled agerave with the ww, no basin level
@@ -1146,7 +1191,8 @@ def report(sc=False, reg="", sdgs=False):
     # driking water
     wr_dri = wp[wp.commodity.isin(["urban_mw", "rural_mw"])]
     wr_dri = wr_dri.drop(columns={"level", "lvl", "mrg"})
-    if suban: wr_dri = wr_dri.rename(columns={"time": "subannual"})
+    if suban:
+        wr_dri = wr_dri.rename(columns={"time": "subannual"})
     wr_dri = wr_dri.merge(ww, how="left")
     wr_dri["variable"] = np.where(
         wr_dri.commodity == "urban_mw",
@@ -1154,7 +1200,11 @@ def report(sc=False, reg="", sdgs=False):
         "Price|Drinking Water|Rural",
     )
     wr_dri_m = (
-        wr_dri.groupby(["region", "unit", "year"] if not suban else ["region", "unit", "year","subannual"])
+        wr_dri.groupby(
+            ["region", "unit", "year"]
+            if not suban
+            else ["region", "unit", "year", "subannual"]
+        )
         .apply(lambda x: np.average(x.value, weights=x.wdr))
         .reset_index()
     )
@@ -1162,14 +1212,17 @@ def report(sc=False, reg="", sdgs=False):
     wr_dri_m = wr_dri_m.drop(columns={0})
     wr_dri_m["variable"] = "Price|Drinking Water"
 
-    wp = pd.concat([wr_dri,
-                    # wp_irr, # TEMP
-                    wr_dri_m])
+    wp = pd.concat(
+        [
+            wr_dri,
+            # wp_irr, # TEMP
+            wr_dri_m,
+        ]
+    )
 
     wp["model"] = sc.model
     wp["scenario"] = sc.scenario
-    col_ex = report_iam.as_pandas().columns[
-        report_iam.as_pandas().columns != "exclude"]
+    col_ex = report_iam.as_pandas().columns[report_iam.as_pandas().columns != "exclude"]
     wp = wp[col_ex]
 
     wp = wp.drop_duplicates()
@@ -1239,7 +1292,7 @@ def report(sc=False, reg="", sdgs=False):
         print("The Population data does not exist or timeseries() has no future values")
     else:
         report_pd = report_pd.append(pop_sdg6)
-    
+
     # add units
     for index, row in map_agg_pd.iterrows():
         report_pd.loc[(report_pd.variable == row["names"]), "unit"] = row["unit"]
@@ -1258,37 +1311,41 @@ def report(sc=False, reg="", sdgs=False):
     report_pd = report_pd.drop(columns=["exclude"])
     report_pd["unit"].replace("EJ", "EJ/yr", inplace=True)
     # for country model
-    if reg not in ["R11"," R12"] and suban:
+    if reg not in ["R11", " R12"] and suban:
         country_n = map_node_dict["World"][0]
-        grouped = report_pd.groupby(['model', 'scenario', 'variable', 
-                              "unit", "year", "subannual"])
+        grouped = report_pd.groupby(
+            ["model", "scenario", "variable", "unit", "year", "subannual"]
+        )
         renamed_df = pd.DataFrame(columns=report_pd.columns)
         # Step 2: Check if there is at least one "world" row and one "country" row for each group
         for name, group in grouped:
-            if 'World' in group['region'].values and country_n in group['region'].values:
+            if (
+                "World" in group["region"].values
+                and country_n in group["region"].values
+            ):
                 report_pd.drop(group.index, inplace=True)
                 # Step 4: Rename "world" to "country" and remove rows with region = "country"
-                group = group[group['region'] == 'World']
-                group.loc[group['region'] == 'World', 'region'] = country_n
+                group = group[group["region"] == "World"]
+                group.loc[group["region"] == "World", "region"] = country_n
                 # Step 5: Update the original dataframe with the modified group
-                renamed_df = pd.concat([renamed_df,group])
-                
+                renamed_df = pd.concat([renamed_df, group])
+
         # Step 8: Concatenate the new dataframe with the original dataframe
         report_pd = pd.concat([report_pd, renamed_df])
-    
-    if reg not in ["R11"," R12"]:
+
+    if reg not in ["R11", " R12"]:
         # temp for leap- re
         out_path = package_data_path().parents[0] / "reporting_output/"
-    
+
         if not out_path.exists():
             out_path.mkdir()
 
     out_file = out_path / f"{sc.model}_{sc.scenario}_nexus.csv"
-    report_pd.to_csv(out_file, index = False)
+    report_pd.to_csv(out_file, index=False)
 
     sc.check_out(timeseries_only=True)
     print("Starting to upload timeseries")
-    print(report_pd.head())    
+    print(report_pd.head())
     sc.add_timeseries(report_pd)
     print("Finished uploading timeseries")
     sc.commit("Reporting uploaded as timeseries")
