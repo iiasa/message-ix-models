@@ -765,7 +765,12 @@ def generate(context: Context) -> Workflow:
         elif climate_policy == "Ctax":
             # Add a carbon tax (not an implementation of an ENGAGE climate policy)
             name = wf.add_step(
-                s, name, tax_emission, target=f"{model}/{s}", clone=True, price=1000.0
+                s,
+                name,
+                tax_emission,
+                target=f"{model}/{s}",
+                clone=True,
+                price=context.navigate.carbon_tax,
             )
             # Solve
             name = wf.add_step(
