@@ -20,15 +20,15 @@ def apply_splines_to_convergence(
 ):
     """Apply polynomial regression and splines to convergence"""
 
-    un_vers = input_df.scenario_version.unique()
+    # un_vers = input_df.scenario_version.unique()
     un_ssp = input_df.scenario.unique()
     un_tech = input_df.message_technology.unique()
     un_reg = input_df.region.unique()
 
     data_reg = []
-    for h, i, j, k in product(un_vers, un_ssp, un_tech, un_reg):
+    for i, j, k in product(un_ssp, un_tech, un_reg):
         tech = input_df.query(
-            "scenario_version == @h and scenario == @i and message_technology == @j \
+            "scenario == @i and message_technology == @j \
                 and region == @k"
         ).query("year == @FIRST_MODEL_YEAR or year >= @input_convergence_year")
 
@@ -47,7 +47,6 @@ def apply_splines_to_convergence(
 
         data = [
             [
-                h,
                 i,
                 j,
                 k,
@@ -61,7 +60,6 @@ def apply_splines_to_convergence(
         df = pd.DataFrame(
             data,
             columns=[
-                "scenario_version",
                 "scenario",
                 "message_technology",
                 "region",
@@ -78,7 +76,6 @@ def apply_splines_to_convergence(
     df_wide = (
         input_df.reindex(
             [
-                "scenario_version",
                 "scenario",
                 "message_technology",
                 "region",
@@ -88,9 +85,7 @@ def apply_splines_to_convergence(
             axis=1,
         )
         .drop_duplicates()
-        .merge(
-            df_reg, on=["scenario_version", "scenario", "message_technology", "region"]
-        )
+        .merge(df_reg, on=["scenario", "message_technology", "region"])
     )
 
     seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + TIME_STEPS, TIME_STEPS))
@@ -118,7 +113,6 @@ def apply_splines_to_convergence(
         ]
     ).melt(
         id_vars=[
-            "scenario_version",
             "scenario",
             "message_technology",
             "region",
