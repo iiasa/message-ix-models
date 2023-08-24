@@ -276,7 +276,9 @@ def report_cli(context, output_model, sdgs, water=False):
     sc = context.get_scenario()
     if water:
         from message_ix_models.model.water.reporting import report
+
         report(sc, reg, sdgs)
     else:
         from message_ix_models.model.water.reporting import report_full
+
         report_full(sc, reg, sdgs)
