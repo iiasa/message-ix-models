@@ -1,3 +1,8 @@
+import logging
+
+log = logging.getLogger(__name__)
+
+
 def main(
     scen,
     budget: float,
@@ -43,11 +48,11 @@ def main(
         if not remove_cumulative_years.empty:
             scen.remove_set("cat_year", remove_cumulative_years)
 
-    scen.add_par(
-        "bound_emission", [region, type_emission, type_tec, type_year], budget, unit
-    )
+    args = [region, type_emission, type_tec, type_year], budget, unit
+    log.info(repr(args))
 
-    scen.commit(f"bound_emission {budget} added")
+    with scen.transact(f"bound_emission {budget} added"):
+        scen.add_par("bound_emission", *args)
 
 
 if __name__ == "__main__":  # pragma: no cover
