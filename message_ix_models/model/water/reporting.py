@@ -1394,7 +1394,7 @@ def report(sc=False, reg="", sdgs=False):
 
     sc.check_out(timeseries_only=True)
     print("Starting to upload timeseries")
-    print(report_pd.head())    
+    print(report_pd.head())
     sc.add_timeseries(report_pd)
     print("Finished uploading timeseries")
     sc.commit("Reporting uploaded as timeseries")
