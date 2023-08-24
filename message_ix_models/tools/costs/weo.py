@@ -70,6 +70,29 @@ DICT_WEO_R12 = {
     "R12_WEU": "European Union",
 }
 
+DICT_WEO_R20 = {
+    "R20_AFR": "Africa",
+    "R20_CHN": "China",
+    "R20_PRK": "Russia",
+    "R20_MNG": "Russia",
+    "R20_MSA": "India",
+    "R20_JPN": "Japan",
+    "R20_AUNZ": "Japan",
+    "R20_KOR": "China",
+    "R20_SEA": "India",
+    "R20_RUBY": "Russia",
+    "R20_UMBA": "Russia",
+    "R20_CAS": "Russia",
+    "R20_SCST": "European Union",
+    "R20_EEU27": "European Union",
+    "R20_LAM": "Brazil",
+    "R20_MEA": "Middle East",
+    "R20_NAM": "United States",
+    "R20_SAS": "India",
+    "R20_WEU27": "European Union",
+    "R20_UKEFT": "European Union",
+}
+
 
 # Function to read in raw IEA WEO data
 def get_weo_data() -> pd.DataFrame:
@@ -231,6 +254,8 @@ def get_weo_region_differentiated_costs(
         dict_regions = DICT_WEO_R11
     if input_node.upper() == "R12":
         dict_regions = DICT_WEO_R12
+    if input_node.upper() == "R20":
+        dict_regions = DICT_WEO_R20
 
     # Grab WEO data and keep only investment costs
     df_weo = get_weo_data()
