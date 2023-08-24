@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 _DSD = click.Option(
     ["--dsd"],
     type=click.Choice(["navigate", "iiasa-ece"]),
-    default="navigate",
+    default=Config.dsd,  # Use the same default value as the .navigate.Config class
     help="Target data structure for submission prep.",
 )
 _SCENARIO = click.Option(
@@ -126,9 +126,15 @@ def gen_workflow(context, versions):
 @common_params("dry_run")
 @click.option("--from", "truncate_step", help="Run workflow from this step.")
 @click.option("--no-transport", is_flag=True, help="Omit MESSAGEix-Transport.")
+@click.option(
+    "--ctax",
+    type=float,
+    default=Config.carbon_tax,
+    help="Starting value of carbon tax for Ctax-* scenarios.",
+)
 @click.argument("target_step", metavar="TARGET")
 @click.pass_obj
-def run(context, dry_run, truncate_step, no_transport, dsd, target_step):
+def run(context, dry_run, truncate_step, no_transport, ctax, dsd, target_step):
     """Run the NAVIGATE workflow up to step TARGET.
 
     --from is interpreted as a regular expression, and the workflow is truncated at
@@ -139,6 +145,7 @@ def run(context, dry_run, truncate_step, no_transport, dsd, target_step):
     # Copy settings to the Config object
     context.navigate.dsd = dsd
     context.navigate.transport = not no_transport
+    context.navigate.carbon_tax = ctax
 
     wf = workflow.generate(context)
 
