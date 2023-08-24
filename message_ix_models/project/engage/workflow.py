@@ -338,6 +338,11 @@ def add_steps(
         if step == 2:
             # Do not solve MESSAGE-MACRO for step 2, even if doing so for steps 1/3
             cfg.solve.update(model="MESSAGE")
+        if step == 3:
+            # May help improve long solve times, per
+            # https://iiasa-ece.slack.com/archives/C03M5NX9X0D/p1678703978634529?
+            # thread_ts=1678701550.474199&cid=C03M5NX9X0D
+            cfg.solve["solve_options"].update(predual=1)
 
         # Add step
         s = workflow.add_step(
