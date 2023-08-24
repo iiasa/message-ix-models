@@ -1,4 +1,8 @@
+import logging
+
 from .get_optimization_years import main as get_optimization_years
+
+log = logging.getLogger(__name__)
 
 
 def main(scen, price, conversion_factor=44 / 12):
@@ -51,6 +55,7 @@ def main(scen, price, conversion_factor=44 / 12):
     scen.check_out()
     scen.add_par("tax_emission", df)
     scen.commit("Added carbon price")
+    log.info(df.to_string())
 
 
 if __name__ == "__main__":
