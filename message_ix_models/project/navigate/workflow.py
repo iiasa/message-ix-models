@@ -683,7 +683,8 @@ def generate(context: Context) -> Workflow:
             # Add ENGAGE-style emissions accounting
             # FIXME this step will not run if `solve_model` is "MESSAGE"
             name = wf.add_step(f"{variant} {s} with EA", name, engage.step_0)
-            name = wf.add_step(f"{name} solved", name, solve, model=solve_model)
+            config = WfConfig(solve=dict(model=solve_model))
+            name = wf.add_step(f"{name} solved", name, solve, config=config)
 
         # Compute a minimum for 2025 emissions based on 2020 values in the solution.
         # Values are cached, but not yet added to the scenario. That would require
@@ -707,7 +708,7 @@ def generate(context: Context) -> Workflow:
 
         # Select the indicated .model.workflow.Config or .engage.workflow.PolicyConfig
         # object, if any
-        config: WfConfig = get_policy_config(climate_policy)
+        config = get_policy_config(climate_policy)
         # Use MESSAGE or MESSAGE-MACRO as appropriate
         config.solve.update(model=solve_model)
 
