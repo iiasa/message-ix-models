@@ -1317,7 +1317,7 @@ def report(sc=False, reg="", sdgs=False):
             ["model", "scenario", "variable", "unit", "year", "subannual"]
         )
         renamed_df = pd.DataFrame(columns=report_pd.columns)
-        # Step 2: Check if there is at least one "world" row and one "country" 
+        # Step 2: Check if there is at least one "world" row and one "country"
         # row for each group
         for name, group in grouped:
             if (
@@ -1325,7 +1325,7 @@ def report(sc=False, reg="", sdgs=False):
                 and country_n in group["region"].values
             ):
                 report_pd.drop(group.index, inplace=True)
-                # Step 4: Rename "world" to "country" and remove rows with 
+                # Step 4: Rename "world" to "country" and remove rows with
                 # region = "country"
                 group = group[group["region"] == "World"]
                 group.loc[group["region"] == "World", "region"] = country_n
