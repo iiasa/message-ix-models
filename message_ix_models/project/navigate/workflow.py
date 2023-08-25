@@ -655,7 +655,8 @@ def generate(context: Context) -> Workflow:
             )
 
         # Step 4: Solve
-        name = wf.add_step(f"{variant} {s} solved", name, solve)
+        config = WfConfig(reserve_margin=False, solve=dict(model="MESSAGE"))
+        name = wf.add_step(f"{variant} {s} solved", name, solve, config=config)
 
         # Steps 5–7: Add and solve buildings
         variant = "B" + variant
