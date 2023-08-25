@@ -737,7 +737,7 @@ def generate(context: Context) -> Workflow:
             # Provide a reference scenario from which to copy (MACRO) DEMAND variable
             # data as a better starting point for (MESSAGE) demand parameter in
             # MESSAGE-MACRO iteration
-            config.demand_scenario.update(**base_info)
+            config.demand_scenario.update(base_info)
 
         if isinstance(config, engage.PolicyConfig):
             # Add 1 or more steps for ENGAGE-style climate policy workflows
@@ -782,7 +782,16 @@ def generate(context: Context) -> Workflow:
         # Re-solve the buildings model(s) to pick up price changes
 
         # Construct the target scenario URL
-        target = "{model}/{scenario}+B".format(**wf.guess_target(name, "scenario")[0])
+        info = wf.guess_target(name, "scenario")[0]
+        target = "{model}/{scenario}+B".format(**info)
+
+        # Configuration for solving MESSAGE(-MACRO) within the Buildings sub-workflow.
+        # NB This relies on a corresponding change in .buildings.pre_solve() that
+        #    invokes transfer_demands(); see comment there.
+        sc = WfConfig(solve=config.solve, reserve_margin=False)
+        if isinstance(config, engage.PolicyConfig):
+            # If running ENGAGE sub-workflow, copy demands from the latest step
+            sc.demand_scenario.update(info)
 
         # - Use the same NAVIGATE buildings scenario as the `base`.
         # - Use the same Scenario.solve() keyword arguments, including `solve_model` and
@@ -796,7 +805,8 @@ def generate(context: Context) -> Workflow:
             clone=True,
             # Keyword arguments for build_solve_buildings
             navigate_scenario=s,
-            config=dict(solve=config.solve),
+            # NB(PNK) This is duplicative, temporarily: "solve" will probably go away
+            config=dict(solve_config=sc, solve=sc.solve),
         )
 
         # Store info to set up reporting, include other scenario from which to copy time
