@@ -153,6 +153,10 @@ def test_sturm_run(tmp_path, test_context, test_data_path, sturm_method):
         ("NAV_Dem-NPi-ele", "NPi-AdvPE"),
         ("NAV_Dem-NPi-act-tec", "NPi-LowCE"),
         # Scenario name after climate policy steps
+        # Current
+        ("NAV_Dem-NPi-ref", "20C-ref ENGAGE_20C_step-3+B"),
+        ("NAV_Dem-NPi-ref", "2C-Default ENGAGE_20C_step-3+B"),
+        # Older
         ("NAV_Dem-NPi-ref", "NPi-Default_ENGAGE_20C_step-3+B"),
         ("NAV_Dem-NPi-ele", "NPi-AdvPE_ENGAGE_20C_step-3+B"),
         ("NAV_Dem-NPi-act-tec", "NPi-LowCE_ENGAGE_20C_step-3+B"),

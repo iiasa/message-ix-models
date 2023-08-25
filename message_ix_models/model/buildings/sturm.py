@@ -177,7 +177,7 @@ def scenario_name(name: str) -> str:
     Other values pass through unaltered.
     """
     result = re.sub(
-        r"^(NAV_Dem-)?(15C|20C|NPi|Ctax|1\d00 Gt)-([^_\+]+)(_[du])?.*",
+        r"^(NAV_Dem-)?(15C|20?C|NPi|Ctax|1\d00 Gt)-([^_\+\s]+)(_[du])?.*",
         r"NAV_Dem-NPi-\3",
         name,
     )
