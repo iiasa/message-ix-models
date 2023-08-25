@@ -17,6 +17,8 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util import MESSAGE_DATA_PATH, identify_nodes, local_data_path
 from message_ix_models.util._logging import mark_time
 
+from message_data.model.workflow import Config as SolveConfig
+
 from . import build, sturm
 from .build import get_prices
 
@@ -78,6 +80,13 @@ class Config:
     #: Keyword arguments for :meth:`.message_ix.Scenario.solve`. Set
     #: ``model="MESSAGE_MACRO" to solve scenarios using MESSAGE_MACRO.
     solve: Dict[str, Any] = field(default_factory=lambda: dict(model="MESSAGE"))
+
+    #: Similar to `solve`, but using another config class
+    solve_config: SolveConfig = field(
+        default_factory=lambda: SolveConfig(
+            solve=dict(model="MESSAGE"), reserve_margin=False
+        )
+    )
 
     #: .. todo:: Document the meaning of this setting.
     ssp: str = "SSP2"
@@ -436,6 +445,22 @@ def pre_solve(scenario: Scenario, context, data):
         )
     else:
         tax_emission = make_df(name).dropna()
+
+    # NB This is a temporary hack for NAVIGATE to improve performance when re-solving
+    #    the buildings models after ENGAGE workflow steps. It is not compatible with
+    #    iterated ACCESS-STURM-MESSAGE using Scenario.solve(callback=…). There may be
+    #    conflicts with the values added in the transact() block below. See comment in
+    #    .navigate.workflow.generate().
+    # FIXME Decouple build_and_solve() above; re-use message_data.model.workflow.solve
+    #       (from which this block is copied) for the latter.
+    sc = context.buildings.solve_config
+    if sc.demand_scenario:
+        from message_data.tools.utilities import transfer_demands
+
+        # Retrieve DEMAND variable data from a different scenario and set as values
+        # for the demand parameter
+        source = Scenario(scenario.platform, **sc.demand_scenario)
+        transfer_demands(source, scenario)
 
     # Add data
     with scenario.transact(f"{__name__}.pre_solve()"):
