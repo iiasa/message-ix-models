@@ -67,34 +67,27 @@ def remove_duplicate(data):
     return final_list
 
 
-def report(sc=False, reg="", sdgs=False):
-    """Report nexus module results"""
-
-    # Generating reporter
-    rep = Reporter.from_scenario(sc)
-    report = rep.get(
-        "message::default"
-    )  # works also with suannual, but aggregates months
-    # Create a timeseries dataframe
-    report_df = report.timeseries()
-    report_df.reset_index(inplace=True)
-    report_df.columns = report_df.columns.astype(str)
-    report_df.columns = report_df.columns.str.title()
-
-    # Removing duplicate region names
-    report_df["Region"] = remove_duplicate(report_df)
-
-    # Adding Water availability as resource in demands
-    # This is not automatically reported using message:default
-    rep_dm = Reporter.from_scenario(sc)
-    rep_dm.set_filters(l="water_avail_basin")
-
-    rep_dm2 = rep.get("demand:n-c-l-y-h")
-    rep_dm_df = rep_dm2.to_dataframe()
-    rep_dm_df.reset_index(inplace=True)
-    df_dmd = rep_dm_df[rep_dm_df["l"] == "water_avail_basin"]
-    # setting sub-annual option based on the demand
-    suban = False if "year" in np.unique(df_dmd["h"]) else True
+def report_iam_definition(sc, rep, df_dmd, rep_dm, report_df, suban):
+    """Function to define the report iam dataframe
+    Parameters
+    ----------
+    sc : ixmp.Scenario
+        Scenario to report
+    rep : ixmp.reporting.Reporter
+        Reporter object
+    suban : bool
+        True if subannual, False if annual
+    df_dmd : pd.DataFrame
+        Dataframe with demands
+    rep_dm : ixmp.reporting.Reporter
+        Reporter object for demands
+    report_df : pd.DataFrame
+        Dataframe with report
+    Returns
+    -------
+    report_iam : pyam.IamDataFrame
+        Report in pyam format
+    """
 
     if not suban:
 
@@ -226,7 +219,78 @@ def report(sc=False, reg="", sdgs=False):
     # endif
 
     # Merge both dataframes in pyam
-    report_iam = report_iam.append(df_dmd1)
+    output = report_iam.append(df_dmd1)
+    return output
+
+
+def multiply_electricity_output_of_hydro(elec_hydro_var, report_iam):
+    """Function to multiply electricity output of hydro to get withdrawals
+    Parameters
+    ----------
+    elec_hydro_var : list
+        List of variables with electricity output of hydro
+    report_iam : pyam.IamDataFrame
+        Report in pyam format
+    Returns
+    -------
+    report_iam : pyam.IamDataFrame
+        Report in pyam format
+    """
+
+    for var in elec_hydro_var:
+        if "hydro_1" in var or "hydro_hc" in var:
+            report_iam = report_iam.append(
+                # Multiply electricity output of hydro to get withdrawals
+                # this is an ex-post model calculation and the values are taken from
+                # data/water/ppl_cooling_tech/tech_water_performance_ssp_msg.csv
+                # for hydr_n water_withdrawal_mid_m3_per output is converted by
+                # multiplying with   60 * 60* 24 * 365 * 1e-9 to convert it
+                # into km3/output
+                report_iam.multiply(
+                    f"{var}", 0.161, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
+                )
+            )
+        else:
+            report_iam = report_iam.append(
+                report_iam.multiply(
+                    f"{var}", 0.323, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
+                )
+            )
+    return report_iam
+
+
+# flake8: noqa: C901
+def report(sc=False, reg="", sdgs=False):
+    """Report nexus module results"""
+
+    # Generating reporter
+    rep = Reporter.from_scenario(sc)
+    report = rep.get(
+        "message::default"
+    )  # works also with suannual, but aggregates months
+    # Create a timeseries dataframe
+    report_df = report.timeseries()
+    report_df.reset_index(inplace=True)
+    report_df.columns = report_df.columns.astype(str)
+    report_df.columns = report_df.columns.str.title()
+
+    # Removing duplicate region names
+    report_df["Region"] = remove_duplicate(report_df)
+
+    # Adding Water availability as resource in demands
+    # This is not automatically reported using message:default
+    rep_dm = Reporter.from_scenario(sc)
+    rep_dm.set_filters(l="water_avail_basin")
+
+    rep_dm2 = rep.get("demand:n-c-l-y-h")
+    rep_dm_df = rep_dm2.to_dataframe()
+    rep_dm_df.reset_index(inplace=True)
+    df_dmd = rep_dm_df[rep_dm_df["l"] == "water_avail_basin"]
+    # setting sub-annual option based on the demand
+    suban = False if "year" in np.unique(df_dmd["h"]) else True
+
+    # if subannual, get and subsittute variables
+    report_iam = report_iam_definition(sc, rep, df_dmd, rep_dm, report_df, suban)
 
     # mapping model outputs for aggregation
     urban_infrastructure = [
@@ -481,25 +545,7 @@ def report(sc=False, reg="", sdgs=False):
 
     elec_hydro_var = report_iam.filter(variable="out|secondary|electr|hydro*").variable
 
-    for var in elec_hydro_var:
-        if "hydro_1" in var or "hydro_hc" in var:
-            report_iam = report_iam.append(
-                # Multiply electricity output of hydro to get withdrawals
-                # this is an ex-post model calculation and the values are taken from
-                # data/water/ppl_cooling_tech/tech_water_performance_ssp_msg.csv
-                # for hydr_n water_withdrawal_mid_m3_per output is converted by
-                # multiplying with   60 * 60* 24 * 365 * 1e-9 to convert it
-                # into km3/output
-                report_iam.multiply(
-                    f"{var}", 0.161, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
-                )
-            )
-        else:
-            report_iam = report_iam.append(
-                report_iam.multiply(
-                    f"{var}", 0.323, f"Water Withdrawal|Electricity|Hydro|{var[21:28]}"
-                )
-            )
+    report_iam = multiply_electricity_output_of_hydro(elec_hydro_var, report_iam)
 
     water_hydro_var = report_iam.filter(
         variable="Water Withdrawal|Electricity|Hydro|*"
