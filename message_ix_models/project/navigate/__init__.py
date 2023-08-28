@@ -26,13 +26,22 @@ ixmp.config.register(
 #: Mapping of climate policy labels to :class:`.engage.workflow.PolicyConfig` objects.
 #:
 #: - Some of the ``budget`` values were originally from
-#:   :file:`message_data/projects/engage/config.yaml`, but have been updated using the
-#:   results of diagnostic Ctax runs and the ENGAGE budget calculator
-#:   :file:`message_data/projects/engage/doc/v4.1.7_T4.5_budget_calculation_r3.1.xlsx`.
-#: - The values for ``low_dem_scen`` have no effect in the NAVIGATE workflow as
-#:   currently implemented. In the :file:`engage/config.yaml`, they appear to form a
-#:   "waterfall", with each successively lower budget referencing the previous, which
-#:   seems to preclude running lower budgets without first running every larger budget.
+#:   :file:`message_data/projects/engage/config.yaml`, but have been updated using,
+#:   variously:
+#:
+#:   - The results of diagnostic runs like Ctax-ref with various values for the --ctax=
+#:     parameter.
+#:   - The Excel-based ENGAGE budget calculator in
+#:     :file:`projects/engage/doc/v4.1.7_T4.5_budget_calculation_r3.1.xlsx`.
+#:   - The interpolate_budget() function via "mix-models navigate check-budget".
+#:
+#: - In the :file:`engage/config.yaml`, values for :attr:`low_dem_scen` (a scenario
+#:   name only) appear to form a "waterfall", with each successively lower budget
+#:   referencing the previous, which seems to preclude running lower budgets without
+#:   first running every larger budget.
+#:   In the NAVIGATE workflow, the :attr:`demand_scenario` values (scenario info style,
+#:   a :class:`dict` of ``model`` name, ``scenario`` name, and optional ``version``) are
+#:   set in .navigate.workflow.generate().
 CLIMATE_POLICY: Dict[Optional[str], WfConfig] = {
     # Default
     None: WfConfig(
@@ -51,27 +60,35 @@ for _pc in (
     # list, but is used in EXTRA_SCENARIOS below.
     PolicyConfig(label="1000 Gt", steps=[1], budget=2449),
     # All steps 1–3
-    # Originally from an item labelled "1000" in engage/config.yaml
     PolicyConfig(
         label="20C",
-        # budget=2700,  # for T3.5 and initial WP6, with 1150 Gt target
-        # budget=1931,  # for WP6 with 900 Gt target, using "check-budget"
-        budget=1239,  # 900 Gt target with y₀=2030, using "check-budget": 1847 - 558
+        # 1150 Gt target — for T3.5 and initial WP6
+        # budget=2700,  # MESSAGE only, y₀=2025
+        # budget=2511,  # MESSAGE-MACRO, y₀=2030: determined via check-budget. This
+        # #               value is infeasible for NPi-ref, but feasible for NPi-Default.
+        # budget=2580   # Manually adjusted for NPi-ref. Not feasible.
+        budget=2585,  # Manually adjusted for NPi-ref. Lowest feasible
+        #
+        # 900 Gt target — for current WP6, i.e. based on NPi-{Default,AdvPE}
+        # budget=1931,  # MESSAGE only, y₀=2025
+        # budget=1239,  # MESSAGE-MACRO, y₀=2030: 1847 via check-budget, minus 558 per
+        # #               JM. Not feasible.
+        # budget=1889,  # Determined via-check-budget. Feasible for NPi-Default.
     ),
     # Originally from an item labelled "600" in engage/config.yaml. Current values
     # calculated based on Ctax runs with price of 1000 USD / t CO₂.
     PolicyConfig(
         label="15C",
-        # Achievable for non-ref demand-side scenarios aiming for 650 Gt:
+        # Feasible for non-ref demand-side scenarios aiming for 650 Gt:
         # budget=1357,
-        # Achievable for -ref demand-side scenario aiming for 850 Gt:
+        # Feasible for -ref demand-side scenario aiming for 850 Gt:
         # budget=1840,
         # Calculated using check-budget based on "NPi-act+MACRO_ENGAGE_20C_step-3+B#3"
         # and "Ctax-ref+B#1"
         budget=1190,
     ),
-    # The following do not appear in the official NAVIGATE scenarios list, but are
-    # used in EXTRA_SCENARIOS below.
+    # The following do not appear in the official NAVIGATE scenarios list, but are used
+    # in EXTRA_SCENARIOS below.
     # From an item labelled "1600" in engage/config.yaml
     PolicyConfig(label="1600 Gt", steps=[1], budget=4162),
     # From an item labelled "2000" in engage/config.yaml
@@ -79,16 +96,16 @@ for _pc in (
 ):
     CLIMATE_POLICY[_pc.label] = replace(_pc, **asdict(CLIMATE_POLICY[None]))
 
-#: Special "20C" policy for Task 6.2:
+#: Special "20C" policy for Task 6.2 scenarios *other than* PC-2C-Default.
 #:
-#: - Only ENGAGE step 3; i.e. not step 1 or 2.
+#: - Only ENGAGE step 3 is run; i.e. not step 1 or 2.
 #: - tax_emission_scenario changes the behaviour of engage.step_3: CO2 prices are
-#:   retrieved from the indicated scenario.
+#:   retrieved from the indicated scenario, i.e. PC-2C-Default.
 CLIMATE_POLICY["20C T6.2"] = PolicyConfig(
     label="20C",
     steps=[3],
-    tax_emission_scenario=dict(scenario="NPi-Default_ENGAGE_20C_step-2"),
-    **asdict(CLIMATE_POLICY[None]),
+    tax_emission_scenario=dict(scenario="2C-Default ENGAGE_20C_step-2"),
+    **asdict(CLIMATE_POLICY[None]),  # Reuse defaults
 )
 
 
@@ -139,6 +156,7 @@ EXTRA_SCENARIOS = [
     Code(id="PC-NPi-AdvPE", annotations=_anno("T6.1 ele advanced", "NPi")),
     Code(id="PC-NPi-LowCE", annotations=_anno("T6.1 act+tec default", "NPi")),
     Code(id="PC-NPi-AllEn", annotations=_anno("T6.1 all advanced", "NPi")),
+    Code(id="PC-Ctax-Default", annotations=_anno("T6.1 ref default", "Ctax")),
 ]
 
 
