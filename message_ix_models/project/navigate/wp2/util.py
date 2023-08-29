@@ -184,7 +184,7 @@ def add_electrification_share(scen):
     with scen.transact("Add sets for add_electrification_share()"):
         scen.add_set("shares", constraint_name)
         scen.add_cat("technology", type_tec_share, ELEC_IND_TECS)
-        # NB(PNK 2023-05-07) This was not needed on the navigate_industy_backup
+        # NB(PNK 2023-05-07) This was not needed on the navigate_industry_backup
         # branch, but *is* needed in the WP6 application. This indicates that it is a
         # structure that should be added/ensured earlier, perhaps in .materials.
         scen.add_set("type_tec", type_tec_total)

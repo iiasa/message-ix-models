@@ -343,11 +343,10 @@ def callback(rep: Reporter, context: Context) -> None:
         si = context.navigate.copy_ts
         other_url = f"ixmp://{platform_name}/{si['model']}/{si['scenario']}"
 
-        # Identify period(s) to copy
+        # Identify period(s) to copy: 2020 inclusive to the period before y0
         y0 = rep.get("y::model")[0]
         y = rep.get("y")
-        index = y.index(y0)
-        to_copy = y[index - 1 : index]
+        to_copy = y[y.index(2020) : y.index(y0)]
 
         log.info(f"Will infill reporting data for year={to_copy} from {other_url}")
 
