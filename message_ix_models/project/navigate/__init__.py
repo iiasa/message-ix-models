@@ -96,11 +96,11 @@ for _pc in (
 ):
     CLIMATE_POLICY[_pc.label] = replace(_pc, **asdict(CLIMATE_POLICY[None]))
 
-#: Special "20C" policy for Task 6.2 scenarios *other than* PC-2C-Default.
+#: Special "20C" policy for Task 6.2 scenarios *other than* PEP-2C-Default.
 #:
 #: - Only ENGAGE step 3 is run; i.e. not step 1 or 2.
 #: - tax_emission_scenario changes the behaviour of engage.step_3: CO2 prices are
-#:   retrieved from the indicated scenario, i.e. PC-2C-Default.
+#:   retrieved from the indicated scenario, i.e. PEP-2C-Default.
 CLIMATE_POLICY["20C T6.2"] = PolicyConfig(
     label="20C",
     steps=[3],
