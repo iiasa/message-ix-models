@@ -793,6 +793,7 @@ def generate(context: Context) -> Workflow:
         if isinstance(config, engage.PolicyConfig):
             # If running ENGAGE sub-workflow, copy demands from the latest step
             sc.demand_scenario.update(info)
+        sc.solve["solve_options"].setdefault("predual", 1)
 
         # - Use the same NAVIGATE buildings scenario as the `base`.
         # - Use the same Scenario.solve() keyword arguments, including `solve_model` and
