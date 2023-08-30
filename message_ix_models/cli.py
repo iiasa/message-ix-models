@@ -114,6 +114,7 @@ submodules = [
     "message_ix_models.model.snapshot",
     "message_ix_models.model.structure",
     "message_ix_models.model.water.cli",
+    "message_ix_models.report.cli",
 ]
 
 try:
