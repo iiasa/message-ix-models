@@ -34,6 +34,7 @@ Among other tasks, the tools allow modelers to:
    api/model-emissions
    api/model-snapshot
    api/disutility
+   api/report/index
    api/tools
    api/util
    api/testing
