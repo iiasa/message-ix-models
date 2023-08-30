@@ -23,6 +23,7 @@ jobs:
       type-hint-packages: >-
         genno
         iam-units
+        "mypy < 1.5"
         "pint < 0.21"
         pytest
         sdmx1
