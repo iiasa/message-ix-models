@@ -9,10 +9,10 @@ from dask.core import quote
 from ixmp.reporting import RENAME_DIMS
 from message_ix.models import MESSAGE_ITEMS
 from message_ix.reporting import Key, KeyExistsError, Quantity, Reporter
-from message_ix_models import ScenarioInfo
 from pandas.api.types import is_scalar
 
-from message_data.tools import silence_log
+from message_ix_models import ScenarioInfo
+from message_ix_models.util._logging import silence_log
 
 
 # Shorthand for MESSAGE_VARS, below
