@@ -1,4 +1,4 @@
-"""Atomic reporting computations for MESSAGEix-GLOBIOM."""
+"""Atomic reporting operations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
 from typing import Any, List, Optional, Set, Union
@@ -46,7 +46,7 @@ def get_ts(
 
     Corresponds to :meth:`ixmp.Scenario.timeseries`.
 
-    .. todo:: move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
+    .. todo:: Move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
     """
     filters = filters or dict()
 
@@ -95,7 +95,7 @@ def make_output_path(config, name):
 def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
     """Return the elements of `y` beyond the firstmodelyear of `cat_year`.
 
-    .. todo:: move upstream, to :mod:`message_ix`.
+    .. todo:: Move upstream, to :mod:`message_ix`.
     """
     return list(
         filter(
@@ -114,10 +114,10 @@ def remove_ts(
 ) -> None:
     """Remove all time series data from `scenario`.
 
-    .. todo:: improve to provide the option to remove only those periods in the model
+    .. todo:: Improve to provide the option to remove only those periods in the model
        horizon.
 
-    .. todo:: move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
+    .. todo:: Move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
     """
     data = scenario.timeseries()
     N = len(data)
@@ -149,7 +149,7 @@ _FROM_URL_REF: Set[Any] = set()
 # def from_url(url: str) -> message_ix.Scenario:
 #     """Return a :class:`message_ix.Scenario` given its `url`.
 #
-#     .. todo:: move upstream to :mod:`message_ix.reporting`.
+#     .. todo:: Move upstream to :mod:`message_ix.reporting`.
 #     .. todo:: Create a similar method in :mod:`ixmp.reporting` to load and return
 #        :class:`ixmp.TimeSeries` (or :class:`ixmp.Scenario`) given its `url`.
 #     """
