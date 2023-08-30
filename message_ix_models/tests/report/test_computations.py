@@ -1,7 +1,7 @@
 import xarray as xr
 from genno import Quantity
 
-from message_data.reporting.computations import compound_growth
+from message_ix_models.report.computations import compound_growth
 
 
 def test_compound_growth():

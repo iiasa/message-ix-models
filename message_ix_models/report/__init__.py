@@ -13,6 +13,7 @@ from dask.core import literal
 from genno import Key
 from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Reporter, Scenario
+
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import local_data_path, private_data_path

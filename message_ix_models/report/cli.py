@@ -4,11 +4,11 @@ from pathlib import Path
 
 import click
 import yaml
+
+from message_ix_models.report import register, report
 from message_ix_models.util import local_data_path, private_data_path
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
-
-from message_data.reporting import register, report
 
 log = logging.getLogger(__name__)
 
