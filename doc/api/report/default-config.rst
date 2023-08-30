@@ -1,5 +1,5 @@
 Default reporting configuration
 *******************************
 
-.. literalinclude:: ../../../data/report/global.yaml
+.. literalinclude:: ../../../message_ix_models/data/report/global.yaml
    :language: yaml
