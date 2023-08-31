@@ -28,6 +28,7 @@ def test_report_bare_res(request, test_context):
     # reporter.get(key)
 
 
+@pytest.mark.xfail(raises=ModuleNotFoundError, reason="Requires message_data")
 def test_report_legacy(caplog, request, tmp_path, test_context):
     """Legacy reporting can be invoked through :func:`.report()`."""
     # Create a target scenario
