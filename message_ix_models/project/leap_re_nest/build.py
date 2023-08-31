@@ -3,21 +3,24 @@
 import ixmp as ix
 import message_ix
 import pandas as pd
-from message_ix_models.model.water.reporting import report
-from message_ix_models.util import private_data_path
+from message_ix_modelsodelsodelsodelsodels.project.leap_re_nest.utils import (
+    add_cap_bound_fossil,
+    map_basin,
+)
 
-from message_data.projects.leap_re_nest.reorting_country import report_all_leapre
-from message_data.projects.leap_re_nest.script import (
+from message_ix_models.model.water.reporting import report
+from message_ix_models.project.leap_re_nest.reorting_country import report_all_leapre
+from message_ix_models.project.leap_re_nest.script import (
     add_grid_shares_OnSSET,
     add_MLED_demand,
     add_WaterCrop,
 )
-from message_data.projects.leap_re_nest.script.add_timeslice import (
+from message_ix_models.project.leap_re_nest.script.add_timeslice import (
     duration_time,
     time_setup,
     xls_to_df,
 )
-from message_data.projects.leap_re_nest.utils import add_cap_bound_fossil, map_basin
+from message_ix_models.util import package_data_path
 
 # 1) Generate a Country model. See documentation #
 
@@ -39,11 +42,11 @@ scen2Name = "sub-units"
 sc_ref = message_ix.Scenario(mp, modelName, scenarioName, cache=True)
 mp.add_unit("km3/month")
 mp.add_unit("GWa/month")
-# sc_ref.to_excel(private_data_path("projects","leap_re_nest","ref_scen.xlsx") )
+# sc_ref.to_excel(package_data_path("projects","leap_re_nest","ref_scen.xlsx") )
 # # external users in local database
 # sc_ref2 = message_ix.Scenario(mp2, modelName, "test", version='new',annotation="load from excel")
 
-# sc_ref2.read_excel(private_data_path("projects","leap_re_nest","ref_scen.xlsx"),
+# sc_ref2.read_excel(package_data_path("projects","leap_re_nest","ref_scen.xlsx"),
 #                     add_units=True,
 #                     init_items=True,
 #                     commit_steps=True)
@@ -70,7 +73,7 @@ last_year = 2060  # either int (year) or None (removes extra years)
 node_exlude = ["World"]
 
 xls_file = "input_data_" + file_id + "_" + model_family + ".xlsx"
-path_xls = private_data_path("projects", "leap_re_nest", xls_file)
+path_xls = package_data_path("projects", "leap_re_nest", xls_file)
 
 if sc.has_solution():
     sc.remove_solution()
@@ -154,6 +157,6 @@ for ss in scens:
 # mp.timeslices()
 # sc = message_ix.Scenario(mp, modelName, scen4Name, cache=True)
 # # ADD GDP and Pop info in the timeseries
-# from message_data.projects.leap_re_nest.script.plotter import plotter
+# from message_ix_modelsodels.project.leap_re_nest.script.plotter import plotter
 
-# out_path = str(private_data_path().parents[0] / "reporting_output/")
+# out_path = str(package_data_path().parents[0] / "reporting_output/")

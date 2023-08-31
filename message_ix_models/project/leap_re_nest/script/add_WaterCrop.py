@@ -8,9 +8,9 @@ Creating irrigation technologies
 import numpy as np
 import pandas as pd
 from message_ix import make_df
-from message_ix_models.util import broadcast, private_data_path, same_node, same_time
 
-from message_data.model.water.utils import map_yv_ya_lt
+from message_ix_models.model.water.utils import map_yv_ya_lt
+from message_ix_models.util import broadcast, package_data_path, same_node, same_time
 
 
 def add_irri_demand(sc, ss):
@@ -27,7 +27,7 @@ def add_irri_demand(sc, ss):
     # change values
     # dem_irr
     file = "ww_km3_main_crops_NEST_BCU.csv"
-    path_csv = private_data_path("projects", "leap_re_nest", "crops", file)
+    path_csv = package_data_path("projects", "leap_re_nest", "crops", file)
     # in km3
     dem_csv = pd.read_csv(path_csv)
     # filter the right scenario
@@ -58,12 +58,12 @@ def irri_tecs(sc):
 
     # irrigation efficiency
     file = "crop_params_NEST.csv"
-    path_csv = private_data_path("projects", "leap_re_nest", "crops", file)
+    path_csv = package_data_path("projects", "leap_re_nest", "crops", file)
     # in km3
     crop_par_csv = pd.read_csv(path_csv)
     # irr par from Indus NEST
     file = "irr_params_NEST.csv"
-    path_csv = private_data_path("projects", "leap_re_nest", "crops", file)
+    path_csv = package_data_path("projects", "leap_re_nest", "crops", file)
     irr_par_csv = pd.read_csv(path_csv)
     # sub-time
     ti = list(sc.set("time"))

@@ -1,7 +1,8 @@
 # add MLED demand and create distribution line technologies
 # also using OnSSeT data
 import pandas as pd
-from message_ix_models.util import private_data_path
+
+from message_ix_models.util import package_data_path
 
 
 def dem_from_csv(sc, csv_file):
@@ -48,7 +49,7 @@ def main(sc, ss):
     print("Removed old electricity demand: " + str(tot_dem_el_old) + " GWa/a")
 
     file = "electricity_demand_MLED_NEST_GWh_mth_" + ss + ".csv"
-    path_csv = private_data_path("projects", "leap_re_nest", file)
+    path_csv = package_data_path("projects", "leap_re_nest", file)
 
     dem_csv = pd.read_csv(path_csv)
     dem = dem_from_csv(sc, dem_csv)
