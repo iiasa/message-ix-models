@@ -15,6 +15,8 @@ from ixmp.reporting import Quantity
 from message_ix_models import Context
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from genno import Computer, Key
     from sdmx.model.v21 import Code
 
@@ -120,7 +122,7 @@ def get_ts(
     return scenario.timeseries(iamc=iamc, subannual=subannual, **filters)
 
 
-def gwp_factors():
+def gwp_factors() -> Quantity:
     """Use :mod:`iam_units` to generate a Quantity of GWP factors.
 
     The quantity is dimensionless, e.g. for converting [mass] to [mass], andhas
@@ -154,7 +156,7 @@ def gwp_factors():
     )
 
 
-def make_output_path(config, name):
+def make_output_path(config: Mapping, name: str) -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
     return config["output_dir"].joinpath(name)
 
