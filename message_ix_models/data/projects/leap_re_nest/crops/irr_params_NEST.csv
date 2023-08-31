@@ -1,0 +1,7 @@
+﻿irr_type,eff,en_inp_kWh_m3,inv_USD_ha,var_USD_ha,fix_USD_ha,cap_fact,lifetime
+drip,0.88,0.18,2600,78,52,0.9,10
+surface,0.4,0,460,14,10,0.9,20
+sprinkler,0.7,0.24,1625,49,33,0.9,10
+drip_smart,0.95,0.23,3100,93,62,0.9,10
+surface_smart,0.75,0.328,2825,85,57,0.9,10
+sprinkler_smart,0.8,0.29,2125,64,43,0.9,10
