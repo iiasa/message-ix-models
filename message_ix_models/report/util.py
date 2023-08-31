@@ -5,6 +5,7 @@ import pandas as pd
 from dask.core import quote
 from genno import Quantity
 from genno.compat.pyam.util import collapse as genno_collapse
+from genno.core.key import single_key
 from iam_units import registry
 from message_ix.reporting import Key, Reporter
 from sdmx.model.v21 import Code
@@ -191,7 +192,7 @@ def copy_ts(rep: Reporter, other: str, filters: Optional[dict]) -> Key:
 
     k1 = rep.add("from_url", f"scenario {_id}", quote(other))
     k2 = rep.add("get_ts", f"ts data {_id}", k1, filters)
-    return rep.add("store_ts", f"copy ts {_id}", "scenario", k2)
+    return single_key(rep.add("store_ts", f"copy ts {_id}", "scenario", k2))
 
 
 def add_replacements(dim: str, codes: Iterable[Code]) -> None:
