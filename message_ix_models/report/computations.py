@@ -1,7 +1,7 @@
 """Atomic reporting operations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
-from typing import Any, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Union
 
 import ixmp
 import pandas as pd
@@ -9,6 +9,9 @@ from genno.computations import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +56,7 @@ def get_ts(
     return scenario.timeseries(iamc=iamc, subannual=subannual, **filters)
 
 
-def gwp_factors():
+def gwp_factors() -> Quantity:
     """Use :mod:`iam_units` to generate a Quantity of GWP factors.
 
     The quantity is dimensionless, e.g. for converting [mass] to [mass], andhas
@@ -87,7 +90,7 @@ def gwp_factors():
     )
 
 
-def make_output_path(config, name):
+def make_output_path(config: Mapping, name: str) -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
     return config["output_dir"].joinpath(name)
 
