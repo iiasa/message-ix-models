@@ -70,7 +70,7 @@ def iamc(c: Reporter, info):
     from message_ix_models.report.util import collapse
 
     # Common
-    base_key = Key.from_str_or_key(info["base"])
+    base_key = Key(info["base"])
 
     # Use message_ix_models custom collapse() method
     info.setdefault("collapse", {})
@@ -375,6 +375,13 @@ def prepare_reporter(
         rep.require_compat("message_data.tools.gdp_pop")
     except ModuleNotFoundError:
         pass  # Currently in message_data
+
+    # Force re-installation of the function iamc() in this file as the handler for
+    # "iamc:" sections in global.yaml. Until message_data.reporting is removed, then
+    # importing it will cause the iamc() function in *that* file to override the one
+    # registered above.
+    # TODO Remove, once message_data.reporting is removed.
+    genno.config.handles("iamc")(iamc)
 
     # Handle `report/config` setting passed from calling code
     context.setdefault("report", dict())
