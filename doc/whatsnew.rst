@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- New module :mod:`message_ix_models.report` for reporting (:pull:`116`).
 - Add documentation on :ref:`migrate-filter-repo` using :program:`git filter-repo` and helper scripts (:pull:`89`).
 
 v2023.7.26
