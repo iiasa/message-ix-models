@@ -191,7 +191,7 @@ class Workflow(Computer):
             self.graph.pop(name, None)
 
         # Add to the Computer; return the name of the added step
-        return self.add_single(name, step, "context", base, strict=True)
+        return str(self.add_single(name, step, "context", base, strict=True))
 
     def run(self, name_or_names: Union[str, List[str]]):
         """Run all workflow steps necessary to produce `name_or_names`.
