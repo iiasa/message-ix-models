@@ -33,7 +33,11 @@ def test_silence_log(caplog):
     with silence_log():
         log.warning(msg)
 
-    assert [] == caplog.messages
+    assert [
+        "Set level=40 for logger(s): message_ix_models message_data",
+        "…restored.",
+    ] == caplog.messages
+    caplog.clear()
 
     # After the "with" block, logging is restored
     log.warning(msg)

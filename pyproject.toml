@@ -5,12 +5,10 @@ requires = ["build", "setuptools-scm"]
 dynamic = ["version"]
 name = "message-ix-models"
 description = "Tools for the MESSAGEix-GLOBIOM family of models"
-authors = [
-  {name = "IIASA Energy, Climate, and Environment (ECE) Program"},
-]
+authors = [{ name = "IIASA Energy, Climate, and Environment (ECE) Program" }]
 maintainers = [
-  {name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name"},
-  {name = "Fridolin Glatter", email = "glatter@iiasa.ac.at"},
+  { name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name" },
+  { name = "Fridolin Glatter", email = "glatter@iiasa.ac.at" },
 ]
 readme = "README.rst"
 classifiers = [
@@ -28,7 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: R",
   "Topic :: Scientific/Engineering",
-  "Topic :: Scientific/Engineering :: Information Analysis"
+  "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -36,7 +34,7 @@ dependencies = [
   "colorama",
   # When the minimum is greater than the minimum via message_ix; e.g.
   # message_ix >= 3.4.0 → ixmp >= 3.4.0 → genno >= 1.6.0",
-  "genno >= 1.8.0",
+  "genno >= 1.18.1",
   "iam_units",
   "message_ix >= 3.4.0",
   "pooch",
