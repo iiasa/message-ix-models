@@ -9,10 +9,10 @@ import numpy as np
 import pandas as pd
 from message_ix import make_df
 
-# add OnSSET shares of grid vs off grid electricity
-from message_ix_models.util import broadcast, private_data_path, same_node, same_time
+from message_ix_models.model.water.utils import map_yv_ya_lt
 
-from message_data.model.water.utils import map_yv_ya_lt
+# add OnSSET shares of grid vs off grid electricity
+from message_ix_models.util import broadcast, package_data_path, same_node, same_time
 
 
 def add_trsm_dist_basin(sc):
@@ -28,10 +28,10 @@ def add_trsm_dist_basin(sc):
 
     last_vtg_year = 2010
     file = "OnSSET_cost_paramters.csv"
-    path_csv = private_data_path("projects", "leap_re_nest", file)
+    path_csv = package_data_path("projects", "leap_re_nest", file)
     onsset_pars = pd.read_csv(path_csv)
     file = "grid_cost_bcu.csv"
-    path_csv = private_data_path("projects", "leap_re_nest", file)
+    path_csv = package_data_path("projects", "leap_re_nest", file)
     grid_cost = pd.read_csv(path_csv)[["BCU", "urb_rur", "tot_cost_usd2010_kW"]]
     grid_loss = onsset_pars["Value"][onsset_pars["Variable"] == "grid_losses"]
     sc.check_out()
@@ -227,7 +227,7 @@ def add_offgrid_gen(sc, scen_name):
     sc.add_set("level", ["offgrid_final_urb", "offgrid_final_rur"])
 
     file = "energy_allocation_results_for_nest.csv"
-    path_csv = private_data_path("projects", "leap_re_nest", file)
+    path_csv = package_data_path("projects", "leap_re_nest", file)
     onsset_en = pd.read_csv(path_csv)
     onsset_en = onsset_en[onsset_en["scenario"] == scen_name]
     # interpolate missing years IT MIGHT CHANGE in FUTURE VERSION
@@ -283,7 +283,7 @@ def add_offgrid_gen(sc, scen_name):
 
     # load file with investment cost assumption from OnSSET
     file = "OnSSET_cost_paramters.xlsx"
-    path_xls = private_data_path("projects", "leap_re_nest", file)
+    path_xls = package_data_path("projects", "leap_re_nest", file)
     tec_cost = pd.read_excel(path_xls, sheet_name="for_NEST")
     avg_cost = int(tec_cost[tec_cost["tec"] == "average"]["inv_cost"])
 

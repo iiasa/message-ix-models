@@ -1,7 +1,8 @@
 # utils for NEST model
 import pandas as pd
 from message_ix import make_df
-from message_ix_models.util import broadcast, private_data_path
+
+from message_ix_models.util import broadcast, package_data_path
 
 
 def map_basin(sc):
@@ -18,7 +19,7 @@ def map_basin(sc):
     # read csv file for basin names and region mapping
     # reading basin_delineation
     FILE = f"basins_by_region_simpl_ZMB.csv"
-    PATH = private_data_path("projects", "leap_re_nest", "delineation", FILE)
+    PATH = package_data_path("projects", "leap_re_nest", "delineation", FILE)
 
     df = pd.read_csv(PATH)
     # Assigning proper nomenclature
