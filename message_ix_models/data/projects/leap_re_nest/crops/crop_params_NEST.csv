@@ -1,0 +1,8 @@
+﻿crop,cf_1,cf_2,cf_3,nd_1,nd_2,nd_3,nd_4,pm_1,pm_2,irr_type,eta_irr,improved_irr,improved_eta
+maize,0.3,1.2,0.35,30,50,60,40,8,11,surface,0.6,sprinkler,0.75
+barley,0.5,1.15,0.33,15,30,65,40,11,6,surface,0.6,sprinkler,0.75
+sugarcane,0.4,1.25,0.75,50,70,220,140,112,6,drip,0.9,drip,0.9
+cotton,0.35,1.2,0.6,30,50,60,55,11,11,sprinkler,0.75,drip,0.9
+wheat,0.5,1.15,0.33,15,30,65,40,5,5,surface,0.6,sprinkler,0.75
+rice,1.05,1.2,0.75,30,30,80,40,11,11,surface,0.6,sprinkler,0.75
+others,0.51,1.07,0.64,49,48,68,35,8,7,surface,0.6,sprinkler,0.75
