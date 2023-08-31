@@ -28,7 +28,7 @@ def compound_growth(qty: Quantity, dim: str) -> Quantity:
     # Compute intervals along `dim`
     # The value at index d is the duration between d and the next index d+1
     c = qty.coords[dim]
-    dur = (c - c.shift({dim: 1})).fillna(0).shift({dim: -1})
+    dur = (c - c.shift({dim: 1})).fillna(0).shift({dim: -1}).fillna(0)
     # - Raise the values of `qty` to the power of the duration.
     # - Compute cumulative product along `dim` from the first index.
     # - Shift, so the value at index d is the growth relative to the prior index d-1
