@@ -1,7 +1,7 @@
 import logging
-import sys
 from copy import deepcopy
 from functools import partial
+from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
@@ -16,7 +16,7 @@ from message_ix import Reporter, Scenario
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import local_data_path, private_data_path
+from message_ix_models.util import local_data_path, package_data_path
 from message_ix_models.util._logging import mark_time
 
 from .util import add_replacements
@@ -67,12 +67,12 @@ def iamc(c: Reporter, info):
     """
     # FIXME the upstream key "variable" for the configuration is confusing; choose a
     #       better name
-    from message_data.reporting.util import collapse
+    from message_ix_models.report.util import collapse
 
     # Common
     base_key = Key.from_str_or_key(info["base"])
 
-    # Use message_data custom collapse() method
+    # Use message_ix_models custom collapse() method
     info.setdefault("collapse", {})
 
     # Add standard renames
@@ -129,7 +129,7 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
 
         from message_ix.reporting import Reporter
         from message_ix_models import Context
-        from message_data.reporting import register
+        from message_ix_models.report import register
 
         def cb(rep: Reporter, ctx: Context):
             # Modify `rep` by calling its methods ...
@@ -140,22 +140,29 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     Parameters
     ----------
     name_or_callback
-        If a string, this may be a submodule of :mod:`.message_data`, in which case the
-        function :func:`message_data.{name}.report.callback` is used. Or, it may be a
-        fully-resolved package/module name, in which case :func:`{name}.callback` is
+        If a string, this may be a submodule of :mod:`.message_ix_models`, or
+        :mod:`message_data`, in which case the function
+        ``{message_data,message_ix_models}.{name}.report.callback`` is used. Or, it may
+        be a fully-resolved package/module name, in which case ``{name}.callback`` is
         used. If a callable (function), it is used directly.
     """
     if isinstance(name_or_callback, str):
         # Resolve a string
-        try:
-            # …as a submodule of message_data
-            name = f"message_data.{name_or_callback}.report"
-            __import__(name)
-        except ImportError:
-            # …as a fully-resolved package/module name
-            name = name_or_callback
-            __import__(name)
-        callback = sys.modules[name].callback
+        for name in [
+            # As a submodule of message_ix_models
+            f"message_ix_models.{name_or_callback}.report",
+            # As a submodule of message_data
+            f"message_data.{name_or_callback}.report",
+            # As a fully-resolved package/module name
+            name_or_callback,
+        ]:
+            try:
+                mod = import_module(name)
+            except ModuleNotFoundError:
+                continue
+            else:
+                break
+        callback = mod.callback
     else:
         callback = name_or_callback
         name = callback.__name__
@@ -244,7 +251,7 @@ def report(context: Context, *args, **kwargs):
 
     # Default arguments for genno-based reporting
     context.report.setdefault("key", "default")
-    context.report.setdefault("config", private_data_path("report", "global.yaml"))
+    context.report.setdefault("config", package_data_path("report", "global.yaml"))
 
     rep, key = prepare_reporter(context)
 
@@ -363,8 +370,11 @@ def prepare_reporter(
         has_solution = scenario.has_solution()
 
     # Append the message_data computations
-    rep.require_compat("message_data.reporting.computations")
-    rep.require_compat("message_data.tools.gdp_pop")
+    rep.require_compat("message_ix_models.report.computations")
+    try:
+        rep.require_compat("message_data.tools.gdp_pop")
+    except ModuleNotFoundError:
+        pass  # Currently in message_data
 
     # Handle `report/config` setting passed from calling code
     context.setdefault("report", dict())
@@ -381,7 +391,7 @@ def prepare_reporter(
     p = config.get("path")
     if p and not p.exists() and not p.is_absolute():
         # Try to resolve relative to the data/ directory
-        p = private_data_path("report", p)
+        p = package_data_path("report", p)
         assert p.exists(), p
         config.update(path=p)
 
