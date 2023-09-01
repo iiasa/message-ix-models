@@ -14,6 +14,7 @@ from typing import Dict, List
 import message_ix
 import pandas as pd
 from genno import Key, computations
+from genno.core.key import single_key
 from iam_units import registry
 from message_ix_models import Context, Spec
 from message_ix_models.util import eval_anno
@@ -137,7 +138,9 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
             store_keys.append(k1)
 
         # Make a path for file output
-        k2 = rep.add("make_output_path", f"{k1} path", "config", f"{base}.csv")
+        k2 = single_key(
+            rep.add("make_output_path", f"{k1} path", "config", f"{base}.csv")
+        )
 
         # Write the data frame to this path
         # FIXME(PNK) upstream genno.computations.write_report handles only Quantity, not
@@ -150,8 +153,10 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     # Same for final energy
     k1 = "buildings fe::iamc"
     store_keys.append(k1)
-    k2 = rep.add(
-        "make_output_path", "buildings fe path", "config", "final-energy-new.csv"
+    k2 = single_key(
+        rep.add(
+            "make_output_path", "buildings fe path", "config", "final-energy-new.csv"
+        )
     )
     k3 = rep.add("buildings fe file", lambda df, path: df.to_csv(path), k1, k2)
     file_keys.append(k3)
