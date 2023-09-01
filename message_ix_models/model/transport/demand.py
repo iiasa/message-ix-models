@@ -10,6 +10,7 @@ import pandas as pd
 from dask.core import literal, quote
 from genno import Computer, Key
 from genno.computations import interpolate
+from genno.core.key import iter_keys
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
@@ -108,8 +109,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
         c.add(key, partial(interpolate, coords=dict(y=info.Y)), k3, sums=True)
 
-    gdp_keys = c.add("GDP:n-y", gdp_pop.gdp, "y", "config", sums=True)
-    c.add("PRICE_COMMODITY:n-c-y", (computations.dummy_prices, gdp_keys[0]), sums=True)
+    gdp_keys = iter_keys(c.add("GDP:n-y", gdp_pop.gdp, "y", "config", sums=True))
+    c.add(
+        "PRICE_COMMODITY:n-c-y", (computations.dummy_prices, next(gdp_keys)), sums=True
+    )
 
 
 def prepare_computer(c: Computer) -> None:
