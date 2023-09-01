@@ -6,6 +6,7 @@ from typing import Dict, List, Mapping
 
 import pandas as pd
 from genno import Computer, Key, Quantity
+from genno.core.key import KeyLike, single_key
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models.util import (
@@ -52,7 +53,7 @@ def prepare_computer(c: Computer):
         name="load factor",
     )
 
-    keys = []
+    keys: List[KeyLike] = []
 
     if source == "IKARUS":
         keys.append("transport nonldv::ixmp+ikarus")
@@ -62,26 +63,33 @@ def prepare_computer(c: Computer):
         raise ValueError(f"Unknown source for non-LDV data: {source!r}")
 
     # Dummy/placeholder data for 2-wheelers (not present in IKARUS)
-    keys.append(c.add("transport 2W::ixmp", get_2w_dummies, "context"))
+    keys.append(single_key(c.add("transport 2W::ixmp", get_2w_dummies, "context")))
 
     # Compute CO₂ emissions factors
     for k in map(Key.from_str_or_key, list(keys[:-1])):
         key = c.add(k.add_tag("input"), itemgetter("input"), k)
         keys.append(
-            c.add(
-                k.add_tag("emi"), partial(ef_for_input, species="CO2"), "context", key
+            single_key(
+                c.add(
+                    k.add_tag("emi"),
+                    partial(ef_for_input, species="CO2"),
+                    "context",
+                    key,
+                )
             )
         )
 
     # Data for usage technologies
     keys.append(
-        c.add(
-            "transport nonldv usage::ixmp",
-            usage_data,
-            k_lf,
-            "t::transport modes",
-            "n::ex world",
-            "y::model",
+        single_key(
+            c.add(
+                "transport nonldv usage::ixmp",
+                usage_data,
+                k_lf,
+                "t::transport modes",
+                "n::ex world",
+                "y::model",
+            )
         )
     )
 

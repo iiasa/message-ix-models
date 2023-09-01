@@ -9,6 +9,7 @@ from typing import Dict
 import pandas as pd
 import xarray as xr
 from genno import Computer, Key, Quantity, quote
+from genno.core.key import single_key
 from iam_units import registry
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
@@ -279,9 +280,9 @@ def prepare_computer(c: Computer):
 
         if name == "input":
             # Apply scenario-specific input efficiency factor
-            key = c.add_product("nonldv efficiency::adj", k_fi, key)
+            key = single_key(c.add_product("nonldv efficiency::adj", k_fi, key))
             # Drop existing "c" dimension
-            key = c.add("drop_vars", key.drop("c"), key, quote("c"))
+            key = single_key(c.add("drop_vars", key.drop("c"), key, quote("c")))
             # Fill (c, l) dimensions based on t
             key = c.add_product(k.add_tag(next(i)), key, "broadcast:t-c-l")
         elif name == "technical_lifetime":
