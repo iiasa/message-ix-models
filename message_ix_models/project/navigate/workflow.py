@@ -581,7 +581,6 @@ def generate(context: Context) -> Workflow:
     # 1. Name of the final step in the policy sequence (if any).
     # 2. Args for report(…, other_scenario_info=…) —either None or model/scenario name.
     to_report: Dict[str, Tuple[str, Optional[Mapping]]] = {}
-    all_reported = []  # Result of step 9
 
     # Step 1
     wf.add_step(
@@ -790,9 +789,10 @@ def generate(context: Context) -> Workflow:
         # NB This relies on a corresponding change in .buildings.pre_solve() that
         #    invokes transfer_demands(); see comment there.
         sc = WfConfig(solve=config.solve, reserve_margin=False)
-        if isinstance(config, engage.PolicyConfig):
-            # If running ENGAGE sub-workflow, copy demands from the latest step
-            sc.demand_scenario.update(info)
+        # If running ENGAGE sub-workflow, copy demands from the latest step
+        sc.demand_scenario.update(
+            info if isinstance(config, engage.PolicyConfig) else {}
+        )
         sc.solve["solve_options"].setdefault("predual", 1)
 
         # - Use the same NAVIGATE buildings scenario as the `base`.
@@ -815,20 +815,33 @@ def generate(context: Context) -> Workflow:
         # series data for y=2020
         to_report[s] = (name, base_info)
 
-    # Steps 8–9
+    add_reporting_steps(wf, to_report)
+
+    return wf
+
+
+def add_reporting_steps(
+    wf: Workflow, to_report: Mapping[str, Tuple[str, Optional[Mapping]]]
+) -> List[str]:
+    """Add reporting and prep-solution steps to `wf` for each item in `to_report`.
+
+    .. todo:: Migrate to :mod:`message_ix_models`.
+    """
+    added = []
+
     for s, (name, other) in to_report.items():
         # Steps 8–9: Report individual scenario (both genno and legacy reporting)
-        all_reported.append(
+        added.append(
             wf.add_step(f"{s} reported", name, report, other_scenario_info=other)
         )
 
         # Step 10: Prepare individual scenario for submission
-        wf.add_step(f"{s} prepped", all_reported[-1], prep_submission)
+        wf.add_step(f"{s} prepped", added[-1], prep_submission)
 
     # Key to invoke steps 8–9 for all scenarios as a batch
-    wf.add_single("all reported", *all_reported)
+    wf.add_single("all reported", *added)
 
     # Key to invoke step 10 for all scenarios as a batch
-    wf.add_single("all prepped", prep_submission, "context", *all_reported)
+    wf.add_single("all prepped", prep_submission, "context", *added)
 
-    return wf
+    return added
