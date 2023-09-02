@@ -558,11 +558,6 @@ combine:
 
 
 general:
-# List of model periods only, excluding those before or after
-- key: "y::model"
-  comp: model_periods
-  inputs: [ "y", "cat_year" ]
-
 - key: Liquids:nl-ya
   comp: apply_units
   inputs: [liquids:nl-ya]

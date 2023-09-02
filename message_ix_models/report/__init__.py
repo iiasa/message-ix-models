@@ -10,16 +10,13 @@ from warnings import warn
 import genno.config
 import yaml
 from dask.core import literal
-from genno import Key
+from genno import Key, KeyExistsError
 from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Reporter, Scenario
 
 from message_ix_models import Context
-from message_ix_models.model.structure import get_codes
 from message_ix_models.util import local_data_path, package_data_path
 from message_ix_models.util._logging import mark_time
-
-from .util import add_replacements
 
 __all__ = [
     "prepare_reporter",
@@ -306,17 +303,6 @@ def prepare_reporter(
 ) -> Tuple[Reporter, Key]:
     """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
 
-    Parameters
-    ----------
-    context : Context
-        Containing settings in the ``report/*`` tree.
-    scenario : message_ix.Scenario, optional
-        Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
-        retrieve a Scenario.
-    reporter : .Reporter, optional
-        Existing reporter to extend with computations. If not given, it is created
-        using :meth:`.Reporter.from_scenario`.
-
     The code responds to the following settings on `context`:
 
     .. list-table::
@@ -344,6 +330,17 @@ def prepare_reporter(
          - Path-like, optional
          - Path to write reporting outputs. If given, a computation ``cli-output`` is
            added to the Reporter which writes ``report/key`` to this path.
+
+    Parameters
+    ----------
+    context : Context
+        Containing settings in the ``report/*`` tree.
+    scenario : message_ix.Scenario, optional
+        Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
+        retrieve a Scenario.
+    reporter : .Reporter, optional
+        Existing reporter to extend with computations. If not given, it is created
+        using :meth:`.Reporter.from_scenario`.
 
     Returns
     -------
@@ -419,18 +416,6 @@ def prepare_reporter(
     # Pass configuration to the reporter
     rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
 
-    # TODO perhaps move all default reporting computations for message_ix_models to a
-    #      `CALLBACK` that is included by default. This would avoid defining any
-    #      tasks in this function.
-    # Add mappings for conversions to IAMC data structures
-    add_replacements("c", get_codes("commodity"))
-    add_replacements("t", get_codes("technology"))
-
-    # Ensure "y::model" and "y0" are present
-    # TODO move upstream, e.g. to message_ix
-    rep.add("model_periods", "y::model", "y", "cat_year")
-    rep.add("y0", itemgetter(0), "y::model")
-
     # Apply callbacks for other modules which define additional reporting computations
     for callback in CALLBACKS:
         callback(rep, context)
@@ -457,3 +442,27 @@ def prepare_reporter(
     log.info("…done")
 
     return rep, key
+
+
+def defaults(rep: Reporter, context: Context) -> None:
+    from message_ix_models.model.structure import get_codes
+
+    from .util import add_replacements
+
+    # Add mappings for conversions to IAMC data structures
+    add_replacements("c", get_codes("commodity"))
+    add_replacements("t", get_codes("technology"))
+
+    # Ensure "y::model" and "y0" are present
+    # TODO remove this once message-ix-models depends on message_ix > 3.7.0 at minimum
+    for comp in (
+        ("y::model", "model_periods", "y", "cat_year"),
+        ("y0", itemgetter(0), "y::model"),
+    ):
+        try:
+            rep.add(*comp, strict=True)
+        except KeyExistsError:
+            pass  # message_ix > 3.7.0; these are already defined
+
+
+register(defaults)
