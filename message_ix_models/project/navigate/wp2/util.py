@@ -87,80 +87,88 @@ def add_CCS_constraint(
 
 
 #: List of technologies for :func:`add_electrification_share`
-#:
-#: Group 1: Final Energy Industry technologies that produce ht_heat
-NONELEC_IND_TECS_HT = [
-    # Cement industry
-    "furnace_foil_cement",
-    "furnace_loil_cement",
-    "furnace_biomass_cement",
-    "furnace_ethanol_cement",
-    "furnace_methanol_cement",
-    "furnace_gas_cement",
-    "furnace_coal_cement",
-    "furnace_h2_cement",
-    # Aluminum industry
-    "furnace_coal_aluminum",
-    "furnace_foil_aluminum",
-    "furnace_loil_aluminum",
-    "furnace_ethanol_aluminum",
-    "furnace_biomass_aluminum",
-    "furnace_methanol_aluminum",
-    "furnace_gas_aluminum",
-    "furnace_h2_aluminum",
-    # High Value Chemicals
-    "furnace_coke_petro",
-    "furnace_coal_petro",
-    "furnace_foil_petro",
-    "furnace_loil_petro",
-    "furnace_ethanol_petro",
-    "furnace_biomass_petro",
-    "furnace_methanol_petro",
-    "furnace_gas_petro",
-    "furnace_h2_petro",
-    # Resins
-    "furnace_coal_resins",
-    "furnace_foil_resins",
-    "furnace_loil_resins",
-    "furnace_ethanol_resins",
-    "furnace_biomass_resins",
-    "furnace_methanol_resins",
-    "furnace_gas_resins",
-    "furnace_h2_resins",
-]
+TECHS = {
+    "non-elec": [
+        # Base model / other industry technologies that output i_therm
+        "foil_i",
+        "loil_i",
+        "biomass_i",
+        "eth_i",
+        "gas_i",
+        "coal_i",
+        "h2_i",
+        # MESSAGEix-Materials technologies that output ht_heat
+        # Cement industry
+        "furnace_foil_cement",
+        "furnace_loil_cement",
+        "furnace_biomass_cement",
+        "furnace_ethanol_cement",
+        "furnace_methanol_cement",
+        "furnace_gas_cement",
+        "furnace_coal_cement",
+        "furnace_h2_cement",
+        # Aluminum industry
+        "furnace_coal_aluminum",
+        "furnace_foil_aluminum",
+        "furnace_loil_aluminum",
+        "furnace_ethanol_aluminum",
+        "furnace_biomass_aluminum",
+        "furnace_methanol_aluminum",
+        "furnace_gas_aluminum",
+        "furnace_h2_aluminum",
+        # High Value Chemicals
+        "furnace_coke_petro",
+        "furnace_coal_petro",
+        "furnace_foil_petro",
+        "furnace_loil_petro",
+        "furnace_ethanol_petro",
+        "furnace_biomass_petro",
+        "furnace_methanol_petro",
+        "furnace_gas_petro",
+        "furnace_h2_petro",
+        # Resins
+        "furnace_coal_resins",
+        "furnace_foil_resins",
+        "furnace_loil_resins",
+        "furnace_ethanol_resins",
+        "furnace_biomass_resins",
+        "furnace_methanol_resins",
+        "furnace_gas_resins",
+        "furnace_h2_resins",
+    ],
+    "elec": [
+        # Base model / other industry technologies that output i_therm
+        "elec_i",
+        # MESSAGEix-Materials technologies that output ht_heat
+        "furnace_elec_cement",
+        "furnace_elec_aluminum",
+        "furnace_elec_petro",
+        "furnace_elec_resins",
+    ],
+}
 
-#: Group 2: Other Industry (produces i_therm)
-NON_ELEC_IND_TEC_OTH = [
-    "foil_i",
-    "loil_i",
-    "biomass_i",
-    "eth_i",
-    "gas_i",
-    "coal_i",
-    "h2_i",
-]
-
-#: Final Energy Industry Electricity Technologies for :func:`add_electrification_share`
-#:
-#: Group 1
-ELEC_IND_TECS_HT = [
-    "furnace_elec_cement",
-    "furnace_elec_aluminum",
-    "furnace_elec_petro",
-    "furnace_elec_resins",
-]
-
-#: Group 2
-ELEC_IND_TECS_OTH = ["elec_i"]
-
-ALL_IND_TECS = (
-    NONELEC_IND_TECS_HT + ELEC_IND_TECS_HT + NON_ELEC_IND_TEC_OTH + ELEC_IND_TECS_OTH
+#: Data for :func:`add_electrification_share`. This is for kind="lo", that is, the
+#: minimum share of the non-elec technologies in the total
+ES = pd.DataFrame(
+    [
+        [2030, 0.4],
+        [2035, 0.5],
+        [2040, 0.6],
+        [2045, 0.7],
+        [2050, 0.8],
+        [2055, 0.8],
+        [2060, 0.8],
+        [2070, 0.8],
+        [2080, 0.8],
+        [2090, 0.8],
+        [2100, 0.8],
+        [2110, 0.8],
+    ],
+    columns=["year_act", "value"],
 )
 
-ELEC_IND_TECS = ELEC_IND_TECS_HT + ELEC_IND_TECS_OTH
 
-
-def add_electrification_share(scen):
+def add_electrification_share(scen, kind=Literal["lo", "up"]):
     """Add share constraints for electrification in industry.
 
     There are no processes at the moment that use low temperature heat.
@@ -171,115 +179,96 @@ def add_electrification_share(scen):
     Iron and Steel are not included since implementation is more complicated.
 
     Depends on scrap availability etc.
+
+    Parameters
+    ----------
+    kind : str
+        Type of constraint to implement. If "lo", then ``share_commodity_lo`` values are
+        set to constrain the minimum share of "elec" outputs (per :data:`TECHS` in the
+        total). If "up", then ``share_commodity_up`` values are set to constrain the
+        maximum share of "non-elec" outputs in the total.
     """
-    log.info("Add share constraints for electrification in industry")
+    msg = "Add share constraints for electrification in industry"
+    log.info(msg)
 
     info = ScenarioInfo(scen)
-    node_list = nodes_ex_world(info.N)
+    nodes = nodes_ex_world(info.N)
 
-    constraint_name = "share_low_lim_elec_ind"
-    type_tec_share = "elec_ind"
-    type_tec_total = "all_ind"
+    shares = "share_elec_ind"
+    # type_tec labels
+    tt_num = "elec_ind" if kind == "lo" else "non-elec_ind"
+    tt_total = "all_ind"
 
-    with scen.transact("Add sets for add_electrification_share()"):
-        scen.add_set("shares", constraint_name)
-        scen.add_cat("technology", type_tec_share, ELEC_IND_TECS)
+    data = {
+        tt_num: TECHS["elec"] if kind == "lo" else TECHS["non-elec"],
+        tt_total: TECHS["elec"] + TECHS["non-elec"],
+    }
+
+    # Base data frame; all nodes, node_share == node
+    # NB cannot use make_df(), since this is a set rather than a parameter
+    base = (
+        pd.DataFrame(
+            None,
+            index=[0],
+            columns="shares node_share node type_tec mode commodity level".split(),
+        )
+        .pipe(broadcast, node=nodes)
+        .eval("node_share = node")
+        .assign(shares=shares)
+    )
+    # Re-used labels for commodity, level, and mode
+    common = {
+        "ht": dict(mode="high_temp", commodity="ht_heat"),
+        "i": dict(mode="M1", commodity="i_therm", level="useful"),
+    }
+    # Levels for "ht" commodities
+    levels = ["useful_cement", "useful_aluminum", "useful_petro", "useful_resins"]
+
+    # Identify the technology types which appear in the numerator
+    data["map_shares_commodity_share"] = pd.concat(
+        [
+            base.assign(**common["ht"]).pipe(broadcast, level=levels),
+            base.assign(**common["i"]),
+        ]
+    ).assign(type_tec=tt_num)
+
+    # Identify the technology types which appear in the denominator
+    data["map_shares_commodity_total"] = pd.concat(
+        [
+            base.assign(**common["ht"]).pipe(broadcast, level=levels),
+            base.assign(**common["i"]),
+        ]
+    ).assign(type_tec=tt_total)
+
+    # Generate share constraint values
+    name = f"share_commodity_{kind}"
+    ya_value = ES.eval("value = 1.0 - value" if kind == "up" else "value = value")
+    data[name] = (
+        make_df(name, shares=shares, time="year", unit="-")
+        .pipe(broadcast, ya_value, node_share=nodes)
+        .astype({"year_act": int})
+    )
+
+    # log.info(data)  # For debugging
+
+    with scen.transact(msg):
+        scen.add_set("shares", shares)
         # NB(PNK 2023-05-07) This was not needed on the navigate_industry_backup
         # branch, but *is* needed in the WP6 application. This indicates that it is a
         # structure that should be added/ensured earlier, perhaps in .materials.
-        scen.add_set("type_tec", type_tec_total)
+        scen.add_set("type_tec", [tt_num, tt_total])
 
-    scen.check_out()
+        # Add all technologies which make up the numerator and denominator
+        for cat in tt_num, tt_total:
+            scen.add_cat("technology", cat, data[cat])
 
-    # Group 1:
-    levels = ["useful_cement", "useful_aluminum", "useful_petro", "useful_resins"]
-    set_name = "map_shares_commodity_share"
+        # Add set and mapping set contents
+        for name in "map_shares_commodity_share", "map_shares_commodity_total":
+            scen.add_set(name, data[name])
 
-    # NB cannot use make_df(), since this is a set rather than a parameter
-    cols = "shares node_share node type_tec mode commodity level"
-    base = pd.DataFrame(None, index=[0], columns=cols.split())
-    common = dict(shares=constraint_name, type_tec=type_tec_share)
-
-    df = (
-        base.assign(mode="high_temp", commodity="ht_heat", **common)
-        .pipe(broadcast, node=node_list, level=levels)
-        .assign(node_share=lambda df: df.node)
-    )
-    scen.add_set(set_name, df)
-
-    # Group 2:
-    df = (
-        base.assign(
-            shares=constraint_name,
-            type_tec=type_tec_total,
-            mode="M1",
-            commodity="i_therm",
-            level="useful",
-        )
-        .pipe(broadcast, node=node_list)
-        .assign(node_share=lambda df: df.node)
-    )
-    scen.add_set(set_name, df)
-
-    scen.commit("Share mapping added.")
-
-    # Add all technologies which make up the "Total"
-    with scen.transact(f"Populate technology category {type_tec_total!r}"):
-        scen.add_cat("technology", type_tec_total, ALL_IND_TECS)
-
-    # Group 1:
-    scen.check_out()
-    set_name = "map_shares_commodity_total"
-
-    common["type_tec"] = type_tec_total
-    df = (
-        base.assign(mode="high_temp", commodity="ht_heat", **common)
-        .pipe(broadcast, node=node_list, level=levels)
-        .assign(node_share=lambda df: df.node)
-    )
-    scen.add_set(set_name, df)
-
-    # Group 2:
-    df = (
-        base.assign(
-            shares=constraint_name,
-            type_tec=type_tec_total,
-            mode="M1",
-            commodity="i_therm",
-            level="useful",
-        )
-        .pipe(broadcast, node=node_list)
-        .assign(node_share=lambda df: df.node)
-    )
-    scen.add_set(set_name, df)
-
-    # Add lower bound share constraint for end of the century
-    par_name = "share_commodity_lo"
-    ya_value = pd.DataFrame(
-        [
-            [2030, 0.4],
-            [2035, 0.5],
-            [2040, 0.6],
-            [2045, 0.7],
-            [2050, 0.8],
-            [2055, 0.8],
-            [2060, 0.8],
-            [2070, 0.8],
-            [2080, 0.8],
-            [2090, 0.8],
-            [2100, 0.8],
-            [2110, 0.8],
-        ],
-        columns=["year_act", "value"],
-    )
-    df = (
-        make_df(par_name, shares=constraint_name, time="year", unit="%")
-        .pipe(broadcast, ya_value, node_share=node_list)
-        .astype({"year_act": int})
-    )
-    scen.add_par(par_name, df)
-
-    scen.commit("Add industry electricity share constraints")
+        # Add parameter values
+        name = f"share_commodity_{kind}"
+        scen.add_par(name, data[name])
 
     # Remove the existing UE bounds if there are infeasibilities
     # Possible relations that can cause problem:

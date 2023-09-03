@@ -1,9 +1,10 @@
+import pytest
 from message_ix import make_df
 from message_ix_models import testing
 from message_ix_models.util import ScenarioInfo, broadcast
 
 from message_data.projects.navigate.wp2.util import (
-    ALL_IND_TECS,
+    TECHS,
     add_CCS_constraint,
     add_electrification_share,
     add_LED_setup,
@@ -34,7 +35,8 @@ def test_add_CCS_constraint(request, test_context):
     add_CCS_constraint(scenario, 2.0, "upper")
 
 
-def test_add_electrification_share(request, test_context):
+@pytest.mark.parametrize("kind", ["lo", "up"])
+def test_add_electrification_share(request, test_context, kind):
     ctx = test_context
     ctx.update(**BARE_RES)
     scenario = testing.bare_res(request, ctx)
@@ -52,10 +54,10 @@ def test_add_electrification_share(request, test_context):
             ["useful_aluminum", "useful_cement", "useful_petro", "useful_resins"],
         )
         scenario.add_set("mode", ["high_temp", "M1"])
-        scenario.add_set("technology", ALL_IND_TECS)
+        scenario.add_set("technology", TECHS["elec"] + TECHS["non-elec"])
         scenario.add_set("type_tec", "all_ind")
 
-    add_electrification_share(scenario)
+    add_electrification_share(scenario, kind)
 
 
 def test_add_LED_setup(request, test_context):
