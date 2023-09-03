@@ -131,7 +131,8 @@ def adjust_materials(
 
     if WP6_production == "advanced":
         add_LED_setup(scenario)
-        add_electrification_share(scenario)
+        # Use upper bound to avoid missing PRICE_COMMODITY values
+        add_electrification_share(scenario, kind="up")
         limit_h2(scenario, "green")
 
     # Constrain CCS at 2.0 Gt [units?]
