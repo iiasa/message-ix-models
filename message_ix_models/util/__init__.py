@@ -547,10 +547,14 @@ def replace_par_data(
             log.info(f"{len(to_remove)} obs in {par_name!r}")
 
 
-def same_node(df: pd.DataFrame) -> pd.DataFrame:
-    """Fill 'node_{dest,origin,rel}' in `df` from 'node_loc'."""
-    cols = list(set(df.columns) & {"node_origin", "node_dest", "node_rel"})
-    return df.assign(**{c: copy_column("node_loc") for c in cols})
+def same_node(df: pd.DataFrame, from_col="node_loc") -> pd.DataFrame:
+    """Fill 'node_{,dest,loc,origin,rel,share}' in `df` from `from_col`."""
+    cols = list(
+        set(df.columns)
+        & ({"node", "node_loc", "node_origin", "node_dest", "node_rel", "node_share"})
+        - {from_col}
+    )
+    return df.assign(**{c: copy_column(from_col) for c in cols})
 
 
 def same_time(df: pd.DataFrame) -> pd.DataFrame:
