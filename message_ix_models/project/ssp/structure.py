@@ -1,7 +1,7 @@
 """Manipulate data structures for working with the SSPs."""
 import logging
 from textwrap import wrap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import sdmx
 import sdmx.model.v30 as m
@@ -10,6 +10,8 @@ import sdmx.urn
 from message_ix_models.util.sdmx import write
 
 if TYPE_CHECKING:
+    from os import PathLike
+
     from message_ix_models import Context
 
 log = logging.getLogger(__name__)
@@ -129,7 +131,7 @@ including by geo-engineering if necessary.""",
 )
 
 
-def generate(context: "Context"):
+def generate(context: "Context", base_dir: Optional["PathLike"] = None):
     """Generate SDMX code lists containing the SSPs."""
     # Create an AgencyScheme containing ICONICS
     as_ = m.AgencyScheme(
@@ -153,7 +155,10 @@ def generate(context: "Context"):
     as_.append(IIASA_ECE)
     as_.append(ICONICS)
 
-    write(as_)
+    if context.dry_run:
+        log.info(f"(dry run) Would write:\n{repr(as_)}")
+    else:
+        write(as_, base_dir)
 
     for cl_info in CL_INFO:
         # Create the codelist: format the name and description
@@ -188,4 +193,8 @@ def generate(context: "Context"):
             # Construct a URN
             c.urn = sdmx.urn.make(c, maintainable_parent=cl)
 
-        write(cl)
+        if context.dry_run:
+            log.info(f"(dry run) Would write:\n{repr(cl)}")
+            continue
+
+        write(cl, base_dir)
