@@ -125,7 +125,7 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     read_excel(scenario, path)
 
 
-@click.group("snapshot", help="__doc__")
+@click.group("snapshot", help=__doc__)
 def cli():  # pragma: no cover
     pass
 
