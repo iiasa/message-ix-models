@@ -8,6 +8,10 @@ from message_ix_models import util
 COMMANDS = [
     tuple(),
     ("debug",),
+    ("report",),
+    ("snapshot",),
+    ("ssp", "gen-structures"),
+    ("techs",),
     ("water-ix",),
 ]
 
