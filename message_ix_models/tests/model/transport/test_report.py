@@ -4,6 +4,7 @@ from copy import deepcopy
 import pytest
 from genno.testing import assert_qty_equal
 from message_ix.reporting import MissingKeyError, Quantity
+from message_ix_models.report import prepare_reporter, register
 from numpy.testing import assert_allclose
 from pytest import mark, param
 
@@ -14,7 +15,6 @@ from message_data.model.transport.testing import (
     built_transport,
     simulated_solution,
 )
-from message_data.reporting import prepare_reporter, register
 
 log = logging.getLogger(__name__)
 
@@ -154,7 +154,7 @@ def quiet_genno(caplog):
 
 @mark.usefixtures("quiet_genno")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
-    # The message_data.reporting.prepare_reporter works on the simulated data
+    """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context)
 
