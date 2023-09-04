@@ -17,11 +17,11 @@ from genno import Key, computations
 from genno.core.key import single_key
 from iam_units import registry
 from message_ix_models import Context, Spec
+from message_ix_models.report import iamc as add_iamc
+from message_ix_models.report.util import add_replacements
 from message_ix_models.util import eval_anno
 
 from message_data.model.transport.computations import nodes_world_agg
-from message_data.reporting import iamc as add_iamc
-from message_data.reporting.util import add_replacements
 
 from . import Config
 from .build import get_spec, get_tech_groups
@@ -42,7 +42,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     - "buildings iamc store": store IAMC-formatted reporting on the scenario.
     - "buildings all": both of the above.
     """
-    from message_data.reporting.util import REPLACE_DIMS
+    from message_ix_models.report.util import REPLACE_DIMS
 
     # Path where STURM output files are found
     rep.graph["config"].setdefault(
