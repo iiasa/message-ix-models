@@ -14,7 +14,6 @@ from typing import Dict, List
 import message_ix
 import pandas as pd
 from genno import Key, computations
-from genno.core.key import single_key
 from iam_units import registry
 from message_ix_models import Context, Spec
 from message_ix_models.report import iamc as add_iamc
@@ -93,10 +92,10 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         "buildings filters 1",
     )
     # Assign missing units, then convert to EJ / a
-    k = Key.from_str_or_key("buildings fe:nl-t-ya-c-l")
-    k2 = k.add_tag("2")
-    rep.add("assign_units", k.add_tag("1"), k.add_tag("0"), "GWa/year")
-    rep.add("convert_units", k2, k.add_tag("1"), "EJ / a", sums=True)
+    buildings_fe = Key("buildings fe:nl-t-ya-c-l")
+    buildings_fe_2 = buildings_fe + "2"
+    rep.add("assign_units", buildings_fe + "1", buildings_fe + "0", "GWa/year")
+    rep.add("convert_units", buildings_fe_2, buildings_fe + "1", "EJ / a", sums=True)
 
     # Convert to IAMC structure
     # - Ensure the unit string is "EJ/yr", nor "EJ / a".
@@ -104,7 +103,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     add_iamc(
         rep,
         dict(
-            base=k2.drop("l"),
+            base=buildings_fe_2 / "l",
             variable="buildings fe",
             var=["Final Energy", "t", "c"],
             sums=["c"],
@@ -138,14 +137,13 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
             store_keys.append(k1)
 
         # Make a path for file output
-        k2 = single_key(
-            rep.add("make_output_path", f"{k1} path", "config", f"{base}.csv")
-        )
+        k_path = f"{k1} path"
+        rep.add(k_path, "make_output_path", "config", f"{base}.csv")
 
         # Write the data frame to this path
         # FIXME(PNK) upstream genno.computations.write_report handles only Quantity, not
         #            pd.DataFrame. Add that feature, then remove the lambda function
-        k3 = rep.add(f"{k1} file", lambda df, path: df.to_csv(path), k1, k2)
+        k3 = rep.add(f"{k1} file", lambda df, path: df.to_csv(path), k1, k_path)
 
         # Add to the list of files to be stored
         file_keys.append(k3)
@@ -153,12 +151,9 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     # Same for final energy
     k1 = "buildings fe::iamc"
     store_keys.append(k1)
-    k2 = single_key(
-        rep.add(
-            "make_output_path", "buildings fe path", "config", "final-energy-new.csv"
-        )
-    )
-    k3 = rep.add("buildings fe file", lambda df, path: df.to_csv(path), k1, k2)
+    k_path = "buildings fe path"
+    rep.add(k_path, "make_output_path", "config", "final-energy-new.csv")
+    k3 = rep.add("buildings fe file", lambda df, path: df.to_csv(path), k1, k_path)
     file_keys.append(k3)
 
     # Add keys that collect others:
