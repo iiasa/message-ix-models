@@ -11,11 +11,11 @@ import pandas as pd
 from message_ix import Reporter, Scenario
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
+from message_ix_models.report.util import copy_ts
 from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
 from sdmx.model.v21 import Code
 
 import message_data.model.material.report.tables
-from message_data.reporting.util import copy_ts
 from message_data.tools.prep_submission import Config, ScenarioConfig
 
 from . import iter_scenario_codes
@@ -320,7 +320,7 @@ def callback(rep: Reporter, context: Context) -> None:
     Adds a key "navigate bmt" that invokes buildings, materials, and transport
     reporting.
     """
-    from message_data.reporting import register
+    from message_ix_models.report import register
 
     # Set up reporting for each of the model variants
     register("model.buildings")

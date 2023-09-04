@@ -316,7 +316,7 @@ def report(
     context: Context, scenario: Scenario, other_scenario_info: Optional[Dict]
 ) -> Scenario:
     """Workflow steps 8–10."""
-    from message_data.reporting import (
+    from message_ix_models.report import (
         _invoke_legacy_reporting,
         log_before,
         prepare_reporter,
