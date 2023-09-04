@@ -3,13 +3,9 @@
 import ixmp as ix
 import message_ix
 import pandas as pd
-from message_ix_modelsodelsodelsodelsodels.project.leap_re_nest.utils import (
-    add_cap_bound_fossil,
-    map_basin,
-)
 
 from message_ix_models.model.water.reporting import report
-from message_ix_models.project.leap_re_nest.reorting_country import report_all_leapre
+from message_ix_models.project.leap_re_nest.reporting_country import report_all_leapre
 from message_ix_models.project.leap_re_nest.script import (
     add_grid_shares_OnSSET,
     add_MLED_demand,
@@ -20,6 +16,7 @@ from message_ix_models.project.leap_re_nest.script.add_timeslice import (
     time_setup,
     xls_to_df,
 )
+from message_ix_models.project.leap_re_nest.utils import add_cap_bound_fossil, map_basin
 from message_ix_models.util import package_data_path
 
 # 1) Generate a Country model. See documentation #
