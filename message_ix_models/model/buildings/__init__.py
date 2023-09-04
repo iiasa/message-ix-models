@@ -24,11 +24,16 @@ from .build import get_prices
 
 log = logging.getLogger(__name__)
 
-ixmp.config.register(
-    "message buildings dir",
-    Path,
-    cast(Path, MESSAGE_DATA_PATH).parent.joinpath("buildings"),
-)
+try:
+    ixmp.config.register(
+        "message buildings dir",
+        Path,
+        cast(Path, MESSAGE_DATA_PATH).parent.joinpath("buildings"),
+    )
+except ValueError:
+    # NB With message_ix_models 2023.9.2, the above code appears to run twice; the
+    #    second time triggers a ValueError. Ignore silently.
+    pass
 
 
 @dataclass
