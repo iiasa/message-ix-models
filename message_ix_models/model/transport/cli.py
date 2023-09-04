@@ -133,7 +133,7 @@ def build_cmd(context, report_build, **options):
 
     if report_build:
         # Also output diagnostic reports
-        from message_data.reporting import prepare_reporter, register
+        from message_ix_models.report import prepare_reporter, register
 
         from . import report
 
@@ -295,9 +295,8 @@ def gen_demand(ctx, source, nodes, years, output_dir):
 def debug(context):
     """Temporary code for development."""
     from message_ix_models import testing
+    from message_ix_models.report import prepare_reporter, register
     from message_ix_models.util import private_data_path
-
-    from message_data.reporting import prepare_reporter, register
 
     from . import build
     from .report import callback

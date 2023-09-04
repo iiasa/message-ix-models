@@ -9,10 +9,9 @@ import message_ix
 from genno import Quantity
 from message_ix_models import Context
 from message_ix_models.model.structure import generate_set_elements
+from message_ix_models.report.util import as_quantity
 from message_ix_models.util import identify_nodes, load_private_data, private_data_path
 from message_ix_models.util.config import ConfigHelper
-
-from message_data.reporting.util import as_quantity
 
 log = logging.getLogger(__name__)
 

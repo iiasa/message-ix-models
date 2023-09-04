@@ -8,10 +8,10 @@ import pytest
 from genno import Computer
 from message_ix import Reporter, Scenario
 from message_ix_models import Context, ScenarioInfo, testing
+from message_ix_models.report.sim import add_simulated_solution
 
 from message_data import reporting
 from message_data.model import transport
-from message_data.reporting.sim import add_simulated_solution
 from message_data.tools import silence_log
 
 from . import build

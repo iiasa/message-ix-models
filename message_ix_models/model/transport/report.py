@@ -7,9 +7,8 @@ from genno import Computer, MissingKeyError
 from genno.computations import aggregate
 from message_ix import Reporter
 from message_ix_models import Context
+from message_ix_models.report.util import add_replacements
 from message_ix_models.util import eval_anno, private_data_path
-
-from message_data.reporting.util import add_replacements
 
 from . import Config
 from .build import get_spec
@@ -32,7 +31,7 @@ def check(scenario):
         respective check passes.
     """
     # NB this is here to avoid circular imports
-    from message_data.reporting import prepare_reporter, register
+    from message_ix_models.report import prepare_reporter, register
 
     register(callback)
     rep, key = prepare_reporter(scenario, "global.yaml", "transport check")
@@ -42,7 +41,7 @@ def check(scenario):
 def require_compat(c: Computer) -> None:
     c.require_compat("ixmp.reporting.computations")
     c.require_compat("message_ix.reporting.computations")
-    c.require_compat("message_data.reporting.computations")
+    c.require_compat("message_ix_models.report.computations")
     c.require_compat("message_data.tools.gdp_pop")
     c.require_compat("message_data.model.transport.computations")
 
