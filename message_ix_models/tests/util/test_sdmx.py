@@ -79,3 +79,6 @@ def test_read1():
     code2 = next(filter(lambda c: "middle of the road" in repr(c).lower(), iter(SSPS)))
 
     assert code0 is code1 is code2
+
+    with pytest.raises(FileNotFoundError):
+        read("foo")
