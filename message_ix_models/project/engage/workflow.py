@@ -332,8 +332,9 @@ def add_steps(
         if solve_model == "MESSAGE-MACRO" and step > 1:
             # Give scenario info from which to copy "DEMAND" variable data; data is
             # copied to the "demand" parameter
-            cfg.demand_scenario.update(
-                model=info["model"], scenario=target.split("/")[-1].format(step - 1)
+            cfg.demand_scenario.update(model=info["model"])
+            cfg.demand_scenario.setdefault(
+                "scenario", target.split("/")[-1].format(step - 1)
             )
         if step == 2:
             # Do not solve MESSAGE-MACRO for step 2, even if doing so for steps 1/3
