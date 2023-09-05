@@ -136,6 +136,7 @@ def read(urn: str, base_dir: Optional["PathLike"] = None):
     """Read SDMX object from package data given its `urn`."""
     # Identify a path that matches `urn`
     base_dir = base_dir or package_data_path("sdmx")
+    urn = urn.replace(":", "_")  # ":" invalid on Windows
     paths = sorted(
         set(base_dir.glob(f"*{urn}*.xml")) | set(base_dir.glob(f"*{urn.upper()}*.xml"))
     )
@@ -146,8 +147,11 @@ def read(urn: str, base_dir: Optional["PathLike"] = None):
             "other result(s)"
         )
 
-    with open(paths[0], "rb") as f:
-        msg = sdmx.read_sdmx(f)
+    try:
+        with open(paths[0], "rb") as f:
+            msg = sdmx.read_sdmx(f)
+    except IndexError:
+        raise FileNotFoundError(f"'*{urn}*.xml', '*{urn.upper()}*.xml' or similar")
 
     for _, cls in msg.iter_collections():
         try:
@@ -172,7 +176,7 @@ def write(obj, base_dir: Optional["PathLike"] = None):
 
     # Identify a path to write the file
     base_dir = base_dir or package_data_path("sdmx")
-    basename = obj.urn.split("=")[-1]
+    basename = obj.urn.split("=")[-1].replace(":", "_")  # ":" invalid on Windows
     path = base_dir.joinpath(f"{basename}.xml")
 
     # Write
