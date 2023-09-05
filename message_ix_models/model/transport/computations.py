@@ -30,9 +30,9 @@ from message_ix_models.tools import advance
 from message_ix_models.util import MappingAdapter, broadcast, eval_anno, nodes_ex_world
 from sdmx.model.v21 import Code
 
+from message_data.projects.navigate import T35_POLICY
 from message_data.tools import iea_eei
 
-from .config import ScenarioFlags
 from .util import path_fallback
 
 log = logging.getLogger(__name__)
@@ -262,7 +262,7 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
     df.iloc[0, :] = 1.0
 
     # NAVIGATE T3.5 "act" demand-side scenario
-    if ScenarioFlags.ACT & config["transport"].flags:
+    if T35_POLICY.ACT & config["transport"].project["navigate"]:
         years = list(filter(lambda y: y <= 2050, y))
         df.loc[years, "value"] = np.interp(years, [y[0], 2050], [1.0, 0.865])
 
@@ -306,7 +306,7 @@ def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quan
     df.iloc[0, :] = 1.0
 
     # NAVIGATE T3.5 "tec" demand-side scenario
-    if ScenarioFlags.TEC & config["transport"].flags:
+    if T35_POLICY.TEC & config["transport"].project["navigate"]:
         years = list(filter(partial(gt, 2050), df.index))
 
         # Prepare a dictionary mapping technologies to their respective EI improvement
@@ -348,7 +348,7 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quanti
     df.iloc[0, :] = 1.0
 
     # Handle particular scenarios
-    if ScenarioFlags.ACT & config["transport"].flags:
+    if T35_POLICY.ACT & config["transport"].project["navigate"]:
         # NAVIGATE T3.5 "act" demand-side scenario
         years = list(filter(lambda y: y <= 2050, y))
         df.loc[years, "LDV"] = np.interp(years, [y[0], 2050], [1.0, 0.8])
