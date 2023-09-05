@@ -20,8 +20,6 @@ from message_ix_models.util import (
 )
 from sdmx.model.v21 import Code
 
-from .config import ScenarioFlags
-
 log = logging.getLogger(__name__)
 
 #: CSV files containing data for input calculations and assumptions.
@@ -250,7 +248,9 @@ def navigate_ele(
 
     Currently only items (1) and (2) are implemented.
     """
-    if not (ScenarioFlags.ELE & config["transport"].flags):
+    from message_data.projects.navigate import T35_POLICY
+
+    if not (T35_POLICY.ELE & config["transport"].project["navigate"]):
         return dict()
 
     # Technologies to constrain for items (1) and (2)
