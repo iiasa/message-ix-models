@@ -7,7 +7,7 @@ import sdmx
 import sdmx.model.v30 as m
 import sdmx.urn
 
-from message_ix_models.util.sdmx import write
+from message_ix_models.util.sdmx import make_enum, write
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -198,3 +198,7 @@ def generate(context: "Context", base_dir: Optional["PathLike"] = None):
             continue
 
         write(cl, base_dir)
+
+
+SSP = SSP_2017 = make_enum("ICONICS:SSP(2017)")
+SSP_2024 = make_enum("ICONICS:SSP(2024)")
