@@ -4,7 +4,7 @@ import re
 import pytest
 from sdmx.model.v21 import Annotation, Code
 
-from message_ix_models.util.sdmx import eval_anno, read
+from message_ix_models.util.sdmx import eval_anno, make_enum, read
 
 
 def test_eval_anno(caplog):
@@ -24,6 +24,34 @@ def test_eval_anno(caplog):
     c.annotations.append(Annotation(id="qux", text="3 + 4"))
 
     assert 7 == eval_anno(c, id="qux")
+
+
+def test_make_enum():
+    """:func:`.make_enum` works with :class:`Flag` and subclasses."""
+    from enum import Flag, IntFlag
+
+    E = make_enum("ICONICS:SSP(2017)", base=Flag)
+
+    # Values are bitwise flags
+    assert not isinstance(E["1"], int)
+
+    # Expected length
+    assert 2 ** (len(E) - 1) == list(E)[-1].value
+
+    # Flags can be combined
+    flags = E["1"] | E["2"]
+    assert E["1"] & flags
+    assert E["2"] & flags
+    assert not (E["3"] & flags)
+
+    # Similar, with IntFlag
+    E = make_enum("IIASA_ECE:AGENCIES(0.1)", base=IntFlag)
+
+    # Values are ints
+    assert isinstance(E["IIASA_ECE"], int)
+
+    # Expected length
+    assert 2 ** (len(E) - 1) == list(E)[-1].value
 
 
 @pytest.mark.parametrize(

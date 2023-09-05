@@ -1,6 +1,7 @@
 """Utilities for handling objects from :mod:`sdmx`."""
 import logging
 from datetime import datetime
+from enum import Enum, Flag
 from importlib.metadata import version
 from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
 
@@ -105,6 +106,30 @@ def eval_anno(obj: AnnotableArtefact, id: str):
     except Exception as e:  # Something that can't be eval()'d, e.g. a plain string
         log.debug(f"Could not eval({value!r}): {e}")
         return value
+
+
+def make_enum(urn, base=Enum):
+    """Create an :class:`Enum` (or `base`) subclass with members from codelist `urn`."""
+    # Read the code list
+    cl = read(urn)
+
+    names = ["NONE"] if issubclass(base, Flag) else []
+    names.extend(code.id for code in cl)
+
+    # Create the class
+    cls = base(urn, names)
+
+    # Add a class method to look up the str() equivalent of any `value`
+    def missing(cls, value):
+        try:
+            return cls[str(value)]
+        except (KeyError, ValueError):
+            return None
+
+    if not issubclass(base, Flag):
+        cls._missing_ = classmethod(missing)
+
+    return cls
 
 
 def read(urn: str, base_dir: Optional["PathLike"] = None):
