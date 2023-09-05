@@ -105,7 +105,6 @@ def test_configure(test_context, regions):
         ),
         {"mode_share": "default"},
         {"mode_share": "INVALID"},
-        {"futures_scenario": "default"},
         {"futures_scenario": "base"},
         {"futures_scenario": "A---"},
         {"futures_scenario": "debug"},
