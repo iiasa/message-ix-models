@@ -9,12 +9,12 @@ from message_ix_models.testing import NIE
 from pytest import param
 
 from message_data.model.transport import testing
-from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.ldv import (
     constraint_data,
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
+from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
 
 log = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
         tmp_path=tmp_path,
         regions=regions,
         years=years,
-        options={"data source": {"LDV": source}, "flags": ScenarioFlags.TEC},
+        options={"data source": {"LDV": source}, "flags": T35_POLICY.TEC},
     )
 
     # Earlier keys in the process, for debugging

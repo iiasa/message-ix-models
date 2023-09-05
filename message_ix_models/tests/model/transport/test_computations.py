@@ -8,17 +8,17 @@ from message_data.model.transport.computations import (
     iea_eei_fv,
     transport_check,
 )
-from message_data.model.transport.config import ScenarioFlags
 from message_data.model.transport.util import get_techs
+from message_data.projects.navigate import T35_POLICY
 
 
 @pytest.mark.parametrize(
     "options, any_change",
     (
         ({}, False),
-        (dict(flags=ScenarioFlags.TEC), True),
-        (dict(flags=ScenarioFlags.ACT), False),
-        (dict(flags=ScenarioFlags.NAVIGATE), True),  # i.e. all
+        (dict(flags=T35_POLICY.TEC), True),
+        (dict(flags=T35_POLICY.ACT), False),
+        (dict(flags=T35_POLICY.ALL), True),  # i.e. all
     ),
 )
 def test_factor_input(test_context, options, any_change):
