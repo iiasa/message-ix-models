@@ -6,18 +6,13 @@ from iam_units import registry
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
 
-from message_data.model.transport import (
-    Config,
-    DataSourceConfig,
-    ScenarioFlags,
-    computations,
-)
+from message_data.model.transport import Config, DataSourceConfig, computations, testing
 from message_data.model.transport import data as data_module
-from message_data.model.transport import testing
 from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.emission import ef_for_input, get_emissions_data
 from message_data.model.transport.roadmap import get_roadmap_data
 from message_data.model.transport.util import path_fallback
+from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
 from message_data.tools.gfei_fuel_economy import get_gfei_data
 
@@ -305,7 +300,7 @@ def test_get_chn_ind_pop():
 
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize("regions", ["ISR", "R11", "R12", "R14"])
-@pytest.mark.parametrize("options", [{}, dict(flags=ScenarioFlags.ELE)])
+@pytest.mark.parametrize("options", [{}, dict(flags=T35_POLICY.ELE)])
 def test_navigate_ele(test_context, regions, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context

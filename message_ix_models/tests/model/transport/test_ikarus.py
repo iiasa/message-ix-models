@@ -5,8 +5,9 @@ from message_ix import make_df
 from numpy.testing import assert_allclose
 from pandas.testing import assert_series_equal
 
-from message_data.model.transport import ScenarioFlags, ikarus, testing
+from message_data.model.transport import ikarus, testing
 from message_data.model.transport.non_ldv import UNITS
+from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
 
 
@@ -111,7 +112,7 @@ def test_get_ikarus_data0(test_context, regions, N_node, years):
         ),
     ],
 )
-@pytest.mark.parametrize("options", [{}, dict(flags=ScenarioFlags.TEC)])
+@pytest.mark.parametrize("options", [{}, dict(flags=T35_POLICY.TEC)])
 def test_get_ikarus_data1(test_context, regions, N_node, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context
