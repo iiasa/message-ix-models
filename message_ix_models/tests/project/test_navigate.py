@@ -5,7 +5,7 @@ import ixmp
 import pytest
 from message_ix_models import testing
 
-from message_data.projects.navigate import Config
+from message_data.projects.navigate import T35_POLICY, Config
 from message_data.projects.navigate.report import _scenario_name
 from message_data.projects.navigate.workflow import add_macro
 
@@ -120,3 +120,21 @@ def test_add_macro(request, test_context):
     test_context.regions = "R12"
     scenario = testing.bare_res(request, test_context, solved=True)
     add_macro(test_context, scenario)
+
+
+class TestT35_POLICY:
+    @pytest.mark.parametrize(
+        "value, expected",
+        (
+            ("", T35_POLICY.REF),
+            ("act", T35_POLICY.ACT),
+            ("ele", T35_POLICY.ELE),
+            ("tec", T35_POLICY.TEC),
+            ("act+ele+tec", T35_POLICY.ACT | T35_POLICY.ELE | T35_POLICY.TEC),
+            pytest.param(
+                "foo+act+tec", None, marks=pytest.mark.xfail(raises=ValueError)
+            ),
+        ),
+    )
+    def test_parse(self, value, expected):
+        assert expected is T35_POLICY.parse(value)
