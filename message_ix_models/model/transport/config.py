@@ -1,17 +1,19 @@
 import logging
-import operator
 from dataclasses import InitVar, dataclass, field, replace
-from enum import Flag, auto
-from functools import reduce
+from enum import Enum
 from typing import Dict, List, Literal, Optional, Union
 
 import message_ix
 from genno import Quantity
 from message_ix_models import Context
 from message_ix_models.model.structure import generate_set_elements
+from message_ix_models.project.ssp import SSP_2017, ssp_field
 from message_ix_models.report.util import as_quantity
 from message_ix_models.util import identify_nodes, load_private_data, private_data_path
 from message_ix_models.util.config import ConfigHelper
+
+from message_data.projects.navigate import T35_POLICY as NAVIGATE_SCENARIO
+from message_data.projects.transport_futures import SCENARIO as FUTURES_SCENARIO
 
 log = logging.getLogger(__name__)
 
@@ -40,79 +42,6 @@ class DataSourceConfig(ConfigHelper):
 def quantity_field(value):
     """Field with a mutable default value that is a :class:`.Quantity`."""
     return field(default_factory=lambda: as_quantity(value))
-
-
-class ScenarioFlags(Flag):
-    """Flags for features of MESSAGEix-Transport scenarios."""
-
-    DEFAULT = 0
-
-    # Transport Futures flags
-    BASE = auto()
-    A___ = auto()  # NB use underscores because "-" is invalid in Python names
-    DEBUG = auto()
-
-    FUTURES = BASE | A___ | DEBUG
-
-    # NAVIGATE flags
-    ACT = auto()
-    ELE = auto()
-    TEC = auto()
-
-    NAVIGATE = ACT | ELE | TEC
-
-    def _assert_not(self, name: str, other: str, value: Optional[str]):
-        if self & self.__class__[other] and value is not None:
-            raise ValueError(f"{name} scenario {value!r} clashes with existing {self}")
-
-    def parse_futures(self, value: Optional[str]):
-        """Parse a Transport Futures scenario from a string.
-
-        Parameters
-        ----------
-        value : str
-            One of "base", "A---", or "debug".
-
-        Raises
-        ------
-        ValueError
-            if `self` is already set to any NAVIGATE scenario.
-        """
-        self._assert_not("Transport Futures", "NAVIGATE", value)
-
-        try:
-            return self.__class__[(value or "default").upper().replace("-", "_")]
-        except KeyError:
-            raise ValueError(f"Unknown Transport Futures scenario {value!r}")
-
-    def futures_id(self) -> str:
-        assert self.name
-        return self.name.replace("_", "-") if "_" in self.name else self.name.lower()
-
-    def parse_navigate(self, value: Optional[str]):
-        """Parse a NAVIGATE scenario from a string.
-
-        Parameters
-        ----------
-        value : str
-            Zero or more of "act", "ele", and/or "tec", joined with "+".
-
-        Raises
-        ------
-        ValueError
-            if `self` is already set to any Transport Futures scenario.
-        """
-        self._assert_not("NAVIGATE", "FUTURES", value)
-        cls = self.__class__
-
-        try:
-            return reduce(
-                operator.or_,
-                map(cls.__getitem__, filter(None, (value or "").upper().split("+"))),
-                self,
-            )
-        except KeyError as e:
-            raise ValueError(f"Unknown NAVIGATE scenario {e.args[0]}") from None
 
 
 @dataclass
@@ -213,16 +142,6 @@ class Config(ConfigHelper):
     #: Fixed future point for total passenger activity.
     fixed_GDP: Quantity = quantity_field("300 kUSD / passenger / year")
 
-    #: Flags for distinct scenario features. In addition to providing zero or more
-    #: :class:`ScenarioFlags` directly, this can be set by passing
-    #: :attr:`futures_scenario` or :attr:`navigate_scenario` to the constructor, or by
-    #: calling :meth:`set_futures_scenario` or :meth:`set_navigate_scenario` on an
-    #: existing Config instance.
-    #:
-    #: :mod:`.transport.build` and :mod:`.transport.report` code will respond to these
-    #: settings in documented ways.
-    flags: ScenarioFlags = ScenarioFlags.DEFAULT
-
     #: Load factors for vehicles.
     #:
     #: ``freight``: similar to IEA “Future of Trucks” (2017) values; see
@@ -256,6 +175,20 @@ class Config(ConfigHelper):
     #: appearing in MA³T.
     node_to_census_division: Dict = field(default_factory=dict)
 
+    #: Flags for distinct scenario features according to projects. In addition to
+    #: providing values directly, this can be set by passing :attr:`futures_scenario` or
+    #: :attr:`navigate_scenario` to the constructor, or by calling
+    #: :meth:`set_futures_scenario` or :meth:`set_navigate_scenario` on an existing
+    #: Config instance.
+    #:
+    #: :mod:`.transport.build` and :mod:`.transport.report` code will respond to these
+    #: settings in documented ways.
+    project: Dict[str, Enum] = field(
+        default_factory=lambda: dict(
+            futures=FUTURES_SCENARIO.BASE, navigate=NAVIGATE_SCENARIO.REF
+        )
+    )
+
     #: Scaling factors for production function [0]
     scaling: float = 1.0
 
@@ -276,6 +209,10 @@ class Config(ConfigHelper):
         }
     )
 
+    #: Enum member indicating a Shared Socioeconomic Pathway, if any, to use for
+    #: exogenous data.
+    ssp: ssp_field = ssp_field(default=SSP_2017["2"])
+
     #: Work hours per year, used to compute the value of time.
     work_hours: Quantity = quantity_field("1600 hours / passenger / year")
 
@@ -294,18 +231,16 @@ class Config(ConfigHelper):
 
     # Init-only variables
 
-    #: Identifier of a Transport Futures scenario, used to update :attr:`flags` via
+    #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
     #: :meth:`.ScenarioFlags.parse_futures`.
     futures_scenario: InitVar[str] = None
 
-    #: Identifiers of NAVIGATE T3.5 demand-side scenarios, used to update :attr:`flags`
-    #: via :meth:`.ScenarioFlags.parse_navigate`.
+    #: Identifiers of NAVIGATE T3.5 demand-side scenarios, used to update
+    #: :attr:`project` via :meth:`.ScenarioFlags.parse_navigate`.
     navigate_scenario: InitVar[str] = None
 
     def __post_init__(self, futures_scenario, navigate_scenario):
         """Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`."""
-        if self.flags != ScenarioFlags.DEFAULT:
-            return
         self.set_futures_scenario(futures_scenario)
         self.set_navigate_scenario(navigate_scenario)
 
@@ -390,26 +325,41 @@ class Config(ConfigHelper):
 
         return context["transport"]
 
-    def set_futures_scenario(self, value: Optional[str]):
+    def check(self):
+        """Check consistency of :attr:`project`."""
+        s1 = self.project["futures"]
+        s2 = self.project["navigate"]
+
+        if all(map(lambda s: s.value > 0, [s1, s2])):
+            raise ValueError(f"Scenario settings {s1} and {s2} are not compatible")
+
+    def set_futures_scenario(self, value: Optional[str]) -> None:
         """Update :attr:`flags` from a string indicating a Transport Futures scenario.
 
         See :meth:`ScenarioFlags.parse_futures`. This method alters :attr:`mode_share`
         and :attr:`fixed_demand` according to the `value` (if any).
         """
-        self.flags = self.flags.parse_futures(value)
-
-        if not self.flags & ScenarioFlags.FUTURES:
+        if value is None:
             return
 
-        self.mode_share = self.flags.futures_id()
+        s = FUTURES_SCENARIO.parse(value)
+        self.project.update(futures=s)
+        self.check()
+
+        self.mode_share = s.id()
 
         if self.mode_share == "A---":
             log.info(f"Set fixed demand for TF scenario {value!r}")
             self.fixed_demand = as_quantity("275000 km / year")
 
-    def set_navigate_scenario(self, value: Optional[str]):
+    def set_navigate_scenario(self, value: Optional[str]) -> None:
         """Update :attr:`flags` from a string representing a NAVIGATE scenario.
 
         See :meth:`ScenarioFlags.parse_navigate`.
         """
-        self.flags = self.flags.parse_navigate(value)
+        if value is None:
+            return
+
+        s = NAVIGATE_SCENARIO.parse(value)
+        self.project.update(navigate=s)
+        self.check()
