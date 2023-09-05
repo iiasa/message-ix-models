@@ -69,6 +69,12 @@ tests = [
 [project.scripts]
 mix-models = "message_ix_models.cli:main"
 
+[tool.coverage.report]
+exclude_also = [
+  # Imports only used by type checkers
+  "if TYPE_CHECKING:",
+]
+
 [tool.isort]
 profile = "black"
 
