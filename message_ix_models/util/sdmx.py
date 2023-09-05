@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from enum import Enum, Flag
 from importlib.metadata import version
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
 
 import sdmx
@@ -135,7 +136,7 @@ def make_enum(urn, base=Enum):
 def read(urn: str, base_dir: Optional["PathLike"] = None):
     """Read SDMX object from package data given its `urn`."""
     # Identify a path that matches `urn`
-    base_dir = base_dir or package_data_path("sdmx")
+    base_dir = Path(base_dir or package_data_path("sdmx"))
     urn = urn.replace(":", "_")  # ":" invalid on Windows
     paths = sorted(
         set(base_dir.glob(f"*{urn}*.xml")) | set(base_dir.glob(f"*{urn.upper()}*.xml"))
@@ -175,7 +176,7 @@ def write(obj, base_dir: Optional["PathLike"] = None):
     msg.add(obj)
 
     # Identify a path to write the file
-    base_dir = base_dir or package_data_path("sdmx")
+    base_dir = Path(base_dir or package_data_path("sdmx"))
     basename = obj.urn.split("=")[-1].replace(":", "_")  # ":" invalid on Windows
     path = base_dir.joinpath(f"{basename}.xml")
 

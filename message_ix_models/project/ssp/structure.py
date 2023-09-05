@@ -162,7 +162,7 @@ def generate(context: "Context", base_dir: Optional["PathLike"] = None):
 
     for cl_info in CL_INFO:
         # Create the codelist: format the name and description
-        cl = m.Codelist(
+        cl: m.Codelist = m.Codelist(
             id="SSP",
             name=f"Shared Socioeconomic Pathways ({cl_info['name_extra']})",
             description="\n".join(
