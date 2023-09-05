@@ -1,8 +1,10 @@
 """NAVIGATE project."""
 import logging
+import operator
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field, replace
-from functools import lru_cache
+from enum import Flag, auto
+from functools import lru_cache, reduce
 from pathlib import Path
 from typing import Dict, Generator, List, Literal, Mapping, Optional, Union, cast
 
@@ -21,6 +23,35 @@ ixmp.config.register(
     Path,
     cast(Path, MESSAGE_DATA_PATH).parent.joinpath("navigate-workflow"),
 )
+
+
+class T35_POLICY(Flag):
+    """Flags for demand-side policies in Task 3.5."""
+
+    REF = 0
+
+    ACT = auto()
+    ELE = auto()
+    TEC = auto()
+
+    ALL = ACT | ELE | TEC
+
+    @classmethod
+    def parse(cls, value):
+        """Parse a NAVIGATE scenario from a string.
+
+        Parameters
+        ----------
+        value : str
+            Zero or more of "act", "ele", and/or "tec", joined with "+".
+        """
+        try:
+            return reduce(
+                operator.or_,
+                map(cls.__getitem__, filter(None, (value or "ref").upper().split("+"))),
+            )
+        except KeyError as e:
+            raise ValueError(f"Unknown NAVIGATE scenario {e.args[0]}") from None
 
 
 #: Mapping of climate policy labels to :class:`.engage.workflow.PolicyConfig` objects.
