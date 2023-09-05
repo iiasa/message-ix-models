@@ -114,23 +114,12 @@ def make_enum(urn, base=Enum):
     # Read the code list
     cl = read(urn)
 
+    # Ensure the 0 member is NONE, not any of the codes
     names = ["NONE"] if issubclass(base, Flag) else []
     names.extend(code.id for code in cl)
 
     # Create the class
-    cls = base(urn, names)
-
-    # Add a class method to look up the str() equivalent of any `value`
-    def missing(cls, value):
-        try:
-            return cls[str(value)]
-        except (KeyError, ValueError):
-            return None
-
-    if not issubclass(base, Flag):
-        cls._missing_ = classmethod(missing)
-
-    return cls
+    return base(urn, names)
 
 
 def read(urn: str, base_dir: Optional["PathLike"] = None):
