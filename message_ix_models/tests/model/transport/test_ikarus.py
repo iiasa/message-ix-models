@@ -112,7 +112,7 @@ def test_get_ikarus_data0(test_context, regions, N_node, years):
         ),
     ],
 )
-@pytest.mark.parametrize("options", [{}, dict(flags=T35_POLICY.TEC)])
+@pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.TEC)])
 def test_get_ikarus_data1(test_context, regions, N_node, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context

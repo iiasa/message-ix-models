@@ -53,7 +53,7 @@ class TestConfig:
     def test_futures_scenario0(self, input, expected):
         """Set Transport Futures scenario through the constructor."""
         c = Config(futures_scenario=input)  # Call succeeds
-        assert expected == c.project["futures"]  # The expected flags are set
+        assert expected == c.project["futures"]  # The expected enum value is set
 
     @pytest.mark.parametrize("input, expected", FUTURES)
     def test_futures_scenario1(self, c, input, expected):

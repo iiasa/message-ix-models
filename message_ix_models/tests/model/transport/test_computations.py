@@ -16,9 +16,9 @@ from message_data.projects.navigate import T35_POLICY
     "options, any_change",
     (
         ({}, False),
-        (dict(flags=T35_POLICY.TEC), True),
-        (dict(flags=T35_POLICY.ACT), False),
-        (dict(flags=T35_POLICY.ALL), True),  # i.e. all
+        (dict(navigate_scenario=T35_POLICY.TEC), True),
+        (dict(navigate_scenario=T35_POLICY.ACT), False),
+        (dict(navigate_scenario=T35_POLICY.ALL), True),  # i.e. all
     ),
 )
 def test_factor_input(test_context, options, any_change):
