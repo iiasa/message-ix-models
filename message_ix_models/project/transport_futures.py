@@ -14,6 +14,8 @@ class SCENARIO(Enum):
 
     @classmethod
     def parse(cls, value):
+        if isinstance(value, cls):
+            return value
         try:
             return cls[(value or "BASE").upper().replace("-", "_")]
         except KeyError:

@@ -45,6 +45,8 @@ class T35_POLICY(Flag):
         value : str
             Zero or more of "act", "ele", and/or "tec", joined with "+".
         """
+        if isinstance(value, cls):
+            return value
         try:
             return reduce(
                 operator.or_,
