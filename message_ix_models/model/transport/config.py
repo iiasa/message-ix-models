@@ -334,7 +334,7 @@ class Config(ConfigHelper):
             raise ValueError(f"Scenario settings {s1} and {s2} are not compatible")
 
     def set_futures_scenario(self, value: Optional[str]) -> None:
-        """Update :attr:`flags` from a string indicating a Transport Futures scenario.
+        """Update :attr:`project` from a string indicating a Transport Futures scenario.
 
         See :meth:`ScenarioFlags.parse_futures`. This method alters :attr:`mode_share`
         and :attr:`fixed_demand` according to the `value` (if any).
@@ -353,7 +353,7 @@ class Config(ConfigHelper):
             self.fixed_demand = as_quantity("275000 km / year")
 
     def set_navigate_scenario(self, value: Optional[str]) -> None:
-        """Update :attr:`flags` from a string representing a NAVIGATE scenario.
+        """Update :attr:`project` from a string representing a NAVIGATE scenario.
 
         See :meth:`ScenarioFlags.parse_navigate`.
         """

@@ -250,8 +250,9 @@ def extend_y(qty: Quantity, y: List[int]) -> Quantity:
 def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
     """Scaling factor for freight activity.
 
-    If :attr:`.Config.flags` is :data:`ScenarioFlags.ACT`, the value declines from 1.0
-    at the first `y` to 0.865 (reduction of 13.5%) at y=2050, then constant thereafter.
+    If :attr:`.Config.project` is :data:`ScenarioFlags.ACT`, the value declines from
+    1.0 at the first `y` to 0.865 (reduction of 13.5%) at y=2050, then constant
+    thereafter.
 
     Otherwise, the value is 1.0 for every (`n`, `y`).
     """
@@ -283,7 +284,7 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
 def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quantity:
     """Scaling factor for ``input`` (energy intensity of activity).
 
-    If :attr:`.Config.flags` is :data:`ScenarioFlags.TEC`, the value declines from 1.0
+    If :attr:`.Config.project` is :data:`ScenarioFlags.TEC`, the value declines from 1.0
     at the first `y` to 0.865 (reduction of 13.5%) at y=2050, then constant thereafter.
 
     Otherwise, the value is 1.0 for every (`t`, `y`).

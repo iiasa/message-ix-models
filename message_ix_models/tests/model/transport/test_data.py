@@ -300,7 +300,7 @@ def test_get_chn_ind_pop():
 
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize("regions", ["ISR", "R11", "R12", "R14"])
-@pytest.mark.parametrize("options", [{}, dict(flags=T35_POLICY.ELE)])
+@pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
 def test_navigate_ele(test_context, regions, years, options):
     """Test genno-based IKARUS data prep."""
     ctx = test_context

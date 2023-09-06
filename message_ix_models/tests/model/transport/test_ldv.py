@@ -58,7 +58,7 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
         tmp_path=tmp_path,
         regions=regions,
         years=years,
-        options={"data source": {"LDV": source}, "flags": T35_POLICY.TEC},
+        options={"data source": {"LDV": source}, "navigate_scenario": T35_POLICY.TEC},
     )
 
     # Earlier keys in the process, for debugging
