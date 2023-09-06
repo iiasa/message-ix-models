@@ -268,34 +268,32 @@ def prepare_computer(c: Computer):
             # those to construct/operate enough vehicles/infrastructure to provide that
             # amount of availability. E.g. a cost of 1000 EUR and availability of 10 km
             # give a cost of 100 EUR / km.
-            key = c.add(
-                "div", k.add_tag(next(i)), key, Key("ikarus availability", "tyc", "1")
-            )
+            key = c.add(k + next(i), "div", key, Key("ikarus availability", "tyc", "1"))
             # Adjust units
-            key = c.add("mul", k.add_tag(next(i)), key, k_u)
+            key = c.add(k + next(i), "mul", key, k_u)
 
         # Select desired values
-        key = c.add("select", k.add_tag(next(i)), key, "ikarus indexers")
-        key = c.add("rename_dims", k.add_tag(next(i)), key, {"t_new": "t"})
+        key = c.add("select", k + next(i), key, "ikarus indexers")
+        key = c.add("rename_dims", k + next(i), key, {"t_new": "t"})
 
         if name == "input":
             # Apply scenario-specific input efficiency factor
-            key = single_key(c.add_product("nonldv efficiency::adj", k_fi, key))
+            key = single_key(c.add("nonldv efficiency::adj", "mul", k_fi, key))
             # Drop existing "c" dimension
             key = single_key(c.add("drop_vars", key.drop("c"), key, quote("c")))
             # Fill (c, l) dimensions based on t
-            key = c.add_product(k.add_tag(next(i)), key, "broadcast:t-c-l")
+            key = c.add(k + next(i), "mul", key, "broadcast:t-c-l")
         elif name == "technical_lifetime":
             # Round up technical_lifetime values due to incompatibility in handling
             # non-integer values in the GAMS code
-            key = c.add("round", k.add_tag(next(i)), key)
+            key = c.add(k + next(i), "round", key)
 
         # Broadcast across "n" dimension
-        key = c.add_product(k.add_tag(next(i)), key, "n:n:ex world")
+        key = c.add(k + next(i), "mul", key, "n:n:ex world")
 
         if name in ("fix_cost", "input", "var_cost"):
             # Broadcast across valid (yv, ya) pairs
-            key = c.add_product(k.add_tag(next(i)), key, "broadcast:y-yv-ya")
+            key = c.add(k + next(i), "mul", key, "broadcast:y-yv-ya")
 
         # Convert to target units
         try:
@@ -303,7 +301,7 @@ def prepare_computer(c: Computer):
         except KeyError:  # "availability"
             pass
         else:
-            key = c.add("convert_units", k.add_tag(next(i)), key, target_units)
+            key = c.add(k + next(i), "convert_units", key, target_units)
 
         # Mapping between short dimension IDs in the computed quantities and the
         # dimensions in the respective MESSAGE parameters

@@ -71,7 +71,7 @@ def prepare_computer(c: Computer):
         "config",
     )
     # Product of input factor and LDV efficiency
-    k3 = c.add_product("ldv efficiency::adj", k2, "ldv efficiency")
+    k3 = c.add("ldv efficiency::adj", "mul", k2, "ldv efficiency")
 
     # Select a task for the final step that computes "ldv::ixmp"
     final = {
