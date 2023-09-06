@@ -53,7 +53,7 @@ def test_parse(value, expected):
     assert expected == parse(value)
 
 
-def test_ssp_field():
+def test_ssp_field() -> None:
     from dataclasses import dataclass
 
     @dataclass
