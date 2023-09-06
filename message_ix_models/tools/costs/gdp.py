@@ -439,6 +439,7 @@ def calculate_gdp_adjusted_region_cost_ratios(
                     "message_technology",
                     "region",
                     "year",
+                    "gdp_ratio_reg_to_reference",
                     "reg_cost_ratio_adj",
                 ],
                 axis=1,
