@@ -71,6 +71,8 @@ mix-models = "message_ix_models.cli:main"
 
 [tool.coverage.report]
 exclude_also = [
+  # Don't complain about abstract methods, they aren't run
+  "@(abc\\.)?abstractmethod",
   # Imports only used by type checkers
   "if TYPE_CHECKING:",
 ]
@@ -110,6 +112,9 @@ no_implicit_optional = false
 # Disable faulthandler plugin on Windows to prevent spurious console noise
 addopts = "-p no:faulthandler --cov=message_ix_models --cov-report="
 filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
+
+[tool.ruff]
+select = ["C9", "E", "F", "I", "W"]
 
 [tool.setuptools.packages]
 find = {}
