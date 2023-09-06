@@ -389,7 +389,7 @@ def prepare_computer(c: Computer):
         if "-exo" in name:
             continue
         keys.append(f"plot {name}")
-        queue.append((keys[-1], cls.make_task()))
+        queue.append((keys[-1], cls))
 
     c.add_queue((item, dict()) for item in queue)
 

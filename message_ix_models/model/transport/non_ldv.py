@@ -66,7 +66,7 @@ def prepare_computer(c: Computer):
     keys.append(single_key(c.add("transport 2W::ixmp", get_2w_dummies, "context")))
 
     # Compute CO₂ emissions factors
-    for k in map(Key.from_str_or_key, list(keys[:-1])):
+    for k in map(Key, list(keys[:-1])):
         key = c.add(k.add_tag("input"), itemgetter("input"), k)
         keys.append(
             single_key(
