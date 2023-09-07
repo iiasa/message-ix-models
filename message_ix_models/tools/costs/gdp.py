@@ -498,7 +498,9 @@ def calculate_region_cost_ratios_gdp_paths(
             )
             .drop(columns=["gdp_ppp_per_capita"])
             .assign(
-                perc_gdp_ratio_to_base_year=lambda x: (x.gdp_ratio_reg_to_reference)
+                perc_gdp_ratio_to_base_year=lambda x: (
+                    x.gdp_ratio_reg_to_reference - x.gdp_ratio_base_year
+                )
                 / x.gdp_ratio_base_year
             )
         )
@@ -507,8 +509,10 @@ def calculate_region_cost_ratios_gdp_paths(
             df_cost_ratios.merge(df_gdp_path, on=["region"])
             .reset_index(drop=1)
             .assign(
-                reg_cost_ratio_path=lambda x: x.reg_cost_ratio
-                * x.perc_gdp_ratio_to_base_year,
+                reg_cost_ratio_path=lambda x: (
+                    x.reg_cost_ratio * x.perc_gdp_ratio_to_base_year
+                )
+                + x.reg_cost_ratio,
                 year=lambda x: x.year.astype(int),
                 scenario_version=lambda x: np.where(
                     x.scenario_version.str.contains("2013"),
