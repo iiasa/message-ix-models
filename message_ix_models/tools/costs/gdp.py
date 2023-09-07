@@ -449,6 +449,91 @@ def calculate_gdp_adjusted_region_cost_ratios(
     return df
 
 
+# Function to calculate region-differentiated costs using paths from GDP
+def calculate_region_cost_ratios_gdp_paths(
+    region_diff_df, input_node, input_ref_region, input_base_year
+):
+    df_gdp = process_raw_ssp_data(
+        input_node=input_node, input_ref_region=input_ref_region
+    ).query("year >= 2020")
+    df_cost_ratios = region_diff_df.copy()
+
+    # If base year does not exist in GDP data, then use earliest year in GDP data
+    # and give warning
+    base_year = int(input_base_year)
+    if int(base_year) not in df_gdp.year.unique():
+        base_year = int(min(df_gdp.year.unique()))
+        print(
+            f"Base year {input_base_year} not found in GDP data. \
+                Using {base_year} for GDP data instead."
+        )
+
+    # Set default values for input arguments
+    # If specified node is R11, then use R11_NAM as the reference region
+    # If specified node is R12, then use R12_NAM as the reference region
+    # If specified node is R20, then use R20_NAM as the reference region
+    # However, if a reference region is specified, then use that instead
+    if input_ref_region is None:
+        if input_node.upper() == "R11":
+            reference_region = "R11_NAM"
+        if input_node.upper() == "R12":
+            reference_region = "R12_NAM"
+        if input_node.upper() == "R20":
+            reference_region = "R20_NAM"
+    else:
+        reference_region = input_ref_region
+
+    if reference_region.upper() not in df_gdp.region.unique():
+        print("Please select a valid reference region: " + str(df_gdp.region.unique()))
+    else:
+        gdp_base = (
+            df_gdp.query("year == @base_year")
+            .drop(columns=["year", "gdp_ppp_per_capita"])
+            .rename(columns={"gdp_ratio_reg_to_reference": "gdp_ratio_base_year"})
+        )
+
+        df_gdp_path = (
+            df_gdp.merge(
+                gdp_base, on=["scenario", "scenario_version", "region"], how="left"
+            )
+            .drop(columns=["gdp_ppp_per_capita"])
+            .assign(
+                perc_gdp_ratio_to_base_year=lambda x: (x.gdp_ratio_reg_to_reference)
+                / x.gdp_ratio_base_year
+            )
+        )
+
+        df_tech_path = (
+            df_cost_ratios.merge(df_gdp_path, on=["region"])
+            .reset_index(drop=1)
+            .assign(
+                reg_cost_ratio_path=lambda x: x.reg_cost_ratio
+                * x.perc_gdp_ratio_to_base_year,
+                year=lambda x: x.year.astype(int),
+                scenario_version=lambda x: np.where(
+                    x.scenario_version.str.contains("2013"),
+                    "Previous (2013)",
+                    "Review (2023)",
+                ),
+            )
+            .reindex(
+                [
+                    "scenario_version",
+                    "scenario",
+                    "message_technology",
+                    "region",
+                    "year",
+                    "gdp_ratio_reg_to_reference",
+                    "gdp_ratio_base_year",
+                    "reg_cost_ratio_path",
+                ],
+                axis=1,
+            )
+        )
+
+        return df_tech_path
+
+
 # Function to project investment costs by
 # multiplying the learning NAM costs with the adjusted regionally
 # differentiated cost ratios
