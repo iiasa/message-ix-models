@@ -11,7 +11,10 @@ from message_ix_models.tools.costs.config import (
     HORIZON_START,
     LAST_MODEL_YEAR,
 )
-from message_ix_models.tools.costs.gdp import calculate_gdp_adjusted_region_cost_ratios
+from message_ix_models.tools.costs.gdp import (
+    calculate_gdp_adjusted_region_cost_ratios,
+    calculate_region_cost_ratios_gdp_paths,
+)
 from message_ix_models.tools.costs.learning import (
     project_ref_region_inv_costs_using_learning_rates,
 )
@@ -155,6 +158,111 @@ def create_projections_gdp(
                 x.year <= FIRST_MODEL_YEAR,
                 x.reg_cost_base_year,
                 x.inv_cost_ref_region_learning * x.reg_cost_ratio_adj,
+            ),
+            fix_cost=lambda x: x.inv_cost * x.fix_to_inv_cost_ratio,
+        )
+        .reindex(
+            [
+                "scenario_version",
+                "scenario",
+                "message_technology",
+                "region",
+                "year",
+                "inv_cost",
+                "fix_cost",
+            ],
+            axis=1,
+        )
+    )
+
+    return df_costs
+
+
+def create_projections_gdp_path(
+    in_node, in_ref_region, in_base_year, in_scenario, in_scenario_version
+):
+    """Create cost projections using GDP ratio paths
+
+    Parameters
+    ----------
+    in_node : str
+        Spatial resolution
+    in_ref_region : str
+        Reference region
+    in_base_year : int
+        Base year
+    in_scenario : str
+        Scenario
+    in_scenario_version : str
+        Scenario version
+
+
+    """
+    # Print selection of scenario version and scenario
+    print("Selected scenario: " + in_scenario)
+    print("Selected scenario version: " + in_scenario_version)
+
+    # If no scenario is specified, do not filter for scenario
+    # If it specified, then filter as below:
+    if in_scenario is not None:
+        if in_scenario == "all":
+            sel_scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
+        else:
+            sel_scen = in_scenario.upper()
+
+    # If no scenario version is specified, do not filter for scenario version
+    # If it specified, then filter as below:
+    if in_scenario_version is not None:
+        if in_scenario_version == "all":
+            sel_scen_vers = ["Review (2023)", "Previous (2013)"]
+        elif in_scenario_version == "updated":
+            sel_scen_vers = ["Review (2023)"]
+        elif in_scenario_version == "original":
+            sel_scen_vers = ["Previous (2013)"]
+
+    # Repeating to avoid linting error
+    sel_scen = sel_scen
+    sel_scen_vers = sel_scen_vers
+
+    df_region_diff = get_weo_region_differentiated_costs(
+        input_node=in_node,
+        input_ref_region=in_ref_region,
+        input_base_year=in_base_year,
+    )
+
+    df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
+        df_region_diff,
+        input_node=in_node,
+        input_ref_region=in_ref_region,
+        input_base_year=in_base_year,
+    )
+
+    df_adj_cost_ratios = calculate_region_cost_ratios_gdp_paths(
+        df_region_diff,
+        input_node=in_node,
+        input_ref_region=in_ref_region,
+        input_base_year=in_base_year,
+    )
+
+    if in_scenario_version is not None:
+        df_adj_cost_ratios = df_adj_cost_ratios.query(
+            "scenario_version == @sel_scen_vers"
+        )
+
+    if in_scenario is not None:
+        df_ref_reg_learning = df_ref_reg_learning.query("scenario == @sel_scen")
+        df_adj_cost_ratios = df_adj_cost_ratios.query("scenario == @sel_scen")
+
+    df_costs = (
+        df_region_diff.merge(df_ref_reg_learning, on="message_technology")
+        .merge(
+            df_adj_cost_ratios, on=["scenario", "message_technology", "region", "year"]
+        )
+        .assign(
+            inv_cost=lambda x: np.where(
+                x.year <= FIRST_MODEL_YEAR,
+                x.reg_cost_base_year,
+                x.inv_cost_ref_region_learning * x.reg_cost_ratio_path,
             ),
             fix_cost=lambda x: x.inv_cost * x.fix_to_inv_cost_ratio,
         )
@@ -429,7 +537,17 @@ def create_cost_projections(
                 in_scenario_version=sel_scenario_version,
             )
 
-        # If method is GDP, then use the GDP method
+        # If method is GDP-path, then use the GDP-path method
+        if sel_method == "gdp-path":
+            df_costs = create_projections_gdp_path(
+                in_node=node_up,
+                in_ref_region=sel_ref_region,
+                in_base_year=sel_base_year,
+                in_scenario=sel_scenario,
+                in_scenario_version=sel_scenario_version,
+            )
+
+        # If method is GDP-splines, then use the GDP-splines method
         if sel_method == "gdp-splines":
             df_costs = create_projections_gdp_with_splines(
                 in_node=node_up,
