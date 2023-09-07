@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 from message_ix_models.tools.costs.config import (
-    ADJ_BASE_YEAR,
     BASE_YEAR,
     FIRST_MODEL_YEAR,
     HORIZON_END,
@@ -36,7 +35,8 @@ def larger_than(sequence, value):
 def create_projections_learning(in_node, in_ref_region, in_base_year, in_scenario):
     print("Selected scenario: " + in_scenario)
     print(
-        "For the learning method, only the SSP scenario(s) itself needs to be specified. \
+        "For the learning method, only the SSP scenario(s) itself \
+            needs to be specified. \
         No scenario version (previous vs. updated) is needed."
     )
 
@@ -472,11 +472,13 @@ def create_cost_projections(
     sel_node : str, optional
         Spatial resolution, by default "r12". Options are "r11", "r12", and "r20"
     sel_ref_region : str, optional
-        Reference region, by default R12_NAM for R12, R11_NAM for R11, and R20_NAM for R20
+        Reference region, by default R12_NAM for R12, R11_NAM for R11, and \
+            R20_NAM for R20
     sel_base_year : int, optional
         Base year, by default BASE_YEAR specified in the config file
     sel_method : str, optional
-        Method to use, by default "gdp". Options are "learning", "gdp", and "convergence"
+        Method to use, by default "gdp". Options are "learning", "gdp", \
+            and "convergence"
     sel_scenario_version : str, optional
         Scenario version, by default "updated". Options are "updated" and "original"
     sel_scenario : str, optional
@@ -665,8 +667,10 @@ def create_cost_projections(
 # - For years after the final model year, repeat the 2100 value
 
 # # Create function to apply to each dataframe
-# Each dataframe has data for each scenario version-scenario-technology-region combination
-# For each dataframe, create a new dataframe that starts in the horizon start year and ends in the horizon end year.
+# Each dataframe has data for each
+# scenario version-scenario-technology-region combination
+# For each dataframe, create a new dataframe that starts in the horizon start year
+# and ends in the horizon end year.
 # For each year, assign the cost value based on the following:
 # - For years up until the base year, repeat the 2020 value
 # - For years up until the horizon end, repeat the 2100 value
@@ -1063,7 +1067,8 @@ def create_message_inputs(df_proj: pd.DataFrame):
     HORIZON_START = 1960
     HORIZON_END = 2110
 
-    # For investment costs, for each region-technology pair, repeat the cost up until base year and then use the projected values up until 2100
+    # For investment costs, for each region-technology pair, repeat the cost up until
+    # base year and then use the projected values up until 2100
     # For years up until the horizon end, repeat the 2100 value
     un_vers = df_proj.scenario_version.unique()
     un_scen = df_proj.scenario.unique()
