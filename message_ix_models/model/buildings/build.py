@@ -56,6 +56,64 @@ BUILD_COMM_CONVERT = [
 MATERIALS = ["steel", "cement", "aluminum"]
 
 
+def adapt_emission_factors(data: Dict[str, pd.DataFrame]):
+    """Adapt ``relation_activity`` values in `data` that represent emission factors.
+
+    In MESSAGEix-GLOBIOM, ``relation_activity`` entries for, for instance, r=CO_Emission
+    are computed as (emission factor for fuel, species) × (input efficiency of
+    technology consuming the fuel). Because the MESSAGE-Buildings representation sets
+    the latter to 1.0, the relation_activity entries must be recomputed.
+
+    This function updates the values in :py:`data["relation_activity"]`, assuming that
+    :py:`data["input"]` contains the *original* (base model, MESSAGEix-GLOBIOM) input
+    efficiencies. Then it sets :py:`data["input"]["value"]` to 1.0.
+
+    .. todo:: When available in :mod:`message_ix_models`, simply read the values for
+       each (fuel, species) from a file, rather than performing this calculation.
+    """
+
+    def assert_value_unique(dfgb):
+        """Ensure that each group of `dfgb` contains only 1 unique "value"."""
+        assert (1 == dfgb.nunique()["value"]).all()
+        return dfgb
+
+    # Common dimensions of "relation_activity" and "input", to merge on
+    cols = ["node_loc", "technology", "year_act", "mode"]
+    # Relations to omit from calculation
+    omit = ["HFC_emission", "HFC_foam_red"]
+
+    # - Group "input" by `cols`.
+    # - Take the first value in each group; given all values are the same within groups.
+    # - Rename "value" to "input" (avoiding clash with "value" in relation_activity).
+    # - Drop columns not present in relation_activity.
+    input_ = (
+        data["input"]
+        .groupby(cols)
+        .pipe(assert_value_unique)
+        .nth(0)
+        .rename(columns={"value": "input"})
+        .drop(
+            "year_vtg node_origin commodity level time time_origin unit".split(), axis=1
+        )
+    )
+
+    # - Omit certain relations.
+    # - Merge `input_` into "relation_activity" data to add an "input" column.
+    # - Divide by base-model input efficiency to recover emissions factors per fuel.
+    # - Drop "input" column.
+    ra = "relation_activity"
+    data[ra] = (
+        data[ra][~data[ra].relation.isin(omit)]
+        .merge(input_, how="left", on=cols)
+        .astype({"year_rel": int})
+        .eval("value = value / input")
+        .drop("input", axis=1)
+    )
+
+    # Set input efficiencies to 1.0 per MESSAGE-Buildings representation
+    data["input"] = data["input"].assign(value=1.0)
+
+
 def get_spec(context: Context) -> Spec:
     """Return the specification for MESSAGEix-Buildings.
 
@@ -476,7 +534,7 @@ def prepare_data(
 
             # Modify data
             for name, filters, extra in (  # type: ignore
-                ("input", {}, dict(value=1.0)),
+                ("input", {}, {}),  # NB value=1.0 is done by adapt_emission_factors()
                 ("output", {}, dict(commodity=commodity, value=1.0)),
                 ("capacity_factor", {}, {}),
                 ("emission_factor", {}, {}),
@@ -490,7 +548,16 @@ def prepare_data(
                 )
 
     # Concatenate data frames together
-    merge_data(result, {k: pd.concat(v) for k, v in data.items()})
+    tmp = {k: pd.concat(v) for k, v in data.items()}
+
+    # Adapt relation_activity values that represent emission factors
+    adapt_emission_factors(tmp)
+    print("tmp['relation_activity'] = ")
+    print(tmp["relation_activity"].head().to_string())
+    print(tmp["relation_activity"].tail().to_string())
+
+    merge_data(result, tmp)
+
     log.info(
         "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in result.items())
     )
