@@ -111,6 +111,14 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     --------
     SNAPSHOTS
     """
+    from importlib.metadata import version
+
+    if version("message_ix") < "3.5":
+        raise NotImplementedError(
+            "Support for message_ix_models.model.snaphot.load() with message_ix <= "
+            "3.4.0. Please upgrade to message_ix 3.5 or later."
+        )
+
     path = fetch(SNAPSHOTS[snapshot_id])
 
     # Add units
