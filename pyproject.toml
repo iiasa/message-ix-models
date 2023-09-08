@@ -77,9 +77,6 @@ exclude_also = [
   "if TYPE_CHECKING:",
 ]
 
-[tool.isort]
-profile = "black"
-
 [tool.mypy]
 exclude = ["doc/"]
 
@@ -115,6 +112,9 @@ filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
 
 [tool.ruff]
 select = ["C9", "E", "F", "I", "W"]
+
+[tool.ruff.mccabe]
+max-complexity = 14
 
 [tool.setuptools.packages]
 find = {}
