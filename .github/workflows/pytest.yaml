@@ -26,17 +26,17 @@ jobs:
         - { os: ubuntu-latest, python: "3.11" }
         - { os: windows-latest, python: "3.11" }
         # Versions of both ixmp and message_ix to use
-        upstream-version:
-        - v3.4.0  # Minimum version given in setup.cfg
-        - v3.5.0
-        - v3.6.0
-        - v3.7.0  # Latest released version
-        - main    # Development version
+        upstream:
+        - { version: v3.4.0, extra-deps: '"pandas<2.0"' }  # Minimum version given in setup.cfg
+        - { version: v3.5.0, extra-deps: '"pandas<2.0"' }
+        - { version: v3.6.0, extra-deps: '"pandas<2.0"' }
+        - { version: v3.7.0, extra-deps: "" }  # Latest released version
+        - { version: main, extra-deps: "" }  # Development version
 
       fail-fast: false
 
     runs-on: ${{ matrix.version.os }}
-    name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream-version }}
+    name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream.version }}
 
     steps:
     - name: Cache test data
@@ -72,10 +72,10 @@ jobs:
       # as needed. DO NOT merge such changes to `main`.
       run: |
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
-        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream-version }}"
-        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream-version }}"
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream.version }}"
+        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
 
-        pip install .[tests]
+        pip install .[tests] ${{ matrix.upstream.extra-deps }}
 
     - name: Configure local data path
       run: |
