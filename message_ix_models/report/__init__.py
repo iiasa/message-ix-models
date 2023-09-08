@@ -351,6 +351,14 @@ def prepare_reporter(
         Same as ``context.report["key"]`` if any, but in full resolution; else one of
         ``default`` or ``cli-output`` according to the other settings.
     """
+    from importlib.metadata import version
+
+    if version("message_ix") < "3.6":
+        raise NotImplementedError(
+            "Support for message_ix_models.report.prepare_reporter() with message_ix <="
+            " 3.5.0. Please upgrade to message_ix 3.6 or later."
+        )
+
     log.info("Prepare reporter")
 
     if reporter:

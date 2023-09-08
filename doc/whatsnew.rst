@@ -8,6 +8,7 @@ v2023.9.2
 =========
 
 - New module :mod:`message_ix_models.report` for reporting (:pull:`116`).
+  Use of this module requires ixmp and message_ix version 3.6.0 or greater.
 - Add documentation on :ref:`migrate-filter-repo` using :program:`git filter-repo` and helper scripts (:pull:`89`).
 
 v2023.7.26
