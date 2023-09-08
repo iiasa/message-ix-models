@@ -12,7 +12,7 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 from iam_units import convert_gwp
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util import identify_nodes
+from message_ix_models.util import broadcast, identify_nodes
 from message_ix_models.workflow import Workflow
 
 from message_data.model.workflow import Config, solve
@@ -31,17 +31,21 @@ class PolicyConfig(Config):
     #: Gt CO₂ for the 21st century (varies).
     label: str = ""
 
-    #: Actual quantity of the carbon budget to be imposed, or the value "calc", in which
-    #: case the value is calculated from :attr:`label` by
+    #: Which steps of the ENGAGE workflow to run. Empty list = don't run any steps.
+    steps: List[int] = field(default_factory=lambda: [1, 2, 3])
+
+    #: In :func:`step_1`, actual quantity of the carbon budget to be imposed , or the
+    #: value "calc", in which case the value is calculated from :attr:`label` by
     #: :meth:`.ScenarioRunner.calc_budget`.
     budget: Union[int, Literal["calc"]] = "calc"
 
-    #: Information on an optional, second scenario from which to copy tax_emission data
-    #: in :func:`step_3`.
+    #: In :func:`step_3`, optional information on a second scenario from which to copy
+    #: ``tax_emission`` data.
     tax_emission_scenario: Dict = field(default_factory=dict)
 
-    #: Which steps of the ENGAGE workflow to run. Empty list = don't run any steps.
-    steps: List[int] = field(default_factory=lambda: [1, 2, 3])
+    #: In :func:`step_3`, emission types or categories (``type_emission``) for which to
+    #: apply values for ``tax_emission``.
+    step_3_type_emission: List[str] = field(default_factory=lambda: ["TCE_non-CO2"])
 
 
 def calc_hist_cum_CO2(
@@ -250,6 +254,22 @@ def step_2(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     return scenario
 
 
+def retr_CO2_price(scen: Scenario):
+    """Retrieve ``PRICE_EMISSION`` data and transform for use as ``tax_emission``.
+
+    This is identical to :meth:`ScenarioRunner.retr_CO2_price`, except without the
+    argument `new_type_emission`. For the same effect, use pandas built-in
+    :meth:`~.DataFrame.assign` or, to create data for multiple ``type_emission``, use
+    :func:`message_ix_models.util.broadcast`.
+    """
+    return (
+        scen.var("PRICE_EMISSION")
+        .assign(unit="USD/tC", type_emission=None)
+        .rename(columns={"lvl": "value", "year": "type_year"})
+        .drop("mrg", axis=1)
+    )
+
+
 def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenario:
     """Step 3 of the ENGAGE climate policy workflow."""
     if config.tax_emission_scenario:
@@ -259,16 +279,10 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
         # Retrieve CO2 prices from `scenario` itself
         source = scenario
 
-    # Retrieve a data frame with CO₂ prices
-    #
-    # NB this method:
-    # - does not use any class or context attributes, so it can be called on any
-    #   instance of ScenarioRunner.
-    #   TODO separate the method from the class as a stand-alone function
-    # - does not require legacy reporting output; only the variable "PRICE_EMISSION",
-    #   i.e. `source` must have solution data.
-    sr = ScenarioRunner(context)
-    df = sr.retr_CO2_price(source, new_type_emission="TCE_non-CO2")
+    # Retrieve a data frame with CO₂ prices, and apply specific ``type_emission``
+    df = retr_CO2_price(source).pipe(
+        broadcast, type_emission=config.step_3_type_emission
+    )
 
     del source  # No longer used → free memory
 
@@ -277,8 +291,15 @@ def step_3(context: Context, scenario: Scenario, config: PolicyConfig) -> Scenar
     except ValueError:
         pass  # Solution did not exist
 
-    with scenario.transact(message="Add price for TCE_non-CO2"):
+    with scenario.transact(message=f"Add price for {config.step_3_type_emission}"):
         scenario.add_par("tax_emission", df)
+
+        # As in step_2, remove the lower bound on global CO2 emissions. This is
+        # necessary if step_2 was not run (for instance, NAVIGATE T6.2 protocol)
+        name = "relation_lower"
+        scenario.remove_par(
+            name, scenario.par(name, filters={"relation": [RELATION_GLOBAL_CO2]})
+        )
 
     return scenario
 
@@ -336,10 +357,11 @@ def add_steps(
             cfg.demand_scenario.setdefault(
                 "scenario", target.split("/")[-1].format(step - 1)
             )
+
         if step == 2:
             # Do not solve MESSAGE-MACRO for step 2, even if doing so for steps 1/3
             cfg.solve.update(model="MESSAGE")
-        if step == 3:
+        elif step == 3:
             # May help improve long solve times, per
             # https://iiasa-ece.slack.com/archives/C03M5NX9X0D/p1678703978634529?
             # thread_ts=1678701550.474199&cid=C03M5NX9X0D
@@ -364,4 +386,5 @@ def add_steps(
                 f"{s} solved", s, solve, config=cfg, set_as_default=True
             )
 
+    # Return the name of the last of the added steps
     return s

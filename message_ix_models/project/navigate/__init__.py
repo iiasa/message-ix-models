@@ -105,6 +105,7 @@ CLIMATE_POLICY["20C T6.2"] = PolicyConfig(
     label="20C",
     steps=[3],
     tax_emission_scenario=dict(scenario="2C-Default ENGAGE_20C_step-2"),
+    step_3_type_emission=["TCE"],
     **asdict(CLIMATE_POLICY[None]),  # Reuse defaults
 )
 
