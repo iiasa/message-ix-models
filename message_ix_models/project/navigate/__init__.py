@@ -118,6 +118,7 @@ _A = {
     "ref": Annotation(id="navigate_T35_policy", text=""),
     "T3.5": Annotation(id="navigate_task", text="T3.5"),
     "T6.1": Annotation(id="navigate_task", text="T6.1"),
+    "T6.2": Annotation(id="navigate_task", text="T6.2"),
     "advanced": Annotation(id="navigate_WP6_production", text="advanced"),
     "default": Annotation(id="navigate_WP6_production", text="default"),
 }
@@ -158,6 +159,7 @@ EXTRA_SCENARIOS = [
     Code(id="PC-NPi-LowCE", annotations=_anno("T6.1 act+tec default", "NPi")),
     Code(id="PC-NPi-AllEn", annotations=_anno("T6.1 all advanced", "NPi")),
     Code(id="PC-Ctax-Default", annotations=_anno("T6.1 ref default", "Ctax")),
+    Code(id="PEP-Ctax-AllEn", annotations=_anno("T6.2 all advanced", "Ctax")),
 ]
 
 
