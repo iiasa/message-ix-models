@@ -106,7 +106,7 @@ def add_tax_emission(
     scen : :class:`message_ix.Scenario`
     price : float
         Price in the first model year, in USD / tonne CO₂.
-    conversion_factor : float, optional
+    conversion_factor : float, *optional*
         Factor for converting `price` into the model's internal emissions units,
         currently USD / tonne carbon. Optional: a default value is retrieved from
         :mod:`iam_units`.

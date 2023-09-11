@@ -234,7 +234,7 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
         name is used for the scenario name of the returned Scenario.
     context : .Context
         Passed to :func:`.testing.bare_res`.
-    solved : bool, optional
+    solved : bool, *optional*
         Return a solved Scenario.
 
     Returns

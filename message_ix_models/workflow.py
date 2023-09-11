@@ -23,12 +23,12 @@ class WorkflowStep:
     Parameters
     ----------
     name : str
-        ``"model name/scenario name"`` for the :class:`.Scenario` produced by the step.
-    action : CallbackType, optional
+        ``"model name/scenario name"`` for the |Scenario| produced by the step.
+    action : CallbackType, *optional*
         Function to be executed to modify the base into the target Scenario.
-    clone : bool, optional
+    clone : bool, *optional*
         :obj:`True` to clone the base scenario the target.
-    target : str, optional
+    target : str, *optional*
         URL for the scenario produced by the workflow step. Parsed to
         :attr:`scenario_info` and :attr:`platform_info`.
     kwargs
