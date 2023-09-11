@@ -94,7 +94,7 @@ jobs:
       shell: bash
 
     - name: Test documentation build using Sphinx
-      if: startsWith(matrix.os, 'ubuntu')
+      if: startsWith(matrix.version.os, 'ubuntu')
       env:
         RTD_TOKEN_MESSAGE_DATA: ${{ secrets.RTD_TOKEN_MESSAGE_DATA }}
       run: make --directory=doc SPHINXOPTS=-n html
