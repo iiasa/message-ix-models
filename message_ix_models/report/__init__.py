@@ -301,7 +301,7 @@ def prepare_reporter(
     scenario: Optional[Scenario] = None,
     reporter: Optional[Reporter] = None,
 ) -> Tuple[Reporter, Key]:
-    """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
+    """Return a :class:`message_ix.Reporter` and `key` prepared to report a |Scenario|.
 
     The code responds to the following settings on `context`:
 
@@ -323,11 +323,12 @@ def prepare_reporter(
            corresponding, full-resolution Key, if any, is returned.
        * - report/config
          - dict or Path-like or None
-         - If :class:`dict`, then this is passed to :meth:`.Reporter.configure`. If
-           Path-like, then this is the path to the reporting configuration file. If not
-           given, defaults to :file:`report/global.yaml`.
+         - If :class:`dict`, then this is passed to
+           :meth:`message_ix.Reporter.configure`. If Path-like, then this is the path to
+           the reporting configuration file. If not given, defaults to
+           :file:`report/global.yaml`.
        * - report/output_path
-         - Path-like, optional
+         - Path-like, *optional*
          - Path to write reporting outputs. If given, a computation ``cli-output`` is
            added to the Reporter which writes ``report/key`` to this path.
 
@@ -340,7 +341,7 @@ def prepare_reporter(
         retrieve a Scenario.
     reporter : message_ix.Reporter, *optional*
         Existing reporter to extend with computations. If not given, it is created
-        using :meth:`.Reporter.from_scenario`.
+        using :meth:`message_ix.Reporter.from_scenario`.
 
     Returns
     -------

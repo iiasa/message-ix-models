@@ -36,7 +36,7 @@ def create_res(context, quiet=True):
 
     Parameters
     ----------
-    context : .Context
+    context : Context
         :attr:`.Context.scenario_info` determines the model name and scenario name of
         the created Scenario. If not provided, the defaults are:
 

@@ -266,7 +266,7 @@ def ffill(
 
     Parameters
     ----------
-    df : .DataFrame
+    df : pandas.DataFrame
         Data to fill forwards.
     dim : str
         Dimension to fill along. Must be a column in `df`.
@@ -335,7 +335,7 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
         If 'input', `efficiency` applies to the input, and the output, thus the activity
         level of the technology, is in dest[2] units. If 'output', the opposite.
     kwargs
-        Passed to :func:`make_df`.
+        Passed to :func:`~message_ix.make_df`.
 
     Returns
     -------
@@ -371,12 +371,11 @@ def make_matched_dfs(
 
     Parameters
     ----------
-    base : pd.DataFrame, dict, etc.
-        Used to populate other columns of each data frame.
-        Duplicates—which occur when the target parameter has fewer dimensions than
-        `base`—are dropped.
+    base : pandas.DataFrame, dict, etc.
+        Used to populate other columns of each data frame. Duplicates—which occur when
+        the target parameter has fewer dimensions than `base`—are dropped.
     par_values :
-        Argument names (e.g. ‘fix_cost’) are passed to :func:`.make_df`.
+        Argument names (e.g. ‘fix_cost’) are passed to :func:`~.message_ix.make_df`.
         If the value is :class:`float`, it overwrites the "value" column; if
         :class:`pint.Quantity`, its magnitude overwrites "value" and its units the
         "units" column, as a formatted string.
@@ -416,13 +415,13 @@ def make_source_tech(
 
     The technology has no inputs; its output commodity and/or level are determined by
     `common`; either single values, or :obj:`None` if the result will be
-    :meth:`~DataFrame.pipe`'d through :func:`broadcast`.
+    :meth:`~pandas.DataFrame.pipe`'d through :func:`broadcast`.
 
     Parameters
     ----------
-    info : .Scenario or .ScenarioInfo
+    info : Scenario or ScenarioInfo
     common : dict
-        Passed to :func:`make_df`.
+        Passed to :func:`~message_ix.make_df`.
     **values
         Values for 'capacity_factor' (optional; default 1.0), 'output', 'var_cost', and
         optionally 'technical_lifetime'.
@@ -463,11 +462,11 @@ def make_source_tech(
 
 
 def maybe_query(series: pd.Series, query: Optional[str]) -> pd.Series:
-    """Apply :meth:`pandas.Series.query` if the `query` arg is not :obj:`None`.
+    """Apply :meth:`pandas.DataFrame.query` if the `query` arg is not :obj:`None`.
 
-    :meth:`~pandas.Series.query` is not chainable (`pandas-dev/pandas#37941
+    :meth:`~pandas.DataFrame.query` is not chainable (`pandas-dev/pandas#37941
     <https://github.com/pandas-dev/pandas/issues/37941>`_). Use this function with
-    :func:`pandas.Series.pipe`, passing an argument that may be :obj:`None`, to have a
+    :meth:`pandas.Series.pipe`, passing an argument that may be :obj:`None`, to have a
     chainable query operation that can be a no-op.
     """
     # Convert Series to DataFrame, query(), then retrieve the single column
@@ -570,7 +569,7 @@ def strip_par_data(  # noqa: C901
     element: str,
     dry_run: bool = False,
     dump: Optional[Dict[str, pd.DataFrame]] = None,
-):
+) -> int:
     """Remove `element` from `set_name` in scenario, optionally dumping to `dump`.
 
     Parameters
@@ -583,7 +582,8 @@ def strip_par_data(  # noqa: C901
 
     Returns
     -------
-    Total number of rows removed across all parameters.
+    int
+       Total number of rows removed across all parameters.
 
     See also
     --------

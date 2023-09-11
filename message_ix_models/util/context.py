@@ -283,18 +283,19 @@ class Context(dict):
         Parameters
         ==========
         parts :
-            Path fragments, e.g. directories, passed to :meth:`Path.joinpath`.
+            Path fragments, for instance directories, passed to
+            :meth:`~.pathlib.PurePath.joinpath`.
         suffix :
-            File name suffix including a ".", e.g. ".csv", passed to
-            :meth:`Path.with_suffix`.
+            File name suffix including a "."—for instance, ".csv"—passed to
+            :meth:`~.pathlib.PurePath.with_suffix`.
         """
         result = self.core.local_data.joinpath(*parts)
         return result.with_suffix(suffix) if suffix else result
 
     def get_platform(self, reload=False) -> ixmp.Platform:
-        """Return a :class:`ixmp.Platform` from :attr:`platform_info`.
+        """Return a |Platform| from :attr:`.Config.platform_info`.
 
-        When used through the CLI, :attr:`platform_info` is a 'base' platform as
+        When used through the CLI, :attr:`.Config.platform_info` is a 'base' platform as
         indicated by the --url or --platform  options.
 
         If a Platform has previously been instantiated with :meth:`get_platform`, the
@@ -319,16 +320,16 @@ class Context(dict):
         return self["_mp"]
 
     def get_scenario(self) -> message_ix.Scenario:
-        """Return a :class:`message_ix.Scenario` from :attr:`scenario_info`.
+        """Return a |Scenario| from :attr:`~.Config.scenario_info`.
 
-        When used through the CLI, :attr:`scenario_info` is a ‘base’ scenario for an
-        operation, indicated by the ``--url`` or ``--platform/--model/--scenario``
-        options.
+        When used through the CLI, :attr:`~.Config.scenario_info` is a ‘base’ scenario
+        for an operation, indicated by the ``--url`` or
+        ``--platform/--model/--scenario`` options.
         """
         return message_ix.Scenario(self.get_platform(), **self.core.scenario_info)
 
     def set_scenario(self, scenario: message_ix.Scenario) -> None:
-        """Update :attr:`scenario_info` to match an existing `scenario`."""
+        """Update :attr:`.Config.scenario_info` to match an existing `scenario`."""
         self.core.scenario_info.update(
             model=scenario.model, scenario=scenario.scenario, version=scenario.version
         )
@@ -346,8 +347,8 @@ class Context(dict):
     ):
         """Handle command-line arguments.
 
-        May update the :attr:`data_path`, :attr:`platform_info`, :attr:`scenario_info`,
-        and/or :attr:`url` settings.
+        May update the :attr:`.Config.local_data`, :attr:`.Config.platform_info`,
+        :attr:`.Config.scenario_info`, and/or :attr:`.url` settings.
         """
         self.core.verbose = verbose
 

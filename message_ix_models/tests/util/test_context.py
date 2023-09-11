@@ -74,7 +74,7 @@ class TestContext:
         assert s.model.startswith("baz") and s.scenario.startswith("baz")
 
     def test_dealias(self, caplog):
-        """Aliasing works with :meth:`Context.__init__`, :meth:`Context.update`."""
+        """Aliasing works with :meth:`.Context.__init__`, :meth:`.Context.update`."""
         c = Context()
         c.update(regions="R99")
         assert [] == caplog.messages  # No log warnings for core Config, .model.Config

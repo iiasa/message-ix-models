@@ -27,7 +27,7 @@ def test_eval_anno(caplog):
 
 
 def test_make_enum():
-    """:func:`.make_enum` works with :class:`Flag` and subclasses."""
+    """:func:`.make_enum` works with :class:`~enum.Flag` and subclasses."""
     from enum import Flag, IntFlag
 
     E = make_enum("ICONICS:SSP(2017)", base=Flag)

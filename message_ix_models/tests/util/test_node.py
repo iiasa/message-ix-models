@@ -39,7 +39,7 @@ VALUE = [0.1, 0.2]
 
 @pytest.fixture(scope="function")
 def input():
-    """Fixture: test data for :func:`.adapt_R11_R14`."""
+    """Fixture: test data for :obj:`.adapt_R11_R14`."""
     R11_all = get_codes("node/R11")
     R11_reg = R11_all[R11_all.index("World")].child
     df = make_df(
@@ -61,7 +61,7 @@ def input():
     ],
 )
 def test_adapt_df(input, func, N, expected, target_nodes):
-    """:func:`.adapt_R11_R14` handles :class:`pandas.DataFrame`."""
+    """:obj:`.adapt_R11_R14` handles :class:`pandas.DataFrame`."""
     # Function runs
     output = func(input)
 
@@ -86,7 +86,7 @@ def test_adapt_df(input, func, N, expected, target_nodes):
     [(adapt_R11_R12, VALUE[0], "R12_CHN"), (adapt_R11_R14, VALUE[1], "R14_CAS")],
 )
 def test_adapt_qty(input, func, expected, node_loc):
-    """:func:`.adapt_R11_R14` handles :class:`genno.Quantity`."""
+    """:obj:`.adapt_R11_R14` handles :class:`genno.Quantity`."""
     # Convert to genno.Quantity
     df = input[PAR]
     input[PAR] = Quantity.from_series(df.set_index(df.columns[:-2].tolist())["value"])
