@@ -1,0 +1,49 @@
+# Carbon emission factors
+#
+# Source: IPCC (1996), "Revised 1996 IPCC Guidelines for National Greenhouse Gas
+#         Inventories", Volume 2, "Greenhouse Gas Inventory Workbook",
+#         Table 1-2 on page 1.6.
+#
+#         https://www.ipcc-nggip.iges.or.jp/public/gl/guidelin/ch1wb1.pdf
+#         https://www.ipcc-nggip.iges.or.jp/public/gl/invs5a.html
+#         https://www.ipcc-nggip.iges.or.jp/public/gl/invs1.html
+#
+# Units: tonne / terajoule
+#
+# This transcription omits headings, notes, parentheses and other information.
+# See the original.
+#
+fuel, value
+"Crude Oil",             20.0
+"Orimulsion",            22.0
+"Natural Gas Liquids",   17.2
+"Gasoline",              18.9
+"Jet Kerosene",          19.5
+"Other Kerosene",        19.6
+"Shale Oil",             20.0
+"Gas/Diesel Oil",        20.2
+"Residual Fuel Oil",     21.1
+"LPG",                   17.2
+"Ethane",                16.8
+"Naphtha",               20.0
+"Bitumen",               22.0
+"Lubricants",            20.0
+"Petroleum Coke",        27.5
+"Refinery Feedstocks",   20.0
+"Refinery Gas",          18.2
+"Other Oil",             20.0
+"Anthracite",            26.8
+"Coking Coal",           25.8
+"Other Bituminous Coal", 25.8
+"Sub-bituminous Coal",   26.2
+"Lignite",               27.6
+"Oil Shale",             29.1
+"Peat",                  28.9
+"BKB & Patent Fuel",     25.8
+"Coke Oven / Gas Coke",  29.5
+"Coke Oven Gas",         13.0
+"Blast Furnace Gas",     66.0
+"Natural Gas (Dry)",     15.3
+"Solid Biomass",         29.9
+"Liquid Biomass",        20.0
+"Gas Biomass",           30.6
