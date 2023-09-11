@@ -195,7 +195,7 @@ def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Any:
 def load_private_data(*parts: str) -> Mapping:  # pragma: no cover (needs message_data)
     """Load a private data file from :mod:`message_data` and return its contents.
 
-    Analogous to :mod:`load_package_data`, but for non-public data.
+    Analogous to :func:`load_package_data`, but for non-public data.
 
     Parameters
     ----------
@@ -250,7 +250,7 @@ def package_data_path(*parts) -> Path:
     Parameters
     ----------
     parts : sequence of str or Path
-        Joined to the base path using :meth:`.Path.joinpath`.
+        Joined to the base path using :meth:`~pathlib.PurePath.joinpath`.
 
     See also
     --------
@@ -268,7 +268,7 @@ def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
     Parameters
     ----------
     parts : sequence of str or Path
-        Joined to the base path using :meth:`.Path.joinpath`.
+        Joined to the base path using :meth:`~pathlib.PurePath.joinpath`.
 
     See also
     --------

@@ -22,13 +22,13 @@ CodeLike = Union[str, Code]
 
 
 def as_codes(data: Union[List[str], Dict[str, CodeLike]]) -> List[Code]:
-    """Convert *data* to a :class:`list` of :class:`.Code` objects.
+    """Convert `data` to a :class:`list` of |Code| objects.
 
     Various inputs are accepted:
 
     - :class:`list` of :class:`str`.
-    - :class:`dict`, in which keys are :attr:`.Code.id` and values are further
-      :class:`dict` with keys matching other :class:`.Code` attributes.
+    - :class:`dict`, in which keys are :attr:`~sdmx.model.common.Code.id` and values are
+      further :class:`dict` with keys matching other Code attributes.
     """
     # Assemble results as a dictionary
     result: Dict[str, Code] = {}

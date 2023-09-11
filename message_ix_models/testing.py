@@ -215,7 +215,7 @@ def cli_test_group():
 
 
 def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scenario:
-    """Return or create a Scenario containing the bare RES, for use in testing.
+    """Return or create a |Scenario| containing the bare RES, for use in testing.
 
     The Scenario has a model name like "MESSAGEix-GLOBIOM [regions]
     [start]:[duration]:[end]", e.g. "MESSAGEix-GLOBIOM R14 2020:10:2110" (see
@@ -232,14 +232,14 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     request : .Request or None
         The pytest :fixture:`pytest:request` fixture. If provided the pytest test node
         name is used for the scenario name of the returned Scenario.
-    context : .Context
+    context : Context
         Passed to :func:`.testing.bare_res`.
     solved : bool, *optional*
         Return a solved Scenario.
 
     Returns
     -------
-    .Scenario
+    Scenario
         The scenario is a fresh clone, so can be modified freely without disturbing
         other tests.
     """

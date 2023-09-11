@@ -113,7 +113,7 @@ def generate_product(
         Mapping from dimension IDs to lists of codes.
     name : str
         Name of the set.
-    template : .Code
+    template : Code
         Must have Python format strings for its its :attr:`id` and :attr:`name`
         attributes.
     """
