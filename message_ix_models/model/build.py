@@ -26,7 +26,8 @@ def _add_unit(mp: ixmp.Platform, unit: str, comment: str) -> None:
             raise
 
 
-def apply_spec(
+# FIXME Reduce complexity from 14 to ≤13
+def apply_spec(  # noqa: C901
     scenario: Scenario,
     spec: Union[Spec, Mapping[str, ScenarioInfo]],
     data: Optional[Callable] = None,

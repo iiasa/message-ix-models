@@ -563,7 +563,8 @@ def same_time(df: pd.DataFrame) -> pd.DataFrame:
     return df.assign(**{c: copy_column("time") for c in cols})
 
 
-def strip_par_data(
+# FIXME Reduce complexity from 14 to ≤13
+def strip_par_data(  # noqa: C901
     scenario: message_ix.Scenario,
     set_name: str,
     element: str,
