@@ -10,8 +10,12 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 
 __all__ = [
-    "prepare_computer",
+    "MEASURES",
+    "SOURCES",
+    "DemoSource",
     "ExoDataSource",
+    "prepare_computer",
+    "register_source",
 ]
 
 #: Supported measures.
@@ -19,7 +23,7 @@ __all__ = [
 #: .. todo:: Store this in a separate code list or concept scheme.
 MEASURES = ("GDP", "POP")
 
-#: List of known sources for data.
+#: Known sources for data. Use :func:`register_source` to add to this collection.
 SOURCES: Dict[str, Type["ExoDataSource"]] = {}
 
 

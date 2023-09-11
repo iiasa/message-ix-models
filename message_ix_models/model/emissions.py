@@ -25,18 +25,18 @@ def get_emission_factors(units: Optional[str] = None) -> Quantity:
     energy" page of the MESSAGEix-GLOBIOM documentation.
 
     The fuel dimension and names in the source are mapped to a :math:`c` ("commodity")
-    dimension and labels from :ref:`commodity-yaml`, using the ``ipcc-1996-name``
-    annotations appearing in the latter. A value for "methanol" that appears in the
-    MESSAGEix-GLOBIOM docs table but not in the source is appended.
+    dimension and labels from :ref:`commodity.yaml <commodity-yaml>`, using the
+    ``ipcc-1996-name`` annotations appearing in the latter. A value for "methanol" that
+    appears in the MESSAGEix-GLOBIOM docs table but not in the source is appended.
 
     Parameters
     ----------
-    unit : str, optional
+    unit : str, *optional*
         Expression for units of the returned quantity. Tested values include:
 
-        - "tC / TJ", source units (default),
-        - "t CO2 / TJ", and
-        - "t C / kWa", internal units in MESSAGEix-GLOBIOM, for instance for
+        - “tC / TJ”, source units (default),
+        - “t CO2 / TJ”, and
+        - “t C / kWa”, internal units in MESSAGEix-GLOBIOM, for instance for
           "relation_activity" entries for emissions relations.
 
     Returns
