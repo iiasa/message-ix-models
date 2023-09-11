@@ -169,7 +169,7 @@ def register_source(cls: Type[ExoDataSource]) -> Type[ExoDataSource]:
 
 
 @register_source
-class TestSource(ExoDataSource):
+class DemoSource(ExoDataSource):
     """Example source of exogenous population and GDP data.
 
     Parameters
@@ -180,7 +180,7 @@ class TestSource(ExoDataSource):
         **Must** contain an element "measure", one of :data:`MEASURES`.
     """
 
-    id = "TEST"
+    id = "DEMO"
 
     def __init__(self, source, source_kw):
         if not source.startswith("test "):
