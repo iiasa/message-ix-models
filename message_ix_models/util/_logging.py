@@ -22,9 +22,9 @@ def silence_log(names=None, level=logging.ERROR):
 
     Parameters
     ----------
-    names : str, optional
+    names : str, *optional*
         Space-separated names of loggers to quiet.
-    level : int, optional
+    level : int, *optional*
         Minimum level of log messages to allow.
 
     Examples
@@ -199,9 +199,9 @@ def setup(
 
     Parameters
     ----------
-    level : str, optional
+    level : str, *optional*
         Log level for :mod:`message_ix_models` and :mod:`message_data`.
-    console : bool, optional
+    console : bool, *optional*
         If :obj:`True`, print all messages to console using a :class:`Formatter`.
     """
     # Copy to avoid modifying with the operations below

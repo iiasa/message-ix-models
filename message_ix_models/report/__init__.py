@@ -335,10 +335,10 @@ def prepare_reporter(
     ----------
     context : Context
         Containing settings in the ``report/*`` tree.
-    scenario : message_ix.Scenario, optional
+    scenario : Scenario, *optional*
         Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
         retrieve a Scenario.
-    reporter : .Reporter, optional
+    reporter : message_ix.Reporter, *optional*
         Existing reporter to extend with computations. If not given, it is created
         using :meth:`.Reporter.from_scenario`.
 

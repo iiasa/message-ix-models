@@ -51,7 +51,7 @@ class Context(dict):
 
         Parameters
         ----------
-        index : int, optional
+        index : int, *optional*
             Index of the Context instance to return, e.g. ``-1`` for the most recently
             created.
         """
@@ -188,7 +188,7 @@ class Context(dict):
 
         Parameters
         ----------
-        create : bool, optional
+        create : bool, *optional*
             If :obj:`True` (the default) and the base scenario does not exist, a bare
             RES scenario is created. Otherwise, an exception is raised.
 
