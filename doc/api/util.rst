@@ -15,6 +15,7 @@ Submodules:
    node
    pooch
    scenarioinfo
+   sdmx
 
 Commonly used:
 
@@ -187,4 +188,12 @@ Commonly used:
 .. currentmodule:: message_ix_models.util.scenarioinfo
 
 .. automodule:: message_ix_models.util.scenarioinfo
+   :members:
+
+:mod:`.util.sdmx`
+=================
+
+.. currentmodule:: message_ix_models.util.sdmx
+
+.. automodule:: message_ix_models.util.sdmx
    :members:
