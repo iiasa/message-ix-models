@@ -449,6 +449,151 @@ def calculate_gdp_adjusted_region_cost_ratios(
     return df
 
 
+# Function to calculate adjusted region-differentiated cost ratios
+def calculate_indiv_adjusted_region_cost_ratios(
+    region_diff_df, input_node, input_ref_region, input_base_year
+):
+    df_gdp = process_raw_ssp_data(
+        input_node=input_node, input_ref_region=input_ref_region
+    ).query("year >= 2020")
+    df_cost_ratios = region_diff_df.copy()
+
+    # If base year does not exist in GDP data, then use earliest year in GDP data
+    # and give warning
+    base_year = int(input_base_year)
+    if int(base_year) not in df_gdp.year.unique():
+        base_year = int(min(df_gdp.year.unique()))
+        print(
+            f"Base year {input_base_year} not found in GDP data. \
+                Using {base_year} for GDP data instead."
+        )
+
+    # Set default values for input arguments
+    # If specified node is R11, then use R11_NAM as the reference region
+    # If specified node is R12, then use R12_NAM as the reference region
+    # If specified node is R20, then use R20_NAM as the reference region
+    # However, if a reference region is specified, then use that instead
+    if input_ref_region is None:
+        if input_node.upper() == "R11":
+            reference_region = "R11_NAM"
+        if input_node.upper() == "R12":
+            reference_region = "R12_NAM"
+        if input_node.upper() == "R20":
+            reference_region = "R20_NAM"
+    else:
+        reference_region = input_ref_region
+
+    gdp_base_year = df_gdp.query("year == @base_year").reindex(
+        ["scenario_version", "scenario", "region", "gdp_ratio_reg_to_reference"], axis=1
+    )
+
+    df_gdp_cost = pd.merge(gdp_base_year, df_cost_ratios, on=["region"])
+
+    dfs = [
+        x
+        for _, x in df_gdp_cost.groupby(
+            ["scenario_version", "scenario", "message_technology", "region"]
+        )
+    ]
+
+    def indiv_regress_tech_cost_ratio_vs_gdp_ratio(df):
+        if df.iloc[0].region == reference_region:
+            df_one = (
+                df.copy()
+                .assign(
+                    slope=np.NaN,
+                    intercept=np.NaN,
+                    rvalue=np.NaN,
+                    pvalue=np.NaN,
+                    stderr=np.NaN,
+                )
+                .reindex(
+                    [
+                        "scenario_version",
+                        "scenario",
+                        "message_technology",
+                        "region",
+                        "slope",
+                        "intercept",
+                        "rvalue",
+                        "pvalue",
+                        "stderr",
+                    ],
+                    axis=1,
+                )
+            )
+        else:
+            df_one = (
+                df.copy()
+                .assign(gdp_ratio_reg_to_reference=1, reg_cost_ratio=1)
+                ._append(df)
+                .reset_index(drop=1)
+                .groupby(
+                    ["scenario_version", "scenario", "message_technology", "region"]
+                )
+                .apply(
+                    lambda x: pd.Series(
+                        linregress(x["gdp_ratio_reg_to_reference"], x["reg_cost_ratio"])
+                    )
+                )
+                .rename(
+                    columns={
+                        0: "slope",
+                        1: "intercept",
+                        2: "rvalue",
+                        3: "pvalue",
+                        4: "stderr",
+                    }
+                )
+                .reset_index()
+            )
+
+        return df_one
+
+    out_reg = pd.Series(dfs).apply(indiv_regress_tech_cost_ratio_vs_gdp_ratio)
+    l_reg = [x for x in out_reg]
+    df_reg = pd.concat(l_reg).reset_index(drop=1)
+
+    df_adj_ratios = (
+        df_gdp.merge(df_reg, on=["scenario_version", "scenario", "region"], how="left")
+        .drop(
+            columns=[
+                "rvalue",
+                "pvalue",
+                "stderr",
+            ]
+        )
+        .query("year >= @base_year")
+        .assign(
+            reg_cost_ratio_adj=lambda x: np.where(
+                x.region == reference_region,
+                1,
+                x.slope * x.gdp_ratio_reg_to_reference + x.intercept,
+            ),
+            year=lambda x: x.year.astype(int),
+            scenario_version=lambda x: np.where(
+                x.scenario_version.str.contains("2013"),
+                "Previous (2013)",
+                "Review (2023)",
+            ),
+        )
+        .reindex(
+            [
+                "scenario_version",
+                "scenario",
+                "message_technology",
+                "region",
+                "year",
+                "gdp_ratio_reg_to_reference",
+                "reg_cost_ratio_adj",
+            ],
+            axis=1,
+        )
+    )
+
+    return df_adj_ratios
+
+
 # Function to calculate region-differentiated costs using paths from GDP
 def calculate_region_cost_ratios_gdp_paths(
     region_diff_df, input_node, input_ref_region, input_base_year
