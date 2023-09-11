@@ -1,8 +1,19 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- New module :mod:`.project.ssp` (:pull:`122`) to generate SDMX codelists for the 2017/original SSPs and the 2024 update, and provide these as :class:`~.enum.Enum` to other code.
+- New module :mod:`.tools.exo_data` to retrieve exogenous data for, among others, population and GDP (:pull:`122`).
+  This module has a general API that can be implemented by provider classes.
+- New function :func:`.model.emissions.get_emission_factors` and associated data file to provide data from `this table <https://docs.messageix.org/projects/global/en/latest/emissions/message/index.html#id15>`__ in the MESSAGEix-GLOBIOM documentation (:pull:`122`).
+- New functions in :mod:`.util.sdmx` (:pull:`122`):
+
+  - :func:`~.util.sdmx.read`, :func:`~.util.sdmx.write` to retrieve/store package data in SDMX-ML.
+  - :func:`~.util.sdmx.make_enum` to make pure-Python :class:`~.enum.Enum` (or subclass) data structures based on SDMX code lists.
+
+- :func:`.same_node` also fills "node_shares", "node_loc", and "node", as appropriate (:pull:`122`).
 
 v2023.9.2
 =========
