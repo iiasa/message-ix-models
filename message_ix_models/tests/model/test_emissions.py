@@ -1,9 +1,11 @@
 import numpy as np
+import pint
+import pytest
 from message_ix import make_df
 from message_ix.models import MACRO
 
 from message_ix_models import testing
-from message_ix_models.model.emissions import add_tax_emission
+from message_ix_models.model.emissions import add_tax_emission, get_emission_factors
 
 
 def add_test_data(scenario):
@@ -52,3 +54,26 @@ def test_add_tax_emission(request, caplog, test_context):
         "Using the first of multiple discount rates: drate=[0.05 0.03]"
         == caplog.messages[-1]
     )
+
+
+MARK = pytest.mark.xfail(
+    raises=pint.errors.DimensionalityError, reason="IAMConsortium/units#X"
+)
+
+
+@pytest.mark.parametrize(
+    "units, exp_coal",
+    (
+        (None, 25.8),
+        pytest.param("tC / TJ", 25.8, marks=MARK),
+        pytest.param("t CO2 / TJ", 94.6, marks=MARK),
+        pytest.param("t C / kWa", 0.814, marks=MARK),
+    ),
+)
+def test_get_emission_factors(units, exp_coal):
+    # Data are loaded
+    result = get_emission_factors(units=units)
+    assert 8 == result.size
+
+    # Expected values are obtained
+    assert exp_coal == result.sel(c="coal").item()
