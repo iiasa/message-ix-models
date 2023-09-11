@@ -1,13 +1,60 @@
 import logging
-from typing import Optional
+import re
+from typing import Optional, Tuple
 
 import pandas as pd
+from genno import Quantity
+from genno import computations as g
 from iam_units import convert_gwp
 from message_ix import Scenario, make_df
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import package_data_path
+
+from .structure import get_codes
 
 log = logging.getLogger(__name__)
+
+
+def get_emission_factors(units: Optional[str] = None):
+    """Return carbon emission factors."""
+    # Prepare information about commodities
+    commodities = get_codes("commodity")
+    relabel = {}  # Mapping from IPCC names/IDs to message_ix_models commodity ID
+    select = []  # Select only the commodities needed
+    for c in commodities:
+        try:
+            ipcc_name = str(c.get_annotation(id="ipcc-1996-name").text)
+        except KeyError:
+            continue
+        else:
+            relabel[ipcc_name] = c.id
+            select.append(c.id)
+
+    # Load data from file; relabel; and select only the values needed
+    result = (
+        g.load_file(package_data_path("ipcc", "1996_v3_t1-2.csv"), dims={"fuel": "c"})
+        .pipe(g.relabel, dict(c=relabel))
+        .pipe(g.select, dict(c=select))
+    )
+
+    # Manually insert a value for methanol
+    result = g.concat(
+        result,
+        Quantity(pd.Series(17.4, pd.Index(["methanol"], name="c")), units=result.units),
+    )
+
+    result.attrs["species"] = "C"
+
+    if units is not None:
+        # Identify a GWP factor for target `units`, if any
+        to_units, to_species = split_species(units)
+        gwp_factor = convert_gwp("AR5GWP100", (1.0, str(result.units)), "C", to_species)
+    else:
+        gwp_factor, to_units = 1.0, result.units
+
+    # Multiply by the GWP factor; let genno/pint handle other conversion
+    return result.pipe(g.mul, gwp_factor).pipe(g.convert_units, to_units)
 
 
 def add_tax_emission(
@@ -76,3 +123,11 @@ def add_tax_emission(
 
     with scen.transact("Added carbon price"):
         scen.add_par(name, data)
+
+
+def split_species(unit_expr: str) -> Tuple[str, Optional[str]]:
+    """Split `unit_expr` to an expression without a unit mention, and maybe species."""
+    if match := re.fullmatch("(.*)(CO2|C)(.*)", unit_expr):
+        return f"{match.group(1)}{match.group(3)}", match.group(2)
+    else:
+        return unit_expr, None
