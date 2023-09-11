@@ -230,7 +230,7 @@ Read through all the steps first before starting.
 
     - Adjust data handling.
 
-      For example, usage of :func:`private_data_path` to locate data files must be modified to :func:`package_data_path` if the data files were moved during the migration.
+      For example, usage of :func:`.private_data_path` to locate data files must be modified to :func:`.package_data_path` if the data files were moved during the migration.
       Tests can help to ensure that these changes are effective.
 
     - Address CI checks.

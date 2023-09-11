@@ -26,10 +26,11 @@ v2023.7.26
 ==========
 
 - Add code and CLI commands to :doc:`fetch and load MESSAGEix-GLOBIOM snapshots <api/model-snapshot>` (:pull:`102`).
+  Use of this module requires ixmp and message_ix version 3.5.0 or greater.
 - Add :func:`.util.pooch.fetch`, a thin wrapper for using :doc:`Pooch <pooch:about>` (:pull:`102`).
 - New module :mod:`message_ix_models.model.macro` with utilities for calibrating :mod:`message_ix.macro` (:pull:`104`).
 - New method :meth:`.Workflow.guess_target` (:pull:`104`).
-- Change in behaviour of :meth:`.Workflow.add_step`: the method now returns the name of the newly-added workflow step, rather than the :class:`WorkflowStep` object added to carry out the step (:pull:`104`).
+- Change in behaviour of :meth:`.Workflow.add_step`: the method now returns the name of the newly-added workflow step, rather than the :class:`.WorkflowStep` object added to carry out the step (:pull:`104`).
   The former is more frequently used in code that uses :class:`.Workflow`.
 - Add the :ref:`R17` node code list (:pull:`109`).
 - Add the :ref:`R20` node code list (:pull:`109`).
@@ -49,7 +50,7 @@ v2023.5.13
 
 - Add :doc:`/water/index` (:pull:`88`, :pull:`91`).
 - New utility function :func:`.replace_par_data` (:pull:`90`).
-- :func:`.disutility.get_spec` preserves all :class:`Annotations <~.sdmx.model.v21.Annotation>` attached to the :class:`~.sdmx.model.v21.Code` object used as a template for usage technologies (:pull:`90`).
+- :func:`.disutility.get_spec` preserves all :class:`Annotations <sdmx.model.common.Annotation>` attached to the :class:`~sdmx.model.common.Code` object used as a template for usage technologies (:pull:`90`).
 - Add ``CO2_Emission_Global_Total`` to the :ref:`“A” relation codelist <relation-yaml>` (:pull:`90`).
 - :class:`.Adapter` and :class:`.MappingAdapter` can be imported from :mod:`message_ix_models.util` (:pull:`90`).
 - Bump :mod:`sdmx` requirement from v2.2.0 to v2.8.0 (:pull:`90`).
@@ -77,9 +78,9 @@ v2023.5.13
 =========
 
 - Add the :ref:`ZMB` node code list (:pull:`83`).
-- Add the utility :func:`same_time`, to copy the set time in paramenters (:pull:`83`).
+- Add the utility :func:`.same_time`, to copy the set time in parameters (:pull:`83`).
 - New :class:`~message_ix_models.Config` and :class:`.model.Config` :py:mod:`dataclasses` for clearer description/handling of recognized settings stored on :class:`.Context` (:pull:`82`).
-  :class:`.ConfigHelper` for convenience/utility functionality in :mod:`message_ix_models`-based code.
+  :class:`.ConfigHelper` for convenience/utility functionality in :mod:`.message_ix_models`-based code.
 - New functions :func:`.generate_product`, :func:`.generate_set_elements`, :func:`.get_region_codes` in :mod:`.model.structure` (:pull:`82`).
 - Revise and improve the :doc:`Workflow API </api/workflow>` (:pull:`82`).
 - Adjust for pandas 1.5.0 (:pull:`81`).
@@ -94,7 +95,7 @@ v2023.5.13
 2022.7.25
 =========
 
-- Add :func:`get_advance_data`, and related tools for data from the ADVANCE project, including the :ref:`node codelist <ADVANCE-nodes>` for the data (:pull:`76`).
+- Add :func:`.get_advance_data`, and related tools for data from the ADVANCE project, including the :ref:`node codelist <ADVANCE-nodes>` for the data (:pull:`76`).
 - Add unit annotations to :ref:`commodity-yaml` (:pull:`76`).
 - New utility methods :meth:`.ScenarioInfo.io_units` to derive units for ``input`` and ``output`` parameters from :meth:`.units_for` commodity stocks and technology activities (:pull:`76`).
 - Transfer :func:`.add_tax_emission` from :mod:`message_data`, improve, and add tests (:pull:`76`).
@@ -109,7 +110,7 @@ v2023.5.13
 2022.5.6
 ========
 
-- Bump minimum required version of :mod:`message_ix` to v3.4.0 from v3.2.0 (:pull:`71`).
+- Bump minimum required version of :mod:`.message_ix` to v3.4.0 from v3.2.0 (:pull:`71`).
 - Add a documentation page on :doc:`distrib` (:pull:`59`).
 - Add :func:`.testing.not_ci` for marking tests not to be run on continuous integration services; improve :func:`~.testing.session_context` (:pull:`62`).
 - :func:`.apply_spec` also adds elements of the "node" set using :meth:`.ixmp.Platform.add_region` (:pull:`62`).
@@ -119,14 +120,14 @@ v2023.5.13
 2022.3.30
 =========
 
-- Add :func:`adapt_R11_R12`, a function for adapting data from the :ref:`R11` to the :ref:`R12` node lists (:pull:`56`).
+- Add :obj:`.adapt_R11_R12`, a function for adapting data from the :ref:`R11` to the :ref:`R12` node lists (:pull:`56`).
 - Work around `iiasa/ixmp#425 <https://github.com/iiasa/ixmp/issues/425>`__ in :func:`.disutility.data_conversion` (:ref:`docs <disutility-units>`, :pull:`55`).
 
 2022.3.3
 ========
 
 - Change the node name in R12.yaml from R12_CPA to R12_RCPA (:pull:`49`).
-- Register “message local data” ixmp configuration file setting and use to set the :attr:`.Context.local_path` when provided.
+- Register “message local data” ixmp configuration file setting and use to set the :attr:`.Context.local_path <.Config.local_data>` when provided.
   See :ref:`local-data` (:pull:`47`)
 
 2022.1.26
@@ -135,7 +136,7 @@ v2023.5.13
 - New :class:`.Spec` class for easier handling of specifications of model (or model variant) structure (:pull:`39`)
 - New utility function :func:`.util.local_data_path` (:pull:`39`).
 - :func:`.repr` of :class:`.Context` no longer prints a (potentially very long) list of all keys and settings (:pull:`39`).
-- :func:`.as_codes` accepts a :class:`.dict` with :class:`.Code` values (:pull:`39`).
+- :func:`.as_codes` accepts a :class:`.dict` with |Code| values (:pull:`39`).
 
 Earlier releases
 ================
@@ -162,8 +163,8 @@ Earlier releases
 2021.7.6
 --------
 
-- Add :func:`identify_nodes`, a function for identifying a :doc:`pkg-data/node` based on a :class:`.Scenario` (:pull:`24`).
-- Add :func:`adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` node lists (:pull:`24`).
+- Add :func:`identify_nodes`, a function for identifying a :doc:`pkg-data/node` based on a |Scenario| (:pull:`24`).
+- Add :obj:`.adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` node lists (:pull:`24`).
 - Add :func:`.export_test_data` and :command:`mix-models export-test-data` command (:pull:`16`).
   See :ref:`export-test-data`.
 - Allow use of pytest's persistent cache across test sessions (:pull:`23`).

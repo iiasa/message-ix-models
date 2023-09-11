@@ -2,7 +2,7 @@ Reproduce the RES (:mod:`.model.bare`)
 **************************************
 
 In contrast to :mod:`.model.create`, this module creates the RES 'from scratch'.
-:func:`.create_res` begins by creating a new, totally empty :class:`.Scenario` and adding data to it (instead of cloning and modifying an existing scenario).
+:func:`.create_res` begins by creating a new, totally empty :class:`~message_ix.Scenario` and adding data to it (instead of cloning and modifying an existing scenario).
 
 .. note:: Currently, the Scenario returned by :func:`.create_res`…
 
@@ -27,7 +27,7 @@ Code reference
    :members:
    :exclude-members: get_spec
 
-.. automethod:: message_ix_models.model.bare.get_spec
+.. autofunction:: get_spec
 
    Since the RES is the base for all variants of MESSAGEix-GLOBIOM, the 'require' and 'remove' portions of the spec are empty.
 
