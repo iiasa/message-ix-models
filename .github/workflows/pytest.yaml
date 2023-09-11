@@ -75,7 +75,7 @@ jobs:
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream.version }}"
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
 
-        pip install .[tests] ${{ matrix.upstream.extra-deps }}
+        pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
 
     - name: Configure local data path
       run: |
@@ -97,7 +97,7 @@ jobs:
       if: startsWith(matrix.version.os, 'ubuntu')
       env:
         RTD_TOKEN_MESSAGE_DATA: ${{ secrets.RTD_TOKEN_MESSAGE_DATA }}
-      run: make --directory=doc SPHINXOPTS=-n html
+      run: make --directory=doc SPHINXOPTS="-n --color" html
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3
