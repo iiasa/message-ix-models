@@ -2,8 +2,8 @@ import pytest
 from genno import Computer
 
 from message_ix_models.tools.exo_data import (
+    DemoSource,
     ExoDataSource,
-    TestSource,
     prepare_computer,
     register_source,
 )
@@ -16,7 +16,7 @@ class TestExoDataSource:
 
     def test_register_source(self):
         with pytest.raises(ValueError, match="already registered for"):
-            register_source(TestSource)
+            register_source(DemoSource)
 
 
 @pytest.mark.parametrize("regions, N_n", [("R12", 12), ("R14", 14)])
