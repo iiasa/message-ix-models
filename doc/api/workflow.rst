@@ -22,7 +22,7 @@ The generic pattern for workflows is:
 
   1. A precursor scenario is obtained.
 
-     It may be returned by a prior workflow step, or loaded from a :class:`Platform`.
+     It may be returned by a prior workflow step, or loaded from a :class:`~ixmp.Platform`.
   2. (Optional) The precursor scenario is cloned to a target model name and scenario name.
   3. A function is called to operate on the scenario.
      This function may do zero or more of:
@@ -54,15 +54,15 @@ These functions **must**:
 
 - Accept at least 2 arguments:
 
-  1. A :class:`Context` instance.
+  1. A :class:`.Context` instance.
   2. The precursor scenario.
   3. Optionally additional, keyword-only arguments.
 
 - Return either:
 
-  - a :class:`.Scenario` object, that can be the same object provided as an argument, or a different scenario, e.g. a clone or a different scenario, even from a different platform.
+  - a :class:`~.message_ix.Scenario` object, that can be the same object provided as an argument, or a different scenario, e.g. a clone or a different scenario, even from a different platform.
   - :class:`None`.
-    In this case, any modifications implemented by the step should be reflected in the :class:`.Scenario` given as an argument.
+    In this case, any modifications implemented by the step should be reflected in the Scenario given as an argument.
 
 The functions **may**:
 
