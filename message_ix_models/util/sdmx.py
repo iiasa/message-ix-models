@@ -92,10 +92,10 @@ def as_codes(data: Union[List[str], Dict[str, CodeLike]]) -> List[Code]:
 def eval_anno(obj: AnnotableArtefact, id: str):
     """Retrieve the annotation `id` from `obj`, run :func:`eval` on its contents.
 
-    This can be used for unpacking Python values (e.g. :class:`dict`) stored as an
-    annotation on a :class:`~sdmx.model.Code`.
+    .. deprecated:: 2023.9.12
 
-    Returns :obj:`None` if no attribute exists with the given `id`.
+       Use :meth:`sdmx.model.common.AnnotableArtefact.eval_annotation`, which provides
+       the same functionality.
     """
     try:
         value = str(obj.get_annotation(id=id).text)
