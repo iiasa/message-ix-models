@@ -110,7 +110,7 @@ def eval_anno(obj: AnnotableArtefact, id: str):
 
 
 def make_enum(urn, base=Enum):
-    """Create an :class:`Enum` (or `base`) subclass with members from codelist `urn`."""
+    """Create an :class:`.enum.Enum` (or `base`) with members from codelist `urn`."""
     # Read the code list
     cl = read(urn)
 

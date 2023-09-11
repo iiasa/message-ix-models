@@ -17,11 +17,32 @@ On this page:
 .. automodule:: message_ix_models.tools
    :members:
 
+.. currentmodule:: message_ix_models.tools.exo_data
+
+Exogenous data (:mod:`.tools.exo_data`)
+=======================================
+
+.. automodule:: message_ix_models.tools.exo_data
+   :members:
+   :exclude-members: ExoDataSource
+
+   .. autosummary::
+
+      MEASURES
+      SOURCES
+      DemoSource
+      ExoDataSource
+      prepare_computer
+      register_source
+
+.. autoclass:: ExoDataSource
+   :members:
+   :special-members: __init__, __call__
+
+.. currentmodule:: message_ix_models.tools.advance
 
 ADVANCE data (:mod:`.tools.advance`)
 ====================================
-
-.. currentmodule:: message_ix_models.tools.advance
 
 .. autosummary::
    get_advance_data
