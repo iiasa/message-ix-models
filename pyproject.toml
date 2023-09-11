@@ -35,7 +35,7 @@ dependencies = [
   # When the minimum is greater than the minimum via message_ix; e.g.
   # message_ix >= 3.4.0 → ixmp >= 3.4.0 → genno >= 1.6.0",
   "genno >= 1.18.1",
-  "iam_units",
+  "iam_units >= 2023.9.11",
   "message_ix >= 3.4.0",
   "pooch",
   "pyam-iamc >= 0.6",
