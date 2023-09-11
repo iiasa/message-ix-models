@@ -1,5 +1,4 @@
 import numpy as np
-import pint
 import pytest
 from message_ix import make_df
 from message_ix.models import MACRO
@@ -56,18 +55,14 @@ def test_add_tax_emission(request, caplog, test_context):
     )
 
 
-MARK = pytest.mark.xfail(
-    raises=pint.errors.DimensionalityError, reason="IAMConsortium/units#X"
-)
-
-
 @pytest.mark.parametrize(
     "units, exp_coal",
     (
         (None, 25.8),
-        pytest.param("tC / TJ", 25.8, marks=MARK),
-        pytest.param("t CO2 / TJ", 94.6, marks=MARK),
-        pytest.param("t C / kWa", 0.814, marks=MARK),
+        # Unit expressions and values appearing in the message_doc table
+        ("tC / TJ", 25.8),
+        ("t CO2 / TJ", 94.6),
+        ("t C / kWa", 0.8142),
     ),
 )
 def test_get_emission_factors(units, exp_coal):
@@ -76,4 +71,4 @@ def test_get_emission_factors(units, exp_coal):
     assert 8 == result.size
 
     # Expected values are obtained
-    assert exp_coal == result.sel(c="coal").item()
+    assert np.isclose(exp_coal, result.sel(c="coal").item(), rtol=1e-4)

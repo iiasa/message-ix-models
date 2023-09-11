@@ -16,8 +16,34 @@ from .structure import get_codes
 log = logging.getLogger(__name__)
 
 
-def get_emission_factors(units: Optional[str] = None):
-    """Return carbon emission factors."""
+def get_emission_factors(units: Optional[str] = None) -> Quantity:
+    """Return carbon emission factors.
+
+    Values are from the file :file:`message_ix_models/data/ipcc/1996_v3_t1-2.csv`, in
+    turn from `IPCC <https://www.ipcc-nggip.iges.or.jp/public/gl/guidelin/ch1wb1.pdf>`_
+    (see Table 1-2 on page 1.6); these are the same that appear on the "Emissions from
+    energy" page of the MESSAGEix-GLOBIOM documentation.
+
+    The fuel dimension and names in the source are mapped to a :math:`c` ("commodity")
+    dimension and labels from :ref:`commodity-yaml`, using the ``ipcc-1996-name``
+    annotations appearing in the latter. A value for "methanol" that appears in the
+    MESSAGEix-GLOBIOM docs table but not in the source is appended.
+
+    Parameters
+    ----------
+    unit : str, optional
+        Expression for units of the returned quantity. Tested values include:
+
+        - "tC / TJ", source units (default),
+        - "t CO2 / TJ", and
+        - "t C / kWa", internal units in MESSAGEix-GLOBIOM, for instance for
+          "relation_activity" entries for emissions relations.
+
+    Returns
+    -------
+    Quantity
+        with 1 dimension (:math:`c`).
+    """
     # Prepare information about commodities
     commodities = get_codes("commodity")
     relabel = {}  # Mapping from IPCC names/IDs to message_ix_models commodity ID
@@ -49,12 +75,14 @@ def get_emission_factors(units: Optional[str] = None):
     if units is not None:
         # Identify a GWP factor for target `units`, if any
         to_units, to_species = split_species(units)
-        gwp_factor = convert_gwp("AR5GWP100", (1.0, str(result.units)), "C", to_species)
+        gwp_factor = convert_gwp(
+            "AR5GWP100", (1.0, str(result.units)), "C", to_species
+        ).magnitude
     else:
         gwp_factor, to_units = 1.0, result.units
 
     # Multiply by the GWP factor; let genno/pint handle other conversion
-    return result.pipe(g.mul, gwp_factor).pipe(g.convert_units, to_units)
+    return result.pipe(g.mul, Quantity(gwp_factor)).pipe(g.convert_units, to_units)
 
 
 def add_tax_emission(
