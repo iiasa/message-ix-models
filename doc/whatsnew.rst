@@ -4,6 +4,9 @@ What's new
 Next release
 ============
 
+All changes
+-----------
+
 - New module :mod:`.project.ssp` (:pull:`122`) to generate SDMX codelists for the 2017/original SSPs and the 2024 update, and provide these as :class:`~.enum.Enum` to other code.
 - New module :mod:`.tools.exo_data` to retrieve exogenous data for, among others, population and GDP (:pull:`122`).
   This module has a general API that can be implemented by provider classes.
@@ -14,6 +17,11 @@ Next release
   - :func:`~.util.sdmx.make_enum` to make pure-Python :class:`~.enum.Enum` (or subclass) data structures based on SDMX code lists.
 
 - :func:`.same_node` also fills "node_shares", "node_loc", and "node", as appropriate (:pull:`122`).
+
+Deprecations
+------------
+
+- :func:`.eval_anno` is deprecated; code should instead use :meth:`sdmx.model.common.AnnotableArtefact.eval_annotation`, which provides the same functionality.
 
 v2023.9.2
 =========
