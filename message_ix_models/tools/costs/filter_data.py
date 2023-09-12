@@ -3,6 +3,36 @@ import pandas as pd
 from message_ix_models.util import package_data_path
 
 
+# Function to compress the SSP data
+def compress_ssp_data():
+    """Save raw SSP data as a compressed csv file.
+
+    This function reads in the raw SSP data from the Excel spreadsheet
+    and saves it as a compressed csv file. The file is saved in the same
+    location as the Excel spreadsheet.
+
+    Returns
+    -------
+    None
+
+    """
+
+    # Set data path for SSP data
+    f = package_data_path("ssp", "SSP-Review-Phase-1.xlsx")
+
+    # Read in data
+    print("Reading in SSP data...")
+    df = pd.read_excel(f, sheet_name="data", usecols="A:Z")
+
+    # Save data to a compressed csv file
+    print("Saving SSP data to compressed csv file...")
+    df.to_csv(
+        package_data_path("ssp", "SSP-Review-Phase-1.csv.gz"),
+        compression="gzip",
+        index=False,
+    )
+
+
 # Function to read in SSP Phase 1 Review data
 # and filter out data for only the variables of interest.
 def subset_ssp_phase_1_data():
@@ -51,5 +81,9 @@ def save_subset_ssp_phase_1_data():
 
 
 # Run to subset and save the SSP data
+# if __name__ == "__main__":
+#     save_subset_ssp_phase_1_data()
+
+# Run to compress the SSP data
 if __name__ == "__main__":
-    save_subset_ssp_phase_1_data()
+    compress_ssp_data()
