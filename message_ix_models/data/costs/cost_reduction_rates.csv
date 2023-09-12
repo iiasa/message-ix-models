@@ -1,0 +1,70 @@
+# Cost reduction in 2100
+# 
+# Units: %  
+#
+# Data is copied from Sheet1 in https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP_technology_learning.xlsx,,,,
+# There are some manually changed assumptions to the original GEA data in the spreadsheet (can be seen in the spreadsheet as marked in yellow),,,,
+# The initial copied data can be found in gea_reduction_rates.csv
+# This file renames the learning rates from GEAL, GEAM, GEAH to low, medium, and high
+message_technology,technology_type,low,medium,high
+coal_ppl,Coal,0,0.2,0.5
+gas_ppl,Gas/Oil,0.2,0.29,0.38
+gas_ct,Gas/Oil,0.2,0.29,0.38
+gas_cc,Gas/Oil,0.2,0.29,0.38
+bio_ppl,Biomass,0.1,0.2,0.3
+coal_adv,Coal,0.1,0.3,0.5
+igcc,Coal,0.1,0.3,0.5
+bio_istig,Biomass,0.1,0.3,0.4
+coal_adv_ccs,CCS,0.1,0.3,0.5
+igcc_ccs,CCS,0.1,0.3,0.5
+gas_cc_ccs,CCS,0.2,0.29,0.5
+bio_istig_ccs,CCS,0.1,0.3,0.4
+syn_liq,Coal,0.05,0.1,0.15
+meth_coal,Coal,0.05,0.1,0.15
+syn_liq_ccs,CCS,0.05,0.1,0.25
+meth_coal_ccs,CCS,0.05,0.1,0.15
+h2_coal,Coal,0.25,0.4,0.4
+h2_smr,Gas/Oil,0.25,0.4,0.5
+h2_bio,Biomass,0.25,0.4,0.5
+h2_coal_ccs,CCS,0.25,0.4,0.5
+h2_smr_ccs,CCS,0.25,0.4,0.5
+h2_bio_ccs,CCS,0.25,0.4,0.5
+eth_bio,Biomass,0.27,0.27,0.4
+eth_bio_ccs,CCS,0.27,0.27,0.4
+c_ppl_co2scr,CCS,0,0,0.3
+g_ppl_co2scr,CCS,0,0,0.3
+bio_ppl_co2scr,CCS,0,0,0.3
+wind_ppl,Renewable,0.3,0.53,0.65
+solar_th_ppl,Renewable,0.3,0.3,0.5
+solar_pv_I,Renewable,0.3,0.7,0.9
+solar_pv_RC,Renewable,0.3,0.7,0.9
+solar_pv_ppl,Renewable,0.3,0.7,0.9
+geo_ppl,Renewable,0.1,0.18,0.25
+hydro_lc,Renewable,0,0,0
+hydro_hc,Renewable,0,0,0
+meth_ng,Gas/Oil,0.05,0.1,0.15
+meth_ng_ccs,CCS,0.05,0.1,0.15
+coal_ppl_u,Coal,0,0,0
+stor_ppl,Renewable,0.2,0.25,0.4
+h2_elec,Renewable,0,0.1,0.2
+liq_bio,Biomass,0.27,0.27,0.4
+liq_bio_ccs,CCS,0.27,0.27,0.4
+coal_i,Coal,0,0,0
+foil_i,Gas/Oil,0,0,0
+loil_i,Gas/Oil,0,0,0
+gas_i,Gas/Oil,0,0,0
+biomass_i,Biomass,0,0,0
+eth_i,Biomass,0,0,0
+meth_i,Coal,0,0,0
+elec_i,NA,0,0,0
+h2_i,NA,0,0,0
+hp_el_i,Renewable,0.2,0.5,0.5
+hp_gas_i,Gas/Oil,0.2,0.4,0.4
+solar_i,Renewable,0.2,0.6,0.9
+heat_i,NA,0,0,0
+geo_hpl,Renewable,0.15,0.18,0.25
+nuc_lc,Nuclear,0,0,0
+nuc_hc,Nuclear,0,0.15,0.3
+wind_ppf,NA,0,0,0
+csp_sm1_ppl,NA,0,0,0
+csp_sm3_ppl,NA,0,0,0
