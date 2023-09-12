@@ -29,9 +29,9 @@ def get_cost_reduction_data() -> pd.DataFrame:
     """
 
     # Read in raw data
-    gea_file_path = package_data_path("costs", "gea_cost_reduction.csv")
+    gea_file_path = package_data_path("costs", "cost_reduction_rates.csv")
     df_gea = (
-        pd.read_csv(gea_file_path, header=6)
+        pd.read_csv(gea_file_path, header=8)
         .melt(
             id_vars=["message_technology", "technology_type"],
             var_name="learning_rate",
@@ -40,11 +40,11 @@ def get_cost_reduction_data() -> pd.DataFrame:
         .assign(
             technology_type=lambda x: x.technology_type.fillna("NA"),
             cost_reduction=lambda x: x.cost_reduction.fillna(0),
-            learning_rate=lambda x: np.where(
-                x.learning_rate == "GEAL",
-                "low",
-                np.where(x.learning_rate == "GEAM", "medium", "high"),
-            ),
+            # learning_rate=lambda x: np.where(
+            #     x.learning_rate == "GEAL",
+            #     "low",
+            #     np.where(x.learning_rate == "GEAM", "medium", "high"),
+            # ),
         )
         .drop_duplicates()
         .reset_index(drop=1)
