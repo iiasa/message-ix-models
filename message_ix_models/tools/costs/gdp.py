@@ -169,7 +169,7 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
     )
 
     # Set data path for SSP data
-    f = package_data_path("ssp", "SSP-Review-Phase-1-subset.csv")
+    f = package_data_path("ssp", "SSP-Review-Phase-1.csv.gz")
 
     # Read in SSP data and do the following:
     # - Rename columns
@@ -181,7 +181,16 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
     # - Aggregate GDP and population to model-scenario-region-year level
     # - Calculate GDP per capita by dividing total GDP by total population
     df = (
-        pd.read_csv(f)
+        pd.read_csv(f, engine="pyarrow")
+        .query("Variable == 'Population' or Variable == 'GDP|PPP'")
+        .query(
+            "Model.str.contains('IIASA-WiC POP') or\
+                Model.str.contains('OECD ENV-Growth')"
+        )
+        .query(
+            r"~(Region.str.contains('\(') or Region.str.contains('World'))",
+            engine="python",
+        )
         .rename(
             columns={
                 "Model": "model",
