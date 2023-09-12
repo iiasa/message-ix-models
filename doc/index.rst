@@ -24,9 +24,39 @@ Among other tasks, the tools allow modelers to:
    distrib
    bibliography
 
+API reference
+=============
+
+.. currentmodule:: message_ix_models
+
+Commonly used classes may be imported directly from :mod:`message_ix_models`.
+
+.. automodule:: message_ix_models
+
+   .. autosummary::
+
+      .Config
+      .Context
+      .ScenarioInfo
+      .Spec
+      .Workflow
+
+- :doc:`api/model`
+- :doc:`api/model-bare`
+- :doc:`api/model-build`
+- :doc:`api/model-emissions`
+- :doc:`api/model-snapshot`
+- :doc:`api/disutility`
+- :doc:`api/report/index`
+- :doc:`api/tools`
+- :doc:`api/util`
+- :doc:`api/testing`
+- :doc:`api/workflow`
+
 .. toctree::
    :maxdepth: 2
    :caption: API reference
+   :hidden:
 
    api/model
    api/model-bare

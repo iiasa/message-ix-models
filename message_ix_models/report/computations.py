@@ -1,14 +1,21 @@
 """Atomic reporting operations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
-from typing import Any, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple, Union
 
 import ixmp
 import pandas as pd
 from genno.computations import pow
+from genno.core.operator import Operator
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
+
+from message_ix_models import Context
+
+if TYPE_CHECKING:
+    from genno import Computer, Key
+    from sdmx.model.v21 import Code
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +30,24 @@ __all__ = [
 ]
 
 
+def codelist_to_groups(
+    codes: List["Code"], dim: str = "n"
+) -> Mapping[str, Mapping[str, List[str]]]:
+    """Convert `codes` into a mapping from parent items to their children.
+
+    The returned value is suitable for use with :func:`genno.computations.aggregate`.
+
+    If this is a list of nodes per :func:`.get_codes`, then the mapping is from regions
+    to the ISO 3166-1 alpha-3 codes of the countries within each region.
+    """
+
+    groups = dict()
+    for code in filter(lambda c: len(c.child), codes):
+        groups[code.id] = list(map(str, code.child))
+
+    return {dim: groups}
+
+
 def compound_growth(qty: Quantity, dim: str) -> Quantity:
     """Compute compound growth along `dim` of `qty`."""
     # Compute intervals along `dim`
@@ -34,6 +59,28 @@ def compound_growth(qty: Quantity, dim: str) -> Quantity:
     # - Shift, so the value at index d is the growth relative to the prior index d-1
     # - Fill in 1.0 for the first index.
     return pow(qty, Quantity(dur)).cumprod(dim).shift({dim: 1}).fillna(1.0)
+
+
+@Operator.define
+def exogenous_data():
+    """No action.
+
+    This exists to connect :func:`.exo_data.prepare_computer` to
+    :meth:`genno.Computer.add`.
+    """
+    pass  # pragma: no cover
+
+
+@exogenous_data.helper
+def add_exogenous_data(
+    func, c: "Computer", *, context=None, source=None, source_kw=None
+) -> Tuple["Key"]:
+    """Prepare `c` to compute exogenous data from `source`."""
+    from message_ix_models.tools.exo_data import prepare_computer
+
+    return prepare_computer(
+        context or Context.get_instance(-1), c, source=source, source_kw=source_kw
+    )
 
 
 def get_ts(

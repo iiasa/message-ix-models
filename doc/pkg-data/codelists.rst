@@ -53,3 +53,15 @@ Each of these codes has the following annotations:
 
 .. literalinclude:: ../../message_ix_models/data/technology.yaml
    :language: yaml
+
+Others
+======
+
+.. literalinclude:: ../../message_ix_models/data/sdmx/ICONICS_SSP(2017).xml
+   :language: xml
+
+.. literalinclude:: ../../message_ix_models/data/sdmx/ICONICS_SSP(2024).xml
+   :language: xml
+
+.. literalinclude:: ../../message_ix_models/data/sdmx/IIASA_ECE_AGENCIES(0.1).xml
+   :language: xml

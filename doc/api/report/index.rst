@@ -32,7 +32,7 @@ Any reporting specific to ``coal_ppl`` must be in :mod:`message_ix_models`, sinc
 The basic **design pattern** of :mod:`message_ix_models.report` is:
 
 - A ``global.yaml`` file (i.e. in `YAML <https://en.wikipedia.org/wiki/YAML#Example>`_ format) that contains a *concise* yet *explicit* description of the reporting computations needed for a MESSAGE-GLOBIOM model.
-- :func:`~.reporting.prepare_reporter` reads the file and a Scenario object, and uses it to populate a new Reporter.
+- :func:`~.report.prepare_reporter` reads the file and a Scenario object, and uses it to populate a new Reporter.
   This function mostly relies on the :doc:`configuration handlers <genno:config>` built in to Genno to handle the different sections of the file.
 
 Features
@@ -106,7 +106,7 @@ Operators
 .. automodule:: message_ix_models.report.computations
    :members:
 
-   :mod:`message_ix_models` provides the following:
+   :mod:`message_ix_models.report.computations` provides the following:
 
    .. autosummary::
 
@@ -118,11 +118,28 @@ Operators
       remove_ts
       share_curtailment
 
-   Other operators are provided by:
+   Other operators or genno-compatible functions are provided by:
 
-   - :mod:`message_ix.reporting.computations`
-   - :mod:`ixmp.reporting.computations`
-   - :mod:`genno.computations`
+   - Upstream packages:
+
+     - :mod:`message_ix.reporting.computations`
+     - :mod:`ixmp.reporting.computations`
+     - :mod:`genno.computations`
+
+   - Other submodules:
+
+     - :mod:`.model.emissions`: :func:`.get_emission_factors`.
+
+   Any of these can be made available for a :class:`.Computer` instance using :meth:`~.genno.Computer.require_compat`, for instance:
+
+   .. code-block::
+
+      # Indicate that a certain module contains functions to
+      # be referenced by name
+      c.require_compat("message_ix_models.model.emissions")
+
+      # Add computations to the graph by referencing functions
+      c.add("ef:c", "get_emission_factors", units="t C / kWa")
 
 Utilities
 ---------

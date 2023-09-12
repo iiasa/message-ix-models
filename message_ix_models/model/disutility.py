@@ -51,11 +51,11 @@ def get_spec(
 
     Parameters
     ----------
-    groups : list of Code
+    groups : list of |Code|
         Identities of the consumer groups with distinct disutilities.
-    technologies : list of Code
+    technologies : list of |Code|
         The technologies to which the disutilities are applied.
-    template : .Code
+    template : |Code|
 
     """
     s = Spec()

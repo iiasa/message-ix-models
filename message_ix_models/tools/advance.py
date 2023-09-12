@@ -37,7 +37,7 @@ def get_advance_data(query: Optional[str] = None) -> pd.Series:
 
     Parameters
     ----------
-    query : str, optional
+    query : str, *optional*
         Passed to :meth:`pandas.DataFrame.query` to limit the returned values.
 
     Returns
@@ -58,7 +58,7 @@ def advance_data(variable: str, query: Optional[str] = None) -> Quantity:
 
     Parameters
     ----------
-    query : str, optional
+    query : str, *optional*
         Passed to :func:`get_advance_data`.
 
     Returns

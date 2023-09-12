@@ -15,6 +15,7 @@ Submodules:
    node
    pooch
    scenarioinfo
+   sdmx
 
 Commonly used:
 
@@ -25,9 +26,9 @@ Commonly used:
    ~context.Context
    ~scenarioinfo.ScenarioInfo
    ~scenarioinfo.Spec
-   adapt_R11_R12
-   adapt_R11_R14
-   as_codes
+   .adapt_R11_R12
+   .adapt_R11_R14
+   .as_codes
    broadcast
    cached
    check_support
@@ -52,6 +53,7 @@ Commonly used:
 
 .. automodule:: message_ix_models.util
    :members:
+   :exclude-members: as_codes, eval_anno
 
 .. autodata:: message_ix_models.util.cache.SKIP_CACHE
 
@@ -117,7 +119,7 @@ Commonly used:
 
    .. automethod:: clone_to_dest
 
-      To use this method, either decorate a command with :func:`common_params`:
+      To use this method, either decorate a command with :func:`.common_params`:
 
       .. code-block:: python
 
@@ -163,7 +165,7 @@ Commonly used:
    :members:
 
 :mod:`.util.node`
-==================
+=================
 
 .. currentmodule:: message_ix_models.util.node
 
@@ -186,4 +188,12 @@ Commonly used:
 .. currentmodule:: message_ix_models.util.scenarioinfo
 
 .. automodule:: message_ix_models.util.scenarioinfo
+   :members:
+
+:mod:`.util.sdmx`
+=================
+
+.. currentmodule:: message_ix_models.util.sdmx
+
+.. automodule:: message_ix_models.util.sdmx
    :members:

@@ -26,7 +26,8 @@ def _add_unit(mp: ixmp.Platform, unit: str, comment: str) -> None:
             raise
 
 
-def apply_spec(
+# FIXME Reduce complexity from 14 to ≤13
+def apply_spec(  # noqa: C901
     scenario: Scenario,
     spec: Union[Spec, Mapping[str, ScenarioInfo]],
     data: Optional[Callable] = None,
@@ -38,7 +39,7 @@ def apply_spec(
     ----------
     spec : .Spec
         Specification of changes to make to `scenario`.
-    data : callable, optional
+    data : callable, *optional*
         Function to add data to `scenario`. `data` can either manipulate the scenario
         directly, or return a :class:`dict` compatible with :func:`.add_par_data`.
 

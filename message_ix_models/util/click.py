@@ -70,7 +70,7 @@ def format_sys_argv() -> str:
 
 
 def store_context(context: Union[click.Context, Context], param, value):
-    """Callback that simply stores a value on the :class:`Context` object.
+    """Callback that simply stores a value on the :class:`.Context` object.
 
     Use this for parameters that are not used directly in a @click.command() function,
     but need to be carried by the Context for later use.
