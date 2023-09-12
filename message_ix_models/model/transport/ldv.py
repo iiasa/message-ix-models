@@ -94,6 +94,9 @@ def prepare_computer(c: Computer):
         c.add("ldv constraints::ixmp", constraint_data, "context"),
     ]
 
+    # TODO add bound_activity constraints for first year given technology shares
+    # TODO add historical_new_capacity for period prior to to first year
+
     return c.add("merge_data", "transport ldv::ixmp", *keys)
 
 

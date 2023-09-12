@@ -69,7 +69,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
       .. todo:: Add an external data source.
 
     - ``MERtoPPP:n-y``, from :file:`mer-to-ppp.csv`. If ``context.model.regions`` is
-      “R14”, data are adapted from R11 using :func:`.adapt_R11_R14`.
+      “R14”, data are adapted from R11 using :obj:`.adapt_R11_R14`.
 
     See also
     --------
