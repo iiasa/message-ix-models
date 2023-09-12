@@ -131,16 +131,16 @@ class Config:
     #: :program:`--scenario` or :program:`--url` CLI options.
     scenario_info: MutableMapping[str, str] = field(default_factory=dict)
 
-    #: Like :attr:`platform_info`, used by e.g. :meth:`clone_to_dest`.
+    #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
     dest_platform: MutableMapping[str, str] = field(default_factory=dict)
 
-    #: Like :attr:`scenario_info`, used by e.g. :meth:`clone_to_dest`.
+    #: Like :attr:`scenario_info`, used by e.g. :meth:`.clone_to_dest`.
     dest_scenario: MutableMapping[str, str] = field(default_factory=dict)
 
     #: A scenario URL, e.g. as given by the :program:`--url` CLI option.
     url: Optional[str] = None
 
-    #: Like :attr:`url`, used by e.g. :meth:`clone_to_dest`.
+    #: Like :attr:`url`, used by e.g. :meth:`.clone_to_dest`.
     dest: Optional[str] = None
 
     #: Base path for cached data, e.g. as given by the :program:`--cache-path` CLI

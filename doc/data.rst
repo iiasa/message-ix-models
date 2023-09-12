@@ -96,7 +96,7 @@ Prefer text formats
 *Do not* hard-code paths
    Data stored with (1) or (2) above can be retrieved with the utility funtions mentioned, instead of hard-coded paths.
 
-   For system-specific paths (3) only, get a :obj:`.Context` object and use it to get an appropriate :class:`.Path` object pointing to a file
+   For system-specific paths (3) only, get a :obj:`.Context` object and use it to get an appropriate :class:`~pathlib.Path` object pointing to a file
 
    .. code-block:: python
 
@@ -253,7 +253,7 @@ Specific modules for model variants, projects, etc. **should**:
 
 - Define a single :mod:`dataclass <dataclasses>` to express the configuration options they understand.
   See for example :class:`.model.Config` (for constructing new models), and :class:`message_data.model.buildings.Config` (for the MESSAGEix-Buildings model variant / linkage).
-- Store this on the :class:`Context` at a simple key.
+- Store this on the :class:`.Context` at a simple key.
   For example :class:`.model.Config` is stored at ``context.model`` or ``context["model"]``.
 - Retrieve and respect configuration from existing objects, i.e. only duplicate settings with the same meaning when strictly necessary.
 - Communicate to other modules by setting the appropriate configuration values.

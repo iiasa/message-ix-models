@@ -138,10 +138,11 @@ class ScenarioInfo:
     def units_for(self, set_name: str, id: str) -> pint.Unit:
         """Return the units associated with code `id` in MESSAGE set `set_name`.
 
-        :mod:`ixmp` (or the sole :class:`.JDBCBackend`, as of v3.5.0) does not handle
-        unit information for variables and equations (unlike parameter values), such as
-        MESSAGE decision variables ``ACT``, ``CAP``, etc. In :mod:`message_ix_models`
-        and :mod:`message_data`, the following conventions are (generally) followed:
+        :mod:`ixmp` (or the sole :class:`~ixmp.backend.base.JDBCBackend`, as of v3.5.0)
+        does not handle unit information for variables and equations (unlike parameter
+        values), such as MESSAGE decision variables ``ACT``, ``CAP``, etc. In
+        :mod:`message_ix_models` and :mod:`message_data`, the following conventions are
+        (generally) followed:
 
         - The units of ``ACT`` and others are consistent for each ``technology``.
         - The units of ``COMMODITY_BALANCE``, ``STOCK``, ``commodity_stock``, etc. are
@@ -278,9 +279,9 @@ class Spec:
     A Spec collects 3 :class:`.ScenarioInfo` instances at the attributes :attr:`.add`,
     :attr:`.remove`, and :attr:`.require`. This is the type that is accepted by
     :func:`.apply_spec`; :doc:`model-build` describes how a Spec is used to modify a
-    :class:`Scenario`. A Spec may also be used to express information about the target
-    structure of data to be prepared; like :class:`.ScenarioInfo`, this can happen
-    before the target :class:`.Scenario` exists.
+    |Scenario|. A Spec may also be used to express information about the target
+    structure of data to be prepared; like ScenarioInfo, this can happen before the
+    target Scenario exists.
 
     Spec also provides:
 

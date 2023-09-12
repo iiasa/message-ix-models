@@ -1,4 +1,6 @@
 """Tests for message_data.reporting."""
+from importlib.metadata import version
+
 import pandas as pd
 import pandas.testing as pdt
 import pytest
@@ -13,7 +15,16 @@ MIN_CONFIG = {
     },
 }
 
+MARK = (
+    pytest.mark.xfail(
+        condition=version("message_ix") < "3.6",
+        raises=NotImplementedError,
+        reason="Not supported with message_ix < 3.6",
+    ),
+)
 
+
+@MARK[0]
 def test_report_bare_res(request, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     scenario = testing.bare_res(request, test_context, solved=True)
@@ -92,6 +103,7 @@ INV_COST_CONFIG = dict(
 )
 
 
+@MARK[0]
 @pytest.mark.parametrize("regions", ["R11"])
 def test_apply_units(request, test_context, regions):
     test_context.regions = regions

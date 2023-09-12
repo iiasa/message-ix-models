@@ -301,7 +301,7 @@ def prepare_reporter(
     scenario: Optional[Scenario] = None,
     reporter: Optional[Reporter] = None,
 ) -> Tuple[Reporter, Key]:
-    """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
+    """Return a :class:`message_ix.Reporter` and `key` prepared to report a |Scenario|.
 
     The code responds to the following settings on `context`:
 
@@ -323,11 +323,12 @@ def prepare_reporter(
            corresponding, full-resolution Key, if any, is returned.
        * - report/config
          - dict or Path-like or None
-         - If :class:`dict`, then this is passed to :meth:`.Reporter.configure`. If
-           Path-like, then this is the path to the reporting configuration file. If not
-           given, defaults to :file:`report/global.yaml`.
+         - If :class:`dict`, then this is passed to
+           :meth:`message_ix.Reporter.configure`. If Path-like, then this is the path to
+           the reporting configuration file. If not given, defaults to
+           :file:`report/global.yaml`.
        * - report/output_path
-         - Path-like, optional
+         - Path-like, *optional*
          - Path to write reporting outputs. If given, a computation ``cli-output`` is
            added to the Reporter which writes ``report/key`` to this path.
 
@@ -335,12 +336,12 @@ def prepare_reporter(
     ----------
     context : Context
         Containing settings in the ``report/*`` tree.
-    scenario : message_ix.Scenario, optional
+    scenario : Scenario, *optional*
         Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
         retrieve a Scenario.
-    reporter : .Reporter, optional
+    reporter : message_ix.Reporter, *optional*
         Existing reporter to extend with computations. If not given, it is created
-        using :meth:`.Reporter.from_scenario`.
+        using :meth:`message_ix.Reporter.from_scenario`.
 
     Returns
     -------
@@ -351,6 +352,14 @@ def prepare_reporter(
         Same as ``context.report["key"]`` if any, but in full resolution; else one of
         ``default`` or ``cli-output`` according to the other settings.
     """
+    from importlib.metadata import version
+
+    if version("message_ix") < "3.6":
+        raise NotImplementedError(
+            "Support for message_ix_models.report.prepare_reporter() with message_ix <="
+            " 3.5.0. Please upgrade to message_ix 3.6 or later."
+        )
+
     log.info("Prepare reporter")
 
     if reporter:

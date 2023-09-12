@@ -102,4 +102,4 @@ Submodules described on separate pages:
       >>> AUT.parent
       <Code R11_WEU: Western Europe>
 
-   .. seealso:: :func:`.adapt_R11_R14`
+   .. seealso:: :obj:`.adapt_R11_R14`

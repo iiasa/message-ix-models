@@ -12,9 +12,9 @@ Overview
 
 Scenarios in the MESSAGEix-GLOBIOM global model family are characterized by:
 
-- ca. 100 MB of data, depending on storage format (e.g. in a :class:`.JDBCBackend` local, HyperSQL database, or :ref:`ixmp:excel-data-format` in Excel files).
-- :meth:`.solve` times of between 10 and 60 minutes, depending on hardware and configuration, plus similar amounts of time to run the legacy reporting in :mod:`message_data`.
-- Memory usage of ~10 GB or more using :class:`.JDBCBackend`, currently the only supported backend.
+- ca. 100 MB of data, depending on storage format (e.g. in a :class:`~ixmp.backend.jdbc.JDBCBackend` local, HyperSQL database, or :ref:`ixmp:excel-data-format` in Excel files).
+- :meth:`~message_ix.Scenario.solve` times of between 10 and 60 minutes, depending on hardware and configuration, plus similar amounts of time to run the legacy reporting in :mod:`message_data`.
+- Memory usage of ~10 GB or more using :class:`~ixmp.backend.jdbc.JDBCBackend`, currently the only supported backend.
 
 These resource needs can be a bottleneck in applications, for example:
 
