@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2023.9.12
+==========
 
 All changes
 -----------
