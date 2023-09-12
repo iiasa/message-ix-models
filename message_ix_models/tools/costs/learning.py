@@ -40,11 +40,6 @@ def get_cost_reduction_data() -> pd.DataFrame:
         .assign(
             technology_type=lambda x: x.technology_type.fillna("NA"),
             cost_reduction=lambda x: x.cost_reduction.fillna(0),
-            # learning_rate=lambda x: np.where(
-            #     x.learning_rate == "GEAL",
-            #     "low",
-            #     np.where(x.learning_rate == "GEAM", "medium", "high"),
-            # ),
         )
         .drop_duplicates()
         .reset_index(drop=1)
