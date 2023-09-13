@@ -547,16 +547,12 @@ def prepare_data(
                     )
                 )
 
-    # Concatenate data frames together
-    tmp = {k: pd.concat(v) for k, v in data.items()}
-
-    # Adapt relation_activity values that represent emission factors
-    adapt_emission_factors(tmp)
-    print("tmp['relation_activity'] = ")
-    print(tmp["relation_activity"].head().to_string())
-    print(tmp["relation_activity"].tail().to_string())
-
-    merge_data(result, tmp)
+    # - Concatenate data frames together.
+    # - Adapt relation_activity values that represent emission factors.
+    # - Merge to results.
+    merge_data(
+        result, adapt_emission_factors({k: pd.concat(v) for k, v in data.items()})
+    )
 
     log.info(
         "Prepared:\n" + "\n".join(f"{len(v)} obs for {k!r}" for k, v in result.items())
