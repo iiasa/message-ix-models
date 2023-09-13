@@ -39,6 +39,7 @@ dependencies = [
   "message_ix >= 3.4.0",
   "pooch",
   "pyam-iamc >= 0.6",
+  "pyarrow",
   "pycountry",
   "PyYAML",
   "sdmx1 >= 2.8.0",
