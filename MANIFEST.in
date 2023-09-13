@@ -1,1 +1,2 @@
 prune message_ix_models/data/test/MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline
+prune message_ix_models/data/test/ssp
