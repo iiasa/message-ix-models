@@ -242,52 +242,55 @@ def batch(click_ctx, go):
         ctx.close_db()
 
 
-@cli.command("gen-demand")
+@cli.command("gen-activity")
 @common_params("nodes years")
-@click.argument("source", metavar="DATASOURCE")
+@click.option("--ssp-update", type=click.Choice("12345"))
+@click.option("--source")
 @click.argument("output_dir", metavar="DIR", type=Path, required=False, default=None)
 @click.pass_obj
-def gen_demand(ctx, source, nodes, years, output_dir):
-    """Compute activity (demand) data and write to file in DIR.
-
-    The indicated DATASOURCE is used for exogenous GDP and population data; both inputs
-    to the calculation of demands.
-    """
-    from genno import Key
+def gen_activity(ctx, ssp_update, source, nodes, years, output_dir):
+    """Compute activity (demand) data and write to file in DIR."""
+    from message_ix_models.project.ssp import SSP_2024
 
     from . import build
 
     # Read general transport config
-    ctx.update(regions=nodes, years=years)
+    ctx.update(regions=nodes or "R12", years=years or "B")
 
-    # Prepare a Computer instance for demand calculations
-    c = build.get_computer(
-        ctx, options={"data source": {"gdp": source, "population": source}}
+    if ssp_update and source:
+        raise click.UsageError("--source is mutually exclusive with --ssp-update")
+    elif ssp_update:
+        options = {"ssp": SSP_2024[ssp_update]}
+        label = f"SSP_2024.{ssp_update}"
+    elif source:
+        assert ssp_update is None
+        options = {"data source": {"gdp": source, "population": source}}
+        label = source.replace(" ", "_")
+    else:
+        raise click.UsageError("Must give one of --ssp-update or --source")
+
+    # Prepare a Computer instance for calculations
+    c = build.get_computer(ctx, options=options)
+
+    # Path to output file
+    output_dir = output_dir or ctx.get_local_path(
+        "transport", "gen-activity", f"{label}-{ctx.regions}-{ctx.years}"
     )
-
-    output_dir = output_dir or ctx.get_local_path("output")
-    output_path = output_dir.joinpath(
-        f"demand-{source.replace(' ', '_')}-{ctx.regions}-{ctx.years}.csv"
-    )
-
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir.joinpath("pdt.csv")
     c.configure(output_dir=output_dir)
 
-    # Compute total demand by mode
-    key = Key("pdt", "nyt")
-    c.add("write_report", "gen-demand 1", key, output_path)
+    # Compute total activity by mode
+    c.add("gen-activity 1", "write_report", "pdt:n-y-t", output_path)
 
     key = c.add(
-        "gen-demand", ["gen-demand 1", "plot demand-exo", "plot demand-exo-capita"]
+        "gen-activity", ["gen-activity 1", "plot demand-exo", "plot demand-exo-capita"]
     )
 
     log.info(f"Compute {repr(key)}\n{c.describe(key)}")
     output_dir.mkdir(exist_ok=True, parents=True)
     c.get(key)
     log.info(f"Wrote to {output_path}")
-
-    # # Generate diagnostic plots
-    # rep.add("demand plots", ["plot demand-exo", "plot demand-exo-capita"])
-    # rep.get("demand plots")
 
 
 @cli.command()
