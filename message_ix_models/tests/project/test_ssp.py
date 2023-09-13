@@ -1,4 +1,5 @@
 import pytest
+from genno import Computer
 
 from message_ix_models.project.ssp import (
     SSP,
@@ -8,6 +9,8 @@ from message_ix_models.project.ssp import (
     parse,
     ssp_field,
 )
+from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
+from message_ix_models.tools.exo_data import prepare_computer
 
 
 def test_generate(tmp_path, test_context):
@@ -81,3 +84,37 @@ def test_ssp_field() -> None:
 
 def test_cli(mix_models_cli):
     mix_models_cli.assert_exit_0(["ssp", "gen-structures", "--dry-run"])
+
+
+class TestSSPUpdate:
+    @pytest.mark.parametrize(
+        "source",
+        (
+            "ICONICS:SSP(2024).1",
+            "ICONICS:SSP(2024).2",
+            "ICONICS:SSP(2024).3",
+            "ICONICS:SSP(2024).4",
+            "ICONICS:SSP(2024).5",
+        ),
+    )
+    @pytest.mark.parametrize(
+        "source_kw",
+        (
+            dict(measure="POP"),
+            dict(measure="GDP", model="IIASA GDP 2023"),
+            dict(measure="GDP", model="OECD ENV-Growth 2023"),
+        ),
+    )
+    def test_prepare_computer(self, test_context, source, source_kw):
+        c = Computer()
+        keys = prepare_computer(test_context, c, source, source_kw)
+
+        # Preparation of data runs successfully
+        result = c.get(keys[0])
+
+        # Data has the expected dimensions
+        assert ("n", "y") == result.dims
+
+        # Data is complete
+        assert 14 == len(result.coords["n"])
+        assert 14 == len(result.coords["y"])
