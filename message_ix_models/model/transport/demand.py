@@ -8,15 +8,12 @@ import genno.computations
 import numpy as np
 import pandas as pd
 from dask.core import literal, quote
-from genno import Computer, Key
+from genno import Computer, Key, Quantity
 from genno.computations import interpolate
-from genno.core.key import iter_keys
 from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import adapt_R11_R14, broadcast
-
-from message_data.tools import gdp_pop
 
 from . import computations, groups
 from .util import path_fallback
@@ -77,11 +74,22 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     """
     context = c.graph["context"]
 
+    from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
+    from message_ix_models.tools.exo_data import prepare_computer
+
+    keys = {}
+    source = str(context.transport.ssp)
+    for kw in (dict(measure="GDP", model="IIASA GDP 2023"), dict(measure="POP")):
+        keys[kw["measure"]] = prepare_computer(
+            context, c, source, source_kw=kw, strict=False
+        )
+
+    # Alias for other computations which expect the upper-case name
+    c.add("GDP:n-y", "gdp:n-y")
+    c.add("population:n-y", "mul", "pop:n-y", Quantity(1.0, units="passenger"))
+
     # Data from files. Add 3 computations per quantity.
-    for key, basename, units in (
-        # (gdp_k, "gdp", "GUSD/year"),  # Handled below
-        (Key("MERtoPPP", "ny"), "mer-to-ppp", ""),
-    ):
+    for key, basename, units in ((Key("MERtoPPP", "ny"), "mer-to-ppp", ""),):
         # 1. Load the file
         k1 = Key(key.name, tag="raw")
         try:
@@ -109,9 +117,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
         c.add(key, partial(interpolate, coords=dict(y=info.Y)), k3, sums=True)
 
-    gdp_keys = iter_keys(c.add("GDP:n-y", gdp_pop.gdp, "y", "config", sums=True))
     c.add(
-        "PRICE_COMMODITY:n-c-y", (computations.dummy_prices, next(gdp_keys)), sums=True
+        "PRICE_COMMODITY:n-c-y", (computations.dummy_prices, keys["GDP"][0]), sums=True
     )
 
 
@@ -162,8 +169,6 @@ def prepare_computer(c: Computer) -> None:
         ("quantity_from_config", "lambda:", "config", quote("lamda")),
         # Base share data
         ("base_shares", "base shares:n-t-y", n, "t::transport modes", y, "config"),
-        # Population data; data source according to config
-        (pop, partial(gdp_pop.population, extra_dims=False), "y", "config"),
         # Population shares by area_type
         (pop_at, groups.urban_rural_shares, y, "config"),
         # Consumer group sizes
