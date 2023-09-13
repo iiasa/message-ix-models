@@ -4,13 +4,13 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional, Tuple
 
+import message_ix_models.report
 import pytest
 from genno import Computer
 from message_ix import Reporter, Scenario
 from message_ix_models import Context, ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
 
-from message_data import reporting
 from message_data.model import transport
 from message_data.tools import silence_log
 
@@ -131,10 +131,10 @@ def simulated_solution(request, context) -> Reporter:
     add_simulated_solution(rep, info, data)
 
     # Register the callback to set up transport reporting
-    reporting.register(callback)
+    message_ix_models.report.register(callback)
 
     # Prepare the reporter
     with silence_log("genno", logging.CRITICAL):
-        reporting.prepare_reporter(context, reporter=rep)
+        message_ix_models.report.prepare_reporter(context, reporter=rep)
 
     return rep
