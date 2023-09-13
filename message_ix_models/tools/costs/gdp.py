@@ -288,7 +288,16 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
             )
         )
 
-    return df
+        # Create dataframe for LED, using SSP2 data and renaming scenario to LED
+        df_led = df.query("scenario == 'SSP2'").assign(scenario="LED")
+
+        # Add LED data to main dataframe
+        df = pd.concat([df, df_led]).reset_index(drop=1)
+
+        # Sort dataframe by scenario version, scenario, region, and year
+        df = df.sort_values(by=["scenario_version", "scenario", "region", "year"])
+
+        return df
 
 
 # Function to calculate adjusted region-differentiated cost ratios
