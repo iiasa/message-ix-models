@@ -40,7 +40,7 @@ def create_projections_learning(in_node, in_ref_region, in_base_year, in_scenari
     # If it specified, then filter as below:
     if in_scenario is not None:
         if in_scenario == "all":
-            sel_scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
+            sel_scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
         else:
             sel_scen = in_scenario.upper()
 
@@ -100,7 +100,7 @@ def create_projections_gdp(
     # If it specified, then filter as below:
     if in_scenario is not None:
         if in_scenario == "all":
-            sel_scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
+            sel_scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
         else:
             sel_scen = in_scenario.upper()
 
@@ -189,7 +189,7 @@ def create_projections_converge(
     # If it specified, then filter as below:
     if in_scenario is not None:
         if in_scenario == "all":
-            sel_scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5"]
+            sel_scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
         else:
             sel_scen = in_scenario.upper()
 
