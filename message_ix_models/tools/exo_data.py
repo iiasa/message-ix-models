@@ -1,6 +1,7 @@
 """Generic tools for working with exogenous data sources."""
 from abc import ABC, abstractmethod
 from operator import itemgetter
+from pathlib import Path
 from typing import Dict, Mapping, Optional, Type
 
 from genno import Computer, Key, Quantity, quote
@@ -8,6 +9,7 @@ from genno.core.key import single_key
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
+from message_ix_models.util import cached
 
 __all__ = [
     "MEASURES",
@@ -220,3 +222,55 @@ class DemoSource(ExoDataSource):
             v={"v0": "Population", "v1": "GDP"},
             y={"y0": 2010, "y1": 2050},
         )
+
+
+@cached
+def iamc_like_data_for_query(path: Path, query: str) -> Quantity:
+    """Load data from `path` in IAMC-like format and transform to :class:`.Quantity`.
+
+    The steps involved are:
+
+    1. Read the data file; use pyarrow for better performance.
+    2. Immediately apply `query` to reduce the data to be handled in subsequent steps.
+    3. Assert that Model, Scenario, Variable, and Unit are unique; store the unique
+       values. This means that `query` **must** result in data with unique values for
+       these dimensions.
+    4. Transform "Region" labels to ISO 3166-1 alpha-3 codes using
+       :func:`.iso_3166_alpha_3`.
+    5. Drop entire time series without such codes; for instance "World".
+    6. Transform to a pd.Series with "n" and "y" index levels; ensure the latter are
+       int.
+    7. Transform to :class:`.Quantity` with units.
+
+    The result is :obj:`.cached`.
+    """
+    import pandas as pd
+
+    from message_ix_models.util.pycountry import iso_3166_alpha_3
+
+    unique = dict()
+
+    def drop_unique(df, names) -> pd.DataFrame:
+        names_list = names.split()
+        for name in names_list:
+            values = df[name].unique()
+            if len(values) > 1:
+                raise RuntimeError(f"Not unique {name!r}: {values}")
+            unique[name] = values[0]
+        return df.drop(names_list, axis=1)
+
+    tmp = (
+        pd.read_csv(path, engine="pyarrow")
+        .query(query)
+        .pipe(drop_unique, "Model Scenario Variable Unit")
+        .assign(n=lambda df: df["Region"].apply(iso_3166_alpha_3))
+        .dropna(subset=["n"])
+        .drop("Region", axis=1)
+        .set_index("n")
+        .rename(columns=lambda y: int(y))
+        .rename_axis(columns="y")
+        .stack()
+        .dropna()
+    )
+
+    return Quantity(tmp, units=unique["Unit"])
