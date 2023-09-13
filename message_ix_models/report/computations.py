@@ -74,7 +74,7 @@ def exogenous_data():
 @exogenous_data.helper
 def add_exogenous_data(
     func, c: "Computer", *, context=None, source=None, source_kw=None
-) -> Tuple["Key"]:
+) -> Tuple["Key", ...]:
     """Prepare `c` to compute exogenous data from `source`."""
     from message_ix_models.tools.exo_data import prepare_computer
 

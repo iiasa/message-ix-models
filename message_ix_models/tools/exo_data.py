@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from operator import itemgetter
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Type
+from typing import Dict, Mapping, Optional, Tuple, Type
 
 from genno import Computer, Key, Quantity, quote
 from genno.core.key import single_key
@@ -69,8 +69,13 @@ class ExoDataSource(ABC):
 
 
 def prepare_computer(
-    context, c: "Computer", source="test", source_kw: Optional[Mapping] = None
-):
+    context,
+    c: "Computer",
+    source="test",
+    source_kw: Optional[Mapping] = None,
+    *,
+    strict: bool = True,
+) -> Tuple[Key, ...]:
     """Prepare `c` to compute GDP, population, or other exogenous data.
 
     Returns a tuple of keys. The first, like ``{m}:n-y``, triggers the following
@@ -125,10 +130,10 @@ def prepare_computer(
     c.require_compat("message_ix_models.report.computations")
 
     # Retrieve the node codelist
-    c.add("n::codes", quote(get_codes(f"node/{context.model.regions}")), strict=True)
+    c.add("n::codes", quote(get_codes(f"node/{context.model.regions}")), strict=strict)
 
     # Convert the codelist into a nested dict for aggregate()
-    c.add("n::groups", "codelist_to_groups", "n::codes", strict=True)
+    c.add("n::groups", "codelist_to_groups", "n::codes", strict=strict)
 
     # Add information about the list of periods
     if "y" not in c:
