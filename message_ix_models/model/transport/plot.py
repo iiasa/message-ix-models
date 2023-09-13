@@ -391,7 +391,7 @@ def prepare_computer(c: Computer):
         keys.append(f"plot {name}")
         queue.append((keys[-1], cls))
 
-    c.add_queue((item, dict()) for item in queue)
+    c.add_queue(queue)
 
     key = "transport plots"
     log.info(f"Add {repr(key)} collecting {len(key)} plots")

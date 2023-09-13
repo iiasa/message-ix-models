@@ -143,14 +143,14 @@ def prepare_computer(c: Computer) -> None:
     pop = pop_at.drop("area_type")
     cg = Key("cg share", "n y cg".split())
     gdp_ppp = Key("GDP", "ny", "PPP")
-    gdp_ppp_cap = gdp_ppp.add_tag("capita")
-    gdp_index = gdp_ppp_cap.add_tag("index")
+    gdp_ppp_cap = gdp_ppp + "capita"
+    gdp_index = gdp_ppp_cap + "index"
     pdt_nyt = Key("pdt", "nyt")  # Total PDT shared out by mode
-    pdt_cap = pdt_nyt.drop("t").add_tag("capita")
-    pdt_ny = pdt_nyt.drop("t").add_tag("total")
-    price_sel1 = price_full.add_tag("transport")
-    price_sel0 = price_sel1.add_tag("raw units")
-    price = price_sel1.add_tag("smooth")
+    pdt_cap = pdt_nyt.drop("t") + "capita"
+    pdt_ny = pdt_nyt.drop("t") + "total"
+    price_sel1 = price_full + "transport"
+    price_sel0 = price_sel1 + "raw units"
+    price = price_sel1 + "smooth"
     cost = Key("cost", "nyct")
     sw = Key("share weight", "nty")
 
