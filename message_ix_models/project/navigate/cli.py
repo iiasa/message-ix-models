@@ -217,12 +217,34 @@ def check_budget(context):
         # ("NPi-Default_ENGAGE_20C_step-3+B", 1, 1150, 2700),
         #
         # From 2023-08-03
-        ("NPi-act+MACRO_ENGAGE_20C_step-3+B", 3, 900, 1931),
+        # ("NPi-act+MACRO_ENGAGE_20C_step-3+B", 3, 900, 1931),
+        # ("NPi-act+MACRO_ENGAGE_20C_step-3+B", 3, 900, 1931),
+        # ("NPi-act+MACRO", 2, np.nan, np.nan), # TODO check version
+        # ("NPi-ele+MACRO", 2, np.nan, np.nan), # TODO check version
+        # ("NPi-tec+MACRO", 2, np.nan, np.nan),
+        # ("NPi-all+MACRO", 4, np.nan, np.nan),
         ("NPi-ref+MACRO", 26, np.nan, np.nan),
-        ("Ctax-ref+B", 5, 650, 920),
+        # ("20C-ref ENGAGE_20C_step-3+B", 2, 1150, 2700),
+        # ("20C-ref ENGAGE_20C_step-3+B", 3, 1150, 2600),
+        # ("20C-ref ENGAGE_20C_step-3+B", 4, 1150, 2585),
+        ("2C-Default ENGAGE_20C_step-3+B", 2, 900, 2511),
+        ("2C-Default ENGAGE_20C_step-3+B", 4, 900, 1889),
+        ("2C-Default ENGAGE_20C_step-3+B", 5, 900, 1840),
+        # ("NPi-act+MACRO_ENGAGE_20C_step-3+B", 3, 900, 1931),
+        # ("NPi-ref+MACRO", 26, np.nan, np.nan),
+        # ("Ctax-ref+B", 9, np.nan, np.nan),  # --ctax=380
+        # ("Ctax-ref+B", 8, np.nan, np.nan),  # --ctax=400
+        # ("Ctax-ref+B", 7, np.nan, np.nan),
+        # ("Ctax-ref+B", 6, np.nan, np.nan),
+        # ("Ctax-ref+B", 5, np.nan, np.nan),
         # NB c=552 is the "Actual cumulative emissions". c=920 is the output (suggested
         #    value for c) below when c=552 is set.
         ("Ctax-ref+B", 1, 650, 920),
+        # ("Ctax-ref+B", 1, 650, 920),
+        # ("Ctax-ref+B", 1, np.nan, np.nan),
+        # WP6
+        # ("NPi-Default+MACRO", 2, np.nan, np.nan),
+        # ("Ctax-Default+B", 1, np.nan, np.nan),
     ):
         try:
             s = Scenario(mp, model=m, scenario=s_name, version=version)
