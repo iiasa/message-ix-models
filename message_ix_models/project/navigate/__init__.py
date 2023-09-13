@@ -74,6 +74,9 @@ for _pc in (
         # budget=1239,  # MESSAGE-MACRO, y₀=2030: 1847 via check-budget, minus 558 per
         # #               JM. Not feasible.
         # budget=1889,  # Determined via-check-budget. Feasible for NPi-Default.
+        # budget=1889,  # Determined via check-budget. Feasible for NPi-Default.
+        # budget=1155,  # Determined via check-budget. Not feasible.
+        # budget=1830,  # Manually adjusted for NPi-Default. Feasible.
     ),
     # Originally from an item labelled "600" in engage/config.yaml. Current values
     # calculated based on Ctax runs with price of 1000 USD / t CO₂.
