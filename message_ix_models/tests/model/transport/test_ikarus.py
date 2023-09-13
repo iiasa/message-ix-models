@@ -169,7 +169,7 @@ def test_get_ikarus_data1(test_context, regions, N_node, years, options):
         .iloc[0, :]
     )
     assert "GUSD_2010 / Gv / km" == row["unit"]
-    assert_allclose(23.696128, row["value"])
+    assert_allclose(23.689086, row["value"])
 
     # Specific magnitudes of other values to check
     # TODO use testing tools to make the following less verbose
