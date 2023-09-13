@@ -106,7 +106,12 @@ class TestSSPUpdate:
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
+        # FIXME The following should be redundant, but appears mutable on GHA linux and
+        #       Windows runners.
+        test_context.model.regions = "R14"
+
         c = Computer()
+
         keys = prepare_computer(test_context, c, source, source_kw)
 
         # Preparation of data runs successfully
