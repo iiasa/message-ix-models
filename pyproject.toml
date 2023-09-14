@@ -86,6 +86,7 @@ exclude = ["doc/"]
 module = [
   "colorama",
   "message_data.*",
+  "plotnine",
   "pooch",
   "pycountry",
   # Indirectly via message_ix
