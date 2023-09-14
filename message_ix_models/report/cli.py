@@ -6,7 +6,6 @@ import click
 import yaml
 
 from message_ix_models.report import register, report
-from message_ix_models.util import local_data_path, private_data_path
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import common_params
 
@@ -52,11 +51,13 @@ def cli(context, config_file, legacy, module, output_path, from_file, key, dry_r
     With --from-file, read multiple Scenario identifiers from FILE, and report each one.
     In this usage, --output-path may only be a directory.
     """
+    from message_ix_models.util import local_data_path, package_data_path
+
     # --config: use the option value as if it were an absolute path
     config = Path(config_file)
     if not config.exists():
         # Path doesn't exist; treat it as a stem in the metadata dir
-        config = private_data_path("report", config_file).with_suffix(".yaml")
+        config = package_data_path("report", config_file).with_suffix(".yaml")
 
     if not config.exists():
         # Can't find the file
