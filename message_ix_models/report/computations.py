@@ -1,6 +1,7 @@
 """Atomic reporting operations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
+import re
 from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple, Union
 
 import ixmp
@@ -20,6 +21,10 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "codelist_to_groups",
+    "compound_growth",
+    "exogenous_data",
+    "filter_ts",
     "from_url",
     "get_ts",
     "gwp_factors",
@@ -80,6 +85,13 @@ def add_exogenous_data(
 
     return prepare_computer(
         context or Context.get_instance(-1), c, source=source, source_kw=source_kw
+    )
+
+
+def filter_ts(df: pd.DataFrame, expr: re.Pattern) -> pd.DataFrame:
+    """Filter time series data in `df`."""
+    return df[df["variable"].str.fullmatch(expr)].assign(
+        variable=df["variable"].str.replace(expr, r"\1", regex=True)
     )
 
 
