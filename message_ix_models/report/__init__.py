@@ -215,6 +215,14 @@ def report(context: Context, *args, **kwargs):
     - ``report/config`` is set to :file:`report/globa.yaml`, if not set.
 
     """
+    try:
+        from ixmp.utils import discard_on_error
+    except ImportError:
+        from contextlib import nullcontext
+
+        def discard_on_error(*args):
+            return nullcontext()
+
     # Handle deprecated usage that appears in:
     # - .model.cli.new_baseline()
     # - .model.create.solve()
@@ -257,7 +265,8 @@ def report(context: Context, *args, **kwargs):
     if context.dry_run:
         return
 
-    result = rep.get(key)
+    with discard_on_error(rep.graph["scenario"]):
+        result = rep.get(key)
 
     # Display information about the result
     log.info(f"Result:\n\n{result}\n")
@@ -475,3 +484,4 @@ def defaults(rep: Reporter, context: Context) -> None:
 
 
 register(defaults)
+register("message_ix_models.report.plot")
