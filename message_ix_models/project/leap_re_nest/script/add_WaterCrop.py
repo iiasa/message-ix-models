@@ -26,7 +26,7 @@ def add_irri_demand(sc, ss):
 
     # change values
     # dem_irr
-    file = "ww_km3_main_crops_NEST_BCU.csv"
+    file = "ww_scen_km3_main_crops_NEST_BCU.csv"
     path_csv = package_data_path("projects", "leap_re_nest", "crops", file)
     # in km3
     dem_csv = pd.read_csv(path_csv)
