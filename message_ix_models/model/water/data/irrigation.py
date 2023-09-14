@@ -58,7 +58,7 @@ def add_irr_structure(context):
         node_loc=df_node["region"],
     ).pipe(broadcast, year_vtg=info.Y)
 
-    inp = inp.append(
+    inp = pd.concat([inp, 
         make_df(
             "input",
             technology="irrigation_oilcrops",
@@ -72,9 +72,9 @@ def add_irr_structure(context):
             node_origin=df_node["region"],
             node_loc=df_node["region"],
         ).pipe(broadcast, year_vtg=info.Y)
-    )
+    ])
 
-    inp = inp.append(
+    inp = pd.concat([inp, 
         make_df(
             "input",
             technology="irrigation_sugarcrops",
@@ -88,7 +88,7 @@ def add_irr_structure(context):
             node_origin=df_node["region"],
             node_loc=df_node["region"],
         ).pipe(broadcast, year_vtg=info.Y)
-    )
+    ])
     # year_act = year_vts for tecs with 1 time-step lifetime
     inp["year_act"] = inp["year_vtg"]
 
@@ -101,7 +101,7 @@ def add_irr_structure(context):
     # Average Value :0.101598174
     # High Value : 0.017123288
 
-    # inp = inp.append(
+    # inp = pd.concat([inp, 
     #     make_df(
     #         "input",
     #         technology="irrigation_sugarcrops",
@@ -115,9 +115,9 @@ def add_irr_structure(context):
     #         node_origin=df_node["region"],
     #         node_loc=df_node["region"],
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-    # )
+    # ])
     #
-    # inp = inp.append(
+    # inp = pd.concat([inp, 
     #     make_df(
     #         "input",
     #         technology="irrigation_oilcrops",
@@ -131,9 +131,9 @@ def add_irr_structure(context):
     #         node_origin=df_node["region"],
     #         node_loc=df_node["region"],
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-    # )
+    # ])
     #
-    # inp = inp.append(
+    # inp = pd.concat([inp, 
     #     make_df(
     #         "input",
     #         technology="irrigation_cereal",
@@ -147,7 +147,7 @@ def add_irr_structure(context):
     #         node_origin=df_node["region"],
     #         node_loc=df_node["region"],
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-    # )
+    # ])
     # inp.loc[(inp['node_loc'] == 'R11_SAS') &
     #         (inp['commodity'] == 'electr'),
     #         "value",
@@ -169,7 +169,7 @@ def add_irr_structure(context):
         node_dest=df_node["region"],
     ).pipe(broadcast, year_vtg=info.Y)
 
-    irr_out = irr_out.append(
+    irr_out = pd.concat([irr_out,
         make_df(
             "output",
             technology="irrigation_sugarcrops",
@@ -186,9 +186,9 @@ def add_irr_structure(context):
             broadcast,
             year_vtg=info.Y,
         )
-    )
+    ])
 
-    irr_out = irr_out.append(
+    irr_out = pd.concat([irr_out,
         make_df(
             "output",
             technology="irrigation_oilcrops",
@@ -205,7 +205,7 @@ def add_irr_structure(context):
             broadcast,
             year_vtg=info.Y,
         )
-    )
+    ])
 
     irr_out["year_act"] = irr_out["year_vtg"]
 
