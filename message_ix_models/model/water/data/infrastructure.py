@@ -163,7 +163,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                 ]
             )
 
-            inp_df = inp_df.append(
+            inp_df = pd.concat([inp_df, 
                 (
                     make_df(
                         "input",
@@ -185,7 +185,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                     .pipe(same_node)
                     .pipe(same_time)
                 )
-            )
+            ])
     result_dc = defaultdict(list)
 
     for index, rows in df_elec.iterrows():
@@ -237,7 +237,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                     time=sub_time,
                 )
 
-                inp = inp.append(
+                inp = pd.concat([inp,
                     make_df(
                         "input",
                         technology=rows["tec"],
@@ -255,7 +255,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                         map_yv_ya_lt(year_wat, 1, first_year),
                         time=sub_time,
                     )
-                )
+                ])
 
                 result_dc["input"].append(inp)
         else:
@@ -280,7 +280,7 @@ def add_infrastructure_techs(context):  # noqa: C901
 
     results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
-    inp_df = inp_df.append(results_new["input"])
+    inp_df = pd.concat([inp_df,results_new["input"] ])
     # inp_df.dropna(inplace = True)
     results["input"] = inp_df
 
@@ -291,7 +291,7 @@ def add_infrastructure_techs(context):  # noqa: C901
 
     out_df = pd.DataFrame([])
     for index, rows in df_out.iterrows():
-        out_df = out_df.append(
+        out_df = pd.concat([out_df,
             (
                 make_df(
                     "output",
@@ -311,10 +311,10 @@ def add_infrastructure_techs(context):  # noqa: C901
                 .pipe(same_node)
                 .pipe(same_time)
             )
-        )
+        ])
 
     if context.SDG != "baseline":
-        out_df = out_df.append(
+        out_df = pd.concat([out_df,
             make_df(
                 "output",
                 technology=df_out_dist["tec"],
@@ -332,9 +332,9 @@ def add_infrastructure_techs(context):  # noqa: C901
             )
             .pipe(same_node)
             .pipe(same_time)
-        )
+        ])
     else:
-        out_df = out_df.append(
+        out_df = pd.concat([out_df,
             make_df(
                 "output",
                 technology=df_out_dist["tec"],
@@ -352,8 +352,8 @@ def add_infrastructure_techs(context):  # noqa: C901
             )
             .pipe(same_node)
             .pipe(same_time)
-        )
-        out_df = out_df.append(
+        ])
+        out_df = pd.concat([out_df,
             make_df(
                 "output",
                 technology=df_out_dist["tec"],
@@ -371,7 +371,7 @@ def add_infrastructure_techs(context):  # noqa: C901
             )
             .pipe(same_node)
             .pipe(same_time)
-        )
+        ])
 
     results["output"] = out_df
 
@@ -380,7 +380,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     cap_df = pd.DataFrame([])
     # Adding capacity factor dataframe
     for index, rows in df_cap.iterrows():
-        cap_df = cap_df.append(
+        cap_df = pd.concat([cap_df,
             make_df(
                 "capacity_factor",
                 technology=rows["tec"],
@@ -394,7 +394,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                 time=sub_time,
             )
             .pipe(same_node)
-        )
+        ])
 
     results["capacity_factor"] = cap_df
 
@@ -436,7 +436,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     var_cost = pd.DataFrame([])
 
     for index, rows in df_inv.iterrows():
-        fix_cost = fix_cost.append(
+        fix_cost = pd.concat([fix_cost,
             make_df(
                 "fix_cost",
                 technology=df_inv["tec"],
@@ -447,7 +447,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                 map_yv_ya_lt(year_wat, rows["technical_lifetime_mid"], first_year),
                 node_loc=df_node["node"],
             )
-        )
+        ])
 
         fix_cost = fix_cost[~fix_cost["technology"].isin(techs)]
 
@@ -462,7 +462,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     if context.SDG != "baseline":
         for index, rows in df_var.iterrows():
             # Variable cost
-            var_cost = var_cost.append(
+            var_cost = pd.concat([var_cost,
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -475,11 +475,11 @@ def add_infrastructure_techs(context):  # noqa: C901
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
-            )
+            ])
 
         # Variable cost for distribution technologies
         for index, rows in df_var_dist.iterrows():
-            var_cost = var_cost.append(
+            var_cost = pd.concat([var_cost,
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -492,12 +492,12 @@ def add_infrastructure_techs(context):  # noqa: C901
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
-            )
+            ])
         results["var_cost"] = var_cost
     else:
         # Variable cost
         for index, rows in df_var.iterrows():
-            var_cost = var_cost.append(
+            var_cost = pd.concat([var_cost,
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -510,10 +510,10 @@ def add_infrastructure_techs(context):  # noqa: C901
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
-            )
+            ])
 
         for index, rows in df_var_dist.iterrows():
-            var_cost = var_cost.append(
+            var_cost = pd.concat([var_cost,
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -526,9 +526,9 @@ def add_infrastructure_techs(context):  # noqa: C901
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
-            )
+            ])
 
-            var_cost = var_cost.append(
+            var_cost = pd.concat([var_cost,
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -541,7 +541,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                     node_loc=df_node["node"],
                     time=sub_time,
                 )
-            )
+            ])
         results["var_cost"] = var_cost
 
     return results
@@ -689,7 +689,7 @@ def add_desalination(context):
     for index, rows in df_desal.iterrows():
         # Fixed costs
         # Prepare dataframe for fix_cost
-        fix_cost = fix_cost.append(
+        fix_cost = pd.concat([fix_cost,
             make_df(
                 "fix_cost",
                 technology=rows["tec"],
@@ -700,12 +700,12 @@ def add_desalination(context):
                 map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
                 node_loc=df_node["node"],
             )
-        )
+        ])
 
         results["fix_cost"] = fix_cost
 
         # Variable cost
-        var_cost = var_cost.append(
+        var_cost = pd.concat([var_cost,
             make_df(
                 "var_cost",
                 technology=rows["tec"],
@@ -718,7 +718,7 @@ def add_desalination(context):
                 node_loc=df_node["node"],
                 time=sub_time,
             )
-        )
+        ])
 
     # Dummy  Variable cost for salinewater extrqction
     # var_cost = var_cost.append(
@@ -734,7 +734,7 @@ def add_desalination(context):
 
     results["var_cost"] = var_cost
 
-    tl = tl.append(
+    tl = pd.concat([tl,
         (
             make_df(
                 "technical_lifetime",
@@ -745,7 +745,7 @@ def add_desalination(context):
             .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
             .pipe(same_node)
         )
-    )
+    ])
 
     results["technical_lifetime"] = tl
 
@@ -807,11 +807,11 @@ def add_desalination(context):
 
     results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
-    inp_df = inp_df.append(results_new["input"])
+    inp_df = pd.concat([inp_df,results_new["input"] ])
 
     # Adding input dataframe
     for index, rows in df_desal.iterrows():
-        inp_df = inp_df.append(
+        inp_df = pd.concat([inp_df,
             (
                 make_df(
                     "input",
@@ -831,13 +831,13 @@ def add_desalination(context):
                 .pipe(same_node)
                 .pipe(same_time)
             )
-        )
+        ])
 
         inp_df.dropna(inplace=True)
 
         results["input"] = inp_df
 
-        out_df = out_df.append(
+        out_df = pd.concat([out_df,
             (
                 make_df(
                     "output",
@@ -857,7 +857,7 @@ def add_desalination(context):
                 .pipe(same_node)
                 .pipe(same_time)
             )
-        )
+        ])
 
         results["output"] = out_df
 

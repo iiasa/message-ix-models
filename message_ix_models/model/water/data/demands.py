@@ -384,7 +384,7 @@ def add_sectoral_demands(context):
     )
     urban_dis["value"] = (1e-3 * urban_dis["value"]) * (1 - urban_dis["rate"])
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df, 
         make_df(
             "demand",
             node="B" + urban_dis["node"],
@@ -395,7 +395,7 @@ def add_sectoral_demands(context):
             value=urban_dis["value"],
             unit="km3/year",
         )
-    )
+    ])
     # rural water demand and return
     rural_mw = rual_withdrawal_df.reset_index(drop=True)
     rural_mw = rural_mw.merge(
@@ -405,7 +405,7 @@ def add_sectoral_demands(context):
     )
     rural_mw["value"] = (1e-3 * rural_mw["value"]) * rural_mw["rate"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + rural_mw["node"],
@@ -416,7 +416,7 @@ def add_sectoral_demands(context):
             value=rural_mw["value"],
             unit="km3/year",
         )
-    )
+    ])
 
     rural_dis = rual_withdrawal_df.reset_index(drop=True)
     rural_dis = rural_dis.merge(
@@ -426,7 +426,7 @@ def add_sectoral_demands(context):
     )
     rural_dis["value"] = (1e-3 * rural_dis["value"]) * (1 - rural_dis["rate"])
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + rural_dis["node"],
@@ -437,13 +437,13 @@ def add_sectoral_demands(context):
             value=rural_dis["value"],
             unit="km3/year",
         )
-    )
+    ])
 
     # manufactury/ industry water demand and return
     manuf_mw = industrial_withdrawals_df.reset_index(drop=True)
     manuf_mw["value"] = 1e-3 * manuf_mw["value"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + manuf_mw["node"],
@@ -454,12 +454,12 @@ def add_sectoral_demands(context):
             value=manuf_mw["value"],
             unit="km3/year",
         )
-    )
+    ])
 
     manuf_uncollected_wst = industrial_return_df.reset_index(drop=True)
     manuf_uncollected_wst["value"] = 1e-3 * manuf_uncollected_wst["value"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + manuf_uncollected_wst["node"],
@@ -470,7 +470,7 @@ def add_sectoral_demands(context):
             value=-manuf_uncollected_wst["value"],
             unit="km3/year",
         )
-    )
+    ])
 
     urban_collected_wst = urban_return_df.reset_index(drop=True)
     urban_collected_wst = urban_collected_wst.merge(
@@ -482,7 +482,7 @@ def add_sectoral_demands(context):
         1e-3 * urban_collected_wst["value"]
     ) * urban_collected_wst["rate"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + urban_collected_wst["node"],
@@ -493,7 +493,7 @@ def add_sectoral_demands(context):
             value=-urban_collected_wst["value"],
             unit="km3/year",
         )
-    )
+    ])
 
     rural_collected_wst = rural_return_df.reset_index(drop=True)
     rural_collected_wst = rural_collected_wst.merge(
@@ -505,7 +505,7 @@ def add_sectoral_demands(context):
         1e-3 * rural_collected_wst["value"]
     ) * rural_collected_wst["rate"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + rural_collected_wst["node"],
@@ -516,7 +516,7 @@ def add_sectoral_demands(context):
             value=-rural_collected_wst["value"],
             unit="km3/year",
         )
-    )
+    ])
     urban_uncollected_wst = urban_return_df.reset_index(drop=True)
     urban_uncollected_wst = urban_uncollected_wst.merge(
         urban_treatment_rate_df.drop(columns=["variable", "time"]).rename(
@@ -527,7 +527,7 @@ def add_sectoral_demands(context):
         1 - urban_uncollected_wst["rate"]
     )
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + urban_uncollected_wst["node"],
@@ -538,7 +538,7 @@ def add_sectoral_demands(context):
             value=-urban_uncollected_wst["value"],
             unit="km3/year",
         )
-    )
+    ])
 
     rural_uncollected_wst = rural_return_df.reset_index(drop=True)
     rural_uncollected_wst = rural_uncollected_wst.merge(
@@ -550,7 +550,7 @@ def add_sectoral_demands(context):
         1 - rural_uncollected_wst["rate"]
     )
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + rural_uncollected_wst["node"],
@@ -561,7 +561,7 @@ def add_sectoral_demands(context):
             value=-rural_uncollected_wst["value"],
             unit="km3/year",
         )
-    )
+    ])
     # Add 2010 & 2015 values as historical activities to corresponding technologies
     h_act = dmd_df[dmd_df["year"].isin([2010, 2015])]
 
@@ -855,7 +855,7 @@ def add_water_availability(context):
         unit="km3/year",
     )
 
-    dmd_df = dmd_df.append(
+    dmd_df = pd.concat([dmd_df,
         make_df(
             "demand",
             node="B" + df_gw["Region"].astype(str),
@@ -866,7 +866,7 @@ def add_water_availability(context):
             value=-df_gw["value"],
             unit="km3/year",
         )
-    )
+    ])
 
     dmd_df["value"] = dmd_df["value"].apply(lambda x: x if x <= 0 else 0)
 

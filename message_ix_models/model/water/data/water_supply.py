@@ -54,6 +54,7 @@ def map_basin_region_wat(context):
 
         # Calculating ratio of water availability in basin by region
         df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
+        df_sw.reset_index(level=0, drop=True, inplace=True)
         df_sw.reset_index(inplace=True)
         df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
         df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
@@ -96,6 +97,7 @@ def map_basin_region_wat(context):
 
         # Calculating ratio of water availability in basin by region
         df_sw = df_sw.groupby(["MSGREG"]).apply(lambda x: x / x.sum())
+        df_sw.reset_index(level=0, drop=True, inplace=True)
         df_sw.reset_index(inplace=True)
         df_sw["Region"] = "B" + df_sw["BCU_name"].astype(str)
         df_sw["Mode"] = df_sw["Region"].replace(regex=["^B"], value="M")
@@ -199,8 +201,7 @@ def add_water_supply(context):
         )
 
         # Add output df  for groundwater supply for regions
-        output_df = output_df.append(
-            make_df(
+        output_df = pd.concat([output_df, make_df(
                 "output",
                 technology="extract_groundwater",
                 value=1,
@@ -216,10 +217,9 @@ def add_water_supply(context):
             )
             .pipe(broadcast, node_loc=node_region)
             .pipe(same_node)
-        )
+        ])
         # Add output of saline water supply for regions
-        output_df = output_df.append(
-            make_df(
+        output_df = pd.concat([output_df, make_df(
                 "output",
                 technology="extract_salinewater",
                 value=1,
@@ -235,7 +235,7 @@ def add_water_supply(context):
             )
             .pipe(broadcast, node_loc=node_region)
             .pipe(same_node)
-        )
+        ])
         results["output"] = output_df
 
     elif context.nexus_set == "nexus":
@@ -262,8 +262,7 @@ def add_water_supply(context):
         )
 
         # input data frame  for slack technology balancing equality with demands
-        inp = inp.append(
-            make_df(
+        inp = pd.concat([inp, make_df(
                 "input",
                 technology="gw_recharge",
                 value=1,
@@ -281,11 +280,10 @@ def add_water_supply(context):
             )
             .pipe(same_node)
             .pipe(same_time)
-        )
+        ])
 
         # input dataframe  linking water supply to energy dummy technology
-        inp = inp.append(
-            make_df(
+        inp = pd.concat([inp, make_df(
                 "input",
                 technology="basin_to_reg",
                 value=1,
@@ -302,10 +300,10 @@ def add_water_supply(context):
                 time=sub_time,
             )
             .pipe(same_time)
-        )
+        ])
         inp["year_act"] = inp["year_vtg"]
         # # input data frame  for slack technology balancing equality with demands
-        # inp = inp.append(
+        # inp = pd.concat([inp,
         #     make_df(
         #         "input",
         #         technology="salinewater_return",
@@ -319,13 +317,12 @@ def add_water_supply(context):
         #         node_origin=df_node["node"],
         #         node_loc=df_node["node"],
         #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
-        # )
+        # ])
 
         # input data frame  for freshwater supply
         yv_ya_sw = map_yv_ya_lt(year_wat, 50, first_year)
 
-        inp = inp.append(
-            make_df(
+        inp = pd.concat([inp, make_df(
                 "input",
                 technology="extract_surfacewater",
                 value=1,
@@ -342,12 +339,11 @@ def add_water_supply(context):
                 time=sub_time,
             )
             .pipe(same_time)
-        )
+        ])
 
         # input dataframe  for groundwater supply
         yv_ya_gw = map_yv_ya_lt(year_wat, 20, first_year)
-        inp = inp.append(
-            make_df(
+        inp = pd.concat([inp, make_df(
                 "input",
                 technology="extract_groundwater",
                 value=1,
@@ -364,12 +360,11 @@ def add_water_supply(context):
                 time=sub_time,
             )
             .pipe(same_time)
-        )
+        ])
 
         # electricity input dataframe  for extract freshwater supply
         # low: 0.001141553, mid: 0.018835616, high: 0.03652968
-        inp = inp.append(
-            make_df(
+        inp = pd.concat([inp, make_df(
                 "input",
                 technology="extract_surfacewater",
                 value=0.018835616,
@@ -385,10 +380,9 @@ def add_water_supply(context):
                 yv_ya_sw,
                 time=sub_time,
             )
-        )
+        ])
 
-        inp = inp.append(
-            make_df(
+        inp = pd.concat([inp, make_df(
                 "input",
                 technology="extract_groundwater",
                 value=df_gwt["GW_per_km3_per_year"] + 0.043464579,
@@ -404,10 +398,9 @@ def add_water_supply(context):
                 yv_ya_gw,
                 time=sub_time,
             )
-        )
+        ])
 
-        inp = inp.append(
-            make_df(
+        inp = pd.concat([inp, make_df(
                 "input",
                 technology="extract_gw_fossil",
                 value=(df_gwt["GW_per_km3_per_year"] + 0.043464579)
@@ -424,7 +417,7 @@ def add_water_supply(context):
                 yv_ya_gw,
                 time=sub_time,
             )
-        )
+        ])
 
         if context.type_reg == "global":
             inp.loc[
@@ -457,8 +450,7 @@ def add_water_supply(context):
             .pipe(same_time)
         )
         # Add output df  for groundwater supply for basins
-        output_df = output_df.append(
-            make_df(
+        output_df = pd.concat([output_df, make_df(
                 "output",
                 technology="extract_groundwater",
                 value=1,
@@ -475,11 +467,10 @@ def add_water_supply(context):
                 time=sub_time,
             )
             .pipe(same_time)
-        )
+        ])
 
         # Add output df  for groundwater supply for basins
-        output_df = output_df.append(
-            make_df(
+        output_df = pd.concat([output_df, make_df(
                 "output",
                 technology="extract_gw_fossil",
                 value=1,
@@ -497,11 +488,10 @@ def add_water_supply(context):
                 time=sub_time,
             )
             .pipe(same_time)
-        )
+        ])
 
         # Add output of saline water supply for regions
-        output_df = output_df.append(
-            make_df(
+        output_df = pd.concat([output_df, make_df(
                 "output",
                 technology="extract_salinewater",
                 value=1,
@@ -517,7 +507,7 @@ def add_water_supply(context):
             )
             .pipe(broadcast, node_loc=node_region)
             .pipe(same_node)
-        )
+        ])
 
         hist_new_cap = make_df(
             "historical_new_capacity",
@@ -528,7 +518,7 @@ def add_water_supply(context):
             year_vtg=2015,
         )
 
-        hist_new_cap = hist_new_cap.append(
+        hist_new_cap = pd.concat([hist_new_cap,
             make_df(
                 "historical_new_capacity",
                 node_loc=df_hist["BCU_name"],
@@ -537,12 +527,12 @@ def add_water_supply(context):
                 unit="km3/year",
                 year_vtg=2015,
             )
-        )
+        ])
 
         results["historical_new_capacity"] = hist_new_cap
 
         # output data frame linking water supply to energy dummy technology
-        output_df = output_df.append(
+        output_df = pd.concat([output_df,
             make_df(
                 "output",
                 technology="basin_to_reg",
@@ -555,7 +545,7 @@ def add_water_supply(context):
                 node_dest=df_node["region"],
                 mode=df_node["mode"],
             ).pipe(broadcast, year_vtg=year_wat, time=sub_time)
-        )
+        ])
 
         output_df["year_act"] = output_df["year_vtg"]
 
@@ -572,7 +562,7 @@ def add_water_supply(context):
         ).pipe(broadcast, year_vtg=year_wat, time=sub_time)
         var["year_act"] = var["year_vtg"]
         # # Dummy cost for extract surface ewater to prioritize water sources
-        # var = var.append(make_df(
+        # var = pd.concat([var, make_df(
         #     "var_cost",
         #     technology='extract_surfacewater',
         #     value= 0.0001,
@@ -582,9 +572,9 @@ def add_water_supply(context):
         #     ).pipe(broadcast, year_vtg=year_wat,
         #       year_act=year_wat, node_loc=df_node["node"]
         #        )
-        #                  )
+        #                  ])
         # # Dummy cost for extract groundwater
-        # var = var.append(make_df(
+        # var = pd.concat([var, make_df(
         #     "var_cost",
         #     technology='extract_groundwater',
         #     value= 0.001,
@@ -592,7 +582,8 @@ def add_water_supply(context):
         #     mode="M1",
         #     time="year",
         # ).pipe(broadcast, year_vtg=year_wat,
-        #   year_act=year_wat, node_loc=df_node["node"])
+        #   year_act=year_wat, node_loc=df_node["node"]
+        # ])
         #                )
         results["var_cost"] = var
 
@@ -624,7 +615,7 @@ def add_water_supply(context):
             .pipe(same_node)
         )
 
-        tl = tl.append(
+        tl = pd.concat([tl,
             make_df(
                 "technical_lifetime",
                 technology="extract_groundwater",
@@ -633,9 +624,9 @@ def add_water_supply(context):
             )
             .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
             .pipe(same_node)
-        )
+        ])
 
-        tl = tl.append(
+        tl = pd.concat([tl,
             make_df(
                 "technical_lifetime",
                 technology="extract_gw_fossil",
@@ -644,7 +635,7 @@ def add_water_supply(context):
             )
             .pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
             .pipe(same_node)
-        )
+        ])
 
         results["technical_lifetime"] = tl
 
@@ -656,23 +647,23 @@ def add_water_supply(context):
             unit="USD/km3",
         ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
 
-        inv_cost = inv_cost.append(
+        inv_cost = pd.concat([inv_cost,
             make_df(
                 "inv_cost",
                 technology="extract_groundwater",
                 value=54.52,
                 unit="USD/km3",
             ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
-        )
+        ])
 
-        inv_cost = inv_cost.append(
+        inv_cost = pd.concat([inv_cost,
             make_df(
                 "inv_cost",
                 technology="extract_gw_fossil",
                 value=54.52 * 150,  # assume higher as normal GW
                 unit="USD/km3",
             ).pipe(broadcast, year_vtg=year_wat, node_loc=df_node["node"])
-        )
+        ])
 
         results["inv_cost"] = inv_cost
 
@@ -766,8 +757,8 @@ def add_e_flow(context):
         )
         df_env = pd.read_csv(path1)
         df_env.drop(["Unnamed: 0"], axis=1, inplace=True)
-        new_cols = pd.to_datetime(df_env.columns, format="%Y/%m/%d")
-        df_env.columns = new_cols
+        # new_cols = pd.to_datetime(df_env.columns, format="%Y/%m/%d")
+        # df_env.columns = new_cols
         df_env.index = df_x["BCU_name"]
         df_env = df_env.stack().reset_index()
         df_env.columns = ["Region", "years", "value"]

@@ -160,7 +160,7 @@ def cool_tech(context):  # noqa: C901
             where:
                 h_fg (flue gasses losses) = 0.1 (10% assumed losses)
         """
-        if "hpl" in x["index"]:
+        if "hpl" in x["parent_tech"]:
             return x["value"] - 1
         else:
             return x["value"] - (x["value"] * 0.1) - 1
@@ -240,7 +240,7 @@ def cool_tech(context):  # noqa: C901
         unit="GWa",
     )
     # once through and closed loop freshwater
-    inp = inp.append(
+    inp = pd.concat([inp,
         make_df(
             "input",
             node_loc=icmse_df["node_loc"],
@@ -256,9 +256,9 @@ def cool_tech(context):  # noqa: C901
             value=icmse_df["value_cool"],
             unit="km3/GWa",
         )
-    )
+    ])
     # saline cooling technologies
-    inp = inp.append(
+    inp = pd.concat([inp,
         make_df(
             "input",
             node_loc=saline_df["node_loc"],
@@ -274,7 +274,7 @@ def cool_tech(context):  # noqa: C901
             value=saline_df["value_cool"],
             unit="km3/GWa",
         )
-    )
+    ])
 
     # Drops NA values from the value column
     inp = inp.dropna(subset=["value"])
@@ -335,7 +335,7 @@ def cool_tech(context):  # noqa: C901
             # multiply by basin water availability share
             out_t["value"] = out_t["value"] * out_t["share"]
             out_t.drop(columns={"share"}, inplace=True)
-            out = out.append(out_t)
+            out = pd.concat([out, out_t])
 
         out = out.dropna(subset=["value"])
         out.reset_index(drop=True, inplace=True)
@@ -608,13 +608,13 @@ def cool_tech(context):  # noqa: C901
     adon_df = input_cool.copy()
     # Add 'cooling_' before name of parent technologies that are type_addon
     # nomenclature
-    adon_df["tech"] = "cooling__" + adon_df["index"].astype(str)
+    adon_df["tech"] = "cooling__" + adon_df["parent_tech"].astype(str)
     # technology : 'parent technology' and type_addon is type of addons such
     # as 'cooling__bio_hpl'
     addon_df = make_df(
         "addon_conversion",
         node=adon_df["node_loc"],
-        technology=adon_df["index"],
+        technology=adon_df["parent_tech"],
         year_vtg=adon_df["year_vtg"],
         year_act=adon_df["year_act"],
         mode=adon_df["mode"],
