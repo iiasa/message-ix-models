@@ -15,7 +15,7 @@ from message_ix_models.model.water.utils import map_yv_ya_lt
 from message_ix_models.util import broadcast, package_data_path, same_node, same_time
 
 
-def add_trsm_dist_basin(sc):
+def add_trsm_dist_basin(sc, scen_name):
     # sub-time
     ti = list(sc.set("time"))
     ti.remove("year")
@@ -30,7 +30,9 @@ def add_trsm_dist_basin(sc):
     file = "OnSSET_cost_paramters.csv"
     path_csv = package_data_path("projects", "leap_re_nest", file)
     onsset_pars = pd.read_csv(path_csv)
-    file = "grid_cost_bcu.csv"
+    # TODO
+    file = "grid_cost_bcu_" + scen_name + ".csv"
+    # file = "grid_cost_bcu.csv"
     path_csv = package_data_path("projects", "leap_re_nest", file)
     grid_cost = pd.read_csv(path_csv)[["BCU", "urb_rur", "tot_cost_usd2010_kW"]]
     grid_loss = onsset_pars["Value"][onsset_pars["Variable"] == "grid_losses"]
@@ -229,7 +231,7 @@ def add_offgrid_gen(sc, scen_name):
     file = "energy_allocation_results_for_nest.csv"
     path_csv = package_data_path("projects", "leap_re_nest", file)
     onsset_en = pd.read_csv(path_csv)
-    onsset_en = onsset_en[onsset_en["scenario"] == scen_name]
+    onsset_en = onsset_en[onsset_en["scenario"].str.contains(scen_name)]
     # interpolate missing years IT MIGHT CHANGE in FUTURE VERSION
     onsset_en_int = (
         onsset_en.pivot(
@@ -442,7 +444,7 @@ def main(sc, scen_name):
 
     # load previous total demand in firstmodelyear
 
-    add_trsm_dist_basin(sc)
+    add_trsm_dist_basin(sc, scen_name)
     add_offgrid_gen(sc, scen_name)
 
     # calibration

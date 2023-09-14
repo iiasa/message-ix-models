@@ -26,16 +26,16 @@ for (scen_name in scenarios){
   ons_data = read_csv(paste0( getwd(),"/OnSSET/onsset_mled_scenario_results_files_full/",scen_name,"_zm-2-0_0_0_0_0_0.csv"))
   # aggregate electrification rate at the BCU level
   
-  ons_data.df = ons_data %>% select(X_deg,Y_deg,BCU,tot_dem_2020,tot_dem_2040,tot_dem_2060) %>% 
+  ons_data.df = ons_data %>% select(X_deg,Y_deg,BCU,tot_dem_2020,tot_dem_2030,tot_dem_2060) %>% 
     gather(key = year, value = demand, 4:6) %>% 
     mutate(year = as.numeric(gsub("tot_dem_","",year))) %>%  
     # add isurban
-    bind_cols(ons_data %>% select(X_deg,Y_deg,isurban_2020,isurban_future_2040,isurban_future_2060) %>% 
+    bind_cols(ons_data %>% select(X_deg,Y_deg,isurban_2020,isurban_future_2030,isurban_future_2060) %>% 
                 gather(key = year_ur, value = isurban,3:5) %>% 
                 mutate(year_ur = as.numeric(gsub("isurban_|isurban_future_","",year_ur))) %>% 
                 rename(lat = X_deg , long = Y_deg)) %>% 
     # add electrification rate
-    bind_cols(ons_data %>% select(X_deg,Y_deg,ElecStart,ElecStatusIn2040,ElecStatusIn2060) %>% 
+    bind_cols(ons_data %>% select(X_deg,Y_deg,ElecStart,ElecStatusIn2030,ElecStatusIn2060) %>% 
                 gather(key = year_el, value = elec,3:5) %>% 
                 mutate(year_el = if_else(year_el == "ElecStart", 2020,
                                          as.numeric(gsub("ElecStatusIn","",year_el))) )  %>% 
@@ -57,7 +57,7 @@ for (scen_name in scenarios){
     select(-act_demand,-tot_demand)
   
   empty_df = crossing(BCU = unique(share_dem_bcu$BCU),
-                      year = c(2030,2050),
+                      year = c(2040,2050),
                       isurban = c(0,1)) %>% 
     mutate(share = NA)
   
@@ -193,7 +193,7 @@ for (scen_name in scenarios){
   clipr::write_clip(dem_agg_y_inc)
   #save
   save_name = gsub("_.*","",scen_name)
-  # write.csv(dem_agg4mess_UR,paste0("M-LED/electricity_demand_MLED_NEST_GWh_mth_",save_name,".csv"),row.names = F)
+  write.csv(dem_agg4mess_UR,paste0("M-LED/electricity_demand_MLED_NEST_GWh_mth_",save_name,".csv"),row.names = F)
   print(paste0(scen_name, " processed and saved!") )
   #check
   a = dem_agg4mess %>% filter(year == 2020, mess_sect != 'agri')
