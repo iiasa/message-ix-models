@@ -14,6 +14,7 @@ import plotnine as p9
 from genno import Computer, Key
 
 if TYPE_CHECKING:
+    from genno.core.key import KeyLike
     from message_ix import Scenario
 
     from message_ix_models import Context
@@ -22,10 +23,26 @@ log = logging.getLogger(__name__)
 
 
 class Plot(genno.compat.plotnine.Plot):
-    """Base class for plots."""
+    """Base class for plots based on reported time-series data.
+
+    Subclasses should be used like:
+
+    .. code-block:: python
+
+       class MyPlot(Plot):
+           ...
+
+       c.add("plot myplot", MyPlot, "scenario")
+
+    …that is, giving "scenario" or another key that points to a |Scenario| object with
+    stored time series data. See the examples in this file.
+    """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic.
-    static = [p9.theme(figure_size=(11.7, 8.3))]
+    static = [
+        p9.theme(figure_size=(23.4, 16.5)),  # A3 paper in landscape [inches]
+        # p9.theme(figure_size=(11.7, 8.3)),  # A4 paper in landscape
+    ]
 
     #: Fixed plot title string. If not given, the first line of the class docstring is
     #: used.
@@ -39,8 +56,41 @@ class Plot(genno.compat.plotnine.Plot):
 
     # NB only here to narrow typing
     inputs: Sequence[str] = []
-    #: List of regular expressions corresponding to :attr:`inputs`.
+
+    #: List of regular expressions corresponding to :attr:`inputs`. These are passed as
+    #: the `expr` argument to :func:`filter_ts` to filter the entire set of time series
+    #: data.
     inputs_regex: List[re.Pattern] = []
+
+    @classmethod
+    def add_tasks(
+        cls, c: "Computer", key: "KeyLike", *inputs, strict: bool = False
+    ) -> "KeyLike":
+        from copy import copy
+        from itertools import zip_longest
+
+        scenario_key = inputs[0]
+
+        # Retrieve all time series data, for advanced filtering
+        all_data = Key(scenario_key) + "iamc"
+        c.add(all_data, "get_ts", scenario_key)
+
+        if len(cls.inputs_regex):
+            # Iterate over matched items from `inputs` and `inputs_regex`
+            for k, expr in zip_longest(cls.inputs, cls.inputs_regex):
+                if expr is None:
+                    break
+                # Filter the data given by `expr` from all::iamc
+                c.add(k, "filter_ts", all_data, copy(expr))
+        else:
+            for k in map(Key, cls.inputs):
+                # Add a computation to get the time series data for a specific variable
+                c.add(k, "get_ts", scenario_key, dict(variable=k.name))
+
+        # Add the plot itself
+        # TODO once the genno class returns the added key, change to "return super().…"
+        super().add_tasks(c, key, *inputs[1:], strict=strict)
+        return key
 
     def ggtitle(self, value=None) -> p9.ggtitle:
         """Return :class:`plotnine.ggtitle` including the current date & time."""
@@ -158,29 +208,5 @@ PLOTS = (
 
 
 def callback(c: Computer, context: "Context") -> None:
-    from copy import copy
-    from itertools import zip_longest
-
-    all_keys = []
-
-    # Retrieve all time series data, for advanced filtering
-    c.add("all::iamc", "get_ts", "scenario")
-
-    for p in PLOTS:
-        # TODO move these into an override of Plot.add_tasks()
-        if len(p.inputs_regex):
-            # Iterate over matched items from `inputs` and `inputs_regex`
-            for key, expr in zip_longest(p.inputs, p.inputs_regex):
-                if expr is None:
-                    break
-                # Filter the data given by `expr` from all::iamc
-                c.add(key, "filter_ts", "all::iamc", copy(expr))
-        else:
-            for key in map(Key, p.inputs):
-                # Add a computation to get the time series data for a specific variable
-                c.add(key, "get_ts", "scenario", dict(variable=key.name))
-
-        # Add the plot itself
-        all_keys.append(c.add(f"plot {p.basename}", p))
-
+    all_keys = [c.add(f"plot {p.basename}", p, "scenario") for p in PLOTS]
     c.add("plot all", all_keys)
