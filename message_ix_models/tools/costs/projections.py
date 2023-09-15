@@ -256,6 +256,254 @@ def create_projections_converge(
     return df_costs
 
 
+def create_message_outputs(input_df_projections: pd.DataFrame, fom_rate: float):
+    """Create MESSAGEix outputs for investment and fixed costs.
+
+    Parameters
+    ----------
+    input_df_projections : pd.DataFrame
+        Dataframe containing the cost projections for each technology. \
+            Output of func:`create_cost_projections`.
+    fom_rate : float
+        Rate of increase/decrease of fixed operating and maintenance costs.
+
+    Returns
+    -------
+    inv: pd.DataFrame
+        Dataframe containing investment costs.
+    fom: pd.DataFrame
+        Dataframe containing fixed operating and maintenance costs.
+
+    """
+    seq_years = list(range(HORIZON_START, HORIZON_END + 5, 5))
+
+    df_prod = pd.DataFrame(
+        product(
+            input_df_projections.scenario_version.unique(),
+            input_df_projections.scenario.unique(),
+            input_df_projections.message_technology.unique(),
+            input_df_projections.region.unique(),
+            seq_years,
+        ),
+        columns=[
+            "scenario_version",
+            "scenario",
+            "message_technology",
+            "region",
+            "year",
+        ],
+    )
+
+    val_2020 = (
+        input_df_projections.query("year == 2020")
+        .rename(columns={"inv_cost": "inv_cost_2020", "fix_cost": "fix_cost_2020"})
+        .drop(columns=["year"])
+    )
+
+    val_2100 = (
+        input_df_projections.query("year == 2100")
+        .drop(columns=["year"])
+        .rename(columns={"inv_cost": "inv_cost_2100", "fix_cost": "fix_cost_2100"})
+    )
+
+    df_merge = (
+        (
+            df_prod.merge(
+                val_2020,
+                on=["scenario_version", "scenario", "message_technology", "region"],
+            )
+            .merge(
+                val_2100,
+                on=["scenario_version", "scenario", "message_technology", "region"],
+            )
+            .merge(
+                input_df_projections,
+                on=[
+                    "scenario_version",
+                    "scenario",
+                    "message_technology",
+                    "region",
+                    "year",
+                ],
+                how="left",
+            )
+        )
+        .assign(
+            inv_cost=lambda x: np.where(
+                x.year <= BASE_YEAR, x.inv_cost_2020, x.inv_cost
+            ),
+            fix_cost=lambda x: np.where(
+                x.year <= BASE_YEAR, x.fix_cost_2020, x.fix_cost
+            ),
+        )
+        .assign(
+            inv_cost=lambda x: np.where(x.year >= 2100, x.inv_cost_2100, x.inv_cost),
+            fix_cost=lambda x: np.where(x.year >= 2100, x.fix_cost_2100, x.fix_cost),
+        )
+        .drop(
+            columns=["inv_cost_2020", "fix_cost_2020", "inv_cost_2100", "fix_cost_2100"]
+        )
+        .rename(columns={"year": "year_vtg"})
+    )
+
+    inv = (
+        df_merge.copy()
+        .assign(unit="USD/kWa")
+        .rename(
+            columns={
+                "inv_cost": "value",
+                "message_technology": "technology",
+                "region": "node_loc",
+            }
+        )
+        .reindex(
+            [
+                "scenario_version",
+                "scenario",
+                "node_loc",
+                "technology",
+                "year_vtg",
+                "value",
+                "unit",
+            ],
+            axis=1,
+        )
+        .query("year_vtg <= 2060 or year_vtg % 10 == 0")
+    )
+
+    fom = (
+        df_merge.copy()
+        .drop(columns=["inv_cost"])
+        .assign(key=1)
+        .merge(pd.DataFrame(data={"year_act": seq_years}).assign(key=1), on="key")
+        .drop(columns=["key"])
+        .query("year_act >= year_vtg")
+        .assign(
+            val=lambda x: np.where(
+                x.year_vtg <= BASE_YEAR,
+                np.where(
+                    x.year_act <= BASE_YEAR,
+                    x.fix_cost,
+                    x.fix_cost * (1 + (fom_rate)) ** (x.year_act - BASE_YEAR),
+                ),
+                x.fix_cost * (1 + (fom_rate)) ** (x.year_act - x.year_vtg),
+            )
+        )
+        .assign(unit="USD/kWa")
+        .rename(
+            columns={
+                "val": "value",
+                "message_technology": "technology",
+                "region": "node_loc",
+            }
+        )
+        .query("year_vtg <= 2060 or year_vtg % 10 == 0")
+        .query("year_act <= 2060 or year_act % 10 == 0")
+        .reindex(
+            [
+                "scenario_version",
+                "scenario",
+                "node_loc",
+                "technology",
+                "year_vtg",
+                "year_act",
+                "value",
+                "unit",
+            ],
+            axis=1,
+        )
+    )
+
+    return inv, fom
+
+
+def create_iamc_outputs(input_msg_inv: pd.DataFrame, input_msg_fix: pd.DataFrame):
+    """Create IAMC outputs for investment and fixed costs.
+
+    Parameters
+    ----------
+    input_msg_inv : pd.DataFrame
+        Dataframe containing investment costs in MESSAGEix format. \
+            Output of func:`create_message_outputs`.
+    input_msg_fix : pd.DataFrame
+        Dataframe containing fixed operating and maintenance costs in MESSAGEix \
+            format. Output of func:`create_message_outputs`.
+
+    Returns
+    -------
+    iamc_inv : pd.DataFrame
+        Dataframe containing investment costs in IAMC format.
+    iamc_fix : pd.DataFrame
+        Dataframe containing fixed operating and maintenance costs in IAMC format.
+    """
+    iamc_inv = (
+        (
+            input_msg_inv.assign(
+                Variable=lambda x: "Capital Cost|Electricity|" + x.technology,
+            )
+            .rename(
+                columns={
+                    "scenario_version": "SSP_Scenario_Version",
+                    "scenario": "SSP_Scenario",
+                    "year_vtg": "Year",
+                    "node_loc": "Region",
+                    "unit": "Unit",
+                }
+            )
+            .drop(columns=["technology"])
+        )
+        .pivot(
+            index=[
+                "SSP_Scenario_Version",
+                "SSP_Scenario",
+                "Region",
+                "Variable",
+                "Unit",
+            ],
+            columns="Year",
+            values="value",
+        )
+        .reset_index()
+        .rename_axis(None, axis=1)
+    )
+
+    iamc_fix = (
+        (
+            input_msg_fix.assign(
+                Variable=lambda x: "OM Cost|Electricity|"
+                + x.technology
+                + "|Vintage="
+                + x.year_vtg.astype(str),
+            )
+            .rename(
+                columns={
+                    "scenario_version": "SSP_Scenario_Version",
+                    "scenario": "SSP_Scenario",
+                    "year_act": "Year",
+                    "node_loc": "Region",
+                    "unit": "Unit",
+                }
+            )
+            .drop(columns=["technology", "year_vtg"])
+        )
+        .pivot(
+            index=[
+                "SSP_Scenario_Version",
+                "SSP_Scenario",
+                "Region",
+                "Variable",
+                "Unit",
+            ],
+            columns="Year",
+            values="value",
+        )
+        .reset_index()
+        .rename_axis(None, axis=1)
+    )
+
+    return iamc_inv, iamc_fix
+
+
 def create_cost_projections(
     sel_node: str = "r12",
     sel_ref_region=None,
@@ -264,6 +512,8 @@ def create_cost_projections(
     sel_scenario_version="updated",
     sel_scenario="all",
     sel_convergence_year: int = 2050,
+    sel_fom_rate: float = 0.025,
+    sel_format: str = "message",
 ):
     """Get investment and fixed cost projections
 
@@ -285,6 +535,11 @@ def create_cost_projections(
         Scenario, by default "all"
     sel_convergence_year : int, optional
         Year to converge costs to, by default 2050
+    sel_fom_rate : float, optional
+        Rate of increase/decrease of fixed operating and maintenance costs, \
+            by default 0.025
+    sel_format : str, optional
+        Format of output, by default "message". Options are "message" and "iamc"
 
     Returns
     -------
@@ -349,7 +604,17 @@ def create_cost_projections(
                 in_convergence_year=sel_convergence_year,
             )
 
-        return df_costs
+        print("Selected fixed O&M rate: " + str(sel_fom_rate))
+        print("Selected format: " + sel_format)
+
+        if sel_format == "message":
+            df_inv, df_fom = create_message_outputs(df_costs, fom_rate=sel_fom_rate)
+            return df_inv, df_fom
+
+        if sel_format == "iamc":
+            df_inv, df_fom = create_message_outputs(df_costs, fom_rate=sel_fom_rate)
+            df_inv_iamc, df_fom_iamc = create_iamc_outputs(df_inv, df_fom)
+            return df_inv_iamc, df_fom_iamc
 
 
 # Function to get cost projections based on the following inputs:
