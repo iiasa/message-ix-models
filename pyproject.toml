@@ -59,9 +59,11 @@ docs = [
   "sphinx_rtd_theme",
   "sphinxcontrib-bibtex",
 ]
+report = ["plotnine"]
 tests = [
   # For nbclient, thus nbformat
   "ixmp[tests]",
+  "message_ix_models[report]",
   "pytest",
   "pytest-cov",
   "pytest-xdist",
