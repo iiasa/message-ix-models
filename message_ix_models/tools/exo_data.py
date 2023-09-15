@@ -267,10 +267,11 @@ def iamc_like_data_for_query(path: Path, query: str) -> Quantity:
     tmp = (
         pd.read_csv(path, engine="pyarrow")
         .query(query)
-        .pipe(drop_unique, "Model Scenario Variable Unit")
-        .assign(n=lambda df: df["Region"].apply(iso_3166_alpha_3))
+        .rename(columns=lambda c: c.upper())
+        .pipe(drop_unique, "MODEL SCENARIO VARIABLE UNIT")
+        .assign(n=lambda df: df["REGION"].apply(iso_3166_alpha_3))
         .dropna(subset=["n"])
-        .drop("Region", axis=1)
+        .drop("REGION", axis=1)
         .set_index("n")
         .rename(columns=lambda y: int(y))
         .rename_axis(columns="y")
@@ -278,4 +279,4 @@ def iamc_like_data_for_query(path: Path, query: str) -> Quantity:
         .dropna()
     )
 
-    return Quantity(tmp, units=unique["Unit"])
+    return Quantity(tmp, units=unique["UNIT"])
