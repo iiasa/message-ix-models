@@ -72,6 +72,7 @@ class Context(dict):
 
     def __init__(self, *args, **kwargs):
         from message_ix_models.model import Config as ModelConfig
+        from message_ix_models.report.config import Config as ReportConfig
 
         if len(_CONTEXTS) == 0:
             log.info("Create root Context")
@@ -79,6 +80,7 @@ class Context(dict):
         # Handle keyword arguments going to known config dataclasses
         kwargs["core"] = Config(**_dealiased("core", kwargs))
         kwargs["model"] = ModelConfig(**_dealiased("model", kwargs))
+        kwargs["report"] = ReportConfig()
 
         # Store any keyword arguments
         super().__init__(*args, **kwargs)
