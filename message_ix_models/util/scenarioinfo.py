@@ -158,7 +158,7 @@ class ScenarioInfo:
     @url.setter
     def url(self, value):
         p, s = ixmp.utils.parse_url(value)
-        self.platform_name = p["name"]
+        self.platform_name = p.get("name")
         for k in "model", "scenario", "version":
             setattr(self, k, s.get(k))
 
