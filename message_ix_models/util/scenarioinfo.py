@@ -52,6 +52,7 @@ class ScenarioInfo:
     """
 
     scenario_obj: InitVar[Optional["Scenario"]] = field(default=None, kw_only=False)
+    empty: InitVar[bool] = False
 
     platform_name: Optional[str] = None
     model: Optional[str] = None
@@ -72,7 +73,7 @@ class ScenarioInfo:
 
     _yv_ya: pd.DataFrame = None
 
-    def __post_init__(self, scenario_obj: Optional["Scenario"]):
+    def __post_init__(self, scenario_obj: Optional["Scenario"], empty: bool):
         if not scenario_obj:
             return
 
@@ -81,6 +82,9 @@ class ScenarioInfo:
         self.version = (
             None if scenario_obj.version is None else int(scenario_obj.version)
         )
+
+        if empty:
+            return
 
         # Copy structure (set contents)
         for name in scenario_obj.set_list():
