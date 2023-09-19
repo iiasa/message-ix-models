@@ -237,9 +237,9 @@ class TestContext:
 
         ctx.delete()
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         c = Context()
-        assert re.fullmatch("<Context object at [^ ]+ with 2 keys>", repr(c))
+        assert re.fullmatch("<Context object at [^ ]+ with 3 keys>", repr(c))
 
     def test_use_defaults(self, caplog):
         caplog.set_level(logging.INFO)
