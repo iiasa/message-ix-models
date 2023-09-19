@@ -30,7 +30,7 @@ def test_report_bare_res(request, test_context):
     scenario = testing.bare_res(request, test_context, solved=True)
 
     # Prepare the reporter
-    test_context.report.update(config="global.yaml", key="message::default")
+    test_context.report.update(from_file="global.yaml", key="message::default")
     reporter, key = prepare_reporter(test_context, scenario)
 
     # Get the default report
@@ -48,13 +48,13 @@ def test_report_legacy(caplog, request, tmp_path, test_context):
     # Set dry_run = True to not actually perform any calculations or modifications
     test_context.dry_run = True
     # Ensure the legacy reporting is used, with default settings
-    test_context.report = {"legacy": dict()}
+    test_context.report.legacy["use"] = True
 
     # Call succeeds
     report(test_context)
 
     # Dry-run message is logged
-    assert "DRY RUN" in caplog.messages
+    assert "DRY RUN" in caplog.messages[-1]
     caplog.clear()
 
     # Other deprecated usage
@@ -62,6 +62,7 @@ def test_report_legacy(caplog, request, tmp_path, test_context):
     # As called in .model.cli.new_baseline() and .model.create.solve(), with path as a
     # positional argument
     legacy_arg = dict(
+        use=True,
         ref_sol="True",  # Must be literal "True" or "False"
         merge_hist=True,
         xlsx=test_context.get_local_path("rep_template.xlsx"),
@@ -115,7 +116,7 @@ def test_apply_units(request, test_context, regions):
     config = MIN_CONFIG.copy()
 
     # Prepare the reporter
-    test_context.report.update(config=config, key=qty)
+    test_context.report.update(genno_config=config, key=qty)
     reporter, key = prepare_reporter(test_context, bare_res)
 
     # Add some data to the scenario
@@ -140,14 +141,14 @@ def test_apply_units(request, test_context, regions):
     assert "dimensionless" == str(reporter.get(key).units)
 
     # Update configuration, re-create the reporter
-    test_context.report["config"]["units"]["apply"] = {"inv_cost": "USD"}
+    test_context.report.genno_config["units"]["apply"] = {"inv_cost": "USD"}
     reporter, key = prepare_reporter(test_context, bare_res)
 
     # Units are applied
     assert USD_2005 == reporter.get(key).units
 
     # Update configuration, re-create the reporter
-    test_context.report["config"].update(INV_COST_CONFIG)
+    test_context.report.genno_config.update(INV_COST_CONFIG)
     reporter, key = prepare_reporter(test_context, bare_res)
 
     # Units are converted
