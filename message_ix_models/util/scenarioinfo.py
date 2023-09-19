@@ -53,6 +53,7 @@ class ScenarioInfo:
 
     scenario_obj: InitVar[Optional["Scenario"]] = field(default=None, kw_only=False)
 
+    platform_name: Optional[str] = None
     model: Optional[str] = None
     scenario: Optional[str] = None
     version: Optional[int] = None
@@ -152,9 +153,10 @@ class ScenarioInfo:
 
     @url.setter
     def url(self, value):
-        _, values = ixmp.utils.parse_url(value)
+        p, s = ixmp.utils.parse_url(value)
+        self.platform_name = p["name"]
         for k in "model", "scenario", "version":
-            setattr(self, k, values.get(k))
+            setattr(self, k, s.get(k))
 
     _path_re = [
         (re.compile(r"[/<>:\"\\\|\?\*]+"), "_"),
