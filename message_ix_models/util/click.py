@@ -4,6 +4,7 @@ These are used for building CLIs using :mod:`click`.
 """
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Union
 
 import click
@@ -11,6 +12,8 @@ from click import Argument, Choice, Option
 
 from message_ix_models import Context
 from message_ix_models.model.structure import codelists
+
+from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
@@ -81,6 +84,20 @@ def store_context(context: Union[click.Context, Context], param, value):
         value,
     )
     return value
+
+
+def urls_from_file(context: Union[click.Context, Context], param, value):
+    """Callback to parse scenario URLs from `value`."""
+    si = []
+    with click.open_file(value) as f:
+        for line in f:
+            si.append(ScenarioInfo.from_url(url=line))
+
+    # Store on context
+    mm_context = context.obj if isinstance(context, click.Context) else context
+    mm_context.core.scenarios = si
+
+    return si
 
 
 def unique_id() -> str:
@@ -177,6 +194,17 @@ PARAMS = {
     ),
     "ssp": Argument(
         ["ssp"], callback=store_context, type=Choice(["SSP1", "SSP2", "SSP3"])
+    ),
+    "urls_from_file": Option(
+        ["--urls-from-file", "-f"],
+        type=click.Path(
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            allow_dash=True,
+            path_type=Path,
+        ),
+        callback=urls_from_file,
     ),
     "verbose": Option(
         # NB cannot use store_callback here; this is processed in the top-level CLI
