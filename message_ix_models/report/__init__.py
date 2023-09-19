@@ -146,12 +146,12 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     if isinstance(name_or_callback, str):
         # Resolve a string
         for name in [
+            # As a fully-resolved package/module name
+            name_or_callback,
             # As a submodule of message_ix_models
             f"message_ix_models.{name_or_callback}.report",
             # As a submodule of message_data
             f"message_data.{name_or_callback}.report",
-            # As a fully-resolved package/module name
-            name_or_callback,
         ]:
             try:
                 mod = import_module(name)
