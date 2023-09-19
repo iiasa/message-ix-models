@@ -100,6 +100,13 @@ class ScenarioInfo:
 
         self._yv_ya = scenario_obj.vintage_and_active_years()
 
+    @classmethod
+    def from_url(cls, url: str) -> "ScenarioInfo":
+        """Create an instance using only an :attr:`url`."""
+        result = cls()
+        result.url = url
+        return result
+
     @property
     def yv_ya(self):
         """:class:`pandas.DataFrame` with valid ``year_vtg``, ``year_act`` pairs."""
