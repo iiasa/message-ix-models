@@ -107,6 +107,13 @@ class ConfigHelper:
             **{k: v for k, v in self._munge_dict(kwargs, "raise", "keyword argument")},
         )
 
+    def update(self, **kwargs):
+        # TODO use _munge_dict(); allow a positional argument
+        for k, v in kwargs.items():
+            if not hasattr(self, k):
+                raise AttributeError(k)
+            setattr(self, k, v)
+
     @classmethod
     def from_dict(cls, data: Mapping):
         """Construct an instance from `data` with name manipulation."""
