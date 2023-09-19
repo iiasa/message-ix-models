@@ -2,9 +2,11 @@ import logging
 import os
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Any, Hashable, Mapping, MutableMapping, Optional, Sequence, Set
+from typing import Any, Hashable, List, Mapping, MutableMapping, Optional, Sequence, Set
 
 import ixmp
+
+from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
@@ -137,6 +139,9 @@ class Config:
     #: :class:`ixmp.Scenario` constructor, as given by the :program:`--model`/
     #: :program:`--scenario` or :program:`--url` CLI options.
     scenario_info: MutableMapping[str, str] = field(default_factory=dict)
+
+    #: Like `scenario_info`, but a list for operations affecting multiple scenarios.
+    scenarios: List[ScenarioInfo] = field(default_factory=list)
 
     #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
     dest_platform: MutableMapping[str, str] = field(default_factory=dict)
