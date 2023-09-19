@@ -181,37 +181,23 @@ def log_before(context, rep, key) -> None:
 
 
 def report(context: Context, *args, **kwargs):
-    """Run complete reporting on a :class:`.message_ix.Scenario`.
+    """Report (post-process) solution data in a |Scenario| and store time series data.
 
-    This function provides a single, common interface to call both the 'new'
-    (:mod:`.reporting`) and 'legacy' (:mod:`.tools.post_processing`) reporting codes.
+    This function provides a single, common interface to call both the :mod:`genno`
+    -based (:mod:`message_ix_models.report`) and ‘legacy’ (
+    :mod:`message_data.tools.post_processing`) reporting codes.
 
-    The code responds to the following settings on `context`:
+    Parameters
+    ----------
+    context : Context
+        The code responds to:
 
-    .. list-table::
-       :width: 100%
-       :widths: 25 25 50
-       :header-rows: 1
+        - :attr:`.dry_run`: if :obj:`True`, reporting is prepared but nothing is done.
+        - :attr:`.scenario_info` and :attr:`.platform_info`: used to retrieve the
+          Scenario to be reported.
 
-       * - Setting
-         - Type
-         - Description
-       * - scenario_info
-         -
-         - Identifies the (solved) scenario to be reported.
-       * - report/dry_run
-         - bool
-         - Only show what would be done. Default: :data:`False`.
-       * - report/legacy
-         - dict or None
-         - If given, the old-style reporting in :mod:`.iamc_report_hackathon` is used,
-           with `legacy` as keyword arguments.
-
-    As well:
-
-    - ``report/key`` is set to ``default``, if not set.
-    - ``report/config`` is set to :file:`report/globa.yaml`, if not set.
-
+        - :py:`context.report`, which is an instance of :class:`.report.Config`; see
+          there for available configuration settings.
     """
     try:
         from ixmp.utils import discard_on_error
@@ -301,39 +287,11 @@ def prepare_reporter(
 ) -> Tuple[Reporter, Key]:
     """Return a :class:`message_ix.Reporter` and `key` prepared to report a |Scenario|.
 
-    The code responds to the following settings on `context`:
-
-    .. list-table::
-       :width: 100%
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Setting
-         - Type
-         - Description
-       * - scenario_info
-         -
-         - Identifies the (solved) scenario to be reported.
-       * - report/key
-         - str or :class:`ixmp.reporting.Key`
-         - Quantity or node to compute. The computation is not triggered (i.e.
-           :meth:`get <ixmp.reporting.Reporter.get>` is not called); but the
-           corresponding, full-resolution Key, if any, is returned.
-       * - report/config
-         - dict or Path-like or None
-         - If :class:`dict`, then this is passed to
-           :meth:`message_ix.Reporter.configure`. If Path-like, then this is the path to
-           the reporting configuration file. If not given, defaults to
-           :file:`report/global.yaml`.
-       * - report/output_path
-         - Path-like, *optional*
-         - Path to write reporting outputs. If given, a computation ``cli-output`` is
-           added to the Reporter which writes ``report/key`` to this path.
-
     Parameters
     ----------
     context : Context
-        Containing settings in the ``report/*`` tree.
+        The code responds to :py:`context.report`, which is an instance of
+        :class:`.report.Config`.
     scenario : Scenario, *optional*
         Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
         retrieve a Scenario.
@@ -346,9 +304,12 @@ def prepare_reporter(
     .Reporter
         Reporter prepared with MESSAGEix-GLOBIOM calculations; if `reporter` is given,
         this is a reference to the same object.
+
+        If :attr:`.cli_output` is given, a task with the key "cli-output" is added that
+        writes the :attr:`.Config.key` to that path.
     .Key
-        Same as ``context.report["key"]`` if any, but in full resolution; else one of
-        ``default`` or ``cli-output`` according to the other settings.
+        Same as :attr:`.Config.key` if any, but in full resolution; else either
+        "default" or "cli-output" according to the other settings.
     """
     from importlib.metadata import version
 
