@@ -28,17 +28,17 @@ def read_material_intensities(parameter, data_path, node, year, technology,
             ####################################################################
 
             # read LCA data from ADVANCE LCA tool
-            data_path_lca = data_path + '/NTNU_LCA_coefficients.xlsx'
+            data_path_lca = data_path + '/power sector/NTNU_LCA_coefficients.xlsx'
             data_lca = pd.read_excel(data_path_lca, sheet_name = "environmentalImpacts")
 
             # read technology, region and commodity mappings
-            data_path_tec_map = data_path + '/MESSAGE_global_model_technologies.xlsx'
+            data_path_tec_map = data_path + '/power sector/MESSAGE_global_model_technologies.xlsx'
             technology_mapping = pd.read_excel(data_path_tec_map, sheet_name = "technology")
 
-            data_path_reg_map = data_path + '/LCA_region_mapping.xlsx'
+            data_path_reg_map = data_path + '/power sector/LCA_region_mapping.xlsx'
             region_mapping = pd.read_excel(data_path_reg_map, sheet_name = "region")
 
-            data_path_com_map = data_path + '/LCA_commodity_mapping.xlsx'
+            data_path_com_map = data_path + '/power sector/LCA_commodity_mapping.xlsx'
             commodity_mapping = pd.read_excel(data_path_com_map, sheet_name = "commodity")
 
             ####################################################################
