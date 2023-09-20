@@ -277,7 +277,24 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                             .pipe(same_node)
                         )
 
-                # Rest of the parameters apart from inpput, output and emission_factor
+                    elif param_name == "share_mode_up":
+                        mod = split[1]
+
+                        df = (
+                            make_df(
+                                param_name,
+                                technology=t,
+                                mode=mod,
+                                shares="steam_cracker",
+                                value=val[regions[regions == rg].index[0]],
+                                unit="-",
+                                **common
+                            )
+                            .pipe(broadcast, node_share=nodes)
+                            .pipe(same_node)
+                        )
+
+                # Rest of the parameters apart from input, output and emission_factor
 
                 else:
 
@@ -292,13 +309,14 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
                 # Copy parameters to all regions
                 if (len(regions) == 1) and (rg != global_region):
-                    if (
-                        len(set(df["node_loc"])) == 1
-                        and list(set(df["node_loc"]))[0] != global_region
-                    ):
-                        # print("Copying to all R11")
-                        df["node_loc"] = None
-                        df = df.pipe(broadcast, node_loc=nodes)
+                    if "node_loc" in df.columns:
+                        if (
+                            len(set(df["node_loc"])) == 1
+                            and list(set(df["node_loc"]))[0] != global_region
+                        ):
+                            # print("Copying to all R11")
+                            df["node_loc"] = None
+                            df = df.pipe(broadcast, node_loc=nodes)
 
                 results[param_name].append(df)
 
