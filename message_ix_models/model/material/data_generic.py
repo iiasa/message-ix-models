@@ -27,18 +27,15 @@ def read_data_generic(scenario):
     # sets = context["material"]["generic"]
 
     # Read the file
-    data_generic = pd.read_excel(
-        context.get_local_path(
-            "material", "generic_furnace_boiler_techno_economic.xlsx"
-        ),
-        sheet_name="generic",
-    )
+    data_generic = pd.read_excel(context.get_local_path(
+            "material", "other", "generic_furnace_boiler_techno_economic.xlsx"
+        ), sheet_name="generic",)
 
     # Clean the data
     # Drop columns that don't contain useful information
 
     data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
-    data_generic_ts = read_timeseries(scenario, "generic_furnace_boiler_techno_economic.xlsx")
+    data_generic_ts = read_timeseries(scenario, "other", "generic_furnace_boiler_techno_economic.xlsx")
 
     # Unit conversion
 
