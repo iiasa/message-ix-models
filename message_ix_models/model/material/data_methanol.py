@@ -29,8 +29,17 @@ def gen_data_methanol(scenario):
         context.get_local_path("material", "methanol", "meth_t_d_material_pars.xlsx"),
         sheet_name=None,
     )
-    dict3.pop("relation_activity")  # remove negative emissions for now
+    df_rel = dict3["relation_activity"]
 
+    def get_embodied_emi(row, pars):
+        if row["year_act"] < pars["incin_trend_end"]:
+            share = pars["incin_rate"] + pars["incin_trend"] * (row["year_act"] - 2020)
+        else:
+            share = 0.5
+        return row["value"] * (1 - share) * pars["hvc_plastics_share"]
+
+    df_rel["value"] = df_rel.apply(lambda x: get_embodied_emi(x, pars), axis=1)
+    # dict3.pop("relation_activity")  # remove negative emissions for now
     new_dict2 = combine_df_dictionaries(new_dict, dict3)
 
     df_final = gen_meth_residual_demand(pars["methanol_elasticity"])
