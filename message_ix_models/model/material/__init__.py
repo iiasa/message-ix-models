@@ -393,13 +393,13 @@ from .data_buildings import gen_data_buildings
 from .data_power_sector import gen_data_power_sector
 from .data_ammonia import gen_data_ammonia
 from .data_methanol import gen_data_methanol
+from .data_ammonia_new import gen_all_NH3_fert
 
 
 DATA_FUNCTIONS_1 = [
     #gen_data_buildings,
     gen_data_methanol,
     gen_all_NH3_fert,
-    #gen_data_ammonia,
     gen_data_generic,
     gen_data_steel,
 ]
@@ -408,7 +408,7 @@ DATA_FUNCTIONS_2 = [
     gen_data_cement,
     gen_data_petro_chemicals,
     #gen_data_power_sector,
-    #gen_data_aluminum,
+    gen_data_aluminum
 ]
 
 # Try to handle multiple data input functions from different materials
