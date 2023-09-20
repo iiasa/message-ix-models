@@ -1384,7 +1384,6 @@ def add_emission_accounting(scen):
     # scen.add_par("emission_factor", df_em)
     # scen.commit("add methanol CO2_industry")
 
-
 def add_elec_lowerbound_2020(scen):
     # To avoid zero i_spec prices only for R12_CHN, add the below section.
     # read input parameters for relevant technology/commodity combinations for
