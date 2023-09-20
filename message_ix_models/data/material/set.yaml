@@ -282,6 +282,10 @@ petro_chemicals:
     add:
     - steam_cracker
 
+  shares:
+    add:
+    - steam_cracker
+
 steel:
   commodity:
     add:
