@@ -466,6 +466,7 @@ fertilizer:
     - trade_NH3
     - export_NH3
     - import_NH3
+    - residual_NH3
     - biomass_NH3_ccs
     - gas_NH3_ccs
     - coal_NH3_ccs
