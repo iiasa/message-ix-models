@@ -254,6 +254,10 @@ petro_chemicals:
     - ref_hil
     - ref_lol
 
+  shares:
+    add:
+    - steam_cracker
+
 steel:
   commodity:
     add:
@@ -503,6 +507,7 @@ methanol:
     add:
     - feedstock
     - fuel
+    - ethanol
 
   technology:
     add:
