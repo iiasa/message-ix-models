@@ -85,7 +85,7 @@ def gen_mock_demand_steel(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -130,8 +130,8 @@ def gen_data_steel(scenario, dry_run=False):
     # TEMP: now add cement sector as well => Need to separate those since now I have get_data_steel and cement
     data_steel = read_sector_data(scenario, "steel")
     # Special treatment for time-dependent Parameters
-    data_steel_ts = read_timeseries(scenario, context.datafile)
-    data_steel_rel = read_rel(scenario, context.datafile)
+    data_steel_ts = read_timeseries(scenario, "steel_cement", context.datafile)
+    data_steel_rel = read_rel(scenario, "steel_cement", context.datafile)
 
     tec_ts = set(data_steel_ts.technology)  # set of tecs with var_cost
 

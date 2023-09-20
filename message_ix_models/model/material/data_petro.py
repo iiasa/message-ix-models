@@ -32,7 +32,8 @@ def read_data_petrochemicals(scenario):
         sheet_n = "data_R11"
 
     # Read the file
-    data_petro = pd.read_excel(private_data_path("material", fname), sheet_name=sheet_n)
+    data_petro = pd.read_excel(private_data_path("material", "petrochemicals", fname),
+    sheet_name=sheet_n)
     # Clean the data
 
     data_petro = data_petro.drop(["Source", "Description"], axis=1)
@@ -131,7 +132,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # Techno-economic assumptions
     data_petro = read_data_petrochemicals(scenario)
-    data_petro_ts = read_timeseries(scenario, "petrochemicals_techno_economic.xlsx")
+    data_petro_ts = read_timeseries(scenario, "petrochemicals",
+    "petrochemicals_techno_economic.xlsx")
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
@@ -454,11 +456,11 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     # modify steam cracker hist data (naphtha -> gasoil) to make model feasible
-    df_cap = pd.read_csv(context.get_local_path(
-            "material", "steam_cracking_hist_new_cap.csv"
+    df_cap = pd.read_csv(private_data_path(
+            "material", "petrochemicals", "steam_cracking_hist_new_cap.csv"
         ))
-    df_act = pd.read_csv(context.get_local_path(
-            "material", "steam_cracking_hist_act.csv"
+    df_act = pd.read_csv(private_data_path(
+            "material", "petrochemicals", "steam_cracking_hist_act.csv"
         ))
     df_act.loc[df_act["mode"]=="naphtha", "mode"] = "vacuum_gasoil"
     df = results["historical_activity"]
