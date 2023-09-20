@@ -312,6 +312,7 @@ steel:
   relation:
     add:
       - minimum_recycling_steel
+      - max_global_recycling_steel
 
   balance_equality:
     add:
