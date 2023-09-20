@@ -282,7 +282,7 @@ def update_macro_calib_file(scenario: message_ix.Scenario, fname: str) -> None:
     fname : str
         file name of MACRO file used for calibration
     """
-    # Change this according to the relevant data path 
+    # Change this according to the relevant data path
     path = "C:/Users/unlu/Documents/MyDocuments_IIASA/Material_Flow/macro_calibration/"
 
     wb = pxl.load_workbook(path + fname)
