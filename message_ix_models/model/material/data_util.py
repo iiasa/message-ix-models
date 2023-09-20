@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 import pandas as pd
 import os
 import message_ix
@@ -37,7 +35,7 @@ def load_GDP_COVID():
     f_name = "iamc_db ENGAGE baseline GDP PPP.xlsx"
 
     gdp_ssp2 = pd.read_excel(
-        context.get_local_path("data", "material", f_name), sheet_name="data_R12"
+        private_data_path("material", "other", f_name), sheet_name="data_R12"
     )
     gdp_ssp2 = gdp_ssp2[gdp_ssp2["Scenario"] == "baseline"]
     regions = "R12_" + gdp_ssp2["Region"]
@@ -138,7 +136,7 @@ def modify_demand_and_hist_activity(scen):
         region_name_CHN = ""
 
     df = pd.read_excel(
-        private_data_path("material", fname), sheet_name=sheet_n, usecols="A:F"
+        private_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
     )
 
     # Filter the necessary variables
@@ -708,7 +706,6 @@ def add_emission_accounting(scen):
     scen.add_par("emission_factor", df_em)
     scen.commit("add methanol CO2_industry")
 
-
 def add_elec_lowerbound_2020(scen):
 
     # To avoid zero i_spec prices only for R12_CHN, add the below section.
@@ -725,7 +722,7 @@ def add_elec_lowerbound_2020(scen):
     # read processed final energy data from IEA extended energy balances
     # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
 
-    final = pd.read_csv(private_data_path("material", "residual_industry_2019.csv"))
+    final = pd.read_csv(private_data_path("material", "other", "residual_industry_2019.csv"))
 
     # downselect needed fuels and sectors
     final_residual_electricity = final.query(
@@ -789,7 +786,7 @@ def add_coal_lowerbound_2020(sc):
 
     context = read_config()
     final_resid = pd.read_csv(
-        private_data_path("material", "residual_industry_2019.csv")
+        private_data_path("material", "other","residual_industry_2019.csv")
     )
 
     # read input parameters for relevant technology/commodity combinations for converting betwen final and useful energy
@@ -934,7 +931,7 @@ def read_sector_data(scenario, sectname):
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        private_data_path("material", context.datafile),
+        private_data_path("material", "steel_cement", context.datafile),
         sheet_name=sheet_n,
     )
 
@@ -1026,7 +1023,7 @@ def add_ccs_technologies(scen):
 
 # Read in time-dependent parameters
 # Now only used to add fuel cost for bare model
-def read_timeseries(scenario, filename):
+def read_timeseries(scenario, material, filename):
 
     import numpy as np
 
@@ -1045,7 +1042,7 @@ def read_timeseries(scenario, filename):
         sheet_n = "timeseries_R11"
 
     # Read the file
-    df = pd.read_excel(private_data_path("material", filename), sheet_name=sheet_n)
+    df = pd.read_excel(private_data_path("material", material, filename), sheet_name=sheet_n)
 
     import numbers
 
@@ -1063,7 +1060,7 @@ def read_timeseries(scenario, filename):
     return df
 
 
-def read_rel(scenario, filename):
+def read_rel(scenario, material, filename):
 
     import numpy as np
 
@@ -1079,7 +1076,7 @@ def read_rel(scenario, filename):
 
     # Read the file
     data_rel = pd.read_excel(
-        private_data_path("material", filename),
+        private_data_path("material", material, filename),
         sheet_name=sheet_n,
     )
 
