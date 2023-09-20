@@ -224,7 +224,7 @@ def gen_meth_bio_ccs(scenario):
 
 def gen_data_meth_chemicals(scenario, chemical):
     df = pd.read_excel(
-        context.get_local_path("material", "methanol", "MTO data collection.xlsx"),
+        context.get_local_path("material", "methanol", "collection files", "MTO data collection.xlsx"),
         sheet_name=chemical,
         usecols=[1, 2, 3, 4, 6, 7],
     )
@@ -281,6 +281,17 @@ def gen_data_meth_chemicals(scenario, chemical):
         "time": "year",
         "unit": "???",
     }
+    nodes_ex_chn = nodes.tolist()
+    nodes_ex_chn.remove("R12_CHN")
+
+    bound_dict = {
+        "node_loc": nodes_ex_chn,
+        "technology": "MTO_petro",
+        "mode": "M1",
+        "time": "year",
+        "unit": "???",
+    }
+
     if chemical == "MTO":
         par_dict["historical_activity"] = make_df(
             "historical_activity", value=4.5, year_act=2015, **hist_dict
@@ -301,7 +312,7 @@ def add_methanol_trp_additives(scenario):
 
     df_mtbe = pd.read_excel(
         context.get_local_path(
-            "material", "methanol", "Methanol production statistics (version 1).xlsx"
+            "material", "methanol", "collection files","Methanol production statistics (version 1).xlsx"
         ),
         # usecols=[1,2,3,4,6,7],
         skiprows=np.linspace(0, 65, 66),
@@ -315,7 +326,7 @@ def add_methanol_trp_additives(scenario):
     df_mtbe = df_mtbe[["node_loc", "% share on trp"]]
     df_biodiesel = pd.read_excel(
         context.get_local_path(
-            "material", "methanol", "Methanol production statistics (version 1).xlsx"
+            "material", "methanol", "collection files","Methanol production statistics (version 1).xlsx"
         ),
         skiprows=np.linspace(0, 37, 38),
         usecols=[1, 2],
