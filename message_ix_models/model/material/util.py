@@ -28,7 +28,9 @@ def read_config() -> Context:
     """
     # TODO this is similar to transport.utils.read_config; make a common
     #      function so it doesn't need to be in this file.
-    context = Context.get_instance(-1)
+    # In the original branch materials_2023_move2
+    # context = Context.get_instance(-1)
+    context = Context.get_instance(0)
 
     if "material set" in context:
         # Already loaded
