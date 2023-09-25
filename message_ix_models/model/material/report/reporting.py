@@ -28,8 +28,8 @@ from message_ix import Scenario
 from message_ix.reporting import Reporter
 from ixmp.reporting import configure
 from message_ix_models import ScenarioInfo
-from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
-from message_data.model.material.util import read_config
+# from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
+# from message_data.model.material.util import read_config
 
 import pandas as pd
 import numpy as np

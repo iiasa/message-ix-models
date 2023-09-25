@@ -13,6 +13,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     same_node,
     add_par_data,
+    package_data_path,
 )
 
 
@@ -27,7 +28,7 @@ def read_data_generic(scenario):
     # sets = context["material"]["generic"]
 
     # Read the file
-    data_generic = pd.read_excel(context.get_local_path(
+    data_generic = pd.read_excel(package_data_path(
             "material", "other", "generic_furnace_boiler_techno_economic.xlsx"
         ), sheet_name="generic",)
 

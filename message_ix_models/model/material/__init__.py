@@ -4,18 +4,19 @@ import click
 import logging
 import ixmp
 # from .build import apply_spec
-# from message_data.tools import ScenarioInfo
-from message_data.model.material.build import apply_spec
+# from message_ix_models.tools import ScenarioInfo
+from message_ix_models.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
 from message_ix_models.util.context import Context
-from message_ix_models.util import add_par_data, private_data_path
-from message_data.tools.utilities import calibrate_UE_gr_to_demand, add_globiom,\
+from message_ix_models.util import add_par_data, package_data_path
+from message_ix_models.tools import calibrate_UE_gr_to_demand, \
     calibrate_UE_share_constraints
 
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity, add_emission_accounting
 from .data_util import add_coal_lowerbound_2020, add_macro_COVID, add_cement_bounds_2020
 from .data_util import add_elec_lowerbound_2020, add_ccs_technologies, read_config
+from .build import get_spec
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def build(scenario):
     # Market penetration adjustments
     # NOTE: changing demand affects the market penetration levels for the enduse technologies.
     # Note: context.ssp doesnt work
-    calibrate_UE_gr_to_demand(scenario, data_path=private_data_path(), ssp='SSP2', region = 'R12')
+    calibrate_UE_gr_to_demand(scenario, data_path=package_data_path(), ssp='SSP2', region = 'R12')
     calibrate_UE_share_constraints(scenario)
 
     # Electricity calibration to avoid zero prices for CHN.
@@ -68,37 +69,13 @@ SPEC_LIST = [
     "cement",
     "aluminum",
     "petro_chemicals",
-    "buildings",
+    # "buildings",
     "power_sector",
     "fertilizer",
     "methanol"
 ]
 
 
-def get_spec() -> Mapping[str, ScenarioInfo]:
-    """Return the specification for materials accounting."""
-    require = ScenarioInfo()
-    add = ScenarioInfo()
-    remove = ScenarioInfo()
-
-    # Load configuration
-    # context = Context.get_instance(-1)
-    context = read_config()
-
-    # Update the ScenarioInfo objects with required and new set elements
-    for type in SPEC_LIST:
-        for set_name, config in context["material"][type].items():
-            # for cat_name, detail in config.items():
-            # Required elements
-            require.set[set_name].extend(config.get("require", []))
-
-            # Elements to add
-            add.set[set_name].extend(config.get("add", []))
-
-            # Elements to remove
-            remove.set[set_name].extend(config.get("remove", []))
-
-    return dict(require=require, add=add, remove=remove)
 
 
 # Group to allow for multiple CLI subcommands under "material"
@@ -113,7 +90,7 @@ def cli():
 @click.pass_obj
 def create_bare(context, regions, dry_run):
     """Create the RES from scratch."""
-    from message_data.model.bare import create_res
+    from message_ix_models.model.bare import create_res
 
     if regions:
         context.regions = regions
@@ -292,7 +269,7 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
 @click.option("--scenario_name", default="NoPolicy")
 @click.option("--model_name", default="MESSAGEix-Materials")
 def add_building_ts(scenario_name, model_name):
-    from message_data.reporting.materials.add_buildings_ts import add_building_timeseries
+    from message_ix_models.reporting.materials.add_buildings_ts import add_building_timeseries
     from message_ix import Scenario
     from ixmp import Platform
 
@@ -315,8 +292,8 @@ def add_building_ts(scenario_name, model_name):
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
     """Run materials, then legacy reporting."""
-    from message_data.reporting.materials.reporting import report
-    from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
+    from message_ix_models.reporting.materials.reporting import report
+    from message_ix_models.tools.post_processing.iamc_report_hackathon import report as reporting
 
     # Retrieve the scenario given by the --url option
     scenario = context.get_scenario()
@@ -396,7 +373,7 @@ def run_reporting(context, remove_ts, profile):
 def run_old_reporting(context):
     from message_ix import Scenario
     from ixmp import Platform
-    from message_data.tools.post_processing.iamc_report_hackathon import (
+    from message_ix_models.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
 
@@ -422,7 +399,7 @@ from .data_steel import gen_data_steel
 from .data_aluminum import gen_data_aluminum
 from .data_generic import gen_data_generic
 from .data_petro import gen_data_petro_chemicals
-from .data_buildings import gen_data_buildings
+# from .data_buildings import gen_data_buildings
 from .data_power_sector import gen_data_power_sector
 from .data_methanol_new import gen_data_methanol_new
 from .data_ammonia_new import gen_all_NH3_fert
