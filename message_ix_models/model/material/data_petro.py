@@ -14,7 +14,7 @@ from message_ix_models.util import (
     make_matched_dfs,
     same_node,
     add_par_data,
-    private_data_path,
+    package_data_path,
 )
 
 
@@ -32,7 +32,7 @@ def read_data_petrochemicals(scenario):
         sheet_n = "data_R11"
 
     # Read the file
-    data_petro = pd.read_excel(private_data_path("material", "petrochemicals", fname),
+    data_petro = pd.read_excel(package_data_path("material", "petrochemicals", fname),
     sheet_name=sheet_n)
     # Clean the data
 
@@ -56,7 +56,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
         ) + demand_t0
 
     df_gdp = pd.read_excel(
-        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
+        package_data_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="GDP_baseline",
     )
 
@@ -364,7 +364,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     context = read_config()
 
     df_pars = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
         ),
         sheet_name="Sheet1",
@@ -456,10 +456,10 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     # modify steam cracker hist data (naphtha -> gasoil) to make model feasible
-    df_cap = pd.read_csv(private_data_path(
+    df_cap = pd.read_csv(package_data_path(
             "material", "petrochemicals", "steam_cracking_hist_new_cap.csv"
         ))
-    df_act = pd.read_csv(private_data_path(
+    df_act = pd.read_csv(package_data_path(
             "material", "petrochemicals", "steam_cracking_hist_act.csv"
         ))
     df_act.loc[df_act["mode"]=="naphtha", "mode"] = "vacuum_gasoil"

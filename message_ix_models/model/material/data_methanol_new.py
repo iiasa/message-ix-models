@@ -2,16 +2,21 @@ import message_ix_models.util
 import pandas as pd
 
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node
-from message_data.model.material.util import read_config
+from message_ix_models.util import (
+broadcast,
+same_node,
+package_data_path,
+
+)
+
+from message_ix_models.model.material.util import read_config
 from ast import literal_eval
 
 context = read_config()
 
-
 def gen_data_methanol_new(scenario):
     df_pars = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
         ),
         sheet_name="Sheet1",
@@ -20,7 +25,7 @@ def gen_data_methanol_new(scenario):
     pars = df_pars.set_index("par").to_dict()["value"]
     if pars["mtbe_scenario"] == "phase-out":
         pars_dict = pd.read_excel(
-            message_ix_models.util.private_data_path(
+            message_ix_models.util.package_data_path(
                 "material", "methanol", "methanol_techno_economic.xlsx"
             ),
             sheet_name=None,
@@ -28,7 +33,7 @@ def gen_data_methanol_new(scenario):
         )
     else:
         pars_dict = pd.read_excel(
-            message_ix_models.util.private_data_path(
+            message_ix_models.util.package_data_path(
                 "material", "methanol", "methanol_techno_economic_high_demand.xlsx"
             ),
             sheet_name=None,
