@@ -7,9 +7,9 @@ from .util import read_config
 import re
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
-from message_data.tools.utilities.get_optimization_years import (
+from message_ix_models.tools.get_optimization_years import (
     main as get_optimization_years,
 )
 
@@ -35,7 +35,7 @@ def load_GDP_COVID():
     f_name = "iamc_db ENGAGE baseline GDP PPP.xlsx"
 
     gdp_ssp2 = pd.read_excel(
-        private_data_path("material", "other", f_name), sheet_name="data_R12"
+        package_data_path("material", "other", f_name), sheet_name="data_R12"
     )
     gdp_ssp2 = gdp_ssp2[gdp_ssp2["Scenario"] == "baseline"]
     regions = "R12_" + gdp_ssp2["Region"]
@@ -136,7 +136,7 @@ def modify_demand_and_hist_activity(scen):
         region_name_CHN = ""
 
     df = pd.read_excel(
-        private_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
+        package_data_path("material", "other", fname), sheet_name=sheet_n, usecols="A:F"
     )
 
     # Filter the necessary variables
@@ -722,7 +722,7 @@ def add_elec_lowerbound_2020(scen):
     # read processed final energy data from IEA extended energy balances
     # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
 
-    final = pd.read_csv(private_data_path("material", "other", "residual_industry_2019.csv"))
+    final = pd.read_csv(package_data_path("material", "other", "residual_industry_2019.csv"))
 
     # downselect needed fuels and sectors
     final_residual_electricity = final.query(
@@ -786,7 +786,7 @@ def add_coal_lowerbound_2020(sc):
 
     context = read_config()
     final_resid = pd.read_csv(
-        private_data_path("material", "other","residual_industry_2019.csv")
+        package_data_path("material", "other","residual_industry_2019.csv")
     )
 
     # read input parameters for relevant technology/commodity combinations for converting betwen final and useful energy
@@ -917,7 +917,7 @@ def add_cement_bounds_2020(sc):
 
     context = read_config()
     final_resid = pd.read_csv(
-        private_data_path("material", "other","residual_industry_2019.csv")
+        package_data_path("material", "other","residual_industry_2019.csv")
     )
 
     input_cement_foil = sc.par(
@@ -1178,7 +1178,7 @@ def read_sector_data(scenario, sectname):
 
     # data_df = data_steel_china.append(data_cement_china, ignore_index=True)
     data_df = pd.read_excel(
-        private_data_path("material", "steel_cement", context.datafile),
+        package_data_path("material", "steel_cement", context.datafile),
         sheet_name=sheet_n,
     )
 
@@ -1289,7 +1289,7 @@ def read_timeseries(scenario, material, filename):
         sheet_n = "timeseries_R11"
 
     # Read the file
-    df = pd.read_excel(private_data_path("material", material, filename), sheet_name=sheet_n)
+    df = pd.read_excel(package_data_path("material", material, filename), sheet_name=sheet_n)
 
     import numbers
 
@@ -1323,7 +1323,7 @@ def read_rel(scenario, material, filename):
 
     # Read the file
     data_rel = pd.read_excel(
-        private_data_path("material", material, filename),
+        package_data_path("material", material, filename),
         sheet_name=sheet_n,
     )
 
