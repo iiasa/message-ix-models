@@ -16,12 +16,12 @@ from message_ix_models.util import (
     make_matched_dfs,
     same_node,
     add_par_data,
-    private_data_path,
+    package_data_path,
 )
 
 # Get endogenous material demand from buildings interface
 from .data_buildings import get_scen_mat_demand
-from . import get_spec
+from .build import get_spec
 
 
 # gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
@@ -93,7 +93,7 @@ def gen_mock_demand_cement(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -106,7 +106,7 @@ def gen_mock_demand_cement(scenario):
 
     # # Regions setting for IMAGE
     # region_cement = pd.read_excel(
-    #     private_data_path("material",  "CEMENT.BvR2010.xlsx"),
+    #     package_data_path("material",  "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Timer_Regions", skiprows=range(0,3))[['Region #', 'Name']]\
     #     .drop_duplicates().sort_values(by='Region #')
     #
@@ -128,7 +128,7 @@ def gen_mock_demand_cement(scenario):
     #
     # # Cement demand 2010 [Mt/year] (IMAGE)
     # demand2010_cement = pd.read_excel(
-    #     private_data_path("material",  "CEMENT.BvR2010.xlsx"),
+    #     package_data_path("material",  "CEMENT.BvR2010.xlsx"),
     #     sheet_name="Domestic Consumption", skiprows=range(0,3)).\
     #     groupby(by=["Region #"]).sum()[[2010]].\
     #     join(region_cement.set_index('Region #'), on='Region #').\
@@ -457,7 +457,7 @@ def derive_cement_demand(scenario, dry_run=False):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
         df = r.derive_cement_demand(
-            pop, base_demand, str(private_data_path("material"))
+            pop, base_demand, str(package_data_path("material"))
         )
         df.year = df.year.astype(int)
 

@@ -21,9 +21,9 @@ from message_ix_models.util import (
     same_node,
     copy_column,
     add_par_data,
-    private_data_path,
+    package_data_path,
 )
-from . import get_spec
+from .build import get_spec
 
 
 # Generate a fake steel demand
@@ -85,7 +85,7 @@ def gen_mock_demand_steel(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -543,7 +543,7 @@ def derive_steel_demand(scenario, dry_run=False):
     # source R code
     r = ro.r
     r.source(str(rcode_path / "init_modularized.R"))
-    context.get_local_path("material")
+    package_data_path("material")
     # Read population and baseline demand for materials
     pop = scenario.par("bound_activity_up", {"technology": "Population"})
     pop = pop.loc[pop.year_act >= 2020].rename(
@@ -564,7 +564,7 @@ def derive_steel_demand(scenario, dry_run=False):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
         df = r.derive_steel_demand(
-            pop, base_demand, str(context.get_local_path("material"))
+            pop, base_demand, str(package_data_path("material"))
         )
         df.year = df.year.astype(int)
 

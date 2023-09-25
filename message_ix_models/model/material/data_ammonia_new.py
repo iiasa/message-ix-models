@@ -3,14 +3,17 @@ import numpy as np
 
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node, private_data_path
+from message_ix_models.util import (
+broadcast,
+same_node,
+package_data_path)
 from .util import read_config
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
+
 default_gdp_elasticity = pd.read_excel(
-        context.get_local_path(
-            "data",
+        package_data_path(
             "material",
             "methanol",
             "methanol_sensitivity_pars.xlsx",
@@ -40,7 +43,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
         nodes.pop(nodes.index("R12_GLB"))
 
     df = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material",
             "ammonia",
             "fert_techno_economic.xlsx",
@@ -125,7 +128,7 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs"]
     cost_conv = pd.read_excel(
-        private_data_path(
+        package_data_path(
             "material",
             "ammonia",
             "cost_conv_nh3.xlsx"),
@@ -163,7 +166,7 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
         nodes.pop(nodes.index("R12_GLB"))
 
     df = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material",
             "ammonia",
             "fert_techno_economic.xlsx",
@@ -232,7 +235,7 @@ def gen_data_ts(scenario, dry_run=False, add_ccs: bool = True):
         nodes.pop(nodes.index("R12_GLB"))
 
     df = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material",
             "ammonia",
             "fert_techno_economic.xlsx",
@@ -284,7 +287,7 @@ def read_demand():
     context = read_config()
 
     N_demand_GLO = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -294,7 +297,7 @@ def read_demand():
 
     # NH3 feedstock share by region in 2010 (from http://ietd.iipnetwork.org/content/ammonia#benchmarks)
     feedshare_GLO = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -305,7 +308,7 @@ def read_demand():
 
     # Read parameters in xlsx
     te_params = data = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material", "ammonia", "nh3_fertilizer_demand.xlsx"
         ),
         sheet_name="old_TE_sheet",
@@ -349,10 +352,10 @@ def read_demand():
     )  # GWa
 
     # N_trade_R12 = pd.read_csv(
-    #    context.get_local_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
+    #    package_data_path("material", "ammonia", "trade.FAO.R12.csv"), index_col=0
     # )
     N_trade_R12 = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -380,12 +383,12 @@ def read_demand():
     NP["prod"] = NP.demand - NP.netimp
 
     # NH3_trade_R12 = pd.read_csv(
-    #    context.get_local_path(
+    #    package_data_path(
     #        "material", "ammonia", "NH3_trade_BACI_R12_aggregation.csv"
     #    )
     # )  # , index_col=0)
     NH3_trade_R12 = pd.read_excel(
-        context.get_local_path(
+        package_data_path(
             "material",
             "ammonia",
             "nh3_fertilizer_demand.xlsx",
@@ -469,7 +472,7 @@ def gen_demand():
     N_energy = read_demand()["N_feed"]  # updated feed with imports accounted
 
     demand_fs_org = pd.read_excel(
-        context.get_local_path("material", "ammonia",
+        package_data_path("material", "ammonia",
                                "nh3_fertilizer_demand.xlsx"),
         sheet_name="demand_i_feed_R12"
     )
@@ -507,7 +510,7 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
         ) + demand_t0
 
     df_gdp = pd.read_excel(
-        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
+        package_data_path("material", "methanol", "methanol demand.xlsx"),
         sheet_name="GDP_baseline",
     )
 
