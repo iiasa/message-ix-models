@@ -156,37 +156,13 @@ SPEC_LIST = [
     "cement",
     "aluminum",
     "petro_chemicals",
-    "buildings",
+    # "buildings",
     "power_sector",
     "fertilizer",
     "methanol",
 ]
 
 
-def get_spec() -> Mapping[str, ScenarioInfo]:
-    """Return the specification for materials accounting."""
-    require = ScenarioInfo()
-    add = ScenarioInfo()
-    remove = ScenarioInfo()
-
-    # Load configuration
-    # context = Context.get_instance(-1)
-    context = read_config()
-
-    # Update the ScenarioInfo objects with required and new set elements
-    for type in SPEC_LIST:
-        for set_name, config in context["material"][type].items():
-            # for cat_name, detail in config.items():
-            # Required elements
-            require.set[set_name].extend(config.get("require", []))
-
-            # Elements to add
-            add.set[set_name].extend(config.get("add", []))
-
-            # Elements to remove
-            remove.set[set_name].extend(config.get("remove", []))
-
-    return dict(require=require, add=add, remove=remove)
 
 
 # Group to allow for multiple CLI subcommands under "material"

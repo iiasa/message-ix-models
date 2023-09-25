@@ -25,7 +25,6 @@ iea_elasticity_map = {
     "RTS high": (1.4, 0.54),
 }
 
-
 def gen_data_methanol_new(scenario):
     context = read_config()
     df_pars = pd.read_excel(
