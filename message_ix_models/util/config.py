@@ -2,7 +2,8 @@ import logging
 import os
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Any, Hashable, Mapping, MutableMapping, Optional, Sequence, Set
+from typing import (Any, Hashable, Mapping, MutableMapping, Optional, Sequence,
+                    Set)
 
 import ixmp
 

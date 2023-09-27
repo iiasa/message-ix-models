@@ -1,7 +1,8 @@
 """Atomic reporting operations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
-from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple, Union
+from typing import (TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple,
+                    Union)
 
 import ixmp
 import pandas as pd

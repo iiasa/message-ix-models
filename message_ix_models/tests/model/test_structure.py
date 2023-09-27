@@ -7,14 +7,11 @@ import pytest
 from iam_units import registry
 from sdmx.model.v21 import Annotation, Code
 
-from message_ix_models.model.structure import (
-    codelists,
-    generate_set_elements,
-    get_codes,
-    get_region_codes,
-    process_commodity_codes,
-    process_units_anno,
-)
+from message_ix_models.model.structure import (codelists,
+                                               generate_set_elements,
+                                               get_codes, get_region_codes,
+                                               process_commodity_codes,
+                                               process_units_anno)
 from message_ix_models.util import as_codes, eval_anno
 
 

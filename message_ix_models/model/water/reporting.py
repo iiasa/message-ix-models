@@ -8,9 +8,8 @@ from message_ix.reporting import Reporter
 from message_ix_models.util import private_data_path
 
 try:
-    from message_data.tools.post_processing.iamc_report_hackathon import (
-        report as old_reporting,
-    )
+    from message_data.tools.post_processing.iamc_report_hackathon import \
+        report as old_reporting
 except ImportError:  # message_data not installed
     old_reporting = None
 

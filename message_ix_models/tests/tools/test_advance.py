@@ -2,13 +2,8 @@ from shutil import copyfile
 
 import pytest
 
-from message_ix_models.tools.advance import (
-    DIMS,
-    LOCATION,
-    _fuzz_data,
-    advance_data,
-    get_advance_data,
-)
+from message_ix_models.tools.advance import (DIMS, LOCATION, _fuzz_data,
+                                             advance_data, get_advance_data)
 from message_ix_models.util import package_data_path
 
 

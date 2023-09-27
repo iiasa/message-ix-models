@@ -13,29 +13,15 @@ from message_ix.testing import make_dantzig
 from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import (
-    MESSAGE_DATA_PATH,
-    MESSAGE_MODELS_PATH,
-    as_codes,
-    broadcast,
-    check_support,
-    convert_units,
-    copy_column,
-    ffill,
-    iter_parameters,
-    load_package_data,
-    load_private_data,
-    local_data_path,
-    make_source_tech,
-    maybe_query,
-    package_data_path,
-    private_data_path,
-    replace_par_data,
-    same_node,
-    same_time,
-    series_of_pint_quantity,
-    strip_par_data,
-)
+from message_ix_models.util import (MESSAGE_DATA_PATH, MESSAGE_MODELS_PATH,
+                                    as_codes, broadcast, check_support,
+                                    convert_units, copy_column, ffill,
+                                    iter_parameters, load_package_data,
+                                    load_private_data, local_data_path,
+                                    make_source_tech, maybe_query,
+                                    package_data_path, private_data_path,
+                                    replace_par_data, same_node, same_time,
+                                    series_of_pint_quantity, strip_par_data)
 
 _actual_package_data = Path(__file__).parents[1].joinpath("data")
 

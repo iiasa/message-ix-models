@@ -1,6 +1,7 @@
 import logging
 from collections import ChainMap, defaultdict
-from typing import Collection, Dict, Mapping, MutableMapping, Optional, Sequence, Union
+from typing import (Collection, Dict, Mapping, MutableMapping, Optional,
+                    Sequence, Union)
 
 import message_ix
 import pandas as pd
@@ -9,17 +10,9 @@ from message_ix.models import MESSAGE_ITEMS
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
-from .common import (
-    MESSAGE_DATA_PATH,
-    MESSAGE_MODELS_PATH,
-    Adapter,
-    MappingAdapter,
-    load_package_data,
-    load_private_data,
-    local_data_path,
-    package_data_path,
-    private_data_path,
-)
+from .common import (MESSAGE_DATA_PATH, MESSAGE_MODELS_PATH, Adapter,
+                     MappingAdapter, load_package_data, load_private_data,
+                     local_data_path, package_data_path, private_data_path)
 from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
 from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
