@@ -4,7 +4,8 @@ from message_ix import make_df
 from message_ix.models import MACRO
 
 from message_ix_models import testing
-from message_ix_models.model.emissions import add_tax_emission, get_emission_factors
+from message_ix_models.model.emissions import (add_tax_emission,
+                                               get_emission_factors)
 
 
 def add_test_data(scenario):
