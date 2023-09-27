@@ -99,8 +99,6 @@ sc.set_as_default()
 # scen_list = scen_list[(scen_list['model']==modelName)]
 
 # 3) Demand processing
-# TODO adding the scenario dimension
-# scen = ["baseline", "moderate", "increased"]
 
 # run different project scenarios: baseline, moderate_development, sustainable_development
 scens = ["baseline", "improved", "ambitious"]
