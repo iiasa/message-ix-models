@@ -11,16 +11,9 @@ from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.build import apply_spec
-from message_ix_models.util import (
-    broadcast,
-    eval_anno,
-    make_io,
-    make_matched_dfs,
-    make_source_tech,
-    merge_data,
-    nodes_ex_world,
-    same_node,
-)
+from message_ix_models.util import (broadcast, eval_anno, make_io,
+                                    make_matched_dfs, make_source_tech,
+                                    merge_data, nodes_ex_world, same_node)
 
 log = logging.getLogger(__name__)
 

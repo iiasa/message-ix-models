@@ -6,7 +6,6 @@ data onto the basin
  mapping used in the nexus module.
 """
 import glob
-
 #  Import packages
 import os
 from datetime import datetime as dt
