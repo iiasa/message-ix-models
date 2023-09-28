@@ -11,7 +11,7 @@ from sdmx.model.v21 import Code
 
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import load_private_data
+from message_ix_models.util import load_package_data
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def read_config(context=None):
         _parts = list(parts)
         _parts[-1] += ".yaml"
 
-        context[key] = load_private_data(*_parts)
+        context[key] = load_package_data(*_parts)
 
     return context
 
