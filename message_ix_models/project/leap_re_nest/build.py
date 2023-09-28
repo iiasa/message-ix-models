@@ -38,6 +38,7 @@ scen2Name = "sub-units"
 # IIASA users
 # sc_ref = message_ix.Scenario(mp, modelName, scenarioName, cache=True)
 mp.add_unit("km3/month")
+mp.add_unit("km3/yr")
 mp.add_unit("GWa/month")
 # sc_ref.to_excel(package_data_path("projects","leap_re_nest","ref_scen.xlsx") )
 # # external users in local database
