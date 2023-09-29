@@ -9,8 +9,7 @@ from pandas.testing import assert_frame_equal
 from sdmx.model.v21 import Code
 
 from message_ix_models import ScenarioInfo, Spec
-from message_ix_models.model.structure import (get_codes,
-                                               process_technology_codes)
+from message_ix_models.model.structure import get_codes, process_technology_codes
 from message_ix_models.util import as_codes
 
 
