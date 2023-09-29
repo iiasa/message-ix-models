@@ -4,10 +4,13 @@ import numpy as np
 import pandas as pd
 from message_ix import make_df
 
-from message_ix_models.model.water.data.water_supply import \
-    map_basin_region_wat
-from message_ix_models.util import (broadcast, make_matched_dfs,
-                                    private_data_path, same_node)
+from message_ix_models.model.water.data.water_supply import map_basin_region_wat
+from message_ix_models.util import (
+    broadcast,
+    make_matched_dfs,
+    private_data_path,
+    same_node,
+)
 
 
 # water & electricity for cooling technologies

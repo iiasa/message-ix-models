@@ -7,8 +7,13 @@ import pandas as pd
 from message_ix import make_df
 
 from message_ix_models.model.water.utils import map_yv_ya_lt
-from message_ix_models.util import (broadcast, make_matched_dfs,
-                                    private_data_path, same_node, same_time)
+from message_ix_models.util import (
+    broadcast,
+    make_matched_dfs,
+    private_data_path,
+    same_node,
+    same_time,
+)
 
 
 def add_infrastructure_techs(context):  # noqa: C901

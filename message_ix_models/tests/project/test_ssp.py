@@ -1,7 +1,13 @@
 import pytest
 
-from message_ix_models.project.ssp import (SSP, SSP_2017, SSP_2024, generate,
-                                           parse, ssp_field)
+from message_ix_models.project.ssp import (
+    SSP,
+    SSP_2017,
+    SSP_2024,
+    generate,
+    parse,
+    ssp_field,
+)
 
 
 def test_generate(tmp_path, test_context):

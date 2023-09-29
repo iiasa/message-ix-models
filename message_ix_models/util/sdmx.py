@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
 import sdmx
 import sdmx.message
 from iam_units import registry
-from sdmx.model.v21 import (AnnotableArtefact, Annotation, Code,
-                            InternationalString)
+from sdmx.model.v21 import AnnotableArtefact, Annotation, Code, InternationalString
 
 from .common import package_data_path
 

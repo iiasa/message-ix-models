@@ -9,8 +9,12 @@ import pandas as pd
 import pint
 from genno import Quantity
 
-from message_ix_models.util import (cached, local_data_path, maybe_query,
-                                    private_data_path)
+from message_ix_models.util import (
+    cached,
+    local_data_path,
+    maybe_query,
+    private_data_path,
+)
 
 log = logging.getLogger(__name__)
 
