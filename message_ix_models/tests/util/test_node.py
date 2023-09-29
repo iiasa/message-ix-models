@@ -9,8 +9,12 @@ from message_ix import Scenario, make_df
 
 from message_ix_models.model.bare import create_res
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import (adapt_R11_R12, adapt_R11_R14, broadcast,
-                                    identify_nodes)
+from message_ix_models.util import (
+    adapt_R11_R12,
+    adapt_R11_R14,
+    broadcast,
+    identify_nodes,
+)
 from message_ix_models.util.node import MappingAdapter
 
 
