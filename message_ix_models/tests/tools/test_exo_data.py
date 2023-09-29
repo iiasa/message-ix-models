@@ -1,9 +1,12 @@
 import pytest
 from genno import Computer
 
-from message_ix_models.tools.exo_data import (DemoSource, ExoDataSource,
-                                              prepare_computer,
-                                              register_source)
+from message_ix_models.tools.exo_data import (
+    DemoSource,
+    ExoDataSource,
+    prepare_computer,
+    register_source,
+)
 
 
 class TestExoDataSource:
