@@ -10,8 +10,12 @@ from sdmx.model.v21 import Annotation, Code
 
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.model import disutility
-from message_ix_models.util import (add_par_data, copy_column,
-                                    make_source_tech, merge_data)
+from message_ix_models.util import (
+    add_par_data,
+    copy_column,
+    make_source_tech,
+    merge_data,
+)
 
 # Common data and fixtures for test_minimal() and other tests
 

@@ -3,7 +3,10 @@ from unittest.mock import patch
 import pandas as pd
 
 from message_ix_models.model.water.data.water_supply import (
-    add_e_flow, add_water_supply, map_basin_region_wat)
+    add_e_flow,
+    add_water_supply,
+    map_basin_region_wat,
+)
 
 
 def test_map_basin_region_wat():
@@ -19,7 +22,7 @@ def test_map_basin_region_wat():
     }
 
     # Mock the DataFrames read from CSV
-    df_x = pd.DataFrame(
+    pd.DataFrame(
         {
             "BCU_name": ["test_BCU"],
         }
@@ -65,14 +68,14 @@ def test_add_water_supply():
     # Mock the DataFrames read from CSV
     df_node = pd.DataFrame({"BCU_name": ["test_BCU"], "REGION": ["test_REGION"]})
 
-    df_gwt = pd.DataFrame(
+    pd.DataFrame(
         {
             "REGION": ["test_REGION"],
             "GW_per_km3_per_year": [1],
         }
     )
 
-    df_hist = pd.DataFrame(
+    pd.DataFrame(
         {
             "BCU_name": ["test_BCU"],
             "hist_cap_sw_km3_year": [1],
@@ -126,7 +129,7 @@ def test_add_e_flow():
         {"Region": ["test_Region"], "value": [1], "year": [2020], "time": ["year"]}
     )
 
-    df_env = pd.DataFrame(
+    pd.DataFrame(
         {"Region": ["test_Region"], "value": [1], "year": [2020], "time": ["year"]}
     )
 
