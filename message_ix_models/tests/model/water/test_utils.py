@@ -3,9 +3,13 @@ from unittest.mock import patch
 import pandas as pd
 import xarray as xr
 
-from message_ix_models.model.water import (Context, add_commodity_and_level,
-                                           build, map_add_on, map_yv_ya_lt,
-                                           read_config)
+from message_ix_models.model.water import (
+    Context,
+    add_commodity_and_level,
+    map_add_on,
+    map_yv_ya_lt,
+    read_config,
+)
 
 
 def test_read_config():
@@ -29,7 +33,7 @@ def test_read_config():
 
 def test_map_add_on():
     # Mock the context
-    context = Context(0)
+    Context(0)
 
     # Mock the data returned by read_config
     mock_data = {
