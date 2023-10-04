@@ -1,16 +1,28 @@
 import logging
 from typing import Callable, Dict, List, Mapping, Union
 
-import pandas as pd
 from ixmp.utils import maybe_check_out, maybe_commit
 from message_ix import Scenario
+import pandas as pd
+
 from sdmx.model import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
+
 log = logging.getLogger(__name__)
 
+def ellipsize(elements: List) -> str:
+    """Generate a short string representation of `elements`.
+
+    If the list has more than 5 elements, only the first two and last two are shown,
+    with "..." between.
+    """
+    if len(elements) > 5:
+        return ", ".join(map(str, elements[:2] + ["..."] + elements[-2:]))
+    else:
+        return ", ".join(map(str, elements))
 
 def ellipsize(elements: List) -> str:
     """Generate a short string representation of `elements`.
@@ -24,8 +36,7 @@ def ellipsize(elements: List) -> str:
         return ", ".join(map(str, elements))
 
 
-# FIXME Reduce complexity (same issues as model.build.apply_spec())
-def apply_spec(  # noqa: C901
+def apply_spec(
     scenario: Scenario,
     spec: Union[Spec, Mapping[str, ScenarioInfo]] = None,
     data: Callable = None,
@@ -75,11 +86,10 @@ def apply_spec(  # noqa: C901
         maybe_check_out(scenario)
 
     if spec:
+
         dump: Dict[str, pd.DataFrame] = {}  # Removed data
 
-        sets = sorted((len(scenario.idx_sets(s)), s) for s in scenario.set_list())
-
-        for _, set_name in sets:
+        for set_name in scenario.set_list():
             # Check whether this set is mentioned at all in the spec
             if 0 == sum(map(lambda info: len(info.set[set_name]), spec.values())):
                 # Not mentioned; don't do anything
