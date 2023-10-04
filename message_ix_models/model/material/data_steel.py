@@ -23,7 +23,7 @@ from message_ix_models.util import (
     add_par_data,
     package_data_path,
 )
-from .build import get_spec
+from . import get_spec
 
 
 # Generate a fake steel demand

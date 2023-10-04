@@ -19,7 +19,7 @@ from message_ix_models.util import (
     add_par_data,
     package_data_path,
 )
-from .build import get_spec
+from . import get_spec
 
 def read_material_intensities(parameter, data_path, node, year, technology,
                               commodity, level, inv_cost):
@@ -210,7 +210,7 @@ def gen_data_power_sector(scenario, dry_run=False):
 
     # paths to lca data
     code_path = Path(__file__).parents[0] / "material_intensity"
-    data_path = context.package_data_path("material")
+    data_path = package_data_path("material")
 
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)

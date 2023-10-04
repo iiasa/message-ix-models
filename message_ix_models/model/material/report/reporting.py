@@ -46,6 +46,9 @@ from matplotlib import pyplot as plt
 
 from pyam.plotting import OUTSIDE_LEGEND
 from matplotlib.backends.backend_pdf import PdfPages
+from message_ix_models.util import (
+    package_data_path,
+)
 
 def print_full(x):
     pd.set_option("display.max_rows", len(x))
@@ -192,7 +195,7 @@ def report(context,scenario):
         nodes.remove("R12_GLB*")
 
     # Path for materials reporting output
-    directory = context.get_local_path("report", "materials")
+    directory = package_data_path("material", "reporting_output")
     directory.mkdir(exist_ok=True)
 
     # Generate message_ix level reporting and dump to an excel file.
