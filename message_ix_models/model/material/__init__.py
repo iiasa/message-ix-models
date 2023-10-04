@@ -9,14 +9,14 @@ from message_ix_models.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
 from message_ix_models.util.context import Context
 from message_ix_models.util import add_par_data, package_data_path
-from message_ix_models.tools import calibrate_UE_gr_to_demand, \
-    calibrate_UE_share_constraints
+from message_ix_models.tools.calibrate_UE_gr_to_demand import main as calibrate_UE_gr_to_demand
+from message_ix_models.tools.calibrate_UE_share_constraints import main as calibrate_UE_share_constraints
 
 # from .data import add_data
 from .data_util import modify_demand_and_hist_activity, add_emission_accounting
 from .data_util import add_coal_lowerbound_2020, add_macro_COVID, add_cement_bounds_2020
 from .data_util import add_elec_lowerbound_2020, add_ccs_technologies, read_config
-from .build import get_spec
+
 
 log = logging.getLogger(__name__)
 
@@ -75,11 +75,35 @@ SPEC_LIST = [
     "methanol"
 ]
 
+def get_spec() -> Mapping[str, ScenarioInfo]:
+    """Return the specification for materials accounting."""
+    require = ScenarioInfo()
+    add = ScenarioInfo()
+    remove = ScenarioInfo()
 
+    # Load configuration
+    # context = Context.get_instance(-1)
+    context = read_config()
+
+    # Update the ScenarioInfo objects with required and new set elements
+
+    for type in SPEC_LIST:
+        for set_name, config in context["material"][type].items():
+            # for cat_name, detail in config.items():
+            # Required elements
+            require.set[set_name].extend(config.get("require", []))
+
+            # Elements to add
+            add.set[set_name].extend(config.get("add", []))
+
+            # Elements to remove
+            remove.set[set_name].extend(config.get("remove", []))
+
+    return dict(require=require, add=add, remove=remove)
 
 
 # Group to allow for multiple CLI subcommands under "material"
-@click.group("material")
+@click.group("material-ix")
 def cli():
     """Model with materials accounting."""
 
@@ -265,24 +289,7 @@ def solve_scen(context, datafile, model_name, scenario_name, add_calibration, ad
         scenario.solve(model="MESSAGE", solve_options={'lpmethod': '4', 'scaind':'-1'})
         scenario.set_as_default()
 
-@cli.command("add_buildings_ts")
-@click.option("--scenario_name", default="NoPolicy")
-@click.option("--model_name", default="MESSAGEix-Materials")
-def add_building_ts(scenario_name, model_name):
-    from message_ix_models.reporting.materials.add_buildings_ts import add_building_timeseries
-    from message_ix import Scenario
-    from ixmp import Platform
-
-    print(model_name)
-    mp = Platform()
-
-    scenario = Scenario(mp, model_name, scenario_name)
-
-    add_building_timeseries(scenario)
-
-
 @cli.command("report")
-# @cli.command("report-1")
 @click.option(
     "--remove_ts",
     default=False,
@@ -291,9 +298,8 @@ def add_building_ts(scenario_name, model_name):
 @click.option("--profile", default=False)
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
-    """Run materials, then legacy reporting."""
-    from message_ix_models.reporting.materials.reporting import report
-    from message_ix_models.tools.post_processing.iamc_report_hackathon import report as reporting
+    """Run materials reporting."""
+    from message_ix_models.model.material.report.reporting import report
 
     # Retrieve the scenario given by the --url option
     scenario = context.get_scenario()
@@ -323,19 +329,6 @@ def run_reporting(context, remove_ts, profile):
             pr.enable()
             print("Reporting material-specific variables")
             report(context, scenario)
-            print("Reporting standard variables")
-            reporting(
-                mp,
-                scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
-                "False",
-                scenario.model,
-                scenario.scenario,
-                merge_hist=True,
-                merge_ts=True,
-                run_config="materials_run_config.yaml",
-            )
 
             def exit():
                 pr.disable()
@@ -350,49 +343,6 @@ def run_reporting(context, remove_ts, profile):
             # Remove existing timeseries and add material timeseries
             print("Reporting material-specific variables")
             report(context, scenario)
-            print("Reporting standard variables")
-            reporting(
-                mp,
-                scenario,
-                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-                #         string containing "True" or "False" instead of an actual bool.
-                "False",
-                scenario.model,
-                scenario.scenario,
-                merge_hist=True,
-                merge_ts=True,
-                run_config="materials_run_config.yaml",
-            )
-        #util.prepare_xlsx_for_explorer(
-        #     Path(os.getcwd()).parents[0].joinpath(
-        #         "reporting_output", scenario.model+"_"+scenario.scenario+".xlsx"))
-
-
-@cli.command("report-2")
-@click.pass_obj
-def run_old_reporting(context):
-    from message_ix import Scenario
-    from ixmp import Platform
-    from message_ix_models.tools.post_processing.iamc_report_hackathon import (
-        report as reporting,
-    )
-
-    # Retrieve the scenario given by the --url option
-    scenario = context.get_scenario()
-    mp = scenario.platform
-
-    reporting(
-        mp,
-        scenario,
-        # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-        #         string containing "True" or "False" instead of an actual bool.
-        "False",
-        scenario.model,
-        scenario.scenario,
-        merge_hist=True,
-        merge_ts=True,
-        run_config="materials_run_config.yaml",
-    )
 
 from .data_cement import gen_data_cement
 from .data_steel import gen_data_steel
