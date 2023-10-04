@@ -1,7 +1,10 @@
 from message_ix_models import Context
 from pathlib import Path
-from message_ix_models.util import load_private_data
+from message_ix_models.util import package_data_path
 import pandas as pd
+
+from pathlib import Path
+import yaml
 
 # Configuration files
 METADATA = [
@@ -32,7 +35,7 @@ def read_config():
         _parts = list(parts)
         _parts[-1] += ".yaml"
 
-        context[key] = load_private_data(*_parts)
+        context[key] = package_data_path(*_parts)
 
     # Read material.yaml
     # context.metadata_path=Path("C:/Users/unlu/Documents/GitHub/message_data/data")
@@ -40,6 +43,20 @@ def read_config():
 
     # Use a shorter name
     context["material"] = context["material set"]
+
+    # There was an error in context["material"][type].items()
+    # context["material"] is not the content of the yaml file but the path to
+    # the yaml file. Below section added to read the yaml file.
+
+    try:
+        with open(context["material"], 'r') as yaml_file:
+            yaml_data = yaml.load(yaml_file, Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+    except Exception as e:
+        print(f"Error reading YAML file: {e}")
+
+    context["material"] = yaml_data
 
     # Merge technology.yaml with set.yaml
     # context["material"]["steel"]["technology"]["add"] = (

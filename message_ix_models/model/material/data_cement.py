@@ -21,7 +21,7 @@ from message_ix_models.util import (
 
 # Get endogenous material demand from buildings interface
 from .data_buildings import get_scen_mat_demand
-from .build import get_spec
+from . import get_spec
 
 
 # gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
