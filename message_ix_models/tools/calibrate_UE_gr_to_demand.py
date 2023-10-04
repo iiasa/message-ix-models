@@ -59,7 +59,7 @@ def main(scenario, data_path, ssp, region, first_mpa_year=None, intpol_lim=1, ve
 
     # Retrieve data for corresponding SSP
     data_filname = "SSP_UE_dyn_input.xlsx"
-    data_fil = data_path / "model" / "UE_dynamic_constraints" / data_filname
+    data_fil = data_path / "material" /"UE_dynamic_constraints" / data_filname
     mpa_data = pd.read_excel(data_fil, sheet_name="SSP_data")
     mpa_tec = mpa_data["technology"].tolist()
 
