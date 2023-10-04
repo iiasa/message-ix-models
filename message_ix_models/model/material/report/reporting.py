@@ -179,7 +179,7 @@ def report(context, scenario):  # noqa: C901
         nodes.remove("R12_GLB*")
 
     # Path for materials reporting output
-    directory = context.get_local_path("report", "materials")
+    directory = package_data_path("material", "reporting_output")
     directory.mkdir(exist_ok=True)
 
     # Generate message_ix level reporting and dump to an excel file.
