@@ -22,7 +22,7 @@ from message_ix_models.util import (
 
 # Get endogenous material demand from buildings interface
 from .data_buildings import get_scen_mat_demand
-from .build import get_spec
+from . import get_spec
 
 
 def read_data_aluminum(scenario):
