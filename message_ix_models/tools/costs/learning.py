@@ -11,7 +11,7 @@ from message_ix_models.util import package_data_path
 
 
 # Function to get GEA based cost reduction data
-def get_cost_reduction_data() -> pd.DataFrame:
+def get_cost_reduction_data(input_module) -> pd.DataFrame:
     """Get cost reduction data
 
     Raw data on cost reduction in 2100 for technologies are read from \
@@ -30,7 +30,7 @@ def get_cost_reduction_data() -> pd.DataFrame:
 
     # Read in raw data
     gea_file_path = package_data_path("costs", "cost_reduction_rates.csv")
-    df_gea = (
+    base_rates = (
         pd.read_csv(gea_file_path, header=8)
         .melt(
             id_vars=["message_technology", "technology_type"],
@@ -45,12 +45,41 @@ def get_cost_reduction_data() -> pd.DataFrame:
         .reset_index(drop=1)
     )
 
-    return df_gea
+    if input_module == "base":
+        return base_rates
+
+    elif input_module == "materials":
+        # Read in materials technology mapping file
+        materials_file_path = package_data_path("costs", "technology_materials_map.csv")
+        df_materials_tech = pd.read_csv(materials_file_path)
+
+        # For materials technologies with map_tech == base, map to base technologies
+        # and use cost reduction data
+        materials_rates = (
+            df_materials_tech.query("map_source == 'base'")
+            .drop(columns=["map_source", "base_year_reference_region_cost"])
+            .merge(
+                base_rates.rename(
+                    columns={"message_technology": "base_message_technology"}
+                ),
+                how="inner",
+                left_on="map_technology",
+                right_on="base_message_technology",
+            )
+            .drop(columns=["base_message_technology", "map_technology"])
+            .drop_duplicates()
+            .reset_index(drop=1)
+        )
+
+        # Concatenate base and materials rates
+        all_rates = pd.concat([base_rates, materials_rates], ignore_index=True)
+
+        return all_rates
 
 
 # Function to get technology learning scenarios data
 def get_technology_learning_scenarios_data(
-    input_base_year,
+    input_base_year, input_module
 ) -> pd.DataFrame:
     """Read in technology first year and learning scenarios data
 
@@ -76,7 +105,7 @@ def get_technology_learning_scenarios_data(
     """
 
     file = package_data_path("costs", "technology_learning_rates.csv")
-    df_learn = (
+    base_learn = (
         pd.read_csv(file)
         .assign(
             first_technology_year=lambda x: np.where(
@@ -93,7 +122,36 @@ def get_technology_learning_scenarios_data(
         )
     )
 
-    return df_learn
+    if input_module == "base":
+        return base_learn
+
+    elif input_module == "materials":
+        # Read in materials technology mapping file
+        materials_file_path = package_data_path("costs", "technology_materials_map.csv")
+        df_materials_tech = pd.read_csv(materials_file_path)
+
+        # For materials technologies with map_tech == base, map to base technologies
+        # and use their learning rates
+        materials_learn = (
+            df_materials_tech.query("map_source == 'base'")
+            .drop(columns=["map_source", "base_year_reference_region_cost"])
+            .merge(
+                base_learn.rename(
+                    columns={"message_technology": "base_message_technology"}
+                ),
+                how="inner",
+                left_on="map_technology",
+                right_on="base_message_technology",
+            )
+            .drop(columns=["base_message_technology", "map_technology"])
+            .drop_duplicates()
+            .reset_index(drop=1)
+        )
+
+        # Concatenate base and materials rates
+        all_learn = pd.concat([base_learn, materials_learn], ignore_index=True)
+
+        return all_learn
 
 
 # Function to project reference region investment cost using learning rates
@@ -102,6 +160,7 @@ def project_ref_region_inv_costs_using_learning_rates(
     input_node,
     input_ref_region,
     input_base_year,
+    input_module,
 ) -> pd.DataFrame:
     """Project investment costs using learning rates for reference region
 
@@ -143,10 +202,10 @@ def project_ref_region_inv_costs_using_learning_rates(
         reference_region = input_ref_region
 
     # Get cost reduction data
-    df_cost_reduction = get_cost_reduction_data()
+    df_cost_reduction = get_cost_reduction_data(input_module)
 
     # Get learning rates data
-    df_learning = get_technology_learning_scenarios_data(input_base_year)
+    df_learning = get_technology_learning_scenarios_data(input_base_year, input_module)
 
     # Merge cost reduction data with learning rates data
     df_learning_reduction = df_learning.merge(

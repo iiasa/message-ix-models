@@ -27,7 +27,9 @@ def larger_than(sequence, value):
     return [item for item in sequence if item > value]
 
 
-def create_projections_learning(in_node, in_ref_region, in_base_year, in_scenario):
+def create_projections_learning(
+    in_node, in_ref_region, in_base_year, in_module, in_scenario
+):
     print("Selected scenario: " + in_scenario)
     print(
         "For the learning method, only the SSP scenario(s) itself \
@@ -50,6 +52,7 @@ def create_projections_learning(in_node, in_ref_region, in_base_year, in_scenari
         input_node=in_node,
         input_ref_region=in_ref_region,
         input_base_year=in_base_year,
+        input_module=in_module,
     )
 
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
@@ -89,7 +92,7 @@ def create_projections_learning(in_node, in_ref_region, in_base_year, in_scenari
 
 
 def create_projections_gdp(
-    in_node, in_ref_region, in_base_year, in_scenario, in_scenario_version
+    in_node, in_ref_region, in_base_year, in_module, in_scenario, in_scenario_version
 ):
     # Print selection of scenario version and scenario
     print("Selected scenario: " + in_scenario)
@@ -121,6 +124,7 @@ def create_projections_gdp(
         input_node=in_node,
         input_ref_region=in_ref_region,
         input_base_year=in_base_year,
+        input_module=in_module,
     )
 
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
@@ -128,6 +132,7 @@ def create_projections_gdp(
         input_node=in_node,
         input_ref_region=in_ref_region,
         input_base_year=in_base_year,
+        input_module=in_module,
     )
 
     df_adj_cost_ratios = calculate_indiv_adjusted_region_cost_ratios(
@@ -174,7 +179,7 @@ def create_projections_gdp(
 
 
 def create_projections_converge(
-    in_node, in_ref_region, in_base_year, in_scenario, in_convergence_year
+    in_node, in_ref_region, in_base_year, in_module, in_scenario, in_convergence_year
 ):
     print("Selected scenario: " + in_scenario)
     print("Selected convergence year: " + str(in_convergence_year))
@@ -199,6 +204,7 @@ def create_projections_converge(
         input_node=in_node,
         input_ref_region=in_ref_region,
         input_base_year=in_base_year,
+        input_module=in_module,
     )
 
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
@@ -368,6 +374,7 @@ def create_message_outputs(input_df_projections: pd.DataFrame, fom_rate: float):
             axis=1,
         )
         .query("year_vtg <= 2060 or year_vtg % 10 == 0")
+        .reset_index(drop=True)
     )
 
     fom = (
@@ -411,6 +418,7 @@ def create_message_outputs(input_df_projections: pd.DataFrame, fom_rate: float):
             ],
             axis=1,
         )
+        .reset_index(drop=True)
     )
 
     return inv, fom
@@ -507,6 +515,7 @@ def create_cost_projections(
     sel_node: str = "r12",
     sel_ref_region=None,
     sel_base_year: int = BASE_YEAR,
+    sel_module: str = "base",
     sel_method: str = "gdp",
     sel_scenario_version="updated",
     sel_scenario="all",
@@ -525,6 +534,8 @@ def create_cost_projections(
             R20_NAM for R20
     sel_base_year : int, optional
         Base year, by default BASE_YEAR specified in the config file
+    sel_module : str, optional
+        Module to use, by default "base". Options are "base" and "materials"
     sel_method : str, optional
         Method to use, by default "gdp". Options are "learning", "gdp", \
             and "convergence"
@@ -571,6 +582,7 @@ def create_cost_projections(
         print("Selected node: " + node_up)
         print("Selected reference region: " + sel_ref_region)
         print("Selected base year: " + str(sel_base_year))
+        print("Selected module: " + sel_module)
 
         print("Selected method: " + sel_method)
 
@@ -580,6 +592,7 @@ def create_cost_projections(
                 in_node=node_up,
                 in_ref_region=sel_ref_region,
                 in_base_year=sel_base_year,
+                in_module=sel_module,
                 in_scenario=sel_scenario,
             )
 
@@ -589,6 +602,7 @@ def create_cost_projections(
                 in_node=node_up,
                 in_ref_region=sel_ref_region,
                 in_base_year=sel_base_year,
+                in_module=sel_module,
                 in_scenario=sel_scenario,
                 in_scenario_version=sel_scenario_version,
             )
@@ -599,6 +613,7 @@ def create_cost_projections(
                 in_node=node_up,
                 in_ref_region=sel_ref_region,
                 in_base_year=sel_base_year,
+                in_module=sel_module,
                 in_scenario=sel_scenario,
                 in_convergence_year=sel_convergence_year,
             )

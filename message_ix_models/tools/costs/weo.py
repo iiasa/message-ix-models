@@ -98,7 +98,8 @@ DICT_WEO_R20 = {
 def get_weo_data() -> pd.DataFrame:
     """Read in raw WEO investment/capital costs and O&M costs data.
 
-    Data are read for all technologies and for STEPS scenario only from the file
+    Data are read for all technologies and for STEPS scenario only from the
+    file
     :file:`data/iea/WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb`.
 
     Returns
@@ -106,7 +107,8 @@ def get_weo_data() -> pd.DataFrame:
     pandas.DataFrame
         DataFrame with columns:
 
-        - technology: WEO technologies, with shorthands as defined in `DICT_WEO_TECH`
+        - technology: WEO technologies, with shorthands as defined in
+        `DICT_WEO_TECH`
         - region: WEO regions
         - year: values from 2021 to 2050, as appearing in the file
         - cost type: either “inv_cost” or “fix_cost”
@@ -165,7 +167,8 @@ def get_weo_data() -> pd.DataFrame:
     all_cost_df = pd.concat(dfs_cost)
 
     # Substitute NaN values
-    # If value is missing, then replace with median across regions for that technology
+    # If value is missing, then replace with median across regions for that
+    # technology
 
     # Calculate median values for each technology
     df_median = (
@@ -185,9 +188,12 @@ def get_weo_data() -> pd.DataFrame:
 
     return df_merged
 
+    base_file_path = package_data_path("costs", "technology_base_map.csv")
+    pd.read_csv(base_file_path)
+
 
 # Function to read in technology mapping file
-def get_technology_mapping() -> pd.DataFrame:
+def get_technology_mapping(input_module) -> pd.DataFrame:
     """Read in technology mapping file
 
     Returns
@@ -197,23 +203,121 @@ def get_technology_mapping() -> pd.DataFrame:
         - message_technology: MESSAGEix technology name
         - map_source: data source to map MESSAGEix technology to (e.g., WEO)
         - map_technology: technology name in the data source
-        - base_year_reference_region_cost: manually specified base year cost of the \
-            technology in the reference region (in 2005 USD)
+        - base_year_reference_region_cost: manually specified base year cost
+        of the technology in the reference region (in 2005 USD)
     """
 
-    file_path = package_data_path("costs", "technology_weo_map.csv")
-    df_tech_map = pd.read_csv(file_path)
+    base_file_path = package_data_path("costs", "technology_base_map.csv")
+    raw_map_base = pd.read_csv(base_file_path)
 
-    return df_tech_map
+    if input_module == "base":
+        return raw_map_base
+
+    if input_module == "materials":
+        materials_file_path = package_data_path("costs", "technology_materials_map.csv")
+
+        # Read in materials mapping and do following processing:
+        # - Remove rows with null map_source values
+        raw_materials_map = pd.read_csv(materials_file_path).query(
+            "map_source.notnull()"
+        )
+
+        # If message_technology in raw_materials_map is in raw_map_base
+        # and base_year_reference_region_cost is not null,
+        # then replace base_year_reference_region_cost in raw_map_base
+        # with base_year_reference_region_cost in raw_materials_map
+        materials_replace = (
+            raw_materials_map.query(
+                "message_technology in @raw_map_base.message_technology"
+            )
+            .rename(
+                columns={
+                    "message_technology": "materials_message_technology",
+                    "base_year_reference_region_cost": "materials_base_year_reference_region_cost",
+                }
+            )
+            .drop(columns=["map_source", "map_technology"])
+            .merge(
+                raw_map_base,
+                how="right",
+                left_on="materials_message_technology",
+                right_on="message_technology",
+            )
+            .assign(
+                base_year_reference_region_cost=lambda x: np.where(
+                    x.materials_base_year_reference_region_cost.notnull(),
+                    x.materials_base_year_reference_region_cost,
+                    x.base_year_reference_region_cost,
+                )
+            )
+            .reindex(
+                [
+                    "message_technology",
+                    "map_source",
+                    "map_technology",
+                    "base_year_reference_region_cost",
+                ],
+                axis=1,
+            )
+        )
+
+        # Subset to only rows where map_source is "base"
+        # Merge with raw_map_base on map_technology
+        # If the "base_year_reference_region_cost" is not null in raw_materials_map, then use that
+        materials_map_base = (
+            raw_materials_map.query("map_source == 'base'")
+            .drop(columns=["map_source"])
+            .rename(
+                columns={
+                    "map_technology": "map_technology_base",
+                    "base_year_reference_region_cost": "materials_base_year_reference_region_cost",
+                }
+            )
+            .merge(
+                raw_map_base.rename(
+                    columns={
+                        "message_technology": "message_technology_base",
+                    }
+                ),
+                left_on="map_technology_base",
+                right_on="message_technology_base",
+                how="left",
+            )
+            .assign(
+                base_year_reference_region_cost=lambda x: np.where(
+                    x.materials_base_year_reference_region_cost.isnull(),
+                    x.base_year_reference_region_cost,
+                    x.materials_base_year_reference_region_cost,
+                )
+            )
+            .reindex(
+                [
+                    "message_technology",
+                    "map_source",
+                    "map_technology",
+                    "base_year_reference_region_cost",
+                ],
+                axis=1,
+            )
+        )
+
+        # Concatenate materials_replace and materials_map_base
+        # Drop duplicates
+        materials_all = (
+            pd.concat([materials_replace, materials_map_base])
+            .drop_duplicates()
+            .reset_index(drop=True)
+        )
+
+        return materials_all
 
 
 # Function to get WEO-based regional differentiation
 def get_weo_region_differentiated_costs(
-    input_node,
-    input_ref_region,
-    input_base_year,
+    input_node, input_ref_region, input_base_year, input_module
 ) -> pd.DataFrame:
-    """Calculate regionally differentiated costs and fixed-to-investment cost ratios
+    """Calculate regionally differentiated costs and fixed-to-investment cost
+    ratios
 
     Parameters
     ----------
@@ -261,9 +365,10 @@ def get_weo_region_differentiated_costs(
     df_weo = get_weo_data()
 
     # Grab technology mapping data
-    df_tech_map = get_technology_mapping()
+    df_tech_map = get_technology_mapping(input_module)
 
-    # If base year does not exist in WEO data, then use earliest year and give warning
+    # If base year does not exist in WEO data, then use earliest year and give
+    # warning
     base_year = str(input_base_year)
     if base_year not in df_weo.year.unique():
         base_year = str(min(df_weo.year.unique()))
@@ -358,8 +463,10 @@ def get_weo_region_differentiated_costs(
     )
 
     # Merge WEO costs and cost ratio data with technology mapping data
-    # If no base year cost in reference region is specified, then use the WEO cost
-    # Calculate regional costs using base year reference region cost and cost ratios
+    # If no base year cost in reference region is specified,
+    # then use the WEO cost
+    # Calculate regional costs using base year reference region cost
+    # and cost ratios
     df_reg_diff = (
         df_tech_map.merge(
             df_cost_ratios,
