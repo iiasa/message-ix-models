@@ -56,7 +56,8 @@ def test_get_technology_mapping():
     # Assert that materials-specific technologies are not present in the base module
     assert bool(all(i in a for i in c)) is False
 
-    # Assert that some materials-specific technologies are present in the materials module
+    # Assert that some materials-specific technologies are present
+    # in the materials module
     assert bool(all(i in d for i in e)) is True
 
 
