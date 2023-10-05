@@ -7,101 +7,6 @@ from scipy.stats import linregress  # type: ignore
 from message_ix_models.util import package_data_path
 
 
-def get_gdp_data() -> pd.DataFrame:
-    """Read in raw GDP data for SSP1, SSP2, SSP3 and output GDP ratios
-
-    Data are read from the files
-    :file:`data/iea/gdp_pp_per_capita-ssp1_v9.csv`,
-    :file:`data/iea/gdp_pp_per_capita-ssp2_v9.csv`, and
-    :file:`data/iea/gdp_pp_per_capita-ssp3_v9.csv`.
-
-    Returns
-    -------
-    pandas.DataFrame
-        DataFrame with columns:
-
-        - scenario: SSP1, SSP2, or SSP3
-        - r11_region: R11 region
-        - year: values from 2000 to 2100
-        - gdp_ppp_per_capita: GDP PPP per capita, in units of billion US$2005/yr/million
-        - gdp_ratio_reg_to_oecd: the maximum ratio of each region's GDP compared to \
-            OECD regions
-        - gdp_ratio_reg_to_nam: the ratio of each region's GDP compared to NAM region
-    """
-
-    scens = ["ssp1", "ssp2", "ssp3"]
-    l_dfs = []
-    for s in scens:
-        f = package_data_path("costs", "gdp_pp_per_capita-" + str(s) + "_v9.csv")
-        df = (
-            pd.read_csv(f, header=4)
-            .melt(
-                id_vars=["Model", "Scenario", "Region", "Variable", "Unit"],
-                var_name="year",
-                value_name="gdp_ppp_per_capita",
-            )
-            .drop(columns=["Model", "Scenario", "Variable", "Unit"])
-            .rename(columns={"Region": "r11_region", "Scenario": "scenario"})
-            .assign(scenario=s.upper(), units="billion US$2005/yr/million")
-            .replace({"r11_region": {"R11": ""}}, regex=True)
-            .pipe(
-                lambda df_: pd.merge(
-                    df_,
-                    df_.loc[df_.r11_region.isin(["NAM", "PAO", "WEU"])]
-                    .groupby("year")["gdp_ppp_per_capita"]
-                    .aggregate(["min", "mean", "max"])
-                    .reset_index(drop=0),
-                    on="year",
-                )
-            )
-            .pipe(
-                lambda df_: pd.merge(
-                    df_,
-                    df_.loc[df_.r11_region == "NAM"][["year", "gdp_ppp_per_capita"]]
-                    .rename(columns={"gdp_ppp_per_capita": "gdp_nam"})
-                    .reset_index(drop=1),
-                    on="year",
-                )
-            )
-            .rename(columns={"min": "oecd_min", "mean": "oecd_mean", "max": "oecd_max"})
-            .assign(
-                ratio_oecd_min=lambda x: np.where(
-                    x.r11_region.isin(["NAM", "PAO", "WEU"]),
-                    1,
-                    x.gdp_ppp_per_capita / x.oecd_min,
-                ),
-                ratio_oecd_max=lambda x: np.where(
-                    x.r11_region.isin(["NAM", "PAO", "WEU"]),
-                    1,
-                    x.gdp_ppp_per_capita / x.oecd_max,
-                ),
-                gdp_ratio_reg_to_oecd=lambda x: np.where(
-                    (x.ratio_oecd_min >= 1) & (x.ratio_oecd_max <= 1),
-                    1,
-                    x[["ratio_oecd_min", "ratio_oecd_min"]].max(axis=1),
-                ),
-                gdp_ratio_reg_to_nam=lambda x: x.gdp_ppp_per_capita / x.gdp_nam,
-            )
-            .reindex(
-                [
-                    "scenario",
-                    "r11_region",
-                    "year",
-                    "gdp_ppp_per_capita",
-                    "gdp_ratio_reg_to_oecd",
-                    "gdp_ratio_reg_to_nam",
-                ],
-                axis=1,
-            )
-        )
-
-        l_dfs.append(df)
-
-    df_gdp = pd.concat(l_dfs).reset_index(drop=1)
-
-    return df_gdp
-
-
 # Function to read in (under-review) SSP data
 def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
     """Read in raw SSP data and process it
@@ -295,7 +200,7 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
         df = pd.concat([df, df_led]).reset_index(drop=1)
 
         # Sort dataframe by scenario version, scenario, region, and year
-        df = df.sort_values(by=["scenario_version", "scenario", "region", "year"])
+        df = df.sort_values(by=["scenario", "scenario_version", "region", "year"])
 
         return df
 
