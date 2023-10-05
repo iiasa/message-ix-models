@@ -232,21 +232,21 @@ def get_technology_mapping(input_module) -> pd.DataFrame:
             )
             .rename(
                 columns={
-                    "message_technology": "materials_message_technology",
-                    "base_year_reference_region_cost": "materials_base_year_reference_region_cost",
+                    "message_technology": "mat_message_technology",
+                    "base_year_reference_region_cost": "material_base_cost",
                 }
             )
             .drop(columns=["map_source", "map_technology"])
             .merge(
                 raw_map_base,
                 how="right",
-                left_on="materials_message_technology",
+                left_on="mat_message_technology",
                 right_on="message_technology",
             )
             .assign(
                 base_year_reference_region_cost=lambda x: np.where(
-                    x.materials_base_year_reference_region_cost.notnull(),
-                    x.materials_base_year_reference_region_cost,
+                    x.material_base_cost.notnull(),
+                    x.material_base_cost,
                     x.base_year_reference_region_cost,
                 )
             )
@@ -263,14 +263,15 @@ def get_technology_mapping(input_module) -> pd.DataFrame:
 
         # Subset to only rows where map_source is "base"
         # Merge with raw_map_base on map_technology
-        # If the "base_year_reference_region_cost" is not null in raw_materials_map, then use that
+        # If the "base_year_reference_region_cost" is not null in raw_materials_map,
+        # then use that
         materials_map_base = (
             raw_materials_map.query("map_source == 'base'")
             .drop(columns=["map_source"])
             .rename(
                 columns={
                     "map_technology": "map_technology_base",
-                    "base_year_reference_region_cost": "materials_base_year_reference_region_cost",
+                    "base_year_reference_region_cost": "material_base_cost",
                 }
             )
             .merge(
@@ -285,9 +286,9 @@ def get_technology_mapping(input_module) -> pd.DataFrame:
             )
             .assign(
                 base_year_reference_region_cost=lambda x: np.where(
-                    x.materials_base_year_reference_region_cost.isnull(),
+                    x.material_base_cost.isnull(),
                     x.base_year_reference_region_cost,
-                    x.materials_base_year_reference_region_cost,
+                    x.material_base_cost,
                 )
             )
             .reindex(

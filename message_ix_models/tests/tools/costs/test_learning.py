@@ -79,5 +79,6 @@ def test_get_cost_reduction_data():
 
 #     # Check that coal_ppl inv_cost_learning_NAM is greater than 0
 #     assert (
-#         res.loc[res.message_technology == "coal_ppl", "inv_cost_learning_NAM"].min() > 0
+#         res.loc[res.message_technology == "coal_ppl",
+# "inv_cost_learning_NAM"].min() > 0
 #     )
