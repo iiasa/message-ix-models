@@ -487,6 +487,7 @@ def report(sc=False, reg="", sdgs=False):
     urban_mwdem_connected = ["out|final|urban_mw|urban_t_d|M1"]
     urban_mwdem_connected_eff = ["out|final|urban_mw|urban_t_d|Mf"]
     industry_mwdem_unconnected = ["out|final|industry_mw|industry_unconnected|M1"]
+    industry_mwdem_unconnected_eff = ["out|final|industry_mw|industry_unconnected|Mf"]
 
     electr_gw = ["in|final|electr|extract_groundwater|M1"]
     electr_fgw = ["in|final|electr|extract_gw_fossil|M1"]
@@ -590,7 +591,8 @@ def report(sc=False, reg="", sdgs=False):
                 + urban_mwdem_connected_eff
                 + urban_mwdem_unconnected
                 + urban_mwdem_unconnected_eff
-                + industry_mwdem_unconnected,
+                + industry_mwdem_unconnected
+                + industry_mwdem_unconnected_eff,
                 "km3/yr",
             ],
             ["Water Withdrawal|Energy techs & Irrigation", region_withdr, "km3/yr"],
@@ -740,8 +742,19 @@ def report(sc=False, reg="", sdgs=False):
                 "km3/yr",
             ],
             [
+                "Water Withdrawal|Industrial Water",
+                industry_mwdem_unconnected
+                + industry_mwdem_unconnected_eff,
+                "km3/yr",
+            ],
+            [
                 "Water Withdrawal|Industrial Water|Unconnected",
                 industry_mwdem_unconnected,
+                "km3/yr",
+            ],
+            [
+                "Water Withdrawal|Industrial Water|Unconnected Eff",
+                industry_mwdem_unconnected_eff,
                 "km3/yr",
             ],
             # ["Water Withdrawal|Irrigation", irr_water, "km3/yr"],
