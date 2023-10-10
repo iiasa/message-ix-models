@@ -32,7 +32,7 @@ def test_apply_splines_to_convergence():
     )
 
     if in_scenario is not None:
-        df_ref_reg_learning = df_ref_reg_learning.query("scenario == @sel_scen")
+        df_ref_reg_learning = df_ref_reg_learning.query("scenario == @in_scenario")
 
     df_pre_costs = df_region_diff.merge(
         df_ref_reg_learning, on="message_technology"
