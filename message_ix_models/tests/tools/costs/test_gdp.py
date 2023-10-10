@@ -126,7 +126,8 @@ def test_calculate_indiv_adjusted_region_cost_ratios():
     # assert bool(all(i in r11_cost_ratios.scenario.unique() for i in scens)) is True
     # assert bool(all(i in r12_cost_ratios.scenario.unique() for i in scens)) is True
 
-    # # Assert that all cost ratios for reference region R11_NAM or R12_NAM are equal to 1
+    # # Assert that all cost ratios for reference region
+    # R11_NAM or R12_NAM are equal to 1
     # assert all(
     #     r11_cost_ratios.query("region == 'R11_NAM'").reg_cost_ratio_adj.values == 1.0
     # )
