@@ -60,6 +60,7 @@ def create_projections_learning(
         input_node=in_node,
         input_ref_region=in_ref_region,
         input_base_year=in_base_year,
+        input_module=in_module,
     )
 
     if in_scenario is not None:
@@ -212,6 +213,7 @@ def create_projections_converge(
         input_node=in_node,
         input_ref_region=in_ref_region,
         input_base_year=in_base_year,
+        input_module=in_module,
     )
 
     if in_scenario is not None:
