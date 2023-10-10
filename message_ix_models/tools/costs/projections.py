@@ -19,6 +19,12 @@ from message_ix_models.tools.costs.splines import apply_splines_to_convergence
 from message_ix_models.tools.costs.weo import get_weo_region_differentiated_costs
 
 
+class projections:
+    def __init__(self, inv_cost, fix_cost):
+        self.inv_cost = inv_cost
+        self.fix_cost = fix_cost
+
+
 def smaller_than(sequence, value):
     return [item for item in sequence if item < value]
 
@@ -625,9 +631,14 @@ def create_cost_projections(
 
         if sel_format == "message":
             df_inv, df_fom = create_message_outputs(df_costs, fom_rate=sel_fom_rate)
-            return df_inv, df_fom
+
+            proj = projections(df_inv, df_fom)
+            return proj
 
         if sel_format == "iamc":
             df_inv, df_fom = create_message_outputs(df_costs, fom_rate=sel_fom_rate)
             df_inv_iamc, df_fom_iamc = create_iamc_outputs(df_inv, df_fom)
-            return df_inv_iamc, df_fom_iamc
+
+            proj = projections(df_inv_iamc, df_fom_iamc)
+
+            return proj
