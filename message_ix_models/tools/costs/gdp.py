@@ -214,9 +214,11 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
 def calculate_indiv_adjusted_region_cost_ratios(
     region_diff_df, input_node, input_ref_region, input_base_year
 ):
-    df_gdp = process_raw_ssp_data(
-        input_node=input_node, input_ref_region=input_ref_region
-    ).query("year >= 2020")
+    df_gdp = (
+        process_raw_ssp_data(input_node=input_node, input_ref_region=input_ref_region)
+        .query("year >= 2020")
+        .drop(columns=["total_gdp", "total_population"])
+    )
     df_cost_ratios = region_diff_df.copy()
 
     # If base year does not exist in GDP data, then use earliest year in GDP data
