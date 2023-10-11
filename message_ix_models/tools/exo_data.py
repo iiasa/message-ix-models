@@ -256,6 +256,9 @@ def iamc_like_data_for_query(path: Path, query: str) -> Quantity:
     unique = dict()
 
     def drop_unique(df, names) -> pd.DataFrame:
+        if len(df) == 0:
+            raise RuntimeError(f"0 rows matching {query!r}")
+
         names_list = names.split()
         for name in names_list:
             values = df[name].unique()
