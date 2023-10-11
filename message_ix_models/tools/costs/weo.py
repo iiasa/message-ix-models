@@ -44,7 +44,7 @@ DICT_COST_COLS = {"inv_cost": "A,B:D", "fix_cost": "A,F:H"}
 DICT_WEO_R11 = {
     "R11_AFR": "Africa",
     "R11_CPA": "China",
-    "R11_EEU": "Russia",
+    "R11_EEU": "European Union",
     "R11_FSU": "Russia",
     "R11_LAM": "Brazil",
     "R11_MEA": "Middle East",
@@ -59,7 +59,7 @@ DICT_WEO_R12 = {
     "R12_AFR": "Africa",
     "R12_RCPA": "China",
     "R12_CHN": "China",
-    "R12_EEU": "Russia",
+    "R12_EEU": "European Union",
     "R12_FSU": "Russia",
     "R12_LAM": "Brazil",
     "R12_MEA": "Middle East",
