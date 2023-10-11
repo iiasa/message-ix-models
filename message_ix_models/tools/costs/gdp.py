@@ -14,7 +14,7 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
     This function takes in the raw SSP data (in IAMC format), aggregates \
     it to a specified node/regional level, and calculates regional GDP \
     per capita. The SSP data is read from the file \
-    :file:`data/iea/SSP-Review-Phase-1-subset.csv`.
+    :file:`data/iea/SSP-Review-Phase-1.csv.gz`.
 
     Parameters
     ----------
@@ -27,12 +27,15 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
+        - scenario_version: scenario version
         - scenario: SSP scenario
         - region: R11, R12, or R20 region
         - year
         - total_gdp: total GDP (in units of billion US$2005/yr)
         - total_population: total population (in units of million)
-        - gdp_ppp_per_capita: GDP per capita (in units of billion US$2005/yr / million)
+        - gdp_ppp_per_capita: total GDP (in units of billion US$2005/yr)
+        - gdp_ratio_reg_to_reference: GDP per capita \
+            (in units of billion US$2005/yr / million)
     """
     # Change node selection to upper case
     node_up = input_node.upper()
@@ -186,6 +189,8 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
                     "scenario",
                     "region",
                     "year",
+                    "total_gdp",
+                    "total_population",
                     "gdp_ppp_per_capita",
                     "gdp_ratio_reg_to_reference",
                 ],
