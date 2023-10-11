@@ -161,7 +161,10 @@ configure(
 
 def dims_of(info: dict) -> Dict[str, str]:
     """Return a mapping from the full index names to short dimension IDs of `info`."""
-    return {d: RENAME_DIMS.get(d, d) for d in info.get("idx_names") or info["idx_sets"]}
+    return {
+        d: RENAME_DIMS.get(d, d)
+        for d in (info.get("idx_names") or info.get("idx_sets") or [])
+    }
 
 
 def simulate_qty(
@@ -269,7 +272,6 @@ def add_simulated_solution(
 
         # Add a task to load data from a file in `path`, if it exists
         try:
-            # Candidate path
             assert path is not None
             p = path.joinpath(name).with_suffix(".csv.gz")
             assert p.exists()
@@ -277,7 +279,6 @@ def add_simulated_solution(
             pass  # No `path` or no such file
         else:
             # Add data from file
-
             rep.add(key, data_from_file, p, name=name, dims=key.dims, sums=True)
             continue
 
