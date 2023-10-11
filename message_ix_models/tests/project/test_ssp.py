@@ -86,6 +86,44 @@ def test_cli(mix_models_cli):
     mix_models_cli.assert_exit_0(["ssp", "gen-structures", "--dry-run"])
 
 
+class TestSSPOriginal:
+    @pytest.mark.parametrize(
+        "source",
+        (
+            "ICONICS:SSP(2017).1",
+            "ICONICS:SSP(2017).2",
+            "ICONICS:SSP(2017).3",
+            "ICONICS:SSP(2017).4",
+            "ICONICS:SSP(2017).5",
+        ),
+    )
+    @pytest.mark.parametrize(
+        "source_kw",
+        (
+            dict(measure="POP", model="OECD Env-Growth"),
+            dict(measure="GDP", model="OECD Env-Growth"),
+        ),
+    )
+    def test_prepare_computer(self, test_context, source, source_kw):
+        # FIXME The following should be redundant, but appears mutable on GHA linux and
+        #       Windows runners.
+        test_context.model.regions = "R14"
+
+        c = Computer()
+
+        keys = prepare_computer(test_context, c, source, source_kw)
+
+        # Preparation of data runs successfully
+        result = c.get(keys[0])
+
+        # Data has the expected dimensions
+        assert ("n", "y") == result.dims
+
+        # Data is complete
+        assert 14 == len(result.coords["n"])
+        assert 14 == len(result.coords["y"])
+
+
 class TestSSPUpdate:
     @pytest.mark.parametrize(
         "source",
