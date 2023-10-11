@@ -1,12 +1,15 @@
 """Tests for message_data.reporting."""
 from importlib.metadata import version
 
+import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
 
-from message_ix_models import testing
+from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report import prepare_reporter, report, util
+from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.util import package_data_path
 
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
@@ -198,3 +201,38 @@ def test_collapse(input, exp):
 
     # collapse() transforms the "variable" column in the expected way
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
+
+
+def test_add_simulated_solution(test_context, test_data_path):
+    from message_ix import Reporter
+
+    rep = Reporter()
+
+    # Simulated solution can be added to an empty Reporter
+    add_simulated_solution(
+        rep,
+        ScenarioInfo(),
+        path=package_data_path("test", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline"),
+    )
+
+    # out can be calculated using "output" and "ACT" from files in `path`
+    result = rep.get("out:*")
+
+    # Has expected dimensions and length
+    assert tuple("nl t yv ya m nd c l h hd".split()) == result.dims
+    assert 155461 == len(result)
+
+    # Compare one expected value
+    value = result.sel(
+        nl="R11_AFR",
+        t="biomass_rc",
+        yv=2020,
+        ya=2020,
+        m="M1",
+        nd="R11_AFR",
+        c="rc_therm",
+        l="useful",
+        h="year",
+        hd="year",
+    )
+    assert np.isclose(79.76478, value.item())
