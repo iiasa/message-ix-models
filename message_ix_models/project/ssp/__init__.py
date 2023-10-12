@@ -71,7 +71,14 @@ def gen_structures(context, **kwargs):
 
 
 @cli.command("make-test-data")
-def make_test_data():
+@click.argument(
+    "filename",
+    metavar="FILENAME",
+    type=click.Choice(
+        ["SSP-Review-Phase-1.csv.gz", "SspDb_country_data_2013-06-12.csv.zip"]
+    ),
+)
+def make_test_data(filename):
     """Create random data for testing."""
     from pathlib import Path
 
@@ -81,7 +88,7 @@ def make_test_data():
     from message_ix_models.util import package_data_path, private_data_path
 
     # Paths
-    p = Path("ssp", "SSP-Review-Phase-1.csv.gz")
+    p = Path("ssp", filename)
     path_in = private_data_path(p)
     path_out = package_data_path("test", p)
 
