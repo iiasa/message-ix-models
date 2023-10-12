@@ -34,6 +34,19 @@ class SSPOriginal(ExoDataSource):
 
     id = "SSP"
 
+    #: One-to-one correspondence between "model" codes and date fragments in scenario
+    #: codes.
+    model_date = {
+        "IIASA GDP": "130219",
+        "IIASA-WiC POP": "130115",
+        "NCAR": "130115",
+        "OECD Env-Growth": "130325",
+        "PIK GDP-32": "130424",
+    }
+
+    #: Replacements to apply when loading the data.
+    replace = {"billion US$2005/yr": "billion USD_2005/yr"}
+
     def __init__(self, source, source_kw):
         s = "ICONICS:SSP(2017)."
         if not source.startswith(s):
@@ -52,13 +65,7 @@ class SSPOriginal(ExoDataSource):
         self.model = _kw.pop("model", None)
 
         # Determine the date based on the model ID. There is a 1:1 correspondence.
-        self.date = {
-            "IIASA GDP": "130219",
-            "IIASA-WiC POP": "130115",
-            "NCAR": "130115",
-            "OECD Env-Growth": "130325",
-            "PIK GDP-32": "130424",
-        }.get(self.model)
+        self.date = self.model_date[self.model]
 
         if len(_kw):
             raise ValueError(_kw)
@@ -82,7 +89,7 @@ class SSPOriginal(ExoDataSource):
             path = package_data_path("test", *parts)
             log.warning(f"Reading random data from {path}")
 
-        return iamc_like_data_for_query(path, query)
+        return iamc_like_data_for_query(path, query, replace=self.replace)
 
 
 @register_source
