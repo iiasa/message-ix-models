@@ -262,6 +262,14 @@ def add_simulated_solution(
         solution data for the MESSAGE variable with the same name. See
         :func:`data_from_file`.
     """
+    from importlib.metadata import version
+
+    if version("message_ix") < "3.6":
+        raise NotImplementedError(
+            "Support for message_ix_models.report.sim.add_simulated_solution() with "
+            "message_ix <= 3.5.0. Please upgrade to message_ix 3.6 or later."
+        )
+
     mark_time()
     N = len(rep.graph)
 
