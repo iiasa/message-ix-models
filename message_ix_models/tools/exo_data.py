@@ -230,7 +230,9 @@ class DemoSource(ExoDataSource):
 
 
 @cached
-def iamc_like_data_for_query(path: Path, query: str) -> Quantity:
+def iamc_like_data_for_query(
+    path: Path, query: str, *, replace: Optional[dict] = None
+) -> Quantity:
     """Load data from `path` in IAMC-like format and transform to :class:`.Quantity`.
 
     The steps involved are:
@@ -270,6 +272,7 @@ def iamc_like_data_for_query(path: Path, query: str) -> Quantity:
     tmp = (
         pd.read_csv(path, engine="pyarrow")
         .query(query)
+        .replace(replace or {})
         .rename(columns=lambda c: c.upper())
         .pipe(drop_unique, "MODEL SCENARIO VARIABLE UNIT")
         .assign(n=lambda df: df["REGION"].apply(iso_3166_alpha_3))
@@ -281,5 +284,4 @@ def iamc_like_data_for_query(path: Path, query: str) -> Quantity:
         .stack()
         .dropna()
     )
-
     return Quantity(tmp, units=unique["UNIT"])
