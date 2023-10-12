@@ -203,6 +203,7 @@ def test_collapse(input, exp):
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
 
 
+@MARK[0]
 def test_add_simulated_solution(test_context, test_data_path):
     from message_ix import Reporter
 
