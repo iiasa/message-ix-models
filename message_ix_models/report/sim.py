@@ -273,6 +273,9 @@ def add_simulated_solution(
     mark_time()
     N = len(rep.graph)
 
+    # Ensure "scenario" is present in the graph
+    rep.graph.setdefault("scenario", None)
+
     # Add simulated data
     data = data or dict()
     for name, item_info in SIMULATE_ITEMS.items():

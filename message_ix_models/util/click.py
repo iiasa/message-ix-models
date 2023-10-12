@@ -5,7 +5,7 @@ These are used for building CLIs using :mod:`click`.
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import click
 from click import Argument, Choice, Option
@@ -86,9 +86,15 @@ def store_context(context: Union[click.Context, Context], param, value):
     return value
 
 
-def urls_from_file(context: Union[click.Context, Context], param, value):
+def urls_from_file(
+    context: Union[click.Context, Context], param, value
+) -> List[ScenarioInfo]:
     """Callback to parse scenario URLs from `value`."""
-    si = []
+    si: List[ScenarioInfo] = []
+
+    if value is None:
+        return si
+
     with click.open_file(value) as f:
         for line in f:
             si.append(ScenarioInfo.from_url(url=line))

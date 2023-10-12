@@ -78,6 +78,8 @@ exclude_also = [
   "@(abc\\.)?abstractmethod",
   # Imports only used by type checkers
   "if TYPE_CHECKING:",
+  # Requires message_data
+  "if HAS_MESSAGE_DATA:",
 ]
 
 [tool.mypy]

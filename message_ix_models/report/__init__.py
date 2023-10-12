@@ -16,7 +16,10 @@ from message_ix import Reporter, Scenario
 from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util._logging import mark_time
 
+from .config import Config
+
 __all__ = [
+    "Config",
     "prepare_reporter",
     "register",
     "report",

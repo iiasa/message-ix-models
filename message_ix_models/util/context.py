@@ -72,7 +72,7 @@ class Context(dict):
 
     def __init__(self, *args, **kwargs):
         from message_ix_models.model import Config as ModelConfig
-        from message_ix_models.report.config import Config as ReportConfig
+        from message_ix_models.report import Config as ReportConfig
 
         if len(_CONTEXTS) == 0:
             log.info("Create root Context")
