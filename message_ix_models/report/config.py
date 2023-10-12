@@ -93,7 +93,7 @@ class Config(ConfigHelper):
                 )
             )
         except StopIteration:
-            raise FileNotFoundError(f"Reporting configuration in {file_path}")
+            raise FileNotFoundError(f"Reporting configuration in '{file_path}(.yaml)'")
 
         # Store for genno to handle
         self.genno_config["path"] = path

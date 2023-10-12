@@ -1,7 +1,10 @@
+import re
+
+import pandas as pd
 import xarray as xr
 from genno import Quantity
 
-from message_ix_models.report.computations import compound_growth
+from message_ix_models.report.computations import compound_growth, filter_ts
 
 
 def test_compound_growth():
@@ -28,3 +31,17 @@ def test_compound_growth():
     assert all(1.02**5 == r1.sel(t=2035) / r1.sel(t=2030))
 
     assert all(1.0 == result.sel(x="x2"))
+
+
+def test_filter_ts():
+    df = pd.DataFrame([["foo"], ["bar"]], columns=["variable"])
+    assert 2 == len(df)
+
+    # Operator runs
+    result = filter_ts(df, re.compile(".(ar)"))
+
+    # Only matching rows are returned
+    assert 1 == len(result)
+
+    # Only the first match group in `expr` is preserved
+    assert {"ar"} == set(result.variable.unique())

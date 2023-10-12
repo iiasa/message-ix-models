@@ -110,6 +110,13 @@ class ConfigHelper:
         )
 
     def update(self, **kwargs):
+        """Update attributes in-place.
+
+        Raises
+        ------
+        AttributeError
+            Any of the `kwargs` are not fields in the data class.
+        """
         # TODO use _munge_dict(); allow a positional argument
         for k, v in kwargs.items():
             if not hasattr(self, k):

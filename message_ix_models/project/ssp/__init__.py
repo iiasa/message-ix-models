@@ -78,7 +78,7 @@ def gen_structures(context, **kwargs):
         ["SSP-Review-Phase-1.csv.gz", "SspDb_country_data_2013-06-12.csv.zip"]
     ),
 )
-def make_test_data(filename):
+def make_test_data(filename):  # pragma: no cover
     """Create random data for testing."""
     from pathlib import Path
 

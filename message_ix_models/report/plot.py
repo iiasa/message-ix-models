@@ -210,3 +210,4 @@ PLOTS = (
 def callback(c: Computer, context: "Context") -> None:
     all_keys = [c.add(f"plot {p.basename}", p, "scenario") for p in PLOTS]
     c.add("plot all", all_keys)
+    log.info(f"Add 'plot all' collecting {len(all_keys)} plots")

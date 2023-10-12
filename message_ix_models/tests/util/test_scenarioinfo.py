@@ -137,6 +137,12 @@ class TestScenarioInfo:
         assert 1963 == info.y0
         assert [1963, 1964, 1965] == info.Y
 
+    def test_from_url(self):
+        si = ScenarioInfo.from_url("m/s#123")
+        assert "m" == si.model
+        assert "s" == si.scenario
+        assert 123 == si.version
+
     @pytest.mark.parametrize(
         "input, expected",
         (

@@ -102,6 +102,11 @@ class TestSSPOriginal:
         (
             dict(measure="POP", model="OECD Env-Growth"),
             dict(measure="GDP", model="OECD Env-Growth"),
+            # Excess keyword arguments
+            pytest.param(
+                dict(measure="GDP", model="OECD Env-Growth", foo="bar"),
+                marks=pytest.mark.xfail(raises=ValueError),
+            ),
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
@@ -141,6 +146,11 @@ class TestSSPUpdate:
             dict(measure="POP"),
             dict(measure="GDP", model="IIASA GDP 2023"),
             dict(measure="GDP", model="OECD ENV-Growth 2023"),
+            # Excess keyword arguments
+            pytest.param(
+                dict(measure="POP", foo="bar"),
+                marks=pytest.mark.xfail(raises=ValueError),
+            ),
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):

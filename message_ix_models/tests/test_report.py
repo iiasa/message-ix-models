@@ -159,6 +159,12 @@ def test_apply_units(request, test_context, regions):
     assert ["EUR_2005"] == df["unit"].unique()
 
 
+@pytest.mark.xfail(reason="Incomplete")
+def test_cli(mix_models_cli):
+    # TODO complete by providing a Scenario that is reportable (with solution)
+    mix_models_cli.assert_exit_0(["report"])
+
+
 @pytest.mark.parametrize(
     "input, exp",
     (
@@ -203,8 +209,8 @@ def test_collapse(input, exp):
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
 
 
-@MARK[0]
-def test_add_simulated_solution(test_context, test_data_path):
+def ss_reporter():
+    """Reporter with a simulated solution for snapshot 0."""
     from message_ix import Reporter
 
     rep = Reporter()
@@ -216,7 +222,15 @@ def test_add_simulated_solution(test_context, test_data_path):
         path=package_data_path("test", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline"),
     )
 
-    # out can be calculated using "output" and "ACT" from files in `path`
+    return rep
+
+
+@MARK[0]
+def test_add_simulated_solution(test_context, test_data_path):
+    # Simulated solution can be added to an empty Reporter
+    rep = ss_reporter()
+
+    # "out" can be calculated using "output" and "ACT" from files in `path`
     result = rep.get("out:*")
 
     # Has expected dimensions and length
@@ -237,3 +251,14 @@ def test_add_simulated_solution(test_context, test_data_path):
         hd="year",
     )
     assert np.isclose(79.76478, value.item())
+
+
+def test_prepare_reporter(test_context):
+    rep = ss_reporter()
+    N = len(rep.graph)
+
+    # prepare_reporter() works on the simulated solution
+    prepare_reporter(test_context, reporter=rep)
+
+    # A number of keys were added
+    assert 14299 <= len(rep.graph) - N

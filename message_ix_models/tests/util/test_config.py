@@ -131,3 +131,8 @@ subconfig-b:  # No name manipulation for subkeys here
         result = c.replace(foo_2="baz")
         assert result is not c
         assert "baz" == result.foo_2
+
+    def test_update(self, c):
+        """:meth:`.update` raises AttributeError."""
+        with pytest.raises(AttributeError):
+            c.update(foo_4="")
