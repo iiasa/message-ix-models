@@ -14,8 +14,9 @@ Next release
 
   - New :class:`.report.Config` class collecting recognized settings for the module.
   - :py:`context["report"]` always exists as an instance of :class:`.report.Config`.
-  - New submodule :class:`.report.plot` with base class and 5 plots of time-series data stored on Scenarios (:pull:`125`).
-  - New operator :func:`.filter_ts` (:pull:`125`).
+  - New submodule :class:`.report.plot` with base class and 5 plots of time-series data stored on Scenarios.
+  - Submodule :class:`.report.sim` provides :func:`add_simulated_solution` for testing reporting configuration.
+  - New operator :func:`.filter_ts`.
 
 - New reusable command-line option :program:`--urls-from-file` in :mod:`.util.click` (:pull:`125`).
 - Add `pyarrow <https://pypi.org/project/pyarrow/>`_ to dependencies (:pull:`125`).
