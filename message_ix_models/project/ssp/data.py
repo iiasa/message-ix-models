@@ -12,6 +12,11 @@ from message_ix_models.util import (
     private_data_path,
 )
 
+__all__ = [
+    "SSPOriginal",
+    "SSPUpdate",
+]
+
 log = logging.getLogger(__name__)
 
 
@@ -19,17 +24,34 @@ log = logging.getLogger(__name__)
 class SSPOriginal(ExoDataSource):
     """Provider of exogenous data from the original SSP database.
 
-    In the `source_kw` to :func:`.exo_data.prepare_computer`, the following are valid:
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    arguments:
 
-    ``model``
-       - IIASA POP
-       - IIASA-WiC POP
-       - NCAR
-       - OECD Env-Growth
-       - PIK GDP-32
+    - `source`: Any value from :data:`.SSP_2017` or equivalent string, for instance
+      "ICONICS:SSP(2017).2". The specific SSP for which data is returned is determined
+      from the value.
+    - `source_kw` including:
 
-    The measures available differ according to the model; see the source data for
-    details.
+      - "model": one of:
+
+          - IIASA POP
+          - IIASA-WiC POP
+          - NCAR
+          - OECD Env-Growth
+          - PIK GDP-32
+
+      - "measure": The measures available differ according to the model; see the source
+        data for details.
+
+    Example
+    -------
+    >>> keys = prepare_computer(
+    ...     context,
+    ...     computer,
+    ...     source="ICONICS:SSP(2015).3",
+    ...     source_kw=dict(measure="POP", model="IIASA-WiC POP"),
+    ... )
+    >>> result = computer.get(keys[0])
     """
 
     id = "SSP"
@@ -94,7 +116,24 @@ class SSPOriginal(ExoDataSource):
 
 @register_source
 class SSPUpdate(ExoDataSource):
-    """Provider of exogenous data from the SSP Update database."""
+    """Provider of exogenous data from the SSP Update database.
+
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    arguments:
+
+    - `source`: Any value from :data:`.SSP_2024` or equivalent string, for instance
+      "ICONICS:SSP(2024).2".
+
+    Example
+    -------
+    >>> keys = prepare_computer(
+    ...     context,
+    ...     computer,
+    ...     source="ICONICS:SSP(2024).3",
+    ...     source_kw=dict(measure="GDP", model="IIASA GDP 2023"),
+    ... )
+    >>> result = computer.get(keys[0])
+    """
 
     id = "SSP update"
 

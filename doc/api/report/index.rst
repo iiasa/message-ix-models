@@ -25,7 +25,7 @@ Not public:
 Introduction
 ============
 
-See :doc:`the discussion in the MESSAGEix docs <message_ix:reporting>` about the stack.
+See :doc:`the discussion in the MESSAGEix docs <message-ix:reporting>` about the stack.
 In short, :mod:`message_ix` must not contain reporting code that references ``coal_ppl``, because not every model built on the MESSAGE framework will have a technology with this name.
 Any reporting specific to ``coal_ppl`` must be in :mod:`message_ix_models`, since all models in the MESSAGEix-GLOBIOM family will have this technology.
 
@@ -95,14 +95,24 @@ API reference
 
    .. autosummary::
 
+      Config
       prepare_reporter
       register
       report
 
+.. currentmodule:: message_ix_models.report.plot
+
+Plots
+-----
+
+.. automodule:: message_ix_models.report.plot
+   :members:
+
+.. currentmodule:: message_ix_models.report.computations
+
 Operators
 ---------
 
-.. currentmodule:: message_ix_models.report.computations
 .. automodule:: message_ix_models.report.computations
    :members:
 
@@ -110,6 +120,10 @@ Operators
 
    .. autosummary::
 
+      codelist_to_groups
+      compound_growth
+      exogenous_data
+      filter_ts
       from_url
       get_ts
       gwp_factors

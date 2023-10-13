@@ -53,9 +53,16 @@ nitpick_ignore_regex = {
 }
 
 rst_prolog = """
+.. role:: py(code)
+   :language: python
+
 .. |Code| replace:: :class:`~sdmx.model.common.Code`
 .. |Platform| replace:: :class:`~ixmp.Platform`
 .. |Scenario| replace:: :class:`~message_ix.Scenario`
+
+.. |n| replace:: :math:`n`
+.. |y| replace:: :math:`y`
+.. |y0| replace:: :math:`y_0`
 """
 
 

@@ -88,10 +88,16 @@ def add_exogenous_data(
     )
 
 
-def filter_ts(df: pd.DataFrame, expr: re.Pattern) -> pd.DataFrame:
-    """Filter time series data in `df`."""
-    return df[df["variable"].str.fullmatch(expr)].assign(
-        variable=df["variable"].str.replace(expr, r"\1", regex=True)
+def filter_ts(df: pd.DataFrame, expr: re.Pattern, *, column="variable") -> pd.DataFrame:
+    """Filter time series data in `df`.
+
+    1. Keep only rows in `df` where `expr` is a full match (
+       :meth:`~pandas.Series.str.fullmatch`) for the entry in `column`.
+    2. Retain only the first match group ("...(...)...") from `expr` as the `column`
+       entry.
+    """
+    return df[df[column].str.fullmatch(expr)].assign(
+        variable=df[column].str.replace(expr, r"\1", regex=True)
     )
 
 
