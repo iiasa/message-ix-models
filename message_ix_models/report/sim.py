@@ -1,3 +1,4 @@
+"""Simulated solution data for testing :mod:`~message_ix_models.report`."""
 import logging
 from collections import ChainMap, defaultdict
 from collections.abc import Mapping
@@ -15,6 +16,13 @@ from pandas.api.types import is_scalar
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util._logging import mark_time, silence_log
+
+__all__ = [
+    "SIMULATE_ITEMS",
+    "add_simulated_solution",
+    "data_from_file",
+    "simulate_qty",
+]
 
 log = logging.getLogger(__name__)
 

@@ -172,7 +172,7 @@ Utilities
 
 
 Command-line interface
-----------------------
+======================
 
 .. currentmodule:: message_ix_models.report.cli
 .. automodule:: message_ix_models.report.cli
@@ -206,3 +206,11 @@ Command-line interface
      -o, --output PATH     Write output to file instead of console.
      --from-file FILE      Report multiple Scenarios listed in FILE.
      --help                Show this message and exit.
+
+Testing
+=======
+
+
+.. currentmodule:: message_ix_models.report.sim
+.. automodule:: message_ix_models.report.sim
+   :members:
