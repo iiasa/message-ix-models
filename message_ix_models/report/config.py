@@ -14,7 +14,11 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class Config(ConfigHelper):
-    """Settings for :mod:`message_ix_models.report`."""
+    """Settings for :mod:`message_ix_models.report`.
+
+    When initializing a new instance, the `from_file` and `_legacy` parameters are
+    respected.
+    """
 
     #: Shorthand to call :func:`use_file` on a new instance.
     from_file: InitVar[Optional[Path]] = package_data_path("report", "global.yaml")
@@ -51,9 +55,10 @@ class Config(ConfigHelper):
         self.legacy.update(use=_legacy)
 
     def set_output_dir(self, arg: Optional[Path]) -> None:
-        """Set the output directory.
+        """Set :attr:`output_dir`, the output directory.
 
-        The value is also passed to :mod:`genno` as the "output_dir" configuration key.
+        The value is also stored to be passed to :mod:`genno` as the "output_dir"
+        configuration key.
         """
         if arg:
             self.output_dir = arg.expanduser()
@@ -64,7 +69,7 @@ class Config(ConfigHelper):
         """Use genno configuration from a (YAML) file at `file_path`.
 
         See :mod:`genno.config` for the format of these files. The path is stored at
-        :py:`.genno_config["path]`, where it is picked up by genno's configuration
+        :py:`.genno_config["path"]`, where it is picked up by genno's configuration
         mechanism.
 
         Parameters

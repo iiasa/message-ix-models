@@ -16,6 +16,7 @@ __all__ = [
     "SOURCES",
     "DemoSource",
     "ExoDataSource",
+    "iamc_like_data_for_query",
     "prepare_computer",
     "register_source",
 ]
@@ -78,19 +79,10 @@ def prepare_computer(
 ) -> Tuple[Key, ...]:
     """Prepare `c` to compute GDP, population, or other exogenous data.
 
-    Returns a tuple of keys. The first, like ``{m}:n-y``, triggers the following
-    computations:
-
-    1. Load data by invoking a :class:`ExoDataSource`.
-    2. Aggregate on the ``n`` (``node``) dimension according to :attr:`Config.regions`.
-    3. Interpolate on the ``y`` (``year``) dimension according to :attr:`Config.years`.
-
-    Additional key(s) include:
-
-    - ``{m}:n-y:y0 indexed``: same as ``{m}:n-y``, indexed to values as of ``y0``, that
-      is, the first model year.
-
-    .. todo:: Extend to also prepare to compute values indexed to a particular ``n``.
+    Check each :class:`ExoDataSource` in :data:`SOURCES` to determine whether it
+    recognizes and can handle `source` and `source_kw`. If a source is identified, add
+    tasks to `c` that retrieve and process data into a :class:`.Quantity` with, at
+    least, dimensions :math:`(n, y)`.
 
     Parameters
     ----------
@@ -103,6 +95,12 @@ def prepare_computer(
         returned.
 
         If the key "measure" is present, it **must** be one of :data:`MEASURES`.
+    strict : bool, *optional*
+        Raise an exception if any of the keys to be added already exist.
+
+    Returns
+    -------
+    tuple of .Key
     """
     # Handle arguments
     source_kw = source_kw or dict()
@@ -172,7 +170,7 @@ def prepare_computer(
 
 
 def register_source(cls: Type[ExoDataSource]) -> Type[ExoDataSource]:
-    """Register `cls` as a source of exogenous data."""
+    """Register :class:`.ExoDataSource` `cls` as a source of exogenous data."""
     if cls.id in SOURCES:
         raise ValueError(f"{SOURCES[cls.id]} already registered for id {cls.id!r}")
     SOURCES[cls.id] = cls

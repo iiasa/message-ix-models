@@ -196,8 +196,8 @@ def report(context: Context, *args, **kwargs):
         The code responds to:
 
         - :attr:`.dry_run`: if :obj:`True`, reporting is prepared but nothing is done.
-        - :attr:`.scenario_info` and :attr:`.platform_info`: used to retrieve the
-          Scenario to be reported.
+        - :attr:`~.Config.scenario_info` and :attr:`~.Config.platform_info`: used to
+          retrieve the Scenario to be reported.
 
         - :py:`context.report`, which is an instance of :class:`.report.Config`; see
           there for available configuration settings.

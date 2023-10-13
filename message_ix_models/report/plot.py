@@ -1,7 +1,7 @@
 """Plots for MESSAGEix-GLOBIOM reporting.
 
-The current set functions on time series data stored on the scenario by :mod:`.report`
-or legacy reporting.
+The current set functions on time series data stored on the scenario by
+:mod:`message_ix_models.report` or :mod:`message_data` legacy reporting.
 """
 import logging
 import re
@@ -18,6 +18,17 @@ if TYPE_CHECKING:
     from message_ix import Scenario
 
     from message_ix_models import Context
+
+__all__ = [
+    "PLOTS",
+    "EmissionsCO2",
+    "FinalEnergy0",
+    "FinalEnergy1",
+    "Plot",
+    "PrimaryEnergy0",
+    "PrimaryEnergy1",
+    "callback",
+]
 
 log = logging.getLogger(__name__)
 
@@ -198,6 +209,7 @@ class PrimaryEnergy1(FinalEnergy1):
     inputs_regex = [re.compile(rf"Primary Energy\|((?!{'|'.join(_omit)})[^\|]*)")]
 
 
+#: All plot classes.
 PLOTS = (
     EmissionsCO2,
     FinalEnergy0,
@@ -208,6 +220,10 @@ PLOTS = (
 
 
 def callback(c: Computer, context: "Context") -> None:
+    """Add all :data:`PLOTS` to `c`.
+
+    Also add a key "plot all" to triggers the generation of all plots.
+    """
     all_keys = [c.add(f"plot {p.basename}", p, "scenario") for p in PLOTS]
     c.add("plot all", all_keys)
     log.info(f"Add 'plot all' collecting {len(all_keys)} plots")

@@ -57,7 +57,6 @@ Commonly used:
 
 .. autodata:: message_ix_models.util.cache.SKIP_CACHE
 
-
 :mod:`.util.click`
 ==================
 
@@ -65,6 +64,11 @@ Commonly used:
 
 .. automodule:: message_ix_models.util.click
    :members:
+
+   :data:`PARAMS` contains, among others:
+
+   - :program:`--urls-from-file=…` Path to a file containing scenario URLs, one per line.
+     These are parsed and stored on :attr:`.Config.scenarios`.
 
 :mod:`.util.config`
 ===================
@@ -181,6 +185,13 @@ Commonly used:
 .. automodule:: message_ix_models.util.pooch
    :members:
 
+:mod:`.util.pycountry`
+======================
+
+.. currentmodule:: message_ix_models.util.pycountry
+
+.. automodule:: message_ix_models.util.pycountry
+   :members:
 
 :mod:`.util.scenarioinfo`
 =========================

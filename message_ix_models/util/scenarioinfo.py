@@ -21,18 +21,19 @@ log = logging.getLogger(__name__)
 
 @dataclass(kw_only=True)
 class ScenarioInfo:
-    """Information about a :class:`~message_ix.Scenario` object.
+    """Information about a |Scenario| object.
 
     Code that prepares data for a target Scenario can accept a ScenarioInfo instance.
-    This avoids the need to load a Scenario, which can be slow under some conditions.
+    This avoids the need to create or load an actual Scenario, which can be slow under
+    some conditions.
 
-    ScenarioInfo objects can also be used (e.g. by :func:`.apply_spec`) to describe the
-    contents of a Scenario *before* it is created.
+    ScenarioInfo objects can also be used (for instance, by :func:`.apply_spec`) to
+    describe the contents of a Scenario *before* it is created.
 
     ScenarioInfo objects have the following convenience attributes:
 
     .. autosummary::
-       set
+       ~ScenarioInfo.set
        io_units
        is_message_macro
        N
@@ -46,17 +47,32 @@ class ScenarioInfo:
     scenario_obj : message_ix.Scenario
         If given, :attr:`.set` is initialized from this existing scenario.
 
+    Examples
+    --------
+    Iterating over an instance gives "model", "scenario", "version" and the values of
+    the respective attributes:
+    >>> si = ScenarioInfo.from_url("model name/scenario name#123")
+    >>> dict(si)
+    {'model': 'model name', 'scenario': 'scenario name', 'version': 123}
+
     See also
     --------
     .Spec
     """
 
+    # Parameters for initialization only
     scenario_obj: InitVar[Optional["Scenario"]] = field(default=None, kw_only=False)
     empty: InitVar[bool] = False
 
     platform_name: Optional[str] = None
+
+    #: Model name; equivalent to :attr:`.TimeSeries.model`.
     model: Optional[str] = None
+
+    #: Scenario name; equivalent to :attr:`.TimeSeries.scenario`.
     scenario: Optional[str] = None
+
+    #: Scenario version; equivalent to :attr:`.TimeSeries.version`.
     version: Optional[int] = None
 
     #: Elements of :mod:`ixmp`/:mod:`message_ix` sets.
@@ -170,7 +186,10 @@ class ScenarioInfo:
 
     @property
     def path(self) -> str:
-        """A valid path name similar to :attr:`url`."""
+        """A valid file system path name similar to :attr:`url`.
+
+        Characters invalid in Windows paths are replaced with "_".
+        """
         from functools import reduce
 
         return reduce(lambda s, e: e[0].sub(e[1], s), self._path_re, self.url)

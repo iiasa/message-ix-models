@@ -349,8 +349,8 @@ class Context(dict):
     ):
         """Handle command-line arguments.
 
-        May update the :attr:`.Config.local_data`, :attr:`.Config.platform_info`,
-        :attr:`.Config.scenario_info`, and/or :attr:`.url` settings.
+        May update the :attr:`.Config.local_data`, :attr:`~.Config.platform_info`,
+        :attr:`~.Config.scenario_info`, and/or :attr:`~.Config.url` settings.
         """
         self.core.verbose = verbose
 
