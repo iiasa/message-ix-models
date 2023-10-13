@@ -253,6 +253,7 @@ def test_add_simulated_solution(test_context, test_data_path):
     assert np.isclose(79.76478, value.item())
 
 
+@MARK[0]
 def test_prepare_reporter(test_context):
     rep = ss_reporter()
     N = len(rep.graph)
