@@ -72,14 +72,16 @@ def test_register_cb():
 )
 def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     """Run MESSAGEix-Transport–specific reporting."""
+    from message_ix_models.report import Config
+
     register(callback)
 
     ctx = test_context
     ctx.update(
         regions=regions,
         years=years,
-        report=dict(
-            config="global.yaml",
+        report=Config(
+            "global.yaml",
             # key="transport all",
             key="stock:nl-t-ya-driver_type:ldv",
             output_dir=tmp_path,
