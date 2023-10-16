@@ -45,7 +45,7 @@ def test_prepare_computer(test_context, regions, N_n):
 def test_prepare_computer_exc(test_context):
     c = Computer()
 
-    with pytest.raises(ValueError, match="must be one of"):
+    with pytest.raises(ValueError, match="No source found that can handle"):
         prepare_computer(test_context, c, "test s1", dict(measure="FOO"))
 
     with pytest.raises(ValueError, match="No source found that can handle"):
