@@ -2,7 +2,7 @@
 import logging
 from functools import partial
 from operator import itemgetter
-from typing import Dict, List, Tuple, cast
+from typing import Dict, List, cast
 
 import numpy as np
 import pandas as pd
@@ -157,11 +157,11 @@ def prepare_computer(c: Computer) -> None:
     # TODO enhance genno so the empty dict() is optional.
     queue = [
         # Values based on configuration
-        ("quantity_from_config", "speed:t", "config", quote("speeds")),
-        ("quantity_from_config", "whour:", "config", quote("work_hours")),
-        ("quantity_from_config", "lambda:", "config", quote("lamda")),
+        ("speed:t", "quantity_from_config", "config", quote("speeds")),
+        ("whour:", "quantity_from_config", "config", quote("work_hours")),
+        ("lambda:", "quantity_from_config", "config", quote("lamda")),
         # Base share data
-        ("base_shares", "base shares:n-t-y", n, "t::transport modes", y, "config"),
+        ("base shares:n-t-y", "base_shares", n, "t::transport modes", y, "config"),
         # Population shares by area_type
         (pop_at, groups.urban_rural_shares, y, "config"),
         # Consumer group sizes
@@ -169,28 +169,28 @@ def prepare_computer(c: Computer) -> None:
         # fix.
         (cg, groups.cg_shares, pop_at, "context"),
         # PPP GDP, total and per capita
-        ("product", gdp_ppp, gdp, mer_to_ppp),
-        ("ratio", gdp_ppp_cap, gdp_ppp, pop),
+        (gdp_ppp, "mul", gdp, mer_to_ppp),
+        (gdp_ppp_cap, "div", gdp_ppp, pop),
         # GDP index
         ("y0", itemgetter(0), y),  # TODO move upstream to message_ix
-        ("index_to", gdp_index, gdp_ppp_cap, literal("y"), "y0"),
+        (gdp_index, "index_to", gdp_ppp_cap, literal("y"), "y0"),
         # Total demand
-        ("pdt_per_capita", pdt_cap, gdp_ppp_cap, "config"),
-        ("product", pdt_ny, pdt_cap, pop),
+        (pdt_cap, "pdt_per_capita", gdp_ppp_cap, "config"),
+        (pdt_ny, "mul", pdt_cap, pop),
         # Value-of-time multiplier
-        ("votm", "votm:n-y", gdp_ppp_cap),
+        ("votm:n-y", "votm", gdp_ppp_cap),
         # Select only the price of transport services
         # FIXME should be the full set of prices
-        ("select", price_sel0, price_full, dict(c="transport")),
-        ("price_units", price_sel1, price_sel0),
+        (price_sel0, "select", price_full, dict(c="transport")),
+        (price_sel1, "price_units", price_sel0),
         # Smooth prices to avoid zig-zag in share projections
-        ("smooth", price, price_sel1),
+        (price, "smooth", price_sel1),
         # Transport costs by mode
-        ("cost", cost, price, gdp_ppp_cap, "whour:", "speed:t", "votm:n-y", y),
+        (cost, "cost", price, gdp_ppp_cap, "whour:", "speed:t", "votm:n-y", y),
         # Share weights
         (
-            "share_weight",
             sw,
+            "share_weight",
             "base shares:n-t-y",
             gdp_ppp_cap,
             cost,
@@ -204,50 +204,45 @@ def prepare_computer(c: Computer) -> None:
         # Shares
         ("shares:n-t-y", partial(computations.logit, dim="t"), cost, sw, "lambda:", y),
         # Total PDT shared out by mode
-        ("product", pdt_nyt.add_tag("0"), pdt_ny, "shares:n-t-y"),
+        (pdt_nyt.add_tag("0"), "mul", pdt_ny, "shares:n-t-y"),
         # Adjustment factor
-        ("factor_pdt", "pdt factor:n-y-t", n, y, "t::transport modes", "config"),
+        ("pdt factor:n-y-t", "factor_pdt", n, y, "t::transport modes", "config"),
         # Only the LDV values
         (
-            ("select", "ldv pdt factor:n-y", "pdt factor:n-y-t", dict(t=["LDV"])),
+            ("ldv pdt factor:n-y", "select", "pdt factor:n-y-t", dict(t=["LDV"])),
             dict(drop=True),
         ),
-        ("product", pdt_nyt, pdt_nyt.add_tag("0"), "pdt factor:n-y-t"),
+        (pdt_nyt, "mul", pdt_nyt.add_tag("0"), "pdt factor:n-y-t"),
         # Per capita (for validation)
-        ("ratio", "transport pdt:n-y-t:capita", pdt_nyt, pop),
+        ("transport pdt:n-y-t:capita", "div", pdt_nyt, pop),
         # LDV PDT only
-        (("select", "ldv pdt:n-y:ref", pdt_nyt, dict(t=["LDV"])), dict(drop=True)),
+        (("ldv pdt:n-y:ref", "select", pdt_nyt, dict(t=["LDV"])), dict(drop=True)),
         # Indexed to base year
-        ("index_to", "ldv pdt:n-y:index", "ldv pdt:n-y:ref", literal("y"), "y0"),
-        ("advance_ldv_pdt", "ldv pdt:n:advance", "config"),
+        ("ldv pdt:n-y:index", "index_to", "ldv pdt:n-y:ref", literal("y"), "y0"),
+        ("ldv pdt:n:advance", "advance_ldv_pdt", "config"),
         # Compute LDV PDT as ADVANCE base-year values indexed to overall growth
-        ("product", "ldv pdt::total+0", "ldv pdt:n-y:index", "ldv pdt:n:advance"),
-        ("product", "ldv pdt::total", "ldv pdt:n-y:total+0", "ldv pdt factor:n-y"),
+        ("ldv pdt::total+0", "mul", "ldv pdt:n-y:index", "ldv pdt:n:advance"),
+        ("ldv pdt::total", "mul", "ldv pdt:n-y:total+0", "ldv pdt factor:n-y"),
         # LDV PDT shared out by consumer group
-        ("product", "ldv pdt", "ldv pdt:n-y:total", cg),
+        ("ldv pdt", "mul", "ldv pdt:n-y:total", cg),
         # Freight from IEA EEI
         # (("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
         # Freight from ADVANCE
-        ("advance_fv", "fv:n:historical", "config"),
-        ("product", "fv:n-y:0", "fv:n:historical", gdp_index),
+        ("fv:n:historical", "advance_fv", "config"),
+        ("fv:n-y:0", "mul", "fv:n:historical", gdp_index),
         # Adjustment factor
-        ("factor_fv", "fv factor:n-y", n, y, "config"),
-        ("product", "fv:n-y", "fv:n-y:0", "fv factor:n-y"),
+        ("fv factor:n-y", "factor_fv", n, y, "config"),
+        ("fv:n-y", "mul", "fv:n-y:0", "fv factor:n-y"),
         # Convert to ixmp format
         (
-            "as_message_df",
             "transport demand freight::ixmp",
+            "as_message_df",
             "fv:n-y",
             "demand",
             dict(node="n", year="y"),
             dict(commodity="transport freight", level="useful", time="year"),
         ),
-        (
-            "transport demand passenger::ixmp",
-            computations.demand_ixmp0,
-            pdt_nyt,
-            "ldv pdt:n-y-cg",
-        ),
+        ("transport demand passenger::ixmp", "demand_ixmp0", pdt_nyt, "ldv pdt:n-y-cg"),
         # Dummy demands, in case these are configured
         (
             "dummy demand::ixmp",
@@ -259,14 +254,4 @@ def prepare_computer(c: Computer) -> None:
         ),
     ]
 
-    # Add the empty dict() of kwargs for items without
-    # FIXME adjust add_queue to be more flexible
-    _queue: List[Tuple[Tuple, Dict]] = []
-    for elem in queue:
-        if len(elem) == 2 and isinstance(elem[0], tuple) and isinstance(elem[1], dict):
-            # NB could use a TypeGuard here, but Python 3.10 only
-            _queue.append(elem)  # type: ignore[arg-type]
-        else:
-            _queue.append((elem, dict()))
-
-    c.add_queue(_queue)
+    c.add_queue(queue)
