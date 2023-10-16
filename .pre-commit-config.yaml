@@ -10,7 +10,7 @@ repos:
     language: python
     entry: bash -c ". ${PRE_COMMIT_MYPY_VENV:-/dev/null}/bin/activate 2>/dev/null; mypy $0 $@"
     additional_dependencies:
-    - "mypy <1.5"
+    - mypy
     - pytest
     - sdmx1
     - types-PyYAML
