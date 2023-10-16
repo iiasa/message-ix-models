@@ -77,13 +77,36 @@ class TestScenarioInfo:
         # level= keyword argument → logged warning
         assert "level = 'useful' ignored" == caplog.messages[-1]
 
-    def test_from_scenario(self, test_context):
+    def test_iter(self) -> None:
+        info = ScenarioInfo(model="m", scenario="s")
+
+        # dict() operates on the instance via __iter__
+        assert dict(model="m", scenario="s", version=None) == dict(info)
+
+        # Individual attributes are accessible
+        assert "m" == info.model
+        assert "s" == info.scenario
+        assert None is info.version
+
+    def test_url(self) -> None:
+        info = ScenarioInfo(model="m", scenario="s", version=42)
+        assert "m/s#42" == info.url
+
+        info.url = "a/b"
+        assert dict(model="a", scenario="b", version=None) == dict(info)
+
+    def test_from_scenario(self, test_context) -> None:
         """ScenarioInfo initialized from an existing Scenario."""
         mp = test_context.get_platform()
         scenario = make_dantzig(mp, multi_year=True)
 
         # ScenarioInfo can be initialized from the scenario
         info = ScenarioInfo(scenario)
+
+        # model, scenario, and version attributes are retrieved from `scenario`
+        assert dict(
+            model="Canning problem (MESSAGE scheme)", scenario="multi-year", version=1
+        ) == dict(info)
 
         # Shorthand properties
         assert_frame_equal(
@@ -113,6 +136,27 @@ class TestScenarioInfo:
         ] == info.N
         assert 1963 == info.y0
         assert [1963, 1964, 1965] == info.Y
+
+    def test_from_url(self):
+        si = ScenarioInfo.from_url("m/s#123")
+        assert "m" == si.model
+        assert "s" == si.scenario
+        assert 123 == si.version
+
+    @pytest.mark.parametrize(
+        "input, expected",
+        (
+            (
+                "Mix-G 1.1-BM-R12 (NAV)/NPi-ref EN_20C_step-3+B#3",
+                "Mix-G 1.1-BM-R12 (NAV)_NPi-ref EN_20C_step-3+B_v3",
+            ),
+            ("foo<>bar/baz|qux*#42", "foo_bar_baz_qux_v42"),
+        ),
+    )
+    def test_path(self, input, expected) -> None:
+        si = ScenarioInfo()
+        si.url = input
+        assert expected == si.path
 
     def test_repr(self):
         si = ScenarioInfo()

@@ -72,6 +72,7 @@ class Context(dict):
 
     def __init__(self, *args, **kwargs):
         from message_ix_models.model import Config as ModelConfig
+        from message_ix_models.report import Config as ReportConfig
 
         if len(_CONTEXTS) == 0:
             log.info("Create root Context")
@@ -79,6 +80,7 @@ class Context(dict):
         # Handle keyword arguments going to known config dataclasses
         kwargs["core"] = Config(**_dealiased("core", kwargs))
         kwargs["model"] = ModelConfig(**_dealiased("model", kwargs))
+        kwargs["report"] = ReportConfig()
 
         # Store any keyword arguments
         super().__init__(*args, **kwargs)
@@ -347,8 +349,8 @@ class Context(dict):
     ):
         """Handle command-line arguments.
 
-        May update the :attr:`.Config.local_data`, :attr:`.Config.platform_info`,
-        :attr:`.Config.scenario_info`, and/or :attr:`.url` settings.
+        May update the :attr:`.Config.local_data`, :attr:`~.Config.platform_info`,
+        :attr:`~.Config.scenario_info`, and/or :attr:`~.Config.url` settings.
         """
         self.core.verbose = verbose
 

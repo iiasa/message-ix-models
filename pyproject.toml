@@ -39,6 +39,7 @@ dependencies = [
   "message_ix >= 3.4.0",
   "pooch",
   "pyam-iamc >= 0.6",
+  "pyarrow",
   "pycountry",
   "PyYAML",
   "sdmx1 >= 2.8.0",
@@ -58,9 +59,11 @@ docs = [
   "sphinx_rtd_theme",
   "sphinxcontrib-bibtex",
 ]
+report = ["plotnine"]
 tests = [
   # For nbclient, thus nbformat
   "ixmp[tests]",
+  "message_ix_models[report]",
   "pytest",
   "pytest-cov",
   "pytest-xdist",
@@ -75,6 +78,8 @@ exclude_also = [
   "@(abc\\.)?abstractmethod",
   # Imports only used by type checkers
   "if TYPE_CHECKING:",
+  # Requires message_data
+  "if HAS_MESSAGE_DATA:",
 ]
 
 [tool.mypy]
@@ -85,6 +90,7 @@ exclude = ["doc/"]
 module = [
   "colorama",
   "message_data.*",
+  "plotnine",
   "pooch",
   "pycountry",
   # Indirectly via message_ix

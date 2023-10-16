@@ -39,7 +39,7 @@ def test_default_path_cb(session_context, mix_models_cli):
         result = mix_models_cli.assert_exit_0(cmd)
 
     # The value was stored on, and retrieved from, `ctx`
-    assert f"{expected}\n" == result.output
+    assert result.output.startswith(f"{expected}\n")
 
 
 def test_store_context(mix_models_cli):
@@ -58,3 +58,31 @@ def test_store_context(mix_models_cli):
 
     # The value was stored on, and retrieved from, `ctx`
     assert "SSP2\n" == result.output
+
+
+def test_urls_from_file(mix_models_cli, tmp_path):
+    """Test :func:`.urls_from_file` callback."""
+
+    # Create a hidden command and attach it to the CLI
+    @click.command(name="_test_store_context", hidden=True)
+    @common_params("urls_from_file")
+    @click.pass_obj
+    def func(ctx, **kwargs):
+        # Print the value stored on the Context object
+        print("\n".join([s.url for s in ctx.core.scenarios]))
+
+    # Create a temporary file with some scenario URLs
+    text = """m/s#3
+foo/bar#5
+baz/qux#123
+"""
+    p = tmp_path.joinpath("scenarios.txt")
+    p.write_text(text)
+
+    # Run the command, referring to the temporary file
+    with temporary_command(main, func):
+        result = mix_models_cli.assert_exit_0([func.name, f"--urls-from-file={p}"])
+
+    # Scenario URLs are parsed to ScenarioInfo objects, and then can be reconstructed →
+    # data is round-tripped
+    assert text == result.output

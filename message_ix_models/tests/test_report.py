@@ -1,12 +1,15 @@
 """Tests for message_data.reporting."""
 from importlib.metadata import version
 
+import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
 
-from message_ix_models import testing
+from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report import prepare_reporter, report, util
+from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.util import package_data_path
 
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
@@ -30,7 +33,7 @@ def test_report_bare_res(request, test_context):
     scenario = testing.bare_res(request, test_context, solved=True)
 
     # Prepare the reporter
-    test_context.report.update(config="global.yaml", key="message::default")
+    test_context.report.update(from_file="global.yaml", key="message::default")
     reporter, key = prepare_reporter(test_context, scenario)
 
     # Get the default report
@@ -41,20 +44,20 @@ def test_report_bare_res(request, test_context):
 
 @pytest.mark.xfail(raises=ModuleNotFoundError, reason="Requires message_data")
 def test_report_legacy(caplog, request, tmp_path, test_context):
-    """Legacy reporting can be invoked through :func:`.report()`."""
+    """Legacy reporting can be invoked via :func:`message_ix_models.report.report`."""
     # Create a target scenario
     scenario = testing.bare_res(request, test_context, solved=False)
     test_context.set_scenario(scenario)
     # Set dry_run = True to not actually perform any calculations or modifications
     test_context.dry_run = True
     # Ensure the legacy reporting is used, with default settings
-    test_context.report = {"legacy": dict()}
+    test_context.report.legacy["use"] = True
 
     # Call succeeds
     report(test_context)
 
     # Dry-run message is logged
-    assert "DRY RUN" in caplog.messages
+    assert "DRY RUN" in caplog.messages[-1]
     caplog.clear()
 
     # Other deprecated usage
@@ -62,6 +65,7 @@ def test_report_legacy(caplog, request, tmp_path, test_context):
     # As called in .model.cli.new_baseline() and .model.create.solve(), with path as a
     # positional argument
     legacy_arg = dict(
+        use=True,
         ref_sol="True",  # Must be literal "True" or "False"
         merge_hist=True,
         xlsx=test_context.get_local_path("rep_template.xlsx"),
@@ -115,7 +119,7 @@ def test_apply_units(request, test_context, regions):
     config = MIN_CONFIG.copy()
 
     # Prepare the reporter
-    test_context.report.update(config=config, key=qty)
+    test_context.report.update(genno_config=config, key=qty)
     reporter, key = prepare_reporter(test_context, bare_res)
 
     # Add some data to the scenario
@@ -140,19 +144,25 @@ def test_apply_units(request, test_context, regions):
     assert "dimensionless" == str(reporter.get(key).units)
 
     # Update configuration, re-create the reporter
-    test_context.report["config"]["units"]["apply"] = {"inv_cost": "USD"}
+    test_context.report.genno_config["units"]["apply"] = {"inv_cost": "USD"}
     reporter, key = prepare_reporter(test_context, bare_res)
 
     # Units are applied
     assert USD_2005 == reporter.get(key).units
 
     # Update configuration, re-create the reporter
-    test_context.report["config"].update(INV_COST_CONFIG)
+    test_context.report.genno_config.update(INV_COST_CONFIG)
     reporter, key = prepare_reporter(test_context, bare_res)
 
     # Units are converted
     df = reporter.get("Investment Cost::iamc").as_pandas()
     assert ["EUR_2005"] == df["unit"].unique()
+
+
+@pytest.mark.xfail(reason="Incomplete")
+def test_cli(mix_models_cli):
+    # TODO complete by providing a Scenario that is reportable (with solution)
+    mix_models_cli.assert_exit_0(["report"])
 
 
 @pytest.mark.parametrize(
@@ -197,3 +207,59 @@ def test_collapse(input, exp):
 
     # collapse() transforms the "variable" column in the expected way
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
+
+
+def ss_reporter():
+    """Reporter with a simulated solution for snapshot 0."""
+    from message_ix import Reporter
+
+    rep = Reporter()
+
+    # Simulated solution can be added to an empty Reporter
+    add_simulated_solution(
+        rep,
+        ScenarioInfo(),
+        path=package_data_path("test", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline"),
+    )
+
+    return rep
+
+
+@MARK[0]
+def test_add_simulated_solution(test_context, test_data_path):
+    # Simulated solution can be added to an empty Reporter
+    rep = ss_reporter()
+
+    # "out" can be calculated using "output" and "ACT" from files in `path`
+    result = rep.get("out:*")
+
+    # Has expected dimensions and length
+    assert tuple("nl t yv ya m nd c l h hd".split()) == result.dims
+    assert 155461 == len(result)
+
+    # Compare one expected value
+    value = result.sel(
+        nl="R11_AFR",
+        t="biomass_rc",
+        yv=2020,
+        ya=2020,
+        m="M1",
+        nd="R11_AFR",
+        c="rc_therm",
+        l="useful",
+        h="year",
+        hd="year",
+    )
+    assert np.isclose(79.76478, value.item())
+
+
+@MARK[0]
+def test_prepare_reporter(test_context):
+    rep = ss_reporter()
+    N = len(rep.graph)
+
+    # prepare_reporter() works on the simulated solution
+    prepare_reporter(test_context, reporter=rep)
+
+    # A number of keys were added
+    assert 14299 <= len(rep.graph) - N

@@ -1,32 +1,39 @@
 """:class:`ScenarioInfo` class."""
 import logging
+import re
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from itertools import product
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
+import ixmp.utils
 import pandas as pd
 import pint
 import sdmx.model.v21 as sdmx_model
 
 from .sdmx import eval_anno
 
+if TYPE_CHECKING:
+    from message_ix import Scenario
+
 log = logging.getLogger(__name__)
 
 
+@dataclass(kw_only=True)
 class ScenarioInfo:
-    """Information about a :class:`~message_ix.Scenario` object.
+    """Information about a |Scenario| object.
 
     Code that prepares data for a target Scenario can accept a ScenarioInfo instance.
-    This avoids the need to load a Scenario, which can be slow under some conditions.
+    This avoids the need to create or load an actual Scenario, which can be slow under
+    some conditions.
 
-    ScenarioInfo objects can also be used (e.g. by :func:`.apply_spec`) to describe the
-    contents of a Scenario *before* it is created.
+    ScenarioInfo objects can also be used (for instance, by :func:`.apply_spec`) to
+    describe the contents of a Scenario *before* it is created.
 
     ScenarioInfo objects have the following convenience attributes:
 
     .. autosummary::
-       set
+       ~ScenarioInfo.set
        io_units
        is_message_macro
        N
@@ -37,19 +44,42 @@ class ScenarioInfo:
 
     Parameters
     ----------
-    scenario : message_ix.Scenario
+    scenario_obj : message_ix.Scenario
         If given, :attr:`.set` is initialized from this existing scenario.
+
+    Examples
+    --------
+    Iterating over an instance gives "model", "scenario", "version" and the values of
+    the respective attributes:
+    >>> si = ScenarioInfo.from_url("model name/scenario name#123")
+    >>> dict(si)
+    {'model': 'model name', 'scenario': 'scenario name', 'version': 123}
 
     See also
     --------
     .Spec
     """
 
+    # Parameters for initialization only
+    scenario_obj: InitVar[Optional["Scenario"]] = field(default=None, kw_only=False)
+    empty: InitVar[bool] = False
+
+    platform_name: Optional[str] = None
+
+    #: Model name; equivalent to :attr:`.TimeSeries.model`.
+    model: Optional[str] = None
+
+    #: Scenario name; equivalent to :attr:`.TimeSeries.scenario`.
+    scenario: Optional[str] = None
+
+    #: Scenario version; equivalent to :attr:`.TimeSeries.version`.
+    version: Optional[int] = None
+
     #: Elements of :mod:`ixmp`/:mod:`message_ix` sets.
-    set: Dict[str, List] = {}
+    set: Dict[str, List] = field(default_factory=lambda: defaultdict(list))
 
     #: Elements of :mod:`ixmp`/:mod:`message_ix` parameters.
-    par: Dict[str, pd.DataFrame] = {}
+    par: Dict[str, pd.DataFrame] = field(default_factory=dict)
 
     #: First model year, if set, else ``Y[0]``.
     y0: int = -1
@@ -59,29 +89,44 @@ class ScenarioInfo:
 
     _yv_ya: pd.DataFrame = None
 
-    def __init__(self, scenario=None):
-        self.set = defaultdict(list)
-        self.par = dict()
-
-        if not scenario:
+    def __post_init__(self, scenario_obj: Optional["Scenario"], empty: bool):
+        if not scenario_obj:
             return
 
-        for name in scenario.set_list():
+        self.model = scenario_obj.model
+        self.scenario = scenario_obj.scenario
+        self.version = (
+            None if scenario_obj.version is None else int(scenario_obj.version)
+        )
+
+        if empty:
+            return
+
+        # Copy structure (set contents)
+        for name in scenario_obj.set_list():
             try:
-                self.set[name] = scenario.set(name).tolist()
+                self.set[name] = scenario_obj.set(name).tolist()
             except AttributeError:
                 continue  # pd.DataFrame for ≥2-D set; don't convert
 
+        # Copy data for a limited set of parameters
         for name in ("duration_period",):
-            self.par[name] = scenario.par(name)
+            self.par[name] = scenario_obj.par(name)
 
-        self.is_message_macro = "PRICE_COMMODITY" in scenario.par_list()
+        self.is_message_macro = "PRICE_COMMODITY" in scenario_obj.par_list()
 
         # Computed once
-        fmy = scenario.cat("year", "firstmodelyear")
+        fmy = scenario_obj.cat("year", "firstmodelyear")
         self.y0 = int(fmy[0]) if len(fmy) else self.set["year"][0]
 
-        self._yv_ya = scenario.vintage_and_active_years()
+        self._yv_ya = scenario_obj.vintage_and_active_years()
+
+    @classmethod
+    def from_url(cls, url: str) -> "ScenarioInfo":
+        """Create an instance using only an :attr:`url`."""
+        result = cls()
+        result.url = url
+        return result
 
     @property
     def yv_ya(self):
@@ -121,6 +166,34 @@ class ScenarioInfo:
         """Elements of the set 'year' that are >= the first model year."""
         return list(filter(lambda y: y >= self.y0, self.set["year"]))
 
+    @property
+    def url(self) -> str:
+        """Identical to :attr:`.TimeSeries.url`."""
+        return f"{self.model}/{self.scenario}#{self.version}"
+
+    @url.setter
+    def url(self, value):
+        p, s = ixmp.utils.parse_url(value)
+        self.platform_name = p.get("name")
+        for k in "model", "scenario", "version":
+            setattr(self, k, s.get(k))
+
+    _path_re = [
+        (re.compile(r"[/<>:\"\\\|\?\*]+"), "_"),
+        (re.compile("#"), "_v"),
+        (re.compile("__+"), "_"),
+    ]
+
+    @property
+    def path(self) -> str:
+        """A valid file system path name similar to :attr:`url`.
+
+        Characters invalid in Windows paths are replaced with "_".
+        """
+        from functools import reduce
+
+        return reduce(lambda s, e: e[0].sub(e[1], s), self._path_re, self.url)
+
     def update(self, other: "ScenarioInfo"):
         """Update with the set elements of `other`."""
         for name, data in other.set.items():
@@ -128,6 +201,10 @@ class ScenarioInfo:
 
         for name, data in other.par.items():
             raise NotImplementedError("Merging parameter data")
+
+    def __iter__(self):
+        for k in "model", "scenario", "version":
+            yield (k, getattr(self, k))
 
     def __repr__(self):
         return (

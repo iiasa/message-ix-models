@@ -14,9 +14,11 @@ try:
 except ImportError:
     log.warning("message_data is not installed or cannot be imported")
     MESSAGE_DATA_PATH: Optional[Path] = None
+    HAS_MESSAGE_DATA = False
 else:  # pragma: no cover  (needs message_data)
     # Root directory of the message_data repository.
     MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
+    HAS_MESSAGE_DATA = True
 
 # Directory containing message_ix_models.__init__
 MESSAGE_MODELS_PATH = Path(__file__).parents[1]
@@ -29,6 +31,7 @@ PRIVATE_DATA: Dict[str, Any] = dict()
 
 
 __all__ = [
+    "HAS_MESSAGE_DATA",
     "Adapter",
     "MappingAdapter",
 ]
