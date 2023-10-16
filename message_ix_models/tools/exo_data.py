@@ -1,4 +1,5 @@
 """Generic tools for working with exogenous data sources."""
+import logging
 from abc import ABC, abstractmethod
 from operator import itemgetter
 from pathlib import Path
@@ -20,6 +21,8 @@ __all__ = [
     "prepare_computer",
     "register_source",
 ]
+
+log = logging.getLogger(__name__)
 
 #: Supported measures.
 #:
@@ -52,6 +55,8 @@ class ExoDataSource(ABC):
         - Transform these into other values, for instance by mapping certain values to
           others, applying regular expressions, or other operations.
         - Store those values as instance attributes for use in :meth:`__call__`, below.
+        - Log messages that give information that may help to debug a
+          :class:`ValueError` for `source` or `source_kw` that cannot be handled.
 
         It **should not** actually load data or perform any time- or memory-intensive
         operations.
@@ -101,12 +106,17 @@ def prepare_computer(
     Returns
     -------
     tuple of .Key
+
+    Raises
+    ------
+    ValueError
+        if no source is available which can handle `source` and `source_kw`.
     """
     # Handle arguments
     source_kw = source_kw or dict()
     if measure := source_kw.get("measure"):
         if measure not in MEASURES:
-            raise ValueError(
+            log.warning(
                 f"source_kw 'measure' must be one of {MEASURES}; got {measure!r}"
             )
     else:
