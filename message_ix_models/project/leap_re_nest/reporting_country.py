@@ -50,44 +50,44 @@ def remove_duplicate(data):
     return final_list
 
 
-df = pd.DataFrame(
-    {
-        "var1": ["A", "A", "A", "B", "B", "C"],
-        "var2": [1, 1, 1, 1, 1, 2],
-        "subannual": ["year", "1", "2", "year", "1", "year"],
-        "value": [10, 20, 30, 3, 2, 99],
-    }
-)
+# df = pd.DataFrame(
+#     {
+#         "var1": ["A", "A", "A", "B", "B", "C"],
+#         "var2": [1, 1, 1, 1, 1, 2],
+#         "subannual": ["year", "1", "2", "year", "1", "year"],
+#         "value": [10, 20, 30, 3, 2, 99],
+#     }
+# )
 
-hierarchy = {"year": ["1", "2"]}
-
-
-def sum_time_hierarchy(df, hierarchy):
-    # group by variables that are not "subannual" or "value"
-    group_cols = [col for col in df.columns if col not in ["subannual", "value"]]
-    df_grouped = df.groupby(group_cols).apply(lambda x: x.copy())
-
-    # iterate over the hierarchy and sum the values for each level
-    lower_hierarchy = hierarchy.get("year")
-    if lower_hierarchy:
-        df_lower = df[df["subannual"].isin(lower_hierarchy)]
-        df_year = df[df["subannual"] == "year"]
-
-        df_summed = df_lower.groupby(group_cols, as_index=False).agg({"value": "sum"})
-        df_summed["subannual"] = "year"
-        df_summed = df_summed[df.columns]
-        # add the summed parts to other with year
-        df_year2 = pd.concat([df_year, df_summed], ignore_index=True)
-        # aggregate those at year
-        df_year2 = df_year2.groupby(group_cols + ["subannual"], as_index=False).agg(
-            {"value": "sum"}
-        )
-
-        df_out = pd.concat([df_year2, df_lower])
-    return df_out
+# hierarchy = {"year": ["1", "2"]}
 
 
-sum_time_hierarchy(df, hierarchy)
+# def sum_time_hierarchy(df, hierarchy):
+#     # group by variables that are not "subannual" or "value"
+#     group_cols = [col for col in df.columns if col not in ["subannual", "value"]]
+#     df_grouped = df.groupby(group_cols).apply(lambda x: x.copy())
+
+#     # iterate over the hierarchy and sum the values for each level
+#     lower_hierarchy = hierarchy.get("year")
+#     if lower_hierarchy:
+#         df_lower = df[df["subannual"].isin(lower_hierarchy)]
+#         df_year = df[df["subannual"] == "year"]
+
+#         df_summed = df_lower.groupby(group_cols, as_index=False).agg({"value": "sum"})
+#         df_summed["subannual"] = "year"
+#         df_summed = df_summed[df.columns]
+#         # add the summed parts to other with year
+#         df_year2 = pd.concat([df_year, df_summed], ignore_index=True)
+#         # aggregate those at year
+#         df_year2 = df_year2.groupby(group_cols + ["subannual"], as_index=False).agg(
+#             {"value": "sum"}
+#         )
+
+#         df_out = pd.concat([df_year2, df_lower])
+#     return df_out
+
+
+# sum_time_hierarchy(df, hierarchy)
 # to check if for variables like price it makes sense. no we would need to make a mean
 
 
@@ -760,9 +760,13 @@ def report_country(sc):
     # filter only subannual
     rep_iamSE_sub = rep_iamSE.filter(subannual="year", keep=False)
     # aggregate subannual time for different variables
+    sub_iam = rep_iamSE_sub
     for vv in rep_iamSE_sub.variable:
-        rep_iamSE_sub.aggregate_time(vv, column="subannual", value="year", append=True)
-    rep_iamSE_sub = rep_iamSE_sub.filter(subannual="year")
+        print(vv)
+        temp_iam = rep_iamSE_sub.aggregate_time(vv, column="subannual", value="year")
+        sub_iam = sub_iam.append(temp_iam)
+        
+    rep_iamSE_sub = sub_iam.filter(subannual="year")
     # merge new summed-up timeseries
     rep_iamSE = rep_iamSE.append(rep_iamSE_sub)
 
@@ -783,7 +787,13 @@ def report_country(sc):
 
     # add units TODO
     report_pd = rep_iamSE.as_pandas()
-    report_pd = report_pd.drop(columns=["exclude"])
+    # report_pd = report_pd.drop(columns=["exclude"])
+    # TEMP FIX
+    # Check if the "value" column exists in the DataFrame
+    if 'value' not in report_pd.columns:
+        # Replace the name of the last column with "value"
+        last_column_name = report_pd.columns[-1]
+        report_pd.rename(columns={last_column_name: 'value'}, inplace=True)
 
     for index, row in map_unit.iterrows():
         report_pd.loc[(report_pd["variable"].str.contains(row["names"])), "unit"] = row[
@@ -833,7 +843,7 @@ def prep_submission_leapre(ts1, ts2):
         df_p.aggregate(variable=v, recursive="skip-validate", append=True)
         df_p = df_p.filter(variable=v)
         df_m = df_p.as_pandas()
-        df_m = df_m.drop(columns=["exclude"])
+        # df_m = df_m.drop(columns=["exclude"])
         df_m.reset_index(inplace=True, drop=True)
         df_m_all = pd.concat([df_m_all, df_m])
 
