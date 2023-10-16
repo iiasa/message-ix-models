@@ -233,10 +233,11 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 @pytest.mark.parametrize(
     "nodes, data_source",
     [
-        ("R11", "GEA mix"),
-        ("R12", "SSP2"),
-        param("R14", "SSP2", marks=MARK[2](AttributeError)),
-        ("R11", "SHAPE innovation"),
+        ("R11", "--source=GEA mix"),
+        ("R12", "--source=SSP2"),
+        ("R12", "--ssp-update=2"),
+        param("R14", "--source=SSP2", marks=MARK[2](ValueError)),
+        ("R11", "--source=SHAPE innovation"),
     ],
 )
 def test_cli(tmp_path, mix_models_cli, nodes, data_source):
@@ -245,7 +246,7 @@ def test_cli(tmp_path, mix_models_cli, nodes, data_source):
     result = mix_models_cli.invoke(
         [
             "transport",
-            "gen-demand",
+            "gen-activity",
             f"--nodes={nodes}",
             "--years=B",
             data_source,
