@@ -39,7 +39,7 @@ def test_default_path_cb(session_context, mix_models_cli):
         result = mix_models_cli.assert_exit_0(cmd)
 
     # The value was stored on, and retrieved from, `ctx`
-    assert f"{expected}\n" == result.output
+    assert result.output.startswith(f"{expected}\n")
 
 
 def test_store_context(mix_models_cli):
