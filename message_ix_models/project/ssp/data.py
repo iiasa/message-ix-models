@@ -34,7 +34,7 @@ class SSPOriginal(ExoDataSource):
 
       - "model": one of:
 
-          - IIASA POP
+          - IIASA GDP
           - IIASA-WiC POP
           - NCAR
           - OECD Env-Growth
