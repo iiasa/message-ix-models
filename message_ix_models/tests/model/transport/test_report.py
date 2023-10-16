@@ -26,15 +26,17 @@ def test_configure_legacy():
 
     configure_legacy_reporting(config)
 
+    # Number of technologies in data/transport/technology.yaml using the given commodity
+    # as input, thus expected to be added to the respective legacy reporting sets
     expected = {
         "trp back": 0,
         "trp coal": 0,
         "trp elec": 6,
-        "trp eth": 1,
+        "trp eth": 2,
         "trp foil": 0,
         "trp gas": 6,
         "trp h2": 4,
-        "trp loil": 20,
+        "trp loil": 19,
         "trp meth": 5,
     }
 
