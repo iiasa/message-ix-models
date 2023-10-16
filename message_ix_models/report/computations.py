@@ -43,12 +43,14 @@ def codelist_to_groups(
     The returned value is suitable for use with :func:`genno.computations.aggregate`.
 
     If this is a list of nodes per :func:`.get_codes`, then the mapping is from regions
-    to the ISO 3166-1 alpha-3 codes of the countries within each region.
+    to the ISO 3166-1 alpha-3 codes of the countries within each region. The code for
+    the region itself is also included in the values to be aggregated, so that already-
+    aggregated data will pass through.
     """
 
     groups = dict()
     for code in filter(lambda c: len(c.child), codes):
-        groups[code.id] = list(map(str, code.child))
+        groups[code.id] = [code.id] + list(map(str, code.child))
 
     return {dim: groups}
 
