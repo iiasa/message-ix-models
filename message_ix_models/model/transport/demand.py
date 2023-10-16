@@ -4,19 +4,15 @@ from functools import partial
 from operator import itemgetter
 from typing import Dict, List, Tuple, cast
 
-import genno.computations
 import numpy as np
 import pandas as pd
 from dask.core import literal, quote
 from genno import Computer, Key, Quantity
-from genno.computations import interpolate
-from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
-from message_ix_models.util import adapt_R11_R14, broadcast
+from message_ix_models.util import broadcast
 
 from . import computations, groups
-from .util import path_fallback
 
 log = logging.getLogger(__name__)
 
@@ -74,52 +70,49 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     """
     context = c.graph["context"]
 
-    from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
+    import message_ix_models.project.ssp.data  # noqa: F401
+    from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
 
+    from . import data  # noqa: F401
+
+    # Added keys
     keys = {}
+
     source = str(context.transport.ssp)
-    for kw in (dict(measure="GDP", model="IIASA GDP 2023"), dict(measure="POP")):
+
+    # Identify appropriate source keyword arguments for loading GDP and population data
+    if context.transport.ssp in SSP_2017:
+        source_kw = (
+            dict(measure="GDP", model="IIASA GDP"),
+            dict(measure="POP", model="IIASA GDP"),
+        )
+    elif context.transport.ssp in SSP_2024:
+        source_kw = (dict(measure="GDP", model="IIASA GDP 2023"), dict(measure="POP"))
+
+    for kw in source_kw:
         keys[kw["measure"]] = prepare_computer(
             context, c, source, source_kw=kw, strict=False
         )
 
+    # Add data for MERtoPPP
+    prepare_computer(
+        context,
+        c,
+        "message_data.model.transport",
+        source_kw=dict(measure="MERtoPPP", context=context),
+        strict=False,
+    )
+
     # Alias for other computations which expect the upper-case name
     c.add("GDP:n-y", "gdp:n-y")
+    c.add("MERtoPPP:n-y", "mertoppp:n-y")
+
+    # Ensure correct units
     c.add("population:n-y", "mul", "pop:n-y", Quantity(1.0, units="passenger"))
 
-    # Data from files. Add 3 computations per quantity.
-    for key, basename, units in ((Key("MERtoPPP", "ny"), "mer-to-ppp", ""),):
-        # 1. Load the file
-        k1 = Key(key.name, tag="raw")
-        try:
-            c.add(
-                k1,
-                partial(genno.computations.load_file, units=units),
-                path_fallback(context, f"{basename}.csv"),
-            )
-        except FileNotFoundError as e:
-            paths = "\n".join(map(str, e.args[0]))
-            log.warning(f"Not found:\n{paths}")
-            log.warning(f"Computing {k1!r} or its dependents may fail")
-            c.add(k1, None)
-
-        # 2. Rename dimensions
-        k2 = key.add_tag("rename")
-        c.add("rename_dims", k2, k1, quote(RENAME_DIMS))
-
-        # 3. Maybe transform from R11 to another node list
-        k3 = key.add_tag(context.model.regions)
-        if context.model.regions in ("R11", "R12"):
-            c.add(k3, k2)  # No-op/pass-through
-        elif context.model.regions == "R14":
-            c.add(k3, adapt_R11_R14, k2)
-
-        c.add(key, partial(interpolate, coords=dict(y=info.Y)), k3, sums=True)
-
-    c.add(
-        "PRICE_COMMODITY:n-c-y", (computations.dummy_prices, keys["GDP"][0]), sums=True
-    )
+    # Dummy prices
+    c.add("PRICE_COMMODITY:n-c-y", "dummy_prices", keys["GDP"][0], sums=True)
 
 
 def prepare_computer(c: Computer) -> None:
