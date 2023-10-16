@@ -9,16 +9,17 @@ from warnings import warn
 
 import genno.config
 import yaml
-from dask.core import literal
 from genno import Key, KeyExistsError
 from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Reporter, Scenario
 
-from message_ix_models import Context
-from message_ix_models.util import local_data_path, package_data_path
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.util._logging import mark_time
 
+from .config import Config
+
 __all__ = [
+    "Config",
     "prepare_reporter",
     "register",
     "report",
@@ -146,12 +147,12 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     if isinstance(name_or_callback, str):
         # Resolve a string
         for name in [
+            # As a fully-resolved package/module name
+            name_or_callback,
             # As a submodule of message_ix_models
             f"message_ix_models.{name_or_callback}.report",
             # As a submodule of message_data
             f"message_data.{name_or_callback}.report",
-            # As a fully-resolved package/module name
-            name_or_callback,
         ]:
             try:
                 mod = import_module(name)
@@ -172,7 +173,7 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     return name
 
 
-def log_before(context, rep, key):
+def log_before(context, rep, key) -> None:
     log.info(f"Prepare to report {'(DRY RUN)' if context.dry_run else ''}")
     log.info(key)
     log.log(
@@ -183,38 +184,32 @@ def log_before(context, rep, key):
 
 
 def report(context: Context, *args, **kwargs):
-    """Run complete reporting on a :class:`.message_ix.Scenario`.
+    """Report (post-process) solution data in a |Scenario| and store time series data.
 
-    This function provides a single, common interface to call both the 'new'
-    (:mod:`.reporting`) and 'legacy' (:mod:`.tools.post_processing`) reporting codes.
+    This function provides a single, common interface to call both the :mod:`genno`
+    -based (:mod:`message_ix_models.report`) and ‘legacy’ (
+    :mod:`message_data.tools.post_processing`) reporting codes.
 
-    The code responds to the following settings on `context`:
+    Parameters
+    ----------
+    context : Context
+        The code responds to:
 
-    .. list-table::
-       :width: 100%
-       :widths: 25 25 50
-       :header-rows: 1
+        - :attr:`.dry_run`: if :obj:`True`, reporting is prepared but nothing is done.
+        - :attr:`~.Config.scenario_info` and :attr:`~.Config.platform_info`: used to
+          retrieve the Scenario to be reported.
 
-       * - Setting
-         - Type
-         - Description
-       * - scenario_info
-         -
-         - Identifies the (solved) scenario to be reported.
-       * - report/dry_run
-         - bool
-         - Only show what would be done. Default: :data:`False`.
-       * - report/legacy
-         - dict or None
-         - If given, the old-style reporting in :mod:`.iamc_report_hackathon` is used,
-           with `legacy` as keyword arguments.
-
-    As well:
-
-    - ``report/key`` is set to ``default``, if not set.
-    - ``report/config`` is set to :file:`report/globa.yaml`, if not set.
-
+        - :py:`context.report`, which is an instance of :class:`.report.Config`; see
+          there for available configuration settings.
     """
+    try:
+        from ixmp.utils import discard_on_error
+    except ImportError:
+        from contextlib import nullcontext
+
+        def discard_on_error(*args):
+            return nullcontext()
+
     # Handle deprecated usage that appears in:
     # - .model.cli.new_baseline()
     # - .model.create.solve()
@@ -230,7 +225,7 @@ def report(context: Context, *args, **kwargs):
 
         # Transfer args, kwargs to context
         context.set_scenario(scenario)
-        context.report["legacy"] = kwargs.pop("legacy")
+        context.report.legacy = kwargs.pop("legacy")
 
         if len(args) + len(set(kwargs.keys()) & {"path"}) != 1:
             raise TypeError(
@@ -241,14 +236,10 @@ def report(context: Context, *args, **kwargs):
             out_dir = args[0]
         else:
             out_dir = kwargs.pop("path")
-        context.report["legacy"].setdefault("out_dir", out_dir)
+        context.report.legacy.setdefault("out_dir", out_dir)
 
-    if "legacy" in context.report:
+    if context.report.legacy["use"]:
         return _invoke_legacy_reporting(context)
-
-    # Default arguments for genno-based reporting
-    context.report.setdefault("key", "default")
-    context.report.setdefault("config", package_data_path("report", "global.yaml"))
 
     rep, key = prepare_reporter(context)
 
@@ -257,12 +248,13 @@ def report(context: Context, *args, **kwargs):
     if context.dry_run:
         return
 
-    result = rep.get(key)
+    with discard_on_error(rep.graph["scenario"]):
+        result = rep.get(key)
 
     # Display information about the result
     log.info(f"Result:\n\n{result}\n")
     log.info(
-        f"File output(s), if any, written under:\n{rep.graph['config']['output_path']}"
+        f"File output(s), if any, written under:\n{rep.graph['config']['output_dir']}"
     )
 
 
@@ -271,20 +263,14 @@ def _invoke_legacy_reporting(context):
     from message_data.tools.post_processing import iamc_report_hackathon
 
     # Convert "legacy" config to keyword arguments for .iamc_report_hackathon.report()
-    args = context.report.setdefault("legacy", dict())
-    if not isinstance(args, dict):
-        raise TypeError(
-            f'Cannot handle Context["report"]["legacy"]={args!r} of type {type(args)}'
-        )
+    kwargs = deepcopy(context.report.legacy)
+    kwargs.pop("use")
 
-    # Read a configuration file and update the arguments
-    config = context.report.get("config")
-    if isinstance(config, Path) and config.exists():
-        with open(config, "r") as f:
-            args.update(yaml.safe_load(f))
-
-    # Default settings
-    args.setdefault("merge_hist", True)
+    # Read a legacy reporting configuration file and update the arguments
+    config_file_path = kwargs.pop("config_file_path", None)
+    if isinstance(config_file_path, Path) and config_file_path.exists():
+        with open(config_file_path, "r") as f:
+            kwargs.update(yaml.safe_load(f))
 
     # Retrieve the Scenario and Platform
     scen = context.get_scenario()
@@ -292,8 +278,9 @@ def _invoke_legacy_reporting(context):
 
     mark_time()
 
-    # `context` is passed only for the "dry_run" setting
-    return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **args)
+    # `context` is passed only for the "dry_run" setting; the function receives all its
+    # other settings via the `kwargs`
+    return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **kwargs)
 
 
 def prepare_reporter(
@@ -303,39 +290,11 @@ def prepare_reporter(
 ) -> Tuple[Reporter, Key]:
     """Return a :class:`message_ix.Reporter` and `key` prepared to report a |Scenario|.
 
-    The code responds to the following settings on `context`:
-
-    .. list-table::
-       :width: 100%
-       :widths: 25 25 50
-       :header-rows: 1
-
-       * - Setting
-         - Type
-         - Description
-       * - scenario_info
-         -
-         - Identifies the (solved) scenario to be reported.
-       * - report/key
-         - str or :class:`ixmp.reporting.Key`
-         - Quantity or node to compute. The computation is not triggered (i.e.
-           :meth:`get <ixmp.reporting.Reporter.get>` is not called); but the
-           corresponding, full-resolution Key, if any, is returned.
-       * - report/config
-         - dict or Path-like or None
-         - If :class:`dict`, then this is passed to
-           :meth:`message_ix.Reporter.configure`. If Path-like, then this is the path to
-           the reporting configuration file. If not given, defaults to
-           :file:`report/global.yaml`.
-       * - report/output_path
-         - Path-like, *optional*
-         - Path to write reporting outputs. If given, a computation ``cli-output`` is
-           added to the Reporter which writes ``report/key`` to this path.
-
     Parameters
     ----------
     context : Context
-        Containing settings in the ``report/*`` tree.
+        The code responds to :py:`context.report`, which is an instance of
+        :class:`.report.Config`.
     scenario : Scenario, *optional*
         Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
         retrieve a Scenario.
@@ -348,9 +307,12 @@ def prepare_reporter(
     .Reporter
         Reporter prepared with MESSAGEix-GLOBIOM calculations; if `reporter` is given,
         this is a reference to the same object.
+
+        If :attr:`.cli_output` is given, a task with the key "cli-output" is added that
+        writes the :attr:`.Config.key` to that path.
     .Key
-        Same as ``context.report["key"]`` if any, but in full resolution; else one of
-        ``default`` or ``cli-output`` according to the other settings.
+        Same as :attr:`.Config.key` if any, but in full resolution; else either
+        "default" or "cli-output" according to the other settings.
     """
     from importlib.metadata import version
 
@@ -368,6 +330,7 @@ def prepare_reporter(
         has_solution = True
         if scenario:
             log.warning(f"{scenario = } argument ignored")
+        scenario = rep.graph["scenario"]
     else:
         # Retrieve the scenario
         scenario = scenario or context.get_scenario()
@@ -389,64 +352,43 @@ def prepare_reporter(
     # TODO Remove, once message_data.reporting is removed.
     genno.config.handles("iamc")(iamc)
 
-    # Handle `report/config` setting passed from calling code
-    context.setdefault("report", dict())
-    context.report.setdefault("config", dict())
-    if isinstance(context.report["config"], dict):
-        # Dictionary of existing settings; deepcopy to protect from destructive
-        # operations
-        config = deepcopy(context.report["config"])
-    else:
-        # Otherwise, must be Path-like
-        config = dict(path=Path(context.report["config"]))
+    if context.report.use_scenario_path:
+        # Construct ScenarioInfo
+        si = ScenarioInfo(scenario, empty=True)
+        # Use the scenario URL to extend the path
+        context.report.set_output_dir(context.report.output_dir.joinpath(si.path))
 
-    # Check location of the reporting config file
-    p = config.get("path")
-    if p and not p.exists() and not p.is_absolute():
-        # Try to resolve relative to the data/ directory
-        p = package_data_path("report", p)
-        assert p.exists(), p
-        config.update(path=p)
-
-    # Set defaults
-    # Directory for reporting output
-    default_output_dir = local_data_path("report")
-    config.setdefault(
-        "output_path", context.report.get("output_path", default_output_dir)
+    # Pass values to genno's configuration; deepcopy to protect from destructive
+    # operations
+    rep.configure(
+        **deepcopy(context.report.genno_config),
+        fail="raise" if has_solution else logging.NOTSET,
     )
-    # For genno.compat.plot
-    # FIXME use a consistent set of names
-    config.setdefault("output_dir", default_output_dir)
-
-    for k in ("output_dir", "output_path"):
-        config[k] = config[k].expanduser()
-        config[k].mkdir(exist_ok=True, parents=True)
-
-    # Pass configuration to the reporter
-    rep.configure(**config, fail="raise" if has_solution else logging.NOTSET)
 
     # Apply callbacks for other modules which define additional reporting computations
     for callback in CALLBACKS:
         callback(rep, context)
 
-    key = context.report.setdefault("key", None)
+    key = context.report.key
     if key:
         # If just a bare name like "ACT" is given, infer the full key
         if Key.bare_name(key):
-            msg = f"for {key!r}"
             inferred = rep.infer_keys(key)
             if inferred != key:
-                log.info(f"Infer {key!r} {msg}")
+                log.info(f"Infer {inferred!r} for {key!r}")
                 key = inferred
 
-        if config["output_path"] and not config["output_path"].is_dir():
-            # Add a new computation that writes *key* to the specified file
+        if context.report.cli_output:
+            # Add a new task that writes `key` to the specified file
             key = rep.add(
-                "cli-output", "write_report", key, literal(config["output_path"])
+                "cli-output", "write_report", key, path=context.report.cli_output
             )
     else:
         key = rep.default_key
         log.info(f"No key given; will use default: {key!r}")
+
+    # Create the output directory
+    context.report.mkdir()
 
     log.info("…done")
 
@@ -475,3 +417,4 @@ def defaults(rep: Reporter, context: Context) -> None:
 
 
 register(defaults)
+register("message_ix_models.report.plot")

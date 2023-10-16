@@ -1,8 +1,25 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- New providers for exogenous data from the :class:`.SSPOriginal` and :class:`.SSPUpdate` (:pull:`125`) sources.
+- Improved :class:`.ScenarioInfo` (:pull:`125`):
+
+  - New attributes :attr:`~.ScenarioInfo.model`, :attr:`~.ScenarioInfo.scenario`, :attr:`~.ScenarioInfo.version`, and (settable) :attr:`~.ScenarioInfo.url`; class method :meth:`~.ScenarioInfo.from_url` to allow storing |Scenario| identifiers on ScenarioInfo objects.
+  - New property :attr:`~.ScenarioInfo.path`, giving a valid path name for scenario-specific file I/O.
+
+- Improvements to :mod:`~message_ix_models.report` (:pull:`125`):
+
+  - New :class:`.report.Config` class collecting recognized settings for the module.
+  - :py:`context["report"]` always exists as an instance of :class:`.report.Config`.
+  - New submodule :class:`.report.plot` with base class and 5 plots of time-series data stored on Scenarios.
+  - Submodule :class:`.report.sim` provides :func:`add_simulated_solution` for testing reporting configuration.
+  - New operator :func:`.filter_ts`.
+
+- New reusable command-line option :program:`--urls-from-file` in :mod:`.util.click` (:pull:`125`).
+- Add `pyarrow <https://pypi.org/project/pyarrow/>`_ to dependencies (:pull:`125`).
 
 v2023.9.12
 ==========

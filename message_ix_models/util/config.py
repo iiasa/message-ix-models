@@ -2,9 +2,11 @@ import logging
 import os
 from dataclasses import dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Any, Hashable, Mapping, MutableMapping, Optional, Sequence, Set
+from typing import Any, Hashable, List, Mapping, MutableMapping, Optional, Sequence, Set
 
 import ixmp
+
+from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +99,9 @@ class ConfigHelper:
                     # Use name manipulation on the attribute value also
                     value = existing.replace(**value)
                 elif not isinstance(existing, type):
-                    value = replace(existing, **value)
+                    # https://github.com/python/mypy/issues/15843
+                    # TODO Check that fix is available in mypy 1.7.x; remove
+                    value = replace(existing, **value)  # type: ignore [misc]
             setattr(self, key, value)
 
     def replace(self, **kwargs):
@@ -106,6 +110,20 @@ class ConfigHelper:
             self,
             **{k: v for k, v in self._munge_dict(kwargs, "raise", "keyword argument")},
         )
+
+    def update(self, **kwargs):
+        """Update attributes in-place.
+
+        Raises
+        ------
+        AttributeError
+            Any of the `kwargs` are not fields in the data class.
+        """
+        # TODO use _munge_dict(); allow a positional argument
+        for k, v in kwargs.items():
+            if not hasattr(self, k):
+                raise AttributeError(k)
+            setattr(self, k, v)
 
     @classmethod
     def from_dict(cls, data: Mapping):
@@ -130,6 +148,9 @@ class Config:
     #: :class:`ixmp.Scenario` constructor, as given by the :program:`--model`/
     #: :program:`--scenario` or :program:`--url` CLI options.
     scenario_info: MutableMapping[str, str] = field(default_factory=dict)
+
+    #: Like `scenario_info`, but a list for operations affecting multiple scenarios.
+    scenarios: List[ScenarioInfo] = field(default_factory=list)
 
     #: Like :attr:`platform_info`, used by e.g. :meth:`.clone_to_dest`.
     dest_platform: MutableMapping[str, str] = field(default_factory=dict)

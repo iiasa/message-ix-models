@@ -10,6 +10,7 @@ from message_ix.models import MESSAGE_ITEMS
 from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
 from .common import (
+    HAS_MESSAGE_DATA,
     MESSAGE_DATA_PATH,
     MESSAGE_MODELS_PATH,
     Adapter,
@@ -25,6 +26,7 @@ from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
 __all__ = [
+    "HAS_MESSAGE_DATA",
     "MESSAGE_DATA_PATH",
     "MESSAGE_MODELS_PATH",
     "Adapter",

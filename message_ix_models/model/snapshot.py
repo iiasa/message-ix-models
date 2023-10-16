@@ -92,9 +92,16 @@ def read_excel(scenario: Scenario, path: Path) -> None:
     base = unpack(path)
 
     scenario.read_excel(base.joinpath("sets.xlsx"))
-    with scenario.transact(f"Read snapshot from {path}"):
+
+    parameters = set(scenario.par_list())
+
+    with scenario.transact(f"Read snapshot data from {path}"):
         for p in base.glob("*.csv.gz"):
             name = p.name.split(".")[0]
+
+            if name not in parameters:
+                continue  # Variable or equation data: don't read
+
             data = pd.read_csv(p)
 
             # Correct units

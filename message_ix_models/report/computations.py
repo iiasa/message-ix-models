@@ -1,6 +1,7 @@
 """Atomic reporting operations for MESSAGEix-GLOBIOM."""
 import itertools
 import logging
+import re
 from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple, Union
 
 import ixmp
@@ -20,6 +21,10 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "codelist_to_groups",
+    "compound_growth",
+    "exogenous_data",
+    "filter_ts",
     "from_url",
     "get_ts",
     "gwp_factors",
@@ -38,12 +43,14 @@ def codelist_to_groups(
     The returned value is suitable for use with :func:`genno.computations.aggregate`.
 
     If this is a list of nodes per :func:`.get_codes`, then the mapping is from regions
-    to the ISO 3166-1 alpha-3 codes of the countries within each region.
+    to the ISO 3166-1 alpha-3 codes of the countries within each region. The code for
+    the region itself is also included in the values to be aggregated, so that already-
+    aggregated data will pass through.
     """
 
     groups = dict()
     for code in filter(lambda c: len(c.child), codes):
-        groups[code.id] = list(map(str, code.child))
+        groups[code.id] = [code.id] + list(map(str, code.child))
 
     return {dim: groups}
 
@@ -74,12 +81,25 @@ def exogenous_data():
 @exogenous_data.helper
 def add_exogenous_data(
     func, c: "Computer", *, context=None, source=None, source_kw=None
-) -> Tuple["Key"]:
+) -> Tuple["Key", ...]:
     """Prepare `c` to compute exogenous data from `source`."""
     from message_ix_models.tools.exo_data import prepare_computer
 
     return prepare_computer(
         context or Context.get_instance(-1), c, source=source, source_kw=source_kw
+    )
+
+
+def filter_ts(df: pd.DataFrame, expr: re.Pattern, *, column="variable") -> pd.DataFrame:
+    """Filter time series data in `df`.
+
+    1. Keep only rows in `df` where `expr` is a full match (
+       :meth:`~pandas.Series.str.fullmatch`) for the entry in `column`.
+    2. Retain only the first match group ("...(...)...") from `expr` as the `column`
+       entry.
+    """
+    return df[df[column].str.fullmatch(expr)].assign(
+        variable=df[column].str.replace(expr, r"\1", regex=True)
     )
 
 
