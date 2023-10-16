@@ -9,7 +9,6 @@ import pandas as pd
 import xarray as xr
 from genno import Quantity, computations
 from genno.computations import (
-    add,
     apply_units,
     convert_units,
     product,
@@ -107,10 +106,11 @@ def cost(
        2. the wage rate per hour (`gdp_ppp_cap` / `whours`), and
        3. the travel time per unit distance (1 / `speeds`).
     """
+    from genno.computations import add, div, mul
+
     # NB for some reason, the 'y' dimension of result becomes `float`, rather than
     # `int`, in this step
-    result = add(price, ratio(product(gdp_ppp_cap, votm), product(speeds, whours)))
-    return result.sel(y=y)
+    return add(price, div(mul(gdp_ppp_cap, votm), mul(speeds, whours))).sel(y=y)
 
 
 def demand_ixmp0(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
