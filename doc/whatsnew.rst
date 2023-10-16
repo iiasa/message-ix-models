@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2023.10.16
+===========
 
 - New providers for exogenous data from the :class:`.SSPOriginal` and :class:`.SSPUpdate` (:pull:`125`) sources.
 - Improved :class:`.ScenarioInfo` (:pull:`125`):
