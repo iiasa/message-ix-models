@@ -1334,7 +1334,7 @@ def report(sc=False, reg="", sdgs=False):
     report_iam.filter(variable=varsexclude, unit="unknown", keep=False, inplace=True)
     # prepare data for loading timeserie
     report_pd = report_iam.as_pandas()
-    report_pd = report_pd.drop(columns=["exclude"])
+    # report_pd = report_pd.drop(columns=["exclude"])
     # all initial variables form Reporte will be filtered out
     d = report_df.Variable.unique()
     d1 = pd.DataFrame({"variable": d})
@@ -1368,7 +1368,7 @@ def report(sc=False, reg="", sdgs=False):
     df_unit = df_unit[~df_unit["variable"].str.contains("Investment")]
     df_unit_inv = df_unit_inv.as_pandas()
     report_pd = pd.concat([df_unit, df_unit_inv])
-    report_pd = report_pd.drop(columns=["exclude"])
+    # report_pd = report_pd.drop(columns=["exclude"])
     report_pd["unit"].replace("EJ", "EJ/yr", inplace=True)
     # for country model
     if reg not in ["R11", " R12"] and suban:
