@@ -91,11 +91,12 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
             # Quantity has the expected size on the n/node dimension
             assert N_node == len(qty.coords["n"]), qty.coords["n"].data
 
-            if "factor" in key:
-                fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
-                dump = tmp_path.joinpath(fn).with_suffix(".csv")
-                print(f"Dumped to {dump}")
-                qty.to_series().to_csv(dump)
+            # commented: dump to a temporary path for inspection
+            # if "factor" in key:
+            #     fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
+            #     dump = tmp_path.joinpath(fn).with_suffix(".csv")
+            #     print(f"Dumped to {dump}")
+            #     qty.to_series().to_csv(dump)
         except Exception:
             # Something else
             print(f"\n\n-- {key} --\n\n")
