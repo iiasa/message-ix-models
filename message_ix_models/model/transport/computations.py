@@ -19,9 +19,8 @@ from genno.computations import (
 )
 from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
-from ixmp import Scenario
 from ixmp.reporting import RENAME_DIMS
-from message_ix import make_df
+from message_ix import Scenario, make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.report.computations import compound_growth
