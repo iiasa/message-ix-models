@@ -11,6 +11,7 @@ from message_data.model.transport import data as data_module
 from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.emission import ef_for_input, get_emissions_data
 from message_data.model.transport.roadmap import get_roadmap_data
+from message_data.model.transport.testing import MARK
 from message_data.model.transport.util import path_fallback
 from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
@@ -299,7 +300,9 @@ def test_get_chn_ind_pop():
 
 
 @pytest.mark.parametrize("years", ["A", "B"])
-@pytest.mark.parametrize("regions", ["ISR", "R11", "R12", "R14"])
+@pytest.mark.parametrize(
+    "regions", [pytest.param("ISR", marks=MARK[3]), "R11", "R12", "R14"]
+)
 @pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.ELE)])
 def test_navigate_ele(test_context, regions, years, options):
     """Test genno-based IKARUS data prep."""
