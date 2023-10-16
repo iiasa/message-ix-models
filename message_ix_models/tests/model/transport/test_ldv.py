@@ -2,10 +2,8 @@ import logging
 
 import pandas as pd
 import pytest
-from genno import ComputationError
 from iam_units import registry
 from message_ix_models.model.structure import get_codes
-from message_ix_models.testing import NIE
 from pytest import param
 
 from message_data.model.transport import testing
@@ -40,10 +38,7 @@ log = logging.getLogger(__name__)
 @pytest.mark.parametrize(
     "regions",
     [
-        param(
-            "ISR",
-            marks=pytest.mark.xfail(raises=(AssertionError, ComputationError)),
-        ),
+        param("ISR", marks=testing.MARK[3]),
         "R11",
         "R12",
         param("R14", marks=pytest.mark.xfail(raises=FileNotFoundError)),
@@ -161,7 +156,7 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
         ("US-TIMES MA3T", "R12", "B"),
         ("US-TIMES MA3T", "R14", "A"),
         # Not implemented
-        param("US-TIMES MA3T", "ISR", "A", marks=NIE),
+        param("US-TIMES MA3T", "ISR", "A", marks=testing.MARK[3]),
     ],
 )
 def test_ldv_constraint_data(test_context, source, regions, years):

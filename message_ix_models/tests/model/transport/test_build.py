@@ -77,10 +77,10 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
             "US-TIMES MA3T",
             "IKARUS",
             False,
-            marks=[mark.slow, MARK[2](AttributeError)],
+            marks=[mark.slow, MARK[2](AssertionError)],
         ),
         # Pending iiasa/message_data#190
-        param("ISR", "A", None, None, False, marks=MARK[2](AttributeError)),
+        param("ISR", "A", None, None, False, marks=MARK[3]),
     ],
 )
 def test_build_bare_res(

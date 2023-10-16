@@ -53,7 +53,7 @@ def test_demand_dummy(test_context, regions, years):
         ("R12", "B", 12, dict()),
         ("R12", "B", 12, dict(navigate_scenario="act+ele+tec")),
         param("R14", "B", 14, dict(), marks=NIE),
-        param("ISR", "A", 1, dict(), marks=NIE),
+        param("ISR", "A", 1, dict(), marks=MARK[3]),
     ],
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, options):
@@ -163,7 +163,7 @@ def test_exo_report(test_context, tmp_path):
 @pytest.mark.parametrize(
     "regions",
     [
-        param("ISR", marks=NIE),
+        param("ISR", marks=MARK[3]),
         "R11",
         "R12",
         param("R14", marks=NIE),
@@ -208,7 +208,7 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
         ("R14", "B", "SSP1"),
         ("R14", "B", "SSP2"),
         ("R14", "B", "SSP3"),
-        ("ISR", "B", "SSP2"),
+        pytest.param("ISR", "B", "SSP2", marks=MARK[3]),
     ],
 )
 def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):

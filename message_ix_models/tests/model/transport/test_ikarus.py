@@ -107,9 +107,7 @@ def test_get_ikarus_data0(test_context, regions, N_node, years):
         ("R11", 11),
         ("R12", 12),
         ("R14", 14),
-        pytest.param(
-            "ISR", 1, marks=pytest.mark.xfail(raises=KeyError, reason="1-region model")
-        ),
+        pytest.param("ISR", 1, marks=testing.MARK[3]),
     ],
 )
 @pytest.mark.parametrize("options", [{}, dict(navigate_scenario=T35_POLICY.TEC)])
