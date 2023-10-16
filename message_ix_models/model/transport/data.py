@@ -9,6 +9,7 @@ import pandas as pd
 from genno import Computer, quote
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
+from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import (
     add_par_data,
     broadcast,
@@ -278,3 +279,56 @@ def navigate_ele(
     )
 
     return {name: data}
+
+
+@register_source
+class MERtoPPP(ExoDataSource):
+    """Provider of exogenous MERtoPPP data."""
+
+    id = "transport MERtoPPP"
+
+    def __init__(self, source, source_kw):
+        from .util import path_fallback
+
+        if not source == "message_data.model.transport":
+            raise ValueError(source)
+        elif source_kw.get("measure") != "MERtoPPP":
+            raise ValueError(source_kw)
+
+        context = source_kw.pop("context")
+
+        try:
+            self.path = path_fallback(context, "mer-to-ppp.csv")
+        except FileNotFoundError:
+            log.info("Fall back to R11 data")
+            self.path = path_fallback("R11", "mer-to-ppp.csv")
+            regions_to = context.model.regions
+
+            from message_ix_models.util import adapt_R11_R12, adapt_R11_R14
+
+            # Try to identify an adapter that can convert R11 to `regions_to`
+            adapt = {
+                "R12": adapt_R11_R12,
+                "R14": adapt_R11_R14,
+            }.get(regions_to)
+
+            if adapt is None:
+                log.info(
+                    f"Not implemented: transform {self.id} data from 'R11' to "
+                    f"{regions_to!r}"
+                )
+                raise NotImplementedError
+
+            self.adapt = adapt
+        else:
+
+            def passthrough(qty):
+                return qty
+
+            self.adapt = passthrough
+
+    def __call__(self):
+        from genno.computations import load_file
+        from ixmp.reporting import RENAME_DIMS
+
+        return self.adapt(load_file(self.path, dims=RENAME_DIMS))
