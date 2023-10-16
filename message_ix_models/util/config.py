@@ -99,7 +99,9 @@ class ConfigHelper:
                     # Use name manipulation on the attribute value also
                     value = existing.replace(**value)
                 elif not isinstance(existing, type):
-                    value = replace(existing, **value)
+                    # https://github.com/python/mypy/issues/15843
+                    # TODO Check that fix is available in mypy 1.7.x; remove
+                    value = replace(existing, **value)  # type: ignore [misc]
             setattr(self, key, value)
 
     def replace(self, **kwargs):
