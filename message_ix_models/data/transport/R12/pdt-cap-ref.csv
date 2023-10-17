@@ -1,0 +1,27 @@
+# Passenger distance travelled per capita
+#
+# Source: rough calculation / temporary placeholder from
+# data/advance/advance_compare_20171018-134445.csv.zip
+# - variable="Transport|Service demand|All|Passenger"
+#   divided by variable="Transport|Population"
+# - model="MESSAGE"
+# - scenario="ADV3TRAr2_Base"
+# - year=2020
+#
+# …via .transport.operator._advance_data_for()
+#
+# Units: km / year
+#
+node,     value
+R12_RCPA,  4795
+R12_PAS,   4795
+R12_CHN,   5173
+R12_EEU,  18495
+R12_WEU,  18495
+R12_SAS,   2663
+R12_LAM,   5759
+R12_AFR,   3410
+R12_MEA,   3410
+R12_PAO,  23551
+R12_FSU,   9120
+R12_NAM,  27896
