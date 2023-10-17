@@ -577,19 +577,29 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
 def pdt_per_capita(gdp_ppp_cap: Quantity, pdt_ref: Quantity, config: dict) -> Quantity:
     """Compute passenger distance traveled (PDT) per capita.
 
-    Simplification of Schäefer et al. (2010): linear interpolation between (0, 0) and
-    the configuration keys "fixed demand" and "fixed GDP".
-
-    Interpolate between reference value of (GDP::PPP+capita, activity) (in some year;
-    usually the model base year) and (fixed_GDP, fixed_demand).
-
+    Per Schäfer et al. (2009) Figure 2.5: linear interpolation between (`gdp_ppp_cap`,
+    `pdt_ref`) in the first period of gdp_ppp_cap and the values (
+    :attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_demand`), which give a fixed future
+    point towards which all regions converge.
     """
-    from genno.computations import div, mul
+    from genno.computations import add, div, mul, sub
 
-    return mul(
-        div(gdp_ppp_cap, config["transport"].fixed_GDP),
-        config["transport"].fixed_demand,
-    )
+    # Selectors/indices
+    y0 = dict(y=[gdp_ppp_cap.coords["y"][0].item()])
+    n = dict(n=gdp_ppp_cap.coords["n"].data)
+
+    # Retrieve values from configuration; broadcast on dimension "n"
+    gdp_fix = config["transport"].fixed_GDP.expand_dims(n)
+    pdt_fix = config["transport"].fixed_demand.expand_dims(n)
+
+    # Initial GDP/capita
+    gdp_0 = gdp_ppp_cap.sel(y0).drop_vars("y")
+
+    # Compute slope between initial and target point, for each "n"
+    m = div(sub(pdt_fix, pdt_ref), sub(gdp_fix, gdp_0))
+
+    # Predict y = mx + b ∀ (n, y (period))
+    return add(mul(m, sub(gdp_ppp_cap, gdp_0)), pdt_ref)
 
 
 def price_units(qty: Quantity) -> Quantity:
