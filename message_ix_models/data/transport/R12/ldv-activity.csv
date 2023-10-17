@@ -1,0 +1,20 @@
+# Activity (driving distance) per light-duty vehicle
+#
+# Source: duplicate of R11/ldv-activity.csv; see comments there. The
+# value for R11_CPA is repeated for R12_RCPA and R12_CHN.
+#
+# Unit: kilometre / year
+#
+node, value
+R12_AFR,  10391
+R12_CHN,  16000
+R12_EEU,   8962
+R12_FSU,  11482
+R12_LAM,  14600
+R12_MEA,  14000
+R12_NAM,  25860
+R12_PAO,  10000
+R12_PAS,  12000
+R12_RCPA, 16000
+R12_SAS,  10400
+R12_WEU,  11646
