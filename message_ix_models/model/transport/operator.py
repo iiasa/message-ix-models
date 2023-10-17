@@ -574,7 +574,7 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
     raise RuntimeError("Failed to identify the World node")
 
 
-def pdt_per_capita(gdp_ppp_cap: Quantity, config: dict) -> Quantity:
+def pdt_per_capita(gdp_ppp_cap: Quantity, pdt_ref: Quantity, config: dict) -> Quantity:
     """Compute passenger distance traveled (PDT) per capita.
 
     Simplification of Schäefer et al. (2010): linear interpolation between (0, 0) and
