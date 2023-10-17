@@ -14,6 +14,11 @@ from message_data.tools.gdp_pop import population
 
 from .util import path_fallback
 
+__all__ = [
+    "cg_shares",
+    "urban_rural_shares",
+]
+
 log = logging.getLogger(__name__)
 
 # Dimensions

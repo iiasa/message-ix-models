@@ -11,8 +11,6 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import broadcast
 
-from . import groups
-
 log = logging.getLogger(__name__)
 
 
@@ -162,11 +160,9 @@ def prepare_computer(c: Computer) -> None:
         # Base share data
         ("base shares:n-t-y", "base_shares", n, "t::transport modes", y, "config"),
         # Population shares by area_type
-        (pop_at, groups.urban_rural_shares, y, "config"),
+        (pop_at, "urban_rural_shares", y, "config"),
         # Consumer group sizes
-        # TODO ixmp is picky here when there is no separate argument to the callable;
-        # fix.
-        (cg, groups.cg_shares, pop_at, "context"),
+        (cg, "cg_shares", pop_at, "context"),
         # PPP GDP, total and per capita
         (gdp_ppp, "mul", gdp, mer_to_ppp),
         (gdp_ppp_cap, "div", gdp_ppp, pop),
