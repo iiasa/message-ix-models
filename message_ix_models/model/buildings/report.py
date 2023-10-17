@@ -20,7 +20,7 @@ from message_ix_models.report import iamc as add_iamc
 from message_ix_models.report.util import add_replacements
 from message_ix_models.util import eval_anno
 
-from message_data.model.transport.computations import nodes_world_agg
+from message_data.model.transport.operator import nodes_world_agg
 
 from . import Config
 from .build import get_spec, get_tech_groups
