@@ -98,6 +98,14 @@ def prepare_computer(c: Computer):
         c.add("ldv tech::ixmp", *final),
         c.add("ldv usage::ixmp", usage_data, "context"),
         c.add("ldv constraints::ixmp", constraint_data, "context"),
+        c.add(
+            "ldv capacity_factor::ixmp",
+            capacity_factor,
+            "ldv activity:n:exo",
+            "t::transport LDV",
+            "y::model",
+            "broadcast:y-yv-ya",
+        ),
     ]
 
     # TODO add bound_activity constraints for first year given technology shares
@@ -304,13 +312,9 @@ def get_USTIMES_MA3T(
         .pipe(same_node)
     )
 
-    # Add capacity factors and technical lifetimes
+    # Add technical lifetimes
     result.update(
-        make_matched_dfs(
-            base=result["output"],
-            capacity_factor=1.0,
-            technical_lifetime=technical_lifetime,
-        )
+        make_matched_dfs(base=result["output"], technical_lifetime=technical_lifetime)
     )
 
     # Transform costs
@@ -377,6 +381,43 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
     data["output"] = output
 
     return data
+
+
+def capacity_factor(
+    qty: Quantity, t_ldv: dict, y, y_broadcast: Quantity
+) -> Dict[str, pd.DataFrame]:
+    """Return capacity factor data for LDVs.
+
+    The data are:
+
+    - Broadcast across all |yV|, |yA| (`broadcast_y`), and LDV technologies (`t_ldv`).
+    - Converted to :mod:`message_ix` parameter format using :func:`.as_message_df`.
+
+    Parameters
+    ----------
+    qty
+        Input data, for instance from file :`ldv-activity.csv`, with dimension |n|.
+    broadcast_y
+        The structure :py:`"broadcast:y-yv-va"`.
+    t_ldv
+        The structure :py:`"t::transport LDV"`, mapping the key "t" to the list of LDV
+        technologies.
+    y
+        The structure :py:`"y::model"`, that is, all :math:`y > y_0`.
+    """
+    from genno.computations import convert_units, mul
+    from message_ix.reporting.computations import as_message_df
+
+    # TODO determine units from technology annotations
+    data = convert_units(mul(qty.expand_dims(y=y), y_broadcast), "Mm / year")
+
+    name = "capacity_factor"
+    dims = dict(node_loc="node", year_vtg="yv", year_act="ya")
+    result = as_message_df(data, name, dims, dict(time="year"))
+
+    result[name] = result[name].pipe(broadcast, technology=t_ldv["t"])
+
+    return result
 
 
 def constraint_data(context) -> Dict[str, pd.DataFrame]:
