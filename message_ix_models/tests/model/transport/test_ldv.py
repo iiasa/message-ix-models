@@ -12,6 +12,7 @@ from message_data.model.transport.ldv import (
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
+from message_data.model.transport.testing import MARK
 from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
 
@@ -145,6 +146,25 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
         # print(par_name, df.to_string(), sep="\nq")
 
         assert N_exp <= len(df)
+
+
+@pytest.mark.parametrize(
+    "regions, N_node_loc",
+    [
+        pytest.param("R11", 11, marks=MARK[2](FileNotFoundError)),
+        ("R12", 12),
+        pytest.param("R14", 14, marks=MARK[2](FileNotFoundError)),
+    ],
+)
+def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):
+    c, _ = testing.configure_build(test_context, regions=regions, years=years)
+
+    result = c.get("ldv capacity_factor::ixmp")
+    assert {"capacity_factor"} == set(result)
+    df = result.pop("capacity_factor")
+    assert not df.isna().any(axis=None)
+    assert 1 == len(df["unit"].unique())
+    assert N_node_loc == len(df["node_loc"].unique())
 
 
 @pytest.mark.parametrize(
