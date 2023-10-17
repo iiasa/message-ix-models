@@ -201,6 +201,7 @@ unit:
     Gt * km: 10⁹ tonne-kilometre
     Gv km: 10⁹ vehicle kilometre
     Gv * km: 10⁹ vehicle kilometre
+    Mm / a: 10³ kilometre per year
     # for IKARUS
     a: year
 
