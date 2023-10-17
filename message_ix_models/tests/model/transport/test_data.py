@@ -6,7 +6,7 @@ from iam_units import registry
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
 
-from message_data.model.transport import Config, DataSourceConfig, computations, testing
+from message_data.model.transport import Config, DataSourceConfig, testing
 from message_data.model.transport import data as data_module
 from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.emission import ef_for_input, get_emissions_data
@@ -16,15 +16,6 @@ from message_data.model.transport.util import path_fallback
 from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
 from message_data.tools.gfei_fuel_economy import get_gfei_data
-
-
-def test_advance_fv():
-    result = computations.advance_fv(dict(regions="R12"))
-
-    assert ("n",) == result.dims
-    # Results only for R12
-    assert 12 == len(result.coords["n"])
-    assert {"[mass]": 1, "[length]": 1} == result.units.dimensionality, result
 
 
 @pytest.mark.parametrize("parts", data_module.DATA_FILES)

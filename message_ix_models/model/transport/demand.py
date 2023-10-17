@@ -1,6 +1,5 @@
 """Demand calculation for MESSAGEix-Transport."""
 import logging
-from functools import partial
 from operator import itemgetter
 from typing import Dict, List, cast
 
@@ -12,7 +11,7 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import broadcast
 
-from . import computations, groups
+from . import groups
 
 log = logging.getLogger(__name__)
 
@@ -202,7 +201,7 @@ def prepare_computer(c: Computer) -> None:
             "config",
         ),
         # Shares
-        ("shares:n-t-y", partial(computations.logit, dim="t"), cost, sw, "lambda:", y),
+        (("shares:n-t-y", "logit", cost, sw, "lambda:", y), dict(dim="t")),
         # Total PDT shared out by mode
         (pdt_nyt.add_tag("0"), "mul", pdt_ny, "shares:n-t-y"),
         # Adjustment factor

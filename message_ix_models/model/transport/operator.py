@@ -579,12 +579,15 @@ def pdt_per_capita(gdp_ppp_cap: Quantity, config: dict) -> Quantity:
 
     Simplification of Schäefer et al. (2010): linear interpolation between (0, 0) and
     the configuration keys "fixed demand" and "fixed GDP".
+
+    Interpolate between reference value of (GDP::PPP+capita, activity) (in some year;
+    usually the model base year) and (fixed_GDP, fixed_demand).
+
     """
-    return product(
-        ratio(
-            gdp_ppp_cap,
-            config["transport"].fixed_GDP,
-        ),
+    from genno.computations import div, mul
+
+    return mul(
+        div(gdp_ppp_cap, config["transport"].fixed_GDP),
         config["transport"].fixed_demand,
     )
 

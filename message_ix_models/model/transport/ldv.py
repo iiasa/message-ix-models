@@ -31,8 +31,8 @@ from message_ix_models.util import (
 from openpyxl import load_workbook
 from sdmx.model.v21 import Code
 
-from .computations import extend_y
 from .emission import ef_for_input
+from .operator import extend_y
 from .util import input_commodity_level, path_fallback
 
 log = logging.getLogger(__name__)

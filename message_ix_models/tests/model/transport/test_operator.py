@@ -1,15 +1,74 @@
 import pytest
 from genno import Quantity
+from genno.testing import assert_qty_equal
 from message_ix import Scenario
+from numpy.testing import assert_allclose
 
 from message_data.model.transport import Config
-from message_data.model.transport.computations import (
+from message_data.model.transport.operator import (
+    advance_fv,
+    distance_ldv,
+    distance_nonldv,
     factor_input,
     iea_eei_fv,
     transport_check,
 )
 from message_data.model.transport.util import get_techs
 from message_data.projects.navigate import T35_POLICY
+
+
+def test_advance_fv():
+    result = advance_fv(dict(regions="R12"))
+
+    assert ("n",) == result.dims
+    # Results only for R12
+    assert 12 == len(result.coords["n"])
+    assert {"[mass]": 1, "[length]": 1} == result.units.dimensionality, result
+
+
+@pytest.mark.parametrize("regions", ["R11", "R12"])
+def test_distance_ldv(test_context, regions):
+    "Test :func:`.distance_ldv`."
+    ctx = test_context
+    ctx.model.regions = regions
+
+    Config.from_context(ctx)
+
+    # Fake reporting config from the context
+    config = dict(transport=ctx.transport)
+
+    # Computation runs
+    result = distance_ldv(config)
+
+    # Computed value has the expected dimensions
+    assert ("nl", "driver_type") == result.dims
+
+    # Check some computed values
+    assert_allclose(
+        [13930, 45550],
+        result.sel(nl=f"{regions}_NAM", driver_type=["M", "F"]),
+        rtol=2e-4,
+    )
+
+
+@pytest.mark.parametrize("regions", ["R11", "R12"])
+def test_distance_nonldv(regions):
+    "Test :func:`.distance_nonldv`."
+    # Configuration
+    config = dict(regions=regions)
+
+    # Computation runs
+    result = distance_nonldv(config)
+
+    # Computed value has the expected dimensions and units
+    assert ("nl", "t") == result.dims
+    assert result.units.is_compatible_with("km / vehicle / year")
+
+    # Check a computed value
+    assert_qty_equal(
+        Quantity(32.7633, units="Mm / vehicle / year", name="non-ldv distance"),
+        result.sel(nl=f"{regions}_EEU", t="BUS", drop=True),
+    )
 
 
 @pytest.mark.parametrize(
