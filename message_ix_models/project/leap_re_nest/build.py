@@ -119,9 +119,9 @@ for ss in scens:
 
 # when using the CLI it would be something like
 # with the correct scenario name
-# mix-models --url=ixmp://ixmp_dev/MESSAGEix_ZM/MLED_baseline water-ix --regions=ZMB nexus --rcps=7p0 --rels=low
-# mix-models --url=ixmp://ixmp_dev/MESSAGEix_ZM/MLED_improved water-ix --regions=ZMB nexus --rcps=7p0 --rels=low --sdgs=improved
-# mix-models --url=ixmp://ixmp_dev/MESSAGEix_ZM/MLED_ambitious water-ix --regions=ZMB nexus --rcps=7p0 --rels=low --sdgs=ambitious
+# mix-models --url=ixmp://local/MESSAGEix_ZM/MLED_baseline water-ix --regions=ZMB nexus --rcps=7p0 --rels=low
+# mix-models --url=ixmp://local/MESSAGEix_ZM/MLED_improved water-ix --regions=ZMB nexus --rcps=7p0 --rels=low --sdgs=improved
+# mix-models --url=ixmp://local/MESSAGEix_ZM/MLED_ambitious water-ix --regions=ZMB nexus --rcps=7p0 --rels=low --sdgs=ambitious
 
 
 # %% 5) add irrigation and adjust electricity uses in the water
