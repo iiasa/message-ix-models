@@ -11,6 +11,8 @@ from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import broadcast
 
+from .util import path_fallback
+
 log = logging.getLogger(__name__)
 
 
@@ -169,8 +171,14 @@ def prepare_computer(c: Computer) -> None:
         # GDP index
         ("y0", itemgetter(0), y),  # TODO move upstream to message_ix
         (gdp_index, "index_to", gdp_ppp_cap, literal("y"), "y0"),
-        # Total demand
-        (pdt_cap, "pdt_per_capita", gdp_ppp_cap, "config"),
+        # Reference (historical) PDT per capita
+        (
+            ("load_file", path_fallback(c.graph["context"], "pdt-cap-ref.csv")),
+            dict(key=pdt_cap + "ref", dims={"node": "n"}),
+        ),
+        # Projected PDT per capita
+        (pdt_cap, "pdt_per_capita", gdp_ppp_cap, pdt_cap + "ref", "config"),
+        # Total PDT
         (pdt_ny, "mul", pdt_cap, pop),
         # Value-of-time multiplier
         ("votm:n-y", "votm", gdp_ppp_cap),
