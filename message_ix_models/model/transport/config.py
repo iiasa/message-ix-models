@@ -153,10 +153,6 @@ class Config(ConfigHelper):
     #: Logit share exponents or cost distribution parameters [0]
     lamda: float = -2.0
 
-    #: LDV activity for average drivers in the model base year.
-    #: Dimensions: (node,). Units: [vehicle-distance / time].
-    ldv_activity: Optional[Quantity] = None
-
     #: Period in which LDV costs match those of a reference region.
     #: Dimensions: (node,).
     ldv_cost_catch_up_year: Dict = field(default_factory=dict)
