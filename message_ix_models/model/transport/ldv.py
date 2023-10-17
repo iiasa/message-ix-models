@@ -65,12 +65,12 @@ def prepare_computer(c: Computer):
     )
 
     # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
-    c.add("div", "ldv efficiency:n-t-y", Quantity(1.0), "ldv fuel economy:n-t-y:exo")
+    c.add("ldv efficiency:n-t-y", "div", Quantity(1.0), "ldv fuel economy:n-t-y:exo")
 
     # Compute the input efficiency adjustment factor
     k2 = c.add(
-        "factor_input",
         "transport input factor:t-y",
+        "factor_input",
         "y",
         "t::transport",
         "t::transport agg",
