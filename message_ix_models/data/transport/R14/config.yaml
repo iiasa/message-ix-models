@@ -54,35 +54,6 @@ factor:
       R14_SCS: 1.0
       R14_UBM: 1.0
 
-ldv activity:
-  # Extracted from the spreadsheet LDV_costs_efficiencies_US-TIMES_MA3T.xlsx,
-  # where the following comments are given by DLM:
-  #
-  #     Annual driving distances by consumer type. These values used for all
-  #     years; only the values in yellow/red [=included in this file] need to be
-  #     changed. Modest and Frequent mileages for all non-NAM regions are scaled
-  #     relative to the NAM values from MA3T. This is because we only have
-  #     driving data for the average driver (supplied by Page Kyle of the GCAM
-  #     team in March 2014).
-  #
-  _dim: nl  # node_loc
-  _unit: vehicle km / year
-  R14_AFR: 10391
-  R14_CPA: 16000
-  R14_EEU:  8962
-  R14_LAM: 14600
-  R14_MEA: 14000
-  R14_NAM: 25860
-  R14_PAO: 10000
-  R14_PAS: 12000
-  R14_RUS: 11482
-  R14_SAS: 10400
-  R14_WEU: 11646
-  # Duplicated from R14_RUS
-  R14_CAS: 11482
-  R14_SCS: 11482
-  R14_UBM: 11482
-
 ldv cost catch-up year:
   R14_AFR: 2050
   R14_CPA: 2030

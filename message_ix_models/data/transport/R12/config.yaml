@@ -13,23 +13,6 @@ factor:
       A: 1  # by definition
       F: 1.7614  # ie. 45550 km in R11_NAM
 
-ldv activity:
-  # Same values as R11, with R11_CPA copied to R12_CHN.
-  _dim: nl
-  _unit: vehicle km / year
-  R12_NAM: 25860
-  R12_LAM: 14600
-  R12_WEU: 11646
-  R12_EEU:  8962
-  R12_FSU: 11482
-  R12_MEA: 14000
-  R12_AFR: 10391
-  R12_RCPA: 16000
-  R12_CHN: 16000
-  R12_PAO: 10000
-  R12_PAS: 12000
-  R12_SAS: 10400
-
 # (DLM) “Which US census region should be used as a proxy for the distribution
 # of driver types in this MESSAGE region?”
 node to census_division:

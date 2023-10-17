@@ -53,31 +53,6 @@ factor:
       R11_PAS: 0.9
       R11_SAS: 0.9
 
-ldv activity:
-  # Extracted from the spreadsheet LDV_costs_efficiencies_US-TIMES_MA3T.xlsx,
-  # where the following comments are given by DLM:
-  #
-  #     Annual driving distances by consumer type. These values used for all
-  #     years; only the values in yellow/red [=included in this file] need to be
-  #     changed. Modest and Frequent mileages for all non-NAM regions are scaled
-  #     relative to the NAM values from MA3T. This is because we only have
-  #     driving data for the average driver (supplied by Page Kyle of the GCAM
-  #     team in March 2014).
-  #
-  _dim: nl  # node_loc
-  _unit: vehicle km / year
-  R11_NAM: 25860
-  R11_LAM: 14600
-  R11_WEU: 11646
-  R11_EEU:  8962
-  R11_FSU: 11482
-  R11_MEA: 14000
-  R11_AFR: 10391
-  R11_CPA: 16000
-  R11_PAO: 10000
-  R11_PAS: 12000
-  R11_SAS: 10400
-
 ldv cost catch-up year:
   R11_NAM: 1.0
   R11_LAM: 2030
