@@ -7,15 +7,8 @@ from typing import Dict, Hashable, List, Mapping, Optional, Set
 import numpy as np
 import pandas as pd
 import xarray as xr
-from genno import Quantity, computations
-from genno.computations import (
-    apply_units,
-    convert_units,
-    product,
-    ratio,
-    relabel,
-    rename_dims,
-)
+from genno import Quantity
+from genno.computations import apply_units, convert_units, relabel, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
 from ixmp.reporting import RENAME_DIMS
@@ -72,19 +65,21 @@ def base_shares(
     If the data lack the n (node, spatial) and/or y (time) dimensions, they are
     broadcast over these.
     """
+    from genno.computations import load_file, mul
+
     # TODO write tests
     path = path_fallback(
         config["regions"], "mode-share", f"{config['transport'].mode_share}.csv"
     )
     log.info(f"Read base mode shares from {path}")
 
-    base = computations.load_file(path, dims=RENAME_DIMS, name="mode share", units="")
+    base = load_file(path, dims=RENAME_DIMS, name="mode share", units="")
 
     missing = [d for d in "nty" if d not in base.dims]
     log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
 
     coords = [("n", nodes), ("t", techs), ("y", y)]
-    return product(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
+    return mul(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
 
 
 def cost(
@@ -164,8 +159,10 @@ def distance_ldv(config: dict) -> Quantity:
     - Regions other than R11_NAM have M/F values in same proportion to their A value as
       in NAM
     """
+    from genno.computations import mul
+
     # Load from config.yaml
-    result = product(
+    result = mul(
         as_quantity(config["transport"].ldv_activity),
         as_quantity(config["transport"].factor["activity"]["ldv"]),
     )
@@ -424,14 +421,16 @@ def logit(
     …where :math:`D` is the dimension named by the `dim` argument. All other dimensions
     are broadcast automatically.
     """
+    from genno.computations import div, mul, pow
+
     # Systematic utility
-    u = product(k, computations.pow(x, lamda)).sel(y=y)
+    u = mul(k, pow(x, lamda)).sel(y=y)
 
     # commented: for debugging
     # u.to_csv("u.csv")
 
     # Logit probability
-    return ratio(u, u.sum(dim))
+    return div(u, u.sum(dim))
 
 
 def make_output_path(config, scenario, name):
@@ -460,6 +459,7 @@ def merge_data(
 def _advance_data_for(config: dict, variable: str, units) -> Quantity:
     import plotnine as p9
     from genno.compat.plotnine import Plot
+    from genno.computations import concat, sum
 
     assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
 
@@ -512,17 +512,14 @@ def _advance_data_for(config: dict, variable: str, units) -> Quantity:
         ("USA", 1.0, "R12_NAM"),
     ):
         results.append(relabel(share * data.sel(n=source), n={source: dest}))
-    result = computations.concat(*results)
+    result = concat(*results)
     result.units = data.units  # FIXME should not be necessary
 
     # Check
     assert_qty_allclose(
-        computations.sum(result, dimensions=["n"]),
-        data.sel(n="World", drop=True),
-        rtol=0.05,
+        sum(result, dimensions=["n"]), data.sel(n="World", drop=True), rtol=0.05
     )
-    # FIXME guard with an assertion
-    result.units = units
+    result.units = units  # FIXME guard with an assertion
 
     return result
 
@@ -644,6 +641,8 @@ def share_weight(
     config: dict,
 ) -> Quantity:
     """Calculate mode share weights."""
+    from genno.computations import div, pow
+
     # Modes from configuration
     cfg = config["transport"]
     modes = cfg.demand_modes
@@ -663,7 +662,7 @@ def share_weight(
     idx = dict(t=modes, n=nodes, **y0)
     s_y0 = share.sel(idx)
     c_y0 = cost.sel(idx).sel(c="transport", drop=True)
-    tmp = ratio(s_y0, computations.pow(c_y0, lamda))
+    tmp = div(s_y0, pow(c_y0, lamda))
 
     # Normalize against first mode's weight
     # TODO should be able to avoid a cast and align here
