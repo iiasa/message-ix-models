@@ -434,6 +434,17 @@ def logit(
     return ratio(u, u.sum(dim))
 
 
+def make_output_path(config, scenario, name):
+    """Return a path under the "output_dir" Path from the reporter configuration.
+
+    This version overrides :func:`ixmp.reporting.computations.make_output_path` to
+    include :attr:`.ScenarioInfo.path`.
+    """
+    result = config["output_dir"].joinpath(ScenarioInfo(scenario).path, name)
+    result.parent.mkdir(parents=True, exist_ok=True)
+    return result
+
+
 def merge_data(
     *others: Mapping[Hashable, pd.DataFrame]
 ) -> Dict[Hashable, pd.DataFrame]:
