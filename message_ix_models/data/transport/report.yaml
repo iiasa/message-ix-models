@@ -17,9 +17,6 @@ general:
   inputs: [ scenario, ACT:nl-t-yv-va-m-h ]
 
 # Exogenous data
-- key: distance:nl-driver_type:ldv
-  comp: distance_ldv
-  inputs: [ config ]
 - key: distance:nl:non-ldv
   comp: distance_nonldv
   inputs: [ config ]
@@ -36,19 +33,16 @@ general:
   # FIXME should not need the extra [vehicle] in the numerator
   args: {units: "v**2 Tm / a"}
 
-- key: stock:*:non-ldv
-  comp: ratio
-  inputs: [ CAP:nl-t-ya:non-ldv+units, distance:nl:non-ldv ]
-  sums: true
-
 - key: CAP:*:ldv+units
   comp: apply_units
-  inputs: [ CAP:nl-t-ya:ldv ]
-  args: {units: "v ** 2 Tm / a"}
+  inputs: [ CAP:*:ldv ]
+  args: {units: "Mv"}
+  sums: true
 
-- key: stock:*:ldv
-  comp: ratio
-  inputs: [ CAP:nl-t-ya:ldv+units, distance:nl-driver_type:ldv ]
+- key: CAP_NEW:*:ldv+units
+  comp: apply_units
+  inputs: [ CAP_NEW:*:ldv ]
+  args: {units: "Mv"}
   sums: true
 
 # NB these units are correct for final energy only
@@ -89,6 +83,7 @@ general:
   inputs:
   - transport activity::iamc
   - transport stock::iamc
+  - transport sales::iamc
   - transport fe::iamc
   - transport fe ldv::iamc
   # Temporarily disabled for NAVIGATE
@@ -111,16 +106,19 @@ _iamc formats:
 # NB these are currently tailored to produce the variable names expected for the
 #    NGFS project
 iamc:
-# Activity
 - variable: transport activity
   base: out:nl-t-ya-c:transport+units
   var: [ "Energy Service|Transportation", t, c ]
   sums: ["c", "t", "c-t"]
 
-# Stock
 - variable: transport stock
-  base: stock:nl-t-ya:ldv
+  base: CAP:nl-t-ya:ldv+units
   var: [ "Transport|Stock|Road|Passenger|LDV", t ]
+  unit: Mvehicle
+
+- variable: transport sales
+  base: CAP_NEW:nl-t-ya:ldv+units
+  var: [ "Transport|Sales|Road|Passenger|LDV", t ]
   unit: Mvehicle
 
 # Final energy

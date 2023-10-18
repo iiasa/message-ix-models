@@ -328,7 +328,7 @@ class Stock0(Plot):
 
     basename = "stock-ldv"
     # Partial sum over driver_type dimension
-    inputs = ["stock:nl-t-ya:ldv"]
+    inputs = ["CAP:nl-t-ya:ldv+units"]
     static = Plot.static + [
         p9.aes(x="ya", y="value", color="t"),
         p9.geom_line(),
@@ -351,7 +351,7 @@ class Stock1(Plot):
     """
 
     basename = "stock-non-ldv"
-    inputs = ["stock:nl-t-ya:non-ldv"]
+    inputs = ["CAP:nl-t-ya:non-ldv+units"]
     static = Plot.static + [
         p9.aes(x="yv", y="value", color="t"),
         p9.geom_line(),
