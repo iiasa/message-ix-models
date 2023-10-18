@@ -265,6 +265,11 @@ def main(
     log.info("Build MESSAGEix-Transport")
     build.apply_spec(scenario, context["transport spec"], data=_add_data, **options)
 
+    # Required for time series data from genno reporting that is expected by legacy
+    # reporting
+    # TODO Include this in the spec, while not using it as a value for `node_loc`
+    scenario.platform.add_region(f"{context.model.regions}_GLB", "region", "World")
+
     mark_time()
 
     scenario.set_as_default()
