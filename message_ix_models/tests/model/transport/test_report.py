@@ -77,14 +77,9 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     ctx.update(
         regions=regions,
         years=years,
-        report=Config(
-            "global.yaml",
-            # key="transport all",
-            key="stock:nl-t-ya-driver_type:ldv",
-            output_dir=tmp_path,
-        ),
+        # report=Config("global.yaml", key="transport all", output_dir=tmp_path),
+        report=Config("global.yaml", key="transport iamc all", output_dir=tmp_path),
     )
-    ctx["output dir"] = tmp_path
 
     scenario = built_transport(
         request, ctx, options={"data source": {"dummy supply": True}}, solved=solved
