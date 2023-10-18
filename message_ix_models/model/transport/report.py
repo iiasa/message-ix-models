@@ -47,15 +47,15 @@ def require_compat(c: Computer) -> None:
     c.require_compat("message_data.model.transport.groups")
 
 
-def _gen0(c: Computer, *keys) -> None:
+def aggregate_transport(c: Computer, *keys) -> None:
     """Aggregate using groups of transport technologies."""
     for k0 in keys:
         # Reference the function to avoid the genno magic which would treat as sum()
         # NB aggregation on the nl dimension *could* come first, but this can use a lot
         #    of memory when applied to e.g. out:*: for a full global model.
-        k = c.add(k0.add_tag("transport agg"), aggregate, k0, "t::transport agg", False)
-        k = c.add(k0.add_tag("world agg"), aggregate, k, "nl::world agg", False)
-        c.add("select", k0.add_tag("transport"), k, "t::transport modes 1", sums=True)
+        k = c.add(k0 + "transport agg", aggregate, k0, "t::transport agg", keep=False)
+        k = c.add(k0 + "world agg", aggregate, k, "nl::world agg", keep=False)
+        c.add(k0 + "transport", "select", k, "t::transport modes 1", sums=True)
 
 
 def select_transport(c: Computer, *keys) -> None:
@@ -161,7 +161,7 @@ def callback(rep: Reporter, context: Context) -> None:
     # Apply some functions that generate sub-graphs
     try:
         # Aggregate by modes
-        rep.apply(_gen0, "in", "out", "emi")
+        rep.apply(aggregate_transport, "in", "out", "emi")
     except MissingKeyError:
         if solved:
             raise
