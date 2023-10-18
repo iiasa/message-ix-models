@@ -84,7 +84,7 @@ general:
   sums: true
 
 # Concatenate IAMC-format tables
-- key: transport iamc
+- key: transport::iamc
   comp: concat
   inputs:
   - transport activity::iamc
@@ -98,40 +98,6 @@ general:
   # - transport debug ACT::iamc
   # - transport debug CAP::iamc
   # - transport debug CAP_NEW::iamc
-
-# Path and comp for IAMC output to file
-- key: transport CSV path
-  comp: make_output_path
-  inputs: [ config ]
-  args: { name: transport.csv }
-- key: transport XLSX path
-  comp: make_output_path
-  inputs: [ config ]
-  args: { name: transport.xlsx }
-- key: transport iamc CSV
-  comp: write_report
-  inputs: [ transport iamc, transport CSV path ]
-- key: transport iamc XLSX
-  comp: write_report
-  inputs: [ transport iamc, transport XLSX path ]
-- key: transport iamc file
-  comp: null
-  inputs: [ transport iamc CSV, transport iamc XLSX ]
-
-# Store IAMC data on scenario
-- key: transport iamc store
-  comp: store_ts
-  inputs: [ scenario, transport iamc ]
-
-# Collecting all others
-- key: transport iamc all
-  comp: null
-  inputs: [ transport iamc file, transport iamc store ]
-- key: transport all
-  comp: null
-  inputs:
-  - transport plots
-  - transport iamc all
 
 # Groups of keys for re-use
 _iamc formats:

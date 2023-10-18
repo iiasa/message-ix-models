@@ -3,7 +3,7 @@ import logging
 from typing import cast
 
 import genno.config
-from genno import Computer, MissingKeyError
+from genno import Computer, MissingKeyError, quote
 from genno.computations import aggregate
 from message_ix import Reporter
 from message_ix_models import Context
@@ -58,14 +58,38 @@ def _gen0(c: Computer, *keys) -> None:
         c.add("select", k0.add_tag("transport"), k, "t::transport modes 1", sums=True)
 
 
-def _gen1(c: Computer, *keys) -> None:
+def select_transport(c: Computer, *keys) -> None:
     """Selected subsets of of transport technologies."""
     for key in keys:
-        c.add(
-            "select", key.add_tag("transport all"), key, "t::transport all", sums=True
+        c.add(key + "transport all", "select", key, "t::transport all", sums=True)
+        c.add(key + "ldv", "select", key, "t::transport LDV", sums=True)
+        c.add(key + "non-ldv", "select", key, "t::transport non-ldv", sums=True)
+
+
+def add_iamc_store_write(c: Computer, base_key) -> None:
+    """Write keys to CSV, XLSX, and/or both; and/or store on "scenario"."""
+    # Text fragments: "foo bar" for "foo::bar", and "foo" alone
+    s, n = str(base_key).replace("::", " "), base_key.name
+
+    file_keys = []
+    for suffix in ("csv", "xlsx"):
+        # Create the path
+        path = c.add(
+            f"{n} {suffix} path",
+            "make_output_path",
+            "config",
+            "scenario",
+            quote(f"{n}.{suffix}"),
         )
-        c.add("select", key.add_tag("ldv"), key, "t::transport LDV", sums=True)
-        c.add("select", key.add_tag("non-ldv"), key, "t::transport non-ldv", sums=True)
+        # Write `key` to the path
+        file_keys.append(c.add(f"{n} {suffix}", "write_report", base_key, path))
+
+    # Write all files
+    c.add(f"{s} file", file_keys)
+    # Store data on "scenario"
+    c.add(f"{s} store", "store_ts", "scenario", base_key)
+    # Both write and store
+    c.add(f"{s} all", [f"{s} file", f"{s} store"])
 
 
 @genno.config.handles("MESSAGEix-Transport", iterate=False)
@@ -142,23 +166,17 @@ def callback(rep: Reporter, context: Context) -> None:
         if solved:
             raise
 
-    # Select only transport technologies
-    # TODO improve upstream to allow "*" here instead of explicit lists of dimensions
-    rep.apply(
-        _gen1,
-        # MESSAGE parameters
-        "fix_cost:nl-t-yv-ya",
-        "input:nl-t-yv-ya-m-no-c-l-h-ho",
-        "inv_cost:nl-t-yv",
-        "var_cost:nl-t-yv-ya-m-h",
-        # MESSAGE decision variables
-        "CAP:nl-t-ya",
-        # MESSAGE computed quantities
-        "in:nl-t-ya-c",
-    )
+    # Select only transport technologies; infer the full dimensionality of each key to
+    # be selected
+    names = "fix_cost input inv_cost var_cost CAP CAP_NEW in"
+    rep.apply(select_transport, *rep.infer_keys([f"{n}:*" for n in names.split()]))
 
     # Add further computations (including conversions to IAMC tables) defined in a file
     rep.configure(path=private_data_path("transport", "report.yaml"))
+
+    # Add tasks for writing IAMC-structured data to file and storing on the scenario
+    rep.apply(add_iamc_store_write, "transport::iamc")
+    rep.add("transport all", ["transport iamc all", "transport plots"])
 
     log.info(f"Added {len(rep.graph)-N_keys} keys")
 
