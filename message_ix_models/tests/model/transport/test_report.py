@@ -161,11 +161,6 @@ def test_iamc_simulated(
     test_context.update(regions=regions, years=years)
     rep = simulated_solution(request, test_context)
 
-    # FIXME hack to ensure the platform accepts time series data, which is modified to
-    #       the expectations of the legacy reporting
-    mp = rep.graph["scenario"].platform
-    mp.add_region(f"{regions}_GLB", "World", "region")
-
     # Key collecting both file output/scenario update
     # NB the trailing colons are necessary because of how genno handles report.yaml
     rep.add(
