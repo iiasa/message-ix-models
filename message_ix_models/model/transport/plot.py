@@ -1,7 +1,7 @@
 """Plots for MESSAGEix-Transport reporting."""
 import logging
 from datetime import datetime
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pandas as pd
 import plotnine as p9
@@ -18,7 +18,7 @@ class LabelFirst:
     Subsequent items are named with the bare value only.
     """
 
-    __name__ = None
+    __name__: Optional[str] = None
 
     def __init__(self, fmt_string):
         self.fmt_string = fmt_string
@@ -39,10 +39,10 @@ class Plot(BasePlot):
 
     #: Fixed plot title string. If not given, the first line of the class docstring is
     #: used.
-    title = None
+    title: Optional[str] = None
 
     #: Units expression for plot title.
-    unit = None
+    unit: Optional[str] = None
 
     def ggtitle(self, value=None):
         """Return :class:`plotnine.ggtitle` including the current date & time."""
