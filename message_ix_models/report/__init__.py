@@ -364,6 +364,7 @@ def prepare_reporter(
         **deepcopy(context.report.genno_config),
         fail="raise" if has_solution else logging.NOTSET,
     )
+    rep.configure(model=deepcopy(context.model))
 
     # Apply callbacks for other modules which define additional reporting computations
     for callback in CALLBACKS:
