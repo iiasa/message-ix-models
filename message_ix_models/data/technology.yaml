@@ -1224,7 +1224,7 @@ gas_rc:
   name: gas_rc
   description: Gas heating in residential/commercial sector
   type: final
-  sector: gas
+  sector: residential/commercial
   input: [gas, secondary]
   output: [gas, final]
 
