@@ -1,13 +1,14 @@
 """Compatibility code that emulates :mod:`message_data` reporting."""
 import logging
 from itertools import chain, count
-from typing import TYPE_CHECKING, List, Mapping, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, cast
 
 from genno import Computer, Key, Quantity, quote
 from genno.core.key import single_key
 
 if TYPE_CHECKING:
     from ixmp.reporting import Reporter
+    from sdmx.model.common import Code
 
     from message_ix_models import Context
 
@@ -22,16 +23,24 @@ log = logging.getLogger(__name__)
 #: reporting calculations.
 #:
 #: .. todo:: store these on :class:`.Context`; read them from technology codelists.
-TECHS: Mapping[str, List[str]] = {
-    "gas extra": [],
+TECHS: Dict[str, List[str]] = dict()
+
+#: Filters for determining sets of technologies.
+#:
+#: Each value is a Python expression :func:`eval`'d in an environment containing
+#: variables derived from the annotations on codes for each technology. If the
+#: expression evalutes to :obj:`True`, then the code is considered to belong to the set
+#: identified by the key.
+TECH_FILTERS = {
+    "gas extra": "FOO",
     # Residential and commercial
-    "rc gas": ["gas_rc", "hp_gas_rc"],
+    "trp coal": "sector == 'transport' and c_in == 'coal'",
+    "trp gas": "sector == 'transport' and c_in == 'gas'",
+    "trp foil": "sector == 'transport' and c_in == 'fueloil'",
+    "trp loil": "sector == 'transport' and c_in == 'lightoil'",
+    "trp meth": "sector == 'transport' and c_in == 'methanol'",
     # Transport
-    "trp coal": ["coal_trp"],
-    "trp foil": ["foil_trp"],
-    "trp gas": ["gas_trp"],
-    "trp loil": ["loil_trp"],
-    "trp meth": ["meth_fc_trp", "meth_ic_trp"],
+    "rc gas": "sector == 'residential/commercial' and c_in == 'gas'",
 }
 
 
@@ -150,13 +159,52 @@ def pe_wCSSretro(
     return k6
 
 
+def prepare_techs(technologies: List["Code"]) -> None:
+    """Update :data:`TECHS` by applying :data:`TECH_FILTERS` to `technologies`."""
+    result: Mapping[str, List[str]] = {k: list() for k in TECH_FILTERS}
+
+    warned = set()
+    # Iterate over technologies
+    for t in technologies:
+        # Assemble information about `t` from its annotations
+        info: Dict[str, Any] = dict()
+        info["sector"] = str(t.get_annotation(id="sector").text)
+        try:
+            # Input commodity and level
+            info["c_in"], info["l_in"] = t.eval_annotation("input")
+        except (TypeError, ValueError):
+            info["c_in"] = info["l_in"] = None
+
+        # commented: for debugging
+        # print(f"{t = } {info['sector'] = } {info['c_in'] = } {info['l_in'] = }")
+
+        # Iterate over keys and respective filters
+        for key, expr in TECH_FILTERS.items():
+            try:
+                # Apply the filter to the `info` about `t`
+                if eval(expr, None, info) is True:
+                    # Filter evaluates to True; add `t` to the list of labels for `key`
+                    result[key].append(t.id)
+            except Exception as e:
+                if expr not in warned:
+                    log.warning(f"{e!r} when evaluating {expr!r}")
+                    warned.add(expr)
+
+    TECHS.update(result)
+
+
 def callback(rep: "Reporter", context: "Context") -> None:
     """Partially duplicate the behaviour of :func:`.default_tables.retr_CO2emi`."""
+    from message_ix_models.model.bare import get_spec
+
     from . import iamc
 
     N = len(rep.graph)
 
     # Structure information
+    spec = get_spec(context)
+    prepare_techs(spec.add.set["technology"])
+
     # Keys like "t::trp gas" corresponding to TECHS["trp gas"]
     for k, v in TECHS.items():
         rep.add(f"t::{k}", quote(v))

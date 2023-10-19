@@ -1,6 +1,6 @@
 from message_ix_models import ScenarioInfo
 from message_ix_models.report import prepare_reporter
-from message_ix_models.report.compat import callback
+from message_ix_models.report.compat import callback, prepare_techs
 
 from ..test_report import MARK, ss_reporter
 
@@ -29,3 +29,25 @@ def test_compat(test_context):
     # print(result.to_string())
     # print(result.as_pandas().to_string())
     del result
+
+
+def test_prepare_techs(test_context):
+    from message_ix_models.model.bare import get_spec
+    from message_ix_models.report.compat import TECHS
+
+    spec = get_spec(test_context)
+
+    prepare_techs(spec.add.set["technology"])
+
+    # Expected sets of technologies based on the default technology.yaml
+    assert {
+        "gas extra": [],
+        # Residential and commercial
+        "rc gas": ["gas_rc", "hp_gas_rc"],
+        # Transport
+        "trp coal": ["coal_trp"],
+        "trp foil": ["foil_trp"],
+        "trp gas": ["gas_trp"],
+        "trp loil": ["loil_trp"],
+        "trp meth": ["meth_fc_trp", "meth_ic_trp"],
+    } == TECHS
