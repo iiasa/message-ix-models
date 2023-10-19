@@ -2,9 +2,10 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.report import prepare_reporter
 from message_ix_models.report.compat import callback
 
-from ..test_report import ss_reporter
+from ..test_report import MARK, ss_reporter
 
 
+@MARK[0]
 def test_compat(test_context):
     rep = ss_reporter()
     prepare_reporter(test_context, reporter=rep)
