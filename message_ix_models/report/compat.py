@@ -3,7 +3,7 @@ import logging
 from itertools import chain, count
 from typing import TYPE_CHECKING, List, Mapping, Optional, Sequence, cast
 
-from genno import Computer, Key, quote
+from genno import Computer, Key, Quantity, quote
 from genno.core.key import single_key
 
 if TYPE_CHECKING:
@@ -61,7 +61,9 @@ def get_techs(prefix: str, kinds: str) -> List[str]:
     )
 
 
-def make_shorthand_function(base_name, to_drop):
+def make_shorthand_function(
+    base_name: str, to_drop: str, default_unit_key: Optional[str] = None
+):
     """Create a shorthand function for adding tasks to a :class:`.Reporter`."""
     _to_drop = to_drop.split()
 
@@ -71,6 +73,7 @@ def make_shorthand_function(base_name, to_drop):
         *,
         name: Optional[str] = None,
         filters: Optional[dict] = None,
+        unit_key: Optional[str] = default_unit_key,
     ) -> Key:
         base = single_key(c.full_key(base_name))
         key = anon(name, dims=base)
@@ -78,7 +81,17 @@ def make_shorthand_function(base_name, to_drop):
         indexers = dict(t=technologies)
         indexers.update(filters or {})
 
-        c.add(key, "select", base, indexers=indexers, sums=True)
+        if unit_key:
+            c.add(key + "sel", "select", base, indexers=indexers)
+            c.add(
+                key,
+                "assign_units",
+                key + "sel",
+                units=c.graph["config"]["model"].units[unit_key],
+                sums=True,
+            )
+        else:
+            c.add(key, "select", base, indexers=indexers, sums=True)
 
         # Return the partial sum over some dimensions
         return key.drop(*_to_drop)
@@ -86,9 +99,9 @@ def make_shorthand_function(base_name, to_drop):
     return func
 
 
-inp = make_shorthand_function("in", "c h ho l no t")
+inp = make_shorthand_function("in", "c h ho l no t", "energy")
 emi = make_shorthand_function("rel", "nr r t yr")
-out = make_shorthand_function("out", "c h hd l nd t")
+out = make_shorthand_function("out", "c h hd l nd t", "energy")
 
 
 def eff(
@@ -116,10 +129,7 @@ def pe_wCSSretro(
     k_share: Optional[Key],
     filters: Optional[dict] = None,
 ) -> Key:
-    """Equivalent to the function of the same name.
-
-    :func:`message_data.tools.post_processing.default_tables._pe_wCCS_retro` at L129.
-    """
+    """Equivalent to :func:`default_tables._pe_wCCS_retro` at L129."""
     ACT: Key = single_key(c.full_key("ACT"))
 
     k0 = out(c, [t_scrub])
@@ -141,9 +151,7 @@ def pe_wCSSretro(
 
 
 def callback(rep: "Reporter", context: "Context") -> None:
-    """Partially duplicate the behaviour of :func:`_retr_CO2emi`."""
-    # TODO Handle `units_ene_mdl`
-    # TODO Handle emissions_units=units_emi
+    """Partially duplicate the behaviour of :func:`.default_tables.retr_CO2emi`."""
     from . import iamc
 
     N = len(rep.graph)
@@ -154,8 +162,9 @@ def callback(rep: "Reporter", context: "Context") -> None:
         rep.add(f"t::{k}", quote(v))
 
     # Constants from report/default_units.yaml
-    rep.add("conv_c2co2:", 44.0 / 12.0)
-    rep.add("crbcnt_gas:", 0.482)  # “Carbon content of natural gas”
+    rep.add("conv_c2co2:", 44.0 / 12.0)  # dimensionless
+    # “Carbon content of natural gas”
+    rep.add("crbcnt_gas:", Quantity(0.482, units="Mt / GWa / a"))
 
     # L3059 from message_data/tools/post_processing/default_tables.py
     k0 = out(rep, ["gas_cc", "gas_ppl"])
@@ -208,7 +217,9 @@ def callback(rep: "Reporter", context: "Context") -> None:
     rep.add(inp_all_gas_tecs, "add", inp_nonccs_gas_tecs, key)
 
     # L3165
-    Hydrogen_tot = emi(rep, ["h2_mix"], filters=dict(r="CO2_cc"))
+    Hydrogen_tot = emi(
+        rep, ["h2_mix"], filters=dict(r="CO2_cc"), unit_key="CO2 emissions"
+    )
 
     # L3063
     filters = dict(c=["gas"], l=["secondary"])
@@ -249,6 +260,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
         get_techs("trp", "coal foil gas loil meth"),
         name="FE_Transport",
         filters=dict(r=["CO2_trp"]),
+        unit_key="CO2 emissions",
     )
 
     # L3886
@@ -257,9 +269,6 @@ def callback(rep: "Reporter", context: "Context") -> None:
 
     k1 = Key.product("Transport", k0, Hydrogen_trp)
     rep.add(k1, "add", k0, Hydrogen_trp, sums=True)
-
-    # FIXME Set units properly upstream so these units emerge from the calculation
-    k2 = rep.add(k1 + "units", "assign_units", k1, units="Mt/a")
 
     # TODO Identify where to sum on "h", "m", "yv" dimensions
 
