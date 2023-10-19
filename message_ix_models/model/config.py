@@ -1,4 +1,4 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 
 from message_ix_models.model.structure import codelists
 from message_ix_models.util.context import _ALIAS
@@ -38,6 +38,11 @@ class Config:
     #: Create the reference energy system with dummy commodities and technologies. See
     #: :func:`.bare.get_spec`.
     res_with_dummies: bool = False
+
+    #: Default or preferred units for model quantities and reporting.
+    units: dict = field(
+        default_factory=lambda: {"energy": "GWa", "CO2 emissions": "Mt / a"}
+    )
 
     def check(self):
         """Check the validity of :attr:`regions`, :attr:`relations`, :attr:`years`."""
