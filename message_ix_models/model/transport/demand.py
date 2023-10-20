@@ -15,6 +15,10 @@ from .util import path_fallback
 
 log = logging.getLogger(__name__)
 
+# Short hand keys
+pdt_nyt = Key("pdt", "nyt")  # Total PDT shared out by mode
+pdt_cap = pdt_nyt.drop("t") + "capita"
+
 
 def dummy(
     commodities: List, nodes: List[str], y: List[int], config: dict
@@ -70,6 +74,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     context = c.graph["context"]
 
     import message_ix_models.project.ssp.data  # noqa: F401
+    from ixmp.reporting import RENAME_DIMS
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
 
@@ -113,6 +118,23 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Dummy prices
     c.add("PRICE_COMMODITY:n-c-y", "dummy_prices", keys["GDP"][0], sums=True)
 
+    # Reference (historical) PDT per capita
+    c.add(
+        "load_file",
+        path_fallback(c.graph["context"], "pdt-cap-ref.csv"),
+        key=pdt_cap + "ref",
+        dims=RENAME_DIMS,
+    )
+
+    # Mode share
+    c.add(
+        "load_file",
+        path_fallback(context, "mode-share", f"{context.transport.mode_share}.csv"),
+        key="mode share::ref",
+        dims=RENAME_DIMS,
+        name="mode share",
+    )
+
 
 def prepare_computer(c: Computer) -> None:
     """Prepare `rep` for calculating transport demand.
@@ -137,8 +159,6 @@ def prepare_computer(c: Computer) -> None:
     gdp_ppp = Key("GDP", "ny", "PPP")
     gdp_ppp_cap = gdp_ppp + "capita"
     gdp_index = gdp_ppp_cap + "index"
-    pdt_nyt = Key("pdt", "nyt")  # Total PDT shared out by mode
-    pdt_cap = pdt_nyt.drop("t") + "capita"
     pdt_ny = pdt_nyt.drop("t") + "total"
     price_sel1 = price_full + "transport"
     price_sel0 = price_sel1 + "raw units"
@@ -147,6 +167,7 @@ def prepare_computer(c: Computer) -> None:
     sw = Key("share weight", "nty")
 
     n = "n::ex world"
+    t_modes = "t::transport modes"
     y = "y::model"
 
     # Inputs for Computer.add_queue()
@@ -160,7 +181,7 @@ def prepare_computer(c: Computer) -> None:
         ("whour:", "quantity_from_config", "config", quote("work_hours")),
         ("lambda:", "quantity_from_config", "config", quote("lamda")),
         # Base share data
-        ("base shares:n-t-y", "base_shares", n, "t::transport modes", y, "config"),
+        ("mode share:n-t-y:base", "base_shares", "mode share::ref", n, t_modes, y),
         # Population shares by area_type
         (pop_at, "urban_rural_shares", y, "config"),
         # Consumer group sizes
@@ -171,11 +192,6 @@ def prepare_computer(c: Computer) -> None:
         # GDP index
         ("y0", itemgetter(0), y),  # TODO move upstream to message_ix
         (gdp_index, "index_to", gdp_ppp_cap, literal("y"), "y0"),
-        # Reference (historical) PDT per capita
-        (
-            ("load_file", path_fallback(c.graph["context"], "pdt-cap-ref.csv")),
-            dict(key=pdt_cap + "ref", dims={"node": "n"}),
-        ),
         # Projected PDT per capita
         (pdt_cap, "pdt_per_capita", gdp_ppp_cap, pdt_cap + "ref", "config"),
         # Total PDT
@@ -194,7 +210,7 @@ def prepare_computer(c: Computer) -> None:
         (
             sw,
             "share_weight",
-            "base shares:n-t-y",
+            "mode share:n-t-y:base",
             gdp_ppp_cap,
             cost,
             "lambda:",
@@ -205,17 +221,17 @@ def prepare_computer(c: Computer) -> None:
             "config",
         ),
         # Shares
-        (("shares:n-t-y", "logit", cost, sw, "lambda:", y), dict(dim="t")),
+        (("mode share:n-t-y", "logit", cost, sw, "lambda:", y), dict(dim="t")),
         # Total PDT shared out by mode
-        (pdt_nyt.add_tag("0"), "mul", pdt_ny, "shares:n-t-y"),
+        (pdt_nyt + "0", "mul", pdt_ny, "mode share:n-t-y"),
         # Adjustment factor
-        ("pdt factor:n-y-t", "factor_pdt", n, y, "t::transport modes", "config"),
+        ("pdt factor:n-y-t", "factor_pdt", n, y, t_modes, "config"),
         # Only the LDV values
         (
             ("ldv pdt factor:n-y", "select", "pdt factor:n-y-t", dict(t=["LDV"])),
             dict(drop=True),
         ),
-        (pdt_nyt, "mul", pdt_nyt.add_tag("0"), "pdt factor:n-y-t"),
+        (pdt_nyt, "mul", pdt_nyt + "0", "pdt factor:n-y-t"),
         # Per capita (for validation)
         ("transport pdt:n-y-t:capita", "div", pdt_nyt, pop),
         # LDV PDT only
