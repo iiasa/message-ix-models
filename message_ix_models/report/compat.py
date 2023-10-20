@@ -116,14 +116,17 @@ def eff(
     return key.drop("t")
 
 
-def pe_wCSSretro(
+def pe_w_ccs_retro(
     c: Computer,
     t: str,
     t_scrub: str,
     k_share: Optional[Key],
     filters: Optional[dict] = None,
 ) -> Key:
-    """Equivalent to :func:`default_tables._pe_wCCS_retro` at L129."""
+    """Calculate primary energy use of technologies with scrubbers.
+
+    Equivalent to :func:`default_tables._pe_wCCS_retro` at L129.
+    """
     ACT: Key = single_key(c.full_key("ACT"))
 
     k0 = out(c, [t_scrub])
@@ -204,6 +207,9 @@ def callback(rep: "Reporter", context: "Context") -> None:
     # Shorthand for get_techs(rep, …)
     techs = partial(get_techs, rep)
 
+    def full(name: str) -> Key:
+        return single_key(rep.full_key(name))
+
     # L3059 from message_data/tools/post_processing/default_tables.py
     k0 = out(rep, ["gas_cc", "gas_ppl"])
     k1 = out(rep, ["gas_cc"])
@@ -242,22 +248,21 @@ def callback(rep: "Reporter", context: "Context") -> None:
 
     # L3063
     filters = dict(c=["gas"], l=["secondary"])
-
-    keys = [
-        pe_wCSSretro(rep, *args, filters=filters)
+    pe_w_ccs_retro_keys = [
+        pe_w_ccs_retro(rep, *args, filters=filters)
         for args in (
-            ("gas_cc", "g_ppl_co2scr", gas_cc_share),
-            ("gas_ppl", "g_ppl_co2_scr", gas_ppl_share),
+            ("gas_cc", "g_ppl_co2scr", full("gas_cc_share")),
+            ("gas_ppl", "g_ppl_co2_scr", full("gas_ppl_share")),
             # FIXME Raises KeyError
             # ("gas_htfc", "gfc_co2scr", None),
         )
     ]
 
-    key = Key.product(anon().name, *keys)
-    rep.add(key, "add", *keys)
+    key = Key.product(anon().name, *pe_w_ccs_retro_keys)
+    rep.add(key, "add", *pe_w_ccs_retro_keys)
 
-    inp_nonccs_gas_tecs_wo_CCSRETRO = Key("inp_nonccs_gas_tecs_wo_CCSRETRO", key.dims)
-    rep.add(inp_nonccs_gas_tecs_wo_CCSRETRO, "sub", inp_nonccs_gas_tecs, key)
+    inp_nonccs_gas_tecs_wo_ccsretro = Key("inp_nonccs_gas_tecs_wo_ccsretro", key.dims)
+    rep.add(inp_nonccs_gas_tecs_wo_ccsretro, "sub", inp_nonccs_gas_tecs, key)
 
     # L3144
     key = inp(rep, techs("trp gas"), filters=c_gas)
@@ -270,8 +275,8 @@ def callback(rep: "Reporter", context: "Context") -> None:
     key = inp(rep, techs("trp gas"), filters=c_gas)
     key = rep.add(anon(), "mul", Hydrogen_tot, key)
 
-    Hydrogen_trp = Key.product("Hydrogen_trp", key, inp_nonccs_gas_tecs_wo_CCSRETRO)
-    rep.add(Hydrogen_trp, "div", key, inp_nonccs_gas_tecs_wo_CCSRETRO)
+    Hydrogen_trp = Key.product("Hydrogen_trp", key, inp_nonccs_gas_tecs_wo_ccsretro)
+    rep.add(Hydrogen_trp, "div", key, inp_nonccs_gas_tecs_wo_ccsretro)
 
     # L3346
     FE_Transport = emi(
