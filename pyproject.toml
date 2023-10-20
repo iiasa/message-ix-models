@@ -1,76 +1,66 @@
-[build-system]
-requires = ["build", "setuptools-scm"]
-
-[project]
-dynamic = ["version"]
+[tool.poetry]
 name = "message-ix-models"
+version = "0.0.0"
 description = "Tools for the MESSAGEix-GLOBIOM family of models"
-authors = [{ name = "IIASA Energy, Climate, and Environment (ECE) Program" }]
+authors = ["IIASA Energy, Climate, and Environment (ECE) Program"]
 maintainers = [
-  { name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name" },
-  { name = "Fridolin Glatter", email = "glatter@iiasa.ac.at" },
+    "Paul Natsuo Kishimoto <mail@paul.kishimoto.name>",
+    "Fridolin Glatter <glatter@iiasa.ac.at>",
 ]
+license = "Apache License 2.0"
 readme = "README.rst"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: R",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Information Analysis",
 ]
-requires-python = ">=3.8"
-dependencies = [
-  "click",
-  "colorama",
-  # When the minimum is greater than the minimum via message_ix; e.g.
-  # message_ix >= 3.4.0 → ixmp >= 3.4.0 → genno >= 1.6.0",
-  "genno >= 1.18.1",
-  "iam_units >= 2023.9.11",
-  "message_ix >= 3.4.0",
-  "pooch",
-  "pyam-iamc >= 0.6",
-  "pyarrow",
-  "pycountry",
-  "PyYAML",
-  "sdmx1 >= 2.8.0",
-  "tqdm",
-]
-
-[project.urls]
 homepage = "https://github.com/iiasa/message-ix-models"
 repository = "https://github.com/iiasa/message-ix-models"
 documentation = "https://docs.messageix.org/models"
 
-[project.optional-dependencies]
-docs = [
-  # sphinx.ext.autosummary covers the test suite, so all test requirements
-  "message_ix_models[tests]",
-  "sphinx >= 4",
-  "sphinx_rtd_theme",
-  "sphinxcontrib-bibtex",
-]
-report = ["plotnine"]
-tests = [
-  # For nbclient, thus nbformat
-  "ixmp[tests]",
-  "message_ix_models[report]",
-  "pytest",
-  "pytest-cov",
-  "pytest-xdist",
-]
+[tool.poetry.dependencies]
+python = ">=3.8, <3.12"
+click = "^8.1.7"
+colorama = "^0.4.6"
+genno = "^1.19.0"
+iam_units = "^2023.9.12"
+message_ix = "^3.4.0"
+pooch = "^1.7.0"
+pyam-iamc = "^1.9.0" #2.0.0 req python >=3.10
+pyarrow = "^13.0.0"
+pycountry = "^22.3.5"
+PyYAML = "^6.0.1"
+sdmx1 = "^2.12.0"
+tqdm = "^4.66.1"
 
-[project.scripts]
+ixmp = {extras = ["tests"], version = "^3.7.0"}
+plotnine = {version = "^0.12.2", optional = true}
+pytest = {version = "^7.4.0", optional = true}
+pytest-cov = {version = "^4.1.0", optional = true}
+pytest-xdist = {version = "^3.3.1", optional = true}
+sphinx = {version = "^6.2.1", optional = true}
+sphinx-rtd-theme = {version = "^1.2.2", optional = true}
+sphinxcontrib-bibtex = {version = "^2.5.0", optional = true}
+
+[tool.poetry.extras]
+docs = ["sphinx", "sphinx-rtd-theme", "sphinxcontrib-bibtex", "tests"]
+report = ["plotnine"]
+tests = ["ixmp", "pytest", "pytest-cov", "pytest-xdist", "report"]
+
+[tool.poetry.scripts]
 mix-models = "message_ix_models.cli:main"
+
+[tool.poetry-dynamic-versioning]
+bump = true
+enable = true
+style = "pep440"
+vcs = "git"
 
 [tool.coverage.report]
 exclude_also = [
@@ -122,7 +112,6 @@ select = ["C9", "E", "F", "I", "W"]
 [tool.ruff.mccabe]
 max-complexity = 13
 
-[tool.setuptools.packages]
-find = {}
-
-[tool.setuptools_scm]
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
