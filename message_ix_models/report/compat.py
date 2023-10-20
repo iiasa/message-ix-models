@@ -1,7 +1,8 @@
 """Compatibility code that emulates :mod:`message_data` reporting."""
 import logging
+from functools import partial
 from itertools import chain, count
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional
 
 from genno import Computer, Key, Quantity, quote
 from genno.core.key import single_key
@@ -14,25 +15,15 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-#: Lists of technologies.
-#:
-#: Duplicated and reduced
-#: from :data:`message_data.tools.post_processing.default_tables.TECHS`.
-#:
-#: Modify these lists in order to control the lists of technologies handled by various`
-#: reporting calculations.
-#:
-#: .. todo:: store these on :class:`.Context`; read them from technology codelists.
-TECHS: Dict[str, List[str]] = dict()
-
-#: Filters for determining sets of technologies.
+#: Filters for determining subsets of technologies.
 #:
 #: Each value is a Python expression :func:`eval`'d in an environment containing
 #: variables derived from the annotations on codes for each technology. If the
-#: expression evalutes to :obj:`True`, then the code is considered to belong to the set
+#: expression evaluates to :obj:`True`, then the code is considered to belong to the set
 #: identified by the key.
 TECH_FILTERS = {
-    "gas extra": "FOO",
+    "gas all": "c_in == 'gas' and l_in in 'secondary final' and '_ccs' not in id",
+    "gas extra": "False",
     # Residential and commercial
     "trp coal": "sector == 'transport' and c_in == 'coal'",
     "trp gas": "sector == 'transport' and c_in == 'gas'",
@@ -54,20 +45,14 @@ def anon(name: Optional[str] = None, dims: Optional[Key] = None) -> Key:
     return result.append(*getattr(dims, "dims", []))
 
 
-def get_techs(prefix: str, kinds: str) -> List[str]:
+def get_techs(c: Computer, prefix: str, kinds: Optional[str] = None) -> List[str]:
     """Return a list of technologies.
 
-    The list is assembled from entries in :data:`TECHS` with the keys
-    "{prefix} {value}", with one `value` for each space-separated item in `kinds`.
+    The list is assembled from entries in :data:`TECHS` with the keys "{prefix} {kind}",
+    with one `kind` for each space-separated item in `kinds`.
     """
-    return list(
-        chain(
-            *[
-                cast(Sequence[str], TECHS.get(f"{prefix} {kind}", []))
-                for kind in kinds.split()
-            ]
-        )
-    )
+    _kinds = kinds.split() if kinds else [""]
+    return list(chain(*[c.graph[f"t::{prefix} {k}".rstrip()][0].data for k in _kinds]))
 
 
 def make_shorthand_function(
@@ -159,15 +144,21 @@ def pe_wCSSretro(
     return k6
 
 
-def prepare_techs(technologies: List["Code"]) -> None:
-    """Update :data:`TECHS` by applying :data:`TECH_FILTERS` to `technologies`."""
+def prepare_techs(c: Computer, technologies: List["Code"]) -> None:
+    """Prepare sets of technologies in `c`.
+
+    Add keys like "t::{key}" to `c` for each `key` in :data:`TECH_FILTERS`, by applying
+    the filter expression to `technologies`.
+    """
     result: Mapping[str, List[str]] = {k: list() for k in TECH_FILTERS}
 
-    warned = set()
+    warned = set()  # Filters that raise some kind of Exception
+
     # Iterate over technologies
     for t in technologies:
         # Assemble information about `t` from its annotations
-        info: Dict[str, Any] = dict()
+        info: Dict[str, Any] = dict(id=t.id)
+        # Sector
         info["sector"] = str(t.get_annotation(id="sector").text)
         try:
             # Input commodity and level
@@ -175,22 +166,22 @@ def prepare_techs(technologies: List["Code"]) -> None:
         except (TypeError, ValueError):
             info["c_in"] = info["l_in"] = None
 
-        # commented: for debugging
-        # print(f"{t = } {info['sector'] = } {info['c_in'] = } {info['l_in'] = }")
-
         # Iterate over keys and respective filters
         for key, expr in TECH_FILTERS.items():
             try:
                 # Apply the filter to the `info` about `t`
                 if eval(expr, None, info) is True:
-                    # Filter evaluates to True; add `t` to the list of labels for `key`
+                    # Filter evaluates to True → add `t` to the list of labels for `key`
                     result[key].append(t.id)
             except Exception as e:
+                # Warn about this filter, only once
                 if expr not in warned:
                     log.warning(f"{e!r} when evaluating {expr!r}")
                     warned.add(expr)
 
-    TECHS.update(result)
+    # Add keys like "t::trp gas" corresponding to TECH_FILTERS["trp gas"]
+    for k, v in result.items():
+        c.add(f"t::{k}", quote(sorted(v)))
 
 
 def callback(rep: "Reporter", context: "Context") -> None:
@@ -203,16 +194,15 @@ def callback(rep: "Reporter", context: "Context") -> None:
 
     # Structure information
     spec = get_spec(context)
-    prepare_techs(spec.add.set["technology"])
-
-    # Keys like "t::trp gas" corresponding to TECHS["trp gas"]
-    for k, v in TECHS.items():
-        rep.add(f"t::{k}", quote(v))
+    prepare_techs(rep, spec.add.set["technology"])
 
     # Constants from report/default_units.yaml
     rep.add("conv_c2co2:", 44.0 / 12.0)  # dimensionless
     # “Carbon content of natural gas”
     rep.add("crbcnt_gas:", Quantity(0.482, units="Mt / GWa / a"))
+
+    # Shorthand for get_techs(rep, …)
+    techs = partial(get_techs, rep)
 
     # L3059 from message_data/tools/post_processing/default_tables.py
     k0 = out(rep, ["gas_cc", "gas_ppl"])
@@ -225,27 +215,8 @@ def callback(rep: "Reporter", context: "Context") -> None:
 
     # L3026
     c_gas = dict(c=["gas"])
-    k1 = inp(
-        rep,
-        [
-            "gas_i",
-            "hp_gas_i",
-            "gas_fs",
-            "gas_ppl",
-            "gas_ct",
-            "gas_cc",
-            "gas_htfc",
-            "gas_hpl",
-            "gas_t_d",
-            "gas_t_d_ch4",
-        ]
-        + TECHS["rc gas"]
-        + TECHS["trp gas"]
-        + TECHS["gas extra"],
-        filters=c_gas,
-    )
+    k1 = inp(rep, techs("gas", "all extra"), filters=c_gas)
     k2 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
-
     inp_nonccs_gas_tecs = Key("inp_nonccs_gas_tecs", k2.dims)
     rep.add(inp_nonccs_gas_tecs, "sub", k1, k2)
 
@@ -289,14 +260,14 @@ def callback(rep: "Reporter", context: "Context") -> None:
     rep.add(inp_nonccs_gas_tecs_wo_CCSRETRO, "sub", inp_nonccs_gas_tecs, key)
 
     # L3144
-    key = inp(rep, TECHS["trp gas"], filters=c_gas)
+    key = inp(rep, techs("trp gas"), filters=c_gas)
     key = rep.add(anon(), "mul", Biogas_tot, key)
 
     Biogas_trp = Key.product("Biogas_trp", key, inp_all_gas_tecs)
     rep.add(Biogas_trp, "div", key, inp_all_gas_tecs)
 
     # L3234
-    key = inp(rep, TECHS["trp gas"], filters=c_gas)
+    key = inp(rep, techs("trp gas"), filters=c_gas)
     key = rep.add(anon(), "mul", Hydrogen_tot, key)
 
     Hydrogen_trp = Key.product("Hydrogen_trp", key, inp_nonccs_gas_tecs_wo_CCSRETRO)
@@ -305,7 +276,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
     # L3346
     FE_Transport = emi(
         rep,
-        get_techs("trp", "coal foil gas loil meth"),
+        techs("trp", "coal foil gas loil meth"),
         name="FE_Transport",
         filters=dict(r=["CO2_trp"]),
         unit_key="CO2 emissions",
