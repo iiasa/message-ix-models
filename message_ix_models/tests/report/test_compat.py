@@ -8,7 +8,7 @@ from ..test_report import MARK, ss_reporter
 
 
 @MARK[0]
-def test_compat(test_context):
+def test_compat(tmp_path, test_context):
     import numpy.testing as npt
 
     rep = ss_reporter()
@@ -19,28 +19,34 @@ def test_compat(test_context):
     # Tasks can be added to the reporter
     callback(rep, test_context)
 
-    key = "transport emissions full::iamc"  # IAMC structure
-    # key = "Transport"  # Top level
-    # key = "Hydrogen_trp"  # Second level
-    # key = "inp_nonccs_gas_tecs_wo_CCSRETRO"  # Third level
-    # key = "_26"  # Fourth level
+    # Select a key
+    key = (
+        "transport emissions full::iamc"  # IAMC structure
+        # "Transport"  # Top level
+        # "Hydrogen_trp"  # Second level
+        # "inp_nonccs_gas_tecs_wo_CCSRETRO"  # Third level
+        # "_26"  # Fourth level
+    )
 
+    # commented: Show what would be done
     # print(rep.describe(key))
-    # rep.visualize("transport-emissions-full-iamc.svg", key)
+    # rep.visualize(tmp_path.joinpath("visualize.svg"), key)
 
     # Calculation runs
     result = rep.get(key)
 
-    # print(result.to_string())
-    # print(result.as_pandas().to_string())
+    # print(result.to_string())  # For intermediate results
+
+    df = result.as_pandas()  # For pyam.IamDataFrame, which doesn't have .to_string()
+
+    # commented: Display or save output
+    # print(df.to_string())
+    # df.to_csv(tmp_path.joinpath("transport-emissions-full.csv"), index=False)
 
     # Check a specific value
     # TODO Expand set of expected values
     npt.assert_allclose(
-        result.as_pandas()
-        .query("region == 'R11_AFR' and year == 2020")["value"]
-        .item(),
-        54.0532,
+        df.query("region == 'R11_AFR' and year == 2020")["value"].item(), 54.0532
     )
 
 
