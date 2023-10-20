@@ -9,6 +9,8 @@ from ..test_report import MARK, ss_reporter
 
 @MARK[0]
 def test_compat(test_context):
+    import numpy.testing as npt
+
     rep = ss_reporter()
     prepare_reporter(test_context, reporter=rep)
 
@@ -24,13 +26,22 @@ def test_compat(test_context):
     # key = "_26"  # Fourth level
 
     # print(rep.describe(key))
+    # rep.visualize("transport-emissions-full-iamc.svg", key)
 
     # Calculation runs
     result = rep.get(key)
 
     # print(result.to_string())
     # print(result.as_pandas().to_string())
-    del result
+
+    # Check a specific value
+    # TODO Expand set of expected values
+    npt.assert_allclose(
+        result.as_pandas()
+        .query("region == 'R11_AFR' and year == 2020")["value"]
+        .item(),
+        54.0532,
+    )
 
 
 def test_prepare_techs(test_context):
