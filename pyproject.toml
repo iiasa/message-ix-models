@@ -7,7 +7,7 @@ maintainers = [
     "Paul Natsuo Kishimoto <mail@paul.kishimoto.name>",
     "Fridolin Glatter <glatter@iiasa.ac.at>",
 ]
-license = "Apache License 2.0"
+license = "Apache-2.0"
 readme = "README.rst"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
