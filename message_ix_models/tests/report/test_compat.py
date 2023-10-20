@@ -1,6 +1,8 @@
+from genno import Computer
+
 from message_ix_models import ScenarioInfo
 from message_ix_models.report import prepare_reporter
-from message_ix_models.report.compat import callback, prepare_techs
+from message_ix_models.report.compat import callback, get_techs, prepare_techs
 
 from ..test_report import MARK, ss_reporter
 
@@ -33,11 +35,12 @@ def test_compat(test_context):
 
 def test_prepare_techs(test_context):
     from message_ix_models.model.bare import get_spec
-    from message_ix_models.report.compat import TECHS
+    from message_ix_models.report.compat import TECH_FILTERS
 
     spec = get_spec(test_context)
 
-    prepare_techs(spec.add.set["technology"])
+    c = Computer()
+    prepare_techs(c, spec.add.set["technology"])
 
     # Expected sets of technologies based on the default technology.yaml
     assert {
@@ -50,4 +53,4 @@ def test_prepare_techs(test_context):
         "trp gas": ["gas_trp"],
         "trp loil": ["loil_trp"],
         "trp meth": ["meth_fc_trp", "meth_ic_trp"],
-    } == TECHS
+    } == {k: get_techs(c, k) for k in TECH_FILTERS}
