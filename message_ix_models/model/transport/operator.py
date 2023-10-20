@@ -2,7 +2,7 @@
 import logging
 from functools import partial, reduce
 from operator import gt, le, lt
-from typing import Dict, Hashable, List, Mapping, Optional, Set
+from typing import Dict, Hashable, List, Mapping, Optional, Set, cast
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,6 @@ from genno import Quantity
 from genno.computations import apply_units, convert_units, relabel, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
-from ixmp.reporting import RENAME_DIMS
 from message_ix import Scenario, make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
@@ -23,8 +22,6 @@ from sdmx.model.v21 import Code
 
 from message_data.projects.navigate import T35_POLICY
 from message_data.tools import iea_eei
-
-from .util import path_fallback
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +48,7 @@ __all__ = [
 
 
 def base_shares(
-    nodes: List[str], techs: List[str], y: List[int], config: dict
+    base: Quantity, nodes: List[str], techs: List[str], y: List[int]
 ) -> Quantity:
     """Return base mode shares.
 
@@ -65,21 +62,38 @@ def base_shares(
     If the data lack the n (node, spatial) and/or y (time) dimensions, they are
     broadcast over these.
     """
-    from genno.computations import load_file, mul
+    from genno.computations import aggregate, div, mul, sum
+    from numpy import allclose
 
-    # TODO write tests
-    path = path_fallback(
-        config["regions"], "mode-share", f"{config['transport'].mode_share}.csv"
-    )
-    log.info(f"Read base mode shares from {path}")
+    # Check: ensure values sum to 1
+    tmp = sum(base, dimensions=["t"])
+    check = allclose(tmp.to_series().values, 1.0)
+    if not check:
+        log.warning("Sum across modes ≠ 1.0; will rescale:\n" + tmp.to_string())
+        result = div(base, tmp)
+    else:
+        result = base
 
-    base = load_file(path, dims=RENAME_DIMS, name="mode share", units="")
+    assert allclose(sum(result, dimensions=["t"]).to_series().values, 1.0)
 
-    missing = [d for d in "nty" if d not in base.dims]
-    log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
+    # Aggregate extra modes that do not appear in the data
+    extra_modes = set(result.coords["t"].data) - set(techs)
+    if extra_modes == {"OTHER ROAD"}:
+        # Add "OTHER ROAD" to "LDV"
+        groups = {t: [t] for t in techs}
+        groups["LDV"].append("OTHER ROAD")
+        result = aggregate(result, groups=dict(t=groups), keep=False)
+    elif len(extra_modes):
+        raise NotImplementedError(f"Extra mode(s) t={extra_modes}")
 
-    coords = [("n", nodes), ("t", techs), ("y", y)]
-    return mul(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
+    missing = cast(Set[Hashable], set("nty")) - set(result.dims)
+    if len(missing):
+        log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
+
+        coords = [("n", nodes), ("t", techs), ("y", y)]
+        result = mul(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
+
+    return result
 
 
 def cost(
