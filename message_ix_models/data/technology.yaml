@@ -1228,8 +1228,8 @@ gas_rc:
   input: [gas, secondary]
   output: [gas, final]
 
-gas_t/d:
-  name: gas_t/d
+gas_t_d:
+  name: gas_t_d
   description: Transmission/Distribution of gas
   type: final
   vintaged: TRUE
@@ -1237,8 +1237,8 @@ gas_t/d:
   input: [gas, secondary]
   output: [gas, final]
 
-gas_t/d_ch4:
-  name: gas_t/d_ch4
+gas_t_d_ch4:
+  name: gas_t_d_ch4
   description: Transmission/Distribution of gas with CH4 mitigation
   type: final
   vintaged: TRUE
