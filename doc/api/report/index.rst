@@ -1,39 +1,54 @@
 Reporting (:mod:`~.message_ix_models.report`)
 *********************************************
 
+On this page:
+
 .. contents::
    :local:
 
-See also:
+Elsewhere:
 
 - ``global.yaml``, the :doc:`default-config`.
 - Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.reporting`, and :mod:`message_ix.reporting`.
+- Reporting of specific model variants:
+
+  - :mod:`.water.reporting`
+  - (Private) :doc:`Reporting of message_data.model.transport <m-data:reference/model/transport/report>`
 
 .. toctree::
    :hidden:
 
    default-config
 
-Not public:
-
-- `“Reporting” project board <https://github.com/orgs/iiasa/projects/3>`_ on GitHub for the initial implementation of these features.
-- :doc:`m-data:/reference/tools/post_processing`, still in use.
-- Documentation for reporting specific to certain model variants:
-
-  - :doc:`m-data:/reference/model/transport/report`
+.. _report-intro:
 
 Introduction
 ============
 
 See :doc:`the discussion in the MESSAGEix docs <message-ix:reporting>` about the stack.
-In short, :mod:`message_ix` must not contain reporting code that references ``coal_ppl``, because not every model built on the MESSAGE framework will have a technology with this name.
-Any reporting specific to ``coal_ppl`` must be in :mod:`message_ix_models`, since all models in the MESSAGEix-GLOBIOM family will have this technology.
+In short, for instance:
+
+- :mod:`message_ix` **must not** contain reporting code that references :py:`technology="coal_ppl"`, because not every model built on the MESSAGE framework will have a technology with this name.
+- Any model in the MESSAGEix-GLOBIOM family—built with :mod:`message_ix_models` and/or :mod:`message_data`—**should**, with few exceptions, have a :py:`technology="coal_ppl"`, since this appears in the common list of :ref:`technology-yaml`.
+  Reporting specific to this technology ID, *as it is represented* in this model family, should be in :mod:`message_ix_models` or user code.
 
 The basic **design pattern** of :mod:`message_ix_models.report` is:
 
-- A ``global.yaml`` file (i.e. in `YAML <https://en.wikipedia.org/wiki/YAML#Example>`_ format) that contains a *concise* yet *explicit* description of the reporting computations needed for a MESSAGE-GLOBIOM model.
-- :func:`~.report.prepare_reporter` reads the file and a Scenario object, and uses it to populate a new Reporter.
-  This function mostly relies on the :doc:`configuration handlers <genno:config>` built in to Genno to handle the different sections of the file.
+- :func:`~.report.prepare_reporter` populates a new :class:`~.message_ix.Reporter` for a given |Scenario| with many keys to report all quantities of interest in a MESSAGEix-GLOBIOM–family model.
+- This function relies on *callbacks* defined in multiple submodules to add keys and tasks for general or tailored reporting calculations and actions.
+  Additional modules **should** define callback functions and register them with :func:`~report.register` when they are to be used.
+  For example:
+
+  1. The module :mod:`message_ix_models.report.plot` defines :func:`.plot.callback` that adds standard plots to the Reporter.
+  2. The module :mod:`message_data.model.transport.report` defines :func:`~.message_data.model.transport.report.callback` that adds tasks specific to MESSAGEix-Transport.
+  3. The module :mod:`message_data.projects.navigate.report` defines :func:`~.message_data.projects.navigate.report.callback` that add tasks specific to the ‘NAVIGATE’ research project.
+
+  The callback (1) is always registered, because these plots are always applicable and can be expected to function correctly for all models in the family. In contrast, (2) and (3) **should** only be registered and run for the specific model variants for which they are developed/intended.
+
+  Modules with tailored reporting configuration **may** also be indicated on the :ref:`command line <report-cli>` by using the :program:`-m/--modules` option: :program:`mix-models report -m model.transport`.
+
+- A file :file:`global.yaml` file (in `YAML <https://en.wikipedia.org/wiki/YAML#Example>`_ format) contains a description of some of the reporting computations needed for a MESSAGE-GLOBIOM model.
+  :func:`~.report.prepare_reporter` uses the :doc:`configuration handlers <genno:config>` built into :mod:`genno` (and some extensions specific to :mod:`message_ix_models`) to handle the different sections of the file.
 
 Features
 ========
@@ -66,24 +81,6 @@ Units
      - variable: Variable Name
        base: example_var:a-b-c
        units: kJ
-
-Continuous reporting
-====================
-
-.. note:: This section is no longer current.
-
-The IIASA TeamCity build server is configured to automatically run the full (:file:`global.yaml`) reporting on the following scenarios:
-
-.. literalinclude:: ../../ci/report.yaml
-   :caption: :file:`ci/report.yaml`
-   :language: yaml
-
-This takes place:
-
-- every morning at 07:00 IIASA time, and
-- for every commit on every pull request branch, *if* the branch name includes ``report`` anywhere, e.g. ``feature/improve-reporting``.
-
-The results are output to Excel files that are preserved and made available as 'build artifacts' via the TeamCity web interface.
 
 API reference
 =============
@@ -170,6 +167,40 @@ Utilities
       collapse_gwp_info
       copy_ts
 
+.. _report-legacy:
+.. currentmodule:: message_ix_models.report.compat
+
+Compatibility with :mod:`.message_data`
+---------------------------------------
+
+.. automodule:: message_ix_models.report.compat
+   :members:
+
+   :mod:`.message_data` contains :doc:`m-data:reference/tools/post_processing`.
+   This code predates :mod:`genno` and the stack of tools built on upon it (:ref:`described above <report-intro>`); these were designed to avoid issues with performance and extensibility in the older code. [1]_
+   :mod:`.report.compat` prepares a Reporter to perform the same calculations as :mod:`message_data.tools.post_processing`, except using :mod:`genno`.
+
+   .. warning:: This code is **under development** and **incomplete**.
+      It is not yet a full or exact replacement for the legacy reporting code.
+      Use with caution.
+
+   Main API:
+
+   .. autosummary::
+      TECH_FILTERS
+      callback
+      prepare_techs
+      get_techs
+
+   Utility functions:
+
+   .. autosummary::
+      inp
+      eff
+      emi
+      out
+
+.. _report-cli:
 
 Command-line interface
 ======================
@@ -210,7 +241,20 @@ Command-line interface
 Testing
 =======
 
-
 .. currentmodule:: message_ix_models.report.sim
 .. automodule:: message_ix_models.report.sim
    :members:
+
+Continuous reporting
+--------------------
+
+As part of the :ref:`test-suite`, reporting is run on the same events (pushes and daily schedule) on publicly-available :doc:`model snapshots </api/model-snapshot>`.
+One goal of these tests *inter alia* is to ensure that adjustments and improvements to the reporting code do not disturb manually-verified model outputs.
+
+As part of the (private) :mod:`message_data` test suite, multiple workflows run on regular schedules; some of these include a combination of :mod:`message_ix_models`-based and :ref:`‘legacy’ reporting <report-legacy>`.
+These workflows:
+
+- Operate on specific scenarios within IIASA databases.
+- Create files in CSV, Excel, and/or PDF formats that are that are preserved and made available as 'build artifacts' via the GitHub Actions web interface and API.
+
+.. [1] See a (non-public) `“Reporting” project board <https://github.com/orgs/iiasa/projects/3>`_ on GitHub for details of the initial implementation of these features.

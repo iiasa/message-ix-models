@@ -1,7 +1,7 @@
+.. currentmodule:: message_ix_models.testing
+
 Test utilities and fixtures (:mod:`.testing`)
 *********************************************
-
-.. currentmodule:: message_ix_models.testing
 
 :doc:`Fixtures <pytest:explanation/fixtures>`:
 
