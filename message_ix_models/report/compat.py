@@ -1,26 +1,44 @@
-"""Compatibility code that emulates :mod:`message_data` reporting."""
+"""Compatibility code that emulates :mod:`.message_data` reporting."""
 import logging
 from functools import partial
 from itertools import chain, count
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional
 
-from genno import Computer, Key, Quantity, quote
-from genno.core.key import single_key
+from genno import Key, Quantity, quote
+from genno.core.key import iter_keys, single_key
 
 if TYPE_CHECKING:
+    from genno import Computer
     from ixmp.reporting import Reporter
     from sdmx.model.common import Code
 
     from message_ix_models import Context
+
+__all__ = [
+    "TECH_FILTERS",
+    "callback",
+    "eff",
+    "emi",
+    "get_techs",
+    "inp",
+    "out",
+    "prepare_techs",
+]
 
 log = logging.getLogger(__name__)
 
 #: Filters for determining subsets of technologies.
 #:
 #: Each value is a Python expression :func:`eval`'d in an environment containing
-#: variables derived from the annotations on codes for each technology. If the
-#: expression evaluates to :obj:`True`, then the code is considered to belong to the set
+#: variables derived from the annotations on :class:`Codes <.Code>` for each technology.
+#: If the expression evaluates to :obj:`True`, then the code belongs to the set
 #: identified by the key.
+#:
+#: See also
+#: --------
+#: get_techs
+#: prepare_techs
+#:
 TECH_FILTERS = {
     "gas all": "c_in == 'gas' and l_in in 'secondary final' and '_ccs' not in id",
     "gas extra": "False",
@@ -35,21 +53,27 @@ TECH_FILTERS = {
 }
 
 
+# Counter for anon()
 _ANON = map(lambda n: Key(f"_{n}"), count())
 
 
 def anon(name: Optional[str] = None, dims: Optional[Key] = None) -> Key:
-    """Create an ‘anonymous’ :class:`.Key` with `dims` optionally from another Key."""
+    """Create an ‘anonymous’ :class:`.Key`, optionally with `dims` from another Key."""
     result = next(_ANON) if name is None else Key(name)
 
     return result.append(*getattr(dims, "dims", []))
 
 
-def get_techs(c: Computer, prefix: str, kinds: Optional[str] = None) -> List[str]:
+def get_techs(c: "Computer", prefix: str, kinds: Optional[str] = None) -> List[str]:
     """Return a list of technologies.
 
-    The list is assembled from entries in :data:`TECHS` with the keys "{prefix} {kind}",
-    with one `kind` for each space-separated item in `kinds`.
+    The list is assembled from lists in `c` with keys like "t::{prefix} {kind}",
+    with one `kind` for each space-separated item in `kinds`. If no `kinds` are
+    supplied, "t::{prefix}" is used.
+
+    See also
+    --------
+    prepare_techs
     """
     _kinds = kinds.split() if kinds else [""]
     return list(chain(*[c.graph[f"t::{prefix} {k}".rstrip()][0].data for k in _kinds]))
@@ -62,13 +86,31 @@ def make_shorthand_function(
     _to_drop = to_drop.split()
 
     def func(
-        c: Computer,
+        c: "Computer",
         technologies: List[str],
         *,
         name: Optional[str] = None,
         filters: Optional[dict] = None,
         unit_key: Optional[str] = default_unit_key,
     ) -> Key:
+        f"""Select data from "{base_name}:*" and apply units.
+
+        The returned key sums the result over the dimensions {_to_drop!r}.
+
+        Parameters
+        ----------
+        technologies :
+            List of technology IDs to include.
+        name : str, *optional*
+            If given, the name of the resulting key. Default: a name like "_123"
+            generated with :func:`anon`.
+        filters : dict, *optional*
+            Additional filters for selecting data from "{base_name}:*". Keys are short
+            dimension names (for instance, "c" for "commodity"); values are lists of
+            IDs.
+        unit_key : str, *optional*
+            Key for units to apply to the result. Must appear in :attr:`.Config.units`.
+        """
         base = single_key(c.full_key(base_name))
         key = anon(name, dims=base)
 
@@ -99,11 +141,23 @@ out = make_shorthand_function("out", "c h hd l nd t", "energy")
 
 
 def eff(
-    c: Computer,
+    c: "Computer",
     technologies: List[str],
     filters_in: Optional[dict] = None,
     filters_out: Optional[dict] = None,
 ) -> Key:
+    """Throughput efficiency (input / output) for `technologies`.
+
+    Equivalent to :meth:`PostProcess.eff`.
+
+    Parameters
+    ----------
+    filters_in : dict, *optional*
+        Passed as the `filters` parameter to :func:`inp`.
+    filters_out : dict, *optional*
+        Passed as the `filters` parameter to :func:`out`.
+    """
+    # TODO Check whether append / drop "t" is necessary
     num = c.graph.unsorted_key(inp(c, technologies, filters=filters_in).append("t"))
     denom = c.graph.unsorted_key(out(c, technologies, filters=filters_out).append("t"))
     assert isinstance(num, Key)
@@ -117,7 +171,7 @@ def eff(
 
 
 def pe_w_ccs_retro(
-    c: Computer,
+    c: "Computer",
     t: str,
     t_scrub: str,
     k_share: Optional[Key],
@@ -136,22 +190,28 @@ def pe_w_ccs_retro(
     c.add(k2, "select", ACT, indexers=dict(t=t), drop=True, sums=True)
 
     # TODO determine the dimensions to drop for the numerator
-    k3 = anon(dims=k2)
-    c.add(k3, "div", k2.drop("yv"), k2, sums=True)
+    k3, *_ = iter_keys(c.add(anon(dims=k2), "div", k2.drop("yv"), k2, sums=True))
+    assert_dims(c, k3)
 
     filters_out = dict(c=["electr"], l=["secondary"])
     k4 = eff(c, [t], filters_in=filters, filters_out=filters_out)
     k5 = single_key(c.add(anon(), "mul", k3, k4))
     k6 = single_key(c.add(anon(dims=k5), "div", k1, k5))
+    assert_dims(c, k6)
 
     return k6
 
 
-def prepare_techs(c: Computer, technologies: List["Code"]) -> None:
+def prepare_techs(c: "Computer", technologies: List["Code"]) -> None:
     """Prepare sets of technologies in `c`.
 
-    Add keys like "t::{key}" to `c` for each `key` in :data:`TECH_FILTERS`, by applying
-    the filter expression to `technologies`.
+    For each `key` → `expr` in :data:`TECH_FILTERS` and each technology :class:`Code`
+    `t` in `technologies`:
+
+    - Apply the filter expression `expr` to information about `t`.
+    - If the expression evaluates to :obj:`True`, add it to a list in `c` at "t::{key}".
+
+    These lists of technologies can be used directly or retrieve with :func:`get_techs`.
     """
     result: Mapping[str, List[str]] = {k: list() for k in TECH_FILTERS}
 
@@ -187,8 +247,39 @@ def prepare_techs(c: Computer, technologies: List["Code"]) -> None:
         c.add(f"t::{k}", quote(sorted(v)))
 
 
+def assert_dims(c: "Computer", *keys: Key):
+    """Check the dimensions of `keys` for an "add", "sub", or "div" task.
+
+    This is a sanity check needed because :py:`c.add("name", "div", …)` does not (yet)
+    automatically infer the dimensions of the resulting key. This is in contrast to
+    :py:`c.add("name", "mul", …)`, which *does* infer.
+
+    Use this function after manual construction of a key for a "add", "div", or "sub"
+    task, in order to ensure the key matches the dimensionality of the quantity that
+    will result from the task.
+
+    .. todo:: Remove once handled upstream in :mod:`genno`.
+    """
+    for key in keys:
+        task = c.graph[key]
+        expected = Key.product("foo", *task[1:])
+
+        op = f" {task[0].__name__} "
+        assert set(key.dims) == set(expected.dims), (
+            f"Task should produce {op.join(repr(k) for k in task[1:])} = "
+            f"{str(expected).split(':')[1]}; key indicates {str(key).split(':')[1]}"
+        )
+
+
 def callback(rep: "Reporter", context: "Context") -> None:
-    """Partially duplicate the behaviour of :func:`.default_tables.retr_CO2emi`."""
+    """Partially duplicate the behaviour of :func:`.default_tables.retr_CO2emi`.
+
+    Currently, this prepares the following keys and the necessary preceding
+    calculations:
+
+    - "transport emissions full::iamc": data for the IAMC variable
+      "Emissions|CO2|Energy|Demand|Transportation|Road Rail and Domestic Shipping"
+    """
     from message_ix_models.model.bare import get_spec
 
     from . import iamc
@@ -208,77 +299,97 @@ def callback(rep: "Reporter", context: "Context") -> None:
     techs = partial(get_techs, rep)
 
     def full(name: str) -> Key:
+        """Return the full key for `name`."""
         return single_key(rep.full_key(name))
 
     # L3059 from message_data/tools/post_processing/default_tables.py
+    # "gas_{cc,ppl}_share": shares of gas_cc and gas_ppl in the summed output of both
     k0 = out(rep, ["gas_cc", "gas_ppl"])
-    k1 = out(rep, ["gas_cc"])
-    k2 = out(rep, ["gas_ppl"])
-    gas_cc_share = Key("gas_cc_share", k0.dims)
-    rep.add(gas_cc_share, "div", k0, k1)
-    gas_ppl_share = Key("gas_ppl_share", k0.dims)
-    rep.add(gas_ppl_share, "div", k0, k2)
+    for t in "gas_cc", "gas_ppl":
+        k1 = out(rep, [t])
+        k2 = rep.add(Key(f"{t}_share", k1.dims), "div", k0, k1)
+        assert_dims(rep, single_key(k2))
 
     # L3026
+    # "in:*:nonccs_gas_tecs": Input to non-CCS technologies using gas at l=(secondary,
+    # final), net of output from transmission and distribution technologies.
     c_gas = dict(c=["gas"])
-    k1 = inp(rep, techs("gas", "all extra"), filters=c_gas)
-    k2 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
-    inp_nonccs_gas_tecs = Key("inp_nonccs_gas_tecs", k2.dims)
-    rep.add(inp_nonccs_gas_tecs, "sub", k1, k2)
+    k0 = inp(rep, techs("gas", "all extra"), filters=c_gas)
+    k1 = out(rep, ["gas_t_d", "gas_t_d_ch4"], filters=c_gas)
+    k2 = rep.add(Key("in", k1.dims, "nonccs_gas_tecs"), "sub", k0, k1)
+    assert_dims(rep, single_key(k2))
 
     # L3091
-    Biogas_tot_abs = out(rep, ["gas_bio"])
-    Biogas_tot = rep.add(
-        "Biogas_tot", "mul", Biogas_tot_abs, "crbcnt_gas", "conv_c2co2"
-    )
+    # "Biogas_tot_abs": absolute output from t=gas_bio [energy units]
+    # "Biogas_tot": above converted to its CO₂ content = CO₂ emissions from t=gas_bio
+    # [mass/time]
+    Biogas_tot_abs = out(rep, ["gas_bio"], name="Biogas_tot_abs")
+    rep.add("Biogas_tot", "mul", Biogas_tot_abs, "crbcnt_gas", "conv_c2co2")
 
     # L3052
-    key = inp(
+    # "in:*:all_gas_tecs": Input to all technologies using gas at l=(secondary, final),
+    # including those with CCS.
+    k0 = inp(
         rep,
         ["gas_cc_ccs", "meth_ng", "meth_ng_ccs", "h2_smr", "h2_smr_ccs"],
         filters=c_gas,
     )
-    inp_all_gas_tecs = Key("inp_all_gas_tecs", key.dims)
-    rep.add(inp_all_gas_tecs, "add", inp_nonccs_gas_tecs, key)
+    k1 = rep.add(
+        Key("in", k0.dims, "all_gas_tecs"), "add", full("in::nonccs_gas_tecs"), k0
+    )
+    assert_dims(rep, k1)
 
     # L3165
-    Hydrogen_tot = emi(
-        rep, ["h2_mix"], filters=dict(r="CO2_cc"), unit_key="CO2 emissions"
+    # "Hydrogen_tot:*": CO₂ emissions from t=h2_mix [mass/time]
+    k0 = emi(
+        rep,
+        ["h2_mix"],
+        name="_Hydrogen_tot",
+        filters=dict(r="CO2_cc"),
+        unit_key="CO2 emissions",
     )
+    # NB Must alias here, otherwise full("Hydrogen_tot") below gets a larger set of
+    #    dimensions than intended
+    rep.add(Key("Hydrogen_tot", k0.dims), k0)
 
     # L3063
+    # "in:*:nonccs_gas_tecs_wo_ccsretro": "in:*:nonccs_gas_tecs" minus inputs to
+    # technologies fitted with CCS add-on technologies.
     filters = dict(c=["gas"], l=["secondary"])
     pe_w_ccs_retro_keys = [
         pe_w_ccs_retro(rep, *args, filters=filters)
         for args in (
             ("gas_cc", "g_ppl_co2scr", full("gas_cc_share")),
-            ("gas_ppl", "g_ppl_co2_scr", full("gas_ppl_share")),
+            ("gas_ppl", "g_ppl_co2scr", full("gas_ppl_share")),
             # FIXME Raises KeyError
             # ("gas_htfc", "gfc_co2scr", None),
         )
     ]
+    k0 = rep.add(anon(dims=pe_w_ccs_retro_keys[0]), "add", *pe_w_ccs_retro_keys)
+    k1 = rep.add(
+        Key("in", k0.dims, "nonccs_gas_tecs_wo_ccsretro"),
+        "sub",
+        full("in::nonccs_gas_tecs"),
+        k0,
+    )
+    assert_dims(rep, k0, k1)
 
-    key = Key.product(anon().name, *pe_w_ccs_retro_keys)
-    rep.add(key, "add", *pe_w_ccs_retro_keys)
-
-    inp_nonccs_gas_tecs_wo_ccsretro = Key("inp_nonccs_gas_tecs_wo_ccsretro", key.dims)
-    rep.add(inp_nonccs_gas_tecs_wo_ccsretro, "sub", inp_nonccs_gas_tecs, key)
-
-    # L3144
-    key = inp(rep, techs("trp gas"), filters=c_gas)
-    key = rep.add(anon(), "mul", Biogas_tot, key)
-
-    Biogas_trp = Key.product("Biogas_trp", key, inp_all_gas_tecs)
-    rep.add(Biogas_trp, "div", key, inp_all_gas_tecs)
-
-    # L3234
-    key = inp(rep, techs("trp gas"), filters=c_gas)
-    key = rep.add(anon(), "mul", Hydrogen_tot, key)
-
-    Hydrogen_trp = Key.product("Hydrogen_trp", key, inp_nonccs_gas_tecs_wo_ccsretro)
-    rep.add(Hydrogen_trp, "div", key, inp_nonccs_gas_tecs_wo_ccsretro)
+    # L3144, L3234
+    # "Biogas_trp", "Hydrogen_trp": transportation shares of emissions savings from
+    # biogas production/use, and from hydrogen production, respectively.
+    # X_trp = X_tot * (trp input of gas / `other` inputs)
+    k0 = inp(rep, techs("trp gas"), filters=c_gas)
+    for name, other in (
+        ("Biogas", full("in::all_gas_tecs")),
+        ("Hydrogen", full("in::nonccs_gas_tecs_wo_ccsretro")),
+    ):
+        k1 = rep.add(anon(dims=other), "div", k0, other)
+        k2 = rep.add(f"{name}_trp", "mul", f"{name}_tot", k1)
+        assert_dims(rep, single_key(k1))
 
     # L3346
+    # "FE_Transport": CO₂ emissions from all transportation technologies directly using
+    # fossil fuels.
     FE_Transport = emi(
         rep,
         techs("trp", "coal foil gas loil meth"),
@@ -288,19 +399,22 @@ def callback(rep: "Reporter", context: "Context") -> None:
     )
 
     # L3886
-    k0 = Key.product(anon().name, FE_Transport, Biogas_trp)
-    rep.add(k0, "sub", FE_Transport, Biogas_trp)
-
-    k1 = Key.product("Transport", k0, Hydrogen_trp)
-    rep.add(k1, "add", k0, Hydrogen_trp, sums=True)
+    # "Transport": CO₂ emissions from transport. "FE_Transport" minus emissions saved by
+    # use of biogas in transport, plus emissions from production of hydrogen used in
+    # transport.
+    k0 = rep.add(anon(dims=FE_Transport), "sub", FE_Transport, full("Biogas_trp"))
+    k1, *_ = iter_keys(
+        rep.add(Key("Transport", k0.dims), "add", k0, full("Hydrogen_trp"), sums=True)
+    )
+    assert_dims(rep, k0, k1)
 
     # TODO Identify where to sum on "h", "m", "yv" dimensions
 
-    # Convert to IAMC format
+    # Convert to IAMC structure
     var = "Emissions|CO2|Energy|Demand|Transportation|Road Rail and Domestic Shipping"
     info = dict(variable="transport emissions", base=k1.drop("h", "m", "yv"), var=[var])
     iamc(rep, info)
 
-    # TODO use store_ts()
+    # TODO use store_ts() to store on scenario
 
     log.info(f"Added {len(rep.graph) - N} keys")
