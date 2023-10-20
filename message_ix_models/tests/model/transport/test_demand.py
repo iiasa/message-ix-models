@@ -64,6 +64,8 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
 
     # Check that some keys (a) can be computed without error and (b) have correct units
     for key, unit in (
+        # ("mode share:n-t-y:base", ""),
+        # ("mode share:n-t-y", ""),
         ("population:n-y", "Mpassenger"),
         ("cg share:n-y-cg", ""),
         ("GDP:n-y:PPP+capita", "kUSD / passenger / year"),
