@@ -37,13 +37,30 @@ def test_prepare_techs(test_context):
     from message_ix_models.model.bare import get_spec
     from message_ix_models.report.compat import TECH_FILTERS
 
+    # Retrieve a spec with the default set of technologies
     spec = get_spec(test_context)
+    technologies = spec.add.set["technology"]
 
     c = Computer()
-    prepare_techs(c, spec.add.set["technology"])
+    prepare_techs(c, technologies)
 
     # Expected sets of technologies based on the default technology.yaml
     assert {
+        "gas all": [
+            "gas_cc",
+            "gas_ct",
+            "gas_fs",
+            "gas_hpl",
+            "gas_htfc",
+            "gas_i",
+            "gas_ppl",
+            "gas_rc",
+            "gas_t_d",
+            "gas_t_d_ch4",
+            "gas_trp",
+            "hp_gas_i",
+            "hp_gas_rc",
+        ],
         "gas extra": [],
         # Residential and commercial
         "rc gas": ["gas_rc", "hp_gas_rc"],
