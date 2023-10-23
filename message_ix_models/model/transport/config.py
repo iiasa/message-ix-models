@@ -22,10 +22,6 @@ log = logging.getLogger(__name__)
 class DataSourceConfig(ConfigHelper):
     """Sources for input data."""
 
-    dummy_demand: bool = False
-
-    dummy_supply: bool = False
-
     #: Emissions: ID of a dump from a base scenario.
     emissions: str = "1"
 
@@ -103,6 +99,13 @@ class Config(ConfigHelper):
     demand_modes: List[str] = field(
         default_factory=lambda: ["LDV", "2W", "AIR", "BUS", "RAIL"]
     )
+
+    #: Include dummy ``demand`` data for testing and debugging.
+    dummy_demand: bool = False
+
+    #: Include dummy technologies supplying commodities required by transport, for
+    #: testing and debugging.
+    dummy_supply: bool = False
 
     #: Various efficiency factors.
     efficiency: Dict = field(

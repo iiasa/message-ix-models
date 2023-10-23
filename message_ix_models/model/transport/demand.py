@@ -49,7 +49,7 @@ def dummy(
     ----------
     info : .ScenarioInfo
     """
-    if not config["transport"].data_source.dummy_demand:
+    if not config["transport"].dummy_demand:
         # No dummy data → return nothing
         return dict()
 

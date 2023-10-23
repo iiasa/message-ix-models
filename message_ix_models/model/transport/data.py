@@ -186,7 +186,7 @@ def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
 @provides_data("config", "info")
 def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
-    if not config["transport"].data_source.dummy_supply:
+    if not config["transport"].dummy_supply:
         return dict()
 
     # TODO read the list of 'commodity' from context/config
