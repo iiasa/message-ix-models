@@ -140,19 +140,22 @@ def add_structure(c: Computer):
     This uses `info` to mock the contents that would be reported from an already-
     populated Scenario for sets "node", "year", and "cat_year".
     """
+    from itertools import product
     from operator import itemgetter
 
     context = c.graph["context"]
     info = context["transport build info"]
 
     # Create a quantity for broadcasting y to (yv, ya)
+    dims = ["y", "yv", "ya"]
     tmp = (
-        info.yv_ya.rename(columns={"year_vtg": "yv", "year_act": "ya"})
-        .eval("y = yv")
-        .assign(value=1.0)
+        # NB cannot use info.yv_ya here, as it omits all year_vtg < y₀
+        pd.DataFrame(product(info.set["year"], info.Y), columns=dims[1:])
+        .query("ya >= yv")
+        .assign(value=1.0, y=lambda df: df["yv"])
+        .set_index(dims)["value"]
     )
-    qty = Quantity(tmp.set_index(["y", "ya", "yv"])["value"])
-    c.add("broadcast:y-yv-ya", qty)
+    c.add("broadcast:y-yv-ya", Quantity(tmp))
 
     for key, value in (
         ("c::transport", quote(info.set["commodity"])),
