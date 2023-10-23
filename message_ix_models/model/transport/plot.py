@@ -148,7 +148,7 @@ class InvCost0(Plot):
     """All transport investment cost."""
 
     basename = "inv-cost-transport"
-    inputs = ["inv_cost:nl-t-yv:transport"]
+    inputs = ["inv_cost:nl-t-yv:transport all"]
     static = Plot.static + [
         p9.aes(x="yv", y="inv_cost", color="t"),
         p9.geom_line(),
@@ -180,7 +180,7 @@ class InvCost2(InvCost0):
     """
 
     basename = "inv-cost-nonldv"
-    inputs = ["inv_cost:nl-t-yv:nonldv"]
+    inputs = ["inv_cost:nl-t-yv:non-ldv"]
 
 
 class FixCost(Plot):
@@ -408,14 +408,14 @@ class Stock0(Plot):
     # Partial sum over driver_type dimension
     inputs = ["CAP:nl-t-ya:ldv+units"]
     static = Plot.static + [
-        p9.aes(x="ya", y="value", color="t"),
+        p9.aes(x="ya", y="CAP", color="t"),
         p9.geom_line(),
         p9.geom_point(),
         p9.labs(x="Period", color="Powertrain technology"),
     ]
 
     def generate(self, data):
-        y_max = max(data["value"])
+        y_max = max(data["CAP"])
         self.unit = data["unit"].unique()[0]
 
         for _, ggplot in self.groupby_plot(data, "nl"):
@@ -431,7 +431,7 @@ class Stock1(Plot):
     basename = "stock-non-ldv"
     inputs = ["CAP:nl-t-ya:non-ldv+units"]
     static = Plot.static + [
-        p9.aes(x="yv", y="value", color="t"),
+        p9.aes(x="yv", y="CAP", color="t"),
         p9.geom_line(),
         p9.geom_point(),
     ]
@@ -440,7 +440,7 @@ class Stock1(Plot):
         if not len(data):
             return
 
-        y_max = max(data["value"])
+        y_max = max(data["CAP"])
         self.unit = data["unit"].unique()[0]
 
         for _, ggplot in self.groupby_plot(data, "nl"):
