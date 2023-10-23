@@ -5,9 +5,8 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 from dask.core import literal, quote
-from genno import Computer, Key, Quantity
+from genno import Computer, Key
 from message_ix import make_df
-from message_ix_models import ScenarioInfo
 from message_ix_models.util import broadcast
 
 log = logging.getLogger(__name__)
@@ -171,89 +170,6 @@ QUEUE = [
         "config",
     ),
 ]
-
-
-def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
-    """Add exogenous data to `c` that mocks data coming from an actual Scenario.
-
-    The specific quantities added are:
-
-    - ``GDP:n-y``, from GEA, SSP, or SHAPE data; see :func:`.gdp_pop`.
-    - ``PRICE_COMMODITY:n-c-y``, currently mocked based on the shape of ``GDP:n-y``
-      using :func:`.dummy_prices`.
-
-      .. todo:: Add an external data source.
-
-    - ``MERtoPPP:n-y``, from :file:`mer-to-ppp.csv`. If ``context.model.regions`` is
-      “R14”, data are adapted from R11 using :obj:`.adapt_R11_R14`.
-
-    See also
-    --------
-    :doc:`/reference/model/transport/data`
-    """
-    # Ensure that the SSPOriginal and SSPUpdate data providers are available
-    import message_ix_models.project.ssp.data  # noqa: F401
-    from ixmp.reporting import RENAME_DIMS
-    from message_ix_models.project.ssp import SSP_2017, SSP_2024
-    from message_ix_models.tools.exo_data import prepare_computer
-
-    # Ensure that the MERtoPPP data provider is available
-    from . import data  # noqa: F401
-    from .util import path_fallback
-
-    # Added keys
-    keys = {}
-
-    context = c.graph["context"]
-    source = str(context.transport.ssp)
-
-    # Identify appropriate source keyword arguments for loading GDP and population data
-    if context.transport.ssp in SSP_2017:
-        source_kw = (
-            dict(measure="GDP", model="IIASA GDP"),
-            dict(measure="POP", model="IIASA GDP"),
-        )
-    elif context.transport.ssp in SSP_2024:
-        source_kw = (dict(measure="GDP", model="IIASA GDP 2023"), dict(measure="POP"))
-
-    for kw in source_kw:
-        keys[kw["measure"]] = prepare_computer(
-            context, c, source, source_kw=kw, strict=False
-        )
-
-    # Add data for MERtoPPP
-    prepare_computer(
-        context,
-        c,
-        "message_data.model.transport",
-        source_kw=dict(measure="MERtoPPP", context=context),
-        strict=False,
-    )
-
-    # Alias for other computations which expect the upper-case name
-    c.add("GDP:n-y", "gdp:n-y")
-    c.add("MERtoPPP:n-y", "mertoppp:n-y")
-
-    # Ensure correct units
-    c.add("population:n-y", "mul", "pop:n-y", Quantity(1.0, units="passenger"))
-
-    # Dummy prices
-    c.add("PRICE_COMMODITY:n-c-y", "dummy_prices", keys["GDP"][0], sums=True)
-
-    # Data from files
-    for parts, key in (
-        # Reference (historical) PDT per capita
-        (("pdt-cap-ref.csv",), pdt_cap + "ref"),
-        # Mode share
-        (("mode-share", f"{context.transport.mode_share}.csv"), Key("mode share::ref")),
-    ):
-        c.add(
-            "load_file",
-            path_fallback(context, *parts),
-            key=key,
-            dims=RENAME_DIMS,
-            name=key.name,
-        )
 
 
 def prepare_computer(c: Computer) -> None:
