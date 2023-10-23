@@ -27,6 +27,7 @@ def test_advance_fv():
     assert {"[mass]": 1, "[length]": 1} == result.units.dimensionality, result
 
 
+@pytest.mark.skip(reason="Operator has been removed.")
 @pytest.mark.parametrize("regions", ["R11", "R12"])
 def test_distance_ldv(test_context, regions):
     "Test :func:`.distance_ldv`."
@@ -145,7 +146,7 @@ def test_pdt_per_capita():
     # Configuration: defaults
     config = dict(transport=Config())
 
-    result = pdt_per_capita(gdp_ppp_cap, pdt_ref, config)
+    result = pdt_per_capita(gdp_ppp_cap, pdt_ref, 2020, config)
     # print(f"{result = }")
 
     # Data have the expected dimensions and shape
