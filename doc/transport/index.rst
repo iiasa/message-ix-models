@@ -117,13 +117,28 @@ Use ``--help`` overall or for a particular command to learn more.
 
   As of 2022-05-25, the settings determining the scenarios, CLI options, etc. are hard-coded in the function; modify directly as needed.
 
-:command:`gen-demand`
-  Generate demand data without building a full scenario::
+:command:`gen-activity`
+  Generate projected activity data without building a full scenario::
 
-    $ mix-models transport gen-demand "SHAPE innovation" ../output_dir/
+    $ mix-models transport gen-demand --ssp-update=2
 
-  Output is written to a CSV file in the indicated directory.
-  See :func:`gdp_pop`, the ``--help`` text, and the command-line output.
+  This command produces:
+
+  - Files in :file:`{MESSAGE_LOCAL_DATA}/transport/gen-activity/{scenario}` (see :ref:`local data <local-data>`), where `scenario` reflects the command options:
+
+    - :file:`pdt.csv`, :file:`pdt-cap.csv`: projected activity data.
+    - :file:`demand-exo.pdf`, :file:`demand-exo-cap.pdf`: plots of the same.
+
+  - :file:`{MESSAGE_LOCAL_DATA}/transport/gen-activity/compare-[pdt,pdt-cap].pdf`: plots that contrast the data output by the current command invocation *and* any others in other sub-directories of :file:`…/gen-demand`, that is, from previous invocations.
+
+  Thus, to prepare :file:`compare-pdt.pdf` containing projections for multiple scenarios, invoke the command repeatedly, for instance::
+
+    $ mix-models transport gen-demand --ssp=2
+    $ mix-models transport gen-demand --ssp-update=1
+    $ mix-models transport gen-demand --ssp-update=2
+    $ mix-models transport gen-demand --ssp-update=3
+    $ mix-models transport gen-demand --ssp-update=4
+    $ mix-models transport gen-demand --ssp-update=5
 
 :command:`refresh`
   Overwrite one given local database (i.e. :mod:`ixmp.backend.jdbc.JDBCBackend` stored in a HyperSQL database) with another.
