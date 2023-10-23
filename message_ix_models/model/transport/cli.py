@@ -244,30 +244,30 @@ def batch(click_ctx, go):
 
 @cli.command("gen-activity")
 @common_params("nodes years")
+@click.option("--ssp", type=click.Choice("12345"))
 @click.option("--ssp-update", type=click.Choice("12345"))
-@click.option("--source")
 @click.argument("output_dir", metavar="DIR", type=Path, required=False, default=None)
 @click.pass_obj
-def gen_activity(ctx, ssp_update, source, nodes, years, output_dir):
+def gen_activity(ctx, ssp, ssp_update, nodes, years, output_dir):
     """Compute activity (demand) data and write to file in DIR."""
-    from message_ix_models.project.ssp import SSP_2024
+    from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
     from . import build
+    from .plot import ComparePDT, ComparePDTCap
 
     # Read general transport config
     ctx.update(regions=nodes or "R12", years=years or "B")
 
-    if ssp_update and source:
-        raise click.UsageError("--source is mutually exclusive with --ssp-update")
+    if ssp and ssp_update:
+        raise click.UsageError("--ssp is mutually exclusive with --ssp-update")
+    elif ssp:
+        options = {"ssp": SSP_2017[ssp]}
+        label = f"SSP_2017.{ssp}"
     elif ssp_update:
         options = {"ssp": SSP_2024[ssp_update]}
         label = f"SSP_2024.{ssp_update}"
-    elif source:
-        assert ssp_update is None
-        options = {"data source": {"gdp": source, "population": source}}
-        label = source.replace(" ", "_")
     else:
-        raise click.UsageError("Must give one of --ssp-update or --source")
+        raise click.UsageError("Must give one of --ssp or --ssp-update")
 
     # Prepare a Computer instance for calculations
     c = build.get_computer(ctx, options=options)
@@ -295,6 +295,11 @@ def gen_activity(ctx, ssp_update, source, nodes, years, output_dir):
     output_dir.mkdir(exist_ok=True, parents=True)
     c.get(key)
     log.info(f"Wrote to {output_dir}")
+
+    # Compare data
+    for cls in ComparePDT, ComparePDTCap:
+        key = c.add(f"compare {cls.kind}", cls, output_dir.parent)
+        c.get(key)
 
 
 @cli.command()
