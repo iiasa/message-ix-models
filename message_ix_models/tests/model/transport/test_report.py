@@ -108,7 +108,7 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     rep.get(k)
 
     # A quantity for message_data.model.transport can be computed
-    k = "stock:nl-t-ya-driver_type:ldv"
+    k = "transport stock::iamc"
     result = rep.get(k)
     assert 0 < len(result)
 
