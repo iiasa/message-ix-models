@@ -50,6 +50,9 @@ class Plot(BasePlot):
     #: Units expression for plot title.
     unit: Optional[str] = None
 
+    #: :obj:`False` for plots not intended to be run on a solved scenario.
+    runs_on_solved_scenario: bool = True
+
     def ggtitle(self, value=None):
         """Return :class:`plotnine.ggtitle` including the current date & time."""
         title_pieces = [
@@ -84,6 +87,7 @@ class ComparePDT(Plot):
     - One line with points per scenario, coloured by scenario.
     """
 
+    runs_on_solved_scenario = False
     basename = "../compare-pdt"
 
     static = Plot.static + [
@@ -343,6 +347,7 @@ def _reduce_units(df: pd.DataFrame, target_units) -> Tuple[pd.DataFrame, str]:
 class DemandExo(Plot):
     """Passenger transport activity."""
 
+    runs_on_solved_scenario = False
     basename = "demand-exo"
     inputs = ["pdt:n-y-t"]
     static = Plot.static + [
@@ -364,6 +369,7 @@ class DemandExo(Plot):
 class DemandExoCap(Plot):
     """Passenger transport activity per person."""
 
+    runs_on_solved_scenario = False
     basename = "demand-exo-capita"
     inputs = ["transport pdt:n-y-t:capita"]
     static = Plot.static + [
@@ -461,9 +467,16 @@ def prepare_computer(c: Computer):
     keys = []
     queue = []
 
+    try:
+        has_solution = c.graph["scenario"].has_solution()
+    except (AttributeError, KeyError):
+        has_solution = False
+
     # Plots
     for name, cls in PLOTS.items():
-        # Skip all but post-solve demand plots
+        if has_solution and not cls.runs_on_solved_scenario:
+            continue
+
         keys.append(f"plot {name}")
         queue.append((keys[-1], cls))
 
