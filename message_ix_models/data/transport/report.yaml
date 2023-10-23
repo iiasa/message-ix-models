@@ -117,7 +117,7 @@ iamc:
   unit: Mvehicle
 
 - variable: transport sales
-  base: CAP_NEW:nl-t-ya:ldv+units
+  base: CAP_NEW:nl-t-yv:ldv+units
   var: [ "Transport|Sales|Road|Passenger|LDV", t ]
   unit: Mvehicle
 
