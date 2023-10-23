@@ -103,7 +103,7 @@ def prepare_computer(c: Computer):
             capacity_factor,
             "ldv activity:n:exo",
             "t::transport LDV",
-            "y::model",
+            "y",
             "broadcast:y-yv-ya",
         ),
     ]
@@ -403,13 +403,13 @@ def capacity_factor(
         The structure :py:`"t::transport LDV"`, mapping the key "t" to the list of LDV
         technologies.
     y
-        The structure :py:`"y::model"`, that is, all :math:`y > y_0`.
+        All periods, including pre-model periods.
     """
-    from genno.computations import convert_units, mul
+    from genno.computations import convert_units
     from message_ix.reporting.computations import as_message_df
 
     # TODO determine units from technology annotations
-    data = convert_units(mul(qty.expand_dims(y=y), y_broadcast), "Mm / year")
+    data = convert_units(qty.expand_dims(y=y) * y_broadcast, "Mm / year")
 
     name = "capacity_factor"
     dims = dict(node_loc="node", year_vtg="yv", year_act="ya")
