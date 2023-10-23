@@ -299,6 +299,9 @@ def gen_activity(ctx, ssp, ssp_update, nodes, years, output_dir):
     # Compare data
     for cls in ComparePDT, ComparePDTCap:
         key = c.add(f"compare {cls.kind}", cls, output_dir.parent)
+        # FIXME on GitHub Actions—but *not* locally—the line above sets `key` to None.
+        #       Debug, fix, and then remove the line below.
+        key = f"compare {cls.kind}"
         c.get(key)
 
 
