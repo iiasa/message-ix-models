@@ -93,7 +93,7 @@ def test_build_bare_res(
     scenario = testing.bare_res(request, ctx)
 
     # Build succeeds without error
-    options = {"data source": {"LDV": ldv, "non-LDV": nonldv, "dummy supply": True}}
+    options = {"data source": {"LDV": ldv, "non-LDV": nonldv}, "dummy_supply": True}
     build.main(ctx, scenario, options, fast=True)
 
     # dump_path = tmp_path / "scenario.xlsx"

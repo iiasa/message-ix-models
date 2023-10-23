@@ -82,7 +82,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
     )
 
     scenario = built_transport(
-        request, ctx, options={"data source": {"dummy supply": True}}, solved=solved
+        request, test_context, options=dict(dummy_supply=True), solved=True
     )
 
     # commented: for debugging

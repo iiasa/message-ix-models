@@ -33,10 +33,10 @@ def test_demand_dummy(test_context, regions, years):
     )
 
     # Returns empty dict without config flag set
-    ctx.transport.data_source.dummy_demand = False
+    ctx.transport.dummy_demand = False
     assert dict() == demand.dummy(*args)
 
-    ctx.transport.data_source.dummy_demand = True
+    ctx.transport.dummy_demand = True
     data = demand.dummy(*args)
 
     assert any(data["demand"]["commodity"] == "transport pax URLMM")
