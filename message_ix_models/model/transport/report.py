@@ -148,9 +148,7 @@ def callback(rep: Reporter, context: Context) -> None:
     # - Call, inter alia:
     #   - demand.prepare_computer() for ex-post mode and demand calculations
     #   - plot.prepare_computer() for plots
-    check = build.get_computer(
-        context, obj=rep, scenario=scenario, options=dict(exogenous_data=not solved)
-    )
+    check = build.get_computer(context, obj=rep, scenario=scenario)
 
     assert check is rep
 
