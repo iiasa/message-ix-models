@@ -1,6 +1,5 @@
 """Demand calculation for MESSAGEix-Transport."""
 import logging
-from operator import itemgetter
 from typing import Dict, List
 
 import numpy as np
@@ -91,7 +90,6 @@ QUEUE = [
     (gdp_ppp, "mul", gdp, mer_to_ppp),
     (gdp_ppp_cap, "div", gdp_ppp, pop),
     # GDP index
-    ("y0", itemgetter(0), y),  # TODO move upstream to message_ix
     (gdp_index, "index_to", gdp_ppp_cap, literal("y"), "y0"),
     # Projected PDT per capita
     (pdt_cap, "pdt_per_capita", gdp_ppp_cap, pdt_cap + "ref", "y0", "config"),

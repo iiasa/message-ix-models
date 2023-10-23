@@ -52,6 +52,8 @@ def add_structure(c: Computer):
     This uses `info` to mock the contents that would be reported from an already-
     populated Scenario for sets "node", "year", and "cat_year".
     """
+    from operator import itemgetter
+
     context = c.graph["context"]
     info = context["transport build info"]
 
@@ -93,17 +95,18 @@ def add_structure(c: Computer):
 
     # List of nodes excluding "World"
     # TODO move upstream, to message_ix
-    c.add("nodes_ex_world", "n::ex world", "n"),
+    c.add("n::ex world", "nodes_ex_world", "n"),
     c.add(
         "n:n:ex world",
         lambda data: Quantity(xr.DataArray(1, dims="n", coords={"n": data})),
         "n::ex world",
     )
-    c.add("nodes_ex_world", "n::ex world+code", "nodes"),
-    c.add("nodes_world_agg", "nl::world agg", "config"),
+    c.add("n::ex world+code", "nodes_ex_world", "nodes"),
+    c.add("nl::world agg", "nodes_world_agg", "config"),
 
     # Model periods only
-    c.add("model_periods", "y::model", "y", "cat_year")
+    c.add("y::model", "model_periods", "y", "cat_year")
+    c.add("y0", itemgetter(0), "y::model")
 
     # Mappings for use with aggregate, select, etc.
     c.add("t::transport agg", quote(dict(t=t_groups)))
