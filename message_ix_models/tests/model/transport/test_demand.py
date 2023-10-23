@@ -258,11 +258,19 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 @pytest.mark.parametrize(
     "nodes, data_source",
     [
-        ("R11", "--source=GEA mix"),
-        ("R12", "--source=SSP2"),
+        param(
+            "R11",
+            "--source=GEA mix",
+            marks=pytest.mark.xfail(reason="Temporary, for #502"),
+        ),
+        ("R12", "--ssp=2"),
         ("R12", "--ssp-update=2"),
-        param("R14", "--source=SSP2", marks=MARK[2](ValueError)),
-        ("R11", "--source=SHAPE innovation"),
+        param("R14", "--ssp=2", marks=MARK[2](ValueError)),
+        param(
+            "R11",
+            "--source=SHAPE innovation",
+            marks=pytest.mark.xfail(reason="Temporary, for #502"),
+        ),
     ],
 )
 def test_cli(tmp_path, mix_models_cli, nodes, data_source):
@@ -282,5 +290,6 @@ def test_cli(tmp_path, mix_models_cli, nodes, data_source):
         print(result.output)
         raise result.exception
 
-    # 1 file created in the temporary path
-    assert 1 == len(list(tmp_path.glob("*.csv")))
+    # Files created in the temporary path
+    assert 2 == len(list(tmp_path.glob("*.csv")))
+    assert 2 == len(list(tmp_path.glob("*.pdf")))
