@@ -94,7 +94,7 @@ QUEUE = [
     ("y0", itemgetter(0), y),  # TODO move upstream to message_ix
     (gdp_index, "index_to", gdp_ppp_cap, literal("y"), "y0"),
     # Projected PDT per capita
-    (pdt_cap, "pdt_per_capita", gdp_ppp_cap, pdt_cap + "ref", "config"),
+    (pdt_cap, "pdt_per_capita", gdp_ppp_cap, pdt_cap + "ref", "y0", "config"),
     # Total PDT
     (pdt_ny, "mul", pdt_cap, pop),
     # Value-of-time multiplier
