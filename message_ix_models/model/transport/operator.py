@@ -606,23 +606,29 @@ def pdt_per_capita(
     :attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_demand`), which give a fixed future
     point towards which all regions converge.
     """
-    from genno.computations import add, div, mul, sub
+    from genno.computations import add, sub
 
     # Selectors/indices
     n = dict(n=gdp_ppp_cap.coords["n"].data)
 
-    # Retrieve values from configuration; broadcast on dimension "n"
+    # Values from configuration; broadcast on dimension "n"
     gdp_fix = config["transport"].fixed_GDP.expand_dims(n)
     pdt_fix = config["transport"].fixed_demand.expand_dims(n)
 
-    # Initial GDP/capita
+    # Reference/base-year GDP per capita
     gdp_0 = gdp_ppp_cap.sel(dict(y=y0))
 
-    # Compute slope between initial and target point, for each "n"
-    m = div(sub(pdt_fix, pdt_ref), sub(gdp_fix, gdp_0))
+    # Slope between initial and target point, for each "n"
+    m = sub(pdt_fix, pdt_ref) / sub(gdp_fix, gdp_0)
+
+    # Difference between projected GDP per capita and reference.
+    # Limit to minimum of zero; values < 0 can extrapolate to negative PDT per capita,
+    # which is invalid
+    # FIXME Remove typing exclusion once genno is properly typed for this operation
+    gdp_delta = np.maximum(sub(gdp_ppp_cap, gdp_0), 0)  # type: ignore [call-overload]
 
     # Predict y = mx + b ∀ (n, y (period))
-    return add(mul(m, sub(gdp_ppp_cap, gdp_0)), pdt_ref)
+    return add(m * gdp_delta, pdt_ref)
 
 
 def price_units(qty: Quantity) -> Quantity:
