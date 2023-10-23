@@ -276,21 +276,25 @@ def gen_activity(ctx, ssp_update, source, nodes, years, output_dir):
     output_dir = output_dir or ctx.get_local_path(
         "transport", "gen-activity", f"{label}-{ctx.regions}-{ctx.years}"
     )
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir.joinpath("pdt.csv")
     c.configure(output_dir=output_dir)
 
     # Compute total activity by mode
-    c.add("gen-activity 1", "write_report", "pdt:n-y-t", output_path)
+    c.add("_1", "write_report", "pdt:n-y-t", output_dir.joinpath("pdt.csv"))
+    c.add(
+        "_2",
+        "write_report",
+        "transport pdt:n-y-t:capita",
+        output_dir.joinpath("pdt-cap.csv"),
+    )
 
     key = c.add(
-        "gen-activity", ["gen-activity 1", "plot demand-exo", "plot demand-exo-capita"]
+        "gen-activity", ["_1", "_2", "plot demand-exo", "plot demand-exo-capita"]
     )
 
     log.info(f"Compute {repr(key)}\n{c.describe(key)}")
     output_dir.mkdir(exist_ok=True, parents=True)
     c.get(key)
-    log.info(f"Wrote to {output_path}")
+    log.info(f"Wrote to {output_dir}")
 
 
 @cli.command()
