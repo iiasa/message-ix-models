@@ -1,10 +1,9 @@
 import logging
 
 import pytest
-from genno.testing import assert_units
-from iam_units import registry
 from message_ix.reporting import Key
 from message_ix_models.model.structure import get_codes
+from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from message_ix_models.testing import NIE
 from pytest import param
 
@@ -58,6 +57,8 @@ def test_demand_dummy(test_context, regions, years):
 )
 def test_exo(test_context, tmp_path, regions, years, N_node, options):
     """Exogenous demand calculation succeeds."""
+    from genno.testing import assert_units
+
     c, info = testing.configure_build(
         test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
@@ -111,16 +112,37 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
     assert {"demand"} == set(data.keys())
     assert not data["demand"].isna().any().any()
 
-    # Demand is expressed for the expected quantities
+
+@pytest.mark.parametrize(
+    "ssp",
+    [
+        SSP_2017["2"],
+        SSP_2024["1"],
+        SSP_2024["2"],
+        SSP_2024["3"],
+        SSP_2024["4"],
+        SSP_2024["5"],
+    ],
+)
+def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
+    from message_data.testing import assert_units
+
+    c, info = testing.configure_build(
+        test_context, regions=regions, years=years, options=dict(ssp=ssp)
+    )
+
     data = c.get("transport demand passenger::ixmp")
 
-    units = data["demand"]["unit"].unique()
-    assert 1 == len(units)
-    assert registry.Unit("Gp km / a") == registry.Unit(units[0])
-
-    # Returns a dict with a single key/DataFrame
+    # Returns a dict with a single key/data frame
     df = data.pop("demand")
     assert 0 == len(data)
+
+    # Data have common, expected units
+    assert_units(df, {"[passenger]": 1, "[length]": 1, "[time]": -1})
+
+    # Passenger distance travelled is positive
+    negative = df[df.value < 0]
+    assert 0 == len(negative), f"Negative values in PDT:\n{negative.to_string()}"
 
     # Both LDV and non-LDV commodities are demanded
     assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"])
