@@ -80,8 +80,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     keys = {}
 
     context = c.graph["context"]
-    if not context.transport.exogenous_data:
-        return
 
     source = str(context.transport.ssp)
 
@@ -108,15 +106,28 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         strict=False,
     )
 
-    # Alias for other computations which expect the upper-case name
-    c.add("GDP:n-y", "gdp:n-y")
+    try:
+        # Alias for other computations which expect the upper-case name
+        c.add("GDP:n-y", "gdp:n-y", strict=True)
+    except KeyExistsError as e:
+        log.info(repr(e))  # Solved scenario that already has this key
+
     c.add("MERtoPPP:n-y", "mertoppp:n-y")
 
     # Ensure correct units
     c.add("population:n-y", "mul", "pop:n-y", Quantity(1.0, units="passenger"))
 
     # Dummy prices
-    c.add("PRICE_COMMODITY:n-c-y", "dummy_prices", keys["GDP"][0], sums=True)
+    try:
+        c.add(
+            "PRICE_COMMODITY:n-c-y",
+            "dummy_prices",
+            keys["GDP"][0],
+            sums=True,
+            strict=True,
+        )
+    except KeyExistsError as e:
+        log.info(repr(e))  # Solved scenario that already has this key
 
     # Data from files
     for parts, key in (
