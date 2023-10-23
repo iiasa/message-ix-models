@@ -2,7 +2,6 @@ import logging
 from copy import deepcopy
 
 import pytest
-from message_ix.reporting import MissingKeyError
 from message_ix_models.report import prepare_reporter, register
 from pytest import mark, param
 
@@ -47,40 +46,31 @@ def test_register_cb():
 
 
 @pytest.mark.parametrize(
-    "regions, years, solved",
+    "regions, years",
     (
-        param(
-            "R11",
-            "A",
-            False,
-            marks=[
-                MARK[1],
-                pytest.mark.xfail(
-                    raises=MissingKeyError,
-                    reason="required key 'ACT:nl-t-yv-va-m-h' not defined w/o solution",
-                ),
-            ],
-        ),
-        param("R11", "A", True, marks=MARK[1]),
-        ("R12", "A", True),
-        param("R14", "A", True, marks=MARK[2](AssertionError)),
-        param("ISR", "A", True, marks=MARK[3]),
+        param("R11", "A", marks=MARK[1]),
+        ("R12", "A"),
+        param("R14", "A", marks=MARK[2](AssertionError)),
+        param("ISR", "A", marks=MARK[3]),
     ),
 )
-def test_report_bare(request, test_context, tmp_path, regions, years, solved):
+def test_report_bare_solved(request, test_context, tmp_path, regions, years):
     """Run MESSAGEix-Transport–specific reporting."""
     from message_ix_models.report import Config
 
     register(callback)
 
-    ctx = test_context
-    ctx.update(
+    # Update configuration
+    # key = "transport all"  # All including plots, etc.
+    key = "transport iamc all"  # IAMC-structured data stored and written to file
+    test_context.update(
         regions=regions,
         years=years,
-        # report=Config("global.yaml", key="transport all", output_dir=tmp_path),
-        report=Config("global.yaml", key="transport iamc all", output_dir=tmp_path),
+        report=Config("global.yaml", key=key, output_dir=tmp_path),
     )
 
+    # Built and (optionally) solved scenario. dummy supply data is necessary for the
+    # scenario to be feasible without any other contents.
     scenario = built_transport(
         request, test_context, options=dict(dummy_supply=True), solved=True
     )
@@ -92,7 +82,7 @@ def test_report_bare(request, test_context, tmp_path, regions, years, solved):
 
     rep, key = prepare_reporter(test_context, scenario)
 
-    # Get the catch-all key, including plots etc.
+    # Reporting `key` succeeds
     rep.get(key)
 
 
