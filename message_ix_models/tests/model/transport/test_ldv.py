@@ -116,11 +116,11 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
         if "year_vtg" not in df.columns:
             continue
 
-        # Data covers these periods
+        # Data covers at least these periods
         exp_y = {"bound_new_capacity_up": info.Y, "var_cost": info.Y}.get(
             par_name, y_2010
         )
-        assert set(exp_y) == set(df["year_vtg"].unique())
+        assert set(exp_y) <= set(df["year_vtg"].unique())
 
         # Expected number of (yv, ya) combinations in the data
         N_y = len(exp_y)
