@@ -596,7 +596,9 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
     raise RuntimeError("Failed to identify the World node")
 
 
-def pdt_per_capita(gdp_ppp_cap: Quantity, pdt_ref: Quantity, config: dict) -> Quantity:
+def pdt_per_capita(
+    gdp_ppp_cap: Quantity, pdt_ref: Quantity, y0: int, config: dict
+) -> Quantity:
     """Compute passenger distance traveled (PDT) per capita.
 
     Per Schäfer et al. (2009) Figure 2.5: linear interpolation between (`gdp_ppp_cap`,
@@ -607,7 +609,6 @@ def pdt_per_capita(gdp_ppp_cap: Quantity, pdt_ref: Quantity, config: dict) -> Qu
     from genno.computations import add, div, mul, sub
 
     # Selectors/indices
-    y0 = dict(y=[gdp_ppp_cap.coords["y"][0].item()])
     n = dict(n=gdp_ppp_cap.coords["n"].data)
 
     # Retrieve values from configuration; broadcast on dimension "n"
@@ -615,7 +616,7 @@ def pdt_per_capita(gdp_ppp_cap: Quantity, pdt_ref: Quantity, config: dict) -> Qu
     pdt_fix = config["transport"].fixed_demand.expand_dims(n)
 
     # Initial GDP/capita
-    gdp_0 = gdp_ppp_cap.sel(y0).drop_vars("y")
+    gdp_0 = gdp_ppp_cap.sel(dict(y=y0))
 
     # Compute slope between initial and target point, for each "n"
     m = div(sub(pdt_fix, pdt_ref), sub(gdp_fix, gdp_0))
