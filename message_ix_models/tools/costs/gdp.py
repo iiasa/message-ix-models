@@ -317,7 +317,7 @@ def calculate_indiv_adjusted_region_cost_ratios(
     l_reg = [x for x in out_reg]
     df_reg = pd.concat(l_reg).reset_index(drop=1)
 
-    df_adj_ratios = (
+    df = (
         df_gdp.merge(df_reg, on=["scenario_version", "scenario", "region"], how="left")
         .drop(
             columns=[
@@ -354,4 +354,40 @@ def calculate_indiv_adjusted_region_cost_ratios(
         )
     )
 
-    return df_adj_ratios
+    negative_slopes = df.query(
+        "year == 2020 and gdp_ratio_reg_to_reference < 1 and reg_cost_ratio_adj > 1"
+    )
+
+    un_ratios = (
+        negative_slopes.reindex(
+            [
+                "scenario_version",
+                "scenario",
+                "message_technology",
+                "region",
+                "reg_cost_ratio_adj",
+            ],
+            axis=1,
+        )
+        .drop_duplicates()
+        .rename(columns={"reg_cost_ratio_adj": "reg_cost_ratio_2020"})
+        .assign(constrain="yes")
+    )
+
+    df = df.merge(
+        un_ratios,
+        on=["scenario_version", "scenario", "message_technology", "region"],
+        how="left",
+    ).fillna({"constrain": "no"})
+
+    # For cases that need to be constrained, if the adjusted cost ratio goes above the 2020 cost ratio,
+    # then set the adjusted cost ratio to be equal to the 2020 cost ratio
+    df = df.assign(
+        reg_cost_ratio_adj=lambda x: np.where(
+            (x.constrain == "yes") & (x.reg_cost_ratio_adj > x.reg_cost_ratio_2020),
+            x.reg_cost_ratio_2020,
+            x.reg_cost_ratio_adj,
+        )
+    ).drop(columns=["reg_cost_ratio_2020", "constrain"])
+
+    return df
