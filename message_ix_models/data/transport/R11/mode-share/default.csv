@@ -12,7 +12,7 @@ node,    technology, value
 R11_AFR, 2W,         0.05
 R11_AFR, AIR,        0.01
 R11_AFR, BUS,        0.10
-R11_AFR, LDV,        0.31
+R11_AFR, LDV,        0.32
 R11_AFR, OTHER ROAD, 0.50
 R11_AFR, RAIL,       0.02
 R11_CPA, 2W,         0.08
