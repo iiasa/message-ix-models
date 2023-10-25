@@ -287,6 +287,7 @@ steel:
     - old_scrap_3
     - primary_material
     - secondary_material
+    - dummy_secondary_material
     - tertiary_material
     - final_material
     - useful_material
@@ -304,6 +305,8 @@ steel:
     - pellet_steel
     - bf_steel
     - dri_steel
+    - dri_gas_steel
+    - dri_h2_steel
     - sr_steel
     - bof_steel
     - eaf_steel
