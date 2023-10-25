@@ -110,13 +110,6 @@ Utilities
 There are several other sub-commands of :program:`mix-models transport` available.
 Use ``--help`` overall or for a particular command to learn more.
 
-:command:`batch`
-  Display (i.e. print to the console, but do not execute) shell commands (currently only for `bash <https://en.wikipedia.org/wiki/Bash_(Unix_shell)>`_ and similar \*nix shells) to build, solve, and report multiple scenarios.
-
-  These can be copied to a temporary location and pasted into a terminal instead of typing them manually.
-
-  As of 2022-05-25, the settings determining the scenarios, CLI options, etc. are hard-coded in the function; modify directly as needed.
-
 :command:`gen-activity`
   Generate projected activity data without building a full scenario::
 
