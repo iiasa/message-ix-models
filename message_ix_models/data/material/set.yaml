@@ -312,6 +312,7 @@ steel:
     - old_scrap_3
     - primary_material
     - secondary_material
+    - dummy_secondary_material
     - tertiary_material
     - final_material
     - useful_material
