@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add :mod:`message_ix_models.report.compat` :ref:`for emulating legacy reporting <report-legacy>` (:pull:`134`).
 
 v2023.10.16
 ===========
