@@ -15,6 +15,8 @@ from ixmp.reporting import Quantity
 from message_ix_models import Context
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from genno import Computer, Key
     from sdmx.model.v21 import Code
 
@@ -68,7 +70,7 @@ def compound_growth(qty: Quantity, dim: str) -> Quantity:
     return pow(qty, Quantity(dur)).cumprod(dim).shift({dim: 1}).fillna(1.0)
 
 
-@Operator.define
+@Operator.define()
 def exogenous_data():
     """No action.
 
@@ -120,7 +122,7 @@ def get_ts(
     return scenario.timeseries(iamc=iamc, subannual=subannual, **filters)
 
 
-def gwp_factors():
+def gwp_factors() -> Quantity:
     """Use :mod:`iam_units` to generate a Quantity of GWP factors.
 
     The quantity is dimensionless, e.g. for converting [mass] to [mass], andhas
@@ -154,7 +156,7 @@ def gwp_factors():
     )
 
 
-def make_output_path(config, name):
+def make_output_path(config: Mapping, name: str) -> "Path":
     """Return a path under the "output_dir" Path from the reporter configuration."""
     return config["output_dir"].joinpath(name)
 
@@ -164,29 +166,28 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
 
     .. todo:: Move upstream, to :mod:`message_ix`.
     """
-    return list(
-        filter(
-            lambda year: cat_year.query("type_year == 'firstmodelyear'")["year"].item()
-            <= year,
-            y,
-        )
-    )
+    y0 = cat_year.query("type_year == 'firstmodelyear'")["year"].item()
+    return list(filter(lambda year: y0 <= year, y))
 
 
 def remove_ts(
     scenario: ixmp.Scenario,
-    config: dict,
+    config: Optional[dict] = None,
     after: Optional[int] = None,
     dump: bool = False,
 ) -> None:
     """Remove all time series data from `scenario`.
 
-    .. todo:: Improve to provide the option to remove only those periods in the model
-       horizon.
+    Note that data stored with :meth:`.add_timeseries` using :py:`meta=True` as a
+    keyword argument cannot be removed using :meth:`.TimeSeries.remove_timeseries`, and
+    thus also not with this operator.
 
-    .. todo:: Move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
+    .. todo:: Move upstream, to :mod:`ixmp` alongside :func:`.store_ts`.
     """
-    data = scenario.timeseries()
+    if dump:
+        raise NotImplementedError
+
+    data = scenario.timeseries().drop("value", axis=1)
     N = len(data)
     count = f"{N}"
 
@@ -206,30 +207,22 @@ def remove_ts(
     else:
         scenario.commit(f"Remove time series data ({__name__}.remove_all_ts)")
 
-    if dump:
-        raise NotImplementedError
-
 
 # Non-weak references to objects to keep them alive
 _FROM_URL_REF: Set[Any] = set()
 
-# def from_url(url: str) -> message_ix.Scenario:
-#     """Return a :class:`message_ix.Scenario` given its `url`.
-#
-#     .. todo:: Move upstream to :mod:`message_ix.reporting`.
-#     .. todo:: Create a similar method in :mod:`ixmp.reporting` to load and return
-#        :class:`ixmp.TimeSeries` (or :class:`ixmp.Scenario`) given its `url`.
-#     """
-#     s, mp = message_ix.Scenario.from_url(url)
-#     assert s is not None
-#     _FROM_URL_REF.add(s)
-#     _FROM_URL_REF.add(mp)
-#     return s
 
+def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:
+    """Return a :class:`ixmp.TimeSeries` or subclass instance, given its `url`.
 
-def from_url(url: str) -> ixmp.TimeSeries:
-    """Return a :class:`ixmp.TimeSeries` given its `url`."""
-    ts, mp = ixmp.TimeSeries.from_url(url)
+    .. todo:: Move upstream, to :mod:`ixmp.reporting`.
+
+    Parameters
+    ----------
+    cls : type, *optional*
+        Subclass to instantiate and return; for instance, |Scenario|.
+    """
+    ts, mp = cls.from_url(url)
     assert ts is not None
     _FROM_URL_REF.add(ts)
     _FROM_URL_REF.add(mp)

@@ -244,6 +244,10 @@ def data_from_file(path: Path, *, name: str, dims: Sequence[str]) -> Quantity:
         cols = list(dims) + ["value", "unit"]
         tmp = (
             pd.read_csv(path, engine="pyarrow")
+            # Drop a leading index column that appears in some files
+            # TODO Adjust .snapshot.unpack() to avoid generating this column; update
+            # data; then remove this call
+            .drop(columns="", errors="ignore")
             .set_axis(cols, axis=1)
             .set_index(cols[:-2])
         )

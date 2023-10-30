@@ -139,6 +139,8 @@ dmypy.json
 # Generated and temporary data files
 debug/
 cache/
+# LibreOffice lock files
+.~lock*#
 
 # VSCode settings
 .vscode

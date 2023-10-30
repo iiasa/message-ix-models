@@ -110,6 +110,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
+      with: { python-version: "3.11" }
 
     - name: Force recreation of pre-commit virtual environment for mypy
       if: github.event_name == 'schedule'  # Comment this line to run on a PR

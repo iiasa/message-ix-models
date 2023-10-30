@@ -146,20 +146,24 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
     """
     if isinstance(name_or_callback, str):
         # Resolve a string
-        for name in [
+        candidates = [
             # As a fully-resolved package/module name
             name_or_callback,
             # As a submodule of message_ix_models
             f"message_ix_models.{name_or_callback}.report",
             # As a submodule of message_data
             f"message_data.{name_or_callback}.report",
-        ]:
+        ]
+        mod = None
+        for name in candidates:
             try:
                 mod = import_module(name)
             except ModuleNotFoundError:
                 continue
             else:
                 break
+        if mod is None:
+            raise ModuleNotFoundError(" or ".join(candidates))
         callback = mod.callback
     else:
         callback = name_or_callback
@@ -338,11 +342,13 @@ def prepare_reporter(
         rep = Reporter.from_scenario(scenario)
         has_solution = scenario.has_solution()
 
-    # Append the message_data computations
+    # Append the message_data operators
     rep.require_compat("message_ix_models.report.computations")
     try:
+        # TODO Replace usage of operators from this module in favour of .exo_data; then
+        #      remove this line.
         rep.require_compat("message_data.tools.gdp_pop")
-    except ModuleNotFoundError:
+    except ModuleNotFoundError:  # pragma: no cover
         pass  # Currently in message_data
 
     # Force re-installation of the function iamc() in this file as the handler for
@@ -364,6 +370,7 @@ def prepare_reporter(
         **deepcopy(context.report.genno_config),
         fail="raise" if has_solution else logging.NOTSET,
     )
+    rep.configure(model=deepcopy(context.model))
 
     # Apply callbacks for other modules which define additional reporting computations
     for callback in CALLBACKS:
