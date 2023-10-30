@@ -28,7 +28,10 @@ from pathlib import Path
 
 import click
 from message_ix_models.util._logging import mark_time
-from message_ix_models.util.click import common_params
+from message_ix_models.util.click import PARAMS, common_params
+from message_ix_models.workflow import make_click_command
+
+from . import workflow
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +40,32 @@ log = logging.getLogger(__name__)
 @click.pass_obj
 def cli(context):
     """MESSAGEix-Transport variant."""
+
+
+# "run" subcommand to interact with the transport workflow
+cli.add_command(
+    make_click_command(
+        workflow.generate,
+        name="MESSAGEix-Transport",
+        slug="transport",
+        params=[
+            click.Option(
+                ["--future", "futures_scenario"], help="Transport futures scenario."
+            ),
+            click.Option(
+                ["--fast"],
+                is_flag=True,
+                help="Skip removing data for removed set elements.",
+            ),
+            click.Option(
+                ["--report", "report_build"],
+                is_flag=True,
+                help="Generate diagnostic reports of the built scenario.",
+            ),
+        ]
+        + [PARAMS[n] for n in "dest dry_run nodes quiet".split()],
+    )
+)
 
 
 @cli.command()
