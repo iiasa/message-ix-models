@@ -1,12 +1,25 @@
 """Tools for modeling workflows."""
 import logging
-from typing import Callable, List, Literal, Mapping, Optional, Tuple, Union
+import re
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from genno import Computer
 from ixmp.utils import parse_url
 from message_ix import Scenario
 
 from message_ix_models.util.context import Context
+
+if TYPE_CHECKING:
+    from click import Command
 
 log = logging.getLogger(__name__)
 
@@ -253,6 +266,90 @@ class Workflow(Computer):
         task = self.graph[step_name]
         i = getattr(task[0], f"{kind}_info")
         return (i.copy(), step_name) if len(i) else self.guess_target(task[2], kind)
+
+
+def make_click_command(
+    wf_callback: Callable, name: str, slug: str, **kwargs
+) -> "Command":
+    """Generate a click CLI command to run a :class:`.Workflow`.
+
+    - The :attr:`~.Computer.default_key` (if any) of the :class:`.Workflow` returned by
+      `wf_callback` is used if the user does not provide :program:`TARGET` on the
+      command-line.
+
+    Parameters
+    ----------
+    name :
+        Descriptive workflow name used in the :program:`--help` text.
+    slug :
+        File name fragment for writing the workflow diagram; the path
+        :file:`{slug}-workflow.svg` is used.
+    wf_callback :
+        Function that generates the workflow.
+    """
+    import click
+
+    help_arg = f"""Run the {name} workflow up to step TARGET.
+
+    Unless --go is given, the workflow is only displayed.
+    --from is interpreted as a regular expression.
+    """
+
+    @click.command(name="run", help=help_arg, **kwargs)
+    @click.option("--go", is_flag=True, help="Actually run the workflow.")
+    @click.option(
+        "--from", "truncate_step", help="Truncate workflow at matching step(s)."
+    )
+    @click.argument("target_step", metavar="TARGET", required=False)
+    @click.pass_obj
+    def _func(context, go, truncate_step, target_step, **kwargs):
+        # Generate the workflow
+        wf = wf_callback(context, **kwargs)
+
+        # Truncate the workflow
+        try:
+            expr = re.compile(truncate_step.replace("\\", ""))
+        except AttributeError:
+            pass  # truncate_step is None
+        else:
+            for step in filter(expr.fullmatch, wf.keys()):
+                log.info(f"Truncate workflow at {step!r}")
+                wf.truncate(step)
+
+        # Identify the target step
+        if target_step:
+            # Compile the string into a regular expression
+            target_expr = re.compile(target_step)
+            # Select 1 or more targets based on a regular expression in `target_step`
+            target_steps = sorted(filter(lambda k: target_expr.fullmatch(k), wf.keys()))
+
+            if len(target_steps):
+                # Create a new target that collects the selected ones
+                target_step = "cli-targets"
+                wf.add(target_step, target_steps)
+            else:
+                raise click.ClickException(
+                    f"No step(s) matched {target_expr!r} among:\n{sorted(wf.keys())}"
+                )
+        else:
+            # Workflow default
+            if not wf.default_key:
+                raise click.ClickException(
+                    f"No target step provided and no default for {wf}"
+                )
+            target_step = wf.default_key
+
+        log.info(f"Execute workflow:\n{wf.describe(target_step)}")
+
+        if not go:
+            path = context.get_local_path(f"{slug}-workflow.svg")
+            wf.visualize(str(path))
+            log.info(f"Workflow diagram written to {path}")
+            return
+
+        wf.run(target_step)
+
+    return _func
 
 
 def solve(context, scenario, **kwargs):
