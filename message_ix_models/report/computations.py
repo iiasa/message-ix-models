@@ -68,7 +68,7 @@ def compound_growth(qty: Quantity, dim: str) -> Quantity:
     return pow(qty, Quantity(dur)).cumprod(dim).shift({dim: 1}).fillna(1.0)
 
 
-@Operator.define
+@Operator.define()
 def exogenous_data():
     """No action.
 
