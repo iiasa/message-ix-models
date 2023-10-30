@@ -1,8 +1,17 @@
+import logging
+
 from genno import Computer
+from ixmp.testing import assert_logs
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.model.structure import get_codes
 from message_ix_models.report import prepare_reporter
-from message_ix_models.report.compat import callback, get_techs, prepare_techs
+from message_ix_models.report.compat import (
+    TECH_FILTERS,
+    callback,
+    get_techs,
+    prepare_techs,
+)
 
 from ..test_report import MARK, ss_reporter
 
@@ -52,7 +61,6 @@ def test_compat(tmp_path, test_context):
 
 def test_prepare_techs(test_context):
     from message_ix_models.model.bare import get_spec
-    from message_ix_models.report.compat import TECH_FILTERS
 
     # Retrieve a spec with the default set of technologies
     spec = get_spec(test_context)
@@ -88,3 +96,11 @@ def test_prepare_techs(test_context):
         "trp loil": ["loil_trp"],
         "trp meth": ["meth_fc_trp", "meth_ic_trp"],
     } == {k: get_techs(c, k) for k in TECH_FILTERS}
+
+
+def test_prepare_techs_filter_error(caplog, monkeypatch):
+    """:func:`.prepare_techs` logs warnings for invalid filters."""
+    monkeypatch.setitem(TECH_FILTERS, "foo", "not a filter")
+
+    with assert_logs(caplog, "SyntaxError('invalid syntax", at_level=logging.WARNING):
+        prepare_techs(Computer(), get_codes("technology"))
