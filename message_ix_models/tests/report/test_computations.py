@@ -1,9 +1,12 @@
 import re
 
+import ixmp
+import message_ix
 import pandas as pd
 import pytest
 import xarray as xr
 from genno import Computer, Quantity
+from message_ix.testing import make_dantzig
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
@@ -23,6 +26,12 @@ from message_ix_models.report.computations import (
 @pytest.fixture
 def c() -> Computer:
     return Computer()
+
+
+@pytest.fixture
+def scenario(test_context):
+    mp = test_context.get_platform()
+    yield make_dantzig(mp)
 
 
 def test_compound_growth():
@@ -65,12 +74,22 @@ def test_filter_ts():
     assert {"ar"} == set(result.variable.unique())
 
 
-@pytest.mark.xfail(reason="Incomplete")
-def test_from_url():
-    from_url()
+def test_from_url(scenario):
+    full_url = f"ixmp://{scenario.platform.name}/{scenario.url}"
+
+    # Operator runs
+    result = from_url(full_url)
+    # Result is of the default class
+    assert result.__class__ is ixmp.TimeSeries
+    # Same object was retrieved
+    assert scenario.url == result.url
+
+    # Same, but specifying message_ix.Scenario
+    result = from_url(full_url, message_ix.Scenario)
+    assert result.__class__ is message_ix.Scenario
+    assert scenario.url == result.url
 
 
-@pytest.mark.xfail(reason="Incomplete")
 def test_get_ts():
     get_ts()
 

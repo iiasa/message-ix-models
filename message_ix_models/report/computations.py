@@ -210,23 +210,18 @@ def remove_ts(
 # Non-weak references to objects to keep them alive
 _FROM_URL_REF: Set[Any] = set()
 
-# def from_url(url: str) -> message_ix.Scenario:
-#     """Return a :class:`message_ix.Scenario` given its `url`.
-#
-#     .. todo:: Move upstream to :mod:`message_ix.reporting`.
-#     .. todo:: Create a similar method in :mod:`ixmp.reporting` to load and return
-#        :class:`ixmp.TimeSeries` (or :class:`ixmp.Scenario`) given its `url`.
-#     """
-#     s, mp = message_ix.Scenario.from_url(url)
-#     assert s is not None
-#     _FROM_URL_REF.add(s)
-#     _FROM_URL_REF.add(mp)
-#     return s
 
+def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:
+    """Return a :class:`ixmp.TimeSeries` or subclass instance, given its `url`.
 
-def from_url(url: str) -> ixmp.TimeSeries:
-    """Return a :class:`ixmp.TimeSeries` given its `url`."""
-    ts, mp = ixmp.TimeSeries.from_url(url)
+    .. todo:: Move upstream, to :mod:`ixmp.reporting`.
+
+    Parameters
+    ----------
+    cls : type, *optional*
+        Subclass to instantiate and return; for instance, |Scenario|.
+    """
+    ts, mp = cls.from_url(url)
     assert ts is not None
     _FROM_URL_REF.add(ts)
     _FROM_URL_REF.add(mp)
