@@ -132,21 +132,16 @@ class ScenarioInfo:
     def yv_ya(self):
         """:class:`pandas.DataFrame` with valid ``year_vtg``, ``year_act`` pairs."""
         if self._yv_ya is None:
-            first = self.y0
-
-            # Product of all years
-            yv = ya = self.set["year"]
-
-            # Predicate for filtering years
-            def _valid(elem):
-                yv, ya = elem
-                return first <= yv <= ya
-
             # - Cartesian product of all yv and ya.
-            # - Filter only valid years.
             # - Convert to data frame.
-            self._yv_ya = pd.DataFrame(
-                filter(_valid, product(yv, ya)), columns=["year_vtg", "year_act"]
+            # - Filter only valid years.
+            self._yv_ya = (
+                pd.DataFrame(
+                    product(self.set["year"], self.set["year"]),
+                    columns=["year_vtg", "year_act"],
+                )
+                .query("@self.y0 <= year_vtg <= year_act")
+                .reset_index(drop=True)
             )
 
         return self._yv_ya
