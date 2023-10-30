@@ -5,7 +5,7 @@ These are used for building CLIs using :mod:`click`.
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import click
 from click import Argument, Choice, Option
@@ -57,6 +57,32 @@ def default_path_cb(*default_parts):
         return value
 
     return _callback
+
+
+def exec_cb(expression: str) -> Callable:
+    """Return a callback that :func:`exec`-utes an `expression`.
+
+    The `expression` is executed in a limited context that has only two names available:
+
+    - :py:`context`: the :class:`.Context` instance.
+    - :py:`value`: the value passed to the :mod:`click.Parameter`.
+
+    Example
+    -------
+    >>> @click.command
+    ... @click.option(
+    ...     "--myopt", callback=exec_cb("context.my_mod.my_opt = value + 3")
+    ... )
+    ... def cmd(...):
+    ...     ...
+    """
+
+    def _cb(context: Union[click.Context, Context], param, value):
+        ctx = context.obj if isinstance(context, click.Context) else context
+        exec(expression, {}, {"context": ctx, "value": value})
+        return value
+
+    return _cb
 
 
 def format_sys_argv() -> str:
@@ -159,6 +185,7 @@ PARAMS = {
     "nodes": Option(
         ["--nodes"],
         help="Code list to use for 'node' dimension.",
+        callback=exec_cb("context.model.regions = value"),
         type=Choice(codelists("node")),
     ),
     "output_model": Option(
@@ -178,6 +205,7 @@ PARAMS = {
     "regions": Option(
         ["--regions"],
         help="Code list to use for 'node' dimension.",
+        callback=exec_cb("context.model.regions = value"),
         type=Choice(codelists("node")),
     ),
     "rep_out_path": Option(
