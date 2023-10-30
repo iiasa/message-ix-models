@@ -844,5 +844,6 @@ def add_reporting_steps(
 
     # Key to invoke step 10 for all scenarios as a batch
     wf.add_single("all prepped", prep_submission, "context", *added)
+    wf.default_key = "all prepped"
 
     return added

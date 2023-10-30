@@ -1,12 +1,12 @@
 """Command-line tools specific to the NAVIGATE project."""
 import logging
-import re
 from pathlib import Path
 
 import click
-from message_ix_models.util.click import common_params
+from message_ix_models.util.click import PARAMS
+from message_ix_models.workflow import make_click_command
 
-from . import Config
+from . import Config, workflow
 
 log = logging.getLogger(__name__)
 
@@ -24,12 +24,31 @@ _SCENARIO = click.Option(
 )
 
 
-@click.group("navigate", params=[_SCENARIO])
+@click.group("navigate", params=[_DSD, _SCENARIO])
+@click.option("--no-transport", is_flag=True, help="Omit MESSAGEix-Transport.")
+@click.option(
+    "--ctax",
+    type=float,
+    default=Config.carbon_tax,
+    help="Starting value of carbon tax for Ctax-* scenarios.",
+)
 @click.pass_obj
-def cli(context, navigate_scenario):
+def cli(context, dsd, navigate_scenario, no_transport, ctax):
     """NAVIGATE project."""
 
     context["navigate"] = Config(scenario=navigate_scenario)
+
+    # Copy settings to the Config object
+    context.navigate.dsd = dsd
+    context.navigate.transport = not no_transport
+    context.navigate.carbon_tax = ctax
+
+
+cli.add_command(
+    make_click_command(
+        workflow.generate, name="NAVIGATE", slug="navigate", params=[PARAMS["dry_run"]]
+    )
+)
 
 
 @cli.command("prep-submission", params=[_DSD])
@@ -120,71 +139,6 @@ def gen_workflow(context, versions):
 
     for cmd in COMMANDS:
         print(whitespace.sub(" ", cmd).strip().format(v=versions, s=s), end="\n\n")
-
-
-@cli.command("run", params=[_DSD])
-@common_params("dry_run")
-@click.option("--from", "truncate_step", help="Run workflow from this step.")
-@click.option("--no-transport", is_flag=True, help="Omit MESSAGEix-Transport.")
-@click.option(
-    "--ctax",
-    type=float,
-    default=Config.carbon_tax,
-    help="Starting value of carbon tax for Ctax-* scenarios.",
-)
-@click.argument("target_step", metavar="TARGET")
-@click.pass_obj
-def run(context, dry_run, truncate_step, no_transport, ctax, dsd, target_step):
-    """Run the NAVIGATE workflow up to step TARGET.
-
-    --from is interpreted as a regular expression, and the workflow is truncated at
-    every point matching this expression.
-    """
-    from . import workflow
-
-    # Copy settings to the Config object
-    context.navigate.dsd = dsd
-    context.navigate.transport = not no_transport
-    context.navigate.carbon_tax = ctax
-
-    wf = workflow.generate(context)
-
-    # TODO move the following upstream to message-ix-models as a utility function, since
-    #      most packages/modules using the Workflow pattern will also likely need to
-    #      define a CLI.
-
-    # Truncate the workflow
-    try:
-        expr = re.compile(truncate_step.replace("\\", ""))
-    except AttributeError:
-        pass  # truncate_step is None
-    else:
-        for step in filter(expr.fullmatch, wf.keys()):
-            log.info(f"Truncate workflow at {step!r}")
-            wf.truncate(step)
-
-    # Select 1 or more targets based on a regular expression in `target_step`
-    target_expr = re.compile(target_step)
-    target_steps = sorted(filter(lambda k: target_expr.fullmatch(k), wf.keys()))
-    if len(target_steps):
-        # Create a new target that collects the selected ones
-        target_step = "cli-targets"
-        wf.add(target_step, target_steps)
-    else:
-        raise click.ClickException(
-            f"No step(s) matched {target_expr!r} among:\n{sorted(wf.keys())}"
-        )
-
-    log.info(f"Execute workflow:\n{wf.describe(target_step)}")
-
-    if dry_run:
-        path = context.get_local_path("navigate", "workflow.svg")
-        path.parent.mkdir(exist_ok=True)
-        wf.visualize(path, key="cli-targets")
-        log.info(f"Workflow diagram written to {path}")
-        return
-
-    wf.run(target_step)
 
 
 @cli.command("check-budget")
