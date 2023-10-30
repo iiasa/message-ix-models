@@ -166,13 +166,8 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
 
     .. todo:: Move upstream, to :mod:`message_ix`.
     """
-    return list(
-        filter(
-            lambda year: cat_year.query("type_year == 'firstmodelyear'")["year"].item()
-            <= year,
-            y,
-        )
-    )
+    y0 = cat_year.query("type_year == 'firstmodelyear'")["year"].item()
+    return list(filter(lambda year: y0 <= year, y))
 
 
 def remove_ts(
