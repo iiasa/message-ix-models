@@ -168,12 +168,14 @@ PARAMS = {
     "dest": Option(
         ["--dest"],
         callback=store_context,
+        expose_value=False,
         help="Destination URL for created scenario(s).",
     ),
     "dry_run": Option(
         ["--dry-run"],
         is_flag=True,
         callback=store_context,
+        expose_value=False,
         help="Only show what would be done.",
     ),
     "force": Option(
@@ -187,6 +189,7 @@ PARAMS = {
         help="Code list to use for 'node' dimension.",
         callback=exec_cb("context.model.regions = value"),
         type=Choice(codelists("node")),
+        expose_value=False,
     ),
     "output_model": Option(
         ["--output-model"], help="Model name under which scenarios should be generated."
@@ -200,6 +203,7 @@ PARAMS = {
     "quiet": Option(
         ["--quiet"],
         is_flag=True,
+        expose_value=False,
         help="Show less or no output.",
     ),
     "regions": Option(
