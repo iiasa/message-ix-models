@@ -177,7 +177,7 @@ Compatibility with :mod:`.message_data`
    :members:
 
    :mod:`.message_data` contains :doc:`m-data:reference/tools/post_processing`.
-   This code predates :mod:`genno` and the stack of tools built on upon it (:ref:`described above <report-intro>`); these were designed to avoid issues with performance and extensibility in the older code. [1]_
+   This code predates :mod:`genno` and the stack of tools built on it (:ref:`described above <report-intro>`); these were designed to avoid issues with performance and extensibility in the older code. [1]_
    :mod:`.report.compat` prepares a Reporter to perform the same calculations as :mod:`message_data.tools.post_processing`, except using :mod:`genno`.
 
    .. warning:: This code is **under development** and **incomplete**.
