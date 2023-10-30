@@ -5,6 +5,8 @@ import pytest
 import xarray as xr
 from genno import Computer, Quantity
 
+from message_ix_models import ScenarioInfo
+from message_ix_models.model.structure import get_codes
 from message_ix_models.report.computations import (
     compound_growth,
     filter_ts,
@@ -90,9 +92,18 @@ def test_make_output_path(tmp_path, c):
     assert tmp_path.joinpath("foo.csv") == c.get("test")
 
 
-@pytest.mark.xfail(reason="Incomplete")
 def test_model_periods():
-    model_periods()
+    # Prepare input data
+    si = ScenarioInfo()
+    si.year_from_codes(get_codes("year/B"))
+    cat_year = pd.DataFrame(si.set["cat_year"], columns=["type_year", "year"])
+
+    # Operator runs
+    result = model_periods(si.set["year"], cat_year)
+
+    assert isinstance(result, list)
+    assert all(isinstance(y, int) for y in result)
+    assert 2020 == min(result)
 
 
 @pytest.mark.xfail(reason="Incomplete")
