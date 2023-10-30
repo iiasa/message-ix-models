@@ -21,6 +21,10 @@ MIN_CONFIG = {
 
 MARK = (
     pytest.mark.xfail(
+        condition=version("message_ix") < "3.5",
+        reason="Not supported with message_ix < 3.5",
+    ),
+    pytest.mark.xfail(
         condition=version("message_ix") < "3.6",
         raises=NotImplementedError,
         reason="Not supported with message_ix < 3.6",
@@ -44,7 +48,7 @@ def test_register(caplog):
         register(_cb)
 
 
-@MARK[0]
+@MARK[1]
 def test_report_bare_res(request, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     scenario = testing.bare_res(request, test_context, solved=True)
@@ -124,7 +128,7 @@ INV_COST_CONFIG = dict(
 )
 
 
-@MARK[0]
+@MARK[1]
 @pytest.mark.parametrize("regions", ["R11"])
 def test_apply_units(request, test_context, regions):
     test_context.regions = regions
@@ -242,7 +246,7 @@ def ss_reporter():
     return rep
 
 
-@MARK[0]
+@MARK[1]
 def test_add_simulated_solution(test_context, test_data_path):
     # Simulated solution can be added to an empty Reporter
     rep = ss_reporter()
@@ -270,7 +274,7 @@ def test_add_simulated_solution(test_context, test_data_path):
     assert np.isclose(79.76478, value.item())
 
 
-@MARK[0]
+@MARK[1]
 def test_prepare_reporter(test_context):
     rep = ss_reporter()
     N = len(rep.graph)

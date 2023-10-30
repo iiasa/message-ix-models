@@ -16,7 +16,7 @@ from message_ix_models.report.compat import (
 from ..test_report import MARK, ss_reporter
 
 
-@MARK[0]
+@MARK[1]
 def test_compat(tmp_path, test_context):
     import numpy.testing as npt
 
