@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from ixmp.testing import assert_logs
 
 from message_ix_models import ScenarioInfo, testing
-from message_ix_models.report import prepare_reporter, report, util
+from message_ix_models.report import prepare_reporter, register, report, util
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.util import package_data_path
 
@@ -25,6 +26,22 @@ MARK = (
         reason="Not supported with message_ix < 3.6",
     ),
 )
+
+
+def test_register(caplog):
+    # Exception raised for unfindable module
+    with pytest.raises(ModuleNotFoundError):
+        register("foo.bar")
+
+    # Adding a callback of the same name twice triggers a log message
+    def _cb(*args):
+        pass
+
+    register(_cb)
+    with assert_logs(
+        caplog, "Already registered: <function test_register.<locals>._cb"
+    ):
+        register(_cb)
 
 
 @MARK[0]
