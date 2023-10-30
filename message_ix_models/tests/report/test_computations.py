@@ -3,9 +3,11 @@ import re
 import ixmp
 import message_ix
 import pandas as pd
+import pandas.testing as pdt
 import pytest
 import xarray as xr
 from genno import Computer, Quantity
+from ixmp.testing import assert_logs
 from message_ix.testing import make_dantzig
 
 from message_ix_models import ScenarioInfo
@@ -90,8 +92,38 @@ def test_from_url(scenario):
     assert scenario.url == result.url
 
 
-def test_get_ts():
-    get_ts()
+def test_get_remove_ts(caplog, scenario):
+    # get_ts() runs
+    result0 = get_ts(scenario)
+    pdt.assert_frame_equal(scenario.timeseries(), result0)
+
+    # Can be used through a Computer
+
+    c = Computer()
+    c.require_compat("message_ix_models.report.computations")
+    c.add("scenario", scenario)
+
+    key = c.add("test1", "get_ts", "scenario", filters=dict(variable="GDP"))
+    result1 = c.get(key)
+    assert 3 == len(result1)
+
+    # remove_ts() can be used through Computer
+    key = c.add("test2", "remove_ts", "scenario", "config", after=1964)
+
+    # Task runs, logs
+    # NB this log message is incorrect, because ixmp's JDBCBackend is unable to delete
+    #    data stored with "meta=True". Only 1 row is removed
+    with assert_logs(caplog, "Remove 2 of 6 (1964 <= year) rows of time series data"):
+        c.get(key)
+
+    # See comment above; only one row is removed
+    assert 6 - 1 == len(scenario.timeseries())
+
+    # remove_ts() can be used directly
+    remove_ts(scenario)
+
+    # All non-'meta' data were removed
+    assert 3 == len(scenario.timeseries())
 
 
 def test_gwp_factors():
@@ -123,11 +155,6 @@ def test_model_periods():
     assert isinstance(result, list)
     assert all(isinstance(y, int) for y in result)
     assert 2020 == min(result)
-
-
-@pytest.mark.xfail(reason="Incomplete")
-def test_remove_ts():
-    remove_ts()
 
 
 @pytest.mark.xfail(reason="Incomplete")

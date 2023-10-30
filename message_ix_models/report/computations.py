@@ -172,18 +172,22 @@ def model_periods(y: List[int], cat_year: pd.DataFrame) -> List[int]:
 
 def remove_ts(
     scenario: ixmp.Scenario,
-    config: dict,
+    config: Optional[dict] = None,
     after: Optional[int] = None,
     dump: bool = False,
 ) -> None:
     """Remove all time series data from `scenario`.
 
-    .. todo:: Improve to provide the option to remove only those periods in the model
-       horizon.
+    Note that data stored with :meth:`.add_timeseries` using :py:`meta=True` as a
+    keyword argument cannot be removed using :meth:`.TimeSeries.remove_timeseries`, and
+    thus also not with this operator.
 
-    .. todo:: Move upstream, e.g. to :mod:`ixmp` alongside :func:`.store_ts`.
+    .. todo:: Move upstream, to :mod:`ixmp` alongside :func:`.store_ts`.
     """
-    data = scenario.timeseries()
+    if dump:
+        raise NotImplementedError
+
+    data = scenario.timeseries().drop("value", axis=1)
     N = len(data)
     count = f"{N}"
 
@@ -202,9 +206,6 @@ def remove_ts(
         scenario.discard_changes()
     else:
         scenario.commit(f"Remove time series data ({__name__}.remove_all_ts)")
-
-    if dump:
-        raise NotImplementedError
 
 
 # Non-weak references to objects to keep them alive
