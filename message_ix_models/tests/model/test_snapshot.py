@@ -35,7 +35,6 @@ def unpacked_snapshot_data(test_context, request):
     shutil.copytree(snapshot_data_path, dest, dirs_exist_ok=True)
 
 
-@pytest.mark.xfail(reason="https://github.com/iiasa/message-ix-models/issues/131")
 @pytest.mark.xfail(
     condition=version("message_ix") < "3.5",
     raises=NotImplementedError,
