@@ -231,7 +231,7 @@ def report(context: Context, *args, **kwargs):
 
         # Transfer args, kwargs to context
         context.set_scenario(scenario)
-        context.report.legacy = kwargs.pop("legacy")
+        context.report.legacy.update(kwargs.pop("legacy", {}))
 
         if len(args) + len(set(kwargs.keys()) & {"path"}) != 1:
             raise TypeError(

@@ -49,18 +49,41 @@ def test_register(caplog):
 
 
 @MARK[1]
-def test_report_bare_res(request, test_context):
+def test_report_bare_res(request, tmp_path, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     scenario = testing.bare_res(request, test_context, solved=True)
+    test_context.set_scenario(scenario)
 
-    # Prepare the reporter
-    test_context.report.update(from_file="global.yaml", key="message::default")
-    reporter, key = prepare_reporter(test_context, scenario)
+    test_context.report.update(
+        from_file="global.yaml",
+        # key="message::default",
+        # Use a key that doesn't access model solution data
+        key="y0",
+        output_dir=tmp_path,
+    )
 
-    # Get the default report
-    # NB commented because the bare RES currently contains no activity, so the
-    #    reporting steps fail
-    # reporter.get(key)
+    # Prepare the reporter and compute the result
+    report(test_context)
+
+
+@MARK[1]
+def test_report_deprecated(caplog, request, tmp_path, test_context):
+    # Create a target scenario
+    scenario = testing.bare_res(request, test_context, solved=False)
+    test_context.set_scenario(scenario)
+
+    # Use a key that doesn't access model solution data
+    test_context.report.key = "y0"
+
+    # Set dry_run = True to not actually perform any calculations or modifications
+    test_context.dry_run = True
+    # Call succeeds, raises a warning
+    with pytest.warns(DeprecationWarning, match="pass a Context instead"):
+        report(scenario, tmp_path)
+
+    # Invalid call warns *and* raises TypeError
+    with pytest.raises(TypeError), pytest.warns(DeprecationWarning):
+        report(scenario, tmp_path, "foo")
 
 
 @pytest.mark.xfail(raises=ModuleNotFoundError, reason="Requires message_data")
