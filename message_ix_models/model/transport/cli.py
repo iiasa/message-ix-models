@@ -31,8 +31,6 @@ from message_ix_models.util._logging import mark_time
 from message_ix_models.util.click import PARAMS, common_params
 from message_ix_models.workflow import make_click_command
 
-from . import workflow
-
 log = logging.getLogger(__name__)
 
 
@@ -45,7 +43,7 @@ def cli(context):
 # "run" subcommand to interact with the transport workflow
 cli.add_command(
     make_click_command(
-        workflow.generate,
+        f"{__package__}.workflow.generate",
         name="MESSAGEix-Transport",
         slug="transport",
         params=[
