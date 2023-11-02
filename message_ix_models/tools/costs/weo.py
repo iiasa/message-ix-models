@@ -205,7 +205,7 @@ def get_technology_mapping(input_module) -> pd.DataFrame:
     """
 
     base_file_path = package_data_path("costs", "technology_base_map.csv")
-    raw_map_base = pd.read_csv(base_file_path)
+    raw_map_base = pd.read_csv(base_file_path, skiprows=2)
 
     if input_module == "base":
         return raw_map_base
