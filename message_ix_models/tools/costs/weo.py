@@ -188,9 +188,6 @@ def get_weo_data() -> pd.DataFrame:
 
     return df_merged
 
-    base_file_path = package_data_path("costs", "technology_base_map.csv")
-    pd.read_csv(base_file_path)
-
 
 # Function to read in technology mapping file
 def get_technology_mapping(input_module) -> pd.DataFrame:
