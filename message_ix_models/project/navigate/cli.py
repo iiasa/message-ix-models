@@ -5,7 +5,7 @@ import click
 from message_ix_models.util.click import PARAMS
 from message_ix_models.workflow import make_click_command
 
-from . import Config, workflow
+from . import Config
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +45,10 @@ def cli(context, dsd, navigate_scenario, no_transport, ctax):
 
 cli.add_command(
     make_click_command(
-        workflow.generate, name="NAVIGATE", slug="navigate", params=[PARAMS["dry_run"]]
+        f"{__package__}.workflow.generate",
+        name="NAVIGATE",
+        slug="navigate",
+        params=[PARAMS["dry_run"]],
     )
 )
 
