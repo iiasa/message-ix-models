@@ -1,7 +1,9 @@
 import logging
 import os
+from base64 import b32hexencode
 from copy import deepcopy
 from pathlib import Path
+from random import randbytes
 from tempfile import TemporaryDirectory
 
 import click.testing
@@ -222,9 +224,9 @@ def cli_test_group():
 def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scenario:
     """Return or create a |Scenario| containing the bare RES, for use in testing.
 
-    The Scenario has a model name like "MESSAGEix-GLOBIOM [regions]
-    [start]:[duration]:[end]", e.g. "MESSAGEix-GLOBIOM R14 2020:10:2110" (see
-    :func:`.bare.name`) and the scenario name "baseline".
+    The Scenario has a model name like "MESSAGEix-GLOBIOM [regions] Y[years]", for
+    instance "MESSAGEix-GLOBIOM R14 YB" (see :func:`.bare.name`) and a scenario name
+    either from :py:`request.node.name` or "baseline" plus a random string.
 
     This function should:
 
@@ -267,7 +269,8 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     try:
         new_name = request.node.name
     except AttributeError:
-        new_name = "baseline"
+        # Generate a new scenario name with a random part
+        new_name = f"baseline {b32hexencode(randbytes(3)).decode().rstrip('=').lower()}"
 
     log.info(f"Clone to '{name}/{new_name}'")
     return base.clone(scenario=new_name, keep_solution=solved)
