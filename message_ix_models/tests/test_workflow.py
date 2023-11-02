@@ -9,6 +9,12 @@ from message_ix import make_df
 from message_ix_models import Workflow, testing
 from message_ix_models.workflow import WorkflowStep, make_click_command, solve
 
+MARK = pytest.mark.skipif(
+    condition=ixmp.__version__ < "3.5",
+    reason="ixmp.TimeSeries.url not available prior to ixmp 3.5.0",
+)
+
+
 # Functions for WorkflowSteps
 
 
@@ -83,27 +89,25 @@ def _wf(
     return wf
 
 
-def test_make_click_command(monkeypatch: pytest.MonkeyPatch, mix_models_cli) -> None:
+@MARK
+def test_make_click_command(mix_models_cli) -> None:
     import click
 
-    import message_ix_models.cli
-
     # make_click_command() runs and generates a command
-    cmd = make_click_command(f"{__name__}._wf", name="test", slug="test")
+    name = "make-click-command"
+    cmd = make_click_command(f"{__name__}._wf", name=name, slug="test")
     assert isinstance(cmd, click.Command)
 
-    # Monkey-patch this command into the CLI temporarily
-    _name = "_test-make-click-command"
-    monkeypatch.setitem(message_ix_models.cli.main.commands, _name, cmd)
+    # Add this into the hidden CLI test group
+    mix_models_cli.add_command(cmd)
 
     # Invoke the command with various parameters
     for params, output in (
         (["--go", "B"], "nothing returned, workflow will continue with"),
-        (["--go", "--from=[AX]", "B"], "nothing returned, workflow will continue with"),
         (["B"], "Workflow diagram written to"),
     ):
         # Command runs and exits with 0
-        result = mix_models_cli.assert_exit_0([_name] + params)
+        result = mix_models_cli.assert_exit_0(["_test", "run"] + params)
         # Expected log messages or output were printed
         assert output in result.output
 
@@ -111,19 +115,16 @@ def test_make_click_command(monkeypatch: pytest.MonkeyPatch, mix_models_cli) -> 
     for params, output in (
         (["--go", "C"], "Error: No step(s) matched"),
         (["--go"], "Error: No target step provided and no default for"),
+        # Step changes_b() fails if changes_a() is not first run
+        (["--go", "--from=[AX]", "B"], "Execute <function changes_b"),
     ):
-        result = mix_models_cli.invoke([_name] + params)
+        result = mix_models_cli.invoke(["_test", "run"] + params)
         assert 0 != result.exit_code
         assert output in result.output
 
 
-@pytest.mark.skipif(
-    condition=ixmp.__version__ < "3.5",
-    reason="ixmp.TimeSeries.url not available prior to ixmp 3.5.0",
-)
+@MARK
 def test_workflow(caplog, request, test_context, wf) -> None:
-    # FIXME disentangle this to fewer tests of atomic behaviour
-
     # Retrieve some information from the fixture
     base_url = wf.graph.pop("_base_url")
     base_platform = wf.graph.pop("_base_platform")
