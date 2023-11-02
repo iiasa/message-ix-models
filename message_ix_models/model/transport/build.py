@@ -135,6 +135,8 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         (("pdt-cap-ref.csv",), pdt_cap + "ref"),
         # Mode share
         (("mode-share", f"{context.transport.mode_share}.csv"), Key("mode share::ref")),
+        # LDV disutility
+        (("disutility.csv",), Key("disutility:n-cg-t-y:per vehicle")),
     ):
         c.add(
             "load_file",
