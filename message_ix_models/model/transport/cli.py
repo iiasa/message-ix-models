@@ -193,15 +193,12 @@ def build_cmd(context, report_build, **options):
 @click.option("--ssp-update", type=click.Choice("12345"))
 @click.argument("output_dir", metavar="DIR", type=Path, required=False, default=None)
 @click.pass_obj
-def gen_activity(ctx, ssp, ssp_update, nodes, years, output_dir):
+def gen_activity(ctx, ssp, ssp_update, output_dir, **kwargs):
     """Compute activity (demand) data and write to file in DIR."""
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
 
     from . import build
     from .plot import ComparePDT, ComparePDTCap
-
-    # Read general transport config
-    ctx.update(regions=nodes or "R12", years=years or "B")
 
     if ssp and ssp_update:
         raise click.UsageError("--ssp is mutually exclusive with --ssp-update")
