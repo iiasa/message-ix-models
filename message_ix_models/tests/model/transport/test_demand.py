@@ -265,7 +265,7 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
         ),
         ("R12", "--ssp=2"),
         ("R12", "--ssp-update=2"),
-        param("R14", "--ssp=2", marks=MARK[2](ValueError)),
+        ("R14", "--ssp=2"),
         param(
             "R11",
             "--source=SHAPE innovation",
