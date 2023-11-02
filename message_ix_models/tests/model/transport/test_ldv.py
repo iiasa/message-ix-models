@@ -12,7 +12,6 @@ from message_data.model.transport.ldv import (
     read_USTIMES_MA3T,
     read_USTIMES_MA3T_2,
 )
-from message_data.model.transport.testing import MARK
 from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
 
@@ -151,9 +150,9 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
 @pytest.mark.parametrize(
     "regions, N_node_loc",
     [
-        pytest.param("R11", 11, marks=MARK[2](FileNotFoundError)),
+        ("R11", 11),
         ("R12", 12),
-        pytest.param("R14", 14, marks=MARK[2](FileNotFoundError)),
+        ("R14", 14),
     ],
 )
 def test_ldv_capacity_factor(test_context, regions, N_node_loc, years="B"):

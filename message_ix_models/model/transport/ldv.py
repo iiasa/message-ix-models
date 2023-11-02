@@ -413,7 +413,7 @@ def capacity_factor(
     data = convert_units(qty.expand_dims(y=y) * y_broadcast, "Mm / year")
 
     name = "capacity_factor"
-    dims = dict(node_loc="node", year_vtg="yv", year_act="ya")
+    dims = dict(node_loc="n", year_vtg="yv", year_act="ya")
     result = as_message_df(data, name, dims, dict(time="year"))
 
     result[name] = result[name].pipe(broadcast, technology=t_ldv["t"])
