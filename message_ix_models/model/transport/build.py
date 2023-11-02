@@ -9,6 +9,7 @@ from typing import Dict, Optional
 import pandas as pd
 import xarray as xr
 from genno import Computer, KeyExistsError, Quantity, quote
+from ixmp.reporting import RENAME_DIMS
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import bare, build, disutility
@@ -67,7 +68,6 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.ssp.data  # noqa: F401
     from genno import Key
-    from ixmp.reporting import RENAME_DIMS
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
 
@@ -156,6 +156,8 @@ def add_structure(c: Computer):
 
     context = c.graph["context"]
     info = context["transport build info"]
+
+    RENAME_DIMS.setdefault("consumer_group", "cg")
 
     # Create a quantity for broadcasting y to (yv, ya)
     dims = ["y", "yv", "ya"]
