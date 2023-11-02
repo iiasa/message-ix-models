@@ -1,3 +1,5 @@
+# The base year costs and WEO mappings are taken from the following file: 
+# https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/doc/NAM_technology_cost_input_20200507.xlsx
 message_technology,map_source,map_technology,base_year_reference_region_cost
 bio_hpl,weo,igcc,275
 bio_istig,weo,igcc,4064
