@@ -62,6 +62,7 @@ def prepare_computer(c: Computer):
         "load_file",
         path_fallback(context, "ldv-activity.csv"),
         key="ldv activity:n:exo",
+        dims=RENAME_DIMS,
     )
 
     # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
