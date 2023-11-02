@@ -380,7 +380,8 @@ def calculate_indiv_adjusted_region_cost_ratios(
         how="left",
     ).fillna({"constrain": "no"})
 
-    # For cases that need to be constrained, if the adjusted cost ratio goes above the 2020 cost ratio,
+    # For cases that need to be constrained,
+    # if the adjusted cost ratio goes above the 2020 cost ratio,
     # then set the adjusted cost ratio to be equal to the 2020 cost ratio
     df = df.assign(
         reg_cost_ratio_adj=lambda x: np.where(
