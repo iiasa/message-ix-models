@@ -768,6 +768,23 @@ def transport_check(scenario: Scenario, ACT: Quantity) -> pd.Series:
     return pd.Series(checks)
 
 
+def usage_selectors(technologies: List[Code]) -> Dict:
+    """Selectors for replacing LDV `t` and `cg` with `t_new` for usage technologies."""
+    labels: Dict[str, List[str]] = dict(cg=[], t=[], t_new=[])
+    for t in technologies:
+        if not t.eval_annotation(id="is-disutility"):
+            continue
+        t_base, *_, cg = t.id.split()
+        labels["t"].append(t_base)
+        labels["cg"].append(cg)
+        labels["t_new"].append(t.id)
+
+    return {
+        "cg": xr.DataArray(labels["cg"], coords=[("t_new", labels["t_new"])]),
+        "t": xr.DataArray(labels["t"], coords=[("t_new", labels["t_new"])]),
+    }
+
+
 def votm(gdp_ppp_cap: Quantity) -> Quantity:
     """Calculate value of time multiplier.
 
