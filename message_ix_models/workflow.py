@@ -268,24 +268,39 @@ class Workflow(Computer):
         return (i.copy(), step_name) if len(i) else self.guess_target(task[2], kind)
 
 
-def make_click_command(
-    wf_callback: Callable, name: str, slug: str, **kwargs
-) -> "Command":
+def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Command":
     """Generate a click CLI command to run a :class:`.Workflow`.
 
-    - The :attr:`~.Computer.default_key` (if any) of the :class:`.Workflow` returned by
-      `wf_callback` is used if the user does not provide :program:`TARGET` on the
+    This command:
+
+    - when invoked, imports the module containing the `wf_callback`, retrieve and calls
+      the function. This function receives the values for any :mod:`click` parameters
+      (arguments and/or options) passed in `kwargs`. The module is not imported
+      until/unless the command is run.
+    - …is automatically given the parameters:
+
+      - :program:`--go`: Actually run the workflow; otherwise the workflow is only
+        displayed.
+      - :program:`--from`: Truncate the workflow at any step(s) whose names are a full
+        match for this regular expression.
+
+    - uses the :attr:`~.Computer.default_key` (if any) of the :class:`.Workflow`
+      returned by `wf_callback`, if the user does not provide :program:`TARGET` on the
       command-line.
 
     Parameters
     ----------
-    name :
+    wf_callback : str
+        Fully-resolved name (module and object name) for a function that generates the
+        workflow; for instance "message_ix_models.project.foo.workflow.generate".
+    name : str
         Descriptive workflow name used in the :program:`--help` text.
-    slug :
+    slug : str
         File name fragment for writing the workflow diagram; the path
         :file:`{slug}-workflow.svg` is used.
-    wf_callback :
-        Function that generates the workflow.
+    kwargs : *optional*
+        Passed to :func:`click.command`, for instance to define additional parameters
+        for the command.
     """
     import click
 
@@ -303,8 +318,15 @@ def make_click_command(
     @click.argument("target_step", metavar="TARGET", required=False)
     @click.pass_obj
     def _func(context, go, truncate_step, target_step, **kwargs):
+        from importlib import import_module
+
+        # Import the module and retrieve the callback function
+        module_name, callback_name = wf_callback.rsplit(".", maxsplit=1)
+        module = import_module(module_name)
+        callback = getattr(module, callback_name)
+
         # Generate the workflow
-        wf = wf_callback(context, **kwargs)
+        wf = callback(context, **kwargs)
 
         # Truncate the workflow
         try:
