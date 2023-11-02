@@ -192,13 +192,19 @@ class CliRunner(click.testing.CliRunner):
         if len(args) + len(kwargs):
             self.invoke(*args, **kwargs)
 
-        if self.last_result.exit_code != 0:
-            # Re-raise the exception triggered within the CLI invocation
-            raise (
-                self.last_result.exc_info[1].__context__ or self.last_result.exc_info[1]
-            )
+        # Retrieve the last result
+        result = self.last_result
 
-        return self.last_result
+        if result.exit_code != 0:
+            print(f"{result.exit_code = }\nresult.output =\n{result.output}")
+            # Re-raise the exception triggered within the CLI invocation
+            raise (result.exc_info[1].__context__ or result.exc_info[1]) from None
+
+        return result
+
+    @property
+    def add_command(self):
+        return cli_test_group.add_command
 
 
 @pytest.fixture(scope="session")
