@@ -10,11 +10,9 @@ from genno import Computer
 from message_ix import Reporter, Scenario
 from message_ix_models import Context, ScenarioInfo, testing
 from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.util._logging import silence_log
 
-from message_data.model import transport
-from message_data.tools import silence_log
-
-from . import build
+from . import Config, build
 from .util import get_techs
 
 log = logging.getLogger(__name__)
@@ -77,10 +75,10 @@ def built_transport(
 
         with log_cm:
             scenario = res.clone(model=model_name)
-            transport.build.main(context, scenario, options, fast=True)
+            build.main(context, scenario, options, fast=True)
     else:
         # Loaded existing Scenario; ensure config files are loaded on `context`
-        transport.Config.from_context(context, options=options)
+        Config.from_context(context, options=options)
 
     if solved and not scenario.has_solution():
         log.info(f"Solve '{scenario.model}/{scenario.scenario}'")

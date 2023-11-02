@@ -27,7 +27,8 @@ import logging
 from pathlib import Path
 
 import click
-from message_ix_models.util._logging import mark_time
+from message_ix_models import ScenarioInfo
+from message_ix_models.util._logging import mark_time, silence_log
 from message_ix_models.util.click import PARAMS, common_params
 from message_ix_models.workflow import make_click_command
 
@@ -98,8 +99,6 @@ def migrate(context, version, check_base, parse, region, source_path, dest):
     Data is transformed to be suitable for the target scenario, and stored in
     migrate/VERSION/*.csv.
     """
-    from message_data.tools import ScenarioInfo, silence_log
-
     from .build import main as build
     from .migrate import import_all, load_all, transform
 
