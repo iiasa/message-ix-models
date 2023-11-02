@@ -327,7 +327,6 @@ LDV:
 "transport {technology.id} load factor":
   _generate: {technology: LDV}
   name: LDV occupancy
-  is-disutility: true
 
 2W:
   name: Two-wheelers and motorcycles
