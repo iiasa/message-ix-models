@@ -104,10 +104,11 @@ class ScenarioInfo:
 
         # Copy structure (set contents)
         for name in scenario_obj.set_list():
+            value = scenario_obj.set(name)
             try:
-                self.set[name] = scenario_obj.set(name).tolist()
+                self.set[name] = value.tolist()
             except AttributeError:
-                continue  # pd.DataFrame for ≥2-D set; don't convert
+                self.set[name] = value  # pd.DataFrame for ≥2-D set; don't convert
 
         # Copy data for a limited set of parameters
         for name in ("duration_period",):
