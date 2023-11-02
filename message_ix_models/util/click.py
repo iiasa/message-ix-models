@@ -10,7 +10,7 @@ from typing import Callable, List, Optional, Union
 import click
 from click import Argument, Choice, Option
 
-from message_ix_models import Context
+from message_ix_models import Context, model
 from message_ix_models.model.structure import codelists
 
 from .scenarioinfo import ScenarioInfo
@@ -189,6 +189,7 @@ PARAMS = {
         help="Code list to use for 'node' dimension.",
         callback=exec_cb("context.model.regions = value"),
         type=Choice(codelists("node")),
+        default=model.Config.regions,
         expose_value=False,
     ),
     "output_model": Option(
@@ -254,6 +255,9 @@ PARAMS = {
     "years": Option(
         ["--years"],
         help="Code list to use for the 'year' dimension.",
+        callback=exec_cb("context.model.years = value"),
         type=Choice(codelists("year")),
+        default=model.Config.years,
+        # expose_value=False,
     ),
 }
