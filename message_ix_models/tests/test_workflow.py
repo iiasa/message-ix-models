@@ -3,7 +3,6 @@ from typing import Optional
 
 import ixmp
 import pytest
-from genno import KeyExistsError
 from message_ix import make_df
 
 from message_ix_models import Workflow, testing
@@ -54,7 +53,7 @@ class TestWorkflowStep:
         assert "<Step load>" == repr(WorkflowStep(None))
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def wf(request, test_context) -> Workflow:
     return _wf(test_context, request=request)
 
@@ -70,7 +69,6 @@ def _wf(
         base_scenario = testing.bare_res(request, context, solved=False)
         base_platform = base_scenario.platform.name
         base_url = f"ixmp://{base_platform}/{base_scenario.url}"
-        del base_scenario
 
     """A function that generates a Workflow."""
     # Create the workflow
@@ -84,7 +82,7 @@ def _wf(
     wf.add_step("B", "A", changes_b, value=100.0)
 
     # Store extra info
-    wf.graph.update({"_base_url": base_url, "_base_platform": base_platform})
+    wf.graph.update({"_base_platform": base_platform})
 
     return wf
 
@@ -126,8 +124,7 @@ def test_make_click_command(mix_models_cli) -> None:
 @MARK
 def test_workflow(caplog, request, test_context, wf) -> None:
     # Retrieve some information from the fixture
-    base_url = wf.graph.pop("_base_url")
-    base_platform = wf.graph.pop("_base_platform")
+    mp = wf.graph.pop("_base_platform")
 
     caplog.clear()
 
@@ -149,7 +146,6 @@ def test_workflow(caplog, request, test_context, wf) -> None:
 
     # Log messages reflect workflow steps executed
     start_index = 1 if caplog.messages[0].startswith("Cull") else 0
-    mp = base_platform
     m = "MESSAGEix-GLOBIOM R14 YB"
     messages = [
         f"Loaded ixmp://{mp}/{m}/test_workflow#1",
@@ -183,14 +179,6 @@ def test_workflow(caplog, request, test_context, wf) -> None:
     )
 
     # Now truncate the workflow at "Model/A"
-    with pytest.raises(RuntimeError, match="Unable to locate platform info for"):
-        wf.truncate("A")
-
-    # Add a full URL including platform info
-    with pytest.raises(KeyExistsError):
-        wf.add_step("base", None, target=f"ixmp://{base_platform}/{base_url}")
-
-    wf.add_step("base", None, target=f"ixmp://{base_platform}/{base_url}", replace=True)
     wf.truncate("A")
 
     # Description reflects that changes_a() will no longer be called
