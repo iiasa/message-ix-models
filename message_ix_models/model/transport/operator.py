@@ -489,7 +489,7 @@ def _advance_data_for(config: dict, variable: str, units) -> Quantity:
                     p9.aes(
                         x="region",
                         y="activity",
-                        color="model"
+                        color="model",
                         # shape="scenario",
                     ),
                     data,

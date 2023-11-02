@@ -199,14 +199,14 @@ def add_structure(c: Computer):
 
     # List of nodes excluding "World"
     # TODO move upstream, to message_ix
-    c.add("n::ex world", "nodes_ex_world", "n"),
+    c.add("n::ex world", "nodes_ex_world", "n")
     c.add(
         "n:n:ex world",
         lambda data: Quantity(xr.DataArray(1, dims="n", coords={"n": data})),
         "n::ex world",
     )
-    c.add("n::ex world+code", "nodes_ex_world", "nodes"),
-    c.add("nl::world agg", "nodes_world_agg", "config"),
+    c.add("n::ex world+code", "nodes_ex_world", "nodes")
+    c.add("nl::world agg", "nodes_world_agg", "config")
 
     # Model periods only
     c.add("y::model", "model_periods", "y", "cat_year")
