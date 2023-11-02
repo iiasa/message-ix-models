@@ -13,6 +13,7 @@ from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
 
 from message_ix_models import Context
+from message_ix_models.util import add_par_data
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "add_par_data",
     "codelist_to_groups",
     "compound_growth",
     "exogenous_data",
