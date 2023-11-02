@@ -47,7 +47,12 @@ def pytest_addoption(parser):
 
 def pytest_sessionstart():
     # Quiet logs for some upstream packages
-    for name in ("pycountry.db", "matplotlib.backends", "matplotlib.font_manager"):
+    for name in (
+        "graphviz._tools",
+        "pycountry.db",
+        "matplotlib.backends",
+        "matplotlib.font_manager",
+    ):
         logging.getLogger(name).setLevel(logging.DEBUG + 1)
 
 
