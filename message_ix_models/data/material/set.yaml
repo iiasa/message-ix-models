@@ -1,0 +1,670 @@
+# Configuration for message_data.model.material
+#
+# NB these values are currently for the nitrogen fertilizer materials
+#    accounting. Different sets can be created once there are 2+ different
+#    categories of materials.
+
+common:
+  commodity:
+    require:
+    - coal
+    - gas
+    - electr
+    - ethanol
+    - methanol
+    - fueloil
+    - lightoil
+    - hydrogen
+    - lh2
+    - d_heat
+    add:
+    - biomass
+    - water
+    - fresh_water
+
+  level:
+    require:
+    - primary
+    - secondary
+    - useful
+    - final
+    - water_supply
+    - export
+    - import
+
+  type_tec:
+    add:
+    - industry
+
+  mode:
+    add:
+    - M1
+    - M2
+
+  emission:
+    add:
+    - CO2
+    - CH4
+    - N2O
+    - NOx
+    - SO2
+    - PM2p5 # Just add there since it is already in Shaohui's data
+    - CF4
+
+  year:
+    add:
+    - 1980
+    - 1990
+    - 2000
+    - 2010
+
+  type_year:
+    add:
+    - 2010
+
+generic:
+  commodity:
+    add:
+    - ht_heat
+    - lt_heat
+
+  level:
+    add:
+    - useful_steel
+    - useful_cement
+    - useful_aluminum
+    - useful_refining
+    - useful_petro
+    - useful_resins
+
+  technology:
+    add:
+    - furnace_foil_steel
+    - furnace_loil_steel
+    - furnace_biomass_steel
+    - furnace_ethanol_steel
+    - furnace_methanol_steel
+    - furnace_gas_steel
+    - furnace_coal_steel
+    - furnace_elec_steel
+    - furnace_h2_steel
+    - hp_gas_steel
+    - hp_elec_steel
+    - fc_h2_steel
+    - solar_steel
+    - dheat_steel
+    - furnace_foil_cement
+    - furnace_loil_cement
+    - furnace_biomass_cement
+    - furnace_ethanol_cement
+    - furnace_methanol_cement
+    - furnace_gas_cement
+    - furnace_coal_cement
+    - furnace_elec_cement
+    - furnace_h2_cement
+    - hp_gas_cement
+    - hp_elec_cement
+    - fc_h2_cement
+    - solar_cement
+    - dheat_cement
+    - furnace_coal_aluminum
+    - furnace_foil_aluminum
+    - furnace_loil_aluminum
+    - furnace_ethanol_aluminum
+    - furnace_biomass_aluminum
+    - furnace_methanol_aluminum
+    - furnace_gas_aluminum
+    - furnace_elec_aluminum
+    - furnace_h2_aluminum
+    - hp_gas_aluminum
+    - hp_elec_aluminum
+    - fc_h2_aluminum
+    - solar_aluminum
+    - dheat_aluminum
+    - furnace_coke_petro
+    - furnace_coal_petro
+    - furnace_foil_petro
+    - furnace_loil_petro
+    - furnace_ethanol_petro
+    - furnace_biomass_petro
+    - furnace_methanol_petro
+    - furnace_gas_petro
+    - furnace_elec_petro
+    - furnace_h2_petro
+    - hp_gas_petro
+    - hp_elec_petro
+    - fc_h2_petro
+    - solar_petro
+    - dheat_petro
+    - furnace_coke_refining
+    - furnace_coal_refining
+    - furnace_foil_refining
+    - furnace_loil_refining
+    - furnace_ethanol_refining
+    - furnace_biomass_refining
+    - furnace_methanol_refining
+    - furnace_gas_refining
+    - furnace_elec_refining
+    - furnace_h2_refining
+    - hp_gas_refining
+    - hp_elec_refining
+    - fc_h2_refining
+    - solar_refining
+    - dheat_refining
+    - furnace_coal_resins
+    - furnace_foil_resins
+    - furnace_loil_resins
+    - furnace_ethanol_resins
+    - furnace_biomass_resins
+    - furnace_methanol_resins
+    - furnace_gas_resins
+    - furnace_elec_resins
+    - furnace_h2_resins
+    - hp_gas_resins
+    - hp_elec_resins
+    - fc_h2_resins
+    - solar_resins
+    - dheat_resins
+  mode:
+    add:
+    - low_temp
+    - high_temp
+
+petro_chemicals:
+  commodity:
+    require:
+    - crudeoil
+    add:
+    - HVC
+    - naphtha
+    - kerosene
+    - diesel
+    - atm_residue
+    - refinery_gas
+    - atm_gasoil
+    - atm_residue
+    - vacuum_gasoil
+    - vacuum_residue
+    - gasoline
+    - heavy_foil
+    - light_foil
+    - propylene
+    - pet_coke
+    - ethane
+    - propane
+    - ethylene
+    - BTX
+
+  level:
+    require:
+    - secondary
+    - final
+    add:
+    - pre_intermediate
+    - desulfurized
+    - intermediate
+    - secondary_material
+    - final_material
+    - demand
+
+  balance_equality:
+    add:
+      - ["lightoil", "import"]
+      - ["lightoil", "export"]
+      - ["fueloil", "import"]
+      - ["fueloil", "export"]
+  mode:
+    add:
+    - atm_gasoil
+    - vacuum_gasoil
+    - naphtha
+    - kerosene
+    - diesel
+    - cracking_gasoline
+    - cracking_loil
+    - ethane
+    - propane
+    - light_foil
+    - refinery_gas
+    - refinery_gas_int
+    - heavy_foil
+    - pet_coke
+    - atm_residue
+    - vacuum_residue
+    - gasoline
+    - ethylene
+    - propylene
+    - BTX
+
+  technology:
+    add:
+    - atm_distillation_ref
+    - vacuum_distillation_ref
+    - hydrotreating_ref
+    - catalytic_cracking_ref
+    - visbreaker_ref
+    - coking_ref
+    - catalytic_reforming_ref
+    - hydro_cracking_ref
+    - steam_cracker_petro
+    - ethanol_to_ethylene_petro
+    - agg_ref
+    - gas_processing_petro
+    - trade_petro
+    - import_petro
+    - export_petro
+    - feedstock_t/d
+    - production_HVC
+    remove:
+    # Any representation of refinery.
+    - ref_hil
+    - ref_lol
+
+  shares:
+    add:
+    - steam_cracker
+
+steel:
+  commodity:
+    add:
+    - steel
+    - pig_iron
+    - sponge_iron
+    - sinter_iron
+    - pellet_iron
+    - ore_iron
+    - limestone_iron
+    - coke_iron
+    - slag_iron
+    - co_gas
+    - bf_gas
+
+  level:
+    add:
+    - new_scrap
+    - old_scrap_1
+    - old_scrap_2
+    - old_scrap_3
+    - primary_material
+    - secondary_material
+    - tertiary_material
+    - final_material
+    - useful_material
+    - waste_material
+    - product
+    - demand
+    - dummy_emission
+    - end_of_life
+    - dummy_end_of_life
+
+  technology:
+    add:
+    - cokeoven_steel
+    - sinter_steel
+    - pellet_steel
+    - bf_steel
+    - dri_steel
+    - sr_steel
+    - bof_steel
+    - eaf_steel
+    - prep_secondary_steel_1
+    - prep_secondary_steel_2
+    - prep_secondary_steel_3
+    - finishing_steel
+    - manuf_steel
+    - scrap_recovery_steel
+    - DUMMY_ore_supply
+    - DUMMY_limestone_supply_steel
+    - DUMMY_coal_supply
+    - DUMMY_gas_supply
+    - trade_steel
+    - import_steel
+    - export_steel
+    - other_EOL_steel
+    - total_EOL_steel
+
+  relation:
+    add:
+      - minimum_recycling_steel
+      - max_global_recycling_steel
+      - max_regional_recycling_steel
+
+  balance_equality:
+    add:
+      - ["steel","old_scrap_1"]
+      - ["steel","old_scrap_2"]
+      - ["steel","old_scrap_3"]
+      - ["steel","end_of_life"]
+      - ["steel","product"]
+      - ["steel","new_scrap"]
+      - ["steel","useful_material"]
+      - ["steel","final_material"]
+
+cement:
+  commodity:
+    add:
+    - cement
+    - clinker_cement
+    - raw_meal_cement
+    - limestone_cement
+
+  level:
+    add:
+    - primary_material
+    - secondary_material
+    - tertiary_material
+    - final_material
+    - useful_material
+    - demand
+    - dummy_end_of_life
+    - end_of_life
+
+  technology:
+    add:
+    - raw_meal_prep_cement
+    - clinker_dry_cement
+    - clinker_wet_cement
+    - clinker_dry_ccs_cement
+    - clinker_wet_ccs_cement
+    - grinding_ballmill_cement
+    - grinding_vertmill_cement
+    - DUMMY_limestone_supply_cement
+    - total_EOL_cement
+    - other_EOL_cement
+    - scrap_recovery_cement
+
+    remove:
+    - cement_co2scr
+    - cement_CO2
+
+  relation:
+    remove:
+    - cement_pro
+    - cement_scrub_lim
+
+  balance_equality:
+    add:
+      - ["cement","end_of_life"]
+
+  addon:
+    add:
+    - clinker_dry_ccs_cement
+    - clinker_wet_ccs_cement
+
+  type_addon:
+    add:
+    - ccs_cement
+
+  map_tec_addon:
+    add:
+    - [clinker_dry_cement, ccs_cement]
+    - [clinker_wet_cement, ccs_cement]
+
+  cat_addon:
+    add:
+    - [ccs_cement, clinker_dry_ccs_cement]
+    - [ccs_cement, clinker_wet_ccs_cement]
+
+aluminum:
+  commodity:
+    add:
+    - aluminum
+
+  level:
+    add:
+    - new_scrap
+    - old_scrap_1
+    - old_scrap_2
+    - old_scrap_3
+    - useful_aluminum
+    - final_material
+    - useful_material
+    - product
+    - secondary_material
+    - demand
+    - end_of_life
+    - dummy_end_of_life_1
+    - dummy_end_of_life_2
+    - dummy_end_of_life_3
+
+
+  technology:
+    add:
+    - soderberg_aluminum
+    - prebake_aluminum
+    - secondary_aluminum
+    - prep_secondary_aluminum_1
+    - prep_secondary_aluminum_2
+    - prep_secondary_aluminum_3
+    - finishing_aluminum
+    - manuf_aluminum
+    - scrap_recovery_aluminum_1
+    - scrap_recovery_aluminum_2
+    - scrap_recovery_aluminum_3
+    - DUMMY_alumina_supply
+    - trade_aluminum
+    - import_aluminum
+    - export_aluminum
+    - other_EOL_aluminum
+    - total_EOL_aluminum
+
+  relation:
+    add:
+      - minimum_recycling_aluminum
+      - maximum_recycling_aluminum
+
+  balance_equality:
+    add:
+      - ["aluminum","old_scrap_1"]
+      - ["aluminum","old_scrap_2"]
+      - ["aluminum","old_scrap_3"]
+      - ["aluminum","end_of_life"]
+      - ["aluminum","product"]
+      - ["aluminum","new_scrap"]
+
+fertilizer:
+  commodity:
+    require:
+    - electr
+    - freshwater_supply
+    add:
+    - NH3
+    - Fertilizer Use|Nitrogen
+    - wastewater
+  level:
+    add:
+    - secondary_material
+    - final_material
+    - wastewater
+  technology:
+    require:
+    - h2_bio_ccs  # Reference for vent-to-storage ratio
+    add:
+    - biomass_NH3
+    - electr_NH3
+    - gas_NH3
+    - coal_NH3
+    - fueloil_NH3
+    - NH3_to_N_fertil
+    - trade_NFert
+    - export_NFert
+    - import_NFert
+    - trade_NH3
+    - export_NH3
+    - import_NH3
+    - residual_NH3
+    - biomass_NH3_ccs
+    - gas_NH3_ccs
+    - coal_NH3_ccs
+    - fueloil_NH3_ccs
+  relation:
+    add:
+      - NH3_trd_cap
+      - NFert_trd_cap
+
+methanol:
+  commodity:
+    require:
+    - electr
+    - biomass
+    - hydrogen
+    - d_heat
+    add:
+    - methanol
+    - ht_heat
+    - formaldehyde
+    - ethylene
+    - propylene
+    - fcoh_resin
+
+  level:
+    add:
+    - final_material
+    - secondary_material
+    - primary_material
+    - export_fs
+    - import_fs
+
+  mode:
+    add:
+    - feedstock
+    - fuel
+    - ethanol
+
+  technology:
+    add:
+    - meth_bio
+    - meth_bio_ccs
+    - meth_h2
+    - meth_t_d_material
+    - MTO_petro
+    - CH2O_synth
+    - CH2O_to_resin
+    - meth_coal
+    - meth_coal_ccs
+    - meth_ng
+    - meth_ng_ccs
+    - meth_t_d
+    - meth_bal
+    - meth_trd
+    - meth_exp
+    - meth_imp
+    remove:
+    - sp_meth_I
+    - meth_rc
+    - meth_ic_trp
+    - meth_fc_trp
+    - meth_i
+    - meth_coal
+    - meth_coal_ccs
+    - meth_ng
+    - meth_ng_ccs
+    - meth_t_d
+    - meth_bal
+    - meth_trd
+    - meth_exp
+    - meth_imp
+
+  addon:
+    add:
+      - meth_h2
+
+  type_addon:
+    add:
+      - methanol_synthesis_addon
+
+  map_tec_addon:
+    add:
+      - [h2_elec, methanol_synthesis_addon]
+
+  cat_addon:
+    add:
+      - [methanol_synthesis_addon, meth_h2]
+
+  relation:
+    add:
+      - CO2_PtX_trans_disp_split
+      - meth_exp_tot
+
+  balance_equality:
+    add:
+    - ["methanol","export"]
+    - ["methanol","export_fs"]
+    - ["methanol","import"]
+    - ["methanol","import_fs"]
+    - ["methanol","final"]
+
+buildings:
+  level:
+    add:
+    - service
+
+  commodity:
+    add:
+    - floor_area
+
+  technology:
+    add:
+    - buildings
+
+power_sector:
+  unit:
+    add:
+      - t/kW
+
+# NB this codelist added by #125
+
+# iron-steel:
+#   name: Iron and Steel
+#   description: Iron is a chemical element with the symbol Fe, while steel is an alloy of iron and carbon and, sometimes, other elements. Measured as the total mass of material.
+#   unit: Mt
+#
+# non-ferrous:
+#   name: Non-ferrous metals
+#   description: Metals and alloys which do not contain iron. Measured as the total mass of material.
+#   unit: Mt
+#
+# aluminum:
+#   name: Aluminum
+#   description: Aluminum (or aluminium) is a chemical element with the symbol Al. Measured as the total mass of material.
+#   unit: Mt
+#   parent: non-ferrous
+#
+# copper:
+#   name: Copper
+#   description: Copper is a chemical element with the symbol Cu. Measured as the total mass of material.
+#   unit: Mt
+#   parent: non-ferrous
+#
+# minerals:
+#   name: Minerals
+#   description: Non-metallic minerals are minerals that have no metallic luster, break easily and include, e.g., sand, limestone, marble, clay and salt. Measured as the FE-equivalent mass of material using LCA midpoint characterization factors.
+#   unit: MtFe-eq
+#
+# cement:
+#   name: Cement
+#   description: Cement is a binder used for construction that sets, hardens, and adheres to other materials to bind them together. Measured as the total mass of material.
+#   unit: Mt
+#   parent: minerals
+#
+# chemicals:
+#   name: Chemicals
+#   description: Industrial chemicals that form the basis of many products. Measured as the total mass of material.
+#   unit: Mt
+#
+# ethylene:
+#   name: Ethylene
+#   description: Ethylene is a hydrocarbon with the formula C2H4. Measured as the total mass of material.
+#   unit: Mt
+#   parent: chemicals
+#
+# ammonia:
+#   name: Ammonia
+#   description: Ammonia is a compound of nitrogen and hydrogen with the formula NH3. Measured as the total mass of material.
+#   unit: Mt
+#   parent: chemicals
+#
+# paper-pulp:
+#   name: Paper and pulp for paper
+#   description: Pulp is a lignocellulosic fibrous material prepared by chemically or mechanically separating cellulose fibers and the raw material for making paper. Measured as the total mass of material.
+#   unit: Mt
