@@ -14,7 +14,7 @@ from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Reporter, Scenario
 
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util._logging import mark_time
+from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
 
@@ -181,7 +181,9 @@ def log_before(context, rep, key) -> None:
     log.info(f"Prepare to report {'(DRY RUN)' if context.dry_run else ''}")
     log.info(key)
     log.log(
-        logging.INFO if (context.dry_run or context.verbose) else logging.DEBUG,
+        logging.INFO
+        if (context.core.dry_run or context.core.verbose)
+        else logging.DEBUG,
         "\n" + rep.describe(key),
     )
     mark_time()
@@ -245,7 +247,12 @@ def report(context: Context, *args, **kwargs):
     if context.report.legacy["use"]:
         return _invoke_legacy_reporting(context)
 
-    rep, key = prepare_reporter(context)
+    with (
+        nullcontext()
+        if context.core.verbose
+        else silence_log(["genno", "message_ix_models"])
+    ):
+        rep, key = prepare_reporter(context)
 
     log_before(context, rep, key)
 
