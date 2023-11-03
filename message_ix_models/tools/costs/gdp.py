@@ -8,7 +8,7 @@ from message_ix_models.util import package_data_path
 
 
 # Function to read in (under-review) SSP data
-def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
+def process_raw_ssp_data(node, ref_region) -> pd.DataFrame:
     """Read in raw SSP data and process it
 
     This function takes in the raw SSP data (in IAMC format), aggregates \
@@ -38,22 +38,22 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
             (in units of billion US$2005/yr / million)
     """
     # Change node selection to upper case
-    node_up = input_node.upper()
+    node_up = node.upper()
 
     # Check if node selection is valid
     if node_up not in ["R11", "R12", "R20"]:
         print("Please select a valid region: R11, R12, or R20")
 
     # Set default reference region
-    if input_ref_region is None:
-        if input_node.upper() == "R11":
-            input_ref_region = "R11_NAM"
-        if input_node.upper() == "R12":
-            input_ref_region = "R12_NAM"
-        if input_node.upper() == "R20":
-            input_ref_region = "R20_NAM"
+    if ref_region is None:
+        if node.upper() == "R11":
+            ref_region = "R11_NAM"
+        if node.upper() == "R12":
+            ref_region = "R12_NAM"
+        if node.upper() == "R20":
+            ref_region = "R20_NAM"
     else:
-        input_ref_region = input_ref_region
+        ref_region = ref_region
 
     # Set data path for node file
     node_file = package_data_path("node", node_up + ".yaml")
@@ -162,7 +162,7 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
     )
 
     # If reference region is not in the list of regions, print error message
-    reference_region = input_ref_region.upper()
+    reference_region = ref_region.upper()
     if reference_region not in df.region.unique():
         print("Please select a valid reference region: " + str(df.region.unique()))
     # If reference region is in the list of regions, calculate GDP ratios
@@ -212,10 +212,10 @@ def process_raw_ssp_data(input_node, input_ref_region) -> pd.DataFrame:
 
 # Function to calculate adjusted region-differentiated cost ratios
 def calculate_indiv_adjusted_region_cost_ratios(
-    region_diff_df, input_node, input_ref_region, input_base_year
+    region_diff_df, node, ref_region, base_year
 ):
     df_gdp = (
-        process_raw_ssp_data(input_node=input_node, input_ref_region=input_ref_region)
+        process_raw_ssp_data(node=node, ref_region=ref_region)
         .query("year >= 2020")
         .drop(columns=["total_gdp", "total_population"])
     )
@@ -223,11 +223,11 @@ def calculate_indiv_adjusted_region_cost_ratios(
 
     # If base year does not exist in GDP data, then use earliest year in GDP data
     # and give warning
-    base_year = int(input_base_year)
+    base_year = int(base_year)
     if int(base_year) not in df_gdp.year.unique():
         base_year = int(min(df_gdp.year.unique()))
         print(
-            f"Base year {input_base_year} not found in GDP data. \
+            f"Base year {base_year} not found in GDP data. \
                 Using {base_year} for GDP data instead."
         )
 
@@ -236,15 +236,15 @@ def calculate_indiv_adjusted_region_cost_ratios(
     # If specified node is R12, then use R12_NAM as the reference region
     # If specified node is R20, then use R20_NAM as the reference region
     # However, if a reference region is specified, then use that instead
-    if input_ref_region is None:
-        if input_node.upper() == "R11":
+    if ref_region is None:
+        if node.upper() == "R11":
             reference_region = "R11_NAM"
-        if input_node.upper() == "R12":
+        if node.upper() == "R12":
             reference_region = "R12_NAM"
-        if input_node.upper() == "R20":
+        if node.upper() == "R20":
             reference_region = "R20_NAM"
     else:
-        reference_region = input_ref_region
+        reference_region = ref_region
 
     gdp_base_year = df_gdp.query("year == @base_year").reindex(
         ["scenario_version", "scenario", "region", "gdp_ratio_reg_to_reference"], axis=1

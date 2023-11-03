@@ -20,6 +20,8 @@ CONVERSION_2021_TO_2005_USD = 0.72
 class Config:
     """Configuration for :mod:`.costs`."""
 
+    test_val: int = 2
+
     #: Base year for projections.
     base_year: int = BASE_YEAR
 

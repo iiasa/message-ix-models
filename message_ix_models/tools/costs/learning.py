@@ -11,7 +11,7 @@ from message_ix_models.util import package_data_path
 
 
 # Function to get GEA based cost reduction data
-def get_cost_reduction_data(input_module) -> pd.DataFrame:
+def get_cost_reduction_data(module) -> pd.DataFrame:
     """Get cost reduction data
 
     Raw data on cost reduction in 2100 for technologies are read from \
@@ -45,10 +45,10 @@ def get_cost_reduction_data(input_module) -> pd.DataFrame:
         .reset_index(drop=1)
     )
 
-    if input_module == "base":
+    if module == "base":
         return base_rates
 
-    elif input_module == "materials":
+    elif module == "materials":
         # Read in materials technology mapping file
         materials_file_path = package_data_path("costs", "technology_materials_map.csv")
         df_materials_tech = pd.read_csv(materials_file_path)
@@ -78,9 +78,7 @@ def get_cost_reduction_data(input_module) -> pd.DataFrame:
 
 
 # Function to get technology learning scenarios data
-def get_technology_learning_scenarios_data(
-    input_base_year, input_module
-) -> pd.DataFrame:
+def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
     """Read in technology first year and learning scenarios data
 
     Raw data on technology first year and learning scenarios are read from \
@@ -90,7 +88,7 @@ def get_technology_learning_scenarios_data(
 
     Parameters
     ----------
-    input_base_year : int, optional
+    base_year : int, optional
         The base year, by default set to global BASE_YEAR
 
     Returns
@@ -109,9 +107,9 @@ def get_technology_learning_scenarios_data(
         pd.read_csv(file)
         .assign(
             first_technology_year=lambda x: np.where(
-                x.first_year_original > input_base_year,
+                x.first_year_original > base_year,
                 x.first_year_original,
-                input_base_year,
+                base_year,
             ),
         )
         .drop(columns=["first_year_original"])
@@ -122,10 +120,10 @@ def get_technology_learning_scenarios_data(
         )
     )
 
-    if input_module == "base":
+    if module == "base":
         return base_learn
 
-    elif input_module == "materials":
+    elif module == "materials":
         # Read in materials technology mapping file
         materials_file_path = package_data_path("costs", "technology_materials_map.csv")
         df_materials_tech = pd.read_csv(materials_file_path)
@@ -157,10 +155,10 @@ def get_technology_learning_scenarios_data(
 # Function to project reference region investment cost using learning rates
 def project_ref_region_inv_costs_using_learning_rates(
     regional_diff_df: pd.DataFrame,
-    input_node,
-    input_ref_region,
-    input_base_year,
-    input_module,
+    node,
+    ref_region,
+    base_year,
+    module,
 ) -> pd.DataFrame:
     """Project investment costs using learning rates for reference region
 
@@ -172,11 +170,11 @@ def project_ref_region_inv_costs_using_learning_rates(
     ----------
     regional_diff_df : pandas.DataFrame
         Dataframe output from :func:`get_weo_region_differentiated_costs`
-    input_node : str, optional
+    node : str, optional
         The reference node, by default "r12"
-    input_ref_region : str, optional
+    ref_region : str, optional
         The reference region, by default None (defaults set in function)
-    input_base_year : int, optional
+    base_year : int, optional
         The base year, by default set to global BASE_YEAR
 
     Returns
@@ -191,21 +189,21 @@ def project_ref_region_inv_costs_using_learning_rates(
     """
 
     # Set default reference region
-    if input_ref_region is None:
-        if input_node.upper() == "R11":
+    if ref_region is None:
+        if node.upper() == "R11":
             reference_region = "R11_NAM"
-        if input_node.upper() == "R12":
+        if node.upper() == "R12":
             reference_region = "R12_NAM"
-        if input_node.upper() == "R20":
+        if node.upper() == "R20":
             reference_region = "R20_NAM"
     else:
-        reference_region = input_ref_region
+        reference_region = ref_region
 
     # Get cost reduction data
-    df_cost_reduction = get_cost_reduction_data(input_module)
+    df_cost_reduction = get_cost_reduction_data(module)
 
     # Get learning rates data
-    df_learning = get_technology_learning_scenarios_data(input_base_year, input_module)
+    df_learning = get_technology_learning_scenarios_data(base_year, module)
 
     # Merge cost reduction data with learning rates data
     df_learning_reduction = df_learning.merge(
@@ -221,7 +219,7 @@ def project_ref_region_inv_costs_using_learning_rates(
             cost_region_2100=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
             b=lambda x: (1 - PRE_LAST_YEAR_RATE) * x.cost_region_2100,
-            r=lambda x: (1 / (LAST_MODEL_YEAR - input_base_year))
+            r=lambda x: (1 / (LAST_MODEL_YEAR - base_year))
             * np.log((x.cost_region_2100 - x.b) / (x.reg_cost_base_year - x.b)),
             reference_region=reference_region,
         )
