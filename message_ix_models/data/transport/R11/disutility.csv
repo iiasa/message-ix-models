@@ -13,7 +13,7 @@
 #
 # Units: kUSD / vehicle
 #
-node,cg,technology,year,value
+node,consumer_group,technology,year,value
 R11_AFR,RUEAA,ELC_100,2020,296.549
 R11_AFR,RUEAA,ELC_100,2030,86.158
 R11_AFR,RUEAA,ELC_100,2040,45.269
