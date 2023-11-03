@@ -350,7 +350,7 @@ def prepare_reporter(
         has_solution = scenario.has_solution()
 
     # Append the message_data operators
-    rep.require_compat("message_ix_models.report.computations")
+    rep.require_compat("message_ix_models.report.operator")
     try:
         # TODO Replace usage of operators from this module in favour of .exo_data; then
         #      remove this line.
