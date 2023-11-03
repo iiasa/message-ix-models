@@ -30,6 +30,14 @@ def get_intensity(context: Context) -> pd.DataFrame:
     return load_file(private_data_path("transport", "fuel-emi-intensity.csv"))
 
 
+def strip_emissions_data(scenario, context):
+    """Remove base model's parametrization of freight transport emissions.
+
+    They are re-added by :func:`get_freight_data`.
+    """
+    log.warning("Not implemented")
+
+
 # TODO read from configuration
 # https://www.eia.gov/environment/emissions/co2_vol_mass.php
 # https://www.epa.gov/sites/default/files/2015-07/documents/emission-factors_2014.pdf

@@ -359,6 +359,8 @@ def main(
     apply_spec
     get_spec
     """
+    from .emission import strip_emissions_data
+
     # Check arguments
     options = dict() if options is None else options.copy()
     dupe = set(options.keys()) & set(option_kwargs.keys())
@@ -380,6 +382,9 @@ def main(
         assert s is c.graph["scenario"]
         result = c.get("add transport data")
         log.info(f"Added {sum(result)} total obs")
+
+    # First strip existing emissions data
+    strip_emissions_data(scenario, context)
 
     # Apply the structural changes AND add the data
     log.info("Build MESSAGEix-Transport")
