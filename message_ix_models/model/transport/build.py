@@ -159,7 +159,15 @@ def add_structure(c: Computer):
     context = c.graph["context"]
     info = context["transport build info"]
 
+    # Update RENAME_DIMS with transport-specific concepts/dimensions. This allows to use
+    # genno.operator.load_file(…, dims=RENAME_DIMS)
+    # TODO move to a more appropriate location
+    RENAME_DIMS.setdefault("area_type", "area_type")
+    RENAME_DIMS.setdefault("attitude", "attitude")
+    RENAME_DIMS.setdefault("census_division", "census_division")
     RENAME_DIMS.setdefault("consumer_group", "cg")
+    RENAME_DIMS.setdefault("driver_type", "driver_type")
+    RENAME_DIMS.setdefault("vehicle_class", "vehicle_class")
 
     # Create a quantity for broadcasting y to (yv, ya)
     dims = ["y", "yv", "ya"]
