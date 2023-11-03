@@ -130,7 +130,7 @@ def load(base_path: Path) -> Mapping[str, pd.DataFrame]:
     """Load MACRO data from CSV files.
 
     The function reads files in the simple/long CSV format understood by
-    :func:`genno.computations.load_file`. For use with
+    :func:`.genno.operator.load_file`. For use with
     :meth:`~message_ix.Scenario.add_macro`, the dimension names should be given in full,
     for instance "node" or "sector".
 
@@ -145,7 +145,7 @@ def load(base_path: Path) -> Mapping[str, pd.DataFrame]:
         Mapping from MACRO calibration parameter names to data; one entry for each file
         in `base_path`.
     """
-    from genno.computations import load_file
+    from genno.operator import load_file
 
     result = {}
     for filename in base_path.glob("*.csv"):

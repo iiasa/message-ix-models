@@ -171,7 +171,7 @@ def prepare_computer(
         raise ValueError(f"No source found that can handle {source!r}")
 
     # Add structural information to the Computer
-    c.require_compat("message_ix_models.report.computations")
+    c.require_compat("message_ix_models.report.operator")
 
     # Retrieve the node codelist
     c.add("n::codes", quote(get_codes(f"node/{context.model.regions}")), strict=strict)
@@ -254,7 +254,7 @@ class DemoSource(ExoDataSource):
         )
 
     def __call__(self) -> Quantity:
-        from genno.computations import select
+        from genno.operator import select
 
         # - Retrieve the data.
         # - Apply the prepared indexers.
@@ -263,7 +263,7 @@ class DemoSource(ExoDataSource):
     @staticmethod
     def random_data():
         """Generate some random data with n, y, s, and v dimensions."""
-        from genno.computations import relabel
+        from genno.operator import relabel
         from genno.testing import random_qty
         from pycountry import countries
 

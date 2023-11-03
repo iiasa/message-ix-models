@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, cast
 
 import pandas as pd
-from genno.computations import concat
+from genno.operator import concat
 from message_ix.reporting import Quantity
 
 log = logging.getLogger(__name__)
@@ -118,11 +118,7 @@ class MappingAdapter(Adapter):
                 continue
             result = concat(
                 *[
-                    qty.sel(
-                        {dim: label[0]}, drop=True
-                    ).expand_dims(  # type: ignore [attr-defined]
-                        {dim: [label[1]]}
-                    )
+                    qty.sel({dim: label[0]}, drop=True).expand_dims({dim: [label[1]]})
                     for label in labels
                 ]
             )
