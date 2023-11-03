@@ -300,7 +300,7 @@ class MERtoPPP(ExoDataSource):
     def __init__(self, source, source_kw):
         from .util import path_fallback
 
-        if not source == "message_data.model.transport":
+        if not source.startswith(__name__.rsplit(".", maxsplit=1)[0]):
             raise ValueError(source)
         elif source_kw.get("measure") != "MERtoPPP":
             raise ValueError(source_kw)
@@ -317,10 +317,7 @@ class MERtoPPP(ExoDataSource):
             from message_ix_models.util import adapt_R11_R12, adapt_R11_R14
 
             # Try to identify an adapter that can convert R11 to `regions_to`
-            adapt = {
-                "R12": adapt_R11_R12,
-                "R14": adapt_R11_R14,
-            }.get(regions_to)
+            adapt = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(regions_to)
 
             if adapt is None:
                 log.info(
