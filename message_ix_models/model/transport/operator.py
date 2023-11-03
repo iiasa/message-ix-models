@@ -73,7 +73,9 @@ def base_shares(
     tmp = sum(base, dimensions=["t"])
     check = allclose(tmp.to_series().values, 1.0)
     if not check:
-        log.warning("Sum across modes ≠ 1.0; will rescale:\n" + tmp.to_string())
+        log.warning(
+            "Sum across modes ≠ 1.0; will rescale:\n" + (tmp[tmp != 1.0].to_string())
+        )
         result = div(base, tmp)
     else:
         result = base
