@@ -112,7 +112,10 @@ def prepare_computer(c: Computer):
     # TODO add bound_activity constraints for first year given technology shares
     # TODO add historical_new_capacity for period prior to to first year
 
-    return c.add("merge_data", "transport ldv::ixmp", *keys)
+    k_all = "transport ldv::ixmp"
+    c.add(k_all, "merge_data", *keys)
+
+    c.add("transport_data", __name__, key=k_all)
 
 
 #: Input file containing structured data about LDV technologies.

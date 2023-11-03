@@ -51,4 +51,4 @@ def prepare_computer(c: "Computer") -> None:
     )
 
     # Add to the scenario
-    c.add("add disutility", "add_par_data", "scenario", "disutility::ixmp", "context")
+    c.add("transport_data", __name__, key="disutility::ixmp")

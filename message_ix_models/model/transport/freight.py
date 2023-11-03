@@ -68,14 +68,9 @@ def iea_2017_t4(measure: int):
 
 
 def prepare_computer(c: Computer):
-    return c.add(
-        "transport freight::ixmp",
-        get_freight_data,
-        "n::ex world",
-        "t::transport",
-        "y::model",
-        "context",
-    )
+    k = "transport freight::ixmp"
+    c.add(k, get_freight_data, "n::ex world", "t::transport", "y::model", "context")
+    c.add("transport_data", __name__, key=k)
 
 
 def get_freight_data(
