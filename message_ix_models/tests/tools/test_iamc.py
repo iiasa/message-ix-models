@@ -1,6 +1,6 @@
 from message_ix_models.project.advance.data import LOCATION, NAME
 from message_ix_models.tools.iamc import describe
-from message_ix_models.util import MESSAGE_DATA_PATH, private_data_path
+from message_ix_models.util import MESSAGE_MODELS_PATH, package_data_path
 
 
 def test_describe(test_context):
@@ -8,13 +8,15 @@ def test_describe(test_context):
 
     import pandas as pd
 
-    path = private_data_path(*LOCATION)
-    zf = zipfile.ZipFile(private_data_path(*LOCATION))
-    source = zf.open(NAME)
+    path = package_data_path("test", *LOCATION)
+    with zipfile.ZipFile(path) as zf:
+        data = pd.read_csv(zf.open(NAME), engine="pyarrow").rename(
+            columns=lambda c: c.upper()
+        )
 
-    data = pd.read_csv(source, engine="pyarrow").rename(columns=lambda c: c.upper())
-
-    sm = describe(data, f"ADVANCE data in {path.relative_to(MESSAGE_DATA_PATH.parent)}")
+    sm = describe(
+        data, f"ADVANCE data in {path.relative_to(MESSAGE_MODELS_PATH.parent)}"
+    )
 
     # Message contains the expected code lists.
     # Code lists have the expected lengths.
