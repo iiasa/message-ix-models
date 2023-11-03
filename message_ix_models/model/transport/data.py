@@ -2,16 +2,15 @@
 import logging
 from collections import defaultdict
 from functools import partial
-from operator import itemgetter, le
-from typing import Dict, List, Mapping
+from operator import le
+from typing import TYPE_CHECKING, Dict, List, Mapping
 
 import pandas as pd
-from genno import Computer, quote
+from genno import Computer
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import (
-    add_par_data,
     broadcast,
     eval_anno,
     make_io,
@@ -19,98 +18,30 @@ from message_ix_models.util import (
     make_source_tech,
     same_node,
 )
-from sdmx.model.v21 import Code
+
+if TYPE_CHECKING:
+    from sdmx.model.v21 import Code
 
 log = logging.getLogger(__name__)
 
-#: CSV files containing data for input calculations and assumptions.
-DATA_FILES = [
-    ("demand-scale.csv",),
-    ("ldv-class.csv",),
-    ("mer-to-ppp.csv",),
-    ("population-suburb-share.csv",),
-    ("ma3t", "population.csv"),
-    ("ma3t", "attitude.csv"),
-    ("ma3t", "driver.csv"),
-    ("mode-share", "default.csv"),
-    ("mode-share", "A---.csv"),
-]
-
-#: Genno computations that generate model-ready data in ixmp format. This mapping is
-#: extended by functions decorated with @provides_data() in this module.
-DATA_FUNCTIONS = {
-    # Keys added by demand.prepare_computer()
-    "demand": ("transport demand passenger::ixmp",),
-    "dummy demand": ("dummy demand::ixmp",),
-    "freight demand": ("transport demand freight::ixmp",),
-    # Key added by ldv.prepare_computer()
-    "ldv": ("transport ldv::ixmp",),
-    # Key added by ikarus.prepare_computer()
-    "non_ldv": ("transport nonldv::ixmp",),  # In progress
-    # Key added by .freight.prepare_computer()
-    "freight": ("transport freight::ixmp",),
-}
-
-
-def provides_data(*args):
-    """Decorator that adds a function to :data:`DATA_FUNCTIONS`."""
-    # TODO eliminate this
-
-    def decorator(f):
-        DATA_FUNCTIONS[f.__name__] = tuple([f] + list(args))
-        return f
-
-    return decorator
-
 
 def prepare_computer(c: Computer):
-    """Prepare the "all transport data" key.
-
-    This key triggers adding all MESSAGEix-Transport data to the "scenario" identified
-    in `c`.
-    """
-    context = c.graph["context"]
-    dry_run = context.core.dry_run
-    scenario = c.graph.get("scenario")
-
-    # First strip existing emissions data
-    strip_emissions_data(scenario, context)
-
-    # Reference values: the ScenarioInfo, and dry_run parameter
-    c.add("info", itemgetter("transport build info"), "context")
-    c.add("dry_run", quote(dry_run))
-
+    """Add miscellaneous transport data."""
     # Data-generating calculations
-    all_keys = []
-    add = partial(add_par_data, dry_run=dry_run)
-    for name, comp in DATA_FUNCTIONS.items():
-        if len(comp) > 1:
-            # Add 2 computations: one to generate the data
-            k1 = c.add(f"{name}::ixmp", *comp)
-        else:
-            k1 = comp[0]
+    n, y = "n::ex world", "y::model"
+    for comp in (
+        (conversion, n, y, "config"),
+        (misc, "info", n, y),
+        (dummy_supply, "config", "info"),
+        (navigate_ele, n, "t::transport", "t::transport agg", y, "config"),
+    ):
+        # Add 2 computations: one to generate the data
+        name = getattr(comp[0], "__name__")
+        k1 = c.add(f"{name}::ixmp", *comp)
         # …one to add it to `scenario`
-        all_keys.append(c.add(f"add {name}", add, "scenario", k1))
-
-    # Add a key to trigger generating and adding all data
-    key = c.add("add transport data", all_keys)
-
-    # commented: extremely verbose
-    # log.debug(c.describe("add transport data"))
-
-    return key
+        c.add("transport_data", f"transport {name}", key=k1)
 
 
-def strip_emissions_data(scenario, context):
-    """Remove base model's parametrization of freight transport emissions.
-
-    They are re-added by :func:`get_freight_data`.
-    """
-    log.warning("Not implemented")
-    pass
-
-
-@provides_data("n::ex world", "y::model", "config")
 def conversion(
     nodes: List[str], years: List[int], config: dict
 ) -> Dict[str, pd.DataFrame]:
@@ -159,31 +90,6 @@ def conversion(
     return data1
 
 
-# @provides_data("info", "n::ex world", "y::model")
-def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
-    """Miscellaneous bounds for calibration/vetting."""
-
-    # Limit activity of methanol LDVs in the model base year
-    # TODO investigate the cause of the underlying behaviour; then remove this
-    name = "bound_activity_up"
-    data = {
-        name: make_df(
-            name,
-            technology="ICAm_ptrp",
-            year_act=y[0],
-            mode="all",
-            time="year",
-            value=0.0,
-            # unit=info.units_for("technology", "ICAm_ptrp"),
-            unit="Gv km",
-        ).pipe(broadcast, node_loc=nodes)
-    }
-
-    log.info("Miscellaneous bounds for calibration/vetting")
-    return data
-
-
-@provides_data("config", "info")
 def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
     if not config["transport"].dummy_supply:
@@ -217,9 +123,31 @@ def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
     return data
 
 
-@provides_data("n::ex world", "t::transport", "t::transport agg", "y::model", "config")
+def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
+    """Miscellaneous bounds for calibration/vetting."""
+
+    # Limit activity of methanol LDVs in the model base year
+    # TODO investigate the cause of the underlying behaviour; then remove this
+    name = "bound_activity_up"
+    data = {
+        name: make_df(
+            name,
+            technology="ICAm_ptrp",
+            year_act=y[0],
+            mode="all",
+            time="year",
+            value=0.0,
+            # unit=info.units_for("technology", "ICAm_ptrp"),
+            unit="Gv km",
+        ).pipe(broadcast, node_loc=nodes)
+    }
+
+    log.info("Miscellaneous bounds for calibration/vetting")
+    return data
+
+
 def navigate_ele(
-    nodes: List[str], techs: List[Code], t_groups, years: List[int], config
+    nodes: List[str], techs: List["Code"], t_groups, years: List[int], config
 ) -> Dict[str, pd.DataFrame]:
     """Return constraint data for :attr:`ScenarioFlags.ELE`.
 
