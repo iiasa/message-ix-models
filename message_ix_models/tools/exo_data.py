@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict, Mapping, Optional, Tuple, Type
 
 from genno import Computer, Key, Quantity, quote
-from genno.core.key import single_key
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
@@ -24,7 +23,8 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-#: Supported measures.
+#: Supported measures. Subclasses of :class:`.ExoDataSource` may provide support for
+#: other measures.
 #:
 #: .. todo:: Store this in a separate code list or concept scheme.
 MEASURES = ("GDP", "POP")
@@ -38,6 +38,14 @@ class ExoDataSource(ABC):
 
     #: Identifier for this particular source.
     id: str = ""
+
+    #: Optional name for the returned :class:`.Key`/:class:`.Quantity`. If not set by
+    #: :meth:`.__init__`, then the "measure" keyword is used.
+    name: str = ""
+
+    #: Optional additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
+    #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`.
+    extra_dims: Tuple[str, ...] = ()
 
     @abstractmethod
     def __init__(self, source: str, source_kw: Mapping) -> None:
@@ -54,24 +62,54 @@ class ExoDataSource(ABC):
 
         - Transform these into other values, for instance by mapping certain values to
           others, applying regular expressions, or other operations.
-        - Store those values as instance attributes for use in :meth:`__call__`, below.
+        - Store those values as instance attributes for use in :meth:`__call__`.
+        - Set :attr:`name` and/or :attr:`extra_dims` to control the behaviour of
+          :func:`.prepare_computer`.
         - Log messages that give information that may help to debug a
           :class:`ValueError` for `source` or `source_kw` that cannot be handled.
 
         It **should not** actually load data or perform any time- or memory-intensive
-        operations.
+        operations; these should only be triggered by :meth:`.__call__`.
         """
         raise ValueError
 
     @abstractmethod
     def __call__(self) -> Quantity:
-        """Return the data.
+        r"""Return the data.
 
-        The Quantity returned by this method **must** have dimensions "n" and "y". If
-        the original/upstream/raw data has additional dimensions or different dimension
-        IDs, the code **must** transform these, make appropriate selections, etc.
+        The Quantity returned by this method **must** have dimensions
+        :math:`(n, y) \cup \text{extra_dims}`. If the original/upstream/raw data has
+        different dimensionality (fewer or more dimensions; different dimension IDs),
+        the code **must** transform these, make appropriate selections, etc.
         """
         raise NotImplementedError
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        """Prepare `c` to transform raw data from `base_key`.
+
+        `base_key` identifies the :class:`.Quantity` that is returned by
+        :meth:`.__call__`. Before the data is returned, :meth:`.transform` allows the
+        data source to add additional tasks or computations to `c` that further
+        transform the data. (These operations **may** be done in :meth:`.__call__`
+        directly, but :meth:`.transform` allows use of other :mod:`genno` operators and
+        conveniences.)
+
+        The default implementation:
+
+        1. Aggregates the data (:func:`.genno.operator.aggregate`) on the |n| dimension
+           using "n::groups".
+        2. Interpolates the data (:func:`.genno.operator.interpolate`) on the |y|
+           dimension using "y::coords".
+        """
+        # Aggregate
+        c.add(base_key + "1", "aggregate", base_key, "n::groups", keep=False)
+
+        # Interpolate to the desired set of periods
+        kw = dict(fill_value="extrapolate")
+        k2 = base_key + "2"
+        c.add(k2, "interpolate", base_key + "1", "y::coords", kwargs=kw)
+
+        return k2
 
 
 def prepare_computer(
@@ -99,7 +137,7 @@ def prepare_computer(
         other information needed by the source class to identify the data to be
         returned.
 
-        If the key "measure" is present, it **must** be one of :data:`MEASURES`.
+        If the key "measure" is present, it **should** be one of :data:`MEASURES`.
     strict : bool, *optional*
         Raise an exception if any of the keys to be added already exist.
 
@@ -110,15 +148,13 @@ def prepare_computer(
     Raises
     ------
     ValueError
-        if no source is available which can handle `source` and `source_kw`.
+        if no source is registered which can handle `source` and `source_kw`.
     """
     # Handle arguments
     source_kw = source_kw or dict()
     if measure := source_kw.get("measure"):
         if measure not in MEASURES:
-            log.warning(
-                f"source_kw 'measure' must be one of {MEASURES}; got {measure!r}"
-            )
+            log.warning(f"source keyword {measure = } not in recognized {MEASURES}")
     else:
         measure = "UNKNOWN"
 
@@ -158,21 +194,23 @@ def prepare_computer(
     c.add("y0::coord", lambda year: dict(y=year), "y0")
 
     # Retrieve the raw data
-    k = Key(measure.lower(), "ny")
+    k = Key(source_obj.name or measure.lower(), ("n", "y") + source_obj.extra_dims)
     k_raw = k + source_obj.id  # Tagged with the source ID
     keys = [k]  # Keys to return
 
     c.add(k_raw, source_obj)
 
-    # Aggregate
-    c.add(k_raw + "agg", "aggregate", k_raw, "n::groups", keep=False)
+    # Allow the class to further transform the data. See ExoDataSource.transform() for
+    # the default: aggregate, then interpolate
+    key = source_obj.transform(c, k_raw)
 
-    # Interpolate to the desired set of periods
-    kwargs = dict(fill_value="extrapolate")
-    c.add(k, "interpolate", k_raw + "agg", "y::coords", kwargs=kwargs)
+    # Alias `key` -> `k`
+    c.add(k, key)
 
     # Index to y0
-    keys.append(single_key(c.add(k + "y0 indexed", "index_to", k, "y0::coord")))
+    k_y0 = k + "y0_indexed"
+    c.add(k_y0, "index_to", k, "y0::coord")
+    keys.append(k_y0)
 
     # TODO also insert (1) index to a particular label on the "n" dimension (2) both
 
