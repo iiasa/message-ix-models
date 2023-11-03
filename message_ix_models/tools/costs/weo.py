@@ -190,7 +190,7 @@ def get_weo_data() -> pd.DataFrame:
 
 
 # Function to read in technology mapping file
-def get_technology_mapping(input_module) -> pd.DataFrame:
+def get_technology_mapping(module) -> pd.DataFrame:
     """Read in technology mapping file
 
     Returns
@@ -207,10 +207,10 @@ def get_technology_mapping(input_module) -> pd.DataFrame:
     base_file_path = package_data_path("costs", "technology_base_map.csv")
     raw_map_base = pd.read_csv(base_file_path, skiprows=2)
 
-    if input_module == "base":
+    if module == "base":
         return raw_map_base
 
-    if input_module == "materials":
+    if module == "materials":
         materials_file_path = package_data_path("costs", "technology_materials_map.csv")
 
         # Read in materials mapping and do following processing:
@@ -312,18 +312,18 @@ def get_technology_mapping(input_module) -> pd.DataFrame:
 
 # Function to get WEO-based regional differentiation
 def get_weo_region_differentiated_costs(
-    input_node, input_ref_region, input_base_year, input_module
+    node, ref_region, base_year, module
 ) -> pd.DataFrame:
     """Calculate regionally differentiated costs and fixed-to-investment cost
     ratios
 
     Parameters
     ----------
-    input_node : str, optional
+    node : str, optional
         MESSAGEix node, by default "r12"
-    input_ref_region : str, optional
+    ref_region : str, optional
         Reference region, by default "r12_nam"
-    input_base_year : int, optional
+    base_year : int, optional
         Base year, by default BASE_YEAR
 
     Returns
@@ -342,36 +342,36 @@ def get_weo_region_differentiated_costs(
     # If specified node is R12, then use R12_NAM as the reference region
     # If specified node is R20, then use R20_NAM as the reference region
     # However, if a reference region is specified, then use that instead
-    if input_ref_region is None:
-        if input_node.upper() == "R11":
-            input_ref_region = "R11_NAM"
-        if input_node.upper() == "R12":
-            input_ref_region = "R12_NAM"
-        if input_node.upper() == "R20":
-            input_ref_region = "R20_NAM"
+    if ref_region is None:
+        if node.upper() == "R11":
+            ref_region = "R11_NAM"
+        if node.upper() == "R12":
+            ref_region = "R12_NAM"
+        if node.upper() == "R20":
+            ref_region = "R20_NAM"
     else:
-        input_ref_region = input_ref_region
+        ref_region = ref_region
 
-    if input_node.upper() == "R11":
+    if node.upper() == "R11":
         dict_regions = DICT_WEO_R11
-    if input_node.upper() == "R12":
+    if node.upper() == "R12":
         dict_regions = DICT_WEO_R12
-    if input_node.upper() == "R20":
+    if node.upper() == "R20":
         dict_regions = DICT_WEO_R20
 
     # Grab WEO data and keep only investment costs
     df_weo = get_weo_data()
 
     # Grab technology mapping data
-    df_tech_map = get_technology_mapping(input_module)
+    df_tech_map = get_technology_mapping(module)
 
     # If base year does not exist in WEO data, then use earliest year and give
     # warning
-    base_year = str(input_base_year)
+    base_year = str(base_year)
     if base_year not in df_weo.year.unique():
         base_year = str(min(df_weo.year.unique()))
         print(
-            f"Base year {input_base_year} not found in WEO data. \
+            f"Base year {base_year} not found in WEO data. \
                 Using {base_year} instead."
         )
 
@@ -401,7 +401,7 @@ def get_weo_region_differentiated_costs(
     df_sel_weo = pd.concat(l_sel_weo)
 
     # If specified reference region is not in WEO data, then give error
-    ref_region = input_ref_region.upper()
+    ref_region = ref_region.upper()
     if ref_region not in df_sel_weo.region.unique():
         raise ValueError(
             f"Reference region {ref_region} not found in WEO data. \

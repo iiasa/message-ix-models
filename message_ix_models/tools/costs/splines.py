@@ -14,23 +14,23 @@ from message_ix_models.tools.costs.config import (
 
 # Function to apply polynomial regression to convergence costs
 def apply_splines_to_convergence(
-    input_df: pd.DataFrame,
+    df_reg,
     column_name,
-    input_convergence_year,
+    convergence_year,
 ):
     """Apply polynomial regression and splines to convergence"""
 
-    # un_vers = input_df.scenario_version.unique()
-    un_ssp = input_df.scenario.unique()
-    un_tech = input_df.message_technology.unique()
-    un_reg = input_df.region.unique()
+    # un_vers = df.scenario_version.unique()
+    un_ssp = df_reg.scenario.unique()
+    un_tech = df_reg.message_technology.unique()
+    un_reg = df_reg.region.unique()
 
     data_reg = []
     for i, j, k in product(un_ssp, un_tech, un_reg):
-        tech = input_df.query(
+        tech = df_reg.query(
             "scenario == @i and message_technology == @j \
                 and region == @k"
-        ).query("year == @FIRST_MODEL_YEAR or year >= @input_convergence_year")
+        ).query("year == @FIRST_MODEL_YEAR or year >= @convergence_year")
 
         if tech.size == 0:
             continue
@@ -74,7 +74,7 @@ def apply_splines_to_convergence(
 
     df_reg = pd.concat(data_reg).reset_index(drop=1)
     df_wide = (
-        input_df.reindex(
+        df.reindex(
             [
                 "scenario",
                 "message_technology",
