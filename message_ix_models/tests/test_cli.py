@@ -12,6 +12,7 @@ COMMANDS = [
     ("snapshot",),
     ("ssp", "gen-structures"),
     ("techs",),
+    ("testing",),
     ("water-ix",),
 ]
 
