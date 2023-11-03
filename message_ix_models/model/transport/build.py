@@ -305,6 +305,10 @@ def get_computer(
     # - Transfer data from `context` to `config`.
     c.configure(config={"MESSAGEix-Transport": {}})
 
+    # Add a computation that is an empty list.
+    # Individual modules add their data to it, below
+    c.add("add transport data", [])
+
     # Add structure-related keys
     add_structure(c)
     # Add exogenous data
