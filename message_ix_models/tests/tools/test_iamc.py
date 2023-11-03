@@ -1,6 +1,6 @@
 from message_ix_models.project.advance.data import LOCATION, NAME
 from message_ix_models.tools.iamc import describe
-from message_ix_models.util import private_data_path
+from message_ix_models.util import MESSAGE_DATA_PATH, private_data_path
 
 
 def test_describe(test_context):
@@ -14,7 +14,7 @@ def test_describe(test_context):
 
     data = pd.read_csv(source, engine="pyarrow").rename(columns=lambda c: c.upper())
 
-    sm = describe(data, f"ADVANCE data in {path}")
+    sm = describe(data, f"ADVANCE data in {path.relative_to(MESSAGE_DATA_PATH.parent)}")
 
     # Message contains the expected code lists.
     # Code lists have the expected lengths.
@@ -26,3 +26,7 @@ def test_describe(test_context):
         ("UNIT", 29),
     ):
         assert N == len(sm.codelist[id])
+
+    # from message_ix_models.util.sdmx import write
+
+    # write(sm, basename="ADVANCE")
