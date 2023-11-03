@@ -80,20 +80,14 @@ def prepare_computer(c: Computer):
         )
 
     # Data for usage technologies
-    keys.append(
-        single_key(
-            c.add(
-                "transport nonldv usage::ixmp",
-                usage_data,
-                k_lf,
-                "t::transport modes",
-                "n::ex world",
-                "y::model",
-            )
-        )
-    )
+    k_usage = "transport nonldv usage::ixmp"
+    keys.append(k_usage)
+    c.add(k_usage, usage_data, k_lf, "t::transport modes", "n::ex world", "y::model")
 
-    return c.add("merge_data", "transport nonldv::ixmp", *keys)
+    # Add to the scenario
+    k_all = "transport nonldv::ixmp"
+    c.add(k_all, "merge_data", *keys)
+    c.add("transport_data", __name__, key=k_all)
 
 
 def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:

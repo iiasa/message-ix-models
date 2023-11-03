@@ -333,8 +333,10 @@ def prepare_computer(c: Computer):
     k_all = "transport nonldv::ixmp+ikarus"
     c.add(k_all, "merge_data", *final.values())
 
-    # Add to the scenario
-    c.add("transport_data", __name__, key=k_all)
+    # NB we do *not* call c.add("transport_data", ...) here; that is done in
+    # .non_ldv.prepare_computer() only if IKARUS is the selected data source for non-LDV
+    # data. Other derived quantities (emissions factors) are also prepared there based
+    # on these outputs.
 
 
 def get_ikarus_data(context):
