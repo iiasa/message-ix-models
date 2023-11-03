@@ -67,14 +67,11 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     """
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.ssp.data  # noqa: F401
-    from genno import Key
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
 
     # Ensure that the MERtoPPP data provider is available
     from . import data  # noqa: F401
-    from .demand import pdt_cap
-    from .util import path_fallback
 
     # Added keys
     keys = {}
@@ -130,21 +127,26 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         log.info(repr(e))  # Solved scenario that already has this key
 
     # Data from files
-    for parts, key in (
-        # Reference (historical) PDT per capita
-        (("pdt-cap-ref.csv",), pdt_cap + "ref"),
-        # Mode share
-        (("mode-share", f"{context.transport.mode_share}.csv"), Key("mode share::ref")),
-        # LDV disutility
-        (("disutility.csv",), Key("disutility:n-cg-t-y:per vehicle")),
-    ):
-        c.add(
-            "load_file",
-            path_fallback(context, *parts),
-            key=key,
-            dims=RENAME_DIMS,
-            name=key.name,
-        )
+    from .files import FILES, ExogenousDataFile
+
+    ExogenousDataFile(
+        ("mode-share", context.transport.mode_share),
+        "mode share:n-t:ref",
+        "Reference (base year) mode share",
+    )
+
+    for f in FILES:
+        try:
+            c.add(
+                "load_file",
+                f.locate(context),
+                key=f.key,
+                dims=RENAME_DIMS,
+                name=f.key.name,
+            )
+        except FileNotFoundError:
+            if f.required:
+                raise
 
 
 def add_structure(c: Computer):
