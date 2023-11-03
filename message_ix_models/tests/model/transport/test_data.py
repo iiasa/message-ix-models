@@ -1,32 +1,34 @@
 import numpy as np
 import pandas as pd
 import pytest
-from genno import Quantity
+from genno import Key, Quantity
 from iam_units import registry
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
 
-from message_data.model.transport import Config, DataSourceConfig, testing
-from message_data.model.transport import data as data_module
+from message_data.model.transport import Config, DataSourceConfig, files, testing
 from message_data.model.transport.CHN_IND import get_chn_ind_data, get_chn_ind_pop
 from message_data.model.transport.emission import ef_for_input, get_emissions_data
 from message_data.model.transport.roadmap import get_roadmap_data
 from message_data.model.transport.testing import MARK
-from message_data.model.transport.util import path_fallback
 from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
 from message_data.tools.gfei_fuel_economy import get_gfei_data
 
 
-@pytest.mark.parametrize("parts", data_module.DATA_FILES)
-def test_data_files(test_context, parts):
+@pytest.mark.parametrize("file", files.FILES, ids=lambda f: "-".join(f.parts))
+def test_data_files(test_context, file):
     """Input data can be read."""
-    from genno.computations import load_file
+    c, _ = testing.configure_build(test_context, regions="R11", years="B")
 
-    test_context.model.regions = "R11"
+    # Task runs
+    result = c.get(file.key)
 
-    result = load_file(path_fallback(test_context, *parts))
+    # Quantity is loaded
     assert isinstance(result, Quantity)
+
+    # Dimensions are as expected
+    assert set(Key(result).dims) == set(file.key.dims)
 
 
 def test_ef_for_input(test_context):
