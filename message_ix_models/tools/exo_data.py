@@ -3,7 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 from operator import itemgetter
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Tuple, Type
+from typing import Any, Dict, Literal, Mapping, Optional, Tuple, Type
 
 from genno import Computer, Key, Quantity, quote
 
@@ -277,7 +277,12 @@ class DemoSource(ExoDataSource):
 
 @cached
 def iamc_like_data_for_query(
-    path: Path, query: str, *, replace: Optional[dict] = None
+    path: Path,
+    query: str,
+    *,
+    archive_member: Optional[str] = None,
+    non_iso_3166: Literal["keep", "discard"] = "discard",
+    replace: Optional[dict] = None,
 ) -> Quantity:
     """Load data from `path` in IAMC-like format and transform to :class:`.Quantity`.
 
@@ -315,13 +320,30 @@ def iamc_like_data_for_query(
             unique[name] = values[0]
         return df.drop(names_list, axis=1)
 
+    def assign_n(df: pd.DataFrame) -> pd.DataFrame:
+        if non_iso_3166 == "discard":
+            return df.assign(n=df["REGION"].apply(iso_3166_alpha_3))
+        else:
+            return df.assign(n=df["REGION"].apply(lambda v: iso_3166_alpha_3(v) or v))
+
+    # Identify the source object/buffer to read from
+    if archive_member:
+        # A single member in a ZIP archive that has >1 members
+        import zipfile
+
+        zf = zipfile.ZipFile(path)
+        source: Any = zf.open(archive_member)
+    else:
+        # A direct path, possibly compressed
+        source = path
+
     tmp = (
-        pd.read_csv(path, engine="pyarrow")
+        pd.read_csv(source, engine="pyarrow")
         .query(query)
         .replace(replace or {})
         .rename(columns=lambda c: c.upper())
         .pipe(drop_unique, "MODEL SCENARIO VARIABLE UNIT")
-        .assign(n=lambda df: df["REGION"].apply(iso_3166_alpha_3))
+        .pipe(assign_n)
         .dropna(subset=["n"])
         .drop("REGION", axis=1)
         .set_index("n")
