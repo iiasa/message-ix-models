@@ -4,7 +4,7 @@ from typing import cast
 
 import genno.config
 from genno import Computer, MissingKeyError, quote
-from genno.computations import aggregate
+from genno.operator import aggregate
 from message_ix import Reporter
 from message_ix_models import Context
 from message_ix_models.report.util import add_replacements
