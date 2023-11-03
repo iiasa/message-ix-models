@@ -78,6 +78,9 @@ ExogenousDataFile(("ikarus", "inv_cost"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "technical_lifetime"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "var_cost"), dims=("source", "t", "c", "y"))
 ExogenousDataFile("ldv-class", dims=("n", "vehicle_class"), required=False)
+ExogenousDataFile(
+    "load-factor-nonldv", doc="Load factor (occupancy) of non-LDV vehicles", dims=("t",)
+)
 ExogenousDataFile(("ma3t", "attitude"), dims=("attitude",))
 ExogenousDataFile(
     ("ma3t", "driver"), dims=("census_division", "area_type", "driver_type")
