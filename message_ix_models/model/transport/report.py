@@ -44,7 +44,6 @@ def require_compat(c: Computer) -> None:
     c.require_compat("message_ix_models.report.computations")
     c.require_compat("message_data.tools.gdp_pop")
     c.require_compat("message_data.model.transport.operator")
-    c.require_compat("message_data.model.transport.groups")
 
 
 def aggregate_transport(c: Computer, *keys) -> None:
