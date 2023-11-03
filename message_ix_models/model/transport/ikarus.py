@@ -4,7 +4,7 @@ from collections import defaultdict
 from functools import lru_cache, partial
 from itertools import count
 from operator import le
-from typing import Dict
+from typing import TYPE_CHECKING, Dict, Tuple, Union
 
 import pandas as pd
 import xarray as xr
@@ -30,6 +30,9 @@ from openpyxl import load_workbook
 
 from .non_ldv import UNITS
 from .util import input_commodity_level
+
+if TYPE_CHECKING:
+    from genno.core.key import KeyLike
 
 log = logging.getLogger(__name__)
 
@@ -117,8 +120,8 @@ def make_indexers(*args) -> Dict[str, xr.DataArray]:
     """
     t_new, source, t = zip(*[(k, v[0], v[1]) for k, v in SOURCE.items()])
     return dict(
-        source=xr.DataArray(list(source), dims="t_new", coords={"t_new": list(t_new)}),
-        t=xr.DataArray(list(t), dims="t_new"),
+        source=xr.DataArray(list(source), coords={"t_new": list(t_new)}),
+        t=xr.DataArray(list(t), coords={"t_new": list(t_new)}),
     )
 
 
@@ -219,8 +222,6 @@ def prepare_computer(c: Computer):
     # TODO identify whether capacity_factor is needed
     RENAME_DIMS.setdefault("source", "source")
 
-    base_path = private_data_path("transport", "ikarus")
-
     c.add_single("ikarus indexers", quote(make_indexers()))
     c.add_single("y::ikarus", lambda data: list(filter(partial(le, 2000), data)), "y")
     k_u = c.add("ikarus adjust units", Quantity(1.0, units="(vehicle year) ** -1"))
@@ -244,23 +245,22 @@ def prepare_computer(c: Computer):
     # For as_message_df(), fixed values for all data
     common = dict(mode="all", time="year", time_origin="year")
 
-    # Create a chain of computations for each parameter
+    # Create a chain of tasks for each parameter
     final = {}
     for name in ["availability"] + parameters:
         # Base key for computations related to parameter `name`
-        k = Key(f"ikarus {name}", "tyc")
-        # Helper iterator: yields "0", "1", "2", etc. to be used as tags for a sequence
-        # of keys based on `k`
-        i = map(str, count())
+        base_key = Key(f"ikarus {name}", "tyc")
+        _keys = map(lambda i: base_key + str(i), count())
+
+        def k():
+            """Return k + "1", k + "2", … for a sequence of keys based on `k`."""
+            return next(_keys)
 
         # Load data from file
-        path = base_path.joinpath(f"{name}.csv")
-        key = c.add(
-            "load_file", path, key=k.add_tag(next(i)), dims=RENAME_DIMS, name=name
-        )
+        key: Union[KeyLike, Tuple[KeyLike, ...], None] = base_key * "source" + "exo"
 
         # Extend over missing periods in the model horizon
-        key = c.add("extend_y", k.add_tag(next(i)), key, "y::ikarus")
+        key = c.add(k() * "source", "extend_y", key, "y::ikarus", strict=True)
 
         if name in ("fix_cost", "inv_cost"):
             # Adjust for "availability". The IKARUS source gives these costs, and
@@ -268,32 +268,32 @@ def prepare_computer(c: Computer):
             # those to construct/operate enough vehicles/infrastructure to provide that
             # amount of availability. E.g. a cost of 1000 EUR and availability of 10 km
             # give a cost of 100 EUR / km.
-            key = c.add(k + next(i), "div", key, Key("ikarus availability", "tyc", "1"))
+            key = c.add(k(), "div", key, Key("ikarus availability", "tyc", "0"))
             # Adjust units
-            key = c.add(k + next(i), "mul", key, k_u)
+            key = c.add(k(), "mul", key, k_u)
 
         # Select desired values
-        key = c.add("select", k + next(i), key, "ikarus indexers")
-        key = c.add("rename_dims", k + next(i), key, {"t_new": "t"})
+        key = c.add(k(), "select", key, "ikarus indexers")
+        key = c.add(k(), "rename_dims", key, quote({"t_new": "t"}))
 
         if name == "input":
             # Apply scenario-specific input efficiency factor
             key = single_key(c.add("nonldv efficiency::adj", "mul", k_fi, key))
             # Drop existing "c" dimension
-            key = single_key(c.add("drop_vars", key.drop("c"), key, quote("c")))
+            key = single_key(c.add(key / "c", "drop_vars", key, quote("c")))
             # Fill (c, l) dimensions based on t
-            key = c.add(k + next(i), "mul", key, "broadcast:t-c-l")
+            key = c.add(k(), "mul", key, "broadcast:t-c-l")
         elif name == "technical_lifetime":
             # Round up technical_lifetime values due to incompatibility in handling
             # non-integer values in the GAMS code
-            key = c.add(k + next(i), "round", key)
+            key = c.add(k(), "round", key)
 
         # Broadcast across "n" dimension
-        key = c.add(k + next(i), "mul", key, "n:n:ex world")
+        key = c.add(k(), "mul", key, "n:n:ex world")
 
         if name in ("fix_cost", "input", "var_cost"):
             # Broadcast across valid (yv, ya) pairs
-            key = c.add(k + next(i), "mul", key, "broadcast:y-yv-ya")
+            key = c.add(k(), "mul", key, "broadcast:y-yv-ya")
 
         # Convert to target units
         try:
@@ -301,7 +301,7 @@ def prepare_computer(c: Computer):
         except KeyError:  # "availability"
             pass
         else:
-            key = c.add(k + next(i), "convert_units", key, target_units)
+            key = c.add(k(), "convert_units", key, target_units)
 
         # Mapping between short dimension IDs in the computed quantities and the
         # dimensions in the respective MESSAGE parameters
