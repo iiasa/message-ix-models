@@ -58,12 +58,6 @@ def prepare_computer(c: Computer):
     k1 = c.add("US-TIMES MA3T all", read_USTIMES_MA3T_2, None, quote("R11"))
     for name in TABLES:
         c.add(f"ldv {name}:n-t-y:exo", itemgetter(name), k1)
-    c.add(
-        "load_file",
-        path_fallback(context, "ldv-activity.csv"),
-        key="ldv activity:n:exo",
-        dims=RENAME_DIMS,
-    )
 
     # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
     c.add("ldv efficiency:n-t-y", "div", Quantity(1.0), "ldv fuel economy:n-t-y:exo")
