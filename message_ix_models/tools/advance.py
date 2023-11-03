@@ -9,6 +9,7 @@ import pandas as pd
 import pint
 from genno import Quantity
 
+from message_ix_models.project.advance.data import LOCATION, NAME
 from message_ix_models.util import (
     cached,
     local_data_path,
@@ -17,12 +18,6 @@ from message_ix_models.util import (
 )
 
 log = logging.getLogger(__name__)
-
-#: Expected location of the ADVANCE WP2 data snapshot.
-LOCATION = "advance", "advance_compare_20171018-134445.csv.zip"
-
-#: Name of the data file within the archive.
-NAME = "advance_compare_20171018-134445.csv"
 
 #: Standard dimensions for data produced as snapshots from the IIASA ENE Program
 #: “WorkDB”.
