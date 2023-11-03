@@ -42,7 +42,6 @@ def require_compat(c: Computer) -> None:
     c.require_compat("ixmp.reporting.computations")
     c.require_compat("message_ix.reporting.computations")
     c.require_compat("message_ix_models.report.computations")
-    c.require_compat("message_data.tools.gdp_pop")
     c.require_compat("message_data.model.transport.operator")
 
 

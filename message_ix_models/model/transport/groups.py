@@ -9,8 +9,6 @@ from ixmp.reporting import Quantity
 from message_ix_models import Context
 from message_ix_models.util import adapt_R11_R14
 
-from message_data.tools.gdp_pop import population
-
 if TYPE_CHECKING:
     from genno import Computer
 
@@ -22,7 +20,7 @@ def prepare_computer(c: "Computer") -> None:
     from .demand import cg, pop_at, y
 
     # Population shares by area_type
-    c.add(pop_at, urban_rural_shares, y, "config")
+    c.add(pop_at, urban_rural_shares, "population:n-y", y, "config")
     # Consumer group sizes
     keys = c.infer_keys(
         [
@@ -125,7 +123,7 @@ def cg_shares(
     return Quantity(groups / groups.sum("cg"), units="")
 
 
-def urban_rural_shares(years: List[int], config: Dict) -> Quantity:
+def urban_rural_shares(pop: Quantity, years: List[int], config: Dict) -> Quantity:
     """Return shares of urban and rural population.
 
     The data are filled forward to cover the years indicated by the `years` setting.
@@ -149,18 +147,6 @@ def urban_rural_shares(years: List[int], config: Dict) -> Quantity:
     from genno.operator import div, mul
 
     scenario = config["data source"]["population"]
-
-    # Let the population() method handle regions, scenarios, data source.
-    # NB need to adapt the key/hierarchy here from the one on `context` to the one
-    #    stored in a Computer/Reporter; a little messy.
-    pop = population(
-        years,
-        config={
-            "data source": {"population": scenario},
-            "regions": config["regions"],
-        },
-        extra_dims=True,
-    )
 
     if "GEA" in scenario:
         return div(

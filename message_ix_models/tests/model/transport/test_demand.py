@@ -208,7 +208,7 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
     result = c.get(key)
 
     # Data have the correct size
-    exp = dict(n=len(info.set["node"]) - 1, y=len(info.Y), cg=27)
+    exp = dict(n=len(info.set["node"]) - 1, y=len(info.set["year"]), cg=27)
 
     # NB as of genno 1.3.0, can't use .sizes on AttrSeries:
     # assert result.sizes == exp
