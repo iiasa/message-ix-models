@@ -18,7 +18,15 @@ if TYPE_CHECKING:
 
 def prepare_computer(c: Computer):
     k = "transport freight::ixmp"
-    c.add(k, get_freight_data, "n::ex world", "t::transport", "y::model", "context")
+    c.add(
+        k,
+        get_freight_data,
+        "energy intensity of VDT:n-y",
+        "n::ex world",
+        "t::transport",
+        "y::model",
+        "context",
+    )
     c.add("transport_data", __name__, key=k)
 
 

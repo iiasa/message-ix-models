@@ -4,7 +4,7 @@
 """
 import logging
 from importlib import import_module
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 import xarray as xr
@@ -78,11 +78,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     context = c.graph["context"]
 
-    source = str(context.transport.ssp)
-
     # Identify appropriate source keyword arguments for loading GDP and population data
+    source = str(context.transport.ssp)
     if context.transport.ssp in SSP_2017:
-        source_kw = (
+        source_kw: Tuple[Dict[str, Any], ...] = (
             dict(measure="GDP", model="IIASA GDP"),
             dict(measure="POP", model="IIASA GDP"),
         )
@@ -95,13 +94,12 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         )
 
     # Add data for MERtoPPP
-    prepare_computer(
-        context,
-        c,
-        "message_data.model.transport",
-        source_kw=dict(measure="MERtoPPP", context=context),
-        strict=False,
-    )
+    kw = dict(measure="MERtoPPP", context=context)
+    prepare_computer(context, c, __name__, source_kw=kw, strict=False)
+
+    # Add IEA Future of Trucks data
+    for kw in dict(measure=1), dict(measure=2):
+        prepare_computer(context, c, "IEA Future of Trucks", source_kw=kw, strict=False)
 
     try:
         # Alias for other computations which expect the upper-case name
