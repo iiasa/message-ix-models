@@ -213,6 +213,7 @@ unit:
     pkm / GJ: passenger-kilometre per gigajoule
 
     # Cost
+    USD / km: USD per kilometre
     MUSD / a / v: 10⁶ USD per vehicle-year
     MUSD / v: 10⁶ USD per vehicle
     GUSD_2010 / Gv / km: 10⁹ USD per 10⁹ vehicle kilometres
