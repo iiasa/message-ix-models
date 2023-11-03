@@ -183,7 +183,10 @@ def add_structure(c: Computer):
     c.add("broadcast:y-yv-ya", Quantity(tmp))
 
     for key, *comp in (
+        # Configuration
         ("info", itemgetter("transport build info"), "context"),
+        ("dry_run", lambda c: c.core.dry_run, "context"),
+        # Structure
         ("c::transport", quote(info.set["commodity"])),
         ("cg", quote(info.set["consumer_group"])),
         ("n", quote(list(map(str, info.set["node"])))),
@@ -295,11 +298,10 @@ def get_computer(
     context["transport spec"] = spec
     context["transport spec disutility"] = get_disutility_spec(context)
 
-    # Create a Computer, attach the context
+    # Create a Computer, attach the context and scenario
     c = obj or Computer()
     c.add("context", context)
-    if scenario:
-        c.add("scenario", scenario)
+    c.add("scenario", scenario)
 
     # .report._handle_config() does more of the low-level setup, including
     # - Require modules with computations.
