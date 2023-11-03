@@ -117,6 +117,7 @@ submodules = [
     "message_ix_models.project.ssp",
     "message_ix_models.report.cli",
     "message_ix_models.testing.cli",
+    "message_ix_models.util.pooch",
 ]
 
 try:

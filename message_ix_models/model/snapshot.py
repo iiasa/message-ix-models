@@ -126,7 +126,7 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
             "3.4.0. Please upgrade to message_ix 3.5 or later."
         )
 
-    path = fetch(SNAPSHOTS[snapshot_id])
+    path, *_ = fetch(SNAPSHOTS[snapshot_id])
 
     # Add units
     spec = Spec()
