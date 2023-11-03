@@ -128,13 +128,13 @@ def cost(
     return add(price, div(mul(gdp_ppp_cap, votm), mul(speeds, whours))).sel(y=y)
 
 
-def demand_ixmp0(pdt1, pdt2) -> Dict[str, pd.DataFrame]:
+def demand_ixmp0(pdt1: Quantity, pdt2: Quantity) -> Dict[str, pd.DataFrame]:
     """Convert passenger transport demands to ixmp format.
 
     Expects the following inputs:
 
-    - pdt1: "transport pdt:n-y-t"
-    - pdt2: "transport ldv pdt:n-y-cg"
+    - pdt1: "pdt:n-y-t"
+    - pdt2: "ldv pdt:n-y-cg"
     """
     units = "Gp km / a"
 
