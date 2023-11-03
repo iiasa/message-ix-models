@@ -112,6 +112,7 @@ Operators
 
 .. automodule:: message_ix_models.report.computations
    :members:
+   :exclude-members: add_par_data
 
    :mod:`message_ix_models.report.computations` provides the following:
 
@@ -128,6 +129,12 @@ Operators
       model_periods
       remove_ts
       share_curtailment
+
+   The following functions, defined elsewhere, are exposed through :mod:`.operator` and so can also be referenced by name:
+
+   .. autosummary::
+
+      message_ix_models.util.add_par_data
 
    Other operators or genno-compatible functions are provided by:
 
