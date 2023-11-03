@@ -170,7 +170,7 @@ class Config(ConfigHelper):
     #: List of modules containing model-building calculations.
     modules: List[str] = field(
         default_factory=lambda: (
-            "demand freight ikarus ldv disutility non_ldv plot data"
+            "groups demand freight ikarus ldv disutility non_ldv plot data"
         ).split()
     )
 
