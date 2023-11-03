@@ -182,7 +182,8 @@ def add_structure(c: Computer):
     )
     c.add("broadcast:y-yv-ya", Quantity(tmp))
 
-    for key, value in (
+    for key, *comp in (
+        ("info", itemgetter("transport build info"), "context"),
         ("c::transport", quote(info.set["commodity"])),
         ("cg", quote(info.set["consumer_group"])),
         ("n", quote(list(map(str, info.set["node"])))),
@@ -195,7 +196,7 @@ def add_structure(c: Computer):
         ),
     ):
         try:
-            c.add(key, value, strict=True)  # Raise an exception if `key` exists
+            c.add(key, *comp, strict=True)  # Raise an exception if `key` exists
         except KeyExistsError:
             continue  # Already present; don't overwrite
 
