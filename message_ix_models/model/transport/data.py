@@ -3,10 +3,12 @@ import logging
 from collections import defaultdict
 from functools import partial
 from operator import le
-from typing import TYPE_CHECKING, Dict, List, Mapping
+from typing import TYPE_CHECKING, Dict, List, Mapping, Optional
 
 import pandas as pd
-from genno import Computer
+from genno import Computer, Key, Quantity
+from genno.core.key import single_key
+from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
@@ -16,6 +18,7 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     make_source_tech,
+    private_data_path,
     same_node,
 )
 
@@ -210,6 +213,85 @@ def navigate_ele(
 
 
 @register_source
+class IEA_Future_of_Trucks(ExoDataSource):
+    """Retrieve IEA “Future of Trucks” data.
+
+    Parameters
+    ----------
+    measure : int
+        One of:
+
+        1. energy intensity of vehicle distance travelled
+        2. load
+        3. energy intensity of freight service (mass × distance)
+    """
+
+    id = "iea-future-of-trucks"
+
+    convert_units: Optional[str] = None
+
+    _name_unit = {
+        1: ("energy intensity of VDT", "GWa / (Gv km)"),
+        2: ("load factor", None),
+        3: ("energy intensity of FV", None),
+    }
+
+    def __init__(self, source, source_kw):
+        if not source == "IEA Future of Trucks":
+            raise ValueError
+
+        self.measure = source_kw.pop("measure")
+        self.name, self._unit = self._name_unit[self.measure]
+        self.path = private_data_path("transport", f"iea-2017-t4-{self.measure}.csv")
+
+    def __call__(self):
+        from genno.operator import load_file
+
+        return load_file(self.path, dims=RENAME_DIMS)
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        import xarray as xr
+
+        # Broadcast to regions. map_as_qty() expects columns in from/to order.
+        map_node = pd.DataFrame(
+            [
+                ("R12_CHN", "CHN"),
+                ("R12_EEU", "EU28"),
+                ("R12_NAM", "USA"),
+                ("R12_SAS", "IND"),
+                ("R12_WEU", "EU28"),
+                # Assumed similarity
+                ("R12_AFR", "IND"),
+                ("R12_FSU", "CHN"),
+                ("R12_LAM", "USA"),
+                ("R12_MEA", "CHN"),
+                ("R12_PAO", "CHN"),
+                ("R12_PAS", "CHN"),
+                ("R12_RCPA", "CHN"),
+            ],
+            columns=["n2", "n"],
+        )[["n", "n2"]]
+
+        # Share of freight activity; transcribed from figure 18, page 38
+        share = Quantity(
+            xr.DataArray([0.1, 0.3, 0.6], coords=[("t", ["LCV", "MFT", "HFT"])])
+        )
+
+        # Add tasks
+        k = base_key
+        # Map from IEA source nodes to target nodes
+        c.add(k + "1", "map_as_qty", map_node, [])
+        c.add(k + "2", "broadcast_map", base_key, k + "1", rename={"n2": "n"})
+        # Weight by share of freight activity
+        result = c.add(k + "3", "sum", k + "2", weights=share, dimensions=["t"])
+
+        if self.convert_units:
+            result = c.add(k + "4", "convert_units", k + "3", units=self.convert_units)
+
+        return single_key(result)
+
+
+@register_source
 class MERtoPPP(ExoDataSource):
     """Provider of exogenous MERtoPPP data."""
 
@@ -257,6 +339,5 @@ class MERtoPPP(ExoDataSource):
 
     def __call__(self):
         from genno.operator import load_file
-        from ixmp.reporting import RENAME_DIMS
 
         return self.adapt(load_file(self.path, dims=RENAME_DIMS))
