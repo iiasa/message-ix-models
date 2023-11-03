@@ -4,7 +4,6 @@ import pytest
 from message_ix.reporting import Key
 from message_ix_models.model.structure import get_codes
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
-from message_ix_models.testing import NIE
 from pytest import param
 
 from message_data.model.transport import Config, build, demand, testing
@@ -51,7 +50,7 @@ def test_demand_dummy(test_context, regions, years):
         param("R11", "B", 11, dict(futures_scenario="A---"), marks=MARK[1]),
         ("R12", "B", 12, dict()),
         ("R12", "B", 12, dict(navigate_scenario="act+ele+tec")),
-        param("R14", "B", 14, dict(), marks=NIE),
+        param("R14", "B", 14, dict(), marks=MARK[2](AttributeError)),
         param("ISR", "A", 1, dict(), marks=MARK[3]),
     ],
 )
@@ -191,7 +190,7 @@ def test_exo_report(test_context, tmp_path):
         param("ISR", marks=MARK[3]),
         "R11",
         "R12",
-        param("R14", marks=NIE),
+        param("R14", marks=MARK[2](AttributeError)),
     ],
 )
 @pytest.mark.parametrize("years", ["B"])

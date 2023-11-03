@@ -31,4 +31,4 @@ def test_disutility(
     # Data are added to the scenario
     N = 12 * 27 * 12 * 14  # n × cg × t × y
     with assert_logs(caplog, f"{N} rows in 'input'"):
-        c.get("add disutility")
+        c.get("add message_data.model.transport.disutility")
