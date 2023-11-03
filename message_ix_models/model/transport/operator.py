@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from genno import Quantity
-from genno.computations import apply_units, convert_units, relabel, rename_dims
+from genno.operator import apply_units, convert_units, relabel, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
 from message_ix import Scenario, make_df
@@ -62,7 +62,7 @@ def base_shares(
     If the data lack the n (node, spatial) and/or y (time) dimensions, they are
     broadcast over these.
     """
-    from genno.computations import aggregate, div, mul, sum
+    from genno.operator import aggregate, div, mul, sum
     from numpy import allclose
 
     # Check: ensure values sum to 1
@@ -115,7 +115,7 @@ def cost(
        2. the wage rate per hour (`gdp_ppp_cap` / `whours`), and
        3. the travel time per unit distance (1 / `speeds`).
     """
-    from genno.computations import add, div, mul
+    from genno.operator import add, div, mul
 
     # NB for some reason, the 'y' dimension of result becomes `float`, rather than
     # `int`, in this step
@@ -173,7 +173,7 @@ def distance_ldv(config: dict) -> Quantity:
     - Regions other than R11_NAM have M/F values in same proportion to their A value as
       in NAM
     """
-    from genno.computations import mul
+    from genno.operator import mul
 
     # Load from config.yaml
     result = mul(
@@ -435,7 +435,7 @@ def logit(
     …where :math:`D` is the dimension named by the `dim` argument. All other dimensions
     are broadcast automatically.
     """
-    from genno.computations import div, mul, pow
+    from genno.operator import div, mul, pow
 
     # Systematic utility
     u = mul(k, pow(x, lamda)).sel(y=y)
@@ -473,7 +473,7 @@ def merge_data(
 def _advance_data_for(config: dict, variable: str, units) -> Quantity:
     import plotnine as p9
     from genno.compat.plotnine import Plot
-    from genno.computations import concat, sum
+    from genno.operator import concat, sum
 
     assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
 
@@ -565,7 +565,7 @@ def iea_eei_fv(name: str, config: Dict) -> Quantity:
 def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
-    This mapping should be used with :func:`.genno.computations.aggregate`, giving the
+    This mapping should be used with :func:`.genno.operator.aggregate`, giving the
     argument ``keep=False``. It includes 1:1 mapping from each region name to itself.
 
     .. todo:: move upstream, to :mod:`message_ix_models`.
@@ -606,7 +606,7 @@ def pdt_per_capita(
     :attr:`.Config.fixed_GDP`, :attr:`.Config.fixed_demand`), which give a fixed future
     point towards which all regions converge.
     """
-    from genno.computations import add, sub
+    from genno.operator import add, sub
 
     # Selectors/indices
     n = dict(n=gdp_ppp_cap.coords["n"].data)
@@ -662,7 +662,7 @@ def share_weight(
     config: dict,
 ) -> Quantity:
     """Calculate mode share weights."""
-    from genno.computations import div, pow
+    from genno.operator import div, pow
 
     # Modes from configuration
     cfg = config["transport"]
@@ -722,7 +722,7 @@ def share_weight(
 
 def smooth(qty: Quantity) -> Quantity:
     """Smooth `qty` (e.g. PRICE_COMMODITY) in the ``y`` dimension."""
-    from genno.computations import add, concat, mul
+    from genno.operator import add, concat, mul
 
     # General smoothing
     result = add(0.25 * qty.shift(y=-1), 0.5 * qty, 0.25 * qty.shift(y=1))

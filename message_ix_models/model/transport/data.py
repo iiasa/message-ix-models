@@ -328,7 +328,7 @@ class MERtoPPP(ExoDataSource):
             self.adapt = passthrough
 
     def __call__(self):
-        from genno.computations import load_file
+        from genno.operator import load_file
         from ixmp.reporting import RENAME_DIMS
 
         return self.adapt(load_file(self.path, dims=RENAME_DIMS))

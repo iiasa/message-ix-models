@@ -406,7 +406,7 @@ def capacity_factor(
     y
         All periods, including pre-model periods.
     """
-    from genno.computations import convert_units
+    from genno.operator import convert_units
     from message_ix.reporting.computations import as_message_df
 
     # TODO determine units from technology annotations

@@ -4,7 +4,7 @@ from typing import Dict, List
 
 import pandas as pd
 from genno import Computer, Quantity, computations
-from genno.computations import broadcast_map, load_file
+from genno.operator import broadcast_map, load_file
 from iam_units import registry
 from ixmp.reporting.computations import map_as_qty
 from message_ix_models import Context

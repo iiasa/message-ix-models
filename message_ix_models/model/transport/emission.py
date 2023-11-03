@@ -5,7 +5,7 @@ from typing import Dict
 
 import pandas as pd
 from genno import Quantity
-from genno.computations import convert_units, load_file, mul
+from genno.operator import convert_units, load_file, mul
 from iam_units import registry
 from message_ix import make_df
 from message_ix_models import Context
