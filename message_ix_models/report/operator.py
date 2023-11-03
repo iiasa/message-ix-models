@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple, Unio
 
 import ixmp
 import pandas as pd
-from genno.computations import pow
 from genno.core.operator import Operator
+from genno.operator import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 from ixmp.reporting import Quantity
@@ -44,7 +44,7 @@ def codelist_to_groups(
 ) -> Mapping[str, Mapping[str, List[str]]]:
     """Convert `codes` into a mapping from parent items to their children.
 
-    The returned value is suitable for use with :func:`genno.computations.aggregate`.
+    The returned value is suitable for use with :func:`genno.operator.aggregate`.
 
     If this is a list of nodes per :func:`.get_codes`, then the mapping is from regions
     to the ISO 3166-1 alpha-3 codes of the countries within each region. The code for
