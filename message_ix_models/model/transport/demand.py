@@ -80,18 +80,14 @@ QUEUE = [
     ("whour:", "quantity_from_config", "config", quote("work_hours")),
     ("lambda:", "quantity_from_config", "config", quote("lamda")),
     # Base share data
-    ("mode share:n-t-y:base", "base_shares", "mode share::ref", n, t_modes, y),
-    # Population shares by area_type
-    (pop_at, "urban_rural_shares", y, "config"),
-    # Consumer group sizes
-    (cg, "cg_shares", pop_at, "context"),
+    ("mode share:n-t-y:base", "base_shares", "mode share:n-t:ref", n, t_modes, y),
     # PPP GDP, total and per capita
     (gdp_ppp, "mul", gdp, mer_to_ppp),
     (gdp_ppp_cap, "div", gdp_ppp, pop),
     # GDP index
     (gdp_index, "index_to", gdp_ppp_cap, literal("y"), "y0"),
     # Projected PDT per capita
-    (pdt_cap, "pdt_per_capita", gdp_ppp_cap, pdt_cap + "ref", "y0", "config"),
+    (pdt_cap, "pdt_per_capita", gdp_ppp_cap, (pdt_cap / "y") + "ref", "y0", "config"),
     # Total PDT
     (pdt_ny, "mul", pdt_cap, pop),
     # Value-of-time multiplier
