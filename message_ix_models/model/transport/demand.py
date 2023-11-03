@@ -169,6 +169,13 @@ QUEUE = [
         "y::model",
         "config",
     ),
+    (
+        "transport demand::ixmp",
+        "merge_data",
+        "transport demand passenger::ixmp",
+        "transport demand freight::ixmp",
+        "dummy demand::ixmp",
+    ),
 ]
 
 
@@ -181,3 +188,4 @@ def prepare_computer(c: Computer) -> None:
         Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
     """
     c.add_queue(QUEUE)
+    c.add("transport_data", __name__, key="transport demand::ixmp")

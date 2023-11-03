@@ -330,7 +330,11 @@ def prepare_computer(c: Computer):
     )
 
     # Merge all data together
-    return c.add("merge_data", "transport nonldv::ixmp+ikarus", *final.values())
+    k_all = "transport nonldv::ixmp+ikarus"
+    c.add(k_all, "merge_data", *final.values())
+
+    # Add to the scenario
+    c.add("transport_data", __name__, key=k_all)
 
 
 def get_ikarus_data(context):
