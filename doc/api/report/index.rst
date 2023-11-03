@@ -105,16 +105,16 @@ Plots
 .. automodule:: message_ix_models.report.plot
    :members:
 
-.. currentmodule:: message_ix_models.report.computations
+.. currentmodule:: message_ix_models.report.operator
 
 Operators
 ---------
 
-.. automodule:: message_ix_models.report.computations
+.. automodule:: message_ix_models.report.operator
    :members:
    :exclude-members: add_par_data
 
-   :mod:`message_ix_models.report.computations` provides the following:
+   :mod:`message_ix_models.report.operator` provides the following:
 
    .. autosummary::
 
