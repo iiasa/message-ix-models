@@ -351,12 +351,6 @@ def prepare_reporter(
 
     # Append the message_data operators
     rep.require_compat("message_ix_models.report.operator")
-    try:
-        # TODO Replace usage of operators from this module in favour of .exo_data; then
-        #      remove this line.
-        rep.require_compat("message_data.tools.gdp_pop")
-    except ModuleNotFoundError:  # pragma: no cover
-        pass  # Currently in message_data
 
     # Force re-installation of the function iamc() in this file as the handler for
     # "iamc:" sections in global.yaml. Until message_data.reporting is removed, then
