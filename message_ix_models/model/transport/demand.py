@@ -73,8 +73,8 @@ def dummy(
     return dict(demand=pd.concat(dfs).pipe(broadcast, node=nodes))
 
 
-# Inputs for Computer.add_queue()
-QUEUE = [
+#: Task for computing and adding demand data; inputs to :meth:`.Computer.add_queue`.
+TASKS = [
     # Values based on configuration
     ("speed:t", "quantity_from_config", "config", quote("speeds")),
     ("whour:", "quantity_from_config", "config", quote("work_hours")),
@@ -176,12 +176,11 @@ QUEUE = [
 
 
 def prepare_computer(c: Computer) -> None:
-    """Prepare `rep` for calculating transport demand.
+    """Prepare `c` to calculate and add transport demand data.
 
-    Parameters
-    ----------
-    rep : Reporter
-        Must contain the keys ``<GDP:n-y>``, ``<MERtoPPP:n-y>``.
+    See also
+    --------
+    TASKS
     """
-    c.add_queue(QUEUE)
+    c.add_queue(TASKS)
     c.add("transport_data", __name__, key="transport demand::ixmp")
