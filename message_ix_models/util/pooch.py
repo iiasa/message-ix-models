@@ -75,7 +75,7 @@ SOURCE = {
     ),
     "MESSAGEix-Nexus": dict(
         pooch_args=dict(
-            base_url="https://github.com/iiasa/message-ix-models/raw/main/"
+            base_url="https://github.com/iiasa/message-ix-models/raw/enh/2023-W44/"
             "message_ix_models/data/water/",
             registry={"water.tar.xz": "sha1:ec9e0655af90ca844c0158968bb03a194b8fa6c6"},
         ),
