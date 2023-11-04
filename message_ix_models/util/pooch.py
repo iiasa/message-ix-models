@@ -11,26 +11,51 @@ from .context import Context
 log = logging.getLogger(__name__)
 
 
-class Unzip:
-    """:class:`pooch.Unzip` streamlined using :mod:`pathlib`."""
+class Extract:
+    """Similar to :class:`pooch.Unzip`, streamlined using :mod:`pathlib`.
 
-    def __init__(self, members=None):
+    This version supports:
+
+    - Absolute or relative paths for the `extract_dir` parameter.
+    - :file:`.zip` or :file:`.tar.xz` archives.
+    """
+
+    def __init__(self, members=None, extract_dir=None):
         self.members = members
+        self.extract_dir = Path(extract_dir or ".")
 
     def __call__(self, fname, action, pooch):
+        import tarfile
         import zipfile
 
         path = Path(fname)
-        extract_dir = path.parent
+
+        # Identify the directory for extracted files
+        if self.extract_dir.is_absolute():
+            # Some absolute path
+            extract_dir = self.extract_dir
+        else:
+            # A relative path, possibly the default
+            extract_dir = path.parent.joinpath(self.extract_dir)
+
+        # Ensure the directory exists
         extract_dir.mkdir(parents=True, exist_ok=True)
 
         members = self.members
-        with zipfile.ZipFile(path, "r") as zf:
+
+        # Select the class/method to open the archive, and the method name for listing
+        # members
+        cls, list_method = {
+            ".zip": (zipfile.ZipFile, "namelist"),
+            ".xz": (tarfile.TarFile.open, "getnames"),
+        }[path.suffix]
+
+        with cls(path) as archive:
             if members is None:
-                members = zf.namelist()
+                members = getattr(archive, list_method)()
                 log.info(f"Unpack all {len(members)} members of {path}")
 
-            zf.extractall(members=members, path=extract_dir)
+            archive.extractall(members=members, path=extract_dir)
 
         return members
 
@@ -46,8 +71,16 @@ SOURCE = {
                 ),
             },
         ),
-        processor=Unzip(members=["PRIMAP-hist_v2.0_11-Dec-2018.csv"]),
-    )
+        processor=Extract(members=["PRIMAP-hist_v2.0_11-Dec-2018.csv"]),
+    ),
+    "MESSAGEix-Nexus": dict(
+        pooch_args=dict(
+            base_url="https://github.com/iiasa/message-ix-models/raw/main/"
+            "message_ix_models/data/water/",
+            registry={"water.tar.xz": "sha1:ec9e0655af90ca844c0158968bb03a194b8fa6c6"},
+        ),
+        processor=Extract(extract_dir="water"),
+    ),
 }
 
 
