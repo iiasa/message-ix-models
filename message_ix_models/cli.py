@@ -111,7 +111,6 @@ main.add_command(ixmp_cli.commands["config"])
 #: or @click.group.
 submodules = [
     "message_ix_models.model.cli",
-    "message_ix_models.model.snapshot",
     "message_ix_models.model.structure",
     "message_ix_models.model.water.cli",
     "message_ix_models.project.ssp",

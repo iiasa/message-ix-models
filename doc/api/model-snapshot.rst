@@ -10,7 +10,7 @@ Usage
 
 From the command line, download data for a single snapshot::
 
-    $ mix-models snapshot fetch 0
+    $ mix-models fetch snapshot-0
 
 …where :program:`0` is the ID of a snapshot; see :data:`.SNAPSHOTS`.
 

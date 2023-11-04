@@ -60,6 +60,18 @@ class Extract:
         return members
 
 
+class UnpackSnapshot:
+    """Pooch processor that calls :func:`.snapshot.unpack`."""
+
+    def __call__(self, fname, action, pooch):
+        from message_ix_models.model.snapshot import unpack
+
+        path = Path(fname)
+        unpack(path)
+
+        return path
+
+
 #: Supported remote sources of data.
 SOURCE = {
     "PRIMAP": dict(
@@ -80,6 +92,17 @@ SOURCE = {
             registry={"water.tar.xz": "sha1:ec9e0655af90ca844c0158968bb03a194b8fa6c6"},
         ),
         processor=Extract(extract_dir="water"),
+    ),
+    "snapshot-0": dict(
+        pooch_args=dict(
+            base_url="doi:10.5281/zenodo.5793870",
+            registry={
+                "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline.xlsx": (
+                    "md5:222193405c25c3c29cc21cbae5e035f4"
+                ),
+            },
+        ),
+        processor=UnpackSnapshot(),
     ),
 }
 
@@ -114,6 +137,9 @@ def fetch(pooch_args, **fetch_kwargs) -> Tuple[Path, ...]:
         raise NotImplementedError("fetch() with registries with >1 files")
 
     filenames = p.fetch(next(iter(p.registry.keys())), **fetch_kwargs)
+
+    if isinstance(filenames, (str, Path)):
+        filenames = [filenames]
 
     # Convert to pathlib.Path
     paths = tuple(map(Path, filenames))
