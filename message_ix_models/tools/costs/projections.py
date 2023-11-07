@@ -446,10 +446,11 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
             technology=lambda x: x.technology.astype("string"),
             unit=lambda x: x.unit.astype("string"),
             year_vtg=lambda x: x.year_vtg.astype(int),
-            year_act=lambda x: x.year_vtg.astype(int),
+            year_act=lambda x: x.year_act.astype(int),
             value=lambda x: x.value.astype(float),
         )
         .query("year_vtg <= 2060 or year_vtg % 10 == 0")
+        .query("year_act <= 2060 or year_act % 10 == 0")
         .reset_index(drop=True)
     )
 
