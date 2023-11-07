@@ -172,7 +172,7 @@ def get_weo_data() -> pd.DataFrame:
 
     # Calculate median values for each technology
     df_median = (
-        all_cost_df.groupby(["weo_technology"])
+        all_cost_df.groupby(["weo_technology", "cost_type"])
         .agg(median_value=("value", "median"))
         .reset_index()
     )
@@ -180,7 +180,7 @@ def get_weo_data() -> pd.DataFrame:
     # Merge full dataframe with median dataframe
     # Replace null values with median values
     df_merged = (
-        all_cost_df.merge(df_median, on=["weo_technology"], how="left")
+        all_cost_df.merge(df_median, on=["weo_technology", "cost_type"], how="left")
         .assign(adj_value=lambda x: np.where(x.value.isnull(), x.median_value, x.value))
         .drop(columns={"value", "median_value"})
         .rename(columns={"adj_value": "value"})
