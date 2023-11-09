@@ -27,7 +27,7 @@ To add a specific database, you can use the ixmp CLI [1]_::
     $ ixmp platform add [PLATFORMNAME] jdbc oracle [COMPUTER]:[PORT]/[SERVICENAME] [USERNAME] [PASSWORD]
 
 You may also want to make this the *default* platform.
-Unless told otherwise, :mod:`message_ix_models` creates :class:`~.Platform` objects without any arguments (``mp = ixmp.Platform()``); this loads the default platform.
+Unless told otherwise, :mod:`message_ix_models` creates :class:`~ixmp.Platform` objects without any arguments (``mp = ixmp.Platform()``); this loads the default platform.
 Set the default::
 
     $ ixmp platform add default [PLATFORMNAME]
@@ -150,7 +150,7 @@ To explain further:
    These options direct it to work with a different Platform.
 
 ``--model MODEL --scenario SCENARIO`` or ``--url``
-    Many commands use an *existing* :class:`~.Scenario` as a starting point, and begin by cloning that Scenario to a new (model name, scenario name).
+    Many commands use an *existing* |Scenario| as a starting point, and begin by cloning that Scenario to a new (model name, scenario name).
     For any such command, these top-level options define the starting point/initial Scenario to clone/‘baseline’.
 
     In contrast, see ``--output-model``, below.

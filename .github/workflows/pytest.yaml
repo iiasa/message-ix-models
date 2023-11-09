@@ -26,18 +26,17 @@ jobs:
         - { os: ubuntu-latest, python: "3.11" }
         - { os: windows-latest, python: "3.11" }
         # Versions of both ixmp and message_ix to use
-        upstream-version:
-        # Temporarily disabled (iiasa/ixmp#477)
-        # - v3.4.0  # Minimum version given in setup.cfg
-        # - v3.5.0
-        # - v3.6.0
-        - v3.7.0  # Latest released version
-        - main    # Development version
+        upstream:
+        - { version: v3.4.0, extra-deps: '"pandas<2.0"' }  # Minimum version given in setup.cfg
+        - { version: v3.5.0, extra-deps: '"pandas<2.0"' }
+        - { version: v3.6.0, extra-deps: '"pandas<2.0"' }
+        - { version: v3.7.0, extra-deps: "" }  # Latest released version
+        - { version: main, extra-deps: "" }  # Development version
 
       fail-fast: false
 
     runs-on: ${{ matrix.version.os }}
-    name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream-version }}
+    name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream.version }}
 
     steps:
     - name: Cache test data
@@ -64,10 +63,19 @@ jobs:
         license: ${{ secrets.GAMS_LICENSE }}
 
     - name: Install packages and dependencies
+      # By default, install:
+      # - ixmp, message_ix: from GitHub branches/tags per matrix.upstream-version (above)
+      # - other dependencies including genno: from PyPI.
+      #
+      # To test against unreleased code (on `main`, or other branches
+      # for open PRs), temporarily uncomment, add, or edit lines below
+      # as needed. DO NOT merge such changes to `main`.
       run: |
-        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream-version }}"
-        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream-version }}"
-        pip install .[tests]
+        # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream.version }}"
+        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
+
+        pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
 
     - name: Configure local data path
       run: |
@@ -86,10 +94,26 @@ jobs:
       shell: bash
 
     - name: Test documentation build using Sphinx
-      if: startsWith(matrix.os, 'ubuntu')
+      if: startsWith(matrix.version.os, 'ubuntu')
       env:
         RTD_TOKEN_MESSAGE_DATA: ${{ secrets.RTD_TOKEN_MESSAGE_DATA }}
-      run: make --directory=doc html
+      run: make --directory=doc SPHINXOPTS="-n --color" html
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3
+
+  pre-commit:
+    name: Code quality
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+
+    - name: Force recreation of pre-commit virtual environment for mypy
+      if: github.event_name == 'schedule'  # Comment this line to run on a PR
+      run: gh cache list -L 999 | cut -f2 | grep pre-commit | xargs -I{} gh cache delete "{}" || true
+      env: { GH_TOKEN: "${{ github.token }}" }
+
+    - uses: pre-commit/action@v3.0.0

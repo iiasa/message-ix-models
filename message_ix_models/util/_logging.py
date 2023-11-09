@@ -13,21 +13,48 @@ __all__ = [
     "silence_log",
 ]
 
+log = logging.getLogger(__name__)
+
 
 @contextmanager
-def silence_log():
-    """Context manager to temporarily silence log output.
+def silence_log(names=None, level=logging.ERROR):
+    """Context manager to temporarily quiet 1 or more loggers.
+
+    Parameters
+    ----------
+    names : str, *optional*
+        Space-separated names of loggers to quiet.
+    level : int, *optional*
+        Minimum level of log messages to allow.
 
     Examples
     --------
     >>> with silence_log():
     >>>     log.warning("This message is not recorded.")
     """
-    # Restore the log level at the end of the context
-    with preserve_log_level():
-        # Set the level to a very high value
-        logging.getLogger(__name__.split(".")[0]).setLevel(100)
+    # Default: the top-level logger for the package containing this file
+    if names is None:
+        names = [__name__.split(".")[0], "message_data"]
+    elif isinstance(names, str):
+        names = [names]
+
+    log.info(f"Set level={level} for logger(s): {' '.join(names)}")
+
+    # Retrieve the logger objects
+    loggers = list(map(logging.getLogger, names))
+    # Store their current levels
+    levels = []
+
+    try:
+        for logger in loggers:
+            levels.append(logger.getEffectiveLevel())  # Store the current levels
+            logger.setLevel(level)  # Set the level
         yield
+    finally:
+        # Restore the levels
+        for logger, original_level in zip(loggers, levels):
+            logger.setLevel(original_level)
+        log.info("…restored.")
 
 
 @contextmanager
@@ -172,9 +199,9 @@ def setup(
 
     Parameters
     ----------
-    level : str, optional
+    level : str, *optional*
         Log level for :mod:`message_ix_models` and :mod:`message_data`.
-    console : bool, optional
+    console : bool, *optional*
         If :obj:`True`, print all messages to console using a :class:`Formatter`.
     """
     # Copy to avoid modifying with the operations below

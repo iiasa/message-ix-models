@@ -5,12 +5,10 @@ requires = ["build", "setuptools-scm"]
 dynamic = ["version"]
 name = "message-ix-models"
 description = "Tools for the MESSAGEix-GLOBIOM family of models"
-authors = [
-  {name = "IIASA Energy, Climate, and Environment (ECE) Program"},
-]
+authors = [{ name = "IIASA Energy, Climate, and Environment (ECE) Program" }]
 maintainers = [
-  {name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name"},
-  {name = "Fridolin Glatter", email = "glatter@iiasa.ac.at"},
+  { name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name" },
+  { name = "Fridolin Glatter", email = "glatter@iiasa.ac.at" },
 ]
 readme = "README.rst"
 classifiers = [
@@ -28,7 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: R",
   "Topic :: Scientific/Engineering",
-  "Topic :: Scientific/Engineering :: Information Analysis"
+  "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -36,8 +34,8 @@ dependencies = [
   "colorama",
   # When the minimum is greater than the minimum via message_ix; e.g.
   # message_ix >= 3.4.0 → ixmp >= 3.4.0 → genno >= 1.6.0",
-  "genno >= 1.8.0",
-  "iam_units",
+  "genno >= 1.18.1",
+  "iam_units >= 2023.9.11",
   "message_ix >= 3.4.0",
   "pooch",
   "pyam-iamc >= 0.6",
@@ -71,8 +69,13 @@ tests = [
 [project.scripts]
 mix-models = "message_ix_models.cli:main"
 
-[tool.isort]
-profile = "black"
+[tool.coverage.report]
+exclude_also = [
+  # Don't complain about abstract methods, they aren't run
+  "@(abc\\.)?abstractmethod",
+  # Imports only used by type checkers
+  "if TYPE_CHECKING:",
+]
 
 [tool.mypy]
 exclude = ["doc/"]
@@ -106,6 +109,12 @@ no_implicit_optional = false
 # Disable faulthandler plugin on Windows to prevent spurious console noise
 addopts = "-p no:faulthandler --cov=message_ix_models --cov-report="
 filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
+
+[tool.ruff]
+select = ["C9", "E", "F", "I", "W"]
+
+[tool.ruff.mccabe]
+max-complexity = 13
 
 [tool.setuptools.packages]
 find = {}

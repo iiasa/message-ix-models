@@ -8,7 +8,7 @@ The codes in these lists denote **regions** and **countries**.
 When loaded using :func:`.get_codes`, the :attr:`.Code.child` attribute is a list of child codes.
 See the function documentation for how to retrieve these.
 
-.. seealso:: :func:`.adapt_R11_R12`, :func:`.adapt_R11_R14`, :func:`.identify_nodes`.
+.. seealso:: :obj:`.adapt_R11_R12`, :obj:`.adapt_R11_R14`, :func:`.identify_nodes`.
 
 .. contents::
    :local:
@@ -22,6 +22,22 @@ Models with global scope
 -------------------------------
 
 .. literalinclude:: ../../message_ix_models/data/node/R32.yaml
+   :language: yaml
+
+.. _R20:
+
+20-region aggregation (``R20``)
+-------------------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/R20.yaml
+   :language: yaml
+
+.. _R17:
+
+17-region aggregation (``R17``)
+-------------------------------
+
+.. literalinclude:: ../../message_ix_models/data/node/R17.yaml
    :language: yaml
 
 .. _R14:

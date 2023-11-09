@@ -39,6 +39,25 @@ templates_path = ["_template"]
 # html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+nitpick_ignore_regex = {
+    # These occur because there is no .. py:module:: directive for the *top-level*
+    # module or package in the respective documentation and inventories.
+    # TODO Remove once the respective docs are fixed
+    ("py:mod", "ixmp"),
+    ("py:mod", "message_ix"),
+    ("py:mod", "message_data"),
+    # iam-units has no Sphinx docs
+    ("py:.*", "iam_units.*"),
+    # These are a consequence of autosummary-class.rst
+    ("py:(obj|meth)", r".*\.Test.*\.test_.*"),
+}
+
+rst_prolog = """
+.. |Code| replace:: :class:`~sdmx.model.common.Code`
+.. |Platform| replace:: :class:`~ixmp.Platform`
+.. |Scenario| replace:: :class:`~message_ix.Scenario`
+"""
+
 
 def setup(app: "sphinx.application.Sphinx") -> None:
     """Copied from pytest's conf.py to enable intersphinx references to these."""
@@ -74,14 +93,12 @@ html_theme = "sphinx_rtd_theme"
 
 autosummary_generate = True
 
-
 # -- Options for sphinx.ext.extlinks ---------------------------------------------------
 
 extlinks = {
     "issue": ("https://github.com/iiasa/message-ix-models/issue/%s", "GH #%s"),
     "pull": ("https://github.com/iiasa/message-ix-models/pull/%s", "PR #%s"),
 }
-
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
 
@@ -95,13 +112,23 @@ intersphinx_mapping = {
     "message-ix": ("https://docs.messageix.org/en/latest/", None),
     "m-data": (
         f"https://{_token}:@docs.messageix.org/projects/models-internal/en/latest/",
-        None,
+        # Use a local copy of objects.inv, if the user has one
+        (None, "message_data.inv"),
     ),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "pint": ("https://pint.readthedocs.io/en/stable/", None),
     "pooch": ("https://www.fatiando.org/pooch/latest/", None),
     "pytest": ("https://docs.pytest.org/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),
+}
+
+# -- Options for sphinx.ext.napoleon ---------------------------------------------------
+
+napoleon_type_aliases = {
+    "Code": ":class:`~sdmx.model.common.Code`",
+    "Path": ":class:`~pathlib.Path`",
+    "PathLike": ":class:`os.PathLike`",
 }
 
 # -- Options for sphinx.ext.todo -------------------------------------------------------

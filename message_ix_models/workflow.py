@@ -23,12 +23,12 @@ class WorkflowStep:
     Parameters
     ----------
     name : str
-        ``"model name/scenario name"`` for the :class:`.Scenario` produced by the step.
-    action : CallbackType, optional
+        ``"model name/scenario name"`` for the |Scenario| produced by the step.
+    action : CallbackType, *optional*
         Function to be executed to modify the base into the target Scenario.
-    clone : bool, optional
+    clone : bool, *optional*
         :obj:`True` to clone the base scenario the target.
-    target : str, optional
+    target : str, *optional*
         URL for the scenario produced by the workflow step. Parsed to
         :attr:`scenario_info` and :attr:`platform_info`.
     kwargs
@@ -136,11 +136,11 @@ class WorkflowStep:
 
 
 class Workflow(Computer):
-    """Workflow for operations on multiple :class:`Scenarios <.Scenario>`.
+    """Workflow for operations on multiple :class:`Scenarios <message_ix.Scenario>`.
 
     Parameters
     ----------
-    context : .Context
+    context : Context
         Context object with settings common to the entire workflow.
     """
 
@@ -191,7 +191,7 @@ class Workflow(Computer):
             self.graph.pop(name, None)
 
         # Add to the Computer; return the name of the added step
-        return self.add_single(name, step, "context", base, strict=True)
+        return str(self.add_single(name, step, "context", base, strict=True))
 
     def run(self, name_or_names: Union[str, List[str]]):
         """Run all workflow steps necessary to produce `name_or_names`.
@@ -207,7 +207,7 @@ class Workflow(Computer):
         """Truncate the workflow at the step `name`.
 
         The step `name` is replaced with a new :class:`WorkflowStep` that simply loads
-        the target :class:`Scenario` that would be produced by the original step.
+        the target |Scenario| that would be produced by the original step.
 
         Raises
         ------

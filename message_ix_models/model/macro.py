@@ -14,7 +14,7 @@ import pandas as pd
 from message_ix_models.model.bare import get_spec
 from message_ix_models.util import nodes_ex_world
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from sdmx.model.v21 import Code
 
     from message_ix_models import Context
@@ -43,8 +43,8 @@ def generate(
       node list indicated by :attr:`.model.Config.regions`.
     - "year": All periods from the period *before* the first model year.
     - "commodity": The elements of `commodities`.
-    - "sector": If each entry of `commodities` is a :class:`.Code` and has an annotation
-      with id="macro-sector", the value of that annotation. Otherwise, the same as
+    - "sector": If each entry of `commodities` is a |Code| and has an annotation with
+      id="macro-sector", the value of that annotation. Otherwise, the same as
       `commodity`.
 
     `value` supplies the parameter value, which is the same for all observations.
@@ -56,7 +56,7 @@ def generate(
         MACRO parameter for which to generate data.
     context
         Used with :func:`.bare.get_spec`.
-    commodities : list of str or Code
+    commodities : list of str or |Code|
         Commodities to include in the MESSAGE-MACRO linkage.
     value : float
         Parameter value.

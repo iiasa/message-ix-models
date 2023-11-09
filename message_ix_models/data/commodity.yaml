@@ -1,11 +1,17 @@
 biomass:
   units: GWa
   report: Solids|Biomass
+  ipcc-1996-name: "Solid Biomass"
 
 coal:
   name: Coal
   units: GWa
   report: Solids|Fossil
+  # NB same value as "Coking coal"; this choice is arbitrary
+  # NB in message_doc, this appears as "Hard coal", but this
+  #    term usually refers to anthracite, which has a higher
+  #    carbon emission factor.
+  ipcc-1996-name: "Other Bituminous Coal"
 
 crudeoil:
   name: Crude oil
@@ -14,6 +20,7 @@ crudeoil:
   level: primary
   units: GWa
   report: Oil
+  ipcc-1996-name: "Crude Oil"
 
 d_heat:
   name: (?) District heat
@@ -38,14 +45,16 @@ freshwater_supply:
 
 fueloil:
   name: Fuel oil
-  description: Heavy fuel oil.
+  description: Heavy fuel oil
   level: secondary
   units: GWa
+  ipcc-1996-name: "Residual Fuel Oil"
 
 gas:
   name: Natural Gas
   units: GWa
   report: Gases
+  ipcc-1996-name: "Natural Gas (Dry)"
 
 hydrogen:
   name: Gaseous hydrogen
@@ -61,11 +70,19 @@ lightoil:
   # level: secondary
   units: GWa
   report: Liquids|Oil
+  # NB same value as "Crude Oil" and several others; this choice is arbitrary
+  ipcc-1996-name: "Other Oil"
+
+lignite:
+  name: Lignite
+  ipcc-1996-name: "Lignite"
 
 methanol:
   name: Methanol
   units: GWa
   report: Liquids|Coal
+  # This does not appear in the referenced source; value is 17.4
+  # ipcc-1996-name: MISSING
 
 non-comm:
   name: Non-commercial biomass
@@ -238,8 +255,6 @@ transport:
 # Land Cover|Forest|Natural Forest
 # Land Cover|Other Natural Land
 # Land Cover|Pasture
-# lh2
-# lignite
 # LiquidTotal
 # LNG
 # LoggingResidues
