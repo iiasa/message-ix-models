@@ -3,7 +3,9 @@ from message_ix_models.tools.costs.learning import (
     get_technology_learning_scenarios_data,
     project_ref_region_inv_costs_using_learning_rates,
 )
-from message_ix_models.tools.costs.weo import get_weo_region_differentiated_costs
+from message_ix_models.tools.costs.regional_differentiation import (
+    get_weo_region_differentiated_costs,
+)
 
 
 def test_get_cost_reduction_data():

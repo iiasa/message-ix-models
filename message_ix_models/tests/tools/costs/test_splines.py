@@ -4,8 +4,10 @@ from message_ix_models.tools.costs.config import FIRST_MODEL_YEAR
 from message_ix_models.tools.costs.learning import (
     project_ref_region_inv_costs_using_learning_rates,
 )
+from message_ix_models.tools.costs.regional_differentiation import (
+    get_weo_region_differentiated_costs,
+)
 from message_ix_models.tools.costs.splines import apply_splines_to_convergence
-from message_ix_models.tools.costs.weo import get_weo_region_differentiated_costs
 
 
 def test_apply_splines_to_convergence():
