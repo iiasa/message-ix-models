@@ -15,7 +15,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     """Get cost reduction data
 
     Raw data on cost reduction in 2100 for technologies are read from \
-        :file:`data/costs/gea_cost_reduction.csv`.
+        :file:`data/costs/cost_reduction_***.csv`.
 
     Returns
     -------
@@ -29,7 +29,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     """
 
     # Read in raw data
-    gea_file_path = package_data_path("costs", "cost_reduction_rates.csv")
+    gea_file_path = package_data_path("costs", "cost_reduction_energy.csv")
     base_rates = (
         pd.read_csv(gea_file_path, header=8)
         .melt(
@@ -50,7 +50,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 
     elif module == "materials":
         # Read in materials technology mapping file
-        materials_file_path = package_data_path("costs", "technology_materials_map.csv")
+        materials_file_path = package_data_path("costs", "tech_map_materials.csv")
         df_materials_tech = pd.read_csv(materials_file_path)
 
         # For materials technologies with map_tech == base, map to base technologies
@@ -102,7 +102,7 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         - learning_rate: the learning rate (either low, medium, or high)
     """
 
-    file = package_data_path("costs", "technology_learning_rates.csv")
+    file = package_data_path("costs", "scenarios_reduction_energy.csv")
     base_learn = (
         pd.read_csv(file)
         .assign(
@@ -125,7 +125,7 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
 
     elif module == "materials":
         # Read in materials technology mapping file
-        materials_file_path = package_data_path("costs", "technology_materials_map.csv")
+        materials_file_path = package_data_path("costs", "tech_map_materials.csv")
         df_materials_tech = pd.read_csv(materials_file_path)
 
         # For materials technologies with map_tech == base, map to base technologies

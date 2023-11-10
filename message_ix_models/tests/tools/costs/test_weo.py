@@ -1,4 +1,4 @@
-from message_ix_models.tools.costs.weo import (
+from message_ix_models.tools.costs.regional_differentiation import (
     get_technology_mapping,
     get_weo_data,
     get_weo_region_differentiated_costs,

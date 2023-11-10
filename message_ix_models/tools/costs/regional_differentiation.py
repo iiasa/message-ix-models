@@ -204,14 +204,14 @@ def get_technology_mapping(module) -> pd.DataFrame:
         of the technology in the reference region (in 2005 USD)
     """
 
-    base_file_path = package_data_path("costs", "technology_base_map.csv")
+    base_file_path = package_data_path("costs", "tech_map_energy.csv")
     raw_map_base = pd.read_csv(base_file_path, skiprows=2)
 
     if module == "base":
         return raw_map_base
 
     if module == "materials":
-        materials_file_path = package_data_path("costs", "technology_materials_map.csv")
+        materials_file_path = package_data_path("costs", "tech_map_materials.csv")
 
         # Read in materials mapping and do following processing:
         # - Remove rows with null map_source values
