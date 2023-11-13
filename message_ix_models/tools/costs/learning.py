@@ -30,7 +30,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 
     # Read in raw data
     gea_file_path = package_data_path("costs", "cost_reduction_energy.csv")
-    base_rates = (
+    energy_rates = (
         pd.read_csv(gea_file_path, header=8)
         .melt(
             id_vars=["message_technology", "technology_type"],
@@ -45,21 +45,21 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         .reset_index(drop=1)
     )
 
-    if module == "base":
-        return base_rates
+    if module == "energy":
+        return energy_rates
 
     elif module == "materials":
         # Read in materials technology mapping file
         materials_file_path = package_data_path("costs", "tech_map_materials.csv")
         df_materials_tech = pd.read_csv(materials_file_path)
 
-        # For materials technologies with map_tech == base, map to base technologies
+        # For materials technologies with map_tech == energy, map to base technologies
         # and use cost reduction data
         materials_rates = (
-            df_materials_tech.query("map_source == 'base'")
+            df_materials_tech.query("map_source == 'energy'")
             .drop(columns=["map_source", "base_year_reference_region_cost"])
             .merge(
-                base_rates.rename(
+                energy_rates.rename(
                     columns={"message_technology": "base_message_technology"}
                 ),
                 how="inner",
@@ -72,7 +72,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         )
 
         # Concatenate base and materials rates
-        all_rates = pd.concat([base_rates, materials_rates], ignore_index=True)
+        all_rates = pd.concat([energy_rates, materials_rates], ignore_index=True)
 
         return all_rates
 
@@ -102,9 +102,9 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         - learning_rate: the learning rate (either low, medium, or high)
     """
 
-    file = package_data_path("costs", "scenarios_reduction_energy.csv")
-    base_learn = (
-        pd.read_csv(file)
+    energy_scen_file = package_data_path("costs", "scenarios_reduction_energy.csv")
+    energy_learn = (
+        pd.read_csv(energy_scen_file)
         .assign(
             first_technology_year=lambda x: np.where(
                 x.first_year_original > base_year,
@@ -120,8 +120,8 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         )
     )
 
-    if module == "base":
-        return base_learn
+    if module == "energy":
+        return energy_learn
 
     elif module == "materials":
         # Read in materials technology mapping file
@@ -131,10 +131,10 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         # For materials technologies with map_tech == base, map to base technologies
         # and use their learning rates
         materials_learn = (
-            df_materials_tech.query("map_source == 'base'")
+            df_materials_tech.query("map_source == 'energy'")
             .drop(columns=["map_source", "base_year_reference_region_cost"])
             .merge(
-                base_learn.rename(
+                energy_learn.rename(
                     columns={"message_technology": "base_message_technology"}
                 ),
                 how="inner",
@@ -147,7 +147,7 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         )
 
         # Concatenate base and materials rates
-        all_learn = pd.concat([base_learn, materials_learn], ignore_index=True)
+        all_learn = pd.concat([energy_learn, materials_learn], ignore_index=True)
 
         return all_learn
 
