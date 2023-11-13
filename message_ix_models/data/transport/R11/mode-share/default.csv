@@ -18,25 +18,25 @@ R11_AFR, RAIL,       0.02
 R11_CPA, 2W,         0.08
 R11_CPA, AIR,        0.14
 R11_CPA, BUS,        0.30
-R11_CPA, LDV,        0.16
+R11_CPA, LDV,        0.17
 R11_CPA, OTHER ROAD, 0.00
 R11_CPA, RAIL,       0.31
 R11_EEU, 2W,         0.01
 R11_EEU, AIR,        0.01
-R11_EEU, BUS,        0.35
+R11_EEU, BUS,        0.34
 R11_EEU, LDV,        0.46
 R11_EEU, OTHER ROAD, 0.00
-R11_EEU, RAIL,       0.14
+R11_EEU, RAIL,       0.18
 R11_FSU, 2W,         0.01
 R11_FSU, AIR,        0.25
 R11_FSU, BUS,        0.20
 R11_FSU, LDV,        0.40
 R11_FSU, OTHER ROAD, 0.00
-R11_FSU, RAIL,       0.12
+R11_FSU, RAIL,       0.14
 R11_LAM, 2W,         0.04
 R11_LAM, AIR,        0.08
 R11_LAM, BUS,        0.36
-R11_LAM, LDV,        0.50
+R11_LAM, LDV,        0.51
 R11_LAM, OTHER ROAD, 0.00
 R11_LAM, RAIL,       0.01
 R11_MEA, 2W,         0.02
@@ -45,7 +45,7 @@ R11_MEA, BUS,        0.18
 R11_MEA, LDV,        0.20
 R11_MEA, OTHER ROAD, 0.36
 R11_MEA, RAIL,       0.03
-R11_NAM, 2W,         0.005
+R11_NAM, 2W,         0.01
 R11_NAM, AIR,        0.11
 R11_NAM, BUS,        0.06
 R11_NAM, LDV,        0.81
@@ -66,7 +66,7 @@ R11_PAS, RAIL,       0.08
 R11_SAS, 2W,         0.30
 R11_SAS, AIR,        0.07
 R11_SAS, BUS,        0.19
-R11_SAS, LDV,        0.13
+R11_SAS, LDV,        0.14
 R11_SAS, OTHER ROAD, 0.14
 R11_SAS, RAIL,       0.16
 R11_WEU, 2W,         0.02
