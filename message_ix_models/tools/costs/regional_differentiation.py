@@ -207,7 +207,7 @@ def get_technology_mapping(module) -> pd.DataFrame:
     base_file_path = package_data_path("costs", "tech_map_energy.csv")
     raw_map_base = pd.read_csv(base_file_path, skiprows=2)
 
-    if module == "base":
+    if module == "energy":
         return raw_map_base
 
     if module == "materials":
@@ -263,7 +263,7 @@ def get_technology_mapping(module) -> pd.DataFrame:
         # If the "base_year_reference_region_cost" is not null in raw_materials_map,
         # then use that
         materials_map_base = (
-            raw_materials_map.query("map_source == 'base'")
+            raw_materials_map.query("map_source == 'energy'")
             .drop(columns=["map_source"])
             .rename(
                 columns={

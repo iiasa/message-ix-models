@@ -49,7 +49,7 @@ class Config:
     method: Literal["convergence", "gdp", "learning"] = "gdp"
 
     #: Model variant to prepare data for.
-    module: Literal["base", "materials"] = "base"
+    module: Literal["energy", "materials"] = "energy"
 
     #: Reference region; default "{node}_NAM".
     ref_region: Optional[str] = None

@@ -615,12 +615,13 @@ def create_cost_projections(
             ref_region = ref_region.upper()
 
         # Print final selection of regions, reference regions, and base year
+        print("Selected module: " + module)
         print("Selected node: " + node_up)
         print("Selected reference region: " + ref_region)
         print("Selected base year: " + str(base_year))
-        print("Selected module: " + module)
-
         print("Selected method: " + method)
+        print("Selected fixed O&M rate: " + str(fom_rate))
+        print("Selected format: " + format)
 
         # If method is learning, then use the learning method
         if method == "learning":
@@ -653,9 +654,6 @@ def create_cost_projections(
                 in_scenario=scenario,
                 in_convergence_year=convergence_year,
             )
-
-        print("Selected fixed O&M rate: " + str(fom_rate))
-        print("Selected format: " + format)
 
         if format == "message":
             df_inv, df_fom = create_message_outputs(df_costs, fom_rate=fom_rate)
