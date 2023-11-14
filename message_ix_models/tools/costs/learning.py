@@ -101,17 +101,28 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, or SSP5)
         - learning_rate: the learning rate (either low, medium, or high)
     """
+    energy_first_year_file = package_data_path("costs", "first_year_energy.csv")
+    df_first_year_energy = pd.read_csv(energy_first_year_file, skiprows=3)
 
     energy_scen_file = package_data_path("costs", "scenarios_reduction_energy.csv")
+
     energy_learn = (
         pd.read_csv(energy_scen_file)
+        .merge(df_first_year_energy, on="message_technology", how="left")
+        .assign(
+            first_technology_year=lambda x: np.where(
+                x.first_year_original.isnull(),
+                base_year,
+                x.first_year_original,
+            )
+        )  # if first year is missing, set to base year
         .assign(
             first_technology_year=lambda x: np.where(
                 x.first_year_original > base_year,
                 x.first_year_original,
                 base_year,
             ),
-        )
+        )  # if first year is after base year, then keep assigned first year
         .drop(columns=["first_year_original"])
         .melt(
             id_vars=["message_technology", "first_technology_year"],
@@ -124,19 +135,43 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         return energy_learn
 
     elif module == "materials":
-        # Read in materials technology mapping file
-        materials_file_path = package_data_path("costs", "tech_map_materials.csv")
-        df_materials_tech = pd.read_csv(materials_file_path)
+        # Read in materials first year
+        materials_first_year_file = package_data_path(
+            "costs", "first_year_materials.csv"
+        )
+        df_first_year_materials = pd.read_csv(materials_first_year_file)
 
-        # For materials technologies with map_tech == base, map to base technologies
-        # and use their learning rates
+        # Read in materials technology mapping file and merge with first year
+        materials_file_path = package_data_path("costs", "tech_map_materials.csv")
+        df_materials_tech = (
+            pd.read_csv(materials_file_path)
+            .merge(df_first_year_materials, on="message_technology", how="left")
+            .assign(
+                first_technology_year=lambda x: np.where(
+                    x.first_year_original.isnull(),
+                    base_year,
+                    x.first_year_original,
+                )
+            )
+            .assign(
+                first_technology_year=lambda x: np.where(
+                    x.first_year_original > base_year,
+                    x.first_year_original,
+                    base_year,
+                ),
+            )
+            .drop(columns=["first_year_original"])
+        )
+
+        # For materials technologies with map_tech == energy,
+        # use the same reduction scenarios as energy technologies
         materials_learn = (
             df_materials_tech.query("map_source == 'energy'")
             .drop(columns=["map_source", "base_year_reference_region_cost"])
             .merge(
                 energy_learn.rename(
                     columns={"message_technology": "base_message_technology"}
-                ),
+                ).drop(columns=["first_technology_year"]),
                 how="inner",
                 left_on="map_technology",
                 right_on="base_message_technology",
