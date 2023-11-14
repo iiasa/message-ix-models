@@ -1,6 +1,6 @@
-# Data on the first year technologies begin to start being operable
-#
-# This data was directly copied from the "NAM_SSP2" sheet in https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP1_techinput.xlsx
+# Data on the first year technologies begin to start being operable,
+#,
+"# This data was directly copied from the ""NAM_SSP2"" sheet in https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/SSP1_techinput.xlsx",
 message_technology,first_year_original
 coal_ppl,2005
 gas_ppl,2005
