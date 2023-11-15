@@ -520,6 +520,14 @@ def gen_data_steel(scenario, dry_run=False):
     df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
     results[parname].append(df)
 
+    # Add CCS as addon
+    parname = "addon_conversion"
+    ccs_tec = ["bf_steel"]
+    df = make_df(
+        parname, mode="M2", type_addon="ccs_steel", value=1, unit="-", **common
+    ).pipe(broadcast, node=nodes, technology=ccs_tec)
+    results[parname].append(df)
+
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
