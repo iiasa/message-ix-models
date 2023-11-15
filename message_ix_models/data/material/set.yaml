@@ -283,6 +283,7 @@ steel:
     add:
     - steel
     - pig_iron
+    - pig_iron_dummy
     - sponge_iron
     - sinter_iron
     - pellet_iron
@@ -318,6 +319,7 @@ steel:
     - sinter_steel
     - pellet_steel
     - bf_steel
+    - bf_ccs_steel
     - dri_steel
     - dri_gas_steel
     - dri_h2_steel
@@ -356,6 +358,18 @@ steel:
       - ["steel","new_scrap"]
       - ["steel","useful_material"]
       - ["steel","final_material"]
+  addon:
+    add:
+      - bf_ccs_steel
+  type_addon:
+    add:
+      - steel_ccs
+  map_tec_addon:
+    add:
+      - [bf_steel, steel_ccs]
+  cat_addon:
+    add:
+      - [steel_ccs, bf_ccs_steel]
 
 cement:
   commodity:

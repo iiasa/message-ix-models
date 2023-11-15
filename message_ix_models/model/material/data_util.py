@@ -1986,6 +1986,7 @@ def add_ccs_technologies(scen: message_ix.Scenario) -> None:
                 "gas_NH3_ccs",
                 "coal_NH3_ccs",
                 "fueloil_NH3_ccs",
+                "bf_ccs_steel"
             ],
             "emission": "CO2",
         },
