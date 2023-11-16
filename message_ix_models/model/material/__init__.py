@@ -347,12 +347,12 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
         )
         emission_dict = {
             "node": "World",
-            "type_emission": "TCE",
+            "type_emission": "TCE_CO2",
             "type_tec": "all",
             "type_year": "cumulative",
             "unit": "???",
         }
-        df = message_ix.make_df("bound_emission", value=3667, **emission_dict)
+        df = message_ix.make_df("bound_emission", value=990, **emission_dict)
         scenario_new.check_out()
         scenario_new.add_par("bound_emission", df)
         scenario_new.commit("add emission bound")
