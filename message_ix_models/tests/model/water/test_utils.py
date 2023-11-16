@@ -3,8 +3,7 @@ from unittest.mock import patch
 import pandas as pd
 import xarray as xr
 
-from message_ix_models.model.water.build import (
-    Context,
+from message_ix_models.model.water.utils import (
     add_commodity_and_level,
     map_add_on,
     map_yv_ya_lt,
