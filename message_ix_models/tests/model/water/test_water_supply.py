@@ -97,7 +97,8 @@ def test_add_water_supply():
     with patch(
         "message_ix_models.util.private_data_path", return_value="path/to/file"
     ), patch("pandas.read_csv", return_value=df_node), patch(
-        "message_ix_models.model.water.water_supply.map_basin_region_wat", return_value=df_sw  # Adjust this import
+        "message_ix_models.model.water.water_supply.map_basin_region_wat",
+        return_value=df_sw  # Adjust this import
     ):
         # Call the function to be tested
         result = add_water_supply(context)
@@ -135,7 +136,8 @@ def test_add_e_flow():
 
     # Mock the function 'read_water_availability' to return the mocked DataFrame
     with patch(
-        "message_ix_models.model.water.demands.read_water_availability", return_value=(df_sw, df_sw)
+        "message_ix_models.model.water.demands.read_water_availability",
+        return_value=(df_sw, df_sw)
     ), patch(
         "message_ix_models.util.private_data_path", return_value="path/to/file"
     ), patch(
