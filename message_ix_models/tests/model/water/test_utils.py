@@ -9,6 +9,8 @@ from message_ix_models.model.water.utils import (
     map_yv_ya_lt,
     read_config,
 )
+from message_ix_models import Context
+from sdmx.model.v21 import Code
 
 
 def test_read_config():
