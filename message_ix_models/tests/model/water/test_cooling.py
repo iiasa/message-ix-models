@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from message_ix_models.model.water.data.irrigation import non_cooling_tec
+from message_ix_models.model.water.data.water_supply import non_cooling_tec
 
 
 def test_non_cooling_tec():
