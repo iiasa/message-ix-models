@@ -217,15 +217,15 @@ def build_scen(context, datafile, tag, mode, scenario_name):
         #print('Base scenario is: ' + scenario.scenario + ", version: " + scenario.version)
         output_scenario_name = scenario.scenario + '_' + tag
         scenario_new = scenario.clone('MESSAGEix-Materials', output_scenario_name,
-                                  keep_solution=False, shift_first_model_year=2025)
+                                  keep_solution=False, shift_first_model_year=2030)
         emission_dict = {
             "node": "World",
-            "type_emission": "TCE",
+            "type_emission": "TCE_CO2",
             "type_tec": "all",
             "type_year": "cumulative",
             "unit": "???",
         }
-        df = message_ix.make_df("bound_emission", value=3667, **emission_dict)
+        df = message_ix.make_df("bound_emission", value=990, **emission_dict)
         scenario_new.check_out()
         scenario_new.add_par("bound_emission", df)
         scenario_new.commit("add emission bound")
@@ -357,11 +357,11 @@ from .data_ammonia_new import gen_all_NH3_fert
 
 DATA_FUNCTIONS_1 = [
     #gen_data_buildings,
+    gen_data_steel,
     gen_data_methanol_new,
     gen_all_NH3_fert,
     #gen_data_ammonia, ## deprecated module!
     gen_data_generic,
-    gen_data_steel,
 ]
 DATA_FUNCTIONS_2 = [
     gen_data_cement,
