@@ -79,7 +79,12 @@ def apply_spec(  # noqa: C901
 
     dump: Dict[str, pd.DataFrame] = {}  # Removed data
 
-    for set_name in scenario.set_list():
+    # Sort the list of sets by the number of dimensions; this places basic (non-indexed)
+    # sets first. Elements for these sets must be added before elements for indexed
+    # sets that may reference them.
+    sets = sorted((len(scenario.idx_sets(s)), s) for s in scenario.set_list())
+
+    for _, set_name in sets:
         # Check whether this set is mentioned at all in the spec
         if 0 == sum(map(lambda info: len(info.set[set_name]), spec.values())):
             # Not mentioned; don't do anything

@@ -103,6 +103,9 @@ module = [
   "dask.*",
   "jpype",
   "memory_profiler",
+  # TEMPORARY pending adjustment for iiasa/ixmp#500
+  "ixmp.utils",
+  "ixmp.reporting",
 ]
 ignore_missing_imports = true
 
