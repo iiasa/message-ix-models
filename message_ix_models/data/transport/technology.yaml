@@ -271,7 +271,7 @@ rail_pub:
   input: {commodity: electr}
   report: RAIL_urban_ELE
 
-transport freight load factor:
+transport freight road usage:
   description: >-
     Conversion from vehicle-distance traveled to freight transport activity
 

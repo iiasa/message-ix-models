@@ -102,8 +102,17 @@ commodity:
       demand: true
       units: Gt km
 
+    transport freight road:
+      name: Freight transport by road
+      demand: true
+      units: Gt km
+
     transport freight vehicle:
       name: Freight transport vehicle distance travelled
+      units: Gv km
+
+    transport freight road vehicle:
+      name: Freight transport by road vehicle distance travelled
       units: Gv km
 
     transport pax:

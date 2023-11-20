@@ -63,7 +63,7 @@ def conversion(
     )
 
     service_info = [
-        ("freight", config["transport"].load_factor["freight"], "Gt km"),
+        # ("freight", config["transport"].load_factor["freight"], "Gt km"),
         ("pax", 1.0, "Gp km / a"),
     ]
 
