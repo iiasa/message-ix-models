@@ -49,7 +49,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         tech_map = pd.concat([energy_map, materials_sub], ignore_index=True)
 
     # Read in raw data
-    gea_file_path = package_data_path("costs", "cost_reduction_energy.csv")
+    gea_file_path = package_data_path("costs", "energy", "cost_reduction_energy.csv")
     energy_rates = (
         pd.read_csv(gea_file_path, header=8)
         .melt(
@@ -144,15 +144,19 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
     """
 
     if module == "energy":
-        energy_first_year_file = package_data_path("costs", "first_year_energy.csv")
+        energy_first_year_file = package_data_path(
+            "costs", "energy", "first_year_energy.csv"
+        )
         df_first_year = pd.read_csv(energy_first_year_file, skiprows=3)
 
     if module == "materials":
-        energy_first_year_file = package_data_path("costs", "first_year_energy.csv")
+        energy_first_year_file = package_data_path(
+            "costs", "energy", "first_year_energy.csv"
+        )
         energy_first_year = pd.read_csv(energy_first_year_file, skiprows=3)
 
         materials_first_year_file = package_data_path(
-            "costs", "first_year_materials.csv"
+            "costs", "materials", "first_year_materials.csv"
         )
         materials_first_year = pd.read_csv(materials_first_year_file)
         df_first_year = pd.concat(
@@ -223,7 +227,9 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
     )
 
     # Merge with energy technologies that have given scenarios
-    energy_scen_file = package_data_path("costs", "scenarios_reduction_energy.csv")
+    energy_scen_file = package_data_path(
+        "costs", "energy", "scenarios_reduction_energy.csv"
+    )
     df_energy_scen = pd.read_csv(energy_scen_file).rename(
         columns={"message_technology": "scenario_technology"}
     )
