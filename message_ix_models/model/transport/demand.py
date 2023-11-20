@@ -28,6 +28,12 @@ gdp_index = gdp_ppp_cap + "index"
 pdt_nyt = Key("pdt", "nyt")  # Total PDT shared out by mode
 pdt_cap = pdt_nyt.drop("t") + "capita"
 pdt_ny = pdt_nyt.drop("t") + "total"
+pdt_cny = Key("pdt", "cny")  # With 'c' instead of 't' dimension, for demand
+ldv_ny = Key("pdt ldv", "ny")
+ldv_nycg = Key("pdt ldv") * cg
+ldv_cny = Key("pdt ldv", "cny")
+fv = Key("freight activity", "nty")
+fv_cny = Key("freight activity", "cny")
 price_sel1 = price_full + "transport"
 price_sel0 = price_sel1 + "raw units"
 price = price_sel1 + "smooth"
@@ -73,13 +79,20 @@ def dummy(
     return dict(demand=pd.concat(dfs).pipe(broadcast, node=nodes))
 
 
+# Common positional args to as_message_df
+_demand_common = (
+    "demand",
+    dict(commodity="c", node="n", year="y"),
+    dict(level="useful", time="year"),
+)
+
 #: Task for computing and adding demand data; inputs to :meth:`.Computer.add_queue`.
 TASKS = [
     # Values based on configuration
     ("speed:t", "quantity_from_config", "config", quote("speeds")),
     ("whour:", "quantity_from_config", "config", quote("work_hours")),
     ("lambda:", "quantity_from_config", "config", quote("lamda")),
-    # Base share data
+    # Base passenger mode share
     ("mode share:n-t-y:base", "base_shares", "mode share:n-t:ref", n, t_modes, y),
     # PPP GDP, total and per capita
     (gdp_ppp, "mul", gdp, mer_to_ppp),
@@ -94,7 +107,7 @@ TASKS = [
     ("votm:n-y", "votm", gdp_ppp_cap),
     # Select only the price of transport services
     # FIXME should be the full set of prices
-    (price_sel0, "select", price_full, dict(c="transport")),
+    ((price_sel0, "select", price_full), dict(indexers=dict(c="transport"), drop=True)),
     (price_sel1, "price_units", price_sel0),
     # Smooth prices to avoid zig-zag in share projections
     (price, "smooth", price_sel1),
@@ -129,48 +142,65 @@ TASKS = [
     # Per capita (for validation)
     ("transport pdt:n-y-t:capita", "div", pdt_nyt, pop),
     # LDV PDT only
-    (("ldv pdt:n-y:ref", "select", pdt_nyt, dict(t=["LDV"])), dict(drop=True)),
+    ((ldv_ny + "ref", "select", pdt_nyt), dict(indexers=dict(t="LDV"), drop=True)),
     # Indexed to base year
-    ("ldv pdt:n-y:index", "index_to", "ldv pdt:n-y:ref", literal("y"), "y0"),
+    (ldv_ny + "index", "index_to", ldv_ny + "ref", literal("y"), "y0"),
     ("ldv pdt:n:advance", "advance_ldv_pdt", "config"),
     # Compute LDV PDT as ADVANCE base-year values indexed to overall growth
-    ("ldv pdt::total+0", "mul", "ldv pdt:n-y:index", "ldv pdt:n:advance"),
-    ("ldv pdt::total", "mul", "ldv pdt:n-y:total+0", "ldv pdt factor:n-y"),
+    (ldv_ny + "total+0", "mul", ldv_ny + "index", "ldv pdt:n:advance"),
+    (ldv_ny + "total", "mul", ldv_ny + "total+0", "ldv pdt factor:n-y"),
     # LDV PDT shared out by consumer group
-    ("ldv pdt", "mul", "ldv pdt:n-y:total", cg),
-    # Freight from IEA EEI
-    # (("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
-    # Freight from ADVANCE
-    ("fv:n:historical", "advance_fv", "config"),
-    ("fv:n-y:0", "mul", "fv:n:historical", gdp_index),
-    # Adjustment factor
-    ("fv factor:n-y", "factor_fv", n, y, "config"),
-    ("fv:n-y", "mul", "fv:n-y:0", "fv factor:n-y"),
+    (ldv_nycg, "mul", ldv_ny + "total", cg),
+    #
+    # Base freight mode share
+    # …from IEA EEI
+    # ("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
+    # …from ADVANCE
+    ("fv:n:advance", "advance_fv", "config"),
+    # …from file
+    (
+        "fv:n-t:historical",
+        "mul",
+        "freight mode share:n-t:ref",
+        "freight activity:n:ref",
+    ),
+    (fv + "0", "mul", "fv:n-t:historical", gdp_index),
+    # Adjustment factor: generate and apply
+    ("fv factor:n-t-y", "factor_fv", n, y, "config"),
+    (fv + "1", "mul", fv + "0", "fv factor:n-t-y"),
+    # Select only the ROAD data
+    ((fv + "2", "select", fv + "1"), dict(indexers={"t": "ROAD"})),
+    # Relabel
+    (
+        (fv_cny, "relabel2", fv + "2"),
+        dict(new_dims={"c": "transport freight {t.lower()}"}),
+    ),
     # Convert to ixmp format
+    ("t demand freight::ixmp", "as_message_df", fv_cny, *_demand_common),
+    # Select only non-LDV PDT
+    ((pdt_nyt + "1", "select", pdt_nyt), dict(indexers=dict(t="LDV"), inverse=True)),
+    # Relabel PDT
     (
-        "transport demand freight::ixmp",
-        "as_message_df",
-        "fv:n-y",
-        "demand",
-        dict(node="n", year="y"),
-        dict(commodity="transport freight", level="useful", time="year"),
+        (pdt_cny + "0", "relabel2", pdt_nyt + "1"),
+        dict(new_dims={"c": "transport pax {t.lower()}"}),
     ),
-    ("transport demand passenger::ixmp", "demand_ixmp0", pdt_nyt, "ldv pdt:n-y-cg"),
-    # Dummy demands, in case these are configured
-    (
-        "dummy demand::ixmp",
-        dummy,
-        "c::transport",
-        "nodes::ex world",
-        "y::model",
-        "config",
-    ),
+    (pdt_cny, "convert_units", pdt_cny + "0", "Gp km / a"),
+    # Convert to ixmp format
+    ("t demand pax non-ldv::ixmp", "as_message_df", pdt_cny, *_demand_common),
+    # Relabel ldv pdt:n-y-cg
+    ((ldv_cny + "0", "relabel2", ldv_nycg), dict(new_dims={"c": "transport pax {cg}"})),
+    (ldv_cny, "convert_units", ldv_cny + "0", "Gp km / a"),
+    ("t demand pax ldv::ixmp", "as_message_df", ldv_cny, *_demand_common),
+    # Dummy demands, if these are configured
+    ("t demand dummy::ixmp", dummy, "c::transport", "nodes::ex world", y, "config"),
+    # Merge all data together
     (
         "transport demand::ixmp",
         "merge_data",
-        "transport demand passenger::ixmp",
-        "transport demand freight::ixmp",
-        "dummy demand::ixmp",
+        "t demand pax ldv::ixmp",
+        "t demand pax non-ldv::ixmp",
+        "t demand freight::ixmp",
+        "t demand dummy::ixmp",
     ),
 ]
 

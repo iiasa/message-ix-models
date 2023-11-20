@@ -1,6 +1,8 @@
 """Reporting computations for MESSAGEix-Transport."""
 import logging
+import re
 from functools import partial, reduce
+from itertools import product
 from operator import gt, le, lt
 from typing import TYPE_CHECKING, Dict, Hashable, List, Mapping, Optional, Set, cast
 
@@ -653,6 +655,53 @@ def quantity_from_config(
     result = getattr(config["transport"], name)
     if not isinstance(result, Quantity):
         result = as_quantity(result)
+    return result
+
+
+def relabel2(qty: Quantity, new_dims: dict):
+    """Replace dimensions with new ones using label templates.
+
+    .. todo:: Choose a more descriptive name.
+    """
+    from collections import defaultdict
+
+    from genno.operator import select
+
+    result = qty
+
+    # Iterate over new dimensions for which templates are provided
+    for new_dim, template in new_dims.items():
+        if new_dim in qty.dims:  # pragma: no cover
+            print(qty.coords)
+            raise NotImplementedError(
+                f"Replace existing dimension {new_dim} in {qty.dims}"
+            )
+
+        # Identify 1 or more source dimension(s) in the template expression
+        # TODO improve the regex or use another method that can handle e.g. "{func(t)}"
+        source_dims = re.findall(r"{([^\.}]*)", template)
+
+        # Resulting labels
+        labels = defaultdict(list)
+
+        # Iterate over the Cartesian product of coords on the `source_dims`
+        for values in product(*[qty.coords[d].data for d in source_dims]):
+            _locals = dict()  # Locals for eval()
+            for d, v in zip(source_dims, values):
+                _locals[d] = v
+                labels[d].append(v)
+
+            # Construct the label for the `new_dim` by formatting the template string
+            labels[new_dim].append(eval(f"f'{template}'", None, _locals))
+
+        # Convert matched lists of labels to xarray selectors
+        selectors = {
+            d: xr.DataArray(labels[d], coords=[(new_dim, labels[new_dim])])
+            for d in source_dims
+        }
+
+        result = select(result, selectors)
+
     return result
 
 
