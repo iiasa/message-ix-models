@@ -226,10 +226,7 @@ def calculate_indiv_adjusted_region_cost_ratios(
     base_year = int(base_year)
     if int(base_year) not in df_gdp.year.unique():
         base_year = int(min(df_gdp.year.unique()))
-        print(
-            f"Base year {base_year} not found in GDP data. \
-                Using {base_year} for GDP data instead."
-        )
+        print("......(Using year " + str(base_year) + " data from GDP.)")
 
     # Set default values for input arguments
     # If specified node is R11, then use R11_NAM as the reference region

@@ -24,7 +24,31 @@ out_default = create_cost_projections(
     format=default.format,
 )
 
-# Example 2: Get cost projections for SSP2 scenario in R12,
+# Example 2: Get cost projections for all scenarios in R12,
+# using NAM as the reference region,
+# with GDP as the method,
+# for the materials module,
+# using the updated data version
+# and outputs in MESSAGE format.
+cfg = Config(module="materials", ref_region="R12_NAM", method="gdp", format="message")
+
+out_materials_gdp = create_cost_projections(
+    node=cfg.node,
+    ref_region=cfg.ref_region,
+    base_year=cfg.base_year,
+    module=cfg.module,
+    method=cfg.method,
+    scenario_version=cfg.scenario_version,
+    scenario=cfg.scenario,
+    convergence_year=cfg.convergence_year,
+    fom_rate=cfg.fom_rate,
+    format=cfg.format,
+)
+
+inv = out_materials_gdp.inv_cost
+fix = out_materials_gdp.fix_cost
+
+# Example 3: Get cost projections for SSP2 scenario in R12,
 # using WEU as the reference region,
 # with convergence as the method,
 # for materials technologies,
@@ -65,7 +89,7 @@ out_materials_ssp2 = create_cost_projections(
     format=config.format,
 )
 
-# Example 3: Get cost projections for SSP5 scenario in R12,
+# Example 4: Get cost projections for SSP5 scenario in R12,
 # using LAM as the reference region,
 # with learning as the method,
 # for materials technologies,

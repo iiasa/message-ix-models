@@ -72,9 +72,9 @@ def apply_splines_to_convergence(
 
         data_reg.append(df)
 
-    df_reg = pd.concat(data_reg).reset_index(drop=1)
+    df_out = pd.concat(data_reg).reset_index(drop=1)
     df_wide = (
-        df.reindex(
+        df_reg.reindex(
             [
                 "scenario",
                 "message_technology",
@@ -85,7 +85,7 @@ def apply_splines_to_convergence(
             axis=1,
         )
         .drop_duplicates()
-        .merge(df_reg, on=["scenario", "message_technology", "region"])
+        .merge(df_out, on=["scenario", "message_technology", "region"])
     )
 
     seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + TIME_STEPS, TIME_STEPS))
