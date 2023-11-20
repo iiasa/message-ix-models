@@ -1,4 +1,4 @@
-message_technology,map_source,map_technology,base_year_reference_region_cost
+message_technology,reg_diff_source,reg_diff_technology,base_year_reference_region_cost
 furnace_foil_steel,energy,foil_i,
 furnace_loil_steel,energy,loil_i,
 furnace_biomass_steel,energy,biomass_i,
@@ -169,9 +169,9 @@ coal_NH3_ccs,energy,igcc_ccs,3087.128546
 fueloil_NH3_ccs,energy,igcc_ccs,3473.019614
 meth_bio,energy,meth_coal,2407.596309
 meth_bio_ccs,energy,meth_coal,2503.380896
-meth_h2,,,187.2054389
+meth_h2,intratec,,187.2054389
 meth_t_d_material,,,
-MTO_petro,,,870.3849175
+MTO_petro,intratec,,870.3849175
 CH2O_synth,,,
 CH2O_to_resin,,,
 meth_coal,energy,meth_coal,2348.41
