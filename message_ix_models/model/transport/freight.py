@@ -71,13 +71,15 @@ def get_freight_data(
     # )
     # del load_factor
 
+    cl_veh = ("transport freight road vehicle", "useful")
+
     data0: Dict[str, List] = defaultdict(list)
     for t in technologies:
         units_in = info.io_units(t, "lightoil")
-        units_out = info.io_units(t, "transport freight vehicle")
+        units_out = info.io_units(t, cl_veh[0])
         i_o = make_io(
             src=(None, None, f"{units_in:~}"),
-            dest=("transport freight vehicle", "useful", f"{units_out:~}"),
+            dest=(*cl_veh, f"{units_out:~}"),
             efficiency=None,
             on="input",
             technology=t.id,
@@ -102,6 +104,19 @@ def get_freight_data(
             technical_lifetime=registry("10 year"),
         )
     )
+
+    # Conversion technology
+    for par, df in make_io(
+        (*cl_veh, "Gv km"),
+        ("transport freight road", "useful", "Gt km"),
+        context.transport.load_factor["freight"],
+        on="output",
+        technology="transport freight road usage",
+        **common,
+    ).items():
+        data1[par] = pd.concat(
+            [data1[par], df.pipe(broadcast, node_loc=nodes).pipe(same_node)]
+        )
 
     # TODO re-add emissions data from file
 
