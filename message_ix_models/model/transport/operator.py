@@ -10,10 +10,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from genno import Operator, Quantity
-from genno.operator import apply_units, convert_units, relabel, rename_dims
+from genno.operator import apply_units, relabel, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
-from message_ix import Scenario, make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.report.computations import compound_growth
@@ -27,6 +26,7 @@ from message_data.tools import iea_eei
 
 if TYPE_CHECKING:
     from genno import Computer
+    from message_ix import Scenario
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,6 @@ __all__ = [
     "advance_fv",
     "base_shares",
     "cost",
-    "demand_ixmp0",
     "distance_ldv",
     "distance_nonldv",
     "dummy_prices",
@@ -128,51 +127,6 @@ def cost(
     # NB for some reason, the 'y' dimension of result becomes `float`, rather than
     # `int`, in this step
     return add(price, div(mul(gdp_ppp_cap, votm), mul(speeds, whours))).sel(y=y)
-
-
-def demand_ixmp0(pdt1: Quantity, pdt2: Quantity) -> Dict[str, pd.DataFrame]:
-    """Convert passenger transport demands to ixmp format.
-
-    Expects the following inputs:
-
-    - pdt1: "pdt:n-y-t"
-    - pdt2: "ldv pdt:n-y-cg"
-    """
-    units = "Gp km / a"
-
-    # Generate the demand data; convert to pd.DataFrame
-    data = convert_units(pdt1, units).to_series().reset_index(name="value")
-
-    common = dict(
-        level="useful",
-        time="year",
-        unit=units,
-    )
-
-    # Convert to message_ix layout
-    # TODO combine the two below in a loop or push the logic to demand.py
-    data = make_df(
-        "demand",
-        node=data["n"],
-        commodity="transport pax " + data["t"].str.lower(),
-        year=data["y"],
-        value=data["value"],
-        **common,
-    )
-    data = data[~data["commodity"].str.contains("ldv")]
-
-    data2 = convert_units(pdt2, units).to_series().reset_index(name="value")
-
-    data2 = make_df(
-        "demand",
-        node=data2["n"],
-        commodity="transport pax " + data2["cg"],
-        year=data2["y"],
-        value=data2["value"],
-        **common,
-    )
-
-    return dict(demand=pd.concat([data, data2]))
 
 
 def distance_ldv(config: dict) -> Quantity:
@@ -822,7 +776,7 @@ def transport_data(*args):
     pass  # pragma: no cover
 
 
-def transport_check(scenario: Scenario, ACT: Quantity) -> pd.Series:
+def transport_check(scenario: "Scenario", ACT: Quantity) -> pd.Series:
     """Reporting computation for :func:`check`.
 
     Imported into :mod:`.reporting.computations`.
