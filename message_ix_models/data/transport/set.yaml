@@ -205,6 +205,7 @@ unit:
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
     Gp km: 10⁹ passenger-kilometre
     Gp km / a: 10⁹ passenger-kilometre per year
+    Gp * km / a: 10⁹ passenger-kilometre per year
     Gp / Gv: passengers per vehicle
     Gt km: 10⁹ tonne-kilometre
     Gt * km: 10⁹ tonne-kilometre
