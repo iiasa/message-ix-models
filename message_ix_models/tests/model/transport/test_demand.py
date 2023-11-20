@@ -63,25 +63,27 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
     )
 
     # Check that some keys (a) can be computed without error and (b) have correct units
+    # commented: these are slow because they repeat some calculations many times.
+    # Uncommented as needed for debugging
     for key, unit in (
         # ("mode share:n-t-y:base", ""),
         # ("mode share:n-t-y", ""),
-        ("population:n-y", "Mpassenger"),
-        ("cg share:n-y-cg", ""),
-        ("GDP:n-y:PPP+capita", "kUSD / passenger / year"),
-        ("GDP:n-y:PPP+capita+index", ""),
-        ("votm:n-y", ""),
-        ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
-        ("cost:n-y-c-t", "USD / km"),
-        # These units are implied by the test of "transport pdt:*":
-        # "transport pdt:n-y:total" [=] Mm / year
-        ("pdt:n-y-t", "passenger km / year"),
-        ("ldv pdt:n-y:total", "Gp km / a"),
-        # ("transport ldv pdt:n-y-cg", {"[length]": 1, "[passenger]": 1, "[time]": -1}),
-        ("ldv pdt:n-y-cg", "Gp km / a"),
-        ("pdt factor:n-y-t", ""),
-        ("fv factor:n-y", ""),
-        ("fv:n-y", "Gt km"),
+        # ("population:n-y", "Mpassenger"),
+        # ("cg share:n-y-cg", ""),
+        # ("GDP:n-y:PPP+capita", "kUSD / passenger / year"),
+        # ("GDP:n-y:PPP+capita+index", ""),
+        # ("votm:n-y", ""),
+        # ("PRICE_COMMODITY:n-c-y:transport+smooth", "USD / km"),
+        # ("cost:n-y-c-t", "USD / km"),
+        # # These units are implied by the test of "transport pdt:*":
+        # # "transport pdt:n-y:total" [=] Mm / year
+        # ("pdt:n-y-t", "passenger km / year"),
+        # (demand.ldv_ny + "total", "Gp km / a"),
+        # (demand.ldv_nycg, {"[length]": 1, "[passenger]": 1, "[time]": -1}),
+        # ("pdt factor:n-y-t", ""),
+        # ("fv factor:n-y", ""),
+        # ("fv:n:advance", ""),
+        # (demand.fv_cny, "Gt km"),
     ):
         try:
             # Quantity can be computed
@@ -94,22 +96,37 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
             assert N_node == len(qty.coords["n"]), qty.coords["n"].data
 
             # commented: dump to a temporary path for inspection
-            # if "factor" in key:
-            #     fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
-            #     dump = tmp_path.joinpath(fn).with_suffix(".csv")
-            #     print(f"Dumped to {dump}")
-            #     qty.to_series().to_csv(dump)
+            # fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
+            # dump = tmp_path.joinpath(fn).with_suffix(".csv")
+            # print(f"Dumped to {dump}")
+            # qty.to_series().to_csv(dump)
         except Exception:
             # Something else
             print(f"\n\n-- {key} --\n\n")
             print(c.describe(key))
-            print(qty, qty.attrs, qty.dims, qty.coords)
+            print(qty.to_series().to_string(), qty.attrs, qty.dims, qty.coords)
             raise
 
-    # Freight demand is available
-    data = c.get("transport demand freight::ixmp")
+    # Demand can be computed
+    data = c.get("transport demand::ixmp")
+
+    # Data is returned for the demand parameter only
     assert {"demand"} == set(data.keys())
+
+    # Certain labels are specifically excluded/dropped in the calculation
+    assert not {"transport pax ldv", "transport freight water"} & set(
+        data["demand"]["commodity"].unique()
+    )
+    assert {"useful"} == set(data["demand"]["level"].unique())
+
+    # No missing data
     assert not data["demand"].isna().any().any()
+
+    # No negative values
+    check = data["demand"]["value"] < 0
+    if check.any():  # pragma: no cover
+        print(data["demand"][check].to_string())
+        assert False, "Negative values in demand"
 
 
 @pytest.mark.parametrize(
@@ -130,7 +147,7 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
         test_context, regions=regions, years=years, options=dict(ssp=ssp)
     )
 
-    data = c.get("transport demand passenger::ixmp")
+    data = c.get("t demand pax::ixmp")
 
     # Returns a dict with a single key/data frame
     df = data.pop("demand")
