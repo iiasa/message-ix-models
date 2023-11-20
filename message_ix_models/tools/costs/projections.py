@@ -16,7 +16,7 @@ from message_ix_models.tools.costs.learning import (
     project_ref_region_inv_costs_using_learning_rates,
 )
 from message_ix_models.tools.costs.regional_differentiation import (
-    get_weo_region_differentiated_costs,
+    apply_regional_differentiation,
 )
 from message_ix_models.tools.costs.splines import apply_splines_to_convergence
 
@@ -36,7 +36,7 @@ def larger_than(sequence, value):
 
 
 def create_projections_learning(
-    in_node, in_ref_region, in_base_year, in_module, in_scenario
+    in_module, in_node, in_ref_region, in_base_year, in_scenario
 ):
     print("Selected scenario: " + in_scenario)
     print(
@@ -56,19 +56,19 @@ def create_projections_learning(
     # Repeating to avoid linting error
     scen = scen
 
-    df_region_diff = get_weo_region_differentiated_costs(
+    print("...Calculating regional differentiation in base year+region...")
+    df_region_diff = apply_regional_differentiation(
+        module=in_module,
         node=in_node,
         ref_region=in_ref_region,
-        base_year=in_base_year,
-        module=in_module,
     )
 
+    print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
-        df_region_diff,
-        node=in_node,
+        regional_diff_df=df_region_diff,
+        module=in_module,
         ref_region=in_ref_region,
         base_year=in_base_year,
-        module=in_module,
     )
 
     if in_scenario is not None:
@@ -82,7 +82,7 @@ def create_projections_learning(
                 x.reg_cost_base_year,
                 x.inv_cost_ref_region_learning * x.reg_cost_ratio,
             ),
-            fix_cost=lambda x: x.inv_cost * x.fix_to_inv_cost_ratio,
+            fix_cost=lambda x: x.inv_cost * x.fix_ratio,
             scenario_version="Not applicable",
         )
         .reindex(
@@ -131,21 +131,22 @@ def create_projections_gdp(
     scen = scen
     scen_vers = scen_vers
 
-    df_region_diff = get_weo_region_differentiated_costs(
+    print("...Calculating regional differentiation in base year+region...")
+    df_region_diff = apply_regional_differentiation(
+        module=in_module,
         node=in_node,
         ref_region=in_ref_region,
-        base_year=in_base_year,
-        module=in_module,
     )
 
+    print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
-        df_region_diff,
-        node=in_node,
+        regional_diff_df=df_region_diff,
         ref_region=in_ref_region,
         base_year=in_base_year,
         module=in_module,
     )
 
+    print("...Adjusting ratios using GDP data...")
     df_adj_cost_ratios = calculate_indiv_adjusted_region_cost_ratios(
         df_region_diff,
         node=in_node,
@@ -170,7 +171,7 @@ def create_projections_gdp(
                 x.reg_cost_base_year,
                 x.inv_cost_ref_region_learning * x.reg_cost_ratio_adj,
             ),
-            fix_cost=lambda x: x.inv_cost * x.fix_to_inv_cost_ratio,
+            fix_cost=lambda x: x.inv_cost * x.fix_ratio,
         )
         .reindex(
             [
@@ -211,16 +212,16 @@ def create_projections_converge(
     # Repeating to avoid linting error
     scen = scen
 
-    df_region_diff = get_weo_region_differentiated_costs(
+    print("...Calculating regional differentiation in base year+region...")
+    df_region_diff = apply_regional_differentiation(
+        module=in_module,
         node=in_node,
         ref_region=in_ref_region,
-        base_year=in_base_year,
-        module=in_module,
     )
 
+    print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
-        df_region_diff,
-        node=in_node,
+        regional_diff_df=df_region_diff,
         ref_region=in_ref_region,
         base_year=in_base_year,
         module=in_module,
@@ -243,6 +244,7 @@ def create_projections_converge(
         ),
     )
 
+    print("...Applying splines to converge...")
     df_splines = apply_splines_to_convergence(
         df_pre_costs,
         column_name="inv_cost_converge",
@@ -257,7 +259,7 @@ def create_projections_converge(
         )
         .rename(columns={"inv_cost_splines": "inv_cost"})
         .assign(
-            fix_cost=lambda x: x.inv_cost * x.fix_to_inv_cost_ratio,
+            fix_cost=lambda x: x.inv_cost * x.fix_ratio,
             scenario_version="Not applicable",
         )
         .reindex(
@@ -656,13 +658,17 @@ def create_cost_projections(
             )
 
         if format == "message":
+            print("...Creating MESSAGE outputs...")
             df_inv, df_fom = create_message_outputs(df_costs, fom_rate=fom_rate)
 
             proj = projections(df_inv, df_fom)
             return proj
 
         if format == "iamc":
+            print("...Creating MESSAGE outputs first...")
             df_inv, df_fom = create_message_outputs(df_costs, fom_rate=fom_rate)
+
+            print("...Creating IAMC format outputs...")
             df_inv_iamc, df_fom_iamc = create_iamc_outputs(df_inv, df_fom)
 
             proj = projections(df_inv_iamc, df_fom_iamc)
