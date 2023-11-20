@@ -102,7 +102,7 @@ def cg_shares(
     )
 
     # Index of pop_share versus the previous period
-    pop_share_index = index_to(pop_share, "y")
+    pop_share_index = index_to(pop_share, "y", context["transport build info"].y0)
 
     # - Apply the trajectory of pop_share to the initial values of ma3t_pop.
     # - Compute the group shares.
