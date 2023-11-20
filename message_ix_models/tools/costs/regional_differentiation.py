@@ -241,13 +241,15 @@ def get_raw_technology_mapping(module) -> pd.DataFrame:
     """
 
     if module == "energy":
-        energy_file = package_data_path("costs", "tech_map_energy.csv")
+        energy_file = package_data_path("costs", "energy", "tech_map_energy.csv")
         raw_map_energy = pd.read_csv(energy_file, skiprows=2)
 
         return raw_map_energy
 
     elif module == "materials":
-        materials_file = package_data_path("costs", "tech_map_materials.csv")
+        materials_file = package_data_path(
+            "costs", "materials", "tech_map_materials.csv"
+        )
         raw_map_materials = pd.read_csv(materials_file)
 
         return raw_map_materials
