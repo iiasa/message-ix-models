@@ -68,9 +68,9 @@ ExogenousDataFile(
 
 ExogenousDataFile("ldv-activity", "ldv activity:n:exo", "LDV activity")
 ExogenousDataFile("disutility", "disutility:n-cg-t-y:per vehicle", "LDV disutility")
-
 ExogenousDataFile("demand-scale", dims=("n", "y"))
 ExogenousDataFile("fuel-emi-intensity", dims=("c", "e"))
+ExogenousDataFile("freight-mode-share-ref", dims=("n", "t"))
 ExogenousDataFile(("ikarus", "availability"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "fix_cost"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "input"), dims=("source", "t", "c", "y"))
