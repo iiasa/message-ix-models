@@ -5,7 +5,6 @@ from typing import Collection, Dict, Mapping, MutableMapping, Optional, Sequence
 import message_ix
 import pandas as pd
 import pint
-from message_ix.models import MESSAGE_ITEMS
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
@@ -44,7 +43,6 @@ __all__ = [
     "eval_anno",
     "ffill",
     "identify_nodes",
-    "iter_parameters",
     "load_package_data",
     "load_private_data",
     "local_data_path",
@@ -303,23 +301,21 @@ def ffill(
     return pd.concat(dfs, ignore_index=True)
 
 
-def iter_parameters(set_name):
+def iter_parameters(set_name, scenario: "message_ix.Scenario"):
     """Iterate over MESSAGEix parameters with *set_name* as a dimension.
 
-    Parameters
-    ----------
-    set_name : str
-        Name of a set.
-
-    Yields
-    ------
-    str
-        Names of parameters that have `set_name` indexing ≥1 dimension.
+    .. deprecated:: 2023.11
+       Use :meth:`ixmp.Scenario.par_list` with the :py:`indexed_by=...` argument
+       instead.
     """
-    # TODO move upstream. See iiasa/ixmp#402 and iiasa/message_ix#444
-    for name, info in MESSAGE_ITEMS.items():
-        if info["ix_type"] == "par" and set_name in info["idx_sets"]:
-            yield name
+    try:
+        yield from scenario.items(indexed_by=set_name, par_data=False)
+    except TypeError:  # ixmp < 3.8.0
+        import message_ix.models
+
+        for name, info in message_ix.models.MESSAGE_ITEMS.items():
+            if info["ix_type"] == "par" and set_name in info["idx_sets"]:
+                yield name
 
 
 def make_io(src, dest, efficiency, on="input", **kwargs):
@@ -603,7 +599,7 @@ def strip_par_data(  # noqa: C901
             + (" (DRY RUN)" if dry_run else "")
         )
         # Iterate over parameters with ≥1 dimensions indexed by `set_name`
-        pars = iter_parameters(set_name)
+        pars = iter_parameters(set_name, scenario=scenario)
 
     for par_name in pars:
         if par_name not in par_list:  # pragma: no cover
