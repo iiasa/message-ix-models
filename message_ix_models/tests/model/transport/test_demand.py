@@ -77,7 +77,7 @@ def test_exo(test_context, tmp_path, regions, years, N_node, options):
         # ("cost:n-y-c-t", "USD / km"),
         # # These units are implied by the test of "transport pdt:*":
         # # "transport pdt:n-y:total" [=] Mm / year
-        # ("pdt:n-y-t", "passenger km / year"),
+        # (demand.pdt_nyt + "1", "passenger km / year"),
         # (demand.ldv_ny + "total", "Gp km / a"),
         # (demand.ldv_nycg, {"[length]": 1, "[passenger]": 1, "[time]": -1}),
         # ("pdt factor:n-y-t", ""),
@@ -147,21 +147,28 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
         test_context, regions=regions, years=years, options=dict(ssp=ssp)
     )
 
-    data = c.get("t demand pax::ixmp")
+    data = c.get("transport demand::ixmp")
+    # data = c.get("t demand pax non-ldv::ixmp")
 
     # Returns a dict with a single key/data frame
-    df = data.pop("demand")
-    assert 0 == len(data)
+    assert {"demand"} == set(data.keys())
 
     # Data have common, expected units
-    assert_units(df, {"[passenger]": 1, "[length]": 1, "[time]": -1})
+    for _, group_df in data["demand"].groupby("unit"):
+        try:
+            assert_units(group_df, {"[passenger]": 1, "[length]": 1, "[time]": -1})
+        except AssertionError:
+            continue
+        else:
+            df = group_df
+            break
 
     # Passenger distance travelled is positive
     negative = df[df.value < 0]
     assert 0 == len(negative), f"Negative values in PDT:\n{negative.to_string()}"
 
     # Both LDV and non-LDV commodities are demanded
-    assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"])
+    assert {"transport pax RUEMF", "transport pax air"} < set(df["commodity"].unique())
 
     # Demand covers the model horizon
     assert set(info.Y) == set(df["year"].unique()), (
