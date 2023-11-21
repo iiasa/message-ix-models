@@ -9,7 +9,7 @@ On this page:
 Elsewhere:
 
 - ``global.yaml``, the :doc:`default-config`.
-- Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.reporting`, and :mod:`message_ix.reporting`.
+- Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.report`, and :mod:`message_ix.report`.
 - Reporting of specific model variants:
 
   - :mod:`.water.reporting`
@@ -140,8 +140,8 @@ Operators
 
    - Upstream packages:
 
-     - :mod:`message_ix.reporting.computations`
-     - :mod:`ixmp.reporting.computations`
+     - :mod:`message_ix.report.operator`
+     - :mod:`ixmp.report.operator`
      - :mod:`genno.computations`
 
    - Other submodules:

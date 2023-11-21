@@ -73,13 +73,13 @@ def report_iam_definition(sc, rep, df_dmd, rep_dm, report_df, suban):
     ----------
     sc : ixmp.Scenario
         Scenario to report
-    rep : ixmp.reporting.Reporter
+    rep : .Reporter
         Reporter object
     suban : bool
         True if subannual, False if annual
     df_dmd : pd.DataFrame
         Dataframe with demands
-    rep_dm : ixmp.reporting.Reporter
+    rep_dm : .Reporter
         Reporter object for demands
     report_df : pd.DataFrame
         Dataframe with report

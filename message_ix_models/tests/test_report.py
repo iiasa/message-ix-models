@@ -1,4 +1,4 @@
-"""Tests for message_data.reporting."""
+"""Tests for :mod:`message_ix_models.report`."""
 from importlib.metadata import version
 
 import numpy as np
@@ -233,7 +233,7 @@ def test_cli(mix_models_cli):
     ),
 )
 def test_collapse(input, exp):
-    """Test :meth:`.reporting.util.collapse` and use of :data:`.REPLACE_VARS`.
+    """Test :meth:`.report.util.collapse` and use of :data:`.REPLACE_VARS`.
 
     This test is parametrized with example input and expected output strings for the
     ``variable`` IAMC column. There should be ≥1 example for each pattern in
