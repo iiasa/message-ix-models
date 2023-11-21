@@ -27,8 +27,8 @@ def prepare_computer(c: "Computer") -> None:
     k4 = c.add(key + "4", "convert_units", k3, units="USD / km")
 
     # Map (t, cg) to (t)
-    c.add("usage selectors", "usage_selectors", "t::transport")
-    k5 = c.add(key + "5", "select", k4, "usage selectors")
+    c.add("indexers::usage", "indexers_usage", "t::transport")
+    k5 = c.add(key + "5", "select", k4, "indexers::usage")
     c.add(key, "rename_dims", k5, quote({"t_new": "t"}))
 
     # Convert to message_ix-ready data
