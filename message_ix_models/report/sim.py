@@ -8,10 +8,9 @@ from typing import Any, Dict, Optional, Sequence, Union
 
 import pandas as pd
 from dask.core import quote
-from genno import configure
-from ixmp.reporting import RENAME_DIMS
+from genno import Key, KeyExistsError, Quantity, configure
+from message_ix import Reporter
 from message_ix.models import MESSAGE_ITEMS, item
-from message_ix.reporting import Key, KeyExistsError, Quantity, Reporter
 from pandas.api.types import is_scalar
 
 from message_ix_models import ScenarioInfo
@@ -169,6 +168,8 @@ configure(
 
 def dims_of(info: dict) -> Dict[str, str]:
     """Return a mapping from the full index names to short dimension IDs of `info`."""
+    from ixmp.report import RENAME_DIMS
+
     return {
         d: RENAME_DIMS.get(d, d)
         for d in (info.get("idx_names") or info.get("idx_sets") or [])
@@ -179,6 +180,8 @@ def simulate_qty(
     name: str, info: dict, item_data: Union[dict, pd.DataFrame]
 ) -> Quantity:
     """Return simulated data for item `name`."""
+    from ixmp.report import RENAME_DIMS
+
     # Dimensions of the resulting quantity
     dims = list(dims_of(info).values())
 
@@ -275,6 +278,8 @@ def add_simulated_solution(
         :func:`data_from_file`.
     """
     from importlib.metadata import version
+
+    from ixmp.report import RENAME_DIMS
 
     if version("message_ix") < "3.6":
         raise NotImplementedError(

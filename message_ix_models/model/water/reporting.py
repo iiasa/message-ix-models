@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 import pyam
-from message_ix.reporting import Reporter
+from message_ix import Reporter
 
 from message_ix_models.util import package_data_path
 

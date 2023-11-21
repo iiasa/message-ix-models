@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, cast
 
 import pandas as pd
+from genno import Quantity
 from genno.operator import concat
-from message_ix.reporting import Quantity
 
 log = logging.getLogger(__name__)
 
