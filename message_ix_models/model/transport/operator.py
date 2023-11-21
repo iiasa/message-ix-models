@@ -103,6 +103,22 @@ def base_shares(
     return result
 
 
+def broadcast_y_yv_ya(y: List[int], y_model: List[int]) -> Quantity:
+    """Return a quantity for broadcasting y to (yv, ya).
+
+    This is distinct from :attr:`.ScenarioInfo.ya_ya`, because it omits all
+    :math:`y^V < y_0`.
+    """
+    dims = ["y", "yv", "ya"]
+    series = (
+        pd.DataFrame(product(y, y_model), columns=dims[1:])
+        .query("ya >= yv")
+        .assign(value=1.0, y=lambda df: df["yv"])
+        .set_index(dims)["value"]
+    )
+    return Quantity(series)
+
+
 def cost(
     price: Quantity,
     gdp_ppp_cap: Quantity,
@@ -524,6 +540,36 @@ def iea_eei_fv(name: str, config: Dict) -> Quantity:
     return result.sel(y=ym1, t="Total freight transport", drop=True)
 
 
+def indexers_n_cd(config: Dict) -> Dict[str, xr.DataArray]:
+    """Indexers for selecting (`n`, `census_division`) → `n`.
+
+    Based on :attr:`.Config.node_to_census_division`.
+    """
+    n_cd_map = config["transport"].node_to_census_division
+    n, cd = zip(*n_cd_map.items())
+    return dict(
+        n=xr.DataArray(list(n), dims="n"),
+        census_division=xr.DataArray(list(cd), dims="n"),
+    )
+
+
+def indexers_usage(technologies: List[Code]) -> Dict:
+    """Indexers for replacing LDV `t` and `cg` with `t_new` for usage technologies."""
+    labels: Dict[str, List[str]] = dict(cg=[], t=[], t_new=[])
+    for t in technologies:
+        if not t.eval_annotation(id="is-disutility"):
+            continue
+        t_base, *_, cg = t.id.split()
+        labels["t"].append(t_base)
+        labels["cg"].append(cg)
+        labels["t_new"].append(t.id)
+
+    return {
+        "cg": xr.DataArray(labels["cg"], coords=[("t_new", labels["t_new"])]),
+        "t": xr.DataArray(labels["t"], coords=[("t_new", labels["t_new"])]),
+    }
+
+
 def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
     """Mapping to aggregate e.g. nl="World" from values for child nodes of "World".
 
@@ -796,23 +842,6 @@ def transport_check(scenario: "Scenario", ACT: Quantity) -> pd.Series:
     # checks['(fail for debugging)'] = False
 
     return pd.Series(checks)
-
-
-def usage_selectors(technologies: List[Code]) -> Dict:
-    """Selectors for replacing LDV `t` and `cg` with `t_new` for usage technologies."""
-    labels: Dict[str, List[str]] = dict(cg=[], t=[], t_new=[])
-    for t in technologies:
-        if not t.eval_annotation(id="is-disutility"):
-            continue
-        t_base, *_, cg = t.id.split()
-        labels["t"].append(t_base)
-        labels["cg"].append(cg)
-        labels["t_new"].append(t.id)
-
-    return {
-        "cg": xr.DataArray(labels["cg"], coords=[("t_new", labels["t_new"])]),
-        "t": xr.DataArray(labels["t"], coords=[("t_new", labels["t_new"])]),
-    }
 
 
 def votm(gdp_ppp_cap: Quantity) -> Quantity:
