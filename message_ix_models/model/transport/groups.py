@@ -1,13 +1,11 @@
 """Consumer groups data."""
 import logging
 from copy import deepcopy
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict
 
 import pandas as pd
 import xarray as xr
 from ixmp.reporting import Quantity
-from message_ix_models import Context
-from message_ix_models.util import adapt_R11_R14
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -17,11 +15,12 @@ log = logging.getLogger(__name__)
 
 def prepare_computer(c: "Computer") -> None:
     """Prepare `rep` for calculating transport consumer groups."""
-    from .demand import cg, pop_at, y
+    from .demand import cg, pop_at
 
+    c.add("indexers:n-cd", "indexers_n_cd", "config")
     # Population shares by area_type
-    c.add(pop_at, urban_rural_shares, "population:n-y", y, "config")
-    # Consumer group sizes
+    c.add(pop_at, urban_rural_shares, "population:n-y", "config")
+    # Exogenous data for consumer group sizes
     keys = c.infer_keys(
         [
             "population suburb share:*:exo",
@@ -30,7 +29,7 @@ def prepare_computer(c: "Computer") -> None:
             "ma3t population:*:exo",
         ]
     )
-    c.add(cg, cg_shares, pop_at, *keys, "context")
+    c.add(cg, cg_shares, pop_at, *keys, "indexers:n-cd", "indexers:cg")
 
 
 def cg_shares(
@@ -39,15 +38,17 @@ def cg_shares(
     ma3t_attitude: Quantity,
     ma3t_driver: Quantity,
     ma3t_pop: Quantity,
-    context: Context,
+    n_cd_indexers: Dict[str, xr.DataArray],
+    cg_indexers: Dict[str, xr.DataArray],
 ) -> Quantity:
     """Return shares of transport consumer groups.
 
     Parameters
     ----------
     ursu_ru : Quantity
-        Population split between "UR+SU" and "RU" on the ``area_type`` dimension.
+        Population shares with "UR+SU" and "RU" on the ``area_type`` dimension.
     su_share : Quantity
+        Share of suburban ("SU") population within "UR+SU".
     ma3t_attitude: Quantity
     ma3t_driver : Quantity
     ma3t_pop : Quantity
@@ -58,17 +59,19 @@ def cg_shares(
         are applicable to the US in 2005.”
 
         NB in the spreadsheet, the data are also filled forward to 2110.
-    context : .Context
-        The ``.regions`` attribute is passed to :func:`get_urban_rural_shares`.
+
+        Currently not used.
+    n_cd_indexers : dict
+    cg_indexers : dict
 
     Returns
     -------
     .Quantity
         Dimensions: n, y, cg. Units.dimensionless.
     """
-    from genno.operator import concat, index_to, mul
+    from genno.operator import concat, mul
 
-    cg_indexers = deepcopy(context.transport.set["consumer_group"]["indexers"])
+    cg_indexers = deepcopy(cg_indexers)
     consumer_group = cg_indexers.pop("consumer_group")
 
     # Assumption: split of population between area_type 'UR' and 'SU'
@@ -76,20 +79,8 @@ def cg_shares(
     # - Fill backward 2010 to 2005, in order to compute.
     su_share = su_share.ffill("y").bfill("y")
 
-    if context.model.regions == "R14":
-        su_share = adapt_R11_R14(su_share)
-
-    # Assumption: each global node is equivalent to a certain U.S. census_division
-
-    # Convert setting from config file into a set of indexers
-    n_cd_map = context.transport.node_to_census_division
-    n, cd = zip(*n_cd_map.items())
-    n_cd_indexers = dict(
-        n=xr.DataArray(list(n), dims="n"),
-        census_division=xr.DataArray(list(cd), dims="n"),
-    )
-
-    # Split the GEA 'UR+SU' population share using su_share
+    # Split the 'UR+SU' population share to "UR", "SU" using `su_share`
+    assert {"UR+SU", "RU"} == set(ursu_ru.coords["area_type"].data)
     pop_share = (
         concat(
             ursu_ru.sel(area_type="UR+SU", drop=True) * (1 - su_share),
@@ -101,10 +92,6 @@ def cg_shares(
         .bfill("y")
     )
 
-    # Index of pop_share versus the previous period
-    pop_share_index = index_to(pop_share, "y", context["transport build info"].y0)
-
-    # - Apply the trajectory of pop_share to the initial values of ma3t_pop.
     # - Compute the group shares.
     # - Select using matched sequences, i.e. select a sequence of (node,
     #   census_division) coordinates.
@@ -112,52 +99,55 @@ def cg_shares(
     # - Collapse area_type, attitude, driver_type dimensions into consumer_group.
     # - Convert to short dimension names.
     groups = (
-        mul(ma3t_pop, pop_share_index.cumprod("y"), ma3t_attitude, ma3t_driver)
+        mul(pop_share, ma3t_attitude, ma3t_driver)
         .sel(n_cd_indexers)
         .sel(cg_indexers)
         .assign_coords(consumer_group=consumer_group.values)
         .rename(dict(node="n", year="y", consumer_group="cg"))
     )
 
-    # Normalize so the sum across groups is always 1; convert to Quantity
-    return Quantity(groups / groups.sum("cg"), units="")
+    # Assert that the sum across groups is 1
+    assert isinstance(groups, Quantity)
+    assert (groups.sum("cg") - 1 < 1e-5).all(), "Groups not balanced"
+
+    return groups
 
 
-def urban_rural_shares(pop: Quantity, years: List[int], config: Dict) -> Quantity:
+def urban_rural_shares(pop: Quantity, config: dict) -> Quantity:
     """Return shares of urban and rural population.
-
-    The data are filled forward to cover the years indicated by the `years` setting.
 
     Parameters
     ----------
-    years : list of int
-        Years for which to return population
+    pop : .Quantity
+        Must have n and y dimensions.
     config : dict
         The ``regions`` and ``data source/population`` keys are used.
 
     Returns
     -------
     .Quantity
-        Dimensions: n, t, area_type. Units: dimensionless.
-
-    See also
-    --------
-    population
+        Dimensions: at least area_type, possibly also n, y. Units: dimensionless.
     """
-    from genno.operator import div, mul
+    from genno.operator import div
+    from message_ix_models.util import broadcast
 
-    scenario = config["data source"]["population"]
-
-    if "GEA" in scenario:
-        return div(
+    if "area_type" in pop.dims:
+        result = div(
             pop.sel(area_type=["UR+SU", "RU"]), pop.sel(area_type="total", drop=True)
         )
-    elif any(source in scenario for source in ("SSP", "SHAPE")):
-        log.warning(f"Need urban/suburban share data for {scenario}")
-
-        share = Quantity(
-            xr.DataArray([0.6, 0.4], coords=[("area_type", ["UR+SU", "RU"])]), units=""
-        )
-        return mul(pop, share)
     else:
-        raise ValueError(scenario)
+        log.warning(
+            f"Population data for {config['data source']['population']} lack "
+            "'area_type' dimension"
+        )
+        df = (
+            pd.DataFrame([["UR+SU", 0.6], ["RU", 0.4]], columns=["area_type", "value"])
+            .assign(n=None, y=None)
+            .pipe(broadcast, n=pop.coords["n"].data, y=pop.coords["y"].data)
+            .set_index(["area_type", "n", "y"])
+        )
+        result = Quantity(df)
+
+    assert {"area_type", "n", "y"} == set(result.dims), result.dims
+
+    return result
