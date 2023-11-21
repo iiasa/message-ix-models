@@ -261,10 +261,13 @@ def subset_materials_map(raw_map):
     # - Remove materials technologies that are missing both a reg_diff_source and a
     # base_year_reference_region_cost
     # - Round base_year_reference_region_cost to nearest integer
-    sub_map = raw_map.query(
-        "reg_diff_source.notnull() or base_year_reference_region_cost.notnull()"
-    ).assign(
-        base_year_reference_region_cost=lambda x: x.base_year_reference_region_cost.round()
+    sub_map = (
+        raw_map.query(
+            "reg_diff_source.notnull() or base_year_reference_region_cost.notnull()"
+        )
+        .rename(columns={"base_year_reference_region_cost": "base_cost"})
+        .assign(base_year_reference_region_cost=lambda x: x.base_cost.round())
+        .drop(columns={"base_cost"})
     )
 
     return sub_map
@@ -380,7 +383,8 @@ def adjust_technology_mapping(module) -> pd.DataFrame:
         # Get technologies that are mapped to Intratec AND have a base year cost
         # Assign map_techonology as "all"
         materials_map_intratec = sub_map_materials.query(
-            "reg_diff_source == 'intratec' and base_year_reference_region_cost.notnull()"
+            "reg_diff_source == 'intratec' and \
+                base_year_reference_region_cost.notnull()"
         ).assign(reg_diff_technology="all")
 
         # Get technologies that don't have a map source but do have a base year cost
