@@ -41,7 +41,7 @@ The generic pattern for workflows is:
 - The same precursor scenario can be used as the basis for multiple target scenarios.
 - A workflow is :meth:`.Workflow.run` starting with the earliest precursor scenario, ending with 1 or many target scenarios.
 
-The implementation is based on the observation that these form a graph (specifically, a directed, acyclic graph, or DAG) of nodes (= scenarios) and edges (= steps), in the same way that :mod:`message_ix.reporting` calculations do; and so the :mod:`dask` DAG features (via :mod:`genno`) can be used to organize the workflow.
+The implementation is based on the observation that these form a graph (specifically, a directed, acyclic graph, or DAG) of nodes (= scenarios) and edges (= steps), in the same way that :mod:`message_ix.report` calculations do; and so the :mod:`dask` DAG features (via :mod:`genno`) can be used to organize the workflow.
 
 Usage
 =====

@@ -125,7 +125,7 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
 
     .. code-block:: python
 
-        from message_ix.reporting import Reporter
+        from message_ix.report import Reporter
         from message_ix_models import Context
         from message_ix_models.report import register
 
