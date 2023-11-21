@@ -178,7 +178,7 @@ TASKS = [
     # Convert to ixmp format
     ("t demand freight::ixmp", "as_message_df", fv_cny, *_demand_common),
     # Select only non-LDV PDT
-    ((pdt_nyt + "1", "select", pdt_nyt), dict(indexers=dict(t="LDV"), inverse=True)),
+    ((pdt_nyt + "1", "select", pdt_nyt), dict(indexers=dict(t=["LDV"]), inverse=True)),
     # Relabel PDT
     (
         (pdt_cny + "0", "relabel2", pdt_nyt + "1"),
