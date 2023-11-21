@@ -9,7 +9,6 @@ from typing import Any, Dict, Optional, Tuple
 import pandas as pd
 import xarray as xr
 from genno import Computer, KeyExistsError, Quantity, quote
-from ixmp.reporting import RENAME_DIMS
 from message_ix import Scenario
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import bare, build, disutility
@@ -67,6 +66,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     """
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.ssp.data  # noqa: F401
+    from ixmp.reporting import RENAME_DIMS
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
 
@@ -153,32 +153,26 @@ def add_structure(c: Computer):
     This uses `info` to mock the contents that would be reported from an already-
     populated Scenario for sets "node", "year", and "cat_year".
     """
-    from itertools import product
     from operator import itemgetter
+
+    from ixmp.report import configure
 
     context = c.graph["context"]
     info = context["transport build info"]
 
     # Update RENAME_DIMS with transport-specific concepts/dimensions. This allows to use
-    # genno.operator.load_file(…, dims=RENAME_DIMS)
+    # genno.operator.load_file(…, dims=RENAME_DIMS) in add_exogenous_data()
     # TODO move to a more appropriate location
-    RENAME_DIMS.setdefault("area_type", "area_type")
-    RENAME_DIMS.setdefault("attitude", "attitude")
-    RENAME_DIMS.setdefault("census_division", "census_division")
-    RENAME_DIMS.setdefault("consumer_group", "cg")
-    RENAME_DIMS.setdefault("driver_type", "driver_type")
-    RENAME_DIMS.setdefault("vehicle_class", "vehicle_class")
-
-    # Create a quantity for broadcasting y to (yv, ya)
-    dims = ["y", "yv", "ya"]
-    tmp = (
-        # NB cannot use info.yv_ya here, as it omits all year_vtg < y₀
-        pd.DataFrame(product(info.set["year"], info.Y), columns=dims[1:])
-        .query("ya >= yv")
-        .assign(value=1.0, y=lambda df: df["yv"])
-        .set_index(dims)["value"]
+    configure(
+        rename_dims={
+            "area_type": "area_type",
+            "attitude": "attitude",
+            "census_division": "census_division",
+            "consumer_group": "cg",
+            "driver_type": "driver_type",
+            "vehicle_class": "vehicle_class",
+        }
     )
-    c.add("broadcast:y-yv-ya", Quantity(tmp))
 
     for key, *comp in (
         # Configuration
@@ -187,6 +181,7 @@ def add_structure(c: Computer):
         # Structure
         ("c::transport", quote(info.set["commodity"])),
         ("cg", quote(info.set["consumer_group"])),
+        ("indexers:cg", context.transport.set["consumer_group"]["indexers"]),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
         ("t::transport modes", quote(context.transport.demand_modes)),
@@ -225,6 +220,7 @@ def add_structure(c: Computer):
     # Model periods only
     c.add("y::model", "model_periods", "y", "cat_year")
     c.add("y0", itemgetter(0), "y::model")
+    c.add("broadcast:y-yv-ya", "broadcast_y_yv_ya", "y", "y::model")
 
     # Mappings for use with aggregate, select, etc.
     c.add("t::transport agg", quote(dict(t=t_groups)))
