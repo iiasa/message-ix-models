@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Deprecate :py:`iter_parameters()` in favour of :meth:`.Scenario.par_list` with :py:`indexed_by=...` argument from ixmp v3.8.0 (:pull:`137`).
 - Add :mod:`message_ix_models.report.compat` :ref:`for emulating legacy reporting <report-legacy>` (:pull:`134`).
 
 v2023.10.16
@@ -218,7 +219,7 @@ Earlier releases
 ---------
 
 - Migrate :mod:`.model.bare`, :mod:`.model.build`, :mod:`.model.cli`, and associated documentation (:pull:`9`)
-- Migrate utilities: :class:`.ScenarioInfo`, :func:`.add_par_data`, :func:`.eval_anno`, :func:`.iter_parameters`, and :func:`.strip_par_data`.
+- Migrate utilities: :class:`.ScenarioInfo`, :func:`.add_par_data`, :func:`.eval_anno`, :py:`iter_parameters()`, and :func:`.strip_par_data`.
 
 2021.3.3
 --------
