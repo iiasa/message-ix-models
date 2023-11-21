@@ -1,0 +1,18 @@
+# Freight activity
+#
+# Source: placeholder; extracted from ADVANCE database
+#
+# Units: Gt km
+#
+node,    value
+R11_AFR, 1210.1
+R11_CPA, 3088.8
+R11_EEU, 388.6
+R11_FSU, 810.4
+R11_LAM, 3100.6
+R11_MEA, 1210.1
+R11_NAM, 5148.9
+R11_PAO, 763.1
+R11_PAS, 2800.3
+R11_SAS, 1221.9
+R11_WEU, 3497.0
