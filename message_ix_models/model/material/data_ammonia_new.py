@@ -9,8 +9,7 @@ from .util import read_config
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
 default_gdp_elasticity = pd.read_excel(
-        context.get_local_path(
-            "data",
+        private_data_path(
             "material",
             "methanol",
             "methanol_sensitivity_pars.xlsx",
