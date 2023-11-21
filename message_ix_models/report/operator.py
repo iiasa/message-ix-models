@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Set, Tuple, Unio
 
 import ixmp
 import pandas as pd
+from genno import Quantity
 from genno.core.operator import Operator
 from genno.operator import pow
 from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
-from ixmp.reporting import Quantity
 
 from message_ix_models import Context
 from message_ix_models.util import add_par_data

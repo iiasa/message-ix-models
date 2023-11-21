@@ -9,7 +9,7 @@ from genno.core.key import iter_keys, single_key
 
 if TYPE_CHECKING:
     from genno import Computer
-    from ixmp.reporting import Reporter
+    from ixmp import Reporter
     from sdmx.model.common import Code
 
     from message_ix_models import Context
