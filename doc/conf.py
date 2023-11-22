@@ -41,6 +41,7 @@ templates_path = ["_template"]
 # html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+nitpicky = True
 nitpick_ignore_regex = {
     # These occur because there is no .. py:module:: directive for the *top-level*
     # module or package in the respective documentation and inventories.
@@ -153,6 +154,7 @@ linkcode_github_repo_slug = "iiasa/message-ix-models"
 
 # -- Options for sphinx.ext.napoleon ---------------------------------------------------
 
+napoleon_preprocess_types = True
 napoleon_type_aliases = {
     "Code": ":class:`~sdmx.model.common.Code`",
     "Path": ":class:`~pathlib.Path`",
