@@ -22,6 +22,7 @@ author = "IIASA Energy, Climate, and Environment (ECE) Program"
 # Add any Sphinx extension module names here, as strings. They can be extensions coming
 # with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
+    # "ixmp.util.sphinx_linkcode_github",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
@@ -145,6 +146,10 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),
 }
+
+# -- Options for sphinx.ext.linkcode / ixmp.util.sphinx_linkcode_github ----------------
+
+linkcode_github_repo_slug = "iiasa/message-ix-models"
 
 # -- Options for sphinx.ext.napoleon ---------------------------------------------------
 
