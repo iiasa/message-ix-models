@@ -3,17 +3,18 @@ import logging
 from collections import ChainMap, defaultdict
 from collections.abc import Mapping
 from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 from dask.core import quote
-from genno import Key, KeyExistsError, Quantity, configure
+from genno import Key, KeyExistsError, Quantity
 from message_ix import Reporter
-from message_ix.models import MACRO, MESSAGE
 from pandas.api.types import is_scalar
 
 from message_ix_models import ScenarioInfo
+from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time, silence_log
 from message_ix_models.util.ixmp import rename_dims
 
@@ -21,30 +22,33 @@ if TYPE_CHECKING:
     from message_ix.models import Item
 
 __all__ = [
-    "SIMULATE_ITEMS",
     "add_simulated_solution",
     "data_from_file",
     "simulate_qty",
+    "to_simulate",
 ]
 
 log = logging.getLogger(__name__)
-
-# Items to included in a simulated solution: MESSAGE sets and parameters; some variables
-SIMULATE_ITEMS = deepcopy(MESSAGE.items)
-# MACRO variables
-SIMULATE_ITEMS.update({k: MACRO.items[k] for k in ("GDP", "MERtoPPP")})
-
-configure(
-    rename_dims=dict(
-        node_rel="nr",
-        year_rel="yr",
-    ),
-)
 
 
 def dims_of(info: "Item") -> Dict[str, str]:
     """Return a mapping from the full index names to short dimension IDs of `info`."""
     return {d: rename_dims().get(d, d) for d in (info.dims or info.coords or [])}
+
+
+@lru_cache(1)
+@minimum_version("message_ix 3.7.0.post0")
+def to_simulate():
+    """Return items to be included in a simulated solution."""
+    from message_ix.models import MACRO, MESSAGE
+
+    # Items to included in a simulated solution: MESSAGE sets and parameters; some
+    # variables
+    result = deepcopy(MESSAGE.items)
+    # MACRO variables
+    result.update({k: MACRO.items[k] for k in ("GDP", "MERtoPPP")})
+
+    return result
 
 
 def simulate_qty(
@@ -132,6 +136,7 @@ def data_from_file(path: Path, *, name: str, dims: Sequence[str]) -> Quantity:
         return Quantity(tmp["value"], name=name)
 
 
+@minimum_version("message_ix 3.6")
 def add_simulated_solution(
     rep: Reporter,
     info: ScenarioInfo,
@@ -151,15 +156,14 @@ def add_simulated_solution(
         solution data for the MESSAGE variable with the same name. See
         :func:`data_from_file`.
     """
-    from importlib.metadata import version
-
     from ixmp.backend import ItemType
 
-    if version("message_ix") < "3.6":
-        raise NotImplementedError(
-            "Support for message_ix_models.report.sim.add_simulated_solution() with "
-            "message_ix <= 3.5.0. Please upgrade to message_ix 3.6 or later."
-        )
+    rep.configure(
+        rename_dims=dict(
+            node_rel="nr",
+            year_rel="yr",
+        ),
+    )
 
     mark_time()
     N = len(rep.graph)
@@ -169,7 +173,7 @@ def add_simulated_solution(
 
     # Add simulated data
     data = data or dict()
-    for name, item_info in SIMULATE_ITEMS.items():
+    for name, item_info in to_simulate().items():
         dims = list(dims_of(item_info).values())
         key = Key(name, dims)
 

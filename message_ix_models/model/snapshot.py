@@ -8,6 +8,7 @@ from message_ix.models import MACRO
 from tqdm import tqdm
 
 from message_ix_models import Spec
+from message_ix_models.util import minimum_version
 from message_ix_models.util.pooch import SOURCE, fetch
 
 from .build import apply_spec
@@ -98,6 +99,7 @@ def read_excel(scenario: Scenario, path: Path) -> None:
             scenario.add_par(name, data)
 
 
+@minimum_version("message_ix 3.5")
 def load(scenario: Scenario, snapshot_id: int) -> None:
     """Fetch and load snapshot with ID `snapshot_id` into `scenario`.
 
@@ -105,14 +107,6 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     --------
     SNAPSHOTS
     """
-    from importlib.metadata import version
-
-    if version("message_ix") < "3.5":
-        raise NotImplementedError(
-            "Support for message_ix_models.model.snapshot.load() with message_ix <= "
-            "3.4.0. Please upgrade to message_ix 3.5 or later."
-        )
-
     path, *_ = fetch(**SOURCE[f"snapshot-{snapshot_id}"])
 
     # Add units

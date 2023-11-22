@@ -14,6 +14,7 @@ from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Reporter, Scenario
 
 from message_ix_models import Context, ScenarioInfo
+from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
@@ -294,6 +295,7 @@ def _invoke_legacy_reporting(context):
     return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **kwargs)
 
 
+@minimum_version("message_ix 3.6")
 def prepare_reporter(
     context: Context,
     scenario: Optional[Scenario] = None,
@@ -325,14 +327,6 @@ def prepare_reporter(
         Same as :attr:`.Config.key` if any, but in full resolution; else either
         "default" or "cli-output" according to the other settings.
     """
-    from importlib.metadata import version
-
-    if version("message_ix") < "3.6":
-        raise NotImplementedError(
-            "Support for message_ix_models.report.prepare_reporter() with message_ix <="
-            " 3.5.0. Please upgrade to message_ix 3.6 or later."
-        )
-
     log.info("Prepare reporter")
 
     if reporter:
