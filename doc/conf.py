@@ -4,7 +4,8 @@
 # the documentation: https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     import sphinx.application
@@ -109,6 +110,21 @@ extlinks = {
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
 
+
+def local_inv(name: str, *parts: str) -> Optional[str]:
+    """Construct the path to a local intersphinx inventory."""
+
+    from importlib.util import find_spec
+
+    spec = find_spec(name)
+    if spec is None:
+        return None
+
+    if 0 == len(parts):
+        parts = ("doc", "_build", "html")
+    return str(Path(spec.origin).parents[1].joinpath(*parts, "objects.inv"))
+
+
 # For message-data, see: https://docs.readthedocs.io/en/stable/guides
 # /intersphinx.html#intersphinx-with-private-projects
 _token = os.environ.get("RTD_TOKEN_MESSAGE_DATA", "")
@@ -120,7 +136,7 @@ intersphinx_mapping = {
     "m-data": (
         f"https://{_token}:@docs.messageix.org/projects/models-internal/en/latest/",
         # Use a local copy of objects.inv, if the user has one
-        (None, "message_data.inv"),
+        (local_inv("message_data"), None),
     ),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pint": ("https://pint.readthedocs.io/en/stable/", None),
