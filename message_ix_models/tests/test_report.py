@@ -9,7 +9,7 @@ from ixmp.testing import assert_logs
 
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report import prepare_reporter, register, report, util
-from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.report.sim import add_simulated_solution, to_simulate
 from message_ix_models.util import package_data_path
 
 # Minimal reporting configuration for testing
@@ -44,6 +44,7 @@ def test_register(caplog):
         register(_cb)
 
 
+@prepare_reporter.minimum_version
 def test_report_bare_res(request, tmp_path, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     scenario = testing.bare_res(request, test_context, solved=True)
@@ -249,7 +250,11 @@ def test_collapse(input, exp):
 
 
 def ss_reporter():
-    """Reporter with a simulated solution for snapshot 0."""
+    """Reporter with a simulated solution for snapshot 0.
+
+    This uses :func:`.add_simulated_solution`, so test functions that use it should be
+    marked with :py:`@to_simulate.minimum_version`.
+    """
     from message_ix import Reporter
 
     rep = Reporter()
@@ -264,7 +269,7 @@ def ss_reporter():
     return rep
 
 
-@add_simulated_solution.minimum_version
+@to_simulate.minimum_version
 def test_add_simulated_solution(test_context, test_data_path):
     # Simulated solution can be added to an empty Reporter
     rep = ss_reporter()
@@ -292,7 +297,7 @@ def test_add_simulated_solution(test_context, test_data_path):
     assert np.isclose(79.76478, value.item())
 
 
-@prepare_reporter.minimum_version
+@to_simulate.minimum_version
 def test_prepare_reporter(test_context):
     rep = ss_reporter()
     N = len(rep.graph)

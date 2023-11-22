@@ -12,11 +12,12 @@ from message_ix_models.report.compat import (
     get_techs,
     prepare_techs,
 )
+from message_ix_models.report.sim import to_simulate
 
 from ..test_report import ss_reporter
 
 
-@prepare_reporter.minimum_version
+@to_simulate.minimum_version
 def test_compat(tmp_path, test_context):
     import numpy.testing as npt
 

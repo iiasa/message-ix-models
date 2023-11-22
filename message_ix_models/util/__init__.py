@@ -313,7 +313,7 @@ def ffill(
     return pd.concat(dfs, ignore_index=True)
 
 
-def iter_parameters(set_name, scenario: "message_ix.Scenario"):
+def iter_parameters(set_name, scenario: Optional["message_ix.Scenario"] = None):
     """Iterate over MESSAGEix parameters with *set_name* as a dimension.
 
     .. deprecated:: 2023.11
@@ -321,8 +321,9 @@ def iter_parameters(set_name, scenario: "message_ix.Scenario"):
        instead.
     """
     try:
+        assert scenario is not None
         yield from scenario.items(indexed_by=set_name, par_data=False)
-    except TypeError:  # ixmp < 3.8.0
+    except (TypeError, AssertionError):  # ixmp < 3.8.0
         import message_ix.models
 
         for name, info in message_ix.models.MESSAGE_ITEMS.items():
