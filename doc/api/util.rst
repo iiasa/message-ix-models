@@ -44,6 +44,7 @@ Commonly used:
    make_source_tech
    maybe_query
    merge_data
+   minimum_version
    ~node.nodes_ex_world
    package_data_path
    private_data_path

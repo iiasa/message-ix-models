@@ -5,6 +5,7 @@ Next release
 ============
 
 - Deprecate :py:`iter_parameters()` in favour of :meth:`.Scenario.par_list` with :py:`indexed_by=...` argument from ixmp v3.8.0 (:pull:`137`).
+- New utility method :func:`.minimum_version` for compatibility and testing (:pull:`137`).
 - Add :mod:`message_ix_models.report.compat` :ref:`for emulating legacy reporting <report-legacy>` (:pull:`134`).
 
 v2023.10.16

@@ -13,10 +13,10 @@ from message_ix_models.report.compat import (
     prepare_techs,
 )
 
-from ..test_report import MARK, ss_reporter
+from ..test_report import ss_reporter
 
 
-@MARK[1]
+@prepare_reporter.minimum_version
 def test_compat(tmp_path, test_context):
     import numpy.testing as npt
 

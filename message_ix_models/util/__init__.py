@@ -1,6 +1,17 @@
 import logging
 from collections import ChainMap, defaultdict
-from typing import Collection, Dict, Mapping, MutableMapping, Optional, Sequence, Union
+from functools import update_wrapper
+from importlib.metadata import version
+from typing import (
+    Callable,
+    Collection,
+    Dict,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 import message_ix
 import pandas as pd
@@ -478,6 +489,67 @@ def merge_data(
     for other in others:
         for par, df in other.items():
             base[par] = pd.concat([base.get(par, None), df])
+
+
+def minimum_version(expr: str) -> Callable:
+    """Decorator for functions that require a minimum version of some upstream package.
+
+    See :func:`.prepare_reporter` for a usage example.
+
+    Parameters
+    ----------
+    expr :
+        Like "example 1.2.3.post0". The condition for the decorated function is that
+        the installed version
+    message :
+        Message about the decorated function.
+    """
+
+    from packaging.version import parse
+
+    package, v_min = expr.split(" ")
+    v_package = version(package)
+    condition = parse(v_package) < parse(v_min)
+    message = f" with {package} {v_package} < {v_min}"
+
+    # Create the decorator
+    def decorator(func):
+        name = f"{func.__module__}.{func.__name__}()"
+
+        # Wrap `func`
+        def wrapper(*args, **kwargs):
+            if condition:
+                raise NotImplementedError(f"{name}{message}.")
+            return func(*args, **kwargs)
+
+        update_wrapper(wrapper, func)
+
+        # Create a test function decorator
+        def marker(test_func):
+            # Import pytest only when there is a test function to mark
+            import pytest
+
+            # Create the mark
+            mark = pytest.mark.xfail(
+                condition=condition,
+                raises=NotImplementedError,
+                reason=f"Not supported{message}",
+            )
+
+            # Attach to the test function
+            try:
+                test_func.pytestmark.append(mark)
+            except AttributeError:
+                test_func.pytestmark = [mark]
+
+            return test_func
+
+        # Store the decorator on the wrapped function
+        setattr(wrapper, "minimum_version", marker)
+
+        return wrapper
+
+    return decorator
 
 
 def replace_par_data(
