@@ -13,10 +13,10 @@ from typing import (
 )
 
 from genno import Computer
-from ixmp.utils import parse_url
 from message_ix import Scenario
 
 from message_ix_models.util.context import Context
+from message_ix_models.util.ixmp import parse_url
 
 if TYPE_CHECKING:
     from click import Command

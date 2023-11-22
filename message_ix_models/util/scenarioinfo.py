@@ -6,11 +6,11 @@ from dataclasses import InitVar, dataclass, field
 from itertools import product
 from typing import TYPE_CHECKING, Dict, List, Optional
 
-import ixmp.utils
 import pandas as pd
 import pint
 import sdmx.model.v21 as sdmx_model
 
+from .ixmp import parse_url
 from .sdmx import eval_anno
 
 if TYPE_CHECKING:
@@ -169,7 +169,7 @@ class ScenarioInfo:
 
     @url.setter
     def url(self, value):
-        p, s = ixmp.utils.parse_url(value)
+        p, s = parse_url(value)
         self.platform_name = p.get("name")
         for k in "model", "scenario", "version":
             setattr(self, k, s.get(k))
