@@ -65,6 +65,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     :doc:`/reference/model/transport/data`
     """
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
+    import message_ix_models.project.advance.data  # noqa: F401
     import message_ix_models.project.ssp.data  # noqa: F401
     from ixmp.reporting import RENAME_DIMS
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
@@ -101,13 +102,25 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     for kw in dict(measure=1), dict(measure=2):
         prepare_computer(context, c, "IEA Future of Trucks", source_kw=kw, strict=False)
 
+    # Add ADVANCE data
+    common = dict(model="MESSAGE", scenario="ADV3TRAr2_Base", aggregate=False)
+    for n, m, u in (
+        ("pdt ldv", "Transport|Service demand|Road|Passenger|LDV", "Gp km / a"),
+        ("fv", "Transport|Service demand|Road|Freight", "Gt km"),
+    ):
+        # Add the base data
+        kw = dict(measure=m, name=f"advance {n}")
+        kw.update(common)
+        key, *_ = prepare_computer(context, c, "ADVANCE", source_kw=kw, strict=False)
+        # Broadcast to R12
+        c.add(f"{n}:n:advance", "broadcast_advance", key, "y0", "config")
+
+    # Alias for other computations which expect the upper-case name
+    c.add("MERtoPPP:n-y", "mertoppp:n-y")
     try:
-        # Alias for other computations which expect the upper-case name
         c.add("GDP:n-y", "gdp:n-y", strict=True)
     except KeyExistsError as e:
         log.info(repr(e))  # Solved scenario that already has this key
-
-    c.add("MERtoPPP:n-y", "mertoppp:n-y")
 
     # Ensure correct units
     c.add("population:n-y", "mul", "pop:n-y", Quantity(1.0, units="passenger"))

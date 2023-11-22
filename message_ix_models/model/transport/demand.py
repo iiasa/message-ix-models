@@ -145,9 +145,8 @@ TASKS = [
     ((ldv_ny + "ref", "select", pdt_nyt), dict(indexers=dict(t="LDV"), drop=True)),
     # Indexed to base year
     (ldv_ny + "index", "index_to", ldv_ny + "ref", literal("y"), "y0"),
-    ("ldv pdt:n:advance", "advance_ldv_pdt", "config"),
     # Compute LDV PDT as ADVANCE base-year values indexed to overall growth
-    (ldv_ny + "total+0", "mul", ldv_ny + "index", "ldv pdt:n:advance"),
+    (ldv_ny + "total+0", "mul", ldv_ny + "index", "pdt ldv:n:advance"),
     (ldv_ny + "total", "mul", ldv_ny + "total+0", "ldv pdt factor:n-y"),
     # LDV PDT shared out by consumer group
     (ldv_nycg, "mul", ldv_ny + "total", cg),
@@ -155,8 +154,6 @@ TASKS = [
     # Base freight mode share
     # …from IEA EEI
     # ("iea_eei_fv", "fv:n-y:historical", quote("tonne-kilometres"), "config"),
-    # …from ADVANCE
-    ("fv:n:advance", "advance_fv", "config"),
     # …from file
     (
         "fv:n-t:historical",
