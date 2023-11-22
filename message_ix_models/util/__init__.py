@@ -62,6 +62,7 @@ __all__ = [
     "make_source_tech",
     "maybe_query",
     "merge_data",
+    "minimum_version",
     "package_data_path",
     "private_data_path",
     "replace_par_data",
@@ -494,15 +495,13 @@ def merge_data(
 def minimum_version(expr: str) -> Callable:
     """Decorator for functions that require a minimum version of some upstream package.
 
-    See :func:`.prepare_reporter` for a usage example.
+    See :func:`.prepare_reporter` / :func:`.test_prepare_reporter` for a usage example.
 
     Parameters
     ----------
     expr :
         Like "example 1.2.3.post0". The condition for the decorated function is that
-        the installed version
-    message :
-        Message about the decorated function.
+        the installed version must be equal to or greater than this version.
     """
 
     from packaging.version import parse
