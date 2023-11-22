@@ -1,5 +1,16 @@
 from typing import Dict
 
+try:
+    # ixmp 3.8.0 and later
+    from ixmp.util import maybe_check_out, maybe_commit, parse_url
+except ImportError:
+    # ixmp <= 3.7.0
+    from ixmp.utils import (  # type: ignore [no-redef]  # noqa: F401
+        maybe_check_out,
+        maybe_commit,
+        parse_url,
+    )
+
 
 def rename_dims() -> Dict[str, str]:
     """Access :data:`.ixmp.report.common.RENAME_DIMS`.
