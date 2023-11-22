@@ -36,8 +36,8 @@ def dims_of(info: "Item") -> Dict[str, str]:
     return {d: rename_dims().get(d, d) for d in (info.dims or info.coords or [])}
 
 
-@lru_cache(1)
 @minimum_version("message_ix 3.7.0.post0")
+@lru_cache(1)
 def to_simulate():
     """Return items to be included in a simulated solution."""
     from message_ix.models import MACRO, MESSAGE
