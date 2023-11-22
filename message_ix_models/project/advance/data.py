@@ -1,6 +1,8 @@
 import logging
 from copy import copy
 
+from genno import Computer, Key
+
 from message_ix_models.tools.exo_data import (
     ExoDataSource,
     iamc_like_data_for_query,
@@ -8,6 +10,7 @@ from message_ix_models.tools.exo_data import (
 )
 from message_ix_models.util import (
     HAS_MESSAGE_DATA,
+    iter_keys,
     package_data_path,
     private_data_path,
 )
@@ -39,6 +42,10 @@ class ADVANCE(ExoDataSource):
       - "model": one of 12 codes including "MESSAGE".
       - "measure": one of 3080 codes for the "VARIABLE" dimension.
       - "scenario": one of 51 codes including "ADV3TRAr2_Base".
+      - "name", optional: override :attr:`.ExoDataSource.name`.
+      - "aggregate", optional: if :any:`True`, aggregate data from the ADVANCE native
+        regions using ``n::groups`` (same behaviour as the base class). Otherwise, do
+        not aggregate.
 
     Example
     -------
@@ -101,6 +108,11 @@ class ADVANCE(ExoDataSource):
         self.model = _kw.pop("model", None)
         self.scenario = _kw.pop("scenario", None)
 
+        # Set the name of the returned quantity
+        self.name = _kw.pop("name", "")
+
+        self.aggregate = _kw.pop("aggregate", True)
+
         if len(_kw):
             raise ValueError(_kw)
 
@@ -126,3 +138,19 @@ class ADVANCE(ExoDataSource):
         return iamc_like_data_for_query(
             path, query, archive_member=NAME, non_iso_3166="keep"
         )
+
+    def transform(self, c: "Computer", base_key: Key) -> Key:
+        k = iter_keys(base_key)
+
+        k1 = base_key
+        if self.aggregate:
+            # Aggregate
+            k1 = k()
+            c.add(k1, "aggregate", base_key, "n::groups", keep=False)
+
+        # Interpolate to the desired set of periods
+        kw = dict(fill_value="extrapolate")
+        k2 = k()
+        c.add(k2, "interpolate", k1, "y::coords", kwargs=kw)
+
+        return k2

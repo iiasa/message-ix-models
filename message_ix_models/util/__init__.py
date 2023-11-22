@@ -1,14 +1,17 @@
 import logging
 from collections import ChainMap, defaultdict
-from functools import update_wrapper
+from functools import partial, update_wrapper
 from importlib.metadata import version
+from itertools import count
 from typing import (
+    TYPE_CHECKING,
     Callable,
     Collection,
     Dict,
     Mapping,
     MutableMapping,
     Optional,
+    Protocol,
     Sequence,
     Union,
 )
@@ -35,6 +38,9 @@ from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
 from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
+if TYPE_CHECKING:
+    import genno
+
 __all__ = [
     "HAS_MESSAGE_DATA",
     "MESSAGE_DATA_PATH",
@@ -54,6 +60,7 @@ __all__ = [
     "eval_anno",
     "ffill",
     "identify_nodes",
+    "iter_keys",
     "load_package_data",
     "load_private_data",
     "local_data_path",
@@ -311,6 +318,15 @@ def ffill(
             dfs.append(group_df.assign(**{dim: new_label}).pipe(_maybe_eval))
 
     return pd.concat(dfs, ignore_index=True)
+
+
+class KeyIterator(Protocol):
+    def __call__(self) -> "genno.Key":
+        ...
+
+
+def iter_keys(base: "genno.Key") -> KeyIterator:
+    return partial(next, map(lambda i: base + str(i), count()))
 
 
 def iter_parameters(set_name, scenario: Optional["message_ix.Scenario"] = None):
