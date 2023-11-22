@@ -15,9 +15,8 @@ from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.report.computations import compound_growth
+from message_ix_models.report.operator import compound_growth
 from message_ix_models.report.util import as_quantity
-from message_ix_models.tools import advance
 from message_ix_models.util import MappingAdapter, broadcast, eval_anno, nodes_ex_world
 from sdmx.model.v21 import Code
 
@@ -31,8 +30,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 __all__ = [
-    "advance_fv",
     "base_shares",
+    "broadcast_advance",
     "cost",
     "distance_ldv",
     "distance_nonldv",
@@ -448,85 +447,47 @@ def merge_data(
     return {k: pd.concat([o.get(k, None) for o in others]) for k in keys}
 
 
-def _advance_data_for(config: dict, variable: str, units) -> Quantity:
-    import plotnine as p9
-    from genno.compat.plotnine import Plot
-    from genno.operator import concat, sum
+def broadcast_advance(data: Quantity, y0: int, config: dict) -> Quantity:
+    """Broadcast ADVANCE `data` from native `n` coords to :py:`config["regions"]`."""
+    from genno.operator import sum
 
     assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
 
-    class Plot1(Plot):
-        basename = f"advance-check-{hash(variable)}"
+    # Create a quantity for broadcasting
+    df = pd.DataFrame(
+        [
+            ["ASIA", 0.1, "R12_RCPA"],
+            ["ASIA", 0.5 - 0.1, "R12_PAS"],
+            ["CHN", 1.0, "R12_CHN"],
+            ["EU", 0.1, "R12_EEU"],
+            ["EU", 0.9, "R12_WEU"],
+            ["IND", 1.0, "R12_SAS"],
+            ["LAM", 1.0, "R12_LAM"],
+            ["MAF", 0.5, "R12_AFR"],
+            ["MAF", 0.5, "R12_MEA"],
+            ["OECD90", 0.08, "R12_PAO"],
+            ["REF", 1.0, "R12_FSU"],
+            ["USA", 1.0, "R12_NAM"],
+        ],
+        columns=["n", "value", "n_new"],
+    )
+    bcast = Quantity(df.set_index(["n", "n_new"])["value"])
 
-        def generate(self, data):
-            N = len(data)
-            data = data.query("activity > 0")
-            log.info(f"Discard {N-len(data)} rows with zero values")
-            return (
-                p9.ggplot(
-                    p9.aes(
-                        x="region",
-                        y="activity",
-                        color="model",
-                        # shape="scenario",
-                    ),
-                    data,
-                )
-                + p9.geom_point()
-                + p9.ggtitle(f"{variable}, 2020 [{units}]")
-            )
+    check = data.sel(n="World", y=y0, drop=True)
 
-    data = advance.advance_data(variable).sel(year=2020)
-    data.name = "activity"
-
-    # Debugging
-    # Plot1().save(dict(output_dir=Path.cwd()), data)
-
-    data = rename_dims(
-        data.sel(model="MESSAGE", scenario="ADV3TRAr2_Base", drop=True),
-        dict(region="n"),
+    # - Multiply by `bcast`, adding a new dimension "n_new".
+    # - Sum on "n" and drop that dimension.
+    # - Rename "n_new" to "n".
+    result = (
+        (data.sel(y=y0, drop=True) * bcast)
+        .pipe(sum, dimensions=["n"])
+        .pipe(rename_dims, {"n_new": "n"})
     )
 
-    # Map regions
-    results = []
-    for source, share, dest in (
-        ("ASIA", 0.1, "R12_RCPA"),
-        ("ASIA", 0.5 - 0.1, "R12_PAS"),
-        ("China", 1.0, "R12_CHN"),
-        ("EU", 0.1, "R12_EEU"),
-        ("EU", 0.9, "R12_WEU"),
-        ("India", 1.0, "R12_SAS"),
-        ("LAM", 1.0, "R12_LAM"),
-        ("MAF", 0.5, "R12_AFR"),
-        ("MAF", 0.5, "R12_MEA"),
-        ("OECD90", 0.08, "R12_PAO"),
-        ("REF", 1.0, "R12_FSU"),
-        ("USA", 1.0, "R12_NAM"),
-    ):
-        results.append(relabel(share * data.sel(n=source), n={source: dest}))
-    result = concat(*results)
-    result.units = data.units  # FIXME should not be necessary
-
-    # Check
-    assert_qty_allclose(
-        sum(result, dimensions=["n"]), data.sel(n="World", drop=True), rtol=0.05
-    )
-    result.units = units  # FIXME guard with an assertion
+    # Ensure the total across the new `n` coords still matches the world total
+    assert_qty_allclose(check, sum(result, dimensions=["n"]), rtol=5e-2)
 
     return result
-
-
-advance_ldv_pdt = partial(
-    _advance_data_for,
-    variable="Transport|Service demand|Road|Passenger|LDV",
-    units="Gp km / a",
-)
-
-advance_fv = partial(
-    _advance_data_for,
-    variable="Transport|Service demand|Road|Freight",
-    units="Gt km",
-)
 
 
 def iea_eei_fv(name: str, config: Dict) -> Quantity:
