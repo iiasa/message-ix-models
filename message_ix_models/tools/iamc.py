@@ -6,8 +6,24 @@ import sdmx.model.v21 as m
 from sdmx.message import StructureMessage
 
 
-def describe(data: pd.DataFrame, extra: Optional[str] = None):
-    """Generate code lists from `data` in IAMC format."""
+def describe(data: pd.DataFrame, extra: Optional[str] = None) -> StructureMessage:
+    """Generate SDMX structure information from `data` in IAMC format.
+
+    Parameters
+    ----------
+    data :
+        Data in "wide" or "long" IAMC format.
+    extra : str, optional
+        Extra text added to the description of each Codelist.
+
+    Returns
+    -------
+    sdmx.message.StructureMessage
+        The message contains one :class:`.Codelist` for each of the MODEL, SCENARIO,
+        REGION, VARIABLE, and UNIT dimensions. Codes for the VARIABLE code list have
+        annotations with :py:`id="preferred-unit-measure"` that give the corresponding
+        UNIT Code(s) that appear with each VARIABLE.
+    """
 
     sm = StructureMessage()
 

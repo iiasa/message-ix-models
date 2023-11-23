@@ -36,6 +36,7 @@ Commonly used:
    copy_column
    ffill
    identify_nodes
+   iter_keys
    load_package_data
    load_private_data
    local_data_path

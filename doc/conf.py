@@ -115,16 +115,14 @@ extlinks = {
 
 def local_inv(name: str, *parts: str) -> Optional[str]:
     """Construct the path to a local intersphinx inventory."""
+    if 0 == len(parts):
+        parts = ("doc", "_build", "html")
 
     from importlib.util import find_spec
 
     spec = find_spec(name)
-    if spec is None:
-        return None
-
-    if 0 == len(parts):
-        parts = ("doc", "_build", "html")
-    return str(Path(spec.origin).parents[1].joinpath(*parts, "objects.inv"))
+    if spec and spec.origin:
+        return str(Path(spec.origin).parents[1].joinpath(*parts, "objects.inv"))
 
 
 # For message-data, see: https://docs.readthedocs.io/en/stable/guides
@@ -132,6 +130,7 @@ def local_inv(name: str, *parts: str) -> Optional[str]:
 _token = os.environ.get("RTD_TOKEN_MESSAGE_DATA", "")
 
 intersphinx_mapping = {
+    "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
     "genno": ("https://genno.readthedocs.io/en/stable", None),
     "ixmp": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
     "message-ix": ("https://docs.messageix.org/en/latest/", None),

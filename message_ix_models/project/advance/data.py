@@ -140,6 +140,11 @@ class ADVANCE(ExoDataSource):
         )
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
+        """Prepare `c` to transform raw data from `base_key`.
+
+        Unlike the base class version, this implementation only adds the aggregation
+        step if :attr:`.aggregate` is :any:`True`.
+        """
         k = iter_keys(base_key)
 
         k1 = base_key

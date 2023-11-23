@@ -301,6 +301,15 @@ def iamc_like_data_for_query(
     7. Transform to :class:`.Quantity` with units.
 
     The result is :obj:`.cached`.
+
+    Parameters
+    ----------
+    archive_member : bool, optional
+        If given, `path` may be an archive with 2 or more members. The member named by
+        `archive_member` is extracted and read.
+    non_iso_3166 : bool, optional
+        If "discard" (default), "region" labels that are not ISO 3166-1 country names
+        are discarded, along with associated data. If "keep", such labels are kept.
     """
     import pandas as pd
 
