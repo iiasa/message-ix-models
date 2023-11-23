@@ -39,9 +39,9 @@ def check(scenario):
 
 
 def require_compat(c: Computer) -> None:
-    c.require_compat("ixmp.reporting.computations")
-    c.require_compat("message_ix.reporting.computations")
-    c.require_compat("message_ix_models.report.computations")
+    c.require_compat("ixmp.report.operator")
+    c.require_compat("message_ix.report.operator")
+    c.require_compat("message_ix_models.report.operator")
     c.require_compat("message_data.model.transport.operator")
 
 

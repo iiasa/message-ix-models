@@ -67,9 +67,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.advance.data  # noqa: F401
     import message_ix_models.project.ssp.data  # noqa: F401
-    from ixmp.reporting import RENAME_DIMS
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
+    from message_ix_models.util.ixmp import rename_dims
 
     # Ensure that the MERtoPPP data provider is available
     from . import data  # noqa: F401
@@ -152,7 +152,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
                 "load_file",
                 f.locate(context),
                 key=f.key,
-                dims=RENAME_DIMS,
+                dims=rename_dims(),
                 name=f.key.name,
             )
         except FileNotFoundError:

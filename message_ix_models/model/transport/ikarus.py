@@ -11,7 +11,6 @@ import xarray as xr
 from genno import Computer, Key, Quantity, quote
 from genno.core.key import single_key
 from iam_units import registry
-from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
@@ -220,7 +219,7 @@ def read_ikarus_data(occupancy, k_output, k_inv_cost):
 def prepare_computer(c: Computer):
     """Prepare `c` to perform model data preparation using IKARUS data."""
     # TODO identify whether capacity_factor is needed
-    RENAME_DIMS.setdefault("source", "source")
+    c.configure(rename_dims={"source": "source"})
 
     c.add_single("ikarus indexers", quote(make_indexers()))
     c.add_single("y::ikarus", lambda data: list(filter(partial(le, 2000), data)), "y")

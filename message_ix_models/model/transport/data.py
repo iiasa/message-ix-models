@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Dict, List, Mapping, Optional
 import pandas as pd
 from genno import Computer, Key, Quantity
 from genno.core.key import single_key
-from ixmp.reporting import RENAME_DIMS
 from message_ix import make_df
 from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
@@ -21,6 +20,7 @@ from message_ix_models.util import (
     private_data_path,
     same_node,
 )
+from message_ix_models.util.ixmp import rename_dims
 
 if TYPE_CHECKING:
     from sdmx.model.v21 import Code
@@ -247,7 +247,7 @@ class IEA_Future_of_Trucks(ExoDataSource):
     def __call__(self):
         from genno.operator import load_file
 
-        return load_file(self.path, dims=RENAME_DIMS)
+        return load_file(self.path, dims=rename_dims())
 
     def transform(self, c: "Computer", base_key: Key) -> Key:
         import xarray as xr
@@ -337,4 +337,4 @@ class MERtoPPP(ExoDataSource):
     def __call__(self):
         from genno.operator import load_file
 
-        return self.adapt(load_file(self.path, dims=RENAME_DIMS))
+        return self.adapt(load_file(self.path, dims=rename_dims()))

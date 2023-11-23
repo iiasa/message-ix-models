@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict
 
 import pandas as pd
 import xarray as xr
-from ixmp.reporting import Quantity
+from genno import Quantity
 
 if TYPE_CHECKING:
     from genno import Computer
