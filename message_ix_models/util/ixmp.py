@@ -2,14 +2,19 @@ from typing import Dict
 
 try:
     # ixmp 3.8.0 and later
-    from ixmp.util import maybe_check_out, maybe_commit, parse_url
+    from ixmp.util import discard_on_error, maybe_check_out, maybe_commit, parse_url
 except ImportError:
     # ixmp <= 3.7.0
-    from ixmp.utils import (  # type: ignore [no-redef]  # noqa: F401
+    from contextlib import nullcontext
+
+    from ixmp.utils import (  # type: ignore [import-not-found,no-redef]  # noqa: F401
         maybe_check_out,
         maybe_commit,
         parse_url,
     )
+
+    def discard_on_error(*args):
+        return nullcontext()
 
 
 def rename_dims() -> Dict[str, str]:

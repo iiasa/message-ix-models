@@ -1,4 +1,5 @@
 import logging
+from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from importlib import import_module
@@ -209,13 +210,7 @@ def report(context: Context, *args, **kwargs):
         - :py:`context.report`, which is an instance of :class:`.report.Config`; see
           there for available configuration settings.
     """
-    try:
-        from ixmp.utils import discard_on_error
-    except ImportError:
-        from contextlib import nullcontext
-
-        def discard_on_error(*args):
-            return nullcontext()
+    from message_ix_models.util.ixmp import discard_on_error
 
     # Handle deprecated usage that appears in:
     # - .model.cli.new_baseline()
