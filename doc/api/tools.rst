@@ -99,16 +99,15 @@ IAMC data structures (:mod:`.tools.iamc`)
    
 IEA WEO data
 ============
+.. currentmodule:: message_ix_models.tools.costs.regional_differentiation
 
-:mod:`.tools.costs.weo` reads data from the IEA WEO 2022 and prepares data for the MESSAGE cost parameters (``fix_cost`` and ``inv_cost``, but not ``var_cost``).
+Regional differentiation of costs (:mod:`.tools.costs.regional_differentiation`)
+================================================================================
 
-The function :func:`.get_region_differentiated_costs` displays all the steps from reading WEO 2022 data to producing data suitable for use in a MESSAGE model.
-
-.. currentmodule:: message_ix_models.tools.costs.weo
-
-.. automodule:: message_ix_models.tools.costs.weo
+.. automodule:: message_ix_models.tools.costs.regional_differentiation
    :members:
 
+<<<<<<< HEAD
 .. _tools-wb:
 
 World Bank structures (:mod:`.tools.wb`)
@@ -120,37 +119,86 @@ World Bank structures (:mod:`.tools.wb`)
 
 GEA and SSP technological learning data
 =======================================
+=======
+   .. autosummary::
+>>>>>>> 7c6186ea (Update docs)
 
-:mod:`.tools.costs.learning` reads technology cost reduction rates data from the Global Energy Assessment (GEA) and determines cost reduction (learning) rates under SSP scenarios for technologies.
+      get_weo_data
+      get_intratec_data
+      adjust_technology_mapping
+      get_weo_regional_differentiation
+      get_intratec_regional_differentiation
+      apply_regional_differentiation
 
-The function :func:`.get_cost_reduction_data` pulls the raw GEA data and calculates learning rates under SSP1-5 scenarios.
 
 .. currentmodule:: message_ix_models.tools.costs.learning
+
+Cost reduction of technologies over time (:mod:`.tools.costs.learning`)
+=======================================================================
 
 .. automodule:: message_ix_models.tools.costs.learning
    :members:
 
-SSP GDP data
-============
+   .. autosummary::
 
-:mod:`.tools.costs.gdp` uses GDP per capita data from the SSP database, along with the IEA WEO data, to develop linear relationships between GDP and technology costs.
-
-The function :func:`.get_gdp_data` pulls in the raw SSP GDP data and calculates regional ratios of GDP.
-The function :func:`.linearly_regress_tech_cost_vs_gdp_ratios` uses the regional GDP ratios and the regional technology cost ratios to compute a linear regression between the two.
+      get_cost_reduction_data
+      get_technology_learning_scenarios_data
+      project_ref_region_inv_costs_using_learning_rates
 
 .. currentmodule:: message_ix_models.tools.costs.gdp
+
+GDP-adjusted costs and regional differentiation (:mod:`.tools.costs.gdp`)
+==========================================================================
 
 .. automodule:: message_ix_models.tools.costs.gdp
    :members:
 
-Polynomial regression of technology costs
-=========================================
+   .. autosummary::
 
-:mod:`.tools.costs.splines` applies a polynomial regression (degrees = 3) to each technology's projected costs in the NAM region and extracts the splines (coefficients).
+      process_raw_ssp_data
+      calculate_indiv_adjusted_region_cost_ratios
 
-The function :func:`.apply_polynominal_regression_NAM_costs` uses projected technology costs in the NAM region to perform technology-level polynomial regressions and outputs coefficients and intercepts for each respective technology.
 
 .. currentmodule:: message_ix_models.tools.costs.splines
 
+Spline costs after convergence (:mod:`.tools.costs.splines`)
+============================================================
+
 .. automodule:: message_ix_models.tools.costs.splines
    :members:
+
+   .. autosummary::
+
+      apply_splines_to_convergence
+
+
+.. currentmodule:: message_ix_models.tools.costs.projections 
+
+Technoeconomic investment and fixed O&M costs projection (:mod:`.tools.costs.projections`)
+===========================================================================================
+
+:mod:`.tools.costs` contains functions for projection investment and fixed costs for technologies in MESSAGEix.
+
+The main function to use is :func:`.create_cost_projections`, which calls the other functions in the module in the correct order.
+The default settings for the function are contained in the config file: :file:`tools/costs/config.py`.
+
+The general breakdown of the module is as follows:
+
+1. The :mod:`tools.costs.regional_differentiation` calculates the regional differentiation of costs for technologies.
+2. The :mod:`tools.costs.learning` projects the costs of technologies in a reference region with only a cost reduction rate applied.
+3. The :mod:`tools.costs.gdp` adjusts the regional differentiation of costs for technologies based on the GDP per capita of the region.
+4. The :mod:`tools.costs.splines` applies a polynomial regression (degrees = 3) to each technology's projected costs in the reference region and applies a spline after a convergence year.
+
+The :mod:`tools.costs.projections` combines all the above steps and returns a class object with the projected costs for each technology in each region.
+
+.. automodule:: message_ix_models.tools.costs.projections
+   :members:
+
+   .. autosummary::
+
+      create_projections_learning
+      create_projections_gdp
+      create_projections_converge
+      create_message_outputs
+      create_iamc_outputs
+      create_cost_projections

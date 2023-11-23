@@ -18,10 +18,10 @@ def process_raw_ssp_data(node, ref_region) -> pd.DataFrame:
 
     Parameters
     ----------
-    sel_node : str
-        The node/region to aggregate the SSP data to. Valid values are \
-        "R11", "R12", and "R20" (can be given in lowercase or uppercase). \
-        Defaults to "R12".
+    node : str
+        Node/region to aggregate to. Valid options are R11, R12, or R20.
+    ref_region : str
+        Reference region to use.
 
     Returns
     -------
@@ -214,6 +214,36 @@ def process_raw_ssp_data(node, ref_region) -> pd.DataFrame:
 def calculate_indiv_adjusted_region_cost_ratios(
     region_diff_df, node, ref_region, base_year
 ):
+    """Calculate adjusted region-differentiated cost ratios
+
+    This function takes in a dataframe with region-differentiated \
+    cost ratios and calculates adjusted region-differentiated cost ratios \
+    using GDP per capita data.
+
+    Parameters
+    ----------
+    region_diff_df : pandas.DataFrame
+        Output of :func:`apply_regional_differentation`.
+    node : str
+        Node/region to aggregate to.
+    ref_region : str
+        Reference region to use.
+    base_year : int
+        Base year to use.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - scenario_version: scenario version
+        - scenario: SSP scenario
+        - message_technology: message technology
+        - region: R11, R12, or R20 region
+        - year
+        - gdp_ratio_reg_to_reference: ratio of GDP per capita \
+            in respective region to GDP per capita in reference region
+        - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
+    """
     df_gdp = (
         process_raw_ssp_data(node=node, ref_region=ref_region)
         .query("year >= 2020")

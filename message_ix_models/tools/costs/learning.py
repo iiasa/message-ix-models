@@ -19,16 +19,20 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     """Get cost reduction data
 
     Raw data on cost reduction in 2100 for technologies are read from \
-        :file:`data/costs/cost_reduction_***.csv`.
+        :file:`data/[module]/cost_reduction_[module].csv`.
+
+    Parameters
+    ----------
+    module : str
+        Model module
 
     Returns
     -------
     pandas.DataFrame
         DataFrame with columns:
-        - message_technology: technologies included in MESSAGEix
-        - technology_type: the technology type (either coal, gas/oil, biomass, CCS, \
-            renewable, nuclear, or NA)
-        - learning_rate: the learning rate (either low, medium, or high)
+        - message_technology: name of technology in MESSAGEix
+        - learning_rate: the learning rate (either very_low, low, medium, \
+            high, or very_high)
         - cost_reduction: cost reduction in 2100 (%)
     """
 
@@ -120,27 +124,36 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 
 # Function to get technology learning scenarios data
 def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
-    """Read in technology first year and learning scenarios data
+    """Read in technology first year and cost reduction scenarios
 
     Raw data on technology first year and learning scenarios are read from \
-        :file:`data/costs/technology_learning_rates.csv`.
+        :file:`data/costs/[module]/first_year_[module]`.
     The first year the technology is available in MESSAGEix is adjusted to \
         be the base year if the original first year is before the base year.
+
+    Raw data on cost reduction scenarios are read from \
+        :file:`data/costs/[module]/scenarios_reduction_[module].csv`.
+
+    Assumptions are made for the materials module for technologies' \
+        cost reduction scenarios that are not given.
 
     Parameters
     ----------
     base_year : int, optional
         The base year, by default set to global BASE_YEAR
+    module : str
+        Model module
 
     Returns
     -------
     pandas.DataFrame
         DataFrame with columns:
-        - message_technology: technology in MESSAGEix
-        - first_technology_year: the adjusted first year the technology is \
-            available in MESSAGEix
-        - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, or SSP5)
-        - learning_rate: the learning rate (either low, medium, or high)
+        - message_technology: name of technology in MESSAGEix
+        - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - first_technology_year: first year the technology is available in \
+            MESSAGEix
+        - learning_rate: the learning rate (either very_low, low, medium, \
+            high, or very_high)
     """
 
     if module == "energy":
@@ -290,7 +303,7 @@ def project_ref_region_inv_costs_using_learning_rates(
 ) -> pd.DataFrame:
     """Project investment costs using learning rates for reference region
 
-    This function uses the learning rates for each technology under each SSP \
+    This function uses the learning rates for each technology under each \
         scenario to project the capital costs for each technology in the \
         reference region.
 
@@ -298,22 +311,25 @@ def project_ref_region_inv_costs_using_learning_rates(
     ----------
     regional_diff_df : pandas.DataFrame
         Dataframe output from :func:`get_weo_region_differentiated_costs`
-    node : str, optional
-        The reference node, by default "r12"
     ref_region : str, optional
         The reference region, by default None (defaults set in function)
     base_year : int, optional
         The base year, by default set to global BASE_YEAR
+    module : str
+        Model module
 
     Returns
     -------
     pandas.DataFrame
         DataFrame with columns:
-        - message_technology: technologies included in MESSAGEix
-        - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, or SSP5)
-        - year: values from FIRST_MODEL_YEAR to LAST_MODEL_YEAR
+        - message_technology: name of technology in MESSAGEix
+        - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - reference_region: reference region
+        - first_technology_year: first year the technology is available in \
+            MESSAGEix
+        - year: year
         - inv_cost_ref_region_learning: investment cost in reference region \
-            using learning rates
+            in year
     """
 
     # Get cost reduction data
