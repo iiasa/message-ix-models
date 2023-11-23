@@ -13,7 +13,7 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean-autosummary:
-	find . -name "$(BUILDDIR)" -prune -o -iname _autosummary -print0 | xargs -0 rmdir
+	find . -name "$(BUILDDIR)" -prune -o -iname _autosummary -print0 | xargs -0 rm -rf
 
 .PHONY: help clean-autosummary Makefile
 

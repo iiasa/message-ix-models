@@ -1,4 +1,5 @@
 import logging
+from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from importlib import import_module
@@ -14,7 +15,8 @@ from genno.compat.pyam import iamc as handle_iamc
 from message_ix import Reporter, Scenario
 
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util._logging import mark_time
+from message_ix_models.util import minimum_version
+from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
 
@@ -125,7 +127,7 @@ def register(name_or_callback: Union[Callable, str]) -> Optional[str]:
 
     .. code-block:: python
 
-        from message_ix.reporting import Reporter
+        from message_ix.report import Reporter
         from message_ix_models import Context
         from message_ix_models.report import register
 
@@ -181,7 +183,9 @@ def log_before(context, rep, key) -> None:
     log.info(f"Prepare to report {'(DRY RUN)' if context.dry_run else ''}")
     log.info(key)
     log.log(
-        logging.INFO if (context.dry_run or context.verbose) else logging.DEBUG,
+        logging.INFO
+        if (context.core.dry_run or context.core.verbose)
+        else logging.DEBUG,
         "\n" + rep.describe(key),
     )
     mark_time()
@@ -206,13 +210,7 @@ def report(context: Context, *args, **kwargs):
         - :py:`context.report`, which is an instance of :class:`.report.Config`; see
           there for available configuration settings.
     """
-    try:
-        from ixmp.utils import discard_on_error
-    except ImportError:
-        from contextlib import nullcontext
-
-        def discard_on_error(*args):
-            return nullcontext()
+    from message_ix_models.util.ixmp import discard_on_error
 
     # Handle deprecated usage that appears in:
     # - .model.cli.new_baseline()
@@ -229,7 +227,7 @@ def report(context: Context, *args, **kwargs):
 
         # Transfer args, kwargs to context
         context.set_scenario(scenario)
-        context.report.legacy = kwargs.pop("legacy")
+        context.report.legacy.update(kwargs.pop("legacy", {}))
 
         if len(args) + len(set(kwargs.keys()) & {"path"}) != 1:
             raise TypeError(
@@ -245,7 +243,12 @@ def report(context: Context, *args, **kwargs):
     if context.report.legacy["use"]:
         return _invoke_legacy_reporting(context)
 
-    rep, key = prepare_reporter(context)
+    with (
+        nullcontext()
+        if context.core.verbose
+        else silence_log(["genno", "message_ix_models"])
+    ):
+        rep, key = prepare_reporter(context)
 
     log_before(context, rep, key)
 
@@ -287,6 +290,7 @@ def _invoke_legacy_reporting(context):
     return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **kwargs)
 
 
+@minimum_version("message_ix 3.6")
 def prepare_reporter(
     context: Context,
     scenario: Optional[Scenario] = None,
@@ -318,14 +322,6 @@ def prepare_reporter(
         Same as :attr:`.Config.key` if any, but in full resolution; else either
         "default" or "cli-output" according to the other settings.
     """
-    from importlib.metadata import version
-
-    if version("message_ix") < "3.6":
-        raise NotImplementedError(
-            "Support for message_ix_models.report.prepare_reporter() with message_ix <="
-            " 3.5.0. Please upgrade to message_ix 3.6 or later."
-        )
-
     log.info("Prepare reporter")
 
     if reporter:
@@ -343,13 +339,7 @@ def prepare_reporter(
         has_solution = scenario.has_solution()
 
     # Append the message_data operators
-    rep.require_compat("message_ix_models.report.computations")
-    try:
-        # TODO Replace usage of operators from this module in favour of .exo_data; then
-        #      remove this line.
-        rep.require_compat("message_data.tools.gdp_pop")
-    except ModuleNotFoundError:  # pragma: no cover
-        pass  # Currently in message_data
+    rep.require_compat("message_ix_models.report.operator")
 
     # Force re-installation of the function iamc() in this file as the handler for
     # "iamc:" sections in global.yaml. Until message_data.reporting is removed, then

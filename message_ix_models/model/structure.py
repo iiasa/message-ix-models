@@ -229,7 +229,7 @@ def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
         Otherwise, log on :ref:`DEBUG <python:levels>`.
 
     """
-    level = logging.DEBUG if quiet else logging.WARNING
+    level = logging.NOTSET if quiet else logging.WARNING
     # Convert a "units" annotation to a code snippet that will return a pint.Unit
     # via eval_anno()
     try:

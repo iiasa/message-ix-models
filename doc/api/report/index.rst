@@ -9,7 +9,7 @@ On this page:
 Elsewhere:
 
 - ``global.yaml``, the :doc:`default-config`.
-- Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.reporting`, and :mod:`message_ix.reporting`.
+- Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.report`, and :mod:`message_ix.report`.
 - Reporting of specific model variants:
 
   - :mod:`.water.reporting`
@@ -105,15 +105,16 @@ Plots
 .. automodule:: message_ix_models.report.plot
    :members:
 
-.. currentmodule:: message_ix_models.report.computations
+.. currentmodule:: message_ix_models.report.operator
 
 Operators
 ---------
 
-.. automodule:: message_ix_models.report.computations
+.. automodule:: message_ix_models.report.operator
    :members:
+   :exclude-members: add_par_data
 
-   :mod:`message_ix_models.report.computations` provides the following:
+   :mod:`message_ix_models.report.operator` provides the following:
 
    .. autosummary::
 
@@ -129,12 +130,18 @@ Operators
       remove_ts
       share_curtailment
 
+   The following functions, defined elsewhere, are exposed through :mod:`.operator` and so can also be referenced by name:
+
+   .. autosummary::
+
+      message_ix_models.util.add_par_data
+
    Other operators or genno-compatible functions are provided by:
 
    - Upstream packages:
 
-     - :mod:`message_ix.reporting.computations`
-     - :mod:`ixmp.reporting.computations`
+     - :mod:`message_ix.report.operator`
+     - :mod:`ixmp.report.operator`
      - :mod:`genno.computations`
 
    - Other submodules:

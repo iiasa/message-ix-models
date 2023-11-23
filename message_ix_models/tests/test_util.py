@@ -1,6 +1,7 @@
 """Tests of :mod:`message_ix_models.util`."""
 import logging
 import re
+from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
@@ -10,6 +11,7 @@ from iam_units import registry
 from ixmp.testing import assert_logs
 from message_ix import Scenario, make_df
 from message_ix.testing import make_dantzig
+from packaging.version import parse
 from pandas.testing import assert_series_equal
 
 from message_ix_models import ScenarioInfo
@@ -206,6 +208,9 @@ def test_ffill():
     # TODO test some specific values
 
 
+@pytest.mark.skipif(
+    parse(version("ixmp")) > parse("3.7.0"), reason="Not used with ixmp > 3.7.0"
+)
 def test_iter_parameters(test_context):
     """Parameters indexed by set 'node' can be retrieved."""
     result = list(iter_parameters("node"))

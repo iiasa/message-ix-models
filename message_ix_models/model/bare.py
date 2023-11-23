@@ -116,8 +116,7 @@ def get_spec(context) -> Spec:
     nodes = get_codes(f"node/{context.model.regions}")
 
     # Top-level "World" node
-    # FIXME typing ignored temporarily for PR#9
-    world = nodes[nodes.index("World")]  # type: ignore [arg-type]
+    world = nodes[nodes.index("World")]
 
     # Set elements: World, followed by the direct children of World
     add.set["node"] = [world] + world.child

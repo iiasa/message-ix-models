@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 import pandas as pd
 from genno import Quantity
-from genno import computations as g
+from genno import operator as g
 from iam_units import convert_gwp
 from message_ix import Scenario, make_df
 

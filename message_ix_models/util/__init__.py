@@ -1,11 +1,24 @@
 import logging
 from collections import ChainMap, defaultdict
-from typing import Collection, Dict, Mapping, MutableMapping, Optional, Sequence, Union
+from functools import partial, update_wrapper
+from importlib.metadata import version
+from itertools import count
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Collection,
+    Dict,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Protocol,
+    Sequence,
+    Union,
+)
 
 import message_ix
 import pandas as pd
 import pint
-from message_ix.models import MESSAGE_ITEMS
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from .cache import cached
@@ -24,6 +37,9 @@ from .common import (
 from .node import adapt_R11_R12, adapt_R11_R14, identify_nodes, nodes_ex_world
 from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
+
+if TYPE_CHECKING:
+    import genno
 
 __all__ = [
     "HAS_MESSAGE_DATA",
@@ -44,7 +60,7 @@ __all__ = [
     "eval_anno",
     "ffill",
     "identify_nodes",
-    "iter_parameters",
+    "iter_keys",
     "load_package_data",
     "load_private_data",
     "local_data_path",
@@ -53,6 +69,7 @@ __all__ = [
     "make_source_tech",
     "maybe_query",
     "merge_data",
+    "minimum_version",
     "package_data_path",
     "private_data_path",
     "replace_par_data",
@@ -303,23 +320,47 @@ def ffill(
     return pd.concat(dfs, ignore_index=True)
 
 
-def iter_parameters(set_name):
+class KeyIterator(Protocol):
+    def __call__(self) -> "genno.Key":
+        ...
+
+
+def iter_keys(base: "genno.Key") -> KeyIterator:
+    """Return an iterator over a sequence of keys starting with `base_key`.
+
+    This can be used for shorthand when constructing sequences of :mod:`genno`
+    computations.
+
+    Example
+    -------
+    >>> base_key = genno.Key("foo:a-b-c")
+    >>> k = iter_keys(base_key)
+    >>> k()
+    <foo:a-b-c:0>
+    >>> k()
+    <foo:a-b-c:1>
+    >>> k()
+    <foo:a-b-c:2>
+    """
+    return partial(next, map(lambda i: base + str(i), count()))
+
+
+def iter_parameters(set_name, scenario: Optional["message_ix.Scenario"] = None):
     """Iterate over MESSAGEix parameters with *set_name* as a dimension.
 
-    Parameters
-    ----------
-    set_name : str
-        Name of a set.
-
-    Yields
-    ------
-    str
-        Names of parameters that have `set_name` indexing ≥1 dimension.
+    .. deprecated:: 2023.11
+       Use :meth:`ixmp.Scenario.par_list` with the :py:`indexed_by=...` argument
+       instead.
     """
-    # TODO move upstream. See iiasa/ixmp#402 and iiasa/message_ix#444
-    for name, info in MESSAGE_ITEMS.items():
-        if info["ix_type"] == "par" and set_name in info["idx_sets"]:
-            yield name
+    try:
+        assert scenario is not None
+        yield from scenario.items(indexed_by=set_name, par_data=False)
+    except (TypeError, AssertionError):  # ixmp < 3.8.0
+        import message_ix.models
+
+        for name, info in message_ix.models.MESSAGE_ITEMS.items():
+            if info["ix_type"] == "par" and set_name in info["idx_sets"]:
+                yield name
 
 
 def make_io(src, dest, efficiency, on="input", **kwargs):
@@ -484,6 +525,65 @@ def merge_data(
             base[par] = pd.concat([base.get(par, None), df])
 
 
+def minimum_version(expr: str) -> Callable:
+    """Decorator for functions that require a minimum version of some upstream package.
+
+    See :func:`.prepare_reporter` / :func:`.test_prepare_reporter` for a usage example.
+
+    Parameters
+    ----------
+    expr :
+        Like "example 1.2.3.post0". The condition for the decorated function is that
+        the installed version must be equal to or greater than this version.
+    """
+
+    from packaging.version import parse
+
+    package, v_min = expr.split(" ")
+    v_package = version(package)
+    condition = parse(v_package) < parse(v_min)
+    message = f" with {package} {v_package} < {v_min}"
+
+    # Create the decorator
+    def decorator(func):
+        name = f"{func.__module__}.{func.__name__}()"
+
+        # Wrap `func`
+        def wrapper(*args, **kwargs):
+            if condition:
+                raise NotImplementedError(f"{name}{message}.")
+            return func(*args, **kwargs)
+
+        update_wrapper(wrapper, func)
+
+        # Create a test function decorator
+        def marker(test_func):
+            # Import pytest only when there is a test function to mark
+            import pytest
+
+            # Create the mark
+            mark = pytest.mark.xfail(
+                condition=condition,
+                raises=NotImplementedError,
+                reason=f"Not supported{message}",
+            )
+
+            # Attach to the test function
+            try:
+                test_func.pytestmark.append(mark)
+            except AttributeError:
+                test_func.pytestmark = [mark]
+
+            return test_func
+
+        # Store the decorator on the wrapped function
+        setattr(wrapper, "minimum_version", marker)
+
+        return wrapper
+
+    return decorator
+
+
 def replace_par_data(
     scenario: message_ix.Scenario,
     parameters: Union[str, Sequence[str]],
@@ -603,7 +703,7 @@ def strip_par_data(  # noqa: C901
             + (" (DRY RUN)" if dry_run else "")
         )
         # Iterate over parameters with ≥1 dimensions indexed by `set_name`
-        pars = iter_parameters(set_name)
+        pars = iter_parameters(set_name, scenario=scenario)
 
     for par_name in pars:
         if par_name not in par_list:  # pragma: no cover

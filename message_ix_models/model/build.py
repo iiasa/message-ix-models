@@ -3,11 +3,11 @@ from typing import Callable, Dict, List, Mapping, Optional, Union
 
 import ixmp
 import pandas as pd
-from ixmp.utils import maybe_check_out, maybe_commit
 from message_ix import Scenario
 from sdmx.model.v21 import Code
 
 from message_ix_models.util import add_par_data, strip_par_data
+from message_ix_models.util.ixmp import maybe_check_out, maybe_commit
 from message_ix_models.util.scenarioinfo import ScenarioInfo, Spec
 
 log = logging.getLogger(__name__)
@@ -79,7 +79,12 @@ def apply_spec(  # noqa: C901
 
     dump: Dict[str, pd.DataFrame] = {}  # Removed data
 
-    for set_name in scenario.set_list():
+    # Sort the list of sets by the number of dimensions; this places basic (non-indexed)
+    # sets first. Elements for these sets must be added before elements for indexed
+    # sets that may reference them.
+    sets = sorted((len(scenario.idx_sets(s)), s) for s in scenario.set_list())
+
+    for _, set_name in sets:
         # Check whether this set is mentioned at all in the spec
         if 0 == sum(map(lambda info: len(info.set[set_name]), spec.values())):
             # Not mentioned; don't do anything
