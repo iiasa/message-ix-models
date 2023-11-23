@@ -326,6 +326,22 @@ class KeyIterator(Protocol):
 
 
 def iter_keys(base: "genno.Key") -> KeyIterator:
+    """Return an iterator over a sequence of keys starting with `base_key`.
+
+    This can be used for shorthand when constructing sequences of :mod:`genno`
+    computations.
+
+    Example
+    -------
+    >>> base_key = genno.Key("foo:a-b-c")
+    >>> k = iter_keys(base_key)
+    >>> k()
+    <foo:a-b-c:0>
+    >>> k()
+    <foo:a-b-c:1>
+    >>> k()
+    <foo:a-b-c:2>
+    """
     return partial(next, map(lambda i: base + str(i), count()))
 
 

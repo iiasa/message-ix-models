@@ -20,8 +20,6 @@ log = logging.getLogger(__name__)
 
 #: Standard dimensions for data produced as snapshots from the IIASA ENE Program
 #: “WorkDB”.
-#:
-#: .. todo:: Move to a common location for use with other snapshots in the same format.
 DIMS = ["model", "scenario", "region", "variable", "unit", "year"]
 
 
@@ -29,9 +27,12 @@ DIMS = ["model", "scenario", "region", "variable", "unit", "year"]
 def get_advance_data(query: Optional[str] = None) -> pd.Series:
     """Return data from the ADVANCE Work Package 2 data snapshot at :data:`LOCATION`.
 
+    .. deprecated:: 2023.11
+       Use :class:`.ADVANCE` through :func:`.exo_data.prepare_computer` instead.
+
     Parameters
     ----------
-    query : str, *optional*
+    query : str, optional
         Passed to :meth:`pandas.DataFrame.query` to limit the returned values.
 
     Returns
@@ -50,9 +51,12 @@ def get_advance_data(query: Optional[str] = None) -> pd.Series:
 def advance_data(variable: str, query: Optional[str] = None) -> Quantity:
     """Return a single ADVANCE data `variable` as a :class:`genno.Quantity`.
 
+    .. deprecated:: 2023.11
+       Use :class:`.ADVANCE` through :func:`.exo_data.prepare_computer` instead.
+
     Parameters
     ----------
-    query : str, *optional*
+    query : str, optional
         Passed to :func:`get_advance_data`.
 
     Returns
@@ -95,7 +99,8 @@ def _read_workdb_snapshot(path: Path, name: str) -> pd.Series:
     the “IAMC format,” without more recent additions intended to represent sub-annual
     time resolution using a separate column.)
 
-    .. todo:: Move to a general location for use with other files in the same format.
+    .. deprecated:: 2023.11
+       Use :func:`.iamc_like_data_for_query` instead.
     """
     with ZipFile(path) as zf:  # Open the ZIP archive
         with zf.open(name) as f:  # Open a particular member
