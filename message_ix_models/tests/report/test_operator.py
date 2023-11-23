@@ -12,7 +12,7 @@ from message_ix.testing import make_dantzig
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.report.computations import (
+from message_ix_models.report.operator import (
     compound_growth,
     filter_ts,
     from_url,
@@ -104,7 +104,7 @@ def test_get_remove_ts(caplog, scenario):
     # Can be used through a Computer
 
     c = Computer()
-    c.require_compat("message_ix_models.report.computations")
+    c.require_compat("message_ix_models.report.operator")
     c.add("scenario", scenario)
 
     key = c.add("test1", "get_ts", "scenario", filters=dict(variable="GDP"))

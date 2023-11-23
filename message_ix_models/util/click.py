@@ -5,12 +5,12 @@ These are used for building CLIs using :mod:`click`.
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import click
 from click import Argument, Choice, Option
 
-from message_ix_models import Context
+from message_ix_models import Context, model
 from message_ix_models.model.structure import codelists
 
 from .scenarioinfo import ScenarioInfo
@@ -57,6 +57,32 @@ def default_path_cb(*default_parts):
         return value
 
     return _callback
+
+
+def exec_cb(expression: str) -> Callable:
+    """Return a callback that :func:`exec`-utes an `expression`.
+
+    The `expression` is executed in a limited context that has only two names available:
+
+    - :py:`context`: the :class:`.Context` instance.
+    - :py:`value`: the value passed to the :mod:`click.Parameter`.
+
+    Example
+    -------
+    >>> @click.command
+    ... @click.option(
+    ...     "--myopt", callback=exec_cb("context.my_mod.my_opt = value + 3")
+    ... )
+    ... def cmd(...):
+    ...     ...
+    """
+
+    def _cb(context: Union[click.Context, Context], param, value):
+        ctx = context.obj if isinstance(context, click.Context) else context
+        exec(expression, {}, {"context": ctx, "value": value})
+        return value
+
+    return _cb
 
 
 def format_sys_argv() -> str:
@@ -142,12 +168,14 @@ PARAMS = {
     "dest": Option(
         ["--dest"],
         callback=store_context,
+        expose_value=False,
         help="Destination URL for created scenario(s).",
     ),
     "dry_run": Option(
         ["--dry-run"],
         is_flag=True,
         callback=store_context,
+        expose_value=False,
         help="Only show what would be done.",
     ),
     "force": Option(
@@ -159,7 +187,10 @@ PARAMS = {
     "nodes": Option(
         ["--nodes"],
         help="Code list to use for 'node' dimension.",
+        callback=exec_cb("context.model.regions = value"),
         type=Choice(codelists("node")),
+        default=model.Config.regions,
+        expose_value=False,
     ),
     "output_model": Option(
         ["--output-model"], help="Model name under which scenarios should be generated."
@@ -173,11 +204,13 @@ PARAMS = {
     "quiet": Option(
         ["--quiet"],
         is_flag=True,
+        expose_value=False,
         help="Show less or no output.",
     ),
     "regions": Option(
         ["--regions"],
         help="Code list to use for 'node' dimension.",
+        callback=exec_cb("context.model.regions = value"),
         type=Choice(codelists("node")),
     ),
     "rep_out_path": Option(
@@ -222,6 +255,9 @@ PARAMS = {
     "years": Option(
         ["--years"],
         help="Code list to use for the 'year' dimension.",
+        callback=exec_cb("context.model.years = value"),
         type=Choice(codelists("year")),
+        default=model.Config.years,
+        # expose_value=False,
     ),
 }

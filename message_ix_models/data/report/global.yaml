@@ -41,7 +41,7 @@ units:
 
 # Filters
 #
-# These limit the data that is retrieved from the backend by ixmp.reporting;
+# These limit the data that is retrieved from the backend by ixmp.report;
 # so ALL quantities in the Reporter are limited to these values. Use these for
 # debugging.
 

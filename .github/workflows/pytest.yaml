@@ -62,6 +62,10 @@ jobs:
         version: 25.1.1
         license: ${{ secrets.GAMS_LICENSE }}
 
+    - uses: ts-graphviz/setup-graphviz@v1
+      with:
+        macos-skip-brew-update: true
+
     - name: Install packages and dependencies
       # By default, install:
       # - ixmp, message_ix: from GitHub branches/tags per matrix.upstream-version (above)
@@ -92,12 +96,6 @@ jobs:
           --numprocesses=auto \
           --local-cache --jvmargs="-Xmx6G"
       shell: bash
-
-    - name: Test documentation build using Sphinx
-      if: startsWith(matrix.version.os, 'ubuntu')
-      env:
-        RTD_TOKEN_MESSAGE_DATA: ${{ secrets.RTD_TOKEN_MESSAGE_DATA }}
-      run: make --directory=doc SPHINXOPTS="-n --color" html
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3

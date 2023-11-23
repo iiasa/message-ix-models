@@ -2,31 +2,19 @@
 import logging
 from pathlib import Path
 
-import click
 import pandas as pd
 from message_ix import Scenario
 from message_ix.models import MACRO
 from tqdm import tqdm
 
 from message_ix_models import Spec
-from message_ix_models.util.pooch import fetch
+from message_ix_models.util import minimum_version
+from message_ix_models.util.pooch import SOURCE, fetch
 
 from .build import apply_spec
 from .structure import get_codes
 
 log = logging.getLogger(__name__)
-
-#: Available snapshots.
-SNAPSHOTS = {
-    0: dict(
-        base_url="doi:10.5281/zenodo.5793870",
-        registry={
-            "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline.xlsx": (
-                "md5:222193405c25c3c29cc21cbae5e035f4"
-            ),
-        },
-    )
-}
 
 
 def unpack(path: Path) -> Path:
@@ -64,7 +52,7 @@ def unpack(path: Path) -> Path:
             dfs.append(xf.parse(x))  # pragma: no cover
 
         # Concatenate once and return
-        return pd.concat(dfs, axis=0)
+        return pd.concat(dfs, axis=0, ignore_index=True)
 
     sets_path = base.joinpath("sets.xlsx")
     sets_path.unlink(missing_ok=True)
@@ -111,6 +99,7 @@ def read_excel(scenario: Scenario, path: Path) -> None:
             scenario.add_par(name, data)
 
 
+@minimum_version("message_ix 3.5")
 def load(scenario: Scenario, snapshot_id: int) -> None:
     """Fetch and load snapshot with ID `snapshot_id` into `scenario`.
 
@@ -118,15 +107,7 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     --------
     SNAPSHOTS
     """
-    from importlib.metadata import version
-
-    if version("message_ix") < "3.5":
-        raise NotImplementedError(
-            "Support for message_ix_models.model.snaphot.load() with message_ix <= "
-            "3.4.0. Please upgrade to message_ix 3.5 or later."
-        )
-
-    path = fetch(SNAPSHOTS[snapshot_id])
+    path, *_ = fetch(**SOURCE[f"snapshot-{snapshot_id}"])
 
     # Add units
     spec = Spec()
@@ -138,15 +119,3 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
         MACRO.initialize(scenario)
 
     read_excel(scenario, path)
-
-
-@click.group("snapshot", help=__doc__)
-def cli():  # pragma: no cover
-    pass
-
-
-@cli.command("fetch")
-@click.argument("id_", metavar="ID", type=int)
-def fetch_cmd(id_):  # pragma: no cover
-    """Fetch snapshot ID from Zenodo."""
-    fetch(SNAPSHOTS[id_], progressbar=True)

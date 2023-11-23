@@ -61,6 +61,9 @@ Exogenous data (:mod:`.tools.exo_data`)
 ADVANCE data (:mod:`.tools.advance`)
 ====================================
 
+.. deprecated:: 2023.11
+   Use :mod:`.project.advance` instead.
+
 .. autosummary::
    get_advance_data
    advance_data
@@ -86,3 +89,11 @@ With :mod:`message_data`:
    :members:
    :exclude-members: LOCATION
    :private-members:
+
+.. currentmodule:: message_ix_models.tools.iamc
+
+IAMC data structures (:mod:`.tools.iamc`)
+=========================================
+
+.. automodule:: message_ix_models.tools.iamc
+   :members:

@@ -4,7 +4,8 @@
 # the documentation: https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     import sphinx.application
@@ -21,6 +22,7 @@ author = "IIASA Energy, Climate, and Environment (ECE) Program"
 # Add any Sphinx extension module names here, as strings. They can be extensions coming
 # with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
+    # "ixmp.util.sphinx_linkcode_github",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
@@ -39,6 +41,7 @@ templates_path = ["_template"]
 # html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+nitpicky = True
 nitpick_ignore_regex = {
     # These occur because there is no .. py:module:: directive for the *top-level*
     # module or package in the respective documentation and inventories.
@@ -109,18 +112,32 @@ extlinks = {
 
 # -- Options for sphinx.ext.intersphinx ------------------------------------------------
 
+
+def local_inv(name: str, *parts: str) -> Optional[str]:
+    """Construct the path to a local intersphinx inventory."""
+    if 0 == len(parts):
+        parts = ("doc", "_build", "html")
+
+    from importlib.util import find_spec
+
+    spec = find_spec(name)
+    if spec and spec.origin:
+        return str(Path(spec.origin).parents[1].joinpath(*parts, "objects.inv"))
+
+
 # For message-data, see: https://docs.readthedocs.io/en/stable/guides
 # /intersphinx.html#intersphinx-with-private-projects
 _token = os.environ.get("RTD_TOKEN_MESSAGE_DATA", "")
 
 intersphinx_mapping = {
+    "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
     "genno": ("https://genno.readthedocs.io/en/stable", None),
     "ixmp": ("https://docs.messageix.org/projects/ixmp/en/latest/", None),
     "message-ix": ("https://docs.messageix.org/en/latest/", None),
     "m-data": (
         f"https://{_token}:@docs.messageix.org/projects/models-internal/en/latest/",
         # Use a local copy of objects.inv, if the user has one
-        (None, "message_data.inv"),
+        (local_inv("message_data"), None),
     ),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pint": ("https://pint.readthedocs.io/en/stable/", None),
@@ -130,8 +147,13 @@ intersphinx_mapping = {
     "sdmx": ("https://sdmx1.readthedocs.io/en/stable/", None),
 }
 
+# -- Options for sphinx.ext.linkcode / ixmp.util.sphinx_linkcode_github ----------------
+
+linkcode_github_repo_slug = "iiasa/message-ix-models"
+
 # -- Options for sphinx.ext.napoleon ---------------------------------------------------
 
+napoleon_preprocess_types = True
 napoleon_type_aliases = {
     "Code": ":class:`~sdmx.model.common.Code`",
     "Path": ":class:`~pathlib.Path`",

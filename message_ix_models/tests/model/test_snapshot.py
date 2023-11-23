@@ -1,7 +1,6 @@
 import logging
 import shutil
 import sys
-from importlib.metadata import version
 
 import pytest
 from message_ix import Scenario
@@ -9,6 +8,7 @@ from message_ix import Scenario
 from message_ix_models.model import snapshot
 from message_ix_models.testing import GHA
 from message_ix_models.util import package_data_path
+from message_ix_models.util.pooch import SOURCE
 
 log = logging.getLogger(__name__)
 
@@ -35,17 +35,14 @@ def unpacked_snapshot_data(test_context, request):
     shutil.copytree(snapshot_data_path, dest, dirs_exist_ok=True)
 
 
-@pytest.mark.xfail(reason="https://github.com/iiasa/message-ix-models/issues/131")
-@pytest.mark.xfail(
-    condition=version("message_ix") < "3.5",
-    raises=NotImplementedError,
-    reason="Not supported with message_ix < 3.5",
-)
+@snapshot.load.minimum_version
 @pytest.mark.skipif(
     condition=GHA and sys.platform in ("darwin", "win32"), reason="Slow."
 )
 @pytest.mark.usefixtures("unpacked_snapshot_data")
-@pytest.mark.parametrize("snapshot_id", snapshot.SNAPSHOTS.keys())
+@pytest.mark.parametrize(
+    "snapshot_id", [int(k.split("-")[1]) for k in SOURCE if k.startswith("snapshot")]
+)
 def test_load(test_context, snapshot_id):
     mp = test_context.get_platform()
     base = Scenario(mp, model="MODEL", scenario="baseline", version="new")

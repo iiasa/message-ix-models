@@ -4,7 +4,45 @@ What's new
 Next release
 ============
 
+Migration notes
+---------------
+Update code that imports from the following modules:
+
+- :py:`message_ix_models.report.computations` → use :py:`message_ix_models.report.operator`.
+
+Code that imports from the old locations will continue to work, but will raise :class:`DeprecationWarning`.
+
+Data for :doc:`water` is no longer included in the PyPI distributions for :mod:`message_ix_models`.
+This reduces the package size from >20 MB to <5 MB.
+To automatically download and unpack these data into a local directory, use :program:`mix-models fetch MESSAGEix-Nexus`.
+
+All changes
+-----------
+
+- Improve :class:`.ExoDataSource` (:pull:`137`):
+
+  - New attributes :attr:`~.ExoDataSource.name`, :attr:`~.ExoDataSource.extra_dims`.
+  - New method :meth:`~.ExoDataSource.transform` that can be overridden by subclasses.
+  - New arguments :py:`archive_member`, :py:`non_iso_3166` to :func:`.iamc_like_data_for_query`.
+
+- New provider for exogenous data from the :class:`.ADVANCE` project (:pull:`137`).
+  This module, :mod:`.project.advance`, supersedes :mod:`.tools.advance` and its idiosyncratic API, which are deprecated.
+- New CLI commands (:pull:`137`):
+
+  - :program:`mix-models testing fuzz-private-data`, superseding :program:`mix-models ssp make-test-data`.
+  - :program:`mix-models fetch`, superseding :program:`mix-models snapshot fetch`.
+
+- New utility functions  (:pull:`137`).
+
+  - :func:`.tools.iamc.describe` to generate SDMX code lists that describe the structure of particular IAMC-format data (:pull:`137`).
+  - :func:`.workflow.make_click_command` to generate :mod:`click` commands for any :class:`.Workflow`.
+  - :func:`.util.minimum_version` to ensure compatibility with upstream packages and aid test writing.
+  - :func:`.util.iter_keys` to generate keys for chains of :mod:`genno` computations.
+
 - Add :mod:`message_ix_models.report.compat` :ref:`for emulating legacy reporting <report-legacy>` (:pull:`134`).
+- Rename :mod:`message_ix_models.report.operator` (:pull:`137`).
+- Deprecate :py:`iter_parameters()` in favour of :meth:`ixmp.Scenario.par_list` with :py:`indexed_by=...` argument from ixmp v3.8.0 (:pull:`137`).
+
 
 v2023.10.16
 ===========
@@ -218,7 +256,7 @@ Earlier releases
 ---------
 
 - Migrate :mod:`.model.bare`, :mod:`.model.build`, :mod:`.model.cli`, and associated documentation (:pull:`9`)
-- Migrate utilities: :class:`.ScenarioInfo`, :func:`.add_par_data`, :func:`.eval_anno`, :func:`.iter_parameters`, and :func:`.strip_par_data`.
+- Migrate utilities: :class:`.ScenarioInfo`, :func:`.add_par_data`, :func:`.eval_anno`, :py:`iter_parameters()`, and :func:`.strip_par_data`.
 
 2021.3.3
 --------

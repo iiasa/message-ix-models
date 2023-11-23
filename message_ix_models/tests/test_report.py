@@ -1,4 +1,4 @@
-"""Tests for message_data.reporting."""
+"""Tests for :mod:`message_ix_models.report`."""
 from importlib.metadata import version
 
 import numpy as np
@@ -9,7 +9,7 @@ from ixmp.testing import assert_logs
 
 from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report import prepare_reporter, register, report, util
-from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.report.sim import add_simulated_solution, to_simulate
 from message_ix_models.util import package_data_path
 
 # Minimal reporting configuration for testing
@@ -20,14 +20,10 @@ MIN_CONFIG = {
 }
 
 MARK = (
+    # Used in test_operator
     pytest.mark.xfail(
         condition=version("message_ix") < "3.5",
         reason="Not supported with message_ix < 3.5",
-    ),
-    pytest.mark.xfail(
-        condition=version("message_ix") < "3.6",
-        raises=NotImplementedError,
-        reason="Not supported with message_ix < 3.6",
     ),
 )
 
@@ -48,19 +44,42 @@ def test_register(caplog):
         register(_cb)
 
 
-@MARK[1]
-def test_report_bare_res(request, test_context):
+@prepare_reporter.minimum_version
+def test_report_bare_res(request, tmp_path, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
     scenario = testing.bare_res(request, test_context, solved=True)
+    test_context.set_scenario(scenario)
 
-    # Prepare the reporter
-    test_context.report.update(from_file="global.yaml", key="message::default")
-    reporter, key = prepare_reporter(test_context, scenario)
+    test_context.report.update(
+        from_file="global.yaml",
+        # key="message::default",
+        # Use a key that doesn't access model solution data
+        key="y0",
+        output_dir=tmp_path,
+    )
 
-    # Get the default report
-    # NB commented because the bare RES currently contains no activity, so the
-    #    reporting steps fail
-    # reporter.get(key)
+    # Prepare the reporter and compute the result
+    report(test_context)
+
+
+@prepare_reporter.minimum_version
+def test_report_deprecated(caplog, request, tmp_path, test_context):
+    # Create a target scenario
+    scenario = testing.bare_res(request, test_context, solved=False)
+    test_context.set_scenario(scenario)
+
+    # Use a key that doesn't access model solution data
+    test_context.report.key = "y0"
+
+    # Set dry_run = True to not actually perform any calculations or modifications
+    test_context.dry_run = True
+    # Call succeeds, raises a warning
+    with pytest.warns(DeprecationWarning, match="pass a Context instead"):
+        report(scenario, tmp_path)
+
+    # Invalid call warns *and* raises TypeError
+    with pytest.raises(TypeError), pytest.warns(DeprecationWarning):
+        report(scenario, tmp_path, "foo")
 
 
 @pytest.mark.xfail(raises=ModuleNotFoundError, reason="Requires message_data")
@@ -128,7 +147,7 @@ INV_COST_CONFIG = dict(
 )
 
 
-@MARK[1]
+@prepare_reporter.minimum_version
 @pytest.mark.parametrize("regions", ["R11"])
 def test_apply_units(request, test_context, regions):
     test_context.regions = regions
@@ -210,7 +229,7 @@ def test_cli(mix_models_cli):
     ),
 )
 def test_collapse(input, exp):
-    """Test :meth:`.reporting.util.collapse` and use of :data:`.REPLACE_VARS`.
+    """Test :meth:`.report.util.collapse` and use of :data:`.REPLACE_VARS`.
 
     This test is parametrized with example input and expected output strings for the
     ``variable`` IAMC column. There should be ≥1 example for each pattern in
@@ -231,7 +250,11 @@ def test_collapse(input, exp):
 
 
 def ss_reporter():
-    """Reporter with a simulated solution for snapshot 0."""
+    """Reporter with a simulated solution for snapshot 0.
+
+    This uses :func:`.add_simulated_solution`, so test functions that use it should be
+    marked with :py:`@to_simulate.minimum_version`.
+    """
     from message_ix import Reporter
 
     rep = Reporter()
@@ -246,7 +269,7 @@ def ss_reporter():
     return rep
 
 
-@MARK[1]
+@to_simulate.minimum_version
 def test_add_simulated_solution(test_context, test_data_path):
     # Simulated solution can be added to an empty Reporter
     rep = ss_reporter()
@@ -274,7 +297,7 @@ def test_add_simulated_solution(test_context, test_data_path):
     assert np.isclose(79.76478, value.item())
 
 
-@MARK[1]
+@to_simulate.minimum_version
 def test_prepare_reporter(test_context):
     rep = ss_reporter()
     N = len(rep.graph)

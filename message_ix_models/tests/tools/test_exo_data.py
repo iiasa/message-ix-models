@@ -58,7 +58,7 @@ def test_operator(test_context, regions, N_n):
     test_context.model.regions = regions
 
     c = Computer()
-    c.require_compat("message_ix_models.report.computations")
+    c.require_compat("message_ix_models.report.operator")
 
     # Function runs successfully `c`
     keys = c.add(
