@@ -356,7 +356,7 @@ def report1(scenario: message_ix.Scenario, filters: dict) -> pd.DataFrame:
     # - Merge ACT data
     # - Rename columns.
     # - Product of the "value" (from relation_activity) and "lvl" (from ACT)
-    #   TODO provide this product (relation_activity * lvl) from message_ix.reporting
+    #   TODO use `rel` (this same product) as provided by message_ix.report
     # - Adjust technology, commodity, emission, and unit labels.
     # - Select some columns.
     # - Compute sums.

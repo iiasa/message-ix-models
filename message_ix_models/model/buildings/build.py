@@ -8,9 +8,9 @@ from typing import Dict, Iterable, List, Mapping, Sequence
 import message_ix
 import pandas as pd
 from genno import Quantity
-from genno.computations import mul, relabel, rename_dims
-from ixmp.reporting.computations import data_for_quantity
-from message_ix.reporting.computations import as_message_df
+from genno.operator import mul, relabel, rename_dims
+from ixmp.report.operator import data_for_quantity
+from message_ix.report.operator import as_message_df
 from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model import build
 from message_ix_models.model.structure import (
@@ -418,14 +418,14 @@ def scale_and_replace(
         else:
             # - Retrieve data as a genno.quantity.
             # - Multiply by scaling factors.
-            # - Convert back to message_ix data frame. as_message_df() returns
-            #   dict (str -> pd.DataFrame), so pop the single value.
-            df = (
+            q = (
                 data_for_quantity("par", name, "value", scenario, config=f_short)
-                .pipe(mul, _q_scale, Quantity(scale))
-                .pipe(as_message_df, name, dims, {})
-                .pop(name)
+                * _q_scale
+                * Quantity(scale)
             )
+            # Convert back to message_ix data frame. as_message_df() returns dict ->
+            # (str -> pd.DataFrame), so pop the single value
+            df = as_message_df(q, name, dims, {}).pop(name)
 
         if not len(df):
             continue
