@@ -1,7 +1,7 @@
 import logging
 
 import pytest
-from message_ix.reporting import Key
+from genno import Key
 from message_ix_models.model.structure import get_codes
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from pytest import param

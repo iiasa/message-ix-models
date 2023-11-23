@@ -27,6 +27,7 @@ def get_emissions_data(context: Context) -> Dict[str, pd.DataFrame]:
 
 def get_intensity(context: Context) -> pd.DataFrame:
     """Load emissions intensity data from a file."""
+    # FIXME use through the build computer
     return load_file(private_data_path("transport", "fuel-emi-intensity.csv"))
 
 

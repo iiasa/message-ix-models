@@ -7,8 +7,7 @@ from operator import itemgetter, le
 from typing import Any, Dict, List, Mapping
 
 import pandas as pd
-from genno import Computer, computations, quote
-from ixmp.reporting import RENAME_DIMS, Quantity
+from genno import Computer, Quantity, computations, quote
 from message_ix import make_df
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
@@ -28,6 +27,7 @@ from message_ix_models.util import (
     private_data_path,
     same_node,
 )
+from message_ix_models.util.ixmp import rename_dims
 from openpyxl import load_workbook
 from sdmx.model.v21 import Code
 
@@ -195,7 +195,7 @@ def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, Quantity]:
             path=private_data_path(
                 "transport", subdir or "", f"ldv-{name.replace(' ', '-')}.csv"
             ),
-            dims=RENAME_DIMS,
+            dims=rename_dims(),
             name=name,
         ).ffill("y")
 
