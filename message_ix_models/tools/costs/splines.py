@@ -18,7 +18,32 @@ def apply_splines_to_convergence(
     column_name,
     convergence_year,
 ):
-    """Apply polynomial regression and splines to convergence"""
+    """Apply splines to convergence projections
+
+    This function performs a polynomial regression on the convergence costs
+    and returns the coefficients for the regression model. The regression
+    model is then used to project the convergence costs for the years
+    after the convergence year.
+
+    Parameters
+    ----------
+    df_reg : pd.DataFrame
+        Dataframe containing the convergence costs
+    column_name : str
+        Name of the column containing the convergence costs
+    convergence_year : int
+        Year of convergence
+
+    Returns
+    -------
+    df_long : pd.DataFrame
+        Dataframe containing the costs with the columns:
+        - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - message_technology: technology name
+        - region: region name
+        - year: year
+        - inv_cost_splines: costs after applying the splines
+    """
 
     # un_vers = df.scenario_version.unique()
     un_ssp = df_reg.scenario.unique()

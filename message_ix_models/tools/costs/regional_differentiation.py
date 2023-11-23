@@ -64,22 +64,15 @@ DICT_WEO_R20 = {
 def get_weo_data() -> pd.DataFrame:
     """Read in raw WEO investment/capital costs and O&M costs data.
 
-    Data are read for all technologies and for STEPS scenario only from the
-    file
-    :file:`data/iea/WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb`.
-
     Returns
     -------
     pandas.DataFrame
         DataFrame with columns:
-
-        - technology: WEO technologies, with shorthands as defined in
-        `DICT_WEO_TECH`
-        - region: WEO regions
-        - year: values from 2021 to 2050, as appearing in the file
-        - cost type: either “inv_cost” or “fix_cost”
-        - units: "usd_per_kw"
-        - value: the cost value
+        - cost_type: investment or fixed O&M cost
+        - weo_technology: WEO technology name
+        - weo_region: WEO region
+        - year: year
+        - value: cost value
     """
 
     # Dict of all of the technologies,
@@ -194,8 +187,9 @@ def get_intratec_data() -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
-        - region: MESSAGEix region
-        - value: Intratec index value
+        - intratec_tech: Intratec technology name
+        - intratec_region: Intratec region
+        - intratec_index: Intratec index value
     """
 
     # Set file path for raw Intratec data
@@ -227,7 +221,12 @@ def get_intratec_data() -> pd.DataFrame:
 
 # Function get raw technology mapping
 def get_raw_technology_mapping(module) -> pd.DataFrame:
-    """Read in technology mapping file
+    """Create technology mapping for each module
+
+    Parameters
+    ----------
+    module : str
+        Model module
 
     Returns
     -------
@@ -258,6 +257,24 @@ def get_raw_technology_mapping(module) -> pd.DataFrame:
 # Function to subset materials mapping for only
 # technologies that have sufficient data
 def subset_materials_map(raw_map):
+    """Subset materials mapping for only technologies that have sufficient data
+
+    Parameters
+    ----------
+    raw_map : pandas.DataFrame
+        Output of :func:`get_raw_technology_mapping`
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns:
+        - message_technology: MESSAGEix technology name
+        - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO)
+        - reg_diff_technology: technology name in the data source
+        - base_year_reference_region_cost: manually specified base year cost
+        of the technology in the reference region (in 2005 USD)
+
+    """
     # - Remove materials technologies that are missing both a reg_diff_source and a
     # base_year_reference_region_cost
     # - Round base_year_reference_region_cost to nearest integer
@@ -273,16 +290,22 @@ def subset_materials_map(raw_map):
     return sub_map
 
 
-# Function to get technology mapping
+# Function to adjust technology mapping
 def adjust_technology_mapping(module) -> pd.DataFrame:
-    """Read in technology mapping file
+    """Adjust technology mapping based on sources and assumptions
+
+    Parameters
+    ----------
+    module : str
+        Model module
 
     Returns
     -------
     pandas.DataFrame
         DataFrame with columns:
         - message_technology: MESSAGEix technology name
-        - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO)
+        - reg_diff_source: data source to map MESSAGEix technology to \
+            (e.g., WEO, Intratec)
         - reg_diff_technology: technology name in the data source
         - base_year_reference_region_cost: manually specified base year cost
         of the technology in the reference region (in 2005 USD)
@@ -625,7 +648,7 @@ def get_intratec_regional_differentiation(node, ref_region) -> pd.DataFrame:
 # If reg_diff_source is "none", then assume no regional differentiation
 # and use the reference region cost as the cost across all regions
 def apply_regional_differentiation(module, node, ref_region) -> pd.DataFrame:
-    """Apply regional differentiation
+    """Apply regional differentiation depending on mapping source
 
     Parameters
     ----------
@@ -641,8 +664,14 @@ def apply_regional_differentiation(module, node, ref_region) -> pd.DataFrame:
     pandas.DataFrame
         DataFrame with columns:
         - message_technology: MESSAGEix technology name
+        - reg_diff_source: data source to map MESSAGEix technology to \
+            (e.g., WEO, Intratec)
+        - reg_diff_technology: technology name in the data source
         - region: MESSAGEix region
+        - base_year_reference_region_cost: manually specified base year cost
+        of the technology in the reference region (in 2005 USD)
         - reg_cost_ratio: regional cost ratio relative to reference region
+        - fix_ratio: ratio of fixed O&M costs to investment costs
     """
 
     # Set default values for input arguments

@@ -38,6 +38,34 @@ def larger_than(sequence, value):
 def create_projections_learning(
     in_module, in_node, in_ref_region, in_base_year, in_scenario
 ):
+    """Create cost projections using the learning method
+
+    Parameters
+    ----------
+    in_module : str
+        Module to use.
+    in_node : str
+        Spatial resolution.
+    in_ref_region : str
+        Reference region.
+    in_base_year : int
+        Base year.
+    in_scenario : str
+        Scenario to use.
+
+    Returns
+    -------
+    df_costs : pd.DataFrame
+        Dataframe containing the cost projections with the columns:
+        - scenario_version: scenario version (for learning method, \
+            only "Not applicable")
+        - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - message_technology: technology name
+        - region: region name
+        - year: year
+        - inv_cost: investment cost
+        - fix_cost: fixed operating and maintenance cost
+    """
     print("Selected scenario: " + in_scenario)
     print(
         "For the learning method, only the SSP scenario(s) itself \
@@ -105,6 +133,36 @@ def create_projections_learning(
 def create_projections_gdp(
     in_node, in_ref_region, in_base_year, in_module, in_scenario, in_scenario_version
 ):
+    """Create cost projections using the GDP method
+
+    Parameters
+    ----------
+    in_node : str
+        Spatial resolution.
+    in_ref_region : str
+        Reference region.
+    in_base_year : int
+        Base year.
+    in_module : str
+        Module to use.
+    in_scenario : str
+        Scenario to use.
+    in_scenario_version : str
+        Scenario version to use.
+
+    Returns
+    -------
+    df_costs : pd.DataFrame
+        Dataframe containing the cost projections with the columns:
+        - scenario_version: scenario version (for gdp method, \
+            either "Review (2023)" or "Previous (2013)"
+        - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - message_technology: technology name
+        - region: region name
+        - year: year
+        - inv_cost: investment cost
+        - fix_cost: fixed operating and maintenance cost
+    """
     # Print selection of scenario version and scenario
     print("Selected scenario: " + in_scenario)
     print("Selected scenario version: " + in_scenario_version)
@@ -193,6 +251,36 @@ def create_projections_gdp(
 def create_projections_converge(
     in_node, in_ref_region, in_base_year, in_module, in_scenario, in_convergence_year
 ):
+    """Create cost projections using the convergence method
+
+    Parameters
+    ----------
+    - in_node : str
+        Spatial resolution.
+    - in_ref_region : str
+        Reference region.
+    - in_base_year : int
+        Base year.
+    - in_module : str
+        Module to use.
+    - in_scenario : str
+        Scenario to use.
+    - in_convergence_year : int
+        Year to converge costs to.
+
+    Returns
+    -------
+    df_costs : pd.DataFrame
+        Dataframe containing the cost projections with the columns:
+        - scenario_version: scenario version (for convergence method, \
+            only "Not applicable")
+        - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - message_technology: technology name
+        - region: region name
+        - year: year
+        - inv_cost: investment cost
+        - fix_cost: fixed operating and maintenance cost
+    """
     print("Selected scenario: " + in_scenario)
     print("Selected convergence year: " + str(in_convergence_year))
     print(
@@ -561,6 +649,10 @@ def create_cost_projections(
     format,
 ):
     """Get investment and fixed cost projections
+
+    This is the main function to get investment and fixed cost projections. \
+        It calls the other functions in this module, and returns the \
+        projections in the specified format.
 
     Parameters
     ----------
