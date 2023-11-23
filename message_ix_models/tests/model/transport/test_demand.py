@@ -50,7 +50,7 @@ def test_demand_dummy(test_context, regions, years):
         param("R11", "B", 11, dict(futures_scenario="A---"), marks=MARK[1]),
         ("R12", "B", 12, dict()),
         ("R12", "B", 12, dict(navigate_scenario="act+ele+tec")),
-        param("R14", "B", 14, dict(), marks=MARK[2](AttributeError)),
+        param("R14", "B", 14, dict(), marks=MARK[2](AssertionError)),
         param("ISR", "A", 1, dict(), marks=MARK[3]),
     ],
 )
