@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Mapping
 import pandas as pd
 from genno import Computer, Quantity, computations, quote
 from message_ix import make_df
+from message_ix.report.operator import as_message_df
 from message_ix_models.model import disutility
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import (
@@ -18,7 +19,6 @@ from message_ix_models.util import (
     broadcast,
     cached,
     check_support,
-    convert_units,
     eval_anno,
     make_io,
     make_matched_dfs,
@@ -217,6 +217,8 @@ def get_USTIMES_MA3T(
         Data for the ``input``, ``output``, ``capacity_factor, ``technical_lifetime``,
         ``inv_cost``, and ``fix_cost`` parameters.
     """
+    from message_ix_models.util import convert_units
+
     # Compatibility checks
     check_support(
         context,
@@ -404,7 +406,6 @@ def capacity_factor(
         All periods, including pre-model periods.
     """
     from genno.operator import convert_units
-    from message_ix.reporting.computations import as_message_df
 
     # TODO determine units from technology annotations
     data = convert_units(qty.expand_dims(y=y) * y_broadcast, "Mm / year")
