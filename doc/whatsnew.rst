@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2023.11.24
+===========
 
 Migration notes
 ---------------
