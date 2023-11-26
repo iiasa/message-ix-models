@@ -382,7 +382,8 @@ def gen_data_aluminum(scenario, dry_run=False):
             # This relation should start from 2020...
             if r == "minimum_recycling_aluminum":
                 modelyears_copy = modelyears[:]
-                modelyears_copy.remove(2020)
+                if 2020 in modelyears_copy:
+                    modelyears_copy.remove(2020)
 
                 common_rel = dict(
                     year_rel=modelyears_copy,

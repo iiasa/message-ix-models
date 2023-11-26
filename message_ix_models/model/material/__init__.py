@@ -16,6 +16,7 @@ from message_data.tools.utilities import calibrate_UE_gr_to_demand, add_globiom,
 from .data_util import modify_demand_and_hist_activity, add_emission_accounting
 from .data_util import add_coal_lowerbound_2020, add_macro_COVID, add_cement_bounds_2020
 from .data_util import add_elec_lowerbound_2020, add_ccs_technologies, read_config
+import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +27,20 @@ def build(scenario):
     # Get the specification
     # Apply to the base scenario
     spec = get_spec()
+
+    if "water_supply" not in list(scenario.set("level")):
+        scenario.check_out()
+        # add missing water tecs
+        scenario.add_set("technology", "extract__freshwater_supply")
+        scenario.add_set("level", "water_supply")
+        scenario.add_set("commodity", "freshwater_supply")
+
+        water_dict = pd.read_excel(
+            "C:/Users\maczek\PycharmProjects\message_data\message_data\model\material\petrochemical model fixes notebooks/water_tec_pars.xlsx",
+            sheet_name=None)
+        for par in water_dict.keys():
+            scenario.add_par(par, water_dict[par])
+        scenario.commit("add missing water tecs")
 
     apply_spec(scenario, spec, add_data_2)
     spec = None
@@ -39,7 +54,10 @@ def build(scenario):
     # Coal calibration 2020
     add_ccs_technologies(scenario)
     modify_demand_and_hist_activity(scenario)
-    add_emission_accounting(scenario)
+    try:
+        add_emission_accounting(scenario)
+    except:
+        scenario.commit("no changes")
     add_coal_lowerbound_2020(scenario)
     add_cement_bounds_2020(scenario)
 
@@ -179,11 +197,21 @@ def build_scen(context, datafile, tag, mode, scenario_name):
             print("WARNING: this code is not tested with this base scenario!")
 
         # Clone and set up
-        scenario = build(
-            context.get_scenario().clone(
-                model="MESSAGEix-Materials", scenario=output_scenario_name + "_" + tag
+
+        if context.model == "SSP_dev_SSP2_v0.1":
+            scenario = build(
+                context.get_scenario().clone(
+                    model=context.scenario_info["model"],
+                    scenario=context.scenario_info["scenario"] + "_" + tag,
+                    keep_solution=False
+                )
             )
-        )
+        else:
+            scenario = build(
+                context.get_scenario().clone(
+                    model="MESSAGEix-Materials", scenario=output_scenario_name + "_" + tag
+                )
+            )
         # Set the latest version as default
         scenario.set_as_default()
 

@@ -46,6 +46,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y #s_info.Y is only for modeling years
+    fy = scenario.firstmodelyear
     nodes = s_info.N
 
     def get_demand_t1_with_income_elasticity(
@@ -55,16 +56,15 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
             elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
         ) + demand_t0
 
-    df_gdp = pd.read_excel(
-        context.get_local_path("material", "methanol", "methanol demand.xlsx"),
-        sheet_name="GDP_baseline",
-    )
-
-    df = df_gdp[(~df_gdp["Region"].isna()) & (df_gdp["Region"] != "World")]
-    df = df.dropna(axis=1)
+    df_gdp = scenario.par("bound_activity_lo", filters={"technology": "GDP"})
+    df = df_gdp.pivot(columns="year_act", values="value", index="node_loc").reset_index()
+    df["node_loc"] = df["node_loc"].str.replace("R12_", "")
+    df = df.rename({"node_loc": "Region"}, axis=1)
 
     df_demand = df.copy(deep=True)
-    df_demand = df_demand.drop([2010, 2015, 2020], axis=1)
+    num_cols = [i for i in df_demand.columns if type(i) == int]
+    hist_yrs = [i for i in num_cols if i <= fy]
+    df_demand = df_demand.drop(hist_yrs, axis=1)
 
     # 2018 production
     # Use as 2020
@@ -90,7 +90,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
         dem_2020 = np.array([2, 75, 30, 4, 11, 42, 60, 32, 30, 29, 35])
         dem_2020 = pd.Series(dem_2020)
 
-    df_demand[2020] = dem_2020
+    df_demand[fy] = dem_2020
 
     for i in range(len(modelyears) - 1):
         income_year1 = modelyears[i]
@@ -107,7 +107,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
         df_demand[income_year2] = dem_2020
 
     df_melt = df_demand.melt(
-        id_vars=["Region"], value_vars=df_demand.columns[5:], var_name="year"
+        id_vars=["Region"], value_vars=df_demand.columns, var_name="year"
     )
 
     return message_ix.make_df(
@@ -364,7 +364,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     context = read_config()
 
     df_pars = pd.read_excel(
-        context.get_local_path(
+        private_data_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
         ),
         sheet_name="Sheet1",
