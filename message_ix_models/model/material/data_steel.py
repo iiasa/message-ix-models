@@ -436,10 +436,12 @@ def gen_data_steel(scenario, dry_run=False):
                 continue
             if r == 'minimum_recycling_steel':
                 # Do not implement the minimum recycling rate for the year 2020
-                model_years_rel.remove(2020)
+                if 2020 in model_years_rel:
+                    model_years_rel.remove(2020)
             if r == 'max_regional_recycling_steel':
                 # Do not implement the minimum recycling rate for the year 2020
-                model_years_rel.remove(2020)
+                if 2020 in model_years_rel:
+                    model_years_rel.remove(2020)
 
             params = set(
                 data_steel_rel.loc[
@@ -562,7 +564,7 @@ def derive_steel_demand(scenario, dry_run=False):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
         df = r.derive_steel_demand(
-            pop, base_demand, str(context.get_local_path("material"))
+            pop, base_demand, str(private_data_path("material"))
         )
         df.year = df.year.astype(int)
 
