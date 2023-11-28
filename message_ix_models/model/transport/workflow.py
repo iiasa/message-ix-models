@@ -16,6 +16,22 @@ def generate(context, **options):
     # Prepare transport configuration
     Config.from_context(context, options)
 
+    # Construct the base URL for scenarios
+    if context.core.dest:
+        # Value from --dest CLI option
+        base_url = context.dest + " {{}}"
+    else:
+        # Values from --model-extra, --scenario-extra CLI options
+        m_extra = context.core.dest_scenario.pop("model", "")
+        s_extra = context.core.dest_scenario.pop("scenario", "baseline")
+
+        base_url = "/".join(
+            (
+                f"MESSAGEix-GLOBIOM 1.1-T-{context.model.regions} {m_extra}".rstrip(),
+                f"{{}} {s_extra}",
+            )
+        )
+
     # Set values expected by workflow steps re-used from .projects.navigate
     context.navigate = navigate.Config(
         scenario="baseline",
@@ -32,17 +48,12 @@ def generate(context, **options):
     all_keys = []
     for ssp in SSP_2024:
         # Construct a label including the SSP
+        # TODO split to a separate function
         label = f"SSP{ssp.name}"
         label_full = f"SSP_2024.{ssp.name}"
 
         # Identify the target of this step
-        target = (
-            f"{context.dest} {label_full}"
-            if context.dest
-            else (
-                f"MESSAGEix-GLOBIOM 1.1-T-{context.model.regions}/{label_full} baseline"
-            )
-        )
+        target = base_url.format(label_full)
 
         # Build Transport on the scenario
         # TODO Add functionality like gen-activity
