@@ -80,15 +80,14 @@ jobs:
       run: pip install --upgrade --upgrade-strategy=eager --editable ./message_data[dl,scgen,tests,transport]
 
     # By default, the above installs message_data dependencies from PyPI.
-    # To run against unreleased code (on `main`, or other branches for open
-    # PRs), temporarily uncomment the lines below and edit as appropriate.
-    # DO NOT merge such changes to `main`.
-    # - name: Force upgrade to unreleased dependencies
-    #   run: |
-    #     # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
-    #     # pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
-    #     # pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
-    #     # pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
+    # To run against unreleased code (on `main`, or other branches for
+    # open PRs), uncomment or modify the lines below as appropriate.
+    - name: Force upgrade to unreleased dependencies
+      run: |
+        # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
+        pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
+        # pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
     - name: Configure
       run: |
