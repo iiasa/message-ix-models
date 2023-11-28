@@ -49,6 +49,8 @@ derive_steel_demand <- function(df_pop, df_demand, datapath) {
     drop_na() %>%
     filter(cons.pcap > 0)
 
+  write.csv(df_steel_consumption, file = "output_file.csv", row.names = TRUE)
+
   nlnit.s = nls(cons.pcap ~ a * exp(b/gdp.pcap) * (1-m)^del.t, data=df_steel_consumption, start=list(a=600, b=-10000, m=0))
 
   df_in = df_pop %>% left_join(df_demand %>% select(-year)) %>% # df_demand is only for 2020
@@ -63,7 +65,7 @@ derive_steel_demand <- function(df_pop, df_demand, datapath) {
 
   # Add 2110 spaceholder
   demand = demand %>% rbind(demand %>% filter(year==2100) %>% mutate(year = 2110))
-
+  print(nlnit.s)
   return(demand %>% select(node=region, year, value=demand.tot) %>% arrange(year, node)) # Mt
 }
 
