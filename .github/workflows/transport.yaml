@@ -25,9 +25,19 @@ jobs:
       DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
       report-key: "transport all"
 
-    # For IIASA self-hosted runner only
+    strategy:
+      matrix:
+        SSP:
+        - SSP1
+        - SSP2
+        - SSP3
+        - SSP4
+        - SSP5
+
+    name: MESSAGEix-Transport ${{ matrix.SSP }}
 
     steps:
+    # Steps for the IIASA self-hosted runner only
     - uses: actions/setup-java@v3
       with:
         distribution: temurin
@@ -37,7 +47,8 @@ jobs:
       run: |
         git lfs --version
 
-    # Steps from here to ##### are identical to pytest.yaml
+    # Steps from here to ##### are nearly identical to pytest.yaml
+
     - uses: webfactory/ssh-agent@v0.8.0
       with:
         ssh-private-key: ${{ secrets.MESSAGE_TRADE_PRIVATE_KEY }}
@@ -88,6 +99,8 @@ jobs:
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
         # pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
+
+    # #####
 
     - name: Configure
       run: |
