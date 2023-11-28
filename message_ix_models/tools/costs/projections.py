@@ -125,6 +125,7 @@ def create_projections_learning(
             ],
             axis=1,
         )
+        .drop_duplicates()
     )
 
     return df_costs
@@ -243,6 +244,7 @@ def create_projections_gdp(
             ],
             axis=1,
         )
+        .drop_duplicates()
     )
 
     return df_costs
@@ -318,18 +320,20 @@ def create_projections_converge(
     if in_scenario is not None:
         df_ref_reg_learning = df_ref_reg_learning.query("scenario == @scen")
 
-    df_pre_costs = df_region_diff.merge(
-        df_ref_reg_learning, on="message_technology"
-    ).assign(
-        inv_cost_converge=lambda x: np.where(
-            x.year <= FIRST_MODEL_YEAR,
-            x.reg_cost_base_year,
-            np.where(
-                x.year < in_convergence_year,
-                x.inv_cost_ref_region_learning * x.reg_cost_ratio,
-                x.inv_cost_ref_region_learning,
+    df_pre_costs = (
+        df_region_diff.merge(df_ref_reg_learning, on="message_technology")
+        .assign(
+            inv_cost_converge=lambda x: np.where(
+                x.year <= FIRST_MODEL_YEAR,
+                x.reg_cost_base_year,
+                np.where(
+                    x.year < in_convergence_year,
+                    x.inv_cost_ref_region_learning * x.reg_cost_ratio,
+                    x.inv_cost_ref_region_learning,
+                ),
             ),
-        ),
+        )
+        .drop_duplicates()
     )
 
     print("...Applying splines to converge...")
@@ -362,6 +366,7 @@ def create_projections_converge(
             ],
             axis=1,
         )
+        .drop_duplicates()
     )
 
     return df_costs
@@ -455,6 +460,7 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
             columns=["inv_cost_2020", "fix_cost_2020", "inv_cost_2100", "fix_cost_2100"]
         )
         .rename(columns={"year": "year_vtg"})
+        .drop_duplicates()
     )
 
     inv = (
@@ -490,6 +496,7 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
         )
         .query("year_vtg <= 2060 or year_vtg % 10 == 0")
         .reset_index(drop=True)
+        .drop_duplicates()
     )
 
     fom = (
@@ -544,7 +551,7 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
         .query("year_vtg <= 2060 or year_vtg % 10 == 0")
         .query("year_act <= 2060 or year_act % 10 == 0")
         .reset_index(drop=True)
-    )
+    ).drop_duplicates()
 
     return inv, fom
 
@@ -597,6 +604,7 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
         )
         .reset_index()
         .rename_axis(None, axis=1)
+        .drop_duplicates()
     )
 
     iamc_fix = (
@@ -631,6 +639,7 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
         )
         .reset_index()
         .rename_axis(None, axis=1)
+        .drop_duplicates()
     )
 
     return iamc_inv, iamc_fix

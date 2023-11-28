@@ -399,6 +399,6 @@ def project_ref_region_inv_costs_using_learning_rates(
             value_name="inv_cost_ref_region_learning",
         )
         .assign(year=lambda x: x.year.astype(int))
-    )
+    ).drop_duplicates()
 
     return df_inv_ref
