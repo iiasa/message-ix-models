@@ -19,7 +19,6 @@ from message_ix_models.util import (
     broadcast,
     cached,
     check_support,
-    eval_anno,
     make_io,
     make_matched_dfs,
     merge_data,
@@ -461,7 +460,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     # Prevent new capacity from being constructed for techs annotated
     # "historical-only: True"
     historical_only_techs = list(
-        filter(lambda t: eval_anno(t, "historical-only") is True, techs)
+        filter(lambda t: t.eval_annotation("historical-only") is True, techs)
     )
     name = "bound_new_capacity_up"
     data[name] = make_df(name, year_vtg=info.Y, value=0.0, unit="-").pipe(

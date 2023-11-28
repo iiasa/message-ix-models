@@ -13,7 +13,6 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import (
     broadcast,
-    eval_anno,
     make_io,
     make_matched_dfs,
     make_source_tech,
@@ -190,7 +189,7 @@ def navigate_ele(
 
     # Item (1): identify LDV technologies with inputs other than electricity or hydrogen
     for code in map(lambda t: techs[techs.index(t)], t_groups["t"]["LDV"]):
-        input_info = eval_anno(code, "input")
+        input_info = code.eval_annotation("input")
 
         if input_info.get("commodity") not in ("electr", "hydrogen"):
             to_constrain.append(code.id)

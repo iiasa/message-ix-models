@@ -5,7 +5,6 @@ import xarray as xr
 from genno.testing import assert_qty_equal
 from iam_units import registry
 from message_ix_models.report.util import as_quantity
-from message_ix_models.util import eval_anno
 
 from message_data.model.transport.config import Config, DataSourceConfig
 from message_data.model.transport.util import input_commodity_level
@@ -80,15 +79,15 @@ def test_configure(test_context, regions):
     # Codes for commodities are generated
     codes = cfg.set["commodity"]["add"]
     RUEAA = codes[codes.index("transport pax RUEAA")]
-    assert eval_anno(RUEAA, "demand") is True
+    assert RUEAA.eval_annotation("demand") is True
 
     # …with expected units
-    assert registry.Unit("Gp km") == eval_anno(RUEAA, "units")
+    assert registry.Unit("Gp km") == RUEAA.eval_annotation("units")
 
     # Codes for technologies are generated, with annotations giving their units
     codes = cfg.set["technology"]["add"]
     ELC_100 = codes[codes.index("ELC_100")]
-    assert registry.Unit("Gv km") == eval_anno(ELC_100, "units")
+    assert registry.Unit("Gv km") == ELC_100.eval_annotation("units")
 
     # If "ISR" was given as 'regions', then the corresponding config file was loaded
     if regions == "ISR":
