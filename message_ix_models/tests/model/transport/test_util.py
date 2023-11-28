@@ -82,12 +82,13 @@ def test_configure(test_context, regions):
     assert RUEAA.eval_annotation("demand") is True
 
     # …with expected units
-    assert registry.Unit("Gp km") == RUEAA.eval_annotation("units")
+    r = dict(registry=registry)
+    assert registry.Unit("Gp km") == RUEAA.eval_annotation("units", r)
 
     # Codes for technologies are generated, with annotations giving their units
     codes = cfg.set["technology"]["add"]
     ELC_100 = codes[codes.index("ELC_100")]
-    assert registry.Unit("Gv km") == ELC_100.eval_annotation("units")
+    assert registry.Unit("Gv km") == ELC_100.eval_annotation("units", r)
 
     # If "ISR" was given as 'regions', then the corresponding config file was loaded
     if regions == "ISR":
