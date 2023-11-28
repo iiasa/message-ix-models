@@ -36,6 +36,7 @@ __all__ = [
     "distance_ldv",
     "distance_nonldv",
     "dummy_prices",
+    "base_demand_header",
     "iea_eei_fv",
     "logit",
     "nodes_ex_world",
@@ -49,6 +50,31 @@ __all__ = [
     "transport_data",
     "votm",
 ]
+
+
+def base_demand_header(scenario: "Scenario") -> Dict[str, str]:
+    """Return a header comment for writing out base model demand data."""
+    from datetime import datetime
+    from io import StringIO
+
+    from ixmp.util import show_versions
+
+    tz = datetime.now().astimezone().tzinfo
+
+    # Retrieve package versions
+    buf = StringIO()
+    show_versions(buf)
+    versions = "\n\n".join(buf.getvalue().split("\n\n")[:2])
+
+    return dict(
+        header_comment=f"""`demand` parameter data for MESSAGEix-GLOBIOM.
+
+Generated: {datetime.now(tz).isoformat()}
+from: ixmp://{scenario.platform.name}/{scenario.url}
+using:
+{versions}
+"""
+    )
 
 
 def base_shares(
