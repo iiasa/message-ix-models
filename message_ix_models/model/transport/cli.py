@@ -29,7 +29,7 @@ from pathlib import Path
 import click
 from message_ix_models import ScenarioInfo
 from message_ix_models.util._logging import mark_time, silence_log
-from message_ix_models.util.click import PARAMS, common_params
+from message_ix_models.util.click import PARAMS, common_params, exec_cb
 from message_ix_models.workflow import make_click_command
 
 log = logging.getLogger(__name__)
@@ -60,6 +60,18 @@ cli.add_command(
                 ["--report", "report_build"],
                 is_flag=True,
                 help="Generate diagnostic reports of the built scenario.",
+            ),
+            click.Option(
+                ["--model-extra", "target_model_name"],
+                callback=exec_cb("context.core.dest_scenario['model'] = value"),
+                default="",
+                help="Model name suffix.",
+            ),
+            click.Option(
+                ["--scenario-extra", "target_scenario_name"],
+                callback=exec_cb("context.core.dest_scenario['scenario'] = value"),
+                default="baseline",
+                help="Scenario name suffix.",
             ),
         ]
         + [PARAMS[n] for n in "dest dry_run nodes quiet".split()],
