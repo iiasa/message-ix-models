@@ -211,8 +211,8 @@ def process_raw_ssp_data(node, ref_region) -> pd.DataFrame:
 
 
 # Function to calculate adjusted region-differentiated cost ratios
-def calculate_indiv_adjusted_region_cost_ratios(
-    region_diff_df, node, ref_region, base_year
+def adjust_cost_ratios_with_gdp(
+    region_diff_df, node, ref_region, scenario, scenario_version, base_year
 ):
     """Calculate adjusted region-differentiated cost ratios
 
@@ -228,6 +228,10 @@ def calculate_indiv_adjusted_region_cost_ratios(
         Node/region to aggregate to.
     ref_region : str
         Reference region to use.
+    scenario : str
+        Scenario to use.
+    scenario_version : str
+        Scenario version to use.
     base_year : int
         Base year to use.
 
@@ -244,10 +248,18 @@ def calculate_indiv_adjusted_region_cost_ratios(
             in respective region to GDP per capita in reference region
         - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
     """
+
     df_gdp = (
         process_raw_ssp_data(node=node, ref_region=ref_region)
         .query("year >= 2020")
         .drop(columns=["total_gdp", "total_population"])
+        .assign(
+            scenario_version=lambda x: np.where(
+                x.scenario_version.str.contains("2013"),
+                "Previous (2013)",
+                "Review (2023)",
+            )
+        )
     )
     df_cost_ratios = region_diff_df.copy()
 
@@ -259,6 +271,30 @@ def calculate_indiv_adjusted_region_cost_ratios(
         print("......(Using year " + str(base_year) + " data from GDP.)")
 
     # Set default values for input arguments
+
+    # If no scenario is specified, do not filter for scenario
+    # If it specified, then filter as below:
+    if scenario is None or scenario == "all":
+        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
+    elif scenario is not None and scenario != "all":
+        scen = scenario.upper()
+
+    # If no scenario version is specified, do not filter for scenario version
+    # If it specified, then filter as below:
+    if scenario_version is None or scenario_version == "updated":
+        scen_vers = ["Review (2023)"]
+    elif scenario_version is not None and scenario_version == "original":
+        scen_vers = ["Review (2023)"]
+    elif scenario_version == "all":
+        scen_vers = ["Review (2023)", "Previous (2013)"]
+
+    # Repeating to avoid linting error
+    scen = scen
+    scen_vers = scen_vers
+
+    # Filter for scenarios and scenario versions
+    df_gdp = df_gdp.query("scenario in @scen and scenario_version in @scen_vers")
+
     # If specified node is R11, then use R11_NAM as the reference region
     # If specified node is R12, then use R12_NAM as the reference region
     # If specified node is R20, then use R20_NAM as the reference region
@@ -361,11 +397,6 @@ def calculate_indiv_adjusted_region_cost_ratios(
                 x.slope * x.gdp_ratio_reg_to_reference + x.intercept,
             ),
             year=lambda x: x.year.astype(int),
-            scenario_version=lambda x: np.where(
-                x.scenario_version.str.contains("2013"),
-                "Previous (2013)",
-                "Review (2023)",
-            ),
         )
         .reindex(
             [

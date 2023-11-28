@@ -9,9 +9,7 @@ from message_ix_models.tools.costs.config import (
     HORIZON_END,
     HORIZON_START,
 )
-from message_ix_models.tools.costs.gdp import (
-    calculate_indiv_adjusted_region_cost_ratios,
-)
+from message_ix_models.tools.costs.gdp import adjust_cost_ratios_with_gdp
 from message_ix_models.tools.costs.learning import (
     project_ref_region_inv_costs_using_learning_rates,
 )
@@ -206,10 +204,12 @@ def create_projections_gdp(
     )
 
     print("...Adjusting ratios using GDP data...")
-    df_adj_cost_ratios = calculate_indiv_adjusted_region_cost_ratios(
+    df_adj_cost_ratios = adjust_cost_ratios_with_gdp(
         df_region_diff,
         node=in_node,
         ref_region=in_ref_region,
+        scenario=in_scenario,
+        scenario_version=in_scenario_version,
         base_year=in_base_year,
     )
 
