@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Union
 
 import pandas as pd
 from dask.core import quote
@@ -8,9 +8,9 @@ from genno.compat.pyam.util import collapse as genno_collapse
 from genno.core.key import single_key
 from iam_units import registry
 from message_ix import Reporter
-from sdmx.model.v21 import Code
 
-from message_ix_models.util import eval_anno
+if TYPE_CHECKING:
+    from sdmx.model.common import Code
 
 log = logging.getLogger(__name__)
 
@@ -195,9 +195,12 @@ def copy_ts(rep: Reporter, other: str, filters: Optional[dict]) -> Key:
     return single_key(rep.add("store_ts", f"copy ts {_id}", "scenario", k2))
 
 
-def add_replacements(dim: str, codes: Iterable[Code]) -> None:
+def add_replacements(dim: str, codes: Iterable["Code"]) -> None:
     """Update :data:`REPLACE_DIMS` for dimension `dim` with values from `codes`."""
     for code in codes:
-        label = eval_anno(code, "report")
-        if label is not None:
+        try:
+            label = str(code.get_annotation(id="report"))
+        except KeyError:
+            continue
+        else:
             REPLACE_DIMS[dim][f"{code.id.title()}$"] = label
