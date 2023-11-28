@@ -67,7 +67,7 @@ def get_afofi_technology_shares(
     Quantity
         with dimensions (n, t); t including all of `technologies`.
     """
-    from genno.computations import aggregate, mul, rename_dims
+    from genno.operator import aggregate, mul, rename_dims
 
     agg = {}
     weight = {}

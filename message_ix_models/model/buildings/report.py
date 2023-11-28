@@ -13,7 +13,7 @@ from typing import Dict, List
 
 import message_ix
 import pandas as pd
-from genno import Key, computations
+from genno import Key, operator
 from iam_units import registry
 from message_ix_models import Context, Spec
 from message_ix_models.report import iamc as add_iamc
@@ -79,7 +79,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     # Aggregate
     rep.add(
         "in:nl-t-ya-c-l:buildings",
-        computations.aggregate,
+        operator.aggregate,
         "in:nl-t-ya-c-l",
         "buildings agg",
         False,
@@ -225,7 +225,7 @@ def var_name(df: pd.DataFrame, expr: str) -> pd.DataFrame:
     return df.assign(variable=df.apply(expr.replace("{", "{0.").format, axis=1))
 
 
-# Reporting computations/atomic steps
+# Reporting operators/atomic steps
 
 
 def buildings_filters0(all_techs: List[str], years: List) -> Dict:
