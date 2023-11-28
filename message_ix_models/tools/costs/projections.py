@@ -591,7 +591,7 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
             )
             .drop(columns=["technology"])
         )
-        .pivot(
+        .pivot_table(
             index=[
                 "SSP_Scenario_Version",
                 "SSP_Scenario",
@@ -626,7 +626,7 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
             )
             .drop(columns=["technology", "year_vtg"])
         )
-        .pivot(
+        .pivot_table(
             index=[
                 "SSP_Scenario_Version",
                 "SSP_Scenario",
