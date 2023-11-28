@@ -13,7 +13,7 @@ import xarray as xr
 from iam_units import registry
 from sdmx.model.v21 import Annotation, Code
 
-from message_ix_models.util import eval_anno, load_package_data, package_data_path
+from message_ix_models.util import load_package_data, package_data_path
 from message_ix_models.util.sdmx import as_codes
 
 log = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ def generate_product(
         attributes.
     """
     # eval() and remove the original annotation
-    dims = eval_anno(template, "_generate")
+    dims = template.eval_annotation(id="_generate")
     template.pop_annotation(id="_generate")
 
     def _base(dim, match):
@@ -183,7 +183,7 @@ def generate_set_elements(data: MutableMapping, name) -> None:
         if name in {"commodity", "technology"}:
             process_units_anno(name, code, quiet=True)
 
-        if eval_anno(code, "_generate"):
+        if code.eval_annotation("_generate"):
             # Requires a call to generate_product(); do these last
             deferred.append(code)
             continue
@@ -212,8 +212,9 @@ def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
     """Process an annotation on `code` with id="units".
 
     The annotation text is wrapped as ``'registry.Unit("{text}")'``, such that it can
-    be retrieved with :func:`.eval_anno` or :meth:`.ScenarioInfo.units_for`. If `code`
-    has direct children, the annotation is also copied to those codes.
+    be retrieved with :meth:`~sdmx.model.common.AnnotableArtefact.eval_annotation` or
+    :meth:`.ScenarioInfo.units_for`. If `code` has direct children, the annotation is
+    also copied to those codes.
 
     Parameters
     ----------
@@ -231,7 +232,7 @@ def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
     """
     level = logging.NOTSET if quiet else logging.WARNING
     # Convert a "units" annotation to a code snippet that will return a pint.Unit
-    # via eval_anno()
+    # via Code.eval_annotation()
     try:
         units_anno = code.get_annotation(id="units")
     except KeyError:
@@ -258,7 +259,7 @@ def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
             f"Unit '{units_anno.text}' for {set_name} {code} not pint compatible",
         )
     else:
-        # Modify the annotation so eval_anno() can be used
+        # Modify the annotation so .eval_annotation() can be used
         units_anno.text = expr
 
     # Also annotate child codes

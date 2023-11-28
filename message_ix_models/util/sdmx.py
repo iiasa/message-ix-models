@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
 
 import sdmx
 import sdmx.message
-from iam_units import registry
 from sdmx.model.v21 import AnnotableArtefact, Annotation, Code, InternationalString
 
 from .common import package_data_path
@@ -97,16 +96,15 @@ def eval_anno(obj: AnnotableArtefact, id: str):
        Use :meth:`sdmx.model.common.AnnotableArtefact.eval_annotation`, which provides
        the same functionality.
     """
-    try:
-        value = str(obj.get_annotation(id=id).text)
-    except KeyError:  # No such attribute
-        return None
+    from warnings import warn
 
-    try:
-        return eval(value, {"registry": registry})
-    except Exception as e:  # Something that can't be eval()'d, e.g. a plain string
-        log.debug(f"Could not eval({value!r}): {e}")
-        return value
+    warn(
+        "Use sdmx.model.common.AnnotableArtefact.eval_annotation(), which provides the "
+        "same behaviour.",
+        DeprecationWarning,
+        2,
+    )
+    return obj.eval_annotation(id)
 
 
 def make_enum(urn, base=Enum):

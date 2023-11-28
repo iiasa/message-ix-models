@@ -11,7 +11,6 @@ import pint
 import sdmx.model.v21 as sdmx_model
 
 from .ixmp import parse_url
-from .sdmx import eval_anno
 
 if TYPE_CHECKING:
     from message_ix import Scenario
@@ -237,7 +236,7 @@ class ScenarioInfo:
             print(self.set[set_name])
             raise
 
-        return eval_anno(self.set[set_name][idx], "units")
+        return self.set[set_name][idx].eval_annotation("units")
 
     def io_units(
         self, technology: str, commodity: str, level: Optional[str] = None
@@ -295,8 +294,6 @@ class ScenarioInfo:
         [2090, 2100, 2110]
 
         """
-        from message_ix_models.util import eval_anno
-
         # Clear existing values
         if len(self.set["year"]):
             log.debug(f"Discard existing 'year' elements: {repr(self.set['year'])}")
@@ -319,7 +316,7 @@ class ScenarioInfo:
             self.set["year"].append(year)
 
             # Check for an annotation 'firstmodelyear: true'
-            if eval_anno(code, "firstmodelyear"):
+            if code.eval_annotation("firstmodelyear"):
                 if fmy_set:
                     # No coverage: data that triggers this should not be committed
                     raise ValueError(  # pragma: no cover
@@ -335,7 +332,7 @@ class ScenarioInfo:
             duration_period.append(
                 dict(
                     year=year,
-                    value=eval_anno(code, "duration_period")
+                    value=code.eval_annotation("duration_period")
                     or (year - duration_period[-1]["year"]),
                     unit="y",
                 )

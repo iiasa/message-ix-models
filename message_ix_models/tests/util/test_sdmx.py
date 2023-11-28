@@ -4,10 +4,12 @@ import re
 import pytest
 from sdmx.model.v21 import Annotation, Code
 
-from message_ix_models.util.sdmx import eval_anno, make_enum, read
+from message_ix_models.util.sdmx import make_enum, read
 
 
 def test_eval_anno(caplog):
+    from message_ix_models.util import eval_anno
+
     c = Code()
 
     assert None is eval_anno(c, "foo")

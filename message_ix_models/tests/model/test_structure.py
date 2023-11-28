@@ -15,7 +15,7 @@ from message_ix_models.model.structure import (
     process_commodity_codes,
     process_units_anno,
 )
-from message_ix_models.util import as_codes, eval_anno
+from message_ix_models.util import as_codes
 
 
 @pytest.mark.parametrize(
@@ -98,7 +98,7 @@ class TestGetCodes:
 
         # Units for one commodity can be retrieved and parsed
         coal = data[data.index("coal")]
-        assert isinstance(eval_anno(coal, "units"), registry.Unit)
+        assert isinstance(coal.eval_annotation("units"), registry.Unit)
 
         # Descriptions are parsed without new lines
         crudeoil = data[data.index("crudeoil")]
@@ -107,7 +107,7 @@ class TestGetCodes:
         # Processing a second time does not double-wrap the unit expressions
         process_commodity_codes(data)
         coal = data[data.index("coal")]
-        assert isinstance(eval_anno(coal, "units"), registry.Unit)
+        assert isinstance(coal.eval_annotation("units"), registry.Unit)
 
     def test_levels(self):
         data = get_codes("level")
@@ -277,4 +277,4 @@ def test_process_units_anno():
     process_units_anno("", codes[0])
 
     # Parents' units are propagated to the child
-    assert registry.Unit("kg") == eval_anno(codes[1], "units")
+    assert registry.Unit("kg") == codes[1].eval_annotation("units")
