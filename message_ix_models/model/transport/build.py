@@ -311,7 +311,7 @@ def get_computer(
     c.add("scenario", scenario)
 
     # .report._handle_config() does more of the low-level setup, including
-    # - Require modules with computations.
+    # - Require modules with operators.
     # - Transfer data from `context` to `config`.
     c.configure(config={"MESSAGEix-Transport": {}})
 
