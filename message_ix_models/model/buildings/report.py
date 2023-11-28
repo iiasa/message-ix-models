@@ -141,9 +141,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         rep.add(k_path, "make_output_path", "config", f"{base}.csv")
 
         # Write the data frame to this path
-        # FIXME(PNK) upstream genno.computations.write_report handles only Quantity, not
-        #            pd.DataFrame. Add that feature, then remove the lambda function
-        k3 = rep.add(f"{k1} file", lambda df, path: df.to_csv(path), k1, k_path)
+        k3 = rep.add(f"{k1} file", "write_report", k1, k_path)
 
         # Add to the list of files to be stored
         file_keys.append(k3)
