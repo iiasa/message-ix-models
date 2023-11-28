@@ -140,7 +140,7 @@ jobs:
       run: |
         mix-models --url="${{ env.BASE }}" \
           transport run \
-          --nodes=R12 --model-extra="ci nightly" \
+          --go --nodes=R12 --model-extra="ci nightly" \
           "${{ matrix.SSP }} reported"
 
     - name: Upload results as a build artifact
