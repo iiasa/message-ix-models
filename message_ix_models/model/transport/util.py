@@ -8,7 +8,7 @@ import pandas as pd
 from iam_units import registry  # noqa: F401
 from message_ix_models import Context, Spec
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import eval_anno, private_data_path
+from message_ix_models.util import private_data_path
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def input_commodity_level(
     def t_cl(t: str) -> pd.Series:
         """Return the commodity and level given technology `t`."""
         # Retrieve the "input" annotation for this technology
-        input = eval_anno(t_info[t_info.index(t)], "input")
+        input = t_info[t_info.index(t)].eval_annotation("input")
 
         # Commodity ID
         commodity = input["commodity"]
@@ -44,7 +44,7 @@ def input_commodity_level(
         # 2. Default level for the commodity from `c_code`.
         # 3. `default_level` argument to this function.
         level = (
-            input.get("level", None) or eval_anno(c_code, id="level") or default_level
+            input.get("level", None) or c_code.eval_annotation("level") or default_level
         )
 
         return pd.Series(dict(commodity=commodity, level=level))

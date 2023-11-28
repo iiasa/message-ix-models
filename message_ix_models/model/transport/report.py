@@ -8,7 +8,7 @@ from genno.operator import aggregate
 from message_ix import Reporter
 from message_ix_models import Context
 from message_ix_models.report.util import add_replacements
-from message_ix_models.util import eval_anno, private_data_path
+from message_ix_models.util import private_data_path
 
 from . import Config
 from .build import get_spec
@@ -204,7 +204,7 @@ def configure_legacy_reporting(config: dict) -> None:
     for t in spec.add.set["technology"]:
         try:
             # Retrieve the input commodity for this technology
-            commodity = eval_anno(t, "input")["commodity"]
+            commodity = t.eval_annotation("input")["commodity"]
         except (TypeError, KeyError):  # No annotation, or no "commodity" info
             commodity = None
         else:

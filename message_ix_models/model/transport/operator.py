@@ -17,7 +17,7 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
 from message_ix_models.report.operator import compound_growth
 from message_ix_models.report.util import as_quantity
-from message_ix_models.util import MappingAdapter, broadcast, eval_anno, nodes_ex_world
+from message_ix_models.util import MappingAdapter, broadcast, nodes_ex_world
 from sdmx.model.v21 import Code
 
 from message_data.projects.navigate import T35_POLICY
@@ -280,7 +280,7 @@ def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quan
     """
 
     def _not_disutility(tech):
-        return eval_anno(tech, "is-disutility") is None
+        return tech.eval_annotation("is-disutility") is None
 
     techs = list(filter(_not_disutility, t))
 
@@ -370,7 +370,7 @@ def input_commodity_level(t: List[Code], default_level=None) -> Quantity:
     data = []
     for tech in t:
         # Retrieve the "input" annotation for this technology
-        input_ = eval_anno(tech, "input")
+        input_ = tech.eval_annotation("input")
 
         # Retrieve the code for this commodity
         try:
@@ -387,7 +387,7 @@ def input_commodity_level(t: List[Code], default_level=None) -> Quantity:
         # 1. Technology-specific input level from `t_code`.
         # 2. Default level for the commodity from `c_code`.
         # 3. `default_level` argument to this function.
-        level = input_.get("level") or eval_anno(c_code, id="level") or default_level
+        level = input_.get("level") or c_code.eval_annotation("level") or default_level
 
         data.append((tech.id, commodity, level))
 
@@ -518,7 +518,7 @@ def indexers_usage(technologies: List[Code]) -> Dict:
     """Indexers for replacing LDV `t` and `cg` with `t_new` for usage technologies."""
     labels: Dict[str, List[str]] = dict(cg=[], t=[], t_new=[])
     for t in technologies:
-        if not t.eval_annotation(id="is-disutility"):
+        if not t.eval_annotation("is-disutility"):
             continue
         t_base, *_, cg = t.id.split()
         labels["t"].append(t_base)
