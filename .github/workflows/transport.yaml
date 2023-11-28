@@ -115,7 +115,8 @@ jobs:
       run: |
         from pathlib import Path
 
-        import message_ix_models
+        # Ensure keys are defined
+        import message_data.model.buildings
         from ixmp import config
 
         config.add_platform(
@@ -127,6 +128,7 @@ jobs:
             "ixmp_dev",
             jvmargs="-Xmx16G",
         )
+
         p = Path("${{ github.workspace }}")
         config.set("message local data", p / "report")
         config.set("message buildings dir", p / "buildings")
