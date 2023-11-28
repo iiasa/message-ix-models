@@ -4,6 +4,7 @@ from message_ix_models.project.ssp import SSP_2024
 def generate(context, **options):
     from message_ix_models import Workflow
 
+    from message_data.model.workflow import Config as SolveConfig
     from message_data.projects import navigate
     from message_data.projects.navigate.workflow import report, solve
 
@@ -37,6 +38,7 @@ def generate(context, **options):
         scenario="baseline",
         # buildings=False,
     )
+    solve_config = SolveConfig(reserve_margin=False, solve=dict(model="MESSAGE"))
 
     wf = Workflow(context)
 
@@ -63,7 +65,7 @@ def generate(context, **options):
         )
 
         # Solve
-        wf.add_step(f"{label} solved", f"{label} built", solve)
+        wf.add_step(f"{label} solved", f"{label} built", solve, config=solve_config)
 
         # Report
         all_keys.append(wf.add_step(f"{label} reported", f"{label} solved", report))
