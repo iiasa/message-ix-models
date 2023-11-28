@@ -93,7 +93,7 @@ def add_iamc_store_write(c: Computer, base_key) -> None:
 @genno.config.handles("MESSAGEix-Transport", iterate=False)
 def _handler(c: Computer, info):
     """Handle the ``MESSAGEix-Transport:`` config section."""
-    # Require modules with computations
+    # Require modules with operators
     require_compat(c)
 
     if info.get("filter", False):

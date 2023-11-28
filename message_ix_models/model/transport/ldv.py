@@ -7,7 +7,8 @@ from operator import itemgetter, le
 from typing import Any, Dict, List, Mapping
 
 import pandas as pd
-from genno import Computer, Quantity, computations, quote
+from genno import Computer, Quantity, quote
+from genno.operator import load_file
 from message_ix import make_df
 from message_ix.report.operator import as_message_df
 from message_ix_models.model import disutility
@@ -190,7 +191,7 @@ def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, Quantity]:
     """Same as :func:`read_USTIMES_MA3T`, but from CSV files."""
     result = {}
     for name in "fix_cost", "fuel economy", "inv_cost":
-        result[name] = computations.load_file(
+        result[name] = load_file(
             path=private_data_path(
                 "transport", subdir or "", f"ldv-{name.replace(' ', '-')}.csv"
             ),
@@ -488,7 +489,7 @@ def usage_data(context) -> Mapping[str, pd.DataFrame]:
     data = disutility.data_conversion(info, spec)
 
     # Read load factor data from file
-    q = computations.load_file(
+    q = load_file(
         path_fallback(context.model.regions, "load-factor-ldv.csv"),
         dims={"node": "node_loc"},
         name="load factor",

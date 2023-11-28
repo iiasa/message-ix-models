@@ -1,4 +1,4 @@
-"""Reporting computations for MESSAGEix-Transport."""
+""":mod:`genno` operators for MESSAGEix-Transport."""
 import logging
 import re
 from functools import partial, reduce
@@ -24,6 +24,8 @@ from message_data.projects.navigate import T35_POLICY
 from message_data.tools import iea_eei
 
 if TYPE_CHECKING:
+    import pathlib
+
     from genno import Computer
     from message_ix import Scenario
 
@@ -450,11 +452,11 @@ def logit(
     return div(u, u.sum(dim))
 
 
-def make_output_path(config, scenario, name):
+def make_output_path(config, scenario, name) -> "pathlib.Path":
     """Return a path under the "output_dir" Path from the reporter configuration.
 
-    This version overrides :func:`ixmp.reporting.computations.make_output_path` to
-    include :attr:`.ScenarioInfo.path`.
+    This version overrides :func:`ixmp.report.operator.make_output_path` to include
+    :attr:`.ScenarioInfo.path`.
     """
     result = config["output_dir"].joinpath(ScenarioInfo(scenario).path, name)
     result.parent.mkdir(parents=True, exist_ok=True)
@@ -810,10 +812,7 @@ def transport_data(*args):
 
 
 def transport_check(scenario: "Scenario", ACT: Quantity) -> pd.Series:
-    """Reporting computation for :func:`check`.
-
-    Imported into :mod:`.reporting.computations`.
-    """
+    """Reporting operator for :func:`.check`."""
     info = ScenarioInfo(scenario)
 
     # Mapping from check name → bool
