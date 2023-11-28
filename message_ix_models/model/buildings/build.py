@@ -19,7 +19,6 @@ from message_ix_models.model.structure import (
     get_region_codes,
 )
 from message_ix_models.util import (
-    eval_anno,
     load_private_data,
     make_io,
     merge_data,
@@ -224,7 +223,7 @@ def get_tech_groups(
         # ID does not contain the ID of the input commodity. Look up the actual input
         # commodity from annotations in technology.yaml.
         try:
-            commodity = eval_anno(t, "input")[0]
+            commodity = t.eval_annotation("input")[0]
         except TypeError:
             pass  # No such annotation
 

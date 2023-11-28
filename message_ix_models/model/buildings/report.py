@@ -18,7 +18,6 @@ from iam_units import registry
 from message_ix_models import Context, Spec
 from message_ix_models.report import iamc as add_iamc
 from message_ix_models.report.util import add_replacements
-from message_ix_models.util import eval_anno
 
 from message_data.model.transport.operator import nodes_world_agg
 
@@ -66,7 +65,7 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
         # Append "$" so the expressions only match the full/end of string
         REPLACE_DIMS["t"][
             f"{s.id.title()} {e.id.title()}$"
-        ] = f"{eval_anno(s, 'report')}|{eval_anno(e, 'report')}"
+        ] = f"{s.eval_annotation('report')}|{e.eval_annotation('report')}"
 
     log.info(f"Will replace:\n{REPLACE_DIMS!r}")
 
