@@ -127,17 +127,8 @@ jobs:
         print(config.path.read_text())
       shell: python
 
-    - name: Build MESSAGEix-Transport
-      run: mix-models --url="${{ env.BASE }}" transport build --dest="${{ env.DEST }}"
-
-    - name: Solve MESSAGEix-Tranport
-      run: message-ix --url="${{ env.DEST }}" solve
-
-    - name: Report MESSAGEix-Transport
-      run: |
-        mkdir -p ${{ github.workspace }}/report
-        mix-models --url="${{ env.DEST }}" report -m model.transport --dry-run "${{ env.report-key }}"
-        mix-models --url="${{ env.DEST }}" report -m model.transport --output=${{ github.workspace }}/report "${{ env.report-key }}"
+    - name: Run MESSAGEix-Transport workflow
+      run: mix-models --url="${{ env.BASE }}" transport run "${{ matrix.SSP }} reported"
 
     - name: Upload results as a build artifact
       uses: actions/upload-artifact@v3
