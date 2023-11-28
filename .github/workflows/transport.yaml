@@ -22,8 +22,6 @@ jobs:
 
     env:
       BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
-      DEST: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12/ci nightly"
-      report-key: "transport all"
 
     strategy:
       matrix:
@@ -139,7 +137,11 @@ jobs:
       shell: python
 
     - name: Run MESSAGEix-Transport workflow
-      run: mix-models --url="${{ env.BASE }}" transport run "${{ matrix.SSP }} reported"
+      run: |
+        mix-models --url="${{ env.BASE }}" \
+          transport run \
+          --nodes=R12 --model-extra="ci nightly" \
+          "${{ matrix.SSP }} reported"
 
     - name: Upload results as a build artifact
       uses: actions/upload-artifact@v3
