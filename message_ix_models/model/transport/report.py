@@ -3,7 +3,7 @@ import logging
 from typing import cast
 
 import genno.config
-from genno import Computer, MissingKeyError, quote
+from genno import Computer, Key, MissingKeyError, quote
 from genno.operator import aggregate
 from message_ix import Reporter
 from message_ix_models import Context
@@ -172,7 +172,26 @@ def callback(rep: Reporter, context: Context) -> None:
 
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
     rep.apply(add_iamc_store_write, "transport::iamc")
-    rep.add("transport all", ["transport iamc all", "transport plots"])
+
+    # Add tasks for producing data for base model calibration
+    bd = "base model transport demand"
+    key = Key("{bd}::ixmp")
+    rep.add(
+        key,
+        "as_message_df",
+        "in:nl-ya-h:transport+units",
+        name="demand",
+        dims=dict(node="nl", year="ya", time="h"),
+        common=dict(commodity="transport", level="useful"),
+        wrap=False,
+    )
+    rep.add(f"{bd} path", "make_output_path", "config", "scenario", "demand.csv")
+    rep.add(f"{bd} header", "base_demand_header", "scenario")
+    rep.add("base demand csv", "write_report", key, f"{bd} path", f"{bd} header")
+
+    rep.add(
+        "transport all", ["transport iamc all", "transport plots", "base demand csv"]
+    )
 
     log.info(f"Added {len(rep.graph)-N_keys} keys")
 
