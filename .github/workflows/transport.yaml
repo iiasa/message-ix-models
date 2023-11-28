@@ -51,7 +51,10 @@ jobs:
 
     - uses: webfactory/ssh-agent@v0.8.0
       with:
-        ssh-private-key: ${{ secrets.MESSAGE_TRADE_PRIVATE_KEY }}
+        ssh-private-key: |
+          ${{ secrets.MESSAGE_BUILDINGS_PRIVATE_KEY }}
+          ${{ secrets.MESSAGE_TRADE_PRIVATE_KEY }}
+
     - name: Check out message_data
       uses: actions/checkout@v3
       with:
@@ -65,11 +68,17 @@ jobs:
 
     # Other repositories required for testing
 
+    - name: Check out MESSAGEix-Buildings code
+      uses: actions/checkout@v3
+      with:
+        repository: iiasa/MESSAGE_Buildings
+        path: buildings
+        ssh-key: ${{ secrets.MESSAGE_BUILDINGS_PRIVATE_KEY }}
+
     - uses: actions/setup-python@v4
       with:
         # Latest version testable on GitHub Actions
-        # Latest release 3.11 is pending wheels for cx-Oracle
-        python-version: "3.10"
+        python-version: "3.11"
         cache: pip
         cache-dependency-path: "**/pyproject.toml"
 
@@ -118,9 +127,9 @@ jobs:
             "ixmp_dev",
             jvmargs="-Xmx16G",
         )
-        config.set(
-            "message local data", Path("${{ github.workspace }}", "report"),
-        )
+        p = Path("${{ github.workspace }}")
+        config.set("message local data", p / "report")
+        config.set("message buildings dir", p / "buildings")
         config.save()
 
         # Equivalent to "(ixmp|message-ix|mix-models) config show"
