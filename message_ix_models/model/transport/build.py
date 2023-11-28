@@ -378,6 +378,9 @@ def main(
         raise ValueError(f"Option(s) {repr(dupe)} appear in both `options` and kwargs")
     options.update(option_kwargs)
 
+    # Use fast=True by default
+    options.setdefault("fast", True)
+
     log.info("Configure MESSAGEix-Transport")
     mark_time()
 
