@@ -1,6 +1,7 @@
 """Prepare data for adding demands"""
 
 import os
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,9 @@ import xarray as xr
 from message_ix import make_df
 
 from message_ix_models.util import broadcast, package_data_path
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 
 def get_basin_sizes(basin, node):
@@ -141,7 +145,7 @@ def target_rate_trt(df, basin):
     return df
 
 
-def add_sectoral_demands(context):
+def add_sectoral_demands(context: "Context"):
     """
     Adds water sectoral demands
     Parameters
@@ -699,7 +703,7 @@ def add_sectoral_demands(context):
     return results
 
 
-def read_water_availability(context):
+def read_water_availability(context: "Context"):
     """
     Reads water availability data and bias correct
     it for the historical years and no climate
@@ -824,7 +828,7 @@ def read_water_availability(context):
     return df_sw, df_gw
 
 
-def add_water_availability(context):
+def add_water_availability(context: "Context"):
     """
     Adds water supply constraints
     Parameters
@@ -892,7 +896,7 @@ def add_water_availability(context):
     return results
 
 
-def add_irrigation_demand(context):
+def add_irrigation_demand(context: "Context"):
     """
     Adds endogenous irrigation water demands from GLOBIOM emulator
     Parameters

@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from functools import lru_cache
 from itertools import product
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -12,6 +12,9 @@ from sdmx.model.v21 import Code
 from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import load_package_data
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +27,7 @@ METADATA = [
 ]
 
 
-def read_config(context=None):
+def read_config(context: Context | None = None):
     """Read the water model configuration / metadata from file.
 
     Numerical values are converted to computation-ready data structures.

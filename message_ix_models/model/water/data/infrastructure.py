@@ -2,6 +2,7 @@
 treatment in urban & rural"""
 
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from message_ix import make_df
@@ -15,8 +16,11 @@ from message_ix_models.util import (
     same_time,
 )
 
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
-def add_infrastructure_techs(context):  # noqa: C901
+
+def add_infrastructure_techs(context: "Context"):
     """Process water distribution data for a scenario instance.
     Parameters
     ----------
@@ -39,8 +43,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     # load the scenario from context
     scen = context.get_scenario()
 
-    year_wat = [2010, 2015]
-    year_wat.extend(info.Y)
+    year_wat = (2010, 2015, *info.Y)
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear
@@ -547,7 +550,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     return results
 
 
-def add_desalination(context):
+def add_desalination(context: "Context"):
     """Add desalination infrastructure
     Two types of desalination are considered;
     1. Membrane
@@ -572,8 +575,7 @@ def add_desalination(context):
     # load the scenario from context
     scen = context.get_scenario()
 
-    year_wat = [2010, 2015]
-    year_wat.extend(info.Y)
+    year_wat = (2010, 2015, *info.Y)
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear
