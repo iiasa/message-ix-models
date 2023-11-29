@@ -313,7 +313,7 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
 
 
 def report(
-    context: Context, scenario: Scenario, other_scenario_info: Optional[Dict]
+    context: Context, scenario: Scenario, *, other_scenario_info: Optional[Dict] = None
 ) -> Scenario:
     """Workflow steps 8–10."""
     from message_ix_models.report import (
@@ -324,7 +324,7 @@ def report(
     )
 
     # Identify other scenario for .navigate.report.callback
-    context.navigate.copy_ts = other_scenario_info
+    context.navigate.copy_ts = other_scenario_info or dict()
 
     # Step 8
     register("projects.navigate")
