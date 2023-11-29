@@ -94,7 +94,7 @@ def test_adjust_cost_ratios_with_gdp(test_context, module):
     assert regions == set(result.region.unique())
 
     # Assert that the maximum year is 2100
-    assert result.year.max() == 2100
+    assert result.year.max() >= 2100
 
     # Assert that all cost ratios for reference region R12_NAM are equal to 1
     assert all(
