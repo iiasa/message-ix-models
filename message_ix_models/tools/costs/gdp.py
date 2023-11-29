@@ -348,9 +348,10 @@ def adjust_cost_ratios_with_gdp(
             in respective region to GDP per capita in reference region
         - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
     """
+    context = Context.get_instance(-1)
 
     df_gdp = (
-        process_raw_ssp_data(node=node, ref_region=ref_region)
+        process_raw_ssp_data1(context=context, ref_region=ref_region)
         .query("year >= 2020")
         .drop(columns=["total_gdp", "total_population"])
         .assign(
