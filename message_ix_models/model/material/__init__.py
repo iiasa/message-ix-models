@@ -552,3 +552,41 @@ def modify_costs_with_tool(context, scen_name, ssp):
 
     scen.commit(f"update cost assumption to: {ssp}")
     scen.solve(model="MESSAGE", solve_options={"barcrossalg":2, "scaind":1})
+
+
+@cli.command("modify_cost")
+@click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
+@click.option("--scen_name", default='SSP_supply_cost_test_baseline_macro')
+@click.pass_obj
+def modify_costs_with_tool(context, scen_name, ssp):
+    import message_ix
+    from message_ix_models.tools.costs.config import Config
+    from message_ix_models.tools.costs.projections import create_cost_projections
+    mp = ixmp.Platform("ixmp_dev")
+    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=scen_name)
+    scen = base.clone(model=base.model, scenario=base.scenario.replace("baseline", ssp))
+
+    tec_set = list(scen.set("technology"))
+
+    cfg = Config(module="materials", ref_region="R12_NAM", method="convergence", format="message", scenario=ssp)
+
+    out_materials = create_cost_projections(
+        node=cfg.node,
+        ref_region=cfg.ref_region,
+        base_year=cfg.base_year,
+        module=cfg.module,
+        method=cfg.method,
+        scenario_version=cfg.scenario_version,
+        scenario=cfg.scenario,
+        convergence_year=cfg.convergence_year,
+        fom_rate=cfg.fom_rate,
+        format=cfg.format,
+    )
+    scen.check_out()
+    fix_cost = out_materials.fix_cost.drop_duplicates().drop(["scenario_version", "scenario"], axis=1)
+    scen.add_par("fix_cost", fix_cost[fix_cost["technology"].isin(tec_set)])
+    inv_cost = out_materials.inv_cost.drop_duplicates().drop(["scenario_version", "scenario"], axis=1)
+    scen.add_par("inv_cost", inv_cost[inv_cost["technology"].isin(tec_set)])
+
+    scen.commit(f"update cost assumption to: {ssp}")
+    scen.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
