@@ -297,7 +297,7 @@ class MERtoPPP(ExoDataSource):
     def __init__(self, source, source_kw):
         from .util import path_fallback
 
-        if not source.startswith(__name__.rsplit(".", maxsplit=1)[0]):
+        if not source.startswith("message_data.model.transport"):
             raise ValueError(source)
         elif source_kw.get("measure") != "MERtoPPP":
             raise ValueError(source_kw)

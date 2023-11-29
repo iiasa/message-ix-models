@@ -96,7 +96,9 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
 
     # Add data for MERtoPPP
     kw = dict(measure="MERtoPPP", context=context)
-    prepare_computer(context, c, __name__, source_kw=kw, strict=False)
+    prepare_computer(
+        context, c, "message_data.model.transport", source_kw=kw, strict=False
+    )
 
     # Add IEA Future of Trucks data
     for kw in dict(measure=1), dict(measure=2):
