@@ -1,13 +1,17 @@
 """Prepare data for water use for cooling & energy technologies."""
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from message_ix import make_df
 
 from message_ix_models.util import broadcast, package_data_path
 
+if TYPE_CHECKING:
+    from message_ix_models import Context
+
 
 # water & electricity for irrigation
-def add_irr_structure(context):
+def add_irr_structure(context: "Context"):
     """Add irrigation withdrawal infrastructure
     The irrigation demands are added in
     Parameters
