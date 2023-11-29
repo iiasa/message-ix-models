@@ -1,3 +1,6 @@
+import pytest
+
+from message_ix_models.model.structure import get_codes
 from message_ix_models.tools.costs.config import BASE_YEAR
 from message_ix_models.tools.costs.gdp import (
     adjust_cost_ratios_with_gdp,
@@ -8,50 +11,27 @@ from message_ix_models.tools.costs.regional_differentiation import (
 )
 
 
-def test_process_raw_ssp_data():
-    ssp_r11 = process_raw_ssp_data(node="r11", ref_region="R11_NAM")
-    ssp_r12 = process_raw_ssp_data(node="r12", ref_region="R12_NAM")
-
+@pytest.mark.parametrize("node", ["R11", "R12"])
+def test_process_raw_ssp_data(node):
     # Assert that all regions are present in each node configuration
-    reg_r11 = [
-        "R11_AFR",
-        "R11_CPA",
-        "R11_EEU",
-        "R11_FSU",
-        "R11_LAM",
-        "R11_MEA",
-        "R11_NAM",
-        "R11_PAO",
-        "R11_PAS",
-        "R11_SAS",
-        "R11_WEU",
-    ]
-    assert bool(all(i in ssp_r11.region.unique() for i in reg_r11)) is True
 
-    reg_r12 = [
-        "R12_AFR",
-        "R12_CHN",
-        "R12_EEU",
-        "R12_FSU",
-        "R12_LAM",
-        "R12_MEA",
-        "R12_NAM",
-        "R12_PAO",
-        "R12_PAS",
-        "R12_RCPA",
-        "R12_SAS",
-        "R12_WEU",
-    ]
-    assert bool(all(i in ssp_r12.region.unique() for i in reg_r12)) is True
+    # Retrieve list of node IDs
+    nodes = get_codes(f"node/{node}")
+    # Convert to string
+    regions = list(map(str, nodes[nodes.index("World")].child))
 
-    # Assert that the maximum year is 2100
-    assert ssp_r11.year.max() == 2100
-    assert ssp_r12.year.max() == 2100
+    # Function runs
+    result = process_raw_ssp_data(node=node, ref_region=f"{node}_NAM")
 
-    # Assert that SSP1-5 and LED are present in each node configuration
+    # Data is present for all nodes
+    assert bool(all(i in result.region.unique() for i in regions)) is True
+
+    # Data extends to 2100
+    assert result.year.max() == 2100
+
+    # Data for SSP1-5 and LED are present
     scens = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-    assert bool(all(i in ssp_r11.scenario.unique() for i in scens)) is True
-    assert bool(all(i in ssp_r12.scenario.unique() for i in scens)) is True
+    assert bool(all(i in result.scenario.unique() for i in scens)) is True
 
 
 def test_adjust_cost_ratios_with_gdp():
