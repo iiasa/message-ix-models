@@ -39,6 +39,17 @@ def test_process_raw_ssp_data(test_context, func, node):
     # - node is ignored by process_raw_ssp_data1
     result = func(context=test_context, ref_region=f"{node}_NAM", node=node)
 
+    # Data have the expected structure
+    assert {
+        "region",
+        "year",
+        "scenario",
+        "total_population",
+        "total_gdp",
+        "gdp_ppp_per_capita",
+        "gdp_ratio_reg_to_reference",
+    } == set(result.columns)
+
     # Data is present for all nodes
     assert regions == set(result.region.unique())
 
