@@ -64,30 +64,20 @@ def test_process_raw_ssp_data(test_context, func, node):
     assert scens == set(result.scenario.unique())
 
 
-def test_adjust_cost_ratios_with_gdp():
+@pytest.mark.parametrize("module", ("energy", "materials"))
+def test_adjust_cost_ratios_with_gdp(test_context, module):
     # Set parameters
-    sel_node = "R12"
+    test_context.model.regions = sel_node = "R12"
     sel_ref_region = "R12_NAM"
 
-    # Get regional differentation for each module in R12
-    energy_r12_reg = apply_regional_differentiation(
-        module="energy", node=sel_node, ref_region=sel_ref_region
-    )
-    materials_r12_reg = apply_regional_differentiation(
-        module="materials", node=sel_node, ref_region=sel_ref_region
+    # Get regional differentiation
+    region_diff = apply_regional_differentiation(
+        module=module, node=sel_node, ref_region=sel_ref_region
     )
 
     # Get adjusted cost ratios based on GDP per capita
-    adj_ratios_energy = adjust_cost_ratios_with_gdp(
-        region_diff_df=energy_r12_reg,
-        node=sel_node,
-        ref_region=sel_ref_region,
-        scenario="SSP2",
-        scenario_version="updated",
-        base_year=BASE_YEAR,
-    )
-    adj_ratios_materials = adjust_cost_ratios_with_gdp(
-        region_diff_df=materials_r12_reg,
+    result = adjust_cost_ratios_with_gdp(
+        region_diff_df=region_diff,
         node=sel_node,
         ref_region=sel_ref_region,
         scenario="SSP2",
@@ -101,22 +91,12 @@ def test_adjust_cost_ratios_with_gdp():
     regions = set(map(str, nodes[nodes.index("World")].child))
 
     # Assert that all regions are present
-    assert regions == set(adj_ratios_energy.region.unique())
-    assert regions == set(adj_ratios_materials.region.unique())
+    assert regions == set(result.region.unique())
 
     # Assert that the maximum year is 2100
-    assert adj_ratios_energy.year.max() == 2100
-    assert adj_ratios_materials.year.max() == 2100
+    assert result.year.max() == 2100
 
-    # Assert that all cost ratios for reference region
-    # R12_NAM are equal to 1
+    # Assert that all cost ratios for reference region R12_NAM are equal to 1
     assert all(
-        adj_ratios_energy.query("region == @sel_ref_region").reg_cost_ratio_adj.values
-        == 1.0
-    )
-    assert all(
-        adj_ratios_materials.query(
-            "region == @sel_ref_region"
-        ).reg_cost_ratio_adj.values
-        == 1.0
+        result.query("region == @sel_ref_region").reg_cost_ratio_adj.values == 1.0
     )
