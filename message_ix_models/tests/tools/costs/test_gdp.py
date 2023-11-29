@@ -53,8 +53,10 @@ def test_process_raw_ssp_data(test_context, func, node):
     # Data is present for all nodes
     assert regions == set(result.region.unique())
 
-    # Data extends to 2100
-    assert result.year.max() == 2100
+    # Data extends to at least 2100
+    # NB(PNK) process_raw_ssp_data1() automatically fills the whole horizon;
+    #         process_raw_ssp_data() does not
+    assert result.year.max() >= 2100
 
     # Data for SSP1-5 and LED are present
     scens = {"SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"}
