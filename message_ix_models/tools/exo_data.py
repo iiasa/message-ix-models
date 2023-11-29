@@ -79,7 +79,7 @@ class ExoDataSource(ABC):
         It **should not** actually load data or perform any time- or memory-intensive
         operations; these should only be triggered by :meth:`.__call__`.
         """
-        raise ValueError
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self) -> Quantity:
@@ -132,6 +132,7 @@ class ExoDataSource(ABC):
         """
         self.aggregate = kwargs.pop("aggregate", self.aggregate)
         self.interpolate = kwargs.pop("interpolate", self.interpolate)
+        self.name = kwargs.pop("name", self.name)
 
         if len(kwargs):
             log.error(
