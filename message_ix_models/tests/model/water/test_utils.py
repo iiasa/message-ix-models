@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pandas as pd
 import xarray as xr
-from sdmx.model.v21 import Code
+from sdmx.model.common import Code
 
 from message_ix_models import Context
 from message_ix_models.model.water.utils import (
@@ -13,9 +13,9 @@ from message_ix_models.model.water.utils import (
 )
 
 
-def test_read_config():
+def test_read_config(test_context):
     # Mock the context
-    context = Context(0)
+    context = test_context
 
     # Mock the data returned by load_private_data
     mock_data = {"test_key": "test_value"}
@@ -33,9 +33,6 @@ def test_read_config():
 
 
 def test_map_add_on():
-    # Mock the context
-    Context(0)
-
     # Mock the data returned by read_config
     mock_data = {
         "water set": {
@@ -78,9 +75,9 @@ def test_add_commodity_and_level():
                     data=[
                         Code(
                             id="tech1",
-                            anno={"input": {"commodity": "com1", "level": "lev1"}},
+                            annotations=["input", "commodity", "com1", "level", "lev1"],
                         ),
-                        Code(id="tech2", anno={"input": {"commodity": "com2"}}),
+                        Code(id="tech2", annotations=["input", "commodity", "com2"]),
                     ],
                     name="tech",
                 )
@@ -89,8 +86,8 @@ def test_add_commodity_and_level():
     }
     mock_codes_data = pd.Series(
         data=[
-            Code(id="com1", anno={"level": "lev1"}),
-            Code(id="com2", anno={"level": "lev2"}),
+            Code(id="com1", annotations=["level", "lev1"]),
+            Code(id="com2", annotations=["level", "lev2"]),
         ],
         name="com",
     )
