@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, Optional
+
 import numpy as np
 import pandas as pd
 import yaml  # type: ignore
@@ -6,9 +8,24 @@ from scipy.stats import linregress  # type: ignore
 
 from message_ix_models.util import package_data_path
 
+if TYPE_CHECKING:
+    import message_ix_models
+
+
+def default_ref_region(node: str, ref_region: Optional[str] = None) -> str:
+    """Return a default for the reference region or raise :class:`ValueError`."""
+    result = ref_region or {"R11": "R11_NAM", "R12": "R12_NAM", "R20": "R20_NAM"}.get(
+        node
+    )
+    if result is None:
+        raise ValueError(f"No ref_region supplied, and no default for {node = }")
+    return result
+
 
 # Function to read in (under-review) SSP data
-def process_raw_ssp_data(node: str, ref_region: str, *, context=None) -> pd.DataFrame:
+def process_raw_ssp_data(
+    node: str, ref_region: Optional[str] = None, *, context=None
+) -> pd.DataFrame:
     """Read in raw SSP data and process it
 
     This function takes in the raw SSP data (in IAMC format), aggregates \
@@ -45,15 +62,7 @@ def process_raw_ssp_data(node: str, ref_region: str, *, context=None) -> pd.Data
         print("Please select a valid region: R11, R12, or R20")
 
     # Set default reference region
-    if ref_region is None:
-        if node.upper() == "R11":
-            ref_region = "R11_NAM"
-        if node.upper() == "R12":
-            ref_region = "R12_NAM"
-        if node.upper() == "R20":
-            ref_region = "R20_NAM"
-    else:
-        ref_region = ref_region
+    ref_region = default_ref_region(node, ref_region)
 
     # Set data path for node file
     node_file = package_data_path("node", node_up + ".yaml")
@@ -210,7 +219,12 @@ def process_raw_ssp_data(node: str, ref_region: str, *, context=None) -> pd.Data
         return df
 
 
-def process_raw_ssp_data1(context, node: str, ref_region: str) -> pd.DataFrame:
+def process_raw_ssp_data1(
+    context: "message_ix_models.Context",
+    ref_region: Optional[str] = None,
+    *,
+    node: Optional[str] = None,
+) -> pd.DataFrame:
     """Equivalent to :func:`.process_raw_ssp_data`, using :mod:`.exo_data`."""
     raise NotImplementedError
 

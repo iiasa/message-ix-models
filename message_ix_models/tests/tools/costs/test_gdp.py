@@ -26,7 +26,8 @@ from message_ix_models.tools.costs.regional_differentiation import (
 )
 @pytest.mark.parametrize("node", ("R11", "R12"))
 def test_process_raw_ssp_data(test_context, func, node):
-    # Assert that all regions are present in each node configuration
+    # Set the "regions" value on the context (only affects process_raw_ssp_data1)
+    test_context.model.regions = node
 
     # Retrieve list of node IDs
     nodes = get_codes(f"node/{node}")
@@ -34,7 +35,9 @@ def test_process_raw_ssp_data(test_context, func, node):
     regions = set(map(str, nodes[nodes.index("World")].child))
 
     # Function runs
-    result = func(node=node, ref_region=f"{node}_NAM", context=test_context)
+    # - context is ignored by process_raw_ssp_data
+    # - node is ignored by process_raw_ssp_data1
+    result = func(context=test_context, ref_region=f"{node}_NAM", node=node)
 
     # Data is present for all nodes
     assert regions == set(result.region.unique())
