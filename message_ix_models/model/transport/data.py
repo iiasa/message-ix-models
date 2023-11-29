@@ -211,7 +211,6 @@ def navigate_ele(
     return {name: data}
 
 
-@register_source
 class IEA_Future_of_Trucks(ExoDataSource):
     """Retrieve IEA “Future of Trucks” data.
 
@@ -290,7 +289,6 @@ class IEA_Future_of_Trucks(ExoDataSource):
         return single_key(result)
 
 
-@register_source
 class MERtoPPP(ExoDataSource):
     """Provider of exogenous MERtoPPP data."""
 
@@ -337,3 +335,12 @@ class MERtoPPP(ExoDataSource):
         from genno.operator import load_file
 
         return self.adapt(load_file(self.path, dims=rename_dims()))
+
+
+# Attempt to register each source; tolerate exceptions if the model is re-imported
+# FIXME Should not be necessary; improve register_source upstream
+for cls in IEA_Future_of_Trucks, MERtoPPP:
+    try:
+        register_source(cls)  # type: ignore [type-abstract]
+    except ValueError as e:
+        log.info(str(e))
