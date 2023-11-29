@@ -226,7 +226,10 @@ def process_raw_ssp_data1(
     node: Optional[str] = None,
 ) -> pd.DataFrame:
     """Equivalent to :func:`.process_raw_ssp_data`, using :mod:`.exo_data`."""
-    from genno import Computer, quote
+    from collections import defaultdict
+
+    import xarray as xr
+    from genno import Computer, Key, Quantity, quote
 
     from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
     from message_ix_models.tools.exo_data import prepare_computer
@@ -237,40 +240,77 @@ def process_raw_ssp_data1(
     # Computer to hold computations
     c = Computer()
 
-    # Source/scenario identifier. TODO Loop over multiple values
-    ssp = "ICONICS:SSP(2024).1"
+    # Common dimensions
+    dims = ("n", "y", "scenario")
 
-    # Add tasks to `c` that retrieve and (partly) process data from the database
-    pop_keys = prepare_computer(
-        context, c, ssp, dict(measure="POP", model="IIASA-WiC POP 2023")
-    )
-    gdp_keys = prepare_computer(
-        context, c, ssp, dict(measure="GDP", model="OECD ENV-Growth 2023"), strict=False
-    )
+    def broadcast_qty(s) -> Quantity:
+        """Return a quantity with a "scenario" dimension with the single label `s`.
+
+        Multiplying this by any other quantity adds the "scenario" dimension."""
+        return Quantity(xr.DataArray([1.0], coords={"scenario": [s]}))
+
+    c.add("LED:scenario", broadcast_qty("LED"))
+
+    # Keys prepared in the loop
+    keys = defaultdict(list)
+    for n in "12345":
+        # Source/scenario identifier
+        ssp = f"ICONICS:SSP(2024).{n}"
+
+        # Add a quantity for broadcasting
+        c.add(f"SSP{n}:scenario", broadcast_qty(f"SSP{n}"))
+
+        # Both population and GDP data
+        for source_kw in (
+            dict(measure="POP", model="IIASA-WiC POP 2023", name=f"_pop {n}"),
+            dict(measure="GDP", model="OECD ENV-Growth 2023", name=f"_gdp {n}"),
+        ):
+            m = source_kw["measure"].lower()
+
+            # Add tasks to `c` that retrieve and (partly) process data from the database
+            key, *_ = prepare_computer(context, c, ssp, source_kw, strict=False)
+
+            # Add a "scenario" dimension
+            for label in [f"SSP{n}"] + (["LED"] if n == "2" else []):
+                keys[m].append(c.add(f"{m} {label}", "mul", key, f"{label}:scenario"))
+
+    # Concatenate single-scenario data
+    k_pop = Key("pop", dims)
+    c.add(k_pop, "concat", *keys["pop"])
+    k_gdp = Key("gdp", dims)
+    c.add(k_gdp, "concat", *keys["gdp"])
 
     # Further calculations
 
     # GDP per capita
-    key = c.add("gdp_ppp_per_capita", "div", gdp_keys[0], pop_keys[0])
+    k_gdp_cap = k_gdp + "cap"
+    c.add(k_gdp_cap, "div", k_gdp, k_pop)
+
     # Ratio to reference region value
-    key = c.add(
-        "gdp_ratio_reg_to_reference", "index_to", key, quote("n"), quote(ref_region)
-    )
+    c.add(k_gdp_cap + "indexed", "index_to", k_gdp_cap, quote("n"), quote(ref_region))
 
-    print(c.describe(key))  # Debug
+    def merge(pop, gdp, gdp_cap, gdp_cap_indexed) -> pd.DataFrame:
+        """Merge data to a single data frame with the expected format."""
+        return (
+            pd.concat(
+                [
+                    pop.to_series().rename("total_gdp"),
+                    gdp.to_series().rename("total_population"),
+                    gdp_cap.to_series().rename("gdp_ppp_per_capita"),
+                    gdp_cap_indexed.to_series().rename("gdp_ratio_reg_to_reference"),
+                ],
+                axis=1,
+            )
+            .reset_index()
+            .rename(columns={"n": "region", "y": "year"})
+            .sort_values(by=["scenario", "region", "year"])
+        )
 
-    # Compute gdp_ppp_per_capita:n-y
-    result = c.get(key)
+    k_result = "data::pyam"
+    c.add(k_result, merge, k_pop, k_gdp, k_gdp_cap, k_gdp_cap + "indexed")
 
-    print(f"{result = }")  # Debug
-
-    raise NotImplementedError("Incomplete")
-    # TODO Duplicate SSP2 data with the label "LED"
-    # TODO Apply `ref_region`
-    # TODO concatenate data to a single data frame with "scenario" and
-    #      "scenario_version" dimensions
-
-    return result
+    # print(c.describe(k_result))  # Debug
+    return c.get(k_result)
 
 
 # Function to calculate adjusted region-differentiated cost ratios
