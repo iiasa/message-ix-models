@@ -8,7 +8,7 @@ from message_ix_models.util import package_data_path
 
 
 # Function to read in (under-review) SSP data
-def process_raw_ssp_data(node, ref_region) -> pd.DataFrame:
+def process_raw_ssp_data(node: str, ref_region: str) -> pd.DataFrame:
     """Read in raw SSP data and process it
 
     This function takes in the raw SSP data (in IAMC format), aggregates \
@@ -208,6 +208,11 @@ def process_raw_ssp_data(node, ref_region) -> pd.DataFrame:
         df = df.sort_values(by=["scenario", "scenario_version", "region", "year"])
 
         return df
+
+
+def process_raw_ssp_data1(node: str, ref_region: str) -> pd.DataFrame:
+    """Equivalent to :func:`.process_raw_ssp_data`, using :mod:`.exo_data`."""
+    raise NotImplementedError
 
 
 # Function to calculate adjusted region-differentiated cost ratios
