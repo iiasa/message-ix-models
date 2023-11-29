@@ -226,7 +226,51 @@ def process_raw_ssp_data1(
     node: Optional[str] = None,
 ) -> pd.DataFrame:
     """Equivalent to :func:`.process_raw_ssp_data`, using :mod:`.exo_data`."""
-    raise NotImplementedError
+    from genno import Computer, quote
+
+    from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
+    from message_ix_models.tools.exo_data import prepare_computer
+
+    # Set default reference region
+    ref_region = default_ref_region(context.model.regions, ref_region)
+
+    # Computer to hold computations
+    c = Computer()
+
+    # Source/scenario identifier. TODO Loop over multiple values
+    ssp = "ICONICS:SSP(2024).1"
+
+    # Add tasks to `c` that retrieve and (partly) process data from the database
+    pop_keys = prepare_computer(
+        context, c, ssp, dict(measure="POP", model="IIASA-WiC POP 2023")
+    )
+    gdp_keys = prepare_computer(
+        context, c, ssp, dict(measure="GDP", model="OECD ENV-Growth 2023"), strict=False
+    )
+
+    # Further calculations
+
+    # GDP per capita
+    key = c.add("gdp_ppp_per_capita", "div", gdp_keys[0], pop_keys[0])
+    # Ratio to reference region value
+    key = c.add(
+        "gdp_ratio_reg_to_reference", "index_to", key, quote("n"), quote(ref_region)
+    )
+
+    print(c.describe(key))  # Debug
+
+    # Compute gdp_ppp_per_capita:n-y
+    result = c.get(key)
+
+    print(f"{result = }")  # Debug
+
+    raise NotImplementedError("Incomplete")
+    # TODO Duplicate SSP2 data with the label "LED"
+    # TODO Apply `ref_region`
+    # TODO concatenate data to a single data frame with "scenario" and
+    #      "scenario_version" dimensions
+
+    return result
 
 
 # Function to calculate adjusted region-differentiated cost ratios
