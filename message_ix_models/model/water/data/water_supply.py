@@ -1,5 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 from message_ix import make_df
@@ -8,8 +10,11 @@ from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import map_yv_ya_lt
 from message_ix_models.util import broadcast, package_data_path, same_node, same_time
 
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
-def map_basin_region_wat(context):
+
+def map_basin_region_wat(context: "Context"):
     """
     Calculate share of water avaialbility of basins per each parent region.
 
@@ -112,7 +117,7 @@ def map_basin_region_wat(context):
     return df_sw
 
 
-def add_water_supply(context):
+def add_water_supply(context: "Context"):
     """Add Water supply infrastructure
     This function links the water supply based on different settings and options.
     It defines the supply linkages for freshwater, groundwater and salinewater.
@@ -135,9 +140,9 @@ def add_water_supply(context):
     # load the scenario from context
     scen = context.get_scenario()
 
-    year_wat = [2010, 2015]
+    # year_wat = (2010, 2015)
     fut_year = info.Y
-    year_wat.extend(info.Y)
+    year_wat = (2010, 2015, *info.Y)
     sub_time = context.time
 
     # first activity year for all water technologies is 2020
@@ -688,7 +693,7 @@ def add_water_supply(context):
     return results
 
 
-def add_e_flow(context):
+def add_e_flow(context: "Context"):
     """Add environmental flows
     This function bounds the available water and allocates the environmental
     flows.Environmental flow bounds are calculated using Variable Monthly Flow
