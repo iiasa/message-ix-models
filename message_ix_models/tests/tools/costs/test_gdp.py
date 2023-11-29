@@ -18,20 +18,20 @@ def test_process_raw_ssp_data(node):
     # Retrieve list of node IDs
     nodes = get_codes(f"node/{node}")
     # Convert to string
-    regions = list(map(str, nodes[nodes.index("World")].child))
+    regions = set(map(str, nodes[nodes.index("World")].child))
 
     # Function runs
     result = process_raw_ssp_data(node=node, ref_region=f"{node}_NAM")
 
     # Data is present for all nodes
-    assert bool(all(i in result.region.unique() for i in regions)) is True
+    assert regions == set(result.region.unique())
 
     # Data extends to 2100
     assert result.year.max() == 2100
 
     # Data for SSP1-5 and LED are present
-    scens = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-    assert bool(all(i in result.scenario.unique() for i in scens)) is True
+    scens = {"SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"}
+    assert scens == set(result.scenario.unique())
 
 
 def test_adjust_cost_ratios_with_gdp():
