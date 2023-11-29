@@ -1,15 +1,11 @@
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd
-import yaml  # type: ignore
-from nomenclature import countries  # type: ignore
 from scipy.stats import linregress  # type: ignore
 
+from message_ix_models import Context
 from message_ix_models.util import package_data_path
-
-if TYPE_CHECKING:
-    import message_ix_models
 
 
 def default_ref_region(node: str, ref_region: Optional[str] = None) -> str:
@@ -54,6 +50,9 @@ def process_raw_ssp_data(
         - gdp_ratio_reg_to_reference: GDP per capita \
             (in units of billion US$2005/yr / million)
     """
+    import yaml
+    from nomenclature import countries  # type: ignore [import-untyped]
+
     # Change node selection to upper case
     node_up = node.upper()
 
@@ -220,10 +219,7 @@ def process_raw_ssp_data(
 
 
 def process_raw_ssp_data1(
-    context: "message_ix_models.Context",
-    ref_region: Optional[str] = None,
-    *,
-    node: Optional[str] = None,
+    context: Context, ref_region: Optional[str] = None, *, node: Optional[str] = None
 ) -> pd.DataFrame:
     """Equivalent to :func:`.process_raw_ssp_data`, using :mod:`.exo_data`."""
     from collections import defaultdict
