@@ -142,7 +142,7 @@ Operators
 
      - :mod:`message_ix.report.operator`
      - :mod:`ixmp.report.operator`
-     - :mod:`genno.computations`
+     - :mod:`genno.operator`
 
    - Other submodules:
 

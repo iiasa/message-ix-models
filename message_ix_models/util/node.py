@@ -126,7 +126,7 @@ def identify_nodes(scenario: Scenario) -> str:
 def nodes_ex_world(nodes: Sequence[Union[str, Code]]) -> List[Union[str, Code]]:
     """Exclude "World" and anything containing "GLB" from `nodes`.
 
-    May also be used as a reporting computation.
+    May also be used as a reporting operator.
 
     .. todo:: Make available from :mod:`message_ix_models.report`.
     """
