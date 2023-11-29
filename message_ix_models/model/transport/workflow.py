@@ -36,7 +36,7 @@ def generate(context, **options):
     # Set values expected by workflow steps re-used from .projects.navigate
     context.navigate = navigate.Config(
         scenario="baseline",
-        # buildings=False,
+        buildings=False,
     )
     solve_config = SolveConfig(reserve_margin=False, solve=dict(model="MESSAGE"))
 
