@@ -102,6 +102,8 @@ def get_spec(context) -> Spec:
     -------
     :class:`dict` of :class:`.ScenarioInfo` objects
     """
+    import iam_units
+
     context.setdefault("model", Config())
 
     add = ScenarioInfo()
@@ -133,7 +135,10 @@ def get_spec(context) -> Spec:
     add.set["commodity"] = get_codes("commodity")
 
     # Add units, associated with commodities
-    units = set(commodity.eval_annotation("unit") for commodity in add.set["commodity"])
+    units = set(
+        commodity.eval_annotation("unit", {"registry": iam_units.registry})
+        for commodity in add.set["commodity"]
+    )
     # Deduplicate by converting to a set and then back; not strictly necessary,
     # but reduces duplicate log entries
     add.set["unit"] = sorted(filter(None, units))

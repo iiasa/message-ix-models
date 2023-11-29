@@ -230,13 +230,15 @@ class ScenarioInfo:
         --------
         io_units
         """
+        from iam_units import registry
+
         try:
             idx = self.set[set_name].index(id)
         except ValueError:
             print(self.set[set_name])
             raise
 
-        return self.set[set_name][idx].eval_annotation("units")
+        return self.set[set_name][idx].eval_annotation("units", {"registry": registry})
 
     def io_units(
         self, technology: str, commodity: str, level: Optional[str] = None
