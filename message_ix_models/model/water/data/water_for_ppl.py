@@ -1,5 +1,7 @@
 """Prepare data for water use for cooling & energy technologies."""
 
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
 import pandas as pd
 from message_ix import make_df
@@ -12,9 +14,12 @@ from message_ix_models.util import (
     same_node,
 )
 
+if TYPE_CHECKING:
+    from message_ix_models import Context
+
 
 # water & electricity for cooling technologies
-def cool_tech(context):  # noqa: C901
+def cool_tech(context: "Context"):
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and
     then cooling fractions are calculated by using the data from
@@ -363,7 +368,7 @@ def cool_tech(context):  # noqa: C901
     ].drop_duplicates()
     search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
 
-    def shares(x, context):
+    def shares(x, context: "Context"):
         """Process share and cooling fraction.
         Returns
         -------
@@ -379,7 +384,7 @@ def cool_tech(context):  # noqa: C901
             ]["cooling_fraction"]
             x[col] = x[col] * cooling_fraction
 
-        results = []
+        results: list[Any] = []
         for i in x:
             if isinstance(i, str):
                 results.append(i)
@@ -397,7 +402,7 @@ def cool_tech(context):  # noqa: C901
     hold_cost = cost[search_cols].apply(shares, axis=1, context=context)
     hold_cost = hold_cost[hold_cost["technology"] != "delme"]
 
-    def hist_act(x, context):
+    def hist_act(x, context: "Context"):
         """Calculate historical activity of cooling technology.
         The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
         Returns
@@ -447,7 +452,7 @@ def cool_tech(context):  # noqa: C901
     # dataframe for historical activities of cooling techs
     act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
 
-    def hist_cap(x, context):
+    def hist_cap(x, context: "Context"):
         """Calculate historical capacity of cooling technology.
         The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
         Returns
@@ -741,7 +746,7 @@ def cool_tech(context):  # noqa: C901
 
 
 # Water use & electricity for non-cooling technologies
-def non_cooling_tec(context):
+def non_cooling_tec(context: "Context"):
     """Process data for water usage of power plants (non-cooling technology related).
     Water withdrawal values for power plants are read in from
     ``tech_water_performance_ssp_msg.csv``

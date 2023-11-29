@@ -1,6 +1,6 @@
 import logging
 from functools import lru_cache, partial
-from typing import Mapping
+from typing import TYPE_CHECKING, Mapping
 
 import pandas as pd
 from sdmx.model.v21 import Code
@@ -12,10 +12,13 @@ from message_ix_models.util import package_data_path
 
 from .utils import read_config
 
+if TYPE_CHECKING:
+    from message_ix_models import Context
+
 log = logging.getLogger(__name__)
 
 
-def get_spec(context) -> Mapping[str, ScenarioInfo]:
+def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     """Return the specification for nexus implementation
 
     Parameters
@@ -190,7 +193,7 @@ def generate_set_elements(set_name, match=None):
     return results
 
 
-def map_basin(context) -> Mapping[str, ScenarioInfo]:
+def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     """Return specification for mapping basins to regions
 
     The basins are spatially consolidated from HydroSHEDS basins delineation
@@ -242,7 +245,7 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     return dict(require=require, remove=remove, add=add)
 
 
-def main(context, scenario, **options):
+def main(context: Context, scenario, **options):
     """Set up MESSAGEix-Nexus on `scenario`.
 
     See also

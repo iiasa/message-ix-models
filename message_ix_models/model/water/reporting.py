@@ -260,7 +260,6 @@ def multiply_electricity_output_of_hydro(elec_hydro_var, report_iam):
 
 
 # TODO
-# flake8: noqa: C901
 def report(sc=False, reg="", sdgs=False):
     """Report nexus module results"""
 
@@ -1372,8 +1371,8 @@ def report(sc=False, reg="", sdgs=False):
                 and country_n in group["region"].values
             ):
                 report_pd.drop(group.index, inplace=True)
-                # Step 4: Rename "world" to "country" and remove rows with
-                # region = "country"
+                # Step 4: Rename "world" to "country" and remove rows
+                # with region = "country"
                 group = group[group["region"] == "World"]
                 group.loc[group["region"] == "World", "region"] = country_n
                 # Step 5: Update the original dataframe with the modified group
