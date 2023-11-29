@@ -95,23 +95,14 @@ def test_adjust_cost_ratios_with_gdp():
         base_year=BASE_YEAR,
     )
 
+    # Retrieve list of node IDs
+    nodes = get_codes(f"node/{sel_node}")
+    # Convert to string
+    regions = set(map(str, nodes[nodes.index("World")].child))
+
     # Assert that all regions are present
-    regions = [
-        "R12_AFR",
-        "R12_CHN",
-        "R12_EEU",
-        "R12_FSU",
-        "R12_LAM",
-        "R12_MEA",
-        "R12_NAM",
-        "R12_PAO",
-        "R12_PAS",
-        "R12_RCPA",
-        "R12_SAS",
-        "R12_WEU",
-    ]
-    assert bool(all(i in adj_ratios_energy.region.unique() for i in regions)) is True
-    assert bool(all(i in adj_ratios_materials.region.unique() for i in regions)) is True
+    assert regions == set(adj_ratios_energy.region.unique())
+    assert regions == set(adj_ratios_materials.region.unique())
 
     # Assert that the maximum year is 2100
     assert adj_ratios_energy.year.max() == 2100
