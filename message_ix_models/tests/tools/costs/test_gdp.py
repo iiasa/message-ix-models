@@ -44,6 +44,7 @@ def test_process_raw_ssp_data(test_context, func, node):
         "region",
         "year",
         "scenario",
+        "scenario_version",
         "total_population",
         "total_gdp",
         "gdp_ppp_per_capita",

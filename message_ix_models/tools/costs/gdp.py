@@ -300,6 +300,7 @@ def process_raw_ssp_data1(
             .reset_index()
             .rename(columns={"n": "region", "y": "year"})
             .sort_values(by=["scenario", "region", "year"])
+            .assign(scenario_version="2023")
         )
 
     k_result = "data::pyam"
