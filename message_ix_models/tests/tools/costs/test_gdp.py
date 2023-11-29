@@ -5,14 +5,16 @@ from message_ix_models.tools.costs.config import BASE_YEAR
 from message_ix_models.tools.costs.gdp import (
     adjust_cost_ratios_with_gdp,
     process_raw_ssp_data,
+    process_raw_ssp_data1,
 )
 from message_ix_models.tools.costs.regional_differentiation import (
     apply_regional_differentiation,
 )
 
 
-@pytest.mark.parametrize("node", ["R11", "R12"])
-def test_process_raw_ssp_data(node):
+@pytest.mark.parametrize("func", (process_raw_ssp_data, process_raw_ssp_data1))
+@pytest.mark.parametrize("node", ("R11", "R12"))
+def test_process_raw_ssp_data(func, node):
     # Assert that all regions are present in each node configuration
 
     # Retrieve list of node IDs
@@ -21,7 +23,7 @@ def test_process_raw_ssp_data(node):
     regions = set(map(str, nodes[nodes.index("World")].child))
 
     # Function runs
-    result = process_raw_ssp_data(node=node, ref_region=f"{node}_NAM")
+    result = func(node=node, ref_region=f"{node}_NAM")
 
     # Data is present for all nodes
     assert regions == set(result.region.unique())
