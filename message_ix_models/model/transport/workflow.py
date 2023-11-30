@@ -37,6 +37,7 @@ def generate(context, **options):
     context.navigate = navigate.Config(
         scenario="baseline",
         buildings=False,
+        material=False,
     )
     solve_config = SolveConfig(reserve_margin=False, solve=dict(model="MESSAGE"))
 
