@@ -362,7 +362,8 @@ def report(
     # Configuration for legacy reporting; matches values in data/report/navigate.yaml
     # used when running the workflow steps manually.
     context.buildings = BUILDINGS_CONFIG
-    context.report["legacy"] = dict(
+    context.report.legacy = dict(
+        use=True,
         merge_hist=True,
         merge_ts=True,
         # Specify output directory
