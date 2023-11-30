@@ -625,3 +625,30 @@ def modify_costs_with_tool(context, scen_name, ssp):
 
     scen_bud.solve(model="MESSAGE-MACRO",solve_options={"scaind":-1})
     return
+
+
+@cli.command("run_LED_cprice_scenario")
+@click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
+@click.pass_obj
+def modify_costs_with_tool(context, scen_name, ssp):
+    import message_ix
+    from message_ix_models.tools.costs.config import Config
+    from message_ix_models.tools.costs.projections import create_cost_projections
+
+    mp = ixmp.Platform("ixmp_dev")
+    price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_1000f")
+
+    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro")
+    scen_cprice = base.clone(model=base.model, scenario=base.scenario + "_1000f_LED_prices", shift_first_model_year=2025)
+
+    tax_emission_new = price_scen.var("PRICE_EMISSION")
+
+    scen_cprice.check_out()
+    tax_emission_new.columns = scen_cprice.par("tax_emission").columns
+    tax_emission_new["unit"] = "USD/tCO2"
+    scen_cprice.add_par("tax_emission", tax_emission_new)
+    scen_cprice.commit('2 degree LED prices are added')
+    print('New LED 1000f carbon prices added')
+
+    scen_bud.solve(model="MESSAGE-MACRO", solve_options={"scaind":-1})
+    return
