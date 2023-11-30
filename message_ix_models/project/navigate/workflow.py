@@ -355,7 +355,7 @@ def report(
 
     # Display information about the result
     log.info(
-        f"File output(s), if any, written under:\n{rep.graph['config']['output_path']}"
+        f"File output(s), if any, written under:\n{rep.graph['config']['output_dir']}"
     )
 
     # Step 9
