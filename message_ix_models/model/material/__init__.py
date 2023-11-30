@@ -590,3 +590,38 @@ def modify_costs_with_tool(context, scen_name, ssp):
 
     scen.commit(f"update cost assumption to: {ssp}")
     scen.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
+
+
+@cli.command("run_2C_scenario")
+@click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
+@click.pass_obj
+def modify_costs_with_tool(context, scen_name, ssp):
+    import message_ix
+    from message_ix_models.tools.costs.config import Config
+    from message_ix_models.tools.costs.projections import create_cost_projections
+
+    mp = ixmp.Platform("ixmp_dev")
+    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro")
+    scenario_cbud = base.clone(model=base.model, scenario=base.scenario + "_1000f", shift_first_model_year=2025)
+
+    emission_dict = {
+        "node": "World",
+        "type_emission": "TCE",
+        "type_tec": "all",
+        "type_year": "cumulative",
+        "unit": "???",
+    }
+    df = message_ix.make_df(
+        "bound_emission", value=3667, **emission_dict
+    )
+    scenario_cbud.check_out()
+    scenario_cbud.add_par("bound_emission", df)
+    scenario_cbud.commit("add emission bound")
+    pre_model_yrs = scenario_cbud.set("cat_year", {"type_year": "cumulative", "year": [2020, 2015, 2010]})
+    scenario_cbud.check_out()
+    scenario_cbud.remove_set("cat_year", pre_model_yrs)
+    scenario_cbud.commit("remove cumulative years from cat_year set")
+    scenario_cbud.set("cat_year", {"type_year": "cumulative"})
+
+    scen_bud.solve(model="MESSAGE-MACRO",solve_options={"scaind":-1})
+    return
