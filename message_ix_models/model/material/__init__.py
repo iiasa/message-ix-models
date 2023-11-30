@@ -595,7 +595,7 @@ def modify_costs_with_tool(context, scen_name, ssp):
 @cli.command("run_2C_scenario")
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
 @click.pass_obj
-def modify_costs_with_tool(context, scen_name, ssp):
+def modify_costs_with_tool(context, ssp):
     import message_ix
     from message_ix_models.tools.costs.config import Config
     from message_ix_models.tools.costs.projections import create_cost_projections
@@ -630,7 +630,7 @@ def modify_costs_with_tool(context, scen_name, ssp):
 @cli.command("run_LED_cprice_scenario")
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
 @click.pass_obj
-def modify_costs_with_tool(context, scen_name, ssp):
+def modify_costs_with_tool(context, ssp):
     import message_ix
     from message_ix_models.tools.costs.config import Config
     from message_ix_models.tools.costs.projections import create_cost_projections
