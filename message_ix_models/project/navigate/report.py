@@ -324,20 +324,14 @@ def callback(rep: Reporter, context: Context) -> None:
 
     # Set up reporting for each of the model variants
     all_keys = []
-
-    # Possibly include buildings reporting config
-    if context.navigate.buildings:
-        register("model.buildings")
-        all_keys.append("buildings all")
-
-    # Materials: always included
-    register("model.material")
-    all_keys.append("materials all")
-
-    # Possibly include transport reporting config
-    if context.navigate.transport:
-        register("model.transport")
-        all_keys.append("transport iamc all")  # Excludes plots
+    for name, k in (
+        ("buildings", "buildings all"),
+        ("material", "materials all"),
+        ("transport", "transport iamc all"),  # Excludes plots
+    ):
+        if getattr(context.navigate, name):
+            register(f"model.{name}")
+            all_keys.append(k)
 
     rep.add("remove_ts", "navigate remove ts", "scenario", "config", "y0")
     rep.add("navigate all", all_keys)
