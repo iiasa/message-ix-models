@@ -650,5 +650,5 @@ def modify_costs_with_tool(context, ssp):
     scen_cprice.commit('2 degree LED prices are added')
     print('New LED 1000f carbon prices added')
 
-    scen_bud.solve(model="MESSAGE-MACRO", solve_options={"scaind":-1})
+    scen_cprice.solve(model="MESSAGE-MACRO", solve_options={"scaind":-1})
     return
