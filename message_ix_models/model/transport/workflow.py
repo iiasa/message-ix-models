@@ -69,7 +69,14 @@ def generate(context, **options):
         wf.add_step(f"{label} solved", f"{label} built", solve, config=solve_config)
 
         # Report
-        all_keys.append(wf.add_step(f"{label} reported", f"{label} solved", report))
+        all_keys.append(
+            wf.add_step(
+                f"{label} reported",
+                f"{label} solved",
+                report,
+                use_legacy_reporting=False,
+            )
+        )
 
     wf.add("all reported", all_keys)
     wf.default_key = "all reported"
