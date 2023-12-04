@@ -592,17 +592,23 @@ def modify_costs_with_tool(context, scen_name, ssp):
     scen.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
 
 
-@cli.command("run_2C_scenario")
+@cli.command("run_cbud_scenario")
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
+@click.option("--scenario", default="1000f", help="description of carbon budget for mitigation target")
 @click.pass_obj
-def modify_costs_with_tool(context, ssp):
+def modify_costs_with_tool(context, ssp, scenario):
     import message_ix
     from message_ix_models.tools.costs.config import Config
     from message_ix_models.tools.costs.projections import create_cost_projections
 
     mp = ixmp.Platform("ixmp_dev")
     base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro")
-    scenario_cbud = base.clone(model=base.model, scenario=base.scenario + "_1000f", shift_first_model_year=2025)
+    scenario_cbud = base.clone(model=base.model, scenario=base.scenario + "_" + scenario, shift_first_model_year=2025)
+
+    if scenario == "1000f":
+        budget = 3667
+    if scenario == "600f":
+        budget = 3667
 
     emission_dict = {
         "node": "World",
@@ -623,22 +629,26 @@ def modify_costs_with_tool(context, ssp):
     scenario_cbud.commit("remove cumulative years from cat_year set")
     scenario_cbud.set("cat_year", {"type_year": "cumulative"})
 
-    scen_bud.solve(model="MESSAGE-MACRO",solve_options={"scaind":-1})
+    scenario_cbud.solve(model="MESSAGE-MACRO",solve_options={"scaind":-1})
     return
 
 
 @cli.command("run_LED_cprice_scenario")
 @click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
+@click.option("--scenario", default="1000f", help="description of carbon budget for mitigation target")
 @click.pass_obj
-def modify_costs_with_tool(context, ssp):
+def modify_costs_with_tool(context, ssp, scenario):
     import message_ix
     from message_ix_models.tools.costs.config import Config
     from message_ix_models.tools.costs.projections import create_cost_projections
 
     mp = ixmp.Platform("ixmp_dev")
-    price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_1000f")
+    if scenario == "1000f":
+        price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_1000f")
+    if scenario == "600f":
+        price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_1000f")
 
-    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro")
+    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro", version=2)
     scen_cprice = base.clone(model=base.model, scenario=base.scenario + "_1000f_LED_prices", shift_first_model_year=2025)
 
     tax_emission_new = price_scen.var("PRICE_EMISSION")
