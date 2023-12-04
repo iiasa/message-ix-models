@@ -1,11 +1,10 @@
 """Reporting for NAVIGATE."""
 import logging
 import re
-import sys
 from datetime import date
 from itertools import count, product
 from pathlib import Path
-from typing import Collection, Optional
+from typing import Callable, Collection, Dict, Optional
 
 import pandas as pd
 from message_ix import Reporter, Scenario
@@ -15,7 +14,6 @@ from message_ix_models.report.util import copy_ts
 from message_ix_models.util import identify_nodes, nodes_ex_world, private_data_path
 from sdmx.model.v21 import Code
 
-import message_data.model.material.report.tables
 from message_data.tools.prep_submission import Config, ScenarioConfig
 
 from . import iter_scenario_codes
@@ -369,7 +367,7 @@ def legacy_output_path(base_path: Path, scenario: Scenario) -> Path:
     return base_path.joinpath(f"{scenario.model}_{scenario.scenario}.xlsx")
 
 
-def return_func_dict():
+def return_func_dict() -> Dict[str, Callable]:
     """Hook for legacy reporting.
 
     This function contains a crude hack. :func:`.iamc_report_hackathon.report`, per a
@@ -377,7 +375,9 @@ def return_func_dict():
     this function to retrieve the list of functions ("tables") in the file. At that
     point, we modify the lists of technologies define in :data:`.default_tables.TECHS`.
     """
-    from message_data.tools.post_processing.default_tables import TECHS
+    from importlib import import_module
+
+    from message_data.tools.post_processing import default_tables
 
     # Retrieve a context reference
     # FIXME Don't depend on this being the most recent instance; pass a particular
@@ -387,30 +387,37 @@ def return_func_dict():
     # Label for the configured variant
     variant = ""
 
-    # Invoke a function from each module to adjust `TECHS`
-    for module in ("buildings", "material", "transport"):
-        if not getattr(config, module, True):
+    # "Table" functions from submodules that override the defaults
+    functions = {}
+
+    for name, tables_name in (
+        ("buildings", None),
+        ("material", "tables"),
+        ("transport", None),
+    ):
+        if not getattr(config, name):
             # This module is disabled; do not configure legacy reporting
             continue
 
-        name = f"message_data.model.{module}.report"
-        __import__(name)
-        func = getattr(sys.modules[name], "configure_legacy_reporting")
+        # Update the variant name
+        variant += name[0].upper()
 
-        func(TECHS)
+        # Invoke a function named configure_legacy_reporting() from each module to
+        # adjust `TECHS`
+        module_name = f"message_data.model.{name}.report"
+        import_module(module_name).configure_legacy_reporting(default_tables.TECHS)
 
-        variant += module[0].upper()
+        # Update `functions` using `func_dict` from the `tables_name` submodule, if any
+        try:
+            functions.update(import_module(f"{module_name}.{tables_name}").func_dict)
+        except ImportError:
+            # .model.buildings and .model.transport: no `func_dict`, because these do
+            # not override any of the legacy reporting functions
+            continue
 
-    log.debug(f"Configured legacy reporting for -{variant}- model variant:\n{TECHS = }")
+    log.debug(
+        f"Configured legacy reporting for -{variant}- model variant:\n"
+        f"{default_tables.TECHS = }"
+    )
 
-    # DEBUG
-    log.info(f"{message_data.model.material.report.tables.pp = }")
-    log.info(f"{message_data.model.material.report.tables.mu = }")
-    log.info(f"{message_data.model.material.report.tables.run_history = }")
-    log.info(f"{message_data.model.material.report.tables.urban_perc_data = }")
-    log.info(f"{message_data.model.material.report.tables.kyoto_hist_data = }")
-    log.info(f"{message_data.model.material.report.tables.lu_hist_data = }")
-
-    # This refers to the functions in .model.material.tables; .model.buildings and
-    # .model.transport do not override any of the legacy reporting functions
-    return message_data.model.material.report.tables.func_dict
+    return functions
