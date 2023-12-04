@@ -313,9 +313,20 @@ def add_macro(context: Context, scenario: Scenario) -> Scenario:
 
 
 def report(
-    context: Context, scenario: Scenario, *, other_scenario_info: Optional[Dict] = None
+    context: Context,
+    scenario: Scenario,
+    *,
+    other_scenario_info: Optional[Dict] = None,
+    use_legacy_reporting: bool = True,
 ) -> Scenario:
-    """Workflow steps 8–10."""
+    """Workflow steps 8–10.
+
+    Parameters
+    ----------
+    use_legacy_reporting : bool
+        :any:`True` (the default) to invoke :mod:`message_data.tools.post_processing`;
+        :any:`False` to skip.
+    """
     from message_ix_models.report import (
         _invoke_legacy_reporting,
         log_before,
@@ -363,7 +374,7 @@ def report(
     # used when running the workflow steps manually.
     context.buildings = BUILDINGS_CONFIG
     context.report.legacy = dict(
-        use=True,
+        use=use_legacy_reporting,  # NB currently ignored by the function
         merge_hist=True,
         merge_ts=True,
         # Specify output directory
@@ -373,7 +384,8 @@ def report(
         ref_sol="False",
         run_config="navigate-rc.yaml",
     )
-    _invoke_legacy_reporting(context)
+    if use_legacy_reporting:
+        _invoke_legacy_reporting(context)
 
     return scenario
 
