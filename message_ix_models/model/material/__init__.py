@@ -601,14 +601,17 @@ def modify_costs_with_tool(context, ssp, scenario):
     from message_ix_models.tools.costs.config import Config
     from message_ix_models.tools.costs.projections import create_cost_projections
 
+    if scenario == "1000f":
+        budget = 3667
+    if scenario == "650f":
+        budget = 1750
+    else:
+        print("chosen budget not available yet please choose 600f or 1000f")
+        return
+
     mp = ixmp.Platform("ixmp_dev")
     base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro")
     scenario_cbud = base.clone(model=base.model, scenario=base.scenario + "_" + scenario, shift_first_model_year=2025)
-
-    if scenario == "1000f":
-        budget = 3667
-    if scenario == "600f":
-        budget = 3667
 
     emission_dict = {
         "node": "World",
@@ -618,7 +621,7 @@ def modify_costs_with_tool(context, ssp, scenario):
         "unit": "???",
     }
     df = message_ix.make_df(
-        "bound_emission", value=3667, **emission_dict
+        "bound_emission", value=budget, **emission_dict
     )
     scenario_cbud.check_out()
     scenario_cbud.add_par("bound_emission", df)
@@ -645,8 +648,8 @@ def modify_costs_with_tool(context, ssp, scenario):
     mp = ixmp.Platform("ixmp_dev")
     if scenario == "1000f":
         price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_1000f")
-    if scenario == "600f":
-        price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_1000f")
+    if scenario == "650f":
+        price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_{scenario}")
 
     base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro", version=2)
     scen_cprice = base.clone(model=base.model, scenario=base.scenario + "_1000f_LED_prices", shift_first_model_year=2025)
