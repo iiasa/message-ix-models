@@ -651,7 +651,7 @@ def modify_costs_with_tool(context, ssp, scenario):
     if scenario == "650f":
         price_scen = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_LED_macro_{scenario}")
 
-    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro", version=2)
+    base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro")
     scen_cprice = base.clone(model=base.model, scenario=base.scenario + "_1000f_LED_prices", shift_first_model_year=2025)
 
     tax_emission_new = price_scen.var("PRICE_EMISSION")
