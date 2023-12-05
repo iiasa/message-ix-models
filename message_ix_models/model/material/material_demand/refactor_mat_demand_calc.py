@@ -664,12 +664,10 @@ def derive_demand(material, scen):
     df_in["del_t"] = df_in["year"] - 2010
     df_in["gdp_pcap"] = df_in["gdp_ppp"] * giga / df_in["pop.mil"] / mega
 
-    x = tuple(pd.Series(df_in[col]) for col in fitting_dict[material]["x_data"])
-
     df_in["demand_pcap0"] = df_in.apply(
-        lambda row: fitting_dict[material]["function"](x, *params_opt), axis=1
+        lambda row: fitting_dict[material]["function"](tuple(row[i] for i in fitting_dict[material]["x_data"]), *params_opt), axis=1
     )
-
+    df_in = df_in.rename({"value":"demand.tot.base"}, axis=1)
     df_final = project_demand(df_in, fitting_dict[material]["phi"], fitting_dict[material]["mu"])
 
-    return df_final
+    return df_final.drop(['technology', 'mode', 'time', 'unit'], axis=1)
