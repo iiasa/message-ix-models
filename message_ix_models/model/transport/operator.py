@@ -35,17 +35,28 @@ __all__ = [
     "base_model_data_header",
     "base_shares",
     "broadcast_advance",
+    "broadcast_y_yv_ya",
     "cost",
     "distance_ldv",
     "distance_nonldv",
     "dummy_prices",
+    "extend_y",
+    "factor_fv",
+    "factor_input",
+    "factor_pdt",
     "iea_eei_fv",
+    "indexers_n_cd",
+    "indexers_usage",
+    "input_commodity_level",
     "logit",
+    "make_output_path",
+    "merge_data",
     "nodes_ex_world",
     "nodes_world_agg",
     "pdt_per_capita",
     "price_units",
     "quantity_from_config",
+    "relabel2",
     "share_weight",
     "smooth",
     "transport_check",
@@ -126,6 +137,49 @@ def base_shares(
 
         coords = [("n", nodes), ("t", techs), ("y", y)]
         result = mul(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
+
+    return result
+
+
+def broadcast_advance(data: Quantity, y0: int, config: dict) -> Quantity:
+    """Broadcast ADVANCE `data` from native `n` coords to :py:`config["regions"]`."""
+    from genno.operator import sum
+
+    assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
+
+    # Create a quantity for broadcasting
+    df = pd.DataFrame(
+        [
+            ["ASIA", 0.1, "R12_RCPA"],
+            ["ASIA", 0.5 - 0.1, "R12_PAS"],
+            ["CHN", 1.0, "R12_CHN"],
+            ["EU", 0.1, "R12_EEU"],
+            ["EU", 0.9, "R12_WEU"],
+            ["IND", 1.0, "R12_SAS"],
+            ["LAM", 1.0, "R12_LAM"],
+            ["MAF", 0.5, "R12_AFR"],
+            ["MAF", 0.5, "R12_MEA"],
+            ["OECD90", 0.08, "R12_PAO"],
+            ["REF", 1.0, "R12_FSU"],
+            ["USA", 1.0, "R12_NAM"],
+        ],
+        columns=["n", "value", "n_new"],
+    )
+    bcast = Quantity(df.set_index(["n", "n_new"])["value"])
+
+    check = data.sel(n="World", y=y0, drop=True)
+
+    # - Multiply by `bcast`, adding a new dimension "n_new".
+    # - Sum on "n" and drop that dimension.
+    # - Rename "n_new" to "n".
+    result = (
+        (data.sel(y=y0, drop=True) * bcast)
+        .pipe(sum, dimensions=["n"])
+        .pipe(rename_dims, {"n_new": "n"})
+    )
+
+    # Ensure the total across the new `n` coords still matches the world total
+    assert_qty_allclose(check, sum(result, dimensions=["n"]), rtol=5e-2)
 
     return result
 
@@ -473,49 +527,6 @@ def merge_data(
     """
     keys: Set[Hashable] = reduce(lambda x, y: x | y.keys(), others, set())
     return {k: pd.concat([o.get(k, None) for o in others]) for k in keys}
-
-
-def broadcast_advance(data: Quantity, y0: int, config: dict) -> Quantity:
-    """Broadcast ADVANCE `data` from native `n` coords to :py:`config["regions"]`."""
-    from genno.operator import sum
-
-    assert "R12" == config["regions"], "ADVANCE data mapping only for R12 regions"
-
-    # Create a quantity for broadcasting
-    df = pd.DataFrame(
-        [
-            ["ASIA", 0.1, "R12_RCPA"],
-            ["ASIA", 0.5 - 0.1, "R12_PAS"],
-            ["CHN", 1.0, "R12_CHN"],
-            ["EU", 0.1, "R12_EEU"],
-            ["EU", 0.9, "R12_WEU"],
-            ["IND", 1.0, "R12_SAS"],
-            ["LAM", 1.0, "R12_LAM"],
-            ["MAF", 0.5, "R12_AFR"],
-            ["MAF", 0.5, "R12_MEA"],
-            ["OECD90", 0.08, "R12_PAO"],
-            ["REF", 1.0, "R12_FSU"],
-            ["USA", 1.0, "R12_NAM"],
-        ],
-        columns=["n", "value", "n_new"],
-    )
-    bcast = Quantity(df.set_index(["n", "n_new"])["value"])
-
-    check = data.sel(n="World", y=y0, drop=True)
-
-    # - Multiply by `bcast`, adding a new dimension "n_new".
-    # - Sum on "n" and drop that dimension.
-    # - Rename "n_new" to "n".
-    result = (
-        (data.sel(y=y0, drop=True) * bcast)
-        .pipe(sum, dimensions=["n"])
-        .pipe(rename_dims, {"n_new": "n"})
-    )
-
-    # Ensure the total across the new `n` coords still matches the world total
-    assert_qty_allclose(check, sum(result, dimensions=["n"]), rtol=5e-2)
-
-    return result
 
 
 def iea_eei_fv(name: str, config: Dict) -> Quantity:
