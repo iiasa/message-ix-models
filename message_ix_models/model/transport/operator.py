@@ -462,6 +462,9 @@ class Quantification:
         default_factory=lambda: dict(L=0.8, M=1.0, H=1.2)
     )
 
+    #: Default setting.
+    default: Optional[Any] = None
+
     def __post_init__(self):
         """Check validity of the setting and values."""
         labels0 = set(self.setting.values())
@@ -472,7 +475,17 @@ class Quantification:
             )
 
     def get_value(self, scenario) -> Quantity:
-        return Quantity(self.value[self.setting[scenario]])
+        try:
+            setting = self.setting[scenario]
+        except KeyError:
+            if not self.default:
+                raise
+            log.warning(
+                f"Use default setting {self.default!r} for unrecognized {scenario}"
+            )
+            setting = self.default
+
+        return Quantity(self.value[setting])
 
     def get_quantity(
         self, scenario: Any, nodes: List[str], years: List[int]

@@ -33,7 +33,7 @@ from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
 from .operator import extend_y
-from .util import input_commodity_level, path_fallback
+from .util import input_commodity_level
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +50,11 @@ def prepare_computer(c: Computer):
 
     In both cases, :func:`get_constraints` is used to generate constraints.
     """
+    from genno import Key
+    from message_ix_models.project.ssp import SSP_2024
+
+    from .operator import Quantification
+
     context = c.graph["context"]
     source = context.transport.data_source.LDV
 
@@ -89,9 +94,17 @@ def prepare_computer(c: Computer):
     if final is None:
         raise ValueError(f"invalid source for non-LDV data: {source}")
 
+    # Insert a scaling factor that varies according to SSP
+    k = Key("load factor ldv:n-y")
+    info = Quantification.of_enum(
+        SSP_2024, {"1": "H", "2": "M", "3": "M", "4": "L", "5": "L"}, default="M"
+    )
+    c.add(k + "ssp", "factor_ssp", "n::ex world", "y::model", "config", info=info)
+    c.add(k + "adj", "mul", (k / "y") + "exo", k + "ssp")
+
     keys = [
         c.add("ldv tech::ixmp", *final),
-        c.add("ldv usage::ixmp", usage_data, "context"),
+        c.add("ldv usage::ixmp", usage_data, k + "adj", "n::ex world", "context"),
         c.add("ldv constraints::ixmp", constraint_data, "context"),
         c.add(
             "ldv capacity_factor::ixmp",
@@ -471,7 +484,9 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
-def usage_data(context) -> Mapping[str, pd.DataFrame]:
+def usage_data(
+    load_factor: Quantity, nodes: List[str], context
+) -> Mapping[str, pd.DataFrame]:
     """Generate data for LDV usage technologies.
 
     These technologies convert commodities like "transport ELC_100 vehicle" (i.e.
@@ -488,26 +503,18 @@ def usage_data(context) -> Mapping[str, pd.DataFrame]:
 
     data = disutility.data_conversion(info, spec)
 
-    # Read load factor data from file
-    q = load_file(
-        path_fallback(context.model.regions, "load-factor-ldv.csv"),
-        dims={"node": "node_loc"},
-        name="load factor",
-        units="",
+    # Apply load factor
+    cols = list(data["output"].columns[:-2])
+    unit = data["output"]["unit"].unique()[0]
+    data["output"] = (
+        (
+            Quantity(data["output"].set_index(cols)["value"])
+            * load_factor.rename({"n": "node_loc", "y": "year_act"})
+        )
+        .to_dataframe()
+        .reset_index()
+        .assign(unit=unit)
     )
-
-    # Fill load factor values in the "value" column for "output"
-    @lru_cache(len(q))
-    def _value_for(node_loc):
-        return q.sel(node_loc=node_loc).item()
-
-    data["output"]["value"] = data["output"]["node_loc"].apply(_value_for)
-    # Alternately —performance seems about the same
-    # (
-    #     output.merge(q.to_series(), left_on=q.dims, right_index=True)
-    #     .drop(columns="value")
-    #     .rename(columns={"load factor": "value"})
-    # )
 
     merge_data(data, disutility.data_source(info, spec))
 
