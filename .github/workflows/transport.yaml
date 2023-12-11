@@ -17,11 +17,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  report:
+  clean-workspace:
     runs-on: self-hosted
 
+    steps:
+    - run: |
+        rm -rf ${{ github.workspace }}/report/*
+
+  report:
+    runs-on: self-hosted
+    needs: [clean-workspace]
+
     env:
-      BASE: "ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+      # Starting point of the workflow.
+      # Use this value to build from a certain scenario:
+      base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+      # Use this value to allow the workflow to determine model & scenario names
+      # and versions:
+      # base: --platform="ixmp-dev"
+
+      # Set this to a particular step to truncate the workflow
+      from-step: ""
 
     strategy:
       matrix:
@@ -138,10 +154,13 @@ jobs:
 
     - name: Run MESSAGEix-Transport workflow
       run: |
-        mix-models --url="${{ env.BASE }}" \
+        mix-models \
+          ${{ env.base }} \
           transport run \
-          --go --nodes=R12 --model-extra="ci nightly" \
-          "${{ matrix.SSP }} reported"
+          --nodes=R12 --model-extra="ci nightly" \
+          --from="${{ env.from-step }}" \
+          "${{ matrix.SSP }} reported" \
+          --go
 
     - name: Upload results as a build artifact
       uses: actions/upload-artifact@v3
