@@ -37,9 +37,6 @@ class Plot(BasePlot):
     This class extends :class:`genno.compat.plotnine.Plot` with extra features.
     """
 
-    # Output goes in the "transport" subdirectory
-    path = ["transport"]
-
     #: 'Static' geoms: list of plotnine objects that are not dynamic
     static = [p9.theme(figure_size=(11.7, 8.3))]
 
@@ -70,8 +67,9 @@ class Plot(BasePlot):
         per group, with :attr:`static` geoms and :func:`ggtitle` appended to each.
         """
         for group_key, group_df in data.groupby(*args):
-            yield group_key, (
-                p9.ggplot(group_df) + self.static + self.ggtitle(repr(group_key))
+            yield (
+                group_key,
+                (p9.ggplot(group_df) + self.static + self.ggtitle(repr(group_key))),
             )
 
 
