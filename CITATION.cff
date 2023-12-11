@@ -1,0 +1,62 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: MESSAGEix-Materials
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: 'Gamze '
+    family-names: Ünlü
+    email: unlu@iiasa.ac.at
+    affiliation: IIASA
+    orcid: 'https://orcid.org/0000-0003-0080-7122'
+  - given-names: Jihoon
+    family-names: Min
+    email: min@iiasa.ac.at
+    affiliation: IIASA
+    orcid: 'https://orcid.org/0000-0002-0020-1174'
+  - given-names: 'Florian '
+    family-names: Maczek
+    email: maczek@iiasa.ac.at
+    affiliation: IIASA
+    orcid: 'https://orcid.org/0000-0003-2194-3609'
+  - given-names: Volker
+    family-names: Krey
+    email: krey@iiasa.ac.at
+    affiliation: IIASA
+    orcid: 'https://orcid.org/0000-0003-0307-3515'
+  - given-names: Paul
+    family-names: Kishimoto
+    email: kishimot@iiasa.ac.at
+    affiliation: IIASA
+    orcid: 'https://orcid.org/0000-0002-8578-753X'
+  - given-names: 'Jan '
+    family-names: Streeck
+    affiliation: BOKU
+    email: jan.streeck@boku.ac.at
+    orcid: 'https://orcid.org/0000-0003-4083-0044'
+  - given-names: 'Nina '
+    family-names: Eisenmenger
+    email: nina.eisenmenger@boku.ac.at
+    affiliation: BOKU
+    orcid: 'https://orcid.org/0000-0002-8833-3883'
+  - given-names: 'Dominik '
+    family-names: Wiedenhofer
+    email: dominik.wiedenhofer@boku.ac.at
+    affiliation: BOKU
+    orcid: 'https://orcid.org/0000-0001-7418-3477'
+  - given-names: Stefan
+    family-names: Frank
+    email: frank@iiasa.ac.at
+    affiliation: IIASA
+    orcid: 'https://orcid.org/0000-0001-5702-8547'
+repository-code: >-
+  https://github.com/iiasa/message-ix-models/tree/migrate-materials
+abstract: 'This is the source code of MESSAGEix-Materials. '
+license: Apache-2.0
+commit: >-
+  https://github.com/iiasa/message-ix-models/commit/236fade684a5b1b908176c51c059cdcda21a1a96
+version: '1.0'
