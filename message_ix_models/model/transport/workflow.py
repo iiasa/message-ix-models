@@ -1,7 +1,17 @@
+import logging
+from typing import TYPE_CHECKING
+
 from message_ix_models.project.ssp import SSP_2024
 
+if TYPE_CHECKING:
+    import message_ix_models
 
-def generate(context, **options):
+log = logging.getLogger(__name__)
+
+
+def generate(
+    context: "message_ix_models.Context", *, report_key="transport all", **options
+):
     from message_ix_models import Workflow
 
     from message_data.model.workflow import Config as SolveConfig
@@ -15,7 +25,7 @@ def generate(context, **options):
     # TODO respect quiet
 
     # Prepare transport configuration
-    Config.from_context(context, options)
+    Config.from_context(context, options=options)
 
     # Construct the base URL for scenarios
     if context.core.dest:
