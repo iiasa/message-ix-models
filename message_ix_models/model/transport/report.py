@@ -3,7 +3,7 @@ import logging
 from typing import cast
 
 import genno.config
-from genno import Computer, Key, MissingKeyError, quote
+from genno import Computer, MissingKeyError, quote
 from genno.operator import aggregate
 from message_ix import Reporter
 from message_ix_models import Context
@@ -131,7 +131,7 @@ def callback(rep: Reporter, context: Context) -> None:
       If the scenario to be reported is not solved, only a subset of plots are added.
     - ``transport all``: all of the above.
     """
-    from . import build
+    from . import base, build
 
     N_keys = len(rep.graph)
 
@@ -173,25 +173,10 @@ def callback(rep: Reporter, context: Context) -> None:
     # Add tasks for writing IAMC-structured data to file and storing on the scenario
     rep.apply(add_iamc_store_write, "transport::iamc")
 
-    # Add tasks for producing data for base model calibration
-    bd = "base model transport demand"
-    key = Key("{bd}::ixmp")
-    rep.add(
-        key,
-        "as_message_df",
-        "in:nl-ya-h:transport+units",
-        name="demand",
-        dims=dict(node="nl", year="ya", time="h"),
-        common=dict(commodity="transport", level="useful"),
-        wrap=False,
-    )
-    rep.add(f"{bd} path", "make_output_path", "config", "scenario", "demand.csv")
-    rep.add(f"{bd} header", "base_demand_header", "scenario")
-    rep.add("base demand csv", "write_report", key, f"{bd} path", f"{bd} header")
+    # Add tasks that prepare data to parametrize the base model
+    base_key = base.prepare_reporter(rep)
 
-    rep.add(
-        "transport all", ["transport iamc all", "transport plots", "base demand csv"]
-    )
+    rep.add("transport all", ["transport iamc all", "transport plots", base_key])
 
     log.info(f"Added {len(rep.graph)-N_keys} keys")
 
