@@ -2,14 +2,17 @@ import pytest
 from genno import Quantity
 from genno.testing import assert_qty_equal, assert_units
 from message_ix import Scenario
+from message_ix_models.project.ssp import SSP_2024
 from numpy.testing import assert_allclose
 
 from message_data.model.transport import Config
 from message_data.model.transport.operator import (
+    Quantification,
     broadcast_advance,
     distance_ldv,
     distance_nonldv,
     factor_input,
+    factor_ssp,
     iea_eei_fv,
     pdt_per_capita,
     transport_check,
@@ -108,6 +111,25 @@ def test_factor_input(test_context, options, any_change):
     # No change after 2050
     assert all(1.0 == result.sel(y=2060) / result.sel(y=2050))
     assert all(1.0 == result.sel(y=2110) / result.sel(y=2050))
+
+
+@pytest.mark.parametrize("ssp", SSP_2024)
+def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
+    cfg = Config.from_context(test_context, options=dict(ssp=ssp))
+
+    # Simulate inputs appearing in a Computer
+    n = ["R12_AFR", "R12_NAM"]
+    y = [2020, 2025, 2030, 2050, 2100, 2110]
+    config = dict(transport=cfg)
+
+    info = Quantification.of_enum(
+        SSP_2024, {"1": "L", "2": "M", "3": "H", "4": "L", "5": "H"}
+    )
+
+    # Function runs
+    result = factor_ssp(n, y, config, info=info)
+
+    assert {"n", "y"} == set(result.dims)
 
 
 def test_iea_eei_fv():
