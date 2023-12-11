@@ -32,13 +32,13 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "base_model_data_header",
     "base_shares",
     "broadcast_advance",
     "cost",
     "distance_ldv",
     "distance_nonldv",
     "dummy_prices",
-    "base_demand_header",
     "iea_eei_fv",
     "logit",
     "nodes_ex_world",
@@ -54,8 +54,8 @@ __all__ = [
 ]
 
 
-def base_demand_header(scenario: "Scenario") -> Dict[str, str]:
-    """Return a header comment for writing out base model demand data."""
+def base_model_data_header(scenario: "Scenario", *, name: str) -> Dict[str, str]:
+    """Return a header comment for writing out base model data."""
     from datetime import datetime
     from io import StringIO
 
@@ -69,7 +69,7 @@ def base_demand_header(scenario: "Scenario") -> Dict[str, str]:
     versions = "\n\n".join(buf.getvalue().split("\n\n")[:2])
 
     return dict(
-        header_comment=f"""`demand` parameter data for MESSAGEix-GLOBIOM.
+        header_comment=f"""`{name}` parameter data for MESSAGEix-GLOBIOM.
 
 Generated: {datetime.now(tz).isoformat()}
 from: ixmp://{scenario.platform.name}/{scenario.url}
