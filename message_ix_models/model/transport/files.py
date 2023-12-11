@@ -78,9 +78,7 @@ ExogenousDataFile(("ikarus", "input"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "inv_cost"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "technical_lifetime"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "var_cost"), dims=("source", "t", "c", "y"))
-ExogenousDataFile(
-    "input-base", "input:t-yv-ya-m-c-l-h-ho:exo", "Base model input efficiency"
-)
+ExogenousDataFile("input-base", "input:t-c-h:base", "Base model input efficiency")
 ExogenousDataFile("ldv-class", dims=("n", "vehicle_class"), required=False)
 ExogenousDataFile(
     "load-factor-nonldv", doc="Load factor (occupancy) of non-LDV vehicles", dims=("t",)
