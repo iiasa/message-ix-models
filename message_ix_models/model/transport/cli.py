@@ -56,11 +56,11 @@ cli.add_command(
                 is_flag=True,
                 help="Skip removing data for removed set elements.",
             ),
-            click.Option(
-                ["--report", "report_build"],
-                is_flag=True,
-                help="Generate diagnostic reports of the built scenario.",
-            ),
+            # click.Option(
+            #     ["--report", "report_build"],
+            #     is_flag=True,
+            #     help="Generate diagnostic reports of the built scenario.",
+            # ),
             click.Option(
                 ["--model-extra", "target_model_name"],
                 callback=exec_cb("context.core.dest_scenario['model'] = value"),
@@ -72,6 +72,9 @@ cli.add_command(
                 callback=exec_cb("context.core.dest_scenario['scenario'] = value"),
                 default="baseline",
                 help="Scenario name suffix.",
+            ),
+            click.Option(
+                ["--key", "report_key"], default="transport all", help="Key to report."
             ),
         ]
         + [PARAMS[n] for n in "dest dry_run nodes quiet".split()],
