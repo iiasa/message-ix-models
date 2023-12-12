@@ -53,7 +53,7 @@ def prepare_computer(c: Computer):
     from genno import Key
     from message_ix_models.project.ssp import SSP_2024
 
-    from .operator import Quantification
+    from . import factor
 
     context = c.graph["context"]
     source = context.transport.data_source.LDV
@@ -96,10 +96,20 @@ def prepare_computer(c: Computer):
 
     # Insert a scaling factor that varies according to SSP
     k = Key("load factor ldv:n-y")
-    info = Quantification.of_enum(
-        SSP_2024, {"1": "H", "2": "M", "3": "M", "4": "L", "5": "L"}, default="M"
-    )
-    c.add(k + "ssp", "factor_ssp", "n::ex world", "y::model", "config", info=info)
+    layers = [
+        factor.Map(
+            "setting",
+            L=factor.Constant(0.8, "n y"),
+            M=factor.Constant(1.0, "n y"),
+            H=factor.Constant(1.2, "n y"),
+        ),
+        factor.Omit(y=[2020]),
+        factor.ScenarioSetting.of_enum(
+            SSP_2024, {"1": "H", "2": "M", "3": "M", "4": "L", "5": "L"}, default="M"
+        ),
+    ]
+    f = factor.Factor(layers)
+    c.add(k + "ssp", "factor_ssp", "config", "n::ex world", "y::model", info=f)
     c.add(k + "adj", "mul", (k / "y") + "exo", k + "ssp")
 
     keys = [
