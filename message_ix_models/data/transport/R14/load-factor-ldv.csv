@@ -1,0 +1,22 @@
+# Load factor (occupancy) of LDVs
+#
+# Source:
+# - Placeholder.
+# - Duplicated manually from the corresponding R11 file.
+# - Data for R11_FSU duplicated for R14_{CAS,RUS,SCS,UBM}.
+#
+node,     value
+R14_AFR,  1.807
+R14_CAS,  1.807
+R14_CPA,  1.892
+R14_EEU,  1.643
+R14_LAM,  1.807
+R14_MEA,  1.807
+R14_NAM,  1.53
+R14_PAO,  1.72
+R14_PAS,  1.892
+R14_RUS,  1.807
+R14_SAS,  1.892
+R14_SCS,  1.807
+R14_UBM,  1.807
+R14_WEU,  1.643
