@@ -1,20 +1,18 @@
 """:mod:`genno` operators for MESSAGEix-Transport."""
 import logging
 import re
-from dataclasses import dataclass, field
 from functools import partial, reduce
 from itertools import product
 from operator import gt, le, lt
 from typing import (
     TYPE_CHECKING,
-    Any,
     Dict,
     Hashable,
     List,
     Mapping,
     Optional,
+    Sequence,
     Set,
-    Union,
     cast,
 )
 
@@ -40,6 +38,8 @@ if TYPE_CHECKING:
 
     from genno import Computer
     from message_ix import Scenario
+
+    import message_data.model.transport.factor
 
 log = logging.getLogger(__name__)
 
@@ -450,77 +450,19 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quanti
     )
 
 
-@dataclass
-class Quantification:
-    """Settings for a simple realization of an SSP narrative parameter."""
-
-    #: Mapping from scenario identifier to setting label.
-    setting: Dict[str, str]
-
-    #: Quantitative values for each setting.
-    value: Dict[str, Union[float, Quantity]] = field(
-        default_factory=lambda: dict(L=0.8, M=1.0, H=1.2)
-    )
-
-    #: Default setting.
-    default: Optional[Any] = None
-
-    def __post_init__(self):
-        """Check validity of the setting and values."""
-        labels0 = set(self.setting.values())
-        labels1 = set(self.value.keys())
-        if not labels0 <= labels1:
-            raise ValueError(
-                f"Setting labels {labels0} do not match value labels {labels1}"
-            )
-
-    def get_value(self, scenario) -> Quantity:
-        try:
-            setting = self.setting[scenario]
-        except KeyError:
-            if not self.default:
-                raise
-            log.warning(
-                f"Use default setting {self.default!r} for unrecognized {scenario}"
-            )
-            setting = self.default
-
-        return Quantity(self.value[setting])
-
-    def get_quantity(
-        self, scenario: Any, nodes: List[str], years: List[int]
-    ) -> Quantity:
-        def _1d(**coords):
-            return Quantity(xr.DataArray(1.0).expand_dims(**coords))
-
-        result = self.get_value(scenario) * _1d(y=years)
-
-        # No scaling in the base period
-        result.loc[years[0]] = 1.0
-
-        return result * _1d(n=nodes)
-
-    @classmethod
-    def of_enum(cls, enum, data, **kwargs):
-        """Create from simpler data for an enumeration."""
-        setting = {enum[key]: value for key, value in data.items()}
-
-        if set(setting) != set(enum):
-            extra = set(enum) - set(setting)
-            missing = set(setting) - set(enum)
-            raise ValueError(
-                f"Scenario identifiers must match members of {enum}; "
-                f"missing {missing} and/or extra {extra}"
-            )
-
-        return cls(setting=setting, **kwargs)
-
-
 def factor_ssp(
-    n: List[str], y: List[int], config: dict, *, info: Quantification
+    config: dict,
+    nodes: List[str],
+    years: List[int],
+    *others: List,
+    info: "message_data.model.transport.factor.Factor",
+    extra_dims: Optional[Sequence[str]] = None,
 ) -> Quantity:
     """Return a scaling factor for an SSP realization."""
-    return info.get_quantity(config["transport"].ssp, n, y)
+    kw = dict(n=nodes, y=years, scenario=config["transport"].ssp)
+    for dim, labels in zip(extra_dims or (), others):
+        kw[dim] = labels
+    return info.quantify(**kw)
 
 
 def input_commodity_level(t: List[Code], default_level=None) -> Quantity:

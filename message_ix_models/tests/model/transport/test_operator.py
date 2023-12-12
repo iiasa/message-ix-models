@@ -5,9 +5,8 @@ from message_ix import Scenario
 from message_ix_models.project.ssp import SSP_2024
 from numpy.testing import assert_allclose
 
-from message_data.model.transport import Config
+from message_data.model.transport import Config, factor
 from message_data.model.transport.operator import (
-    Quantification,
     broadcast_advance,
     distance_ldv,
     distance_nonldv,
@@ -122,12 +121,15 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
     y = [2020, 2025, 2030, 2050, 2100, 2110]
     config = dict(transport=cfg)
 
-    info = Quantification.of_enum(
-        SSP_2024, {"1": "L", "2": "M", "3": "H", "4": "L", "5": "H"}
-    )
+    layers = [
+        factor.Constant(4.0, "n y"),
+        factor.ScenarioSetting.of_enum(
+            SSP_2024, {"1": "L", "2": "M", "3": "H", "4": "L", "5": "H"}, default="M"
+        ),
+    ]
 
     # Function runs
-    result = factor_ssp(n, y, config, info=info)
+    result = factor_ssp(config, n, y, info=factor.Factor(layers))
 
     assert {"n", "y"} == set(result.dims)
 
