@@ -1,4 +1,11 @@
-"""Tools for scaling factors."""
+"""Tools for scaling factors.
+
+.. todo:: Add further :class:`.Layer` subclasses beyond :class:`.Constant` for, for
+   instance:
+
+   - Linear interpolation between given points.
+   - Exponentials, splines, and other functions.
+"""
 import logging
 import operator
 import re
