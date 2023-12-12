@@ -115,6 +115,7 @@ def test_scenario_name(test_context, dsd, input, expected):
     assert expected == _scenario_name(test_context, input)
 
 
+@pytest.mark.skipif(testing.GHA, reason="Crashes pytest on GitHub Actions runners")
 @pytest.mark.xfail(reason="Bare RES lacks detail sufficient for add_macro()")
 def test_add_macro(request, test_context):
     test_context.regions = "R12"
