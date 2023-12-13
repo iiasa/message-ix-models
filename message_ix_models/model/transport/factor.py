@@ -228,8 +228,21 @@ class ScenarioSetting(Layer):
             )
 
     @classmethod
-    def of_enum(cls, enum, data, **kwargs):
-        """Create from simpler data for an enumeration."""
+    def of_enum(cls, enum, data_expr: str, **kwargs):
+        """Create from simpler data for an enumeration.
+
+        Parameters
+        ----------
+        enum :
+            An enumeration, for instance :any:`.SSP_2024`.
+        data_expr : str
+            A string of the form "A=foo B=bar" indicating that the ‘setting’ for `enum`
+            member "A" is "foo", and so on.
+        **kwargs :
+            Passed to :class:`ScenarioSetting`.
+        """
+        data = dict([item.split("=") for item in data_expr.split()])
+
         # Look `enum` members corresponding to keys of `data`
         setting = {enum[key]: value for key, value in data.items()}
 
@@ -347,24 +360,89 @@ class Factor:
         return self.quantify(**kw)
 
 
-#: Common Factors for transport
-_LMH = Map(
-    "setting",
-    L=Constant(0.8, "n y"),
-    M=Constant(1.0, "n y"),
-    H=Constant(1.2, "n y"),
+#: Common settings of ‘L’ow -20%, ‘M’edium = 0%, ‘H’igh = +20%.
+LMH = Map(
+    "setting", L=Constant(0.8, "n y"), M=Constant(1.0, "n y"), H=Constant(1.2, "n y")
 )
-_OMIT_2020 = Omit(y=[2020])
+#: Exclude 2020 from certain factors.
+OMIT_2020 = Omit(y=[2020])
+
+#: Common Factors for SSP quantification in transport.
 COMMON = {
-    "load factor ldv": Factor(
+    # “Share of Electric vehicles across SSPs”
+    # NB(PNK) The sign of these is reversed versus the spreadsheet, as indicated in the
+    #    Slack thread: "high improvement" → "'L'ow investment cost".
+    # TODO Implement SSP4 as HIC=L, LIC=H (what about MIC?)
+    # TODO Interpret the note “?? / hybrid / e-fuel = We assume that 20% reduction in
+    #      inv_cost for ICE_nga, ICAe_ffv, ICAm_ptrp, ICH_chyb, IGH_ghyb, IAHe_ptrp,
+    #      IAHm_ptrp, HFC_ptrp over the relevant SSP trajectory” —under which conditions
+    #      does this apply?
+    "ldv ev inv_cost": Factor(
         [
-            _LMH,
-            _OMIT_2020,
-            ScenarioSetting.of_enum(
-                SSP_2024,
-                {"1": "H", "2": "M", "3": "M", "4": "L", "5": "L"},
-                default="M",
-            ),
+            LMH,
+            OMIT_2020,
+            Keep(t=["ELC_100", "PHEV_ptrp"]),
+            ScenarioSetting.of_enum(SSP_2024, "1=L 2=M 3=H 4=M 5=H", default="M"),
         ]
-    )
+    ),
+    # “Occupancy of LDVs should differ across SSPs”
+    # TODO Implement SSP4 as "HIC: L, LIC: H"
+    "ldv load factor": Factor(
+        [
+            LMH,
+            OMIT_2020,
+            ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=M 4=L 5=L", default="M"),
+        ]
+    ),
+    # “Difference in energy intensity of LDVs across SSPs”
+    # NB "High fuel economy" = "High efficiency" = *lower* input coefficient.
+    # TODO Implement SSP4 as “divergence (across and within)”
+    "ldv fuel economy": Factor(
+        [
+            LMH,
+            OMIT_2020,
+            ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=L 4=M 5=L", default="M"),
+        ]
+    ),
+    # “Mode share change by [AIR] across SSPs”
+    # NB To be applied as shift from (LDV + RAIL) modes to AIR mode.
+    "pdt air": Factor(
+        [LMH, ScenarioSetting.of_enum(SSP_2024, "1=L 2=M 3=H 4=M 5=H", default="M")]
+    ),
+    # “Total pdt (active mode) differences across SSPs”
+    # This is implemented as the remaining share of PDT for "non-active" modes; that is,
+    # once active modes are subtracted.
+    # TODO Implement SSP4 as "HIC=H, MIC=M, LIC=M"
+    "pdt non-active": Factor(
+        [
+            Map(
+                "setting",
+                H=Constant(0.8, "n y"),
+                M=Constant(0.95, "n y"),
+                L=Constant(1.0, "n y"),
+            ),
+            ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=L 4=M 5=L", default="M"),
+        ]
+    ),
+    # “Mode share of RAIL/PT across SSPs”
+    # NB(PNK) According to the Slack thread, the same factors are applied to shifts:
+    #    - from LDV to RAIL (in the "urban public transport" *and* in "long-distance
+    #      public modes")
+    #    - from LDV to BUS.
+    # They are stored here as the same value, to be applied where indicated.
+    # TODO Interpret text: "SSP3=low/medium"
+    "pdt ldv → PT shift": Factor(
+        [LMH, ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=L 4=M 5=L", default="M")]
+    ),
+    # “Difference in electrification of RAIL across SSPs”
+    # NB(PNK) The sign of these are reversed versus the spread sheet: "high improvement
+    #    [in cost]" → "Low cost".
+    # TODO Implement SSP4 as "HIC=L, MIC=H, LIC=H"
+    "rail inv_cost": Factor(
+        [
+            LMH,
+            Keep(t=["Hspeed_rai", "Mspeed_rai", "rail_pub"]),
+            ScenarioSetting.of_enum(SSP_2024, "1=L 2=M 3=H 4=M 5=H", default="M"),
+        ]
+    ),
 }
