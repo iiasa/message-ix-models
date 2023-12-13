@@ -4,7 +4,7 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from dask.core import literal, quote
+from dask.core import literal
 from genno import Computer, Key
 from message_ix import make_df
 from message_ix_models.util import broadcast
@@ -23,8 +23,9 @@ pop_at = Key("population", "n y area_type".split())
 pop = pop_at.drop("area_type")
 cg = Key("cg share", "n y cg".split())
 gdp_ppp = gdp + "PPP"
-gdp_ppp_cap = gdp_ppp + "capita"
-gdp_index = gdp_ppp_cap + "index"
+gdp_cap = gdp_ppp + "capita"
+gdp_index = gdp_cap + "index"
+ms = Key("mode share:n-t-y")
 pdt_nyt = Key("pdt", "nyt")  # Total PDT shared out by mode
 pdt_cap = pdt_nyt.drop("t") + "capita"
 pdt_ny = pdt_nyt.drop("t") + "total"
@@ -89,22 +90,23 @@ _demand_common = (
 #: Task for computing and adding demand data; inputs to :meth:`.Computer.add_queue`.
 TASKS = [
     # Values based on configuration
-    ("speed:t", "quantity_from_config", "config", quote("speeds")),
-    ("whour:", "quantity_from_config", "config", quote("work_hours")),
-    ("lambda:", "quantity_from_config", "config", quote("lamda")),
+    (("speed:t", "quantity_from_config", "config"), dict(name="speeds")),
+    (("whour:", "quantity_from_config", "config"), dict(name="work_hours")),
+    (("lambda:", "quantity_from_config", "config"), dict(name="lamda")),
+    (("y::conv", "quantity_from_config", "config"), dict(name="year_convergence")),
     # Base passenger mode share
-    ("mode share:n-t-y:base", "base_shares", "mode share:n-t:ref", n, t_modes, y),
+    (ms + "base", "base_shares", "mode share:n-t:ref", n, t_modes, y),
     # PPP GDP, total and per capita
     (gdp_ppp, "mul", gdp, mer_to_ppp),
-    (gdp_ppp_cap, "div", gdp_ppp, pop),
+    (gdp_cap, "div", gdp_ppp, pop),
     # GDP index
-    (gdp_index, "index_to", gdp_ppp_cap, literal("y"), "y0"),
+    (gdp_index, "index_to", gdp_cap, literal("y"), "y0"),
     # Projected PDT per capita
-    (pdt_cap, "pdt_per_capita", gdp_ppp_cap, (pdt_cap / "y") + "ref", "y0", "config"),
+    (pdt_cap, "pdt_per_capita", gdp_cap, (pdt_cap / "y") + "ref", "y0", "config"),
     # Total PDT
     (pdt_ny, "mul", pdt_cap + "adj", pop),
     # Value-of-time multiplier
-    ("votm:n-y", "votm", gdp_ppp_cap),
+    ("votm:n-y", "votm", gdp_cap),
     # Select only the price of transport services
     # FIXME should be the full set of prices
     ((price_sel0, "select", price_full), dict(indexers=dict(c="transport"), drop=True)),
@@ -112,25 +114,13 @@ TASKS = [
     # Smooth prices to avoid zig-zag in share projections
     (price, "smooth", price_sel1),
     # Transport costs by mode
-    (cost, "cost", price, gdp_ppp_cap, "whour:", "speed:t", "votm:n-y", y),
+    (cost, "cost", price, gdp_cap, "whour:", "speed:t", "votm:n-y", y),
     # Share weights
-    (
-        sw,
-        "share_weight",
-        "mode share:n-t-y:base",
-        gdp_ppp_cap,
-        cost,
-        "lambda:",
-        n,
-        y,
-        "t::transport",
-        "cat_year",
-        "config",
-    ),
+    (sw, "share_weight", ms + "base", gdp_cap, cost, "lambda:", t_modes, y, "config"),
     # Shares
-    (("mode share:n-t-y", "logit", cost, sw, "lambda:", y), dict(dim="t")),
+    ((ms, "logit", cost, sw, "lambda:", y), dict(dim="t")),
     # Total PDT shared out by mode
-    (pdt_nyt + "0", "mul", pdt_ny, "mode share:n-t-y"),
+    (pdt_nyt + "0", "mul", pdt_ny, ms),
     # Adjustment factor
     ("pdt factor:n-y-t", "factor_pdt", n, y, t_modes, "config"),
     # Only the LDV values
