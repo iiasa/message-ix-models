@@ -11,11 +11,28 @@ import operator
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from functools import partial
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import pandas as pd
-from genno import Quantity
+from genno import Key, Quantity
 from genno import operator as g
+from message_ix_models.project.ssp import SSP_2024
+
+if TYPE_CHECKING:
+    import genno
+    import genno.core.key
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +52,9 @@ class Layer(ABC):
     #:   values in `other` with 1.0, since :py:`other ** 0 = 1.0` and
     #:   :py:`other ** 1 = other`.
     operation: Callable
+
+    def __hash__(self) -> int:
+        return hash(repr(self))
 
     @abstractmethod
     def quantify(self, coords: Mapping[str, Any]) -> Quantity:
@@ -165,6 +185,8 @@ class Map(Layer):
         self.dim = dim
         self.values = values or value_kwargs
 
+    __hash__ = Layer.__hash__
+
     def quantify(self, coords):
         return g.concat(
             *[
@@ -208,6 +230,7 @@ class ScenarioSetting(Layer):
     @classmethod
     def of_enum(cls, enum, data, **kwargs):
         """Create from simpler data for an enumeration."""
+        # Look `enum` members corresponding to keys of `data`
         setting = {enum[key]: value for key, value in data.items()}
 
         if set(setting) != set(enum):
@@ -218,6 +241,7 @@ class ScenarioSetting(Layer):
                 f"missing {missing} and/or extra {extra}"
             )
 
+        # Call the constructor
         return cls(setting=setting, **kwargs)
 
     def quantify(self, coords):
@@ -267,6 +291,9 @@ class Factor:
     #: Ordered list of :class:`.Layer`.
     layers: List[Layer] = field(default_factory=list)
 
+    def __hash__(self):
+        return hash(tuple(self.layers))
+
     def quantify(self, **coords) -> Quantity:
         """Return a quantification.
 
@@ -292,3 +319,52 @@ class Factor:
             assert set(v) == set(result.coords[k].data)
 
         return result
+
+    # genno connection
+
+    def add_tasks(
+        self,
+        c: "genno.Computer",
+        key: "genno.core.key.KeyLike",
+        *inputs: "genno.Key",
+        scenario_expr: str,
+    ) -> "genno.core.key.KeyLike":
+        """Add a task to `c` to return the quantified Factor."""
+        dims = tuple(Key(k).name for k in inputs)
+        return c.add_single(
+            key,
+            partial(self, dims=dims, scenario_expr=scenario_expr),
+            "config",
+            *inputs,
+        )
+
+    def __call__(
+        self, config, *coords, dims: Tuple[str], scenario_expr: str
+    ) -> Quantity:
+        """Invoke :meth:`quantify`, for use with :mod:`genno`."""
+        kw = dict(zip(dims, coords))
+        kw.update(scenario=eval(scenario_expr, dict(config=config)))
+        return self.quantify(**kw)
+
+
+#: Common Factors for transport
+_LMH = Map(
+    "setting",
+    L=Constant(0.8, "n y"),
+    M=Constant(1.0, "n y"),
+    H=Constant(1.2, "n y"),
+)
+_OMIT_2020 = Omit(y=[2020])
+COMMON = {
+    "load factor ldv": Factor(
+        [
+            _LMH,
+            _OMIT_2020,
+            ScenarioSetting.of_enum(
+                SSP_2024,
+                {"1": "H", "2": "M", "3": "M", "4": "L", "5": "L"},
+                default="M",
+            ),
+        ]
+    )
+}
