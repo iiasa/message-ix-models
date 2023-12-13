@@ -25,13 +25,10 @@ class DataSourceConfig(ConfigHelper):
     #: Emissions: ID of a dump from a base scenario.
     emissions: str = "1"
 
-    gdp: str = "SSP2"
-
-    population: str = "SSP2"
-
-    #: Light-duty vehicle techno-economic data.
+    #: Light-duty passenger vehicle techno-economic data.
     LDV: Union[None, Literal["US-TIMES MA3T"]] = "US-TIMES MA3T"
 
+    #: Non-passenger and non-light-duty vehicles.
     non_LDV: str = "IKARUS"
 
 

@@ -136,10 +136,7 @@ def urban_rural_shares(pop: Quantity, config: dict) -> Quantity:
             pop.sel(area_type=["UR+SU", "RU"]), pop.sel(area_type="total", drop=True)
         )
     else:
-        log.warning(
-            f"Population data for {config['data source']['population']} lack "
-            "'area_type' dimension"
-        )
+        log.warning("Population data lack 'area_type' dimension")
         df = (
             pd.DataFrame([["UR+SU", 0.6], ["RU", 0.4]], columns=["area_type", "value"])
             .assign(n=None, y=None)
