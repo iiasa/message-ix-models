@@ -166,7 +166,7 @@ TASKS = [
     ("fv factor:n-t-y", "factor_fv", n, y, "config"),
     (fv + "1", "mul", fv + "0", "fv factor:n-t-y"),
     # Select only the ROAD data
-    ((fv + "2", "select", fv + "1"), dict(indexers={"t": "ROAD"})),
+    ((fv + "2", "select", fv + "1"), dict(indexers=dict(t=["ROAD"]))),
     # Relabel
     (
         (fv_cny, "relabel2", fv + "2"),
