@@ -6,6 +6,7 @@ from itertools import product
 from operator import gt, le, lt
 from typing import (
     TYPE_CHECKING,
+    Any,
     Dict,
     Hashable,
     List,
@@ -32,6 +33,8 @@ from sdmx.model.v21 import Code
 
 from message_data.projects.navigate import T35_POLICY
 from message_data.tools import iea_eei
+
+from .config import Config
 
 if TYPE_CHECKING:
     import pathlib
@@ -737,40 +740,42 @@ def share_weight(
     gdp_ppp_cap: Quantity,
     cost: Quantity,
     lamda: Quantity,
-    nodes: List[str],
+    t_modes: List[str],
     y: List[int],
-    t: List[str],
-    cat_year: pd.DataFrame,
     config: dict,
 ) -> Quantity:
-    """Calculate mode share weights."""
-    # Modes from configuration
-    cfg = config["transport"]
-    modes = cfg.demand_modes
+    """Calculate mode share weights.
+
+    Returns
+    -------
+    Quantity
+        With dimensions :math:`(n, t, y)`: |n| matching `gdp_ppp_cap; :math:`t` per
+        `t_modes`, and |y| per `y`.
+    """
+    # Extract info from arguments
+    cfg: Config = config["transport"]
+    nodes = sorted(gdp_ppp_cap.coords["n"].data)
 
     # Selectors
-    y0 = dict(y=y[0])
-    yC = dict(y=cfg.year_convergence)
-    years = list(filter(lambda year: year <= yC["y"], y))
+    y0 = dict(y=y[0])  # As a scalar, this induces xarray but not genno <= 1.21 to drop
+    y0_ = dict(y=[y[0]])  # Do not drop
+    yC: Dict[Any, Any] = dict(y=cfg.year_convergence)
+    years = list(filter(lambda year: year <= cfg.year_convergence, y))
 
     # Share weights
-    coords = [("n", nodes), ("y", years), ("t", modes)]
-    weight = xr.DataArray(np.nan, coords=coords)
+    coords = [("n", nodes), ("y", years), ("t", t_modes)]
+    weight = xr.DataArray(np.nan, coords)
 
     # Weights in y0 for all modes and nodes
     # NB here and below, with Python 3.9 one could do: dict(t=modes, n=nodes) | y0
-    idx = dict(t=modes, n=nodes, **y0)
-    s_y0 = share.sel(idx)
-    c_y0 = cost.sel(idx).sel(c="transport", drop=True)
-    tmp = s_y0 / (c_y0**lamda)
-
-    # Insert into `weight`
-    *_, weight.loc[y0] = xr.align(
-        weight.loc[y0], xr.DataArray.from_series(tmp.to_series())
-    )
+    idx = dict(t=t_modes, n=nodes, **y0)
+    w0 = share.sel(idx) / (cost.sel(idx).sel(c="transport", drop=True) ** lamda)
 
     # Normalize to 1 across modes
-    weight.loc[y0] = weight.loc[y0] / weight.loc[y0].sum("t")
+    w0 = w0 / w0.sum("t")
+
+    # Insert into `weight`
+    *_, weight.loc[y0_] = xr.align(weight, xr.DataArray.from_series(w0.to_series()))
 
     # Weights at the convergence year, yC
     for node in nodes:
