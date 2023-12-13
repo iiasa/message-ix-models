@@ -36,13 +36,7 @@ log = logging.getLogger(__name__)
 )
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
-    "regions",
-    [
-        param("ISR", marks=testing.MARK[3]),
-        "R11",
-        "R12",
-        param("R14", marks=pytest.mark.xfail(raises=FileNotFoundError)),
-    ],
+    "regions", [param("ISR", marks=testing.MARK[3]), "R11", "R12", "R14"]
 )
 def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years):
     # Info about the corresponding RES
