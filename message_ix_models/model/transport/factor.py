@@ -26,12 +26,11 @@ from typing import (
 )
 
 import pandas as pd
-from genno import Key, Quantity
+from genno import Computer, Key, Quantity
 from genno import operator as g
 from message_ix_models.project.ssp import SSP_2024
 
 if TYPE_CHECKING:
-    import genno
     import genno.core.key
 
 log = logging.getLogger(__name__)
@@ -337,7 +336,7 @@ class Factor:
 
     def add_tasks(
         self,
-        c: "genno.Computer",
+        c: Computer,
         key: "genno.core.key.KeyLike",
         *inputs: "genno.Key",
         scenario_expr: str,
@@ -446,3 +445,23 @@ COMMON = {
         ]
     ),
 }
+
+
+def insert(c: Computer, key, *, name: str, target: Key):
+    """Update `c` to apply the factor :py:`COMMON[name]` to `key`.
+
+    Use via :meth:`genno.Computer.apply`.
+    """
+    k_target = Key(target)
+
+    # TODO allow additional dims, such as "t"
+    coords = ["n::ex world", "y::model"]
+    se = "config['transport'].ssp"
+
+    # Quantify the factor
+    c.add(k_target + "ssp factor", COMMON[name], *coords, scenario_expr=se)
+
+    # Multiply `key` by the factor
+    c.add(k_target, "mul", key, k_target + "ssp factor")
+
+    return k_target

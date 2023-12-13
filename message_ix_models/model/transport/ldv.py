@@ -95,18 +95,11 @@ def prepare_computer(c: Computer):
 
     # Insert a scaling factor that varies according to SSP
     k = Key("load factor ldv:n-y")
-    c.add(
-        k + "ssp",
-        factor.COMMON["load factor ldv"],
-        "n::ex world",
-        "y::model",
-        scenario_expr="config['transport'].ssp",
-    )
-    c.add(k + "adj", "mul", (k / "y") + "exo", k + "ssp")
+    c.apply(factor.insert, (k / "y") + "exo", name="ldv load factor", target=k)
 
     keys = [
         c.add("ldv tech::ixmp", *final),
-        c.add("ldv usage::ixmp", usage_data, k + "adj", "n::ex world", "context"),
+        c.add("ldv usage::ixmp", usage_data, k, "n::ex world", "context"),
         c.add("ldv constraints::ixmp", constraint_data, "context"),
         c.add(
             "ldv capacity_factor::ixmp",
