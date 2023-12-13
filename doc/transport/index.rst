@@ -4,14 +4,11 @@ MESSAGEix-Transport
 .. warning::
 
    MESSAGEix-Transport is **under development**.
-
-   For details, see the
-   `transport <https://github.com/iiasa/message_data/labels/transport>`_ label,
-   `project board <https://github.com/iiasa/message_data/projects/1>`_, and
-   `current tracking issue (#180) <https://github.com/iiasa/message_data/issues/180>`_.
+   For details, see the `project board <https://github.com/orgs/iiasa/projects/29>`_.
 
 :mod:`message_data.model.transport` adds a technology-rich representation of transport to the MESSAGEix-GLOBIOM global model.
-The resulting model is referred to as **“MESSAGEix-Transport”**. This extends the formulation described by McCollum et al. (2016) :cite:`McCollum2017` for the older, MESSAGE V framework that predated MESSAGEix.
+The resulting model is referred to as **“MESSAGEix-Transport”**.
+This extends the formulation described by McCollum et al. (2016) :cite:`McCollum2017` for the older, MESSAGE V framework that predated MESSAGEix.
 
 On this page:
 
@@ -57,6 +54,33 @@ Details
 
 Usage
 =====
+
+.. note:: The details below are still valid, but most of the steps involve can now be performed using the command-line interface to :mod:`.transport.workflow`::
+
+      $ mix-models transport run --help
+      Usage: mix-models transport run [OPTIONS] TARGET
+
+        Run the MESSAGEix-Transport workflow up to step TARGET.
+
+        Unless --go is given, the workflow is only displayed. --from is interpreted
+        as a regular expression.
+
+      Options:
+        --future TEXT                   Transport futures scenario.
+        --fast                          Skip removing data for removed set elements.
+        --model-extra TEXT              Model name suffix.
+        --scenario-extra TEXT           Scenario name suffix.
+        --key TEXT                      Key to report.
+        --dest TEXT                     Destination URL for created scenario(s).
+        --dry-run                       Only show what would be done.
+        --nodes [ADVANCE|B210-R11|ISR|R11|R12|R14|R17|R20|R32|RCP|ZMB]
+                                        Code list to use for 'node' dimension.
+        --quiet                         Show less or no output.
+        --go                            Actually run the workflow.
+        --from TEXT                     Truncate workflow at matching step(s).
+        --help                          Show this message and exit.
+
+   See the :file:`transport.yaml` workflow file described under :ref:`transport-ci` for specific example that is tested daily, thus known to work.
 
 **Preliminaries.**
 Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for working with :mod:`.message_data`.
@@ -134,22 +158,23 @@ Use ``--help`` overall or for a particular command to learn more.
     $ mix-models transport gen-demand --ssp-update=5
 
 :command:`refresh`
-  Overwrite one given local database (i.e. :mod:`ixmp.backend.jdbc.JDBCBackend` stored in a HyperSQL database) with another.
-  This reads configuration from ixmp configuration file; e.g. to replace the database named ``local`` with the one named ``clone-2022-05-25``, do this:
+  .. deprecated:: 2023-11-21
+     Use :program:`ixmp platform copy` from the :mod:`ixmp` :doc:`ixmp:cli` instead.
 
-  .. code-block:: json
-
-    {
-      "...": "...",
-      "transport refresh db": {"source": "clone-2022-05-25", "dest": "local"}
-    }
+Scenarios
+=========
 
 .. _transport-base-scenarios:
 
 Base scenarios
-==============
+--------------
 
 The following existing scenarios are targets for the MESSAGEix-Transport code to operate on:
+
+``ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21``
+  nodes=R12, years=B.
+
+  Current development target as of 2023-12-13, and used in the :file:`transport.yaml` CI workflow.
 
 ``ixmp://ene-ixmp/CD_Links_SSP2_v2/baseline``
    regions=R11, years=A.
@@ -175,14 +200,15 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
 ``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_GLOBIOM_R12_s#1``
   regions=R12, years=B. Includes :doc:`material` detail.
 
-``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_2305#?`` (default version as of 2022-05-25)
+``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_2305#?``
   regions=R12, years=B. Includes :doc:`material` detail.
-
 
 Structure of base scenarios
 ---------------------------
 
-The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.create` or :mod:`.model.bare`) contains an aggregated transport representation, as follows:
+The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.create` or :mod:`.model.bare`) contains a representation of transport with lower resolution.
+Some documentation is in the base-model documentation (:py:`message_doc`; see also `iiasa/message-ix-models#107 <https://github.com/iiasa/message-ix-models/pull/107>`_).
+This section gives additional details missing there, which are relevant to MESSAGEix-Transport.
 
 - Demand (``commodity=transport``, ``level=useful``) is denoted in **energy units**, i.e. GWa.
 - Technologies producing this output; all at ``m=M1``, except where noted.
@@ -208,6 +234,59 @@ The MESSAGEix-GLOBIOM RES (e.g. :mod:`.model.create` or :mod:`.model.bare`) cont
   - Some, e.g. ``back_trp``, are not (zero values)
   - Disaggregated technologies must match these totals.
 
+SSP scenarios (2024 update)
+---------------------------
+
+The code responds to :attr:`.transport.Config.ssp` (equivalently, :py:`context["transport"].ssp`) by computing and applying a variety of **factors**.
+These are defined in :data:`.factor.COMMON`.
+Each :class:`.Factor` is built-up from 1 or more **layers** that each represent a different assumption or choice.
+When MESSAGEix-Transport is built, these assumptions are **quantified** and combined into a single, concrete :class:`.Quantity` object with at least the dimensions :math:`(n, y)`, sometimes :math:`(n, y, t)`.
+These specific values are applied in (usually) multiplicative or other ways to other values produced by the model build process.
+
+Here we explain one example:
+
+.. code-block:: python
+
+    LMH = Map(
+        "setting", L=Constant(0.8, "n y"), M=Constant(1.0, "n y"), H=Constant(1.2, "n y")
+    )
+    OMIT_2020 = Omit(y=[2020])
+
+    ...
+
+        "ldv load factor": Factor(
+            [
+                LMH,
+                OMIT_2020,
+                ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=M 4=L 5=L", default="M"),
+            ]
+        ),
+
+This example has three layers.
+The first two are reused from variables, because they also appear in other factors.
+
+- The first layer sets constant values (the same for every label on the dimensions :math:`(n, y)`) for three different labels on a ‘setting’ dimension.
+  These labels are merely :class:`str`: their meaning or interpretation **must** be clearly explained in code comments or by linked documentation.
+  Otherwise they may be ambiguous ("'H'igh energy intensity" means the same thing as "'L'ow efficiency": what precisely is measured by the quantity to which the factor should apply?)
+  The ‘M’ setting has a value of 1.0.
+  Because this particular factor is used multiplicatively, in effect choosing the ‘M’ setting results in :py:`value * 1.0 = value`: that is, no change or a **no-op**.
+- The second layer indicates to omit or mask values for :math:`y \in \{2020\}`.
+  In effect, this results in values of 1.0 for this period, with the same no-op effect described above.
+- The last layer is a “scenario setting”.
+  In effect, this transforms a ‘scenario’ identifier from an enumeration (something like :py:`SSP_2024["2"]`) into one of the ‘setting’ labels from the first layer.
+  This allows the same setting to be specified for multiple scenarios: in this example, SSP2 and SSP3 have the same setting.
+  If the constant values in the first layer are changed, the values applied for SSP2 and SSP3 will both change.
+
+  The string :py:`"1=H …"` **must** contain every member of (in this case) :data:`~message_ix_models.project.ssp.SSP_2024`; every setting label that appears **must** be provided by the previous layers of the factor.
+  (To be clear: this does *not* mean that all defined settings must be used; it is valid to use, for instance, :py:`"1=M 2=M 3=M 4=M 5=M"`.)
+
+To change the assumptions that are modeled via any particular factor:
+
+- Add or remove layers.
+- Change the :class:`.Constant` values that appear.
+- Change the :class:`.ScenarioSetting` mapping.
+- Adjust where and how the factor is applied in the transport build process.
+  This option requires more technical skill.
 
 Data, metadata, and configuration
 =================================
@@ -234,9 +313,76 @@ Other data files include:
 - :file:`reference/transport/` contains files from :doc:`transport/old` that are for reference, and not used by MESSAGEix-Transport.
   The directory structure matches :file:`P:\ene.model\TaxSub_Transport_Merged\\`.
 
+.. _transport-ci:
 
-Reference
-=========
+Testing and validation
+======================
+
+MESSAGEix-Transport includes a GitHub Actions workflow defined in the file :file:`.github/workflows.transport.yaml`.
+A list of past runs of this workflow appears `here <https://github.com/iiasa/message_data/actions/workflows/transport.yaml>`_.
+This workflow:
+
+- Runs on a schedule trigger, daily.
+- Runs on a GitHub Actions **self-hosted runner**.
+  This is hosted on a server within the IIASA network, so is able to access the ``ixmp-dev`` :mod:`ixmp` Oracle database.
+- Uses, as its starting point, the first scenario listed under :ref:`transport-base-scenarios`, above.
+- Runs multiple jobs; currently, one job for each :data:`~message_ix_models.project.ssp.SSP_2024`.
+  Each job takes about 30 minutes, and the jobs run in sequence, so the entire workflow takes 2.5 hours to run.
+- Produces an **artifact**: aside from the logs, certain files generated during the run are combined in a ZIP archive and stored by GitHub.
+  This artifact contains, *inter alia*:
+
+  - One directory per job.
+  - In each directory, files :file:`transport.csv` and :file:`transport.xlsx` containing :doc:`MESSAGEix-Transport reporting output <report>`.
+  - In each directory, files :file:`demand.csv` and :file:`bound_activity_{lo,up}.csv` containing data suitable for parametrizing the base MESSAGEix-GLOBIOM model.
+- May be triggered manually.
+  Use the “Run workflow” button and choose a branch; the code and data on this branch will be the ones used to build, solve, and report MESSAGEix-Transport.
+- May be altered to aid with development:
+
+  - Run on every commit on a pull request branch:
+
+    .. code-block:: yaml
+
+       # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
+       pull_request:
+       branches: [ main, dev ]
+
+  - Run only some steps; not the full build–solve–report sequence.
+    For instance:
+
+    .. code-block:: yaml
+
+       env:
+         # Starting point of the workflow.
+         # Use this value to build from a certain scenario:
+         # base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+         # Use this value to allow the workflow to determine model & scenario names
+         # and versions:
+         base: --platform="ixmp-dev"
+
+         # Set this to a particular step to truncate the workflow
+         from-step: ".* solved"
+
+  Per the comments, **do not** merge such changes to ``dev`` or ``main``.
+  Instead, make them with a commit message like "TEMPORARY Adjust 'transport' CI workflow for PR"; then later :program:`git rebase -i` and ``drop`` the temporary commit.
+
+Code reference
+==============
+
+The entire module and its contents are documented recursively:
+
+.. currentmodule:: message_data.model
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: autosummary-module.rst
+   :recursive:
+
+   message_data.model.transport
+
+Index
+=====
+
+Contents of other documentation pages:
 
 .. toctree::
    :maxdepth: 2
@@ -246,16 +392,3 @@ Reference
    transport/disutility
    transport/report
    transport/old
-
-
-Code reference
-==============
-
-.. currentmodule:: message_data.model
-
-.. autosummary::
-   :toctree: _autosummary
-   :template: autosummary-module.rst
-   :recursive:
-
-   transport
