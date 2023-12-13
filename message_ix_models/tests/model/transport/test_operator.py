@@ -123,9 +123,7 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
 
     layers = [
         factor.Constant(4.0, "n y"),
-        factor.ScenarioSetting.of_enum(
-            SSP_2024, {"1": "L", "2": "M", "3": "H", "4": "L", "5": "H"}, default="M"
-        ),
+        factor.ScenarioSetting.of_enum(SSP_2024, "1=L 2=M 3=H 4=L 5=H", default="M"),
     ]
 
     # Function runs
