@@ -744,14 +744,11 @@ def share_weight(
     config: dict,
 ) -> Quantity:
     """Calculate mode share weights."""
-    from genno.operator import div, pow
-
     # Modes from configuration
     cfg = config["transport"]
     modes = cfg.demand_modes
 
     # Selectors
-    t0 = dict(t=modes[0])
     y0 = dict(y=y[0])
     yC = dict(y=cfg.year_convergence)
     years = list(filter(lambda year: year <= yC["y"], y))
@@ -765,12 +762,12 @@ def share_weight(
     idx = dict(t=modes, n=nodes, **y0)
     s_y0 = share.sel(idx)
     c_y0 = cost.sel(idx).sel(c="transport", drop=True)
-    tmp = div(s_y0, pow(c_y0, lamda))
+    tmp = s_y0 / (c_y0**lamda)
 
-    # Normalize against first mode's weight
-    # TODO should be able to avoid a cast and align here
-    tmp = tmp / tmp.sel(t0, drop=True)
-    *_, weight.loc[y0] = xr.align(weight.loc[y0], xr.DataArray.from_series(tmp).sel(y0))
+    # Insert into `weight`
+    *_, weight.loc[y0] = xr.align(
+        weight.loc[y0], xr.DataArray.from_series(tmp.to_series())
+    )
 
     # Normalize to 1 across modes
     weight.loc[y0] = weight.loc[y0] / weight.loc[y0].sum("t")
