@@ -265,43 +265,6 @@ def gen_activity(ctx, ssp, ssp_update, output_dir, **kwargs):
 @click.pass_obj
 def debug(context):
     """Temporary code for development."""
-    from message_ix_models import testing
-    from message_ix_models.report import prepare_reporter, register
-    from message_ix_models.util import private_data_path
-
-    from . import build
-    from .report import callback
-
-    request = None
-    context.model.regions = "R11"
-    context.years = "A"
-    context.res_with_dummies = True
-
-    # Retrieve (maybe generate) the bare RES with the same settings
-    res = testing.bare_res(request, context, solved=False)
-    # Derive the name for the transport scenario
-    model_name = res.model.replace("-GLOBIOM", "-Transport")
-    # Build
-    log.info(f"Create '{model_name}/baseline' for testing")
-    scenario = res.clone(model=model_name)
-    build.main(context, scenario, fast=True, quiet=False)
-    # Solve
-    log.info(f"Solve '{scenario.model}/{scenario.scenario}'")
-    scenario.solve(solve_options=dict(lpmethod=4))
-
-    # Prepare reporting
-    register(callback)
-    rep, key = prepare_reporter(
-        scenario,
-        private_data_path("report", "global.yaml"),
-        "plot ldv-tech-share-by-cg",
-    )
-
-    # Configure output
-    rep.configure(output_dir=Path.cwd())
-
-    # Get the catch-all key, including plots etc.
-    rep.get(key)
 
 
 @cli.command("export-emi")
@@ -338,51 +301,3 @@ def export_emissions_factors(context, path_stem):
         )
         # Write data
         df.to_csv(path, mode="a", index=False)
-
-
-@cli.command()
-@click.option("--go", is_flag=True, help="Actually manipulate files.")
-def refresh(go):
-    """Overwrite a local ixmp HyperSQL database with a fresh copy.
-
-    Source and target platforms are read from the "transport refresh db" key in the
-    user's ixmp config.json.
-
-    Without --go, no action occurs.
-    """
-    # TODO move upstream, e.g. to ixmp JDBCBackend
-    import shutil
-
-    import ixmp
-
-    # Read the from/to database names from user's ixmp config
-    ixmp.config.register("transport refresh db", dict)
-    ixmp.config.read()
-    cfg = ixmp.config.get("transport refresh db")
-
-    name_src = cfg["source"]
-    name_dest = cfg["dest"]
-
-    # Base paths for file operations
-    dir_src = Path(ixmp.config.get_platform_info(name_src)[1]["path"]).parent
-    dir_dest = Path(ixmp.config.get_platform_info(name_dest)[1]["path"]).parent
-
-    msg = "" if go else "(dry run) "
-
-    for path in dir_dest.glob(f"{name_dest}.*"):
-        if path.suffix == ".tmp":
-            continue
-        print(f"{msg}Unlink {path}")
-        if not go:
-            continue
-        path.unlink()
-
-    for path in dir_src.joinpath("backup").glob(f"{name_src}.*"):
-        if path.suffix in (".log", ".properties"):
-            continue
-        dst = dir_dest.joinpath(name_dest).with_suffix(path.suffix)
-
-        print(f"{msg}Copy {path} → {dst}")
-        if not go:
-            continue
-        shutil.copyfile(path, dst)
