@@ -113,9 +113,6 @@ def _handler(c: Computer, info):
     config.setdefault("regions", context.model.regions)
     config["transport"] = context.transport
     config.setdefault("data source", dict())
-    config["data source"].update(
-        {k: getattr(context.transport.data_source, k) for k in ("gdp", "population")}
-    )
     config["output_dir"] = context.get_local_path()
 
 

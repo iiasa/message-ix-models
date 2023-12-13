@@ -218,14 +218,11 @@ def test_exo_report(test_context, tmp_path):
     ],
 )
 @pytest.mark.parametrize("years", ["B"])
-@pytest.mark.parametrize("pop_scen", ["SSP2"])
+@pytest.mark.parametrize("pop_scen", [SSP_2017["2"], SSP_2024["2"]])
 def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
+    options = dict(ssp=pop_scen)
     c, info = testing.configure_build(
-        test_context,
-        tmp_path=tmp_path,
-        regions=regions,
-        years=years,
-        options={"data source": {"population": pop_scen}},
+        test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
 
     key = Key("cg share", "n y cg".split())
@@ -244,28 +241,29 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
     assert (result.sum("cg") - 1.0 < 1e-08).all()
 
 
+_unsup = pytest.mark.xfail(reason="Currently unsupported")
+
+
 @pytest.mark.parametrize(
     "regions,years,pop_scen",
     [
-        ("R11", "A", "GEA mix"),
-        ("R11", "A", "GEA supply"),
-        ("R11", "A", "GEA eff"),
+        pytest.param("R11", "A", "GEA mix", marks=_unsup),
+        pytest.param("R11", "A", "GEA supply", marks=_unsup),
+        pytest.param("R11", "A", "GEA eff", marks=_unsup),
         # Different years
-        ("R11", "B", "GEA mix"),
+        pytest.param("R11", "B", "GEA mix", marks=_unsup),
         # Different regions & years
-        ("R14", "B", "SSP1"),
-        ("R14", "B", "SSP2"),
-        ("R14", "B", "SSP3"),
-        pytest.param("ISR", "B", "SSP2", marks=MARK[3]),
+        ("R12", "B", SSP_2024["2"]),
+        ("R14", "B", SSP_2017["1"]),
+        ("R14", "B", SSP_2017["2"]),
+        ("R14", "B", SSP_2017["3"]),
+        pytest.param("ISR", "B", SSP_2024["2"], marks=MARK[3]),
     ],
 )
 def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
+    options = dict(ssp=pop_scen)
     c, info = testing.configure_build(
-        test_context,
-        tmp_path=tmp_path,
-        regions=regions,
-        years=years,
-        options={"data source": {"population": pop_scen}},
+        test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
     )
 
     # Shares can be retrieved
