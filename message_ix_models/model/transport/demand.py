@@ -102,7 +102,7 @@ TASKS = [
     # Projected PDT per capita
     (pdt_cap, "pdt_per_capita", gdp_ppp_cap, (pdt_cap / "y") + "ref", "y0", "config"),
     # Total PDT
-    (pdt_ny, "mul", pdt_cap, pop),
+    (pdt_ny, "mul", pdt_cap + "adj", pop),
     # Value-of-time multiplier
     ("votm:n-y", "votm", gdp_ppp_cap),
     # Select only the price of transport services
@@ -209,5 +209,12 @@ def prepare_computer(c: Computer) -> None:
     --------
     TASKS
     """
+    from . import factor
+
+    # NB It is necessary to pre-add this key because Computer.apply() errors otherwise
+    c.add_single(pdt_cap, None)
+    # Insert a scaling factor that varies according to SSP setting
+    c.apply(factor.insert, pdt_cap, name="pdt non-active", target=pdt_cap + "adj")
+
     c.add_queue(TASKS)
     c.add("transport_data", __name__, key="transport demand::ixmp")
