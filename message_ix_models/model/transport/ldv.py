@@ -58,32 +58,42 @@ def prepare_computer(c: Computer):
     source = context.transport.data_source.LDV
 
     # Add all the following computations, even if they will not be used
+    k1 = Key("US-TIMES MA3T")
+    c.add(k1 + "R11", read_USTIMES_MA3T_2, None, quote("R11"))
 
-    k1 = c.add("US-TIMES MA3T all", read_USTIMES_MA3T_2, None, quote("R11"))
+    # Operator for adapting R11 data
+    adapt = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(context.model.regions)
+    if adapt:
+        c.add(k1 + "exo", adapt, k1 + "R11")  # Adapt
+    else:
+        c.add(k1 + "exo", k1 + "R11")  # Alias
+
+    # Extract the separate quantities
     for name in TABLES:
-        c.add(f"ldv {name}:n-t-y:exo", itemgetter(name), k1)
+        k2 = Key(f"ldv {name}:n-t-y:exo")
+        c.add(k2, itemgetter(name), k1 + "exo")
+
+    # Insert a scaling factor that varies according to SSP
+    k_fe = Key("ldv fuel economy:n-t-y")
+    c.apply(factor.insert, k_fe + "exo", name=k_fe.name, target=k_fe, dims="nty")
 
     # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
-    c.add("ldv efficiency:n-t-y", "div", Quantity(1.0), "ldv fuel economy:n-t-y:exo")
+    k_eff = Key("ldv efficiency:t-y-n")
+    c.add(k_eff, "div", Quantity(1.0), k_fe)
 
     # Compute the input efficiency adjustment factor
-    k2 = c.add(
-        "transport input factor:t-y",
-        "factor_input",
-        "y",
-        "t::transport",
-        "t::transport agg",
-        "config",
-    )
+    k2 = Key("transport input factor:t-y")
+    c.add(k2, "factor_input", "y", "t::transport", "t::transport agg", "config")
+
     # Product of input factor and LDV efficiency
-    k3 = c.add("ldv efficiency::adj", "mul", k2, "ldv efficiency")
+    c.add(k_eff + "adj", "mul", k2, k_eff)
 
     # Select a task for the final step that computes "ldv::ixmp"
     final = {
         "US-TIMES MA3T": (
             get_USTIMES_MA3T,
             "context",
-            k3,
+            k_eff + "adj",
             "ldv inv_cost:n-t-y:exo",
             "ldv fix_cost:n-t-y:exo",
         ),
@@ -245,20 +255,8 @@ def get_USTIMES_MA3T(
     all_info.set["commodity"].extend(get_codes("commodity"))
     all_info.update(spec.add)
 
-    # if context.model.regions in ("R12", "R14"):
-    #     # Read data using the R11 nodes
-    #     read_nodes: Sequence[Union[str, Code]] = get_region_codes("R11")
-    # else:
-    #     read_nodes = nodes_ex_world(info.N)
-
     # Retrieve the input data
     data = dict(efficiency=efficiency, inv_cost=inv_cost, fix_cost=fix_cost)
-
-    # Convert R11 to R12 or R14 data, as necessary
-    if context.model.regions == "R12":
-        data = adapt_R11_R12(data)
-    elif context.model.regions == "R14":
-        data = adapt_R11_R14(data)
 
     # Years to include
     target_years = list(filter(partial(le, 2010), info.set["year"]))
