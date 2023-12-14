@@ -95,6 +95,8 @@ class Constant(Layer):
     #: Dimensions of the result.
     dims: Tuple[str, ...]
 
+    operation = operator.mul
+
     def __init__(self, value: Union[float, Quantity], dims: Union[str, Sequence[str]]):
         self.value = value if isinstance(value, Quantity) else Quantity(value)
         self.dims = (
@@ -399,6 +401,7 @@ COMMON = {
     "ldv fuel economy": Factor(
         [
             LMH,
+            Constant(1.0, "t"),
             OMIT_2020,
             ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=L 4=M 5=L", default="M"),
         ]
