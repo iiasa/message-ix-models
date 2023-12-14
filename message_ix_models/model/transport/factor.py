@@ -326,7 +326,7 @@ class Factor:
             result = layer.apply(result, coords)
 
         # Ensure the result has complete dimensionality and scope
-        assert set(result.coords) >= set(coords)
+        assert set(result.coords) >= set(coords), (result.coords, coords)
         for k, v in coords.items():
             assert set(v) == set(result.coords[k].data)
 
@@ -447,15 +447,19 @@ COMMON = {
 }
 
 
-def insert(c: Computer, key, *, name: str, target: Key):
+def insert(c: Computer, key, *, name: str, target: Key, dims: str = "ny"):
     """Update `c` to apply the factor :py:`COMMON[name]` to `key`.
 
     Use via :meth:`genno.Computer.apply`.
     """
     k_target = Key(target)
 
-    # TODO allow additional dims, such as "t"
-    coords = ["n::ex world", "y::model"]
+    dim_coord = {
+        "n": "n::ex world",
+        "t": "t::transport",
+        "y": "y::model",
+    }
+    coords = [dim_coord[d] for d in dims]
     se = "config['transport'].ssp"
 
     # Quantify the factor
