@@ -11,14 +11,13 @@ library(tictoc)
 library("xlsx")
 
 country = "Zambia"
+iso3 = "ZMB"
 country_lc = tolower(country)
 
 basin.spdf = readOGR( paste0( getwd(),'/',country, '_NEST_delineation'), 
-                      paste0(country,'_NEST_delineation'), verbose = FALSE )
-basin.sf = st_read( paste0(country, '_NEST_delineation/',country,'_NEST_delineation.shp'))
-plot(basin.sf)
-
-st_crs(basin.sf) = proj4string(basin.spdf)
+                      paste0("basins_by_region_simpl_",iso3), verbose = FALSE )
+basin.spdf$BCU = as.numeric(gsub("\\|.*","",basin.spdf$BCU_name))
+basin.sf = st_read( paste0(country, '_NEST_delineation/',"basins_by_region_simpl_",iso3,".csv"))
 
 # scen_name = "baseline"
 scenarios = c("baseline",
