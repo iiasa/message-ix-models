@@ -345,7 +345,7 @@ def callback(rep: "Reporter", context: "Context") -> None:
         rep,
         ["h2_mix"],
         name="_Hydrogen_tot",
-        filters=dict(r="CO2_cc"),
+        filters=dict(r=["CO2_cc"]),
         unit_key="CO2 emissions",
     )
     # NB Must alias here, otherwise full("Hydrogen_tot") below gets a larger set of
