@@ -122,7 +122,7 @@ ICG_bus:
 
 ICAe_bus:
   description: Internal combustion engine bus using biofuels
-  input: {commodity: lightoil}  # actually biofuel
+  input: {commodity: ethanol}
   report: BUS_ICAe
 
 ICH_bus:
@@ -180,7 +180,7 @@ conm_ar:
 
 conE_ar:
   description: Conventional jet engine passenger aircraft using biofuels
-  input: {commodity: lightoil}  # actually biofuel
+  input: {commodity: ethanol}
   report: AIRp_BIO
 
 FR_ICE_H:
@@ -211,7 +211,7 @@ FR_ICG:
 
 FR_ICAe:
   description: Internal combustion engine freight truck using biofuels
-  input: {commodity: lightoil}  # actually biofuel
+  input: {commodity: ethanol}
   report: FRT_ICAe
 
 FR_ICH:
