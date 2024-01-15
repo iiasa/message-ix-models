@@ -25,7 +25,7 @@ In code, use :func:`.snapshot.load`:
 
     snapshot.load(scenario, 0)
 
-.. note:: For snapshot 0, contrary to the `description of the Zenodo item <https://10.5281/zenodo.5793870>`__, the file cannot be loaded using :meth:`.Scenario.read_excel`.
+.. note:: For snapshot 0, contrary to the `description of the Zenodo item <https://doi.org/10.5281/zenodo.5793870>`__, the file cannot be loaded using :meth:`.Scenario.read_excel`.
    This limitation will be fixed in subsequent snapshots.
 
 Code reference
