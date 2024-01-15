@@ -39,7 +39,8 @@ def add_trsm_dist_basin(sc, scen_name):
     sc.check_out()
 
     for ur in ["_urb", "_rur"]:
-        # load elec_t_d and make a elec_t_basin with outputs to the basin by mode
+        # load elec_t_d and make a elec_t_basin with outputs to the basin by
+        # mode
         inp_t = sc.par("input", {"technology": "elec_t_d"})
         inp_t["mode"] = np.nan
         inp_t["node_loc"] = np.nan
@@ -125,8 +126,10 @@ def add_trsm_dist_basin(sc, scen_name):
         var_t = var_t[var_t["year_vtg"] >= last_vtg_year]
         sc.add_par("var_cost", var_t)
 
-        # add sp_el_I and sp_el_RC to link the new transmission technologies to the new demands
-        # between transmission and final user there is a splitter that takes some energy form rural generation
+        # add sp_el_I and sp_el_RC to link the new transmission technologies to the new
+        # demands
+        # between transmission and final user there is a splitter that takes some energy
+        # form rural generation
 
         inp = sc.par("input", {"technology": "sp_el_I"})
         inp["time"] = np.nan

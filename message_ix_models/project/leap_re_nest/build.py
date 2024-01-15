@@ -27,33 +27,34 @@ from message_ix_models.util import package_data_path
 
 # load a scenario
 # IIASA users
-# mp = ix.Platform(name="ixmp_dev", jvmargs=["-Xmx14G"])
+mp = ix.Platform(name="ixmp_dev", jvmargs=["-Xmx14G"])
 # external users
-mp = ix.Platform(name='local' , jvmargs=['-Xmx14G'])
+# mp = ix.Platform(name='local' , jvmargs=['-Xmx14G'])
 
 modelName = "MESSAGEix_ZM"
 scenarioName = "single_node"
 scen2Name = "sub-units"
 
 # IIASA users
-# sc_ref = message_ix.Scenario(mp, modelName, scenarioName, cache=True)
+sc_ref = message_ix.Scenario(mp, modelName, scenarioName, cache=True)
 mp.add_unit("km3/month")
 mp.add_unit("km3/yr")
 mp.add_unit("GWa/month")
 # sc_ref.to_excel(package_data_path("projects","leap_re_nest","ref_scen.xlsx") )
 # # external users in local database
-sc_ref2 = message_ix.Scenario(mp, modelName, "test", version='new',annotation="load from excel")
+# sc_ref2 = message_ix.Scenario(mp, modelName, "test", version='new',annotation="load from excel")
 
-sc_ref2.read_excel(package_data_path("projects","leap_re_nest","ref_scen.xlsx"),
-                    add_units=True,
-                    init_items=True,
-                    commit_steps=True)
+# sc_ref2.read_excel(package_data_path("projects","leap_re_nest","ref_scen.xlsx"),
+#                     add_units=True,
+#                     init_items=True,
+#                     commit_steps=True)
 # sc_ref2.commit("")
-sc_ref2.solve(solve_options={"lpmethod": "4"},model="MESSAGE")
+# sc_ref2.solve(solve_options={"lpmethod": "4"},model="MESSAGE")
 
-# for all
-# sc = sc_ref.clone(modelName, scen2Name, keep_solution=False)
-sc = sc_ref2.clone(modelName, scen2Name,keep_solution=False)
+# for IIASA
+sc = sc_ref.clone(modelName, scen2Name, keep_solution=False)
+# for external
+# sc = sc_ref2.clone(modelName, scen2Name,keep_solution=False)
 
 sc.check_out()
 # add basins
@@ -119,6 +120,12 @@ for ss in scens:
 
 # when using the CLI it would be something like
 # with the correct scenario name
+# for IIASA users
+# mix-models --url=ixmp://ixmp_dev/MESSAGEix_ZM/MLED_baseline water-ix --regions=ZMB nexus --rcps=7p0 --rels=low
+# mix-models --url=ixmp://ixmp_dev/MESSAGEix_ZM/MLED_improved water-ix --regions=ZMB nexus --rcps=7p0 --rels=low --sdgs=improved
+# mix-models --url=ixmp://ixmp_dev/MESSAGEix_ZM/MLED_ambitious water-ix --regions=ZMB nexus --regions=ZMB --rcps=7p0 --rels=low --sdgs=ambitious
+
+# for external users
 # mix-models --url=ixmp://local/MESSAGEix_ZM/MLED_baseline water-ix --regions=ZMB nexus --rcps=7p0 --rels=low
 # mix-models --url=ixmp://local/MESSAGEix_ZM/MLED_improved water-ix --regions=ZMB nexus --rcps=7p0 --rels=low --sdgs=improved
 # mix-models --url=ixmp://local/MESSAGEix_ZM/MLED_ambitious water-ix --regions=ZMB nexus --rcps=7p0 --rels=low --sdgs=ambitious
@@ -130,7 +137,7 @@ for mm in range(1, 13):
     # print(str(mm))
     mp.add_timeslice(name=str(mm), category="month", duration=0.08333)
 
-scens = ["baseline", "improved", "ambitious"]
+scens = ["improved", "ambitious"]
 for ss in scens:
     scen_nex_name = "MLED_" + ss + "_nexus"
     scen4Name = "MLED_" + ss + "_nexus_full"
