@@ -137,7 +137,7 @@ for mm in range(1, 13):
     # print(str(mm))
     mp.add_timeslice(name=str(mm), category="month", duration=0.08333)
 
-scens = ["improved", "ambitious"]
+scens = ["baseline","improved", "ambitious"]
 for ss in scens:
     scen_nex_name = "MLED_" + ss + "_nexus"
     scen4Name = "MLED_" + ss + "_nexus_full"
