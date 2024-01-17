@@ -1,11 +1,66 @@
 """Tools for World Bank data."""
 import logging
-from typing import TYPE_CHECKING
+from collections import defaultdict
+from typing import TYPE_CHECKING, MutableMapping, Optional
 
 if TYPE_CHECKING:
     import sdmx.model.common
 
 log = logging.getLogger(__name__)
+
+
+def assign_income_groups(
+    cl_node: "sdmx.model.common.Codelist", cl_income_group: "sdmx.model.common.Codelist"
+) -> None:
+    """Annotate `cl_node` with income groups. .
+
+    Each node is assigned an |Annotation| with :py:`id="wb-income-group"`, according to
+    the income groups of its children (countries), as reflected in `cl_income_group`
+    (see :func:`.get_income_group_codelist`). The mode (most frequently occurring value)
+    is used.
+    """
+
+    import sdmx.model.v21 as m
+
+    # Iterate over nodes
+    for node in cl_node:
+        if not len(node.child):
+            continue  # Country → skip
+
+        # Count of appearances of different income groups among `node`'s countries
+        count: MutableMapping[Optional[str], int] = defaultdict(lambda: 0)
+
+        # Iterate over countries
+        for country in node.child:
+            # Identify the income group of `country` from an annotation
+            try:
+                ig = str(
+                    cl_income_group[country.id]
+                    .get_annotation(id="wb-income-group")
+                    .text
+                )
+            except KeyError:
+                # country.id is not in cl_income_group *or* no such annotation
+                ig = None
+
+            # TODO apply a mapping
+
+            count[ig] += 1
+
+        if {None} == set(count):
+            continue  # World node → no direct children that are countries
+
+        # Sort counts from highest to lowest
+        count_sorted = sorted([(v, k) for k, v in count.items()], reverse=True)
+        log.debug(f"{node}: {count_sorted}")
+
+        # Identify the income group with the highest count; not None
+        for N, ig in count_sorted:
+            if ig is not None:
+                break
+
+        # Annotate the node
+        node.annotations.append(m.Annotation(id="wb-income-group", text=ig))
 
 
 def get_income_group_codelist() -> "sdmx.model.common.Codelist":
