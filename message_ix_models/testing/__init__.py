@@ -1,6 +1,7 @@
 import logging
 import os
 from base64 import b32hexencode
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from random import randbytes
@@ -205,6 +206,16 @@ class CliRunner(click.testing.CliRunner):
     @property
     def add_command(self):
         return cli_test_group.add_command
+
+    @contextmanager
+    def temporary_command(self, func: "click.Command", set_target: bool = True):
+        """Temporarily attach command `func` to :func:`cli_test_group`."""
+        assert func.name is not None
+        try:
+            cli_test_group.add_command(func)
+            yield
+        finally:
+            cli_test_group.commands.pop(func.name)
 
 
 @pytest.fixture(scope="session")
