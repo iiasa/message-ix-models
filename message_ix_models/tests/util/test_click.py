@@ -29,6 +29,34 @@ def test_default_path_cb(session_context, mix_models_cli):
     assert result.output.startswith(f"{expected}\n")
 
 
+def test_regions(mix_models_cli):
+    """--regions=… used on both group and a command within the group.
+
+    If the option is not provided to the inner command, the value given to the outer
+    group should persist.
+    """
+
+    @click.group()
+    @common_params("regions")
+    def outer(regions):
+        pass
+
+    @outer.command()
+    @common_params("regions")
+    @click.pass_obj
+    def inner(context, regions):
+        print(context.model.regions)
+
+    # Give the option for the outer group, but not for the inner command
+    with mix_models_cli.temporary_command(outer):
+        result = mix_models_cli.assert_exit_0(
+            ["_test", "outer", "--regions=ZMB", "inner"]
+        )
+
+    # Value given to the outer group is stored and available to the inner command
+    assert "ZMB" == result.output.strip()
+
+
 def test_store_context(mix_models_cli):
     """Test :func:`.store_context`."""
 
