@@ -210,7 +210,7 @@ PARAMS = {
     "regions": Option(
         ["--regions"],
         help="Code list to use for 'node' dimension.",
-        callback=exec_cb("context.model.regions = value"),
+        callback=exec_cb("context.model.regions = value or context.model.regions"),
         type=Choice(codelists("node")),
     ),
     "rep_out_path": Option(
