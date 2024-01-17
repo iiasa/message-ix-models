@@ -9,26 +9,32 @@ log = logging.getLogger(__name__)
 
 
 def get_income_group_codelist() -> "sdmx.model.common.Codelist":
-    """Return a :class:`.Codelist` with World Bank income group information.
+    """Return a |Codelist| with World Bank income group information.
 
     The returned code list is a modified version of the one with URN
-    ``…Codelist=WB:CL_REF_AREA_WDI(1.0)``, available from
-    http://api.worldbank.org/v2/sdmx/rest/codelist/WB/ as described at
-    https://datahelpdesk.worldbank.org/knowledgebase/articles/1886701-sdmx-api-queries.
+    ``…Codelist=WB:CL_REF_AREA_WDI(1.0)`` as described at
+    https://datahelpdesk.worldbank.org/knowledgebase/articles/1886701-sdmx-api-queries
+    and available from http://api.worldbank.org/v2/sdmx/rest/codelist/WB/.
 
     This is augmented with information about the income group and lending category
-    concepts: https://datahelpdesk.worldbank.org/knowledgebase/articles/906519
+    concepts as described at
+    https://datahelpdesk.worldbank.org/knowledgebase/articles/906519
 
     The information is stored two ways:
 
     - Existing codes in the list like "HIC: High income" that designate groups of
       countries are associated with child codes that are designated as members of that
-      country.
+      country. These can be accessed at :attr:`Code.child
+      <sdmx.model.common.Item.child>`.
     - Existing codes in the list like "ABW: Aruba" are annotated with:
 
       - :py:`id="wb-income-group"`: the name of the income group, for instance
         "High income".
       - :py:`id="wb-lending-category"`: the name of the lending category, if any.
+
+      These can be accessed using :attr:`Code.annotations
+      <sdmx.model.common.AnnotableArtefact.annotations>`, :attr:`Code.get_annotation
+      <sdmx.model.common.AnnotableArtefact.get_annotation>`, and other methods.
     """
     import pandas as pd
     import pooch

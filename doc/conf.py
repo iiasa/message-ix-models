@@ -60,6 +60,7 @@ rst_prolog = """
    :language: python
 
 .. |Code| replace:: :class:`~sdmx.model.common.Code`
+.. |Codelist| replace:: :class:`~sdmx.model.common.Codelist`
 .. |Platform| replace:: :class:`~ixmp.Platform`
 .. |Scenario| replace:: :class:`~message_ix.Scenario`
 
