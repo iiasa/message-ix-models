@@ -14,6 +14,7 @@ import plotnine as p9
 from genno import Computer, Key
 
 if TYPE_CHECKING:
+    import plotnine.typing
     from genno.core.key import KeyLike
     from message_ix import Scenario
 
@@ -50,7 +51,7 @@ class Plot(genno.compat.plotnine.Plot):
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic.
-    static = [
+    static: List["plotnine.typing.PlotAddable"] = [
         p9.theme(figure_size=(23.4, 16.5)),  # A3 paper in landscape [inches]
         # p9.theme(figure_size=(11.7, 8.3)),  # A4 paper in landscape
     ]
@@ -122,12 +123,15 @@ class Plot(genno.compat.plotnine.Plot):
         per group, with :attr:`static` geoms and :func:`ggtitle` appended to each.
         """
         for group_key, group_df in data.groupby(*args):
-            yield group_key, (
-                p9.ggplot(group_df)
-                + self.static
-                + self.ggtitle(
-                    group_key if isinstance(group_key, str) else repr(group_key)
-                )
+            yield (
+                group_key,
+                (
+                    p9.ggplot(group_df)
+                    + self.static
+                    + self.ggtitle(
+                        group_key if isinstance(group_key, str) else repr(group_key)
+                    )
+                ),
             )
 
 
@@ -141,7 +145,7 @@ class EmissionsCO2(Plot):
         p9.aes(x="year", y="value", color="region"),
         p9.geom_line(),
         p9.geom_point(),
-        p9.labs(x="Period", y=None, color="Region"),
+        p9.labs(x="Period", y="", color="Region"),
     ]
 
     def generate(self, data: pd.DataFrame, scenario: "Scenario"):
@@ -181,7 +185,7 @@ class FinalEnergy1(Plot):
     static = Plot.static + [
         p9.aes(x="year", y="value", fill="variable"),
         p9.geom_bar(stat="identity", size=5.0),  # 5.0 is the minimum spacing of "year"
-        p9.labs(x="Period", y=None, fill="Commodity"),
+        p9.labs(x="Period", y="", fill="Commodity"),
     ]
 
     def generate(self, data: pd.DataFrame, scenario: "Scenario"):
