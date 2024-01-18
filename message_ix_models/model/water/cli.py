@@ -193,8 +193,8 @@ def nexus(context, regions, rcps, sdgs, rels, macro=False):
 
 @cli.command("cooling")
 @common_params("regions")
-@click.option("--rcps", type=click.Choice(_RCPS))
-@click.option("--rels", type=click.Choice(_REL))
+@click.option("--rcps", default="6p0", type=click.Choice(_RCPS))
+@click.option("--rels", default="low", type=click.Choice(_REL))
 @click.pass_obj
 def cooling_cli(context, regions, rcps, rels):
     """Build and solve model with new cooling technologies."""
