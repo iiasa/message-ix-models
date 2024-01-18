@@ -163,7 +163,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                 ]
             )
 
-            inp_df = inp_df.append(
+            inp_df = inp_df._append(
                 (
                     make_df(
                         "input",
@@ -237,7 +237,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                     time=sub_time,
                 )
 
-                inp = inp.append(
+                inp = inp._append(
                     make_df(
                         "input",
                         technology=rows["tec"],
@@ -280,7 +280,7 @@ def add_infrastructure_techs(context):  # noqa: C901
 
     results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
-    inp_df = inp_df.append(results_new["input"])
+    inp_df = inp_df._append(results_new["input"])
     # inp_df.dropna(inplace = True)
     results["input"] = inp_df
 
@@ -291,7 +291,7 @@ def add_infrastructure_techs(context):  # noqa: C901
 
     out_df = pd.DataFrame([])
     for index, rows in df_out.iterrows():
-        out_df = out_df.append(
+        out_df = out_df._append(
             (
                 make_df(
                     "output",
@@ -314,7 +314,7 @@ def add_infrastructure_techs(context):  # noqa: C901
         )
 
     if context.SDG != "baseline":
-        out_df = out_df.append(
+        out_df = out_df._append(
             make_df(
                 "output",
                 technology=df_out_dist["tec"],
@@ -334,7 +334,7 @@ def add_infrastructure_techs(context):  # noqa: C901
             .pipe(same_time)
         )
     else:
-        out_df = out_df.append(
+        out_df = out_df._append(
             make_df(
                 "output",
                 technology=df_out_dist["tec"],
@@ -353,7 +353,7 @@ def add_infrastructure_techs(context):  # noqa: C901
             .pipe(same_node)
             .pipe(same_time)
         )
-        out_df = out_df.append(
+        out_df = out_df._append(
             make_df(
                 "output",
                 technology=df_out_dist["tec"],
@@ -380,7 +380,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     cap_df = pd.DataFrame([])
     # Adding capacity factor dataframe
     for index, rows in df_cap.iterrows():
-        cap_df = cap_df.append(
+        cap_df = cap_df._append(
             make_df(
                 "capacity_factor",
                 technology=rows["tec"],
@@ -436,7 +436,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     var_cost = pd.DataFrame([])
 
     for index, rows in df_inv.iterrows():
-        fix_cost = fix_cost.append(
+        fix_cost = fix_cost._append(
             make_df(
                 "fix_cost",
                 technology=df_inv["tec"],
@@ -462,7 +462,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     if context.SDG != "baseline":
         for index, rows in df_var.iterrows():
             # Variable cost
-            var_cost = var_cost.append(
+            var_cost = var_cost._append(
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -479,7 +479,7 @@ def add_infrastructure_techs(context):  # noqa: C901
 
         # Variable cost for distribution technologies
         for index, rows in df_var_dist.iterrows():
-            var_cost = var_cost.append(
+            var_cost = var_cost._append(
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -497,7 +497,7 @@ def add_infrastructure_techs(context):  # noqa: C901
     else:
         # Variable cost
         for index, rows in df_var.iterrows():
-            var_cost = var_cost.append(
+            var_cost = var_cost._append(
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -513,7 +513,7 @@ def add_infrastructure_techs(context):  # noqa: C901
             )
 
         for index, rows in df_var_dist.iterrows():
-            var_cost = var_cost.append(
+            var_cost = var_cost._append(
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -528,7 +528,7 @@ def add_infrastructure_techs(context):  # noqa: C901
                 )
             )
 
-            var_cost = var_cost.append(
+            var_cost = var_cost._append(
                 make_df(
                     "var_cost",
                     technology=rows["tec"],
@@ -689,7 +689,7 @@ def add_desalination(context):
     for index, rows in df_desal.iterrows():
         # Fixed costs
         # Prepare dataframe for fix_cost
-        fix_cost = fix_cost.append(
+        fix_cost = fix_cost._append(
             make_df(
                 "fix_cost",
                 technology=rows["tec"],
@@ -705,7 +705,7 @@ def add_desalination(context):
         results["fix_cost"] = fix_cost
 
         # Variable cost
-        var_cost = var_cost.append(
+        var_cost = var_cost._append(
             make_df(
                 "var_cost",
                 technology=rows["tec"],
@@ -721,7 +721,7 @@ def add_desalination(context):
         )
 
     # Dummy  Variable cost for salinewater extrqction
-    # var_cost = var_cost.append(
+    # var_cost = var_cost._append(
     #     make_df(
     #     "var_cost",
     #     technology='extract_salinewater_basin',
@@ -734,7 +734,7 @@ def add_desalination(context):
 
     results["var_cost"] = var_cost
 
-    tl = tl.append(
+    tl = tl._append(
         (
             make_df(
                 "technical_lifetime",
@@ -807,11 +807,11 @@ def add_desalination(context):
 
     results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
-    inp_df = inp_df.append(results_new["input"])
+    inp_df = inp_df._append(results_new["input"])
 
     # Adding input dataframe
     for index, rows in df_desal.iterrows():
-        inp_df = inp_df.append(
+        inp_df = inp_df._append(
             (
                 make_df(
                     "input",
@@ -837,7 +837,7 @@ def add_desalination(context):
 
         results["input"] = inp_df
 
-        out_df = out_df.append(
+        out_df = out_df._append(
             (
                 make_df(
                     "output",

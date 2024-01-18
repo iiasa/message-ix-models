@@ -384,7 +384,7 @@ def add_sectoral_demands(context):
     )
     urban_dis["value"] = (1e-3 * urban_dis["value"]) * (1 - urban_dis["rate"])
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + urban_dis["node"],
@@ -405,7 +405,7 @@ def add_sectoral_demands(context):
     )
     rural_mw["value"] = (1e-3 * rural_mw["value"]) * rural_mw["rate"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + rural_mw["node"],
@@ -426,7 +426,7 @@ def add_sectoral_demands(context):
     )
     rural_dis["value"] = (1e-3 * rural_dis["value"]) * (1 - rural_dis["rate"])
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + rural_dis["node"],
@@ -443,7 +443,7 @@ def add_sectoral_demands(context):
     manuf_mw = industrial_withdrawals_df.reset_index(drop=True)
     manuf_mw["value"] = 1e-3 * manuf_mw["value"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + manuf_mw["node"],
@@ -459,7 +459,7 @@ def add_sectoral_demands(context):
     manuf_uncollected_wst = industrial_return_df.reset_index(drop=True)
     manuf_uncollected_wst["value"] = 1e-3 * manuf_uncollected_wst["value"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + manuf_uncollected_wst["node"],
@@ -482,7 +482,7 @@ def add_sectoral_demands(context):
         1e-3 * urban_collected_wst["value"]
     ) * urban_collected_wst["rate"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + urban_collected_wst["node"],
@@ -505,7 +505,7 @@ def add_sectoral_demands(context):
         1e-3 * rural_collected_wst["value"]
     ) * rural_collected_wst["rate"]
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + rural_collected_wst["node"],
@@ -527,7 +527,7 @@ def add_sectoral_demands(context):
         1 - urban_uncollected_wst["rate"]
     )
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + urban_uncollected_wst["node"],
@@ -550,7 +550,7 @@ def add_sectoral_demands(context):
         1 - rural_uncollected_wst["rate"]
     )
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + rural_uncollected_wst["node"],
@@ -659,7 +659,7 @@ def add_sectoral_demands(context):
     #     unit="-",
     # )
 
-    # rel = rel.append(
+    # rel = rel._append(
     #     make_df(
     #         "relation_activity",
     #         relation="recycle_rel",
@@ -855,7 +855,7 @@ def add_water_availability(context):
         unit="km3/year",
     )
 
-    dmd_df = dmd_df.append(
+    dmd_df = dmd_df._append(
         make_df(
             "demand",
             node="B" + df_gw["Region"].astype(str),

@@ -58,7 +58,7 @@ def add_irr_structure(context):
         node_loc=df_node["region"],
     ).pipe(broadcast, year_vtg=info.Y)
 
-    inp = inp.append(
+    inp = inp._append(
         make_df(
             "input",
             technology="irrigation_oilcrops",
@@ -74,7 +74,7 @@ def add_irr_structure(context):
         ).pipe(broadcast, year_vtg=info.Y)
     )
 
-    inp = inp.append(
+    inp = inp._append(
         make_df(
             "input",
             technology="irrigation_sugarcrops",
@@ -101,7 +101,7 @@ def add_irr_structure(context):
     # Average Value :0.101598174
     # High Value : 0.017123288
 
-    # inp = inp.append(
+    # inp = inp._append(
     #     make_df(
     #         "input",
     #         technology="irrigation_sugarcrops",
@@ -117,7 +117,7 @@ def add_irr_structure(context):
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
     # )
     #
-    # inp = inp.append(
+    # inp = inp._append(
     #     make_df(
     #         "input",
     #         technology="irrigation_oilcrops",
@@ -133,7 +133,7 @@ def add_irr_structure(context):
     #     ).pipe(broadcast, year_vtg=year_wat, year_act=year_wat)
     # )
     #
-    # inp = inp.append(
+    # inp = inp._append(
     #     make_df(
     #         "input",
     #         technology="irrigation_cereal",
@@ -169,7 +169,7 @@ def add_irr_structure(context):
         node_dest=df_node["region"],
     ).pipe(broadcast, year_vtg=info.Y)
 
-    irr_out = irr_out.append(
+    irr_out = irr_out._append(
         make_df(
             "output",
             technology="irrigation_sugarcrops",
@@ -188,7 +188,7 @@ def add_irr_structure(context):
         )
     )
 
-    irr_out = irr_out.append(
+    irr_out = irr_out._append(
         make_df(
             "output",
             technology="irrigation_oilcrops",
