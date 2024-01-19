@@ -61,8 +61,9 @@ class ScenarioInfo:
     .Spec
     """
 
+    # TODO: give this field kw_only=False once python 3.10 is the minimum version
     # Parameters for initialization only
-    scenario_obj: InitVar[Optional["Scenario"]] = field(default=None, kw_only=False)
+    scenario_obj: InitVar[Optional["Scenario"]] = field(default=None)
     empty: InitVar[bool] = False
 
     platform_name: Optional[str] = None
