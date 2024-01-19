@@ -59,7 +59,9 @@ rst_prolog = """
 .. role:: py(code)
    :language: python
 
+.. |Annotation| replace:: :class:`~sdmx.model.common.Annotation`
 .. |Code| replace:: :class:`~sdmx.model.common.Code`
+.. |Codelist| replace:: :class:`~sdmx.model.common.Codelist`
 .. |Platform| replace:: :class:`~ixmp.Platform`
 .. |Scenario| replace:: :class:`~message_ix.Scenario`
 
