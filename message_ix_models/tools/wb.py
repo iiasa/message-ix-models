@@ -2,7 +2,9 @@
 import logging
 from collections import defaultdict
 from functools import lru_cache
-from typing import TYPE_CHECKING, MutableMapping, Optional
+from typing import TYPE_CHECKING, Dict, MutableMapping, Optional
+
+import pandas as pd
 
 if TYPE_CHECKING:
     import sdmx.model.common
@@ -14,6 +16,7 @@ def assign_income_groups(
     cl_node: "sdmx.model.common.Codelist",
     cl_income_group: "sdmx.model.common.Codelist",
     method: str = "population",
+    replace: Optional[Dict[str, str]] = None,
 ) -> None:
     """Annotate `cl_node` with income groups. .
 
@@ -24,20 +27,40 @@ def assign_income_groups(
     Parameters
     ----------
     method : "population" or "count"
-        Method for aggregating
+        Method for aggregation:
 
         - :py:`"population"` (default): the WB World Development Indicators (WDI) 2020
           population for each country is used as a weight, so that the node's income
           group is the income group of the plurality of the population of its children.
         - :py:`"count"`: each country is weighted equally, so that the node's income
           group is the mode (most frequently occurring value) of its childrens'.
+    replace : dict
+        Mapping from wb-income-group text appearing in `cl_income_group` to texts to be
+        attached to `cl_node`. Mapping two keys to the same value effectively combines
+        or aggregates those group.
+
+    Example
+    -------
+    Annotate the R12 node list with income group information, mapping high income
+    countries (HIC) and upper-middle income countries (UMC) into one group and
+    aggregating by population.
+
+    >>> cl_node = get_codelist(f"node/R12")
+    >>> cl_ig = get_income_group_codelist()
+    >>> replace = make_map({"HIC": "HMIC", "UMC": "HMIC"})
+    >>> assign_income_groups(cl_node, cl_ig, replace=replace)
+    >>> cl_node["R12_NAM"].get_annotation(id="wb-income-group").text
+    HMIC
     """
+
     import sdmx
     import sdmx.model.v21 as m
 
+    replace = replace or dict()
+
     if method == "count":
 
-        def weight(code: "sdmx.model.common.Code") -> float:
+        def get_weight(code: "sdmx.model.common.Code") -> float:
             """Weight of the country `code` in aggregation."""
             return 1.0
 
@@ -52,23 +75,25 @@ def assign_income_groups(
         # REF_AREA.
         df = sdmx.to_pandas(dm.data[0])
 
-        def weight(code: "sdmx.model.common.Code") -> float:
+        def get_weight(code: "sdmx.model.common.Code") -> float:
             """Return a weight for the country `code`: its total population."""
             try:
                 return df[code.id].item()
             except KeyError:
-                log.warning(f"No population data for {code!r}")
+                # log.debug(f"No population data for {code!r}; omitted")
                 return 0
     else:
         raise ValueError(f"method={method!r}")
+
+    weight_info = {}  # For debugging
 
     # Iterate over nodes
     for node in cl_node:
         if not len(node.child):
             continue  # Country → skip
 
-        # Count of appearances of different income groups among `node`'s countries
-        count: MutableMapping[Optional[str], float] = defaultdict(lambda: 0.0)
+        # Total weight of different income groups among `node`'s countries
+        weight: MutableMapping[Optional[str], float] = defaultdict(lambda: 0.0)
 
         # Iterate over countries
         for country in node.child:
@@ -79,37 +104,68 @@ def assign_income_groups(
                     .get_annotation(id="wb-income-group")
                     .text
                 )
+                # Apply replacement to `ig`
+                ig = replace.get(ig, ig)
             except KeyError:
-                # country.id is not in cl_income_group *or* no such annotation
+                # country.id is not in cl_income_group, or no such annotation
                 ig = None
 
-            # TODO apply a mapping to `ig`
+            weight[ig] += get_weight(country)
 
-            count[ig] += weight(country)
-
-        if {None} == set(count):
+        if {None} == set(weight):
             continue  # World node → no direct children that are countries
 
-        # Sort counts from highest to lowest
-        count_sorted = sorted([(v, k) for k, v in count.items()], reverse=True)
-        log.debug(f"{node}: {count_sorted}")
+        # Sort weights and group IDs from largest/first alphabetically to smallest/last
+        weight_sorted = sorted([(-v, k) for k, v in weight.items()])
+        weight_info[node.id] = pd.Series({k: -v for v, k in weight_sorted})
 
-        # Identify the income group with the highest count; not None
-        for N, ig in count_sorted:
-            if ig is not None:
-                break
+        # Identify the income group with the largest weight; not None
+        _, ig = next(filter(lambda item: item[1] is not None, weight_sorted))
+
+        try:
+            # Remove any existing annotation
+            node.pop_annotation(id="wb-income-group")
+        except KeyError:
+            pass
 
         # Annotate the node
         node.annotations.append(m.Annotation(id="wb-income-group", text=ig))
 
+    log.debug(
+        "(node, group) weights:\n"
+        + pd.concat(weight_info, axis=1).fillna(0).to_string()
+    )
 
+
+def fetch_codelist(id: str) -> "sdmx.model.common.Codelist":
+    """Retrieve code lists related to the WB World Development Indicators.
+
+    In principle this could be done with :py:`sdmx.Client("WB_WDI").codelist(id)`, but
+    the World Bank SDMX REST API does not support queries for a specific code list. See
+    https://datahelpdesk.worldbank.org/knowledgebase/articles/1886701-sdmx-api-queries.
+
+    :func:`fetch_codelist` retrieves http://api.worldbank.org/v2/sdmx/rest/codelist/WB/,
+    the structure message containing *all* code lists; and extracts and returns the one
+    with the given `id`.
+    """
+    import pooch
+    import sdmx
+
+    file = pooch.retrieve(
+        url="http://api.worldbank.org/v2/sdmx/rest/codelist/WB/", known_hash=None
+    )
+    # Read the retrieved SDMX StructureMessage and extract the code list
+    sm = sdmx.read_sdmx(file)
+
+    return sm.codelist[id]
+
+
+@lru_cache()
 def get_income_group_codelist() -> "sdmx.model.common.Codelist":
     """Return a |Codelist| with World Bank income group information.
 
     The returned code list is a modified version of the one with URN
-    ``…Codelist=WB:CL_REF_AREA_WDI(1.0)`` as described at
-    https://datahelpdesk.worldbank.org/knowledgebase/articles/1886701-sdmx-api-queries
-    and available from http://api.worldbank.org/v2/sdmx/rest/codelist/WB/.
+    ``…Codelist=WB:CL_REF_AREA_WDI(1.0)``, via :func:`.fetch_codelist`.
 
     This is augmented with information about the income group and lending category
     concepts as described at
@@ -123,30 +179,19 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
       <sdmx.model.common.Item.child>`.
     - Existing codes in the list like "ABW: Aruba" are annotated with:
 
-      - :py:`id="wb-income-group"`: the URN of the income group, for instance
+      - :py:`id="wb-income-group"`: the URN of the income group code, for instance
         "urn:sdmx:org.sdmx.infomodel.codelist.Code=WB:CL_REF_AREA_WDI(1.0).HIC". This is
-        a completely unambiguous reference to a code in the same list.
+        an unambiguous reference to a code in the same list.
       - :py:`id="wb-lending-category"`: the name of the lending category, if any.
 
       These can be accessed using :attr:`Code.annotations
       <sdmx.model.common.AnnotableArtefact.annotations>`, :attr:`Code.get_annotation
       <sdmx.model.common.AnnotableArtefact.get_annotation>`, and other methods.
     """
-    import pandas as pd
     import pooch
-    import sdmx
     import sdmx.model.v21 as m
 
-    # Retrieve the WB WDI related code lists
-    # NB Would prefer to use sdmx.Client("WB_WDI").codelist("CL_REF_AREA_WDI"), but the
-    #    World Bank SDMX REST API does not support queries for a specific code list.
-    file = pooch.retrieve(
-        url="http://api.worldbank.org/v2/sdmx/rest/codelist/WB/",
-        known_hash=None,
-    )
-    # Read the retrieved SDMX StructureMessage and extract the code list
-    sm = sdmx.read_sdmx(file)
-    cl = sm.codelist["CL_REF_AREA_WDI"]
+    cl = fetch_codelist("CL_REF_AREA_WDI")
 
     @lru_cache()
     def urn_for(name: str) -> str:
@@ -156,7 +201,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
                 return code.urn
         raise ValueError(name)
 
-    # Retrieve the file containing the classification
+    # Fetch the file containing the classification
     file = pooch.retrieve(
         url="https://datacatalogfiles.worldbank.org/ddh-published/0037712/DR0090755/"
         "CLASS.xlsx",
@@ -178,9 +223,10 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
         try:
             row = tmp.loc[code.id, :]
         except KeyError:
-            log.debug(f"Not in 'List of economies' sheet: {code!r}")
+            # log.debug(f"Not in 'List of economies' sheet: {code!r}")
             continue
 
+        # Annotate wb-income-group; map a value like "Low income" to a URN
         code.annotations.append(
             m.Annotation(id="wb-income-group", text=urn_for(row["Income group"]))
         )
@@ -202,17 +248,17 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
             # Identify the Code for this group ID
             group = cl[group_id]
         except KeyError:
-            log.debug(f"Group {group_id!r} is not in {cl}")
+            # log.debug(f"Group {group_id!r} is not in {cl}")
             continue
 
         for child_id in sorted(group_df["CountryCode"]):
             try:
                 group.append_child(cl[child_id])
             except KeyError:
-                log.debug(f"No code for child {child_id!r}")
+                # log.debug(f"No code for child {child_id!r}")
                 continue
 
-        log.debug(f"{cl[group_id]}: {len(cl[group_id].child)} children")
+        # log.debug(f"{cl[group_id]}: {len(cl[group_id].child)} children")
 
     # Read "Notes" sheet → append to description of `cl`
     tmp = "\n\n".join(pd.read_excel(ef, sheet_name="Notes").dropna()["Notes"])
@@ -228,3 +274,31 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
     )
 
     return cl
+
+
+def make_map(
+    source: Dict[str, str], expand_key_urn: bool = True, expand_value_urn: bool = False
+) -> Dict[str, str]:
+    """Prepare the :py:`map` parameter of :func:`assign_income_groups`.
+
+    The result has one (`key`, `value`) for each in `source`.
+
+    Parameters
+    ----------
+    expand_key_urn : bool
+        If :obj:`True` (the default), replace each `key` from `source` with the URN for
+        the code in ``CL_REF_AREA_WDI`` with :py:`id=key`.
+    expand_value_urn : bool
+        If :obj:`True`, replace each `value` from `source` with the URN for the code in
+        ``CL_REF_AREA_WDI`` with :py:`id=value`.
+    """
+    # Retrieve the code list
+    cl = fetch_codelist("CL_REF_AREA_WDI")
+
+    result = dict()
+    for key, value in source.items():
+        key = cl[key].urn if expand_key_urn else key
+        value = cl[value].urn if expand_value_urn else value
+        result[key] = value
+
+    return result
