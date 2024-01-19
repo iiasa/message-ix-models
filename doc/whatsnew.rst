@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Add :ref:`tools-wb` and :func:`.assign_income_groups` to assign MESSAGE regions to World Bank income groups (:pull:`144`).
 - Adjust :mod:`.report.compat` for genno version 1.22 (:issue:`141`, :pull:`142`).
 
 v2023.11.24

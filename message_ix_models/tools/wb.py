@@ -18,7 +18,7 @@ def assign_income_groups(
     method: str = "population",
     replace: Optional[Dict[str, str]] = None,
 ) -> None:
-    """Annotate `cl_node` with income groups. .
+    """Annotate `cl_node` with income groups.
 
     Each node is assigned an |Annotation| with :py:`id="wb-income-group"`, according to
     the income groups of its children (countries), as reflected in `cl_income_group`
@@ -35,9 +35,9 @@ def assign_income_groups(
         - :py:`"count"`: each country is weighted equally, so that the node's income
           group is the mode (most frequently occurring value) of its childrens'.
     replace : dict
-        Mapping from wb-income-group text appearing in `cl_income_group` to texts to be
-        attached to `cl_node`. Mapping two keys to the same value effectively combines
-        or aggregates those group.
+        Mapping from wb-income-group annotation text appearing in `cl_income_group` to
+        texts to be attached to `cl_node`. Mapping two keys to the same value
+        effectively combines or aggregates those groups. See :func:`.make_map`.
 
     Example
     -------
@@ -82,7 +82,7 @@ def assign_income_groups(
             except KeyError:
                 # log.debug(f"No population data for {code!r}; omitted")
                 return 0
-    else:
+    else:  # pragma: no cover
         raise ValueError(f"method={method!r}")
 
     weight_info = {}  # For debugging
@@ -199,7 +199,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
         for code in cl:
             if str(code.name) == name:
                 return code.urn
-        raise ValueError(name)
+        raise ValueError(name)  # pragma: no cover
 
     # Fetch the file containing the classification
     file = pooch.retrieve(
@@ -279,7 +279,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
 def make_map(
     source: Dict[str, str], expand_key_urn: bool = True, expand_value_urn: bool = False
 ) -> Dict[str, str]:
-    """Prepare the :py:`map` parameter of :func:`assign_income_groups`.
+    """Prepare the :py:`replace` parameter of :func:`assign_income_groups`.
 
     The result has one (`key`, `value`) for each in `source`.
 
