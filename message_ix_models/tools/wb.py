@@ -1,6 +1,7 @@
 """Tools for World Bank data."""
 import logging
 from collections import defaultdict
+from functools import lru_cache
 from typing import TYPE_CHECKING, MutableMapping, Optional
 
 if TYPE_CHECKING:
@@ -122,8 +123,9 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
       <sdmx.model.common.Item.child>`.
     - Existing codes in the list like "ABW: Aruba" are annotated with:
 
-      - :py:`id="wb-income-group"`: the name of the income group, for instance
-        "High income".
+      - :py:`id="wb-income-group"`: the URN of the income group, for instance
+        "urn:sdmx:org.sdmx.infomodel.codelist.Code=WB:CL_REF_AREA_WDI(1.0).HIC". This is
+        a completely unambiguous reference to a code in the same list.
       - :py:`id="wb-lending-category"`: the name of the lending category, if any.
 
       These can be accessed using :attr:`Code.annotations
@@ -146,6 +148,14 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
     sm = sdmx.read_sdmx(file)
     cl = sm.codelist["CL_REF_AREA_WDI"]
 
+    @lru_cache()
+    def urn_for(name: str) -> str:
+        """Return the URN of a code in `cl`, given its `name`."""
+        for code in cl:
+            if str(code.name) == name:
+                return code.urn
+        raise ValueError(name)
+
     # Retrieve the file containing the classification
     file = pooch.retrieve(
         url="https://datacatalogfiles.worldbank.org/ddh-published/0037712/DR0090755/"
@@ -157,7 +167,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
     # Open the retrieved file
     ef = pd.ExcelFile(file)
 
-    # Read the "List of economies" sheet
+    # Read the "List of economies" sheet → store wb-{income-group,lending-category}
     tmp = (
         pd.read_excel(ef, sheet_name="List of economies")
         .drop(["Economy", "Region"], axis=1)
@@ -172,7 +182,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
             continue
 
         code.annotations.append(
-            m.Annotation(id="wb-income-group", text=row["Income group"])
+            m.Annotation(id="wb-income-group", text=urn_for(row["Income group"]))
         )
 
         try:
@@ -180,7 +190,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
                 m.Annotation(id="wb-lending-category", text=row["Lending category"])
             )
         except ValueError:
-            pass
+            pass  # text was None → no value
 
     # Read the "Groups" sheet → assign hierarchy
     for group_id, group_df in (
@@ -192,7 +202,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
             # Identify the Code for this group ID
             group = cl[group_id]
         except KeyError:
-            log.info(f"No code for group {group_id!r}")
+            log.debug(f"Group {group_id!r} is not in {cl}")
             continue
 
         for child_id in sorted(group_df["CountryCode"]):
@@ -202,7 +212,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
                 log.debug(f"No code for child {child_id!r}")
                 continue
 
-        log.info(f"{cl[group_id]}: {len(cl[group_id].child)} children")
+        log.debug(f"{cl[group_id]}: {len(cl[group_id].child)} children")
 
     # Read "Notes" sheet → append to description of `cl`
     tmp = "\n\n".join(pd.read_excel(ef, sheet_name="Notes").dropna()["Notes"])

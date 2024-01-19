@@ -17,35 +17,42 @@ def test_get_income_group_codelist() -> None:
     # NB +1 is for VEN, which is not categorized
     assert n("WLD") == n("LIC") + n("MIC") + n("HIC") + 1
 
+    # Annotations exist and have expected values
+    assert (
+        "urn:sdmx:org.sdmx.infomodel.codelist.Code=WB:CL_REF_AREA_WDI(1.0).HIC"
+        == str(cl["ABW"].get_annotation(id="wb-income-group").text)
+    )
+    assert "IDA" == str(cl["AFG"].get_annotation(id="wb-lending-category").text)
+
 
 EXP = {
     ("R12", "count"): {
-        "R12_AFR": "Lower middle income",
-        "R12_RCPA": "Lower middle income",
-        "R12_CHN": "Upper middle income",
-        "R12_EEU": "High income",
-        "R12_FSU": "Upper middle income",
-        "R12_LAM": "Upper middle income",
-        "R12_MEA": "Lower middle income",
-        "R12_NAM": "High income",
-        "R12_PAO": "High income",
-        "R12_PAS": "Upper middle income",
-        "R12_SAS": "Lower middle income",
-        "R12_WEU": "High income",
+        "R12_AFR": "LMC",
+        "R12_RCPA": "LMC",
+        "R12_CHN": "UMC",
+        "R12_EEU": "HIC",
+        "R12_FSU": "UMC",
+        "R12_LAM": "UMC",
+        "R12_MEA": "LMC",
+        "R12_NAM": "HIC",
+        "R12_PAO": "HIC",
+        "R12_PAS": "UMC",
+        "R12_SAS": "LMC",
+        "R12_WEU": "HIC",
     },
     ("R12", "population"): {
-        "R12_AFR": "Lower middle income",
-        "R12_RCPA": "Lower middle income",
-        "R12_CHN": "Upper middle income",
-        "R12_EEU": "High income",
-        "R12_FSU": "Upper middle income",
-        "R12_LAM": "Upper middle income",
-        "R12_MEA": "Lower middle income",
-        "R12_NAM": "High income",
-        "R12_PAO": "High income",
-        "R12_PAS": "Upper middle income",
-        "R12_SAS": "Lower middle income",
-        "R12_WEU": "High income",
+        "R12_AFR": "LMC",
+        "R12_RCPA": "LMC",
+        "R12_CHN": "UMC",
+        "R12_EEU": "HIC",
+        "R12_FSU": "UMC",
+        "R12_LAM": "UMC",
+        "R12_MEA": "LMC",
+        "R12_NAM": "HIC",
+        "R12_PAO": "HIC",
+        "R12_PAS": "UMC",
+        "R12_SAS": "LMC",
+        "R12_WEU": "HIC",
     },
 }
 
@@ -66,4 +73,6 @@ def test_assign_income_groups(nodes: str, method: str) -> None:
 
     # Each node belongs to the expected income group
     for node, ig in EXP[nodes, method].items():
-        assert ig == str(cl_node[node].get_annotation(id="wb-income-group").text), node
+        assert str(cl_node[node].get_annotation(id="wb-income-group").text).endswith(
+            ig
+        ), node
