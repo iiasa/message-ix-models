@@ -1,6 +1,7 @@
-"""Tools for IEA World Energy Balance (WEB) data."""
+"""Tools for IEA (Extended) World Energy Balance (WEB) data."""
 import logging
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -74,7 +75,7 @@ def load_data(base_path=None) -> pd.DataFrame:
     return _read(base_path, usecols=COLUMNS.keys()).rename(columns=COLUMNS)
 
 
-def generate_code_lists(base_path: Path = None) -> None:
+def generate_code_lists(base_path: Optional[Path] = None) -> None:
     """Extract structure from the data itself."""
     # 'Peek' at the data to inspect the column headers
     peek = _read(base_path, nrows=1)
@@ -95,7 +96,7 @@ def generate_code_lists(base_path: Path = None) -> None:
         except ValueError:
             return False
 
-    for (id, name) in [
+    for id, name in [
         ("COUNTRY", "Country"),
         ("FLOW", "Flow"),
         ("PRODUCT", "Product"),
