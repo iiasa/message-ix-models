@@ -10,17 +10,56 @@ log = logging.getLogger(__name__)
 
 
 def assign_income_groups(
-    cl_node: "sdmx.model.common.Codelist", cl_income_group: "sdmx.model.common.Codelist"
+    cl_node: "sdmx.model.common.Codelist",
+    cl_income_group: "sdmx.model.common.Codelist",
+    method: str = "population",
 ) -> None:
     """Annotate `cl_node` with income groups. .
 
     Each node is assigned an |Annotation| with :py:`id="wb-income-group"`, according to
     the income groups of its children (countries), as reflected in `cl_income_group`
-    (see :func:`.get_income_group_codelist`). The mode (most frequently occurring value)
-    is used.
-    """
+    (see :func:`.get_income_group_codelist`).
 
+    Parameters
+    ----------
+    method : "population" or "count"
+        Method for aggregating
+
+        - :py:`"population"` (default): the WB World Development Indicators (WDI) 2020
+          population for each country is used as a weight, so that the node's income
+          group is the income group of the plurality of the population of its children.
+        - :py:`"count"`: each country is weighted equally, so that the node's income
+          group is the mode (most frequently occurring value) of its childrens'.
+    """
+    import sdmx
     import sdmx.model.v21 as m
+
+    if method == "count":
+
+        def weight(code: "sdmx.model.common.Code") -> float:
+            """Weight of the country `code` in aggregation."""
+            return 1.0
+
+    elif method == "population":
+        # Retrieve WB_WDI data for SERIES=SP_POP_TOTAL (Population, total)
+        dm = sdmx.Client("WB_WDI").data(
+            "WDI", key="A.SP_POP_TOTL.", params=dict(startperiod=2020, endperiod=2020)
+        )
+
+        # Convert to pd.Series with multi-index with levels: REF_AREA, SERIES, FREQ,
+        # TIME_PERIOD. Because of the query, there is only 1 value for each unique
+        # REF_AREA.
+        df = sdmx.to_pandas(dm.data[0])
+
+        def weight(code: "sdmx.model.common.Code") -> float:
+            """Return a weight for the country `code`: its total population."""
+            try:
+                return df[code.id].item()
+            except KeyError:
+                log.warning(f"No population data for {code!r}")
+                return 0
+    else:
+        raise ValueError(f"method={method!r}")
 
     # Iterate over nodes
     for node in cl_node:
@@ -28,7 +67,7 @@ def assign_income_groups(
             continue  # Country → skip
 
         # Count of appearances of different income groups among `node`'s countries
-        count: MutableMapping[Optional[str], int] = defaultdict(lambda: 0)
+        count: MutableMapping[Optional[str], float] = defaultdict(lambda: 0.0)
 
         # Iterate over countries
         for country in node.child:
@@ -43,9 +82,9 @@ def assign_income_groups(
                 # country.id is not in cl_income_group *or* no such annotation
                 ig = None
 
-            # TODO apply a mapping
+            # TODO apply a mapping to `ig`
 
-            count[ig] += 1
+            count[ig] += weight(country)
 
         if {None} == set(count):
             continue  # World node → no direct children that are countries
