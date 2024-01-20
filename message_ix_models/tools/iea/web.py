@@ -1,55 +1,149 @@
 """Tools for IEA (Extended) World Energy Balance (WEB) data."""
 import logging
+import zipfile
+from functools import partial
+from itertools import count
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import yaml
 from iam_units import registry
+from platformdirs import user_cache_path
 from pycountry import countries
 
-from message_ix_models.util import cached, package_data_path
+from message_ix_models.util import (
+    cached,
+    local_data_path,
+    package_data_path,
+    private_data_path,
+)
+from message_ix_models.util._logging import silence_log
 
 log = logging.getLogger(__name__)
 
+DIMS = ["COUNTRY", "PRODUCT", "TIME", "FLOW", "MEASURE"]
+
 #: Subset of columns to load, mapped to returned values.
 COLUMNS = {
-    "Unit": "unit",
     "COUNTRY": "node",
     "PRODUCT": "commodity",
-    "FLOW": "flow",
     "TIME": "year",
+    "FLOW": "flow",
+    "MEASURE": "unit",
     "Flag Codes": "flag",
     "Value": "value",
 }
 
-#: File name containing data.
-FILE = "WBAL_12052022124930839.csv"
-# FILE = "cac5fa90-en.zip"
+#: Mapping from (provider, year, time stamp) → set of file name(s) containing data.
+FILES = {
+    ("IEA", "2023"): ("WBIG1.zip", "WBIG2.zip"),  # Timestamped 20230726T0014
+    ("OECD", "2021"): ("cac5fa90-en.zip",),  # Timestamped 20211119T1000
+    ("OECD", "2022"): ("372f7e29-en.zip",),  # Timestamped 20230406T1000
+    ("OECD", "2023"): ("8624f431-en.zip",),  # Timestamped 20231012T1000
+}
 
-NROWS = 1e6
+
+def unpack_fwf(path: Path, read_kw) -> List[Path]:
+    """Unpack a fixed-width file to a set of other files.
+
+    For the IEA 2023 data, this can on the order of 10 minutes, depending on hardware.
+    """
+    p = path.with_suffix(".parquet")
+
+    cs = 5e6
+    reader = pd.read_fwf(path, iterator=True, chunksize=cs, memory_map=True, **read_kw)
+    names: List[Path] = []
+
+    try:
+        for name in map(lambda i: p.with_stem(f"{p.stem}-{i}"), count()):
+            if name.exists():
+                names.extend(p.parent.glob(f"{p.stem}-*.parquet"))
+                break
+            next(reader).to_parquet(name)
+            names.append(name)
+    except StopIteration:
+        pass
+
+    return names
 
 
-def _read(base_path=None, **kwargs) -> pd.DataFrame:
-    base_path = base_path or package_data_path("iea")
-    path = base_path.joinpath(FILE)
+def unpack_zip(path: Path) -> Path:
+    """Unpack a ZIP archive."""
+    cache_dir = user_cache_path("message-ix-models", ensure_exists=True).joinpath("iea")
 
-    log.info(f"Read {path}")
-    if "nrows" not in kwargs:
-        # Only uncomment (a) or (b):
-        # (a)
-        log.warning(f"Development; only load {NROWS:.0f} observations")
-        kwargs["nrows"] = NROWS
+    log.info(f"Decompress {path} to {cache_dir}")
+    with zipfile.ZipFile(path) as zf:
+        members = zf.infolist()
+        assert 1 == len(members)
+        zi = members[0]
 
-        # (b); fails (exhausts memory)
-        # kwargs.setdefault("engine", "pyarrow")
-
-    return pd.read_csv(path, **kwargs)
+        # Candidate path for the extracted file
+        target = cache_dir.joinpath(zi.filename)
+        if target.exists() and target.stat().st_size >= zi.file_size:
+            log.info(f"Skip extraction of {target}")
+            return target
+        else:
+            return Path(zf.extract(members[0], path=cache_dir))
 
 
 @cached
-def load_data(base_path=None) -> pd.DataFrame:
+def iea_web_data_for_query(
+    base_path: Path, *filenames: str, format: str, query_expr: str
+) -> pd.DataFrame:
+    # Filenames to pass to dask.dataframe
+    names_to_read = []
+
+    # Iterate over origin filenames
+    for filename in filenames:
+        path = base_path.joinpath(filename)
+
+        if path.suffix == ".zip":
+            path = unpack_zip(path)
+
+        if path.suffix == ".TXT":
+            names_to_read.extend(
+                unpack_fwf(
+                    path,
+                    dict(
+                        header=None,
+                        colspecs=[
+                            (0, 26),
+                            (26, 32),
+                            (32, 48),
+                            (48, 64),
+                            (64, 68),
+                            (68, 100),
+                        ],
+                        names=DIMS + ["Value"],
+                    ),
+                )
+            )
+            func = dd.read_parquet
+        else:
+            names_to_read.append(path)
+            func = partial(dd.read_csv, header=0, usecols=list(COLUMNS.keys()))
+
+    with silence_log("fsspec.local"):
+        ddf = func(names_to_read, engine="pyarrow")
+        ddf = ddf[ddf.MEASURE == "TJ"]
+        # NB compute() must precede query(), else "ValueError: The columns in the
+        # computed data do not match the columns in the provided metadata" occurs with
+        # the CSV-formatted data.
+        result = ddf.dropna(subset=["Value"]).compute().query(query_expr)
+
+    log.info(f"{len(result)} observations")
+    return result
+
+
+def load_data(
+    provider: str,
+    edition: str,
+    query_expr="MEASURE == 'TJ' and TIME >= 1980",
+    base_path=None,
+) -> pd.DataFrame:
     """Load data from the IEA World Energy Balances.
 
     Parameters
@@ -72,13 +166,26 @@ def load_data(base_path=None) -> pd.DataFrame:
         - unit
         - flag
     """
-    return _read(base_path, usecols=COLUMNS.keys()).rename(columns=COLUMNS)
+    files = FILES[(provider, edition)]
+
+    # Identify a location that contains the `files`
+    if base_path is None:
+        try:
+            base_path = private_data_path("iea")
+            assert base_path.joinpath(files[0]).exists()
+        except AssertionError:
+            base_path = local_data_path("iea")
+            assert base_path.joinpath(files[0]).exists()
+
+    return iea_web_data_for_query(
+        base_path, *files, format=provider, query_expr=query_expr
+    )
 
 
 def generate_code_lists(base_path: Optional[Path] = None) -> None:
     """Extract structure from the data itself."""
     # 'Peek' at the data to inspect the column headers
-    peek = _read(base_path, nrows=1)
+    peek = iea_web_data_for_query(base_path, nrows=1)
     unit_id_column = peek.columns[0]
 
     # Country names that are already in pycountry
@@ -108,7 +215,7 @@ def generate_code_lists(base_path: Optional[Path] = None) -> None:
         # - Drop empty rows and duplicates.
         # - Drop 'trivial' values, where the name and id are identical.
         df = (
-            _read(base_path, usecols=[id, name])
+            iea_web_data_for_query(base_path, usecols=[id, name])
             .set_axis(["id", "name"], axis=1)
             .dropna(how="all")
             .drop_duplicates()
@@ -146,7 +253,7 @@ def generate_code_lists(base_path: Optional[Path] = None) -> None:
 
 def fuzz_data(base_path=None, target_path=None):
     """Generate a fuzzed subset of the data for testing."""
-    df = _read(base_path)
+    df = iea_web_data_for_query(base_path)
 
     # - Reduce the data by only taking 2 periods for each (flow, product, country).
     # - Replace the actual values with random.

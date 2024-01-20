@@ -147,6 +147,7 @@ The module :mod:`message_ix_models.tools.iea.web` attempts to detect and support
 The approach to handling proprietary data is the same as in :mod:`.project.advance` and :mod:`.project.ssp`:
 
 - A copy of the data are stored in :mod:`message_data`.
+  Non-IIASA users must obtain their own license to access and use the data.
 - :mod:`message_ix_models` contains only a ‘fuzzed’ version of the data (same structure, random values) for testing purposes.
 
 .. _tools-wb:
