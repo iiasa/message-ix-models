@@ -38,8 +38,8 @@ def build(scenario):
         scenario.add_set("commodity", "freshwater_supply")
 
         water_dict = pd.read_excel(
-            "C:/Users\maczek\PycharmProjects\message_data\message_data\model\material\petrochemical model fixes notebooks/water_tec_pars.xlsx",
-            sheet_name=None,
+            private_data_path("material", "other", "water_tec_pars.xlsx"),
+            sheet_name=None
         )
         for par in water_dict.keys():
             scenario.add_par(par, water_dict[par])
@@ -204,7 +204,7 @@ def build_scen(context, datafile, tag, mode, scenario_name):
 
         # Clone and set up
 
-        if context.scenario_info["model"] == "SSP_dev_SSP2_v0.1":
+        if "SSP_dev" in context.scenario_info["model"]:
             scenario = build(
                 context.get_scenario().clone(
                     model=context.scenario_info["model"],
@@ -290,7 +290,7 @@ def build_scen(context, datafile, tag, mode, scenario_name):
 @click.option("--add_calibration", default=False)
 @click.pass_obj
 def solve_scen(
-    context, datafile, model_name, scenario_name, add_calibration, add_macro, version
+        context, datafile, model_name, scenario_name, add_calibration, add_macro, version
 ):
     """Solve a scenario.
 
@@ -482,7 +482,6 @@ from .data_petro import gen_data_petro_chemicals
 from .data_power_sector import gen_data_power_sector
 from .data_methanol_new import gen_data_methanol_new
 from .data_ammonia_new import gen_all_NH3_fert
-
 
 DATA_FUNCTIONS_1 = [
     # gen_data_buildings,
