@@ -89,7 +89,7 @@ class ScenarioInfo:
     #: :obj:`True` if a MESSAGE-MACRO scenario.
     is_message_macro: bool = False
 
-    _yv_ya: pd.DataFrame | None = None
+    _yv_ya: Optional[pd.DataFrame] = None
 
     def __post_init__(self, scenario_obj: Optional["Scenario"], empty: bool):
         if not scenario_obj:
