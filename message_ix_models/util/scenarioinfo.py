@@ -19,7 +19,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-@dataclass(kw_only=True)
+# TODO: use kw_only=True once python 3.10 is oldest supported version
+@dataclass()
 class ScenarioInfo:
     """Information about a |Scenario| object.
 
@@ -60,8 +61,9 @@ class ScenarioInfo:
     .Spec
     """
 
+    # TODO: give this field kw_only=False once python 3.10 is the minimum version
     # Parameters for initialization only
-    scenario_obj: InitVar[Optional["Scenario"]] = field(default=None, kw_only=False)
+    scenario_obj: InitVar[Optional["Scenario"]] = field(default=None)
     empty: InitVar[bool] = False
 
     platform_name: Optional[str] = None
@@ -87,7 +89,7 @@ class ScenarioInfo:
     #: :obj:`True` if a MESSAGE-MACRO scenario.
     is_message_macro: bool = False
 
-    _yv_ya: pd.DataFrame = None
+    _yv_ya: Optional[pd.DataFrame] = None
 
     def __post_init__(self, scenario_obj: Optional["Scenario"], empty: bool):
         if not scenario_obj:
@@ -192,10 +194,12 @@ class ScenarioInfo:
 
     def update(self, other: "ScenarioInfo"):
         """Update with the set elements of `other`."""
-        for name, data in other.set.items():
-            self.set[name].extend(filter(lambda id: id not in self.set[name], data))
+        for name, data_list in other.set.items():
+            self.set[name].extend(
+                filter(lambda id: id not in self.set[name], data_list)
+            )
 
-        for name, data in other.par.items():
+        for name, data_frame in other.par.items():
             raise NotImplementedError("Merging parameter data")
 
     def __iter__(self):
