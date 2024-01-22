@@ -2,13 +2,16 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import pandas as pd
 import plotnine as p9
 from genno import Computer
 from genno.compat.plotnine import Plot as BasePlot
 from iam_units import registry
+
+if TYPE_CHECKING:
+    import plotnine.typing
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +41,7 @@ class Plot(BasePlot):
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic
-    static = [p9.theme(figure_size=(11.7, 8.3))]
+    static: List["plotnine.typing.PlotAddable"] = [p9.theme(figure_size=(11.7, 8.3))]
 
     #: Fixed plot title string. If not given, the first line of the class docstring is
     #: used.
@@ -230,7 +233,12 @@ class LDV_IO(Plot):
     inputs = ["input:nl-t-yv-ya:transport all"]
     static = Plot.static + [
         p9.aes(x="ya", y="input", color="t"),
-        p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}")),
+        # TODO remove typing exclusion once plotnine >0.12.4 is released
+        p9.facet_wrap(
+            ["nl"],
+            ncol=2,
+            labeller=LabelFirst("node: {}"),  # type: ignore [arg-type]
+        ),
         p9.geom_line(),
         p9.geom_point(),
         p9.labs(x="Period", y="", color="LDV technology"),
@@ -247,9 +255,14 @@ class LDVTechShare0(Plot):
     inputs = ["out:nl-t-ya:transport"]
     static = Plot.static + [
         p9.aes(x="ya", y="value", fill="t"),
-        p9.facet_wrap(["nl"], ncol=2, labeller=LabelFirst("node: {}")),
+        # TODO remove typing exclusion once plotnine >0.12.4 is released
+        p9.facet_wrap(
+            ["nl"],
+            ncol=2,
+            labeller=LabelFirst("node: {}"),  # type: ignore [arg-type]
+        ),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y=None, fill="LDV technology"),
+        p9.labs(x="Period", y="", fill="LDV technology"),
     ]
 
     def generate(self, data):
@@ -304,7 +317,7 @@ class DemandCalibrated(Plot):
     static = Plot.static + [
         p9.aes(x="y", y="demand", fill="c_group"),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y=None, fill="Transport mode group"),
+        p9.labs(x="Period", y="", fill="Transport mode group"),
     ]
 
     def generate(self, data, commodities, cg):
@@ -322,7 +335,7 @@ class DemandCalibratedCap(Plot):
     static = Plot.static + [
         p9.aes(x="y", y="value", fill="c"),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y=None, fill="Transport mode group"),
+        p9.labs(x="Period", y="", fill="Transport mode group"),
     ]
 
     def generate(self, data, commodities, cg):
@@ -351,7 +364,7 @@ class DemandExo(Plot):
     static = Plot.static + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y=None, fill="Mode (tech group)"),
+        p9.labs(x="Period", y="", fill="Mode (tech group)"),
     ]
 
     def generate(self, data):
@@ -373,7 +386,7 @@ class DemandExoCap(Plot):
     static = Plot.static + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y=None, fill="Mode (tech group)"),
+        p9.labs(x="Period", y="", fill="Mode (tech group)"),
     ]
 
     def generate(self, data):
