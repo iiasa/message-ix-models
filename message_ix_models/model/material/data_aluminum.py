@@ -1,28 +1,21 @@
 import pandas as pd
-import numpy as np
 from collections import defaultdict
 from .data_util import read_timeseries
 from pathlib import Path
 
-import message_ix
-import ixmp
 
+from .material_demand import material_demand_calc
 from .util import read_config
 from .data_util import read_rel
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
-    make_io,
-    make_matched_dfs,
     same_node,
-    add_par_data,
     private_data_path,
 )
 
 # Get endogenous material demand from buildings interface
-from .data_buildings import get_scen_mat_demand
-from . import get_spec
 
 
 def read_data_aluminum(scenario):
@@ -45,14 +38,18 @@ def read_data_aluminum(scenario):
         sheet_n_relations = "relations_R11"
 
     # Read the file
-    data_alu = pd.read_excel(private_data_path("material", "aluminum", fname), sheet_name=sheet_n)
+    data_alu = pd.read_excel(
+        private_data_path("material", "aluminum", fname), sheet_name=sheet_n
+    )
 
     # Drop columns that don't contain useful information
     data_alu = data_alu.drop(["Source", "Description"], axis=1)
 
     data_alu_rel = read_rel(scenario, "aluminum", "aluminum_techno_economic.xlsx")
 
-    data_aluminum_ts = read_timeseries(scenario, "aluminum", "aluminum_techno_economic.xlsx")
+    data_aluminum_ts = read_timeseries(
+        scenario, "aluminum", "aluminum_techno_economic.xlsx"
+    )
 
     # Unit conversion
 
@@ -283,17 +280,7 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    demand = derive_aluminum_demand(scenario)
-    df = make_df(
-        parname,
-        level="demand",
-        commodity="aluminum",
-        value=demand.value,
-        unit="t",
-        year=demand.year,
-        time="year",
-        node=demand.node,
-    )  # .pipe(broadcast, node=nodes)
+    df = material_demand_calc.derive_demand("aluminum", scenario, old_gdp=False)
     results[parname].append(df)
 
     # Special treatment for time-varying params
@@ -454,6 +441,7 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     results_aluminum = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
     return results_aluminum
+
 
 def gen_mock_demand_aluminum(scenario):
 

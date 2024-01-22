@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
+
 from collections import defaultdict
-from .data_util import read_timeseries, read_rel
-
-import message_ix
-
-from .util import read_config
+from message_data.model.material.data_util import read_timeseries, read_rel
+from message_data.model.material.util import read_config
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
@@ -32,8 +30,9 @@ def read_data_petrochemicals(scenario):
         sheet_n = "data_R11"
 
     # Read the file
-    data_petro = pd.read_excel(private_data_path("material", "petrochemicals", fname),
-    sheet_name=sheet_n)
+    data_petro = pd.read_excel(
+        private_data_path("material", "petrochemicals", fname), sheet_name=sheet_n
+    )
     # Clean the data
 
     data_petro = data_petro.drop(["Source", "Description"], axis=1)
@@ -45,7 +44,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
 
     context = read_config()
     s_info = ScenarioInfo(scenario)
-    modelyears = s_info.Y #s_info.Y is only for modeling years
+    modelyears = s_info.Y  # s_info.Y is only for modeling years
     fy = scenario.firstmodelyear
     nodes = s_info.N
 
@@ -53,18 +52,32 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
         demand_t0, income_t0, income_t1, elasticity
     ):
         return (
-            elasticity * demand_t0 * ((income_t1 - income_t0) / income_t0)
+            elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
         ) + demand_t0
 
-    df_gdp = scenario.par("bound_activity_lo", filters={"technology": "GDP"})
-    df = df_gdp.pivot(columns="year_act", values="value", index="node_loc").reset_index()
-    df["node_loc"] = df["node_loc"].str.replace("R12_", "")
-    df = df.rename({"node_loc": "Region"}, axis=1)
-
-    df_demand = df.copy(deep=True)
-    num_cols = [i for i in df_demand.columns if type(i) == int]
-    hist_yrs = [i for i in num_cols if i <= fy]
-    df_demand = df_demand.drop(hist_yrs, axis=1)
+    gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
+    mer_to_ppp = pd.read_csv(
+        private_data_path("material", "other", "mer_to_ppp_default.csv")
+    ).set_index("node", "year")
+    # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year") TODO: might need to be re-activated for different SSPs
+    gdp_mer = gdp_mer.merge(
+        mer_to_ppp.reset_index()[["node", "year", "value"]],
+        left_on=["node_loc", "year_act"],
+        right_on=["node", "year"],
+    )
+    gdp_mer["gdp_ppp"] = gdp_mer["value_y"] * gdp_mer["value_x"]
+    gdp_mer = gdp_mer[["year", "node_loc", "gdp_ppp"]].reset_index()
+    gdp_mer["Region"] = gdp_mer["node_loc"]  # .str.replace("R12_", "")
+    df_gdp_ts = gdp_mer.pivot(
+        index="Region", columns="year", values="gdp_ppp"
+    ).reset_index()
+    num_cols = [i for i in df_gdp_ts.columns if type(i) == int]
+    hist_yrs = [i for i in num_cols if i < fy]
+    df_gdp_ts = (
+        df_gdp_ts.drop([i for i in hist_yrs if i in df_gdp_ts.columns], axis=1)
+        .set_index("Region")
+        .sort_index()
+    )
 
     # 2018 production
     # Use as 2020
@@ -78,39 +91,50 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     # r = ['R12_AFR', 'R12_RCPA', 'R12_EEU', 'R12_FSU', 'R12_LAM', 'R12_MEA',\
     #        'R12_NAM', 'R12_PAO', 'R12_PAS', 'R12_SAS', 'R12_WEU',"R12_CHN"]
 
-    if "R12_CHN" in nodes:
-        nodes.remove("R12_GLB")
-        region_set = 'R12_'
-        dem_2020 = np.array([2.4, 0.44, 3, 5, 11, 40.3, 49.8, 11, 37.5, 10.7, 29.2, 50.5])
-        dem_2020 = pd.Series(dem_2020)
+    # if "R12_CHN" in nodes:
+    #     nodes.remove("R12_GLB")
+    #     dem_2020 = np.array([2.4, 0.44, 3, 5, 11, 40.3, 49.8, 11, 37.5, 10.7, 29.2, 50.5])
+    #     dem_2020 = pd.Series(dem_2020)
+    #
+    # else:
+    #     nodes.remove("R11_GLB")
+    #     dem_2020 = np.array([2, 75, 30, 4, 11, 42, 60, 32, 30, 29, 35])
+    #     dem_2020 = pd.Series(dem_2020)
 
-    else:
-        nodes.remove("R11_GLB")
-        region_set = 'R11_'
-        dem_2020 = np.array([2, 75, 30, 4, 11, 42, 60, 32, 30, 29, 35])
-        dem_2020 = pd.Series(dem_2020)
+    from message_data.model.material.material_demand.material_demand_calc import (
+        read_base_demand,
+    )
 
-    df_demand[fy] = dem_2020
+    df_demand_2020 = read_base_demand(
+        private_data_path() / "material" / "petrochemicals/demand_petro.yaml"
+    )
+    df_demand_2020 = df_demand_2020.rename({"region": "Region"}, axis=1)
+    df_demand = df_demand_2020.pivot(index="Region", columns="year", values="value")
+    dem_next_yr = df_demand
 
     for i in range(len(modelyears) - 1):
         income_year1 = modelyears[i]
         income_year2 = modelyears[i + 1]
 
         if income_year2 >= 2030:
-            dem_2020 = get_demand_t1_with_income_elasticity(
-                dem_2020, df[income_year1], df[income_year2], gdp_elasticity_2030
+            dem_next_yr = get_demand_t1_with_income_elasticity(
+                dem_next_yr,
+                df_gdp_ts[income_year1],
+                df_gdp_ts[income_year2],
+                gdp_elasticity_2030,
             )
         else:
-            dem_2020 = get_demand_t1_with_income_elasticity(
-                dem_2020, df[income_year1], df[income_year2], gdp_elasticity_2020
+            dem_next_yr = get_demand_t1_with_income_elasticity(
+                dem_next_yr,
+                df_gdp_ts[income_year1],
+                df_gdp_ts[income_year2],
+                gdp_elasticity_2020,
             )
-        df_demand[income_year2] = dem_2020
+        df_demand[income_year2] = dem_next_yr
 
-    df_melt = df_demand.melt(
-        id_vars=["Region"], value_vars=df_demand.columns, var_name="year"
-    )
+    df_melt = df_demand.melt(ignore_index=False).reset_index()
 
-    return message_ix.make_df(
+    return make_df(
         "demand",
         unit="t",
         level="demand",
@@ -118,7 +142,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
         time="year",
         commodity="HVC",
         year=df_melt.year,
-        node=(region_set + df_melt["Region"]),
+        node=df_melt["Region"],
     )
 
 
@@ -132,8 +156,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     # Techno-economic assumptions
     data_petro = read_data_petrochemicals(scenario)
-    data_petro_ts = read_timeseries(scenario, "petrochemicals",
-    "petrochemicals_techno_economic.xlsx")
+    data_petro_ts = read_timeseries(
+        scenario, "petrochemicals", "petrochemicals_techno_economic.xlsx"
+    )
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
@@ -285,20 +310,17 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                                 .pipe(same_node)
                             )
                         else:
-                            df = (
-                                make_df(
-                                    param_name,
-                                    technology=t,
-                                    commodity=com,
-                                    level=lev,
-                                    mode=mod,
-                                    value=val[regions[regions == rg].index[0]],
-                                    node_loc=rg,
-                                    unit="t",
-                                    **common
-                                )
-                                .pipe(same_node)
-                            )
+                            df = make_df(
+                                param_name,
+                                technology=t,
+                                commodity=com,
+                                level=lev,
+                                mode=mod,
+                                value=val[regions[regions == rg].index[0]],
+                                node_loc=rg,
+                                unit="t",
+                                **common
+                            ).pipe(same_node)
 
                     elif param_name == "share_mode_up":
                         mod = split[1]
@@ -352,9 +374,9 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
         "year_act": "2020",
         "time": "year",
         "value": [0.4, 0.4],
-        "unit": "-"
+        "unit": "-",
     }
-    results["share_mode_lo"].append(message_ix.make_df("share_mode_lo", **share_dict))
+    results["share_mode_lo"].append(make_df("share_mode_lo", **share_dict))
 
     # Add demand
     # Create external demand param
@@ -364,16 +386,16 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     context = read_config()
 
     df_pars = pd.read_excel(
-        private_data_path(
-            "material", "methanol", "methanol_sensitivity_pars.xlsx"
-        ),
+        private_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
         sheet_name="Sheet1",
         dtype=object,
     )
     pars = df_pars.set_index("par").to_dict()["value"]
     default_gdp_elasticity_2020 = pars["hvc_elasticity_2020"]
     default_gdp_elasticity_2030 = pars["hvc_elasticity_2030"]
-    demand_HVC = gen_mock_demand_petro(scenario, default_gdp_elasticity_2020, default_gdp_elasticity_2030)
+    demand_HVC = gen_mock_demand_petro(
+        scenario, default_gdp_elasticity_2020, default_gdp_elasticity_2030
+    )
     results["demand"].append(demand_HVC)
 
     # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
@@ -456,23 +478,33 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
     # modify steam cracker hist data (naphtha -> gasoil) to make model feasible
-    df_cap = pd.read_csv(private_data_path(
+    df_cap = pd.read_csv(
+        private_data_path(
             "material", "petrochemicals", "steam_cracking_hist_new_cap.csv"
-        ))
-    df_act = pd.read_csv(private_data_path(
-            "material", "petrochemicals", "steam_cracking_hist_act.csv"
-        ))
-    df_act.loc[df_act["mode"]=="naphtha", "mode"] = "vacuum_gasoil"
+        )
+    )
+    df_act = pd.read_csv(
+        private_data_path("material", "petrochemicals", "steam_cracking_hist_act.csv")
+    )
+    df_act.loc[df_act["mode"] == "naphtha", "mode"] = "vacuum_gasoil"
     df = results["historical_activity"]
-    results["historical_activity"] = pd.concat([df.loc[df["technology"]!="steam_cracker_petro"], df_act])
+    results["historical_activity"] = pd.concat(
+        [df.loc[df["technology"] != "steam_cracker_petro"], df_act]
+    )
     df = results["historical_new_capacity"]
-    results["historical_new_capacity"] = pd.concat([df.loc[df["technology"]!="steam_cracker_petro"], df_cap])
+    results["historical_new_capacity"] = pd.concat(
+        [df.loc[df["technology"] != "steam_cracker_petro"], df_cap]
+    )
 
     # remove growth constraint for R12_AFR to make trade constraints feasible
     df = results["growth_activity_up"]
-    results["growth_activity_up"] = df[~((df["technology"]=="steam_cracker_petro") &
-                                          (df["node_loc"]=="R12_AFR") &
-                                          (df["year_act"]==2020))]
+    results["growth_activity_up"] = df[
+        ~(
+            (df["technology"] == "steam_cracker_petro")
+            & (df["node_loc"] == "R12_AFR")
+            & (df["year_act"] == 2020)
+        )
+    ]
 
     # add 25% total trade bound
     df_dem = results["demand"]
@@ -487,7 +519,11 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
         "time": "year",
         "unit": "-",
     }
-    results["bound_activity_up"] = pd.concat([results["bound_activity_up"],
-                                              message_ix.make_df("bound_activity_up", **df_dem, **par_dict)])
+    results["bound_activity_up"] = pd.concat(
+        [
+            results["bound_activity_up"],
+            make_df("bound_activity_up", **df_dem, **par_dict),
+        ]
+    )
 
     return results

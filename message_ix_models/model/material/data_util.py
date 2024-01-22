@@ -3,15 +3,15 @@ import os
 import message_ix
 import ixmp
 
-from .util import read_config
-import re
+from message_data.model.material.util import (
+    read_config,
+    read_yaml_file,
+    invert_dictionary,
+)
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import private_data_path
 
-from message_data.tools.utilities.get_optimization_years import (
-    main as get_optimization_years,
-)
 
 pd.options.mode.chained_assignment = None
 
@@ -178,14 +178,16 @@ def modify_demand_and_hist_activity(scen):
     for r in df_spec["REGION"].unique():
         df_spec_temp = df_spec.loc[df_spec["REGION"] == r]
         df_spec_total_temp = df_spec_total.loc[df_spec_total["REGION"] == r]
-        df_spec_temp.loc[:,"i_spec"] = (
-            df_spec_temp.loc[:,"RESULT"] / df_spec_total_temp.loc[:,"RESULT"].values[0]
+        df_spec_temp.loc[:, "i_spec"] = (
+            df_spec_temp.loc[:, "RESULT"]
+            / df_spec_total_temp.loc[:, "RESULT"].values[0]
         )
         df_spec_new = pd.concat([df_spec_temp, df_spec_new], ignore_index=True)
 
     df_spec_new.drop(["FUEL", "RYEAR", "UNIT_OUT", "RESULT"], axis=1, inplace=True)
     df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] = (
-        df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] * 0.67
+        df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"]
+        * 0.67
     )
 
     df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
@@ -240,8 +242,9 @@ def modify_demand_and_hist_activity(scen):
     for r in df_therm["REGION"].unique():
         df_therm_temp = df_therm.loc[df_therm["REGION"] == r]
         df_therm_total_temp = df_therm_total.loc[df_therm_total["REGION"] == r]
-        df_therm_temp.loc[:,"i_therm"] = (
-            df_therm_temp.loc[:,"RESULT"] / df_therm_total_temp.loc[:,"RESULT"].values[0]
+        df_therm_temp.loc[:, "i_therm"] = (
+            df_therm_temp.loc[:, "RESULT"]
+            / df_therm_total_temp.loc[:, "RESULT"].values[0]
         )
         df_therm_new = pd.concat([df_therm_temp, df_therm_new], ignore_index=True)
         df_therm_new = df_therm_new.drop(["RESULT"], axis=1)
@@ -261,7 +264,7 @@ def modify_demand_and_hist_activity(scen):
 
     df_therm_new.loc[index, "i_therm"] = 0.2
 
-    df_therm_new = df_therm_new.groupby(["REGION"]).sum().reset_index()
+    df_therm_new = df_therm_new.groupby(["REGION"]).sum(numeric_only=True).reset_index()
 
     # TODO: Useful technology efficiencies will also be included
 
@@ -404,6 +407,227 @@ def modify_demand_and_hist_activity(scen):
         scen.remove_par("growth_activity_lo", df)
         scen.commit(comment="remove growth_lo constraints")
 
+    scen.check_out()
+    for substr in ["up", "lo"]:
+        df = scen.par(f"bound_activity_{substr}")
+        scen.remove_par(
+            f"bound_activity_{substr}",
+            df[(df["technology"].str.endswith("_fs")) & (df["year_act"] == 2020)],
+        )
+        scen.remove_par(
+            f"bound_activity_{substr}",
+            df[(df["technology"].str.endswith("_i")) & (df["year_act"] == 2020)],
+        )
+        scen.remove_par(
+            f"bound_activity_{substr}",
+            df[(df["technology"].str.endswith("_I")) & (df["year_act"] == 2020)],
+        )
+    scen.commit(comment="remove bounds")
+
+
+def calc_hist_activity_new(scen, years):
+    df_orig = get_hist_act_data("IEA_mappings.csv", years=years)
+    df_mat = get_hist_act_data("IEA_mappings_industry.csv", years=years)
+    df_chem = get_hist_act_data("IEA_mappings_chemicals.csv", years=years)
+
+    # scale chemical activity to deduct explicitly represented activities of MESSAGEix-Materials
+    # (67% are covered by NH3, HVCs and methanol)
+    df_chem = df_chem.mul(0.67)
+    df_mat = df_mat.sub(df_chem, fill_value=0)
+
+    # calculate share of residual activity not covered by industry sector explicit technologies
+    df = (
+        df_mat.div(df_orig)
+        .sub(1)
+        .mul(-1)
+        .dropna()
+        .sort_values("Value", ascending=False)
+    )
+    # manually set elec_i to 0 since all of it is covered by iron/steel sector
+    df.loc[:, "elec_i", :] = 0
+
+    df = df.round(5)
+    tecs = df.index.get_level_values("technology").unique()
+
+    df_hist_act = scen.par(
+        "historical_activity", filters={"technology": tecs, "year_act": years}
+    )
+
+    df_hist_act_merged = df_hist_act.set_index(
+        ["node_loc", "technology", "year_act"]
+    ).join(df)
+    df_hist_act_merged["value"] *= df_hist_act_merged["Value"]
+    df_hist_act_merged = df_hist_act_merged.drop("Value", axis=1)
+
+    return df_hist_act_merged
+
+
+def calc_demand_shares(Inp, base_year):
+    # TODO: refactor to use external mapping file
+    i_spec_material_flows = ["NONMET", "CHEMICAL", "NONFERR"]
+    i_therm_material_flows = ["NONMET", "CHEMICAL", "IRONSTL"]
+    i_flow = ["TOTIND"]
+    i_spec_prods = ["ELECTR", "NONBIODIES", "BIOGASOL"]
+    year = base_year
+
+    df_i_spec = Inp[
+        (Inp["FLOW"].isin(i_flow))
+        & (Inp["PRODUCT"].isin(i_spec_prods))
+        & ~((Inp["PRODUCT"] == ("ELECTR")) & (Inp["FLOW"] == "IRONSTL"))
+        & (Inp["TIME"] == year)
+    ]
+    df_i_spec = df_i_spec.groupby("REGION").sum(numeric_only=True)
+
+    df_i_spec_materials = Inp[
+        (Inp["FLOW"].isin(i_spec_material_flows))
+        & (Inp["PRODUCT"].isin(i_spec_prods))
+        & (Inp["TIME"] == year)
+    ]
+    df_i_spec_materials = df_i_spec_materials.groupby("REGION").sum(numeric_only=True)
+
+    df_i_spec_resid_shr = (
+        df_i_spec_materials.div(df_i_spec, fill_value=0).sub(1).mul(-1)
+    )
+    df_i_spec_resid_shr["commodity"] = "i_spec"
+
+    df_elec_i = Inp[
+        ((Inp["PRODUCT"] == ("ELECTR")) & (Inp["FLOW"] == "IRONSTL"))
+        & (Inp["TIME"] == year)
+    ]
+    df_elec_i = df_elec_i.groupby("REGION").sum(numeric_only=True)
+
+    agg_prods = ["MRENEW", "TOTAL"]
+    df_i_therm = Inp[
+        (Inp["FLOW"].isin(i_flow))
+        & ~(Inp["PRODUCT"].isin(i_spec_prods))
+        & ~(Inp["PRODUCT"].isin(agg_prods))
+        & (Inp["TIME"] == year)
+    ]
+    df_i_therm = df_i_therm.groupby("REGION").sum(numeric_only=True)
+    df_i_therm = df_i_therm.add(df_elec_i, fill_value=0)
+
+    agg_prods = ["MRENEW", "TOTAL"]
+    df_i_therm_materials = Inp[
+        (Inp["FLOW"].isin(i_therm_material_flows))
+        & ~(Inp["PRODUCT"].isin(i_spec_prods))
+        & ~(Inp["PRODUCT"].isin(agg_prods))
+        & (Inp["TIME"] == year)
+    ]
+    df_i_therm_materials = df_i_therm_materials.groupby(["REGION", "FLOW"]).sum(
+        numeric_only=True
+    )
+    # only two thirds of chemical consumption is represented by Materials module currently
+    df_i_therm_materials.loc[
+        df_i_therm_materials.index.get_level_values(1) == "CHEMICAL", "Value"
+    ] *= 0.67
+
+    df_i_therm_materials = df_i_therm_materials.groupby("REGION").sum(numeric_only=True)
+    df_i_therm_materials = df_i_therm_materials.add(df_elec_i, fill_value=0)
+
+    df_i_therm_resid_shr = df_i_therm_materials.div(df_i_therm).sub(1).mul(-1)
+    df_i_therm_resid_shr["commodity"] = "i_therm"
+
+    return (
+        pd.concat([df_i_spec_resid_shr, df_i_therm_resid_shr])
+        .set_index("commodity", append=True)
+        .drop("TIME", axis=1)
+    )
+
+
+def modify_industry_demand(scen, baseyear):
+    comms = ["i_spec", "i_therm"]
+    path = os.path.join(
+        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
+    )
+    Inp = pd.read_parquet(path, engine="fastparquet")
+    Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
+    demand_shrs_new = calc_demand_shares(Inp, baseyear)
+    df_demands = scen.par("demand", filters={"commodity": comms}).set_index(
+        ["node", "commodity"]
+    )
+    demand_shrs_new.index.set_names(["node", "commodity"], inplace=True)
+    df_demands["value"] = df_demands["value"] * demand_shrs_new["Value"]
+    # scen.add_par("demand", df_demands)
+
+    # remove i_spec demand separately since we assume 100% coverage by MESSAGE-Materials
+    df_i_feed = scen.par("demand", filters={"commodity": "i_feed"})
+    # scen.remove_par("demand", df_i_feed)
+
+
+def map_iea_db_to_msg_regs(df_iea, fname_map):
+    file_path = private_data_path("node", fname_map)
+    yaml_data = read_yaml_file(file_path)
+    if "World" in yaml_data.keys():
+        yaml_data.pop("World")
+
+    r12_map = {k: v["child"] for k, v in yaml_data.items()}
+    r12_map_inv = {k: v[0] for k, v in invert_dictionary(r12_map).items()}
+
+    df_iea = df_iea.merge(
+        pd.DataFrame.from_dict(
+            r12_map_inv, orient="index", columns=["REGION"]
+        ).reset_index(),
+        left_on="COUNTRY",
+        right_on="index",
+    ).drop("index", axis=1)
+    return df_iea
+
+
+def read_iea_tec_map(map_fname):
+    MAP = pd.read_csv(private_data_path("model", "IEA", map_fname))
+
+    MAP = pd.concat([MAP, MAP["IEA flow"].str.split(", ", expand=True)], axis=1)
+    MAP = (
+        MAP.melt(
+            value_vars=MAP.columns[-13:],
+            value_name="FLOW",
+            id_vars=["technology", "IEA product"],
+        )
+        .dropna()
+        .drop("variable", axis=1)
+    )
+    MAP = pd.concat([MAP, MAP["IEA product"].str.split(", ", expand=True)], axis=1)
+    MAP = (
+        MAP.melt(
+            value_vars=MAP.columns[-19:],
+            value_name="PRODUCT",
+            id_vars=["technology", "FLOW"],
+        )
+        .dropna()
+        .drop("variable", axis=1)
+    )
+    MAP = MAP.drop_duplicates()
+    return MAP
+
+
+def get_hist_act_data(map_fname, years=None):
+    path = os.path.join(
+        "P:", "ene.model", "IEA_database", "Florian", "REV2022_allISO_IEA.parquet"
+    )
+    Inp = pd.read_parquet(path, engine="fastparquet")
+    if years:
+        Inp = Inp[Inp["TIME"].isin(years)]
+
+    # map IEA countries to MESSAGE region definition
+    Inp = map_iea_db_to_msg_regs(Inp, "R12_SSP_V1.yaml")
+
+    # read file for IEA product/flow - MESSAGE technologies map
+    MAP = read_iea_tec_map(map_fname)
+
+    # map IEA flows to MESSAGE technologies and aggregate
+    df_final = Inp.set_index(["PRODUCT", "FLOW"]).join(
+        MAP.set_index(["PRODUCT", "FLOW"])
+    )
+
+    # multiply with efficiency and sector coverage ratios
+
+    df_final = (
+        df_final.drop_duplicates()
+        .groupby(["REGION", "technology", "TIME"])
+        .sum(numeric_only=True)
+    )
+    return df_final
+
 
 def add_emission_accounting(scen):
     context = read_config()
@@ -418,100 +642,142 @@ def add_emission_accounting(scen):
 
     # The technology list to retrieve the input values
     tec_list_input = [
-        i
-        for i in tec_list_input
-        if (
-            ("furnace" in i) |
-            ("hp_gas_" in i)
-
-        )
+        i for i in tec_list_input if (("furnace" in i) | ("hp_gas_" in i))
     ]
-    tec_list_input.remove('hp_gas_i')
-    tec_list_input.remove('hp_gas_rc')
+    tec_list_input.remove("hp_gas_i")
+    tec_list_input.remove("hp_gas_rc")
 
     # The technology list to retreive the emission_factors
     tec_list_residual = [
         i
         for i in tec_list_residual
         if (
-        (('biomass_i' in i) |
-        ('coal_i' in i) |
-        ('foil_i' in i) |
-        ('gas_i' in i) |
-        ('hp_gas_i' in i) |
-        ('loil_i' in i) |
-        ('meth_i' in i)) &
-        ('imp' not in i) &
-        ('trp' not in i)
+            (
+                ("biomass_i" in i)
+                | ("coal_i" in i)
+                | ("foil_i" in i)
+                | ("gas_i" in i)
+                | ("hp_gas_i" in i)
+                | ("loil_i" in i)
+                | ("meth_i" in i)
+            )
+            & ("imp" not in i)
+            & ("trp" not in i)
         )
     ]
 
     # Retrieve the input values
-    input_df = scen.par('input', filters = {'technology':tec_list_input})
-    input_df.drop(['node_origin','commodity','level','time','time_origin','unit'],
-    axis = 1, inplace = True)
-    input_df.drop_duplicates(inplace = True)
-    input_df = input_df[input_df['year_act']>=2020]
+    input_df = scen.par("input", filters={"technology": tec_list_input})
+    input_df.drop(
+        ["node_origin", "commodity", "level", "time", "time_origin", "unit"],
+        axis=1,
+        inplace=True,
+    )
+    input_df.drop_duplicates(inplace=True)
+    input_df = input_df[input_df["year_act"] >= 2020]
 
     # Retrieve the emission factors
 
     emission_df = scen.par("emission_factor", filters={"technology": tec_list_residual})
-    emission_df.drop(['unit','mode'], axis = 1, inplace = True)
-    emission_df = emission_df[emission_df['year_act']>=2020]
-    emission_df.drop_duplicates(inplace = True)
+    emission_df.drop(["unit", "mode"], axis=1, inplace=True)
+    emission_df = emission_df[emission_df["year_act"] >= 2020]
+    emission_df.drop_duplicates(inplace=True)
 
     # Mapping to multiply the emission_factor with the corresponding
     # input values from new indsutry technologies
 
-    dic = {"foil_i" : ['furnace_foil_steel', 'furnace_foil_aluminum',
-           'furnace_foil_cement', 'furnace_foil_petro', 'furnace_foil_refining'],
-           "biomass_i" : ['furnace_biomass_steel', 'furnace_biomass_aluminum',
-           'furnace_biomass_cement', 'furnace_biomass_petro',
-           'furnace_biomass_refining'],
-           "coal_i": ['furnace_coal_steel', 'furnace_coal_aluminum',
-           'furnace_coal_cement', 'furnace_coal_petro', 'furnace_coal_refining',
-           'furnace_coke_petro', 'furnace_coke_refining'],
-           "loil_i" : ['furnace_loil_steel', 'furnace_loil_aluminum',
-           'furnace_loil_cement', 'furnace_loil_petro', 'furnace_loil_refining'],
-           "gas_i":['furnace_gas_steel', 'furnace_gas_aluminum',
-           'furnace_gas_cement', 'furnace_gas_petro', 'furnace_gas_refining'],
-           'meth_i': ['furnace_methanol_steel', 'furnace_methanol_aluminum',
-           'furnace_methanol_cement', 'furnace_methanol_petro', 'furnace_methanol_refining'],
-           'hp_gas_i': ['hp_gas_steel', 'hp_gas_aluminum','hp_gas_cement',
-           'hp_gas_petro', 'hp_gas_refining']}
+    dic = {
+        "foil_i": [
+            "furnace_foil_steel",
+            "furnace_foil_aluminum",
+            "furnace_foil_cement",
+            "furnace_foil_petro",
+            "furnace_foil_refining",
+        ],
+        "biomass_i": [
+            "furnace_biomass_steel",
+            "furnace_biomass_aluminum",
+            "furnace_biomass_cement",
+            "furnace_biomass_petro",
+            "furnace_biomass_refining",
+        ],
+        "coal_i": [
+            "furnace_coal_steel",
+            "furnace_coal_aluminum",
+            "furnace_coal_cement",
+            "furnace_coal_petro",
+            "furnace_coal_refining",
+            "furnace_coke_petro",
+            "furnace_coke_refining",
+        ],
+        "loil_i": [
+            "furnace_loil_steel",
+            "furnace_loil_aluminum",
+            "furnace_loil_cement",
+            "furnace_loil_petro",
+            "furnace_loil_refining",
+        ],
+        "gas_i": [
+            "furnace_gas_steel",
+            "furnace_gas_aluminum",
+            "furnace_gas_cement",
+            "furnace_gas_petro",
+            "furnace_gas_refining",
+        ],
+        "meth_i": [
+            "furnace_methanol_steel",
+            "furnace_methanol_aluminum",
+            "furnace_methanol_cement",
+            "furnace_methanol_petro",
+            "furnace_methanol_refining",
+        ],
+        "hp_gas_i": [
+            "hp_gas_steel",
+            "hp_gas_aluminum",
+            "hp_gas_cement",
+            "hp_gas_petro",
+            "hp_gas_refining",
+        ],
+    }
 
     # Create an empty dataframe
     df_non_co2_emissions = pd.DataFrame()
 
     # Find the technology, year_act, year_vtg, emission, node_loc combination
-    emissions = [e for e in emission_df['emission'].unique()]
-    emissions.remove('CO2_industry')
-    emissions.remove('CO2_res_com')
+    emissions = [e for e in emission_df["emission"].unique()]
+    emissions.remove("CO2_industry")
+    emissions.remove("CO2_res_com")
 
-    for t in emission_df['technology'].unique():
+    for t in emission_df["technology"].unique():
         for e in emissions:
             # This should be a dataframe
-            emission_df_filt = emission_df.loc[((emission_df['technology'] == t)\
-            & (emission_df['emission'] == e))]
+            emission_df_filt = emission_df.loc[
+                ((emission_df["technology"] == t) & (emission_df["emission"] == e))
+            ]
             # Filter the technologies that we need the input value
             # This should be a dataframe
-            input_df_filt = input_df[input_df['technology'].isin(dic[t])]
-            if ((emission_df_filt.empty) | (input_df_filt.empty)):
+            input_df_filt = input_df[input_df["technology"].isin(dic[t])]
+            if (emission_df_filt.empty) | (input_df_filt.empty):
                 continue
             else:
-                df_merged = pd.merge(emission_df_filt, input_df_filt, on = \
-                ['year_act', 'year_vtg', 'node_loc'])
-                df_merged['value'] = df_merged['value_x'] * df_merged['value_y']
-                df_merged.drop(['technology_x','value_x','value_y', 'year_vtg',
-                'emission'], axis= 1, inplace = True)
-                df_merged.rename(columns={'technology_y':'technology'},
-                inplace = True)
-                relation_name = e + '_Emission'
-                df_merged['relation'] = relation_name
-                df_merged['node_rel'] = df_merged['node_loc']
-                df_merged['year_rel'] = df_merged['year_act']
-                df_merged['unit'] = '???'
-                df_non_co2_emissions = pd.concat([df_non_co2_emissions,df_merged])
+                df_merged = pd.merge(
+                    emission_df_filt,
+                    input_df_filt,
+                    on=["year_act", "year_vtg", "node_loc"],
+                )
+                df_merged["value"] = df_merged["value_x"] * df_merged["value_y"]
+                df_merged.drop(
+                    ["technology_x", "value_x", "value_y", "year_vtg", "emission"],
+                    axis=1,
+                    inplace=True,
+                )
+                df_merged.rename(columns={"technology_y": "technology"}, inplace=True)
+                relation_name = e + "_Emission"
+                df_merged["relation"] = relation_name
+                df_merged["node_rel"] = df_merged["node_loc"]
+                df_merged["year_rel"] = df_merged["year_act"]
+                df_merged["unit"] = "???"
+                df_non_co2_emissions = pd.concat([df_non_co2_emissions, df_merged])
 
         scen.check_out()
         scen.add_par("relation_activity", df_non_co2_emissions)
@@ -539,7 +805,7 @@ def add_emission_accounting(scen):
     tec_list_materials.remove("replacement_so2")
     tec_list_materials.remove("SO2_scrub_ref")
     emission_factors = scen.par(
-        "emission_factor", filters={"technology": tec_list_materials, 'emission':'CO2'}
+        "emission_factor", filters={"technology": tec_list_materials, "emission": "CO2"}
     )
     # Note: Emission for CO2 MtC/ACT.
     relation_activity = emission_factors.assign(
@@ -572,8 +838,10 @@ def add_emission_accounting(scen):
 
     relation_activity_steel = scen.par(
         "emission_factor",
-        filters={"emission": "CO2_industry",
-        "technology": ["DUMMY_coal_supply", "DUMMY_gas_supply"]},
+        filters={
+            "emission": "CO2_industry",
+            "technology": ["DUMMY_coal_supply", "DUMMY_gas_supply"],
+        },
     )
     relation_activity_steel["relation"] = "CO2_ind"
     relation_activity_steel["node_rel"] = relation_activity_steel["node_loc"]
@@ -614,7 +882,7 @@ def add_emission_accounting(scen):
                         # fueloil emission factor * input
                         val = 0.665 * 1.339
                     elif m == "atm_gasoil":
-                         val = 0.665 * 1.435
+                        val = 0.665 * 1.435
                     else:
                         val = 0.665 * 1.537442922
 
@@ -706,6 +974,7 @@ def add_emission_accounting(scen):
     # scen.add_par("emission_factor", df_em)
     # scen.commit("add methanol CO2_industry")
 
+
 def add_elec_lowerbound_2020(scen):
 
     # To avoid zero i_spec prices only for R12_CHN, add the below section.
@@ -722,7 +991,9 @@ def add_elec_lowerbound_2020(scen):
     # read processed final energy data from IEA extended energy balances
     # that is aggregated to MESSAGEix regions, fuels and (industry) sectors
 
-    final = pd.read_csv(private_data_path("material", "other", "residual_industry_2019.csv"))
+    final = pd.read_csv(
+        private_data_path("material", "other", "residual_industry_2019.csv")
+    )
 
     # downselect needed fuels and sectors
     final_residual_electricity = final.query(
@@ -786,7 +1057,7 @@ def add_coal_lowerbound_2020(sc):
 
     context = read_config()
     final_resid = pd.read_csv(
-        private_data_path("material", "other","residual_industry_2019.csv")
+        private_data_path("material", "other", "residual_industry_2019.csv")
     )
 
     # read input parameters for relevant technology/commodity combinations for converting betwen final and useful energy
@@ -911,13 +1182,14 @@ def add_coal_lowerbound_2020(sc):
         "added lower bound for activity of residual industrial coal and cement coal furnace technologies and adjusted 2020 residual industrial electricity demand"
     )
 
+
 def add_cement_bounds_2020(sc):
 
     """Set lower and upper bounds for gas and oil as a calibration for 2020"""
 
     context = read_config()
     final_resid = pd.read_csv(
-        private_data_path("material", "other","residual_industry_2019.csv")
+        private_data_path("material", "other", "residual_industry_2019.csv")
     )
 
     input_cement_foil = sc.par(
@@ -991,7 +1263,6 @@ def add_cement_bounds_2020(sc):
         'MESSAGE_fuel=="coal" & MESSAGE_sector=="cement"'
     )
 
-
     # join final energy data from IEA energy balances and input coefficients from final-to-useful technologies from MESSAGEix
     bound_cement_loil = pd.merge(
         input_cement_loil,
@@ -1037,9 +1308,10 @@ def add_cement_bounds_2020(sc):
     bound_cement_loil["value"] = bound_cement_loil["Value"] / bound_cement_loil["value"]
     bound_cement_foil["value"] = bound_cement_foil["Value"] / bound_cement_foil["value"]
     bound_cement_gas["value"] = bound_cement_gas["Value"] / bound_cement_gas["value"]
-    bound_cement_biomass["value"] = bound_cement_biomass["Value"] / bound_cement_biomass["value"]
+    bound_cement_biomass["value"] = (
+        bound_cement_biomass["Value"] / bound_cement_biomass["value"]
+    )
     bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
-
 
     # downselect dataframe columns for MESSAGEix parameters
     bound_cement_loil = bound_cement_loil.filter(
@@ -1061,7 +1333,6 @@ def add_cement_bounds_2020(sc):
     bound_cement_coal = bound_cement_coal.filter(
         items=["node_loc", "technology", "year_act", "mode", "time", "value", "unit_x"]
     )
-
 
     # rename columns if necessary
     bound_cement_loil.columns = [
@@ -1127,37 +1398,40 @@ def add_cement_bounds_2020(sc):
     sc.add_par("bound_activity_up", bound_cement_coal)
 
     for n in nodes:
-        bound_cement_meth = pd.DataFrame({
-        "node_loc": n,
-        "technology": "furnace_methanol_cement",
-        "year_act": years,
-        "mode":"high_temp",
-        "time":"year",
-        "value":0,
-        "unit": "???"
-        })
+        bound_cement_meth = pd.DataFrame(
+            {
+                "node_loc": n,
+                "technology": "furnace_methanol_cement",
+                "year_act": years,
+                "mode": "high_temp",
+                "time": "year",
+                "value": 0,
+                "unit": "???",
+            }
+        )
 
         sc.add_par("bound_activity_lo", bound_cement_meth)
         sc.add_par("bound_activity_up", bound_cement_meth)
 
     for n in nodes:
-        bound_cement_eth = pd.DataFrame({
-        "node_loc": n,
-        "technology": "furnace_ethanol_cement",
-        "year_act": years,
-        "mode":"high_temp",
-        "time":"year",
-        "value":0,
-        "unit": "???"
-        })
+        bound_cement_eth = pd.DataFrame(
+            {
+                "node_loc": n,
+                "technology": "furnace_ethanol_cement",
+                "year_act": years,
+                "mode": "high_temp",
+                "time": "year",
+                "value": 0,
+                "unit": "???",
+            }
+        )
 
         sc.add_par("bound_activity_lo", bound_cement_eth)
         sc.add_par("bound_activity_up", bound_cement_eth)
 
     # commit scenario to ixmp backend
-    sc.commit(
-        "added lower and upper bound for fuels for cement 2020."
-    )
+    sc.commit("added lower and upper bound for fuels for cement 2020.")
+
 
 def read_sector_data(scenario, sectname):
 
@@ -1289,7 +1563,9 @@ def read_timeseries(scenario, material, filename):
         sheet_n = "timeseries_R11"
 
     # Read the file
-    df = pd.read_excel(private_data_path("material", material, filename), sheet_name=sheet_n)
+    df = pd.read_excel(
+        private_data_path("material", material, filename), sheet_name=sheet_n
+    )
 
     import numbers
 
@@ -1298,7 +1574,15 @@ def read_timeseries(scenario, material, filename):
 
     df = pd.melt(
         df,
-        id_vars=["parameter", "region", "technology", "mode", "units","commodity","level"],
+        id_vars=[
+            "parameter",
+            "region",
+            "technology",
+            "mode",
+            "units",
+            "commodity",
+            "level",
+        ],
         value_vars=datayears,
         var_name="year",
     )
@@ -1308,8 +1592,6 @@ def read_timeseries(scenario, material, filename):
 
 
 def read_rel(scenario, material, filename):
-
-    import numpy as np
 
     # Ensure config is loaded, get the context
     context = read_config()
@@ -1328,3 +1610,25 @@ def read_rel(scenario, material, filename):
     )
 
     return data_rel
+
+
+if __name__ == "__main__":
+    mp = ixmp.Platform("ixmp_dev")
+    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "NoPolicy_petro_thesis_2")
+    # modify_demand_and_hist_activity_new(scen, [2015])
+    # modify_industry_demand(scen, 2015)
+    # modify_demand_and_hist_activity(scen)
+    df = get_hist_act_data("IEA_mappings_furnaces.csv", years=[2015])
+    df.index.names = ["node_loc", "technology", "year_act"]
+    df_inp = scen.par(
+        "input",
+        filters={
+            "year_vtg": 2020,
+            "year_act": 2020,
+            "mode": "high_temp",
+            "node_loc": "R12_AFR",
+        },
+    )
+    df = df_inp.set_index(["technology"]).join(df).dropna()
+    df["Value"] = df["Value"] / df["value"] / 3.6 / 8760
+    print()

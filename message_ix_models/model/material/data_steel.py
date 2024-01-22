@@ -1,29 +1,22 @@
 from .data_util import read_sector_data, read_timeseries
 
-import numpy as np
 from collections import defaultdict
-import logging
 from pathlib import Path
 
 import pandas as pd
 
+from .material_demand import material_demand_calc
 from .util import read_config
 from .data_util import read_rel
 
 # Get endogenous material demand from buildings interface
-from .data_buildings import get_scen_mat_demand
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
-    make_io,
-    make_matched_dfs,
     same_node,
-    copy_column,
-    add_par_data,
     private_data_path,
 )
-from . import get_spec
 
 
 # Generate a fake steel demand
@@ -209,9 +202,9 @@ def gen_data_steel(scenario, dry_run=False):
                     ).pipe(broadcast, node_loc=nodes)
                 if p == "output":
                     comm = data_steel_ts.loc[
-                    (data_steel_ts["technology"] == t)
-                    & (data_steel_ts["parameter"] == p),
-                    "commodity",
+                        (data_steel_ts["technology"] == t)
+                        & (data_steel_ts["parameter"] == p),
+                        "commodity",
                     ]
 
                     lev = data_steel_ts.loc[
@@ -236,8 +229,8 @@ def gen_data_steel(scenario, dry_run=False):
                         mode=mod,
                         node_loc=rg,
                         node_dest=rg,
-                        commodity = comm,
-                        level = lev,
+                        commodity=comm,
+                        level=lev,
                         **common
                     )
                 else:
@@ -394,36 +387,62 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Add relation for the maximum global scrap use in 2020
 
-    df_max_recycling = pd.DataFrame({'relation': 'max_global_recycling_steel',
-                       'node_rel': 'R12_GLB',
-                       'year_rel': 2020,
-                       'year_act': 2020,
-                       'node_loc': nodes,
-                       'technology': 'scrap_recovery_steel',
-                       'mode': 'M1',
-                       'unit': '???',
-                       'value': data_steel_rel.loc[((data_steel_rel['relation'] \
-                       == 'max_global_recycling_steel') & (data_steel_rel['parameter'] \
-                       == 'relation_activity')), 'value'].values[0]})
+    df_max_recycling = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "year_act": 2020,
+            "node_loc": nodes,
+            "technology": "scrap_recovery_steel",
+            "mode": "M1",
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_activity")
+                ),
+                "value",
+            ].values[0],
+        }
+    )
 
-    df_max_recycling_upper = pd.DataFrame({'relation': 'max_global_recycling_steel',
-    'node_rel': 'R12_GLB',
-    'year_rel': 2020,
-    'unit': '???',
-    'value': data_steel_rel.loc[((data_steel_rel['relation'] \
-    == 'max_global_recycling_steel') & (data_steel_rel['parameter'] \
-    == 'relation_upper')), 'value'].values[0]}, index = [0])
-    df_max_recycling_lower = pd.DataFrame({'relation': 'max_global_recycling_steel',
-    'node_rel': 'R12_GLB',
-    'year_rel': 2020,
-    'unit': '???',
-    'value': data_steel_rel.loc[((data_steel_rel['relation'] \
-    == 'max_global_recycling_steel') & (data_steel_rel['parameter'] \
-    == 'relation_lower')), 'value'].values[0]}, index = [0])
+    df_max_recycling_upper = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_upper")
+                ),
+                "value",
+            ].values[0],
+        },
+        index=[0],
+    )
+    df_max_recycling_lower = pd.DataFrame(
+        {
+            "relation": "max_global_recycling_steel",
+            "node_rel": "R12_GLB",
+            "year_rel": 2020,
+            "unit": "???",
+            "value": data_steel_rel.loc[
+                (
+                    (data_steel_rel["relation"] == "max_global_recycling_steel")
+                    & (data_steel_rel["parameter"] == "relation_lower")
+                ),
+                "value",
+            ].values[0],
+        },
+        index=[0],
+    )
 
-    results['relation_activity'].append(df_max_recycling)
-    results['relation_upper'].append(df_max_recycling_upper)
-    results['relation_lower'].append(df_max_recycling_lower)
+    results["relation_activity"].append(df_max_recycling)
+    results["relation_upper"].append(df_max_recycling_upper)
+    results["relation_lower"].append(df_max_recycling_lower)
 
     # Add relations for scrap grades and availability
     regions = set(data_steel_rel["Region"].values)
@@ -432,13 +451,13 @@ def gen_data_steel(scenario, dry_run=False):
             model_years_rel = modelyears.copy()
             if r is None:
                 break
-            if r == 'max_global_recycling_steel':
+            if r == "max_global_recycling_steel":
                 continue
-            if r == 'minimum_recycling_steel':
+            if r == "minimum_recycling_steel":
                 # Do not implement the minimum recycling rate for the year 2020
                 if 2020 in model_years_rel:
                     model_years_rel.remove(2020)
-            if r == 'max_regional_recycling_steel':
+            if r == "max_regional_recycling_steel":
                 # Do not implement the minimum recycling rate for the year 2020
                 if 2020 in model_years_rel:
                     model_years_rel.remove(2020)
@@ -520,6 +539,7 @@ def gen_data_steel(scenario, dry_run=False):
         time="year",
         node=demand.node,
     )  # .pipe(broadcast, node=nodes)
+    df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False)
     results[parname].append(df)
 
     # Concatenate to one data frame per parameter
@@ -563,9 +583,7 @@ def derive_steel_demand(scenario, dry_run=False):
     with localconverter(ro.default_converter + pandas2ri.converter):
         # GDP is only in MER in scenario.
         # To get PPP GDP, it is read externally from the R side
-        df = r.derive_steel_demand(
-            pop, base_demand, str(private_data_path("material"))
-        )
+        df = r.derive_steel_demand(pop, base_demand, str(private_data_path("material")))
         df.year = df.year.astype(int)
 
     return df

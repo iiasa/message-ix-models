@@ -1,27 +1,21 @@
 from .data_util import read_sector_data, read_timeseries
 
-import numpy as np
 from collections import defaultdict
-import logging
 from pathlib import Path
 
 import pandas as pd
 
+from .material_demand import material_demand_calc
 from .util import read_config
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
-    make_io,
-    make_matched_dfs,
     same_node,
-    add_par_data,
     private_data_path,
 )
 
 # Get endogenous material demand from buildings interface
-from .data_buildings import get_scen_mat_demand
-from . import get_spec
 
 
 # gdp_growth = [0.121448215899944, 0.0733079014579874, 0.0348154093342843, \
@@ -380,17 +374,18 @@ def gen_data_cement(scenario, dry_run=False):
     # Create external demand param
     parname = "demand"
     # demand = gen_mock_demand_cement(scenario)
-    demand = derive_cement_demand(scenario)
-    df = make_df(
-        parname,
-        level="demand",
-        commodity="cement",
-        value=demand.value,
-        unit="t",
-        year=demand.year,
-        time="year",
-        node=demand.node,
-    )
+    # demand = derive_cement_demand(scenario)
+    # df = make_df(
+    #     parname,
+    #     level="demand",
+    #     commodity="cement",
+    #     value=demand.value,
+    #     unit="t",
+    #     year=demand.year,
+    #     time="year",
+    #     node=demand.node,
+    # )
+    df = material_demand_calc.derive_demand("cement", scenario, old_gdp=False)
     results[parname].append(df)
 
     # Add CCS as addon

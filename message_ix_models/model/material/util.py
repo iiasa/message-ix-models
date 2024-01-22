@@ -1,7 +1,7 @@
 from message_ix_models import Context
-from pathlib import Path
 from message_ix_models.util import load_private_data
 import pandas as pd
+import yaml
 
 # Configuration files
 METADATA = [
@@ -48,7 +48,6 @@ def read_config():
 
 
 def prepare_xlsx_for_explorer(filepath):
-    import pandas as pd
     df = pd.read_excel(filepath)
 
     def add_R12(str):
@@ -68,3 +67,23 @@ def combine_df_dictionaries(*args):
     for i in keys:
         comb_dict[i] = pd.concat([j.get(i) for j in args])
     return comb_dict
+
+
+def read_yaml_file(file_path):
+    with open(file_path, encoding="utf8") as file:
+        try:
+            data = yaml.safe_load(file)
+            return data
+        except yaml.YAMLError as e:
+            print(f"Error while parsing YAML file: {e}")
+            return None
+
+
+def invert_dictionary(original_dict):
+    inverted_dict = {}
+    for key, value in original_dict.items():
+        for array_element in value:
+            if array_element not in inverted_dict:
+                inverted_dict[array_element] = []
+            inverted_dict[array_element].append(key)
+    return inverted_dict
