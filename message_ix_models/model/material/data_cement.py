@@ -409,50 +409,50 @@ def gen_data_cement(scenario, dry_run=False):
     return results
 
 
-# load rpy2 modules
-import rpy2.robjects as ro
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
-
-
-# This returns a df with columns ["region", "year", "demand.tot"]
-def derive_cement_demand(scenario, dry_run=False):
-    """Generate cement demand."""
-    # paths to r code and lca data
-    rcode_path = Path(__file__).parents[0] / "material_demand"
-    context = read_config()
-
-    # source R code
-    r = ro.r
-    r.source(str(rcode_path / "init_modularized.R"))
-
-    # Read population and baseline demand for materials
-    pop = scenario.par("bound_activity_up", {"technology": "Population"})
-    pop = pop.loc[pop.year_act >= 2020].rename(
-        columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
-    )
-    pop = pop[["region", "year", "pop.mil"]]
-
-    base_demand = gen_mock_demand_cement(scenario)
-    base_demand = base_demand.loc[base_demand.year == 2020].rename(
-        columns={"value": "demand.tot.base", "node": "region"}
-    )
-
-    # import pdb; pdb.set_trace()
-
-    # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
-    # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
-    #     columns={"value": "demand.tot.base", "node": "region"}
-    # )
-    # base_demand = base_demand[["region", "year", "demand.tot.base"]]
-
-    # call R function with type conversion
-    with localconverter(ro.default_converter + pandas2ri.converter):
-        # GDP is only in MER in scenario.
-        # To get PPP GDP, it is read externally from the R side
-        df = r.derive_cement_demand(
-            pop, base_demand, str(private_data_path("material"))
-        )
-        df.year = df.year.astype(int)
-
-    return df
+# # load rpy2 modules
+# import rpy2.robjects as ro
+# from rpy2.robjects import pandas2ri
+# from rpy2.robjects.conversion import localconverter
+#
+#
+# # This returns a df with columns ["region", "year", "demand.tot"]
+# def derive_cement_demand(scenario, dry_run=False):
+#     """Generate cement demand."""
+#     # paths to r code and lca data
+#     rcode_path = Path(__file__).parents[0] / "material_demand"
+#     context = read_config()
+#
+#     # source R code
+#     r = ro.r
+#     r.source(str(rcode_path / "init_modularized.R"))
+#
+#     # Read population and baseline demand for materials
+#     pop = scenario.par("bound_activity_up", {"technology": "Population"})
+#     pop = pop.loc[pop.year_act >= 2020].rename(
+#         columns={"year_act": "year", "value": "pop.mil", "node_loc": "region"}
+#     )
+#     pop = pop[["region", "year", "pop.mil"]]
+#
+#     base_demand = gen_mock_demand_cement(scenario)
+#     base_demand = base_demand.loc[base_demand.year == 2020].rename(
+#         columns={"value": "demand.tot.base", "node": "region"}
+#     )
+#
+#     # import pdb; pdb.set_trace()
+#
+#     # base_demand = scenario.par("demand", {"commodity": "steel", "year": 2020})
+#     # base_demand = base_demand.loc[base_demand.year >= 2020].rename(
+#     #     columns={"value": "demand.tot.base", "node": "region"}
+#     # )
+#     # base_demand = base_demand[["region", "year", "demand.tot.base"]]
+#
+#     # call R function with type conversion
+#     with localconverter(ro.default_converter + pandas2ri.converter):
+#         # GDP is only in MER in scenario.
+#         # To get PPP GDP, it is read externally from the R side
+#         df = r.derive_cement_demand(
+#             pop, base_demand, str(private_data_path("material"))
+#         )
+#         df.year = df.year.astype(int)
+#
+#     return df
