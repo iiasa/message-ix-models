@@ -29,11 +29,11 @@ def test_configure_legacy():
         "trp back": 0,
         "trp coal": 0,
         "trp elec": 6,
-        "trp eth": 2,
+        "trp eth": 5,
         "trp foil": 0,
         "trp gas": 6,
         "trp h2": 4,
-        "trp loil": 19,
+        "trp loil": 16,
         "trp meth": 5,
     }
 
