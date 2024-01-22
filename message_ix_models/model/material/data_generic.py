@@ -1,5 +1,4 @@
 from collections import defaultdict
-import logging
 
 import pandas as pd
 
@@ -9,10 +8,7 @@ from message_ix import make_df
 from .data_util import read_timeseries
 from message_ix_models.util import (
     broadcast,
-    make_io,
-    make_matched_dfs,
     same_node,
-    add_par_data,
 )
 
 
@@ -27,15 +23,20 @@ def read_data_generic(scenario):
     # sets = context["material"]["generic"]
 
     # Read the file
-    data_generic = pd.read_excel(context.get_local_path(
+    data_generic = pd.read_excel(
+        context.get_local_path(
             "material", "other", "generic_furnace_boiler_techno_economic.xlsx"
-        ), sheet_name="generic",)
+        ),
+        sheet_name="generic",
+    )
 
     # Clean the data
     # Drop columns that don't contain useful information
 
     data_generic = data_generic.drop(["Region", "Source", "Description"], axis=1)
-    data_generic_ts = read_timeseries(scenario, "other", "generic_furnace_boiler_techno_economic.xlsx")
+    data_generic_ts = read_timeseries(
+        scenario, "other", "generic_furnace_boiler_techno_economic.xlsx"
+    )
 
     # Unit conversion
 
@@ -68,11 +69,10 @@ def gen_data_generic(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     fmy = s_info.y0
 
-
     # Do not parametrize GLB region the same way
     if "R11_GLB" in nodes:
         nodes.remove("R11_GLB")
-        global_region = 'R11_GLB'
+        global_region = "R11_GLB"
     if "R12_GLB" in nodes:
         nodes.remove("R12_GLB")
         global_region = "R12_GLB"
@@ -267,7 +267,6 @@ def gen_data_generic(scenario, dry_run=False):
                 df = df.pipe(broadcast, node_loc=nodes)
 
             results[p].append(df)
-
 
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 
