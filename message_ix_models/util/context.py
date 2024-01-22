@@ -371,7 +371,7 @@ class Context(dict):
                 )
 
             self.core.url = url
-            urlinfo = ixmp.utils.parse_url(url)
+            urlinfo = ixmp.util.parse_url(url)
             platform_info.update(urlinfo[0])
             scenario_info.update(urlinfo[1])
         elif platform:
