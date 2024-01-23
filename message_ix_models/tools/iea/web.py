@@ -26,8 +26,17 @@ log = logging.getLogger(__name__)
 
 DIMS = ["COUNTRY", "PRODUCT", "TIME", "FLOW", "MEASURE"]
 
+FWF_COLUMNS = {
+    "COUNTRY": (0, 26),
+    "PRODUCT": (26, 32),
+    "TIME": (32, 48),
+    "FLOW": (48, 64),
+    "MEASURE": (64, 68),
+    "Value": (68, 100),
+}
+
 #: Subset of columns to load, mapped to returned values.
-COLUMNS = {
+CSV_COLUMNS = {
     "COUNTRY": "node",
     "PRODUCT": "commodity",
     "TIME": "year",
@@ -109,22 +118,15 @@ def iea_web_data_for_query(
                     path,
                     dict(
                         header=None,
-                        colspecs=[
-                            (0, 26),
-                            (26, 32),
-                            (32, 48),
-                            (48, 64),
-                            (64, 68),
-                            (68, 100),
-                        ],
-                        names=DIMS + ["Value"],
+                        colspecs=list(FWF_COLUMNS.values()),
+                        names=list(FWF_COLUMNS.keys()),
                     ),
                 )
             )
             func = dd.read_parquet
         else:
             names_to_read.append(path)
-            func = partial(dd.read_csv, header=0, usecols=list(COLUMNS.keys()))
+            func = partial(dd.read_csv, header=0, usecols=list(CSV_COLUMNS.keys()))
 
     with silence_log("fsspec.local"):
         ddf = func(names_to_read, engine="pyarrow")
