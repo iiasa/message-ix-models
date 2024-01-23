@@ -1,19 +1,23 @@
 """Tools for IEA (Extended) World Energy Balance (WEB) data."""
 import logging
 import zipfile
+from copy import copy
 from functools import partial
 from itertools import count
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import yaml
+from genno import Quantity
+from genno.core.key import single_key
 from iam_units import registry
 from platformdirs import user_cache_path
 from pycountry import countries
 
+from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import (
     cached,
     local_data_path,
@@ -21,6 +25,9 @@ from message_ix_models.util import (
     private_data_path,
 )
 from message_ix_models.util._logging import silence_log
+
+if TYPE_CHECKING:
+    import genno
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +60,76 @@ FILES = {
     ("OECD", "2022"): ("372f7e29-en.zip",),  # Timestamped 20230406T1000
     ("OECD", "2023"): ("8624f431-en.zip",),  # Timestamped 20231012T1000
 }
+
+
+@register_source
+class IEA_EWEB(ExoDataSource):
+    """Provider of exogenous data from the IEA Extended World Energy Balances.
+
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    :py:`source_kw`:
+
+    - "provider": Either "IEA" or "OECD". See :data:`.FILES`.
+    - "edition": one of "2021", "2022", or "2023". See :data:`.FILES`.
+    - "product": :class:`str` or :class:`list` of :class:`str.
+    - "flow": :class:`str` or :class:`list` of :class:`str.
+
+    The returned data have the extra dimensions "product" and "flow", and are not
+    aggregated by year.
+
+    Example
+    -------
+    >>> keys = prepare_computer(
+    ...     context,
+    ...     computer,
+    ...     source="IEA_EWEB",
+    ...     source_kw=dict(
+    ...         provider="OECD", edition="2022", product="CHARCOAL", flow="RESIDENT"
+    ...     ),
+    ... )
+    >>> result = computer.get(keys[0])
+    """
+
+    id = "IEA_EWEB"
+
+    extra_dims = ("product", "flow")
+
+    def __init__(self, source, source_kw):
+        if source != self.id:
+            raise ValueError(source)
+
+        _kw = copy(source_kw)
+
+        provider = _kw.pop("provider", None)
+        edition = _kw.pop("edition", None)
+        assert (provider, edition) in FILES
+        self.load_kw = dict(provider=provider, edition=edition)
+
+        self.indexers = dict(MEASURE="TJ")
+        if product := _kw.pop("product", None):
+            self.indexers.update(product=product)
+        if flow := _kw.pop("flow", None):
+            self.indexers.update(flow=flow)
+
+        if len(_kw):
+            raise ValueError(_kw)
+
+    def __call__(self):
+        # - Load the data.
+        # - Convert to pd.Series, then genno.Quantity.
+        # - Map dimensions.
+        # - Apply `indexers` to select.
+        return (
+            Quantity(load_data(**self.load_kw).set_index(DIMS)["Value"], units="TJ")
+            .rename({"COUNTRY": "n", "TIME": "y", "FLOW": "flow", "PRODUCT": "product"})
+            .sel(self.indexers, drop=True)
+        )
+
+    def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
+        # Aggregate only; do not interpolate on "y"
+        return single_key(
+            c.add(base_key + "1", "aggregate", base_key, "n::groups", keep=False)
+        )
 
 
 def unpack_fwf(path: Path, read_kw) -> List[Path]:
