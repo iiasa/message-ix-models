@@ -132,7 +132,7 @@ def iea_web_data_for_query(
         # NB compute() must precede query(), else "ValueError: The columns in the
         # computed data do not match the columns in the provided metadata" occurs with
         # the CSV-formatted data.
-        result = ddf.dropna(subset=["Value"]).compute().query(query_expr)
+        result = ddf.compute().query(query_expr).dropna(subset=["Value"])
 
     log.info(f"{len(result)} observations")
     return result
