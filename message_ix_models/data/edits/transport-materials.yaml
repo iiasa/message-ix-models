@@ -1,0 +1,22 @@
+format: 1
+
+title: Materials + transport representation in MESSAGEix
+description: |-
+  These are the data required to parametrize a representation of materials use
+  in the transport sector, i.e. the integration of MESSAGEix-Materials and
+  MESSAGEix-Transport.
+
+provider:
+  organisation: International Institute for Applied Systems Analysis (IIASA)
+  contact: xum@iiasa.ac.at; lorenzo.usai@ntnu.no; kishimot@iiasa.ac.at
+
+classifiers:
+- "Kind :: Model input"
+
+dimension:
+  time: {}
+  space: {}
+
+measure: {}
+
+quantity: []
