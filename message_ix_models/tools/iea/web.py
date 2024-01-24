@@ -269,19 +269,20 @@ def generate_code_lists(
     """Extract structure from the data itself."""
     import sdmx.model.v21 as m
 
-    from message_ix_models.util.sdmx import write
+    from message_ix_models.util.sdmx import register_agency, write
 
     output_path = output_path or package_data_path("sdmx")
-
-    # Read the data
-    data = iea_web_data_for_query(
-        private_data_path("iea"), *FILES[(provider, edition)], query_expr="TIME > 0"
-    )
 
     IEA = m.Agency(
         id="IEA",
         name="International Energy Agency",
         contact=[m.Contact(uri=["https://iea.org"])],
+    )
+    register_agency(IEA)
+
+    # Read the data
+    data = iea_web_data_for_query(
+        private_data_path("iea"), *FILES[(provider, edition)], query_expr="TIME > 0"
     )
 
     for concept_id in ("COUNTRY", "FLOW", "PRODUCT"):
