@@ -2,10 +2,8 @@
 import logging
 import zipfile
 from copy import copy
-from functools import partial
-from itertools import count
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
 import dask.dataframe as dd
 import numpy as np
@@ -132,28 +130,44 @@ class IEA_EWEB(ExoDataSource):
         )
 
 
-def unpack_fwf(path: Path, read_kw) -> List[Path]:
-    """Unpack a fixed-width file to a set of other files.
+def fwf_to_csv(path: Path, progress: bool = False) -> Path:
+    """Convert the IEA fixed-width file format to CSV.
 
-    For the IEA 2023 data, this can on the order of 10 minutes, depending on hardware.
+    This appears to operate at about 900k lines / second, about 1 minute for the IEA
+    2023 .TXT files. This is faster than doing full pandas I/O, which takes 5–10 minutes
+    depending on formats.
     """
-    p = path.with_suffix(".parquet")
+    import io
+    import re
 
-    cs = 5e6
-    reader = pd.read_fwf(path, iterator=True, chunksize=cs, memory_map=True, **read_kw)
-    names: List[Path] = []
+    # Output path
+    path_out = path.with_suffix(".csv")
+    if path_out.exists() and path_out.stat().st_mtime > path.stat().st_mtime:
+        log.info(f"Skip conversion; file exists and is newer than source: {path_out}")
+        return path_out
 
-    try:
-        for name in map(lambda i: p.with_stem(f"{p.stem}-{i}"), count()):
-            if name.exists():
-                names.extend(p.parent.glob(f"{p.stem}-*.parquet"))
-                break
-            next(reader).to_parquet(name)
-            names.append(name)
-    except StopIteration:
-        pass
+    # Input and output buffers; read the entire file into memory immediately
+    file_in = io.BytesIO(path.read_bytes())
+    file_out = io.BytesIO()
 
-    return names
+    # Regular expression to split lines
+    expr = re.compile(b"  +")
+
+    if progress:
+        from tqdm import tqdm
+
+        iterator: Iterable[bytes] = tqdm(file_in, desc=f"{path} → {path_out}")
+    else:
+        iterator = file_in
+
+    # Convert to CSV
+    for line in iterator:
+        file_out.write(b",".join(expr.split(line)))
+
+    # Write to file
+    path_out.write_bytes(file_out.getbuffer())
+
+    return path_out
 
 
 def unpack_zip(path: Path) -> Path:
@@ -190,24 +204,15 @@ def iea_web_data_for_query(
             path = unpack_zip(path)
 
         if path.suffix == ".TXT":
-            names_to_read.extend(
-                unpack_fwf(
-                    path,
-                    dict(
-                        header=None,
-                        colspecs=list(FWF_COLUMNS.values()),
-                        names=list(FWF_COLUMNS.keys()),
-                    ),
-                )
-            )
-            func = dd.read_parquet
+            names_to_read.append(fwf_to_csv(path, progress=True))
+            args: Dict[str, Any] = dict(header=None, names=DIMS + ["Value"])
         else:
             names_to_read.append(path)
-            func = partial(dd.read_csv, header=0, usecols=list(CSV_COLUMNS.keys()))
+            args = dict(header=0, usecols=list(CSV_COLUMNS.keys()))
 
     with silence_log("fsspec.local"):
-        ddf = func(names_to_read, engine="pyarrow")
-        ddf = ddf[ddf.MEASURE == "TJ"]
+        ddf = dd.read_csv(names_to_read, engine="pyarrow", **args)
+        ddf = ddf[ddf["MEASURE"] == "TJ"]
         # NB compute() must precede query(), else "ValueError: The columns in the
         # computed data do not match the columns in the provided metadata" occurs with
         # the CSV-formatted data.
