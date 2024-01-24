@@ -98,6 +98,33 @@ def test_generate_code_lists(tmp_path, test_context, provider, edition):
     generate_code_lists(provider, edition, tmp_path)
 
 
+@pytest.mark.parametrize(
+    "urn, N",
+    (
+        ("IEA:COUNTRY_IEA(2023)", 191),
+        ("IEA:COUNTRY_OECD(2021)", 190),
+        ("IEA:COUNTRY_OECD(2022)", 185),
+        ("IEA:COUNTRY_OECD(2023)", 191),
+        ("IEA:FLOW_IEA(2023)", 108),
+        ("IEA:FLOW_OECD(2021)", 108),
+        ("IEA:FLOW_OECD(2022)", 108),
+        ("IEA:FLOW_OECD(2023)", 108),
+        ("IEA:PRODUCT_IEA(2023)", 68),
+        ("IEA:PRODUCT_OECD(2021)", 68),
+        ("IEA:PRODUCT_OECD(2022)", 68),
+        ("IEA:PRODUCT_OECD(2023)", 68),
+    ),
+)
+def test_load_codelists(urn, N):
+    from message_ix_models.util.sdmx import read
+
+    # Code list can be read using its URN
+    cl = read(urn)
+
+    # Code list has the expected number of codes
+    assert N == len(cl)
+
+
 @pytest.mark.skip(reason="Refactoring")
 def test_fuzz_data(test_context, tmp_path):
     # fuzz_data() runs
