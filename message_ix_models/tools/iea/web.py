@@ -14,8 +14,8 @@ from platformdirs import user_cache_path
 
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import (
+    HAS_MESSAGE_DATA,
     cached,
-    local_data_path,
     package_data_path,
     private_data_path,
 )
@@ -29,15 +29,6 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 DIMS = ["COUNTRY", "PRODUCT", "TIME", "FLOW", "MEASURE"]
-
-FWF_COLUMNS = {
-    "COUNTRY": (0, 26),
-    "PRODUCT": (26, 32),
-    "TIME": (32, 48),
-    "FLOW": (48, 64),
-    "MEASURE": (64, 68),
-    "Value": (68, 100),
-}
 
 #: Subset of columns to load, mapped to returned values.
 CSV_COLUMNS = {
@@ -225,7 +216,7 @@ def load_data(
     provider: str,
     edition: str,
     query_expr="MEASURE == 'TJ' and TIME >= 1980",
-    base_path=None,
+    path: Optional[Path] = None,
 ) -> pd.DataFrame:
     """Load data from the IEA World Energy Balances.
 
@@ -252,15 +243,16 @@ def load_data(
     files = FILES[(provider, edition)]
 
     # Identify a location that contains the `files`
-    if base_path is None:
-        try:
-            base_path = private_data_path("iea")
-            assert base_path.joinpath(files[0]).exists()
-        except AssertionError:
-            base_path = local_data_path("iea")
-            assert base_path.joinpath(files[0]).exists()
+    if path is None:
+        if HAS_MESSAGE_DATA:
+            path = private_data_path("iea")
+        else:
+            path = package_data_path("test", "iea")
+            log.warning(f"Reading random data from {path}")
 
-    return iea_web_data_for_query(base_path, *files, query_expr=query_expr)
+    assert path.joinpath(files[0]).exists()
+
+    return iea_web_data_for_query(path, *files, query_expr=query_expr)
 
 
 def generate_code_lists(
