@@ -51,7 +51,7 @@ Structure
 
 The data have the following conceptual dimensions, each enumerated by a different list of codes:
 
-- ``FLOW`, ``PRODUCT``: for both of these, the lists of codes appearing in the data are the same from 2021 and 2023 inclusive.
+- ``FLOW``, ``PRODUCT``: for both of these, the lists of codes appearing in the data are the same from 2021 and 2023 inclusive.
 - ``COUNTRY``: The data provided by IEA directly contain codes that are all caps, abbreviated country names, for instance "DOMINICANR".
   The data provided by the OECD contain ISO 3166-1 alpha-3 codes, for instance "DOM".
   In both cases, there are additional labels denoting country groupings; these are defined in the documentation linked above.
