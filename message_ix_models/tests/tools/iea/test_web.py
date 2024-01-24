@@ -56,12 +56,26 @@ class TestIEA_EWEB:
         # Data has the expected dimensions
         assert {"n", "y", "product", "flow"} == set(result.dims)
 
-        # Data is complete
-        assert 14 == len(result.coords["n"])
-        assert {1980, 2020} < set(result.coords["y"].data)
+        # Data contain expected coordinates
+        # NB cannot test total counts here because the fuzzed test data does not
+        #    necessarily include ≥1 data point from each COUNTRY and TIME
+        assert {"R14_AFR", "R14_WEU"} < set(result.coords["n"].data)
+        assert {1980, 2018} < set(result.coords["y"].data)
 
 
-@pytest.mark.parametrize("provider, edition", FILES.keys())
+@pytest.mark.parametrize(
+    "provider, edition",
+    [
+        pytest.param(
+            "IEA",
+            "2023",
+            marks=pytest.mark.xfail(reason="No fuzzed version of this data"),
+        ),
+        ("OECD", "2023"),
+        ("OECD", "2022"),
+        ("OECD", "2023"),
+    ],
+)
 def test_load_data(test_context, tmp_path, provider, edition):
     # # Store in the temporary directory for this test
     # test_context.cache_path = tmp_path.joinpath("cache")

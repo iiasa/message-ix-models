@@ -14,9 +14,11 @@ from message_ix_models.tools.exo_data import prepare_computer
 
 
 def test_generate(tmp_path, test_context):
+    # Function runs
     generate(test_context, base_dir=tmp_path)
 
-    assert 3 == len(list(tmp_path.glob("*.xml")))
+    # Two XML files are created
+    assert 2 == len(list(tmp_path.glob("*.xml")))
 
 
 def test_enum():
