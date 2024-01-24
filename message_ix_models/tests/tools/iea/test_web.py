@@ -33,6 +33,10 @@ class TestIEA_EWEB:
                     "WORLDMAR",
                 ],
             ),
+            pytest.param(
+                dict(provider="IEA", edition="2023", extra_kw="FOO"),
+                marks=pytest.mark.xfail(raises=ValueError),
+            ),
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
