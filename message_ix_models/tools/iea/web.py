@@ -275,8 +275,13 @@ def generate_code_lists(
     register_agency(IEA)
 
     # Read the data
+    if HAS_MESSAGE_DATA:
+        path = private_data_path("iea")
+    else:
+        path = package_data_path("test", "iea")
+        log.warning(f"Reading random data from {path}")
     data = iea_web_data_for_query(
-        private_data_path("iea"), *FILES[(provider, edition)], query_expr="TIME > 0"
+        path, *FILES[(provider, edition)], query_expr="TIME > 0"
     )
 
     for concept_id in ("COUNTRY", "FLOW", "PRODUCT"):

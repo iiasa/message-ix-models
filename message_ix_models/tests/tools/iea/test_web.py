@@ -93,7 +93,7 @@ def test_load_data(test_context, tmp_path, provider, edition):
 
 
 @pytest.mark.parametrize("provider, edition", list(FILES.keys()))
-def test_generate_code_lists(tmp_path, test_context, provider, edition):
+def test_generate_code_lists(tmp_path, provider, edition):
     # generate_code_lists() runs
     generate_code_lists(provider, edition, tmp_path)
 
