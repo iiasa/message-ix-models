@@ -1,5 +1,4 @@
 """Tests of :mod:`.tools`."""
-from shutil import copyfile
 
 import pandas as pd
 import pytest
@@ -13,7 +12,6 @@ from message_ix_models.tools.iea.web import (
     generate_code_lists,
     load_data,
 )
-from message_ix_models.util import package_data_path
 
 
 class TestIEA_EWEB:
@@ -80,13 +78,10 @@ def test_load_data(test_context, tmp_path, provider, edition):
     assert (set(DIMS) & {"Value"}) < set(result.columns)
 
 
-@pytest.mark.skip(reason="Refactoring")
-def test_generate_code_lists(test_context, tmp_path):
-    # Copy the data file to a temporary directory
-    copyfile(package_data_path("iea", FILES), tmp_path.joinpath(FILES))
-
+@pytest.mark.parametrize("provider, edition", list(FILES.keys()))
+def test_generate_code_lists(tmp_path, test_context, provider, edition):
     # generate_code_lists() runs
-    generate_code_lists(tmp_path)
+    generate_code_lists(provider, edition, tmp_path)
 
 
 @pytest.mark.skip(reason="Refactoring")

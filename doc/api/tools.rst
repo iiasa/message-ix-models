@@ -150,6 +150,26 @@ The approach to handling proprietary data is the same as in :mod:`.project.advan
   Non-IIASA users must obtain their own license to access and use the data.
 - :mod:`message_ix_models` contains only a ‘fuzzed’ version of the data (same structure, random values) for testing purposes.
 
+The data include the following dimensions:
+
+- FLOW, PRODUCT: the lists of codes appearing in the data are identical between 2021 and 2023 inclusive.
+- COUNTRY: The data directly from IEA contain codes that are all caps, abbreviated country names, for instance "DOMINICANR".
+  The data from the OECD source contain ISO 3166-1 alpha-3 codes, for instance "DOM".
+  In both cases, there are additional labels denoting country groupings; these are defined in the documentation linked above.
+
+  Known changes:
+
+  - 2022 → 2023:
+
+    - New codes: ASEAN, BFA, GREENLAND, MALI, MRT, PSE, TCD,
+    - Removed: MASEAN
+
+  - 2021 → 2022:
+
+    - New codes: GNQ, MDG, MKD, RWA, SWZ, UGA.
+    - Removed: EQGUINEA, GREENLAND, MALI, MBURKINAFA, MCHAD, MMADAGASCA, MMAURITANI, MPALESTINE, MRWANDA, MUGANDA, NORTHMACED.
+
+
 .. _tools-wb:
 
 World Bank structures (:mod:`.tools.wb`)
