@@ -191,7 +191,7 @@ def unpack_zip(path: Path) -> Path:
 
 @cached
 def iea_web_data_for_query(
-    base_path: Path, *filenames: str, format: str, query_expr: str
+    base_path: Path, *filenames: str, query_expr: str
 ) -> pd.DataFrame:
     # Filenames to pass to dask.dataframe
     names_to_read = []
@@ -261,9 +261,7 @@ def load_data(
             base_path = local_data_path("iea")
             assert base_path.joinpath(files[0]).exists()
 
-    return iea_web_data_for_query(
-        base_path, *files, format=provider, query_expr=query_expr
-    )
+    return iea_web_data_for_query(base_path, *files, query_expr=query_expr)
 
 
 def generate_code_lists(base_path: Optional[Path] = None) -> None:
