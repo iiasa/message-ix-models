@@ -83,6 +83,7 @@ class IEA_EWEB(ExoDataSource):
     extra_dims = ("product", "flow")
 
     def __init__(self, source, source_kw):
+        """Initialize the data source."""
         if source != self.id:
             raise ValueError(source)
 
@@ -103,6 +104,7 @@ class IEA_EWEB(ExoDataSource):
             raise ValueError(_kw)
 
     def __call__(self):
+        """Load and process the data."""
         # - Load the data.
         # - Convert to pd.Series, then genno.Quantity.
         # - Map dimensions.
