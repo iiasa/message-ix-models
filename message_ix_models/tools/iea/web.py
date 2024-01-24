@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
 import dask.dataframe as dd
-import numpy as np
 import pandas as pd
 from genno import Quantity
 from genno.core.key import single_key
@@ -28,18 +27,8 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: Dimensions of the data.
 DIMS = ["COUNTRY", "PRODUCT", "TIME", "FLOW", "MEASURE"]
-
-#: Subset of columns to load, mapped to returned values.
-CSV_COLUMNS = {
-    "COUNTRY": "node",
-    "PRODUCT": "commodity",
-    "TIME": "year",
-    "FLOW": "flow",
-    "MEASURE": "unit",
-    "Flag Codes": "flag",
-    "Value": "value",
-}
 
 #: Mapping from (provider, year, time stamp) → set of file name(s) containing data.
 FILES = {
@@ -116,7 +105,7 @@ class IEA_EWEB(ExoDataSource):
         )
 
     def transform(self, c: "genno.Computer", base_key: "genno.Key") -> "genno.Key":
-        # Aggregate only; do not interpolate on "y"
+        """Aggregate only; do not interpolate on "y"."""
         return single_key(
             c.add(base_key + "1", "aggregate", base_key, "n::groups", keep=False)
         )
@@ -185,6 +174,7 @@ def unpack_zip(path: Path) -> Path:
 def iea_web_data_for_query(
     base_path: Path, *filenames: str, query_expr: str
 ) -> pd.DataFrame:
+    """Load data from `base_path` / `filenames` in IEA WEB formats."""
     # Filenames to pass to dask.dataframe
     names_to_read = []
 
@@ -200,7 +190,7 @@ def iea_web_data_for_query(
             args: Dict[str, Any] = dict(header=None, names=DIMS + ["Value"])
         else:
             names_to_read.append(path)
-            args = dict(header=0, usecols=list(CSV_COLUMNS.keys()))
+            args = dict(header=0, usecols=DIMS + ["Value"])
 
     with silence_log("fsspec.local"):
         ddf = dd.read_csv(names_to_read, engine="pyarrow", **args)
@@ -224,23 +214,20 @@ def load_data(
 
     Parameters
     ----------
+    provider : str
+        First entry in :data:`.FILES`.
+    edition : str
+        Second entry in :data:`.FILES`.
+    query_expr : str, optional
+        Used with :meth:`pandas.DataFrame.query` to reduce the returned data.
     base_path : os.Pathlike, optional
-        Path containing :data:`.FILE`.
+        Path containing :data:`.FILES`. If not provided, locations within
+        :mod:`message_data` or :mod:`message_ix_models` are used.
 
     Returns
     -------
     pandas.DataFrame
-        The data frame has the following columns:
-
-        - flow
-        - commodity, i.e. “PRODUCT” in the raw data.
-        - node, i.e. “COUNTRY” in the raw data.
-        - year, i.e. “TIME” in the raw data. The IEA dimension ID is actually more
-          precise here, but “year” is used because it aligns with the :mod:`message_ix`
-          formulation
-        - value
-        - unit
-        - flag
+        The data frame has one column for each of :data:`.DIMS`, plus "Value".
     """
     files = FILES[(provider, edition)]
 
@@ -291,20 +278,3 @@ def generate_code_lists(
             m.Code(id=code_id) for code_id in sorted(data[concept_id].dropna().unique())
         )
         write(cl, output_path)
-
-
-def fuzz_data(base_path=None, target_path=None):
-    """Generate a fuzzed subset of the data for testing."""
-    df = iea_web_data_for_query(base_path)
-
-    # - Reduce the data by only taking 2 periods for each (flow, product, country).
-    # - Replace the actual values with random.
-    df = (
-        df.groupby(["FLOW", "PRODUCT", "COUNTRY"])
-        .take([0, -1])
-        .reset_index(drop=True)
-        .assign(Value=lambda df: np.random.rand(len(df)))
-    )
-
-    # TODO write to file
-    # path = (target_path or package_data_path("iea")).joinpath(f"fuzzed-{FILE}")

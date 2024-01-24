@@ -4,14 +4,9 @@ import pandas as pd
 import pytest
 from genno import Computer
 
+from message_ix_models.testing import GHA
 from message_ix_models.tools.exo_data import prepare_computer
-from message_ix_models.tools.iea.web import (
-    DIMS,
-    FILES,
-    fuzz_data,
-    generate_code_lists,
-    load_data,
-)
+from message_ix_models.tools.iea.web import DIMS, generate_code_lists, load_data
 
 
 class TestIEA_EWEB:
@@ -63,19 +58,21 @@ class TestIEA_EWEB:
         assert {1980, 2018} < set(result.coords["y"].data)
 
 
-@pytest.mark.parametrize(
-    "provider, edition",
-    [
-        pytest.param(
-            "IEA",
-            "2023",
-            marks=pytest.mark.xfail(reason="No fuzzed version of this data"),
-        ),
-        ("OECD", "2023"),
-        ("OECD", "2022"),
-        ("OECD", "2023"),
-    ],
+# NB once there is a fuzzed version of the (IEA, 2023) data available, usage of this
+#    variable can be replaced with list(FILES.keys())
+PROVIDER_EDITION = (
+    pytest.param(
+        "IEA",
+        "2023",
+        marks=pytest.mark.xfail(GHA, reason="No fuzzed version of this data"),
+    ),
+    ("OECD", "2023"),
+    ("OECD", "2022"),
+    ("OECD", "2023"),
 )
+
+
+@pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_load_data(test_context, tmp_path, provider, edition):
     # # Store in the temporary directory for this test
     # test_context.cache_path = tmp_path.joinpath("cache")
@@ -92,7 +89,7 @@ def test_load_data(test_context, tmp_path, provider, edition):
     assert (set(DIMS) & {"Value"}) < set(result.columns)
 
 
-@pytest.mark.parametrize("provider, edition", list(FILES.keys()))
+@pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_generate_code_lists(tmp_path, provider, edition):
     # generate_code_lists() runs
     generate_code_lists(provider, edition, tmp_path)
@@ -123,9 +120,3 @@ def test_load_codelists(urn, N):
 
     # Code list has the expected number of codes
     assert N == len(cl)
-
-
-@pytest.mark.skip(reason="Refactoring")
-def test_fuzz_data(test_context, tmp_path):
-    # fuzz_data() runs
-    fuzz_data(target_path=tmp_path)
