@@ -98,7 +98,6 @@ IAMC data structures (:mod:`.tools.iamc`)
 .. automodule:: message_ix_models.tools.iamc
    :members:
 
-
 .. _tools-wb:
 
 World Bank structures (:mod:`.tools.wb`)

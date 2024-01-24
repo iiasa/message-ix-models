@@ -66,6 +66,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    api/disutility
    api/report/index
    api/tools
+   api/data-sources
    api/util
    api/testing
    api/workflow

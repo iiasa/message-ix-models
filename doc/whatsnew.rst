@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Add :ref:`tools-iea-web` for handling data from the International Energy Agency (IEA) Extended World Energy Balances (:issue:`25`, :pull:`75`).
 - Add :ref:`tools-wb` and :func:`.assign_income_groups` to assign MESSAGE regions to World Bank income groups (:pull:`144`).
 - Adjust :mod:`.report.compat` for genno version 1.22 (:issue:`141`, :pull:`142`).
 

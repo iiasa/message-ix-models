@@ -1,3 +1,5 @@
+from typing import IO, Union
+
 import click
 
 
@@ -9,14 +11,18 @@ def cli():
 
 FILENAMES = [
     "advance/advance_compare_20171018-134445.csv.zip",
+    "iea/372f7e29-en.zip",
+    "iea/8624f431-en.zip",
+    "iea/cac5fa90-en.zip",
     "ssp/SSP-Review-Phase-1.csv.gz",
     "ssp/SspDb_country_data_2013-06-12.csv.zip",
 ]
 
 
 @cli.command("fuzz-private-data")
+@click.option("--frac", type=float, default=1.0, help="Fraction of rows (default: all)")
 @click.argument("filename", metavar="FILENAME", type=click.Choice(FILENAMES))
-def fuzz_private_data(filename):  # pragma: no cover
+def fuzz_private_data(filename, frac: float):  # pragma: no cover
     """Create random data for testing.
 
     This command creates data files in message_ix_models/data/test/… based on
@@ -29,9 +35,10 @@ def fuzz_private_data(filename):  # pragma: no cover
     To see valid FILENAMES, run the command with no arguments.
     """
     import zipfile
-    from contextlib import nullcontext
     from pathlib import Path
+    from tempfile import TemporaryDirectory
 
+    import dask.dataframe as dd
     import pandas as pd
     from numpy import char, random
 
@@ -44,12 +51,35 @@ def fuzz_private_data(filename):  # pragma: no cover
     path_out = package_data_path("test", p)
 
     # Read the data
-    member = NAME if "advance" in filename else None
-    with zipfile.ZipFile(path_in) if member else nullcontext() as zf:
-        df = pd.read_csv(zf.open(member) if member else path_in, engine="pyarrow")
+    with TemporaryDirectory() as td:
+        td_path = Path(td)
+        if "advance" in filename:
+            # Manually unpack one member of the multi-member archive `path_in`
+            target: Union[IO, Path, str] = zipfile.ZipFile(path_in).extract(
+                NAME, path=td_path
+            )
+        elif "iea" in filename:
+            # Manually unpack so that dask.dataframe.read_csv() can be used
+            from message_ix_models.tools.iea.web import unpack_zip
 
-    # Determine its numeric columns (2000, 2001, etc.) and shape
-    cols = list(filter(char.isnumeric, df.columns))
+            target = unpack_zip(path_in)
+        else:
+            target = path_in
+
+        # - Read the data using dask & pyarrow.
+        # - Subset the data if `frac` < 1.0.
+        # - Compute the resulting pandas.DataFrame
+        df = dd.read_csv(target, engine="pyarrow").sample(frac=frac).compute()
+
+    # Determine columns in which to replace numerical data
+    if "iea" in filename:
+        # Specific column
+        cols = ["Value"]
+    else:
+        # All columns with numeric names, for instance 2000, 2001, etc.
+        cols = list(filter(char.isnumeric, df.columns))
+
+    # Shape of random data
     size = (df.shape[0], len(cols))
     # - Generate random data of this shape.
     # - Keep only the elements corresponding to non-NA elements of `df`.
@@ -60,11 +90,10 @@ def fuzz_private_data(filename):  # pragma: no cover
     # Write to file, keeping only a few decimal points
     path_out.parent.mkdir(parents=True, exist_ok=True)
 
-    with zipfile.ZipFile(
-        path_out, "w", compression=zipfile.ZIP_BZIP2
-    ) if member else nullcontext() as zf:
-        df.to_csv(
-            zf.open(member, "w") if member else path_out,
-            index=False,
-            float_format="%.2f",
-        )
+    if "advance" in filename:
+        zf = zipfile.ZipFile(path_out, "w", compression=zipfile.ZIP_BZIP2)
+        target = zf.open(NAME)
+    else:
+        target = path_out
+
+    df.to_csv(target, index=False, float_format="%.2f")
