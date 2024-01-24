@@ -14,7 +14,7 @@
         <str:Agency id="ICONICS">
           <com:Name xml:lang="en">International Committee on New Integrated Climate Change Assessment Scenarios</com:Name>
           <str:Contact>
-            <str:URI text="https://depts.washington.edu/iconics/"/>
+            <str:URI>https://depts.washington.edu/iconics/</str:URI>
           </str:Contact>
         </str:Agency>
       </str:AgencyScheme>
