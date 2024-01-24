@@ -7,7 +7,7 @@ import sdmx
 import sdmx.model.v30 as m
 import sdmx.urn
 
-from message_ix_models.util.sdmx import make_enum, write
+from message_ix_models.util.sdmx import make_enum, register_agency, write
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -133,32 +133,14 @@ including by geo-engineering if necessary.""",
 
 def generate(context: "Context", base_dir: Optional["PathLike"] = None):
     """Generate SDMX code lists containing the SSPs."""
-    # Create an AgencyScheme containing ICONICS
-    as_ = m.AgencyScheme(
-        id="AGENCIES",
-        description="Agencies referenced by data structures in message_ix_models",
-        version="0.1",
-    )
-
-    IIASA_ECE = m.Agency(
-        id="IIASA_ECE", name="IIASA Energy, Climate, and Environment Program"
-    )
-
+    # Agency for ICONICS as the maintainer of other objects
     ICONICS = m.Agency(
         id="ICONICS",
         name="International Committee on New Integrated Climate Change Assessment "
         "Scenarios",
         contact=[m.Contact(uri=["https://depts.washington.edu/iconics/"])],
     )
-
-    as_.maintainer = IIASA_ECE
-    as_.append(IIASA_ECE)
-    as_.append(ICONICS)
-
-    if context.dry_run:
-        log.info(f"(dry run) Would write:\n{repr(as_)}")
-    else:
-        write(as_, base_dir)
+    register_agency(ICONICS)
 
     for cl_info in CL_INFO:
         # Create the codelist: format the name and description

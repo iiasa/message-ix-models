@@ -12,6 +12,26 @@ coal:
   #    term usually refers to anthracite, which has a higher
   #    carbon emission factor.
   ipcc-1996-name: "Other Bituminous Coal"
+  iea-eweb-product:
+  - ANTCOAL
+  - BITCOAL
+  - BKB
+  - BLFURGS
+  - BROWN
+  - COALTAR
+  - COKCOAL
+  - COKEOVGS
+  - GASCOKE
+  - GASWKSGS
+  - HARDCOAL
+  - INDWASTE
+  - LIGNITE
+  - MANGAS
+  - MUNWASTEN
+  - OVENCOKE
+  - PATFUEL
+  - PEAT
+  - SUBCOAL
 
 crudeoil:
   name: Crude oil
@@ -32,11 +52,13 @@ electr:
   name: Electricity
   units: GWa
   report: Electricity
+  iea-eweb-product: [ELECTR]
 
 ethanol:
   name: Ethanol
   units: GWa
   report: Liquids|Biomass
+  iea-eweb-product: [BIODIESEL, BIOGASOL, BIOJETKERO, OBIOLIQ]
 
 freshwater_supply:
   name: (?) Fresh water
@@ -49,12 +71,14 @@ fueloil:
   level: secondary
   units: GWa
   ipcc-1996-name: "Residual Fuel Oil"
+  iea-eweb-product: [BITUMEN, PARWAX, PETCOKE, RESFUEL]
 
 gas:
   name: Natural Gas
   units: GWa
   report: Gases
   ipcc-1996-name: "Natural Gas (Dry)"
+  iea-eweb-product: [NATGAS]
 
 hydrogen:
   name: Gaseous hydrogen
@@ -72,6 +96,20 @@ lightoil:
   report: Liquids|Oil
   # NB same value as "Crude Oil" and several others; this choice is arbitrary
   ipcc-1996-name: "Other Oil"
+  iea-eweb-product:
+  - AVGAS
+  - ETHANE
+  - JETGAS
+  - LPG
+  - LUBRIC
+  - NAPHTHA
+  - NONBIODIES
+  - NONBIOGASO
+  - NONBIOJETK
+  - ONONSPEC
+  - OTHKERO
+  - REFINGAS
+  - WHITESP
 
 lignite:
   name: Lignite

@@ -72,7 +72,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-doc/_autosummary/
+doc/**/_autosummary/
 doc/_build/
 doc/*.inv
 

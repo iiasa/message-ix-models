@@ -42,7 +42,7 @@ dependencies = [
   "pyarrow",
   "pycountry",
   "PyYAML",
-  "sdmx1 >= 2.8.0",
+  "sdmx1 >= 2.13.1",
   "tqdm",
 ]
 

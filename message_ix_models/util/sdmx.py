@@ -16,6 +16,8 @@ from .common import package_data_path
 if TYPE_CHECKING:
     from os import PathLike
 
+    import sdmx.model.common
+
 log = logging.getLogger(__name__)
 
 CodeLike = Union[str, Code]
@@ -177,7 +179,27 @@ def write(obj, base_dir: Optional["PathLike"] = None, basename: Optional[str] = 
 
     # Write
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "wb") as f:
-        f.write(sdmx.to_xml(msg, pretty_print=True))
+    path.write_bytes(sdmx.to_xml(msg, pretty_print=True))
 
     log.info(f"Wrote {path}")
+
+
+def register_agency(
+    agency: "sdmx.model.common.Agency",
+) -> "sdmx.model.common.AgencyScheme":
+    """Add `agency` to the :class:`.AgencyScheme` "IIASA_ECE:AGENCIES"."""
+    # Read the existing agency scheme
+    as_ = read("IIASA_ECE:AGENCIES")
+
+    if agency in as_:
+        log.info(f"Replace or update existing {as_[agency.id]!r}")
+        as_.items[agency.id] = agency
+    else:
+        as_.append(agency)
+
+    log.info(f"Updated {as_!r}")
+
+    # Write to file again
+    write(as_)
+
+    return as_
