@@ -6,7 +6,7 @@
   </mes:Header>
   <mes:Structures>
     <str:OrganisationSchemes>
-      <str:AgencyScheme version="0.1" isExternalReference="none" isFinal="none" agencyID="IIASA_ECE" id="AGENCIES" urn="urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=IIASA_ECE:AGENCIES(0.1)">
+      <str:AgencyScheme version="0.1" isExternalReference="false" isFinal="false" agencyID="IIASA_ECE" id="AGENCIES" urn="urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=IIASA_ECE:AGENCIES(0.1)">
         <com:Description xml:lang="en">Agencies referenced by data structures in message_ix_models</com:Description>
         <str:Agency id="IIASA_ECE">
           <com:Name xml:lang="en">IIASA Energy, Climate, and Environment Program</com:Name>
@@ -15,6 +15,12 @@
           <com:Name xml:lang="en">International Committee on New Integrated Climate Change Assessment Scenarios</com:Name>
           <str:Contact>
             <str:URI>https://depts.washington.edu/iconics/</str:URI>
+          </str:Contact>
+        </str:Agency>
+        <str:Agency id="IEA">
+          <com:Name xml:lang="en">International Energy Agency</com:Name>
+          <str:Contact>
+            <str:URI>https://iea.org</str:URI>
           </str:Contact>
         </str:Agency>
       </str:AgencyScheme>
