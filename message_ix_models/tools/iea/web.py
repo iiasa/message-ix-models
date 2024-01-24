@@ -111,7 +111,7 @@ class IEA_EWEB(ExoDataSource):
         )
 
 
-def fwf_to_csv(path: Path, progress: bool = False) -> Path:
+def fwf_to_csv(path: Path, progress: bool = False) -> Path:  # pragma: no cover
     """Convert the IEA fixed-width file format to CSV.
 
     This appears to operate at about 900k lines / second, about 1 minute for the IEA
@@ -185,7 +185,7 @@ def iea_web_data_for_query(
         if path.suffix == ".zip":
             path = unpack_zip(path)
 
-        if path.suffix == ".TXT":
+        if path.suffix == ".TXT":  # pragma: no cover
             names_to_read.append(fwf_to_csv(path, progress=True))
             args: Dict[str, Any] = dict(header=None, names=DIMS + ["Value"])
         else:
