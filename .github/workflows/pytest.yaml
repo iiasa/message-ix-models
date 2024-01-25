@@ -20,15 +20,16 @@ jobs:
         # These should match the versions used in the "pytest" workflows of both
         # ixmp and message_ix.
         version:
-        - { os: macos-latest, python: "3.11" }
-        - { os: ubuntu-latest, python: "3.11" }
-        - { os: windows-latest, python: "3.11" }
+        - { os: macos-latest, python: "3.12" }
+        - { os: ubuntu-latest, python: "3.12" }
+        - { os: windows-latest, python: "3.12" }
         # Versions of both ixmp and message_ix to use
         upstream:
         - { version: v3.4.0, extra-deps: '"pandas<2.0"' }  # Minimum version given in setup.cfg
         - { version: v3.5.0, extra-deps: '"pandas<2.0"' }
         - { version: v3.6.0, extra-deps: '"pandas<2.0"' }
-        - { version: v3.7.0, extra-deps: "" }  # Latest released version
+        - { version: v3.7.0, extra-deps: "" }  
+        - { version: v3.8.0, extra-deps: "" } # Latest released version
         - { version: main, extra-deps: "" }  # Development version
 
       fail-fast: false
@@ -111,7 +112,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
-      with: { python-version: "3.11" }
+      with: { python-version: "3.12" }
 
     - name: Force recreation of pre-commit virtual environment for mypy
       if: github.event_name == 'schedule'  # Comment this line to run on a PR
