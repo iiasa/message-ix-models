@@ -539,7 +539,12 @@ def add_data_2(scenario, dry_run=False):
     for func in DATA_FUNCTIONS_2:
         # Generate or load the data; add to the Scenario
         log.info(f"from {func.__name__}()")
-        add_par_data(scenario, func(scenario), dry_run=dry_run)
+        # TODO: remove this once emission_factors are back in SSP_dev
+        data = func(scenario)
+        if "SSP_dev" in scenario.model:
+            if "emission_factor" in list(data.keys()):
+                data.pop("emission_factor")
+        add_par_data(scenario, data, dry_run=dry_run)
 
     log.info("done")
 
