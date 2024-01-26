@@ -454,6 +454,7 @@ def read_demand():
     fs_GLO.insert(1, "bio_pct", 0)
     fs_GLO.insert(2, "elec_pct", 0)
     # 17/14 NH3:N ratio, to get NH3 activity based on N demand => No NH3 loss assumed during production
+    # FIXME: Name: elec_pct, dtype: float64 ' has dtype incompatible with int64, please explicitly cast to a compatible dtype first.
     fs_GLO.iloc[:, 1:6] = input_fuel[5] * fs_GLO.iloc[:, 1:6]
     fs_GLO.insert(6, "NH3_to_N", 1)
 

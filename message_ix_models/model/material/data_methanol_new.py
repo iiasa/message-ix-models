@@ -68,7 +68,7 @@ def broadcast_reduced_df(df, par_name):
         yr_cols_codes = {}
         yr_col_inp = [i for i in df_final.columns if "year" in i]
         yr_col_out = [i for i in df_bc_node.columns if "year" in i]
-        df_bc_node[yr_col_inp] = df_final.loc[i][yr_col_inp]
+        df_bc_node[yr_col_inp] = df_final.loc[i][yr_col_inp].values
 
         for colname in node_cols:
             df_bc_node[colname] = None
