@@ -12,12 +12,10 @@ from message_data.model.material.util import (
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import private_data_path
 
-
 pd.options.mode.chained_assignment = None
 
 
 def load_GDP_COVID():
-
     context = read_config()
     # Obtain 2015 and 2020 GDP values from NGFS baseline. These values are COVID corrected. (GDP MER)
 
@@ -52,7 +50,6 @@ def load_GDP_COVID():
     df_new = pd.DataFrame(columns=["node", "year", "value"])
 
     for ind in gdp_ssp2.index:
-
         df_temp = pd.DataFrame(columns=["node", "year", "value"])
         region = gdp_ssp2.loc[ind, "node"]
         mult_value = gdp_covid_2020.loc[
@@ -74,7 +71,6 @@ def load_GDP_COVID():
 
 
 def add_macro_COVID(scen, filename, check_converge=False):
-
     context = read_config()
     info = ScenarioInfo(scen)
     nodes = info.N
@@ -148,7 +144,7 @@ def modify_demand_and_hist_activity(scen):
         | (df["SECTOR"] == "industry (non-ferrous metals)")
         | (df["SECTOR"] == "industry (non-metallic minerals)")
         | (df["SECTOR"] == "industry (total)")
-    ]
+        ]
     df = df[df["RYEAR"] == 2015]
 
     # NOTE: Total cehmical industry energy: 27% thermal, 8% electricity, 65% feedstock
@@ -167,10 +163,10 @@ def modify_demand_and_hist_activity(scen):
         & (df["SECTOR"] != "industry (total)")
         & (df["SECTOR"] != "feedstock (petrochemical industry)")
         & (df["SECTOR"] != "feedstock (total)")
-    ]
+        ]
     df_spec_total = df[
         (df["SECTOR"] == "industry (total)") & (df["FUEL"] == "electricity")
-    ]
+        ]
 
     df_spec_new = pd.DataFrame(
         columns=["REGION", "SECTOR", "FUEL", "RYEAR", "UNIT_OUT", "RESULT"]
@@ -179,15 +175,15 @@ def modify_demand_and_hist_activity(scen):
         df_spec_temp = df_spec.loc[df_spec["REGION"] == r]
         df_spec_total_temp = df_spec_total.loc[df_spec_total["REGION"] == r]
         df_spec_temp.loc[:, "i_spec"] = (
-            df_spec_temp.loc[:, "RESULT"]
-            / df_spec_total_temp.loc[:, "RESULT"].values[0]
+                df_spec_temp.loc[:, "RESULT"]
+                / df_spec_total_temp.loc[:, "RESULT"].values[0]
         )
         df_spec_new = pd.concat([df_spec_temp, df_spec_new], ignore_index=True)
 
     df_spec_new.drop(["FUEL", "RYEAR", "UNIT_OUT", "RESULT"], axis=1, inplace=True)
     df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"] = (
-        df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"]
-        * 0.67
+            df_spec_new.loc[df_spec_new["SECTOR"] == "industry (chemicals)", "i_spec"]
+            * 0.67
     )
 
     df_spec_new = df_spec_new.groupby(["REGION"]).sum().reset_index()
@@ -196,7 +192,7 @@ def modify_demand_and_hist_activity(scen):
 
     df_feed = df[
         (df["SECTOR"] == "feedstock (petrochemical industry)") & (df["FUEL"] == "total")
-    ]
+        ]
     df_feed_total = df[(df["SECTOR"] == "feedstock (total)") & (df["FUEL"] == "total")]
     df_feed_temp = pd.DataFrame(columns=["REGION", "i_feed"])
     df_feed_new = pd.DataFrame(columns=["REGION", "i_feed"])
@@ -220,12 +216,12 @@ def modify_demand_and_hist_activity(scen):
         & (df["SECTOR"] != "feedstock (petrochemical industry)")
         & (df["SECTOR"] != "feedstock (total)")
         & (df["SECTOR"] != "industry (non-ferrous metals)")
-    ]
+        ]
     df_therm_total = df[
         (df["SECTOR"] == "industry (total)")
         & (df["FUEL"] != "total")
         & (df["FUEL"] != "electricity")
-    ]
+        ]
     df_therm_total = (
         df_therm_total.groupby(by="REGION").sum().drop(["RYEAR"], axis=1).reset_index()
     )
@@ -243,23 +239,23 @@ def modify_demand_and_hist_activity(scen):
         df_therm_temp = df_therm.loc[df_therm["REGION"] == r]
         df_therm_total_temp = df_therm_total.loc[df_therm_total["REGION"] == r]
         df_therm_temp.loc[:, "i_therm"] = (
-            df_therm_temp.loc[:, "RESULT"]
-            / df_therm_total_temp.loc[:, "RESULT"].values[0]
+                df_therm_temp.loc[:, "RESULT"]
+                / df_therm_total_temp.loc[:, "RESULT"].values[0]
         )
         df_therm_new = pd.concat([df_therm_temp, df_therm_new], ignore_index=True)
         df_therm_new = df_therm_new.drop(["RESULT"], axis=1)
 
     df_therm_new.drop(["FUEL", "RYEAR", "UNIT_OUT"], axis=1, inplace=True)
     df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"] = (
-        df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"]
-        * 0.67
+            df_therm_new.loc[df_therm_new["SECTOR"] == "industry (chemicals)", "i_therm"]
+            * 0.67
     )
 
     # Modify CPA based on https://www.iea.org/sankey/#?c=Japan&s=Final%20consumption.
     # Since the value did not allign with the one in the IEA website.
     index = (df_therm_new["SECTOR"] == "industry (iron and steel)") & (
-        (df_therm_new["REGION"] == region_name_CPA)
-        | (df_therm_new["REGION"] == region_name_CHN)
+            (df_therm_new["REGION"] == region_name_CPA)
+            | (df_therm_new["REGION"] == region_name_CHN)
     )
 
     df_therm_new.loc[index, "i_therm"] = 0.2
@@ -310,39 +306,41 @@ def modify_demand_and_hist_activity(scen):
         useful_thermal.loc[
             useful_thermal["node"] == r_MESSAGE, "value"
         ] = useful_thermal.loc[useful_thermal["node"] == r_MESSAGE, "value"] * (
-            1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0]
+                1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0]
         )
 
         thermal_df_hist.loc[
             thermal_df_hist["node_loc"] == r_MESSAGE, "value"
         ] = thermal_df_hist.loc[thermal_df_hist["node_loc"] == r_MESSAGE, "value"] * (
-            1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0]
+                1 - df_therm_new.loc[df_therm_new["REGION"] == r, "i_therm"].values[0]
         )
 
     for r in df_spec_new["REGION"]:
         r_MESSAGE = region_type + r
 
         useful_spec.loc[useful_spec["node"] == r_MESSAGE, "value"] = useful_spec.loc[
-            useful_spec["node"] == r_MESSAGE, "value"
-        ] * (1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0])
+                                                                         useful_spec["node"] == r_MESSAGE, "value"
+                                                                     ] * (1 - df_spec_new.loc[
+            df_spec_new["REGION"] == r, "i_spec"].values[0])
 
         spec_df_hist.loc[
             spec_df_hist["node_loc"] == r_MESSAGE, "value"
         ] = spec_df_hist.loc[spec_df_hist["node_loc"] == r_MESSAGE, "value"] * (
-            1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0]
+                1 - df_spec_new.loc[df_spec_new["REGION"] == r, "i_spec"].values[0]
         )
 
     for r in df_feed_new["REGION"]:
         r_MESSAGE = region_type + r
 
         useful_feed.loc[useful_feed["node"] == r_MESSAGE, "value"] = useful_feed.loc[
-            useful_feed["node"] == r_MESSAGE, "value"
-        ] * (1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0])
+                                                                         useful_feed["node"] == r_MESSAGE, "value"
+                                                                     ] * (1 - df_feed_new.loc[
+            df_feed_new["REGION"] == r, "i_feed"].values[0])
 
         feed_df_hist.loc[
             feed_df_hist["node_loc"] == r_MESSAGE, "value"
         ] = feed_df_hist.loc[feed_df_hist["node_loc"] == r_MESSAGE, "value"] * (
-            1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0]
+                1 - df_feed_new.loc[df_feed_new["REGION"] == r, "i_feed"].values[0]
         )
 
     scen.check_out()
@@ -995,17 +993,17 @@ def add_emission_accounting(scen):
         i
         for i in tec_list_residual
         if (
-            (
-                ("biomass_i" in i)
-                | ("coal_i" in i)
-                | ("foil_i" in i)
-                | ("gas_i" in i)
-                | ("hp_gas_i" in i)
-                | ("loil_i" in i)
-                | ("meth_i" in i)
-            )
-            & ("imp" not in i)
-            & ("trp" not in i)
+                (
+                        ("biomass_i" in i)
+                        | ("coal_i" in i)
+                        | ("foil_i" in i)
+                        | ("gas_i" in i)
+                        | ("hp_gas_i" in i)
+                        | ("loil_i" in i)
+                        | ("meth_i" in i)
+                )
+                & ("imp" not in i)
+                & ("trp" not in i)
         )
     ]
 
@@ -1137,11 +1135,11 @@ def add_emission_accounting(scen):
         i
         for i in tec_list
         if (
-            ("steel" in i)
-            | ("aluminum" in i)
-            | ("petro" in i)
-            | ("cement" in i)
-            | ("ref" in i)
+                ("steel" in i)
+                | ("aluminum" in i)
+                | ("petro" in i)
+                | ("cement" in i)
+                | ("ref" in i)
         )
     ]
     tec_list_materials.remove("refrigerant_recovery")
@@ -1161,7 +1159,7 @@ def add_emission_accounting(scen):
         (relation_activity["relation"] != "PM2p5_Emission")
         & (relation_activity["relation"] != "CO2_industry_Emission")
         & (relation_activity["relation"] != "CO2_transformation_Emission")
-    ]
+        ]
 
     # ***** (3) Add thermal industry technologies to CO2_ind relation ******
 
@@ -1319,7 +1317,6 @@ def add_emission_accounting(scen):
 
 
 def add_elec_lowerbound_2020(scen):
-
     # To avoid zero i_spec prices only for R12_CHN, add the below section.
     # read input parameters for relevant technology/commodity combinations for
     # converting betwen final and useful energy
@@ -1356,7 +1353,7 @@ def add_elec_lowerbound_2020(scen):
     # derive useful energy values by dividing final energy by
     # input coefficient from final-to-useful technologies
     bound_residual_electricity["value"] = (
-        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
+            bound_residual_electricity["Value"] / bound_residual_electricity["value"]
     )
 
     # downselect dataframe columns for MESSAGEix parameters
@@ -1378,7 +1375,7 @@ def add_elec_lowerbound_2020(scen):
     bound_residual_electricity["value"] = bound_residual_electricity["value"] * 0.8
     bound_residual_electricity = bound_residual_electricity[
         bound_residual_electricity["node_loc"] == "R12_CHN"
-    ]
+        ]
 
     scen.check_out()
 
@@ -1460,7 +1457,7 @@ def add_coal_lowerbound_2020(sc):
     bound_coal["value"] = bound_coal["Value"] / bound_coal["value"]
     bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
     bound_residual_electricity["value"] = (
-        bound_residual_electricity["Value"] / bound_residual_electricity["value"]
+            bound_residual_electricity["Value"] / bound_residual_electricity["value"]
     )
 
     # downselect dataframe columns for MESSAGEix parameters
@@ -1527,7 +1524,6 @@ def add_coal_lowerbound_2020(sc):
 
 
 def add_cement_bounds_2020(sc):
-
     """Set lower and upper bounds for gas and oil as a calibration for 2020"""
 
     context = read_config()
@@ -1652,7 +1648,7 @@ def add_cement_bounds_2020(sc):
     bound_cement_foil["value"] = bound_cement_foil["Value"] / bound_cement_foil["value"]
     bound_cement_gas["value"] = bound_cement_gas["Value"] / bound_cement_gas["value"]
     bound_cement_biomass["value"] = (
-        bound_cement_biomass["Value"] / bound_cement_biomass["value"]
+            bound_cement_biomass["Value"] / bound_cement_biomass["value"]
     )
     bound_cement_coal["value"] = bound_cement_coal["Value"] / bound_cement_coal["value"]
 
@@ -1777,7 +1773,6 @@ def add_cement_bounds_2020(sc):
 
 
 def read_sector_data(scenario, sectname):
-
     # Read in technology-specific parameters from input xlsx
     # Now used for steel and cement, which are in one file
 
@@ -1843,7 +1838,6 @@ def read_sector_data(scenario, sectname):
 # Add the relevant ccs technologies to the co2_trans_disp and bco2_trans_disp
 # relations
 def add_ccs_technologies(scen):
-
     context = read_config()
     s_info = ScenarioInfo(scen)
 
@@ -1888,7 +1882,6 @@ def add_ccs_technologies(scen):
 # Read in time-dependent parameters
 # Now only used to add fuel cost for bare model
 def read_timeseries(scenario, material, filename):
-
     import numpy as np
 
     # Ensure config is loaded, get the context
@@ -1935,7 +1928,6 @@ def read_timeseries(scenario, material, filename):
 
 
 def read_rel(scenario, material, filename):
-
     # Ensure config is loaded, get the context
     context = read_config()
 

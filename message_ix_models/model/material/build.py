@@ -1,6 +1,8 @@
 import logging
 from typing import Callable, Dict, List, Mapping, Union
 
+import ixmp
+import message_ix
 from ixmp.utils import maybe_check_out, maybe_commit
 from message_ix import Scenario
 import pandas as pd
