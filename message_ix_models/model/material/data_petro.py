@@ -58,7 +58,7 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
     gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
     mer_to_ppp = pd.read_csv(
         private_data_path("material", "other", "mer_to_ppp_default.csv")
-    ).set_index("node", "year")
+    ).set_index(["node", "year"])
     # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year") TODO: might need to be re-activated for different SSPs
     gdp_mer = gdp_mer.merge(
         mer_to_ppp.reset_index()[["node", "year", "value"]],
