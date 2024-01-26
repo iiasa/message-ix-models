@@ -2,6 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
+from message_ix_models.util import private_data_path
 
 from .util import read_config
 from message_ix_models import ScenarioInfo
@@ -16,19 +17,19 @@ def read_material_intensities(
         ####################################################################
 
         # read LCA data from ADVANCE LCA tool
-        data_path_lca = data_path + "/power sector/NTNU_LCA_coefficients.xlsx"
+        data_path_lca = data_path + "/NTNU_LCA_coefficients.xlsx"
         data_lca = pd.read_excel(data_path_lca, sheet_name="environmentalImpacts")
 
         # read technology, region and commodity mappings
         data_path_tec_map = (
-            data_path + "/power sector/MESSAGE_global_model_technologies.xlsx"
+            data_path + "/MESSAGE_global_model_technologies.xlsx"
         )
         technology_mapping = pd.read_excel(data_path_tec_map, sheet_name="technology")
 
-        data_path_reg_map = data_path + "/power sector/LCA_region_mapping.xlsx"
+        data_path_reg_map = data_path + "/LCA_region_mapping.xlsx"
         region_mapping = pd.read_excel(data_path_reg_map, sheet_name="region")
 
-        data_path_com_map = data_path + "/power sector/LCA_commodity_mapping.xlsx"
+        data_path_com_map = data_path + "/LCA_commodity_mapping.xlsx"
         commodity_mapping = pd.read_excel(data_path_com_map, sheet_name="commodity")
 
         ####################################################################
@@ -280,7 +281,7 @@ def gen_data_power_sector(scenario, dry_run=False):
 
     # paths to lca data
     code_path = Path(__file__).parents[0] / "material_intensity"
-    data_path = context.get_local_path("material")
+    data_path = private_data_path("material", "power_sector")
 
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
