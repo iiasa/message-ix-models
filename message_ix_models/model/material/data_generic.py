@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import message_ix_models.util
 import pandas as pd
 
 from .util import read_config
@@ -24,7 +25,7 @@ def read_data_generic(scenario):
 
     # Read the file
     data_generic = pd.read_excel(
-        context.get_local_path(
+        message_ix_models.util.private_data_path(
             "material", "other", "generic_furnace_boiler_techno_economic.xlsx"
         ),
         sheet_name="generic",

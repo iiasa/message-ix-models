@@ -39,8 +39,9 @@ def gen_data_methanol_new(scenario):
     for i in pars_dict.keys():
         pars_dict[i] = broadcast_reduced_df(pars_dict[i], i)
 
-    if scenario.model == "SSP_dev_SSP2_v0.1":
-        file_path = "C:/Users\maczek\PycharmProjects\message_data\message_data\model\material\petrochemical model fixes notebooks\missing_rels.yaml"
+    if "SSP_dev" in scenario.model:
+        file_path = message_ix_models.util.private_data_path("material", "methanol", "missing_rels.yaml")
+        # file_path = "C:/Users\maczek\PycharmProjects\message_data\message_data\model\material\petrochemical model fixes notebooks\"
 
         with open(file_path, "r") as file:
             missing_rels = yaml.safe_load(file)

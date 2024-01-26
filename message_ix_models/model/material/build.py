@@ -159,8 +159,6 @@ def apply_spec(
         result = data(scenario, dry_run=dry_run)
         if result:
             # `data` function returned some data; use add_par_data()
-            if "SSP_dev" in scenario.model:
-                result.pop("emission_factor")
             add_par_data(scenario, result, dry_run=dry_run)
 
     # Finalize
