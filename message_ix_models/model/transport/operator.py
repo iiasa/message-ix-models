@@ -548,7 +548,7 @@ def make_output_path(config, scenario, name) -> "pathlib.Path":
 
 
 def merge_data(
-    *others: Mapping[Hashable, pd.DataFrame]
+    *others: Mapping[Hashable, pd.DataFrame],
 ) -> Dict[Hashable, pd.DataFrame]:
     """Slightly modified from message_ix_models.util.
 

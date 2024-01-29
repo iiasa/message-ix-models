@@ -419,7 +419,7 @@ COMMON = {
         [
             Map(
                 "setting",
-                H=Constant(0.8, "n y"),
+                H=Constant(0.9, "n y"),
                 M=Constant(0.95, "n y"),
                 L=Constant(1.0, "n y"),
             ),
