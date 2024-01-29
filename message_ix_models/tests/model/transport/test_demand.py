@@ -312,5 +312,5 @@ def test_cli(tmp_path, mix_models_cli, nodes, data_source):
         raise result.exception
 
     # Files created in the temporary path
-    assert 2 == len(list(tmp_path.glob("*.csv")))
+    assert 3 == len(list(tmp_path.glob("*.csv")))
     assert 2 == len(list(tmp_path.glob("*.pdf")))
