@@ -96,8 +96,10 @@ TASKS = [
     (("y::conv", "quantity_from_config", "config"), dict(name="year_convergence")),
     # Base passenger mode share
     (ms + "base", "base_shares", "mode share:n-t:ref", n, t_modes, y),
-    # PPP GDP, total and per capita
-    (gdp_ppp, "mul", gdp, mer_to_ppp),
+    # GDP in the SSP(2024) input files is already expressed in PPP terms, so no need to
+    # multiply by mer_to_ppp
+    (gdp_ppp, gdp),
+    # GDP PPP per capita
     (gdp_cap, "div", gdp_ppp, pop),
     # GDP index
     (gdp_index, "index_to", gdp_cap, literal("y"), "y0"),
