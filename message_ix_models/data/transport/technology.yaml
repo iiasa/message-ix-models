@@ -319,8 +319,19 @@ LDV:
 
     In MESSAGE-V, the output of these technologies was labelled: v-u
   by_consumer_group: true
-  child: [ELC_100, HFC_ptrp, IAHe_ptrp, IAHm_ptrp, ICAe_ffv, ICAm_ptrp,
-    ICE_conv, ICE_L_ptrp, ICE_nga, ICH_chyb, IGH_ghyb, PHEV_ptrp]
+  child:
+  - ELC_100
+  - HFC_ptrp
+  - IAHe_ptrp
+  - IAHm_ptrp
+  - ICAe_ffv
+  - ICAm_ptrp,
+  - ICE_conv
+  - ICE_L_ptrp
+  - ICE_nga
+  - ICH_chyb
+  - IGH_ghyb
+  - PHEV_ptrp
   # Units of ACT; units of CAP are 10⁶ vehicle
   units: Gv km
 
