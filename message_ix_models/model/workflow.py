@@ -39,7 +39,7 @@ def solve(
     scenario: Scenario,
     *,
     config: Optional[Config] = None,
-    set_as_default: bool = False
+    set_as_default: bool = False,
 ):
     """Common model solve step for ENGAGE, NAVIGATE, and other workflows.
 
