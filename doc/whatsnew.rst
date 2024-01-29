@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2024.1.29
+==========
 
 - Add :ref:`tools-iea-web` for handling data from the International Energy Agency (IEA) Extended World Energy Balances (:issue:`25`, :pull:`75`).
 - Add :ref:`tools-wb` and :func:`.assign_income_groups` to assign MESSAGE regions to World Bank income groups (:pull:`144`).
