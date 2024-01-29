@@ -242,12 +242,16 @@ def gen_activity(ctx, ssp, ssp_update, output_dir, **kwargs):
         "transport pdt:n-y-t:capita",
         output_dir.joinpath("pdt-cap.csv"),
     )
-
-    key = c.add(
-        "gen-activity", ["_1", "_2", "plot demand-exo", "plot demand-exo-capita"]
+    c.add(
+        "_3", "write_report", "mode share:n-t-y", output_dir.joinpath("mode-share.csv")
     )
 
-    log.info(f"Compute {repr(key)}\n{c.describe(key)}")
+    key = c.add(
+        "gen-activity", ["_1", "_2", "_3", "plot demand-exo", "plot demand-exo-capita"]
+    )
+
+    log.info(f"Compute {repr(key)}")
+    log.info(c.describe(key))
     output_dir.mkdir(exist_ok=True, parents=True)
     c.get(key)
     log.info(f"Wrote to {output_dir}")
