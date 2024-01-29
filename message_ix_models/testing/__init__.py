@@ -218,10 +218,12 @@ class CliRunner(click.testing.CliRunner):
             cli_test_group.commands.pop(func.name)
 
 
-@pytest.fixture(scope="session")
-def mix_models_cli(request, session_context, tmp_env):
+@pytest.fixture
+def mix_models_cli(request, test_context, tmp_env):
     """A :class:`.CliRunner` object that invokes the :program:`mix-models` CLI."""
-    # Require the `session_context` fixture in order to set Context.local_data
+    # Require the `test_context` fixture in order to (a) set Context.local_data and (b)
+    # ensure changes to the Context from tested CLI commands are isolated from other
+    # tests
     yield CliRunner(env=tmp_env)
 
 
