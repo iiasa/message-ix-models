@@ -259,12 +259,22 @@ class ScenarioInfo:
         level : str
             Placeholder for future functionality, i.e. to use different units per
             (commodity, level). Currently ignored. If given, a debug message is logged.
+
+        Raises
+        ------
+        ValueError
+            if either `technology` or `commodity` lack defined units.
         """
         if level is not None:
             log.debug(f"{level = } ignored")
-        return self.units_for("commodity", commodity) / self.units_for(
-            "technology", technology
-        )
+        c = self.units_for("commodity", commodity)
+        t = self.units_for("technology", technology)
+        if None in (c, t):
+            raise ValueError(
+                "Cannot compute input/output units for: "
+                f"commodity={commodity!r} [{c}] / technology={technology!r} [{t}]"
+            )
+        return c / t
 
     def year_from_codes(self, codes: List[sdmx_model.Code]):
         """Update using a list of `codes`.
