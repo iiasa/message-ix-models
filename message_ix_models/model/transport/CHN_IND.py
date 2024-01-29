@@ -216,7 +216,8 @@ def get_chn_ind_data(private_vehicles=False):
         pd.concat([df, split_variable(df["Variable"])], axis=1)
         # Drop "Variable" and then rename "Var" to "Variable", since "Variable" column
         # was previously returned with that label by split_units()
-        .drop(["Variable"], axis=1).rename(columns={"Var": "Variable"})
+        .drop(["Variable"], axis=1)
+        .rename(columns={"Var": "Variable"})
     )
 
     # Reorder columns of *df*
