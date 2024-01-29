@@ -1110,7 +1110,7 @@ def report(sc=False, reg="", sdgs=False):
         for ur in ["urban", "rural"]:
             # CHANGE TO URBAN AND RURAL POP
             pop_tot = sc.timeseries(variable=("Population|" + ur.capitalize()))
-            pop_tot = pop_tot[-(pop_tot.region == "GLB region (R11)")]
+            pop_tot = pop_tot[-(pop_tot.region == "GLB region (R11)")]  # ONLY R11!!!
             pop_reg = np.unique(pop_tot["region"])
             # need to change names
             reg_map = mp2.regions()

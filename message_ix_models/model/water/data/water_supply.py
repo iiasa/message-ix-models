@@ -48,8 +48,10 @@ def map_basin_region_wat(context):
         if context.type_reg == "country":
             df_sw["MSGREG"] = context.map_ISO_c[context.regions]
         else:
-            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
-        # df_sw["MSGREG"] = f"R11_" + df_sw["BCU_name"].str[-3:]
+            df_sw["MSGREG"] = (
+                f"{context.regions}_" + df_sw["BCU_name"].str.split("|").str[-1]
+            )
+        # df_sw["MSGREG"] = f"R11_" + df_sw["BCU_name"].str.split("|").str[-1]
         df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
 
         # Calculating ratio of water availability in basin by region
@@ -91,7 +93,9 @@ def map_basin_region_wat(context):
         if context.type_reg == "country":
             df_sw["MSGREG"] = context.map_ISO_c[context.regions]
         else:
-            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
+            df_sw["MSGREG"] = (
+                f"{context.regions}_" + df_sw["BCU_name"].str.split("|").str[-1]
+            )
 
         df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
         df_sw.drop(columns="Unnamed: 0", inplace=True)

@@ -793,7 +793,8 @@ def non_cooling_tec(context):
 
     n_cool_df = scen.par("output", {"technology": non_cool_tech})
     n_cool_df = n_cool_df[
-        (n_cool_df["node_loc"] != "R11_GLB") & (n_cool_df["node_dest"] != "R11_GLB")
+        (n_cool_df["node_loc"] != f"{context.regions}_GLB")
+        & (n_cool_df["node_dest"] != f"{context.regions}_GLB")
     ]
     n_cool_df_merge = pd.merge(n_cool_df, non_cool_df, on="technology", how="right")
     n_cool_df_merge.dropna(inplace=True)
