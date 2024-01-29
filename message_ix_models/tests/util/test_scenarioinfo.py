@@ -1,4 +1,5 @@
 import logging
+import re
 
 import pandas as pd
 import pytest
@@ -53,7 +54,7 @@ class TestScenarioInfo:
         info.set["commodity"] = get_codes("commodity")
         # NB create a technology with units annotation, since technology.yaml lacks
         #    units as of 2022-07-20
-        t = as_codes({"example tech": {"units": "coulomb"}})
+        t = as_codes({"example tech": {"units": "coulomb"}, "example tech 2": {}})
         process_technology_codes(t)
         info.set["technology"].extend(t)
 
@@ -76,6 +77,12 @@ class TestScenarioInfo:
             )
         # level= keyword argument → logged warning
         assert "level = 'useful' ignored" == caplog.messages[-1]
+
+        # io_units
+        with pytest.raises(
+            ValueError, match=re.escape("technology='example tech 2' [None]")
+        ):
+            info.io_units("example tech 2", "electr")
 
     def test_iter(self) -> None:
         info = ScenarioInfo(model="m", scenario="s")
