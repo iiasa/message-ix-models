@@ -325,7 +325,7 @@ LDV:
   - IAHe_ptrp
   - IAHm_ptrp
   - ICAe_ffv
-  - ICAm_ptrp,
+  - ICAm_ptrp
   - ICE_conv
   - ICE_L_ptrp
   - ICE_nga
