@@ -8,6 +8,15 @@ if TYPE_CHECKING:
     import message_ix
 
 
+SCALE_1_HEADER = """Ratio of MESSAGEix-Transport output to IEA EWEB data.
+
+- `t` (technology) codes correspond to IEA `FLOW` codes or equivalent aggregates
+  across groups of MESSAGEix-Transport technologies.
+- `c` (commodity) codes correspond to MESSAGEix-GLOBIOM commodities or equivalent
+  aggregates across groups of IEA `PRODUCT` codes.
+"""
+
+
 def prepare_reporter(rep: "message_ix.Reporter") -> str:
     """Add tasks that produce data to parametrize transport in MESSAGEix-GLOBIOM.
 
@@ -27,6 +36,49 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     .. todo:: Drop ``bound_activity_lo`` values that are equal to zero.
     """
     from genno import Key, Quantity, quote
+
+    # Final key
+    targets = []
+
+    e_iea = Key("energy:n-y-product-flow:iea")
+    e_fnp = e_iea.drop("y")
+    e_cnlt = e_fnp.drop("flow", "product") * "nl" * "c"
+    in_ = Key("in:nl-t-ya-c:transport+units")
+
+    # Transform IEA EWEB data for comparison
+    rep.add(e_fnp + "0", "select", e_iea, indexers=dict(y=2020), drop=True)
+    rep.add(
+        e_fnp + "1", "aggregate", e_fnp + "0", "groups::iea to transport", keep=False
+    )
+    rep.add(
+        e_cnlt, "rename_dims", e_fnp + "1", quote(dict(flow="t", n="nl", product="c"))
+    )
+
+    # Transport outputs for comparison
+    rep.add(in_ + "0", "select", in_, indexers=dict(ya=2020), drop=True)
+    rep.add(in_ + "1", "aggregate", in_ + "0", "groups::transport to iea", keep=False)
+
+    # Scaling factor 1: ratio of MESSAGEix-Transport outputs to IEA data
+    k = rep.add("scale 1", "div", in_ + "1", e_cnlt)
+    assert isinstance(k, Key)
+    rep.add(k + "1", "convert_units", k, units="1 / a")
+
+    # Output path for this parameter
+    rep.add(f"{k.name} path", "make_output_path", "config", "scenario", "scale-1.csv")
+    # Write to file
+    rep.add(
+        f"{k.name} csv",
+        "write_report",
+        k + "1",
+        f"{k.name} path",
+        dict(header_comment=SCALE_1_HEADER),
+    )
+    targets.append(f"{k.name} csv")
+
+    # TODO Correct MESSAGEix-Transport outputs for MESSAGEix-GLOBIOM base model (below)
+    #      using the high-resolution scaling factor.
+    # TODO Compute a scaling factor: overall totals/low resolution.
+    # TODO Correct MESSAGEix-Transport outputs using the low-resolution scaling factor.
 
     # Common calculations
 
@@ -55,9 +107,6 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         dims=dict(node_loc="nl", technology="t", year_act="ya", time="h"),
         common=dict(mode="M1"),
     )
-
-    # Final key
-    targets = []
 
     # Add similar steps for each parameter
     for name, short, base_key, args in [

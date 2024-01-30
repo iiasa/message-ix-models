@@ -94,66 +94,6 @@ general:
   # - transport debug CAP::iamc
   # - transport debug CAP_NEW::iamc
 
-# Compare transport final energy use against IEA Extended World Energy Balances
-# TODO Move to .model.transport.base, .model.transport.iea or similar
-- key: groups::iea to transport
-  comp: groups_iea_eweb0
-  inputs: [ info, t::transport ]
-
-- key: groups::transport to iea
-  comp: groups_iea_eweb1
-  inputs: [ t::transport ]
-
-- key: energy:n-product-flow:iea+0
-  comp: select
-  inputs: [ energy:*:iea ]
-  args:
-    indexers: {"y": 2020}
-    drop: true
-
-- key: energy:*:iea+1
-  comp: aggregate
-  inputs:
-  - energy:*:iea+0
-  - groups::iea to transport
-  args: {keep: false}
-
-- key: energy:c-nl-t:iea+2
-  comp: rename_dims
-  inputs: [ energy:*:iea+1 ]
-  args: {flow: t, "n": nl, product: c}
-
-- key: in:*:iea compare+0
-  comp: select
-  inputs: [ in:nl-ya-c-t:transport+units ]
-  args:
-    indexers: {"ya": 2020}
-    drop: true
-
-- key: in:*:iea compare+1
-  comp: aggregate
-  inputs:
-  - in:*:iea compare+0
-  - groups::transport to iea
-  args: {keep: false}
-
-- key: "iea compare+0"
-  comp: div
-  inputs:
-  - in:c-nl-t-ya:iea compare+1
-  - energy:*:iea+2
-
-- key: "iea compare+1"
-  comp: convert_units
-  inputs: [ "iea compare+0" ]
-  args: {units: "1 / a"}
-
-# TODO Use make_output_path and base_model_data_header
-- key: "iea compare+2"
-  comp: write_report
-  inputs: [ "iea compare+1" ]
-  args: {path: "check-1.csv"}
-
 # Groups of keys for re-use
 _iamc formats:
   # Units for final energy. This *exact* value (and not e.g. "EJ / year") is required
