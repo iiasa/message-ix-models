@@ -273,6 +273,10 @@ def add_structure(c: Computer):
         c.add(f"t::transport {id}", quote(dict(t=techs)))
     c.add("t::transport all", quote(dict(t=technologies)))
 
+    # Mappings for use with IEA Extended World Energy Balances data
+    c.add("groups::iea to transport", "groups_iea_eweb0", "t::transport")
+    c.add("groups::transport to iea", "groups_iea_eweb1", "t::transport")
+
 
 def get_spec(context: Context) -> Spec:
     """Return the specification for MESSAGEix-Transport.
