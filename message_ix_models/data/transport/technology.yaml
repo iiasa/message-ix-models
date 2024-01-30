@@ -334,6 +334,7 @@ LDV:
   - PHEV_ptrp
   # Units of ACT; units of CAP are 10⁶ vehicle
   units: Gv km
+  iea-eweb-flow: [ROAD]
 
 "transport {technology.id} load factor":
   _generate: {technology: LDV}
@@ -345,6 +346,7 @@ LDV:
     In MESSAGE-V, the output of these technologies was labelled: h-u
   child: [ICE_H_moto, ELE_moto]
   units: Gv km
+  iea-eweb-flow: [ROAD]
 
 freight truck:
   name: Freight trucks
@@ -354,6 +356,7 @@ freight truck:
   child: [FR_ICE_H, FR_ICE_M, FR_ICE_L, FR_ICG, FR_ICAe, FR_ICH, FR_FCH,
     FR_FCg, FR_FCm]
   units: Gv km
+  iea-eweb-flow: [ROAD]
 
 AIR:
   name: Aviation
@@ -369,6 +372,7 @@ AIR:
     In MESSAGE-V, the output of these technologies was labelled: a-u
   child: [con_ar, conh_ar, conm_ar, conE_ar]
   units: Gv km
+  iea-eweb-flow: [DOMESAIR]
 
 BUS:
   name: Urban public transit
@@ -385,6 +389,7 @@ BUS:
   child: [ICE_H_bus, ICE_M_bus, ICG_bus, ICAe_bus, ICH_bus, FC_bus, FCg_bus,
          FCm_bus, Trolley_bus, PHEV_bus]
   units: Gv km
+  iea-eweb-flow: [ROAD]
 
 RAIL:
   name: Passenger rail
@@ -401,3 +406,4 @@ RAIL:
     In MESSAGE-V, the output of these technologies was labelled: i-u
   child: [crail_pub, dMspeed_rai, drail_pub, Hspeed_rai, Mspeed_rai, rail_pub]
   units: Gv km
+  iea-eweb-flow: [RAIL]
