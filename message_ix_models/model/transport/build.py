@@ -67,6 +67,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     # Ensure that the SSPOriginal and SSPUpdate data providers are available
     import message_ix_models.project.advance.data  # noqa: F401
     import message_ix_models.project.ssp.data  # noqa: F401
+    import message_ix_models.tools.iea.web  # noqa: F401
     from message_ix_models.project.ssp import SSP_2017, SSP_2024
     from message_ix_models.tools.exo_data import prepare_computer
     from message_ix_models.util.ixmp import rename_dims
@@ -99,6 +100,28 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
     prepare_computer(
         context, c, "message_data.model.transport", source_kw=kw, strict=False
     )
+
+    # Add IEA Extended World Energy Balances data; select only the flows related to
+    # transport
+    kw = dict(
+        provider="OECD",
+        edition="2022",
+        flow=[
+            "DOMESAIR",
+            "DOMESNAV",
+            "PIPELINE",
+            "RAIL",
+            "ROAD",
+            "TOTTRANS",
+            "TRNONSPE",
+            "WORLDAV",
+            "WORLDMAR",
+        ],
+    )
+    prepare_computer(context, c, "IEA_EWEB", source_kw=kw, strict=False)
+    # Alias for use in reporting
+    # TODO Fix the upstream code so that the name is not "unknown"
+    c.add("energy:n-y-product-flow:iea", "unknown:n-y-product-flow")
 
     # Add IEA Future of Trucks data
     for kw in dict(measure=1), dict(measure=2):
