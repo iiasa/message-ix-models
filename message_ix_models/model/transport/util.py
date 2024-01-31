@@ -42,7 +42,7 @@ class KeySequence:
         else:
             return next(self)
 
-    def __getitem__(self, index: int) -> Key:
+    def __getitem__(self, index: Hashable) -> Key:
         tag = str(index)
         result = self._generated[tag] = self.base + tag
         return result
