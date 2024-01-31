@@ -51,6 +51,7 @@ __all__ = [
     "base_shares",
     "broadcast_advance",
     "broadcast_y_yv_ya",
+    "clip",
     "cost",
     "distance_ldv",
     "distance_nonldv",
@@ -215,6 +216,19 @@ def broadcast_y_yv_ya(y: List[int], y_model: List[int]) -> Quantity:
         .set_index(dims)["value"]
     )
     return Quantity(series)
+
+
+def clip(
+    qty: Quantity, lower: Optional[float] = None, upper: Optional[float] = None
+) -> Quantity:
+    """Like :meth:`.pandas.Series.clip`.
+
+    .. todo:: Move upstream, to :mod:`genno`.
+    """
+    from genno.operator import _preserve
+
+    result = Quantity(qty.to_series().clip(lower=lower, upper=upper))
+    return _preserve("attrs name units", result, qty)
 
 
 def cost(
