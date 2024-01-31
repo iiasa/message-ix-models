@@ -37,55 +37,64 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     """
     from genno import Key, Quantity, quote
 
+    from .util import KeySequence
+
     # Final key
     targets = []
 
     e_iea = Key("energy:n-y-product-flow:iea")
-    e_fnp = e_iea.drop("y")
-    e_cnlt = e_fnp.drop("flow", "product") * "nl" * "c"
-    in_ = Key("in:nl-t-ya-c:transport+units")
+    e_fnp = KeySequence(e_iea.drop("y"))
+    e_cnlt = Key("energy:c-nl-t:iea")
+    in_ = KeySequence("in:nl-t-ya-c:transport+units")
 
     # Transform IEA EWEB data for comparison
-    rep.add(e_fnp + "0", "select", e_iea, indexers=dict(y=2020), drop=True)
-    rep.add(
-        e_fnp + "1", "aggregate", e_fnp + "0", "groups::iea to transport", keep=False
-    )
-    rep.add(
-        e_cnlt, "rename_dims", e_fnp + "1", quote(dict(flow="t", n="nl", product="c"))
-    )
+    rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
+    rep.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
+    rep.add(e_cnlt, "rename_dims", e_fnp[1], quote(dict(flow="t", n="nl", product="c")))
 
     # Transport outputs for comparison
-    rep.add(in_ + "0", "select", in_, indexers=dict(ya=2020), drop=True)
-    rep.add(in_ + "1", "aggregate", in_ + "0", "groups::transport to iea", keep=False)
+    rep.add(in_[0], "select", in_.base, indexers=dict(ya=2020), drop=True)
+    rep.add(in_[1], "aggregate", in_[0], "groups::transport to iea", keep=False)
 
     # Scaling factor 1: ratio of MESSAGEix-Transport outputs to IEA data
-    k = rep.add("scale 1", "div", in_ + "1", e_cnlt)
-    assert isinstance(k, Key)
-    rep.add(k + "1", "convert_units", k, units="1 / a")
+    tmp = rep.add("scale 1", "div", in_[1], e_cnlt)
+    s1 = KeySequence(tmp)
+    rep.add(s1[1], "convert_units", s1.base, units="1 / a")
+    rep.add(s1[2], "mul", s1[1], Quantity(1.0, units="a"))
 
     # Output path for this parameter
-    rep.add(f"{k.name} path", "make_output_path", "config", "scenario", "scale-1.csv")
+    rep.add(f"{s1.name} path", "make_output_path", "config", "scenario", "scale-1.csv")
     # Write to file
     rep.add(
-        f"{k.name} csv",
+        f"{s1.name} csv",
         "write_report",
-        k + "1",
-        f"{k.name} path",
+        s1[2],
+        f"{s1.name} path",
         dict(header_comment=SCALE_1_HEADER),
     )
-    targets.append(f"{k.name} csv")
+    targets.append(f"{s1.name} csv")
 
-    # TODO Correct MESSAGEix-Transport outputs for MESSAGEix-GLOBIOM base model (below)
-    #      using the high-resolution scaling factor.
-    # TODO Compute a scaling factor: overall totals/low resolution.
+    # Clip values to 1.0; this avoids x / 0 = inf
+    rep.add(s1[3], "clip", s1[2], lower=1.0)
+    # Restore original "t" labels to scale-1
+    rep.add(s1[4], "select", s1[3], "indexers::iea to transport")
+    rep.add(s1[5], "rename_dims", s1[4], quote(dict(t_new="t")))
+
+    # Correct MESSAGEix-Transport outputs for the MESSAGEix-base model using the high-
+    # resolution scaling factor
+    base = Key("in:nl-t-ya-c-l-h:transport+units")  # TODO Try to reuse `in_`, above
+    k = rep.add(base + "scaled", "div", base, s1[5])
+    assert isinstance(k, Key)
+
+    # TODO Compute a second scaling factor: overall totals/low resolution.
     # TODO Correct MESSAGEix-Transport outputs using the low-resolution scaling factor.
-
-    # Common calculations
 
     # Convert "final" energy inputs to transport to "useful energy" outputs, using
     # efficiency data from input-base.csv (in turn, from the base model). This data
     # will be used for `demand`.
-    ue = rep.add("ue", "div", "in:nl-ya-c-l-h:transport+units", "input:t-c-h:base")
+    # - Sum across the "t" dimension of `k` to avoid conflict with "t" labels introduced
+    #   by the data from file.
+    ue = rep.add("ue", "div", k / "t", "input:t-c-h:base")
     assert isinstance(ue, Key)
 
     # Ensure units: in::transport+units [=] GWa/a and input::base [=] GWa; their ratio
