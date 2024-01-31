@@ -274,8 +274,11 @@ def add_structure(c: Computer):
     c.add("t::transport all", quote(dict(t=technologies)))
 
     # Mappings for use with IEA Extended World Energy Balances data
-    c.add("groups::iea to transport", "groups_iea_eweb0", "t::transport")
-    c.add("groups::transport to iea", "groups_iea_eweb1", "t::transport")
+    c.add("groups::iea eweb", "groups_iea_eweb", "t::transport")
+    # Unpack
+    c.add("groups::iea to transport", itemgetter(0), "groups::iea eweb")
+    c.add("groups::transport to iea", itemgetter(1), "groups::iea eweb")
+    c.add("indexers::iea to transport", itemgetter(2), "groups::iea eweb")
 
 
 def get_spec(context: Context) -> Spec:
