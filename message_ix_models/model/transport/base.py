@@ -26,20 +26,25 @@ scale-1.csv.
 def prepare_reporter(rep: "message_ix.Reporter") -> str:
     """Add tasks that produce data to parametrize transport in MESSAGEix-GLOBIOM.
 
-    Returns a key, "base model data". Retrieving the key results in the creation of 3
+    Returns a key, "base model data". Retrieving the key results in the creation of 5
     files in the reporting output directory for the :class:`.Scenario` being reported
     (see :func:`.make_output_path`):
 
-    - :file:`demand.csv`: This contains MESSAGEix-Transport model solution data
-      transformed into ``demand`` parameter data for a base MESSAGEix-GLOBIOM model—that
-      is, one without MESSAGEix-Transport. :file:`input-base.csv` is used.
-    - :file:`bound_activity_lo.csv`: Same data transformed into ``bound_activity_lo``
-      parameter data for the transport technologies ("coal_trp", etc.) appearing in the
-      base model.
-    - :file:`bound_activity_up.csv`: Same values as ``bound_activity_lo``, multiplied by
-      1.005.
+    1. :file:`demand.csv`: This contains MESSAGEix-Transport model solution data
+       transformed into ``demand`` parameter data for a base MESSAGEix-GLOBIOM model—
+       that is, one without MESSAGEix-Transport. :file:`input-base.csv` is used.
+    2. :file:`bound_activity_lo.csv`: Same data transformed into ``bound_activity_lo``
+       parameter data for the transport technologies ("coal_trp", etc.) appearing in the
+       base model.
 
-    .. todo:: Drop ``bound_activity_lo`` values that are equal to zero.
+       .. todo:: Drop ``bound_activity_lo`` values that are equal to zero.
+    3. :file:`bound_activity_up.csv`: Same values as (2), multiplied by 1.005.
+
+    Two files are for diagnosis:
+
+    4. :file:`scale-1.csv`: First stage scaling factor used to bring MESSAGEix-Transport
+       (c, t) totals in correspondence with IEA World Energy Balance (WEB) values.
+    5. :file:`scale-2.csv`: Second stage scaling factor used to bring overall totals.
     """
     from genno import Key, Quantity, quote
 
