@@ -16,6 +16,12 @@ SCALE_1_HEADER = """Ratio of MESSAGEix-Transport output to IEA EWEB data.
   aggregates across groups of IEA `PRODUCT` codes.
 """
 
+SCALE_2_HEADER = """Ratio of scaled MESSAGEix-Transport output to IEA EWEB data.
+
+The numerator used to compute this scaling factor is the one corrected by the values in
+scale-1.csv.
+"""
+
 
 def prepare_reporter(rep: "message_ix.Reporter") -> str:
     """Add tasks that produce data to parametrize transport in MESSAGEix-GLOBIOM.
@@ -44,57 +50,79 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     e_iea = Key("energy:n-y-product-flow:iea")
     e_fnp = KeySequence(e_iea.drop("y"))
-    e_cnlt = Key("energy:c-nl-t:iea")
-    in_ = KeySequence("in:nl-t-ya-c:transport+units")
+    e_cnlt = Key("energy:c-nl-t:iea+0")
+    k = KeySequence("in:nl-t-ya-c-l-h:transport+units")
 
     # Transform IEA EWEB data for comparison
     rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
     rep.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
-    rep.add(e_cnlt, "rename_dims", e_fnp[1], quote(dict(flow="t", n="nl", product="c")))
+    rep.add(
+        e_cnlt,
+        "rename_dims",
+        e_fnp[1],
+        quote(dict(flow="t", n="nl", product="c")),
+        sums=True,
+    )
 
     # Transport outputs for comparison
-    rep.add(in_[0], "select", in_.base, indexers=dict(ya=2020), drop=True)
-    rep.add(in_[1], "aggregate", in_[0], "groups::transport to iea", keep=False)
+    rep.add(k[0], "select", k.base, indexers=dict(ya=2020), drop=True)
+    rep.add(k[1], "aggregate", k[0], "groups::transport to iea", keep=False)
 
     # Scaling factor 1: ratio of MESSAGEix-Transport outputs to IEA data
-    tmp = rep.add("scale 1", "div", in_[1], e_cnlt)
+    tmp = rep.add("scale 1", "div", k[1], e_cnlt)
     s1 = KeySequence(tmp)
     rep.add(s1[1], "convert_units", s1.base, units="1 / a")
     rep.add(s1[2], "mul", s1[1], Quantity(1.0, units="a"))
 
-    # Output path for this parameter
-    rep.add(f"{s1.name} path", "make_output_path", "config", "scenario", "scale-1.csv")
-    # Write to file
-    rep.add(
-        f"{s1.name} csv",
-        "write_report",
-        s1[2],
-        f"{s1.name} path",
-        dict(header_comment=SCALE_1_HEADER),
-    )
-    targets.append(f"{s1.name} csv")
+    def _to_csv(base: "Key", name: str, hc):
+        """Helper to add computations to output data to CSV."""
+        # Some strings
+        csv, path, fn = f"{name} csv", f"{name} path", f"{name.replace(' ', '-')}.csv"
+        # Output path for this parameter
+        rep.add(path, "make_output_path", "config", "scenario", fn)
+        # Write to file
+        rep.add(csv, "write_report", base, path, hc)
+        targets.append(csv)
+
+    _to_csv(s1[2], s1.name, dict(header_comment=SCALE_1_HEADER))
 
     # Clip values to 1.0; this avoids x / 0 = inf
     rep.add(s1[3], "clip", s1[2], lower=1.0)
     # Restore original "t" labels to scale-1
     rep.add(s1[4], "select", s1[3], "indexers::iea to transport")
     rep.add(s1[5], "rename_dims", s1[4], quote(dict(t_new="t")))
-
     # Correct MESSAGEix-Transport outputs for the MESSAGEix-base model using the high-
     # resolution scaling factor
-    base = Key("in:nl-t-ya-c-l-h:transport+units")  # TODO Try to reuse `in_`, above
-    k = rep.add(base + "scaled", "div", base, s1[5])
-    assert isinstance(k, Key)
+    rep.add(k["s1"], "div", k.base, s1[5])
 
-    # TODO Compute a second scaling factor: overall totals/low resolution.
-    # TODO Correct MESSAGEix-Transport outputs using the low-resolution scaling factor.
+    # Scaling factor 2: ratio of total of scaled data to IEA total
+    rep.add(
+        k[2] / "ya", "select", k["s1"], indexers=dict(ya=2020), drop=True, sums=True
+    )
+    rep.add(
+        "energy:nl:iea+transport",
+        "select",
+        e_cnlt / "c",
+        indexers=dict(t="transport"),
+        drop=True,
+    )
+    tmp = rep.add("scale 2", "div", k[2] / ("c", "t", "ya"), "energy:nl:iea+transport")
+    s2 = KeySequence(tmp)
+
+    rep.add(s2[1], "convert_units", s2.base, units="1 / a")
+    rep.add(s2[2], "mul", s2[1], Quantity(1.0, units="a"))
+
+    _to_csv(s2[2], s2.name, dict(header_comment=SCALE_2_HEADER))
+
+    # Correct MESSAGEix-Transport outputs using the low-resolution scaling factor
+    rep.add(k["s2"], "div", k["s1"], s2[2])
 
     # Convert "final" energy inputs to transport to "useful energy" outputs, using
     # efficiency data from input-base.csv (in turn, from the base model). This data
     # will be used for `demand`.
     # - Sum across the "t" dimension of `k` to avoid conflict with "t" labels introduced
     #   by the data from file.
-    ue = rep.add("ue", "div", k / "t", "input:t-c-h:base")
+    ue = rep.add("ue", "div", k["s2"] / "t", "input:t-c-h:base")
     assert isinstance(ue, Key)
 
     # Ensure units: in::transport+units [=] GWa/a and input::base [=] GWa; their ratio
@@ -118,15 +146,14 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     )
 
     # Add similar steps for each parameter
-    for name, short, base_key, args in [
-        ("demand", "demand", (ue + "1").drop("c", "t"), args_demand),
-        ("bound_activity_lo", "b_a_l", b_a_l, args_bound_activity),
-        ("bound_activity_up", "b_a_u", b_a_u, args_bound_activity),
-    ]:
+    for name, base_key, args in (
+        ("demand", (ue + "1").drop("c", "t"), args_demand),
+        ("bound_activity_lo", b_a_l, args_bound_activity),
+        ("bound_activity_up", b_a_u, args_bound_activity),
+    ):
         # More identifiers
-        s = f"base model transport {short}"
-        key = Key(f"{s}::ixmp")
-        targets.append(f"{s} csv")
+        s = f"base model transport {name}"
+        key, header = Key(f"{s}::ixmp"), f"{s} header"
 
         # Convert to MESSAGE data structure
         rep.add(key, "as_message_df", base_key, name=name, wrap=False, **args)
@@ -136,14 +163,10 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         dims = list(args["dims"])
         rep.add(key + "1", partial(pd.DataFrame.sort_values, by=dims), key)
 
-        # Output path for this parameter
-        rep.add(f"{s} path", "make_output_path", "config", "scenario", f"{name}.csv")
-
         # Header for this file
-        rep.add(f"{s} header", "base_model_data_header", "scenario", name=name)
+        rep.add(header, "base_model_data_header", "scenario", name=name)
 
-        # Write to file
-        rep.add(targets[-1], "write_report", key + "1", f"{s} path", f"{s} header")
+        _to_csv(key + "1", name, header)
 
     # Key to trigger all the above
     result = "base model data"
