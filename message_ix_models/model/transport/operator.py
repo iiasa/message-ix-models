@@ -14,6 +14,7 @@ from typing import (
     Optional,
     Sequence,
     Set,
+    Tuple,
     cast,
 )
 
@@ -60,8 +61,7 @@ __all__ = [
     "factor_fv",
     "factor_input",
     "factor_pdt",
-    "groups_iea_eweb0",
-    "groups_iea_eweb1",
+    "groups_iea_eweb",
     "iea_eei_fv",
     "indexers_n_cd",
     "indexers_usage",
@@ -484,50 +484,58 @@ def factor_ssp(
     return info.quantify(**kw)
 
 
-def groups_iea_eweb0(technologies: List[Code]) -> Dict[str, Dict[str, List[str]]]:
-    """Aggregation groups for IEA Extended World Energy Balance data.
+Groups = Dict[str, Dict[str, List[str]]]
 
-    These make the data comparable to MESSAGEix-Transport. In particular:
 
-    - Labels for IEA ``product`` are aggregated to labels for MESSAGEix-Transport
-      ``commodity``.
-    - Labels for IEA ``flow`` are selected 1:1 *and* aggregated to a flow named
-      "transport".
+def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
+    """Structure for calibration to IEA Extended World Energy Balances (EWEB).
+
+    Returns 3 sets of groups:
+
+    1. Groups for aggregating the EWEB data. In particular:
+
+       - Labels for IEA ``product`` are aggregated to labels for MESSAGEix-Transport
+         ``commodity``.
+       - Labels for IEA ``flow`` are selected 1:1 *and* aggregated to a flow named
+         "transport".
+
+    2. Groups for aggregating MESSAGEix-Transport data. In particular:
+
+       - Labels for MESSAGEix-Transport transport modes (``t`` dimension) are aggregated
+         to labels for IEA ``flow``.
+
+    3. Indexers for *dis*aggregating computed scaling factors; that is, reversing (2).
     """
-    result: Dict[str, Dict[str, List[str]]] = dict(flow={}, product={})
-
-    # Add groups from MESSAGEix-Transport technology code list
-    for t in technologies:
-        if flows := t.eval_annotation(id="iea-eweb-flow"):
-            result["flow"][flows[0]] = flows
+    g0: Groups = dict(flow={}, product={})
+    g1: Groups = dict(t={})
+    g2: Dict = dict(t=[], t_new=[])
 
     # Add groups from base model commodity code list:
     # - IEA product list → MESSAGE commodity (e.g. "lightoil")
     # - IEA flow list → MESSAGE technology group (e.g. "transport")
     for c in get_codelist("commodity"):
         if products := c.eval_annotation(id="iea-eweb-product"):
-            result["product"][c.id] = products
+            g0["product"][c.id] = products
         if flows := c.eval_annotation(id="iea-eweb-flow"):
-            result["flow"][c.id] = flows
+            g0["flow"][c.id] = flows
 
-    # print(f"{result=}")
-    return result
-
-
-def groups_iea_eweb1(technologies: List[Code]) -> Dict[str, Dict[str, List[str]]]:
-    """Aggregation groups to make MESSAGEix-Transport data comparable to IEA EWEB."""
-    result: Dict[str, Dict[str, List[str]]] = dict(t={})
-
+    # Add groups from MESSAGEix-Transport technology code list
     for t in technologies:
         if flows := t.eval_annotation(id="iea-eweb-flow"):
-            result["t"].setdefault(flows[0], [])
-            # Append the mode name, for instance "AIR"
-            result["t"][flows[0]].append(t.id)
-            # # Append the name of individual technologies for this mode
-            # result["t"][flows[0]].extend(map(lambda c: c.id, t.child))
+            g0["flow"][flows[0]] = flows
 
-    # print(f"{result=}")
-    return result
+            g1["t"].setdefault(flows[0], [])
+            # Append the mode name, for instance "AIR"
+            g1["t"][flows[0]].append(t.id)
+            # # Append the name of individual technologies for this mode
+            # g1["t"][flows[0]].extend(map(lambda c: c.id, t.child))
+
+            g2["t"].append(flows[0])
+            g2["t_new"].append(t.id)
+
+    g2["t"] = xr.DataArray(g2.pop("t"), coords=[("t_new", g2.pop("t_new"))])
+
+    return g0, g1, g2
 
 
 def input_commodity_level(t: List[Code], default_level=None) -> Quantity:
