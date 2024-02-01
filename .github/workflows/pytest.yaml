@@ -16,26 +16,24 @@ jobs:
   pytest:
     strategy:
       matrix:
-        # One job per OS; latest python version testable on GitHub actions.
-        # These should match the versions used in the "pytest" workflows of both
-        # ixmp and message_ix.
+        # One job per OS.
         version:
-        - { os: macos-latest, python: "3.12" }
-        - { os: ubuntu-latest, python: "3.12" }
-        - { os: windows-latest, python: "3.12" }
-        # Versions of both ixmp and message_ix to use
+        - { os: macos-latest }
+        - { os: ubuntu-latest }
+        - { os: windows-latest }
+        # Versions of both ixmp and message_ix to use plus latest supported python version
         upstream:
-        - { version: v3.4.0, extra-deps: '"pandas<2.0"' }  # Minimum version given in setup.cfg
-        - { version: v3.5.0, extra-deps: '"pandas<2.0"' }
-        - { version: v3.6.0, extra-deps: '"pandas<2.0"' }
-        - { version: v3.7.0, extra-deps: "" }  
-        - { version: v3.8.0, extra-deps: "" } # Latest released version
-        - { version: main, extra-deps: "" }  # Development version
+        - { version: v3.4.0, extra-deps: '"pandas<2.0"', python-version: "3.11" }  # Minimum version given in pyproject.toml
+        - { version: v3.5.0, extra-deps: '"pandas<2.0"', python-version: "3.11" }
+        - { version: v3.6.0, extra-deps: '"pandas<2.0"', python-version: "3.11" }
+        - { version: v3.7.0, extra-deps: "", python-version: "3.11" }  
+        - { version: v3.8.0, extra-deps: "", python-version: "3.12" } # Latest released version
+        - { version: main, extra-deps: "", python-version: "3.12" }  # Development version
 
       fail-fast: false
 
     runs-on: ${{ matrix.version.os }}
-    name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream.version }}
+    name: ${{ matrix.version.os }}-py${{ matrix.upstream.python-version }}-upstream-${{ matrix.upstream.version }}
 
     steps:
     - name: Cache test data
@@ -45,14 +43,14 @@ jobs:
         key: ${{ matrix.version.os }}
 
     - name: Check out message-ix-models
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         lfs: true
         fetch-depth: ${{ env.depth }}
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.version.python }}
+        python-version: ${{ matrix.upstream.python-version }}
         cache: pip
         cache-dependency-path: "**/pyproject.toml"
 
@@ -110,8 +108,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with: { python-version: "3.12" }
 
     - name: Force recreation of pre-commit virtual environment for mypy
