@@ -7,7 +7,6 @@ from message_ix_models.model.water.data.irrigation import add_irr_structure
 
 
 def test_add_irr_structure(test_context):
-    
     context = test_context
     mp = context.get_platform()
     scenario_info = {
@@ -20,7 +19,7 @@ def test_add_irr_structure(test_context):
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["tech1", "tech2"])
     s.add_set("node", ["loc1", "loc2"])
-    s.add_set("year", [2020,2030, 2040])
+    s.add_set("year", [2020, 2030, 2040])
 
     # Mock the DataFrame read from CSV
     df_node = pd.DataFrame({"BCU_name": ["1", "2"], "REGION": ["region1", "region2"]})
