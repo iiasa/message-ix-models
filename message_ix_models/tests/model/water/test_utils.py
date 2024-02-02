@@ -126,8 +126,8 @@ def test_map_yv_ya_lt():
     # test with no active year specified
     expected_no_ya = pd.DataFrame(
         {
-            "year_vtg": [2010, 2020, 2020, 2030, 2030, 2040],
-            "year_act": [2020, 2020, 2030, 2030, 2040, 2040],
+            "year_vtg": [2020, 2020, 2020, 2020],
+            "year_act": [2020, 2030, 2040, 2050],
         }
     )
 
