@@ -77,7 +77,7 @@ def test_add_water_supply(test_context):
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["tech1", "tech2"])
     s.add_set("node", ["loc1", "loc2"])
-    s.add_set("year", [2020,2030, 2040])
+    s.add_set("year", [2020, 2030, 2040])
     # Mock the DataFrames read from CSV
     df_node = pd.DataFrame({"BCU_name": ["test_BCU"], "REGION": ["test_REGION"]})
 
@@ -153,9 +153,7 @@ def test_add_e_flow():
         return_value=(df_sw, df_sw),
     ), patch(
         "message_ix_models.util.private_data_path", return_value="path/to/file"
-    ), patch(
-        "pandas.read_csv", return_value=df_sw
-    ):
+    ), patch("pandas.read_csv", return_value=df_sw):
         # Call the function to be tested
         result = add_e_flow(context)
 
