@@ -37,7 +37,7 @@ jobs:
 
     steps:
     - name: Cache test data
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: message-local-data
         key: ${{ matrix.version.os }}
