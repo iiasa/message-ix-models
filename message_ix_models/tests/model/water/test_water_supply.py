@@ -1,3 +1,4 @@
+from message_ix import Scenario
 from unittest.mock import patch
 
 import pandas as pd
@@ -51,7 +52,7 @@ def test_map_basin_region_wat():
         )
 
 
-def test_add_water_supply():
+def test_add_water_supply(test_context):
     # Mock the context
     context = {
         "water build info": {"Y": [2020, 2030, 2040]},
@@ -64,7 +65,19 @@ def test_add_water_supply():
         "nexus_set": "nexus",
         "get_scenario": lambda: {"firstmodelyear": 2020},
     }
-
+    context = test_context
+    mp = context.get_platform()
+    scenario_info = {
+        "mp": mp,
+        "model": "test water model",
+        "scenario": "test water scenario",
+        "version": "new",
+    }
+    s = Scenario(**scenario_info)
+    s.add_horizon(year=[2020, 2030, 2040])
+    s.add_set("technology", ["tech1", "tech2"])
+    s.add_set("node", ["loc1", "loc2"])
+    s.add_set("year", [2020,2030, 2040])
     # Mock the DataFrames read from CSV
     df_node = pd.DataFrame({"BCU_name": ["test_BCU"], "REGION": ["test_REGION"]})
 

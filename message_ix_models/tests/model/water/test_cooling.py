@@ -15,6 +15,8 @@ def test_non_cooling_tec(test_context):
     s = Scenario(**scenario_info)
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["tech1", "tech2"])
+    s.add_set("node", ["loc1", "loc2"])
+    s.add_set("year", [2020,2030, 2040])
 
     # TODO: this is where you would add
     #     "node_loc": ["loc1", "loc2"],
