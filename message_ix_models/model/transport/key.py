@@ -33,34 +33,67 @@ __all__ = [
 ]
 
 # Existing keys, either from Reporter.from_scenario() or .build.add_structure()
-gdp = Key("GDP:n-y")
-mer_to_ppp = Key("MERtoPPP:n-y")
+gdp = Key("GDP", "ny")
+mer_to_ppp = Key("MERtoPPP", "ny")
 PRICE_COMMODITY = Key("PRICE_COMMODITY", "nclyh")
-price_full = PRICE_COMMODITY.drop("h", "l")
+price_full = PRICE_COMMODITY / ("h", "l")
 
 # Keys for new quantities
-pop_at = Key("population", "n y area_type".split())
-pop = pop_at.drop("area_type")
-cg = Key("cg share", "n y cg".split())
+
+#: Shares of population with consumer group (`cg`) dimension.
+cg = Key("cg share:n-y-cg")
+
+cost = Key("cost", "nyct")
+
+#: Population.
+pop = Key("population", "ny")
+
+#: Population with `area_type` dimension.
+pop_at = pop * "area_type"
+
+#: GDP at purchasing power parity.
 gdp_ppp = gdp + "PPP"
+
+#: :data:`.gdp_ppp` per capita.
 gdp_cap = gdp_ppp + "capita"
+
 gdp_index = gdp_cap + "index"
-ms = Key("mode share:n-t-y")
-pdt_nyt = Key("pdt", "nyt")  # Total PDT shared out by mode
-pdt_cap = pdt_nyt.drop("t") + "capita"
-pdt_ny = pdt_nyt.drop("t") + "total"
-pdt_cny = Key("pdt", "cny")  # With 'c' instead of 't' dimension, for demand
-ldv_ny = Key("pdt ldv", "ny")
-ldv_nycg = Key("pdt ldv") * cg
-ldv_cny = Key("pdt ldv", "cny")
+
 fv = Key("freight activity", "nty")
 fv_cny = Key("freight activity", "cny")
+
+ldv_cny = Key("pdt ldv", "cny")
+ldv_ny = Key("pdt ldv", "ny")
+ldv_nycg = Key("pdt ldv") * cg
+ms = Key("mode share", "nty")
+
+#: Passenger distance travelled.
+_pdt = Key("pdt", "ny")
+
+#: PDT per capita.
+pdt_cap = _pdt + "capita"
+
+#: PDT with 'c' dimension, for demand.
+pdt_cny = _pdt * "c"
+pdt_ny = _pdt + "total"
+
+#: PDT with 't' dimension. The labels along the 't' dimension are modes, not individual
+#: technologies.
+pdt_nyt = _pdt * "t"
+
 price_sel1 = price_full + "transport"
-price_sel0 = price_sel1 + "raw units"
 price = price_sel1 + "smooth"
-cost = Key("cost", "nyct")
+price_sel0 = price_sel1 + "raw units"
+
 sw = Key("share weight", "nty")
 
+# Keys for (partial or full) sets or indexers
+
+#: List of nodes excepting "World" or "*_GLB".
 n = "n::ex world"
+
+#: List of transport modes.
 t_modes = "t::transport modes"
+
+#: Model periods.
 y = "y::model"
