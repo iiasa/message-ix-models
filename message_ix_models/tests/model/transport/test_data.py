@@ -19,7 +19,7 @@ from message_data.tools.gfei_fuel_economy import get_gfei_data
 @pytest.mark.parametrize("file", files.FILES, ids=lambda f: "-".join(f.parts))
 def test_data_files(test_context, file):
     """Input data can be read."""
-    c, _ = testing.configure_build(test_context, regions="R11", years="B")
+    c, _ = testing.configure_build(test_context, regions="R12", years="B")
 
     # Task runs
     result = c.get(file.key)
