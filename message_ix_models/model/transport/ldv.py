@@ -56,6 +56,7 @@ def prepare_computer(c: Computer):
 
     context = c.graph["context"]
     source = context.transport.data_source.LDV
+    info = context["transport build info"]
 
     # Add all the following computations, even if they will not be used
     k1 = Key("US-TIMES MA3T")
@@ -129,17 +130,17 @@ def prepare_computer(c: Computer):
     else:
         kw = dict(dims=dict(node_loc="nl", technology="t", year_vtg="yv"), common={})
 
-        # historical_new_capacity: select only data from 2015 and earlier
-        # FIXME Don't hard-code years; retrieve from `c`
+        # historical_new_capacity: select only data prior to y₀
         kw.update(name="historical_new_capacity")
-        c.add(k + "1", "select", k, dict(yv=[2015]))
+        y_historical = list(filter(lambda y: y < info.y0, info.set["year"]))
+        c.add(k + "1", "select", k, indexers=dict(yv=y_historical))
         keys.append(c.add("ldv hnc::ixmp", "as_message_df", k + "1", **kw))
 
-        # bound_new_capacity_{lo,up}: all data. Values before y₀ have no effect, so they
-        # are harmless clutter
+        # bound_new_capacity_{lo,up}: select only data from y₀ and later
+        c.add(k + "2", "select", k, indexers=dict(yv=info.Y))
         for s in "lo", "up":
             kw.update(name=f"bound_new_capacity_{s}")
-            keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k, **kw))
+            keys.append(c.add(f"ldv bnc_{s}::ixmp", "as_message_df", k + "2", **kw))
 
     # TODO add bound_activity constraints for first year given technology shares
     # TODO add historical_new_capacity for period prior to to first year
