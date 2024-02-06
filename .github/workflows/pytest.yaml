@@ -59,7 +59,7 @@ jobs:
         version: 25.1.1
         license: ${{ secrets.GAMS_LICENSE }}
 
-    - uses: ts-graphviz/setup-graphviz@v1
+    - uses: ts-graphviz/setup-graphviz@v2
       with:
         macos-skip-brew-update: true
 
@@ -100,7 +100,7 @@ jobs:
       shell: bash
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
 
   pre-commit:
     name: Code quality
