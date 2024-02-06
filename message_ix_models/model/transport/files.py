@@ -66,6 +66,12 @@ ExogenousDataFile(
     "Reference (historical) PDT per capita",
 )
 
+ExogenousDataFile(
+    "ldv-new-capacity",
+    "cap_new:n-t-yv:ldv+exo",
+    "New capacity values for LDVs",
+    required=False,
+)
 ExogenousDataFile("ldv-activity", "ldv activity:n:exo", "LDV activity")
 ExogenousDataFile("disutility", "disutility:n-cg-t-y:per vehicle", "LDV disutility")
 ExogenousDataFile("demand-scale", dims=("n", "y"))
