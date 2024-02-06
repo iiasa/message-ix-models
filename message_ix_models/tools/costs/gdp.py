@@ -349,6 +349,7 @@ def adjust_cost_ratios_with_gdp(
         - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
     """
     context = Context.get_instance(-1)
+    context.model.regions = node
 
     df_gdp = (
         process_raw_ssp_data1(context=context, ref_region=ref_region)
