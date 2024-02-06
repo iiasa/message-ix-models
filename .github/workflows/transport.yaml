@@ -17,16 +17,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  clean-workspace:
+  prepare-workspace:
     runs-on: self-hosted
 
     steps:
     - run: |
         rm -rf ${{ github.workspace }}/report/*
 
+    - name: Check out message-static-data
+      uses: actions/checkout@v4
+      with:
+        repository: iiasa/message-static-data
+        token: ${{ secrets.MESSAGE_STATIC_DATA_PAT }}
+        path: message-static-data
+        lfs: true
+
   report:
     runs-on: self-hosted
-    needs: [clean-workspace]
+    needs: [prepare-workspace]
 
     env:
       # Starting point of the workflow.
@@ -81,6 +89,9 @@ jobs:
       run: git lfs checkout
 
     # Other repositories required for testing
+
+    - name: Connect static data to message_data
+      run: cp -rs $(realpath message-static-data)/* message_data/data/
 
     - name: Check out MESSAGEix-Buildings code
       uses: actions/checkout@v4
