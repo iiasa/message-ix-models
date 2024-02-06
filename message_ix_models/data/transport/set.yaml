@@ -201,6 +201,9 @@ unit:
     # TODO move this one upstream
     "": dimensionless
 
+    # Capacity
+    Mv: 10⁶ vehicle
+
     # Activity
     Gp * km / a / v: 10⁹ passenger-kilometre per vehicle-year
     Gp km: 10⁹ passenger-kilometre
