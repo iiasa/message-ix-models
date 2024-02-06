@@ -31,6 +31,12 @@ jobs:
         token: ${{ secrets.MESSAGE_STATIC_DATA_PAT }}
         path: message-static-data
         lfs: true
+        # Only check out the following files to limit bandwidth usage.
+        # Respectively
+        # 1. IEA Extended World Energy Balances, OECD source, 2022 edition
+        sparse-checkout: |
+          iea/372f7e29-en.zip
+        sparse-checkout-cone-mode: false
 
   report:
     runs-on: self-hosted
