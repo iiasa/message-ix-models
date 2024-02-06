@@ -39,7 +39,7 @@ UNITS = dict(
 
 
 def prepare_computer(c: Computer):
-    from .demand import n, t_modes, y
+    from .key import n, t_modes, y
 
     source = c.graph["context"].transport.data_source.non_LDV
     log.info(f"non-LDV data from {source}")
