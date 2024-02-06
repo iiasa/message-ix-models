@@ -52,7 +52,7 @@ jobs:
 
     steps:
     # Steps for the IIASA self-hosted runner only
-    - uses: actions/setup-java@v3
+    - uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: "17"
@@ -70,7 +70,7 @@ jobs:
           ${{ secrets.MESSAGE_TRADE_PRIVATE_KEY }}
 
     - name: Check out message_data
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: message_data
         # lfs: true
@@ -83,13 +83,13 @@ jobs:
     # Other repositories required for testing
 
     - name: Check out MESSAGEix-Buildings code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: iiasa/MESSAGE_Buildings
         path: buildings
         ssh-key: ${{ secrets.MESSAGE_BUILDINGS_PRIVATE_KEY }}
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         # Latest version testable on GitHub Actions
         python-version: "3.11"
@@ -163,7 +163,7 @@ jobs:
           --go
 
     - name: Upload results as a build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: MESSAGEix-Transport
         path: |
