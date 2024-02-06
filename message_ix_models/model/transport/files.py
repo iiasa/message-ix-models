@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from genno import Key
 
-from .demand import pdt_cap
+from .key import pdt_cap
 
 if TYPE_CHECKING:
     from genno.core.key import KeyLike

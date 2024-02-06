@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 def prepare_computer(c: "Computer") -> None:
     """Prepare `rep` for calculating transport consumer groups."""
-    from .demand import cg, pop_at
+    from .key import cg, pop_at
 
     c.add("indexers:n-cd", "indexers_n_cd", "config")
     # Population shares by area_type
