@@ -5,7 +5,6 @@ from message_ix_models.tools.costs.config import BASE_YEAR
 from message_ix_models.tools.costs.gdp import (
     adjust_cost_ratios_with_gdp,
     process_raw_ssp_data,
-    process_raw_ssp_data1,
 )
 from message_ix_models.tools.costs.regional_differentiation import (
     apply_regional_differentiation,
@@ -14,15 +13,7 @@ from message_ix_models.tools.costs.regional_differentiation import (
 
 @pytest.mark.parametrize(
     "func",
-    (
-        pytest.param(
-            process_raw_ssp_data,
-            marks=pytest.mark.xfail(
-                raises=FileNotFoundError, reason="Data not present on branch"
-            ),
-        ),
-        process_raw_ssp_data1,
-    ),
+    (process_raw_ssp_data,),
 )
 @pytest.mark.parametrize("node", ("R11", "R12"))
 def test_process_raw_ssp_data(test_context, func, node):
