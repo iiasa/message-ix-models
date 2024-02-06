@@ -18,27 +18,12 @@ from message_data.testing import assert_units
 log = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize(
-    "source, extra_pars",
-    [
-        (None, set()),
-        (
-            "US-TIMES MA3T",
-            {
-                "emission_factor",
-                "fix_cost",
-                "inv_cost",
-                "relation_activity",
-                "technical_lifetime",
-            },
-        ),
-    ],
-)
+@pytest.mark.parametrize("source", [None, "US-TIMES MA3T"])
 @pytest.mark.parametrize("years", ["A", "B"])
 @pytest.mark.parametrize(
     "regions", [param("ISR", marks=testing.MARK[3]), "R11", "R12", "R14"]
 )
-def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years):
+def test_get_ldv_data(tmp_path, test_context, source, regions, years):
     # Info about the corresponding RES
     ctx = test_context
     # Prepare a Computer for LDV data calculations
@@ -67,7 +52,7 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
     # print(data.to_series().to_string())  # DEBUG
 
     # Data are returned for the following parameters
-    assert {
+    exp_pars = {
         "bound_new_capacity_up",
         "capacity_factor",
         "growth_activity_lo",
@@ -75,7 +60,19 @@ def test_get_ldv_data(tmp_path, test_context, source, extra_pars, regions, years
         "input",
         "output",
         "var_cost",
-    } | extra_pars == set(data.keys())
+    }
+    if source == "US-TIMES MA3T":
+        exp_pars |= {
+            "emission_factor",
+            "fix_cost",
+            "inv_cost",
+            "relation_activity",
+            "technical_lifetime",
+        }
+    if regions == "R12":
+        exp_pars |= {"bound_new_capacity_lo", "historical_new_capacity"}
+
+    assert exp_pars == set(data.keys())
 
     # Input data is returned and has the correct units
     assert {"GW * a / Gv / km", "km", "-"} >= set(data["input"]["unit"].unique())
