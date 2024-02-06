@@ -65,10 +65,6 @@ jobs:
         distribution: temurin
         java-version: "17"
 
-    - name: Update Git LFS configuration
-      run: |
-        git lfs --version
-
     # Steps from here to ##### are nearly identical to pytest.yaml
 
     - uses: webfactory/ssh-agent@v0.8.0
@@ -81,17 +77,19 @@ jobs:
       uses: actions/checkout@v4
       with:
         path: message_data
+        # NB This leads to errors on the IIASA self-hosted runner.
+        #    The next step has the same effect.
         # lfs: true
         submodules: true
 
-    - name: Fetch Git LFS files
+    - name: Check out Git LFS files
       working-directory: message_data
       run: git lfs checkout
 
     # Other repositories required for testing
 
     - name: Connect static data to message_data
-      run: cp -rs $(realpath message-static-data)/* message_data/data/
+      run: cp -rsv $(realpath message-static-data)/* message_data/data/
 
     - name: Check out MESSAGEix-Buildings code
       uses: actions/checkout@v4
