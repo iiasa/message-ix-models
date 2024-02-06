@@ -68,7 +68,7 @@ ExogenousDataFile(
 
 ExogenousDataFile(
     "ldv-new-capacity",
-    "cap_new:n-t-yv:ldv+exo",
+    "cap_new:nl-t-yv:ldv+exo",
     "New capacity values for LDVs",
     required=False,
 )
