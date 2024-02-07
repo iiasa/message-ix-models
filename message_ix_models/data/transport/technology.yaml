@@ -408,9 +408,11 @@ RAIL:
   units: Gv km
   iea-eweb-flow: [RAIL]
 
-"transport other {commodity.id}":
-  _generate: {commodity: null}
-  name: LDV occupancy
+transport other coal: {input: {commodity: coal}}
+transport other electr: {input: {commodity: electr}}
+transport other fueloil: {input: {commodity: fueloil}}
+transport other gas: {input: {commodity: lightoil}}
+transport other lightoil: {input: {commodity: lightoil}}
 
 OTHER:
   name: Other modes
