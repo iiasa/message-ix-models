@@ -407,3 +407,21 @@ RAIL:
   child: [crail_pub, dMspeed_rai, drail_pub, Hspeed_rai, Mspeed_rai, rail_pub]
   units: Gv km
   iea-eweb-flow: [RAIL]
+
+"transport other {commodity.id}":
+  _generate: {commodity: null}
+  name: LDV occupancy
+
+OTHER:
+  name: Other modes
+  description: >-
+    This 'mode' exists to represent aggregate transport demand for energy that
+    is not directly represented by inputs to other technologies in this file.
+  child:
+  - transport other coal
+  - transport other electr
+  - transport other fueloil
+  - transport other gas
+  - transport other lightoil
+  units: GWa
+  iea-eweb-flow: [DOMESNAV, TRNONSPE]
