@@ -2,10 +2,10 @@
 import logging
 from functools import partial
 from operator import itemgetter
-from typing import Dict, List, Mapping
+from typing import TYPE_CHECKING, Dict, List, Mapping
 
 import pandas as pd
-from genno import Computer, Key, Quantity
+from genno import Computer, Key, Quantity, quote
 from genno.core.key import KeyLike, single_key
 from message_ix import make_df
 from message_ix_models.util import (
@@ -13,12 +13,17 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     merge_data,
+    private_data_path,
     same_node,
     same_time,
 )
 from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
+from .util import KeySequence
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -37,11 +42,19 @@ UNITS = dict(
     capacity_factor="",
 )
 
+ENERGY_OTHER_HEADER = """2020 energy demand for OTHER transport
+
+Source: Extracted from IEA EWEB, 2022 OECD edition
+
+Units: TJ
+"""
+
 
 def prepare_computer(c: Computer):
     from .key import n, t_modes, y
 
-    source = c.graph["context"].transport.data_source.non_LDV
+    context: "Context" = c.graph["context"]
+    source = context.transport.data_source.non_LDV
     log.info(f"non-LDV data from {source}")
 
     keys: List[KeyLike] = []
@@ -74,6 +87,30 @@ def prepare_computer(c: Computer):
     k_usage = "transport nonldv usage::ixmp"
     keys.append(k_usage)
     c.add(k_usage, usage_data, "load factor nonldv:t:exo", t_modes, n, y)
+
+    # Data for non-specified transport technologies
+
+    #### NB lines below duplicated from .transport.base
+    e_iea = Key("energy:n-y-product-flow:iea")
+    e_fnp = KeySequence(e_iea.drop("y"))
+    e = KeySequence("energy:commodity-flow-node_loc:iea")
+
+    # Transform IEA EWEB data for comparison
+
+    c.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
+    c.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
+    c.add(
+        e[0],
+        "rename_dims",
+        e_fnp[1],
+        quote(dict(n="node_loc", product="commodity")),
+        sums=True,
+    )
+    ####
+    c.add(e[1] / "flow", "select", e[0], indexers=dict(flow="OTHER"), drop=True)
+    path = private_data_path("transport", context.regions, "energy-other.csv")
+    kw = dict(header_comment=ENERGY_OTHER_HEADER)
+    c.add("energy other csv", "write_report", e[1] / "flow", path=path, kwargs=kw)
 
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
