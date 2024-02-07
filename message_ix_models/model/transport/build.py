@@ -348,7 +348,7 @@ def get_computer(
     c.configure(config={"MESSAGEix-Transport": {}})
 
     # Add a computation that is an empty list.
-    # Individual modules add their data to it, below
+    # Individual modules's prepare_computer() functions can append keys.
     c.add("add transport data", [])
 
     # Add structure-related keys
@@ -356,7 +356,8 @@ def get_computer(
     # Add exogenous data
     add_exogenous_data(c, base_info)
 
-    # Prepare other calculations
+    # For each module in transport.Config.modules, invoke the function
+    # prepare_computer() to add further calculations
     for name in context.transport.modules:
         module = import_module(name if "." in name else f"..{name}", __name__)
         module.prepare_computer(c)

@@ -3,12 +3,13 @@ from copy import copy
 
 import ixmp
 import pytest
-from message_ix_models import testing
+from genno.testing import assert_units
 from message_ix_models.model.structure import get_codes
+from message_ix_models.testing import bare_res
 from pytest import mark, param
 
 from message_data.model.transport import Config, build, report
-from message_data.model.transport.testing import MARK
+from message_data.model.transport.testing import MARK, configure_build
 
 log = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ def test_build_bare_res(
     # Generate the relevant bare RES
     ctx = test_context
     ctx.update(regions=regions, years=years)
-    scenario = testing.bare_res(request, ctx)
+    scenario = bare_res(request, ctx)
 
     # Build succeeds without error
     options = {"data source": {"LDV": ldv, "non-LDV": nonldv}, "dummy_supply": True}
@@ -165,3 +166,45 @@ def test_build_existing(tmp_path, test_context, url, solve=False):
         assert result.all(), f"\n{result}"
 
     del mp
+
+
+@pytest.mark.parametrize(
+    "regions, years, N_node, options",
+    [
+        ("R12", "B", 12, dict()),
+    ],
+)
+def test_debug(test_context, tmp_path, regions, years, N_node, options):
+    """Exogenous demand calculation succeeds."""
+    c, info = configure_build(
+        test_context, tmp_path=tmp_path, regions=regions, years=years, options=options
+    )
+
+    # Check that some keys (a) can be computed without error and (b) have correct units
+    # commented: these are slow because they repeat some calculations many times.
+    # Uncommented as needed for debugging
+    for key, unit in (("energy:flow-n-product:trn other+1", "TJ"),):
+        try:
+            # Quantity can be computed
+            qty = c.get(key)
+
+            # qty.to_string()
+            print(qty.to_series().to_string())
+
+            # Quantity has the expected units
+            assert_units(qty, unit)
+
+            # Quantity has the expected size on the n/node dimension
+            assert N_node == len(qty.coords["n"]), qty.coords["n"].data
+
+            # commented: dump to a temporary path for inspection
+            # fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
+            # dump = tmp_path.joinpath(fn).with_suffix(".csv")
+            # print(f"Dumped to {dump}")
+            # qty.to_series().to_csv(dump)
+        except Exception:
+            # Something else
+            print(f"\n\n-- {key} --\n\n")
+            print(c.describe(key))
+            print(qty.to_series().to_string(), qty.attrs, qty.dims, qty.coords)
+            raise
