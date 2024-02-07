@@ -1,9 +1,7 @@
-import logging
-
-import numpy as np
 import pandas as pd
 import pyam
 from message_ix.reporting import Reporter
+
 from message_ix_models.model.water.reporting import report
 from message_ix_models.util import package_data_path
 
@@ -327,7 +325,7 @@ def report_country(sc):
     # offgrid technologies
     electr_offgrid_urb = ["out|offgrid_final_urb|electr|offgrid_urb|M1"]
     electr_offgrid_rur = [
-        "out|offgrid_final_rur|electr|offgrid_urb|M1",
+        "out|offgrid_final_rur|electr|offgrid_rur|M1",
     ]
     electr_offgrid = electr_offgrid_urb + electr_offgrid_rur
 
@@ -395,8 +393,8 @@ def report_country(sc):
     # wind
     inv_el_wind = [inv_en_string + x for x in wind_tecs]
     # offgrid technologies
-    inv_el_offgrid_urb = ["inv cost|offgrid_rur"]
-    inv_el_offgrid_rur = ["inv cost|offgrid_urb"]
+    inv_el_offgrid_urb = ["inv cost|offgrid_urb"]
+    inv_el_offgrid_rur = ["inv cost|offgrid_rur"]
     inv_el_offgrid = inv_el_offgrid_urb + inv_el_offgrid_rur
 
     inv_el_grid = (
@@ -530,8 +528,8 @@ def report_country(sc):
     # wind
     tom_el_wind = [tom_en_string + x for x in wind_tecs]
     # offgrid technologies
-    tom_el_offgrid_urb = ["total om cost|offgrid_rur"]
-    tom_el_offgrid_rur = ["total om cost|offgrid_urb"]
+    tom_el_offgrid_urb = ["total om cost|offgrid_urb"]
+    tom_el_offgrid_rur = ["total om cost|offgrid_rur"]
     tom_el_offgrid = tom_el_offgrid_urb + tom_el_offgrid_rur
 
     tom_el_grid = (
@@ -765,7 +763,7 @@ def report_country(sc):
         print(vv)
         temp_iam = rep_iamSE_sub.aggregate_time(vv, column="subannual", value="year")
         sub_iam = sub_iam.append(temp_iam)
-        
+
     rep_iamSE_sub = sub_iam.filter(subannual="year")
     # merge new summed-up timeseries
     rep_iamSE = rep_iamSE.append(rep_iamSE_sub)
@@ -790,10 +788,10 @@ def report_country(sc):
     # report_pd = report_pd.drop(columns=["exclude"])
     # TEMP FIX
     # Check if the "value" column exists in the DataFrame
-    if 'value' not in report_pd.columns:
+    if "value" not in report_pd.columns:
         # Replace the name of the last column with "value"
         last_column_name = report_pd.columns[-1]
-        report_pd.rename(columns={last_column_name: 'value'}, inplace=True)
+        report_pd.rename(columns={last_column_name: "value"}, inplace=True)
 
     for index, row in map_unit.iterrows():
         report_pd.loc[(report_pd["variable"].str.contains(row["names"])), "unit"] = row[

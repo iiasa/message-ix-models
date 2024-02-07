@@ -277,7 +277,6 @@ def add_offgrid_gen(sc, scen_name):
     # also calculate the share of different off-grid technologies within
     # the off-grid generation. This is used to assign costs to the single
     # off-grid technology
-
     df_off = df.copy()
     df_off = df_off[~df_off.tec.isin(["grid_existing", "grid_new", "unelectrified"])]
     df_off = (
@@ -333,6 +332,20 @@ def add_offgrid_gen(sc, scen_name):
 
         # capital cost
         inv_df = df_offc[df_offc["urb_rur"].str.contains(ur)]
+        # Calculate the average value for each group excluding zeros
+        avg_values = (
+            inv_df.loc[inv_df["tot_cost"] != 0]
+            .groupby(["node", "urb_rur"])["tot_cost"]
+            .mean()
+        )
+        # Replace 0 values in 'tot_cost' with the average value of each group
+        inv_df.loc[inv_df["tot_cost"] == 0, "tot_cost"] = (
+            inv_df.loc[inv_df["tot_cost"] == 0]
+            .set_index(["node", "urb_rur"])
+            .index.map(avg_values.get)
+        )
+        # if inv_df has na values replace with avg_cost
+        inv_df["tot_cost"] = inv_df["tot_cost"].fillna(avg_cost)
 
         inv_t = make_df(
             "inv_cost",
@@ -343,13 +356,20 @@ def add_offgrid_gen(sc, scen_name):
             value=avg_cost if inv_df.empty else inv_df["tot_cost"],
         )
 
-        inv_df["tot_cost"][inv_df["tot_cost"] == 0] = avg_cost
-        inv_df["tot_cost"] = round(inv_df["tot_cost"], 1)
+        # fixed costs for off-grid 2% of inv costs (as solar pv and wind)
+        fix_t = make_df(
+            "fix_cost",
+            technology="offgrid" + ur,
+            unit="USD/kW",
+            node_loc=inv_df["node"],
+            value=avg_cost * 0.02 if inv_df.empty else inv_df["tot_cost"] * 0.02,
+        ).pipe(broadcast, yv_ya_gr)
 
         # add paramenters
         sc.add_par("output", out_t)
         sc.add_par("technical_lifetime", lt_t)
         sc.add_par("inv_cost", inv_t)
+        sc.add_par("fix_cost", fix_t)
 
         # add technology with share constraint
         sc.add_set("technology", ["elec_fin" + ur])
