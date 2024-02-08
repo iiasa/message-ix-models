@@ -96,8 +96,16 @@ IAMC data structures (:mod:`.tools.iamc`)
 =========================================
 
 .. automodule:: message_ix_models.tools.iamc
+   :members:
 
-.. currentmodule:: message_ix_models.tools.costs
+.. _tools-wb:
+
+World Bank structures (:mod:`.tools.wb`)
+========================================
+
+.. automodule:: message_ix_models.tools.wb
+   :members:
+
 
 Technoeconomic investment and fixed O&M costs projection (:mod:`.tools.costs`)
 ==============================================================================
@@ -123,24 +131,12 @@ Regional differentiation of costs (:mod:`.tools.costs.regional_differentiation`)
 .. automodule:: message_ix_models.tools.costs.regional_differentiation
    :members:
 
-<<<<<<< HEAD
-.. _tools-wb:
-
-World Bank structures (:mod:`.tools.wb`)
-========================================
-
-.. automodule:: message_ix_models.tools.wb
-   :members:
-
-
-GEA and SSP technological learning data
-=======================================
-=======
    .. autosummary::
->>>>>>> 7c6186ea (Update docs)
 
       get_weo_data
       get_intratec_data
+      get_raw_technology_mapping
+      subset_materials_map
       adjust_technology_mapping
       get_weo_regional_differentiation
       get_intratec_regional_differentiation
@@ -171,8 +167,9 @@ GDP-adjusted costs and regional differentiation (:mod:`.tools.costs.gdp`)
 
    .. autosummary::
 
+      default_ref_region
       process_raw_ssp_data
-      calculate_indiv_adjusted_region_cost_ratios
+      adjust_cost_ratios_with_gdp
 
 
 .. currentmodule:: message_ix_models.tools.costs.splines
