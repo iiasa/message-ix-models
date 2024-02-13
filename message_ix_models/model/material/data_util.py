@@ -1036,7 +1036,7 @@ def add_emission_accounting(scen):
     """
     # (1) ******* Add non-CO2 gases to the relevant relations. ********
     # This is done by multiplying the input values and emission_factor
-    # per year,region and technology.
+    # per year,region and technology for furnace technologies.
 
     tec_list_residual = scen.par("emission_factor")["technology"].unique()
     tec_list_input = scen.par("input")["technology"].unique()
@@ -1083,6 +1083,8 @@ def add_emission_accounting(scen):
     emission_df.drop(["unit", "mode"], axis=1, inplace=True)
     emission_df = emission_df[emission_df["year_act"] >= 2020]
     emission_df.drop_duplicates(inplace=True)
+
+    emission_df_industry = scen.par("emission_factor", filters={"technology": tec_list_industry})
 
     # Mapping to multiply the emission_factor with the corresponding
     # input values from new indsutry technologies
