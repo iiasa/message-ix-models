@@ -284,6 +284,7 @@ steel:
     - steel
     - pig_iron
     - pig_iron_dummy
+    - off_gas
     - sponge_iron
     - sinter_iron
     - pellet_iron
@@ -341,6 +342,7 @@ steel:
     - export_steel
     - other_EOL_steel
     - total_EOL_steel
+    - bf_biomass_steel
 
   relation:
     add:
