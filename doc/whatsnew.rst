@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Annotate :py:`c="transport"` in :ref:`the commodity code list <commodity-yaml>` with associated :ref:`IEA (E)WEB <tools-iea-web>` flows (:pull:`153`).
 
 v2024.1.29
 ==========
