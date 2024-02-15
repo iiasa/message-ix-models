@@ -89,7 +89,6 @@ Most of the files have a header comment including a precise description of the q
 - :file:`ma3t/driver.csv` → ``ma3t driver:census_division-area_type-driver_type:exo``
 - :file:`ma3t/population.csv` → ``ma3t population:census_division-area_type:exo``
 - :file:`mer-to-ppp.csv` → ``mer to ppp:n-y:exo``
-- :file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
 - :file:`population-suburb-share.csv` → ``population suburb share:n-y:exo``
 
 :file:`ldv-cost-efficiency.xlsx`
@@ -102,6 +101,41 @@ The function :func:`get_USTIMES_MA3T` reads data from multiple sheets in this fi
 To understand the sheet names and cell layout expected, see the code for that function.
 
 As the name implies, the data for :doc:`MESSAGE (V)-Transport <old>` was derived from the US-TIMES and MA³T models.
+
+:file:`mode-share/default.csv`
+------------------------------
+
+Quantity: Share of each mode in passenger transport activity in the model base year
+Dimensions: :math:`(n, t)` with transport modes expressed in the :math:`t` dimensions.
+Units: dimensionless
+
+node = R12_CHN
+   (Comments by A. Javaid from `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.)
+
+   Based on the total pdt and mode share breakdown from 2017^ as reported in `Liu, et al. 2022 <https://doi.org/10.1016/j.accre.2022.01.009>`_, and extrapolating to 2020 (assuming the mode share in 2020 is the same as the one in 2017).
+
+   Subtracting Waterways from PDT.
+   RAIL includes both urban PT & RAIL.
+   BUS includes both local buses and COACH.
+
+:file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
+----------------------------------------------
+
+Quantity: Passenger distance travelled per capita in the model base year
+Dimensions: :math:`(n)`
+Units: km / year
+
+node = R12_CHN
+   (Comments by A. Javaid from `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.)
+
+   Based on the vehicle activity method `Liu, et al. 2022`_ estimate the total PDT for R12_CHN for year (2017) is 9406 billion pkm.
+   This is the latest corrected estimate available from Liu, et al. 2022.
+   Based on similar estimates for 2013 & 2015, I estimate the average growth of PDT to be 8% per year.
+   Using the growth rate and 2017 estimate, the total PDT for year (2020) comes out to be 11848.9 billion pkm.
+
+   R12_CHN population estimate from IMAGE: 1.4483 billion
+
+   the PDT/capita = 11848.9/1.4483
 
 Other data sources
 ==================

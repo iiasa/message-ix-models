@@ -1,7 +1,12 @@
 # Mode shares in the model base year; default set
 #
-# - Duplicated manually from corresponding R11 data as of 2023-10-20.
-# - R11_CPA data copied to R12_CHN, R12_RCPA
+# Sources:
+#
+# - R12_CHN: see the documentation at https://docs.messageix.org/projects/models-internal/en/latest/reference/model/transport/files.html
+# - All others:
+#
+#   - Duplicated manually from corresponding R11 data as of 2023-10-20.
+#   - R11_CPA data copied to R12_RCPA.
 #
 # Units: dimensionless
 #
