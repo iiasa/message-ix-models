@@ -141,6 +141,7 @@ transport:
     duty vehicles, civil aviation, freight transport, etc.)
   level: useful
   units: GWa
+  iea-eweb-flow: [DOMESAIR, DOMESNAV, RAIL, ROAD, TRNONSPE]
 
 # The following codes also appear in a recent (2020-02-28) SSP2 scenario, but
 # are not currently used by model.bare.create_res.
