@@ -42,9 +42,9 @@ class Config(ConfigHelper):
     """Configuration for MESSAGEix-Transport.
 
     This dataclass stores and documents all configuration settings required and used by
-    :mod:`.transport`. It also handles (via :meth:`.from_context`) loading configuration
-    and values from files like :file:`config.yaml`, while respecting higher-level
-    configuration, e.g. :attr:`.model.Config.regions`.
+    :mod:`~message_data.model.transport`. It also handles (via :meth:`.from_context`)
+    loading configuration and values from files like :file:`config.yaml`, while
+    respecting higher-level configuration, for instance :attr:`.model.Config.regions`.
     """
 
     #: Values for constraints:
@@ -273,7 +273,7 @@ class Config(ConfigHelper):
 
            If a subdirectory of :file:`data/transport/` exists corresponding to
            ``context.model.regions`` then the files are loaded from that subdirectory,
-           e.g. :file:`data/transport/ISR/set.yaml` is preferred to
+           for instance :file:`data/transport/ISR/set.yaml` is preferred to
            :file:`data/transport/set.yaml`.
         """
         from .util import path_fallback

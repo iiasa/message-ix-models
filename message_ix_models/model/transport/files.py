@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from genno.core.key import KeyLike
     from message_ix_models import Context
 
+#: List of all :class:`.ExogenousDataFile`.
 FILES: List["ExogenousDataFile"] = []
 
 
@@ -53,6 +54,9 @@ class ExogenousDataFile:
         # Add to the list of FILES
         if not any(f.key == self.key for f in FILES):
             FILES.append(self)
+
+    def __repr__(self) -> str:
+        return f"<ExogenousDataFile {'/'.join(self.parts)} → {self.key}>"
 
     def locate(self, context: "Context") -> Path:
         from .util import path_fallback
