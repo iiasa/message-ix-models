@@ -416,7 +416,7 @@ def add_emission_accounting(scen):
     tec_list_residual = scen.par("emission_factor")["technology"].unique()
     tec_list_input = scen.par("input")["technology"].unique()
 
-    # The technology list to retrieve the input values
+    # The technology list to retrieve the input values for furnaces
     tec_list_input = [
         i
         for i in tec_list_input
@@ -427,21 +427,24 @@ def add_emission_accounting(scen):
         )
     ]
 
+    tec_list_input.remove('hp_gas_i')
+    tec_list_input.remove('hp_gas_rc')
+
+    # The technology list for industry technologies except furnaces
     tec_list_industry = [
 
             i
-            for i in tec_list_input
+            for i in tec_list_residual
             if (
-                ("steel" in i) |
-                ("aluminum" in i) |
-                ("cement" in i) |
-                ("petro" in i) |
-            ) &
-            (furnace not in i)
+                (("steel" in i) |
+                 ("aluminum" in i) |
+                 ("cement" in i) |
+                 ("petro" in i))
+               & ("furnace" not in i)
+               & ("hp_" not in i)
+               & ("replacement" not in i)
+              )
     ]
-
-    tec_list_input.remove('hp_gas_i')
-    tec_list_input.remove('hp_gas_rc')
 
     # The technology list to retreive the emission_factors
     tec_list_residual = [
@@ -475,6 +478,8 @@ def add_emission_accounting(scen):
     emission_df.drop_duplicates(inplace = True)
 
     emission_df_industry = scen.par("emission_factor", filters={"technology": tec_list_industry})
+    emission_df_industry = emission_df_industry[emission_df_industry['year_act']>=2020]
+    emission_df_industry.drop_duplicates(inplace = True)
 
     # Mapping to multiply the emission_factor with the corresponding
     # input values from new indsutry technologies
@@ -498,6 +503,30 @@ def add_emission_accounting(scen):
 
     # Create an empty dataframe
     df_non_co2_emissions = pd.DataFrame()
+
+    # Add the non-GHG emission factors to the relevant relations for technologies
+    # different than furnaces. (We dont need to multiply with input values.)
+    emissions_industry = [e for e in emission_df_industry['emission'].unique()]
+    emissions_industry.remove('CO2_industry')
+    emissions_industry.remove('CO2')
+    emissions_industry.remove('PM2p5')
+
+    for t in emission_df_industry['technology'].unique():
+        for e in emissions_industry:
+            emission_df_filt = emission_df_industry.loc[((emission_df_industry['technology'] == t)\
+            & (emission_df_industry['emission'] == e))]
+
+            if (emission_df_filt.empty):
+                continue
+            else:
+                relation_name = e + '_Emission'
+                emission_df_filt["node_rel"] = emission_df_filt["node_loc"]
+                emission_df_filt["relation"] = relation_name
+                emission_df_filt["year_rel"] = emission_df_filt["year_act"]
+                emission_df_filt.drop(["year_vtg","emission","unit"],
+                axis= 1, inplace = True)
+                emission_df_filt["unit"] = "???"
+                df_non_co2_emissions = pd.concat([df_non_co2_emissions,emission_df_filt])
 
     # Find the technology, year_act, year_vtg, emission, node_loc combination
     emissions = [e for e in emission_df['emission'].unique()]
