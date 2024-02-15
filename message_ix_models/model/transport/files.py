@@ -70,7 +70,7 @@ ExogenousDataFile("disutility", "disutility:n-cg-t-y:per vehicle", "LDV disutili
 ExogenousDataFile("demand-scale", dims=("n", "y"))
 ExogenousDataFile(
     "energy-other",
-    "energy:nl-c:transport other",
+    "energy:c-n:transport other",
     "2020 demand for other transport energy",
     required=False,
 )
