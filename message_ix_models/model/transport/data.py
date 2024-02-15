@@ -98,7 +98,15 @@ def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
         return dict()
 
     # TODO read the list of 'commodity' from context/config
-    commodities = ["electr", "gas", "hydrogen", "lightoil", "methanol"]
+    commodities = [
+        "coal",
+        "electr",
+        "fueloil",
+        "gas",
+        "hydrogen",
+        "lightoil",
+        "methanol",
+    ]
 
     # TODO separate dummy supplies by commodity
     data = make_source_tech(
