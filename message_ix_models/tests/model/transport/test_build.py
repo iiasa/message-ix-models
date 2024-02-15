@@ -3,6 +3,7 @@ from copy import copy
 
 import ixmp
 import pytest
+from genno import Quantity
 from genno.testing import assert_units
 from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import bare_res
@@ -183,28 +184,37 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
     # Check that some keys (a) can be computed without error and (b) have correct units
     # commented: these are slow because they repeat some calculations many times.
     # Uncommented as needed for debugging
-    for key, unit in (("energy:flow-n-product:trn other+1", "TJ"),):
-        try:
-            # Quantity can be computed
-            qty = c.get(key)
+    for key, unit in (
+        # ("energy:flow-n-product:trn other+1", "TJ"),
+        # ("transport other::ixmp", None),
+    ):
+        print(f"\n\n-- {key} --\n\n")
+        print(c.describe(key))
 
-            # qty.to_string()
-            print(qty.to_series().to_string())
+        # Quantity can be computed
+        result = c.get(key)
+
+        print(f"{result = }")
+
+        if isinstance(result, Quantity):
+            print(result.to_series().to_string())
 
             # Quantity has the expected units
-            assert_units(qty, unit)
+            assert_units(result, unit)
 
             # Quantity has the expected size on the n/node dimension
-            assert N_node == len(qty.coords["n"]), qty.coords["n"].data
+            assert N_node == len(result.coords["n"]), result.coords["n"].data
 
             # commented: dump to a temporary path for inspection
             # fn = f"{key.replace(' ', '-')}-{hash(tuple(options.items()))}"
             # dump = tmp_path.joinpath(fn).with_suffix(".csv")
             # print(f"Dumped to {dump}")
             # qty.to_series().to_csv(dump)
-        except Exception:
-            # Something else
-            print(f"\n\n-- {key} --\n\n")
-            print(c.describe(key))
-            print(qty.to_series().to_string(), qty.attrs, qty.dims, qty.coords)
-            raise
+        elif isinstance(result, dict):
+            for k, v in result.items():
+                print(f"{k} = ")
+                print(v.head().to_string())
+                print(v.tail().to_string())
+                missing = v.isna()
+                if missing.any(axis=None):
+                    raise ValueError("Missing values")
