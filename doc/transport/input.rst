@@ -80,7 +80,6 @@ Most of the files have a header comment including a precise description of the q
 - :file:`ikarus/technical_lifetime.csv` → ``ikarus technical_lifetime:source-t-c-y:exo``
 - :file:`ikarus/var_cost.csv` → ``ikarus var_cost:source-t-c-y:exo``
 - :file:`input-base.csv` → ``input:t-c-h:base``
-- :file:`ldv-activity.csv` → ``ldv activity:n:exo``
 - :file:`ldv-class.csv` → ``ldv class:n-vehicle_class:exo``
 - :file:`ldv-new-capacity.csv` → ``cap_new:nl-t-yv:ldv+exo``
 - :file:`load-factor-ldv.csv` → ``load factor ldv:n:exo``
@@ -90,6 +89,33 @@ Most of the files have a header comment including a precise description of the q
 - :file:`ma3t/population.csv` → ``ma3t population:census_division-area_type:exo``
 - :file:`mer-to-ppp.csv` → ``mer to ppp:n-y:exo``
 - :file:`population-suburb-share.csv` → ``population suburb share:n-y:exo``
+
+:file:`ldv-activity.csv` → ``ldv activity:n:exo``
+-------------------------------------------------
+
+Quantity: Activity (driving distance) per light-duty vehicle
+Units: kilometre / year
+
+node = R12_AFR [1]_
+  Obtained from literature, based on estimates from South Africa. The reported value for South Africa is lower (18000 km/year, `source <https://blog.sbtjapan.com/car-info/what-mileage-is-good-for-a-used-car#:~:text=Average%20Mileage%20in%20South%20Africa,is%20just%20a%20general%20guideline>`__) than the one for Kenya (22000 km/year, `source <https://www.changing-transport.org/wp-content/uploads/2019_Updated-transport-data-in-Kenya.pdf>`__).
+
+node = R12_FSU [1]_
+  Based on Russia estimates (`source <https://eng.autostat.ru/news/17616/>`__).
+
+node = R12_NAM [1]_
+  Based on US estimates (`source <https://afdc.energy.gov/data/10309>`__`), Canada estimates tend to [be] lower in general.
+
+node = R12_PAO [1]_
+  Estimates for AU is 11000 in 2020, it's a sharp decrease from 12600 in 2018 (maybe a Covid effect?).
+  Whereas JP is 8532 (`source <https://www.mlit.go.jp/road/road_e/statistics.html>`__) in 2016.
+
+node = R12_PAS [1]_
+  Based on Singapore by `Chong et al. (2018) <https://doi.org/10.1016/j.enconman.2017.12.083>`__.
+
+node = R12_SAS [1]_
+  Based on India, mainly Delhi estimate by `Goel et al. (2015) <https://doi.org/10.1016/j.tbs.2014.10.001>`__.
+
+.. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1944227441>`__.
 
 :file:`ldv-cost-efficiency.xlsx`
 --------------------------------
@@ -109,25 +135,23 @@ Quantity: Share of each mode in passenger transport activity in the model base y
 Dimensions: :math:`(n, t)` with transport modes expressed in the :math:`t` dimensions.
 Units: dimensionless
 
-node = R12_AFR [1]_
+node = R12_AFR [2]_
    These new estimates are mainly based on IMAGE regional estimates (average of EA, WA, and SA) after discussion with Jarmo as well as an additional literature search + guesstimates from vehicle count etc.
    Still, no comprehensive source to validate these.
    Only broad qualitative impressions formed from the literature.
    More details in [other] notes.
 
-node = R12_CHN
-   (Comments by A. Javaid from `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.)
-
+node = R12_CHN [3]_
    Based on the total pdt and mode share breakdown from 2017^ as reported in `Liu, et al. 2022 <https://doi.org/10.1016/j.accre.2022.01.009>`_, and extrapolating to 2020 (assuming the mode share in 2020 is the same as the one in 2017).
 
    Subtracting Waterways from PDT.
    RAIL includes both urban PT & RAIL.
    BUS includes both local buses and COACH.
 
-node = R12_MEA [1]_
+node = R12_MEA [2]_
    These new estimates are mainly based on IMAGE regional estimates (average of ME & NA) guesstimates from vehicle count etc. Same as [R12_AFR].
 
-node = R12_PAO [1]_
+node = R12_PAO [2]_
    Estimated from weighing Japan (0.80) & Aus/NZ (0.2) by population.
    JP source is ATO, Statistics Japan, IEA.
    AU source is BITRE 2021.
@@ -135,12 +159,13 @@ node = R12_PAO [1]_
    BUS estimate for Japan is based on ATO data, less certain as source is missing.
    More details in [other] notes.
 
-node = R12_SAS [1]_
+node = R12_SAS [2]_
    Estimated from India ATO & OECD sources.
    Rest of SA is likely to have lower RAIL share.
    2W share also includes 3W (Auto rickshaw).
 
-.. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1941860412>`_.
+.. [2] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1941860412>`_.
+.. [3] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
 
 :file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
 ----------------------------------------------
@@ -149,9 +174,7 @@ Quantity: Passenger distance travelled per capita in the model base year
 Dimensions: :math:`(n)`
 Units: km / year
 
-node = R12_CHN
-   (Comments by A. Javaid from `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.)
-
+node = R12_CHN [4]_
    Based on the vehicle activity method `Liu, et al. 2022`_ estimate the total PDT for R12_CHN for year (2017) is 9406 billion pkm.
    This is the latest corrected estimate available from Liu, et al. 2022.
    Based on similar estimates for 2013 & 2015, I estimate the average growth of PDT to be 8% per year.
@@ -160,6 +183,8 @@ node = R12_CHN
    R12_CHN population estimate from IMAGE: 1.4483 billion
 
    the PDT/capita = 11848.9/1.4483
+
+.. [4] A. Javaid, `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.
 
 Other data sources
 ==================
