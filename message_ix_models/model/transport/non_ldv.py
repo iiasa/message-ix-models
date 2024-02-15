@@ -5,7 +5,7 @@ from operator import itemgetter
 from typing import TYPE_CHECKING, Dict, List, Mapping
 
 import pandas as pd
-from genno import Computer, Key, KeySeq, Quantity, quote
+from genno import Computer, Key, KeySeq, MissingKeyError, Quantity, quote
 from genno.core.key import KeyLike, iter_keys, single_key
 from message_ix import make_df
 from message_ix_models.util import (
@@ -112,7 +112,11 @@ def prepare_computer(c: Computer):
     c.add("energy other csv", "write_report", e[1] / "flow", path=path, kwargs=kw)
 
     # Handle data from the file energy-transport.csv
-    keys.extend(iter_keys(c.apply(other, "energy:c-nl:transport other")))
+    try:
+        k = Key("energy:c-nl:transport other")
+        keys.extend(iter_keys(c.apply(other, k)))
+    except MissingKeyError:
+        log.warning(f"No key {k!r}; unable to add data for 'transport other *' techs")
 
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
