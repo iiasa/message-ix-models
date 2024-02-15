@@ -411,7 +411,7 @@ RAIL:
 transport other coal: {input: {commodity: coal}}
 transport other electr: {input: {commodity: electr}}
 transport other fueloil: {input: {commodity: fueloil}}
-transport other gas: {input: {commodity: lightoil}}
+transport other gas: {input: {commodity: gas}}
 transport other lightoil: {input: {commodity: lightoil}}
 
 OTHER:
