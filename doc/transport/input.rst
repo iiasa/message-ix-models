@@ -109,6 +109,12 @@ Quantity: Share of each mode in passenger transport activity in the model base y
 Dimensions: :math:`(n, t)` with transport modes expressed in the :math:`t` dimensions.
 Units: dimensionless
 
+node = R12_AFR [1]_
+   These new estimates are mainly based on IMAGE regional estimates (average of EA, WA, and SA) after discussion with Jarmo as well as an additional literature search + guesstimates from vehicle count etc.
+   Still, no comprehensive source to validate these.
+   Only broad qualitative impressions formed from the literature.
+   More details in [other] notes.
+
 node = R12_CHN
    (Comments by A. Javaid from `message_data#538 (comment) <https://github.com/iiasa/message_data/issues/538#issuecomment-1934663340>`__.)
 
@@ -117,6 +123,24 @@ node = R12_CHN
    Subtracting Waterways from PDT.
    RAIL includes both urban PT & RAIL.
    BUS includes both local buses and COACH.
+
+node = R12_MEA [1]_
+   These new estimates are mainly based on IMAGE regional estimates (average of ME & NA) guesstimates from vehicle count etc. Same as [R12_AFR].
+
+node = R12_PAO [1]_
+   Estimated from weighing Japan (0.80) & Aus/NZ (0.2) by population.
+   JP source is ATO, Statistics Japan, IEA.
+   AU source is BITRE 2021.
+   Motorcycle share is guess-timate based on no. of motorbikes, load factor, and comparing it to cars.
+   BUS estimate for Japan is based on ATO data, less certain as source is missing.
+   More details in [other] notes.
+
+node = R12_SAS [1]_
+   Estimated from India ATO & OECD sources.
+   Rest of SA is likely to have lower RAIL share.
+   2W share also includes 3W (Auto rickshaw).
+
+.. [1] A. Javaid, `message_data#180 (comment) <https://github.com/iiasa/message_data/issues/180#issuecomment-1941860412>`_.
 
 :file:`pdt-cap-ref.csv` → ``pdt:n:capita+ref``
 ----------------------------------------------
