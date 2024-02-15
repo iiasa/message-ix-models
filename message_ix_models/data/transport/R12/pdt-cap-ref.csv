@@ -1,14 +1,17 @@
 # Passenger distance travelled per capita
 #
-# Source: rough calculation / temporary placeholder from
-# data/advance/advance_compare_20171018-134445.csv.zip
-# - variable="Transport|Service demand|All|Passenger"
-#   divided by variable="Transport|Population"
-# - model="MESSAGE"
-# - scenario="ADV3TRAr2_Base"
-# - year=2020
+# Sources:
 #
-# …via .transport.operator._advance_data_for()
+# - R12_CHN: see the documentation at https://docs.messageix.org/projects/models-internal/en/latest/reference/model/transport/files.html
+# - All others: rough calculation / temporary placeholder from
+#   data/advance/advance_compare_20171018-134445.csv.zip
+#   via .transport.operator._advance_data_for()
+#
+#   - variable="Transport|Service demand|All|Passenger"
+#     divided by variable="Transport|Population"
+#   - model="MESSAGE"
+#   - scenario="ADV3TRAr2_Base"
+#   - year=2020
 #
 # Units: km / year
 #
