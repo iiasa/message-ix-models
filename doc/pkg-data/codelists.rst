@@ -11,12 +11,14 @@ These codelists correspond to :doc:`sets in the generic MESSAGE IAM formulation 
 Commodities (``commodity.yaml``)
 ================================
 
-These codes hav the following annotations:
+These codes have the following annotations:
 
 ``level`` (mandatory)
    Level where this commodity typically (not exclusively) occurs.
 ``units`` (mandatory)
    Units typically associated with this commodity.
+``iea-eweb-flow`` (optional)
+   List of ``FLOW`` codes from the IEA :ref:`tools-iea-web` associated with this MESSAGEix-GLOBIOM commodity.
 ``iea-eweb-product`` (optional)
    List of ``PRODUCT`` codes from the IEA :ref:`tools-iea-web` associated with this MESSAGEix-GLOBIOM commodity.
 
