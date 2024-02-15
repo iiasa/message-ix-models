@@ -167,8 +167,11 @@ def other(c: Computer, base: Key) -> List[Key]:
     """Generate MESSAGE parameter data for other transport technologies."""
     from .key import gdp_index
 
-    assert {"c", "nl"} == set(base.dims)
-    base_cnlt = (base + "0") * "t"
+    # Keys
+    assert {"c", "n"} == set(base.dims)
+    bcast = Key("broadcast:c-t:other transport")
+    k_cnt = (base + "0") * "t"  # with added dimension "t"
+    k_cnty = KeySeq(base * ("t", "y") + "1")  # with added dimensions "t", "y"
 
     def broadcast_other_transport(technologies) -> Quantity:
         """Transform e.g. c="gas" to (c="gas", t="transport other gas")."""
@@ -180,18 +183,13 @@ def other(c: Computer, base: Key) -> List[Key]:
 
         return Quantity(pd.DataFrame(rows, columns=cols).set_index(cols[:-1])[cols[-1]])
 
-    bcast = Key("broadcast:c-t:other transport")
     c.add(bcast, broadcast_other_transport, "t::transport")
-    c.add(base_cnlt, "mul", base, bcast)
+    c.add(k_cnt, "mul", base, bcast)
 
     # Project values across y using GDP PPP index
-    k_cn = (base + "1") / "nl" * ("n", "t")
-    k_cnly = KeySeq(k_cn * "y")
-    c.add(k_cn, "rename_dims", base_cnlt, quote({"nl": "n"}))
-    c.add(k_cnly[0], "mul", k_cn, gdp_index)
-
+    c.add(k_cnty[0], "mul", k_cnt, gdp_index)
     # Convert units to GWa
-    c.add(k_cnly[1], "convert_units", k_cnly[0], quote("GWa"))
+    c.add(k_cnty[1], "convert_units", k_cnty[0], quote("GWa"))
 
     # Produce MESSAGE parameter bound_activity_lo:nl-t-ya-m-h
     kw = dict(
@@ -199,18 +197,18 @@ def other(c: Computer, base: Key) -> List[Key]:
         common=dict(mode="all", time="year"),
     )
     k_bal = Key("bound_activity_lo::transport other+ixmp")
-    c.add(k_bal, "as_message_df", k_cnly.prev, name=k_bal.name, **kw)
+    c.add(k_bal, "as_message_df", k_cnty.prev, name=k_bal.name, **kw)
 
     # Divide by self to ensure values = 1.0 but same dimensionality
-    c.add(k_cnly[2], "div", k_cnly[0], k_cnly[0])
+    c.add(k_cnty[2], "div", k_cnty[0], k_cnty[0])
     # Results in dimensionless; re-assign units
-    c.add(k_cnly[3], "assign_units", k_cnly[2], quote("GWa"))
+    c.add(k_cnty[3], "assign_units", k_cnty[2], quote("GWa"))
 
     # Produce MESSAGE parameter input:nl-t-yv-ya-m-no-c-l-h-ho
     kw["dims"].update(commodity="c", node_origin="n", year_vtg="y")
     kw["common"].update(level="final", time_origin="year")
     k_input = Key("input::transport other+ixmp")
-    c.add(k_input, "as_message_df", k_cnly.prev, name=k_input.name, **kw)
+    c.add(k_input, "as_message_df", k_cnty.prev, name=k_input.name, **kw)
 
     result = Key("transport other::ixmp")
     c.add(result, "merge_data", k_bal, k_input)
