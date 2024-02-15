@@ -5,8 +5,8 @@ from operator import itemgetter
 from typing import TYPE_CHECKING, Dict, List, Mapping
 
 import pandas as pd
-from genno import Computer, Key, Quantity, quote
-from genno.core.key import KeyLike, single_key
+from genno import Computer, Key, KeySeq, Quantity, quote
+from genno.core.key import KeyLike, iter_keys, single_key
 from message_ix import make_df
 from message_ix_models.util import (
     broadcast,
@@ -20,7 +20,6 @@ from message_ix_models.util import (
 from sdmx.model.v21 import Code
 
 from .emission import ef_for_input
-from .util import KeySequence
 
 if TYPE_CHECKING:
     from message_ix_models import Context
@@ -92,8 +91,8 @@ def prepare_computer(c: Computer):
 
     #### NB lines below duplicated from .transport.base
     e_iea = Key("energy:n-y-product-flow:iea")
-    e_fnp = KeySequence(e_iea.drop("y"))
-    e = KeySequence("energy:commodity-flow-node_loc:iea")
+    e_fnp = KeySeq(e_iea.drop("y"))
+    e = KeySeq("energy:commodity-flow-node_loc:iea")
 
     # Transform IEA EWEB data for comparison
 
@@ -111,6 +110,9 @@ def prepare_computer(c: Computer):
     path = private_data_path("transport", context.regions, "energy-other.csv")
     kw = dict(header_comment=ENERGY_OTHER_HEADER)
     c.add("energy other csv", "write_report", e[1] / "flow", path=path, kwargs=kw)
+
+    # Handle data from the file energy-transport.csv
+    keys.extend(iter_keys(c.apply(other, "energy:c-nl:transport other")))
 
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
@@ -159,6 +161,60 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     data["output"] = output
 
     return data
+
+
+def other(c: Computer, base: Key) -> List[Key]:
+    """Generate MESSAGE parameter data for other transport technologies."""
+    from .key import gdp_index
+
+    assert {"c", "nl"} == set(base.dims)
+    base_cnlt = (base + "0") * "t"
+
+    def broadcast_other_transport(technologies) -> Quantity:
+        """Transform e.g. c="gas" to (c="gas", t="transport other gas")."""
+        rows = []
+        cols = ["c", "t", "value"]
+
+        for code in filter(lambda code: "other" in code.id, technologies):
+            rows.append([code.eval_annotation(id="input")["commodity"], code.id, 1.0])
+
+        return Quantity(pd.DataFrame(rows, columns=cols).set_index(cols[:-1])[cols[-1]])
+
+    bcast = Key("broadcast:c-t:other transport")
+    c.add(bcast, broadcast_other_transport, "t::transport")
+    c.add(base_cnlt, "mul", base, bcast)
+
+    # Project values across y using GDP PPP index
+    k_cn = (base + "1") / "nl" * ("n", "t")
+    k_cnly = KeySeq(k_cn * "y")
+    c.add(k_cn, "rename_dims", base_cnlt, quote({"nl": "n"}))
+    c.add(k_cnly[0], "mul", k_cn, gdp_index)
+
+    # Convert units to GWa
+    c.add(k_cnly[1], "convert_units", k_cnly[0], quote("GWa"))
+
+    # Produce MESSAGE parameter bound_activity_lo:nl-t-ya-m-h
+    kw = dict(
+        dims=dict(node_loc="n", technology="t", year_act="y"),
+        common=dict(mode="all", time="year"),
+    )
+    k_bal = Key("bound_activity_lo::transport other+ixmp")
+    c.add(k_bal, "as_message_df", k_cnly.prev, name=k_bal.name, **kw)
+
+    # Divide by self to ensure values = 1.0 but same dimensionality
+    c.add(k_cnly[2], "div", k_cnly[0], k_cnly[0])
+    # Results in dimensionless; re-assign units
+    c.add(k_cnly[3], "assign_units", k_cnly[2], quote("GWa"))
+
+    # Produce MESSAGE parameter input:nl-t-yv-ya-m-no-c-l-h-ho
+    kw["dims"].update(commodity="c", node_origin="n", year_vtg="y")
+    kw["common"].update(level="final", time_origin="year")
+    k_input = Key("input::transport other+ixmp")
+    c.add(k_input, "as_message_df", k_cnly.prev, name=k_input.name, **kw)
+
+    result = Key("transport other::ixmp")
+    c.add(result, "merge_data", k_bal, k_input)
+    return [result]
 
 
 def usage_data(
