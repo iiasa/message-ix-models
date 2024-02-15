@@ -66,15 +66,14 @@ ExogenousDataFile(
     "Reference (historical) PDT per capita",
 )
 
-ExogenousDataFile(
-    "ldv-new-capacity",
-    "cap_new:nl-t-yv:ldv+exo",
-    "New capacity values for LDVs",
-    required=False,
-)
-ExogenousDataFile("ldv-activity", "ldv activity:n:exo", "LDV activity")
 ExogenousDataFile("disutility", "disutility:n-cg-t-y:per vehicle", "LDV disutility")
 ExogenousDataFile("demand-scale", dims=("n", "y"))
+ExogenousDataFile(
+    "energy-other",
+    "energy:nl-c:transport other",
+    "2020 demand for other transport energy",
+    required=False,
+)
 ExogenousDataFile("fuel-emi-intensity", dims=("c", "e"))
 ExogenousDataFile("freight-activity", "freight activity:n:ref")
 ExogenousDataFile("freight-mode-share-ref", "freight mode share:n-t:ref")
@@ -85,7 +84,14 @@ ExogenousDataFile(("ikarus", "inv_cost"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "technical_lifetime"), dims=("source", "t", "c", "y"))
 ExogenousDataFile(("ikarus", "var_cost"), dims=("source", "t", "c", "y"))
 ExogenousDataFile("input-base", "input:t-c-h:base", "Base model input efficiency")
+ExogenousDataFile("ldv-activity", "ldv activity:n:exo", "LDV activity")
 ExogenousDataFile("ldv-class", dims=("n", "vehicle_class"), required=False)
+ExogenousDataFile(
+    "ldv-new-capacity",
+    "cap_new:nl-t-yv:ldv+exo",
+    "New capacity values for LDVs",
+    required=False,
+)
 ExogenousDataFile("load-factor-ldv", doc="Load factor (occupancy) of LDVs", dims=("n",))
 ExogenousDataFile(
     "load-factor-nonldv", doc="Load factor (occupancy) of non-LDV vehicles", dims=("t",)
