@@ -6,12 +6,12 @@ This page describes building blocks for transferring the detailed transport modu
 It was originally written by David McCollum in December 2018; fragments of that text are sometimes set off with ‘DLM:’/“in quotes,” to distinguish from rewritten/expanded description.
 
 The files are located in :file:`P:\ene.model\TaxSub_Transport_Merged\\` on the IIASA ‘Projects’ shared drive, except where otherwise noted.
+Some of the files are reproduced in the :mod:`message_data` repository within :file:`/data/transport/` (if addressed by any code, including older, disused code) or in :file:`/reference/transport/` (if not).
 
 .. contents::
    :local:
    :depth: 2
    :backlinks: none
-
 
 Structure
 =========
@@ -42,7 +42,6 @@ Structure
   - ``trp_rai`` is produced by ``dMspeed_rai``, ``Hspeed_rai``, and ``Mspeed_rai``.
   - ``trp_urb`` is produced by ``.*_bus`` (11).
   - ``transport`` also exists, produced by (perhaps legacy technologies): ``back_trp``, ``back_trp``, ``back_trp``, ``eth_ic_trp``, ``eth_fc_trp``, ``h2_fc_trp``, ``coal_trp``, ``elec_trp``, ``foil_trp``, ``gas_trp``, ``loil_trp``, ``meth_ic_trp``, ``meth_fc_trp``, ``Trans_1``, ``Trans_2``, ``Trans_3``, ``Trans_4``, ``Trans_5``.
-
 
 MESSAGE_Transport_port_to_ix\\sqlite\\
 ======================================

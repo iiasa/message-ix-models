@@ -6,22 +6,39 @@ MESSAGEix-Transport
    MESSAGEix-Transport is **under development**.
    For details, see the `project board <https://github.com/orgs/iiasa/projects/29>`_.
 
-:mod:`message_data.model.transport` adds a technology-rich representation of transport to the MESSAGEix-GLOBIOM global model.
-The resulting model is referred to as **“MESSAGEix-Transport”**.
-This extends the formulation described by McCollum et al. (2016) :cite:`McCollum2017` for the older, MESSAGE V framework that predated MESSAGEix.
+:mod:`message_data.model.transport` adds a technology-rich representation of transport to models in the MESSAGEix-GLOBIOM family.
+The resulting “model variant” is variously referred to as:
+
+- **MESSAGEix-Transport**,
+- “MESSAGEix-GLOBIOM ‘T’” or, with other variants like :mod:`.buildings` and :mod:`.material`, “MESSAGEix-GLOBIOM BMT”, or
+- “MESSAGEix-XX-Transport” where built on a single-country base model (again, in the MESSAGEix-GLOBIOM family) named like “MESSAGEix-XX”.
+
+MESSAGEix-Transport extends the formulation described by McCollum et al. (2016) :cite:`McCollum2017` for the older, MESSAGE V framework that predated MESSAGEix.
+Some inherited information about the older model is collected at :doc:`transport/old`.
+
+Information about MESSAGEix-Transport, its inputs, configuration, implementation, and output, are organized according to this diagram:
+
+.. figure:: https://raw.githubusercontent.com/khaeru/doc/main/image/data-stages.svg
+
+   Information about MESSAGEix-Transport is separated into:
+
+- :doc:`transport/input` (separate page)—line (1) in the diagram.
+- :ref:`transport-implementation` (below)—between lines (1) and (3) in the diagram.
+- :doc:`transport/output` (separate page)—between lines (3) and (4) in the diagram.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
+   transport/input
+   transport/output
 
 On this page:
 
 .. contents::
    :local:
 
-On other pages:
-
-- :doc:`transport/files`
-- :doc:`transport/data`
-- :doc:`transport/disutility`
-- :doc:`transport/report`
-- :doc:`transport/old`
+.. _transport-implementation:
 
 Implementation
 ==============
@@ -29,24 +46,41 @@ Implementation
 Summary
 -------
 
-The code and data:
+The code:
 
-- Check the RES to confirm that it contains a specific MESSAGEix representation of transportation, to be replaced—including elements of the ``technology``, ``commodity``, ``node`` (region) and other sets.
-- Prepares data for MESSAGEix-Transport, based on:
+- Operates on a base model with a particular structure, the standard MESSAGEix-GLOBIOM representation of transport.
+  See :ref:`transport-base-structure`.
+- **Builds** MESSAGEix-Transport on the base model:
 
-  - files in :file:`data/transport` describing the technologies,
-  - input spreadsheets containing preliminary calculations.
+  - Use the :func:`.apply_spec` pattern, with a :class:`.Spec` that identifies:
 
-  …and inserts this data into a target :class:`.Scenario`.
+    - Required set elements in the base model, for instance ``commodity`` elements representing the fuels used by MESSAGEix-Transport technologies.
+    - Set elements to be removed, for instance the ``technology`` elements for base model/aggregate transport technologies.
+      (Removing these elements also removes all parameter data indexed by these elements.)
+    - Set elements to be added.
+      These are generated dynamically based on configuration setting from files and code; see :ref:`transport-config`.
 
-- Provide an exogenous mode choice model that iterates with MESSAGEix-GLOBIOM
-  through the ixmp callback feature, to set demand for specific transport
-  technologies.
+  - Use a :class:`genno.Computer` (from :func:`.build.get_computer`) to:
+
+    - Read data from :ref:`transport-data-files` and other sources,
+    - Prepares the parametrization of MESSAGEix-Transport through an extensive set of computations, and
+    - Add these data to the target :class:`.Scenario`.
+
+- **Solves** the :class:`.Scenario`.
+- Provides :mod:`message_ix_models.report` extensions to **report or post-process** the model solution data and prepare detailed transport outputs in various formats (see :doc:`transport/output`).
 
 Details
 -------
 
-- For light-duty vehicle technologies annotated with ``historical-only: True``, parameter data for ``bound_new_capacity_up`` are created value of 0.0.
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
+   transport/disutility
+
+On other page(s): :doc:`transport/disutility`.
+
+- For light-duty vehicle technologies annotated with ``historical-only: True``, parameter data for ``bound_new_capacity_up`` are created with a value of 0.0.
   These prevent new capacity of these technologies from being created during the model horizon, but allow pre-horizon installed capacity (represented by ``historical_new_capacity``) to continue to be operated within its technical lifetime.
   (:pull:`441`)
 
@@ -55,32 +89,41 @@ Details
 Usage
 =====
 
-.. note:: The details below are still valid, but most of the steps involve can now be performed using the command-line interface to :mod:`.transport.workflow`::
+Automated workflow
+------------------
 
-      $ mix-models transport run --help
-      Usage: mix-models transport run [OPTIONS] TARGET
+:mod:`.transport.workflow.generate` returns a :class:`.Workflow` instance.
+This can be handled with further code, or with through the command-line::
 
-        Run the MESSAGEix-Transport workflow up to step TARGET.
+  $ mix-models transport run --help
+  Usage: mix-models transport run [OPTIONS] TARGET
 
-        Unless --go is given, the workflow is only displayed. --from is interpreted
-        as a regular expression.
+    Run the MESSAGEix-Transport workflow up to step TARGET.
 
-      Options:
-        --future TEXT                   Transport futures scenario.
-        --fast                          Skip removing data for removed set elements.
-        --model-extra TEXT              Model name suffix.
-        --scenario-extra TEXT           Scenario name suffix.
-        --key TEXT                      Key to report.
-        --dest TEXT                     Destination URL for created scenario(s).
-        --dry-run                       Only show what would be done.
-        --nodes [ADVANCE|B210-R11|ISR|R11|R12|R14|R17|R20|R32|RCP|ZMB]
-                                        Code list to use for 'node' dimension.
-        --quiet                         Show less or no output.
-        --go                            Actually run the workflow.
-        --from TEXT                     Truncate workflow at matching step(s).
-        --help                          Show this message and exit.
+    Unless --go is given, the workflow is only displayed. --from is interpreted
+    as a regular expression.
 
-   See the :file:`transport.yaml` workflow file described under :ref:`transport-ci` for specific example that is tested daily, thus known to work.
+  Options:
+    --future TEXT                   Transport futures scenario.
+    --fast                          Skip removing data for removed set elements.
+    --model-extra TEXT              Model name suffix.
+    --scenario-extra TEXT           Scenario name suffix.
+    --key TEXT                      Key to report.
+    --dest TEXT                     Destination URL for created scenario(s).
+    --dry-run                       Only show what would be done.
+    --nodes [ADVANCE|B210-R11|ISR|R11|R12|R14|R17|R20|R32|RCP|ZMB]
+                                    Code list to use for 'node' dimension.
+    --quiet                         Show less or no output.
+    --go                            Actually run the workflow.
+    --from TEXT                     Truncate workflow at matching step(s).
+    --help                          Show this message and exit.
+
+This is the method used by the :file:`transport.yaml` GitHub Actions workflow (see :ref:`transport-ci`) on a daily schedule, and thus always known to work.
+
+Manual
+------
+
+This subsection contains an older, manual step
 
 **Preliminaries.**
 Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for working with :mod:`.message_data`.
@@ -203,6 +246,8 @@ The following existing scenarios are targets for the MESSAGEix-Transport code to
 ``ixmp://ixmp-dev/MESSAGEix-Materials/NoPolicy_2305#?``
   regions=R12, years=B. Includes :doc:`material` detail.
 
+.. _transport-base-structure:
+
 Structure of base scenarios
 ---------------------------
 
@@ -288,31 +333,6 @@ To change the assumptions that are modeled via any particular factor:
 - Adjust where and how the factor is applied in the transport build process.
   This option requires more technical skill.
 
-Data, metadata, and configuration
-=================================
-
-→ See also: :doc:`transport/files` and :doc:`transport/data`.
-
-The :class:`.transport.Config` class stores all the settings understood by the code for building, solving, and reporting MESSAGEix-Transport, including their default values:
-
-.. currentmodule:: message_data.model.transport.config
-
-.. autoclass:: message_data.model.transport.config.Config
-   :members:
-   :noindex:
-
-   .. automethod:: from_context
-      :noindex:
-
-      :func:`from_context` reads configuration files from :file:`data/transport/…` **or** a subdirectory, e.g. :file:`data/transport/R12/…`.
-      This allows to separate input data files according to the node list used by the base model.
-
-Other data files include:
-
-- :file:`data/transport/` contains data files originally from :file:`P:\ene.model\TaxSub_Transport_Merged` (a private IIASA shared drive) and other metadata used for defining transport technologies.
-- :file:`reference/transport/` contains files from :doc:`transport/old` that are for reference, and not used by MESSAGEix-Transport.
-  The directory structure matches :file:`P:\ene.model\TaxSub_Transport_Merged\\`.
-
 .. _transport-ci:
 
 Testing and validation
@@ -332,7 +352,7 @@ This workflow:
   This artifact contains, *inter alia*:
 
   - One directory per job.
-  - In each directory, files :file:`transport.csv` and :file:`transport.xlsx` containing :doc:`MESSAGEix-Transport reporting output <report>`.
+  - In each directory, files :file:`transport.csv` and :file:`transport.xlsx` containing :doc:`MESSAGEix-Transport reporting output <transport/output>`.
   - In each directory, files :file:`demand.csv` and :file:`bound_activity_{lo,up}.csv` containing data suitable for parametrizing the base MESSAGEix-GLOBIOM model.
 - May be triggered manually.
   Use the “Run workflow” button and choose a branch; the code and data on this branch will be the ones used to build, solve, and report MESSAGEix-Transport.
@@ -379,16 +399,10 @@ The entire module and its contents are documented recursively:
 
    message_data.model.transport
 
-Index
-=====
-
-Contents of other documentation pages:
+Other documents
+===============
 
 .. toctree::
    :maxdepth: 2
 
-   transport/files
-   transport/data
-   transport/disutility
-   transport/report
    transport/old
