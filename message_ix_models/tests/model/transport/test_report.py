@@ -27,13 +27,13 @@ def test_configure_legacy():
     # as input, thus expected to be added to the respective legacy reporting sets
     expected = {
         "trp back": 0,
-        "trp coal": 0,
-        "trp elec": 6,
+        "trp coal": 1,
+        "trp elec": 7,
         "trp eth": 5,
-        "trp foil": 0,
-        "trp gas": 6,
+        "trp foil": 1,
+        "trp gas": 7,
         "trp h2": 4,
-        "trp loil": 16,
+        "trp loil": 17,
         "trp meth": 5,
     }
 

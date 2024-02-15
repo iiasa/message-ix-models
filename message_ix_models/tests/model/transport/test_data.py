@@ -158,7 +158,7 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     data = c.get("transport nonldv::ixmp")
 
     # Data are provided for the these parameters
-    assert {
+    exp_pars = {
         "capacity_factor",
         "emission_factor",
         "fix_cost",
@@ -168,13 +168,19 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
         "relation_activity",
         "technical_lifetime",
         "var_cost",
-    } == set(data.keys())
+    }
+    if regions == "R12":
+        exp_pars |= {"bound_activity_lo"}  # From .non_ldv.other()
+    assert exp_pars == set(data.keys())
 
     # Input data have expected units
-    mask = data["input"]["technology"].str.endswith(" usage")
+    mask0 = data["input"]["technology"].str.endswith(" usage")
+    mask1 = data["input"]["technology"].str.startswith("transport other")
 
-    assert_units(data["input"][~mask], registry("1.0 GWa / (Gv km)"))
-    assert_units(data["input"][mask], registry("Gv km"))
+    assert_units(data["input"][mask0], registry("Gv km"))
+    if mask1.any():
+        assert_units(data["input"][mask1], registry("GWa"))
+    assert_units(data["input"][~(mask0 | mask1)], registry("1.0 GWa / (Gv km)"))
 
     # Output data exist for all non-LDV modes
     modes = list(filter(lambda m: m != "LDV", ctx.transport.demand_modes))
