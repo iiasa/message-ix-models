@@ -1,6 +1,6 @@
 """Data for transport modes and technologies outside of LDVs."""
 import logging
-from functools import partial
+from functools import lru_cache, partial
 from operator import itemgetter
 from typing import TYPE_CHECKING, Dict, List, Mapping
 
@@ -118,6 +118,9 @@ def prepare_computer(c: Computer):
     except MissingKeyError:
         log.warning(f"No key {k!r}; unable to add data for 'transport other *' techs")
 
+    # Add minimum activity for transport technologies
+    keys.extend(iter_keys(c.apply(bound_activity_lo)))
+
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
     c.add(k_all, "merge_data", *keys)
@@ -167,8 +170,84 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     return data
 
 
+#: Tuples of (node, technology (transport mode), commodity) for which minimum activity
+#: should be enforced.
+#:
+#: .. todo: Move to configuration.
+B_A_L = {
+    ("R12_AFR", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_CHN", ("RAIL",), "electr"),
+    ("R12_CHN", ("2W", "BUS", "LDV", "freight truck"), "ethanol"),
+    ("R12_CHN", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_EEU", ("RAIL",), "electr"),
+    ("R12_EEU", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_FSU", ("RAIL",), "electr"),
+    ("R12_FSU", ("2W", "BUS", "LDV", "freight truck"), "electr"),
+    ("R12_FSU", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_LAM", ("RAIL",), "electr"),
+    ("R12_LAM", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_MEA", ("RAIL",), "electr"),
+    ("R12_MEA", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_NAM", ("RAIL",), "electr"),
+    ("R12_PAO", ("RAIL",), "electr"),
+    ("R12_PAO", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_PAS", ("RAIL",), "electr"),
+    ("R12_PAS", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_RCPA", ("RAIL",), "electr"),
+    ("R12_RCPA", ("RAIL",), "lightoil"),
+    ("R12_RCPA", ("2W", "BUS", "LDV", "freight truck"), "electr"),
+    ("R12_SAS", ("RAIL",), "electr"),
+    ("R12_SAS", ("2W", "BUS", "LDV", "freight truck"), "electr"),
+    ("R12_SAS", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+    ("R12_WEU", ("RAIL",), "electr"),
+    ("R12_WEU", ("2W", "BUS", "LDV", "freight truck"), "gas"),
+}
+
+
+def bound_activity_lo(c: Computer) -> List[Key]:
+    @lru_cache
+    def techs_for(mode: Code, commodity: str) -> List[Code]:
+        """Return techs that are (a) associated with `mode` and (b) use `commodity`."""
+        result = []
+        for t in mode.child:
+            if input_info := t.eval_annotation(id="input"):
+                if input_info["commodity"] == commodity:
+                    result.append(t.id)
+        return result
+
+    def _(nodes, technologies, y0) -> Quantity:
+        """Quantity with dimensions (c, n, t, y), value 0.01."""
+        # Construct a set of all (node, technology, commodity) to constrain
+        rows: List[List[str]] = []
+        cols = ["n", "t", "c"]
+        for n, modes, c in filter(lambda item: item[0] in nodes, B_A_L):
+            for m in modes:
+                m_idx = technologies.index(m)
+                rows.extend([n, t, c] for t in techs_for(technologies[m_idx], c))
+
+        # Assign y and value; convert to Quantity
+        return Quantity(
+            pd.DataFrame(rows, columns=cols)
+            .assign(y=y0, value=0.01)
+            .set_index(cols + ["y"])["value"],
+            units="GWa",
+        )
+
+    k = KeySeq("bound_activity_lo:n-t-y:transport minimum")
+    c.add(next(k), _, "n::ex world", "t::transport", "y0")
+
+    # Produce MESSAGE parameter bound_activity_lo:nl-t-ya-m-h
+    kw = dict(
+        dims=dict(node_loc="n", technology="t", year_act="y"),
+        common=dict(mode="all", time="year"),
+    )
+
+    c.add(k["ixmp"], "as_message_df", k[0], name=k.name, **kw)
+    return [k["ixmp"]]
+
+
 def other(c: Computer, base: Key) -> List[Key]:
-    """Generate MESSAGE parameter data for other transport technologies."""
+    """Generate MESSAGE parameter data for ``transport other *`` technologies."""
     from .key import gdp_index
 
     # Keys
