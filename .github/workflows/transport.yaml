@@ -180,8 +180,9 @@ jobs:
     - name: Upload results as a build artifact
       uses: actions/upload-artifact@v4
       with:
-        name: MESSAGEix-Transport
+        name: MESSAGEix-Transport ${{ matrix.SSP }}
         path: |
           ${{ github.workspace }}/report/
           !${{ github.workspace }}/report/cache/
         if-no-files-found: error
+      continue-on-error: true
