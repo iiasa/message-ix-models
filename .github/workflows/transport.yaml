@@ -40,7 +40,7 @@ jobs:
 
   report:
     runs-on: self-hosted
-    needs: [prepare-workspace]
+    needs: prepare-workspace
 
     env:
       # Starting point of the workflow.
@@ -167,7 +167,7 @@ jobs:
         print(config.path.read_text())
       shell: python
 
-    - name: Run MESSAGEix-Transport workflow
+    - name: Run MESSAGEix-Transport workflow "${{ env.from-step }}" → "${{ matrix.SSP }} reported"
       run: |
         mix-models \
           ${{ env.base }} \
@@ -186,3 +186,14 @@ jobs:
           !${{ github.workspace }}/report/cache/
         if-no-files-found: error
       continue-on-error: true
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: report
+
+    steps:
+    - name: Merge artifacts
+      uses: actions/upload-artifact/merge@v4
+      with:
+        name: MESSAGEix-Transport
+        delete-merged: true
