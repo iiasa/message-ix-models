@@ -87,6 +87,7 @@ _SHEET_INDEX = dict(
 #: 3. starting and final cells delimiting tables in :data:`FILE`.
 SOURCE = {
     "rail_pub": ("IKARUS", "regional train electric efficient", "C103:I109"),
+    "drail_pub": ("IKARUS", "commuter train diesel efficient", "C37:I43"),
     "dMspeed_rai": ("IKARUS", "intercity train diesel efficient", "C125:I131"),
     "Mspeed_rai": ("IKARUS", "intercity train electric efficient", "C147:I153"),
     "Hspeed_rai": ("IKARUS", "high speed train efficient", "C169:I175"),
