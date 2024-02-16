@@ -101,6 +101,7 @@ def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
     commodities = [
         "coal",
         "electr",
+        "ethanol",
         "fueloil",
         "gas",
         "hydrogen",
