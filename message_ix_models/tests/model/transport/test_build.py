@@ -103,7 +103,7 @@ def test_build_bare_res(
     # scenario.to_excel(dump_path)
 
     if solve:
-        scenario.solve(solve_options=dict(lpmethod=4))
+        scenario.solve(solve_options=dict(lpmethod=4, iis=1))
 
         # commented: Appears to be giving a false negative
         # # Use Reporting calculations to check the result
