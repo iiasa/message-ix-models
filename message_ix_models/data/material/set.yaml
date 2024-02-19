@@ -270,7 +270,7 @@ steel:
     - steel
     - pig_iron
     - pig_iron_dummy
-    - off_gas
+    - charcoal
     - sponge_iron
     - sinter_iron
     - pellet_iron
@@ -280,6 +280,7 @@ steel:
     - slag_iron
     - co_gas
     - bf_gas
+    - off_gas
 
   level:
     add:
@@ -329,6 +330,7 @@ steel:
     - other_EOL_steel
     - total_EOL_steel
     - bf_biomass_steel
+    - prod_charcoal_steel
 
   relation:
     add:
