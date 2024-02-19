@@ -1,7 +1,7 @@
 import logging
 from dataclasses import InitVar, dataclass, field, replace
 from enum import Enum
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import message_ix
 from genno import Quantity
@@ -160,6 +160,12 @@ class Config(ConfigHelper):
         dict(modest=20, average=15, frequent=10, _dim="consumer type", _unit="year")
     )
 
+    #: Tuples of (node, technology (transport mode), commodity) for which minimum
+    #: activity should be enforced. See :func:`.non_ldv.bound_activity_lo`.
+    minimum_activity: Dict[Tuple[str, Tuple[str, ...], str], float] = field(
+        default_factory=dict
+    )
+
     #: Base year shares of activity by mode. This should be the stem of a CSV file in
     #: the directory :file:`data/transport/{regions}/mode-share/`.
     mode_share: str = "default"
@@ -304,6 +310,12 @@ class Config(ConfigHelper):
             )
         except FileNotFoundError as e:
             log.warning(e)
+
+        # Data structure that cannot be stored in YAML
+        if isinstance(config.minimum_activity, list):
+            config.minimum_activity = {
+                tuple(row[:-1]): row[-1] for row in config.minimum_activity
+            }
 
         # Overrides specific to regional versions
         tmp = dict()
