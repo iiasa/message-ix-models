@@ -2,54 +2,15 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Hashable, Iterable, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import pandas as pd
-from genno import Key
 from iam_units import registry  # noqa: F401
 from message_ix_models import Context, Spec
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import private_data_path
 
 log = logging.getLogger(__name__)
-
-
-class KeySequence:
-    """Utility class for generating sets of related :class:`Keys <.Key>`.
-
-    .. todo:: Move upstream, to :mod:`genno`.
-    """
-
-    base: Key
-    _generated: Dict[Hashable, Key]
-
-    def __init__(self, *args, **kwargs):
-        self.base = Key(*args, **kwargs)
-        self._generated = {}
-
-    def __next__(self) -> Key:
-        int_keys: Iterable[int] = [
-            (t if isinstance(t, int) else -1) for t in self._generated
-        ]
-        tag = max(int_keys) + 1
-        result = self._generated[tag] = self.base + str(tag)
-        return result
-
-    def __call__(self, tag: Optional[Hashable] = None) -> Key:
-        if tag:
-            result = self._generated[tag] = self.base + str(tag)
-            return result
-        else:
-            return next(self)
-
-    def __getitem__(self, index: Hashable) -> Key:
-        tag = str(index)
-        result = self._generated[tag] = self.base + tag
-        return result
-
-    @property
-    def name(self) -> str:
-        return self.base.name
 
 
 def input_commodity_level(

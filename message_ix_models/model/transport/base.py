@@ -46,17 +46,15 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
        (c, t) totals in correspondence with IEA World Energy Balance (WEB) values.
     5. :file:`scale-2.csv`: Second stage scaling factor used to bring overall totals.
     """
-    from genno import Key, Quantity, quote
-
-    from .util import KeySequence
+    from genno import Key, KeySeq, Quantity, quote
 
     # Final key
     targets = []
 
     e_iea = Key("energy:n-y-product-flow:iea")
-    e_fnp = KeySequence(e_iea.drop("y"))
+    e_fnp = KeySeq(e_iea.drop("y"))
     e_cnlt = Key("energy:c-nl-t:iea+0")
-    k = KeySequence("in:nl-t-ya-c-l-h:transport+units")
+    k = KeySeq("in:nl-t-ya-c-l-h:transport+units")
 
     # Transform IEA EWEB data for comparison
     rep.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
@@ -75,7 +73,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Scaling factor 1: ratio of MESSAGEix-Transport outputs to IEA data
     tmp = rep.add("scale 1", "div", k[1], e_cnlt)
-    s1 = KeySequence(tmp)
+    s1 = KeySeq(tmp)
     rep.add(s1[1], "convert_units", s1.base, units="1 / a")
     rep.add(s1[2], "mul", s1[1], Quantity(1.0, units="a"))
 
@@ -112,7 +110,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         drop=True,
     )
     tmp = rep.add("scale 2", "div", k[2] / ("c", "t", "ya"), "energy:nl:iea+transport")
-    s2 = KeySequence(tmp)
+    s2 = KeySeq(tmp)
 
     rep.add(s2[1], "convert_units", s2.base, units="1 / a")
     rep.add(s2[2], "mul", s2[1], Quantity(1.0, units="a"))
