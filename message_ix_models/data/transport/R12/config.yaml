@@ -29,6 +29,37 @@ node to census_division:
   R12_SAS: 2
   R12_WEU: 2
 
+minimum activity:
+  # Source: manually calculated from scale-1.csv for
+  # ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-T-R12 ci nightly/SSP_2024.2 baseline#73
+  # In that scenario, all the minimum-activity values were set to 0.01. The
+  # resulting scale factors indicate the mismatch vs. expected energy input per
+  # IEA EWEB. These values are computed to make those scale factors come out near
+  # 1.0.
+  - [R12_AFR, ROAD, gas, 0.000661]
+  - [R12_CHN, RAIL, electr, 2.33]
+  - [R12_CHN, ROAD, ethanol, 5.36]
+  - [R12_CHN, ROAD, gas, 23.1]
+  - [R12_EEU, RAIL, electr, 0.219]
+  - [R12_EEU, ROAD, gas, 0.260]
+  - [R12_FSU, RAIL, electr, 1.42]
+  - [R12_FSU, ROAD, electr, 0.121]
+  - [R12_FSU, ROAD, gas, 3.68]
+  - [R12_LAM, RAIL, electr, 0.102]
+  - [R12_LAM, ROAD, gas, 3.94]
+  - [R12_MEA, RAIL, electr, 0.0566]
+  - [R12_MEA, ROAD, gas, 6.40]
+  - [R12_NAM, RAIL, electr, 0.111]
+  - [R12_PAO, RAIL, electr, 0.493]
+  - [R12_PAO, ROAD, gas, 0.0861]
+  - [R12_PAS, RAIL, electr, 0.184]
+  - [R12_PAS, ROAD, gas, 2.21]
+  - [R12_RCPA, RAIL, lightoil, 0.00849]
+  - [R12_SAS, RAIL, electr, 0.442]
+  - [R12_SAS, ROAD, gas, 3.643]
+  - [R12_WEU, RAIL, electr, 1.03]
+  - [R12_WEU, ROAD, gas, 1.58]
+
 share weight convergence:
   R12_AFR: [R12_PAO, R12_WEU]
   R12_CHN: [R12_PAO, R12_WEU]
