@@ -36,6 +36,7 @@ minimum activity:
   # resulting scale factors indicate the mismatch vs. expected energy input per
   # IEA EWEB. These values are computed to make those scale factors come out near
   # 1.0.
+  - [R12_AFR, ROAD, ethanol, 0.01]  # DEBUG
   - [R12_AFR, ROAD, gas, 0.000661]
   - [R12_CHN, RAIL, electr, 2.33]
   - [R12_CHN, ROAD, ethanol, 5.36]
@@ -43,11 +44,14 @@ minimum activity:
   - [R12_EEU, RAIL, electr, 0.219]
   - [R12_EEU, ROAD, gas, 0.260]
   - [R12_FSU, RAIL, electr, 1.42]
+  - [R12_FSU, RAIL, lightoil, 0.01]  # DEBUG
   - [R12_FSU, ROAD, electr, 0.121]
   - [R12_FSU, ROAD, gas, 3.68]
   - [R12_LAM, RAIL, electr, 0.102]
+  - [R12_LAM, RAIL, lightoil, 0.01]  # DEBUG
   - [R12_LAM, ROAD, gas, 3.94]
   - [R12_MEA, RAIL, electr, 0.0566]
+  - [R12_MEA, RAIL, lightoil, 0.01]  # DEBUG
   - [R12_MEA, ROAD, gas, 6.40]
   - [R12_NAM, RAIL, electr, 0.111]
   - [R12_PAO, RAIL, electr, 0.493]
@@ -55,6 +59,7 @@ minimum activity:
   - [R12_PAS, RAIL, electr, 0.184]
   - [R12_PAS, ROAD, gas, 2.21]
   - [R12_RCPA, RAIL, lightoil, 0.00849]
+  - [R12_RCPA, ROAD, gas, 0.01]  # DEBUG
   - [R12_SAS, RAIL, electr, 0.442]
   - [R12_SAS, ROAD, gas, 3.643]
   - [R12_WEU, RAIL, electr, 1.03]
