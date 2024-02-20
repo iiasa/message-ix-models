@@ -245,23 +245,29 @@ def read_pop_from_scen(scen):
 
 
 def read_gdp_ppp_from_scen(scen):
-    gdp_mer = scen.par("bound_activity_up", {"technology": "GDP"})
-    mer_to_ppp = scen.par("MERtoPPP")
-    if not len(mer_to_ppp):
-        mer_to_ppp = pd.read_csv(
-            message_ix_models.util.private_data_path(
-                "material", "other", "mer_to_ppp_default.csv"
+    if len(scen.par("bound_activity_up", filters={{"technology": "GDP_PPP"}})):
+        gdp = scen.par("bound_activity_up", {"technology": "GDP_PPP"})
+        gdp = gdp.rename({"value": "gdp_ppp", "year_act": "year"}, axis=1)[
+            ["year", "node_loc", "gdp_ppp"]
+        ]
+    else:
+        gdp_mer = scen.par("bound_activity_up", {"technology": "GDP"})
+        mer_to_ppp = scen.par("MERtoPPP")
+        if not len(mer_to_ppp):
+            mer_to_ppp = pd.read_csv(
+                message_ix_models.util.private_data_path(
+                    "material", "other", "mer_to_ppp_default.csv"
+                )
             )
+        mer_to_ppp = mer_to_ppp.set_index(["node", "year"])
+        gdp_mer = gdp_mer.merge(
+            mer_to_ppp.reset_index()[["node", "year", "value"]],
+            left_on=["node_loc", "year_act"],
+            right_on=["node", "year"],
         )
-    mer_to_ppp = mer_to_ppp.set_index(["node", "year"])
-    gdp_mer = gdp_mer.merge(
-        mer_to_ppp.reset_index()[["node", "year", "value"]],
-        left_on=["node_loc", "year_act"],
-        right_on=["node", "year"],
-    )
-    gdp_mer["gdp_ppp"] = gdp_mer["value_y"] * gdp_mer["value_x"]
-    gdp_mer = gdp_mer[["year", "node_loc", "gdp_ppp"]]
-    gdp = gdp_mer.loc[gdp_mer.year >= 2020].rename(columns={"node_loc": "region"})
+        gdp_mer["gdp_ppp"] = gdp_mer["value_y"] * gdp_mer["value_x"]
+        gdp = gdp_mer[["year", "node_loc", "gdp_ppp"]].rename(columns={"node_loc": "region"})
+    gdp = gdp.loc[gdp.year >= 2020]
     return gdp
 
 
