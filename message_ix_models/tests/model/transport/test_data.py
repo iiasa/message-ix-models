@@ -157,8 +157,11 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     # Code runs
     data = c.get("transport nonldv::ixmp")
 
+    print(data["bound_activity_lo"].to_string())
+
     # Data are provided for the these parameters
     exp_pars = {
+        "bound_activity_lo",  # From .non_ldv.other(). For R11 this is empty.
         "capacity_factor",
         "emission_factor",
         "fix_cost",
@@ -169,8 +172,6 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
         "technical_lifetime",
         "var_cost",
     }
-    if regions == "R12":
-        exp_pars |= {"bound_activity_lo"}  # From .non_ldv.other()
     assert exp_pars == set(data.keys())
 
     # Input data have expected units
