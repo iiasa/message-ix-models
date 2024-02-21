@@ -227,8 +227,11 @@ def clip(
     """
     from genno.operator import _preserve
 
-    result = Quantity(qty.to_series().clip(lower=lower, upper=upper))
-    return _preserve("attrs name units", result, qty)
+    return _preserve(
+        "attrs name units",
+        Quantity(qty.to_series().clip(lower=lower, upper=upper)),
+        qty,
+    )
 
 
 def cost(
@@ -954,3 +957,15 @@ def votm(gdp_ppp_cap: Quantity) -> Quantity:
     result = 1 / (1 + np.exp((30 - gdp_ppp_cap) / 20))
     result.units = ""
     return result
+
+
+def where(qty: Quantity, cond, other) -> Quantity:
+    """Like :meth:`.pandas.Series.where`.
+
+    .. todo:: Move upstream, to :mod:`genno`.
+    """
+    from genno.operator import _preserve
+
+    return _preserve(
+        "attrs name units", Quantity(qty.to_series().where(cond=cond, other=other)), qty
+    )
