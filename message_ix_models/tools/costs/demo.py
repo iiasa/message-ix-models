@@ -1,112 +1,74 @@
-from message_ix_models.tools.costs.config import Config
+from message_ix_models.tools.costs.config import BASE_YEAR
 from message_ix_models.tools.costs.projections import create_cost_projections
 
-# Example 1: By default, the Config fill will run for:
-# R12
+# Example 1: Get cost projections for all scenarios in R12,
 # for the base suite of technologies,
 # with NAM as reference region,
 # using GDP as the cost driver,
 # and the updated data version
 # and outputs in MESSAGE format.
-# The function will also run for all SSP scenarios,
+# The function will also run for all SSP scenarios (using scenario="all")
 # for all years from 2021 to 2100.
-default = Config()
-out_default = create_cost_projections(
-    node=default.node,
-    ref_region=default.ref_region,
-    base_year=default.base_year,
-    module=default.module,
-    method=default.method,
-    scenario_version=default.scenario_version,
-    scenario=default.scenario,
-    convergence_year=default.convergence_year,
-    fom_rate=default.fom_rate,
-    format=default.format,
+
+res_r12_energy = create_cost_projections(
+    node="R12",
+    ref_region="R12_NAM",
+    base_year=BASE_YEAR,
+    module="energy",
+    method="gdp",
+    convergence_year=2050,
+    scenario_version="updated",
+    scenario="all",
+    fom_rate=0.025,
+    format="message",
 )
 
-# Example 2: Get cost projections for all scenarios in R12,
-# using NAM as the reference region,
-# with GDP as the method,
-# for the materials module,
+# The results are stored in the inv_cost and fix_cost attributes of the output object.
+inv = res_r12_energy.inv_cost
+fix = res_r12_energy.fix_cost
+
+# Example 2: Get cost projections for all scenarios in R11,
+# using WEU as the reference region,
+# with convergence as the method,
+# for the energy module,
 # using the updated data version
-# and outputs in MESSAGE format.
-cfg = Config(module="materials", ref_region="R12_NAM", method="gdp", format="message")
+# and outputs in IAMC format.
 
-out_materials_gdp = create_cost_projections(
-    node=cfg.node,
-    ref_region=cfg.ref_region,
-    base_year=cfg.base_year,
-    module=cfg.module,
-    method=cfg.method,
-    scenario_version=cfg.scenario_version,
-    scenario=cfg.scenario,
-    convergence_year=cfg.convergence_year,
-    fom_rate=cfg.fom_rate,
-    format=cfg.format,
+r11_energy_convergence = create_cost_projections(
+    node="R11",
+    ref_region="R11_WEU",
+    base_year=BASE_YEAR,
+    module="energy",
+    method="convergence",
+    scenario_version="updated",
+    scenario="all",
+    convergence_year=2050,
+    fom_rate=0.025,
+    format="iamc",
 )
 
-inv = out_materials_gdp.inv_cost
-fix = out_materials_gdp.fix_cost
+r11_energy_convergence.inv_cost
+r11_energy_convergence.fix_cost
 
 # Example 3: Get cost projections for SSP2 scenario in R12,
-# using WEU as the reference region,
+# using NAM as the reference region,
 # with convergence as the method,
 # for materials technologies,
 # using GDP (updated data)
-# You can either put the inputs directly into the create_cost_projections function,
-# or you can create a Config object and pass that in.
-default = Config()
+# and outputs in MESSAGE format.
 
-# Option 1: Directly input the parameters
-out_materials_ssp2 = create_cost_projections(
-    node=default.node,
-    ref_region="R12_WEU",
-    base_year=default.base_year,
+r12_materials_ssp2 = create_cost_projections(
+    node="R12",
+    ref_region="R12_NAM",
+    base_year=BASE_YEAR,
     module="materials",
-    method="convergence",
-    scenario_version=default.scenario_version,
-    scenario="SSP2",
-    convergence_year=default.convergence_year,
-    fom_rate=default.fom_rate,
-    format=default.format,
+    method="gdp",
+    scenario_version="updated",
+    scenario="ssp2",
+    convergence_year=2050,
+    fom_rate=0.025,
+    format="message",
 )
 
-# Option 2: Create a Config object and pass that in
-config = Config(
-    module="materials", scenario="SSP2", ref_region="R12_WEU", method="convergence"
-)
-
-out_materials_ssp2 = create_cost_projections(
-    node=config.node,
-    ref_region=config.ref_region,
-    base_year=config.base_year,
-    module=config.module,
-    method=config.method,
-    scenario_version=config.scenario_version,
-    scenario=config.scenario,
-    convergence_year=config.convergence_year,
-    fom_rate=config.fom_rate,
-    format=config.format,
-)
-
-# Example 4: Get cost projections for SSP5 scenario in R12,
-# using LAM as the reference region,
-# with learning as the method,
-# for materials technologies,
-
-config = Config(
-    module="materials", scenario="SSP5", ref_region="R12_LAM", method="learning"
-)
-
-out_materials_ssp5 = create_cost_projections(
-    node=config.node,
-    ref_region=config.ref_region,
-    base_year=config.base_year,
-    module=config.module,
-    method=config.method,
-    scenario_version=config.scenario_version,
-    scenario=config.scenario,
-    convergence_year=config.convergence_year,
-    fom_rate=config.fom_rate,
-    format=config.format,
-)
+r12_materials_ssp2.inv_cost
+r12_materials_ssp2.fix_cost
