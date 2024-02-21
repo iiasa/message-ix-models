@@ -426,4 +426,7 @@ OTHER:
   - transport other gas
   - transport other lightoil
   units: GWa
-  iea-eweb-flow: [DOMESNAV, TRNONSPE]
+  iea-eweb-flow:
+  - DOMESNAV
+  # - PIPELINE
+  - TRNONSPE
