@@ -67,7 +67,7 @@ def assign_income_groups(
     elif method == "population":
         # Retrieve WB_WDI data for SERIES=SP_POP_TOTAL (Population, total)
         dm = sdmx.Client("WB_WDI").data(
-            "WDI", key="A.SP_POP_TOTL.", params=dict(startperiod=2020, endperiod=2020)
+            "WDI", key="A.SP_POP_TOTL.", params=dict(start_period=2020, end_period=2020)
         )
 
         # Convert to pd.Series with multi-index with levels: REF_AREA, SERIES, FREQ,
