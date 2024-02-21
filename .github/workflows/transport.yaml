@@ -138,6 +138,11 @@ jobs:
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
         pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
+    - name: Upgrade matplotlib
+      # NB pyam pins matplotlib < 3.7.1, which conflicts with plotnine per
+      #    https://github.com/has2k1/plotnine/pull/751. Override
+      run: pip install --upgrade matplotlib
+
     # #####
 
     - name: Configure
