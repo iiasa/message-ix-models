@@ -525,15 +525,16 @@ def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
     # Add groups from MESSAGEix-Transport technology code list
     for t in technologies:
         if flows := t.eval_annotation(id="iea-eweb-flow"):
-            g0["flow"][flows[0]] = flows
+            target = flows[0] if len(flows) == 1 else t.id
 
-            g1["t"].setdefault(flows[0], [])
+            g0["flow"][target] = flows
+
             # Append the mode name, for instance "AIR"
-            g1["t"][flows[0]].append(t.id)
+            g1["t"].setdefault(target, []).append(t.id)
             # # Append the name of individual technologies for this mode
-            # g1["t"][flows[0]].extend(map(lambda c: c.id, t.child))
+            # g1["t"][target].extend(map(lambda c: c.id, t.child))
 
-            g2["t"].append(flows[0])
+            g2["t"].append(target)
             g2["t_new"].append(t.id)
 
     g2["t"] = xr.DataArray(g2.pop("t"), coords=[("t_new", g2.pop("t_new"))])
