@@ -86,7 +86,7 @@ jobs:
         # NB This leads to errors on the IIASA self-hosted runner.
         #    The next step has the same effect.
         # lfs: true
-        submodules: true
+        submodules: false
 
     - name: Check out Git LFS files
       working-directory: message_data
