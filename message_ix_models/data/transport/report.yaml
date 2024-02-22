@@ -32,6 +32,7 @@ general:
   inputs: [ CAP:nl-t-ya:non-ldv ]
   # FIXME should not need the extra [vehicle] in the numerator
   args: {units: "v**2 Tm / a"}
+  sums: true
 
 - key: CAP:*:ldv+units
   comp: apply_units
