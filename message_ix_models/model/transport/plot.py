@@ -4,14 +4,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
+import genno.compat.plotnine
 import pandas as pd
 import plotnine as p9
-from genno import Computer
-from genno.compat.plotnine import Plot as BasePlot
+from genno import Computer, quote
 from iam_units import registry
 
 if TYPE_CHECKING:
     import plotnine.typing
+    from genno.core.key import KeyLike
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class LabelFirst:
         return self.fmt_string.format(value) if first else value
 
 
-class Plot(BasePlot):
+class Plot(genno.compat.plotnine.Plot):
     """Base class for plots.
 
     This class extends :class:`genno.compat.plotnine.Plot` with extra features.
@@ -74,6 +75,31 @@ class Plot(BasePlot):
                 group_key,
                 (p9.ggplot(group_df) + self.static + self.ggtitle(repr(group_key))),
             )
+
+    def save(self, config, *args, **kwargs) -> Optional[Path]:
+        # Strip off the last of `args`, a pre-computed path, and store
+        *_args, self.path, self.scenario = args
+        # Call the parent method with the remaining arguments
+        return super().save(config, *_args, **kwargs)
+
+    @classmethod
+    def add_tasks(
+        cls, c: Computer, key: "KeyLike", *inputs, strict: bool = False
+    ) -> "KeyLike":
+        """Use a custom output path."""
+        # Some strings
+        k_path = f"{cls.basename} path"
+        filename = f"{cls.basename}{cls.suffix}"
+        # Output path for this parameter
+        c.add(k_path, "make_output_path", "config", "scenario", quote(filename))
+
+        # Same as the parent method
+        _inputs = list(inputs if inputs else cls.inputs)
+
+        # Append the key for `path` to the inputs
+        return super(Plot, cls).add_tasks(
+            c, key, *_inputs, k_path, "scenario", strict=strict
+        )
 
 
 class ComparePDT(Plot):
