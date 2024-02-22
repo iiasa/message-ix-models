@@ -435,20 +435,50 @@ class DemandExoCap(Plot):
             yield ggplot + p9.expand_limits(y=[0, y_max])
 
 
-class EnergyCmdty(Plot):
+class EnergyCmdty0(Plot):
     """Energy input to transport [GWa]."""
 
-    basename = "energy-by-cmdty"
-    inputs = ["in:nl-ya-c:transport all"]
+    basename = "energy-c"
+    inputs = ["y0", "in:nl-ya-c:transport all"]
     static = Plot.static + [
         p9.aes(x="ya", y="value", fill="c"),
         p9.geom_bar(stat="identity", width=5, color="black"),
         p9.labs(x="Period", y="Energy", fill="Commodity"),
     ]
 
-    def generate(self, data):
+    def generate(self, y0: int, data):
         # Discard data for certain commodities
-        data = data[~(data.c.str.startswith("transport") | (data.c == "disutility"))]
+        data = data[
+            ~(
+                data.c.str.startswith("transport")
+                | (data.c == "disutility")
+                | (data.ya < y0)
+            )
+        ]
+
+        for _, ggplot in self.groupby_plot(data, "nl"):
+            yield ggplot
+
+
+class EnergyCmdty1(EnergyCmdty0):
+    """Share of energy input to transport [0]."""
+
+    basename = "energy-c-share"
+
+    def generate(self, y0: int, data):
+        # Discard data for certain commodities
+        data = data[
+            ~(
+                data.c.str.startswith("transport")
+                | (data.c == "disutility")
+                | (data.ya < y0)
+            )
+        ]
+        # Normalize data
+        # TODO Do this in genno
+        data["value"] = data["value"] / data.groupby(["nl", "ya"])["value"].transform(
+            "sum"
+        )
 
         for _, ggplot in self.groupby_plot(data, "nl"):
             yield ggplot
