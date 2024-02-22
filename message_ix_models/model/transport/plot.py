@@ -54,15 +54,21 @@ class Plot(genno.compat.plotnine.Plot):
     #: :obj:`False` for plots not intended to be run on a solved scenario.
     runs_on_solved_scenario: bool = True
 
-    def ggtitle(self, value=None):
+    def ggtitle(self, extra: Optional[str] = None):
         """Return :class:`plotnine.ggtitle` including the current date & time."""
-        title_pieces = [
-            (self.title or self.__doc__).splitlines()[0].rstrip("."),
+        title_parts = [
+            (self.title or self.__doc__ or "").splitlines()[0].rstrip("."),
             f"[{self.unit}]" if self.unit else None,
-            value,
-            f"({datetime.now().isoformat(timespec='minutes')})",
+            f"— {extra}" if extra else None,
         ]
-        return p9.ggtitle(" ".join(filter(None, title_pieces)))
+        subtitle_parts = [
+            self.scenario.url,
+            "—",
+            datetime.now().isoformat(timespec="minutes"),
+        ]
+        return p9.labs(
+            title=" ".join(filter(None, title_parts)), subtitle=" ".join(subtitle_parts)
+        )
 
     def groupby_plot(self, data: pd.DataFrame, *args):
         """Combination of groupby and ggplot().
@@ -73,7 +79,11 @@ class Plot(genno.compat.plotnine.Plot):
         for group_key, group_df in data.groupby(*args):
             yield (
                 group_key,
-                (p9.ggplot(group_df) + self.static + self.ggtitle(repr(group_key))),
+                (
+                    p9.ggplot(group_df)
+                    + self.static
+                    + self.ggtitle(f"{'-'.join(args)}={group_key!r}")
+                ),
             )
 
     def save(self, config, *args, **kwargs) -> Optional[Path]:
@@ -454,7 +464,7 @@ class Stock0(Plot):
         p9.aes(x="ya", y="CAP", color="t"),
         p9.geom_line(),
         p9.geom_point(),
-        p9.labs(x="Period", color="Powertrain technology"),
+        p9.labs(x="Period", y="", color="Powertrain technology"),
     ]
 
     def generate(self, data):
@@ -474,9 +484,10 @@ class Stock1(Plot):
     basename = "stock-non-ldv"
     inputs = ["CAP:nl-t-ya:non-ldv+units"]
     static = Plot.static + [
-        p9.aes(x="yv", y="CAP", color="t"),
+        p9.aes(x="ya", y="CAP", color="t"),
         p9.geom_line(),
         p9.geom_point(),
+        p9.labs(x="Period", y="", color="Powertrain technology"),
     ]
 
     def generate(self, data):
