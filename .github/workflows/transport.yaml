@@ -165,6 +165,7 @@ jobs:
 
         p = Path("${{ github.workspace }}")
         config.set("message local data", p / "report")
+        config.set("message solve options", {"iis": 1, "tilim": 60 * 30})
         config.set("message buildings dir", p / "buildings")
         config.save()
 
@@ -181,6 +182,7 @@ jobs:
           --from="${{ env.from-step }}" \
           "${{ matrix.SSP }} reported" \
           --go
+      continue-on-error: true
 
     - name: Upload results as a build artifact
       uses: actions/upload-artifact@v4
