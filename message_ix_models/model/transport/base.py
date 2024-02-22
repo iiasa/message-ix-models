@@ -90,8 +90,8 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     _to_csv(s1[2], s1.name, dict(header_comment=SCALE_1_HEADER))
 
-    # Replace 0 values to 1.0; this avoids x / 0 = inf
-    rep.add(s1[3], "where", s1[2], cond=lambda v: v > 1e-3 or v == np.inf, other=1.0)
+    # Replace ~0 and ∞ values with 1.0; this avoids x / 0 = inf
+    rep.add(s1[3], "where", s1[2], cond=lambda v: (v > 1e-3) & (v != np.inf), other=1.0)
     # Restore original "t" labels to scale-1
     rep.add(s1[4], "select", s1[3], "indexers::iea to transport")
     rep.add(s1[5], "rename_dims", s1[4], quote(dict(t_new="t")))
