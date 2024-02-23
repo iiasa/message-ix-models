@@ -81,9 +81,8 @@ def create_projections_learning(config: "Config"):
     """
     print(f"Selected scenario: {config.scenario}")
     print(
-        "For the learning method, only the SSP scenario(s) itself \
-            needs to be specified. \
-        No scenario version (previous vs. updated) is needed."
+        "For the learning method, only the SSP scenario(s) itself needs to be "
+        "specified. No scenario version (previous vs. updated) is needed."
     )
 
     print("...Calculating regional differentiation in base year+region...")
@@ -241,9 +240,8 @@ def create_projections_converge(config: "Config"):
     print(f"Selected scenario: {config.scenario}")
     print(f"Selected convergence year: {config.convergence_year}")
     print(
-        "For the convergence method, only the SSP scenario(s) itself \
-        needs to be specified. \
-        No scenario version (previous vs. updated) is needed."
+        "For the convergence method, only the SSP scenario(s) itself needs to be "
+        "specified. No scenario version (previous vs. updated) is needed."
     )
 
     print("...Calculating regional differentiation in base year+region...")
