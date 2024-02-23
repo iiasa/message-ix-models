@@ -11,11 +11,6 @@ HORIZON_START = 1960
 HORIZON_END = 2110
 
 
-# Conversion rate from 2021 USD to 2005 USD
-# Taken from https://www.officialdata.org/us/inflation/2021?endYear=2005&amount=1
-CONVERSION_2021_TO_2005_USD = 0.72
-
-
 @dataclass
 class Config:
     """Configuration for :mod:`.costs`.

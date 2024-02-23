@@ -1,3 +1,5 @@
+import numpy as np
+
 from message_ix_models.tools.costs import Config
 from message_ix_models.tools.costs.regional_differentiation import (
     adjust_technology_mapping,
@@ -33,14 +35,14 @@ def test_get_weo_data() -> None:
     )
 
     # Check one sample value
-    assert (
+    assert np.isclose(
+        1324.68,
         result.query(
             "weo_technology == 'steam_coal_subcritical'"
             "and weo_region == 'United States'"
             "and year == '2021'"
             "and cost_type == 'inv_cost'"
-        ).value.values[0]
-        == 1296.0
+        )["value"].item(),
     )
 
 
