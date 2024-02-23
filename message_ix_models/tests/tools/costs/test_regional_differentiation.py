@@ -35,9 +35,10 @@ def test_get_weo_data():
     # Check one sample value
     assert (
         result.query(
-            "weo_technology == 'steam_coal_subcritical' and \
-                weo_region == 'United States' and \
-                    year == '2021' and cost_type == 'inv_cost'"
+            "weo_technology == 'steam_coal_subcritical'"
+            "and weo_region == 'United States'"
+            "and year == '2021'"
+            "and cost_type == 'inv_cost'"
         ).value.values[0]
         == 1296.0
     )

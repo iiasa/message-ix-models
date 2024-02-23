@@ -49,8 +49,7 @@ def apply_splines_to_convergence(
     data_reg = []
     for i, j, k in product(un_ssp, un_tech, un_reg):
         tech = df_reg.query(
-            "scenario == @i and message_technology == @j \
-                and region == @k"
+            "scenario == @i and message_technology == @j and region == @k"
         ).query("year == @FIRST_MODEL_YEAR or year >= @convergence_year")
 
         if tech.size == 0:

@@ -407,8 +407,8 @@ def adjust_technology_mapping(module) -> pd.DataFrame:
         # Get technologies that are mapped to Intratec AND have a base year cost
         # Assign map_techonology as "all"
         materials_map_intratec = sub_map_materials.query(
-            "reg_diff_source == 'intratec' and \
-                base_year_reference_region_cost.notnull()"
+            "reg_diff_source == 'intratec' and "
+            "base_year_reference_region_cost.notnull()"
         ).assign(reg_diff_technology="all")
 
         # Get technologies that don't have a map source but do have a base year cost
@@ -516,9 +516,9 @@ def get_weo_regional_differentiation(node, ref_region) -> pd.DataFrame:
     ref_region = ref_region.upper()
     if ref_region not in df_sel_weo.region.unique():
         raise ValueError(
-            f"Reference region {ref_region} not found in WEO data. \
-                Please specify a different reference region. \
-                    Available regions are: {df_sel_weo.region.unique()}"
+            f"Reference region {ref_region} not found in WEO data. "
+            "Please specify a different reference region. "
+            f"Available regions are: {df_sel_weo.region.unique()}"
         )
 
     # Calculate regional investment cost ratio relative to reference region
@@ -616,9 +616,9 @@ def get_intratec_regional_differentiation(node, ref_region) -> pd.DataFrame:
     ref_region = ref_region.upper()
     if ref_region not in df_intratec_map.region.unique():
         raise ValueError(
-            f"Reference region {ref_region} not found in WEO data. \
-                Please specify a different reference region. \
-                    Available regions are: {df_intratec_map.region.unique()}"
+            f"Reference region {ref_region} not found in WEO data. "
+            "Please specify a different reference region. "
+            f"Available regions are: {df_intratec_map.region.unique()}"
         )
 
     # Calculate regional investment cost ratio relative to reference region
