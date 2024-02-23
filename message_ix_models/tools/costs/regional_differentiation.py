@@ -9,7 +9,7 @@ from iam_units import registry
 
 from message_ix_models.util import package_data_path
 
-from .config import BASE_YEAR, Config
+from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -421,15 +421,16 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
 # The function should take the WEO data, map it to MESSAGEix regions
 # using the node and ref_region,
 # and then calculate cost ratios for each region relative to the reference region
-def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame:
+def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
     """Apply WEO regional differentiation.
 
     Parameters
     ----------
-    node : str
-        See :attr`.Config.node`.
-    ref_region : str
-        See :attr`.Config.ref_region`.
+    config : .Config
+        The function responds to the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.node`, and
+        :attr:`~.Config.ref_region`.
 
     Returns
     -------
@@ -447,14 +448,14 @@ def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame
 
     # Get list of years in WEO data and select year closest to base year
     l_years = df_weo.year.unique()
-    sel_year = min(l_years, key=lambda x: abs(int(x) - BASE_YEAR))
+    sel_year = min(l_years, key=lambda x: abs(int(x) - config.base_year))
     log.info("…using year " + str(sel_year) + " data from WEO")
 
     # - Retrieve a map from MESSAGEix node IDs to WEO region names.
     # - Map WEO data to MESSAGEix regions.
     # - Keep only base year data.
     l_sel_weo = []
-    for message_node, weo_region in get_weo_region_map(node).items():
+    for message_node, weo_region in get_weo_region_map(config.node).items():
         df_sel = (
             df_weo.query("year == @sel_year & weo_region == @weo_region")
             .assign(region=message_node)
@@ -476,7 +477,8 @@ def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame
     df_sel_weo = pd.concat(l_sel_weo)
 
     # If specified reference region is not in WEO data, then give error
-    ref_region = ref_region.upper()
+    assert config.ref_region is not None
+    ref_region = config.ref_region.upper()
     if ref_region not in df_sel_weo.region.unique():
         raise ValueError(
             f"Reference region {ref_region} not found in WEO data. "
@@ -640,7 +642,7 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
     """
     df_map = adjust_technology_mapping(config.module)
     assert config.ref_region is not None
-    df_weo = get_weo_regional_differentiation(config.node, config.ref_region)
+    df_weo = get_weo_regional_differentiation(config)
     df_intratec = get_intratec_regional_differentiation(config.node, config.ref_region)
 
     # Filter for reg_diff_source == "energy" or "weo"

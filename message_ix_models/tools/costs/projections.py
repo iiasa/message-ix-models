@@ -5,7 +5,9 @@ from typing import Mapping, Tuple
 import numpy as np
 import pandas as pd
 
-from .config import BASE_YEAR, FIRST_MODEL_YEAR, HORIZON_END, HORIZON_START, Config
+from message_ix_models.model.structure import get_codes
+
+from .config import FIRST_MODEL_YEAR, Config
 from .gdp import adjust_cost_ratios_with_gdp
 from .learning import project_ref_region_inv_costs_using_learning_rates
 from .regional_differentiation import apply_regional_differentiation
@@ -292,7 +294,7 @@ def create_projections_converge(config: "Config"):
 
 
 def create_message_outputs(
-    df_projections: pd.DataFrame, fom_rate: float
+    df_projections: pd.DataFrame, config: "Config"
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Create MESSAGEix outputs for investment and fixed costs.
 
@@ -314,7 +316,12 @@ def create_message_outputs(
     """
     log.info("Convert {fix,inv}_cost data to MESSAGE structure")
 
-    seq_years = list(range(HORIZON_START, HORIZON_END + 5, 5))
+    y_base = config.base_year
+
+    # Identify years from one of the common MESSAGEix-GLOBIOM lists
+    # TODO Make this configurable, by reading Context.model.years
+    years = get_codes("year/B")
+    seq_years = sorted(map(lambda y: int(y.id), years))
 
     df_prod = pd.DataFrame(
         product(
@@ -368,14 +375,11 @@ def create_message_outputs(
             )
         )
         .assign(
-            inv_cost=lambda x: np.where(
-                x.year <= BASE_YEAR, x.inv_cost_2020, x.inv_cost
-            ),
-            fix_cost=lambda x: np.where(
-                x.year <= BASE_YEAR, x.fix_cost_2020, x.fix_cost
-            ),
+            inv_cost=lambda x: np.where(x.year <= y_base, x.inv_cost_2020, x.inv_cost),
+            fix_cost=lambda x: np.where(x.year <= y_base, x.fix_cost_2020, x.fix_cost),
         )
         .assign(
+            # FIXME Clarify the purpose of these hard-coded periods
             inv_cost=lambda x: np.where(x.year >= 2100, x.inv_cost_2100, x.inv_cost),
             fix_cost=lambda x: np.where(x.year >= 2100, x.fix_cost_2100, x.fix_cost),
         )
@@ -417,6 +421,7 @@ def create_message_outputs(
             year_vtg=lambda x: x.year_vtg.astype(int),
             value=lambda x: x.value.astype(float),
         )
+        # FIXME Clarify the purpose of these hard-coded periods
         .query("year_vtg <= 2060 or year_vtg % 10 == 0")
         .reset_index(drop=True)
         .drop_duplicates()
@@ -431,13 +436,13 @@ def create_message_outputs(
         .query("year_act >= year_vtg")
         .assign(
             val=lambda x: np.where(
-                x.year_vtg <= BASE_YEAR,
+                x.year_vtg <= y_base,
                 np.where(
-                    x.year_act <= BASE_YEAR,
+                    x.year_act <= y_base,
                     x.fix_cost,
-                    x.fix_cost * (1 + (fom_rate)) ** (x.year_act - BASE_YEAR),
+                    x.fix_cost * (1 + (config.fom_rate)) ** (x.year_act - y_base),
                 ),
-                x.fix_cost * (1 + (fom_rate)) ** (x.year_act - x.year_vtg),
+                x.fix_cost * (1 + (config.fom_rate)) ** (x.year_act - x.year_vtg),
             )
         )
         .assign(unit="USD/kWa")
@@ -471,6 +476,7 @@ def create_message_outputs(
             year_act=lambda x: x.year_act.astype(int),
             value=lambda x: x.value.astype(float),
         )
+        # FIXME Clarify the purpose of these hard-coded periods
         .query("year_vtg <= 2060 or year_vtg % 10 == 0")
         .query("year_act <= 2060 or year_act % 10 == 0")
         .reset_index(drop=True)
@@ -616,7 +622,7 @@ def create_cost_projections(config: "Config") -> Mapping[str, pd.DataFrame]:
     df_costs = func(config)
 
     # Convert to MESSAGEix format
-    df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
+    df_inv, df_fom = create_message_outputs(df_costs, config)
 
     if config.format == "iamc":
         df_inv, df_fom = create_iamc_outputs(df_inv, df_fom)

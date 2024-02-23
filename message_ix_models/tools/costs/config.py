@@ -1,14 +1,11 @@
 from dataclasses import dataclass
 from typing import Literal, Optional
 
-BASE_YEAR = 2021
 ADJ_BASE_YEAR = 2020
-FIRST_MODEL_YEAR = 2020
-LAST_MODEL_YEAR = 2100
+FIRST_MODEL_YEAR = 2020  # FIXME Read from year/A or year/B
+LAST_MODEL_YEAR = 2100  # FIXME Clarify why this is not the same as 2110
 PRE_LAST_YEAR_RATE = 0.01
-TIME_STEPS = 5
-HORIZON_START = 1960
-HORIZON_END = 2110
+TIME_STEPS = 5  # FIXME Read from year/A or year/B
 
 
 @dataclass
@@ -21,10 +18,8 @@ class Config:
       instance, :py:`ref_region="R12_NAM"` for :py:`node="R12"`.
     """
 
-    test_val: int = 2
-
     #: Base year for projections.
-    base_year: int = BASE_YEAR
+    base_year: int = 2021
 
     #: Year of convergence; used when :attr:`.method` is "convergence". See
     #: :func:`.create_projections_converge`.
