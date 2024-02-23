@@ -1,17 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from message_ix_models.tools.costs.config import (
-    FIRST_MODEL_YEAR,
-    LAST_MODEL_YEAR,
-    PRE_LAST_YEAR_RATE,
-    TIME_STEPS,
-)
-from message_ix_models.tools.costs.regional_differentiation import (
-    get_raw_technology_mapping,
-    subset_materials_map,
-)
 from message_ix_models.util import package_data_path
+
+from .config import FIRST_MODEL_YEAR, LAST_MODEL_YEAR, PRE_LAST_YEAR_RATE, TIME_STEPS
+from .regional_differentiation import get_raw_technology_mapping, subset_materials_map
 
 
 # Function to get GEA based cost reduction data

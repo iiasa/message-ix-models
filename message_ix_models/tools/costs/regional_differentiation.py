@@ -3,8 +3,9 @@ from itertools import product
 import numpy as np
 import pandas as pd
 
-from message_ix_models.tools.costs.config import BASE_YEAR, CONVERSION_2021_TO_2005_USD
 from message_ix_models.util import package_data_path
+
+from .config import BASE_YEAR, CONVERSION_2021_TO_2005_USD
 
 # Dict of each R11 region matched with a WEO region
 DICT_WEO_R11 = {
