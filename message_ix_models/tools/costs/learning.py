@@ -121,7 +121,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 
 
 # Function to get technology learning scenarios data
-def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
+def get_technology_learning_scenarios_data(base_year: int, module: str) -> pd.DataFrame:
     """Read in technology first year and cost reduction scenarios
 
     Raw data on technology first year and learning scenarios are read from
