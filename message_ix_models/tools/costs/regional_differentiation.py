@@ -189,9 +189,19 @@ def get_intratec_data() -> pd.DataFrame:
     return df_long
 
 
-# Function get raw technology mapping
 def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
-    """Create technology mapping for each module
+    """Retrieve a technology mapping for `module`.
+
+    The data are read from a CSV file at :file:`data/{module}/tech_map_{module}.csv`.
+    The file must have the following columns:
+
+    - ``message_technology``: MESSAGEix-GLOBIOM technology code
+    - ``reg_diff_source``: data source to map MESSAGEix technology to. A string like
+      "weo", "energy", or possibly others.
+    - ``reg_diff_technology``: Technology code in the source data.
+    - ``base_year_reference_region_cost``: manually specified base year cost of the
+      technology in the reference region (in 2005 USD).
+    - ``fix_ratio``: ???
 
     Parameters
     ----------
@@ -201,28 +211,10 @@ def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.Dat
     Returns
     -------
     pandas.DataFrame
-        DataFrame with columns:
-
-        - message_technology: MESSAGEix technology name
-        - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO)
-        - reg_diff_technology: technology name in the data source
-        - base_year_reference_region_cost: manually specified base year cost
-        of the technology in the reference region (in 2005 USD)
     """
 
-    if module == "energy":
-        energy_file = package_data_path("costs", "energy", "tech_map_energy.csv")
-        raw_map_energy = pd.read_csv(energy_file, skiprows=2)
-
-        return raw_map_energy
-
-    elif module == "materials":
-        materials_file = package_data_path(
-            "costs", "materials", "tech_map_materials.csv"
-        )
-        raw_map_materials = pd.read_csv(materials_file)
-
-        return raw_map_materials
+    path = package_data_path("costs", module, f"tech_map_{module}.csv")
+    return pd.read_csv(path, comment="#")
 
 
 # Function to subset materials mapping for only
@@ -284,19 +276,19 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
         of the technology in the reference region (in 2005 USD)
     """
 
+    raw_map_energy = get_raw_technology_mapping("energy")
+
     if module == "energy":
-        raw_map_energy = get_raw_technology_mapping("energy")
         return raw_map_energy
 
     elif module == "materials":
-        raw_map_energy = get_raw_technology_mapping("energy")
         raw_map_materials = get_raw_technology_mapping("materials")
         sub_map_materials = subset_materials_map(raw_map_materials)
 
-        # If message_technology in sub_map_materials is in raw_map_energy
-        # and base_year_reference_region_cost is not null/empty,
-        # then replace base_year_reference_region_cost in raw_map_energy
-        # with base_year_reference_region_cost in sub_map_materials
+        # If message_technology in sub_map_materials is in raw_map_energy and
+        # base_year_reference_region_cost is not null/empty, then replace
+        # base_year_reference_region_cost in raw_map_energy with
+        # base_year_reference_region_cost in sub_map_materials
         materials_replace = (
             sub_map_materials.query(
                 "message_technology in @raw_map_energy.message_technology"

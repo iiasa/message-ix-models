@@ -37,11 +37,9 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     """
 
     # Get full list of technologies from mapping
-    if module == "energy":
-        tech_map = get_raw_technology_mapping("energy")
+    tech_map = energy_map = get_raw_technology_mapping("energy")
 
     if module == "materials":
-        energy_map = get_raw_technology_mapping("energy")
         materials_map = get_raw_technology_mapping("materials")
         materials_sub = subset_materials_map(materials_map)
 
@@ -156,47 +154,32 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
           very_high)
     """
 
-    if module == "energy":
-        energy_first_year_file = package_data_path(
-            "costs", "energy", "first_year_energy.csv"
-        )
-        df_first_year = pd.read_csv(energy_first_year_file, skiprows=3)
+    energy_first_year_file = package_data_path(
+        "costs", "energy", "first_year_energy.csv"
+    )
+    df_first_year = pd.read_csv(energy_first_year_file, skiprows=3)
 
     if module == "materials":
-        energy_first_year_file = package_data_path(
-            "costs", "energy", "first_year_energy.csv"
-        )
-        energy_first_year = pd.read_csv(energy_first_year_file, skiprows=3)
-
         materials_first_year_file = package_data_path(
             "costs", "materials", "first_year_materials.csv"
         )
         materials_first_year = pd.read_csv(materials_first_year_file)
         df_first_year = pd.concat(
-            [energy_first_year, materials_first_year], ignore_index=True
+            [df_first_year, materials_first_year], ignore_index=True
         ).drop_duplicates()
 
-    if module == "energy":
-        tech_map = (
-            get_raw_technology_mapping("energy")
-            .reindex(
-                ["message_technology", "reg_diff_source", "reg_diff_technology"], axis=1
-            )
-            .drop_duplicates()
-        )
+    tech_map = tech_energy = get_raw_technology_mapping("energy")
+
     if module == "materials":
-        tech_energy = get_raw_technology_mapping("energy")
         tech_materials = subset_materials_map(get_raw_technology_mapping("materials"))
         tech_energy = tech_energy.query(
             "message_technology not in @tech_materials.message_technology"
         )
-        tech_map = (
-            pd.concat([tech_energy, tech_materials], ignore_index=True)
-            .reindex(
-                ["message_technology", "reg_diff_source", "reg_diff_technology"], axis=1
-            )
-            .drop_duplicates()
-        )
+        tech_map = pd.concat([tech_energy, tech_materials], ignore_index=True)
+
+    tech_map = tech_map.reindex(
+        ["message_technology", "reg_diff_source", "reg_diff_technology"], axis=1
+    ).drop_duplicates()
 
     # Adjust first year:
     # - if first year is missing, set to base year

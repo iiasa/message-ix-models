@@ -615,16 +615,10 @@ def create_cost_projections(config: "Config") -> Mapping[str, pd.DataFrame]:
     # Create projections
     df_costs = func(config)
 
-    if config.format == "message":
-        print("...Creating MESSAGE outputs...")
-        df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
+    # Convert to MESSAGEix format
+    df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
 
-        return {"inv_cost": df_inv, "fix_cost": df_fom}
-    elif config.format == "iamc":
-        print("...Creating MESSAGE outputs first...")
-        df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
+    if config.format == "iamc":
+        df_inv, df_fom = create_iamc_outputs(df_inv, df_fom)
 
-        print("...Creating IAMC format outputs...")
-        df_inv_iamc, df_fom_iamc = create_iamc_outputs(df_inv, df_fom)
-
-        return {"inv_cost": df_inv_iamc, "fix_cost": df_fom_iamc}
+    return {"inv_cost": df_inv, "fix_cost": df_fom}
