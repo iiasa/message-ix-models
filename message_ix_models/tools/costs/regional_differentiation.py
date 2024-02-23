@@ -1,5 +1,6 @@
+from functools import lru_cache
 from itertools import product
-from typing import Literal
+from typing import Literal, Mapping
 
 import numpy as np
 import pandas as pd
@@ -8,58 +9,20 @@ from message_ix_models.util import package_data_path
 
 from .config import BASE_YEAR, CONVERSION_2021_TO_2005_USD, Config
 
-# Dict of each R11 region matched with a WEO region
-DICT_WEO_R11 = {
-    "R11_AFR": "Africa",
-    "R11_CPA": "China",
-    "R11_EEU": "European Union",
-    "R11_FSU": "Russia",
-    "R11_LAM": "Brazil",
-    "R11_MEA": "Middle East",
-    "R11_NAM": "United States",
-    "R11_PAO": "Japan",
-    "R11_PAS": "India",
-    "R11_SAS": "India",
-    "R11_WEU": "European Union",
-}
 
-DICT_WEO_R12 = {
-    "R12_AFR": "Africa",
-    "R12_RCPA": "China",
-    "R12_CHN": "China",
-    "R12_EEU": "European Union",
-    "R12_FSU": "Russia",
-    "R12_LAM": "Brazil",
-    "R12_MEA": "Middle East",
-    "R12_NAM": "United States",
-    "R12_PAO": "Japan",
-    "R12_PAS": "India",
-    "R12_SAS": "India",
-    "R12_WEU": "European Union",
-}
+@lru_cache
+def get_weo_region_map(regions: str) -> Mapping[str, str]:
+    """Return a mapping from MESSAGE node IDs to WEO region names.
 
-DICT_WEO_R20 = {
-    "R20_AFR": "Africa",
-    "R20_CHN": "China",
-    "R20_PRK": "Russia",
-    "R20_MNG": "Russia",
-    "R20_MSA": "India",
-    "R20_JPN": "Japan",
-    "R20_AUNZ": "Japan",
-    "R20_KOR": "China",
-    "R20_SEA": "India",
-    "R20_RUBY": "Russia",
-    "R20_UMBA": "Russia",
-    "R20_CAS": "Russia",
-    "R20_SCST": "European Union",
-    "R20_EEU27": "European Union",
-    "R20_LAM": "Brazil",
-    "R20_MEA": "Middle East",
-    "R20_NAM": "United States",
-    "R20_SAS": "India",
-    "R20_WEU27": "European Union",
-    "R20_UKEFT": "European Union",
-}
+    The mapping is constructed from the ``iea-weo-region`` annotations on the
+    :doc:`/pkg-data/node`.
+    """
+    from message_ix_models.model.structure import get_codelist
+
+    # Retrieve the appropriate node codelist; the "World" code; and its children
+    nodes = get_codelist(f"node/{regions}")["World"].child
+    # Map from the child's (node's) ID to the value of the "iea-weo-region" annotation
+    return {n.id: str(n.get_annotation(id="iea-weo-region").text) for n in nodes}
 
 
 # Function to read in raw IEA WEO data
@@ -480,13 +443,6 @@ def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame
         - reg_cost_ratio: regional cost ratio relative to reference region
     """
 
-    if node.upper() == "R11":
-        dict_regions = DICT_WEO_R11
-    if node.upper() == "R12":
-        dict_regions = DICT_WEO_R12
-    if node.upper() == "R20":
-        dict_regions = DICT_WEO_R20
-
     # Grab WEO data and keep only investment costs
     df_weo = get_weo_data()
 
@@ -495,13 +451,14 @@ def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame
     sel_year = min(l_years, key=lambda x: abs(int(x) - BASE_YEAR))
     print("......(Using year " + str(sel_year) + " data from WEO.)")
 
-    # Map WEO data to MESSAGEix regions
-    # Keep only base year data
+    # - Retrieve a map from MESSAGEix node IDs to WEO region names.
+    # - Map WEO data to MESSAGEix regions.
+    # - Keep only base year data.
     l_sel_weo = []
-    for m, w in dict_regions.items():
+    for message_node, weo_region in get_weo_region_map(node).items():
         df_sel = (
-            df_weo.query("year == @sel_year & weo_region == @w")
-            .assign(region=m)
+            df_weo.query("year == @sel_year & weo_region == @weo_region")
+            .assign(region=message_node)
             .rename(columns={"value": "weo_cost"})
             .reindex(
                 [
