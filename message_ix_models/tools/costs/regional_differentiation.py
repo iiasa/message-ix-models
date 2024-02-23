@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 from itertools import product
 from typing import Literal, Mapping
@@ -8,6 +9,8 @@ import pandas as pd
 from message_ix_models.util import package_data_path
 
 from .config import BASE_YEAR, CONVERSION_2021_TO_2005_USD, Config
+
+log = logging.getLogger(__name__)
 
 
 @lru_cache
@@ -408,7 +411,7 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
             "message_technology not in @materials_all.message_technology"
         ).message_technology.unique()
 
-        print(
+        log.info(
             "The following technologies are not projected due to insufficient data:"
             + "\n"
             + "\n".join(missing_tech)
@@ -449,7 +452,7 @@ def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame
     # Get list of years in WEO data and select year closest to base year
     l_years = df_weo.year.unique()
     sel_year = min(l_years, key=lambda x: abs(int(x) - BASE_YEAR))
-    print("......(Using year " + str(sel_year) + " data from WEO.)")
+    log.info("…using year " + str(sel_year) + " data from WEO")
 
     # - Retrieve a map from MESSAGEix node IDs to WEO region names.
     # - Map WEO data to MESSAGEix regions.

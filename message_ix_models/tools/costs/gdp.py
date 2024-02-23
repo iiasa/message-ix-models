@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 import numpy as np
@@ -7,6 +8,8 @@ from scipy.stats import linregress  # type: ignore
 from message_ix_models import Context
 
 from .config import Config
+
+log = logging.getLogger(__name__)
 
 
 def default_ref_region(node: str, ref_region: Optional[str] = None) -> str:
@@ -107,7 +110,7 @@ def process_raw_ssp_data(
     k_result = "data::pyam"
     c.add(k_result, merge, k_pop, k_gdp, k_gdp_cap, k_gdp_cap + "indexed")
 
-    # print(c.describe(k_result))  # Debug
+    # log.debug(c.describe(k_result))  # Debug
     return c.get(k_result)
 
 
@@ -168,7 +171,7 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     base_year = int(config.base_year)
     if int(base_year) not in df_gdp.year.unique():
         base_year = int(min(df_gdp.year.unique()))
-        print("......(Using year " + str(base_year) + " data from GDP.)")
+        log.info(f"…Using year {base_year} data from GDP")
 
     # Set default values for input arguments
 
