@@ -1,5 +1,6 @@
+import logging
 from itertools import product
-from typing import Mapping
+from typing import Mapping, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,8 @@ from .gdp import adjust_cost_ratios_with_gdp
 from .learning import project_ref_region_inv_costs_using_learning_rates
 from .regional_differentiation import apply_regional_differentiation
 from .splines import apply_splines_to_convergence
+
+log = logging.getLogger(__name__)
 
 
 def smaller_than(sequence, value):
@@ -71,16 +74,16 @@ def create_projections_learning(config: "Config"):
         - inv_cost: investment cost
         - fix_cost: fixed operating and maintenance cost
     """
-    print(f"Selected scenario: {config.scenario}")
-    print(
+    log.info(f"Selected scenario: {config.scenario}")
+    log.info(
         "For the learning method, only the SSP scenario(s) itself needs to be "
         "specified. No scenario version (previous vs. updated) is needed."
     )
 
-    print("...Calculating regional differentiation in base year+region...")
+    log.info("Calculate regional differentiation in base year+region")
     df_region_diff = apply_regional_differentiation(config)
 
-    print("...Applying learning rates to reference region...")
+    log.info("Apply learning rates to reference region")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
         df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
@@ -142,18 +145,18 @@ def create_projections_gdp(config: "Config"):
         - fix_cost: fixed operating and maintenance cost
     """
     # Print selection of scenario version and scenario
-    print(f"Selected scenario: {config.scenario}")
-    print(f"Selected scenario version: {config.scenario_version}")
+    log.info(f"Selected scenario: {config.scenario}")
+    log.info(f"Selected scenario version: {config.scenario_version}")
 
-    print("...Calculating regional differentiation in base year+region...")
+    log.info("Calculate regional differentiation in base year+region")
     df_region_diff = apply_regional_differentiation(config)
 
-    print("...Applying learning rates to reference region...")
+    log.info("Apply learning rates to reference region")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
         df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
-    print("...Adjusting ratios using GDP data...")
+    log.info("Adjust ratios using GDP data")
     # - Compute adjustment
     # - Filter by Config.scenario, if given.
     # - Filter by Config.scenario_version, if given.
@@ -221,17 +224,17 @@ def create_projections_converge(config: "Config"):
         - inv_cost: investment cost
         - fix_cost: fixed operating and maintenance cost
     """
-    print(f"Selected scenario: {config.scenario}")
-    print(f"Selected convergence year: {config.convergence_year}")
-    print(
+    log.info(f"Selected scenario: {config.scenario}")
+    log.info(f"Selected convergence year: {config.convergence_year}")
+    log.info(
         "For the convergence method, only the SSP scenario(s) itself needs to be "
         "specified. No scenario version (previous vs. updated) is needed."
     )
 
-    print("...Calculating regional differentiation in base year+region...")
+    log.info("Calculate regional differentiation in base year+region")
     df_region_diff = apply_regional_differentiation(config)
 
-    print("...Applying learning rates to reference region...")
+    log.info("Apply learning rates to reference region")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
         df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
@@ -252,7 +255,7 @@ def create_projections_converge(config: "Config"):
         .drop_duplicates()
     )
 
-    print("...Applying splines to converge...")
+    log.info("Apply splines to converge")
     df_splines = apply_splines_to_convergence(
         df_pre_costs,
         column_name="inv_cost_converge",
@@ -288,7 +291,9 @@ def create_projections_converge(config: "Config"):
     return df_costs
 
 
-def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
+def create_message_outputs(
+    df_projections: pd.DataFrame, fom_rate: float
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Create MESSAGEix outputs for investment and fixed costs.
 
     Parameters
@@ -307,6 +312,8 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
         Dataframe containing fixed operating and maintenance costs.
 
     """
+    log.info("Convert {fix,inv}_cost data to MESSAGE structure")
+
     seq_years = list(range(HORIZON_START, HORIZON_END + 5, 5))
 
     df_prod = pd.DataFrame(
@@ -472,7 +479,9 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
     return inv, fom
 
 
-def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
+def create_iamc_outputs(
+    msg_inv: pd.DataFrame, msg_fix: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Create IAMC outputs for investment and fixed costs.
 
     Parameters
@@ -491,6 +500,8 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
     iamc_fix : pd.DataFrame
         Dataframe containing fixed operating and maintenance costs in IAMC format.
     """
+    log.info("Convert {fix,inv}_cost data to IAMC structure")
+
     iamc_inv = (
         (
             msg_inv.assign(
@@ -592,7 +603,7 @@ def create_cost_projections(config: "Config") -> Mapping[str, pd.DataFrame]:
     config.check()
 
     # Display configuration using the default __repr__ provided by @dataclass
-    print(f"Selected configuration: {config!r}")
+    log.info(f"Configuration: {config!r}")
 
     # Select function according to `config.method`
     func = {
@@ -601,6 +612,7 @@ def create_cost_projections(config: "Config") -> Mapping[str, pd.DataFrame]:
         "learning": create_projections_learning,
     }[config.method]
 
+    # Create projections
     df_costs = func(config)
 
     if config.format == "message":

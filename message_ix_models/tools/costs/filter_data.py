@@ -1,31 +1,34 @@
+import logging
+
 import pandas as pd
 
 from message_ix_models.util import package_data_path
 
+log = logging.getLogger(__name__)
+
 
 # Function to compress the SSP data
-def compress_ssp_data():
+def compress_ssp_data() -> None:
     """Save raw SSP data as a compressed csv file.
 
-    This function reads in the raw SSP data from the Excel spreadsheet
-    and saves it as a compressed csv file. The file is saved in the same
-    location as the Excel spreadsheet.
+    This function reads in the raw SSP data from the Excel spreadsheet and saves it as a
+    compressed csv file. The file is saved in the same location as the Excel
+    spreadsheet.
 
     Returns
     -------
     None
-
     """
 
     # Set data path for SSP data
     f = package_data_path("ssp", "SSP-Review-Phase-1.xlsx")
 
     # Read in data
-    print("Reading in SSP data...")
+    log.info("Read SSP data…")
     df = pd.read_excel(f, sheet_name="data", usecols="A:Z")
 
     # Save data to a compressed csv file
-    print("Saving SSP data to compressed csv file...")
+    log.info("Save SSP data to compressed csv file")
     df.to_csv(
         package_data_path("ssp", "SSP-Review-Phase-1.csv.gz"),
         compression="gzip",
@@ -35,7 +38,7 @@ def compress_ssp_data():
 
 # Function to read in SSP Phase 1 Review data
 # and filter out data for only the variables of interest.
-def subset_ssp_phase_1_data():
+def subset_ssp_phase_1_data() -> pd.DataFrame:
     """Read in SSP Phase 1 Review data and only keep data with variables of interest.
 
     The reason for this function is because the complete data file is quite large and
@@ -59,8 +62,8 @@ def subset_ssp_phase_1_data():
         pd.read_excel(f, sheet_name="data", usecols="A:Z")
         .query("Variable == 'Population' or Variable == 'GDP|PPP'")
         .query(
-            "Model.str.contains('IIASA-WiC POP') or\
-                Model.str.contains('OECD ENV-Growth')"
+            "Model.str.contains('IIASA-WiC POP')"
+            " or Model.str.contains('OECD ENV-Growth')"
         )
         .query(
             r"~(Region.str.contains('\(') or Region.str.contains('World'))",
@@ -72,11 +75,11 @@ def subset_ssp_phase_1_data():
 
 
 # Save subsetted SSP data to a csv file in the same location
-def save_subset_ssp_phase_1_data():
-    print("Reading in and filtering SSP data...")
+def save_subset_ssp_phase_1_data() -> None:
+    log.info("Read in and filter SSP data")
     df = subset_ssp_phase_1_data()
 
-    print("Saving subsetted SSP data to csv file...")
+    log.info("Save subsetted SSP data to csv file")
     df.to_csv(package_data_path("ssp", "SSP-Review-Phase-1-subset.csv"), index=False)
 
 
