@@ -24,6 +24,32 @@ def larger_than(sequence, value):
     return [item for item in sequence if item > value]
 
 
+def _maybe_query_scenario(df: pd.DataFrame, config: "Config") -> pd.DataFrame:
+    """Filter `df` for :attr`.Config.scenario`, if any is specified."""
+    if config.scenario == "all":
+        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]  # noqa: F841
+        return df.query("scenario in @scen")
+    elif config.scenario is not None:
+        return df.query(f"scenario == {config.scenario.upper()!r}")
+    else:
+        return df
+
+
+def _maybe_query_scenario_version(df: pd.DataFrame, config: "Config") -> pd.DataFrame:
+    """Filter `df` for :attr`.Config.scenario_version`, if any is specified."""
+    if config.scenario_version is None:
+        return df
+
+    # NB "all" does not appear in Config
+    scen_vers = {  # noqa: F841
+        "all": ["Review (2023)", "Previous (2013)"],
+        "updated": ["Review (2023)"],
+        "original": ["Previous (2013)"],
+    }[config.scenario_version]
+
+    return df.query("scenario_version in @scen_vers")
+
+
 def create_projections_learning(config: "Config"):
     """Create cost projections using the learning method
 
@@ -60,15 +86,6 @@ def create_projections_learning(config: "Config"):
         No scenario version (previous vs. updated) is needed."
     )
 
-    # If no scenario is specified, do not filter for scenario
-    # If it specified, then filter as below:
-    if config.scenario == "all":
-        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-    elif config.scenario is not None:
-        scen = [config.scenario.upper()]
-    else:
-        scen = [None]
-
     print("...Calculating regional differentiation in base year+region...")
     df_region_diff = apply_regional_differentiation(
         module=config.module,
@@ -82,10 +99,7 @@ def create_projections_learning(config: "Config"):
         module=config.module,
         ref_region=config.ref_region,
         base_year=config.base_year,
-    )
-
-    if scen:
-        df_ref_reg_learning = df_ref_reg_learning.query("scenario in @scen")
+    ).pipe(_maybe_query_scenario, config)
 
     df_costs = (
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
@@ -151,26 +165,6 @@ def create_projections_gdp(config: "Config"):
     print(f"Selected scenario: {config.scenario}")
     print(f"Selected scenario version: {config.scenario_version}")
 
-    # If no scenario is specified, do not filter for scenario
-    # If it specified, then filter as below:
-    if config.scenario == "all":
-        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-    elif config.scenario is not None:
-        scen = [config.scenario.upper()]
-    else:
-        scen = [None]
-
-    # If no scenario version is specified, do not filter for scenario version
-    # If it specified, then filter as below:
-    if config.scenario_version == "all":  # NB this does not appear in Config
-        scen_vers = ["Review (2023)", "Previous (2013)"]
-    elif config.scenario_version == "updated":
-        scen_vers = ["Review (2023)"]
-    elif config.scenario_version == "original":
-        scen_vers = ["Previous (2013)"]
-    else:
-        scen_vers = []
-
     print("...Calculating regional differentiation in base year+region...")
     df_region_diff = apply_regional_differentiation(
         module=config.module,
@@ -184,24 +178,24 @@ def create_projections_gdp(config: "Config"):
         ref_region=config.ref_region,
         base_year=config.base_year,
         module=config.module,
-    )
+    ).pipe(_maybe_query_scenario, config)
 
     print("...Adjusting ratios using GDP data...")
-    df_adj_cost_ratios = adjust_cost_ratios_with_gdp(
-        df_region_diff,
-        node=config.node,
-        ref_region=config.ref_region,
-        scenario=config.scenario,
-        scenario_version=config.scenario_version,
-        base_year=config.base_year,
+    # - Compute adjustment
+    # - Filter by Config.scenario, if given.
+    # - Filter by Config.scenario_version, if given.
+    df_adj_cost_ratios = (
+        adjust_cost_ratios_with_gdp(
+            df_region_diff,
+            node=config.node,
+            ref_region=config.ref_region,
+            scenario=config.scenario,
+            scenario_version=config.scenario_version,
+            base_year=config.base_year,
+        )
+        .pipe(_maybe_query_scenario, config)
+        .pipe(_maybe_query_scenario_version, config)
     )
-
-    if scen:
-        df_ref_reg_learning = df_ref_reg_learning.query("scenario in @scen")
-        if scen_vers:
-            df_adj_cost_ratios = df_adj_cost_ratios.query(
-                "scenario_version in @scen_vers and scenario in @scen"
-            )
 
     df_costs = (
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
@@ -273,15 +267,6 @@ def create_projections_converge(config: "Config"):
         No scenario version (previous vs. updated) is needed."
     )
 
-    # If no scenario is specified, do not filter for scenario
-    # If it specified, then filter as below:
-    if config.scenario == "all":
-        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-    elif config.scenario is not None:
-        scen = [config.scenario.upper()]
-    else:
-        scen = []
-
     print("...Calculating regional differentiation in base year+region...")
     df_region_diff = apply_regional_differentiation(
         module=config.module,
@@ -295,10 +280,7 @@ def create_projections_converge(config: "Config"):
         ref_region=config.ref_region,
         base_year=config.base_year,
         module=config.module,
-    )
-
-    if scen:
-        df_ref_reg_learning = df_ref_reg_learning.query("scenario in @scen")
+    ).pipe(_maybe_query_scenario, config)
 
     df_pre_costs = (
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
