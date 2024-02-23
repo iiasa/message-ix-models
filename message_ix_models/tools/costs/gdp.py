@@ -134,6 +134,7 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - scenario_version: scenario version
         - scenario: SSP scenario
         - message_technology: message technology
