@@ -122,16 +122,13 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     ----------
     region_diff_df : pandas.DataFrame
         Output of :func:`apply_regional_differentation`.
-    node : str
-        Node/region to aggregate to.
-    ref_region : str
-        Reference region to use.
-    scenario : str
-        Scenario to use.
-    scenario_version : str
-        Scenario version to use.
-    base_year : int
-        Base year to use.
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.node`,
+        :attr:`~.Config.ref_region`,
+        :attr:`~.Config.scenario`, and
+        :attr:`~.Config.scenario_version`.
 
     Returns
     -------

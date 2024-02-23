@@ -1,4 +1,5 @@
 from itertools import product
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -221,13 +222,13 @@ def get_intratec_data() -> pd.DataFrame:
 
 
 # Function get raw technology mapping
-def get_raw_technology_mapping(module) -> pd.DataFrame:
+def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
     """Create technology mapping for each module
 
     Parameters
     ----------
     module : str
-        Model module
+        See :attr:`.Config.module`.
 
     Returns
     -------
@@ -292,13 +293,13 @@ def subset_materials_map(raw_map):
 
 
 # Function to adjust technology mapping
-def adjust_technology_mapping(module) -> pd.DataFrame:
+def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
     """Adjust technology mapping based on sources and assumptions
 
     Parameters
     ----------
     module : str
-        Model module
+        See :attr:`.Config.module`.
 
     Returns
     -------
@@ -453,15 +454,15 @@ def adjust_technology_mapping(module) -> pd.DataFrame:
 # The function should take the WEO data, map it to MESSAGEix regions
 # using the node and ref_region,
 # and then calculate cost ratios for each region relative to the reference region
-def get_weo_regional_differentiation(node, ref_region) -> pd.DataFrame:
-    """Apply WEO regional differentiation
+def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame:
+    """Apply WEO regional differentiation.
 
     Parameters
     ----------
     node : str
-        MESSAGEix node
+        See :attr`.Config.node`.
     ref_region : str
-        Reference region
+        See :attr`.Config.ref_region`.
 
     Returns
     -------
@@ -575,15 +576,15 @@ def get_weo_regional_differentiation(node, ref_region) -> pd.DataFrame:
 # The function should take the Intratec data, map it to MESSAGEix regions using
 # the node and ref_region,
 # and then calculate cost ratios for each region relative to the reference region
-def get_intratec_regional_differentiation(node, ref_region) -> pd.DataFrame:
-    """Apply Intratec regional differentiation
+def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame:
+    """Apply Intratec regional differentiation.
 
     Parameters
     ----------
     node : str
-        MESSAGEix node
+        See :attr`.Config.node`.
     ref_region : str
-        Reference region
+        See :attr`.Config.ref_region`.
 
     Returns
     -------
@@ -653,12 +654,11 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
 
     Parameters
     ----------
-    module : str
-        Model module
-    node : str
-        MESSAGEix node
-    ref_region : str
-        Reference region
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.module`,
+        :attr:`~.Config.node`, and
+        :attr:`~.Config.ref_region`.
 
     Returns
     -------
@@ -675,6 +675,7 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         - fix_ratio: ratio of fixed O&M costs to investment costs
     """
     df_map = adjust_technology_mapping(config.module)
+    assert config.ref_region is not None
     df_weo = get_weo_regional_differentiation(config.node, config.ref_region)
     df_intratec = get_intratec_regional_differentiation(config.node, config.ref_region)
 

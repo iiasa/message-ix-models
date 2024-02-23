@@ -10,10 +10,10 @@ from .config import FIRST_MODEL_YEAR, LAST_MODEL_YEAR, TIME_STEPS
 
 # Function to apply polynomial regression to convergence costs
 def apply_splines_to_convergence(
-    df_reg,
-    column_name,
-    convergence_year,
-):
+    df_reg: pd.DataFrame,
+    column_name: str,
+    convergence_year: int,
+) -> pd.DataFrame:
     """Apply splines to convergence projections
 
     This function performs a polynomial regression on the convergence costs
@@ -28,7 +28,7 @@ def apply_splines_to_convergence(
     column_name : str
         Name of the column containing the convergence costs
     convergence_year : int
-        Year of convergence
+        See :attr:`.Config.convergence_year`.
 
     Returns
     -------
