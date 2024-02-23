@@ -70,6 +70,7 @@ def get_weo_data() -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - cost_type: investment or fixed O&M cost
         - weo_technology: WEO technology name
         - weo_region: WEO region
@@ -189,6 +190,7 @@ def get_intratec_data() -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - intratec_tech: Intratec technology name
         - intratec_region: Intratec region
         - intratec_index: Intratec index value
@@ -234,6 +236,7 @@ def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.Dat
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: MESSAGEix technology name
         - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO)
         - reg_diff_technology: technology name in the data source
@@ -270,6 +273,7 @@ def subset_materials_map(raw_map):
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: MESSAGEix technology name
         - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO)
         - reg_diff_technology: technology name in the data source
@@ -305,6 +309,7 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: MESSAGEix technology name
         - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO,
           Intratec)
@@ -468,6 +473,7 @@ def get_weo_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: MESSAGEix technology name
         - region: MESSAGEix region
         - weo_ref_region_cost: WEO cost in reference region
@@ -590,6 +596,7 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: MESSAGEix technology name
         - region: MESSAGEix region
         - intratec_ref_region_cost: Intratec cost in reference region
@@ -664,6 +671,7 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: MESSAGEix technology name
         - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO,
           Intratec)

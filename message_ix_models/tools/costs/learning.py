@@ -29,6 +29,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: name of technology in MESSAGEix
         - learning_rate: the learning rate (either very_low, low, medium, high, or
           very_high)
@@ -147,6 +148,7 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: name of technology in MESSAGEix
         - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - first_technology_year: first year the technology is available in MESSAGEix.
@@ -296,7 +298,7 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
 def project_ref_region_inv_costs_using_learning_rates(
     regional_diff_df: pd.DataFrame, config: Config
 ) -> pd.DataFrame:
-    """Project investment costs using learning rates for reference region
+    """Project investment costs using learning rates for reference region.
 
     This function uses the learning rates for each technology under each scenario to
     project the capital costs for each technology in the reference region.
@@ -315,6 +317,7 @@ def project_ref_region_inv_costs_using_learning_rates(
     -------
     pandas.DataFrame
         DataFrame with columns:
+
         - message_technology: name of technology in MESSAGEix
         - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - reference_region: reference region
