@@ -1,26 +1,13 @@
 from itertools import product
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
-from message_ix_models.tools.costs.config import (
-    BASE_YEAR,
-    FIRST_MODEL_YEAR,
-    HORIZON_END,
-    HORIZON_START,
-)
-from message_ix_models.tools.costs.gdp import adjust_cost_ratios_with_gdp
-from message_ix_models.tools.costs.learning import (
-    project_ref_region_inv_costs_using_learning_rates,
-)
-from message_ix_models.tools.costs.regional_differentiation import (
-    apply_regional_differentiation,
-)
-from message_ix_models.tools.costs.splines import apply_splines_to_convergence
-
-if TYPE_CHECKING:
-    from .config import Config
+from .config import BASE_YEAR, FIRST_MODEL_YEAR, HORIZON_END, HORIZON_START, Config
+from .gdp import adjust_cost_ratios_with_gdp
+from .learning import project_ref_region_inv_costs_using_learning_rates
+from .regional_differentiation import apply_regional_differentiation
+from .splines import apply_splines_to_convergence
 
 
 class projections:

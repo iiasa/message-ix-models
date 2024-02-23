@@ -5,11 +5,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
-from message_ix_models.tools.costs.config import (
-    FIRST_MODEL_YEAR,
-    LAST_MODEL_YEAR,
-    TIME_STEPS,
-)
+from .config import FIRST_MODEL_YEAR, LAST_MODEL_YEAR, TIME_STEPS
 
 
 # Function to apply polynomial regression to convergence costs
