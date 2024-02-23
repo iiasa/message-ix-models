@@ -305,8 +305,8 @@ def adjust_technology_mapping(module) -> pd.DataFrame:
     pandas.DataFrame
         DataFrame with columns:
         - message_technology: MESSAGEix technology name
-        - reg_diff_source: data source to map MESSAGEix technology to \
-            (e.g., WEO, Intratec)
+        - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO,
+          Intratec)
         - reg_diff_technology: technology name in the data source
         - base_year_reference_region_cost: manually specified base year cost
         of the technology in the reference region (in 2005 USD)
@@ -665,8 +665,8 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
     pandas.DataFrame
         DataFrame with columns:
         - message_technology: MESSAGEix technology name
-        - reg_diff_source: data source to map MESSAGEix technology to \
-            (e.g., WEO, Intratec)
+        - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO,
+          Intratec)
         - reg_diff_technology: technology name in the data source
         - region: MESSAGEix region
         - base_year_reference_region_cost: manually specified base year cost

@@ -115,9 +115,8 @@ def process_raw_ssp_data(
 def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     """Calculate adjusted region-differentiated cost ratios
 
-    This function takes in a dataframe with region-differentiated \
-    cost ratios and calculates adjusted region-differentiated cost ratios \
-    using GDP per capita data.
+    This function takes in a dataframe with region-differentiated cost ratios and
+    calculates adjusted region-differentiated cost ratios using GDP per capita data.
 
     Parameters
     ----------
@@ -143,8 +142,8 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
         - message_technology: message technology
         - region: R11, R12, or R20 region
         - year
-        - gdp_ratio_reg_to_reference: ratio of GDP per capita \
-            in respective region to GDP per capita in reference region
+        - gdp_ratio_reg_to_reference: ratio of GDP per capita in respective region to
+          GDP per capita in reference region.
         - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
     """
     from .projections import _maybe_query_scenario, _maybe_query_scenario_version
