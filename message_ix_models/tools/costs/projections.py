@@ -87,18 +87,11 @@ def create_projections_learning(config: "Config"):
     )
 
     print("...Calculating regional differentiation in base year+region...")
-    df_region_diff = apply_regional_differentiation(
-        module=config.module,
-        node=config.node,
-        ref_region=config.ref_region,
-    )
+    df_region_diff = apply_regional_differentiation(config)
 
     print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
-        regional_diff_df=df_region_diff,
-        module=config.module,
-        ref_region=config.ref_region,
-        base_year=config.base_year,
+        df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
     df_costs = (
@@ -166,18 +159,11 @@ def create_projections_gdp(config: "Config"):
     print(f"Selected scenario version: {config.scenario_version}")
 
     print("...Calculating regional differentiation in base year+region...")
-    df_region_diff = apply_regional_differentiation(
-        module=config.module,
-        node=config.node,
-        ref_region=config.ref_region,
-    )
+    df_region_diff = apply_regional_differentiation(config)
 
     print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
-        regional_diff_df=df_region_diff,
-        ref_region=config.ref_region,
-        base_year=config.base_year,
-        module=config.module,
+        df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
     print("...Adjusting ratios using GDP data...")
@@ -185,14 +171,7 @@ def create_projections_gdp(config: "Config"):
     # - Filter by Config.scenario, if given.
     # - Filter by Config.scenario_version, if given.
     df_adj_cost_ratios = (
-        adjust_cost_ratios_with_gdp(
-            df_region_diff,
-            node=config.node,
-            ref_region=config.ref_region,
-            scenario=config.scenario,
-            scenario_version=config.scenario_version,
-            base_year=config.base_year,
-        )
+        adjust_cost_ratios_with_gdp(df_region_diff, config)
         .pipe(_maybe_query_scenario, config)
         .pipe(_maybe_query_scenario_version, config)
     )
@@ -268,18 +247,11 @@ def create_projections_converge(config: "Config"):
     )
 
     print("...Calculating regional differentiation in base year+region...")
-    df_region_diff = apply_regional_differentiation(
-        module=config.module,
-        node=config.node,
-        ref_region=config.ref_region,
-    )
+    df_region_diff = apply_regional_differentiation(config)
 
     print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
-        regional_diff_df=df_region_diff,
-        ref_region=config.ref_region,
-        base_year=config.base_year,
-        module=config.module,
+        df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
     df_pre_costs = (

@@ -6,6 +6,8 @@ from scipy.stats import linregress  # type: ignore
 
 from message_ix_models import Context
 
+from .config import Config
+
 
 def default_ref_region(node: str, ref_region: Optional[str] = None) -> str:
     """Return a default for the reference region or raise :class:`ValueError`."""
@@ -110,9 +112,7 @@ def process_raw_ssp_data(
 
 
 # Function to calculate adjusted region-differentiated cost ratios
-def adjust_cost_ratios_with_gdp(
-    region_diff_df, node, ref_region, scenario, scenario_version, base_year
-):
+def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     """Calculate adjusted region-differentiated cost ratios
 
     This function takes in a dataframe with region-differentiated \
@@ -147,11 +147,13 @@ def adjust_cost_ratios_with_gdp(
             in respective region to GDP per capita in reference region
         - reg_cost_ratio_adj: adjusted region-differentiated cost ratio
     """
+    from .projections import _maybe_query_scenario, _maybe_query_scenario_version
+
     context = Context.get_instance(-1)
-    context.model.regions = node
+    context.model.regions = config.node
 
     df_gdp = (
-        process_raw_ssp_data(context=context, ref_region=ref_region)
+        process_raw_ssp_data(context=context, ref_region=config.ref_region)
         .query("year >= 2020")
         .drop(columns=["total_gdp", "total_population"])
         .assign(
@@ -166,49 +168,17 @@ def adjust_cost_ratios_with_gdp(
 
     # If base year does not exist in GDP data, then use earliest year in GDP data
     # and give warning
-    base_year = int(base_year)
+    base_year = int(config.base_year)
     if int(base_year) not in df_gdp.year.unique():
         base_year = int(min(df_gdp.year.unique()))
         print("......(Using year " + str(base_year) + " data from GDP.)")
 
     # Set default values for input arguments
 
-    # If no scenario is specified, do not filter for scenario
-    # If it specified, then filter as below:
-    if scenario is None or scenario == "all":
-        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-    elif scenario is not None and scenario != "all":
-        scen = scenario.upper()
-
-    # If no scenario version is specified, do not filter for scenario version
-    # If it specified, then filter as below:
-    if scenario_version is None or scenario_version == "updated":
-        scen_vers = ["Review (2023)"]
-    elif scenario_version is not None and scenario_version == "original":
-        scen_vers = ["Review (2023)"]
-    elif scenario_version == "all":
-        scen_vers = ["Review (2023)", "Previous (2013)"]
-
-    # Repeating to avoid linting error
-    scen = scen
-    scen_vers = scen_vers
-
     # Filter for scenarios and scenario versions
-    df_gdp = df_gdp.query("scenario in @scen and scenario_version in @scen_vers")
-
-    # If specified node is R11, then use R11_NAM as the reference region
-    # If specified node is R12, then use R12_NAM as the reference region
-    # If specified node is R20, then use R20_NAM as the reference region
-    # However, if a reference region is specified, then use that instead
-    if ref_region is None:
-        if node.upper() == "R11":
-            reference_region = "R11_NAM"
-        if node.upper() == "R12":
-            reference_region = "R12_NAM"
-        if node.upper() == "R20":
-            reference_region = "R20_NAM"
-    else:
-        reference_region = ref_region
+    df_gdp = df_gdp.pipe(_maybe_query_scenario, config).pipe(
+        _maybe_query_scenario_version, config
+    )
 
     gdp_base_year = df_gdp.query("year == @base_year").reindex(
         ["scenario_version", "scenario", "region", "gdp_ratio_reg_to_reference"], axis=1
@@ -224,7 +194,7 @@ def adjust_cost_ratios_with_gdp(
     ]
 
     def indiv_regress_tech_cost_ratio_vs_gdp_ratio(df):
-        if df.iloc[0].region == reference_region:
+        if df.iloc[0].region == config.ref_region:
             df_one = (
                 df.copy()
                 .assign(
@@ -293,7 +263,7 @@ def adjust_cost_ratios_with_gdp(
         .query("year >= @base_year")
         .assign(
             reg_cost_ratio_adj=lambda x: np.where(
-                x.region == reference_region,
+                x.region == config.ref_region,
                 1,
                 x.slope * x.gdp_ratio_reg_to_reference + x.intercept,
             ),

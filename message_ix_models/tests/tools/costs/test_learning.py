@@ -1,3 +1,4 @@
+from message_ix_models.tools.costs import Config
 from message_ix_models.tools.costs.learning import (
     get_cost_reduction_data,
     get_technology_learning_scenarios_data,
@@ -61,25 +62,19 @@ def test_get_technology_learning_scenarios_data():
 
 
 def test_project_ref_region_inv_costs_using_learning_rates():
-    r12_energy_reg_diff = apply_regional_differentiation(
-        module="energy", node="r12", ref_region="R12_NAM"
-    )
-    r12_materials_reg_diff = apply_regional_differentiation(
-        module="materials", node="r12", ref_region="R12_NAM"
-    )
+    # TODO Parametrize this test
+    c0 = Config(base_year=2021)
+    r12_energy_reg_diff = apply_regional_differentiation(c0)
+
+    c1 = Config(base_year=2021, module="materials")
+    r12_materials_reg_diff = apply_regional_differentiation(c1)
 
     r12_energy_res = project_ref_region_inv_costs_using_learning_rates(
-        regional_diff_df=r12_energy_reg_diff,
-        ref_region="R12_NAM",
-        base_year=2021,
-        module="energy",
+        regional_diff_df=r12_energy_reg_diff, config=c0
     )
 
     r12_materials_res = project_ref_region_inv_costs_using_learning_rates(
-        regional_diff_df=r12_materials_reg_diff,
-        ref_region="R12_NAM",
-        base_year=2021,
-        module="materials",
+        regional_diff_df=r12_materials_reg_diff, config=c1
     )
 
     a = ["coal_ppl", "gas_ppl", "gas_cc", "solar_pv_ppl"]

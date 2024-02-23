@@ -1,3 +1,4 @@
+from message_ix_models.tools.costs import Config
 from message_ix_models.tools.costs.regional_differentiation import (
     adjust_technology_mapping,
     apply_regional_differentiation,
@@ -116,15 +117,13 @@ def test_adjust_technology_mapping():
 def test_apply_regional_differentiation():
     # Assert that the regional differentiation is applied correctly
     # for the energy module
-    energy_r12_nam = apply_regional_differentiation(
-        module="energy", node="r12", ref_region="R12_NAM"
-    )
+    config = Config()
+    energy_r12_nam = apply_regional_differentiation(config)
 
     # Assert that the regional differentiation is applied correctly
     # for the materials module
-    materials_r12_nam = apply_regional_differentiation(
-        module="materials", node="r12", ref_region="R12_NAM"
-    )
+    config.module = "materials"
+    materials_r12_nam = apply_regional_differentiation(config)
 
     # Assert that certain technologies are present in the energy module
     energy_tech = ["coal_ppl", "gas_ppl", "gas_cc", "solar_pv_ppl"]
