@@ -18,7 +18,13 @@ CONVERSION_2021_TO_2005_USD = 0.72
 
 @dataclass
 class Config:
-    """Configuration for :mod:`.costs`."""
+    """Configuration for :mod:`.costs`.
+
+    On creation:
+
+    - If not given, :attr:`.ref_region` is set based on :attr:`.node` using, for
+      instance, :py:`ref_region="R12_NAM"` for :py:`node="R12"`.
+    """
 
     test_val: int = 2
 
@@ -66,3 +72,11 @@ class Config:
     def __post_init__(self):
         if self.ref_region is None:
             self.ref_region = f"{self.node}_NAM"
+
+    def check(self):
+        """Validate settings."""
+        valid_nodes = {"R11", "R12", "R20"}
+        if self.node not in valid_nodes:
+            raise NotImplementedError(
+                f"Cost projections for {self.node!r}; use one of {valid_nodes}"
+            )

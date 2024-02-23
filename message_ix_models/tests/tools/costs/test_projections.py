@@ -1,20 +1,11 @@
-from message_ix_models.tools.costs.config import BASE_YEAR
+from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 
 
 def test_create_cost_projections():
-    energy_gdp_r11_message = create_cost_projections(
-        node="r11",
-        ref_region="R11_NAM",
-        base_year=BASE_YEAR,
-        module="energy",
-        method="gdp",
-        scenario_version="updated",
-        scenario="SSP2",
-        fom_rate=0.025,
-        convergence_year=2050,
-        format="message",
-    )
+    cfg = Config(node="R11", scenario="SSP2")
+
+    energy_gdp_r11_message = create_cost_projections(cfg)
 
     msg_inv = energy_gdp_r11_message.inv_cost
     msg_fix = energy_gdp_r11_message.fix_cost
@@ -47,18 +38,11 @@ def test_create_cost_projections():
     columns_fix = ["node_loc", "technology", "year_vtg", "year_act", "value"]
     assert bool(all(i in msg_fix.columns for i in columns_fix)) is True
 
-    materials_converge_r12_iamc = create_cost_projections(
-        node="r12",
-        ref_region="R12_NAM",
-        base_year=BASE_YEAR,
-        module="materials",
-        method="convergence",
-        scenario_version="updated",
-        scenario="SSP2",
-        fom_rate=0.025,
-        convergence_year=2050,
-        format="iamc",
+    cfg = Config(
+        module="materials", method="convergence", scenario="SSP2", format="iamc"
     )
+
+    materials_converge_r12_iamc = create_cost_projections(cfg)
 
     iamc_inv = materials_converge_r12_iamc.inv_cost
     iamc_fix = materials_converge_r12_iamc.fix_cost
