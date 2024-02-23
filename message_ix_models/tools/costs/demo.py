@@ -26,8 +26,8 @@ cfg = Config()
 res_r12_energy = create_cost_projections(cfg)
 
 # The results are stored in the inv_cost and fix_cost attributes of the output object.
-inv = res_r12_energy.inv_cost
-fix = res_r12_energy.fix_cost
+inv = res_r12_energy["inv_cost"]
+fix = res_r12_energy["fix_cost"]
 
 # Example 2: Get cost projections for all scenarios in R11,
 # using WEU as the reference region,
@@ -45,8 +45,8 @@ cfg = Config(
 
 r11_energy_convergence = create_cost_projections(cfg)
 
-r11_energy_convergence.inv_cost
-r11_energy_convergence.fix_cost
+r11_energy_convergence["inv_cost"]
+r11_energy_convergence["fix_cost"]
 
 # Example 3: Get cost projections for SSP2 scenario in R12,
 # using NAM as the reference region,
@@ -63,5 +63,5 @@ cfg = Config(
 
 r12_materials_ssp2 = create_cost_projections(cfg)
 
-r12_materials_ssp2.inv_cost
-r12_materials_ssp2.fix_cost
+r12_materials_ssp2["inv_cost"]
+r12_materials_ssp2["fix_cost"]

@@ -8,7 +8,7 @@ from message_ix_models.tools.costs.regional_differentiation import (
 )
 
 
-def test_get_weo_data():
+def test_get_weo_data() -> None:
     result = get_weo_data()
 
     # Check that the minimum and maximum years are correct
@@ -44,7 +44,7 @@ def test_get_weo_data():
     )
 
 
-def test_get_intratec_data():
+def test_get_intratec_data() -> None:
     res = get_intratec_data()
 
     # Check that the regions of R12 are present
@@ -67,7 +67,7 @@ def test_get_intratec_data():
     )
 
 
-def test_get_raw_technology_mapping():
+def test_get_raw_technology_mapping() -> None:
     energy = get_raw_technology_mapping("energy")
 
     # Assert that certain energy technologies are present
@@ -95,7 +95,7 @@ def test_get_raw_technology_mapping():
     assert "energy" in materials.reg_diff_source.unique()
 
 
-def test_adjust_technology_mapping():
+def test_adjust_technology_mapping() -> None:
     energy_raw = get_raw_technology_mapping("energy")
     energy_adj = adjust_technology_mapping("energy")
 
@@ -115,7 +115,7 @@ def test_adjust_technology_mapping():
     assert "weo" in materials_adj.reg_diff_source.unique()
 
 
-def test_apply_regional_differentiation():
+def test_apply_regional_differentiation() -> None:
     # Assert that the regional differentiation is applied correctly
     # for the energy module
     config = Config()

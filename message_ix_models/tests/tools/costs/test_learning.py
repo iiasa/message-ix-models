@@ -9,7 +9,7 @@ from message_ix_models.tools.costs.regional_differentiation import (
 )
 
 
-def test_get_cost_reduction_data():
+def test_get_cost_reduction_data() -> None:
     # Assert that the energy module is present
     cost_red_energy = get_cost_reduction_data(module="energy")
 
@@ -45,7 +45,7 @@ def test_get_cost_reduction_data():
     assert cost_red_materials.cost_reduction.max() <= 1
 
 
-def test_get_technology_learning_scenarios_data():
+def test_get_technology_learning_scenarios_data() -> None:
     energy = get_technology_learning_scenarios_data(base_year=2021, module="energy")
     materials = get_technology_learning_scenarios_data(
         base_year=2021, module="materials"
@@ -61,7 +61,7 @@ def test_get_technology_learning_scenarios_data():
     assert bool(all(i in materials.scenario.unique() for i in scens)) is True
 
 
-def test_project_ref_region_inv_costs_using_learning_rates():
+def test_project_ref_region_inv_costs_using_learning_rates() -> None:
     # TODO Parametrize this test
     c0 = Config(base_year=2021)
     r12_energy_reg_diff = apply_regional_differentiation(c0)

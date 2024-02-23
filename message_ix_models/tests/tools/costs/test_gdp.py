@@ -16,7 +16,7 @@ from message_ix_models.tools.costs.regional_differentiation import (
     (process_raw_ssp_data,),
 )
 @pytest.mark.parametrize("node", ("R11", "R12"))
-def test_process_raw_ssp_data(test_context, func, node):
+def test_process_raw_ssp_data(test_context, func, node) -> None:
     # Set the "regions" value on the context (only affects process_raw_ssp_data1)
     test_context.model.regions = node
 
@@ -56,7 +56,7 @@ def test_process_raw_ssp_data(test_context, func, node):
 
 
 @pytest.mark.parametrize("module", ("energy", "materials"))
-def test_adjust_cost_ratios_with_gdp(test_context, module):
+def test_adjust_cost_ratios_with_gdp(test_context, module) -> None:
     # Set parameters
     test_context.model.regions = "R12"
 
