@@ -1,4 +1,5 @@
 from itertools import product
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,9 @@ from message_ix_models.tools.costs.regional_differentiation import (
     apply_regional_differentiation,
 )
 from message_ix_models.tools.costs.splines import apply_splines_to_convergence
+
+if TYPE_CHECKING:
+    from .config import Config
 
 
 class projections:
@@ -645,18 +649,7 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
     return iamc_inv, iamc_fix
 
 
-def create_cost_projections(
-    node,
-    ref_region,
-    base_year,
-    module,
-    method,
-    scenario_version,
-    scenario,
-    convergence_year,
-    fom_rate,
-    format,
-):
+def create_cost_projections(config: "Config") -> projections:
     """Get investment and fixed cost projections
 
     This is the main function to get investment and fixed cost projections. \
@@ -695,83 +688,51 @@ def create_cost_projections(
         Object containing investment and fixed cost projections
 
     """
-    # Change node selection to upper case
-    node_up = node.upper()
+    # Validate configuration
+    config.check()
 
-    # Check if node selection is valid
-    if node_up not in ["R11", "R12", "R20"]:
-        return "Please select a valid spatial resolution: R11, R12, or R20"
-    else:
-        # Set default values for input arguments
-        # If specified node is R11, then use R11_NAM as the reference region
-        # If specified node is R12, then use R12_NAM as the reference region
-        # If specified node is R20, then use R20_NAM as the reference region
-        # However, if a reference region is specified, then use that instead
-        if ref_region is None:
-            if node_up == "R11":
-                ref_region = "R11_NAM"
-            if node_up == "R12":
-                ref_region = "R12_NAM"
-            if node_up == "R20":
-                ref_region = "R20_NAM"
-        elif ref_region is not None:
-            ref_region = ref_region.upper()
+    # Display configuration using the default __repr__ provided by @dataclass
+    print(f"Selected configuration: {config!r}")
 
-        # Print final selection of regions, reference regions, and base year
-        print("Selected module: " + module)
-        print("Selected node: " + node_up)
-        print("Selected reference region: " + ref_region)
-        print("Selected base year: " + str(base_year))
-        print("Selected method: " + method)
-        print("Selected fixed O&M rate: " + str(fom_rate))
-        print("Selected format: " + format)
-
-        # If method is learning, then use the learning method
-        if method == "learning":
-            df_costs = create_projections_learning(
-                in_node=node_up,
-                in_ref_region=ref_region,
-                in_base_year=base_year,
-                in_module=module,
-                in_scenario=scenario,
-            )
-
-        # If method is GDP, then use the GDP method
-        if method == "gdp":
-            df_costs = create_projections_gdp(
-                in_node=node_up,
-                in_ref_region=ref_region,
-                in_base_year=base_year,
-                in_module=module,
-                in_scenario=scenario,
-                in_scenario_version=scenario_version,
-            )
-
+    # If method is learning, then use the learning method
+    if config.method == "learning":
+        df_costs = create_projections_learning(
+            in_node=config.node,
+            in_ref_region=config.ref_region,
+            in_base_year=config.base_year,
+            in_module=config.module,
+            in_scenario=config.scenario,
+        )
+    elif config.method == "gdp":  # If method is GDP, then use the GDP method
+        df_costs = create_projections_gdp(
+            in_node=config.node,
+            in_ref_region=config.ref_region,
+            in_base_year=config.base_year,
+            in_module=config.module,
+            in_scenario=config.scenario,
+            in_scenario_version=config.scenario_version,
+        )
+    elif config.method == "convergence":
         # If method is convergence, then use the convergence method
-        if method == "convergence":
-            df_costs = create_projections_converge(
-                in_node=node_up,
-                in_ref_region=ref_region,
-                in_base_year=base_year,
-                in_module=module,
-                in_scenario=scenario,
-                in_convergence_year=convergence_year,
-            )
+        df_costs = create_projections_converge(
+            in_node=config.node,
+            in_ref_region=config.ref_region,
+            in_base_year=config.base_year,
+            in_module=config.module,
+            in_scenario=config.scenario,
+            in_convergence_year=config.convergence_year,
+        )
 
-        if format == "message":
-            print("...Creating MESSAGE outputs...")
-            df_inv, df_fom = create_message_outputs(df_costs, fom_rate=fom_rate)
+    if config.format == "message":
+        print("...Creating MESSAGE outputs...")
+        df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
 
-            proj = projections(df_inv, df_fom)
-            return proj
+        return projections(df_inv, df_fom)
+    elif config.format == "iamc":
+        print("...Creating MESSAGE outputs first...")
+        df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
 
-        if format == "iamc":
-            print("...Creating MESSAGE outputs first...")
-            df_inv, df_fom = create_message_outputs(df_costs, fom_rate=fom_rate)
+        print("...Creating IAMC format outputs...")
+        df_inv_iamc, df_fom_iamc = create_iamc_outputs(df_inv, df_fom)
 
-            print("...Creating IAMC format outputs...")
-            df_inv_iamc, df_fom_iamc = create_iamc_outputs(df_inv, df_fom)
-
-            proj = projections(df_inv_iamc, df_fom_iamc)
-
-            return proj
+        return projections(df_inv_iamc, df_fom_iamc)
