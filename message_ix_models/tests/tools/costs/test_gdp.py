@@ -11,12 +11,8 @@ from message_ix_models.tools.costs.regional_differentiation import (
 )
 
 
-@pytest.mark.parametrize(
-    "func",
-    (process_raw_ssp_data,),
-)
 @pytest.mark.parametrize("node", ("R11", "R12"))
-def test_process_raw_ssp_data(test_context, func, node) -> None:
+def test_process_raw_ssp_data(test_context, node) -> None:
     # Set the "regions" value on the context (only affects process_raw_ssp_data1)
     test_context.model.regions = node
 
@@ -28,7 +24,9 @@ def test_process_raw_ssp_data(test_context, func, node) -> None:
     # Function runs
     # - context is ignored by process_raw_ssp_data
     # - node is ignored by process_raw_ssp_data1
-    result = func(context=test_context, ref_region=f"{node}_NAM", node=node)
+    result = process_raw_ssp_data(
+        context=test_context, ref_region=f"{node}_NAM", node=node
+    )
 
     # Data have the expected structure
     assert {
@@ -61,13 +59,13 @@ def test_adjust_cost_ratios_with_gdp(test_context, module) -> None:
     test_context.model.regions = "R12"
 
     # Mostly defaults
-    config = Config(scenario="SSP2")
+    config = Config(module=module, scenario="SSP2")
 
     # Get regional differentiation
     region_diff = apply_regional_differentiation(config)
 
     # Get adjusted cost ratios based on GDP per capita
-    result = adjust_cost_ratios_with_gdp(region_diff_df=region_diff, config=config)
+    result = adjust_cost_ratios_with_gdp(region_diff, config)
 
     # Retrieve list of node IDs
     nodes = get_codes(f"node/{test_context.model.regions}")
