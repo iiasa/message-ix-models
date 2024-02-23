@@ -1,4 +1,5 @@
 from itertools import product
+from typing import Mapping
 
 import numpy as np
 import pandas as pd
@@ -8,12 +9,6 @@ from .gdp import adjust_cost_ratios_with_gdp
 from .learning import project_ref_region_inv_costs_using_learning_rates
 from .regional_differentiation import apply_regional_differentiation
 from .splines import apply_splines_to_convergence
-
-
-class projections:
-    def __init__(self, inv_cost, fix_cost):
-        self.inv_cost = inv_cost
-        self.fix_cost = fix_cost
 
 
 def smaller_than(sequence, value):
@@ -566,7 +561,7 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
     return iamc_inv, iamc_fix
 
 
-def create_cost_projections(config: "Config") -> projections:
+def create_cost_projections(config: "Config") -> Mapping[str, pd.DataFrame]:
     """Get investment and fixed cost projections.
 
     This is the main function to get investment and fixed cost projections. It calls the
@@ -589,9 +584,9 @@ def create_cost_projections(config: "Config") -> projections:
 
     Returns
     -------
-    projections
-        Object containing investment and fixed cost projections
-
+    dict
+        Keys are "fix_cost" and "inv_cost", each mapped to a
+        :class:`~.pandas.DataFrame`.
     """
     # Validate configuration
     config.check()
@@ -612,7 +607,7 @@ def create_cost_projections(config: "Config") -> projections:
         print("...Creating MESSAGE outputs...")
         df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
 
-        return projections(df_inv, df_fom)
+        return {"inv_cost": df_inv, "fix_cost": df_fom}
     elif config.format == "iamc":
         print("...Creating MESSAGE outputs first...")
         df_inv, df_fom = create_message_outputs(df_costs, fom_rate=config.fom_rate)
@@ -620,4 +615,4 @@ def create_cost_projections(config: "Config") -> projections:
         print("...Creating IAMC format outputs...")
         df_inv_iamc, df_fom_iamc = create_iamc_outputs(df_inv, df_fom)
 
-        return projections(df_inv_iamc, df_fom_iamc)
+        return {"inv_cost": df_inv_iamc, "fix_cost": df_fom_iamc}

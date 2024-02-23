@@ -2,13 +2,13 @@ from message_ix_models.tools.costs.config import Config
 from message_ix_models.tools.costs.projections import create_cost_projections
 
 
-def test_create_cost_projections():
+def test_create_cost_projections() -> None:
     cfg = Config(node="R11", scenario="SSP2")
 
     energy_gdp_r11_message = create_cost_projections(cfg)
 
-    msg_inv = energy_gdp_r11_message.inv_cost
-    msg_fix = energy_gdp_r11_message.fix_cost
+    msg_inv = energy_gdp_r11_message["inv_cost"]
+    msg_fix = energy_gdp_r11_message["fix_cost"]
 
     # Assert that all R11 regions are present in both inv and fix
     reg_r11 = [
@@ -44,8 +44,8 @@ def test_create_cost_projections():
 
     materials_converge_r12_iamc = create_cost_projections(cfg)
 
-    iamc_inv = materials_converge_r12_iamc.inv_cost
-    iamc_fix = materials_converge_r12_iamc.fix_cost
+    iamc_inv = materials_converge_r12_iamc["inv_cost"]
+    iamc_fix = materials_converge_r12_iamc["fix_cost"]
 
     # Assert that all R12 regions are present in both inv and fix
     reg_r12 = [

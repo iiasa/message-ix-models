@@ -11,7 +11,7 @@ from message_ix_models.tools.costs.regional_differentiation import (
 from message_ix_models.tools.costs.splines import apply_splines_to_convergence
 
 
-def test_apply_splines_to_convergence():
+def test_apply_splines_to_convergence() -> None:
     # Get results for energy module
     config = Config()
     energy_r12_reg = apply_regional_differentiation(config)
