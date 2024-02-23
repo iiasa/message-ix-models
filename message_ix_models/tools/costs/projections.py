@@ -37,9 +37,7 @@ def larger_than(sequence, value):
     return [item for item in sequence if item > value]
 
 
-def create_projections_learning(
-    in_module, in_node, in_ref_region, in_base_year, in_scenario
-):
+def create_projections_learning(config: "Config"):
     """Create cost projections using the learning method
 
     Parameters
@@ -68,7 +66,7 @@ def create_projections_learning(
         - inv_cost: investment cost
         - fix_cost: fixed operating and maintenance cost
     """
-    print("Selected scenario: " + in_scenario)
+    print(f"Selected scenario: {config.scenario}")
     print(
         "For the learning method, only the SSP scenario(s) itself \
             needs to be specified. \
@@ -77,32 +75,30 @@ def create_projections_learning(
 
     # If no scenario is specified, do not filter for scenario
     # If it specified, then filter as below:
-    if in_scenario is not None:
-        if in_scenario == "all":
-            scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-        else:
-            scen = in_scenario.upper()
-
-    # Repeating to avoid linting error
-    scen = scen
+    if config.scenario == "all":
+        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
+    elif config.scenario is not None:
+        scen = [config.scenario.upper()]
+    else:
+        scen = [None]
 
     print("...Calculating regional differentiation in base year+region...")
     df_region_diff = apply_regional_differentiation(
-        module=in_module,
-        node=in_node,
-        ref_region=in_ref_region,
+        module=config.module,
+        node=config.node,
+        ref_region=config.ref_region,
     )
 
     print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
         regional_diff_df=df_region_diff,
-        module=in_module,
-        ref_region=in_ref_region,
-        base_year=in_base_year,
+        module=config.module,
+        ref_region=config.ref_region,
+        base_year=config.base_year,
     )
 
-    if in_scenario is not None:
-        df_ref_reg_learning = df_ref_reg_learning.query("scenario == @scen")
+    if scen:
+        df_ref_reg_learning = df_ref_reg_learning.query("scenario in @scen")
 
     df_costs = (
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
@@ -133,9 +129,7 @@ def create_projections_learning(
     return df_costs
 
 
-def create_projections_gdp(
-    in_node, in_ref_region, in_base_year, in_module, in_scenario, in_scenario_version
-):
+def create_projections_gdp(config: "Config"):
     """Create cost projections using the GDP method
 
     Parameters
@@ -167,61 +161,60 @@ def create_projections_gdp(
         - fix_cost: fixed operating and maintenance cost
     """
     # Print selection of scenario version and scenario
-    print("Selected scenario: " + in_scenario)
-    print("Selected scenario version: " + in_scenario_version)
+    print(f"Selected scenario: {config.scenario}")
+    print(f"Selected scenario version: {config.scenario_version}")
 
     # If no scenario is specified, do not filter for scenario
     # If it specified, then filter as below:
-    if in_scenario is not None:
-        if in_scenario == "all":
-            scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-        else:
-            scen = in_scenario.upper()
+    if config.scenario == "all":
+        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
+    elif config.scenario is not None:
+        scen = [config.scenario.upper()]
+    else:
+        scen = [None]
 
     # If no scenario version is specified, do not filter for scenario version
     # If it specified, then filter as below:
-    if in_scenario_version is not None:
-        if in_scenario_version == "all":
-            scen_vers = ["Review (2023)", "Previous (2013)"]
-        elif in_scenario_version == "updated":
-            scen_vers = ["Review (2023)"]
-        elif in_scenario_version == "original":
-            scen_vers = ["Previous (2013)"]
-
-    # Repeating to avoid linting error
-    scen = scen
-    scen_vers = scen_vers
+    if config.scenario_version == "all":  # NB this does not appear in Config
+        scen_vers = ["Review (2023)", "Previous (2013)"]
+    elif config.scenario_version == "updated":
+        scen_vers = ["Review (2023)"]
+    elif config.scenario_version == "original":
+        scen_vers = ["Previous (2013)"]
+    else:
+        scen_vers = []
 
     print("...Calculating regional differentiation in base year+region...")
     df_region_diff = apply_regional_differentiation(
-        module=in_module,
-        node=in_node,
-        ref_region=in_ref_region,
+        module=config.module,
+        node=config.node,
+        ref_region=config.ref_region,
     )
 
     print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
         regional_diff_df=df_region_diff,
-        ref_region=in_ref_region,
-        base_year=in_base_year,
-        module=in_module,
+        ref_region=config.ref_region,
+        base_year=config.base_year,
+        module=config.module,
     )
 
     print("...Adjusting ratios using GDP data...")
     df_adj_cost_ratios = adjust_cost_ratios_with_gdp(
         df_region_diff,
-        node=in_node,
-        ref_region=in_ref_region,
-        scenario=in_scenario,
-        scenario_version=in_scenario_version,
-        base_year=in_base_year,
+        node=config.node,
+        ref_region=config.ref_region,
+        scenario=config.scenario,
+        scenario_version=config.scenario_version,
+        base_year=config.base_year,
     )
 
-    if in_scenario is not None:
-        df_ref_reg_learning = df_ref_reg_learning.query("scenario == @scen")
-        df_adj_cost_ratios = df_adj_cost_ratios.query(
-            "scenario_version == @scen_vers and scenario == @scen"
-        )
+    if scen:
+        df_ref_reg_learning = df_ref_reg_learning.query("scenario in @scen")
+        if scen_vers:
+            df_adj_cost_ratios = df_adj_cost_ratios.query(
+                "scenario_version in @scen_vers and scenario in @scen"
+            )
 
     df_costs = (
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
@@ -254,9 +247,7 @@ def create_projections_gdp(
     return df_costs
 
 
-def create_projections_converge(
-    in_node, in_ref_region, in_base_year, in_module, in_scenario, in_convergence_year
-):
+def create_projections_converge(config: "Config"):
     """Create cost projections using the convergence method
 
     Parameters
@@ -287,8 +278,8 @@ def create_projections_converge(
         - inv_cost: investment cost
         - fix_cost: fixed operating and maintenance cost
     """
-    print("Selected scenario: " + in_scenario)
-    print("Selected convergence year: " + str(in_convergence_year))
+    print(f"Selected scenario: {config.scenario}")
+    print(f"Selected convergence year: {config.convergence_year}")
     print(
         "For the convergence method, only the SSP scenario(s) itself \
         needs to be specified. \
@@ -297,32 +288,30 @@ def create_projections_converge(
 
     # If no scenario is specified, do not filter for scenario
     # If it specified, then filter as below:
-    if in_scenario is not None:
-        if in_scenario == "all":
-            scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
-        else:
-            scen = in_scenario.upper()
-
-    # Repeating to avoid linting error
-    scen = scen
+    if config.scenario == "all":
+        scen = ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]
+    elif config.scenario is not None:
+        scen = [config.scenario.upper()]
+    else:
+        scen = []
 
     print("...Calculating regional differentiation in base year+region...")
     df_region_diff = apply_regional_differentiation(
-        module=in_module,
-        node=in_node,
-        ref_region=in_ref_region,
+        module=config.module,
+        node=config.node,
+        ref_region=config.ref_region,
     )
 
     print("...Applying learning rates to reference region...")
     df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
         regional_diff_df=df_region_diff,
-        ref_region=in_ref_region,
-        base_year=in_base_year,
-        module=in_module,
+        ref_region=config.ref_region,
+        base_year=config.base_year,
+        module=config.module,
     )
 
-    if in_scenario is not None:
-        df_ref_reg_learning = df_ref_reg_learning.query("scenario == @scen")
+    if scen:
+        df_ref_reg_learning = df_ref_reg_learning.query("scenario in @scen")
 
     df_pre_costs = (
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
@@ -331,7 +320,7 @@ def create_projections_converge(
                 x.year <= FIRST_MODEL_YEAR,
                 x.reg_cost_base_year,
                 np.where(
-                    x.year < in_convergence_year,
+                    x.year < config.convergence_year,
                     x.inv_cost_ref_region_learning * x.reg_cost_ratio,
                     x.inv_cost_ref_region_learning,
                 ),
@@ -344,7 +333,7 @@ def create_projections_converge(
     df_splines = apply_splines_to_convergence(
         df_pre_costs,
         column_name="inv_cost_converge",
-        convergence_year=in_convergence_year,
+        convergence_year=config.convergence_year,
     )
 
     df_costs = (
@@ -694,34 +683,14 @@ def create_cost_projections(config: "Config") -> projections:
     # Display configuration using the default __repr__ provided by @dataclass
     print(f"Selected configuration: {config!r}")
 
-    # If method is learning, then use the learning method
-    if config.method == "learning":
-        df_costs = create_projections_learning(
-            in_node=config.node,
-            in_ref_region=config.ref_region,
-            in_base_year=config.base_year,
-            in_module=config.module,
-            in_scenario=config.scenario,
-        )
-    elif config.method == "gdp":  # If method is GDP, then use the GDP method
-        df_costs = create_projections_gdp(
-            in_node=config.node,
-            in_ref_region=config.ref_region,
-            in_base_year=config.base_year,
-            in_module=config.module,
-            in_scenario=config.scenario,
-            in_scenario_version=config.scenario_version,
-        )
-    elif config.method == "convergence":
-        # If method is convergence, then use the convergence method
-        df_costs = create_projections_converge(
-            in_node=config.node,
-            in_ref_region=config.ref_region,
-            in_base_year=config.base_year,
-            in_module=config.module,
-            in_scenario=config.scenario,
-            in_convergence_year=config.convergence_year,
-        )
+    # Select function according to `config.method`
+    func = {
+        "convergence": create_projections_converge,
+        "gdp": create_projections_gdp,
+        "learning": create_projections_learning,
+    }[config.method]
+
+    df_costs = func(config)
 
     if config.format == "message":
         print("...Creating MESSAGE outputs...")
