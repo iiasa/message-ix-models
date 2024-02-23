@@ -70,8 +70,8 @@ def create_projections_learning(config: "Config"):
     -------
     df_costs : pd.DataFrame
         Dataframe containing the cost projections with the columns:
-        - scenario_version: scenario version (for learning method, \
-            only "Not applicable")
+        - scenario_version: scenario version (for learning method, only
+          "Not applicable")
         - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - message_technology: technology name
         - region: region name
@@ -144,8 +144,8 @@ def create_projections_gdp(config: "Config"):
     -------
     df_costs : pd.DataFrame
         Dataframe containing the cost projections with the columns:
-        - scenario_version: scenario version (for gdp method, \
-            either "Review (2023)" or "Previous (2013)"
+        - scenario_version: scenario version (for gdp method, either "Review (2023)" or
+          "Previous (2013)"
         - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - message_technology: technology name
         - region: region name
@@ -228,8 +228,8 @@ def create_projections_converge(config: "Config"):
     -------
     df_costs : pd.DataFrame
         Dataframe containing the cost projections with the columns:
-        - scenario_version: scenario version (for convergence method, \
-            only "Not applicable")
+        - scenario_version: scenario version (for convergence method, only "Not
+          applicable")
         - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - message_technology: technology name
         - region: region name
@@ -310,8 +310,8 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
     Parameters
     ----------
     df_projections : pd.DataFrame
-        Dataframe containing the cost projections for each technology. \
-            Output of func:`create_cost_projections`.
+        Dataframe containing the cost projections for each technology.
+        Output of func:`create_cost_projections`.
     fom_rate : float
         Rate of increase/decrease of fixed operating and maintenance costs.
 
@@ -494,11 +494,11 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
     Parameters
     ----------
     msg_inv : pd.DataFrame
-        Dataframe containing investment costs in MESSAGEix format. \
-            Output of func:`create_message_outputs`.
+        Dataframe containing investment costs in MESSAGEix format.
+        Output of func:`create_message_outputs`.
     msg_fix : pd.DataFrame
-        Dataframe containing fixed operating and maintenance costs in MESSAGEix \
-            format. Output of func:`create_message_outputs`.
+        Dataframe containing fixed operating and maintenance costs in MESSAGEix format.
+        Output of func:`create_message_outputs`.
 
     Returns
     -------
@@ -580,24 +580,23 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
 def create_cost_projections(config: "Config") -> projections:
     """Get investment and fixed cost projections
 
-    This is the main function to get investment and fixed cost projections. \
-        It calls the other functions in this module, and returns the \
-        projections in the specified format.
+    This is the main function to get investment and fixed cost projections. It calls the
+    other functions in this module, and returns the projections in the specified format.
 
     Parameters
     ----------
     node : str, optional
         Spatial resolution, by default "r12". Options are "r11", "r12", and "r20"
     ref_region : str, optional
-        Reference region, by default R12_NAM for R12, R11_NAM for R11, and \
-            R20_NAM for R20
+        Reference region, by default R12_NAM for R12, R11_NAM for R11, and R20_NAM for
+        R20.
     base_year : int, optional
         Base year, by default BASE_YEAR specified in the config file
     module : str, optional
         Module to use, by default "base". Options are "base" and "materials"
     method : str, optional
-        Method to use, by default "gdp". Options are "learning", "gdp", \
-            and "convergence"
+        Method to use, by default "gdp". Options are "learning", "gdp", and
+        "convergence".
     scenario_version : str, optional
         Scenario version, by default "updated". Options are "updated" and "original"
     scenario : str, optional
@@ -605,8 +604,8 @@ def create_cost_projections(config: "Config") -> projections:
     convergence_year : int, optional
         Year to converge costs to, by default 2050
     fom_rate : float, optional
-        Rate of increase/decrease of fixed operating and maintenance costs, \
-            by default 0.025
+        Rate of increase/decrease of fixed operating and maintenance costs, by default
+        0.025.
     format : str, optional
         Format of output, by default "message". Options are "message" and "iamc"
 

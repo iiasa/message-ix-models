@@ -17,8 +17,8 @@ from .regional_differentiation import get_raw_technology_mapping, subset_materia
 def get_cost_reduction_data(module) -> pd.DataFrame:
     """Get cost reduction data
 
-    Raw data on cost reduction in 2100 for technologies are read from \
-        :file:`data/[module]/cost_reduction_[module].csv`.
+    Raw data on cost reduction in 2100 for technologies are read from
+    :file:`data/[module]/cost_reduction_[module].csv`.
 
     Parameters
     ----------
@@ -30,8 +30,8 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     pandas.DataFrame
         DataFrame with columns:
         - message_technology: name of technology in MESSAGEix
-        - learning_rate: the learning rate (either very_low, low, medium, \
-            high, or very_high)
+        - learning_rate: the learning rate (either very_low, low, medium, high, or
+          very_high)
         - cost_reduction: cost reduction in 2100 (%)
     """
 
@@ -125,16 +125,16 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
     """Read in technology first year and cost reduction scenarios
 
-    Raw data on technology first year and learning scenarios are read from \
-        :file:`data/costs/[module]/first_year_[module]`.
-    The first year the technology is available in MESSAGEix is adjusted to \
-        be the base year if the original first year is before the base year.
+    Raw data on technology first year and learning scenarios are read from
+    :file:`data/costs/[module]/first_year_[module]`. The first year the technology is
+    available in MESSAGEix is adjusted to be the base year if the original first year is
+    before the base year.
 
-    Raw data on cost reduction scenarios are read from \
-        :file:`data/costs/[module]/scenarios_reduction_[module].csv`.
+    Raw data on cost reduction scenarios are read from
+    :file:`data/costs/[module]/scenarios_reduction_[module].csv`.
 
-    Assumptions are made for the materials module for technologies' \
-        cost reduction scenarios that are not given.
+    Assumptions are made for the materials module for technologies' cost reduction
+    scenarios that are not given.
 
     Parameters
     ----------
@@ -149,10 +149,9 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
         DataFrame with columns:
         - message_technology: name of technology in MESSAGEix
         - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
-        - first_technology_year: first year the technology is available in \
-            MESSAGEix
-        - learning_rate: the learning rate (either very_low, low, medium, \
-            high, or very_high)
+        - first_technology_year: first year the technology is available in MESSAGEix.
+        - learning_rate: the learning rate (either very_low, low, medium, high, or
+          very_high)
     """
 
     if module == "energy":
@@ -299,9 +298,8 @@ def project_ref_region_inv_costs_using_learning_rates(
 ) -> pd.DataFrame:
     """Project investment costs using learning rates for reference region
 
-    This function uses the learning rates for each technology under each \
-        scenario to project the capital costs for each technology in the \
-        reference region.
+    This function uses the learning rates for each technology under each scenario to
+    project the capital costs for each technology in the reference region.
 
     Parameters
     ----------
@@ -321,11 +319,9 @@ def project_ref_region_inv_costs_using_learning_rates(
         - message_technology: name of technology in MESSAGEix
         - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - reference_region: reference region
-        - first_technology_year: first year the technology is available in \
-            MESSAGEix
+        - first_technology_year: first year the technology is available in MESSAGEix.
         - year: year
-        - inv_cost_ref_region_learning: investment cost in reference region \
-            in year
+        - inv_cost_ref_region_learning: investment cost in reference region in year.
     """
 
     # Get cost reduction data

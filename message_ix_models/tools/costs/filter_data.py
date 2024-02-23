@@ -38,9 +38,9 @@ def compress_ssp_data():
 def subset_ssp_phase_1_data():
     """Read in SSP Phase 1 Review data and only keep data with variables of interest.
 
-    The reason for this function is because the complete data file is quite large
-    and takes too long to read in the module. This is not an integral part of \
-    the module, only a fix during the development and exploration phase.
+    The reason for this function is because the complete data file is quite large and
+    takes too long to read in the module. This is not an integral part of the module,
+    only a fix during the development and exploration phase.
 
     Returns
     -------
