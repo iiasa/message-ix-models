@@ -5,10 +5,11 @@ from typing import Literal, Mapping
 
 import numpy as np
 import pandas as pd
+from iam_units import registry
 
 from message_ix_models.util import package_data_path
 
-from .config import BASE_YEAR, CONVERSION_2021_TO_2005_USD, Config
+from .config import BASE_YEAR, Config
 
 log = logging.getLogger(__name__)
 
@@ -83,6 +84,9 @@ def get_weo_data() -> pd.DataFrame:
         "iea", "WEO_2022_PG_Assumptions_STEPSandNZE_Scenario.xlsb"
     )
 
+    # Retrieve conversion factor
+    conversion_factor = registry("1.0 USD_2021").to("USD_2005").magnitude  # noqa: F841
+
     # Loop through Excel sheets to read in data and process:
     # - Convert to long format
     # - Only keep investment costs
@@ -118,7 +122,7 @@ def get_weo_data() -> pd.DataFrame:
                 axis=1,
             )
             .replace({"value": "n.a."}, np.nan)
-            .assign(value=lambda x: x.value * CONVERSION_2021_TO_2005_USD)
+            .eval("value = value * @conversion_factor")
         )
 
         dfs_cost.append(df)
