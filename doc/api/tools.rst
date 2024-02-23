@@ -107,21 +107,30 @@ World Bank structures (:mod:`.tools.wb`)
    :members:
 
 
+.. currentmodule:: message_ix_models.tools.costs
+
 Technoeconomic investment and fixed O&M costs projection (:mod:`.tools.costs`)
 ==============================================================================
 
-:mod:`.tools.costs` contains functions for projection investment and fixed costs for technologies in MESSAGEix.
+:mod:`.tools.costs` contains functions for projection of investment and fixed costs for technologies in MESSAGEix.
+:func:`.create_cost_projections` is the top-level entry point.
+This function in turns calls the other functions in the module in the correct order, according to settings stored on a :class:`.costs.Config` object.
 
-The main function to use is :func:`.create_cost_projections`, which calls the other functions in the module in the correct order.
-The default settings for the function are contained in the config file: :file:`tools/costs/config.py`.
+.. autosummary::
 
-The general breakdown of the module is as follows:
+   Config
+   create_cost_projections
 
-1. :mod:`tools.costs.regional_differentiation` calculates the regional differentiation of costs for technologies.
-2. :mod:`tools.costs.learning` projects the costs of technologies in a reference region with only a cost reduction rate applied.
-3. :mod:`tools.costs.gdp` adjusts the regional differentiation of costs for technologies based on the GDP per capita of the region.
-4. :mod:`tools.costs.splines` applies a polynomial regression (degrees = 3) to each technology's projected costs in the reference region and applies a spline after a convergence year.
-5. :mod:`tools.costs.projections` combines all the above steps and returns a class object with the projected costs for each technology in each region.
+The other submodules implement the supporting methods, calculations, and data handling:
+
+1. :mod:`.tools.costs.regional_differentiation` calculates the regional differentiation of costs for technologies.
+2. :mod:`.tools.costs.learning` projects the costs of technologies in a reference region with only a cost reduction rate applied.
+3. :mod:`.tools.costs.gdp` adjusts the regional differentiation of costs for technologies based on the GDP per capita of the region.
+4. :mod:`.tools.costs.splines` applies a polynomial regression (degrees = 3) to each technology's projected costs in the reference region and applies a spline after a convergence year.
+5. :mod:`.tools.costs.projections` combines all the above steps and returns the projected costs for each technology in each region.
+
+.. automodule:: message_ix_models.tools.costs
+   :members:
 
 .. currentmodule:: message_ix_models.tools.costs.regional_differentiation
 
@@ -185,7 +194,7 @@ Spline costs after convergence (:mod:`.tools.costs.splines`)
       apply_splines_to_convergence
 
 
-.. currentmodule:: message_ix_models.tools.costs.projections 
+.. currentmodule:: message_ix_models.tools.costs.projections
 
 Projection of costs given input parameters (:mod:`.tools.costs.projections`)
 ----------------------------------------------------------------------------
@@ -200,4 +209,3 @@ Projection of costs given input parameters (:mod:`.tools.costs.projections`)
       create_projections_converge
       create_message_outputs
       create_iamc_outputs
-      create_cost_projections

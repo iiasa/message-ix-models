@@ -305,12 +305,11 @@ def project_ref_region_inv_costs_using_learning_rates(
     ----------
     regional_diff_df : pandas.DataFrame
         Dataframe output from :func:`get_weo_region_differentiated_costs`
-    ref_region : str, optional
-        The reference region, by default None (defaults set in function)
-    base_year : int, optional
-        The base year, by default set to global BASE_YEAR
-    module : str
-        Model module
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.module`, and
+        :attr:`~.Config.ref_region`.
 
     Returns
     -------

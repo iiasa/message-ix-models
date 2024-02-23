@@ -51,20 +51,17 @@ def _maybe_query_scenario_version(df: pd.DataFrame, config: "Config") -> pd.Data
 
 
 def create_projections_learning(config: "Config"):
-    """Create cost projections using the learning method
+    """Create cost projections using the learning method.
 
     Parameters
     ----------
-    in_module : str
-        Module to use.
-    in_node : str
-        Spatial resolution.
-    in_ref_region : str
-        Reference region.
-    in_base_year : int
-        Base year.
-    in_scenario : str
-        Scenario to use.
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.module`,
+        :attr:`~.Config.node`,
+        :attr:`~.Config.ref_region`, and
+        :attr:`~.Config.scenario`.
 
     Returns
     -------
@@ -123,22 +120,18 @@ def create_projections_learning(config: "Config"):
 
 
 def create_projections_gdp(config: "Config"):
-    """Create cost projections using the GDP method
+    """Create cost projections using the GDP method.
 
     Parameters
     ----------
-    in_node : str
-        Spatial resolution.
-    in_ref_region : str
-        Reference region.
-    in_base_year : int
-        Base year.
-    in_module : str
-        Module to use.
-    in_scenario : str
-        Scenario to use.
-    in_scenario_version : str
-        Scenario version to use.
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.module`,
+        :attr:`~.Config.node`,
+        :attr:`~.Config.ref_region`,
+        :attr:`~.Config.scenario`, and
+        :attr:`~.Config.scenario_version`.
 
     Returns
     -------
@@ -207,22 +200,18 @@ def create_projections_gdp(config: "Config"):
 
 
 def create_projections_converge(config: "Config"):
-    """Create cost projections using the convergence method
+    """Create cost projections using the convergence method.
 
     Parameters
     ----------
-    - in_node : str
-        Spatial resolution.
-    - in_ref_region : str
-        Reference region.
-    - in_base_year : int
-        Base year.
-    - in_module : str
-        Module to use.
-    - in_scenario : str
-        Scenario to use.
-    - in_convergence_year : int
-        Year to converge costs to.
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.convergence_year`,
+        :attr:`~.Config.module`,
+        :attr:`~.Config.node`,
+        :attr:`~.Config.ref_region`, and
+        :attr:`~.Config.scenario`.
 
     Returns
     -------
@@ -313,7 +302,7 @@ def create_message_outputs(df_projections: pd.DataFrame, fom_rate: float):
         Dataframe containing the cost projections for each technology.
         Output of func:`create_cost_projections`.
     fom_rate : float
-        Rate of increase/decrease of fixed operating and maintenance costs.
+        See :attr:`.Config.fom_rate`.
 
     Returns
     -------
@@ -578,36 +567,25 @@ def create_iamc_outputs(msg_inv: pd.DataFrame, msg_fix: pd.DataFrame):
 
 
 def create_cost_projections(config: "Config") -> projections:
-    """Get investment and fixed cost projections
+    """Get investment and fixed cost projections.
 
     This is the main function to get investment and fixed cost projections. It calls the
     other functions in this module, and returns the projections in the specified format.
 
     Parameters
     ----------
-    node : str, optional
-        Spatial resolution, by default "r12". Options are "r11", "r12", and "r20"
-    ref_region : str, optional
-        Reference region, by default R12_NAM for R12, R11_NAM for R11, and R20_NAM for
-        R20.
-    base_year : int, optional
-        Base year, by default BASE_YEAR specified in the config file
-    module : str, optional
-        Module to use, by default "base". Options are "base" and "materials"
-    method : str, optional
-        Method to use, by default "gdp". Options are "learning", "gdp", and
-        "convergence".
-    scenario_version : str, optional
-        Scenario version, by default "updated". Options are "updated" and "original"
-    scenario : str, optional
-        Scenario, by default "all"
-    convergence_year : int, optional
-        Year to converge costs to, by default 2050
-    fom_rate : float, optional
-        Rate of increase/decrease of fixed operating and maintenance costs, by default
-        0.025.
-    format : str, optional
-        Format of output, by default "message". Options are "message" and "iamc"
+    config : .Config
+        The function responds to, or passes on to other functions, the fields:
+        :attr:`~.Config.base_year`,
+        :attr:`~.Config.convergence_year`,
+        :attr:`~.Config.fom_rate`,
+        :attr:`~.Config.format`,
+        :attr:`~.Config.method`,
+        :attr:`~.Config.module`,
+        :attr:`~.Config.node`,
+        :attr:`~.Config.ref_region`,
+        :attr:`~.Config.scenario`, and
+        :attr:`~.Config.scenario_version`.
 
     Returns
     -------

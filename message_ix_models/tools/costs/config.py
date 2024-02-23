@@ -38,13 +38,13 @@ class Config:
     #: Rate of increase/decrease of fixed operating and maintenance costs.
     fom_rate: float = 0.025
 
-    #: Format of output. One of:
+    #: Format of output from :func:`.create_cost_projections`. One of:
     #:
     #: - "iamc": IAMC time series data structure.
     #: - "message": :mod:`message_ix` parameter data.
     format: Literal["iamc", "message"] = "message"
 
-    #: Spatial resolution
+    #: Node code list / spatial resolution to use.
     node: Literal["R11", "R12", "R20"] = "R12"
 
     #: Projection method; one of:
@@ -57,16 +57,17 @@ class Config:
     #: Model variant to prepare data for.
     module: Literal["energy", "materials"] = "energy"
 
-    #: Reference region; default "{node}_NAM".
+    #: Reference region; default "{node}_NAM" for a given :attr:`.node`.
     ref_region: Optional[str] = None
 
     #: Set of SSPs referenced by :attr:`scenario`. One of:
     #:
     #: - "original": :obj:`SSP_2017`
     #: - "updated": :obj:`SSP_2024`
-    scenario_version: Literal["original", "updated"] = "updated"
+    #: - "all": both of the above.
+    scenario_version: Literal["original", "updated", "all"] = "updated"
 
-    #: Scenario(s) for which to create data.
+    #: Scenario(s) for which to create data. "all" implies the remaining values.
     scenario: Literal["all", "LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "all"
 
     def __post_init__(self):
