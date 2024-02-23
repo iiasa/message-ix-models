@@ -5,7 +5,7 @@ import pandas as pd
 
 from message_ix_models.util import package_data_path
 
-from .config import BASE_YEAR, CONVERSION_2021_TO_2005_USD
+from .config import BASE_YEAR, CONVERSION_2021_TO_2005_USD, Config
 
 # Dict of each R11 region matched with a WEO region
 DICT_WEO_R11 = {
@@ -648,7 +648,7 @@ def get_intratec_regional_differentiation(node, ref_region) -> pd.DataFrame:
 # If reg_diff_source is "intratec", then use Intratec data
 # If reg_diff_source is "none", then assume no regional differentiation
 # and use the reference region cost as the cost across all regions
-def apply_regional_differentiation(module, node, ref_region) -> pd.DataFrame:
+def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
     """Apply regional differentiation depending on mapping source
 
     Parameters
@@ -674,25 +674,9 @@ def apply_regional_differentiation(module, node, ref_region) -> pd.DataFrame:
         - reg_cost_ratio: regional cost ratio relative to reference region
         - fix_ratio: ratio of fixed O&M costs to investment costs
     """
-
-    # Set default values for input arguments
-    # If specified node is R11, then use R11_NAM as the reference region
-    # If specified node is R12, then use R12_NAM as the reference region
-    # If specified node is R20, then use R20_NAM as the reference region
-    # However, if a reference region is specified, then use that instead
-    if ref_region is None:
-        if node.upper() == "R11":
-            ref_region = "R11_NAM"
-        if node.upper() == "R12":
-            ref_region = "R12_NAM"
-        if node.upper() == "R20":
-            ref_region = "R20_NAM"
-    else:
-        ref_region = ref_region
-
-    df_map = adjust_technology_mapping(module)
-    df_weo = get_weo_regional_differentiation(node, ref_region)
-    df_intratec = get_intratec_regional_differentiation(node, ref_region)
+    df_map = adjust_technology_mapping(config.module)
+    df_weo = get_weo_regional_differentiation(config.node, config.ref_region)
+    df_intratec = get_intratec_regional_differentiation(config.node, config.ref_region)
 
     # Filter for reg_diff_source == "energy" or "weo"
     # Then merge with output of get_weo_regional_differentiation

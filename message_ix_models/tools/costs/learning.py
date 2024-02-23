@@ -3,7 +3,13 @@ import pandas as pd
 
 from message_ix_models.util import package_data_path
 
-from .config import FIRST_MODEL_YEAR, LAST_MODEL_YEAR, PRE_LAST_YEAR_RATE, TIME_STEPS
+from .config import (
+    FIRST_MODEL_YEAR,
+    LAST_MODEL_YEAR,
+    PRE_LAST_YEAR_RATE,
+    TIME_STEPS,
+    Config,
+)
 from .regional_differentiation import get_raw_technology_mapping, subset_materials_map
 
 
@@ -289,10 +295,7 @@ def get_technology_learning_scenarios_data(base_year, module) -> pd.DataFrame:
 
 # Function to project reference region investment cost using learning rates
 def project_ref_region_inv_costs_using_learning_rates(
-    regional_diff_df: pd.DataFrame,
-    ref_region,
-    base_year,
-    module,
+    regional_diff_df: pd.DataFrame, config: Config
 ) -> pd.DataFrame:
     """Project investment costs using learning rates for reference region
 
@@ -326,10 +329,12 @@ def project_ref_region_inv_costs_using_learning_rates(
     """
 
     # Get cost reduction data
-    df_cost_reduction = get_cost_reduction_data(module)
+    df_cost_reduction = get_cost_reduction_data(config.module)
 
     # Get learning rates data
-    df_learning = get_technology_learning_scenarios_data(base_year, module)
+    df_learning = get_technology_learning_scenarios_data(
+        config.base_year, config.module
+    )
 
     # Merge cost reduction data with learning rates data
     df_learning_reduction = df_learning.merge(
@@ -339,15 +344,15 @@ def project_ref_region_inv_costs_using_learning_rates(
     # Filter for reference region, then merge with learning scenarios and discount rates
     # Calculate cost in reference region in 2100
     df_ref = (
-        regional_diff_df.query("region == @ref_region")
+        regional_diff_df.query("region == @config.ref_region")
         .merge(df_learning_reduction, on="message_technology")
         .assign(
             cost_region_2100=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
             b=lambda x: (1 - PRE_LAST_YEAR_RATE) * x.cost_region_2100,
-            r=lambda x: (1 / (LAST_MODEL_YEAR - base_year))
+            r=lambda x: (1 / (LAST_MODEL_YEAR - config.base_year))
             * np.log((x.cost_region_2100 - x.b) / (x.reg_cost_base_year - x.b)),
-            reference_region=ref_region,
+            reference_region=config.ref_region,
         )
     )
 

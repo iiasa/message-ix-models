@@ -1,7 +1,7 @@
 import pytest
 
 from message_ix_models.model.structure import get_codes
-from message_ix_models.tools.costs.config import BASE_YEAR
+from message_ix_models.tools.costs import Config
 from message_ix_models.tools.costs.gdp import (
     adjust_cost_ratios_with_gdp,
     process_raw_ssp_data,
@@ -58,26 +58,19 @@ def test_process_raw_ssp_data(test_context, func, node):
 @pytest.mark.parametrize("module", ("energy", "materials"))
 def test_adjust_cost_ratios_with_gdp(test_context, module):
     # Set parameters
-    test_context.model.regions = sel_node = "R12"
-    sel_ref_region = "R12_NAM"
+    test_context.model.regions = "R12"
+
+    # Mostly defaults
+    config = Config(scenario="SSP2")
 
     # Get regional differentiation
-    region_diff = apply_regional_differentiation(
-        module=module, node=sel_node, ref_region=sel_ref_region
-    )
+    region_diff = apply_regional_differentiation(config)
 
     # Get adjusted cost ratios based on GDP per capita
-    result = adjust_cost_ratios_with_gdp(
-        region_diff_df=region_diff,
-        node=sel_node,
-        ref_region=sel_ref_region,
-        scenario="SSP2",
-        scenario_version="updated",
-        base_year=BASE_YEAR,
-    )
+    result = adjust_cost_ratios_with_gdp(region_diff_df=region_diff, config=config)
 
     # Retrieve list of node IDs
-    nodes = get_codes(f"node/{sel_node}")
+    nodes = get_codes(f"node/{test_context.model.regions}")
     # Convert to string
     regions = set(map(str, nodes[nodes.index("World")].child))
 
@@ -89,5 +82,5 @@ def test_adjust_cost_ratios_with_gdp(test_context, module):
 
     # Assert that all cost ratios for reference region R12_NAM are equal to 1
     assert all(
-        result.query("region == @sel_ref_region").reg_cost_ratio_adj.values == 1.0
+        result.query("region == @config.ref_region").reg_cost_ratio_adj.values == 1.0
     )
