@@ -1,8 +1,10 @@
 import pytest
 from message_ix import make_df
 
+from message_ix_models import testing
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.tools.costs import Config, create_cost_projections
+from message_ix_models.util import add_par_data
 
 
 @pytest.mark.parametrize(
@@ -31,6 +33,12 @@ from message_ix_models.tools.costs import Config, create_cost_projections
                     "Capital Cost|Electricity|furnace_foil_steel",
                 }
             },
+        ),
+        pytest.param(
+            Config(node="R20"),
+            set(),
+            set(),
+            marks=pytest.mark.xfail(raises=NotImplementedError),
         ),
     ),
 )
@@ -62,3 +70,42 @@ def test_create_cost_projections(config, exp_fix, exp_inv) -> None:
     # Expected values are in inv_cost columns
     for column, values in exp_inv.items():
         assert values <= set(inv_cost[column].unique())
+
+
+@pytest.mark.parametrize(
+    "node",
+    (
+        "R11",
+        "R12",
+        pytest.param("R20", marks=pytest.mark.xfail(raises=NotImplementedError)),
+    ),
+)
+def test_bare_res(request, test_context, node):
+    """Costs data can be added to the bare RES and solved."""
+
+    # Set the regions on the Context
+    test_context.model.regions = node
+    # Matching setting on .costs.Config
+    config = Config(node=node, scenario="SSP2")
+    # Create the bare RES
+    scenario = testing.bare_res(request, test_context)
+    test_context.set_scenario(scenario)
+
+    # Data can be created
+    data = create_cost_projections(config)
+
+    # The extra "scenario" and "scenario_version" columns are ignored by
+    # message_ix/ixmp. If they contain multiple values, these are treated as duplicate
+    # rows, and only the last value for the combination of other dimensions is applied.
+    #
+    # Check that there are no duplicates when calling create_cost_projections() with a
+    # single scenario.
+    for df in data.values():
+        assert 1 == len(df.scenario.unique()) == len(df.scenario_version.unique())
+
+    # Data can be added to the scenario
+    with scenario.transact("Add technoeconomic cost data"):
+        add_par_data(scenario, data)
+
+    # Scenario solves with the added data
+    scenario.solve()
