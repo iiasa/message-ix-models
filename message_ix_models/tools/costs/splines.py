@@ -1,4 +1,3 @@
-from itertools import product
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -45,22 +44,10 @@ def apply_splines_to_convergence(
         - inv_cost_splines: costs after applying the splines
     """
 
-    # un_vers = df.scenario_version.unique()
-    un_ssp = df_reg.scenario.unique()
-    un_tech = df_reg.message_technology.unique()
-    un_reg = df_reg.region.unique()
-
-    data_reg = []
-    for i, j, k in product(un_ssp, un_tech, un_reg):
-        tech = df_reg.query(
-            "scenario == @i and message_technology == @j and region == @k"
-        ).query("year == @config.y0 or year >= @config.convergence_year")
-
-        if tech.size == 0:
-            continue
-
-        x = tech.year.values
-        y = tech[[column_name]].values
+    def _poly_coeffs(df: pd.DataFrame) -> pd.Series:
+        """Return polynomial coefficients fit on `df`."""
+        x = df.year.values
+        y = df[[column_name]].values
 
         # polynomial regression model
         poly = PolynomialFeatures(degree=3, include_bias=False)
@@ -69,34 +56,26 @@ def apply_splines_to_convergence(
         poly_reg_model = LinearRegression()
         poly_reg_model.fit(poly_features, y)
 
-        data = [
-            [
-                i,
-                j,
-                k,
-                poly_reg_model.coef_[0][0],
-                poly_reg_model.coef_[0][1],
-                poly_reg_model.coef_[0][2],
-                poly_reg_model.intercept_[0],
-            ]
-        ]
-
-        df = pd.DataFrame(
-            data,
-            columns=[
-                "scenario",
-                "message_technology",
-                "region",
-                "beta_1",
-                "beta_2",
-                "beta_3",
-                "intercept",
-            ],
+        return pd.Series(
+            {
+                "beta_1": poly_reg_model.coef_[0][0],
+                "beta_2": poly_reg_model.coef_[0][1],
+                "beta_3": poly_reg_model.coef_[0][2],
+                "intercept": poly_reg_model.intercept_[0],
+            }
         )
 
-        data_reg.append(df)
+    # - Subset data from y₀ or the convergence year or later
+    # - Group by scenario, technology, and region (preserve keys).
+    # - Compute polynomial coefficients.
+    # - Reset group keys from index to columns.
+    df_out = (
+        df_reg.query("year == @config.y0 or year >= @config.convergence_year")
+        .groupby(["scenario", "message_technology", "region"], group_keys=True)
+        .apply(_poly_coeffs)
+        .reset_index()
+    )
 
-    df_out = pd.concat(data_reg).reset_index(drop=1)
     df_wide = (
         df_reg.reindex(
             [
