@@ -3,13 +3,7 @@ import pandas as pd
 
 from message_ix_models.util import package_data_path
 
-from .config import (
-    FIRST_MODEL_YEAR,
-    LAST_MODEL_YEAR,
-    PRE_LAST_YEAR_RATE,
-    TIME_STEPS,
-    Config,
-)
+from .config import Config
 from .regional_differentiation import get_raw_technology_mapping, subset_materials_map
 
 
@@ -286,6 +280,8 @@ def project_ref_region_inv_costs_using_learning_rates(
     This function uses the learning rates for each technology under each scenario to
     project the capital costs for each technology in the reference region.
 
+    The returned data have the list of periods given by :attr:`.Config.seq_years`.
+
     Parameters
     ----------
     regional_diff_df : pandas.DataFrame
@@ -330,19 +326,17 @@ def project_ref_region_inv_costs_using_learning_rates(
         .assign(
             cost_region_2100=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
-            b=lambda x: (1 - PRE_LAST_YEAR_RATE) * x.cost_region_2100,
-            r=lambda x: (1 / (LAST_MODEL_YEAR - config.base_year))
+            b=lambda x: (1 - config.pre_last_year_rate) * x.cost_region_2100,
+            r=lambda x: (1 / (config.final_year - config.base_year))
             * np.log((x.cost_region_2100 - x.b) / (x.reg_cost_base_year - x.b)),
             reference_region=config.ref_region,
         )
     )
 
-    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + TIME_STEPS, TIME_STEPS))
-
-    for y in seq_years:
+    for y in config.seq_years:
         df_ref = df_ref.assign(
             ycur=lambda x: np.where(
-                y <= FIRST_MODEL_YEAR,
+                y <= config.y0,
                 x.reg_cost_base_year,
                 (x.reg_cost_base_year - x.b)
                 * np.exp(x.r * (y - x.first_technology_year))

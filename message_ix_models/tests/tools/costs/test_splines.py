@@ -4,7 +4,6 @@ import pytest
 
 from message_ix_models.model.structure import get_codelist
 from message_ix_models.tools.costs import Config
-from message_ix_models.tools.costs.config import FIRST_MODEL_YEAR
 from message_ix_models.tools.costs.learning import (
     project_ref_region_inv_costs_using_learning_rates,
 )
@@ -35,7 +34,7 @@ def test_apply_splines_to_convergence(module, techs) -> None:
         reg_diff.merge(inv_cost, on="message_technology")
         .assign(
             inv_cost_converge=lambda x: np.where(
-                x.year <= FIRST_MODEL_YEAR,
+                x.year <= config.y0,
                 x.reg_cost_base_year,
                 np.where(
                     x.year < config.convergence_year,
@@ -49,7 +48,7 @@ def test_apply_splines_to_convergence(module, techs) -> None:
 
     # Apply splines to convergence costs
     splines = apply_splines_to_convergence(
-        pre_costs, column_name="inv_cost_converge", convergence_year=2050
+        pre_costs, column_name="inv_cost_converge", config=config
     )
 
     # Retrieve list of node IDs for children of the "World" node; convert to string
