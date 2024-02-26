@@ -5,9 +5,7 @@ from typing import Mapping, Tuple
 import numpy as np
 import pandas as pd
 
-from message_ix_models.model.structure import get_codes
-
-from .config import FIRST_MODEL_YEAR, Config
+from .config import Config
 from .gdp import adjust_cost_ratios_with_gdp
 from .learning import project_ref_region_inv_costs_using_learning_rates
 from .regional_differentiation import apply_regional_differentiation
@@ -94,7 +92,7 @@ def create_projections_learning(config: "Config"):
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
         .assign(
             inv_cost=lambda x: np.where(
-                x.year <= FIRST_MODEL_YEAR,
+                x.year <= config.y0,
                 x.reg_cost_base_year,
                 x.inv_cost_ref_region_learning * x.reg_cost_ratio,
             ),
@@ -175,7 +173,7 @@ def create_projections_gdp(config: "Config"):
         )
         .assign(
             inv_cost=lambda x: np.where(
-                x.year <= FIRST_MODEL_YEAR,
+                x.year <= config.y0,
                 x.reg_cost_base_year,
                 x.inv_cost_ref_region_learning * x.reg_cost_ratio_adj,
             ),
@@ -245,7 +243,7 @@ def create_projections_converge(config: "Config"):
         df_region_diff.merge(df_ref_reg_learning, on="message_technology")
         .assign(
             inv_cost_converge=lambda x: np.where(
-                x.year <= FIRST_MODEL_YEAR,
+                x.year <= config.y0,
                 x.reg_cost_base_year,
                 np.where(
                     x.year < config.convergence_year,
@@ -259,9 +257,7 @@ def create_projections_converge(config: "Config"):
 
     log.info("Apply splines to converge")
     df_splines = apply_splines_to_convergence(
-        df_pre_costs,
-        column_name="inv_cost_converge",
-        convergence_year=config.convergence_year,
+        df_pre_costs, column_name="inv_cost_converge", config=config
     )
 
     df_costs = (
@@ -298,13 +294,17 @@ def create_message_outputs(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Create MESSAGEix outputs for investment and fixed costs.
 
+    The returned data have the model periods given by :attr:`.Config.Y`.
+
     Parameters
     ----------
     df_projections : pd.DataFrame
         Dataframe containing the cost projections for each technology.
         Output of func:`create_cost_projections`.
-    fom_rate : float
-        See :attr:`.Config.fom_rate`.
+    config : .Config
+        The function responds to the fields
+        :attr:`~.Config.fom_rate` and
+        :attr:`~.Config.Y`.
 
     Returns
     -------
@@ -318,18 +318,13 @@ def create_message_outputs(
 
     y_base = config.base_year
 
-    # Identify years from one of the common MESSAGEix-GLOBIOM lists
-    # TODO Make this configurable, by reading Context.model.years
-    years = get_codes("year/B")
-    seq_years = sorted(map(lambda y: int(y.id), years))
-
     df_prod = pd.DataFrame(
         product(
             df_projections.scenario_version.unique(),
             df_projections.scenario.unique(),
             df_projections.message_technology.unique(),
             df_projections.region.unique(),
-            seq_years,
+            config.seq_years,
         ),
         columns=[
             "scenario_version",
@@ -431,7 +426,9 @@ def create_message_outputs(
         df_merge.copy()
         .drop(columns=["inv_cost"])
         .assign(key=1)
-        .merge(pd.DataFrame(data={"year_act": seq_years}).assign(key=1), on="key")
+        .merge(
+            pd.DataFrame(data={"year_act": config.seq_years}).assign(key=1), on="key"
+        )
         .drop(columns=["key"])
         .query("year_act >= year_vtg")
         .assign(

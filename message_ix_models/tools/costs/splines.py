@@ -1,18 +1,18 @@
 from itertools import product
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
-from .config import FIRST_MODEL_YEAR, LAST_MODEL_YEAR, TIME_STEPS
+if TYPE_CHECKING:
+    from .config import Config
 
 
 # Function to apply polynomial regression to convergence costs
 def apply_splines_to_convergence(
-    df_reg: pd.DataFrame,
-    column_name: str,
-    convergence_year: int,
+    df_reg: pd.DataFrame, column_name: str, config: "Config"
 ) -> pd.DataFrame:
     """Apply splines to convergence projections
 
@@ -20,14 +20,18 @@ def apply_splines_to_convergence(
     the coefficients for the regression model. The regression model is then used to
     project the convergence costs for the years after the convergence year.
 
+    The returned data have the list of periods given by :attr:`.Config.seq_years`.
+
     Parameters
     ----------
     df_reg : pd.DataFrame
         Dataframe containing the convergence costs
     column_name : str
         Name of the column containing the convergence costs
-    convergence_year : int
-        See :attr:`.Config.convergence_year`.
+    config : .Config
+        The code responds to:
+        :attr:`~.Config.convergence_year`, and
+        :attr:`~.Config.y0`.
 
     Returns
     -------
@@ -50,7 +54,7 @@ def apply_splines_to_convergence(
     for i, j, k in product(un_ssp, un_tech, un_reg):
         tech = df_reg.query(
             "scenario == @i and message_technology == @j and region == @k"
-        ).query("year == @FIRST_MODEL_YEAR or year >= @convergence_year")
+        ).query("year == @config.y0 or year >= @config.convergence_year")
 
         if tech.size == 0:
             continue
@@ -108,9 +112,7 @@ def apply_splines_to_convergence(
         .merge(df_out, on=["scenario", "message_technology", "region"])
     )
 
-    seq_years = list(range(FIRST_MODEL_YEAR, LAST_MODEL_YEAR + TIME_STEPS, TIME_STEPS))
-
-    for y in seq_years:
+    for y in config.seq_years:
         df_wide = df_wide.assign(
             ycur=lambda x: np.where(
                 y <= x.first_technology_year,
