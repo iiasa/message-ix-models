@@ -7,12 +7,11 @@ from .config import Config
 from .regional_differentiation import get_raw_technology_mapping, subset_materials_map
 
 
-# Function to get GEA based cost reduction data
 def get_cost_reduction_data(module) -> pd.DataFrame:
-    """Get cost reduction data
+    """Get cost reduction data from file.
 
     Raw data on cost reduction in 2100 for technologies are read from
-    :file:`data/[module]/cost_reduction_[module].csv`.
+    :file:`data/[module]/cost_reduction_[module].csv`, based on GEA data.
 
     Parameters
     ----------
@@ -114,9 +113,8 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     return all_rates
 
 
-# Function to get technology learning scenarios data
 def get_technology_learning_scenarios_data(base_year: int, module: str) -> pd.DataFrame:
-    """Read in technology first year and cost reduction scenarios
+    """Read in technology first year and cost reduction scenarios.
 
     Raw data on technology first year and learning scenarios are read from
     :file:`data/costs/[module]/first_year_[module]`. The first year the technology is
@@ -271,11 +269,10 @@ def get_technology_learning_scenarios_data(base_year: int, module: str) -> pd.Da
     return all_scens
 
 
-# Function to project reference region investment cost using learning rates
 def project_ref_region_inv_costs_using_learning_rates(
     regional_diff_df: pd.DataFrame, config: Config
 ) -> pd.DataFrame:
-    """Project investment costs using learning rates for reference region.
+    """Project investment costs for the reference region using learning rates.
 
     This function uses the learning rates for each technology under each scenario to
     project the capital costs for each technology in the reference region.

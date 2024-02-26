@@ -25,7 +25,25 @@ def default_ref_region(node: str, ref_region: Optional[str] = None) -> str:
 def process_raw_ssp_data(
     context: Context, ref_region: Optional[str] = None, *, node: Optional[str] = None
 ) -> pd.DataFrame:
-    """Equivalent to :func:`.process_raw_ssp_data`, using :mod:`.exo_data`."""
+    """Retrieve SSP data as required for :mod:`.tools.costs`.
+
+    This method uses :class:`.SSPOriginal` and :class:`.SSPUpdate` via
+    :func:`.exo_data.prepare_computer`
+
+    Returns
+    -------
+    pandas.DataFrame
+        with the columns:
+
+        - scenario_version
+        - scenario
+        - region
+        - year
+        - total_gdp
+        - total_population
+        - gdp_ppp_per_capita
+        - gdp_ratio_reg_to_reference
+    """
     from collections import defaultdict
 
     import xarray as xr
@@ -114,9 +132,8 @@ def process_raw_ssp_data(
     return c.get(k_result)
 
 
-# Function to calculate adjusted region-differentiated cost ratios
 def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
-    """Calculate adjusted region-differentiated cost ratios
+    """Calculate adjusted region-differentiated cost ratios.
 
     This function takes in a dataframe with region-differentiated cost ratios and
     calculates adjusted region-differentiated cost ratios using GDP per capita data.

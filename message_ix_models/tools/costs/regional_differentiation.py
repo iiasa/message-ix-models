@@ -29,7 +29,6 @@ def get_weo_region_map(regions: str) -> Mapping[str, str]:
     return {n.id: str(n.get_annotation(id="iea-weo-region").text) for n in nodes}
 
 
-# Function to read in raw IEA WEO data
 def get_weo_data() -> pd.DataFrame:
     """Read in raw WEO investment/capital costs and O&M costs data.
 
@@ -152,9 +151,8 @@ def get_weo_data() -> pd.DataFrame:
     return df_merged
 
 
-# Function to read in intratec data
 def get_intratec_data() -> pd.DataFrame:
-    """Read in raw Intratec data
+    """Read in raw Intratec data.
 
     Returns
     -------
@@ -221,10 +219,8 @@ def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.Dat
     return pd.read_csv(path, comment="#")
 
 
-# Function to subset materials mapping for only
-# technologies that have sufficient data
 def subset_materials_map(raw_map):
-    """Subset materials mapping for only technologies that have sufficient data
+    """Subset materials mapping for only technologies that have sufficient data.
 
     Parameters
     ----------
@@ -240,8 +236,7 @@ def subset_materials_map(raw_map):
         - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO)
         - reg_diff_technology: technology name in the data source
         - base_year_reference_region_cost: manually specified base year cost
-        of the technology in the reference region (in 2005 USD)
-
+          of the technology in the reference region (in 2005 USD)
     """
     # - Remove materials technologies that are missing both a reg_diff_source and a
     # base_year_reference_region_cost
@@ -258,9 +253,8 @@ def subset_materials_map(raw_map):
     return sub_map
 
 
-# Function to adjust technology mapping
 def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
-    """Adjust technology mapping based on sources and assumptions
+    """Adjust technology mapping based on sources and assumptions.
 
     Parameters
     ----------
@@ -272,12 +266,12 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
     pandas.DataFrame
         DataFrame with columns:
 
-        - message_technology: MESSAGEix technology name
+        - message_technology: MESSAGEix technology name.
         - reg_diff_source: data source to map MESSAGEix technology to (e.g., WEO,
-          Intratec)
-        - reg_diff_technology: technology name in the data source
+          Intratec).
+        - reg_diff_technology: technology name in the data source.
         - base_year_reference_region_cost: manually specified base year cost
-        of the technology in the reference region (in 2005 USD)
+          of the technology in the reference region (in 2005 USD).
     """
 
     raw_map_energy = get_raw_technology_mapping("energy")
@@ -416,13 +410,13 @@ def adjust_technology_mapping(module: Literal["energy", "materials"]) -> pd.Data
         return materials_all
 
 
-# Function to get WEO regional differentiation
-# Inputs: node, ref_region
-# The function should take the WEO data, map it to MESSAGEix regions
-# using the node and ref_region,
-# and then calculate cost ratios for each region relative to the reference region
 def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
     """Apply WEO regional differentiation.
+
+    1. Retrieve WEO data using :func:`.get_weo_data`.
+    2. Map data to MESSAGEix-GLOBIOM regions according to the :attr:`.Config.node`.
+    3. Calculate cost ratios for each region relative to the
+       :attr:`~.Config.ref_region`.
 
     Parameters
     ----------
@@ -535,13 +529,13 @@ def get_weo_regional_differentiation(config: "Config") -> pd.DataFrame:
     return df_cost_ratios
 
 
-# Function to get Intratec regional differentiation
-# Inputs: node, ref_region
-# The function should take the Intratec data, map it to MESSAGEix regions using
-# the node and ref_region,
-# and then calculate cost ratios for each region relative to the reference region
 def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.DataFrame:
     """Apply Intratec regional differentiation.
+
+    1. Retrieve Intratec data using :func:`.get_intratec_data`.
+    2. Map data to MESSAGEix-GLOBIOM regions according to the :attr:`.Config.node`.
+    3. Calculate cost ratios for each region relative to the
+       :attr:`~.Config.ref_region`.
 
     Parameters
     ----------
@@ -608,14 +602,17 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
     return df_reg_ratios
 
 
-# Function to get regional differentiation
-# Inputs: module, node, ref_region
-# If reg_diff_source is "energy" or "weo", then use WEO data
-# If reg_diff_source is "intratec", then use Intratec data
-# If reg_diff_source is "none", then assume no regional differentiation
-# and use the reference region cost as the cost across all regions
 def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
-    """Apply regional differentiation depending on mapping source
+    """Apply regional differentiation depending on mapping source.
+
+    1. Retrieve an adjusted technology mapping from :func:`.adjust_technology_mapping`.
+    2. Based on the value in the ``reg_diff_source`` column:
+
+       - "energy" or "weo": use WEO data via :func:`.get_weo_regional_differentiation`.
+       - "intratec": use Intratec data via
+         :func:`.get_intratec_regional_differentiation`.
+       - "none": assume no regional differentiation; use the :attr:`~.Config.ref_region`
+         cost as the cost for all regions.
 
     Parameters
     ----------
@@ -636,7 +633,7 @@ def apply_regional_differentiation(config: "Config") -> pd.DataFrame:
         - reg_diff_technology: technology name in the data source
         - region: MESSAGEix region
         - base_year_reference_region_cost: manually specified base year cost
-        of the technology in the reference region (in 2005 USD)
+          of the technology in the reference region (in 2005 USD)
         - reg_cost_ratio: regional cost ratio relative to reference region
         - fix_ratio: ratio of fixed O&M costs to investment costs
     """

@@ -7,7 +7,6 @@ from message_ix_models.util import package_data_path
 log = logging.getLogger(__name__)
 
 
-# Function to compress the SSP data
 def compress_ssp_data() -> None:
     """Save raw SSP data as a compressed csv file.
 
@@ -36,8 +35,6 @@ def compress_ssp_data() -> None:
     )
 
 
-# Function to read in SSP Phase 1 Review data
-# and filter out data for only the variables of interest.
 def subset_ssp_phase_1_data() -> pd.DataFrame:
     """Read in SSP Phase 1 Review data and only keep data with variables of interest.
 
@@ -74,8 +71,8 @@ def subset_ssp_phase_1_data() -> pd.DataFrame:
     return df
 
 
-# Save subsetted SSP data to a csv file in the same location
 def save_subset_ssp_phase_1_data() -> None:
+    """Save subsetted SSP data to a csv file in the same location."""
     log.info("Read in and filter SSP data")
     df = subset_ssp_phase_1_data()
 
