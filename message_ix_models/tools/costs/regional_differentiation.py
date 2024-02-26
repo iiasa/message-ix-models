@@ -567,10 +567,12 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
             .replace({"region": {"R11_CHN": "R11_CPA", "R11_RCPA": np.nan}})
             .dropna()
         )
-    if node.upper() == "R12":
+    elif node.upper() == "R12":
         df_intratec_map = df_intratec.assign(
             region=lambda x: "R12_" + x.intratec_region
         )
+    elif node.upper() == "R20":
+        raise NotImplementedError
 
     # If specified reference region is not in data, then give error
     ref_region = ref_region.upper()
