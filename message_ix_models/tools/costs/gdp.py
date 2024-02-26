@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from genno import KeySeq
 
 from message_ix_models import Context
 
@@ -78,27 +79,28 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
     # Concatenate single-scenario data
     k_pop = Key("pop", dims)
     c.add(k_pop, "concat", *keys["pop"])
-    k_gdp = Key("gdp", dims)
-    c.add(k_gdp, "concat", *keys["gdp"])
+    k_gdp = KeySeq("gdp", dims)
+    c.add(k_gdp.base, "concat", *keys["gdp"])
 
     # Further calculations
 
     # GDP per capita
-    k_gdp_cap = k_gdp + "cap"
-    c.add(k_gdp_cap, "div", k_gdp, k_pop)
+    c.add(k_gdp["cap"], "div", k_gdp.base, k_pop)
 
     # Ratio to reference region value
-    c.add(k_gdp_cap + "indexed", "index_to", k_gdp_cap, quote("n"), quote(ref_region))
+    c.add(
+        k_gdp["indexed"], "index_to", k_gdp["cap"], quote("n"), quote(config.ref_region)
+    )
 
-    def merge(pop, gdp, gdp_cap, gdp_cap_indexed) -> pd.DataFrame:
+    def merge(*dfs: pd.DataFrame) -> pd.DataFrame:
         """Merge data to a single data frame with the expected format."""
         return (
             pd.concat(
                 [
-                    pop.to_series().rename("total_gdp"),
-                    gdp.to_series().rename("total_population"),
-                    gdp_cap.to_series().rename("gdp_ppp_per_capita"),
-                    gdp_cap_indexed.to_series().rename("gdp_ratio_reg_to_reference"),
+                    dfs[0].to_series().rename("total_gdp"),
+                    dfs[1].to_series().rename("total_population"),
+                    dfs[2].to_series().rename("gdp_ppp_per_capita"),
+                    dfs[3].to_series().rename("gdp_ratio_reg_to_reference"),
                 ],
                 axis=1,
             )
@@ -108,11 +110,16 @@ def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
             .assign(scenario_version="2023")
         )
 
-    k_result = "data::pyam"
-    c.add(k_result, merge, k_pop, k_gdp, k_gdp_cap, k_gdp_cap + "indexed")
+    k_result = "data::pandas"
+    c.add(k_result, merge, k_pop, k_gdp.base, k_gdp["cap"], k_gdp["indexed"])
 
-    # log.debug(c.describe(k_result))  # Debug
-    return c.get(k_result)
+    # log.debug(c.describe(k_result))  # DEBUG Show what would be done
+    result = c.get(k_result)
+
+    # Ensure no NaN values in the ratio column
+    assert not result.gdp_ratio_reg_to_reference.isna().any()
+
+    return result
 
 
 def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
