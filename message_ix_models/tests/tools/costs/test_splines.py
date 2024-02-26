@@ -50,6 +50,16 @@ def test_apply_splines_to_convergence(module, techs) -> None:
     splines = apply_splines_to_convergence(
         pre_costs, column_name="inv_cost_converge", config=config
     )
+    assert all(
+        [
+            "scenario",
+            "message_technology",
+            "region",
+            "year",
+            "inv_cost_splines",
+        ]
+        == splines.columns
+    )
 
     # Retrieve list of node IDs for children of the "World" node; convert to string
     regions = set(map(str, get_codelist(f"node/{config.node}")["World"].child))

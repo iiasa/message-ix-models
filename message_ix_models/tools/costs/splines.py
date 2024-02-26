@@ -2,18 +2,16 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
+from numpy.polynomial import Polynomial
 
 if TYPE_CHECKING:
     from .config import Config
 
 
-# Function to apply polynomial regression to convergence costs
 def apply_splines_to_convergence(
     df_reg: pd.DataFrame, column_name: str, config: "Config"
 ) -> pd.DataFrame:
-    """Apply splines to convergence projections
+    """Apply polynomial regression to convergence projections.
 
     This function performs a polynomial regression on the convergence costs and returns
     the coefficients for the regression model. The regression model is then used to
@@ -43,83 +41,43 @@ def apply_splines_to_convergence(
         - year: year
         - inv_cost_splines: costs after applying the splines
     """
+    y_predict = np.array(config.seq_years)
+    y_index = pd.Index(config.seq_years, name="year")
 
-    def _poly_coeffs(df: pd.DataFrame) -> pd.Series:
-        """Return polynomial coefficients fit on `df`."""
-        x = df.year.values
-        y = df[[column_name]].values
+    def _predict(df: pd.DataFrame) -> pd.Series:
+        """Fit a degree-3 polynomial to `df` and predict for :attr:`.seq_years`."""
+        # Fit
+        p = Polynomial.fit(df.year, df[column_name], deg=3)
 
-        # polynomial regression model
-        poly = PolynomialFeatures(degree=3, include_bias=False)
-        poly_features = poly.fit_transform(x.reshape(-1, 1))
+        # - Predict using config.seq_years.
+        # - Assemble a single-column data frame with "year" as the index name.
+        return pd.DataFrame({"inv_cost_splines": p(y_predict)}, index=y_index)
 
-        poly_reg_model = LinearRegression()
-        poly_reg_model.fit(poly_features, y)
+    # Columns for grouping and merging
+    cols = ["scenario", "message_technology", "region"]
 
-        return pd.Series(
-            {
-                "beta_1": poly_reg_model.coef_[0][0],
-                "beta_2": poly_reg_model.coef_[0][1],
-                "beta_3": poly_reg_model.coef_[0][2],
-                "intercept": poly_reg_model.intercept_[0],
-            }
-        )
+    # Columns needed from df_reg
+    other_cols = ["first_technology_year", "reg_cost_base_year"]
 
     # - Subset data from y₀ or the convergence year or later
     # - Group by scenario, technology, and region (preserve keys).
-    # - Compute polynomial coefficients.
+    # - Fit a spline and predict values for all config.seq_years.
     # - Reset group keys from index to columns.
-    df_out = (
+    # - Reattach `df_reg` for first_technology_year and reg_cost_base_year.
+    # - Use the predicted value for periods after first_technology_year; else
+    #   reg_cost_base_year.
+    # - Drop intermediate columns and sort.
+    return (
         df_reg.query("year == @config.y0 or year >= @config.convergence_year")
-        .groupby(["scenario", "message_technology", "region"], group_keys=True)
-        .apply(_poly_coeffs)
+        .groupby(cols[:3], group_keys=True)
+        .apply(_predict)
         .reset_index()
-    )
-
-    df_wide = (
-        df_reg.reindex(
-            [
-                "scenario",
-                "message_technology",
-                "region",
-                "first_technology_year",
-                "reg_cost_base_year",
-            ],
-            axis=1,
-        )
-        .drop_duplicates()
-        .merge(df_out, on=["scenario", "message_technology", "region"])
-    )
-
-    for y in config.seq_years:
-        df_wide = df_wide.assign(
-            ycur=lambda x: np.where(
-                y <= x.first_technology_year,
-                x.reg_cost_base_year,
-                (x.beta_1 * y)
-                + (x.beta_2 * (y**2))
-                + (x.beta_3 * (y**3))
-                + x.intercept,
+        .merge(df_reg[cols + other_cols].drop_duplicates(), on=cols)
+        .assign(
+            inv_cost_splines=lambda df: df.inv_cost_splines.where(
+                df.first_technology_year < df.year, df.reg_cost_base_year
             )
-        ).rename(columns={"ycur": y})
-
-    df_long = df_wide.drop(
-        columns=[
-            "first_technology_year",
-            "beta_1",
-            "beta_2",
-            "beta_3",
-            "intercept",
-            "reg_cost_base_year",
-        ]
-    ).melt(
-        id_vars=[
-            "scenario",
-            "message_technology",
-            "region",
-        ],
-        var_name="year",
-        value_name="inv_cost_splines",
+        )
+        .drop(other_cols, axis=1)
+        .sort_values(cols + ["year"])
     )
-
-    return df_long
