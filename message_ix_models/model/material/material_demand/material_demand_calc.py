@@ -59,7 +59,7 @@ def gompertz(phi, mu, y, baseyear=2020):
     return 1 - np.exp(-phi * np.exp(-mu * (y - baseyear)))
 
 
-def read_timer_pop(datapath, filename, material):
+def read_timer_pop(datapath, material):
     df_population = pd.read_excel(
         f'{datapath}/{material_data[material]["dir"]}{material_data["cement"]["file"]}',
         sheet_name="Timer_POP",
@@ -75,7 +75,7 @@ def read_timer_pop(datapath, filename, material):
     return df_population
 
 
-def read_timer_gdp(datapath, filename, material):
+def read_timer_gdp(datapath, material):
     # Read GDP per capita data
     df_gdp = pd.read_excel(
         f'{datapath}/{material_data[material]["dir"]}{material_data["cement"]["file"]}',
@@ -245,7 +245,7 @@ def read_pop_from_scen(scen):
 
 
 def read_gdp_ppp_from_scen(scen):
-    if len(scen.par("bound_activity_up", filters={{"technology": "GDP_PPP"}})):
+    if len(scen.par("bound_activity_up", filters={"technology": "GDP_PPP"})):
         gdp = scen.par("bound_activity_up", {"technology": "GDP_PPP"})
         gdp = gdp.rename({"value": "gdp_ppp", "year_act": "year"}, axis=1)[
             ["year", "node_loc", "gdp_ppp"]
@@ -266,8 +266,8 @@ def read_gdp_ppp_from_scen(scen):
             right_on=["node", "year"],
         )
         gdp_mer["gdp_ppp"] = gdp_mer["value_y"] * gdp_mer["value_x"]
-        gdp = gdp_mer[["year", "node_loc", "gdp_ppp"]].rename(columns={"node_loc": "region"})
-    gdp = gdp.loc[gdp.year >= 2020]
+        gdp = gdp_mer[["year", "node_loc", "gdp_ppp"]]
+    gdp = gdp.loc[gdp.year >= 2020].rename(columns={"node_loc": "region"})
     return gdp
 
 
@@ -309,7 +309,7 @@ def derive_demand(material, scen, old_gdp=False):
         p0=fitting_dict[material]["initial_guess"],
     )
 
-    # prepare df for applying regression model to project demand
+    # prepare df for applying regression model and project demand
     df_all = pd.merge(df_pop, df_base_demand.drop(columns=["year"]), how="left")
     df_all = pd.merge(df_all, df_gdp[["region", "year", "gdp_ppp"]], how="inner")
     df_all["del_t"] = df_all["year"] - 2010
@@ -322,10 +322,12 @@ def derive_demand(material, scen, old_gdp=False):
     )
     df_all = df_all.rename({"value": "demand.tot.base"}, axis=1)
 
-    # apply regression model
+    # correct base year difference with convergence function
     df_final = project_demand(
         df_all, fitting_dict[material]["phi"], fitting_dict[material]["mu"]
     )
+
+    # format to MESSAGEix standard
     df_final = df_final.rename({"region": "node", "demand_tot": "value"}, axis=1)
     df_final["commodity"] = material
     df_final["level"] = "demand"
