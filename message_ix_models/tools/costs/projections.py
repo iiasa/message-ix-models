@@ -385,6 +385,16 @@ def create_message_outputs(
         .drop_duplicates()
     )
 
+    dtypes = dict(
+        scenario_version=str,
+        scenario=str,
+        node_loc=str,
+        technology=str,
+        unit=str,
+        year_vtg=int,
+        value=float,
+    )
+
     inv = (
         df_merge.copy()
         .assign(unit="USD/kWa")
@@ -407,21 +417,13 @@ def create_message_outputs(
             ],
             axis=1,
         )
-        .assign(
-            scenario_version=lambda x: x.scenario_version.astype("string"),
-            scenario=lambda x: x.scenario.astype("string"),
-            node_loc=lambda x: x.node_loc.astype("string"),
-            technology=lambda x: x.technology.astype("string"),
-            unit=lambda x: x.unit.astype("string"),
-            year_vtg=lambda x: x.year_vtg.astype(int),
-            value=lambda x: x.value.astype(float),
-        )
-        # FIXME Clarify the purpose of these hard-coded periods
-        .query("year_vtg <= 2060 or year_vtg % 10 == 0")
+        .astype(dtypes)
+        .query("year_vtg in @config.Y")
         .reset_index(drop=True)
         .drop_duplicates()
     )
 
+    dtypes.update(year_act=int)
     fom = (
         df_merge.copy()
         .drop(columns=["inv_cost"])
@@ -463,19 +465,8 @@ def create_message_outputs(
             ],
             axis=1,
         )
-        .assign(
-            scenario_version=lambda x: x.scenario_version.astype("string"),
-            scenario=lambda x: x.scenario.astype("string"),
-            node_loc=lambda x: x.node_loc.astype("string"),
-            technology=lambda x: x.technology.astype("string"),
-            unit=lambda x: x.unit.astype("string"),
-            year_vtg=lambda x: x.year_vtg.astype(int),
-            year_act=lambda x: x.year_act.astype(int),
-            value=lambda x: x.value.astype(float),
-        )
-        # FIXME Clarify the purpose of these hard-coded periods
-        .query("year_vtg <= 2060 or year_vtg % 10 == 0")
-        .query("year_act <= 2060 or year_act % 10 == 0")
+        .astype(dtypes)
+        .query("year_act in @config.Y and year_vtg in @config.Y")
         .reset_index(drop=True)
     ).drop_duplicates()
 
