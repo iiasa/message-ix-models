@@ -1,9 +1,7 @@
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import linregress  # type: ignore
 
 from message_ix_models import Context
 
@@ -12,19 +10,7 @@ from .config import Config
 log = logging.getLogger(__name__)
 
 
-def default_ref_region(node: str, ref_region: Optional[str] = None) -> str:
-    """Return a default for the reference region or raise :class:`ValueError`."""
-    result = ref_region or {"R11": "R11_NAM", "R12": "R12_NAM", "R20": "R20_NAM"}.get(
-        node
-    )
-    if result is None:
-        raise ValueError(f"No ref_region supplied, and no default for {node = }")
-    return result
-
-
-def process_raw_ssp_data(
-    context: Context, ref_region: Optional[str] = None, *, node: Optional[str] = None
-) -> pd.DataFrame:
+def process_raw_ssp_data(context: Context, config: Config) -> pd.DataFrame:
     """Retrieve SSP data as required for :mod:`.tools.costs`.
 
     This method uses :class:`.SSPOriginal` and :class:`.SSPUpdate` via
@@ -51,9 +37,6 @@ def process_raw_ssp_data(
 
     from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
     from message_ix_models.tools.exo_data import prepare_computer
-
-    # Set default reference region
-    ref_region = default_ref_region(context.model.regions, ref_region)
 
     # Computer to hold computations
     c = Computer()
@@ -135,13 +118,13 @@ def process_raw_ssp_data(
 def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     """Calculate adjusted region-differentiated cost ratios.
 
-    This function takes in a dataframe with region-differentiated cost ratios and
+    This function takes in a data frame with region-differentiated cost ratios and
     calculates adjusted region-differentiated cost ratios using GDP per capita data.
 
     Parameters
     ----------
     region_diff_df : pandas.DataFrame
-        Output of :func:`apply_regional_differentation`.
+        Output of :func:`apply_regional_differentiation`.
     config : .Config
         The function responds to, or passes on to other functions, the fields:
         :attr:`~.Config.base_year`,
@@ -169,9 +152,15 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
     context = Context.get_instance(-1)
     context.model.regions = config.node
 
+    # - Retrieve GDP from SSP databases and compute and ratios (per capita; versus
+    #   ref_region.
+    # - Keep only data from y₀ onwards.
+    # - Map "scenario_version" strings to the desired output.
+    # - Set the dtype of the "year" column.
+    # - Filter on config.scenario and config.scenario_version, if configured.
     df_gdp = (
-        process_raw_ssp_data(context=context, ref_region=config.ref_region)
-        .query("year >= 2020")
+        process_raw_ssp_data(context, config)
+        .query("year >= @config.y0")
         .drop(columns=["total_gdp", "total_population"])
         .assign(
             scenario_version=lambda x: np.where(
@@ -180,113 +169,65 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
                 "Review (2023)",
             )
         )
-    )
-    df_cost_ratios = region_diff_df.copy()
-
-    # If base year does not exist in GDP data, then use earliest year in GDP data
-    # and give warning
-    base_year = int(config.base_year)
-    if int(base_year) not in df_gdp.year.unique():
-        base_year = int(min(df_gdp.year.unique()))
-        log.info(f"…Using year {base_year} data from GDP")
-
-    # Set default values for input arguments
-
-    # Filter for scenarios and scenario versions
-    df_gdp = df_gdp.pipe(_maybe_query_scenario, config).pipe(
-        _maybe_query_scenario_version, config
+        .astype({"year": int})
+        .pipe(_maybe_query_scenario, config)
+        .pipe(_maybe_query_scenario_version, config)
     )
 
-    gdp_base_year = df_gdp.query("year == @base_year").reindex(
-        ["scenario_version", "scenario", "region", "gdp_ratio_reg_to_reference"], axis=1
-    )
+    # If base year does not exist in GDP data, then use earliest year in GDP data and
+    # give warning
+    base_year = config.base_year
+    if base_year not in df_gdp.year.unique():
+        new_base_year = min(df_gdp.year.unique())
+        log.warning(f"Use year={new_base_year} GDP data as proxy for {base_year}")
+        base_year = new_base_year
 
-    df_gdp_cost = pd.merge(gdp_base_year, df_cost_ratios, on=["region"])
+    def _constrain_cost_ratio(df: pd.DataFrame, base_year):
+        """Constrain "reg_cost_ratio_adj".
 
-    dfs = [
-        x
-        for _, x in df_gdp_cost.groupby(
-            ["scenario_version", "scenario", "message_technology", "region"]
-        )
-    ]
-
-    def indiv_regress_tech_cost_ratio_vs_gdp_ratio(df):
-        if df.iloc[0].region == config.ref_region:
-            df_one = (
-                df.copy()
-                .assign(
-                    slope=np.NaN,
-                    intercept=np.NaN,
-                    rvalue=np.NaN,
-                    pvalue=np.NaN,
-                    stderr=np.NaN,
-                )
-                .reindex(
-                    [
-                        "scenario_version",
-                        "scenario",
-                        "message_technology",
-                        "region",
-                        "slope",
-                        "intercept",
-                        "rvalue",
-                        "pvalue",
-                        "stderr",
-                    ],
-                    axis=1,
+        In cases where gdp_ratio_reg_to_reference is < 1 and reg_cost_ratio_adj > 1 in
+        the base period, ensure reg_cost_ratio_adj(y) <= reg_cost_ratio_adj(base_year)
+        for all future periods y.
+        """
+        ref = df.query("year == @base_year").iloc[0]
+        if ref.gdp_ratio_reg_to_reference < 1 and ref.reg_cost_ratio_adj > 1:
+            return df.assign(
+                reg_cost_ratio_adj=df.reg_cost_ratio_adj.clip(
+                    upper=ref.reg_cost_ratio_adj
                 )
             )
         else:
-            df_one = (
-                df.copy()
-                .assign(gdp_ratio_reg_to_reference=1, reg_cost_ratio=1)
-                ._append(df)
-                .reset_index(drop=1)
-                .groupby(
-                    ["scenario_version", "scenario", "message_technology", "region"]
-                )
-                .apply(
-                    lambda x: pd.Series(
-                        linregress(x["gdp_ratio_reg_to_reference"], x["reg_cost_ratio"])
-                    )
-                )
-                .rename(
-                    columns={
-                        0: "slope",
-                        1: "intercept",
-                        2: "rvalue",
-                        3: "pvalue",
-                        4: "stderr",
-                    }
-                )
-                .reset_index()
-            )
+            return df
 
-        return df_one
-
-    out_reg = pd.Series(dfs).apply(indiv_regress_tech_cost_ratio_vs_gdp_ratio)
-    l_reg = [x for x in out_reg]
-    df_reg = pd.concat(l_reg).reset_index(drop=1)
-
-    df = (
-        df_gdp.merge(df_reg, on=["scenario_version", "scenario", "region"], how="left")
-        .drop(
-            columns=[
-                "rvalue",
-                "pvalue",
-                "stderr",
-            ]
+    #  1. Select base-year GDP data for "gdp_ratio_reg_to_reference".
+    #  2. Drop "year".
+    #  3. Merge `df_region_diff` for "reg_cost_ratio".
+    #  4. Compute slope.
+    #  5. Compute intercept.
+    #  6. Drop "gdp_ratio_reg_to_reference"—because of (1–2), this is the base period
+    #     value only.
+    #  7. Merge `df_gdp` again to re-adds "year" and "gdp_ratio_reg_to_reference" with
+    #     distinct values for each period.
+    #  8. Compute ref_cost_ratio_adj
+    #  9. Fill 1.0 where NaNs occur in (8), i.e. for the reference region.
+    # 10. Group by (sv, s, r, t) and apply _constrain_cost_ratio(), above, to each
+    #     group.
+    # 11. Select the desired columns.
+    return (
+        df_gdp.query("year == @base_year")
+        .drop("year", axis=1)
+        .merge(region_diff_df, on=["region"])
+        .eval("slope = (reg_cost_ratio - 1) / (gdp_ratio_reg_to_reference - 1)")
+        .eval("intercept = 1 - slope")
+        .drop("gdp_ratio_reg_to_reference", axis=1)
+        .merge(df_gdp, on=["scenario_version", "scenario", "region"], how="right")
+        .eval("reg_cost_ratio_adj = slope * gdp_ratio_reg_to_reference + intercept")
+        .fillna({"reg_cost_ratio_adj": 1.0})
+        .groupby(
+            ["scenario_version", "scenario", "region", "message_technology"],
+            group_keys=False,
         )
-        .query("year >= @base_year")
-        .assign(
-            reg_cost_ratio_adj=lambda x: np.where(
-                x.region == config.ref_region,
-                1,
-                x.slope * x.gdp_ratio_reg_to_reference + x.intercept,
-            ),
-            year=lambda x: x.year.astype(int),
-        )
-        .reindex(
+        .apply(_constrain_cost_ratio, base_year)[
             [
                 "scenario_version",
                 "scenario",
@@ -295,46 +236,6 @@ def adjust_cost_ratios_with_gdp(region_diff_df, config: Config):
                 "year",
                 "gdp_ratio_reg_to_reference",
                 "reg_cost_ratio_adj",
-            ],
-            axis=1,
-        )
+            ]
+        ]
     )
-
-    negative_slopes = df.query(
-        "year == 2020 and gdp_ratio_reg_to_reference < 1 and reg_cost_ratio_adj > 1"
-    )
-
-    un_ratios = (
-        negative_slopes.reindex(
-            [
-                "scenario_version",
-                "scenario",
-                "message_technology",
-                "region",
-                "reg_cost_ratio_adj",
-            ],
-            axis=1,
-        )
-        .drop_duplicates()
-        .rename(columns={"reg_cost_ratio_adj": "reg_cost_ratio_2020"})
-        .assign(constrain="yes")
-    )
-
-    df = df.merge(
-        un_ratios,
-        on=["scenario_version", "scenario", "message_technology", "region"],
-        how="left",
-    ).fillna({"constrain": "no"})
-
-    # For cases that need to be constrained,
-    # if the adjusted cost ratio goes above the 2020 cost ratio,
-    # then set the adjusted cost ratio to be equal to the 2020 cost ratio
-    df = df.assign(
-        reg_cost_ratio_adj=lambda x: np.where(
-            (x.constrain == "yes") & (x.reg_cost_ratio_adj > x.reg_cost_ratio_2020),
-            x.reg_cost_ratio_2020,
-            x.reg_cost_ratio_adj,
-        )
-    ).drop(columns=["reg_cost_ratio_2020", "constrain"])
-
-    return df
