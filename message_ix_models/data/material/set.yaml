@@ -50,6 +50,9 @@ common:
     - SO2
     - PM2p5 # Just add there since it is already in Shaohui's data
     - CF4
+    - CO2_industry
+    - CO2_transport
+    - CO2_transformation
 
   year:
     add:
