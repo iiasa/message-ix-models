@@ -119,6 +119,37 @@ class Plot(genno.compat.plotnine.Plot):
         )
 
 
+class CapNewLDV(Plot):
+    # FIXME remove hard-coded units
+    """New LDV capacity [10⁶ vehicle]."""
+
+    basename = "cap-new-t-ldv"
+    inputs = ["historical_new_capacity:nl-t-yv:ldv", "CAP_NEW:nl-t-yv:ldv"]
+    static = Plot.static + [
+        p9.aes(x="yv", y="value", color="t"),
+        p9.geom_vline(xintercept=2020, size=4, color="white"),
+        p9.geom_line(),
+        p9.geom_point(),
+        p9.labs(x="Period", y="", color="LDV technology"),
+    ]
+
+    def generate(self, data0, data1):
+        # - Concatenate data0 (values in "historical_new_capacity" column) and
+        #   data1 (values in "CAP_NEW" column).
+        # - Fill with zeros.
+        # - Compute a "value" column: one or the other.
+        # - Remove some errant values for R12_GLB.
+        #   FIXME Investigate and remove the source
+        data = (
+            pd.concat([data0, data1])
+            .fillna(0)
+            .eval("value = CAP_NEW + historical_new_capacity")
+            .query("nl != 'R12_GLB'")
+        )
+
+        yield from [ggplot for _, ggplot in self.groupby_plot(data, "nl")]
+
+
 class ComparePDT(Plot):
     """Activity.
 
