@@ -9,6 +9,8 @@ import message_ix_models.tools.costs.projections
 from message_data.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data, private_data_path
+
+from message_data.model.material.data_buildings import gen_data_buildings
 from message_data.tools.utilities import (
     calibrate_UE_gr_to_demand,
     calibrate_UE_share_constraints,
@@ -41,7 +43,7 @@ from message_data.model.material.data_ammonia_new import gen_all_NH3_fert
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS_1 = [
-    # gen_data_buildings,
+    gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
     # gen_data_ammonia, ## deprecated module!
@@ -78,9 +80,9 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
             scenario.add_par(par, water_dict[par])
         scenario.commit("add missing water tecs")
 
-    apply_spec(scenario, spec, add_data_2)
-    spec = None
     apply_spec(scenario, spec, add_data_1)  # dry_run=True
+    spec = None
+    apply_spec(scenario, spec, add_data_2)
 
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N

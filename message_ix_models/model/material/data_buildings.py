@@ -1,4 +1,4 @@
-from .data_util import read_sector_data
+from message_data.model.material.data_util import read_sector_data
 
 import numpy as np
 from collections import defaultdict
@@ -6,8 +6,8 @@ import logging
 
 import pandas as pd
 
-from .util import read_config
-from .data_util import read_rel
+from message_data.model.material.util import read_config
+from message_data.model.material.data_util import read_rel
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
@@ -35,7 +35,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
     nodes = s_info.N
 
     # Read the file and filter the given sensitivity case
-    bld_input_raw = pd.read_csv(private_data_path("material", filename))
+    bld_input_raw = pd.read_csv(private_data_path("material", "buildings", filename))
     bld_input_raw = bld_input_raw.loc[bld_input_raw.Sensitivity == case]
 
     bld_input_mat = bld_input_raw[
@@ -193,7 +193,7 @@ def gen_data_buildings(scenario, dry_run=False):
     # List of data frames, to be concatenated together at end
     results = defaultdict(list)
 
-    # For each technology there are differnet input and output combinations
+    # For each technology there are different input and output combinations
     # Iterate over technologies
 
     # allyears = s_info.set['year'] #s_info.Y is only for modeling years
