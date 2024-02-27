@@ -1274,7 +1274,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False):
     map_node_dict = map_node.groupby("node_parent")["node"].apply(list).to_dict()
 
     for index, row in map_agg_pd.iterrows():
-        log.info(f"Processing {row["names"]}")
+        log.info(f"Processing {row['names']}")
         # Aggregates variables as per standard reporting
         report_iam.aggregate(row["names"], components=row["list_cat"], append=True)
 
