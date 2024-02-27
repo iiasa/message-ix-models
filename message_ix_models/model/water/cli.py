@@ -263,7 +263,7 @@ def cooling(context, regions, rcps, rels):
     help="Default running legacy and water (full) otherwise only water, if specified",
 )
 @common_params("output_model")
-def report_cli(context, output_model, sdgs, water=False):
+def report_cli(context: "Context", output_model, sdgs, water=False):
     """function to run the water report_full from cli to the
     scenario defined by the user with --url
 
@@ -276,7 +276,7 @@ def report_cli(context, output_model, sdgs, water=False):
     SDG : Str
         Defines if and what water SDG measures are activated
     """
-    reg = context.regions
+    reg = context.model.regions
     sc = context.get_scenario()
     if water:
         from message_ix_models.model.water.reporting import report

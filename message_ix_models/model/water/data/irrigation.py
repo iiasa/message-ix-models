@@ -36,10 +36,11 @@ def add_irr_structure(context: "Context"):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    if context.type_reg == "country":
-        df_node["region"] = context.map_ISO_c[context.regions]
-    else:
-        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    df_node["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df_node["REGION"].astype(str)
+    )
 
     # Reference to the water configuration
     info = context["water build info"]
@@ -62,6 +63,7 @@ def add_irr_structure(context: "Context"):
         node_loc=df_node["region"],
     ).pipe(broadcast, year_vtg=info.Y)
 
+    # FIXME pd.DataFrames don't have append(), please choose another way!
     inp = inp.append(
         make_df(
             "input",
