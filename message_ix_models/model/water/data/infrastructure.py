@@ -20,66 +20,17 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 
-def add_infrastructure_techs(context: "Context"):
-    """Process water distribution data for a scenario instance.
-    Parameters
-    ----------
-    context : .Context
-    Returns
-    -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
-        Values are data frames ready for :meth:`~.Scenario.add_par`.
-        Years in the data include the model horizon indicated by
-        ``context["water build info"]``, plus the additional year 2010.
-    """
-    # TODO reduce complexity of this function from 18 to 15 or less
-    # Reference to the water configuration
-    info = context["water build info"]
-
-    # define an empty dictionary
-    results = {}
-    sub_time = context.time
-    # load the scenario from context
-    scen = context.get_scenario()
-
-    year_wat = (2010, 2015, *info.Y)
-
-    # first activity year for all water technologies is 2020
-    first_year = scen.firstmodelyear
-
-    # reading basin_delineation
-    FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = package_data_path("water", "delineation", FILE2)
-
-    df_node = pd.read_csv(PATH)
-    # Assigning proper nomenclature
-    df_node["node"] = "B" + df_node["BCU_name"].astype(str)
-    df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    if context.type_reg == "country":
-        df_node["region"] = context.map_ISO_c[context.regions]
-    else:
-        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
-
-    # Reading water distribution mapping from csv
-    path = package_data_path("water", "infrastructure", "water_distribution.xlsx")
-    df = pd.read_excel(path)
-
-    techs = [
-        "urban_t_d",
-        "urban_unconnected",
-        "industry_unconnected",
-        "rural_t_d",
-        "rural_unconnected",
-    ]
-
-    df_non_elec = df[df["incmd"] != "electr"].reset_index()
-    df_dist = df_non_elec[df_non_elec["tec"].isin(techs)]
-    df_non_elec = df_non_elec[~df_non_elec["tec"].isin(techs)]
-    df_elec = df[df["incmd"] == "electr"].reset_index()
-
+def start_creating_input_dataframe(
+    sdg: str,
+    df_node: pd.DataFrame,
+    df_non_elec: pd.DataFrame,
+    df_dist: pd.DataFrame,
+    year_wat: tuple,
+    first_year: int,
+    sub_time,
+) -> pd.DataFrame:
+    """Creates an input pd.DataFrame and adds some data to it."""
     inp_df = pd.DataFrame([])
-
     # Input Dataframe for non elec commodities
     for index, rows in df_non_elec.iterrows():
         inp_df = pd.concat(
@@ -108,10 +59,9 @@ def add_infrastructure_techs(context: "Context"):
                 ),
             ]
         )
-
-    if context.SDG != "baseline":
+    if sdg != "baseline":
         for index, rows in df_dist.iterrows():
-            inp_df = pd.concat(
+            return pd.concat(
                 [
                     inp_df,
                     (
@@ -166,7 +116,7 @@ def add_infrastructure_techs(context: "Context"):
                 ]
             )
 
-            inp_df = inp_df.append(
+            return inp_df.append(
                 (
                     make_df(
                         "input",
@@ -189,6 +139,77 @@ def add_infrastructure_techs(context: "Context"):
                     .pipe(same_time)
                 )
             )
+
+
+def add_infrastructure_techs(context: "Context"):
+    """Process water distribution data for a scenario instance.
+    Parameters
+    ----------
+    context : .Context
+    Returns
+    -------
+    data : dict of (str -> pandas.DataFrame)
+        Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
+        Values are data frames ready for :meth:`~.Scenario.add_par`.
+        Years in the data include the model horizon indicated by
+        ``context["water build info"]``, plus the additional year 2010.
+    """
+    # TODO reduce complexity of this function from 18 to 15 or less
+    # Reference to the water configuration
+    info = context["water build info"]
+
+    # define an empty dictionary
+    results = {}
+    sub_time = context.time
+    # load the scenario from context
+    scen = context.get_scenario()
+
+    year_wat = (2010, 2015, *info.Y)
+
+    # first activity year for all water technologies is 2020
+    first_year = scen.firstmodelyear
+
+    # reading basin_delineation
+    FILE2 = f"basins_by_region_simpl_{context.regions}.csv"
+    PATH = package_data_path("water", "delineation", FILE2)
+
+    df_node = pd.read_csv(PATH)
+    # Assigning proper nomenclature
+    df_node["node"] = "B" + df_node["BCU_name"].astype(str)
+    df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
+    df_node["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df_node["REGION"].astype(str)
+    )
+
+    # Reading water distribution mapping from csv
+    path = package_data_path("water", "infrastructure", "water_distribution.xlsx")
+    df = pd.read_excel(path)
+
+    techs = [
+        "urban_t_d",
+        "urban_unconnected",
+        "industry_unconnected",
+        "rural_t_d",
+        "rural_unconnected",
+    ]
+
+    df_non_elec = df[df["incmd"] != "electr"].reset_index()
+    df_dist = df_non_elec[df_non_elec["tec"].isin(techs)]
+    df_non_elec = df_non_elec[~df_non_elec["tec"].isin(techs)]
+    df_elec = df[df["incmd"] == "electr"].reset_index()
+
+    inp_df = start_creating_input_dataframe(
+        sdg=context.SDG,
+        df_node=df_node,
+        df_non_elec=df_non_elec,
+        df_dist=df_dist,
+        year_wat=year_wat,
+        first_year=first_year,
+        sub_time=sub_time,
+    )
+
     result_dc = defaultdict(list)
 
     for index, rows in df_elec.iterrows():

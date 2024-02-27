@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def map_basin_region_wat(context: "Context"):
     """
-    Calculate share of water avaialbility of basins per each parent region.
+    Calculate share of water availability of basins per each parent region.
 
     The parent region could be global message regions or country
 
@@ -49,11 +49,11 @@ def map_basin_region_wat(context: "Context"):
 
         # Reading data, the data is spatially and temporally aggregated from GHMs
         df_sw["BCU_name"] = df_x["BCU_name"]
-
-        if context.type_reg == "country":
-            df_sw["MSGREG"] = context.map_ISO_c[context.regions]
-        else:
-            df_sw["MSGREG"] = f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
+        df_sw["MSGREG"] = (
+            context.map_ISO_c[context.regions]
+            if context.type_reg == "country"
+            else f"{context.regions}_" + df_sw["BCU_name"].str[-3:]
+        )
 
         df_sw = df_sw.set_index(["MSGREG", "BCU_name"])
 
@@ -139,6 +139,7 @@ def add_water_supply(context: "Context"):
     info = context["water build info"]
     # load the scenario from context
     scen = context.get_scenario()
+    # scen = Scenario(context.get_platform(), **context.core.scenario_info)
 
     # year_wat = (2010, 2015)
     fut_year = info.Y
@@ -159,10 +160,11 @@ def add_water_supply(context: "Context"):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    if context.type_reg == "country":
-        df_node["region"] = context.map_ISO_c[context.regions]
-    else:
-        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    df_node["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df_node["REGION"].astype(str)
+    )
 
     # Storing the energy MESSAGE region names
     node_region = df_node["region"].unique()
@@ -171,10 +173,11 @@ def add_water_supply(context: "Context"):
     FILE1 = f"gw_energy_intensity_depth_{context.regions}.csv"
     PATH1 = package_data_path("water", "availability", FILE1)
     df_gwt = pd.read_csv(PATH1)
-    if context.type_reg == "country":
-        df_gwt["region"] = context.map_ISO_c[context.regions]
-    else:
-        df_gwt["REGION"] = f"{context.regions}_" + df_gwt["REGION"].astype(str)
+    df_gwt["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df_gwt["REGION"].astype(str)
+    )
 
     # reading groundwater energy intensity data
     FILE2 = f"historical_new_cap_gw_sw_km3_year_{context.regions}.csv"
@@ -266,6 +269,7 @@ def add_water_supply(context: "Context"):
             .pipe(same_time)
         )
 
+        # FIXME pd.DataFrames don't have append(), please choose another way!
         # input data frame  for slack technology balancing equality with demands
         inp = inp.append(
             make_df(
