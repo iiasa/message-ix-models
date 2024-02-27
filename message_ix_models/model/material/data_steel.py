@@ -527,18 +527,7 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    demand = derive_steel_demand(scenario)
 
-    df = make_df(
-        parname,
-        level="demand",
-        commodity="steel",
-        value=demand.value,
-        unit="t",
-        year=demand.year,
-        time="year",
-        node=demand.node,
-    )  # .pipe(broadcast, node=nodes)
     df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False)
     results[parname].append(df)
 
