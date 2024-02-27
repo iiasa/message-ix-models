@@ -56,7 +56,7 @@ def aggregate_transport(c: Computer, *keys) -> None:
         c.add(k0 + "transport", "select", k, "t::transport modes 1", sums=True)
 
 
-def select_transport(c: Computer, *keys) -> None:
+def select_transport_techs(c: Computer, *keys) -> None:
     """Selected subsets of of transport technologies."""
     for key in keys:
         c.add(key + "transport all", "select", key, "t::transport all", sums=True)
@@ -164,7 +164,9 @@ def callback(rep: Reporter, context: Context) -> None:
     names = (
         "fix_cost historical_new_capacity input inv_cost var_cost CAP CAP_NEW in out"
     )
-    rep.apply(select_transport, *rep.infer_keys([f"{n}:*" for n in names.split()]))
+    rep.apply(
+        select_transport_techs, *rep.infer_keys([f"{n}:*" for n in names.split()])
+    )
 
     # Add further computations (including conversions to IAMC tables) defined in a file
     rep.configure(path=private_data_path("transport", "report.yaml"))

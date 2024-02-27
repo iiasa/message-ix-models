@@ -239,7 +239,7 @@ def add_structure(c: Computer):
     spec, technologies, t_groups = get_techs(context)
 
     # Lists and subsets
-    c.add("c::transport", quote(spec["add"].set["commodity"]))
+    c.add("c::transport", quote(spec.add.set["commodity"]))
     c.add("t::transport", quote(technologies))
 
     # Create a quantity for broadcasting t to t, c, l
