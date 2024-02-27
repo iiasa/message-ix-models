@@ -196,7 +196,8 @@ def add_structure(c: Computer):
     from ixmp.report import configure
 
     context = c.graph["context"]
-    info = context["transport build info"]
+    info = context["transport build info"]  # Information about the base scenario
+    spec = context["transport spec"]  # Specification for MESSAGEix-Transport structure
 
     # Update RENAME_DIMS with transport-specific concepts/dimensions. This allows to use
     # genno.operator.load_file(…, dims=RENAME_DIMS) in add_exogenous_data()
@@ -218,7 +219,7 @@ def add_structure(c: Computer):
         ("dry_run", lambda c: c.core.dry_run, "context"),
         # Structure
         ("c::transport", quote(info.set["commodity"])),
-        ("cg", quote(info.set["consumer_group"])),
+        ("cg", quote(spec.add.set["consumer_group"])),
         ("indexers:cg", context.transport.set["consumer_group"]["indexers"]),
         ("n", quote(list(map(str, info.set["node"])))),
         ("nodes", quote(info.set["node"])),
