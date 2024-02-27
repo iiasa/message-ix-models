@@ -42,7 +42,9 @@ class Plot(genno.compat.plotnine.Plot):
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic
-    static: List["plotnine.typing.PlotAddable"] = [p9.theme(figure_size=(11.7, 8.3))]
+    static: List["plotnine.typing.PlotAddable"] = [
+        p9.theme(figure_size=(11.7, 8.3)),
+    ]
 
     #: Fixed plot title string. If not given, the first line of the class docstring is
     #: used.
@@ -230,7 +232,7 @@ class FixCost(Plot):
     basename = "fix-cost"
     inputs = ["fix_cost:nl-t-yv-ya:transport all"]
     static = Plot.static + [
-        p9.aes(x="ya", y="fix_cost", color="t", group="t"),
+        p9.aes(x="ya", y="fix_cost", color="t", group="t * yv"),
         p9.geom_line(),
         p9.geom_point(),
     ]
@@ -249,7 +251,7 @@ class VarCost(Plot):
     basename = "var-cost"
     inputs = ["var_cost:nl-t-yv-ya:transport all"]
     static = Plot.static + [
-        p9.aes(x="ya", y="var_cost", color="t", group="yv"),
+        p9.aes(x="ya", y="var_cost", color="t", group="t * yv"),
         p9.geom_line(),
         p9.geom_point(),
     ]
