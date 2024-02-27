@@ -65,6 +65,12 @@ general:
   args: {units: "Tm / a"}
   sums: true
 
+- key: out:*:ldv+units
+  comp: apply_units
+  inputs: [ out::ldv ]
+  args: {units: "Tm / a"}
+  sums: true
+
 # Units of ACT are not carried, so must correct here:
 # - Add [time]: -1
 # - Remove [vehicle]: -1, [distance]: -1
