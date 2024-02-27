@@ -1,9 +1,9 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import genno.config
-from genno import Computer, MissingKeyError, quote
+from genno import MissingKeyError, quote
 from genno.operator import aggregate
 from message_ix import Reporter
 from message_ix_models import Context
@@ -12,6 +12,9 @@ from message_ix_models.util import private_data_path
 
 from . import Config
 from .build import get_spec
+
+if TYPE_CHECKING:
+    from genno import Computer, Key
 
 log = logging.getLogger(__name__)
 
@@ -38,14 +41,14 @@ def check(scenario):
     return rep.get(key)
 
 
-def require_compat(c: Computer) -> None:
+def require_compat(c: "Computer") -> None:
     c.require_compat("ixmp.report.operator")
     c.require_compat("message_ix.report.operator")
     c.require_compat("message_ix_models.report.operator")
     c.require_compat("message_data.model.transport.operator")
 
 
-def aggregate_transport(c: Computer, *keys) -> None:
+def aggregate_transport(c: Computer, *keys: "Key") -> None:
     """Aggregate using groups of transport technologies."""
     for k0 in keys:
         # Reference the function to avoid the genno magic which would treat as sum()
@@ -56,15 +59,54 @@ def aggregate_transport(c: Computer, *keys) -> None:
         c.add(k0 + "transport", "select", k, "t::transport modes 1", sums=True)
 
 
-def select_transport_techs(c: Computer, *keys) -> None:
-    """Selected subsets of of transport technologies."""
-    for key in keys:
+def reapply_units(c: "Computer") -> None:
+    """Apply units to transport quantities.
+
+    :func:`.ixmp.report.operator.data_for_quantity` drops units for most data extracted
+    from a MESSAGEix-GLOBIOM :class:`.Scenario`, because the data contain a mix of
+    inconsistent units.
+
+    Here, add tasks to reapply units to selected subsets of data that are guaranteed to
+    have certain units.
+    """
+    # TODO Infer these values from technology.yaml etc.
+    for base, (op, units) in {
+        # Vehicle stocks
+        # FIXME should not need the extra [vehicle] in the numerator
+        "CAP:nl-t-ya:non-ldv": ("apply", "v**2 Tm / a"),
+        "CAP:*:ldv": ("apply", "Mv"),
+        "CAP_NEW:*:ldv": ("apply", "Mv"),
+        # NB these units are correct for final energy only
+        "in::transport": ("apply", "GWa / a"),
+        "in::ldv": ("apply", "GWa / a"),
+        "out::transport": ("apply", "Tm / a"),
+        "out::ldv": ("apply", "Tm / a"),
+        # Units of ACT are not carried, so must correct here:
+        # - Add [time]: -1
+        # - Remove [vehicle]: -1, [distance]: -1
+        #
+        # When run together with global.yaml reporting, emi:* is assigned units of
+        # "Mt / year". Using apply_units() causes these to be *converted* to  kt/a, i.e.
+        # increasing the magnitude; so use assign_units() instead.
+        "emi::transport": ("assign", "kt / a"),
+    }.items():
+        key = c.infer_keys(base)
+        c.add(key + "units", f"{op}_units", key, units=units)
+
+
+def select_transport_techs(c: "Computer") -> None:
+    """Select subsets of transport technologies."""
+    for name in (
+        "fix_cost historical_new_capacity input inv_cost var_cost CAP CAP_NEW in out"
+    ).split():
+        # Infer the full dimensionality of each key to be selected
+        key = c.infer_keys(f"{name}:*")
         c.add(key + "transport all", "select", key, "t::transport all", sums=True)
         c.add(key + "ldv", "select", key, "t::transport LDV", sums=True)
         c.add(key + "non-ldv", "select", key, "t::transport non-ldv", sums=True)
 
 
-def add_iamc_store_write(c: Computer, base_key) -> None:
+def add_iamc_store_write(c: "Computer", base_key) -> None:
     """Write keys to CSV, XLSX, and/or both; and/or store on "scenario"."""
     # Text fragments: "foo bar" for "foo::bar", and "foo" alone
     s, n = str(base_key).replace("::", " "), base_key.name
@@ -91,7 +133,7 @@ def add_iamc_store_write(c: Computer, base_key) -> None:
 
 
 @genno.config.handles("MESSAGEix-Transport", iterate=False)
-def _handler(c: Computer, info):
+def _handler(c: "Computer", info):
     """Handle the ``MESSAGEix-Transport:`` config section."""
     # Require modules with operators
     require_compat(c)
@@ -159,14 +201,8 @@ def callback(rep: Reporter, context: Context) -> None:
         if solved:
             raise
 
-    # Select only transport technologies; infer the full dimensionality of each key to
-    # be selected
-    names = (
-        "fix_cost historical_new_capacity input inv_cost var_cost CAP CAP_NEW in out"
-    )
-    rep.apply(
-        select_transport_techs, *rep.infer_keys([f"{n}:*" for n in names.split()])
-    )
+    select_transport_techs(rep)
+    reapply_units(rep)
 
     # Add further computations (including conversions to IAMC tables) defined in a file
     rep.configure(path=private_data_path("transport", "report.yaml"))
