@@ -161,7 +161,9 @@ def callback(rep: Reporter, context: Context) -> None:
 
     # Select only transport technologies; infer the full dimensionality of each key to
     # be selected
-    names = "fix_cost input inv_cost var_cost CAP CAP_NEW in out"
+    names = (
+        "fix_cost historical_new_capacity input inv_cost var_cost CAP CAP_NEW in out"
+    )
     rep.apply(select_transport, *rep.infer_keys([f"{n}:*" for n in names.split()]))
 
     # Add further computations (including conversions to IAMC tables) defined in a file
