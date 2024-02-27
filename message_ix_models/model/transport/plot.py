@@ -105,7 +105,7 @@ class Plot(genno.compat.plotnine.Plot):
     ) -> "KeyLike":
         """Use a custom output path."""
         # Some strings
-        k_path = f"{cls.basename} path"
+        k_path = f"plot {cls.basename} path"
         filename = f"{cls.basename}{cls.suffix}"
         # Output path for this parameter
         c.add(k_path, "make_output_path", "config", "scenario", quote(filename))
@@ -383,25 +383,49 @@ def c_group(df: pd.DataFrame, cg):
     )
 
 
-class DemandCalibrated(Plot):
-    """Transport demand [pass · km / a]."""
+class Demand0(Plot):
+    """Passenger transport demand [pass · km / a]."""
 
     basename = "demand"
     inputs = ["demand:n-c-y", "c::transport", "cg"]
     static = Plot.static + [
         p9.aes(x="y", y="demand", fill="c_group"),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y="", fill="Transport mode group"),
+        p9.labs(x="Period", y="", fill="Transport mode"),
     ]
 
-    def generate(self, data, commodities, cg):
+    @staticmethod
+    def _prep_data(data, commodities, cg):
         # Convert and select data
-        data = data.query(f"c in {repr(list(map(str, commodities)))}").pipe(c_group, cg)
-        for _, ggplot in self.groupby_plot(data, "n"):
-            yield ggplot
+        _commodity = list(map(str, commodities))
+        return (
+            data.query("c in @_commodity")
+            .pipe(c_group, cg)
+            .groupby(["c_group", "n", "y"])
+            .aggregate({"demand": sum})
+            .reset_index()
+        )
+
+    def generate(self, data, commodities, cg):
+        data = self._prep_data(data, commodities, cg)
+        yield from [ggplot for _, ggplot in self.groupby_plot(data, "n")]
 
 
-class DemandCalibratedCap(Plot):
+class Demand1(Demand0):
+    """Share of transport demand [Ø]."""
+
+    basename = "demand-share"
+
+    def generate(self, data, commodities, cg):
+        data = self._prep_data(data, commodities, cg)
+        # Normalize
+        data["demand"] = data["demand"] / data.groupby(["n", "y"])["demand"].transform(
+            "sum"
+        )
+        yield from [ggplot for _, ggplot in self.groupby_plot(data, "n")]
+
+
+class DemandCap(Plot):
     """Transport demand per capita [km / a]."""
 
     basename = "demand-capita"
