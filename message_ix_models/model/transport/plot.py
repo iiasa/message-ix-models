@@ -16,6 +16,11 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+# Quiet messages like:
+#   "Fontsize 0.00 < 1.0 pt not allowed by FreeType. Setting fontsize= 1 pt"
+# TODO Investigate or move upstream
+logging.getLogger("matplotlib.font_manager").setLevel(logging.INFO + 1)
+
 
 class LabelFirst:
     """Labeller that labels the first item using a format string.
