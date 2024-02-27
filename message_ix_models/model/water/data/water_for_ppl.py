@@ -18,6 +18,151 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 
+def missing_tech(x: pd.Series) -> pd.Series:
+    """Assign values to missing data.
+    It goes through the input data frame and extract the technologies which
+    don't have input values and then assign manual  values to those technologies
+    along with assigning them an arbitrary level i.e dummy supply
+    """
+    data_dic = {
+        "geo_hpl": 1 / 0.850,
+        "geo_ppl": 1 / 0.385,
+        "nuc_hc": 1 / 0.326,
+        "nuc_lc": 1 / 0.326,
+        "solar_th_ppl": 1 / 0.385,
+    }
+
+    if data_dic.get(x["technology"]):
+        if x["level"] == "cooling":
+            return pd.Series((data_dic.get(x["technology"]), "dummy_supply"))
+        else:
+            return pd.Series((data_dic.get(x["technology"]), x["level"]))
+    else:
+        return pd.Series((x["value"], x["level"]))
+
+
+def cooling_fr(x: pd.Series) -> float:
+    """Calculate cooling fraction
+    Returns the calculated cooling fraction after for two categories;
+    1. Technologies that produce heat as an output
+        cooling_fraction(h_cool) = input value(hi) - 1
+    Simply subtract 1 from the heating value since the rest of the part is already
+    accounted in the heating value
+    2. Rest of technologies
+        h_cool  =  hi -Hi* h_fg - 1,
+        where:
+            h_fg (flue gasses losses) = 0.1 (10% assumed losses)
+    """
+    if "hpl" in x["index"]:
+        return x["value"] - 1
+    else:
+        return x["value"] - (x["value"] * 0.1) - 1
+
+
+def shares(
+    x: pd.Series,
+    context: "Context",
+    search_cols_cooling_fraction: list,
+    hold_df: pd.DataFrame,
+    search_cols: list,
+) -> pd.Series:
+    """Process share and cooling fraction.
+    Returns
+    -------
+    Product of value of shares of cooling technology types of regions with
+    corresponding cooling fraction
+    """
+    for col in search_cols_cooling_fraction:
+        # MAPPING ISOCODE to region name, assume one country only
+        col2 = context.map_ISO_c[col] if context.type_reg == "country" else col
+        cooling_fraction = hold_df[
+            (hold_df["node_loc"] == col2)
+            & (hold_df["technology_name"] == x["technology"])
+        ]["cooling_fraction"]
+        x[col] = x[col] * cooling_fraction
+
+    results: list[Any] = []
+    for i in x:
+        if isinstance(i, str):
+            results.append(i)
+        else:
+            if not len(i):
+                return pd.Series(
+                    [i for i in range(len(search_cols) - 1)] + ["delme"],
+                    index=search_cols,
+                )
+            else:
+                results.append(float(i))
+    return pd.Series(results, index=search_cols)
+
+
+def hist_act(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
+    """Calculate historical activity of cooling technology.
+    The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
+    Returns
+    -------
+    hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
+    *cooling_fraction
+    """
+    tech_df = hold_cost[
+        hold_cost["technology"].str.startswith(x.technology)
+    ]  # [x.node_loc]
+
+    node_search = context.regions if context.type_reg == "country" else x["node_loc"]
+
+    node_loc = x["node_loc"]
+    technology = x["technology"]
+    cooling_technologies = list(tech_df["technology"])
+    new_values = tech_df[node_search] * x.value
+
+    return [
+        [
+            node_loc,
+            technology,
+            cooling_technology,
+            x.year_act,
+            x.value,
+            new_value,
+            x.unit,
+        ]
+        for new_value, cooling_technology in zip(new_values, cooling_technologies)
+    ]
+
+
+def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
+    """Calculate historical capacity of cooling technology.
+    The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
+    Returns
+    -------
+    hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
+    share * cooling_fraction
+    """
+    tech_df = hold_cost[
+        hold_cost["technology"].str.startswith(x.technology)
+    ]  # [x.node_loc]
+    if context.type_reg == "country":
+        node_search = context.regions
+    else:
+        node_search = x["node_loc"]  # R11_EEU
+    node_loc = x["node_loc"]
+    technology = x["technology"]
+    cooling_technologies = list(tech_df["technology"])
+    new_values = tech_df[node_search] * x.value
+
+    return [
+        [
+            node_loc,
+            technology,
+            cooling_technology,
+            x.year_vtg,
+            x.value,
+            new_value,
+            x.unit,
+        ]
+        for new_value, cooling_technology in zip(new_values, cooling_technologies)
+    ]
+
+
 # water & electricity for cooling technologies
 def cool_tech(context: "Context"):
     """Process cooling technology data for a scenario instance.
@@ -27,9 +172,11 @@ def cool_tech(context: "Context"):
     It adds cooling  technologies as addons to the parent technologies.The
     nomenclature for cooling technology is <parenttechnologyname>__<coolingtype>.
     E.g: `coal_ppl__ot_fresh`
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -38,7 +185,6 @@ def cool_tech(context: "Context"):
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
     """
-    # TODO reduce complexity of this function from 18 to 15 or less
     #: Name of the input file.
     # The input file mentions water withdrawals and emission heating fractions for
     # cooling technologies alongwith parent technologies:
@@ -66,10 +212,11 @@ def cool_tech(context: "Context"):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    if context.type_reg == "country":
-        df_node["region"] = context.map_ISO_c[context.regions]
-    else:
-        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    df_node["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df_node["REGION"].astype(str)
+    )
 
     node_region = df_node["region"].unique()
     # reading ppl cooling tech dataframe
@@ -88,41 +235,20 @@ def cool_tech(context: "Context"):
 
     # Extracting input database from scenario for parent technologies
     # Extracting input values from scenario
-    ref_input = scen.par("input", {"technology": cooling_df["parent_tech"]})
+    ref_input: pd.DataFrame = scen.par(
+        "input", {"technology": cooling_df["parent_tech"]}
+    )
     # Extracting historical activity from scenario
-    ref_hist_act = scen.par(
+    ref_hist_act: pd.DataFrame = scen.par(
         "historical_activity", {"technology": cooling_df["parent_tech"]}
     )
     # Extracting historical capacity from scenario
-    ref_hist_cap = scen.par(
+    ref_hist_cap: pd.DataFrame = scen.par(
         "historical_new_capacity", {"technology": cooling_df["parent_tech"]}
     )
     # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
     # where h_fg (flue gasses losses) = 0.1
     ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
-
-    def missing_tech(x):
-        """Assign values to missing data.
-        It goes through the input data frame and extract the technologies which
-        don't have input values and then assign manual  values to those technologies
-        along with assigning them an arbitrary level i.e dummy supply
-        """
-        data_dic = {
-            "geo_hpl": 1 / 0.850,
-            "geo_ppl": 1 / 0.385,
-            "nuc_hc": 1 / 0.326,
-            "nuc_lc": 1 / 0.326,
-            "solar_th_ppl": 1 / 0.385,
-        }
-
-        if data_dic.get(x["technology"]):
-            if x["level"] == "cooling":
-                return pd.Series((data_dic.get(x["technology"]), "dummy_supply"))
-            else:
-                return pd.Series((data_dic.get(x["technology"]), x["level"]))
-        else:
-            return pd.Series((x["value"], x["level"]))
-
     ref_input[["value", "level"]] = ref_input[["technology", "value", "level"]].apply(
         missing_tech, axis=1
     )
@@ -152,23 +278,6 @@ def cool_tech(context: "Context"):
         (input_cool["node_loc"] != f"{context.regions}_GLB")
         & (input_cool["node_origin"] != f"{context.regions}_GLB")
     ]
-
-    def cooling_fr(x):
-        """Calculate cooling fraction
-        Returns the calculated cooling fraction after for two categories;
-        1. Technologies that produce heat as an output
-            cooling_fraction(h_cool) = input value(hi) - 1
-        Simply subtract 1 from the heating value since the rest of the part is already
-        accounted in the heating value
-        2. Rest of technologies
-            h_cool  =  hi -Hi* h_fg - 1,
-            where:
-                h_fg (flue gasses losses) = 0.1 (10% assumed losses)
-        """
-        if "hpl" in x["index"]:
-            return x["value"] - 1
-        else:
-            return x["value"] - (x["value"] * 0.1) - 1
 
     input_cool["cooling_fraction"] = input_cool.apply(cooling_fr, axis=1)
 
@@ -368,75 +477,20 @@ def cool_tech(context: "Context"):
     ].drop_duplicates()
     search_cols_cooling_fraction = [col for col in search_cols if col != "technology"]
 
-    def shares(x, context: "Context"):
-        """Process share and cooling fraction.
-        Returns
-        -------
-        Product of value of shares of cooling technology types of regions with
-        corresponding cooling fraction
-        """
-        for col in search_cols_cooling_fraction:
-            # MAPPING ISOCODE to region name, assume one country only
-            col2 = context.map_ISO_c[col] if context.type_reg == "country" else col
-            cooling_fraction = hold_df[
-                (hold_df["node_loc"] == col2)
-                & (hold_df["technology_name"] == x["technology"])
-            ]["cooling_fraction"]
-            x[col] = x[col] * cooling_fraction
-
-        results: list[Any] = []
-        for i in x:
-            if isinstance(i, str):
-                results.append(i)
-            else:
-                if not len(i):
-                    return pd.Series(
-                        [i for i in range(len(search_cols) - 1)] + ["delme"],
-                        index=search_cols,
-                    )
-                else:
-                    results.append(float(i))
-        return pd.Series(results, index=search_cols)
-
     # Apply function to the
-    hold_cost = cost[search_cols].apply(shares, axis=1, context=context)
+    hold_cost = cost[search_cols].apply(
+        shares,
+        axis=1,
+        context=context,
+        search_cols_cooling_fraction=search_cols_cooling_fraction,
+        hold_df=hold_df,
+        search_cols=search_cols,
+    )
     hold_cost = hold_cost[hold_cost["technology"] != "delme"]
 
-    def hist_act(x, context: "Context"):
-        """Calculate historical activity of cooling technology.
-        The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
-        Returns
-        -------
-        hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
-        *cooling_fraction
-        """
-        tech_df = hold_cost[
-            hold_cost["technology"].str.startswith(x.technology)
-        ]  # [x.node_loc]
-
-        node_search = (
-            context.regions if context.type_reg == "country" else x["node_loc"]
-        )
-
-        node_loc = x["node_loc"]
-        technology = x["technology"]
-        cooling_technologies = list(tech_df["technology"])
-        new_values = tech_df[node_search] * x.value
-
-        return [
-            [
-                node_loc,
-                technology,
-                cooling_technology,
-                x.year_act,
-                x.value,
-                new_value,
-                x.unit,
-            ]
-            for new_value, cooling_technology in zip(new_values, cooling_technologies)
-        ]
-
-    changed_value_series = ref_hist_act.apply(hist_act, axis=1, context=context)
+    changed_value_series = ref_hist_act.apply(
+        hist_act, axis=1, context=context, hold_cost=hold_cost
+    )
     changed_value_series_flat = [
         row for series in changed_value_series for row in series
     ]
@@ -452,40 +506,9 @@ def cool_tech(context: "Context"):
     # dataframe for historical activities of cooling techs
     act_value_df = pd.DataFrame(changed_value_series_flat, columns=columns)
 
-    def hist_cap(x, context: "Context"):
-        """Calculate historical capacity of cooling technology.
-        The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
-        Returns
-        -------
-        hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
-        share * cooling_fraction
-        """
-        tech_df = hold_cost[
-            hold_cost["technology"].str.startswith(x.technology)
-        ]  # [x.node_loc]
-        if context.type_reg == "country":
-            node_search = context.regions
-        else:
-            node_search = x["node_loc"]  # R11_EEU
-        node_loc = x["node_loc"]
-        technology = x["technology"]
-        cooling_technologies = list(tech_df["technology"])
-        new_values = tech_df[node_search] * x.value
-
-        return [
-            [
-                node_loc,
-                technology,
-                cooling_technology,
-                x.year_vtg,
-                x.value,
-                new_value,
-                x.unit,
-            ]
-            for new_value, cooling_technology in zip(new_values, cooling_technologies)
-        ]
-
-    changed_value_series = ref_hist_cap.apply(hist_cap, axis=1, context=context)
+    changed_value_series = ref_hist_cap.apply(
+        hist_cap, axis=1, context=context, hold_cost=hold_cost
+    )
     changed_value_series_flat = [
         row for series in changed_value_series for row in series
     ]
@@ -766,7 +789,8 @@ def non_cooling_tec(context: "Context"):
     FILE = "tech_water_performance_ssp_msg.csv"
     path = package_data_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
-    cooling_df = df.loc[df["technology_group"] == "cooling"]
+    cooling_df = df.copy()
+    cooling_df = cooling_df.loc[cooling_df["technology_group"] == "cooling"]
     # Separate a column for parent technologies of respective cooling
     # techs
     cooling_df["parent_tech"] = (
