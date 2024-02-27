@@ -197,6 +197,8 @@ petro_chemicals:
     - propane
     - ethylene
     - BTX
+    remove:
+    - i_feed
 
   level:
     require:
@@ -216,6 +218,7 @@ petro_chemicals:
       - ["lightoil", "export"]
       - ["fueloil", "import"]
       - ["fueloil", "export"]
+
   mode:
     add:
     - atm_gasoil
@@ -262,6 +265,13 @@ petro_chemicals:
     # Any representation of refinery.
     - ref_hil
     - ref_lol
+    - coal_fs
+    - coal_fs
+    - ethanol_fs
+    - gas_fs
+    - foil_fs
+    - loil_fs
+    - methanol_fs
 
   shares:
     add:
@@ -596,6 +606,16 @@ methanol:
     - ["methanol","import"]
     - ["methanol","import_fs"]
     - ["methanol","final"]
+
+  emission:
+    add:
+    - BCA
+    - CO
+    - HFC
+    - OCA
+    - NH3
+    - SF6
+    - VOC
 
 buildings:
   level:
