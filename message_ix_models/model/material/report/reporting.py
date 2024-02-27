@@ -25,8 +25,8 @@ Material_global_grpahs.pdf
 
 from ixmp import Platform
 from message_ix import Scenario
-from message_ix.reporting import Reporter
-from ixmp.reporting import configure
+from message_ix.report import Reporter
+from ixmp.report import configure
 from message_ix_models import ScenarioInfo
 from message_data.tools.post_processing.iamc_report_hackathon import report as reporting
 from message_data.model.material.util import read_config
@@ -38,7 +38,7 @@ import xlsxwriter
 import os
 import openpyxl
 
-import plotly.graph_objects as go
+#import plotly.graph_objects as go
 import matplotlib
 
 matplotlib.use("Agg")
@@ -164,6 +164,7 @@ def fix_excel(path_temp, path_new):
                 new_sheet.cell(row=i, column=col_no).value = value
 
     new_workbook.save(path_new)
+
 
 def report(context,scenario):
 
@@ -367,7 +368,7 @@ def report(context,scenario):
     df.convert_unit('unknown', to='', factor=1, inplace = True)
 
     variables = df.variable
-    df.aggregate_region(variables, region="World", method=sum, append=True)
+    df.aggregate_region(variables, region="World", method="sum", append=True)
 
     name = os.path.join(directory, "check.xlsx")
     df.to_excel(name)
@@ -3876,7 +3877,7 @@ def report(context,scenario):
     # ....................
 
     path_temp = os.path.join(directory, "temp_new_reporting.xlsx")
-    df_final.to_excel(path_temp, sheet_name="data", index=False)
+    df_final.to_excel(path_temp, sheet_name="data")
 
     excel_name_new = "New_Reporting_" + model_name + "_" + scenario_name + ".xlsx"
     path_new = os.path.join(directory, excel_name_new)
