@@ -291,57 +291,57 @@ class LDV_IO(Plot):
         return p9.ggplot(data) + self.static + self.ggtitle()
 
 
-class LDVTechShare0(Plot):
-    """Activity [10⁹ km / y]."""
+class OutShareLDV0(Plot):
+    """Share of total LDV output [Ø]."""
 
-    basename = "ldv-tech-share"
-    inputs = ["out:nl-t-ya:transport"]
+    basename = "out-share-t-ldv"
+    inputs = ["out:nl-t-ya:ldv+units"]
     static = Plot.static + [
         p9.aes(x="ya", y="value", fill="t"),
-        # TODO remove typing exclusion once plotnine >0.12.4 is released
-        p9.facet_wrap(
-            ["nl"],
-            ncol=2,
-            labeller=LabelFirst("node: {}"),  # type: ignore [arg-type]
-        ),
         p9.geom_bar(stat="identity", width=4),
+        # # Select a palette with up to 12 colors
+        # p9.scale_fill_brewer(type="qual", palette="Set3"),
         p9.labs(x="Period", y="", fill="LDV technology"),
     ]
 
     def generate(self, data):
-        return p9.ggplot(data) + self.static + self.ggtitle()
+        # Normalize data
+        # TODO Do this in genno
+        data["value"] = data["value"] / data.groupby(["nl", "ya"])["value"].transform(
+            "sum"
+        )
+
+        yield from [ggplot for _, ggplot in self.groupby_plot(data, "nl")]
 
 
-class LDVTechShare1(Plot):
-    """Usage of LDV technologies by CG."""
+class OutShareLDV1(Plot):
+    """Share of LDV usage [Ø]."""
 
-    basename = "ldv-tech-share-by-cg"
-    inputs = ["out:nl-t-ya-c", "consumer groups"]
+    basename = "out-share-t-cg-ldv"
+    inputs = ["out:nl-t-ya-c", "cg"]
     static = Plot.static + [
         p9.aes(x="ya", y="value", fill="t"),
         p9.facet_wrap(["c"], ncol=5),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y="Activity [10⁹ km / y]", fill="LDV technology"),
+        p9.labs(x="Period", y="", fill="LDV technology"),
     ]
 
     def generate(self, data, cg):
         # TODO do these operations in reporting for broader reuse
-        # - Select a subset of commodities
-        # - Remove the consumer group name from the technology name.
-        # - Remove the prefix from the commodity name.
-        # - Discard others, e.g. non-LDV activity
-
+        # - Recover the consumer group code from the commodity code.
+        # - Select only the consumer groups.
+        # - Recover the LDV technology code from the usage technology code.
         data = (
-            data[data.c.str.contains("transport pax")]
-            .assign(
-                t=lambda df: df.t.str.split(" usage by ", expand=True)[0],
-                c=lambda df: df.c.str.replace("transport pax ", ""),
-            )
-            .query(f"c in {list(map(str, cg))}")
+            data.assign(c=lambda df: df.c.str.replace("transport pax ", ""))
+            .query("c in @cg")
+            .assign(t=lambda df: df.t.str.split(" usage by ", expand=True)[0])
         )
+        # Normalize data
+        data["value"] = data["value"] / data.groupby(["c", "nl", "ya"])[
+            "value"
+        ].transform("sum")
 
-        for _, ggplot in self.groupby_plot(data, "nl"):
-            yield ggplot
+        yield from [ggplot for _, ggplot in self.groupby_plot(data, "nl")]
 
 
 def c_group(df: pd.DataFrame, cg):
