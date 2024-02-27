@@ -1,11 +1,11 @@
-from typing import Mapping
-
+import message_ix
+import pandas as pd
+import ntfy
 import click
 import logging
 import ixmp
+import message_ix_models.tools.costs.projections
 
-# from .build import apply_spec
-# from message_data.tools import ScenarioInfo
 from message_data.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data, private_data_path
@@ -13,18 +13,50 @@ from message_data.tools.utilities import (
     calibrate_UE_gr_to_demand,
     calibrate_UE_share_constraints,
 )
-
-# from .data import add_data
-from .data_util import modify_demand_and_hist_activity, add_emission_accounting, add_new_ind_hist_act, \
-    modify_industry_demand, modify_baseyear_bounds
-from .data_util import add_coal_lowerbound_2020, add_macro_COVID, add_cement_bounds_2020
-from .data_util import add_elec_lowerbound_2020, add_ccs_technologies, read_config
-import pandas as pd
+from message_data.model.material.data_util import (
+    modify_demand_and_hist_activity,
+    add_emission_accounting,
+    add_new_ind_hist_act,
+    modify_industry_demand,
+    modify_baseyear_bounds,
+    add_coal_lowerbound_2020,
+    add_macro_COVID,
+    add_cement_bounds_2020,
+    add_elec_lowerbound_2020,
+    add_ccs_technologies,
+    read_config,
+    gen_te_projections,
+    get_ssp_soc_eco_data,
+)
+from typing import Mapping
+from message_data.model.material.data_cement import gen_data_cement
+from message_data.model.material.data_steel import gen_data_steel
+from message_data.model.material.data_aluminum import gen_data_aluminum
+from message_data.model.material.data_generic import gen_data_generic
+from message_data.model.material.data_petro import gen_data_petro_chemicals
+from message_data.model.material.data_power_sector import gen_data_power_sector
+from message_data.model.material.data_methanol_new import gen_data_methanol_new
+from message_data.model.material.data_ammonia_new import gen_all_NH3_fert
 
 log = logging.getLogger(__name__)
 
+DATA_FUNCTIONS_1 = [
+    # gen_data_buildings,
+    gen_data_methanol_new,
+    gen_all_NH3_fert,
+    # gen_data_ammonia, ## deprecated module!
+    gen_data_generic,
+    gen_data_steel,
+]
+DATA_FUNCTIONS_2 = [
+    gen_data_cement,
+    gen_data_petro_chemicals,
+    # gen_data_power_sector,
+    gen_data_aluminum,
+]
 
-def build(scenario, old_calib):
+
+def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario:
     """Set up materials accounting on `scenario`."""
 
     # Get the specification
@@ -40,7 +72,7 @@ def build(scenario, old_calib):
 
         water_dict = pd.read_excel(
             private_data_path("material", "other", "water_tec_pars.xlsx"),
-            sheet_name=None
+            sheet_name=None,
         )
         for par in water_dict.keys():
             scenario.add_par(par, water_dict[par])
@@ -172,11 +204,18 @@ def create_bare(context, regions, dry_run):
     help="File name for external data input",
 )
 @click.option("--tag", default="", help="Suffix to the scenario name")
-@click.option("--mode", default="by_url")
+@click.option(
+    "--mode", default="by_url", type=click.Choice(["by_url", "cbudget", "by_copy"])
+)
 @click.option("--scenario_name", default="NoPolicy_3105_macro")
 @click.option("--old_calib", default=False)
+@click.option(
+    "--update_costs",
+    default=False,
+    type=click.Choice([False, "SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]),
+)
 @click.pass_obj
-def build_scen(context, datafile, tag, mode, scenario_name, old_calib):
+def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_costs):
     """Build a scenario.
 
     Use the --url option to specify the base scenario. If this scenario is on a
@@ -213,29 +252,38 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib):
         # Clone and set up
 
         if "SSP_dev" in context.scenario_info["model"]:
-            scenario = build(
-                context.get_scenario().clone(
-                    model=context.scenario_info["model"],
-                    scenario=context.scenario_info["scenario"] + "_" + tag,
-                    keep_solution=False,
-                ), old_calib=old_calib
+            scenario = context.get_scenario().clone(
+                model=context.scenario_info["model"],
+                scenario=context.scenario_info["scenario"] + "_" + tag,
+                keep_solution=False,
             )
+            context.model.regions = "R12"
+            measures = ["GDP", "POP"]
+            tecs = ["GDP_PPP", "Population"]
+            models = ["IIASA GDP 2023", "IIASA-WiC POP 2023"]
+            for measure, model, tec in zip(measures, models, tecs):
+                df = get_ssp_soc_eco_data(context, model, measure, tec)
+                scenario.check_out()
+                scenario.add_par("bound_activity_lo", df)
+                scenario.add_par("bound_activity_up", df)
+                scenario.commit("update projections")
+            scenario = build(scenario, old_calib=old_calib)
         else:
             scenario = build(
                 context.get_scenario().clone(
                     model="MESSAGEix-Materials",
                     scenario=output_scenario_name + "_" + tag,
-                )
+                ), old_calib=old_calib
             )
         # Set the latest version as default
         scenario.set_as_default()
 
     # Create a two degrees scenario by copying carbon prices from another scenario.
-    if mode == "by_copy":
+    elif mode == "by_copy":
         output_scenario_name = "2degrees"
         mod_mitig = "ENGAGE_SSP2_v4.1.8"
         scen_mitig = "EN_NPi2020_1000f"
-        print("Loading " + mod_mitig + " " + scen_mitig + " to retreive carbon prices.")
+        print("Loading " + mod_mitig + " " + scen_mitig + " to retrieve carbon prices.")
         scen_mitig_prices = message_ix.Scenario(mp, mod_mitig, scen_mitig)
         tax_emission_new = scen_mitig_prices.var("PRICE_EMISSION")
 
@@ -257,7 +305,7 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib):
         print("New scenario name is " + output_scenario_name)
         scenario.set_as_default()
 
-    if mode == "cbudget":
+    elif mode == "cbudget":
         scenario = context.get_scenario()
         print(scenario.version)
         # print('Base scenario is: ' + scenario.scenario + ", version: " + scenario.version)
@@ -283,6 +331,16 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib):
         print("New scenario name is " + output_scenario_name)
         scenario_new.set_as_default()
 
+    if update_costs:
+        log.info(f"Updating costs with {message_ix_models.tools.costs.projections}")
+        inv, fix = gen_te_projections(scenario, update_costs)
+        scenario.check_out()
+        scenario.add_par("fix_cost", fix)
+        scenario.add_par("inv_cost", inv)
+        scenario.commit(f"update cost assumption to: {update_costs}")
+
+    ntfy.notify(title="MESSAGEix-Materials", message="building successfully finished!")
+
 
 @cli.command("solve")
 @click.option("--scenario_name", default="NoPolicy")
@@ -298,7 +356,7 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib):
 @click.option("--add_calibration", default=False)
 @click.pass_obj
 def solve_scen(
-        context, datafile, model_name, scenario_name, add_calibration, add_macro, version
+    context, datafile, model_name, scenario_name, add_calibration, add_macro, version
 ):
     """Solve a scenario.
 
@@ -318,24 +376,58 @@ def solve_scen(
         scenario.remove_solution()
 
     if add_calibration:
-        # Solve
+        # Solve with 2020 base year
         print("Solving the scenario without MACRO")
+        print(
+            "After macro calibration a new scenario with the suffix _macro is created."
+        )
+        print("Make sure to use this scenario to solve with MACRO iterations.")
         scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
         scenario.set_as_default()
 
+        # Report
+        from message_data.model.material.report.reporting import report
+        from message_data.tools.post_processing.iamc_report_hackathon import (
+            report as reporting,
+        )
+
+        # Remove existing timeseries and add material timeseries
+        print("Reporting material-specific variables")
+        report(context, scenario)
+        print("Reporting standard variables")
+        reporting(
+            mp,
+            scenario,
+            # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
+            #         string containing "True" or "False" instead of an actual bool.
+            "False",
+            scenario.model,
+            scenario.scenario,
+            merge_hist=True,
+            merge_ts=True,
+            run_config="materials_run_config.yaml",
+        )
+
+        # Shift to 2025 base year
+        scenario = scenario.clone(
+            model=scenario.model,
+            scenario=scenario.scenario + "_2025",
+            shift_first_model_year=2025,
+        )
+        scenario.set_as_default()
+        scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
+
         # After solving, add macro calibration
         print("Scenario solved, now adding MACRO calibration")
+        # scenario = add_macro_COVID(
+        #     scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx"
+        # )
         scenario = add_macro_COVID(
-            scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx"
+            scenario, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx"
         )
         print("Scenario calibrated.")
 
     if add_macro:  # Default True
-        print(
-            "After macro calibration a new scneario with the suffix _macro is created."
-        )
-        print("Make sure to use this scenario to solve with MACRO iterations.")
-
         scenario.solve(
             model="MESSAGE-MACRO", solve_options={"lpmethod": "4", "scaind": "-1"}
         )
@@ -346,6 +438,7 @@ def solve_scen(
         print("Solving the scenario without MACRO")
         scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
         scenario.set_as_default()
+    ntfy.notify(title="MESSAGEix-Materials", message="solving successfully finished!")
 
 
 @cli.command("add_buildings_ts")
@@ -377,7 +470,7 @@ def add_building_ts(scenario_name, model_name):
 @click.pass_obj
 def run_reporting(context, remove_ts, profile):
     """Run materials, then legacy reporting."""
-    from message_data.reporting.materials.reporting import report
+    from message_data.model.material.report.reporting import report
     from message_data.tools.post_processing.iamc_report_hackathon import (
         report as reporting,
     )
@@ -398,7 +491,6 @@ def run_reporting(context, remove_ts, profile):
         else:
             print("There are no timeseries to be removed.")
     else:
-
         if profile:
             import cProfile
             import pstats
@@ -435,7 +527,6 @@ def run_reporting(context, remove_ts, profile):
 
             atexit.register(exit)
         else:
-
             # Remove existing timeseries and add material timeseries
             print("Reporting material-specific variables")
             report(context, scenario)
@@ -482,31 +573,6 @@ def run_old_reporting(context):
     )
 
 
-from .data_cement import gen_data_cement
-from .data_steel import gen_data_steel
-from .data_aluminum import gen_data_aluminum
-from .data_generic import gen_data_generic
-from .data_petro import gen_data_petro_chemicals
-from .data_power_sector import gen_data_power_sector
-from .data_methanol_new import gen_data_methanol_new
-from .data_ammonia_new import gen_all_NH3_fert
-
-DATA_FUNCTIONS_1 = [
-    # gen_data_buildings,
-    gen_data_methanol_new,
-    gen_all_NH3_fert,
-    # gen_data_ammonia, ## deprecated module!
-    gen_data_generic,
-    gen_data_steel,
-]
-DATA_FUNCTIONS_2 = [
-    gen_data_cement,
-    gen_data_petro_chemicals,
-    gen_data_power_sector,
-    gen_data_aluminum,
-]
-
-
 # Try to handle multiple data input functions from different materials
 def add_data_1(scenario, dry_run=False):
     """Populate `scenario` with MESSAGEix-Materials data."""
@@ -526,9 +592,9 @@ def add_data_1(scenario, dry_run=False):
         # Generate or load the data; add to the Scenario
         log.info(f"from {func.__name__}()")
         data = func(scenario)
-        if "SSP_dev" in scenario.model:
-            if "emission_factor" in list(data.keys()):
-                data.pop("emission_factor")
+        # if "SSP_dev" in scenario.model:
+        #     if "emission_factor" in list(data.keys()):
+        #         data.pop("emission_factor")
         add_par_data(scenario, data, dry_run=dry_run)
 
     log.info("done")
@@ -567,46 +633,18 @@ def add_data_2(scenario, dry_run=False):
 @click.pass_obj
 def modify_costs_with_tool(context, scen_name, ssp):
     import message_ix
-    from message_ix_models.tools.costs.config import Config
-    from message_ix_models.tools.costs.projections import create_cost_projections
 
     mp = ixmp.Platform("ixmp_dev")
     base = message_ix.Scenario(mp, "MESSAGEix-Materials", scenario=scen_name)
     scen = base.clone(model=base.model, scenario=base.scenario.replace("baseline", ssp))
 
-    tec_set = list(scen.set("technology"))
+    inv, fix = gen_te_projections(scen, ssp)
 
-    cfg = Config(
-        module="materials",
-        ref_region="R12_NAM",
-        method="convergence",
-        format="message",
-        scenario=ssp,
-    )
-
-    out_materials = create_cost_projections(
-        node=cfg.node,
-        ref_region=cfg.ref_region,
-        base_year=cfg.base_year,
-        module=cfg.module,
-        method=cfg.method,
-        scenario_version=cfg.scenario_version,
-        scenario=cfg.scenario,
-        convergence_year=cfg.convergence_year,
-        fom_rate=cfg.fom_rate,
-        format=cfg.format,
-    )
     scen.check_out()
-    fix_cost = out_materials.fix_cost.drop_duplicates().drop(
-        ["scenario_version", "scenario"], axis=1
-    )
-    scen.add_par("fix_cost", fix_cost[fix_cost["technology"].isin(tec_set)])
-    inv_cost = out_materials.inv_cost.drop_duplicates().drop(
-        ["scenario_version", "scenario"], axis=1
-    )
-    scen.add_par("inv_cost", inv_cost[inv_cost["technology"].isin(tec_set)])
-
+    scen.add_par("fix_cost", fix)
+    scen.add_par("inv_cost", inv)
     scen.commit(f"update cost assumption to: {ssp}")
+
     scen.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
 
 
@@ -670,7 +708,7 @@ def run_cbud_scenario(context, ssp, scenario):
     help="description of carbon budget for mitigation target",
 )
 @click.pass_obj
-def modify_costs_with_tool(context, ssp, scenario):
+def run_LED_cprice(context, ssp, scenario):
     import message_ix
 
     mp = ixmp.Platform("ixmp_dev")
