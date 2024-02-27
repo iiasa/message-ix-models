@@ -1,8 +1,9 @@
 # historical_new_capacity and bound_new_capacity_{lo,up} values for LDVs
 #
 # Source: these were prepared by VK using some R/IPython scripts shared
-# in the IIASA ECE #transport Slack channel:
-# https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1704965143599229
+# in the IIASA ECE #transport Slack channel on 2024-01-11
+# https://iiasa-ece.slack.com/archives/CCFHDNA6P/p1704965143599229 and
+# updated on 2024-02-23
 #
 # They are derived from (1) an IEA EV data set and (2) data from the OICA
 # website.
@@ -108,39 +109,51 @@ R12_WEU,  PHEV_ptrp,  2025,     0.4020514
 # - TH comments that these values are for only "passenger car" sales according
 #   to OICA; but should include some portion of "commercial vehicle" sales.
 #
+R12_AFR,  ICE_conv,   2005,     0.504355
 R12_AFR,  ICE_conv,   2010,     0.4591278
 R12_AFR,  ICE_conv,   2015,     0.5486596
 R12_AFR,  ICE_conv,   2020,     0.4254732
+R12_CHN,  ICE_conv,   2005,     3.971101
 R12_CHN,  ICE_conv,   2010,     8.4633314
 R12_CHN,  ICE_conv,   2015,     17.6963284
 R12_CHN,  ICE_conv,   2020,     21.57345364
+R12_EEU,  ICE_conv,   2005,     1.073804
 R12_EEU,  ICE_conv,   2010,     1.1220846
 R12_EEU,  ICE_conv,   2015,     0.8920238
 R12_EEU,  ICE_conv,   2020,     1.346424224
+R12_FSU,  ICE_conv,   2005,     1.89872
 R12_FSU,  ICE_conv,   2010,     2.6371742
 R12_FSU,  ICE_conv,   2015,     2.7071796
 R12_FSU,  ICE_conv,   2020,     1.675368296
+R12_LAM,  ICE_conv,   2005,     3.015425
 R12_LAM,  ICE_conv,   2010,     4.0860284
 R12_LAM,  ICE_conv,   2015,     5.0652378
 R12_LAM,  ICE_conv,   2020,     4.20394276
+R12_MEA,  ICE_conv,   2005,     2.012852
 R12_MEA,  ICE_conv,   2010,     2.5947266
 R12_MEA,  ICE_conv,   2015,     3.1085048
 R12_MEA,  ICE_conv,   2020,     2.569833648
+R12_NAM,  ICE_conv,   2005,     8.603419
 R12_NAM,  ICE_conv,   2010,     7.4953316
 R12_NAM,  ICE_conv,   2015,     7.9270812
 R12_NAM,  ICE_conv,   2020,     5.71890652
+R12_PAO,  ICE_conv,   2005,     5.615403
 R12_PAO,  ICE_conv,   2010,     5.1048088
 R12_PAO,  ICE_conv,   2015,     5.2454674
 R12_PAO,  ICE_conv,   2020,     5.057919592
+R12_PAS,  ICE_conv,   2005,     2.340128
 R12_PAS,  ICE_conv,   2010,     2.5077206
 R12_PAS,  ICE_conv,   2015,     3.5354078
 R12_PAS,  ICE_conv,   2020,     3.7892756
+R12_RCPA, ICE_conv,   2005,     0.027388
 R12_RCPA, ICE_conv,   2010,     0.0527654
 R12_RCPA, ICE_conv,   2015,     0.0827384
 R12_RCPA, ICE_conv,   2020,     0.195187376
+R12_SAS,  ICE_conv,   2005,     1.269789
 R12_SAS,  ICE_conv,   2010,     1.878095
 R12_SAS,  ICE_conv,   2015,     2.833356
 R12_SAS,  ICE_conv,   2020,     3.235079568
+R12_WEU,  ICE_conv,   2005,     12.910489
 R12_WEU,  ICE_conv,   2010,     12.2301818
 R12_WEU,  ICE_conv,   2015,     10.9489012
 R12_WEU,  ICE_conv,   2020,     11.6740978
