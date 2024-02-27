@@ -1,19 +1,19 @@
-from functools import partial
-from typing import Mapping
 import logging
-
 import message_ix
 
-from message_ix_models import Code, ScenarioInfo, get_context, set_info, add_par_data
+from typing import Mapping
+from message_ix_models import ScenarioInfo
+#from message_ix_models.util get_context, set_info, add_par_data
+from message_ix_models.util import add_par_data
+from sdmx.model.v21 import Code
 from .build import apply_spec
 from .util import read_config
-from .data import get_data, gen_data_steel, gen_data_generic, gen_data_aluminum, \
-gen_data_variable, gen_data_petro_chemicals
+from message_data.model.data import get_data
+from message_data.model.material import gen_data_steel, gen_data_generic, gen_data_aluminum, gen_data_petro_chemicals
 import message_data
 
 
 log = logging.getLogger(__name__)
-
 
 # Settings and valid values; the default is listed first
 # How do we add the historical period ?
@@ -27,6 +27,7 @@ SETTINGS = dict(
     res_with_dummies=[True],
     time_step=[10],
 )
+
 
 def create_res(context=None, quiet=True):
     """Create a 'bare' MESSAGE-GLOBIOM reference energy system (RES).
@@ -77,8 +78,9 @@ DATA_FUNCTIONS = [
     gen_data_steel,
     gen_data_generic,
     gen_data_aluminum,
-    gen_data_variable
+    #gen_data_variable
 ]
+
 
 # Try to handle multiple data input functions from different materials
 def add_data(scenario, dry_run=False):
@@ -99,7 +101,6 @@ def add_data(scenario, dry_run=False):
         add_par_data(scenario, func(scenario), dry_run=dry_run)
 
     log.info('done')
-
 
 
 def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
@@ -172,7 +173,7 @@ def get_spec(context=None) -> Mapping[str, ScenarioInfo]:
     add.set['commodity'] = context["material"]["steel"]["commodity"]["add"] + \
         context["material"]["common"]["commodity"]["require"] + \
         context["material"]["generic"]["commodity"]["add"] + \
-        context["material"]["aluminum"]["commodity"]["add"]
+        context["material"]["aluminum"]["commodity"]["add"] + \
         context["material"]["petro_chemicals"]["commodity"]["add"]
 
     # Add other sets

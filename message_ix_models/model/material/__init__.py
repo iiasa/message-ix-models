@@ -145,7 +145,7 @@ def cli():
 @click.pass_obj
 def create_bare(context, regions, dry_run):
     """Create the RES from scratch."""
-    from message_data.model.bare import create_res
+    from message_data.model.create import create_res
 
     if regions:
         context.regions = regions
@@ -157,7 +157,7 @@ def create_bare(context, regions, dry_run):
     # context.metadata_path = context.metadata_path / "data"
 
     scen = create_res(context)
-    build(scen)
+    build(scen, True)
 
     # Solve
     if not dry_run:
