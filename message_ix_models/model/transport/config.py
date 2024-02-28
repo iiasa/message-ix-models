@@ -47,13 +47,18 @@ class Config(ConfigHelper):
     respecting higher-level configuration, for instance :attr:`.model.Config.regions`.
     """
 
-    #: Values for constraints:
+    #: Values for constraints.
     #:
-    #: ``LDV growth_activity``
-    #:     Default 0.0192 = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years
+    #: "LDV growth_activity_lo", "LDV growth_activity_up"
+    #:    Allowable *annual* decrease or increase (respectively) in activity of each LDV
+    #:    technology. For example, a value of 0.01 means the activity may increase by 1%
+    #:    from one year to the next. For periods of length >1 year, MESSAGE compounds
+    #:    the value. Default use 0.0192 = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years. See
+    #:    :func:`ldv.constraint_data`.
     constraint: Dict = field(
         default_factory=lambda: {
-            "LDV growth_activity": 0.0192,
+            "LDV growth_activity_lo": -0.0192,
+            "LDV growth_activity_up": 0.0192 * 4.0,
         }
     )
 

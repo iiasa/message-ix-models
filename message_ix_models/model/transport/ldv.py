@@ -449,12 +449,8 @@ def capacity_factor(
 def constraint_data(context) -> Dict[str, pd.DataFrame]:
     """Return constraints on light-duty vehicle technology activity and usage.
 
-    Responds to the ``["transport config"]["constraint"]["LDV growth_activity"]``
-    context setting, which should give the allowable *annual* increase/decrease in
-    activity of each LDV technology.
-
-    For example, a value of 0.01 means the activity may increase (or decrease) by 1%
-    from one year to the next. For periods of length >1 year, this value is compounded.
+    Responds to the :attr:`.Config.constraint` key :py:`"LDV growth_activity"`; see
+    description there. The allowable rate is doubled for ``growth_activity_up``.
     """
     config = context.transport
 
@@ -475,14 +471,16 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     for t in map(str, ldv_techs):
         constrained.extend(filter(lambda _t: t in _t, all_techs))  # type: ignore
 
-    # Constraint value
-    annual = config.constraint["LDV growth_activity"]
+    data: Dict[str, pd.DataFrame] = dict()
+    for bound in "lo", "up":
+        name = f"growth_activity_{bound}"
 
-    data = dict()
-    for bound, factor in (("lo", -1.0), ("up", 1.0)):
-        par = f"growth_activity_{bound}"
-        data[par] = make_df(
-            par, value=factor * annual, year_act=years, time="year", unit="-"
+        # Retrieve the constraint value from configuration
+        value = config.constraint[f"LDV {name}"]
+
+        # Assemble the data
+        data[name] = make_df(
+            name, value=value, year_act=years, time="year", unit="-"
         ).pipe(broadcast, node_loc=info.N[1:], technology=constrained)
 
     # Prevent new capacity from being constructed for techs annotated
