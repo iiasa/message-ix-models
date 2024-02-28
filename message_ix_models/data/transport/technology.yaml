@@ -18,18 +18,20 @@ ELC_100:
   message-v-report: LDV_ELE
 
 HFC_ptrp:
-  description: Hybridized fuel cell light-duty vehicle using hydrogen
   report: FCEV
+  description: Hybridized fuel cell light-duty vehicle using hydrogen
   input: {commodity: hydrogen}
   message-v-report: LDV_HFC
 
 IAHe_ptrp:
+  report: Biofuel hybrid
   description: >-
     Hybridized internal combustion engine light-duty vehicle using biofuels
   input: {commodity: ethanol}
   message-v-report: LDV_EHYB
 
 IAHm_ptrp:
+  report: Methanol hybrid
   description: >-
     Hybridized internal combustion engine light-duty vehicle using methanol/
     synthetic fossil liquids
@@ -37,11 +39,13 @@ IAHm_ptrp:
   message-v-report: LDV_MHYB
 
 ICAe_ffv:
+  report: Biofuel ICEV
   description: Internal combustion engine light-duty vehicle using biofuels
   input: {commodity: ethanol}
   message-v-report: LDV_ffv
 
 ICAm_ptrp:
+  report: Synfuel ICEV
   description: >-
     Internal combustion engine light-duty vehicle using methanol/synthetic
     fossil liquids
@@ -49,6 +53,7 @@ ICAm_ptrp:
   message-v-report: LDV_meth
 
 ICE_conv:
+  report: ICEV
   description: >-
     Future (2005 and after) medium/high-efficiency internal combustion engine
     light-duty vehicle using gasoline/diesel
@@ -56,6 +61,7 @@ ICE_conv:
   message-v-report: LDV_conv
 
 ICE_L_ptrp:
+  report: ICEV (pre-2005)
   description: >-
     Historical (2005 and before) Low-efficiency internal combustion engine
     light-duty vehicle using gasoline/diesel
@@ -64,12 +70,14 @@ ICE_L_ptrp:
   message-v-report: LDV_ICE_L
 
 ICE_nga:
+  report: Gas ICEV
   description: >-
     Internal combustion engine light-duty vehicle using natural gas
   input: {commodity: gas}
   message-v-report: LDV_NGA
 
 ICH_chyb:
+  report: Hybrid
   description: >-
     Hybridized internal combustion engine light-duty vehicle using
     gasoline/diesel
@@ -77,20 +85,22 @@ ICH_chyb:
   message-v-report: LDV_CHYB
 
 IGH_ghyb:
+  report: Gas hybrid
   description: >-
     Hybridized internal combustion engine light-duty vehicle using natural gas
   input: {commodity: gas}
   message-v-report: LDV_GHYB
 
 PHEV_ptrp:
+  report: PHEV
   description: >-
     Plug-in hybrid-electric light-duty vehicle using gasoline/diesel (40-mile
     all-electric range)
-  report: PHEV
   input: {commodity: lightoil}
   message-v-report: LDV_PHEV
 
 ICE_H_moto:
+  report: ICEV
   description: >-
     High-efficiency internal combustion engine two-wheeler/motorcycle using
     gasoline/diesel
@@ -98,6 +108,7 @@ ICE_H_moto:
   report: 2W_ICE_H
 
 ELE_moto:
+  report: BEV
   description: >-
     Battery-electric two-wheeler/motorcycle using electricity-only
   input: {commodity: electr}
