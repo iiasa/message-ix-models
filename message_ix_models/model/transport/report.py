@@ -3,7 +3,7 @@ import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from genno import Computer, KeySeq, MissingKeyError, quote
+from genno import Computer, KeySeq, MissingKeyError
 from genno.core.key import single_key
 from message_ix import Reporter
 from message_ix_models import Context
@@ -127,11 +127,7 @@ def add_iamc_store_write(c: Computer, base_key) -> "Key":
     for suffix in ("csv", "xlsx"):
         # Create the path
         path = c.add(
-            f"{n} {suffix} path",
-            "make_output_path",
-            "config",
-            "scenario",
-            quote(f"{n}.{suffix}"),
+            f"{n} {suffix} path", "make_output_path", "config", name=f"{n}.{suffix}"
         )
         # Write `key` to the path
         file_keys.append(c.add(f"{n} {suffix}", "write_report", base_key, path))

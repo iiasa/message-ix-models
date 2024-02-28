@@ -38,8 +38,6 @@ from message_data.tools import iea_eei
 from .config import Config
 
 if TYPE_CHECKING:
-    import pathlib
-
     from genno import Computer
     from message_ix import Scenario
 
@@ -67,9 +65,8 @@ __all__ = [
     "indexers_usage",
     "input_commodity_level",
     "logit",
-    "make_output_path",
     "merge_data",
-    "nodes_ex_world",
+    "nodes_ex_world",  # Re-export from message_ix_models.util TODO do this upstream
     "nodes_world_agg",
     "pdt_per_capita",
     "price_units",
@@ -80,6 +77,7 @@ __all__ = [
     "transport_check",
     "transport_data",
     "votm",
+    "where",
 ]
 
 
@@ -608,19 +606,6 @@ def logit(
 
     # Logit probability
     return div(u, u.sum(dim))
-
-
-def make_output_path(config: dict, scenario: "Scenario", name: str) -> "pathlib.Path":
-    """Return a path under the "output_dir" Path from the reporter configuration.
-
-    This version overrides :func:`ixmp.report.operator.make_output_path` to include
-    :attr:`.ScenarioInfo.path`.
-
-    .. todo:: Move upstream, to :mod:`message_ix_models`.
-    """
-    result = config["output_dir"].joinpath(ScenarioInfo(scenario).path, name)
-    result.parent.mkdir(parents=True, exist_ok=True)
-    return result
 
 
 def merge_data(

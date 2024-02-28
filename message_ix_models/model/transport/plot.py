@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple
 import genno.compat.plotnine
 import pandas as pd
 import plotnine as p9
-from genno import Computer, quote
+from genno import Computer
 from iam_units import registry
 
 if TYPE_CHECKING:
@@ -104,11 +104,9 @@ class Plot(genno.compat.plotnine.Plot):
         cls, c: Computer, key: "KeyLike", *inputs, strict: bool = False
     ) -> "KeyLike":
         """Use a custom output path."""
-        # Some strings
         k_path = f"plot {cls.basename} path"
-        filename = f"{cls.basename}{cls.suffix}"
         # Output path for this parameter
-        c.add(k_path, "make_output_path", "config", "scenario", quote(filename))
+        c.add(k_path, "make_output_path", "config", name=f"{cls.basename}{cls.suffix}")
 
         # Same as the parent method
         _inputs = list(inputs if inputs else cls.inputs)
