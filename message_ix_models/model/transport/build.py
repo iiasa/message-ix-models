@@ -316,9 +316,14 @@ def get_spec(context: Context) -> Spec:
 
 
 def get_computer(
-    context: Context, obj: Optional[Computer] = None, **kwargs
+    context: Context,
+    obj: Optional[Computer] = None,
+    *,
+    visualize: bool = True,
+    **kwargs,
 ) -> Computer:
     """Return a :class:`genno.Computer` set up for model-building calculations."""
+    from . import operator
 
     # Configure
     Config.from_context(context, **kwargs)
@@ -338,16 +343,27 @@ def get_computer(
     context["transport spec"] = spec
     context["transport spec disutility"] = get_disutility_spec(context)
 
-    # Create a Computer, attach the context and scenario
+    # Create a Computer
     c = obj or Computer()
+
+    # Require modules with operators
+    c.require_compat("ixmp.report.operator")
+    c.require_compat("message_ix.report.operator")
+    c.require_compat("message_ix_models.report.operator")
+    c.require_compat(operator)
+
+    # Transfer data from `context` to "config" in the genno graph
+    for k, v in {
+        "regions": context.model.regions,
+        "transport": context.transport,
+        "data source": dict(),
+        "output_dir": context.get_local_path(),
+    }.items():
+        c.graph["config"].setdefault(k, v)
+
+    # Attach the context and scenario
     c.add("context", context)
     c.add("scenario", scenario)
-
-    # .report._handle_config() does more of the low-level setup, including
-    # - Require modules with operators.
-    # - Transfer data from `context` to `config`.
-    c.configure(config={"MESSAGEix-Transport": {}})
-
     # Add a computation that is an empty list.
     # Individual modules's prepare_computer() functions can append keys.
     c.add("add transport data", [])
@@ -363,10 +379,11 @@ def get_computer(
         module = import_module(name if "." in name else f"..{name}", __name__)
         module.prepare_computer(c)
 
-    path = context.get_local_path("transport", "build.svg")
-    path.parent.mkdir(exist_ok=True)
-    c.visualize(filename=path, key="add transport data")
-    log.info(f"Visualization written to {path}")
+    if visualize:
+        path = context.get_local_path("transport", "build.svg")
+        path.parent.mkdir(exist_ok=True)
+        c.visualize(filename=path, key="add transport data")
+        log.info(f"Visualization written to {path}")
 
     return c
 
