@@ -610,11 +610,13 @@ def logit(
     return div(u, u.sum(dim))
 
 
-def make_output_path(config, scenario, name) -> "pathlib.Path":
+def make_output_path(config: dict, scenario: "Scenario", name: str) -> "pathlib.Path":
     """Return a path under the "output_dir" Path from the reporter configuration.
 
     This version overrides :func:`ixmp.report.operator.make_output_path` to include
     :attr:`.ScenarioInfo.path`.
+
+    .. todo:: Move upstream, to :mod:`message_ix_models`.
     """
     result = config["output_dir"].joinpath(ScenarioInfo(scenario).path, name)
     result.parent.mkdir(parents=True, exist_ok=True)
