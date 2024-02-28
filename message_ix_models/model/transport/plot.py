@@ -69,7 +69,7 @@ class Plot(genno.compat.plotnine.Plot):
             f"— {extra}" if extra else None,
         ]
         subtitle_parts = [
-            self.scenario.url,
+            getattr(self.scenario, "url", "no scenario"),
             "—",
             datetime.now().isoformat(timespec="minutes"),
         ]
