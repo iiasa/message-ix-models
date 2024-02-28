@@ -57,7 +57,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         # Some strings
         csv, path, fn = f"{name} csv", f"{name} path", f"{name.replace(' ', '-')}.csv"
         # Output path for this parameter
-        rep.add(path, "make_output_path", "config", "scenario", fn)
+        rep.add(path, "make_output_path", "config", name=fn)
         # Write to file
         rep.add(csv, "write_report", base, path, hc)
         targets.append(csv)
