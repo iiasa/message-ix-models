@@ -3,7 +3,7 @@ import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from genno import KeySeq, MissingKeyError, quote
+from genno import Computer, KeySeq, MissingKeyError, quote
 from genno.core.key import single_key
 from message_ix import Reporter
 from message_ix_models import Context
@@ -114,7 +114,8 @@ def select_transport_techs(c: "Computer") -> None:
         c.add(key + "non-ldv", "select", key, "t::transport non-ldv", sums=True)
 
 
-def add_iamc_store_write(c: "Computer", base_key) -> "Key":
+# TODO Type c as (string) "Computer" once genno supports this
+def add_iamc_store_write(c: Computer, base_key) -> "Key":
     """Write `base_key` to CSV, XLSX, and/or both; and/or store on "scenario".
 
     .. todo:: Move upstream, to :mod:`message_ix_models`.
