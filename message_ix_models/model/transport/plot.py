@@ -400,7 +400,7 @@ class Demand0(Plot):
             data.query("c in @_commodity")
             .pipe(c_group, cg)
             .groupby(["c_group", "n", "y"])
-            .aggregate({"demand": sum})
+            .aggregate({"demand": "sum"})
             .reset_index()
         )
 
