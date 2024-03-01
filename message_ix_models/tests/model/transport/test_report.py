@@ -63,7 +63,7 @@ def test_report_bare_solved(request, test_context, tmp_path, regions, years):
 
     # Update configuration
     # key = "transport all"  # All including plots, etc.
-    key = "transport iamc all"  # IAMC-structured data stored and written to file
+    key = "transport::iamc+all"  # IAMC-structured data stored and written to file
     test_context.update(
         regions=regions,
         years=years,
