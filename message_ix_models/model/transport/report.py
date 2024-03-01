@@ -1,18 +1,21 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
 import logging
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Tuple
 
-from genno import Computer, KeySeq, MissingKeyError
+import pandas as pd
+from genno import Computer, KeySeq, MissingKeyError, Quantity
 from genno.core.key import single_key
 from message_ix import Reporter
-from message_ix_models import Context
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.util import add_replacements
 
 from . import Config
 from .build import get_spec
 
 if TYPE_CHECKING:
+    import ixmp
     from genno import Computer, Key
 
 log = logging.getLogger(__name__)
@@ -118,26 +121,46 @@ def select_transport_techs(c: "Computer") -> None:
 def add_iamc_store_write(c: Computer, base_key) -> "Key":
     """Write `base_key` to CSV, XLSX, and/or both; and/or store on "scenario".
 
+    If `base_key` is, for instance, "foo::iamc", this function adds the following keys:
+
+    - "foo::iamc+all": both of:
+
+      - "foo::iamc+file": both of:
+
+        - "foo::iamc+csv": write the data in `base_key` to a file named :file:`foo.csv`.
+        - "foo::iamc+xlsx": write the data in `base_key` to a file named
+          :file:`foo.xlsx`.
+
+        The files are created in a subdirectory using :func:`make_output_path`—that is,
+        including a path component given by the scenario URL.
+
+      - "foo::iamc+store" store the data in `base_key` as time series data on the
+        scenario identified by the key "scenario".
+
     .. todo:: Move upstream, to :mod:`message_ix_models`.
     """
-    # Text fragments: "foo bar" for "foo::bar", and "foo" alone
-    s, n = str(base_key).replace("::", " "), base_key.name
+    k = KeySeq(base_key)
 
     file_keys = []
     for suffix in ("csv", "xlsx"):
         # Create the path
         path = c.add(
-            f"{n} {suffix} path", "make_output_path", "config", name=f"{n}.{suffix}"
+            k[f"{suffix} path"],
+            "make_output_path",
+            "config",
+            name=f"{k.base.name}.{suffix}",
         )
         # Write `key` to the path
-        file_keys.append(c.add(f"{n} {suffix}", "write_report", base_key, path))
+        file_keys.append(c.add(k[suffix], "write_report", base_key, path))
 
     # Write all files
-    c.add(f"{s} file", file_keys)
+    c.add(k["file"], file_keys)
+
     # Store data on "scenario"
-    c.add(f"{s} store", "store_ts", "scenario", base_key)
+    c.add(k["store"], "store_ts", "scenario", base_key)
+
     # Both write and store
-    return single_key(c.add(f"{s} all", [f"{s} file", f"{s} store"]))
+    return single_key(c.add(k["all"], [k["file"], k["store"]]))
 
 
 # Units for final energy. This *exact* value (and not e.g. "EJ / year") is required for
@@ -301,7 +324,7 @@ def callback(rep: Reporter, context: Context) -> None:
     # Add tasks that prepare data to parametrize the MESSAGEix-GLOBIOM base model
     base_key = base.prepare_reporter(rep)
 
-    rep.add("transport all", [iamc_key, "transport plots", base_key])
+    rep.add("transport all", [iamc_key + "file", "transport plots", base_key])
 
     log.info(f"Added {len(rep.graph)-N_keys} keys")
     # TODO Write an SVG visualization of reporting calculations
@@ -348,3 +371,187 @@ def configure_legacy_reporting(config: dict) -> None:
         group = f"trp {commodity}"
         # log.debug(f"{t} → '{group}'")
         config[group].append(t.id)
+
+
+def latest_reporting_from_file(
+    info: ScenarioInfo, base_dir: Path
+) -> Tuple[Any, int, pd.DataFrame]:
+    """Locate and retrieve the latest reported output for the scenario `info`.
+
+    The file :file:`transport.csv` is sought in a subdirectory of `base_dir` identified
+    by :attr:`.ScenarioInfo.path`.
+
+    .. todo:: Move upstream, to :mod:`message_ix_models`.
+
+    Returns
+    -------
+    tuple
+        1. The path of the file read.
+        2. :class:`int`: The scenario version corresponding to the data read.
+        3. :class:`pandas.DataFrame`: the data.
+
+        If no data is found, all the elements are :any:`None`.
+    """
+    dirs = sorted(base_dir.glob(info.path.replace("vNone", "v*")), reverse=True)
+    for _dir in dirs:
+        path = _dir.joinpath("transport.csv")
+        if not path.exists():
+            log.info(f"Skip {_dir}; no file 'transport.csv'")
+            continue
+        path_version = int(path.parent.name.split("v")[-1])
+        return (
+            path,
+            path_version,
+            pd.read_csv(path).assign(
+                Scenario=lambda df: df.Scenario + f"#{path_version}"
+            ),
+        )
+
+    return None, -1, pd.DataFrame()
+
+
+def latest_reporting_from_platform(
+    info: ScenarioInfo, platform: "ixmp.Platform", minimum_version: int = -1
+) -> Tuple[Any, int, pd.DataFrame]:
+    """Retrieve the latest reported output for the scenario described by `info`.
+
+    The time series data attached to a scenario on `platform` is retrieved.
+
+    .. todo:: Move upstream, to :mod:`message_ix_models`.
+
+    Returns
+    -------
+    tuple
+        1. The :class:`.Scenario` object.
+        2. :class:`int`: The scenario version corresponding to the data read.
+        3. :class:`pandas.DataFrame`: the data.
+
+        If no data is found or the latest version with reporting time series data is
+        <= `minimum_version`, all the elements are :any:`None`.
+    """
+    from message_ix import Scenario
+
+    for _, row in (
+        platform.scenario_list(model=info.model, scen=info.scenario, default=False)
+        .sort_values(["version"], ascending=False)
+        .iterrows()
+    ):
+        if row.version <= minimum_version:
+            log.info(f"{row.version} ≤ minimum {minimum_version}")
+            break
+        elif row.is_locked:
+            log.info(f"Skip {info.url} {row.version}; locked")
+            continue
+
+        s = Scenario(
+            platform, model=info.model, scenario=info.scenario, version=row.version
+        )
+        if s.has_solution():
+            return (
+                s,
+                row.version,
+                s.timeseries().assign(
+                    # Scenario=lambda df: df.Scenario + f"v{row.version}"
+                ),
+            )
+        else:
+            log.info(f"Skip {info.url} {row.version}; no reporting output")
+            del s
+
+    return None, -1, pd.DataFrame()
+
+
+def multi(context: Context, targets):
+    """Report outputs from multiple scenarios."""
+    import plotnine as p9
+
+    report_dir = context.get_local_path("report")
+    platform = context.get_platform()
+
+    dfs = []
+    for target in map(ScenarioInfo.from_url, targets):
+        path, path_version, df_path = latest_reporting_from_file(target, report_dir)
+        scen, scen_version, df_scen = latest_reporting_from_platform(target, platform)
+
+        if path_version == scen_version == -1:
+            raise RuntimeError(f"No reporting output available for {target}")
+        elif path_version >= scen_version:
+            source = "file"
+            df = df_path
+            version = path_version
+        else:
+            source = "platform"
+            df = df_scen
+            version = scen_version
+
+        log.info(f"{target.url = } {source = } {version = }")
+
+        dfs.append(df)
+
+    # FIXME This duplicates code from message_ix_models.tools.exo_data; deduplicate
+    def drop_unique(df, names) -> pd.DataFrame:
+        names_list = names.split()
+        for name in names_list:
+            values = df[name].unique()
+            if len(values) > 1:
+                raise RuntimeError(f"Not unique {name!r}: {values}")
+        return df.drop(names_list, axis=1)
+
+    # Convert to a genno.Quantity
+    cols = ["Variable", "Model", "Scenario", "Region", "Unit"]
+    data = Quantity(
+        pd.concat(dfs)
+        .sort_values(cols)
+        .melt(id_vars=cols, var_name="y")
+        .astype({"y": int})
+        .pipe(drop_unique, "Model")
+        .rename(columns={"Variable": "v", "Scenario": "s", "Region": "n"})
+        .dropna(subset=["value"])
+        .set_index("v s n y Unit".split())["value"]
+    )
+
+    # Select a subset of data
+    qty = quantity_from_iamc(data, r"Transport\|Stock\|Road\|Passenger\|LDV\|(.*)")
+
+    # Plot
+    # TODO Move to .transport.plot
+    plot = (
+        p9.ggplot(qty.to_dataframe().reset_index())
+        + p9.aes(x="y", y="value", color="v")
+        + p9.facet_grid("n ~ s")
+        + p9.geom_point()
+        + p9.geom_line()
+        + p9.theme(figure_size=(11.7, 16.6))
+    )
+    plot.save("debug.pdf")
+
+    return data
+
+
+def quantity_from_iamc(qty: Quantity, variable: str) -> Quantity:
+    """Extract data for a single measure from `qty` with (at least) dimensions v, u.
+
+    .. todo:: Move upstream, to either :mod:`ixmp` or :mod:`genno`.
+
+    Parameters
+    ----------
+    variable : str
+        Regular expression to match the ``v`` dimension of `qty`.
+    """
+    import re
+
+    from genno.operator import relabel, select
+
+    expr = re.compile(variable)
+    variables, replacements = [], {}
+    for var in qty.coords["v"].data:
+        if match := expr.fullmatch(var):
+            variables.append(match.group(0))
+            replacements[match.group(0)] = match.group(1)
+
+    subset = qty.pipe(select, {"v": variables}).pipe(relabel, {"v": replacements})
+
+    unique_units = subset.coords["Unit"].data
+    assert 1 == len(unique_units)
+    subset.units = unique_units[0]
+    return subset.sel(Unit=unique_units[0], drop=True)
