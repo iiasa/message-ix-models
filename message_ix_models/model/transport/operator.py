@@ -373,7 +373,8 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
     # - Broadcast over all nodes `n`.
     # - Set dimensions as index.
     return Quantity(
-        df.ffill()
+        df.infer_objects(copy=False)
+        .ffill()
         .reset_index()
         .assign(n=None)
         .pipe(broadcast, n=n)
@@ -428,7 +429,9 @@ def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quan
         for t_ in map(str, techs):
             df.loc[years, t_] = value.get(t_, 1.0)
 
-    qty = Quantity(df.fillna(1.0).reset_index().set_index("y").stack())
+    qty = Quantity(
+        df.infer_objects(copy=False).fillna(1.0).reset_index().set_index("y").stack()
+    )
 
     return compound_growth(qty, "y")
 
@@ -460,7 +463,8 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quanti
     # - Broadcast over all nodes `n`.
     # - Set dimensions as index.
     return Quantity(
-        df.ffill()
+        df.infer_objects(copy=False)
+        .ffill()
         .reset_index()
         .melt(id_vars="y", var_name="t")
         .assign(n=None)
