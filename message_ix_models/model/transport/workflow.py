@@ -21,6 +21,7 @@ def generate(
 
     from . import build
     from .config import Config
+    from .report import multi
 
     # TODO respect dry-run
     # TODO respect quiet
@@ -70,6 +71,7 @@ def generate(
     wf.add_step("base", None, target=base_url)
 
     all_keys = []
+    all_targets = []
     for ssp in SSP_2024:
         # Construct a label including the SSP
         # TODO split to a separate function
@@ -78,6 +80,7 @@ def generate(
 
         # Identify the target of this step
         target = url_template.format(label_full)
+        all_targets.append(target)
 
         # Build Transport on the scenario
         # TODO Add functionality like gen-activity
@@ -91,6 +94,9 @@ def generate(
 
         # Report
         all_keys.append(wf.add_step(f"{label} reported", f"{label} solved", report))
+
+    # Report across multiple scenarios
+    wf.add("report multi", multi, "context", targets=all_targets)
 
     wf.add("all reported", all_keys)
     wf.default_key = "all reported"
