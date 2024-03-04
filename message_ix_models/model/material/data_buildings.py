@@ -45,7 +45,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
             "Floor Space|Aluminum|Cement|Steel"
         )
     ]  # Final Energy - Later. Need to figure out carving out
-    bld_input_mat["Region"] = "R11_" + bld_input_mat["Region"]
+    bld_input_mat["Region"] = "R12_" + bld_input_mat["Region"]
     print("Check the year values")
     print(bld_input_mat)
 
@@ -202,7 +202,7 @@ def gen_data_buildings(scenario, dry_run=False):
     yv_ya = s_info.yv_ya
     # fmy = s_info.y0
     nodes.remove("World")
-    nodes.remove("R11_RCPA")
+    #nodes.remove("R11_RCPA")
 
     # Read field values from the buildings input data
     regions = list(set(data_buildings.node))
