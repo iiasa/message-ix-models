@@ -4,6 +4,7 @@ import ntfy
 import click
 import logging
 import ixmp
+import os
 import message_ix_models.tools.costs.projections
 
 from message_data.model.material.build import apply_spec
@@ -30,6 +31,7 @@ from message_data.model.material.data_util import (
     gen_te_projections,
     get_ssp_soc_eco_data,
 )
+from message_data.model.material.util import excel_to_csv, get_all_input_data_dirs
 from typing import Mapping
 from message_data.model.material.data_cement import gen_data_cement
 from message_data.model.material.data_steel import gen_data_steel
@@ -745,3 +747,36 @@ def run_LED_cprice(context, ssp, scenario):
 
     scen_cprice.solve(model="MESSAGE-MACRO", solve_options={"scaind": -1})
     return
+
+
+@cli.command("make_xls_input_vc_able")
+@click.option(
+    "--files",
+    default="all",
+    help="optionally specify which files to make VC-able - not implemented yet",
+)
+@click.pass_obj
+def make_xls_input_vc_able(context, files):
+    if files == "all":
+        dirs = get_all_input_data_dirs()
+        dirs = [i for i in dirs if i != "version control"]
+        for dir in dirs:
+            print(dir)
+            files = os.listdir(private_data_path("material", dir))
+            files = [i for i in files if ((i.endswith(".xlsx")) & ~i.startswith("~$"))]
+            print(files)
+            for filename in files:
+                excel_to_csv(dir, filename)
+    else:
+        raise NotImplementedError
+        # if not isinstance(files, tuple):
+        #     print(type(files))
+        #
+        # print(files)
+        # for element in files:
+        #     print(element)
+        #     fname = element.split("/")[-1]
+        #     path = private_data_path(str(element.split("/")[:-1]))
+        #     print(path, fname)
+        # message_data.model.material.util.excel_to_csv(files)
+    retu
