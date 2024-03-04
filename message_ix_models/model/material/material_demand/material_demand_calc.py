@@ -146,10 +146,10 @@ def read_hist_mat_demand(material):
 
     if material in ["cement", "steel"]:
         # Read population data
-        df_pop = read_timer_pop(datapath, file_cement, material)
+        df_pop = read_timer_pop(datapath, material)
 
         # Read GDP per capita data
-        df_gdp = read_timer_gdp(datapath, file_cement, material)
+        df_gdp = read_timer_gdp(datapath, material)
 
     if material == "aluminum":
         df_raw_cons = (
