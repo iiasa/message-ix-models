@@ -268,6 +268,10 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
             for measure, model, tec in zip(measures, models, tecs):
                 df = get_ssp_soc_eco_data(context, model, measure, tec)
                 scenario.check_out()
+                if "GDP_PPP" not in list(scenario.set("technology")):
+                    scenario.add_set("technology", "GDP_PPP")
+                scenario.commit("update projections")
+                scenario.check_out()
                 scenario.add_par("bound_activity_lo", df)
                 scenario.add_par("bound_activity_up", df)
                 scenario.commit("update projections")
@@ -277,7 +281,8 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
                 context.get_scenario().clone(
                     model="MESSAGEix-Materials",
                     scenario=output_scenario_name + "_" + tag,
-                ), old_calib=old_calib
+                ),
+                old_calib=old_calib,
             )
         # Set the latest version as default
         scenario.set_as_default()
