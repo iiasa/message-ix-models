@@ -66,6 +66,11 @@ jobs:
       with:
         macos-skip-brew-update: true
 
+    - name: Install specific version of pytest
+      # All versions prior to v3.9.0 use a hook argument that pytest removed in v8.1.0
+      if: ${{ matrix.version != 'main' }}
+      run: pip install pytest==8.0.0
+
     - name: Install packages and dependencies
       # By default, install:
       # - ixmp, message_ix: from GitHub branches/tags per matrix.upstream-version (above)
