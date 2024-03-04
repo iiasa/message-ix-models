@@ -533,6 +533,8 @@ def gen_data_steel(scenario, dry_run=False):
 
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
+    if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
+        results["input"] = results["input"].replace({"freshwater_supply": "freshwater"})
     return results
 
 
