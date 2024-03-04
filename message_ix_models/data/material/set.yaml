@@ -479,7 +479,7 @@ fertilizer:
   commodity:
     require:
     - electr
-    - freshwater_supply
+    #- freshwater_supply removed for SSP_dev developments, is added in build if missing
     add:
     - NH3
     - Fertilizer Use|Nitrogen
