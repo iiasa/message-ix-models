@@ -1,7 +1,8 @@
 from message_ix_models import Context
-from message_ix_models.util import load_private_data
+from message_ix_models.util import load_private_data, private_data_path
 import pandas as pd
 import yaml
+import os
 
 # Configuration files
 METADATA = [
@@ -87,3 +88,23 @@ def invert_dictionary(original_dict):
                 inverted_dict[array_element] = []
             inverted_dict[array_element].append(key)
     return inverted_dict
+
+
+def excel_to_csv(material_dir, fname):
+    xlsx_dict = pd.read_excel(
+        private_data_path("material", material_dir, fname), sheet_name=None
+    )
+    if not os.path.isdir(private_data_path("material", "version control")):
+        os.mkdir(private_data_path("material", "version control"))
+    os.mkdir(private_data_path("material", "version control", fname))
+    for tab in xlsx_dict.keys():
+        xlsx_dict[tab].to_csv(
+            private_data_path("material", "version control", fname, f"{tab}.csv"),
+            index=False,
+        )
+
+
+def get_all_input_data_dirs():
+    elements = os.listdir(private_data_path("material"))
+    elements = [i for i in elements if os.path.isdir(private_data_path("material", i))]
+    return elements
