@@ -162,6 +162,10 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
             conv_cost_df = pd.concat([conv_cost_df, make_df(p, **df_tecs)])
         par_dict[p] = pd.concat([df[~df["technology"].isin(tec_list)], conv_cost_df])
 
+    # HACK: quick fix to enable compatibility with water build
+    if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
+        par_dict["input"] = par_dict["input"].replace({"freshwater_supply": "freshwater"})
+
     return par_dict
 
 
