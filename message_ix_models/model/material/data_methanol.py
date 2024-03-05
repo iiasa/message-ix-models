@@ -226,7 +226,7 @@ def gen_data_methanol(scenario):
         new_dict2[i] = new_dict2[i].drop_duplicates()
 
     # model MTBE phase out legislation
-    if pars["mtbe_scenario"] == "phase_out":
+    if pars["mtbe_scenario"] == "phase-out":
         new_dict2 = combine_df_dictionaries(new_dict2, add_mtbe_act_bound(scenario))
 
 
