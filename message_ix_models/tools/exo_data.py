@@ -1,4 +1,5 @@
 """Generic tools for working with exogenous data sources."""
+
 import logging
 from abc import ABC, abstractmethod
 from operator import itemgetter

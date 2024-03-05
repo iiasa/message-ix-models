@@ -146,7 +146,7 @@ class SSPUpdate(ExoDataSource):
 
         # Map the `measure` keyword to a string appearing in the data
         _kw = copy(source_kw)
-        self.measure = {
+        measure = {
             "GDP": "GDP|PPP",
             "POP": "Population",
         }[_kw.pop("measure")]
@@ -154,24 +154,62 @@ class SSPUpdate(ExoDataSource):
         # Store the model ID, if any
         self.model = _kw.pop("model", None)
 
+        # Identify the data release date/version/label
+        self.release = _kw.pop("release", "3.0")
+
+        # Directories in which to locate `self.filename`
+        self.dirs = []
+
+        # Replacements to apply, if any
+        self.replace = {}
+
+        # Prepare query pieces
+        models = []
+        scenarios = []
+
+        if self.release == "3.0":
+            self.filename = "1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz"
+            # Stored directly in message_ix_models
+            self.dirs.append(package_data_path("ssp"))
+            scenarios.append(f"SSP{self.ssp_number}")
+
+            if measure == "GDP|PPP" and self.model != "OECD ENV-Growth 2023":
+                # Configure to prepend s="Historical Reference" observations to series
+                models.extend([self.model, "OECD ENV-Growth 2023"])
+                scenarios.append("Historical Reference")
+                self.replace.update(
+                    Model={"OECD ENV-Growth 2023": models[0]},
+                    Scenario={"Historical Reference": scenarios[0]},
+                )
+        elif self.release == "preview":
+            self.filename = "SSP-Review-Phase-1.csv.gz"
+            # Look first in message_data, then in message_ix_models test data
+            self.dirs.extend(
+                [private_data_path("ssp"), package_data_path("test", "ssp")]
+            )
+            scenarios.append(f"SSP{self.ssp_number} - Review Phase 1")
+        else:
+            raise ValueError(f"{self.release = }")
+
+        # Assemble and store a query string
+        self.query = f"Scenario in {scenarios!r} and Variable == '{measure}'" + (
+            f"and Model in {models!r}" if models else ""
+        )
+        # log.info(f"{self.query = }")
+
         if len(_kw):
             raise ValueError(_kw)
 
     def __call__(self):
-        # Assemble a query string
-        query = " and ".join(
-            [
-                f"Scenario == 'SSP{self.ssp_number} - Review Phase 1'",
-                f"Variable == '{self.measure}'",
-                f"Model == '{self.model}'" if self.model else "True",
-            ]
-        )
+        # Iterate over possible locations for self.filename
+        for dir in self.dirs:
+            path = dir.joinpath(self.filename)
+            if not path.exists():
+                log.info(f"Not found: {path}")
+            elif "test" in path.parts:
+                log.warning(f"Reading random data from {path}")
+            else:
+                break
 
-        parts = ("ssp", "SSP-Review-Phase-1.csv.gz")
-        if HAS_MESSAGE_DATA:
-            path = private_data_path(*parts)
-        else:
-            path = package_data_path("test", *parts)
-            log.warning(f"Reading random data from {path}")
-
-        return iamc_like_data_for_query(path, query)
+        # Use prepared query and replacements
+        return iamc_like_data_for_query(path, self.query, replace=self.replace)
