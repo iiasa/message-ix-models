@@ -93,7 +93,7 @@ Automated workflow
 ------------------
 
 :mod:`.transport.workflow.generate` returns a :class:`.Workflow` instance.
-This can be handled with further code, or with through the command-line::
+This can be invoked or modified by other code, or through the command-line::
 
   $ mix-models transport run --help
   Usage: mix-models transport run [OPTIONS] TARGET
@@ -123,7 +123,7 @@ This is the method used by the :file:`transport.yaml` GitHub Actions workflow (s
 Manual
 ------
 
-This subsection contains an older, manual step
+This subsection contains an older, manual, step-by-step workflow.
 
 **Preliminaries.**
 Check the list of :doc:`pre-requisite knowledge <message_ix:prereqs>` for working with :mod:`.message_data`.
