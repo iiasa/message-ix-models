@@ -1,26 +1,9 @@
 """Command-line interface for MESSAGEix-Transport.
 
 Use the :doc:`CLI <message_ix_models:cli>` command :program:`mix-models transport` to
-invoke the commands defined in this module.
-
-Use :program:`mix-models transport --help` to show a help text like::
-
-    Usage: mix-models transport [OPTIONS] COMMAND [ARGS]...
-
-      MESSAGEix-Transport variant.
-
-    Options:
-      --help  Show this message and exit.
-
-    Commands:
-      build       Prepare the model.
-      debug       Temporary code for development.
-      export-emi  Export emissions factors from base scenarios.
-      migrate     Migrate data from MESSAGE(V)-Transport.
-      solve       Run the model.
-
-Each individual command also has its own help text; try e.g. :program:`mix-models
-transport build --help`.
+invoke the commands defined in this module. Each individual command also has its own
+help text; try e.g. :program:`mix-models transport run --help`. For the main CLI entry
+point, see :ref:`transport-usage`.
 """
 
 import logging
@@ -56,11 +39,6 @@ cli.add_command(
                 is_flag=True,
                 help="Skip removing data for removed set elements.",
             ),
-            # click.Option(
-            #     ["--report", "report_build"],
-            #     is_flag=True,
-            #     help="Generate diagnostic reports of the built scenario.",
-            # ),
             click.Option(
                 ["--model-extra", "target_model_name"],
                 callback=exec_cb("context.core.dest_scenario['model'] = value"),

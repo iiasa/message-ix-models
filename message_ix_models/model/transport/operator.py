@@ -1,4 +1,5 @@
 """:mod:`genno` operators for MESSAGEix-Transport."""
+
 import logging
 import re
 from functools import partial, reduce
