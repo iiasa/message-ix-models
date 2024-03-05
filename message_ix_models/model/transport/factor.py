@@ -6,6 +6,7 @@
    - Linear interpolation between given points.
    - Exponentials, splines, and other functions.
 """
+
 import logging
 import operator
 import re
@@ -423,6 +424,7 @@ COMMON = {
                 M=Constant(0.95, "n y"),
                 L=Constant(1.0, "n y"),
             ),
+            OMIT_2020,
             ScenarioSetting.of_enum(SSP_2024, "1=H 2=M 3=L 4=M 5=L", default="M"),
         ]
     ),
