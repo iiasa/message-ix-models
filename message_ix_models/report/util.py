@@ -10,8 +10,6 @@ from iam_units import registry
 from message_ix import Reporter
 from sdmx.model.v21 import Code
 
-from message_ix_models.util import eval_anno
-
 log = logging.getLogger(__name__)
 
 
@@ -198,6 +196,9 @@ def copy_ts(rep: Reporter, other: str, filters: Optional[dict]) -> Key:
 def add_replacements(dim: str, codes: Iterable[Code]) -> None:
     """Update :data:`REPLACE_DIMS` for dimension `dim` with values from `codes`."""
     for code in codes:
-        label = eval_anno(code, "report")
-        if label is not None:
+        try:
+            label = str(code.get_annotation(id="report").text)
+        except KeyError:
+            pass
+        else:
             REPLACE_DIMS[dim][f"{code.id.title()}$"] = label
