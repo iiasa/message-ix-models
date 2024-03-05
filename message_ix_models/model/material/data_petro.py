@@ -41,7 +41,6 @@ def read_data_petrochemicals(scenario):
 
 
 def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
-
     context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
@@ -181,7 +180,6 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
         global_region = "R12_GLB"
 
     for t in config["technology"]["add"]:
-
         # years = s_info.Y
         params = data_petro.loc[
             (data_petro["technology"] == t), "parameter"
@@ -190,9 +188,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
         # Availability year of the technology
         av = data_petro.loc[(data_petro["technology"] == t), "availability"].values[0]
         modelyears = [year for year in modelyears if year >= av]
-        yva = yv_ya.loc[
-            yv_ya.year_vtg >= av,
-        ]
+        yva = yv_ya.loc[yv_ya.year_vtg >= av,]
 
         # Iterate over parameters
         for par in params:
@@ -222,9 +218,7 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
             for rg in regions:
                 if len(split) > 1:
-
                     if (param_name == "input") | (param_name == "output"):
-
                         com = split[1]
                         lev = split[2]
                         mod = split[3]
@@ -342,7 +336,6 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
                 # Rest of the parameters apart from input, output and emission_factor
 
                 else:
-
                     df = make_df(
                         param_name,
                         technology=t,
@@ -526,4 +519,21 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
         ]
     )
 
+    # TODO: move this to input xlsx file
+    df = scenario.par(
+        "relation_activity",
+        filters={"relation": "h2_scrub_limit", "technology": "gas_bio"},
+    )
+    df["value"] = -(1.33181 * 0.482)  # gas input * emission factor of gas
+    df["technology"] = "gas_processing_petro"
+    results["relation_activity"] = df
+
+    # TODO: move this to input xlsx file
+    df_gro = results["growth_activity_up"]
+    drop_idx = df_gro[
+        (df_gro["technology"] == "steam_cracker_petro")
+        & (df_gro["node_loc"] == "R12_RCPA")
+        & (df_gro["year_act"] == 2020)
+    ].index
+    results["growth_activity_up"] = results["growth_activity_up"].drop(drop_idx)
     return results
