@@ -13,7 +13,7 @@ from iam_units import convert_gwp
 from iam_units.emissions import SPECIES
 
 from message_ix_models import Context
-from message_ix_models.util import add_par_data
+from message_ix_models.util import add_par_data, nodes_ex_world
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,6 +34,7 @@ __all__ = [
     "gwp_factors",
     "make_output_path",
     "model_periods",
+    "nodes_ex_world",
     "remove_ts",
     "share_curtailment",
 ]
