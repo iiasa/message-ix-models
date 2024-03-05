@@ -10,7 +10,11 @@ log = logging.getLogger(__name__)
 
 
 def generate(
-    context: "message_ix_models.Context", *, report_key="transport all", **options
+    context: "message_ix_models.Context",
+    *,
+    report_key="transport all",
+    dry_run: bool = False,
+    **options,
 ):
     from message_ix_models import Workflow
     from message_ix_models.report import register, report
@@ -23,7 +27,6 @@ def generate(
     from .config import Config
     from .report import multi
 
-    # TODO respect dry-run
     # TODO respect quiet
 
     options.pop("target_model_name")
@@ -70,8 +73,9 @@ def generate(
     # Load the base model scenario
     wf.add_step("base", None, target=base_url)
 
-    all_keys = []
-    all_targets = []
+    reported = []
+    targets = []
+    debug = []
     for ssp in SSP_2024:
         # Construct a label including the SSP
         # TODO split to a separate function
@@ -80,25 +84,41 @@ def generate(
 
         # Identify the target of this step
         target = url_template.format(label_full)
-        all_targets.append(target)
+        targets.append(target)
 
         # Build Transport on the scenario
         # TODO Add functionality like gen-activity
         # TODO Add functionality like build_cmd() with report_build
         wf.add_step(
-            f"{label} built", "base", build.main, target=target, clone=True, ssp=ssp
+            f"{label} built",
+            "base",
+            build.main,
+            target=target,
+            clone=True,
+            ssp=ssp,
         )
+
+        # Simulate build
+        debug.append(f"{label} debug build")
+        wf.add_step(debug[-1], "base", build.main, ssp=ssp, dry_run=True)
 
         # Solve
         wf.add_step(f"{label} solved", f"{label} built", solve, config=solve_config)
 
         # Report
-        all_keys.append(wf.add_step(f"{label} reported", f"{label} solved", report))
+        reported.append(f"{label} reported")
+        wf.add_step(reported[-1], f"{label} solved", report)
+
+    # Compare simulated builds
+    # NB the following use genno.Computer.add(), not
+    #    message_ix_models.Workflow.add_step(). This is because the operations are not
+    #    modifying and handling scenarios, just calling ordinary functions.
+    wf.add("debug build", build.debug_multi, "context", *debug)
 
     # Report across multiple scenarios
-    wf.add("report multi", multi, "context", targets=all_targets)
+    wf.add("report multi", multi, "context", targets=targets)
 
-    wf.add("all reported", all_keys)
+    wf.add("all reported", reported)
     wf.default_key = "all reported"
 
     return wf

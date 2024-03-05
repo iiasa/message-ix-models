@@ -1,4 +1,5 @@
 """Plots for MESSAGEix-Transport reporting."""
+
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -149,7 +150,7 @@ class CapNewLDV(Plot):
 
 
 class ComparePDT(Plot):
-    """Activity.
+    """Passenger activity.
 
     This plot is used in :func:`.transport.cli.gen_activity`, not in ordinary reporting.
     Rather than receiving data from computed quantities already in the graph, it reads
@@ -161,10 +162,11 @@ class ComparePDT(Plot):
     """
 
     runs_on_solved_scenario = False
-    basename = "../compare-pdt"
+    basename = "compare-pdt"
 
     static = Plot.static + [
         p9.aes(x="y", y="value", color="scenario"),
+        p9.scale_y_log10(),
         p9.facet_wrap("t", ncol=5),
         p9.geom_line(),
         p9.geom_point(size=0.5),
@@ -178,10 +180,8 @@ class ComparePDT(Plot):
     unit = "km/a"
     #: Unit adjustment factor.
     factor = 1e6
-    #: :obj:`True` to fix the y axis on all pages to the same range.
-    use_y_max = False
 
-    def generate(self, base_dir: Path):
+    def generate(self, *paths: Path):
         # - Read data from files named, for instance, "pdt.csv" in subdirectories of
         #   `base_dir`; store with keys that are subdirectory names.
         # - Concatenate to a single data frame with a "scenario" column.
@@ -189,8 +189,8 @@ class ComparePDT(Plot):
         data = (
             pd.concat(
                 {
-                    p.parts[-2]: pd.read_csv(p)
-                    for p in base_dir.glob(f"**/{self.kind}.csv")
+                    p.parts[-1]: pd.read_csv(p.joinpath(f"{self.kind}.csv"))
+                    for p in paths
                 },
                 names=["scenario"],
             )
@@ -198,27 +198,20 @@ class ComparePDT(Plot):
             .eval("value = value / @self.factor")
         )
 
-        # Maximum across all data
-        y_max = max(data["value"])
-
         # Add factor to the unit expression
         if self.factor != 1.0:
             self.unit = f"{self.factor:.0e} {self.unit}"
 
         for _, ggplot in self.groupby_plot(data, "n"):
-            # Set y in (0, `y_max`) only if use_y_max is True
-            yield ggplot + p9.expand_limits(
-                **(dict(y=[0, y_max]) if self.use_y_max else {})
-            )
+            yield ggplot + p9.expand_limits(y=[5e-2, max(data["value"])])
 
 
 class ComparePDTCap(ComparePDT):
-    """Activity per capita."""
+    """Passenger activity per capita."""
 
-    basename = "../compare-pdt-cap"
+    basename = "compare-pdt-cap"
     kind = "pdt-cap"
     factor = 1e3
-    use_y_max = True
 
 
 class InvCost0(Plot):

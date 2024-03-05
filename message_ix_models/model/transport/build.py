@@ -2,9 +2,10 @@
 
 .. autodata:: TEMPLATE
 """
+
 import logging
 from importlib import import_module
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import pandas as pd
 import xarray as xr
@@ -18,6 +19,9 @@ from sdmx.model.v21 import Annotation, Code
 
 from . import Config
 from .util import get_techs
+
+if TYPE_CHECKING:
+    import pathlib
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +48,58 @@ TEMPLATE = Code(
         Annotation(id="is-disutility", text=repr(True)),
     ],
 )
+
+
+def add_debug(c: Computer) -> None:
+    """Add tasks for debugging the build."""
+    from .key import ms, pdt_nyt
+
+    context: Context = c.graph["context"]
+
+    # Path to output file
+    output_dir = context.get_local_path(
+        "transport",
+        f"debug-{context.transport.ssp}-{context.model.regions}-{context.years}",
+    )
+    c.configure(output_dir=output_dir)
+
+    op = output_dir.joinpath  # Shorthand
+
+    # Compute total activity by mode
+    c.add("_1", "write_report", pdt_nyt, op("pdt.csv"))
+    c.add("_2", "write_report", pdt_nyt + "capita+post", op("pdt-cap.csv"))
+    c.add("_3", "write_report", ms, op("mode-share.csv"))
+
+    def _(*args) -> "pathlib.Path":
+        """Do nothing with the computed `args`, but return `output_path`."""
+        return output_dir
+
+    c.add(
+        "transport build debug",
+        _,
+        "_1",
+        "_2",
+        "_3",
+        "plot demand-exo",
+        "plot demand-exo-capita",
+        "plot var-cost",
+        "plot fix-cost",
+        "plot inv-cost",
+    )
+
+    output_dir.mkdir(exist_ok=True, parents=True)
+
+
+def debug_multi(context: Context, *paths: "pathlib.Path") -> None:
+    """Generate plots comparing data from multiple build debug directories."""
+    from .plot import ComparePDT, ComparePDTCap
+
+    c = Computer(output_dir=paths[0].parent)
+    c.require_compat("message_ix_models.report.operator")
+
+    for cls in ComparePDT, ComparePDTCap:
+        key = c.add(f"compare {cls.kind}", cls, *paths)
+        c.get(key)
 
 
 def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
@@ -88,7 +144,10 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
             dict(measure="POP", model="IIASA GDP"),
         )
     elif context.transport.ssp in SSP_2024:
-        source_kw = (dict(measure="GDP", model="IIASA GDP 2023"), dict(measure="POP"))
+        source_kw = (
+            dict(measure="GDP", model="IIASA GDP 2023"),
+            dict(measure="POP"),
+        )
 
     for kw in source_kw:
         keys[kw["measure"]] = prepare_computer(
@@ -379,6 +438,9 @@ def get_computer(
         module = import_module(name if "." in name else f"..{name}", __name__)
         module.prepare_computer(c)
 
+    # Add tasks for debugging the build
+    add_debug(c)
+
     if visualize:
         path = context.get_local_path("transport", "build.svg")
         path.parent.mkdir(exist_ok=True)
@@ -431,6 +493,7 @@ def main(
 
     # Use fast=True by default
     options.setdefault("fast", True)
+    dry_run = options.pop("dry_run", False)
 
     log.info("Configure MESSAGEix-Transport")
     mark_time()
@@ -446,6 +509,9 @@ def main(
         assert s is c.graph["scenario"]
         result = c.get("add transport data")
         log.info(f"Added {sum(result)} total obs")
+
+    if dry_run:
+        return c.get("transport build debug")
 
     # First strip existing emissions data
     strip_emissions_data(scenario, context)
