@@ -317,6 +317,7 @@ steel:
     - dummy_emission
     - end_of_life
     - dummy_end_of_life
+    - dummy_ccs
 
   technology:
     add:
