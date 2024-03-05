@@ -1,4 +1,5 @@
 """Demand calculation for MESSAGEix-Transport."""
+
 import logging
 from typing import Dict, List
 
@@ -126,7 +127,7 @@ TASKS = [
     ),
     (pdt_nyt, "mul", pdt_nyt + "0", "pdt factor:n-y-t"),
     # Per capita (for validation)
-    ("transport pdt:n-y-t:capita", "div", pdt_nyt, pop),
+    (pdt_nyt + "capita+post", "div", pdt_nyt, pop),
     # LDV PDT only
     ((ldv_ny + "ref", "select", pdt_nyt), dict(indexers=dict(t="LDV"), drop=True)),
     # Indexed to base year
