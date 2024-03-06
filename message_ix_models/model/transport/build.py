@@ -52,6 +52,8 @@ TEMPLATE = Code(
 
 def add_debug(c: Computer) -> None:
     """Add tasks for debugging the build."""
+    from genno import Key, KeySeq
+
     from .key import ms, pdt_nyt
 
     context: Context = c.graph["context"]
@@ -66,10 +68,21 @@ def add_debug(c: Computer) -> None:
 
     op = output_dir.joinpath  # Shorthand
 
-    # Compute total activity by mode
+    # Write some intermediate calculations from the build process to file
     c.add("_1", "write_report", pdt_nyt, op("pdt.csv"))
     c.add("_2", "write_report", pdt_nyt + "capita+post", op("pdt-cap.csv"))
     c.add("_3", "write_report", ms, op("mode-share.csv"))
+
+    # FIXME Duplicated from base.prepare_reporter()
+    e_iea = Key("energy:n-y-product-flow:iea")
+    e_fnp = KeySeq(e_iea.drop("y"))
+    e_cnlt = Key("energy:c-nl-t:iea+0")
+    # Transform IEA EWEB data for comparison
+    c.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
+    c.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
+    c.add(e_cnlt, "rename_dims", e_fnp[1], quote(dict(flow="t", n="nl", product="c")))
+    c.add("_4", "write_report", e_fnp[0], op("energy-iea-0.csv"))
+    c.add("_5", "write_report", e_cnlt, op("energy-iea-1.csv"))
 
     def _(*args) -> "pathlib.Path":
         """Do nothing with the computed `args`, but return `output_path`."""
@@ -81,6 +94,8 @@ def add_debug(c: Computer) -> None:
         "_1",
         "_2",
         "_3",
+        "_4",
+        "_5",
         "plot demand-exo",
         "plot demand-exo-capita",
         "plot var-cost",
