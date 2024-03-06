@@ -56,10 +56,11 @@ def add_debug(c: Computer) -> None:
 
     context: Context = c.graph["context"]
 
+    # Compatible with actions/upload-artifact
+    ssp = str(context.transport.ssp).replace(":", "_")
     # Path to output file
     output_dir = context.get_local_path(
-        "transport",
-        f"debug-{context.transport.ssp}-{context.model.regions}-{context.years}",
+        "transport", f"debug-{ssp}-{context.model.regions}-{context.model.years}"
     )
     c.configure(output_dir=output_dir)
 
