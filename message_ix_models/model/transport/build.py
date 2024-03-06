@@ -64,14 +64,7 @@ def add_debug(c: Computer) -> None:
     output_dir = context.get_local_path(
         "transport", f"debug-{ssp}-{context.model.regions}-{context.model.years}"
     )
-    c.configure(output_dir=output_dir)
-
-    op = output_dir.joinpath  # Shorthand
-
-    # Write some intermediate calculations from the build process to file
-    c.add("_1", "write_report", pdt_nyt, op("pdt.csv"))
-    c.add("_2", "write_report", pdt_nyt + "capita+post", op("pdt-cap.csv"))
-    c.add("_3", "write_report", ms, op("mode-share.csv"))
+    output_dir.mkdir(exist_ok=True, parents=True)
 
     # FIXME Duplicated from base.prepare_reporter()
     e_iea = Key("energy:n-y-product-flow:iea")
@@ -81,29 +74,27 @@ def add_debug(c: Computer) -> None:
     c.add(e_fnp[0], "select", e_iea, indexers=dict(y=2020), drop=True)
     c.add(e_fnp[1], "aggregate", e_fnp[0], "groups::iea to transport", keep=False)
     c.add(e_cnlt, "rename_dims", e_fnp[1], quote(dict(flow="t", n="nl", product="c")))
-    c.add("_4", "write_report", e_fnp[0], op("energy-iea-0.csv"))
-    c.add("_5", "write_report", e_cnlt, op("energy-iea-1.csv"))
+
+    # Write some intermediate calculations from the build process to file
+    debug_keys = []
+    for i, (key, stem) in enumerate(
+        (
+            (pdt_nyt, "pdt"),
+            (pdt_nyt + "capita+post", "pdt-cap"),
+            (ms, "mode-share"),
+            (e_fnp[0], "energy-iea-0"),
+            (e_cnlt, "energy-iea-1"),
+        )
+    ):
+        debug_keys.append(f"transport debug {i}")
+        c.add(debug_keys[-1], "write_report", key, output_dir.joinpath(f"{stem}.csv"))
 
     def _(*args) -> "pathlib.Path":
         """Do nothing with the computed `args`, but return `output_path`."""
         return output_dir
 
-    c.add(
-        "transport build debug",
-        _,
-        "_1",
-        "_2",
-        "_3",
-        "_4",
-        "_5",
-        "plot demand-exo",
-        "plot demand-exo-capita",
-        "plot var-cost",
-        "plot fix-cost",
-        "plot inv-cost",
-    )
-
-    output_dir.mkdir(exist_ok=True, parents=True)
+    debug_plots = "demand-exo demand-exo-capita var-cost fix-cost inv-cost".split()
+    c.add("transport build debug", _, *debug_keys, *[f"plot {p}" for p in debug_plots])
 
 
 def debug_multi(context: Context, *paths: "pathlib.Path") -> None:
