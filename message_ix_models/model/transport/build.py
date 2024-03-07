@@ -96,6 +96,9 @@ def add_debug(c: Computer) -> None:
     debug_plots = "demand-exo demand-exo-capita var-cost fix-cost inv-cost".split()
     c.add("transport build debug", _, *debug_keys, *[f"plot {p}" for p in debug_plots])
 
+    # Also generate these debugging outputs when building the scenario
+    c.graph["add transport data"].append("transport build debug")
+
 
 def debug_multi(context: Context, *paths: "pathlib.Path") -> None:
     """Generate plots comparing data from multiple build debug directories."""
