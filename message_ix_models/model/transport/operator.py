@@ -803,7 +803,7 @@ def relabel2(qty: Quantity, new_dims: dict):
 
 def share_weight(
     share: Quantity,
-    gdp_ppp_cap: Quantity,
+    gdp: Quantity,
     cost: Quantity,
     lamda: Quantity,
     t_modes: List[str],
@@ -811,6 +811,27 @@ def share_weight(
     config: dict,
 ) -> Quantity:
     """Calculate mode share weights.
+
+    - In the base year (:py:`y[0]`), the weights for each |n| are as given in `share`.
+    - In the convergence year (:attr:`.Config.year_convergence`,
+      via :py:`config["transport"]`), the weights are between the same-node base year
+      mode shares and the mean of the base-year mode shares in 0 or more reference nodes
+      given by the mapping :attr:`Config.share_weight_convergence`.
+
+      - The interpolation between these points is given by the ratio :math:`k` between
+        the same-node convergence-year GDP PPP per capita (`gdp`) and the reference
+        node(s mean) base-year GDP PPP per capita.
+      - If no reference nodes are given, certain fixed share weights are used.
+
+        .. todo:: Document these.
+
+    - Values for the years between the base year and the convergence year are
+      interpolated.
+
+    Parameters
+    ----------
+    gdp :
+       GDP per capita in purchasing power parity.
 
     Returns
     -------
@@ -820,17 +841,17 @@ def share_weight(
     """
     # Extract info from arguments
     cfg: Config = config["transport"]
-    nodes = sorted(gdp_ppp_cap.coords["n"].data)
-
-    # Selectors
-    y0 = dict(y=y[0])  # As a scalar, this induces xarray but not genno <= 1.21 to drop
-    y0_ = dict(y=[y[0]])  # Do not drop
-    yC: Dict[Any, Any] = dict(y=cfg.year_convergence)
+    nodes = sorted(gdp.coords["n"].data)
     years = list(filter(lambda year: year <= cfg.year_convergence, y))
 
-    # Share weights
-    coords = [("n", nodes), ("y", years), ("t", t_modes)]
-    weight = xr.DataArray(np.nan, coords)
+    # Empty container for share weights
+    weight = xr.DataArray(np.nan, coords=[("n", nodes), ("y", years), ("t", t_modes)])
+
+    # Selectors
+    # A scalar induces xarray but not genno <= 1.21 to drop
+    y0: Dict[Any, Any] = dict(y=y[0])
+    y0_ = dict(y=[y[0]])  # Do not drop
+    yC: Dict[Any, Any] = dict(y=cfg.year_convergence)
 
     # Weights in y0 for all modes and nodes
     # NB here and below, with Python 3.9 one could do: dict(t=modes, n=nodes) | y0
@@ -845,18 +866,34 @@ def share_weight(
 
     # Weights at the convergence year, yC
     for node in nodes:
-        # Set of 1+ nodes to converge towards
+        # Retrieve referenc nodes: a set of 0+ nodes to converge towards
         ref_nodes = cfg.share_weight_convergence[node]
 
-        # Ratio between this node's GDP and that of the first reference node
-        scale = (
-            gdp_ppp_cap.sel(n=node, **yC, drop=True)
-            / gdp_ppp_cap.sel(n=ref_nodes[0], **yC, drop=True)
-        ).item()
+        _1 = dict(n=node, **yC)
 
-        # Scale weights in yC
-        _1, _2, _3 = dict(n=node, **yC), dict(n=ref_nodes, **y0), dict(n=node, **y0)
-        weight.loc[_1] = scale * weight.sel(_2).mean("n") + (1 - scale) * weight.sel(_3)
+        if not len(ref_nodes):
+            # No reference nodes: use equal shares, except higher value for LDV, and
+            # lower value for 2W.
+            # NB This will not work if these are not among the mode codes.
+            k = 1.0 / (len(t_modes) + 2 - 0.5)
+            weight.loc[_1] = k
+            weight.loc[dict(**_1, t="LDV")] = 3 * k
+            weight.loc[dict(**_1, t="2W")] = 0.5 * k
+            continue
+
+        _2 = dict(n=ref_nodes, **y0)
+
+        # Ratio between this node's GDP in yC and the mean of the reference nodes' GDP
+        # values in y0. Maximum 1.0.
+        k = min((gdp.sel(_1) / (gdp.sel(_2).sum() / float(len(ref_nodes)))).item(), 1.0)
+
+        # Scale weights in yC:
+        # - As k tends to 1, converge towards the mean of the reference nodes' scale
+        #   weights in y0/base shares.
+        # - As k tends to 0, converge towards the same node's base shares.
+        weight.loc[_1] = k * weight.sel(_2).mean("n") + (1 - k) * weight.sel(
+            n=node, **y0
+        )
 
     # Currently not enabled
     # “Set 2010 sweight to 2005 value in order not to have rail in 2010, where
