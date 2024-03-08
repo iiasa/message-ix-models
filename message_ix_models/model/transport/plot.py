@@ -634,16 +634,13 @@ def prepare_computer(c: Computer):
     keys = []
     queue = []
 
-    try:
-        has_solution = c.graph["scenario"].has_solution()
-    except (AttributeError, KeyError):
-        has_solution = False
+    # try:
+    #     has_solution = c.graph["scenario"].has_solution()
+    # except (AttributeError, KeyError):
+    #     has_solution = False
 
     # Plots
     for name, cls in PLOTS.items():
-        if has_solution and not cls.runs_on_solved_scenario:
-            continue
-
         keys.append(f"plot {name}")
         queue.append((keys[-1], cls))
 
