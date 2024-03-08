@@ -93,8 +93,12 @@ def add_debug(c: Computer) -> None:
         """Do nothing with the computed `args`, but return `output_path`."""
         return output_dir
 
-    debug_plots = "demand-exo demand-exo-capita var-cost fix-cost inv-cost".split()
+    debug_plots = (
+        "demand-exo demand-exo-capita demand-exo-capita-gdp var-cost fix-cost inv_cost"
+    ).split()
+
     c.add("transport build debug", _, *debug_keys, *[f"plot {p}" for p in debug_plots])
+    log.info(c.describe("transport build debug"))
 
     # Also generate these debugging outputs when building the scenario
     c.graph["add transport data"].append("transport build debug")
