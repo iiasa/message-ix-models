@@ -74,7 +74,7 @@ share weight convergence:
   R12_FSU: [R12_NAM]
   R12_LAM: [R12_PAO, R12_WEU]
   R12_MEA: [R12_NAM, R12_WEU]
-  R12_NAM: [R12_NAM]
+  R12_NAM: []
   R12_PAO: [R12_PAO, R12_WEU]
   R12_PAS: [R12_PAO, R12_WEU]
   R12_SAS: [R12_PAO, R12_WEU]
