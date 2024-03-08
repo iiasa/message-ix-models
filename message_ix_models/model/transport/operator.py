@@ -122,7 +122,7 @@ def base_shares(
     If the data lack the n (node, spatial) and/or y (time) dimensions, they are
     broadcast over these.
     """
-    from genno.operator import aggregate, div, mul, sum
+    from genno.operator import aggregate, sum
     from numpy import allclose
 
     # Check: ensure values sum to 1
@@ -132,7 +132,7 @@ def base_shares(
         log.warning(
             "Sum across modes ≠ 1.0; will rescale:\n" + (tmp[tmp != 1.0].to_string())
         )
-        result = div(base, tmp)
+        result = base / tmp
     else:
         result = base
 
@@ -153,7 +153,7 @@ def base_shares(
         log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
 
         coords = [("n", nodes), ("t", techs), ("y", y)]
-        result = mul(base, Quantity(xr.DataArray(1.0, coords=coords), units=""))
+        result = base * Quantity(xr.DataArray(1.0, coords=coords), units="")
 
     return result
 
@@ -252,11 +252,12 @@ def cost(
        2. the wage rate per hour (`gdp_ppp_cap` / `whours`), and
        3. the travel time per unit distance (1 / `speeds`).
     """
-    from genno.operator import add, div, mul
+    from genno.operator import add
 
     # NB for some reason, the 'y' dimension of result becomes `float`, rather than
     # `int`, in this step
-    return add(price, div(mul(gdp_ppp_cap, votm), mul(speeds, whours))).sel(y=y)
+    # FIXME genno does not handle units here correctly using "+" instead of add()
+    return add(price, (gdp_ppp_cap * votm) / (speeds * whours)).sel(y=y)
 
 
 def distance_ldv(config: dict) -> Quantity:
@@ -265,12 +266,9 @@ def distance_ldv(config: dict) -> Quantity:
     - Regions other than R11_NAM have M/F values in same proportion to their A value as
       in NAM
     """
-    from genno.operator import mul
-
     # Load from config.yaml
-    result = mul(
-        as_quantity(config["transport"].ldv_activity),
-        as_quantity(config["transport"].factor["activity"]["ldv"]),
+    result = as_quantity(config["transport"].ldv_activity) * as_quantity(
+        config["transport"].factor["activity"]["ldv"]
     )
 
     result.name = "ldv distance"
@@ -601,16 +599,14 @@ def logit(
     …where :math:`D` is the dimension named by the `dim` argument. All other dimensions
     are broadcast automatically.
     """
-    from genno.operator import div, mul, pow
-
     # Systematic utility
-    u = mul(k, pow(x, lamda)).sel(y=y)
+    u = (k * x**lamda).sel(y=y)
 
     # commented: for debugging
     # u.to_csv("u.csv")
 
     # Logit probability
-    return div(u, u.sum(dim))
+    return u / u.sum(dim)
 
 
 def merge_data(
@@ -909,7 +905,7 @@ def share_weight(
 
 def smooth(qty: Quantity) -> Quantity:
     """Smooth `qty` (e.g. PRICE_COMMODITY) in the ``y`` dimension."""
-    from genno.operator import add, concat, mul
+    from genno.operator import add, concat
 
     # General smoothing
     result = add(0.25 * qty.shift(y=-1), 0.5 * qty, 0.25 * qty.shift(y=1))
@@ -921,12 +917,12 @@ def smooth(qty: Quantity) -> Quantity:
         return Quantity(xr.DataArray(values, coords=[("y", years)]), units="")
 
     # First period
-    r0 = mul(qty, _w([0.4, 0.4, 0.2], y[:3])).sum("y").expand_dims(dict(y=y[:1]))
+    r0 = (qty * _w([0.4, 0.4, 0.2], y[:3])).sum("y").expand_dims(dict(y=y[:1]))
 
     # Final period. “closer to the trend line”
     # NB the inherited R file used a formula equivalent to weights like [-⅛, 0, ⅜, ¾];
     # didn't make much sense.
-    r_m1 = mul(qty, _w([0.2, 0.2, 0.6], y[-3:])).sum("y").expand_dims(dict(y=y[-1:]))
+    r_m1 = (qty * _w([0.2, 0.2, 0.6], y[-3:])).sum("y").expand_dims(dict(y=y[-1:]))
 
     # apply_units() is to work around khaeru/genno#64
     # TODO remove when fixed upstream
