@@ -11,6 +11,8 @@ import plotnine as p9
 from genno import Computer
 from iam_units import registry
 
+from .key import gdp_cap, pdt_nyt
+
 if TYPE_CHECKING:
     import plotnine.typing
     from genno.core.key import KeyLike
@@ -449,7 +451,7 @@ class DemandExo(Plot):
 
     runs_on_solved_scenario = False
     basename = "demand-exo"
-    inputs = ["pdt:n-y-t"]
+    inputs = [pdt_nyt]
     static = Plot.static + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
@@ -466,16 +468,16 @@ class DemandExo(Plot):
             yield ggplot + p9.expand_limits(y=[0, y_max])
 
 
-class DemandExoCap(Plot):
+class DemandExoCap0(Plot):
     """Passenger transport activity per person."""
 
     runs_on_solved_scenario = False
     basename = "demand-exo-capita"
-    inputs = ["transport pdt:n-y-t:capita"]
+    inputs = [pdt_nyt + "capita+post"]
     static = Plot.static + [
         p9.aes(x="y", y="value", fill="t"),
         p9.geom_bar(stat="identity", width=4),
-        p9.labs(x="Period", y="", fill="Mode (tech group)"),
+        p9.labs(x="Period", y="", fill="Transport mode"),
     ]
 
     def generate(self, data):
@@ -486,6 +488,40 @@ class DemandExoCap(Plot):
 
         for _, ggplot in self.groupby_plot(data, "n"):
             yield ggplot + p9.expand_limits(y=[0, y_max])
+
+
+class DemandExoCap1(DemandExoCap0):
+    """Transport demand per capita.
+
+    Unlike :class:`DemandExoCap0`, this uses GDP per capita as the abscissa/x-aesthetic.
+    """
+
+    basename = "demand-exo-capita-gdp"
+    inputs = [pdt_nyt + "capita+post", gdp_cap]
+    static = Plot.static + [
+        p9.aes(x="gdp", y="value", color="t"),
+        p9.geom_line(),
+        p9.geom_point(),
+        p9.scale_x_log10(),
+        p9.scale_y_log10(),
+        p9.labs(x="GDP [10³ USD_2017 / capita]", y="", color="Transport mode"),
+    ]
+
+    def generate(self, df_pdt, df_gdp):
+        # Merge data from two quantities; keep separate column names
+        data = df_pdt.merge(
+            df_gdp.rename(columns={"value": "gdp", "unit": "gdp_unit"}), on=["n", "y"]
+        )
+
+        data, self.unit = _reduce_units(data, "km / a")
+
+        # Set limits for log-log plot
+        stats = data.describe()
+        limits = p9.expand_limits(
+            x=stats.loc[["min", "max"], "gdp"], y=[3e1, stats.loc["max", "value"]]
+        )
+
+        yield from [ggplot + limits for _, ggplot in self.groupby_plot(data, "n")]
 
 
 class EnergyCmdty0(Plot):
