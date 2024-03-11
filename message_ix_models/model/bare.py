@@ -8,7 +8,6 @@ from sdmx.model.v21 import Code
 
 import message_ix_models
 from message_ix_models import ScenarioInfo, Spec
-from message_ix_models.util import eval_anno
 
 from .build import apply_spec
 from .config import Config
@@ -134,7 +133,9 @@ def get_spec(context) -> Spec:
     add.set["commodity"] = get_codes("commodity")
 
     # Add units, associated with commodities
-    units = set(eval_anno(commodity, "unit") for commodity in add.set["commodity"])
+    units = set(
+        commodity.eval_annotation(id="unit") for commodity in add.set["commodity"]
+    )
     # Deduplicate by converting to a set and then back; not strictly necessary,
     # but reduces duplicate log entries
     add.set["unit"] = sorted(filter(None, units))

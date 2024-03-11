@@ -13,7 +13,6 @@ from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.build import apply_spec
 from message_ix_models.util import (
     broadcast,
-    eval_anno,
     make_io,
     make_matched_dfs,
     make_source_tech,
@@ -81,9 +80,11 @@ def get_spec(
         fmt = dict(technology=t, group=g)
 
         # Format each field in the "input" and "output" annotations
-        input = {k: v.format(**fmt) for k, v in eval_anno(template, id="input").items()}
+        input = {
+            k: v.format(**fmt) for k, v in template.eval_annotation(id="input").items()
+        }
         output = {
-            k: v.format(**fmt) for k, v in eval_anno(template, id="output").items()
+            k: v.format(**fmt) for k, v in template.eval_annotation(id="output").items()
         }
 
         # - Format the ID string from the template
@@ -176,8 +177,8 @@ def data_conversion(info, spec) -> MutableMapping[str, pd.DataFrame]:
     for t in technology:
         # Use the annotations on the technology Code to get information about the
         # commodity, level, and unit
-        input = eval_anno(t, "input")
-        output = eval_anno(t, "output")
+        input = t.eval_annotation(id="input")
+        output = t.eval_annotation(id="output")
         if None in (input, output):
             if t.id == "disutility source":
                 continue  # Data for this tech is from data_source()
@@ -219,7 +220,7 @@ def data_source(info, spec) -> Mapping[str, pd.DataFrame]:
     # List of input levels where disutility commodity must exist
     levels = set()
     for t in spec["add"].set["technology"]:
-        input = eval_anno(t, "input")
+        input = t.eval_annotation(id="input")
         if input:
             levels.add(input["level"])
 
