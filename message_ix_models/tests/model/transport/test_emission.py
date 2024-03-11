@@ -49,6 +49,9 @@ def test_ef_for_input(test_context):
     # Data is complete
     assert not ef.isna().any().any(), ef
 
+    # Data have the expected columns
+    assert set(make_df("emission_factor").columns) == set(ef.columns)
+
     ra = result["relation_activity"]
     assert not ra.isna().any(axis=None), ra
 
