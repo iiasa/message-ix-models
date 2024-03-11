@@ -54,7 +54,7 @@ def add_debug(c: Computer) -> None:
     """Add tasks for debugging the build."""
     from genno import Key, KeySeq
 
-    from .key import ms, pdt_nyt
+    from .key import gdp_cap, ms, pdt_nyt
 
     context: Context = c.graph["context"]
 
@@ -79,6 +79,7 @@ def add_debug(c: Computer) -> None:
     debug_keys = []
     for i, (key, stem) in enumerate(
         (
+            (gdp_cap, "gdp-ppp-cap"),
             (pdt_nyt, "pdt"),
             (pdt_nyt + "capita+post", "pdt-cap"),
             (ms, "mode-share"),
@@ -98,7 +99,7 @@ def add_debug(c: Computer) -> None:
     ).split()
 
     c.add("transport build debug", _, *debug_keys, *[f"plot {p}" for p in debug_plots])
-    log.info(c.describe("transport build debug"))
+    # log.info(c.describe("transport build debug"))
 
     # Also generate these debugging outputs when building the scenario
     c.graph["add transport data"].append("transport build debug")
