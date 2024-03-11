@@ -47,7 +47,7 @@ from message_data.model.material.data_ammonia_new import gen_all_NH3_fert
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS_1 = [
-    gen_data_buildings,
+    #gen_data_buildings,
     gen_data_methanol_new,
     gen_all_NH3_fert,
     # gen_data_ammonia, ## deprecated module!
@@ -85,9 +85,13 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         scenario.commit("add missing water tecs")
 
     apply_spec(scenario, spec, add_data_1)  # dry_run=True
-    if "SSP_dev" in scenario.model:
-        manual_updates_ENGAGE_SSP2_v417_to_v418._correct_balance_td_efficiencies(scenario)
-        manual_updates_ENGAGE_SSP2_v417_to_v418._correct_coal_ppl_u_efficiencies(scenario)
+    if "SSP_dev" not in scenario.model:
+        manual_updates_ENGAGE_SSP2_v417_to_v418._correct_balance_td_efficiencies(
+            scenario
+        )
+        manual_updates_ENGAGE_SSP2_v417_to_v418._correct_coal_ppl_u_efficiencies(
+            scenario
+        )
         manual_updates_ENGAGE_SSP2_v417_to_v418._correct_td_co2cc_emissions(scenario)
         update_h2_blending.main(scenario)
     spec = None
@@ -107,10 +111,8 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         last_hist_year = scenario.par("historical_activity")["year_act"].max()
         modify_industry_demand(scenario, last_hist_year)
         add_new_ind_hist_act(scenario, [last_hist_year])
-    try:
         add_emission_accounting(scenario)
-    except:
-        pass
+
         # scenario.commit("no changes")
     add_coal_lowerbound_2020(scenario)
     add_cement_bounds_2020(scenario)
@@ -131,6 +133,14 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     scenario.check_out()
     scenario.remove_set("sector", "i_feed")
     scenario.commit("i_feed removed from sectors.")
+
+    df = scenario.par(
+        "bound_activity_lo",
+        filters={"node_loc": "R12_RCPA", "technology": "sp_el_I", "year_act": 2020},
+    )
+    scenario.check_out()
+    scenario.remove_par("bound_activity_lo", df)
+    scenario.commit("remove sp_el_I min bound on RCPA in 2020")
 
     return scenario
 
@@ -635,9 +645,9 @@ def add_data_2(scenario, dry_run=False):
         log.info(f"from {func.__name__}()")
         # TODO: remove this once emission_factors are back in SSP_dev
         data = func(scenario)
-        if "SSP_dev" in scenario.model:
-            if "emission_factor" in list(data.keys()):
-                data.pop("emission_factor")
+        # if "SSP_dev" in scenario.model:
+        #     if "emission_factor" in list(data.keys()):
+        #         data.pop("emission_factor")
         add_par_data(scenario, data, dry_run=dry_run)
 
     log.info("done")
