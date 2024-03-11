@@ -98,7 +98,14 @@ def add_debug(c: Computer) -> None:
         "demand-exo demand-exo-capita demand-exo-capita-gdp var-cost fix-cost inv_cost"
     ).split()
 
-    c.add("transport build debug", _, *debug_keys, *[f"plot {p}" for p in debug_plots])
+    c.add(
+        "transport build debug",
+        _,
+        # NB To omit some or all of these calculations / plots from the debug outputs
+        #    for individuals, comment 1 or both of the following lines
+        *debug_keys,
+        *[f"plot {p}" for p in debug_plots],
+    )
     # log.info(c.describe("transport build debug"))
 
     # Also generate these debugging outputs when building the scenario
@@ -107,13 +114,13 @@ def add_debug(c: Computer) -> None:
 
 def debug_multi(context: Context, *paths: "pathlib.Path") -> None:
     """Generate plots comparing data from multiple build debug directories."""
-    from .plot import ComparePDT, ComparePDTCap
+    from .plot import ComparePDT, ComparePDTCap0, ComparePDTCap1
 
     c = Computer(output_dir=paths[0].parent)
     c.require_compat("message_ix_models.report.operator")
 
-    for cls in ComparePDT, ComparePDTCap:
-        key = c.add(f"compare {cls.kind}", cls, *paths)
+    for cls in (ComparePDT, ComparePDTCap0, ComparePDTCap1):
+        key = c.add(f"compare {cls.basename}", cls, *paths)
         c.get(key)
 
 
