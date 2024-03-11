@@ -108,3 +108,8 @@ def get_all_input_data_dirs():
     elements = os.listdir(private_data_path("material"))
     elements = [i for i in elements if os.path.isdir(private_data_path("material", i))]
     return elements
+
+
+def remove_from_list_if_exists(element, _list):
+    if element in _list:
+        _list.remove(element)

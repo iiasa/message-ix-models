@@ -9,6 +9,7 @@ from message_data.model.material.util import (
     read_config,
     read_yaml_file,
     invert_dictionary,
+    remove_from_list_if_exists,
 )
 
 from message_ix_models import ScenarioInfo
@@ -1091,8 +1092,10 @@ def add_emission_accounting(scen):
 
     # Find the technology, year_act, year_vtg, emission, node_loc combination
     emissions = [e for e in emission_df["emission"].unique()]
-    emissions.remove("CO2_industry")
-    emissions.remove("CO2_res_com")
+    remove_from_list_if_exists("CO2_industry", emissions)
+    remove_from_list_if_exists("CO2_res_com", emissions)
+    # emissions.remove("CO2_industry")
+    # emissions.remove("CO2_res_com")
 
     for t in emission_df["technology"].unique():
         for e in emissions:
@@ -1147,9 +1150,11 @@ def add_emission_accounting(scen):
             | ("ref" in i)
         )
     ]
-    tec_list_materials.remove("refrigerant_recovery")
-    tec_list_materials.remove("replacement_so2")
-    tec_list_materials.remove("SO2_scrub_ref")
+    for elem in ["refrigerant_recovery", "replacement_so2", "SO2_scrub_ref"]:
+        remove_from_list_if_exists(elem, tec_list_materials)
+    # tec_list_materials.remove("refrigerant_recovery")
+    # tec_list_materials.remove("replacement_so2")
+    # tec_list_materials.remove("SO2_scrub_ref")
     emission_factors = scen.par(
         "emission_factor", filters={"technology": tec_list_materials, "emission": "CO2"}
     )
@@ -2018,7 +2023,7 @@ if __name__ == "__main__":
         mp, "SSP_dev_SSP2_v0.1_Blv0.6", "baseline_prep_lu_bkp_solved_materials"
     )
 
-    #add_macro_COVID(scen, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx")
+    # add_macro_COVID(scen, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx")
 
     df_hist_new = calc_hist_activity(scen, [2015])
     print()
