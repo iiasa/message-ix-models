@@ -65,6 +65,8 @@ def add_debug(c: Computer) -> None:
         "transport", f"debug-{ssp}-{context.model.regions}-{context.model.years}"
     )
     output_dir.mkdir(exist_ok=True, parents=True)
+    # Store in the config, but not at "output_dir" that is used by e.g. reporting
+    c.graph["config"]["transport build debug dir"] = output_dir
 
     # FIXME Duplicated from base.prepare_reporter()
     e_iea = Key("energy:n-y-product-flow:iea")
@@ -95,7 +97,10 @@ def add_debug(c: Computer) -> None:
         return output_dir
 
     debug_plots = (
-        "demand-exo demand-exo-capita demand-exo-capita-gdp var-cost fix-cost inv_cost"
+        "demand-exo demand-exo-capita demand-exo-capita-gdp inv_cost"
+        # FIXME The following currently don't work, as their required/expected input
+        #       keys (from the post-solve/report step) do not exist in the build step
+        # " var-cost fix-cost"
     ).split()
 
     c.add(

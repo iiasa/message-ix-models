@@ -72,7 +72,7 @@ class Plot(genno.compat.plotnine.Plot):
             f"— {extra}" if extra else None,
         ]
         subtitle_parts = [
-            getattr(self.scenario, "url", "no scenario"),
+            getattr(self.scenario, "url", "no Scenario"),
             "—",
             datetime.now().isoformat(timespec="minutes"),
         ]
@@ -107,9 +107,20 @@ class Plot(genno.compat.plotnine.Plot):
         cls, c: Computer, key: "KeyLike", *inputs, strict: bool = False
     ) -> "KeyLike":
         """Use a custom output path."""
-        k_path = f"plot {cls.basename} path"
+        from operator import itemgetter
+
+        from genno import quote
+
         # Output path for this parameter
-        c.add(k_path, "make_output_path", "config", name=f"{cls.basename}{cls.suffix}")
+        k_path = f"plot {cls.basename} path"
+        filename = f"{cls.basename}{cls.suffix}"
+        if cls.runs_on_solved_scenario:
+            # Make a path including the Scenario URL
+            c.add(k_path, "make_output_path", "config", name=filename)
+        else:
+            # Build phase: no Scenario/URL exists; use a path set by add_debug()
+            c.add(f"{k_path} 0", itemgetter("transport build debug dir"), "config")
+            c.add(k_path, Path.joinpath, f"{k_path} 0", quote(filename))
 
         # Same as the parent method
         _inputs = list(inputs if inputs else cls.inputs)
@@ -670,32 +681,25 @@ class Stock1(Plot):
             yield ggplot + p9.expand_limits(y=[0, y_max])
 
 
-#: Plots of data from the built (and maybe solved) MESSAGEix-Transport scenario.
-PLOTS = {}
-
-# Inspect the defined plots to populate the dict
-_ = obj = None
-for _, obj in globals().items():
-    if isinstance(obj, type) and issubclass(obj, Plot) and obj is not Plot:
-        PLOTS[obj.basename] = obj
-
-
 def prepare_computer(c: Computer):
+    """Add :data:`.PLOTS` to `c`.
+
+    Adds:
+
+    - 1 key like **"plot inv-cost"** corresponding to the :attr:`.basename` of each
+      :class:`.Plot` subclass defined in this module.
+    - The key **"transport plots"** that triggers writing all the plots to file.
+    """
     keys = []
-    queue = []
 
-    # try:
-    #     has_solution = c.graph["scenario"].has_solution()
-    # except (AttributeError, KeyError):
-    #     has_solution = False
-
-    # Plots
-    for name, cls in PLOTS.items():
-        keys.append(f"plot {name}")
-        queue.append((keys[-1], cls))
-
-    c.add_queue(queue)
+    # Iterate over the Plot subclasses defined in the current module
+    for plot in filter(
+        lambda cls: isinstance(cls, type) and issubclass(cls, Plot) and cls is not Plot,
+        globals().values(),
+    ):
+        keys.append(f"plot {plot.basename}")
+        c.add(keys[-1], plot)
 
     key = "transport plots"
-    log.info(f"Add {repr(key)} collecting {len(key)} plots")
+    log.info(f"Add {repr(key)} collecting {len(keys)} plots")
     c.add(key, keys)
