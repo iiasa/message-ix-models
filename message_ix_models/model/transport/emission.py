@@ -1,6 +1,6 @@
 """Transport emissions data."""
+
 import logging
-from functools import lru_cache
 from typing import Dict
 
 import pandas as pd
@@ -55,46 +55,65 @@ EI_TEMP = {
 }
 
 
-@lru_cache
-def _ef_cached(commodity, species, units_in, units_out) -> pd.Series:
-    # Product of the input efficiency [energy / activity units] and emissions
-    # intensity for the input commodity [mass / energy] → [mass / activity units]
-    result = (
-        registry.Quantity(1.0, units_in)
-        * registry(EI_TEMP.get((species, commodity), "0 g / J"))
-    ).to(units_out)
-    return result.magnitude, f"{result.units:~}"
-
-
 def ef_for_input(
     context: Context,
     input_data: pd.DataFrame,
     species: str = "CO2",
     units_out: str = "kt / (Gv km)",
 ) -> Dict[str, pd.DataFrame]:
-    """Calculate emissions factors given data for the ``input`` parameter."""
+    """Calculate emissions factors given data for the ``input`` parameter.
 
-    # Since pd.DataFrame is not hashable, cannot apply lru_cache() here…
-    def _ef(df: pd.DataFrame) -> pd.DataFrame:
-        # This call is cached
-        ef, unit = _ef_cached(
-            df["commodity"].iloc[0], species, df["unit"].iloc[0], units_out
-        )
-        return df.assign(_ef=ef, unit=unit)
+    Parameters
+    ----------
+    input_data :
+        Data for the ``input`` parameter.
+    species : str
+        Species of emissions.
+    units_out : str
+        Preferred output units. Should be units of emissions mass (for respective
+        species) divided by units of activity (for respective technology).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data for the ``emission_factor`` parameter.
+    """
+
+    def _ef_and_unit(s: pd.Series) -> pd.Series:
+        """Look up emission factor multiplier and units given `s`.
+
+        Returns `s` extended with columns "_ef" and "_unit_out".
+        """
+        c, u = s["commodity"], s["unit"]
+
+        # Product of the input efficiency [energy / activity units] and emissions
+        # intensity for the input commodity [mass / energy] → [mass / activity units]
+        uq = (
+            registry.Quantity(1.0, u) * registry(EI_TEMP.get((species, c), "0 g / J"))
+        ).to(units_out)
+
+        return pd.Series(dict(**s, _ef=uq.magnitude, _unit_out=f"{uq.units:~}"))
 
     # Generate emissions_factor data
     # - Create a message_ix-ready data frame; fill `species` as the "emissions" label.
     # - Add the input commodity.
-    # - Group by commodity and (input) unit.
-    # - Fill the "ef" column with appropriate values and replace "unit".
-    # - Compute new value.
+    # - Merge columns (_ef, _unit_out) computed by _ef_and_unit(). This function runs on
+    #   only the unique combinations of (commodity, unit) in `input_data`, or less than
+    #   10 rows.
+    # - Compute the product of the `input` value and `ef` column.
+    # - Restore the expected dimensions.
     df = (
         make_df("emission_factor", **input_data, emission=species)
         .assign(commodity=input_data["commodity"])
-        .groupby(["commodity", "unit"], group_keys=False)
-        .apply(_ef)
+        .merge(
+            input_data[["commodity", "unit"]]
+            .drop_duplicates()
+            .apply(_ef_and_unit, axis=1),
+            on=["commodity", "unit"],
+        )
         .eval("value = value * _ef")
-        .drop("_ef", axis=1)
+        .drop(["_ef", "commodity"], axis=1)
+        .rename(columns={"_unit_out": "unit"})
     )
     result = dict(emission_factor=df)
 
