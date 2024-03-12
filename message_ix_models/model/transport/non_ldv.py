@@ -1,6 +1,7 @@
 """Data for transport modes and technologies outside of LDVs."""
+
 import logging
-from functools import lru_cache, partial
+from functools import lru_cache
 from operator import itemgetter
 from typing import TYPE_CHECKING, Dict, List, Mapping
 
@@ -72,17 +73,9 @@ def prepare_computer(c: Computer):
 
     # Compute CO₂ emissions factors
     for k in map(Key, list(keys[:-1])):
-        key = c.add(k.add_tag("input"), itemgetter("input"), k)
-        keys.append(
-            single_key(
-                c.add(
-                    k.add_tag("emi"),
-                    partial(ef_for_input, species="CO2"),
-                    "context",
-                    key,
-                )
-            )
-        )
+        c.add(k + "input", itemgetter("input"), k)
+        c.add(k + "emi", ef_for_input, "context", k + "input", species="CO2")
+        keys.append(k + "emi")
 
     # Data for usage technologies
     k_usage = "transport nonldv usage::ixmp"
