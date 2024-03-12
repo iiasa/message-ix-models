@@ -278,4 +278,6 @@ def test_process_units_anno():
     process_units_anno("", codes[0])
 
     # Parents' units are propagated to the child
-    assert registry.Unit("kg") == codes[1].eval_annotation("units")
+    assert registry.Unit("kg") == codes[1].eval_annotation(
+        "units", dict(registry=registry)
+    )
