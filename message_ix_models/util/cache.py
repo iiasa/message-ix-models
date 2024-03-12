@@ -8,7 +8,6 @@ included in the computed cache key:
   string representation / ID.
 - :class:`ixmp.Platform`, :class:`xarray.Dataset`: ignored, with a warning logged.
 - :class:`ScenarioInfo`: only the :attr:`~ScenarioInfo.set` entries are hashed.
-
 """
 
 import json
@@ -20,8 +19,8 @@ import genno.caching
 import ixmp
 import sdmx.model
 import xarray as xr
-from platformdirs import user_cache_path
 
+from .context import Context
 from .scenarioinfo import ScenarioInfo
 
 if TYPE_CHECKING:
@@ -77,11 +76,12 @@ def cached(func: Callable) -> Callable:
     :doc:`genno:cache` in the :mod:`genno` documentation
     """
     # Determine and create the cache path
-    cache_path = user_cache_path("message-ix-models", ensure_exists=True)
+    cache_path = Context.get_instance(-1).core.cache_path
 
     if cache_path not in PATHS_SEEN:
         log.debug(f"{func.__name__}() will cache in {cache_path}")
         PATHS_SEEN.add(cache_path)
+        cache_path.mkdir(parents=True, exist_ok=True)
 
     # Use the genno internals to wrap the function.
     cached_load = genno.caching.decorate(
