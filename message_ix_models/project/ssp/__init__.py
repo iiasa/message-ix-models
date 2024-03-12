@@ -59,7 +59,7 @@ class ssp_field:
 
 @click.group("ssp")
 def cli():
-    pass
+    """Shared Socioeconomic Pathways (SSP) project."""
 
 
 @cli.command("gen-structures")

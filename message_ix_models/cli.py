@@ -11,7 +11,7 @@ e.g.:
 The top-level options --platform, --model, and --scenario are used by commands that
 access specific message_ix scenarios; these can also be specified with --url.
 
-For more information, see https://docs.messageix.org/projects/models2/en/latest/cli.html
+For more information, see https://docs.messageix.org/projects/models/en/latest/cli.html
 """
 
 import logging
@@ -57,6 +57,7 @@ def main(click_ctx, **kwargs):
     non_trivial = (
         not any(s in sys.argv for s in {"last-log", "--help"})
         and click_ctx.invoked_subcommand != "_test"
+        and "pytest" not in sys.argv[0]
     )
 
     # Log to console: either DEBUG or INFO.
