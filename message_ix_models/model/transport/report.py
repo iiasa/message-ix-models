@@ -1,4 +1,5 @@
 """Reporting/postprocessing for MESSAGEix-Transport."""
+
 import logging
 from copy import deepcopy
 from pathlib import Path

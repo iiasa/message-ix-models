@@ -1,4 +1,5 @@
 """Transport Futures project."""
+
 from enum import Enum, auto
 
 

@@ -1,4 +1,5 @@
 """Data preparation for the MESSAGEix-GLOBIOM base model."""
+
 from functools import partial
 from typing import TYPE_CHECKING
 

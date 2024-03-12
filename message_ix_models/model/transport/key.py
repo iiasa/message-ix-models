@@ -1,4 +1,5 @@
 """Keys to refer to various quantities."""
+
 from genno import Key
 
 __all__ = [

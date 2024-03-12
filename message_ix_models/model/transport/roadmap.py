@@ -13,6 +13,7 @@ The countries belonging to the Africa region in the Roadmap 1.0 model are:
     Uganda, South Africa, Zambia, Zimbabwe -- see sheet **Countries by Roadmap
     Region** in RoadmapResults_2017.xlsx.
 """
+
 import pandas as pd
 from message_ix_models.util import private_data_path
 from plotnine import save_as_pdf_pages

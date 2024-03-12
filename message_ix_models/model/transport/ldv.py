@@ -1,4 +1,5 @@
 """Data for light-duty vehicles (LDVs) for passenger transport."""
+
 import logging
 from collections import defaultdict
 from copy import deepcopy
