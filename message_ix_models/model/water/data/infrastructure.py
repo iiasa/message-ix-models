@@ -1,5 +1,5 @@
 """Prepare data for adding techs related to water distribution,
- treatment in urban & rural"""
+treatment in urban & rural"""
 
 from collections import defaultdict
 
