@@ -3,15 +3,14 @@
 import atexit
 import logging
 import logging.config
+import logging.handlers
 import sys
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+from queue import SimpleQueue
 from time import process_time
-from typing import TYPE_CHECKING, List, Union
-
-if TYPE_CHECKING:
-    import logging.handlers
+from typing import List, Union
 
 __all__ = [
     "Formatter",
@@ -180,26 +179,23 @@ class StreamHandler(logging.StreamHandler):
         return getattr(sys, self.stream_name)
 
 
-class QueueHandler("logging.handlers.QueueHandler"):
+class QueueHandler(logging.handlers.QueueHandler):
     """Queue handler with custom set-up.
 
     This emulates the default behaviour available in Python 3.12.
     """
 
     #: Corresponding listener that dispatches to the actual handlers.
-    listener: "logging.handlers.QueueListener"
+    listener: logging.handlers.QueueListener
 
     def __init__(
         self, *, handlers: List[str] = [], respect_handler_level: bool = False
     ) -> None:
-        from logging.handlers import QueueListener
-        from queue import SimpleQueue
-
         super().__init__(SimpleQueue())
 
         # Construct the listener
         # NB This relies on the non-public collection logging._handlers
-        self.listener = QueueListener(
+        self.listener = logging.handlers.QueueListener(
             self.queue,
             *[logging._handlers[name] for name in handlers],  # type: ignore [attr-defined]
             respect_handler_level=respect_handler_level,
