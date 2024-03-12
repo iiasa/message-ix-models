@@ -22,6 +22,7 @@ import pandas as pd
 import pint
 
 from ._convert_units import convert_units, series_of_pint_quantity
+from ._logging import mark_time, preserve_log_level, silence_log
 from .cache import cached
 from .common import (
     HAS_MESSAGE_DATA,
@@ -68,15 +69,18 @@ __all__ = [
     "make_io",
     "make_matched_dfs",
     "make_source_tech",
+    "mark_time",
     "maybe_query",
     "merge_data",
     "minimum_version",
     "package_data_path",
+    "preserve_log_level",
     "private_data_path",
     "replace_par_data",
     "same_node",
     "same_time",
     "series_of_pint_quantity",
+    "silence_log",
     "strip_par_data",
 ]
 
