@@ -1,4 +1,5 @@
 """Manipulate data structures for working with the SSPs."""
+
 import logging
 from textwrap import wrap
 from typing import TYPE_CHECKING, Optional

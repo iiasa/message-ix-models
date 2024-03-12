@@ -1,4 +1,5 @@
 """Tests of :mod:`.model.disutility`."""
+
 from itertools import product
 
 import pandas as pd

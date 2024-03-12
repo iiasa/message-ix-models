@@ -1,4 +1,5 @@
 """Basic tests of the command line."""
+
 import ixmp
 import pytest
 from message_ix.testing import make_dantzig
