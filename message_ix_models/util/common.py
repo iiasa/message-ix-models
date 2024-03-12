@@ -258,11 +258,15 @@ def package_data_path(*parts) -> Path:
     return _make_path(MESSAGE_MODELS_PATH / "data", *parts)
 
 
-def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
+def private_data_path(*parts) -> Path:
     """Construct a path to a file under :file:`data/` in :mod:`message_data`.
 
-    Use this function to access non-public (e.g. embargoed or proprietary) data stored
-    in the :mod:`message_data` repository.
+    Use this function to access non-public (for instance, embargoed or proprietary) data
+    stored in the :mod:`message_data` repository.
+
+    If the repository is not available, the function falls back to
+    :meth:`.Context.get_local_path`, where users may put files obtained through other
+    messages.
 
     Parameters
     ----------
@@ -273,4 +277,11 @@ def private_data_path(*parts) -> Path:  # pragma: no cover (needs message_data)
     --------
     :ref:`Choose locations for data <private-data>`
     """
-    return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)
+    if HAS_MESSAGE_DATA:
+        return _make_path(cast(Path, MESSAGE_DATA_PATH) / "data", *parts)
+    else:
+        from .context import Context
+
+        base = Context.get_instance(-1).get_local_path()
+        log.warning(f"message_data not installed; fall back to {base}")
+        return base.joinpath(*parts)
