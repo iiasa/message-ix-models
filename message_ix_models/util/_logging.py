@@ -12,11 +12,10 @@ from queue import SimpleQueue
 from time import process_time
 from typing import List, Union
 
+# NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
     "Formatter",
-    "make_formatter",
     "setup",
-    "silence_log",
 ]
 
 log = logging.getLogger(__name__)
@@ -83,8 +82,9 @@ class Formatter(logging.Formatter):
 
     Parameters
     ----------
-    colorama : module
-        If provided, :mod:`colorama` is used to colour log messages printed to stdout.
+    use_color : bool, *optional*
+        If :any:`True`, :mod:`colorama` is used to colour log messages printed to
+        stdout.
     """
 
     CYAN = ""
@@ -93,12 +93,20 @@ class Formatter(logging.Formatter):
 
     _short_name = None
 
-    def __init__(self, colorama=None):
+    def __init__(self, use_colour: bool = True):
         super().__init__()
-        if colorama:
-            self.CYAN = colorama.Fore.CYAN
-            self.DIM = colorama.Style.DIM
-            self.RESET_ALL = colorama.Style.RESET_ALL
+
+        try:
+            if use_colour:
+                # Import and initialize colorama
+                import colorama
+
+                colorama.init()
+                self.CYAN = colorama.Fore.CYAN
+                self.DIM = colorama.Style.DIM
+                self.RESET_ALL = colorama.Style.RESET_ALL
+        except ImportError:  # pragma: no cover
+            pass  # Not installed
 
     def format(self, record):
         """Format `record`.
@@ -127,29 +135,11 @@ class Formatter(logging.Formatter):
         return f"{prefix}{record.funcName}{self.RESET_ALL}  {record.getMessage()}"
 
 
-def make_formatter():
-    """Return a :class:`Formatter` instance for the ``message_ix_models`` logger.
-
-    See also
-    --------
-    setup
-    """
-    try:
-        # Initialize colorama
-        import colorama
-
-        colorama.init()
-    except ImportError:  # pragma: no cover
-        # Colorama not installed
-        colorama = None
-
-    return Formatter(colorama)
-
-
+# For mark_time()
 _TIMES = []
 
 
-def mark_time(quiet=False):
+def mark_time(quiet: bool = False) -> None:
     """Record and log (if `quiet` is :obj:`True`) a time mark."""
     _TIMES.append(process_time())
     if not quiet and len(_TIMES) > 1:
@@ -231,8 +221,8 @@ CONFIG = dict(
     version=1,
     disable_existing_loggers=False,
     formatters=dict(
-        color={"()": "message_ix_models.util._logging.make_formatter"},
-        plain={"()": "message_ix_models.util._logging.Formatter"},
+        color={"()": "message_ix_models.util._logging.Formatter"},
+        plain={"()": "message_ix_models.util._logging.Formatter", "use_colour": False},
     ),
     handlers=HANDLER_CONFIG,
     loggers={
