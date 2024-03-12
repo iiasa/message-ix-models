@@ -50,7 +50,7 @@ def test_ef_for_input(test_context):
     assert not ef.isna().any().any(), ef
 
     # Data have the expected columns
-    assert set(make_df("emission_factor").columns) == set(ef.columns)
+    assert sorted(make_df("emission_factor").columns) == sorted(ef.columns)
 
     ra = result["relation_activity"]
     assert not ra.isna().any(axis=None), ra

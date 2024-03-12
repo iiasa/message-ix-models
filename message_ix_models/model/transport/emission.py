@@ -112,7 +112,7 @@ def ef_for_input(
             on=["commodity", "unit"],
         )
         .eval("value = value * _ef")
-        .drop(["_ef", "commodity"], axis=1)
+        .drop(["_ef", "commodity", "unit"], axis=1)
         .rename(columns={"_unit_out": "unit"})
     )
     result = dict(emission_factor=df)
