@@ -1,4 +1,6 @@
 import logging
+import re
+from pathlib import Path
 
 import pytest
 from genno import Key
@@ -277,40 +279,38 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 
 
 @pytest.mark.parametrize(
-    "nodes, data_source",
+    "nodes, target",
     [
+        param("R11", "GEA mix", marks=pytest.mark.xfail(reason="Temporary, for #502")),
+        ("R12", "SSP2"),
+        ("R12", "SSP5"),
+        ("R14", "SSP2"),
+        ("R14", "SSP5"),
         param(
             "R11",
-            "--source=GEA mix",
-            marks=pytest.mark.xfail(reason="Temporary, for #502"),
-        ),
-        ("R12", "--ssp=2"),
-        ("R12", "--ssp-update=2"),
-        ("R14", "--ssp=2"),
-        param(
-            "R11",
-            "--source=SHAPE innovation",
+            "SHAPE innovation",
             marks=pytest.mark.xfail(reason="Temporary, for #502"),
         ),
     ],
 )
-def test_cli(tmp_path, mix_models_cli, nodes, data_source):
-    assert 0 == len(list(tmp_path.glob("*.csv")))
-
+def test_cli(tmp_path, mix_models_cli, nodes, target):
     result = mix_models_cli.invoke(
         [
+            "--platform=",
             "transport",
-            "gen-activity",
+            "run",
             f"--nodes={nodes}",
-            "--years=B",
-            data_source,
-            str(tmp_path),
+            f"{target} debug build",
+            "--go",
         ]
     )
     if result.exit_code != 0:
         print(result.output)
         raise result.exception
 
+    # Identify the path containing the outputs
+    output_dir = Path(re.search(r"Save to (.*)\.pdf$", result.output).group(1)).parent
+
     # Files created in the temporary path
-    assert 3 == len(list(tmp_path.glob("*.csv")))
-    assert 2 == len(list(tmp_path.glob("*.pdf")))
+    assert 6 <= len(list(output_dir.glob("*.csv")))
+    assert 3 <= len(list(output_dir.glob("*.pdf")))
