@@ -1,4 +1,5 @@
 """Utilities for testing :mod:`~message_data.model.transport`."""
+
 import logging
 from contextlib import nullcontext
 from pathlib import Path
@@ -41,7 +42,7 @@ def configure_build(
     options=None,
 ) -> Tuple[Computer, ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
-    c = build.get_computer(test_context, options=options)
+    c = build.get_computer(test_context, visualize=False, options=options)
     return c, test_context["transport build info"]
 
 
