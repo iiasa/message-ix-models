@@ -1,4 +1,5 @@
 """NAVIGATE project."""
+
 import logging
 import operator
 from copy import deepcopy

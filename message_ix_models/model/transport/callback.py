@@ -1,4 +1,5 @@
 """Iteration of MESSAGE-MACRO solve and MESSAGEix-Transport's demand calculation."""
+
 import logging
 
 from message_ix_models import Context, ScenarioInfo

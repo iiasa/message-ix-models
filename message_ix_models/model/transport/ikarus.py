@@ -1,4 +1,5 @@
 """Prepare non-LDV data from the IKARUS model via :file:`GEAM_TRP_techinput.xlsx`."""
+
 import logging
 from collections import defaultdict
 from functools import lru_cache, partial

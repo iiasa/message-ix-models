@@ -1,4 +1,5 @@
 """Compute MESSAGEix-compatible input data for MESSAGEix-Transport."""
+
 import logging
 from collections import defaultdict
 from functools import partial

@@ -1,4 +1,5 @@
 """MESSAGEix-Transport."""
+
 from .config import Config, DataSourceConfig
 
 __all__ = [
