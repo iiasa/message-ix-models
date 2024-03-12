@@ -35,32 +35,39 @@ def generate(
     # Prepare transport configuration
     Config.from_context(context, options=options)
 
-    # Identify the base MESSAGEix-GLOBIOM scenario
-    if not (context.platform_info or context.scenario_info):
-        # TODO Move this functionality upstream to message-ix-models
-
+    if not context.platform_info:
         # Set up a temporary, in-memory platform
+        # TODO Move this functionality upstream to message-ix-models
         from ixmp import config as ixmp_config
-        from message_ix_models.model import bare
 
         ixmp_config.add_platform(
             __name__, "jdbc", "hsqldb", url=f"jdbc:hsqldb:mem:{__name__}"
         )
         context.platform_info.update(name=__name__)
+        log.info("No --platform/--url; using temporary, in-memory database")
 
-        # Build a bare RES scenario given .model.Config settings
-        s = bare.create_res(context)
+    if not context.scenario_info:
+        # Identify the base MESSAGEix-GLOBIOM scenario
+        if context.platform_info["name"] in (__name__, "message-ix-models"):
+            # Temporary platform or testing → use the bare RES
+            from message_ix_models.model import bare
 
-        # Update Context.core.scenario_info to match `s`
-        context.set_scenario(s)
-        # Also update context.core.url  FIXME Do this in Context.set_scenario()
-        context.core.url = f"ixmp://{__name__}/{s.url}"
-    elif not context.core.url:
-        log.warning("No --url given; some workflow steps may not work")
-        platform = context.platform_info.get("name", "NONE")
-        context.core.url = f"ixmp://{platform}/NONE/NONE"
+            log.info("No --model/--scenario/--url; use the bare RES as base")
+            # Build a bare RES scenario given .model.Config settings
+            s = bare.create_res(context)
+
+            # Update Context.core.scenario_info to match `s`
+            context.set_scenario(s)
+            # Also update context.core.url
+            # FIXME Do this in Context.set_scenario()
+            context.core.url = f"ixmp://{__name__}/{s.url}"
+        else:
+            log.warning("No --model/--scenario/--url; some workflow steps may not work")
+            platform = context.platform_info.get("name", "NONE")
+            context.core.url = f"ixmp://{platform}/NONE/NONE"
 
     base_url = context.core.url
+    log.info(f"{base_url = }")
 
     # Construct a URL template for MESSAGEix-Transport scenarios
     if context.core.dest:
