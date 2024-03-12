@@ -1,4 +1,5 @@
 """Command-line tools specific to the NAVIGATE project."""
+
 import logging
 
 import click

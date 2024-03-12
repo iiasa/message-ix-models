@@ -15,6 +15,7 @@ commodities; or activities of the technologies producing these commodities.
 :func:`return_PERC_AFOFI` was brought into :mod:`message_data` from the (private,
 unpublished) iiasa/MESSAGE_Buildings repository.
 """
+
 from functools import lru_cache
 from typing import Iterable, Tuple
 
