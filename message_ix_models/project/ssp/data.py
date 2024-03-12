@@ -1,16 +1,11 @@
 import logging
-from copy import copy
 
 from message_ix_models.tools.exo_data import (
     ExoDataSource,
     iamc_like_data_for_query,
     register_source,
 )
-from message_ix_models.util import (
-    HAS_MESSAGE_DATA,
-    package_data_path,
-    private_data_path,
-)
+from message_ix_models.util import package_data_path, private_data_path
 
 __all__ = [
     "SSPOriginal",
@@ -56,6 +51,9 @@ class SSPOriginal(ExoDataSource):
 
     id = "SSP"
 
+    #: Name of file containing the data.
+    filename = "SspDb_country_data_2013-06-12.csv.zip"
+
     #: One-to-one correspondence between "model" codes and date fragments in scenario
     #: codes.
     model_date = {
@@ -74,44 +72,45 @@ class SSPOriginal(ExoDataSource):
         if not source.startswith(s):
             raise ValueError(source)
 
-        *parts, self.ssp_number = source.partition(s)
+        *parts, ssp_id = source.partition(s)
 
         # Map the `measure` keyword to a string appearing in the data
-        _kw = copy(source_kw)
-        self.measure = {
+        measure = {
             "GDP": "GDP|PPP",
             "POP": "Population",
-        }[_kw.pop("measure")]
+        }[source_kw.pop("measure")]
 
         # Store the model ID, if any
-        self.model = _kw.pop("model", None)
+        model = source_kw.pop("model", None)
 
         # Determine the date based on the model ID. There is a 1:1 correspondence.
-        self.date = self.model_date[self.model]
+        date = self.model_date[model]
 
-        if len(_kw):
-            raise ValueError(_kw)
+        self.raise_on_extra_kw(source_kw)
+
+        # Assemble a query string
+        extra = "d" if ssp_id == "4" and model == "IIASA-WiC POP" else ""
+        self.query = (
+            f"SCENARIO == 'SSP{ssp_id}{extra}_v9_{date}' and VARIABLE == '{measure}'"
+            + (f" and MODEL == '{model}'" if model else "")
+        )
+        # log.debug(query)
+
+        # Iterate over possible locations for the data file
+        dirs = [private_data_path("ssp"), package_data_path("test", "ssp")]
+        for path in [d.joinpath(self.filename) for d in dirs]:
+            if not path.exists():
+                log.info(f"Not found: {path}")
+                continue
+            if "test" in path.parts:
+                log.warning(f"Reading random data from {path}")
+            break
+
+        self.path = path
 
     def __call__(self):
-        # Assemble a query string
-        extra = "d" if self.ssp_number == "4" and self.model == "IIASA-WiC POP" else ""
-        query = " and ".join(
-            [
-                f"SCENARIO == 'SSP{self.ssp_number}{extra}_v9_{self.date}'",
-                f"VARIABLE == '{self.measure}'",
-                f"MODEL == '{self.model}'" if self.model else "True",
-            ]
-        )
-        log.debug(query)
-
-        parts = ("ssp", "SspDb_country_data_2013-06-12.csv.zip")
-        if HAS_MESSAGE_DATA:
-            path = private_data_path(*parts)
-        else:
-            path = package_data_path("test", *parts)
-            log.warning(f"Reading random data from {path}")
-
-        return iamc_like_data_for_query(path, query, replace=self.replace)
+        # Use prepared path, query, and replacements
+        return iamc_like_data_for_query(self.path, self.query, replace=self.replace)
 
 
 @register_source
@@ -123,6 +122,7 @@ class SSPUpdate(ExoDataSource):
 
     - `source`: Any value from :data:`.SSP_2024` or equivalent string, for instance
       "ICONICS:SSP(2024).2".
+    - `release`: One of "3.0" or "preview".
 
     Example
     -------
@@ -137,28 +137,32 @@ class SSPUpdate(ExoDataSource):
 
     id = "SSP update"
 
+    #: File names containing the data, according to the release.
+    filename = {
+        "3.0": "1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz",
+        "preview": "SSP-Review-Phase-1.csv.gz",
+    }
+
     def __init__(self, source, source_kw):
         s = "ICONICS:SSP(2024)."
         if not source.startswith(s):
             raise ValueError(source)
 
-        *parts, self.ssp_number = source.partition(s)
+        *parts, ssp_id = source.partition(s)
 
-        # Map the `measure` keyword to a string appearing in the data
-        _kw = copy(source_kw)
+        # Map the `measure` keyword to a 'Variable' dimension code
         measure = {
             "GDP": "GDP|PPP",
             "POP": "Population",
-        }[_kw.pop("measure")]
+        }[source_kw.pop("measure")]
 
-        # Store the model ID, if any
-        self.model = _kw.pop("model", None)
+        # Store the model code, if any
+        model = source_kw.pop("model", None)
 
         # Identify the data release date/version/label
-        self.release = _kw.pop("release", "3.0")
+        release = source_kw.pop("release", "3.0")
 
-        # Directories in which to locate `self.filename`
-        self.dirs = []
+        self.raise_on_extra_kw(source_kw)
 
         # Replacements to apply, if any
         self.replace = {}
@@ -167,29 +171,33 @@ class SSPUpdate(ExoDataSource):
         models = []
         scenarios = []
 
-        if self.release == "3.0":
-            self.filename = "1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz"
-            # Stored directly in message_ix_models
-            self.dirs.append(package_data_path("ssp"))
-            scenarios.append(f"SSP{self.ssp_number}")
+        if release == "3.0":
+            # Directories in which to locate `self.filename`; stored directly within
+            # message_ix_models
+            dirs = [package_data_path("ssp")]
 
-            if measure == "GDP|PPP" and self.model != "OECD ENV-Growth 2023":
-                # Configure to prepend s="Historical Reference" observations to series
-                models.extend([self.model, "OECD ENV-Growth 2023"])
+            scenarios.append(f"SSP{ssp_id}")
+
+            if measure == "GDP|PPP":
+                # Configure to prepend (m="OECD…", s="Historical Reference")
+                # observations to series
+                models.extend({model, "OECD ENV-Growth 2023"})
                 scenarios.append("Historical Reference")
                 self.replace.update(
-                    Model={"OECD ENV-Growth 2023": models[0]},
+                    Model={"OECD ENV-Growth 2023": model},
                     Scenario={"Historical Reference": scenarios[0]},
                 )
-        elif self.release == "preview":
-            self.filename = "SSP-Review-Phase-1.csv.gz"
+        elif release == "preview":
             # Look first in message_data, then in message_ix_models test data
-            self.dirs.extend(
-                [private_data_path("ssp"), package_data_path("test", "ssp")]
-            )
-            scenarios.append(f"SSP{self.ssp_number} - Review Phase 1")
+            dirs = [private_data_path("ssp"), package_data_path("test", "ssp")]
+
+            scenarios.append(f"SSP{ssp_id} - Review Phase 1")
         else:
-            raise ValueError(f"{self.release = }")
+            log.error(
+                f"{release = } invalid for {type(self)}; expected one of: "
+                f"{set(self.filename)}"
+            )
+            raise ValueError(release)
 
         # Assemble and store a query string
         self.query = f"Scenario in {scenarios!r} and Variable == '{measure}'" + (
@@ -197,19 +205,17 @@ class SSPUpdate(ExoDataSource):
         )
         # log.info(f"{self.query = }")
 
-        if len(_kw):
-            raise ValueError(_kw)
-
-    def __call__(self):
-        # Iterate over possible locations for self.filename
-        for dir in self.dirs:
-            path = dir.joinpath(self.filename)
+        # Iterate over possible locations for the data file
+        for path in [d.joinpath(self.filename[release]) for d in dirs]:
             if not path.exists():
                 log.info(f"Not found: {path}")
-            elif "test" in path.parts:
+                continue
+            if "test" in path.parts:
                 log.warning(f"Reading random data from {path}")
-            else:
-                break
+            break
 
-        # Use prepared query and replacements
-        return iamc_like_data_for_query(path, self.query, replace=self.replace)
+        self.path = path
+
+    def __call__(self):
+        # Use prepared path, query, and replacements
+        return iamc_like_data_for_query(self.path, self.query, replace=self.replace)
