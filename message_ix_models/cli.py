@@ -104,6 +104,17 @@ def export_test_data_cmd(ctx, exclude, nodes, techs):
     mark_time()
 
 
+@main.command("last-log")
+@click.pass_obj
+def last_log(ctx):
+    """Show the location of the last log file, if any."""
+    from platformdirs import user_log_path
+
+    log_dir = user_log_path("message-ix-models")
+    if log_files := sorted(log_dir.glob("*T*")):
+        print(log_files[-1])
+
+
 @main.command(hidden=True)
 @click.pass_obj
 def debug(ctx):
