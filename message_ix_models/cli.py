@@ -63,7 +63,8 @@ def main(click_ctx, **kwargs):
     # Don't start file logging for a non-trivial execution.
     setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", file=non_trivial)
 
-    log.debug("CLI invoked with:\n" + "\n  ".join(sys.argv))
+    if "pytest" not in sys.argv[0]:
+        log.debug("CLI invoked with:\n" + "\n  ".join(sys.argv))
 
     # Store the most recently created instance of message_ix_models.Context. click
     # carries this object to any subcommand decorated with @click.pass_obj.
