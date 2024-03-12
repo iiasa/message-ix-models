@@ -1,5 +1,6 @@
 import logging
 from collections import ChainMap, defaultdict
+from datetime import datetime
 from functools import partial, update_wrapper
 from importlib.metadata import version
 from itertools import count
@@ -278,6 +279,12 @@ def copy_column(column_name):
     return lambda df: df[column_name]
 
 
+def datetime_now_with_tz() -> datetime:
+    """Current date and time with time zone information."""
+    tz = datetime.now().astimezone().tzinfo
+    return datetime.now(tz)
+
+
 def ffill(
     df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: Optional[str] = None
 ) -> pd.DataFrame:
@@ -321,8 +328,7 @@ def ffill(
 
 
 class KeyIterator(Protocol):
-    def __call__(self) -> "genno.Key":
-        ...
+    def __call__(self) -> "genno.Key": ...
 
 
 def iter_keys(base: "genno.Key") -> KeyIterator:
@@ -662,6 +668,19 @@ def same_time(df: pd.DataFrame) -> pd.DataFrame:
     """Fill 'time_origin'/'time_dest' in `df` from 'time'."""
     cols = list(set(df.columns) & {"time_origin", "time_dest"})
     return df.assign(**{c: copy_column("time") for c in cols})
+
+
+def show_versions() -> str:
+    """Output of :func:`ixmp.show_versions`, as a :class:`str`."""
+    from io import StringIO
+
+    from . import ixmp
+
+    # Retrieve package versions
+    buf = StringIO()
+    ixmp.show_versions(buf)
+
+    return buf.getvalue()
 
 
 # FIXME Reduce complexity from 14 to ≤13
