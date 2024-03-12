@@ -13,6 +13,7 @@ access specific message_ix scenarios; these can also be specified with --url.
 
 For more information, see https://docs.messageix.org/projects/models2/en/latest/cli.html
 """
+
 import logging
 import sys
 from pathlib import Path
@@ -52,8 +53,17 @@ def main(click_ctx, **kwargs):
     # Start timer
     mark_time(quiet=True)
 
-    # Log to console
-    setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
+    # Check for a non-trivial execution of the CLI
+    non_trivial = (
+        not any(s in sys.argv for s in {"last-log", "--help"})
+        and click_ctx.invoked_subcommand != "_test"
+    )
+
+    # Log to console: either DEBUG or INFO.
+    # Don't start file logging for a non-trivial execution.
+    setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", file=non_trivial)
+
+    log.debug("CLI invoked with:\n" + "\n  ".join(sys.argv))
 
     # Store the most recently created instance of message_ix_models.Context. click
     # carries this object to any subcommand decorated with @click.pass_obj.

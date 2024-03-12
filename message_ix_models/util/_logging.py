@@ -1,10 +1,17 @@
 """Logging utilities."""
 
+import atexit
 import logging
 import logging.config
+import sys
+import time
 from contextlib import contextmanager
-from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from time import process_time
+from typing import TYPE_CHECKING, List, Union
+
+if TYPE_CHECKING:
+    import logging.handlers
 
 __all__ = [
     "Formatter",
@@ -87,7 +94,7 @@ class Formatter(logging.Formatter):
 
     _short_name = None
 
-    def __init__(self, colorama):
+    def __init__(self, colorama=None):
         super().__init__()
         if colorama:
             self.CYAN = colorama.Fore.CYAN
@@ -152,67 +159,155 @@ def mark_time(quiet=False):
         )
 
 
+class StreamHandler(logging.StreamHandler):
+    """Like :class:`.logging.StreamHandler`, but refresh sys.stdout on each access.
+
+    This avoids the case that :mod:`click`, :mod:`pytest`, or something else adjusts
+    :py:`sys.stdout` temporarily, but the handler's stored reference to the original is
+    not updated.
+    """
+
+    #: Name of the :mod:`sys` stream to use, as :class:`str` rather than a direct
+    #: reference.
+    stream_name: str
+
+    def __init__(self, stream_name: str):
+        self.stream_name = stream_name
+        logging.Handler.__init__(self)
+
+    @property
+    def stream(self):
+        return getattr(sys, self.stream_name)
+
+
+class QueueHandler("logging.handlers.QueueHandler"):
+    """Queue handler with custom set-up.
+
+    This emulates the default behaviour available in Python 3.12.
+    """
+
+    #: Corresponding listener that dispatches to the actual handlers.
+    listener: "logging.handlers.QueueListener"
+
+    def __init__(
+        self, *, handlers: List[str] = [], respect_handler_level: bool = False
+    ) -> None:
+        from logging.handlers import QueueListener
+        from queue import SimpleQueue
+
+        super().__init__(SimpleQueue())
+
+        # Construct the listener
+        # NB This relies on the non-public collection logging._handlers
+        self.listener = QueueListener(
+            self.queue,
+            *[logging._handlers[name] for name in handlers],  # type: ignore [attr-defined]
+            respect_handler_level=respect_handler_level,
+        )
+
+        self.listener.start()
+        atexit.register(self.listener.stop)
+
+
+# NB This is only separate to avoid complaints from mypy
+HANDLER_CONFIG = dict(
+    console={
+        "class": "message_ix_models.util._logging.StreamHandler",
+        "level": 99,
+        "formatter": "color",
+        "stream_name": "stdout",
+    },
+    file={
+        "class": "logging.FileHandler",
+        "level": 99,
+        "formatter": "plain",
+        "delay": True,
+    },
+    queue={
+        "class": "message_ix_models.util._logging.QueueHandler",
+        "handlers": ["console", "file"],
+        "respect_handler_level": True,
+    },
+)
+
+
 CONFIG = dict(
     version=1,
     disable_existing_loggers=False,
-    formatters=dict(simple={"()": "message_ix_models.util._logging.make_formatter"}),
-    handlers=dict(
-        console={
-            "class": "logging.StreamHandler",
-            "level": "NOTSET",
-            "formatter": "simple",
-            "stream": "ext://sys.stdout",
-        },
-        # commented: needs code in setup() to choose an appropriate file path
-        # file_handler={
-        #    "class": "logging.handlers.RotatingFileHandler",
-        #    "level": "DEBUG",
-        #    "formatter": "simple",
-        #    "backupCount": "100",
-        #    "delay": True,
-        # },
+    formatters=dict(
+        color={"()": "message_ix_models.util._logging.make_formatter"},
+        plain={"()": "message_ix_models.util._logging.Formatter"},
     ),
-    loggers=dict(
-        message_ix_models=dict(
-            level="NOTSET",
-            # propagate=False,
-            # handlers=[],
-        ),
-        message_data=dict(
-            level="NOTSET",
-            # propagate=False,
-            # handlers=[],
-        ),
-    ),
-    root=dict(
-        handlers=[],
-    ),
+    handlers=HANDLER_CONFIG,
+    loggers={
+        # Ensure no level set for these packages; the level of the "console"/"file"
+        # handlers determines outputs
+        "message_ix_models": dict(level=logging.NOTSET),
+        "message_data": dict(level=logging.NOTSET),
+        # Hide DEBUG messages for some upstream packages from the file log
+        "graphviz._tools": dict(level=logging.DEBUG + 1),
+        "pycountry.db": dict(level=logging.DEBUG + 1),
+        "matplotlib.backends": dict(level=logging.DEBUG + 1),
+        "matplotlib.font_manager": dict(level=logging.DEBUG + 1),
+    },
+    root=dict(handlers=["queue"]),
 )
 
 
 def setup(
-    level="NOTSET",
-    console=True,
-    # file=False,
-):
+    level: Union[str, int] = 99,
+    console: bool = True,
+    *,
+    file: bool = False,
+) -> None:
     """Initialize logging.
 
     Parameters
     ----------
     level : str, *optional*
-        Log level for :mod:`message_ix_models` and :mod:`message_data`.
+        Log level for the console log handler.
     console : bool, *optional*
-        If :obj:`True`, print all messages to console using a :class:`Formatter`.
+        If :obj:`False`, do not print any messages to console.
+    file : bool, *optional*
+        If :obj:`False`, do not print any messages to file.
     """
-    # Copy to avoid modifying with the operations below
-    config = deepcopy(CONFIG)
+    from platformdirs import user_log_path
 
-    config["root"].setdefault("level", level)
+    # Construct the file name for the log file
+    filename = (
+        datetime.now(timezone(timedelta(seconds=time.timezone)))
+        .isoformat(timespec="seconds")
+        .replace(":", "")
+    )
+    log_dir = user_log_path("message-ix-models", ensure_exists=True)
+    HANDLER_CONFIG["file"].setdefault("filename", log_dir.joinpath(filename))
+    CONFIG["handlers"] = HANDLER_CONFIG
 
-    if console:
-        config["root"]["handlers"].append("console")
-    # if file:
-    #     config["loggers"]["message_data"]["handlers"].append("file")
+    root = logging.getLogger()
+    if not root.handlers:
+        # Not yet configured → apply the configuration
+        logging.config.dictConfig(CONFIG)
 
-    # Apply the configuration
-    logging.config.dictConfig(config)
+    # Apply settings to loggers and handlers: either just-created, or pre-existing
+
+    # Set the level of the console handler
+    get_handler("console").setLevel(99 if console is False else level)
+
+    file_handler = get_handler("file")
+    if file is False:
+        file_handler.setLevel(99)
+    else:
+        file_handler.setLevel("DEBUG")
+        log.info(f"Log to {HANDLER_CONFIG['file']['filename']!s}")
+
+
+def get_handler(name: str) -> logging.Handler:
+    """Retrieve one of the handlers of the :class:`logging.handlers.QueueListener`."""
+    queue_handler = logging.getLogger().handlers[0]
+    assert isinstance(queue_handler, QueueHandler)
+
+    for h in queue_handler.listener.handlers:
+        if h.name == name:
+            return h
+
+    raise ValueError(name)
