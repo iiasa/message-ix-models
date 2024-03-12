@@ -5,6 +5,7 @@ scenario.
 
 Originally transcribed from :file:`reporting_EFC.py` in the buildings repository.
 """
+
 import logging
 import re
 from functools import lru_cache, partial
@@ -63,9 +64,9 @@ def callback(rep: message_ix.Reporter, context: Context) -> None:
     add_replacements("t", spec.add.set["buildings_sector"])
     for s, e in product(spec.add.set["buildings_sector"], spec.add.set["enduse"]):
         # Append "$" so the expressions only match the full/end of string
-        REPLACE_DIMS["t"][
-            f"{s.id.title()} {e.id.title()}$"
-        ] = f"{s.eval_annotation('report')}|{e.eval_annotation('report')}"
+        REPLACE_DIMS["t"][f"{s.id.title()} {e.id.title()}$"] = (
+            f"{s.eval_annotation('report')}|{e.eval_annotation('report')}"
+        )
 
     log.info(f"Will replace:\n{REPLACE_DIMS!r}")
 
