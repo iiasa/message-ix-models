@@ -195,7 +195,7 @@ jobs:
       continue-on-error: true
 
   merge:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: report
 
     steps:
