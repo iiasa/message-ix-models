@@ -20,7 +20,7 @@ repos:
     - "message-ix @ git+https://github.com/iiasa/message_ix.git@main"
     args: ["."]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.13
+  rev: v0.3.0
   hooks:
   - id: ruff
   - id: ruff-format

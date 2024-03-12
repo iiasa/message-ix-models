@@ -1,4 +1,5 @@
 """Tests for :mod:`message_ix_models.report`."""
+
 from importlib.metadata import version
 
 import numpy as np
