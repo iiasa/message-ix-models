@@ -1,4 +1,5 @@
 """Prepare base models from snapshot data."""
+
 import logging
 from pathlib import Path
 

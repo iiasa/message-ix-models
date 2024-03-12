@@ -1,4 +1,5 @@
 """Utilities for nodes."""
+
 import logging
 from typing import List, Sequence, Union
 

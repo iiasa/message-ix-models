@@ -1,4 +1,5 @@
 """Handle data from the ADVANCE project."""
+
 import logging
 from pathlib import Path
 from typing import Optional

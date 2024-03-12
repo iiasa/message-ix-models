@@ -3,6 +3,7 @@
 The current set functions on time series data stored on the scenario by
 :mod:`message_ix_models.report` or :mod:`message_data` legacy reporting.
 """
+
 import logging
 import re
 from datetime import datetime

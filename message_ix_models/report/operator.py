@@ -1,4 +1,5 @@
 """Atomic reporting operations for MESSAGEix-GLOBIOM."""
+
 import itertools
 import logging
 import re
