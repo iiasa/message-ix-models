@@ -139,6 +139,12 @@ class Context(dict):
 
         return result
 
+    def __eq__(self, other) -> bool:
+        # Don't compare contents, only identity, for _CONTEXTS.index()
+        if not isinstance(other, Context):
+            return NotImplemented
+        return id(self) == id(other)
+
     def __repr__(self):
         return f"<{self.__class__.__name__} object at {id(self)} with {len(self)} keys>"
 
