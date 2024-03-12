@@ -214,7 +214,9 @@ def broadcast(
             _check_dim(dim)
         # Concatenate 1 copy of `df` for each row in `labels`
         df = pd.concat(
-            [df.assign(**row) for _, row in labels.iterrows()], ignore_index=True
+            [df.assign(**row) for _, row in labels.iterrows()],
+            ignore_index=True,
+            sort=False,
         )
 
     # Next, broadcast other dimensions given as keyword arguments
@@ -231,7 +233,7 @@ def broadcast(
         # - Re-add the column from the constructed MultiIndex
         # - Reindex for sequential row numbers
         df = (
-            pd.concat([df] * len(levels), keys=levels, names=[dim])
+            pd.concat([df] * len(levels), keys=levels, names=[dim], sort=False)
             .drop(dim, axis=1)
             .reset_index(dim)
             .reset_index(drop=True)
