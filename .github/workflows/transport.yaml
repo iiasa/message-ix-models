@@ -1,5 +1,16 @@
 name: MESSAGEix-Transport
 
+env:
+  # Starting point of the workflow.
+  # Use this value to build from a certain scenario:
+  base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
+  # Use this value to allow the workflow to determine model & scenario names
+  # and versions:
+  # base: --platform="ixmp-dev"
+
+  # Set this to a particular step to truncate the workflow
+  from-step: ""
+
 on:
   # Uncomment these lines for debugging, but leave them commented on 'main'/'dev'
   # pull_request:
@@ -7,8 +18,7 @@ on:
   # push:
   #   branches: [ main, dev ]
   schedule:
-  # 01:00 UTC = 02:00 CET = 03:00 CEST
-  - cron: "0 1 * * *"
+  - cron: "0 1 * * *"  # 01:00 UTC = 02:00 CET = 03:00 CEST
   workflow_dispatch: {}
 
 # Cancel previous runs that have not completed
@@ -41,17 +51,7 @@ jobs:
   report:
     runs-on: self-hosted
     needs: prepare-workspace
-
-    env:
-      # Starting point of the workflow.
-      # Use this value to build from a certain scenario:
-      base: --url="ixmp://ixmp-dev/MESSAGEix-GLOBIOM 1.1-R12/baseline_DEFAULT#21"
-      # Use this value to allow the workflow to determine model & scenario names
-      # and versions:
-      # base: --platform="ixmp-dev"
-
-      # Set this to a particular step to truncate the workflow
-      from-step: ""
+    name: MESSAGEix-Transport ${{ matrix.SSP }}
 
     strategy:
       matrix:
@@ -62,32 +62,24 @@ jobs:
         - SSP4
         - SSP5
 
-    name: MESSAGEix-Transport ${{ matrix.SSP }}
-
     steps:
-    # Steps for the IIASA self-hosted runner only
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: "17"
-
-    # Steps from here to ##### are nearly identical to pytest.yaml
-
     - uses: webfactory/ssh-agent@v0.9.0
       with:
         ssh-private-key: |
           ${{ secrets.MESSAGE_BUILDINGS_PRIVATE_KEY }}
           ${{ secrets.MESSAGE_TRADE_PRIVATE_KEY }}
+          ${{ secrets.NAVIGATE_WORKFLOW_PRIVATE_KEY }}
 
-    - name: Check out message_data
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         path: message_data
-        # NB This leads to errors on the IIASA self-hosted runner.
-        #    The next step has the same effect.
-        # lfs: true
+        lfs: true
+        # On GitHub Actions
+        # submodules: true
+        # On self-hosted runners
         submodules: false
 
+    # NB Needed for self-hosted runner, not for GitHub
     - name: Check out Git LFS files
       working-directory: message_data
       run: git lfs checkout
@@ -97,22 +89,24 @@ jobs:
     - name: Connect static data to message_data
       run: cp -rsv $(realpath message-static-data)/* message_data/data/
 
-    - name: Check out MESSAGEix-Buildings code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         repository: iiasa/MESSAGE_Buildings
         path: buildings
         ssh-key: ${{ secrets.MESSAGE_BUILDINGS_PRIVATE_KEY }}
 
+    # NB Needed for self-hosted runner, not for GitHub
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+
     - uses: actions/setup-python@v5
       with:
         # Latest version testable on GitHub Actions
-        python-version: "3.11"
+        python-version: "3.12"
         cache: pip
         cache-dependency-path: "**/pyproject.toml"
-
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
 
     - uses: iiasa/actions/setup-gams@main
       with:
@@ -123,14 +117,11 @@ jobs:
     #    so the following doesn't work. Rather, the necessary packages
     #    (graphviz libgraphviz-dev pkg-config) are manually installed on the
     #    host system
-    # - uses: ts-graphviz/setup-graphviz@v1
+    # - uses: ts-graphviz/setup-graphviz@v2
 
-    - name: Install package; upgrade dependencies
-      run: pip install --upgrade --upgrade-strategy=eager --editable ./message_data[dl,scgen,tests,transport]
-
-    # By default, the above installs message_data dependencies from PyPI.
-    # To run against unreleased code (on `main`, or other branches for
-    # open PRs), uncomment or modify the lines below as appropriate.
+    # By default, the next step installs dependencies from PyPI.
+    # To run against unreleased code (on `main`, or other branches for open
+    # PRs), uncomment or modify the lines below as appropriate.
     - name: Force upgrade to unreleased dependencies
       run: |
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
@@ -138,12 +129,14 @@ jobs:
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
         pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
-    - name: Upgrade matplotlib
-      # NB pyam pins matplotlib < 3.7.1, which conflicts with plotnine per
-      #    https://github.com/has2k1/plotnine/pull/751. Override
-      run: pip install --upgrade matplotlib
+        # Upgrade matplotlib
+        # pyam pins matplotlib < 3.7.1, which conflicts with plotnine per
+        # https://github.com/has2k1/plotnine/pull/751. Override.
+        pip install --upgrade matplotlib
 
-    # #####
+    - name: Install package; upgrade dependencies
+      working-directory: message_data
+      run: pip install --upgrade --upgrade-strategy=eager --editable .[dl,scgen,tests,transport]
 
     - name: Configure
       run: |
