@@ -117,11 +117,12 @@ no_implicit_optional = false
 addopts = "-p no:faulthandler --cov=message_ix_models --cov-report="
 filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
 
-[tool.ruff]
+[tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
-
-[tool.ruff.mccabe]
-max-complexity = 13
+# Exceptions:
+# - .tools.wb.assign_income_groups(): 12 > 11
+# - .util.sdmx.as_codes(): 13 > 11
+mccabe.max-complexity = 11
 
 [tool.setuptools.packages]
 find = {}

@@ -25,7 +25,10 @@ log = logging.getLogger(__name__)
 CodeLike = Union[str, Code]
 
 
-def as_codes(data: Union[List[str], Dict[str, CodeLike]]) -> List[Code]:
+# FIXME Reduce complexity from 13 → ≤11
+def as_codes(  # noqa: C901
+    data: Union[List[str], Dict[str, CodeLike]],
+) -> List[Code]:
     """Convert `data` to a :class:`list` of |Code| objects.
 
     Various inputs are accepted:
