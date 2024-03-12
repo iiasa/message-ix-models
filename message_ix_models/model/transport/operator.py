@@ -30,7 +30,13 @@ from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codelist, get_codes
 from message_ix_models.report.operator import compound_growth
 from message_ix_models.report.util import as_quantity
-from message_ix_models.util import MappingAdapter, broadcast, nodes_ex_world
+from message_ix_models.util import (
+    MappingAdapter,
+    broadcast,
+    datetime_now_with_tz,
+    nodes_ex_world,
+    show_versions,
+)
 from sdmx.model.v21 import Code
 
 from message_data.projects.navigate import T35_POLICY
@@ -84,22 +90,12 @@ __all__ = [
 
 def base_model_data_header(scenario: "Scenario", *, name: str) -> Dict[str, str]:
     """Return a header comment for writing out base model data."""
-    from datetime import datetime
-    from io import StringIO
-
-    from ixmp.util import show_versions
-
-    tz = datetime.now().astimezone().tzinfo
-
-    # Retrieve package versions
-    buf = StringIO()
-    show_versions(buf)
-    versions = "\n\n".join(buf.getvalue().split("\n\n")[:2])
+    versions = "\n\n".join(show_versions().split("\n\n")[:2])
 
     return dict(
         header_comment=f"""`{name}` parameter data for MESSAGEix-GLOBIOM.
 
-Generated: {datetime.now(tz).isoformat()}
+Generated: {datetime_now_with_tz().isoformat()}
 from: ixmp://{scenario.platform.name}/{scenario.url}
 using:
 {versions}
