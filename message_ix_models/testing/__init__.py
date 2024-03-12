@@ -82,6 +82,8 @@ def session_context(pytestconfig, tmp_env):
       the :ref:`pytest tmp_path directory <pytest:tmp_path>`.
 
     """
+    from platformdirs import user_cache_path
+
     ctx = Context.only()
 
     # Temporary, empty local directory for local data
@@ -91,7 +93,7 @@ def session_context(pytestconfig, tmp_env):
     # pick up the existing setting from the user environment. If False, use a pytest-
     # managed cache directory that persists across test sessions.
     ctx.cache_path = (
-        ctx.local_data.joinpath("cache")
+        user_cache_path("message-ix-models", ensure_exists=True)
         if pytestconfig.option.local_cache
         # TODO use pytestconfig.cache.mkdir() when pytest >= 6.3 is available
         else Path(pytestconfig.cache.makedir("cache"))
