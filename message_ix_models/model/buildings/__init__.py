@@ -3,6 +3,7 @@
 This module currently includes the main algorithm for iterating between the models
 ACCESS and STURM and MESSAGEix itself.
 """
+
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
