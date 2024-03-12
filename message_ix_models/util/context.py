@@ -271,14 +271,8 @@ class Context(dict):
         The directory containing the resulting path is created if it does not already
         exist.
         """
-        # Construct relative to local_data if cache_path is not defined
-        base = self.core.cache_path or self.core.local_data.joinpath("cache")
-
-        result = base.joinpath(*parts)
-
-        # Ensure the directory exists
-        result.parent.mkdir(parents=True, exist_ok=True)
-
+        result = self.core.cache_path.joinpath(*parts)
+        result.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
         return result
 
     def get_local_path(self, *parts: str, suffix=None) -> Path:
