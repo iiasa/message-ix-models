@@ -131,16 +131,21 @@ class Formatter(logging.Formatter):
 class QueueHandler(logging.handlers.QueueHandler):
     """Queue handler with custom set-up.
 
-    This emulates the default behaviour available in Python 3.12.
+    This emulates the default behaviour available in Python 3.12 for Python 3.11 and
+    earlier; it is also compatible with Python 3.12.
     """
 
     #: Corresponding listener that dispatches to the actual handlers.
     listener: logging.handlers.QueueListener
 
     def __init__(
-        self, *, handlers: List[str] = [], respect_handler_level: bool = False
+        self,
+        queue=None,  # For Python 3.12
+        *,
+        handlers: List[str] = [],  # For Python 3.11 and earlier
+        respect_handler_level: bool = False,
     ) -> None:
-        super().__init__(SimpleQueue())
+        super().__init__(queue or SimpleQueue())
 
         # Construct the listener
         # NB This relies on the non-public collection logging._handlers
