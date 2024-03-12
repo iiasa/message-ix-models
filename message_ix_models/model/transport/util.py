@@ -1,14 +1,18 @@
 """Utility code for MESSAGEix-Transport."""
+
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
 
 import pandas as pd
 from iam_units import registry  # noqa: F401
 from message_ix_models import Context, Spec
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import private_data_path
+
+if TYPE_CHECKING:
+    import numbers
 
 log = logging.getLogger(__name__)
 
@@ -101,3 +105,14 @@ def get_techs(context) -> Tuple[Spec, List, Dict]:
             t_groups["non-ldv"].extend(t_groups[tech.id])
 
     return spec, technologies, t_groups
+
+
+def sum_numeric(iterable: Iterable, /, start=0) -> "numbers.Real":
+    """Sum only the numeric values in `iterable`."""
+    result = start
+    for item in iterable:
+        try:
+            result += item
+        except TypeError:
+            pass
+    return result

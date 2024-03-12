@@ -510,6 +510,7 @@ def main(
     get_spec
     """
     from .emission import strip_emissions_data
+    from .util import sum_numeric
 
     # Check arguments
     options = dict() if options is None else options.copy()
@@ -535,7 +536,8 @@ def main(
     def _add_data(s, **kw):
         assert s is c.graph["scenario"]
         result = c.get("add transport data")
-        log.info(f"Added {sum(result)} total obs")
+        # For calls to add_par_data(), int() are returned with number of observations
+        log.info(f"Added {sum_numeric(result)} total obs")
 
     if dry_run:
         return c.get("transport build debug")
