@@ -1,4 +1,5 @@
 """Context and settings for :mod:`message_ix_models` code."""
+
 import logging
 from copy import deepcopy
 from dataclasses import fields
@@ -10,6 +11,7 @@ import message_ix
 from click import BadOptionUsage
 
 from .config import Config
+from .ixmp import parse_url
 
 log = logging.getLogger(__name__)
 
@@ -371,7 +373,7 @@ class Context(dict):
                 )
 
             self.core.url = url
-            urlinfo = ixmp.utils.parse_url(url)
+            urlinfo = parse_url(url)
             platform_info.update(urlinfo[0])
             scenario_info.update(urlinfo[1])
         elif platform:
