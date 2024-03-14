@@ -11,7 +11,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
-from typing import List, Union, cast
+from typing import Dict, List, Union, cast
 
 # NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
@@ -22,6 +22,8 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+
+_HANDLER: Dict[str, logging.Handler] = dict()
 
 # NB This is only separate to avoid complaints from mypy
 _HANDLER_CONFIG = dict(
@@ -136,7 +138,7 @@ class QueueHandler(logging.handlers.QueueHandler):
     """
 
     #: Corresponding listener that dispatches to the actual handlers.
-    listener: logging.handlers.QueueListener
+    listener: "QueueListener"
 
     def __init__(
         self,
@@ -149,14 +151,23 @@ class QueueHandler(logging.handlers.QueueHandler):
 
         # Construct the listener
         # NB This relies on the non-public collection logging._handlers
-        self.listener = logging.handlers.QueueListener(
+        self.listener = QueueListener(
             self.queue,
             *[logging._handlers[name] for name in handlers],  # type: ignore [attr-defined]
             respect_handler_level=respect_handler_level,
         )
-
         self.listener.start()
         atexit.register(self.listener.stop)
+
+
+class QueueListener(logging.handlers.QueueListener):
+    """:class:`.logging.QueueListener` with a :meth:`.flush` method."""
+
+    def flush(self):
+        """Flush the queue: join the listener/monitor thread and then restart."""
+        if self._thread is not None:
+            super().stop()
+            self.start()
 
 
 class StreamHandler(logging.StreamHandler):
@@ -204,6 +215,9 @@ def preserve_log_level():
         main_log.setLevel(level)
 
 
+_HANDLER = dict()
+
+
 def setup(
     level: Union[str, int] = 99,
     console: bool = True,
@@ -248,17 +262,24 @@ def setup(
     # Identify the QueueHandler instance
     queue_handler = next(filter(lambda qh: isinstance(qh, QueueHandler), root.handlers))
     assert isinstance(queue_handler, QueueHandler)
+    _HANDLER.update(queue=queue_handler)
+
     # Prepare a dictionary of the listener's handlers
-    handler = {h.name: h for h in queue_handler.listener.handlers}
+    _HANDLER.update({str(h.name): h for h in queue_handler.listener.handlers})
 
     # Set the level of the console handler
-    handler["console"].setLevel(99 if console is False else level)
+    _HANDLER["console"].setLevel(99 if console is False else level)
 
     if file is False:
-        handler["file"].setLevel(99)
+        _HANDLER["file"].setLevel(99)
     else:
-        handler["file"].setLevel("DEBUG")
-        log.info(f"Log to {cast(logging.FileHandler, handler['file']).baseFilename}")
+        _HANDLER["file"].setLevel("DEBUG")
+        log.info(f"Log to {cast(logging.FileHandler, _HANDLER['file']).baseFilename}")
+
+
+def flush() -> None:
+    """Flush the queue."""
+    cast(QueueHandler, _HANDLER["queue"]).listener.flush()
 
 
 @contextmanager
