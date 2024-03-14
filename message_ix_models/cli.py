@@ -21,7 +21,7 @@ from pathlib import Path
 import click
 from ixmp.cli import main as ixmp_cli
 
-from message_ix_models.util._logging import mark_time
+from message_ix_models.util._logging import flush, mark_time
 from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
@@ -79,6 +79,9 @@ def main(click_ctx, **kwargs):
 
     # Close any database connections when the CLI exits
     click_ctx.call_on_close(click_ctx.obj.close_db)
+
+    # Ensure all log messages are handled
+    click_ctx.call_on_close(flush)
 
 
 @main.command("export-test-data")
