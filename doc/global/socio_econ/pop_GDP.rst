@@ -1,0 +1,15 @@
+Population and GDP
+====================
+Population and economic developments have strong implications for the anticipated mitigation and adaptation challenges. For example, a larger, poorer and less educated population will have more difficulties to adapt to the detrimental effects of climate change (O’Neill et al., 2014 :cite:`oneill_new_2014`). The primary drivers of future energy demand in MESSAGEix are projections of total population and GDP at purchasing power parity exchange rates, denoted as GDP (PPP). In addition to total population, the urban/rural split of population is relevant for the `MESSAGEix-Access <http://www.iiasa.ac.at/web/home/research/researchPrograms/Energy/MESSAGE-Access.en.html>`_ version of the model which distinguishes rural and urban population with different household incomes in developing country regions.
+
+Understanding how population and economic growth develops in the SSPs gives a first layer of understanding of the multiple mitigation and adaptation challenges. Population growth evolves in response to how fertility, 
+mortality, migration, and education of various social strata are assumed to change over time. In SSP2, global population peaks at 9.4 billion people around 2070, and slowly declines thereafter 
+(KC and Lutz, 2015 :cite:`kc_human_2014`). Gross Domestic Product (GDP) follows regional historical trends (Dellink et al., 2015 :cite:`dellink_long-term_2015`). In SSP2, average income grows by a factor of six and reaches 
+about 60,000 USD/capita by the end of the century (all GDP/capita figures use USD2005 and purchasing-power-parity – PPP). The SSP2 GDP projection is situated in-between the estimates for SSP1 and SSP3, 
+which reach global average income levels of 82,000 USD2005 and 22,000 USD2005, respectively, by the end of the century. SSP2 depicts a future of global progress where developing countries achieve significant economic growth. 
+Today, average per capita income in the global North is about five times higher than in the global South. In SSP2, developing countries reach today’s average income levels of the OECD between 2060 and 2090, depending on 
+the region. However, modest improvements of educational attainment levels result in declines in education-specific fertility rates, leading to incomplete economic convergence across different world regions. 
+This is particularly an issue for Africa. Overall, both the population and GDP developments in SSP2 are designed to be situated in the middle of the road between SSP1 and SSP3, see 
+KC and Lutz (2015) :cite:`kc_human_2014`, Dellink et al. (2015) :cite:`dellink_long-term_2015` and Fricko et al. (2017) :cite:`fricko_marker_2017` for more details.
+
+The full quantitative data set of demographic and economic projections for the SSPs can be found in an online database (`SSP database <https://tntcat.iiasa.ac.at/SspDb/dsd?Action=htmlpage&page=welcome>`_).
