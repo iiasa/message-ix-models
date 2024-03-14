@@ -1,6 +1,9 @@
 import logging
 import re
 
+import click
+import pytest
+
 from message_ix_models.util._logging import mark_time, silence_log
 
 
@@ -15,6 +18,40 @@ def test_mark_time(caplog):
 
     # Each message matches the expected format
     assert all(re.match(r" \+\d+\.\d = \d+\.\d seconds", m) for m in caplog.messages)
+
+
+class TestQueueListener:
+    #: Number of log messages to emit.
+    N = 1_000
+
+    #: Number of times to run the test.
+    k = 4
+
+    @pytest.mark.parametrize("k", range(k))
+    def test_flush(self, caplog, mix_models_cli, k):
+        """Test logging in multiple processes, multiple threads, and with :mod:`click`.
+
+        With pytest-xdist, these :attr:`k` test cases will run in multiple processes.
+        Each process will have its main thread, and the thread of the QueueListener.
+        The test ensures that all :attr:`N` log records emitted by the :py:`func()` are
+        "flushed" from the queue, transferred to stdout by the :class:`.StreamHandler`
+        and captured by the :class:`.CliRunner`.
+        """
+
+        @click.command("log-threads")
+        def func():
+            # Emit many log records
+            log = logging.getLogger("message_ix_models")
+            [log.info(f"{k = } {i = }") for i in range(self.N)]
+
+        with mix_models_cli.temporary_command(func):
+            # Run the command, capture output
+            result = mix_models_cli.assert_exit_0(["_test", func.name])
+
+        # All records are emitted; the last record ends with N - 1
+        assert result.output.rstrip().endswith(f"{self.N - 1}"), result.output.split(
+            "\n"
+        )[-2:]
 
 
 def test_silence_log(caplog):
