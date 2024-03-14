@@ -12,7 +12,6 @@ log = logging.getLogger(__name__)
 try:
     import message_data
 except ImportError:
-    log.warning("message_data is not installed or cannot be imported")
     MESSAGE_DATA_PATH: Optional[Path] = None
     HAS_MESSAGE_DATA = False
 else:  # pragma: no cover  (needs message_data)
