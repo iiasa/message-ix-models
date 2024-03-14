@@ -2,16 +2,18 @@
 
 Every tool and script in this repository is accessible through this CLI. Scripts are
 grouped into commands and sub-commands. For help on specific (sub)commands, use --help,
-e.g.:
+for instance:
 
     \b
-    mix-models cd-links --help
-    mix-models cd-links run --help
+    mix-models report --help
+    mix-models ssp gen-structures --help
 
 The top-level options --platform, --model, and --scenario are used by commands that
-access specific message_ix scenarios; these can also be specified with --url.
+access specific MESSAGEix scenarios in a specific ixmp platform/database; these can also
+be specified with --url.
 
-For more information, see https://docs.messageix.org/projects/models/en/latest/cli.html
+For complete documentation, see
+https://docs.messageix.org/projects/models/en/latest/cli.html
 """
 
 import logging
@@ -35,7 +37,7 @@ log = logging.getLogger(__name__)
 @click.option(
     "--url", metavar="ixmp://PLATFORM/MODEL/SCENARIO[#VERSION]", help="Scenario URL."
 )
-@click.option("--platform", metavar="PLATFORM", help="Configured platform name.")
+@click.option("--platform", metavar="PLATFORM", help="ixmp platform name.")
 @click.option(
     "--model", "model_name", metavar="MODEL", help="Model name for some commands."
 )
@@ -45,7 +47,7 @@ log = logging.getLogger(__name__)
     metavar="SCENARIO",
     help="Scenario name for some commands.",
 )
-@click.option("--version", type=int, help="Scenario version.")
+@click.option("--version", type=int, help="Scenario version for some commands.")
 @click.option("--local-data", type=Path, help="Base path for local data.")
 @common_params("verbose")
 @click.pass_context
