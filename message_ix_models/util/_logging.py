@@ -7,10 +7,11 @@ import logging.handlers
 import sys
 import time
 from contextlib import contextmanager
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
-from typing import List, Union
+from typing import List, Union, cast
 
 # NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
@@ -42,7 +43,6 @@ _HANDLER_CONFIG = dict(
         "respect_handler_level": True,
     },
 )
-
 
 _CONFIG = dict(
     version=1,
@@ -180,18 +180,6 @@ class StreamHandler(logging.StreamHandler):
         return getattr(sys, self.stream_name)
 
 
-def _get_handler(name: str) -> logging.Handler:
-    """Retrieve one of the handlers of the :class:`logging.handlers.QueueListener`."""
-    queue_handler = logging.getLogger().handlers[0]
-    assert isinstance(queue_handler, QueueHandler)
-
-    for h in queue_handler.listener.handlers:
-        if h.name == name:
-            return h
-
-    raise ValueError(name)
-
-
 def mark_time(quiet: bool = False) -> None:
     """Record and log (if `quiet` is :obj:`True`) a time mark."""
     _TIMES.append(process_time())
@@ -235,32 +223,42 @@ def setup(
     """
     from platformdirs import user_log_path
 
-    # Construct the file name for the log file
-    filename = (
-        datetime.now(timezone(timedelta(seconds=time.timezone)))
-        .isoformat(timespec="seconds")
-        .replace(":", "")
-    )
-    log_dir = user_log_path("message-ix-models", ensure_exists=True)
-    _HANDLER_CONFIG["file"].setdefault("filename", log_dir.joinpath(filename))
-    _CONFIG["handlers"] = _HANDLER_CONFIG
-
     root = logging.getLogger()
-    if not root.handlers:
-        # Not yet configured → apply the configuration
-        logging.config.dictConfig(_CONFIG)
+    if not any(isinstance(h, QueueHandler) for h in root.handlers):
+        # Not yet configured
+
+        # Construct the file name for the log file
+        log_file_path = user_log_path("message-ix-models", ensure_exists=True).joinpath(
+            datetime.now(timezone(timedelta(seconds=time.timezone)))
+            .isoformat(timespec="seconds")
+            .replace(":", "")
+        )
+
+        # Copy and modify dictionaries
+        config_handlers = deepcopy(_HANDLER_CONFIG)
+        config_handlers["file"].update(filename=log_file_path)
+        config = deepcopy(_CONFIG)
+        config.update(handlers=config_handlers)
+
+        # Apply the configuration
+        logging.config.dictConfig(config)
 
     # Apply settings to loggers and handlers: either just-created, or pre-existing
 
-    # Set the level of the console handler
-    _get_handler("console").setLevel(99 if console is False else level)
+    # Identify the QueueHandler instance
+    queue_handler = next(filter(lambda qh: isinstance(qh, QueueHandler), root.handlers))
+    assert isinstance(queue_handler, QueueHandler)
+    # Prepare a dictionary of the listener's handlers
+    handler = {h.name: h for h in queue_handler.listener.handlers}
 
-    file_handler = _get_handler("file")
+    # Set the level of the console handler
+    handler["console"].setLevel(99 if console is False else level)
+
     if file is False:
-        file_handler.setLevel(99)
+        handler["file"].setLevel(99)
     else:
-        file_handler.setLevel("DEBUG")
-        log.info(f"Log to {_HANDLER_CONFIG['file']['filename']!s}")
+        handler["file"].setLevel("DEBUG")
+        log.info(f"Log to {cast(logging.FileHandler, handler['file']).baseFilename}")
 
 
 @contextmanager
