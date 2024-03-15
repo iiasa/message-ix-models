@@ -130,6 +130,26 @@ def debug(ctx):
     log.debug(ctx.local_data)
 
 
+@main.group("_test", hidden=True)
+def cli_test_group():
+    """Hidden group of CLI commands.
+
+    Other code which needs to test CLI behaviour **may** attach temporary/throw-away
+    commands to this group and then invoke them using :func:`mix_models_cli`. This
+    avoids the need to expose additional commands for testing purposes only.
+    """
+
+
+@cli_test_group.command("log-threads")
+@click.argument("k", type=int)
+@click.argument("N", type=int)
+def _log_threads(k: int, n: int):
+    # Emit many log records
+    log = logging.getLogger("message_ix_models")
+    for i in range(n):
+        log.info(f"{k = } {i = }")
+
+
 # Attach the ixmp "config" CLI
 main.add_command(ixmp_cli.commands["config"])
 
@@ -185,3 +205,7 @@ for name in submodules:
         continue
 
     main.add_command(cmd)
+
+
+if __name__ == "__main__":
+    main()

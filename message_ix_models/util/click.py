@@ -4,16 +4,21 @@ These are used for building CLIs using :mod:`click`.
 """
 
 import logging
+import sys
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Literal, Mapping, Optional, Union, cast
 
 import click
+import click.testing
 from click import Argument, Choice, Option
 
 from message_ix_models import Context, model
 from message_ix_models.model.structure import codelists
 
+from ._logging import preserve_log_level
 from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
@@ -88,8 +93,6 @@ def exec_cb(expression: str) -> Callable:
 
 def format_sys_argv() -> str:
     """Format :data:`sys.argv` in a readable manner."""
-    import sys
-
     lines = ["Invoked:"]
     indent = ""
     for item in sys.argv:
@@ -111,6 +114,17 @@ def store_context(context: Union[click.Context, Context], param, value):
         value,
     )
     return value
+
+
+@contextmanager
+def temporary_command(group: "click.Group", command: "click.Command"):
+    """Temporarily attach command `command` to `group`."""
+    assert command.name is not None
+    try:
+        group.add_command(command)
+        yield
+    finally:
+        group.commands.pop(command.name)
 
 
 def urls_from_file(
@@ -262,3 +276,80 @@ PARAMS = {
         # expose_value=False,
     ),
 }
+
+
+@dataclass
+class CliRunner:
+    """Similar to :class:`click.testing.CliRunner`, with extra features."""
+
+    #: CLI entry point
+    cli_cmd: click.Command
+    #: CLI module
+    cli_module: str
+
+    env: Mapping[str, str] = field(default_factory=dict)
+    charset: str = "utf-8"
+
+    #: Method for invoking the command
+    method: Literal["click", "subprocess"] = "click"
+
+    def invoke(self, *args, **kwargs) -> click.testing.Result:
+        method = kwargs.pop("method", self.method)
+
+        if method == "click":
+            runner = click.testing.CliRunner(env=self.env)
+            with preserve_log_level():
+                result = runner.invoke(self.cli_cmd, *args, **kwargs)
+        elif method == "subprocess":
+            result = self.invoke_subprocess(*args, **kwargs)
+
+        # Store the result to be used by assert_exit_0()
+        self.last_result = result
+
+        return result
+
+    def invoke_subprocess(self, *args, **kwargs) -> click.testing.Result:
+        """Invoke the CLI in a subprocess."""
+        import subprocess
+
+        assert 1 == len(args)
+        all_args: List[str] = [sys.executable, "-m", self.cli_module, *args[0]]
+
+        # Run; capture in a subprocess.CompletedProcess
+        cp = subprocess.run(all_args, capture_output=True, env=self.env, **kwargs)
+
+        # Convert to a click.testing.Result
+        return click.testing.Result(
+            runner=cast(click.testing.CliRunner, self),
+            stdout_bytes=cp.stdout or bytes(),
+            stderr_bytes=cp.stderr or bytes(),
+            return_value=None,
+            exit_code=cp.returncode,
+            exception=None,
+            exc_info=None,
+        )
+
+    def assert_exit_0(self, *args, **kwargs) -> click.testing.Result:
+        """Assert a result has exit_code 0, or print its traceback.
+
+        If any `args` or `kwargs` are given, :meth:`.invoke` is first called. Otherwise,
+        the result from the last call of :meth:`.invoke` is used.
+
+        Raises
+        ------
+        AssertionError
+            if the result exit code is not 0.
+        """
+        __tracebackhide__ = True
+
+        if len(args) + len(kwargs):
+            self.invoke(*args, **kwargs)
+
+        # Retrieve the last result
+        result = self.last_result
+
+        if result.exit_code != 0:
+            print(f"{result.exit_code = }", f"{result.output = }", sep="\n")
+            raise RuntimeError(result.exit_code)
+
+        return result
