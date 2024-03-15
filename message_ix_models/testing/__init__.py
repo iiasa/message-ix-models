@@ -9,7 +9,6 @@ from tempfile import TemporaryDirectory
 import message_ix
 import pandas as pd
 import pytest
-from ixmp import Platform
 from ixmp import config as ixmp_config
 
 from message_ix_models import util
@@ -109,10 +108,7 @@ def session_context(pytestconfig, tmp_env):
         url=f"jdbc:hsqldb:mem://{platform_name}",
         jvmargs=pytestconfig.option.jvmargs,
     )
-
-    # Launch Platform and connect to testdb (reconnect if closed)
-    mp = Platform(name=platform_name)
-    mp.open_db()
+    ixmp_config.save()
 
     ctx.platform_info["name"] = platform_name
 
