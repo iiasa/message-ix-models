@@ -681,10 +681,15 @@ def show_versions() -> str:
     from io import StringIO
 
     from . import ixmp
+    from ._logging import preserve_log_handlers
 
     # Retrieve package versions
     buf = StringIO()
-    ixmp.show_versions(buf)
+
+    # show_versions() imports pyam-iamc, which in turn imports ixmp4, which removes all
+    # handlers from the root logger (?!). Preserve the message-ix-models logging config.
+    with preserve_log_handlers():
+        ixmp.show_versions(buf)
 
     return buf.getvalue()
 
