@@ -70,7 +70,7 @@ def test_silence_log(caplog):
         log.warning(msg)
 
     assert [
-        "Set level=40 for logger(s): message_ix_models message_data",
+        "Set level=40 for logger(s): message_data message_ix_models",
         "…restored.",
     ] == caplog.messages
     caplog.clear()
