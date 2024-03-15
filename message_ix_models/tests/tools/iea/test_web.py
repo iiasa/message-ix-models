@@ -7,6 +7,7 @@ from genno import Computer
 from message_ix_models.testing import GHA
 from message_ix_models.tools.exo_data import prepare_computer
 from message_ix_models.tools.iea.web import DIMS, generate_code_lists, load_data
+from message_ix_models.util import HAS_MESSAGE_DATA
 
 
 class TestIEA_EWEB:
@@ -68,7 +69,9 @@ PROVIDER_EDITION = (
     pytest.param(
         "IEA",
         "2023",
-        marks=pytest.mark.xfail(GHA, reason="No fuzzed version of this data"),
+        marks=pytest.mark.xfail(
+            GHA or not HAS_MESSAGE_DATA, reason="No fuzzed version of this data"
+        ),
     ),
     ("OECD", "2023"),
     ("OECD", "2022"),

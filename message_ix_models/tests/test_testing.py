@@ -1,8 +1,5 @@
 import os
 
-import click
-import pytest
-
 from message_ix_models.testing import bare_res, not_ci
 
 
@@ -21,8 +18,8 @@ def test_bare_res_solved(request, test_context):
 
 
 def test_cli_runner(mix_models_cli):
-    with pytest.raises(click.exceptions.UsageError, match="No such command 'foo'"):
-        mix_models_cli.assert_exit_0(["foo", "bar"])
+    result = mix_models_cli.invoke(["foo", "bar"])
+    assert "No such command 'foo'" in result.output
 
 
 @not_ci(reason="foo", action="skip")
