@@ -11,7 +11,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
-from typing import Dict, List, Union, cast
+from typing import Dict, List, Optional, Union, cast
 
 # NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
@@ -198,6 +198,25 @@ def mark_time(quiet: bool = False) -> None:
         logging.getLogger(__name__).info(
             f" +{_TIMES[-1] - _TIMES[-2]:.1f} = {_TIMES[-1]:.1f} seconds"
         )
+
+
+@contextmanager
+def preserve_log_handlers(name: Optional[str] = None):
+    """Context manager to preserve the handlers of a `logger`."""
+    # Access the named logger
+    logger = logging.getLogger(name)
+    # Make a copy of its list of handlers
+    handlers = list(logger.handlers)
+
+    try:
+        yield
+    finally:
+        # Make a list of handlers which have disappeared from the logger
+        to_restore = list(filter(lambda h: h not in logger.handlers, handlers))
+        for h in to_restore:
+            logger.addHandler(h)
+        # Log after the handlers have been restored
+        log.debug(f"Restore to {logger}.handlers: {to_restore or '(none)'}")
 
 
 @contextmanager
