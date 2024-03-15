@@ -7,66 +7,23 @@ import logging.handlers
 import sys
 import time
 from contextlib import contextmanager
-from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, Optional, Union, cast
 
 # NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
     "Formatter",
-    "QueueHandler",
+    "QueueListener",
     "StreamHandler",
     "setup",
 ]
 
 log = logging.getLogger(__name__)
 
+# References to handlers
 _HANDLER: Dict[str, logging.Handler] = dict()
-
-# NB This is only separate to avoid complaints from mypy
-_HANDLER_CONFIG = dict(
-    console={
-        "class": "message_ix_models.util._logging.StreamHandler",
-        "level": 99,
-        "formatter": "color",
-        "stream_name": "stdout",
-    },
-    file={
-        "class": "logging.FileHandler",
-        "level": 99,
-        "formatter": "plain",
-        "delay": True,
-    },
-    queue={
-        "class": "message_ix_models.util._logging.QueueHandler",
-        "handlers": ["console", "file"],
-        "respect_handler_level": True,
-    },
-)
-
-_CONFIG = dict(
-    version=1,
-    disable_existing_loggers=False,
-    formatters=dict(
-        color={"()": "message_ix_models.util._logging.Formatter"},
-        plain={"()": "message_ix_models.util._logging.Formatter", "use_colour": False},
-    ),
-    handlers=_HANDLER_CONFIG,
-    loggers={
-        # Ensure no level set for these packages; the level of the "console"/"file"
-        # handlers determines outputs
-        "message_ix_models": dict(level=logging.NOTSET),
-        "message_data": dict(level=logging.NOTSET),
-        # Hide DEBUG messages for some upstream packages from the file log
-        "graphviz._tools": dict(level=logging.DEBUG + 1),
-        "pycountry.db": dict(level=logging.DEBUG + 1),
-        "matplotlib.backends": dict(level=logging.DEBUG + 1),
-        "matplotlib.font_manager": dict(level=logging.DEBUG + 1),
-    },
-    root=dict(handlers=["queue"]),
-)
 
 # For mark_time()
 _TIMES = []
@@ -78,8 +35,7 @@ class Formatter(logging.Formatter):
     Parameters
     ----------
     use_color : bool, *optional*
-        If :any:`True`, :mod:`colorama` is used to colour log messages printed to
-        stdout.
+        If :any:`True`, :mod:`colorama` is used to colour log messages.
     """
 
     CYAN = ""
@@ -109,7 +65,7 @@ class Formatter(logging.Formatter):
         Records are formatted like::
 
             model.transport.data.add_par_data  220 rows in 'input'
-            ...add_par_data:  further messages
+            ...add_par_data  further messages
 
         …with the calling function name (e.g. 'add_par_data') coloured for legibility
         on first occurrence, then dimmed when repeated.
@@ -131,33 +87,8 @@ class Formatter(logging.Formatter):
 
 
 class QueueHandler(logging.handlers.QueueHandler):
-    """Queue handler with custom set-up.
-
-    This emulates the default behaviour available in Python 3.12 for Python 3.11 and
-    earlier; it is also compatible with Python 3.12.
-    """
-
-    #: Corresponding listener that dispatches to the actual handlers.
+    # For typing with Python ≤ 3.11 only; from 3.12 this attribute is described
     listener: "QueueListener"
-
-    def __init__(
-        self,
-        queue=None,  # For Python 3.12
-        *,
-        handlers: List[str] = [],  # For Python 3.11 and earlier
-        respect_handler_level: bool = False,
-    ) -> None:
-        super().__init__(queue or SimpleQueue())
-
-        # Construct the listener
-        # NB This relies on the non-public collection logging._handlers
-        self.listener = QueueListener(
-            self.queue,
-            *[logging._handlers[name] for name in handlers],  # type: ignore [attr-defined]
-            respect_handler_level=respect_handler_level,
-        )
-        self.listener.start()
-        atexit.register(self.listener.stop)
 
 
 class QueueListener(logging.handlers.QueueListener):
@@ -171,7 +102,7 @@ class QueueListener(logging.handlers.QueueListener):
 
 
 class StreamHandler(logging.StreamHandler):
-    """Like :class:`.logging.StreamHandler`, but refresh sys.stdout on each access.
+    """Like :class:`.logging.StreamHandler`, but retrieve the stream on each access.
 
     This avoids the case that :mod:`click`, :mod:`pytest`, or something else adjusts
     :py:`sys.stdout` temporarily, but the handler's stored reference to the original is
@@ -234,7 +165,55 @@ def preserve_log_level():
         main_log.setLevel(level)
 
 
-_HANDLER = dict()
+def configure():
+    """Apply logging configuration."""
+    # NB We do this programmatically as logging.config.dictConfig()'s automatic steps
+    #    require adjustments that end up being more verbose and less clear.
+    from platformdirs import user_log_path
+
+    # Stream handler
+    _HANDLER["console"] = h_console = StreamHandler(stream_name="stdout")
+    h_console.setLevel(logging.CRITICAL)
+    h_console.setFormatter(Formatter())
+
+    # Construct the file name for the log file
+    log_file_path = user_log_path("message-ix-models", ensure_exists=True).joinpath(
+        datetime.now(timezone(timedelta(seconds=time.timezone)))
+        .isoformat(timespec="seconds")
+        .replace(":", "")
+    )
+
+    # File handler
+    _HANDLER["file"] = h_file = logging.FileHandler(
+        filename=str(log_file_path), delay=True
+    )
+    h_file.setLevel(logging.CRITICAL)
+    h_file.setFormatter(Formatter(use_colour=False))
+
+    # Queue handler
+    queue = SimpleQueue()
+    _HANDLER["queue"] = h_queue = QueueHandler(queue)
+    logging.root.addHandler(h_queue)
+
+    # Queue listener
+    h_queue.listener = listener = QueueListener(
+        queue, h_console, h_file, respect_handler_level=True
+    )
+    listener.start()
+    atexit.register(listener.stop)
+
+    for name, level in (
+        (None, logging.DEBUG),
+        # Ensure no level set for these packages; the level of the "console"/"file"
+        # handlers determines outputs
+        ("message_ix_models", logging.NOTSET),
+        ("message_data", logging.NOTSET),
+        # Hide lower-level messages for some upstream packages from the file log
+        ("graphviz._tools", logging.WARNING),
+        ("matplotlib", logging.WARNING),
+        ("pycountry.db", logging.WARNING),
+    ):
+        logging.getLogger(name).setLevel(level)
 
 
 def setup(
@@ -254,37 +233,13 @@ def setup(
     file : bool, *optional*
         If :obj:`False`, do not print any messages to file.
     """
-    from platformdirs import user_log_path
 
     root = logging.getLogger()
-    if not any(isinstance(h, QueueHandler) for h in root.handlers):
+    if not any(isinstance(h, logging.handlers.QueueHandler) for h in root.handlers):
         # Not yet configured
-
-        # Construct the file name for the log file
-        log_file_path = user_log_path("message-ix-models", ensure_exists=True).joinpath(
-            datetime.now(timezone(timedelta(seconds=time.timezone)))
-            .isoformat(timespec="seconds")
-            .replace(":", "")
-        )
-
-        # Copy and modify dictionaries
-        config_handlers = deepcopy(_HANDLER_CONFIG)
-        config_handlers["file"].update(filename=log_file_path)
-        config = deepcopy(_CONFIG)
-        config.update(handlers=config_handlers)
-
-        # Apply the configuration
-        logging.config.dictConfig(config)
+        configure()
 
     # Apply settings to loggers and handlers: either just-created, or pre-existing
-
-    # Identify the QueueHandler instance
-    queue_handler = next(filter(lambda qh: isinstance(qh, QueueHandler), root.handlers))
-    assert isinstance(queue_handler, QueueHandler)
-    _HANDLER.update(queue=queue_handler)
-
-    # Prepare a dictionary of the listener's handlers
-    _HANDLER.update({str(h.name): h for h in queue_handler.listener.handlers})
 
     # Set the level of the console handler
     _HANDLER["console"].setLevel(99 if console is False else level)
