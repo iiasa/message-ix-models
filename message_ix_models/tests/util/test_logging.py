@@ -1,7 +1,6 @@
 import logging
 import re
 
-import click
 import pytest
 
 from message_ix_models.util._logging import mark_time, silence_log
@@ -38,15 +37,11 @@ class TestQueueListener:
         and captured by the :class:`.CliRunner`.
         """
 
-        @click.command("log-threads")
-        def func():
-            # Emit many log records
-            log = logging.getLogger("message_ix_models")
-            [log.info(f"{k = } {i = }") for i in range(self.N)]
-
-        with mix_models_cli.temporary_command(func):
-            # Run the command, capture output
-            result = mix_models_cli.assert_exit_0(["_test", func.name])
+        # Run the command, capture output
+        # See message_ix_models.cli._log_threads
+        result = mix_models_cli.assert_exit_0(
+            ["_test", "log-threads", str(k), str(self.N)], method="click"
+        )
 
         # All records are emitted; the last record ends with N - 1
         assert result.output.rstrip().endswith(f"{self.N - 1}"), result.output.split(

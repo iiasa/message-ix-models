@@ -1,21 +1,19 @@
 import logging
 import os
 from base64 import b32hexencode
-from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from random import randbytes
 from tempfile import TemporaryDirectory
 
-import click.testing
 import message_ix
 import pandas as pd
 import pytest
 from ixmp import Platform
 from ixmp import config as ixmp_config
 
-from message_ix_models import cli, util
-from message_ix_models.util._logging import mark_time, preserve_log_level
+from message_ix_models import util
+from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
 
 log = logging.getLogger(__name__)
@@ -148,84 +146,22 @@ def user_context(request):  # pragma: no cover
     raise NotImplementedError
 
 
-class CliRunner(click.testing.CliRunner):
-    """Subclass of :class:`click.testing.CliRunner` with extra features."""
-
-    # NB decorator ensures any changes that the CLI makes to the logger level are
-    #    restored
-    @preserve_log_level()
-    def invoke(self, *args, **kwargs):
-        """Invoke the :program:`mix-models` CLI."""
-        result = super().invoke(cli.main, *args, **kwargs)
-
-        # Store the result to be used by assert_exit_0()
-        self.last_result = result
-
-        return result
-
-    def assert_exit_0(self, *args, **kwargs):
-        """Assert a result has exit_code 0, or print its traceback.
-
-        If any `args` or `kwargs` are given, :meth:`.invoke` is first called. Otherwise,
-        the result from the last call of :meth:`.invoke` is used.
-
-        Raises
-        ------
-        AssertionError
-            if the result exit code is not 0. The exception contains the traceback from
-            within the CLI.
-
-        Returns
-        -------
-        click.testing.Result
-        """
-        __tracebackhide__ = True
-
-        if len(args) + len(kwargs):
-            self.invoke(*args, **kwargs)
-
-        # Retrieve the last result
-        result = self.last_result
-
-        if result.exit_code != 0:
-            print(f"{result.exit_code = }\nresult.output =\n{result.output}")
-            # Re-raise the exception triggered within the CLI invocation
-            raise (result.exc_info[1].__context__ or result.exc_info[1]) from None
-
-        return result
-
-    @property
-    def add_command(self):
-        return cli_test_group.add_command
-
-    @contextmanager
-    def temporary_command(self, func: "click.Command", set_target: bool = True):
-        """Temporarily attach command `func` to :func:`cli_test_group`."""
-        assert func.name is not None
-        try:
-            cli_test_group.add_command(func)
-            yield
-        finally:
-            cli_test_group.commands.pop(func.name)
-
-
 @pytest.fixture
-def mix_models_cli(request, test_context, tmp_env):
-    """A :class:`.CliRunner` object that invokes the :program:`mix-models` CLI."""
-    # Require the `test_context` fixture in order to (a) set Context.local_data and (b)
-    # ensure changes to the Context from tested CLI commands are isolated from other
-    # tests
-    yield CliRunner(env=tmp_env)
+def mix_models_cli(session_context, tmp_env):
+    """A :class:`.CliRunner` object that invokes the :program:`mix-models` CLI.
 
+    NB this requires:
 
-@cli.main.group("_test", hidden=True)
-def cli_test_group():
-    """Hidden group of CLI commands.
-
-    Other code which needs to test CLI behaviour **may** attach temporary/throw-away
-    commands to this group and then invoke them using :func:`mix_models_cli`. This
-    avoids the need to expose additional commands for testing purposes only.
+    - The :mod:`ixmp` :func:`.tmp_env` fixture. This sets ``IXMP_DATA`` to a temporary
+      directory managed by :mod:`pytest`.
+    - The :func:`session_context` fixture. This (a) sets :attr:`.Config.local_data` to
+      a temporary directory within ``IXMP_DATA`` and (b) ensures changes to
+      :class:`.Context` made by invoked commands do not reach other tests.
     """
+    from message_ix_models import cli
+    from message_ix_models.util.click import CliRunner
+
+    yield CliRunner(cli.main, cli.__name__, env=tmp_env)
 
 
 # Testing utility functions
