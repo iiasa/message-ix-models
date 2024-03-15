@@ -246,7 +246,7 @@ def report(context: Context, *args, **kwargs):
     with (
         nullcontext()
         if context.core.verbose
-        else silence_log(["genno", "message_ix_models"])
+        else silence_log("genno message_ix_models")
     ):
         rep, key = prepare_reporter(context)
 

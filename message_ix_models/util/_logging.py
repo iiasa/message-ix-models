@@ -4,6 +4,7 @@ import atexit
 import logging
 import logging.config
 import logging.handlers
+import re
 import sys
 import time
 from contextlib import contextmanager
@@ -11,11 +12,13 @@ from datetime import datetime, timedelta, timezone
 from queue import SimpleQueue
 from time import process_time
 from typing import Dict, Optional, Union, cast
+from warnings import warn
 
 # NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
     "Formatter",
     "QueueListener",
+    "SilenceFilter",
     "StreamHandler",
     "setup",
 ]
@@ -99,6 +102,20 @@ class QueueListener(logging.handlers.QueueListener):
         if self._thread is not None:
             super().stop()
             self.start()
+
+
+class SilenceFilter(logging.Filter):
+    """Log filter that only allows records from `names` that are at or above `level`."""
+
+    __slots__ = ("level", "name_expr")
+
+    def __init__(self, names: str, level: int):
+        self.level = level
+        # Compile a regular expression for the name
+        self.name_re = re.compile("|".join(map(re.escape, sorted(names.split()))))
+
+    def filter(self, record) -> bool:
+        return not (record.levelno < self.level and self.name_re.match(record.name))
 
 
 class StreamHandler(logging.StreamHandler):
@@ -257,7 +274,7 @@ def flush() -> None:
 
 
 @contextmanager
-def silence_log(names=None, level=logging.ERROR):
+def silence_log(names: Optional[str] = None, level: int = logging.ERROR):
     """Context manager to temporarily quiet 1 or more loggers.
 
     Parameters
@@ -272,26 +289,26 @@ def silence_log(names=None, level=logging.ERROR):
     >>> with silence_log():
     >>>     log.warning("This message is not recorded.")
     """
-    # Default: the top-level logger for the package containing this file
-    if names is None:
-        names = [__name__.split(".")[0], "message_data"]
-    elif isinstance(names, str):
-        names = [names]
+    if isinstance(names, list):
+        warn(
+            "silence_log(names=…) as list of str; use a single, space-separated str",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        names = " ".join(names)
 
-    log.info(f"Set level={level} for logger(s): {' '.join(names)}")
-
-    # Retrieve the logger objects
-    loggers = list(map(logging.getLogger, names))
-    # Store their current levels
-    levels = []
+    # Create a filter; default, the top-level logger for the current package
+    f = SilenceFilter(names or f"message_data {__name__.split('.')[0]}", level)
+    log.info(f"Set level={level} for logger(s): {f.name_re.pattern.replace('|', ' ')}")
 
     try:
-        for logger in loggers:
-            levels.append(logger.getEffectiveLevel())  # Store the current levels
-            logger.setLevel(level)  # Set the level
+        # Add the same filter to every handler of the root logger
+        for handler in logging.root.handlers:
+            handler.addFilter(f)
+
         yield
     finally:
-        # Restore the levels
-        for logger, original_level in zip(loggers, levels):
-            logger.setLevel(original_level)
+        # Remove the filter
+        for handler in logging.root.handlers:
+            handler.removeFilter(f)
         log.info("…restored.")
