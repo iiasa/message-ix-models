@@ -26,8 +26,12 @@ class TestQueueListener:
     #: Number of times to run the test.
     k = 4
 
+    @pytest.mark.parametrize(
+        "method",
+        ("click", pytest.param("subprocess", marks=pytest.mark.skip(reason="Slow."))),
+    )
     @pytest.mark.parametrize("k", range(k))
-    def test_flush(self, caplog, mix_models_cli, k):
+    def test_flush(self, caplog, mix_models_cli, method, k):
         """Test logging in multiple processes, multiple threads, and with :mod:`click`.
 
         With pytest-xdist, these :attr:`k` test cases will run in multiple processes.
@@ -40,7 +44,7 @@ class TestQueueListener:
         # Run the command, capture output
         # See message_ix_models.cli._log_threads
         result = mix_models_cli.assert_exit_0(
-            ["_test", "log-threads", str(k), str(self.N)], method="click"
+            ["_test", "log-threads", str(k), str(self.N)], method=method
         )
 
         # All records are emitted; the last record ends with N - 1
