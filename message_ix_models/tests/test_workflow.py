@@ -91,34 +91,36 @@ def _wf(
 def test_make_click_command(mix_models_cli) -> None:
     import click
 
+    from message_ix_models.cli import cli_test_group
+    from message_ix_models.util.click import temporary_command
+
     # make_click_command() runs and generates a command
     name = "make-click-command"
     cmd = make_click_command(f"{__name__}._wf", name=name, slug="test")
     assert isinstance(cmd, click.Command)
 
     # Add this into the hidden CLI test group
-    mix_models_cli.add_command(cmd)
+    with temporary_command(cli_test_group, cmd):
+        # Invoke the command with various parameters
+        for params, output in (
+            (["--go", "B"], "nothing returned, workflow will continue with"),
+            (["B"], "Workflow diagram written to"),
+        ):
+            # Command runs and exits with 0
+            result = mix_models_cli.assert_exit_0(["_test", "run"] + params)
+            # Expected log messages or output were printed
+            assert output in result.output
 
-    # Invoke the command with various parameters
-    for params, output in (
-        (["--go", "B"], "nothing returned, workflow will continue with"),
-        (["B"], "Workflow diagram written to"),
-    ):
-        # Command runs and exits with 0
-        result = mix_models_cli.assert_exit_0(["_test", "run"] + params)
-        # Expected log messages or output were printed
-        assert output in result.output
-
-    # Invalid usage
-    for params, output in (
-        (["--go", "C"], "Error: No step(s) matched"),
-        (["--go"], "Error: No target step provided and no default for"),
-        # Step changes_b() fails if changes_a() is not first run
-        (["--go", "--from=[AX]", "B"], "Execute <function changes_b"),
-    ):
-        result = mix_models_cli.invoke(["_test", "run"] + params)
-        assert 0 != result.exit_code
-        assert output in result.output
+        # Invalid usage
+        for params, output in (
+            (["--go", "C"], "Error: No step(s) matched"),
+            (["--go"], "Error: No target step provided and no default for"),
+            # Step changes_b() fails if changes_a() is not first run
+            (["--go", "--from=[AX]", "B"], "Execute <function changes_b"),
+        ):
+            result = mix_models_cli.invoke(["_test", "run"] + params)
+            assert 0 != result.exit_code
+            assert output in result.output
 
 
 @MARK
