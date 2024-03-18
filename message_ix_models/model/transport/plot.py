@@ -566,6 +566,7 @@ class DemandExoCap1(DemandExoCap0):
     Unlike :class:`DemandExoCap0`, this uses GDP per capita as the abscissa/x-aesthetic.
     """
 
+    runs_on_solved_scenario = False
     basename = "demand-exo-capita-gdp"
     inputs = [pdt_nyt + "capita+post", gdp_cap]
     static = PDT_CAP_GDP_STATIC
