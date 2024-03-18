@@ -134,10 +134,15 @@ def map_yv_ya_lt(
 
     Parameters
     ----------
-    labels : pandas.DataFrame
-        Each column (dimension) corresponds to one in `df`. Each row represents one
-        matched set of labels for those dimensions.
+    periods : Tuple[int, ...]
+        A sequence of years.
     lt : int, lifetime
+    ya : int, active year
+        The first active year.
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame with columns 'year_vtg' and 'year_act'.
     """
     if not ya:
         ya = periods[0]
