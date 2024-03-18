@@ -44,9 +44,11 @@ def check(scenario):
     return rep.get(key)
 
 
-def aggregate(c: "Computer", solved: bool) -> None:
+def aggregate(c: "Computer") -> None:
     """Aggregate individual transport technologies to modes."""
     from genno.operator import aggregate as func
+
+    config: Config = c.graph["config"]["transport"]
 
     for key in map(lambda s: KeySeq(c.infer_keys(s)), "emi in out".split()):
         try:
@@ -57,7 +59,7 @@ def aggregate(c: "Computer", solved: bool) -> None:
             c.add(key[1], func, key[0], "nl::world agg", keep=False)
             c.add(key["transport"], "select", key[1], "t::transport modes 1", sums=True)
         except MissingKeyError:
-            if solved:
+            if config.with_solution:
                 raise
 
 
@@ -284,18 +286,14 @@ def callback(rep: Reporter, context: Context) -> None:
 
     N_keys = len(rep.graph)
 
-    scenario = rep.graph.get("scenario")
-    try:
-        solved = scenario.has_solution() if scenario else False
-    except AttributeError:
-        solved = False  # "scenario" is not present in the Reporter; may be added later
-
     # - Configure MESSAGEix-Transport.
     # - Add structure and other information.
     # - Call, inter alia:
     #   - demand.prepare_computer() for ex-post mode and demand calculations
     #   - plot.prepare_computer() for plots
-    check = build.get_computer(context, obj=rep, visualize=False, scenario=scenario)
+    check = build.get_computer(
+        context, obj=rep, visualize=False, scenario=rep.graph.get("scenario")
+    )
 
     assert check is rep  # Same `rep` was returned
 
@@ -316,7 +314,7 @@ def callback(rep: Reporter, context: Context) -> None:
     add_replacements("t", spec.add.set["technology"])
 
     # Apply some functions that prepare further tasks. Order matters here.
-    aggregate(rep, solved)
+    aggregate(rep)
     select_transport_techs(rep)
     reapply_units(rep)
     misc(rep)
