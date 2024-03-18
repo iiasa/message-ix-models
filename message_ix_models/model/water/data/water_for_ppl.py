@@ -354,40 +354,46 @@ def cool_tech(context: "Context"):
         unit="GWa",
     )
     # once through and closed loop freshwater
-    inp = inp.append(
-        make_df(
-            "input",
-            node_loc=icmse_df["node_loc"],
-            technology=icmse_df["technology_name"],
-            year_vtg=icmse_df["year_vtg"],
-            year_act=icmse_df["year_act"],
-            mode=icmse_df["mode"],
-            node_origin=icmse_df["node_origin"],
-            commodity="freshwater",
-            level="water_supply",
-            time="year",
-            time_origin="year",
-            value=icmse_df["value_cool"],
-            unit="km3/GWa",
-        )
+    inp = pd.concat(
+        [
+            inp,
+            make_df(
+                "input",
+                node_loc=icmse_df["node_loc"],
+                technology=icmse_df["technology_name"],
+                year_vtg=icmse_df["year_vtg"],
+                year_act=icmse_df["year_act"],
+                mode=icmse_df["mode"],
+                node_origin=icmse_df["node_origin"],
+                commodity="freshwater",
+                level="water_supply",
+                time="year",
+                time_origin="year",
+                value=icmse_df["value_cool"],
+                unit="km3/GWa",
+            ),
+        ]
     )
     # saline cooling technologies
-    inp = inp.append(
-        make_df(
-            "input",
-            node_loc=saline_df["node_loc"],
-            technology=saline_df["technology_name"],
-            year_vtg=saline_df["year_vtg"],
-            year_act=saline_df["year_act"],
-            mode=saline_df["mode"],
-            node_origin=saline_df["node_origin"],
-            commodity="saline_ppl",
-            level="saline_supply",
-            time="year",
-            time_origin="year",
-            value=saline_df["value_cool"],
-            unit="km3/GWa",
-        )
+    inp = pd.concat(
+        [
+            inp,
+            make_df(
+                "input",
+                node_loc=saline_df["node_loc"],
+                technology=saline_df["technology_name"],
+                year_vtg=saline_df["year_vtg"],
+                year_act=saline_df["year_act"],
+                mode=saline_df["mode"],
+                node_origin=saline_df["node_origin"],
+                commodity="saline_ppl",
+                level="saline_supply",
+                time="year",
+                time_origin="year",
+                value=saline_df["value_cool"],
+                unit="km3/GWa",
+            ),
+        ]
     )
 
     # Drops NA values from the value column
@@ -449,7 +455,7 @@ def cool_tech(context: "Context"):
             # multiply by basin water availability share
             out_t["value"] = out_t["value"] * out_t["share"]
             out_t.drop(columns={"share"}, inplace=True)
-            out = out.append(out_t)
+            out = pd.concat([out, out_t])
 
         out = out.dropna(subset=["value"])
         out.reset_index(drop=True, inplace=True)
@@ -636,13 +642,13 @@ def cool_tech(context: "Context"):
     adon_df = input_cool.copy()
     # Add 'cooling_' before name of parent technologies that are type_addon
     # nomenclature
-    adon_df["tech"] = "cooling__" + adon_df["index"].astype(str)
+    adon_df["tech"] = "cooling__" + adon_df["parent_tech"].astype(str)
     # technology : 'parent technology' and type_addon is type of addons such
     # as 'cooling__bio_hpl'
     addon_df = make_df(
         "addon_conversion",
         node=adon_df["node_loc"],
-        technology=adon_df["index"],
+        technology=adon_df["parent_tech"],
         year_vtg=adon_df["year_vtg"],
         year_act=adon_df["year_act"],
         mode=adon_df["mode"],

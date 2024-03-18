@@ -97,7 +97,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
 
         df_share2 = pd.DataFrame(data=d2)
 
-        df_share = df_share.append(df_share2)
+        df_share = pd.concat([df_share, df_share2])
         df_list = df_share.values.tolist()
 
         results["map_shares_commodity_total"] = df_list
@@ -147,7 +147,7 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
 
         df_share2 = pd.DataFrame(data=d2)
 
-        df_share = df_share.append(df_share2)
+        df_share = pd.concat([df_share, df_share2])
         df_list = df_share.values.tolist()
 
         results["map_shares_commodity_total"] = df_list
