@@ -1,13 +1,14 @@
 """Data preparation for the MESSAGEix-GLOBIOM base model."""
 
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
     import message_ix
+    from genno.core.key import KeyLike
 
 
 SCALE_1_HEADER = """Ratio of MESSAGEix-Transport output to IEA EWEB data.
@@ -53,14 +54,14 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # Final key
     targets = []
 
-    def _to_csv(base: "Key", name: str, hc):
+    def _to_csv(base: "Key", name: str, write_kw: Union[dict, "KeyLike", None] = None):
         """Helper to add computations to output data to CSV."""
         # Some strings
         csv, path, fn = f"{name} csv", f"{name} path", f"{name.replace(' ', '-')}.csv"
         # Output path for this parameter
         rep.add(path, "make_output_path", "config", name=fn)
         # Write to file
-        rep.add(csv, "write_report", base, path, hc)
+        rep.add(csv, "write_report", base, path, write_kw or {})
         targets.append(csv)
 
     e_iea = Key("energy:n-y-product-flow:iea")
