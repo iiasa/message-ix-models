@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from message_ix import Scenario, make_df
 from message_ix_models import Context, ScenarioInfo
-from message_ix_models.util import MESSAGE_DATA_PATH, identify_nodes, local_data_path
+from message_ix_models.util import identify_nodes, local_data_path
 from message_ix_models.util._logging import mark_time
 
 from message_data.model.workflow import Config as SolveConfig
@@ -24,17 +24,6 @@ from . import build, sturm
 from .build import get_prices
 
 log = logging.getLogger(__name__)
-
-try:
-    ixmp.config.register(
-        "message buildings dir",
-        Path,
-        cast(Path, MESSAGE_DATA_PATH).parent.joinpath("buildings"),
-    )
-except ValueError:
-    # NB With message_ix_models 2023.9.2, the above code appears to run twice; the
-    #    second time triggers a ValueError. Ignore silently.
-    pass
 
 
 @dataclass
