@@ -5,18 +5,12 @@ import pandas as pd
 import pyam
 from message_ix import Reporter, Scenario
 
-from message_ix_models.util import package_data_path
+from message_ix_models.util import HAS_MESSAGE_DATA, package_data_path
 
-# FIXME This is not how things are supposed to work! Your code always requires
-# message_data to be present, which is not allowed in message-ix-models! If
-# legacy_reporting truly remained None, your code would fail, as mypy already points
-# out!
-try:
+if HAS_MESSAGE_DATA:
     from message_data.tools.post_processing.iamc_report_hackathon import (
         report as legacy_reporting,
     )
-except ImportError:  # message_data not installed
-    legacy_reporting = None
 
 log = logging.getLogger(__name__)
 
@@ -1399,8 +1393,11 @@ def report_full(sc: Scenario, reg: str, sdgs=False):
     log.info("Finished removing timeseries, now commit..")
     sc.commit("Remove existing timeseries")
 
-    run_old_reporting(sc)
-    log.info("First part of reporting completed, now procede with the water variables")
+    if HAS_MESSAGE_DATA:
+        run_old_reporting(sc)
+        log.info(
+            "First part of reporting completed, now procede with the water variables"
+        )
 
     report(sc, reg, sdgs)
     log.info("overall NAVIGATE reporting completed")

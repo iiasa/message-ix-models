@@ -277,8 +277,6 @@ def add_water_supply(context: "Context"):
             .pipe(same_time)
         )
 
-        # FIXME pd.DataFrames don't have append(), please choose another way!
-        # input data frame  for slack technology balancing equality with demands
         inp = pd.concat(
             [
                 inp,
