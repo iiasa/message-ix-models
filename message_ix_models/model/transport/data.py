@@ -300,7 +300,14 @@ class IEA_Future_of_Trucks(ExoDataSource):
 
 
 class MERtoPPP(ExoDataSource):
-    """Provider of exogenous MERtoPPP data."""
+    """Provider of exogenous MERtoPPP data.
+
+    Parameters
+    ----------
+    source_kw :
+       Must include exactly the keys "measure" (must be "MERtoPPP") and "nodes" (the ID
+       of the node code list).
+    """
 
     id = "transport MERtoPPP"
 
@@ -309,31 +316,29 @@ class MERtoPPP(ExoDataSource):
 
         if not source.startswith("message_data.model.transport"):
             raise ValueError(source)
-        elif source_kw.get("measure") != "MERtoPPP":
+        elif source_kw.pop("measure") != "MERtoPPP":
             raise ValueError(source_kw)
 
-        context = source_kw.pop("context")
+        # ID of the node code list
+        nodes = source_kw.pop("nodes")
+        self.raise_on_extra_kw(source_kw)
 
         try:
-            self.path = path_fallback(context, "mer-to-ppp.csv")
+            self.path = path_fallback(nodes, "mer-to-ppp.csv")
         except FileNotFoundError:
             log.info("Fall back to R11 data")
             self.path = path_fallback("R11", "mer-to-ppp.csv")
-            regions_to = context.model.regions
 
             from message_ix_models.util import adapt_R11_R12, adapt_R11_R14
 
             # Try to identify an adapter that can convert R11 to `regions_to`
-            adapt = {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(regions_to)
-
-            if adapt is None:
-                log.info(
-                    f"Not implemented: transform {self.id} data from 'R11' to "
-                    f"{regions_to!r}"
+            if adapt := {"R12": adapt_R11_R12, "R14": adapt_R11_R14}.get(nodes):
+                self.adapt = adapt
+            else:
+                log.warning(
+                    f"Not implemented: transform {self.id} data from 'R11' to {nodes!r}"
                 )
                 raise NotImplementedError
-
-            self.adapt = adapt
         else:
 
             def passthrough(qty):

@@ -188,7 +188,7 @@ def add_exogenous_data(c: Computer, info: ScenarioInfo) -> None:
         )
 
     # Add data for MERtoPPP
-    kw = dict(measure="MERtoPPP", context=context)
+    kw = dict(measure="MERtoPPP", nodes=context.model.regions)
     prepare_computer(
         context, c, "message_data.model.transport", source_kw=kw, strict=False
     )
