@@ -124,8 +124,6 @@ def test_map_yv_ya_lt():
     lt = 20
     ya = 2020
 
-    # TODO this is what we should expect given the formula you use in map_yv_ya_lt,
-    # but is this what you want to see? If not, you should consider changing the formula
     expected = pd.DataFrame(
         {
             "year_vtg": [2010, 2010, 2020, 2020, 2020, 2030, 2030, 2040],
@@ -133,13 +131,11 @@ def test_map_yv_ya_lt():
         }
     )
 
-    result = map_yv_ya_lt(periods, lt, ya)
-    print(result)
+    result = map_yv_ya_lt(periods, lt, ya).reset_index(drop=True)
+    # print(result)
 
     pd.testing.assert_frame_equal(result, expected)
 
-    # TODO same as above
-    # test with no active year specified
     expected_no_ya = pd.DataFrame(
         {
             "year_vtg": [2010, 2010, 2010, 2020, 2020, 2020, 2030, 2030, 2040],
@@ -147,6 +143,6 @@ def test_map_yv_ya_lt():
         }
     )
 
-    result_no_ya = map_yv_ya_lt(periods, lt)
+    result_no_ya = map_yv_ya_lt(periods, lt).reset_index(drop=True)
 
     pd.testing.assert_frame_equal(result_no_ya, expected_no_ya)
