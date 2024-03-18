@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     import plotnine.typing
     from genno.core.key import KeyLike
 
+    from .config import Config
+
 log = logging.getLogger(__name__)
 
 # Quiet messages like:
@@ -692,11 +694,16 @@ def prepare_computer(c: Computer):
     """
     keys = []
 
+    config: "Config" = c.graph["config"]["transport"]
+
     # Iterate over the Plot subclasses defined in the current module
     for plot in filter(
         lambda cls: isinstance(cls, type) and issubclass(cls, Plot) and cls is not Plot,
         globals().values(),
     ):
+        if not plot.runs_on_solved_scenario and config.with_solution:
+            log.info(f"Skip {plot}")
+            continue
         keys.append(f"plot {plot.basename}")
         c.add(keys[-1], plot)
 

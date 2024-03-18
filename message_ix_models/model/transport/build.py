@@ -57,14 +57,20 @@ def add_debug(c: Computer) -> None:
     from .key import gdp_cap, ms, pdt_nyt
 
     context: Context = c.graph["context"]
+    config: Config = context.transport
 
-    # Compatible with actions/upload-artifact
-    ssp = str(context.transport.ssp).replace(":", "_")
     # Path to output file
-    output_dir = context.get_local_path(
-        "transport", f"debug-{ssp}-{context.model.regions}-{context.model.years}"
-    )
+    if config.with_scenario and config.with_solution:
+        # Output to a directory corresponding to the Scenario URL
+        label = c.graph["scenario"].url.replace("/", "_")
+    else:
+        # Output to a directory name constructed from settings
+        # Remove ":" to be compatible with actions/upload-artifact
+        ssp = str(config.ssp).replace(":", "_")
+        label = f"{ssp}-{context.model.regions}-{context.model.years}"
+    output_dir = context.get_local_path("transport", f"debug-{label}")
     output_dir.mkdir(exist_ok=True, parents=True)
+
     # Store in the config, but not at "output_dir" that is used by e.g. reporting
     c.graph["config"]["transport build debug dir"] = output_dir
 
@@ -412,15 +418,20 @@ def get_computer(
     from . import operator
 
     # Configure
-    Config.from_context(context, **kwargs)
+    config = Config.from_context(context, **kwargs)
 
     # Structure information for the base model
     scenario = kwargs.get("scenario")
     if scenario:
         base_info = ScenarioInfo(scenario)
+
+        config.with_scenario = True
+        config.with_solution = scenario.has_solution()
     else:
         base_spec = bare.get_spec(context)
         base_info = base_spec["add"]
+
+        config.with_scenario = config.with_solution = False
 
     context["transport build info"] = base_info
 
