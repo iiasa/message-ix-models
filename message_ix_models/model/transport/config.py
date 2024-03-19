@@ -55,10 +55,14 @@ class Config(ConfigHelper):
     #:    from one year to the next. For periods of length >1 year, MESSAGE compounds
     #:    the value. Default use 0.0192 = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years. See
     #:    :func:`ldv.constraint_data`.
+    #: "non-LDV growth_new_capacity_up"
+    #:    Allowable annual increase in new capacity (roughly, sales) of each technology
+    #:    for transport modes *other than* LDV. See :func:`non_ldv.growth_new_capacity`.
     constraint: Dict = field(
         default_factory=lambda: {
             "LDV growth_activity_lo": -0.0192,
             "LDV growth_activity_up": 0.0192 * 4.0,
+            "non-LDV growth_new_capacity_up": 0.1,
         }
     )
 

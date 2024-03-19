@@ -185,9 +185,10 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
     # commented: these are slow because they repeat some calculations many times.
     # Uncommented as needed for debugging
     for key, unit in (
-        # ("energy:flow-n-product:trn other+1", "TJ"),
-        # ("transport other::ixmp", None),
         # ("bound_activity_lo:n-t-y:transport minimum+ixmp", None),
+        # ("energy:flow-n-product:trn other+1", "TJ"),
+        # ("growth_new_capacity_*::ixmp+transport+non-ldv", None),
+        # ("transport other::ixmp", None),
     ):
         print(f"\n\n-- {key} --\n\n")
         print(c.describe(key))

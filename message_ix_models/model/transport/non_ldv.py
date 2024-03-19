@@ -116,6 +116,10 @@ def prepare_computer(c: Computer):
     # Add minimum activity for transport technologies
     keys.extend(iter_keys(c.apply(bound_activity_lo)))
 
+    k_gnc = "growth_new_capacity_*::ixmp+transport+non-ldv"
+    keys.append(k_gnc)
+    c.add(k_gnc, growth_new_capacity, "t::transport", t_modes, n, y, "config")
+
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
     c.add(k_all, "merge_data", *keys)
@@ -210,6 +214,39 @@ def bound_activity_lo(c: Computer) -> List[Key]:
 
     c.add(k["ixmp"], "as_message_df", k[0], name=k.name, **kw)
     return [k["ixmp"]]
+
+
+def growth_new_capacity(
+    t_all, t_modes: List[str], nodes, years: List[int], genno_config: dict
+) -> Dict[str, pd.DataFrame]:
+    """Return constraints on growth of CAP_NEW for non-LDV technologies.
+
+    Responds to the :attr:`.Config.constraint` key
+    :py:`"non-LDV growth_new_capacity_up"`; see description there.
+    """
+    config: Config = genno_config["transport"]
+
+    # Non-LDV modes
+    modes = set(t for t in t_modes if t != "LDV")
+
+    # List of technologies to constrain: all technologies under the non-LDV modes
+    constrained: List[Code] = list(
+        filter(lambda t: t.parent and t.parent.id in modes, t_all)
+    )
+
+    data: Dict[str, pd.DataFrame] = dict()
+    for bound in ("up",):
+        name = f"growth_new_capacity_{bound}"
+
+        # Retrieve the constraint value from configuration
+        value = config.constraint[f"non-LDV {name}"]
+
+        # Assemble the data
+        data[name] = make_df(
+            name, value=value, year_vtg=years, time="year", unit="-"
+        ).pipe(broadcast, node_loc=nodes, technology=constrained)
+
+    return data
 
 
 def other(c: Computer, base: Key) -> List[Key]:
