@@ -116,9 +116,9 @@ def prepare_computer(c: Computer):
     # Add minimum activity for transport technologies
     keys.extend(iter_keys(c.apply(bound_activity_lo)))
 
-    k_gnc = "growth_new_capacity_*::ixmp+transport+non-ldv"
-    keys.append(k_gnc)
-    c.add(k_gnc, growth_new_capacity, "t::transport", t_modes, n, y, "config")
+    k_constraint = "constraints::ixmp+transport+non-ldv"
+    keys.append(k_constraint)
+    c.add(k_constraint, constraint_data, "t::transport", t_modes, n, y, "config")
 
     # Add to the scenario
     k_all = "transport nonldv::ixmp"
@@ -216,7 +216,7 @@ def bound_activity_lo(c: Computer) -> List[Key]:
     return [k["ixmp"]]
 
 
-def growth_new_capacity(
+def constraint_data(
     t_all, t_modes: List[str], nodes, years: List[int], genno_config: dict
 ) -> Dict[str, pd.DataFrame]:
     """Return constraints on growth of CAP_NEW for non-LDV technologies.
@@ -234,17 +234,24 @@ def growth_new_capacity(
         filter(lambda t: t.parent and t.parent.id in modes, t_all)
     )
 
+    common = dict(year_act=years, year_vtg=years, time="year", unit="-")
     data: Dict[str, pd.DataFrame] = dict()
-    for bound in ("up",):
-        name = f"growth_new_capacity_{bound}"
-
+    for name in "growth_activity_lo", "growth_new_capacity_up":
         # Retrieve the constraint value from configuration
         value = config.constraint[f"non-LDV {name}"]
 
         # Assemble the data
-        data[name] = make_df(
-            name, value=value, year_vtg=years, time="year", unit="-"
-        ).pipe(broadcast, node_loc=nodes, technology=constrained)
+        data[name] = make_df(name, value=value, **common).pipe(
+            broadcast, node_loc=nodes, technology=constrained
+        )
+
+        # Add initial_* values to set the starting point of dynamic growth constraints
+        if name != "growth_new_capacity_up":
+            continue
+
+        i_n_c = name.replace("growth", "initial")
+        value = config.constraint[f"non-LDV {i_n_c}"]
+        data.update(make_matched_dfs(data[name], **{i_n_c: value}))
 
     return data
 
