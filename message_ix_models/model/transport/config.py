@@ -53,8 +53,8 @@ class Config(ConfigHelper):
     #:    Allowable *annual* decrease or increase (respectively) in activity of each LDV
     #:    technology. For example, a value of 0.01 means the activity may increase by 1%
     #:    from one year to the next. For periods of length >1 year, MESSAGE compounds
-    #:    the value. Default use 0.0192 = (1.1 ^ 0.2) - 1.0; or ±10% each 5 years. See
-    #:    :func:`ldv.constraint_data`.
+    #:    the value. Defaults are multiples of 0.0192 = (1.1 ^ 0.2) - 1.0; or ±10% each
+    #:    5 years. See :func:`ldv.constraint_data`.
     #: "non-LDV growth_new_capacity_up"
     #:    Allowable annual increase in new capacity (roughly, sales) of each technology
     #:    for transport modes *other than* LDV. See :func:`non_ldv.growth_new_capacity`.
@@ -62,7 +62,9 @@ class Config(ConfigHelper):
         default_factory=lambda: {
             "LDV growth_activity_lo": -0.0192,
             "LDV growth_activity_up": 0.0192 * 4.0,
-            "non-LDV growth_new_capacity_up": 0.1,
+            "non-LDV growth_activity_lo": -0.0192 * 2.0,
+            "non-LDV growth_new_capacity_up": 0.0192 * 1.0,
+            "non-LDV initial_new_capacity_up": 10.0,
         }
     )
 
