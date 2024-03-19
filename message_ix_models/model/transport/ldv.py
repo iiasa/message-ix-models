@@ -451,7 +451,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     """Return constraints on light-duty vehicle technology activity and usage.
 
     Responds to the :attr:`.Config.constraint` key :py:`"LDV growth_activity"`; see
-    description there. The allowable rate is doubled for ``growth_activity_up``.
+    description there.
     """
     config = context.transport
 
