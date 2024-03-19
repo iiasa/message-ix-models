@@ -693,6 +693,11 @@ def prepare_computer(c: Computer):
       :class:`.Plot` subclass defined in this module.
     - The key **"transport plots"** that triggers writing all the plots to file.
     """
+    import matplotlib
+
+    # Force matplotlib to use a non-interactive backend for plotting
+    matplotlib.use("pdf")
+
     keys = []
 
     config: "Config" = c.graph["config"]["transport"]
