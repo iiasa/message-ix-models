@@ -56,10 +56,6 @@ The following sets of extra dependencies are available; per the user guide linke
    Minimal requirements for the test suite.
 
 
-Known issues
-------------
-
-
 Check that installation was successful
 --------------------------------------
 
