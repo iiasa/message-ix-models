@@ -20,6 +20,7 @@ Among other tasks, the tools allow modelers to:
    install
    data
    cli
+   quickstart
    repro
    distrib
    bibliography
