@@ -15,7 +15,7 @@ from message_data.model.material.data_buildings import gen_data_buildings
 from message_data.tools.utilities import (
     calibrate_UE_gr_to_demand,
     calibrate_UE_share_constraints,
-    manual_updates_ENGAGE_SSP2_v417_to_v418,
+    manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
     update_h2_blending,
 )
 from message_data.model.material.data_util import (
@@ -86,13 +86,13 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
 
     apply_spec(scenario, spec, add_data_1)  # dry_run=True
     if "SSP_dev" not in scenario.model:
-        manual_updates_ENGAGE_SSP2_v417_to_v418._correct_balance_td_efficiencies(
+        engage_updates._correct_balance_td_efficiencies(
             scenario
         )
-        manual_updates_ENGAGE_SSP2_v417_to_v418._correct_coal_ppl_u_efficiencies(
+        engage_updates._correct_coal_ppl_u_efficiencies(
             scenario
         )
-        manual_updates_ENGAGE_SSP2_v417_to_v418._correct_td_co2cc_emissions(scenario)
+        engage_updates._correct_td_co2cc_emissions(scenario)
         update_h2_blending.main(scenario)
     spec = None
     apply_spec(scenario, spec, add_data_2)
