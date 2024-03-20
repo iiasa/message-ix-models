@@ -1,22 +1,12 @@
-from message_data.model.material.data_util import read_sector_data
-
-import numpy as np
-from collections import defaultdict
-import logging
-
 import pandas as pd
 
+from collections import defaultdict
 from message_data.model.material.util import read_config
-from message_data.model.material.data_util import read_rel
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
-    broadcast,
-    make_io,
-    make_matched_dfs,
     same_node,
     copy_column,
-    add_par_data,
     private_data_path,
 )
 
@@ -314,3 +304,12 @@ def gen_data_buildings(scenario, dry_run=False):
         adjust_demand_param(scenario)
 
     return results
+
+
+if __name__ == "__main__":
+    import ixmp
+    import message_ix
+    mp = ixmp.Platform("ixmp_dev")
+    scen = message_ix.Scenario(mp, "MESSAGEix-Materials", "baseline_balance-equality_materials")
+    df = gen_data_buildings(scen)
+    print()
