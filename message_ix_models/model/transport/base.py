@@ -97,9 +97,21 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     # Restore original "t" labels to scale-1
     rep.add(s1[4], "select", s1[3], "indexers::iea to transport")
     rep.add(s1[5], "rename_dims", s1[4], quote(dict(t_new="t")))
+
+    # Interpolate the scaling factor from computed value in ya=2020 to 1.0 in ya ≥ 2050
+    rep.add(s1[6], lambda q: q.expand_dims(ya=[2020]), s1[5])
+    rep.add(s1[7], lambda q: q.expand_dims(ya=[2050]).clip(1.0, 1.0), s1[5])
+    rep.add(s1[8], lambda q: q.expand_dims(ya=[2110]).clip(1.0, 1.0), s1[5])
+    rep.add(s1[9], "concat", s1[6], s1[7], s1[8])
+    rep.add("ya::coord", lambda v: {"ya": v}, "y::model")
+    rep.add(
+        s1[10], "interpolate", s1[9], "ya::coord", kwargs=dict(fill_value="extrapolate")
+    )
+    _to_csv(s1[10], f"{s1.name}-blend", dict(header_comment=SCALE_1_HEADER))
+
     # Correct MESSAGEix-Transport outputs for the MESSAGEix-base model using the high-
     # resolution scaling factor
-    rep.add(k["s1"], "div", k.base, s1[5])
+    rep.add(k["s1"], "div", k.base, s1[10])
 
     # Scaling factor 2: ratio of total of scaled data to IEA total
     rep.add(
