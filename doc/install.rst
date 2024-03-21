@@ -1,4 +1,3 @@
-.. _installation:
 Installation
 ************
 
@@ -51,7 +50,7 @@ The following sets of extra dependencies are available; per the user guide linke
 ``docs``
    Minimum requirements for building the docs.
 ``report``
-   For running the :doc:`reporting` functionality.
+   For running the :doc:`api/report/index` functionality.
 ``tests``
    Minimal requirements for the test suite.
 
@@ -70,4 +69,4 @@ Verify that the version installed corresponds to the `latest release <https://gi
     $ mix-models config show
 
 The above commands will work as of :mod:`message_ix` 3.0 and in subsequent versions.
-Please read through the output of the :doc:`mix-models command <cli_help>` to understand the different CLI options and what you can do with them.
+Please read through the output of the :ref:`mix-models command <cli_help>` to understand the different CLI options and what you can do with them.
