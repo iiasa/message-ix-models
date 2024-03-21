@@ -155,6 +155,7 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
     for name, base_key, args in (
         ("demand", (ue + "1").drop("c", "t"), args_demand),
         ("bound_activity_lo", b_a_l, args_bound_activity),
+        ("bound_activity_lo-projected", ue + "1", args_bound_activity),
         ("bound_activity_up", b_a_u, args_bound_activity),
     ):
         # More identifiers
@@ -162,7 +163,9 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
         key, header = Key(f"{s}::ixmp"), f"{s} header"
 
         # Convert to MESSAGE data structure
-        rep.add(key, "as_message_df", base_key, name=name, wrap=False, **args)
+        rep.add(
+            key, "as_message_df", base_key, name=name.split("-")[0], wrap=False, **args
+        )
 
         # Sort values
         # TODO Move upstream as a feature of as_message_df()
