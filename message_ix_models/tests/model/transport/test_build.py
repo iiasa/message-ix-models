@@ -186,8 +186,8 @@ def test_debug(test_context, tmp_path, regions, years, N_node, options):
     # Uncommented as needed for debugging
     for key, unit in (
         # ("bound_activity_lo:n-t-y:transport minimum+ixmp", None),
+        # ("constraints::ixmp+transport+non-ldv", None),
         # ("energy:flow-n-product:trn other+1", "TJ"),
-        # ("growth_new_capacity_*::ixmp+transport+non-ldv", None),
         # ("transport other::ixmp", None),
     ):
         print(f"\n\n-- {key} --\n\n")
