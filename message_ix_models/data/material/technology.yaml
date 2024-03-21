@@ -1301,3 +1301,53 @@ visbreaker_ref:
     commodity: test
   name: empty
   report: string
+
+tecs_steel:
+  name: Steel making technologies
+  description: group of technologies that steel
+  child: []
+
+tecs_petro:
+  name: Petrochemicals technologies
+  description: group of technologies that produce petrochemicals
+  child: []
+
+tecs_cement:
+  name: Cement making technologies
+  description: group of technologies that steel
+  child: []
+
+tecs_alu:
+  name: Aluminum making technologies
+  description: group of technologies that steel
+  child: []
+  
+tecs_ref:
+  name: Refinery technologies
+  description: group of refinery process units
+  child: [ ]
+
+heat_tecs_steel:
+  name: Steel heat supply technologies
+  description: group of technologies that steel
+  child: []
+
+heat_tecs_petro:
+  name: Petrochemicals heat supply technologies
+  description: group of technologies that produce petrochemicals
+  child: []
+
+heat_tecs_cement:
+  name: Cement heat supply technologies
+  description: group of technologies that steel
+  child: []
+
+heat_tecs_alu:
+  name: Aluminum heat supply technologies
+  description: group of technologies that steel
+  child: []
+
+heat_tecs_ref:
+  name: Refinery heat supply technologies
+  description: group of refinery process units
+  child: [ ]
