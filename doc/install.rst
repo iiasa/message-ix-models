@@ -1,7 +1,7 @@
 Installation
 ************
 
-.. note:: :mod:`message_ix_models` requires :mod:`message_ix` to run. Please ensure your system has :external+message-ix:doc:`their required dependencies <system-dependencies>` installed.
+.. note:: :mod:`message_ix_models` requires :mod:`message_ix` to run. Please ensure your system has :external+message-ix:ref:`their required dependencies <system-dependencies>` installed.
 
 :mod:`message_ix_models` is structured as a Python package and is published to the PyPI public code repository. Hence, there are two options for the installation:
 
