@@ -8,7 +8,7 @@ This starting guide is for researchers at IIASA or external collaborators, who a
 It should support running scenarios of different models of the MESSAGEix-GLOBIOM family.
 
 .. note:: The guide **does not** give guidelines on how to contribute in ``message_ix_models``.
-          If you wish to contribute, please read and understand `Outline & organization <https://docs.messageix.org/en/latest/contributing.html>`_ completely.
+          If you wish to contribute, please read and understand our :doc:`contribution guide  <contributing>` completely.
 
 .. note:: As this is just a quick guide, it is **very possible**, the following steps for running a scenario might **not work directly** on your machine.
 
@@ -22,8 +22,8 @@ Most of these prerequisites are analogous to the prerequisites of running ``mess
 Knowledge & skills
 ------------------
 
-Please go through the `Prerequisite knowledge & skills <https://docs.messageix.org/en/stable/prereqs.html#prerequisite-knowledge-skills>`_ and check if you can tick the basic as well as the advanced usage.
-Especially understanding the concept of virtual environments is important.
+Please go through the :external+message-ix:doc:`prerequisites <prereqs>` and check if you can tick the basic as well as the advanced usage.
+Understanding the concept of virtual environments is especially important.
 If needed, please educate yourself in the specific areas.
 
 Going through this guide, some error messages might occur.
@@ -33,14 +33,14 @@ If an error message is not directly understandable, google-ing it is often very 
 `Stack overflow <https://stackoverflow.com>`_ is a great source of support, and most likely someone else already had the same question on how to solve an error.
 
 If you couldn't find a solution on the internet, please `open an issue on the main repository <https://github.com/iiasa/message-ix-models/issues/new>`_ or another repository of the ``message_ix`` software stack, as appropriate.
-
-.. tip:: If you run into issues related to the setup, please also check `Common issues <https://docs.messageix.org/en/stable/install.html#common-issues>`_.
+  
+.. tip:: If you run into issues related to the setup, please also check :external+message-ix:doc:`Common issues <common-issues>`.
 
 
 Installation
 ============
 
-Go through the installation process of ``message-ix-models`` via :ref:`installation`.
+Go through the installation process of ``message-ix-models`` via :doc:`installation`.
 
 
 Preparation
@@ -56,21 +56,14 @@ Configure access to existing DBs
 .. note:: The existing DBs at IIASA facilities are not open to the public. If you are interested in collaborating, please reach out to the ``message_ix`` modelling team.
 
 Every model in ``message-ix-models`` should contain information about the needed platform.
-``ixmp`` keeps track of these platforms.
-
-Use the ``ixmp`` CLI to add a specific platform::
-
-    $ ixmp platform add <PLATFORMNAME> jdbc oracle x8oda.iiasa.ac.at:1521/<PATH> <USERNAME> <PASSWORD>
-
-``PATH`` will be ``pIXMP2.iiasa.ac.at`` for most modern DBs, but could also be ``pIXMP1.iiasa.ac.at`` on older instances.
+``ixmp`` keeps track of these platforms. Please see :doc:`the Command-Line Interface (CLI) documentation <cli>` for how to work with them via the CLI.
+To access the IIASA DBs, ``Computer`` is ``x8oda.iiasa.ac.at``, ``PORT`` is ``1521``, and ``PATH`` will be ``pIXMP2.iiasa.ac.at`` for most modern DBs, but could also be ``pIXMP1.iiasa.ac.at`` on older instances.
 
 .. note:: If you are a collaborator, but do not know the ``USERNAME`` and/or ``PASSWORD`` of the platform you want to use, please reach out to the ``message_ix`` community manager.
 
 If you do not have access to the IIASA DBs, you need to configure a local DB. 
-For small applications, you can replace the URL ``x8oda.iiasa.ac.at:1521/pIXMP2.iiasa.ac.at`` with a path on your system and omit ``USERNAME`` and ``PASSWORD``.
+For small applications, you can replace the URL ``<COMPUTER>:<PORT>/<PATH>`` with a path on your system and omit ``USERNAME`` and ``PASSWORD``.
 For more complex modelling needs and required infrastructure, please reach out to the ``message_ix`` modelling team. 
-
-Please see the `Command-line interface documentation <https://docs.messageix.org/projects/models/en/latest/cli.html>`_ of ``message-ix-models`` for further information, e.g. how to set a platform as default.
 
 
 Download snapshot from Zenodo

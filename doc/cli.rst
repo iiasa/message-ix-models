@@ -17,27 +17,27 @@ To support a variety of complex use-cases, the MESSAGEix stack takes configurati
 :mod:`ixmp` configuration file: :file:`config.json`
 ---------------------------------------------------
 :mod:`ixmp` keeps track of named Platforms and their associated databases, and stores information in its :file:`config.json` file.
-See :mod:`ixmp.config`.
+See :mod:`~ixmp.config`.
 List existing platforms::
 
     $ ixmp platform list
 
 To add a specific database, you can use the ixmp CLI [1]_::
 
-    $ ixmp platform add [PLATFORMNAME] jdbc oracle [COMPUTER]:[PORT]/[SERVICENAME] [USERNAME] [PASSWORD]
+    $ ixmp platform add <PLATFORMNAME> jdbc oracle <COMPUTER>:<PORT>/<PATH> <USERNAME> <PASSWORD>
 
 You may also want to make this the *default* platform.
 Unless told otherwise, :mod:`message_ix_models` creates :class:`~ixmp.Platform` objects without any arguments (``mp = ixmp.Platform()``); this loads the default platform.
 Set the default::
 
-    $ ixmp platform add default [PLATFORMNAME]
+    $ ixmp platform add default <PLATFORMNAME>
 
 :mod:`message_ix` stores only one configuration value in :file:`config.json`: ``'message model dir'``, the path to the GAMS model files.
-MESSAGEix-GLOBIOM uses the GAMS model files from the current :mod:`message_ix` ``master`` branch, so you should not set this, or unset it when using :mod:`message_ix_models`.
+MESSAGEix-GLOBIOM uses the GAMS model files from the current :mod:`message_ix` ``main`` branch, so you should not set this, or unset it when using :mod:`message_ix_models`.
 
 :mod:`message_ix_models` will use the :file:`config.json` value ``"message_local_data"`` for local data, if it is set and not overridden.
 
-.. [1] ``[COMPUTER]`` is in this case either the hostname or the IP address.
+.. [1] ``<COMPUTER>`` is in this case either the hostname or the IP address.
 
 Environment variables
 ---------------------
