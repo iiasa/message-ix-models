@@ -17,7 +17,7 @@ To support a variety of complex use-cases, the MESSAGEix stack takes configurati
 :mod:`ixmp` configuration file: :file:`config.json`
 ---------------------------------------------------
 :mod:`ixmp` keeps track of named Platforms and their associated databases, and stores information in its :file:`config.json` file.
-See :mod:`~ixmp.config`.
+See :external+ixmp:ref:`configuration`.
 List existing platforms::
 
     $ ixmp platform list

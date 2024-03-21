@@ -8,7 +8,7 @@ This starting guide is for researchers at IIASA or external collaborators, who a
 It should support running scenarios of different models of the MESSAGEix-GLOBIOM family.
 
 .. note:: The guide **does not** give guidelines on how to contribute in ``message_ix_models``.
-          If you wish to contribute, please read and understand our :doc:`contribution guide  <contributing>` completely.
+          If you wish to contribute, please read and understand our :external+message-ix:doc:`contribution guide <contributing>` completely.
 
 .. note:: As this is just a quick guide, it is **very possible**, the following steps for running a scenario might **not work directly** on your machine.
 
@@ -34,13 +34,13 @@ If an error message is not directly understandable, google-ing it is often very 
 
 If you couldn't find a solution on the internet, please `open an issue on the main repository <https://github.com/iiasa/message-ix-models/issues/new>`_ or another repository of the ``message_ix`` software stack, as appropriate.
   
-.. tip:: If you run into issues related to the setup, please also check :external+message-ix:doc:`Common issues <common-issues>`.
+.. tip:: If you run into issues related to the setup, please also check :external+message-ix:ref:`Common issues <common-issues>`.
 
 
 Installation
 ============
 
-Go through the installation process of ``message-ix-models`` via :doc:`installation`.
+Go through the installation process of ``message-ix-models`` via :doc:`install`.
 
 
 Preparation
