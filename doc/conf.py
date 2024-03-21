@@ -184,8 +184,7 @@ def local_inv(name: str, *parts: str) -> Optional[str]:
         return str(Path(spec.origin).parents[1].joinpath(*parts, "objects.inv"))
 
 
-# For message-data, see: https://docs.readthedocs.io/en/stable/guides
-# /intersphinx.html#intersphinx-with-private-projects
+# For message-data, see: https://docs.readthedocs.io/en/stable/guides/intersphinx.html#intersphinx-with-private-projects
 _token = os.environ.get("RTD_TOKEN_MESSAGE_DATA", "")
 
 intersphinx_mapping = {
