@@ -11,8 +11,8 @@
 ELC_100:
   name: Battery-electric LDV
   description: >-
-    Battery-electric light-duty vehicle using electricity-only (100-mile
-    all-electric range)
+    Battery-electric light-duty vehicle using electricity only
+    (100-mile all-electric range)
   report: BEV
   input: {commodity: electr}
   message-v-report: LDV_ELE
@@ -167,8 +167,15 @@ Trolley_bus:
 
 PHEV_bus:
   description: Plug-in hybrid-electric bus using gasoline/diesel
-  input: {commodity: lightoil}  # actually both lightoil *and* electr
+  input:
+    commodity: lightoil
+    # commodity: [electr, lightoil]  # actually both lightoil *and* electr
   report: BUS_PHEV
+
+# BEV_bus:
+#   description: Battery-electric bus using electricity only
+#   input: {commodity: electr}
+#   report: BUS_BEV
 
 con_ar:
   description: >-

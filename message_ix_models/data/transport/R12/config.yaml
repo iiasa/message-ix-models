@@ -67,6 +67,7 @@ minimum activity:
   - [R12_WEU, ROAD, gas, 1.58]
 
 share weight convergence:
+  # Settings from MESSAGE (V)-Transport
   R12_AFR: [R12_PAO, R12_WEU]
   R12_CHN: [R12_PAO, R12_WEU]
   R12_RCPA: [R12_PAO, R12_WEU]
@@ -79,3 +80,16 @@ share weight convergence:
   R12_PAS: [R12_PAO, R12_WEU]
   R12_SAS: [R12_PAO, R12_WEU]
   R12_WEU: [R12_PAO, R12_WEU]
+  # No convergence for any region:
+  # R12_AFR: []
+  # R12_CHN: []
+  # R12_RCPA: []
+  # R12_EEU: []
+  # R12_FSU: []
+  # R12_LAM: []
+  # R12_MEA: []
+  # R12_NAM: []
+  # R12_PAO: []
+  # R12_PAS: []
+  # R12_SAS: []
+  # R12_WEU: []
