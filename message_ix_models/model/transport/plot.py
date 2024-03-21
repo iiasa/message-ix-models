@@ -707,11 +707,12 @@ def prepare_computer(c: Computer):
         lambda cls: isinstance(cls, type) and issubclass(cls, Plot) and cls is not Plot,
         globals().values(),
     ):
-        if not plot.runs_on_solved_scenario and config.with_solution:
+        if (not plot.runs_on_solved_scenario and config.with_solution) or (
+            False  # Use True here or uncomment below to skip some or all plots
+            # "stock" not in plot.basename
+        ):
             log.info(f"Skip {plot}")
             continue
-        # if "stock" not in plot.basename:
-        #     continue
         keys.append(f"plot {plot.basename}")
         c.add(keys[-1], plot)
 
