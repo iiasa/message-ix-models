@@ -1,10 +1,11 @@
 """Data for transport modes and technologies outside of LDVs."""
 
 import logging
-from functools import lru_cache
+from functools import lru_cache, partial
 from operator import itemgetter
 from typing import TYPE_CHECKING, Dict, List, Mapping
 
+import numpy as np
 import pandas as pd
 from genno import Computer, Key, KeySeq, MissingKeyError, Quantity, quote
 from genno.core.key import KeyLike, iter_keys, single_key
@@ -216,6 +217,17 @@ def bound_activity_lo(c: Computer) -> List[Key]:
     return [k["ixmp"]]
 
 
+def _inputs(technology: Code, commodity: str) -> bool:
+    """Return :any:`True` if `technology` has an ‘input’ annotation with `commodity`.
+
+    :func:`.filter` helper for sequences of technology codes.
+    """
+    if input_info := technology.eval_annotation(id="input"):
+        return commodity in input_info["commodity"]
+    else:
+        return False
+
+
 def constraint_data(
     t_all, t_modes: List[str], nodes, years: List[int], genno_config: dict
 ) -> Dict[str, pd.DataFrame]:
@@ -229,29 +241,44 @@ def constraint_data(
     # Non-LDV modes
     modes = set(t for t in t_modes if t != "LDV")
 
-    # List of technologies to constrain: all technologies under the non-LDV modes
-    constrained: List[Code] = list(
-        filter(lambda t: t.parent and t.parent.id in modes, t_all)
-    )
+    # Lists of technologies to constrain
+    # All technologies under the non-LDV modes
+    t_0: List[Code] = list(filter(lambda t: t.parent and t.parent.id in modes, t_all))
+    # Only the technologies that input c=electr
+    t_1: List[Code] = list(filter(partial(_inputs, commodity="electr"), t_0))
 
     common = dict(year_act=years, year_vtg=years, time="year", unit="-")
     data: Dict[str, pd.DataFrame] = dict()
-    for name in "growth_activity_lo", "growth_new_capacity_up":
-        # Retrieve the constraint value from configuration
-        value = config.constraint[f"non-LDV {name}"]
+
+    # Iterate over:
+    # 1. Parameter name
+    # 2. Set of technologies to be constrained.
+    # 3. A fixed value, if any, to be used.
+    for name, techs, fixed_value in (
+        # These 2 entries set:
+        # - 0 for the t_1 (c=electr) technologies
+        # - The value from config for all others
+        ("growth_activity_lo", set(t_0) - set(t_1), np.nan),
+        ("growth_activity_lo", t_1, 0.0),
+        # This 1 entry sets the value from config for all technologies
+        # ("growth_activity_lo", t_0, np.nan),
+        # For this parameter, no differentiation
+        ("growth_new_capacity_up", t_0, np.nan),
+    ):
+        # Use the fixed_value, if any, or a value from configuration
+        value = np.nan_to_num(fixed_value, nan=config.constraint[f"non-LDV {name}"])
 
         # Assemble the data
         data[name] = make_df(name, value=value, **common).pipe(
-            broadcast, node_loc=nodes, technology=constrained
+            broadcast, node_loc=nodes, technology=techs
         )
 
-        # Add initial_* values to set the starting point of dynamic growth constraints
-        if name != "growth_new_capacity_up":
-            continue
-
-        i_n_c = name.replace("growth", "initial")
-        value = config.constraint[f"non-LDV {i_n_c}"]
-        data.update(make_matched_dfs(data[name], **{i_n_c: value}))
+        # Add initial_* values corresponding to growth_new_capacity_up only, to set the
+        # starting point of dynamic growth constraints
+        if name == "growth_new_capacity_up":
+            i_n_c = name.replace("growth", "initial")
+            value = config.constraint[f"non-LDV {i_n_c}"]
+            data.update(make_matched_dfs(data[name], **{i_n_c: value}))
 
     return data
 
