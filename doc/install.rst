@@ -2,7 +2,7 @@
 Installation
 ************
 
-.. note:: :mod:`message_ix_models` requires :mod:`message_ix` to run. Please ensure your system has `their required dependencies <https://docs.messageix.org/en/stable/install.html#install-system-dependencies>`_ installed.
+.. note:: :mod:`message_ix_models` requires :mod:`message_ix` to run. Please ensure your system has :external+message-ix:doc:`their required dependencies <system-dependencies>` installed.
 
 :mod:`message_ix_models` is structured as a Python package and is published to the PyPI public code repository. Hence, there are two options for the installation:
 
@@ -21,7 +21,7 @@ From source
 -----------
 
 Use this option if you intend to make changes to the source code. 
-We value your contributions via pull requests to `the main repository <https://github.com/iiasa/message-ix-models>`_. Please consider `contributing to development <https://docs.messageix.org/en/latest/contributing.html>`_ your changes.
+We value your contributions via pull requests to `the main repository <https://github.com/iiasa/message-ix-models>`_. Please consider :external+message-ix:doc:`contributing <contributing>` your changes.
 
 1. Fork the `the main repository <https://github.com/iiasa/message-ix-models>`_.
    This will create a new repository ``<user>/message-ix-models``.
@@ -51,7 +51,7 @@ The following sets of extra dependencies are available; per the user guide linke
 ``docs``
    Minimum requirements for building the docs.
 ``report``
-   For running the :mod:`~.message_ix_models.report` functionality.
+   For running the :doc:`reporting` functionality.
 ``tests``
    Minimal requirements for the test suite.
 
@@ -70,4 +70,4 @@ Verify that the version installed corresponds to the `latest release <https://gi
     $ mix-models config show
 
 The above commands will work as of :mod:`message_ix` 3.0 and in subsequent versions.
-Please read through the output ``mix-models`` :mod:`~.message_ix_models.cli` command to understand the different CLI options and what you can do with them. You can also study its `documentation page <https://docs.messageix.org/projects/models/en/latest/cli.html>`_ online.
+Please read through the output of the :doc:`mix-models command <cli_help>` to understand the different CLI options and what you can do with them.
