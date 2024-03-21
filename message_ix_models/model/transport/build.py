@@ -5,6 +5,7 @@
 
 import logging
 from importlib import import_module
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import pandas as pd
@@ -123,11 +124,20 @@ def add_debug(c: Computer) -> None:
     c.graph["add transport data"].append("transport build debug")
 
 
-def debug_multi(context: Context, *paths: "pathlib.Path") -> None:
+def debug_multi(context: Context, *paths: Path) -> None:
     """Generate plots comparing data from multiple build debug directories."""
     from .plot import ComparePDT, ComparePDTCap0, ComparePDTCap1
 
-    c = Computer(output_dir=paths[0].parent)
+    if isinstance(paths[0], Scenario):
+        # Workflow was called with --from="…", so paths from the previous step are not
+        # available; try to guess
+        paths = sorted(
+            filter(
+                Path.is_dir, context.get_local_path("transport").glob("debug-ICONICS_*")
+            )
+        )
+
+    c = Computer(config={"transport build debug dir": paths[0].parent})
     c.require_compat("message_ix_models.report.operator")
 
     for cls in (ComparePDT, ComparePDTCap0, ComparePDTCap1):

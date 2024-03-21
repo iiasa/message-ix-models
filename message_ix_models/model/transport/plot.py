@@ -710,6 +710,8 @@ def prepare_computer(c: Computer):
         if not plot.runs_on_solved_scenario and config.with_solution:
             log.info(f"Skip {plot}")
             continue
+        # if "stock" not in plot.basename:
+        #     continue
         keys.append(f"plot {plot.basename}")
         c.add(keys[-1], plot)
 
