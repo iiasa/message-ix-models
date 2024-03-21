@@ -69,4 +69,4 @@ Verify that the version installed corresponds to the `latest release <https://gi
     $ mix-models config show
 
 The above commands will work as of :mod:`message_ix` 3.0 and in subsequent versions.
-Please read through the output of the :ref:`mix-models command <cli_help>` to understand the different CLI options and what you can do with them.
+Please read through the output of the :ref:`mix-models command <cli-help>` to understand the different CLI options and what you can do with them.
