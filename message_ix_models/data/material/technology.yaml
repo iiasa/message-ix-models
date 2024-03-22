@@ -1226,10 +1226,10 @@ sr_steel:
   report: string
 
 steam_cracker_petro:
-  description: ''
+  description: Most important conventional technology for primary petrochemicals
   input:
     commodity: test
-  name: empty
+  name: Steam cracker
   report: string
 
 total_EOL_aluminum:
