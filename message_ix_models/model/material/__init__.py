@@ -278,20 +278,21 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
                 scenario=context.scenario_info["scenario"] + "_" + tag,
                 keep_solution=False,
             )
-            context.model.regions = "R12"
-            measures = ["GDP", "POP"]
-            tecs = ["GDP_PPP", "Population"]
-            models = ["IIASA GDP 2023", "IIASA-WiC POP 2023"]
-            for measure, model, tec in zip(measures, models, tecs):
-                df = get_ssp_soc_eco_data(context, model, measure, tec)
-                scenario.check_out()
-                if "GDP_PPP" not in list(scenario.set("technology")):
-                    scenario.add_set("technology", "GDP_PPP")
-                scenario.commit("update projections")
-                scenario.check_out()
-                scenario.add_par("bound_activity_lo", df)
-                scenario.add_par("bound_activity_up", df)
-                scenario.commit("update projections")
+            if float(context.scenario_info["model"].split("Blv")[1]) < 0.12:
+                context.model.regions = "R12"
+                measures = ["GDP", "POP"]
+                tecs = ["GDP_PPP", "Population"]
+                models = ["IIASA GDP 2023", "IIASA-WiC POP 2023"]
+                for measure, model, tec in zip(measures, models, tecs):
+                    df = get_ssp_soc_eco_data(context, model, measure, tec)
+                    scenario.check_out()
+                    if "GDP_PPP" not in list(scenario.set("technology")):
+                        scenario.add_set("technology", "GDP_PPP")
+                    scenario.commit("update projections")
+                    scenario.check_out()
+                    scenario.add_par("bound_activity_lo", df)
+                    scenario.add_par("bound_activity_up", df)
+                    scenario.commit("update projections")
             scenario = build(scenario, old_calib=old_calib)
         else:
             scenario = build(
