@@ -963,7 +963,20 @@ def votm(gdp_ppp_cap: "AnyQuantity") -> "AnyQuantity":
     gdp_ppp_cap
         PPP GDP per capita.
     """
+    from genno.operator import assign_units
+
+    u = gdp_ppp_cap.units
     assert_units(gdp_ppp_cap, "kUSD / passenger / year")
-    result = 1 / (1 + np.exp((30 - gdp_ppp_cap) / 20))
-    result.units = ""
+    n = gdp_ppp_cap.coords["n"].data
+
+    result = 1 / (
+        1
+        + assign_units(
+            np.exp(
+                (genno.Quantity(30, units=u).expand_dims({"n": n}) - gdp_ppp_cap) / 20
+            ),
+            units="",
+        )
+    )
+    assert_units(result, "")
     return result
