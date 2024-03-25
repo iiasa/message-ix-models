@@ -84,7 +84,7 @@ exclude_also = [
 ]
 
 [tool.mypy]
-exclude = ["doc/"]
+exclude = ["doc/", "message_ix_models/report/legacy/"]
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available
@@ -119,6 +119,7 @@ filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
 
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
+exclude = ["message_ix_models/report/legacy/"]
 # Exceptions:
 # - .tools.wb.assign_income_groups(): 12 > 11
 # - .util.sdmx.as_codes(): 13 > 11
