@@ -4,6 +4,7 @@ import sys
 import pytest
 
 from message_ix_models.model import snapshot
+from message_ix_models.report import legacy_report
 from message_ix_models.testing import GHA
 
 log = logging.getLogger(__name__)
@@ -13,10 +14,9 @@ log = logging.getLogger(__name__)
 @pytest.mark.skipif(
     condition=GHA and sys.platform in ("darwin", "win32"), reason="Slow."
 )
-def test_load(test_context, load_snapshots):
-    scenario_names = []
+def test_legacy_report(test_context, load_snapshots):
+    latest_scenario = [scenario for scenario in load_snapshots][-1]
 
-    for scenario in load_snapshots:
-        scenario_names.append(scenario.scenario)
+    mp = test_context.get_platform()
 
-    assert len(scenario_names) >= 2
+    legacy_report(mp=mp, scen=latest_scenario)
