@@ -59,6 +59,7 @@ __all__ = [
     "check_support",
     "convert_units",
     "copy_column",
+    "datetime_now_with_tz",
     "eval_anno",
     "ffill",
     "identify_nodes",
@@ -80,6 +81,7 @@ __all__ = [
     "same_node",
     "same_time",
     "series_of_pint_quantity",
+    "show_versions",
     "silence_log",
     "strip_par_data",
 ]
