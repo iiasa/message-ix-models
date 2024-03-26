@@ -1,0 +1,145 @@
+model_units:
+        conv_c2co2: 44. / 12.
+        conv_co22c: 12. / 44.
+        crbcnt_gas: 0.482  # Carbon content of natural gas
+        crbcnt_oil: 0.631  # Carbon content of oil
+        crbcnt_coal: 0.814  # Carbon content of coal
+        currency_unit_out: "US$2010"
+        currency_unit_out_conv: 1.10774
+        gwp_ch4: 25
+        gwp_n2o: 298
+        # HFC factors: GWP-HFC134a / HFC-Species
+        # GWP from Guus Velders (SSPs 2015 scen: OECD-SSP2)
+        # Email to Riahi, Fricko 20150713
+        gwp_HFC125: 1360. / 3450.
+        gwp_HFC134a: 1360. / 1360.
+        gwp_HFC143a: 1360. / 5080.
+        gwp_HFC227ea: 1360. / 3140.
+        gwp_HFC23: 1360. / 12500.
+        gwp_HFC245fa: 1360. / 882.
+        gwp_HFC365: 1360. / 804.
+        gwp_HFC32: 1360. / 704.
+        gwp_HFC4310: 1360. / 1650.
+        gwp_HFC236fa: 1360. / 8060.
+        gwp_HFC152a: 1360. / 148.
+conversion_factors:
+        GWa:
+            EJ/yr: .03154
+            GWa: 1.
+            ???: 1.
+            MWa: 1000
+            ZJ: .00003154
+            km3/yr: 1.
+            Index (2005 = 1): 1
+            TWh: 8760. / 1000.
+            Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
+        GWa/a:
+            EJ/yr: .03154
+            GWa: 1.
+            ???: 1.
+            MWa: .001
+            ZJ: .00003154
+            km3/yr: 1.
+            Index (2005 = 1): 1
+        EJ/yr:
+            ZJ: .001
+        y:
+            years: 1.
+        # New units from unit-revision
+        "Mt C/GWyr/yr":
+            Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
+            Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")" 
+        # Emissions currently have the units ???
+        -:
+            Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
+        ???:
+            # Model units for CO2 are in MtC
+            # NB this values implies that whatever quantity it is applied to is
+            #    internally [Mt C/yr]
+            Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
+            Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")" 
+            # N2O is always left in kt
+            kt N2O/yr: 1.
+            # All other units are in kt
+            # NB this values implies that whatever quantity it is applied to is
+            #    internally [kt BC/yr], etc.
+            Mt BC/yr: .001
+            Mt CH4/yr: .001
+            Mt CO/yr: .001
+            Mt OC/yr: .001
+            Mt NOx/yr: .001
+            Mt NH3/yr: .001
+            Mt SO2/yr: .001
+            Mt VOC/yr: .001
+            kt HFC125/yr: "float(f\"{mu['gwp_HFC125']}\")"
+            kt HFC134a/yr: "float(f\"{mu['gwp_HFC134a']}\")"
+            kt HFC143a/yr: "float(f\"{mu['gwp_HFC143a']}\")"
+            kt HFC227ea/yr: "float(f\"{mu['gwp_HFC227ea']}\")"
+            kt HFC23/yr: "float(f\"{mu['gwp_HFC23']}\")"
+            kt HFC245fa/yr: "float(f\"{mu['gwp_HFC245fa']}\")"
+            kt HFC365/yr: "float(f\"{mu['gwp_HFC365']}\")"
+            kt HFC32/yr: "float(f\"{mu['gwp_HFC32']}\")"
+            kt HFC43-10/yr: "float(f\"{mu['gwp_HFC4310']}\")"
+            kt HFC236fa/yr: "float(f\"{mu['gwp_HFC236fa']}\")"
+            kt HFC152a/yr: "float(f\"{mu['gwp_HFC152a']}\")"
+            ???: 1.
+            Index (2005 = 1): 1
+            EJ/yr: .03154
+            GWa: 1.
+            km3/yr: 1.
+        USD/kWa:
+            "f\"{mu['currency_unit_out']}/kW/yr\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"{mu['currency_unit_out']}/kW\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"{mu['currency_unit_out']}/kWh\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"billion {mu['currency_unit_out']}/yr\"": "float(f\"{mu['currency_unit_out_conv']}\") / 1000"
+            "f\"{mu['currency_unit_out']}/GJ\"": "0.03171 * float(f\"{mu['currency_unit_out_conv']}\")"
+        USD/kW:
+            "f\"{mu['currency_unit_out']}/kW/yr\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"{mu['currency_unit_out']}/kW\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"{mu['currency_unit_out']}/kWh\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"billion {mu['currency_unit_out']}/yr\"": "float(f\"{mu['currency_unit_out_conv']}\") / 1000"
+            "f\"{mu['currency_unit_out']}/GJ\"": "0.03171 * float(f\"{mu['currency_unit_out_conv']}\")"
+        USD/GWa:
+            "f\"{mu['currency_unit_out']}/kWh\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"{mu['currency_unit_out']}/kW/yr\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"{mu['currency_unit_out']}/kW\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"billion {mu['currency_unit_out']}/yr\"": "float(f\"{mu['currency_unit_out_conv']}\") / 1000"
+            "f\"{mu['currency_unit_out']}/GJ\"": "0.03171 * float(f\"{mu['currency_unit_out_conv']}\")"
+            Index (2005 = 1): 1
+        US$2005/tC:
+            "f\"{mu['currency_unit_out']}/tC\"": "float(f\"{mu['currency_unit_out_conv']}\")"
+            "f\"{mu['currency_unit_out']}/tCO2\"": "float(f\"{mu['conv_co22c']}\") * float(f\"{mu['currency_unit_out_conv']}\")"
+            "US$2005/tCO2": "float(f\"{mu['conv_co22c']}\")"
+        kt BC/yr:
+            Mt BC/yr: 1. / 1000.
+        kt CO/yr:
+            Mt CO/yr: 1. / 1000.
+        kt CH4/yr:
+            Mt CO2eq/yr: "float(f\"{mu['gwp_ch4']}\") / 1000."
+            Mt C/yr: "float(f\"{mu['gwp_ch4']}\") * float(f\"{mu['conv_co22c']}\") / 1000."
+            Mt CH4/yr: 1. / 1000.
+        kt N2O/yr:
+            Mt CO2eq/yr: "float(f\"{mu['gwp_n2o']}\") / 1000."
+            Mt C/yr: "float(f\"{mu['gwp_n2o']}\") * float(f\"{mu['conv_co22c']}\") / 1000."
+            kt N2O/yr: 1.
+            Mt N2O/yr: 1. / 1000.
+        kt NH3/yr:
+            Mt NH3/yr: 1. / 1000.
+        kt NOx/yr:
+            Mt NOx/yr: 1. / 1000.
+        kt OC/yr:
+            Mt OC/yr: 1. / 1000.
+        kt SO2/yr:
+            kt Sulfur/yr: 1.
+            Mt Sulfur/yr: 1. / 1000.
+            Mt SO2/yr: 1. / 1000.
+        kt VOC/yr:
+            Mt VOC/yr: 1. / 1000.
+        Mt CO2eq/yr:
+            Mt C/yr: "float(f\"{mu['conv_co22c']}\")"
+        Mt C/yr:
+            Mt CO2eq/yr: "float(f\"{mu['conv_c2co2']}\")"
+            Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")" 
+            Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")"
+        Mt CO2/yr:
+            Mt CO2/yr: 1.

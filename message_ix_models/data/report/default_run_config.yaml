@@ -1,0 +1,341 @@
+report_config:
+    table_def: "message_data.tools.post_processing.default_tables"
+    aggr_def: "default_aggregates.csv"
+    var_def: "default_variable_definitions.csv"
+    unit_yaml: "default_units.yaml"
+    urban_perc: "default_pop_urban_rural.csv"
+    kyoto_hist: "default_kyoto_hist.csv"
+    lu_hist: "default_lu_co2_hist.csv"  
+run_tables:
+    Res_extr:
+        root: Resource|Extraction
+        active: True
+        function: retr_extraction
+        args: {"units": "EJ/yr"}
+    Res_extr_cum:
+        root: Resource|Cumulative Extraction
+        active: True
+        function: retr_cumulative_extraction
+        args: {"units": "ZJ"}
+    Res_remain:
+        root: Resource|Remaining
+        active: False # This function is not yet working
+        function: retr_remaining_resources
+        args: {"units": "ZJ"}
+    Enrgy_PE:
+        root: Primary Energy
+        active: True
+        function: retr_pe
+        args: {"units": "EJ/yr"}
+    Enrgy_PE_sub:
+        root: Primary Energy (substitution method)
+        active: True
+        function: retr_pe
+        args: {"units": "EJ/yr",
+               "method": "substitution"}
+    Enrgy_FE:
+        root: Final Energy
+        active: True
+        function: retr_fe
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_elec:
+        root: Secondary Energy|Electricity
+        active: True
+        function: retr_SE_elecgen
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_heat:
+        root: Secondary Energy|Heat
+        active: True
+        function: retr_SE_district_heat
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_syn:
+        root: Secondary Energy
+        active: True
+        function: retr_SE_synfuels
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_gas:
+        root: Secondary Energy|Gases
+        active: True
+        function: retr_SE_gases
+        args: {"units": "EJ/yr"}
+    Enrgy_SE_solid:
+        root: Secondary Energy|Solids
+        active: True
+        function: retr_SE_solids
+        args: {"units": "EJ/yr"}
+    Emi_CO2:
+        root: Emissions|CO2
+        active: True
+        function: retr_CO2emi
+        args: {"units_emi": "Mt CO2/yr",
+               "units_ene_mdl": "GWa"}  
+    Emi_Crb_seq:
+        root: Carbon Sequestration
+        active: True
+        function: retr_CO2_CCS
+        args: {"units_emi": "Mt CO2/yr",
+               "units_ene": "EJ/yr"}
+    Emi_BC:
+        root: Emissions|BC
+        active: True
+        function: retr_othemi
+        args: {"var": "BCA",
+               "units": "Mt BC/yr"}
+    Emi_OC:
+        root: Emissions|OC
+        active: True
+        function: retr_othemi
+        args: {"var": "OCA",
+               "units": "Mt OC/yr"}
+    Emi_CO:
+        root: Emissions|CO
+        active: True
+        function: retr_othemi
+        args: {"var": "CO",
+               "units": "Mt CO/yr"}
+    Emi_N2O:
+        root: Emissions|N2O
+        active: True
+        function: retr_othemi
+        args: {"var": "N2O",
+               "units": "kt N2O/yr"}
+    Emi_CH4:
+        root: Emissions|CH4
+        active: True
+        function: retr_othemi
+        args: {"var": "CH4",
+               "units": "Mt CH4/yr"}
+    Emi_NH3:
+        root: Emissions|NH3
+        active: True
+        function: retr_othemi
+        args: {"var": "NH3",
+               "units": "Mt NH3/yr"}
+    Emi_SO2:
+        root: Emissions|Sulfur
+        active: True
+        function: retr_othemi
+        args: {"var": "SO2",
+               "units": "Mt SO2/yr"}
+    Emi_NOx:
+        root: Emissions|NOx
+        active: True
+        function: retr_othemi
+        args: {"var": "NOx",
+               "units": "Mt NOx/yr"}
+    Emi_VOC:
+        root: Emissions|VOC
+        active: True
+        function: retr_othemi
+        args: {"var": "VOC",
+               "units": "Mt VOC/yr"}
+    Emi_HFC:
+        root: Emissions|HFC
+        active: True
+        function: retr_hfc
+        args: {"hfc_lst": {
+                "Total": [True, 0, "kt HFC134a-equiv/yr"],
+                "HFC125": [True, 125, "kt HFC125/yr"], 
+                "HFC134a": [True, 134, "kt HFC134a/yr"],
+                "HFC143a": [True, 143, "kt HFC143a/yr"],
+                "HFC227ea": [True, 227, "kt HFC227ea/yr"],
+                "HFC23": ["empty", 0, "kt HFC23/yr"],
+                "HFC245fa": [True, 245, "kt HFC245fa/yr"],
+                "HFC32": [True, 32, "kt HFC32/yr"],
+                "HFC43-10": [True, 431, "kt HFC43-10/yr"],
+                "HFC365mfc": [False, 365, "kt HFC365mfc/yr"],
+                "HFC152a": [False, 152, "kt HFC152a/yr"],
+                "HFC236fa": [False, 236, "kt HFC236fa/yr"]}}
+    Emi_fgas:
+        root: Emissions
+        active: True
+        function: retr_fgases
+        args: {"units_SF6": "kt SF6/yr",
+               "conv_SF6": 1000, 
+               "units_CF4": "kt CF4/yr",
+               "conv_CF4": 1000,
+               "units_fgas": "Mt CO2-equiv/yr"}
+    Emi_kyoto:
+        root: Emissions
+        active: True
+        function: retr_kyoto
+        args: {"units": "Mt CO2-equiv/yr"}
+    LU_Agr_dem:
+        root: Agricultural Demand
+        active: True
+        function: retr_agri_dem
+        args: {"units": "million t DM/yr"}
+    LU_Agr_pro:
+        root: Agricultural Production
+        active: True
+        function: retr_agri_prd
+        args: {"units": "million t DM/yr"}
+    LU_Agr_fert:
+        root: Fertilizer Use
+        active: True
+        function: retr_fertilizer_use
+        args: {"units_nitrogen": "Tg N/yr",
+               "units_phosphorus": "Tg P/yr"}
+    LU_Agr_fert_int:
+        root: Fertilizer
+        active: True
+        function: retr_fertilizer_int
+        args: {"units_nitrogen": "t N/ha/yr",
+               "units_phosphorus": "t P/ha/yr"}
+    LU_Fd_waste:
+        root: Food Waste
+        active: True
+        function: retr_food_waste
+        args: {"units": "million t DM/yr"}
+    LU_Fd_dem:
+        root: Food Demand
+        active: True
+        function: retr_food_dem
+        args: {"units": "kcal/cap/day"}
+    LU_For_dem:
+        root: Forestry Demand
+        active: True
+        function: retr_frst_dem
+        args: {"units": "million m3/yr"}
+    LU_For_prd:
+        root: Forestry Production
+        active: True
+        function: retr_frst_prd
+        args: {"units_residues": "million t DM/yr",
+               "units_roundwood": "million m3/yr"}
+    LU_Lnd_cvr:
+        root: Land Cover
+        active: True
+        function: retr_lnd_cvr
+        args: {"units": "million ha"}
+    LU_Yld:
+        root: Yield
+        active: True
+        function: retr_yield
+        args: {"units": "t DM/ha/yr"}
+    Tec_cap:
+        root: Capacity
+        active: True
+        function: retr_ppl_capparameters
+        args: {"prmfunc": pp.tic,
+               "units": "GW"}
+    Tec_cap_add:
+        root: Capacity Additions
+        active: True
+        function: retr_ppl_capparameters
+        args: {"prmfunc": pp.nic,
+               "units": "GW/yr"}
+    Tec_cap_cum:
+        root: Cumulative Capacity
+        active: True
+        function: retr_ppl_capparameters
+        args: {"prmfunc": pp.cumcap,
+               "units": "GW"}
+    Tec_inv_cst:
+        root: Capital Cost
+        active: True
+        function: retr_ppl_parameters
+        args: {"prmfunc": pp.inv_cost,
+               "units": "US$2010/kW"}
+    Tec_FOM_cst:
+        root: OM Cost|Fixed
+        active: True
+        function: retr_ppl_opcost_parameters
+        args: {"prmfunc": pp.fom,
+               "units": "US$2010/kW/yr"}
+    Tec_VOM_cst:
+        root: OM Cost|Variable
+        active: True
+        function: retr_ppl_opcost_parameters
+        args: {"prmfunc": pp.vom,
+               "units": "US$2010/kWh"}
+    Tec_lft:
+        root: Lifetime
+        active: True
+        function: retr_ppl_parameters
+        args: {"prmfunc": pp.pll,
+               "units": "years"}
+    Tec_eff:
+        root: Efficiency
+        active: True
+        function: retr_eff_parameters
+        args: {"units": "%"}
+    Pop:
+        root: Population
+        active: True
+        function: retr_pop
+        args: {"units": "million"}
+    Prc:
+        root: Price
+        active: True
+        function: retr_price
+        args: {"units_CPrc_co2": "US$2010/tCO2",
+               "units_CPrc_co2_outp": "US$2010/t CO2", # Name of units in output file
+               "units_energy": "US$2010/GJ",
+               "units_energy_outp": "US$2010/GJ",
+               "units_CPrc_c": "US$2010/tC",
+               "conv_CPrc_co2_to_c": 0.03171,
+               "units_agri": "Index (2005 = 1)"}
+    Enrgy_UE_inp:
+        root: Useful Energy
+        active: True
+        function: retr_demands_input
+        args: {"units": "EJ/yr"}
+    Enrgy_UE_outp:
+        root: Useful Energy
+        active: True
+        function: retr_demands_output
+        args: {"units": "EJ/yr"}
+    Enrgy_Trd:
+        root: Trade
+        active: True
+        function: retr_trade
+        args: {"units_energy": "EJ/yr",
+               "units_CPrc_co2": "US$2010/tCO2",
+               "units_emi_val": "billion US$2010/yr",
+               "units_emi_vol": "Mt CO2-equiv/yr"}
+    Tec_Invst:
+        root: Investment|Energy Supply
+        active: True
+        function: retr_supply_inv
+        args: {"units_energy": "billion US$2010/yr",
+               "units_emi": "Mt CO2/yr",
+               "units_ene_mdl": "GWa"}
+    Wtr_cons:
+        root: Water Consumption
+        active: True
+        function: retr_water_use
+        args: {"units": "km3/yr",
+               "method": "consumption"}
+    Wtr_wthd:
+        root: Water Withdrawal
+        active: True
+        function: retr_water_use
+        args: {"units": "km3/yr",
+               "method": "withdrawal"}
+    GDP:
+        root: GDP
+        active: True
+        function: retr_macro
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Cst:
+        root: Cost
+        active: True
+        function: retr_cost
+        condition: scen.var("COST_NODAL_NET").empty
+        args: {"units": "billion US$2010/yr",
+               "conv_usd": 1.10774}
+    Glob_fdbk:
+        root: GLOBIOM Feedback
+        active: True
+        function: retr_globiom_feedback
+        args: {
+            "units_emi_CH4": "Mt CH4/yr",
+            "units_emi_CO2": "Mt CO2/yr",
+            "units_emi_N2O": "kt N2O/yr",
+            "units_ene": "EJ/yr",
+            "units_ene_prc": "US$2005/GJ",
+            "units_CPrc_co2": "US$2005/tCO2",
+            "units_CPrc_co2_outp": "US$2005/t CO2",
+            "units_gdp": "billion US$2005/yr",}
