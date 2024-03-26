@@ -293,23 +293,16 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
         ),
     ],
 )
-def test_cli(tmp_path, mix_models_cli, nodes, target):
-    result = mix_models_cli.invoke(
-        [
-            "--platform=",
-            "transport",
-            "run",
-            f"--nodes={nodes}",
-            f"{target} debug build",
-            "--go",
-        ]
-    )
-    if result.exit_code != 0:
-        print(result.output)
-        raise result.exception
+def test_cli(tmp_path, mix_models_cli, test_context, nodes, target):
+    """Transport CLI can be used to generate build-phase debug outputs."""
+    # NB test_context is necessary so that the temporary, in-memory platform established
+    #    by .transport.workflow.generate() does not carry to other tests
+    cmd = ["transport", "run", f"--nodes={nodes}", f"{target} debug build", "--go"]
+    result = mix_models_cli.assert_exit_0(cmd)
 
     # Identify the path containing the outputs
-    output_dir = Path(re.search(r"Save to (.*)\.pdf$", result.output).group(1)).parent
+    expr = re.compile(r"Save to (.*)\.pdf$", flags=re.MULTILINE)
+    output_dir = Path(expr.search(result.output).group(1)).parent
 
     # Files created in the temporary path
     assert 6 <= len(list(output_dir.glob("*.csv")))
