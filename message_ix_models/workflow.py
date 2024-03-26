@@ -1,4 +1,5 @@
 """Tools for modeling workflows."""
+
 import logging
 import re
 from typing import (
@@ -320,6 +321,8 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
     def _func(context, go, truncate_step, target_step, **kwargs):
         from importlib import import_module
 
+        from message_ix_models.util import show_versions
+
         # Import the module and retrieve the callback function
         module_name, callback_name = wf_callback.rsplit(".", maxsplit=1)
         module = import_module(module_name)
@@ -361,7 +364,8 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
                 )
             target_step = wf.default_key
 
-        log.info(f"Execute workflow:\n{wf.describe(target_step)}")
+        log.info(f"Execute workflow\n{wf.describe(target_step)}")
+        log.debug(f"…with package versions:\n{show_versions()}")
 
         if not go:
             path = context.get_local_path(f"{slug}-workflow.svg")

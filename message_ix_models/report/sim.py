@@ -1,4 +1,5 @@
 """Simulated solution data for testing :mod:`~message_ix_models.report`."""
+
 import logging
 from collections import ChainMap, defaultdict
 from collections.abc import Mapping

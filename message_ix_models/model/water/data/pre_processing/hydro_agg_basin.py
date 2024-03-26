@@ -156,9 +156,9 @@ def bias_correction(df):
                         final_temp = pd.concat((final_temp, temp), axis=1)
 
                 df_monthly = final_temp
-                df[
-                    pd.date_range(str(year) + "-01-01", periods=12, freq="M")
-                ] = final_temp.groupby(final_temp.columns.month, axis=1).mean()
+                df[pd.date_range(str(year) + "-01-01", periods=12, freq="M")] = (
+                    final_temp.groupby(final_temp.columns.month, axis=1).mean()
+                )
                 # 5 year monthly data
                 df_5y_m = df[df.columns[df.columns.year.isin(years)]]
                 # 5 year annual
@@ -319,9 +319,9 @@ for year in np.arange(2020, 2105, 5):
             ]
 
     df_monthly = final_temp
-    eflow[
-        pd.date_range(str(year) + "-01-01", periods=12, freq="M")
-    ] = final_temp.groupby(final_temp.columns.month, axis=1).mean()
+    eflow[pd.date_range(str(year) + "-01-01", periods=12, freq="M")] = (
+        final_temp.groupby(final_temp.columns.month, axis=1).mean()
+    )
 
     eflow_5y_m = eflow[eflow.columns[eflow.columns.year.isin(years)]]
     eflow_5y_m.to_csv(wd11 + f"e-flow_5y_m_7p0_{iso3}.csv")

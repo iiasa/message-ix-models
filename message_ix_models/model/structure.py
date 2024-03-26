@@ -13,7 +13,7 @@ import xarray as xr
 from iam_units import registry
 from sdmx.model.v21 import Annotation, Code, Codelist
 
-from message_ix_models.util import eval_anno, load_package_data, package_data_path
+from message_ix_models.util import load_package_data, package_data_path
 from message_ix_models.util.sdmx import as_codes
 
 log = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ def generate_product(
         attributes.
     """
     # eval() and remove the original annotation
-    dims = eval_anno(template, "_generate")
+    dims = template.eval_annotation(id="_generate")
     template.pop_annotation(id="_generate")
 
     def _base(dim, match):
@@ -191,7 +191,7 @@ def generate_set_elements(data: MutableMapping, name) -> None:
         if name in {"commodity", "technology"}:
             process_units_anno(name, code, quiet=True)
 
-        if eval_anno(code, "_generate"):
+        if code.eval_annotation(id="_generate"):
             # Requires a call to generate_product(); do these last
             deferred.append(code)
             continue

@@ -20,8 +20,8 @@ except PackageNotFoundError:  # pragma: no cover
     # Package is not installed
     __version__ = "999"
 
-# No logging to stdout (console) by default
-setup_logging(console=False)
+# By default, no logging to console/stdout or to file
+setup_logging(console=False, file=False)
 
 # Use iam_units.registry as the default pint.UnitsRegistry
 pint.set_application_registry(registry)

@@ -1,4 +1,5 @@
 """Utilities for nodes."""
+
 import logging
 from typing import List, Sequence, Union
 
@@ -126,8 +127,6 @@ def identify_nodes(scenario: Scenario) -> str:
 def nodes_ex_world(nodes: Sequence[Union[str, Code]]) -> List[Union[str, Code]]:
     """Exclude "World" and anything containing "GLB" from `nodes`.
 
-    May also be used as a reporting computation.
-
-    .. todo:: Make available from :mod:`message_ix_models.report`.
+    May also be used as a genno (reporting) operator.
     """
     return list(filter(lambda n_: "GLB" not in n_ and n_ != "World", nodes))
