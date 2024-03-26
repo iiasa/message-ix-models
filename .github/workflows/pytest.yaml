@@ -16,31 +16,55 @@ jobs:
   pytest:
     strategy:
       matrix:
-        # One job per OS.
-        version:
-        - { os: macos-latest }
-        - { os: ubuntu-latest }
-        - { os: windows-latest }
-        # Versions of both ixmp and message_ix to use plus latest supported python version
+        os:
+        - macos-latest
+        - ubuntu-latest
+        - windows-latest
         upstream:
-        - { python-version: "3.11", version: v3.4.0, extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0"' }  # Minimum version given in pyproject.toml
-        - { python-version: "3.11", version: v3.5.0, extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0"' }
-        - { python-version: "3.11", version: v3.6.0, extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0"' }
-        - { python-version: "3.11", version: v3.7.0, extra-deps: 'dask[dataframe] "genno < 1.25" ' }
-        - { python-version: "3.12", version: v3.8.0, extra-deps: 'dask[dataframe]' } # Latest released version
-        - { python-version: "3.12", version: main,   extra-deps: 'dask[dataframe]' }  # Development version
+        # In each group:
+        # - Versions of ixmp and message_ix to test.
+        # - Latest supported Python version for those or other dependencies.
+        # - Extra dependencies, in particular fixed/maximum versions to resolve conficts.
+        #   - dask[dataframe] >= 2024.3.0 requires dask-expr and in turn pandas >= 2.0.
+        #     https://github.com/iiasa/message-ix-models/pull/156#issuecomment-2020152360
+        #   - genno: upstream versions < 3.8.0 import genno.computations, removed in 1.25.0.
+        #     https://github.com/iiasa/message-ix-models/pull/156
+        #   - pytest: upstream versions < 3.9.0 use a hook argument removed in pytest 8.1.0.
+        #     https://github.com/iiasa/message-ix-models/pull/155
+        #
+        # Minimum version given in pyproject.toml
+        - version: v3.4.0
+          python-version: "3.11"
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        - version: v3.5.0
+          python-version: "3.11"
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        - version: v3.6.0
+          python-version: "3.11"
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        - version: v3.7.0
+          python-version: "3.11"
+          extra-deps: 'dask[dataframe]   "genno < 1.25"                "pytest == 8.0.0"' #
+        # Latest released version
+        - version: v3.8.0
+          python-version: "3.12"
+          extra-deps: 'dask[dataframe]                                 "pytest == 8.0.0"' #
+        # Development version
+        - version: main
+          python-version: "3.12"
+          extra-deps: 'dask[dataframe]' #
 
       fail-fast: false
 
-    runs-on: ${{ matrix.version.os }}
-    name: ${{ matrix.version.os }}-py${{ matrix.upstream.python-version }}-upstream-${{ matrix.upstream.version }}
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}-py${{ matrix.upstream.python-version }}-upstream-${{ matrix.upstream.version }}
 
     steps:
     - name: Cache test data
       uses: actions/cache@v4
       with:
         path: message-local-data
-        key: ${{ matrix.version.os }}
+        key: ${{ matrix.os }}
 
     - name: Check out message-ix-models
       uses: actions/checkout@v4
@@ -62,11 +86,6 @@ jobs:
     - uses: ts-graphviz/setup-graphviz@v2
       with:
         macos-skip-brew-update: true
-
-    - name: Install specific version of pytest
-      # All versions prior to v3.9.0 use a hook argument that pytest removed in v8.1.0
-      if: ${{ matrix.version != 'main' }}
-      run: pip install pytest==8.0.0
 
     - name: Install packages and dependencies
       # By default, install:
