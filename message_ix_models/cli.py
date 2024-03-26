@@ -2,17 +2,20 @@
 
 Every tool and script in this repository is accessible through this CLI. Scripts are
 grouped into commands and sub-commands. For help on specific (sub)commands, use --help,
-e.g.:
+for instance:
 
     \b
-    mix-models cd-links --help
-    mix-models cd-links run --help
+    mix-models report --help
+    mix-models ssp gen-structures --help
 
 The top-level options --platform, --model, and --scenario are used by commands that
-access specific message_ix scenarios; these can also be specified with --url.
+access specific MESSAGEix scenarios in a specific ixmp platform/database; these can also
+be specified with --url.
 
-For more information, see https://docs.messageix.org/projects/models2/en/latest/cli.html
+For complete documentation, see
+https://docs.messageix.org/projects/models/en/latest/cli.html
 """
+
 import logging
 import sys
 from pathlib import Path
@@ -20,7 +23,7 @@ from pathlib import Path
 import click
 from ixmp.cli import main as ixmp_cli
 
-from message_ix_models.util._logging import mark_time
+from message_ix_models.util._logging import flush, mark_time
 from message_ix_models.util._logging import setup as setup_logging
 from message_ix_models.util.click import common_params
 from message_ix_models.util.context import Context
@@ -34,7 +37,7 @@ log = logging.getLogger(__name__)
 @click.option(
     "--url", metavar="ixmp://PLATFORM/MODEL/SCENARIO[#VERSION]", help="Scenario URL."
 )
-@click.option("--platform", metavar="PLATFORM", help="Configured platform name.")
+@click.option("--platform", metavar="PLATFORM", help="ixmp platform name.")
 @click.option(
     "--model", "model_name", metavar="MODEL", help="Model name for some commands."
 )
@@ -44,7 +47,7 @@ log = logging.getLogger(__name__)
     metavar="SCENARIO",
     help="Scenario name for some commands.",
 )
-@click.option("--version", type=int, help="Scenario version.")
+@click.option("--version", type=int, help="Scenario version for some commands.")
 @click.option("--local-data", type=Path, help="Base path for local data.")
 @common_params("verbose")
 @click.pass_context
@@ -52,8 +55,19 @@ def main(click_ctx, **kwargs):
     # Start timer
     mark_time(quiet=True)
 
-    # Log to console
-    setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", console=True)
+    # Check for a non-trivial execution of the CLI
+    non_trivial = (
+        not any(s in sys.argv for s in {"last-log", "--help"})
+        and click_ctx.invoked_subcommand != "_test"
+        and "pytest" not in sys.argv[0]
+    )
+
+    # Log to console: either DEBUG or INFO.
+    # Don't start file logging for a non-trivial execution.
+    setup_logging(level="DEBUG" if kwargs.pop("verbose") else "INFO", file=non_trivial)
+
+    if "pytest" not in sys.argv[0]:
+        log.debug("CLI invoked with:\n" + "\n  ".join(sys.argv))
 
     # Store the most recently created instance of message_ix_models.Context. click
     # carries this object to any subcommand decorated with @click.pass_obj.
@@ -67,6 +81,9 @@ def main(click_ctx, **kwargs):
 
     # Close any database connections when the CLI exits
     click_ctx.call_on_close(click_ctx.obj.close_db)
+
+    # Ensure all log messages are handled
+    click_ctx.call_on_close(flush)
 
 
 @main.command("export-test-data")
@@ -94,12 +111,43 @@ def export_test_data_cmd(ctx, exclude, nodes, techs):
     mark_time()
 
 
+@main.command("last-log")
+@click.pass_obj
+def last_log(ctx):
+    """Show the location of the last log file, if any."""
+    from platformdirs import user_log_path
+
+    log_dir = user_log_path("message-ix-models")
+    if log_files := sorted(log_dir.glob("*T*")):
+        print(log_files[-1])
+
+
 @main.command(hidden=True)
 @click.pass_obj
 def debug(ctx):
     """Hidden command for debugging."""
     # Print the local data path
     log.debug(ctx.local_data)
+
+
+@main.group("_test", hidden=True)
+def cli_test_group():
+    """Hidden group of CLI commands.
+
+    Other code which needs to test CLI behaviour **may** attach temporary/throw-away
+    commands to this group and then invoke them using :func:`mix_models_cli`. This
+    avoids the need to expose additional commands for testing purposes only.
+    """
+
+
+@cli_test_group.command("log-threads")
+@click.argument("k", type=int)
+@click.argument("N", type=int)
+def _log_threads(k: int, n: int):
+    # Emit many log records
+    log = logging.getLogger("message_ix_models")
+    for i in range(n):
+        log.info(f"{k = } {i = }")
 
 
 # Attach the ixmp "config" CLI
@@ -123,11 +171,23 @@ try:
     import message_data.cli
 except ImportError:
     # message_data is not installed or contains some ImportError of its own
-    from traceback import format_exception
+    import ixmp
 
-    # Display information for debugging
-    etype, value, tb = sys.exc_info()
-    print("", *format_exception(etype, value, tb, limit=-1, chain=False)[1:], sep="\n")
+    if ixmp.config.get("no message_data") is not True:
+        print(
+            "Warning: message_data is not installed or cannot be imported; see the "
+            "documentation via --help"
+        )
+
+    # commented: Display verbose information for debugging
+    # from traceback import format_exception
+    #
+    # etype, value, tb = sys.exc_info()
+    # print(
+    #     "",
+    #     *format_exception(etype, value, tb, limit=-1, chain=False)[1:],
+    #     sep="\n",
+    # )
 else:  # pragma: no cover  (needs message_data)
     # Also add message_data submodules
     submodules.extend(
@@ -145,3 +205,7 @@ for name in submodules:
         continue
 
     main.add_command(cmd)
+
+
+if __name__ == "__main__":
+    main()

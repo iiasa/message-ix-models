@@ -157,11 +157,12 @@ class TestContext:
         """:meth:`.write_debug_archive` works."""
         # Create a CLI command attached to the hidden "_test" group
 
-        from message_ix_models.testing import cli_test_group
+        from message_ix_models.cli import cli_test_group
+        from message_ix_models.util.click import temporary_command
 
-        @cli_test_group.command("write-debug-archive")
+        @click.command("write-debug-archive")
         @click.pass_obj
-        def _(context):
+        def command(context):
             # Register one file to be archived
             p = context.core.local_data.joinpath("foo.txt")
             context.core.debug_paths.append(p)
@@ -176,7 +177,8 @@ class TestContext:
             context.write_debug_archive()
 
         # Invoke the command; I/O occurs in a temporary directory
-        result = mix_models_cli.invoke(["_test", "write-debug-archive"])
+        with temporary_command(cli_test_group, command):
+            result = mix_models_cli.invoke(["_test", "write-debug-archive"])
 
         # Output path is constructed as expected; file exists
         match = re.search(

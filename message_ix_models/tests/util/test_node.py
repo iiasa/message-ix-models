@@ -1,4 +1,5 @@
 """Tests of :mod:`message_ix_models.util.node`."""
+
 import re
 
 import pandas as pd

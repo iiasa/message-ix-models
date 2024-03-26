@@ -3,6 +3,7 @@
 The current set functions on time series data stored on the scenario by
 :mod:`message_ix_models.report` or :mod:`message_data` legacy reporting.
 """
+
 import logging
 import re
 from datetime import datetime
@@ -100,9 +101,7 @@ class Plot(genno.compat.plotnine.Plot):
                 c.add(k, "get_ts", scenario_key, dict(variable=k.name))
 
         # Add the plot itself
-        # TODO once the genno class returns the added key, change to "return super().…"
-        super().add_tasks(c, key, *inputs[1:], strict=strict)
-        return key
+        return super().add_tasks(c, key, *inputs[1:], strict=strict)
 
     def ggtitle(self, value=None) -> p9.ggtitle:
         """Return :class:`plotnine.ggtitle` including the current date & time."""

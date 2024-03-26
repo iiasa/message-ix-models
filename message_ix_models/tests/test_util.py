@@ -1,4 +1,5 @@
 """Tests of :mod:`message_ix_models.util`."""
+
 import logging
 import re
 from importlib.metadata import version

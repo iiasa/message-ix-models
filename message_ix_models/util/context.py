@@ -1,4 +1,5 @@
 """Context and settings for :mod:`message_ix_models` code."""
+
 import logging
 from copy import deepcopy
 from dataclasses import fields
@@ -10,6 +11,7 @@ import message_ix
 from click import BadOptionUsage
 
 from .config import Config
+from .ixmp import parse_url
 
 log = logging.getLogger(__name__)
 
@@ -136,6 +138,12 @@ class Context(dict):
         _CONTEXTS.append(result)
 
         return result
+
+    def __eq__(self, other) -> bool:
+        # Don't compare contents, only identity, for _CONTEXTS.index()
+        if not isinstance(other, Context):
+            return NotImplemented
+        return id(self) == id(other)
 
     def __repr__(self):
         return f"<{self.__class__.__name__} object at {id(self)} with {len(self)} keys>"
@@ -269,14 +277,8 @@ class Context(dict):
         The directory containing the resulting path is created if it does not already
         exist.
         """
-        # Construct relative to local_data if cache_path is not defined
-        base = self.core.cache_path or self.core.local_data.joinpath("cache")
-
-        result = base.joinpath(*parts)
-
-        # Ensure the directory exists
-        result.parent.mkdir(parents=True, exist_ok=True)
-
+        result = self.core.cache_path.joinpath(*parts)
+        result.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
         return result
 
     def get_local_path(self, *parts: str, suffix=None) -> Path:
@@ -371,7 +373,7 @@ class Context(dict):
                 )
 
             self.core.url = url
-            urlinfo = ixmp.utils.parse_url(url)
+            urlinfo = parse_url(url)
             platform_info.update(urlinfo[0])
             scenario_info.update(urlinfo[1])
         elif platform:

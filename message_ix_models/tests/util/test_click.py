@@ -1,7 +1,9 @@
 """Basic tests of the command line."""
+
 import click
 
-from message_ix_models.util.click import common_params
+from message_ix_models.cli import cli_test_group
+from message_ix_models.util.click import common_params, temporary_command
 
 
 def test_default_path_cb(session_context, mix_models_cli):
@@ -22,7 +24,7 @@ def test_default_path_cb(session_context, mix_models_cli):
     expected = session_context.local_data / "reporting_output"
 
     # Run the command
-    with mix_models_cli.temporary_command(func):
+    with temporary_command(cli_test_group, func):
         result = mix_models_cli.assert_exit_0(cmd)
 
     # The value was stored on, and retrieved from, `ctx`
@@ -48,7 +50,7 @@ def test_regions(mix_models_cli):
         print(context.model.regions)
 
     # Give the option for the outer group, but not for the inner command
-    with mix_models_cli.temporary_command(outer):
+    with temporary_command(cli_test_group, outer):
         result = mix_models_cli.assert_exit_0(
             ["_test", "outer", "--regions=ZMB", "inner"]
         )
@@ -68,7 +70,7 @@ def test_store_context(mix_models_cli):
         print(ctx["ssp"])  # Print the value stored on the Context object
 
     # Run the command with a valid value
-    with mix_models_cli.temporary_command(func):
+    with temporary_command(cli_test_group, func):
         result = mix_models_cli.assert_exit_0(["_test", func.name, "SSP2"])
 
     # The value was stored on, and retrieved from, `ctx`
@@ -95,7 +97,7 @@ baz/qux#123
     p.write_text(text)
 
     # Run the command, referring to the temporary file
-    with mix_models_cli.temporary_command(func):
+    with temporary_command(cli_test_group, func):
         result = mix_models_cli.assert_exit_0(
             ["_test", func.name, f"--urls-from-file={p}"]
         )

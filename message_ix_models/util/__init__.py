@@ -1,5 +1,6 @@
 import logging
 from collections import ChainMap, defaultdict
+from datetime import datetime
 from functools import partial, update_wrapper
 from importlib.metadata import version
 from itertools import count
@@ -21,6 +22,7 @@ import pandas as pd
 import pint
 
 from ._convert_units import convert_units, series_of_pint_quantity
+from ._logging import mark_time, preserve_log_level, silence_log
 from .cache import cached
 from .common import (
     HAS_MESSAGE_DATA,
@@ -57,6 +59,7 @@ __all__ = [
     "check_support",
     "convert_units",
     "copy_column",
+    "datetime_now_with_tz",
     "eval_anno",
     "ffill",
     "identify_nodes",
@@ -67,15 +70,19 @@ __all__ = [
     "make_io",
     "make_matched_dfs",
     "make_source_tech",
+    "mark_time",
     "maybe_query",
     "merge_data",
     "minimum_version",
     "package_data_path",
+    "preserve_log_level",
     "private_data_path",
     "replace_par_data",
     "same_node",
     "same_time",
     "series_of_pint_quantity",
+    "show_versions",
+    "silence_log",
     "strip_par_data",
 ]
 
@@ -209,7 +216,9 @@ def broadcast(
             _check_dim(dim)
         # Concatenate 1 copy of `df` for each row in `labels`
         df = pd.concat(
-            [df.assign(**row) for _, row in labels.iterrows()], ignore_index=True
+            [df.assign(**row) for _, row in labels.iterrows()],
+            ignore_index=True,
+            sort=False,
         )
 
     # Next, broadcast other dimensions given as keyword arguments
@@ -226,7 +235,7 @@ def broadcast(
         # - Re-add the column from the constructed MultiIndex
         # - Reindex for sequential row numbers
         df = (
-            pd.concat([df] * len(levels), keys=levels, names=[dim])
+            pd.concat([df] * len(levels), keys=levels, names=[dim], sort=False)
             .drop(dim, axis=1)
             .reset_index(dim)
             .reset_index(drop=True)
@@ -278,6 +287,12 @@ def copy_column(column_name):
     return lambda df: df[column_name]
 
 
+def datetime_now_with_tz() -> datetime:
+    """Current date and time with time zone information."""
+    tz = datetime.now().astimezone().tzinfo
+    return datetime.now(tz)
+
+
 def ffill(
     df: pd.DataFrame, dim: str, values: Sequence[CodeLike], expr: Optional[str] = None
 ) -> pd.DataFrame:
@@ -321,8 +336,7 @@ def ffill(
 
 
 class KeyIterator(Protocol):
-    def __call__(self) -> "genno.Key":
-        ...
+    def __call__(self) -> "genno.Key": ...
 
 
 def iter_keys(base: "genno.Key") -> KeyIterator:
@@ -662,6 +676,24 @@ def same_time(df: pd.DataFrame) -> pd.DataFrame:
     """Fill 'time_origin'/'time_dest' in `df` from 'time'."""
     cols = list(set(df.columns) & {"time_origin", "time_dest"})
     return df.assign(**{c: copy_column("time") for c in cols})
+
+
+def show_versions() -> str:
+    """Output of :func:`ixmp.show_versions`, as a :class:`str`."""
+    from io import StringIO
+
+    from . import ixmp
+    from ._logging import preserve_log_handlers
+
+    # Retrieve package versions
+    buf = StringIO()
+
+    # show_versions() imports pyam-iamc, which in turn imports ixmp4, which removes all
+    # handlers from the root logger (?!). Preserve the message-ix-models logging config.
+    with preserve_log_handlers():
+        ixmp.show_versions(buf)
+
+    return buf.getvalue()
 
 
 # FIXME Reduce complexity from 14 to ≤13

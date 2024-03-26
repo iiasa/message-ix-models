@@ -3,17 +3,16 @@ from collections import defaultdict
 from copy import copy
 from functools import partial
 from itertools import product
-from typing import List, Mapping, MutableMapping, Sequence, Union
+from typing import List, Mapping, MutableMapping, Sequence
 
 import message_ix
 import pandas as pd
-from sdmx.model.v21 import Annotation, Code
+from sdmx.model.common import Annotation, Code
 
 from message_ix_models import ScenarioInfo, Spec
 from message_ix_models.model.build import apply_spec
 from message_ix_models.util import (
     broadcast,
-    eval_anno,
     make_io,
     make_matched_dfs,
     make_source_tech,
@@ -23,8 +22,6 @@ from message_ix_models.util import (
 )
 
 log = logging.getLogger(__name__)
-
-CodeLike = Union[str, Code]
 
 
 def add(
@@ -81,9 +78,11 @@ def get_spec(
         fmt = dict(technology=t, group=g)
 
         # Format each field in the "input" and "output" annotations
-        input = {k: v.format(**fmt) for k, v in eval_anno(template, id="input").items()}
+        input = {
+            k: v.format(**fmt) for k, v in template.eval_annotation(id="input").items()
+        }
         output = {
-            k: v.format(**fmt) for k, v in eval_anno(template, id="output").items()
+            k: v.format(**fmt) for k, v in template.eval_annotation(id="output").items()
         }
 
         # - Format the ID string from the template
@@ -154,7 +153,7 @@ def dp_for(col_name: str, info: ScenarioInfo) -> pd.Series:  # pragma: no cover
     return func
 
 
-def data_conversion(info, spec) -> MutableMapping[str, pd.DataFrame]:
+def data_conversion(info, spec: Spec) -> MutableMapping[str, pd.DataFrame]:
     """Generate input and output data for disutility conversion technologies."""
     common = dict(
         mode="all",
@@ -167,7 +166,7 @@ def data_conversion(info, spec) -> MutableMapping[str, pd.DataFrame]:
     )
 
     # Use the spec to retrieve information
-    technology = spec["add"].set["technology"]
+    technology: List[Code] = spec.add.set["technology"]
 
     # Data to return
     data0: Mapping[str, List[pd.DataFrame]] = defaultdict(list)
@@ -176,8 +175,8 @@ def data_conversion(info, spec) -> MutableMapping[str, pd.DataFrame]:
     for t in technology:
         # Use the annotations on the technology Code to get information about the
         # commodity, level, and unit
-        input = eval_anno(t, "input")
-        output = eval_anno(t, "output")
+        input = t.eval_annotation(id="input")
+        output = t.eval_annotation(id="output")
         if None in (input, output):
             if t.id == "disutility source":
                 continue  # Data for this tech is from data_source()
@@ -194,9 +193,6 @@ def data_conversion(info, spec) -> MutableMapping[str, pd.DataFrame]:
             **common,
         )
         for par, df in i_o.items():
-            # Broadcast across nodes
-            df = df.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(same_node)
-
             if par == "input":
                 # Add input of disutility
                 df = pd.concat(
@@ -205,8 +201,14 @@ def data_conversion(info, spec) -> MutableMapping[str, pd.DataFrame]:
 
             data0[par].append(df)
 
-    # Concatenate to a single data frame per parameter
-    data = {par: pd.concat(dfs, ignore_index=True) for par, dfs in data0.items()}
+    # - Concatenate to a single data frame per parameter
+    # - Broadcast across nodes
+    data = {
+        par: pd.concat(dfs, ignore_index=True)
+        .pipe(broadcast, node_loc=nodes_ex_world(info.N))
+        .pipe(same_node)
+        for par, dfs in data0.items()
+    }
 
     # Create data for capacity_factor
     data.update(make_matched_dfs(base=data["input"], capacity_factor=1.0))
@@ -219,7 +221,7 @@ def data_source(info, spec) -> Mapping[str, pd.DataFrame]:
     # List of input levels where disutility commodity must exist
     levels = set()
     for t in spec["add"].set["technology"]:
-        input = eval_anno(t, "input")
+        input = t.eval_annotation(id="input")
         if input:
             levels.add(input["level"])
 

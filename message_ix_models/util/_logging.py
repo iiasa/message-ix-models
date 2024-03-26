@@ -1,75 +1,35 @@
 """Logging utilities."""
 
+import atexit
 import logging
 import logging.config
+import logging.handlers
+import re
+import sys
+import time
 from contextlib import contextmanager
-from copy import deepcopy
+from datetime import datetime, timedelta, timezone
+from queue import SimpleQueue
 from time import process_time
+from typing import Dict, Optional, Union, cast
+from warnings import warn
 
+# NB mark_time, preserve_log_level, and silence_log are exposed by util/__init__.py
 __all__ = [
     "Formatter",
-    "make_formatter",
+    "QueueListener",
+    "SilenceFilter",
+    "StreamHandler",
     "setup",
-    "silence_log",
 ]
 
 log = logging.getLogger(__name__)
 
+# References to handlers
+_HANDLER: Dict[str, logging.Handler] = dict()
 
-@contextmanager
-def silence_log(names=None, level=logging.ERROR):
-    """Context manager to temporarily quiet 1 or more loggers.
-
-    Parameters
-    ----------
-    names : str, *optional*
-        Space-separated names of loggers to quiet.
-    level : int, *optional*
-        Minimum level of log messages to allow.
-
-    Examples
-    --------
-    >>> with silence_log():
-    >>>     log.warning("This message is not recorded.")
-    """
-    # Default: the top-level logger for the package containing this file
-    if names is None:
-        names = [__name__.split(".")[0], "message_data"]
-    elif isinstance(names, str):
-        names = [names]
-
-    log.info(f"Set level={level} for logger(s): {' '.join(names)}")
-
-    # Retrieve the logger objects
-    loggers = list(map(logging.getLogger, names))
-    # Store their current levels
-    levels = []
-
-    try:
-        for logger in loggers:
-            levels.append(logger.getEffectiveLevel())  # Store the current levels
-            logger.setLevel(level)  # Set the level
-        yield
-    finally:
-        # Restore the levels
-        for logger, original_level in zip(loggers, levels):
-            logger.setLevel(original_level)
-        log.info("…restored.")
-
-
-@contextmanager
-def preserve_log_level():
-    """Context manager to preserve the level of the ``message_ix_models`` logger."""
-    # Get the top-level logger for the package containing this file
-    main_log = logging.getLogger(__name__.split(".")[0])
-
-    try:
-        # Store the current level
-        level = main_log.getEffectiveLevel()
-        yield
-    finally:
-        # Restore the level
-        main_log.setLevel(level)
+# For mark_time()
+_TIMES = []
 
 
 class Formatter(logging.Formatter):
@@ -77,8 +37,8 @@ class Formatter(logging.Formatter):
 
     Parameters
     ----------
-    colorama : module
-        If provided, :mod:`colorama` is used to colour log messages printed to stdout.
+    use_color : bool, *optional*
+        If :any:`True`, :mod:`colorama` is used to colour log messages.
     """
 
     CYAN = ""
@@ -87,12 +47,20 @@ class Formatter(logging.Formatter):
 
     _short_name = None
 
-    def __init__(self, colorama):
+    def __init__(self, use_colour: bool = True):
         super().__init__()
-        if colorama:
-            self.CYAN = colorama.Fore.CYAN
-            self.DIM = colorama.Style.DIM
-            self.RESET_ALL = colorama.Style.RESET_ALL
+
+        try:
+            if use_colour:
+                # Import and initialize colorama
+                import colorama
+
+                colorama.init()
+                self.CYAN = colorama.Fore.CYAN
+                self.DIM = colorama.Style.DIM
+                self.RESET_ALL = colorama.Style.RESET_ALL
+        except ImportError:  # pragma: no cover
+            pass  # Not installed
 
     def format(self, record):
         """Format `record`.
@@ -100,7 +68,7 @@ class Formatter(logging.Formatter):
         Records are formatted like::
 
             model.transport.data.add_par_data  220 rows in 'input'
-            ...add_par_data:  further messages
+            ...add_par_data  further messages
 
         …with the calling function name (e.g. 'add_par_data') coloured for legibility
         on first occurrence, then dimmed when repeated.
@@ -121,29 +89,57 @@ class Formatter(logging.Formatter):
         return f"{prefix}{record.funcName}{self.RESET_ALL}  {record.getMessage()}"
 
 
-def make_formatter():
-    """Return a :class:`Formatter` instance for the ``message_ix_models`` logger.
+class QueueHandler(logging.handlers.QueueHandler):
+    # For typing with Python ≤ 3.11 only; from 3.12 this attribute is described
+    listener: "QueueListener"
 
-    See also
-    --------
-    setup
+
+class QueueListener(logging.handlers.QueueListener):
+    """:class:`.logging.QueueListener` with a :meth:`.flush` method."""
+
+    def flush(self):
+        """Flush the queue: join the listener/monitor thread and then restart."""
+        if self._thread is not None:
+            super().stop()
+            self.start()
+
+
+class SilenceFilter(logging.Filter):
+    """Log filter that only allows records from `names` that are at or above `level`."""
+
+    __slots__ = ("level", "name_expr")
+
+    def __init__(self, names: str, level: int):
+        self.level = level
+        # Compile a regular expression for the name
+        self.name_re = re.compile("|".join(map(re.escape, sorted(names.split()))))
+
+    def filter(self, record) -> bool:
+        return not (record.levelno < self.level and self.name_re.match(record.name))
+
+
+class StreamHandler(logging.StreamHandler):
+    """Like :class:`.logging.StreamHandler`, but retrieve the stream on each access.
+
+    This avoids the case that :mod:`click`, :mod:`pytest`, or something else adjusts
+    :py:`sys.stdout` temporarily, but the handler's stored reference to the original is
+    not updated.
     """
-    try:
-        # Initialize colorama
-        import colorama
 
-        colorama.init()
-    except ImportError:  # pragma: no cover
-        # Colorama not installed
-        colorama = None
+    #: Name of the :mod:`sys` stream to use, as :class:`str` rather than a direct
+    #: reference.
+    stream_name: str
 
-    return Formatter(colorama)
+    def __init__(self, stream_name: str):
+        self.stream_name = stream_name
+        logging.Handler.__init__(self)
+
+    @property
+    def stream(self):
+        return getattr(sys, self.stream_name)
 
 
-_TIMES = []
-
-
-def mark_time(quiet=False):
+def mark_time(quiet: bool = False) -> None:
     """Record and log (if `quiet` is :obj:`True`) a time mark."""
     _TIMES.append(process_time())
     if not quiet and len(_TIMES) > 1:
@@ -152,67 +148,167 @@ def mark_time(quiet=False):
         )
 
 
-CONFIG = dict(
-    version=1,
-    disable_existing_loggers=False,
-    formatters=dict(simple={"()": "message_ix_models.util._logging.make_formatter"}),
-    handlers=dict(
-        console={
-            "class": "logging.StreamHandler",
-            "level": "NOTSET",
-            "formatter": "simple",
-            "stream": "ext://sys.stdout",
-        },
-        # commented: needs code in setup() to choose an appropriate file path
-        # file_handler={
-        #    "class": "logging.handlers.RotatingFileHandler",
-        #    "level": "DEBUG",
-        #    "formatter": "simple",
-        #    "backupCount": "100",
-        #    "delay": True,
-        # },
-    ),
-    loggers=dict(
-        message_ix_models=dict(
-            level="NOTSET",
-            # propagate=False,
-            # handlers=[],
-        ),
-        message_data=dict(
-            level="NOTSET",
-            # propagate=False,
-            # handlers=[],
-        ),
-    ),
-    root=dict(
-        handlers=[],
-    ),
-)
+@contextmanager
+def preserve_log_handlers(name: Optional[str] = None):
+    """Context manager to preserve the handlers of a `logger`."""
+    # Access the named logger
+    logger = logging.getLogger(name)
+    # Make a copy of its list of handlers
+    handlers = list(logger.handlers)
+
+    try:
+        yield
+    finally:
+        # Make a list of handlers which have disappeared from the logger
+        to_restore = list(filter(lambda h: h not in logger.handlers, handlers))
+        for h in to_restore:
+            logger.addHandler(h)
+        # Log after the handlers have been restored
+        log.debug(f"Restore to {logger}.handlers: {to_restore or '(none)'}")
+
+
+@contextmanager
+def preserve_log_level():
+    """Context manager to preserve the level of the ``message_ix_models`` logger."""
+    # Get the top-level logger for the package containing this file
+    main_log = logging.getLogger(__name__.split(".")[0])
+
+    try:
+        # Store the current level
+        level = main_log.getEffectiveLevel()
+        yield
+    finally:
+        # Restore the level
+        main_log.setLevel(level)
+
+
+def configure():
+    """Apply logging configuration."""
+    # NB We do this programmatically as logging.config.dictConfig()'s automatic steps
+    #    require adjustments that end up being more verbose and less clear.
+    from platformdirs import user_log_path
+
+    # Stream handler
+    _HANDLER["console"] = h_console = StreamHandler(stream_name="stdout")
+    h_console.setLevel(logging.CRITICAL)
+    h_console.setFormatter(Formatter())
+
+    # Construct the file name for the log file
+    log_file_path = user_log_path("message-ix-models", ensure_exists=True).joinpath(
+        datetime.now(timezone(timedelta(seconds=time.timezone)))
+        .isoformat(timespec="seconds")
+        .replace(":", "")
+    )
+
+    # File handler
+    _HANDLER["file"] = h_file = logging.FileHandler(
+        filename=str(log_file_path), delay=True
+    )
+    h_file.setLevel(logging.CRITICAL)
+    h_file.setFormatter(Formatter(use_colour=False))
+
+    # Queue handler
+    queue = SimpleQueue()
+    _HANDLER["queue"] = h_queue = QueueHandler(queue)
+    logging.root.addHandler(h_queue)
+
+    # Queue listener
+    h_queue.listener = listener = QueueListener(
+        queue, h_console, h_file, respect_handler_level=True
+    )
+    listener.start()
+    atexit.register(listener.stop)
+
+    for name, level in (
+        (None, logging.DEBUG),
+        # Ensure no level set for these packages; the level of the "console"/"file"
+        # handlers determines outputs
+        ("message_ix_models", logging.NOTSET),
+        ("message_data", logging.NOTSET),
+        # Hide lower-level messages for some upstream packages from the file log
+        ("graphviz._tools", logging.WARNING),
+        ("matplotlib", logging.WARNING),
+        ("pycountry.db", logging.WARNING),
+    ):
+        logging.getLogger(name).setLevel(level)
 
 
 def setup(
-    level="NOTSET",
-    console=True,
-    # file=False,
-):
+    level: Union[str, int] = 99,
+    console: bool = True,
+    *,
+    file: bool = False,
+) -> None:
     """Initialize logging.
 
     Parameters
     ----------
     level : str, *optional*
-        Log level for :mod:`message_ix_models` and :mod:`message_data`.
+        Log level for the console log handler.
     console : bool, *optional*
-        If :obj:`True`, print all messages to console using a :class:`Formatter`.
+        If :obj:`False`, do not print any messages to console.
+    file : bool, *optional*
+        If :obj:`False`, do not print any messages to file.
     """
-    # Copy to avoid modifying with the operations below
-    config = deepcopy(CONFIG)
 
-    config["root"].setdefault("level", level)
+    root = logging.getLogger()
+    if not any(isinstance(h, logging.handlers.QueueHandler) for h in root.handlers):
+        # Not yet configured
+        configure()
 
-    if console:
-        config["root"]["handlers"].append("console")
-    # if file:
-    #     config["loggers"]["message_data"]["handlers"].append("file")
+    # Apply settings to loggers and handlers: either just-created, or pre-existing
 
-    # Apply the configuration
-    logging.config.dictConfig(config)
+    # Set the level of the console handler
+    _HANDLER["console"].setLevel(99 if console is False else level)
+
+    if file is False:
+        _HANDLER["file"].setLevel(99)
+    else:
+        _HANDLER["file"].setLevel("DEBUG")
+        log.info(f"Log to {cast(logging.FileHandler, _HANDLER['file']).baseFilename}")
+
+
+def flush() -> None:
+    """Flush the queue."""
+    cast(QueueHandler, _HANDLER["queue"]).listener.flush()
+
+
+@contextmanager
+def silence_log(names: Optional[str] = None, level: int = logging.ERROR):
+    """Context manager to temporarily quiet 1 or more loggers.
+
+    Parameters
+    ----------
+    names : str, *optional*
+        Space-separated names of loggers to quiet.
+    level : int, *optional*
+        Minimum level of log messages to allow.
+
+    Examples
+    --------
+    >>> with silence_log():
+    >>>     log.warning("This message is not recorded.")
+    """
+    if isinstance(names, list):
+        warn(
+            "silence_log(names=…) as list of str; use a single, space-separated str",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        names = " ".join(names)
+
+    # Create a filter; default, the top-level logger for the current package
+    f = SilenceFilter(names or f"message_data {__name__.split('.')[0]}", level)
+    log.info(f"Set level={level} for logger(s): {f.name_re.pattern.replace('|', ' ')}")
+
+    try:
+        # Add the same filter to every handler of the root logger
+        for handler in logging.root.handlers:
+            handler.addFilter(f)
+
+        yield
+    finally:
+        # Remove the filter
+        for handler in logging.root.handlers:
+            handler.removeFilter(f)
+        log.info("…restored.")

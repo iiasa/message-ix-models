@@ -1,4 +1,5 @@
 """Tools for working with IAMC-structured data."""
+
 from typing import Optional
 
 import pandas as pd

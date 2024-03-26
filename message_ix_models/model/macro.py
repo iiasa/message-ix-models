@@ -3,6 +3,7 @@
 See :doc:`message-ix:macro` for *general* documentation on MACRO and MESSAGE-MACRO. This
 module contains tools specifically for using these models with MESSAGEix-GLOBIOM.
 """
+
 import logging
 from functools import lru_cache
 from itertools import product

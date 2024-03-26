@@ -1,4 +1,5 @@
 """Utilities for using :doc:`Pooch <pooch:about>`."""
+
 import logging
 from pathlib import Path
 from typing import Tuple
