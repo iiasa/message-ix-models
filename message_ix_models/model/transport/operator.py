@@ -19,10 +19,11 @@ from typing import (
     cast,
 )
 
+import genno
 import numpy as np
 import pandas as pd
 import xarray as xr
-from genno import Operator, Quantity
+from genno import Operator
 from genno.operator import apply_units, relabel, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
 from iam_units import registry
@@ -46,6 +47,7 @@ from .config import Config
 
 if TYPE_CHECKING:
     from genno import Computer
+    from genno.types import AnyQuantity
     from message_ix import Scenario
 
     import message_data.model.transport.factor
@@ -57,7 +59,6 @@ __all__ = [
     "base_shares",
     "broadcast_advance",
     "broadcast_y_yv_ya",
-    "clip",
     "cost",
     "distance_ldv",
     "distance_nonldv",
@@ -84,7 +85,6 @@ __all__ = [
     "transport_check",
     "transport_data",
     "votm",
-    "where",
 ]
 
 
@@ -104,8 +104,8 @@ using:
 
 
 def base_shares(
-    base: Quantity, nodes: List[str], techs: List[str], y: List[int]
-) -> Quantity:
+    base: "AnyQuantity", nodes: List[str], techs: List[str], y: List[int]
+) -> "AnyQuantity":
     """Return base mode shares.
 
     The mode shares are read from a file at
@@ -149,12 +149,12 @@ def base_shares(
         log.info(f"Broadcast base mode shares with dims {base.dims} over {missing}")
 
         coords = [("n", nodes), ("t", techs), ("y", y)]
-        result = base * Quantity(xr.DataArray(1.0, coords=coords), units="")
+        result = base * genno.Quantity(xr.DataArray(1.0, coords=coords), units="")
 
     return result
 
 
-def broadcast_advance(data: Quantity, y0: int, config: dict) -> Quantity:
+def broadcast_advance(data: "AnyQuantity", y0: int, config: dict) -> "AnyQuantity":
     """Broadcast ADVANCE `data` from native `n` coords to :py:`config["regions"]`."""
     from genno.operator import sum
 
@@ -178,7 +178,7 @@ def broadcast_advance(data: Quantity, y0: int, config: dict) -> Quantity:
         ],
         columns=["n", "value", "n_new"],
     )
-    bcast = Quantity(df.set_index(["n", "n_new"])["value"])
+    bcast = genno.Quantity(df.set_index(["n", "n_new"])["value"])
 
     check = data.sel(n="World", y=y0, drop=True)
 
@@ -197,7 +197,7 @@ def broadcast_advance(data: Quantity, y0: int, config: dict) -> Quantity:
     return result
 
 
-def broadcast_y_yv_ya(y: List[int], y_model: List[int]) -> Quantity:
+def broadcast_y_yv_ya(y: List[int], y_model: List[int]) -> "AnyQuantity":
     """Return a quantity for broadcasting y to (yv, ya).
 
     This is distinct from :attr:`.ScenarioInfo.ya_ya`, because it omits all
@@ -210,33 +210,17 @@ def broadcast_y_yv_ya(y: List[int], y_model: List[int]) -> Quantity:
         .assign(value=1.0, y=lambda df: df["yv"])
         .set_index(dims)["value"]
     )
-    return Quantity(series)
-
-
-def clip(
-    qty: Quantity, lower: Optional[float] = None, upper: Optional[float] = None
-) -> Quantity:
-    """Like :meth:`.pandas.Series.clip`.
-
-    .. todo:: Move upstream, to :mod:`genno`.
-    """
-    from genno.operator import _preserve
-
-    return _preserve(
-        "attrs name units",
-        Quantity(qty.to_series().clip(lower=lower, upper=upper)),
-        qty,
-    )
+    return genno.Quantity(series)
 
 
 def cost(
-    price: Quantity,
-    gdp_ppp_cap: Quantity,
-    whours: Quantity,
-    speeds: Quantity,
-    votm: Quantity,
+    price: "AnyQuantity",
+    gdp_ppp_cap: "AnyQuantity",
+    whours: "AnyQuantity",
+    speeds: "AnyQuantity",
+    votm: "AnyQuantity",
     y: List[int],
-) -> Quantity:
+) -> "AnyQuantity":
     """Calculate cost of transport [money / distance].
 
     Calculated from two components:
@@ -256,7 +240,7 @@ def cost(
     return add(price, (gdp_ppp_cap * votm) / (speeds * whours)).sel(y=y)
 
 
-def distance_ldv(config: dict) -> Quantity:
+def distance_ldv(config: dict) -> "AnyQuantity":
     """Return annual driving distance per LDV.
 
     - Regions other than R11_NAM have M/F values in same proportion to their A value as
@@ -284,7 +268,7 @@ EEI_TECH_MAP = {
 }
 
 
-def distance_nonldv(config: dict) -> Quantity:
+def distance_nonldv(config: dict) -> "AnyQuantity":
     """Return annual travel distance per vehicle for non-LDV transport modes."""
     # Load from IEA EEI
     dfs = iea_eei.get_eei_data(config["regions"])
@@ -302,7 +286,7 @@ def distance_nonldv(config: dict) -> Quantity:
 
     # Rename IEA EEI technology IDs to model-internal ones
     result = relabel(
-        Quantity(df["value"], name="non-ldv distance", units=units),
+        genno.Quantity(df["value"], name="non-ldv distance", units=units),
         dict(t=EEI_TECH_MAP),
     )
 
@@ -314,7 +298,7 @@ def distance_nonldv(config: dict) -> Quantity:
     return result.sel(y=y_m1, drop=True)
 
 
-def dummy_prices(gdp: Quantity) -> Quantity:
+def dummy_prices(gdp: "AnyQuantity") -> "AnyQuantity":
     # Commodity prices: all equal to 0.1
 
     # Same coords/shape as `gdp`, but with c="transport"
@@ -322,10 +306,12 @@ def dummy_prices(gdp: Quantity) -> Quantity:
     coords.append(("c", ["transport"]))
     shape = list(len(c[1]) for c in coords)
 
-    return Quantity(xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km")
+    return genno.Quantity(
+        xr.DataArray(np.full(shape, 0.1), coords=coords), units="USD / km"
+    )
 
 
-def extend_y(qty: Quantity, y: List[int]) -> Quantity:
+def extend_y(qty: "AnyQuantity", y: List[int]) -> "AnyQuantity":
     """Extend `qty` along the "y" dimension to cover `y`."""
     y_ = set(y)
 
@@ -343,7 +329,7 @@ def extend_y(qty: Quantity, y: List[int]) -> Quantity:
     return MappingAdapter({"y": y_map})(qty.ffill("y"))  # type: ignore [attr-defined]
 
 
-def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
+def factor_fv(n: List[str], y: List[int], config: dict) -> "AnyQuantity":
     """Scaling factor for freight activity.
 
     If :attr:`.Config.project` is :data:`ScenarioFlags.ACT`, the value declines from
@@ -367,7 +353,7 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
     # - Convert to long format.
     # - Broadcast over all nodes `n`.
     # - Set dimensions as index.
-    return Quantity(
+    return genno.Quantity(
         df.infer_objects(copy=False)
         .ffill()
         .reset_index()
@@ -378,7 +364,9 @@ def factor_fv(n: List[str], y: List[int], config: dict) -> Quantity:
     )
 
 
-def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quantity:
+def factor_input(
+    y: List[int], t: List[Code], t_agg: Dict, config: dict
+) -> "AnyQuantity":
     """Scaling factor for ``input`` (energy intensity of activity).
 
     If :attr:`.Config.project` is :data:`ScenarioFlags.TEC`, the value declines from 1.0
@@ -424,14 +412,14 @@ def factor_input(y: List[int], t: List[Code], t_agg: Dict, config: dict) -> Quan
         for t_ in map(str, techs):
             df.loc[years, t_] = value.get(t_, 1.0)
 
-    qty = Quantity(
+    qty = genno.Quantity(
         df.infer_objects(copy=False).fillna(1.0).reset_index().set_index("y").stack()
     )
 
     return compound_growth(qty, "y")
 
 
-def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quantity:
+def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> "AnyQuantity":
     """Scaling factor for passenger activity.
 
     When :attr:`.Config.scenarios` includes :attr:`ScenarioFlags.ACT` (i.e. NAVIGATE
@@ -457,7 +445,7 @@ def factor_pdt(n: List[str], y: List[int], t: List[str], config: dict) -> Quanti
     # - Convert to long format.
     # - Broadcast over all nodes `n`.
     # - Set dimensions as index.
-    return Quantity(
+    return genno.Quantity(
         df.infer_objects(copy=False)
         .ffill()
         .reset_index()
@@ -476,7 +464,7 @@ def factor_ssp(
     *others: List,
     info: "message_data.model.transport.factor.Factor",
     extra_dims: Optional[Sequence[str]] = None,
-) -> Quantity:
+) -> "AnyQuantity":
     """Return a scaling factor for an SSP realization."""
     kw = dict(n=nodes, y=years, scenario=config["transport"].ssp)
     for dim, labels in zip(extra_dims or (), others):
@@ -539,7 +527,7 @@ def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
     return g0, g1, g2
 
 
-def input_commodity_level(t: List[Code], default_level=None) -> Quantity:
+def input_commodity_level(t: List[Code], default_level=None) -> "AnyQuantity":
     """Return a Quantity for broadcasting dimension (t) to (c, l) for ``input``.
 
     .. todo:: This essentially replaces :func:`.transport.util.input_commodity_level`,
@@ -576,12 +564,12 @@ def input_commodity_level(t: List[Code], default_level=None) -> Quantity:
 
     idx = pd.MultiIndex.from_frame(pd.DataFrame(data, columns=["t", "c", "l"]))
     s = pd.Series(1.0, index=idx)
-    return Quantity(s)
+    return genno.Quantity(s)
 
 
 def logit(
-    x: Quantity, k: Quantity, lamda: Quantity, y: List[int], dim: str
-) -> Quantity:
+    x: "AnyQuantity", k: "AnyQuantity", lamda: "AnyQuantity", y: List[int], dim: str
+) -> "AnyQuantity":
     r"""Compute probabilities for a logit random utility model.
 
     The choice probabilities have the form:
@@ -617,7 +605,7 @@ def merge_data(
     return {k: pd.concat([o.get(k, None) for o in others]) for k in keys}
 
 
-def iea_eei_fv(name: str, config: Dict) -> Quantity:
+def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
     """Returns base-year demand for freight from IEA EEI, with dimensions n-c-y."""
     result = iea_eei.as_quantity(name, config["regions"])
     ym1 = result.coords["y"].data[-1]
@@ -693,8 +681,8 @@ def nodes_world_agg(config, dim: Hashable = "nl") -> Dict[Hashable, Mapping]:
 
 
 def pdt_per_capita(
-    gdp_ppp_cap: Quantity, pdt_ref: Quantity, y0: int, config: dict
-) -> Quantity:
+    gdp_ppp_cap: "AnyQuantity", pdt_ref: "AnyQuantity", y0: int, config: dict
+) -> "AnyQuantity":
     """Compute passenger distance traveled (PDT) per capita.
 
     Per Schäfer et al. (2009) Figure 2.5: linear interpolation between (`gdp_ppp_cap`,
@@ -727,7 +715,7 @@ def pdt_per_capita(
     return add(m * gdp_delta, pdt_ref)
 
 
-def price_units(qty: Quantity) -> Quantity:
+def price_units(qty: "AnyQuantity") -> "AnyQuantity":
     """Forcibly adjust price units, if necessary."""
     target = "USD_2010 / km"
     if not qty.units.is_compatible_with(target):
@@ -737,16 +725,16 @@ def price_units(qty: Quantity) -> Quantity:
 
 def quantity_from_config(
     config: dict, name: str, dimensionality: Optional[Dict] = None
-) -> Quantity:
+) -> "AnyQuantity":
     if dimensionality:
         raise NotImplementedError
     result = getattr(config["transport"], name)
-    if not isinstance(result, Quantity):
+    if not isinstance(result, genno.Quantity):
         result = as_quantity(result)
     return result
 
 
-def relabel2(qty: Quantity, new_dims: dict):
+def relabel2(qty: "AnyQuantity", new_dims: dict):
     """Replace dimensions with new ones using label templates.
 
     .. todo:: Choose a more descriptive name.
@@ -794,14 +782,14 @@ def relabel2(qty: Quantity, new_dims: dict):
 
 
 def share_weight(
-    share: Quantity,
-    gdp: Quantity,
-    cost: Quantity,
-    lamda: Quantity,
+    share: "AnyQuantity",
+    gdp: "AnyQuantity",
+    cost: "AnyQuantity",
+    lamda: "AnyQuantity",
     t_modes: List[str],
     y: List[int],
     config: dict,
-) -> Quantity:
+) -> "AnyQuantity":
     """Calculate mode share weights.
 
     - In the base year (:py:`y[0]`), the weights for each |n| are as given in `share`.
@@ -896,10 +884,10 @@ def share_weight(
     # NB this will not work if yC is before the final period; it will leave NaN after yC
     weight = weight.interpolate_na(dim="y")
 
-    return Quantity(weight)
+    return genno.Quantity(weight)
 
 
-def smooth(qty: Quantity) -> Quantity:
+def smooth(qty: "AnyQuantity") -> "AnyQuantity":
     """Smooth `qty` (e.g. PRICE_COMMODITY) in the ``y`` dimension."""
     from genno.operator import add, concat
 
@@ -910,7 +898,7 @@ def smooth(qty: Quantity) -> Quantity:
 
     # Shorthand for weights
     def _w(values, years):
-        return Quantity(xr.DataArray(values, coords=[("y", years)]), units="")
+        return genno.Quantity(values, coords={"y": years}, units="")
 
     # First period
     r0 = (qty * _w([0.4, 0.4, 0.2], y[:3])).sum("y").expand_dims(dict(y=y[:1]))
@@ -946,7 +934,7 @@ def transport_data(*args):
     pass  # pragma: no cover
 
 
-def transport_check(scenario: "Scenario", ACT: Quantity) -> pd.Series:
+def transport_check(scenario: "Scenario", ACT: "AnyQuantity") -> pd.Series:
     """Reporting operator for :func:`.check`."""
     info = ScenarioInfo(scenario)
 
@@ -965,7 +953,7 @@ def transport_check(scenario: "Scenario", ACT: Quantity) -> pd.Series:
     return pd.Series(checks)
 
 
-def votm(gdp_ppp_cap: Quantity) -> Quantity:
+def votm(gdp_ppp_cap: "AnyQuantity") -> "AnyQuantity":
     """Calculate value of time multiplier.
 
     A value of 1 means the VoT is equal to the wage rate per hour.
@@ -979,15 +967,3 @@ def votm(gdp_ppp_cap: Quantity) -> Quantity:
     result = 1 / (1 + np.exp((30 - gdp_ppp_cap) / 20))
     result.units = ""
     return result
-
-
-def where(qty: Quantity, cond, other) -> Quantity:
-    """Like :meth:`.pandas.Series.where`.
-
-    .. todo:: Move upstream, to :mod:`genno`.
-    """
-    from genno.operator import _preserve
-
-    return _preserve(
-        "attrs name units", Quantity(qty.to_series().where(cond=cond, other=other)), qty
-    )
