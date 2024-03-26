@@ -23,12 +23,12 @@ jobs:
         - { os: windows-latest }
         # Versions of both ixmp and message_ix to use plus latest supported python version
         upstream:
-        - { python-version: "3.11", version: v3.4.0, extra-deps: '"genno < 1.25" "pandas < 2.0"' }  # Minimum version given in pyproject.toml
-        - { python-version: "3.11", version: v3.5.0, extra-deps: '"genno < 1.25" "pandas < 2.0"' }
-        - { python-version: "3.11", version: v3.6.0, extra-deps: '"genno < 1.25" "pandas < 2.0"' }
-        - { python-version: "3.11", version: v3.7.0, extra-deps: '"genno < 1.25" ' }
-        - { python-version: "3.12", version: v3.8.0, extra-deps: '' } # Latest released version
-        - { python-version: "3.12", version: main,   extra-deps: '' }  # Development version
+        - { python-version: "3.11", version: v3.4.0, extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0"' }  # Minimum version given in pyproject.toml
+        - { python-version: "3.11", version: v3.5.0, extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0"' }
+        - { python-version: "3.11", version: v3.6.0, extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0"' }
+        - { python-version: "3.11", version: v3.7.0, extra-deps: 'dask[dataframe] "genno < 1.25" ' }
+        - { python-version: "3.12", version: v3.8.0, extra-deps: 'dask[dataframe]' } # Latest released version
+        - { python-version: "3.12", version: main,   extra-deps: 'dask[dataframe]' }  # Development version
 
       fail-fast: false
 
