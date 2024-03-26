@@ -481,7 +481,8 @@ def prepare_data(
 
         # Convert back to a MESSAGE data frame
         dims = dict(commodity="c", node="n", level="l", year="y", time="h")
-        result.update(as_message_df(tmp, "demand", dims, {}))
+        # TODO Remove typing exclusion once message_ix is updated for genno 1.25
+        result.update(as_message_df(tmp, "demand", dims, {}))  # type: ignore [arg-type]
 
         # Copy technology parameter values from rc_spec and rc_therm to new afofi.
         # Again, once rc_(spec|therm) are stripped, .par() returns nothing here, so
