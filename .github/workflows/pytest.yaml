@@ -1,8 +1,6 @@
 name: Test
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main , "migrate-*"]
   schedule:
@@ -18,42 +16,41 @@ jobs:
   pytest:
     strategy:
       matrix:
-        # One job per OS; latest python version testable on GitHub actions.
-        # These should match the versions used in the "pytest" workflows of both
-        # ixmp and message_ix.
+        # One job per OS.
         version:
-        - { os: macos-latest, python: "3.11" }
-        - { os: ubuntu-latest, python: "3.11" }
-        - { os: windows-latest, python: "3.11" }
-        # Versions of both ixmp and message_ix to use
+        - { os: macos-latest }
+        - { os: ubuntu-latest }
+        - { os: windows-latest }
+        # Versions of both ixmp and message_ix to use plus latest supported python version
         upstream:
-        - { version: v3.4.0, extra-deps: '"pandas<2.0"' }  # Minimum version given in setup.cfg
-        - { version: v3.5.0, extra-deps: '"pandas<2.0"' }
-        - { version: v3.6.0, extra-deps: '"pandas<2.0"' }
-        - { version: v3.7.0, extra-deps: "" }  # Latest released version
-        - { version: main, extra-deps: "" }  # Development version
+        - { version: v3.4.0, extra-deps: '"pandas<2.0"', python-version: "3.11" }  # Minimum version given in pyproject.toml
+        - { version: v3.5.0, extra-deps: '"pandas<2.0"', python-version: "3.11" }
+        - { version: v3.6.0, extra-deps: '"pandas<2.0"', python-version: "3.11" }
+        - { version: v3.7.0, extra-deps: "", python-version: "3.11" }  
+        - { version: v3.8.0, extra-deps: "", python-version: "3.12" } # Latest released version
+        - { version: main, extra-deps: "", python-version: "3.12" }  # Development version
 
       fail-fast: false
 
     runs-on: ${{ matrix.version.os }}
-    name: ${{ matrix.version.os }}-py${{ matrix.version.python }}-upstream-${{ matrix.upstream.version }}
+    name: ${{ matrix.version.os }}-py${{ matrix.upstream.python-version }}-upstream-${{ matrix.upstream.version }}
 
     steps:
     - name: Cache test data
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: message-local-data
         key: ${{ matrix.version.os }}
 
     - name: Check out message-ix-models
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         lfs: true
         fetch-depth: ${{ env.depth }}
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.version.python }}
+        python-version: ${{ matrix.upstream.python-version }}
         cache: pip
         cache-dependency-path: "**/pyproject.toml"
 
@@ -62,7 +59,7 @@ jobs:
         version: 25.1.1
         license: ${{ secrets.GAMS_LICENSE }}
 
-    - uses: ts-graphviz/setup-graphviz@v1
+    - uses: ts-graphviz/setup-graphviz@v2
       with:
         macos-skip-brew-update: true
 
@@ -103,7 +100,9 @@ jobs:
       shell: bash
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # required
 
   pre-commit:
     name: Code quality
@@ -111,13 +110,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with: { python-version: "3.11" }
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with: { python-version: "3.12" }
 
     - name: Force recreation of pre-commit virtual environment for mypy
       if: github.event_name == 'schedule'  # Comment this line to run on a PR
       run: gh cache list -L 999 | cut -f2 | grep pre-commit | xargs -I{} gh cache delete "{}" || true
       env: { GH_TOKEN: "${{ github.token }}" }
 
-    - uses: pre-commit/action@v3.0.0
+    - uses: pre-commit/action@v3.0.1

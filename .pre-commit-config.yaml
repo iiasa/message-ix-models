@@ -8,7 +8,7 @@ repos:
     pass_filenames: false
 
     language: python
-    entry: bash -c ". ${PRE_COMMIT_MYPY_VENV:-/dev/null}/bin/activate 2>/dev/null; mypy $0 $@"
+    entry: bash -c ". ${PRE_COMMIT_MYPY_VENV:-/dev/null}/bin/activate 2>/dev/null; mypy $0 $@; python -m pip list"
     additional_dependencies:
     - mypy >= 1.8.0
     - plotnine
