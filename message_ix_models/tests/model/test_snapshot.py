@@ -13,10 +13,5 @@ log = logging.getLogger(__name__)
 @pytest.mark.skipif(
     condition=GHA and sys.platform in ("darwin", "win32"), reason="Slow."
 )
-def test_load(test_context, load_snapshots):
-    scenario_names = []
-
-    for scenario in load_snapshots:
-        scenario_names.append(scenario.scenario)
-
-    assert len(scenario_names) >= 2
+def test_load(test_context, load_snapshot):
+    assert load_snapshot.model == "MESSAGEix-GLOBIOM_1.1_R11_no-policy"

@@ -355,23 +355,24 @@ def not_ci(reason=None, action="skip"):
     return getattr(pytest.mark, action)(condition=GHA, reason=reason)
 
 
-# TODO Store unpacked data for snapshot-1 and make this fixture handle them
-def unpack_snapshot_data(context: Context, snapshot_id):
+def unpack_snapshot_data(context: Context, snapshot_id: int):
     """Already-unpacked data for a snapshot.
 
     This copies the .csv.gz files from message_ix_models/data/test/… to the directory
     where they *would* be unpacked by .model.snapshot._unpack. This causes the code to
     skip unpacking them, which can be very slow.
     """
-    if snapshot_id != 0:
+    if snapshot_id != 0 or snapshot_id != 1:
         log.info(f"No unpacked data for snapshot {snapshot_id}")
         return
 
-    dest = context.get_cache_path("MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline")
+    dest = context.get_cache_path(
+        "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline", f"v{snapshot_id}"
+    )
     log.debug(f"{dest = }")
 
     snapshot_data_path = util.package_data_path(
-        "test", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline"
+        "test", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline", f"v{snapshot_id}"
     )
     log.debug(f"{snapshot_data_path = }")
 
@@ -384,8 +385,8 @@ def unpack_snapshot_data(context: Context, snapshot_id):
         int(k.split("-")[1]) for k in util.pooch.SOURCE if k.startswith("snapshot")
     ],
 )
-def load_snapshots(request, session_context, solved: bool = False):
-    snapshot_id = request.param
+def load_snapshot(request, session_context, solved: bool = False):
+    snapshot_id: int = request.param
     assert snapshot_id is not None
     unpack_snapshot_data(context=session_context, snapshot_id=snapshot_id)
     model_name = "MESSAGEix-GLOBIOM_1.1_R11_no-policy"
@@ -395,7 +396,7 @@ def load_snapshots(request, session_context, solved: bool = False):
     try:
         base = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
     except ValueError:
-        log.info(f"Create '{model_name}/baseline' for testing")
+        log.info(f"Create '{model_name}/{scenario_name}' for testing")
         session_context.scenario_info.update(model=model_name, scenario=scenario_name)
         base = message_ix.Scenario(
             mp, model=model_name, scenario=scenario_name, version="new"
