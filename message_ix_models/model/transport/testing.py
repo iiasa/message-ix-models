@@ -69,7 +69,7 @@ def built_transport(
 
         # Optionally silence logs for code used via build.main()
         log_cm = (
-            silence_log(["genno", "message_data.model.transport", "message_ix_models"])
+            silence_log("genno message_data.model.transport message_ix_models")
             if quiet
             else nullcontext()
         )

@@ -5,10 +5,11 @@ from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache, partial
 from operator import itemgetter, le
-from typing import Any, Dict, List, Mapping
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
 
+import genno
 import pandas as pd
-from genno import Computer, Quantity, quote
+from genno import Computer, quote
 from genno.operator import load_file
 from message_ix import make_df
 from message_ix.report.operator import as_message_df
@@ -35,6 +36,9 @@ from sdmx.model.v21 import Code
 from .emission import ef_for_input
 from .operator import extend_y
 from .util import input_commodity_level
+
+if TYPE_CHECKING:
+    from genno.types import AnyQuantity
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +85,7 @@ def prepare_computer(c: Computer):
 
     # Reciprocal value, i.e. from  Gv km / GW a → GW a / Gv km
     k_eff = Key("ldv efficiency:t-y-n")
-    c.add(k_eff, "div", Quantity(1.0), k_fe)
+    c.add(k_eff, "div", genno.Quantity(1.0), k_fe)
 
     # Compute the input efficiency adjustment factor
     k2 = Key("transport input factor:t-y")
@@ -167,7 +171,7 @@ TABLES = {
 
 
 @cached
-def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, Quantity]:
+def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Mapping[str, "AnyQuantity"]:
     """Read the US-TIMES MA3T data from :data:`FILE`.
 
     No transformation is performed.
@@ -218,7 +222,7 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, Quantity]:
     # Combine data frames, convert to Quantity
     qty = {}
     for par_name, dfs in data.items():
-        qty[par_name] = Quantity(
+        qty[par_name] = genno.Quantity(
             pd.concat(dfs, ignore_index=True).set_index(["n", "t", "y"]),
             units=TABLES[par_name][1],
             name=par_name,
@@ -227,7 +231,7 @@ def read_USTIMES_MA3T(nodes: List[str], subdir=None) -> Dict[str, Quantity]:
     return qty
 
 
-def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, Quantity]:
+def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, "AnyQuantity"]:
     """Same as :func:`read_USTIMES_MA3T`, but from CSV files."""
     result = {}
     for name in "fix_cost", "fuel economy", "inv_cost":
@@ -243,7 +247,7 @@ def read_USTIMES_MA3T_2(nodes: Any, subdir=None) -> Dict[str, Quantity]:
 
 
 def get_USTIMES_MA3T(
-    context, efficiency: Quantity, inv_cost: Quantity, fix_cost: Quantity
+    context, efficiency: "AnyQuantity", inv_cost: "AnyQuantity", fix_cost: "AnyQuantity"
 ) -> Dict[str, pd.DataFrame]:
     """Prepare LDV data from US-TIMES and MA3T.
 
@@ -412,7 +416,7 @@ def get_dummy(context) -> Dict[str, pd.DataFrame]:
 
 
 def capacity_factor(
-    qty: Quantity, t_ldv: dict, y, y_broadcast: Quantity
+    qty: "AnyQuantity", t_ldv: dict, y, y_broadcast: "AnyQuantity"
 ) -> Dict[str, pd.DataFrame]:
     """Return capacity factor data for LDVs.
 
@@ -440,7 +444,8 @@ def capacity_factor(
 
     name = "capacity_factor"
     dims = dict(node_loc="n", year_vtg="yv", year_act="ya")
-    result = as_message_df(data, name, dims, dict(time="year"))
+    # TODO Remove typing exclusion once message_ix is updated for genno 1.25
+    result = as_message_df(data, name, dims, dict(time="year"))  # type: ignore [arg-type]
 
     result[name] = result[name].pipe(broadcast, technology=t_ldv["t"])
 
@@ -498,7 +503,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
 
 
 def usage_data(
-    load_factor: Quantity, nodes: List[str], context
+    load_factor: "AnyQuantity", nodes: List[str], context
 ) -> Mapping[str, pd.DataFrame]:
     """Generate data for LDV usage technologies.
 
@@ -519,10 +524,11 @@ def usage_data(
     # Apply load factor
     cols = list(data["output"].columns[:-2])
     unit = data["output"]["unit"].unique()[0]
+    rename = cast(Mapping, {"n": "node_loc", "y": "year_act"})
     data["output"] = (
         (
-            Quantity(data["output"].set_index(cols)["value"])
-            * load_factor.rename({"n": "node_loc", "y": "year_act"})
+            genno.Quantity(data["output"].set_index(cols)["value"])
+            * load_factor.rename(rename)
         )
         .to_dataframe()
         .reset_index()
