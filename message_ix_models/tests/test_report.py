@@ -250,7 +250,7 @@ def test_collapse(input, exp):
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
 
 
-def ss_reporter():
+def simulated_solution_reporter():
     """Reporter with a simulated solution for snapshot 0.
 
     This uses :func:`.add_simulated_solution`, so test functions that use it should be
@@ -275,7 +275,7 @@ def ss_reporter():
 @to_simulate.minimum_version
 def test_add_simulated_solution(test_context, test_data_path):
     # Simulated solution can be added to an empty Reporter
-    rep = ss_reporter()
+    rep = simulated_solution_reporter()
 
     # "out" can be calculated using "output" and "ACT" from files in `path`
     result = rep.get("out:*")
@@ -302,7 +302,7 @@ def test_add_simulated_solution(test_context, test_data_path):
 
 @to_simulate.minimum_version
 def test_prepare_reporter(test_context):
-    rep = ss_reporter()
+    rep = simulated_solution_reporter()
     N = len(rep.graph)
 
     # prepare_reporter() works on the simulated solution
