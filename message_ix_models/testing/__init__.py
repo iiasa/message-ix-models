@@ -362,7 +362,7 @@ def unpack_snapshot_data(context: Context, snapshot_id: int):
     where they *would* be unpacked by .model.snapshot._unpack. This causes the code to
     skip unpacking them, which can be very slow.
     """
-    if snapshot_id != 0 or snapshot_id != 1:
+    if snapshot_id != 0 and snapshot_id != 1:
         log.info(f"No unpacked data for snapshot {snapshot_id}")
         return
 
