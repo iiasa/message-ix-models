@@ -90,14 +90,15 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     # Code runs
     data = c.get("transport nonldv::ixmp")
 
-    print(data["bound_activity_lo"].to_string())
-
     # Data are provided for the these parameters
     exp_pars = {
         "bound_activity_lo",  # From .non_ldv.other(). For R11 this is empty.
         "capacity_factor",
         "emission_factor",
         "fix_cost",
+        "initial_new_capacity_up",
+        "growth_new_capacity_up",
+        "growth_activity_lo",
         "input",
         "inv_cost",
         "output",
