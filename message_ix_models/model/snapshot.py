@@ -108,7 +108,8 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     --------
     SNAPSHOTS
     """
-    path, *_ = fetch(**SOURCE[f"snapshot-{snapshot_id}"])
+    snapshot_name = f"snapshot-{snapshot_id}"
+    path, *_ = fetch(**SOURCE[snapshot_name], extra_cache_path=snapshot_name)
 
     # Add units
     spec = Spec()

@@ -367,12 +367,15 @@ def unpack_snapshot_data(context: Context, snapshot_id: int):
         return
 
     dest = context.get_cache_path(
-        "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline", f"v{snapshot_id}"
+        f"snapshot-{snapshot_id}",
+        "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
     )
     log.debug(f"{dest = }")
 
     snapshot_data_path = util.package_data_path(
-        "test", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline", f"v{snapshot_id}"
+        "test",
+        f"snapshot-{snapshot_id}",
+        "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
     )
     log.debug(f"{snapshot_data_path = }")
 
@@ -401,8 +404,7 @@ def load_snapshot(request, session_context, solved: bool = False):
         base = message_ix.Scenario(
             mp, model=model_name, scenario=scenario_name, version="new"
         )
-
-    snapshot.load(base, snapshot_id)
+        snapshot.load(base, snapshot_id)
 
     if solved and not base.has_solution():
         log.info("Solve")
