@@ -1,5 +1,5 @@
 report_config:
-    table_def: "message_data.tools.post_processing.default_tables"
+    table_def: "message_ix_models.report.legacy.default_tables"
     aggr_def: "default_aggregates.csv"
     var_def: "default_variable_definitions.csv"
     unit_yaml: "default_units.yaml"
