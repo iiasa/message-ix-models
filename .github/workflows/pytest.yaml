@@ -112,6 +112,91 @@ jobs:
     - name: Run test suite using pytest
       run: |
         pytest message_ix_models \
+          -m "not snapshot" \
+          -rA --verbose --color=yes --durations=20 \
+          --cov-report=term-missing --cov-report=xml \
+          --numprocesses=auto \
+          --local-cache --jvmargs="-Xmx6G"
+      shell: bash
+
+    - name: Upload test coverage to Codecov.io
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # required
+
+  snapshots:
+    strategy:
+      matrix:
+        os:
+        # - macos-latest
+        - ubuntu-latest
+        # - windows-latest
+        upstream:
+        # Same group structure as above
+        # Development version
+        - version: main
+          python-version: "3.12"
+          extra-deps: 'dask[dataframe]' #
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} snapshots
+
+    steps:
+    - name: Cache test data
+      uses: actions/cache@v4
+      with:
+        path: message-local-data
+        key: ${{ matrix.os }}
+
+    - name: Check out message-ix-models
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+        fetch-depth: ${{ env.depth }}
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.upstream.python-version }}
+        cache: pip
+        cache-dependency-path: "**/pyproject.toml"
+
+    - uses: iiasa/actions/setup-gams@main
+      with:
+        version: 25.1.1
+        license: ${{ secrets.GAMS_LICENSE }}
+
+    - uses: ts-graphviz/setup-graphviz@v2
+      with:
+        macos-skip-brew-update: true
+
+    - name: Install packages and dependencies
+      # By default, install:
+      # - ixmp, message_ix: from GitHub branches/tags per matrix.upstream-version (above)
+      # - other dependencies including genno: from PyPI.
+      #
+      # To test against unreleased code (on `main`, or other branches
+      # for open PRs), temporarily uncomment, add, or edit lines below
+      # as needed. DO NOT merge such changes to `main`.
+      run: |
+        # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
+        pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream.version }}"
+        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
+
+        pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
+
+    - name: Configure local data path
+      run: |
+        mkdir -p message-local-data/cache
+        mix-models config set "message local data" "$(realpath message-local-data)"
+        mix-models config show
+      shell: bash
+
+    - name: Run test suite using pytest
+      run: |
+        pytest message_ix_models \
+          -m "snapshot" \
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
           --numprocesses=auto \

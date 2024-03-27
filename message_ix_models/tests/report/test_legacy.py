@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 @pytest.mark.skipif(
     condition=GHA and sys.platform in ("darwin", "win32"), reason="Slow."
 )
+@pytest.mark.snapshot
 def test_legacy_report(test_context, load_snapshot):
     # TODO This probably shouldn't be hardcoded
     if load_snapshot.scenario == "baseline_v1":
