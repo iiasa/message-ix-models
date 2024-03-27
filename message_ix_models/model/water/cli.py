@@ -1,9 +1,13 @@
 import logging
+from typing import TYPE_CHECKING
 
 import click
 
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util.click import common_params
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -13,12 +17,12 @@ log = logging.getLogger(__name__)
 @common_params("regions")
 @click.option("--time", help="Manually defined time")
 @click.pass_obj
-def cli(context, regions, time):
+def cli(context: "Context", regions, time):
     """MESSAGEix-Water and Nexus variant."""
     water_ini(context, regions, time)
 
 
-def water_ini(context, regions, time):
+def water_ini(context: "Context", regions, time):
     """Add components of the MESSAGEix-Nexus module
 
     This function modifies model name & scenario name
@@ -61,7 +65,7 @@ def water_ini(context, regions, time):
     context.regions = regions
 
     # create a mapping ISO code :
-    # region name, for other scripts
+    # a region name, for other scripts
     # only needed for 1-country models
     nodes = get_codes(f"node/{context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
@@ -106,7 +110,7 @@ _REL = ["low", "med", "high"]
     help="Defines whether the model solves with macro",
 )
 @common_params("regions")
-def nexus_cli(context, regions, rcps, sdgs, rels, macro=False):
+def nexus_cli(context: "Context", regions, rcps, sdgs, rels, macro=False):
     """
     Add basin structure connected to the energy sector and
     water balance linking different water demands to supply.
@@ -115,7 +119,7 @@ def nexus_cli(context, regions, rcps, sdgs, rels, macro=False):
     nexus(context, regions, rcps, sdgs, rels, macro)
 
 
-def nexus(context, regions, rcps, sdgs, rels, macro=False):
+def nexus(context: "Context", regions, rcps, sdgs, rels, macro=False):
     """Add basin structure connected to the energy sector and
     water balance linking different water demands to supply.
 
@@ -259,7 +263,7 @@ def cooling(context, regions, rcps, rels):
     help="Default running legacy and water (full) otherwise only water, if specified",
 )
 @common_params("output_model")
-def report_cli(context, output_model, sdgs, water=False):
+def report_cli(context: "Context", output_model, sdgs, water=False):
     """function to run the water report_full from cli to the
     scenario defined by the user with --url
 
@@ -272,7 +276,7 @@ def report_cli(context, output_model, sdgs, water=False):
     SDG : Str
         Defines if and what water SDG measures are activated
     """
-    reg = context.regions
+    reg = context.model.regions
     sc = context.get_scenario()
     if water:
         from message_ix_models.model.water.reporting import report
