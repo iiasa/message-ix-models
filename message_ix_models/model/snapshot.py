@@ -120,4 +120,9 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     with scenario.transact("Prepare scenario for snapshot data"):
         MACRO.initialize(scenario)
 
-    read_excel(scenario, path)
+    if snapshot_id == 0:
+        # Needs correction of units
+        read_excel(scenario, path)
+    elif snapshot_id == 1:
+        # Should contain only valid units
+        scenario.read_excel(path, add_units=True, init_items=True)
