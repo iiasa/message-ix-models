@@ -116,6 +116,9 @@ no_implicit_optional = false
 # Disable faulthandler plugin on Windows to prevent spurious console noise
 addopts = "-p no:faulthandler --cov=message_ix_models --cov-report="
 filterwarnings = "ignore:distutils Version classes.*:DeprecationWarning"
+markers = [
+  "snapshot: Slow tests using the public MESSAGEix-GLOBIOM baseline snapshot",
+]
 
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
