@@ -208,6 +208,8 @@ def add_simulated_solution(
                 continue
 
             # Add a task to simulate data for this quantity
+            # NB data.get() can return None, but simulate_qty() needs item_data to not
+            # be None
             rep.add(
                 key,
                 simulate_qty,

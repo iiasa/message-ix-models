@@ -265,7 +265,9 @@ def simulated_solution_reporter():
         rep,
         ScenarioInfo(),
         path=package_data_path(
-            "test", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline", "v0"
+            "test",
+            "snapshot-0",
+            "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
         ),
     )
 
