@@ -97,7 +97,7 @@ def report(
     model_nm = model_out if model_out else scen.model
     scen_nm = scenario_out if scenario_out else scen.scenario
     run_history = ref_sol
-    path = package_data_path("report")
+    path = package_data_path("report", "legacy")
 
     # ----------------------------
     # Read reporting configuration
@@ -401,7 +401,7 @@ def report(
             df = df.drop("subannual", axis=1)
 
     if not out_dir:
-        out_dir = package_data_path("reporting_output")
+        out_dir = package_data_path("report", "legacy", "reporting_output")
     else:
         out_dir = Path(out_dir)
     if not out_dir.exists():
