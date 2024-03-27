@@ -111,18 +111,22 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     snapshot_name = f"snapshot-{snapshot_id}"
     path, *_ = fetch(**SOURCE[snapshot_name], extra_cache_path=snapshot_name)
 
-    # Add units
-    spec = Spec()
-    spec.add.set["unit"] = get_codes("unit/snapshot")
-    apply_spec(scenario, spec)
-
-    # Initialize MACRO items
-    with scenario.transact("Prepare scenario for snapshot data"):
-        MACRO.initialize(scenario)
-
     if snapshot_id == 0:
         # Needs correction of units
+        # Add units
+        spec = Spec()
+        spec.add.set["unit"] = get_codes("unit/snapshot")
+        apply_spec(scenario, spec)
+
+        # Initialize MACRO items
+        with scenario.transact("Prepare scenario for snapshot data"):
+            MACRO.initialize(scenario)
+
         read_excel(scenario, path)
     elif snapshot_id == 1:
         # Should contain only valid units
+        # Initialize MACRO items
+        with scenario.transact("Prepare scenario for snapshot data"):
+            MACRO.initialize(scenario)
+
         scenario.read_excel(path, add_units=True, init_items=True)
