@@ -120,9 +120,11 @@ markers = [
   "snapshot: Slow tests using the public MESSAGEix-GLOBIOM baseline snapshot",
 ]
 
+[tool.ruff]
+exclude = ["message_ix_models/report/legacy/"]
+
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
-exclude = ["message_ix_models/report/legacy/"]
 # Exceptions:
 # - .tools.wb.assign_income_groups(): 12 > 11
 # - .util.sdmx.as_codes(): 13 > 11
