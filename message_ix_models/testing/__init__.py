@@ -393,7 +393,7 @@ def load_snapshot(request, session_context, solved: bool = False):
     assert snapshot_id is not None
     unpack_snapshot_data(context=session_context, snapshot_id=snapshot_id)
     model_name = "MESSAGEix-GLOBIOM_1.1_R11_no-policy"
-    scenario_name = f"baseline_v{snapshot_id}"
+    scenario_name = "baseline"
     mp = session_context.get_platform()
 
     try:
@@ -404,7 +404,11 @@ def load_snapshot(request, session_context, solved: bool = False):
         base = message_ix.Scenario(
             mp, model=model_name, scenario=scenario_name, version="new"
         )
-        snapshot.load(base, snapshot_id)
+        snapshot.load(
+            scenario=base,
+            snapshot_id=snapshot_id,
+            extra_cache_path=f"snapshot-{snapshot_id}/{model_name}_{scenario_name}",
+        )
 
     if solved and not base.has_solution():
         log.info("Solve")
