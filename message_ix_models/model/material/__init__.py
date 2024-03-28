@@ -5,12 +5,11 @@ import click
 import logging
 import ixmp
 import os
-import message_ix_models.tools.costs.projections
 
+import message_ix_models.tools.costs.projections
 from message_data.model.material.build import apply_spec
 from message_ix_models import ScenarioInfo
 from message_ix_models.util import add_par_data, private_data_path
-
 from message_data.model.material.data_buildings import gen_data_buildings
 from message_data.tools.utilities import (
     calibrate_UE_gr_to_demand,

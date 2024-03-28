@@ -115,7 +115,7 @@ def gen_data_steel(scenario, dry_run=False):
     # Load configuration
     context = read_config()
     config = context["material"]["steel"]
-
+    ssp = context["ssp"]
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
 
@@ -528,7 +528,7 @@ def gen_data_steel(scenario, dry_run=False):
     # Create external demand param
     parname = "demand"
 
-    df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False)
+    df = material_demand_calc.derive_demand("steel", scenario, old_gdp=False, ssp=ssp)
     results[parname].append(df)
 
     # Concatenate to one data frame per parameter
