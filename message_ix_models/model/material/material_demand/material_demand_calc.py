@@ -10,13 +10,40 @@ file_steel = "/STEEL_database_2012.xlsx"
 file_al = "/demand_aluminum.xlsx"
 file_gdp = "/iamc_db ENGAGE baseline GDP PPP.xlsx"
 
-giga = 10**9
-mega = 10**6
+giga = 10 ** 9
+mega = 10 ** 6
 
 material_data = {
     "aluminum": {"dir": "aluminum", "file": "/demand_aluminum.xlsx"},
     "steel": {"dir": "steel_cement", "file": "/STEEL_database_2012.xlsx"},
     "cement": {"dir": "steel_cement", "file": "/CEMENT.BvR2010.xlsx"},
+}
+
+ssp_mode_map = {
+    "SSP1": "low",
+    "SSP2": "normal",
+    "SSP3": "high",
+    "SSP4": "normal",
+    "SSP5": "high",
+    "LED": "low",
+}
+
+mode_modifiers_dict = {
+    "low": {
+        "steel": {"a": 0.85, "b": 0.95},
+        "cement": {"a": 0.8},
+        "aluminum": {"a": 0.85, "b": 0.95},
+    },
+    "normal": {
+        "steel": {"a": 1, "b": 1},
+        "cement": {"a": 1},
+        "aluminum": {"a": 1, "b": 1},
+    },
+    "high": {
+        "steel": {"a": 1.3, "b": 1},
+        "cement": {"a": 1.3},
+        "aluminum": {"a": 1.3, "b": 1},
+    }
 }
 
 
@@ -96,9 +123,9 @@ def project_demand(df, phi, mu):
     df_demand = df.groupby("region", group_keys=False).apply(
         lambda group: group.assign(
             demand_pcap_base=group["demand.tot.base"].iloc[0]
-            * giga
-            / group["pop.mil"].iloc[0]
-            / mega
+                             * giga
+                             / group["pop.mil"].iloc[0]
+                             / mega
         )
     )
     df_demand = df_demand.groupby("region", group_keys=False).apply(
@@ -109,7 +136,7 @@ def project_demand(df, phi, mu):
     df_demand = df_demand.groupby("region", group_keys=False).apply(
         lambda group: group.assign(
             demand_pcap=group["demand_pcap0"]
-            + group["gap_base"] * gompertz(phi, mu, y=group["year"])
+                        + group["gap_base"] * gompertz(phi, mu, y=group["year"])
         )
     )
     df_demand = (
@@ -221,7 +248,7 @@ def read_hist_mat_demand(material):
             pd.merge(df_raw_cons, df_pop.drop("region", axis=1), on=["reg_no", "year"])
             .merge(df_gdp[["reg_no", "year", "gdp_pcap"]], on=["reg_no", "year"])
             .assign(
-                cons_pcap=lambda x: x["consumption"] / x["pop"] / 10**6,
+                cons_pcap=lambda x: x["consumption"] / x["pop"] / 10 ** 6,
                 del_t=lambda x: x["year"].astype(int) - 2010,
             )
             .dropna()
@@ -271,7 +298,7 @@ def read_gdp_ppp_from_scen(scen):
     return gdp
 
 
-def derive_demand(material, scen, old_gdp=False):
+def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
     datapath = message_ix_models.util.private_data_path("material")
 
     # read pop projection from scenario
@@ -308,6 +335,12 @@ def derive_demand(material, scen, old_gdp=False):
         ydata=df_cons["cons_pcap"],
         p0=fitting_dict[material]["initial_guess"],
     )
+    mode = ssp_mode_map[ssp]
+    print(f"adjust regression parameters according to mode: {mode}")
+    print(f"before adjustment: {params_opt}")
+    for idx, multiplier in enumerate(mode_modifiers_dict[mode][material].values()):
+        params_opt[idx] *= multiplier
+    print(f"before adjustment: {params_opt}")
 
     # prepare df for applying regression model and project demand
     df_all = pd.merge(df_pop, df_base_demand.drop(columns=["year"]), how="left")

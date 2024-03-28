@@ -66,12 +66,12 @@ def print_full(x):
 
 
 def gen_data_aluminum(scenario, dry_run=False):
-
-    config = read_config()["material"]["aluminum"]
+    context = read_config()
+    config = context["material"]["aluminum"]
 
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
-
+    ssp = context["ssp"]
     # Techno-economic assumptions
     data_aluminum, data_aluminum_rel, data_aluminum_ts = read_data_aluminum(scenario)
     # List of data frames, to be concatenated together at end
@@ -280,7 +280,7 @@ def gen_data_aluminum(scenario, dry_run=False):
 
     # Create external demand param
     parname = "demand"
-    df = material_demand_calc.derive_demand("aluminum", scenario, old_gdp=False)
+    df = material_demand_calc.derive_demand("aluminum", scenario, old_gdp=False, ssp=ssp)
     results[parname].append(df)
 
     # Special treatment for time-varying params

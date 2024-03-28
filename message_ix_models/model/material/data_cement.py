@@ -1,12 +1,12 @@
-from .data_util import read_sector_data, read_timeseries
-
-from collections import defaultdict
-from pathlib import Path
-
+import ixmp
+import message_ix
 import pandas as pd
 
-from .material_demand import material_demand_calc
-from .util import read_config
+from collections import defaultdict
+
+from message_data.model.material.data_util import read_sector_data, read_timeseries
+from message_data.model.material.material_demand import material_demand_calc
+from message_data.model.material.util import read_config
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
@@ -175,10 +175,10 @@ def gen_data_cement(scenario, dry_run=False):
     # Load configuration
     context = read_config()
     config = read_config()["material"]["cement"]
-
+    ssp = context["ssp"]
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
-
+    context.datafile = "Global_steel_cement_MESSAGE.xlsx"
     # Techno-economic assumptions
     # TEMP: now add cement sector as well
     data_cement = read_sector_data(scenario, "cement")
@@ -385,7 +385,7 @@ def gen_data_cement(scenario, dry_run=False):
     #     time="year",
     #     node=demand.node,
     # )
-    df = material_demand_calc.derive_demand("cement", scenario, old_gdp=False)
+    df = material_demand_calc.derive_demand("cement", scenario, old_gdp=False, ssp=ssp)
     results[parname].append(df)
 
     # Add CCS as addon
@@ -408,6 +408,11 @@ def gen_data_cement(scenario, dry_run=False):
 
     return results
 
+
+if __name__ == "__main__":
+    mp = ixmp.Platform("local")
+    scenario = message_ix.Scenario(mp,"MESSAGEix-Materials", "baseline")
+    gen_data_cement(scenario)
 
 # # load rpy2 modules
 # import rpy2.robjects as ro
