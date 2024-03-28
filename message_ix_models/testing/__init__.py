@@ -407,7 +407,7 @@ def load_snapshot(request, session_context, solved: bool = False):
         snapshot.load(
             scenario=base,
             snapshot_id=snapshot_id,
-            extra_cache_path=f"snapshot-{snapshot_id}/{model_name}_baseline",
+            extra_cache_path=f"snapshot-{snapshot_id}",
         )
 
     if solved and not base.has_solution():
