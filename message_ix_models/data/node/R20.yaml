@@ -16,41 +16,49 @@ R20_AFR:
   parent: World
   name: Sub-Saharan Africa
   child: [AGO, BDI, BEN, BFA, BWA, CAF, CIV, CMR, COD, COG, COM, CPV, DJI, ERI, ETH, GAB, GHA, GIN, GMB, GNB, GNQ, KEN, LBR, LSO, MDG, MLI, MOZ, MRT, MUS, MWI, MYT, NAM, NER, NGA, REU, RWA, SEN, SHN, SLE, SOM, STP, SWZ, SYC, TCD, TGO, TZA, UGA, ZAF, ZMB, ZWE]
+  iea-weo-region: Africa
 
 R20_CHN:
   parent: World
   name: China
   child: [CHN, HKG]
+  iea-weo-region: China
 
 R20_PRK:
   parent: World
   name: North Korea
   child: [PRK]
+  iea-weo-region: Russia
 
 R20_MNG:
   parent: World
   name: Mongolia
   child: [MNG]
+  iea-weo-region: Russia
 
 R20_MSA:
   parent: World
   name: Mainland Southeast Asia
   child: [KHM, LAO, VNM]
+  iea-weo-region: India
 
 R20_JPN:
   parent: World
   name: Japan
   child: [JPN]
+  iea-weo-region: Japan
 
 R20_AUNZ:
   parent: World
   name: Australia and New Zealand
   child: [AUS, NZL]
+  iea-weo-region: Japan
 
 R20_KOR:
   parent: World
   name: South Korea
   child: [KOR]
+  iea-weo-region: China
 
 R20_SEA:
   parent: World
@@ -59,11 +67,13 @@ R20_SEA:
     Trust Territory of the Pacific Islands (PCI) still included in this list,
     but it was dissolved into MHL, FSM, MNP and PLW in 1986.
   child: [ASM, BRN, CCK, COK, CXR, FJI, FSM, IDN, KIR, MAC, MHL, MMR, MNP, MYS, NCL, NFK, NIU, NRU, PCI, PCN, PHL, PLW, PNG, PYF, SGP, SLB, THA, TKL, TLS, TON, TUV, TWN, VUT, WLF, WSM]
+  iea-weo-region: India
 
 R20_RUBY:
   parent: World
   name: Russia and Belarus
   child: [RUS, BLR]
+  iea-weo-region: Russia
 
 R20_UMBA:
   parent: World
@@ -72,21 +82,25 @@ R20_UMBA:
     Serbia and Montenegro (SCG) and Yugoslavia (YUG) still included in this list,
     even though their ISO 3166-1 codes were deleted in 2006 and 2003, respectively.
   child: [ALB, BGR, BIH, MDA, MKD, MNE, SCG, SRB, UKR, YUG, XKO]
+  iea-weo-region: Russia
 
 R20_CAS:
   parent: World
   name: Centra Asia
   child: [ KAZ, KGZ, TJK, TKM, UZB]
+  iea-weo-region: Russia
 
 R20_SCST:
   parent: World
   name: South Caucasus and Turkey
   child: [ARM, AZE,  GEO,  TUR]
+  iea-weo-region: European Union
 
 R20_EEU27:
   parent: World
   name: Central and Eastern Europe (EU27)
   child: [CZE, EST, HRV, HUN, LTU, LVA, POL, ROU, SVK, SVN]
+  iea-weo-region: European Union
 
 R20_LAM:
   parent: World
@@ -95,28 +109,34 @@ R20_LAM:
     The source includes “Netherlands Antilles” which has a provisional ISO 3166-2 alpha-3 code (ANT),
     but is not a country. It was dissolved in 2010 into BES, CUW and SXM, also included.
   child: [ABW, AIA, ANT, ARG, ATG, BES, BHS, BLZ, BMU, BOL, BRA, BRB, CHL, COL, CRI, CUB, CUW, CYM, DMA, DOM, ECU, FLK, GLP, GRD, GTM, GUF, GUY, HND, HTI, JAM, KNA, LCA, MEX, MSR, MTQ, NIC, PAN, PER, PRY, SLV, SUR, SXM, TCA, TTO, URY, VCT, VEN, VGB]
+  iea-weo-region: Brazil
 
 R20_MEA:
   parent: World
   name: Middle East and North Africa
   child: [ARE, BHR, DZA, EGY, ESH, IRN, IRQ, ISR, JOR, KWT, LBN, LBY, MAR, OMN, PSE, QAT, SAU, SDN, SSD, SYR, TUN, YEM]
+  iea-weo-region: Middle East
 
 R20_NAM:
   parent: World
   name: North America
   child: [CAN, GUM, PRI, SPM, USA, VIR]
+  iea-weo-region: United States
 
 R20_SAS:
   parent: World
   name: South Asia
   child: [AFG, BGD, BTN, IND, LKA, MDV, NPL, PAK]
+  iea-weo-region: India
 
 R20_WEU27:
   parent: World
   name: Western Europe (EU27)
   child: [AND, AUT, BEL, CYP, DEU, DNK, ESP, FIN, FRA, FRO, GIB, GRC, GRL, IMN, IRL, ITA, LUX, MCO, MLT, NLD, PRT, SJM, SMR, SWE, VAT]
+  iea-weo-region: European Union
 
 R20_UKEFT:
   parent: World
   name: UK and European Free Trade Association
   child: [GBR, ISL, CHE, NOR, LIE]
+  iea-weo-region: European Union

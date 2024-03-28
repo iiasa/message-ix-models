@@ -161,7 +161,7 @@ class SSPUpdate(ExoDataSource):
 
         # Identify the data release date/version/label
         release = source_kw.pop("release", "3.0")
-
+        print(source_kw)
         self.raise_on_extra_kw(source_kw)
 
         # Replacements to apply, if any

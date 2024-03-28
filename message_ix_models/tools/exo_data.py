@@ -73,6 +73,7 @@ class ExoDataSource(ABC):
         It **should not** actually load data or perform any time- or memory-intensive
         operations; these should only be triggered by :meth:`.__call__`.
         """
+
         raise ValueError
 
     @abstractmethod
@@ -115,6 +116,8 @@ class ExoDataSource(ABC):
 
     def raise_on_extra_kw(self, kwargs) -> None:
         """Helper for subclasses."""
+        self.name = kwargs.pop("name", self.name)
+
         if len(kwargs):
             log.error(
                 f"Unhandled extra keyword arguments for {type(self).__name__}: "
