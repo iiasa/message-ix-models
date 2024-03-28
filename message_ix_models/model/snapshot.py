@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from message_ix import Scenario
@@ -101,22 +102,34 @@ def read_excel(scenario: Scenario, path: Path) -> None:
 
 
 @minimum_version("message_ix 3.5")
-def load(scenario: Scenario, snapshot_id: int) -> None:
+def load(
+    scenario: Scenario, snapshot_id: int, extra_cache_path: Optional[str] = None
+) -> None:
     """Fetch and load snapshot with ID `snapshot_id` into `scenario`.
 
     See also
     --------
     SNAPSHOTS
     """
-    path, *_ = fetch(**SOURCE[f"snapshot-{snapshot_id}"])
+    snapshot_name = f"snapshot-{snapshot_id}"
+    path, *_ = fetch(**SOURCE[snapshot_name], extra_cache_path=extra_cache_path)
 
-    # Add units
-    spec = Spec()
-    spec.add.set["unit"] = get_codes("unit/snapshot")
-    apply_spec(scenario, spec)
+    if snapshot_id == 0:
+        # Needs correction of units
+        # Add units
+        spec = Spec()
+        spec.add.set["unit"] = get_codes("unit/snapshot")
+        apply_spec(scenario, spec)
 
-    # Initialize MACRO items
-    with scenario.transact("Prepare scenario for snapshot data"):
-        MACRO.initialize(scenario)
+        # Initialize MACRO items
+        with scenario.transact("Prepare scenario for snapshot data"):
+            MACRO.initialize(scenario)
 
-    read_excel(scenario, path)
+        read_excel(scenario, path)
+    elif snapshot_id == 1:
+        # Should contain only valid units
+        # Initialize MACRO items
+        with scenario.transact("Prepare scenario for snapshot data"):
+            MACRO.initialize(scenario)
+
+        scenario.read_excel(path, add_units=True, init_items=True)
