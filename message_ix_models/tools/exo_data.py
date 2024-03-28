@@ -79,7 +79,8 @@ class ExoDataSource(ABC):
         It **should not** actually load data or perform any time- or memory-intensive
         operations; these should only be triggered by :meth:`.__call__`.
         """
-        raise NotImplementedError
+
+        raise ValueError
 
     @abstractmethod
     def __call__(self) -> Quantity:
