@@ -109,7 +109,9 @@ def load(scenario: Scenario, snapshot_id: int) -> None:
     SNAPSHOTS
     """
     snapshot_name = f"snapshot-{snapshot_id}"
-    path, *_ = fetch(**SOURCE[snapshot_name], extra_cache_path=snapshot_name)
+    path, *_ = fetch(
+        **SOURCE[snapshot_name], extra_cache_path=f"{snapshot_name}/{scenario.model}"
+    )
 
     if snapshot_id == 0:
         # Needs correction of units
