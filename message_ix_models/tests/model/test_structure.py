@@ -224,7 +224,7 @@ def test_cli_techs(session_context, mix_models_cli):
     result = mix_models_cli.assert_exit_0(["techs"])
 
     # Result test
-    assert result.output.endswith("[5 rows x 8 columns]\n")
+    assert "\n[5 rows x 8 columns]\n" in result.output
 
     # Path to the temporary file written by the command
     path = Path(re.search("Write to (.*.csv)", result.output)[1])

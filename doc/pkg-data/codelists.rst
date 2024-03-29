@@ -1,6 +1,8 @@
 Other code lists
 ****************
 
+These codelists correspond to :doc:`sets in the generic MESSAGE IAM formulation <message-ix:model/MESSAGE/sets_maps_def>` with the same names.
+
 .. contents::
    :local:
 
@@ -9,12 +11,16 @@ Other code lists
 Commodities (``commodity.yaml``)
 ================================
 
-Each of these codes has the following annotations:
+These codes have the following annotations:
 
-``level``
+``level`` (mandatory)
    Level where this commodity typically (not exclusively) occurs.
-``unit``
+``units`` (mandatory)
    Units typically associated with this commodity.
+``iea-eweb-flow`` (optional)
+   List of ``FLOW`` codes from the IEA :ref:`tools-iea-web` associated with this MESSAGEix-GLOBIOM commodity.
+``iea-eweb-product`` (optional)
+   List of ``PRODUCT`` codes from the IEA :ref:`tools-iea-web` associated with this MESSAGEix-GLOBIOM commodity.
 
 .. literalinclude:: ../../message_ix_models/data/commodity.yaml
    :language: yaml

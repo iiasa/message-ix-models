@@ -1,4 +1,5 @@
 import pytest
+from genno import Computer
 
 from message_ix_models.project.ssp import (
     SSP,
@@ -8,12 +9,16 @@ from message_ix_models.project.ssp import (
     parse,
     ssp_field,
 )
+from message_ix_models.project.ssp.data import SSPUpdate  # noqa: F401
+from message_ix_models.tools.exo_data import prepare_computer
 
 
 def test_generate(tmp_path, test_context):
+    # Function runs
     generate(test_context, base_dir=tmp_path)
 
-    assert 3 == len(list(tmp_path.glob("*.xml")))
+    # Two XML files are created
+    assert 2 == len(list(tmp_path.glob("*.xml")))
 
 
 def test_enum():
@@ -81,3 +86,90 @@ def test_ssp_field() -> None:
 
 def test_cli(mix_models_cli):
     mix_models_cli.assert_exit_0(["ssp", "gen-structures", "--dry-run"])
+
+
+class TestSSPOriginal:
+    @pytest.mark.parametrize(
+        "source",
+        (
+            "ICONICS:SSP(2017).1",
+            "ICONICS:SSP(2017).2",
+            "ICONICS:SSP(2017).3",
+            "ICONICS:SSP(2017).4",
+            "ICONICS:SSP(2017).5",
+        ),
+    )
+    @pytest.mark.parametrize(
+        "source_kw",
+        (
+            dict(measure="POP", model="OECD Env-Growth"),
+            dict(measure="GDP", model="OECD Env-Growth"),
+            # Excess keyword arguments
+            pytest.param(
+                dict(measure="GDP", model="OECD Env-Growth", foo="bar"),
+                marks=pytest.mark.xfail(raises=ValueError),
+            ),
+        ),
+    )
+    def test_prepare_computer(self, test_context, source, source_kw):
+        # FIXME The following should be redundant, but appears mutable on GHA linux and
+        #       Windows runners.
+        test_context.model.regions = "R14"
+
+        c = Computer()
+
+        keys = prepare_computer(test_context, c, source, source_kw)
+
+        # Preparation of data runs successfully
+        result = c.get(keys[0])
+
+        # Data has the expected dimensions
+        assert ("n", "y") == result.dims
+
+        # Data is complete
+        assert 14 == len(result.coords["n"])
+        assert 14 == len(result.coords["y"])
+
+
+class TestSSPUpdate:
+    @pytest.mark.parametrize(
+        "source",
+        (
+            "ICONICS:SSP(2024).1",
+            "ICONICS:SSP(2024).2",
+            "ICONICS:SSP(2024).3",
+            "ICONICS:SSP(2024).4",
+            "ICONICS:SSP(2024).5",
+        ),
+    )
+    @pytest.mark.parametrize(
+        "source_kw",
+        (
+            dict(measure="POP"),
+            dict(measure="GDP", model="IIASA GDP 2023"),
+            dict(measure="GDP", model="OECD ENV-Growth 2023"),
+            # Excess keyword arguments
+            pytest.param(
+                dict(measure="POP", foo="bar"),
+                marks=pytest.mark.xfail(raises=ValueError),
+            ),
+        ),
+    )
+    def test_prepare_computer(self, test_context, source, source_kw):
+        # FIXME The following should be redundant, but appears mutable on GHA linux and
+        #       Windows runners.
+        test_context.model.regions = "R14"
+
+        c = Computer()
+
+        keys = prepare_computer(test_context, c, source, source_kw)
+
+        # Preparation of data runs successfully
+        result = c.get(keys[0])
+
+        # Data has the expected dimensions
+        assert ("n", "y") == result.dims
+
+        # Data is complete
+        assert 14 == len(result.coords["n"])
+        assert 14 == len(result.coords["y"])

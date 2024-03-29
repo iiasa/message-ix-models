@@ -4,13 +4,16 @@ These are used for building CLIs using :mod:`click`.
 """
 import logging
 from datetime import datetime
-from typing import Optional, Union
+from pathlib import Path
+from typing import Callable, List, Optional, Union
 
 import click
 from click import Argument, Choice, Option
 
-from message_ix_models import Context
+from message_ix_models import Context, model
 from message_ix_models.model.structure import codelists
+
+from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +59,32 @@ def default_path_cb(*default_parts):
     return _callback
 
 
+def exec_cb(expression: str) -> Callable:
+    """Return a callback that :func:`exec`-utes an `expression`.
+
+    The `expression` is executed in a limited context that has only two names available:
+
+    - :py:`context`: the :class:`.Context` instance.
+    - :py:`value`: the value passed to the :mod:`click.Parameter`.
+
+    Example
+    -------
+    >>> @click.command
+    ... @click.option(
+    ...     "--myopt", callback=exec_cb("context.my_mod.my_opt = value + 3")
+    ... )
+    ... def cmd(...):
+    ...     ...
+    """
+
+    def _cb(context: Union[click.Context, Context], param, value):
+        ctx = context.obj if isinstance(context, click.Context) else context
+        exec(expression, {}, {"context": ctx, "value": value})
+        return value
+
+    return _cb
+
+
 def format_sys_argv() -> str:
     """Format :data:`sys.argv` in a readable manner."""
     import sys
@@ -81,6 +110,26 @@ def store_context(context: Union[click.Context, Context], param, value):
         value,
     )
     return value
+
+
+def urls_from_file(
+    context: Union[click.Context, Context], param, value
+) -> List[ScenarioInfo]:
+    """Callback to parse scenario URLs from `value`."""
+    si: List[ScenarioInfo] = []
+
+    if value is None:
+        return si
+
+    with click.open_file(value) as f:
+        for line in f:
+            si.append(ScenarioInfo.from_url(url=line))
+
+    # Store on context
+    mm_context = context.obj if isinstance(context, click.Context) else context
+    mm_context.core.scenarios = si
+
+    return si
 
 
 def unique_id() -> str:
@@ -119,12 +168,14 @@ PARAMS = {
     "dest": Option(
         ["--dest"],
         callback=store_context,
+        expose_value=False,
         help="Destination URL for created scenario(s).",
     ),
     "dry_run": Option(
         ["--dry-run"],
         is_flag=True,
         callback=store_context,
+        expose_value=False,
         help="Only show what would be done.",
     ),
     "force": Option(
@@ -136,7 +187,10 @@ PARAMS = {
     "nodes": Option(
         ["--nodes"],
         help="Code list to use for 'node' dimension.",
+        callback=exec_cb("context.model.regions = value"),
         type=Choice(codelists("node")),
+        default=model.Config.regions,
+        expose_value=False,
     ),
     "output_model": Option(
         ["--output-model"], help="Model name under which scenarios should be generated."
@@ -150,11 +204,13 @@ PARAMS = {
     "quiet": Option(
         ["--quiet"],
         is_flag=True,
+        expose_value=False,
         help="Show less or no output.",
     ),
     "regions": Option(
         ["--regions"],
         help="Code list to use for 'node' dimension.",
+        callback=exec_cb("context.model.regions = value or context.model.regions"),
         type=Choice(codelists("node")),
     ),
     "rep_out_path": Option(
@@ -178,6 +234,17 @@ PARAMS = {
     "ssp": Argument(
         ["ssp"], callback=store_context, type=Choice(["SSP1", "SSP2", "SSP3"])
     ),
+    "urls_from_file": Option(
+        ["--urls-from-file", "-f"],
+        type=click.Path(
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            allow_dash=True,
+            path_type=Path,
+        ),
+        callback=urls_from_file,
+    ),
     "verbose": Option(
         # NB cannot use store_callback here; this is processed in the top-level CLI
         #    before the message_ix_models.Context() object is set up
@@ -188,6 +255,9 @@ PARAMS = {
     "years": Option(
         ["--years"],
         help="Code list to use for the 'year' dimension.",
+        callback=exec_cb("context.model.years = value"),
         type=Choice(codelists("year")),
+        default=model.Config.years,
+        # expose_value=False,
     ),
 }

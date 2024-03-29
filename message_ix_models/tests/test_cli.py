@@ -8,10 +8,11 @@ from message_ix_models import util
 COMMANDS = [
     tuple(),
     ("debug",),
+    ("fetch",),
     ("report",),
-    ("snapshot",),
     ("ssp", "gen-structures"),
     ("techs",),
+    ("testing",),
     ("water-ix",),
 ]
 
@@ -31,7 +32,7 @@ def test_cli_debug(mix_models_cli):
     mix_models_cli.assert_exit_0(["debug"])
 
 
-def test_cli_export_test_data(monkeypatch, session_context, mix_models_cli, tmp_path):
+def test_cli_export_test_data(monkeypatch, tmp_path, test_context, mix_models_cli):
     """The :command:`export-test-data` command can be invoked."""
     # Create an empty scenario in the temporary local file database
     platform = "local"

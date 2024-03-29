@@ -12,11 +12,8 @@ def cli(context):
 @cli.command("create-bare")
 @common_params("nodes")
 @click.pass_obj
-def create_bare(context, nodes):
+def create_bare(context):
     """Create the RES from scratch."""
     from .bare import create_res
-
-    if nodes:
-        context.regions = nodes
 
     create_res(context)

@@ -24,7 +24,7 @@ Exogenous data (:mod:`.tools.exo_data`)
 
 .. automodule:: message_ix_models.tools.exo_data
    :members:
-   :exclude-members: ExoDataSource
+   :exclude-members: ExoDataSource, prepare_computer
 
    .. autosummary::
 
@@ -32,8 +32,25 @@ Exogenous data (:mod:`.tools.exo_data`)
       SOURCES
       DemoSource
       ExoDataSource
+      iamc_like_data_for_query
       prepare_computer
       register_source
+
+.. autofunction:: prepare_computer
+
+   The first returned key, like ``{measure}:n-y``, triggers the following computations:
+
+   1. Load data by invoking a :class:`ExoDataSource`.
+   2. Aggregate on the |n| (node) dimension according to :attr:`.Config.regions`.
+   3. Interpolate on the |y| (year) dimension according to :attr:`.Config.years`.
+
+   Additional key(s) include:
+
+   - ``{measure}:n-y:y0 indexed``: same as ``{measure}:n-y``, indexed to values as of |y0| (the first model year).
+
+   See particular data source classes, like :class:`.SSPOriginal`, for particular examples of usage.
+
+   .. todo:: Extend to also prepare to compute values indexed to a particular |n|.
 
 .. autoclass:: ExoDataSource
    :members:
@@ -43,6 +60,9 @@ Exogenous data (:mod:`.tools.exo_data`)
 
 ADVANCE data (:mod:`.tools.advance`)
 ====================================
+
+.. deprecated:: 2023.11
+   Use :mod:`.project.advance` instead.
 
 .. autosummary::
    get_advance_data
@@ -69,3 +89,19 @@ With :mod:`message_data`:
    :members:
    :exclude-members: LOCATION
    :private-members:
+
+.. currentmodule:: message_ix_models.tools.iamc
+
+IAMC data structures (:mod:`.tools.iamc`)
+=========================================
+
+.. automodule:: message_ix_models.tools.iamc
+   :members:
+
+.. _tools-wb:
+
+World Bank structures (:mod:`.tools.wb`)
+========================================
+
+.. automodule:: message_ix_models.tools.wb
+   :members:

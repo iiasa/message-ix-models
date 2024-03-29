@@ -1,7 +1,10 @@
 import logging
 import os
+from base64 import b32hexencode
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
+from random import randbytes
 from tempfile import TemporaryDirectory
 
 import click.testing
@@ -47,7 +50,12 @@ def pytest_addoption(parser):
 
 def pytest_sessionstart():
     # Quiet logs for some upstream packages
-    for name in ("pycountry.db", "matplotlib.backends", "matplotlib.font_manager"):
+    for name in (
+        "graphviz._tools",
+        "pycountry.db",
+        "matplotlib.backends",
+        "matplotlib.font_manager",
+    ):
         logging.getLogger(name).setLevel(logging.DEBUG + 1)
 
 
@@ -185,19 +193,37 @@ class CliRunner(click.testing.CliRunner):
         if len(args) + len(kwargs):
             self.invoke(*args, **kwargs)
 
-        if self.last_result.exit_code != 0:
+        # Retrieve the last result
+        result = self.last_result
+
+        if result.exit_code != 0:
+            print(f"{result.exit_code = }\nresult.output =\n{result.output}")
             # Re-raise the exception triggered within the CLI invocation
-            raise (
-                self.last_result.exc_info[1].__context__ or self.last_result.exc_info[1]
-            )
+            raise (result.exc_info[1].__context__ or result.exc_info[1]) from None
 
-        return self.last_result
+        return result
+
+    @property
+    def add_command(self):
+        return cli_test_group.add_command
+
+    @contextmanager
+    def temporary_command(self, func: "click.Command", set_target: bool = True):
+        """Temporarily attach command `func` to :func:`cli_test_group`."""
+        assert func.name is not None
+        try:
+            cli_test_group.add_command(func)
+            yield
+        finally:
+            cli_test_group.commands.pop(func.name)
 
 
-@pytest.fixture(scope="session")
-def mix_models_cli(request, session_context, tmp_env):
+@pytest.fixture
+def mix_models_cli(request, test_context, tmp_env):
     """A :class:`.CliRunner` object that invokes the :program:`mix-models` CLI."""
-    # Require the `session_context` fixture in order to set Context.local_data
+    # Require the `test_context` fixture in order to (a) set Context.local_data and (b)
+    # ensure changes to the Context from tested CLI commands are isolated from other
+    # tests
     yield CliRunner(env=tmp_env)
 
 
@@ -217,9 +243,9 @@ def cli_test_group():
 def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scenario:
     """Return or create a |Scenario| containing the bare RES, for use in testing.
 
-    The Scenario has a model name like "MESSAGEix-GLOBIOM [regions]
-    [start]:[duration]:[end]", e.g. "MESSAGEix-GLOBIOM R14 2020:10:2110" (see
-    :func:`.bare.name`) and the scenario name "baseline".
+    The Scenario has a model name like "MESSAGEix-GLOBIOM [regions] Y[years]", for
+    instance "MESSAGEix-GLOBIOM R14 YB" (see :func:`.bare.name`) and a scenario name
+    either from :py:`request.node.name` or "baseline" plus a random string.
 
     This function should:
 
@@ -262,7 +288,8 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
     try:
         new_name = request.node.name
     except AttributeError:
-        new_name = "baseline"
+        # Generate a new scenario name with a random part
+        new_name = f"baseline {b32hexencode(randbytes(3)).decode().rstrip('=').lower()}"
 
     log.info(f"Clone to '{name}/{new_name}'")
     return base.clone(scenario=new_name, keep_solution=solved)

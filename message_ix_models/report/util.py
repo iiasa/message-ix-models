@@ -3,11 +3,11 @@ from typing import Dict, Iterable, Optional, Union
 
 import pandas as pd
 from dask.core import quote
-from genno import Quantity
+from genno import Key, Quantity
 from genno.compat.pyam.util import collapse as genno_collapse
 from genno.core.key import single_key
 from iam_units import registry
-from message_ix.reporting import Key, Reporter
+from message_ix import Reporter
 from sdmx.model.v21 import Code
 
 from message_ix_models.util import eval_anno

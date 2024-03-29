@@ -36,6 +36,7 @@ Commonly used:
    copy_column
    ffill
    identify_nodes
+   iter_keys
    load_package_data
    load_private_data
    local_data_path
@@ -44,6 +45,7 @@ Commonly used:
    make_source_tech
    maybe_query
    merge_data
+   minimum_version
    ~node.nodes_ex_world
    package_data_path
    private_data_path
@@ -57,7 +59,6 @@ Commonly used:
 
 .. autodata:: message_ix_models.util.cache.SKIP_CACHE
 
-
 :mod:`.util.click`
 ==================
 
@@ -65,6 +66,11 @@ Commonly used:
 
 .. automodule:: message_ix_models.util.click
    :members:
+
+   :data:`PARAMS` contains, among others:
+
+   - :program:`--urls-from-file=…` Path to a file containing scenario URLs, one per line.
+     These are parsed and stored on :attr:`.Config.scenarios`.
 
 :mod:`.util.config`
 ===================
@@ -181,6 +187,13 @@ Commonly used:
 .. automodule:: message_ix_models.util.pooch
    :members:
 
+:mod:`.util.pycountry`
+======================
+
+.. currentmodule:: message_ix_models.util.pycountry
+
+.. automodule:: message_ix_models.util.pycountry
+   :members:
 
 :mod:`.util.scenarioinfo`
 =========================

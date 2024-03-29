@@ -1,6 +1,6 @@
 import logging
 from functools import lru_cache, partial
-from typing import Mapping
+from typing import TYPE_CHECKING, Mapping
 
 import pandas as pd
 from sdmx.model.v21 import Code
@@ -8,14 +8,17 @@ from sdmx.model.v21 import Code
 from message_ix_models import ScenarioInfo
 from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 
 from .utils import read_config
+
+if TYPE_CHECKING:
+    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
 
-def get_spec(context) -> Mapping[str, ScenarioInfo]:
+def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     """Return the specification for nexus implementation
 
     Parameters
@@ -94,7 +97,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
         df_share2 = pd.DataFrame(data=d2)
 
-        df_share = df_share.append(df_share2)
+        df_share = pd.concat([df_share, df_share2])
         df_list = df_share.values.tolist()
 
         results["map_shares_commodity_total"] = df_list
@@ -144,7 +147,7 @@ def get_spec(context) -> Mapping[str, ScenarioInfo]:
 
         df_share2 = pd.DataFrame(data=d2)
 
-        df_share = df_share.append(df_share2)
+        df_share = pd.concat([df_share, df_share2])
         df_list = df_share.values.tolist()
 
         results["map_shares_commodity_total"] = df_list
@@ -190,7 +193,7 @@ def generate_set_elements(set_name, match=None):
     return results
 
 
-def map_basin(context) -> Mapping[str, ScenarioInfo]:
+def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     """Return specification for mapping basins to regions
 
     The basins are spatially consolidated from HydroSHEDS basins delineation
@@ -211,7 +214,7 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     # read csv file for basin names and region mapping
     # reading basin_delineation
     FILE = f"basins_by_region_simpl_{context.regions}.csv"
-    PATH = private_data_path("water", "delineation", FILE)
+    PATH = package_data_path("water", "delineation", FILE)
 
     df = pd.read_csv(PATH)
     # Assigning proper nomenclature
@@ -242,7 +245,7 @@ def map_basin(context) -> Mapping[str, ScenarioInfo]:
     return dict(require=require, remove=remove, add=add)
 
 
-def main(context, scenario, **options):
+def main(context: Context, scenario, **options):
     """Set up MESSAGEix-Nexus on `scenario`.
 
     See also

@@ -20,6 +20,8 @@ This is a Scenario that has the same *structure* (ixmp 'sets') as actual instanc
 Code that operates on the global model can be tested on the bare RES; if it works on that scenario, this is one indication (necessary, but not always sufficient) that it should work on fully-populated scenarios.
 Such tests are faster and lighter than testing on fully-populated scenarios, and make it easier to isolate errors in the code that is being tested.
 
+.. _test-suite:
+
 Test suite (:mod:`message_ix_models.tests`)
 ===========================================
 
@@ -58,13 +60,16 @@ In either case:
 - Running the test suite with ``--local-cache`` causes the local cache to be populated, and this will affect subsequent runs.
 - The continuous integration (below) services don't preserve caches, so code always runs.
 
+.. _ci:
+
 Continuous testing
 ==================
 
-The test suite (:mod:`message_ix_models.tests`) is run using GitHub Actions for new commits on the ``main`` branch, or on any branch associated with a pull request.
+The test suite (:mod:`message_ix_models.tests`) is run using GitHub Actions for new commits on the ``main`` branch; new commits on any branch associated with a pull request; and on a daily schedule.
+These ensure that the code is functional and produces expected outputs, even as upstream dependencies evolve.
+Workflow runs and their outputs can be viewed `here <https://github.com/iiasa/message-ix-models/actions/workflows/pytest.yaml>`__.
 
-Because it is closed-source and requires access to internal IIASA resources, including databases, continuous integration for :mod:`message_data` is handled by an internal server running `TeamCity <https://www.jetbrains.com/teamcity/>`_: https://ene-builds.iiasa.ac.at/project/message (requires authorization)
-
+Because it is closed-source and requires access to internal IIASA resources, including databases, continuous integration for :mod:`.message_data` is handled by GitHub Actions `self-hosted runners <https://docs.github.com/en/actions/hosting-your-own-runners>`__ running on IIASA systems.
 
 .. _export-test-data:
 

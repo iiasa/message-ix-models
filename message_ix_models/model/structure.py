@@ -11,7 +11,7 @@ import pandas as pd
 import pycountry
 import xarray as xr
 from iam_units import registry
-from sdmx.model.v21 import Annotation, Code
+from sdmx.model.v21 import Annotation, Code, Codelist
 
 from message_ix_models.util import eval_anno, load_package_data, package_data_path
 from message_ix_models.util.sdmx import as_codes
@@ -90,6 +90,14 @@ def get_codes(name: str) -> List[Code]:
         process_technology_codes(data)
 
     return data
+
+
+@lru_cache()
+def get_codelist(name: str) -> Codelist:
+    """Return a |Codelist| for the dimension/set `name` in MESSAGE-GLOBIOM scenarios."""
+    cl = Codelist(id=name.replace("/", "_").upper())
+    cl.extend(get_codes(name))
+    return cl
 
 
 @lru_cache()
@@ -229,7 +237,7 @@ def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
         Otherwise, log on :ref:`DEBUG <python:levels>`.
 
     """
-    level = logging.DEBUG if quiet else logging.WARNING
+    level = logging.NOTSET if quiet else logging.WARNING
     # Convert a "units" annotation to a code snippet that will return a pint.Unit
     # via eval_anno()
     try:

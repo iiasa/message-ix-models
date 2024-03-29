@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, cast
 
 import pandas as pd
-from genno.computations import concat
-from message_ix.reporting import Quantity
+from genno import Quantity
+from genno.operator import concat
 
 log = logging.getLogger(__name__)
 
@@ -14,9 +14,11 @@ try:
 except ImportError:
     log.warning("message_data is not installed or cannot be imported")
     MESSAGE_DATA_PATH: Optional[Path] = None
+    HAS_MESSAGE_DATA = False
 else:  # pragma: no cover  (needs message_data)
     # Root directory of the message_data repository.
     MESSAGE_DATA_PATH = Path(message_data.__file__).parents[1]
+    HAS_MESSAGE_DATA = True
 
 # Directory containing message_ix_models.__init__
 MESSAGE_MODELS_PATH = Path(__file__).parents[1]
@@ -29,6 +31,7 @@ PRIVATE_DATA: Dict[str, Any] = dict()
 
 
 __all__ = [
+    "HAS_MESSAGE_DATA",
     "Adapter",
     "MappingAdapter",
 ]
@@ -115,11 +118,7 @@ class MappingAdapter(Adapter):
                 continue
             result = concat(
                 *[
-                    qty.sel(
-                        {dim: label[0]}, drop=True
-                    ).expand_dims(  # type: ignore [attr-defined]
-                        {dim: [label[1]]}
-                    )
+                    qty.sel({dim: label[0]}, drop=True).expand_dims({dim: [label[1]]})
                     for label in labels
                 ]
             )
