@@ -77,11 +77,11 @@ def unpack(path: Path) -> Path:
     return base
 
 
-def read_excel(scenario: Scenario, path: Path, add_units: bool) -> None:
+def read_excel(scenario: Scenario, path: Path) -> None:
     """Similar to :meth:`.Scenario.read_excel`, but using :func:`unpack`."""
     base = unpack(path)
 
-    scenario.read_excel(path=base.joinpath("sets.xlsx"), add_units=add_units)
+    scenario.read_excel(path=base.joinpath("sets.xlsx"))
 
     parameters = set(scenario.par_list())
 
@@ -95,7 +95,7 @@ def read_excel(scenario: Scenario, path: Path, add_units: bool) -> None:
             data = pd.read_csv(p)
 
             # Correct units
-            if name == "inv_cost" and not add_units:
+            if name == "inv_cost":
                 data.replace({"unit": {"USD_2005/t ": "USD_2005/t"}}, inplace=True)
 
             scenario.add_par(name, data)
@@ -114,22 +114,13 @@ def load(
     snapshot_name = f"snapshot-{snapshot_id}"
     path, *_ = fetch(**SOURCE[snapshot_name], extra_cache_path=extra_cache_path)
 
-    if snapshot_id == 0:
-        # Needs correction of units
-        # Add units
-        spec = Spec()
-        spec.add.set["unit"] = get_codes("unit/snapshot")
-        apply_spec(scenario, spec)
+    # Add units
+    spec = Spec()
+    spec.add.set["unit"] = get_codes(f"unit/snapshot-{snapshot_id}")
+    apply_spec(scenario, spec)
 
-        # Initialize MACRO items
-        with scenario.transact("Prepare scenario for snapshot data"):
-            MACRO.initialize(scenario)
+    # Initialize MACRO items
+    with scenario.transact("Prepare scenario for snapshot data"):
+        MACRO.initialize(scenario)
 
-        read_excel(scenario=scenario, path=path, add_units=False)
-    elif snapshot_id == 1:
-        # Should contain only valid units
-        # Initialize MACRO items
-        with scenario.transact("Prepare scenario for snapshot data"):
-            MACRO.initialize(scenario)
-
-        read_excel(scenario=scenario, path=path, add_units=True)
+    read_excel(scenario=scenario, path=path)
