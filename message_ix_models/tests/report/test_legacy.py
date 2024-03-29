@@ -27,4 +27,4 @@ def test_legacy_report(test_context, load_snapshot):
         log.info("Solve")
         scenario.solve(solve_options=dict(lpmethod=4), quiet=True)
 
-    legacy_report(mp=mp, scen=scenario)
+    legacy_report(mp=mp, scen=scenario, merge_hist=True, ref_sol="True")
