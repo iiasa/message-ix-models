@@ -77,11 +77,11 @@ def unpack(path: Path) -> Path:
     return base
 
 
-def read_excel(scenario: Scenario, path: Path) -> None:
+def read_excel(scenario: Scenario, path: Path, add_units: bool) -> None:
     """Similar to :meth:`.Scenario.read_excel`, but using :func:`unpack`."""
     base = unpack(path)
 
-    scenario.read_excel(base.joinpath("sets.xlsx"))
+    scenario.read_excel(path=base.joinpath("sets.xlsx"), add_units=add_units)
 
     parameters = set(scenario.par_list())
 
@@ -95,7 +95,7 @@ def read_excel(scenario: Scenario, path: Path) -> None:
             data = pd.read_csv(p)
 
             # Correct units
-            if name == "inv_cost":
+            if name == "inv_cost" and not add_units:
                 data.replace({"unit": {"USD_2005/t ": "USD_2005/t"}}, inplace=True)
 
             scenario.add_par(name, data)
@@ -125,11 +125,11 @@ def load(
         with scenario.transact("Prepare scenario for snapshot data"):
             MACRO.initialize(scenario)
 
-        read_excel(scenario, path)
+        read_excel(scenario=scenario, path=path, add_units=False)
     elif snapshot_id == 1:
         # Should contain only valid units
         # Initialize MACRO items
         with scenario.transact("Prepare scenario for snapshot data"):
             MACRO.initialize(scenario)
 
-        scenario.read_excel(path, add_units=True, init_items=True)
+        read_excel(scenario=scenario, path=path, add_units=True)
