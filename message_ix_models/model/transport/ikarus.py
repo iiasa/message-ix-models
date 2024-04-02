@@ -34,6 +34,8 @@ from .util import input_commodity_level
 if TYPE_CHECKING:
     from genno.core.key import KeyLike
 
+    from .config import Config
+
 log = logging.getLogger(__name__)
 
 #: Name of the input file.
@@ -358,12 +360,12 @@ def get_ikarus_data(context):
         Keys are MESSAGE parameter names such as 'input', 'fix_cost'.
         Values are data frames ready for :meth:`~.Scenario.add_par`.
         Years in the data include the model horizon indicated by
-        ``context["transport build info"]``, plus the additional year 2010.
+        :attr:`.Config.base_model_info`, plus the additional year 2010.
     """
     # Reference to the transport configuration
-    config = context.transport
+    config: "Config" = context.transport
     tech_info = context.transport.set["technology"]["add"]
-    info = context["transport build info"]
+    info = config.base_model_info
 
     # Merge with base model commodity information for io_units() below
     # TODO this duplicates code in .ldv; move to a common location

@@ -298,7 +298,7 @@ def add_structure(c: Computer):
     from ixmp.report import configure
 
     context = c.graph["context"]
-    info = context["transport build info"]  # Information about the base scenario
+    info = context.transport.base_model_info  # Information about the base scenario
     spec = context["transport spec"]  # Specification for MESSAGEix-Transport structure
 
     # Update RENAME_DIMS with transport-specific concepts/dimensions. This allows to use
@@ -317,7 +317,7 @@ def add_structure(c: Computer):
 
     for key, *comp in (
         # Configuration
-        ("info", itemgetter("transport build info"), "context"),
+        ("info", lambda c: c.transport.base_model_info, "context"),
         ("dry_run", lambda c: c.core.dry_run, "context"),
         # Structure
         ("c::transport", quote(info.set["commodity"])),
@@ -434,17 +434,15 @@ def get_computer(
     # Structure information for the base model
     scenario = kwargs.get("scenario")
     if scenario:
-        base_info = ScenarioInfo(scenario)
+        config.base_model_info = ScenarioInfo(scenario)
 
         config.with_scenario = True
         config.with_solution = scenario.has_solution()
     else:
         base_spec = bare.get_spec(context)
-        base_info = base_spec["add"]
+        config.base_model_info = base_spec["add"]
 
         config.with_scenario = config.with_solution = False
-
-    context["transport build info"] = base_info
 
     # Structure information for MESSAGEix-Transport
     spec = get_spec(context)
@@ -479,7 +477,7 @@ def get_computer(
     # Add structure-related keys
     add_structure(c)
     # Add exogenous data
-    add_exogenous_data(c, base_info)
+    add_exogenous_data(c, config.base_model_info)
 
     # For each module in transport.Config.modules, invoke the function
     # prepare_computer() to add further calculations
