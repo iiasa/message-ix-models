@@ -179,7 +179,6 @@ def test_exo_pdt(test_context, ssp, regions="R12", years="B"):
     )
 
 
-@pytest.mark.skip(reason="Temporary, for #440; crashes pytest-xdist worker")
 def test_exo_report(test_context, tmp_path):
     """Exogenous demand results can be plotted.
 
@@ -281,16 +280,12 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 @pytest.mark.parametrize(
     "nodes, target",
     [
-        param("R11", "GEA mix", marks=pytest.mark.xfail(reason="Temporary, for #502")),
+        ("R11", "GEA mix"),
         ("R12", "SSP2"),
         ("R12", "SSP5"),
         ("R14", "SSP2"),
         ("R14", "SSP5"),
-        param(
-            "R11",
-            "SHAPE innovation",
-            marks=pytest.mark.xfail(reason="Temporary, for #502"),
-        ),
+        ("R11", "SHAPE innovation"),
     ],
 )
 def test_cli(tmp_path, mix_models_cli, test_context, nodes, target):
