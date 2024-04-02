@@ -1,8 +1,10 @@
 What's new
 **********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Expand :doc:`data` (:pull:`161`).
 
 v2024.4.2
 =========
