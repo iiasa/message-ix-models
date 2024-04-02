@@ -1,0 +1,58 @@
+report_config:
+    table_def: "message_ix_models.report.legacy.ENGAGE_SSP2_v417_tables"
+run_tables:
+    LU_Agr_fert_int:
+        root: Fertilizer
+        active: False
+        function: retr_fertilizer_int
+        args: {"units_nitrogen": "t N/ha/yr",
+               "units_phosphorus": "t P/ha/yr"}
+    LU_Fd_waste:
+        root: Food Waste
+        active: False
+        function: retr_food_waste
+        args: {"units": "million t DM/yr"}
+    LU_glo:
+        root: GLOBIOM
+        active: True
+        function: retr_globiom
+        args: {"units_ghg": "Mt CO2eq/yr",
+               "units_co2": "Mt CO2/yr",
+               "units_energy": "EJ/yr",
+               "units_volume": "Mm3",
+               "units_area": "million ha"}
+    LU_For_prd:
+        root: Forestry Production
+        active: True
+        function: retr_frst_prd
+        args: {"units": "million m3/yr"}
+
+    Prc:
+        root: Price
+        active: True
+        function: retr_price
+        args: {"units_CPrc_co2": "US$2010/tCO2",
+               "units_CPrc_co2_outp": "US$2010/t CO2 or local currency/t CO2",
+               "units_energy": "US$2010/GJ",
+               "units_energy_outp": "US$2010/GJ or local currency/GJ",
+               "units_CPrc_c": "US$2010/tC",
+               "conv_CPrc_co2_to_c": 0.03171,
+               "units_agri": "Index (2005 = 1)"}
+    Tec_cap_add:
+        root: Capacity Additions
+        active: True
+        function: retr_ppl_capparameters
+        args: {"prmfunc": pp.nic,
+               "units": "GW"}
+    Glob_fdbk:
+        root: GLOBIOM Feedback
+        active: False
+        function: retr_globiom_feedback
+        args: {
+            "units_emi_CH4": "Mt CH4/yr",
+            "units_emi_CO2": "Mt CO2/yr",
+            "units_emi_N2O": "kt N2O/yr",
+            "units_ene": "EJ/yr",
+            "units_CPrc_co2": "US$2005/tCO2",
+            "units_CPrc_co2_outp": "US$2005/t CO2",
+            "units_gdp": "billion US$2005/yr",}               
