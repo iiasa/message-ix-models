@@ -166,6 +166,11 @@ jobs:
         print(config.path.read_text())
       shell: python
 
+    - name: Fetch data
+      run: |
+        mix-models fetch "SSP-Update-3.0"
+        mix-models fetch "SSP-Update-3.0.1"
+
     - name: Run MESSAGEix-Transport workflow "${{ env.from-step }}" → "${{ matrix.SSP }} reported"
       run: |
         mix-models \
