@@ -8,7 +8,7 @@ from functools import cmp_to_key
 
 import numpy as np
 import pandas as pd
-from message_ix_models.util import private_data_path
+from message_ix_models.util import package_data_path
 from pandas.api.types import is_numeric_dtype
 
 from . import iamc_tree, utilities
@@ -54,7 +54,7 @@ def combineDict(*args):
 def fil(df, fil, factor, unit_out=None):
     """Uses predefined values from a fil file"""
     inf = os.path.join(
-        private_data_path(), "report", "fil_files", "*-{}.fil".format(fil)
+        package_data_path(), "report", "legacy", "fil_files", "*-{}.fil".format(fil)
     )
     files = glob.glob(inf)
     dfs = []
@@ -315,7 +315,7 @@ def _convert_units(df, unit_out):
             )
         except Exception:
             print(
-                f"No unit conversion factor found to convert {df["Unit"].unique()[0]} to {unit_out}"
+                f"No unit conversion factor found to convert {df['Unit'].unique()[0]} to {unit_out}"
             )
     df.Unit = unit_out
 
