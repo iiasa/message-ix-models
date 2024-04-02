@@ -6,10 +6,9 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 import message_ix
 from genno import Quantity
 from message_ix_models import Context, ScenarioInfo, Spec
-from message_ix_models.model.structure import generate_set_elements
 from message_ix_models.project.ssp import SSP_2017, ssp_field
 from message_ix_models.report.util import as_quantity
-from message_ix_models.util import identify_nodes, load_private_data, private_data_path
+from message_ix_models.util import identify_nodes, private_data_path
 from message_ix_models.util.config import ConfigHelper
 
 from message_data.projects.navigate import T35_POLICY as NAVIGATE_SCENARIO
@@ -306,7 +305,7 @@ class Config(ConfigHelper):
            for instance :file:`data/transport/ISR/set.yaml` is preferred to
            :file:`data/transport/set.yaml`.
         """
-        from .util import path_fallback
+        from .structure import make_spec
 
         # Handle arguments
         options = options or dict()
@@ -341,33 +340,17 @@ class Config(ConfigHelper):
                 tuple(row[:-1]): row[-1] for row in config.minimum_activity
             }
 
-        # Overrides specific to regional versions
-        tmp = dict()
-        for fn in ("set.yaml", "technology.yaml"):
-            # Field name
-            name = fn.split(".yaml")[0]
-
-            # Load and store the data from the YAML file: either in a subdirectory for
-            # context.model.regions, or the top-level data directory
-            path = path_fallback(context, fn).relative_to(private_data_path())
-            tmp[name] = load_private_data(*path.parts)
-
-        # Merge contents of technology.yaml into set.yaml
-        config.set.update(tmp.pop("set"))
-        config.set["technology"]["add"] = tmp.pop("technology")
-
-        # Convert some values to codes
-        for set_name in config.set:
-            generate_set_elements(config.set, set_name)
-
         # Separate data source options
         ds_options = options.pop("data source", {})
         # Update values, store on context
-        context["transport"] = replace(
+        result = context["transport"] = replace(
             config, **options, data_source=config.data_source.replace(**ds_options)
         )
 
-        return context["transport"]
+        # Create the structural spec
+        result.spec = make_spec(context.model.regions)
+
+        return result
 
     def check(self):
         """Check consistency of :attr:`project`."""

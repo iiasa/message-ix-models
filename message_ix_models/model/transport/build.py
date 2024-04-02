@@ -12,43 +12,17 @@ import pandas as pd
 import xarray as xr
 from genno import Computer, KeyExistsError, Quantity, quote
 from message_ix import Scenario
-from message_ix_models import Context, ScenarioInfo, Spec
-from message_ix_models.model import bare, build, disutility
-from message_ix_models.model.structure import get_region_codes
+from message_ix_models import Context, ScenarioInfo
+from message_ix_models.model import bare, build
 from message_ix_models.util._logging import mark_time
-from sdmx.model.v21 import Annotation, Code
 
 from . import Config
-from .util import get_techs
+from .structure import get_technology_groups
 
 if TYPE_CHECKING:
     import pathlib
 
 log = logging.getLogger(__name__)
-
-#: Template for disutility technologies.
-TEMPLATE = Code(
-    id="{technology} usage by {group}",
-    annotations=[
-        Annotation(
-            id="input",
-            text=repr(
-                dict(
-                    commodity="transport vehicle {technology}",
-                    level="useful",
-                    unit="km",
-                )
-            ),
-        ),
-        Annotation(
-            id="output",
-            text=repr(
-                dict(commodity="transport pax {group}", level="useful", unit="km")
-            ),
-        ),
-        Annotation(id="is-disutility", text=repr(True)),
-    ],
-)
 
 
 def add_debug(c: Computer) -> None:
@@ -338,8 +312,8 @@ def add_structure(c: Computer):
             continue  # Already present; don't overwrite
 
     # Retrieve information about the model structure
-    spec, t_groups = get_techs(context)
     technologies = spec.add.set["technology"]
+    t_groups = get_technology_groups(spec)
 
     # Lists and subsets
     c.add("c::transport", quote(spec.add.set["commodity"]))
@@ -385,39 +359,6 @@ def add_structure(c: Computer):
     c.add("indexers::iea to transport", itemgetter(2), "groups::iea eweb")
 
 
-def get_spec(context: Context) -> Spec:
-    """Return the specification for MESSAGEix-Transport.
-
-    Parameters
-    ----------
-    context : .Context
-        The key ``regions`` determines the regional aggregation used.
-    """
-    s = Spec()
-
-    for set_name, config in context.transport.set.items():
-        # Elements to add, remove, and require
-        for action in {"add", "remove", "require"}:
-            s[action].set[set_name].extend(config.get(action, []))
-
-    # The set of required nodes varies according to context.model.regions
-    codelist = context.model.regions
-    try:
-        s["require"].set["node"].extend(map(str, get_region_codes(codelist)))
-    except FileNotFoundError:
-        raise ValueError(
-            f"Cannot get spec for MESSAGEix-Transport with regions={codelist!r}"
-        ) from None
-
-    # Generate a spec for the generalized disutility formulation for LDVs
-    s2 = get_disutility_spec(context)
-
-    # Merge the items to be added by the two specs
-    s["add"].update(s2["add"])
-
-    return s
-
-
 def get_computer(
     context: Context,
     obj: Optional[Computer] = None,
@@ -443,11 +384,6 @@ def get_computer(
         config.base_model_info = base_spec["add"]
 
         config.with_scenario = config.with_solution = False
-
-    # Structure information for MESSAGEix-Transport
-    spec = get_spec(context)
-    context["transport spec"] = spec
-    context["transport spec disutility"] = get_disutility_spec(context)
 
     # Create a Computer
     c = obj or Computer()
@@ -495,24 +431,6 @@ def get_computer(
         log.info(f"Visualization written to {path}")
 
     return c
-
-
-def get_disutility_spec(context: Context) -> Spec:
-    """Return the spec for the disutility formulation on LDVs.
-
-    See also
-    --------
-    TEMPLATE
-    """
-    # Identify LDV technologies
-    techs = context.transport.set["technology"]["add"]
-    LDV_techs = techs[techs.index("LDV")].child
-
-    return disutility.get_spec(
-        groups=context.transport.set["consumer_group"]["add"],
-        technologies=LDV_techs,
-        template=TEMPLATE,
-    )
 
 
 def main(

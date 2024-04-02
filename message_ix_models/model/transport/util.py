@@ -3,11 +3,10 @@
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, Union
 
 import pandas as pd
-from iam_units import registry  # noqa: F401
-from message_ix_models import Context, Spec
+from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import private_data_path
 
@@ -80,25 +79,6 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
             return c
 
     raise FileNotFoundError(candidates)
-
-
-def get_techs(context) -> Tuple[Spec, Dict]:
-    """Return info about transport technologies, given `context`."""
-    from . import build
-
-    # Get a specification that describes this setting
-    spec = build.get_spec(context)
-
-    # Subsets of transport technologies for aggregation and filtering
-    t_groups: Dict[str, List[str]] = {"non-ldv": []}
-    # Only include those technologies with children
-    for tech in filter(lambda t: len(t.child), spec.add.set["technology"]):
-        t_groups[tech.id] = list(c.id for c in tech.child)
-        # Store non-LDV technologies
-        if tech.id != "LDV":
-            t_groups["non-ldv"].extend(t_groups[tech.id])
-
-    return spec, t_groups
 
 
 def sum_numeric(iterable: Iterable, /, start=0) -> "numbers.Real":
