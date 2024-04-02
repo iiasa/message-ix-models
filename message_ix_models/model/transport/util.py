@@ -25,7 +25,7 @@ def input_commodity_level(
        Use :func:`.computations.input_commodity_level` instead.
     """
     # Retrieve transport technology information from configuration
-    t_info = context.transport.set["technology"]["add"]
+    t_info = context.transport.spec.add.set["technology"]
 
     # Retrieve general commodity information
     c_info = get_codes("commodity")

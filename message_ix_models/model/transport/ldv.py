@@ -118,7 +118,15 @@ def prepare_computer(c: Computer):
 
     keys = [
         c.add("ldv tech::ixmp", *final),
-        c.add("ldv usage::ixmp", usage_data, k, "n::ex world", "context"),
+        c.add(
+            "ldv usage::ixmp",
+            usage_data,
+            k,
+            "cg",
+            "n::ex world",
+            "t::transport LDV",
+            "y::model",
+        ),
         c.add("ldv constraints::ixmp", constraint_data, "context"),
         c.add(
             "ldv capacity_factor::ixmp",
@@ -379,13 +387,14 @@ def get_USTIMES_MA3T(
 def get_dummy(context) -> Dict[str, pd.DataFrame]:
     """Generate dummy, equal-cost output for each LDV technology."""
     # Information about the target structure
-    info: ScenarioInfo = context.transport.base_model_info
+    config: "Config" = context.transport
+    info = config.base_model_info
 
     # List of years to include
     years = list(filter(lambda y: y >= 2010, info.set["year"]))
 
     # List of LDV technologies
-    all_techs = context.transport.set["technology"]["add"]
+    all_techs = config.spec.add.set["technology"]
     ldv_techs = list(map(str, all_techs[all_techs.index("LDV")].child))
 
     # 'output' parameter values: all 1.0 (ACT units == output units)
@@ -469,11 +478,11 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     years = info.Y[1:]
 
     # Technologies as a hierarchical code list
-    techs = config.set["technology"]["add"]
+    techs = config.spec.add.set["technology"]
     ldv_techs = techs[techs.index("LDV")].child
 
     # All technologies in the spec, as strings
-    all_techs = list(map(str, config.spec.add.set["technology"]))
+    all_techs = list(map(str, techs))
 
     # List of technologies to constrain, including the LDV technologies, plus the
     # corresponding "X usage by CG" pseudo-technologies

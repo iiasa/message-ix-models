@@ -16,7 +16,7 @@ from message_data.model.transport.operator import (
     pdt_per_capita,
     transport_check,
 )
-from message_data.model.transport.util import get_techs
+from message_data.model.transport.structure import get_technology_groups
 from message_data.projects.navigate import T35_POLICY
 
 
@@ -85,19 +85,19 @@ def test_distance_nonldv(regions):
         (dict(navigate_scenario=T35_POLICY.ALL), True),  # i.e. all
     ),
 )
-def test_factor_input(test_context, options, any_change):
+def test_factor_input(test_context, options, any_change) -> None:
     cfg = Config.from_context(test_context, options=options)
 
     # Simulate inputs appearing in a Computer
     y = [2020, 2045, 2050, 2060, 2110]
-    spec, t_groups = get_techs(test_context)
-    techs = spec.add.set["technology"]
+    techs = cfg.spec.add.set["technology"]
+    t_groups = get_technology_groups(cfg.spec)
 
     # Function runs
     result = factor_input(y, techs, dict(t=t_groups), dict(transport=cfg))
 
     # No change to 2020 values
-    assert all(1.0 == result.sel(y=2020))
+    assert all(1.0 == result.sel(y=2020))  # type: ignore [arg-type]
 
     # Check intermediate values
     k = 5 if any_change else 0

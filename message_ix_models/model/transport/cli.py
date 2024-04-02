@@ -79,7 +79,7 @@ def export_emissions_factors(context, path_stem):
     from message_ix_models.util import private_data_path
 
     # List of techs
-    techs = context.transport.set["technology"]["remove"]
+    techs = context.transport.spec.remove.set["technology"]
 
     # Load the targeted scenario
     scenario = context.get_scenario()

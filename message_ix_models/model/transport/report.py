@@ -13,11 +13,11 @@ from message_ix_models import Context, ScenarioInfo
 from message_ix_models.report.util import add_replacements
 
 from . import Config
-from .build import get_spec
 
 if TYPE_CHECKING:
     import ixmp
     from genno import Computer, Key
+    from message_ix_models import Spec
 
 log = logging.getLogger(__name__)
 
@@ -341,7 +341,7 @@ def configure_legacy_reporting(config: dict) -> None:
     context.setdefault("transport", Config.from_context(context))
 
     # Get a spec
-    spec = get_spec(context)
+    spec: "Spec" = context.transport.spec
 
     # Commented: pp_utils._retr_act_data() raises IndexError if lists are empty
     # # Clear existing entries
