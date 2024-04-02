@@ -371,7 +371,7 @@ def get_ikarus_data(context):
     # TODO this duplicates code in .ldv; move to a common location
     all_info = ScenarioInfo()
     all_info.set["commodity"].extend(get_codes("commodity"))
-    all_info.update(context["transport spec"].add)
+    all_info.update(config.spec.add)
 
     # Retrieve the data from the spreadsheet. Use additional output efficiency and
     # investment cost factors for some bus technologies

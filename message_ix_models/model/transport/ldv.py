@@ -277,7 +277,7 @@ def get_USTIMES_MA3T(
     config: "Config" = context.transport
     technical_lifetime = config.ldv_lifetime["average"]
     info = config.base_model_info
-    spec = context["transport spec"]
+    spec = config.spec
 
     # Merge with base model commodity information for io_units() below
     # TODO this duplicates code in .ikarus; move to a common location
@@ -473,7 +473,7 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     ldv_techs = techs[techs.index("LDV")].child
 
     # All technologies in the spec, as strings
-    all_techs = list(map(str, context["transport spec"].add.set["technology"]))
+    all_techs = list(map(str, config.spec.add.set["technology"]))
 
     # List of technologies to constrain, including the LDV technologies, plus the
     # corresponding "X usage by CG" pseudo-technologies

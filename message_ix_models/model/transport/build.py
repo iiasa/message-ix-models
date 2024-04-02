@@ -299,7 +299,7 @@ def add_structure(c: Computer):
 
     context = c.graph["context"]
     info = context.transport.base_model_info  # Information about the base scenario
-    spec = context["transport spec"]  # Specification for MESSAGEix-Transport structure
+    spec = context.transport.spec  # Specification for MESSAGEix-Transport structure
 
     # Update RENAME_DIMS with transport-specific concepts/dimensions. This allows to use
     # genno.operator.load_file(…, dims=RENAME_DIMS) in add_exogenous_data()
@@ -548,7 +548,7 @@ def main(
 
     # Set up a Computer for input data calculations. This also:
     # - Creates a Config instance
-    # - Generates and stores context["transport spec"], i.e the specification of the
+    # - Generates and stores context.transport.spec, i.e the specification of the
     #   MESSAGEix-Transport structure: required, added, and removed set items
     # - Prepares the "add transport data" key used below
     c = get_computer(context, scenario=scenario, options=options)
@@ -567,7 +567,7 @@ def main(
 
     # Apply the structural changes AND add the data
     log.info("Build MESSAGEix-Transport")
-    build.apply_spec(scenario, context["transport spec"], data=_add_data, **options)
+    build.apply_spec(scenario, context.transport.spec, data=_add_data, **options)
 
     # Required for time series data from genno reporting that is expected by legacy
     # reporting
