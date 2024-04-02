@@ -248,11 +248,8 @@ class Config(ConfigHelper):
     #: Year for share convergence.
     year_convergence: int = 2110
 
-    #: Information on the structure of MESSAGEix-Transport, processed from contents of
-    #: :file:`set.yaml` and :file:`technology.yaml`.
-    set: Dict = field(default_factory=dict, repr=False)
-
-    #: Specification for the structure of MESSAGEix-Transport.
+    #: Specification for the structure of MESSAGEix-Transport, processed from contents
+    #: of :file:`set.yaml` and :file:`technology.yaml`.
     spec: Spec = field(default_factory=Spec)
 
     #: Sources for input data.
