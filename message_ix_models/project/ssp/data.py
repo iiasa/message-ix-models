@@ -1,5 +1,7 @@
 import logging
 
+from platformdirs import user_cache_path
+
 from message_ix_models.tools.exo_data import (
     ExoDataSource,
     iamc_like_data_for_query,
@@ -173,9 +175,11 @@ class SSPUpdate(ExoDataSource):
         scenarios = []
 
         if release in ("3.0.1", "3.0"):
-            # Directories in which to locate `self.filename`; stored directly within
-            # message_ix_models
-            dirs = [package_data_path("ssp")]
+            # Directories in which to locate `self.filename`:
+            # - User's local cache (retrieved with "mix-models fetch" or equivalent).
+            # - Stored directly within message_ix_models (editable install from a clone
+            #   of the git repository).
+            dirs = [user_cache_path("message-ix-models"), package_data_path("ssp")]
 
             scenarios.append(f"SSP{ssp_id}")
 
