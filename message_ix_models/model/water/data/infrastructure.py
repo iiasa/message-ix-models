@@ -2,7 +2,7 @@
 treatment in urban & rural"""
 
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from message_ix import make_df
@@ -213,100 +213,15 @@ def add_infrastructure_techs(context: "Context"):
         sub_time=sub_time,
     )
 
-    result_dc = defaultdict(list)
-
-    for index, rows in df_elec.iterrows():
-        if rows["tec"] in techs:
-            if context.SDG != "baseline":
-                inp = make_df(
-                    "input",
-                    technology=rows["tec"],
-                    value=rows["value_high"],
-                    unit="-",
-                    level="final",
-                    commodity="electr",
-                    mode="Mf",
-                    time_origin="year",
-                    node_loc=df_node["node"],
-                    node_origin=df_node["region"],
-                ).pipe(
-                    broadcast,
-                    map_yv_ya_lt(
-                        year_wat,
-                        # 1 because elec commodities don't have technical lifetime
-                        1,
-                        first_year,
-                    ),
-                    time=sub_time,
-                )
-
-                result_dc["input"].append(inp)
-            else:
-                inp = make_df(
-                    "input",
-                    technology=rows["tec"],
-                    value=rows["value_high"],
-                    unit="-",
-                    level="final",
-                    commodity="electr",
-                    mode="Mf",
-                    time_origin="year",
-                    node_loc=df_node["node"],
-                    node_origin=df_node["region"],
-                ).pipe(
-                    broadcast,
-                    map_yv_ya_lt(
-                        year_wat,
-                        # 1 because elec commodities don't have technical lifetime
-                        1,
-                        first_year,
-                    ),
-                    time=sub_time,
-                )
-
-                inp = pd.concat(
-                    [
-                        inp,
-                        make_df(
-                            "input",
-                            technology=rows["tec"],
-                            value=rows["value_mid"],
-                            unit="-",
-                            level="final",
-                            commodity="electr",
-                            mode="M1",
-                            time_origin="year",
-                            node_loc=df_node["node"],
-                            node_origin=df_node["region"],
-                        ).pipe(
-                            broadcast,
-                            # 1 because elec commodities don't have technical lifetime
-                            map_yv_ya_lt(year_wat, 1, first_year),
-                            time=sub_time,
-                        ),
-                    ]
-                )
-
-                result_dc["input"].append(inp)
-        else:
-            inp = make_df(
-                "input",
-                technology=rows["tec"],
-                value=rows["value_mid"],
-                unit="-",
-                level="final",
-                commodity="electr",
-                mode="M1",
-                time_origin="year",
-                node_loc=df_node["node"],
-                node_origin=df_node["region"],
-            ).pipe(
-                broadcast,
-                map_yv_ya_lt(year_wat, 1, first_year),
-                time=sub_time,
-            )
-
-            result_dc["input"].append(inp)
+    result_dc = prepare_input_dataframe(
+        context=context,
+        sub_time=sub_time,
+        year_wat=year_wat,
+        first_year=first_year,
+        df_node=df_node,
+        techs=techs,
+        df_elec=df_elec,
+    )
 
     results_new = {par_name: pd.concat(dfs) for par_name, dfs in result_dc.items()}
 
@@ -620,6 +535,112 @@ def add_infrastructure_techs(context: "Context"):
         results["var_cost"] = var_cost
 
     return results
+
+
+def prepare_input_dataframe(
+    context: "Context",
+    sub_time,
+    year_wat: tuple,
+    first_year: int,
+    df_node: pd.DataFrame,
+    techs: list[str],
+    df_elec: pd.DataFrame,
+) -> defaultdict[Any, list]:
+    result_dc = defaultdict(list)
+
+    for _, rows in df_elec.iterrows():
+        if rows["tec"] in techs:
+            if context.SDG != "baseline":
+                inp = make_df(
+                    "input",
+                    technology=rows["tec"],
+                    value=rows["value_high"],
+                    unit="-",
+                    level="final",
+                    commodity="electr",
+                    mode="Mf",
+                    time_origin="year",
+                    node_loc=df_node["node"],
+                    node_origin=df_node["region"],
+                ).pipe(
+                    broadcast,
+                    map_yv_ya_lt(
+                        year_wat,
+                        # 1 because elec commodities don't have technical lifetime
+                        1,
+                        first_year,
+                    ),
+                    time=sub_time,
+                )
+
+                result_dc["input"].append(inp)
+            else:
+                inp = make_df(
+                    "input",
+                    technology=rows["tec"],
+                    value=rows["value_high"],
+                    unit="-",
+                    level="final",
+                    commodity="electr",
+                    mode="Mf",
+                    time_origin="year",
+                    node_loc=df_node["node"],
+                    node_origin=df_node["region"],
+                ).pipe(
+                    broadcast,
+                    map_yv_ya_lt(
+                        year_wat,
+                        # 1 because elec commodities don't have technical lifetime
+                        1,
+                        first_year,
+                    ),
+                    time=sub_time,
+                )
+
+                inp = pd.concat(
+                    [
+                        inp,
+                        make_df(
+                            "input",
+                            technology=rows["tec"],
+                            value=rows["value_mid"],
+                            unit="-",
+                            level="final",
+                            commodity="electr",
+                            mode="M1",
+                            time_origin="year",
+                            node_loc=df_node["node"],
+                            node_origin=df_node["region"],
+                        ).pipe(
+                            broadcast,
+                            # 1 because elec commodities don't have technical lifetime
+                            map_yv_ya_lt(year_wat, 1, first_year),
+                            time=sub_time,
+                        ),
+                    ]
+                )
+
+                result_dc["input"].append(inp)
+        else:
+            inp = make_df(
+                "input",
+                technology=rows["tec"],
+                value=rows["value_mid"],
+                unit="-",
+                level="final",
+                commodity="electr",
+                mode="M1",
+                time_origin="year",
+                node_loc=df_node["node"],
+                node_origin=df_node["region"],
+            ).pipe(
+                broadcast,
+                map_yv_ya_lt(year_wat, 1, first_year),
+                time=sub_time,
+            )
+
+            result_dc["input"].append(inp)
+    return result_dc
 
 
 def add_desalination(context: "Context"):
