@@ -41,7 +41,14 @@ def configure_build(
     options=None,
 ) -> Tuple[Computer, ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
+
+    # By default, omit plots while testing
+    options = options or {}
+    options.setdefault("extra_modules", [])
+    options["extra_modules"].append("-plot")
+
     c = build.get_computer(test_context, visualize=False, options=options)
+
     return c, test_context.transport.base_model_info
 
 
