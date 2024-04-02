@@ -190,9 +190,6 @@ class Config(ConfigHelper):
         ).split()
     )
 
-    #: Extra entries for :attr:`modules`, supplied to the constructor.
-    extra_modules: InitVar[Union[str, List[str]]] = []
-
     #: Used by :func:`.get_USTIMES_MA3T` to map MESSAGE regions to U.S. census divisions
     #: appearing in MA³T.
     node_to_census_division: Dict = field(default_factory=dict)
@@ -260,6 +257,12 @@ class Config(ConfigHelper):
 
     # Init-only variables
 
+    #: Extra entries for :attr:`modules`, supplied to the constructor. May be either a
+    #: space-delimited string (:py:`"module_a -module_b"`) or sequence of strings.
+    #: Values prefixed with a hyphen (:py:`"-module_b"`) are *removed* from
+    #: :attr:`.modules`.
+    extra_modules: InitVar[Union[str, List[str]]] = None
+
     #: Identifier of a Transport Futures scenario, used to update :attr:`project` via
     #: :meth:`.ScenarioFlags.parse_futures`.
     futures_scenario: InitVar[str] = None
@@ -270,9 +273,17 @@ class Config(ConfigHelper):
 
     def __post_init__(self, extra_modules, futures_scenario, navigate_scenario):
         # Handle extra_modules
-        self.modules.extend(
-            [extra_modules] if isinstance(extra_modules, str) else extra_modules
-        )
+        em = extra_modules or []
+        for m in em.split() if isinstance(em, str) else em:
+            if m.startswith("-"):
+                try:
+                    idx = self.modules.index(m[1:])
+                except ValueError:
+                    pass
+                else:
+                    self.modules.pop(idx)
+            else:
+                self.modules.append(m)
 
         # Handle values for :attr:`futures_scenario` and :attr:`navigate_scenario`
         self.set_futures_scenario(futures_scenario)
