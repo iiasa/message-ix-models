@@ -3,13 +3,12 @@
 import logging
 from collections import defaultdict
 from functools import lru_cache, partial
-from itertools import count
 from operator import le
-from typing import TYPE_CHECKING, Dict, Tuple, Union
+from typing import TYPE_CHECKING, Dict
 
 import pandas as pd
 import xarray as xr
-from genno import Computer, Key, Quantity, quote
+from genno import Computer, Key, KeySeq, Quantity, quote
 from genno.core.key import single_key
 from iam_units import registry
 from message_ix import make_df
@@ -32,8 +31,6 @@ from .non_ldv import UNITS
 from .util import input_commodity_level
 
 if TYPE_CHECKING:
-    from genno.core.key import KeyLike
-
     from .config import Config
 
 log = logging.getLogger(__name__)
@@ -252,18 +249,17 @@ def prepare_computer(c: Computer):
     final = {}
     for name in ["availability"] + parameters:
         # Base key for computations related to parameter `name`
-        base_key = Key(f"ikarus {name}", "tyc")
-        _keys = map(lambda i: base_key + str(i), count())
+        ks = KeySeq(f"ikarus {name}:c-t-y")
 
-        def k():
-            """Return k + "1", k + "2", … for a sequence of keys based on `k`."""
-            return next(_keys)
-
-        # Load data from file
-        key: Union[KeyLike, Tuple[KeyLike, ...], None] = base_key * "source" + "exo"
-
+        # Refer to data loaded from file
         # Extend over missing periods in the model horizon
-        key = c.add(k() * "source", "extend_y", key, "y::ikarus", strict=True)
+        key = c.add(
+            ks[0] * "source",
+            "extend_y",
+            ks.base * "source" + "exo",
+            "y::ikarus",
+            strict=True,
+        )
 
         if name in ("fix_cost", "inv_cost"):
             # Adjust for "availability". The IKARUS source gives these costs, and
@@ -271,13 +267,13 @@ def prepare_computer(c: Computer):
             # those to construct/operate enough vehicles/infrastructure to provide that
             # amount of availability. E.g. a cost of 1000 EUR and availability of 10 km
             # give a cost of 100 EUR / km.
-            key = c.add(k(), "div", key, Key("ikarus availability", "tyc", "0"))
+            key = c.add(ks[1], "div", key, Key("ikarus availability", "tyc", "0"))
             # Adjust units
-            key = c.add(k(), "mul", key, k_u)
+            key = c.add(ks[2], "mul", key, k_u)
 
         # Select desired values
-        key = c.add(k(), "select", key, "ikarus indexers")
-        key = c.add(k(), "rename_dims", key, quote({"t_new": "t"}))
+        c.add(ks[3], "select", key, "ikarus indexers")
+        key = c.add(ks[4], "rename_dims", ks[3], quote({"t_new": "t"}))
 
         if name == "input":
             # Apply scenario-specific input efficiency factor
@@ -285,18 +281,18 @@ def prepare_computer(c: Computer):
             # Drop existing "c" dimension
             key = single_key(c.add(key / "c", "drop_vars", key, quote("c")))
             # Fill (c, l) dimensions based on t
-            key = c.add(k(), "mul", key, "broadcast:t-c-l")
+            key = c.add(ks[5], "mul", key, "broadcast:t-c-l")
         elif name == "technical_lifetime":
             # Round up technical_lifetime values due to incompatibility in handling
             # non-integer values in the GAMS code
-            key = c.add(k(), "round", key)
+            key = c.add(ks[5], "round", key)
 
         # Broadcast across "n" dimension
-        key = c.add(k(), "mul", key, "n:n:ex world")
+        key = c.add(ks[6], "mul", key, "n:n:ex world")
 
         if name in ("fix_cost", "input", "var_cost"):
             # Broadcast across valid (yv, ya) pairs
-            key = c.add(k(), "mul", key, "broadcast:y-yv-ya")
+            key = c.add(ks[7], "mul", key, "broadcast:y-yv-ya")
 
         # Convert to target units
         try:
@@ -304,7 +300,7 @@ def prepare_computer(c: Computer):
         except KeyError:  # "availability"
             pass
         else:
-            key = c.add(k(), "convert_units", key, target_units)
+            key = c.add(ks[8], "convert_units", key, target_units)
 
         # Mapping between short dimension IDs in the computed quantities and the
         # dimensions in the respective MESSAGE parameters
