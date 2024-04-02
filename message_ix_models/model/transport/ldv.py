@@ -2,7 +2,6 @@
 
 import logging
 from collections import defaultdict
-from copy import deepcopy
 from functools import lru_cache, partial
 from operator import itemgetter, le
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, cast
@@ -25,7 +24,6 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     merge_data,
-    nodes_ex_world,
     private_data_path,
     same_node,
 )
@@ -516,7 +514,11 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
 
 
 def usage_data(
-    load_factor: "AnyQuantity", nodes: List[str], context
+    load_factor: "AnyQuantity",
+    cg: List["Code"],
+    nodes: List[str],
+    t_ldv: Mapping[str, List],
+    years: List,
 ) -> Mapping[str, pd.DataFrame]:
     """Generate data for LDV usage technologies.
 
@@ -527,10 +529,16 @@ def usage_data(
     1. Load factor, in the ``output`` efficiency.
     2. Required consumption of a "disutility" commodity, in ``input``.
     """
-    # Add disutility data separately
-    spec = context["transport spec disutility"]
-    info: ScenarioInfo = deepcopy(context.transport.base_model_info)
-    info.set["node"] = nodes_ex_world(info.set["node"])
+    from .structure import TEMPLATE
+
+    info = ScenarioInfo(set={"node": nodes, "year": years})
+
+    # Regenerate the Spec for the disutility formulation
+    spec = disutility.get_spec(
+        groups=cg,
+        technologies=t_ldv["t"],
+        template=TEMPLATE,
+    )
 
     data = disutility.data_conversion(info, spec)
 
@@ -548,6 +556,7 @@ def usage_data(
         .assign(unit=unit)
     )
 
+    # Add a source that produces the "disutility" commodity
     merge_data(data, disutility.data_source(info, spec))
 
     return data
