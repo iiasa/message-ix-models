@@ -102,6 +102,9 @@ class Config(ConfigHelper):
         }
     )
 
+    #: Sources for input data.
+    data_source: DataSourceConfig = field(default_factory=DataSourceConfig)
+
     #: Set of modes handled by demand projection. This list must correspond to groups
     #: specified in the corresponding technology.yaml file.
     #:
@@ -134,6 +137,9 @@ class Config(ConfigHelper):
             },
         }
     )
+
+    #: Generate relation entries for emissions.
+    emission_relations: bool = True
 
     #: Various other factors.
     factor: Dict = field(default_factory=dict)
@@ -214,6 +220,10 @@ class Config(ConfigHelper):
     #: Mapping from nodes to other nodes towards which share weights should converge.
     share_weight_convergence: Dict = field(default_factory=dict)
 
+    #: Specification for the structure of MESSAGEix-Transport, processed from contents
+    #: of :file:`set.yaml` and :file:`technology.yaml`.
+    spec: Spec = field(default_factory=Spec)
+
     #: Speeds of transport modes. The labels on the 't' dimension must match
     #: :attr:`demand_modes`. Source: Schäefer et al. (2010)
     speeds: Quantity = quantity_field(
@@ -244,16 +254,6 @@ class Config(ConfigHelper):
 
     #: Year for share convergence.
     year_convergence: int = 2110
-
-    #: Specification for the structure of MESSAGEix-Transport, processed from contents
-    #: of :file:`set.yaml` and :file:`technology.yaml`.
-    spec: Spec = field(default_factory=Spec)
-
-    #: Sources for input data.
-    data_source: DataSourceConfig = field(default_factory=DataSourceConfig)
-
-    #: Generate relation entries for emissions.
-    emission_relations: bool = True
 
     # Init-only variables
 
