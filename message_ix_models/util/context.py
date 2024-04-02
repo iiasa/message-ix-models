@@ -333,10 +333,19 @@ class Context(dict):
         return message_ix.Scenario(self.get_platform(), **self.core.scenario_info)
 
     def set_scenario(self, scenario: message_ix.Scenario) -> None:
-        """Update :attr:`.Config.scenario_info` to match an existing `scenario`."""
+        """Update :attr:`.Config.scenario_info` to match an existing `scenario`.
+
+        :attr:`.Config.url` is also updated.
+        """
         self.core.scenario_info.update(
             model=scenario.model, scenario=scenario.scenario, version=scenario.version
         )
+        try:
+            url = scenario.url
+        except AttributeError:
+            # Compatibility with ixmp <3.5
+            url = f"{scenario.model}/{scenario.scenario}/{scenario.version}"
+        self.core.url = f"ixmp://{scenario.platform.name}/{url}"
 
     def handle_cli_args(
         self,
