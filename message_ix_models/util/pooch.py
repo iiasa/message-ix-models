@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Mapping, Tuple
 
 import click
 import pooch
@@ -77,7 +77,7 @@ class UnpackSnapshot:
 GH_MAIN = "https://github.com/iiasa/message-ix-models/raw/main/message_ix_models/data"
 
 #: Supported remote sources of data.
-SOURCE = {
+SOURCE: Mapping[str, Mapping[str, Any]] = {
     "PRIMAP": dict(
         pooch_args=dict(
             base_url="ftp://datapub.gfz-potsdam.de/download/10.5880.PIK.2019.001/",
