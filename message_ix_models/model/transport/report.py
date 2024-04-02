@@ -310,8 +310,7 @@ def callback(rep: Reporter, context: Context) -> None:
         rep.set_filters(t=sorted(t_filter))
 
     # Configure replacements for conversion to IAMC data structure
-    spec = context["transport spec"]
-    add_replacements("t", spec.add.set["technology"])
+    add_replacements("t", context.transport.spec.add.set["technology"])
 
     # Apply some functions that prepare further tasks. Order matters here.
     aggregate(rep)

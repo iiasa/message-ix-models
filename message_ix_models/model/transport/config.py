@@ -5,7 +5,7 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import message_ix
 from genno import Quantity
-from message_ix_models import Context, ScenarioInfo
+from message_ix_models import Context, ScenarioInfo, Spec
 from message_ix_models.model.structure import generate_set_elements
 from message_ix_models.project.ssp import SSP_2017, ssp_field
 from message_ix_models.report.util import as_quantity
@@ -252,6 +252,9 @@ class Config(ConfigHelper):
     #: Information on the structure of MESSAGEix-Transport, processed from contents of
     #: :file:`set.yaml` and :file:`technology.yaml`.
     set: Dict = field(default_factory=dict, repr=False)
+
+    #: Specification for the structure of MESSAGEix-Transport.
+    spec: Spec = field(default_factory=Spec)
 
     #: Sources for input data.
     data_source: DataSourceConfig = field(default_factory=DataSourceConfig)

@@ -45,7 +45,7 @@ def get_freight_data(
     strip_emissions_data
     """
     # Info about the model structure being built
-    info = context["transport spec"].add
+    info = context.transport.spec.add
     info.set["commodity"].extend(get_codes("commodity"))
 
     technologies = techs[techs.index(Code(id="freight truck"))].child
