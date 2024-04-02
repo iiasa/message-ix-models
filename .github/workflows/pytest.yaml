@@ -182,7 +182,8 @@ jobs:
       run: |
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream.version }}"
-        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
+        # pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
+        pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@issue/723"
 
         pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
 
