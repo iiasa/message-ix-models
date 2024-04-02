@@ -115,15 +115,8 @@ def generate(
         targets.append(target)
 
         # Build Transport on the scenario
-        # TODO Add functionality like gen-activity
-        # TODO Add functionality like build_cmd() with report_build
         wf.add_step(
-            f"{label} built",
-            "base",
-            build.main,
-            target=target,
-            clone=True,
-            ssp=ssp,
+            f"{label} built", "base", build.main, target=target, clone=True, ssp=ssp
         )
 
         # Simulate build
