@@ -1,8 +1,11 @@
 What's new
 **********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2024.4.2
+=========
 
 - The :class:`.SSPUpdate` data provider pulls data from the SSP 2024 "Release 3.0" data files, and handles both the earlier and current structures (:pull:`156`).
 - Improve :class:`.ExoDataSource` with :meth:`.raise_on_extra_kw` utility method, automatic copy of source keyword arguments (:pull:`156`).
