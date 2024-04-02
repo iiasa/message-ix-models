@@ -2,6 +2,7 @@ import logging
 from copy import copy
 
 import ixmp
+import pandas as pd
 import pytest
 from genno import Quantity
 from genno.testing import assert_units
@@ -9,7 +10,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.testing import bare_res
 from pytest import mark, param
 
-from message_data.model.transport import Config, build, report
+from message_data.model.transport import build, report, structure
 from message_data.model.transport.testing import MARK, configure_build
 
 log = logging.getLogger(__name__)
@@ -25,19 +26,9 @@ log = logging.getLogger(__name__)
         ("ISR", "ISR"),
     ],
 )
-def test_get_spec(test_context, regions_arg, regions_exp, years):
-    ctx = test_context
-
-    # With None values, defaults are used
-    if regions_arg:
-        ctx.update(regions=regions_arg)
-    if years:
-        ctx.update(years=years)
-
-    Config.from_context(ctx)
-
+def test_make_spec(regions_arg, regions_exp, years):
     # The spec can be generated
-    spec = build.get_spec(ctx)
+    spec = structure.make_spec(regions_arg)
 
     # The required elements of the "node" set match the configuration
     nodes = get_codes(f"node/{regions_exp}")
@@ -79,7 +70,7 @@ def test_get_spec(test_context, regions_arg, regions_exp, years):
             "US-TIMES MA3T",
             "IKARUS",
             False,
-            marks=[mark.slow, MARK[2](AssertionError)],
+            marks=[mark.slow, MARK[2](pd.errors.EmptyDataError)],
         ),
         # Pending iiasa/message_data#190
         param("ISR", "A", None, None, False, marks=MARK[3]),
