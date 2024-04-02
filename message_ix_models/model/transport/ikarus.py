@@ -342,7 +342,7 @@ def prepare_computer(c: Computer):
     # on these outputs.
 
 
-def get_ikarus_data(context):
+def get_ikarus_data(context) -> Dict[str, pd.DataFrame]:
     """Prepare non-LDV data from :cite:`Martinsen2006`.
 
     The data is read from from ``GEAM_TRP_techinput.xlsx``, and the processed data is
@@ -376,7 +376,7 @@ def get_ikarus_data(context):
     # Retrieve the data from the spreadsheet. Use additional output efficiency and
     # investment cost factors for some bus technologies
     data = read_ikarus_data(
-        occupancy=config.non_ldv_output,
+        occupancy=config.non_ldv_output,  # type: ignore [attr-defined]
         k_output=config.efficiency["bus output"],
         k_inv_cost=config.cost["bus inv"],
     )
@@ -400,7 +400,7 @@ def get_ikarus_data(context):
     )
 
     # Dict of ('parameter name' -> [list of data frames])
-    result = defaultdict(list)
+    dfs = defaultdict(list)
 
     # Iterate over each parameter and technology
     for (par, tec), group_data in data.groupby(["param", "technology"]):
@@ -466,13 +466,12 @@ def get_ikarus_data(context):
             df["value"] = df["value"].round()
 
         # Broadcast across all nodes
-        result[par].append(
+        dfs[par].append(
             df.pipe(broadcast, node_loc=nodes_ex_world(info.N)).pipe(same_node)
         )
 
     # Concatenate data frames for each model parameter
-    for par, list_of_df in result.items():
-        result[par] = pd.concat(list_of_df)
+    result = {par: pd.concat(list_of_df) for par, list_of_df in dfs.items()}
 
     # Capacity factors all 1.0
     result.update(make_matched_dfs(result["output"], capacity_factor=1.0))
