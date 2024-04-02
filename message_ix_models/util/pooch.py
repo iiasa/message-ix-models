@@ -73,6 +73,9 @@ class UnpackSnapshot:
         return path
 
 
+#: Base URL portion for files stored in the message-ix-models GitHub repository.
+GH_MAIN = "https://github.com/iiasa/message-ix-models/raw/main/message_ix_models/data"
+
 #: Supported remote sources of data.
 SOURCE = {
     "PRIMAP": dict(
@@ -88,8 +91,7 @@ SOURCE = {
     ),
     "MESSAGEix-Nexus": dict(
         pooch_args=dict(
-            base_url="https://github.com/iiasa/message-ix-models/raw/enh/2023-W44/"
-            "message_ix_models/data/water/",
+            base_url=f"{GH_MAIN}/water/",
             registry={"water.tar.xz": "sha1:ec9e0655af90ca844c0158968bb03a194b8fa6c6"},
         ),
         processor=Extract(extract_dir="water"),
