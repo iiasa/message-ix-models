@@ -338,7 +338,8 @@ def add_structure(c: Computer):
             continue  # Already present; don't overwrite
 
     # Retrieve information about the model structure
-    spec, technologies, t_groups = get_techs(context)
+    spec, t_groups = get_techs(context)
+    technologies = spec.add.set["technology"]
 
     # Lists and subsets
     c.add("c::transport", quote(spec.add.set["commodity"]))

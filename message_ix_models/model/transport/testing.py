@@ -103,7 +103,8 @@ def simulated_solution(request, context) -> Reporter:
     # Info about the built model
     info = ScenarioInfo(scenario)
 
-    spec, technologies, t_info = get_techs(context)
+    spec, t_info = get_techs(context)
+    technologies = spec.add.set["technology"]
 
     # Create a reporter
     rep = Reporter.from_scenario(scenario)

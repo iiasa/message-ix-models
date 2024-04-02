@@ -90,7 +90,8 @@ def test_factor_input(test_context, options, any_change):
 
     # Simulate inputs appearing in a Computer
     y = [2020, 2045, 2050, 2060, 2110]
-    spec, techs, t_groups = get_techs(test_context)
+    spec, t_groups = get_techs(test_context)
+    techs = spec.add.set["technology"]
 
     # Function runs
     result = factor_input(y, techs, dict(t=t_groups), dict(transport=cfg))

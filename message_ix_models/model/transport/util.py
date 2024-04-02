@@ -82,29 +82,23 @@ def path_fallback(context_or_regions: Union[Context, str], *parts) -> Path:
     raise FileNotFoundError(candidates)
 
 
-def get_techs(context) -> Tuple[Spec, List, Dict]:
+def get_techs(context) -> Tuple[Spec, Dict]:
     """Return info about transport technologies, given `context`."""
     from . import build
 
     # Get a specification that describes this setting
-    # TODO assume this is on `context`. This is valid within the code proper, but some
-    #      tests currently rely on get_spec() being called here.
     spec = build.get_spec(context)
-
-    # Set of all transport technologies
-    technologies = spec["add"].set["technology"].copy()
 
     # Subsets of transport technologies for aggregation and filtering
     t_groups: Dict[str, List[str]] = {"non-ldv": []}
-    for tech in filter(  # Only include those technologies with children
-        lambda t: len(t.child), context.transport.set["technology"]["add"]
-    ):
+    # Only include those technologies with children
+    for tech in filter(lambda t: len(t.child), spec.add.set["technology"]):
         t_groups[tech.id] = list(c.id for c in tech.child)
         # Store non-LDV technologies
         if tech.id != "LDV":
             t_groups["non-ldv"].extend(t_groups[tech.id])
 
-    return spec, technologies, t_groups
+    return spec, t_groups
 
 
 def sum_numeric(iterable: Iterable, /, start=0) -> "numbers.Real":
