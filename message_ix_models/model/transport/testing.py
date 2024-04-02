@@ -43,7 +43,7 @@ def configure_build(
 ) -> Tuple[Computer, ScenarioInfo]:
     test_context.update(regions=regions, years=years, output_path=tmp_path)
     c = build.get_computer(test_context, visualize=False, options=options)
-    return c, test_context["transport build info"]
+    return c, test_context.transport.base_model_info
 
 
 def built_transport(

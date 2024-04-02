@@ -40,6 +40,8 @@ from .util import input_commodity_level
 if TYPE_CHECKING:
     from genno.types import AnyQuantity
 
+    from .config import Config
+
 log = logging.getLogger(__name__)
 
 
@@ -60,8 +62,9 @@ def prepare_computer(c: Computer):
     from . import factor
 
     context = c.graph["context"]
-    source = context.transport.data_source.LDV
-    info = context["transport build info"]
+    config: "Config" = context.transport
+    source = config.data_source.LDV
+    info = config.base_model_info
 
     # Add all the following computations, even if they will not be used
     k1 = Key("US-TIMES MA3T")
@@ -271,8 +274,9 @@ def get_USTIMES_MA3T(
     )
 
     # Retrieve configuration and ScenarioInfo
-    technical_lifetime = context.transport.ldv_lifetime["average"]
-    info = context["transport build info"]
+    config: "Config" = context.transport
+    technical_lifetime = config.ldv_lifetime["average"]
+    info = config.base_model_info
     spec = context["transport spec"]
 
     # Merge with base model commodity information for io_units() below
@@ -375,7 +379,7 @@ def get_USTIMES_MA3T(
 def get_dummy(context) -> Dict[str, pd.DataFrame]:
     """Generate dummy, equal-cost output for each LDV technology."""
     # Information about the target structure
-    info = context["transport build info"]
+    info: ScenarioInfo = context.transport.base_model_info
 
     # List of years to include
     years = list(filter(lambda y: y >= 2010, info.set["year"]))
@@ -458,10 +462,10 @@ def constraint_data(context) -> Dict[str, pd.DataFrame]:
     Responds to the :attr:`.Config.constraint` key :py:`"LDV growth_activity"`; see
     description there.
     """
-    config = context.transport
+    config: "Config" = context.transport
 
     # Information about the target structure
-    info = context["transport build info"]
+    info = config.base_model_info
     years = info.Y[1:]
 
     # Technologies as a hierarchical code list
@@ -516,7 +520,7 @@ def usage_data(
     """
     # Add disutility data separately
     spec = context["transport spec disutility"]
-    info = deepcopy(context["transport build info"])
+    info: ScenarioInfo = deepcopy(context.transport.base_model_info)
     info.set["node"] = nodes_ex_world(info.set["node"])
 
     data = disutility.data_conversion(info, spec)

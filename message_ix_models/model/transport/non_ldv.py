@@ -24,7 +24,7 @@ from sdmx.model.v21 import Code
 from .emission import ef_for_input
 
 if TYPE_CHECKING:
-    from message_ix_models import Context
+    from message_ix_models import Context, ScenarioInfo
 
     from .config import Config
 
@@ -133,7 +133,7 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     **NB** this is analogous to :func:`.ldv.get_dummy`.
     """
     # Information about the target structure
-    info = context["transport build info"]
+    info: "ScenarioInfo" = context.transport.base_model_info
 
     # List of years to include
     years = list(filter(lambda y: y >= 2010, info.set["year"]))
