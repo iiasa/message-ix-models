@@ -122,11 +122,16 @@ jobs:
     # By default, the next step installs dependencies from PyPI.
     # To run against unreleased code (on `main`, or other branches for open
     # PRs), uncomment or modify the lines below as appropriate.
+    # - genno and message-ix-models are released frequently and *should* be
+    #   installed from PyPI, with only temporary exceptions.
+    # - ixmp and message-ix are released less frequently and *may* be installed
+    #   from `main`
     - name: Force upgrade to unreleased dependencies
       run: |
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
+        # Temporary, pending a release that includes iiasa/message-ix-models#161
         pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
 
         # Upgrade matplotlib
