@@ -14,7 +14,6 @@ from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.util._logging import silence_log
 
 from . import Config, build
-from .util import get_techs
 
 log = logging.getLogger(__name__)
 
@@ -103,8 +102,8 @@ def simulated_solution(request, context) -> Reporter:
     # Info about the built model
     info = ScenarioInfo(scenario)
 
-    spec, t_info = get_techs(context)
-    technologies = spec.add.set["technology"]
+    config: "Config" = context.transport
+    technologies = config.spec.add.set["technology"]
 
     # Create a reporter
     rep = Reporter.from_scenario(scenario)

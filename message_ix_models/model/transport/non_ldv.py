@@ -24,7 +24,7 @@ from sdmx.model.v21 import Code
 from .emission import ef_for_input
 
 if TYPE_CHECKING:
-    from message_ix_models import Context, ScenarioInfo
+    from message_ix_models import Context
 
     from .config import Config
 
@@ -133,13 +133,14 @@ def get_2w_dummies(context) -> Dict[str, pd.DataFrame]:
     **NB** this is analogous to :func:`.ldv.get_dummy`.
     """
     # Information about the target structure
-    info: "ScenarioInfo" = context.transport.base_model_info
+    config: "Config" = context.transport
+    info = config.base_model_info
 
     # List of years to include
     years = list(filter(lambda y: y >= 2010, info.set["year"]))
 
     # List of 2-wheeler technologies
-    all_techs = context.transport.set["technology"]["add"]
+    all_techs = config.spec.add.set["technology"]
     techs = list(map(str, all_techs[all_techs.index("2W")].child))
 
     # 'output' parameter values: all 1.0 (ACT units == output units)

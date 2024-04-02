@@ -68,16 +68,16 @@ def test_configure(test_context, regions):
     assert_qty_equal(as_quantity("200 * 8 hours / passenger / year"), cfg.work_hours)
 
     # Codes for the consumer_group set are generated
-    codes = cfg.set["consumer_group"]["add"]
+    codes = cfg.spec.add.set["consumer_group"]
     RUEAA = codes[codes.index("RUEAA")]
     assert "Rural, or “Outside MSA”, Early Adopter, Average" == str(RUEAA.name)
 
     # xarray objects are generated for advanced indexing
-    indexers = cfg.set["consumer_group"]["indexers"]
+    indexers = cfg.spec.add.set["consumer_group indexers"]
     assert all(isinstance(da, xr.DataArray) for da in indexers.values())
 
     # Codes for commodities are generated
-    codes = cfg.set["commodity"]["add"]
+    codes = cfg.spec.add.set["commodity"]
     RUEAA = codes[codes.index("transport pax RUEAA")]
     assert RUEAA.eval_annotation("demand") is True
 
@@ -86,7 +86,7 @@ def test_configure(test_context, regions):
     assert registry.Unit("Gp km") == RUEAA.eval_annotation("units", r)
 
     # Codes for technologies are generated, with annotations giving their units
-    codes = cfg.set["technology"]["add"]
+    codes = cfg.spec.add.set["technology"]
     ELC_100 = codes[codes.index("ELC_100")]
     assert registry.Unit("Gv km") == ELC_100.eval_annotation("units", r)
 

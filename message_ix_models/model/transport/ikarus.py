@@ -364,7 +364,7 @@ def get_ikarus_data(context):
     """
     # Reference to the transport configuration
     config: "Config" = context.transport
-    tech_info = context.transport.set["technology"]["add"]
+    tech_info = config.spec.add.set["technology"]
     info = config.base_model_info
 
     # Merge with base model commodity information for io_units() below

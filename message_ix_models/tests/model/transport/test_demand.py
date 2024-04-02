@@ -8,7 +8,7 @@ from message_ix_models.model.structure import get_codes
 from message_ix_models.project.ssp import SSP_2017, SSP_2024
 from pytest import param
 
-from message_data.model.transport import Config, build, demand, testing
+from message_data.model.transport import Config, demand, testing
 from message_data.model.transport.testing import MARK
 
 log = logging.getLogger(__name__)
@@ -22,22 +22,22 @@ def test_demand_dummy(test_context, regions, years):
     ctx.model.regions = regions
     ctx.model.years = years
 
-    Config.from_context(ctx)
+    config = Config.from_context(ctx)
 
-    spec = build.get_spec(ctx)
+    spec = config.spec
 
     args = (
-        spec["add"].set["commodity"],
-        spec["require"].set["node"],
+        spec.add.set["commodity"],
+        spec.require.set["node"],
         get_codes(f"year/{years}"),  # FIXME should be present in the spec
         {"transport": ctx.transport},  # Minimal config object
     )
 
     # Returns empty dict without config flag set
-    ctx.transport.dummy_demand = False
+    config.dummy_demand = False
     assert dict() == demand.dummy(*args)
 
-    ctx.transport.dummy_demand = True
+    config.dummy_demand = True
     data = demand.dummy(*args)
 
     assert any(data["demand"]["commodity"] == "transport pax URLMM")
