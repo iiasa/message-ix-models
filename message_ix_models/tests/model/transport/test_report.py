@@ -50,7 +50,7 @@ def test_register_cb():
     "regions, years",
     (
         param("R11", "A", marks=MARK[1]),
-        param("R12", "A", marks=pytest.mark.skip(reason="Temporary, for #545")),
+        ("R12", "A"),
         param("R14", "A", marks=MARK[2](pd.errors.EmptyDataError)),
         param("ISR", "A", marks=MARK[3]),
     ),
@@ -94,7 +94,6 @@ def quiet_genno(caplog):
     caplog.set_level(logging.WARNING, logger="genno.compat.pyam")
 
 
-@pytest.mark.skip(reason="Temporary, for #545")
 @mark.usefixtures("quiet_genno")
 def test_simulated_solution(request, test_context, regions="R12", years="B"):
     """:func:`message_ix_models.report.prepare_reporter` works on the simulated data."""
@@ -115,7 +114,6 @@ def test_simulated_solution(request, test_context, regions="R12", years="B"):
     assert 0 < len(result)
 
 
-@mark.skip("Temporary, for merging #370")
 @mark.usefixtures("quiet_genno")
 @pytest.mark.parametrize(
     "plot_name",
@@ -139,9 +137,6 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
-@pytest.mark.xfail(
-    reason="Temporary, for #397; identify_nodes(…) incorrectly gives R14 on GHA"
-)
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ):
