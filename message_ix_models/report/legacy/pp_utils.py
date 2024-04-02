@@ -315,7 +315,7 @@ def _convert_units(df, unit_out):
             )
         except Exception:
             print(
-                f"No unit conversion factor found to convert {df.unit.unique()[0]} to {unit_out}"
+                f"No unit conversion factor found to convert {df["Unit"].unique()[0]} to {unit_out}"
             )
     df.Unit = unit_out
 
