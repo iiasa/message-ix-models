@@ -311,9 +311,18 @@ transport rail usage:
     Conversion from vehicle-distance traveled to passenger transport activity
 
 
-DUMMY transport fuel:
+# TODO Parametrize
+DUMMY supply of coal:
   description: >-
     Dummy technology for development; should not appear in the final model.
+DUMMY supply of electr: {}
+DUMMY supply of ethanol: {}
+DUMMY supply of fueloil: {}
+DUMMY supply of gas: {}
+DUMMY supply of hydrogen: {}
+DUMMY supply of lightoil: {}
+DUMMY supply of methanol: {}
+
 
 transport disutility:
   description: >-

@@ -17,6 +17,7 @@ from message_ix_models.util import (
     make_io,
     make_matched_dfs,
     make_source_tech,
+    merge_data,
     private_data_path,
     same_node,
 )
@@ -35,7 +36,7 @@ def prepare_computer(c: Computer):
     for comp in (
         (conversion, n, y, "config"),
         (misc, "info", n, y),
-        (dummy_supply, "config", "info"),
+        (dummy_supply, "t::transport", "info", "config"),
         (navigate_ele, n, "t::transport", "t::transport agg", y, "config"),
     ):
         # Add 2 computations: one to generate the data
@@ -93,46 +94,33 @@ def conversion(
     return data1
 
 
-def dummy_supply(config, info) -> Dict[str, pd.DataFrame]:
+def dummy_supply(technologies: List["Code"], info, config) -> Dict[str, pd.DataFrame]:
     """Dummy fuel supply for the bare RES."""
     if not config["transport"].dummy_supply:
         return dict()
 
-    # TODO read the list of 'commodity' from context/config
-    commodities = [
-        "coal",
-        "electr",
-        "ethanol",
-        "fueloil",
-        "gas",
-        "hydrogen",
-        "lightoil",
-        "methanol",
-    ]
+    # Identify (level, commodity) from `technologies`
+    level_commodity = set()
+    for input_info in map(lambda t: t.eval_annotation(id="input"), technologies):
+        if input_info is None or input_info.get("level", None) == "useful":
+            continue  # No `input` annotation, or an LDV usage pseudo-technology
+        level_commodity.add(("final", input_info["commodity"]))
 
-    # TODO separate dummy supplies by commodity
-    data = make_source_tech(
-        info,
-        common=dict(
-            level="final",  # TODO read the level from config
-            mode="all",
-            technology="DUMMY transport fuel",
-            time="year",
-            time_dest="year",
-            unit="GWa",
-        ),
-        output=1.0,
-        var_cost=1.0,
-    )
+    result: Dict[str, pd.DataFrame] = dict()
+    common = dict(mode="all", time="year", time_dest="year", unit="GWa")
+    values = dict(output=1.0, var_cost=1.0)
 
-    # Broadcast across all fuel commodities
-    for par_name in data:
-        try:
-            data[par_name] = data[par_name].pipe(broadcast, commodity=commodities)
-        except ValueError:
-            pass  # No 'commodity' dimension
+    # Make one source technology for each (level, commodity)
+    for level, c in sorted(level_commodity):
+        t = f"DUMMY supply of {c}"
+        merge_data(
+            result,
+            make_source_tech(
+                info, dict(commodity=c, level=level, technology=t, **common), **values
+            ),
+        )
 
-    return data
+    return result
 
 
 def misc(info: ScenarioInfo, nodes: List[str], y: List[int]):
