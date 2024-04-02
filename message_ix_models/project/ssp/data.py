@@ -192,6 +192,7 @@ class SSPUpdate(ExoDataSource):
             # Look first in message_data, then in message_ix_models test data
             dirs = [private_data_path("ssp"), package_data_path("test", "ssp")]
 
+            models.extend([model] if model is not None else [])
             scenarios.append(f"SSP{ssp_id} - Review Phase 1")
         else:
             log.error(
