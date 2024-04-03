@@ -441,7 +441,7 @@ def gen_GLB(df, param, weighted_by):
         # Global region needs to be dropped or else it is used for calcualting
         # the mean
         df_tmp = df[df.Region != "World"]
-        df_tmp = df_tmp.groupby(idx).mean().reset_index()
+        df_tmp = df_tmp.groupby(idx).mean(numeric_only=True).reset_index()
     elif param == "weighted_avg":
         weighted_by = weighted_by.reset_index()
         weighted_by = weighted_by[weighted_by.Region != "World"].set_index("Region")
