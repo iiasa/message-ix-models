@@ -83,6 +83,12 @@ exclude_also = [
   "if HAS_MESSAGE_DATA:",
 ]
 
+[tool.coverage.run]
+omit = [
+  # The single existing test is far from enough
+  "message_ix_models/report/legacy/*",
+]
+
 [tool.mypy]
 exclude = ["doc/", "message_ix_models/report/legacy/"]
 
