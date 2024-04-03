@@ -147,6 +147,10 @@ def apply_spec(  # noqa: C901
         unit = unit if isinstance(unit, Code) else Code(id=unit, name=unit)
         _add_unit(scenario.platform, unit.id, str(unit.name))
 
+    # Add nodes to the Platform before adding data
+    for node in spec["add"].set["node"]:
+        scenario.platform.add_region(node, hierarchy="")
+
     # Add data
     if callable(data):
         result = data(scenario, dry_run=dry_run)
