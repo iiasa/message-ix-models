@@ -1,17 +1,21 @@
+import logging
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 import yaml
-from message_ix_models.util import package_data_path
 from yaml.loader import SafeLoader
+from message_ix_models import Context
+from message_ix_models.util import package_data_path
 
 from . import postprocess 
 from . import pp_utils
 from .get_historical_years import main as get_historical_years
 from .get_nodes import get_nodes
 from .get_optimization_years import main as get_optimization_years
-
 from .utilities import retrieve_region_mapping
+
+log = logging.getLogger(__name__)
 
 
 def report(
@@ -31,6 +35,8 @@ def report(
     kyoto_hist=None,
     lu_hist=None,
     verbose=False,
+    *,
+    context: Optional[Context] = None,
 ):
     """Main reporting function.
 
@@ -85,6 +91,9 @@ def report(
         Historic land-use GHG emissions for regions.
     verbose : str (default: False)
         Option whther to print onscreen messages.
+    context : .Context
+        Only the ``dry_run`` setting is respected. If :data:`True`, configuration is
+        read, but nothing is done.
     """
     nds0 = get_nodes(scen)
     nds = [n for n in nds0 if "|" not in n]
@@ -165,6 +174,11 @@ def report(
 
     # Config: Define which variable definition should be used
     var_def = path / config["report_config"]["var_def"] if not var_def else var_def
+
+    # If dry_run is requested, leave here
+    if context and context.dry_run:
+        log.info(f"(DRY RUN) Would write to {out_dir}")
+        return
 
     # --------------------------------
     # Set global variables in pp_utils
