@@ -103,9 +103,7 @@ def generate(
     debug = []
     for ssp in SSP_2024:
         # Construct a label including the SSP
-        # TODO split to a separate function
-        label = f"SSP{ssp.name}"
-        label_full = f"SSP_2024.{ssp.name}"
+        label, label_full = f"SSP{ssp.name}", f"SSP_2024.{ssp.name}"
 
         # Identify the target of this step
         target = url_template.format(label_full)
