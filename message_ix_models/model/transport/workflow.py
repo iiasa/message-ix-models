@@ -58,9 +58,6 @@ def generate(
 
             # Update Context.core.scenario_info to match `s`
             context.set_scenario(s)
-            # Also update context.core.url
-            # FIXME Do this in Context.set_scenario()
-            context.core.url = f"ixmp://{__name__}/{s.url}"
         else:
             log.warning("No --model/--scenario/--url; some workflow steps may not work")
             platform = context.platform_info.get("name", "NONE")
