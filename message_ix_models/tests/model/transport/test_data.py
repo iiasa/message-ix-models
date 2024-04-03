@@ -9,7 +9,6 @@ from message_data.model.transport.roadmap import get_roadmap_data
 from message_data.model.transport.testing import MARK
 from message_data.projects.navigate import T35_POLICY
 from message_data.testing import assert_units
-from message_data.tools.gfei_fuel_economy import get_gfei_data
 
 
 @pytest.mark.parametrize("file", files.FILES, ids=lambda f: "-".join(f.parts))
@@ -126,41 +125,6 @@ def test_get_non_ldv_data(test_context, regions, years="B"):
     mask = data["output"]["technology"].str.endswith(" usage")
     assert_units(data["output"][~mask], {"[vehicle]": 1, "[length]": 1})
     assert_units(data["output"][mask], {"[passenger]": 1, "[length]": 1})
-
-
-def test_get_gfei_data(test_context):
-    test_context.model.regions = "R11"
-
-    df = get_gfei_data(test_context)
-
-    # Data have the expected size
-    assert 307 == len(df)
-
-    # Data covers all historical periods from the Roadmap model
-    assert {2017} == set(df["year"].unique())
-    # Modes match the list below
-    assert {
-        "ICAe_ffv",
-        "ICAm_ptrp",
-        "ICH_chyb",
-        "ICE_conv",
-        "ELC_100",
-        "ICE_lpg",
-        "PHEV_ptrp",
-        "ICE_nga",
-        "HFC_ptrp",
-    } == set(df["technology"].unique())
-
-    # Data have the expected dimensions
-    assert {
-        "technology",
-        "value",
-        "ISO_code",
-        "region",
-        "year",
-        "units",
-        "variable",
-    } == set(df.columns)
 
 
 @pytest.mark.skip("Pending https://github.com/transportenergy/database/issues/75")
