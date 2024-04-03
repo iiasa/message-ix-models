@@ -1729,7 +1729,7 @@ def retr_price(
 
     # Define the technology which represents the quantities used to derive
     # sums accross regions values.
-    scale_tec = "Agricultural Production|Non-Energy Crops"
+    scale_tec = "Agricultural Production|Non-Energy|Crops"
 
     vars["Agriculture|Non-Energy Crops and Livestock|Index"] = pp.retrieve_lu_price(
         "Price|Agriculture|Non-Energy Crops and Livestock|Index", scale_tec
