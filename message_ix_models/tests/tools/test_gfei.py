@@ -17,7 +17,10 @@ class TestGFEI:
         keys = prepare_computer(test_context, c, source, source_kw)
 
         # Preparation of data and plotting runs successfully
-        result, *_ = c.get([keys[0], "plot GFEI debug"])
+        c.add("tmp", [keys[0], "plot GFEI debug"])
+        result, *_ = c.get("tmp")
 
-        # Data have the expected dimensions
+        # Data have the expected dimensions, coords, and size
         assert {"n", "t", "y"} == set(result.dims)
+        assert {2017} == set(result.coords["y"].data)
+        assert 317 == result.size
