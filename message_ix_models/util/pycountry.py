@@ -7,8 +7,9 @@ from pycountry import countries, historic_countries
 COUNTRY_NAME = {
     "Korea": "Korea, Republic of",
     "Republic of Korea": "Korea, Republic of",
-    "South Korea": "Korea, Republic of",
     "Russia": "Russian Federation",
+    "South Korea": "Korea, Republic of",
+    "Turkey": "Türkiye",
 }
 
 
