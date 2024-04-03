@@ -10,6 +10,7 @@ from message_ix.models import MACRO
 from tqdm import tqdm
 
 from message_ix_models import Spec
+from message_ix_models.report.legacy.get_nodes import get_nodes
 from message_ix_models.util import minimum_version
 from message_ix_models.util.pooch import SOURCE, fetch
 
@@ -117,6 +118,7 @@ def load(
     # Add units
     spec = Spec()
     spec.add.set["unit"] = get_codes(f"unit/snapshot-{snapshot_id}")
+    spec.add.set["node"] = get_nodes(scen=scenario)
     apply_spec(scenario, spec)
 
     # Initialize MACRO items
