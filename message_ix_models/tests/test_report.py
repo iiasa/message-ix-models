@@ -83,7 +83,6 @@ def test_report_deprecated(caplog, request, tmp_path, test_context):
         report(scenario, tmp_path, "foo")
 
 
-@pytest.mark.xfail(raises=ModuleNotFoundError, reason="Requires message_data")
 def test_report_legacy(caplog, request, tmp_path, test_context):
     """Legacy reporting can be invoked via :func:`message_ix_models.report.report`."""
     # Create a target scenario
