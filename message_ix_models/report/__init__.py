@@ -30,18 +30,20 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-# Add to the configuration keys stored by Reporter.configure().
-genno.config.STORE.add("output_path")
-genno.config.STORE.add("output_dir")
+# Ignore a section in global.yaml used to define YAML anchors
+try:
+    # genno ≥ 1.25
+    genno.config.handles("_iamc formats", False, False)(genno.config.store)
+except AttributeError:
+    # genno < 1.25
+    # TODO Remove once the minimum supported version in message-ix-models is ≥ 1.25
+    @genno.config.handles("_iamc formats")
+    def _(c: Reporter, info):
+        pass
+
 
 #: List of callbacks for preparing the Reporter.
 CALLBACKS: List[Callable] = []
-
-
-# Ignore a section in global.yaml used to define YAML anchors
-@genno.config.handles("_iamc formats")
-def _(c: Reporter, info):
-    pass
 
 
 @genno.config.handles("iamc")
