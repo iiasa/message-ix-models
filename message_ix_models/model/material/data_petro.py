@@ -16,6 +16,23 @@ from message_ix_models.util import (
 )
 
 
+ssp_mode_map = {
+    "SSP1": "CTS core",
+    "SSP2": "RTS core",
+    "SSP3": "RTS high",
+    "SSP4": "CTS high",
+    "SSP5": "RTS high",
+    "LED": "CTS core",  # TODO: maybe move to OECD projection instead
+}
+
+iea_elasticity_map = {
+    "CTS core": (0.75, 0.15),
+    "CTS high": (0.9, 0.45),
+    "RTS core": (0.75, 0.4),
+    "RTS high": (0.95, 0.7),
+}
+
+
 def read_data_petrochemicals(scenario):
     """Read and clean data from :file:`petrochemicals_techno_economic.xlsx`."""
 
@@ -147,9 +164,9 @@ def gen_mock_demand_petro(scenario, gdp_elasticity_2020, gdp_elasticity_2030):
 
 def gen_data_petro_chemicals(scenario, dry_run=False):
     # Load configuration
-
-    config = read_config()["material"]["petro_chemicals"]
-
+    context = read_config()
+    config = context["material"]["petro_chemicals"]
+    ssp = context["ssp"]
     # Information about scenario, e.g. node, year
     s_info = ScenarioInfo(scenario)
 
@@ -375,21 +392,24 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
     # Create external demand param
 
     # demand_HVC = derive_petro_demand(scenario)
-    default_gdp_elasticity = float(0.93)
-    context = read_config()
+    # default_gdp_elasticity = float(0.93)
+    # context = read_config()
 
-    df_pars = pd.read_excel(
-        private_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
-        sheet_name="Sheet1",
-        dtype=object,
-    )
-    pars = df_pars.set_index("par").to_dict()["value"]
-    default_gdp_elasticity_2020 = pars["hvc_elasticity_2020"]
-    default_gdp_elasticity_2030 = pars["hvc_elasticity_2030"]
-    demand_HVC = gen_mock_demand_petro(
+    # df_pars = pd.read_excel(
+    #     private_data_path("material", "methanol", "methanol_sensitivity_pars.xlsx"),
+    #     sheet_name="Sheet1",
+    #     dtype=object,
+    # )
+    # pars = df_pars.set_index("par").to_dict()["value"]
+    # default_gdp_elasticity_2020 = pars["hvc_elasticity_2020"]
+    # default_gdp_elasticity_2030 = pars["hvc_elasticity_2030"]
+
+    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[ssp_mode_map[ssp]]
+
+    demand_hvc = gen_mock_demand_petro(
         scenario, default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
-    results["demand"].append(demand_HVC)
+    results["demand"].append(demand_hvc)
 
     # df_e = make_df(paramname, level='final_material', commodity="ethylene", \
     # value=demand_e.value, unit='t',year=demand_e.year, time='year', \
