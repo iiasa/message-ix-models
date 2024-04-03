@@ -183,6 +183,7 @@ def prepare_computer(
 
     # Add structural information to the Computer
     c.require_compat("message_ix_models.report.operator")
+    c.graph.setdefault("context", context)
 
     # Retrieve the node codelist
     c.add("n::codes", quote(get_codes(f"node/{context.model.regions}")), strict=strict)

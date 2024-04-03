@@ -47,8 +47,7 @@ class GFEI(ExoDataSource):
 
     Country-level data is retrieved from the underlying data of `"Figure 37. Fuel
     consumption range by type of powertrain and vehicle size, 2017"` in
-    https://theicct.org/publications/gfei-tech-policy-drivers-2005-2017,
-    in which:
+    https://theicct.org/publications/gfei-tech-policy-drivers-2005-2017, in which:
 
     - Values correspond exclusively to new vehicle registrations in 2017.
     - Units are in Lge/100 km, converted into MJ/km.
