@@ -228,6 +228,7 @@ def configure():
         # Hide lower-level messages for some upstream packages from the file log
         ("graphviz._tools", logging.WARNING),
         ("matplotlib", logging.WARNING),
+        ("PIL", logging.INFO),
         ("pycountry.db", logging.WARNING),
     ):
         logging.getLogger(name).setLevel(level)
