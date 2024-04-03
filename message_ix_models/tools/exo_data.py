@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Dict, Literal, Mapping, Optional, Tuple, Type
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Type
 
 from genno import Computer, Key, Quantity, quote
 
@@ -48,6 +48,9 @@ class ExoDataSource(ABC):
     #: Optional additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
     #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`.
     extra_dims: Tuple[str, ...] = ()
+
+    aggregate: bool = True
+    interpolate: bool = True
 
     @abstractmethod
     def __init__(self, source: str, source_kw: Mapping) -> None:
@@ -103,18 +106,23 @@ class ExoDataSource(ABC):
         2. Interpolates the data (:func:`.genno.operator.interpolate`) on the |y|
            dimension using "y::coords".
         """
+        k = base_key
         # Aggregate
-        c.add(base_key + "1", "aggregate", base_key, "n::groups", keep=False)
+        if self.aggregate:
+            k = c.add(k + "1", "aggregate", k, "n::groups", keep=False)
 
         # Interpolate to the desired set of periods
-        kw = dict(fill_value="extrapolate")
-        k2 = base_key + "2"
-        c.add(k2, "interpolate", base_key + "1", "y::coords", kwargs=kw)
+        if self.interpolate:
+            kw = dict(fill_value="extrapolate")
+            k = c.add(k + "2", "interpolate", k, "y::coords", kwargs=kw)
 
-        return k2
+        return k
 
     def raise_on_extra_kw(self, kwargs) -> None:
         """Helper for subclasses."""
+        self.aggregate = kwargs.pop("aggregate", self.aggregate)
+        self.interpolate = kwargs.pop("interpolate", self.interpolate)
+
         if len(kwargs):
             log.error(
                 f"Unhandled extra keyword arguments for {type(self).__name__}: "
@@ -295,8 +303,11 @@ def iamc_like_data_for_query(
     query: str,
     *,
     archive_member: Optional[str] = None,
+    drop: Optional[List[str]] = None,
     non_iso_3166: Literal["keep", "discard"] = "discard",
     replace: Optional[dict] = None,
+    unique: str = "MODEL SCENARIO VARIABLE UNIT",
+    **kwargs,
 ) -> Quantity:
     """Load data from `path` in IAMC-like format and transform to :class:`.Quantity`.
 
@@ -329,7 +340,7 @@ def iamc_like_data_for_query(
 
     from message_ix_models.util.pycountry import iso_3166_alpha_3
 
-    unique = dict()
+    unique_values = dict()
 
     def drop_unique(df, names) -> pd.DataFrame:
         if len(df) == 0:
@@ -340,7 +351,7 @@ def iamc_like_data_for_query(
             values = df[name].unique()
             if len(values) > 1:
                 raise RuntimeError(f"Not unique {name!r}: {values}")
-            unique[name] = values[0]
+            unique_values[name] = values[0]
         return df.drop(names_list, axis=1)
 
     def assign_n(df: pd.DataFrame) -> pd.DataFrame:
@@ -360,19 +371,26 @@ def iamc_like_data_for_query(
         # A direct path, possibly compressed
         source = path
 
+    kwargs.setdefault("engine", "pyarrow")
+    set_index = ["n"] + sorted(
+        set(["MODEL", "SCENARIO", "VARIABLE", "UNIT"]) - set(unique.split())
+    )
+
     tmp = (
-        pd.read_csv(source, engine="pyarrow")
+        pd.read_csv(source, **kwargs)
+        .drop(columns=drop or [])
         .query(query)
         .replace(replace or {})
+        .dropna(how="all", axis=1)
         .rename(columns=lambda c: c.upper())
-        .pipe(drop_unique, "MODEL SCENARIO VARIABLE UNIT")
+        .pipe(drop_unique, unique)
         .pipe(assign_n)
         .dropna(subset=["n"])
         .drop("REGION", axis=1)
-        .set_index("n")
+        .set_index(set_index)
         .rename(columns=lambda y: int(y))
         .rename_axis(columns="y")
         .stack()
         .dropna()
     )
-    return Quantity(tmp, units=unique["UNIT"])
+    return Quantity(tmp, units=unique_values["UNIT"])
