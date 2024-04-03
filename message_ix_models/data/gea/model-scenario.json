@@ -1,0 +1,186 @@
+[
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_atr_full"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_atr_limbe"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_atr_limir"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_atr_nbecs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_atr_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_atr_nsink"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_btr_full"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geaha_450_btr_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geah_counterfactual"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_full"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_limbe"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_limbe_limir"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_limir"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_nbecs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_nbecs_nsink_limbe"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_noccs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_noccs_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_atr_nsink"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_full"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_limbe"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_limbe_limir"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_limir"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_nbecs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_nbecs_nsink_limbe"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_noccs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_noccs_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geala_450_btr_nsink"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_atr_full"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_atr_limbe"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_atr_limir"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_atr_nbecs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_atr_noccs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_atr_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_atr_nsink"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_btr_full"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_btr_limbe"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_btr_limir"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_btr_nbecs"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_btr_nonuc"
+    },
+    {
+        "model": "GEA",
+        "scenario": "geama_450_btr_nsink"
+    },
+    {
+        "model": "IMAGE",
+        "scenario": "GEA_high"
+    },
+    {
+        "model": "IMAGE",
+        "scenario": "GEA_high_450"
+    },
+    {
+        "model": "IMAGE",
+        "scenario": "GEA_low_450"
+    },
+    {
+        "model": "IMAGE",
+        "scenario": "GEA_med_450"
+    }
+]
