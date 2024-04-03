@@ -18,8 +18,6 @@ import pandas as pd
 from message_ix_models.util import private_data_path
 from plotnine import save_as_pdf_pages
 
-from message_data.tools.iea_eei import plot_params_per_mode
-
 #: Name of the file containing the data.
 FILE = "RoadmapResults_2017.xlsx"
 
@@ -168,7 +166,7 @@ def get_roadmap_data(context, region=("Africa", "R11_AFR"), years=None, plot=Fal
         debug_path.mkdir(parents=True, exist_ok=True)
         # Plot all indicators as grid, per mode, and store them into PNG images
         save_as_pdf_pages(
-            plot_params_per_mode(df),
+            # plot_params_per_mode(df),  # TODO Convert to use genno.core.plotnine.Plot
             filename=f"{context.model.regions}_AFR_Indicators_per_mode.pdf",
             path=debug_path,
         )

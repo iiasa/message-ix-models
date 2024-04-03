@@ -41,7 +41,6 @@ from message_ix_models.util import (
 from sdmx.model.v21 import Code
 
 from message_data.projects.navigate import T35_POLICY
-from message_data.tools import iea_eei
 
 from .config import Config
 
@@ -271,6 +270,8 @@ EEI_TECH_MAP = {
 def distance_nonldv(config: dict) -> "AnyQuantity":
     """Return annual travel distance per vehicle for non-LDV transport modes."""
     # Load from IEA EEI
+    from message_data.tools import iea_eei  # type: ignore [attr-defined]
+
     dfs = iea_eei.get_eei_data(config["regions"])
     df = (
         dfs["vehicle use"]
@@ -607,6 +608,8 @@ def merge_data(
 
 def iea_eei_fv(name: str, config: Dict) -> "AnyQuantity":
     """Returns base-year demand for freight from IEA EEI, with dimensions n-c-y."""
+    from message_data.tools import iea_eei  # type: ignore [attr-defined]
+
     result = iea_eei.as_quantity(name, config["regions"])
     ym1 = result.coords["y"].data[-1]
 

@@ -12,7 +12,6 @@ from message_data.model.transport.operator import (
     distance_nonldv,
     factor_input,
     factor_ssp,
-    iea_eei_fv,
     pdt_per_capita,
     transport_check,
 )
@@ -131,13 +130,6 @@ def test_factor_ssp(test_context, ssp: SSP_2024) -> None:
     result = factor_ssp(config, n, y, info=factor.Factor(layers))
 
     assert {"n", "y"} == set(result.dims)
-
-
-def test_iea_eei_fv():
-    # TODO expand with additional cases
-    result = iea_eei_fv("tonne-kilometres", dict(regions="R12"))
-
-    assert 12 == len(result)
 
 
 DATA = """
