@@ -175,6 +175,8 @@ def prepare_computer(
         try:
             # Instantiate a Source object to provide this data
             source_obj = cls(source, deepcopy(source_kw or dict()))
+        # except Exception as e:  # For debugging
+        #     log.debug(repr(e))
         except Exception:
             pass  # Class does not recognize the arguments
 
