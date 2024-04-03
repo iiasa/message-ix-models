@@ -43,6 +43,8 @@ from message_data.model.material.data_power_sector import gen_data_power_sector
 from message_data.model.material.data_methanol_new import gen_data_methanol_new
 from message_data.model.material.data_ammonia_new import gen_all_NH3_fert
 
+
+from message_ix_models.util.click import common_params
 log = logging.getLogger(__name__)
 
 DATA_FUNCTIONS_1 = [
@@ -187,7 +189,8 @@ def get_spec() -> Mapping[str, ScenarioInfo]:
 
 # Group to allow for multiple CLI subcommands under "material"
 @click.group("material")
-def cli():
+@common_params("ssp")
+def cli(ssp):
     """Model with materials accounting."""
 
 
@@ -232,7 +235,6 @@ def create_bare(context, regions, dry_run):
 @click.option(
     "--update_costs",
     default=False,
-    type=click.Choice([False, "SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"]),
 )
 @click.pass_obj
 def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_costs):
@@ -359,7 +361,7 @@ def build_scen(context, datafile, tag, mode, scenario_name, old_calib, update_co
 
     if update_costs:
         log.info(f"Updating costs with {message_ix_models.tools.costs.projections}")
-        inv, fix = gen_te_projections(scenario, update_costs)
+        inv, fix = gen_te_projections(scenario, context["ssp"])
         scenario.check_out()
         scenario.add_par("fix_cost", fix)
         scenario.add_par("inv_cost", inv)
@@ -801,4 +803,4 @@ def make_xls_input_vc_able(context, files):
         #     path = private_data_path(str(element.split("/")[:-1]))
         #     print(path, fname)
         # message_data.model.material.util.excel_to_csv(files)
-    retu
+    return
