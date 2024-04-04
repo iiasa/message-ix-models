@@ -9,7 +9,6 @@ from .config import Config
 from .gdp import adjust_cost_ratios_with_gdp
 from .learning import project_ref_region_inv_costs_using_learning_rates
 from .regional_differentiation import apply_regional_differentiation
-from .splines import apply_splines_to_convergence
 
 log = logging.getLogger(__name__)
 
@@ -255,18 +254,8 @@ def create_projections_converge(config: "Config"):
         .drop_duplicates()
     )
 
-    log.info("Apply splines to converge")
-    df_splines = apply_splines_to_convergence(
-        df_pre_costs, column_name="inv_cost_converge", config=config
-    )
-
     df_costs = (
-        df_pre_costs.merge(
-            df_splines,
-            on=["scenario", "message_technology", "region", "year"],
-            how="outer",
-        )
-        .rename(columns={"inv_cost_splines": "inv_cost"})
+        df_pre_costs.rename(columns={"inv_cost_converge": "inv_cost"})
         .assign(
             fix_cost=lambda x: x.inv_cost * x.fix_ratio,
             scenario_version="Not applicable",
