@@ -19,11 +19,9 @@ from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
-from .legacy.iamc_report_hackathon import report as legacy_report
 
 __all__ = [
     "Config",
-    "legacy_report",
     "prepare_reporter",
     "register",
     "report",
@@ -268,7 +266,9 @@ def report(context: Context, *args, **kwargs):
 
 
 def _invoke_legacy_reporting(context):
-    log.info("Using legacy.iamc_report_hackathon")
+    from .legacy import iamc_report_hackathon
+
+    log.info("Using .report.legacy.iamc_report_hackathon.report")
 
     # Convert "legacy" config to kwargs for .legacy.iamc_report_hackathon.report()
     kwargs = deepcopy(context.report.legacy)
@@ -288,7 +288,7 @@ def _invoke_legacy_reporting(context):
 
     # `context` is passed only for the "dry_run" setting; the function receives all its
     # other settings via the `kwargs`
-    return legacy_report(mp=mp, scen=scen, context=context, **kwargs)
+    return iamc_report_hackathon.report(mp=mp, scen=scen, context=context, **kwargs)
 
 
 @minimum_version("message_ix 3.6")
