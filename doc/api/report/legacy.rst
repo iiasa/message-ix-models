@@ -12,7 +12,7 @@ This code:
 
 - is only tested to *run* against :doc:`the global model snapshot </api/model-snapshot>`, specifically snapshot ID :py:`1`.
   This implies that the *outputs*—specific numerical values, labels, etc.—of the code are not tested or validated in any way.
-  Users of the code should, in particular, exercise care to validate particular outputs, especially when the code is run against any scenario other than snapshot :py:`1`.
+  Users of the code should carefully validate output data, especially when the code is run against any scenario other than snapshot :py:`1`.
 - is provided primarily for reference by users of snapshot :py:`1`.
 - is not currently used in IIASA ECE program workflows or publications.
   As of 2024-04-04, all MESSAGEix-GLOBIOM outputs that appear in public and closed databases, associated with peer-reviewed works, etc. have been produced with other code from various branches of :mod:`message_data`.
@@ -31,9 +31,16 @@ Set :attr:`.report.Config.legacy` to include :py:`use=True` and any other keywor
    from message_ix_models import Context
    from message_ix_models.report import Config, report
 
-   # Configure to use .report.legacy; include some keyword arguments
+   # Configure to use .report.legacy
    context = Context.get_instance()
-   context.report.legacy.update(use=True, merge_ts=True)
+   context.report.legacy.update(
+       use=True,
+       # Only this exact set of keyword arguments is
+       # tested and known to work:
+       merge_hist=True,
+       ref_sol="True",
+       run_config="ENGAGE_SSP2_v417_run_config.yaml",
+   )
 
    # Invoke
    report(context)
