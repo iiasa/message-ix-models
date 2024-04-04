@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Migrate :mod:`.report.legacy` to provide post-processing functionality for the public global model baseline snapshot (:pull:`159`). 
 - Expand :doc:`data` (:pull:`161`).
 
 v2024.4.2
