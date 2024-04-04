@@ -10,15 +10,18 @@ Elsewhere:
 
 - ``global.yaml``, the :doc:`default-config`.
 - Documentation for :mod:`genno` (:doc:`genno:index`), :mod:`ixmp.report`, and :mod:`message_ix.report`.
-- Reporting of specific model variants:
+- Reporting for specific model variants:
 
   - :mod:`.water.reporting`
   - (Private) :doc:`Reporting of message_data.model.transport <m-data:reference/model/transport/report>`
+
+- :doc:`‘Legacy’ reporting <legacy>`.
 
 .. toctree::
    :hidden:
 
    default-config
+   legacy
 
 .. _report-intro:
 
@@ -174,21 +177,19 @@ Utilities
       collapse_gwp_info
       copy_ts
 
-.. _report-legacy:
+
 .. currentmodule:: message_ix_models.report.compat
 
-Compatibility with :mod:`.message_data`
+Compatibility with :mod:`.report.legacy`
 ---------------------------------------
 
 .. automodule:: message_ix_models.report.compat
    :members:
 
-   :mod:`.message_data` contains :doc:`m-data:reference/tools/post_processing`.
-   This code predates :mod:`genno` and the stack of tools built on it (:ref:`described above <report-intro>`); these were designed to avoid issues with performance and extensibility in the older code. [1]_
-   :mod:`.report.compat` prepares a Reporter to perform the same calculations as :mod:`message_data.tools.post_processing`, except using :mod:`genno`.
+   :mod:`.report.compat` prepares a Reporter to perform the same calculations as :mod:`.report.legacy`, except using :mod:`genno`.
 
    .. warning:: This code is **under development** and **incomplete**.
-      It is not yet a full or exact replacement for the legacy reporting code.
+      It is not yet a full or exact replacement for :mod:`.report.legacy`.
       Use with caution.
 
    Main API:
@@ -263,5 +264,3 @@ These workflows:
 
 - Operate on specific scenarios within IIASA databases.
 - Create files in CSV, Excel, and/or PDF formats that are that are preserved and made available as 'build artifacts' via the GitHub Actions web interface and API.
-
-.. [1] See a (non-public) `“Reporting” project board <https://github.com/orgs/iiasa/projects/3>`_ on GitHub for details of the initial implementation of these features.

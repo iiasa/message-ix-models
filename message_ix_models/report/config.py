@@ -44,10 +44,8 @@ class Config(ConfigHelper):
     #: name.
     use_scenario_path: bool = True
 
-    #: Keyword arguments for the ‘legacy’ reporting entry point
-    #: (:func:`message_data.tools.post_processing.iamc_report_hackathon.report`), plus
-    #: the special key "use", which should be :data:`True` if legacy reporting is to
-    #: be used.
+    #: Keyword arguments for :func:`.report.legacy.iamc_report_hackathon.report`, plus
+    #: the key "use", which should be :any:`True` if legacy reporting is to be used.
     legacy: Dict = field(default_factory=lambda: dict(use=False, merge_hist=True))
 
     def __post_init__(self, from_file, _legacy) -> None:
