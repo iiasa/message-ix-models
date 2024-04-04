@@ -14,5 +14,5 @@ log = logging.getLogger(__name__)
     condition=GHA and sys.platform in ("darwin", "win32"), reason="Slow."
 )
 @pytest.mark.snapshot
-def test_load(test_context, load_snapshot):
-    assert load_snapshot.model == "MESSAGEix-GLOBIOM_1.1_R11_no-policy"
+def test_load(test_context, loaded_snapshot):
+    assert loaded_snapshot.model == "MESSAGEix-GLOBIOM_1.1_R11_no-policy"
