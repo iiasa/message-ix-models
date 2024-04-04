@@ -125,10 +125,9 @@ This function in turns calls the other functions in the module in the correct or
 The other submodules implement the supporting methods, calculations, and data handling:
 
 1. :mod:`.tools.costs.regional_differentiation` calculates the regional differentiation of costs for technologies.
-2. :mod:`.tools.costs.learning` projects the costs of technologies in a reference region with only a cost reduction rate applied.
+2. :mod:`.tools.costs.decay` projects the costs of technologies in a reference region with only a cost reduction rate applied.
 3. :mod:`.tools.costs.gdp` adjusts the regional differentiation of costs for technologies based on the GDP per capita of the region.
-4. :mod:`.tools.costs.splines` applies a polynomial regression (degrees = 3) to each technology's projected costs in the reference region and applies a spline after a convergence year.
-5. :mod:`.tools.costs.projections` combines all the above steps and returns the projected costs for each technology in each region.
+4. :mod:`.tools.costs.projections` combines all the above steps and returns the projected costs for each technology in each region.
 
 .. automodule:: message_ix_models.tools.costs
    :members:
@@ -153,19 +152,19 @@ Regional differentiation of costs (:mod:`.tools.costs.regional_differentiation`)
       apply_regional_differentiation
 
 
-.. currentmodule:: message_ix_models.tools.costs.learning
+.. currentmodule:: message_ix_models.tools.costs.decay
 
-Cost reduction of technologies over time (:mod:`.tools.costs.learning`)
+Cost reduction of technologies over time (:mod:`.tools.costs.decay`)
 ------------------------------------------------------------------------
 
-.. automodule:: message_ix_models.tools.costs.learning
+.. automodule:: message_ix_models.tools.costs.decay
    :members:
 
    .. autosummary::
 
       get_cost_reduction_data
-      get_technology_learning_scenarios_data
-      project_ref_region_inv_costs_using_learning_rates
+      get_technology_reduction_scenarios_data
+      project_ref_region_inv_costs_using_reduction_rates
 
 .. currentmodule:: message_ix_models.tools.costs.gdp
 
@@ -182,19 +181,6 @@ GDP-adjusted costs and regional differentiation (:mod:`.tools.costs.gdp`)
       adjust_cost_ratios_with_gdp
 
 
-.. currentmodule:: message_ix_models.tools.costs.splines
-
-Spline costs after convergence (:mod:`.tools.costs.splines`)
-------------------------------------------------------------
-
-.. automodule:: message_ix_models.tools.costs.splines
-   :members:
-
-   .. autosummary::
-
-      apply_splines_to_convergence
-
-
 .. currentmodule:: message_ix_models.tools.costs.projections
 
 Projection of costs given input parameters (:mod:`.tools.costs.projections`)
@@ -205,7 +191,7 @@ Projection of costs given input parameters (:mod:`.tools.costs.projections`)
 
    .. autosummary::
 
-      create_projections_learning
+      create_projections_constant
       create_projections_gdp
       create_projections_converge
       create_message_outputs
