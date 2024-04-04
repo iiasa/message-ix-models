@@ -1,11 +1,15 @@
 """Tools for working with SHAPE data."""
 
+import logging
+
 from message_ix_models.tools.exo_data import (
     ExoDataSource,
     iamc_like_data_for_query,
     register_source,
 )
-from message_ix_models.util import private_data_path
+from message_ix_models.util import path_fallback
+
+log = logging.getLogger(__name__)
 
 INFO = {
     "gdp": dict(latest="1.2", suffix=".mif", variable="GDP|PPP"),
@@ -82,11 +86,13 @@ class SHAPE(ExoDataSource):
         version = version.replace("latest", info["latest"])
 
         # Construct path to data file
-        self.path = private_data_path(
-            "shape", f"{measure}_v{version.replace('.', 'p')}"
-        ).with_suffix(info["suffix"])
-        if not self.path.exists():
-            raise ValueError
+        self.path = path_fallback(
+            "shape",
+            f"{measure}_v{version.replace('.', 'p')}{info['suffix']}",
+            where="private test",
+        )
+        if "test" in self.path.parts:
+            log.warning(f"Reading random data from {self.path}")
 
         variable = info.get("variable", measure)
         self.query = " and ".join(
