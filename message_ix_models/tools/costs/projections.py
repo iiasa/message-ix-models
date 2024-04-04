@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 
 from .config import Config
+from .decay import project_ref_region_inv_costs_using_reduction_rates
 from .gdp import adjust_cost_ratios_with_gdp
-from .learning import project_ref_region_inv_costs_using_learning_rates
 from .regional_differentiation import apply_regional_differentiation
 
 log = logging.getLogger(__name__)
@@ -47,8 +47,8 @@ def _maybe_query_scenario_version(df: pd.DataFrame, config: "Config") -> pd.Data
     return df.query("scenario_version in @scen_vers")
 
 
-def create_projections_learning(config: "Config"):
-    """Create cost projections using the learning method.
+def create_projections_constant(config: "Config"):
+    """Create cost projections using assuming constant regional cost ratios.
 
     Parameters
     ----------
@@ -64,7 +64,7 @@ def create_projections_learning(config: "Config"):
     -------
     df_costs : pd.DataFrame
         Dataframe containing the cost projections with the columns:
-        - scenario_version: scenario version (for learning method, only
+        - scenario_version: scenario version (for constant method, only
           "Not applicable")
         - scenario: scenario name (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - message_technology: technology name
@@ -75,25 +75,25 @@ def create_projections_learning(config: "Config"):
     """
     log.info(f"Selected scenario: {config.scenario}")
     log.info(
-        "For the learning method, only the SSP scenario(s) itself needs to be "
+        "For the constant method, only the SSP scenario(s) itself needs to be "
         "specified. No scenario version (previous vs. updated) is needed."
     )
 
     log.info("Calculate regional differentiation in base year+region")
     df_region_diff = apply_regional_differentiation(config)
 
-    log.info("Apply learning rates to reference region")
-    df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
+    log.info("Apply cost reduction rates rates to reference region")
+    df_ref_reg_decay = project_ref_region_inv_costs_using_reduction_rates(
         df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
     df_costs = (
-        df_region_diff.merge(df_ref_reg_learning, on="message_technology")
+        df_region_diff.merge(df_ref_reg_decay, on="message_technology")
         .assign(
             inv_cost=lambda x: np.where(
                 x.year <= config.y0,
                 x.reg_cost_base_year,
-                x.inv_cost_ref_region_learning * x.reg_cost_ratio,
+                x.inv_cost_ref_region_decay * x.reg_cost_ratio,
             ),
             fix_cost=lambda x: x.inv_cost * x.fix_ratio,
             scenario_version="Not applicable",
@@ -150,8 +150,8 @@ def create_projections_gdp(config: "Config"):
     log.info("Calculate regional differentiation in base year+region")
     df_region_diff = apply_regional_differentiation(config)
 
-    log.info("Apply learning rates to reference region")
-    df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
+    log.info("Apply cost reduction rates to reference region")
+    df_ref_reg_reduction = project_ref_region_inv_costs_using_reduction_rates(
         df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
@@ -166,7 +166,7 @@ def create_projections_gdp(config: "Config"):
     )
 
     df_costs = (
-        df_region_diff.merge(df_ref_reg_learning, on="message_technology")
+        df_region_diff.merge(df_ref_reg_reduction, on="message_technology")
         .merge(
             df_adj_cost_ratios, on=["scenario", "message_technology", "region", "year"]
         )
@@ -174,7 +174,7 @@ def create_projections_gdp(config: "Config"):
             inv_cost=lambda x: np.where(
                 x.year <= config.y0,
                 x.reg_cost_base_year,
-                x.inv_cost_ref_region_learning * x.reg_cost_ratio_adj,
+                x.inv_cost_ref_region_decay * x.reg_cost_ratio_adj,
             ),
             fix_cost=lambda x: x.inv_cost * x.fix_ratio,
         )
@@ -233,21 +233,21 @@ def create_projections_converge(config: "Config"):
     log.info("Calculate regional differentiation in base year+region")
     df_region_diff = apply_regional_differentiation(config)
 
-    log.info("Apply learning rates to reference region")
-    df_ref_reg_learning = project_ref_region_inv_costs_using_learning_rates(
+    log.info("Apply cost reduction rates to reference region")
+    df_ref_reg_cost_reduction = project_ref_region_inv_costs_using_reduction_rates(
         df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
     df_pre_costs = (
-        df_region_diff.merge(df_ref_reg_learning, on="message_technology")
+        df_region_diff.merge(df_ref_reg_cost_reduction, on="message_technology")
         .assign(
             inv_cost_converge=lambda x: np.where(
                 x.year <= config.y0,
                 x.reg_cost_base_year,
                 np.where(
                     x.year < config.convergence_year,
-                    x.inv_cost_ref_region_learning * x.reg_cost_ratio,
-                    x.inv_cost_ref_region_learning,
+                    x.inv_cost_ref_region_decay * x.reg_cost_ratio,
+                    x.inv_cost_ref_region_decay,
                 ),
             ),
         )
@@ -592,7 +592,7 @@ def create_cost_projections(config: "Config") -> Mapping[str, pd.DataFrame]:
     func = {
         "convergence": create_projections_converge,
         "gdp": create_projections_gdp,
-        "learning": create_projections_learning,
+        "constant": create_projections_constant,
     }[config.method]
 
     # Create projections

@@ -24,7 +24,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         DataFrame with columns:
 
         - message_technology: name of technology in MESSAGEix
-        - learning_rate: the learning rate (either very_low, low, medium, high, or
+        - reduction_rate: the cost reduction rate (either very_low, low, medium, high, or
           very_high)
         - cost_reduction: cost reduction in 2100 (%)
     """
@@ -49,7 +49,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         pd.read_csv(gea_file_path, header=8)
         .melt(
             id_vars=["message_technology", "technology_type"],
-            var_name="learning_rate",
+            var_name="reduction_rate",
             value_name="cost_reduction",
         )
         .assign(
@@ -58,7 +58,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         )
         .drop_duplicates()
         .reset_index(drop=1)
-    ).reindex(["message_technology", "learning_rate", "cost_reduction"], axis=1)
+    ).reindex(["message_technology", "reduction_rate", "cost_reduction"], axis=1)
 
     # For materials technologies with map_tech == energy, map to base technologies
     # and use cost reduction data
@@ -76,7 +76,7 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         .drop(columns=["base_message_technology", "reg_diff_technology"])
         .drop_duplicates()
         .reset_index(drop=1)
-    ).reindex(["message_technology", "learning_rate", "cost_reduction"], axis=1)
+    ).reindex(["message_technology", "reduction_rate", "cost_reduction"], axis=1)
 
     # Combine technologies that have cost reduction rates
     df_reduction_techs = pd.concat(
@@ -84,10 +84,10 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     )
     df_reduction_techs = df_reduction_techs.drop_duplicates().reset_index(drop=1)
 
-    # Create unique dataframe of learning rates and make all cost_reduction values 0
+    # Create unique dataframe of cost reduction rates and make all cost_reduction values 0
     un_rates = pd.DataFrame(
         {
-            "learning_rate": ["none"],
+            "reduction_rate": ["none"],
             "cost_reduction": [0],
             "key": "z",
         }
@@ -95,28 +95,30 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
 
     # For remaining materials technologies that are not mapped to energy technologies,
     # assume no cost reduction
-    materials_rates_nolearning = (
+    materials_rates_noreduction = (
         tech_map.query(
             "message_technology not in @df_reduction_techs.message_technology"
         )
         .assign(key="z")
         .merge(un_rates, on="key")
         .drop(columns=["key"])
-    ).reindex(["message_technology", "learning_rate", "cost_reduction"], axis=1)
+    ).reindex(["message_technology", "reduction_rate", "cost_reduction"], axis=1)
 
     # Concatenate base and materials rates
     all_rates = pd.concat(
-        [energy_rates, materials_rates_energy, materials_rates_nolearning],
+        [energy_rates, materials_rates_energy, materials_rates_noreduction],
         ignore_index=True,
     ).reset_index(drop=1)
 
     return all_rates
 
 
-def get_technology_learning_scenarios_data(base_year: int, module: str) -> pd.DataFrame:
+def get_technology_reduction_scenarios_data(
+    base_year: int, module: str
+) -> pd.DataFrame:
     """Read in technology first year and cost reduction scenarios.
 
-    Raw data on technology first year and learning scenarios are read from
+    Raw data on technology first year and reduction scenarios are read from
     :file:`data/costs/[module]/first_year_[module]`. The first year the technology is
     available in MESSAGEix is adjusted to be the base year if the original first year is
     before the base year.
@@ -140,9 +142,9 @@ def get_technology_learning_scenarios_data(base_year: int, module: str) -> pd.Da
         DataFrame with columns:
 
         - message_technology: name of technology in MESSAGEix
-        - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - scenario: scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - first_technology_year: first year the technology is available in MESSAGEix.
-        - learning_rate: the learning rate (either very_low, low, medium, high, or
+        - reduction_rate: the cost reduction rate (either very_low, low, medium, high, or
           very_high)
     """
 
@@ -236,15 +238,15 @@ def get_technology_learning_scenarios_data(base_year: int, module: str) -> pd.Da
                 "first_technology_year",
             ],
             var_name="scenario",
-            value_name="learning_rate",
+            value_name="reduction_rate",
         )
     )
 
-    # Create dataframe of SSP1-SSP5 and LED scenarios with "none" learning rate
+    # Create dataframe of SSP1-SSP5 and LED scenarios with "none" cost reduction rate
     un_scens = pd.DataFrame(
         {
             "scenario": ["SSP1", "SSP2", "SSP3", "SSP4", "SSP5", "LED"],
-            "learning_rate": "none",
+            "reduction_rate": "none",
             "key": "z",
         }
     )
@@ -269,12 +271,12 @@ def get_technology_learning_scenarios_data(base_year: int, module: str) -> pd.Da
     return all_scens
 
 
-def project_ref_region_inv_costs_using_learning_rates(
+def project_ref_region_inv_costs_using_reduction_rates(
     regional_diff_df: pd.DataFrame, config: Config
 ) -> pd.DataFrame:
-    """Project investment costs for the reference region using learning rates.
+    """Project investment costs for the reference region using cost reduction rates.
 
-    This function uses the learning rates for each technology under each scenario to
+    This function uses the cost reduction rates for each technology under each scenario to
     project the capital costs for each technology in the reference region.
 
     The returned data have the list of periods given by :attr:`.Config.seq_years`.
@@ -295,31 +297,31 @@ def project_ref_region_inv_costs_using_learning_rates(
         DataFrame with columns:
 
         - message_technology: name of technology in MESSAGEix
-        - scenario: learning scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
+        - scenario: scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - reference_region: reference region
         - first_technology_year: first year the technology is available in MESSAGEix.
         - year: year
-        - inv_cost_ref_region_learning: investment cost in reference region in year.
+        - inv_cost_ref_region_decay: investment cost in reference region in year.
     """
 
     # Get cost reduction data
     df_cost_reduction = get_cost_reduction_data(config.module)
 
-    # Get learning rates data
-    df_learning = get_technology_learning_scenarios_data(
+    # Get scenarios data
+    df_scenarios = get_technology_reduction_scenarios_data(
         config.base_year, config.module
     )
 
-    # Merge cost reduction data with learning rates data
-    df_learning_reduction = df_learning.merge(
-        df_cost_reduction, on=["message_technology", "learning_rate"], how="left"
+    # Merge cost reduction data with cost reduction rates data
+    df_cost_reduction = df_cost_reduction.merge(
+        df_scenarios, on=["message_technology", "reduction_rate"], how="left"
     )
 
-    # Filter for reference region, then merge with learning scenarios and discount rates
+    # Filter for reference region, and merge with reduction scenarios and discount rates
     # Calculate cost in reference region in 2100
     df_ref = (
         regional_diff_df.query("region == @config.ref_region")
-        .merge(df_learning_reduction, on="message_technology")
+        .merge(df_cost_reduction, on="message_technology")
         .assign(
             cost_region_2100=lambda x: x.reg_cost_base_year
             - (x.reg_cost_base_year * x.cost_reduction),
@@ -353,7 +355,7 @@ def project_ref_region_inv_costs_using_learning_rates(
                 "reg_cost_ratio",
                 "reg_cost_base_year",
                 "fix_ratio",
-                "learning_rate",
+                "reduction_rate",
                 "cost_reduction",
                 "cost_region_2100",
             ]
@@ -366,7 +368,7 @@ def project_ref_region_inv_costs_using_learning_rates(
                 "first_technology_year",
             ],
             var_name="year",
-            value_name="inv_cost_ref_region_learning",
+            value_name="inv_cost_ref_region_decay",
         )
         .assign(year=lambda x: x.year.astype(int))
     ).drop_duplicates()

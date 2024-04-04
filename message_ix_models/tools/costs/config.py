@@ -41,8 +41,8 @@ class Config:
     #:
     #: - "convergence": uses :func:`.create_projections_converge`
     #: - "gdp": :func:`.create_projections_gdp`
-    #: - "learning": :func:`.create_projections_converge`
-    method: Literal["convergence", "gdp", "learning"] = "gdp"
+    #: - "constant": :func:`.create_projections_constant`
+    method: Literal["convergence", "gdp", "constant"] = "gdp"
 
     #: Model variant to prepare data for.
     module: Literal["energy", "materials"] = "energy"

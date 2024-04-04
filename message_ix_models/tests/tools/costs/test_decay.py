@@ -3,10 +3,10 @@ from typing import Literal
 import pytest
 
 from message_ix_models.tools.costs import Config
-from message_ix_models.tools.costs.learning import (
+from message_ix_models.tools.costs.decay import (
     get_cost_reduction_data,
-    get_technology_learning_scenarios_data,
-    project_ref_region_inv_costs_using_learning_rates,
+    get_technology_reduction_scenarios_data,
+    project_ref_region_inv_costs_using_reduction_rates,
 )
 from message_ix_models.tools.costs.regional_differentiation import (
     apply_regional_differentiation,
@@ -33,9 +33,9 @@ def test_get_cost_reduction_data(module: str, t_exp) -> None:
 
 
 @pytest.mark.parametrize("module", ("energy", "materials"))
-def test_get_technology_learning_scenarios_data(module: str) -> None:
+def test_get_technology_reduction_scenarios_data(module: str) -> None:
     # The function runs without error
-    result = get_technology_learning_scenarios_data(Config.base_year, module=module)
+    result = get_technology_reduction_scenarios_data(Config.base_year, module=module)
 
     # All first technology years are equal to or greater than the default base year
     assert Config.base_year <= result.first_technology_year.min()
@@ -53,7 +53,7 @@ def test_get_technology_learning_scenarios_data(module: str) -> None:
         ("materials", {"biomass_NH3", "MTO_petro", "furnace_foil_steel"}, set()),
     ),
 )
-def test_project_ref_region_inv_costs_using_learning_rates(
+def test_project_ref_region_inv_costs_using_reduction_rates(
     module: Literal["energy", "materials"], t_exp, t_excluded
 ) -> None:
     # Set up
@@ -61,7 +61,7 @@ def test_project_ref_region_inv_costs_using_learning_rates(
     reg_diff = apply_regional_differentiation(config)
 
     # The function runs without error
-    result = project_ref_region_inv_costs_using_learning_rates(reg_diff, config)
+    result = project_ref_region_inv_costs_using_reduction_rates(reg_diff, config)
 
     # Expected technologies are present
     t = set(result.message_technology.unique())
