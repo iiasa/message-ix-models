@@ -9,6 +9,7 @@ from typing import (
     Callable,
     Collection,
     Dict,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -41,6 +42,8 @@ from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
 if TYPE_CHECKING:
+    import pathlib
+
     import genno
 
 __all__ = [
@@ -75,6 +78,7 @@ __all__ = [
     "merge_data",
     "minimum_version",
     "package_data_path",
+    "path_fallback",
     "preserve_log_level",
     "private_data_path",
     "replace_par_data",
@@ -596,6 +600,39 @@ def minimum_version(expr: str) -> Callable:
         return wrapper
 
     return decorator
+
+
+def path_fallback(
+    *parts: Union[str, "pathlib.Path"],
+    where: Union[str, List[Union[str, "pathlib.Path"]]] = "",
+) -> "pathlib.Path":
+    """Return a path constructed from `parts` found in the first of several directories.
+
+    This allows to implement ‘fallback’ behaviour in which files in certain locations
+    are used preferentially.
+    """
+    dirs = []
+    for item in where.split() if isinstance(where, str) else where:
+        if isinstance(item, str):
+            if item == "private":
+                dirs.append(private_data_path())
+            elif item == "package":
+                dirs.append(package_data_path())
+            elif item == "test":
+                dirs.append(package_data_path("test"))
+        else:
+            dirs.append(item)
+
+    for path in [d.joinpath(*parts) for d in dirs]:
+        if not path.exists():
+            log.debug(f"Not found: {path}")
+            continue
+        return path
+
+    if not dirs:
+        raise ValueError(f"No directories identified among {where!r}")
+    else:
+        raise ValueError(f"{parts} not found in any of {dirs}")
 
 
 def replace_par_data(
