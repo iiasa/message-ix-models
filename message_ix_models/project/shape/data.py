@@ -11,25 +11,38 @@ from message_ix_models.util import path_fallback
 
 log = logging.getLogger(__name__)
 
+#: Information about data file version, suffixes, "variable" codes, and extra columns to
+#: drop.
 INFO = {
-    "gdp": dict(latest="1.2", suffix=".mif", variable="GDP|PPP"),
+    "gdp": dict(
+        latest="1.2",
+        suffix=".mif",
+        variable="GDP|PPP",
+    ),
     "gini": dict(
-        latest="1.1",
-        suffix=".csv",
-        variable="Gini",
         drop=[
             "tgt.achieved",
             "Base gini imputed",
             "Share of final consumption among GDP imputed",
         ],
+        latest="1.1",
+        suffix=".csv",
+        variable="Gini",
     ),
-    "population": dict(latest="1.2", suffix=".mif", variable="Population"),
+    "population": dict(
+        latest="1.2",
+        suffix=".mif",
+        variable="Population",
+    ),
     "urbanisation": dict(
-        latest="1.0", suffix=".csv", variable="Population|Urban|Share", drop=["Notes"]
+        drop=["Notes"],
+        latest="1.0",
+        suffix=".csv",
+        variable="Population|Urban|Share",
     ),
 }
 
-# Convert unit forms appearing in files to pint-compatible expressions
+#: Convert unit forms appearing in files to pint-compatible expressions.
 UNITS = {
     "%": "",  # urbanisation
     "billion $2005/yr": "GUSD_2005 / year",  # gdp
