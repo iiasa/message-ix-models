@@ -6,6 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 from random import randbytes
 from tempfile import TemporaryDirectory
+from typing import Generator
 
 import message_ix
 import pandas as pd
@@ -362,21 +363,15 @@ def unpack_snapshot_data(context: Context, snapshot_id: int):
     where they *would* be unpacked by .model.snapshot._unpack. This causes the code to
     skip unpacking them, which can be very slow.
     """
-    if snapshot_id != 0 and snapshot_id != 1:
+    if snapshot_id not in (0, 1):
         log.info(f"No unpacked data for snapshot {snapshot_id}")
         return
 
-    dest = context.get_cache_path(
-        f"snapshot-{snapshot_id}",
-        "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
-    )
+    parts = (f"snapshot-{snapshot_id}", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline")
+    dest = context.get_cache_path(*parts)
     log.debug(f"{dest = }")
 
-    snapshot_data_path = util.package_data_path(
-        "test",
-        f"snapshot-{snapshot_id}",
-        "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
-    )
+    snapshot_data_path = util.package_data_path("test", *parts)
     log.debug(f"{snapshot_data_path = }")
 
     shutil.copytree(snapshot_data_path, dest, dirs_exist_ok=True)
@@ -388,7 +383,9 @@ def unpack_snapshot_data(context: Context, snapshot_id: int):
         int(k.split("-")[1]) for k in util.pooch.SOURCE if k.startswith("snapshot")
     ],
 )
-def load_snapshot(request, session_context, solved: bool = False):
+def loaded_snapshot(
+    request, session_context, solved: bool = False
+) -> Generator[message_ix.Scenario, None, None]:
     snapshot_id: int = request.param
     assert snapshot_id is not None
     unpack_snapshot_data(context=session_context, snapshot_id=snapshot_id)
@@ -396,6 +393,7 @@ def load_snapshot(request, session_context, solved: bool = False):
     scenario_name = f"baseline_v{snapshot_id}"
     mp = session_context.get_platform()
 
+    # The following code roughly parallels bare_res()
     try:
         base = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
     except ValueError:

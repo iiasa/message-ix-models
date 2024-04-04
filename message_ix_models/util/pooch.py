@@ -165,12 +165,9 @@ def fetch(
     --------
     :func:`.snapshot.load`
     """
-    path = (
-        [str(Context.get_instance(-1).get_cache_path()), extra_cache_path]
-        if extra_cache_path
-        else Context.get_instance(-1).get_cache_path()
+    pooch_args.setdefault(
+        "path", Context.get_instance(-1).get_cache_path(extra_cache_path or "")
     )
-    pooch_args.setdefault("path", path)
 
     p = pooch.create(**pooch_args)
 

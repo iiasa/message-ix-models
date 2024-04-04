@@ -19,7 +19,7 @@ from message_ix_models.util import minimum_version
 from message_ix_models.util._logging import mark_time, silence_log
 
 from .config import Config
-from .legacy import legacy_report
+from .legacy.iamc_report_hackathon import report as legacy_report
 
 __all__ = [
     "Config",
