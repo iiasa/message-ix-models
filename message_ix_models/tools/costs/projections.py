@@ -4,6 +4,7 @@ from typing import Mapping, Tuple
 
 import numpy as np
 import pandas as pd
+from numpy.polynomial import Polynomial
 
 from .config import Config
 from .decay import project_ref_region_inv_costs_using_reduction_rates
@@ -238,10 +239,10 @@ def create_projections_converge(config: "Config"):
         df_region_diff, config
     ).pipe(_maybe_query_scenario, config)
 
-    df_pre_costs = (
+    df_tmp_costs = (
         df_region_diff.merge(df_ref_reg_cost_reduction, on="message_technology")
         .assign(
-            inv_cost_converge=lambda x: np.where(
+            inv_cost_tmp=lambda x: np.where(
                 x.year <= config.y0,
                 x.reg_cost_base_year,
                 np.where(
@@ -254,8 +255,72 @@ def create_projections_converge(config: "Config"):
         .drop_duplicates()
     )
 
+    y_predict = np.array(config.seq_years)
+    y_index = pd.Index(config.seq_years, name="year")
+
+    # def poly_decay_to_converge(
+    #     df_pre: pd.DataFrame, column_name: str, config: "Config"
+    # ) -> pd.DataFrame
+    def _predict(df: pd.DataFrame) -> pd.Series:
+        """Fit a degree-3 polynomial to `df` and predict for :attr:`.seq_years`."""
+        # Fit
+        p = Polynomial.fit(df.year, df.inv_cost_tmp, deg=1)
+
+        # - Predict using config.seq_years.
+        # - Assemble a single-column data frame with "year" as the index name.
+        return pd.DataFrame({"inv_pre_converge_decay": p(y_predict)}, index=y_index)
+
+    # Columns for grouping and merging
+    cols = ["scenario", "message_technology", "region"]
+
+    df_pre_converge_costs = (
+        df_tmp_costs.query("year == @config.y0 or year == @config.convergence_year")
+        .groupby(cols[:3], group_keys=True)
+        .apply(_predict)
+        .reset_index()
+    )
+
+    df_inv_costs_final = (
+        df_tmp_costs.merge(
+            df_pre_converge_costs,
+            on=["scenario", "message_technology", "region", "year"],
+        )
+        .assign(
+            inv_cost_converge=lambda x: np.where(
+                x.year <= config.y0,
+                x.reg_cost_base_year,
+                np.where(
+                    x.region == config.ref_region,
+                    x.inv_cost_ref_region_decay,
+                    np.where(
+                        x.year < config.convergence_year,
+                        x.inv_pre_converge_decay,
+                        x.inv_cost_ref_region_decay,
+                    ),
+                ),
+            ),
+        )
+        .drop_duplicates()
+    )
+
+    # df_pre_costs = (
+    #     df_region_diff.merge(df_ref_reg_cost_reduction, on="message_technology")
+    #     .assign(
+    #         inv_cost_converge=lambda x: np.where(
+    #             x.year <= config.y0,
+    #             x.reg_cost_base_year,
+    #             np.where(
+    #                 x.year < config.convergence_year,
+    #                 x.inv_cost_ref_region_decay * x.reg_cost_ratio,
+    #                 x.inv_cost_ref_region_decay,
+    #             ),
+    #         ),
+    #     )
+    #     .drop_duplicates()
+    # )
+
     df_costs = (
-        df_pre_costs.rename(columns={"inv_cost_converge": "inv_cost"})
+        df_inv_costs_final.rename(columns={"inv_cost_converge": "inv_cost"})
         .assign(
             fix_cost=lambda x: x.inv_cost * x.fix_ratio,
             scenario_version="Not applicable",
