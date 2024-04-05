@@ -9,7 +9,7 @@ from message_ix_models.tools.exo_data import (
     iamc_like_data_for_query,
     register_source,
 )
-from message_ix_models.util import package_data_path, private_data_path
+from message_ix_models.util import package_data_path, path_fallback
 
 if TYPE_CHECKING:
     from sdmx.model.common import Code
@@ -55,10 +55,11 @@ class GEA(ExoDataSource):
         self.raise_on_extra_kw(source_kw)
 
         # Identify input data path
-        self.path = private_data_path("gea", "GEADB_ARCHIVE_20171108.zip")
-        if not self.path.exists():
-            log.error(f"Not found: {self.path}")
-            raise ValueError(self.path)
+        self.path = path_fallback(
+            "gea", "GEADB_ARCHIVE_20171108.zip", where="private test"
+        )
+        if "test" in self.path.parts:
+            log.warning(f"Reading random data from {self.path}")
 
         # Assemble query
         self.query = " and ".join(
