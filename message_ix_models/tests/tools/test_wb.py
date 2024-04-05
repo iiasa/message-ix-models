@@ -12,12 +12,21 @@ from message_ix_models.tools.wb import (
 if TYPE_CHECKING:
     import sdmx.model.common
 
+# TODO Remove once WB servers consistently provide the updated file; i.e. all of the
+#      marked tests XPASS.
+MARK = pytest.mark.xfail(
+    raises=ValueError,
+    match="SHA256 hash of downloaded file .* does not match .* got but got "
+    "9b8452db52e391602c9e9e4d4ef4d254f505ce210ce6464497cf3e40002a3545",
+)
+
 
 @pytest.fixture(scope="module")
 def cl_ig() -> "sdmx.model.common.Codelist":
     return get_income_group_codelist()
 
 
+@MARK
 def test_get_income_group_codelist(cl_ig: "sdmx.model.common.Codelist") -> None:
     def n(id) -> int:
         return len(cl_ig[id].child)
@@ -92,6 +101,7 @@ EXP = {
 }
 
 
+@MARK
 @pytest.mark.parametrize(
     "nodes, method, replace",
     (
