@@ -24,8 +24,8 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
         DataFrame with columns:
 
         - message_technology: name of technology in MESSAGEix
-        - reduction_rate: the cost reduction rate (either very_low, low, medium, high, or
-          very_high)
+        - reduction_rate: the cost reduction rate (either very_low, low, medium, high,
+        or very_high)
         - cost_reduction: cost reduction in 2100 (%)
     """
 
@@ -84,7 +84,8 @@ def get_cost_reduction_data(module) -> pd.DataFrame:
     )
     df_reduction_techs = df_reduction_techs.drop_duplicates().reset_index(drop=1)
 
-    # Create unique dataframe of cost reduction rates and make all cost_reduction values 0
+    # Create unique dataframe of cost reduction rates
+    # and make all cost_reduction values 0
     un_rates = pd.DataFrame(
         {
             "reduction_rate": ["none"],
@@ -144,8 +145,8 @@ def get_technology_reduction_scenarios_data(
         - message_technology: name of technology in MESSAGEix
         - scenario: scenario (SSP1, SSP2, SSP3, SSP4, SSP5, or LED)
         - first_technology_year: first year the technology is available in MESSAGEix.
-        - reduction_rate: the cost reduction rate (either very_low, low, medium, high, or
-          very_high)
+        - reduction_rate: the cost reduction rate (either very_low, low, medium, high,
+        or very_high)
     """
 
     energy_first_year_file = package_data_path(
@@ -276,8 +277,8 @@ def project_ref_region_inv_costs_using_reduction_rates(
 ) -> pd.DataFrame:
     """Project investment costs for the reference region using cost reduction rates.
 
-    This function uses the cost reduction rates for each technology under each scenario to
-    project the capital costs for each technology in the reference region.
+    This function uses the cost reduction rates for each technology under each scenario
+    to project the capital costs for each technology in the reference region.
 
     The returned data have the list of periods given by :attr:`.Config.seq_years`.
 
