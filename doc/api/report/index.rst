@@ -181,7 +181,7 @@ Utilities
 .. currentmodule:: message_ix_models.report.compat
 
 Compatibility with :mod:`.report.legacy`
----------------------------------------
+----------------------------------------
 
 .. automodule:: message_ix_models.report.compat
    :members:
