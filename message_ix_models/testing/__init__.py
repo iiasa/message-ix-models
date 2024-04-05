@@ -1,10 +1,12 @@
 import logging
 import os
+import shutil
 from base64 import b32hexencode
 from copy import deepcopy
 from pathlib import Path
 from random import randbytes
 from tempfile import TemporaryDirectory
+from typing import Generator
 
 import message_ix
 import pandas as pd
@@ -12,6 +14,7 @@ import pytest
 from ixmp import config as ixmp_config
 
 from message_ix_models import util
+from message_ix_models.model import snapshot
 from message_ix_models.util._logging import mark_time
 from message_ix_models.util.context import Context
 
@@ -351,3 +354,69 @@ def not_ci(reason=None, action="skip"):
     """
     action = "skipif" if action == "skip" else action
     return getattr(pytest.mark, action)(condition=GHA, reason=reason)
+
+
+def unpack_snapshot_data(context: Context, snapshot_id: int):
+    """Already-unpacked data for a snapshot.
+
+    This copies the .csv.gz files from message_ix_models/data/test/… to the directory
+    where they *would* be unpacked by .model.snapshot._unpack. This causes the code to
+    skip unpacking them, which can be very slow.
+    """
+    if snapshot_id not in (0, 1):
+        log.info(f"No unpacked data for snapshot {snapshot_id}")
+        return
+
+    parts = (f"snapshot-{snapshot_id}", "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline")
+    dest = context.get_cache_path(*parts)
+    log.debug(f"{dest = }")
+
+    snapshot_data_path = util.package_data_path("test", *parts)
+    log.debug(f"{snapshot_data_path = }")
+
+    shutil.copytree(snapshot_data_path, dest, dirs_exist_ok=True)
+
+
+@pytest.fixture(
+    scope="session",
+    params=[
+        int(k.split("-")[1]) for k in util.pooch.SOURCE if k.startswith("snapshot")
+    ],
+)
+def loaded_snapshot(
+    request, session_context, solved: bool = False
+) -> Generator[message_ix.Scenario, None, None]:
+    snapshot_id: int = request.param
+    assert snapshot_id is not None
+    unpack_snapshot_data(context=session_context, snapshot_id=snapshot_id)
+    model_name = "MESSAGEix-GLOBIOM_1.1_R11_no-policy"
+    scenario_name = f"baseline_v{snapshot_id}"
+    mp = session_context.get_platform()
+
+    # The following code roughly parallels bare_res()
+    try:
+        base = message_ix.Scenario(mp, model=model_name, scenario=scenario_name)
+    except ValueError:
+        log.info(f"Create '{model_name}/{scenario_name}' for testing")
+        session_context.scenario_info.update(model=model_name, scenario=scenario_name)
+        base = message_ix.Scenario(
+            mp, model=model_name, scenario=scenario_name, version="new"
+        )
+        snapshot.load(
+            scenario=base,
+            snapshot_id=snapshot_id,
+            extra_cache_path=f"snapshot-{snapshot_id}",
+        )
+
+    if solved and not base.has_solution():
+        log.info("Solve")
+        base.solve(solve_options=dict(lpmethod=4), quiet=True)
+
+    try:
+        new_name = request.node.name
+    except AttributeError:
+        # Generate a new scenario name with a random part
+        new_name = f"baseline {b32hexencode(randbytes(3)).decode().rstrip('=').lower()}"
+
+    log.info(f"Clone to '{model_name}/{new_name}'")
+    yield base.clone(scenario=new_name, keep_solution=solved)

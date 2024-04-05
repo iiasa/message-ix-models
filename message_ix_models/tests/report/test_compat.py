@@ -14,14 +14,14 @@ from message_ix_models.report.compat import (
 )
 from message_ix_models.report.sim import to_simulate
 
-from ..test_report import ss_reporter
+from ..test_report import simulated_solution_reporter
 
 
 @to_simulate.minimum_version
 def test_compat(tmp_path, test_context):
     import numpy.testing as npt
 
-    rep = ss_reporter()
+    rep = simulated_solution_reporter()
     prepare_reporter(test_context, reporter=rep)
 
     rep.add("scenario", ScenarioInfo(model="Model name", scenario="Scenario name"))

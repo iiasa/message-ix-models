@@ -196,7 +196,7 @@ def report(context: Context, *args, **kwargs):
 
     This function provides a single, common interface to call both the :mod:`genno`
     -based (:mod:`message_ix_models.report`) and ‘legacy’ (
-    :mod:`message_data.tools.post_processing`) reporting codes.
+    :mod:`message_ix_models.report.legacy`) reporting codes.
 
     Parameters
     ----------
@@ -266,10 +266,11 @@ def report(context: Context, *args, **kwargs):
 
 
 def _invoke_legacy_reporting(context):
-    log.info("Using tools.post_processing.iamc_report_hackathon")
-    from message_data.tools.post_processing import iamc_report_hackathon
+    from .legacy import iamc_report_hackathon
 
-    # Convert "legacy" config to keyword arguments for .iamc_report_hackathon.report()
+    log.info("Using .report.legacy.iamc_report_hackathon.report")
+
+    # Convert "legacy" config to kwargs for .legacy.iamc_report_hackathon.report()
     kwargs = deepcopy(context.report.legacy)
     kwargs.pop("use")
 

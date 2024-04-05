@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from message_ix import Scenario
@@ -80,7 +81,7 @@ def read_excel(scenario: Scenario, path: Path) -> None:
     """Similar to :meth:`.Scenario.read_excel`, but using :func:`unpack`."""
     base = unpack(path)
 
-    scenario.read_excel(base.joinpath("sets.xlsx"))
+    scenario.read_excel(path=base.joinpath("sets.xlsx"))
 
     parameters = set(scenario.par_list())
 
@@ -101,22 +102,29 @@ def read_excel(scenario: Scenario, path: Path) -> None:
 
 
 @minimum_version("message_ix 3.5")
-def load(scenario: Scenario, snapshot_id: int) -> None:
+def load(
+    scenario: Scenario, snapshot_id: int, extra_cache_path: Optional[str] = None
+) -> None:
     """Fetch and load snapshot with ID `snapshot_id` into `scenario`.
 
     See also
     --------
     SNAPSHOTS
     """
-    path, *_ = fetch(**SOURCE[f"snapshot-{snapshot_id}"])
+    snapshot_name = f"snapshot-{snapshot_id}"
+    path, *_ = fetch(**SOURCE[snapshot_name], extra_cache_path=extra_cache_path)
 
     # Add units
     spec = Spec()
-    spec.add.set["unit"] = get_codes("unit/snapshot")
+    spec.add.set["unit"] = get_codes(f"unit/snapshot-{snapshot_id}")
     apply_spec(scenario, spec)
 
     # Initialize MACRO items
     with scenario.transact("Prepare scenario for snapshot data"):
         MACRO.initialize(scenario)
 
-    read_excel(scenario, path)
+    read_excel(scenario=scenario, path=path)
+
+    # Transfer 'node' from `scenario` to `platform` "regions"
+    spec.add.set["node"] = scenario.set("node")
+    apply_spec(scenario, spec)

@@ -1,0 +1,392 @@
+﻿IAMC Parent,IAMC Child
+Capacity Additions|Electricity|Storage Capacity,Capacity Additions|Electricity|Storage
+Emissions|XXX|AFOLU|Agriculture and Biomass Burning,Emissions|XXX|AFOLU|Agriculture
+Emissions|XXX|AFOLU|Agriculture and Biomass Burning,Emissions|XXX|AFOLU|Biomass Burning
+Emissions|XXX|Energy|Demand|Residential and Commercial,Emissions|XXX|Energy|Demand|Commercial
+Emissions|XXX|Energy|Demand|Residential and Commercial,Emissions|XXX|Energy|Demand|Residential
+Emissions|XXX|Energy|Demand|Residential and Commercial and AFOFI,Emissions|XXX|Energy|Demand|AFOFI
+Emissions|XXX|Energy|Demand|Residential and Commercial and AFOFI,Emissions|XXX|Energy|Demand|Residential and Commercial
+Emissions|XXX|Energy|Demand|Transportation|Rail and Domestic Shipping,Emissions|XXX|Energy|Demand|Transportation|Rail
+Emissions|XXX|Energy|Demand|Transportation|Rail and Domestic Shipping,Emissions|XXX|Energy|Demand|Transportation|Shipping|Domestic
+Emissions|XXX|Energy|Demand|Transportation|Road Rail and Domestic Shipping,Emissions|XXX|Energy|Demand|Transportation|Rail
+Emissions|XXX|Energy|Demand|Transportation|Road Rail and Domestic Shipping,Emissions|XXX|Energy|Demand|Transportation|Road
+Emissions|XXX|Energy|Demand|Transportation|Road Rail and Domestic Shipping,Emissions|XXX|Energy|Demand|Transportation|Shipping|Domestic
+Emissions|XXX|Energy|Supply|Electricity and Heat,Emissions|XXX|Energy|Supply|Electricity
+Emissions|XXX|Energy|Supply|Electricity and Heat,Emissions|XXX|Energy|Supply|Heat
+Emissions|XXX|Energy|Supply|Gases|Fugitive,Emissions|XXX|Energy|Supply|Gases|Biomass|Fugitive
+Emissions|XXX|Energy|Supply|Gases|Fugitive,Emissions|XXX|Energy|Supply|Gases|Coal|Fugitive
+Emissions|XXX|Energy|Supply|Gases|Fugitive,Emissions|XXX|Energy|Supply|Gases|Extraction|Fugitive
+Emissions|XXX|Energy|Supply|Gases|Fugitive,Emissions|XXX|Energy|Supply|Gases|Hydrogen|Fugitive
+Emissions|XXX|Energy|Supply|Gases|Fugitive,Emissions|XXX|Energy|Supply|Gases|Natural Gas|Fugitive
+Emissions|XXX|Energy|Supply|Gases|Fugitive,Emissions|XXX|Energy|Supply|Gases|Transportation|Fugitive
+Emissions|XXX|Energy|Supply|Liquids|Fugitive,Emissions|XXX|Energy|Supply|Liquids|Biomass|Fugitive
+Emissions|XXX|Energy|Supply|Liquids|Fugitive,Emissions|XXX|Energy|Supply|Liquids|Coal|Fugitive
+Emissions|XXX|Energy|Supply|Liquids|Fugitive,Emissions|XXX|Energy|Supply|Liquids|Extraction|Fugitive
+Emissions|XXX|Energy|Supply|Liquids|Fugitive,Emissions|XXX|Energy|Supply|Liquids|Natural Gas|Fugitive
+Emissions|XXX|Energy|Supply|Liquids|Fugitive,Emissions|XXX|Energy|Supply|Liquids|Oil|Fugitive
+Emissions|XXX|Energy|Supply|Liquids|Fugitive,Emissions|XXX|Energy|Supply|Liquids|Transportation|Fugitive
+Emissions|XXX|Energy|Supply|Gases and Liquids Fugitive,Emissions|XXX|Energy|Supply|Gases|Fugitive
+Emissions|XXX|Energy|Supply|Gases and Liquids Fugitive,Emissions|XXX|Energy|Supply|Liquids|Fugitive
+Emissions|XXX|Energy|Supply|Gases|Combustion,Emissions|XXX|Energy|Supply|Gases|Biomass|Combustion
+Emissions|XXX|Energy|Supply|Gases|Combustion,Emissions|XXX|Energy|Supply|Gases|Coal|Combustion
+Emissions|XXX|Energy|Supply|Gases|Combustion,Emissions|XXX|Energy|Supply|Gases|Extraction|Combustion
+Emissions|XXX|Energy|Supply|Gases|Combustion,Emissions|XXX|Energy|Supply|Gases|Hydrogen|Combustion
+Emissions|XXX|Energy|Supply|Gases|Combustion,Emissions|XXX|Energy|Supply|Gases|Natural Gas|Combustion
+Emissions|XXX|Energy|Supply|Gases|Combustion,Emissions|XXX|Energy|Supply|Gases|Transportation|Combustion
+Emissions|XXX|Energy|Supply|Liquids|Combustion,Emissions|XXX|Energy|Supply|Liquids|Biomass|Combustion
+Emissions|XXX|Energy|Supply|Liquids|Combustion,Emissions|XXX|Energy|Supply|Liquids|Coal|Combustion
+Emissions|XXX|Energy|Supply|Liquids|Combustion,Emissions|XXX|Energy|Supply|Liquids|Extraction|Combustion
+Emissions|XXX|Energy|Supply|Liquids|Combustion,Emissions|XXX|Energy|Supply|Liquids|Natural Gas|Combustion
+Emissions|XXX|Energy|Supply|Liquids|Combustion,Emissions|XXX|Energy|Supply|Liquids|Oil|Combustion
+Emissions|XXX|Energy|Supply|Liquids|Combustion,Emissions|XXX|Energy|Supply|Liquids|Transportation|Combustion
+Emissions|XXX|Energy|Supply|Gases,Emissions|XXX|Energy|Supply|Gases|Biomass
+Emissions|XXX|Energy|Supply|Gases,Emissions|XXX|Energy|Supply|Gases|Coal
+Emissions|XXX|Energy|Supply|Gases,Emissions|XXX|Energy|Supply|Gases|Extraction
+Emissions|XXX|Energy|Supply|Gases,Emissions|XXX|Energy|Supply|Gases|Hydrogen
+Emissions|XXX|Energy|Supply|Gases,Emissions|XXX|Energy|Supply|Gases|Natural Gas
+Emissions|XXX|Energy|Supply|Gases,Emissions|XXX|Energy|Supply|Gases|Transportation
+Emissions|XXX|Energy|Supply|Liquids,Emissions|XXX|Energy|Supply|Liquids|Biomass
+Emissions|XXX|Energy|Supply|Liquids,Emissions|XXX|Energy|Supply|Liquids|Coal
+Emissions|XXX|Energy|Supply|Liquids,Emissions|XXX|Energy|Supply|Liquids|Extraction
+Emissions|XXX|Energy|Supply|Liquids,Emissions|XXX|Energy|Supply|Liquids|Natural Gas
+Emissions|XXX|Energy|Supply|Liquids,Emissions|XXX|Energy|Supply|Liquids|Oil
+Emissions|XXX|Energy|Supply|Liquids,Emissions|XXX|Energy|Supply|Liquids|Transportation
+Emissions|XXX|Energy|Supply|Solids|Fugitive,Emissions|XXX|Energy|Supply|Solids|Biomass|Fugitive
+Emissions|XXX|Energy|Supply|Solids|Fugitive,Emissions|XXX|Energy|Supply|Solids|Coal|Fugitive
+Emissions|XXX|Energy|Supply|Solids|Fugitive,Emissions|XXX|Energy|Supply|Solids|Extraction|Fugitive
+Emissions|XXX|Energy|Supply|Solids|Fugitive,Emissions|XXX|Energy|Supply|Solids|Transportation|Fugitive
+Emissions|XXX|Energy|Supply|Solids and Other Fugitive,Emissions|XXX|Energy|Supply|Solids|Fugitive
+Emissions|XXX|Energy|Supply|Solids and Other Fugitive,Emissions|XXX|Energy|Supply|Other|Fugitive
+Emissions|XXX|Energy|Supply|Solids|Combustion,Emissions|XXX|Energy|Supply|Solids|Biomass|Combustion
+Emissions|XXX|Energy|Supply|Solids|Combustion,Emissions|XXX|Energy|Supply|Solids|Coal|Combustion
+Emissions|XXX|Energy|Supply|Solids|Combustion,Emissions|XXX|Energy|Supply|Solids|Extraction|Combustion
+Emissions|XXX|Energy|Supply|Solids|Combustion,Emissions|XXX|Energy|Supply|Solids|Transportation|Combustion
+Emissions|XXX|Energy|Supply|Solids,Emissions|XXX|Energy|Supply|Solids|Biomass
+Emissions|XXX|Energy|Supply|Solids,Emissions|XXX|Energy|Supply|Solids|Coal
+Emissions|XXX|Energy|Supply|Solids,Emissions|XXX|Energy|Supply|Solids|Extraction
+Emissions|XXX|Energy|Supply|Solids,Emissions|XXX|Energy|Supply|Solids|Transportation
+Emissions|XXX|Energy|Supply,Emissions|XXX|Energy|Supply|Electricity
+Emissions|XXX|Energy|Supply,Emissions|XXX|Energy|Supply|Heat
+Emissions|XXX|Energy|Supply,Emissions|XXX|Energy|Supply|Solids
+Emissions|XXX|Energy|Supply,Emissions|XXX|Energy|Supply|Liquids
+Emissions|XXX|Energy|Supply,Emissions|XXX|Energy|Supply|Other
+Emissions|XXX|Energy|Supply,Emissions|XXX|Energy|Supply|Gases
+Emissions|XXX|Energy,Emissions|XXX|Energy|Supply
+Emissions|XXX|Energy,Emissions|XXX|Energy|Demand
+Emissions|XXX|Industrial Processes|Metals and Minerals,Emissions|XXX|Industrial Processes|Non-Ferrous Metals
+Emissions|XXX|Industrial Processes|Metals and Minerals,Emissions|XXX|Industrial Processes|Non-Metallic Minerals
+Emissions|XXX|Industrial Processes|Metals and Minerals,Emissions|XXX|Industrial Processes|Iron and Steel
+Emissions|XXX|Fossil Fuels and Industry,Emissions|XXX|Energy
+Emissions|XXX|Fossil Fuels and Industry,Emissions|XXX|Industrial Processes
+Emissions|XXX|Energy and Industrial Processes,Emissions|XXX|Energy
+Emissions|XXX|Energy and Industrial Processes,Emissions|XXX|Industrial Processes
+Emissions|XXX,Emissions|XXX|AFOLU
+Emissions|XXX,Emissions|XXX|Energy
+Emissions|XXX,Emissions|XXX|Industrial Processes
+Emissions|XXX,Emissions|XXX|Natural
+Emissions|XXX,Emissions|XXX|Product Use
+Emissions|XXX,Emissions|XXX|Waste
+Final Energy|Residential and Commercial|Solids,Final Energy|Residential and Commercial|Solids|Biomass
+Final Energy|Residential and Commercial|Solids,Final Energy|Residential and Commercial|Solids|Coal
+Final Energy|Electricity,Final Energy|Industry|Electricity
+Final Energy|Electricity,Final Energy|Residential and Commercial|Electricity
+Final Energy|Electricity,Final Energy|Transportation|Electricity
+Final Energy|Electricity|Solar,Final Energy|Residential and Commercial|Electricity|Solar
+Final Energy|Electricity|Solar,Final Energy|Industry|Electricity|Solar
+Final Energy|Gases,Final Energy|Industry|Gases
+Final Energy|Gases,Final Energy|Residential and Commercial|Gases
+Final Energy|Gases,Final Energy|Transportation|Gases
+Final Energy|Heat,Final Energy|Industry|Heat
+Final Energy|Heat,Final Energy|Residential and Commercial|Heat
+Final Energy|Hydrogen,Final Energy|Industry|Hydrogen
+Final Energy|Hydrogen,Final Energy|Residential and Commercial|Hydrogen
+Final Energy|Hydrogen,Final Energy|Transportation|Hydrogen
+Final Energy|Liquids|Biomass,Final Energy|Industry|Liquids|Biomass
+Final Energy|Liquids|Biomass,Final Energy|Residential and Commercial|Liquids|Biomass
+Final Energy|Liquids|Biomass,Final Energy|Transportation|Liquids|Biomass
+Final Energy|Liquids|Coal,Final Energy|Industry|Liquids|Coal
+Final Energy|Liquids|Coal,Final Energy|Residential and Commercial|Liquids|Coal
+Final Energy|Liquids|Coal,Final Energy|Transportation|Liquids|Coal
+Final Energy|Liquids|Gas,Final Energy|Industry|Liquids|Gas
+Final Energy|Liquids|Gas,Final Energy|Residential and Commercial|Liquids|Gas
+Final Energy|Liquids|Gas,Final Energy|Transportation|Liquids|Gas
+Final Energy|Liquids|Oil,Final Energy|Industry|Liquids|Oil
+Final Energy|Liquids|Oil,Final Energy|Residential and Commercial|Liquids|Oil
+Final Energy|Liquids|Oil,Final Energy|Transportation|Liquids|Oil
+Final Energy|Liquids,Final Energy|Liquids|Biomass
+Final Energy|Liquids,Final Energy|Liquids|Coal
+Final Energy|Liquids,Final Energy|Liquids|Gas
+Final Energy|Liquids,Final Energy|Liquids|Oil
+Final Energy|Solar,Final Energy|Industry|Other
+Final Energy|Solar,Final Energy|Residential and Commercial|Other
+Final Energy|Solids|Biomass,Final Energy|Industry|Solids|Biomass
+Final Energy|Solids|Biomass,Final Energy|Residential and Commercial|Solids|Biomass
+Final Energy|Solids|Biomass|Traditional,Final Energy|Residential and Commercial|Solids|Biomass|Traditional
+Final Energy|Solids|Coal,Final Energy|Industry|Solids|Coal
+Final Energy|Solids|Coal,Final Energy|Residential and Commercial|Solids|Coal
+Final Energy|Solids|Coal,Final Energy|Transportation|Other
+Final Energy|Solids,Final Energy|Solids|Biomass
+Final Energy|Solids,Final Energy|Solids|Coal
+Final Energy,Final Energy|Industry
+Final Energy,Final Energy|Residential and Commercial
+Final Energy,Final Energy|Transportation
+Food Demand,Food Demand|Total
+Primary Energy|Biomass,Primary Energy|Biomass|w/ CCS
+Primary Energy|Biomass,Primary Energy|Biomass|w/o CCS
+Primary Energy|Biomass|Electricity,Primary Energy|Biomass|Electricity|w/ CCS
+Primary Energy|Biomass|Electricity,Primary Energy|Biomass|Electricity|w/o CCS
+Primary Energy|Coal,Primary Energy|Coal|w/o CCS
+Primary Energy|Coal,Primary Energy|Coal|w/ CCS
+Primary Energy|Coal|Electricity,Primary Energy|Coal|Electricity|w/ CCS
+Primary Energy|Coal|Electricity,Primary Energy|Coal|Electricity|w/o CCS
+Primary Energy|Gas,Primary Energy|Gas|w/o CCS
+Primary Energy|Gas,Primary Energy|Gas|w/ CCS
+Primary Energy|Gas|Electricity,Primary Energy|Gas|Electricity|w/ CCS
+Primary Energy|Gas|Electricity,Primary Energy|Gas|Electricity|w/o CCS
+Primary Energy|Oil,Primary Energy|Oil|w/o CCS
+Primary Energy|Oil,Primary Energy|Oil|w/ CCS
+Primary Energy|Fossil,Primary Energy|Coal|w/ CCS
+Primary Energy|Fossil,Primary Energy|Coal|w/o CCS
+Primary Energy|Fossil,Primary Energy|Oil|w/ CCS
+Primary Energy|Fossil,Primary Energy|Oil|w/o CCS
+Primary Energy|Fossil,Primary Energy|Gas|w/ CCS
+Primary Energy|Fossil,Primary Energy|Gas|w/o CCS
+Primary Energy|Fossil|w/ CCS,Primary Energy|Coal|w/ CCS
+Primary Energy|Fossil|w/ CCS,Primary Energy|Gas|w/ CCS
+Primary Energy|Fossil|w/ CCS,Primary Energy|Oil|w/ CCS
+Primary Energy|Fossil|w/o CCS,Primary Energy|Coal|w/o CCS
+Primary Energy|Fossil|w/o CCS,Primary Energy|Gas|w/o CCS
+Primary Energy|Fossil|w/o CCS,Primary Energy|Oil|w/o CCS
+Primary Energy|Non-Biomass Renewables,Primary Energy|Geothermal
+Primary Energy|Non-Biomass Renewables,Primary Energy|Hydro
+Primary Energy|Non-Biomass Renewables,Primary Energy|Ocean
+Primary Energy|Non-Biomass Renewables,Primary Energy|Solar
+Primary Energy|Non-Biomass Renewables,Primary Energy|Wind
+Primary Energy,Primary Energy|Biomass
+Primary Energy,Primary Energy|Coal
+Primary Energy,Primary Energy|Gas
+Primary Energy,Primary Energy|Geothermal
+Primary Energy,Primary Energy|Hydro
+Primary Energy,Primary Energy|Nuclear
+Primary Energy,Primary Energy|Oil
+Primary Energy,Primary Energy|Other
+Primary Energy,Primary Energy|Solar
+Primary Energy,Primary Energy|Wind
+Primary Energy (substitution method)|Fossil,Primary Energy (substitution method)|Coal|w/ CCS
+Primary Energy (substitution method)|Fossil,Primary Energy (substitution method)|Coal|w/o CCS
+Primary Energy (substitution method)|Fossil,Primary Energy (substitution method)|Oil|w/ CCS
+Primary Energy (substitution method)|Fossil,Primary Energy (substitution method)|Oil|w/o CCS
+Primary Energy (substitution method)|Fossil,Primary Energy (substitution method)|Gas|w/ CCS
+Primary Energy (substitution method)|Fossil,Primary Energy (substitution method)|Gas|w/o CCS
+Primary Energy (substitution method)|Fossil|w/ CCS,Primary Energy (substitution method)|Coal|w/ CCS
+Primary Energy (substitution method)|Fossil|w/ CCS,Primary Energy (substitution method)|Gas|w/ CCS
+Primary Energy (substitution method)|Fossil|w/ CCS,Primary Energy (substitution method)|Oil|w/ CCS
+Primary Energy (substitution method)|Fossil|w/o CCS,Primary Energy (substitution method)|Coal|w/o CCS
+Primary Energy (substitution method)|Fossil|w/o CCS,Primary Energy (substitution method)|Gas|w/o CCS
+Primary Energy (substitution method)|Fossil|w/o CCS,Primary Energy (substitution method)|Oil|w/o CCS
+Primary Energy (substitution method)|Non-Biomass Renewables,Primary Energy (substitution method)|Geothermal
+Primary Energy (substitution method)|Non-Biomass Renewables,Primary Energy (substitution method)|Hydro
+Primary Energy (substitution method)|Non-Biomass Renewables,Primary Energy (substitution method)|Ocean
+Primary Energy (substitution method)|Non-Biomass Renewables,Primary Energy (substitution method)|Solar
+Primary Energy (substitution method)|Non-Biomass Renewables,Primary Energy (substitution method)|Wind
+Primary Energy (substitution method),Primary Energy (substitution method)|Biomass
+Primary Energy (substitution method),Primary Energy (substitution method)|Coal
+Primary Energy (substitution method),Primary Energy (substitution method)|Gas
+Primary Energy (substitution method),Primary Energy (substitution method)|Geothermal
+Primary Energy (substitution method),Primary Energy (substitution method)|Hydro
+Primary Energy (substitution method),Primary Energy (substitution method)|Nuclear
+Primary Energy (substitution method),Primary Energy (substitution method)|Oil
+Primary Energy (substitution method),Primary Energy (substitution method)|Other
+Primary Energy (substitution method),Primary Energy (substitution method)|Solar
+Primary Energy (substitution method),Primary Energy (substitution method)|Wind
+Secondary Energy|Electricity|Fossil,Secondary Energy|Electricity|Coal
+Secondary Energy|Electricity|Fossil,Secondary Energy|Electricity|Gas
+Secondary Energy|Electricity|Fossil,Secondary Energy|Electricity|Oil
+Secondary Energy|Electricity|Fossil|w/ CCS,Secondary Energy|Electricity|Coal|w/ CCS
+Secondary Energy|Electricity|Fossil|w/ CCS,Secondary Energy|Electricity|Gas|w/ CCS
+Secondary Energy|Electricity|Fossil|w/ CCS,Secondary Energy|Electricity|Oil|w/ CCS
+Secondary Energy|Electricity|Fossil|w/o CCS,Secondary Energy|Electricity|Coal|w/o CCS
+Secondary Energy|Electricity|Fossil|w/o CCS,Secondary Energy|Electricity|Gas|w/o CCS
+Secondary Energy|Electricity|Fossil|w/o CCS,Secondary Energy|Electricity|Oil|w/o CCS
+Secondary Energy|Electricity|Non-Biomass Renewables,Secondary Energy|Electricity|Geothermal
+Secondary Energy|Electricity|Non-Biomass Renewables,Secondary Energy|Electricity|Hydro
+Secondary Energy|Electricity|Non-Biomass Renewables,Secondary Energy|Electricity|Ocean
+Secondary Energy|Electricity|Non-Biomass Renewables,Secondary Energy|Electricity|Solar
+Secondary Energy|Electricity|Non-Biomass Renewables,Secondary Energy|Electricity|Wind
+Secondary Energy|Electricity|Solar,Secondary Energy|Electricity|Solar|CSP
+Secondary Energy|Electricity|Solar,Secondary Energy|Electricity|Solar|PV
+Secondary Energy|Electricity|Wind,Secondary Energy|Electricity|Wind|Offshore
+Secondary Energy|Electricity|Wind,Secondary Energy|Electricity|Wind|Onshore
+Secondary Energy|Electricity,Secondary Energy|Electricity|Biomass
+Secondary Energy|Electricity,Secondary Energy|Electricity|Coal
+Secondary Energy|Electricity,Secondary Energy|Electricity|Gas
+Secondary Energy|Electricity,Secondary Energy|Electricity|Geothermal
+Secondary Energy|Electricity,Secondary Energy|Electricity|Hydro
+Secondary Energy|Electricity,Secondary Energy|Electricity|Nuclear
+Secondary Energy|Electricity,Secondary Energy|Electricity|Oil
+Secondary Energy|Electricity,Secondary Energy|Electricity|Other
+Secondary Energy|Electricity,Secondary Energy|Electricity|Solar
+Secondary Energy|Electricity,Secondary Energy|Electricity|Wind
+Secondary Energy|Hydrogen|Fossil,Secondary Energy|Hydrogen|Coal
+Secondary Energy|Hydrogen|Fossil,Secondary Energy|Hydrogen|Gas
+Secondary Energy|Hydrogen|Fossil,Secondary Energy|Hydrogen|Oil
+Secondary Energy|Hydrogen|Fossil|w/ CCS,Secondary Energy|Hydrogen|Coal|w/ CCS
+Secondary Energy|Hydrogen|Fossil|w/ CCS,Secondary Energy|Hydrogen|Gas|w/ CCS
+Secondary Energy|Hydrogen|Fossil|w/o CCS,Secondary Energy|Hydrogen|Coal|w/o CCS
+Secondary Energy|Hydrogen|Fossil|w/o CCS,Secondary Energy|Hydrogen|Gas|w/o CCS
+Secondary Energy|Hydrogen|Fossil|w/o CCS,Secondary Energy|Hydrogen|Oil
+Secondary Energy|Liquids|Fossil,Secondary Energy|Liquids|Coal
+Secondary Energy|Liquids|Fossil,Secondary Energy|Liquids|Gas
+Secondary Energy|Liquids|Fossil,Secondary Energy|Liquids|Oil
+Secondary Energy|Liquids|Fossil|w/ CCS,Secondary Energy|Liquids|Coal|w/ CCS
+Secondary Energy|Liquids|Fossil|w/ CCS,Secondary Energy|Liquids|Gas|w/ CCS
+Secondary Energy|Liquids|Fossil|w/o CCS,Secondary Energy|Liquids|Coal|w/o CCS
+Secondary Energy|Liquids|Fossil|w/o CCS,Secondary Energy|Liquids|Gas|w/o CCS
+Secondary Energy|Liquids|Fossil|w/o CCS,Secondary Energy|Liquids|Oil
+Resource|Extraction,Resource|Extraction|Coal
+Resource|Extraction,Resource|Extraction|Gas
+Resource|Extraction,Resource|Extraction|Oil
+Resource|Cumulative Extraction,Resource|Cumulative Extraction|Coal
+Resource|Cumulative Extraction,Resource|Cumulative Extraction|Gas
+Resource|Cumulative Extraction,Resource|Cumulative Extraction|Oil
+Land Cover,Land Cover|Total
+Emissions|HFC,Emissions|HFC|Total
+Population,Population|Total
+Investment|Energy Supply|Electricity|Fossil,Investment|Energy Supply|Electricity|Coal
+Investment|Energy Supply|Electricity|Fossil,Investment|Energy Supply|Electricity|Gas
+Investment|Energy Supply|Electricity|Fossil,Investment|Energy Supply|Electricity|Oil
+Investment|Energy Supply|Electricity|Non-Biomass Renewables,Investment|Energy Supply|Electricity|Geothermal
+Investment|Energy Supply|Electricity|Non-Biomass Renewables,Investment|Energy Supply|Electricity|Hydro
+Investment|Energy Supply|Electricity|Non-Biomass Renewables,Investment|Energy Supply|Electricity|Solar
+Investment|Energy Supply|Electricity|Non-Biomass Renewables,Investment|Energy Supply|Electricity|Wind
+Investment|Energy Supply|Electricity|Non-fossil,Investment|Energy Supply|Electricity|Geothermal
+Investment|Energy Supply|Electricity|Non-fossil,Investment|Energy Supply|Electricity|Hydro
+Investment|Energy Supply|Electricity|Non-fossil,Investment|Energy Supply|Electricity|Solar
+Investment|Energy Supply|Electricity|Non-fossil,Investment|Energy Supply|Electricity|Wind
+Investment|Energy Supply|Electricity|Non-fossil,Investment|Energy Supply|Electricity|Nuclear
+Investment|Energy Supply|Extraction|Fossil,Investment|Energy Supply|Extraction|Coal
+Investment|Energy Supply|Extraction|Fossil,Investment|Energy Supply|Extraction|Gas
+Investment|Energy Supply|Extraction|Fossil,Investment|Energy Supply|Extraction|Oil
+Water Consumption|Electricity|Fossil|w/ CCS,Water Consumption|Electricity|Coal|w/ CCS
+Water Consumption|Electricity|Fossil|w/ CCS,Water Consumption|Electricity|Gas|w/ CCS
+Water Consumption|Electricity|Fossil|w/ CCS,Water Consumption|Electricity|Oil|w/ CCS
+Water Consumption|Electricity|Fossil|w/o CCS,Water Consumption|Electricity|Coal|w/o CCS
+Water Consumption|Electricity|Fossil|w/o CCS,Water Consumption|Electricity|Gas|w/o CCS
+Water Consumption|Electricity|Fossil|w/o CCS,Water Consumption|Electricity|Oil|w/o CCS
+Water Consumption|Electricity|Fossil,Water Consumption|Electricity|Fossil|w/ CCS
+Water Consumption|Electricity|Fossil,Water Consumption|Electricity|Fossil|w/o CCS
+Water Consumption|Electricity|Non-Biomass Renewables,Water Consumption|Electricity|Geothermal
+Water Consumption|Electricity|Non-Biomass Renewables,Water Consumption|Electricity|Hydro
+Water Consumption|Electricity|Non-Biomass Renewables,Water Consumption|Electricity|Solar
+Water Consumption|Electricity|Non-Biomass Renewables,Water Consumption|Electricity|Wind
+Water Consumption|Electricity,Water Consumption|Electricity|Biomass
+Water Consumption|Electricity,Water Consumption|Electricity|Coal
+Water Consumption|Electricity,Water Consumption|Electricity|Gas
+Water Consumption|Electricity,Water Consumption|Electricity|Geothermal
+Water Consumption|Electricity,Water Consumption|Electricity|Hydro
+Water Consumption|Electricity,Water Consumption|Electricity|Nuclear
+Water Consumption|Electricity,Water Consumption|Electricity|Oil
+Water Consumption|Electricity,Water Consumption|Electricity|Other
+Water Consumption|Electricity,Water Consumption|Electricity|Solar
+Water Consumption|Electricity,Water Consumption|Electricity|Wind
+Water Consumption|Hydrogen|Fossil|w/ CCS,Water Consumption|Hydrogen|Coal|w/ CCS
+Water Consumption|Hydrogen|Fossil|w/ CCS,Water Consumption|Hydrogen|Gas|w/ CCS
+Water Consumption|Hydrogen|Fossil|w/o CCS,Water Consumption|Hydrogen|Coal|w/o CCS
+Water Consumption|Hydrogen|Fossil|w/o CCS,Water Consumption|Hydrogen|Gas|w/o CCS
+Water Consumption|Hydrogen|Fossil|w/o CCS,Water Consumption|Hydrogen|Oil
+Water Consumption|Hydrogen|Fossil,Water Consumption|Hydrogen|Fossil|w/ CCS
+Water Consumption|Hydrogen|Fossil,Water Consumption|Hydrogen|Fossil|w/o CCS
+Water Consumption|Hydrogen,Water Consumption|Hydrogen|Biomass
+Water Consumption|Hydrogen,Water Consumption|Hydrogen|Coal
+Water Consumption|Hydrogen,Water Consumption|Hydrogen|Electricity
+Water Consumption|Hydrogen,Water Consumption|Hydrogen|Gas
+Water Consumption|Hydrogen,Water Consumption|Hydrogen|Oil
+Water Consumption|Hydrogen,Water Consumption|Hydrogen|Other
+Water Consumption|Hydrogen,Water Consumption|Hydrogen|Solar
+Water Consumption|Liquids|Fossil|w/ CCS,Water Consumption|Liquids|Coal|w/ CCS
+Water Consumption|Liquids|Fossil|w/ CCS,Water Consumption|Liquids|Gas|w/ CCS
+Water Consumption|Liquids|Fossil|w/o CCS,Water Consumption|Liquids|Coal|w/o CCS
+Water Consumption|Liquids|Fossil|w/o CCS,Water Consumption|Liquids|Gas|w/o CCS
+Water Consumption|Liquids|Fossil|w/o CCS,Water Consumption|Liquids|Oil
+Water Consumption|Liquids|Fossil,Water Consumption|Liquids|Fossil|w/ CCS
+Water Consumption|Liquids|Fossil,Water Consumption|Liquids|Fossil|w/o CCS
+Water Consumption|Liquids,Water Consumption|Liquids|Biomass
+Water Consumption|Liquids,Water Consumption|Liquids|Coal
+Water Consumption|Liquids,Water Consumption|Liquids|Gas
+Water Consumption|Liquids,Water Consumption|Liquids|Oil
+Water Consumption,Water Consumption|Electricity
+Water Consumption,Water Consumption|Extraction
+Water Consumption,Water Consumption|Gases
+Water Consumption,Water Consumption|Heat
+Water Consumption,Water Consumption|Hydrogen
+Water Consumption,Water Consumption|Industrial Water
+Water Consumption,Water Consumption|Irrigation
+Water Consumption,Water Consumption|Liquids
+Water Consumption,Water Consumption|Livestock
+Water Consumption,Water Consumption|Municipal Water
+Water Thermal Pollution|Electricity|Fossil|w/ CCS,Water Thermal Pollution|Electricity|Coal|w/ CCS
+Water Thermal Pollution|Electricity|Fossil|w/ CCS,Water Thermal Pollution|Electricity|Gas|w/ CCS
+Water Thermal Pollution|Electricity|Fossil|w/ CCS,Water Thermal Pollution|Electricity|Oil|w/ CCS
+Water Thermal Pollution|Electricity|Fossil|w/o CCS,Water Thermal Pollution|Electricity|Coal|w/o CCS
+Water Thermal Pollution|Electricity|Fossil|w/o CCS,Water Thermal Pollution|Electricity|Gas|w/o CCS
+Water Thermal Pollution|Electricity|Fossil|w/o CCS,Water Thermal Pollution|Electricity|Oil|w/o CCS
+Water Thermal Pollution|Electricity|Fossil,Water Thermal Pollution|Electricity|Fossil|w/ CCS
+Water Thermal Pollution|Electricity|Fossil,Water Thermal Pollution|Electricity|Fossil|w/o CCS
+Water Thermal Pollution|Electricity|Non-Biomass Renewables,Water Thermal Pollution|Electricity|Geothermal
+Water Thermal Pollution|Electricity|Non-Biomass Renewables,Water Thermal Pollution|Electricity|Solar
+Water Withdrawal|Electricity|Fossil|w/ CCS,Water Withdrawal|Electricity|Coal|w/ CCS
+Water Withdrawal|Electricity|Fossil|w/ CCS,Water Withdrawal|Electricity|Gas|w/ CCS
+Water Withdrawal|Electricity|Fossil|w/ CCS,Water Withdrawal|Electricity|Oil|w/ CCS
+Water Withdrawal|Electricity|Fossil|w/o CCS,Water Withdrawal|Electricity|Coal|w/o CCS
+Water Withdrawal|Electricity|Fossil|w/o CCS,Water Withdrawal|Electricity|Gas|w/o CCS
+Water Withdrawal|Electricity|Fossil|w/o CCS,Water Withdrawal|Electricity|Oil|w/o CCS
+Water Withdrawal|Electricity|Non-Biomass Renewables,Water Withdrawal|Electricity|Geothermal
+Water Withdrawal|Electricity|Non-Biomass Renewables,Water Withdrawal|Electricity|Hydro
+Water Withdrawal|Electricity|Non-Biomass Renewables,Water Withdrawal|Electricity|Solar
+Water Withdrawal|Electricity|Non-Biomass Renewables,Water Withdrawal|Electricity|Wind
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Biomass
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Coal
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Gas
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Geothermal
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Hydro
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Nuclear
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Oil
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Other
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Solar
+Water Withdrawal|Electricity,Water Withdrawal|Electricity|Wind
+Water Withdrawal|Hydrogen|Fossil|w/ CCS,Water Withdrawal|Hydrogen|Coal|w/ CCS
+Water Withdrawal|Hydrogen|Fossil|w/ CCS,Water Withdrawal|Hydrogen|Gas|w/ CCS
+Water Withdrawal|Hydrogen|Fossil|w/o CCS,Water Withdrawal|Hydrogen|Coal|w/o CCS
+Water Withdrawal|Hydrogen|Fossil|w/o CCS,Water Withdrawal|Hydrogen|Gas|w/o CCS
+Water Withdrawal|Hydrogen|Fossil|w/o CCS,Water Withdrawal|Hydrogen|Oil
+Water Withdrawal|Hydrogen|Fossil,Water Withdrawal|Hydrogen|Fossil|w/ CCS
+Water Withdrawal|Hydrogen|Fossil,Water Withdrawal|Hydrogen|Fossil|w/o CCS
+Water Withdrawal|Hydrogen,Water Withdrawal|Hydrogen|Biomass
+Water Withdrawal|Hydrogen,Water Withdrawal|Hydrogen|Coal
+Water Withdrawal|Hydrogen,Water Withdrawal|Hydrogen|Electricity
+Water Withdrawal|Hydrogen,Water Withdrawal|Hydrogen|Gas
+Water Withdrawal|Hydrogen,Water Withdrawal|Hydrogen|Oil
+Water Withdrawal|Hydrogen,Water Withdrawal|Hydrogen|Other
+Water Withdrawal|Hydrogen,Water Withdrawal|Hydrogen|Solar
+Water Withdrawal|Liquids|Fossil|w/ CCS,Water Withdrawal|Liquids|Coal|w/ CCS
+Water Withdrawal|Liquids|Fossil|w/ CCS,Water Withdrawal|Liquids|Gas|w/ CCS
+Water Withdrawal|Liquids|Fossil|w/o CCS,Water Withdrawal|Liquids|Coal|w/o CCS
+Water Withdrawal|Liquids|Fossil|w/o CCS,Water Withdrawal|Liquids|Gas|w/o CCS
+Water Withdrawal|Liquids|Fossil|w/o CCS,Water Withdrawal|Liquids|Oil
+Water Withdrawal|Liquids|Fossil,Water Withdrawal|Liquids|Fossil|w/ CCS
+Water Withdrawal|Liquids|Fossil,Water Withdrawal|Liquids|Fossil|w/o CCS
+Water Withdrawal|Liquids,Water Withdrawal|Liquids|Biomass
+Water Withdrawal|Liquids,Water Withdrawal|Liquids|Coal
+Water Withdrawal|Liquids,Water Withdrawal|Liquids|Gas
+Water Withdrawal|Liquids,Water Withdrawal|Liquids|Oil
+Water Withdrawal,Water Withdrawal|Electricity
+Water Withdrawal,Water Withdrawal|Extraction
+Water Withdrawal,Water Withdrawal|Gases
+Water Withdrawal,Water Withdrawal|Heat
+Water Withdrawal,Water Withdrawal|Hydrogen
+Water Withdrawal,Water Withdrawal|Industrial Water
+Water Withdrawal,Water Withdrawal|Irrigation
+Water Withdrawal,Water Withdrawal|Liquids
+Water Withdrawal,Water Withdrawal|Livestock
+Water Withdrawal,Water Withdrawal|Municipal Water
+Consumption,GDP|Consumption

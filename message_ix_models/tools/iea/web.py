@@ -49,8 +49,8 @@ class IEA_EWEB(ExoDataSource):
 
     - "provider": Either "IEA" or "OECD". See :data:`.FILES`.
     - "edition": one of "2021", "2022", or "2023". See :data:`.FILES`.
-    - "product": :class:`str` or :class:`list` of :class:`str.
-    - "flow": :class:`str` or :class:`list` of :class:`str.
+    - "product": :class:`str` or :class:`list` of :class:`str`.
+    - "flow": :class:`str` or :class:`list` of :class:`str`.
 
     The returned data have the extra dimensions "product" and "flow", and are not
     aggregated by year.

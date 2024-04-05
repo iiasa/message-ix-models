@@ -24,7 +24,6 @@ Others:
 .. autosummary::
 
    EXPORT_OMIT
-   CliRunner
    bare_res
    export_test_data
    pytest_addoption
