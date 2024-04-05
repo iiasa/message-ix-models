@@ -7,7 +7,7 @@ import genno
 import plotnine as p9
 
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
-from message_ix_models.util import private_data_path
+from message_ix_models.util import path_fallback
 
 if TYPE_CHECKING:
     from genno import Computer
@@ -77,10 +77,11 @@ class GFEI(ExoDataSource):
         # Set the name of the returned quantity
         self.name = "fuel economy"
 
-        self.path = private_data_path("transport", "GFEI_FE_by_Powertrain_2017.csv")
-        if not self.path.exists():
-            log.error(f"Not found: {self.path}")
-            raise ValueError(self.path)
+        self.path = path_fallback(
+            "transport", "GFEI_FE_by_Powertrain_2017.csv", where="private test"
+        )
+        if "test" in self.path.parts:
+            log.warning(f"Reading random data from {self.path}")
 
     def __call__(self):
         import genno.operator
