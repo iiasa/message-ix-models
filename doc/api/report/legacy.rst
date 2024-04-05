@@ -6,7 +6,7 @@
 ‘Legacy’ reporting (:mod:`.report.legacy`)
 ******************************************
 
-:mod:`.report.legacy` contains ‘legacy’ reporting code transferred from :doc:`message_data <m-data:reference/tools/post_processing>` (:mod:`message_data.tools.post_processing`).
+:mod:`.report.legacy` contains ‘legacy’ reporting code transferred from :doc:`message_data <m-data:reference/tools/post_processing>` (:external+m-data:mod:`message_data.tools.post_processing.iamc_report_hackathon`).
 
 This code:
 
