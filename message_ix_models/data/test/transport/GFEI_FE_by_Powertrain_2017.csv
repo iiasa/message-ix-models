@@ -1,0 +1,330 @@
+# Fuel consumption
+#
+# Source:
+# - Fuzzed version of same file in message_data.
+# - Data underlies "Figure 37. Fuel consumption range by type of powertrain
+#   and vehicle size, 2017"` in
+#   https://theicct.org/publications/gfei-tech-policy-drivers-2005-2017.
+#   Private correspondence from the report authors.
+# - Values correspond exclusively to new vehicle registrations in year 2017.
+#
+# Units: 0.01 Lge / vkm
+#
+Country,        FuelTypeReduced, value
+Turkey,         Diesel,0.16
+Romania,        Diesel,0.70
+Japan,          Unspec.,0.22
+Belgium,        Plug-in,0.10
+Greece,         Plug-in,0.43
+Greece,         Electric,0.15
+Croatia,        LPG,0.38
+United Kingdom, Electric,0.44
+Mexico,         Diesel,0.79
+Germany,        CNG,0.05
+Spain,          CNG,0.80
+USA,            CNG,0.44
+South Korea,    Unspec.,0.09
+Finland,        Petrol,0.84
+Netherlands,    Petrol,0.09
+India,          Diesel,0.87
+Australia,      LPG,0.68
+Austria,        Electric,0.72
+Germany,        Petrol,0.03
+Thailand,       CNG,0.81
+Hungary,        Petrol,0.49
+Belgium,        Hybrid,0.30
+Bulgaria,       Plug-in,0.93
+South Africa,   Plug-in,0.10
+Greece,         Diesel,0.97
+Greece,         Petrol,0.71
+Austria,        CNG,0.87
+Argentina,      Hybrid,0.41
+Thailand,       Petrol,0.25
+Denmark,        Petrol,0.29
+Ukraine,        Hybrid,0.31
+Australia,      Electric,0.31
+Malta,          Diesel,0.86
+Croatia,        CNG,0.93
+Slovakia,       CNG,0.39
+Poland,         LPG,0.49
+Belgium,        LPG,0.73
+Spain,          LPG,0.61
+Ireland,        Hybrid,0.63
+Austria,        Hybrid,0.79
+Austria,        Flexfuel,0.04
+Spain,          Hybrid,0.11
+Latvia,         CNG,0.43
+Netherlands,    LPG,0.07
+Bulgaria,       Electric,0.02
+Romania,        Hybrid,0.88
+Iceland,        Petrol,0.99
+Mexico,         Petrol,0.23
+Ukraine,        Petrol,0.65
+Sweden,         Plug-in,0.20
+South Korea,    Petrol,0.33
+Estonia,        CNG,0.53
+Germany,        LPG,0.51
+Philippines,    Unspec.,0.15
+Brazil,         Electric,1.00
+Italy,          Electric,0.96
+Denmark,        LPG,0.88
+Greece,         CNG,0.25
+Turkey,         Petrol,0.60
+Latvia,         Plug-in,0.56
+Ireland,        Petrol,0.91
+Turkey,         Hybrid,0.50
+Croatia,        Electric,0.19
+Portugal,       LPG,0.56
+India,          CNG,0.37
+Brazil,         Hybrid,0.20
+Russia,         Diesel,0.64
+Slovenia,       Plug-in,0.16
+Czech Republic, Electric,0.61
+France,         Diesel,0.57
+Australia,      Plug-in,0.19
+United Kingdom, Plug-in,0.12
+Estonia,        Hybrid,0.64
+Romania,        LPG,0.06
+Ukraine,        Diesel,0.78
+Argentina,      Diesel,0.77
+Croatia,        Plug-in,0.12
+Japan,          Hydrogen,0.65
+France,         Flexfuel,0.55
+Indonesia,      Petrol,0.80
+Estonia,        Diesel,0.75
+Indonesia,      Diesel,0.61
+Croatia,        Diesel,0.84
+Slovakia,       Diesel,0.30
+South Korea,    Electric,0.98
+Czech Republic, LPG,0.83
+Portugal,       Hybrid,0.50
+Lithuania,      Petrol,0.07
+Canada,         Diesel,0.05
+Germany,        Hybrid,0.87
+Japan,          Diesel,0.44
+Mexico,         Plug-in,0.70
+Iceland,        Electric,0.68
+Sweden,         Diesel,0.39
+Ukraine,        CNG,0.44
+South Africa,   Electric,0.08
+USA,            Hybrid,0.44
+Sweden,         Petrol,0.36
+Hungary,        CNG,0.18
+USA,            Hydrogen,0.71
+Poland,         Plug-in,0.55
+Sweden,         CNG,0.06
+USA,            Electric,0.23
+Italy,          Diesel,0.67
+Chile,          Electric,0.63
+Lithuania,      Diesel,0.31
+South Korea,    Plug-in,0.51
+Austria,        Diesel,0.45
+Argentina,      Petrol,0.21
+Slovakia,       Flexfuel,0.30
+USA,            Diesel,0.89
+Egypt,          Diesel,0.63
+Cyprus,         Plug-in,0.11
+Luxembourg,     LPG,0.94
+Italy,          Hybrid,0.80
+Cyprus,         Diesel,0.27
+Sweden,         LPG,0.57
+Netherlands,    Electric,0.39
+South Korea,    Hybrid,0.31
+South Korea,    Diesel,0.44
+Slovakia,       Petrol,0.03
+United Kingdom, Diesel,0.52
+Thailand,       Plug-in,0.76
+Brazil,         Unspec.,0.83
+Luxembourg,     Diesel,0.23
+Brazil,         Petrol,0.09
+South Korea,    LPG,0.07
+Spain,          Petrol,0.21
+Iceland,        Plug-in,0.21
+Slovakia,       Plug-in,0.23
+Latvia,         Petrol,0.34
+Denmark,        Electric,0.79
+China,          Plug-in,0.43
+India,          LPG,0.01
+Finland,        Electric,0.54
+Australia,      Diesel,0.10
+USA,            Petrol,0.14
+Lithuania,      Electric,0.94
+Sweden,         Hybrid,0.21
+India,          Hybrid,0.08
+China,          Hybrid,0.07
+China,          Diesel,0.75
+Portugal,       CNG,0.45
+Austria,        LPG,0.41
+Romania,        CNG,0.22
+Romania,        Plug-in,0.02
+Chile,          Diesel,0.91
+Slovakia,       Electric,0.05
+Chile,          Plug-in,0.18
+Greece,         LPG,0.10
+Netherlands,    Diesel,0.70
+India,          Electric,0.98
+United Kingdom, Hybrid,0.26
+Spain,          Electric,0.73
+Hungary,        Plug-in,0.29
+France,         Electric,0.42
+Malta,          Petrol,0.73
+Portugal,       Plug-in,0.62
+Denmark,        Diesel,0.80
+Spain,          Plug-in,0.61
+China,          Petrol,0.60
+Denmark,        Plug-in,0.43
+Finland,        CNG,0.74
+Poland,         Hybrid,0.48
+United Kingdom, CNG,0.98
+Ireland,        Diesel,0.41
+Lithuania,      LPG,0.79
+Bulgaria,       CNG,0.61
+Germany,        Diesel,0.65
+Luxembourg,     Petrol,0.87
+Czech Republic, Hybrid,0.70
+Slovenia,       Electric,0.86
+Latvia,         Diesel,0.34
+Italy,          Plug-in,0.84
+Hungary,        Diesel,0.10
+Czech Republic, Diesel,0.18
+Italy,          Petrol,0.59
+Chile,          Hybrid,0.84
+Argentina,      Flexfuel,0.57
+Indonesia,      Plug-in,0.05
+Denmark,        Hybrid,0.69
+Hungary,        LPG,0.39
+Russia,         Petrol,0.11
+Malaysia,       Unspec.,0.78
+Romania,        Electric,0.47
+Brazil,         Diesel,0.18
+Czech Republic, Plug-in,0.38
+Czech Republic, Petrol,0.40
+Bulgaria,       LPG,0.23
+Latvia,         LPG,0.58
+Estonia,        Electric,0.93
+Iceland,        Diesel,0.34
+Canada,         Plug-in,0.31
+Turkey,         Electric,0.29
+Bulgaria,       Petrol,0.46
+USA,            Plug-in,0.47
+Belgium,        Electric,0.46
+Ukraine,        Plug-in,0.08
+Peru,           Unspec.,0.81
+Belgium,        Petrol,0.10
+Poland,         Flexfuel,0.43
+Estonia,        Petrol,0.28
+Lithuania,      Plug-in,0.43
+France,         LPG,0.68
+Belgium,        CNG,0.31
+Canada,         Hybrid,0.21
+Japan,          Electric,0.50
+Finland,        LPG,0.82
+USA,            Unspec.,0.10
+Japan,          Plug-in,0.14
+Estonia,        LPG,0.06
+South Africa,   Hybrid,0.57
+Egypt,          Petrol,0.89
+Egypt,          Unspec.,0.18
+Thailand,       Electric,0.96
+Thailand,       Diesel,0.30
+Canada,         CNG,0.73
+Poland,         Diesel,0.44
+Chile,          Petrol,0.59
+Iceland,        CNG,0.00
+Canada,         Flexfuel,0.16
+Indonesia,      Hybrid,0.42
+Germany,        Electric,0.90
+Netherlands,    CNG,0.56
+Belgium,        Diesel,0.30
+Finland,        Flexfuel,0.72
+Iceland,        Hybrid,0.42
+Canada,         Petrol,0.03
+Slovenia,       Petrol,0.37
+Turkey,         Plug-in,0.71
+Bulgaria,       Hybrid,0.81
+Luxembourg,     Electric,0.15
+Sweden,         Electric,0.44
+Poland,         CNG,0.36
+Czech Republic, Flexfuel,0.76
+Latvia,         Electric,0.27
+Spain,          Diesel,0.87
+Ireland,        Electric,0.94
+Poland,         Electric,0.21
+Portugal,       Electric,0.76
+Greece,         Hybrid,0.67
+Italy,          LPG,0.94
+Italy,          Flexfuel,0.05
+Mexico,         Electric,0.66
+India,          Petrol,0.73
+Mexico,         Hybrid,0.55
+Hungary,        Hybrid,0.31
+Lithuania,      Hybrid,0.92
+Ukraine,        LPG,0.28
+Netherlands,    Plug-in,0.02
+United Kingdom, Flexfuel,0.98
+Germany,        Flexfuel,0.97
+China,          CNG,0.23
+Austria,        Plug-in,0.03
+Netherlands,    Hybrid,0.97
+Russia,         Plug-in,0.91
+Japan,          Petrol,0.18
+Croatia,        Petrol,0.45
+Slovenia,       LPG,0.04
+France,         Hybrid,0.73
+Thailand,       LPG,0.44
+Hungary,        Electric,0.59
+Australia,      Petrol,0.93
+Latvia,         Hybrid,0.38
+Brazil,         Plug-in,0.34
+South Korea,    Hydrogen,0.93
+Luxembourg,     Plug-in,0.05
+Ireland,        LPG,0.62
+Russia,         Hybrid,0.48
+Slovakia,       LPG,0.47
+France,         Plug-in,0.52
+Russia,         Electric,0.90
+Malta,          Electric,0.66
+United Kingdom, Petrol,0.55
+Ukraine,        Electric,0.06
+Malta,          Plug-in,0.15
+South Africa,   Petrol,0.92
+Australia,      Hybrid,0.62
+Lithuania,      CNG,0.57
+Estonia,        Plug-in,0.79
+Bulgaria,       Diesel,0.60
+Germany,        Plug-in,0.25
+Slovenia,       CNG,0.12
+Finland,        Diesel,0.19
+Austria,        Petrol,0.38
+Romania,        Petrol,0.97
+Mexico,         Unspec.,0.91
+China,          Electric,0.02
+France,         CNG,0.54
+Portugal,       Diesel,0.08
+Japan,          Hybrid,0.04
+Czech Republic, CNG,0.87
+Thailand,       Hybrid,0.11
+Denmark,        CNG,0.80
+Indonesia,      Unspec.,0.91
+Slovenia,       Hybrid,0.31
+Luxembourg,     Hybrid,0.14
+Finland,        Plug-in,0.35
+Finland,        Hybrid,0.02
+Cyprus,         Petrol,0.91
+Croatia,        Hybrid,0.20
+Portugal,       Petrol,0.37
+Luxembourg,     CNG,0.05
+Brazil,         Flexfuel,0.33
+France,         Petrol,0.37
+USA,            Flexfuel,0.22
+Ireland,        Plug-in,0.08
+India,          Plug-in,0.28
+Italy,          CNG,0.72
+Poland,         Petrol,0.49
+South Africa,   Diesel,0.37
+Cyprus,         Hybrid,0.38
+Malta,          Hybrid,0.53
+Canada,         Electric,0.83
+Slovenia,       Diesel,0.25
+Romania,        Flexfuel,0.21
+Slovakia,       Hybrid,0.46
