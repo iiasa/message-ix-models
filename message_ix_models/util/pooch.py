@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Mapping, Tuple
+from typing import Any, Mapping, Optional, Tuple
 
 import click
 import pooch
@@ -107,6 +107,16 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
         ),
         processor=UnpackSnapshot(),
     ),
+    "snapshot-1": dict(
+        pooch_args=dict(
+            base_url="doi:10.5281/zenodo.10514052",
+            registry={
+                "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline.xlsx": (
+                    "md5:e7c0c562843e85c643ad9d84fecef979"
+                ),
+            },
+        ),
+    ),
     "SSP-Update-3.0": dict(
         pooch_args=dict(
             base_url=f"{GH_MAIN}/ssp/",
@@ -131,7 +141,9 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
 }
 
 
-def fetch(pooch_args, **fetch_kwargs) -> Tuple[Path, ...]:
+def fetch(
+    pooch_args: dict, *, extra_cache_path: Optional[str] = None, **fetch_kwargs
+) -> Tuple[Path, ...]:
     """Create a :class:`~pooch.Pooch` instance and fetch a single file.
 
     Files are stored under the directory identified by :meth:`.Context.get_cache_path`,
@@ -153,7 +165,9 @@ def fetch(pooch_args, **fetch_kwargs) -> Tuple[Path, ...]:
     --------
     :func:`.snapshot.load`
     """
-    pooch_args.setdefault("path", Context.get_instance(-1).get_cache_path())
+    pooch_args.setdefault(
+        "path", Context.get_instance(-1).get_cache_path(extra_cache_path or "")
+    )
 
     p = pooch.create(**pooch_args)
 

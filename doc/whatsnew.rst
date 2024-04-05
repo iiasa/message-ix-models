@@ -4,6 +4,7 @@ What's new
 Next release
 ============
 
+- Migrate :doc:`/api/report/legacy` to provide post-processing functionality for the :doc:`global model snapshot </api/model-snapshot>` (:pull:`159`).
 - Expand :doc:`data` (:pull:`161`).
 
 v2024.4.2

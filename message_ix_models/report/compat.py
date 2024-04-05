@@ -1,4 +1,4 @@
-"""Compatibility code that emulates :mod:`.message_data` reporting."""
+"""Compatibility code that emulates legacy reporting."""
 
 import logging
 from functools import partial
