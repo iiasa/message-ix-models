@@ -69,7 +69,7 @@ def assign_income_groups(  # noqa: C901
     elif method == "population":
         # Retrieve WB_WDI data for SERIES=SP_POP_TOTAL (Population, total)
         dm = sdmx.Client("WB_WDI").data(
-            "WDI", key="A.SP_POP_TOTL.", params=dict(start_period=2020, end_period=2020)
+            "WDI", key="A.SP_POP_TOTL.", params=dict(startPeriod=2020, endPeriod=2020)
         )
 
         # Convert to pd.Series with multi-index with levels: REF_AREA, SERIES, FREQ,
@@ -208,7 +208,7 @@ def get_income_group_codelist() -> "sdmx.model.common.Codelist":
         url="https://datacatalogfiles.worldbank.org/ddh-published/0037712/DR0090755/"
         "CLASS.xlsx",
         known_hash="sha256:"
-        "9b8452db52e391602c9e9e4d4ef4d254f505ce210ce6464497cf3e40002a3545",
+        "1418a4fd6badb7c26ae2bc3a9bfef4903f3d9c54c1679f856e1dece3c729e935",
     )
 
     # Open the retrieved file
