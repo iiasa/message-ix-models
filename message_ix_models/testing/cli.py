@@ -25,6 +25,7 @@ FILENAMES = [
     "shape/urbanisation_v1p0.csv",
     "ssp/SSP-Review-Phase-1.csv.gz",
     "ssp/SspDb_country_data_2013-06-12.csv.zip",
+    "transport/GFEI_FE_by_Powertrain_2017.csv",
 ]
 
 
@@ -59,10 +60,12 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     path_in = private_data_path(p)
     path_out = package_data_path("test", p)
 
-    # Shared kwargs for read_csv() and to_csv()
-    kw = dict()
+    # Shared arguments for read_csv() and to_csv()
+    comment, engine, sep = None, "pyarrow", ","
+    if "GFEI" in str(p):
+        comment, engine = "#", "c"
     if p.suffix == ".mif":
-        kw.update(sep=";")
+        sep = ";"
 
     # Read the data
     with TemporaryDirectory() as td:
@@ -87,7 +90,12 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         # - Compute the resulting pandas.DataFrame.
         df = (
             dd.read_csv(
-                target, engine="pyarrow", na_values=[], keep_default_na=False, **kw
+                target,
+                comment=comment,
+                engine=engine,
+                keep_default_na=False,
+                na_values=[],
+                sep=sep,
             )
             .sample(frac=frac)
             .compute()
@@ -99,7 +107,7 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         cols = ["Value"]
     else:
         # All columns with numeric names, for instance 2000, 2001, etc.
-        cols = list(filter(char.isnumeric, df.columns))
+        cols = list(filter(lambda c: char.isnumeric(c) or c.lower() == c, df.columns))
 
     # Shape of random data
     size = (df.shape[0], len(cols))
@@ -118,4 +126,4 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     else:
         target = path_out
 
-    df.to_csv(target, index=False, float_format="%.2f", **kw)
+    df.to_csv(target, float_format="%.2f", index=False, sep=sep)
