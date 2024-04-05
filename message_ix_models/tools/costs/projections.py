@@ -258,9 +258,6 @@ def create_projections_converge(config: "Config"):
     y_predict = np.array(config.seq_years)
     y_index = pd.Index(config.seq_years, name="year")
 
-    # def poly_decay_to_converge(
-    #     df_pre: pd.DataFrame, column_name: str, config: "Config"
-    # ) -> pd.DataFrame
     def _predict(df: pd.DataFrame) -> pd.Series:
         """Fit a degree-3 polynomial to `df` and predict for :attr:`.seq_years`."""
         # Fit
@@ -273,6 +270,7 @@ def create_projections_converge(config: "Config"):
     # Columns for grouping and merging
     cols = ["scenario", "message_technology", "region"]
 
+    # Apply polynomial regression to costs at base year and convergence year (interpolating)
     df_pre_converge_costs = (
         df_tmp_costs.query("year == @config.y0 or year == @config.convergence_year")
         .groupby(cols[:3], group_keys=True)
@@ -280,6 +278,7 @@ def create_projections_converge(config: "Config"):
         .reset_index()
     )
 
+    # Get final investment costs
     df_inv_costs_final = (
         df_tmp_costs.merge(
             df_pre_converge_costs,
@@ -303,22 +302,7 @@ def create_projections_converge(config: "Config"):
         .drop_duplicates()
     )
 
-    # df_pre_costs = (
-    #     df_region_diff.merge(df_ref_reg_cost_reduction, on="message_technology")
-    #     .assign(
-    #         inv_cost_converge=lambda x: np.where(
-    #             x.year <= config.y0,
-    #             x.reg_cost_base_year,
-    #             np.where(
-    #                 x.year < config.convergence_year,
-    #                 x.inv_cost_ref_region_decay * x.reg_cost_ratio,
-    #                 x.inv_cost_ref_region_decay,
-    #             ),
-    #         ),
-    #     )
-    #     .drop_duplicates()
-    # )
-
+    # Get fixed O&M costs
     df_costs = (
         df_inv_costs_final.rename(columns={"inv_cost_converge": "inv_cost"})
         .assign(
