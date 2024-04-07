@@ -7,14 +7,17 @@ from sdmx.model.v21 import Annotation, Code
 from message_ix_models.util.sdmx import eval_anno, make_enum, read
 
 
-def test_eval_anno(caplog):
+def test_eval_anno(caplog, recwarn):
     c = Code()
 
-    assert None is eval_anno(c, "foo")
+    with pytest.warns(DeprecationWarning):
+        assert None is eval_anno(c, "foo")
 
     c.annotations.append(Annotation(id="foo", text="bar baz"))
 
-    with caplog.at_level(logging.DEBUG, logger="message_ix_models"):
+    with caplog.at_level(logging.DEBUG, logger="message_ix_models"), pytest.warns(
+        DeprecationWarning
+    ):
         assert "bar baz" == eval_anno(c, "foo")
 
     assert re.fullmatch(
@@ -23,7 +26,8 @@ def test_eval_anno(caplog):
 
     c.annotations.append(Annotation(id="qux", text="3 + 4"))
 
-    assert 7 == eval_anno(c, id="qux")
+    with pytest.warns(DeprecationWarning):
+        assert 7 == eval_anno(c, id="qux")
 
 
 def test_make_enum():

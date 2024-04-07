@@ -1186,32 +1186,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False):
     wp["unit"] = "US$2010/m3"
     wp = wp.rename(columns={"node": "region"})
     # get withdrawals for weighted mean
-    ww = report_iam.as_pandas()
-    ww = ww[
-        ww.variable.isin(
-            ["out|final|rural_mw|rural_t_d|M1", "out|final|urban_mw|urban_t_d|M1"]
-        )
-    ]
-    ww["commodity"] = np.where(
-        ww.variable.str.contains("urban_mw"), "urban_mw", "rural_mw"
-    )
-    ww["wdr"] = ww["value"]
-    if not suban:
-        ww = ww[["region", "year", "commodity", "wdr"]]
-    else:
-        ww = ww[["region", "year", "subannual", "commodity", "wdr"]]
-        ww = pd.concat(
-            [
-                ww,
-                (
-                    ww.groupby(["region", "year", "commodity"])["wdr"]
-                    .sum()
-                    .reset_index()
-                    .assign(subannual="year")
-                    .loc[:, ["region", "year", "subannual", "commodity", "wdr"]]
-                ),
-            ]
-        ).reset_index(drop=True)
+    ww = prepare_ww(ww_input=report_iam.as_pandas(), suban=suban)
     # irrigation water, at regional level
     # need to update for global model now we have 3 irrigation
     # probably will need to do a scaled agerave with the ww, no basin level
@@ -1223,8 +1198,7 @@ def report(sc: Scenario, reg: str, sdgs: bool = False):
     # driking water
     wr_dri = wp[wp.commodity.isin(["urban_mw", "rural_mw"])]
     wr_dri = wr_dri.drop(columns={"level", "lvl", "mrg"})
-    if suban:
-        wr_dri = wr_dri.rename(columns={"time": "subannual"})
+    wr_dri = wr_dri.rename(columns={"time": "subannual"}) if suban else wr_dri
     wr_dri = wr_dri.merge(ww, how="left")
     wr_dri["variable"] = np.where(
         wr_dri.commodity == "urban_mw",
@@ -1378,6 +1352,36 @@ def report(sc: Scenario, reg: str, sdgs: bool = False):
     sc.add_timeseries(report_pd)
     log.info("Finished uploading timeseries")
     sc.commit("Reporting uploaded as timeseries")
+
+
+def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
+    ww = ww_input[
+        ww_input.variable.isin(
+            ["out|final|rural_mw|rural_t_d|M1", "out|final|urban_mw|urban_t_d|M1"]
+        )
+    ]
+    ww["commodity"] = np.where(
+        ww.variable.str.contains("urban_mw"), "urban_mw", "rural_mw"
+    )
+    ww["wdr"] = ww["value"]
+    if not suban:
+        ww = ww[["region", "year", "commodity", "wdr"]]
+    else:
+        ww = ww[["region", "year", "subannual", "commodity", "wdr"]]
+        ww = pd.concat(
+            [
+                ww,
+                (
+                    ww.groupby(["region", "year", "commodity"])["wdr"]
+                    .sum()
+                    .reset_index()
+                    .assign(subannual="year")
+                    .loc[:, ["region", "year", "subannual", "commodity", "wdr"]]
+                ),
+            ]
+        ).reset_index(drop=True)
+
+    return ww
 
 
 def report_full(sc: Scenario, reg: str, sdgs=False):

@@ -10,6 +10,7 @@ from .scenarioinfo import ScenarioInfo
 
 log = logging.getLogger(__name__)
 
+ixmp.config.register("no message_data", bool, False)
 ixmp.config.register("message local data", Path, Path.cwd())
 
 
@@ -165,7 +166,8 @@ class Config:
     dest: Optional[str] = None
 
     #: Base path for cached data, e.g. as given by the :program:`--cache-path` CLI
-    #: option. Default: :file:`{local_data}/cache/`.
+    #: option. Default: the directory :file:`message-ix-models` within the directory
+    #: given by :func:`.platformdirs.user_cache_path`.
     cache_path: Optional[str] = None
 
     #: Paths of files containing debug outputs. See :meth:`Context.write_debug_archive`.
@@ -179,3 +181,9 @@ class Config:
     #: Flag for causing verbose output to logs or stdout. Different modules will respect
     #: :attr:`verbose` in distinct ways.
     verbose: bool = False
+
+    def __post_init__(self):
+        if self.cache_path is None:
+            from platformdirs import user_cache_path
+
+            self.cache_path = user_cache_path("message-ix-models", ensure_exists=True)

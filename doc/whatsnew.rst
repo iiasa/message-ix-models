@@ -4,6 +4,29 @@ What's new
 Next release
 ============
 
+- Expand :doc:`data` (:pull:`161`).
+
+v2024.4.2
+=========
+
+- The :class:`.SSPUpdate` data provider pulls data from the SSP 2024 "Release 3.0" data files, and handles both the earlier and current structures (:pull:`156`).
+- Improve :class:`.ExoDataSource` with :meth:`.raise_on_extra_kw` utility method, automatic copy of source keyword arguments (:pull:`156`).
+- Expose :func:`.node.nodes_ex_world` for use as a genno (reporting) operator.
+- Raise DeprecationWarning from :func:`.util.sdmx.eval_anno`; remove internal usage of this deprecated method (:pull:`156`).
+- Reduce verbosity when using the :program:`mix-models` CLI when :mod:`message_data` is not installed (:issue:`37`, :pull:`156`).
+- Improve logging (:pull:`156`).
+
+  - Use multi-threaded logging for better performance.
+    Logging to stdout and file is on a separate thread and does not block operations on the main thread.
+  - Add automatic file logging.
+    Log versions of packages to file when using :func:`.workflow.make_click_command`.
+  - New CLI command :program:`mix-models last-log` to retrieve the location of the latest log file.
+- Update :doc:`cli` (:pull:`156`).
+- Improve performance in :func:`.disutility.data_conversion` (:pull:`156`).
+- Use :func:`platformdirs.user_cache_path` in more places; remove cache-path handling code (:pull:`156`).
+- Add :func:`.util.datetime_now_with_tz` (:pull:`156`).
+- Add :func:`.util.show_versions`, wrapping :func:`ixmp.util.show_versions` and returning its output as :class:`str` (:pull:`156`).
+- :func:`.util.private_data_path` returns an alternate, local data path if :mod:`message_data` is not installed (:pull:`156`).
 - Annotate :py:`c="transport"` in :ref:`the commodity code list <commodity-yaml>` with associated :ref:`IEA (E)WEB <tools-iea-web>` flows (:pull:`153`).
 
 v2024.1.29

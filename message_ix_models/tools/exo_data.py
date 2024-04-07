@@ -1,6 +1,8 @@
 """Generic tools for working with exogenous data sources."""
+
 import logging
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from operator import itemgetter
 from pathlib import Path
 from typing import Any, Dict, Literal, Mapping, Optional, Tuple, Type
@@ -111,6 +113,15 @@ class ExoDataSource(ABC):
 
         return k2
 
+    def raise_on_extra_kw(self, kwargs) -> None:
+        """Helper for subclasses."""
+        if len(kwargs):
+            log.error(
+                f"Unhandled extra keyword arguments for {type(self).__name__}: "
+                + repr(kwargs)
+            )
+            raise ValueError(kwargs)
+
 
 def prepare_computer(
     context,
@@ -163,7 +174,7 @@ def prepare_computer(
     for cls in SOURCES.values():
         try:
             # Instantiate a Source object to provide this data
-            source_obj = cls(source, source_kw or dict())
+            source_obj = cls(source, deepcopy(source_kw or dict()))
         except Exception:
             pass  # Class does not recognize the arguments
 

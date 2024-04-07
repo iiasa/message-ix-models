@@ -1,4 +1,5 @@
 """Compatibility code that emulates :mod:`.message_data` reporting."""
+
 import logging
 from functools import partial
 from itertools import chain, count

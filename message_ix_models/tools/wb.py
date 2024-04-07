@@ -1,4 +1,5 @@
 """Tools for World Bank data."""
+
 import logging
 from collections import defaultdict
 from functools import lru_cache
@@ -12,7 +13,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def assign_income_groups(
+# FIXME Reduce complexity from 12 → ≤11
+def assign_income_groups(  # noqa: C901
     cl_node: "sdmx.model.common.Codelist",
     cl_income_group: "sdmx.model.common.Codelist",
     method: str = "population",

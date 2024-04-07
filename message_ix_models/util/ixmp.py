@@ -2,7 +2,13 @@ from typing import Dict
 
 try:
     # ixmp 3.8.0 and later
-    from ixmp.util import discard_on_error, maybe_check_out, maybe_commit, parse_url
+    from ixmp.util import (
+        discard_on_error,
+        maybe_check_out,
+        maybe_commit,
+        parse_url,
+        show_versions,
+    )
 except ImportError:
     # ixmp <= 3.7.0
     from contextlib import nullcontext
@@ -11,6 +17,7 @@ except ImportError:
         maybe_check_out,
         maybe_commit,
         parse_url,
+        show_versions,
     )
 
     def discard_on_error(*args):

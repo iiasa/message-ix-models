@@ -1,4 +1,5 @@
 """Tests of :mod:`message_ix_models.util`."""
+
 import logging
 import re
 from importlib.metadata import version
@@ -156,10 +157,11 @@ def test_convert_units(recwarn):
 
     # With store="quantity", a series of pint.Quantity is returned
     result = convert_units(*args, store="quantity")
-    assert all(
-        np.isclose(a, b, atol=1e-4 * registry.kg)
-        for a, b in zip(exp.values, result.values)
-    )
+    # Will raise a DimensionalityError if units are not equal
+    ratios = [(a / b) for a, b in zip(exp.values, result.values)]
+    # Assert equal units and sufficiently close values
+    for ratio in ratios:
+        assert ratio.dimensionless and np.isclose(ratio, 1, atol=1e-4)
 
     # With store="magnitude", a series of floats
     exp = pd.Series([q.magnitude for q in exp.values], name="bar")

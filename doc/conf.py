@@ -143,6 +143,7 @@ intersphinx_mapping = {
     ),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pint": ("https://pint.readthedocs.io/en/stable/", None),
+    "platformdirs": ("https://platformdirs.readthedocs.io/en/latest", None),
     "pooch": ("https://www.fatiando.org/pooch/latest/", None),
     "pytest": ("https://docs.pytest.org/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),

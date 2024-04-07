@@ -1,7 +1,9 @@
 from unittest.mock import patch
 
 import pandas as pd
+from message_ix import Scenario
 
+from message_ix_models import ScenarioInfo
 from message_ix_models.model.water.data.water_supply import (
     add_e_flow,
     add_water_supply,
@@ -9,25 +11,20 @@ from message_ix_models.model.water.data.water_supply import (
 )
 
 
-def test_map_basin_region_wat():
-    # Mock the context
-    context = {
-        "water build info": {"Y": [2020, 2030, 2040]},
-        "type_reg": "country",
-        "regions": "test_region",
-        "map_ISO_c": {"test_region": "test_ISO"},
-        "RCP": "test_RCP",
-        "REL": "test_REL",
-        "time": "year",
-    }
+def test_map_basin_region_wat(test_context):
+    # FIXME You probably want this to be part of a common setup rather than writing
+    # something like this for every test
+    # Personalize the context
+    context = test_context
+    context["water build info"] = {"Y": [2020, 2030, 2040]}
+    context.type_reg = "country"
+    context.regions = "test_region"
+    context.map_ISO_c = {"test_region": "test_ISO"}
+    context.RCP = "test_RCP"
+    context.REL = "test_REL"
+    context.time = "year"
 
     # Mock the DataFrames read from CSV
-    pd.DataFrame(
-        {
-            "BCU_name": ["test_BCU"],
-        }
-    )
-
     df_sw = pd.DataFrame(
         {
             "Unnamed: 0": [0],
@@ -40,7 +37,10 @@ def test_map_basin_region_wat():
     with patch(
         "message_ix_models.util.private_data_path", return_value="path/to/file"
     ), patch("pandas.read_csv", return_value=df_sw):
-        # Call the function to be tested
+        context["time"] = "year"
+        # FIXME This is not working with context.type_reg == "country". Have you ever
+        # confirmed that the code works in this case? If not, maybe this test is not
+        # needed.
         result = map_basin_region_wat(context)
 
         # Assert the results
@@ -51,19 +51,37 @@ def test_map_basin_region_wat():
         )
 
 
-def test_add_water_supply():
-    # Mock the context
-    context = {
-        "water build info": {"Y": [2020, 2030, 2040]},
-        "type_reg": "country",
-        "regions": "test_region",
-        "map_ISO_c": {"test_region": "test_ISO"},
-        "RCP": "test_RCP",
-        "REL": "test_REL",
-        "time": "year",
-        "nexus_set": "nexus",
-        "get_scenario": lambda: {"firstmodelyear": 2020},
+def test_add_water_supply(test_context):
+    # FIXME You probably want this to be part of a common setup rather than writing
+    # something like this for every test
+    # Personalize the context
+    context = test_context
+    context["water build info"] = {"Y": [2020, 2030, 2040]}
+    context.type_reg = "country"
+    context.regions = "test_region"
+    context.map_ISO_c = {"test_region": "test_ISO"}
+    context.RCP = "test_RCP"
+    context.REL = "test_REL"
+    context.time = "year"
+    context.nexus_set = "nexus"
+
+    mp = context.get_platform()
+    scenario_info = {
+        "mp": mp,
+        "model": "test water model",
+        "scenario": "test water scenario",
+        "version": "new",
     }
+    s = Scenario(**scenario_info)
+    s.add_horizon(year=[2020, 2030, 2040])
+    s.add_set("technology", ["tech1", "tech2"])
+    s.add_set("node", ["loc1", "loc2"])
+    s.add_set("year", [2020, 2030, 2040])
+
+    # FIXME You probably want this to be part of a common setup rather than writing
+    # something like this for every test
+    context.set_scenario(s)
+    context["water build info"] = ScenarioInfo(s)
 
     # Mock the DataFrames read from CSV
     df_node = pd.DataFrame({"BCU_name": ["test_BCU"], "REGION": ["test_REGION"]})
@@ -97,8 +115,9 @@ def test_add_water_supply():
     with patch(
         "message_ix_models.util.private_data_path", return_value="path/to/file"
     ), patch("pandas.read_csv", return_value=df_node), patch(
-        "your_module.map_basin_region_wat", return_value=df_sw
-    ):
+        "message_ix_models.model.water.data.water_supply.map_basin_region_wat",
+        return_value=df_sw,  # Adjust this import
+    ), patch("message_ix_models.util.context.Context.get_scenario", return_value=s):
         # Call the function to be tested
         result = add_water_supply(context)
 
@@ -114,33 +133,41 @@ def test_add_water_supply():
             assert isinstance(df, pd.DataFrame)
 
 
-def test_add_e_flow():
-    # Mock the context
-    context = {
-        "water build info": {"Y": [2020, 2030, 2040]},
-        "regions": "test_region",
-        "RCP": "test_RCP",
-        "time": "year",
-        "SDG": True,
-    }
+def test_add_e_flow(test_context):
+    # FIXME You probably want this to be part of a common setup rather than writing
+    # something like this for every test
+    # Personalize the context
+    context = test_context
+    context["water build info"] = {"Y": [2020, 2030, 2040]}
+    context.regions = "test_region"
+    context.RCP = "test_RCP"
+    context.REL = "test_REL"
+    context.time = "year"
+    context.SDG = True
 
     # Mock the DataFrames read from CSV
     df_sw = pd.DataFrame(
-        {"Region": ["test_Region"], "value": [1], "year": [2020], "time": ["year"]}
-    )
-
-    pd.DataFrame(
-        {"Region": ["test_Region"], "value": [1], "year": [2020], "time": ["year"]}
+        {
+            "Region": ["test_Region"],
+            "value": [1],
+            "year": [2020],
+            "time": ["year"],
+            "Unnamed: 0": [0],
+            "BCU_name": ["test_BCU"],
+        }
     )
 
     # Mock the function 'read_water_availability' to return the mocked DataFrame
     with patch(
-        "your_module.read_water_availability", return_value=(df_sw, df_sw)
+        "message_ix_models.model.water.data.demands.read_water_availability",
+        return_value=(df_sw, df_sw),
     ), patch(
         "message_ix_models.util.private_data_path", return_value="path/to/file"
-    ), patch(
-        "pandas.read_csv", return_value=df_sw
-    ):
+    ), patch("pandas.read_csv", return_value=df_sw):
+        # FIXME This doesn't work because read_water_availability() in line 749 of
+        # water/data/demands expects the second column of df_sw to be "years", but it
+        # contains the names of the columns at that point starting with df_sw here, not
+        # something that pandas can convert to DateTimes!
         # Call the function to be tested
         result = add_e_flow(context)
 

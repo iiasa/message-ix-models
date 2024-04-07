@@ -34,6 +34,7 @@ Commonly used:
    check_support
    convert_units
    copy_column
+   datetime_now_with_tz
    ffill
    identify_nodes
    iter_keys
@@ -52,6 +53,7 @@ Commonly used:
    same_node
    same_time
    series_of_pint_quantity
+   show_versions
 
 .. automodule:: message_ix_models.util
    :members:

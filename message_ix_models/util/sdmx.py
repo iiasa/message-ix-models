@@ -1,10 +1,12 @@
 """Utilities for handling objects from :mod:`sdmx`."""
+
 import logging
 from datetime import datetime
 from enum import Enum, Flag
 from importlib.metadata import version
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
+from warnings import warn
 
 import sdmx
 import sdmx.message
@@ -23,7 +25,10 @@ log = logging.getLogger(__name__)
 CodeLike = Union[str, Code]
 
 
-def as_codes(data: Union[List[str], Dict[str, CodeLike]]) -> List[Code]:
+# FIXME Reduce complexity from 13 → ≤11
+def as_codes(  # noqa: C901
+    data: Union[List[str], Dict[str, CodeLike]],
+) -> List[Code]:
     """Convert `data` to a :class:`list` of |Code| objects.
 
     Various inputs are accepted:
@@ -99,6 +104,13 @@ def eval_anno(obj: AnnotableArtefact, id: str):
        Use :meth:`sdmx.model.common.AnnotableArtefact.eval_annotation`, which provides
        the same functionality.
     """
+    warn(
+        "message_ix_models.util.eval_anno; use sdmx.model.common.AnnotableArtefact"
+        ".eval_annotation() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     try:
         value = str(obj.get_annotation(id=id).text)
     except KeyError:  # No such attribute

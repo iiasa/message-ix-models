@@ -1,3 +1,5 @@
+from copy import copy
+
 import pytest
 from genno import Computer
 
@@ -155,10 +157,15 @@ class TestSSPUpdate:
             ),
         ),
     )
-    def test_prepare_computer(self, test_context, source, source_kw):
+    @pytest.mark.parametrize("release", ("preview", "3.0", "3.0.1"))
+    def test_prepare_computer(self, test_context, source, source_kw, release):
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
+
+        # Set the release
+        source_kw = copy(source_kw)
+        source_kw.update(release=release)
 
         c = Computer()
 

@@ -1,7 +1,8 @@
 """Utilities for using :doc:`Pooch <pooch:about>`."""
+
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Mapping, Tuple
 
 import click
 import pooch
@@ -72,8 +73,11 @@ class UnpackSnapshot:
         return path
 
 
+#: Base URL portion for files stored in the message-ix-models GitHub repository.
+GH_MAIN = "https://github.com/iiasa/message-ix-models/raw/main/message_ix_models/data"
+
 #: Supported remote sources of data.
-SOURCE = {
+SOURCE: Mapping[str, Mapping[str, Any]] = {
     "PRIMAP": dict(
         pooch_args=dict(
             base_url="ftp://datapub.gfz-potsdam.de/download/10.5880.PIK.2019.001/",
@@ -87,8 +91,7 @@ SOURCE = {
     ),
     "MESSAGEix-Nexus": dict(
         pooch_args=dict(
-            base_url="https://github.com/iiasa/message-ix-models/raw/enh/2023-W44/"
-            "message_ix_models/data/water/",
+            base_url=f"{GH_MAIN}/water/",
             registry={"water.tar.xz": "sha1:ec9e0655af90ca844c0158968bb03a194b8fa6c6"},
         ),
         processor=Extract(extract_dir="water"),
@@ -103,6 +106,27 @@ SOURCE = {
             },
         ),
         processor=UnpackSnapshot(),
+    ),
+    "SSP-Update-3.0": dict(
+        pooch_args=dict(
+            base_url=f"{GH_MAIN}/ssp/",
+            registry={
+                "1706548837040-ssp_basic_drivers_release_3.0_full.csv.gz": (
+                    "sha1:e2af7a88aeed7d0e44ceaf2dff60f891cf551517"
+                ),
+            },
+        ),
+    ),
+    "SSP-Update-3.0.1": dict(
+        pooch_args=dict(
+            base_url="https://github.com/iiasa/message-ix-models/raw/fix/ssp-pooch/"
+            "message_ix_models/data/ssp/",
+            registry={
+                "1710759470883-ssp_basic_drivers_release_3.0.1_full.csv.gz": (
+                    "sha1:e5c24c27ee743e79dac5a578235b35a68cd64183"
+                ),
+            },
+        ),
     ),
 }
 
