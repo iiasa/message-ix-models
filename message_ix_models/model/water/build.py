@@ -174,7 +174,6 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
 
     return dict(require=require, remove=remove, add=add)
 
-    return dict(require=require, remove=remove, add=add)
 
 
 @lru_cache()
