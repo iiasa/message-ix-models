@@ -1,11 +1,12 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from message_ix import make_df
 
+from message_ix_models import Context
 from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 from message_ix_models.util import (
     broadcast,
@@ -13,9 +14,6 @@ from message_ix_models.util import (
     package_data_path,
     same_node,
 )
-
-if TYPE_CHECKING:
-    from message_ix_models import Context
 
 
 def missing_tech(x: pd.Series) -> pd.Series:
@@ -222,7 +220,7 @@ def cool_tech(context: "Context"):
     # reading ppl cooling tech dataframe
     path = package_data_path("water", "ppl_cooling_tech", FILE)
     df = pd.read_csv(path)
-    cooling_df = df.loc[df["technology_group"] == "cooling"]
+    cooling_df = df.loc[df["technology_group"] == "cooling"].copy()
     # Separate a column for parent technologies of respective cooling
     # techs
     cooling_df["parent_tech"] = (
@@ -249,9 +247,19 @@ def cool_tech(context: "Context"):
     # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
     # where h_fg (flue gasses losses) = 0.1
     ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
+    # FIXME
+    # Used to be:
     ref_input[["value", "level"]] = ref_input[["technology", "value", "level"]].apply(
         missing_tech, axis=1
     )
+    # # Needs either
+    # ref_input[["value", "level"]] = ref_input[["value", "level"]].apply(
+    #     missing_tech, axis=1
+    # )
+    # # or
+    # ref_input[["technology", "value", "level"]] = ref_input[
+    #     ["technology", "value", "level"]
+    # ].apply(missing_tech, axis=1)
 
     # Combines the input df of parent_tech with water withdrawal data
     input_cool = (
