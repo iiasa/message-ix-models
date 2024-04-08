@@ -105,7 +105,7 @@ def add_par_data(
     data
         Dict with keys that are parameter names, and values are pd.DataFrame or other
         arguments
-    dry_run : bool, *optional*
+    dry_run : optional
         Only show what would be done.
 
     See also
@@ -310,7 +310,7 @@ def ffill(
         Dimension to fill along. Must be a column in `df`.
     values : list of str
         Labels along `dim` that must be present in the returned data frame.
-    expr : str, *optional*
+    expr : str, optional
         If provided, :meth:`.DataFrame.eval` is called. This can be used to assign one
         column to another. For instance, if `dim` == "year_vtg" and `expr` is "year_act
         = year_vtg", then forward filling is performed along the "year_vtg" dimension/
@@ -777,9 +777,9 @@ def strip_par_data(  # noqa: C901
 
     Parameters
     ----------
-    dry_run : bool, *optional*
+    dry_run : bool, optional
         If :data:`True`, only show what would be done.
-    dump : dict, *optional*
+    dump : dict, optional
         If provided, stripped data are stored in this dictionary. Otherwise, they are
         discarded.
 

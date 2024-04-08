@@ -151,7 +151,7 @@ def prepare_computer(
     source : str
         Identifier of the source, possibly with other information to be handled by a
         :class:`ExoDataSource`.
-    source_kw : dict, *optional*
+    source_kw : dict, optional
         Keyword arguments for a Source class. These can include indexers, selectors, or
         other information needed by the source class to identify the data to be
         returned.

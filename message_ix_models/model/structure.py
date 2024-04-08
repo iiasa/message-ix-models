@@ -227,7 +227,7 @@ def process_units_anno(set_name: str, code: Code, quiet: bool = False) -> None:
     ----------
     set_name : str
         Used in logged messages when `quiet` is :data:`False`.
-    quiet : bool, *optional*
+    quiet : bool, optional
         If :data:`False` (the default), log on level :ref:`WARNING <python:levels>` if:
 
         - the annotation is missing, or
