@@ -1,4 +1,4 @@
-"""Retrieve data from the IEA Energy Efficiency Indicators source."""
+"""Handle data from the IEA Energy Efficiency Indicators (EEI)."""
 # FIXME This file is currently excluded from coverage measurement. See
 #       iiasa/message-ix-models#164
 
@@ -13,17 +13,16 @@ import plotnine as p9
 
 from message_ix_models import Context
 from message_ix_models.tools.exo_data import ExoDataSource, register_source
-from message_ix_models.util import cached, private_data_path
+from message_ix_models.util import cached, path_fallback
 
 if TYPE_CHECKING:
     from genno import Computer
 
 log = logging.getLogger(__name__)
 
-#: Sheets in the input file.
 #: Mapping of weights to variables used as weights for weighted averaging.
 #:
-#: .. todo:: Remove this, replace with tests showing usage of wavg()
+#: .. todo:: Replace with tests showing usage of :func:`wavg`.
 WAVG_MAP = {
     "Fuel intensity": "vehicle-kilometres",
     "Passenger load factor": "vehicle-kilometres",
@@ -35,7 +34,7 @@ WAVG_MAP = {
     # "Per capita energy intensity"
     # "Vehicle-kilometres per capita"
     # "Tonne-kilometres per capita"
-    # TODO: fix intensities, should not be weighted with population:
+    # TODO The following should not be weighted with population
     # "Tonne-kilometres energy intensity": np.average,
     # "Passenger-kilometres energy intensity": np.average,
 }
@@ -43,53 +42,56 @@ WAVG_MAP = {
 
 @register_source
 class IEA_EEI(ExoDataSource):
-    """Read 2020 Energy Efficiency Indicators data.
+    """Provider of exogenous data from the IEA Energy Efficiency Indicators data source.
 
-    The data is read from :data:`.FILE`.
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    arguments:
 
-    .. todo:: currently, the function returns a mix of aggregated and un-aggregated
-       data. Add an argument and modify to consistently return one or the other.
+    - `source`: "IEA_EEI".
+    - `source_kw` including:
 
-    Parameters
-    ----------
-    regions : str
-        Regional aggregation to use.
-    plot : bool, optional
-        If ``True``, plots per mode will be generated in :file:`./debug/` directory,
-        and the processed data exported to :file:`eei_data_wrapped.csv`.
-
-    Returns
-    -------
-    data : dict of (str -> :class:`pandas.DataFrame`)
-        Keys are measures. Values are data frames with the dimensions "region", "year",
-        "Mode/vehicle type"; additionally "ISO_code" (country code) and "units".
+      - `measure`: name of a measure or indicator in the data.
+      - `broadcast_map` (optional): name of a :class:`.Key` containing a mapping for
+        :func:`genno.operator.broadcast_map`.
+      - `plot` (optional, default :any:`False`): add a task with the key
+        "plot IEA_EEI debug" to generate diagnostic plot using :class:`.Plot`.
+      - `aggregate`, `interpolate`: see :meth:`.ExoDataSource.transform`.
     """
 
     id = "IEA EEI"
+
+    #: By default, do not aggregate.
+    aggregate = False
+
+    #: By default, do not interpolate.
+    interpolate = False
 
     def __init__(self, source, source_kw):
         if source != self.id:
             raise ValueError(source)
 
-        indicator = source_kw.pop("indicator", None)
-
-        self.aggregate = source_kw.pop("aggregate", False)
+        measure = source_kw.pop("measure", None)
         self.broadcast_map = source_kw.pop("broadcast_map", None)
         self.plot = source_kw.pop("plot", False)
 
         self.raise_on_extra_kw(source_kw)
 
-        self.path = private_data_path(
-            "transport", "Energyefficiencyindicators_2020-extended.xlsx"
+        self.path = path_fallback(
+            "transport",
+            "Energyefficiencyindicators_2020-extended.xlsx",
+            where="private",
         )
-        if not self.path.exists():
-            log.error(f"Not found: {self.path}")
-            raise ValueError(self.path)
 
         # Prepare query
-        self.query = f"INDICATOR == {indicator!r}"
+        self.query = f"INDICATOR == {measure!r}"
         self.measure = "INDICATOR"
-        self.name = indicator.lower()
+        self.name = measure.lower()
+
+        # Determine whether to perform a weighted average operation
+        self.weights = None
+        if False:  # pragma: no cover
+            # TODO This code never executes; update and reactivate
+            pass
 
     def __call__(self):
         from genno.operator import unique_units_from_dim
@@ -114,16 +116,19 @@ class IEA_EEI(ExoDataSource):
         )
 
     def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
-        k = base_key
-
-        # Aggregate
-        if self.aggregate:
-            k = c.add(k + "1", "aggregate", k, "n::groups", keep=False)
+        ks = genno.KeySeq(super().transform(c, base_key))
+        k = ks.base
 
         if self.broadcast_map:
             k_map = genno.Key(self.broadcast_map)
             rename = {k_map.dims[1]: k_map.dims[0]}
-            k = c.add(k + "2", "broadcast_map", k, self.broadcast_map, rename=rename)
+            k = c.add(
+                ks[0], "broadcast_map", ks.base, self.broadcast_map, rename=rename
+            )
+
+        if self.weights:
+            # TODO Add operations for computing a weighted mean
+            pass
 
         if self.plot:
             # Path for debug output
@@ -134,20 +139,11 @@ class IEA_EEI(ExoDataSource):
 
             c.add(f"plot {self.id} debug", Plot, k)
 
-        # Specific handling for different sheets
-        name = df = dfs = None
-        if name == "indicators":
-            # Apply wavg() to each measure; store results
-            for var, group_df in df.groupby("variable"):
-                dfs[var.lower()] = wavg(var, group_df, dfs)
-
         return k
 
 
 class Plot(genno.compat.plotnine.Plot):
-    """Plot values from file."""
-
-    """Generate ggplot object populated with EEIs per transport mode."""
+    """Diagnostic plot of processed data."""
 
     basename = "IEA_EEI-data"
 

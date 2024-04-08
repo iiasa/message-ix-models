@@ -27,10 +27,9 @@ class GFEI(ExoDataSource):
     - `source`: "GFEI".
     - `source_kw` including:
 
-      - `aggregate` (optional, default :any:`False`): aggregate data to the target node
-        code list.
       - `plot` (optional, default :any:`False`): add a task with the key
         "plot GFEI debug" to generate diagnostic plot using :class:`.Plot`.
+      - `aggregate`, `interpolate`: see :meth:`.ExoDataSource.transform`.
 
     The source data:
 
@@ -52,11 +51,16 @@ class GFEI(ExoDataSource):
 
     id = "GFEI"
 
+    #: By default, do not aggregate.
+    aggregate = False
+
+    #: By default, do not interpolate.
+    interpolate = False
+
     def __init__(self, source, source_kw):
         if source != self.id:
             raise ValueError(source)
 
-        self.aggregate = source_kw.pop("aggregate", False)
         self.plot = source_kw.pop("plot", False)
 
         self.raise_on_extra_kw(source_kw)
@@ -92,17 +96,8 @@ class GFEI(ExoDataSource):
         )
 
     def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
-        """Prepare `c` to transform raw data from `base_key`.
-
-        Unlike the base class version, this implementation only adds the aggregation
-        step if :attr:`.aggregate` is :any:`True`.
-        """
-        ks = genno.KeySeq(base_key)
-
-        k = ks.base
-        if self.aggregate:
-            # Aggregate
-            k = c.add(ks[1], "aggregate", k, "n::groups", keep=False)
+        """Prepare `c` to transform raw data from `base_key`."""
+        ks = genno.KeySeq(super().transform(c, base_key))
 
         if self.plot:
             # Path for debug output
@@ -111,9 +106,9 @@ class GFEI(ExoDataSource):
             debug_path.mkdir(parents=True, exist_ok=True)
             c.configure(output_dir=debug_path)
 
-            c.add(f"plot {self.id} debug", Plot, k)
+            c.add(f"plot {self.id} debug", Plot, ks.base)
 
-        return k
+        return ks.base
 
 
 class Plot(genno.compat.plotnine.Plot):

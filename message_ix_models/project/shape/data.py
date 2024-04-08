@@ -1,4 +1,4 @@
-"""Tools for working with SHAPE data."""
+"""Handle data from the SHAPE project."""
 
 import logging
 
@@ -52,29 +52,18 @@ UNITS = {
 
 @register_source
 class SHAPE(ExoDataSource):
-    """Return SHAPE data.
+    """Provider of exogenous data from the SHAPE project data source.
 
-    See :ref:`shape-data` for a description of the available data.
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    arguments:
 
-    Parameters
-    ----------
-    quantity : str
-        Name of the quantity to load; one of "gdp", "gini", "population", or
-        "urbanisation".
-    version : str
-        Version of the data to load.
-    rtype : str
-        Class of object to return:
+    - `source`: "SHAPE".
+    - `source_kw` including:
 
-        - "series": :class:`pandas.Series`
-        - "quantity": :class:`genno.Quantity`
-
-    Raises
-    ------
-    ValueError
-        If invalid `quantity` is given.
-    FileNotFoundError
-        If invalid `version` is given.
+      - `measure`: one of the keys of :data:`.INFO`.
+      - `version` (optional): "latest" (default) or a version string like "1.2".
+      - `scenario`: one of the SHAPE "SDP" scenario names.
+      - `aggregate`, `interpolate`: see :meth:`.ExoDataSource.transform`.
     """
 
     id = "SHAPE"

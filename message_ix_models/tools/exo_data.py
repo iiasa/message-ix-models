@@ -49,7 +49,10 @@ class ExoDataSource(ABC):
     #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`.
     extra_dims: Tuple[str, ...] = ()
 
+    #: :any:`True` if :meth:`.transform` should aggregate data on the |n| dimension.
     aggregate: bool = True
+
+    #: :any:`True` if :meth:`.transform` should interpolate data on the |y| dimension.
     interpolate: bool = True
 
     @abstractmethod
@@ -101,10 +104,11 @@ class ExoDataSource(ABC):
 
         The default implementation:
 
-        1. Aggregates the data (:func:`.genno.operator.aggregate`) on the |n| dimension
-           using "n::groups".
-        2. Interpolates the data (:func:`.genno.operator.interpolate`) on the |y|
-           dimension using "y::coords".
+        1. If :attr:`.aggregate` is :any:`True`, aggregates the data (
+           :func:`.genno.operator.aggregate`) on the |n| dimension using the key
+           "n::groups".
+        2. If :attr:`.interpolate` is :any:`True`, interpolates the data (
+           :func:`.genno.operator.interpolate`) on the |y| dimension using "y::coords".
         """
         k = base_key
         # Aggregate
@@ -119,7 +123,13 @@ class ExoDataSource(ABC):
         return k
 
     def raise_on_extra_kw(self, kwargs) -> None:
-        """Helper for subclasses."""
+        """Helper for subclasses to handle the `source_kw` argument.
+
+        1. Store :attr:`.aggregate` and :attr:`.interpolate`, if they remain in
+           `kwargs`.
+        2. Raise :class:`ValueError` if there are any other, unhandled keyword arguments
+           in `kwargs`.
+        """
         self.aggregate = kwargs.pop("aggregate", self.aggregate)
         self.interpolate = kwargs.pop("interpolate", self.interpolate)
 
@@ -173,7 +183,7 @@ def prepare_computer(
     source_kw = source_kw or dict()
     if measure := source_kw.get("measure"):
         if measure not in MEASURES:
-            log.warning(f"source keyword {measure = } not in recognized {MEASURES}")
+            log.debug(f"source keyword {measure = } not in recognized {MEASURES}")
     else:
         measure = "UNKNOWN"
 
