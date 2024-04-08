@@ -7,6 +7,7 @@ Next release
 - Migrate :doc:`/api/report/legacy` to provide post-processing functionality for the :doc:`global model snapshot </api/model-snapshot>` (:pull:`159`).
 - Migrate and improve code for four sources of exogenous data (:pull:`162`): :mod:`.project.gea`, :mod:`.project.shape`, :mod:`.tools.gfei`, and :mod:`.tools.iea.eei`.
 - Expand :doc:`data` (:pull:`161`).
+- Add an explicit :ref:`policy-upstream-versions` (:pull:`162`).
 
 v2024.4.2
 =========
