@@ -13,7 +13,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  warm-lfs-cache:
+    strategy:
+      matrix:
+        os: [ macos-latest, ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: nschloe/action-cached-lfs-checkout@v1
+
   pytest:
+    needs: warm-lfs-cache
+
     strategy:
       matrix:
         os:
@@ -67,10 +77,7 @@ jobs:
         key: ${{ matrix.os }}
 
     - name: Check out message-ix-models
-      uses: actions/checkout@v4
-      with:
-        lfs: true
-        fetch-depth: ${{ env.depth }}
+      uses: nschloe/action-cached-lfs-checkout@v1
 
     - uses: actions/setup-python@v5
       with:
