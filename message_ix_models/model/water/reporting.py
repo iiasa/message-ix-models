@@ -5,12 +5,10 @@ import pandas as pd
 import pyam
 from message_ix import Reporter, Scenario
 
-from message_ix_models.util import HAS_MESSAGE_DATA, package_data_path
-
-if HAS_MESSAGE_DATA:
-    from message_data.tools.post_processing.iamc_report_hackathon import (
-        report as legacy_reporting,
-    )
+from message_ix_models.report.legacy.iamc_report_hackathon import (
+    report as legacy_report,
+)
+from message_ix_models.util import package_data_path
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +20,7 @@ def run_old_reporting(sc=False):
         " Start reporting of the global energy system (old reporting scheme)"
         f"for the scenario {sc.model}.{sc.scenario}"
     )
-    legacy_reporting(
+    legacy_report(
         mp=mp2,
         scen=sc,
         merge_hist=True,
@@ -1397,11 +1395,8 @@ def report_full(sc: Scenario, reg: str, sdgs=False):
     log.info("Finished removing timeseries, now commit..")
     sc.commit("Remove existing timeseries")
 
-    if HAS_MESSAGE_DATA:
-        run_old_reporting(sc)
-        log.info(
-            "First part of reporting completed, now procede with the water variables"
-        )
+    run_old_reporting(sc)
+    log.info("First part of reporting completed, now procede with the water variables")
 
     report(sc, reg, sdgs)
     log.info("overall NAVIGATE reporting completed")
