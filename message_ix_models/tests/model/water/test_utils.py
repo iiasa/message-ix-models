@@ -1,15 +1,10 @@
-from unittest.mock import patch
-
 import pandas as pd
-import xarray as xr
-from sdmx.model.common import Annotation, Code
+from sdmx.model.common import Code
 
-from message_ix_models import Context
 from message_ix_models.model.water.utils import (
     map_yv_ya_lt,
     read_config,
 )
-from message_ix_models.util import load_private_data
 
 
 def test_read_config(session_context):
