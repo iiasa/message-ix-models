@@ -49,6 +49,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
 - :doc:`api/disutility`
 - :doc:`api/report/index`
 - :doc:`api/tools`
+- :doc:`api/data-sources`
 - :doc:`api/util`
 - :doc:`api/testing`
 - :doc:`api/workflow`
@@ -73,10 +74,18 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Variants and projects
+   :caption: Model variants
 
    water/index
-   api/project
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Research projects
+
+   project/advance
+   project/gea
+   project/shape
+   project/ssp
 
 .. toctree::
    :maxdepth: 2

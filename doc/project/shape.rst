@@ -1,3 +1,7 @@
+.. currentmodule:: message_ix_models.project.shape
+
+.. module:: message_ix_models.project.shape
+
 SHAPE
 *****
 
@@ -13,24 +17,21 @@ The SDPs simultaneously achieve the Sustainable Development Goals in 2030, maint
 
 Uses:
 
-- :doc:`/model/buildings`
-- :doc:`/reference/model/material`
-- :doc:`/reference/model/transport`
+- :doc:`m-data:/model/buildings`
+- :doc:`m-data:/reference/model/material`
+- :doc:`m-data:/reference/model/transport`
 
 Project information
 ===================
 
 - Website: http://shape-project.org
-- Other URLs:
-
-  - `Narratives for SDPs <https://docs.google.com/document/d/1WtpugNnbam9j3uJZw3YSU8vffS7IfKHTMbTJOcuo9LA/edit#heading=h.etfbme2j75lw>`_ (Google Drive)
 - Part of AXIS, an ERA-NET initiated by JPI Climate and funded by DLR/BMBF (DE, Grant No. 01LS1907A-B-C), Formas (SE), FFG/BMWFW (AT), NWO (NL) and RCN (NO) with co-funding by the European Union (Grant No. 776608).
 - Project period: 2019-09 to 2022-08.
 
 .. _shape-data:
 
 ​Data
-====
+=====
 
 :file:`data/shape/` contains common data for constructing scenarios.
 These data quantify the SDP narratives (see link above) as future projections for certain quantities.

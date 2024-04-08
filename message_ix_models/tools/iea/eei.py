@@ -48,7 +48,7 @@ class IEA_EEI(ExoDataSource):
     The data is read from :data:`.FILE`.
 
     .. todo:: currently, the function returns a mix of aggregated and un-aggregated
-    data. Add an argument and modify to consistently return one or the other.
+       data. Add an argument and modify to consistently return one or the other.
 
     Parameters
     ----------
