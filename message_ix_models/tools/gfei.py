@@ -16,30 +16,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-#: Technology map to MESSAGEix-Transport technologies.
-#:
-#: .. todo:: Store and use this elsewhere.
-#:
-#: - Flexfuel: Reference is ICEs vehicle using methanol/synthetic fossil liquids.
-#: - Missing in the mapping: ``IGH_ghyb``, ``ICE_L_ptrp``.
-#:
-#: .. todo:: Deal with diesel (ATM assumed to be ICE using biofuels) and LPG powertrains
-#:    (so far, it is ICE_lpg, not present in MESSAGEix-Transport). Also, category
-#:    ``Hybrid`` should be extended to the list of three modes: "IAHe_ptrp",
-#:    "IAHm_ptrp", "ICH_chyb".
-TECH_MAP = {
-    "Diesel": "ICAe_ffv",
-    "Flexfuel": "ICAm_ptrp",
-    "Hybrid": "ICH_chyb",
-    "Petrol": "ICE_conv",
-    "Electric": "ELC_100",
-    "LPG": "ICE_lpg",
-    "Plug-in": "PHEV_ptrp",
-    "CNG": "ICE_nga",
-    "Hydrogen": "HFC_ptrp",
-    "Unspec.": None,
-}
-
 
 @register_source
 class GFEI(ExoDataSource):
