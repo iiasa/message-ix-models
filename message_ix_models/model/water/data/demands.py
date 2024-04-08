@@ -778,8 +778,8 @@ def read_water_availability(context: "Context"):
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
         df_sw["time"] = "year"
-        df_sw2210 = df_sw[df_sw["year"] == 2100]
-        df_sw2210["year"] = 2110
+        df_sw2210 = df_sw[df_sw["year"] == 2100].copy()
+        df_sw2210.loc["year"] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
 
@@ -801,8 +801,8 @@ def read_water_availability(context: "Context"):
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
         df_gw["time"] = "year"
-        df_gw2210 = df_gw[df_gw["year"] == 2100]
-        df_gw2210["year"] = 2110
+        df_gw2210 = df_gw[df_gw["year"] == 2100].copy()
+        df_gw2210.loc["year"] = 2110
         df_gw = pd.concat([df_gw, df_gw2210])
         df_gw = df_gw[df_gw["year"].isin(info.Y)]
 
@@ -825,8 +825,8 @@ def read_water_availability(context: "Context"):
         df_sw.reset_index(drop=True, inplace=True)
         df_sw["year"] = pd.DatetimeIndex(df_sw["years"]).year
         df_sw["time"] = pd.DatetimeIndex(df_sw["years"]).month
-        df_sw2210 = df_sw[df_sw["year"] == 2100]
-        df_sw2210["year"] = 2110
+        df_sw2210 = df_sw[df_sw["year"] == 2100].copy()
+        df_sw2210.loc["year"] = 2110
         df_sw = pd.concat([df_sw, df_sw2210])
         df_sw = df_sw[df_sw["year"].isin(info.Y)]
 
@@ -847,9 +847,9 @@ def read_water_availability(context: "Context"):
         df_gw.reset_index(drop=True, inplace=True)
         df_gw["year"] = pd.DatetimeIndex(df_gw["years"]).year
         df_gw["time"] = pd.DatetimeIndex(df_gw["years"]).month
-        df_gw2210 = df_gw[df_gw["year"] == 2100]
-        df_gw2210["year"] = 2110
-        df_gw = pd.concat([df_gw, df_sw2210])
+        df_gw2210 = df_gw[df_gw["year"] == 2100].copy()
+        df_gw2210.loc["year"] = 2110
+        df_gw = pd.concat([df_gw, df_gw2210])
         df_gw = df_gw[df_gw["year"].isin(info.Y)]
 
     return df_sw, df_gw

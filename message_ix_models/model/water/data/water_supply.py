@@ -1,17 +1,13 @@
 """Prepare data for water use for cooling & energy technologies."""
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 import pandas as pd
 from message_ix import make_df
 
+from message_ix_models import Context
 from message_ix_models.model.water.data.demands import read_water_availability
 from message_ix_models.model.water.utils import map_yv_ya_lt
 from message_ix_models.util import broadcast, package_data_path, same_node, same_time
-
-if TYPE_CHECKING:
-    from message_ix_models import Context
 
 
 def map_basin_region_wat(context: "Context"):
@@ -119,7 +115,7 @@ def map_basin_region_wat(context: "Context"):
     return df_sw
 
 
-def add_water_supply(context: "Context"):
+def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     """Add Water supply infrastructure
     This function links the water supply based on different settings and options.
     It defines the supply linkages for freshwater, groundwater and salinewater.
@@ -147,6 +143,7 @@ def add_water_supply(context: "Context"):
     fut_year = info.Y
     year_wat = (2010, 2015, *info.Y)
     sub_time = context.time
+    print(sub_time)
 
     # first activity year for all water technologies is 2020
     first_year = scen.firstmodelyear
@@ -271,7 +268,7 @@ def add_water_supply(context: "Context"):
             .pipe(
                 broadcast,
                 node_loc=df_node["node"],
-                time=sub_time,
+                time=pd.Series(sub_time),
             )
             .pipe(same_node)
             .pipe(same_time)
@@ -294,7 +291,7 @@ def add_water_supply(context: "Context"):
                 .pipe(
                     broadcast,
                     node_loc=df_node["node"],
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 )
                 .pipe(same_node)
                 .pipe(same_time),
@@ -319,7 +316,7 @@ def add_water_supply(context: "Context"):
                 .pipe(
                     broadcast,
                     year_vtg=year_wat,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 )
                 .pipe(same_time),
             ]
@@ -362,7 +359,7 @@ def add_water_supply(context: "Context"):
                 .pipe(
                     broadcast,
                     yv_ya_sw,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 )
                 .pipe(same_time),
             ]
@@ -387,7 +384,7 @@ def add_water_supply(context: "Context"):
                 .pipe(
                     broadcast,
                     yv_ya_gw,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 )
                 .pipe(same_time),
             ]
@@ -412,7 +409,7 @@ def add_water_supply(context: "Context"):
                 ).pipe(
                     broadcast,
                     yv_ya_sw,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 ),
             ]
         )
@@ -429,12 +426,12 @@ def add_water_supply(context: "Context"):
                     commodity="electr",
                     mode="M1",
                     time_origin="year",
-                    node_origin=df_gwt["REGION"],
+                    node_origin=df_node["region"],
                     node_loc=df_node["node"],
                 ).pipe(
                     broadcast,
                     yv_ya_gw,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 ),
             ]
         )
@@ -452,12 +449,12 @@ def add_water_supply(context: "Context"):
                     commodity="electr",
                     mode="M1",
                     time_origin="year",
-                    node_origin=df_gwt["REGION"],
+                    node_origin=df_node["region"],
                     node_loc=df_node["node"],
                 ).pipe(
                     broadcast,
                     yv_ya_gw,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 ),
             ]
         )
@@ -488,7 +485,7 @@ def add_water_supply(context: "Context"):
             .pipe(
                 broadcast,
                 yv_ya_sw,
-                time=sub_time,
+                time=pd.Series(sub_time),
             )
             .pipe(same_time)
         )
@@ -510,7 +507,7 @@ def add_water_supply(context: "Context"):
                 .pipe(
                     broadcast,
                     yv_ya_gw,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 )
                 .pipe(same_time),
             ]
@@ -535,7 +532,7 @@ def add_water_supply(context: "Context"):
                 .pipe(
                     broadcast,
                     yv_ya_gw,
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 )
                 .pipe(same_time),
             ]
@@ -604,7 +601,7 @@ def add_water_supply(context: "Context"):
                     node_loc=df_node["region"],
                     node_dest=df_node["region"],
                     mode=df_node["mode"],
-                ).pipe(broadcast, year_vtg=year_wat, time=sub_time),
+                ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time)),
             ]
         )
 
@@ -620,7 +617,7 @@ def add_water_supply(context: "Context"):
             node_loc=df_node["region"],
             value=20,
             unit="-",
-        ).pipe(broadcast, year_vtg=year_wat, time=sub_time)
+        ).pipe(broadcast, year_vtg=year_wat, time=pd.Series(sub_time))
         var["year_act"] = var["year_vtg"]
         # # Dummy cost for extract surface ewater to prioritize water sources
         # var = pd.concat([var, make_df(
@@ -817,8 +814,8 @@ def add_e_flow(context: "Context"):
         df_env.reset_index(drop=True, inplace=True)
         df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
         df_env["time"] = "year"
-        df_env2210 = df_env[df_env["year"] == 2100]
-        df_env2210["year"] = 2110
+        df_env2210 = df_env[df_env["year"] == 2100].copy()
+        df_env2210.loc["year"] = 2110
         df_env = pd.concat([df_env, df_env2210])
         df_env = df_env[df_env["year"].isin(info.Y)]
     else:
@@ -840,8 +837,8 @@ def add_e_flow(context: "Context"):
         df_env.reset_index(drop=True, inplace=True)
         df_env["year"] = pd.DatetimeIndex(df_env["years"]).year
         df_env["time"] = pd.DatetimeIndex(df_env["years"]).month
-        df_env2210 = df_env[df_env["year"] == 2100]
-        df_env2210["year"] = 2110
+        df_env2210 = df_env[df_env["year"] == 2100].copy()
+        df_env2210.loc["year"] = 2110
         df_env = pd.concat([df_env, df_env2210])
         df_env = df_env[df_env["year"].isin(info.Y)]
 
