@@ -13,6 +13,11 @@ class TestSHAPE:
             (dict(measure="gini", scenario="society"), {}),
             (dict(measure="population", scenario="all_SHAPE_SDPs"), {}),
             (dict(measure="urbanisation", scenario="urb_tech"), {}),
+            pytest.param(
+                dict(measure="foo", scenario="urb_tech"),
+                {},
+                marks=pytest.mark.xfail(raises=ValueError),
+            ),
         ),
     )
     @pytest.mark.parametrize(
