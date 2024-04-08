@@ -52,7 +52,7 @@ def common_params(param_names: str):
 def default_path_cb(*default_parts):
     """Return a callback function for click.Option handling.
 
-    If no option value is given, the callback uses :meth:`Context.get_local_path` and
+    If no option value is given, the callback uses :meth:`.Context.get_local_path` and
     `default_parts` to provide a path that is relative to local data directory, e.g.
     the current working directory (see :doc:`/data`).
     """

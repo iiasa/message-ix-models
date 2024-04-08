@@ -170,7 +170,8 @@ class Config:
     #: given by :func:`.platformdirs.user_cache_path`.
     cache_path: Optional[str] = None
 
-    #: Paths of files containing debug outputs. See :meth:`Context.write_debug_archive`.
+    #: Paths of files containing debug outputs. See
+    #: :meth:`.Context.write_debug_archive`.
     debug_paths: Sequence[str] = field(default_factory=list)
 
     #: Whether an operation should be carried out, or only previewed. Different modules

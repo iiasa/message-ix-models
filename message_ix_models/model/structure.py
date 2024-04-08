@@ -94,7 +94,7 @@ def get_codes(name: str) -> List[Code]:
 
 @lru_cache()
 def get_codelist(name: str) -> Codelist:
-    """Return a |Codelist| for the dimension/set `name` in MESSAGE-GLOBIOM scenarios."""
+    """Return a :class:`.Codelist` for `name` in MESSAGEix-GLOBIOM scenarios."""
     cl = Codelist(id=name.replace("/", "_").upper())
     cl.extend(get_codes(name))
     return cl

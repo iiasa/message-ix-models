@@ -194,7 +194,7 @@ def log_before(context, rep, key) -> None:
 
 
 def report(context: Context, *args, **kwargs):
-    """Report (post-process) solution data in a |Scenario| and store time series data.
+    """Report (post-process) solution data in a :class:`.Scenario`.
 
     This function provides a single, common interface to call both the :mod:`genno`
     -based (:mod:`message_ix_models.report`) and ‘legacy’ (
@@ -299,14 +299,14 @@ def prepare_reporter(
     scenario: Optional[Scenario] = None,
     reporter: Optional[Reporter] = None,
 ) -> Tuple[Reporter, Key]:
-    """Return a :class:`message_ix.Reporter` and `key` prepared to report a |Scenario|.
+    """Return a :class:`.Reporter` and `key` prepared to report a :class:`.Scenario`.
 
     Parameters
     ----------
-    context : Context
+    context : .Context
         The code responds to :py:`context.report`, which is an instance of
         :class:`.report.Config`.
-    scenario : Scenario, optional
+    scenario : .Scenario, optional
         Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
         retrieve a Scenario.
     reporter : .Reporter, optional

@@ -14,15 +14,15 @@ Method & usage
 Use this code by calling :func:`add`, which takes arguments that describe the concrete usage:
 
 Consumer groups
-   This is a list of |Code| objects describing the consumer groups.
+   This is a list of :class:`.Code` objects describing the consumer groups.
    The list must be 1-dimensional, but can be composed (as in :mod:`message_data.model.transport`) from multiple dimensions.
 
 Technologies
-   This is a list of |Code| objects describing the technologies for which the consumers in the different groups experience disutility.
+   This is a list of :class:`.Code` objects describing the technologies for which the consumers in the different groups experience disutility.
    Each object must be have 'input' and 'output' annotations (:attr:`~.Code.annotations`); each of these is a :class:`dict` with the keys 'commodity', 'input', and 'unit', describing the source or sink for the technology.
 
 Template
-   This is also a |Code| object, similar to those in ``technologies``; see below.
+   This is also a :class:`.Code` object, similar to those in ``technologies``; see below.
 
 The code creates a source technology for the “disutility” commodity.
 The code does *not* perform the following step(s) needed to completely parametrize the formulation:

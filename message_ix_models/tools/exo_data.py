@@ -157,7 +157,7 @@ def prepare_computer(
         returned.
 
         If the key "measure" is present, it **should** be one of :data:`MEASURES`.
-    strict : bool, *optional*
+    strict : bool, optional
         Raise an exception if any of the keys to be added already exist.
 
     Returns

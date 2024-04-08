@@ -102,14 +102,14 @@ def make_shorthand_function(
         ----------
         technologies :
             List of technology IDs to include.
-        name : str, *optional*
+        name : str, optional
             If given, the name of the resulting key. Default: a name like "_123"
             generated with :func:`anon`.
-        filters : dict, *optional*
+        filters : dict, optional
             Additional filters for selecting data from "{base_name}:*". Keys are short
             dimension names (for instance, "c" for "commodity"); values are lists of
             IDs.
-        unit_key : str, *optional*
+        unit_key : str, optional
             Key for units to apply to the result. Must appear in :attr:`.Config.units`.
         """
         base = single_key(c.full_key(base_name))
@@ -153,9 +153,9 @@ def eff(
 
     Parameters
     ----------
-    filters_in : dict, *optional*
+    filters_in : dict, optional
         Passed as the `filters` parameter to :func:`inp`.
-    filters_out : dict, *optional*
+    filters_out : dict, optional
         Passed as the `filters` parameter to :func:`out`.
     """
     # TODO Check whether append / drop "t" is necessary

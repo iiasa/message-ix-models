@@ -219,12 +219,12 @@ _FROM_URL_REF: Set[Any] = set()
 def from_url(url: str, cls=ixmp.TimeSeries) -> ixmp.TimeSeries:
     """Return a :class:`ixmp.TimeSeries` or subclass instance, given its `url`.
 
-    .. todo:: Move upstream, to :mod:`ixmp.reporting`.
+    .. todo:: Move upstream, to :mod:`ixmp.report`.
 
     Parameters
     ----------
-    cls : type, *optional*
-        Subclass to instantiate and return; for instance, |Scenario|.
+    cls : type, optional
+        Subclass to instantiate and return; for instance, :class:`.Scenario`.
     """
     ts, mp = cls.from_url(url)
     assert ts is not None

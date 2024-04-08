@@ -229,7 +229,7 @@ def test_cli(mix_models_cli):
     ),
 )
 def test_collapse(input, exp):
-    """Test :meth:`.report.util.collapse` and use of :data:`.REPLACE_VARS`.
+    """Test :func:`.report.util.collapse` and use of :data:`.REPLACE_VARS`.
 
     This test is parametrized with example input and expected output strings for the
     ``variable`` IAMC column. There should be ≥1 example for each pattern in

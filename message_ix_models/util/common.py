@@ -87,7 +87,7 @@ class MappingAdapter(Adapter):
 
     Parameters
     ----------
-    maps : dict of sequence of (str, str)
+    maps : dict of sequence of tuple
         Keys are names of dimensions. Values are sequences of 2-tuples; each tuple
         consists of an original label and a target label.
 

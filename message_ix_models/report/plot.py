@@ -47,8 +47,8 @@ class Plot(genno.compat.plotnine.Plot):
 
        c.add("plot myplot", MyPlot, "scenario")
 
-    …that is, giving "scenario" or another key that points to a |Scenario| object with
-    stored time series data. See the examples in this file.
+    …that is, giving "scenario" or another key that points to a :class:`.Scenario`
+    object with stored time series data. See the examples in this file.
     """
 
     #: 'Static' geoms: list of plotnine objects that are not dynamic.
@@ -71,7 +71,7 @@ class Plot(genno.compat.plotnine.Plot):
     inputs: Sequence[str] = []
 
     #: List of regular expressions corresponding to :attr:`inputs`. These are passed as
-    #: the `expr` argument to :func:`filter_ts` to filter the entire set of time series
+    #: the `expr` argument to :func:`.filter_ts` to filter the entire set of time series
     #: data.
     inputs_regex: List[re.Pattern] = []
 

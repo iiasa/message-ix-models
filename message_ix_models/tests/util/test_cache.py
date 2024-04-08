@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 class TestEncoder:
     def test_sdmx(self):
-        """:mod:`message_ix_models` configures :class:`.Encoder` for |Code|."""
+        """:mod:`message_ix_models` configures :class:`.Encoder` for :class:`.Code`."""
         codes0 = [sdmx_model.Code(id=f"FOO{i}", name="foo") for i in range(5)]
         codes1 = [f"FOO{i}" for i in range(5)]
 

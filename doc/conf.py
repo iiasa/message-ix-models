@@ -22,7 +22,6 @@ author = "IIASA Energy, Climate, and Environment (ECE) Program"
 # Add any Sphinx extension module names here, as strings. They can be extensions coming
 # with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    # "ixmp.util.sphinx_linkcode_github",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
@@ -30,6 +29,9 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    # Others
+    "genno.compat.sphinx.rewrite_refs",
+    # "ixmp.util.sphinx_linkcode_github",
     "sphinxcontrib.bibtex",
 ]
 
@@ -43,12 +45,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 nitpicky = True
 nitpick_ignore_regex = {
-    # These occur because there is no .. py:module:: directive for the *top-level*
-    # module or package in the respective documentation and inventories.
-    # TODO Remove once the respective docs are fixed
-    ("py:mod", "ixmp"),
-    ("py:mod", "message_ix"),
-    ("py:mod", "message_data"),
+    # Legacy reporting docstrings are not formatted
+    ("py:.*", r"boolean \(default|str \(default|None\)|False\)"),
     # iam-units has no Sphinx docs
     ("py:.*", "iam_units.*"),
     # These are a consequence of autosummary-class.rst
@@ -58,12 +56,6 @@ nitpick_ignore_regex = {
 rst_prolog = """
 .. role:: py(code)
    :language: python
-
-.. |Annotation| replace:: :class:`~sdmx.model.common.Annotation`
-.. |Code| replace:: :class:`~sdmx.model.common.Code`
-.. |Codelist| replace:: :class:`~sdmx.model.common.Codelist`
-.. |Platform| replace:: :class:`~ixmp.Platform`
-.. |Scenario| replace:: :class:`~message_ix.Scenario`
 
 .. |n| replace:: :math:`n`
 .. |y| replace:: :math:`y`
@@ -100,6 +92,34 @@ html_static_path = ["_static"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for a list of
 # builtin themes.
 html_theme = "sphinx_rtd_theme"
+
+# -- Options for genno.compat.sphinx.rewrite_refs --------------------------------------
+
+# When base classes in upstream (genno, ixmp) packages are inherited in message_ix,
+# Sphinx will not properly resolve relative references within docstrings of methods of
+# the former. Some of these aliases are to allow Sphinx to locate the correct targets.
+reference_aliases = {
+    # genno
+    "Computer": "genno.Computer",
+    "KeyLike": ":data:`genno.core.key.KeyLike`",
+    r"(genno\.|)Key(?=Seq|[^\w]|$)": "genno.core.key.Key",
+    r"(genno\.|)Quantity": "genno.core.attrseries.AttrSeries",
+    # ixmp
+    "Platform": "ixmp.Platform",
+    "TimeSeries": "ixmp.TimeSeries",
+    # message_ix
+    r"Scenario(?=[^\w]|$)": "message_ix.Scenario",
+    "Reporter": "message_ix.report.Reporter",
+    "make_df": "message_ix.util.make_df",
+    # sdmx
+    "Code": "sdmx.model.common.Code",
+    #
+    # Many projects (including Sphinx itself!) do not have a py:module target in for the
+    # top-level module in objects.inv. Resolve these using :doc:`index` or similar for
+    # each project.
+    "pint$": ":std:doc:`pint <pint:index>`",
+    "plotnine$": ":class:`plotnine.ggplot`",
+}
 
 # -- Options for sphinx.ext.autosummary ------------------------------------------------
 
@@ -159,7 +179,8 @@ linkcode_github_repo_slug = "iiasa/message-ix-models"
 
 napoleon_preprocess_types = True
 napoleon_type_aliases = {
-    "Code": ":class:`~sdmx.model.common.Code`",
+    "iterable": ":class:`~collections.abc.Iterable`",
+    "sequence": ":class:`~collections.abc.Sequence`",
     "Path": ":class:`~pathlib.Path`",
     "PathLike": ":class:`os.PathLike`",
 }
