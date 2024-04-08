@@ -1,13 +1,10 @@
 import logging
-from typing import TYPE_CHECKING
 
 import click
 
+from message_ix_models import Context
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util.click import common_params
-
-if TYPE_CHECKING:
-    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 

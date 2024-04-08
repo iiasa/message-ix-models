@@ -1,19 +1,16 @@
 import logging
 from functools import lru_cache, partial
-from typing import TYPE_CHECKING, Mapping
+from typing import Mapping
 
 import pandas as pd
 from sdmx.model.v21 import Code
 
-from message_ix_models import ScenarioInfo
+from message_ix_models import Context, ScenarioInfo
 from message_ix_models.model import build
 from message_ix_models.model.structure import get_codes
 from message_ix_models.util import package_data_path
 
 from .utils import read_config
-
-if TYPE_CHECKING:
-    from message_ix_models import Context
 
 log = logging.getLogger(__name__)
 
@@ -175,7 +172,6 @@ def get_spec(context: Context) -> Mapping[str, ScenarioInfo]:
     return dict(require=require, remove=remove, add=add)
 
 
-
 @lru_cache()
 def generate_set_elements(set_name, match=None):
     codes = read_config()["water set"][set_name].get("add", [])
@@ -219,10 +215,11 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     # Assigning proper nomenclature
     df["node"] = "B" + df["BCU_name"].astype(str)
     df["mode"] = "M" + df["BCU_name"].astype(str)
-    if context.type_reg == "country":
-        df["region"] = context.map_ISO_c[context.regions]
-    else:
-        df["region"] = f"{context.regions}_" + df["REGION"].astype(str)
+    df["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df["REGION"].astype(str)
+    )
 
     results["node"] = df["node"]
     results["mode"] = df["mode"]
@@ -238,7 +235,7 @@ def map_basin(context: Context) -> Mapping[str, ScenarioInfo]:
     context.all_nodes = df["node"]
 
     for set_name, config in results.items():
-        # Sets  to add
+        # Sets to add
         add.set[set_name].extend(config)
 
     return dict(require=require, remove=remove, add=add)
