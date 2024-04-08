@@ -1,3 +1,5 @@
+"""Handle data from the Global Energy Assessment (GEA)."""
+
 import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING, Dict, List, Set, Tuple
@@ -21,18 +23,27 @@ log = logging.getLogger(__name__)
 
 @register_source
 class GEA(ExoDataSource):
-    """Return Global Energy Assessment data.
+    """Provider of exogenous data from the GEA data source.
 
-    The data is stored in :file:`data/gea/` using a snapshot from the GEA database as
-    of 2017-11-08.
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    arguments:
 
-    Parameters
-    ----------
-    query : str, optional
-        Used with :meth:`pandas.DataFrame.query` to limit the returned values.
+    - `source`: "GEA".
+    - `source_kw` including:
+
+      - `model`, `scenario`: model name and scenario name. See
+        :func:`.get_model_scenario`.
+      - `measure`: See the source data for details.
+      - `aggregate`, `interpolate`: see :meth:`.ExoDataSource.transform`.
     """
 
     id = "GEA"
+
+    #: By default, do not aggregate.
+    aggregate = False
+
+    #: By default, do not interpolate.
+    interpolate = False
 
     def __init__(self, source, source_kw):
         if source != self.id:
@@ -48,9 +59,6 @@ class GEA(ExoDataSource):
         if check not in get_model_scenario():
             log.error(f"No data for (model, scenario) = {check!r}")
             raise ValueError(check)
-
-        # For transform()
-        self.aggregate = source_kw.pop("aggregate", False)
 
         self.raise_on_extra_kw(source_kw)
 
@@ -81,15 +89,11 @@ class GEA(ExoDataSource):
     def transform(self, c: "Computer", base_key: genno.Key) -> genno.Key:
         """Prepare `c` to transform raw data from `base_key`.
 
-        Unlike the base class version, this implementation only adds the aggregation
-        step if :attr:`.aggregate` is :any:`True`.
-        """
-        ks = genno.KeySeq(base_key)
+        Compared to :meth:`.ExoDataSource.transform`, this version:
 
-        k = ks.base
-        if self.aggregate:
-            # Aggregate
-            k = c.add(ks[1], "aggregate", k, "n::groups", keep=False)
+        - Does not perform interpolation.
+        """
+        k = super().transform(c, base_key)
 
         # TODO Incorporate the following
         def adapt_nodes(nodes: List["Code"]) -> Dict[str, str]:
@@ -104,9 +108,9 @@ class GEA(ExoDataSource):
 
 @lru_cache
 def get_model_scenario() -> Set[Tuple[str, str]]:
-    """Return a mapping from (full) GEA scenario names to (short) labels/IDs.
+    """Return a set of valid GEA (model name, scenario name) combinations.
 
-    These are read from :file:`data/gea/scenario.yaml`.
+    These are read from :file:`data/gea/model-scenario.json`.
     """
     import json
 
