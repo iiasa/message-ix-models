@@ -270,7 +270,8 @@ def create_projections_converge(config: "Config"):
     # Columns for grouping and merging
     cols = ["scenario", "message_technology", "region"]
 
-    # Apply polynomial regression to costs at base year and convergence year (interpolating)
+    # Apply polynomial regression to costs at base year and convergence year
+    # (interpolating)
     df_pre_converge_costs = (
         df_tmp_costs.query("year == @config.y0 or year == @config.convergence_year")
         .groupby(cols[:3], group_keys=True)
