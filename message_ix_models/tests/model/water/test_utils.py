@@ -1,5 +1,4 @@
 import pandas as pd
-from sdmx.model.common import Code
 
 from message_ix_models.model.water.utils import (
     map_yv_ya_lt,
@@ -7,13 +6,16 @@ from message_ix_models.model.water.utils import (
 )
 
 
-def test_read_config(session_context):
+def test_read_config(test_context):
     # read_config() returns a reference to the current context
     context = read_config()
-    assert context is session_context
+    assert context is test_context
 
-    # 'add' elements have been converted to Code objects
-    assert isinstance(context["water"]["set"]["technology"]["add"][0], Code)
+    # config::'data files' have been read-in correctly
+    assert context["water config"]["data files"] == [
+        "cooltech_cost_and_shares_ssp_msg14",
+        "tech_water_performance_ssp_msg",
+    ]
 
 
 def test_map_yv_ya_lt():
