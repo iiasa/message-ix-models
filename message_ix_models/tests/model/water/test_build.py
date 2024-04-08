@@ -4,8 +4,10 @@ from message_ix_models import ScenarioInfo, testing
 from message_ix_models.model.structure import get_codes
 from message_ix_models.model.water.build import get_spec, map_basin
 from message_ix_models.model.water.build import main as build
+from message_ix_models.model.water.data.water_supply import map_basin_region_wat
 
 
+@map_basin_region_wat.minimum_version
 def test_build(request, test_context):
     # This is needed below and for the RES to contain the correct number of regions
     test_context.regions = "R11"
