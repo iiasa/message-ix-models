@@ -297,7 +297,7 @@ class Context(dict):
         return result.with_suffix(suffix) if suffix else result
 
     def get_platform(self, reload=False) -> ixmp.Platform:
-        """Return a |Platform| from :attr:`.Config.platform_info`.
+        """Return a :class:`.Platform` from :attr:`.Config.platform_info`.
 
         When used through the CLI, :attr:`.Config.platform_info` is a 'base' platform as
         indicated by the --url or --platform  options.
@@ -324,7 +324,7 @@ class Context(dict):
         return self["_mp"]
 
     def get_scenario(self) -> message_ix.Scenario:
-        """Return a |Scenario| from :attr:`~.Config.scenario_info`.
+        """Return a :class:`.Scenario` from :attr:`~.Config.scenario_info`.
 
         When used through the CLI, :attr:`~.Config.scenario_info` is a ‘base’ scenario
         for an operation, indicated by the ``--url`` or

@@ -7,7 +7,7 @@ included in the computed cache key:
 - :class:`sdmx.model.IdentifiableArtefact`, including :class:`.Code`: hashed as their
   string representation / ID.
 - :class:`ixmp.Platform`, :class:`xarray.Dataset`: ignored, with a warning logged.
-- :class:`ScenarioInfo`: only the :attr:`~ScenarioInfo.set` entries are hashed.
+- :class:`.ScenarioInfo`: only the :attr:`~ScenarioInfo.set` entries are hashed.
 """
 
 import json

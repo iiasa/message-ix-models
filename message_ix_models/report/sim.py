@@ -148,10 +148,10 @@ def add_simulated_solution(
 
     Parameters
     ----------
-    data : dict or pandas.DataFrame, *optional*
+    data : dict or pandas.DataFrame, optional
         If given, a mapping from MESSAGE item (set, parameter, or variable) names to
         inputs that are passed to :func:`simulate_qty`.
-    path : Path, *optional*
+    path : Path, optional
         If given, a path to a directory containing one or more files with names like
         :file:`ACT.csv.gz`. These files are taken as containing "simulated" model
         solution data for the MESSAGE variable with the same name. See

@@ -31,7 +31,7 @@ def get_emission_factors(units: Optional[str] = None) -> Quantity:
 
     Parameters
     ----------
-    unit : str, *optional*
+    unit : str, optional
         Expression for units of the returned quantity. Tested values include:
 
         - “tC / TJ”, source units (default),

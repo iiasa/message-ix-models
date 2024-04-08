@@ -386,17 +386,17 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
 
     Parameters
     ----------
-    src : tuple (str, str, str)
-        Input commodity, level, unit.
-    dest : tuple (str, str, str)
-        Output commodity, level, unit.
+    src : tuple of str
+        Input (commodity, level, unit)
+    dest : tuple of str
+        Output (commodity, level, unit)
     efficiency : float
         Conversion efficiency.
     on : 'input' or 'output'
         If 'input', `efficiency` applies to the input, and the output, thus the activity
         level of the technology, is in dest[2] units. If 'output', the opposite.
     kwargs
-        Passed to :func:`~message_ix.make_df`.
+        Passed to :func:`.make_df`.
 
     Returns
     -------
@@ -436,10 +436,10 @@ def make_matched_dfs(
         Used to populate other columns of each data frame. Duplicates—which occur when
         the target parameter has fewer dimensions than `base`—are dropped.
     par_values :
-        Argument names (e.g. ‘fix_cost’) are passed to :func:`~.message_ix.make_df`.
-        If the value is :class:`float`, it overwrites the "value" column; if
-        :class:`pint.Quantity`, its magnitude overwrites "value" and its units the
-        "units" column, as a formatted string.
+        Argument names (e.g. ‘fix_cost’) are passed to :func:`.make_df`. If the value is
+        :class:`float`, it overwrites the "value" column; if :class:`pint.Quantity`, its
+        magnitude overwrites "value" and its units the "units" column, as a formatted
+        string.
 
     Returns
     -------
@@ -480,9 +480,9 @@ def make_source_tech(
 
     Parameters
     ----------
-    info : Scenario or ScenarioInfo
+    info : .Scenario or .ScenarioInfo
     common : dict
-        Passed to :func:`~message_ix.make_df`.
+        Passed to :func:`.make_df`.
     **values
         Values for 'capacity_factor' (optional; default 1.0), 'output', 'var_cost', and
         optionally 'technical_lifetime'.
