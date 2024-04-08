@@ -244,11 +244,11 @@ def setup(
 
     Parameters
     ----------
-    level : str, *optional*
+    level : str, optional
         Log level for the console log handler.
-    console : bool, *optional*
+    console : bool, optional
         If :obj:`False`, do not print any messages to console.
-    file : bool, *optional*
+    file : bool, optional
         If :obj:`False`, do not print any messages to file.
     """
 

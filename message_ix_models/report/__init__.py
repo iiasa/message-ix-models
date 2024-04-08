@@ -306,10 +306,10 @@ def prepare_reporter(
     context : Context
         The code responds to :py:`context.report`, which is an instance of
         :class:`.report.Config`.
-    scenario : Scenario, *optional*
+    scenario : Scenario, optional
         Scenario to report. If not given, :meth:`.Context.get_scenario` is used to
         retrieve a Scenario.
-    reporter : message_ix.Reporter, *optional*
+    reporter : .Reporter, optional
         Existing reporter to extend with computations. If not given, it is created
         using :meth:`message_ix.Reporter.from_scenario`.
 
