@@ -5,6 +5,7 @@ Next release
 ============
 
 - Migrate :doc:`/api/report/legacy` to provide post-processing functionality for the :doc:`global model snapshot </api/model-snapshot>` (:pull:`159`).
+- Migrate and improve code for four sources of exogenous data (:pull:`162`): :mod:`.project.gea`, :mod:`.project.shape`, :mod:`.tools.gfei`, and :mod:`.tools.iea.eei`.
 - Expand :doc:`data` (:pull:`161`).
 
 v2024.4.2
@@ -94,8 +95,8 @@ v2023.10.16
 
   - New :class:`.report.Config` class collecting recognized settings for the module.
   - :py:`context["report"]` always exists as an instance of :class:`.report.Config`.
-  - New submodule :class:`.report.plot` with base class and 5 plots of time-series data stored on Scenarios.
-  - Submodule :class:`.report.sim` provides :func:`add_simulated_solution` for testing reporting configuration.
+  - New submodule :mod:`.report.plot` with base class and 5 plots of time-series data stored on Scenarios.
+  - Submodule :mod:`.report.sim` provides :func:`.add_simulated_solution` for testing reporting configuration.
   - New operator :func:`.filter_ts`.
 
 - New reusable command-line option :program:`--urls-from-file` in :mod:`.util.click` (:pull:`125`).

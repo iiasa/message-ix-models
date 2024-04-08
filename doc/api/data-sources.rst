@@ -1,6 +1,16 @@
 Tools for specific data sources
 *******************************
 
+.. _tools-gfei:
+
+Global Fuel Economy Initiative (GFEI) (:mod:`.tools.gfei`)
+==========================================================
+
+.. currentmodule:: message_ix_models.tools.gfei
+
+.. automodule:: message_ix_models.tools.gfei
+   :members:
+
 .. _tools-iea:
 
 International Energy Agency (IEA) (:mod:`.tools.iea`)
@@ -23,6 +33,7 @@ Documentation for all module contents:
 Energy efficiency indicators (:mod:`.tools.iea.eei`)
 ----------------------------------------------------
 
+See :class:`.IEA_EEI`.
 This data is produced by the IEA and retrieved from the Energy Efficiency Indicators database.
 It is proprietary.
 
@@ -34,16 +45,10 @@ The data:
  - Others including Brazil, Chile, Lithuania, Morocco, Armenia, Azerbaijan, Belarus, Georgia, Kazakhstan, Kyrgyzstan, Republic of Moldova, Ukraine, Uzbekistan.
 
 - Includes measures/variables for energy consumption, efficiency, carbon emissions, and others for four conceptual sectors: Residential, Services, Industry and Transport.
-- The **2020 December edition** covers the time periods 2000–2018 with annual resolution.
-
-.. currentmodule:: message_ix_models.tools.iea.eei
+- The **December 2020 edition** covers the time periods 2000–2018 with annual resolution.
 
 .. note:: Currently, :mod:`.iea.eei` mainly retrieves and processes data useful for MESSAGEix-Transport.
    To retrieve other end-use sectoral data, the code can be extended.
-
-.. automodule:: message_ix_models.tools.iea.eei
-   :members:
-
 
 .. _tools-iea-web:
 
