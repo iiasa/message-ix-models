@@ -1,4 +1,4 @@
-"""Prepare fuel economy data from the GFEI model via GFEI_FE_by_Powertrain_2017.csv"""
+"""Handle data from the Global Fuel Economy Initiative (GFEI)."""
 
 import logging
 from typing import TYPE_CHECKING
@@ -10,7 +10,7 @@ from message_ix_models.tools.exo_data import ExoDataSource, register_source
 from message_ix_models.util import path_fallback
 
 if TYPE_CHECKING:
-    from genno import Computer
+    from genno import Computer, Quantity
 
     from message_ix_models import Context
 
@@ -19,24 +19,35 @@ log = logging.getLogger(__name__)
 
 @register_source
 class GFEI(ExoDataSource):
-    """Read Global Fuel Economy Initiative data for 2017.
+    """Provider of exogenous data from the GFEI 2017 data source.
 
-    Country-level data is retrieved from the underlying data of `"Figure 37. Fuel
-    consumption range by type of powertrain and vehicle size, 2017"` in
-    https://theicct.org/publications/gfei-tech-policy-drivers-2005-2017, in which:
+    To use data from this source, call :func:`.exo_data.prepare_computer` with the
+    arguments:
 
-    - Values correspond exclusively to new vehicle registrations in 2017.
-    - Units are in Lge/100 km, converted into MJ/km.
+    - `source`: "GFEI".
+    - `source_kw` including:
 
-    Data is processed into a :class:`pandas.DataFrame` with columns including modes,
-    country names and their respective ISO codes, MESSAGEix region and units.
+      - `aggregate` (optional, default :any:`False`): aggregate data to the target node
+        code list.
+      - `plot` (optional, default :any:`False`): add a task with the key
+        "plot GFEI debug" to generate diagnostic plot using :class:`.Plot`.
 
-    Parameters
-    ----------
-    context : .Context
-        Information about target Scenario.
-    plot : bool, optional
-        If ``True``, plots per mode will be generated in folder /debug.
+    The source data:
+
+    - is derived from
+      https://theicct.org/publications/gfei-tech-policy-drivers-2005-2017, specifically
+      the data underlying “Figure 37. Fuel consumption range by type of powertrain and
+      vehicle size, 2017”.
+    - has resolution of individual countries.
+    - corresponds to new vehicle registrations in 2017.
+    - has units of megajoule / kilometre, converted from original litres of gasoline
+      equivalent per 100 km.
+
+    .. note:: if py:`source_kw["aggregate"] is True`, the aggregation performed is an
+       unweighted :func:`sum`. To produce meaningful values for multi-country regions,
+       instead perform perform a weighted mean using appropriate weights; for instance
+       the vehicle activity for each country. The class currently **does not** do this
+       automatically.
     """
 
     id = "GFEI"
@@ -62,6 +73,12 @@ class GFEI(ExoDataSource):
     def __call__(self):
         import genno.operator
 
+        from message_ix_models.util.pycountry import iso_3166_alpha_3
+
+        def relabel_n(qty: "Quantity") -> "Quantity":
+            labels = {n: iso_3166_alpha_3(n) for n in qty.coords["n"].data}
+            return genno.operator.relabel(qty, {"n": labels})
+
         # - Read the CSV file, rename columns.
         # - Assign the y value.
         # - Convert units.
@@ -69,6 +86,7 @@ class GFEI(ExoDataSource):
             genno.operator.load_file(
                 self.path, dims={"Country": "n", "FuelTypeReduced": "t"}
             )
+            .pipe(relabel_n)
             .pipe(lambda qty: qty.expand_dims(y=[2017]))
             .pipe(genno.operator.convert_units, "MJ / (vehicle km)")
         )
@@ -86,11 +104,6 @@ class GFEI(ExoDataSource):
             # Aggregate
             k = c.add(ks[1], "aggregate", k, "n::groups", keep=False)
 
-        # TODO: missing to perform weighted average for countries in the same regions,
-        #  based on vehicle stocks form get_eei_data(). This could be done by retrieving
-        #  the "Activity" DataFrame from the returned dict, otherwise, I could be added
-        #  as a genno calculation.
-
         if self.plot:
             # Path for debug output
             context: "Context" = c.graph["context"]
@@ -104,7 +117,7 @@ class GFEI(ExoDataSource):
 
 
 class Plot(genno.compat.plotnine.Plot):
-    """Plot values from file."""
+    """Diagnostic plot of processed data."""
 
     basename = "GFEI-fuel-economy-t"
 
