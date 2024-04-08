@@ -1,12 +1,29 @@
-# Transport technologies in the MESSAGE V version of MESSAGE-Transport
+# Technologies in MESSAGEix-Transport
 #
-# References:
-# [1] “The "GEAM_TRP_techinput.xls" workbook ("updateTRPdata" sheet) in
-#      Christoph's folders.”
+# - Some of these codes still repeat those used for transport technologies in
+#   the MESSAGE V version of MESSAGE-Transport. Some note the reference:
+#   “The "GEAM_TRP_techinput.xls" workbook ("updateTRPdata" sheet) in
+#   Christoph's folders.”
 #
-# - "report" annotations are picked up by add_replacements() for reporting.
-# - "message-v-report" annotations appear in the US-TIMES–MA³T input data, but
-#   were apparently not used in MESSAGE-(V)-Transport.
+# Codes have the following annotations:
+#
+# - 'gfei-2017-technology': Originally added to message_data.tools.iea_eei;
+#   moved here in iiasa/message_data#549 / iiasa/message-ix-models#162. Comments
+#   from the original location by F. Lovat:
+#
+#   - Flexfuel: Reference is ICEs vehicles using methanol/synthetic fossil
+#     liquids.
+#   - Missing in the mapping: ICE_L_ptrp, IGH_ghyb.
+#   - TODO: Deal with diesel (at the moment assumed to be ICE using biofuels)
+#     and LPG powertrains (so far, it is ICE_lpg, not present in
+#     MESSAGEix-Transport). Also, category "Hybrid" should be extended to the
+#     list of three modes: ICH_chyb, IAHe_ptrp, IAHm_ptrp.
+#
+# - 'input': same as in message-ix-models: mapping including 'commodity' and/or
+#   'level' keys indicating the technology's inputs.
+# - 'message-v-report': these appeared in the US-TIMES–MA³T input data, but were
+#   apparently not used in MESSAGE-(V)-Transport.
+# - 'report': are picked up by add_replacements() for reporting.
 
 ELC_100:
   name: Battery-electric LDV
@@ -16,12 +33,14 @@ ELC_100:
   report: BEV
   input: {commodity: electr}
   message-v-report: LDV_ELE
+  gfei-2017-technology: Electric
 
 HFC_ptrp:
   report: FCEV
   description: Hybridized fuel cell light-duty vehicle using hydrogen
   input: {commodity: hydrogen}
   message-v-report: LDV_HFC
+  gfei-2017-technology: Hydrogen
 
 IAHe_ptrp:
   report: Biofuel hybrid
@@ -43,6 +62,7 @@ ICAe_ffv:
   description: Internal combustion engine light-duty vehicle using biofuels
   input: {commodity: ethanol}
   message-v-report: LDV_ffv
+  gfei-2017-technology: Diesel
 
 ICAm_ptrp:
   report: Synfuel ICEV
@@ -51,6 +71,7 @@ ICAm_ptrp:
     fossil liquids
   input: {commodity: methanol}
   message-v-report: LDV_meth
+  gfei-2017-technology: Flexfuel
 
 ICE_conv:
   report: ICEV
@@ -59,6 +80,7 @@ ICE_conv:
     light-duty vehicle using gasoline/diesel
   input: {commodity: lightoil}
   message-v-report: LDV_conv
+  gfei-2017-technology: Petrol
 
 ICE_L_ptrp:
   report: ICEV (pre-2005)
@@ -75,6 +97,7 @@ ICE_nga:
     Internal combustion engine light-duty vehicle using natural gas
   input: {commodity: gas}
   message-v-report: LDV_NGA
+  gfei-2017-technology: [CNG, LPG]
 
 ICH_chyb:
   report: Hybrid
@@ -83,6 +106,7 @@ ICH_chyb:
     gasoline/diesel
   input: {commodity: lightoil}
   message-v-report: LDV_CHYB
+  gfei-2017-technology: Hybrid
 
 IGH_ghyb:
   report: Gas hybrid
@@ -98,6 +122,7 @@ PHEV_ptrp:
     all-electric range)
   input: {commodity: lightoil}
   message-v-report: LDV_PHEV
+  gfei-2017-technology: Plug-in
 
 ICE_H_moto:
   report: ICEV
