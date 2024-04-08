@@ -6,11 +6,18 @@ from message_ix_models.tools.gfei import GFEI  # noqa: F401
 
 
 class TestGFEI:
-    @pytest.mark.parametrize("regions, N_n", (("R12", 4),))
-    def test_prepare_computer(self, test_context, regions, N_n):
-        source = "GFEI"
-        source_kw = dict(plot=True)
+    @pytest.mark.parametrize(
+        "regions, aggregate, N_n, size",
+        (
+            ("R12", False, 50, 317),
+            ("R12", True, 11, 77),
+        ),
+    )
+    def test_prepare_computer(self, test_context, regions, aggregate, N_n, size):
         test_context.model.regions = regions
+
+        source = "GFEI"
+        source_kw = dict(aggregate=aggregate, plot=True)
 
         c = Computer()
 
@@ -22,5 +29,6 @@ class TestGFEI:
 
         # Data have the expected dimensions, coords, and size
         assert {"n", "t", "y"} == set(result.dims)
+        assert N_n == len(result.coords["n"])
         assert {2017} == set(result.coords["y"].data)
-        assert 317 == result.size
+        assert size == result.size
