@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import partial, update_wrapper
 from importlib.metadata import version
 from itertools import count
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -21,6 +22,7 @@ from typing import (
 import message_ix
 import pandas as pd
 import pint
+from platformdirs import user_cache_path
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from ._logging import mark_time, preserve_log_level, silence_log
@@ -42,8 +44,6 @@ from .scenarioinfo import ScenarioInfo, Spec
 from .sdmx import CodeLike, as_codes, eval_anno
 
 if TYPE_CHECKING:
-    import pathlib
-
     import genno
 
 __all__ = [
@@ -603,21 +603,53 @@ def minimum_version(expr: str) -> Callable:
 
 
 def path_fallback(
-    *parts: Union[str, "pathlib.Path"],
-    where: Union[str, List[Union[str, "pathlib.Path"]]] = "",
-) -> "pathlib.Path":
-    """Return a path constructed from `parts` found in the first of several directories.
+    *parts: Union[str, Path],
+    where: Union[str, List[Union[str, Path]]] = "",
+) -> Path:
+    """Locate a path constructed from `parts` found in the first of several directories.
 
-    This allows to implement ‘fallback’ behaviour in which files in certain locations
-    are used preferentially.
+    This allows to implement ‘fallback’ behaviour in which files or directories in
+    certain locations are used preferentially.
+
+    Parameters
+    ----------
+    parts :
+        Path parts or fragments such as directory names and a final file name.
+    where :
+        Either:
+
+        - :class:`str` containing one or more of:
+
+          - "cache": locate `parts` in the :mod:`message_ix_models` cache directory.
+          - "package": locate `parts` in :mod:`message_ix_models` package data (same
+            as :func:`.package_data_path`).
+          - "private": locate `parts` in the :mod:`message_data` :file:`/data/`
+            directory (same as :func:`.private_data_path`).
+          - "test": locate test data in :py:`package_data_path("test", ...)`
+
+        - :class:`list` where each element is :class:`str` (one of the above) or a
+          :class:`pathlib.Path`.
+
+    Returns
+    -------
+    pathlib.Path
+        The first of the locations indicated by `where` in which the file or directory
+        `parts` exists.
+
+    Raises
+    ------
+    ValueError
+        If `where` is empty or `parts` are not found in any of the indicated locations.
     """
     dirs = []
     for item in where.split() if isinstance(where, str) else where:
         if isinstance(item, str):
-            if item == "private":
-                dirs.append(private_data_path())
+            if item == "cache":
+                dirs.append(user_cache_path("message-ix-models"))
             elif item == "package":
                 dirs.append(package_data_path())
+            elif item == "private":
+                dirs.append(private_data_path())
             elif item == "test":
                 dirs.append(package_data_path("test"))
         else:
@@ -632,7 +664,7 @@ def path_fallback(
     if not dirs:
         raise ValueError(f"No directories identified among {where!r}")
     else:
-        raise ValueError(f"{parts} not found in any of {dirs}")
+        raise ValueError(f"'{Path(*parts)!s}' not found in any of {dirs}")
 
 
 def replace_par_data(
