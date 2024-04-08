@@ -15,7 +15,7 @@ class TestGEA:
         (
             (dict(measure=M, model="GEA", scenario=S)),
             pytest.param(
-                dict(model="IMAGE", scenario=S),
+                dict(measure=M, model="IMAGE", scenario=S),
                 marks=pytest.mark.xfail(
                     raises=ValueError,
                     reason="Non-existent (model, scenario) combination",
