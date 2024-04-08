@@ -50,7 +50,7 @@ class TestIEA_EEI:
             ("R12", True, 5),
         ),
     )
-    def test_prepare_computer(
+    def test_prepare_computer(  # pragma: no cover cf. iiasa/message-ix-models#164
         self, test_context, source_kw, dimensionality, regions, aggregate, N_n
     ):
         test_context.model.regions = regions
