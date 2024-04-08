@@ -1,11 +1,5 @@
-
-
 from message_ix_models import testing
-from message_ix_models.testing import bare_res
-
-from message_ix_models.model.water.build import build, get_spec,
-
-
+from message_ix_models.model.water.build import build, get_spec
 
 
 def test_build(request, test_context):
@@ -27,6 +21,3 @@ def test_get_spec(session_context):
 
     # Contents are read correctly
     assert "water_supply" in spec["require"].set["level"]
-
-
-
