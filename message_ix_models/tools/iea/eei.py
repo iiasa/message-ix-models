@@ -1,4 +1,6 @@
 """Retrieve data from the IEA Energy Efficiency Indicators source."""
+# FIXME This file is currently excluded from coverage measurement. See
+#       iiasa/message-ix-models#164
 
 import logging
 import re
