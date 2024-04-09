@@ -160,7 +160,7 @@ class ScenarioInfo:
         return list(map(str, self.set["node"]))
 
     @property
-    def Y(self):
+    def Y(self) -> List[int]:
         """Elements of the set 'year' that are >= the first model year."""
         return list(filter(lambda y: y >= self.y0, self.set["year"]))
 

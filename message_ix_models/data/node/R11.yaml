@@ -16,11 +16,13 @@ R11_AFR:
   parent: World
   name: Sub-Saharan Africa
   child: [AGO, BDI, BEN, BFA, BWA, CAF, CIV, CMR, COD, COG, COM, CPV, DJI, ERI, ETH, GAB, GHA, GIN, GMB, GNB, GNQ, KEN, LBR, LSO, MDG, MLI, MOZ, MRT, MUS, MWI, MYT, NAM, NER, NGA, REU, RWA, SEN, SHN, SLE, SOM, STP, SWZ, SYC, TCD, TGO, TZA, UGA, ZAF, ZMB, ZWE]
+  iea-weo-region: Africa
 
 R11_CPA:
   parent: World
   name: Centrally Planned Asia
   child: [CHN, HKG, KHM, LAO, MNG, PRK, VNM]
+  iea-weo-region: China
 
 R11_EEU:
   parent: World
@@ -29,11 +31,13 @@ R11_EEU:
     Serbia and Montenegro (SCG) and Yugoslavia (YUG) still included in this list,
     even though their ISO 3166-1 codes were deleted in 2006 and 2003, respectively.
   child: [ALB, BGR, BIH, CZE, EST, HRV, HUN, LTU, LVA, MKD, MNE, POL, ROU, SCG, SRB, SVK, SVN, YUG]
+  iea-weo-region: European Union
 
 R11_FSU:
   parent: World
   name: Former Soviet Union
   child: [ARM, AZE, BLR, GEO, KAZ, KGZ, MDA, RUS, TJK, TKM, UKR, UZB]
+  iea-weo-region: Russia
 
 R11_LAM:
   parent: World
@@ -42,21 +46,25 @@ R11_LAM:
     The source includes “Netherlands Antilles” which has a provisional ISO 3166-2 alpha-3 code (ANT),
     but is not a country. It was dissolved in 2010 into BES, CUW and SXM, also included.
   child: [ABW, AIA, ANT, ARG, ATG, BES, BHS, BLZ, BMU, BOL, BRA, BRB, CHL, COL, CRI, CUB, CUW, CYM, DMA, DOM, ECU, FLK, GLP, GRD, GTM, GUF, GUY, HND, HTI, JAM, KNA, LCA, MEX, MSR, MTQ, NIC, PAN, PER, PRY, SLV, SUR, SXM, TCA, TTO, URY, VCT, VEN, VGB]
+  iea-weo-region: Brazil
 
 R11_MEA:
   parent: World
   name: Middle East and North Africa
   child: [ARE, BHR, DZA, EGY, ESH, IRN, IRQ, ISR, JOR, KWT, LBN, LBY, MAR, OMN, PSE, QAT, SAU, SDN, SSD, SYR, TUN, YEM]
+  iea-weo-region: Middle East
 
 R11_NAM:
   parent: World
   name: North America
   child: [CAN, GUM, PRI, SPM, USA, VIR]
+  iea-weo-region: United States
 
 R11_PAO:
   parent: World
   name: Pacific OECD
   child: [AUS, JPN, NZL]
+  iea-weo-region: Japan
 
 R11_PAS:
   parent: World
@@ -65,13 +73,16 @@ R11_PAS:
     Trust Territory of the Pacific Islands (PCI) still included in this list,
     but it was dissolved into MHL, FSM, MNP and PLW in 1986.
   child: [ASM, BRN, CCK, COK, CXR, FJI, FSM, IDN, KIR, KOR, MAC, MHL, MMR, MNP, MYS, NCL, NFK, NIU, NRU, PCI, PCN, PHL, PLW, PNG, PYF, SGP, SLB, THA, TKL, TLS, TON, TUV, TWN, VUT, WLF, WSM]
+  iea-weo-region: India
 
 R11_SAS:
   parent: World
   name: South Asia
   child: [AFG, BGD, BTN, IND, LKA, MDV, NPL, PAK]
+  iea-weo-region: India
 
 R11_WEU:
   parent: World
   name: Western Europe
   child: [AND, AUT, BEL, CHE, CYP, DEU, DNK, ESP, FIN, FRA, FRO, GBR, GIB, GRC, GRL, IMN, IRL, ISL, ITA, LIE, LUX, MCO, MLT, NLD, NOR, PRT, SJM, SMR, SWE, TUR, VAT]
+  iea-weo-region: European Union
