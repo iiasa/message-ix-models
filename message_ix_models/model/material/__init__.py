@@ -28,9 +28,11 @@ def build(scenario):
     # Apply to the base scenario
     spec = get_spec()
 
-    apply_spec(scenario, spec, add_data_2)
-    spec = None
+    # Methanol and ammonia should be loaded first (add_data_1) to add
+    # coal fly ash for related technologies as well.
     apply_spec(scenario, spec, add_data_1)  # dry_run=True
+    spec = None
+    apply_spec(scenario, spec, add_data_2)
 
     s_info = ScenarioInfo(scenario)
     nodes = s_info.N
@@ -62,17 +64,18 @@ def build(scenario):
     return scenario
 
 # add as needed/implemented
+# The order is important
 SPEC_LIST = [
     "generic",
     "common",
+    "fertilizer",
+    "methanol",
     "steel",
     "cement",
     "aluminum",
     "petro_chemicals",
     # "buildings",
     "power_sector",
-    "fertilizer",
-    "methanol"
 ]
 
 def get_spec() -> Mapping[str, ScenarioInfo]:
@@ -360,7 +363,6 @@ DATA_FUNCTIONS_1 = [
     gen_data_steel,
     gen_data_methanol_new,
     gen_all_NH3_fert,
-    #gen_data_ammonia, ## deprecated module!
     gen_data_generic,
 ]
 DATA_FUNCTIONS_2 = [
