@@ -355,6 +355,67 @@ def gen_data_cement(scenario, dry_run=False):
     ).pipe(broadcast, node=nodes, technology=ccs_tec)
     results[parname].append(df)
 
+    # Adding fly_ash as waste product from coal technologies
+    coal_technologies_modes = {"feedstock": ["meth_coal","meth_coal_ccs"],
+                               "fuel":      ["meth_coal","meth_coal_ccs"],
+                               "M1":        ["coal_i","sp_coal_I","coal_NH3",
+                                             "coal_NH3_ccs","coal_adv",
+                                             "coal_adv_ccs","coal_ppl",
+                                             "coal_ppl_u","coal_gas",
+                                             "coal_hpl", "h2_coal",
+                                             "h2_coal_ccs"],
+                               "high_temp": ["furnace_coal_steel",
+                                             "furnace_coal_aluminum",
+                                             "furnace_coal_cement",
+                                             "furnace_coal_petro",
+                                             "furnace_coal_refining",
+                                             "furnace_coal_resins",],
+                               "low_temp":  ["furnace_coal_steel",
+                                             "furnace_coal_aluminum",
+                                             "furnace_coal_cement",
+                                             "furnace_coal_petro",
+                                             "furnace_coal_refining",
+                                             "furnace_coal_resins",]
+                               }
+
+    # value = (Mt coal/GWa) * (input_coal) * (fly ash as mass % of coal)
+    # * (% of fly ash in total ash)
+    # Mt coal/GWa = 1kg --> 25 MJ --> (25*2.778*10^-7)/8760 GWa
+    # Mt coal/GWa = 1kg --> 7.928*10^-10 GWa, 1 Mt --> 0.7928 GWa
+    # Mt coal/GWa = 1 GWa --> 1.261 Mt coal
+    # fly ash as mass % of coal = 0.125 (Shah et al., 2022)
+    # % of fly ash in total ash = 0.9   (Shah et al., 2022)
+    modes = coal_technologies_modes.keys()
+    conversion_factor = 1.261 * 0.125 * 0.9
+    df_input = scenario.par('input')
+
+    for n in nodes:
+        for m in modes:
+            for t in coal_technologies_modes[m]:
+                df_output = df_input[(df_input['node_loc']==n) & (df_input['technology']==t)
+                & (df_input['mode']==m)]
+                if df_output.empty:
+                    print('Technology {} not found in the input table'.format(t))
+                    continue
+                else:
+                    df_output["updated_value"] = df_output['value']*conversion_factor
+                    df_output.drop(["value"], axis=1, inplace = True)
+                    df_output.rename(columns={"node_origin":"node_dest",
+                                                         'time_origin':'time_dest',
+                                                         'updated_value':'value'}, inplace = True)
+                    df_output['level']= 'waste_material'
+                    df_output['commodity']= 'fly_ash'
+                    df_output['unit']= 'Mt'
+
+                    results["output"].append(df_output)
+
+    # Test emission bound
+    # parname = 'bound_emission'
+    # df = (make_df(parname, type_tec='all', type_year='cumulative', \
+    #     type_emission='CO2_industry', \
+    #     value=200, unit='-').pipe(broadcast, node=nodes))
+    # results[parname].append(df)
+
     # Concatenate to one data frame per parameter
     results = {par_name: pd.concat(dfs) for par_name, dfs in results.items()}
 

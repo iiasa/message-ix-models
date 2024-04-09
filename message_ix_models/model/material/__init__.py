@@ -149,9 +149,12 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
 
 
 # add as needed/implemented
+# The order is important
 SPEC_LIST = [
     "generic",
     "common",
+    "fertilizer",
+    "methanol",
     "steel",
     "cement",
     "aluminum",
