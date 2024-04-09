@@ -14,18 +14,21 @@ class Config:
       instance, :py:`ref_region="R12_NAM"` for :py:`node="R12"`.
     """
 
-    #: Base year for projections.
+    #: Base year for projected costs.
     base_year: int = 2021
 
-    #: Year of convergence; used when :attr:`.method` is "convergence". See
-    #: :func:`.create_projections_converge`.
+    #: Year of convergence; used when :attr:`.method` is "convergence". This is the year
+    #: by which costs in all regions should converge to the reference region's costs.
+    #: See :func:`.create_projections_converge`.
     convergence_year: int = 2050
 
     #: Final year for projections. Note that the default is different from the final
     #: model year of 2110 commonly used in MESSAGEix-GLOBIOM (:doc:`/pkg-data/year`).
     final_year: int = 2100
 
-    #: Rate of increase/decrease of fixed operating and maintenance costs.
+    #: Rate of exponential growth (positive values) or decrease of fixed operating and
+    #: maintenance costs over time. The default of 0.025 implies exponential growth at a
+    #: rate of 2.5% per year; or :py:`(1 + 0.025) ** N` for a period of length N.
     fom_rate: float = 0.025
 
     #: Format of output from :func:`.create_cost_projections`. One of:
@@ -34,23 +37,25 @@ class Config:
     #: - "message": :mod:`message_ix` parameter data.
     format: Literal["iamc", "message"] = "message"
 
-    #: Node code list / spatial resolution to use.
+    #: Node code list / spatial resolution for which to project costs.
+    #: This should correspond to the target scenario to which data is to be added.
     node: Literal["R11", "R12", "R20"] = "R12"
 
-    #: Projection method; one of:
+    #: Method for projecting costs in non-reference regions. One of:
     #:
-    #: - "convergence": uses :func:`.create_projections_converge`
-    #: - "gdp": :func:`.create_projections_gdp`
-    #: - "constant": :func:`.create_projections_constant`
-    method: Literal["convergence", "gdp", "constant"] = "gdp"
+    #: - "constant": uses :func:`.create_projections_constant`.
+    #: - "convergence": uses :func:`.create_projections_converge`.
+    #: - "gdp": uses :func:`.create_projections_gdp`.
+    method: Literal["constant", "convergence", "gdp"] = "gdp"
 
-    #: Model variant to prepare data for.
+    #: Model variant for which to project costs.
     module: Literal["energy", "materials"] = "energy"
 
-    #: TODO Document the meaning of this setting.
+    #: .. todo:: Document the meaning of this setting.
     pre_last_year_rate: float = 0.01
 
-    #: Reference region; default "{node}_NAM" for a given :attr:`.node`.
+    #: Reference region. If not given, :py:`"{node}_NAM"`` for a given :attr:`.node`.
+    #: This default **must** be overridden if there is no such node.
     ref_region: Optional[str] = None
 
     #: Set of SSPs referenced by :attr:`scenario`. One of:
@@ -60,7 +65,8 @@ class Config:
     #: - "all": both of the above.
     scenario_version: Literal["original", "updated", "all"] = "updated"
 
-    #: Scenario(s) for which to create data. "all" implies the remaining values.
+    #: Scenario(s) for which to project costs. "all" implies the set of all the other
+    #: values, meaning that costs are projected for all scenarios.
     scenario: Literal["all", "LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "all"
 
     # Internal: Scenario Info object used for y0, Y, seq_years

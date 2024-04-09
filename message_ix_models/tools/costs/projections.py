@@ -631,6 +631,11 @@ def create_cost_projections(config: "Config") -> Mapping[str, pd.DataFrame]:
     dict
         Keys are "fix_cost" and "inv_cost", each mapped to a
         :class:`~.pandas.DataFrame`.
+
+        If :attr:`.Config.format` is "message", the data frames have the same columns as
+        required by :mod:`message_ix` for the respective parameter—for instance, the
+        columns given by :py:`make_df("fix_cost", ...)`—*plus* columns named "scenario"
+        and "scenario_version".
     """
     # Validate configuration
     config.check()
