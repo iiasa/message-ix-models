@@ -292,6 +292,7 @@ steel:
     - limestone_iron
     - coke_iron
     - slag_iron
+    - granulated_slag_iron
     - co_gas
     - bf_gas
     - off_gas
@@ -346,6 +347,7 @@ steel:
     - total_EOL_steel
     - bf_biomass_steel
     - prod_charcoal_steel
+    - slag_granulator_steel
 
   relation:
     add:
@@ -389,20 +391,28 @@ cement:
   commodity:
     add:
     - cement
+    - concrete
     - clinker_cement
     - raw_meal_cement
     - limestone_cement
+    - fly_ash
+    - granulated_slag_iron
+    - slag_iron
+    - sand_gravel
+    - aggregates
 
   level:
     add:
     - primary_material
     - secondary_material
     - tertiary_material
+    - grinded_material
     - final_material
     - useful_material
     - demand
     - dummy_end_of_life
     - end_of_life
+    - waste_material
 
   technology:
     add:
@@ -417,6 +427,10 @@ cement:
     - total_EOL_cement
     - other_EOL_cement
     - scrap_recovery_cement
+    - mix_cement
+    - sand_gravel_supply_cement
+    - aggregates_supply_cement
+    - concrete_production_cement
 
     remove:
     - cement_co2scr
