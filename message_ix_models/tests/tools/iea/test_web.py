@@ -17,10 +17,9 @@ dask_python_incompatibility_condition = parse(version("message_ix")) < parse("3.
 
 
 class TestIEA_EWEB:
-    @pytest.mark.xfail(
+    @pytest.mark.skipif(
         condition=dask_python_incompatibility_condition,
         reason="Pinned dask version and certain Python versions are incompatible",
-        raises=TypeError,
     )
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
     @pytest.mark.parametrize(
@@ -92,7 +91,7 @@ PROVIDER_EDITION = (
 )
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     condition=dask_python_incompatibility_condition,
     reason="Pinned dask version and certain Python versions are incompatible",
     raises=TypeError,
@@ -115,7 +114,7 @@ def test_load_data(test_context, tmp_path, provider, edition):
     assert (set(DIMS) & {"Value"}) < set(result.columns)
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     condition=dask_python_incompatibility_condition,
     reason="Pinned dask version and certain Python versions are incompatible",
     raises=TypeError,
