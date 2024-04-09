@@ -108,6 +108,7 @@ World Bank structures (:mod:`.tools.wb`)
 
 
 .. currentmodule:: message_ix_models.tools.costs
+.. _tools-costs:
 
 Technoeconomic investment and fixed O&M costs projection (:mod:`.tools.costs`)
 ==============================================================================
