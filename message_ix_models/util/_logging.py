@@ -37,7 +37,7 @@ class Formatter(logging.Formatter):
 
     Parameters
     ----------
-    use_color : bool, *optional*
+    use_color : bool, optional
         If :any:`True`, :mod:`colorama` is used to colour log messages.
     """
 
@@ -228,6 +228,7 @@ def configure():
         # Hide lower-level messages for some upstream packages from the file log
         ("graphviz._tools", logging.WARNING),
         ("matplotlib", logging.WARNING),
+        ("PIL", logging.INFO),
         ("pycountry.db", logging.WARNING),
     ):
         logging.getLogger(name).setLevel(level)
@@ -243,11 +244,11 @@ def setup(
 
     Parameters
     ----------
-    level : str, *optional*
+    level : str, optional
         Log level for the console log handler.
-    console : bool, *optional*
+    console : bool, optional
         If :obj:`False`, do not print any messages to console.
-    file : bool, *optional*
+    file : bool, optional
         If :obj:`False`, do not print any messages to file.
     """
 
@@ -279,9 +280,9 @@ def silence_log(names: Optional[str] = None, level: int = logging.ERROR):
 
     Parameters
     ----------
-    names : str, *optional*
+    names : str, optional
         Space-separated names of loggers to quiet.
-    level : int, *optional*
+    level : int, optional
         Minimum level of log messages to allow.
 
     Examples

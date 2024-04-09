@@ -11,11 +11,22 @@ def cli():
 
 FILENAMES = [
     "advance/advance_compare_20171018-134445.csv.zip",
+    "gea/GEADB_ARCHIVE_20171108.zip",
     "iea/372f7e29-en.zip",
     "iea/8624f431-en.zip",
     "iea/cac5fa90-en.zip",
+    "shape/gdp_v1p0.mif",
+    "shape/gdp_v1p1.mif",
+    "shape/gdp_v1p2.mif",
+    "shape/gini_v1p0.csv",
+    "shape/gini_v1p1.csv",
+    "shape/population_v1p0.mif",
+    "shape/population_v1p1.mif",
+    "shape/population_v1p2.mif",
+    "shape/urbanisation_v1p0.csv",
     "ssp/SSP-Review-Phase-1.csv.gz",
     "ssp/SspDb_country_data_2013-06-12.csv.zip",
+    "transport/GFEI_FE_by_Powertrain_2017.csv",
 ]
 
 
@@ -50,6 +61,13 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     path_in = private_data_path(p)
     path_out = package_data_path("test", p)
 
+    # Shared arguments for read_csv() and to_csv()
+    comment, engine, sep = None, "pyarrow", ","
+    if "GFEI" in str(p):
+        comment, engine = "#", "c"
+    if p.suffix == ".mif":
+        sep = ";"
+
     # Read the data
     with TemporaryDirectory() as td:
         td_path = Path(td)
@@ -66,10 +84,23 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         else:
             target = path_in
 
-        # - Read the data using dask & pyarrow.
+        # - Read the data
+        #   - Use dask & pyarrow.
+        #   - Prevent values like "NA" being auto-transformed to np.nan.
         # - Subset the data if `frac` < 1.0.
-        # - Compute the resulting pandas.DataFrame
-        df = dd.read_csv(target, engine="pyarrow").sample(frac=frac).compute()
+        # - Compute the resulting pandas.DataFrame.
+        df = (
+            dd.read_csv(
+                target,
+                comment=comment,
+                engine=engine,
+                keep_default_na=False,
+                na_values=[],
+                sep=sep,
+            )
+            .sample(frac=frac)
+            .compute()
+        )
 
     # Determine columns in which to replace numerical data
     if "iea" in filename:
@@ -77,7 +108,7 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
         cols = ["Value"]
     else:
         # All columns with numeric names, for instance 2000, 2001, etc.
-        cols = list(filter(char.isnumeric, df.columns))
+        cols = list(filter(lambda c: char.isnumeric(c) or c.lower() == c, df.columns))
 
     # Shape of random data
     size = (df.shape[0], len(cols))
@@ -96,4 +127,4 @@ def fuzz_private_data(filename, frac: float):  # pragma: no cover
     else:
         target = path_out
 
-    df.to_csv(target, index=False, float_format="%.2f")
+    df.to_csv(target, float_format="%.2f", index=False, sep=sep)

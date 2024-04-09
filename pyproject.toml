@@ -87,6 +87,8 @@ exclude_also = [
 omit = [
   # The single existing test is far from enough
   "message_ix_models/report/legacy/*",
+  # See https://github.com/iiasa/message-ix-models/issues/164
+  "message_ix_models/tools/iea/eei.py",
 ]
 
 [tool.mypy]

@@ -87,7 +87,7 @@ class MappingAdapter(Adapter):
 
     Parameters
     ----------
-    maps : dict of sequence of (str, str)
+    maps : dict of sequence of tuple
         Keys are names of dimensions. Values are sequences of 2-tuples; each tuple
         consists of an original label and a target label.
 
@@ -174,7 +174,7 @@ def load_package_data(*parts: str, suffix: Optional[str] = ".yaml") -> Any:
     ----------
     parts : iterable of str
         Used to construct a path under :file:`message_ix_models/data/`.
-    suffix : str, *optional*
+    suffix : str, optional
         File name suffix, including, the ".", e.g. :file:`.yaml`.
 
     Returns

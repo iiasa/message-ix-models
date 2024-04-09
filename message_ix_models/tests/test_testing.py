@@ -4,12 +4,12 @@ from message_ix_models.testing import bare_res, not_ci
 
 
 def test_bare_res_no_request(test_context):
-    """:func:`bare_res` works with `request` = :obj:`None`."""
+    """:func:`.bare_res` works with `request` = :obj:`None`."""
     bare_res(None, test_context, solved=False)
 
 
 def test_bare_res_solved(request, test_context):
-    """:func:`bare_res` works with `solve` = :obj:`True`.
+    """:func:`.bare_res` works with `solve` = :obj:`True`.
 
     This test can be removed once this feature of the test function is used by another
     test.

@@ -29,7 +29,7 @@ CodeLike = Union[str, Code]
 def as_codes(  # noqa: C901
     data: Union[List[str], Dict[str, CodeLike]],
 ) -> List[Code]:
-    """Convert `data` to a :class:`list` of |Code| objects.
+    """Convert `data` to a :class:`list` of :class:`.Code` objects.
 
     Various inputs are accepted:
 

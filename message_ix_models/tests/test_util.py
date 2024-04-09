@@ -32,6 +32,7 @@ from message_ix_models.util import (
     make_source_tech,
     maybe_query,
     package_data_path,
+    path_fallback,
     private_data_path,
     replace_par_data,
     same_node,
@@ -332,6 +333,31 @@ def test_package_data_path():
     assert MESSAGE_MODELS_PATH.joinpath("data", "foo", "bar") == package_data_path(
         "foo", "bar"
     )
+
+
+def test_path_fallback(caplog):
+    # Can be called with where=list() including both strings and paths
+    result = path_fallback(
+        "test", "macro", "kgdp.csv", where=["private", package_data_path()]
+    )
+    assert package_data_path("test", "macro", "kgdp.csv") == result
+
+    assert 1 <= len(caplog.messages)
+    assert caplog.messages[-1].startswith("Not found: ")
+    caplog.clear()
+
+    # "package", "private", and "test" each expanded to a path
+    with pytest.raises(ValueError, match=r"'foo.bar' not found in any of \["):
+        path_fallback("foo", "bar", where="cache package private test")
+
+    assert 4 <= len(caplog.messages)
+    assert caplog.messages[-1].startswith("Not found: ")
+    caplog.clear()
+
+    # Empty argument raises an exception
+    with pytest.raises(ValueError, match="No directories identified among ''"):
+        path_fallback("foo", "bar")
+    assert 0 == len(caplog.messages)
 
 
 @pytest.mark.xfail(

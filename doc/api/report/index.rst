@@ -37,7 +37,7 @@ In short, for instance:
 
 The basic **design pattern** of :mod:`message_ix_models.report` is:
 
-- :func:`~.report.prepare_reporter` populates a new :class:`~.message_ix.Reporter` for a given |Scenario| with many keys to report all quantities of interest in a MESSAGEix-GLOBIOM–family model.
+- :func:`~.report.prepare_reporter` populates a new :class:`~.message_ix.Reporter` for a given :class:`.Scenario` with many keys to report all quantities of interest in a MESSAGEix-GLOBIOM–family model.
 - This function relies on *callbacks* defined in multiple submodules to add keys and tasks for general or tailored reporting calculations and actions.
   Additional modules **should** define callback functions and register them with :func:`~report.register` when they are to be used.
   For example:
@@ -145,7 +145,7 @@ Operators
 
      - :mod:`message_ix.report.operator`
      - :mod:`ixmp.report.operator`
-     - :mod:`genno.computations`
+     - :mod:`genno.operator`
 
    - Other submodules:
 

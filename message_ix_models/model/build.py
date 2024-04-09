@@ -39,7 +39,7 @@ def apply_spec(  # noqa: C901
     ----------
     spec : .Spec
         Specification of changes to make to `scenario`.
-    data : callable, *optional*
+    data : callable, optional
         Function to add data to `scenario`. `data` can either manipulate the scenario
         directly, or return a :class:`dict` compatible with :func:`.add_par_data`.
 

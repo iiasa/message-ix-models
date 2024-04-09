@@ -1,4 +1,4 @@
-""":class:`ScenarioInfo` class."""
+""":class:`.ScenarioInfo` class."""
 
 import logging
 import re
@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 # TODO: use kw_only=True once python 3.10 is oldest supported version
 @dataclass()
 class ScenarioInfo:
-    """Information about a |Scenario| object.
+    """Information about a :class:`.Scenario` object.
 
     Code that prepares data for a target Scenario can accept a ScenarioInfo instance.
     This avoids the need to create or load an actual Scenario, which can be slow under
@@ -367,7 +367,7 @@ class Spec:
     A Spec collects 3 :class:`.ScenarioInfo` instances at the attributes :attr:`.add`,
     :attr:`.remove`, and :attr:`.require`. This is the type that is accepted by
     :func:`.apply_spec`; :doc:`model-build` describes how a Spec is used to modify a
-    |Scenario|. A Spec may also be used to express information about the target
+    :class:`.Scenario`. A Spec may also be used to express information about the target
     structure of data to be prepared; like ScenarioInfo, this can happen before the
     target Scenario exists.
 

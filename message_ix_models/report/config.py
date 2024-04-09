@@ -72,7 +72,7 @@ class Config(ConfigHelper):
 
         Parameters
         ----------
-        file_path : PathLike, *optional*
+        file_path : PathLike, optional
             This may be:
 
             1. The complete path to any existing file.

@@ -74,7 +74,7 @@ def spec(groups, techs, template):
 
 @pytest.fixture
 def scenario(request, test_context, techs):
-    """Fixture: a |Scenario| with technologies given by :func:`techs`."""
+    """Fixture: a :class:`.Scenario` with technologies given by :func:`techs`."""
     test_context.regions = "R14"
     s = testing.bare_res(request, test_context, solved=False)
     s.check_out()
