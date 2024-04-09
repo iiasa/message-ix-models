@@ -1,71 +1,96 @@
 .. currentmodule:: message_ix_models.tools.costs
 
-Technoeconomic investment and fixed O&M costs projection (:mod:`.tools.costs`)
-******************************************************************************
+Investment and fixed costs (:mod:`.tools.costs`)
+************************************************
 
-:mod:`.tools.costs` is a tool that projects the investment costs and fixed operational and maintenance costs of technologies in MESSAGEix until the year 2100.
-The tool is able to project costs for different regions, technologies, and scenarios.
-The costs are projected based on historical (mostly a base year) data and assumptions about future cost reductions.
+:mod:`.tools.costs` implements methods to **project investment and fixed costs of technologies** [1]_ in MESSAGEix-GLOBIOM family models.
 
-Future costs in reference region
-================================
+.. contents::
+   :local:
 
-The costs in the reference region are projected based on the following assumption: given a cost reduction rate, the cost of the technology in the reference region experiences an exponential decay over time.
+.. [1] Fixed costs are also referred to as “operation and maintenance (O&M)” or “fixed O&M” costs.
+   Investment and fixed costs are also collectively referred to as “techno-economic costs” or “techno-economic parameters”.
 
-Future costs in non-reference regions
-=====================================
-
-The costs for each technology in all non-reference regions can be calculated in one of three ways:
-
-1. Constant cost reduction rate (called `constant`): the regional cost ratio that is calculated in the base year is kept constant and used to project regionally-differentiated costs across all years.
-2. Convergence to reference region costs by a certain year (called `convergence`): all other regions' costs exponentially decay until they become they same as the reference region's cost by a specified year.
-3. GDP-adjusted cost reduction rate (called `gdp`): this method assumes that regional costs converge not based on a specified year but based on GDP per capita.
-   In this case, all non-reference regions' costs are adjusted based on the ratio of the GDP per capita of the region to the GDP per capita of the reference region.
-
-Modules
+Methods
 =======
 
-Within the context of the tool, modules are defined as subsets of technologies.
-Currently two modules are available:
+The tool creates distinct projected cost values for different regions, technologies, and scenarios.
+The costs are projected based on historical (mostly a base year) data and assumptions about future cost reductions.
 
-- `energy`: mosty power technologies, as well as a few other supply-side technologies
-- `materials`: technologies relevant to the materials and industry sectors
+The projections use the concept of a **reference region** [2]_ and apply distinct methods to the reference and non-reference regions:
 
-Consider the `energy` module as sort of the base module, as it contains the most technologies.
+Reference region
+   Costs in the reference region are projected based on the following assumption: given a cost reduction rate, the cost of the technology in the reference region experiences an exponential decay over time.
+
+Non-reference regions
+   Costs for each technology in all non-reference regions may be calculated using one of three methods, specified using :attr:`.Config.method`:
+
+   1. Constant cost reduction rate (:attr:`.Config.method` = "constant"): the regional cost ratio (versus the reference region) that is calculated in the base year is held constant and used to project regionally-differentiated costs across all years.
+   2. Convergence to reference region costs by a certain year (:attr:`.Config.method` = "convergence"): all other regions' costs exponentially decay until they become they same as the reference region's cost by a specified year.
+   3. GDP-adjusted cost reduction rate (:attr:`.Config.method` = "gdp"): this method assumes that regional costs converge not based on a specified year but based on GDP per capita.
+      All non-reference regions' costs are adjusted based on the ratio of the GDP per capita of the region to the GDP per capita of the reference region.
+
+.. [2] In :mod:`message_ix`, these are elements of the ``node`` set.
+   The term ‘region’ is used in this documentation to mean the same thing.
+
+Modules and model variants
+==========================
+
+Within the context of the tool, the term **module** (specified by :attr:`.Config.module`) is used to mean input data for particular *sets of technologies*.
+These correspond to subsets of all the technologies in MESSAGEix-GLOBIOM models—either the base model or model variants. [3]_
+Currently, :mod:`.tools.costs` supports two module :attr:`~.Config.module` settings:
+
+"energy"
+   Mostly electric power technologies, as well as a few other supply-side technologies.
+
+   This can be considered the "base" module, corresponding to the "base" version of MESSAGEix-GLOBIOM, as it contains the most technologies.
+
+"materials"
+   Technologies conceived as part of the materials and industry sectors.
+
+Data and files for a particular module can refer to other modules.
+This allows for values or settings for "materials" and other technologies to be assumed to match the values and settings used for the referenced "energy"-module technologies.
+
+.. [3] This usage of “module” differs from the meaning of a “Python module”.
+   For instance, :mod:`message_ix_models.model.water` is a *Python module* for MESSAGEix-Nexus.
+   If the setting :py:`.costs.Config.module = "water"` were added, this *might* refer to input data for projecting investment and fixed costs of water technologies that are defined in :mod:`message_ix_models.model.water`—but not necessarily.
 
 To add a new module, the following steps are required:
 
-- Add the relevant data to the `data` directory, under the `costs` subdirectory.
-  Create another folder with the name of the new module. The following files are needed:
+- In :file:`message_ix_models/data/costs/`, create another subdirectory with the name of the new module, for instance :file:`message_ix_models/data/costs/[module]/`.
+- Add the following files to the new directory:
 
-   - :file:`first_year_[module].csv`: a file with a list of technologies and the corresponding first year that the respective technology can start being deployed/modeled.
+  :file:`first_year_[module].csv`
+     A file with a list of technologies and the corresponding first year that the respective technology can start being deployed/modeled.
      The file should have the following columns:
 
-     - `message_technology`: the technology name
-     - `first_year_original`: the first year the technology can start being deployed
+     - "message_technology": the technology name.
+     - "first_year_original": the first year the technology can start being deployed.
 
-   - :file:`tech_map_[module].csv`: a file with the mapping of technologies to a base year cost source.
+  :file:`tech_map_[module].csv`
+     A file with the mapping of technologies to a source of base year cost data.
      The file should have the following columns:
 
-     - `message_technology`: the technology name
-     - `reg_diff_source` and `reg_diff_technology`: the source data for the regional differentiation of costs and the corresponding technology to map to.
-        If `reg_diff_source` is `energy`, then `reg_diff_technology` should be a technology that is present in the `energy` module.
-        If `reg_diff_source` is `weo`, then `reg_diff_technology` should be a technology that is present in the WEO data (refer to the `tech_map_energy.csv` file for the kinds of WEO technologies available, as all energy technologies are mapped to a WEO technology).
-        You can also add another source of regional differentation (in the case of `materials`, a newly created source called `intratec` is used).
-        However, this method is a little more involved as it would involved changing the code to read in this new source data.
-     - `base_year_reference_region_cost`: the base year cost for the technology in the reference region.
-     - `fix_ratio`: the ratio of fixed O&M costs to investment costs for the technology.
+     - "message_technology": the technology name.
+     - "reg_diff_source" and "reg_diff_technology": the source data for the regional differentiation of costs and the corresponding technology to map to.
 
-- Add the new module to the config file in `tools.costs.config` under the `modules` key.
+       - If "reg_diff_source" is "energy", then "reg_diff_technology" should be a technology that is present in the "energy" module.
+       - If "reg_diff_source" is "weo", then "reg_diff_technology" should be a technology that is present in the WEO data (refer to :file:`tech_map_energy.csv` for the names of WEO technologies available, as all energy technologies are mapped to a WEO technology).
+       - You can also add another source of regional differentiation (in the case of :py:`module="materials"`, a newly created source called "intratec" is used).
+         However, this method is a little more involved as it requires extending the code to read in new source data.
+     - "base_year_reference_region_cost": the base year cost for the technology in the reference region.
+     - "fix_ratio": the ratio of fixed O&M costs to investment costs for the technology.
+
+- Add the new module to the allowed values of :attr:`.Config.module`.
 
 Please note that the following assumptions are made in technology costs mapping:
 
-- If a technology is mapped to a technology in the `energy` module, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
-- If a `materials` (or any other non-`energy`) technology is has `reg_diff_source` as `energy` and the `base_year_reference_region_cost` is not empty, then the `base_year_reference_region_cost` that is in `tech_map_materials.csv` is used as the base year cost for the technology in the reference region.
-  If the `base_year_reference_region_cost` is empty, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
-- If using the `materials` module, if a technology that is specified in :file:`tech_map_materials.csv` already exists in :file:`tech_map_energy.csv`, then the reference region cost is taken from :file:`tech_map_materials.csv`.
+- If a technology is mapped to a technology in the "energy" module, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
+- If a "materials" (or any other non-"energy") technology has :py:`reg_diff_source="energy"` and the "base_year_reference_region_cost" is not empty, then the "base_year_reference_region_cost" in :file:`tech_map_[module].csv` is used as the base year cost for the technology in the reference region.
+  If the "base_year_reference_region_cost" is empty, then the cost reduction across scenarios is the same as the cost reduction of the mapped technology.
+- If using the "materials" module, if a technology that is specified in :file:`tech_map_materials.csv` already exists in :file:`tech_map_energy.csv`, then the reference region cost is taken from :file:`tech_map_materials.csv`.
 - If a technology in a module is not mapped to any source of regional differentiation, then no cost reduction over the years is applied to the technology.
-- If a technology has a non-empty `base_year_reference_region_cost` but is not mapped to any source of regional differentiation, then assume no regional differentiation and use the reference region base year cost as the base year cost for all regions.
+- If a technology has a non-empty "base_year_reference_region_cost" but is not mapped to any source of regional differentiation, then assume no regional differentiation and use the reference region base year cost as the base year cost for all regions.
 
 Data sources
 ============
@@ -75,68 +100,74 @@ The tool uses the following data sources for the regional differentiation of cos
 - WEO: the World Energy Outlook data from the International Energy Agency (IEA).
 - Intratec: the Intratec data, which is a database of production costs for chemicals and other materials.
 
-The tool also uses SSP data (called upon by the :mod:`exo_data` module) to adjust the costs of technologies based on GDP per capita.
+The tool also uses :mod:`.ssp.data` (via :func:`.exo_data.prepare_computer`) to adjust the costs of technologies based on GDP per capita.
 
-How to use the tool
-===================
+Usage
+=====
 
 :func:`.create_cost_projections` is the top-level entry point.
-This function in turns calls the other functions in the module in the correct order, according to settings stored on a :class:`.costs.Config` object.
 
-The inputs for :func:`.create_cost_projections` are:
+This function takes a single :class:`.costs.Config` object as an argument. The object carries all the settings understood by :func:`.create_cost_projections` and other functions.
+Those settings include the following; click each for the full description, allowable values, and defaults:
 
-- Module: the module to use for the cost projections (either `energy` or `materials`). Default is `energy`.
-- Method: the method to use for projecting costs in non-reference regions (either `constant`, `convergence`, or `gdp`). Default is `gdp`.
-- Node: the regional level (node) to use for the cost projections (either `R11` or `R12`). Default is `R12`.
-- Reference region: the reference region to use for the cost projections (by default, NAM is used)
-- Scenario: the scenario to use for the cost projections (such as `SSP1`, `SSP2`, `SSP3`, `SSP4`, `SSP5`, or `LED`). By default, `all` is used, which means that the costs are projected for all scenarios.
-- Scenario version: the version of the SSP data to use (either `updated` or `original`). Default is `updated`.
-- Base year: the base year to use for the cost projections. Default is 2021.
-- Convergence year: the year by which the costs in all regions should converge to the reference region costs (if using the `convergence` method). By default, the year 2050 is used.
-- FOM rate: the rate at which the fixed O&M rate of a technology increases over time. Default is 0.025.
-- Format: the format of the output data (either `message` or `iamc`). Default is `message`.
+   :attr:`~.Config.module`,
+   :attr:`~.Config.method`,
+   :attr:`~.Config.node`,
+   :attr:`~.Config.ref_region`,
+   :attr:`~.Config.scenario`,
+   :attr:`~.Config.scenario_version`,
+   :attr:`~.Config.base_year`,
+   :attr:`~.Config.convergence_year`,
+   :attr:`~.Config.fom_rate`, and
+   :attr:`~.Config.format`.
 
-To use the tool with the default settings, simply create a :class:`.costs.Config` object and call the :func:`.create_cost_projections` function with the :class:`.costs.Config` object as the input.
-The output of :func:`.create_cost_projections` is a dictionary with the following keys:
+:func:`.create_cost_projections` in turn calls the other functions in the module in the correct order, and returns a Python :class:`dict` with the following keys mapped to :class:`pandas.DataFrame`.
 
-- `inv_cost`: the investment costs of the technologies in each region
-- `fix_cost`: the fixed O&M costs of the technologies in each region
+- "inv_cost": the investment costs of the technologies in each region.
+- "fix_cost": the fixed O&M costs of the technologies in each region.
 
-An example is::
+To use the tool with the default settings, simply create a :class:`.Config` object and pass it as an argument to :func:`.create_cost_projections`::
 
-   from message_ix_models.tools.costs.config import Config
-   from message_ix_models.tools.costs.projections import create_cost_projections
+   from message_ix_models.tools.costs import Config, create_cost_projections
 
+   # Use default settings
    cfg = Config()
+
+   # Compute cost projections
    costs = create_cost_projections(cfg)
 
+   # Show the resulting data
    costs["inv_cost"]
    costs["fix_cost"]
 
-More examples of how to use the function are given in the file :file:`tools/costs/demo.py`, which also shows how to use settings that are not the default in :class:`.Config`.
+These data can be further manipulated; for instance, added to a scenario using :func:`.add_par_data`.
+See the file :file:`message_ix_models/tools/costs/demo.py` for multiple examples using various non-default settings to control the methods and data used by :func:`.create_cost_projections`.
+
 
 Code reference
 ==============
+
+The top-level function and configuration class:
 
 .. autosummary::
 
    Config
    create_cost_projections
 
-The other submodules implement the supporting methods, calculations, and data handling:
+The other submodules implement the supporting methods, calculations, and data handling, in roughly the following order:
 
-1. :mod:`.tools.costs.regional_differentiation` calculates the regional differentiation of costs for technologies.
-2. :mod:`.tools.costs.decay` projects the costs of technologies in a reference region with only a cost reduction rate applied.
-3. :mod:`.tools.costs.gdp` adjusts the regional differentiation of costs for technologies based on the GDP per capita of the region.
-4. :mod:`.tools.costs.projections` combines all the above steps and returns the projected costs for each technology in each region.
+1. :mod:`~.costs.regional_differentiation` calculates the regional differentiation of costs for technologies.
+2. :mod:`~.costs.decay` projects the costs of technologies in a reference region with only a cost reduction rate applied.
+3. :mod:`~.costs.gdp` adjusts the regional differentiation of costs for technologies based on the GDP per capita of the region.
+4. :mod:`~.costs.projections` combines all the above steps and returns the projected costs for each technology in each region.
 
 .. automodule:: message_ix_models.tools.costs
    :members:
 
 .. currentmodule:: message_ix_models.tools.costs.decay
 
-Cost reduction of technologies over time (:mod:`.tools.costs.decay`)
---------------------------------------------------------------------
+Cost reduction of technologies over time (:mod:`~.costs.decay`)
+---------------------------------------------------------------
 
 .. automodule:: message_ix_models.tools.costs.decay
    :members:
@@ -149,8 +180,8 @@ Cost reduction of technologies over time (:mod:`.tools.costs.decay`)
 
 .. currentmodule:: message_ix_models.tools.costs.gdp
 
-GDP-adjusted costs and regional differentiation (:mod:`.tools.costs.gdp`)
--------------------------------------------------------------------------
+GDP-adjusted costs and regional differentiation (:mod:`~.costs.gdp`)
+--------------------------------------------------------------------
 
 .. automodule:: message_ix_models.tools.costs.gdp
    :members:
@@ -163,8 +194,8 @@ GDP-adjusted costs and regional differentiation (:mod:`.tools.costs.gdp`)
 
 .. currentmodule:: message_ix_models.tools.costs.projections
 
-Projection of costs given input parameters (:mod:`.tools.costs.projections`)
-----------------------------------------------------------------------------
+Projection of costs given input parameters (:mod:`~.costs.projections`)
+-----------------------------------------------------------------------
 
 .. automodule:: message_ix_models.tools.costs.projections
    :members:
@@ -179,8 +210,8 @@ Projection of costs given input parameters (:mod:`.tools.costs.projections`)
 
 .. currentmodule:: message_ix_models.tools.costs.regional_differentiation
 
-Regional differentiation of costs (:mod:`.tools.costs.regional_differentiation`)
----------------------------------------------------------------------------------
+Regional differentiation of costs (:mod:`~.costs.regional_differentiation`)
+---------------------------------------------------------------------------
 
 .. automodule:: message_ix_models.tools.costs.regional_differentiation
    :members:
