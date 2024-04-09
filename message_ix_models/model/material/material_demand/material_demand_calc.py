@@ -340,7 +340,7 @@ def derive_demand(material, scen, old_gdp=False, ssp="SSP2"):
     print(f"before adjustment: {params_opt}")
     for idx, multiplier in enumerate(mode_modifiers_dict[mode][material].values()):
         params_opt[idx] *= multiplier
-    print(f"before adjustment: {params_opt}")
+    print(f"after adjustment: {params_opt}")
 
     # prepare df for applying regression model and project demand
     df_all = pd.merge(df_pop, df_base_demand.drop(columns=["year"]), how="left")
