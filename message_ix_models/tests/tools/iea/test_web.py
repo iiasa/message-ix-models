@@ -17,6 +17,11 @@ dask_python_incompatibility_condition = parse(version("message_ix")) < parse("3.
 
 
 class TestIEA_EWEB:
+    @pytest.mark.xfail(
+        condition=dask_python_incompatibility_condition,
+        reason="Pinned dask version and certain Python versions are incompatible",
+        raises=TypeError,
+    )
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
     @pytest.mark.parametrize(
         "source_kw",
@@ -47,6 +52,8 @@ class TestIEA_EWEB:
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
+        import message_ix_models.tools.iea.web  # noqa: F401
+
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
