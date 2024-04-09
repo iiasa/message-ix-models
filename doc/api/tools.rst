@@ -6,6 +6,10 @@ General purpose modeling tools
 - Codes for retrieving data from specific data sources and adapting it for use with :mod:`message_ix_models`.
 - Codes for modifying scenarios; although tools for building models should go in :mod:`message_ix_models.model`.
 
+On other pages:
+
+- :doc:`tools-costs`
+
 On this page:
 
 .. contents::
