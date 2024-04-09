@@ -172,7 +172,7 @@ Further information about the top-level options:
    These options direct it to work with a different Platform.
 
 :program:`--model MODEL --scenario SCENARIO` or :program:`--url`
-    Many commands use an *existing* |Scenario| as a starting point, and begin by cloning that Scenario to a new (model name, scenario name).
+    Many commands use an *existing* :class:`.Scenario` as a starting point, and begin by cloning that Scenario to a new (model name, scenario name).
     For any such command, these top-level options define the starting point/initial Scenario to clone/‘baseline’.
 
     In contrast, see :program:`--output-model`, below.

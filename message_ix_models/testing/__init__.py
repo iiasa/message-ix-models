@@ -60,7 +60,7 @@ def session_context(pytestconfig, tmp_env):
 
     Uses the :func:`.tmp_env` fixture from ixmp. This fixture also sets:
 
-    - :attr:`.Context.cache_path`, depending on whether the :program:`--local-cache` CLI
+    - :attr:`.Config.cache_path`, depending on whether the :program:`--local-cache` CLI
       option was given:
 
       - If not given: pytest's :doc:`standard cache directory <pytest:how-to/cache>`.
@@ -167,7 +167,7 @@ def mix_models_cli(session_context, tmp_env):
 
 
 def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scenario:
-    """Return or create a |Scenario| containing the bare RES, for use in testing.
+    """Return or create a :class:`.Scenario` containing the bare RES for use in testing.
 
     The Scenario has a model name like "MESSAGEix-GLOBIOM [regions] Y[years]", for
     instance "MESSAGEix-GLOBIOM R14 YB" (see :func:`.bare.name`) and a scenario name
@@ -181,12 +181,12 @@ def bare_res(request, context: Context, solved: bool = False) -> message_ix.Scen
 
     Parameters
     ----------
-    request : .Request or None
+    request : .FixtureRequest or None
         The pytest :fixture:`pytest:request` fixture. If provided the pytest test node
         name is used for the scenario name of the returned Scenario.
-    context : Context
+    context : .Context
         Passed to :func:`.testing.bare_res`.
-    solved : bool, *optional*
+    solved : bool, optional
         Return a solved Scenario.
 
     Returns

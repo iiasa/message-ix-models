@@ -5,7 +5,9 @@ Next release
 ============
 
 - Migrate :doc:`/api/report/legacy` to provide post-processing functionality for the :doc:`global model snapshot </api/model-snapshot>` (:pull:`159`).
+- Migrate and improve code for four sources of exogenous data (:pull:`162`): :mod:`.project.gea`, :mod:`.project.shape`, :mod:`.tools.gfei`, and :mod:`.tools.iea.eei`.
 - Expand :doc:`data` (:pull:`161`).
+- Add an explicit :ref:`policy-upstream-versions` (:pull:`162`).
 
 v2024.4.2
 =========
@@ -49,7 +51,7 @@ Update code that imports from the following modules:
 
 Code that imports from the old locations will continue to work, but will raise :class:`DeprecationWarning`.
 
-Data for :doc:`water` is no longer included in the PyPI distributions for :mod:`message_ix_models`.
+Data for :doc:`water/index` is no longer included in the PyPI distributions for :mod:`message_ix_models`.
 This reduces the package size from >20 MB to <5 MB.
 To automatically download and unpack these data into a local directory, use :program:`mix-models fetch MESSAGEix-Nexus`.
 
@@ -87,15 +89,15 @@ v2023.10.16
 - New providers for exogenous data from the :class:`.SSPOriginal` and :class:`.SSPUpdate` (:pull:`125`) sources.
 - Improved :class:`.ScenarioInfo` (:pull:`125`):
 
-  - New attributes :attr:`~.ScenarioInfo.model`, :attr:`~.ScenarioInfo.scenario`, :attr:`~.ScenarioInfo.version`, and (settable) :attr:`~.ScenarioInfo.url`; class method :meth:`~.ScenarioInfo.from_url` to allow storing |Scenario| identifiers on ScenarioInfo objects.
+  - New attributes :attr:`~.ScenarioInfo.model`, :attr:`~.ScenarioInfo.scenario`, :attr:`~.ScenarioInfo.version`, and (settable) :attr:`~.ScenarioInfo.url`; class method :meth:`~.ScenarioInfo.from_url` to allow storing :class:`.Scenario` identifiers on ScenarioInfo objects.
   - New property :attr:`~.ScenarioInfo.path`, giving a valid path name for scenario-specific file I/O.
 
 - Improvements to :mod:`~message_ix_models.report` (:pull:`125`):
 
   - New :class:`.report.Config` class collecting recognized settings for the module.
   - :py:`context["report"]` always exists as an instance of :class:`.report.Config`.
-  - New submodule :class:`.report.plot` with base class and 5 plots of time-series data stored on Scenarios.
-  - Submodule :class:`.report.sim` provides :func:`add_simulated_solution` for testing reporting configuration.
+  - New submodule :mod:`.report.plot` with base class and 5 plots of time-series data stored on Scenarios.
+  - Submodule :mod:`.report.sim` provides :func:`.add_simulated_solution` for testing reporting configuration.
   - New operator :func:`.filter_ts`.
 
 - New reusable command-line option :program:`--urls-from-file` in :mod:`.util.click` (:pull:`125`).
@@ -196,7 +198,7 @@ v2023.5.13
 2022.8.17
 =========
 
-- Add :func:`.nodes_ex_world` and use this in :func:`.disutility.data_conversion` instead of expected a "World" node ID to be the first element in :attr:`.ScenarioInfo.N` (:pull:`78`).
+- Add :func:`~.util.node.nodes_ex_world` and use this in :func:`.disutility.data_conversion` instead of expected a "World" node ID to be the first element in :attr:`.ScenarioInfo.N` (:pull:`78`).
 - Add example files and documentation for :doc:`pkg-data/iiasa-se` (:pull:`78`).
 - Expand :file:`~` (i.e. ``$HOME``) in the ``"message local data"`` :ref:`configuration setting <local-data>` (:pull:`78`).
 
@@ -244,7 +246,7 @@ v2023.5.13
 - New :class:`.Spec` class for easier handling of specifications of model (or model variant) structure (:pull:`39`)
 - New utility function :func:`.util.local_data_path` (:pull:`39`).
 - :func:`.repr` of :class:`.Context` no longer prints a (potentially very long) list of all keys and settings (:pull:`39`).
-- :func:`.as_codes` accepts a :class:`.dict` with |Code| values (:pull:`39`).
+- :func:`.as_codes` accepts a :class:`.dict` with :class:`.Code` values (:pull:`39`).
 
 Earlier releases
 ================
@@ -263,15 +265,15 @@ Earlier releases
 2021.7.22
 ---------
 
-- Migrate utilities :func:`cached`, :func:`.check_support`, :func:`.convert_units`, :func:`.maybe_query`, :func:`.series_of_pint_quantity` (:pull:`27`)
+- Migrate utilities :func:`.cached`, :func:`.check_support`, :func:`.convert_units`, :func:`.maybe_query`, :func:`.series_of_pint_quantity` (:pull:`27`)
 - Add :data:`.testing.NIE`.
 - Add the ``--jvmargs`` option to :command:`pytest` (see :func:`.pytest_addoption`).
-- Remove :meth:`.Context.get_config_file`, :meth:`.get_path`, :meth:`.load_config`, and :meth:`.units`, all deprecated since 2021-02-28.
+- Remove :py:`.Context.get_config_file()`, :py:`.get_path()`, :py:`.load_config()`, and :py:`.units`, all deprecated since 2021-02-28.
 
 2021.7.6
 --------
 
-- Add :func:`identify_nodes`, a function for identifying a :doc:`pkg-data/node` based on a |Scenario| (:pull:`24`).
+- Add :func:`.identify_nodes`, a function for identifying a :doc:`pkg-data/node` based on a :class:`.Scenario` (:pull:`24`).
 - Add :obj:`.adapt_R11_R14`, a function for adapting data from the :ref:`R11` to the :ref:`R14` node lists (:pull:`24`).
 - Add :func:`.export_test_data` and :command:`mix-models export-test-data` command (:pull:`16`).
   See :ref:`export-test-data`.
@@ -298,8 +300,8 @@ Earlier releases
 2021.3.3
 --------
 
-- Migrate :mod:`.util.click`, :mod:`.util.logging`; expand documentation (:pull:`8`:).
-- :meth:`.Context.clone_to_dest` method replaces :func:`clone_to_dest` function.
+- Migrate :mod:`.util.click`, :mod:`.util.logging <.util._logging>`; expand documentation (:pull:`8`:).
+- :meth:`.Context.clone_to_dest` method replaces :py:`clone_to_dest()` function.
 - Build PDF documentation on ReadTheDocs.
 - Allow CLI commands from both :mod:`message_ix_models` and :mod:`message_data` via :program:`mix-models`.
 - Migrate :program:`mix-models techs` CLI command.

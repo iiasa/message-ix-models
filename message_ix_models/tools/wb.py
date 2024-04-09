@@ -22,9 +22,9 @@ def assign_income_groups(  # noqa: C901
 ) -> None:
     """Annotate `cl_node` with income groups.
 
-    Each node is assigned an |Annotation| with :py:`id="wb-income-group"`, according to
-    the income groups of its children (countries), as reflected in `cl_income_group`
-    (see :func:`.get_income_group_codelist`).
+    Each node is assigned an :class:`.Annotation` with :py:`id="wb-income-group"`,
+    according to the income groups of its children (countries), as reflected in
+    `cl_income_group` (see :func:`.get_income_group_codelist`).
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ def fetch_codelist(id: str) -> "sdmx.model.common.Codelist":
 
 @lru_cache()
 def get_income_group_codelist() -> "sdmx.model.common.Codelist":
-    """Return a |Codelist| with World Bank income group information.
+    """Return a :class:`.Codelist` with World Bank income group information.
 
     The returned code list is a modified version of the one with URN
     ``…Codelist=WB:CL_REF_AREA_WDI(1.0)``, via :func:`.fetch_codelist`.

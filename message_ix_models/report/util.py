@@ -100,7 +100,7 @@ def collapse(df: pd.DataFrame, var=[]) -> pd.DataFrame:
 
     Parameters
     ----------
-    var : list of str, *optional*
+    var : list of str, optional
         Strings or dimensions to concatenate to the 'Variable' column. The first of
         these is usually a string value used to populate the column. These are joined
         using the pipe ('|') character.
@@ -175,7 +175,7 @@ def copy_ts(rep: Reporter, other: str, filters: Optional[dict]) -> Key:
     ----------
     other_url : str
        URL of the other scenario from which to copy time series data.
-    filters : dict, *optional*
+    filters : dict, optional
        Filters; passed via :func:`.store_ts` to :meth:`ixmp.TimeSeries.timeseries`.
 
     Returns

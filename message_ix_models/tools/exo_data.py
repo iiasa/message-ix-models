@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Dict, Literal, Mapping, Optional, Tuple, Type
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Type
 
 from genno import Computer, Key, Quantity, quote
 
@@ -48,6 +48,12 @@ class ExoDataSource(ABC):
     #: Optional additional dimensions for the returned :class:`.Key`/:class:`.Quantity`.
     #: If not set by :meth:`.__init__`, the dimensions are :math:`(n, y)`.
     extra_dims: Tuple[str, ...] = ()
+
+    #: :any:`True` if :meth:`.transform` should aggregate data on the |n| dimension.
+    aggregate: bool = True
+
+    #: :any:`True` if :meth:`.transform` should interpolate data on the |y| dimension.
+    interpolate: bool = True
 
     @abstractmethod
     def __init__(self, source: str, source_kw: Mapping) -> None:
@@ -98,23 +104,35 @@ class ExoDataSource(ABC):
 
         The default implementation:
 
-        1. Aggregates the data (:func:`.genno.operator.aggregate`) on the |n| dimension
-           using "n::groups".
-        2. Interpolates the data (:func:`.genno.operator.interpolate`) on the |y|
-           dimension using "y::coords".
+        1. If :attr:`.aggregate` is :any:`True`, aggregates the data (
+           :func:`.genno.operator.aggregate`) on the |n| dimension using the key
+           "n::groups".
+        2. If :attr:`.interpolate` is :any:`True`, interpolates the data (
+           :func:`.genno.operator.interpolate`) on the |y| dimension using "y::coords".
         """
+        k = base_key
         # Aggregate
-        c.add(base_key + "1", "aggregate", base_key, "n::groups", keep=False)
+        if self.aggregate:
+            k = c.add(k + "1", "aggregate", k, "n::groups", keep=False)
 
         # Interpolate to the desired set of periods
-        kw = dict(fill_value="extrapolate")
-        k2 = base_key + "2"
-        c.add(k2, "interpolate", base_key + "1", "y::coords", kwargs=kw)
+        if self.interpolate:
+            kw = dict(fill_value="extrapolate")
+            k = c.add(k + "2", "interpolate", k, "y::coords", kwargs=kw)
 
-        return k2
+        return k
 
     def raise_on_extra_kw(self, kwargs) -> None:
-        """Helper for subclasses."""
+        """Helper for subclasses to handle the `source_kw` argument.
+
+        1. Store :attr:`.aggregate` and :attr:`.interpolate`, if they remain in
+           `kwargs`.
+        2. Raise :class:`ValueError` if there are any other, unhandled keyword arguments
+           in `kwargs`.
+        """
+        self.aggregate = kwargs.pop("aggregate", self.aggregate)
+        self.interpolate = kwargs.pop("interpolate", self.interpolate)
+
         if len(kwargs):
             log.error(
                 f"Unhandled extra keyword arguments for {type(self).__name__}: "
@@ -143,13 +161,13 @@ def prepare_computer(
     source : str
         Identifier of the source, possibly with other information to be handled by a
         :class:`ExoDataSource`.
-    source_kw : dict, *optional*
+    source_kw : dict, optional
         Keyword arguments for a Source class. These can include indexers, selectors, or
         other information needed by the source class to identify the data to be
         returned.
 
         If the key "measure" is present, it **should** be one of :data:`MEASURES`.
-    strict : bool, *optional*
+    strict : bool, optional
         Raise an exception if any of the keys to be added already exist.
 
     Returns
@@ -165,7 +183,7 @@ def prepare_computer(
     source_kw = source_kw or dict()
     if measure := source_kw.get("measure"):
         if measure not in MEASURES:
-            log.warning(f"source keyword {measure = } not in recognized {MEASURES}")
+            log.debug(f"source keyword {measure = } not in recognized {MEASURES}")
     else:
         measure = "UNKNOWN"
 
@@ -175,6 +193,8 @@ def prepare_computer(
         try:
             # Instantiate a Source object to provide this data
             source_obj = cls(source, deepcopy(source_kw or dict()))
+        # except Exception as e:  # For debugging
+        #     log.debug(repr(e))
         except Exception:
             pass  # Class does not recognize the arguments
 
@@ -183,6 +203,7 @@ def prepare_computer(
 
     # Add structural information to the Computer
     c.require_compat("message_ix_models.report.operator")
+    c.graph.setdefault("context", context)
 
     # Retrieve the node codelist
     c.add("n::codes", quote(get_codes(f"node/{context.model.regions}")), strict=strict)
@@ -292,8 +313,11 @@ def iamc_like_data_for_query(
     query: str,
     *,
     archive_member: Optional[str] = None,
+    drop: Optional[List[str]] = None,
     non_iso_3166: Literal["keep", "discard"] = "discard",
     replace: Optional[dict] = None,
+    unique: str = "MODEL SCENARIO VARIABLE UNIT",
+    **kwargs,
 ) -> Quantity:
     """Load data from `path` in IAMC-like format and transform to :class:`.Quantity`.
 
@@ -326,7 +350,7 @@ def iamc_like_data_for_query(
 
     from message_ix_models.util.pycountry import iso_3166_alpha_3
 
-    unique = dict()
+    unique_values = dict()
 
     def drop_unique(df, names) -> pd.DataFrame:
         if len(df) == 0:
@@ -337,7 +361,7 @@ def iamc_like_data_for_query(
             values = df[name].unique()
             if len(values) > 1:
                 raise RuntimeError(f"Not unique {name!r}: {values}")
-            unique[name] = values[0]
+            unique_values[name] = values[0]
         return df.drop(names_list, axis=1)
 
     def assign_n(df: pd.DataFrame) -> pd.DataFrame:
@@ -357,19 +381,26 @@ def iamc_like_data_for_query(
         # A direct path, possibly compressed
         source = path
 
+    kwargs.setdefault("engine", "pyarrow")
+    set_index = ["n"] + sorted(
+        set(["MODEL", "SCENARIO", "VARIABLE", "UNIT"]) - set(unique.split())
+    )
+
     tmp = (
-        pd.read_csv(source, engine="pyarrow")
+        pd.read_csv(source, **kwargs)
+        .drop(columns=drop or [])
         .query(query)
         .replace(replace or {})
+        .dropna(how="all", axis=1)
         .rename(columns=lambda c: c.upper())
-        .pipe(drop_unique, "MODEL SCENARIO VARIABLE UNIT")
+        .pipe(drop_unique, unique)
         .pipe(assign_n)
         .dropna(subset=["n"])
         .drop("REGION", axis=1)
-        .set_index("n")
+        .set_index(set_index)
         .rename(columns=lambda y: int(y))
         .rename_axis(columns="y")
         .stack()
         .dropna()
     )
-    return Quantity(tmp, units=unique["UNIT"])
+    return Quantity(tmp, units=unique_values["UNIT"])

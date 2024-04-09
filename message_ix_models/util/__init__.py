@@ -4,11 +4,13 @@ from datetime import datetime
 from functools import partial, update_wrapper
 from importlib.metadata import version
 from itertools import count
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
     Collection,
     Dict,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -20,6 +22,7 @@ from typing import (
 import message_ix
 import pandas as pd
 import pint
+from platformdirs import user_cache_path
 
 from ._convert_units import convert_units, series_of_pint_quantity
 from ._logging import mark_time, preserve_log_level, silence_log
@@ -75,6 +78,7 @@ __all__ = [
     "merge_data",
     "minimum_version",
     "package_data_path",
+    "path_fallback",
     "preserve_log_level",
     "private_data_path",
     "replace_par_data",
@@ -101,7 +105,7 @@ def add_par_data(
     data
         Dict with keys that are parameter names, and values are pd.DataFrame or other
         arguments
-    dry_run : bool, *optional*
+    dry_run : optional
         Only show what would be done.
 
     See also
@@ -306,7 +310,7 @@ def ffill(
         Dimension to fill along. Must be a column in `df`.
     values : list of str
         Labels along `dim` that must be present in the returned data frame.
-    expr : str, *optional*
+    expr : str, optional
         If provided, :meth:`.DataFrame.eval` is called. This can be used to assign one
         column to another. For instance, if `dim` == "year_vtg" and `expr` is "year_act
         = year_vtg", then forward filling is performed along the "year_vtg" dimension/
@@ -382,17 +386,17 @@ def make_io(src, dest, efficiency, on="input", **kwargs):
 
     Parameters
     ----------
-    src : tuple (str, str, str)
-        Input commodity, level, unit.
-    dest : tuple (str, str, str)
-        Output commodity, level, unit.
+    src : tuple of str
+        Input (commodity, level, unit)
+    dest : tuple of str
+        Output (commodity, level, unit)
     efficiency : float
         Conversion efficiency.
     on : 'input' or 'output'
         If 'input', `efficiency` applies to the input, and the output, thus the activity
         level of the technology, is in dest[2] units. If 'output', the opposite.
     kwargs
-        Passed to :func:`~message_ix.make_df`.
+        Passed to :func:`.make_df`.
 
     Returns
     -------
@@ -432,10 +436,10 @@ def make_matched_dfs(
         Used to populate other columns of each data frame. Duplicates—which occur when
         the target parameter has fewer dimensions than `base`—are dropped.
     par_values :
-        Argument names (e.g. ‘fix_cost’) are passed to :func:`~.message_ix.make_df`.
-        If the value is :class:`float`, it overwrites the "value" column; if
-        :class:`pint.Quantity`, its magnitude overwrites "value" and its units the
-        "units" column, as a formatted string.
+        Argument names (e.g. ‘fix_cost’) are passed to :func:`.make_df`. If the value is
+        :class:`float`, it overwrites the "value" column; if :class:`pint.Quantity`, its
+        magnitude overwrites "value" and its units the "units" column, as a formatted
+        string.
 
     Returns
     -------
@@ -476,9 +480,9 @@ def make_source_tech(
 
     Parameters
     ----------
-    info : Scenario or ScenarioInfo
+    info : .Scenario or .ScenarioInfo
     common : dict
-        Passed to :func:`~message_ix.make_df`.
+        Passed to :func:`.make_df`.
     **values
         Values for 'capacity_factor' (optional; default 1.0), 'output', 'var_cost', and
         optionally 'technical_lifetime'.
@@ -598,6 +602,71 @@ def minimum_version(expr: str) -> Callable:
     return decorator
 
 
+def path_fallback(
+    *parts: Union[str, Path],
+    where: Union[str, List[Union[str, Path]]] = "",
+) -> Path:
+    """Locate a path constructed from `parts` found in the first of several directories.
+
+    This allows to implement ‘fallback’ behaviour in which files or directories in
+    certain locations are used preferentially.
+
+    Parameters
+    ----------
+    parts :
+        Path parts or fragments such as directory names and a final file name.
+    where :
+        Either:
+
+        - :class:`str` containing one or more of:
+
+          - "cache": locate `parts` in the :mod:`message_ix_models` cache directory.
+          - "package": locate `parts` in :mod:`message_ix_models` package data (same
+            as :func:`.package_data_path`).
+          - "private": locate `parts` in the :mod:`message_data` :file:`/data/`
+            directory (same as :func:`.private_data_path`).
+          - "test": locate test data in :py:`package_data_path("test", ...)`
+
+        - :class:`list` where each element is :class:`str` (one of the above) or a
+          :class:`pathlib.Path`.
+
+    Returns
+    -------
+    pathlib.Path
+        The first of the locations indicated by `where` in which the file or directory
+        `parts` exists.
+
+    Raises
+    ------
+    ValueError
+        If `where` is empty or `parts` are not found in any of the indicated locations.
+    """
+    dirs = []
+    for item in where.split() if isinstance(where, str) else where:
+        if isinstance(item, str):
+            if item == "cache":
+                dirs.append(user_cache_path("message-ix-models"))
+            elif item == "package":
+                dirs.append(package_data_path())
+            elif item == "private":
+                dirs.append(private_data_path())
+            elif item == "test":
+                dirs.append(package_data_path("test"))
+        else:
+            dirs.append(item)
+
+    for path in [d.joinpath(*parts) for d in dirs]:
+        if not path.exists():
+            log.debug(f"Not found: {path}")
+            continue
+        return path
+
+    if not dirs:
+        raise ValueError(f"No directories identified among {where!r}")
+    else:
+        raise ValueError(f"'{Path(*parts)!s}' not found in any of {dirs}")
+
+
 def replace_par_data(
     scenario: message_ix.Scenario,
     parameters: Union[str, Sequence[str]],
@@ -708,9 +777,9 @@ def strip_par_data(  # noqa: C901
 
     Parameters
     ----------
-    dry_run : bool, *optional*
+    dry_run : bool, optional
         If :data:`True`, only show what would be done.
-    dump : dict, *optional*
+    dump : dict, optional
         If provided, stripped data are stored in this dictionary. Otherwise, they are
         discarded.
 

@@ -53,7 +53,7 @@ class Context(dict):
 
         Parameters
         ----------
-        index : int, *optional*
+        index : int, optional
             Index of the Context instance to return, e.g. ``-1`` for the most recently
             created.
         """
@@ -198,7 +198,7 @@ class Context(dict):
 
         Parameters
         ----------
-        create : bool, *optional*
+        create : bool, optional
             If :obj:`True` (the default) and the base scenario does not exist, a bare
             RES scenario is created. Otherwise, an exception is raised.
 
@@ -297,7 +297,7 @@ class Context(dict):
         return result.with_suffix(suffix) if suffix else result
 
     def get_platform(self, reload=False) -> ixmp.Platform:
-        """Return a |Platform| from :attr:`.Config.platform_info`.
+        """Return a :class:`.Platform` from :attr:`.Config.platform_info`.
 
         When used through the CLI, :attr:`.Config.platform_info` is a 'base' platform as
         indicated by the --url or --platform  options.
@@ -324,7 +324,7 @@ class Context(dict):
         return self["_mp"]
 
     def get_scenario(self) -> message_ix.Scenario:
-        """Return a |Scenario| from :attr:`~.Config.scenario_info`.
+        """Return a :class:`.Scenario` from :attr:`~.Config.scenario_info`.
 
         When used through the CLI, :attr:`~.Config.scenario_info` is a ‘base’ scenario
         for an operation, indicated by the ``--url`` or
@@ -333,10 +333,19 @@ class Context(dict):
         return message_ix.Scenario(self.get_platform(), **self.core.scenario_info)
 
     def set_scenario(self, scenario: message_ix.Scenario) -> None:
-        """Update :attr:`.Config.scenario_info` to match an existing `scenario`."""
+        """Update :attr:`.Config.scenario_info` to match an existing `scenario`.
+
+        :attr:`.Config.url` is also updated.
+        """
         self.core.scenario_info.update(
             model=scenario.model, scenario=scenario.scenario, version=scenario.version
         )
+        try:
+            url = scenario.url
+        except AttributeError:
+            # Compatibility with ixmp <3.5
+            url = f"{scenario.model}/{scenario.scenario}/{scenario.version}"
+        self.core.url = f"ixmp://{scenario.platform.name}/{url}"
 
     def handle_cli_args(
         self,

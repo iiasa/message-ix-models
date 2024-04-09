@@ -37,12 +37,12 @@ class WorkflowStep:
     Parameters
     ----------
     name : str
-        ``"model name/scenario name"`` for the |Scenario| produced by the step.
-    action : CallbackType, *optional*
+        ``"model name/scenario name"`` for the :class:`.Scenario` produced by the step.
+    action : CallbackType, optional
         Function to be executed to modify the base into the target Scenario.
-    clone : bool, *optional*
+    clone : bool, optional
         :obj:`True` to clone the base scenario the target.
-    target : str, *optional*
+    target : str, optional
         URL for the scenario produced by the workflow step. Parsed to
         :attr:`scenario_info` and :attr:`platform_info`.
     kwargs
@@ -221,7 +221,7 @@ class Workflow(Computer):
         """Truncate the workflow at the step `name`.
 
         The step `name` is replaced with a new :class:`WorkflowStep` that simply loads
-        the target |Scenario| that would be produced by the original step.
+        the target :class:`.Scenario` that would be produced by the original step.
 
         Raises
         ------
@@ -299,7 +299,7 @@ def make_click_command(wf_callback: str, name: str, slug: str, **kwargs) -> "Com
     slug : str
         File name fragment for writing the workflow diagram; the path
         :file:`{slug}-workflow.svg` is used.
-    kwargs : *optional*
+    kwargs : optional
         Passed to :func:`click.command`, for instance to define additional parameters
         for the command.
     """

@@ -42,12 +42,12 @@ from message_ix_models.util import as_codes
     ],
 )
 def test_codelists(kind, exp):
-    """:func:`codelists` returns the expected IDs."""
+    """:func:`.codelists` returns the expected IDs."""
     assert exp == set(codelists(kind))
 
 
 class TestGetCodes:
-    """Test :func:`get_codes` for different code lists."""
+    """Test :func:`.get_codes` for different code lists."""
 
     @pytest.mark.parametrize(
         "name",

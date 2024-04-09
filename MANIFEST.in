@@ -1,10 +1,13 @@
+# Data for testing
 prune message_ix_models/data/test/advance
+prune message_ix_models/data/test/gea
 prune message_ix_models/data/test/iea
-prune message_ix_models/data/test/MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline
+prune message_ix_models/data/test/shape
+prune message_ix_models/data/test/snapshot-*
 prune message_ix_models/data/test/ssp
-prune message_ix_models/data/water/*
 # Larger package data
 # - Not distributed on PyPI.
 # - Should be fetched with Pooch from GitHub.
 exclude message_ix_models/data/ssp/*.gz
+prune message_ix_models/data/water/*
 exclude message_ix_models/data/water/*.tar.xz

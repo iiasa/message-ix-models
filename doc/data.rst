@@ -201,7 +201,7 @@ Fetch directly from a remote source
 This corresponds to section (1) above.
 Preferably, do this via :mod:`message_ix_models.util.pooch`:
 
-- Extend :mod:`.pooch.SOURCE` to store the Internet location, file name(s), and hash(es) of the file(s).
+- Extend :data:`.pooch.SOURCE` to store the Internet location, file name(s), and hash(es) of the file(s).
 - Call :func:`.pooch.fetch` to retrieve the file and cache it locally.
 - Write code in :mod:`message_ix_models` that processes the data into a common format, for instance by subclassing :class:`.ExoDataSource`.
 
