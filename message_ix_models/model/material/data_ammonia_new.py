@@ -80,7 +80,6 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
     act_years = act_years.drop_duplicates()
 
     for par_name in par_dict.keys():
-
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_loc"] = df["node_loc"].apply(lambda x: None if x == "default" else x)
@@ -182,7 +181,9 @@ def gen_data(scenario, dry_run=False, add_ccs: bool = True, lower_costs=False):
 
     # HACK: quick fix to enable compatibility with water build
     if len(scenario.par("output", filters={"technology": "extract_surfacewater"})):
-        par_dict["input"] = par_dict["input"].replace({"freshwater_supply": "freshwater"})
+        par_dict["input"] = par_dict["input"].replace(
+            {"freshwater_supply": "freshwater"}
+        )
 
     return par_dict
 
@@ -213,7 +214,6 @@ def gen_data_rel(scenario, dry_run=False, add_ccs: bool = True):
     act_years = act_years.drop_duplicates()
 
     for par_name in par_dict.keys():
-
         df = par_dict[par_name]
         # remove "default" node name to broadcast with all scenario regions later
         df["node_rel"] = df["node_rel"].apply(lambda x: None if x == "all" else x)
@@ -419,9 +419,7 @@ def read_demand():
         }
     )
 
-    df = N_trade_R12.loc[
-        N_trade_R12.year_act == 2010,
-    ]
+    df = N_trade_R12.loc[N_trade_R12.year_act == 2010,]
     df = df.pivot(index="node_loc", columns="type", values="value")
     NP = pd.DataFrame({"netimp": df["import"] - df.export, "demand": ND[2010]})
     NP["prod"] = NP.demand - NP.netimp
@@ -540,7 +538,6 @@ def gen_demand():
 
 
 def gen_resid_demand_NH3(scenario, gdp_elasticity):
-
     context = read_config()
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
