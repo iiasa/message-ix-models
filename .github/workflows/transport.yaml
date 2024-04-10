@@ -131,8 +131,8 @@ jobs:
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@main"
         pip install --upgrade "message_ix @ git+https://github.com/iiasa/message_ix.git@main"
-        # Temporary, pending a release that includes iiasa/message-ix-models#161
-        pip install --upgrade "message-ix-models @ git+https://github.com/iiasa/message-ix-models.git@main"
+        # Temporary, pending a release that includes iiasa/message-ix-models#161, #166
+        pip install --upgrade "message-ix-models[iea-web] @ git+https://github.com/iiasa/message-ix-models.git@main"
 
         # Upgrade matplotlib
         # pyam pins matplotlib < 3.7.1, which conflicts with plotnine per
