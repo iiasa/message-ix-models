@@ -9,18 +9,19 @@ from packaging.version import parse
 
 from message_ix_models.testing import GHA
 from message_ix_models.tools.exo_data import prepare_computer
+from message_ix_models.tools.iea.web import DIMS, generate_code_lists, load_data
 from message_ix_models.util import HAS_MESSAGE_DATA
 
 # Dask < 2024.4.1 is incompatible with Python >= 3.11.9, but we pin dask in this range
-# for tests of message_ix < 3.7.0. XFail these tests:
-dask_python_incompatibility_condition = parse(version("message_ix")) < parse("3.7.0")
+# for tests of message_ix < 3.7.0. Skip these tests:
+MARK_DASK_PYTHON = pytest.mark.skipif(
+    condition=parse(version("message_ix")) < parse("3.7.0"),
+    reason="Pinned dask version and certain Python versions are incompatible",
+)
 
 
 class TestIEA_EWEB:
-    @pytest.mark.skipif(
-        condition=dask_python_incompatibility_condition,
-        reason="Pinned dask version and certain Python versions are incompatible",
-    )
+    @MARK_DASK_PYTHON
     @pytest.mark.parametrize("source", ("IEA_EWEB",))
     @pytest.mark.parametrize(
         "source_kw",
@@ -51,8 +52,6 @@ class TestIEA_EWEB:
         ),
     )
     def test_prepare_computer(self, test_context, source, source_kw):
-        import message_ix_models.tools.iea.web  # noqa: F401
-
         # FIXME The following should be redundant, but appears mutable on GHA linux and
         #       Windows runners.
         test_context.model.regions = "R14"
@@ -91,14 +90,9 @@ PROVIDER_EDITION = (
 )
 
 
-@pytest.mark.skipif(
-    condition=dask_python_incompatibility_condition,
-    reason="Pinned dask version and certain Python versions are incompatible",
-    raises=TypeError,
-)
+@MARK_DASK_PYTHON
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_load_data(test_context, tmp_path, provider, edition):
-    from message_ix_models.tools.iea.web import DIMS, load_data
     # # Store in the temporary directory for this test
     # test_context.cache_path = tmp_path.joinpath("cache")
 
@@ -114,15 +108,9 @@ def test_load_data(test_context, tmp_path, provider, edition):
     assert (set(DIMS) & {"Value"}) < set(result.columns)
 
 
-@pytest.mark.skipif(
-    condition=dask_python_incompatibility_condition,
-    reason="Pinned dask version and certain Python versions are incompatible",
-    raises=TypeError,
-)
+@MARK_DASK_PYTHON
 @pytest.mark.parametrize("provider, edition", PROVIDER_EDITION)
 def test_generate_code_lists(tmp_path, provider, edition):
-    from message_ix_models.tools.iea.web import generate_code_lists
-
     # generate_code_lists() runs
     generate_code_lists(provider, edition, tmp_path)
 
