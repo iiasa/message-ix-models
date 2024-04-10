@@ -10,9 +10,9 @@ coverage:
         if_ci_failed: success
         # Currently, CI runs on PR branches do not include tests of (a) snapshot
         # handling or (b) legacy reporting; these are only run on schedule
-        # triggers. This resuls in an apparent coverage drop of about 90 lines,
-        # or 0.46 percent. Allow this.
-        threshold: 0.5%
+        # triggers. This resuls in an apparent coverage drop of about 90 lines
+        # in 7157, or 1.258 percent. Allow this.
+        threshold: 1.3%
     patch:
       default:
         if_ci_failed: success
