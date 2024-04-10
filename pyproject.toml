@@ -61,6 +61,7 @@ docs = [
   "sphinx_rtd_theme",
   "sphinxcontrib-bibtex",
 ]
+iea-web = ["dask[dataframe]"]
 report = ["plotnine", "xlsxwriter"]
 tests = [
   # For nbclient, thus nbformat

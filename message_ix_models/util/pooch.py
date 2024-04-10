@@ -129,8 +129,7 @@ SOURCE: Mapping[str, Mapping[str, Any]] = {
     ),
     "SSP-Update-3.0.1": dict(
         pooch_args=dict(
-            base_url="https://github.com/iiasa/message-ix-models/raw/fix/ssp-pooch/"
-            "message_ix_models/data/ssp/",
+            base_url=f"{GH_MAIN}/ssp/",
             registry={
                 "1710759470883-ssp_basic_drivers_release_3.0.1_full.csv.gz": (
                     "sha1:e5c24c27ee743e79dac5a578235b35a68cd64183"

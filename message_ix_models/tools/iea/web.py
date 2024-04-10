@@ -6,7 +6,6 @@ from copy import copy
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
-import dask.dataframe as dd
 import pandas as pd
 from genno import Quantity
 from genno.core.key import single_key
@@ -176,6 +175,8 @@ def iea_web_data_for_query(
     base_path: Path, *filenames: str, query_expr: str
 ) -> pd.DataFrame:
     """Load data from `base_path` / `filenames` in IEA WEB formats."""
+    import dask.dataframe as dd
+
     # Filenames to pass to dask.dataframe
     names_to_read = []
 
