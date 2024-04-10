@@ -159,36 +159,22 @@ def get_intratec_data() -> pd.DataFrame:
     pandas.DataFrame
         DataFrame with columns:
 
-        - intratec_tech: Intratec technology name
-        - intratec_region: Intratec region
         - intratec_index: Intratec index value
+        - intratec_region: Intratec region
+        - intratec_tech: technology index can be applied to (in this case, "all")
     """
 
     # Set file path for raw Intratec data
-    file = package_data_path("intratec", "intratec_data.xlsx")
+    file = package_data_path("intratec", "indices_r12.csv")
 
     # Read in data
     df = (
-        pd.read_excel(file, sheet_name="comparison", header=0)
-        .rename(columns={"Unnamed: 0": "type"})
-        .query("type.notnull()")
-    )
-
-    # Convert to long format
-    df_long = (
-        (
-            df.melt(
-                id_vars=["type"], var_name="region", value_name="value"
-            ).reset_index(drop=True)
-        )
-        .query("type == 'Intratec index'")
-        .rename(columns={"value": "intratec_index", "region": "intratec_region"})
+        pd.read_csv(file, comment="#", skipinitialspace=True)
+        .rename(columns={"region": "intratec_region"})
         .assign(intratec_tech="all")
-        .drop(columns={"type"})
-        .reset_index(drop=True)
     )
 
-    return df_long
+    return df
 
 
 def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
