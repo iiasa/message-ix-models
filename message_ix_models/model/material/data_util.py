@@ -1375,3 +1375,151 @@ def read_rel(scenario, material, filename):
     )
 
     return data_rel
+
+def add_share_const_clinker_substitutes(scenario):
+
+    s_info = ScenarioInfo(scenario)
+    node_list = s_info.N
+    node_list.remove('R12_GLB')
+
+    coal_technologies = scenario.par('output', filters = {"commodity":"fly_ash",
+    'level':'waste_material'})
+    modes_coal = coal_technologies['mode'].unique()
+    coal_technologies = coal_technologies['technology'].unique()
+    grinding_technologies = ['grinding_ballmill_cement', 'grinding_vertmill_cement']
+    steel_technologies_rest = ['bof_steel','eaf_steel','dri_gas_steel']
+    steel_technologies_blastf = ['bf_steel', 'bf_biomass_steel']
+
+    shr_const_1 = 'share_fly_ash'
+    shr_const_2 = 'share_steel_slag'
+    shr_const_3 = 'share_bf_slag'
+    type_tec_tot_1 = 'coal_tec'
+    type_tec_tot_2 = 'steel_tec'
+    type_tec_tot_3 = 'bf_tec'
+    type_tec_shr = 'cement_tec'
+
+    scenario.check_out()
+    scenario.add_set('shares', shr_const_1)
+    scenario.add_set('shares', shr_const_2)
+    scenario.add_set('shares', shr_const_3)
+    scenario.add_cat('technology', type_tec_shr, grinding_technologies)
+    scenario.add_cat('technology', type_tec_tot_1, coal_technologies)
+    scenario.add_cat('technology', type_tec_tot_2, steel_technologies_rest)
+    scenario.add_cat('technology', type_tec_tot_3, steel_technologies_blastf)
+
+    # Total
+
+    for n in node_list:
+        for m in modes_coal:
+            df_1_total = pd.DataFrame({'shares': [shr_const_1],
+                           'node_share': n,
+                           'node': n,
+                           'type_tec': [type_tec_tot_1],
+                           'mode': m,
+                           'commodity': 'fly_ash',
+                           'level': 'waste_material'})
+
+            scenario.add_set('map_shares_commodity_total', df_1_total)
+
+    modes_steel_rest = scenario.par('output', filters = {"technology":steel_technologies_rest})
+    modes_steel_rest = modes_steel_rest['mode'].unique()
+
+    for n in node_list:
+        for m in modes_steel_rest:
+            df_2_total = pd.DataFrame({'shares': [shr_const_2],
+                           'node_share': n,
+                           'node': n,
+                           'type_tec': [type_tec_tot_2],
+                           'mode': m,
+                           'commodity': 'slag_iron',
+                           'level': 'waste_material'})
+            scenario.add_set('map_shares_commodity_total', df_2_total)
+
+    modes_steel_blastf = scenario.par('output', filters = {"technology":steel_technologies_blastf})
+    modes_steel_blastf = modes_steel_blastf['mode'].unique()
+
+    for n in node_list:
+        for m in modes_steel_blastf:
+            df_3_total = pd.DataFrame({'shares': [shr_const_3],
+                           'node_share': n,
+                           'node': n,
+                           'type_tec': [type_tec_tot_3],
+                           'mode': m,
+                           'commodity': 'slag_iron',
+                           'level': 'waste_material'})
+            scenario.add_set('map_shares_commodity_total', df_3_total)
+
+    # Share
+
+    for n in node_list:
+        df_1_share = pd.DataFrame({'shares': [shr_const_1],
+                       'node_share': n,
+                       'node': n,
+                       'type_tec': [type_tec_shr],
+                       'mode': 'M3',
+                       'commodity': 'fly_ash',
+                       'level': 'waste_material'})
+        df_2_share = pd.DataFrame({'shares': [shr_const_2],
+                       'node_share': n,
+                       'node': n,
+                       'type_tec': [type_tec_shr],
+                       'mode': 'M2',
+                       'commodity': 'granulated_slag_iron',
+                       'level': 'tertiary_material'})
+        df_3_share = pd.DataFrame({'shares': [shr_const_3],
+                       'node_share': n,
+                       'node': n,
+                       'type_tec': [type_tec_shr],
+                       'mode': 'M2',
+                       'commodity': 'granulated_slag_iron',
+                       'level': 'tertiary_material'})
+
+        scenario.add_set('map_shares_commodity_share', df_1_share)
+        scenario.add_set('map_shares_commodity_share', df_2_share)
+        scenario.add_set('map_shares_commodity_share', df_3_share)
+
+    # Add upper bound for the share constraints
+
+    years = get_optimization_years(scenario)
+
+    # Fly ash is available around 900 Mt/yr, but the quality is very variable,
+    # such that only about one third of this amount is currently used in
+    # cement and concrete. There is probably some scope for increasing this
+    # proportion, through better characterisation and classification.
+    # Converting un-reactive fly ash into reactive material by adjusting
+    # the chemistry is unlikely to be economically viable. (Scrivener et al., 2018).
+
+    # According to the literature there are not much quality concerns on blast
+    # furnace slag that can be used as substitue. Main limitation is the costs of
+    # granulation process and local availability. We can assume 90% to reflect
+    # the transportation limiations of the blast furnace slag.
+    # Steel slag (from eaf_steel and bof_steel) doesnt have the desired quality
+    # all the time. Upgrading the quality is not represented in the model for now.
+    # So the share constraint will reflect this limitation.
+
+    for n in node_list:
+        for y in years:
+            df_1 = pd.DataFrame({'shares': [shr_const_1],
+                       'node_share': n,
+                       'year_act': y,
+                       'time': 'year',
+                       'value': 0.34 ,
+                       'unit': '%'})
+            df_2 = pd.DataFrame({'shares': [shr_const_2],
+                       'node_share': n,
+                       'year_act': y,
+                       'time': 'year',
+                       'value': 0.4  ,
+                       'unit': '%'})
+            df_3 = pd.DataFrame({'shares': [shr_const_3],
+                       'node_share': n,
+                       'year_act': y,
+                       'time': 'year',
+                       'value': 0.9 ,
+                       'unit': '%'})
+
+            scenario.add_par('share_commodity_up', df_1)
+            scenario.add_par('share_commodity_up', df_2)
+            scenario.add_par('share_commodity_up', df_3)
+
+    scenario.commit("Add share constraints.")
