@@ -2,13 +2,32 @@ import copy
 import pandas as pd
 
 from message_ix import make_df
-from message_ix_models.util import broadcast, same_node
-from .util import read_config, combine_df_dictionaries
+from message_ix_models.util import broadcast, same_node, private_data_path
+from message_data.model.material.util import read_config, combine_df_dictionaries
+from message_data.model.material.material_demand import material_demand_calc
 
 context = read_config()
 
 
+ssp_mode_map = {
+    "SSP1": "CTS core",
+    "SSP2": "RTS core",
+    "SSP3": "RTS high",
+    "SSP4": "CTS high",
+    "SSP5": "RTS high",
+    "LED": "CTS core",  # TODO: move to even lower projection
+}
+
+iea_elasticity_map = {
+    "CTS core": (1.2, 0.25),
+    "CTS high": (1.3, 0.48),
+    "RTS core": (1.25, 0.35),
+    "RTS high": (1.4, 0.54),
+}
+
+
 def gen_data_methanol(scenario):
+    ssp = context["ssp"]
     # read sensitivity file
     df_pars = pd.read_excel(
         context.get_local_path(
@@ -163,20 +182,23 @@ def gen_data_methanol(scenario):
                                         dict_t_d_fs, dict_t_d_fuel)
 
 
-    for i in scenario.par_list():
-        try:
-            df = scenario.par(i, filters={"technology": ["meth_ng",
-                                                         "meth_coal", "meth_ng_ccs",
-                                                         "meth_coal_ccs", "meth_exp",
-                                                         "meth_imp", "meth_trd", "meth_bal", "meth_t_d"],
-                                          "mode": "M1"})
-            if df.size != 0:
-                scenario.remove_par(i, df)
-        except:
-            pass
-
-
-    df_final = gen_meth_residual_demand(pars["methanol_elasticity_2020"], pars["methanol_elasticity_2030"])
+    # for i in scenario.par_list():
+    #     try:
+    #         df = scenario.par(i, filters={"technology": ["meth_ng",
+    #                                                      "meth_coal", "meth_ng_ccs",
+    #                                                      "meth_coal_ccs", "meth_exp",
+    #                                                      "meth_imp", "meth_trd", "meth_bal", "meth_t_d"],
+    #                                       "mode": "M1"})
+    #         if df.size != 0:
+    #             scenario.remove_par(i, df)
+    #     except:
+    #         pass
+    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
+        ssp_mode_map[ssp]
+    ]
+    df_final = material_demand_calc.gen_demand_petro(
+        scenario, "methanol", default_gdp_elasticity_2020, default_gdp_elasticity_2030
+    )
     df_final["value"] = df_final["value"].apply(
         lambda x: x * pars["methanol_resid_demand_share"])
     new_dict2["demand"] = df_final

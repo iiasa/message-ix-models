@@ -4,6 +4,7 @@ import numpy as np
 from collections import defaultdict
 from message_data.model.material.data_util import read_timeseries, read_rel
 from message_data.model.material.util import read_config
+from message_data.model.material.material_demand import material_demand_calc
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
@@ -406,8 +407,8 @@ def gen_data_petro_chemicals(scenario, dry_run=False):
 
     default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[ssp_mode_map[ssp]]
 
-    demand_hvc = gen_mock_demand_petro(
-        scenario, default_gdp_elasticity_2020, default_gdp_elasticity_2030
+    demand_hvc = material_demand_calc.gen_demand_petro(
+        scenario, "HVC", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
     results["demand"].append(demand_hvc)
 

@@ -5,6 +5,7 @@ from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node, private_data_path
 from message_data.model.material.util import read_config
+from message_data.model.material.material_demand import material_demand_calc
 
 CONVERSION_FACTOR_NH3_N = 17 / 14
 context = read_config()
@@ -20,6 +21,23 @@ default_gdp_elasticity = (
     .to_dict()["value"]["nh3_elasticity"]
 )
 # float(0.65) # old default value
+
+
+ssp_mode_map = {
+    "SSP1": "CTS core",
+    "SSP2": "RTS core",
+    "SSP3": "RTS high",
+    "SSP4": "CTS high",
+    "SSP5": "RTS high",
+    "LED": "CTS core",  # TODO: move to even lower projection
+}
+
+iea_elasticity_map = {
+    "CTS core": (0.3, 0.3),
+    "CTS high": (0.48, 0.48),
+    "RTS core": (0.3, 0.3),
+    "RTS high": (0.48, 0.48),
+}
 
 
 def gen_all_NH3_fert(scenario, dry_run=False):
@@ -527,6 +545,7 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
     s_info = ScenarioInfo(scenario)
     modelyears = s_info.Y  # s_info.Y is only for modeling years
     nodes = s_info.N
+    ssp = context["ssp"]
 
     def get_demand_t1_with_income_elasticity(
         demand_t0, income_t0, income_t1, elasticity
@@ -599,6 +618,14 @@ def gen_resid_demand_NH3(scenario, gdp_elasticity):
         commodity="NH3",
         year=df_melt.year,
         node=(region_set + df_melt["Region"]),
+    )
+
+    # TODO: remove old approach once tested
+    default_gdp_elasticity_2020, default_gdp_elasticity_2030 = iea_elasticity_map[
+        ssp_mode_map[ssp]
+    ]
+    df_residual = material_demand_calc.gen_demand_petro(
+        scenario, "NH3", default_gdp_elasticity_2020, default_gdp_elasticity_2030
     )
 
     return {"demand": df_residual}
