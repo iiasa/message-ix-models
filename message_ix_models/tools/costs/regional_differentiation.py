@@ -537,9 +537,8 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
     df_intratec = get_intratec_data()
 
     # Map Intratec regions to MESSAGEix regions
-    # If node == "R11", add "R11_" to the beginning of each region
-    # If node == "R11", then rename "CHN" to "CPA" and remove "CHN" and "RCPA"
-    # If node == "R12", add "R12_" to the beginning of each region
+    # If node is R11, then map directly
+    # If node is R12, then adapt R11 regions to R12 regions
     if node.upper() == "R11":
         df_intratec_map = df_intratec.rename(
             columns={"node": "region", "value": "intratec_index"}
