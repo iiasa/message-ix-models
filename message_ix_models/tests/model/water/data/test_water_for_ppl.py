@@ -53,6 +53,11 @@ def test_cool_tec(request, test_context, RCP):
     #     }
     # )
 
+    # FIXME This currently fails because the pd.DataFrame read in as ref_input is empty
+    # This can most likely be fixed by calling the right function on the largely empty
+    # Scenario created above that sets the Scenario up with all things necessary to run
+    # cool_tech(). Whatever the fix here is, it can also be applied to the failing
+    # test_build::test_build().
     result = cool_tech(context=test_context)
 
     # Assert the results
