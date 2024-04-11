@@ -322,7 +322,16 @@ def callback(rep: Reporter, context: Context) -> None:
     # Add tasks that prepare data to parametrize the MESSAGEix-GLOBIOM base model
     base_key = base.prepare_reporter(rep)
 
-    rep.add("transport all", [iamc_key + "file", "transport plots", base_key])
+    rep.add(
+        "transport all",
+        [
+            iamc_key,
+            # Use this line for "transport::iamc+file" instead of "transport::iamc+all"
+            # iamc_key - "all" + "file",
+            "transport plots",
+            base_key,
+        ],
+    )
 
     log.info(f"Added {len(rep.graph)-N_keys} keys")
     # TODO Write an SVG visualization of reporting calculations
