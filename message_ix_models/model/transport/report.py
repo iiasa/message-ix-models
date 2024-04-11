@@ -231,10 +231,12 @@ CONVERT_IAMC = (
     #     unit="Mt/yr",
     # ),
     #
-    # For debugging
-    dict(variable="debug ACT", base="ACT:nl-t-ya", var=["--debug--", "t"]),
-    dict(variable="debug CAP", base="CAP:nl-t-ya", var=["--debug--", "t"]),
-    dict(variable="debug CAP_NEW", base="CAP_NEW:nl-t-yv", var=["--debug--", "t"]),
+    # # For debugging
+    # dict(variable="debug ACT", base="ACT:nl-t-ya", var=["DEBUG", "t"], unit="-"),
+    # dict(variable="debug CAP", base="CAP:nl-t-ya", var=["DEBUG", "t"], unit="-"),
+    # dict(
+    #     variable="debug CAP_NEW", base="CAP_NEW:nl-t-yv", var=["DEBUG", "t"], unit="-"
+    # ),
 )
 
 
