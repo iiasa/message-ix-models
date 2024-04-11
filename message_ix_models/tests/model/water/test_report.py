@@ -4,7 +4,7 @@ from message_ix import Scenario
 
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codes
-from message_ix_models.model.water.reporting import report_full
+from message_ix_models.model.water.report import report_full
 from message_ix_models.util import package_data_path
 
 
