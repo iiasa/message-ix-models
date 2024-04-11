@@ -1,7 +1,7 @@
 """Prepare data for adding demands"""
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 import pandas as pd
@@ -14,14 +14,14 @@ if TYPE_CHECKING:
     from message_ix_models import Context
 
 
-def get_basin_sizes(basin, node):
+def get_basin_sizes(basin: pd.DataFrame, node: str) -> Tuple[float, float]:
     """Returns the sizes of developing and developed basins for a given node"""
     temp = basin[basin["BCU_name"] == node]
     sizes = temp.pivot_table(index=["STATUS"], aggfunc="size")
     return sizes["DEV"], sizes["IND"]
 
 
-def set_target_rate(df, node, year, target):
+def set_target_rate(df: pd.DataFrame, node: str, year: int, target: float) -> None:
     """Sets the target value for a given node and year"""
     indices = df[df["node"] == node][df[df["node"] == node]["year"] == year].index
     for index in indices:
@@ -34,12 +34,12 @@ def set_target_rate(df, node, year, target):
             df.at[index, "value"] = target
 
 
-def set_target_rate_developed(df, node, target):
+def set_target_rate_developed(df: pd.DataFrame, node: str, target: float) -> None:
     """Sets target rate for a developed basin"""
     set_target_rate(df, node, 2030, target)
 
 
-def set_target_rate_developing(df, node, target):
+def set_target_rate_developing(df: pd.DataFrame, node: str, target: float) -> None:
     """Sets target rate for a developing basin"""
     for i in df.index:
         if df.at[i, "node"] == node and df.at[i, "year"] == 2030:
@@ -55,7 +55,7 @@ def set_target_rate_developing(df, node, target):
     set_target_rate(df, node, 2040, target)
 
 
-def set_target_rates(df, basin, val):
+def set_target_rates(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> None:
     """Sets target rates for all nodes in a given basin"""
     for node in df.node.unique():
         dev_size, ind_size = get_basin_sizes(basin, node)
@@ -65,7 +65,7 @@ def set_target_rates(df, basin, val):
             set_target_rate_developing(df, node, val)
 
 
-def target_rate(df, basin, val):
+def target_rate(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> pd.DataFrame:
     """
     Sets target connection and sanitation rates for SDG scenario.
     The function filters out the basins as developing and
@@ -145,12 +145,14 @@ def target_rate_trt(df, basin):
     return df
 
 
-def add_sectoral_demands(context: "Context"):
+def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water sectoral demands
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -730,7 +732,7 @@ def add_sectoral_demands(context: "Context"):
     return results
 
 
-def read_water_availability(context: "Context"):
+def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Reads water availability data and bias correct
     it for the historical years and no climate
@@ -739,11 +741,10 @@ def read_water_availability(context: "Context"):
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
-        are data frames ready for :meth:`~.Scenario.add_par`.
+    data : (pd.DataFrame, pd.DataFrame)
     """
 
     # Reference to the water configuration
