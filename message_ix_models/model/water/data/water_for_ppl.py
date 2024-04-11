@@ -41,7 +41,10 @@ def missing_tech(x: pd.Series) -> pd.Series:
 
 def cooling_fr(x: pd.Series) -> float:
     """Calculate cooling fraction
-    Returns the calculated cooling fraction after for two categories;
+
+    Returns
+    -------
+    The calculated cooling fraction after for two categories;
     1. Technologies that produce heat as an output
         cooling_fraction(h_cool) = input value(hi) - 1
     Simply subtract 1 from the heating value since the rest of the part is already
@@ -65,6 +68,7 @@ def shares(
     search_cols: list,
 ) -> pd.Series:
     """Process share and cooling fraction.
+
     Returns
     -------
     Product of value of shares of cooling technology types of regions with
@@ -97,6 +101,7 @@ def shares(
 def hist_act(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
     """Calculate historical activity of cooling technology.
     The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
+
     Returns
     -------
     hist_activity(cooling_tech) = hist_activitiy(parent_technology) * share
@@ -130,6 +135,7 @@ def hist_act(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
 def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
     """Calculate historical capacity of cooling technology.
     The data for shares is read from ``cooltech_cost_and_shares_ssp_msg.csv``
+
     Returns
     -------
     hist_new_capacity(cooling_tech) = historical_new_capacity(parent_technology)*
@@ -162,12 +168,12 @@ def hist_cap(x: pd.Series, context: "Context", hold_cost: pd.DataFrame) -> list:
 
 
 # water & electricity for cooling technologies
-def cool_tech(context: "Context"):
+def cool_tech(context: "Context") -> dict[str, pd.DataFrame]:
     """Process cooling technology data for a scenario instance.
     The input values of parent technologies are read in from a scenario instance and
     then cooling fractions are calculated by using the data from
     ``tech_water_performance_ssp_msg.csv``.
-    It adds cooling  technologies as addons to the parent technologies.The
+    It adds cooling technologies as addons to the parent technologies. The
     nomenclature for cooling technology is <parenttechnologyname>__<coolingtype>.
     E.g: `coal_ppl__ot_fresh`
 
@@ -247,19 +253,9 @@ def cool_tech(context: "Context"):
     # cooling fraction = H_cool = Hi - 1 - Hi*(h_fg)
     # where h_fg (flue gasses losses) = 0.1
     ref_input["cooling_fraction"] = ref_input["value"] * 0.9 - 1
-    # FIXME
-    # Used to be:
-    ref_input[["value", "level"]] = ref_input[["technology", "value", "level"]].apply(
-        missing_tech, axis=1
-    )
-    # # Needs either
-    # ref_input[["value", "level"]] = ref_input[["value", "level"]].apply(
-    #     missing_tech, axis=1
-    # )
-    # # or
-    # ref_input[["technology", "value", "level"]] = ref_input[
-    #     ["technology", "value", "level"]
-    # ].apply(missing_tech, axis=1)
+    ref_input[["technology", "value", "level"]] = ref_input[
+        ["technology", "value", "level"]
+    ].apply(missing_tech, axis=1)
 
     # Combines the input df of parent_tech with water withdrawal data
     input_cool = (
@@ -783,13 +779,15 @@ def cool_tech(context: "Context"):
 
 
 # Water use & electricity for non-cooling technologies
-def non_cooling_tec(context: "Context"):
+def non_cooling_tec(context: "Context") -> dict[str, pd.DataFrame]:
     """Process data for water usage of power plants (non-cooling technology related).
     Water withdrawal values for power plants are read in from
     ``tech_water_performance_ssp_msg.csv``
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
