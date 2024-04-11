@@ -33,7 +33,6 @@ def test_add_infrastructure_techs(test_context, SDG, request):
     s = Scenario(**scenario_info)
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["tech1", "tech2"])
-    # s.add_set("node", ["loc1", "loc2"])
     s.add_set("year", [2020, 2030, 2040])
 
     s.commit(comment="basic water add_infrastructure_techs test model")
@@ -104,7 +103,6 @@ def test_add_desalination(test_context, request):
     s = Scenario(**scenario_info)
     s.add_horizon(year=[2020, 2030, 2040])
     s.add_set("technology", ["tech1", "tech2"])
-    # s.add_set("node", ["loc1", "loc2"])
     s.add_set("year", [2020, 2030, 2040])
 
     s.commit(comment="basic water add_infrastructure_techs test model")
