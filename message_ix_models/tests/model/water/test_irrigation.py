@@ -6,17 +6,15 @@ from message_ix_models.model.water.data.irrigation import add_irr_structure
 
 
 def test_add_irr_structure(test_context):
-    context = test_context
-
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
-    context.type_reg = "country"
-    context.regions = "ZMB"
-    nodes = get_codes(f"node/{context.regions}")
+    test_context.type_reg = "country"
+    test_context.regions = "ZMB"
+    nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
-    context.map_ISO_c = {context.regions: nodes[0]}
+    test_context.map_ISO_c = {test_context.regions: nodes[0]}
 
-    mp = context.get_platform()
+    mp = test_context.get_platform()
     scenario_info = {
         "mp": mp,
         "model": "test water model",
@@ -30,10 +28,10 @@ def test_add_irr_structure(test_context):
     s.add_set("year", [2020, 2030, 2040])
 
     # FIXME same as above
-    context["water build info"] = ScenarioInfo(s)
+    test_context["water build info"] = ScenarioInfo(s)
 
     # Call the function to be tested
-    result = add_irr_structure(context)
+    result = add_irr_structure(test_context)
 
     # Assert the results
     assert isinstance(result, dict)
