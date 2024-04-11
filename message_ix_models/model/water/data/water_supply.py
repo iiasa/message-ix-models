@@ -17,7 +17,7 @@ from message_ix_models.util import (
 
 
 @minimum_version("message_ix 3.7")
-def map_basin_region_wat(context: "Context"):
+def map_basin_region_wat(context: "Context") -> pd.DataFrame:
     """
     Calculate share of water availability of basins per each parent region.
 
@@ -25,12 +25,11 @@ def map_basin_region_wat(context: "Context"):
 
     Parameters
     ----------
-    context : .Context
+        context : .Context
+
     Returns
     -------
-    data : dict of (str -> pandas.DataFrame)
-        Keys are MESSAGE parameter names such as 'input', 'fix_cost'. Values
-        are data frames ready for :meth:`~.Scenario.add_par`.
+        data : pandas.DataFrame
     """
     info = context["water build info"]
 
@@ -126,9 +125,11 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     """Add Water supply infrastructure
     This function links the water supply based on different settings and options.
     It defines the supply linkages for freshwater, groundwater and salinewater.
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -756,7 +757,7 @@ def add_water_supply(context: "Context") -> dict[str, pd.DataFrame]:
     return results
 
 
-def add_e_flow(context: "Context"):
+def add_e_flow(context: "Context") -> dict[str, pd.DataFrame]:
     """Add environmental flows
     This function bounds the available water and allocates the environmental
     flows.Environmental flow bounds are calculated using Variable Monthly Flow
@@ -765,9 +766,11 @@ def add_e_flow(context: "Context"):
     values.Environmental flows in the model will be incorporated as bounds on
     'return_flow' technology. The lower bound on this technology will ensure
     that certain amount of water remain
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
