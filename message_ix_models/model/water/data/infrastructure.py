@@ -142,11 +142,13 @@ def start_creating_input_dataframe(
             )
 
 
-def add_infrastructure_techs(context: "Context"):
+def add_infrastructure_techs(context: "Context") -> dict[str, pd.DataFrame]:
     """Process water distribution data for a scenario instance.
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -155,7 +157,6 @@ def add_infrastructure_techs(context: "Context"):
         Years in the data include the model horizon indicated by
         ``context["water build info"]``, plus the additional year 2010.
     """
-    # TODO reduce complexity of this function from 18 to 15 or less
     # Reference to the water configuration
     info = context["water build info"]
 
@@ -641,14 +642,16 @@ def prepare_input_dataframe(
     return result_dc
 
 
-def add_desalination(context: "Context"):
+def add_desalination(context: "Context") -> dict[str, pd.DataFrame]:
     """Add desalination infrastructure
     Two types of desalination are considered;
     1. Membrane
     2. Distillation
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -700,10 +703,11 @@ def add_desalination(context: "Context"):
     # Assigning proper nomenclature
     df_node["node"] = "B" + df_node["BCU_name"].astype(str)
     df_node["mode"] = "M" + df_node["BCU_name"].astype(str)
-    if context.type_reg == "country":
-        df_node["region"] = context.map_ISO_c[context.regions]
-    else:
-        df_node["region"] = f"{context.regions}_" + df_node["REGION"].astype(str)
+    df_node["region"] = (
+        context.map_ISO_c[context.regions]
+        if context.type_reg == "country"
+        else f"{context.regions}_" + df_node["REGION"].astype(str)
+    )
     # output dataframe linking to desal tech types
     out_df = (
         make_df(
@@ -719,7 +723,7 @@ def add_desalination(context: "Context"):
             broadcast,
             map_yv_ya_lt(year_wat, 20, first_year),
             node_loc=df_node["node"],
-            time=sub_time,
+            time=pd.Series(sub_time),
         )
         .pipe(same_node)
         .pipe(same_time)
@@ -814,7 +818,7 @@ def add_desalination(context: "Context"):
                     broadcast,
                     map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
                     node_loc=df_node["node"],
-                    time=sub_time,
+                    time=pd.Series(sub_time),
                 ),
             ]
         )
@@ -873,7 +877,7 @@ def add_desalination(context: "Context"):
         ).pipe(
             broadcast,
             map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
-            time=sub_time,
+            time=pd.Series(sub_time),
         )
 
         result_dc["input"].append(inp)
@@ -902,7 +906,7 @@ def add_desalination(context: "Context"):
         ).pipe(
             broadcast,
             map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
-            time=sub_time,
+            time=pd.Series(sub_time),
         )
 
         result_dc["input"].append(inp)
@@ -930,7 +934,7 @@ def add_desalination(context: "Context"):
                         broadcast,
                         map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
                         node_loc=df_node["node"],
-                        time=sub_time,
+                        time=pd.Series(sub_time),
                     )
                     .pipe(same_node)
                     .pipe(same_time)
@@ -959,7 +963,7 @@ def add_desalination(context: "Context"):
                         broadcast,
                         map_yv_ya_lt(year_wat, rows["lifetime_mid"], first_year),
                         node_loc=df_node["node"],
-                        time=sub_time,
+                        time=pd.Series(sub_time),
                     )
                     .pipe(same_node)
                     .pipe(same_time)
@@ -981,7 +985,7 @@ def add_desalination(context: "Context"):
     ).pipe(
         broadcast,
         year_act=year_wat,
-        time=sub_time,
+        time=pd.Series(sub_time),
     )
 
     bound_lo = bound_lo[bound_lo["year_act"] <= 2030]
