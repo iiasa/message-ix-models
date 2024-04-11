@@ -15,20 +15,19 @@ def test_map_basin_region_wat(test_context):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     # Personalize the context
-    context = test_context
     sets = {"year": [2020, 2030, 2040]}
-    context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    context.type_reg = "country"
-    context.regions = "ZMB"
-    nodes = get_codes(f"node/{context.regions}")
+    test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
+    test_context.type_reg = "country"
+    test_context.regions = "ZMB"
+    nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
-    map_ISO_c = {context.regions: nodes[0]}
-    context.map_ISO_c = map_ISO_c
-    context.RCP = "2p6"
-    context.REL = "med"
-    context.time = "year"
+    map_ISO_c = {test_context.regions: nodes[0]}
+    test_context.map_ISO_c = map_ISO_c
+    test_context.RCP = "2p6"
+    test_context.REL = "med"
+    test_context.time = "year"
 
-    result = map_basin_region_wat(context)
+    result = map_basin_region_wat(test_context)
 
     # Assert the results
     assert isinstance(result, pd.DataFrame)
@@ -43,21 +42,20 @@ def test_add_water_supply(request, test_context):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     # Personalize the context
-    context = test_context
     sets = {"year": [2020, 2030, 2040]}
-    context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    context.type_reg = "country"
-    context.regions = "ZMB"
-    nodes = get_codes(f"node/{context.regions}")
+    test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
+    test_context.type_reg = "country"
+    test_context.regions = "ZMB"
+    nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
-    map_ISO_c = {context.regions: nodes[0]}
-    context.map_ISO_c = map_ISO_c
-    context.RCP = "2p6"
-    context.REL = "med"
-    context.time = "year"
-    context.nexus_set = "nexus"
+    map_ISO_c = {test_context.regions: nodes[0]}
+    test_context.map_ISO_c = map_ISO_c
+    test_context.RCP = "2p6"
+    test_context.REL = "med"
+    test_context.time = "year"
+    test_context.nexus_set = "nexus"
 
-    mp = context.get_platform()
+    mp = test_context.get_platform()
     scenario_info = {
         "mp": mp,
         "model": f"{request.node.name}/test water model",
@@ -73,10 +71,10 @@ def test_add_water_supply(request, test_context):
 
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
-    context.set_scenario(s)
-    context["water build info"] = ScenarioInfo(s)
+    test_context.set_scenario(s)
+    test_context["water build info"] = ScenarioInfo(s)
 
-    result = add_water_supply(context)
+    result = add_water_supply(test_context)
 
     # Assert the results
     assert isinstance(result, dict)
@@ -94,21 +92,20 @@ def test_add_e_flow(test_context):
     # FIXME You probably want this to be part of a common setup rather than writing
     # something like this for every test
     # Personalize the context
-    context = test_context
     sets = {"year": [2020, 2030, 2040]}
-    context["water build info"] = ScenarioInfo(y0=2020, set=sets)
-    context.regions = "R12"
-    nodes = get_codes(f"node/{context.regions}")
+    test_context["water build info"] = ScenarioInfo(y0=2020, set=sets)
+    test_context.regions = "R12"
+    nodes = get_codes(f"node/{test_context.regions}")
     nodes = list(map(str, nodes[nodes.index("World")].child))
-    map_ISO_c = {context.regions: nodes[0]}
-    context.map_ISO_c = map_ISO_c
-    context.RCP = "2p6"
-    context.REL = "med"
-    context.time = "year"
-    context.SDG = True
+    map_ISO_c = {test_context.regions: nodes[0]}
+    test_context.map_ISO_c = map_ISO_c
+    test_context.RCP = "2p6"
+    test_context.REL = "med"
+    test_context.time = "year"
+    test_context.SDG = True
 
     # Call the function to be tested
-    result = add_e_flow(context)
+    result = add_e_flow(test_context)
 
     # Assert the results
     assert isinstance(result, dict)
