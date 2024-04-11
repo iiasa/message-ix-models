@@ -17,7 +17,9 @@ if TYPE_CHECKING:
 def get_basin_sizes(basin: pd.DataFrame, node: str) -> Tuple[float, float]:
     """Returns the sizes of developing and developed basins for a given node"""
     temp = basin[basin["BCU_name"] == node]
+    print(temp)
     sizes = temp.pivot_table(index=["STATUS"], aggfunc="size")
+    print(sizes)
     return sizes["DEV"], sizes["IND"]
 
 
@@ -78,21 +80,24 @@ def target_rate(df: pd.DataFrame, basin: pd.DataFrame, val: float) -> pd.DataFra
     For developing basins, the access target is set at
     2040 and 2035 target is the average of
     2030 original rate and 2040 target.
-    Returns:
+
+    Returns
+    -------
         df (pandas.DataFrame): Data frame with updated value column.
     """
     set_target_rates(df, basin, val)
     return df
 
 
-def target_rate_trt(df, basin):
+def target_rate_trt(df: pd.DataFrame, basin: pd.DataFrame) -> pd.DataFrame:
     """
     Sets target treatment rates for SDG scenario. The target value for
     developed and developing region is making sure that the amount of untreated
     wastewater is halved beyond 2030 & 2040 respectively.
+
     Returns
     -------
-    data : dict of (str -> pandas.DataFrame)
+    data : pandas.DataFrame
     """
 
     value = []
@@ -197,7 +202,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
     df_f = df_x_c.to_dataframe("").unstack()
 
     # Format the dataframe to be compatible with message format
-    df_dmds = df_f.stack().reset_index(level=0).reset_index()
+    df_dmds = df_f.stack(future_stack=True).reset_index(level=0).reset_index()
     df_dmds.columns = ["year", "node", "variable", "value"]
     df_dmds.sort_values(["year", "node", "variable", "value"], inplace=True)
 
@@ -212,15 +217,15 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         PATH = package_data_path(
             "water", "demands", "harmonized", region, "ssp2_m_water_demands.csv"
         )
-        df_m = pd.read_csv(PATH)
+        df_m: pd.DataFrame = pd.read_csv(PATH)
         df_m.value *= 30  # from mcm/day to mcm/month
-        df_m["sector"][df_m["sector"] == "industry"] = "manufacturing"
+        df_m.loc[df_m["sector"] == "industry", "sector"] = "manufacturing"
         df_m["variable"] = df_m["sector"] + "_" + df_m["type"] + "_baseline"
-        df_m["variable"].replace(
-            "urban_withdrawal_baseline", "urban_withdrawal2_baseline", inplace=True
+        df_m.loc[df_m["variable"] == "urban_withdrawal_baseline", "variable"] = (
+            "urbann_withdrawal2_baseline"
         )
-        df_m["variable"].replace(
-            "urban_return_baseline", "urban_return2_baseline", inplace=True
+        df_m.loc[df_m["variable"] == "urban_return_baseline", "variable"] = (
+            "urbann_return2_baseline"
         )
         df_m = df_m[["year", "pid", "variable", "value", "month"]]
         df_m.columns = ["year", "node", "variable", "value", "time"]
@@ -673,7 +678,7 @@ def add_sectoral_demands(context: "Context") -> dict[str, pd.DataFrame]:
         unit="-",
     ).pipe(
         broadcast,
-        time=sub_time,
+        time=pd.Series(sub_time),
     )
 
     df_share_wat = df_share_wat[df_share_wat["year_act"].isin(info.Y)]
@@ -856,12 +861,14 @@ def read_water_availability(context: "Context") -> Tuple[pd.DataFrame, pd.DataFr
     return df_sw, df_gw
 
 
-def add_water_availability(context: "Context"):
+def add_water_availability(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds water supply constraints
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
@@ -927,12 +934,14 @@ def add_water_availability(context: "Context"):
     return results
 
 
-def add_irrigation_demand(context: "Context"):
+def add_irrigation_demand(context: "Context") -> dict[str, pd.DataFrame]:
     """
     Adds endogenous irrigation water demands from GLOBIOM emulator
+
     Parameters
     ----------
     context : .Context
+
     Returns
     -------
     data : dict of (str -> pandas.DataFrame)
