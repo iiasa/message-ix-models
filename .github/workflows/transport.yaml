@@ -27,30 +27,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prepare-workspace:
-    runs-on: self-hosted
-
-    steps:
-    - run: |
-        rm -rf ${{ github.workspace }}/report/*
-
-    - name: Check out message-static-data
-      uses: actions/checkout@v4
-      with:
-        repository: iiasa/message-static-data
-        token: ${{ secrets.MESSAGE_STATIC_DATA_PAT }}
-        path: message-static-data
-        lfs: true
-        # Only check out the following files to limit bandwidth usage.
-        # Respectively
-        # 1. IEA Extended World Energy Balances, OECD source, 2022 edition
-        sparse-checkout: |
-          iea/372f7e29-en.zip
-        sparse-checkout-cone-mode: false
-
   report:
     runs-on: self-hosted
-    needs: prepare-workspace
     name: MESSAGEix-Transport ${{ matrix.SSP }}
 
     strategy:
@@ -63,6 +41,10 @@ jobs:
         - SSP5
 
     steps:
+    - name: Clean workspace
+      run: |
+        rm -rf ${{ github.workspace }}/report/*
+
     - uses: webfactory/ssh-agent@v0.9.0
       with:
         ssh-private-key: |
@@ -85,6 +67,19 @@ jobs:
       run: git lfs checkout
 
     # Other repositories required for testing
+    - name: Check out message-static-data
+      uses: actions/checkout@v4
+      with:
+        repository: iiasa/message-static-data
+        token: ${{ secrets.MESSAGE_STATIC_DATA_PAT }}
+        path: message-static-data
+        lfs: true
+        # Only check out the following files to limit bandwidth usage.
+        # Respectively
+        # 1. IEA Extended World Energy Balances, OECD source, 2022 edition
+        sparse-checkout: |
+          iea/372f7e29-en.zip
+        sparse-checkout-cone-mode: false
 
     - name: Connect static data to message_data
       run: cp -rsv $(realpath message-static-data)/* message_data/data/
