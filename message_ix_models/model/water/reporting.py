@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -13,7 +14,9 @@ from message_ix_models.util import package_data_path
 log = logging.getLogger(__name__)
 
 
-def run_old_reporting(sc=False):
+def run_old_reporting(sc: Optional[Scenario] = None):
+    if sc is None:
+        raise ValueError("Must provide a Scenario object!")
     mp2 = sc.platform
 
     log.info(
@@ -63,22 +66,31 @@ def remove_duplicate(data):
     return final_list
 
 
-def report_iam_definition(sc, rep, df_dmd, rep_dm, report_df, suban):
+def report_iam_definition(
+    sc: Scenario,
+    rep: Reporter,
+    df_dmd: pd.DataFrame,
+    rep_dm: Reporter,
+    report_df: pd.DataFrame,
+    suban: bool,
+) -> pyam.IamDataFrame:
     """Function to define the report iam dataframe
+
     Parameters
     ----------
     sc : ixmp.Scenario
         Scenario to report
     rep : .Reporter
         Reporter object
-    suban : bool
-        True if subannual, False if annual
     df_dmd : pd.DataFrame
         Dataframe with demands
     rep_dm : .Reporter
         Reporter object for demands
     report_df : pd.DataFrame
         Dataframe with report
+    suban : bool
+        True if subannual, False if annual
+
     Returns
     -------
     report_iam : pyam.IamDataFrame
@@ -219,14 +231,18 @@ def report_iam_definition(sc, rep, df_dmd, rep_dm, report_df, suban):
     return output
 
 
-def multiply_electricity_output_of_hydro(elec_hydro_var, report_iam):
+def multiply_electricity_output_of_hydro(
+    elec_hydro_var: list, report_iam: pyam.IamDataFrame
+) -> pyam.IamDataFrame:
     """Function to multiply electricity output of hydro to get withdrawals
+
     Parameters
     ----------
     elec_hydro_var : list
         List of variables with electricity output of hydro
     report_iam : pyam.IamDataFrame
         Report in pyam format
+
     Returns
     -------
     report_iam : pyam.IamDataFrame
@@ -256,9 +272,9 @@ def multiply_electricity_output_of_hydro(elec_hydro_var, report_iam):
 
 
 # TODO
-def report(sc: Scenario, reg: str, sdgs: bool = False):
+def report(sc: Scenario, reg: str, sdgs: bool = False) -> None:
     """Report nexus module results"""
-    log.info(f"Regions given as {reg}; no warranty of it's not in ['R11','R12']")
+    log.info(f"Regions given as {reg}; no warranty if it's not in ['R11','R12']")
     # Generating reporter
     rep = Reporter.from_scenario(sc)
     report = rep.get(
@@ -1382,7 +1398,7 @@ def prepare_ww(ww_input: pd.DataFrame, suban: bool) -> pd.DataFrame:
     return ww
 
 
-def report_full(sc: Scenario, reg: str, sdgs=False):
+def report_full(sc: Scenario, reg: str, sdgs=False) -> None:
     """Combine old and new reporting workflows"""
     a = sc.timeseries()
     # keep historical part, if present
@@ -1406,8 +1422,7 @@ def report_full(sc: Scenario, reg: str, sdgs=False):
 
     out_path = package_data_path().parents[0] / "reporting_output/"
 
-    if not out_path.exists():
-        out_path.mkdir()
+    out_path.mkdir(exist_ok=True)
 
     out_file = out_path / f"{sc.model}_{sc.scenario}.csv"
 
