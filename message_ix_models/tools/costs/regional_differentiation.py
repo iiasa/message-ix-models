@@ -165,7 +165,7 @@ def get_intratec_data() -> pd.DataFrame:
     """
 
     # Set file path for raw Intratec data
-    file = package_data_path("intratec", "indices_r12.csv")
+    file = package_data_path("intratec", "R12", "indices.csv")
 
     # Read in data
     df = (
