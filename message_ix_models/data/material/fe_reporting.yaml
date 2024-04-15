@@ -1,0 +1,18 @@
+# collection of industry specific Final Energy reporting variables
+# grouped by sector
+# each variable specifies a list of filters
+# the filter is in the order: technology, mode, commodity
+chemicals:
+  - iamc name:
+      Chemicals
+  - methanol coal fuel:
+      filters:
+        - [meth_coal, fuel, coal]
+      iamc name:
+        Methanol|Fuel|Coal
+  - :
+      filters:
+        - [steam_cracker, M1, ethylene]
+        -
+      iamc name:
+        Methanol|Fuel|Coal
