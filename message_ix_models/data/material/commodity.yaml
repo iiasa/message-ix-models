@@ -1,0 +1,274 @@
+# Collection of all material/industry commodities of MESSAGEix-Materials
+BTX:
+  description: BTX chemcials group consisting of benzene, toluene and xylenes
+  name: Aromatics
+  report: string
+  units: Mt
+
+Fertilizer Use|Nitrogen:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+HVC:
+  description: High Value Chemicals consisting of ethylene, propylene, butylene and BTX
+  name: High Value Chemicals
+  report: string
+  units: Mt
+
+NH3:
+  description: Ammonia
+  name: Ammonia
+  report: string
+  units: Mt
+
+aluminum:
+  description: ''
+  name: Aluminum
+  report: string
+  units: Mt
+
+atm_gasoil:
+  description: Gas oil yielded from atmospheric distillation
+  name: Atmospheric gas oil
+  report: string
+  units: GWa
+
+atm_residue:
+  description: Residue yield from atmospheric distillation
+  name: Atmospheric residue
+  report: string
+  units: GWa
+
+bf_gas:
+  description: Gas produced by blast furnace during iron making process
+  name: Blast furnace gas
+  report: string
+  units: GWa
+
+cement:
+  description: Cement produced by mixing clinker with ... # TODO: look up process
+  name: Cement
+  report: string
+  units: Mt
+
+clinker_cement:
+  description: Clinker required for cement production
+  name: Clinker
+  report: string
+  units: Mt
+
+co_gas:
+  description: Gaseous by-product of coke production in coke oven
+  name: Coke oven gas
+  report: string
+  units: GWa
+
+coke_iron:
+  description: Coke used for iron production
+  name: Coke for iron production
+  report: string
+  units: GWa
+
+diesel:
+  description: Petroleum product mainly used in internal combustion engines
+  name: Diesel
+  report: string
+  units: GWa
+
+ethane:
+  description: Alkane with two C atoms mainly used as petrochemical feedstock
+  name: Ethane
+  report: string
+  units: Mt
+
+ethylene:
+  description: Most produced petrochemical commodity used as a building block for hundreds of chemicals
+  name: Ethylene
+  report: string
+  units: Mt
+
+fcoh_resin:
+  description: Resin type produced by combining formaldehyde and urea (UF), phenol (PF) or melamin (MF)
+  name: Formaldehyde resin
+  report: string
+  units: Mt
+
+floor_area:
+  description: ''
+  name: empty
+  report: string
+  units: GWa
+ #TODO: check unit
+
+formaldehyde:
+  description: Important base chemical used for resins, solvents and other chemicals
+  name: Formaldehyde
+  report: string
+  units: Mt
+
+fresh_water:
+  description: ''
+  name: empty
+  report: string
+  units: GWa
+ #TODO: check unit
+
+gasoline:
+  description: Refined petroleum product mainly used in internal combustion engines
+  name: Gasoline
+  report: string
+  units: GWa
+
+heavy_foil:
+  description: Refined petroleum product mainly used as shipping fuel
+  name: Heavy fuel oil
+  report: string
+  units: GWa
+
+ht_heat:
+  description: Heat for industrial processes above x°C # TODO: define temperature range for ht_heat and document
+  name: High temperature heat
+  report: string
+  units: GWa
+
+kerosene:
+  description: Refined petroleum product mainly used as aviation fuel
+  name: Kerosene
+  report: string
+  units: GWa
+
+light_foil:
+  description: '' # TODO: figure out how this product maps to PRELIM/McKinsey Energy Insights/IEA/etc.
+  name: empty
+  report: string
+  units: GWa
+
+limestone_cement:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+limestone_iron:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+lt_heat:
+  description: Heat for industrial processes below x°C # TODO: define temperature range in MESSAGEix-Materials
+  name: Low-temperature heat
+  report: string
+  units: GWa
+
+methanol:
+  description: Simplest alcoholic molecule used as fuel and base chemical
+  name: Methanol
+  report: string
+  units: GWa
+
+naphtha:
+  description: Distillation fractions and other intermediates in the gasoline boiling range used for gasoline production and petrochemical feedstock
+  name: Naphtha
+  report: string
+  units: GWa
+
+ore_iron:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+pellet_iron:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+pet_coke:
+  description: Coke mainly produced by coking unit process in a refinery
+  name: Petroleum coke
+  report: string
+  units: GWa
+
+pig_iron:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+propane:
+  description: Alkane with three C atoms mainly used in LPG and as petrochemical feedstock
+  name: empty
+  report: string
+  units: Mt
+
+propylene:
+  description: Petrochemical base chemical mainly used for polymer production
+  name: Propylene
+  report: string
+  units: Mt
+
+raw_meal_cement:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+refinery_gas:
+  description: Off gas yield from various refinery processes consisting mainly of methane and hydrogen
+  name: Refinery gas
+  report: string
+  units: GWa
+
+sinter_iron:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+slag_iron:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+sponge_iron:
+  description: ''
+  name: empty
+  report: string
+  units: Mt
+
+steel:
+  description: Steel commodities with varying degree of processing depending on the "level"
+  name: Steel
+  report: string
+  units: Mt
+
+vacuum_gasoil:
+  description: Lighter fraction yielded from vacuum distillation
+  name: Vacuum Gas Oil (VGO)
+  report: string
+  units: GWa
+
+vacuum_residue:
+  description: Heavy fraction yield from vacuum distillation
+  name: Vacuum Residue (VR)
+  report: string
+  units: GWa
+
+wastewater:
+  description: ''
+  name: empty
+  report: string
+  units: GWa
+ #TODO: check unit
+
+water:
+  description: ''
+  name: empty
+  report: string
+  units: GWa
+ #TODO: check unit

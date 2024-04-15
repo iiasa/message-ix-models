@@ -1,0 +1,1353 @@
+# Collection of all material/industry technologies of MESSAGEix-Materials
+CH2O_synth:
+  description: Synthesis of formaldehyde from methanol via silver-catalyst pathway # check this
+  input:
+    commodity: test
+  name: Formaldehyde Synthesis
+  report: string
+
+CH2O_to_resin:
+  description: Synthesis of formaldehyde resins (proxy chemical phenol-formaldehyde)
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+DUMMY_alumina_supply:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+DUMMY_coal_supply:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+DUMMY_gas_supply:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+DUMMY_limestone_supply_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+DUMMY_limestone_supply_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+DUMMY_ore_supply:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+MTO_petro:
+  description: Methanol-to-Olefins process unit producing ethylene and propylene from methanol
+  input:
+    commodity: test
+  name: Methanol-to-Olefins
+  report: string
+
+NH3_to_N_fertil:
+  description: Nitrogen fertilizer production from ammonia
+  input:
+    commodity: test
+  name: Nitrogen fertilizer production
+  report: string
+
+agg_ref:
+  description: Pseudo technology aggregating petroleum products to light-oil and heavy-oil
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+atm_distillation_ref:
+  description: Most important unit in a refinery separating crude oil by
+  input:
+    commodity: test
+  name: Atmospheric distillation unit
+  report: string
+
+bf_steel:
+  description: Blast furnace producing iron from iron ore
+  input:
+    commodity: test
+  name: Blast furnace
+  report: string
+
+biomass_NH3:
+  description: Ammonia synthesis with hydrogen produced from biomass gasification
+  input:
+    commodity: test
+  name: Ammonia production from biomass
+  report: string
+
+biomass_NH3_ccs:
+  description: Ammonia synthesis with hydrogen produced from biomass gasification with CCS
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+bof_steel:
+  description: Basic oxygen furnace steel making route
+  input:
+    commodity: test
+  name: Basic oxygen furnace
+  report: string
+
+buildings:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+catalytic_cracking_ref:
+  description: Catalytic cracking converts gas oils with high gasoline yield
+  input:
+    commodity: test
+  name: Catalytic cracking process unit
+  report: string
+
+catalytic_reforming_ref:
+  description: Catalytic reforming used to produce hydrogen from refinery feedstock
+  input:
+    commodity: test
+  name: Catalytic reforming process unit
+  report: string
+
+clinker_dry_ccs_cement:
+  description: Addon technology for clinker_dry_cement capturing process emissions
+  input:
+    commodity: test
+  name: Dry process clinker kiln CCS addon
+  report: string
+
+clinker_dry_cement:
+  description: Clinker kiln using the more efficient dry calcining process
+  input:
+    commodity: test
+  name: Dry process clinker kiln
+  report: string
+
+clinker_wet_ccs_cement:
+  description: Addon technology for clinker_wet_cement capturing process emissions
+  input:
+    commodity: test
+  name:  Wet process clinker kiln CCS addon
+  report: string
+
+clinker_wet_cement:
+  description: Clinker kiln using the less efficient wet calcining process
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+coal_NH3:
+  description: Ammonia synthesis with hydrogen from coal gasification
+  input:
+    commodity: test
+  name: Ammonia production from coal
+  report: string
+
+coal_NH3_ccs:
+  description: Ammonia synthesis with hydrogen from coal gasification with CCS
+  input:
+    commodity: test
+  name: Ammonia production from coal with CCS
+  report: string
+
+cokeoven_steel:
+  description: Coke oven transforming coal to coke for steel production
+  input:
+    commodity: test
+  name: Coke oven for steel production
+  report: string
+
+coking_ref:
+  description: Deep conversion technology of refinery upgrading heavy residues of vacuum distillation
+  input:
+    commodity: test
+  name: Refinery coker process unit
+  report: string
+
+dheat_aluminum:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+dheat_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+dheat_petro:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+dheat_refining:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+dheat_resins:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+dheat_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+dri_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+eaf_steel:
+  description: Electric arc furnace for steel making from DRI iron or steel scrap
+  input:
+    commodity: test
+  name: Electric arc furnace
+  report: string
+
+electr_NH3:
+  description: Integrated ammonia production facility combining on-site hydrogen electrolyser with ammonia synthesis unit
+  input:
+    commodity: test
+  name: Ammonia production from electricity
+  report: string
+
+ethanol_to_ethylene_petro:
+  description: Ethylene production via ethanol dehydration
+  input:
+    commodity: test
+  name: Ethanol dehydration
+  report: string
+
+export_NFert:
+  description: Pseudo technology representing regional nitrogen fertilizer exports to global market
+  input:
+    commodity: test
+  name: Nitrogen fertilizer export
+  report: string
+
+export_NH3:
+  description: Pseudo technology representing regional ammonia exports to global market
+  input:
+    commodity: test
+  name: NH3 export
+  report: string
+
+export_aluminum:
+  description: Pseudo technology representing regional aluminum exports to global market
+  input:
+    commodity: test
+  name: Aluminum export
+  report: string
+
+export_petro:
+  description: Pseudo technology representing regional HVC exports to global market
+  input:
+    commodity: test
+  name: HVC export
+  report: string
+
+export_steel:
+  description: Pseudo technology representing regional steel exports to global market
+  input:
+    commodity: test
+  name: Steel export
+  report: string
+
+#FIXME: fuel cells are currently only producing low temp heat, but no electricity
+fc_h2_aluminum:
+  description: Fuel cell using hydrogen to produce heat for aluminum and electricity
+  input:
+    commodity: test
+  name: Hydrogen fuel-cell for aluminum process heat
+  report: string
+
+fc_h2_cement:
+  description: Fuel cell using hydrogen to produce heat for cement and electricity
+  input:
+    commodity: test
+  name: Hydrogen fuel-cell for cement process heat
+  report: string
+
+fc_h2_petro:
+  description: Fuel cell using hydrogen to produce heat for petrochemicals and electricity
+  input:
+    commodity: test
+  name: Hydrogen fuel-cell for petrochemicals process heat
+  report: string
+
+fc_h2_refining:
+  description: Fuel cell using hydrogen to produce heat for refineries and electricity
+  input:
+    commodity: test
+  name: Hydrogen fuel-cell for refinery process heat
+  report: string
+
+fc_h2_resins:
+  description: Fuel cell using hydrogen to produce heat for resins and electricity
+  input:
+    commodity: test
+  name: Hydrogen fuel-cell for resin process heat
+  report: string
+
+fc_h2_steel:
+  description: Fuel cell using hydrogen to produce heat for aluminum and electricity
+  input:
+    commodity: test
+  name: Hydrogen fuel-cell for steel process heat
+  report: string
+
+feedstock_t/d:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+finishing_aluminum:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+finishing_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+fueloil_NH3:
+  description: Ammonia synthesis with hydrogen via partial oxidation of fueloil
+  input:
+    commodity: test
+  name: Ammonia production from fueloil
+  report: string
+
+fueloil_NH3_ccs:
+  description: Ammonia synthesis with hydrogen via partial oxidation of fueloil with CCS
+  input:
+    commodity: test
+  name: Ammonia production from fueloil with CCS
+  report: string
+
+furnace_biomass_aluminum:
+  description: Generalized furnace using biomass to provide process heat for aluminum production
+  input:
+    commodity: test
+  name: Industrial furnace from biomass for aluminum sector
+  report: string
+
+furnace_biomass_cement:
+  description: Generalized furnace using biomass to provide process heat for aluminum production
+  input:
+    commodity: test
+  name: Industrial furnace from biomass for aluminum sector
+  report: string
+
+furnace_biomass_petro:
+  description: Generalized furnace using biomass to provide process heat for petrochemical production
+  input:
+    commodity: test
+  name: Industrial furnace from biomass for petrochemical sector
+  report: string
+
+furnace_biomass_refining:
+  description: Generalized furnace using biomass to provide process heat for refineries
+  input:
+    commodity: test
+  name: Industrial furnace from biomass for refinery sector
+  report: string
+
+furnace_biomass_resins:
+  description: Generalized furnace using biomass to provide process heat for resin production
+  input:
+    commodity: test
+  name: Industrial furnace from biomass for resin sector
+  report: string
+
+furnace_biomass_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from biomass for iron/steel sector
+  report: string
+
+furnace_coal_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coal for aluminum sector
+  report: string
+
+furnace_coal_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coal for cement sector
+  report: string
+
+furnace_coal_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coal for petrochemicals sector
+  report: string
+
+furnace_coal_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coal for refinery sector
+  report: string
+
+furnace_coal_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coal for resins sector
+  report: string
+
+furnace_coal_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coal for steel sector
+  report: string
+
+furnace_coke_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coke for petrochemical sector
+  report: string
+
+furnace_coke_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace from coke for refinery sector
+  report: string
+
+furnace_elec_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using electricity for aluminum sector
+  report: string
+
+furnace_elec_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using electricity for cement sector
+  report: string
+
+furnace_elec_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using electricity for petrochemical sector
+  report: string
+
+furnace_elec_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using electricity for refinery sector
+  report: string
+
+furnace_elec_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using electricity for resin sector
+  report: string
+
+furnace_elec_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using electricity for steel sector
+  report: string
+
+furnace_ethanol_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using ethanol for aluminum sector
+  report: string
+
+furnace_ethanol_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using ethanol for cement sector
+  report: string
+
+furnace_ethanol_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using ethanol for petrochemical sector
+  report: string
+
+furnace_ethanol_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using ethanol for refinery sector
+  report: string
+
+furnace_ethanol_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using ethanol for resins sector
+  report: string
+
+furnace_ethanol_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using ethanol for steel sector
+  report: string
+
+furnace_foil_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using fueloil for aluminum sector
+  report: string
+
+furnace_foil_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using fueloil for cement sector
+  report: string
+
+furnace_foil_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using fueloil for petrochemical sector
+  report: string
+
+furnace_foil_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using fueloil for refinery sector
+  report: string
+
+furnace_foil_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using fueloil for resin sector
+  report: string
+
+furnace_foil_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using fueloil for steel sector
+  report: string
+
+furnace_gas_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using natural gas for aluminum sector
+  report: string
+
+furnace_gas_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using natural gas for cement sector
+  report: string
+
+furnace_gas_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using natural gas for petrochemical sector
+  report: string
+
+furnace_gas_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using natural gas for refinery sector
+  report: string
+
+furnace_gas_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using natural gas for resin sector
+  report: string
+
+furnace_gas_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using natural gas for steel sector
+  report: string
+
+furnace_h2_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using hydrogen for aluminum sector
+  report: string
+
+furnace_h2_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using hydrogen for cement sector
+  report: string
+
+furnace_h2_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using hydrogen for petrochemicals sector
+  report: string
+
+furnace_h2_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using hydrogen for refinery sector
+  report: string
+
+furnace_h2_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using hydrogen for resin sector
+  report: string
+
+furnace_h2_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using hydrogen for steel sector
+  report: string
+
+furnace_loil_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using lightoil for aluminum sector
+  report: string
+
+furnace_loil_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using lightoil for cement sector
+  report: string
+
+furnace_loil_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using lightoil for petrochemical sector
+  report: string
+
+furnace_loil_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using lightoil for refinery sector
+  report: string
+
+furnace_loil_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using lightoil for resin sector
+  report: string
+
+furnace_loil_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using lightoil for steel sector
+  report: string
+
+furnace_methanol_aluminum:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using methanol for aluminum sector
+  report: string
+
+furnace_methanol_cement:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using methanol for cement sector
+  report: string
+
+furnace_methanol_petro:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using methanol for petrochemical sector
+  report: string
+
+furnace_methanol_refining:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using methanol for refinery sector
+  report: string
+
+furnace_methanol_resins:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using methanol for resin sector
+  report: string
+
+furnace_methanol_steel:
+  description: Generalized furnace using biomass to provide process heat for steel production
+  input:
+    commodity: test
+  name: Industrial furnace using methanol for steel sector
+  report: string
+
+gas_NH3:
+  description: Ammonia synthesis with hydrogen via steam reforming of methane
+  input:
+    commodity: test
+  name: Ammonia production from natural gas
+  report: string
+
+gas_NH3_ccs:
+  description: Ammonia synthesis with hydrogen via steam reforming of methane with CCS
+  input:
+    commodity: test
+  name: Ammonia production from natural gas with CCS
+  report: string
+
+gas_processing_petro:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+grinding_ballmill_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+grinding_vertmill_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_elec_aluminum:
+  description: Electric heat pump used to provide process heat for aluminum production
+  input:
+    commodity: test
+  name: Electric heat pump for aluminum process heat
+  report: string
+
+hp_elec_cement:
+  description: Electric heat pump used to provide process heat for cement production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_elec_petro:
+  description: Electric heat pump used to provide process heat for petrochemical production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_elec_refining:
+  description: Electric heat pump used to provide process heat for refinery processes
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_elec_resins:
+  description: Electric heat pump used to provide process heat for resin production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_elec_steel:
+  description: Electric heat pump used to provide process heat for steel production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_gas_aluminum:
+  description: Gas powered heat pump used to provide process heat for aluminum production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_gas_cement:
+  description: Gas powered heat pump used to provide process heat for aluminum production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_gas_petro:
+  description: Gas powered heat pump used to provide process heat for petrochemical production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_gas_refining:
+  description: Gas powered heat pump used to provide process heat for refineries
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_gas_resins:
+  description: Gas powered heat pump used to provide process heat for resin production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hp_gas_steel:
+  description: Gas powered heat pump used to provide process heat for steel production
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hydro_cracking_ref:
+  description: Hydrocracking unit of a refinery converting gas oils with hydrogen to lighter petroleum products
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+hydrotreating_ref:
+  description: Hydrotreating unit of a refinery
+  input:
+    commodity: test
+  name: Hydrotreating refinery unit
+  report: string
+
+import_NFert:
+  description: Pseudo technology representing imports of nitrogen fertilizer from a global pool
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+import_NH3:
+  description: Pseudo technology representing imports of ammonia from a global pool
+  input:
+    commodity: test
+  name: Ammonia import
+  report: string
+
+import_aluminum:
+  description: Pseudo technology representing imports of aluminum from a global pool
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+import_petro:
+  description: Pseudo technology representing imports of HVCs from a global pool
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+import_steel:
+  description: Pseudo technology representing imports of steel from a global pool
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+manuf_aluminum:
+  description: Technology representing the manufacturing steps from crude alu to alu products
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+manuf_steel:
+  description: Technology representing the manufacturing steps from crude steel to steel products
+  input:
+    commodity: test
+  name: Steel products manufacturing
+  report: string
+
+meth_bal:
+  description: Pseudo technology moving methanol from primary(_material) to secondary(_material) level
+  input:
+    commodity: test
+  name: Methanol balance
+  report: string
+
+meth_bio:
+  description: Methanol production via biomass gasification
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+meth_bio_ccs:
+  description: Methanol production via biomass gasification with CCS
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+meth_coal:
+  description: Methanol production via coal gasification
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+meth_coal_ccs:
+  description: Methanol production via coal gasification with CCS
+  input:
+    commodity: test
+  name: Methanol production from coal with CCS
+  report: string
+
+meth_exp:
+  description: Pseudo technology representing export of methanol to the global pool
+  input:
+    commodity: test
+  name: Methanol export
+  report: string
+
+meth_h2:
+  description: Methanol production from synthetic syngas (H2 and CO2)
+  input:
+    commodity: test
+  name: Methanol production from hydrogen
+  report: string
+
+meth_imp:
+  description: Pseudo technology representing imports of methanol from the global pool
+  input:
+    commodity: test
+  name: Methanol import
+  report: string
+
+meth_ng:
+  description: Methanol production via steam reforming of natural gas
+  input:
+    commodity: test
+  name: Methanol production from natural gas
+  report: string
+
+meth_ng_ccs:
+  description: Methanol production via steam reforming of natural gas with CCS
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+meth_t_d:
+  description: Pseudo technology moving methanol from secondary to final level
+  input:
+    commodity: test
+  name: Methanol transmission and distribution
+  report: string
+
+meth_t_d_material:
+  description: Pseudo technology moving methanol from secondary_material to final_material level
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+meth_trd:
+  description: Pseudo technology representing methanol trade on global markets
+  input:
+    commodity: test
+  name: Methanol trade
+  report: string
+
+other_EOL_aluminum:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+other_EOL_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+other_EOL_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+pellet_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+prebake_aluminum:
+  description: Aluminum production via Hall–Héroult process with prebaked electrodes
+  input:
+    commodity: test
+  name: Aluminum production with prebaked electrodes
+  report: string
+
+prep_secondary_aluminum_1:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+prep_secondary_aluminum_2:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+prep_secondary_aluminum_3:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+prep_secondary_steel_1:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+prep_secondary_steel_2:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+prep_secondary_steel_3:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+production_HVC:
+  description: Pseudo technology aggregating all chemicals belong to HVC group to HVC commodity
+  input:
+    commodity: test
+  name: High Value Chemicals production
+  report: string
+
+raw_meal_prep_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+residual_NH3:
+  description: Pseudo technology that moves ammonia from level x to level y #TODO: look up levels
+  input:
+    commodity: test
+  name: Non-fertilizer ammonia production
+  report: string
+
+scrap_recovery_aluminum:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+scrap_recovery_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+scrap_recovery_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+secondary_aluminum:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+sinter_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+soderberg_aluminum:
+  description: Aluminum production via Hall–Héroult process with Söderberg electrodes
+  input:
+    commodity: test
+    name: Aluminum production with Söderberg electrodes
+  report: string
+
+solar_aluminum:
+  description: Solar heat collected with ? for aluminum production
+  input:
+    commodity: test
+  name: Solar heat for aluminum production
+  report: string
+
+solar_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+solar_petro:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+solar_refining:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+solar_resins:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+solar_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+sr_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+steam_cracker_petro:
+  description: Most important conventional technology for primary petrochemicals
+  input:
+    commodity: test
+  name: Steam cracker
+  report: string
+
+total_EOL_aluminum:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+total_EOL_cement:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+total_EOL_steel:
+  description: ''
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+trade_NFert:
+  description: Pseudo technology representing nitrogen fertilizer trade on global markets
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+trade_NH3:
+  description: Pseudo technology representing NH3 trade on global markets
+  input:
+    commodity: test
+  name: Ammonia trade
+  report: string
+
+trade_aluminum:
+  description: Pseudo technology representing aluminum trade on global markets
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+trade_petro:
+  description: Pseudo technology representing HVC trade on global markets
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+trade_steel:
+  description: Pseudo technology representing steel trade on global markets
+  input:
+    commodity: test
+  name: Steel trade
+  report: string
+
+vacuum_distillation_ref:
+  description: Refinery process distilling heavy residue from atmospheric distillation
+  input:
+    commodity: test
+  name: Vacuum distillation unit
+  report: string
+
+visbreaker_ref:
+  description: Visbreaker unit of a refinery
+  input:
+    commodity: test
+  name: empty
+  report: string
+
+tecs_steel:
+  name: Steel making technologies
+  description: group of technologies that steel
+  child: []
+
+tecs_petro:
+  name: Petrochemicals technologies
+  description: group of technologies that produce petrochemicals
+  child: []
+
+tecs_cement:
+  name: Cement making technologies
+  description: group of technologies that steel
+  child: []
+
+tecs_alu:
+  name: Aluminum making technologies
+  description: group of technologies that steel
+  child: []
+  
+tecs_ref:
+  name: Refinery technologies
+  description: group of refinery process units
+  child: [ ]
+
+heat_tecs_steel:
+  name: Steel heat supply technologies
+  description: group of technologies that steel
+  child: []
+
+heat_tecs_petro:
+  name: Petrochemicals heat supply technologies
+  description: group of technologies that produce petrochemicals
+  child: []
+
+heat_tecs_cement:
+  name: Cement heat supply technologies
+  description: group of technologies that steel
+  child: []
+
+heat_tecs_alu:
+  name: Aluminum heat supply technologies
+  description: group of technologies that steel
+  child: []
+
+heat_tecs_ref:
+  name: Refinery heat supply technologies
+  description: group of refinery process units
+  child: [ ]
