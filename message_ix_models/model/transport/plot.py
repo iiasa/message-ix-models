@@ -133,6 +133,24 @@ class Plot(genno.compat.plotnine.Plot):
         )
 
 
+class BaseEnergy0(Plot):
+    """Transport final energy intensity of GDP."""
+
+    basename = "base-fe-intensity-gdp"
+    inputs = ["fe intensity:nl-ya:units"]
+    static = Plot.static + [
+        p9.aes(x="ya", y="value", color="nl"),
+        p9.geom_line(),
+        p9.geom_point(),
+        p9.labs(x="Period", y="", color="Node"),
+        p9.expand_limits(y=[0, 0.1]),
+    ]
+
+    def generate(self, data):
+        self.unit = data["unit"].unique()[0]
+        return p9.ggplot(data) + self.static + self.ggtitle()
+
+
 class CapNewLDV(Plot):
     # FIXME remove hard-coded units
     """New LDV capacity [10⁶ vehicle]."""

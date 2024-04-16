@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
+from genno.core.key import single_key
+
+from .key import gdp_exo
 
 if TYPE_CHECKING:
     import message_ix
@@ -134,6 +137,12 @@ def prepare_reporter(rep: "message_ix.Reporter") -> str:
 
     # Correct MESSAGEix-Transport outputs using the low-resolution scaling factor
     rep.add(k["s2"], "div", k["s1"], s2[2])
+
+    # Compute for file and plot: transport final energy intensity of GDP PPP
+    k_gdp = rep.add("gdp:nl-ya", "rename_dims", gdp_exo, quote({"n": "nl", "y": "ya"}))
+    k_fei = single_key(rep.add("fe intensity", "div", k["s2"] / tuple("chlt"), k_gdp))
+    rep.add(k_fei + "units", "convert_units", k_fei, units="MJ / USD")
+    _to_csv(k_fei + "units", "fe intensity")
 
     # Convert "final" energy inputs to transport to "useful energy" outputs, using
     # efficiency data from input-base.csv (in turn, from the base model). This data
