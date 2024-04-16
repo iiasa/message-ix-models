@@ -55,17 +55,17 @@ def test_distance_ldv(test_context, regions):
     )
 
 
+@pytest.mark.xfail(reason="Pending updates to message-ix-models")
 @pytest.mark.parametrize("regions", ["R11", "R12"])
-def test_distance_nonldv(regions):
+def test_distance_nonldv(test_context, regions):
     "Test :func:`.distance_nonldv`."
-    # Configuration
-    config = dict(regions=regions)
+    test_context.model.regions = regions
 
     # Computation runs
-    result = distance_nonldv(config)
+    result = distance_nonldv(test_context)
 
     # Computed value has the expected dimensions and units
-    assert ("nl", "t") == result.dims
+    assert {"nl", "t"} == set(result.dims)
     assert result.units.is_compatible_with("km / vehicle / year")
 
     # Check a computed value

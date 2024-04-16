@@ -23,10 +23,9 @@ import genno
 import numpy as np
 import pandas as pd
 import xarray as xr
-from genno import Operator
-from genno.operator import apply_units, relabel, rename_dims
+from genno import Computer, KeySeq, Operator, quote
+from genno.operator import apply_units, rename_dims
 from genno.testing import assert_qty_allclose, assert_units
-from iam_units import registry
 from message_ix_models import ScenarioInfo
 from message_ix_models.model.structure import get_codelist, get_codes
 from message_ix_models.report.operator import compound_growth
@@ -45,9 +44,9 @@ from message_data.projects.navigate import T35_POLICY
 from .config import Config
 
 if TYPE_CHECKING:
-    from genno import Computer
     from genno.types import AnyQuantity
     from message_ix import Scenario
+    from message_ix_models import Context
 
     import message_data.model.transport.factor
 
@@ -267,29 +266,32 @@ EEI_TECH_MAP = {
 }
 
 
-def distance_nonldv(config: dict) -> "AnyQuantity":
+def distance_nonldv(context: "Context") -> "AnyQuantity":
     """Return annual travel distance per vehicle for non-LDV transport modes."""
-    # Load from IEA EEI
-    from message_data.tools import iea_eei  # type: ignore [attr-defined]
+    import message_ix_models.tools.iea.eei  # noqa: F401
+    from message_ix_models.tools import exo_data
 
-    dfs = iea_eei.get_eei_data(config["regions"])
-    df = (
-        dfs["vehicle use"]
-        .rename(columns={"region": "nl", "year": "y", "Mode/vehicle type": "t"})
-        .set_index(["nl", "t", "y"])
+    log.warning(
+        "distance_nonldv() currently returns a sum, rather than weighted average. Use"
+        "with caution."
     )
 
-    # Check units
-    assert "kilovkm / vehicle" == registry.parse_units(
-        df["units"].unique()[0].replace("10^3 ", "k")
-    )
-    units = "Mm / vehicle / year"
+    c = Computer()
+    source_kw = dict(measure="Vehicle use", aggregate=True)
+    keys = exo_data.prepare_computer(context, c, "IEA EEI", source_kw)
 
-    # Rename IEA EEI technology IDs to model-internal ones
-    result = relabel(
-        genno.Quantity(df["value"], name="non-ldv distance", units=units),
-        dict(t=EEI_TECH_MAP),
-    )
+    ks = KeySeq(keys[0])
+
+    c.add(ks[0], "select", ks.base, indexers={"SECTOR": "transport"}, drop=True)
+    c.add(ks[1], "rename", ks[0], quote({"Mode/vehicle type": "t"}))
+    # Replace IEA EEI technology codes with MESSAGEix-Transport ones
+    c.add(ks[2], "relabel", ks[1], labels=dict(t=EEI_TECH_MAP))
+    # Ensure compatible dimensionality and convert units
+    c.add(ks[3], "convert_units", ks[2], units="Mm / vehicle / year")
+    c.add(ks[4], "rename_dims", ks[3], quote({"n": "nl"}))
+
+    # Execute the calculation
+    result = c.get(ks[4])
 
     # Select the latest year.
     # TODO check whether coverage varies by year; if so, then fill-forward or
