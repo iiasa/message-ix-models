@@ -53,20 +53,19 @@ def test_get_intratec_data() -> None:
     # Check that the regions of R12 are present
     assert all(
         [
-            "NAM",
-            "LAM",
-            "WEU",
-            "EEU",
-            "FSU",
-            "AFR",
-            "MEA",
-            "SAS",
-            "RCPA",
-            "PAS",
-            "PAO",
-            "CHN",
+            "R11_NAM",
+            "R11_LAM",
+            "R11_WEU",
+            "R11_EEU",
+            "R11_FSU",
+            "R11_AFR",
+            "R11_MEA",
+            "R11_SAS",
+            "R11_CPA",
+            "R11_PAS",
+            "R11_PAO",
         ]
-        == res.intratec_region.unique()
+        == res.node.unique()
     )
 
 

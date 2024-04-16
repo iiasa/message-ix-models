@@ -1,0 +1,16 @@
+﻿# Indices derived from Intratec,
+#,
+# Source: IIASA ECE calculation (F. Maczek) based on values from different countries in each region,
+# Units: dimensionless,
+node,value
+R11_NAM,89.83783784
+R11_LAM,105.8648649
+R11_WEU,103.2162162
+R11_EEU,87.24324324
+R11_FSU,72.72972973
+R11_AFR,115.6486486
+R11_MEA,113.027027
+R11_SAS,66.02702703
+R11_CPA,79.89189189
+R11_PAS,76.97683398
+R11_PAO,101.1891892
