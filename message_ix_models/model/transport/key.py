@@ -35,6 +35,7 @@ __all__ = [
 
 # Existing keys, either from Reporter.from_scenario() or .build.add_structure()
 gdp = Key("GDP", "ny")
+gdp_exo = Key("gdp", "ny")
 mer_to_ppp = Key("MERtoPPP", "ny")
 PRICE_COMMODITY = Key("PRICE_COMMODITY", "nclyh")
 price_full = PRICE_COMMODITY / ("h", "l")

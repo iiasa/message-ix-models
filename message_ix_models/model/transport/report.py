@@ -327,6 +327,7 @@ def callback(rep: Reporter, context: Context) -> None:
     rep.add(
         "transport all",
         [
+            # Use ths line to both store and write to file IAMC structured-data
             iamc_key,
             # Use this line for "transport::iamc+file" instead of "transport::iamc+all"
             # iamc_key - "all" + "file",
