@@ -8,6 +8,7 @@ import pandas as pd
 from iam_units import registry
 
 from message_ix_models.util import package_data_path
+from message_ix_models.util.node import adapt_R11_R12
 
 from .config import Config
 
@@ -159,36 +160,14 @@ def get_intratec_data() -> pd.DataFrame:
     pandas.DataFrame
         DataFrame with columns:
 
-        - intratec_tech: Intratec technology name
-        - intratec_region: Intratec region
-        - intratec_index: Intratec index value
+        - node: Intratec region
+        - value: Intratec index value
     """
 
     # Set file path for raw Intratec data
-    file = package_data_path("intratec", "intratec_data.xlsx")
+    file = package_data_path("intratec", "R11", "indices.csv")
 
-    # Read in data
-    df = (
-        pd.read_excel(file, sheet_name="comparison", header=0)
-        .rename(columns={"Unnamed: 0": "type"})
-        .query("type.notnull()")
-    )
-
-    # Convert to long format
-    df_long = (
-        (
-            df.melt(
-                id_vars=["type"], var_name="region", value_name="value"
-            ).reset_index(drop=True)
-        )
-        .query("type == 'Intratec index'")
-        .rename(columns={"value": "intratec_index", "region": "intratec_region"})
-        .assign(intratec_tech="all")
-        .drop(columns={"type"})
-        .reset_index(drop=True)
-    )
-
-    return df_long
+    return pd.read_csv(file, comment="#", skipinitialspace=True)
 
 
 def get_raw_technology_mapping(module: Literal["energy", "materials"]) -> pd.DataFrame:
@@ -558,18 +537,18 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
     df_intratec = get_intratec_data()
 
     # Map Intratec regions to MESSAGEix regions
-    # If node == "R11", add "R11_" to the beginning of each region
-    # If node == "R11", then rename "CHN" to "CPA" and remove "CHN" and "RCPA"
-    # If node == "R12", add "R12_" to the beginning of each region
+    # If node is R11, then map directly
+    # If node is R12, then adapt R11 regions to R12 regions
     if node.upper() == "R11":
-        df_intratec_map = (
-            df_intratec.assign(region=lambda x: "R11_" + x.intratec_region)
-            .replace({"region": {"R11_CHN": "R11_CPA", "R11_RCPA": np.nan}})
-            .dropna()
-        )
+        df_intratec_map = df_intratec.rename(
+            columns={"node": "region", "value": "intratec_index"}
+        ).assign(intratec_tech="all")
     elif node.upper() == "R12":
-        df_intratec_map = df_intratec.assign(
-            region=lambda x: "R12_" + x.intratec_region
+        df_intratec_map = (
+            adapt_R11_R12(df_intratec)
+            .rename(columns={"node": "region", "value": "intratec_index"})
+            .assign(intratec_tech="all")
+            .drop(columns=["unit"])
         )
     elif node.upper() == "R20":
         raise NotImplementedError
@@ -587,7 +566,7 @@ def get_intratec_regional_differentiation(node: str, ref_region: str) -> pd.Data
     df_reg_ratios = (
         df_intratec_map.query("region == @ref_region")
         .rename(columns={"intratec_index": "intratec_ref_region_cost"})
-        .drop(columns={"intratec_region", "region"})
+        .drop(columns={"region"})
         .merge(df_intratec_map, on=["intratec_tech"])
         .assign(reg_cost_ratio=lambda x: x.intratec_index / x.intratec_ref_region_cost)
         .reindex(
