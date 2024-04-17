@@ -274,14 +274,26 @@ Below are some examples:
        branch="main",
    )
 
-   BATCH = {
-       0: (
-           "--path-rename=:doc/global/",
-           "--path-rename=doc/global/_static/:doc/_static/",
+   BATCH = (
+       dict(
+           args=[
+               "--path-rename=:doc/global/",
+               "--path-rename=doc/global/_static/:doc/_static/",
+               "--replace-message=../replacements.txt",
+           ],
+           message_callback=message_callback,
        ),
-       1: (CAPITALIZE_MESSAGE,),
-       2: ("--invert-paths", "--path=doc/_static/combined-logo-white.png"),
-   }
+       dict(
+           args=["--invert-paths", "--path=doc/_static/combined-logo-white.png"],
+       ),
+   )
+
+.. code-block:: text
+
+   regex:^(Add|Correct|Edit|Insert|Switch|Try)(ed|ing)==>\1
+   regex:^(Chang|Integrat|Remov|Renam|Updat)(ed|ing)==>\1e
+   regex:^Citation$==>Edit citation
+   Formatted==>Format
 
 .. code-block:: python
 
@@ -298,24 +310,23 @@ Below are some examples:
    # Path fragment for using in BATCH
    MOD = "water"
 
-   BATCH = {
+   BATCH = (
        # Use --path-rename to rename several paths and files under them:
-       0: (
-           # Add or remove lines here as necessary; not all modules have all the following
-           # pieces, and some modules have additional pieces.
-           #
-           # Module data.
-           f"--path-rename=data/{MOD}/:{T.base}/data/{MOD}/",
-           # Module code. The "/model/" path fragment could also be "/project/", or removed
-           # entirely.
-           f"--path-rename={S.base}/model/{MOD}/:{T.base}/model/{MOD}/",
-           # Module tests.
-           f"--path-rename={S.base}/tests/model/{MOD}/:{T.base}/tests/model/{MOD}/",
-       ),
-       #
        # Use --message-callback to rewrite some commit messages, capitalizing the first letter.
-       1: (
-           """--message-callback='return re.sub(b"^[a-z]", message[:1].upper(), message)'""",
+       dict(
+           args=[
+               # Add or remove lines here as necessary; not all modules have all the following
+               # pieces, and some modules have additional pieces.
+               #
+               # Module data.
+               f"--path-rename=data/{MOD}/:{T.base}/data/{MOD}/",
+               # Module code. The "/model/" path fragment could also be "/project/", or removed
+               # entirely.
+               f"--path-rename={S.base}/model/{MOD}/:{T.base}/model/{MOD}/",
+               # Module tests.
+               f"--path-rename={S.base}/tests/model/{MOD}/:{T.base}/tests/model/{MOD}/",
+           ],
+           message_callback=message_callback
        ),
        #
        # Use --path to keep only a subset of files and directories.
@@ -324,18 +335,23 @@ Below are some examples:
        # keeping only message_ix_models. This operates on the paths renamed by the previous
        # command. It would be possible to combine in a single command, but we would then
        # need to specify the *original* paths to keep.
-       2: (
-           f"--path={T.base}",
-           # NB can add lines to keep other files, for instance:
-           # f"--path=doc/{MOD}/",
+       dict(
+           args=[
+               f"--path={T.base}",
+               #
+               # Can add lines to keep other files, for instance:
+               # f"--path=doc/{MOD}/",
+           ],
        ),
        #
        # Use --invert-paths to *remove* some specific files, e.g. non-reporting test data.
-       3: (
-           "--invert-paths",
-           f"--path-regex=^{T.base}/tests/data/[^r].*$",
+       dict(
+           args=[
+               "--invert-paths",
+               f"--path-regex=^{T.base}/tests/data/[^r].*$",
+           ],
        ),
-   }
+   )
 
 
 After migrating
