@@ -11,6 +11,9 @@ Over time:
   (This point may vary from project to project.)
 - :mod:`message_data` may be renamed.
 
+.. contents::
+   :local:
+
 Using both packages together
 ============================
 
@@ -52,8 +55,8 @@ Use :mod:`message_ix_models.tools` and :mod:`~message_ix_models.util` in :mod:`m
 
 .. _migrate-filter-repo:
 
-Migrating individual modules
-============================
+Migrate individual modules using :program:`git filter-repo`
+===========================================================
 
 This section describes a general process for migrating (sub)modules of :mod:`.message_data` or other repositories, private or public, to :mod:`.message_ix_models`.
 Using this process preserves the commit and development history of code and data.
@@ -89,7 +92,7 @@ Read through all the steps before starting.
 
    This copies the :file:`migrate.py` module into the temporary directory from (0).
 
-   **Edit the file**, particularly the variables :py:`SOURCE`, :py:`DEST`, and :py:`BATCH`.
+   **Edit the file**, particularly the variables :py:`SOURCE`, :py:`TARGET`, and :py:`BATCH`.
    Use the section “Using :program:`git filter-repo`,” below, and comments in the file as a guide to the necessary changes.
 
 2. Run::
@@ -98,13 +101,13 @@ Read through all the steps before starting.
 
    This step:
 
-   - Clones the source and destination repositories into directories with names like :file:`source-a1b` and :file:`dest-2c3`.
+   - Clones the source and target repositories into directories with names like :file:`source-a1b` and :file:`target-2c3`.
    - Fetches all available Git LFS objects associated with any commit in the source repository.
      These are needed as the history is replayed in the next step.
 
      If the source repository is :mod:`message_data`, this will download up to 6 GB of data from GitHub, so it can be slow.
-     The :file:`source-*` directory is not modified during the rest of the process, so if you do not modify it, this step does not need repeating.
-   - Creates symlinks pointing from :file:`dest-*/.git/lfs/objects/…` to :file:`source-*/.git/lfs/objects/…`.
+     The :file:`source-*` directory is not modified during the rest of the process, so if you do not modify it, this step will not need repeating.
+   - Creates symlinks pointing from :file:`target-*/.git/lfs/objects/…` to :file:`source-*/.git/lfs/objects/…`.
      This makes it appear as if the LFS objects are locally stored and available to the target repo.
 
 3. Run::
@@ -113,14 +116,16 @@ Read through all the steps before starting.
 
    This step:
 
-   - Connects the two repos together, with the destination repo seeing the source repo as a remote.
+   - Connects the two repos together, with the target repo seeing the source repo as a Git remote.
+     (Note that in Git terminology, ‘remote’ does not necessarily mean “on another machine”.
+     In this case, the remote is just located in a different directory.)
    - Fetches the source branch.
    - Rewrites the source branch history according to the rules in :py:`BATCH`.
    - Writes a file :file:`rebase-todo.in` to be used in the next step.
 
 4. Prepare for :program:`git rebase`.
 
-   Make a copy of the file :file:`rebase-todo.in`, and open the copy.
+   Make a copy of the file :file:`rebase-todo.in`—for instance, :file:`rebase-todo.txt`—and open the copy.
    This file contains a list of commands for the rebase.
    You can edit this list before using it in step (5); if needed, restore the list by making a fresh copy of the original.
 
@@ -128,9 +133,9 @@ Read through all the steps before starting.
    These commits *may*—not necessarily—be indication of a *non-linear history*.
    This can occur when branches with similar commit names but different contents are merged together (despite our best efforts, this sometimes happens on :mod:`message_data`).
 
-   Some changes you can make to your copy of :file:`rebase-todo.in`:
+   Some changes you can make to :file:`rebase-todo.txt`:
 
-   - Remove lines for duplicated commits, per :file:`duplicates.txt`.
+   - Remove lines for duplicated commits, per :file:`duplicate-messages.txt`.
      This avoids commanding :program:`git` to apply the same changes more than once, which can lead to conflicts.
      You could:
 
@@ -148,16 +153,29 @@ Read through all the steps before starting.
      $ git checkout -b migrate-example source-branch
      $ git rebase --interactive --empty=drop main
 
-   - In the editor that opens, delete *everything*.
-   - Paste in the contents of :file:`rebase-todo.in` from step (4).
-   - Save the file and exit.
+   Replace the to-do list for the rebase with the one prepared in step (4).
+
+   - One way to do this:
+
+     - In the editor that opens, delete *everything*.
+     - Paste in the contents of :file:`rebase-todo.txt`.
+     - Save the file and exit.
+
+   - Another way:
+
+     - Insert a single line with the text ``break`` at the top of the existing TODO list.
+     - Save the file and exit.
+       The rebase will begin, but stop before picking the first commit.
+     - Open the file :file:`.git/rebase-merge/git-rebase-todo` in a different editor; replace its contents with :file:`rebase-todo.txt`, and save.
+     - Run :program:`git rebase --continue`.
 
    The interactive rebase begins.
 
    - Resolve any conflicts that arise in the usual way.
      After resolving, perhaps run::
 
-       $ git add --update && git rebase --continue
+       $ git add --update && git status
+       $ git rebase --continue
 
    - If you see a message like the following::
 
@@ -198,7 +216,7 @@ Read through all the steps before starting.
 7.  Clean up.
 
     This *may* be done directly on the branch from (6).
-    However, a better option to create a secondary branch from the HEAD of (6), named like ``migrate-example-tidy``, and make clean-up commits to this branch.
+    However, a better option to create a secondary branch from the head of (6), named like ``migrate-example-tidy``, and make clean-up commits to this branch.
     Create a second pull request to merge this manual clean-up branch into the branch from (6).
     This way, if steps (1–6) need to be repeated, a new history can be force-pushed to ``migrate-example``, and then the manual clean-up branch can be rebased on the newly updated ``migrate-example`` branch, with little disturbance.
 
@@ -242,8 +260,8 @@ Read through all the steps before starting.
 **To restart** at any time, run :program:`python migrate.py reset` from your temporary directory to delete the clone of :mod:`message_ix_models` and all other changes from steps (3–5).
 Then begin from step (2).
 
-Using :program:`git filter-repo`
---------------------------------
+:program:`git filter-repo` features and options
+-----------------------------------------------
 
 :program:`git-filter-repo` (`docs <https://htmlpreview.github.io/?https://github.com/newren/git-filter-repo/blob/docs/html/git-filter-repo.html>`_) is a powerful tool for rewriting :program:`git` history.
 It has many command-line options and features.
@@ -263,6 +281,7 @@ These commands are **batched** when they cannot be given simultaneously in a sin
 Below are some examples:
 
 .. code-block:: python
+   :caption: :file:`migrate.py` config section, used in :pull:`107`
 
    S = SOURCE = RepoInfo(
        url="git@github.com:iiasa/message_doc.git",
@@ -289,6 +308,7 @@ Below are some examples:
    )
 
 .. code-block:: text
+   :caption: :file:`requirements.txt`, used in :pull:`107`
 
    regex:^(Add|Correct|Edit|Insert|Switch|Try)(ed|ing)==>\1
    regex:^(Chang|Integrat|Remov|Renam|Updat)(ed|ing)==>\1e
@@ -296,6 +316,7 @@ Below are some examples:
    Formatted==>Format
 
 .. code-block:: python
+   :caption: :file:`migrate.py` config section, used in :pull:`88`
 
    S = SOURCE = RepoInfo(
        url="git@github.com:iiasa/message_data.git",
