@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import blake2s
@@ -6,6 +7,15 @@ from typing import Literal
 
 import click
 import git
+from git_filter_repo import FilteringOptions, RepoFilter
+
+#: Common args for calls to git-filter-repo in `target_repo`
+COMMON = [
+    "--force",  # Ignore non-clean history
+    # "--debug",  # Show debug information
+    "--prune-empty=always",
+    "--prune-degenerate=always",
+]
 
 
 @dataclass
@@ -17,37 +27,42 @@ class RepoInfo:
     branch: str = "main"
 
     @property
-    def name(self) -> str:
-        """Directory name once cloned."""
-        return self.url.split("/")[-1].split(".")[0]
-
-    @property
     def base(self) -> str:
         """Likely top-level directory in the repo, a Python module name."""
-        return self.name.replace("-", "_")
+        return self.url.split("/")[-1].split(".")[0].replace("-", "_")
 
 
-# For use in BATCHES, below
-CAPITALIZE_MESSAGE = """
-    --message-callback='return re.sub(b"^[a-z]", message[:1].upper(), message)'
-"""
+def message_callback(message: bytes) -> bytes:
+    return message.capitalize()
+
 
 # -- Configuration ---------------------------------------------------------------------
 # Do not edit outside of this section. See the documentation for examples.
 
 S = SOURCE = RepoInfo(
-    url="",
-    branch="",
+    url="git@github.com:iiasa/message_doc.git",
+    branch="main",
 )
 
 T = TARGET = RepoInfo(
-    url="",
-    branch="",
+    url="git@github.com:iiasa/message-ix-models.git",
+    branch="main",
 )
 
-#: Batches of commands for git-filter-repo. Keys must be integers; values must be tuples
-#: or lists of strings.
-BATCH = {}
+
+BATCH = (
+    dict(
+        args=[
+            "--path-rename=:doc/global/",
+            "--path-rename=doc/global/_static/:doc/_static/",
+            "--replace-message=../replacements.txt",
+        ],
+        message_callback=message_callback,
+    ),
+    dict(
+        args=["--invert-paths", "--path=doc/_static/combined-logo-white.png"],
+    ),
+)
 
 # --------------------------------------------------------------------------------------
 
@@ -160,6 +175,14 @@ def prep_repo(
     return repo
 
 
+def same_commit(prev: "git.Commit", commit: "git.Commit") -> bool:
+    """Return True if `prev` and `commit` have the same message and author name.
+
+    This allows for the e-mail address to be different, e.g. contain typos.
+    """
+    return prev.message == commit.message and prev.author.name == commit.author.name
+
+
 @click.group
 @click.pass_context
 def main(ctx):
@@ -171,9 +194,8 @@ def main(ctx):
         hash_ = blake2s(repr(info).encode()).hexdigest()[:3]
         repo = git.Repo.init(Path.cwd().joinpath(f"{label}-{hash_}"))
 
-        print(f"{label}:")
-        print(f"  remote: {info.url}:{info.branch}")
-        print(f"  local: {repo.working_dir}")
+        print(f"{label} remote : {info.url}:{info.branch}")
+        print(f"       local  : {repo.working_dir}")
 
         # Store for usage in commands
         config.update({f"{label} info": info, f"{label} repo": repo})
@@ -215,6 +237,8 @@ def step_2(config):
 @click.pass_obj
 def step_3(config):
     """Rewrite history and prepare rebase."""
+    cwd = Path.cwd()
+
     # Retrieve objects from configuration
     source_repo: "git.Repo" = config["source repo"]
     target_repo: "git.Repo" = config["target repo"]
@@ -222,7 +246,8 @@ def step_3(config):
 
     # Record the initial commit of the `target_repo` "main" branch
     target_initial_commit = find_initial_commit(target_repo, "main")
-    print(f"Will rebase initial commits on to: {target_initial_commit!r}")
+    # print(f"Will rebase initial commits on to: {target_initial_commit!r}")
+    del target_initial_commit  # Currently unused
 
     # Add a remote to `target_repo` that points to `source_repo`
     delete_remote(target_repo, "source-remote")
@@ -236,24 +261,21 @@ def step_3(config):
     # NB For some reason the same approach as in prep_repo() does not work here
     target_repo.git.checkout(f"remotes/{b.name}", b="source-branch")
     head = target_repo.heads["source-branch"]
+    # Only rewrite the branch `head`
+    COMMON.append(f"--refs={head}")
 
     # Remove the remote again
     target_repo.delete_remote(source_remote)
 
-    # Common args for calls to git-filter-repo in `target_repo`
-    common = [
-        f"--refs={head}",  # Only rewrite this branch
-        "--force",  # Ignore non-clean history
-        "--debug",  # Show debug information
-    ]
+    # Change to the target repo working tree for git-filter-repo
+    os.chdir(target_repo.working_tree_dir)
 
     # Run each batch of commands
-    for i, args in BATCH.items():
-        if not args:
-            print(f"No actions for batch {i}; skip")
-            continue
-
-        target_repo.git.filter_repo(*common, *args)
+    for i, config in enumerate(BATCH):
+        # Parse CLI-ish arguments: common arguments and batch-specific
+        fo = FilteringOptions.parse_args(COMMON + config.pop("args"))
+        # Create and run a RepoFilter using parsed arguments and any other kwargs
+        RepoFilter(fo, **config).run()
 
     # NB the following block is commented because the migration process currently uses
     #    an interactive rebase in step (5).
@@ -275,14 +297,18 @@ def step_3(config):
     # Non-adjacent, identical messages
     messages = defaultdict(list)
     # Info on the previous commit
-    prev = ("", "")
+    prev = None
 
-    for c in target_repo.iter_commits(head):
+    # Get a list of the commits from the initial to latest
+    commits = reversed(list(target_repo.iter_commits(head)))
+
+    for c in commits:
         first_line = c.message.splitlines()[0]
 
-        if (c.message, c.author) == prev:
-            # Same as previous commit's message *and* author → suggest to squash
-            action = "squash"
+        if prev and same_commit(prev, c):
+            # Same as previous commit's message *and* author → suggest to squash while
+            # keeping only the first message
+            action = "fixup"
             # Don't add to messages
         else:
             action = "pick"
@@ -293,28 +319,29 @@ def step_3(config):
         todo_lines.append(f"{action} {c.hexsha[:8]}  {first_line}\n")
 
         # Update for next commit
-        prev = (c.message, c.author)
+        prev = c
 
     # Generate a TODO list for "git rebase --interactive --empty=drop main"
-    with open("rebase-todo.in", "w") as f:
+    with open(cwd.joinpath("rebase-todo.in"), "w") as f:
         f.write("""# This is a candidate TODO list for:
 #   git rebase --interactive --empty=drop main
 
 """)
-        f.writelines(reversed(todo_lines))
+        f.writelines(todo_lines)
 
     # Generate a list to help identifying duplicate commits
-    with open("duplicate-messages.txt", "w") as f:
+    with open(cwd.joinpath("duplicate-messages.txt"), "w") as f:
         f.write("""# This is a list of commits with duplicate messages""")
         for k, v in messages.items():
             if len(v) == 1:
                 continue
-            f.write("\n\n" + "\n".join(reversed(v)))
+            f.write("\n\n" + "\n".join(v))
 
 
 @main.command
 @click.pass_obj
 def reset(config):
+    """Undo changes."""
     # Checks out the `main` branch, wiping out any uncommitted changes
     target_repo = prep_repo(config, "target")
 
