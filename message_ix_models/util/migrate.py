@@ -10,91 +10,46 @@ import git
 
 @dataclass
 class RepoInfo:
+    #: Source (probably GitHub) URL of the remote to clone.
     url: str
-    branch: str
+
+    #: Branch to use.
+    branch: str = "main"
 
     @property
     def name(self) -> str:
+        """Directory name once cloned."""
         return self.url.split("/")[-1].split(".")[0]
 
     @property
     def base(self) -> str:
+        """Likely top-level directory in the repo, a Python module name."""
         return self.name.replace("-", "_")
 
 
-# Path fragment for path renaming and filtering
-MOD = "doc"
+# For use in BATCHES, below
+CAPITALIZE_MESSAGE = """
+    --message-callback='return re.sub(b"^[a-z]", message[:1].upper(), message)'
+"""
+
+# -- Configuration ---------------------------------------------------------------------
+# Do not edit outside of this section. See the documentation for examples.
 
 S = SOURCE = RepoInfo(
-    url="git@github.com:iiasa/message_data.git",
-    branch="dev",
+    url="",
+    branch="",
 )
 
-S = SOURCE = RepoInfo(
-    url="git@github.com:iiasa/message_doc.git",
-    branch="main",
+T = TARGET = RepoInfo(
+    url="",
+    branch="",
 )
 
+#: Batches of commands for git-filter-repo. Keys must be integers; values must be tuples
+#: or lists of strings.
+BATCH = {}
 
-D = DEST = RepoInfo(
-    url="git@github.com:iiasa/message-ix-models.git",
-    branch=f"migrate-{MOD}",
-)
-
-
-# Batches of commands for git-filter-repo
-BATCH = {
-    # --path-rename = rename several paths and files under them, i.e.:
-    #   - Module data.
-    #   - Module code. The "/model/" path fragment could also be "/project/", or removed
-    #     entirely.
-    #   - Module tests.
-    0: (
-        # Add or remove lines here as necessary; not all modules have all the following
-        # pieces, and some modules have additional pieces.
-        f"--path-rename=data/{MOD}/:{D.base}/data/{MOD}/",
-        f"--path-rename={S.base}/model/{MOD}/:{D.base}/model/{MOD}/",
-        f"--path-rename={S.base}/tests/model/{MOD}/:{D.base}/tests/model/{MOD}/",
-    ),
-    #
-    # --path = keep only a subset of files and directories.
-    #
-    # This has the effect of discarding the top-level message_data and data directories,
-    # keeping only message_ix_models. This operates on the paths renamed by the previous
-    # command. It would be possible to combine in a single command, but we would then
-    # need to specify the *original* paths to keep.
-    1: [
-        "--message-callback="
-        """'return re.sub(b"^[a-z]", message[:1].upper(), message)'""",
-        f"--path={D.base}",
-        # NB can add lines to keep other files, for instance:
-        # --path doc/$MOD/
-    ],
-    #
-    # --invert-paths = *remove* some specific files, e.g. non-reporting test data
-    2: [
-        # commented: currently not used
-        # "--invert-paths",
-        # f"--path-regex=^{d}/tests/data/[^r].*$",
-    ],
-}
-
-
-@click.group
-@click.pass_context
-def main(ctx):
-    ctx.ensure_object(dict)
-
-    for label, info in ("source", SOURCE), ("dest", DEST):
-        # Local directory containing a git repo
-        hash_ = blake2s(info.url.encode()).hexdigest()[:3]
-        repo = git.Repo.init(Path.cwd().joinpath(f"{label}-{hash_}"))
-        from icecream import ic
-
-        ic(repo, repo.working_dir)
-
-        # Store for usage in commands
-        ctx.obj.update({f"{label} info": info, f"{label} repo": repo})
+# --------------------------------------------------------------------------------------
 
 
 def delete_remote(repo: "git.Repo", name: str = "origin"):
@@ -107,31 +62,31 @@ def delete_remote(repo: "git.Repo", name: str = "origin"):
         repo.delete_remote(name)
 
 
-def find_initial_commit(repo: "git.Repo") -> "git.Commit":
-    return repo.commit(repo.git.rev_list("--max-parents=0", "HEAD"))
+def find_initial_commit(repo: "git.Repo", name: str) -> "git.Commit":
+    return repo.commit(repo.git.rev_list("--max-parents=0", name))
 
 
-def mirror_lfs_objects(src: "git.Repo", dest: "git.Repo") -> None:
-    """Symlink Git LFS objects in `src` from `dest`."""
-    s_base = Path(src.git_dir, "lfs", "objects")
-    d_base = Path(dest.git_dir, "lfs", "objects")
+def mirror_lfs_objects(source_repo: "git.Repo", target_repo: "git.Repo") -> None:
+    """Symlink Git LFS objects in `source_repo` from `target_repo`."""
+    s_base = Path(source_repo.git_dir, "lfs", "objects")
+    t_base = Path(target_repo.git_dir, "lfs", "objects")
 
     for s_path in s_base.rglob("*"):
-        d_path = d_base.joinpath(s_path.relative_to(s_base))
+        t_path = t_base.joinpath(s_path.relative_to(s_base))
 
         if s_path.is_dir():
-            d_path.mkdir(parents=True, exist_ok=True)
+            t_path.mkdir(parents=True, exist_ok=True)
             continue
 
         try:
-            d_path.symlink_to(s_path)
+            t_path.symlink_to(s_path)
         except FileExistsError:
             if not (
-                (d_path.is_symlink() and d_path.readlink() == s_path)
-                or d_path.stat().st_size == s_path.stat().st_size
+                (t_path.is_symlink() and t_path.readlink() == s_path)
+                or t_path.stat().st_size == s_path.stat().st_size
             ):
                 raise FileExistsError(
-                    f"{d_path}, but is not the expected symlink to/copy of {s_path}"
+                    f"{t_path}, but is not the expected symlink to/copy of {s_path}"
                 )
 
 
@@ -159,10 +114,17 @@ def missing_lfs_objects(repo: "git.Repo") -> list["Path"]:
 
 def prep_repo(
     config: dict,
-    label=Literal["source", "dest"],
-    branch: bool = False,
+    label=Literal["source", "target"],
     lfs: bool = False,
 ) -> None:
+    """Prepare the git repo with the given `label`.
+
+    - Add the remote 'origin'.
+    - Fetch the configured branch from 'origin'.
+    - Check out the branch.
+    - Fetch all LFS objects existing on the server.
+    - Delete the 'origin' remote, to avoid inadvertent pushes.
+    """
     repo: "git.Repo" = config[f"{label} repo"]
     info: RepoInfo = config[f"{label} info"]
 
@@ -171,109 +133,167 @@ def prep_repo(
     origin = repo.create_remote("origin", info.url)
 
     # Fetch the remote
-    name = info.branch if branch else "main"
-    origin.fetch(f"refs/heads/{name}")
-    b = origin.refs[name]
+    branch_name = info.branch
+    origin.fetch(f"refs/heads/{branch_name}")
+    b = origin.refs[branch_name]
 
     # Check out the branch
     try:
-        head = repo.heads[name]
-    except KeyError:
-        head = repo.create_head(name, b)
+        head = repo.heads[branch_name]
+    except IndexError:
+        head = repo.create_head(branch_name, b)
     head.set_tracking_branch(b).checkout(force=True)
 
-    # Fetch all LFS objects existing on the server; about 5.7 GB for message_data
-    if lfs:
+    if label == "source":
+        # Fetch all LFS objects existing on the server
         repo.git.lfs("fetch", "--all")
 
-    # Delete the `origin` remote to avoid inadvertent pushing
+        # Write a list of missing LFS objects
+        to_remove = missing_lfs_objects(repo)
+        Path.cwd().joinpath("lfs-sha256s-to-remove.txt").write_text(
+            "\n".join(to_remove)
+        )
+
+    # Delete the `origin` remote
     delete_remote(repo, "origin")
 
     return repo
 
 
-@main.command
+@click.group
+@click.pass_context
+def main(ctx):
+    ctx.ensure_object(dict)
+    config = ctx.obj
+
+    for label, info in ("source", SOURCE), ("target", TARGET):
+        # Local directory containing a git repo
+        hash_ = blake2s(repr(info).encode()).hexdigest()[:3]
+        repo = git.Repo.init(Path.cwd().joinpath(f"{label}-{hash_}"))
+
+        print(f"{label}:")
+        print(f"  remote: {info.url}:{info.branch}")
+        print(f"  local: {repo.working_dir}")
+
+        # Store for usage in commands
+        config.update({f"{label} info": info, f"{label} repo": repo})
+
+    print()
+
+
+@main.command("step-1")
+def step_1():
+    """Copy the script into the temporary directory."""
+    wd = Path.cwd()
+    file_path = Path(__file__)
+    script_path = wd.joinpath(file_path.name)
+
+    if not script_path.exists():
+        import shutil
+        import sys
+
+        shutil.copyfile(file_path, script_path)
+
+    print(f"Continue using '{sys.executable} {script_path.name}'")
+
+
+@main.command("step-2")
 @click.pass_obj
-def prep(config):
-    src = prep_repo(config, "source", branch=True, lfs=True)
-
-    # Write a list of missing LFS objects
-    to_remove = missing_lfs_objects(src)
-    Path.cwd().joinpath("lfs-sha256s-to-remove.txt").write_text("\n".join(to_remove))
-
-    dest = prep_repo(config, "dest")
+def step_2(config):
+    """Prepare the source and target repos."""
+    source_repo = prep_repo(config, "source", lfs=True)
+    target_repo = prep_repo(config, "target")
 
     # Symlink LFS objects from source repo's .git directory.
     #
     # This ensures that when commit history is being rewritten in the current directory,
     # references to LFS objects are resolved, because they are in the local cache.
-    mirror_lfs_objects(src, dest)
+    mirror_lfs_objects(source_repo, target_repo)
 
 
-@main.command
+@main.command("step-3")
 @click.pass_obj
-def migrate(config):
-    # Source and destination repos
-    src: "git.Repo" = config["source repo"]
-    dest: "git.Repo" = config["dest repo"]
+def step_3(config):
+    """Rewrite history and prepare rebase."""
+    # Retrieve objects from configuration
+    source_repo: "git.Repo" = config["source repo"]
+    target_repo: "git.Repo" = config["target repo"]
+    source_info: RepoInfo = config["source info"]
 
-    # Configuration
-    s_info: RepoInfo = config["source info"]
-    # d_info: RepoInfo = config["dest info"]
+    # Record the initial commit of the `target_repo` "main" branch
+    target_initial_commit = find_initial_commit(target_repo, "main")
+    print(f"Will rebase initial commits on to: {target_initial_commit!r}")
 
-    # Record the initial commit of the `dest` "main" branch
-    dest_initial_commit = find_initial_commit(dest, "main")
-    print(f"Will rebase initial commits on to: {dest_initial_commit!r}")
-
-    # Add a remote to `dest` that points to `src`
-    delete_remote(dest, "source-remote")
-    src_remote = dest.create_remote("source-remote", src.working_tree_dir)
+    # Add a remote to `target_repo` that points to `source_repo`
+    delete_remote(target_repo, "source-remote")
+    source_remote = target_repo.create_remote("source-remote", source_repo.working_dir)
 
     # Fetch (local)
-    src_remote.fetch()
+    source_remote.fetch()
+    b = source_remote.refs[source_info.branch]
 
-    # Create a branch in the `dest` that tracks a branch in `src`
-    try:
-        head = dest.heads["source-branch"]
-    except IndexError:
-        head = dest.create_head("source-branch", src_remote.refs[s_info.branch])
-    finally:
-        head.set_tracking_branch(src_remote.refs[s_info.branch])
+    # Create a branch in the `target_repo` that tracks a branch in `source_repo`
+    # NB For some reason the same approach as in prep_repo() does not work here
+    target_repo.git.checkout(f"remotes/{b.name}", b="source-branch")
+    head = target_repo.heads["source-branch"]
 
-    # Common args for calls to filter-repo in `dest`
-    common = [f"--refs={head}", "--force", "--debug"]
+    # Remove the remote again
+    target_repo.delete_remote(source_remote)
+
+    # Common args for calls to git-filter-repo in `target_repo`
+    common = [
+        f"--refs={head}",  # Only rewrite this branch
+        "--force",  # Ignore non-clean history
+        "--debug",  # Show debug information
+    ]
 
     # Run each batch of commands
     for i, args in BATCH.items():
         if not args:
-            print("No actions for batch {i}; skip")
+            print(f"No actions for batch {i}; skip")
             continue
 
-        dest.git.filter_repo(*common, *args)
+        target_repo.git.filter_repo(*common, *args)
 
-    # Filtering is complete
-
-    src_initial_commit = find_initial_commit(dest, head)
-
-    # Graft the initial commit(s) of the rewritten branch onto the initial commit of
-    # `dest`, so the two share a common initial commit
-
-    dest.git.replace("--graft", src_initial_commit.hexsha, dest_initial_commit.hexsha)
-
-    # FIXME If there are more than one, the git-replace operations must be done together
-    # and filter-repo last.
-
-    # Run filter repo one more time to rewrite
-    dest.git.filter_repo(*common)
+    # NB the following block is commented because the migration process currently uses
+    #    an interactive rebase in step (5).
+    #
+    # # Identify the initial commit of the rewritten source-branch
+    # source_initial_commit = find_initial_commit(target_repo, head)
+    #
+    # # Graft the initial commit(s) of the rewritten branch onto the initial commit of
+    # # `target_repo`, so the two share a common initial commit
+    # target_repo.git.replace(
+    #     "--graft", source_initial_commit.hexsha, target_initial_commit.hexsha
+    # )
+    #
+    # # Run filter repo one more time to rewrite
+    # target_repo.git.filter_repo(*common)
 
     # Log of the rewritten branch
     todo_lines = list()
+    # Non-adjacent, identical messages
     messages = defaultdict(list)
+    # Info on the previous commit
+    prev = ("", "")
 
-    for commit in dest.iter_commits(head):
-        todo_lines.append(f"p {commit.hexsha[:8]}\n")
-        message = commit.message.splitlines()[0]
-        messages[message].append(f"{commit.hexsha[:8]}  {message}")
+    for c in target_repo.iter_commits(head):
+        first_line = c.message.splitlines()[0]
+
+        if (c.message, c.author) == prev:
+            # Same as previous commit's message *and* author → suggest to squash
+            action = "squash"
+            # Don't add to messages
+        else:
+            action = "pick"
+            # Record the hash
+            messages[first_line].append(f"{c.hexsha[:8]}  {first_line}")
+
+        # Add to TODO lines
+        todo_lines.append(f"{action} {c.hexsha[:8]}  {first_line}\n")
+
+        # Update for next commit
+        prev = (c.message, c.author)
 
     # Generate a TODO list for "git rebase --interactive --empty=drop main"
     with open("rebase-todo.in", "w") as f:
@@ -296,18 +316,18 @@ def migrate(config):
 @click.pass_obj
 def reset(config):
     # Checks out the `main` branch, wiping out any uncommitted changes
-    dest = prep_repo(config, "dest")
+    target_repo = prep_repo(config, "target")
 
-    # Remove the remote pointing to migrate-src
-    delete_remote(dest, "migrate-src")
+    # Remove the remote pointing to the source repo
+    delete_remote(target_repo, "source-remote")
 
-    # Remove the target branch
+    # Remove the rewritten branch
     try:
-        dest.heads[config["dest branch"]]
+        target_repo.heads["source-branch"]
     except IndexError:
         pass
     else:
-        dest.delete_head(config["dest branch"], force=True)
+        target_repo.delete_head("source-branch", force=True)
 
     # Remove generated files
     for name in "lfs-sha256s-to-remove.txt", "rebase-todo.in", "duplicate-messages.txt":
