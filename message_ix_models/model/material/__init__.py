@@ -7,11 +7,8 @@ import ixmp
 import message_ix
 import ntfy
 import pandas as pd
-from message_data.tools.utilities import (
-    calibrate_UE_gr_to_demand,
-    calibrate_UE_share_constraints,
-    update_h2_blending,
-)
+
+#update_h2_blending,
 from message_data.tools.utilities import (
     manual_updates_ENGAGE_SSP2_v417_to_v418 as engage_updates,
 )
@@ -49,7 +46,11 @@ from message_ix_models.model.material.util import (
     get_all_input_data_dirs,
     update_macro_calib_file,
 )
-from message_ix_models.util import add_par_data, private_data_path
+from message_ix_models.tools import (
+    calibrate_UE_gr_to_demand,
+    calibrate_UE_share_constraints,
+)
+from message_ix_models.util import add_par_data, package_data_path
 from message_ix_models.util.click import common_params
 
 log = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         scenario.add_set("commodity", "freshwater_supply")
 
         water_dict = pd.read_excel(
-            private_data_path("material", "other", "water_tec_pars.xlsx"),
+            package_data_path("material", "other", "water_tec_pars.xlsx"),
             sheet_name=None,
         )
         for par in water_dict.keys():
@@ -97,7 +98,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         engage_updates._correct_balance_td_efficiencies(scenario)
         engage_updates._correct_coal_ppl_u_efficiencies(scenario)
         engage_updates._correct_td_co2cc_emissions(scenario)
-        update_h2_blending.main(scenario)
+        #update_h2_blending.main(scenario)
     spec = None
     apply_spec(scenario, spec, add_data_2)
 
@@ -115,7 +116,6 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         last_hist_year = scenario.par("historical_activity")["year_act"].max()
         modify_industry_demand(scenario, last_hist_year)
         add_new_ind_hist_act(scenario, [last_hist_year])
-        add_elec_i_ini_act(scenario)
         add_emission_accounting(scenario)
 
         # scenario.commit("no changes")
@@ -123,12 +123,13 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     add_cement_bounds_2020(scenario)
 
     # Market penetration adjustments
-    # NOTE: changing demand affects the market penetration levels for the enduse technologies.
+    # NOTE: changing demand affects the market penetration
+    # levels for the enduse technologies.
     # Note: context.ssp doesnt work
-    calibrate_UE_gr_to_demand(
-        scenario, data_path=private_data_path(), ssp="SSP2", region="R12"
+    calibrate_UE_gr_to_demand.main(
+        scenario, data_path=package_data_path(), ssp="SSP2", region="R12"
     )
-    calibrate_UE_share_constraints(scenario)
+    calibrate_UE_share_constraints.main(scenario)
 
     # Electricity calibration to avoid zero prices for CHN.
     if "R12_CHN" in nodes:
@@ -146,6 +147,11 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
     scenario.check_out()
     scenario.remove_par("bound_activity_lo", df)
     scenario.commit("remove sp_el_I min bound on RCPA in 2020")
+
+    # copy initial_activity_up from heat pump since
+    # historic elec_i is set to 0 in materials set up
+    # (since we assume 100% electric thermal use in electric arc furnaces)
+    add_elec_i_ini_act(scenario)
 
     return scenario
 
@@ -798,7 +804,7 @@ def make_xls_input_vc_able(context, files):
         dirs = [i for i in dirs if i != "version control"]
         for dir in dirs:
             print(dir)
-            files = os.listdir(private_data_path("material", dir))
+            files = os.listdir(package_data_path("material", dir))
             files = [i for i in files if ((i.endswith(".xlsx")) & ~i.startswith("~$"))]
             print(files)
             for filename in files:
@@ -812,7 +818,7 @@ def make_xls_input_vc_able(context, files):
         # for element in files:
         #     print(element)
         #     fname = element.split("/")[-1]
-        #     path = private_data_path(str(element.split("/")[:-1]))
+        #     path = package_data_path(str(element.split("/")[:-1]))
         #     print(path, fname)
         # message_ix_models.model.material.util.excel_to_csv(files)
     return
