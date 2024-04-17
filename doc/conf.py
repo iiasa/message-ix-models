@@ -57,14 +57,6 @@ exclude_patterns = [
     "global/glossary.rst",
 ]
 
-# A string of reStructuredText included at the beginning of every source file
-rst_prolog = r"""
-.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
-
-.. role:: strike
-.. role:: underline
-"""
-
 nitpicky = True
 nitpick_ignore_regex = {
     # Legacy reporting docstrings are not formatted
@@ -75,13 +67,18 @@ nitpick_ignore_regex = {
     ("py:(obj|meth)", r".*\.Test.*\.test_.*"),
 }
 
-rst_prolog = """
+# A string of reStructuredText included at the beginning of every source file
+rst_prolog = r"""
 .. role:: py(code)
    :language: python
+.. role:: strike
+.. role:: underline
 
 .. |n| replace:: :math:`n`
 .. |y| replace:: :math:`y`
 .. |y0| replace:: :math:`y_0`
+
+.. |MESSAGEix| replace:: MESSAGE\ :emphasis:`ix`
 """
 
 
@@ -115,6 +112,24 @@ html_static_path = ["_static"]
 # builtin themes.
 html_theme = "sphinx_rtd_theme"
 
+# -- Options for LaTeX output ----------------------------------------------------------
+
+# LaTeX engine to build the docs
+latex_engine = "lualatex"
+
+latex_elements = {
+    # Paper size option of the document class.
+    "papersize": "a4paper",
+    # Additional preamble content.
+    "preamble": r"""
+    \usepackage{tabularx}
+    """,
+}
+
+# The name of an image file (relative to this directory) to place at the top of
+# the title page.
+latex_logo = "_static/logo_blue.png"
+
 # -- Options for genno.compat.sphinx.rewrite_refs --------------------------------------
 
 # When base classes in upstream (genno, ixmp) packages are inherited in message_ix,
@@ -142,24 +157,6 @@ reference_aliases = {
     "pint$": ":std:doc:`pint <pint:index>`",
     "plotnine$": ":class:`plotnine.ggplot`",
 }
-
-# -- Options for LaTeX output ----------------------------------------------------------
-
-# LaTeX engine to build the docs
-latex_engine = "lualatex"
-
-latex_elements = {
-    # Paper size option of the document class.
-    "papersize": "a4paper",
-    # Additional preamble content.
-    "preamble": r"""
-    \usepackage{tabularx}
-    """,
-}
-
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-latex_logo = "_static/logo_blue.png"
 
 # -- Options for sphinx.ext.autosummary ------------------------------------------------
 
