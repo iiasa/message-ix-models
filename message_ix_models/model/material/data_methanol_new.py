@@ -5,8 +5,8 @@ import yaml
 from message_ix import make_df
 from message_ix_models.util import broadcast, same_node
 
-from message_data.model.material.material_demand import material_demand_calc
-from message_data.model.material.util import read_config
+from message_ix_models.model.material.material_demand import material_demand_calc
+from message_ix_models.model.material.util import read_config
 from ast import literal_eval
 
 ssp_mode_map = {
@@ -29,7 +29,7 @@ iea_elasticity_map = {
 def gen_data_methanol_new(scenario):
     context = read_config()
     df_pars = pd.read_excel(
-        message_ix_models.util.private_data_path(
+        message_ix_models.util.package_data_path(
             "material", "methanol", "methanol_sensitivity_pars.xlsx"
         ),
         sheet_name="Sheet1",
@@ -38,7 +38,7 @@ def gen_data_methanol_new(scenario):
     pars = df_pars.set_index("par").to_dict()["value"]
     if pars["mtbe_scenario"] == "phase-out":
         pars_dict = pd.read_excel(
-            message_ix_models.util.private_data_path(
+            message_ix_models.util.package_data_path(
                 "material", "methanol", "methanol_techno_economic.xlsx"
             ),
             sheet_name=None,
@@ -46,7 +46,7 @@ def gen_data_methanol_new(scenario):
         )
     else:
         pars_dict = pd.read_excel(
-            message_ix_models.util.private_data_path(
+            message_ix_models.util.package_data_path(
                 "material", "methanol", "methanol_techno_economic_high_demand.xlsx"
             ),
             sheet_name=None,
@@ -57,10 +57,10 @@ def gen_data_methanol_new(scenario):
         pars_dict[i] = broadcast_reduced_df(pars_dict[i], i)
     # TODO: only temporary hack to ensure SSP_dev compatibility
     if "SSP_dev" in scenario.model:
-        file_path = message_ix_models.util.private_data_path(
+        file_path = message_ix_models.util.package_data_path(
             "material", "methanol", "missing_rels.yaml"
         )
-        # file_path = "C:/Users\maczek\PycharmProjects\message_data\message_data\model\material\petrochemical model fixes notebooks\"
+        # file_path = "C:/Users\maczek\PycharmProjects\message_ix_models\message_ix_models\model\material\petrochemical model fixes notebooks\"
 
         with open(file_path, "r") as file:
             missing_rels = yaml.safe_load(file)

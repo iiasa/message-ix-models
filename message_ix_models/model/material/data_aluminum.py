@@ -1,19 +1,18 @@
-import pandas as pd
 from collections import defaultdict
-from .data_util import read_timeseries
-from pathlib import Path
 
-
-from .material_demand import material_demand_calc
-from .util import read_config
-from .data_util import read_rel
-from message_ix_models import ScenarioInfo
+import pandas as pd
 from message_ix import make_df
+
+from message_ix_models import ScenarioInfo
 from message_ix_models.util import (
     broadcast,
+    package_data_path,
     same_node,
-    private_data_path,
 )
+
+from .data_util import read_rel, read_timeseries
+from .material_demand import material_demand_calc
+from .util import read_config
 
 # Get endogenous material demand from buildings interface
 
@@ -39,7 +38,7 @@ def read_data_aluminum(scenario):
 
     # Read the file
     data_alu = pd.read_excel(
-        private_data_path("material", "aluminum", fname), sheet_name=sheet_n
+        package_data_path("material", "aluminum", fname), sheet_name=sheet_n
     )
 
     # Drop columns that don't contain useful information
@@ -487,7 +486,7 @@ def gen_mock_demand_aluminum(scenario):
 
     # SSP2 R11 baseline GDP projection
     gdp_growth = pd.read_excel(
-        private_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
+        package_data_path("material", "other", "iamc_db ENGAGE baseline GDP PPP.xlsx"),
         sheet_name=sheet_n,
     )
 
@@ -555,7 +554,7 @@ def gen_mock_demand_aluminum(scenario):
 #         # GDP is only in MER in scenario.
 #         # To get PPP GDP, it is read externally from the R side
 #         df = r.derive_aluminum_demand(
-#             pop, base_demand, str(private_data_path("material"))
+#             pop, base_demand, str(package_data_path("material"))
 #         )
 #         df.year = df.year.astype(int)
 #

@@ -8,9 +8,9 @@ from message_ix_models.util import add_par_data
 from sdmx.model.v21 import Code
 from .build import apply_spec
 from .util import read_config
-from message_data.model.data import get_data
-from message_data.model.material import gen_data_steel, gen_data_generic, gen_data_aluminum, gen_data_petro_chemicals
-import message_data
+from message_ix_models.model.data import get_data
+from message_ix_models.model.material import gen_data_steel, gen_data_generic, gen_data_aluminum, gen_data_petro_chemicals
+import message_ix_models
 
 
 log = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ def create_res(context=None, quiet=True):
         # data=partial(get_data, context=context, spec=spec),
         data=add_data,
         quiet=quiet,
-        message=f"Create using message_data {message_data.__version__}",
+        message=f"Create using message_ix_models {message_ix_models.__version__}",
     )
 
     return scenario

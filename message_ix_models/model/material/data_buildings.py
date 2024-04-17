@@ -1,13 +1,13 @@
 import pandas as pd
 
 from collections import defaultdict
-from message_data.model.material.util import read_config
+from message_ix_models.model.material.util import read_config
 from message_ix_models import ScenarioInfo
 from message_ix import make_df
 from message_ix_models.util import (
     same_node,
     copy_column,
-    private_data_path,
+    package_data_path,
 )
 
 CASE_SENS = "ref"  # 'min', 'max'
@@ -25,7 +25,7 @@ def read_timeseries_buildings(filename, scenario, case=CASE_SENS):
     nodes = s_info.N
 
     # Read the file and filter the given sensitivity case
-    bld_input_raw = pd.read_csv(private_data_path("material", "buildings", filename))
+    bld_input_raw = pd.read_csv(package_data_path("material", "buildings", filename))
     bld_input_raw = bld_input_raw.loc[bld_input_raw.Sensitivity == case]
 
     bld_input_mat = bld_input_raw[
