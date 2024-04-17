@@ -95,6 +95,7 @@ omit = [
   "message_ix_models/report/legacy/*",
   # See https://github.com/iiasa/message-ix-models/issues/164
   "message_ix_models/tools/iea/eei.py",
+  "message_ix_models/util/migrate.py",
 ]
 
 [tool.mypy]
