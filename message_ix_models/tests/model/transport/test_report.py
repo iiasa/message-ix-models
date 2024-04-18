@@ -1,8 +1,10 @@
 import logging
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
+from message_ix_models import ScenarioInfo
 from message_ix_models.report import prepare_reporter, register
 from pytest import mark, param
 
@@ -12,6 +14,9 @@ from message_data.model.transport.testing import (
     built_transport,
     simulated_solution,
 )
+
+if TYPE_CHECKING:
+    import message_ix
 
 log = logging.getLogger(__name__)
 
@@ -139,8 +144,10 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
 
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
-):
+) -> None:
     test_context.update(regions=regions, years=years)
+    test_context.report.output_dir = test_context.get_local_path()
+
     rep = simulated_solution(request, test_context)
 
     # Key collecting both file output/scenario update
@@ -148,9 +155,9 @@ def test_iamc_simulated(
     rep.add(
         "test",
         [
-            "transport iamc file",
-            "transport iamc store",
-            # Other keys, for debugging:
+            "transport::iamc+file",
+            "transport::iamc+store",
+            # DEBUG Other keys:
             # "emi:nl-t-yv-ya-m-e-h:transport",
         ],
     )
@@ -159,20 +166,24 @@ def test_iamc_simulated(
     result = rep.get("test")
     # print(result[-1])  # DEBUG
 
+    s: "message_ix.Scenario" = rep.get("scenario")
+
     # File with output was created
-    path = tmp_path_factory.getbasetemp().joinpath("data0", "report", "transport.csv")
+    path = tmp_path_factory.getbasetemp().joinpath(
+        "data0", ScenarioInfo(s).path, "transport.csv"
+    )
     assert path.exists(), path
 
     # Retrieve time series data stored on the scenario object
-    ts = rep.get("scenario").timeseries()
+    ts = s.timeseries()
     # print(ts, ts["variable"].unique(), sep="\n")  # DEBUG
 
     # The reported data was stored on the scenario, and has expected variable names
     # print("\n".join(sorted(ts["variable"].unique())))  # DEBUG
     assert {
-        "Emissions|CO2|Energy|Demand|Transportation|Ldv",
-        "Emissions|CO2|Energy|Demand|Transportation|Rail",
-        "Transport|Stock|Road|Passenger|LDV|Elc_100",
+        "Energy Service|Transportation|Domestic Aviation",
+        "Final Energy|Transportation|Bus",
+        "Transport|Stock|Road|Passenger|LDV|BEV",
     } <= set(ts["variable"].unique())
 
     del result
