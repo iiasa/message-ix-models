@@ -156,7 +156,7 @@ class Config(ConfigHelper):
     fixed_demand: Quantity = quantity_field("337327.9893 km / year")
 
     #: Fixed future point for total passenger activity.
-    fixed_GDP: Quantity = quantity_field("300 kUSD_2005 / passenger / year")
+    fixed_GDP: Quantity = quantity_field("1 MUSD_2005 / passenger / year")
 
     #: Load factors for vehicles.
     #:
