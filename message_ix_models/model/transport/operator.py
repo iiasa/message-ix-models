@@ -492,10 +492,10 @@ def groups_iea_eweb(technologies: List[Code]) -> Tuple[Groups, Groups, Dict]:
 
     2. Groups for aggregating MESSAGEix-Transport data. In particular:
 
-       - Labels for MESSAGEix-Transport transport modes (``t`` dimension) are aggregated
+       - Labels for MESSAGEix-Transport transport modes (|t| dimension) are aggregated
          to labels for IEA ``flow``.
 
-    3. Indexers for *dis*aggregating computed scaling factors; that is, reversing (2).
+    3. Indexers for *dis* aggregating computed scaling factors; that is, reversing (2).
     """
     g0: Groups = dict(flow={}, product={})
     g1: Groups = dict(t={})
