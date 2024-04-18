@@ -1,7 +1,4 @@
-"""Build MESSAGEix-Transport on a base model.
-
-.. autodata:: TEMPLATE
-"""
+"""Build MESSAGEix-Transport on a base model."""
 
 import logging
 from importlib import import_module

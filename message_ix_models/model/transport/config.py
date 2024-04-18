@@ -242,11 +242,11 @@ class Config(ConfigHelper):
     #: exogenous data.
     ssp: ssp_field = ssp_field(default=SSP_2017["2"])
 
-    #: :any:`.True` if a base model or MESSAGEix-Transport scenario (possibly with
+    #: :any:`True` if a base model or MESSAGEix-Transport scenario (possibly with
     #: solution data) is available.
     with_scenario: bool = False
 
-    #: :any:`.True` if solution data is available.
+    #: :any:`True` if solution data is available.
     with_solution: bool = False
 
     #: Work hours per year, used to compute the value of time.

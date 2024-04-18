@@ -282,6 +282,6 @@ class Config:
     #: :data:`True` to use MESSAGEix-Materials (:mod:`.model.material`).
     material: bool = True
 
-    #: :data:`True` to use MESSAGEix-Transport (:mod:`.model.transport`) alongside
-    #: MESSAGEix-Buildings and MESSAGEix-Materials.
+    #: :data:`True` to use MESSAGEix-Transport (:mod:`message_data.model.transport`)
+    #: alongside MESSAGEix-Buildings and MESSAGEix-Materials.
     transport: bool = True
