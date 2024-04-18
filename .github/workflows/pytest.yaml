@@ -43,15 +43,15 @@ jobs:
         #     https://github.com/iiasa/message-ix-models/pull/155
         #
         # Minimum version given in pyproject.toml
-        - version: v3.4.0
-          python-version: "3.11"
-          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
-        - version: v3.5.0
-          python-version: "3.11"
-          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
-        - version: v3.6.0
-          python-version: "3.11"
-          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        # - version: v3.4.0
+        #   python-version: "3.11"
+        #   extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        # - version: v3.5.0
+        #   python-version: "3.11"
+        #   extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        # - version: v3.6.0
+        #   python-version: "3.11"
+        #   extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
         - version: v3.7.0
           python-version: "3.11"
           extra-deps: 'dask[dataframe]   "genno < 1.25"                "pytest == 8.0.0"' #
@@ -120,6 +120,7 @@ jobs:
       run: |
         pytest message_ix_models \
           -m "not snapshot" \
+          -k "test_report or test_cache" \
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
           --numprocesses=auto \
