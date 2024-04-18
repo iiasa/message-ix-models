@@ -1,5 +1,6 @@
 # The base year costs and WEO mappings are taken from the following file: ,,,,
 # https://github.com/iiasa/message_data/blob/dev/data/model/investment_cost/doc/NAM_technology_cost_input_20200507.xlsx,,,,
+# If base_year_reference_region_cost is blank then the 2021 WEO cost from the mapped technology is used in its place.
 message_technology,reg_diff_source,reg_diff_technology,base_year_reference_region_cost,fix_ratio
 bio_hpl,weo,igcc,275,
 bio_istig,weo,igcc,4064,
