@@ -27,7 +27,7 @@ c_ppl_co2scr,medium,medium,low,high,high,medium
 g_ppl_co2scr,medium,medium,low,high,high,medium
 bio_ppl_co2scr,medium,medium,low,high,high,medium
 wind_ppl,high,medium,low,high,medium,very_high
-wind_ppf,low,low,low,low,low,low
+wind_ppf,high,medium,low,high,medium,very_high
 solar_th_ppl,high,medium,low,high,medium,very_high
 solar_pv_I,high,medium,low,high,medium,very_high
 solar_pv_RC,high,medium,low,high,medium,very_high
