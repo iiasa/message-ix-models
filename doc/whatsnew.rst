@@ -7,6 +7,7 @@ Next release
 - Incorporate the :doc:`/global/index` documentation (:pull:`107`, :pull:`110`).
   This documentation formerly lived at https://docs.messageix.org/global/ and in a separate repository at `iiasa/message_doc <https://github.com/iiasa/message_doc>`_.
 - Improve tool for :ref:`migrate-filter-repo` (:pull:`174`); expand documentation.
+- Update investment cost assumptions for wind and solar technologies (:pull:`176`).
 - Convert Intratec data for :doc:`/api/tools-costs` from Excel to a simpler CSV format. (:pull:`167`).
 - New module for :doc:`/api/tools-costs` (:pull:`99`).
 - Migrate :doc:`/api/report/legacy` to provide post-processing functionality for the :doc:`global model snapshot </api/model-snapshot>` (:pull:`159`).
