@@ -13,6 +13,25 @@ from message_ix_models.report import prepare_reporter, register, report, util
 from message_ix_models.report.sim import add_simulated_solution, to_simulate
 from message_ix_models.util import package_data_path
 
+
+def show_log_handlers(id: str, expected_n_handlers: int):
+    import logging
+
+    from icecream import ic
+
+    root_logger = logging.getLogger("root")
+
+    ic(id)
+
+    if expected_n_handlers != len(root_logger.handlers):
+        ic(
+            root_logger.level,
+            root_logger.handlers,
+            root_logger.manager.loggerDict,
+        )
+        assert False
+
+
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
     "units": {
@@ -30,6 +49,8 @@ MARK = (
 
 
 def test_register(caplog):
+    show_log_handlers("test_register 0")
+
     # Exception raised for unfindable module
     with pytest.raises(ModuleNotFoundError):
         register("foo.bar")
@@ -44,10 +65,40 @@ def test_register(caplog):
     ):
         register(_cb)
 
+    show_log_handlers("test_register 1")
+
 
 @prepare_reporter.minimum_version
 def test_report_bare_res(request, tmp_path, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
+    show_log_handlers("test_report_bare_res 0", 5)
+
+    from importlib import import_module
+
+    for name in (
+        "dotenv",
+        "fastapi",
+        "fsspec",
+        "hpack",
+        "httpcore",
+        "httpx",
+        "matplotlib",
+        "numba",
+        "pint",
+        "pycountry",
+        "requests",
+        "rich",
+        "sdmx",
+        "sqlalchemy",
+        "tqdm",
+        "urllib3",
+        "xarray",
+        "ixmp4",  # assert False occurs here
+        "pyam",
+    ):
+        import_module(name)
+        show_log_handlers(f"test_report_bare_res after `import {name}`", 5)
+
     scenario = testing.bare_res(request, test_context, solved=True)
     test_context.set_scenario(scenario)
 
@@ -62,9 +113,13 @@ def test_report_bare_res(request, tmp_path, test_context):
     # Prepare the reporter and compute the result
     report(test_context)
 
+    show_log_handlers("test_report_bare_res 1")
+
 
 @prepare_reporter.minimum_version
 def test_report_deprecated(caplog, request, tmp_path, test_context):
+    show_log_handlers("test_report_deprecated 0")
+
     # Create a target scenario
     scenario = testing.bare_res(request, test_context, solved=False)
     test_context.set_scenario(scenario)
@@ -82,9 +137,13 @@ def test_report_deprecated(caplog, request, tmp_path, test_context):
     with pytest.raises(TypeError), pytest.warns(DeprecationWarning):
         report(scenario, tmp_path, "foo")
 
+    show_log_handlers("test_report_deprecated 1")
+
 
 def test_report_legacy(caplog, request, tmp_path, test_context):
     """Legacy reporting can be invoked via :func:`message_ix_models.report.report`."""
+    show_log_handlers(0)
+
     # Create a target scenario
     scenario = testing.bare_res(request, test_context, solved=False)
     test_context.set_scenario(scenario)
@@ -93,8 +152,12 @@ def test_report_legacy(caplog, request, tmp_path, test_context):
     # Ensure the legacy reporting is used, with default settings
     test_context.report.legacy["use"] = True
 
+    show_log_handlers(1)
+
     # Call succeeds
     report(test_context)
+
+    show_log_handlers(2)
 
     # Dry-run message is logged
     assert "DRY RUN" in caplog.messages[-1]
