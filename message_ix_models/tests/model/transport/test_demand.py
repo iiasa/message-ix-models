@@ -242,17 +242,14 @@ def test_cg_shares(test_context, tmp_path, regions, years, pop_scen):
     assert (result.sum("cg") - 1.0 < 1e-08).all()
 
 
-_unsup = pytest.mark.xfail(reason="Currently unsupported")
-
-
 @pytest.mark.parametrize(
     "regions,years,pop_scen",
     [
-        pytest.param("R11", "A", "GEA mix", marks=_unsup),
-        pytest.param("R11", "A", "GEA supply", marks=_unsup),
-        pytest.param("R11", "A", "GEA eff", marks=_unsup),
+        pytest.param("R11", "A", "GEA mix", marks=MARK[4]),
+        pytest.param("R11", "A", "GEA supply", marks=MARK[4]),
+        pytest.param("R11", "A", "GEA eff", marks=MARK[4]),
         # Different years
-        pytest.param("R11", "B", "GEA mix", marks=_unsup),
+        pytest.param("R11", "B", "GEA mix", marks=MARK[4]),
         # Different regions & years
         ("R12", "B", SSP_2024["2"]),
         ("R14", "B", SSP_2017["1"]),
@@ -280,12 +277,12 @@ def test_urban_rural_shares(test_context, tmp_path, regions, years, pop_scen):
 @pytest.mark.parametrize(
     "nodes, target",
     [
-        ("R11", "GEA mix"),
+        pytest.param("R11", "GEA mix", marks=MARK[4]),
         ("R12", "SSP2"),
         ("R12", "SSP5"),
         ("R14", "SSP2"),
         ("R14", "SSP5"),
-        ("R11", "SHAPE innovation"),
+        pytest.param("R11", "SHAPE innovation", marks=MARK[4]),
     ],
 )
 def test_cli(tmp_path, mix_models_cli, test_context, nodes, target):

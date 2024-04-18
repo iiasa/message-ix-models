@@ -29,6 +29,7 @@ MARK = (
         reason="Missing input data/assumptions for this node codelist", raises=t
     ),
     pytest.mark.xfail(raises=ValueError, reason="Missing ISR/mer-to-ppp.csv"),
+    pytest.mark.xfail(reason="Currently unsupported"),
 )
 
 
