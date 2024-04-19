@@ -1,6 +1,8 @@
 """Tests for :mod:`message_ix_models.report`."""
 
+import re
 from importlib.metadata import version
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -311,3 +313,103 @@ def test_prepare_reporter(test_context):
 
     # A number of keys were added
     assert 14299 <= len(rep.graph) - N
+
+
+@to_simulate.minimum_version
+def test_compare(test_context):
+    """Compare the output of genno-based and legacy reporting."""
+    key = "pe test"
+
+    # Obtain the output from reporting `key` on `snapshot_id`
+    snapshot_id: int = 1
+    rep = simulated_solution_reporter(snapshot_id)
+    rep.add(
+        "scenario",
+        ScenarioInfo(
+            model="MESSAGEix-GLOBIOM_1.1_R11_no-policy", scenario="baseline_v1"
+        ),
+    )
+    test_context.report.modules.append("message_ix_models.report.compat")
+    prepare_reporter(test_context, reporter=rep)
+    # print(rep.describe(key)); assert False
+    obs = rep.get(key).as_pandas()  # Convert from pyam.IamDataFrame to pd.DataFrame
+
+    # Expected results
+    exp = pd.read_csv(
+        package_data_path("test", "report", f"snapshot-{snapshot_id}.csv.gz"),
+        engine="pyarrow",
+    )
+
+    # Filters for comparison
+    pe0 = r"Primary Energy\|(Coal|Gas|Hydro|Nuclear|Solar|Wind)"
+    pe1 = r"Primary Energy\|(Coal|Gas|Solar|Wind)"
+    ignore = [
+        # Other 'variable' codes are missing from `obs`
+        re.compile(f"variable='(?!{pe0}).*': no right data"),
+        # 'variable' codes with further parts are missing from `obs`
+        re.compile(f"variable='{pe0}.*': no right data"),
+        # For `pe1` (NB: not Hydro or Solar) units and most values differ
+        re.compile(f"variable='{pe1}.*': units mismatch .*EJ/yr.*'', nan"),
+        re.compile(r"variable='Primary Energy|Coal': 220 of 240 values with \|diff"),
+        re.compile(r"variable='Primary Energy|Gas': 234 of 240 values with \|diff"),
+        re.compile(r"variable='Primary Energy|Solar': 191 of 240 values with \|diff"),
+        re.compile(r"variable='Primary Energy|Wind': 179 of 240 values with \|diff"),
+    ]
+
+    # Perform the comparison, ignoring some messages
+    if messages := compare_iamc(exp, obs, ignore=ignore):
+        # Other messages that were not explicitly ignored → some error
+        print("\n".join(messages))
+        assert False
+
+
+def compare_iamc(
+    left: pd.DataFrame, right: pd.DataFrame, atol: float = 1e-3, ignore=List[re.Pattern]
+) -> List[str]:
+    """Compare IAMC-structured data in `left` and `right`; return a list of messages."""
+    result = []
+
+    def record(message: str) -> None:
+        if any(p.match(message) for p in ignore):
+            return
+        result.append(message)
+
+    def checks(df: pd.DataFrame):
+        prefix = f"variable={df.variable.iloc[0]!r}:"
+
+        if df.value_left.isna().all():
+            record(f"{prefix} no left data")
+            return
+        elif df.value_right.isna().all():
+            record(f"{prefix} no right data")
+            return
+
+        tmp = df.eval("value_diff = value_right - value_left").eval(
+            "value_rel = value_diff / value_left"
+        )
+
+        units_left = set(tmp.unit_left.unique())
+        units_right = set(tmp.unit_right.unique())
+        if units_left != units_right:
+            record(f"{prefix} units mismatch: {units_left} != {units_right}")
+
+        N0 = len(df)
+
+        mask1 = tmp.query("abs(value_diff) > @atol")
+        if len(mask1):
+            record(f"{prefix} {len(mask1)} of {N0} values with |diff| > {atol}")
+
+    for (model, scenario), group_0 in left.merge(
+        right,
+        how="outer",
+        on=["model", "scenario", "variable", "region", "year"],
+        suffixes=("_left", "_right"),
+    ).groupby(["model", "scenario"]):
+        if group_0.value_left.isna().all():
+            record("No left data for model={model!r}, scenario={scenario!r}")
+        elif group_0.value_right.isna().all():
+            record("No right data for model={model!r}, scenario={scenario!r}")
+        else:
+            group_0.groupby(["variable"]).apply(checks)
+
+    return result
