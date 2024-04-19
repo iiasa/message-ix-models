@@ -4,6 +4,8 @@ What's new
 Next release
 ============
 
+- Incorporate the :doc:`/global/index` documentation (:pull:`107`, :pull:`110`).
+  This documentation formerly lived at https://docs.messageix.org/global/ and in a separate repository at `iiasa/message_doc <https://github.com/iiasa/message_doc>`_.
 - Convert Intratec data for :doc:`/api/tools-costs` from Excel to a simpler CSV format. (:pull:`167`).
 - New module for :doc:`/api/tools-costs` (:pull:`99`).
 - Migrate :doc:`/api/report/legacy` to provide post-processing functionality for the :doc:`global model snapshot </api/model-snapshot>` (:pull:`159`).
