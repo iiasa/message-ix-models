@@ -389,6 +389,9 @@ def prepare_reporter(
     )
     rep.configure(model=deepcopy(context.model))
 
+    # Add a placeholder task to concatenate IAMC-structured data
+    rep.add("all::iamc", "concat")
+
     # Apply callbacks for other modules which define additional reporting computations
     for callback in context.report.iter_callbacks():
         callback(rep, context)
