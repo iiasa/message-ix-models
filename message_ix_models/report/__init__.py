@@ -3,6 +3,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from importlib import import_module
+from itertools import chain
 from operator import itemgetter
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
@@ -369,7 +370,7 @@ def prepare_reporter(
     rep.configure(model=deepcopy(context.model))
 
     # Apply callbacks for other modules which define additional reporting computations
-    for callback in CALLBACKS:
+    for callback in chain(CALLBACKS, context.report.iter_callbacks()):
         callback(rep, context)
 
     key = context.report.key

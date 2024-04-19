@@ -1,7 +1,8 @@
 import logging
 from dataclasses import InitVar, dataclass, field
+from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Generator, List, Optional, Union
 
 from message_ix_models.util import local_data_path, package_data_path
 from message_ix_models.util.config import ConfigHelper
@@ -35,6 +36,9 @@ class Config(ConfigHelper):
     #: Key for the Quantity or computation to report.
     key: Optional["KeyLike"] = None
 
+    #: Modules with reporting callbacks.
+    modules: List[str] = field(default_factory=list)
+
     #: Directory for output.
     output_dir: Optional[Path] = field(
         default_factory=lambda: local_data_path("report")
@@ -51,6 +55,11 @@ class Config(ConfigHelper):
     def __post_init__(self, from_file, _legacy) -> None:
         self.use_file(from_file)
         self.legacy.update(use=_legacy)
+
+    def iter_callbacks(self) -> Generator[Callable, None, None]:
+        """Yield the :py:`callback()` function for each of :attr:`.modules`."""
+        for mod in map(import_module, self.modules):
+            yield getattr(mod, "callback")
 
     def set_output_dir(self, arg: Optional[Path]) -> None:
         """Set :attr:`output_dir`, the output directory.
