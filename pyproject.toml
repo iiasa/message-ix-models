@@ -62,6 +62,10 @@ docs = [
   "sphinxcontrib-bibtex",
 ]
 iea-web = ["dask[dataframe]"]
+migrate = [
+  "git-filter-repo",
+  "GitPython",
+]
 report = ["plotnine", "xlsxwriter"]
 tests = [
   # For nbclient, thus nbformat
@@ -91,6 +95,7 @@ omit = [
   "message_ix_models/report/legacy/*",
   # See https://github.com/iiasa/message-ix-models/issues/164
   "message_ix_models/tools/iea/eei.py",
+  "message_ix_models/util/migrate.py",
 ]
 
 [tool.mypy]
