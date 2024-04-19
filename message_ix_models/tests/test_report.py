@@ -320,7 +320,8 @@ def test_prepare_reporter(test_context):
 
 def test_compare(test_context) -> None:
     """Compare the output of genno-based and legacy reporting."""
-    key = "pe test"
+    key = "all::iamc"
+    # key = "pe test"
 
     # Obtain the output from reporting `key` on `snapshot_id`
     snapshot_id: int = 1
