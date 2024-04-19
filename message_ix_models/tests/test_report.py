@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Hashable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,9 @@ from message_ix_models import ScenarioInfo, testing
 from message_ix_models.report import prepare_reporter, register, report, util
 from message_ix_models.report.sim import add_simulated_solution
 from message_ix_models.util import package_data_path
+
+if TYPE_CHECKING:
+    from message_ix import Reporter
 
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
@@ -249,12 +253,8 @@ def test_collapse(input, exp):
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
 
 
-def simulated_solution_reporter():
-    """Reporter with a simulated solution for snapshot 0.
-
-    This uses :func:`.add_simulated_solution`, so test functions that use it should be
-    marked with :py:`@to_simulate.minimum_version`.
-    """
+def simulated_solution_reporter(snapshot_id: int = 0) -> "Reporter":
+    """Reporter with a simulated solution for `snapshot_id`."""
     from message_ix import Reporter
 
     rep = Reporter()
@@ -265,7 +265,7 @@ def simulated_solution_reporter():
         ScenarioInfo(),
         path=package_data_path(
             "test",
-            "snapshot-0",
+            f"snapshot-{snapshot_id}",
             "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
         ),
     )
