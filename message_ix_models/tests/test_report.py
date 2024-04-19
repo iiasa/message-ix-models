@@ -249,8 +249,8 @@ def test_collapse(input, exp):
     pdt.assert_frame_equal(util.collapse(df_in), df_exp)
 
 
-def simulated_solution_reporter():
-    """Reporter with a simulated solution for snapshot 0.
+def simulated_solution_reporter(snapshot_id: int = 0):
+    """Reporter with a simulated solution for `snapshot_id`.
 
     This uses :func:`.add_simulated_solution`, so test functions that use it should be
     marked with :py:`@to_simulate.minimum_version`.
@@ -265,7 +265,7 @@ def simulated_solution_reporter():
         ScenarioInfo(),
         path=package_data_path(
             "test",
-            "snapshot-0",
+            f"snapshot-{snapshot_id}",
             "MESSAGEix-GLOBIOM_1.1_R11_no-policy_baseline",
         ),
     )
