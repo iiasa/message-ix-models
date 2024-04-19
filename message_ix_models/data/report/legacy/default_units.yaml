@@ -41,14 +41,18 @@ conversion_factors:
             ZJ: .00003154
             km3/yr: 1.
             Index (2005 = 1): 1
+        GWyr/yr:
+            EJ/yr: 0.03154
+            GWa: 1.
+            km3/yr: 1.
         EJ/yr:
             ZJ: .001
-        y:
+        "y":
             years: 1.
         # New units from unit-revision
         "Mt C/GWyr/yr":
             Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
-            Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")" 
+            Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")"
         # Emissions currently have the units ???
         -:
             Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
@@ -57,7 +61,7 @@ conversion_factors:
             # NB this values implies that whatever quantity it is applied to is
             #    internally [Mt C/yr]
             Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
-            Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")" 
+            Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")"
             # N2O is always left in kt
             kt N2O/yr: 1.
             # All other units are in kt
@@ -139,7 +143,7 @@ conversion_factors:
             Mt C/yr: "float(f\"{mu['conv_co22c']}\")"
         Mt C/yr:
             Mt CO2eq/yr: "float(f\"{mu['conv_c2co2']}\")"
-            Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")" 
+            Mt CO2/yr: "float(f\"{mu['conv_c2co2']}\")"
             Mt CO2-equiv/yr: "float(f\"{mu['conv_c2co2']}\")"
         Mt CO2/yr:
             Mt CO2/yr: 1.
