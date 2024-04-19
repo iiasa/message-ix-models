@@ -1,6 +1,6 @@
 Further reading
 ***************
 
-.. bibliography:: /bibs/main.bib
+.. bibliography:: /main.bib
    :list: enumerated
    :notcited:

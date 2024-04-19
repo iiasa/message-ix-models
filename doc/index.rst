@@ -77,6 +77,7 @@ Commonly used classes may be imported directly from :mod:`message_ix_models`.
    :maxdepth: 2
    :caption: Model variants
 
+   global/index
    water/index
 
 .. toctree::
