@@ -33,3 +33,8 @@ def test_legacy_report(test_context, loaded_snapshot):
     )
 
     report(test_context)
+
+    # commented: Dump resulting time series data for debugging and testing
+    # scenario.timeseries()[
+    #     "model", "scenario", "region", "variable", "year", "value", "unit"
+    # ].to_csv(f"test_legacy_report-{scenario.scenario}.csv", index=False)
