@@ -74,6 +74,11 @@ def iamc(c: Reporter, info):
     # Common
     base_key = Key(info["base"])
 
+    # First part of the 'Variable' name
+    name = info.pop("variable", base_key.name)
+    # Parts (string literals or dimension names) to concatenate into variable name
+    var_parts = info.pop("var", [name])
+
     # Use message_ix_models custom collapse() method
     info.setdefault("collapse", {})
 
@@ -96,7 +101,7 @@ def iamc(c: Reporter, info):
         # TODO allow iterable of str
         dims = dims.split("-")
 
-        label = f"{info['variable']} {'-'.join(dims) or 'full'}"
+        label = f"{name} {'-'.join(dims) or 'full'}"
 
         # Modified copy of `info` for this invocation
         _info = info.copy()
@@ -104,9 +109,7 @@ def iamc(c: Reporter, info):
         _info.update(base=base_key.drop(*dims), variable=label)
         # Exclude any summed dimensions from the IAMC Variable to be constructed
         _info["collapse"].update(
-            callback=partial(
-                collapse, var=list(filter(lambda v: v not in dims, info.get("var", [])))
-            )
+            callback=partial(collapse, var=[v for v in var_parts if v not in dims])
         )
 
         # Invoke the genno built-in handler
@@ -115,7 +118,7 @@ def iamc(c: Reporter, info):
         keys.append(f"{label}::iamc")
 
     # Concatenate together the multiple tables
-    c.add("concat", f"{info['variable']}::iamc", *keys)
+    c.add("concat", f"{name}::iamc", *keys)
 
 
 def register(name_or_callback: "Callback | str") -> str | None:
