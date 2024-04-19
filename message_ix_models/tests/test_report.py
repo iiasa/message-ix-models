@@ -11,8 +11,15 @@ import pytest
 from ixmp.testing import assert_logs
 
 from message_ix_models import ScenarioInfo, testing
-from message_ix_models.report import prepare_reporter, register, report, util
+from message_ix_models.report import (
+    NOT_IMPLEMENTED_IAMC,
+    prepare_reporter,
+    register,
+    report,
+    util,
+)
 from message_ix_models.report.sim import add_simulated_solution
+from message_ix_models.tools import iamc
 from message_ix_models.util import package_data_path
 
 if TYPE_CHECKING:
@@ -309,3 +316,36 @@ def test_prepare_reporter(test_context):
 
     # A number of keys were added
     assert 14299 <= len(rep.graph) - N
+
+
+def test_compare(test_context) -> None:
+    """Compare the output of genno-based and legacy reporting."""
+    key = "pe test"
+
+    # Obtain the output from reporting `key` on `snapshot_id`
+    snapshot_id: int = 1
+    rep = simulated_solution_reporter(snapshot_id)
+    rep.add(
+        "scenario",
+        ScenarioInfo(
+            model="MESSAGEix-GLOBIOM_1.1_R11_no-policy", scenario="baseline_v1"
+        ),
+    )
+    test_context.report.modules.append("message_ix_models.report.compat")
+    prepare_reporter(test_context, reporter=rep)
+    # print(rep.describe(key)); assert False
+    obs = rep.get(key).as_pandas()  # Convert from pyam.IamDataFrame to pd.DataFrame
+
+    # Retrieve expected results from file
+    exp = pd.read_csv(
+        package_data_path("test", "report", f"snapshot-{snapshot_id}.csv.gz"),
+        engine="pyarrow",
+    )
+
+    # Perform the comparison, ignoring some messages
+    messages = iamc.compare(exp, obs, ignore=NOT_IMPLEMENTED_IAMC)
+
+    # Other messages that were not explicitly ignored → some error
+    assert "20 matching of 519792 left and 220 right values" == messages[0], "\n".join(
+        messages
+    )
