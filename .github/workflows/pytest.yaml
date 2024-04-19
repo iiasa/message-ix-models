@@ -111,8 +111,8 @@ jobs:
 
         # TEMPORARY For debugging #173
         pip install icecream
-        # TODO Use a PR branch of ixmp4 instead of main
-        pip install --upgrade "ixmp4 @ git+https://github.com/iiasa/ixmp4.git@main"
+        # TODO Use a PR branch of pyam instead of main
+        pip install --upgrade "pyam-iamc @ git+https://github.com/IAMconsortium/pyam.git@main"
 
     - name: Configure local data path
       run: |
