@@ -390,7 +390,7 @@ def prepare_reporter(
     rep.configure(model=deepcopy(context.model))
 
     # Apply callbacks for other modules which define additional reporting computations
-    for callback in context.report.callback:
+    for callback in context.report.iter_callbacks():
         callback(rep, context)
 
     key = context.report.key
