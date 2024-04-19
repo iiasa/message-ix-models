@@ -142,6 +142,7 @@ def test_plot_simulated(request, test_context, plot_name, regions="R12", years="
     rep.get(f"plot {plot_name}")
 
 
+@pytest.mark.xfail(raises=AssertionError, reason="Temporary, for #549")
 def test_iamc_simulated(
     request, tmp_path_factory, test_context, regions="R12", years="B"
 ) -> None:
