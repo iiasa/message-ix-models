@@ -268,7 +268,8 @@ EEI_TECH_MAP = {
 
 def distance_nonldv(context: "Context") -> "AnyQuantity":
     """Return annual travel distance per vehicle for non-LDV transport modes."""
-    import message_ix_models.tools.iea.eei  # noqa: F401
+    # FIXME Remove this type exclusion; added only to merge #549
+    import message_ix_models.tools.iea.eei  # type: ignore  # noqa: F401
     from message_ix_models.tools import exo_data
 
     log.warning(
