@@ -57,7 +57,7 @@ def main(click_ctx, **kwargs):
 
     # Check for a non-trivial execution of the CLI
     non_trivial = (
-        not any(s in sys.argv for s in {"last-log", "--help"})
+        not any(s in sys.argv for s in {"config", "last-log", "--help"})
         and click_ctx.invoked_subcommand != "_test"
         and "pytest" not in sys.argv[0]
     )
