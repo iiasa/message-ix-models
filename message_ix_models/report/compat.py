@@ -429,6 +429,10 @@ def callback(rep: "Reporter", context: "Context") -> None:
     info = dict(variable="transport emissions", base=k1.drop("h", "m", "yv"), var=[var])
     iamc(rep, info)
 
+    # Append to the "all::iamc" task
+    # TODO Use a helper function for this
+    rep.graph["all::iamc"] += ("transport emissions::iamc",)
+
     # TODO use store_ts() to store on scenario
 
     log.info(f"Added {len(rep.graph) - N} keys")
