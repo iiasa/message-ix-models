@@ -43,15 +43,15 @@ jobs:
         #     https://github.com/iiasa/message-ix-models/pull/155
         #
         # Minimum version given in pyproject.toml
-        # - version: v3.4.0
-        #   python-version: "3.11"
-        #   extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
-        # - version: v3.5.0
-        #   python-version: "3.11"
-        #   extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
-        # - version: v3.6.0
-        #   python-version: "3.11"
-        #   extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        - version: v3.4.0
+          python-version: "3.11"
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        - version: v3.5.0
+          python-version: "3.11"
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
+        - version: v3.6.0
+          python-version: "3.11"
+          extra-deps: '"dask < 2024.3.0" "genno < 1.25" "pandas < 2.0" "pytest == 8.0.0"' #
         - version: v3.7.0
           python-version: "3.11"
           extra-deps: 'dask[dataframe]   "genno < 1.25"                "pytest == 8.0.0"' #
@@ -103,16 +103,15 @@ jobs:
       # for open PRs), temporarily uncomment, add, or edit lines below
       # as needed. DO NOT merge such changes to `main`.
       run: |
+        # Temporary, to work around iiasa/message-ix-models#173
+        # TODO Remove after a pyam release that fixes logging
+        pip install --upgrade "pyam-iamc @ git+https://github.com/IAMconsortium/pyam.git@main"
+
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream.version }}"
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
 
         pip install .[docs,tests] ${{ matrix.upstream.extra-deps }}
-
-        # TEMPORARY For debugging #173
-        pip install icecream
-        # TODO Use a PR branch of pyam instead of main
-        pip install --upgrade "pyam-iamc @ git+https://github.com/IAMconsortium/pyam.git@main"
 
     - name: Configure local data path
       run: |
@@ -125,7 +124,6 @@ jobs:
       run: |
         pytest message_ix_models \
           -m "not snapshot" \
-          -k "test_report or test_cache" \
           -rA --verbose --color=yes --durations=20 \
           --cov-report=term-missing --cov-report=xml \
           --numprocesses=auto \

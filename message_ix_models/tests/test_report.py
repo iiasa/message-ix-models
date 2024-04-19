@@ -13,25 +13,6 @@ from message_ix_models.report import prepare_reporter, register, report, util
 from message_ix_models.report.sim import add_simulated_solution, to_simulate
 from message_ix_models.util import package_data_path
 
-
-def show_log_handlers(id: str, expected_n_handlers: int):
-    import logging
-
-    from icecream import ic
-
-    root_logger = logging.getLogger("root")
-
-    ic(id)
-
-    if expected_n_handlers != len(root_logger.handlers):
-        ic(
-            root_logger.level,
-            root_logger.handlers,
-            root_logger.manager.loggerDict,
-        )
-        assert False
-
-
 # Minimal reporting configuration for testing
 MIN_CONFIG = {
     "units": {
@@ -67,18 +48,6 @@ def test_register(caplog):
 @prepare_reporter.minimum_version
 def test_report_bare_res(request, tmp_path, test_context):
     """Prepare and run the standard MESSAGE-GLOBIOM reporting on a bare RES."""
-    show_log_handlers("test_report_bare_res 0", 5)
-
-    from importlib import import_module
-
-    for name in (
-        "xarray",
-        "ixmp4",  # assert False occurs here
-        "pyam",
-    ):
-        import_module(name)
-        show_log_handlers(f"test_report_bare_res after `import {name}`", 5)
-
     scenario = testing.bare_res(request, test_context, solved=True)
     test_context.set_scenario(scenario)
 
