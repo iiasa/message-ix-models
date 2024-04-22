@@ -84,7 +84,7 @@ def add_macro_COVID(scen, filename, check_converge=False):
 
     # Excel file for calibration data
     if "SSP_dev" in scen.model:
-        xls_file = os.path.join("C:/", "Users", "maczek", "Downloads", filename)
+        xls_file = os.path.join("C:/", "Users", "maczek", "Downloads", "macro", filename)
     else:
         xls_file = os.path.join("P:", "ene.model", "MACRO", "python", filename)
     # Making a dictionary from the MACRO Excel file
@@ -2015,6 +2015,16 @@ def get_ssp_soc_eco_data(context, model, measure, tec):
     df["unit"] = "GWa"
     df["technology"] = tec
     return df
+
+
+def add_elec_i_ini_act(scenario):
+    par = "inital_activity_up"
+    df_el = scenario.par(par, filters={"technology":"hp_el_i"})
+    df_el["technology"] = "elec_i"
+    scenario.check_out()
+    scenario.add_par(par, df_el)
+    scenario.commit("add initial_activity_up for elec_i")
+    return
 
 
 if __name__ == "__main__":

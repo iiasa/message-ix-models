@@ -31,8 +31,13 @@ from message_data.model.material.data_util import (
     read_config,
     gen_te_projections,
     get_ssp_soc_eco_data,
+    add_elec_i_ini_act,
 )
-from message_data.model.material.util import excel_to_csv, get_all_input_data_dirs
+from message_data.model.material.util import (
+    excel_to_csv,
+    get_all_input_data_dirs,
+    update_macro_calib_file,
+)
 from typing import Mapping
 from message_data.model.material.data_cement import gen_data_cement
 from message_data.model.material.data_steel import gen_data_steel
@@ -87,12 +92,8 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
 
     apply_spec(scenario, spec, add_data_1)  # dry_run=True
     if "SSP_dev" not in scenario.model:
-        engage_updates._correct_balance_td_efficiencies(
-            scenario
-        )
-        engage_updates._correct_coal_ppl_u_efficiencies(
-            scenario
-        )
+        engage_updates._correct_balance_td_efficiencies(scenario)
+        engage_updates._correct_coal_ppl_u_efficiencies(scenario)
         engage_updates._correct_td_co2cc_emissions(scenario)
         update_h2_blending.main(scenario)
     spec = None
@@ -112,6 +113,7 @@ def build(scenario: message_ix.Scenario, old_calib: bool) -> message_ix.Scenario
         last_hist_year = scenario.par("historical_activity")["year_act"].max()
         modify_industry_demand(scenario, last_hist_year)
         add_new_ind_hist_act(scenario, [last_hist_year])
+        add_elec_i_ini_act(scenario)
         add_emission_accounting(scenario)
 
         # scenario.commit("no changes")
@@ -401,7 +403,8 @@ def solve_scen(
     # scenario = Scenario(context.get_platform(), model_name, scenario_name)
 
     if scenario.has_solution():
-        scenario.remove_solution()
+        if not add_calibration:
+            scenario.remove_solution()
 
     if add_calibration:
         # Solve with 2020 base year
@@ -410,31 +413,34 @@ def solve_scen(
             "After macro calibration a new scenario with the suffix _macro is created."
         )
         print("Make sure to use this scenario to solve with MACRO iterations.")
-        scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
-        scenario.set_as_default()
+        if not scenario.has_solution():
+            scenario.solve(
+                model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"}
+            )
+            scenario.set_as_default()
 
-        # Report
-        from message_data.model.material.report.reporting import report
-        from message_data.tools.post_processing.iamc_report_hackathon import (
-            report as reporting,
-        )
+            # Report
+            from message_data.model.material.report.reporting import report
+            from message_data.tools.post_processing.iamc_report_hackathon import (
+                report as reporting,
+            )
 
-        # Remove existing timeseries and add material timeseries
-        print("Reporting material-specific variables")
-        report(context, scenario)
-        print("Reporting standard variables")
-        reporting(
-            mp,
-            scenario,
-            # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
-            #         string containing "True" or "False" instead of an actual bool.
-            "False",
-            scenario.model,
-            scenario.scenario,
-            merge_hist=True,
-            merge_ts=True,
-            run_config="materials_run_config.yaml",
-        )
+            # Remove existing timeseries and add material timeseries
+            print("Reporting material-specific variables")
+            report(context, scenario)
+            print("Reporting standard variables")
+            reporting(
+                mp,
+                scenario,
+                # NB(PNK) this is not an error; .iamc_report_hackathon.report() expects a
+                #         string containing "True" or "False" instead of an actual bool.
+                "False",
+                scenario.model,
+                scenario.scenario,
+                merge_hist=True,
+                merge_ts=True,
+                run_config="materials_run_config.yaml",
+            )
 
         # Shift to 2025 base year
         scenario = scenario.clone(
@@ -445,13 +451,18 @@ def solve_scen(
         scenario.set_as_default()
         scenario.solve(model="MESSAGE", solve_options={"lpmethod": "4", "scaind": "-1"})
 
+        # update cost_ref and price_ref with new solution
+        update_macro_calib_file(
+            scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
+        )
+
         # After solving, add macro calibration
         print("Scenario solved, now adding MACRO calibration")
         # scenario = add_macro_COVID(
         #     scenario, "R12-CHN-5y_macro_data_NGFS_w_rc_ind_adj_mat.xlsx"
         # )
         scenario = add_macro_COVID(
-            scenario, "SSP_dev_SSP2-R12-5y_macro_data_v0.6_mat.xlsx"
+            scenario, f"SSP_dev_{context['ssp']}-R12-5y_macro_data_v0.12_mat.xlsx"
         )
         print("Scenario calibrated.")
 
@@ -677,32 +688,31 @@ def modify_costs_with_tool(context, scen_name, ssp):
 
 
 @cli.command("run_cbud_scenario")
-@click.option("--ssp", default="SSP2", help="Suffix to the scenario name")
 @click.option(
     "--scenario",
-    default="1000f",
+    default="baseline_prep_lu_bkp_solved_materials_2025_macro",
     help="description of carbon budget for mitigation target",
 )
+@click.option("--budget", default="1000f")
+@click.option("--model", default="MESSAGEix-Materials")
 @click.pass_obj
-def run_cbud_scenario(context, ssp, scenario):
+def run_cbud_scenario(context, model, scenario, budget):
     import message_ix
 
-    if scenario == "1000f":
-        budget = 3667
-    elif scenario == "650f":
-        budget = 1750
+    if budget == "1000f":
+        budget_i = 3667
+    elif budget == "650f":
+        budget_i = 1750
     else:
         print("chosen budget not available yet please choose 650f or 1000f")
         return
 
     mp = ixmp.Platform("ixmp_dev")
-    base = message_ix.Scenario(
-        mp, "MESSAGEix-Materials", scenario=f"SSP_supply_cost_test_{ssp}_macro"
-    )
+    base = message_ix.Scenario(mp, model, scenario=scenario)
     scenario_cbud = base.clone(
         model=base.model,
-        scenario=base.scenario + "_" + scenario,
-        shift_first_model_year=2025,
+        scenario=base.scenario + "_" + budget,
+        shift_first_model_year=2030,
     )
 
     emission_dict = {
@@ -712,7 +722,7 @@ def run_cbud_scenario(context, ssp, scenario):
         "type_year": "cumulative",
         "unit": "???",
     }
-    df = message_ix.make_df("bound_emission", value=budget, **emission_dict)
+    df = message_ix.make_df("bound_emission", value=budget_i, **emission_dict)
     scenario_cbud.check_out()
     scenario_cbud.add_par("bound_emission", df)
     scenario_cbud.commit("add emission bound")
