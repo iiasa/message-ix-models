@@ -406,33 +406,42 @@ def gen_demand_petro(scenario, chemical, gdp_elasticity_2020, gdp_elasticity_203
             elasticity * demand_t0.mul(((income_t1 - income_t0) / income_t0), axis=0)
         ) + demand_t0
 
-    gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
-    mer_to_ppp = pd.read_csv(
-        private_data_path("material", "other", "mer_to_ppp_default.csv")
-    ).set_index(["node", "year"])
-    # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year") TODO: might need to be re-activated for different SSPs
-    gdp_mer = gdp_mer.merge(
-        mer_to_ppp.reset_index()[["node", "year", "value"]],
-        left_on=["node_loc", "year_act"],
-        right_on=["node", "year"],
-    )
-    gdp_mer["gdp_ppp"] = gdp_mer["value_y"] * gdp_mer["value_x"]
-    gdp_mer = gdp_mer[["year", "node_loc", "gdp_ppp"]].reset_index()
-    gdp_mer["Region"] = gdp_mer["node_loc"]  # .str.replace("R12_", "")
-    df_gdp_ts = gdp_mer.pivot(
-        index="Region", columns="year", values="gdp_ppp"
-    ).reset_index()
-    num_cols = [i for i in df_gdp_ts.columns if type(i) == int]
-    hist_yrs = [i for i in num_cols if i < fy]
-    df_gdp_ts = (
-        df_gdp_ts.drop([i for i in hist_yrs if i in df_gdp_ts.columns], axis=1)
-        .set_index("Region")
-        .sort_index()
-    )
-
-    from message_data.model.material.material_demand.material_demand_calc import (
-        read_base_demand,
-    )
+    if "GDP_PPP" in list(scenario.set("technology")):
+        gdp_ppp = scenario.par("bound_activity_up", {"technology": "GDP_PPP"})
+        df_gdp_ts = gdp_ppp.pivot(
+            index="node_loc", columns="year_act", values="value"
+        ).reset_index()
+        num_cols = [i for i in df_gdp_ts.columns if type(i) == int]
+        hist_yrs = [i for i in num_cols if i < fy]
+        df_gdp_ts = (
+            df_gdp_ts.drop([i for i in hist_yrs if i in df_gdp_ts.columns], axis=1)
+            .set_index("node_loc")
+            .sort_index()
+        )
+    else:
+        gdp_mer = scenario.par("bound_activity_up", {"technology": "GDP"})
+        mer_to_ppp = pd.read_csv(
+            private_data_path("material", "other", "mer_to_ppp_default.csv")
+        ).set_index(["node", "year"])
+        # mer_to_ppp = scenario.par("MERtoPPP").set_index("node", "year") TODO: might need to be re-activated for different SSPs
+        gdp_mer = gdp_mer.merge(
+            mer_to_ppp.reset_index()[["node", "year", "value"]],
+            left_on=["node_loc", "year_act"],
+            right_on=["node", "year"],
+        )
+        gdp_mer["gdp_ppp"] = gdp_mer["value_y"] * gdp_mer["value_x"]
+        gdp_mer = gdp_mer[["year", "node_loc", "gdp_ppp"]].reset_index()
+        gdp_mer["Region"] = gdp_mer["node_loc"]  # .str.replace("R12_", "")
+        df_gdp_ts = gdp_mer.pivot(
+            index="Region", columns="year", values="gdp_ppp"
+        ).reset_index()
+        num_cols = [i for i in df_gdp_ts.columns if type(i) == int]
+        hist_yrs = [i for i in num_cols if i < fy]
+        df_gdp_ts = (
+            df_gdp_ts.drop([i for i in hist_yrs if i in df_gdp_ts.columns], axis=1)
+            .set_index("Region")
+            .sort_index()
+        )
 
     df_demand_2020 = read_base_demand(
         private_data_path()
