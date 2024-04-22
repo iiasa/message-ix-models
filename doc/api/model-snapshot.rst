@@ -1,5 +1,6 @@
 .. currentmodule:: message_ix_models.model.snapshot
 
+.. _model-snapshot:
 Load model snapshots (:mod:`.model.snapshot`)
 *********************************************
 

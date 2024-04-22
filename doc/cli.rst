@@ -24,13 +24,13 @@ List existing platforms::
 
 To add a specific database, you can use the ixmp CLI [1]_::
 
-    $ ixmp platform add [PLATFORMNAME] jdbc oracle [COMPUTER]:[PORT]/[SERVICENAME] [USERNAME] [PASSWORD]
+    $ ixmp platform add <PLATFORMNAME> jdbc oracle <COMPUTER>:<PORT>/<PATH> <USERNAME> <PASSWORD>
 
 You may also want to make this the *default* platform.
 Unless told otherwise, :mod:`message_ix_models` creates :class:`~ixmp.Platform` objects without any arguments (:py:`mp = ixmp.Platform()`); this loads the default platform.
 Set the default::
 
-    $ ixmp platform add default [PLATFORMNAME]
+    $ ixmp platform add default <PLATFORMNAME>
 
 :mod:`message_ix` recognizes the following :file:`config.json` value:
 
@@ -51,7 +51,7 @@ Set the default::
 
       $ mix-models config set no_message_data true
 
-.. [1] ``[COMPUTER]`` is in this case either the hostname or the IP address.
+.. [1] ``<COMPUTER>`` is in this case either the hostname or the IP address.
 
 Environment variables
 ---------------------
