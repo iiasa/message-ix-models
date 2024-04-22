@@ -103,10 +103,6 @@ jobs:
       # for open PRs), temporarily uncomment, add, or edit lines below
       # as needed. DO NOT merge such changes to `main`.
       run: |
-        # Temporary, to work around iiasa/message-ix-models#173
-        # TODO Remove after a pyam release that fixes logging
-        pip install --upgrade "pyam-iamc @ git+https://github.com/IAMconsortium/pyam.git@main"
-
         # pip install --upgrade "genno @ git+https://github.com/khaeru/genno.git@main"
         pip install --upgrade "ixmp @ git+https://github.com/iiasa/ixmp.git@${{ matrix.upstream.version }}"
         pip install --upgrade "message-ix @ git+https://github.com/iiasa/message_ix.git@${{ matrix.upstream.version }}"
