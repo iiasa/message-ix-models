@@ -1960,7 +1960,7 @@ def read_rel(scenario, material, filename):
 def gen_te_projections(
     scen,
     ssp: Literal["all", "LED", "SSP1", "SSP2", "SSP3", "SSP4", "SSP5"] = "SSP2",
-    method: Literal["convergence", "gdp", "learning"] = "convergence",
+    method: Literal["constant", "convergence", "gdp"] = "convergence",
     ref_reg: str = "R12_NAM",
 ) -> tuple:
     model_tec_set = list(scen.set("technology"))
@@ -1971,23 +1971,12 @@ def gen_te_projections(
         format="message",
         scenario=ssp,
     )
-    out_materials = create_cost_projections(
-        node=cfg.node,
-        ref_region=cfg.ref_region,
-        base_year=cfg.base_year,
-        module=cfg.module,
-        method=cfg.method,
-        scenario_version=cfg.scenario_version,
-        scenario=cfg.scenario,
-        convergence_year=cfg.convergence_year,
-        fom_rate=cfg.fom_rate,
-        format=cfg.format,
-    )
-    fix_cost = out_materials.fix_cost.drop_duplicates().drop(
+    out_materials = create_cost_projections(cfg)
+    fix_cost = out_materials["fix_cost"].drop_duplicates().drop(
         ["scenario_version", "scenario"], axis=1
     )
     fix_cost = fix_cost[fix_cost["technology"].isin(model_tec_set)]
-    inv_cost = out_materials.inv_cost.drop_duplicates().drop(
+    inv_cost = out_materials["inv_cost"].drop_duplicates().drop(
         ["scenario_version", "scenario"], axis=1
     )
     inv_cost = inv_cost[inv_cost["technology"].isin(model_tec_set)]
